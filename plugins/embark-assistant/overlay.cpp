@@ -481,7 +481,7 @@ void embark_assist::overlay::set_embark(embark_assist::defs::site_infos *site_in
         state->embark_info.push_back({ Screen::Pen(' ', COLOR_WHITE), world->raws.inorganics[i]->id });
     }
 
-    for (int16_t i = 0; i < site_info->neighbors.size(); i++) {
+    for (uint16_t i = 0; i < site_info->neighbors.size(); i++) {
         if (world->raws.entities[site_info->neighbors[i]]->translation == "") {
             state->embark_info.push_back({ Screen::Pen(' ', COLOR_YELLOW), world->raws.entities[site_info->neighbors[i]]->code });  //  Kobolds have an empty translation field
         }

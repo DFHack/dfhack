@@ -1481,7 +1481,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
     //  Focus has to be at the world tile to get neighbor info
     //
     if (!tile->surveyed) {
-        for (int16_t i = 0; i < world->entities.all.size(); i++) {
+        for (uint16_t i = 0; i < world->entities.all.size(); i++) {
             if (world->entities.all[i]->flags.bits.neighbor) {
                 if (world->entities.all[i]->type == df::historical_entity_type::SiteGovernment) {
                     tile->necro_neighbors++;
@@ -2147,7 +2147,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
     bool incursion_processing_failed = false;
     df::world_data *world_data = world->world_data;
 
-    if (!use_cache) {  //  For some reason DF scrambles these values on world tile movements (at least in Lua...).
+    if (!use_cache) {  //  DF scrambles these values on world tile movements, while embark-tools stabilizes the movement, but its changes to the value are done after we've read them.
         state->local_min_x = screen->location.embark_pos_min.x;
         state->local_min_y = screen->location.embark_pos_min.y;
         state->local_max_x = screen->location.embark_pos_max.x;
@@ -2516,7 +2516,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
 
     if (incursion_processing_failed) site_info->incursions_processed = false;
 
-    for (int16_t i = 0; i < survey_results->at(x).at(y).neighbors.size(); i++) {
+    for (uint16_t i = 0; i < survey_results->at(x).at(y).neighbors.size(); i++) {
         site_info->neighbors.push_back(survey_results->at(x).at(y).neighbors[i]);
     }
 

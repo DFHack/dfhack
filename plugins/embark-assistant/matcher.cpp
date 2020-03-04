@@ -1369,10 +1369,10 @@ namespace embark_assist {
 
             //  Civ Neighbors
             if (finder->min_civ_neighbors > (int16_t)world_tile->neighbors.size()) world_tile_match = false;
-            if (finder->max_civ_neighbors != -1 && finder->max_civ_neighbors < world_tile->neighbors.size()) world_tile_match = false;
+            if (finder->max_civ_neighbors != -1 && finder->max_civ_neighbors < (int8_t)world_tile->neighbors.size()) world_tile_match = false;
 
             //  Specific Neighbors
-            for (int16_t i = 0; i < finder->neighbors.size(); i++) {
+            for (uint16_t i = 0; i < finder->neighbors.size(); i++) {
                 switch (finder->neighbors[i].present) {
                 case embark_assist::defs::present_absent_ranges::NA:
                     break;
@@ -1381,7 +1381,7 @@ namespace embark_assist {
                 {
                     bool found = false;
 
-                    for (int16_t k = 0; k < world_tile->neighbors.size(); k++) {
+                    for (uint16_t k = 0; k < world_tile->neighbors.size(); k++) {
                         if (finder->neighbors[i].entity_raw == world_tile->neighbors[k]) {
                             found = true;
                             break;
@@ -1394,7 +1394,7 @@ namespace embark_assist {
                 }
 
                 case embark_assist::defs::present_absent_ranges::Absent:
-                    for (int16_t k = 0; k < world_tile->neighbors.size(); k++) {
+                    for (uint16_t k = 0; k < world_tile->neighbors.size(); k++) {
                         if (finder->neighbors[i].entity_raw == world_tile->neighbors[k]) {
                             world_tile_match = false;
                             break;
@@ -2218,17 +2218,17 @@ namespace embark_assist {
 
                 //  Civ Neighbors
                 if (finder->min_civ_neighbors > (int16_t)tile->neighbors.size()) {
-                    if (trace) out.print("matcher::world_tile_match: Civ_Neighbors 1 (%i, %i), %i, %i\n", x, y, finder->min_civ_neighbors, tile->neighbors.size());
+                    if (trace) out.print("matcher::world_tile_match: Civ_Neighbors 1 (%i, %i), %i, %i\n", x, y, finder->min_civ_neighbors, (int)tile->neighbors.size());
                     return false;
                 }
-                if (finder->max_civ_neighbors < tile->neighbors.size() &&
+                if (finder->max_civ_neighbors < (int8_t)tile->neighbors.size() &&
                     finder->max_civ_neighbors != -1) {
                     if (trace) out.print("matcher::world_tile_match: Civ_Neighbors 2 (%i, %i)\n", x, y);
                     return false;
                 }
 
                 //  Specific Neighbors
-                for (int16_t i = 0; i < finder->neighbors.size(); i++) {
+                for (uint16_t i = 0; i < finder->neighbors.size(); i++) {
                     switch (finder->neighbors[i].present) {
                     case embark_assist::defs::present_absent_ranges::NA:
                         break;
@@ -2237,7 +2237,7 @@ namespace embark_assist {
                     {
                         bool found = false;
 
-                        for (int16_t k = 0; k < tile->neighbors.size(); k++) {
+                        for (uint16_t k = 0; k < tile->neighbors.size(); k++) {
                             if (finder->neighbors[i].entity_raw == tile->neighbors[k]) {
                                 found = true;
                                 break;
@@ -2253,7 +2253,7 @@ namespace embark_assist {
                     }
 
                     case embark_assist::defs::present_absent_ranges::Absent:
-                        for (int16_t k = 0; k < tile->neighbors.size(); k++) {
+                        for (uint16_t k = 0; k < tile->neighbors.size(); k++) {
                             if (finder->neighbors[i].entity_raw == tile->neighbors[k]) {
                                 if (trace) out.print("matcher::world_tile_match: Specific Neighbors Absent (%i, %i)\n", x, y);
                                 return false;
@@ -3042,7 +3042,7 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
                 return 0;
             }
 
-            if (iterator->finder.min_civ_neighbors != -1 && iterator->finder.neighbors.size() - absent_count < iterator->finder.min_civ_neighbors) {
+            if (iterator->finder.min_civ_neighbors != -1 && (int8_t)iterator->finder.neighbors.size() - absent_count < iterator->finder.min_civ_neighbors) {
                 out.printerr("matcher::find: Will never find any matches with total possible neighbors - excluded neighbors < min civ neighbors\n");
                 return 0;
             }

@@ -327,11 +327,11 @@ namespace embark_assist {
             int16_t controllable_civs = 0;
             int16_t max_civs;
 
-            for (int16_t i = 0; i < world->raws.entities.size(); i++) {
+            for (int16_t i = 0; i < (int16_t)world->raws.entities.size(); i++) {
                 if (world->raws.entities[i]->flags.is_set(df::entity_raw_flags::CIV_CONTROLLABLE)) controllable_civs++;
             }
 
-            for (int16_t i = 0; i < world->raws.entities.size(); i++) {
+            for (int16_t i = 0; i < (int16_t)world->raws.entities.size(); i++) {
                 if (!world->raws.entities[i]->flags.is_set(df::entity_raw_flags::LAYER_LINKED) &&  // Animal people
                     !world->raws.entities[i]->flags.is_set(df::entity_raw_flags::GENERATED) &&     // Vault guardians
                     (controllable_civs > 1 ||                                                              //  Suppress the playable civ when only 1
@@ -426,6 +426,10 @@ namespace embark_assist {
 
                         case embark_assist::defs::aquifer_ranges::None_Plus_Light:
                             element->list.push_back({ "None + Light", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::aquifer_ranges::None_Plus_At_Least_Light:
+                            element->list.push_back({ "None + >= Light", static_cast<int8_t>(k) });
                             break;
 
                         case embark_assist::defs::aquifer_ranges::Light:
@@ -1294,8 +1298,8 @@ namespace embark_assist {
                     break;
 
                 case fields::neighbors:
-                    for (int16_t k = 0; k < state->civs.size(); k++) {
-                        state->finder_list.push_back({ state->civs[k].description, static_cast<int8_t>(i) + k });
+                    for (uint8_t k = 0; k < state->civs.size(); k++) {
+                        state->finder_list.push_back({ state->civs[k].description, static_cast<int8_t>(i) + (int8_t)k });
                     }
                     break;
                 }

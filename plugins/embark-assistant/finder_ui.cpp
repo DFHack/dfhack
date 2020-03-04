@@ -1299,7 +1299,7 @@ namespace embark_assist {
 
                 case fields::neighbors:
                     for (uint8_t k = 0; k < state->civs.size(); k++) {
-                        state->finder_list.push_back({ state->civs[k].description, static_cast<int8_t>(i) + (int8_t)k });
+                        state->finder_list.push_back({ state->civs[k].description, (int16_t)(static_cast<int8_t>(i) + k) });
                     }
                     break;
                 }

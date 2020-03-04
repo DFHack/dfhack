@@ -3022,7 +3022,7 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
             int16_t present_count = 0;
             int16_t absent_count = 0;
 
-            for (int16_t i = 0; i < iterator->finder.neighbors.size(); i++) {
+            for (size_t i = 0; i < iterator->finder.neighbors.size(); i++) {
                 switch (iterator->finder.neighbors[i].present) {
                 case embark_assist::defs::present_absent_ranges::NA:
                     break;

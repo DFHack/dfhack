@@ -454,3 +454,90 @@ void DFHack::flagarrayToString(std::vector<std::string> *pvec, const void *p,
         }
     }
 }
+
+static const struct_field_info *find_union_tag_candidate(const struct_field_info *fields, const struct_field_info *union_field)
+{
+    std::string name(union_field->name);
+    if (name.length() >= 4 && name.substr(name.length() - 4) == "data")
+    {
+        name.erase(name.length() - 4, 4);
+        name += "type";
+
+        for (auto field = fields; field->mode != struct_field_info::END; field++)
+        {
+            if (field->name == name)
+            {
+                return field;
+            }
+        }
+    }
+
+    if (name.length() > 7 &&
+            name.substr(name.length() - 7) == "_target" &&
+            fields != union_field &&
+            (union_field - 1)->name == name.substr(0, name.length() - 7))
+    {
+        return union_field - 1;
+    }
+
+    return union_field + 1;
+}
+
+const struct_field_info *DFHack::find_union_tag(const struct_field_info *fields, const struct_field_info *union_field)
+{
+    CHECK_NULL_POINTER(fields);
+    CHECK_NULL_POINTER(union_field);
+
+    auto tag_candidate = find_union_tag_candidate(fields, union_field);
+
+    if (union_field->mode == struct_field_info::SUBSTRUCT &&
+            union_field->type &&
+            union_field->type->type() == IDTYPE_UNION)
+    {
+        // union field
+
+        if (tag_candidate->mode == struct_field_info::PRIMITIVE &&
+                tag_candidate->type &&
+                tag_candidate->type->type() == IDTYPE_ENUM)
+        {
+            return tag_candidate;
+        }
+
+        return nullptr;
+    }
+
+    if (union_field->mode != struct_field_info::CONTAINER ||
+            !union_field->type ||
+            union_field->type->type() != IDTYPE_CONTAINER)
+    {
+        // not a union field or a vector; bail
+        return nullptr;
+    }
+
+    auto container_type = static_cast<container_identity *>(union_field->type);
+    if (container_type->getFullName(nullptr) != "vector<void>" ||
+            !container_type->getItemType() ||
+            container_type->getItemType()->type() != IDTYPE_UNION)
+    {
+        // not a vector of unions
+        return nullptr;
+    }
+
+    if (tag_candidate->mode != struct_field_info::CONTAINER ||
+            !tag_candidate->type ||
+            tag_candidate->type->type() != IDTYPE_CONTAINER)
+    {
+        // candidate is not a vector
+        return nullptr;
+    }
+
+    auto tag_container_type = static_cast<container_identity *>(tag_candidate->type);
+    if (tag_container_type->getFullName(nullptr) == "vector<void>" &&
+            tag_container_type->getItemType() &&
+            tag_container_type->getItemType()->type() == IDTYPE_ENUM)
+    {
+        return tag_candidate;
+    }
+
+    return nullptr;
+}

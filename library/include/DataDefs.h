@@ -796,6 +796,16 @@ namespace DFHack {
         flagarray_to_string<T>(&tmp, val);
         return join_strings(sep, tmp);
     }
+
+    /**
+     * Finds the tag field for a given union field.
+     *
+     * The returned tag field is a primitive enum field or nullptr.
+     *
+     * If the union field is a container type, the returned tag field is
+     * a container of primitive enum types.
+     */
+    DFHACK_EXPORT const struct_field_info *find_union_tag(const struct_field_info *fields, const struct_field_info *union_field);
 }
 
 #define ENUM_ATTR(enum,attr,val) (df::enum_traits<df::enum>::attrs(val).attr)

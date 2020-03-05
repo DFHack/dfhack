@@ -97,97 +97,6 @@ static const char *const *get_enum_item_key(enum_identity *identity, int64_t val
     return &identity->getKeys()[index];
 }
 
-static const struct_field_info *find_union_tag_field(const struct_field_info *fields, const struct_field_info *union_field)
-{
-    std::string name(union_field->name);
-    if (name.length() >= 4 && name.substr(name.length() - 4) == "data")
-    {
-        name.erase(name.length() - 4, 4);
-        name += "type";
-
-        for (auto field = fields; field->mode != struct_field_info::END; field++)
-        {
-            if (field->name == name)
-            {
-                return field;
-            }
-        }
-    }
-
-    if (name.length() > 7 &&
-            name.substr(name.length() - 7) == "_target" &&
-            fields != union_field &&
-            (union_field - 1)->name == name.substr(0, name.length() - 7))
-    {
-        return union_field - 1;
-    }
-
-    return union_field + 1;
-}
-
-static const struct_field_info *find_union_tag(const struct_field_info *fields, const struct_field_info *union_field)
-{
-    if (union_field->mode != struct_field_info::SUBSTRUCT ||
-            !union_field->type ||
-            union_field->type->type() != IDTYPE_UNION)
-    {
-        // not a union
-        return nullptr;
-    }
-
-
-    const struct_field_info *tag_field = find_union_tag_field(fields, union_field);
-    if (tag_field->mode != struct_field_info::PRIMITIVE ||
-            !tag_field->type ||
-            tag_field->type->type() != IDTYPE_ENUM)
-    {
-        // no tag
-        return nullptr;
-    }
-
-    return tag_field;
-}
-
-static const struct_field_info *find_union_vector_tag_vector(const struct_field_info *fields, const struct_field_info *union_field)
-{
-    if (union_field->mode != struct_field_info::CONTAINER ||
-            !union_field->type ||
-            union_field->type->type() != IDTYPE_CONTAINER)
-    {
-        // not a vector
-        return nullptr;
-    }
-
-    auto container_type = static_cast<container_identity *>(union_field->type);
-    if (container_type->getFullName(nullptr) != "vector<void>" ||
-            !container_type->getItemType() ||
-            container_type->getItemType()->type() != IDTYPE_UNION)
-    {
-        // not a union
-        return nullptr;
-    }
-
-    const struct_field_info *tag_field = find_union_tag_field(fields, union_field);
-    if (tag_field->mode != struct_field_info::CONTAINER ||
-            !tag_field->type ||
-            tag_field->type->type() != IDTYPE_CONTAINER)
-    {
-        // no tag vector
-        return nullptr;
-    }
-
-    auto tag_container_type = static_cast<container_identity *>(tag_field->type);
-    if (tag_container_type->getFullName(nullptr) != "vector<void>" ||
-            !tag_container_type->getItemType() ||
-            tag_container_type->getItemType()->type() != IDTYPE_ENUM)
-    {
-        // not an enum
-        return nullptr;
-    }
-
-    return tag_field;
-}
-
 struct ToCheck
 {
     std::vector<std::string> path;
@@ -693,27 +602,18 @@ void Checker::queue_static_array(const ToCheck & array, void *base, type_identit
 bool Checker::maybe_queue_union(const ToCheck & item, const struct_field_info *fields, const struct_field_info *union_field)
 {
     auto tag_field = find_union_tag(fields, union_field);
-    if (tag_field)
-    {
-        ToCheck union_item(item, "." + std::string(union_field->name), PTR_ADD(item.ptr, union_field->offset), union_field->type);
-        ToCheck tag_item(item, "." + std::string(tag_field->name), PTR_ADD(item.ptr, tag_field->offset), tag_field->type);
+    if (!tag_field)
+        return false;
+
+    ToCheck union_item(item, "." + std::string(union_field->name), PTR_ADD(item.ptr, union_field->offset), union_field->type);
+    ToCheck tag_item(item, "." + std::string(tag_field->name), PTR_ADD(item.ptr, tag_field->offset), tag_field->type);
+
+    if (union_field->mode == struct_field_info::SUBSTRUCT)
         queue_union(union_item, tag_item);
+    else
+        queue_union_vector(union_item, tag_item);
 
-        return true;
-    }
-
-    tag_field = find_union_vector_tag_vector(fields, union_field);
-    if (tag_field)
-    {
-        ToCheck union_vector_item(item, "." + std::string(union_field->name), PTR_ADD(item.ptr, union_field->offset), union_field->type);
-        ToCheck tag_vector_item(item, "." + std::string(tag_field->name), PTR_ADD(item.ptr, tag_field->offset), tag_field->type);
-
-        queue_union_vector(union_vector_item, tag_vector_item);
-
-        return true;
-    }
-
-    return false;
+    return true;
 }
 
 void Checker::queue_union(const ToCheck & item, const ToCheck & tag_item)

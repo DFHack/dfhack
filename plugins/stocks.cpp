@@ -179,8 +179,8 @@ static map<df::item *, bool> items_in_cages;
 static df::job *get_item_job(df::item *item)
 {
     auto ref = Items::getSpecificRef(item, specific_ref_type::JOB);
-    if (ref && ref->job)
-        return ref->job;
+    if (ref && ref->data.JOB)
+        return ref->data.JOB;
 
     return nullptr;
 }
@@ -1008,12 +1008,12 @@ private:
             if (item->flags.bits.in_job)
             {
                 auto ref = Items::getSpecificRef(item, specific_ref_type::JOB);
-                if (ref && ref->job)
+                if (ref && ref->data.JOB)
                 {
-                    if (ref->job->job_type == job_type::Eat || ref->job->job_type == job_type::Drink)
+                    if (ref->data.JOB->job_type == job_type::Eat || ref->data.JOB->job_type == job_type::Drink)
                         return pos;
 
-                    auto unit = Job::getWorker(ref->job);
+                    auto unit = Job::getWorker(ref->data.JOB);
                     if (unit)
                         return unit->pos;
                 }

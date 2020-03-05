@@ -1825,17 +1825,17 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
                 case unit_action_type::Move:
                     if (unit->path.path.x.size() > 0)
                     {
-                        send_unit->set_subpos_x(lerp(0, unit->path.path.x[0] - unit->pos.x, (float)(action->data.move.timer_init - action->data.move.timer) / action->data.move.timer_init));
-                        send_unit->set_subpos_y(lerp(0, unit->path.path.y[0] - unit->pos.y, (float)(action->data.move.timer_init - action->data.move.timer) / action->data.move.timer_init));
-                        send_unit->set_subpos_z(lerp(0, unit->path.path.z[0] - unit->pos.z, (float)(action->data.move.timer_init - action->data.move.timer) / action->data.move.timer_init));
+                        send_unit->set_subpos_x(lerp(0, unit->path.path.x[0] - unit->pos.x, (float)(action->data.Move.timer_init - action->data.Move.timer) / action->data.Move.timer_init));
+                        send_unit->set_subpos_y(lerp(0, unit->path.path.y[0] - unit->pos.y, (float)(action->data.Move.timer_init - action->data.Move.timer) / action->data.Move.timer_init));
+                        send_unit->set_subpos_z(lerp(0, unit->path.path.z[0] - unit->pos.z, (float)(action->data.Move.timer_init - action->data.Move.timer) / action->data.Move.timer_init));
                     }
                     break;
                 case unit_action_type::Job:
                     {
                     auto facing = send_unit->mutable_facing();
-                    facing->set_x(action->data.job.x - unit->pos.x);
-                    facing->set_y(action->data.job.y - unit->pos.y);
-                    facing->set_z(action->data.job.z - unit->pos.z);
+                    facing->set_x(action->data.Job.x - unit->pos.x);
+                    facing->set_y(action->data.Job.y - unit->pos.y);
+                    facing->set_z(action->data.Job.z - unit->pos.z);
                     }
                 default:
                     break;

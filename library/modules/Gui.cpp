@@ -1064,12 +1064,12 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
         if (auto item = vector_get(ui_look_list->items, *ui_look_cursor))
         {
             if (item->type == df::ui_look_list::T_items::Unit)
-                return item->unit;
+                return item->data.Unit;
             else if (item->type == df::ui_look_list::T_items::Item)
             {
-                if (VIRTUAL_CAST_VAR(corpse, df::item_corpsest, item->item))
+                if (VIRTUAL_CAST_VAR(corpse, df::item_corpsest, item->data.Item))
                     return df::unit::find(corpse->unit_id); // loo(k) at corpse
-                else if (VIRTUAL_CAST_VAR(corpsepiece, df::item_corpsepiecest, item->item))
+                else if (VIRTUAL_CAST_VAR(corpsepiece, df::item_corpsepiecest, item->data.Item))
                     return df::unit::find(corpsepiece->unit_id); // loo(k) at corpse piece
             }
             else if (item->type == df::ui_look_list::T_items::Spatter)
@@ -1201,7 +1201,7 @@ df::item *Gui::getAnyItem(df::viewscreen *top)
 
         auto item = vector_get(ui_look_list->items, *ui_look_cursor);
         if (item && item->type == df::ui_look_list::T_items::Item)
-            return item->item;
+            return item->data.Item;
         else
             return NULL;
     }
@@ -1266,7 +1266,7 @@ df::building *Gui::getAnyBuilding(df::viewscreen *top)
 
         auto item = vector_get(ui_look_list->items, *ui_look_cursor);
         if (item && item->type == df::ui_look_list::T_items::Building)
-            return item->building;
+            return item->data.Building;
         else
             return NULL;
     }

@@ -1822,16 +1822,16 @@ public:
         switch (element->type)
         {
         case elt_type::Item:
-            if (element->item)
-                desc = Items::getDescription(element->item, 0, true);
+            if (element->data.Item)
+                desc = Items::getDescription(element->data.Item, 0, true);
             break;
         case elt_type::Unit:
-            if (element->unit)
-                desc = get_unit_description(element->unit);
+            if (element->data.Unit)
+                desc = get_unit_description(element->data.Unit);
             break;
         case elt_type::Building:
-            if (element->building)
-                element->building->getName(&desc);
+            if (element->data.Building)
+                element->data.Building->getName(&desc);
             break;
         default:
             break;

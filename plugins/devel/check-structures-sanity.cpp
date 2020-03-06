@@ -692,14 +692,17 @@ void Checker::queue_union(const ToCheck & item, const ToCheck & tag_item)
 
 void Checker::queue_union_vector(const ToCheck & item, const ToCheck & tag_item)
 {
-    if (tag_item.identity->getFullName(nullptr) == "vector<bool>")
+    auto union_container_type = static_cast<container_identity *>(item.identity);
+    auto tag_container_type = static_cast<container_identity *>(tag_item.identity);
+
+    if (tag_container_type->getFullName(nullptr) == "vector<bool>")
     {
         queue_union_bitvector(item, tag_item);
         return;
     }
 
-    auto union_type = static_cast<union_identity *>(static_cast<container_identity *>(item.identity)->getItemType());
-    auto tag_type = static_cast<enum_identity *>(static_cast<container_identity *>(tag_item.identity)->getItemType());
+    auto union_type = static_cast<union_identity *>(union_container_type->getItemType());
+    auto tag_type = static_cast<enum_identity *>(tag_container_type->getItemType());
 
     auto union_count = check_vector_size(item, union_type->byte_size());
     auto tag_count = check_vector_size(tag_item, tag_type->byte_size());
@@ -734,7 +737,7 @@ void Checker::queue_union_bitvector(const ToCheck & item, const ToCheck & tag_it
 
     if (union_count != tag_vector->size())
     {
-        FAIL("tagged union vector size (" << union_count << ") does not match tag vector (" << join_strings("", tag_item.path) << ") size (" << tag_count << ")");
+        FAIL("tagged union vector size (" << union_count << ") does not match tag vector (" << join_strings("", tag_item.path) << ") size (" << tag_vector->size() << ")");
     }
 
     auto union_base = *reinterpret_cast<void **>(item.ptr);

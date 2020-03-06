@@ -804,6 +804,9 @@ namespace DFHack {
      *
      * If the union field is a container type, the returned tag field is
      * a container of primitive enum types.
+     *
+     * As a special case, a container-type union can have a tag field that is
+     * a bit vector if it has exactly two members.
      */
     DFHACK_EXPORT const struct_field_info *find_union_tag(const struct_field_info *fields, const struct_field_info *union_field);
 }

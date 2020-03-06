@@ -539,5 +539,14 @@ const struct_field_info *DFHack::find_union_tag(const struct_field_info *fields,
         return tag_candidate;
     }
 
+    auto union_fields = ((struct_identity*)union_field->type)->getFields();
+    if (tag_container_type->getFullName(nullptr) != "vector<bool>" &&
+            union_fields[0].mode != struct_field_info::END &&
+            union_fields[1].mode != struct_field_info::END &&
+            union_fields[2].mode == struct_field_info::END)
+    {
+        return tag_candidate;
+    }
+
     return nullptr;
 }

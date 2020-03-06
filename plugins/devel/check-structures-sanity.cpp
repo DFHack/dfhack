@@ -150,6 +150,7 @@ private:
     bool maybe_queue_union(const ToCheck &, const struct_field_info *, const struct_field_info *);
     void queue_union(const ToCheck &, const ToCheck &);
     void queue_union_vector(const ToCheck &, const ToCheck &);
+    void queue_union_bitvector(const ToCheck &, const ToCheck &);
     void check_dispatch(ToCheck &);
     void check_global(const ToCheck &);
     void check_primitive(const ToCheck &);
@@ -163,7 +164,7 @@ private:
     void check_deque(const ToCheck &, type_identity *);
     void check_dfarray(const ToCheck &, type_identity *);
     void check_bitarray(const ToCheck &);
-    void check_bitvector(const ToCheck &);
+    bool check_bitvector(const ToCheck &);
     void check_struct(const ToCheck &);
     void check_virtual(const ToCheck &);
 public:
@@ -691,6 +692,12 @@ void Checker::queue_union(const ToCheck & item, const ToCheck & tag_item)
 
 void Checker::queue_union_vector(const ToCheck & item, const ToCheck & tag_item)
 {
+    if (tag_item.identity->getFullName(nullptr) == "vector<bool>")
+    {
+        queue_union_bitvector(item, tag_item);
+        return;
+    }
+
     auto union_type = static_cast<union_identity *>(static_cast<container_identity *>(item.identity)->getItemType());
     auto tag_type = static_cast<enum_identity *>(static_cast<container_identity *>(tag_item.identity)->getItemType());
 
@@ -711,6 +718,33 @@ void Checker::queue_union_vector(const ToCheck & item, const ToCheck & tag_item)
         ToCheck union_item(item, i, union_base, union_type);
         ToCheck tag(tag_item, i, tag_base, tag_type);
         queue_union(union_item, tag);
+    }
+}
+
+void Checker::queue_union_bitvector(const ToCheck & item, const ToCheck & tag_item)
+{
+    auto union_type = static_cast<union_identity *>(static_cast<container_identity *>(item.identity)->getItemType());
+    auto union_count = check_vector_size(item, union_type->byte_size());
+
+    if (!check_bitvector(tag_item))
+    {
+        return;
+    }
+    auto tag_vector = reinterpret_cast<std::vector<bool> *>(tag_item.ptr);
+
+    if (union_count != tag_vector->size())
+    {
+        FAIL("tagged union vector size (" << union_count << ") does not match tag vector (" << join_strings("", tag_item.path) << ") size (" << tag_count << ")");
+    }
+
+    auto union_base = *reinterpret_cast<void **>(item.ptr);
+
+    auto count = union_count < tag_vector->size() ? union_count : tag_vector->size();
+    for (size_t i = 0; i < count; i++, union_base = PTR_ADD(union_base, union_type->byte_size()))
+    {
+        auto item_field = &union_type->getFields()[tag_vector->at(i) ? 1 : 0];
+        ToCheck tagged_union_item(item, stl_sprintf("[%zu].%s", i, item_field->name), union_base, item_field->type);
+        queue_field(std::move(tagged_union_item), item_field);
     }
 }
 
@@ -1267,7 +1301,7 @@ void Checker::check_bitarray(const ToCheck & item)
     // TODO: check DFHack::BitArray?
 }
 
-void Checker::check_bitvector(const ToCheck & item)
+bool Checker::check_bitvector(const ToCheck & item)
 {
     struct biterator_data
     {
@@ -1285,10 +1319,11 @@ void Checker::check_bitvector(const ToCheck & item)
     if (item.identity->byte_size() != sizeof(bvector_data))
     {
         UNEXPECTED;
-        return;
+        return false;
     }
 
     // TODO: check vector<bool>?
+    return true;
 }
 
 void Checker::check_struct(const ToCheck & item)

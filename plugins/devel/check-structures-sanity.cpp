@@ -1347,6 +1347,10 @@ void Checker::check_struct(const ToCheck & item)
                 FAIL("allocated structure size (" << allocated_size << ") does not match expected size (" << expected_size << ")");
             }
         }
+        else if (item.path.at(item.path.size() - 1) == "prev" || item.path.at(item.path.size() - 1) == "next")
+        {
+            // ignore unknown DfLinkedList sizes for now
+        }
         else
         {
             FAIL("unknown allocation size; possibly bad");

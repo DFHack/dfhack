@@ -151,6 +151,7 @@ private:
     void queue_union(const ToCheck &, const ToCheck &);
     void queue_union_vector(const ToCheck &, const ToCheck &);
     void queue_union_bitvector(const ToCheck &, const ToCheck &);
+    void queue_df_linked_list(const ToCheck &);
     void check_dispatch(ToCheck &);
     void check_global(const ToCheck &);
     void check_primitive(const ToCheck &);
@@ -551,7 +552,10 @@ void Checker::queue_field(ToCheck && item, const struct_field_info *field)
             queue.push_back(std::move(item));
             break;
         case struct_field_info::CONTAINER:
-            queue.push_back(std::move(item));
+            if (field->type && field->type->type() == IDTYPE_STRUCT)
+                queue_df_linked_list(item);
+            else
+                queue.push_back(std::move(item));
             break;
         case struct_field_info::STL_VECTOR_PTR:
             item.temp_identity = std::unique_ptr<df::stl_ptr_vector_identity>(new df::stl_ptr_vector_identity(field->type, field->eid));
@@ -748,6 +752,96 @@ void Checker::queue_union_bitvector(const ToCheck & item, const ToCheck & tag_it
         auto item_field = &union_type->getFields()[tag_vector->at(i) ? 1 : 0];
         ToCheck tagged_union_item(item, stl_sprintf("[%zu].%s", i, item_field->name), union_base, item_field->type);
         queue_field(std::move(tagged_union_item), item_field);
+    }
+}
+
+void Checker::queue_df_linked_list(const ToCheck & item)
+{
+    if (item.identity->type() != IDTYPE_STRUCT)
+    {
+        UNEXPECTED;
+        return;
+    }
+
+    const struct_field_info *prev_field = nullptr, *next_field = nullptr, *item_field = nullptr;
+    auto fields = static_cast<struct_identity *>(item.identity)->getFields();
+    for (auto field = fields; field->mode != struct_field_info::END; field++)
+    {
+#define WANT_FIELD(fieldname, sametype) \
+        if (!strcmp(#fieldname, field->name)) \
+        { \
+            if (field->mode != struct_field_info::POINTER) \
+            { \
+                FAIL("internal error: expected field " #fieldname " to be a pointer"); \
+                UNEXPECTED; \
+                return; \
+            } \
+            if (sametype && field->type != item.identity) \
+            { \
+                FAIL("internal error: expected field " #fieldname " to have a matching type"); \
+                UNEXPECTED; \
+                return; \
+            } \
+            if (fieldname ## _field) \
+            { \
+                FAIL("internal error: duplicate field " #fieldname); \
+                UNEXPECTED; \
+                return; \
+            } \
+            fieldname ## _field = field; \
+            continue; \
+        }
+
+        WANT_FIELD(prev, true);
+        WANT_FIELD(next, true);
+        WANT_FIELD(item, false);
+
+        FAIL("internal error: unexpected extra field " << field->name);
+        UNEXPECTED;
+        return;
+    }
+
+    if (!prev_field || !next_field || !item_field)
+    {
+        FAIL("internal error: missing field(s) in DfLinkedList");
+        UNEXPECTED;
+        return;
+    }
+
+    // static verification of the type succeeded; continue to the actual list.
+
+    int index = -1;
+    void *prev_ptr = nullptr;
+    void *cur_ptr = item.ptr;
+
+    while (cur_ptr)
+    {
+        auto cur_prev_ptr = *reinterpret_cast<void **>(PTR_ADD(cur_ptr, prev_field->offset));
+        if (prev_ptr != cur_prev_ptr)
+        {
+            FAIL("linked list element " << index << " previous element pointer " << stl_sprintf("%p", cur_prev_ptr) << " does not match actual previous element " << stl_sprintf("%p", prev_ptr));
+            return;
+        }
+
+        auto item_ptr_ptr = PTR_ADD(cur_ptr, item_field->offset);
+        std::unique_ptr<df::pointer_identity> item_ptr_identity(new df::pointer_identity(item_field->type));
+        ToCheck item_item(item, stl_sprintf("[%d].item", index), item_ptr_ptr, item_ptr_identity.get());
+        item_item.temp_identity = std::move(item_ptr_identity);
+        queue.push_back(std::move(item_item));
+
+        auto next_ptr = *reinterpret_cast<void **>(PTR_ADD(cur_ptr, next_field->offset));
+        ToCheck next_item(item, stl_sprintf("[%d].next", index), next_ptr, item.identity);
+        if (check_access(next_item, next_ptr, item.identity))
+        {
+            prev_ptr = cur_ptr;
+            cur_ptr = next_ptr;
+        }
+        else
+        {
+            cur_ptr = nullptr;
+        }
+
+        index++;
     }
 }
 
@@ -1347,10 +1441,6 @@ void Checker::check_struct(const ToCheck & item)
                 FAIL("allocated structure size (" << allocated_size << ") does not match expected size (" << expected_size << ")");
             }
         }
-        else if (item.path.at(item.path.size() - 1) == "prev" || item.path.at(item.path.size() - 1) == "next")
-        {
-            // ignore unknown DfLinkedList sizes for now
-        }
         else
         {
             FAIL("unknown allocation size; possibly bad");
@@ -1370,6 +1460,12 @@ void Checker::check_struct(const ToCheck & item)
         {
             if (maybe_queue_union(item, fields, field))
             {
+                continue;
+            }
+
+            if (!strcmp(field->name, "link") && field->mode == struct_field_info::POINTER && field->type->getFullName() == item.identity->getFullName() + "_list_link")
+            {
+                // skip linked list pointers
                 continue;
             }
 

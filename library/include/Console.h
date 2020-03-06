@@ -135,7 +135,7 @@ namespace  DFHack
         ///dtor, NOT thread-safe
         ~Console();
         /// initialize the console. NOT thread-safe
-        bool init( bool sharing );
+        bool init( bool dont_redirect );
         /// shutdown the console. NOT thread-safe
         bool shutdown( void );
 

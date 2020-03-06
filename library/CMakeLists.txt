@@ -79,8 +79,14 @@ set(MAIN_SOURCES
     RemoteTools.cpp
 )
 
+if(WIN32)
+    set(CONSOLE_SOURCES Console-windows.cpp)
+else()
+    set(CONSOLE_SOURCES Console-posix.cpp)
+endif()
+
 set(MAIN_SOURCES_WINDOWS
-    Console-windows.cpp
+    ${CONSOLE_SOURCES}
     Hooks-windows.cpp
     PlugLoad-windows.cpp
     Process-windows.cpp
@@ -92,21 +98,21 @@ if(WIN32)
 endif()
 
 set(MAIN_SOURCES_LINUX
-    Console-posix.cpp
+    ${CONSOLE_SOURCES}
     Hooks-linux.cpp
     PlugLoad-posix.cpp
     Process-linux.cpp
 )
 
 set(MAIN_SOURCES_DARWIN
-    Console-posix.cpp
+    ${CONSOLE_SOURCES}
     Hooks-darwin.cpp
     PlugLoad-posix.cpp
     Process-darwin.cpp
 )
 
 set(MAIN_SOURCES_LINUX_EGGY
-    Console-linux.cpp
+    ${CONSOLE_SOURCES}
     Hooks-egg.cpp
     PlugLoad-linux.cpp
     Process-linux.cpp
@@ -359,7 +365,7 @@ add_library(dfhack SHARED ${PROJECT_SOURCES})
 add_dependencies(dfhack generate_proto_core)
 add_dependencies(dfhack generate_headers)
 
-add_library(dfhack-client SHARED RemoteClient.cpp ColorText.cpp MiscUtils.cpp Error.cpp ${PROJECT_PROTO_SRCS})
+add_library(dfhack-client SHARED RemoteClient.cpp ColorText.cpp MiscUtils.cpp Error.cpp ${PROJECT_PROTO_SRCS} ${CONSOLE_SOURCES})
 add_dependencies(dfhack-client dfhack)
 
 add_executable(dfhack-run dfhack-run.cpp)

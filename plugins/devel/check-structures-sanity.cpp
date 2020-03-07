@@ -804,9 +804,9 @@ void Checker::queue_df_linked_list(const ToCheck & item)
     int index = -1;
     struct df_linked_list_entry
     {
+        void *item;
         df_linked_list_entry *prev;
         df_linked_list_entry *next;
-        void *item;
     } *prev_ptr = nullptr, *cur_ptr = reinterpret_cast<df_linked_list_entry *>(item.ptr);
 
     while (cur_ptr)

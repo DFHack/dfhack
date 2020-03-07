@@ -73,6 +73,36 @@ static void build_size_table()
     }
 }
 
+static bool is_df_linked_list(type_identity *type)
+{
+    if (type->type() != IDTYPE_STRUCT)
+        return false;
+
+    auto struct_type = static_cast<struct_identity *>(type);
+    auto fields = struct_type->getFields();
+
+    if (fields[0].mode != struct_field_info::POINTER)
+        return false;
+    if (strcmp(fields[0].name, "item"))
+        return false;
+
+    if (fields[1].mode != struct_field_info::POINTER)
+        return false;
+    if (fields[1].type != type)
+        return false;
+    if (strcmp(fields[1].name, "prev"))
+        return false;
+
+    if (fields[2].mode != struct_field_info::POINTER)
+        return false;
+    if (fields[2].type != type)
+        return false;
+    if (strcmp(fields[2].name, "next"))
+        return false;
+
+    return fields[3].mode == struct_field_info::END;
+}
+
 static const char *const *get_enum_item_key(enum_identity *identity, int64_t value)
 {
     size_t index;
@@ -572,6 +602,7 @@ void Checker::queue_field(ToCheck && item, const struct_field_info *field)
 void Checker::queue_static_array(const ToCheck & array, void *base, type_identity *type, size_t count, bool pointer, enum_identity *ienum)
 {
     size_t size = pointer ? sizeof(void *) : type->byte_size();
+    bool is_linked_list = type && is_df_linked_list(type);
 
     for (size_t i = 0; i < count; i++, base = PTR_ADD(base, size))
     {
@@ -599,6 +630,11 @@ void Checker::queue_static_array(const ToCheck & array, void *base, type_identit
         {
             item.temp_identity = std::unique_ptr<pointer_identity>(new pointer_identity(type));
             item.identity = item.temp_identity.get();
+        }
+        else if (is_linked_list)
+        {
+            queue_df_linked_list(item);
+            continue;
         }
         queue.push_back(std::move(item));
     }
@@ -757,84 +793,42 @@ void Checker::queue_union_bitvector(const ToCheck & item, const ToCheck & tag_it
 
 void Checker::queue_df_linked_list(const ToCheck & item)
 {
-    if (item.identity->type() != IDTYPE_STRUCT)
+    if (!is_df_linked_list(item.identity))
     {
         UNEXPECTED;
         return;
     }
 
-    const struct_field_info *prev_field = nullptr, *next_field = nullptr, *item_field = nullptr;
-    auto fields = static_cast<struct_identity *>(item.identity)->getFields();
-    for (auto field = fields; field->mode != struct_field_info::END; field++)
-    {
-#define WANT_FIELD(fieldname, sametype) \
-        if (!strcmp(#fieldname, field->name)) \
-        { \
-            if (field->mode != struct_field_info::POINTER) \
-            { \
-                FAIL("internal error: expected field " #fieldname " to be a pointer"); \
-                UNEXPECTED; \
-                return; \
-            } \
-            if (sametype && field->type != item.identity) \
-            { \
-                FAIL("internal error: expected field " #fieldname " to have a matching type"); \
-                UNEXPECTED; \
-                return; \
-            } \
-            if (fieldname ## _field) \
-            { \
-                FAIL("internal error: duplicate field " #fieldname); \
-                UNEXPECTED; \
-                return; \
-            } \
-            fieldname ## _field = field; \
-            continue; \
-        }
-
-        WANT_FIELD(prev, true);
-        WANT_FIELD(next, true);
-        WANT_FIELD(item, false);
-
-        FAIL("internal error: unexpected extra field " << field->name);
-        UNEXPECTED;
-        return;
-    }
-
-    if (!prev_field || !next_field || !item_field)
-    {
-        FAIL("internal error: missing field(s) in DfLinkedList");
-        UNEXPECTED;
-        return;
-    }
-
-    // static verification of the type succeeded; continue to the actual list.
+    auto item_type = static_cast<struct_identity *>(item.identity)->getFields()[2].type;
 
     int index = -1;
-    void *prev_ptr = nullptr;
-    void *cur_ptr = item.ptr;
+    struct df_linked_list_entry
+    {
+        df_linked_list_entry *prev;
+        df_linked_list_entry *next;
+        void *item;
+    } *prev_ptr = nullptr, *cur_ptr = reinterpret_cast<df_linked_list_entry *>(item.ptr);
 
     while (cur_ptr)
     {
-        auto cur_prev_ptr = *reinterpret_cast<void **>(PTR_ADD(cur_ptr, prev_field->offset));
-        if (prev_ptr != cur_prev_ptr)
+        if (prev_ptr != cur_ptr->prev)
         {
-            FAIL("linked list element " << index << " previous element pointer " << stl_sprintf("%p", cur_prev_ptr) << " does not match actual previous element " << stl_sprintf("%p", prev_ptr));
+            FAIL("linked list element " << index << " previous element pointer " << stl_sprintf("%p", cur_ptr->prev) << " does not match actual previous element " << stl_sprintf("%p", prev_ptr));
             return;
         }
 
-        auto item_ptr_ptr = PTR_ADD(cur_ptr, item_field->offset);
-        std::unique_ptr<df::pointer_identity> item_ptr_identity(new df::pointer_identity(item_field->type));
+        auto item_ptr_ptr = reinterpret_cast<void *>(&cur_ptr->item);
+        std::unique_ptr<df::pointer_identity> item_ptr_identity(new df::pointer_identity(item_type));
         ToCheck item_item(item, stl_sprintf("[%d].item", index), item_ptr_ptr, item_ptr_identity.get());
         item_item.temp_identity = std::move(item_ptr_identity);
         queue.push_back(std::move(item_item));
 
-        auto next_ptr = *reinterpret_cast<void **>(PTR_ADD(cur_ptr, next_field->offset));
+        auto next_ptr = reinterpret_cast<void *>(cur_ptr->next);
         ToCheck next_item(item, stl_sprintf("[%d].next", index), next_ptr, item.identity);
         if (check_access(next_item, next_ptr, item.identity))
         {
             prev_ptr = cur_ptr;
-            cur_ptr = next_ptr;
+            cur_ptr = cur_ptr->next;
         }
         else
         {
@@ -1463,7 +1457,7 @@ void Checker::check_struct(const ToCheck & item)
                 continue;
             }
 
-            if (!strcmp(field->name, "link") && field->mode == struct_field_info::POINTER && field->type->getFullName() == item.identity->getFullName() + "_list_link")
+            if (field->mode == struct_field_info::POINTER && is_df_linked_list(field->type))
             {
                 // skip linked list pointers
                 continue;

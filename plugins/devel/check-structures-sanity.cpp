@@ -75,7 +75,7 @@ static void build_size_table()
 
 static bool is_df_linked_list(type_identity *type)
 {
-    if (type->type() != IDTYPE_STRUCT)
+    if (!type || type->type() != IDTYPE_STRUCT)
         return false;
 
     auto struct_type = static_cast<struct_identity *>(type);

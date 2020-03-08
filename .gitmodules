@@ -18,4 +18,4 @@
 	url = ../../DFHack/jsoncpp.git
 [submodule "travis/df-luacheck"]
 	path = travis/df-luacheck
-	url = ../../mifki/df-luacheck.git
+	url = ../../DFHack/df-luacheck.git

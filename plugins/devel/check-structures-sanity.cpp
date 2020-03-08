@@ -799,7 +799,7 @@ void Checker::queue_df_linked_list(const ToCheck & item)
         return;
     }
 
-    auto item_type = static_cast<struct_identity *>(item.identity)->getFields()[2].type;
+    auto item_type = static_cast<struct_identity *>(item.identity)->getFields()[0].type;
 
     int index = -1;
     struct df_linked_list_entry

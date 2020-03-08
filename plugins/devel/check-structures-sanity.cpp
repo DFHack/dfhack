@@ -48,6 +48,7 @@ DFhackCExport command_result plugin_init(color_ostream &, std::vector<PluginComm
         "\n"
         "-enums: report unexpected or unnamed enum or bitfield values.\n"
         "-sizes: report struct and class sizes that don't match structures. (requires sizecheck)\n"
+        "-unnamed: report unnamed enum/bitfield values, not just undefined ones.\n"
         "-lowmem: use depth-first search instead of breadth-first search. uses less memory but processes fields in a less intuitive order.\n"
         "-maxerrors n: set the maximum number of errors before bailing out.\n"
         "-failfast: crash if any error is encountered. useful only for debugging.\n"
@@ -162,6 +163,7 @@ public:
     size_t num_checked;
     bool enums;
     bool sizes;
+    bool unnamed;
     bool lowmem;
     bool failfast;
     size_t maxerrors;
@@ -243,6 +245,7 @@ static command_result command(color_ostream & out, std::vector<std::string> & pa
     }
     BOOL_PARAM(enums);
     BOOL_PARAM(sizes);
+    BOOL_PARAM(unnamed);
     BOOL_PARAM(lowmem);
     BOOL_PARAM(failfast);
 #undef BOOL_PARAM
@@ -303,6 +306,7 @@ Checker::Checker(color_ostream & out) :
     Core::getInstance().p->getMemRanges(mapped);
     enums = false;
     sizes = false;
+    unnamed = false;
     lowmem = false;
     failfast = false;
     maxerrors = ~size_t(0);
@@ -684,7 +688,7 @@ void Checker::queue_union(const ToCheck & item, const ToCheck & tag_item)
     {
         FAIL("tagged union tag (" << join_strings("", tag_item.path) << ") out of range (" << tag_value << ")");
     }
-    else if (!tag_key)
+    else if (!tag_key && unnamed)
     {
         FAIL("tagged union tag (" << join_strings("", tag_item.path) << ") unnamed (" << tag_value << ")");
     }
@@ -1160,8 +1164,12 @@ void Checker::check_bitfield(const ToCheck & item)
 
     size_t num_bits = identity->getNumBits();
     auto bits = identity->getBits();
+    size_t next_bit = 0;
     for (size_t i = 0; i < num_bits; i++)
     {
+        if (bits[i].size)
+            next_bit = i + 1;
+
         if (bits[i].size < 0)
             continue;
         if (bits[i].name)
@@ -1170,13 +1178,13 @@ void Checker::check_bitfield(const ToCheck & item)
         if (!(val & (1ULL << i)))
             continue;
 
-        if (bits[i].size)
+        if (!bits[i].size)
+        {
+            FAIL("bitfield bit " << i << " past the defined end of the bitfield (" << next_bit << " would be next)");
+        }
+        else if (unnamed)
         {
             FAIL("bitfield bit " << i << " is unnamed");
-        }
-        else
-        {
-            FAIL("bitfield bit " << i << " past the defined end of the bitfield");
         }
     }
 }
@@ -1231,7 +1239,7 @@ int64_t Checker::check_enum(const ToCheck & item)
             FAIL("enum value (" << value << ") outside of defined range (" << identity->getFirstItem() << " to " << identity->getLastItem() << ")");
         }
     }
-    else if (!*key)
+    else if (!*key && unnamed)
     {
         FAIL("enum value (" << value << ") is unnamed");
     }

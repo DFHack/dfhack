@@ -173,8 +173,8 @@ private:
     const std::string *check_possible_stl_string_pointer(const void *const*);
 #endif
     bool check_access(const ToCheck &, void *, type_identity *);
-    bool check_access(const ToCheck &, void *, type_identity *, size_t);
-    const char *check_vtable(const ToCheck &, void *, type_identity *);
+    bool check_access(const ToCheck &, void *, type_identity *, size_t, bool = false);
+    const char *check_vtable(const ToCheck &, void *, type_identity *, bool = false);
     void queue_field(ToCheck &&, const struct_field_info *);
     void queue_static_array(const ToCheck &, void *, type_identity *, size_t, bool = false, enum_identity * = nullptr);
     bool maybe_queue_union(const ToCheck &, const struct_field_info *, const struct_field_info *);
@@ -427,7 +427,7 @@ bool Checker::check_access(const ToCheck & item, void *base, type_identity *iden
     return check_access(item, base, identity, identity ? identity->byte_size() : 0);
 }
 
-bool Checker::check_access(const ToCheck & item, void *base, type_identity *identity, size_t size)
+bool Checker::check_access(const ToCheck & item, void *base, type_identity *identity, size_t size, bool quiet)
 {
     if (!base)
     {
@@ -445,7 +445,10 @@ bool Checker::check_access(const ToCheck & item, void *base, type_identity *iden
 #endif
     if (reinterpret_cast<uintptr_t>(base) == UNINIT_PTR)
     {
-        FAIL_PTR("uninitialized pointer");
+        if (!quiet)
+        {
+            FAIL_PTR("uninitialized pointer");
+        }
         return false;
     }
 
@@ -467,7 +470,10 @@ bool Checker::check_access(const ToCheck & item, void *base, type_identity *iden
 
             if (!range.valid || !range.read)
             {
-                FAIL_PTR("pointer to invalid memory range");
+                if (!quiet)
+                {
+                    FAIL_PTR("pointer to invalid memory range");
+                }
                 return false;
             }
 
@@ -483,6 +489,11 @@ bool Checker::check_access(const ToCheck & item, void *base, type_identity *iden
         }
     }
 
+    if (quiet)
+    {
+        return false;
+    }
+
     if (expected_start == base)
     {
         FAIL_PTR("pointer not in any mapped range");
@@ -495,14 +506,14 @@ bool Checker::check_access(const ToCheck & item, void *base, type_identity *iden
 #undef FAIL_PTR
 }
 
-const char *Checker::check_vtable(const ToCheck & item, void *vtable, type_identity *identity)
+const char *Checker::check_vtable(const ToCheck & item, void *vtable, type_identity *identity, bool quiet)
 {
-    if (!check_access(item, PTR_ADD(vtable, -ptrdiff_t(sizeof(void *))), identity, sizeof(void *)))
+    if (!check_access(item, PTR_ADD(vtable, -ptrdiff_t(sizeof(void *))), identity, sizeof(void *), quiet))
         return nullptr;
     char **info = *(reinterpret_cast<char ***>(vtable) - 1);
 
 #ifdef WIN32
-    if (!check_access(item, PTR_ADD(info, 12), identity, 4))
+    if (!check_access(item, PTR_ADD(info, 12), identity, 4, quiet))
         return nullptr;
 
 #ifdef DFHACK64
@@ -516,7 +527,7 @@ const char *Checker::check_vtable(const ToCheck & item, void *vtable, type_ident
     char *name = reinterpret_cast<char *>(info) + 8;
 #endif
 #else
-    if (!check_access(item, info + 1, identity, sizeof(void *)))
+    if (!check_access(item, info + 1, identity, sizeof(void *), quiet))
         return nullptr;
     char *name = *(info + 1);
 #endif
@@ -530,7 +541,10 @@ const char *Checker::check_vtable(const ToCheck & item, void *vtable, type_ident
 
         if (!range.valid || !range.read)
         {
-            FAIL("pointer to invalid memory range");
+            if (!quiet)
+            {
+                FAIL("pointer to invalid memory range");
+            }
             return nullptr;
         }
 
@@ -863,17 +877,17 @@ void Checker::check_dispatch(ToCheck & item)
                 size_t allocated_size = *reinterpret_cast<size_t *>(PTR_ADD(item.ptr, -16));
 
                 FAIL("pointer to a block of " << allocated_size << " bytes of allocated memory");
+                if (allocated_size >= MIN_SIZE_FOR_SUGGEST && known_types_by_size.count(allocated_size))
+                {
+                    FAIL("known types of this size: " << join_strings(", ", known_types_by_size.at(allocated_size)));
+                }
 
-                // check recursively if it might be a valid pointer
-                if (allocated_size == sizeof(void *))
+                // check recursively if it's the right size for a pointer or if it starts with what might be a valid pointer
+                if (allocated_size == sizeof(void *) || (allocated_size > sizeof(void *) && check_access(item, item.ptr, df::identity_traits<void *>::get(), sizeof(void *), true)))
                 {
                     item.path.push_back(".?ptr?");
                     item.path.push_back("");
                     item.identity = df::identity_traits<void *>::get();
-                }
-                else if (allocated_size >= MIN_SIZE_FOR_SUGGEST && known_types_by_size.count(allocated_size))
-                {
-                    FAIL("known types of this size: " << join_strings(", ", known_types_by_size.at(allocated_size)));
                 }
             }
 #ifndef WIN32
@@ -907,6 +921,8 @@ void Checker::check_dispatch(ToCheck & item)
     // special case for large_integer weirdness
     if (item.identity == df::identity_traits<df::large_integer>::get())
     {
+        // it's 16 bytes on 64-bit linux due to a messy header in libgraphics
+        // but only the first 8 bytes are ever used
         item.identity = df::identity_traits<int64_t>::get();
     }
 
@@ -1433,6 +1449,11 @@ void Checker::check_struct(const ToCheck & item)
             if (allocated_size != expected_size)
             {
                 FAIL("allocated structure size (" << allocated_size << ") does not match expected size (" << expected_size << ")");
+
+                if (allocated_size >= MIN_SIZE_FOR_SUGGEST && known_types_by_size.count(allocated_size))
+                {
+                    FAIL("known types of this size: " << join_strings(", ", known_types_by_size.at(allocated_size)));
+                }
             }
         }
         else

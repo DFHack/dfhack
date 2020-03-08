@@ -61,7 +61,7 @@ public class find_df_globals extends GhidraScript {
                 dataAddr = globalAddr.getNewAddress(mem.getInt(globalAddr.add(globalCount * ptrSize * 2 + ptrSize)));
             }
 
-            String name = StringDataInstance.getStringDataInstance(currentProgram.getListing().createData(nameAddr, TerminatedStringDataType.dataType)).getStringValue();
+            String name = StringDataInstance.getStringDataInstance(DataUtilities.createData(currentProgram, nameAddr, TerminatedStringDataType.dataType, 0, false, DataUtilities.ClearDataMode.CLEAR_ALL_CONFLICT_DATA)).getStringValue();
 
             createLabel(dataAddr, name, true);
         }

@@ -2,6 +2,7 @@ local _ENV = mkmodule('dfhack.workshops')
 
 local utils = require 'utils'
 
+--luacheck:global
 input_filter_defaults = {
     item_type = -1,
     item_subtype = -1,
@@ -24,7 +25,12 @@ input_filter_defaults = {
     quantity = 1
 }
 local fuel={item_type=df.item_type.BAR,mat_type=df.builtin_mats.COAL}
-jobs_furnace={
+
+-- typedef for luacheck
+local workshop_job = {} --as:{_type:workshop_job,name:string,items:'input_filter_defaults[]',job_fields:none}
+
+--luacheck:global
+jobs_furnace={ --as:workshop_job[][]
     [df.furnace_type.Smelter]={
         {
             name="Melt metal object",
@@ -85,7 +91,8 @@ jobs_furnace={
         }
     },
 }
-jobs_workshop={
+--luacheck:global
+jobs_workshop={ --as:workshop_job[][]
 
     [df.workshop_type.Jewelers]={
         {
@@ -398,7 +405,7 @@ jobs_workshop={
         },
     },
     [df.workshop_type.Leatherworks]={
-        defaults={item_type=SKIN_TANNED},
+        defaults={item_type=df.item_type.SKIN_TANNED},
         {
             name="construct leather bag",
             items={{}},
@@ -475,7 +482,7 @@ local function matchIds(bid1,wid1,cid1,bid2,wid2,cid2)
     return true
 end
 local function scanRawsReaction(buildingId,workshopId,customId)
-    local ret={}
+    local ret={} --as:df.reaction[]
     for idx,reaction in ipairs(df.global.world.raws.reactions.reactions) do
         for k,v in pairs(reaction.building.type) do
             if matchIds(buildingId,workshopId,customId,v,reaction.building.subtype[k],reaction.building.custom[k]) then
@@ -495,7 +502,7 @@ end
 local function addReactionJobs(ret,bid,wid,cid)
     local reactions=scanRawsReaction(bid,wid or -1,cid or -1)
     for idx,react in pairs(reactions) do
-    local job={name=react.name,
+    local job={name=react.name, --as:workshop_job
                items={},job_fields={job_type=df.job_type.CustomReaction,reaction_name=react.code}
               }
         for reagentId,reagent in pairs(react.reagents) do
@@ -521,7 +528,8 @@ local function addSmeltJobs(ret,use_fuel)
     for idx,ore in pairs(ores) do
         print("adding:",ore.material.state_name.Solid)
         printall(ore)
-    local job={name="smelt "..ore.material.state_name.Solid,job_fields={job_type=df.job_type.SmeltOre,mat_type=df.builtin_mats.INORGANIC,mat_index=idx},items={
+    local job={ --as:workshop_job
+        name="smelt "..ore.material.state_name.Solid,job_fields={job_type=df.job_type.SmeltOre,mat_type=df.builtin_mats.INORGANIC,mat_index=idx},items={
         {item_type=df.item_type.BOULDER,mat_type=df.builtin_mats.INORGANIC,mat_index=idx,vector_id=df.job_item_vector_id.BOULDER}}}
         if use_fuel then
             table.insert(job.items,fuel)
@@ -531,8 +539,7 @@ local function addSmeltJobs(ret,use_fuel)
     return ret
 end
 function getJobs(buildingId,workshopId,customId)
-    local ret={}
-    local c_jobs
+    local c_jobs = {} --as:workshop_job[]
     if buildingId==df.building_type.Workshop then
         c_jobs=jobs_workshop[workshopId]
     elseif buildingId==df.building_type.Furnace then
@@ -551,10 +558,11 @@ function getJobs(buildingId,workshopId,customId)
         c_jobs=utils.clone(c_jobs,true)
     end
 
+    local ret = {} --as:c_jobs
     addReactionJobs(c_jobs,buildingId,workshopId,customId)
     for jobId,contents in pairs(c_jobs) do
         if jobId~="defaults" then
-            local entry={}
+            local entry={} --as:workshop_job
             entry.name=contents.name
             local lclDefaults=utils.clone(input_filter_defaults,true)
             if c_jobs.defaults ~=nil then

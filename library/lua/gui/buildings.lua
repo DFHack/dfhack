@@ -16,6 +16,7 @@ WORKSHOP_SPECIAL={
     [df.building_type.Workshop]=true,[df.building_type.Furnace]=true,[df.building_type.Trap]=true,
     [df.building_type.Construction]=true,[df.building_type.SiegeEngine]=true
 }
+--luacheck:defclass={prompt:string,frame_style:number,frame_inset:number,frame_title:string,none_caption:string,hide_none:bool,use_abstract:bool,use_workshops:bool,use_tool_workshop:bool,use_furnace:bool,use_construction:bool,use_siege:bool,use_trap:bool,use_custom:bool,building_filter:{_type:function,_anyfunc:true},on_select:{_type:function,_anyfunc:true},on_cancel:{_type:function,_anyfunc:true},on_close:{_type:function,_anyfunc:true},back_stack:'{_type:table,context_str:string,all_choices:table,edit_text:string,selected:number}[]'}
 BuildingDialog = defclass(BuildingDialog, gui.FramedScreen)
 
 BuildingDialog.focus_path = 'BuildingDialog'
@@ -229,7 +230,7 @@ function BuildingDialog:pushContext(name, choices)
     end
 
     self.context_str = name
-    self.subviews.list:setChoices(choices, 1)
+    self.subviews.list:setChoices(choices, 1) --hint:widgets.FilteredList
 end
 
 function BuildingDialog:onGoBack()
@@ -237,8 +238,9 @@ function BuildingDialog:onGoBack()
     self.subviews.back.visible = (#self.back_stack > 0)
 
     self.context_str = save.context_str
-    self.subviews.list:setChoices(save.all_choices)
-    self.subviews.list:setFilter(save.edit_text, save.selected)
+    local list = self.subviews.list --as:widgets.FilteredList
+    list:setChoices(save.all_choices)
+    list:setFilter(save.edit_text, save.selected)
 end
 
 function BuildingDialog:submitBuilding(type_id,subtype_id,custom_id,choice,index)

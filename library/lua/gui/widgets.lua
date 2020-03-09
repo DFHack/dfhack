@@ -178,8 +178,8 @@ end
 -----------
 
 function parse_label_text(obj)
-    local text = obj.text or {}
-    if type(text) ~= 'table' then
+    local text = obj.text or {} --as:string[]
+    if type(text) ~= 'table' then --luacheck:skip
         text = { text }
     end
     local curline = nil
@@ -190,7 +190,7 @@ function parse_label_text(obj)
         local vv
         if type(v) == 'string' then
             vv = utils.split_string(v, NEWLINE)
-        else
+        else --luacheck:skip
             vv = { v }
         end
 
@@ -343,7 +343,7 @@ function check_text_keys(self, keys)
     end
 end
 
---luacheck: defclass={text_lines:'{_type:table,text:string,gap:number,tile:dfhack.pen,key:string,key_pen:number,pen:dfhack.pen,dpen:dfhack.pen,disabled:bool,enabled:bool,width:number,pad_char:string,rjustify:bool,key_sep:string,on_activate:\'anyfunc:none\'}[][]',on_click:'anyfunc:none',on_rclick:'anyfunc:none',text_hpen:number,text_active:Label.text_lines._array}
+--luacheck: defclass={text_lines:'{_type:table,text:string,gap:number,tile:dfhack.pen,key:string,key_pen:number,pen:dfhack.pen,dpen:dfhack.pen,disabled:bool,enabled:bool,width:number,pad_char:string,rjustify:bool,key_sep:string,on_activate:\'anyfunc:none\'}[][]',on_click:'anyfunc:none',on_rclick:'anyfunc:none',text_hpen:number,text_active:Label.text_lines._array,text_ids:Label.text_lines._array}
 Label = defclass(Label, Widget)
 
 Label.ATTRS{
@@ -465,11 +465,13 @@ end
 function List:setChoices(choices, selected)
     self.choices = {}
 
-    for i,v in ipairs(choices or {}) do
+    local choices = choices or {} --as:List.choices
+
+    for i,v in ipairs(choices) do
         local l = utils.clone(v);
         if type(v) ~= 'table' then
             l = { text = v }
-        else
+        else --luacheck:skip
             l.text = v.text or v.caption or v[1]
         end
         parse_label_text(l)
@@ -664,7 +666,7 @@ end
 -- Filtered List --
 -------------------
 
---luacheck: defclass={edit:EditField,list:List,edit_key:string}
+--luacheck: defclass={edit:EditField,list:List,edit_key:string,not_found:Label}
 FilteredList = defclass(FilteredList, Widget)
 
 FilteredList.ATTRS {
@@ -784,6 +786,7 @@ function FilteredList:getFilter()
     return self.edit.text, self.list.choices
 end
 
+--luacheck:skip
 function FilteredList:setFilter(filter, pos)
     local choices = self.choices
     local cidx = nil

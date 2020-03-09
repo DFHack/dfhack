@@ -540,7 +540,8 @@ const struct_field_info *DFHack::find_union_tag(const struct_field_info *fields,
     }
 
     auto union_fields = ((struct_identity*)union_field->type)->getFields();
-    if (tag_container_type->getFullName(nullptr) != "vector<bool>" &&
+    if (tag_container_type->getFullName() != "vector<bool>" &&
+            tag_container_type->getFullName() != "vector<char>" &&
             union_fields[0].mode != struct_field_info::END &&
             union_fields[1].mode != struct_field_info::END &&
             union_fields[2].mode == struct_field_info::END)

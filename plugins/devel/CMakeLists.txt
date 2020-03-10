@@ -6,7 +6,6 @@ include(FindThreads)
 
 add_definitions(-DDEV_PLUGIN)
 dfhack_plugin(buildprobe buildprobe.cpp)
-dfhack_plugin(check-structures-sanity check-structures-sanity.cpp LINK_LIBRARIES lua)
 dfhack_plugin(color-dfhack-text color-dfhack-text.cpp)
 dfhack_plugin(counters counters.cpp)
 dfhack_plugin(dumpmats dumpmats.cpp)
@@ -27,3 +26,5 @@ dfhack_plugin(zoom zoom.cpp)
 if(UNIX)
     dfhack_plugin(ref-index ref-index.cpp)
 endif()
+
+add_subdirectory(check-structures-sanity)

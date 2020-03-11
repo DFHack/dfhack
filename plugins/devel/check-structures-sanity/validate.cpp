@@ -191,8 +191,9 @@ const char *Checker::get_vtable_name(const QueueItem & item, const CheckedStruct
     return nullptr;
 }
 
-std::pair<const void *, size_t> Checker::validate_vector_size(const QueueItem & item, const CheckedStructure & cs, bool quiet)
+std::pair<const void *, CheckedStructure> Checker::validate_vector_size(const QueueItem & item, const CheckedStructure & cs, bool quiet)
 {
+    using ret_type = std::pair<const void *, CheckedStructure>;
     struct vector_data
     {
         uintptr_t start;
@@ -206,7 +207,7 @@ std::pair<const void *, size_t> Checker::validate_vector_size(const QueueItem & 
     ptrdiff_t capacity = vector.end_of_storage - vector.start;
 
     bool local_ok = true;
-    auto item_size = cs.full_size();
+    auto item_size = cs.identity ? cs.identity->byte_size() : 0;
     if (!item_size)
     {
         item_size = 1;
@@ -263,7 +264,7 @@ std::pair<const void *, size_t> Checker::validate_vector_size(const QueueItem & 
         {
             FAIL("vector has null pointer but capacity " << (capacity / item_size));
         }
-        return std::make_pair(nullptr, 0);
+        return ret_type();
     }
 
     auto start_ptr = reinterpret_cast<const void *>(vector.start);
@@ -273,7 +274,14 @@ std::pair<const void *, size_t> Checker::validate_vector_size(const QueueItem & 
         local_ok = false;
     }
 
-    return local_ok ? std::make_pair(start_ptr, ulength / item_size) : std::make_pair(nullptr, 0);
+    if (!local_ok)
+    {
+        return ret_type();
+    }
+
+    CheckedStructure ret_cs(cs.identity, ulength / item_size);
+    ret_cs.allocated_count = ucapacity / item_size;
+    return std::make_pair(start_ptr, ret_cs);
 }
 
 size_t Checker::get_allocated_size(const QueueItem & item)

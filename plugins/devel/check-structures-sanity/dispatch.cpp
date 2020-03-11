@@ -160,6 +160,44 @@ void Checker::dispatch_item(const QueueItem & base, const CheckedStructure & cs)
         return;
     }
 
+    if (sizes && !cs.inside_structure)
+    {
+        if (auto allocated_size = get_allocated_size(base))
+        {
+            auto expected_size = cs.identity->byte_size();
+            if (cs.allocated_count)
+                expected_size *= cs.allocated_count;
+            else if (cs.count)
+                expected_size *= cs.count;
+
+            if (cs.identity->type() == IDTYPE_CLASS && get_vtable_name(base, cs, true))
+            {
+                if (cs.count)
+                {
+                    UNEXPECTED;
+                }
+
+                auto virtual_type = virtual_identity::get(static_cast<virtual_ptr>(const_cast<void *>(base.ptr)));
+                expected_size = virtual_type->byte_size();
+            }
+
+            auto & item = base;
+
+            if (allocated_size > expected_size)
+            {
+                FAIL("identified structure is too small (expected " << expected_size << " bytes, but there are " << allocated_size << " bytes allocated)");
+            }
+            else if (allocated_size < expected_size)
+            {
+                FAIL("identified structure is too big (expected " << expected_size << " bytes, but there are " << allocated_size << " bytes allocated)");
+            }
+        }
+        else
+        {
+            UNEXPECTED;
+        }
+    }
+
     auto ptr = base.ptr;
     auto size = cs.identity->byte_size();
     for (size_t i = 0; i < cs.count; i++)
@@ -292,28 +330,6 @@ void Checker::dispatch_pointer(const QueueItem & item, const CheckedStructure & 
     }
 
     CheckedStructure target_cs(target);
-
-    if (auto allocated_size = get_allocated_size(target_item))
-    {
-        auto expected_size = target->byte_size();
-        if (target->type() == IDTYPE_CLASS && get_vtable_name(target_item, target_cs, true))
-        {
-            auto target_virtual = virtual_identity::get(static_cast<virtual_ptr>(const_cast<void *>(target_item.ptr)));
-            expected_size = target_virtual->byte_size();
-        }
-        if (cs.ptr_is_array && allocated_size % expected_size == 0)
-        {
-            target_cs.count = allocated_size / expected_size;
-        }
-        else if (allocated_size > expected_size)
-        {
-            FAIL("identified structure is too small (expected " << expected_size << " bytes, but there are " << allocated_size << " bytes allocated)");
-        }
-        else if (allocated_size < expected_size)
-        {
-            FAIL("identified structure is too big (expected " << expected_size << " bytes, but there are " << allocated_size << " bytes allocated)");
-        }
-    }
 
     // 256 is an arbitrarily chosen size threshold
     if (cs.count || target->byte_size() <= 256)
@@ -564,7 +580,7 @@ void Checker::dispatch_buffer(const QueueItem & item, const CheckedStructure & c
     auto identity = static_cast<container_identity *>(cs.identity);
 
     auto item_identity = identity->getItemType();
-    dispatch_item(item, CheckedStructure(item_identity, identity->byte_size() / item_identity->byte_size(), static_cast<enum_identity *>(identity->getIndexEnumType())));
+    dispatch_item(item, CheckedStructure(item_identity, identity->byte_size() / item_identity->byte_size(), static_cast<enum_identity *>(identity->getIndexEnumType()), cs.inside_structure));
 }
 void Checker::dispatch_stl_ptr_vector(const QueueItem & item, const CheckedStructure & cs)
 {
@@ -657,17 +673,17 @@ void Checker::dispatch_tagged_union_vector(const QueueItem & item, const QueueIt
             // invalid vectors (already warned)
             return;
         }
-        if (!vec_union.second && !vec_tag.second)
+        if (!vec_union.second.count && !vec_tag.second.count)
         {
             // empty vectors
             return;
         }
-        if (vec_union.second != vec_tag.second)
+        if (vec_union.second.count != vec_tag.second.count)
         {
-            FAIL("tagged union vector is " << vec_union.second << " elements, but tag vector (accessed as " << tag_item.path << ") is " << vec_tag.second << " elements");
+            FAIL("tagged union vector is " << vec_union.second.count << " elements, but tag vector (accessed as " << tag_item.path << ") is " << vec_tag.second.count << " elements");
         }
 
-        for (size_t i = 0; i < vec_union.second && i < vec_tag.second; i++)
+        for (size_t i = 0; i < vec_union.second.count && i < vec_tag.second.count; i++)
         {
             dispatch_tagged_union(QueueItem(item, i, vec_union.first), QueueItem(tag_item, i, vec_tag.first), union_item_cs, tag_item_cs);
             vec_union.first = PTR_ADD(vec_union.first, union_item_cs.identity->byte_size());
@@ -691,7 +707,7 @@ void Checker::dispatch_untagged_union(const QueueItem & item, const CheckedStruc
     {
         // it's 16 bytes on 64-bit linux due to a messy header in libgraphics
         // but only the first 8 bytes are ever used
-        dispatch_primitive(item, CheckedStructure(df::identity_traits<int64_t>::get()));
+        dispatch_primitive(item, CheckedStructure(df::identity_traits<int64_t>::get(), 0, nullptr, cs.inside_structure));
         return;
     }
 
@@ -700,7 +716,7 @@ void Checker::dispatch_untagged_union(const QueueItem & item, const CheckedStruc
 
 void Checker::check_unknown_pointer(const QueueItem & item)
 {
-    const static CheckedStructure cs(nullptr, 0);
+    const static CheckedStructure cs(nullptr, 0, nullptr, true);
     if (auto allocated_size = get_allocated_size(item))
     {
         FAIL("pointer to a block of " << allocated_size << " bytes of allocated memory");
@@ -748,17 +764,16 @@ void Checker::check_stl_vector(const QueueItem & item, type_identity *item_ident
         return;
     }
 
-    if (vec_items.first && vec_items.second)
+    if (vec_items.first && vec_items.second.count)
     {
         QueueItem items_item(item.path, vec_items.first);
-        CheckedStructure items_cs(item_identity, vec_items.second, static_cast<enum_identity *>(eid));
-        queue_item(items_item, items_cs);
+        queue_item(items_item, vec_items.second);
     }
 }
 
 void Checker::check_stl_string(const QueueItem & item)
 {
-    const static CheckedStructure cs(df::identity_traits<std::string>::get());
+    const static CheckedStructure cs(df::identity_traits<std::string>::get(), 0, nullptr, true);
 
 #ifdef WIN32
     struct string_data

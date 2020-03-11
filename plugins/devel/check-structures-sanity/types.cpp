@@ -19,14 +19,16 @@ CheckedStructure::CheckedStructure() :
 {
 }
 CheckedStructure::CheckedStructure(type_identity *identity, size_t count) :
-    CheckedStructure(identity, count, nullptr)
+    CheckedStructure(identity, count, nullptr, false)
 {
 }
-CheckedStructure::CheckedStructure(type_identity *identity, size_t count, enum_identity *eid) :
+CheckedStructure::CheckedStructure(type_identity *identity, size_t count, enum_identity *eid, bool inside_structure) :
     identity(identity),
     count(count),
+    allocated_count(0),
     eid(eid),
-    ptr_is_array(false)
+    ptr_is_array(false),
+    inside_structure(inside_structure)
 {
 }
 CheckedStructure::CheckedStructure(const struct_field_info *field) :
@@ -39,6 +41,7 @@ CheckedStructure::CheckedStructure(const struct_field_info *field) :
 
     identity = field->type;
     eid = field->eid;
+    inside_structure = true;
     switch (field->mode)
     {
         case struct_field_info::END:

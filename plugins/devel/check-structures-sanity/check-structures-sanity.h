@@ -33,12 +33,14 @@ struct CheckedStructure
 {
     type_identity *identity;
     size_t count;
+    size_t allocated_count;
     enum_identity *eid;
     bool ptr_is_array;
+    bool inside_structure;
 
     CheckedStructure();
     explicit CheckedStructure(type_identity *, size_t = 0);
-    CheckedStructure(type_identity *, size_t, enum_identity *);
+    CheckedStructure(type_identity *, size_t, enum_identity *, bool);
     CheckedStructure(const struct_field_info *);
 
     size_t full_size() const;
@@ -105,7 +107,7 @@ public:
     }
     int64_t get_int_value(const QueueItem & item, type_identity *type, bool quiet = false);
     const char *get_vtable_name(const QueueItem & item, const CheckedStructure & cs, bool quiet = false);
-    std::pair<const void *, size_t> validate_vector_size(const QueueItem & item, const CheckedStructure & cs, bool quiet = false);
+    std::pair<const void *, CheckedStructure> validate_vector_size(const QueueItem & item, const CheckedStructure & cs, bool quiet = false);
     size_t get_allocated_size(const QueueItem & item);
 #ifndef WIN32
     // this function doesn't make sense on windows, where std::string is not pointer-sized.

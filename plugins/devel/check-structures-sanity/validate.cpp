@@ -283,6 +283,11 @@ size_t Checker::get_allocated_size(const QueueItem & item)
         return 0;
     }
 
+    if (uintptr_t(item.ptr) % 32 != 16)
+    {
+        return 0;
+    }
+
     uint32_t tag = *reinterpret_cast<const uint32_t *>(PTR_ADD(item.ptr, -8));
     if (tag == 0xdfdf4ac8)
     {
@@ -307,6 +312,11 @@ const std::string *Checker::validate_stl_string_pointer(const void *const* base)
         size_t capacity;
         int32_t refcount;
     } *str_data = static_cast<const string_data_inner *>(*base) - 1;
+
+    if (!is_valid_dereference(QueueItem("str", PTR_ADD(str_data, -16)), 16, true))
+    {
+        return nullptr;
+    }
 
     uint32_t tag = *reinterpret_cast<const uint32_t *>(PTR_ADD(str_data, -8));
     if (tag == 0xdfdf4ac8)

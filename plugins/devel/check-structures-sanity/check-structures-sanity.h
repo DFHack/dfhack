@@ -34,6 +34,7 @@ struct CheckedStructure
     type_identity *identity;
     size_t count;
     enum_identity *eid;
+    bool ptr_is_array;
 
     CheckedStructure();
     explicit CheckedStructure(type_identity *, size_t = 0);
@@ -76,6 +77,7 @@ public:
     bool sizes;
     bool unnamed;
     bool failfast;
+    bool noprogress;
 
     Checker(color_ostream & out);
     bool queue_item(const QueueItem & item, const CheckedStructure & cs);
@@ -133,6 +135,7 @@ private:
     void check_unknown_pointer(const QueueItem &);
     void check_stl_vector(const QueueItem &, type_identity *, type_identity *);
     void check_stl_string(const QueueItem &);
+    void check_possible_pointer(const QueueItem &, const CheckedStructure &);
 
     friend struct CheckedStructure;
     static type_identity *wrap_in_pointer(type_identity *);

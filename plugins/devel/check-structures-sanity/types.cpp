@@ -19,15 +19,14 @@ CheckedStructure::CheckedStructure() :
 {
 }
 CheckedStructure::CheckedStructure(type_identity *identity, size_t count) :
-    identity(identity),
-    count(count),
-    eid(nullptr)
+    CheckedStructure(identity, count, nullptr)
 {
 }
 CheckedStructure::CheckedStructure(type_identity *identity, size_t count, enum_identity *eid) :
     identity(identity),
     count(count),
-    eid(eid)
+    eid(eid),
+    ptr_is_array(false)
 {
 }
 CheckedStructure::CheckedStructure(const struct_field_info *field) :
@@ -60,7 +59,10 @@ CheckedStructure::CheckedStructure(const struct_field_info *field) :
             count = field->count;
             break;
         case struct_field_info::POINTER:
-            // TODO: check flags (stored in field->count)
+            if (field->count & PTRFLAG_IS_ARRAY)
+            {
+                ptr_is_array = true;
+            }
             identity = Checker::wrap_in_pointer(field->type);
             break;
         case struct_field_info::STATIC_ARRAY:

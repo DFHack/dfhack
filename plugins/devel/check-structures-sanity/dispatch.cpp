@@ -11,7 +11,8 @@ Checker::Checker(color_ostream & out) :
     enums(false),
     sizes(false),
     unnamed(false),
-    failfast(false)
+    failfast(false),
+    noprogress(!out.is_console())
 {
     Core::getInstance().p->getMemRanges(mapped);
 }
@@ -252,6 +253,8 @@ void Checker::dispatch_primitive(const QueueItem & item, const CheckedStructure 
     }
     else if (auto int_id = dynamic_cast<df::integer_identity_base *>(cs.identity))
     {
+        check_possible_pointer(item, cs);
+
         // TODO check ints?
     }
     else if (auto float_id = dynamic_cast<df::float_identity_base *>(cs.identity))
@@ -288,22 +291,46 @@ void Checker::dispatch_pointer(const QueueItem & item, const CheckedStructure & 
         return;
     }
 
+    CheckedStructure target_cs(target);
+
+    if (auto allocated_size = get_allocated_size(target_item))
+    {
+        auto expected_size = target->byte_size();
+        if (target->type() == IDTYPE_CLASS && get_vtable_name(target_item, target_cs, true))
+        {
+            auto target_virtual = virtual_identity::get(static_cast<virtual_ptr>(const_cast<void *>(target_item.ptr)));
+            expected_size = target_virtual->byte_size();
+        }
+        if (cs.ptr_is_array && allocated_size % expected_size == 0)
+        {
+            target_cs.count = allocated_size / expected_size;
+        }
+        else if (allocated_size > expected_size)
+        {
+            FAIL("identified structure is too small (expected " << expected_size << " bytes, but there are " << allocated_size << " bytes allocated)");
+        }
+        else if (allocated_size < expected_size)
+        {
+            FAIL("identified structure is too big (expected " << expected_size << " bytes, but there are " << allocated_size << " bytes allocated)");
+        }
+    }
+
     // 256 is an arbitrarily chosen size threshold
     if (cs.count || target->byte_size() <= 256)
     {
         // target is small, or we are inside an array of pointers; handle now
-        if (queue_item(target_item, CheckedStructure(target)))
+        if (queue_item(target_item, target_cs))
         {
             // we insert it into the queue to make sure we're not stuck in a loop
             // get it back out of the queue to prevent the queue growing too big
             queue.pop_back();
-            dispatch_item(target_item, CheckedStructure(target));
+            dispatch_item(target_item, target_cs);
         }
     }
     else
     {
         // target is large and not part of an array; handle later
-        queue_item(target_item, CheckedStructure(target));
+        queue_item(target_item, target_cs);
     }
 }
 void Checker::dispatch_container(const QueueItem & item, const CheckedStructure & cs)
@@ -350,6 +377,8 @@ void Checker::dispatch_bit_container(const QueueItem & item, const CheckedStruct
 }
 void Checker::dispatch_bitfield(const QueueItem & item, const CheckedStructure & cs)
 {
+    check_possible_pointer(item, cs);
+
     if (!enums)
     {
         return;
@@ -418,6 +447,8 @@ void Checker::dispatch_bitfield(const QueueItem & item, const CheckedStructure &
 }
 void Checker::dispatch_enum(const QueueItem & item, const CheckedStructure & cs)
 {
+    check_possible_pointer(item, cs);
+
     if (!enums)
     {
         return;
@@ -669,7 +700,7 @@ void Checker::dispatch_untagged_union(const QueueItem & item, const CheckedStruc
 
 void Checker::check_unknown_pointer(const QueueItem & item)
 {
-    CheckedStructure cs(df::identity_traits<void *>::get());
+    const static CheckedStructure cs(nullptr, 0);
     if (auto allocated_size = get_allocated_size(item))
     {
         FAIL("pointer to a block of " << allocated_size << " bytes of allocated memory");
@@ -680,13 +711,14 @@ void Checker::check_unknown_pointer(const QueueItem & item)
 
         // check recursively if it's the right size for a pointer
         // or if it starts with what might be a valid pointer
-        if (allocated_size == sizeof(void *) || (allocated_size > sizeof(void *) && is_valid_dereference(item, cs, true)))
+        QueueItem ptr_item(item, "?ptr?", item.ptr);
+        if (allocated_size == sizeof(void *) || (allocated_size > sizeof(void *) && is_valid_dereference(ptr_item, 1, true)))
         {
-            QueueItem ptr_item(item, "?ptr?", item.ptr);
-            if (queue_item(ptr_item, cs))
+            CheckedStructure ptr_cs(df::identity_traits<void *>::get());
+            if (queue_item(ptr_item, ptr_cs))
             {
                 queue.pop_back();
-                dispatch_pointer(ptr_item, cs);
+                dispatch_pointer(ptr_item, ptr_cs);
             }
         }
     }
@@ -804,4 +836,16 @@ void Checker::check_stl_string(const QueueItem & item)
         }
     }
 #endif
+}
+void Checker::check_possible_pointer(const QueueItem & item, const CheckedStructure & cs)
+{
+    if (sizes && uintptr_t(item.ptr) % sizeof(void *) == 0)
+    {
+        auto ptr = validate_and_dereference<const void *>(item, true);
+        QueueItem ptr_item(item, "?maybe_pointer?", ptr);
+        if (ptr && is_valid_dereference(ptr_item, 1, true))
+        {
+            check_unknown_pointer(ptr_item);
+        }
+    }
 }

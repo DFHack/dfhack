@@ -37,6 +37,7 @@ static command_result command(color_ostream & out, std::vector<std::string> & pa
     CoreSuspender suspend;
 
     Checker checker(out);
+
     // check parameters with values first
 #define VAL_PARAM(name, expr_using_value) \
     auto name ## _idx = std::find(parameters.begin(), parameters.end(), "-" #name); \
@@ -73,6 +74,7 @@ static command_result command(color_ostream & out, std::vector<std::string> & pa
     BOOL_PARAM(sizes);
     BOOL_PARAM(unnamed);
     BOOL_PARAM(failfast);
+    BOOL_PARAM(noprogress);
 #undef BOOL_PARAM
 
     if (parameters.size() > 1)
@@ -117,7 +119,7 @@ static command_result command(color_ostream & out, std::vector<std::string> & pa
 
     while (checker.process_queue())
     {
-        if (out.is_console())
+        if (!checker.noprogress)
         {
             out << "checked " << checker.checked_count << " fields\r" << std::flush;
         }

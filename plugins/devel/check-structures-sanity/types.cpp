@@ -20,7 +20,14 @@ CheckedStructure::CheckedStructure() :
 }
 CheckedStructure::CheckedStructure(type_identity *identity, size_t count) :
     identity(identity),
-    count(count)
+    count(count),
+    eid(nullptr)
+{
+}
+CheckedStructure::CheckedStructure(type_identity *identity, size_t count, enum_identity *eid) :
+    identity(identity),
+    count(count),
+    eid(eid)
 {
 }
 CheckedStructure::CheckedStructure(const struct_field_info *field) :
@@ -31,24 +38,8 @@ CheckedStructure::CheckedStructure(const struct_field_info *field) :
         UNEXPECTED;
     }
 
-    if (field->mode == struct_field_info::STATIC_ARRAY && field->eid)
-    {
-        UNEXPECTED;
-    }
-    else if (field->type && field->type->isContainer())
-    {
-        auto expected_eid = static_cast<container_identity *>(field->type)->getIndexEnumType();
-        if (field->eid != expected_eid)
-        {
-            UNEXPECTED;
-        }
-    }
-    else if (field->eid)
-    {
-        UNEXPECTED;
-    }
-
     identity = field->type;
+    eid = field->eid;
     switch (field->mode)
     {
         case struct_field_info::END:
@@ -128,4 +119,16 @@ type_identity *Checker::wrap_in_stl_ptr_vector(type_identity *base)
 type_identity *Checker::wrap_in_pointer(type_identity *base)
 {
     RETURN_CACHED_WRAPPER(df::pointer_identity, base);
+}
+
+std::map<size_t, std::vector<std::string>> known_types_by_size;
+void build_size_table()
+{
+    for (auto & ident : compound_identity::getTopScope())
+    {
+        if (ident->byte_size() >= MIN_SIZE_FOR_SUGGEST)
+        {
+            known_types_by_size[ident->byte_size()].push_back(ident->getFullName());
+        }
+    }
 }

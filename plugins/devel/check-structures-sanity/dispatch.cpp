@@ -25,19 +25,25 @@ color_ostream & Checker::fail(int line, const QueueItem & item, const CheckedStr
     out << COLOR_YELLOW;
     if (maxerrors && maxerrors != ~size_t(0))
         maxerrors--;
-    if (failfast)
-        UNEXPECTED;
     return out;
 }
 
-void Checker::queue_item(const QueueItem & item, const CheckedStructure & cs)
+bool Checker::queue_item(const QueueItem & item, const CheckedStructure & cs)
 {
-    if (data.count(item.ptr) && data.at(item.ptr).full_size() == cs.full_size())
+    if (data.count(item.ptr))
     {
         // already checked
-        // TODO: make sure types are equal
-        UNEXPECTED;
-        return;
+        auto existing = data.at(item.ptr);
+        if (cs.identity != existing.second.identity)
+        {
+            if (cs.identity->type() == IDTYPE_CLASS && existing.second.identity->type() == IDTYPE_CLASS && get_vtable_name(item, cs, false) && static_cast<virtual_identity *>(cs.identity)->is_instance(static_cast<virtual_ptr>(const_cast<void *>(item.ptr))))
+            {
+                return false;
+            }
+
+            FAIL("TODO: handle merging structures: " << data.at(item.ptr).first << " overlaps " << item.path << " (same pointer)");
+        }
+        return false;
     }
 
     auto ptr_end = PTR_ADD(item.ptr, cs.full_size());
@@ -46,10 +52,27 @@ void Checker::queue_item(const QueueItem & item, const CheckedStructure & cs)
     if (prev != data.cbegin())
     {
         prev--;
-        if (uintptr_t(prev->first) + prev->second.full_size() > uintptr_t(item.ptr))
+        if (uintptr_t(prev->first) + prev->second.second.full_size() > uintptr_t(item.ptr))
         {
+            // placeholder algorithm
+            if (auto sid = dynamic_cast<struct_identity *>(prev->second.second.identity))
+            {
+                auto offset = uintptr_t(item.ptr) - uintptr_t(prev->first);
+                for (auto field = sid->getFields(); field->mode != struct_field_info::END; field++)
+                {
+                    if (field->offset == offset)
+                    {
+                        if (field->mode == struct_field_info::SUBSTRUCT && field->type == cs.identity)
+                        {
+                            return false;
+                        }
+
+                        UNEXPECTED;
+                    }
+                }
+            }
             // TODO
-            UNEXPECTED;
+            FAIL("TODO: handle merging structures: " << prev->second.first << " overlaps " << item.path << " (backward)");
         }
     }
 
@@ -58,12 +81,13 @@ void Checker::queue_item(const QueueItem & item, const CheckedStructure & cs)
     while (overlap != overlap_end)
     {
         // TODO
-        UNEXPECTED;
+        FAIL("TODO: handle merging structures: " << overlap->second.first << " overlaps " << item.path << " (forward)");
         overlap++;
     }
 
-    data[item.ptr] = cs;
+    data[item.ptr] = std::make_pair(item.path, cs);
     queue.push_back(item);
+    return true;
 }
 
 void Checker::queue_globals()
@@ -89,6 +113,12 @@ void Checker::queue_globals()
             continue;
         }
 
+        if (!strcmp(field->name, "enabler"))
+        {
+            // don't care about libgraphics as we have the source code
+            continue;
+        }
+
         queue_item(item, cs);
     }
 }
@@ -110,7 +140,7 @@ bool Checker::process_queue()
         return true;
     }
 
-    dispatch_item(item, cs->second);
+    dispatch_item(item, cs->second.second);
 
     return true;
 }
@@ -194,7 +224,6 @@ void Checker::dispatch_single_item(const QueueItem & item, const CheckedStructur
             dispatch_stl_ptr_vector(item, cs);
             break;
         case IDTYPE_OPAQUE:
-            UNEXPECTED;
             break;
         case IDTYPE_UNION:
             dispatch_untagged_union(item, cs);
@@ -204,27 +233,78 @@ void Checker::dispatch_single_item(const QueueItem & item, const CheckedStructur
 
 void Checker::dispatch_primitive(const QueueItem & item, const CheckedStructure & cs)
 {
-    if (cs.identity->isConstructed())
+    if (cs.identity == df::identity_traits<std::string>::get())
     {
-        if (cs.identity == df::identity_traits<std::string>::get())
+        check_stl_string(item);
+    }
+    else if (cs.identity == df::identity_traits<char *>::get())
+    {
+        // TODO check c strings
+        UNEXPECTED;
+    }
+    else if (cs.identity == df::identity_traits<bool>::get())
+    {
+        auto val = *reinterpret_cast<const uint8_t *>(item.ptr);
+        if (val > 1 && val != 0xd2)
         {
-            // TODO check std::string
-            UNEXPECTED;
-        }
-        else
-        {
-            UNEXPECTED;
+            FAIL("invalid value for bool: " << int(val));
         }
     }
-
-    // TODO: check primitives
-    UNEXPECTED;
+    else if (auto int_id = dynamic_cast<df::integer_identity_base *>(cs.identity))
+    {
+        // TODO check ints?
+    }
+    else if (auto float_id = dynamic_cast<df::float_identity_base *>(cs.identity))
+    {
+        // TODO check floats?
+    }
+    else
+    {
+        UNEXPECTED;
+    }
 }
 void Checker::dispatch_pointer(const QueueItem & item, const CheckedStructure & cs)
 {
-    auto identity = static_cast<pointer_identity *>(cs.identity);
-    // TODO: check pointer
-    UNEXPECTED;
+    auto target_ptr = validate_and_dereference<const void *>(item);
+    if (!target_ptr)
+    {
+        return;
+    }
+
+#ifdef DFHACK64
+    if (uintptr_t(target_ptr) == 0xd2d2d2d2d2d2d2d2)
+#else
+    if (uintptr_t(target_ptr) == 0xd2d2d2d2)
+#endif
+    {
+        return;
+    }
+
+    QueueItem target_item(item.path, target_ptr);
+    auto target = static_cast<pointer_identity *>(cs.identity)->getTarget();
+    if (!target)
+    {
+        check_unknown_pointer(item);
+        return;
+    }
+
+    // 256 is an arbitrarily chosen size threshold
+    if (cs.count || target->byte_size() <= 256)
+    {
+        // target is small, or we are inside an array of pointers; handle now
+        if (queue_item(target_item, CheckedStructure(target)))
+        {
+            // we insert it into the queue to make sure we're not stuck in a loop
+            // get it back out of the queue to prevent the queue growing too big
+            queue.pop_back();
+            dispatch_item(target_item, CheckedStructure(target));
+        }
+    }
+    else
+    {
+        // target is large and not part of an array; handle later
+        queue_item(target_item, CheckedStructure(target));
+    }
 }
 void Checker::dispatch_container(const QueueItem & item, const CheckedStructure & cs)
 {
@@ -232,11 +312,7 @@ void Checker::dispatch_container(const QueueItem & item, const CheckedStructure 
     auto base_container = identity->getFullName(nullptr);
     if (base_container == "vector<void>")
     {
-        if (identity->getIndexEnumType())
-        {
-            UNEXPECTED;
-        }
-        check_stl_vector(item, identity->getItemType());
+        check_stl_vector(item, identity->getItemType(), identity->getIndexEnumType());
     }
     else if (base_container == "deque<void>")
     {
@@ -262,12 +338,10 @@ void Checker::dispatch_bit_container(const QueueItem & item, const CheckedStruct
     if (base_container == "BitArray<>")
     {
         // TODO: check DF bit array
-        UNEXPECTED;
     }
     else if (base_container == "vector<bool>")
     {
         // TODO: check stl bit vector
-        UNEXPECTED;
     }
     else
     {
@@ -281,8 +355,66 @@ void Checker::dispatch_bitfield(const QueueItem & item, const CheckedStructure &
         return;
     }
 
-    // TODO: check bitfields
-    UNEXPECTED;
+    auto bitfield_type = static_cast<bitfield_identity *>(cs.identity);
+    uint64_t bitfield_value;
+    switch (bitfield_type->byte_size())
+    {
+        case 1:
+            bitfield_value = validate_and_dereference<uint8_t>(item);
+            // don't check for uninitialized; too small to be sure
+            break;
+        case 2:
+            bitfield_value = validate_and_dereference<uint16_t>(item);
+            if (bitfield_value == 0xd2d2)
+            {
+                bitfield_value = 0;
+            }
+            break;
+        case 4:
+            bitfield_value = validate_and_dereference<uint32_t>(item);
+            if (bitfield_value == 0xd2d2d2d2)
+            {
+                bitfield_value = 0;
+            }
+            break;
+        case 8:
+            bitfield_value = validate_and_dereference<uint64_t>(item);
+            if (bitfield_value == 0xd2d2d2d2d2d2d2d2)
+            {
+                bitfield_value = 0;
+            }
+            break;
+        default:
+            UNEXPECTED;
+            bitfield_value = 0;
+            break;
+    }
+
+    auto num_bits = bitfield_type->getNumBits();
+    auto bits = bitfield_type->getBits();
+    for (int i = 0; i < 64; i++)
+    {
+        if (!(num_bits & 1))
+        {
+            bitfield_value >>= 1;
+            continue;
+        }
+
+        bitfield_value >>= 1;
+
+        if (i >= num_bits || !bits[i].size)
+        {
+            FAIL("bitfield bit " << i << " is out of range");
+        }
+        else if (unnamed && bits[i].size > 0 && !bits[i].name)
+        {
+            FAIL("bitfield bit " << i << " is unnamed");
+        }
+        else if (unnamed && !bits[i + bits[i].size].name)
+        {
+            FAIL("bitfield bit " << i << " (part of a field starting at bit " << (i + bits[i].size) << ") is unnamed");
+        }
+    }
 }
 void Checker::dispatch_enum(const QueueItem & item, const CheckedStructure & cs)
 {
@@ -291,8 +423,31 @@ void Checker::dispatch_enum(const QueueItem & item, const CheckedStructure & cs)
         return;
     }
 
-    // TODO: check enums
-    UNEXPECTED;
+    auto enum_type = static_cast<enum_identity *>(cs.identity);
+    auto enum_value = get_int_value(item, enum_type->getBaseType());
+    if (enum_type->byte_size() == 2 && uint16_t(enum_value) == 0xd2d2)
+    {
+        return;
+    }
+    else if (enum_type->byte_size() == 4 && uint32_t(enum_value) == 0xd2d2d2d2)
+    {
+        return;
+    }
+    else if (enum_type->byte_size() == 8 && uint64_t(enum_value) == 0xd2d2d2d2d2d2d2d2)
+    {
+        return;
+    }
+
+    auto enum_name = get_enum_item_key(enum_type, enum_value);
+    if (!enum_name)
+    {
+        FAIL("enum value (" << enum_value << ") is out of range");
+        return;
+    }
+    if (unnamed && !*enum_name)
+    {
+        FAIL("enum value (" << enum_value << ") is unnamed");
+    }
 }
 void Checker::dispatch_struct(const QueueItem & item, const CheckedStructure & cs)
 {
@@ -300,6 +455,11 @@ void Checker::dispatch_struct(const QueueItem & item, const CheckedStructure & c
     for (auto p = identity; p; p = p->getParent())
     {
         auto fields = p->getFields();
+        if (!fields)
+        {
+            continue;
+        }
+
         for (auto field = fields; field->mode != struct_field_info::END; field++)
         {
             dispatch_field(item, cs, fields, field);
@@ -314,16 +474,28 @@ void Checker::dispatch_field(const QueueItem & item, const CheckedStructure & cs
         return;
     }
 
+    auto field_ptr = PTR_ADD(item.ptr, field->offset);
+    QueueItem field_item(item, field->name, field_ptr);
+    CheckedStructure field_cs(field);
+
     auto tag_field = find_union_tag(fields, field);
     if (tag_field)
     {
-        UNEXPECTED;
+        auto tag_ptr = PTR_ADD(item.ptr, tag_field->offset);
+        QueueItem tag_item(item, tag_field->name, tag_ptr);
+        CheckedStructure tag_cs(tag_field);
+        if (tag_cs.identity->isContainer())
+        {
+            dispatch_tagged_union_vector(field_item, tag_item, field_cs, tag_cs);
+        }
+        else
+        {
+            dispatch_tagged_union(field_item, tag_item, field_cs, tag_cs);
+        }
         return;
     }
 
-    auto field_ptr = PTR_ADD(item.ptr, field->offset);
-    CheckedStructure field_cs(field);
-    dispatch_item(QueueItem(item, field->name, field_ptr), field_cs);
+    dispatch_item(field_item, field_cs);
 }
 void Checker::dispatch_class(const QueueItem & item, const CheckedStructure & cs)
 {
@@ -336,40 +508,158 @@ void Checker::dispatch_class(const QueueItem & item, const CheckedStructure & cs
 
     auto base_identity = static_cast<virtual_identity *>(cs.identity);
     auto vptr = static_cast<virtual_ptr>(const_cast<void *>(item.ptr));
-    if (!base_identity->is_instance(vptr))
+    auto identity = virtual_identity::get(vptr);
+    if (!identity)
     {
-        FAIL("expected subclass of " << base_identity->getFullName() << ", but got " << vtable_name);
+        FAIL("unidentified subclass of " << base_identity->getFullName() << ": " << vtable_name);
+        return;
+    }
+    if (base_identity != identity && !base_identity->is_subclass(identity))
+    {
+        FAIL("expected subclass of " << base_identity->getFullName() << ", but got " << identity->getFullName());
         return;
     }
 
-    auto identity = virtual_identity::get(vptr);
+    if (data.count(item.ptr) && data.at(item.ptr).first == item.path)
+    {
+        // TODO: handle cases where this may overlap later data
+        data.at(item.ptr).second.identity = identity;
+    }
+
     dispatch_struct(QueueItem(item.path + "<" + identity->getFullName() + ">", item.ptr), CheckedStructure(identity));
 }
 void Checker::dispatch_buffer(const QueueItem & item, const CheckedStructure & cs)
 {
     auto identity = static_cast<container_identity *>(cs.identity);
-    if (identity->getIndexEnumType())
-    {
-        UNEXPECTED;
-    }
 
     auto item_identity = identity->getItemType();
-    dispatch_item(item, CheckedStructure(item_identity, identity->byte_size() / item_identity->byte_size()));
+    dispatch_item(item, CheckedStructure(item_identity, identity->byte_size() / item_identity->byte_size(), static_cast<enum_identity *>(identity->getIndexEnumType())));
 }
 void Checker::dispatch_stl_ptr_vector(const QueueItem & item, const CheckedStructure & cs)
 {
     auto identity = static_cast<container_identity *>(cs.identity);
-    if (identity->getIndexEnumType())
+    auto ptr_type = wrap_in_pointer(identity->getItemType());
+    check_stl_vector(item, ptr_type, identity->getIndexEnumType());
+}
+void Checker::dispatch_tagged_union(const QueueItem & item, const QueueItem & tag_item, const CheckedStructure & cs, const CheckedStructure & tag_cs)
+{
+    if (tag_cs.identity->type() != IDTYPE_ENUM || cs.identity->type() != IDTYPE_UNION)
+    {
+        UNEXPECTED;
+        return;
+    }
+
+    auto tag_identity = static_cast<enum_identity *>(tag_cs.identity);
+    auto tag_value = get_int_value(tag_item, tag_identity->getBaseType());
+    auto tag_name = get_enum_item_key(tag_identity, tag_value);
+    if (!tag_name)
+    {
+        FAIL("tagged union tag (accessed as " << tag_item.path << ") value (" << tag_value << ") not defined in enum " << tag_cs.identity->getFullName());
+        return;
+    }
+
+    if (!*tag_name)
+    {
+        FAIL("tagged union tag (accessed as " << tag_item.path << ") value (" << tag_value << ") is unnamed");
+        return;
+    }
+
+    auto union_type = static_cast<union_identity *>(cs.identity);
+    for (auto field = union_type->getFields(); field->mode != struct_field_info::END; field++)
+    {
+        if (strcmp(field->name, *tag_name))
+        {
+            continue;
+        }
+
+        if (field->offset != 0)
+        {
+            UNEXPECTED;
+        }
+
+        dispatch_item(QueueItem(item, field->name, item.ptr), field);
+        return;
+    }
+
+    auto union_data_ptr = reinterpret_cast<const uint8_t *>(item.ptr);
+    uint8_t padding_byte = *union_data_ptr;
+    if (padding_byte == 0x00 || padding_byte == 0xd2 || padding_byte == 0xff)
+    {
+        bool all_padding = true;
+        for (size_t i = 0; i < union_type->byte_size(); i++)
+        {
+            if (union_data_ptr[i] != padding_byte)
+            {
+                all_padding = false;
+                break;
+            }
+        }
+
+        // don't ask for fields if it's all padding
+        if (all_padding)
+        {
+            return;
+        }
+    }
+
+    FAIL("tagged union missing " << *tag_name << " field to match tag (accessed as " << tag_item.path << ") value (" << tag_value << ")");
+}
+void Checker::dispatch_tagged_union_vector(const QueueItem & item, const QueueItem & tag_item, const CheckedStructure & cs, const CheckedStructure & tag_cs)
+{
+    auto union_container_identity = static_cast<container_identity *>(cs.identity);
+    CheckedStructure union_item_cs(union_container_identity->getItemType());
+    if (union_container_identity->type() != IDTYPE_CONTAINER)
+    {
+        // assume pointer container
+        union_item_cs.identity = wrap_in_pointer(union_item_cs.identity);
+    }
+
+    auto tag_container_identity = static_cast<container_identity *>(tag_cs.identity);
+    auto tag_container_base = tag_container_identity->getFullName(nullptr);
+    if (tag_container_base == "vector<void>")
+    {
+        auto vec_union = validate_vector_size(item, union_item_cs);
+        CheckedStructure tag_item_cs(tag_container_identity->getItemType());
+        auto vec_tag = validate_vector_size(tag_item, tag_item_cs);
+        if (!vec_union.first || !vec_tag.first)
+        {
+            // invalid vectors (already warned)
+            return;
+        }
+        if (!vec_union.second && !vec_tag.second)
+        {
+            // empty vectors
+            return;
+        }
+        if (vec_union.second != vec_tag.second)
+        {
+            FAIL("tagged union vector is " << vec_union.second << " elements, but tag vector (accessed as " << tag_item.path << ") is " << vec_tag.second << " elements");
+        }
+
+        for (size_t i = 0; i < vec_union.second && i < vec_tag.second; i++)
+        {
+            dispatch_tagged_union(QueueItem(item, i, vec_union.first), QueueItem(tag_item, i, vec_tag.first), union_item_cs, tag_item_cs);
+            vec_union.first = PTR_ADD(vec_union.first, union_item_cs.identity->byte_size());
+            vec_tag.first = PTR_ADD(vec_tag.first, tag_item_cs.identity->byte_size());
+        }
+    }
+    else if (tag_container_base == "vector<bool>")
+    {
+        // TODO
+        UNEXPECTED;
+    }
+    else
     {
         UNEXPECTED;
     }
-    auto ptr_type = wrap_in_pointer(identity->getItemType());
-    check_stl_vector(item, ptr_type);
 }
 void Checker::dispatch_untagged_union(const QueueItem & item, const CheckedStructure & cs)
 {
+    // special case for large_integer weirdness
     if (cs.identity == df::identity_traits<df::large_integer>::get())
     {
+        // it's 16 bytes on 64-bit linux due to a messy header in libgraphics
+        // but only the first 8 bytes are ever used
         dispatch_primitive(item, CheckedStructure(df::identity_traits<int64_t>::get()));
         return;
     }
@@ -377,13 +667,141 @@ void Checker::dispatch_untagged_union(const QueueItem & item, const CheckedStruc
     UNEXPECTED;
 }
 
-void Checker::check_stl_vector(const QueueItem & item, type_identity *item_identity)
+void Checker::check_unknown_pointer(const QueueItem & item)
+{
+    CheckedStructure cs(df::identity_traits<void *>::get());
+    if (auto allocated_size = get_allocated_size(item))
+    {
+        FAIL("pointer to a block of " << allocated_size << " bytes of allocated memory");
+        if (allocated_size >= MIN_SIZE_FOR_SUGGEST && known_types_by_size.count(allocated_size))
+        {
+            FAIL("known types of this size: " << join_strings(", ", known_types_by_size.at(allocated_size)));
+        }
+
+        // check recursively if it's the right size for a pointer
+        // or if it starts with what might be a valid pointer
+        if (allocated_size == sizeof(void *) || (allocated_size > sizeof(void *) && is_valid_dereference(item, cs, true)))
+        {
+            QueueItem ptr_item(item, "?ptr?", item.ptr);
+            if (queue_item(ptr_item, cs))
+            {
+                queue.pop_back();
+                dispatch_pointer(ptr_item, cs);
+            }
+        }
+    }
+#ifndef WIN32
+    else if (auto str = validate_stl_string_pointer(&item.ptr))
+    {
+        FAIL("untyped pointer is actually stl-string with value \"" << *str << "\" (length " << str->length() << ")");
+    }
+#endif
+    else if (auto vtable_name = get_vtable_name(QueueItem(item.path, &item.ptr), cs, true))
+    {
+        FAIL("pointer to a vtable: " << vtable_name);
+    }
+    else if (sizes)
+    {
+        //FAIL("pointer to memory with no size information");
+    }
+}
+
+void Checker::check_stl_vector(const QueueItem & item, type_identity *item_identity, type_identity *eid)
 {
     auto vec_items = validate_vector_size(item, CheckedStructure(item_identity));
+
+    // skip bad pointer vectors
+    if (item.path.length() > 4 && item.path.substr(item.path.length() - 4) == ".bad" && item_identity->type() == IDTYPE_POINTER)
+    {
+        return;
+    }
+
     if (vec_items.first && vec_items.second)
     {
         QueueItem items_item(item.path, vec_items.first);
-        CheckedStructure items_cs(item_identity, vec_items.second);
+        CheckedStructure items_cs(item_identity, vec_items.second, static_cast<enum_identity *>(eid));
         queue_item(items_item, items_cs);
     }
+}
+
+void Checker::check_stl_string(const QueueItem & item)
+{
+    const static CheckedStructure cs(df::identity_traits<std::string>::get());
+
+#ifdef WIN32
+    struct string_data
+    {
+        union
+        {
+            uintptr_t start;
+            char local_data[16];
+        };
+        size_t length;
+        size_t capacity;
+    };
+#else
+    struct string_data
+    {
+        struct string_data_inner
+        {
+            size_t length;
+            size_t capacity;
+            int32_t refcount;
+        } *ptr;
+    };
+#endif
+
+    auto string = reinterpret_cast<const string_data *>(item.ptr);
+#ifdef WIN32
+    bool is_local = string->capacity < 16;
+    const char *start = is_local ? &string->local_data[0] : reinterpret_cast<const char *>(string->start);
+    ptrdiff_t length = string->length;
+    ptrdiff_t capacity = string->capacity;
+#else
+    if (!is_valid_dereference(QueueItem(item, "?ptr?", string->ptr), 1))
+    {
+        // nullptr is NOT okay here
+        FAIL("invalid string pointer " << stl_sprintf("%p", string->ptr));
+        return;
+    }
+    if (!is_valid_dereference(QueueItem(item, "?hdr?", string->ptr - 1), sizeof(*string->ptr)))
+    {
+        return;
+    }
+    const char *start = reinterpret_cast<const char *>(string->ptr);
+    ptrdiff_t length = (string->ptr - 1)->length;
+    ptrdiff_t capacity = (string->ptr - 1)->capacity;
+#endif
+
+    if (length < 0)
+    {
+        FAIL("string length is negative (" << length << ")");
+    }
+    else if (capacity < 0)
+    {
+        FAIL("string capacity is negative (" << capacity << ")");
+    }
+    else if (capacity < length)
+    {
+        FAIL("string capacity (" << capacity << ") is less than length (" << length << ")");
+    }
+
+#ifndef WIN32
+    const std::string empty_string;
+    auto empty_string_data = reinterpret_cast<const string_data *>(&empty_string);
+    if (sizes && string->ptr != empty_string_data->ptr)
+    {
+        size_t allocated_size = get_allocated_size(QueueItem(item, "?hdr?", string->ptr - 1));
+        size_t expected_size = sizeof(*string->ptr) + capacity + 1;
+
+        if (!allocated_size)
+        {
+            FAIL("pointer does not appear to be a string");
+        }
+        else if (allocated_size != expected_size)
+        {
+            FAIL("allocated string data size (" << allocated_size << ") does not match expected size (" << expected_size << ")");
+        }
+    }
+#endif
 }

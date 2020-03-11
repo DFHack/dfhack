@@ -15,7 +15,7 @@ using namespace DFHack;
 #ifdef WIN32
 #define UNEXPECTED __debugbreak()
 #else
-#define UNEXPECTED __asm__ volatile ("int $0x03")
+#define UNEXPECTED __asm__ volatile ("int $0x03; nop")
 #endif
 
 #define PTR_ADD(ptr, offset) reinterpret_cast<const void *>(uintptr_t(ptr) + (offset))
@@ -33,13 +33,19 @@ struct CheckedStructure
 {
     type_identity *identity;
     size_t count;
+    enum_identity *eid;
 
     CheckedStructure();
     explicit CheckedStructure(type_identity *, size_t = 0);
+    CheckedStructure(type_identity *, size_t, enum_identity *);
     CheckedStructure(const struct_field_info *);
 
     size_t full_size() const;
 };
+
+#define MIN_SIZE_FOR_SUGGEST 64
+extern std::map<size_t, std::vector<std::string>> known_types_by_size;
+void build_size_table();
 
 namespace
 {
@@ -59,7 +65,7 @@ class Checker
 {
     color_ostream & out;
     std::vector<t_memrange> mapped;
-    std::map<const void *, CheckedStructure> data;
+    std::map<const void *, std::pair<std::string, CheckedStructure>> data;
     std::deque<QueueItem> queue;
 public:
     size_t checked_count;
@@ -72,11 +78,19 @@ public:
     bool failfast;
 
     Checker(color_ostream & out);
-    void queue_item(const QueueItem & item, const CheckedStructure & cs);
+    bool queue_item(const QueueItem & item, const CheckedStructure & cs);
     void queue_globals();
     bool process_queue();
 
-    bool is_valid_dereference(const QueueItem & item, const CheckedStructure & cs, bool quiet = false);
+    bool is_valid_dereference(const QueueItem & item, const CheckedStructure & cs, size_t size, bool quiet);
+    inline bool is_valid_dereference(const QueueItem & item, const CheckedStructure & cs, bool quiet = false)
+    {
+        return is_valid_dereference(item, cs, cs.full_size(), quiet);
+    }
+    inline bool is_valid_dereference(const QueueItem & item, size_t size, bool quiet = false)
+    {
+        return is_valid_dereference(item, CheckedStructure(df::identity_traits<void *>::get()), size, quiet);
+    }
     template<typename T>
     const T validate_and_dereference(const QueueItem & item, bool quiet = false)
     {
@@ -87,8 +101,15 @@ public:
 
         return *reinterpret_cast<const T *>(item.ptr);
     }
+    int64_t get_int_value(const QueueItem & item, type_identity *type, bool quiet = false);
     const char *get_vtable_name(const QueueItem & item, const CheckedStructure & cs, bool quiet = false);
     std::pair<const void *, size_t> validate_vector_size(const QueueItem & item, const CheckedStructure & cs, bool quiet = false);
+    size_t get_allocated_size(const QueueItem & item);
+#ifndef WIN32
+    // this function doesn't make sense on windows, where std::string is not pointer-sized.
+    const std::string *validate_stl_string_pointer(const void *const*);
+#endif
+    static const char *const *get_enum_item_key(enum_identity *identity, int64_t value);
 
 private:
     color_ostream & fail(int, const QueueItem &, const CheckedStructure &);
@@ -106,12 +127,25 @@ private:
     void dispatch_class(const QueueItem &, const CheckedStructure &);
     void dispatch_buffer(const QueueItem &, const CheckedStructure &);
     void dispatch_stl_ptr_vector(const QueueItem &, const CheckedStructure &);
+    void dispatch_tagged_union(const QueueItem &, const QueueItem &, const CheckedStructure &, const CheckedStructure &);
+    void dispatch_tagged_union_vector(const QueueItem &, const QueueItem &, const CheckedStructure &, const CheckedStructure &);
     void dispatch_untagged_union(const QueueItem &, const CheckedStructure &);
-    void check_stl_vector(const QueueItem &, type_identity *);
+    void check_unknown_pointer(const QueueItem &);
+    void check_stl_vector(const QueueItem &, type_identity *, type_identity *);
+    void check_stl_string(const QueueItem &);
 
     friend struct CheckedStructure;
     static type_identity *wrap_in_pointer(type_identity *);
     static type_identity *wrap_in_stl_ptr_vector(type_identity *);
 };
 
-#define FAIL(message) (static_cast<color_ostream &>(fail(__LINE__, item, cs) << message) << COLOR_RESET << std::endl)
+#define FAIL(message) \
+    do \
+    { \
+        auto & failstream = fail(__LINE__, item, cs); \
+        failstream << message; \
+        failstream << COLOR_RESET << std::endl; \
+        if (failfast) \
+            UNEXPECTED; \
+    } \
+    while (false)

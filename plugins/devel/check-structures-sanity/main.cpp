@@ -26,6 +26,9 @@ DFhackCExport command_result plugin_init(color_ostream &, std::vector<PluginComm
         "by default, check-structures-sanity reports invalid pointers, vectors, strings, and vtables."
     ));
 
+    known_types_by_size.clear();
+    build_size_table();
+
     return CR_OK;
 }
 

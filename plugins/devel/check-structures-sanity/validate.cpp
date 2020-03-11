@@ -1,9 +1,8 @@
 #include "check-structures-sanity.h"
 
-bool Checker::is_valid_dereference(const QueueItem & item, const CheckedStructure & cs, bool quiet)
+bool Checker::is_valid_dereference(const QueueItem & item, const CheckedStructure & cs, size_t size, bool quiet)
 {
     auto base = const_cast<void *>(item.ptr);
-    auto size = cs.full_size();
     if (!base)
     {
         // cannot dereference null pointer, but not an error
@@ -81,6 +80,47 @@ bool Checker::is_valid_dereference(const QueueItem & item, const CheckedStructur
 
     return false;
 #undef FAIL_PTR
+}
+
+int64_t Checker::get_int_value(const QueueItem & item, type_identity *type, bool quiet)
+{
+    if (type == df::identity_traits<int32_t>::get())
+    {
+        return validate_and_dereference<int32_t>(item, quiet);
+    }
+    else if (type == df::identity_traits<uint32_t>::get())
+    {
+        return validate_and_dereference<uint32_t>(item, quiet);
+    }
+    else if (type == df::identity_traits<int16_t>::get())
+    {
+        return validate_and_dereference<int16_t>(item, quiet);
+    }
+    else if (type == df::identity_traits<uint16_t>::get())
+    {
+        return validate_and_dereference<uint16_t>(item, quiet);
+    }
+    else if (type == df::identity_traits<int64_t>::get())
+    {
+        return validate_and_dereference<int64_t>(item, quiet);
+    }
+    else if (type == df::identity_traits<uint64_t>::get())
+    {
+        return int64_t(validate_and_dereference<uint64_t>(item, quiet));
+    }
+    else if (type == df::identity_traits<int8_t>::get())
+    {
+        return validate_and_dereference<int8_t>(item, quiet);
+    }
+    else if (type == df::identity_traits<uint8_t>::get())
+    {
+        return validate_and_dereference<uint8_t>(item, quiet);
+    }
+    else
+    {
+        UNEXPECTED;
+        return 0;
+    }
 }
 
 const char *Checker::get_vtable_name(const QueueItem & item, const CheckedStructure & cs, bool quiet)
@@ -234,4 +274,99 @@ std::pair<const void *, size_t> Checker::validate_vector_size(const QueueItem & 
     }
 
     return local_ok ? std::make_pair(start_ptr, ulength / item_size) : std::make_pair(nullptr, 0);
+}
+
+size_t Checker::get_allocated_size(const QueueItem & item)
+{
+    if (!sizes)
+    {
+        return 0;
+    }
+
+    uint32_t tag = *reinterpret_cast<const uint32_t *>(PTR_ADD(item.ptr, -8));
+    if (tag == 0xdfdf4ac8)
+    {
+        return *reinterpret_cast<const size_t *>(PTR_ADD(item.ptr, -16));
+    }
+
+    return 0;
+}
+
+#ifndef WIN32
+const std::string *Checker::validate_stl_string_pointer(const void *const* base)
+{
+    std::string empty_string;
+    if (*base == *reinterpret_cast<void **>(&empty_string))
+    {
+        return reinterpret_cast<const std::string *>(base);
+    }
+
+    const struct string_data_inner
+    {
+        size_t length;
+        size_t capacity;
+        int32_t refcount;
+    } *str_data = static_cast<const string_data_inner *>(*base) - 1;
+
+    uint32_t tag = *reinterpret_cast<const uint32_t *>(PTR_ADD(str_data, -8));
+    if (tag == 0xdfdf4ac8)
+    {
+        size_t allocated_size = *reinterpret_cast<const size_t *>(PTR_ADD(str_data, -16));
+        size_t expected_size = sizeof(*str_data) + str_data->capacity + 1;
+
+        if (allocated_size != expected_size)
+        {
+            return nullptr;
+        }
+    }
+    else
+    {
+        return nullptr;
+    }
+
+    if (str_data->capacity < str_data->length)
+    {
+        return nullptr;
+    }
+
+    const char *ptr = reinterpret_cast<const char *>(*base);
+    for (size_t i = 0; i < str_data->length; i++)
+    {
+        if (!*ptr++)
+        {
+            return nullptr;
+        }
+    }
+
+    if (*ptr++)
+    {
+        return nullptr;
+    }
+
+    return reinterpret_cast<const std::string *>(base);
+}
+#endif
+
+const char *const *Checker::get_enum_item_key(enum_identity *identity, int64_t value)
+{
+    size_t index;
+    if (auto cplx = identity->getComplex())
+    {
+        auto it = cplx->value_index_map.find(value);
+        if (it == cplx->value_index_map.cend())
+        {
+            return nullptr;
+        }
+        index = it->second;
+    }
+    else
+    {
+        if (value < identity->getFirstItem() || value > identity->getLastItem())
+        {
+            return nullptr;
+        }
+        index = value - identity->getFirstItem();
+    }
+
+    return &identity->getKeys()[index];
 }

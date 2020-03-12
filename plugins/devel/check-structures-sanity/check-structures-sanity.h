@@ -44,6 +44,7 @@ struct CheckedStructure
     CheckedStructure(const struct_field_info *);
 
     size_t full_size() const;
+    const struct_field_info *find_field_at_offset_with_type(size_t, const CheckedStructure &) const;
 };
 
 #define MIN_SIZE_FOR_SUGGEST 64
@@ -87,6 +88,7 @@ public:
     void queue_globals();
     bool process_queue();
 
+    bool is_in_global(const QueueItem & item);
     bool is_valid_dereference(const QueueItem & item, const CheckedStructure & cs, size_t size, bool quiet);
     inline bool is_valid_dereference(const QueueItem & item, const CheckedStructure & cs, bool quiet = false)
     {

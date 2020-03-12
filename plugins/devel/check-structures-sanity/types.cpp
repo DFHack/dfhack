@@ -107,6 +107,45 @@ size_t CheckedStructure::full_size() const
     return size;
 }
 
+const struct_field_info *CheckedStructure::find_field_at_offset_with_type(size_t offset, const CheckedStructure & type) const
+{
+    if (!identity)
+        return nullptr;
+
+    if (offset >= identity->byte_size() && offset < full_size())
+        offset %= identity->byte_size();
+    else if (offset >= identity->byte_size())
+        return nullptr;
+
+    auto st = dynamic_cast<struct_identity *>(identity);
+    if (!st)
+    {
+        UNEXPECTED;
+        return nullptr;
+    }
+
+    for (auto p = st; p; p = p->getParent())
+    {
+        auto fields = p->getFields();
+        if (!fields)
+            continue;
+
+        for (auto field = fields; field->mode != struct_field_info::END; field++)
+        {
+            if (field->offset > offset)
+                continue;
+
+            if (field->offset == offset && CheckedStructure(field).identity == type.identity)
+                return field;
+
+            if (auto subfield = CheckedStructure(field).find_field_at_offset_with_type(offset - field->offset, type))
+                return subfield;
+        }
+    }
+
+    return nullptr;
+}
+
 type_identity *Checker::wrap_in_stl_ptr_vector(type_identity *base)
 {
     static std::map<type_identity *, std::unique_ptr<df::stl_ptr_vector_identity>> wrappers;

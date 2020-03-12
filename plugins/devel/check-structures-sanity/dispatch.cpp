@@ -78,14 +78,20 @@ bool Checker::queue_item(const QueueItem & item, const CheckedStructure & cs)
         }
     }
 
-    auto overlap = data.lower_bound(item.ptr);
+    auto overlap_start = data.lower_bound(item.ptr);
     auto overlap_end = data.lower_bound(ptr_end);
-    while (overlap != overlap_end)
+    for (auto overlap = overlap_start; overlap != overlap_end; overlap++)
     {
-        // TODO
-        FAIL("TODO: handle merging structures: " << overlap->second.first << " overlaps " << item.path << " (forward)");
-        overlap++;
+        auto offset = uintptr_t(overlap->first) - uintptr_t(item.ptr);
+        if (!cs.find_field_at_offset_with_type(offset, overlap->second.second))
+        {
+            // TODO
+            FAIL("TODO: handle merging structures: " << overlap->second.first << " overlaps " << item.path << " (forward)");
+            return false;
+        }
     }
+
+    data.erase(overlap_start, overlap_end);
 
     data[item.ptr] = std::make_pair(item.path, cs);
     queue.push_back(item);
@@ -326,7 +332,7 @@ void Checker::dispatch_pointer(const QueueItem & item, const CheckedStructure & 
     auto target = static_cast<pointer_identity *>(cs.identity)->getTarget();
     if (!target)
     {
-        check_unknown_pointer(item);
+        check_unknown_pointer(target_item);
         return;
     }
 
@@ -361,6 +367,10 @@ void Checker::dispatch_container(const QueueItem & item, const CheckedStructure 
     else if (base_container == "deque<void>")
     {
         // TODO: check deque?
+    }
+    else if (base_container == "DfArray<void>")
+    {
+        // TODO: check DfArray
     }
     else
     {
@@ -482,6 +492,11 @@ void Checker::dispatch_enum(const QueueItem & item, const CheckedStructure & cs)
         return;
     }
     else if (enum_type->byte_size() == 8 && uint64_t(enum_value) == 0xd2d2d2d2d2d2d2d2)
+    {
+        return;
+    }
+
+    if (is_in_global(item) && enum_value == 0)
     {
         return;
     }

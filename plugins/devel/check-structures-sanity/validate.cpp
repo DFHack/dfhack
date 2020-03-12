@@ -1,5 +1,21 @@
 #include "check-structures-sanity.h"
 
+bool Checker::is_in_global(const QueueItem & item)
+{
+    auto fields = df::global::_identity.getFields();
+    for (auto field = fields; field->mode != struct_field_info::END; field++)
+    {
+        size_t size = CheckedStructure(field).full_size();
+        auto start = *reinterpret_cast<const void * const*>(field->offset);
+        auto offset = uintptr_t(item.ptr) - uintptr_t(start);
+        if (offset < size)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
 bool Checker::is_valid_dereference(const QueueItem & item, const CheckedStructure & cs, size_t size, bool quiet)
 {
     auto base = const_cast<void *>(item.ptr);

@@ -107,23 +107,26 @@ size_t CheckedStructure::full_size() const
     return size;
 }
 
-#define RETURN_CACHED_WRAPPER(T, base, ...) \
-    static std::map<type_identity *, std::unique_ptr<T>> wrappers; \
-    auto it = wrappers.find(base); \
-    if (it != wrappers.end()) \
-    { \
-        return it->second.get(); \
-    } \
-    return (wrappers[base] = dts::make_unique<T>(base __VA_OPT__(,) __VA_ARGS__)).get()
-
 type_identity *Checker::wrap_in_stl_ptr_vector(type_identity *base)
 {
-    RETURN_CACHED_WRAPPER(df::stl_ptr_vector_identity, base, nullptr);
+    static std::map<type_identity *, std::unique_ptr<df::stl_ptr_vector_identity>> wrappers;
+    auto it = wrappers.find(base);
+    if (it != wrappers.end())
+    {
+        return it->second.get();
+    }
+    return (wrappers[base] = dts::make_unique<df::stl_ptr_vector_identity>(base, nullptr)).get();
 }
 
 type_identity *Checker::wrap_in_pointer(type_identity *base)
 {
-    RETURN_CACHED_WRAPPER(df::pointer_identity, base);
+    static std::map<type_identity *, std::unique_ptr<df::pointer_identity>> wrappers;
+    auto it = wrappers.find(base);
+    if (it != wrappers.end())
+    {
+        return it->second.get();
+    }
+    return (wrappers[base] = dts::make_unique<df::pointer_identity>(base)).get();
 }
 
 std::map<size_t, std::vector<std::string>> known_types_by_size;

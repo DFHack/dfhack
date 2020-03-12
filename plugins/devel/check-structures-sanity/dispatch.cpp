@@ -580,7 +580,7 @@ void Checker::dispatch_buffer(const QueueItem & item, const CheckedStructure & c
     auto identity = static_cast<container_identity *>(cs.identity);
 
     auto item_identity = identity->getItemType();
-    dispatch_item(item, CheckedStructure(item_identity, identity->byte_size() / item_identity->byte_size(), static_cast<enum_identity *>(identity->getIndexEnumType()), cs.inside_structure));
+    dispatch_item(item, CheckedStructure(item_identity, identity->byte_size() / item_identity->byte_size(), static_cast<enum_identity *>(identity->getIndexEnumType()), true));
 }
 void Checker::dispatch_stl_ptr_vector(const QueueItem & item, const CheckedStructure & cs)
 {

@@ -21,6 +21,7 @@ DFhackCExport command_result plugin_init(color_ostream &, std::vector<PluginComm
         "-unnamed: report unnamed enum/bitfield values, not just undefined ones.\n"
         "-maxerrors n: set the maximum number of errors before bailing out.\n"
         "-failfast: crash if any error is encountered. useful only for debugging.\n"
+        "-maybepointer: report integers that might actually be pointers.\n"
         "starting_point: a lua expression or a word like 'screen', 'item', or 'building'. (defaults to df.global)\n"
         "\n"
         "by default, check-structures-sanity reports invalid pointers, vectors, strings, and vtables."
@@ -75,6 +76,7 @@ static command_result command(color_ostream & out, std::vector<std::string> & pa
     BOOL_PARAM(unnamed);
     BOOL_PARAM(failfast);
     BOOL_PARAM(noprogress);
+    BOOL_PARAM(maybepointer);
 #undef BOOL_PARAM
 
     if (parameters.size() > 1)

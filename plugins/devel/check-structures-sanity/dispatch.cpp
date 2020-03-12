@@ -12,7 +12,8 @@ Checker::Checker(color_ostream & out) :
     sizes(false),
     unnamed(false),
     failfast(false),
-    noprogress(!out.is_console())
+    noprogress(!out.is_console()),
+    maybepointer(false)
 {
     Core::getInstance().p->getMemRanges(mapped);
 }
@@ -854,7 +855,7 @@ void Checker::check_stl_string(const QueueItem & item)
 }
 void Checker::check_possible_pointer(const QueueItem & item, const CheckedStructure & cs)
 {
-    if (sizes && uintptr_t(item.ptr) % sizeof(void *) == 0)
+    if (sizes && maybepointer && uintptr_t(item.ptr) % sizeof(void *) == 0)
     {
         auto ptr = validate_and_dereference<const void *>(item, true);
         QueueItem ptr_item(item, "?maybe_pointer?", ptr);

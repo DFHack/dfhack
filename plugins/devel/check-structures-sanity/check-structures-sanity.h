@@ -80,6 +80,7 @@ public:
     bool unnamed;
     bool failfast;
     bool noprogress;
+    bool maybepointer;
 
     Checker(color_ostream & out);
     bool queue_item(const QueueItem & item, const CheckedStructure & cs);

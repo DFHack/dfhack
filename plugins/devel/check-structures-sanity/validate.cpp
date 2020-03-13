@@ -1,5 +1,12 @@
 #include "check-structures-sanity.h"
 
+#ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
+#define _WIN32_WINNT 0x0501
+#define WINVER 0x0501
+#include <windows.h>
+#endif
+
 bool Checker::is_in_global(const QueueItem & item)
 {
     auto fields = df::global::_identity.getFields();
@@ -155,7 +162,7 @@ const char *Checker::get_vtable_name(const QueueItem & item, const CheckedStruct
     if (!RtlPcToFileHeader(info, &base))
         return nullptr;
 
-    const char *typeinfo = reinterpret_cast<const char *>(base) + reinterpret_cast<int32_t *>(info)[3];
+    const char *typeinfo = reinterpret_cast<const char *>(base) + reinterpret_cast<const int32_t *>(info)[3];
     const char *name = typeinfo + 16;
 #else
     const char *name = reinterpret_cast<const char *>(info) + 8;

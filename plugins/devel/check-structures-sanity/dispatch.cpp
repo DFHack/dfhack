@@ -30,52 +30,50 @@ color_ostream & Checker::fail(int line, const QueueItem & item, const CheckedStr
     return out;
 }
 
-bool Checker::queue_item(const QueueItem & item, const CheckedStructure & cs)
+bool Checker::queue_item(const QueueItem & item, CheckedStructure cs)
 {
-    if (data.count(item.ptr))
+    if (!cs.identity)
     {
-        // already checked
-        auto existing = data.at(item.ptr);
-        if (cs.identity != existing.second.identity)
-        {
-            if (cs.identity->type() == IDTYPE_CLASS && existing.second.identity->type() == IDTYPE_CLASS && get_vtable_name(item, cs, false) && static_cast<virtual_identity *>(cs.identity)->is_instance(static_cast<virtual_ptr>(const_cast<void *>(item.ptr))))
-            {
-                return false;
-            }
-
-            FAIL("TODO: handle merging structures: " << data.at(item.ptr).first << " overlaps " << item.path << " (same pointer)");
-        }
+        UNEXPECTED;
         return false;
+    }
+
+    if (cs.identity->type() == IDTYPE_CLASS)
+    {
+        if (cs.count)
+        {
+            UNEXPECTED;
+        }
+
+        if (get_vtable_name(item, cs, true))
+        {
+            auto actual_identity = virtual_identity::get(reinterpret_cast<virtual_ptr>(const_cast<void *>(item.ptr)));
+            if (static_cast<virtual_identity *>(cs.identity)->is_subclass(actual_identity))
+            {
+                cs.identity = actual_identity;
+            }
+        }
     }
 
     auto ptr_end = PTR_ADD(item.ptr, cs.full_size());
 
     auto prev = data.lower_bound(item.ptr);
-    if (prev != data.cbegin())
+    if (prev != data.cbegin() && uintptr_t(prev->first) > uintptr_t(item.ptr))
     {
         prev--;
-        if (uintptr_t(prev->first) + prev->second.second.full_size() > uintptr_t(item.ptr))
+    }
+    if (prev != data.cend() && uintptr_t(prev->first) <= uintptr_t(item.ptr) && uintptr_t(prev->first) + prev->second.second.full_size() > uintptr_t(item.ptr))
+    {
+        auto offset = uintptr_t(item.ptr) - uintptr_t(prev->first);
+        if (!prev->second.second.has_type_at_offset(cs, offset))
         {
-            // placeholder algorithm
-            if (auto sid = dynamic_cast<struct_identity *>(prev->second.second.identity))
-            {
-                auto offset = uintptr_t(item.ptr) - uintptr_t(prev->first);
-                for (auto field = sid->getFields(); field->mode != struct_field_info::END; field++)
-                {
-                    if (field->offset == offset)
-                    {
-                        if (field->mode == struct_field_info::SUBSTRUCT && field->type == cs.identity)
-                        {
-                            return false;
-                        }
-
-                        UNEXPECTED;
-                    }
-                }
-            }
             // TODO
-            FAIL("TODO: handle merging structures: " << prev->second.first << " overlaps " << item.path << " (backward)");
+            FAIL("TODO: handle merging structures: " << item.path << " overlaps " << prev->second.first << " (backward)");
+            return false;
         }
+
+        // we've already checked this structure, or we're currently queued to do so
+        return false;
     }
 
     auto overlap_start = data.lower_bound(item.ptr);
@@ -83,7 +81,7 @@ bool Checker::queue_item(const QueueItem & item, const CheckedStructure & cs)
     for (auto overlap = overlap_start; overlap != overlap_end; overlap++)
     {
         auto offset = uintptr_t(overlap->first) - uintptr_t(item.ptr);
-        if (!cs.find_field_at_offset_with_type(offset, overlap->second.second))
+        if (!cs.has_type_at_offset(overlap->second.second, offset))
         {
             // TODO
             FAIL("TODO: handle merging structures: " << overlap->second.first << " overlaps " << item.path << " (forward)");
@@ -612,8 +610,60 @@ void Checker::dispatch_tagged_union(const QueueItem & item, const QueueItem & ta
         return;
     }
 
+    auto union_type = static_cast<union_identity *>(cs.identity);
+    auto union_data_ptr = reinterpret_cast<const uint8_t *>(item.ptr);
+    uint8_t padding_byte = *union_data_ptr;
+    bool all_padding = false;
+    if (padding_byte == 0x00 || padding_byte == 0xd2 || padding_byte == 0xff)
+    {
+        all_padding = true;
+        for (size_t i = 0; i < union_type->byte_size(); i++)
+        {
+            if (union_data_ptr[i] != padding_byte)
+            {
+                all_padding = false;
+                break;
+            }
+        }
+    }
+
     auto tag_identity = static_cast<enum_identity *>(tag_cs.identity);
     auto tag_value = get_int_value(tag_item, tag_identity->getBaseType());
+    if (all_padding && padding_byte == 0xd2)
+    {
+        // special case: completely uninitialized
+        switch (tag_identity->byte_size())
+        {
+            case 1:
+                if (tag_value == 0xd2)
+                {
+                    return;
+                }
+                break;
+            case 2:
+                if (tag_value == 0xd2d2)
+                {
+                    return;
+                }
+                break;
+            case 4:
+                if (tag_value == 0xd2d2d2d2)
+                {
+                    return;
+                }
+                break;
+            case 8:
+                if (uint64_t(tag_value) == 0xd2d2d2d2d2d2d2d2)
+                {
+                    return;
+                }
+                break;
+            default:
+                UNEXPECTED;
+                break;
+        }
+    }
+
     auto tag_name = get_enum_item_key(tag_identity, tag_value);
     if (!tag_name)
     {
@@ -627,7 +677,6 @@ void Checker::dispatch_tagged_union(const QueueItem & item, const QueueItem & ta
         return;
     }
 
-    auto union_type = static_cast<union_identity *>(cs.identity);
     for (auto field = union_type->getFields(); field->mode != struct_field_info::END; field++)
     {
         if (strcmp(field->name, *tag_name))
@@ -644,25 +693,10 @@ void Checker::dispatch_tagged_union(const QueueItem & item, const QueueItem & ta
         return;
     }
 
-    auto union_data_ptr = reinterpret_cast<const uint8_t *>(item.ptr);
-    uint8_t padding_byte = *union_data_ptr;
-    if (padding_byte == 0x00 || padding_byte == 0xd2 || padding_byte == 0xff)
+    // don't ask for fields if it's all padding
+    if (all_padding)
     {
-        bool all_padding = true;
-        for (size_t i = 0; i < union_type->byte_size(); i++)
-        {
-            if (union_data_ptr[i] != padding_byte)
-            {
-                all_padding = false;
-                break;
-            }
-        }
-
-        // don't ask for fields if it's all padding
-        if (all_padding)
-        {
-            return;
-        }
+        return;
     }
 
     FAIL("tagged union missing " << *tag_name << " field to match tag (accessed as " << tag_item.path << ") value (" << tag_value << ")");

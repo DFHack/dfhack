@@ -44,7 +44,7 @@ struct CheckedStructure
     CheckedStructure(const struct_field_info *);
 
     size_t full_size() const;
-    const struct_field_info *find_field_at_offset_with_type(size_t, const CheckedStructure &) const;
+    bool has_type_at_offset(const CheckedStructure &, size_t) const;
 };
 
 #define MIN_SIZE_FOR_SUGGEST 64
@@ -84,7 +84,7 @@ public:
     bool maybepointer;
 
     Checker(color_ostream & out);
-    bool queue_item(const QueueItem & item, const CheckedStructure & cs);
+    bool queue_item(const QueueItem & item, CheckedStructure cs);
     void queue_globals();
     bool process_queue();
 

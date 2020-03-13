@@ -107,21 +107,30 @@ size_t CheckedStructure::full_size() const
     return size;
 }
 
-const struct_field_info *CheckedStructure::find_field_at_offset_with_type(size_t offset, const CheckedStructure & type) const
+bool CheckedStructure::has_type_at_offset(const CheckedStructure & type, size_t offset) const
 {
     if (!identity)
-        return nullptr;
+        return false;
+
+    if (offset == 0 && identity == type.identity)
+        return true;
 
     if (offset >= identity->byte_size() && offset < full_size())
         offset %= identity->byte_size();
     else if (offset >= identity->byte_size())
-        return nullptr;
+        return false;
+
+    if (identity->type() == IDTYPE_BUFFER)
+    {
+        auto target = static_cast<container_identity *>(identity)->getItemType();
+        return CheckedStructure(target, 0).has_type_at_offset(type, offset % target->byte_size());
+    }
 
     auto st = dynamic_cast<struct_identity *>(identity);
     if (!st)
     {
         UNEXPECTED;
-        return nullptr;
+        return false;
     }
 
     for (auto p = st; p; p = p->getParent())
@@ -132,18 +141,18 @@ const struct_field_info *CheckedStructure::find_field_at_offset_with_type(size_t
 
         for (auto field = fields; field->mode != struct_field_info::END; field++)
         {
+            if (field->mode == struct_field_info::OBJ_METHOD || field->mode == struct_field_info::CLASS_METHOD)
+                continue;
+
             if (field->offset > offset)
                 continue;
 
-            if (field->offset == offset && CheckedStructure(field).identity == type.identity)
-                return field;
-
-            if (auto subfield = CheckedStructure(field).find_field_at_offset_with_type(offset - field->offset, type))
-                return subfield;
+            if (CheckedStructure(field).has_type_at_offset(type, offset - field->offset))
+                return true;
         }
     }
 
-    return nullptr;
+    return false;
 }
 
 type_identity *Checker::wrap_in_stl_ptr_vector(type_identity *base)

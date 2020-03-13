@@ -159,7 +159,7 @@ const char *Checker::get_vtable_name(const QueueItem & item, const CheckedStruct
 #ifdef WIN32
 #ifdef DFHACK64
     void *base;
-    if (!RtlPcToFileHeader(info, &base))
+    if (!RtlPcToFileHeader(const_cast<void *>(reinterpret_cast<const void *>(info)), &base))
         return nullptr;
 
     const char *typeinfo = reinterpret_cast<const char *>(base) + reinterpret_cast<const int32_t *>(info)[3];

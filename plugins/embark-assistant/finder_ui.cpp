@@ -168,20 +168,26 @@ namespace embark_assist {
 
             FILE* outfile = fopen(profile_file_name, "w");
             fields i = first_fields;
+            size_t civ = 0;
 
             while (true) {
                 for (size_t k = 0; k < state->ui[static_cast<int8_t>(i)]->list.size(); k++) {
-                    if (state->ui[static_cast<int8_t>(i)]->current_value == state->ui[static_cast<int8_t>(i)]->list[k].key) {
-                        fprintf(outfile, "[%s:%s]\n", state->finder_list[static_cast<int8_t>(i)].text.c_str(), state->ui[static_cast<int8_t>(i)]->list[k].text.c_str());
+                    if (state->ui[static_cast<int8_t>(i) + civ]->current_value == state->ui[static_cast<int8_t>(i) + civ]->list[k].key) {
+                        fprintf(outfile, "[%s:%s]\n", state->finder_list[static_cast<int8_t>(i) + civ].text.c_str(), state->ui[static_cast<int8_t>(i) + civ]->list[k].text.c_str());
                         break;
                     }
                 }
 //                fprintf(outfile, "[%s:%i]\n", state->finder_list[static_cast<int8_t>(i)].text.c_str(), state->ui[static_cast<int8_t>(i)]->current_value);
                 if (i == last_fields) {
-                    break;  // done
-                }
+                    civ++;
 
-                i = static_cast <fields>(static_cast<int8_t>(i) + 1);
+                    if (civ == state->civs.size()) {
+                        break;  // done
+                    }
+                }
+                else {
+                    i = static_cast <fields>(static_cast<int8_t>(i) + 1);
+                }
             }
 
             fclose(outfile);
@@ -192,6 +198,7 @@ namespace embark_assist {
         void load_profile() {
             color_ostream_proxy out(Core::getInstance().getConsole());
             FILE* infile = fopen(profile_file_name, "r");
+            size_t civ = 0;
 
             if (!infile) {
                 out.printerr("No profile file found at %s\n", profile_file_name);
@@ -213,8 +220,8 @@ namespace embark_assist {
                 for (int k = 1; k < count; k++) {
                     if (line[k] == ':') {
                         for (int l = 1; l < k; l++) {
-                            if (state->finder_list[static_cast<int8_t>(i)].text.c_str()[l - 1] != line[l]) {
-                                out.printerr("Token mismatch of %s vs %s\n", line, state->finder_list[static_cast<int8_t>(i)].text.c_str());
+                            if (state->finder_list[static_cast<int8_t>(i) + civ].text.c_str()[l - 1] != line[l]) {
+                                out.printerr("Token mismatch of %s vs %s\n", line, state->finder_list[static_cast<int8_t>(i) + civ].text.c_str());
                                 fclose(infile);
                                 return;
                             }
@@ -222,10 +229,10 @@ namespace embark_assist {
 
                         found = false;
 
-                        for (size_t l = 0; l < state->ui[static_cast<int8_t>(i)]->list.size(); l++) {
+                        for (size_t l = 0; l < state->ui[static_cast<int8_t>(i) + civ]->list.size(); l++) {
                             for (int m = k + 1; m < count; m++) {
-                                if (state->ui[static_cast<int8_t>(i)]->list[l].text.c_str()[m - (k + 1)] != line[m]) {
-                                    if (state->ui[static_cast<int8_t>(i)]->list[l].text.c_str()[m - (k + 1)] == '\0' &&
+                                if (state->ui[static_cast<int8_t>(i) + civ]->list[l].text.c_str()[m - (k + 1)] != line[m]) {
+                                    if (state->ui[static_cast<int8_t>(i) + civ]->list[l].text.c_str()[m - (k + 1)] == '\0' &&
                                         line[m] == ']') {
                                         found = true;
                                     }
@@ -254,10 +261,15 @@ namespace embark_assist {
                 }
 
                 if (i == last_fields) {
-                    break;  // done
-                }
+                    civ++;
 
-                i = static_cast <fields>(static_cast<int8_t>(i) + 1);
+                    if (civ == state->civs.size()) {
+                        break;  // done
+                    }
+                }
+                else {
+                    i = static_cast <fields>(static_cast<int8_t>(i) + 1);
+                }
             }
 
             fclose(infile);
@@ -266,6 +278,7 @@ namespace embark_assist {
 
             infile = fopen(profile_file_name, "r");
             i = first_fields;
+            civ = 0;
 
             while (true) {
                 if (!fgets(line, count, infile))
@@ -278,13 +291,13 @@ namespace embark_assist {
 
                         found = false;
 
-                        for (size_t l = 0; l < state->ui[static_cast<int8_t>(i)]->list.size(); l++) {
+                        for (size_t l = 0; l < state->ui[static_cast<int8_t>(i) + civ]->list.size(); l++) {
                             for (int m = k + 1; m < count; m++) {
-                                if (state->ui[static_cast<int8_t>(i)]->list[l].text.c_str()[m - (k + 1)] != line[m]) {
-                                    if (state->ui[static_cast<int8_t>(i)]->list[l].text.c_str()[m - (k + 1)] == '\0' &&
+                                if (state->ui[static_cast<int8_t>(i) + civ]->list[l].text.c_str()[m - (k + 1)] != line[m]) {
+                                    if (state->ui[static_cast<int8_t>(i) + civ]->list[l].text.c_str()[m - (k + 1)] == '\0' &&
                                         line[m] == ']') {
-                                        state->ui[static_cast<int8_t>(i)]->current_value = state->ui[static_cast<int8_t>(i)]->list[l].key;
-                                        state->ui[static_cast<int8_t>(i)]->current_display_value = l;
+                                        state->ui[static_cast<int8_t>(i) + civ]->current_value = state->ui[static_cast<int8_t>(i) + civ]->list[l].key;
+                                        state->ui[static_cast<int8_t>(i) + civ]->current_display_value = l;
                                         found = true;
                                     }
 
@@ -301,10 +314,15 @@ namespace embark_assist {
                 }
 
                 if (i == last_fields) {
-                    break;  // done
-                }
+                    civ++;
 
-                i = static_cast <fields>(static_cast<int8_t>(i) + 1);
+                    if (civ == state->civs.size()) {
+                        break;  // done
+                    }
+                }
+                else {
+                    i = static_cast <fields>(static_cast<int8_t>(i) + 1);
+                }
             }
 
             fclose(infile);

@@ -827,21 +827,23 @@ Console::~Console()
         delete d;
 }
 
-bool Console::init(bool sharing)
+bool Console::init(bool dont_redirect)
 {
-    if(sharing)
-    {
-        inited = false;
-        return false;
-    }
-    if (!freopen("stdout.log", "w", stdout))
-        ;
     d = new Private();
     // make our own weird streams so our IO isn't redirected
-    d->dfout_C = fopen("/dev/tty", "w");
+    if (dont_redirect)
+    {
+        d->dfout_C = fopen("/dev/stdout", "w");
+    }
+    else
+    {
+        if (!freopen("stdout.log", "w", stdout))
+            ;
+        d->dfout_C = fopen("/dev/tty", "w");
+    }
     std::cin.tie(this);
     clear();
-    d->supported_terminal = !isUnsupportedTerm() &&  isatty(STDIN_FILENO);
+    d->supported_terminal = !isUnsupportedTerm() && isatty(STDIN_FILENO);
     // init the exit mechanism
     if (pipe(d->exit_pipe) == -1)
         ;
@@ -858,6 +860,8 @@ bool Console::shutdown(void)
         return true;
     lock_guard <recursive_mutex> g(*wlock);
     close(d->exit_pipe[1]);
+    if (d->state != Private::con_lineedit)
+        inited = false;
     return true;
 }
 

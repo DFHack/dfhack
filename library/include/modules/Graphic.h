@@ -33,6 +33,7 @@ distribution.
 #include <stdint.h>
 #include "Export.h"
 #include "Module.h"
+#include <vector>
 
 namespace DFHack
 {
@@ -71,8 +72,6 @@ namespace DFHack
     class DFHACK_EXPORT Graphic : public Module
     {
         public:
-            Graphic();
-            ~Graphic();
             bool Finish()
             {
                 return true;
@@ -82,8 +81,7 @@ namespace DFHack
             DFTileSurface* Call(int x, int y);
 
         private:
-            struct Private;
-            Private *d;
+            std::vector<DFTileSurface* (*)(int, int)> funcs;
     };
 
 }

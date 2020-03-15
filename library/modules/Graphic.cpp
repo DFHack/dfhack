@@ -47,40 +47,22 @@ std::unique_ptr<Module> DFHack::createGraphic()
     return dts::make_unique<Graphic>();
 }
 
-struct Graphic::Private
-{
-    bool Started;
-    vector<DFTileSurface* (*)(int,int)> funcs;
-};
-
-Graphic::Graphic()
-{
-    d = new Private;
-
-    d->Started = true;
-}
-
-Graphic::~Graphic()
-{
-    delete d;
-}
-
 bool Graphic::Register(DFTileSurface* (*func)(int,int))
 {
-    d->funcs.push_back(func);
+    funcs.push_back(func);
     return true;
 }
 
 bool Graphic::Unregister(DFTileSurface* (*func)(int,int))
 {
-    if ( d->funcs.empty() ) return false;
+    if ( funcs.empty() ) return false;
 
-    vector<DFTileSurface* (*)(int,int)>::iterator it = d->funcs.begin();
-    while ( it != d->funcs.end() )
+    vector<DFTileSurface* (*)(int,int)>::iterator it = funcs.begin();
+    while ( it != funcs.end() )
     {
         if ( *it == func )
         {
-            d->funcs.erase(it);
+            funcs.erase(it);
             return true;
         }
         it++;
@@ -92,12 +74,12 @@ bool Graphic::Unregister(DFTileSurface* (*func)(int,int))
 // This will return first DFTileSurface it can get (or NULL if theres none)
 DFTileSurface* Graphic::Call(int x, int y)
 {
-    if ( d->funcs.empty() ) return NULL;
+    if ( funcs.empty() ) return NULL;
 
     DFTileSurface* temp = NULL;
 
-    vector<DFTileSurface* (*)(int,int)>::iterator it = d->funcs.begin();
-    while ( it != d->funcs.end() )
+    vector<DFTileSurface* (*)(int,int)>::iterator it = funcs.begin();
+    while ( it != funcs.end() )
     {
         temp = (*it)(x,y);
         if ( temp != NULL )

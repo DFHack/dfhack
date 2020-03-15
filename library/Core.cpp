@@ -1707,7 +1707,6 @@ bool Core::Init()
     }
     if (is_text_mode && !is_headless)
     {
-        con.init(true);
         cerr << "Console is not available. Use dfhack-run to send commands.\n";
         if (!is_text_mode)
         {

@@ -1165,6 +1165,7 @@ static void IndexFields(lua_State *state, int base, struct_identity *pstruct, bo
         lua_pop(state, 1);
 
         bool add_to_enum = true;
+        const struct_field_info *tag_field = nullptr;
 
         // Handle the field
         switch (fields[i].mode)
@@ -1183,6 +1184,11 @@ static void IndexFields(lua_State *state, int base, struct_identity *pstruct, bo
                 add_to_enum = false;
             break;
 
+        case struct_field_info::SUBSTRUCT:
+        case struct_field_info::CONTAINER:
+            tag_field = find_union_tag(fields, &fields[i]);
+            break;
+
         default:
             break;
         }
@@ -1193,6 +1199,17 @@ static void IndexFields(lua_State *state, int base, struct_identity *pstruct, bo
 
         if (add_to_enum)
             AssociateId(state, base+3, ++cnt, name.c_str());
+
+        if (tag_field)
+        {
+            // TODO: handle tagged unions
+            //
+            // tagged unions are treated as if they have at most one field,
+            // with the same name as the corresponding enumeration value.
+            //
+            // if no field's name matches the enumeration value's name,
+            // the tagged union is treated as a structure with no fields.
+        }
 
         lua_pushlightuserdata(state, (void*)&fields[i]);
         lua_setfield(state, base+2, name.c_str());

@@ -5,13 +5,11 @@ import java.util.*;
 import javax.xml.stream.*;
 
 import ghidra.app.script.*;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRangeImpl;
-import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.program.model.symbol.*;
+import ghidra.program.model.util.*;
 import ghidra.util.task.*;
 
 public class import_df_structures extends GhidraScript
@@ -34,6 +32,7 @@ public class import_df_structures extends GhidraScript
 	private DataType dtInt8, dtInt16, dtInt32, dtInt64;
 	private DataType dtInt, dtLong, dtSizeT;
 	private DataType dtString, dtFStream, dtVectorBool, dtBitArray, dtSet, dtDeque;
+	private int baseClassPadding;
 
 	@Override
 	protected void run() throws Exception
@@ -146,6 +145,7 @@ public class import_df_structures extends GhidraScript
 		switch (currentProgram.getExecutableFormat())
 		{
 		case "Executable and Linking Format (ELF)":
+		case "Mac OS X Mach-O":
 			var rep = new StructureDataType("_string_rep", 0);
 			rep.setToDefaultAlignment();
 			rep.add(dtSizeT, "_M_length", null);
@@ -188,6 +188,33 @@ public class import_df_structures extends GhidraScript
 
 			dequeDataType.setMinimumAlignment(currentProgram.getDefaultPointerSize());
 			dequeDataType.add(Undefined.getUndefinedDataType(10 * currentProgram.getDefaultPointerSize()));
+
+			this.baseClassPadding = 1;
+
+			break;
+		case "Portable Executable (PE)":
+			var stringVal = new UnionDataType("_string_val");
+			stringVal.setToDefaultAlignment();
+			stringVal.add(StringDataType.dataType, 16, "_Buf", null);
+			stringVal.add(dtm.getPointer(TerminatedStringDataType.dataType, currentProgram.getDefaultPointerSize()), "_Ptr", null);
+
+			stringDataType.add(createDataType(dtcStd, stringVal), "_Bx", null);
+			stringDataType.add(dtSizeT, "_Mysize", null);
+			stringDataType.add(dtSizeT, "_Myres", null);
+
+			bitVecDataType.setMinimumAlignment(currentProgram.getDefaultPointerSize());
+			bitVecDataType.add(Undefined.getUndefinedDataType(4 * currentProgram.getDefaultPointerSize()));
+
+			fStreamDataType.setMinimumAlignment(currentProgram.getDefaultPointerSize());
+			fStreamDataType.add(Undefined.getUndefinedDataType(22 * currentProgram.getDefaultPointerSize() + 96));
+
+			setDataType.setMinimumAlignment(currentProgram.getDefaultPointerSize());
+			setDataType.add(Undefined.getUndefinedDataType(2 * currentProgram.getDefaultPointerSize()));
+
+			dequeDataType.setMinimumAlignment(currentProgram.getDefaultPointerSize());
+			dequeDataType.add(Undefined.getUndefinedDataType(5 * currentProgram.getDefaultPointerSize()));
+
+			this.baseClassPadding = currentProgram.getDefaultPointerSize();
 
 			break;
 		default:
@@ -1039,7 +1066,11 @@ public class import_df_structures extends GhidraScript
 		{
 			addStructFields(st, codegen.typesByName.get(t.inheritsFrom));
 
-			// TODO: add base class padding if needed
+			int pastAlignment = st.getLength() % this.baseClassPadding;
+			if (pastAlignment != 0)
+			{
+				st.add(new ArrayDataType(Undefined1DataType.dataType, this.baseClassPadding - pastAlignment, 1), null, "base class padding for " + t.typeName);
+			}
 		}
 
 		for (var f : t.fields)
@@ -1173,10 +1204,6 @@ public class import_df_structures extends GhidraScript
 				var st = currentProgram.getSymbolTable();
 				var syms = st.getSymbols(e.getAddress());
 				printerr("overlapping " + e.getDataType().getName() + " " + (syms.length > 0 ? syms[0].getName() : "(unnamed)"));
-				if (e.getDataType().getName().startsWith("vector<"))
-				{
-					listing.clearCodeUnits(e.getMinAddress(), e.getMaxAddress(), false, monitor);
-				}
 			}
 		}
 
@@ -1208,9 +1235,11 @@ public class import_df_structures extends GhidraScript
 			if (dt == null)
 				continue;
 
+			long offset = vt.hasOffset ? vt.offset : 0;
+
 			if (vt.hasValue)
 			{
-				labelData(toAddr(vt.value), dt, dt.getName(), 0);
+				labelData(toAddr(vt.value + offset), dt, dt.getName(), 0);
 			}
 
 			if (vt.hasMangledName)
@@ -1221,7 +1250,7 @@ public class import_df_structures extends GhidraScript
 
 				for (var s : syms)
 				{
-					labelData(s.getAddress(), dt, dt.getName(), 0);
+					labelData(s.getAddress().add(offset), dt, dt.getName(), 0);
 				}
 			}
 		}

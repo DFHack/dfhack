@@ -153,8 +153,8 @@ public class import_df_structures extends GhidraScript
 
 			var dataPlus = new UnionDataType("_string_dataplus");
 			dataPlus.setToDefaultAlignment();
-			dataPlus.add(rep);
-			dataPlus.add(new PointerDataType(new TerminatedStringDataType()));
+			dataPlus.add(dtm.getPointer(rep, currentProgram.getDefaultPointerSize()));
+			dataPlus.add(dtm.getPointer(new TerminatedStringDataType(), currentProgram.getDefaultPointerSize()));
 			createDataType(dtcStd, dataPlus);
 
 			stringDataType.add(dataPlus, "_M_p", null);

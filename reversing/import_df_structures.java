@@ -1125,7 +1125,7 @@ public class import_df_structures extends GhidraScript
 		if (t.originalName != null)
 			dtc.addDataType(new TypedefDataType(t.typeName, st), DataTypeConflictHandler.REPLACE_HANDLER);
 		st.setToDefaultAlignment();
-		st.add(createVTableDataType(t), "_vtable", null);
+		st.add(dtm.getPointer(createVTableDataType(t), currentProgram.getDefaultPointerSize()), "_vtable", null);
 
 		addStructFields(st, t);
 

@@ -76,6 +76,8 @@ public class import_df_structures extends GhidraScript
 	{
 		if (target == null)
 			target = DataType.DEFAULT;
+		if (BooleanDataType.dataType.isEquivalent(target))
+			target = dtInt8;
 		var ptr = dtm.getPointer(target, currentProgram.getDefaultPointerSize());
 		var name = "vector<" + target.getName() + ">";
 
@@ -247,7 +249,7 @@ public class import_df_structures extends GhidraScript
 	}
 	private interface IHasFields
 	{
-		List<TypeDef.Field> getFields(); 
+		List<TypeDef.Field> getFields();
 	}
 
 	private static abstract class NameHaver implements IHasName
@@ -1192,9 +1194,13 @@ public class import_df_structures extends GhidraScript
 	private void labelVTables() throws Exception
 	{
 		updateProgressMajor("Labelling vtables...");
+		monitor.initialize(symbolTable.vtables.size());
 
+		int i = 0;
 		for (var vt : symbolTable.vtables)
 		{
+			monitor.setProgress(i++);
+
 			if (!vt.hasName)
 				continue;
 
@@ -1224,7 +1230,8 @@ public class import_df_structures extends GhidraScript
 	private void labelGlobals() throws Exception
 	{
 		updateProgressMajor("Labelling globals...");
-		
+		monitor.initialize(codegen.globals.size());
+
 		var addrs = new HashMap<String, Address>();
 
 		for (var g : symbolTable.globals)
@@ -1237,8 +1244,11 @@ public class import_df_structures extends GhidraScript
 			addrs.put(g.name, toAddr(g.value));
 		}
 
+		int i = 0;
 		for (var gobj : codegen.globals)
 		{
+			monitor.setProgress(i++);
+
 			if (!gobj.hasName)
 				continue;
 			if (!addrs.containsKey(gobj.name))
@@ -1247,7 +1257,7 @@ public class import_df_structures extends GhidraScript
 			var dt = getDataType(gobj.item);
 			if (dt == null)
 				throw new Exception("missing data type for global " + gobj.name);
-			
+
 			labelData(addrs.get(gobj.name), dt, gobj.name, gobj.item.size);
 		}
 	}

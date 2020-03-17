@@ -27,7 +27,7 @@ public class import_df_structures extends GhidraScript
 	private Symbols symbols;
 	private SymbolTable symbolTable;
 	private DataTypeManager dtm;
-	private Category dtc, dtcStd, dtcEnums, dtcVTables;
+	private Category dtc, dtcStd, dtcEnums, dtcVTables, dtcVMethods;
 	private DataType dtUint8, dtUint16, dtUint32, dtUint64;
 	private DataType dtInt8, dtInt16, dtInt32, dtInt64;
 	private DataType dtInt, dtLong, dtSizeT;
@@ -234,6 +234,7 @@ public class import_df_structures extends GhidraScript
 
 		this.dtcEnums = dtc.createCategory("enums");
 		this.dtcVTables = dtc.createCategory("vtables");
+		this.dtcVMethods = dtcVTables.createCategory("methods");
 	}
 
 	private void processXMLInputs() throws Exception
@@ -421,7 +422,45 @@ public class import_df_structures extends GhidraScript
 
 		public SymbolTable findTable(Program currentProgram) throws Exception
 		{
-			var actualTS = currentProgram.getCreationDate().getTime() / 1000;
+			long actualTS = 0;
+			if (currentProgram.getExecutableFormat().equals("Portable Executable (PE)"))
+			{
+				// TODO: is there a *good* way to do this with Ghida APIs?
+				var dtm = currentProgram.getDataTypeManager();
+				var dosHeader = currentProgram.getListing().getDataAt(currentProgram.getImageBase());
+				var dosHeaderType = (Structure)dosHeader.getBaseDataType();
+				DataTypeComponent ntHeaderOffsetField = null;
+				for (var dosHeaderField : dosHeaderType.getComponents())
+				{
+					if (dosHeaderField.getFieldName().equals("e_lfanew"))
+					{
+						ntHeaderOffsetField = dosHeaderField;
+						break;
+					}
+				}
+				var ntHeaderOffset = dosHeader.getUnsignedInt(ntHeaderOffsetField.getOffset());
+				var ntHeaderAddr = currentProgram.getImageBase().add(ntHeaderOffset);
+				var ntHeader = currentProgram.getListing().getDataAt(ntHeaderAddr);
+				var ntHeaderType = (Structure)ntHeader.getBaseDataType();
+				for (var ntHeaderField : ntHeaderType.getComponents())
+				{
+					if (ntHeaderField.getFieldName().equals("FileHeader"))
+					{
+						var fileHeader = ntHeader.getComponent(ntHeaderField.getOrdinal());
+						var fileHeaderType = (Structure)fileHeader.getDataType();
+						for (var fileHeaderField : fileHeaderType.getComponents())
+						{
+							if (fileHeaderField.getFieldName().equals("TimeDateStamp"))
+							{
+								actualTS = fileHeader.getUnsignedInt(fileHeaderField.getOffset());
+								break;
+							}
+						}
+
+						break;
+					}
+				}
+			}
 			var actualMD5 = currentProgram.getExecutableMD5();
 			if (actualMD5 == null)
 			{
@@ -1097,9 +1136,13 @@ public class import_df_structures extends GhidraScript
 	private DataType createMethodDataType(String name, TypeDef.VMethod vm) throws Exception
 	{
 		var ft = new FunctionDefinitionDataType(name);
+		ft.setGenericCallingConvention(GenericCallingConvention.thiscall);
 
-		if (vm.returnType != null)
+		if (vm.returnType == null)
+			ft.setReturnType(DataType.VOID);
+		else
 			ft.setReturnType(getDataType(vm.returnType));
+
 		var args = new ParameterDefinition[vm.arguments.size()];
 		for (int i = 0; i < vm.arguments.size(); i++)
 		{
@@ -1113,17 +1156,17 @@ public class import_df_structures extends GhidraScript
 		}
 		ft.setArguments(args);
 
-		return createDataType(dtcVTables, ft);
+		return createDataType(dtcVMethods, ft);
 	}
 
 	private DataType createVTableDataType(TypeDef t) throws Exception
 	{
-		var name = "vtable_" + (t.originalName != null ? t.originalName : t.typeName);
-		var existing = dtcVTables.getDataType(name);
+		var name = t.originalName != null ? t.originalName : t.typeName;
+		var existing = dtcVTables.getDataType("vtable_" + name);
 		if (existing != null)
 			return existing;
 
-		Structure st = new StructureDataType(name, 0);
+		Structure st = new StructureDataType("vtable_" + name, 0);
 		// add early to avoid recursion
 		st = (Structure)dtcVTables.addDataType(st, DataTypeConflictHandler.REPLACE_HANDLER);
 		st.setToDefaultAlignment();
@@ -1144,7 +1187,7 @@ public class import_df_structures extends GhidraScript
 				mname = "~" + name;
 			else
 				mname = "_anon_vmethod_" + (st.getLength() / currentProgram.getDefaultPointerSize());
-			st.add(dtm.getPointer(createMethodDataType("_" + name + "::" + mname, vm), currentProgram.getDefaultPointerSize()), mname, null);
+			st.add(dtm.getPointer(createMethodDataType(name + "::" + mname, vm), currentProgram.getDefaultPointerSize()), mname, null);
 		}
 
 		return createDataType(dtcVTables, st);

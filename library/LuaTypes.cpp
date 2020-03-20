@@ -634,6 +634,20 @@ static int meta_struct_field_reference(lua_State *state)
 }
 
 /**
+ * Method: _field for df.global.
+ */
+static int meta_global_field_reference(lua_State *state)
+{
+    if (lua_gettop(state) != 2)
+        luaL_error(state, "Usage: object._field(name)");
+    auto field = (struct_field_info*)find_field(state, 2, "reference");
+    if (!field)
+        field_error(state, 2, "builtin property or method", "reference");
+    field_reference(state, field, *(void**)field->offset);
+    return 1;
+}
+
+/**
  * Metamethod: __newindex for structures.
  */
 static int meta_struct_newindex(lua_State *state)
@@ -1410,7 +1424,10 @@ void struct_identity::build_metatable(lua_State *state)
 
 void global_identity::build_metatable(lua_State *state)
 {
+    int base = lua_gettop(state);
     MakeFieldMetatable(state, this, meta_global_index, meta_global_newindex, true);
+    SetStructMethod(state, base+1, base+2, meta_global_field_reference, "_field");
+    SetPtrMethods(state, base+1, base+2);
 }
 
 /**

@@ -80,6 +80,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``building_type``: added ``OfferingPlace``
 - ``creature_interaction_effect``: added subclasses new to 0.47
 - ``creature_raw_flags``: identified several more items
+- ``creature_raw_flags``: renamed many items to match DF names
+- ``caste_raw_flags``: renamed many items to match DF names
 - ``d_init``: added settings new to 0.47
 - ``entity_name_type``: added ``MERCHANT_COMPANY``, ``CRAFT_GUILD``
 - ``entity_position_responsibility``: added values new to 0.47

@@ -44,6 +44,7 @@ public class import_df_structures extends GhidraScript
 		processXMLInputs();
 		this.symbolTable = symbols.findTable(currentProgram);
 		println("selected symbol table: " + symbolTable.name);
+		preprocessTypes();
 		createDataTypes();
 		labelVTables();
 		labelGlobals();
@@ -88,7 +89,7 @@ public class import_df_structures extends GhidraScript
 		vec.setToDefaultAlignment();
 		vec.add(ptr, "_M_start", null);
 		vec.add(ptr, "_M_finish", null);
-		vec.add(ptr, "_M_end_of_allocation", null);
+		vec.add(ptr, "_M_end_of_storage", null);
 
 		return createDataType(dtcStd, vec);
 	}
@@ -169,7 +170,7 @@ public class import_df_structures extends GhidraScript
 
 			bitVecDataType.add(biterator, "_M_start", null);
 			bitVecDataType.add(biterator, "_M_finish", null);
-			bitVecDataType.add(dtm.getPointer(dtSizeT, currentProgram.getDefaultPointerSize()), "_M_end_of_allocation", null);
+			bitVecDataType.add(dtm.getPointer(dtSizeT, currentProgram.getDefaultPointerSize()), "_M_end_of_storage", null);
 
 			fStreamDataType.setMinimumAlignment(currentProgram.getDefaultPointerSize());
 			fStreamDataType.add(Undefined.getUndefinedDataType(61 * currentProgram.getDefaultPointerSize() + 40));
@@ -390,6 +391,7 @@ public class import_df_structures extends GhidraScript
 		public String meta = "";
 		public String subtype = "";
 		public boolean isUnion;
+		public boolean hasSubClasses;
 		public final List<Field> fields = new ArrayList<>();
 		public final List<EnumItem> enumItems = new ArrayList<>();
 		public final List<VMethod> vmethods = new ArrayList<>();
@@ -426,7 +428,6 @@ public class import_df_structures extends GhidraScript
 			if (currentProgram.getExecutableFormat().equals("Portable Executable (PE)"))
 			{
 				// TODO: is there a *good* way to do this with Ghida APIs?
-				var dtm = currentProgram.getDataTypeManager();
 				var dosHeader = currentProgram.getListing().getDataAt(currentProgram.getImageBase());
 				var dosHeaderType = (Structure)dosHeader.getBaseDataType();
 				DataTypeComponent ntHeaderOffsetField = null;
@@ -873,7 +874,7 @@ public class import_df_structures extends GhidraScript
 		}
 	}
 
-	private void createDataTypes() throws Exception
+	private void preprocessTypes() throws Exception
 	{
 		var toAdd = new ArrayList<TypeDef>();
 		for (var gobj : codegen.globals)
@@ -893,6 +894,28 @@ public class import_df_structures extends GhidraScript
 				codegen.typesByName.put(t.originalName, t);
 		}
 
+		boolean foundAny = true;
+		while (foundAny)
+		{
+			foundAny = false;
+
+			for (var t : codegen.types)
+			{
+				if (!"class-type".equals(t.meta))
+					continue;
+
+				var parent = codegen.typesByName.get(t.inheritsFrom);
+				if (parent != null && !parent.hasSubClasses)
+				{
+					parent.hasSubClasses = true;
+					foundAny = true;
+				}
+			}
+		}
+	}
+
+	private void createDataTypes() throws Exception
+	{
 		updateProgressMajor("Creating data types...");
 		monitor.initialize(codegen.types.size());
 		int i = 0;
@@ -1047,6 +1070,14 @@ public class import_df_structures extends GhidraScript
 		case "pointer":
 			if (f.item == null)
 				return dtm.getPointer(DataType.DEFAULT, currentProgram.getDefaultPointerSize());
+
+			if ("global".equals(f.item.meta) || "compound".equals(f.item.meta))
+			{
+				var t = codegen.typesByName.get(f.item.typeName);
+				if (t != null && t.hasSubClasses)
+					return findOrCreateBaseClassUnion(t);
+			}
+
 			return dtm.getPointer(getDataType(f.item), currentProgram.getDefaultPointerSize());
 		case "global":
 		case "compound":
@@ -1193,6 +1224,34 @@ public class import_df_structures extends GhidraScript
 		return createDataType(dtcVTables, st);
 	}
 
+	private Union findOrCreateBaseClassUnion(TypeDef t) throws Exception
+	{
+		var typeName = "virtual_" + (t.originalName == null ? t.typeName : t.originalName) + "_ptr";
+		var existing = (Union)dtc.getDataType(typeName);
+		if (existing != null)
+			return existing;
+
+		var ut = new UnionDataType(typeName);
+		dtc.addDataType(ut, DataTypeConflictHandler.REPLACE_HANDLER);
+		ut.add(dtm.getPointer(createDataType(t), currentProgram.getDefaultPointerSize()));
+		return (Union)createDataType(dtc, ut);
+	}
+
+	private void addToBaseClassUnion(TypeDef t, Structure st) throws Exception
+	{
+		if (t.inheritsFrom == null)
+			return;
+
+		DataType ptr;
+		if (t.hasSubClasses)
+			ptr = findOrCreateBaseClassUnion(t);
+		else
+			ptr = dtm.getPointer(st, currentProgram.getDefaultPointerSize());
+
+		var parent = findOrCreateBaseClassUnion(codegen.typesByName.get(t.inheritsFrom));
+		parent.add(ptr);
+	}
+
 	private DataType createClassDataType(TypeDef t) throws Exception
 	{
 		Structure st = new StructureDataType(t.originalName != null ? t.originalName : t.typeName, 0);
@@ -1206,6 +1265,9 @@ public class import_df_structures extends GhidraScript
 		addStructFields(st, t);
 
 		st = (Structure)createDataType(dtc, st);
+
+		addToBaseClassUnion(t, st);
+
 		if (t.originalName != null)
 			return createDataType(dtc, t.typeName, st);
 		return st;
@@ -1261,10 +1323,44 @@ public class import_df_structures extends GhidraScript
 		createLabel(addr, name, true, SourceType.IMPORTED);
 	}
 
+	private void labelVMethods(Address addr, GhidraClass cls, Structure st) throws Exception
+	{
+		var symtab = currentProgram.getSymbolTable();
+
+		for (var field : st.getComponents())
+		{
+			if ("_super".equals(field.getFieldName()))
+			{
+				labelVMethods(addr, cls, (Structure)field.getDataType());
+			}
+			Address fnaddr;
+			if (currentProgram.getDefaultPointerSize() == 4)
+			{
+				fnaddr = toAddr(currentProgram.getMemory().getInt(addr.add(field.getOffset())));
+			}
+			else
+			{
+				fnaddr = toAddr(currentProgram.getMemory().getLong(addr.add(field.getOffset())));
+			}
+			symtab.createLabel(fnaddr, field.getFieldName(), cls, SourceType.IMPORTED);
+		}
+	}
+
+	private void labelVTable(Namespace ns, Address addr, GhidraClass cls, DataType dt) throws Exception
+	{
+		labelData(addr, dt, dt.getName(), 0);
+		labelVMethods(addr, cls, (Structure)dt);
+	}
+
 	private void labelVTables() throws Exception
 	{
 		updateProgressMajor("Labelling vtables...");
 		monitor.initialize(symbolTable.vtables.size());
+
+		var symtab = currentProgram.getSymbolTable();
+		var ns = symtab.getNamespace("df", null);
+		if (ns == null)
+			ns = symtab.createNameSpace(null, "df", SourceType.IMPORTED);
 
 		int i = 0;
 		for (var vt : symbolTable.vtables)
@@ -1278,22 +1374,24 @@ public class import_df_structures extends GhidraScript
 			if (dt == null)
 				continue;
 
+			var cls = symtab.createClass(ns, vt.name, SourceType.IMPORTED);
+
 			long offset = vt.hasOffset ? vt.offset : 0;
 
 			if (vt.hasValue)
 			{
-				labelData(toAddr(vt.value + offset), dt, dt.getName(), 0);
+				labelVTable(ns, toAddr(vt.value + offset), cls, dt);
 			}
 
 			if (vt.hasMangledName)
 			{
-				var syms = currentProgram.getSymbolTable().getGlobalSymbols(vt.mangledName);
+				var syms = symtab.getGlobalSymbols(vt.mangledName);
 				if (syms.isEmpty())
 					continue;
 
 				for (var s : syms)
 				{
-					labelData(s.getAddress().add(offset), dt, dt.getName(), 0);
+					labelVTable(ns, s.getAddress().add(offset), cls, dt);
 				}
 			}
 		}

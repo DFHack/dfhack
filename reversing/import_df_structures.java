@@ -1332,7 +1332,9 @@ public class import_df_structures extends GhidraScript
 			if ("_super".equals(field.getFieldName()))
 			{
 				labelVMethods(addr, cls, (Structure)field.getDataType());
+				continue;
 			}
+
 			Address fnaddr;
 			if (currentProgram.getDefaultPointerSize() == 4)
 			{

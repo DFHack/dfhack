@@ -53,6 +53,7 @@ grubsteak               grubsteak
 Harlan Playford         playfordh
 Hayati Ayguen           hayguen
 Herwig Hochleitner      bendlas
+Ian S                   kremlin-
 IndigoFenix
 James Logsdon           jlogsdon
 Japa                    JapaMala
@@ -61,7 +62,7 @@ Jeremy Apthorp          nornagon
 Jim Lisi                stonetoad
 Jimbo Whales            jimbowhales
 jimcarreer              jimcarreer
-jj                      jjyg                    jj``
+jj                      jjyg                    jj\`\`
 Joel Meador             janxious
 John Beisley            huin
 John Shade              gsvslto
@@ -97,6 +98,7 @@ moversti                moversti
 napagokc                napagokc
 Neil Little             nmlittle
 Nick Rart               nickrart                comestible
+Nicolas Ayala           nicolasayala
 Nikolay Amiantov        abbradar
 nocico                  nocico
 Omniclasm
@@ -148,6 +150,7 @@ therahedwig             therahedwig
 ThiagoLira              ThiagoLira
 Tim Walberg             twalberg
 Timothy Collett         danaris
+Timur Kelman            TymurGubayev
 Tom Jobbins             TheBloke
 Tom Prince
 TotallyGatsby           TotallyGatsby

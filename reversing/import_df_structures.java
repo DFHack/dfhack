@@ -4,12 +4,16 @@ import java.util.*;
 
 import javax.xml.stream.*;
 
+import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.script.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.*;
+import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.*;
 
 public class import_df_structures extends GhidraScript
@@ -1169,10 +1173,10 @@ public class import_df_structures extends GhidraScript
 		var ft = new FunctionDefinitionDataType(name);
 		ft.setGenericCallingConvention(GenericCallingConvention.thiscall);
 
-		if (vm.returnType == null)
-			ft.setReturnType(DataType.VOID);
-		else
+		if (vm.returnType != null)
 			ft.setReturnType(getDataType(vm.returnType));
+		else if (!vm.hasAnonName)
+			ft.setReturnType(DataType.VOID);
 
 		var args = new ParameterDefinition[vm.arguments.size()];
 		for (int i = 0; i < vm.arguments.size(); i++)
@@ -1344,7 +1348,37 @@ public class import_df_structures extends GhidraScript
 			{
 				fnaddr = toAddr(currentProgram.getMemory().getLong(addr.add(field.getOffset())));
 			}
-			symtab.createLabel(fnaddr, field.getFieldName(), cls, SourceType.IMPORTED);
+
+			var funcType = (FunctionDefinition)((Pointer)field.getDataType()).getDataType();
+			var cmd = new CreateFunctionCmd(field.getFieldName(), fnaddr, null, SourceType.IMPORTED);
+			Function func;
+			if (cmd.applyTo(currentProgram))
+			{
+				func = cmd.getFunction();
+			}
+			else
+			{
+				func = currentProgram.getListing().getFunctionAt(fnaddr);
+				if (func != null && !func.getSignatureSource().isLowerPriorityThan(SourceType.IMPORTED))
+				{
+					func = null;
+				}
+			}
+			if (func != null)
+			{
+				func.setName(field.getFieldName(), SourceType.IMPORTED);
+				func.setParentNamespace(cls);
+				var ret = new ReturnParameterImpl(funcType.getReturnType(), currentProgram);
+				var params = new ArrayList<Variable>();
+				for (var arg : funcType.getArguments())
+					params.add(new ParameterImpl(arg.getName(), arg.getDataType(), currentProgram));
+
+				func.updateFunction("__thiscall", ret, params, FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, true, SourceType.IMPORTED);
+			}
+			else
+			{
+				symtab.createLabel(fnaddr, field.getFieldName(), cls, SourceType.IMPORTED);
+			}
 		}
 	}
 

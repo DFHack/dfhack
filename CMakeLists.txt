@@ -474,6 +474,12 @@ if(BUILD_DOCS)
     install(FILES "README.html" DESTINATION "${DFHACK_DATA_DESTINATION}")
 endif()
 
+option(BUILD_TESTS "Include tests (currently just installs Lua tests into the scripts folder)" OFF)
+if(BUILD_TESTS)
+    install(DIRECTORY ${dfhack_SOURCE_DIR}/test
+        DESTINATION ${DFHACK_DATA_DESTINATION}/scripts)
+endif()
+
 # Packaging with CPack!
 set(DFHACK_PACKAGE_SUFFIX "")
 if(UNIX)

@@ -178,7 +178,7 @@ namespace embark_assist{
                 help_text.push_back("Clay, if present, including thorugh incursions.");
                 help_text.push_back("Min and Max soil depth in the embark rectangle, including incursions.");
                 help_text.push_back("Flat indicator if all the tiles and incursions have the same elevation.");
-                help_text.push_back("Aquifer indicator: Part(ial) or Full, when present, including incursions.");
+                help_text.push_back("Aquifer indicator: 'No', 'Lt', 'Hv' for presence/type including incursions.");
                 help_text.push_back("Waterfall and largest Z level drop if the river has elevation differences");
                 help_text.push_back("Evil weather, when present: BR = Blood Rain, TS = Temporary Syndrome");
                 help_text.push_back("PS = Permanent Syndrome, Re = Reanimating, and Th = Thralling. Incursions.");
@@ -186,6 +186,7 @@ namespace embark_assist{
                 help_text.push_back("A list of all metals present in the embark. Not incursions.");
                 help_text.push_back("A list of all economic minerals present in the embark. Both clays and flux");
                 help_text.push_back("stones are economic, so they show up here as well. Not incursions.");
+                help_text.push_back("Neighbors, including Kobolds (SKULKING) (hidden in vanilla) and Towers.");
                 help_text.push_back("In addition to the above, the Find functionality can also produce blinking");
                 help_text.push_back("overlays over the Local, Region, and World maps to indicate where");
                 help_text.push_back("matching embarks are found. The Local display marks the top left corner of");
@@ -215,11 +216,7 @@ namespace embark_assist{
                 help_text.push_back("Present means at least one embark tile has to have this value.");
                 help_text.push_back("Absent means the feature mustn't exist in any of the embark tiles.");
                 help_text.push_back("N/A means no restrictions are applied.");
-                help_text.push_back("The Aquifer criterion introduces some new parameters:");
-                help_text.push_back("Partial means at least one tile has to have an aquifer, but it also has");
-                help_text.push_back("to be absent from at least one tile. Not All means an aquifer is tolerated");
-                help_text.push_back("as long as at least one tile doesn't have one, but it doesn't have to have");
-                help_text.push_back("any at all.");
+                help_text.push_back("The Aquifer criterion allows you to search for a number of combinations.");
                 help_text.push_back("Min/Max rivers should be self explanatory. The Yes and No values of");
                 help_text.push_back("Clay, etc. means one has to be Present and Absent respectivey.");
                 help_text.push_back("Min Waterfall Drop finds embarks with drops of at least that number");
@@ -238,8 +235,10 @@ namespace embark_assist{
                 help_text.push_back("The parameters for biomes, regions, etc. all require that the required");
                 help_text.push_back("feature is Present in the embark, and entering the same value multiple");
                 help_text.push_back("times does nothing (the first match ticks all requirements off). It can be");
-                help_text.push_back("noted that all the Economic materials are found in the much longer Mineral");
-                help_text.push_back("list. Note that Find is a fairly time consuming task (as it is in vanilla).");
+                help_text.push_back("noted that all the Economic materials are found among the longer Minerals.");
+                help_text.push_back("Min/Max Necro Towers and Min/Max Near Civs work on neighbor counts, while");
+                help_text.push_back("the civ entity selections let you choose your specific neighbors.");
+                help_text.push_back("Note that Find is a fairly time consuming task (as it is in vanilla).");
                 break;
 
             case pages::Caveats_1:
@@ -266,6 +265,10 @@ namespace embark_assist{
                 help_text.push_back("ones.");
                 help_text.push_back("");
                 help_text.push_back("Caveats & technical stuff:");
+                help_text.push_back("- embark-tools' neutralizing of DF random rectangle placement on world");
+                help_text.push_back("  tile shifts changes placement info after it's read. This is compensated");
+                help_text.push_back("  for, but at the cost of incorrect info without it. In tile move back");
+                help_text.push_back("  and forth causes the correct info to be displayed.");
                 help_text.push_back("- The plugin does in fact allow for a single, optional case sensitive");
                 help_text.push_back("  parameter when invoked: 'fileresult'. When this parameter is provided");
                 help_text.push_back("  The plugin will read the search profile stored to file and immediately");
@@ -293,11 +296,10 @@ namespace embark_assist{
             case pages::Caveats_2:
                 Screen::drawBorder("  Embark Assistant Help/Info Caveats 2 Page  ");
 
-                help_text.push_back("- The site info is deduced by the author, so there may be errors and");
-                help_text.push_back("  there are probably site types that end up not being identified.");
                 help_text.push_back("- Aquifer indications are based on the author's belief that they occur");
                 help_text.push_back("  whenever an aquifer supporting layer is present at a depth of 3 or");
-                help_text.push_back("  more.");
+                help_text.push_back("  more. In addition, Toady's description on how Heavy aquifers are");
+                help_text.push_back("  selected has been used.");
                 help_text.push_back("- Thralling is determined by whether material interactions causes");
                 help_text.push_back("  blinking, which the author believes is one of 4 thralling changes.");
                 help_text.push_back("- The geo information is gathered by code which is essentially a");
@@ -320,10 +322,11 @@ namespace embark_assist{
                 help_text.push_back("  whether to make a second, completing, search.");
                 help_text.push_back("- Incursions are taken into consideration when looking for Aquifers,");
                 help_text.push_back("  Clay, Sand, Min Soil when Everywhere, Biomes, Regions, Evil Weather,");
-                help_text.push_back("  Savagery, Evilness, Freezing and Flatness, but ignored for metals/");
-                help_text.push_back("  economics/minerals (including Flux and Coal) as any volumes are typically");
-                help_text.push_back("  too small to be of interest. Rivers, Waterfalls, Spires, and Magma Pools");
-                help_text.push_back("  are not incursion related features.");
+                help_text.push_back("  Savagery, Evilness, Freezing and Flatness, and trees, but ignored for");
+                help_text.push_back("  metals/economics/minerals (including Flux and Coal) as any volumes are");
+                help_text.push_back("  typically too small to be of interest. Rivers, Waterfalls, Spires, and");
+                help_text.push_back("  Magma Pools are not incursion related features.");
+                help_text.push_back("- Neighbor determination makes use of a flag in entities.");
                 help_text.push_back("- There are special rules for handing of incursions from Lakes and Oceans,");
                 help_text.push_back("  as well as Mountains into everything that isn't a Lake or Ocean, and the");
                 help_text.push_back("  rules state that these incursions should be reversed (i.e. 'normal' biomes");
@@ -335,7 +338,7 @@ namespace embark_assist{
                 help_text.push_back("  the N, followed by the one to the W, and lastly the one acting as the");
                 help_text.push_back("  reference. This means there's a risk embarks with such 'trouble' corners");
                 help_text.push_back("  may get affected corner(s) evaluated incorrectly.");
-                help_text.push_back("Version 0.10 2019-09-21");
+                help_text.push_back("Version 0.11 2020-03-03");
 
                 break;
             }

@@ -38,6 +38,14 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
+## Misc Improvements
+- `embark-assistant`:
+    - updated embark aquifer info to show all aquifer kinds present
+    - added neighbor display, including kobolds (SKULKING) and necro tower count
+    - updated aquifer search criteria to handle the new variation
+    - added search criteria for embark initial tree cover
+    - added search criteria for necro tower count, neighbor civ count, and specific neighbors. Should handle additional entities, but not tested
+
 # 0.47.03-beta1
 
 ## New Scripts

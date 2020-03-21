@@ -9,11 +9,8 @@ import ghidra.app.script.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.*;
-import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.*;
 
 public class import_df_structures extends GhidraScript
@@ -1077,9 +1074,11 @@ public class import_df_structures extends GhidraScript
 
 			if ("global".equals(f.item.meta) || "compound".equals(f.item.meta))
 			{
+				/*
 				var t = codegen.typesByName.get(f.item.typeName);
 				if (t != null && t.hasSubClasses)
-					return findOrCreateBaseClassUnion(t);
+					return dtm.getPointer(findOrCreateBaseClassUnion(t), currentProgram.getDefaultPointerSize());
+				*/
 			}
 
 			return dtm.getPointer(getDataType(f.item), currentProgram.getDefaultPointerSize());
@@ -1093,7 +1092,8 @@ public class import_df_structures extends GhidraScript
 		case "static-array":
 			if (f.hasCount)
 				return new ArrayDataType(getDataType(f.item), f.count, 0);
-			return new ArrayDataType(getDataType(f.item), codegen.typesByName.get(f.indexEnum).enumItems.size(), 0);
+			var enumItems = codegen.typesByName.get(f.indexEnum).enumItems;
+			return new ArrayDataType(getDataType(f.item), (int)enumItems.get(enumItems.size() - 1).value + 1, 0);
 		case "bytes":
 			switch (f.subtype)
 			{
@@ -1123,13 +1123,13 @@ public class import_df_structures extends GhidraScript
 		return createDataType(dtcEnums, et);
 	}
 
-	private void addStructField(Composite st, TypeDef.Field f) throws Exception
+	private void addStructField(Composite st, TypeDef t, TypeDef.Field f) throws Exception
 	{
 		String name = null;
 		if (f.hasName)
 			name = f.name;
 		else if (f.hasAnonName)
-			name = f.anonName;
+			name = t.typeName + "_" + f.anonName;
 
 		st.add(getDataType(f), f.size, name, null);
 	}
@@ -1149,7 +1149,7 @@ public class import_df_structures extends GhidraScript
 
 		for (var f : t.fields)
 		{
-			addStructField(st, f);
+			addStructField(st, t, f);
 		}
 	}
 
@@ -1217,11 +1217,9 @@ public class import_df_structures extends GhidraScript
 			if (vm.hasName)
 				mname = vm.name;
 			else if (vm.hasAnonName)
-				mname = vm.anonName;
+				mname = name + "_" + vm.anonName;
 			else if (vm.isDestructor)
 				mname = "~" + name;
-			else
-				mname = "_anon_vmethod_" + (st.getLength() / currentProgram.getDefaultPointerSize());
 			st.add(dtm.getPointer(createMethodDataType(name + "::" + mname, vm), currentProgram.getDefaultPointerSize()), mname, null);
 		}
 
@@ -1230,14 +1228,14 @@ public class import_df_structures extends GhidraScript
 
 	private Union findOrCreateBaseClassUnion(TypeDef t) throws Exception
 	{
-		var typeName = "virtual_" + (t.originalName == null ? t.typeName : t.originalName) + "_ptr";
+		var typeName = "virtual_" + (t.originalName == null ? t.typeName : t.originalName);
 		var existing = (Union)dtc.getDataType(typeName);
 		if (existing != null)
 			return existing;
 
 		var ut = new UnionDataType(typeName);
 		dtc.addDataType(ut, DataTypeConflictHandler.REPLACE_HANDLER);
-		ut.add(dtm.getPointer(createDataType(t), currentProgram.getDefaultPointerSize()));
+		ut.add(createDataType(t), t.typeName, null);
 		return (Union)createDataType(dtc, ut);
 	}
 
@@ -1246,14 +1244,9 @@ public class import_df_structures extends GhidraScript
 		if (t.inheritsFrom == null)
 			return;
 
-		DataType ptr;
-		if (t.hasSubClasses)
-			ptr = findOrCreateBaseClassUnion(t);
-		else
-			ptr = dtm.getPointer(st, currentProgram.getDefaultPointerSize());
-
+		var self = t.hasSubClasses ? findOrCreateBaseClassUnion(t) : st;
 		var parent = findOrCreateBaseClassUnion(codegen.typesByName.get(t.inheritsFrom));
-		parent.add(ptr);
+		parent.add(self);
 	}
 
 	private DataType createClassDataType(TypeDef t) throws Exception
@@ -1289,7 +1282,7 @@ public class import_df_structures extends GhidraScript
 			if (f.hasName)
 				name = f.name;
 			else if (f.hasAnonName)
-				name = f.anonName;
+				name = t.typeName + "_" + f.anonName;
 			int count = f.hasCount ? f.count : 1;
 			st.addBitField(dtUint32, count, name, null);
 		}
@@ -1373,7 +1366,7 @@ public class import_df_structures extends GhidraScript
 				for (var arg : funcType.getArguments())
 					params.add(new ParameterImpl(arg.getName(), arg.getDataType(), currentProgram));
 
-				func.updateFunction("__thiscall", ret, params, FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, true, SourceType.IMPORTED);
+				func.updateFunction("__thiscall", ret, params, Function.FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, true, SourceType.IMPORTED);
 			}
 			else
 			{

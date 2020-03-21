@@ -108,6 +108,7 @@ Paul Fenwick            pjf
 PeridexisErrant         PeridexisErrant
 Petr Mrázek             peterix
 Pfhreak                 Pfhreak
+Pierre-David Bélanger   pierredavidbelanger
 potato
 Priit Laes              plaes
 Putnam                  Putnam3145

@@ -1214,12 +1214,38 @@ public class import_df_structures extends GhidraScript
 		for (var vm : t.vmethods)
 		{
 			String mname = null;
+			if (vm.isDestructor)
+			{
+				mname = "~" + name;
+				if (baseClassPadding == 1)
+				{
+					// GCC
+					var mt = dtm.getPointer(createMethodDataType(name + "::" + mname, vm), currentProgram.getDefaultPointerSize());
+					st.add(mt, mname, null);
+					st.add(mt, mname + "(deleting)", null);
+				}
+				else
+				{
+					// MSVC
+					if (vm.arguments.isEmpty())
+					{
+						var arg = new TypeDef.Field();
+						arg.meta = "number";
+						arg.subtype = "bool";
+						arg.hasName = true;
+						arg.name = "deleting";
+						vm.arguments.add(arg);
+					}
+					var mt = dtm.getPointer(createMethodDataType(name + "::" + mname, vm), currentProgram.getDefaultPointerSize());
+					st.add(mt, mname, null);
+				}
+				continue;
+			}
+			
 			if (vm.hasName)
 				mname = vm.name;
 			else if (vm.hasAnonName)
 				mname = name + "_" + vm.anonName;
-			else if (vm.isDestructor)
-				mname = "~" + name;
 			st.add(dtm.getPointer(createMethodDataType(name + "::" + mname, vm), currentProgram.getDefaultPointerSize()), mname, null);
 		}
 

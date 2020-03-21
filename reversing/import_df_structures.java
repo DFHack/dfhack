@@ -32,7 +32,7 @@ public class import_df_structures extends GhidraScript
 	private DataType dtUint8, dtUint16, dtUint32, dtUint64;
 	private DataType dtInt8, dtInt16, dtInt32, dtInt64;
 	private DataType dtInt, dtLong, dtSizeT;
-	private DataType dtString, dtFStream, dtVectorBool, dtBitArray, dtSet, dtDeque;
+	private DataType dtString, dtFStream, dtVectorBool, dtBitArray, dtDeque;
 	private int baseClassPadding;
 
 	@Override
@@ -94,6 +94,57 @@ public class import_df_structures extends GhidraScript
 
 		return createDataType(dtcStd, vec);
 	}
+	private DataType createSetType(DataType target) throws Exception
+	{
+		if (target == null)
+			target = DataType.DEFAULT;
+
+		var name = "set<" + target.getName() + ">";
+		var existing = dtcStd.getDataType(name);
+		if (existing != null)
+			return existing;
+
+		Structure node = new StructureDataType("_Rb_tree_node<" + target.getName() + ">", 0);
+		node.setToDefaultAlignment();
+		node = (Structure)createDataType(dtcStd, node);
+
+		var set = new StructureDataType(name, 0);
+		set.setToDefaultAlignment();
+
+		if (baseClassPadding == 1)
+		{
+			// GCC
+
+			Structure nodeBase = new StructureDataType("_Rb_tree_node_base<" + target.getName() + ">", 0);
+			nodeBase.setToDefaultAlignment();
+			nodeBase = (Structure)createDataType(dtcStd, nodeBase);
+			nodeBase.add(BooleanDataType.dataType, "_M_color", null);
+			nodeBase.add(dtm.getPointer(node, currentProgram.getDefaultPointerSize()), "_M_parent", null);
+			nodeBase.add(dtm.getPointer(node, currentProgram.getDefaultPointerSize()), "_M_left", null);
+			nodeBase.add(dtm.getPointer(node, currentProgram.getDefaultPointerSize()), "_M_right", null);
+
+			set.add(nodeBase, "_M_header", null);
+		}
+		else
+		{
+			// MSVC
+
+			node.add(dtm.getPointer(node, currentProgram.getDefaultPointerSize()), "_Left", null);
+			node.add(dtm.getPointer(node, currentProgram.getDefaultPointerSize()), "_Parent", null);
+			node.add(dtm.getPointer(node, currentProgram.getDefaultPointerSize()), "_Right", null);
+			node.add(BooleanDataType.dataType, "_Color", null);
+			node.add(BooleanDataType.dataType, "_Isnil", null);
+
+			set.add(dtm.getPointer(node, currentProgram.getDefaultPointerSize()), "_Myhead", null);
+		}
+
+		node.add(nodeBase, "_M_base", null);
+		node.add(target, "_M_value_field", null);
+
+		set.add(dtSizeT, "_M_node_count", null);
+
+		return createDataType(dtcStd, set);
+	}
 	private DataType createDfArrayType(DataType target) throws Exception
 	{
 		if (target == null)
@@ -137,12 +188,10 @@ public class import_df_structures extends GhidraScript
 		var stringDataType = new StructureDataType("string", 0);
 		var bitVecDataType = new StructureDataType("vector<bool>", 0);
 		var fStreamDataType = new StructureDataType("fstream", 0);
-		var setDataType = new StructureDataType("set", 0);
 		var dequeDataType = new StructureDataType("deque", 0);
 		stringDataType.setToDefaultAlignment();
 		bitVecDataType.setToDefaultAlignment();
 		fStreamDataType.setToDefaultAlignment();
-		setDataType.setToDefaultAlignment();
 		dequeDataType.setToDefaultAlignment();
 		switch (currentProgram.getExecutableFormat())
 		{
@@ -176,18 +225,6 @@ public class import_df_structures extends GhidraScript
 			fStreamDataType.setMinimumAlignment(currentProgram.getDefaultPointerSize());
 			fStreamDataType.add(Undefined.getUndefinedDataType(61 * currentProgram.getDefaultPointerSize() + 40));
 
-			Structure node = new StructureDataType("_Rb_tree_node", 0);
-			node.setToDefaultAlignment();
-			node = (Structure)createDataType(dtcStd, node);
-			node.add(BooleanDataType.dataType, "_M_color", null);
-			node.add(dtm.getPointer(node, currentProgram.getDefaultPointerSize()), "_M_parent", null);
-			node.add(dtm.getPointer(node, currentProgram.getDefaultPointerSize()), "_M_left", null);
-			node.add(dtm.getPointer(node, currentProgram.getDefaultPointerSize()), "_M_right", null);
-			node.setFlexibleArrayComponent(Undefined1DataType.dataType, "_M_value_field", null);
-
-			setDataType.add(node, "_M_header", null);
-			setDataType.add(dtSizeT, "_M_node_count", null);
-
 			dequeDataType.setMinimumAlignment(currentProgram.getDefaultPointerSize());
 			dequeDataType.add(Undefined.getUndefinedDataType(10 * currentProgram.getDefaultPointerSize()));
 
@@ -210,9 +247,6 @@ public class import_df_structures extends GhidraScript
 			fStreamDataType.setMinimumAlignment(currentProgram.getDefaultPointerSize());
 			fStreamDataType.add(Undefined.getUndefinedDataType(22 * currentProgram.getDefaultPointerSize() + 96));
 
-			setDataType.setMinimumAlignment(currentProgram.getDefaultPointerSize());
-			setDataType.add(Undefined.getUndefinedDataType(2 * currentProgram.getDefaultPointerSize()));
-
 			dequeDataType.setMinimumAlignment(currentProgram.getDefaultPointerSize());
 			dequeDataType.add(Undefined.getUndefinedDataType(5 * currentProgram.getDefaultPointerSize()));
 
@@ -225,7 +259,6 @@ public class import_df_structures extends GhidraScript
 		this.dtFStream = createDataType(dtcStd, fStreamDataType);
 		this.dtString = createDataType(dtcStd, stringDataType);
 		this.dtVectorBool = createDataType(dtcStd, bitVecDataType);
-		this.dtSet = createDataType(dtcStd, setDataType);
 		this.dtDeque = createDataType(dtcStd, dequeDataType);
 
 		var bitArrayDataType = new StructureDataType("BitArray", 0);
@@ -1028,7 +1061,7 @@ public class import_df_structures extends GhidraScript
 			case "stl-bit-vector":
 				return dtVectorBool;
 			case "stl-set":
-				return dtcStd.addDataType(new TypedefDataType("set<" + (f.item == null ? DataType.DEFAULT : getDataType(f.item)).getName() + ">", dtSet), DataTypeConflictHandler.REPLACE_HANDLER);
+				return createSetType(f.item == null ? null : getDataType(f.item));
 			case "stl-deque":
 				return dtcStd.addDataType(new TypedefDataType("deque<" + (f.item == null ? DataType.DEFAULT : getDataType(f.item)).getName() + ">", dtDeque), DataTypeConflictHandler.REPLACE_HANDLER);
 			case "df-flagarray":

@@ -252,6 +252,13 @@ namespace DFHack
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
     };
 
+    struct struct_field_info_extra {
+        enum_identity *index_enum;
+        type_identity *ref_target;
+        const char *union_tag_field;
+        const char *union_tag_attr;
+    };
+
     struct struct_field_info {
         enum Mode {
             END,
@@ -270,7 +277,7 @@ namespace DFHack
         size_t offset;
         type_identity *type;
         size_t count;
-        enum_identity *eid;
+        const struct_field_info_extra *extra;
     };
 
     class DFHACK_EXPORT struct_identity : public compound_identity {
@@ -452,6 +459,7 @@ namespace df
     using DFHack::struct_identity;
     using DFHack::union_identity;
     using DFHack::struct_field_info;
+    using DFHack::struct_field_info_extra;
     using DFHack::bitfield_item_info;
     using DFHack::bitfield_identity;
     using DFHack::enum_identity;

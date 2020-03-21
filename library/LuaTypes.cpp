@@ -508,8 +508,8 @@ static void read_field(lua_State *state, const struct_field_info *field, void *p
             return;
 
         case struct_field_info::CONTAINER:
-            if (!field->eid || !field->type->isContainer() ||
-                field->eid == ((container_identity*)field->type)->getIndexEnumType())
+            if (!field->extra || !field->extra->index_enum || !field->type->isContainer() ||
+                field->extra->index_enum == ((container_identity*)field->type)->getIndexEnumType())
             {
                 field->type->lua_read(state, 2, ptr);
                 return;
@@ -1445,7 +1445,7 @@ static void GetAdHocMetatable(lua_State *state, const struct_field_info *field)
         case struct_field_info::CONTAINER:
         {
             auto ctype = (container_identity*)field->type;
-            MakeContainerMetatable(state, ctype, ctype->getItemType(), -1, field->eid);
+            MakeContainerMetatable(state, ctype, ctype->getItemType(), -1, field->extra ? field->extra->index_enum : nullptr);
             break;
         }
 
@@ -1456,12 +1456,12 @@ static void GetAdHocMetatable(lua_State *state, const struct_field_info *field)
 
         case struct_field_info::STATIC_ARRAY:
             MakeContainerMetatable(state, &df::buffer_container_identity::base_instance,
-                                   field->type, field->count, field->eid);
+                                   field->type, field->count, field->extra ? field->extra->index_enum : nullptr);
             break;
 
         case struct_field_info::STL_VECTOR_PTR:
             MakeContainerMetatable(state, &df::identity_traits<std::vector<void*> >::identity,
-                                   field->type, -1, field->eid);
+                                   field->type, -1, field->extra ? field->extra->index_enum : nullptr);
             break;
 
         default:

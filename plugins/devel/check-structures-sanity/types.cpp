@@ -40,7 +40,7 @@ CheckedStructure::CheckedStructure(const struct_field_info *field) :
     }
 
     identity = field->type;
-    eid = field->eid;
+    eid = field->extra ? field->extra->index_enum : nullptr;
     inside_structure = true;
     switch (field->mode)
     {

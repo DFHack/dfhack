@@ -457,6 +457,19 @@ void DFHack::flagarrayToString(std::vector<std::string> *pvec, const void *p,
 
 static const struct_field_info *find_union_tag_candidate(const struct_field_info *fields, const struct_field_info *union_field)
 {
+    if (union_field->extra && union_field->extra->union_tag_field)
+    {
+        auto defined_field_name = union_field->extra->union_tag_field;
+        for (auto field = fields; field->mode != struct_field_info::END; field++)
+        {
+            if (!strcmp(field->name, defined_field_name))
+            {
+                return field;
+            }
+        }
+        return nullptr;
+    }
+
     std::string name(union_field->name);
     if (name.length() >= 4 && name.substr(name.length() - 4) == "data")
     {

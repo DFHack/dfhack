@@ -545,13 +545,14 @@ void Checker::dispatch_field(const QueueItem & item, const CheckedStructure & cs
         auto tag_ptr = PTR_ADD(item.ptr, tag_field->offset);
         QueueItem tag_item(item, tag_field->name, tag_ptr);
         CheckedStructure tag_cs(tag_field);
+        auto attr_name = field->extra ? field->extra->union_tag_attr : nullptr;
         if (tag_cs.identity->isContainer())
         {
-            dispatch_tagged_union_vector(field_item, tag_item, field_cs, tag_cs);
+            dispatch_tagged_union_vector(field_item, tag_item, field_cs, tag_cs, attr_name);
         }
         else
         {
-            dispatch_tagged_union(field_item, tag_item, field_cs, tag_cs);
+            dispatch_tagged_union(field_item, tag_item, field_cs, tag_cs, attr_name);
         }
         return;
     }
@@ -602,7 +603,7 @@ void Checker::dispatch_stl_ptr_vector(const QueueItem & item, const CheckedStruc
     auto ptr_type = wrap_in_pointer(identity->getItemType());
     check_stl_vector(item, ptr_type, identity->getIndexEnumType());
 }
-void Checker::dispatch_tagged_union(const QueueItem & item, const QueueItem & tag_item, const CheckedStructure & cs, const CheckedStructure & tag_cs)
+void Checker::dispatch_tagged_union(const QueueItem & item, const QueueItem & tag_item, const CheckedStructure & cs, const CheckedStructure & tag_cs, const char *attr_name)
 {
     if (tag_cs.identity->type() != IDTYPE_ENUM || cs.identity->type() != IDTYPE_UNION)
     {
@@ -664,7 +665,7 @@ void Checker::dispatch_tagged_union(const QueueItem & item, const QueueItem & ta
         }
     }
 
-    auto tag_name = get_enum_item_key(tag_identity, tag_value);
+    auto tag_name = get_enum_item_attr_or_key(tag_identity, tag_value, attr_name);
     if (!tag_name)
     {
         FAIL("tagged union tag (accessed as " << tag_item.path << ") value (" << tag_value << ") not defined in enum " << tag_cs.identity->getFullName());
@@ -701,7 +702,7 @@ void Checker::dispatch_tagged_union(const QueueItem & item, const QueueItem & ta
 
     FAIL("tagged union missing " << *tag_name << " field to match tag (accessed as " << tag_item.path << ") value (" << tag_value << ")");
 }
-void Checker::dispatch_tagged_union_vector(const QueueItem & item, const QueueItem & tag_item, const CheckedStructure & cs, const CheckedStructure & tag_cs)
+void Checker::dispatch_tagged_union_vector(const QueueItem & item, const QueueItem & tag_item, const CheckedStructure & cs, const CheckedStructure & tag_cs, const char *attr_name)
 {
     auto union_container_identity = static_cast<container_identity *>(cs.identity);
     CheckedStructure union_item_cs(union_container_identity->getItemType());
@@ -735,7 +736,7 @@ void Checker::dispatch_tagged_union_vector(const QueueItem & item, const QueueIt
 
         for (size_t i = 0; i < vec_union.second.count && i < vec_tag.second.count; i++)
         {
-            dispatch_tagged_union(QueueItem(item, i, vec_union.first), QueueItem(tag_item, i, vec_tag.first), union_item_cs, tag_item_cs);
+            dispatch_tagged_union(QueueItem(item, i, vec_union.first), QueueItem(tag_item, i, vec_tag.first), union_item_cs, tag_item_cs, attr_name);
             vec_union.first = PTR_ADD(vec_union.first, union_item_cs.identity->byte_size());
             vec_tag.first = PTR_ADD(vec_tag.first, tag_item_cs.identity->byte_size());
         }

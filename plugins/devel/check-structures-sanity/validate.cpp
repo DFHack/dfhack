@@ -390,6 +390,11 @@ const std::string *Checker::validate_stl_string_pointer(const void *const* base)
 
 const char *const *Checker::get_enum_item_key(enum_identity *identity, int64_t value)
 {
+    return get_enum_item_attr_or_key(identity, value, nullptr);
+}
+
+const char *const *Checker::get_enum_item_attr_or_key(enum_identity *identity, int64_t value, const char *attr_name)
+{
     size_t index;
     if (auto cplx = identity->getComplex())
     {
@@ -407,6 +412,27 @@ const char *const *Checker::get_enum_item_key(enum_identity *identity, int64_t v
             return nullptr;
         }
         index = value - identity->getFirstItem();
+    }
+
+    if (attr_name)
+    {
+        auto attrs = identity->getAttrs();
+        auto attr_type = identity->getAttrType();
+        if (!attrs || !attr_type)
+        {
+            return nullptr;
+        }
+
+        attrs = PTR_ADD(attrs, attr_type->byte_size() * index);
+        for (auto field = attr_type->getFields(); field->mode != struct_field_info::END; field++)
+        {
+            if (!strcmp(field->name, attr_name))
+            {
+                return reinterpret_cast<const char *const *>(PTR_ADD(attrs, field->offset));
+            }
+        }
+
+        return nullptr;
     }
 
     return &identity->getKeys()[index];

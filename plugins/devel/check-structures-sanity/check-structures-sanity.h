@@ -117,6 +117,7 @@ public:
     const std::string *validate_stl_string_pointer(const void *const*);
 #endif
     static const char *const *get_enum_item_key(enum_identity *identity, int64_t value);
+    static const char *const *get_enum_item_attr_or_key(enum_identity *identity, int64_t value, const char *attr_name);
 
 private:
     color_ostream & fail(int, const QueueItem &, const CheckedStructure &);
@@ -134,8 +135,8 @@ private:
     void dispatch_class(const QueueItem &, const CheckedStructure &);
     void dispatch_buffer(const QueueItem &, const CheckedStructure &);
     void dispatch_stl_ptr_vector(const QueueItem &, const CheckedStructure &);
-    void dispatch_tagged_union(const QueueItem &, const QueueItem &, const CheckedStructure &, const CheckedStructure &);
-    void dispatch_tagged_union_vector(const QueueItem &, const QueueItem &, const CheckedStructure &, const CheckedStructure &);
+    void dispatch_tagged_union(const QueueItem &, const QueueItem &, const CheckedStructure &, const CheckedStructure &, const char *);
+    void dispatch_tagged_union_vector(const QueueItem &, const QueueItem &, const CheckedStructure &, const CheckedStructure &, const char *);
     void dispatch_untagged_union(const QueueItem &, const CheckedStructure &);
     void check_unknown_pointer(const QueueItem &);
     void check_stl_vector(const QueueItem &, type_identity *, type_identity *);

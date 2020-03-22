@@ -27,6 +27,7 @@ public class import_df_structures extends GhidraScript
 	private CodeGen codegen;
 	private Symbols symbols;
 	private SymbolTable symbolTable;
+	private ghidra.program.model.symbol.SymbolTable symtab;
 	private DataTypeManager dtm;
 	private Category dtc, dtcStd, dtcEnums, dtcVTables, dtcVMethods;
 	private DataType dtUint8, dtUint16, dtUint32, dtUint64;
@@ -167,6 +168,12 @@ public class import_df_structures extends GhidraScript
 	private void createStdDataTypes() throws Exception
 	{
 		updateProgressMajor("erasing existing data types...");
+		symtab = currentProgram.getSymbolTable();
+		var dfNamespace = symtab.getNamespace("df", currentProgram.getGlobalNamespace());
+		if (dfNamespace != null)
+		{
+			dfNamespace.getSymbol().delete();
+		}
 		dtm = currentProgram.getDataTypeManager();
 		dtm.getRootCategory().removeCategory("df", monitor);
 		dtc = dtm.createCategory(new CategoryPath("/df"));
@@ -423,6 +430,7 @@ public class import_df_structures extends GhidraScript
 		public String inheritsFrom;
 		public String baseType;
 		public String meta = "";
+		@SuppressWarnings("unused")
 		public String subtype = "";
 		public boolean isUnion;
 		public boolean hasSubClasses;
@@ -554,8 +562,6 @@ public class import_df_structures extends GhidraScript
 		public long binaryTimestamp;
 		public boolean hasMD5Hash;
 		public String md5Hash;
-		public boolean hasOSType;
-		public String osType;
 		public final List<VTableAddress> vtables = new ArrayList<>();
 		public final List<GlobalAddress> globals = new ArrayList<>();
 
@@ -819,9 +825,7 @@ public class import_df_structures extends GhidraScript
 							// ignore
 							break;
 						case "os-type":
-							st = (SymbolTable)stack.peek();
-							st.hasOSType = true;
-							st.osType = reader.getAttributeValue(i);
+							// ignore (symbols)
 							break;
 						case "offset":
 							vta = (SymbolTable.VTableAddress)stack.peek();
@@ -1201,7 +1205,7 @@ public class import_df_structures extends GhidraScript
 		return createDataType(dtc, st);
 	}
 
-	private DataType createMethodDataType(String name, TypeDef.VMethod vm) throws Exception
+	private DataType createMethodDataType(String name, TypeDef t, TypeDef.VMethod vm) throws Exception
 	{
 		var ft = new FunctionDefinitionDataType(name);
 		ft.setGenericCallingConvention(GenericCallingConvention.thiscall);
@@ -1211,7 +1215,8 @@ public class import_df_structures extends GhidraScript
 		else if (!vm.hasAnonName)
 			ft.setReturnType(DataType.VOID);
 
-		var args = new ParameterDefinition[vm.arguments.size()];
+		var args = new ParameterDefinition[vm.arguments.size() + 1];
+		args[0] = new ParameterDefinitionImpl("this", dtm.getPointer(createDataType(t), currentProgram.getDefaultPointerSize()), null);
 		for (int i = 0; i < vm.arguments.size(); i++)
 		{
 			var arg = vm.arguments.get(i);
@@ -1220,7 +1225,7 @@ public class import_df_structures extends GhidraScript
 				aname = arg.name;
 			else if (arg.hasAnonName)
 				aname = arg.anonName;
-			args[i] = new ParameterDefinitionImpl(aname, getDataType(arg), null);
+			args[i + 1] = new ParameterDefinitionImpl(aname, getDataType(arg), null);
 		}
 		ft.setArguments(args);
 
@@ -1253,7 +1258,7 @@ public class import_df_structures extends GhidraScript
 				if (baseClassPadding == 1)
 				{
 					// GCC
-					var mt = dtm.getPointer(createMethodDataType(name + "::" + mname, vm), currentProgram.getDefaultPointerSize());
+					var mt = dtm.getPointer(createMethodDataType(name + "::" + mname, t, vm), currentProgram.getDefaultPointerSize());
 					st.add(mt, mname, null);
 					st.add(mt, mname + "(deleting)", null);
 				}
@@ -1269,7 +1274,7 @@ public class import_df_structures extends GhidraScript
 						arg.name = "deleting";
 						vm.arguments.add(arg);
 					}
-					var mt = dtm.getPointer(createMethodDataType(name + "::" + mname, vm), currentProgram.getDefaultPointerSize());
+					var mt = dtm.getPointer(createMethodDataType(name + "::" + mname, t, vm), currentProgram.getDefaultPointerSize());
 					st.add(mt, mname, null);
 				}
 				continue;
@@ -1279,7 +1284,7 @@ public class import_df_structures extends GhidraScript
 				mname = vm.name;
 			else if (vm.hasAnonName)
 				mname = name + "_" + vm.anonName;
-			st.add(dtm.getPointer(createMethodDataType(name + "::" + mname, vm), currentProgram.getDefaultPointerSize()), mname, null);
+			st.add(dtm.getPointer(createMethodDataType(name + "::" + mname, t, vm), currentProgram.getDefaultPointerSize()), mname, null);
 		}
 
 		return createDataType(dtcVTables, st);
@@ -1381,8 +1386,6 @@ public class import_df_structures extends GhidraScript
 
 	private void labelVMethods(Address addr, GhidraClass cls, Structure st) throws Exception
 	{
-		var symtab = currentProgram.getSymbolTable();
-
 		for (var field : st.getComponents())
 		{
 			if ("_super".equals(field.getFieldName()))
@@ -1422,8 +1425,16 @@ public class import_df_structures extends GhidraScript
 				func.setParentNamespace(cls);
 				var ret = new ReturnParameterImpl(funcType.getReturnType(), currentProgram);
 				var params = new ArrayList<Variable>();
+				boolean first = true;
 				for (var arg : funcType.getArguments())
+				{
+					if (first)
+					{
+						first = false;
+						continue;
+					}
 					params.add(new ParameterImpl(arg.getName(), arg.getDataType(), currentProgram));
+				}
 
 				func.updateFunction("__thiscall", ret, params, Function.FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, true, SourceType.IMPORTED);
 			}

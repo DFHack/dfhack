@@ -122,6 +122,7 @@ public class import_df_structures extends GhidraScript
 			nodeBase.add(dtm.getPointer(node, currentProgram.getDefaultPointerSize()), "_M_parent", null);
 			nodeBase.add(dtm.getPointer(node, currentProgram.getDefaultPointerSize()), "_M_left", null);
 			nodeBase.add(dtm.getPointer(node, currentProgram.getDefaultPointerSize()), "_M_right", null);
+			node.add(nodeBase, "_M_base", null);
 
 			set.add(nodeBase, "_M_header", null);
 		}
@@ -138,7 +139,6 @@ public class import_df_structures extends GhidraScript
 			set.add(dtm.getPointer(node, currentProgram.getDefaultPointerSize()), "_Myhead", null);
 		}
 
-		node.add(nodeBase, "_M_base", null);
 		node.add(target, "_M_value_field", null);
 
 		set.add(dtSizeT, "_M_node_count", null);
@@ -1126,7 +1126,7 @@ public class import_df_structures extends GhidraScript
 			if (f.hasCount)
 				return new ArrayDataType(getDataType(f.item), f.count, 0);
 			var enumItems = codegen.typesByName.get(f.indexEnum).enumItems;
-			return new ArrayDataType(getDataType(f.item), (int)enumItems.get(enumItems.size() - 1).value + 1, 0);
+			return new ArrayDataType(getDataType(f.item), enumItems.size() + (int)enumItems.get(0).value, 0);
 		case "bytes":
 			switch (f.subtype)
 			{

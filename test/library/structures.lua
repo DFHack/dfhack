@@ -21,3 +21,13 @@ function test.overlappingGlobals()
         expect.true_(prev.last < cur.first, "global variable " .. prev.name .. " overlaps global variable " .. cur.name)
     end
 end
+
+function test.viewscreenDtors()
+    for name, type in pairs(df) do
+        if name:startswith('viewscreen') then
+            print('testing', name)
+            v = type:new()
+            expect.true_(v:delete(), "destructor returned false: " .. name)
+        end
+    end
+end

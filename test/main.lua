@@ -1,8 +1,16 @@
+local json = require 'json'
 local script = require 'gui.script'
 local utils = require 'utils'
 
 local args = {...}
 local done_command = args[1]
+
+local STATUS_FILE = 'test_status.json'
+local TestStatus = {
+    PENDING = 'pending',
+    PASSED = 'passed',
+    FAILED = 'failed',
+}
 
 expect = {}
 function expect.true_(value, comment)
@@ -78,18 +86,17 @@ function get_test_files()
     return files
 end
 
-function set_test_stage(stage)
-    local f = io.open('test_stage.txt', 'w')
-    f:write(stage)
-    f:close()
+function load_test_status()
+    if dfhack.filesystem.isfile(STATUS_FILE) then
+        return json.decode_file(STATUS_FILE)
+    end
 end
 
-function finish_tests(ok)
-    if ok then
-        print('Tests finished')
-    else
-        dfhack.printerr('Tests failed!')
-    end
+function save_test_status(status)
+    json.encode_file(status, STATUS_FILE)
+end
+
+function finish_tests()
     if done_command then
         dfhack.run_command(done_command)
     end
@@ -122,9 +129,11 @@ function main()
         qerror('Could not find title screen')
     end
 
-    print('Running tests')
+    print('Loading tests')
+    local tests = {}
     for _, file in ipairs(files) do
-        print('Running file: ' .. file:sub(file:find('test'), -1))
+        local short_filename = file:sub(file:find('test'), -1)
+        print('Loading file: ' .. short_filename)
         local env, env_private = build_test_env()
         local code, err = loadfile(file, 't', env)
         if not code then
@@ -138,25 +147,49 @@ function main()
                 counts.file_errors = counts.file_errors + 1
                 dfhack.printerr('Error when running file: ' .. tostring(err))
             else
-                for name, test in pairs(env.test) do
-                    env_private.checks = 0
-                    env_private.checks_ok = 0
-                    counts.tests = counts.tests + 1
-                    local ok, err = pcall(test)
-                    if not ok then
-                        dfhack.printerr('test errored: ' .. name .. ': ' .. tostring(err))
-                        passed = false
-                    elseif env_private.checks ~= env_private.checks_ok then
-                        dfhack.printerr('test failed: ' .. name)
-                        passed = false
-                    else
-                        print('test passed: ' .. name)
-                        counts.tests_ok = counts.tests_ok + 1
-                    end
-                    counts.checks = counts.checks + (tonumber(env_private.checks) or 0)
-                    counts.checks_ok = counts.checks_ok + (tonumber(env_private.checks_ok) or 0)
+                for name, test_func in pairs(env.test) do
+                    local test_data = {
+                        full_name = short_filename .. ':' .. name,
+                        func = test_func,
+                        private = env_private,
+                    }
+                    test_data.name = test_data.full_name:gsub('test/', ''):gsub('.lua', '')
+                    table.insert(tests, test_data)
                 end
             end
+        end
+    end
+
+    local status = load_test_status() or {}
+    for _, test in pairs(tests) do
+        if not status[test.full_name] then
+            status[test.full_name] = TestStatus.PENDING
+        end
+    end
+
+    print('Running tests')
+    for _, test in pairs(tests) do
+        if status[test.full_name] == TestStatus.PENDING then
+            test.private.checks = 0
+            test.private.checks_ok = 0
+            counts.tests = counts.tests + 1
+            local ok, err = pcall(test.func)
+            local passed = false
+            if not ok then
+                dfhack.printerr('test errored: ' .. test.name .. ': ' .. tostring(err))
+            elseif test.private.checks ~= test.private.checks_ok then
+                dfhack.printerr('test failed: ' .. test.name)
+            else
+                print('test passed: ' .. test.name)
+                passed = true
+                counts.tests_ok = counts.tests_ok + 1
+            end
+            counts.checks = counts.checks + (tonumber(test.private.checks) or 0)
+            counts.checks_ok = counts.checks_ok + (tonumber(test.private.checks_ok) or 0)
+            status[test.full_name] = passed and TestStatus.PASSED or TestStatus.FAILED
+            save_test_status(status)
+        else
+            print('test skipped: ' .. test.name .. ' (state = ' .. status[test.full_name] .. ')')
         end
     end
 
@@ -165,8 +198,7 @@ function main()
     print(('%d/%d checks passed'):format(counts.checks_ok, counts.checks))
     print(('%d test files failed to load'):format(counts.file_errors))
 
-    set_test_stage(passed and 'done' or 'fail')
-    finish_tests(passed)
+    finish_tests()
 end
 
 script.start(main)

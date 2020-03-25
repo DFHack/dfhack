@@ -1,40 +1,104 @@
-import os, subprocess, sys
+import argparse
+import enum
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+
+parser = argparse.ArgumentParser()
+parser.add_argument('df_folder', help='DF base folder')
+parser.add_argument('--headless', action='store_true',
+    help='Run without opening DF window (requires non-Windows)')
+parser.add_argument('--keep-status', action='store_true',
+    help='Do not delete final status file')
+args = parser.parse_args()
 
 MAX_TRIES = 5
 
 dfhack = 'Dwarf Fortress.exe' if sys.platform == 'win32' else './dfhack'
-test_stage = 'test_stage.txt'
+test_status_file = 'test_status.json'
 
-def get_test_stage():
-    if os.path.isfile(test_stage):
-        return open(test_stage).read().strip()
-    return '0'
+class TestStatus(enum.Enum):
+    PENDING = 'pending'
+    PASSED = 'passed'
+    FAILED = 'failed'
+
+def get_test_status():
+    if os.path.isfile(test_status_file):
+        with open(test_status_file) as f:
+            return {k: TestStatus(v) for k, v in json.load(f).items()}
+
+def change_setting(content, setting, value):
+    return '[' + setting + ':' + value + ']\n' + re.sub(
+        r'\[' + setting + r':.+?\]', '(overridden)', content, flags=re.IGNORECASE)
 
 os.chdir(sys.argv[1])
-if os.path.exists(test_stage):
-    os.remove(test_stage)
+if os.path.exists(test_status_file):
+    os.remove(test_status_file)
 
-print(os.getcwd())
-print(os.listdir('.'))
+print('Backing up init.txt to init.txt.orig')
+init_txt_path = 'data/init/init.txt'
+shutil.copyfile(init_txt_path, init_txt_path + '.orig')
+with open(init_txt_path) as f:
+    init_contents = f.read()
+init_contents = change_setting(init_contents, 'INTRO', 'NO')
+init_contents = change_setting(init_contents, 'SOUND', 'NO')
+init_contents = change_setting(init_contents, 'WINDOWED', 'YES')
+init_contents = change_setting(init_contents, 'WINDOWEDX', '80')
+init_contents = change_setting(init_contents, 'WINDOWEDY', '25')
+init_contents = change_setting(init_contents, 'FPS', 'YES')
+if args.headless:
+    init_contents = change_setting(init_contents, 'PRINT_MODE', 'TEXT')
 
-tries = 0
-while True:
-    tries += 1
-    stage = get_test_stage()
-    print('Run #%i: stage=%s' % (tries, get_test_stage()))
-    if stage == 'done':
-        print('Done!')
-        os.remove(test_stage)
-        sys.exit(0)
-    elif stage == 'fail':
-        print('Failed!')
-        os.remove(test_stage)
-        sys.exit(1)
-    if tries > MAX_TRIES:
-        print('Too many tries - aborting')
-        sys.exit(1)
+test_init_file = 'dfhackzzz_test.init'  # Core sorts these alphabetically
+with open(test_init_file, 'w') as f:
+    f.write('''
+    devel/dump-rpc dfhack-rpc.txt
+    :lua dfhack.internal.addScriptPath(dfhack.getHackPath())
+    test/main "lua scr.breakdown_level=df.interface_breakdown_types.QUIT"
+    ''')
 
-    process = subprocess.Popen([dfhack], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-    process.communicate()
-    if process.returncode != 0:
-        print('DF exited with ' + repr(process.returncode))
+try:
+    with open(init_txt_path, 'w') as f:
+        f.write(init_contents)
+
+    tries = 0
+    while True:
+        status = get_test_status()
+        if status is not None:
+            if all(s is not TestStatus.PENDING for s in status.values()):
+                print('Done!')
+                break
+        elif tries > 0:
+            print('ERROR: Could not read status file')
+            sys.exit(2)
+
+        tries += 1
+        print('Starting DF: #%i' % (tries))
+        if tries > MAX_TRIES:
+            print('ERROR: Too many tries - aborting')
+            sys.exit(1)
+
+        if args.headless:
+            os.environ['DFHACK_HEADLESS'] = '1'
+            os.environ['DFHACK_DISABLE_CONSOLE'] = '1'
+
+        process = subprocess.Popen([dfhack],
+            stdin=subprocess.PIPE if args.headless else sys.stdin,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
+        _, err = process.communicate()
+        if err:
+            print('WARN: DF produced stderr: ' + repr(err[:5000]))
+        if process.returncode != 0:
+            print('WARN: DF exited with ' + repr(process.returncode))
+finally:
+    print('\nRestoring original init.txt')
+    shutil.copyfile(init_txt_path + '.orig', init_txt_path)
+    if os.path.isfile(test_init_file):
+        os.remove(test_init_file)
+    if not args.keep_status and os.path.isfile(test_status_file):
+        os.remove(test_status_file)
+    print('Cleanup done')

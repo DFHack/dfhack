@@ -34,7 +34,7 @@ def change_setting(content, setting, value):
     return '[' + setting + ':' + value + ']\n' + re.sub(
         r'\[' + setting + r':.+?\]', '(overridden)', content, flags=re.IGNORECASE)
 
-os.chdir(sys.argv[1])
+os.chdir(args.df_folder)
 if os.path.exists(test_status_file):
     os.remove(test_status_file)
 

@@ -858,6 +858,7 @@ bool Console::shutdown(void)
 {
     if(!d)
         return true;
+    d->reset_color();
     lock_guard <recursive_mutex> g(*wlock);
     close(d->exit_pipe[1]);
     if (d->state != Private::con_lineedit)

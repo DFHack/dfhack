@@ -23,6 +23,18 @@ void init() {
     initialized = true;
 }
 
+#ifdef _WIN32
+static int posix_memalign(void **ptr, size_t alignment, size_t size)
+{
+    if ((*ptr = _aligned_malloc(size, alignment)))
+    {
+        return 0;
+    }
+
+    return errno;
+}
+#endif
+
 void* alloc(size_t n) {
     if (!initialized) {
         init();

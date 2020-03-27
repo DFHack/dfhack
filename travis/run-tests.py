@@ -70,9 +70,9 @@ try:
     while True:
         status = get_test_status()
         if status is not None:
-            if all(s is not TestStatus.PENDING for s in status.values()):
+            if all(s != TestStatus.PENDING for s in status.values()):
                 print('Done!')
-                break
+                sys.exit(int(any(s != TestStatus.PASSED for s in status.values())))
         elif tries > 0:
             print('ERROR: Could not read status file')
             sys.exit(2)

@@ -207,8 +207,8 @@ function main()
     print(('%d/%d tests passed'):format(counts.tests_ok, counts.tests))
     print(('%d/%d checks passed'):format(counts.checks_ok, counts.checks))
     print(('%d test files failed to load'):format(counts.file_errors))
-
-    finish_tests()
 end
 
-script.start(main)
+script.start(function()
+    dfhack.with_finalize(finish_tests, main)
+end)

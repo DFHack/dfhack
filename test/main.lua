@@ -27,6 +27,21 @@ end
 function expect.ne(a, b, comment)
     return a ~= b, comment, ('%s == %s'):format(a, b)
 end
+function expect.table_eq(a, b, comment)
+    local checked = {}
+    for k, v in pairs(a) do
+        if a[k] ~= b[k] then
+            return false, comment, ('key "%s": %s ~= %s'):format(k, a[k], b[k])
+        end
+        checked[k] = true
+    end
+    for k in pairs(b) do
+        if not checked[k] then
+            return false, comment, ('key "%s": %s ~= %s'):format(k, a[k], b[k])
+        end
+    end
+    return true
+end
 function expect.error(func, ...)
     local ok, ret = pcall(func, ...)
     if ok then

@@ -13,6 +13,8 @@ parser.add_argument('--headless', action='store_true',
     help='Run without opening DF window (requires non-Windows)')
 parser.add_argument('--keep-status', action='store_true',
     help='Do not delete final status file')
+parser.add_argument('--no-quit', action='store_true',
+    help='Do not quit DF when done')
 args = parser.parse_args()
 
 MAX_TRIES = 5
@@ -57,8 +59,8 @@ with open(test_init_file, 'w') as f:
     f.write('''
     devel/dump-rpc dfhack-rpc.txt
     :lua dfhack.internal.addScriptPath(dfhack.getHackPath())
-    test/main "lua scr.breakdown_level=df.interface_breakdown_types.QUIT"
-    ''')
+    test/main "lua scr.breakdown_level=df.interface_breakdown_types.%s"
+    ''' % ('NONE' if args.no_quit else 'QUIT'))
 
 try:
     with open(init_txt_path, 'w') as f:

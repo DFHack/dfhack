@@ -27,6 +27,18 @@ end
 function expect.ne(a, b, comment)
     return a ~= b, comment, ('%s == %s'):format(a, b)
 end
+function expect.lt(a, b, comment)
+    return a < b, comment, ('%s >= %s'):format(a, b)
+end
+function expect.le(a, b, comment)
+    return a <= b, comment, ('%s > %s'):format(a, b)
+end
+function expect.gt(a, b, comment)
+    return a > b, comment, ('%s <= %s'):format(a, b)
+end
+function expect.ge(a, b, comment)
+    return a >= b, comment, ('%s < %s'):format(a, b)
+end
 function expect.table_eq(a, b, comment)
     local checked = {}
     for k, v in pairs(a) do

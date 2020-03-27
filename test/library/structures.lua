@@ -18,7 +18,7 @@ function test.overlappingGlobals()
         local prev = globals[i - 1]
         local cur = globals[i]
 
-        expect.true_(prev.last < cur.first, "global variable " .. prev.name .. " overlaps global variable " .. cur.name)
+        expect.lt(prev.last, cur.first, "global variable " .. prev.name .. " overlaps global variable " .. cur.name)
     end
 end
 

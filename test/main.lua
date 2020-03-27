@@ -12,6 +12,8 @@ local TestStatus = {
     FAILED = 'failed',
 }
 
+local VALID_MODES = utils.invert{'none', 'fortress'}
+
 expect = {}
 function expect.true_(value, comment)
     return not not value, comment, 'expected true'
@@ -42,6 +44,9 @@ end
 function build_test_env()
     local env = {
         test = utils.OrderedTable(),
+        config = {
+            mode = 'none',
+        },
         expect = {},
         delay = delay,
     }
@@ -116,11 +121,16 @@ function load_tests(file, tests)
             dfhack.printerr('Error when running file: ' .. tostring(err))
             return false
         else
+            if not VALID_MODES[env.config.mode] then
+                dfhack.printerr('Invalid config.mode: ' .. env.config.mode)
+                return false
+            end
             for name, test_func in pairs(env.test) do
                 local test_data = {
                     full_name = short_filename .. ':' .. name,
                     func = test_func,
                     private = env_private,
+                    config = env.config,
                 }
                 test_data.name = test_data.full_name:gsub('test/', ''):gsub('.lua', '')
                 table.insert(tests, test_data)

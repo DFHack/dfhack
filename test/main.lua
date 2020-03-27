@@ -141,28 +141,23 @@ function load_tests(file, tests)
 end
 
 function run_test(test, status, counts)
-    if status[test.full_name] == TestStatus.PENDING then
-        test.private.checks = 0
-        test.private.checks_ok = 0
-        counts.tests = counts.tests + 1
-        local ok, err = pcall(test.func)
-        local passed = false
-        if not ok then
-            dfhack.printerr('test errored: ' .. test.name .. ': ' .. tostring(err))
-        elseif test.private.checks ~= test.private.checks_ok then
-            dfhack.printerr('test failed: ' .. test.name)
-        else
-            print('test passed: ' .. test.name)
-            passed = true
-            counts.tests_ok = counts.tests_ok + 1
-        end
-        counts.checks = counts.checks + (tonumber(test.private.checks) or 0)
-        counts.checks_ok = counts.checks_ok + (tonumber(test.private.checks_ok) or 0)
-        status[test.full_name] = passed and TestStatus.PASSED or TestStatus.FAILED
-        save_test_status(status)
+    test.private.checks = 0
+    test.private.checks_ok = 0
+    counts.tests = counts.tests + 1
+    local ok, err = pcall(test.func)
+    local passed = false
+    if not ok then
+        dfhack.printerr('test errored: ' .. test.name .. ': ' .. tostring(err))
+    elseif test.private.checks ~= test.private.checks_ok then
+        dfhack.printerr('test failed: ' .. test.name)
     else
-        print('test skipped: ' .. test.name .. ' (state = ' .. status[test.full_name] .. ')')
+        print('test passed: ' .. test.name)
+        passed = true
+        counts.tests_ok = counts.tests_ok + 1
     end
+    counts.checks = counts.checks + (tonumber(test.private.checks) or 0)
+    counts.checks_ok = counts.checks_ok + (tonumber(test.private.checks_ok) or 0)
+    return passed
 end
 
 function main()
@@ -201,16 +196,23 @@ function main()
         end
     end
 
+    print('Filtering tests')
     local status = load_test_status() or {}
-    for _, test in pairs(tests) do
+    for i = #tests, 1, -1 do
+        local test = tests[i]
         if not status[test.full_name] then
             status[test.full_name] = TestStatus.PENDING
+        elseif status[test.full_name] ~= TestStatus.PENDING then
+            print('skipping test: ' .. test.name .. ': state = ' .. status[test.full_name] .. ')')
+            table.remove(tests, i)
         end
     end
 
-    print('Running tests')
+    print('Running ' .. #tests .. ' tests')
     for _, test in pairs(tests) do
-        run_test(test, status, counts)
+        local passed = run_test(test, status, counts)
+        status[test.full_name] = passed and TestStatus.PASSED or TestStatus.FAILED
+        save_test_status(status)
     end
 
     print('\nTest summary:')

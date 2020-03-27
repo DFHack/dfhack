@@ -48,6 +48,12 @@ $HOME/$RC to affect future DFHack installations:
 EOF
 fi
 
+if [ ! -t 0 ]; then
+    stty() {
+        return
+    }
+fi
+
 # Save current terminal settings
 old_tty_settings=$(stty -g)
 

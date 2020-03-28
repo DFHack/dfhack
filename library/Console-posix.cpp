@@ -840,6 +840,12 @@ bool Console::init(bool dont_redirect)
         if (!freopen("stdout.log", "w", stdout))
             ;
         d->dfout_C = fopen("/dev/tty", "w");
+        if (!d->dfout_C)
+        {
+            fprintf(stderr, "could not open tty\n");
+            d->dfout_C = fopen("/dev/stdout", "w");
+            return false;
+        }
     }
     std::cin.tie(this);
     clear();

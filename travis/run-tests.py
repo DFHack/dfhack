@@ -99,7 +99,7 @@ try:
         if err:
             print('WARN: DF produced stderr: ' + repr(err[:5000]))
         if process.returncode != 0:
-            print('WARN: DF exited with ' + repr(process.returncode))
+            print('ERROR: DF exited with ' + repr(process.returncode))
 finally:
     print('\nRestoring original init.txt')
     shutil.copyfile(init_txt_path + '.orig', init_txt_path)

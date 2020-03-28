@@ -17,6 +17,10 @@ parser.add_argument('--no-quit', action='store_true',
     help='Do not quit DF when done')
 args = parser.parse_args()
 
+if (not sys.stdin.isatty() or not sys.stdout.isatty() or not sys.stderr.isatty()) and not args.headless:
+    print('WARN: no TTY detected, enabling headless mode')
+    args.headless = True
+
 MAX_TRIES = 5
 
 dfhack = 'Dwarf Fortress.exe' if sys.platform == 'win32' else './dfhack'

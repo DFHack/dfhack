@@ -413,7 +413,6 @@ file(WRITE "${CMAKE_BINARY_DIR}/dfhack_setarch.txt" ${DFHACK_SETARCH})
 install(FILES "${CMAKE_BINARY_DIR}/dfhack_setarch.txt" DESTINATION "${DFHACK_DATA_DESTINATION}")
 
 install(DIRECTORY dfhack-config/ DESTINATION dfhack-config/default)
-install(DIRECTORY test DESTINATION "${DFHACK_DATA_DESTINATION}")
 
 # build the plugins
 if(BUILD_PLUGINS)

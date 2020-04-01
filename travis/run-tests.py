@@ -15,11 +15,18 @@ parser.add_argument('--keep-status', action='store_true',
     help='Do not delete final status file')
 parser.add_argument('--no-quit', action='store_true',
     help='Do not quit DF when done')
+parser.add_argument('--test-dir', '--test-folder',
+    help='Base test folder (default: df_folder/test)')
 args = parser.parse_args()
 
 if (not sys.stdin.isatty() or not sys.stdout.isatty() or not sys.stderr.isatty()) and not args.headless:
     print('WARN: no TTY detected, enabling headless mode')
     args.headless = True
+
+if args.test_dir is not None:
+    args.test_dir = os.path.normpath(os.path.join(os.getcwd(), args.test_dir))
+    if not os.path.isdir(args.test_dir):
+        print('ERROR: invalid test folder: %r' % args.test_dir)
 
 MAX_TRIES = 5
 
@@ -65,6 +72,12 @@ with open(test_init_file, 'w') as f:
     :lua dfhack.internal.addScriptPath(dfhack.getHackPath())
     test/main "lua scr.breakdown_level=df.interface_breakdown_types.%s"
     ''' % ('NONE' if args.no_quit else 'QUIT'))
+
+test_config_file = 'test_config.json'
+with open(test_config_file, 'w') as f:
+    json.dump({
+        'test_dir': args.test_dir,
+    }, f)
 
 try:
     with open(init_txt_path, 'w') as f:

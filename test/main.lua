@@ -5,6 +5,7 @@ local utils = require 'utils'
 local args = {...}
 local done_command = args[1]
 
+local CONFIG_FILE = 'test_config.json'
 local STATUS_FILE = 'test_status.json'
 local TestStatus = {
     PENDING = 'pending',
@@ -68,6 +69,22 @@ function delay(frames)
     script.sleep(frames, 'frames')
 end
 
+function load_test_config(config_file)
+    local config = {}
+    if dfhack.filesystem.isfile(config_file) then
+        config = json.decode_file(config_file)
+    end
+
+    if not config.test_dir then
+        config.test_dir = dfhack.getHackPath() .. 'scripts/test'
+    end
+    if not dfhack.filesystem.isdir(config.test_dir) then
+        error('Invalid test folder: ' .. config.test_dir)
+    end
+
+    return config
+end
+
 function build_test_env()
     local env = {
         test = utils.OrderedTable(),
@@ -107,9 +124,9 @@ function build_test_env()
     return env, private
 end
 
-function get_test_files()
+function get_test_files(test_dir)
     local files = {}
-    for _, entry in ipairs(dfhack.filesystem.listdir_recursive(dfhack.getHackPath() .. 'test')) do
+    for _, entry in ipairs(dfhack.filesystem.listdir_recursive(test_dir)) do
         if not entry.isdir and not entry.path:match('main.lua') then
             table.insert(files, entry.path)
         end
@@ -188,7 +205,8 @@ function run_test(test, status, counts)
 end
 
 function main()
-    local files = get_test_files()
+    local config = load_test_config(CONFIG_FILE)
+    local files = get_test_files(config.test_dir)
 
     local counts = {
         tests = 0,

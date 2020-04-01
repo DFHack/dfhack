@@ -242,6 +242,17 @@ function main()
     end
 
     print('Filtering tests')
+    if config.tests then
+        local orig_length = #tests
+        for i = #tests, 1, -1 do
+            for _, pattern in pairs(config.tests) do
+                if not tests[i].name:match(pattern) then
+                    table.remove(tests, i)
+                end
+            end
+        end
+        print('Selected tests: ' .. #tests .. '/' .. orig_length)
+    end
     local status = load_test_status() or {}
     for i = #tests, 1, -1 do
         local test = tests[i]

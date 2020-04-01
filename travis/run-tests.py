@@ -17,6 +17,8 @@ parser.add_argument('--no-quit', action='store_true',
     help='Do not quit DF when done')
 parser.add_argument('--test-dir', '--test-folder',
     help='Base test folder (default: df_folder/test)')
+parser.add_argument('-t', '--test', dest='tests', nargs='+',
+    help='Test(s) to run (Lua patterns accepted)')
 args = parser.parse_args()
 
 if (not sys.stdin.isatty() or not sys.stdout.isatty() or not sys.stderr.isatty()) and not args.headless:
@@ -77,6 +79,7 @@ test_config_file = 'test_config.json'
 with open(test_config_file, 'w') as f:
     json.dump({
         'test_dir': args.test_dir,
+        'tests': args.tests,
     }, f)
 
 try:

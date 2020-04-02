@@ -33,8 +33,25 @@ DFhackCExport command_result plugin_init(color_ostream &, std::vector<PluginComm
     return CR_OK;
 }
 
+bool check_malloc_perturb()
+{
+    struct T_test {
+        int32_t data[1024];
+    };
+    auto test = new T_test;
+    bool ret = (test->data[0] == 0xd2d2d2d2);
+    delete test;
+    return ret;
+}
+
 static command_result command(color_ostream & out, std::vector<std::string> & parameters)
 {
+    if (!check_malloc_perturb())
+    {
+        out.printerr("check-structures-sanity: MALLOC_PERTURB_ not set, cannot continue\n");
+        return CR_FAILURE;
+    }
+
     CoreSuspender suspend;
 
     Checker checker(out);

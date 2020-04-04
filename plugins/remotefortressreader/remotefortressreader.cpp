@@ -1701,7 +1701,7 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
         {
             if (auto identity = Units::getIdentity(unit))
             {
-                if (identity->histfig_id < 0)
+                if (identity->histfig_nemesis_id < 0)
                     birth_time = identity->birth_year * year_ticks + identity->birth_second;
             }
         }

@@ -33,10 +33,13 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ================================================================================
 ======== IMPORTANT: rename this, and add a new "future" section, BEFORE ========
-======== making a new DFHack release!                                   ========
+======== making a new DFHack release, even if the only changes made     ========
+======== were in submodules with their own changelogs!                  ========
 ================================================================================
 
 # Future
+
+# 0.47.04-beta1
 
 ## Misc Improvements
 - `embark-assistant`:
@@ -45,6 +48,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
     - updated aquifer search criteria to handle the new variation
     - added search criteria for embark initial tree cover
     - added search criteria for necro tower count, neighbor civ count, and specific neighbors. Should handle additional entities, but not tested
+
+## Internals
+- Improved support for tagged unions, allowing tools to access union fields more safely
 
 # 0.47.03-beta1
 

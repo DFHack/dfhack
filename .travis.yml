@@ -15,6 +15,7 @@ addons:
       - libxml-libxslt-perl
       - ninja-build
       - zlib1g-dev
+      - astyle
 matrix:
   include:
     - env: GCC_VERSION=4.8

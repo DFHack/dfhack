@@ -13,6 +13,9 @@ struct embark_profile_name_hook : df::viewscreen_setupdwarfgamest {
         if( in_save_profile && ch >= 33 && ch <= 126 ) {
             profile_name.push_back( ( char )ch );
         } else {
+            if( input->count( df::interface_key::LEAVESCREEN ) ) {
+                input->insert( df::interface_key::SETUPGAME_SAVE_PROFILE_ABORT );
+            }
             INTERPOSE_NEXT( feed )( input );
         }
     }

@@ -82,6 +82,7 @@ Matt Regul              mattregul
 Matthew Cline
 Matthew Lindner         mlindner
 Max                     maxthyme                Max^TM
+McArcady                McArcady
 melkor217               melkor217
 Meneth32
 Meph

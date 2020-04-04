@@ -41,7 +41,15 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # 0.47.04-beta1
 
+## Fixes
+- Fixed a crash when starting DFHack in headless mode with no terminal
+
 ## Misc Improvements
+- Added "bit" suffix to downloads (e.g. 64-bit)
+- Tests:
+    - moved from DF folder to hack/scripts folder, and disabled installation by default
+    - made test runner script more flexible
+- `dfhack-run`: added color output support
 - `embark-assistant`:
     - updated embark aquifer info to show all aquifer kinds present
     - added neighbor display, including kobolds (SKULKING) and necro tower count
@@ -51,6 +59,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Internals
 - Improved support for tagged unions, allowing tools to access union fields more safely
+- Added separate changelogs in the scripts and df-structures repos
+- Moved ``reversing`` scripts to df_misc repo
 
 # 0.47.03-beta1
 

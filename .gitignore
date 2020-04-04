@@ -51,6 +51,9 @@ build/CPack*Config.cmake
 *.swp
 .vimrc
 
+# VSCode files
+.vscode
+
 # ctags file
 tags
 

@@ -36,7 +36,7 @@ DFhackCExport command_result plugin_init(color_ostream &, std::vector<PluginComm
 bool check_malloc_perturb()
 {
     struct T_test {
-        int32_t data[1024];
+        uint32_t data[1024];
     };
     auto test = new T_test;
     bool ret = (test->data[0] == 0xd2d2d2d2);

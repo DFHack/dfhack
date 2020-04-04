@@ -150,6 +150,7 @@ thefriendlyhacker       thefriendlyhacker
 TheHologram             TheHologram
 therahedwig             therahedwig
 ThiagoLira              ThiagoLira
+thurin                  thurin
 Tim Walberg             twalberg
 Timothy Collett         danaris
 Timur Kelman            TymurGubayev

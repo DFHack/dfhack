@@ -17,10 +17,13 @@ local VALID_MODES = utils.invert{'none', 'title', 'fortress'}
 
 expect = {}
 function expect.true_(value, comment)
-    return not not value, comment, 'expected true'
+    return not not value, comment, 'expected true, got ' .. tostring(value)
 end
 function expect.false_(value, comment)
-    return not value, comment, 'expected false'
+    return not value, comment, 'expected false, got ' .. tostring(value)
+end
+function expect.nil_(value, comment)
+    return value == nil, comment, 'expected nil, got ' .. tostring(value)
 end
 function expect.eq(a, b, comment)
     return a == b, comment, ('%s ~= %s'):format(a, b)

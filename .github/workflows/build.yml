@@ -1,0 +1,43 @@
+name: Build and test
+
+on: [push, pull_request]
+
+jobs:
+  setup:
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt install \
+            libsdl-image1.2-dev \
+            libsdl-ttf2.0-dev \
+            libsdl1.2-dev \
+            libxml-libxml-perl \
+            libxml-libxslt-perl \
+            lua5.3 \
+            ninja-build \
+            zlib1g-dev
+        sudo pip3 install --system sphinx
+    - name: Clone DFHack
+      uses: actions/checkout@v1
+    - name: Set up environment
+      run: |
+        export DF_VERSION=$(sh travis/get-df-version.sh)
+        export DF_FOLDER="$HOME/DF/$DF_VERSION/df_linux"
+    - name: Download DF
+      run: |
+        sh travis/download-df.sh
+    - name: Git information
+      run: |
+        sh travis/git-info.sh
+  docs:
+    needs: [setup]
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Build docs
+      run: |
+        sphinx-build -qW -j3 . docs/html
+    - uses: actions/upload-artifact@master
+      with:
+        name: docs
+        path: docs/html

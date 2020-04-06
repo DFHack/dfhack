@@ -1608,8 +1608,8 @@ static void RenderType(lua_State *state, compound_identity *node)
     lua_dup(state);
     lua_setfield(state, ix_meta, "__index");
 
-    // pairs table
-    lua_newtable(state);
+    // pairs table - reuse index table
+    lua_dup(state);
     int ptable = base+4;
 
     lua_pushvalue(state, ptable);

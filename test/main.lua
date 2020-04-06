@@ -22,6 +22,9 @@ end
 function expect.false_(value, comment)
     return not value, comment, 'expected false, got ' .. tostring(value)
 end
+function expect.fail(comment)
+    return false, comment or 'check failed, no reason provided'
+end
 function expect.nil_(value, comment)
     return value == nil, comment, 'expected nil, got ' .. tostring(value)
 end
@@ -65,6 +68,22 @@ function expect.error(func, ...)
     else
         return true
     end
+end
+function expect.pairs_contains(table, key, comment)
+    for k, v in pairs(table) do
+        if k == key then
+            return true
+        end
+    end
+    return false, comment, ('could not find key "%s" in table'):format(key)
+end
+function expect.not_pairs_contains(table, key, comment)
+    for k, v in pairs(table) do
+        if k == key then
+            return false, comment, ('found key "%s" in table'):format(key)
+        end
+    end
+    return true
 end
 
 function delay(frames)

@@ -68,6 +68,8 @@ namespace DFHack
         IDTYPE_UNION
     };
 
+    // pointer flags (bitfield), stored in the count field of struct_field_info
+    // if mode is POINTER.
     enum pointer_identity_flags {
         PTRFLAG_IS_ARRAY = 1,
         PTRFLAG_HAS_BAD_POINTERS = 2,
@@ -164,7 +166,12 @@ namespace DFHack
 
     // Bitfields
     struct bitfield_item_info {
+        // the name of the field, or null if the field is unnamed
         const char *name;
+        // size is positive for defined fields, zero for bits past the end
+        // of the field, and negative for padding on multi-bit fields
+        //
+        // ex. if bits[2].size is -2, then bits[0].size is at least 3
         int size;
     };
 

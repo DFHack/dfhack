@@ -8,7 +8,8 @@ jobs:
     steps:
     - name: Install dependencies
       run: |
-        sudo apt install \
+        sudo apt-get update
+        sudo apt-get install \
             libsdl-image1.2-dev \
             libsdl-ttf2.0-dev \
             libsdl1.2-dev \

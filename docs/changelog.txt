@@ -39,6 +39,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
+## Fixes
+- `tweak` embark-profile-name: fixed handling of the native shift+space key
+
+## Lua
+- ``pairs()`` now returns available class methods for DF types
+
 # 0.47.04-beta1
 
 ## Fixes

@@ -13,14 +13,20 @@ local TestStatus = {
     FAILED = 'failed',
 }
 
-local VALID_MODES = utils.invert{'none', 'fortress'}
+local VALID_MODES = utils.invert{'none', 'title', 'fortress'}
 
 expect = {}
 function expect.true_(value, comment)
-    return not not value, comment, 'expected true'
+    return not not value, comment, 'expected true, got ' .. tostring(value)
 end
 function expect.false_(value, comment)
-    return not value, comment, 'expected false'
+    return not value, comment, 'expected false, got ' .. tostring(value)
+end
+function expect.fail(comment)
+    return false, comment or 'check failed, no reason provided'
+end
+function expect.nil_(value, comment)
+    return value == nil, comment, 'expected nil, got ' .. tostring(value)
 end
 function expect.eq(a, b, comment)
     return a == b, comment, ('%s ~= %s'):format(a, b)
@@ -63,11 +69,52 @@ function expect.error(func, ...)
         return true
     end
 end
+function expect.pairs_contains(table, key, comment)
+    for k, v in pairs(table) do
+        if k == key then
+            return true
+        end
+    end
+    return false, comment, ('could not find key "%s" in table'):format(key)
+end
+function expect.not_pairs_contains(table, key, comment)
+    for k, v in pairs(table) do
+        if k == key then
+            return false, comment, ('found key "%s" in table'):format(key)
+        end
+    end
+    return true
+end
 
 function delay(frames)
     frames = frames or 1
     script.sleep(frames, 'frames')
 end
+
+function ensure_title_screen()
+    if df.viewscreen_titlest:is_instance(dfhack.gui.getCurViewscreen()) then
+        return
+    end
+    print('Looking for title screen...')
+    for i = 0, 100 do
+        local scr = dfhack.gui.getCurViewscreen()
+        if df.viewscreen_titlest:is_instance(scr) then
+            print('Found title screen')
+            break
+        else
+            scr:feed_key(df.interface_key.LEAVESCREEN)
+            delay(10)
+        end
+    end
+    if not df.viewscreen_titlest:is_instance(dfhack.gui.getCurViewscreen()) then
+        error('Could not find title screen')
+    end
+end
+
+local MODE_NAVIGATE_FNS = {
+    none = function() end,
+    title = ensure_title_screen,
+}
 
 function load_test_config(config_file)
     local config = {}
@@ -166,7 +213,7 @@ function load_tests(file, tests)
             return false
         else
             if not VALID_MODES[env.config.mode] then
-                dfhack.printerr('Invalid config.mode: ' .. env.config.mode)
+                dfhack.printerr('Invalid config.mode: ' .. tostring(env.config.mode))
                 return false
             end
             for name, test_func in pairs(env.test) do
@@ -182,6 +229,18 @@ function load_tests(file, tests)
         end
     end
     return true
+end
+
+function sort_tests(tests)
+    -- to make sort stable
+    local test_index = utils.invert(tests)
+    table.sort(tests, function(a, b)
+        if a.config.mode ~= b.config.mode then
+            return VALID_MODES[a.config.mode] < VALID_MODES[b.config.mode]
+        else
+            return test_index[a] < test_index[b]
+        end
+    end)
 end
 
 function run_test(test, status, counts)
@@ -217,20 +276,7 @@ function main()
     }
     local passed = true
 
-    print('Looking for title screen...')
-    for i = 0, 100 do
-        local scr = dfhack.gui.getCurViewscreen()
-        if df.viewscreen_titlest:is_instance(scr) then
-            print('Found title screen')
-            break
-        else
-            scr:feed_key(df.interface_key.LEAVESCREEN)
-            delay(10)
-        end
-    end
-    if not df.viewscreen_titlest:is_instance(dfhack.gui.getCurViewscreen()) then
-        qerror('Could not find title screen')
-    end
+    ensure_title_screen()
 
     print('Loading tests')
     local tests = {}
@@ -263,9 +309,11 @@ function main()
             table.remove(tests, i)
         end
     end
+    sort_tests(tests)
 
     print('Running ' .. #tests .. ' tests')
     for _, test in pairs(tests) do
+        MODE_NAVIGATE_FNS[test.config.mode]()
         local passed = run_test(test, status, counts)
         status[test.full_name] = passed and TestStatus.PASSED or TestStatus.FAILED
         save_test_status(status)

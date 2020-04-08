@@ -210,7 +210,7 @@ void Units::setNickname(df::unit *unit, std::string nick)
                 break;  //  We want the nickname to end up in the identity
 
             case df::identity_type::Unk_1:  // Guess, but that's how it worked in the past
-            case df::identity_type::Demon_Alias:
+            case df::identity_type::True_Name:
             case df::identity_type::Unk_4:  // Pure guess, as this is a new case, still unseen
                 id_hfig = df::historical_figure::find(identity->histfig_nemesis_id);
                 break;

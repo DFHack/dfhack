@@ -25,10 +25,11 @@ jobs:
         submodules: true
     - name: Set up environment
       run: |
-        export DF_VERSION=$(sh travis/get-df-version.sh)
-        export DF_FOLDER="$HOME/DF/$DF_VERSION/df_linux"
+        echo 'export DF_VERSION=$(sh travis/get-df-version.sh)' >> "$HOME/.dfhackrc"
+        echo 'export DF_FOLDER="$HOME/DF/$DF_VERSION/df_linux"' >> "$HOME/.dfhackrc"
     - name: Download DF
       run: |
+        source "$HOME/.dfhackrc"
         sh travis/download-df.sh
     - name: Git information
       run: |

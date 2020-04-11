@@ -3,7 +3,7 @@ name: Build and test
 on: [push, pull_request]
 
 jobs:
-  main:
+  build:
     runs-on: ubuntu-18.04
     steps:
     - name: Install dependencies
@@ -36,7 +36,32 @@ jobs:
     - name: Build docs
       run: |
         sphinx-build -qW -j3 . docs/html
-    - uses: actions/upload-artifact@master
+    - name: Upload docs
+      uses: actions/upload-artifact@master
       with:
         name: docs
         path: docs/html
+  lint:
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install \
+          lua5.3 \
+          ruby
+    - name: Check whitespace
+      run: |
+        python travis/lint.py
+    - name: Check Authors.rst
+      run: |
+        python travis/authors-rst.py
+    - name: Check for missing documentation
+      run: |
+        python travis/script-docs.py
+    - name: Check Lua syntax
+      run: |
+        python travis/script-syntax.py --ext=lua --cmd="luac5.3 -p"
+    - name: Check Ruby syntax
+      run: |
+        python travis/script-syntax.py --ext=rb --cmd="ruby -c"

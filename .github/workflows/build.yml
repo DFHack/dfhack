@@ -50,6 +50,10 @@ jobs:
         sudo apt-get install \
           lua5.3 \
           ruby
+    - name: Clone DFHack
+      uses: actions/checkout@v1
+      with:
+        submodules: true
     - name: Check whitespace
       run: |
         python travis/lint.py

@@ -903,10 +903,7 @@ void Console::add_text(color_value color, const std::string &text)
     if (inited)
         d->print_text(color, text);
     else
-    {
-        FILE *out = d->dfout_C ? d->dfout_C : stderr;
-        fwrite(text.data(), 1, text.size(), out);
-    }
+        fwrite(text.data(), 1, text.size(), stderr);
 }
 
 int Console::get_columns(void)

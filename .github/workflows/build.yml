@@ -42,6 +42,18 @@ jobs:
       with:
         name: docs
         path: docs/html
+    - name: Build DFHack
+      run: |
+        source "$HOME/.dfhackrc"
+        mkdir build-ci
+        cd build-ci
+        cmake .. \
+          -G Ninja \
+          -DDFHACK_BUILD_ARCH=64 \
+          -DBUILD_DOCS:BOOL=ON \
+          -DBUILD_TESTS:BOOL=ON \
+          -DCMAKE_INSTALL_PREFIX="$DF_FOLDER"
+        ninja install
   lint:
     runs-on: ubuntu-18.04
     steps:

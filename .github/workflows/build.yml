@@ -38,7 +38,7 @@ jobs:
       run: |
         sphinx-build -qW -j3 . docs/html
     - name: Upload docs
-      uses: actions/upload-artifact@master
+      uses: actions/upload-artifact@v1
       with:
         name: docs
         path: docs/html
@@ -54,6 +54,20 @@ jobs:
           -DBUILD_TESTS:BOOL=ON \
           -DCMAKE_INSTALL_PREFIX="$DF_FOLDER"
         ninja install
+    - name: Run tests
+      run: |
+        cd ..
+        mv "$DF_FOLDER"/dfhack.init-example "$DF_FOLDER"/dfhack.init
+        python travis/run-tests.py --headless --keep-status "$DF_FOLDER"
+        python travis/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt"
+        mkdir -p artifacts
+        cp "$DF_FOLDER/test_status.json" "$DF_FOLDER"/*.log artifacts
+    - name: Upload test artifacts
+      uses: actions/upload-artifact@v1
+      if: success() || failure()
+      with:
+        name: test-artifacts
+        path: artifacts
   lint:
     runs-on: ubuntu-18.04
     steps:

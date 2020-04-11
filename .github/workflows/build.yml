@@ -57,9 +57,8 @@ jobs:
     - name: Run tests
       run: |
         source "$HOME/.df-env"
-        export TERM=xterm
         mv "$DF_FOLDER"/dfhack.init-example "$DF_FOLDER"/dfhack.init
-        python travis/run-tests.py --headless --keep-status "$DF_FOLDER"
+        script -qe -c "python travis/run-tests.py --headless --keep-status \"$DF_FOLDER\""
         python travis/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt"
         mkdir -p artifacts
         cp "$DF_FOLDER/test_status.json" "$DF_FOLDER"/*.log artifacts

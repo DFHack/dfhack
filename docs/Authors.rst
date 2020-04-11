@@ -34,6 +34,7 @@ Clayton Hughes
 Clément Vuchener        cvuchener
 Dan Amlund              danamlund
 Daniel Brooks           db48x
+David                   Nilsolm
 David Corbett           dscorbett
 David Seguin            dseguin
 David Timm              dtimm

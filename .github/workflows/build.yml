@@ -21,6 +21,8 @@ jobs:
         sudo pip3 install --system sphinx
     - name: Clone DFHack
       uses: actions/checkout@v1
+      with:
+        submodules: true
     - name: Set up environment
       run: |
         export DF_VERSION=$(sh travis/get-df-version.sh)

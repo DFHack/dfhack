@@ -3,7 +3,7 @@ name: Build and test
 on: [push, pull_request]
 
 jobs:
-  setup:
+  main:
     runs-on: ubuntu-18.04
     steps:
     - name: Install dependencies
@@ -31,10 +31,6 @@ jobs:
     - name: Git information
       run: |
         sh travis/git-info.sh
-  docs:
-    needs: [setup]
-    runs-on: ubuntu-18.04
-    steps:
     - name: Build docs
       run: |
         sphinx-build -qW -j3 . docs/html

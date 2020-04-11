@@ -45,19 +45,18 @@ jobs:
     - name: Build DFHack
       run: |
         source "$HOME/.dfhackrc"
-        mkdir build-ci
-        cd build-ci
-        cmake .. \
+        cmake \
+          -S . \
+          -B build-ci \
           -G Ninja \
           -DDFHACK_BUILD_ARCH=64 \
           -DBUILD_DOCS:BOOL=ON \
           -DBUILD_TESTS:BOOL=ON \
           -DCMAKE_INSTALL_PREFIX="$DF_FOLDER"
-        ninja install
+        ninja -C build-ci install
     - name: Run tests
       run: |
         source "$HOME/.dfhackrc"
-        cd ..
         mv "$DF_FOLDER"/dfhack.init-example "$DF_FOLDER"/dfhack.init
         python travis/run-tests.py --headless --keep-status "$DF_FOLDER"
         python travis/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt"

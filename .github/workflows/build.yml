@@ -97,3 +97,13 @@ jobs:
     - name: Check Ruby syntax
       run: |
         python travis/script-syntax.py --ext=rb --cmd="ruby -c"
+  check-pr:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check that PR is based on develop branch
+      if: github.event_name == 'pull_request'
+      env:
+        BASE_BRANCH: ${{ github.base_ref }}
+      run: |
+        echo "PR base branch: $BASE_BRANCH"
+        test "$BASE_BRANCH" = develop

@@ -40,6 +40,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## Fixes
+- `autogems`: fixed an issue with binned gems being ignored in linked stockpiles
 - `tweak` embark-profile-name: fixed handling of the native shift+space key
 
 ## Misc Improvements

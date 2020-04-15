@@ -798,13 +798,13 @@ static command_result orders_clear_command(color_ostream & out)
         {
             delete condition;
         }
-        if (order->anon_1)
+        if (order->items)
         {
-            for (auto anon_1 : *order->anon_1)
+            for (auto anon_1 : *order->items)
             {
                 delete anon_1;
             }
-            delete order->anon_1;
+            delete order->items;
         }
 
         delete order;

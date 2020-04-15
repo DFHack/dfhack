@@ -40,7 +40,13 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## Fixes
+- Fixed translation of certain types of in-game names
+- `autogems`: fixed an issue with binned gems being ignored in linked stockpiles
 - `tweak` embark-profile-name: fixed handling of the native shift+space key
+
+## Misc Improvements
+- `manipulator`: added intrigue to displayed skills
+- `search`: added support for the fortress mode justice screen
 
 ## Lua
 - ``pairs()`` now returns available class methods for DF types

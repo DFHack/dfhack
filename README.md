@@ -1,6 +1,6 @@
 # DFHack Readme
 
-[![Build Status](https://github.com/DFHack/dfhack/workflows/Build/badge.svg)](https://github.com/DFHack/dfhack/actions?query=workflow%3ABuild)
+[![Build Status](https://github.com/DFHack/dfhack/workflows/Build/badge.svg?event=push)](https://github.com/DFHack/dfhack/actions?query=workflow%3ABuild)
 [![Documentation Status](https://readthedocs.org/projects/dfhack/badge)](https://dfhack.readthedocs.org)
 [![License](https://img.shields.io/badge/license-ZLib-blue.svg)](https://en.wikipedia.org/wiki/Zlib_License)
 

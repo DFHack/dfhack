@@ -245,6 +245,7 @@ enable \
  dwarfmonitor \
  mousequery \
  autogems \
+ autodump \
  automelt \
  autotrade \
  buildingplan \

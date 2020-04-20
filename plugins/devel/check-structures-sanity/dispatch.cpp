@@ -67,6 +67,11 @@ bool Checker::queue_item(const QueueItem & item, CheckedStructure cs)
         auto offset = uintptr_t(item.ptr) - uintptr_t(prev->first);
         if (!prev->second.second.has_type_at_offset(cs, offset))
         {
+            if (offset == 0 && cs.identity == df::identity_traits<void *>::get())
+            {
+                FAIL("unknown pointer is " << prev->second.second.identity->getFullName() << ", previously seen at " << prev->second.first);
+                return false;
+            }
             // TODO
             FAIL("TODO: handle merging structures: " << item.path << " overlaps " << prev->second.first << " (backward)");
             return false;

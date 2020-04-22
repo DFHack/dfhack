@@ -12,10 +12,11 @@
 
 namespace {
     template<class T>
-    inline T &_toref(T &r) { return r; }
+    inline T *_toptr(T &r) { return &r; }
     template<class T>
-    inline T &_toref(T *&p) { return *p; }
+    inline T *_toptr(T *&p) { return p; }
 }
+#define _fieldptr(ptr, fn) (ptr) ? _toptr((ptr)->fn) : NULL
 
 #define INIT_GLOBAL_FUNCTION_PREFIX \
     DFHack::VersionInfo *global_table_ = DFHack::Core::getInstance().vinfo.get(); \

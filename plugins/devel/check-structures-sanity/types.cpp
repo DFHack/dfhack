@@ -129,7 +129,6 @@ bool CheckedStructure::has_type_at_offset(const CheckedStructure & type, size_t 
     auto st = dynamic_cast<struct_identity *>(identity);
     if (!st)
     {
-        UNEXPECTED;
         return false;
     }
 

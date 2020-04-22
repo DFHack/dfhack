@@ -800,9 +800,9 @@ static command_result orders_clear_command(color_ostream & out)
         }
         if (order->items)
         {
-            for (auto anon_1 : *order->items)
+            for (auto item : *order->items)
             {
-                delete anon_1;
+                delete item;
             }
             delete order->items;
         }

@@ -1693,7 +1693,7 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
         using df::global::cur_year;
         using df::global::cur_year_tick;
 
-       send_unit->set_age(Units::getAge(unit, false));
+        send_unit->set_age(Units::getAge(unit, false));
 
         ConvertDfColor(Units::getProfessionColor(unit), send_unit->mutable_profession_color());
         send_unit->set_flags1(unit->flags1.whole);

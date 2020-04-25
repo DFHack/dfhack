@@ -64,7 +64,7 @@ enum class selectability {
 //  Both Red Spinach and Elephant-Head Amaranth have the seed extraction reaction
 //  explicitly specified for the structural part, but no other use for it. This causes
 //  these parts to be collected (a valid reaction is defined), but remain unusable. This
-//  is one of the issues in bug 9640 on the bug tracker (the others cases are detected and
+//  is one of the issues in bug 6940 on the bug tracker (the others cases are detected and
 //  result in the plants not being usable for farming or even collectable at all).
 
 //selectability selectablePlant(color_ostream &out, const df::plant_raw *plant, bool farming)

@@ -38,16 +38,53 @@ enum class selectability {
     Unselected
 };
 
-//selectability selectablePlant(color_ostream &out, const df::plant_raw *plant)
-selectability selectablePlant(const df::plant_raw *plant)
+//  Determination of whether seeds can be collected is somewhat messy:
+//    - Growths of type SEEDS are collected only if they are edible either raw or cooked.
+//    - Growths of type PLANT_GROWTH are collected provided the STOCKPILE_PLANT_GROWTH
+//      flag is set.
+//  The two points above were determined through examination of the DF code, while the ones
+//  below were determined through examination of the behavior of bugged, working, and
+//  RAW manipulated shrubs on embarks.
+//    - If seeds are defined as explicit growths, they are the source of seeds, overriding
+//      the default STRUCTURAL part as the source.
+//    - If a growth has the reaction that extracts seeds as a side effect of other
+//      processing (brewing, eating raw, etc.), this overrides the STRUCTURAL part as the
+//      source of seeds. However, for some reason it does not produce seeds from eating
+//      raw growths unless the structural part is collected (at least for shrubs: other
+//      processing was not examined).
+//    - If a growth has a (non vanilla) reaction that produces seeds, seeds are produced,
+//      provided there is something (such as a workshop order) that triggers it.
+//  The code below is satisfied with detection of a seed producing reaction, and does not
+//  detect the bugged case where a seed extraction process is defined but doesn't get
+//  triggered. Such a process can be triggered either as a side effect of other
+//  processing, or as a workshop reaction, and it would be overkill for this code to
+//  try to determine if a workshop reaction exists and has been permitted for the played
+//  race.
+//  There are two bugged cases of this in the current vanilla RAWs:
+//  Both Red Spinach and Elephant-Head Amaranth have the seed extraction reaction
+//  explicitly specified for the structural part, but no other use for it. This causes
+//  these parts to be collected (a valid reaction is defined), but remain unusable. This
+//  is one ofthe issues in bug 9640 on the bug tracker (the others cases are detected and
+//  result in the plants not being usable for farming or even collectable at all).
+
+//selectability selectablePlant(color_ostream &out, const df::plant_raw *plant, bool farming)
+selectability selectablePlant(const df::plant_raw *plant, bool farming)
 {
     const DFHack::MaterialInfo basic_mat = DFHack::MaterialInfo(plant->material_defs.type_basic_mat, plant->material_defs.idx_basic_mat);
     bool outOfSeason = false;
+    selectability result = selectability::Nonselectable;
 
     if (plant->flags.is_set(plant_raw_flags::TREE))
     {
 //        out.print("%s is a selectable tree\n", plant->id.c_str());
-        return selectability::Selectable;
+        if (farming)
+        {
+            return selectability::Nonselectable;
+        }
+        else
+        {
+            return selectability::Selectable;
+        }
     }
     else if (plant->flags.is_set(plant_raw_flags::GRASS))
     {
@@ -55,11 +92,26 @@ selectability selectablePlant(const df::plant_raw *plant)
         return selectability::Grass;
     }
 
+    if (farming && plant->material_defs.type_seed == -1)
+    {
+        return selectability::Nonselectable;
+    }
+
     if (basic_mat.material->flags.is_set(material_flags::EDIBLE_RAW) ||
         basic_mat.material->flags.is_set(material_flags::EDIBLE_COOKED))
     {
 //        out.print("%s is edible\n", plant->id.c_str());
-        return selectability::Selectable;
+        if (farming)
+        {
+            if (basic_mat.material->flags.is_set(material_flags::EDIBLE_RAW))
+            {
+                result = selectability::Selectable;
+            }
+        }
+        else
+        {
+            return selectability::Selectable;
+        }
     }
 
     if (plant->flags.is_set(plant_raw_flags::THREAD) ||
@@ -69,14 +121,28 @@ selectability selectablePlant(const df::plant_raw *plant)
         plant->flags.is_set(plant_raw_flags::EXTRACT_STILL_VIAL))
     {
 //        out.print("%s is thread/mill/extract\n", plant->id.c_str());
-        return selectability::Selectable;
+        if (farming)
+        {
+            result = selectability::Selectable;
+        }
+        else
+        {
+            return selectability::Selectable;
+        }
     }
 
     if (basic_mat.material->reaction_product.id.size() > 0 ||
         basic_mat.material->reaction_class.size() > 0)
     {
 //        out.print("%s has a reaction\n", plant->id.c_str());
-        return selectability::Selectable;
+        if (farming)
+        {
+            result = selectability::Selectable;
+        }
+        else
+        {
+            return selectability::Selectable;
+        }
     }
 
     for (size_t i = 0; i < plant->growths.size(); i++)
@@ -91,16 +157,37 @@ selectability selectablePlant(const df::plant_raw *plant)
                 (plant->growths[i]->item_type == df::item_type::PLANT_GROWTH &&
                  growth_mat.material->flags.is_set(material_flags::LEAF_MAT)))  //  Will change name to STOCKPILE_PLANT_GROWTH any day now...
             {
+                bool seedSource = plant->growths[i]->item_type == df::item_type::SEEDS;
+
+                if (plant->growths[i]->item_type == df::item_type::PLANT_GROWTH)
+                {
+                    for (size_t k = 0; growth_mat.material->reaction_product.material.mat_type.size(); k++)
+                    {
+                        if (growth_mat.material->reaction_product.material.mat_type[k] == plant->material_defs.type_seed &&
+                            growth_mat.material->reaction_product.material.mat_index[k] == plant->material_defs.idx_seed)
+                        {
+                            seedSource = true;
+                            break;
+                        }
+                    }
+                }
+
                 if (*cur_year_tick >= plant->growths[i]->timing_1 &&
                     (plant->growths[i]->timing_2 == -1 ||
                         *cur_year_tick <= plant->growths[i]->timing_2))
                 {
 //                     out.print("%s has an edible seed or a stockpile growth\n", plant->id.c_str());
-                    return selectability::Selectable;
+                    if (!farming || seedSource)
+                    {
+                        return selectability::Selectable;
+                    }
                 }
                 else
                 {
-                    outOfSeason = true;
+                    if (!farming || seedSource)
+                    {
+                        outOfSeason = true;
+                    }
                 }
             }
         }
@@ -133,7 +220,7 @@ selectability selectablePlant(const df::plant_raw *plant)
     else
     {
 //        out.printerr("%s cannot be gathered\n", plant->id.c_str());
-        return selectability::Nonselectable;
+        return result;
     }
 }
 
@@ -143,8 +230,8 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
     std::vector<selectability> plantSelections;
     std::vector<size_t> collectionCount;
     set<string> plantNames;
-    bool deselect = false, exclude = false, treesonly = false, shrubsonly = false, all = false, verbose = false;
-
+    bool deselect = false, exclude = false, treesonly = false, shrubsonly = false, all = false, verbose = false, farming = false;
+    size_t maxCount = 999999;
     int count = 0;
 
     plantSelections.resize(world->raws.plants.all.size());
@@ -160,26 +247,54 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
 
     for (size_t i = 0; i < parameters.size(); i++)
     {
-        if(parameters[i] == "help" || parameters[i] == "?")
+        if (parameters[i] == "help" || parameters[i] == "?")
             return CR_WRONG_USAGE;
-        else if(parameters[i] == "-t")
+        else if (parameters[i] == "-t")
             treesonly = true;
-        else if(parameters[i] == "-s")
+        else if (parameters[i] == "-s")
             shrubsonly = true;
-        else if(parameters[i] == "-c")
+        else if (parameters[i] == "-c")
             deselect = true;
-        else if(parameters[i] == "-x")
+        else if (parameters[i] == "-x")
             exclude = true;
-        else if(parameters[i] == "-a")
+        else if (parameters[i] == "-a")
             all = true;
-        else if(parameters[i] == "-v")
+        else if (parameters[i] == "-v")
             verbose = true;
+        else if (parameters[i] == "-f")
+            farming = true;
+        else if (parameters[i] == "-n")
+        {
+            if (parameters.size() > i + 1)
+            {
+                maxCount = atoi(parameters[i + 1].c_str());
+                if (maxCount >= 1)
+                {
+                    i++;  //  We've consumed the next parameter, so we need to progress the iterator.
+                }
+                else
+                {
+                    out.printerr("-n requires a positive integer parameter!\n");
+                    return CR_WRONG_USAGE;
+                }
+            }
+            else
+            {
+                out.printerr("-n requires a positive integer parameter!\n");
+                return CR_WRONG_USAGE;
+            }
+        }
         else
             plantNames.insert(parameters[i]);
     }
     if (treesonly && shrubsonly)
     {
         out.printerr("Cannot specify both -t and -s at the same time!\n");
+        return CR_WRONG_USAGE;
+    }
+    if (treesonly && farming)
+    {
+        out.printerr("Cannot specify both -t and -f at the same time!\n");
         return CR_WRONG_USAGE;
     }
     if (all && exclude)
@@ -200,14 +315,14 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
         df::plant_raw *plant = world->raws.plants.all[i];
         if (all)
         {
-//            plantSelections[i] = selectablePlant(out, plant);
-            plantSelections[i] = selectablePlant(plant);
+//            plantSelections[i] = selectablePlant(out, plant, farming);
+            plantSelections[i] = selectablePlant(plant, farming);
         }
          else if (plantNames.find(plant->id) != plantNames.end())
         {
             plantNames.erase(plant->id);
-//            plantSelections[i] = selectablePlant(out, plant);
-            plantSelections[i] = selectablePlant(plant);
+//            plantSelections[i] = selectablePlant(out, plant, farming);
+            plantSelections[i] = selectablePlant(plant, farming);
             switch (plantSelections[i])
             {
             case selectability::Grass:
@@ -215,7 +330,14 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
                 break;
 
             case selectability::Nonselectable:
-                out.printerr("%s does not have any parts that can be gathered\n", plant->id.c_str());
+                if (farming)
+                {
+                    out.printerr("%s does not have any parts that can be gathered for seeds for farming\n", plant->id.c_str());
+                }
+                else
+                {
+                    out.printerr("%s does not have any parts that can be gathered\n", plant->id.c_str());
+                }
                 break;
 
             case selectability::OutOfSeason:
@@ -255,8 +377,8 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
         for (size_t i = 0; i < world->raws.plants.all.size(); i++)
         {
             df::plant_raw *plant = world->raws.plants.all[i];
-//            switch (selectablePlant(out, plant))
-            switch (selectablePlant(plant))
+//            switch (selectablePlant(out, plant, farming))
+            switch (selectablePlant(plant, farming))
                 {
             case selectability::Grass:
             case selectability::Nonselectable:
@@ -264,13 +386,21 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
 
             case selectability::OutOfSeason:
             {
-                out.print("* (shrub) %s - %s is out of season\n", plant->id.c_str(), plant->name.c_str());
+                if (!treesonly)
+                {
+                    out.print("* (shrub) %s - %s is out of season\n", plant->id.c_str(), plant->name.c_str());
+                }
                 break;
             }
 
             case selectability::Selectable:
             {
-                out.print("* (%s) %s - %s\n", plant->flags.is_set(plant_raw_flags::TREE) ? "tree" : "shrub", plant->id.c_str(), plant->name.c_str());
+                if ((treesonly && plant->flags.is_set(plant_raw_flags::TREE)) ||
+                    (shrubsonly && !plant->flags.is_set(plant_raw_flags::TREE)) ||
+                    (!treesonly && !shrubsonly))  // 'farming' weeds out trees when determining selectability, so no need to test that explicitly
+                {
+                    out.print("* (%s) %s - %s\n", plant->flags.is_set(plant_raw_flags::TREE) ? "tree" : "shrub", plant->id.c_str(), plant->name.c_str());
+                }
                 break;
             }
 
@@ -311,6 +441,8 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
             continue;
         if (cur->designation[x][y].bits.hidden)
             continue;
+        if (collectionCount[plant->material] >= maxCount)
+            continue;
         if (deselect && Designations::unmarkPlant(plant))
         {
             collectionCount[plant->material]++;
@@ -350,12 +482,16 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
         "Options:\n"
         "  -t - Tree: Select trees only (exclude shrubs)\n"
         "  -s - Shrub: Select shrubs only (exclude trees)\n"
+        "  -f - Farming: Designate only shrubs that yield seeds for farming. Implies -s\n"
         "  -c - Clear: Clear designations instead of setting them\n"
         "  -x - eXcept: Apply selected action to all plants except those specified\n"
-        "  -a - All: Select every type of plant (obeys -t/-s)\n"
-        "  -v - Verbose: lists the number of (un)designations per plant\n"
-        "Specifying both -t and -s will have no effect.\n"
-        "If no plant IDs are specified, all valid plant IDs will be listed.\n"
+        "  -a - All: Select every type of plant (obeys -t/-s/-f)\n"
+        "  -v - Verbose: List the number of (un)designations per plant\n"
+        "  -n * - Number: Designate up to * (an integer number) plants of each species\n"
+        "Specifying both -t and -s or -f will have no effect.\n"
+        "If no plant IDs are specified, and the -a switch isn't given, all valid plant\n"
+        "IDs will be listed with -t, -s, and -f restricting the list to trees, shrubs,\n"
+        "and farmable shrubs, respectively.\n"
     ));
     return CR_OK;
 }

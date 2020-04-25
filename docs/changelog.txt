@@ -46,6 +46,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Misc Improvements
 - ``dfhack.init-example``: enabled `autodump`
+- `getplants`: added switches for designations for farming seeds and for max number designated per plant
 - `manipulator`: added intrigue to displayed skills
 - `search`: added support for the fortress mode justice screen
 

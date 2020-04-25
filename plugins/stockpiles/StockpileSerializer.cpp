@@ -417,7 +417,7 @@ void StockpileSerializer::serialize_list_itemdef ( FuncWriteExport add_value,  s
         {
             const df::itemdef *a = items.at ( i );
             // skip procedurally generated items
-            if ( a->base_flags.is_set ( 0 ) ) continue;
+            if ( a->base_flags.is_set ( df::itemdef_flags::GENERATED ) ) continue;
             ItemTypeInfo ii;
             if ( !ii.decode ( type,  i ) ) continue;
             add_value ( ii.getToken() );

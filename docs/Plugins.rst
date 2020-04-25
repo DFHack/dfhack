@@ -2322,9 +2322,9 @@ restricting the list to trees, shrubs, and farmable shrubs, respectively.
     designation). See :issue:`1479` for details.
 
     The implementation another known deficiency: it's incapable of detecting that
-    RAW definitions that specify a seed extraction reaction for the structural part
+    raw definitions that specify a seed extraction reaction for the structural part
     but has no other use for it cannot actually yield any seeds, as the part is
-    never used (parts of bug tracker report 6940, e.g. Red Spinach), even though DF
+    never used (parts of :bug:`6940`, e.g. Red Spinach), even though DF
     collects it, unless there's a workshop reaction to do it (which there isn't
     in vanilla).
 

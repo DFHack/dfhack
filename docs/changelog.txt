@@ -43,6 +43,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Fixed translation of certain types of in-game names
 - Fixed a crash in ``find()`` for some types when no world is loaded
 - `autogems`: fixed an issue with binned gems being ignored in linked stockpiles
+- `stocks`: fixed display of book titles
 - `tweak` embark-profile-name: fixed handling of the native shift+space key
 
 ## Misc Improvements
@@ -50,6 +51,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `getplants`: added switches for designations for farming seeds and for max number designated per plant
 - `manipulator`: added intrigue to displayed skills
 - `search`: added support for the fortress mode justice screen
+
+## API
+- Added ``Items::getBookTitle`` to get titles of books. Catches titles buried in improvements, unlike getDescription.
 
 ## Lua
 - ``pairs()`` now returns available class methods for DF types

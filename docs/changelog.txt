@@ -39,6 +39,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
+# 0.47.04-r1
+
 ## Fixes
 - Fixed translation of certain types of in-game names
 - Fixed a crash in ``find()`` for some types when no world is loaded

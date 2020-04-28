@@ -1,0 +1,106 @@
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install \
+            libsdl-image1.2-dev \
+            libsdl-ttf2.0-dev \
+            libsdl1.2-dev \
+            libxml-libxml-perl \
+            libxml-libxslt-perl \
+            lua5.3 \
+            ninja-build \
+            zlib1g-dev
+        sudo pip3 install --system sphinx
+    - name: Clone DFHack
+      uses: actions/checkout@v1
+      with:
+        submodules: true
+    - name: Set up environment
+      run: |
+        echo export DF_VERSION="$(sh travis/get-df-version.sh)" >> "$HOME/.df-env"
+        echo export DF_FOLDER="$HOME/DF/$DF_VERSION/df_linux" >> "$HOME/.df-env"
+    - name: Download DF
+      run: |
+        source "$HOME/.df-env"
+        sh travis/download-df.sh
+    - name: Build docs
+      run: |
+        sphinx-build -qW -j3 . docs/html
+    - name: Upload docs
+      uses: actions/upload-artifact@v1
+      with:
+        name: docs
+        path: docs/html
+    - name: Build DFHack
+      run: |
+        source "$HOME/.df-env"
+        cmake \
+          -S . \
+          -B build-ci \
+          -G Ninja \
+          -DDFHACK_BUILD_ARCH=64 \
+          -DBUILD_DOCS:BOOL=ON \
+          -DBUILD_TESTS:BOOL=ON \
+          -DCMAKE_INSTALL_PREFIX="$DF_FOLDER"
+        ninja -C build-ci install
+    - name: Run tests
+      run: |
+        source "$HOME/.df-env"
+        export TERM=dumb
+        mv "$DF_FOLDER"/dfhack.init-example "$DF_FOLDER"/dfhack.init
+        script -qe -c "python travis/run-tests.py --headless --keep-status \"$DF_FOLDER\""
+        python travis/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt"
+        mkdir -p artifacts
+        cp "$DF_FOLDER/test_status.json" "$DF_FOLDER"/*.log artifacts
+    - name: Upload test artifacts
+      uses: actions/upload-artifact@v1
+      if: success() || failure()
+      with:
+        name: test-artifacts
+        path: artifacts
+  lint:
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install \
+          lua5.3 \
+          ruby
+    - name: Clone DFHack
+      uses: actions/checkout@v1
+      with:
+        submodules: true
+    - name: Check whitespace
+      run: |
+        python travis/lint.py
+    - name: Check Authors.rst
+      run: |
+        python travis/authors-rst.py
+    - name: Check for missing documentation
+      run: |
+        python travis/script-docs.py
+    - name: Check Lua syntax
+      run: |
+        python travis/script-syntax.py --ext=lua --cmd="luac5.3 -p"
+    - name: Check Ruby syntax
+      run: |
+        python travis/script-syntax.py --ext=rb --cmd="ruby -c"
+  check-pr:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+    - name: Check that PR is based on develop branch
+      env:
+        BASE_BRANCH: ${{ github.base_ref }}
+      run: |
+        echo "PR base branch: $BASE_BRANCH"
+        test "$BASE_BRANCH" = develop

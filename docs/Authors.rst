@@ -34,6 +34,7 @@ Clayton Hughes
 Clément Vuchener        cvuchener
 Dan Amlund              danamlund
 Daniel Brooks           db48x
+David                   Nilsolm
 David Corbett           dscorbett
 David Seguin            dseguin
 David Timm              dtimm
@@ -116,6 +117,7 @@ Priit Laes              plaes
 Putnam                  Putnam3145
 Quietust                quietust                _Q
 Raidau                  Raidau
+Ralph Bisschops         ralpha
 Ramblurr                Ramblurr
 rampaging-poet
 Raoul van Putten

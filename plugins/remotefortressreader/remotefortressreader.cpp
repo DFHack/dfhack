@@ -1693,20 +1693,7 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
         using df::global::cur_year;
         using df::global::cur_year_tick;
 
-        int year_ticks = 403200;
-        int birth_time = unit->birth_year * year_ticks + unit->birth_time;
-        int cur_time = *cur_year * year_ticks + *cur_year_tick;
-
-        if (unit->curse_year >= 0)
-        {
-            if (auto identity = Units::getIdentity(unit))
-            {
-                if (identity->histfig_id < 0)
-                    birth_time = identity->birth_year * year_ticks + identity->birth_second;
-            }
-        }
-
-        send_unit->set_age(cur_time - birth_time);
+        send_unit->set_age(Units::getAge(unit, false));
 
         ConvertDfColor(Units::getProfessionColor(unit), send_unit->mutable_profession_color());
         send_unit->set_flags1(unit->flags1.whole);

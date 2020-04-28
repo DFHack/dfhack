@@ -10,6 +10,12 @@ if("${CMAKE_GENERATOR}" STREQUAL Ninja)
     endif()
 endif()
 
+if(NOT("${CMAKE_VERSION}" VERSION_LESS 3.12))
+    # make ZLIB_ROOT work in CMake >= 3.12
+    # https://cmake.org/cmake/help/git-stage/policy/CMP0074.html
+    cmake_policy(SET CMP0074 NEW)
+endif()
+
 # Set up build types
 if(CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_CONFIGURATION_TYPES "Release;RelWithDebInfo" CACHE STRING "List of supported configuration types" FORCE)
@@ -174,8 +180,8 @@ endif()
 
 # set up versioning.
 set(DF_VERSION "0.47.04")
-set(DFHACK_RELEASE "beta1")
-set(DFHACK_PRERELEASE TRUE)
+set(DFHACK_RELEASE "r1")
+set(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 

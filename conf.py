@@ -174,7 +174,7 @@ def all_keybinds_documented():
         plugin_binds = set(re.findall(':dfhack-keybind:`(.*?)`', f.read()))
     undocumented_binds = configured_binds - script_commands - plugin_binds
     if undocumented_binds:
-        raise ValueError('The following DFHack commands have undocumented'
+        raise ValueError('The following DFHack commands have undocumented '
                          'keybindings: {}'.format(sorted(undocumented_binds)))
 
 

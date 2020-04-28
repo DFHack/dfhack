@@ -235,6 +235,7 @@ def generate_changelog(all=False):
         dev_entries[entry.dev_version][entry.section].append(entry)
 
     consolidate_changelog(stable_entries)
+    consolidate_changelog(dev_entries)
 
     print_changelog(versions, stable_entries, 'docs/_auto/news.rst')
     print_changelog(versions, dev_entries, 'docs/_auto/news-dev.rst')

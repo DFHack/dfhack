@@ -242,6 +242,7 @@ const SkillColumn columns[] = {
     {16, 3, profession::NONE, unit_labor::NONE, job_skill::FLATTERY, "Fl"},
     {16, 3, profession::NONE, unit_labor::NONE, job_skill::CONSOLE, "Cs"},
     {16, 3, profession::NONE, unit_labor::NONE, job_skill::PACIFY, "Pc"},
+    {16, 3, profession::NONE, unit_labor::NONE, job_skill::INTRIGUE, "Sc"},
 // Noble
     {17, 5, profession::TRADER, unit_labor::NONE, job_skill::APPRAISAL, "Ap"},
     {17, 5, profession::ADMINISTRATOR, unit_labor::NONE, job_skill::ORGANIZATION, "Or"},

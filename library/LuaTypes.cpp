@@ -708,7 +708,7 @@ static type_identity *find_primitive_field(lua_State *state, int field, const ch
 static int meta_primitive_index(lua_State *state)
 {
     const char *attr = lua_tostring(state, -1);
-    if (attr == std::string("ref_target")) {
+    if (strcmp(attr, "ref_target") == 0) {
         const struct_field_info *field_info = get_object_ref_header(state, 1)->field_info;
         if (field_info && field_info->extra && field_info->extra->ref_target) {
             LookupInTable(state, field_info->extra->ref_target, &DFHACK_TYPEID_TABLE_TOKEN);
@@ -717,6 +717,7 @@ static int meta_primitive_index(lua_State *state)
         }
         return 1;
     }
+
     uint8_t *ptr = get_object_addr(state, 1, 2, "read");
     auto type = find_primitive_field(state, 2, "read", &ptr);
     if (!type)

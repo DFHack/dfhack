@@ -2541,7 +2541,7 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
 
                     out_building->set_id(in_building->id);
 #if DF_VERSION_INT > 34011
-                    out_building->set_type((SiteRealizationBuildingType)in_building->type);
+                    out_building->set_type(in_building->type);
 #endif
                     out_building->set_min_x(in_building->min_x - (site_x * 48));
                     out_building->set_min_y(in_building->min_y - (site_y * 48));

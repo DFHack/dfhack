@@ -285,8 +285,8 @@ do_print_recurse = function(printfn, value, seen, indent)
     return recurse_type_map[t](printfn, value, seen, indent)
 end
 
-function printall_recurse(value)
-    local seen = {}
+function printall_recurse(value, seen)
+    local seen = seen or {}
     do_print_recurse(dfhack.println, value, seen, 0)
 end
 

@@ -17,7 +17,7 @@ namespace embark_assist {
     namespace defs {
         //  Survey types
         //
-        enum class river_sizes {
+        enum class river_sizes : int8_t {
             None,
             Brook,
             Stream,
@@ -26,8 +26,27 @@ namespace embark_assist {
             Major
         };
 
+        enum class aquifer_sizes : int8_t {
+            NA,
+            None,
+            Light,
+            None_Light,
+            Heavy,
+            None_Heavy,
+            Light_Heavy,
+            None_Light_Heavy
+        };
+
+        enum class tree_levels : int8_t {
+            None,
+            Very_Scarce,
+            Scarce,
+            Woodland,
+            Heavily_Forested
+        };
+
         struct mid_level_tile {
-            bool aquifer = false;
+            aquifer_sizes aquifer = aquifer_sizes::NA;
             bool clay = false;
             bool sand = false;
             bool flux = false;
@@ -40,6 +59,7 @@ namespace embark_assist {
             int8_t adamantine_level;  // -1 = none, 0 .. 3 = cavern 1 .. magma sea. Currently not used beyond present/absent.
             int8_t magma_level;  // -1 = none, 0 .. 3 = cavern 3 .. surface/volcano
             int8_t biome_offset;
+            tree_levels trees;
             uint8_t savagery_level;  // 0 - 2
             uint8_t evilness_level;  // 0 - 2
             std::vector<bool> metals;
@@ -51,7 +71,7 @@ namespace embark_assist {
 
         struct region_tile_datum {
             bool surveyed = false;
-            uint16_t aquifer_count = 0;
+            aquifer_sizes aquifer = aquifer_sizes::NA;
             uint16_t clay_count = 0;
             uint16_t sand_count = 0;
             uint16_t flux_count = 0;
@@ -65,6 +85,8 @@ namespace embark_assist {
             uint8_t biome_count;
             int16_t min_temperature[10];  // Indexed through biome_offset; -30000 = null, Urists - 10000, [0] not used
             int16_t max_temperature[10];  // Indexed through biome_offset; -30000 = null, Urists - 10000, [0] not used
+            tree_levels min_tree_level = embark_assist::defs::tree_levels::Heavily_Forested;
+            tree_levels max_tree_level = embark_assist::defs::tree_levels::None;
             bool blood_rain[10];
             bool blood_rain_possible;
             bool blood_rain_full;
@@ -85,6 +107,8 @@ namespace embark_assist {
             std::vector<bool> metals;
             std::vector<bool> economics;
             std::vector<bool> minerals;
+            std::vector<int16_t> neighbors;  //  entity_raw indices
+            uint8_t necro_neighbors;
             mid_level_tile north_row[16];
             mid_level_tile south_row[16];
             mid_level_tile west_column[16];
@@ -121,8 +145,7 @@ namespace embark_assist {
 
         struct site_infos {
             bool incursions_processed;
-            bool aquifer;
-            bool aquifer_full;
+            aquifer_sizes aquifer;
             uint8_t min_soil;
             uint8_t max_soil;
             bool flat;
@@ -140,6 +163,8 @@ namespace embark_assist {
             std::vector<uint16_t> economics;
             std::vector<uint16_t> minerals;
             //  Could add savagery, evilness, and biomes, but DF provides those easily.
+            std::vector<int16_t> neighbors;  //  entity_raw indices
+            uint8_t necro_neighbors;
         };
 
         typedef std::vector<sites> site_lists;
@@ -176,11 +201,17 @@ namespace embark_assist {
 
         enum class aquifer_ranges : int8_t {
             NA = -1,
-            All,
-            Present,
-            Partial,
-            Not_All,
-            Absent
+            None,
+            At_Most_Light,
+            None_Plus_Light,
+            None_Plus_At_Least_Light,
+            Light,
+            At_Least_Light,
+            None_Plus_Heavy,
+            At_Most_Light_Plus_Heavy,
+            Light_Plus_Heavy,
+            None_Light_Heavy,
+            Heavy
         };
 
         enum class river_ranges : int8_t {
@@ -263,6 +294,20 @@ namespace embark_assist {
             Never
         };
 
+        enum class tree_ranges : int8_t {
+            NA = -1,
+            None,
+            Very_Scarce,  // DF dislays this with a different color but still the "scarce" text
+            Scarce,
+            Woodland,
+            Heavily_Forested
+        };
+
+        struct neighbor {
+            int16_t entity_raw;  //  entity_raw
+            present_absent_ranges present;
+        };
+
         struct finders {
             uint16_t x_dim;
             uint16_t y_dim;
@@ -296,6 +341,8 @@ namespace embark_assist {
             int8_t biome_1;         // N/A(-1), df::biome_type
             int8_t biome_2;         // N/A(-1), df::biome_type
             int8_t biome_3;         // N/A(-1), df::biome_type
+            tree_ranges min_trees;
+            tree_ranges max_trees;
             int16_t metal_1;        // N/A(-1), 0-max_inorganic;
             int16_t metal_2;        // N/A(-1), 0-max_inorganic;
             int16_t metal_3;        // N/A(-1), 0-max_inorganic;
@@ -305,6 +352,11 @@ namespace embark_assist {
             int16_t mineral_1;      // N/A(-1), 0-max_inorganic;
             int16_t mineral_2;      // N/A(-1), 0-max_inorganic;
             int16_t mineral_3;      // N/A(-1), 0-max_inorganic;
+            int8_t min_necro_neighbors; // N/A(-1), 0 - 9, where 9 = 9+
+            int8_t max_necro_neighbors; // N/A(-1), 0 - 9, where 9 = 9+
+            int8_t min_civ_neighbors; // N/A(-1), 0 - 9, where 9 = 9+
+            int8_t max_civ_neighbors; // N/A(-1), 0 - 9, where 9 = 9+
+            std::vector<neighbor> neighbors;
         };
 
         struct match_iterators {

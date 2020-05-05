@@ -1579,6 +1579,12 @@ void Core::fatal (std::string output)
 #else
     cout << "DFHack fatal error: " << out.str() << std::endl;
 #endif
+
+    bool is_headless = bool(getenv("DFHACK_HEADLESS"));
+    if (is_headless)
+    {
+        exit('f');
+    }
 }
 
 std::string Core::getHackPath()
@@ -1686,14 +1692,21 @@ bool Core::Init()
     if (is_headless)
     {
 #ifdef LINUX_BUILD
-        auto endwin = (int(*)(void))dlsym(RTLD_DEFAULT, "endwin");
-        if (endwin)
+        if (is_text_mode)
         {
-            endwin();
+            auto endwin = (int(*)(void))dlsym(RTLD_DEFAULT, "endwin");
+            if (endwin)
+            {
+                endwin();
+            }
+            else
+            {
+                cerr << "endwin(): bind failed" << endl;
+            }
         }
         else
         {
-            cerr << "endwin(): bind failed" << endl;
+            cerr << "Headless mode requires PRINT_MODE:TEXT" << endl;
         }
 #else
         cerr << "Headless mode not supported on Windows" << endl;
@@ -1701,7 +1714,6 @@ bool Core::Init()
     }
     if (is_text_mode && !is_headless)
     {
-        con.init(true);
         cerr << "Console is not available. Use dfhack-run to send commands.\n";
         if (!is_text_mode)
         {

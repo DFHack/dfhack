@@ -414,7 +414,9 @@ void AnimalHospital::processPatients(color_ostream &out) {
 static vector<AnimalHospital*> animal_hospital_zones;
 
 void delete_animal_hospital_vector(color_ostream &out) {
-    out.print("Clearing all animal hospitals\n");
+    if (dwarfvet_enabled) {
+        out.print("Clearing all animal hospitals\n");
+    }
     for (vector<AnimalHospital*>::iterator animal_hospital = animal_hospital_zones.begin(); animal_hospital != animal_hospital_zones.end(); animal_hospital++) {
         delete (*animal_hospital);
     }

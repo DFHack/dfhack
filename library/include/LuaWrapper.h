@@ -132,7 +132,7 @@ namespace LuaWrapper {
      * Push the pointer as DF object ref using metatable on the stack.
      */
     void push_object_ref(lua_State *state, void *ptr);
-    void *get_object_ref(lua_State *state, int val_index);
+    DFHACK_EXPORT void *get_object_ref(lua_State *state, int val_index);
 
     /*
      * The system might be extended to carry some simple
@@ -165,6 +165,7 @@ namespace LuaWrapper {
     bool is_type_compatible(lua_State *state, type_identity *type1, int meta1,
                             type_identity *type2, int meta2, bool exact_equal);
 
+    DFHACK_EXPORT
     type_identity *get_object_identity(lua_State *state, int objidx,
                                        const char *ctx, bool allow_type = false,
                                        bool keep_metatable = false);

@@ -4,6 +4,12 @@ import itertools
 import os
 import sys
 
+CHANGELOG_PATHS = (
+    'docs/changelog.txt',
+    'scripts/changelog.txt',
+    'library/xml/changelog.txt',
+)
+
 CHANGELOG_SECTIONS = [
     'New Plugins',
     'New Scripts',
@@ -83,55 +89,61 @@ class ChangelogEntry(object):
         return 'ChangelogEntry(%r, %r)' % (self.feature, self.children)
 
 def parse_changelog():
-    cur_stable = None
-    cur_dev = None
-    cur_section = None
-    last_entry = None
     entries = []
 
-    with open('docs/changelog.txt') as f:
-        multiline = ''
-        for line_id, line in enumerate(f.readlines()):
-            line_id += 1
+    for fpath in CHANGELOG_PATHS:
+        if not os.path.isfile(fpath):
+            continue
+        with open(fpath) as f:
+            cur_stable = None
+            cur_dev = None
+            cur_section = None
+            last_entry = None
+            multiline = ''
+            for line_id, line in enumerate(f.readlines()):
+                line_id += 1
 
-            if multiline:
-                multiline += line
-            elif '[[[' in line:
-                multiline = line.replace('[[[', '')
+                if multiline:
+                    multiline += line
+                elif '[[[' in line:
+                    multiline = line.replace('[[[', '')
 
-            if ']]]' in multiline:
-                line = multiline.replace(']]]', '')
-                multiline = ''
-            elif multiline:
-                continue
+                if ']]]' in multiline:
+                    line = multiline.replace(']]]', '')
+                    multiline = ''
+                elif multiline:
+                    continue
 
-            if not line.strip() or line.startswith('==='):
-                continue
+                if not line.strip() or line.startswith('==='):
+                    continue
 
-            if line.startswith('##'):
-                cur_section = line.lstrip('#').strip()
-            elif line.startswith('#'):
-                cur_dev = line.lstrip('#').strip().lower()
-                if ('alpha' not in cur_dev and 'beta' not in cur_dev and
-                        'rc' not in cur_dev):
-                    cur_stable = cur_dev
-            elif line.startswith('-'):
-                if not cur_stable or not cur_dev or not cur_section:
-                    raise ValueError(
-                        'changelog.txt:%i: Entry without section' % line_id)
-                last_entry = ChangelogEntry(line.strip(), cur_section,
-                                            cur_stable, cur_dev)
-                entries.append(last_entry)
-            elif line.lstrip().startswith('-'):
-                if not cur_stable or not cur_dev:
-                    raise ValueError(
-                        'changelog.txt:%i: Sub-entry without section' % line_id)
-                if not last_entry:
-                    raise ValueError(
-                        'changelog.txt:%i: Sub-entry without parent' % line_id)
-                last_entry.children.append(line.strip('- \n'))
-            else:
-                raise ValueError('Invalid line: ' + line)
+                if line.startswith('##'):
+                    cur_section = line.lstrip('#').strip()
+                elif line.startswith('#'):
+                    cur_dev = line.lstrip('#').strip().lower()
+                    if ('alpha' not in cur_dev and 'beta' not in cur_dev and
+                            'rc' not in cur_dev):
+                        cur_stable = cur_dev
+                elif line.startswith('-'):
+                    if not cur_stable or not cur_dev or not cur_section:
+                        raise ValueError(
+                            '%s:%i: Entry without section' % (fpath, line_id))
+                    last_entry = ChangelogEntry(line.strip(), cur_section,
+                                                cur_stable, cur_dev)
+                    entries.append(last_entry)
+                elif line.lstrip().startswith('-'):
+                    if not cur_stable or not cur_dev:
+                        raise ValueError(
+                            '%s:%i: Sub-entry without section' % (fpath, line_id))
+                    if not last_entry:
+                        raise ValueError(
+                            '%s:%i: Sub-entry without parent' % (fpath, line_id))
+                    last_entry.children.append(line.strip('- \n'))
+                else:
+                    raise ValueError('Invalid line: ' + line)
+
+    if not entries:
+        raise RuntimeError('No changelog files with contents found')
 
     return entries
 
@@ -223,6 +235,7 @@ def generate_changelog(all=False):
         dev_entries[entry.dev_version][entry.section].append(entry)
 
     consolidate_changelog(stable_entries)
+    consolidate_changelog(dev_entries)
 
     print_changelog(versions, stable_entries, 'docs/_auto/news.rst')
     print_changelog(versions, dev_entries, 'docs/_auto/news-dev.rst')

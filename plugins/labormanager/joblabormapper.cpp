@@ -373,6 +373,7 @@ public:
             return df::unit_labor::TRAPPER;
         case df::building_type::Civzone:
         case df::building_type::Nest:
+        case df::building_type::OfferingPlace:
         case df::building_type::Stockpile:
         case df::building_type::Weapon:
             return df::unit_labor::NONE;
@@ -475,6 +476,7 @@ public:
             return df::unit_labor::TRAPPER;
         case df::building_type::Civzone:
         case df::building_type::Nest:
+        case df::building_type::OfferingPlace:
         case df::building_type::RoadDirt:
         case df::building_type::Stockpile:
         case df::building_type::Weapon:
@@ -894,6 +896,10 @@ JobLaborMapper::JobLaborMapper()
     job_to_labor_table[df::job_type::PutItemOnDisplay] = jlf_const(df::unit_labor::HAUL_ITEM);
 
     job_to_labor_table[df::job_type::StoreItemInLocation] = jlf_no_labor; // StoreItemInLocation
+
+    job_to_labor_table[df::job_type::unk_fake_no_job] = jlf_no_labor; // added for 47.04 - see #1561
+    job_to_labor_table[df::job_type::InterrogateSubject] = jlf_no_labor; // added for 47.04 - see #1561
+    job_to_labor_table[df::job_type::unk_fake_no_activity] = jlf_no_labor; // added for 47.04 - see #1561
 };
 
 df::unit_labor JobLaborMapper::find_job_labor(df::job* j)

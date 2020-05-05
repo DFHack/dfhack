@@ -296,6 +296,7 @@ bool LuaWrapper::is_type_compatible(lua_State *state, type_identity *type1, int 
     }
 
     case IDTYPE_STRUCT:
+    case IDTYPE_UNION:
     case IDTYPE_CLASS:
     {
         auto b1 = (struct_identity*)type1;
@@ -1607,8 +1608,8 @@ static void RenderType(lua_State *state, compound_identity *node)
     lua_dup(state);
     lua_setfield(state, ix_meta, "__index");
 
-    // pairs table
-    lua_newtable(state);
+    // pairs table - reuse index table
+    lua_dup(state);
     int ptable = base+4;
 
     lua_pushvalue(state, ptable);
@@ -1618,6 +1619,7 @@ static void RenderType(lua_State *state, compound_identity *node)
     switch (node->type())
     {
     case IDTYPE_STRUCT:
+    case IDTYPE_UNION: // TODO: change this to union-type? what relies on this?
         lua_pushstring(state, "struct-type");
         lua_setfield(state, ftable, "_kind");
         IndexStatics(state, ix_meta, ftable, (struct_identity*)node);

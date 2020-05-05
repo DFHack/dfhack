@@ -10,6 +10,12 @@ if("${CMAKE_GENERATOR}" STREQUAL Ninja)
     endif()
 endif()
 
+if(NOT("${CMAKE_VERSION}" VERSION_LESS 3.12))
+    # make ZLIB_ROOT work in CMake >= 3.12
+    # https://cmake.org/cmake/help/git-stage/policy/CMP0074.html
+    cmake_policy(SET CMP0074 NEW)
+endif()
+
 # Set up build types
 if(CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_CONFIGURATION_TYPES "Release;RelWithDebInfo" CACHE STRING "List of supported configuration types" FORCE)
@@ -173,8 +179,8 @@ if(NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl OR NOT EXISTS ${dfhack
 endif()
 
 # set up versioning.
-set(DF_VERSION "0.44.12")
-set(DFHACK_RELEASE "r3")
+set(DF_VERSION "0.47.04")
+set(DFHACK_RELEASE "r1")
 set(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
@@ -413,7 +419,6 @@ file(WRITE "${CMAKE_BINARY_DIR}/dfhack_setarch.txt" ${DFHACK_SETARCH})
 install(FILES "${CMAKE_BINARY_DIR}/dfhack_setarch.txt" DESTINATION "${DFHACK_DATA_DESTINATION}")
 
 install(DIRECTORY dfhack-config/ DESTINATION dfhack-config/default)
-install(DIRECTORY test DESTINATION "${DFHACK_DATA_DESTINATION}")
 
 # build the plugins
 if(BUILD_PLUGINS)
@@ -474,6 +479,12 @@ if(BUILD_DOCS)
     install(FILES "README.html" DESTINATION "${DFHACK_DATA_DESTINATION}")
 endif()
 
+option(BUILD_TESTS "Include tests (currently just installs Lua tests into the scripts folder)" OFF)
+if(BUILD_TESTS)
+    install(DIRECTORY ${dfhack_SOURCE_DIR}/test
+        DESTINATION ${DFHACK_DATA_DESTINATION}/scripts)
+endif()
+
 # Packaging with CPack!
 set(DFHACK_PACKAGE_SUFFIX "")
 if(UNIX)
@@ -496,7 +507,7 @@ if(DFHACK_BUILD_ID STREQUAL "")
 else()
     set(DFHACK_BUILD_ID_PACKAGE "${DFHACK_BUILD_ID}-")
 endif()
-set(CPACK_PACKAGE_FILE_NAME "dfhack-${DFHACK_VERSION}-${DFHACK_BUILD_ID_PACKAGE}${DFHACK_PACKAGE_PLATFORM_NAME}-${DFHACK_BUILD_ARCH}${DFHACK_PACKAGE_SUFFIX}")
+set(CPACK_PACKAGE_FILE_NAME "dfhack-${DFHACK_VERSION}-${DFHACK_BUILD_ID_PACKAGE}${DFHACK_PACKAGE_PLATFORM_NAME}-${DFHACK_BUILD_ARCH}bit${DFHACK_PACKAGE_SUFFIX}")
 include(CPack)
 
 option(DFHACK_INCLUDE_CORE "Download and include Dwarf Fortress core files in DFHack. Useful for local testing, but should not be used in releases." OFF)
@@ -540,3 +551,9 @@ endif()
 
 # Store old build arch
 set(DFHACK_BUILD_ARCH_PREV "${DFHACK_BUILD_ARCH}" CACHE STRING "Previous build architecture" FORCE)
+
+option(BUILD_SIZECHECK "Build the sizecheck library, for research" OFF)
+if(BUILD_SIZECHECK)
+    add_subdirectory(depends/sizecheck)
+    add_dependencies(dfhack sizecheck)
+endif()

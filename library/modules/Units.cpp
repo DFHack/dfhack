@@ -58,6 +58,7 @@ using namespace std;
 #include "df/entity_position_assignment.h"
 #include "df/entity_raw.h"
 #include "df/entity_raw_flags.h"
+#include "df/identity_type.h"
 #include "df/game_mode.h"
 #include "df/histfig_entity_link_positionst.h"
 #include "df/historical_entity.h"
@@ -200,13 +201,23 @@ void Units::setNickname(df::unit *unit, std::string nick)
 
         if (auto identity = getFigureIdentity(figure))
         {
-            auto id_hfig = df::historical_figure::find(identity->histfig_id);
+            df::historical_figure *id_hfig = NULL;
+
+            switch (identity->type) {
+            case df::identity_type::HidingCurse:
+            case df::identity_type::Identity:
+            case df::identity_type::FalseIdentity:
+                break;  //  We want the nickname to end up in the identity
+
+            case df::identity_type::Unk_1:  // Guess, but that's how it worked in the past
+            case df::identity_type::TrueName:
+            case df::identity_type::Unk_4:  // Pure guess, as this is a new case, still unseen
+                id_hfig = df::historical_figure::find(identity->histfig_id);
+                break;
+            }
 
             if (id_hfig)
             {
-                // Even DF doesn't do this bit, because it's apparently
-                // only used for demons masquerading as gods, so you
-                // can't ever change their nickname in-game.
                 Translation::setNickname(&id_hfig->name, nick);
             }
             else
@@ -247,7 +258,7 @@ bool Units::isHidingCurse(df::unit *unit)
     if (!unit->job.hunt_target)
     {
         auto identity = Units::getIdentity(unit);
-        if (identity && identity->unk_4c == 0)
+        if (identity && identity->type == df::identity_type::HidingCurse)
             return true;
     }
 
@@ -722,12 +733,11 @@ double Units::getAge(df::unit *unit, bool true_age)
     double birth_time = unit->birth_year + unit->birth_time/year_ticks;
     double cur_time = *cur_year + *cur_year_tick / year_ticks;
 
-    if (!true_age && unit->curse_year >= 0)
-    {
-        if (auto identity = getIdentity(unit))
-        {
-            if (identity->histfig_id < 0)
-                birth_time = identity->birth_year + identity->birth_second/year_ticks;
+    if (!true_age) {
+        if (auto identity = getIdentity(unit)) {
+            if (identity->birth_year != -1) {
+                birth_time = identity->birth_year + identity->birth_second / year_ticks;
+            }
         }
     }
 
@@ -1001,7 +1011,7 @@ int Units::computeMovementSpeed(df::unit *unit)
         if (in_magma)
             speed *= 2;
 
-        if (craw->flags.is_set(caste_raw_flags::SWIMS_LEARNED))
+        if (craw->flags.is_set(caste_raw_flags::CAN_SWIM))
         {
             int skill = Units::getEffectiveSkill(unit, job_skill::SWIMMING);
 
@@ -1441,7 +1451,7 @@ int8_t Units::getCasteProfessionColor(int race, int casteid, df::profession pid)
     {
         if (auto caste = vector_get(creature->caste, casteid))
         {
-            if (caste->flags.is_set(caste_raw_flags::CASTE_COLOR))
+            if (caste->flags.is_set(caste_raw_flags::HAS_COLOR))
                 return caste->caste_color[0] + caste->caste_color[2] * 8;
         }
         return creature->color[0] + creature->color[2] * 8;

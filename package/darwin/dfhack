@@ -17,6 +17,12 @@ if ! test -f hack/quarantine-removed; then
     echo "quarantine flag removed on $(date); remove this file to re-run" > hack/quarantine-removed
 fi
 
+if [ ! -t 0 ]; then
+    stty() {
+        return
+    }
+fi
+
 old_tty_settings=$(stty -g)
 DYLD_INSERT_LIBRARIES=./hack/libdfhack.dylib ./dwarfort.exe "$@"
 stty "$old_tty_settings"

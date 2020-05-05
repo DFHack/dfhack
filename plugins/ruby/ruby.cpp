@@ -9,6 +9,8 @@
 
 #include "modules/Gui.h"
 #include "df/global_objects.h"
+#include "df/building.h"
+#include "df/item.h"
 #include "df/unit.h"
 
 #include "tinythread.h"
@@ -630,6 +632,18 @@ static VALUE rb_dfget_vtable_ptr(VALUE self, VALUE objptr)
     return rb_uint2inum(*(uintptr_t*)rb_num2ulong(objptr));
 }
 
+static VALUE rb_dfget_selected_building_id(VALUE self)
+{
+    df::building *b = Gui::getAnyBuilding(Core::getTopViewscreen());
+    return rb_int2inum(b ? b->id : -1);
+}
+
+static VALUE rb_dfget_selected_item_id(VALUE self)
+{
+    df::item *i = Gui::getAnyItem(Core::getTopViewscreen());
+    return rb_int2inum(i ? i->id : -1);
+}
+
 static VALUE rb_dfget_selected_unit_id(VALUE self)
 {
     df::unit *u = Gui::getAnyUnit(Core::getTopViewscreen());
@@ -1147,6 +1161,8 @@ static void ruby_bind_dfhack(void) {
     rb_define_singleton_method(rb_cDFHack, "get_vtable", RUBY_METHOD_FUNC(rb_dfget_vtable), 1);
     rb_define_singleton_method(rb_cDFHack, "get_rtti_classname", RUBY_METHOD_FUNC(rb_dfget_rtti_classname), 1);
     rb_define_singleton_method(rb_cDFHack, "get_vtable_ptr", RUBY_METHOD_FUNC(rb_dfget_vtable_ptr), 1);
+    rb_define_singleton_method(rb_cDFHack, "get_selected_building_id", RUBY_METHOD_FUNC(rb_dfget_selected_building_id), 0);
+    rb_define_singleton_method(rb_cDFHack, "get_selected_item_id", RUBY_METHOD_FUNC(rb_dfget_selected_item_id), 0);
     rb_define_singleton_method(rb_cDFHack, "get_selected_unit_id", RUBY_METHOD_FUNC(rb_dfget_selected_unit_id), 0);
     rb_define_singleton_method(rb_cDFHack, "dfhack_run", RUBY_METHOD_FUNC(rb_dfhack_run), 1);
     rb_define_singleton_method(rb_cDFHack, "print_str", RUBY_METHOD_FUNC(rb_dfprint_str), 1);

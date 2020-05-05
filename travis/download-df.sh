@@ -36,10 +36,6 @@ mkdir df_linux
 
 echo Extracting
 tar xf "$tardest" --strip-components=1 -C df_linux
-echo Changing settings
-echo '' >> "df_linux/data/init/init.txt"
-echo '[PRINT_MODE:TEXT]' >> "df_linux/data/init/init.txt"
-echo '[SOUND:NO]' >> "df_linux/data/init/init.txt"
 echo Done
 
 echo "$selfmd5" > receipt

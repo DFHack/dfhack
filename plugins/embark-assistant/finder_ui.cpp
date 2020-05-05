@@ -8,11 +8,14 @@
 
 #include "MemAccess.h"
 #include "df/biome_type.h"
+#include "df/entity_raw.h"
+#include "df/entity_raw_flags.h"
 #include "df/inorganic_raw.h"
 #include "df/material_flags.h"
 #include "df/viewscreen_choose_start_sitest.h"
 #include "df/world.h"
 #include "df/world_data.h"
+#include "df/world_raws.h"
 #include "df/world_region_type.h"
 #include "df/world_raws.h"
 
@@ -64,6 +67,8 @@ namespace embark_assist {
             biome_1,
             biome_2,
             biome_3,
+            min_trees,
+            max_trees,
             metal_1,
             metal_2,
             metal_3,
@@ -72,10 +77,15 @@ namespace embark_assist {
             economic_3,
             mineral_1,
             mineral_2,
-            mineral_3
+            mineral_3,
+            min_necro_neighbors,
+            max_necro_neighbors,
+            min_civ_neighbors,
+            max_civ_neighbors,
+            neighbors
         };
         fields first_fields = fields::x_dim;
-        fields last_fields = fields::mineral_3;
+        fields last_fields = fields::neighbors;
 
         struct display_map_elements {
             std::string text;
@@ -104,6 +114,11 @@ namespace embark_assist {
         const DFHack::Screen::Pen white_pen(' ', COLOR_WHITE);
         const DFHack::Screen::Pen lr_pen(' ', COLOR_LIGHTRED);
 
+        struct civ_entities {
+            int16_t id;
+            std::string description;
+        };
+
         //==========================================================================================================
 
         struct states {
@@ -113,6 +128,7 @@ namespace embark_assist {
             uint16_t finder_list_focus;
             bool finder_list_active;
             uint16_t max_inorganic;
+            std::vector<civ_entities> civs;
         };
 
         static states *state = 0;
@@ -152,20 +168,26 @@ namespace embark_assist {
 
             FILE* outfile = fopen(profile_file_name, "w");
             fields i = first_fields;
+            size_t civ = 0;
 
             while (true) {
                 for (size_t k = 0; k < state->ui[static_cast<int8_t>(i)]->list.size(); k++) {
-                    if (state->ui[static_cast<int8_t>(i)]->current_value == state->ui[static_cast<int8_t>(i)]->list[k].key) {
-                        fprintf(outfile, "[%s:%s]\n", state->finder_list[static_cast<int8_t>(i)].text.c_str(), state->ui[static_cast<int8_t>(i)]->list[k].text.c_str());
+                    if (state->ui[static_cast<int8_t>(i) + civ]->current_value == state->ui[static_cast<int8_t>(i) + civ]->list[k].key) {
+                        fprintf(outfile, "[%s:%s]\n", state->finder_list[static_cast<int8_t>(i) + civ].text.c_str(), state->ui[static_cast<int8_t>(i) + civ]->list[k].text.c_str());
                         break;
                     }
                 }
 //                fprintf(outfile, "[%s:%i]\n", state->finder_list[static_cast<int8_t>(i)].text.c_str(), state->ui[static_cast<int8_t>(i)]->current_value);
                 if (i == last_fields) {
-                    break;  // done
-                }
+                    civ++;
 
-                i = static_cast <fields>(static_cast<int8_t>(i) + 1);
+                    if (civ == state->civs.size()) {
+                        break;  // done
+                    }
+                }
+                else {
+                    i = static_cast <fields>(static_cast<int8_t>(i) + 1);
+                }
             }
 
             fclose(outfile);
@@ -176,6 +198,7 @@ namespace embark_assist {
         void load_profile() {
             color_ostream_proxy out(Core::getInstance().getConsole());
             FILE* infile = fopen(profile_file_name, "r");
+            size_t civ = 0;
 
             if (!infile) {
                 out.printerr("No profile file found at %s\n", profile_file_name);
@@ -197,8 +220,8 @@ namespace embark_assist {
                 for (int k = 1; k < count; k++) {
                     if (line[k] == ':') {
                         for (int l = 1; l < k; l++) {
-                            if (state->finder_list[static_cast<int8_t>(i)].text.c_str()[l - 1] != line[l]) {
-                                out.printerr("Token mismatch of %s vs %s\n", line, state->finder_list[static_cast<int8_t>(i)].text.c_str());
+                            if (state->finder_list[static_cast<int8_t>(i) + civ].text.c_str()[l - 1] != line[l]) {
+                                out.printerr("Token mismatch of %s vs %s\n", line, state->finder_list[static_cast<int8_t>(i) + civ].text.c_str());
                                 fclose(infile);
                                 return;
                             }
@@ -206,10 +229,10 @@ namespace embark_assist {
 
                         found = false;
 
-                        for (size_t l = 0; l < state->ui[static_cast<int8_t>(i)]->list.size(); l++) {
+                        for (size_t l = 0; l < state->ui[static_cast<int8_t>(i) + civ]->list.size(); l++) {
                             for (int m = k + 1; m < count; m++) {
-                                if (state->ui[static_cast<int8_t>(i)]->list[l].text.c_str()[m - (k + 1)] != line[m]) {
-                                    if (state->ui[static_cast<int8_t>(i)]->list[l].text.c_str()[m - (k + 1)] == '\0' &&
+                                if (state->ui[static_cast<int8_t>(i) + civ]->list[l].text.c_str()[m - (k + 1)] != line[m]) {
+                                    if (state->ui[static_cast<int8_t>(i) + civ]->list[l].text.c_str()[m - (k + 1)] == '\0' &&
                                         line[m] == ']') {
                                         found = true;
                                     }
@@ -238,10 +261,15 @@ namespace embark_assist {
                 }
 
                 if (i == last_fields) {
-                    break;  // done
-                }
+                    civ++;
 
-                i = static_cast <fields>(static_cast<int8_t>(i) + 1);
+                    if (civ == state->civs.size()) {
+                        break;  // done
+                    }
+                }
+                else {
+                    i = static_cast <fields>(static_cast<int8_t>(i) + 1);
+                }
             }
 
             fclose(infile);
@@ -250,6 +278,7 @@ namespace embark_assist {
 
             infile = fopen(profile_file_name, "r");
             i = first_fields;
+            civ = 0;
 
             while (true) {
                 if (!fgets(line, count, infile))
@@ -262,13 +291,13 @@ namespace embark_assist {
 
                         found = false;
 
-                        for (size_t l = 0; l < state->ui[static_cast<int8_t>(i)]->list.size(); l++) {
+                        for (size_t l = 0; l < state->ui[static_cast<int8_t>(i) + civ]->list.size(); l++) {
                             for (int m = k + 1; m < count; m++) {
-                                if (state->ui[static_cast<int8_t>(i)]->list[l].text.c_str()[m - (k + 1)] != line[m]) {
-                                    if (state->ui[static_cast<int8_t>(i)]->list[l].text.c_str()[m - (k + 1)] == '\0' &&
+                                if (state->ui[static_cast<int8_t>(i) + civ]->list[l].text.c_str()[m - (k + 1)] != line[m]) {
+                                    if (state->ui[static_cast<int8_t>(i) + civ]->list[l].text.c_str()[m - (k + 1)] == '\0' &&
                                         line[m] == ']') {
-                                        state->ui[static_cast<int8_t>(i)]->current_value = state->ui[static_cast<int8_t>(i)]->list[l].key;
-                                        state->ui[static_cast<int8_t>(i)]->current_display_value = l;
+                                        state->ui[static_cast<int8_t>(i) + civ]->current_value = state->ui[static_cast<int8_t>(i) + civ]->list[l].key;
+                                        state->ui[static_cast<int8_t>(i) + civ]->current_display_value = l;
                                         found = true;
                                     }
 
@@ -285,10 +314,15 @@ namespace embark_assist {
                 }
 
                 if (i == last_fields) {
-                    break;  // done
-                }
+                    civ++;
 
-                i = static_cast <fields>(static_cast<int8_t>(i) + 1);
+                    if (civ == state->civs.size()) {
+                        break;  // done
+                    }
+                }
+                else {
+                    i = static_cast <fields>(static_cast<int8_t>(i) + 1);
+                }
             }
 
             fclose(infile);
@@ -308,6 +342,30 @@ namespace embark_assist {
 
             fields i = first_fields;
             ui_lists *element;
+            int16_t controllable_civs = 0;
+            int16_t max_civs;
+
+            for (int16_t i = 0; i < (int16_t)world->raws.entities.size(); i++) {
+                if (world->raws.entities[i]->flags.is_set(df::entity_raw_flags::CIV_CONTROLLABLE)) controllable_civs++;
+            }
+
+            for (int16_t i = 0; i < (int16_t)world->raws.entities.size(); i++) {
+                if (!world->raws.entities[i]->flags.is_set(df::entity_raw_flags::LAYER_LINKED) &&  // Animal people
+                    !world->raws.entities[i]->flags.is_set(df::entity_raw_flags::GENERATED) &&     // Vault guardians
+                    (controllable_civs > 1 ||                                                              //  Suppress the playable civ when only 1
+                        !world->raws.entities[i]->flags.is_set(df::entity_raw_flags::CIV_CONTROLLABLE))) { //  Too much work to change dynamically for modded worlds.
+                    if (world->raws.entities[i]->translation == "") {
+                        state->civs.push_back({ i, world->raws.entities[i]->code });                       //  Kobolds don't have a translation...
+                    }
+                    else {
+                        state->civs.push_back({ i, world->raws.entities[i]->translation });
+                    }
+                }
+            }
+
+            max_civs = state->civs.size();
+
+            if (controllable_civs > 1) max_civs = max_civs - 1;
 
             while (true) {
                 element = new ui_lists;
@@ -376,28 +434,52 @@ namespace embark_assist {
                             element->list.push_back({ "N/A", static_cast<int8_t>(k) });
                             break;
 
-                        case embark_assist::defs::aquifer_ranges::All:
-                            element->list.push_back({ "All", static_cast<int8_t>(k) });
+                        case embark_assist::defs::aquifer_ranges::None:
+                            element->list.push_back({ "None", static_cast<int8_t>(k) });
                             break;
 
-                        case embark_assist::defs::aquifer_ranges::Present:
-                            element->list.push_back({ "Present", static_cast<int8_t>(k) });
+                        case embark_assist::defs::aquifer_ranges::At_Most_Light:
+                            element->list.push_back({ "<= Light", static_cast<int8_t>(k) });
                             break;
 
-                        case embark_assist::defs::aquifer_ranges::Partial:
-                            element->list.push_back({ "Partial", static_cast<int8_t>(k) });
+                        case embark_assist::defs::aquifer_ranges::None_Plus_Light:
+                            element->list.push_back({ "None + Light", static_cast<int8_t>(k) });
                             break;
 
-                        case embark_assist::defs::aquifer_ranges::Not_All:
-                            element->list.push_back({ "Not All", static_cast<int8_t>(k) });
+                        case embark_assist::defs::aquifer_ranges::None_Plus_At_Least_Light:
+                            element->list.push_back({ "None + >= Light", static_cast<int8_t>(k) });
                             break;
 
-                        case embark_assist::defs::aquifer_ranges::Absent:
-                            element->list.push_back({ "Absent", static_cast<int8_t>(k) });
+                        case embark_assist::defs::aquifer_ranges::Light:
+                            element->list.push_back({ "Light", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::aquifer_ranges::At_Least_Light:
+                            element->list.push_back({ ">= Light", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::aquifer_ranges::None_Plus_Heavy:
+                            element->list.push_back({ "None + Heavy", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::aquifer_ranges::At_Most_Light_Plus_Heavy:
+                            element->list.push_back({ "<= Light + Heavy", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::aquifer_ranges::Light_Plus_Heavy:
+                            element->list.push_back({ "Light + Heavy", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::aquifer_ranges::None_Light_Heavy:
+                            element->list.push_back({ "None + Light + Heavy", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::aquifer_ranges::Heavy:
+                            element->list.push_back({ "Heavy", static_cast<int8_t>(k) });
                             break;
                         }
 
-                        if (k == embark_assist::defs::aquifer_ranges::Absent) {
+                        if (k == embark_assist::defs::aquifer_ranges::Heavy) {
                             break;
                         }
 
@@ -836,6 +918,47 @@ namespace embark_assist {
                 }
                 break;
 
+                case fields::min_trees:
+                case fields::max_trees:
+                {
+                    embark_assist::defs::tree_ranges k = embark_assist::defs::tree_ranges::NA;
+                    while (true) {
+                        switch (k) {
+                        case embark_assist::defs::tree_ranges::NA:
+                            element->list.push_back({ "N/A", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::tree_ranges::None:
+                            element->list.push_back({ "None", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::tree_ranges::Very_Scarce:
+                            element->list.push_back({ "Very Scarce", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::tree_ranges::Scarce:
+                            element->list.push_back({ "Scarce", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::tree_ranges::Woodland:
+                            element->list.push_back({ "Woodland", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::tree_ranges::Heavily_Forested:
+                            element->list.push_back({ "Heavily Forested", static_cast<int8_t>(k) });
+                            break;
+                        }
+
+                        if (k == embark_assist::defs::tree_ranges::Heavily_Forested) {
+                            break;
+                        }
+
+                        k = static_cast <embark_assist::defs::tree_ranges>(static_cast<int8_t>(k) + 1);
+                    }
+                }
+
+                break;
+
                 case fields::metal_1:
                 case fields::metal_2:
                 case fields::metal_3:
@@ -918,10 +1041,73 @@ namespace embark_assist {
                     name.clear();
                 }
                 break;
+
+                case fields::min_necro_neighbors:
+                case fields::max_necro_neighbors:
+                    for (int16_t k = -1; k <= 16; k++) {
+                        if (k == -1) {
+                            element->list.push_back({ "N/A", k });
+                        }
+                        else {
+                            element->list.push_back({ std::to_string(k), k });
+                        }
+                    }
+
+                    break;
+
+                case fields::min_civ_neighbors:
+                case fields::max_civ_neighbors:
+                    for (int16_t k = -1; k <= max_civs; k++) {
+                        if (k == -1) {
+                            element->list.push_back({ "N/A", k });
+                        }
+                        else {
+                            element->list.push_back({ std::to_string(k), k });
+                        }
+                    }
+
+                    break;
+
+                case fields::neighbors:
+                    for (size_t l = 0; l < state->civs.size(); l++) {
+                        embark_assist::defs::present_absent_ranges k = embark_assist::defs::present_absent_ranges::NA;
+                        while (true) {
+                            switch (k) {
+                            case embark_assist::defs::present_absent_ranges::NA:
+                                element->list.push_back({ "N/A", static_cast<int8_t>(k) });
+                                break;
+
+                            case embark_assist::defs::present_absent_ranges::Present:
+                                element->list.push_back({ "Present", static_cast<int8_t>(k) });
+                                break;
+
+                            case embark_assist::defs::present_absent_ranges::Absent:
+                                element->list.push_back({ "Absent", static_cast<int8_t>(k) });
+                                break;
+                            }
+
+                            if (k == embark_assist::defs::present_absent_ranges::Absent) {
+                                break;
+                            }
+
+                            k = static_cast <embark_assist::defs::present_absent_ranges>(static_cast<int8_t>(k) + 1);
+                        }
+
+                        if (l < state->civs.size() - 1) {
+                            element->current_value = element->list[0].key;
+                            state->ui.push_back(element);
+                            element = new ui_lists;
+                            element->current_display_value = 0;
+                            element->current_index = 0;
+                            element->focus = 0;
+                        }
+                    }
+
+                    break;
+
                 }
 
                 element->current_value = element->list[0].key;
-
                 state->ui.push_back(element);
 
                 switch (i) {
@@ -1069,6 +1255,14 @@ namespace embark_assist {
                     state->finder_list.push_back({ "Biome 3", static_cast<int8_t>(i) });
                     break;
 
+                case fields::min_trees:
+                    state->finder_list.push_back({ "Min Trees", static_cast<int8_t>(i) });
+                    break;
+
+                case fields::max_trees:
+                    state->finder_list.push_back({ "Max Trees", static_cast<int8_t>(i) });
+                    break;
+
                 case fields::metal_1:
                     state->finder_list.push_back({ "Metal 1", static_cast<int8_t>(i) });
                     break;
@@ -1104,6 +1298,28 @@ namespace embark_assist {
                 case fields::mineral_3:
                     state->finder_list.push_back({ "Mineral 3", static_cast<int8_t>(i) });
                     break;
+
+                case fields::min_necro_neighbors:
+                    state->finder_list.push_back({ "Min Necro Tower", static_cast<int8_t>(i) });
+                    break;
+
+                case fields::max_necro_neighbors:
+                    state->finder_list.push_back({ "Max Necro Tower", static_cast<int8_t>(i) });
+                    break;
+
+                case fields::min_civ_neighbors:
+                    state->finder_list.push_back({ "Min Near Civs", static_cast<int8_t>(i) });
+                    break;
+
+                case fields::max_civ_neighbors:
+                    state->finder_list.push_back({ "Max Near Civs", static_cast<int8_t>(i) });
+                    break;
+
+                case fields::neighbors:
+                    for (uint8_t k = 0; k < state->civs.size(); k++) {
+                        state->finder_list.push_back({ state->civs[k].description, (int16_t)(static_cast<int8_t>(i) + k) });
+                    }
+                    break;
                 }
 
                 if (i == last_fields) {
@@ -1135,7 +1351,6 @@ namespace embark_assist {
             state->ui[static_cast<int8_t>(fields::y_dim)]->current_value =
                 state->ui[static_cast<int8_t>(fields::y_dim)]->current_display_value + 1;
         }
-
 
         //==========================================================================================================
 
@@ -1312,6 +1527,14 @@ namespace embark_assist {
                     finder.biome_3 = state->ui[static_cast<uint8_t>(i)]->current_value;
                     break;
 
+                case fields::min_trees:
+                    finder.min_trees = static_cast<embark_assist::defs::tree_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                    break;
+
+                case fields::max_trees:
+                    finder.max_trees = static_cast<embark_assist::defs::tree_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                    break;
+
                 case fields::metal_1:
                     finder.metal_1 = state->ui[static_cast<uint8_t>(i)]->current_value;
                     break;
@@ -1346,6 +1569,28 @@ namespace embark_assist {
 
                 case fields::mineral_3:
                     finder.mineral_3 = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    break;
+
+                case fields::min_necro_neighbors:
+                    finder.min_necro_neighbors = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    break;
+
+                case fields::max_necro_neighbors:
+                    finder.max_necro_neighbors = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    break;
+
+                case fields::min_civ_neighbors:
+                    finder.min_civ_neighbors = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    break;
+
+                case fields::max_civ_neighbors:
+                    finder.max_civ_neighbors = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    break;
+
+                case fields::neighbors:
+                    for (size_t k = 0; k < state->civs.size(); k++) {
+                        finder.neighbors.push_back({ state->civs[k].id, static_cast<embark_assist::defs::present_absent_ranges>(state->ui[static_cast<uint8_t>(i) + k]->current_value) });
+                    }
                     break;
                 }
 
@@ -1394,7 +1639,7 @@ namespace embark_assist {
                         state->finder_list_focus--;
                     }
                     else {
-                        state->finder_list_focus = static_cast<uint16_t>(last_fields);
+                        state->finder_list_focus = static_cast<uint16_t>(last_fields) + state->civs.size() - 1;
                     }
                 }
                 else {
@@ -1407,7 +1652,7 @@ namespace embark_assist {
 
             } else if (input->count(df::interface_key::STANDARDSCROLL_DOWN)) {
                 if (state->finder_list_active) {
-                    if (state->finder_list_focus < static_cast<uint16_t>(last_fields)) {
+                    if (state->finder_list_focus < static_cast<uint16_t>(last_fields) + state->civs.size() - 1) {
                         state->finder_list_focus++;
                     } else {
                         state->finder_list_focus = 0;

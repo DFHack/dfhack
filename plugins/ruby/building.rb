@@ -2,16 +2,7 @@ module DFHack
     class << self
         def building_find(what=:selected, y=nil, z=nil)
             if what == :selected
-                case ui.main.mode
-                when :LookAround
-                    k = ui_look_list.items[ui_look_cursor]
-                    k.building if k.type == :Building
-                when :BuildingItems, :QueryBuilding
-                    world.selected_building
-                when :Zones, :ZonesPenInfo, :ZonesPitInfo, :ZonesHospitalInfo
-                    ui_sidebar_menus.zone.selected
-                end
-
+                return world.buildings.all.binsearch(df.get_selected_building_id)
             elsif what.kind_of?(Integer)
                 # search by building.id
                 return world.buildings.all.binsearch(what) if not z

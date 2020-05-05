@@ -25,6 +25,7 @@
 #include "df/viewscreen_buildinglistst.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_joblistst.h"
+#include "df/viewscreen_justicest.h"
 #include "df/viewscreen_kitchenprefst.h"
 #include "df/viewscreen_layer_militaryst.h"
 #include "df/viewscreen_layer_noblelistst.h"
@@ -1822,16 +1823,16 @@ public:
         switch (element->type)
         {
         case elt_type::Item:
-            if (element->item)
-                desc = Items::getDescription(element->item, 0, true);
+            if (element->data.Item)
+                desc = Items::getDescription(element->data.Item, 0, true);
             break;
         case elt_type::Unit:
-            if (element->unit)
-                desc = get_unit_description(element->unit);
+            if (element->data.Unit)
+                desc = get_unit_description(element->data.Unit);
             break;
         case elt_type::Building:
-            if (element->building)
-                element->building->getName(&desc);
+            if (element->data.Building)
+                element->data.Building->getName(&desc);
             break;
         default:
             break;
@@ -2327,6 +2328,85 @@ IMPLEMENT_HOOKS(df::viewscreen_layer_stone_restrictionst, stone_search);
 // END: Stone status screen search
 //
 
+//
+// START: Justice screen conviction search
+//
+
+typedef search_generic<df::viewscreen_justicest, df::unit*> justice_conviction_search_base;
+class justice_conviction_search : public justice_conviction_search_base
+{
+public:
+    bool can_init (df::viewscreen_justicest *screen)
+    {
+        return screen->cur_column == df::viewscreen_justicest::ConvictChoices;
+    }
+
+    string get_element_description (df::unit *unit) const
+    {
+        return get_unit_description(unit);
+    }
+
+    void render() const
+    {
+        print_search_option(37);
+    }
+
+    vector<df::unit*> *get_primary_list()
+    {
+        return &viewscreen->convict_choices;
+    }
+
+    virtual int32_t *get_viewscreen_cursor()
+    {
+        return &viewscreen->cursor_right;
+    }
+};
+
+IMPLEMENT_HOOKS(df::viewscreen_justicest, justice_conviction_search);
+
+//
+// END: Justice screen conviction search
+//
+
+//
+// START: Justice screen interrogation search
+//
+
+typedef search_generic<df::viewscreen_justicest, df::unit*> justice_interrogation_search_base;
+class justice_interrogation_search : public justice_interrogation_search_base
+{
+public:
+    bool can_init (df::viewscreen_justicest *screen)
+    {
+        return screen->cur_column == df::viewscreen_justicest::InterrogateChoices;
+    }
+
+    string get_element_description (df::unit *unit) const
+    {
+        return get_unit_description(unit);
+    }
+
+    void render() const
+    {
+        print_search_option(37);
+    }
+
+    vector<df::unit*> *get_primary_list()
+    {
+        return &viewscreen->interrogate_choices;
+    }
+
+    virtual int32_t *get_viewscreen_cursor()
+    {
+        return &viewscreen->cursor_right;
+    }
+};
+
+IMPLEMENT_HOOKS(df::viewscreen_justicest, justice_interrogation_search);
+
+//
+// END: Justice screen conviction search
+//
 
 #define SEARCH_HOOKS \
     HOOK_ACTION(unitlist_search_hook) \
@@ -2350,6 +2430,8 @@ IMPLEMENT_HOOKS(df::viewscreen_layer_stone_restrictionst, stone_search);
     HOOK_ACTION(location_assign_occupation_search_hook) \
     HOOK_ACTION(kitchen_pref_search_hook) \
     HOOK_ACTION(stone_search_hook) \
+    HOOK_ACTION(justice_conviction_search_hook) \
+    HOOK_ACTION(justice_interrogation_search_hook) \
 
 
 DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable)

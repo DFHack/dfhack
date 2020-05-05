@@ -242,6 +242,7 @@ const SkillColumn columns[] = {
     {16, 3, profession::NONE, unit_labor::NONE, job_skill::FLATTERY, "Fl"},
     {16, 3, profession::NONE, unit_labor::NONE, job_skill::CONSOLE, "Cs"},
     {16, 3, profession::NONE, unit_labor::NONE, job_skill::PACIFY, "Pc"},
+    {16, 3, profession::NONE, unit_labor::NONE, job_skill::INTRIGUE, "Sc"},
 // Noble
     {17, 5, profession::TRADER, unit_labor::NONE, job_skill::APPRAISAL, "Ap"},
     {17, 5, profession::ADMINISTRATOR, unit_labor::NONE, job_skill::ORGANIZATION, "Or"},
@@ -576,7 +577,7 @@ namespace unit_ops {
         for (int i = 0; i < 2; i++)
         {
             if (name.words[i] >= 0)
-                ret += world->raws.language.words[name.words[i]]->forms[name.parts_of_speech[i].value];
+                ret += world->raws.language.words[name.words[i]]->forms[name.parts_of_speech[i]];
         }
         return Translation::capitalize(ret);
     }

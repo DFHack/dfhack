@@ -1,26 +1,22 @@
-#include <vector>
+#include <mutex>
+#include <sstream>
 #include <string>
+#include <vector>
 
-#include <LuaTools.h>
-
-#include <VTableInterpose.h>
-
-#include "Core.h"
 #include "Console.h"
+#include "Core.h"
 #include "Export.h"
+#include "LuaTools.h"
 #include "PluginManager.h"
+#include "VTableInterpose.h"
 
-#include <VTableInterpose.h>
-#include "df/renderer.h"
 #include "df/enabler.h"
+#include "df/renderer.h"
+#include "df/viewscreen_dungeonmodest.h"
+#include "df/viewscreen_dwarfmodest.h"
 
 #include "renderer_opengl.hpp"
 #include "renderer_light.hpp"
-
-#include "df/viewscreen_dwarfmodest.h"
-#include "df/viewscreen_dungeonmodest.h"
-
-#include <sstream>
 
 using df::viewscreen_dungeonmodest;
 using df::viewscreen_dwarfmodest;
@@ -367,7 +363,7 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
                 cur=blue;
 
             renderer_test* r=reinterpret_cast<renderer_test*>(enabler->renderer);
-            tthread::lock_guard<tthread::fast_mutex> guard(r->dataMutex);
+            std::lock_guard<std::mutex> guard{r->dataMutex};
             int h=gps->dimy;
             int w=gps->dimx;
             int cx=w/2;

@@ -34,6 +34,7 @@ Clayton Hughes
 Clément Vuchener        cvuchener
 Dan Amlund              danamlund
 Daniel Brooks           db48x
+David                   Nilsolm
 David Corbett           dscorbett
 David Seguin            dseguin
 David Timm              dtimm
@@ -53,6 +54,7 @@ grubsteak               grubsteak
 Harlan Playford         playfordh
 Hayati Ayguen           hayguen
 Herwig Hochleitner      bendlas
+Ian S                   kremlin-
 IndigoFenix
 James Logsdon           jlogsdon
 Japa                    JapaMala
@@ -61,7 +63,7 @@ Jeremy Apthorp          nornagon
 Jim Lisi                stonetoad
 Jimbo Whales            jimbowhales
 jimcarreer              jimcarreer
-jj                      jjyg                    jj``
+jj                      jjyg                    jj\`\`
 Joel Meador             janxious
 John Beisley            huin
 John Shade              gsvslto
@@ -80,7 +82,9 @@ Mason11987              Mason11987
 Matt Regul              mattregul
 Matthew Cline
 Matthew Lindner         mlindner
+Matthew Taylor          ymber                   yutna
 Max                     maxthyme                Max^TM
+McArcady                McArcady
 melkor217               melkor217
 Meneth32
 Meph
@@ -97,6 +101,7 @@ moversti                moversti
 napagokc                napagokc
 Neil Little             nmlittle
 Nick Rart               nickrart                comestible
+Nicolas Ayala           nicolasayala
 Nikolay Amiantov        abbradar
 nocico                  nocico
 Omniclasm
@@ -106,11 +111,13 @@ Paul Fenwick            pjf
 PeridexisErrant         PeridexisErrant
 Petr Mrázek             peterix
 Pfhreak                 Pfhreak
+Pierre-David Bélanger   pierredavidbelanger
 potato
 Priit Laes              plaes
 Putnam                  Putnam3145
 Quietust                quietust                _Q
 Raidau                  Raidau
+Ralph Bisschops         ralpha
 Ramblurr                Ramblurr
 rampaging-poet
 Raoul van Putten
@@ -146,8 +153,10 @@ thefriendlyhacker       thefriendlyhacker
 TheHologram             TheHologram
 therahedwig             therahedwig
 ThiagoLira              ThiagoLira
+thurin                  thurin
 Tim Walberg             twalberg
 Timothy Collett         danaris
+Timur Kelman            TymurGubayev
 Tom Jobbins             TheBloke
 Tom Prince
 TotallyGatsby           TotallyGatsby

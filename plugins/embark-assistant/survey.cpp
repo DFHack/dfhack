@@ -2424,7 +2424,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
         }
         else {
             process_embark_incursion_mid_level_tile
-            (translate_ns_edge(survey_results,
+            (translate_ew_edge(survey_results,
                 true,
                 x,
                 y,
@@ -2481,7 +2481,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
         }
         else {
             process_embark_incursion_mid_level_tile
-            (translate_ns_edge(survey_results,
+            (translate_ew_edge(survey_results,
                 false,
                 x,
                 y,

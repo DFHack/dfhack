@@ -112,7 +112,8 @@ Generator
 The ``Ninja`` CMake build generator is the prefered build method on Linux and
 macOS, instead of ``Unix Makefiles``, which is the default. You can select Ninja
 by passing ``-G Ninja`` to CMake. Incremental builds using Unix Makefiles can be
-much slower than Ninja builds.
+much slower than Ninja builds. Note that you will probably need to install
+Ninja; see the platform-specific sections for details.
 
 ::
 
@@ -178,13 +179,18 @@ DFHack is meant to be installed into an existing DF folder, so get one ready.
 We assume that any Linux platform will have ``git`` available (though it may
 need to be installed with your package manager.)
 
-To build DFHack you need GCC version 4.8 or later. GCC 4.8 is easiest to work
-with due to avoiding libstdc++ issues (see below), but any version from 4.8
-onwards (including 5.x) will work.
+To build DFHack, you need GCC 4.8 or newer. GCC 4.8 has the benefit of avoiding
+`libstdc++ compatibility issues <linux-incompatible-libstdcxx>`, but can be hard
+to obtain on modern distributions, and working around these issues is done
+automatically by the ``dfhack`` launcher script. As long as your system-provided
+GCC is new enough, it should work. Note that extremely new GCC versions may not
+have been used to build DFHack yet, so if you run into issues with these, please
+let us know (e.g. by opening a GitHub issue).
 
 Before you can build anything, you'll also need ``cmake``. It is advisable to
 also get ``ccmake`` on distributions that split the cmake package into multiple
-parts.
+parts. As mentioned above, ``ninja`` is recommended (many distributions call
+this package ``ninja-build``).
 
 You will need pthread; most systems should have this already. Note that older
 CMake versions may have trouble detecting pthread, so if you run into
@@ -260,29 +266,32 @@ This will show a curses-based interface that lets you set all of the
 extra options. You can also use a cmake-friendly IDE like KDevelop 4
 or the cmake-gui program.
 
+.. _linux-incompatible-libstdcxx:
+
 Incompatible libstdc++
 ~~~~~~~~~~~~~~~~~~~~~~
-When compiling dfhack yourself, it builds against your system libstdc++. When
-Dwarf Fortress runs, it uses a libstdc++ shipped with the binary, which comes
-from GCC 4.8 and is incompatible with code compiled with newer GCC versions. If
-you compile DFHack with a GCC version newer than 4.8, you will see an error
-message such as::
+When compiling DFHack yourself, it builds against your system libstdc++. When
+Dwarf Fortress runs, it uses a libstdc++ shipped in the ``libs`` folder, which
+comes from GCC 4.8 and is incompatible with code compiled with newer GCC
+versions. As of DFHack 0.42.05-alpha1, the ``dfhack`` launcher script attempts
+to fix this by automatically removing the DF-provided libstdc++ on startup.
+In rare cases, this may fail and cause errors such as::
 
    ./libs/Dwarf_Fortress: /pathToDF/libs/libstdc++.so.6: version
        `GLIBCXX_3.4.18' not found (required by ./hack/libdfhack.so)
 
-To fix this you can compile with GCC 4.8 or remove the libstdc++ shipped with
+The easiest way to fix this is generally removing the libstdc++ shipped with
 DF, which causes DF to use your system libstdc++ instead::
 
     cd /path/to/DF/
     rm libs/libstdc++.so.6
 
-Note that distributing binaries compiled with newer GCC versions requires end-
-users to delete libstdc++ themselves and have a libstdc++ on their system from
-the same GCC version or newer. For this reason, distributing anything compiled
-with GCC versions newer than 4.8 is discouraged. In the future we may start
-bundling a later libstdc++ as part of the DFHack package, so as to enable
-compilation-for-distribution with a GCC newer than 4.8.
+Note that distributing binaries compiled with newer GCC versions may result in
+the opposite compatibily issue: users with *older* GCC versions may encounter
+similar errors. This is why DFHack distributes both GCC 4.8 and GCC 7 builds. If
+you are planning on distributing binaries to other users, we recommend using an
+older GCC (but still at least 4.8) version if possible.
+
 
 Mac OS X
 ========

@@ -2,10 +2,16 @@
 Compiling DFHack
 ################
 
-You don't need to compile DFHack unless you're developing plugins or working on the core.
+DFHack builds are available for all supported platforms; see `installing` for
+installation instructions. If you are a DFHack end-user, modder, or plan on
+writing scripts (not plugins), it is generally recommended (and easier) to use
+these builds instead of compiling DFHack from source.
 
-For users, modders, and authors of scripts it's better to download
-and `install the latest release instead <installing>`.
+However, if you are looking to develop plugins, work on the DFHack core, make
+complex changes to DF-structures, or anything else that requires compiling
+DFHack from source, this document will walk you through the build process. Note
+that some steps may be unconventional compared to other projects, so be sure to
+pay close attention if this is your first time compiling DFHack.
 
 .. contents::
    :depth: 2
@@ -14,35 +20,60 @@ and `install the latest release instead <installing>`.
 
 How to get the code
 ===================
-DFHack doesn't have any kind of system of code snapshots in place, so you will have to
-get code from the GitHub repository using Git.  How to get Git is described under
-the instructions for each platform.
-
-To get the latest release code (master branch)::
+DFHack uses Git for source control; instructions for installing Git can be found
+in the platform-specific sections below. The code is hosted on
+`GitHub <https://github.com/DFHack/dfhack>`_, and can be downloaded with::
 
     git clone --recursive https://github.com/DFHack/dfhack
     cd dfhack
 
-If your version of Git does not support the ``--recursive`` flag, you will need to omit it and run
-``git submodule update --init`` after entering the dfhack directory.
+If your version of Git does not support the ``--recursive`` flag, you will need
+to omit it and run ``git submodule update --init`` after entering the dfhack
+directory.
 
-To get the latest development code (develop branch), clone as above and then::
+This will check out the code on the default branch of the GitHub repo, currently
+``develop``, which may be unstable. If you want code for the latest stable
+release, you can check out the ``master`` branch instead::
 
-  git checkout develop
+  git checkout master
   git submodule update
 
-Generally, you should only need to clone DFHack once.
+In general, a single DFHack clone is suitable for development - most Git
+operations such as switching branches can be done on an existing clone. If you
+find yourself cloning DFHack frequently as part of your development process, or
+getting stuck on anything else Git-related, feel free to reach out to us for
+assistance.
 
-**Important note regarding submodule update after pulling or changing branches**:
+.. admonition:: A note on submodules
 
-You must run ``git submodule update`` every time you change branches, such as
-when switching between the master and develop branches or vice versa. You also
-must run it after pulling any changes to submodules from the DFHack repo. If a
-submodule only exists on the newer branch, or if a commit you just pulled
-contains a new submodule, you need to run ``git submodule update --init``.
-Failure to do this may result in a variety of errors, including ``fatal: <path>
-does not exist`` when using Git, errors when building DFHack, and ``not a known
-DF version`` when starting DF.
+  DFHack uses submodules extensively to manage its subprojects (including the
+  ``scripts`` folder and DF-structures in ``library/xml``). Failing to keep
+  submodules in sync when switching between branches can result in build errors
+  or scripts that don't work. In general, you should always update submodules
+  whenever you switch between branches in the main DFHack repo with
+  ``git submodule update``. (If you are working on bleeding-edge DFHack and
+  have checked out the master branch of some submodules, running ``git pull``
+  in those submodules is also an option.)
+
+  Rarely, we add or remove submodules. If there are any changes to the existence
+  of submodules when you switch between branches, you should run
+  ``git submodule update --init`` instead (adding ``--init`` to the above
+  command).
+
+  Some common errors that can arise when failing to update submodules include:
+
+  * ``fatal: <some path> does not exist`` when performing Git operations
+  * Build errors, particularly referring to structures in the ``df::`` namespace
+    or the ``library/include/df`` folder
+  * ``Not a known DF version`` when starting DF
+  * ``Run 'git submodule update --init'`` when running CMake
+
+  Submodules are a particularly confusing feature of Git. The
+  `Git Book <https://git-scm.com/book/en/v2/Git-Tools-Submodules>`_ has a
+  thorough explanation of them (as well as of many other aspects of Git) and
+  is a recommended resource if you run into any issues. Other DFHack developers
+  are also able to help with any submodule-related (or Git-related) issues
+  you may encounter.
 
 **More notes**:
 
@@ -51,18 +82,21 @@ DF version`` when starting DF.
 
 Contributing to DFHack
 ======================
-If you want to get involved with the development, create an account on
-GitHub, make a clone there and then use that as your remote repository instead.
+To contribute to DFHack on GitHub, you will need a GitHub account. Only some
+DFHack developers can push directly to the DFHack repositories; we recommend
+making a fork of whatever repos you are interested in contributing to, making
+changes there, and submitting pull requests.  `GitHub's pull request tutorial
+<https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/proposing-changes-to-your-work-with-pull-requests>`_
+is a good resource for getting started with pull requests (some things to note:
+our work mainly happens on the ``develop`` branch, and you will need to use
+your own fork, assuming that you don't have write access to the DFHack repos).
 
-We'd love that; join us on IRC_ (#dfhack channel on freenode) for discussion,
-and whenever you need help.
+Most development-related discussion happens on IRC or in individual GitHub
+issues and pull requests, but there are also other ways to reach out - see
+`support` for details.
 
-.. _IRC: https://webchat.freenode.net/?channels=dfhack
-
-(Note: for submodule issues, please see the above instructions first!)
-
-For lots more details on contributing to DFHack, including pull requests, code format,
-and more, please see `contributing-code`.
+For more details on contributing to DFHack, including pull requests, code
+format, and more, please see `contributing-code`.
 
 
 Build settings

@@ -87,6 +87,7 @@ the console.
 
 
 .. _troubleshooting:
+.. _support:
 
 Troubleshooting
 ===============

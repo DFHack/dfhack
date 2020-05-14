@@ -102,7 +102,7 @@ If  the search function in this documentation isn't enough and
 :wiki:`the DF Wiki <>` hasn't helped, try asking in:
 
 - the `#dfhack IRC channel on freenode <https://webchat.freenode.net/?channels=dfhack>`_
-- the :forums:`Bay12 DFHack thread <139553>`
+- the `Bay12 DFHack thread <https://dfhack.org/bay12>`_
 - the `/r/dwarffortress <https://dwarffortress.reddit.com>`_ questions thread
 - the thread for the mod or Starter Pack you're using (if any)
 

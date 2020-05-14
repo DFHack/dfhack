@@ -574,7 +574,7 @@ namespace DFHack
     {
         std::vector<I *> & operator[](O other_id)
         {
-            CHECK_INVALID_ARGUMENT(size_t(other_id) < sizeof(*this) / sizeof(std::vector<I *>));
+            CHECK_INVALID_ARGUMENT(size_t(other_id) < sizeof(T) / sizeof(std::vector<I *>));
 
             auto vectors = reinterpret_cast<std::vector<I *> *>(this);
             return vectors[other_id];

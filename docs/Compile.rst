@@ -2,10 +2,16 @@
 Compiling DFHack
 ################
 
-You don't need to compile DFHack unless you're developing plugins or working on the core.
+DFHack builds are available for all supported platforms; see `installing` for
+installation instructions. If you are a DFHack end-user, modder, or plan on
+writing scripts (not plugins), it is generally recommended (and easier) to use
+these builds instead of compiling DFHack from source.
 
-For users, modders, and authors of scripts it's better to download
-and `install the latest release instead <installing>`.
+However, if you are looking to develop plugins, work on the DFHack core, make
+complex changes to DF-structures, or anything else that requires compiling
+DFHack from source, this document will walk you through the build process. Note
+that some steps may be unconventional compared to other projects, so be sure to
+pay close attention if this is your first time compiling DFHack.
 
 .. contents::
    :depth: 2
@@ -14,35 +20,60 @@ and `install the latest release instead <installing>`.
 
 How to get the code
 ===================
-DFHack doesn't have any kind of system of code snapshots in place, so you will have to
-get code from the GitHub repository using Git.  How to get Git is described under
-the instructions for each platform.
-
-To get the latest release code (master branch)::
+DFHack uses Git for source control; instructions for installing Git can be found
+in the platform-specific sections below. The code is hosted on
+`GitHub <https://github.com/DFHack/dfhack>`_, and can be downloaded with::
 
     git clone --recursive https://github.com/DFHack/dfhack
     cd dfhack
 
-If your version of Git does not support the ``--recursive`` flag, you will need to omit it and run
-``git submodule update --init`` after entering the dfhack directory.
+If your version of Git does not support the ``--recursive`` flag, you will need
+to omit it and run ``git submodule update --init`` after entering the dfhack
+directory.
 
-To get the latest development code (develop branch), clone as above and then::
+This will check out the code on the default branch of the GitHub repo, currently
+``develop``, which may be unstable. If you want code for the latest stable
+release, you can check out the ``master`` branch instead::
 
-  git checkout develop
+  git checkout master
   git submodule update
 
-Generally, you should only need to clone DFHack once.
+In general, a single DFHack clone is suitable for development - most Git
+operations such as switching branches can be done on an existing clone. If you
+find yourself cloning DFHack frequently as part of your development process, or
+getting stuck on anything else Git-related, feel free to reach out to us for
+assistance.
 
-**Important note regarding submodule update after pulling or changing branches**:
+.. admonition:: A note on submodules
 
-You must run ``git submodule update`` every time you change branches, such as
-when switching between the master and develop branches or vice versa. You also
-must run it after pulling any changes to submodules from the DFHack repo. If a
-submodule only exists on the newer branch, or if a commit you just pulled
-contains a new submodule, you need to run ``git submodule update --init``.
-Failure to do this may result in a variety of errors, including ``fatal: <path>
-does not exist`` when using Git, errors when building DFHack, and ``not a known
-DF version`` when starting DF.
+  DFHack uses submodules extensively to manage its subprojects (including the
+  ``scripts`` folder and DF-structures in ``library/xml``). Failing to keep
+  submodules in sync when switching between branches can result in build errors
+  or scripts that don't work. In general, you should always update submodules
+  whenever you switch between branches in the main DFHack repo with
+  ``git submodule update``. (If you are working on bleeding-edge DFHack and
+  have checked out the master branch of some submodules, running ``git pull``
+  in those submodules is also an option.)
+
+  Rarely, we add or remove submodules. If there are any changes to the existence
+  of submodules when you switch between branches, you should run
+  ``git submodule update --init`` instead (adding ``--init`` to the above
+  command).
+
+  Some common errors that can arise when failing to update submodules include:
+
+  * ``fatal: <some path> does not exist`` when performing Git operations
+  * Build errors, particularly referring to structures in the ``df::`` namespace
+    or the ``library/include/df`` folder
+  * ``Not a known DF version`` when starting DF
+  * ``Run 'git submodule update --init'`` when running CMake
+
+  Submodules are a particularly confusing feature of Git. The
+  `Git Book <https://git-scm.com/book/en/v2/Git-Tools-Submodules>`_ has a
+  thorough explanation of them (as well as of many other aspects of Git) and
+  is a recommended resource if you run into any issues. Other DFHack developers
+  are also able to help with any submodule-related (or Git-related) issues
+  you may encounter.
 
 **More notes**:
 
@@ -51,18 +82,21 @@ DF version`` when starting DF.
 
 Contributing to DFHack
 ======================
-If you want to get involved with the development, create an account on
-GitHub, make a clone there and then use that as your remote repository instead.
+To contribute to DFHack on GitHub, you will need a GitHub account. Only some
+DFHack developers can push directly to the DFHack repositories; we recommend
+making a fork of whatever repos you are interested in contributing to, making
+changes there, and submitting pull requests.  `GitHub's pull request tutorial
+<https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/proposing-changes-to-your-work-with-pull-requests>`_
+is a good resource for getting started with pull requests (some things to note:
+our work mainly happens on the ``develop`` branch, and you will need to use
+your own fork, assuming that you don't have write access to the DFHack repos).
 
-We'd love that; join us on IRC_ (#dfhack channel on freenode) for discussion,
-and whenever you need help.
+Most development-related discussion happens on IRC or in individual GitHub
+issues and pull requests, but there are also other ways to reach out - see
+`support` for details.
 
-.. _IRC: https://webchat.freenode.net/?channels=dfhack
-
-(Note: for submodule issues, please see the above instructions first!)
-
-For lots more details on contributing to DFHack, including pull requests, code format,
-and more, please see `contributing-code`.
+For more details on contributing to DFHack, including pull requests, code
+format, and more, please see `contributing-code`.
 
 
 Build settings
@@ -78,7 +112,8 @@ Generator
 The ``Ninja`` CMake build generator is the prefered build method on Linux and
 macOS, instead of ``Unix Makefiles``, which is the default. You can select Ninja
 by passing ``-G Ninja`` to CMake. Incremental builds using Unix Makefiles can be
-much slower than Ninja builds.
+much slower than Ninja builds. Note that you will probably need to install
+Ninja; see the platform-specific sections for details.
 
 ::
 
@@ -133,6 +168,9 @@ your build folder or by running ``ccmake`` (or another CMake GUI). Most
 DFHack-specific settings begin with ``BUILD_`` and control which parts of DFHack
 are built.
 
+
+.. _compile-linux:
+
 Linux
 =====
 On Linux, DFHack acts as a library that shadows parts of the SDL API using LD_PRELOAD.
@@ -144,13 +182,18 @@ DFHack is meant to be installed into an existing DF folder, so get one ready.
 We assume that any Linux platform will have ``git`` available (though it may
 need to be installed with your package manager.)
 
-To build DFHack you need GCC version 4.8 or later. GCC 4.8 is easiest to work
-with due to avoiding libstdc++ issues (see below), but any version from 4.8
-onwards (including 5.x) will work.
+To build DFHack, you need GCC 4.8 or newer. GCC 4.8 has the benefit of avoiding
+`libstdc++ compatibility issues <linux-incompatible-libstdcxx>`, but can be hard
+to obtain on modern distributions, and working around these issues is done
+automatically by the ``dfhack`` launcher script. As long as your system-provided
+GCC is new enough, it should work. Note that extremely new GCC versions may not
+have been used to build DFHack yet, so if you run into issues with these, please
+let us know (e.g. by opening a GitHub issue).
 
 Before you can build anything, you'll also need ``cmake``. It is advisable to
 also get ``ccmake`` on distributions that split the cmake package into multiple
-parts.
+parts. As mentioned above, ``ninja`` is recommended (many distributions call
+this package ``ninja-build``).
 
 You will need pthread; most systems should have this already. Note that older
 CMake versions may have trouble detecting pthread, so if you run into
@@ -226,37 +269,42 @@ This will show a curses-based interface that lets you set all of the
 extra options. You can also use a cmake-friendly IDE like KDevelop 4
 or the cmake-gui program.
 
+.. _linux-incompatible-libstdcxx:
+
 Incompatible libstdc++
 ~~~~~~~~~~~~~~~~~~~~~~
-When compiling dfhack yourself, it builds against your system libstdc++. When
-Dwarf Fortress runs, it uses a libstdc++ shipped with the binary, which comes
-from GCC 4.8 and is incompatible with code compiled with newer GCC versions. If
-you compile DFHack with a GCC version newer than 4.8, you will see an error
-message such as::
+When compiling DFHack yourself, it builds against your system libstdc++. When
+Dwarf Fortress runs, it uses a libstdc++ shipped in the ``libs`` folder, which
+comes from GCC 4.8 and is incompatible with code compiled with newer GCC
+versions. As of DFHack 0.42.05-alpha1, the ``dfhack`` launcher script attempts
+to fix this by automatically removing the DF-provided libstdc++ on startup.
+In rare cases, this may fail and cause errors such as::
 
    ./libs/Dwarf_Fortress: /pathToDF/libs/libstdc++.so.6: version
        `GLIBCXX_3.4.18' not found (required by ./hack/libdfhack.so)
 
-To fix this you can compile with GCC 4.8 or remove the libstdc++ shipped with
+The easiest way to fix this is generally removing the libstdc++ shipped with
 DF, which causes DF to use your system libstdc++ instead::
 
     cd /path/to/DF/
     rm libs/libstdc++.so.6
 
-Note that distributing binaries compiled with newer GCC versions requires end-
-users to delete libstdc++ themselves and have a libstdc++ on their system from
-the same GCC version or newer. For this reason, distributing anything compiled
-with GCC versions newer than 4.8 is discouraged. In the future we may start
-bundling a later libstdc++ as part of the DFHack package, so as to enable
-compilation-for-distribution with a GCC newer than 4.8.
+Note that distributing binaries compiled with newer GCC versions may result in
+the opposite compatibily issue: users with *older* GCC versions may encounter
+similar errors. This is why DFHack distributes both GCC 4.8 and GCC 7 builds. If
+you are planning on distributing binaries to other users, we recommend using an
+older GCC (but still at least 4.8) version if possible.
 
-Mac OS X
-========
-DFHack functions similarly on OS X and Linux, and the majority of the
-information above regarding the build process (cmake and ninja) applies here
+
+.. _compile-macos:
+
+macOS
+=====
+DFHack functions similarly on macOS and Linux, and the majority of the
+information above regarding the build process (CMake and Ninja) applies here
 as well.
 
-DFHack can officially be built on OS X with GCC 4.8 or 7. Anything newer than 7
+DFHack can officially be built on macOS only with GCC 4.8 or 7. Anything newer than 7
 will require you to perform extra steps to get DFHack to run (see `osx-new-gcc-notes`),
 and your build will likely not be redistributable.
 
@@ -309,7 +357,7 @@ Dependencies and system set-up
     cleaner, quicker, and smarter. For example, installing MacPort's GCC will
     install more than twice as many dependencies as Homebrew's will, and all in
     both 32-bit and 64-bit variants. Homebrew also doesn't require constant use
-    of sudo.
+    of ``sudo``.
 
     Using `Homebrew <http://brew.sh/>`_ (recommended)::
 
@@ -378,9 +426,9 @@ Building
     export CC=gcc-7
     export CXX=g++-7
 
-  etc.
+  (adjust as needed for different GCC installations)
 
-* Build dfhack::
+* Build DFHack::
 
     mkdir build-osx
     cd build-osx
@@ -389,6 +437,7 @@ Building
 
   <path to DF> should be a path to a copy of Dwarf Fortress, of the appropriate
   version for the DFHack you are building.
+
 
 .. _compile-windows:
 
@@ -682,9 +731,9 @@ It may be installed in a directory such as ``~/.local/bin/``, so after pip
 install, find ``sphinx-build`` and ensure its directory is in your local ``$PATH``.
 
 
-Mac OS X
---------
-OS X has Python 2.7 installed by default, but it does not have the pip package manager.
+macOS
+-----
+macOS has Python 2.7 installed by default, but it does not have the pip package manager.
 
 You can install Homebrew's Python 3, which includes pip, and then install the
 latest Sphinx using pip::
@@ -696,11 +745,11 @@ Alternatively, you can simply install Sphinx 1.3.x directly from Homebrew::
 
   brew install sphinx-doc
 
-This will install Sphinx for OS X's system Python 2.7, without needing pip.
+This will install Sphinx for macOS's system Python 2.7, without needing pip.
 
 Either method works; if you plan to use Python for other purposes, it might best
 to install Homebrew's Python 3 so that you have the latest Python as well as pip.
-If not, just installing sphinx-doc for OS X's system Python 2.7 is fine.
+If not, just installing sphinx-doc for macOS's system Python 2.7 is fine.
 
 
 Windows
@@ -767,7 +816,7 @@ files alphabetically, so all the files you need should be next to each other.
 It is recommended that you create a build folder and run CMake to verify that
 you have downloaded everything at this point, assuming your download machine has
 CMake installed. This involves running a "generate" batch script on Windows, or
-a command starting with ``cmake .. -G Ninja`` on Linux and OS X, following the
+a command starting with ``cmake .. -G Ninja`` on Linux and macOS, following the
 instructions in the sections above. CMake should automatically locate files that
 you placed in ``CMake/downloads``, and use them instead of attempting to
 download them.

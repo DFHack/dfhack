@@ -168,6 +168,9 @@ your build folder or by running ``ccmake`` (or another CMake GUI). Most
 DFHack-specific settings begin with ``BUILD_`` and control which parts of DFHack
 are built.
 
+
+.. _compile-linux:
+
 Linux
 =====
 On Linux, DFHack acts as a library that shadows parts of the SDL API using LD_PRELOAD.
@@ -293,13 +296,15 @@ you are planning on distributing binaries to other users, we recommend using an
 older GCC (but still at least 4.8) version if possible.
 
 
-Mac OS X
-========
-DFHack functions similarly on OS X and Linux, and the majority of the
-information above regarding the build process (cmake and ninja) applies here
+.. _compile-macos:
+
+macOS
+=====
+DFHack functions similarly on macOS and Linux, and the majority of the
+information above regarding the build process (CMake and Ninja) applies here
 as well.
 
-DFHack can officially be built on OS X with GCC 4.8 or 7. Anything newer than 7
+DFHack can officially be built on macOS only with GCC 4.8 or 7. Anything newer than 7
 will require you to perform extra steps to get DFHack to run (see `osx-new-gcc-notes`),
 and your build will likely not be redistributable.
 
@@ -352,7 +357,7 @@ Dependencies and system set-up
     cleaner, quicker, and smarter. For example, installing MacPort's GCC will
     install more than twice as many dependencies as Homebrew's will, and all in
     both 32-bit and 64-bit variants. Homebrew also doesn't require constant use
-    of sudo.
+    of ``sudo``.
 
     Using `Homebrew <http://brew.sh/>`_ (recommended)::
 
@@ -421,9 +426,9 @@ Building
     export CC=gcc-7
     export CXX=g++-7
 
-  etc.
+  (adjust as needed for different GCC installations)
 
-* Build dfhack::
+* Build DFHack::
 
     mkdir build-osx
     cd build-osx
@@ -432,6 +437,7 @@ Building
 
   <path to DF> should be a path to a copy of Dwarf Fortress, of the appropriate
   version for the DFHack you are building.
+
 
 .. _compile-windows:
 
@@ -725,9 +731,9 @@ It may be installed in a directory such as ``~/.local/bin/``, so after pip
 install, find ``sphinx-build`` and ensure its directory is in your local ``$PATH``.
 
 
-Mac OS X
---------
-OS X has Python 2.7 installed by default, but it does not have the pip package manager.
+macOS
+-----
+macOS has Python 2.7 installed by default, but it does not have the pip package manager.
 
 You can install Homebrew's Python 3, which includes pip, and then install the
 latest Sphinx using pip::
@@ -739,11 +745,11 @@ Alternatively, you can simply install Sphinx 1.3.x directly from Homebrew::
 
   brew install sphinx-doc
 
-This will install Sphinx for OS X's system Python 2.7, without needing pip.
+This will install Sphinx for macOS's system Python 2.7, without needing pip.
 
 Either method works; if you plan to use Python for other purposes, it might best
 to install Homebrew's Python 3 so that you have the latest Python as well as pip.
-If not, just installing sphinx-doc for OS X's system Python 2.7 is fine.
+If not, just installing sphinx-doc for macOS's system Python 2.7 is fine.
 
 
 Windows
@@ -810,7 +816,7 @@ files alphabetically, so all the files you need should be next to each other.
 It is recommended that you create a build folder and run CMake to verify that
 you have downloaded everything at this point, assuming your download machine has
 CMake installed. This involves running a "generate" batch script on Windows, or
-a command starting with ``cmake .. -G Ninja`` on Linux and OS X, following the
+a command starting with ``cmake .. -G Ninja`` on Linux and macOS, following the
 instructions in the sections above. CMake should automatically locate files that
 you placed in ``CMake/downloads``, and use them instead of attempting to
 download them.

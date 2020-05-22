@@ -89,6 +89,10 @@ if(MSVC)
     # a smaller type, and most of the time this is just conversion from 64 to 32 bits
     # for things like vector sizes, which are never that big anyway.
     add_definitions("/wd4267")
+
+    # MSVC panics if an object file contains more than 65,279 sections. this
+    # happens quite frequently with code that uses templates, such as vectors.
+    add_definitions("/bigobj")
 endif()
 
 # Automatically detect architecture based on Visual Studio generator

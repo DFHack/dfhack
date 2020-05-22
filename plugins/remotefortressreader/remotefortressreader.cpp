@@ -949,9 +949,6 @@ static command_result GetGrowthList(color_ostream &stream, const EmptyMessage *i
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos)
 {
-    NetBlock->set_map_x(DfBlock->map_pos.x);
-    NetBlock->set_map_y(DfBlock->map_pos.y);
-    NetBlock->set_map_z(DfBlock->map_pos.z);
 
     MapExtras::Block * block = MC->BlockAtTile(DfBlock->map_pos);
 
@@ -1465,7 +1462,12 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                         bool flows = block->flows.size() > 0;
                         RemoteFortressReader::MapBlock *net_block = nullptr;
                         if (tileChanged || desChanged || spatterChanged || firstBlock || itemsChanged || flows)
+                        {
                             net_block = out->add_map_blocks();
+                            net_block->set_map_x(block->map_pos.x);
+                            net_block->set_map_y(block->map_pos.y);
+                            net_block->set_map_z(block->map_pos.z);
+                        }
                         if (tileChanged)
                         {
                             CopyBlock(block, net_block, &MC, pos);

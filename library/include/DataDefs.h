@@ -334,6 +334,23 @@ namespace DFHack
         virtual identity_type type() { return IDTYPE_UNION; }
     };
 
+    class DFHACK_EXPORT other_vectors_identity : public struct_identity {
+        enum_identity *index_enum;
+
+    public:
+        other_vectors_identity(size_t size, TAllocateFn alloc,
+                compound_identity *scope_parent, const char *dfhack_name,
+                struct_identity *parent, const struct_field_info *fields,
+                enum_identity *index_enum) :
+            struct_identity(size, alloc, scope_parent, dfhack_name, parent, fields),
+            index_enum(index_enum)
+        {}
+
+        enum_identity *getIndexEnum() { return index_enum; }
+
+        virtual void build_metatable(lua_State *state);
+    };
+
 #ifdef _MSC_VER
     typedef void *virtual_ptr;
 #else
@@ -465,6 +482,7 @@ namespace df
     using DFHack::global_identity;
     using DFHack::struct_identity;
     using DFHack::union_identity;
+    using DFHack::other_vectors_identity;
     using DFHack::struct_field_info;
     using DFHack::struct_field_info_extra;
     using DFHack::bitfield_item_info;
@@ -474,6 +492,7 @@ namespace df
     using DFHack::BitArray;
     using DFHack::DfArray;
     using DFHack::DfLinkedList;
+    using DFHack::DfOtherVectors;
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdelete-non-virtual-dtor"

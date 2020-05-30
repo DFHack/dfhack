@@ -6080,21 +6080,10 @@ void viewscreen_unitklokerst::printScripts(UnitInfo *cur)
     //~ string sitestr = df::world_site::find(df::global::ui->site_id)->name.nickname;
     // Obsinian Late Winter 125-12-24 | Kloker
     // 
-    //     Timber, Late Autumn  îd 212, ïlon 9, alod 1 
-    
-    
-    
-    
-    //     Timber, Late Autumn   îd 212 ïlon 9 Alod 1 
-    
-    
     //     Timber, Late Autumn  îd·212 ïlon·9 Alod·1 
     //
-    //
-    //
-    // Timber, Late Autumn - Id 212 'lon 9 'od 1 
     uint8_t dwfglyph = 234; //omega glyph
-    uint8_t glyphi1 = 140; //Î î
+    uint8_t glyphi1 = 140; //Î
     uint8_t glyphi2= 139; //ï
     uint8_t gdot = 249; //·
   

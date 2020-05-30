@@ -1,4 +1,4 @@
-## Cavern Keeper 
+## Kloker (fka Cavern Keeper) 
 
 This is an extended dfhack labor manager plugin.
 
@@ -10,7 +10,8 @@ It includes these improvements:
 * Units characters are summarized in great detail and conviently as they are focused.
 * Sorting of list of units is more powerful and simple to control.
 * Two extra column modes are included to reveal units physical and mental scores, and units conditions (pregnant, noShoes, needs doctor, wounded etc)
-* Colorful highlighting can be enabled to indicate which jobs and roles each units stats make them especially good or bad at (over and above their plain skill level which is displayed). 
+* Integrated autolabor can assign outstanding tasks to selected units.
+* Colorful highlighting indicates which jobs and roles each units are especially good or bad at (over and above their plain skill level which is displayed). 
 * A fair cheat feature is included so dwarfs skills can be revised immediately after embark since they are much easier to examine in keeper than in the embark preparation screens.
 * Keeper can also open and display the intresting details of the listings of pets, visitors and others, monsters etc. and can also nickname pets and visitors.
 * Keeper's UI has multiple refinements over the basic labor manager to make it easier to use often, such as persistent focus and selection.
@@ -39,17 +40,20 @@ Windows64 Peridix's starter Pack ver. 0.44.12-r04
 Windows64 Peridix's starter Pack ver. 0.44.12-r05 (pack is [here](http://dffd.bay12games.com/file.php?id=7622))
 * [`/win_dfhack_44.12-R2/`](https://github.com/strainer/dfhack/tree/master/build/compile_archive_df44/win_dfhack_44.12-R2)
 
-#### And finally:
+#### Also:
 
 For MacOS DFHack ver 44.12-r2
 * [`/macos_dfhack_44.12-r2/`](https://github.com/strainer/dfhack/tree/master/build/compile_archive_df44/macos_dfhack_44.12-r2)
+
+Linux DFHack 47.3 beta 1
+* [`/linux_dfhack_47.3b1/`](https://github.com/strainer/dfhack/tree/master/build/compile_archive_df47/linux_dfhack_47.3b1/)
 
 The plugin file is called `"manipulator.plug.so"` for linux, `"manipulator.plug.dll"` for windows and `"manipulator.plug.dylib"` for MacOS. The file goes into the directory `'../(df_directory)/hack/plugins'` or `'..\dwarf fortress\hack\plugins'` on windows.
 
 
 ### Running
 
-To open Cavern Keeper in fortress mode press 'u' (for unitlist) and then 'k' for keeper. It can also be opened on the listing screens for pets and visitors and the dead.
+To open Kloker in fortress mode press 'u' (for unitlist) and then 'k' for klocker. It can also be opened on the listing screens for pets and visitors and the dead. It can also open on the map 
 
 It behaves similar to the legacy dfhack labor manager. Toggle 
 Cavern Keepers extended abilities by pressing the keys
@@ -75,6 +79,7 @@ It can be saved on top of `..\[dfhome]\data\init\colors.txt`
 DF's default keypress timings seem really sluggish to me.
 Here are my tweaked keyboard speed settings, they go
 near the bottom of `~lnp\df_linux\data\init\init.txt`
+
 
 ```
 [KEY_HOLD_MS:250]

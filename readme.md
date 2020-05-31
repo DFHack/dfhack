@@ -7,14 +7,14 @@ This is a greatly extended dfhack labor manager plugin.
 
 It includes these improvements:
 
-* Units characters are summarized in great detail and conviently as they are focused.
-* Sorting of list of units is more powerful and simple to control.
-* Two extra column modes are included to reveal units physical and mental scores, and units conditions (pregnant, noShoes, needs doctor, wounded etc)
-* Integrated autolabor can assign outstanding tasks to selected units.
-* Colorful highlighting indicates which jobs and roles each units are especially good or bad at (over and above their plain skill level which is displayed). 
-* A fair cheat feature is included so dwarfs skills can be revised immediately after embark since they are much easier to examine in keeper than in the embark preparation screens.
-* Keeper can also open and display the intresting details of the listings of pets, visitors and others, monsters etc. and can also nickname pets and visitors.
-* Keeper's UI has multiple refinements over the basic labor manager to make it easier to use often, such as persistent focus and selection.
+* Units characters are summarized in great detail as they are focused in listing.
+* Sorting of unit list is more powerful and simple to control.
+* Units physical and mental scores, and units conditions (pregnant, noShoes, needs doctor, wounded etc) can be easily browsed.
+* DFhack autolabor is integrated, enabling easy assignment of outstanding tasks to selected units.
+* Colorful highlighting indicates which jobs and roles each units are especially good or bad at (over and above their plain skill level which is also displayed). 
+* A fair cheat feature is included so dwarfs skills can be revised immediately after embark, since they are much easier to examine in kloker than in the embark preparation screens.
+* Kloker can also open and display the intresting details of pets, visitors and others, monsters etc. and can also nickname pets and visitors.
+* Kloker's UI has multiple refinements over the basic labor manager to make it easier to use often, such as persistent focus and selection, and jumping straight to units from the game map.
 
 ### Installing
 
@@ -59,11 +59,10 @@ The plugin file is called `"manipulator.plug.so"` for linux, `"manipulator.plug.
 
 To open Kloker in fortress mode press 'u' (for unitlist) and then 'k' for kloker. It can also be opened on the listing screens for pets and visitors and the dead. It can also open on the map 
 
-It behaves similar to the legacy dfhack labor manager. Toggle 
-Cavern Keepers extended abilities by pressing the keys
-displayed in the footer next to 'Mode'.
+It behaves similar to the legacy dfhack labor manager. Adjust 
+Klokers extended abilities by pressing the keys displayed in the menu next to 'Mode'. A tooltip appears to help understand setting changes. 
 
-Here is a [guide and discussion](http://www.bay12forums.com/smf/index.php?topic=169329.msg7678623#msg7678623) on the plugin at bay12forum. Feedback there is appreciated.
+Here is a [intro and discussion](http://www.bay12forums.com/smf/index.php?topic=169329.msg7678623#msg7678623) on the plugin at bay12forum. Feedback there is appreciated.
 
 
 ### Extra configs:

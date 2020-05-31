@@ -1,6 +1,6 @@
 ## Kloker (fka Cavern Keeper) 
 
-This is an extended dfhack labor manager plugin.
+This is a greatly extended dfhack labor manager plugin.
 
 <img src="https://i.imgur.com/5g0Z34C.png" alt="screenshot1" width="800">
 <img src="https://i.imgur.com/Gq3MicB.png" alt="screenshot2" width="600">
@@ -19,11 +19,20 @@ It includes these improvements:
 ### Installing
 
 It is installed by saving one plugin file into dfhacks `/plugins` directory.
-It will overwrite the "manipulator" plugin (dfhack labor manager) that lives in there already. Cavern Keeper is a much extended version of the old plugin.
+It will overwrite the "manipulator" plugin (dfhack labor manager) that lives in there already. Kloker is a much extended version of the old plugin.
 It won't work with dfhack versions which it was not compiled specifically for.
-Only these latest compiles are stable and feature complete.
+
+Only these latest compiles are feature complete:
 
 #### Compiles for starter packs are located in the following directories:  
+
+Linux DFHack 47.03 beta 1
+* [`/linux_dfhack_47.3b1/`](https://github.com/strainer/dfhack/tree/master/build/compile_archive_df47/linux_dfhack_47.3b1/)
+
+Win64 DFHack 47.04 rel 1
+* [`/win64_dfhack_47.04r1/`](https://github.com/strainer/dfhack/tree/master/build/compile_archive_df47/win64_dfhack_47.04r1/)
+
+#### Also:
 
 Linux Newbie Pack ver. 44.12 r03 (pack [here](http://dffd.bay12games.com/file.php?id=13244))
 * [`/linux_lnp_44.12-r03/`](https://github.com/strainer/dfhack/tree/master/build/compile_archive_df44/linux_lnp_44.12-r03/)
@@ -40,20 +49,15 @@ Windows64 Peridix's starter Pack ver. 0.44.12-r04
 Windows64 Peridix's starter Pack ver. 0.44.12-r05 (pack is [here](http://dffd.bay12games.com/file.php?id=7622))
 * [`/win_dfhack_44.12-R2/`](https://github.com/strainer/dfhack/tree/master/build/compile_archive_df44/win_dfhack_44.12-R2)
 
-#### Also:
-
 For MacOS DFHack ver 44.12-r2
 * [`/macos_dfhack_44.12-r2/`](https://github.com/strainer/dfhack/tree/master/build/compile_archive_df44/macos_dfhack_44.12-r2)
-
-Linux DFHack 47.3 beta 1
-* [`/linux_dfhack_47.3b1/`](https://github.com/strainer/dfhack/tree/master/build/compile_archive_df47/linux_dfhack_47.3b1/)
 
 The plugin file is called `"manipulator.plug.so"` for linux, `"manipulator.plug.dll"` for windows and `"manipulator.plug.dylib"` for MacOS. The file goes into the directory `'../(df_directory)/hack/plugins'` or `'..\dwarf fortress\hack\plugins'` on windows.
 
 
 ### Running
 
-To open Kloker in fortress mode press 'u' (for unitlist) and then 'k' for klocker. It can also be opened on the listing screens for pets and visitors and the dead. It can also open on the map 
+To open Kloker in fortress mode press 'u' (for unitlist) and then 'k' for kloker. It can also be opened on the listing screens for pets and visitors and the dead. It can also open on the map 
 
 It behaves similar to the legacy dfhack labor manager. Toggle 
 Cavern Keepers extended abilities by pressing the keys
@@ -64,12 +68,12 @@ Here is a [guide and discussion](http://www.bay12forums.com/smf/index.php?topic=
 
 ### Extra configs:
 
-##### Alternative keeper pallete:
+##### Alternative keeper color pallete:
 
 The file [`dfkeeper_pallete.txt`](https://github.com/strainer/dfhack/tree/master/build/compile_archive_df44/dfkeeper_pallete.txt) can be used to customise the theme colors.
-It can be saved into the directory `..\[dfhome]\dfkeeper\` and can be edited with a text editor for further tweaking.
+It can be saved into the directory `..\[dfhome]\kloker\` and can be edited with a text editor for further tweaking.
  
-##### Game pallete tweaked for nice text as well as graphics:
+##### Game's color pallete tweaked for nice text as well as graphics:
 
 [`colors.txt`](https://github.com/strainer/dfhack/tree/master/build/compile_archive_df44/colors.txt) is the default LNP pallet tweaked to balance text readablity and graphics look.
 It can be saved on top of `..\[dfhome]\data\init\colors.txt`
@@ -95,7 +99,7 @@ Also the game Zoom setting works nicely with much smaller increments than defaul
 
 ## Development:
 
-This repository was forked from the main dfhack but I've deleted everything except manipulator.cpp so to make a compile it is necessary to place it into a full dfhack repo.
+This repository was forked from the main dfhack but I've deleted everything except manipulator.cpp. To make a compile it is necessary to place it into a full dfhack repo and follow DFhack's excellent [compiling instructions](https://docs.dfhack.org/en/stable/docs/Compile.html).
 
 The latest sourecode file is in `/plugins` directory. It has a complete but messy commit history since I worked in and merged a few branches and am learning how to do that better :)
 

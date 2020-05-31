@@ -1130,7 +1130,7 @@ const skill_attrib_weight skills_attribs[] =
     { { 0, 0, 0, 0, 0, 0 }, { 9, 0, 0, 9, 0, 0, 0, 0, 9, 0, 0, 0, 0 } } /* FLUID_ENGINEER */,
     { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* PAPERMAKING */,
     { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* BOOKBINDING */,
-    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 9, 9, 0, 0, 9, 9, 0, 0, 9, 9 } } /* INTRIGUE? */
+    { { 0, 0, 0, 0, 0, 0 }, { 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0 } } /* INTRIGUE? */
 };//S A T E R D     A F W C I P M L S M K E S
 
 df::job_skill labor_skill_map[ENUM_LAST_ITEM(unit_labor) + 1];

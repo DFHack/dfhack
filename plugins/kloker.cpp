@@ -87,7 +87,7 @@ using std::string;
 using namespace DFHack;
 using namespace df::enums;
 
-DFHACK_PLUGIN("manipulator");
+DFHACK_PLUGIN("kloker");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(ui);

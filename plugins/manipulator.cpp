@@ -1130,7 +1130,7 @@ const skill_attrib_weight skills_attribs[] =
     { { 0, 0, 0, 0, 0, 0 }, { 9, 0, 0, 9, 0, 0, 0, 0, 9, 0, 0, 0, 0 } } /* FLUID_ENGINEER */,
     { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* PAPERMAKING */,
     { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* BOOKBINDING */,
-    { { 0, 0, 0, 0, 0, 0 }, { 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0 } } /* INTRIGUE? */
+    { { 0, 0, 0, 0, 0, 0 }, { 9, 0, 0, 9, 9, 0, 0, 0, 0, 0, 0, 9, 0 } } /* INTRIGUE */
 };//S A T E R D     A F W C I P M L S M K E S
 
 df::job_skill labor_skill_map[ENUM_LAST_ITEM(unit_labor) + 1];
@@ -1946,7 +1946,7 @@ void calcNotices(vector<UnitInfo *> &units)
     }
 }
 
-//pinched from dwarfmonitor
+//item naming pinched and buffed from dwarfmonitor...
 df::world_raws::T_itemdefs &defs = world->raws.itemdefs;
 
 // COIN ROCK SLAB PET GEM CABINET BIN BOX TABLE BARREL CHAIN CHAIR BED DOOR ROUGH
@@ -2203,8 +2203,8 @@ void setDescriptions(UnitInfo * uin)
     int uid = uin->unit->id;
     int figid = unit->hist_figure_id;
 
-    int mother = 0, father = 0, spouse = 0, sibling = 0, child = 0, lover = 0, prisoner = 0, inprison = 0, master = 0, apprentice = 0, pets = 0
-            , companion = 0, fmaster = 0, fapp = 0, petown = 0, heros = 0, stars = 0, friends = 0, aquaints = 0, comrades = 0, lsoldiers = 0, grudges = 0, bullies = 0, foes = 0;
+    int mother = 0, father = 0, spouse = 0, sibling = 0, child = 0, lover = 0, prisoner = 0, inprison = 0, master = 0, apprentice = 0, pets = 0, companion = 0
+     , fmaster = 0, fapp = 0, petown = 0, heros = 0, stars = 0, friends = 0, aquaints = 0, comrades = 0, lsoldiers = 0, grudges = 0, bullies = 0, foes = 0;
 
     string gods;
 
@@ -2337,9 +2337,9 @@ void setDescriptions(UnitInfo * uin)
             kin = -1; //unit is motherless !
         }
 
-    }///if had figure id
+    }//if had figure id
 
-// count minor children, lover and sibling
+    // count minor children, lover and sibling
 
     momuid = unit->relationship_ids[df::unit_relationship_type::Mother];
     daduid = unit->relationship_ids[df::unit_relationship_type::Father];
@@ -2364,8 +2364,6 @@ void setDescriptions(UnitInfo * uin)
             }
         }
     }
-
-//for (auto hf = world->history.figures.begin(); hf !=  world->history.figures.end(); hf++){}
 
     if (kin > 99) kin = 99;
 
@@ -2397,8 +2395,7 @@ void setDescriptions(UnitInfo * uin)
 
     int outy = 0;
     if (uin->unit->status.current_soul)
-        //outy = uin->unit->status.current_soul->personality.unk_v4019_1;
-        outy =uin->unit->status.current_soul->personality.likes_outdoors;
+        outy =uin->unit->status.current_soul->personality.likes_outdoors; //.unk_v4019_1
 
     if (outy == 1) { outdoors = " Rgh"; }
     else if (outy == 2) { outdoors = " Rgh+"; }
@@ -2466,7 +2463,7 @@ void setDescriptions(UnitInfo * uin)
         cstr += " ";
     }
 
-//cstr+=kills;
+    //cstr+=kills;
 
     if (grudges + bullies + foes) {
         cstr += " Foe" + to_string(bullies)
@@ -2585,7 +2582,7 @@ void setDescriptions(UnitInfo * uin)
     if (traits_len > 85) traits_len = 85 + ((traits_len - 85) * 2) / 3;
     cstr = "";
 
-//Regarded stuff..
+    //Regarded stuff..
 
     if (&unit->status.current_soul->personality.values) {
 
@@ -2638,12 +2635,12 @@ void setDescriptions(UnitInfo * uin)
         }
 
         uin->regards = cstr;
-    }///rwgards
+    }//regards
 
     cstr = "";
     dstr = "";
     if (&unit->status.current_soul->personality.traits) {
-//Traits..
+    //Traits..
         std::array<uint8_t, 50> cachptr;
         std::array<int, 50> cachval;
 
@@ -2656,7 +2653,7 @@ void setDescriptions(UnitInfo * uin)
             return abs(cachval[a] - 50) > abs(cachval[b] - 50);
         });
 
-//find end of must note
+        //find end of must note
         for (e = 0; e < 50; e++) if (abs(cachval[cachptr[e]] - 50) < 6) break;
 
         bool punc = false;
@@ -2678,10 +2675,10 @@ void setDescriptions(UnitInfo * uin)
             pw = pw > 45 ? 0 : pw > 36 ? 1 : pw > 24 ? 2 : pw > 18 ? 3 : 4;
             //pw=pw>lowest?4:pw; //a bit
 
-            //game cat is
-            //most  41 - 50
-            //much  24 - 40
-            //often 10 - 24
+            //game categories are:
+            // most  41 - 50
+            // much  24 - 40
+            // often 10 - 24
 
             if (pw == 4) {
                 if (abit++ == 0) adv = 3;
@@ -2702,8 +2699,8 @@ void setDescriptions(UnitInfo * uin)
 
             dstr += traitnom[ tx * 2 + ((cachval[tx] > 50) ? 0 : 1) ];
 
-            if (pw == 4 && wrds > 3 && dstr.size() > 13) { //cancel a bit "bigword"
-                abit--; //get small final word.
+            if (pw == 4 && wrds > 3 && dstr.size() > 13) { //cancel "a bit [bigword]"
+                abit--; //get a small final word.
                 dstr = "";
             }
 
@@ -2720,7 +2717,7 @@ void setDescriptions(UnitInfo * uin)
         }
 
         uin->traits = cstr + ". ";
-    }/// Extremely gregarious...
+    }// Extremely gregarious...
 
 }
 
@@ -3382,9 +3379,9 @@ class viewscreen_unitbatchopst : public dfhack_viewscreen {
 public:
     viewscreen_unitbatchopst(
         vector<UnitInfo*> &parameter_units
-    ):menu_entries(-1) // default
+    ):menu_entries(-1)
     { 
-        cur_units = parameter_units; // dont know c better way to make parameter a member 
+        cur_units = parameter_units; 
         profmanager.reload();
         lastaction = "";
         labors_stashed = false;
@@ -3419,13 +3416,13 @@ public:
 
         if(!autolabor_on){
             menu_entries.add(
-                ListEntry<size_t>("Relieve constuction and hauling", MG_HAULING, "",COLOR_GREY )
+                ListEntry<size_t>("Relieve construction and hauling", MG_HAULING, "",COLOR_GREY )
             );
             menu_entries.add(
-                ListEntry<size_t>("Allow any multiformed activity", MG_ALLOW, "",COLOR_GREY )
+                ListEntry<size_t>("Permit all non-uniformed activities", MG_ALLOW, "",COLOR_GREY )
             ); 
             menu_entries.add(
-                ListEntry<size_t>("Forbid most activity", MG_FORBID, "",COLOR_CYAN )
+                ListEntry<size_t>("Forbid most activities", MG_FORBID, "",COLOR_CYAN )
             );
         }
         
@@ -3495,10 +3492,10 @@ public:
                 auto c = menu_entries.getFirstSelectedElem();
                 
                 if (c == MG_EXIT) {
-                  //ensure autolabor is finished ...
-                  auto_labor_end();
-                  Screen::dismiss(this);
-                  return;
+                    //ensure autolabor is finished ...
+                    auto_labor_end();
+                    Screen::dismiss(this);
+                    return;
                 } else if ( c == MG_AUTOAVAIL) {
                   
                     if(DFHack::World::ReadPauseState()) {
@@ -3537,7 +3534,7 @@ public:
                     return;
                 } else if ( c == MG_REVERT) {
                     revert_labors();
-                    lastaction = "       ...previous arrangements restored";
+                    lastaction = "       ...previous arrangements are restored";
                     refresh_menu();
                     return;
                 } else if ( c == MG_NICKNAME) {
@@ -3587,11 +3584,10 @@ public:
 
     void auto_labor_on(){
 
-        //~ color_ostream_proxy outstream( Core::getInstance().getConsole() );
         buffered_color_ostream outstream;
-        //~ CoreSuspendClaimer suspend;  //-no observed effects yet 
+        //~ CoreSuspendClaimer suspend;  //-no observed effects from suspension 
         
-        //all working units not selected need exempt from autolabor .. 
+        //all working units not selected need exempt from autolabor: 
         for (df::unit *uc : world->units.active)
         {
             bool exempt = false;
@@ -3608,7 +3604,7 @@ public:
                 }
             } 
 
-            if( exempt ) { //set grasp_count = 0 to exempt unit from autolabor
+            if( exempt ) {
                 grasp_stash.emplace( uc , uc->status2.limbs_grasp_count );
                 uc->status2.limbs_grasp_count = 0;
             }
@@ -3619,9 +3615,8 @@ public:
         stash_labors(); 
         clear_labors();
                 
+        //use to get console output:
         //color_ostream_proxy outstream( Core::getInstance().getConsole() );
-        //or to not output to console:
-        //buffered_color_ostream out;
         
         auto plugmgr = Core::getInstance().getPluginManager();
         std::string spg = "labormanager";
@@ -3629,12 +3624,11 @@ public:
         vector<string> px;
         px.push_back(scm);
         plugmgr->InvokeCommand(outstream, spg, px);
-        
-        std::this_thread::sleep_for(std::chrono::milliseconds(150));
-
         //plugmgr->InvokeCommand(outstream,"labormanager", vector<string>{"debug"}); 
         //plugmgr->InvokeCommand(outstream,"labormanager", vector<string>{"status"});
-                 
+        
+        std::this_thread::sleep_for(std::chrono::milliseconds(150));
+   
         //??? outstream.close();
     }
 
@@ -3642,8 +3636,6 @@ public:
         
         if(!autolabor_on) return;
         
-        //color_ostream_proxy outstream(Core::getInstance().getConsole());
-        //or to not output to console:
         buffered_color_ostream outstream;
         //color_ostream_proxy outstream( Core::getInstance().getConsole() );
         auto plugmgr = Core::getInstance().getPluginManager();
@@ -3672,7 +3664,7 @@ public:
 
         grasp_stash.clear();
         
-        // reavails to cur_units
+        // re-avails to cur_units
         if(autolabor_mask) { 
             for (UnitInfo *uic : cur_units) {
                 if(labor_stash.count( uic->unit->id ) != 0) {
@@ -3998,11 +3990,11 @@ int viewscreen_unitklokerst::findUnitsListPos(int unit_row) {
 
 viewscreen_unitklokerst::viewscreen_unitklokerst(vector<df::unit*> &src, int cursor_pos)
 {
-    //ignores cursor_pos if==0 so previous selection is not lost routinely
+    //ignores cursor_pos if==0 so that previous selection is not lost routinely
     if (cursor_pos > 0 || sel_unitid < 0){ 
-      if(cursor_pos == 999999) // bodge to allow 0 from unitview hook
-          cursor_pos = 0;
-      sel_unitid = src[cursor_pos]->id;
+        if(cursor_pos == 999999) // bodge to allow 0 from unitview hook
+            cursor_pos = 0;
+        sel_unitid = src[cursor_pos]->id;
     }
     std::map<df::unit*,int> active_idx;
     auto &active = world->units.active;
@@ -4011,8 +4003,6 @@ viewscreen_unitklokerst::viewscreen_unitklokerst(vector<df::unit*> &src, int cur
 
     for (size_t i = 0; i < src.size(); i++)
     {
-        //if (!(src[i]->status.current_soul)) continue; // todo allow zombies etc
-
         UnitInfo *cur = new UnitInfo;
         df::unit *unit = src[i];
 
@@ -6433,8 +6423,8 @@ struct unitlist_hook : df::viewscreen_unitlistst
         {
             auto dim = Screen::getWindowSize();
             int x = 2, y = dim.y - 2;
-            /* not werking
-            while ( x < 62 //find space for label
+            /* not werking to find space for label
+            while ( x < 62 
                 && ( Screen::readTile(x - 1, y).valid()
                   || Screen::readTile(x + 1, y).valid()
                   || Screen::readTile(x + 3, y).valid() )

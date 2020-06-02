@@ -332,6 +332,7 @@ Subcommands that persist until disabled or DF quits:
 :stone-status-all:      Adds an option to toggle the economic status of all stones
 :title-start-rename:    Adds a safe rename option to the title screen "Start Playing" menu
 :tradereq-pet-gender:   Displays pet genders on the trade request screen
+:reaction-gloves:       Fixes reactions to produce gloves in sets with correct handedness
 
 .. _fix-armory:
 

@@ -636,74 +636,50 @@ bool Units::isEggLayer(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
     df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    for (auto caste = raw->caste.begin(); caste != raw->caste.end(); ++caste)
-    {
-        if ((*caste)->flags.is_set(caste_raw_flags::LAYS_EGGS)
-                || (*caste)->flags.is_set(caste_raw_flags::LAYS_UNUSUAL_EGGS))
-            return true;
-    }
-    return false;
+    df::caste_raw *caste = raw->caste.at(unit->caste);
+    return caste->flags.is_set(caste_raw_flags::LAYS_EGGS)
+        || caste->flags.is_set(caste_raw_flags::LAYS_UNUSUAL_EGGS);
 }
 
 bool Units::isGrazer(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
     df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    for (auto caste = raw->caste.begin(); caste != raw->caste.end(); ++caste)
-    {
-        if((*caste)->flags.is_set(caste_raw_flags::GRAZER))
-            return true;
-    }
-    return false;
+    df::caste_raw *caste = raw->caste.at(unit->caste);
+    return caste->flags.is_set(caste_raw_flags::GRAZER);
 }
 
 bool Units::isMilkable(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
     df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    for (auto caste = raw->caste.begin(); caste != raw->caste.end(); ++caste)
-    {
-        if((*caste)->flags.is_set(caste_raw_flags::MILKABLE))
-            return true;
-    }
-    return false;
+    df::caste_raw *caste = raw->caste.at(unit->caste);
+    return caste->flags.is_set(caste_raw_flags::MILKABLE);
 }
 
 bool Units::isTrainableWar(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
     df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    for (auto caste = raw->caste.begin(); caste != raw->caste.end(); ++caste)
-    {
-        if((*caste)->flags.is_set(caste_raw_flags::TRAINABLE_WAR))
-            return true;
-    }
-    return false;
+    df::caste_raw *caste = raw->caste.at(unit->caste);
+    return caste->flags.is_set(caste_raw_flags::TRAINABLE_WAR);
 }
 
 bool Units::isTrainableHunting(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
     df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    for (auto caste = raw->caste.begin(); caste != raw->caste.end(); ++caste)
-    {
-        if((*caste)->flags.is_set(caste_raw_flags::TRAINABLE_HUNTING))
-            return true;
-    }
-    return false;
+    df::caste_raw *caste = raw->caste.at(unit->caste);
+    return caste->flags.is_set(caste_raw_flags::TRAINABLE_HUNTING);
 }
 
 bool Units::isTamable(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
     df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    for (auto caste = raw->caste.begin(); caste != raw->caste.end(); ++caste)
-    {
-        if((*caste)->flags.is_set(caste_raw_flags::PET) ||
-                (*caste)->flags.is_set(caste_raw_flags::PET_EXOTIC))
-            return true;
-    }
-    return false;
+    df::caste_raw *caste = raw->caste.at(unit->caste);
+    return caste->flags.is_set(caste_raw_flags::PET)
+        || caste->flags.is_set(caste_raw_flags::PET_EXOTIC);
 }
 
 bool Units::isMale(df::unit* unit)

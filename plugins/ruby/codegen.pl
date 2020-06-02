@@ -240,6 +240,12 @@ sub render_global_class {
     }
 
     my $rbparent = ($parent ? rb_ucase($parent) : 'MemHack::Compound');
+    my $ienum;
+    if (($type->getAttribute('ld:subtype') or '') eq 'df-other-vectors-type')
+    {
+        $rbparent = 'MemHack::OtherVectors';
+        $ienum = rb_ucase($type->getAttribute('index-enum'));
+    }
     push @lines_rb, "class $rbname < $rbparent";
     indent_rb {
         my $sz = sizeof($type);
@@ -248,6 +254,8 @@ sub render_global_class {
         push @lines_rb, "sizeof $sz\n";
 
         push @lines_rb, "rtti_classname :$rtti_name\n" if $rtti_name;
+
+        push @lines_rb, "ienum $ienum\n" if $ienum;
 
         render_struct_fields($type);
 

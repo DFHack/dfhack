@@ -59,6 +59,7 @@
 #include "df/reaction.h"
 #include "df/reaction_reagent_itemst.h"
 #include "df/reaction_reagent_flags.h"
+#include "df/reaction_product_itemst.h"
 #include "df/viewscreen_setupdwarfgamest.h"
 #include "df/viewscreen_layer_assigntradest.h"
 #include "df/viewscreen_tradegoodsst.h"
@@ -106,6 +107,7 @@
 #include "tweaks/stone-status-all.h"
 #include "tweaks/title-start-rename.h"
 #include "tweaks/tradereq-pet-gender.h"
+#include "tweaks/reaction-gloves.h"
 
 using std::set;
 using std::vector;
@@ -250,6 +252,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Adds a safe rename option to the title screen \"Start Playing\" menu\n"
         "  tweak tradereq-pet-gender [disable]\n"
         "    Displays the gender of pets in the trade request list\n"
+        "  tweak reaction-gloves [disable]\n"
+        "    Changes custom reactions to produce gloves in sets with correct handedness\n"
 //        "  tweak military-training [disable]\n"
 //        "    Speed up melee squad training, removing inverse dependency on unit count.\n"
     ));
@@ -331,6 +335,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     TWEAK_HOOK("title-start-rename", title_start_rename_hook, render);
 
     TWEAK_HOOK("tradereq-pet-gender", pet_gender_hook, render);
+
+    TWEAK_HOOK("reaction-gloves", reaction_gloves_hook, produce);
 
     return CR_OK;
 }

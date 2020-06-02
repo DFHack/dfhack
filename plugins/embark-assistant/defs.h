@@ -119,6 +119,8 @@ namespace embark_assist {
             df::world_region_type region_type[16][16];  //  Required for incursion override detection. We could store only the
                                                 //  edges, but storing it for every tile allows for a unified fetching
                                                 //  logic.
+            int8_t north_row_biome_x[16];    //  "biome_x" data cached for the northern row for access from the north.
+            int8_t west_column_biome_y[16];  //  "biome_y" data cached for the western row for access from the west.
         };
 
         struct geo_datum {

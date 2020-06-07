@@ -1603,7 +1603,7 @@ df::world_region_type embark_assist::survey::region_type_of(embark_assist::defs:
     int16_t effective_y = y;
     int8_t effective_i = i;
     int8_t effective_k = k;
-    adjust_coordinates(&effective_x, &effective_y, &effective_i, &effective_i);
+    adjust_coordinates(&effective_x, &effective_y, &effective_i, &effective_k);
 
     if (effective_x < 0 ||
         effective_x >= world_data->world_width ||
@@ -1659,7 +1659,7 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
         effective_k = k + 1;
     }
 
-    adjust_coordinates(&effective_x, &effective_y, &effective_i, &effective_i);
+    adjust_coordinates(&effective_x, &effective_y, &effective_i, &effective_k);
 
     if (effective_x == world_data->world_width) {
         if (effective_y == world_data->world_height) {  //  Only the SE corner of the SE most tile of the world can reference this.

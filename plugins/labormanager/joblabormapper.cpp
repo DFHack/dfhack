@@ -460,7 +460,7 @@ public:
             auto b = (df::building_actual*) bld;
             return construction_build_labor(b);
         }
-        break;        
+        break;
         case df::building_type::RoadPaved:
             return df::unit_labor::BUILD_ROAD;
         case df::building_type::FarmPlot:

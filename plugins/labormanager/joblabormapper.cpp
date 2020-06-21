@@ -200,8 +200,6 @@ static df::building* get_building_from_job(df::job* j)
 
 static df::unit_labor construction_build_labor(df::building_actual* b)
 {
-    if (b->getType() == df::building_type::RoadPaved)
-        return df::unit_labor::BUILD_ROAD;
     // Find last item in building with use mode appropriate to the building's constructions state
     // For screw pumps contained_items[0] = pipe, 1 corkscrew, 2 block
     // For wells 0 mechanism, 1 rope, 2 bucket, 3 block
@@ -313,14 +311,27 @@ public:
                 return workshop_build_labor[ws->type];
         }
         break;
+        case df::building_type::Furnace:
+        {
+            df::building_furnacest* frn = (df::building_furnacest*) bld;
+            if (frn->design && !frn->design->flags.bits.designed)
+                return df::unit_labor::ARCHITECT;
+            if (frn->type == df::furnace_type::Custom)
+            {
+                df::building_def* def = df::building_def::find(frn->custom_type);
+                return def->build_labors[0];
+            }
+            else
+                // cast to building_actual should be safe here because at this point the building has been designed
+                return construction_build_labor((df::building_actual*)bld);
+        }
+        break;
         case df::building_type::Construction:
             return df::unit_labor::BUILD_CONSTRUCTION;
-        case df::building_type::Furnace:
         case df::building_type::TradeDepot:
         case df::building_type::Bridge:
         case df::building_type::ArcheryTarget:
         case df::building_type::WaterWheel:
-        case df::building_type::RoadPaved:
         case df::building_type::Well:
         case df::building_type::ScrewPump:
         case df::building_type::Wagon:
@@ -334,6 +345,8 @@ public:
             return construction_build_labor(b);
         }
         break;
+        case df::building_type::RoadPaved:
+            return df::unit_labor::BUILD_ROAD;
         case df::building_type::FarmPlot:
             return df::unit_labor::PLANT;
         case df::building_type::Chair:
@@ -418,15 +431,26 @@ public:
                 return workshop_build_labor[ws->type];
         }
         break;
+        case df::building_type::Furnace:
+        {
+            df::building_furnacest* frn = (df::building_furnacest*) bld;
+            if (frn->type == df::furnace_type::Custom)
+            {
+                df::building_def* def = df::building_def::find(frn->custom_type);
+                return def->build_labors[0];
+            }
+            else
+                // can't destroy a building if doesn't actually exist
+                return construction_build_labor((df::building_actual*)bld);
+        }
+        break;
         case df::building_type::Construction:
             return df::unit_labor::REMOVE_CONSTRUCTION;
-        case df::building_type::Furnace:
         case df::building_type::TradeDepot:
         case df::building_type::Wagon:
         case df::building_type::Bridge:
         case df::building_type::ScrewPump:
         case df::building_type::ArcheryTarget:
-        case df::building_type::RoadPaved:
         case df::building_type::Shop:
         case df::building_type::Support:
         case df::building_type::WaterWheel:
@@ -436,7 +460,9 @@ public:
             auto b = (df::building_actual*) bld;
             return construction_build_labor(b);
         }
-        break;
+        break;        
+        case df::building_type::RoadPaved:
+            return df::unit_labor::BUILD_ROAD;
         case df::building_type::FarmPlot:
             return df::unit_labor::PLANT;
         case df::building_type::Trap:

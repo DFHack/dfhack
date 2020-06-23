@@ -7,11 +7,15 @@
 struct reaction_gloves_hook : df::reaction_product_itemst {
     typedef df::reaction_product_itemst interpose_base;
 
-    DEFINE_VMETHOD_INTERPOSE(void, produce, (df::unit *unit, std::vector<df::reaction_product*> *out_products, std::vector<df::item*> *out_items, std::vector<df::reaction_reagent*> *in_reag, std::vector<df::item*> *in_items, int32_t quantity, df::job_skill skill, df::historical_entity *entity, int32_t unk_1, df::world_site *site, void *unk_2))
+    DEFINE_VMETHOD_INTERPOSE(void, produce, (df::unit *unit,
+        std::vector<df::reaction_product*> *out_products, std::vector<df::item*> *out_items,
+        std::vector<df::reaction_reagent*> *in_reag, std::vector<df::item*> *in_items,
+        int32_t quantity, df::job_skill skill, int32_t quality,
+        df::historical_entity *entity, df::world_site *site, std::vector<void *> *unk_2))
     {
         if (item_type != df::item_type::GLOVES)
         {
-            INTERPOSE_NEXT(produce)(unit, out_products, out_items, in_reag, in_items, quantity, skill, entity, unk_1, site, unk_2);
+            INTERPOSE_NEXT(produce)(unit, out_products, out_items, in_reag, in_items, quantity, skill, quality, entity, site, unk_2);
             return;
         }
 
@@ -45,7 +49,7 @@ struct reaction_gloves_hook : df::reaction_product_itemst {
             count *= num_hands;
         }
 
-        INTERPOSE_NEXT(produce)(unit, out_products, &out_items_temp, in_reag, in_items, quantity, skill, entity, unk_1, site, unk_2);
+        INTERPOSE_NEXT(produce)(unit, out_products, &out_items_temp, in_reag, in_items, quantity, skill, quality, entity, site, unk_2);
         count = old_count;
 
         // If the reaction was somehow asked to produce multiple sets (due to excess inputs), multiply the outputs too

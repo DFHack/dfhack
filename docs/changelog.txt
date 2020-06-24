@@ -1,16 +1,10 @@
 === Scroll down for changes
 
 ===[[[
-===help
+The text below is included in docs/Documentation.rst - see that file for more details on the changelog setup.
+This is kept in this file as a quick syntax reference.
 
-Entries in docs/NEWS.rst and docs/NEWS-dev.rst are generated from
-docs/changelog.txt. NEWS.rst groups entries by stable releases, and NEWS-dev.rst
-groups them by all releases (stable and development). For example, an entry
-listed under "0.44.05-alpha1" in changelog.txt will be listed under that in
-NEWS-dev.rst as well, but under "0.44.05-r1" in NEWS.rst (assuming that is the
-closest stable release after 0.44.05-alpha1). An entry listed under a stable
-release in changelog.txt will be listed under that release in both NEWS.rst and
-NEWS-dev.rst.
+===help
 
 changelog.txt uses a syntax similar to RST, with a few special sequences:
 

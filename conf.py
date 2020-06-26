@@ -15,6 +15,7 @@ serve to show the default.
 
 # pylint:disable=redefined-builtin
 
+import datetime
 from io import open
 import os
 import re
@@ -222,7 +223,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'DFHack'
-copyright = '2015, The DFHack Team'
+copyright = '2015-%d, The DFHack Team' % datetime.datetime.now().year
 author = 'The DFHack Team'
 
 # The version info for the project you're documenting, acts as replacement for

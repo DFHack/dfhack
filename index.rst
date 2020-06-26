@@ -62,6 +62,7 @@ For Developers
    /docs/Compile
    /docs/NEWS-dev
    /docs/Lua API
+   /docs/Documentation
    /library/xml/SYNTAX
    /library/xml/how-to-update
    /docs/Binpatches

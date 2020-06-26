@@ -204,6 +204,21 @@ end
 location_retire.title = "Retire location"
 location_retire.message = "Are you sure you want to retire this location?"
 
+convict = defconf('convict')
+convict.title = "Confirm conviction"
+function convict.intercept_key(key)
+    return key == keys.SELECT and
+        screen.cur_column == df.viewscreen_justicest.T_cur_column.ConvictChoices
+end
+function convict.get_message()
+    name = dfhack.TranslateName(screen.convict_choices[screen.cursor_right].name)
+    if name == "" then
+        name = "this creature"
+    end
+    return "Are you sure you want to convict " .. name .. "?\n" ..
+        "This action is irreversible."
+end
+
 -- End of confirmation definitions
 
 function check()

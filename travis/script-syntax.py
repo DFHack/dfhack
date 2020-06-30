@@ -18,8 +18,7 @@ def print_stderr(stderr, args):
             if parts[i].endswith('.' + args.ext) and parts[i + 1].isdigit():
                 print('::error file=%s,line=%s::%s' % (parts[i], parts[i + 1], ':'.join(parts[i + 2:])))
                 break
-        else:
-            print(line)
+        print(line)
 
 
 def main(args):

@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 tardest="df.tar.bz2"
 
 which md5sum && alias md5=md5sum

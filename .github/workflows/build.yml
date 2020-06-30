@@ -105,17 +105,22 @@ jobs:
       run: |
         python travis/lint.py
     - name: Check Authors.rst
+      if: success() || failure()
       run: |
         python travis/authors-rst.py
     - name: Check for missing documentation
+      if: success() || failure()
       run: |
         python travis/script-docs.py
     - name: Check Lua syntax
+      if: success() || failure()
       run: |
         python travis/script-syntax.py --ext=lua --cmd="luac5.3 -p" --github-actions
     - name: Check Ruby syntax
+      if: success() || failure()
       run: |
         python travis/script-syntax.py --ext=rb --cmd="ruby -c" --github-actions
+
   check-pr:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'

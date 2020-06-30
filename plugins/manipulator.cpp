@@ -2032,7 +2032,9 @@ void viewscreen_unitlaborsst::render()
         int x = 1, y = 3 + num_rows + 2;
         Screen::Pen white_pen(' ', 15, 0);
 
-        Screen::paintString(white_pen, x, y, (cur->unit && cur->unit->sex) ? "\x0b" : "\x0c");
+        auto symbol = cur->unit ? ENUM_ATTR(pronoun_type, symbol, cur->unit->sex) : nullptr;
+        if (symbol)
+            Screen::paintString(white_pen, x, y, symbol);
         x += 2;
         Screen::paintString(white_pen, x, y, cur->transname);
         x += cur->transname.length();

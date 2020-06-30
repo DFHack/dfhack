@@ -2685,7 +2685,7 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
 
             send_caste->add_child_name(orig_caste->child_name[0]);
             send_caste->add_child_name(orig_caste->child_name[1]);
-            send_caste->set_gender(orig_caste->gender);
+            send_caste->set_gender(orig_caste->sex);
 
             for (size_t partIndex = 0; partIndex < orig_caste->body_info.body_parts.size(); partIndex++)
             {

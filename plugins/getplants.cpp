@@ -70,7 +70,7 @@ enum class selectability {
 //selectability selectablePlant(color_ostream &out, const df::plant_raw *plant, bool farming)
 selectability selectablePlant(const df::plant_raw *plant, bool farming)
 {
-    const DFHack::MaterialInfo basic_mat = DFHack::MaterialInfo(plant->material_defs.type_basic_mat, plant->material_defs.idx_basic_mat);
+    const DFHack::MaterialInfo basic_mat = DFHack::MaterialInfo(plant->material_defs.type[plant_material_def::basic_mat], plant->material_defs.idx[plant_material_def::basic_mat]);
     bool outOfSeason = false;
     selectability result = selectability::Nonselectable;
 
@@ -92,7 +92,7 @@ selectability selectablePlant(const df::plant_raw *plant, bool farming)
         return selectability::Grass;
     }
 
-    if (farming && plant->material_defs.type_seed == -1)
+    if (farming && plant->material_defs.type[plant_material_def::seed] == -1)
     {
         return selectability::Nonselectable;
     }
@@ -163,8 +163,8 @@ selectability selectablePlant(const df::plant_raw *plant, bool farming)
                 {
                     for (size_t k = 0; growth_mat.material->reaction_product.material.mat_type.size(); k++)
                     {
-                        if (growth_mat.material->reaction_product.material.mat_type[k] == plant->material_defs.type_seed &&
-                            growth_mat.material->reaction_product.material.mat_index[k] == plant->material_defs.idx_seed)
+                        if (growth_mat.material->reaction_product.material.mat_type[k] == plant->material_defs.type[plant_material_def::seed] &&
+                            growth_mat.material->reaction_product.material.mat_index[k] == plant->material_defs.idx[plant_material_def::seed])
                         {
                             seedSource = true;
                             break;
@@ -193,7 +193,7 @@ selectability selectablePlant(const df::plant_raw *plant, bool farming)
         }
 /*            else if (plant->growths[i]->behavior.bits.has_seed)  //  This code designates beans, etc. when DF doesn't, but plant gatherers still fail to collect anything, so it's useless: bug #0006940.
             {
-                const DFHack::MaterialInfo seed_mat = DFHack::MaterialInfo(plant->material_defs.type_seed, plant->material_defs.idx_seed);
+                const DFHack::MaterialInfo seed_mat = DFHack::MaterialInfo(plant->material_defs.type[plant_material_def::seed], plant->material_defs.idx[plant_material_def::seed]);
 
                 if (seed_mat.material->flags.is_set(material_flags::EDIBLE_RAW) ||
                     seed_mat.material->flags.is_set(material_flags::EDIBLE_COOKED))

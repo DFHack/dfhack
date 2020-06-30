@@ -1,4 +1,8 @@
-// With thanks to peterix for DFHack and Quietust for information http://www.bay12forums.com/smf/index.php?topic=91166.msg2605147#msg2605147
+// Dynamically enables and disables cooking restrictions for plants and seeds
+// in order to limit the number of seeds available for each crop type
+
+// With thanks to peterix for DFHack and Quietust for information
+// http://www.bay12forums.com/smf/index.php?topic=91166.msg2605147#msg2605147
 
 #include <map>
 #include <string>
@@ -8,6 +12,7 @@
 #include "Export.h"
 #include "PluginManager.h"
 #include "modules/World.h"
+#include "modules/Materials.h"
 #include "modules/Kitchen.h"
 #include "VersionInfo.h"
 #include "df/world.h"
@@ -124,10 +129,10 @@ command_result df_seedwatch(color_ostream &out, vector<string>& parameters)
 {
     CoreSuspender suspend;
 
-    map<string, t_materialIndex> materialsReverser;
+    map<string, int32_t> plantIDs;
     for(size_t i = 0; i < world->raws.plants.all.size(); ++i)
     {
-        materialsReverser[world->raws.plants.all[i]->id] = i;
+        plantIDs[world->raws.plants.all[i]->id] = i;
     }
 
     t_gamemodes gm;
@@ -181,7 +186,7 @@ command_result df_seedwatch(color_ostream &out, vector<string>& parameters)
             {
                 out.print("seedwatch is not supervising.  Use 'seedwatch start' to start supervision.\n");
             }
-            map<t_materialIndex, unsigned int> watchMap;
+            map<int32_t, int16_t> watchMap;
             Kitchen::fillWatchMap(watchMap);
             if(watchMap.empty())
             {
@@ -190,7 +195,7 @@ command_result df_seedwatch(color_ostream &out, vector<string>& parameters)
             else
             {
                 out.print("The watch list is:\n");
-                for(map<t_materialIndex, unsigned int>::const_iterator i = watchMap.begin(); i != watchMap.end(); ++i)
+                for(auto i = watchMap.begin(); i != watchMap.end(); ++i)
                 {
                     out.print("%s : %u\n", world->raws.plants.all[i->first]->id.c_str(), i->second);
                 }
@@ -198,33 +203,16 @@ command_result df_seedwatch(color_ostream &out, vector<string>& parameters)
         }
         else if(par == "debug")
         {
-            map<t_materialIndex, unsigned int> watchMap;
+            map<int32_t, int16_t> watchMap;
             Kitchen::fillWatchMap(watchMap);
             Kitchen::debug_print(out);
         }
-        /*
-        else if(par == "dumpmaps")
-        {
-            out.print("Plants:\n");
-            for(auto i = plantMaterialTypes.begin(); i != plantMaterialTypes.end(); i++)
-            {
-                auto t = materialsModule.df_organic->at(i->first);
-                out.print("%s : %u %u\n", organics[i->first].id.c_str(), i->second, t->material_basic_mat);
-            }
-            out.print("Seeds:\n");
-            for(auto i = seedMaterialTypes.begin(); i != seedMaterialTypes.end(); i++)
-            {
-                auto t = materialsModule.df_organic->at(i->first);
-                out.print("%s : %u %u\n", organics[i->first].id.c_str(), i->second, t->material_seed);
-            }
-        }
-        */
         else
         {
             string token = searchAbbreviations(par);
-            if(materialsReverser.count(token) > 0)
+            if(plantIDs.count(token) > 0)
             {
-                Kitchen::removeLimit(materialsReverser[token]);
+                Kitchen::removeLimit(plantIDs[token]);
                 out.print("%s is not being watched\n", token.c_str());
             }
             else
@@ -238,17 +226,17 @@ command_result df_seedwatch(color_ostream &out, vector<string>& parameters)
         if(limit < 0) limit = 0;
         if(parameters[0] == "all")
         {
-            for(map<string, string>::const_iterator i = abbreviations.begin(); i != abbreviations.end(); ++i)
+            for(auto i = abbreviations.begin(); i != abbreviations.end(); ++i)
             {
-                if(materialsReverser.count(i->second) > 0) Kitchen::setLimit(materialsReverser[i->second], limit);
+                if(plantIDs.count(i->second) > 0) Kitchen::setLimit(plantIDs[i->second], limit);
             }
         }
         else
         {
             string token = searchAbbreviations(parameters[0]);
-            if(materialsReverser.count(token) > 0)
+            if(plantIDs.count(token) > 0)
             {
-                Kitchen::setLimit(materialsReverser[token], limit);
+                Kitchen::setLimit(plantIDs[token], limit);
                 out.print("%s is being watched.\n", token.c_str());
             }
             else
@@ -289,7 +277,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginComman
     abbreviations["sb"] = "BERRY_SUN";
     abbreviations["sp"] = "POD_SWEET";
     abbreviations["vh"] = "HERB_VALLEY";
-    abbreviations["ws"] = "BERRIES_STRAW_WILD";
+    abbreviations["ws"] = "BERRIES_STRAW";
     abbreviations["wv"] = "VINE_WHIP";
     return CR_OK;
 }
@@ -326,17 +314,20 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
             return CR_OK;
         }
         // this is dwarf mode, continue
-        map<t_materialIndex, unsigned int> seedCount; // the number of seeds
+        map<int32_t, int16_t> seedCount; // the number of seeds
 
         // count all seeds and plants by RAW material
         for(size_t i = 0; i < world->items.other[items_other_id::SEEDS].size(); ++i)
         {
-            df::item * item = world->items.other[items_other_id::SEEDS][i];
-            t_materialIndex materialIndex = item->getMaterialIndex();
-            if(!ignoreSeeds(item->flags)) ++seedCount[materialIndex];
+            df::item *item = world->items.other[items_other_id::SEEDS][i];
+            MaterialInfo mat(item);
+            if (!mat.isPlant())
+                continue;
+            if (!ignoreSeeds(item->flags))
+                ++seedCount[mat.plant->index];
         }
 
-        map<t_materialIndex, unsigned int> watchMap;
+        map<int32_t, int16_t> watchMap;
         Kitchen::fillWatchMap(watchMap);
         for(auto i = watchMap.begin(); i != watchMap.end(); ++i)
         {

@@ -43,12 +43,6 @@ namespace DFHack
 {
 namespace Kitchen
 {
-const unsigned int seedLimit = 400; // a limit on the limits which can be placed on seeds
-const t_itemSubtype organicSubtype = -1; // seems to fixed
-const df::enums::item_type::item_type limitType = df::enums::item_type::BAR; // used to store limit as an entry in the exclusion list. 0 = BAR
-const t_itemSubtype limitSubtype = 0; // used to store limit as an entry in the exclusion list
-const df::kitchen_exc_type limitExclusion = df::kitchen_exc_type(4); // used to store limit as an entry in the exclusion list
-
 /**
  * Kitchen exclusions manipulator. Currently geared towards plants and seeds.
  * \ingroup grp_modules
@@ -58,20 +52,23 @@ const df::kitchen_exc_type limitExclusion = df::kitchen_exc_type(4); // used to 
 // print the exclusion list, with the material index also translated into its token (for organics) - for debug really
 DFHACK_EXPORT void debug_print(color_ostream &out);
 
-// remove this material from the exclusion list if it is in it
-DFHACK_EXPORT void allowPlantSeedCookery(t_materialIndex materialIndex);
+// remove this plant from the exclusion list if it is in it
+DFHACK_EXPORT void allowPlantSeedCookery(int32_t plant_id);
 
-// add this material to the exclusion list, if it is not already in it
-DFHACK_EXPORT void denyPlantSeedCookery(t_materialIndex materialIndex);
+// add this plant to the exclusion list, if it is not already in it
+DFHACK_EXPORT void denyPlantSeedCookery(int32_t plant_id);
 
 // fills a map with info from the limit info storage entries in the exclusion list
-DFHACK_EXPORT void fillWatchMap(std::map<t_materialIndex, unsigned int>& watchMap);
+DFHACK_EXPORT void fillWatchMap(std::map<int32_t, int16_t>& watchMap);
+
+// Finds the index of a limit info storage entry. Returns -1 if not found.
+DFHACK_EXPORT int findLimit(int32_t plant_id);
 
 // removes a limit info storage entry from the exclusion list if it's present
-DFHACK_EXPORT void removeLimit(t_materialIndex materialIndex);
+DFHACK_EXPORT bool removeLimit(int32_t plant_id);
 
 // add a limit info storage item to the exclusion list, or alters an existing one
-DFHACK_EXPORT void setLimit(t_materialIndex materialIndex, unsigned int limit);
+DFHACK_EXPORT bool setLimit(int32_t plant_id, int16_t limit);
 
 // clears all limit info storage items from the exclusion list
 DFHACK_EXPORT void clearLimits();

@@ -1,7 +1,25 @@
+#!/usr/bin/env python3
 import argparse
 import os
 import subprocess
 import sys
+
+
+def print_stderr(stderr, args):
+    if not args.github_actions:
+        sys.stderr.write(stderr + '\n')
+        return
+
+    for line in stderr.split('\n'):
+        parts = list(map(str.strip, line.split(':')))
+        # e.g. luac prints "luac:" in front of messages, so find the first part
+        # containing the actual filename
+        for i in range(len(parts) - 1):
+            if parts[i].endswith('.' + args.ext) and parts[i + 1].isdigit():
+                print('::error file=%s,line=%s::%s' % (parts[i], parts[i + 1], ':'.join(parts[i + 2:])))
+                break
+        print(line)
+
 
 def main(args):
     root_path = os.path.abspath(args.path)
@@ -19,7 +37,13 @@ def main(args):
                 continue
             full_path = os.path.join(cur, filename)
             try:
-                subprocess.check_output(cmd + [full_path])
+                p = subprocess.Popen(cmd + [full_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                _, stderr = p.communicate()
+                stderr = stderr.decode('utf-8', errors='ignore')
+                if stderr:
+                    print_stderr(stderr, args)
+                if p.returncode != 0:
+                    err = True
             except subprocess.CalledProcessError:
                 err = True
             except IOError:
@@ -34,5 +58,7 @@ if __name__ == '__main__':
     parser.add_argument('--path', default='.', help='Root directory')
     parser.add_argument('--ext', help='Script extension', required=True)
     parser.add_argument('--cmd', help='Command', required=True)
+    parser.add_argument('--github-actions', action='store_true',
+        help='Enable GitHub Actions workflow command output')
     args = parser.parse_args()
     main(args)

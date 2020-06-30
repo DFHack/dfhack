@@ -82,34 +82,47 @@ jobs:
       if: success() || failure()
       run: |
         rm -rf "$DF_FOLDER"
+
   lint:
     runs-on: ubuntu-18.04
     steps:
-    - name: Install dependencies
+    - name: Set up Python 3
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3
+    - name: Set up Ruby 2.7
+      uses: actions/setup-ruby@v1
+      with:
+        ruby-version: 2.7
+    - name: Install Lua
       run: |
         sudo apt-get update
-        sudo apt-get install \
-          lua5.3 \
-          ruby
+        sudo apt-get install lua5.3
     - name: Clone DFHack
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
       with:
         submodules: true
+        # don't need tags here
     - name: Check whitespace
       run: |
         python travis/lint.py
     - name: Check Authors.rst
+      if: success() || failure()
       run: |
         python travis/authors-rst.py
     - name: Check for missing documentation
+      if: success() || failure()
       run: |
         python travis/script-docs.py
     - name: Check Lua syntax
+      if: success() || failure()
       run: |
-        python travis/script-syntax.py --ext=lua --cmd="luac5.3 -p"
+        python travis/script-syntax.py --ext=lua --cmd="luac5.3 -p" --github-actions
     - name: Check Ruby syntax
+      if: success() || failure()
       run: |
-        python travis/script-syntax.py --ext=rb --cmd="ruby -c"
+        python travis/script-syntax.py --ext=rb --cmd="ruby -c" --github-actions
+
   check-pr:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'

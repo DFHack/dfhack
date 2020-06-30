@@ -105,7 +105,7 @@ class TabLinter(Linter):
 linters = [cls() for cls in Linter.__subclasses__() if not cls.ignore]
 
 def main():
-    is_github_actions = os.environ.get('GITHUB_ACTIONS')
+    is_github_actions = bool(os.environ.get('GITHUB_ACTIONS'))
     root_path = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else '.')
     if not os.path.exists(root_path):
         print('Nonexistent path: %s' % root_path)

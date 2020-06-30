@@ -106,10 +106,10 @@ jobs:
         python travis/script-docs.py
     - name: Check Lua syntax
       run: |
-        python travis/script-syntax.py --ext=lua --cmd="luac5.3 -p"
+        python travis/script-syntax.py --ext=lua --cmd="luac5.3 -p" --github-actions
     - name: Check Ruby syntax
       run: |
-        python travis/script-syntax.py --ext=rb --cmd="ruby -c"
+        python travis/script-syntax.py --ext=rb --cmd="ruby -c" --github-actions
   check-pr:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'

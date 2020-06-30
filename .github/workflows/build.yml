@@ -97,9 +97,10 @@ jobs:
           lua5.3 \
           ruby
     - name: Clone DFHack
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
       with:
         submodules: true
+        # don't need tags here
     - name: Check whitespace
       run: |
         python travis/lint.py

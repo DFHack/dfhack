@@ -71,6 +71,12 @@ jobs:
       with:
         name: test-artifacts
         path: artifacts
+    - name: Clean up DF folder
+      # to prevent DFHack-generated files from ending up in the cache
+      # (download-df.sh also removes them, this is just to save cache space)
+      if: success() || failure()
+      run: |
+        rm -rf "$DF_FOLDER"
   lint:
     runs-on: ubuntu-18.04
     steps:

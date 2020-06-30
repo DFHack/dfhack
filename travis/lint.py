@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import re, os, sys
 
 valid_extensions = ['c', 'cpp', 'h', 'hpp', 'mm', 'lua', 'rb', 'proto',

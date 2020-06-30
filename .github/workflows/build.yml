@@ -82,9 +82,14 @@ jobs:
       if: success() || failure()
       run: |
         rm -rf "$DF_FOLDER"
+
   lint:
     runs-on: ubuntu-18.04
     steps:
+    - name: Set up Python 3
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3
     - name: Install dependencies
       run: |
         sudo apt-get update

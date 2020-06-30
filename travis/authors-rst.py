@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """ Overly-complicated script to check formatting/sorting in Authors.rst """
 
 import re, sys

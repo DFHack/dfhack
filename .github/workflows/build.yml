@@ -24,15 +24,17 @@ jobs:
       with:
         submodules: true
     - name: Set up environment
+      id: env_setup
       run: |
         DF_VERSION="$(sh travis/get-df-version.sh)"
         echo "::set-env name=DF_VERSION::${DF_VERSION}"
+        echo "::set-output name=df_version::${DF_VERSION}"
         echo "::set-env name=DF_FOLDER::${HOME}/DF/${DF_VERSION}/df_linux"
     - name: Fetch DF cache
       uses: actions/cache@v2
       with:
         path: ~/DF
-        key: ${DF_VERSION}
+        key: ${{ steps.env_setup.outputs.df_version }}
     - name: Download DF
       run: |
         sh travis/download-df.sh

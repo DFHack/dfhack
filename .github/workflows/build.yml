@@ -6,6 +6,10 @@ jobs:
   build:
     runs-on: ubuntu-18.04
     steps:
+    - name: Set up Python 3
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3
     - name: Install dependencies
       run: |
         sudo apt-get update
@@ -18,7 +22,7 @@ jobs:
             lua5.3 \
             ninja-build \
             zlib1g-dev
-        sudo pip3 install --system sphinx
+        pip install sphinx
     - name: Clone DFHack
       uses: actions/checkout@v1
       with:

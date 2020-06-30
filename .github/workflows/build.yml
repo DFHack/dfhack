@@ -25,11 +25,11 @@ jobs:
         submodules: true
     - name: Set up environment
       run: |
-        echo export DF_VERSION="$(sh travis/get-df-version.sh)" >> "$HOME/.df-env"
-        echo export DF_FOLDER="$HOME/DF/$DF_VERSION/df_linux" >> "$HOME/.df-env"
+        DF_VERSION="$(sh travis/get-df-version.sh)"
+        echo "::set-env name=DF_VERSION::${DF_VERSION}"
+        echo "::set-env name=DF_FOLDER::${HOME}/DF/${DF_VERSION}/df_linux"
     - name: Download DF
       run: |
-        source "$HOME/.df-env"
         sh travis/download-df.sh
     - name: Build docs
       run: |
@@ -41,7 +41,6 @@ jobs:
         path: docs/html
     - name: Build DFHack
       run: |
-        source "$HOME/.df-env"
         cmake \
           -S . \
           -B build-ci \
@@ -53,7 +52,6 @@ jobs:
         ninja -C build-ci install
     - name: Run tests
       run: |
-        source "$HOME/.df-env"
         export TERM=dumb
         mv "$DF_FOLDER"/dfhack.init-example "$DF_FOLDER"/dfhack.init
         script -qe -c "python travis/run-tests.py --headless --keep-status \"$DF_FOLDER\""

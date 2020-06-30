@@ -24,8 +24,9 @@ jobs:
             zlib1g-dev
         pip install sphinx
     - name: Clone DFHack
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
       with:
+        fetch-depth: 0  # unlimited - we need past tags
         submodules: true
     - name: Set up environment
       id: env_setup

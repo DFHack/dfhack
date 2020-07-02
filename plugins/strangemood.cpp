@@ -153,7 +153,7 @@ void selectWord (const df::language_word_table &table, int32_t &word, df::part_o
     }
 }
 
-void generateName(df::language_name &output, int language, int mode, const df::language_word_table &table1, const df::language_word_table &table2)
+void generateName(df::language_name &output, int language, df::language_name_type mode, const df::language_word_table &table1, const df::language_word_table &table2)
 {
     for (int i = 0; i < 100; i++)
     {
@@ -162,7 +162,7 @@ void generateName(df::language_name &output, int language, int mode, const df::l
             output = df::language_name();
             if (language == -1)
                 language = rng.df_trandom(world->raws.language.translations.size());
-            output.unknown = mode;
+            output.type = mode;
             output.language = language;
         }
         output.has_name = 1;
@@ -1316,10 +1316,10 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
 
     // Generate the artifact's name
     if (type == mood_type::Fell || type == mood_type::Macabre)
-        generateName(unit->status.artifact_name, unit->name.language, 1, world->raws.language.word_table[0][2], world->raws.language.word_table[1][2]);
+        generateName(unit->status.artifact_name, unit->name.language, language_name_type::Artifact, world->raws.language.word_table[0][2], world->raws.language.word_table[1][2]);
     else
     {
-        generateName(unit->status.artifact_name, unit->name.language, 1, world->raws.language.word_table[0][1], world->raws.language.word_table[1][1]);
+        generateName(unit->status.artifact_name, unit->name.language, language_name_type::Artifact, world->raws.language.word_table[0][1], world->raws.language.word_table[1][1]);
         if (!rng.df_trandom(100))
             unit->status.artifact_name = unit->name;
     }

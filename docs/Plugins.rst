@@ -2356,10 +2356,14 @@ dfhack command line and can't be used from a hotkey. Settings will be remembered
 as long as dfhack runs. Intended for use in combination with the command
 ``liquids-here`` (which can be bound to a hotkey).  See also :issue:`80`.
 
-.. note::
+.. warning::
 
     Spawning and deleting liquids can mess up pathing data and
     temperatures (creating heat traps). You've been warned.
+
+.. note::
+
+    `gui/liquids` is an in-game UI for this script.
 
 Settings will be remembered until you quit DF. You can call `liquids-here` to execute
 the last configured action, which is useful in combination with keybindings.

@@ -234,7 +234,7 @@ selectability selectablePlant(const df::plant_raw *plant, bool farming)
 //  Formula for determination of the variance in plant growth maturation time, determined via disassembly.
 //  The x and y parameters are in tiles relative to the embark.
 bool ripe(int32_t x, int32_t y, int32_t start, int32_t end) {
-    int32_t time = ((435522653 - (((y + 3) * x + 5) * ((y + 7) * y * 400181475 + 289700012))) & 0x3FFFFFFF) % 2000 + (*cur_year_tick % 403200);
+    int32_t time = (((435522653 - (((y + 3) * x + 5) * ((y + 7) * y * 400181475 + 289700012))) & 0x3FFFFFFF) % 2000 + *cur_year_tick) % 403200;
 
     return time >= start && (end == -1 || time <= end);
 }

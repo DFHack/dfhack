@@ -283,3 +283,17 @@ if __name__ == '__main__':
                     print('stable missing: ' + description)
                 if description not in content_dev:
                     print('dev missing: ' + description)
+
+
+def sphinx_entrypoint(app, config):
+    generate_changelog()
+
+
+def setup(app):
+    app.connect('config-inited', sphinx_entrypoint)
+
+    return {
+        'version': '0.1',
+        'parallel_read_safe': True,
+        'parallel_write_safe': True,
+    }

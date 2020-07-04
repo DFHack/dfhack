@@ -187,7 +187,7 @@ all_keybinds_documented()
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-needs_sphinx = '1.3'
+needs_sphinx = '1.8'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -286,7 +286,6 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 html_theme = 'alabaster'
-html_style = 'dfhack.css'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -297,6 +296,7 @@ html_theme_options = {
     'github_repo': 'dfhack',
     'github_button': False,
     'travis_button': False,
+    'fixed_sidebar': True,
 }
 
 # The name for this set of Sphinx documents.  If None, it defaults to
@@ -335,6 +335,10 @@ html_domain_indices = False
 
 # If false, no index is generated.
 html_use_index = False
+
+html_css_files = [
+    'dfhack.css',
+]
 
 # -- Options for LaTeX output ---------------------------------------------
 

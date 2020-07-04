@@ -4,11 +4,14 @@ import itertools
 import os
 import sys
 
+from dfhack.util import DFHACK_ROOT, DOCS_ROOT
+
 CHANGELOG_PATHS = (
     'docs/changelog.txt',
     'scripts/changelog.txt',
     'library/xml/changelog.txt',
 )
+CHANGELOG_PATHS = (os.path.join(DFHACK_ROOT, p) for p in CHANGELOG_PATHS)
 
 CHANGELOG_SECTIONS = [
     'New Plugins',
@@ -237,8 +240,8 @@ def generate_changelog(all=False):
     consolidate_changelog(stable_entries)
     consolidate_changelog(dev_entries)
 
-    print_changelog(versions, stable_entries, 'docs/_auto/news.rst')
-    print_changelog(versions, dev_entries, 'docs/_auto/news-dev.rst')
+    print_changelog(versions, stable_entries, os.path.join(DOCS_ROOT, '_auto/news.rst'))
+    print_changelog(versions, dev_entries, os.path.join(DOCS_ROOT, '_auto/news-dev.rst'))
 
     if all:
         for version in versions:
@@ -250,16 +253,16 @@ def generate_changelog(all=False):
             else:
                 version_entries = {version: dev_entries[version]}
             print_changelog([version], version_entries,
-                'docs/_changelogs/%s-github.txt' % version,
+                os.path.join(DOCS_ROOT, '_changelogs/%s-github.txt' % version),
                 replace=False)
             print_changelog([version], version_entries,
-                'docs/_changelogs/%s-reddit.txt' % version,
+                os.path.join(DOCS_ROOT, '_changelogs/%s-reddit.txt' % version),
                 replace=False,
                 prefix='> ')
 
     return entries
 
-if __name__ == '__main__':
+def cli_entrypoint():
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('-a', '--all', action='store_true',
@@ -268,14 +271,12 @@ if __name__ == '__main__':
         help='Check that all entries are printed')
     args = parser.parse_args()
 
-    os.chdir(os.path.abspath(os.path.dirname(__file__)))
-    os.chdir('..')
     entries = generate_changelog(all=args.all)
 
     if args.check:
-        with open('docs/_auto/news.rst') as f:
+        with open(os.path.join(DOCS_ROOT, '_auto/news.rst')) as f:
             content_stable = f.read()
-        with open('docs/_auto/news-dev.rst') as f:
+        with open(os.path.join(DOCS_ROOT, '_auto/news-dev.rst')) as f:
             content_dev = f.read()
         for entry in entries:
             for description in entry.children:

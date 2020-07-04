@@ -297,6 +297,7 @@ html_theme_options = {
     'github_repo': 'dfhack',
     'github_button': False,
     'travis_button': False,
+    'fixed_sidebar': True,
 }
 
 # The name for this set of Sphinx documents.  If None, it defaults to

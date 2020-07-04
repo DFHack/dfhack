@@ -46,3 +46,12 @@ div.body p, div.body dd, div.body li, div.body blockquote {
     -webkit-hyphens: manual;
     hyphens: manual;
 }
+
+div.sphinxsidebar {
+    max-height: 100%;
+    overflow-y: auto;
+}
+
+div.sphinxsidebar h3 > a {
+    border-bottom: 1px dotted #999;
+}

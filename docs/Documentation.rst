@@ -28,21 +28,118 @@ The main thing you lose in plain text format is hyperlinking.)
 .. contents::
 
 
+.. _docs-standards:
+
+Documentation standards
+=======================
+
+Whether you're adding new code or just fixing old documentation (and there's plenty),
+there are a few important standards for completeness and consistent style.  Treat
+this section as a guide rather than iron law, match the surrounding text, and you'll
+be fine.
+
+Each command should have a short (~54 character) help string, which is shown
+by the `ls` command.  For scripts, this is a comment on the first line
+(the comment marker and whitespace is stripped).  For plugins it's the second
+argument to ``PluginCommand``.  Please make this brief but descriptive!
+
+Everything should be documented!  If it's not clear *where* a particular
+thing should be documented, ask on IRC or in the DFHack thread on Bay12 -
+as well as getting help, you'll be providing valuable feedback that
+makes it easier for future readers!
+
+Scripts can use a custom autodoc function, based on the Sphinx ``include``
+directive - anything between the tokens is copied into the appropriate scripts
+documentation page.  For Ruby, we follow the built-in docstring convention
+(``=begin`` and ``=end``).  For Lua, the tokens are ``[====[`` and ``]====]``
+- ordinary multi-line strings.  It is highly encouraged to reuse this string
+as the in-console documentation by (eg.) printing it when a ``-help`` argument
+is given.
+
+The docs **must** have a heading which exactly matches the command, underlined
+with ``=====`` to the same length.  For example, a lua file would have::
+
+    local helpstr = [====[
+
+    add-thought
+    ===========
+    Adds a thought or emotion to the selected unit.  Can be used by other scripts,
+    or the gui invoked by running ``add-thought gui`` with a unit selected.
+
+    ]====]
+
+
+Where the heading for a section is also the name of a command, the spelling
+and case should exactly match the command to enter in the DFHack command line.
+
+Try to keep lines within 80-100 characters, so it's readable in plain text
+in the terminal - Sphinx (our documentation system) will make sure
+paragraphs flow.
+
+If there aren't many options or examples to show, they can go in a paragraph of
+text.  Use double-backticks to put commands in monospaced font, like this::
+
+    You can use ``cleanowned scattered x`` to dump tattered or abandoned items.
+
+If the command takes more than three arguments, format the list as a table
+called Usage.  The table *only* lists arguments, not full commands.
+Input values are specified in angle brackets.  Example::
+
+    Usage:
+
+    :arg1:          A simple argument.
+    :arg2 <input>:  Does something based on the input value.
+    :Very long argument:
+                    Is very specific.
+
+To demonstrate usage - useful mainly when the syntax is complicated, list the
+full command with arguments in monospaced font, then indent the next line and
+describe the effect::
+
+    ``resume all``
+            Resumes all suspended constructions.
+
+If it would be helpful to mention another DFHack command, don't just type the
+name - add a hyperlink!  Specify the link target in backticks, and it will be
+replaced with the corresponding title and linked:  eg ```autolabor```
+=> `autolabor`.  Link targets should be equivalent to the command
+described (without file extension), and placed above the heading of that
+section like this::
+
+    .. _autolabor:
+
+    autolabor
+    =========
+
+Add link targets if you need them, but otherwise plain headings are preferred.
+Scripts have link targets created automatically.
+
+
+Building the documentation
+==========================
+
 Required dependencies
-=====================
+---------------------
 In order to build the documentation, you must have Python with Sphinx
-version 1.3.1 or later. Both Python 2.x and 3.x are supported.
+version 1.8 or later. Both Python 2.x and 3.x are supported.
 
 When installing Sphinx from OS package managers, be aware that there is
 another program called Sphinx, completely unrelated to documentation management.
 Be sure you are installing the right Sphinx; it may be called ``python-sphinx``,
 for example. To avoid doubt, ``pip`` can be used instead as detailed below.
 
+Once you have installed Sphinx, ``sphinx-build --version`` should report the
+version of Sphinx that you have installed. If this works, CMake should also be
+able to find Sphinx.
+
 For more detailed platform-specific instructions, see the sections below:
+
+.. contents::
+  :local:
 
 
 Linux
------
+~~~~~
 Most Linux distributions will include Python as standard.
 
 Check your package manager to see if Sphinx 1.3.1 or later is available,
@@ -66,7 +163,7 @@ install, find ``sphinx-build`` and ensure its directory is in your local ``$PATH
 
 
 macOS
------
+~~~~~
 macOS has Python 2.7 installed by default, but it does not have the pip package manager.
 
 You can install Homebrew's Python 3, which includes pip, and then install the
@@ -87,7 +184,7 @@ If not, just installing sphinx-doc for macOS's system Python 2.7 is fine.
 
 
 Windows
--------
+~~~~~~~
 Python for Windows can be downloaded `from python.org <https://www.python.org/downloads/>`_.
 The latest version of Python 3 is recommended, as it includes pip already.
 
@@ -104,13 +201,6 @@ Once you have pip available, you can install Sphinx with the following command::
 Note that this may require opening a new (admin) command prompt if you just
 installed pip from the same command prompt.
 
-
-Building the documentation
-==========================
-
-Once you have installed Sphinx, ``sphinx-build --version`` should report the
-version of Sphinx that you have installed. If this works, CMake should also be
-able to find Sphinx.
 
 Using CMake
 -----------
@@ -154,6 +244,7 @@ the root DFHack folder::
 
 Sphinx has many options to enable clean builds, parallel builds, logging, and
 more - run ``sphinx-build --help`` for details.
+
 
 .. _build-changelog:
 

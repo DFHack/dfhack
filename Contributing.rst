@@ -32,6 +32,7 @@ How to get new code into DFHack
   (i.e. not the master or develop branch of your fork).
 * If possible, compile on multiple platforms when changing anything that compiles
 * It must pass CI - run ``python travis/all.py`` to check this.
+* Update documentation when applicable - see `docs-standards` for details.
 * Update ``changelog.txt`` and ``docs/Authors.rst`` when applicable. See
   `build-changelog` for more information on the changelog format.
 * Create a GitHub pull request once finished
@@ -125,94 +126,6 @@ Currently the supported set of requests is limited, because the developers don't
 know what exactly is most useful.  `remotefortressreader` provides a fairly
 comprehensive interface for visualisers such as :forums:`Armok Vision <146473>`.
 
-
-Documentation Standards
-=======================
-DFHack documentation is built with Sphinx_, and configured automatically
-through CMake.  If you want to build the docs *only*, use this command::
-
-    sphinx-build . docs/html
-
-Whether you're adding new code or just fixing old documentation (and there's plenty),
-there are a few important standards for completeness and consistent style.  Treat
-this section as a guide rather than iron law, match the surrounding text, and you'll
-be fine.
-
-Each command should have a short (~54 character) help string, which is shown
-by the `ls` command.  For scripts, this is a comment on the first line
-(the comment marker and whitespace is stripped).  For plugins it's the second
-argument to ``PluginCommand``.  Please make this brief but descriptive!
-
-Everything should be documented!  If it's not clear *where* a particular
-thing should be documented, ask on IRC or in the DFHack thread on Bay12 -
-as well as getting help, you'll be providing valuable feedback that
-makes it easier for future readers!
-
-Scripts can use a custom autodoc function, based on the Sphinx ``include``
-directive - anything between the tokens is copied into the appropriate scripts
-documentation page.  For Ruby, we follow the built-in docstring convention
-(``=begin`` and ``=end``).  For Lua, the tokens are ``[====[`` and ``]====]``
-- ordinary multi-line strings.  It is highly encouraged to reuse this string
-as the in-console documentation by (eg.) printing it when a ``-help`` argument
-is given.
-
-The docs **must** have a heading which exactly matches the command, underlined
-with ``=====`` to the same length.  For example, a lua file would have::
-
-    local helpstr = [====[
-
-    add-thought
-    ===========
-    Adds a thought or emotion to the selected unit.  Can be used by other scripts,
-    or the gui invoked by running ``add-thought gui`` with a unit selected.
-
-    ]====]
-
-
-Where the heading for a section is also the name of a command, the spelling
-and case should exactly match the command to enter in the DFHack command line.
-
-Try to keep lines within 80-100 characters, so it's readable in plain text
-in the terminal - Sphinx (our documentation system) will make sure
-paragraphs flow.
-
-If there aren't many options or examples to show, they can go in a paragraph of
-text.  Use double-backticks to put commands in monospaced font, like this::
-
-    You can use ``cleanowned scattered x`` to dump tattered or abandoned items.
-
-If the command takes more than three arguments, format the list as a table
-called Usage.  The table *only* lists arguments, not full commands.
-Input values are specified in angle brackets.  Example::
-
-    Usage:
-
-    :arg1:          A simple argument.
-    :arg2 <input>:  Does something based on the input value.
-    :Very long argument:
-                    Is very specific.
-
-To demonstrate usage - useful mainly when the syntax is complicated, list the
-full command with arguments in monospaced font, then indent the next line and
-describe the effect::
-
-    ``resume all``
-            Resumes all suspended constructions.
-
-If it would be helpful to mention another DFHack command, don't just type the
-name - add a hyperlink!  Specify the link target in backticks, and it will be
-replaced with the corresponding title and linked:  eg ```autolabor```
-=> `autolabor`.  Link targets should be equivalent to the command
-described (without file extension), and placed above the heading of that
-section like this::
-
-    .. _autolabor:
-
-    autolabor
-    =========
-
-Add link targets if you need them, but otherwise plain headings are preferred.
-Scripts have link targets created automatically.
 
 Other ways to help
 ==================

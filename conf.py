@@ -153,7 +153,8 @@ def write_script_docs():
     for k in head:
         title = ('.. _scripts-{k}:\n\n{l}\n{t}\n{l}\n\n'
                  '.. include:: /scripts/{a}about.txt\n\n'
-                 '.. contents::\n\n').format(
+                 '.. contents:: Contents\n'
+                 '  :local:\n\n').format(
                      k=k, t=head[k],
                      l=len(head[k])*'#',
                      a=('' if k == 'base' else k + '/')

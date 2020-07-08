@@ -4,8 +4,9 @@
 DFHack Core
 ###########
 
-.. contents::
-   :depth: 2
+.. contents:: Contents
+  :local:
+  :depth: 2
 
 
 Command Implementation

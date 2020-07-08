@@ -25,8 +25,8 @@ compile the documentation in order to read it. Like Markdown, reST documents are
 designed to be just as readable in a plain-text editor as they are in HTML format.
 The main thing you lose in plain text format is hyperlinking.)
 
-.. contents::
-
+.. contents:: Contents
+  :local:
 
 .. _docs-standards:
 

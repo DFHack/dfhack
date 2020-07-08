@@ -2,8 +2,8 @@
 How to contribute to DFHack
 ###########################
 
-.. contents::
-
+.. contents:: Contents
+  :local:
 
 .. _contributing-code:
 

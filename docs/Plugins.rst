@@ -9,8 +9,9 @@ game subsystems or the entire renderer.
 Most commands offered by plugins are listed here,
 hopefully organised in a way you will find useful.
 
-.. contents::
-   :depth: 3
+.. contents:: Contents
+  :local:
+  :depth: 2
 
 ===============================
 Data inspection and visualizers

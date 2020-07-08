@@ -4,8 +4,9 @@ Removed scripts
 
 The following scripts were removed for various reasons.
 
-.. contents::
-   :depth: 2
+.. contents:: Contents
+  :local:
+  :depth: 1
 
 .. _warn-stuck-trees:
 

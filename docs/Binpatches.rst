@@ -15,7 +15,8 @@ the `binpatch` command.
     at all possible - that way your work will work for many versions
     across multiple operating systems.
 
-.. contents::
+.. contents:: Contents
+  :local:
 
 
 Getting a patch

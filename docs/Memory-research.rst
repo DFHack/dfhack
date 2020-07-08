@@ -9,8 +9,8 @@ listed here. Note that some of these may be old and unmaintained. If you aren't
 sure what tool would be best for your purposes, feel free to ask for advice (on
 IRC, Bay12, etc.).
 
-.. contents::
-    :local:
+.. contents:: Contents
+  :local:
 
 
 Cross-platform tools

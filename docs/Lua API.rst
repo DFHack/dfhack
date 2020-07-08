@@ -24,8 +24,9 @@ implemented by Lua files located in :file:`hack/lua/*`
 (:file:`library/lua/*` in the git repo).
 
 
-.. contents::
-   :depth: 3
+.. contents:: Contents
+  :local:
+  :depth: 2
 
 
 =========================

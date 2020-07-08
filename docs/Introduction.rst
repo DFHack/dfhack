@@ -30,7 +30,8 @@ allows easier development of new tools.  As an open-source project under
 `various copyleft licences <license>`, contributions are welcome.
 
 
-.. contents::
+.. contents:: Contents
+  :local:
 
 
 .. _installing:

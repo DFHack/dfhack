@@ -151,7 +151,7 @@ def write_script_docs():
         'gui': 'GUI Scripts',
         'modtools': 'Scripts for Modders'}
     for k in head:
-        title = ('.. _{k}:\n\n{l}\n{t}\n{l}\n\n'
+        title = ('.. _scripts-{k}:\n\n{l}\n{t}\n{l}\n\n'
                  '.. include:: /scripts/{a}about.txt\n\n'
                  '.. contents::\n\n').format(
                      k=k, t=head[k],

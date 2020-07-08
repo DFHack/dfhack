@@ -408,7 +408,7 @@ All matching init files will be executed in alphebetical order.
 A world being loaded can mean a fortress, an adventurer, or legends mode.
 
 These files are best used for non-persistent commands, such as setting
-a `fix <fix>` script to run on `repeat`.
+a `fix <scripts-fix>` script to run on `repeat`.
 
 
 .. _onUnload.init:

@@ -41,26 +41,6 @@ How to get new code into DFHack
 * Work on :issue:`reported problems <?q=is:open+-label:idea>`
   will take priority over ideas or suggestions.
 
-.. _contributing-memory-research:
-
-Memory research
----------------
-If you want to do memory research, you'll need some tools and some knowledge.
-In general, you'll need a good memory viewer and optionally something
-to look at machine code without getting crazy :)
-Using publicly known information and analyzing the game's data is preferred.
-
-Good Windows tools include:
-
-* IDA Freeware 7.0 (for non-commercial use, supports 32-bit and 64-bit)
-* Cheat Engine
-
-Good Linux tools:
-
-* angavrilov's df-structures gui (32-bit only, visit us on IRC for details)
-* IDA Freeware 7.0 (see above)
-* edb (Evan's Debugger)
-* Some of the tools residing in the ``legacy`` dfhack branch.
 
 Using the library as a developer
 ================================

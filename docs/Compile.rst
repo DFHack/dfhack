@@ -161,6 +161,8 @@ in any case.
 Note that the scripts in the "build" folder on Windows will set the architecture
 automatically.
 
+.. _compile-build-options:
+
 Other settings
 --------------
 There are a variety of other settings which you can find in CMakeCache.txt in

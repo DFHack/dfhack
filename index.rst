@@ -65,4 +65,5 @@ For Developers
    /docs/Documentation
    /library/xml/SYNTAX
    /library/xml/how-to-update
+   /docs/Memory-research
    /docs/Binpatches

@@ -58,7 +58,7 @@ For Developers
 .. toctree::
    :maxdepth: 1
 
-   /Contributing
+   /docs/Contributing
    /docs/Compile
    /docs/NEWS-dev
    /docs/Lua API

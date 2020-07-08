@@ -1,8 +1,8 @@
 .. _documentation:
 
-####################
-DFHack Documentation
-####################
+###########################
+DFHack Documentation System
+###########################
 
 
 DFHack documentation, like the file you are reading now, is created as ``.rst`` files,
@@ -136,6 +136,7 @@ For more detailed platform-specific instructions, see the sections below:
 
 .. contents::
   :local:
+  :backlinks: none
 
 
 Linux

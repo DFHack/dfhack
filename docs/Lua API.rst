@@ -802,6 +802,8 @@ Random number generation
   Dimension may be 1, 2 or 3 (default).
 
 
+.. _lua-cpp-func-wrappers:
+
 C++ function wrappers
 =====================
 

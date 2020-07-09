@@ -2,41 +2,72 @@
 DFHack development overview
 ===========================
 
-Currently, the most direct way to use the library is to write a script or plugin that can be loaded by it.
-All the plugins can be found in the 'plugins' folder. There's no in-depth documentation
-on how to write one yet, but it should be easy enough to copy one and just follow the pattern.
-``plugins/skeleton/skeleton.cpp`` is provided for this purpose.
+DFHack has various components; this page provides an overview of some. If you
+are looking to develop a tool for DFHack, developing a script or plugin is
+likely the most straightforward choice.
 
-Other than through plugins, it is possible to use DFHack via remote access interface,
-or by writing scripts in Lua or Ruby.  There are plenty of examples in the scripts folder.
-The `lua-api` is quite well documented.
+Other pages that may be relevant include:
 
-The most important parts of DFHack are the Core, Console, Modules and Plugins.
+- `contributing`
+- `documentation`
+- `license`
 
-* Core acts as the centerpiece of DFHack - it acts as a filter between DF and
-  SDL and synchronizes the various plugins with DF.
-* Console is a thread-safe console that can be used to invoke commands exported by Plugins.
-* Modules actually describe the way to access information in DF's memory. You
-  can get them from the Core. Most modules are split into two parts: high-level
-  and low-level. High-level is mostly method calls, low-level publicly visible
-  pointers to DF's data structures.
-* Plugins are the tools that use all the other stuff to make things happen.
-  A plugin can have a list of commands that it exports and an onupdate function
-  that will be called each DF game tick.
 
-Rudimentary API documentation can be built using doxygen (see build options
-in ``CMakeCache.txt`` or with ``ccmake`` or ``cmake-gui``).  The full DFHack
-documentation is built with Sphinx_, which runs automatically at compile time.
+.. contents:: Contents
+    :local:
 
-.. _Sphinx: http://www.sphinx-doc.org
 
-DFHack consists of variously licensed code, but invariably weak copyleft.
-The main license is zlib/libpng, some bits are MIT licensed, and some are
-BSD licensed.  See the `license` for more information.
+Plugins
+-------
 
-Feel free to add your own extensions and plugins. Contributing back to
-the DFHack repository is welcome and the right thing to do :)
+DFHack plugins are written in C++ and located in the ``plugins`` folder.
+Currently, documentation on how to write plugins is somewhat sparse. There are
+templates that you can get use to get started in the ``plugins/skeleton``
+folder, and the source code of existing plugins can also be helpful.
 
+If you want to compile a plugin that you have just added, you will need to add a
+call to ``DFHACK_PLUGIN`` in ``plugins/CMakeLists.txt``.
+
+Plugins have the ability to make one or more commands available to users of the
+DFHack console. Examples include `3dveins` (which implements the ``3dveins``
+command) and `reveal` (which implements ``reveal``, ``unreveal``, and several
+other commands).
+
+Plugins can also register handlers to run on every tick, and can interface with
+the built-in `enable` and `disable` commands. For the full plugin API, see the
+skeleton plugins or ``PluginManager.cpp``.
+
+Scripts
+-------
+
+DFHack scripts can currently be written in Lua or Ruby. The `Lua API <lua-api>`
+is more complete and currently better-documented, however. Referring to existing
+scripts as well as the API documentation can be helpful when developing new
+scripts.
+
+DFHack scripts live in a separate `scripts repository <https://github.com/dfhack/scripts>`_.
+This can be found in the ``scripts`` submodule if you have
+`cloned DFHack <compile-how-to-get-the-code>`, or the ``hack/scripts`` folder
+of an installed copy of DFHack.
+
+Core
+----
+
+The DFHack core has a variety of low-level functions. It is responsible for
+hooking into DF (via SDL), providing a console, and providing an interface
+for plugins and scripts to interact with DF.
+
+Modules
+-------
+
+A lot of shared code to interact with DF in more complicated ways is exposed by
+**modules**. For example, the Units module contains functions for checking
+various traits of units, changing nicknames properly, and more. Generally,
+code that is useful to multiple plugins and scripts should go in the appropriate
+module, if there is one.
+
+Several modules are also `exposed to Lua <lua-cpp-func-wrappers>`, although
+some functions (and some entire modules) are currently only available in C++.
 
 Remote access interface
 -----------------------

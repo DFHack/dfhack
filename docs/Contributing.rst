@@ -1,3 +1,5 @@
+.. _contributing:
+
 ###########################
 How to contribute to DFHack
 ###########################

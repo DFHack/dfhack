@@ -50,7 +50,7 @@ Other Contents
    /docs/Authors
    /LICENSE
    /docs/NEWS
-   /docs/Scripts-removed
+   /docs/Removed
 
 For Developers
 ==============

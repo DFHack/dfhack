@@ -37,22 +37,6 @@ BSD licensed.  See the `license` for more information.
 Feel free to add your own extensions and plugins. Contributing back to
 the DFHack repository is welcome and the right thing to do :)
 
-DF data structure definitions
------------------------------
-DFHack uses information about the game data structures, represented via xml files
-in the ``library/xml/`` submodule.
-
-See https://github.com/DFHack/df-structures, and the documentation linked in the index.
-
-Data structure layouts are described in files following the ``df.*.xml`` name pattern.
-This information is transformed by a perl script into C++ headers describing the
-structures, and associated metadata for the Lua wrapper. These headers and data
-are then compiled into the DFHack libraries, thus necessitating a compatibility
-break every time layouts change; in return it significantly boosts the efficiency
-and capabilities of DFHack code.
-
-Global object addresses are stored in :file:`symbols.xml`, which is copied to the dfhack
-release package and loaded as data at runtime.
 
 Remote access interface
 -----------------------

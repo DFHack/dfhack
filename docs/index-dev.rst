@@ -13,8 +13,7 @@ These are pages relevant to people developing for DFHack.
    /docs/NEWS-dev
    /docs/Lua API
    /docs/Documentation
-   /library/xml/SYNTAX
-   /library/xml/how-to-update
+   /docs/Structures-intro
    /docs/Memory-research
    /docs/Binpatches
 

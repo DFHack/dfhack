@@ -40,6 +40,7 @@ User Manual
    /docs/Core
    /docs/Plugins
    /docs/Scripts
+   /docs/index-dev
 
 Other Contents
 ==============
@@ -51,19 +52,3 @@ Other Contents
    /LICENSE
    /docs/NEWS
    /docs/Removed
-
-For Developers
-==============
-
-.. toctree::
-   :maxdepth: 1
-
-   /docs/Contributing
-   /docs/Compile
-   /docs/NEWS-dev
-   /docs/Lua API
-   /docs/Documentation
-   /library/xml/SYNTAX
-   /library/xml/how-to-update
-   /docs/Memory-research
-   /docs/Binpatches

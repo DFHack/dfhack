@@ -20,7 +20,7 @@ enhancements by default, and more can be enabled.  There are also many tools
 You can even add third-party scripts and plugins to do almost anything!
 
 For modders, DFHack makes many things possible.  Custom reactions, new
-interactions, magic creature abilities, and more can be set through `modtools`
+interactions, magic creature abilities, and more can be set through `scripts-modtools`
 and custom raws.  Non-standard DFHack scripts and inits can be stored in the
 raw directory, making raws or saves fully self-contained for distribution -
 or for coexistence in a single DF install, even with incompatible components.
@@ -30,7 +30,8 @@ allows easier development of new tools.  As an open-source project under
 `various copyleft licences <license>`, contributions are welcome.
 
 
-.. contents::
+.. contents:: Contents
+  :local:
 
 
 .. _installing:

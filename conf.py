@@ -22,8 +22,6 @@ import re
 import shlex  # pylint:disable=unused-import
 import sys
 
-sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'docs'))
-from gen_changelog import generate_changelog
 
 # -- Support :dfhack-keybind:`command` ------------------------------------
 # this is a custom directive that pulls info from dfhack.init-example
@@ -153,9 +151,10 @@ def write_script_docs():
         'gui': 'GUI Scripts',
         'modtools': 'Scripts for Modders'}
     for k in head:
-        title = ('.. _{k}:\n\n{l}\n{t}\n{l}\n\n'
+        title = ('.. _scripts-{k}:\n\n{l}\n{t}\n{l}\n\n'
                  '.. include:: /scripts/{a}about.txt\n\n'
-                 '.. contents::\n\n').format(
+                 '.. contents:: Contents\n'
+                 '  :local:\n\n').format(
                      k=k, t=head[k],
                      l=len(head[k])*'#',
                      a=('' if k == 'base' else k + '/')
@@ -180,11 +179,12 @@ def all_keybinds_documented():
 
 
 # Actually call the docs generator and run test
-generate_changelog()
 write_script_docs()
 all_keybinds_documented()
 
 # -- General configuration ------------------------------------------------
+
+sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'docs', 'sphinx_extensions'))
 
 # If your documentation needs a minimal Sphinx version, state it here.
 needs_sphinx = '1.8'
@@ -192,7 +192,10 @@ needs_sphinx = '1.8'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.extlinks']
+extensions = [
+    'sphinx.ext.extlinks',
+    'dfhack.changelog',
+]
 
 # This config value must be a dictionary of external sites, mapping unique
 # short alias names to a base URL and a prefix.

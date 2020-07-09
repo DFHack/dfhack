@@ -24,8 +24,9 @@ implemented by Lua files located in :file:`hack/lua/*`
 (:file:`library/lua/*` in the git repo).
 
 
-.. contents::
-   :depth: 3
+.. contents:: Contents
+  :local:
+  :depth: 2
 
 
 =========================
@@ -800,6 +801,8 @@ Random number generation
   of dimension *dim*, initialized from this random generator.
   Dimension may be 1, 2 or 3 (default).
 
+
+.. _lua-cpp-func-wrappers:
 
 C++ function wrappers
 =====================

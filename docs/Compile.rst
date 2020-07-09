@@ -13,8 +13,9 @@ DFHack from source, this document will walk you through the build process. Note
 that some steps may be unconventional compared to other projects, so be sure to
 pay close attention if this is your first time compiling DFHack.
 
-.. contents::
-   :depth: 2
+.. contents:: Contents
+  :local:
+  :depth: 1
 
 .. _compile-how-to-get-the-code:
 
@@ -160,6 +161,8 @@ in any case.
 
 Note that the scripts in the "build" folder on Windows will set the architecture
 automatically.
+
+.. _compile-build-options:
 
 Other settings
 --------------

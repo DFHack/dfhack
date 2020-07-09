@@ -20,7 +20,7 @@ enhancements by default, and more can be enabled.  There are also many tools
 You can even add third-party scripts and plugins to do almost anything!
 
 For modders, DFHack makes many things possible.  Custom reactions, new
-interactions, magic creature abilities, and more can be set through `modtools`
+interactions, magic creature abilities, and more can be set through `scripts-modtools`
 and custom raws.  Non-standard DFHack scripts and inits can be stored in the
 raw directory, making raws or saves fully self-contained for distribution -
 or for coexistence in a single DF install, even with incompatible components.
@@ -40,6 +40,7 @@ User Manual
    /docs/Core
    /docs/Plugins
    /docs/Scripts
+   /docs/index-dev
 
 Other Contents
 ==============
@@ -50,19 +51,4 @@ Other Contents
    /docs/Authors
    /LICENSE
    /docs/NEWS
-   /docs/Scripts-removed
-
-For Developers
-==============
-
-.. toctree::
-   :maxdepth: 1
-
-   /Contributing
-   /docs/Compile
-   /docs/NEWS-dev
-   /docs/Lua API
-   /docs/Documentation
-   /library/xml/SYNTAX
-   /library/xml/how-to-update
-   /docs/Binpatches
+   /docs/Removed

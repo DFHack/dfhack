@@ -1,3 +1,5 @@
+.. _plugins-index:
+
 ##############
 DFHack Plugins
 ##############

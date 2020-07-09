@@ -166,10 +166,13 @@ right place to do it.
 Most such plugins or scripts support the built-in ``enable`` and ``disable``
 commands. Calling them at any time without arguments prints a list
 of enabled and disabled plugins, and shows whether that can be changed
-through the same commands.
+through the same commands. Passing plugin names to these commands will enable
+or disable the specified plugins. For example, to enable the `manipulator`
+plugin::
 
-To enable or disable plugins that support this, use their names as
-arguments for the command::
+  enable manipulator
+
+It is also possible to enable or disable multiple plugins at once::
 
   enable manipulator search
 
@@ -271,6 +274,9 @@ something.  Usage::
     load|unload|reload PLUGIN|(-a|--all)
 
 Allows dealing with plugins individually by name, or all at once.
+
+Note that plugins do not maintain their enabled state if they are reloaded, so
+you may need to use `enable` to re-enable a plugin after reloading it.
 
 
 .. _ls:

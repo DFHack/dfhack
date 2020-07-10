@@ -283,6 +283,13 @@ pygments_style = 'sphinx'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
+rst_prolog = """
+.. |sphinx_min_version| replace:: {sphinx_min_version}
+.. |dfhack_version| replace:: {dfhack_version}
+""".format(
+    sphinx_min_version=needs_sphinx,
+    dfhack_version=version,
+)
 
 # -- Options for HTML output ----------------------------------------------
 

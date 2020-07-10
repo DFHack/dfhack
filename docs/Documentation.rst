@@ -121,7 +121,7 @@ Building the documentation
 Required dependencies
 ---------------------
 In order to build the documentation, you must have Python with Sphinx
-version 1.8 or later. Both Python 2.x and 3.x are supported.
+version |sphinx_min_version| or later. Both Python 2.x and 3.x are supported.
 
 When installing Sphinx from OS package managers, be aware that there is
 another program called Sphinx, completely unrelated to documentation management.
@@ -141,27 +141,29 @@ For more detailed platform-specific instructions, see the sections below:
 
 Linux
 ~~~~~
-Most Linux distributions will include Python as standard.
+Most Linux distributions will include Python by default. If not, start by
+installing Python (preferably Python 3). On Debian-based distros::
 
-Check your package manager to see if Sphinx 1.3.1 or later is available,
-but at the time of writing Ubuntu for example only has 1.2.x.
+  sudo apt install python3
 
-You can instead install Sphinx with the pip package manager. This may need
-to be installed from your OS package manager; this is the case on Ubuntu.
-On Ubuntu/Debian, use the following to first install pip::
+Check your package manager to see if Sphinx |sphinx_min_version| or later is
+available. On Debian-based distros, this package is named ``python3-sphinx``.
+If this package is new enough, you can install it directly. If not, or if you
+want to use a newer Sphinx version (which may result in faster builds), you
+can install Sphinx through the ``pip`` package manager instead. On Debian-based
+distros, you can install pip with::
 
-  sudo apt-get install python-pip
+  sudo apt install python3-pip
 
-Once pip is available, you can then install the Python Sphinx module with::
+Once pip is available, you can then install Sphinx with::
 
-  pip install sphinx
+  pip3 install sphinx
 
-If you run this as a normal user it will install a local copy for your user only.
-Run it with sudo if you want a system-wide install. Either is fine for DFHack,
-however if installing locally do check that ``sphinx-build`` is in your path.
-It may be installed in a directory such as ``~/.local/bin/``, so after pip
-install, find ``sphinx-build`` and ensure its directory is in your local ``$PATH``.
-
+If you run this as an unpriviliged user, it may install a local copy of Sphinx
+for your user only. The ``sphinx-build`` executable will typically end up in
+``~/.local/bin/`` in this case. Alternatively, you can install Sphinx
+system-wide by running pip with ``sudo``. In any case, you will need the folder
+containing ``sphinx-build`` to be in your ``$PATH``.
 
 macOS
 ~~~~~
@@ -173,7 +175,7 @@ latest Sphinx using pip::
   brew install python3
   pip3 install sphinx
 
-Alternatively, you can simply install Sphinx 1.3.x directly from Homebrew::
+Alternatively, you can simply install Sphinx directly from Homebrew::
 
   brew install sphinx-doc
 

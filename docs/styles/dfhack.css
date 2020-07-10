@@ -52,3 +52,7 @@ div.sphinxsidebar {
 div.sphinxsidebar h3 > a {
     border-bottom: 1px dotted #999;
 }
+
+div.body {
+    min-width: unset;
+}

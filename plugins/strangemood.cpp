@@ -171,7 +171,9 @@ void generateName(df::language_name &output, int language, df::language_name_typ
         int r, r2, r3;
         switch (mode)
         {
-        case 0: case 9: case 10:
+        case language_name_type::Figure:
+        case language_name_type::FigureNoFirst:
+        case language_name_type::FigureFirstOnly:
             if (mode != 9)
             {
                 int32_t word; df::part_of_speech part;
@@ -182,7 +184,8 @@ void generateName(df::language_name &output, int language, df::language_name_typ
             }
             if (mode != 10)
             {
-        case 4: case 37: // this is not a typo
+        case language_name_type::Site:
+        case language_name_type::Unk37: // this is not a typo
                 if (rng.df_trandom(2))
                 {
                     selectWord(table2, output.words[0], output.parts_of_speech[0], 0);
@@ -196,7 +199,9 @@ void generateName(df::language_name &output, int language, df::language_name_typ
             }
             break;
 
-        case 1: case 13: case 20:
+        case language_name_type::Artifact:
+        case language_name_type::Unk13:
+        case language_name_type::River:
             r = rng.df_trandom(3);
             if (r == 0 || r == 1)
             {
@@ -213,7 +218,9 @@ void generateName(df::language_name &output, int language, df::language_name_typ
             }
             if (r == 1 || r == 2)
             {
-        case 3: case 8: case 11: // this is not a typo either
+        case language_name_type::Squad:
+        case language_name_type::LegendaryFigure:
+        case language_name_type::ArtImage: // this is not a typo either
                 r2 = rng.df_trandom(2);
                 if (r2)
                     selectWord(table1, output.words[5], output.parts_of_speech[5], 2);
@@ -256,9 +263,34 @@ void generateName(df::language_name &output, int language, df::language_name_typ
                 output.parts_of_speech[5] = part_of_speech::NounPlural;
             break;
 
-        case 2: case 5: case 6: case 12: case 14: case 15: case 16: case 17: case 18: case 19:
-        case 21: case 22: case 23: case 24: case 25: case 26: case 27: case 28: case 29: case 30:
-        case 31: case 32: case 33: case 34: case 35: case 36: case 38: case 39:
+        case language_name_type::Civilization:
+        case language_name_type::World:
+        case language_name_type::Region:
+        case language_name_type::AdventuringGroup:
+        case language_name_type::SiteGovernment:
+        case language_name_type::Unk15:
+        case language_name_type::Vessel:
+        case language_name_type::MilitaryUnit:
+        case language_name_type::Religion:
+        case language_name_type::MountainPeak:
+        case language_name_type::Temple:
+        case language_name_type::Keep:
+        case language_name_type::MeadHall:
+        case language_name_type::Unk24:
+        case language_name_type::Unk25:
+        case language_name_type::Unk26:
+        case language_name_type::Market:
+        case language_name_type::Tavern:
+        case language_name_type::War:
+        case language_name_type::Battle:
+        case language_name_type::Siege:
+        case language_name_type::Road:
+        case language_name_type::Wall:
+        case language_name_type::Bridge:
+        case language_name_type::Tunnel:
+        case language_name_type::PretentiousEntityPosition:
+        case language_name_type::Tomb:
+        case language_name_type::MigratingGroup:
             selectWord(table1, output.words[5], output.parts_of_speech[5], 2);
             r3 = rng.df_trandom(3);
             if (rng.df_trandom(50))
@@ -280,7 +312,7 @@ void generateName(df::language_name &output, int language, df::language_name_typ
                 selectWord(table2, output.words[4], output.parts_of_speech[4], 4);
             break;
 
-        case 7:
+        case language_name_type::Dungeon:
             r = rng.df_trandom(3);
             if (r == 0 || r == 1)
             {

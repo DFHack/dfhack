@@ -314,6 +314,9 @@ void generateName(df::language_name &output, int language, df::language_name_typ
             if (rng.df_trandom(100))
                 selectWord(table2, output.words[4], output.parts_of_speech[4], 4);
             break;
+        default:
+            // not handled yet
+            break;
         }
         if (output.words[2] != -1 && output.words[3] != -1 &&
             world->raws.language.words[output.words[3]]->adj_dist < world->raws.language.words[output.words[2]]->adj_dist)

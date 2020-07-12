@@ -30,15 +30,5 @@ User Manual
    /docs/Core
    /docs/Plugins
    /docs/Scripts
+   /docs/index-about
    /docs/index-dev
-
-Other Contents
-==============
-
-.. toctree::
-   :maxdepth: 1
-
-   /docs/Authors
-   /LICENSE
-   /docs/NEWS
-   /docs/Removed

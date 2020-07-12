@@ -1,3 +1,5 @@
+.. _compile:
+
 ################
 Compiling DFHack
 ################

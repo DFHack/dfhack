@@ -7,14 +7,15 @@ Introduction and Overview
 DFHack is a Dwarf Fortress memory access library, distributed with
 a wide variety of useful scripts and plugins.
 
-The project is currently hosted at https://www.github.com/DFHack/dfhack,
-and can be downloaded from `the releases page
-<http://github.com/DFHack/dfhack/releases>`_.
+The project is currently hosted `on GitHub <https://www.github.com/DFHack/dfhack>`_,
+and can be downloaded from `the releases page <http://github.com/DFHack/dfhack/releases>`_
+- see `installing` for installation instructions. This is also where the
+`DFHack bug tracker <https://www.github.com/DFHack/dfhack>`_ is hosted.
 
-All new releases are announced in :forums:`the bay12 forums thread <139553>`,
+All new releases are announced in `the Bay12 forums thread <https://dfhack.org/bay12>`_,
 which is also a good place for discussion and questions.
 
-For users, it provides a significant suite of bugfixes and interface
+For users, DFHack provides a significant suite of bugfixes and interface
 enhancements by default, and more can be enabled.  There are also many tools
 (such as `workflow` or `autodump`) which can make life easier.
 You can even add third-party scripts and plugins to do almost anything!
@@ -27,7 +28,7 @@ or for coexistence in a single DF install, even with incompatible components.
 
 For developers, DFHack unites the various ways tools access DF memory and
 allows easier development of new tools.  As an open-source project under
-`various copyleft licences <license>`, contributions are welcome.
+`various open-source licences <license>`, contributions are welcome.
 
 
 .. contents:: Contents

@@ -49,7 +49,7 @@ div.sphinxsidebar {
     overflow-y: auto;
 }
 
-div.sphinxsidebar h3 > a {
+div.sphinxsidebar h3.logo-name a {
     border-bottom: 1px dotted #999;
 }
 

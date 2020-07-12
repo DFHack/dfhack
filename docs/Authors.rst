@@ -57,6 +57,7 @@ Hayati Ayguen           hayguen
 Herwig Hochleitner      bendlas
 Ian S                   kremlin-
 IndigoFenix
+James Gilles            kazimuth
 James Logsdon           jlogsdon
 Japa                    JapaMala
 Jared Adams

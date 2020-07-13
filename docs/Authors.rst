@@ -161,6 +161,7 @@ Timothy Collett         danaris
 Timur Kelman            TymurGubayev
 Tom Jobbins             TheBloke
 Tom Prince
+Tommy R                 tommy
 TotallyGatsby           TotallyGatsby
 Travis Hoppe            thoppe                  orthographic-pedant
 txtsd                   txtsd

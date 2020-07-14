@@ -38,6 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Fixed an issue with the macOS launcher failing to un-quarantine some files
 - `labormanager`: fixed handling of new jobs in 0.47
 - Fixed ``Units::isEggLayer``, ``Units::isGrazer``, ``Units::isMilkable``, ``Units::isTrainableHunting``, ``Units::isTrainableWar``, and ``Units::isTamable`` ignoring the unit's caste
+- `RemoteFortressReader`: fixed a couple crashes that could result from decoding invalid enum items (``site_realization_building_type`` and ``improvement_type``)
 
 ## Misc Improvements
 - `confirm`: added a confirmation dialog for convicting dwarves of crimes

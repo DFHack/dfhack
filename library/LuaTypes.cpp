@@ -1316,6 +1316,8 @@ static void MakePrimitiveMetatable(lua_State *state, type_identity *type)
     {
         EnableMetaField(state, base+2, "value", type);
         AssociateId(state, base+3, 1, "value");
+
+        EnableMetaField(state, base+2, "ref_target", NULL);
     }
 
     // Add the iteration metamethods

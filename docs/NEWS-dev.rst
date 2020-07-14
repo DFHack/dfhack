@@ -13,7 +13,8 @@ which they first appeared. See `build-changelog` for more information.
 
 See `changelog` for a list of changes grouped by stable releases.
 
-.. contents::
-   :depth: 2
+.. contents:: Contents
+  :local:
+  :depth: 1
 
 .. include:: /docs/_auto/news-dev.rst

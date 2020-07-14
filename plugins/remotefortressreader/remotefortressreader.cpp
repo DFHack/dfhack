@@ -1,5 +1,5 @@
 #include "df_version_int.h"
-#define RFR_VERSION "0.20.3"
+#define RFR_VERSION "0.21.0"
 
 #include <cstdio>
 #include <time.h>
@@ -949,9 +949,6 @@ static command_result GetGrowthList(color_ostream &stream, const EmptyMessage *i
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos)
 {
-    NetBlock->set_map_x(DfBlock->map_pos.x);
-    NetBlock->set_map_y(DfBlock->map_pos.y);
-    NetBlock->set_map_z(DfBlock->map_pos.z);
 
     MapExtras::Block * block = MC->BlockAtTile(DfBlock->map_pos);
 
@@ -1465,7 +1462,12 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                         bool flows = block->flows.size() > 0;
                         RemoteFortressReader::MapBlock *net_block = nullptr;
                         if (tileChanged || desChanged || spatterChanged || firstBlock || itemsChanged || flows)
+                        {
                             net_block = out->add_map_blocks();
+                            net_block->set_map_x(block->map_pos.x);
+                            net_block->set_map_y(block->map_pos.y);
+                            net_block->set_map_z(block->map_pos.z);
+                        }
                         if (tileChanged)
                         {
                             CopyBlock(block, net_block, &MC, pos);
@@ -2541,7 +2543,7 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
 
                     out_building->set_id(in_building->id);
 #if DF_VERSION_INT > 34011
-                    out_building->set_type((SiteRealizationBuildingType)in_building->type);
+                    out_building->set_type(in_building->type);
 #endif
                     out_building->set_min_x(in_building->min_x - (site_x * 48));
                     out_building->set_min_y(in_building->min_y - (site_y * 48));
@@ -2685,7 +2687,7 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
 
             send_caste->add_child_name(orig_caste->child_name[0]);
             send_caste->add_child_name(orig_caste->child_name[1]);
-            send_caste->set_gender(orig_caste->gender);
+            send_caste->set_gender(orig_caste->sex);
 
             for (size_t partIndex = 0; partIndex < orig_caste->body_info.body_parts.size(); partIndex++)
             {

@@ -46,7 +46,6 @@ freely, subject to the following restrictions:
 /// @li tthread::recursive_mutex
 /// @li tthread::condition_variable
 /// @li tthread::lock_guard
-/// @li tthread::fast_mutex
 ///
 /// @section misc_sec Miscellaneous
 /// The following special keywords are available: #thread_local.

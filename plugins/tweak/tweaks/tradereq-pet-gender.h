@@ -20,7 +20,7 @@ struct pet_gender_hook : df::viewscreen_topicmeeting_takerequestsst {
             vector<int16_t>& castes = entity->resources.animals.pet_castes;
             for (int i = (good_idx / 17) * 17, y = 4; i < (good_idx / 17) * 17 + 17 && size_t(i) < races.size(); i++, y++) {
                 int x = 30 + 1 + world->raws.creatures.all[races[i]]->caste[castes[i]]->caste_name[0].size();
-                bool male = (bool)world->raws.creatures.all[races[i]]->caste[castes[i]]->gender;
+                bool male = world->raws.creatures.all[races[i]]->caste[castes[i]]->sex == pronoun_type::he;
                 OutputString((i == good_idx) ? COLOR_WHITE : COLOR_GREY,
                     x, y, male ? "\013" : "\014");
             }

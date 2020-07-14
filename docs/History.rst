@@ -1,16 +1,19 @@
 :orphan:
 
-.. _HISTORY:
+.. _History:
 
-########################
-HISTORY - old changelogs
-########################
+#####################
+Historical changelogs
+#####################
 
-This file is where old changelogs live, so the current `changelog`
-in ``NEWS.rst`` doesn't get too long.
+This file is where old changelogs live, so the `current changelog <changelog>`
+doesn't get too long. Some of these changelogs are also formatted differently
+from current changelogs and would be difficult for the current `changelog
+generation system <build-changelog>` to handle.
 
-.. contents::
-   :depth: 2
+.. contents:: Contents
+  :local:
+  :depth: 1
 
 DFHack 0.43.05-r3
 =================

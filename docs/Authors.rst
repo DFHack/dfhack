@@ -25,6 +25,7 @@ belal                   jimhester
 Ben Lubar               BenLubar
 Ben Rosser              TC01
 billw2012               billw2012
+BrickViking             brickviking
 brndd                   brndd                   burneddi
 Bumber                  Bumber64
 Caldfir                 caldfir
@@ -56,6 +57,7 @@ Hayati Ayguen           hayguen
 Herwig Hochleitner      bendlas
 Ian S                   kremlin-
 IndigoFenix
+James Gilles            kazimuth
 James Logsdon           jlogsdon
 Japa                    JapaMala
 Jared Adams
@@ -159,6 +161,7 @@ Timothy Collett         danaris
 Timur Kelman            TymurGubayev
 Tom Jobbins             TheBloke
 Tom Prince
+Tommy R                 tommy
 TotallyGatsby           TotallyGatsby
 Travis Hoppe            thoppe                  orthographic-pedant
 txtsd                   txtsd

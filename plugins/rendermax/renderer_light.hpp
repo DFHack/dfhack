@@ -1,11 +1,14 @@
-#ifndef RENDERER_LIGHT_INCLUDED
-#define RENDERER_LIGHT_INCLUDED
+#pragma once
+
+#include <memory>
+#include <mutex>
+#include <stack>
+#include <tuple>
+#include <unordered_map>
+
 #include "renderer_opengl.hpp"
 #include "Types.h"
-#include <tuple>
-#include <stack>
-#include <memory>
-#include <unordered_map>
+
 // we are not using boost so let's cheat:
 template <class T>
 inline void hash_combine(std::size_t & seed, const T & v)
@@ -91,7 +94,7 @@ private:
     }
     void reinitLightGrid(int w,int h)
     {
-        tthread::lock_guard<tthread::fast_mutex> guard(dataMutex);
+        std::lock_guard<std::mutex> guard{dataMutex};
         lightGrid.resize(w*h,rgbf(1,1,1));
     }
     void reinitLightGrid()
@@ -100,7 +103,7 @@ private:
     }
 
 public:
-    tthread::fast_mutex dataMutex;
+    std::mutex dataMutex;
     std::vector<rgbf> lightGrid;
     renderer_light(renderer* parent):renderer_wrap(parent),light_adaptation(1)
     {
@@ -108,12 +111,12 @@ public:
     }
     virtual void update_tile(int32_t x, int32_t y) {
         renderer_wrap::update_tile(x,y);
-        tthread::lock_guard<tthread::fast_mutex> guard(dataMutex);
+        std::lock_guard<std::mutex> guard{dataMutex};
         colorizeTile(x,y);
     };
     virtual void update_all() {
         renderer_wrap::update_all();
-        tthread::lock_guard<tthread::fast_mutex> guard(dataMutex);
+        std::lock_guard<std::mutex> guard{dataMutex};
         for (int x = 0; x < df::global::gps->dimx; x++)
             for (int y = 0; y < df::global::gps->dimy; y++)
                 colorizeTile(x,y);
@@ -374,4 +377,3 @@ private:
 };
 rgbf blend(const rgbf& a,const rgbf& b);
 rgbf blendMax(const rgbf& a,const rgbf& b);
-#endif

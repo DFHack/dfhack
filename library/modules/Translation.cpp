@@ -69,16 +69,7 @@ bool Translation::copyName(df::language_name * source, df::language_name * targe
     if (source == target)
         return true;
 
-    target->first_name = source->first_name;
-    target->nickname = source->nickname;
-    for (int i = 0; i < 7; i++)
-    {
-        target->words[i] = source->words[i];
-        target->parts_of_speech[i] = source->parts_of_speech[i];
-    }
-    target->language = source->language;
-    target->unknown = source->unknown;
-    target->has_name = source->has_name;
+    *target = *source;
     return true;
 }
 

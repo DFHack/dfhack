@@ -17,4 +17,4 @@ if [ -z "$JOBS" ]; then
     JOBS=2
 fi
 
-"$sphinx" -a -E -q -b html . ./docs/html -w ./docs/_sphinx-warnings.txt -j "$JOBS" "$@"
+"$sphinx" -a -E -b html . ./docs/html -w ./docs/_sphinx-warnings.txt -j "$JOBS" "$@"

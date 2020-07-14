@@ -4,6 +4,8 @@ import itertools
 import os
 import sys
 
+from sphinx.errors import ExtensionError, SphinxError, SphinxWarning
+
 from dfhack.util import DFHACK_ROOT, DOCS_ROOT
 
 CHANGELOG_PATHS = (
@@ -214,7 +216,7 @@ def generate_changelog(all=False):
     # scan for unrecognized sections
     for entry in entries:
         if entry.section not in CHANGELOG_SECTIONS:
-            raise RuntimeWarning('Unknown section: ' + entry.section)
+            raise SphinxWarning('Unknown section: ' + entry.section)
 
     # ordered versions
     versions = ['future']
@@ -287,7 +289,12 @@ def cli_entrypoint():
 
 
 def sphinx_entrypoint(app, config):
-    generate_changelog()
+    try:
+        generate_changelog()
+    except SphinxError:
+        raise
+    except Exception as e:
+        raise ExtensionError(str(e), e)
 
 
 def setup(app):

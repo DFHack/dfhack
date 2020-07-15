@@ -170,18 +170,24 @@ void LuaWrapper::push_object_ref(lua_State *state, void *ptr)
     // stack: [metatable]
     auto ref = (DFRefHeader*)lua_newuserdata(state, sizeof(DFRefHeader));
     ref->ptr = ptr;
+    ref->field_info = NULL;
 
     lua_swap(state);
     lua_setmetatable(state, -2);
     // stack: [userdata]
 }
 
-void *LuaWrapper::get_object_ref(lua_State *state, int val_index)
+DFRefHeader *LuaWrapper::get_object_ref_header(lua_State *state, int val_index)
 {
     assert(!lua_islightuserdata(state, val_index));
 
     auto ref = (DFRefHeader*)lua_touserdata(state, val_index);
-    return ref->ptr;
+    return ref;
+}
+
+void *LuaWrapper::get_object_ref(lua_State *state, int val_index)
+{
+    return get_object_ref_header(state, val_index)->ptr;
 }
 
 /**

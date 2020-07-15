@@ -43,6 +43,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 - `confirm`: added a confirmation dialog for convicting dwarves of crimes
 
+## Lua
+- Added a ``ref_target`` field to primitive field references, corresponding to the ``ref-target`` XML attribute
+
 ## Ruby
 - Updated ``item_find`` and ``building_find`` to use centralized logic that works on more screens
 

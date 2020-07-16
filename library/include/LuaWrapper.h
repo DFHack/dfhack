@@ -126,6 +126,7 @@ namespace LuaWrapper {
      */
     struct DFRefHeader {
         void *ptr;
+        const struct_field_info *field_info;
     };
 
     /**
@@ -133,15 +134,7 @@ namespace LuaWrapper {
      */
     void push_object_ref(lua_State *state, void *ptr);
     DFHACK_EXPORT void *get_object_ref(lua_State *state, int val_index);
-
-    /*
-     * The system might be extended to carry some simple
-     * objects inline inside the reference buffer.
-     */
-    inline bool is_self_contained(DFRefHeader *ptr) {
-        void **pp = &ptr->ptr;
-        return **(void****)pp == (pp + 1);
-    }
+    DFHACK_EXPORT DFRefHeader *get_object_ref_header(lua_State *state, int val_index);
 
     /**
     * Report an error while accessing a field (index = field name).

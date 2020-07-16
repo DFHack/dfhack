@@ -359,3 +359,5 @@ latex_documents = [
     (master_doc, 'DFHack.tex', 'DFHack Documentation',
      'The DFHack Team', 'manual'),
 ]
+
+latex_toplevel_sectioning = 'part'

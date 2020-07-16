@@ -536,6 +536,7 @@ static void field_reference(lua_State *state, const struct_field_info *field, vo
         case struct_field_info::PRIMITIVE:
         case struct_field_info::SUBSTRUCT:
             push_object_internal(state, field->type, ptr);
+            get_object_ref_header(state, -1)->field_info = field;
             return;
 
         case struct_field_info::POINTER:
@@ -706,6 +707,17 @@ static type_identity *find_primitive_field(lua_State *state, int field, const ch
  */
 static int meta_primitive_index(lua_State *state)
 {
+    const char *attr = lua_tostring(state, -1);
+    if (strcmp(attr, "ref_target") == 0) {
+        const struct_field_info *field_info = get_object_ref_header(state, 1)->field_info;
+        if (field_info && field_info->extra && field_info->extra->ref_target) {
+            LookupInTable(state, field_info->extra->ref_target, &DFHACK_TYPEID_TABLE_TOKEN);
+        } else {
+            lua_pushnil(state);
+        }
+        return 1;
+    }
+
     uint8_t *ptr = get_object_addr(state, 1, 2, "read");
     auto type = find_primitive_field(state, 2, "read", &ptr);
     if (!type)
@@ -1304,6 +1316,8 @@ static void MakePrimitiveMetatable(lua_State *state, type_identity *type)
     {
         EnableMetaField(state, base+2, "value", type);
         AssociateId(state, base+3, 1, "value");
+
+        EnableMetaField(state, base+2, "ref_target", NULL);
     }
 
     // Add the iteration metamethods

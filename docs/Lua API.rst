@@ -158,7 +158,9 @@ that don't fit any of the other reference types. Such
 references can only appear as a value of a pointer field,
 or as a result of calling the ``_field()`` method.
 
-They behave as structs with one field ``value`` of the right type.
+They behave as structs with a ``value`` field of the right type. If the
+object's XML definition has a ``ref-target`` attribute, they will also have
+a read-only ``ref_target`` field set to the corresponding type object.
 
 To make working with numeric buffers easier, they also allow
 numeric indices. Note that other than excluding negative values

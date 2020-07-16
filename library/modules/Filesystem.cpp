@@ -104,7 +104,7 @@ bool Filesystem::mkdir_recursive (std::string path)
     std::replace(path.begin(), path.end(), '\\', '/');
 #endif
 
-    if (path.size() > PATH_MAX)
+    if (path.size() > FILENAME_MAX)
     {
         // path too long
         return false;

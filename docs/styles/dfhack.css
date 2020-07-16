@@ -56,3 +56,8 @@ div.sphinxsidebar h3.logo-name a {
 div.body {
     min-width: unset;
 }
+
+div.body li > p {
+    margin-top: 0;
+    margin-bottom: 0;
+}

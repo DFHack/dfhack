@@ -3,7 +3,6 @@
 //Translates a region of tiles specified by the cursor and arguments/prompts into a series of blueprint files suitable for digfort/buildingplan/quickfort
 
 #include <algorithm>
-#include <experimental/filesystem> // This is just <filesystem> in c++17, but we're currently compiling with c++11
 #include <sstream>
 
 #include <Console.h>
@@ -11,6 +10,7 @@
 #include "LuaTools.h"
 
 #include "modules/Buildings.h"
+#include "modules/Filesystem.h"
 #include "modules/Gui.h"
 #include "modules/MapCache.h"
 
@@ -34,8 +34,6 @@ using std::find;
 using std::pair;
 using namespace DFHack;
 using namespace df::enums;
-
-namespace filesystem = std::experimental::filesystem;
 
 DFHACK_PLUGIN("blueprint");
 
@@ -562,13 +560,11 @@ string get_tile_query(df::building* b)
     return " ";
 }
 
-void init_stream(ofstream &out, filesystem::path basename, std::string target)
+void init_stream(ofstream &out, std::string basename, std::string target)
 {
-    filesystem::path out_path(basename);
-    out_path += "-";
-    out_path += target;
-    out_path += ".csv";
-    out.open(out_path, ofstream::trunc);
+    std::ostringstream out_path;
+    out_path << basename << "-" << target << ".csv";
+    out.open(out_path.str(), ofstream::trunc);
     out << "#" << target << endl;
 }
 
@@ -576,16 +572,21 @@ command_result do_transform(DFCoord start, DFCoord end, string name, uint32_t ph
 {
     ofstream dig, build, place, query;
 
-    filesystem::path basename = "blueprints";
-    basename /= name;
-    basename.make_preferred();
+    std::string basename = "blueprints/" + name;
+
+#ifdef _WIN32
+    // normalize to forward slashes
+    std::replace(basename.begin(), basename.end(), '\\', '/');
+#endif
+
+    size_t last_slash = basename.find_last_of("/");
+    std::string parent_path = basename.substr(0, last_slash);
 
     // create output directory if it doesn't already exist
     std::error_code ec;
-    if (!filesystem::create_directories(basename.parent_path(), ec) && ec)
+    if (!Filesystem::mkdir_recursive(parent_path))
     {
-        err << "could not create output directory: " << basename.parent_path()
-            << " (" << ec.message() << ")";
+        err << "could not create output directory: '" << parent_path << "'";
         return CR_FAILURE;
     }
 

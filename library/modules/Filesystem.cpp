@@ -82,6 +82,37 @@ bool Filesystem::mkdir (std::string path)
     return fail == 0;
 }
 
+static bool mkdir_recursive_impl (std::string path)
+{
+    size_t last_slash = path.find_last_of("/");
+    if (last_slash != std::string::npos)
+    {
+        std::string parent_path = path.substr(0, last_slash);
+        bool parent_exists = mkdir_recursive_impl(parent_path);
+        if (!parent_exists)
+        {
+            return false;
+        }
+    }
+    return Filesystem::mkdir(path) || errno == EEXIST;
+}
+
+bool Filesystem::mkdir_recursive (std::string path)
+{
+#ifdef _WIN32
+    // normalize to forward slashes
+    std::replace(path.begin(), path.end(), '\\', '/');
+#endif
+
+    if (path.size() > PATH_MAX)
+    {
+        // path too long
+        return false;
+    }
+
+    return mkdir_recursive_impl(path);
+}
+
 bool Filesystem::rmdir (std::string path)
 {
     int fail;

@@ -149,6 +149,7 @@ namespace DFHack {
         DFHACK_EXPORT bool chdir (std::string path);
         DFHACK_EXPORT std::string getcwd ();
         DFHACK_EXPORT bool mkdir (std::string path);
+        DFHACK_EXPORT bool mkdir_recursive (std::string path);
         DFHACK_EXPORT bool rmdir (std::string path);
         DFHACK_EXPORT bool stat (std::string path, STAT_STRUCT &info);
         DFHACK_EXPORT bool exists (std::string path);

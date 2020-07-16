@@ -236,9 +236,9 @@ Running Sphinx manually
 -----------------------
 
 You can also build the documentation without going through CMake, which may be
-faster. There is a ``docs/build.sh`` script available for Linux and macOS that
+faster. There is a ``docs/build.sh`` script provided for Linux and macOS that
 will run essentially the same command that CMake runs - see the script for
-options.
+additional options.
 
 To build the documentation with default options, run the following command from
 the root DFHack folder::
@@ -248,6 +248,19 @@ the root DFHack folder::
 Sphinx has many options to enable clean builds, parallel builds, logging, and
 more - run ``sphinx-build --help`` for details.
 
+Building a PDF version
+----------------------
+
+ReadTheDocs automatically builds a PDF version of the documentation (available
+under the "Downloads" section when clicking on the release selector). If you
+want to build a PDF version locally, you will need ``pdflatex``, which is part
+of a TeX distribution. The following command will then build a PDF, located in
+``docs/pdf/latex/DFHack.pdf``, with default options::
+
+  sphinx-build -M latexpdf . ./docs/pdf
+
+There is a ``docs/build-pdf.sh`` script provided for Linux and macOS that runs
+this command for convenience - see the script for additional options.
 
 .. _build-changelog:
 

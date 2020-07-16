@@ -94,7 +94,7 @@ static bool mkdir_recursive_impl (std::string path)
             return false;
         }
     }
-    return Filesystem::mkdir(path) || errno == EEXIST;
+    return (Filesystem::mkdir(path) || errno == EEXIST) && Filesystem::isdir(path);
 }
 
 bool Filesystem::mkdir_recursive (std::string path)

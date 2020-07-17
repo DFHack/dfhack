@@ -22,7 +22,7 @@ struct reaction_gloves_hook : df::reaction_product_itemst {
         // Examine creator unit's body plan, see how many hands it has
         // Count left hands and right hands, as well as "neutral" hands for compatibility
         int num_hands = 0, num_left = 0, num_right = 0;
-        for (int i = 0; i < unit->body.body_plan->body_parts.size(); i++)
+        for (size_t i = 0; i < unit->body.body_plan->body_parts.size(); i++)
         {
             df::body_part_raw *part = unit->body.body_plan->body_parts[i];
             if (part->flags.is_set(df::body_part_raw_flags::GRASP))
@@ -57,7 +57,7 @@ struct reaction_gloves_hook : df::reaction_product_itemst {
         num_right *= quantity;
 
         // Iterate across the output gloves, set their handedness, then append them to the actual out_items list for DF
-        for (int i = 0; i < out_items_temp.size(); i++)
+        for (size_t i = 0; i < out_items_temp.size(); i++)
         {
             // Do left gloves first, then right gloves, then "neutral" ones last
             // This is important for the "createitem" plugin, which contains similar workaround logic

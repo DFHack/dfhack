@@ -2093,6 +2093,11 @@ unless otherwise noted.
 
   Creates a new directory. Returns ``false`` if unsuccessful, including if ``path`` already exists.
 
+* ``dfhack.filesystem.mkdir_recursive(path)``
+
+  Creates a new directory, including any intermediate directories that don't exist yet.
+  Returns ``true`` if the folder was created or already existed, or ``false`` if unsuccessful.
+
 * ``dfhack.filesystem.rmdir(path)``
 
   Removes a directory. Only works if the directory is already empty.

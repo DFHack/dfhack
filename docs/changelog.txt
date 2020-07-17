@@ -50,6 +50,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `blueprint`: now automatically creates folder trees when organizing blueprints into subfolders (e.g. ``blueprint 30 30 1 rooms/dining dig`` will create the file ``blueprints/rooms/dining-dig.csv``); previously it would fail if the ``blueprints/rooms/`` directory didn't already exist
 - `confirm`: added a confirmation dialog for convicting dwarves of crimes
 
+## API
+- Added ``Filesystem::mkdir_recursive``
+
 ## Lua
 - Added a ``ref_target`` field to primitive field references, corresponding to the ``ref-target`` XML attribute
 

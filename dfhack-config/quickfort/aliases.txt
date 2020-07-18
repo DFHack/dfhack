@@ -1,0 +1,30 @@
+# quickfort aliases configuration file
+#
+# Defines custom keycode shortcuts for blueprints. Definitions in this file take
+# precedence over any definitions in the baseline aliases configuration file at
+# hack/data/quickfort/aliases-common.txt. See that file for aliases that are
+# already defined.
+#
+# This file can be used to simplify repetitive tasks, such as building minecart
+# tracks or adjusting a food stockpile to accept seeds only. Making new aliases
+# is just a matter of mimicking the keys used to navigate through the menus and
+# select options.
+#
+# Syntax:
+#   aliasname: keystrokes
+#
+# Special keys:
+#   {Right}, {Left}, {Up}, {Down}, >, < move the DF cursor
+#   {/}, {*}, {+}, {-} can be used to navigate some DF menus
+#   {Enter}, +{Enter}, {ExitMenu} - Enter, Shift+Enter, and Escape, respectively
+#   {Wait} pauses playback briefly
+#
+# Special keys can be repeated by adding a number inside the curly braces, for
+# example: {Down 5}
+#
+# Some shorthand:
+#   &   expands to {Enter}
+#   @   expands to +{Enter}
+#   ^   expands to {ExitMenu}
+#   %   expands to {Wait}
+

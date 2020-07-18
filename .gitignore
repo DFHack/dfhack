@@ -24,6 +24,7 @@ build/Makefile
 build/CMakeCache.txt
 build/cmake_install.cmake
 build/CMakeFiles
+build/data
 build/doc
 build/lua
 build/bin

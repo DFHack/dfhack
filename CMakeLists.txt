@@ -429,6 +429,7 @@ if(BUILD_PLUGINS)
     add_subdirectory(plugins)
 endif()
 
+add_subdirectory(data)
 add_subdirectory(scripts)
 
 find_package(Sphinx QUIET)

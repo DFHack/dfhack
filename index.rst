@@ -27,6 +27,7 @@ User Manual
    :maxdepth: 2
 
    /docs/Introduction
+   /docs/Installing
    /docs/Core
    /docs/Plugins
    /docs/Scripts

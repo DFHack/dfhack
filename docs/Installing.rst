@@ -97,12 +97,12 @@ operating system should have built-in utilities capable of extracting files from
 these archives.
 
 The release archives contain several files and folders, including a ``hack``
-folder, a ``dfhack-config`` folder, and a ``dfhack.init-example`` file. All
-files from the DFHack archive need to be copied into the root DF folder, which
-should already include a ``data`` folder and a ``raw`` folder, among other
-things. Some packs and other redistributions of Dwarf Fortress may place DF in
-another folder, so ensure that the ``hack`` folder ends up next to the ``data``
-folder.
+folder, a ``dfhack-config`` folder, and a ``dfhack.init-example`` file. To
+install DFHack, copy all of the files from the DFHack archive into the root DF
+folder, which should already include a ``data`` folder and a ``raw`` folder,
+among other things. Some packs and other redistributions of Dwarf Fortress may
+place DF in another folder, so ensure that the ``hack`` folder ends up next to
+the ``data`` folder.
 
 .. note::
 
@@ -121,6 +121,26 @@ can remove any files that were part of the DFHack archive. DFHack does not
 currently maintain a list of these files, so if you want to completely remove
 them, you should consult the DFHack archive that you installed for a full list.
 Generally, any files left behind should not negatively affect DF.
+
+
+Upgrading DFHack
+================
+
+The recommended approach to upgrade DFHack is to uninstall DFHack first, then
+install the new version. This will ensure that any files that are only part
+of the older DFHack installation do not affect the new DFHack installation
+(although this is unlikely to occur).
+
+It is also possible to overwrite an existing DFHack installation in-place.
+To do this, follow the installation instructions above, but overwrite all files
+that exist in the new DFHack archive (on Windows, this includes ``SDL.dll`` again).
+
+.. note::
+
+    You may wish to make a backup of your ``dfhack-config`` folder first if you
+    have made changes to it. Some archive managers (e.g. Archive Utility on macOS)
+    will overwrite the entire folder, removing any files that you have added.
+
 
 Pre-packaged DFHack installations
 =================================

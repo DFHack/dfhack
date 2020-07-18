@@ -1,6 +1,6 @@
+//Describes a very basic material structure for the map embark
 package isoworldremote;
 
-//Describes a very basic material structure for the map embark
 option optimize_for = LITE_RUNTIME;
 
 // Plugin: isoworldremote

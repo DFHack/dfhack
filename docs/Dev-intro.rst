@@ -77,11 +77,6 @@ some functions (and some entire modules) are currently only available in C++.
 
 Remote access interface
 -----------------------
-DFHack supports remote access by exchanging Google protobuf messages via a TCP
-socket. Both the core and plugins can define remotely accessible methods. The
-``dfhack-run`` command uses this interface to invoke ordinary console commands.
 
-Currently the supported set of requests is limited, because the developers don't
-know what exactly is most useful.  `remotefortressreader` provides a fairly
-comprehensive interface for visualisers such as :forums:`Armok Vision <146473>`.
-
+DFHack provides a remote access interface that external tools can connect to and
+use to interact with DF. See `remote` for more information.

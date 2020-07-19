@@ -15,5 +15,6 @@ These are pages relevant to people developing for DFHack.
    /docs/Documentation
    /docs/Structures-intro
    /docs/Memory-research
+   /docs/Remote
    /docs/Binpatches
 

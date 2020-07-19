@@ -5,16 +5,16 @@
 
 # Directory to search for blueprints. Can be set to an absolute or relative
 # path. If set to a relative path, resolves to a directory under the DF folder.
-blueprints-dir=blueprints
+blueprints_dir=blueprints
 
 # Set to "true" or "false". If true, will designate dig blueprints in marker
 # mode. If false, only cells with dig codes prefixed with ``m`` will be
 # designated in marker mode.
-force-marker-mode=false
+force_marker_mode=false
 
 # Allows you to manually select building materials for each
 # building/construction when running (or creating orders for) build blueprints.
 # Materials in selection dialogs are ordered according to preferences in
 # materials.txt. If false, will only prompt for materials that have :labels.
 # See https://github.com/joelpt/quickfort#manual-material-selection for details.
-force-interactive-build=false
+force_interactive_build=false

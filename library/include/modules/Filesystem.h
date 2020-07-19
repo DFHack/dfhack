@@ -161,6 +161,6 @@ namespace DFHack {
         DFHACK_EXPORT int64_t mtime (std::string path);
         DFHACK_EXPORT int listdir (std::string dir, std::vector<std::string> &files);
         DFHACK_EXPORT int listdir_recursive (std::string dir, std::map<std::string, bool> &files,
-            int depth = 10, std::string prefix = "");
+            int depth = 10, bool include_prefix = true);
     }
 }

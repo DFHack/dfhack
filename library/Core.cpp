@@ -301,7 +301,7 @@ static void listScripts(PluginManager *plug_mgr, std::map<string,string> &pset, 
     path += '/';
     for (size_t i = 0; i < files.size(); i++)
     {
-        if (hasEnding(files[i], ".lua"))
+        if (hasEnding(files[i], ".lua") && !hasEnding(files[i], "-internal.lua"))
         {
             string help = getScriptHelp(path + files[i], "--");
             string key = prefix + files[i].substr(0, files[i].size()-4);

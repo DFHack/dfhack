@@ -59,6 +59,11 @@ remotefortressreader
 An in-development plugin for realtime fortress visualisation.
 See :forums:`Armok Vision <146473>`.
 
+.. _isoworldremote:
+
+isoworldremote
+==============
+A plugin that implements a `remote API <remote>` used by Isoworld.
 
 .. _cursecheck:
 

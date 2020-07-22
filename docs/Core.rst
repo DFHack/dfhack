@@ -82,7 +82,7 @@ dfhack-run
 
 If DF and DFHack are already running, calling ``dfhack-run my command``
 in an external terminal is equivalent to calling ``my command`` in the
-DFHack console.  Direct use of the DFhack console is generally easier,
+DFHack console.  Direct use of the DFHack console is generally easier,
 but ``dfhack-run`` can be useful in a variety of circumstances:
 
 - if the console is unavailable
@@ -100,6 +100,14 @@ Examples::
 
 The first (\*nix) example `checks for vampires <cursecheck>`; the
 second (Windows) example uses `kill-lua` to stop a Lua script.
+
+.. note::
+
+  ``dfhack-run`` attempts to connect to a server on TCP port 5000. If DFHack
+  was unable to start this server, ``dfhack-run`` will not be able to connect.
+  This could happen if you have other software listening on port 5000, or if
+  you have multiple copies of DF running simultaneously. To assign a different
+  port, see `remote-server-config`.
 
 
 Built-in Commands
@@ -442,6 +450,8 @@ Other init files
   directory, will be run when any world or that save is loaded.
 
 
+.. _env-vars:
+
 Environment variables
 =====================
 
@@ -453,6 +463,7 @@ on UNIX-like systems::
 - ``DFHACK_PORT``: the port to use for the RPC server (used by ``dfhack-run``
   and `remotefortressreader` among others) instead of the default ``5000``. As
   with the default, if this port cannot be used, the server is not started.
+  See `remote` for more details.
 
 - ``DFHACK_DISABLE_CONSOLE``: if set, the DFHack console is not set up. This is
   the default behavior if ``PRINT_MODE:TEXT`` is set in ``data/init/init.txt``.

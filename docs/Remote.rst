@@ -82,6 +82,10 @@ Protocol description
 This is a low-level description of the RPC protocol, which may be useful when
 developing custom clients.
 
+A WireShark dissector for this protocol is available in the
+`df_misc repo <https://github.com/DFHack/df_misc/blob/master/wireshark_dfhack_rpc.lua>`_.
+
+
 Built-in messages
 -----------------
 These messages have hardcoded IDs; all others must be obtained through ``BindMethod``.
@@ -216,7 +220,7 @@ failure
 quit
 ~~~~
 
-**Note:** the server closes the connection after sending this message.
+**Note:** the server closes the connection after receiving this message.
 
 .. list-table::
     :align: left

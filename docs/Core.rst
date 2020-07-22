@@ -442,6 +442,8 @@ Other init files
   directory, will be run when any world or that save is loaded.
 
 
+.. _env-vars:
+
 Environment variables
 =====================
 
@@ -453,6 +455,7 @@ on UNIX-like systems::
 - ``DFHACK_PORT``: the port to use for the RPC server (used by ``dfhack-run``
   and `remotefortressreader` among others) instead of the default ``5000``. As
   with the default, if this port cannot be used, the server is not started.
+  See `remote` for more details.
 
 - ``DFHACK_DISABLE_CONSOLE``: if set, the DFHack console is not set up. This is
   the default behavior if ``PRINT_MODE:TEXT`` is set in ``data/init/init.txt``.

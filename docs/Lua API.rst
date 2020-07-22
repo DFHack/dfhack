@@ -42,11 +42,11 @@ to lua code as a tree of objects and functions under the ``df`` global, which
 also broadly maps to the ``df`` namespace in the headers generated for C++.
 
 .. warning::
-    The wrapper provides almost raw access to the memory
-    of the game, so mistakes in manipulating objects are as likely to
-    crash the game as equivalent plain C++ code would be.
 
-    eg. NULL pointer access is safely detected, but dangling pointers aren't.
+    The wrapper provides almost raw access to the memory of the game, so
+    mistakes in manipulating objects are as likely to crash the game as
+    equivalent plain C++ code would be - e.g. null pointer access is safely
+    detected, but dangling pointers aren't.
 
 Objects managed by the wrapper can be broadly classified into the following groups:
 

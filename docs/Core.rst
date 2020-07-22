@@ -15,12 +15,12 @@ DFHack commands can be implemented in three ways, all of which
 are used in the same way:
 
 :builtin:   commands are implemented by the core of DFHack. They manage
-            other DFhack tools, interpret commands, and control basic
+            other DFHack tools, interpret commands, and control basic
             aspects of DF (force pause or quit).
 
 :plugins:   are stored in ``hack/plugins/`` and must be compiled with the
             same version of DFHack.  They are less flexible than scripts,
-            but used for complex or ongoing tasks becasue they run faster.
+            but used for complex or ongoing tasks because they run faster.
 
 :scripts:   are Ruby or Lua scripts stored in ``hack/scripts/``.
             Because they don't need to be compiled, scripts are
@@ -88,7 +88,7 @@ but ``dfhack-run`` can be useful in a variety of circumstances:
 - if the console is unavailable
 
   - with the init setting ``PRINT_MODE:TEXT``
-  - while running an interactive command (eg. `liquids` or `tiletypes`)
+  - while running an interactive command (e.g. `liquids` or `tiletypes`)
 
 - from external programs or scripts
 - if DF or DFHack are not responding
@@ -113,7 +113,7 @@ second (Windows) example uses `kill-lua` to stop a Lua script.
 Built-in Commands
 =================
 The following commands are provided by the 'core' components
-of DFhack, rather than plugins or scripts.
+of DFHack, rather than plugins or scripts.
 
 .. contents::
    :local:
@@ -419,7 +419,7 @@ onLoad*.init
 When a world is loaded, DFHack looks for files of the form ``onLoad*.init``,
 where ``*`` can be any string, including the empty string.
 
-All matching init files will be executed in alphebetical order.
+All matching init files will be executed in alphabetical order.
 A world being loaded can mean a fortress, an adventurer, or legends mode.
 
 These files are best used for non-persistent commands, such as setting
@@ -444,7 +444,7 @@ Other init files
 
 * ``onMapLoad*.init`` and ``onMapUnload*.init`` are run when a map,
   distinct from a world, is loaded.  This is good for map-affecting
-  commands (eg `clean`), or avoiding issues in Legends mode.
+  commands (e.g. `clean`), or avoiding issues in Legends mode.
 
 * Any lua script named ``raw/init.d/*.lua``, in the save or main DF
   directory, will be run when any world or that save is loaded.

@@ -16,6 +16,8 @@ available are not comprehensive, but can be extended with plugins.
     :local:
 
 
+.. _remote-server-config:
+
 Server configuration
 ====================
 

@@ -82,7 +82,7 @@ dfhack-run
 
 If DF and DFHack are already running, calling ``dfhack-run my command``
 in an external terminal is equivalent to calling ``my command`` in the
-DFHack console.  Direct use of the DFhack console is generally easier,
+DFHack console.  Direct use of the DFHack console is generally easier,
 but ``dfhack-run`` can be useful in a variety of circumstances:
 
 - if the console is unavailable
@@ -100,6 +100,14 @@ Examples::
 
 The first (\*nix) example `checks for vampires <cursecheck>`; the
 second (Windows) example uses `kill-lua` to stop a Lua script.
+
+.. note::
+
+  ``dfhack-run`` attempts to connect to a server on TCP port 5000. If DFHack
+  was unable to start this server, ``dfhack-run`` will not be able to connect.
+  This could happen if you have other software listening on port 5000, or if
+  you have multiple copies of DF running simultaneously. To assign a different
+  port, see `remote-server-config`.
 
 
 Built-in Commands

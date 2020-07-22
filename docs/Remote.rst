@@ -226,7 +226,6 @@ quit
     :align: left
     :header-rows: 1
     :widths: 25 75
-    :width: 100%
 
     * - Type
       - Description

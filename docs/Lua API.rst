@@ -2116,8 +2116,10 @@ unless otherwise noted.
 * ``dfhack.filesystem.listdir(path)``
 
   Lists files/directories in a directory.  Returns ``{}`` if ``path`` does not exist.
+  Set include_prefix to false if you don't want the ``path`` string prepended to the
+  returned filenames.
 
-* ``dfhack.filesystem.listdir_recursive(path [, depth = 10])``
+* ``dfhack.filesystem.listdir_recursive(path [, depth = 10[, include_prefix = true]])``
 
   Lists all files/directories in a directory and its subdirectories. All directories
   are listed before their contents. Returns a table with subtables of the format::

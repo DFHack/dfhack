@@ -59,6 +59,11 @@ remotefortressreader
 An in-development plugin for realtime fortress visualisation.
 See :forums:`Armok Vision <146473>`.
 
+.. _isoworldremote:
+
+isoworldremote
+==============
+A plugin that implements a `remote API <remote>` used by Isoworld.
 
 .. _cursecheck:
 
@@ -186,7 +191,7 @@ Usage and related commands:
 :revflood:      Hide everything, then reveal tiles with a path to the cursor
                 (useful to make walled-off rooms vanish)
 :revforget:     Discard info about what was visible before revealing the map.
-                Only useful where (eg) you abandoned with the fort revealed
+                Only useful where (e.g.) you abandoned with the fort revealed
                 and no longer want the data.
 
 .. _showmood:
@@ -732,7 +737,7 @@ by moving the view manually.
 
 mousequery
 ==========
-Adds mouse controls to the DF interface, eg click-and-drag designations.
+Adds mouse controls to the DF interface, e.g. click-and-drag designations.
 
 Options:
 
@@ -835,10 +840,10 @@ See `gui/stockpiles` for an in-game interface.
 
 :savestock:     Saves the currently highlighted stockpile's settings to a file in your Dwarf
                 Fortress folder. This file can be used to copy settings between game saves or
-                players.  eg:  ``savestock food_settings.dfstock``
+                players.  e.g.:  ``savestock food_settings.dfstock``
 
 :loadstock:     Loads a saved stockpile settings file and applies it to the currently selected
-                stockpile.  eg:  ``loadstock food_settings.dfstock``
+                stockpile.  e.g.:  ``loadstock food_settings.dfstock``
 
 To use savestock and loadstock, use the :kbd:`q` command to highlight a stockpile.
 Then run savestock giving it a descriptive filename. Then, in a different (or

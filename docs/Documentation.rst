@@ -53,7 +53,7 @@ directive - anything between the tokens is copied into the appropriate scripts
 documentation page.  For Ruby, we follow the built-in docstring convention
 (``=begin`` and ``=end``).  For Lua, the tokens are ``[====[`` and ``]====]``
 - ordinary multi-line strings.  It is highly encouraged to reuse this string
-as the in-console documentation by (eg.) printing it when a ``-help`` argument
+as the in-console documentation by (e.g.) printing it when a ``-help`` argument
 is given.
 
 The docs **must** have a heading which exactly matches the command, underlined
@@ -101,7 +101,7 @@ describe the effect::
 
 If it would be helpful to mention another DFHack command, don't just type the
 name - add a hyperlink!  Specify the link target in backticks, and it will be
-replaced with the corresponding title and linked:  eg ```autolabor```
+replaced with the corresponding title and linked:  e.g. ```autolabor```
 => `autolabor`.  Link targets should be equivalent to the command
 described (without file extension), and placed above the heading of that
 section like this::
@@ -159,7 +159,7 @@ Once pip is available, you can then install Sphinx with::
 
   pip3 install sphinx
 
-If you run this as an unpriviliged user, it may install a local copy of Sphinx
+If you run this as an unprivileged user, it may install a local copy of Sphinx
 for your user only. The ``sphinx-build`` executable will typically end up in
 ``~/.local/bin/`` in this case. Alternatively, you can install Sphinx
 system-wide by running pip with ``sudo``. In any case, you will need the folder

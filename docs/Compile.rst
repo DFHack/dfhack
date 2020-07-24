@@ -112,7 +112,7 @@ in the platform-specific sections below first, then come back here.
 Generator
 ---------
 
-The ``Ninja`` CMake build generator is the prefered build method on Linux and
+The ``Ninja`` CMake build generator is the preferred build method on Linux and
 macOS, instead of ``Unix Makefiles``, which is the default. You can select Ninja
 by passing ``-G Ninja`` to CMake. Incremental builds using Unix Makefiles can be
 much slower than Ninja builds. Note that you will probably need to install

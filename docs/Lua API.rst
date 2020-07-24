@@ -42,11 +42,11 @@ to lua code as a tree of objects and functions under the ``df`` global, which
 also broadly maps to the ``df`` namespace in the headers generated for C++.
 
 .. warning::
-    The wrapper provides almost raw access to the memory
-    of the game, so mistakes in manipulating objects are as likely to
-    crash the game as equivalent plain C++ code would be.
 
-    eg. NULL pointer access is safely detected, but dangling pointers aren't.
+    The wrapper provides almost raw access to the memory of the game, so
+    mistakes in manipulating objects are as likely to crash the game as
+    equivalent plain C++ code would be - e.g. null pointer access is safely
+    detected, but dangling pointers aren't.
 
 Objects managed by the wrapper can be broadly classified into the following groups:
 
@@ -2116,8 +2116,10 @@ unless otherwise noted.
 * ``dfhack.filesystem.listdir(path)``
 
   Lists files/directories in a directory.  Returns ``{}`` if ``path`` does not exist.
+  Set include_prefix to false if you don't want the ``path`` string prepended to the
+  returned filenames.
 
-* ``dfhack.filesystem.listdir_recursive(path [, depth = 10])``
+* ``dfhack.filesystem.listdir_recursive(path [, depth = 10[, include_prefix = true]])``
 
   Lists all files/directories in a directory and its subdirectories. All directories
   are listed before their contents. Returns a table with subtables of the format::

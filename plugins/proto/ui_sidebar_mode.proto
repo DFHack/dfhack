@@ -1,6 +1,6 @@
+//Attempts to provide a complete framework for reading everything from a fortress needed for vizualization
 package proto.enums.ui_sidebar_mode;
 
-//Attempts to provide a complete framework for reading everything from a fortress needed for vizualization
 option optimize_for = LITE_RUNTIME;
 
 enum ui_sidebar_mode

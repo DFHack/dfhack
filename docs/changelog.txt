@@ -51,7 +51,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `confirm`: added a confirmation dialog for convicting dwarves of crimes
 
 ## API
-- Added ``Filesystem::mkdir_recursive`` (returns true if directories to create already exist)
+- Added ``Filesystem::mkdir_recursive``
 - Extended ``Filesystem::listdir_recursive`` to optionally make returned filenames relative to the start directory
 
 ## Lua

@@ -56,7 +56,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Lua
 - Added a ``ref_target`` field to primitive field references, corresponding to the ``ref-target`` XML attribute
-- Support for splitting scripts into multiple files without polluting the output of '#DFHack ls'. Scripts that end in '-internal.lua' will not be listed, but but they can still be 'require'd from other scripts.
+- Support for splitting scripts into multiple files without polluting the output of ``#DFHack ls``. Scripts can now add internal files to an ``scripts/internal`` folder.
 
 ## Ruby
 - Updated ``item_find`` and ``building_find`` to use centralized logic that works on more screens

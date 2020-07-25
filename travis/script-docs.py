@@ -81,7 +81,9 @@ def check_file(fname):
 def main():
     """Check that all DFHack scripts include documentation"""
     err = 0
-    for root, _, files in os.walk(SCRIPT_PATH):
+    exclude = set(['internal'])
+    for root, dirs, files in os.walk(SCRIPT_PATH, topdown=True):
+        dirs[:] = [d for d in dirs if d not in exclude]
         for f in files:
             if f[-3:] in {'.rb', 'lua'}:
                 err += check_file(join(root, f))

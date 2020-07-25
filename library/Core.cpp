@@ -317,7 +317,7 @@ static void listScripts(PluginManager *plug_mgr, std::map<string,string> &pset, 
                 pset[key] = help;
             }
         }
-        else if (all && !files[i].empty() && files[i][0] != '.')
+        else if (all && !files[i].empty() && files[i][0] != '.' && files[i] != "internal")
         {
             listScripts(plug_mgr, pset, path+files[i]+"/", all, prefix+files[i]+"/");
         }

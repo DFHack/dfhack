@@ -52,6 +52,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## API
 - Added ``Filesystem::mkdir_recursive``
+- Extended ``Filesystem::listdir_recursive`` to optionally make returned filenames relative to the start directory
 
 ## Lua
 - Added a ``ref_target`` field to primitive field references, corresponding to the ``ref-target`` XML attribute

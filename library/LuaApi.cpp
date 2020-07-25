@@ -2406,8 +2406,11 @@ static int filesystem_listdir_recursive(lua_State *L)
     int depth = 10;
     if (lua_type(L, 2) == LUA_TNUMBER)
         depth = lua_tounsigned(L, 2);
+    bool include_prefix = true;
+    if (lua_type(L, 3) == LUA_TBOOLEAN)
+        include_prefix = lua_toboolean(L, 3);
     std::map<std::string, bool> files;
-    int err = DFHack::Filesystem::listdir_recursive(dir, files, depth);
+    int err = DFHack::Filesystem::listdir_recursive(dir, files, depth, include_prefix);
     if (err)
     {
         lua_pushnil(L);

@@ -1,0 +1,20 @@
+# quickfort main configuration file
+#
+# Set startup defaults for the quickfort script in this file. Settings can be
+# dynamically overridden in the active session with the `quickfort set` command.
+
+# Directory to search for blueprints. Can be set to an absolute or relative
+# path. If set to a relative path, resolves to a directory under the DF folder.
+blueprints_dir=blueprints
+
+# Set to "true" or "false". If true, will designate dig blueprints in marker
+# mode. If false, only cells with dig codes prefixed with ``m`` will be
+# designated in marker mode.
+force_marker_mode=false
+
+# Allows you to manually select building materials for each
+# building/construction when running (or creating orders for) build blueprints.
+# Materials in selection dialogs are ordered according to preferences in
+# materials.txt. If false, will only prompt for materials that have :labels.
+# See https://github.com/joelpt/quickfort#manual-material-selection for details.
+force_interactive_build=false

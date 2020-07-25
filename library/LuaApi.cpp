@@ -2404,10 +2404,10 @@ static int filesystem_listdir_recursive(lua_State *L)
     luaL_checktype(L,1,LUA_TSTRING);
     std::string dir=lua_tostring(L,1);
     int depth = 10;
-    if (lua_gettop(L) >= 2)
+    if (lua_gettop(L) >= 2 && !lua_isnil(L, 2))
         depth = luaL_checkint(L, 2);
     bool include_prefix = true;
-    if (lua_gettop(L) >= 3)
+    if (lua_gettop(L) >= 3 && !lua_isnil(L, 3))
         include_prefix = lua_toboolean(L, 3);
     std::map<std::string, bool> files;
     int err = DFHack::Filesystem::listdir_recursive(dir, files, depth, include_prefix);

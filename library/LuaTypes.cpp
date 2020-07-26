@@ -707,15 +707,18 @@ static type_identity *find_primitive_field(lua_State *state, int field, const ch
  */
 static int meta_primitive_index(lua_State *state)
 {
-    const char *attr = lua_tostring(state, -1);
-    if (strcmp(attr, "ref_target") == 0) {
-        const struct_field_info *field_info = get_object_ref_header(state, 1)->field_info;
-        if (field_info && field_info->extra && field_info->extra->ref_target) {
-            LookupInTable(state, field_info->extra->ref_target, &DFHACK_TYPEID_TABLE_TOKEN);
-        } else {
-            lua_pushnil(state);
+    if (lua_type(state, -1) == LUA_TSTRING)
+    {
+        const char *attr = lua_tostring(state, -1);
+        if (strcmp(attr, "ref_target") == 0) {
+            const struct_field_info *field_info = get_object_ref_header(state, 1)->field_info;
+            if (field_info && field_info->extra && field_info->extra->ref_target) {
+                LookupInTable(state, field_info->extra->ref_target, &DFHACK_TYPEID_TABLE_TOKEN);
+            } else {
+                lua_pushnil(state);
+            }
+            return 1;
         }
-        return 1;
     }
 
     uint8_t *ptr = get_object_addr(state, 1, 2, "read");

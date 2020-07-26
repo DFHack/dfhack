@@ -1451,7 +1451,7 @@ void other_vectors_identity::build_metatable(lua_State *state)
 
     auto keys = &index_enum->getKeys()[-index_enum->getFirstItem()];
 
-    for (int64_t i = 0; i < index_enum->getLastItem(); i++)
+    for (int64_t i = 0; i <= index_enum->getLastItem(); i++)
     {
         lua_getfield(state, base+2, keys[i]);
         lua_rawseti(state, base+2, int(i));

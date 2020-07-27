@@ -24,7 +24,7 @@ jobs:
             zlib1g-dev
         pip install sphinx
     - name: Clone DFHack
-      uses: actions/checkout@v2
+      uses: actions/checkout@v1
       with:
         fetch-depth: 0  # unlimited - we need past tags
         submodules: true
@@ -99,7 +99,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install lua5.3
     - name: Clone DFHack
-      uses: actions/checkout@v2
+      uses: actions/checkout@v1
       with:
         submodules: true
         # don't need tags here

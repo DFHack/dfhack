@@ -13,6 +13,7 @@ These are pages relevant to people developing for DFHack.
    /docs/NEWS-dev
    /docs/Lua API
    /docs/Remote
+   /docs/api/index
    /docs/Documentation
    /docs/Structures-intro
    /docs/Memory-research

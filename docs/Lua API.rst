@@ -1414,6 +1414,8 @@ Items module
 
   Checks whether the item is assigned to a squad.
 
+.. _lua-maps:
+
 Maps module
 -----------
 

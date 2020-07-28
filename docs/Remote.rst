@@ -12,7 +12,7 @@ available are not comprehensive, but can be extended with plugins.
 
 .. _Google protobuf: https://developers.google.com/protocol-buffers
 
-.. contents::
+.. contents:: Contents
     :local:
 
 

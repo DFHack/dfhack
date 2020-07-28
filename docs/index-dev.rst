@@ -12,9 +12,9 @@ These are pages relevant to people developing for DFHack.
    /docs/Compile
    /docs/NEWS-dev
    /docs/Lua API
+   /docs/Remote
    /docs/Documentation
    /docs/Structures-intro
    /docs/Memory-research
-   /docs/Remote
    /docs/Binpatches
 

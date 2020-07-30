@@ -1641,10 +1641,10 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
     bool n_region_type_active;
     bool w_region_type_active;
     bool home_region_type_active;
-    uint8_t nw_region_type_level;
-    uint8_t n_region_type_level;
-    uint8_t w_region_type_level;
-    uint8_t home_region_type_level;
+    int8_t nw_region_type_level;
+    int8_t n_region_type_level;
+    int8_t w_region_type_level;
+    int8_t home_region_type_level;
 
     if (corner_location == 4) {  //  We're the reference. No change.
     }
@@ -1666,6 +1666,39 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
             return 4;
         }
         else {  //  East side corners of the east edge of the world
+            nw_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i - 1, effective_k - 1);
+            w_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i - 1, effective_k);
+
+            if (nw_region_type == df::world_region_type::Lake ||
+                nw_region_type == df::world_region_type::Ocean) {
+                nw_region_type_level = 0;
+            }
+            else if (nw_region_type == df::world_region_type::Mountains) {
+                nw_region_type_level = 1;
+            }
+            else {
+                nw_region_type_level = 2;
+            }
+
+            if (w_region_type == df::world_region_type::Lake ||
+                w_region_type == df::world_region_type::Ocean) {
+                w_region_type_level = 0;
+            }
+            else if (w_region_type == df::world_region_type::Mountains) {
+                w_region_type_level = 1;
+            }
+            else {
+                w_region_type_level = 2;
+            }
+
+            if (nw_region_type_level < w_region_type_level) {
+                return 4;
+            }
+            else if (nw_region_type_level > w_region_type_level) {
+                return 1;
+            }
+
+            //  Neither tile will automatically yield to the other
             if (corner_location == 5) {
                 return 1;
             }
@@ -1675,11 +1708,44 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
         }
     }
     else if (effective_y == world_data->world_height) {
+        nw_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i - 1, effective_k - 1);
+        n_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i, effective_k - 1);
+
+        if (nw_region_type == df::world_region_type::Lake ||
+            nw_region_type == df::world_region_type::Ocean) {
+            nw_region_type_level = 0;
+        }
+        else if (nw_region_type == df::world_region_type::Mountains) {
+            nw_region_type_level = 1;
+        }
+        else {
+            nw_region_type_level = 2;
+        }
+
+        if (n_region_type == df::world_region_type::Lake ||
+            n_region_type == df::world_region_type::Ocean) {
+            n_region_type_level = 0;
+        }
+        else if (n_region_type == df::world_region_type::Mountains) {
+            n_region_type_level = 1;
+        }
+        else {
+            n_region_type_level = 2;
+        }
+
+        if (nw_region_type_level < n_region_type_level) {
+            return 4;
+        }
+        else if (nw_region_type_level > n_region_type_level) {
+            return 5;
+        }
+
+        //  Neither tile will automatically yield to the other
         if (corner_location == 7) {
             return 4;
         }
         else {  //  Can only be corner_location == 8
-            return 3;
+            return 5;
         }
     }
 

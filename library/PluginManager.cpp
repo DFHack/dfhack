@@ -313,8 +313,12 @@ bool Plugin::load(color_ostream &con)
     if (plug_git_desc_ptr)
     {
         if (strcmp(dfhack_git_desc, plug_git_desc) != 0)
-            con.printerr("Warning: Plugin %s compiled for DFHack %s, running DFHack %s\n",
+        {
+            std::string msg = stl_sprintf("Warning: Plugin %s compiled for DFHack %s, running DFHack %s\n",
                 *plug_name, plug_git_desc, dfhack_git_desc);
+            con << msg;
+            cerr << msg;
+        }
     }
     else
         con.printerr("Warning: Plugin %s missing git information\n", *plug_name);

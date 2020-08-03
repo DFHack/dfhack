@@ -55,6 +55,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Extended ``Filesystem::listdir_recursive`` to optionally make returned filenames relative to the start directory
 
 ## Internals
+- Linux/macOS: Added console keybindings for deleting words (Alt+Backspace and Alt+d in most terminals)
 - Added support for splitting scripts into multiple files in the ``scripts/internal`` folder without polluting the output of `ls`
 
 ## Lua

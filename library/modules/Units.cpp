@@ -1437,6 +1437,73 @@ int8_t Units::getCasteProfessionColor(int race, int casteid, df::profession pid)
     return 3;
 }
 
+df::goal_type Units::getGoalType(df::unit *unit, int goalIndex)
+{
+    CHECK_NULL_POINTER(unit);
+
+    df::goal_type goal = df::goal_type::STAY_ALIVE;
+    if (unit->status.current_soul
+        && unit->status.current_soul->personality.dreams.size() > goalIndex)
+    {
+        goal = unit->status.current_soul->personality.dreams[goalIndex]->type;
+    }
+    return goal;
+}
+
+std::string Units::getGoalName(df::unit *unit, int goalIndex)
+{
+    CHECK_NULL_POINTER(unit);
+
+    df::goal_type goal = getGoalType(unit, goalIndex);
+    bool achieved_goal = isGoalAchieved(unit, goalIndex);
+
+    switch (goal)
+    {
+    default:
+    case df::goal_type::STAY_ALIVE:
+        return achieved_goal ? "Stayed Alive" : "Stay Alive";
+    case df::goal_type::MAINTAIN_ENTITY_STATUS:
+        return achieved_goal ? "Maintained Status" : "Maintain Status";
+    case df::goal_type::START_A_FAMILY:
+        return isFemale(unit) ?
+            (achieved_goal ? "Is a Mother" : "Be a Mother") :
+            (achieved_goal ? "Is a Father" : "Be a Father");
+    case df::goal_type::RULE_THE_WORLD:
+        return achieved_goal ? "Ruled the World" : "Rule the World";
+    case df::goal_type::CREATE_A_GREAT_WORK_OF_ART:
+        return achieved_goal ? "Made Great Artwork" : "Create Great Artwork";
+    case df::goal_type::CRAFT_A_MASTERWORK:
+        return achieved_goal ? "Crafted a Masterwork" : "Craft a Masterwork";
+    case df::goal_type::BRING_PEACE_TO_THE_WORLD:
+        return achieved_goal ? "Brought World Peace" : "Bring Peace to World";
+    case df::goal_type::BECOME_A_LEGENDARY_WARRIOR:
+        return achieved_goal ? "Is Legendary Warrior" : "Be Legendary Warrior";
+    case df::goal_type::MASTER_A_SKILL:
+        return achieved_goal ? "Mastered a Skill" : "Master a Skill";
+    case df::goal_type::FALL_IN_LOVE:
+        return achieved_goal ? "Fell in Love" : "Fall in Love";
+    case df::goal_type::SEE_THE_GREAT_NATURAL_SITES:
+        return achieved_goal ? "Saw Natural Wonders" : "See Natural Wonders";
+    case df::goal_type::IMMORTALITY:
+        return achieved_goal ? "Immortal" : "Immortality";
+    case df::goal_type::MAKE_A_GREAT_DISCOVERY:
+        return achieved_goal ? "Made Great Discovery" : "Make Great Discovery";
+    case df::goal_type::ATTAINING_RANK_IN_SOCIETY:
+        return achieved_goal ? "Attained Social Rank" : "Attain Social Rank";
+    case df::goal_type::BATHING_THE_WORLD_IN_CHAOS:
+        return achieved_goal ? "World is in Chaos" : "Bathe World in Chaos";
+    }
+}
+
+bool Units::isGoalAchieved(df::unit *unit, int goalIndex)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return unit->status.current_soul
+        && unit->status.current_soul->personality.dreams.size() > goalIndex
+        && unit->status.current_soul->personality.dreams[goalIndex]->flags.whole != 0;
+}
+
 std::string Units::getSquadName(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);

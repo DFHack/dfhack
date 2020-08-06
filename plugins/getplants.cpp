@@ -264,7 +264,7 @@ bool picked(const df::plant *plant, int32_t growth_subtype) {
 
 bool designate(const df::plant *plant, bool farming) {
     df::plant_raw *plant_raw = world->raws.plants.all[plant->material];
-    const DFHack::MaterialInfo basic_mat = DFHack::MaterialInfo(plant_raw->material_defs.type_basic_mat, plant_raw->material_defs.idx_basic_mat);
+    const DFHack::MaterialInfo basic_mat = DFHack::MaterialInfo(plant_raw->material_defs.type[plant_material_def::basic_mat], plant_raw->material_defs.idx[plant_material_def::basic_mat]);
 
     if (basic_mat.material->flags.is_set(material_flags::EDIBLE_RAW) ||
         basic_mat.material->flags.is_set(material_flags::EDIBLE_COOKED))
@@ -309,8 +309,8 @@ bool designate(const df::plant *plant, bool farming) {
                 {
                     for (size_t k = 0; growth_mat.material->reaction_product.material.mat_type.size(); k++)
                     {
-                        if (growth_mat.material->reaction_product.material.mat_type[k] == plant_raw->material_defs.type_seed &&
-                            growth_mat.material->reaction_product.material.mat_index[k] == plant_raw->material_defs.idx_seed)
+                        if (growth_mat.material->reaction_product.material.mat_type[k] == plant_raw->material_defs.type[plant_material_def::seed] &&
+                            growth_mat.material->reaction_product.material.mat_index[k] == plant_raw->material_defs.idx[plant_material_def::seed])
                         {
                             seedSource = true;
                             break;

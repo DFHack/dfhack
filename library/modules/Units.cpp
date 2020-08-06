@@ -204,14 +204,15 @@ void Units::setNickname(df::unit *unit, std::string nick)
             df::historical_figure *id_hfig = NULL;
 
             switch (identity->type) {
+            case df::identity_type::None:
             case df::identity_type::HidingCurse:
-            case df::identity_type::Identity:
             case df::identity_type::FalseIdentity:
+            case df::identity_type::InfiltrationIdentity:
+            case df::identity_type::Identity:
                 break;  //  We want the nickname to end up in the identity
 
-            case df::identity_type::Unk_1:  // Guess, but that's how it worked in the past
+            case df::identity_type::Impersonating:
             case df::identity_type::TrueName:
-            case df::identity_type::Unk_4:  // Pure guess, as this is a new case, still unseen
                 id_hfig = df::historical_figure::find(identity->histfig_id);
                 break;
             }

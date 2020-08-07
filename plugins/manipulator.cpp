@@ -37,7 +37,6 @@
 
 #include "uicommon.h"
 #include "listcolumn.h"
-#include "manipulator.h"
 
 using std::stringstream;
 using std::set;

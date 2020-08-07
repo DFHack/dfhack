@@ -61,6 +61,7 @@ using namespace std;
 #include "df/identity_type.h"
 #include "df/game_mode.h"
 #include "df/histfig_entity_link_positionst.h"
+#include "df/histfig_relationship_type.h"
 #include "df/historical_entity.h"
 #include "df/historical_figure.h"
 #include "df/historical_figure_info.h"
@@ -1457,42 +1458,16 @@ std::string Units::getGoalName(df::unit *unit, int goalIndex)
     df::goal_type goal = getGoalType(unit, goalIndex);
     bool achieved_goal = isGoalAchieved(unit, goalIndex);
 
-    switch (goal)
-    {
-    default:
-    case df::goal_type::STAY_ALIVE:
-        return achieved_goal ? "Stayed Alive" : "Stay Alive";
-    case df::goal_type::MAINTAIN_ENTITY_STATUS:
-        return achieved_goal ? "Maintained Status" : "Maintain Status";
-    case df::goal_type::START_A_FAMILY:
-        return isFemale(unit) ?
-            (achieved_goal ? "Is a Mother" : "Be a Mother") :
-            (achieved_goal ? "Is a Father" : "Be a Father");
-    case df::goal_type::RULE_THE_WORLD:
-        return achieved_goal ? "Ruled the World" : "Rule the World";
-    case df::goal_type::CREATE_A_GREAT_WORK_OF_ART:
-        return achieved_goal ? "Made Great Artwork" : "Create Great Artwork";
-    case df::goal_type::CRAFT_A_MASTERWORK:
-        return achieved_goal ? "Crafted a Masterwork" : "Craft a Masterwork";
-    case df::goal_type::BRING_PEACE_TO_THE_WORLD:
-        return achieved_goal ? "Brought World Peace" : "Bring Peace to World";
-    case df::goal_type::BECOME_A_LEGENDARY_WARRIOR:
-        return achieved_goal ? "Is Legendary Warrior" : "Be Legendary Warrior";
-    case df::goal_type::MASTER_A_SKILL:
-        return achieved_goal ? "Mastered a Skill" : "Master a Skill";
-    case df::goal_type::FALL_IN_LOVE:
-        return achieved_goal ? "Fell in Love" : "Fall in Love";
-    case df::goal_type::SEE_THE_GREAT_NATURAL_SITES:
-        return achieved_goal ? "Saw Natural Wonders" : "See Natural Wonders";
-    case df::goal_type::IMMORTALITY:
-        return achieved_goal ? "Immortal" : "Immortality";
-    case df::goal_type::MAKE_A_GREAT_DISCOVERY:
-        return achieved_goal ? "Made Great Discovery" : "Make Great Discovery";
-    case df::goal_type::ATTAINING_RANK_IN_SOCIETY:
-        return achieved_goal ? "Attained Social Rank" : "Attain Social Rank";
-    case df::goal_type::BATHING_THE_WORLD_IN_CHAOS:
-        return achieved_goal ? "World is in Chaos" : "Bathe World in Chaos";
+    std::string goal_name = achieved_goal ? ENUM_ATTR(goal_type, achieved_short_name, goal) : ENUM_ATTR(goal_type, short_name, goal);
+    if (goal == df::goal_type::START_A_FAMILY) {
+        std::string parent = ENUM_KEY_STR(histfig_relationship_type, histfig_relationship_type::Parent);
+        size_t start_pos = goal_name.find(parent);
+        if (start_pos != std::string::npos) {
+            df::histfig_relationship_type parent_type = isFemale(unit) ? histfig_relationship_type::Mother : histfig_relationship_type::Father;
+            goal_name.replace(start_pos, parent.length(), ENUM_KEY_STR(histfig_relationship_type, parent_type));
+        }
     }
+    return goal_name;
 }
 
 bool Units::isGoalAchieved(df::unit *unit, int goalIndex)

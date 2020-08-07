@@ -34,12 +34,14 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Tweaks
+- `tweak` do-job-now: adds a job priority toggle to the jobs list
 - `tweak` reaction-gloves: adds an option to make reactions produce gloves in sets with correct handedness
 
 ## Fixes
 - Fixed a segfault when attempting to start a headless session with a graphical PRINT_MODE setting
 - Fixed an issue with the macOS launcher failing to un-quarantine some files
 - Linux: fixed ``dfhack.getDFPath()`` (Lua) and ``Process::getPath()`` (C++) to always return the DF root path, even if the working directory has changed
+- `getplants`: fixed issues causing plants to be collected even if they have no growths (or unripe growths)
 - `labormanager`: fixed handling of new jobs in 0.47
 - `embark-assistant`: fixed a couple of incursion handling bugs.
 - Fixed ``Units::isEggLayer``, ``Units::isGrazer``, ``Units::isMilkable``, ``Units::isTrainableHunting``, ``Units::isTrainableWar``, and ``Units::isTamable`` ignoring the unit's caste
@@ -55,6 +57,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Extended ``Filesystem::listdir_recursive`` to optionally make returned filenames relative to the start directory
 
 ## Internals
+- Linux/macOS: Added console keybindings for deleting words (Alt+Backspace and Alt+d in most terminals)
 - Added support for splitting scripts into multiple files in the ``scripts/internal`` folder without polluting the output of `ls`
 
 ## Lua

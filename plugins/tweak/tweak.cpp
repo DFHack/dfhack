@@ -183,6 +183,7 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         /*"  tweak fix-dimensions [disable]\n"
         "    Fixes subtracting small amount of thread/cloth/liquid from a stack\n"
         "    by splitting the stack and subtracting from the remaining single item.\n"*/
+        // sort these alphabetically
         "  tweak adamantine-cloth-wear [disable]\n"
         "    Stops adamantine clothing from wearing out while being worn (bug 6481).\n"
         "  tweak advmode-contained [disable]\n"
@@ -246,6 +247,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "  tweak pausing-fps-counter [disable]\n"
         "    Replace fortress mode FPS counter with one that stops counting \n"
         "    when paused.\n"
+        "  tweak reaction-gloves [disable]\n"
+        "    Changes custom reactions to produce gloves in sets with correct handedness\n"
         "  tweak shift-8-scroll [disable]\n"
         "    Gives Shift+8 (or *) priority when scrolling menus, instead of \n"
         "    scrolling the map\n"
@@ -255,8 +258,7 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Adds a safe rename option to the title screen \"Start Playing\" menu\n"
         "  tweak tradereq-pet-gender [disable]\n"
         "    Displays the gender of pets in the trade request list\n"
-        "  tweak reaction-gloves [disable]\n"
-        "    Changes custom reactions to produce gloves in sets with correct handedness\n"
+        // sort these alphabetically
 //        "  tweak military-training [disable]\n"
 //        "    Speed up melee squad training, removing inverse dependency on unit count.\n"
     ));

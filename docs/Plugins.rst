@@ -291,6 +291,8 @@ One-shot subcommands:
 
 Subcommands that persist until disabled or DF quits:
 
+.. comment: sort these alphabetically
+
 :adamantine-cloth-wear: Prevents adamantine clothing from wearing out while being worn (:bug:`6481`).
 :advmode-contained:     Works around :bug:`6202`, custom reactions with container inputs
                         in advmode. The issue is that the screen tries to force you to select
@@ -336,12 +338,14 @@ Subcommands that persist until disabled or DF quits:
                         i.e. stop the rightmost list of the Positions page of the military
                         screen from constantly resetting to the top.
 :nestbox-color:         Fixes the color of built nestboxes
+:reaction-gloves:       Fixes reactions to produce gloves in sets with correct handedness (:bug:`6273`)
 :shift-8-scroll:        Gives Shift-8 (or :kbd:`*`) priority when scrolling menus, instead of scrolling the map
 :stable-cursor:         Saves the exact cursor position between t/q/k/d/b/etc menus of fortress mode.
 :stone-status-all:      Adds an option to toggle the economic status of all stones
 :title-start-rename:    Adds a safe rename option to the title screen "Start Playing" menu
 :tradereq-pet-gender:   Displays pet genders on the trade request screen
-:reaction-gloves:       Fixes reactions to produce gloves in sets with correct handedness (:bug:`6273`)
+
+.. comment: sort these alphabetically
 
 .. _fix-armory:
 

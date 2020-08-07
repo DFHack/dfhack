@@ -4,7 +4,7 @@ struct do_job_now_hook : public df::viewscreen_joblistst {
     typedef df::viewscreen_joblistst interpose_base;
 
     bool handleInput(std::set<df::interface_key> *input) {
-        if (input->count(interface_key::CUSTOM_N)) {
+        if (input->count(interface_key::BUILDJOB_NOW)) {
             df::job *job = vector_get(jobs, cursor_pos);
             if (job) {
                 job->flags.bits.do_now = !job->flags.bits.do_now;
@@ -34,8 +34,8 @@ struct do_job_now_hook : public df::viewscreen_joblistst {
             do_now = job->flags.bits.do_now;
         }
 
-        OutputHotkeyString(x, y, (!do_now ? "Do job now!" : "Normal priority"),
-            interface_key::CUSTOM_N, false, x, COLOR_WHITE, COLOR_LIGHTRED);
+        OutputHotkeyString(x, y, (!do_now ? "Do job now!" : "Reset priority"),
+            interface_key::BUILDJOB_NOW, false, x, job ? COLOR_WHITE : COLOR_DARKGREY, COLOR_LIGHTRED);
     }
 };
 

@@ -86,6 +86,7 @@
 #include "tweaks/civ-agreement-ui.h"
 #include "tweaks/condition-material.h"
 #include "tweaks/craft-age-wear.h"
+#include "tweaks/do-job-now.h"
 #include "tweaks/eggs-fertile.h"
 #include "tweaks/embark-profile-name.h"
 #include "tweaks/farm-plot-select.h"
@@ -200,6 +201,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Fixes a crash in the work order contition material list (bug 9905).\n"
         "  tweak craft-age-wear [disable]\n"
         "    Makes cloth and leather items wear out at the correct rate (bug 6003).\n"
+        "  tweak do-job-now [disable]\n"
+        "    Adds a job priority toggle to the jobs list.\n"
         "  tweak embark-profile-name [disable]\n"
         "    Allows the use of lowercase letters when saving embark profiles\n"
         "  tweak eggs-fertile [disable]\n"
@@ -279,6 +282,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     TWEAK_HOOK("condition-material", condition_material_hook, feed);
 
     TWEAK_HOOK("craft-age-wear", craft_age_wear_hook, ageItem);
+
+    TWEAK_HOOK("do-job-now", do_job_now_hook, feed);
+    TWEAK_HOOK("do-job-now", do_job_now_hook, render);
 
     TWEAK_HOOK("eggs-fertile", egg_fertile_hook, render);
 

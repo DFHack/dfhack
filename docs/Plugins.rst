@@ -305,6 +305,7 @@ Subcommands that persist until disabled or DF quits:
 :craft-age-wear:        Fixes the behavior of crafted items wearing out over time (:bug:`6003`).
                         With this tweak, items made from cloth and leather will gain a level of
                         wear  every 20 years.
+:do-job-now:            Adds a job priority toggle to the jobs list
 :embark-profile-name:   Allows the use of lowercase letters when saving embark profiles
 :eggs-fertile:          Displays a fertility indicator on nestboxes
 :farm-plot-select:      Adds "Select all" and "Deselect all" options to farm plot menus

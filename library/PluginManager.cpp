@@ -316,8 +316,8 @@ bool Plugin::load(color_ostream &con)
         {
             std::string msg = stl_sprintf("Warning: Plugin %s compiled for DFHack %s, running DFHack %s\n",
                 *plug_name, plug_git_desc, dfhack_git_desc);
-            con << msg;
-            cerr << msg;
+            con << msg << flush;
+            cerr << msg << flush;
         }
     }
     else

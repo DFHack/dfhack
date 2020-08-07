@@ -86,6 +86,7 @@
 #include "tweaks/civ-agreement-ui.h"
 #include "tweaks/condition-material.h"
 #include "tweaks/craft-age-wear.h"
+#include "tweaks/do-job-now.h"
 #include "tweaks/eggs-fertile.h"
 #include "tweaks/embark-profile-name.h"
 #include "tweaks/farm-plot-select.h"
@@ -182,6 +183,7 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         /*"  tweak fix-dimensions [disable]\n"
         "    Fixes subtracting small amount of thread/cloth/liquid from a stack\n"
         "    by splitting the stack and subtracting from the remaining single item.\n"*/
+        // sort these alphabetically
         "  tweak adamantine-cloth-wear [disable]\n"
         "    Stops adamantine clothing from wearing out while being worn (bug 6481).\n"
         "  tweak advmode-contained [disable]\n"
@@ -200,6 +202,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Fixes a crash in the work order contition material list (bug 9905).\n"
         "  tweak craft-age-wear [disable]\n"
         "    Makes cloth and leather items wear out at the correct rate (bug 6003).\n"
+        "  tweak do-job-now [disable]\n"
+        "    Adds a job priority toggle to the jobs list.\n"
         "  tweak embark-profile-name [disable]\n"
         "    Allows the use of lowercase letters when saving embark profiles\n"
         "  tweak eggs-fertile [disable]\n"
@@ -243,6 +247,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "  tweak pausing-fps-counter [disable]\n"
         "    Replace fortress mode FPS counter with one that stops counting \n"
         "    when paused.\n"
+        "  tweak reaction-gloves [disable]\n"
+        "    Changes custom reactions to produce gloves in sets with correct handedness\n"
         "  tweak shift-8-scroll [disable]\n"
         "    Gives Shift+8 (or *) priority when scrolling menus, instead of \n"
         "    scrolling the map\n"
@@ -252,8 +258,7 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Adds a safe rename option to the title screen \"Start Playing\" menu\n"
         "  tweak tradereq-pet-gender [disable]\n"
         "    Displays the gender of pets in the trade request list\n"
-        "  tweak reaction-gloves [disable]\n"
-        "    Changes custom reactions to produce gloves in sets with correct handedness\n"
+        // sort these alphabetically
 //        "  tweak military-training [disable]\n"
 //        "    Speed up melee squad training, removing inverse dependency on unit count.\n"
     ));
@@ -279,6 +284,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     TWEAK_HOOK("condition-material", condition_material_hook, feed);
 
     TWEAK_HOOK("craft-age-wear", craft_age_wear_hook, ageItem);
+
+    TWEAK_HOOK("do-job-now", do_job_now_hook, feed);
+    TWEAK_HOOK("do-job-now", do_job_now_hook, render);
 
     TWEAK_HOOK("eggs-fertile", egg_fertile_hook, render);
 

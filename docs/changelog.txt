@@ -68,6 +68,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Lua
 - Added a ``ref_target`` field to primitive field references, corresponding to the ``ref-target`` XML attribute
+- Made ``dfhack.units.getRaceNameById()``, ``dfhack.units.getRaceBabyNameById()``, and ``dfhack.units.getRaceChildNameById()`` available to Lua
 
 ## Ruby
 - Updated ``item_find`` and ``building_find`` to use centralized logic that works on more screens

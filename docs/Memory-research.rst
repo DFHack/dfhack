@@ -86,10 +86,13 @@ You should not count on DF being stable when using this.
 DFHack's implementation of sizecheck is currently only tested on Linux, although
 it probably also works on macOS. It can be built with the ``BUILD_SIZECHECK``
 `CMake option <compile-build-options>`, which produces a ``libsizecheck``
-library installed in the ``hack`` folder. You will need to preload this library
-manually, by setting ``PRELOAD_LIB`` on Linux (or ``LD_PRELOAD`` if editing
-the ``dfhack`` launcher script directly), or by editing the ``dfhack``
-launcher script and adding the library to ``DYLD_INSERT_LIBRARIES`` on macOS.
+library installed in the ``hack`` folder. On Linux, passing ``--sc`` as the
+first argument to the ``dfhack`` launcher script will load this library on
+startup. On other platforms, or when passing a different argument to the
+launcher (such as for `linux-gdb`), you will need to preload this library
+manually, by setting ``PRELOAD_LIB`` on Linux (or ``LD_PRELOAD`` if editing the
+``dfhack`` launcher script directly), or by editing the ``dfhack`` launcher
+script and adding the library to ``DYLD_INSERT_LIBRARIES`` on macOS.
 
 There is also an older sizecheck implementation by Mifki available on
 `GitHub <https://github.com/mifki/df-sizecheck>`__ (``b.cpp`` is the main
@@ -129,6 +132,14 @@ Some basic GDB commands:
 See the `official GDB documentation <https://www.gnu.org/software/gdb/documentation/>`_
 for more details.
 
+Other analysis tools
+--------------------
+
+The ``dfhack`` launcher script on Linux has support for launching several other
+tools alongside DFHack, including Valgrind (as well as Callgrind and Helgrind)
+and strace. See the script for the exact command-line option to specify. Note
+that currently only one tool at a time is supported, and must be specified
+with the first argument to the script.
 
 df-structures GUI
 -----------------

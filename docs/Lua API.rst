@@ -1277,6 +1277,30 @@ Units module
 
   Retrieves the profession color for the given race/caste using raws.
 
+* ``dfhack.units.getGoalType(unit[,goalIndex])``
+
+  Retrieves the goal type of the dream that the given unit has.
+  By default the goal of the first dream is returned.
+  The goalIndex parameter may be used to retrieve additional dream goals.
+  Currently only one dream per unit is supported by Dwarf Fortress.
+  Support for multiple dreams may be added in future versions of Dwarf Fortress.
+
+* ``dfhack.units.getGoalName(unit[,goalIndex])``
+
+  Retrieves the short name describing the goal of the dream that the given unit has.
+  By default the goal of the first dream is returned.
+  The goalIndex parameter may be used to retrieve additional dream goals.
+  Currently only one dream per unit is supported by Dwarf Fortress.
+  Support for multiple dreams may be added in future versions of Dwarf Fortress.
+
+* ``dfhack.units.isGoalAchieved(unit[,goalIndex])``
+
+  Checks if given unit has achieved the goal of the dream.
+  By default the status of the goal of the first dream is returned.
+  The goalIndex parameter may be used to check additional dream goals.
+  Currently only one dream per unit is supported by Dwarf Fortress.
+  Support for multiple dreams may be added in future versions of Dwarf Fortress.
+
 * ``dfhack.units.getStressCategory(unit)``
 
   Returns a number from 0-6 indicating stress. 0 is most stressed; 6 is least.

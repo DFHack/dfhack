@@ -60,6 +60,7 @@ distribution.
 #include "modules/Translation.h"
 #include "modules/Units.h"
 #include "modules/World.h"
+#include "modules/XlsxReader.h"
 
 #include "LuaWrapper.h"
 #include "LuaTools.h"
@@ -2474,6 +2475,47 @@ static const LuaWrapper::FunctionReg dfhack_kitchen_module[] = {
     {NULL, NULL}
 };
 
+/***** XlsxReader module *****/
+
+static const LuaWrapper::FunctionReg dfhack_xlsxreader_module[] = {
+    WRAPM(XlsxReader, open_xlsx_file),
+    WRAPM(XlsxReader, close_xlsx_file),
+    WRAPM(XlsxReader, list_sheets),
+    WRAPM(XlsxReader, open_sheet),
+    WRAPM(XlsxReader, close_sheet),
+    WRAPM(XlsxReader, get_next_row),
+    {NULL, NULL}
+};
+
+// takes the sheet handle and returns a string, or nil if there is no next cell
+// in the current row.
+static int xlsxreader_get_next_cell(lua_State *L)
+{
+    if (lua_gettop(L) != 1 || lua_isnil(L, 1))
+    {
+        luaL_error(L, "invalid sheet handle");
+    }
+    luaL_checktype(L, 1, LUA_TUSERDATA);
+    XlsxReader::xlsx_sheet_handle sheet_handle = lua_touserdata(L, 1);
+
+    std::string value;
+    bool ok = XlsxReader::get_next_cell(sheet_handle, value);
+    if (!ok)
+    {
+        lua_pushnil(L);
+    }
+    else
+    {
+        lua_pushstring(L, value.c_str());
+    }
+    return 1;
+}
+
+static const luaL_Reg dfhack_xlsxreader_funcs[] = {
+    {"get_next_cell", xlsxreader_get_next_cell},
+    {NULL, NULL}
+};
+
 /***** Console module *****/
 
 namespace console {
@@ -3027,6 +3069,7 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "filesystem", dfhack_filesystem_module, dfhack_filesystem_funcs);
     OpenModule(state, "designations", dfhack_designations_module, dfhack_designations_funcs);
     OpenModule(state, "kitchen", dfhack_kitchen_module);
+    OpenModule(state, "xlsxreader", dfhack_xlsxreader_module, dfhack_xlsxreader_funcs);
     OpenModule(state, "console", dfhack_console_module);
     OpenModule(state, "internal", dfhack_internal_module, dfhack_internal_funcs);
 }

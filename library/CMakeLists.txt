@@ -144,6 +144,7 @@ set(MODULE_HEADERS
     include/modules/Translation.h
     include/modules/Units.h
     include/modules/World.h
+    include/modules/XlsxReader.h
 )
 
 set(MODULE_SOURCES
@@ -172,6 +173,7 @@ set(MODULE_SOURCES
     modules/Units.cpp
     modules/Windows.cpp
     modules/World.cpp
+    modules/XlsxReader.cpp
 )
 
 set(STATIC_FIELDS_FILES)
@@ -409,7 +411,7 @@ if(APPLE)
     set_target_properties(dfhack PROPERTIES SOVERSION 1.0.0)
 endif()
 
-target_link_libraries(dfhack protobuf-lite clsocket lua jsoncpp_lib_static dfhack-version ${PROJECT_LIBS})
+target_link_libraries(dfhack protobuf-lite clsocket lua jsoncpp_lib_static xlsxio_read zip expat dfhack-version ${PROJECT_LIBS})
 set_target_properties(dfhack PROPERTIES INTERFACE_LINK_LIBRARIES "")
 
 target_link_libraries(dfhack-client protobuf-lite clsocket jsoncpp_lib_static)

@@ -364,6 +364,8 @@ endif()
 
 #### expose depends ####
 
+include(ExternalProject)
+
 if(UNIX)
     # Rescan for pthread and zlib if the build arch changed
     if(NOT "${DFHACK_BUILD_ARCH}" STREQUAL "${DFHACK_BUILD_ARCH_PREV}")
@@ -415,6 +417,23 @@ endif()
 
 # build the lib itself
 if(BUILD_LIBRARY)
+    ExternalProject_Get_Property(xlsxio_project INSTALL_DIR)
+    set(XLSXIO_INSTALL_DIR ${INSTALL_DIR})
+    include_directories(${XLSXIO_INSTALL_DIR}/include)
+    add_library(xlsxio_read STATIC IMPORTED)
+    set_target_properties(xlsxio_read PROPERTIES
+            IMPORTED_LOCATION ${XLSXIO_INSTALL_DIR}/lib/libxlsxio_read.a)
+    add_dependencies(xlsxio_read xlsxio_project)
+
+    # just pull from the system until I figure out how to integrate these deps
+    # into the build
+    add_library(zip SHARED IMPORTED)
+    set_target_properties(zip PROPERTIES
+            IMPORTED_LOCATION /usr/lib64/libzip.so)
+    add_library(expat SHARED IMPORTED)
+    set_target_properties(expat PROPERTIES
+            IMPORTED_LOCATION /usr/lib64/libexpat.so)
+
     add_subdirectory(library)
     install(FILES LICENSE.rst docs/changelog.txt DESTINATION ${DFHACK_USERDOC_DESTINATION})
 endif()

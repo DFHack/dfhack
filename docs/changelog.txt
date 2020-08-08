@@ -33,6 +33,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
+# 0.47.04-r2
+
 ## New Tweaks
 - `tweak` do-job-now: adds a job priority toggle to the jobs list
 - `tweak` reaction-gloves: adds an option to make reactions produce gloves in sets with correct handedness

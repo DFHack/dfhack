@@ -60,7 +60,6 @@ Ian S                   kremlin-
 IndigoFenix
 James Gilles            kazimuth
 James Logsdon           jlogsdon
-Japa                    JapaMala
 Jared Adams
 Jeremy Apthorp          nornagon
 Jim Lisi                stonetoad
@@ -136,6 +135,7 @@ Robert Janetzko         robertjanetzko
 RocheLimit
 rofl0r                  rofl0r
 root
+Rose                    RosaryMala
 Roses                   Pheosics
 Ross M                  RossM
 rout
@@ -173,7 +173,7 @@ U-glouglou\\simon
 Valentin Ochs           Cat-Ion
 Vitaly Pronkin          pronvit                 mifki
 ViTuRaS                 ViTuRaS
-Vjek
+Vjek                    vjek
 Warmist                 warmist
 Wes Malone              wesQ3
 Will Rogers             wjrogers

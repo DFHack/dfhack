@@ -46,12 +46,17 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `embark-assistant`: fixed a couple of incursion handling bugs.
 - Fixed ``Units::isEggLayer``, ``Units::isGrazer``, ``Units::isMilkable``, ``Units::isTrainableHunting``, ``Units::isTrainableWar``, and ``Units::isTamable`` ignoring the unit's caste
 - `RemoteFortressReader`: fixed a couple crashes that could result from decoding invalid enum items (``site_realization_building_type`` and ``improvement_type``)
+- `RemoteFortressReader`: fixed an issue that could cause block coordinates to be incorrect
+- `rendermax`: fixed a hang that could occur when enabling some renderers, notably on Linux
+- `stonesense`: fixed a crash when launching Stonesense
+- `stonesense`: fixed some issues that could cause the splash screen to hang
 
 ## Misc Improvements
 - Linux/macOS: Added console keybindings for deleting words (Alt+Backspace and Alt+d in most terminals)
 - `blueprint`: now writes blueprints to the ``blueprints/`` subfolder instead of the df root folder
 - `blueprint`: now automatically creates folder trees when organizing blueprints into subfolders (e.g. ``blueprint 30 30 1 rooms/dining dig`` will create the file ``blueprints/rooms/dining-dig.csv``); previously it would fail if the ``blueprints/rooms/`` directory didn't already exist
 - `confirm`: added a confirmation dialog for convicting dwarves of crimes
+- `manipulator`: added a new column option to display units' goals
 
 ## API
 - Added ``Filesystem::mkdir_recursive``
@@ -66,6 +71,11 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Ruby
 - Updated ``item_find`` and ``building_find`` to use centralized logic that works on more screens
+
+## Documentation
+- Expanded the installation guide
+- Added some new dev-facing pages, including dedicated pages about the remote API, memory research, and documentation
+- Made a couple theme adjustments
 
 # 0.47.04-r1
 

@@ -55,6 +55,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## API
 - Added ``Filesystem::mkdir_recursive``
 - Extended ``Filesystem::listdir_recursive`` to optionally make returned filenames relative to the start directory
+- ``Units``: added goal-related functions: ``getGoalType()``, ``getGoalName()``, ``isGoalAchieved()``
 
 ## Internals
 - Linux/macOS: Added console keybindings for deleting words (Alt+Backspace and Alt+d in most terminals)

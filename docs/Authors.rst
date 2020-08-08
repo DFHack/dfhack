@@ -142,6 +142,7 @@ rout
 rubybrowncoat           rubybrowncoat
 Rumrusher               rumrusher
 RusAnon                 RusAnon
+Ryan Bennitt            ryanbennitt
 sami
 scamtank                scamtank
 Sebastian Wolfertz      Enkrod

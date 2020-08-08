@@ -43,6 +43,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Linux: fixed ``dfhack.getDFPath()`` (Lua) and ``Process::getPath()`` (C++) to always return the DF root path, even if the working directory has changed
 - `getplants`: fixed issues causing plants to be collected even if they have no growths (or unripe growths)
 - `labormanager`: fixed handling of new jobs in 0.47
+- `labormanager`: fixed an issue preventing custom furnaces from being built
 - `embark-assistant`: fixed a couple of incursion handling bugs.
 - Fixed ``Units::isEggLayer``, ``Units::isGrazer``, ``Units::isMilkable``, ``Units::isTrainableHunting``, ``Units::isTrainableWar``, and ``Units::isTamable`` ignoring the unit's caste
 - `RemoteFortressReader`: fixed a couple crashes that could result from decoding invalid enum items (``site_realization_building_type`` and ``improvement_type``)

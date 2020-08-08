@@ -1769,7 +1769,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
                 std::stable_sort(units.begin(), units.end(), sortBySquad);
             } else if (detail_mode == DETAIL_MODE_JOB) {
                 std::stable_sort(units.begin(), units.end(), sortByJob);
-            } else if (detail_mode == DETAIL_MODE_PROFESSION){
+            } else if (detail_mode == DETAIL_MODE_PROFESSION) {
                 std::stable_sort(units.begin(), units.end(), sortByProfession);
             } else {
                 std::stable_sort(units.begin(), units.end(), sortByGoal);
@@ -1818,6 +1818,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         } else {
             detail_mode = DETAIL_MODE_PROFESSION;
         }
+        calcSize();
     }
 
     if (events->count(interface_key::CUSTOM_SHIFT_X))
@@ -2202,7 +2203,7 @@ void viewscreen_unitlaborsst::render()
             OutputString(15, x, y, "Squad");
         } else if (detail_mode == DETAIL_MODE_JOB) {
             OutputString(15, x, y, "Job");
-        } else if (detail_mode == DETAIL_MODE_PROFESSION){
+        } else if (detail_mode == DETAIL_MODE_PROFESSION) {
             OutputString(15, x, y, "Profession");
         } else {
             OutputString(15, x, y, "Goal");

@@ -290,7 +290,7 @@ struct UnitInfo
     string transname;
     string profession;
     string goal;
-    enum { NEUTRAL, MALE, FEMALE } goal_gender;
+    df::pronoun_type goal_gender;
     bool achieved_goal;
     int8_t color;
     int active_index;
@@ -1263,9 +1263,9 @@ void viewscreen_unitlaborsst::refreshNames()
         cur->goal = Units::getGoalName(unit);
         df::goal_type goal = Units::getGoalType(unit);
         if (goal == df::goal_type::START_A_FAMILY) {
-            cur->goal_gender = Units::isFemale(unit) ? UnitInfo::FEMALE : UnitInfo::MALE;
+            cur->goal_gender = unit->sex;
         } else {
-            cur->goal_gender = UnitInfo::NEUTRAL;
+            cur->goal_gender = df::pronoun_type::it;
         }
         cur->achieved_goal = Units::isGoalAchieved(unit);
 
@@ -2021,13 +2021,13 @@ void viewscreen_unitlaborsst::render()
             fg = cur->color;
             detail_str = cur->profession;
         } else {
-            if (cur->goal_gender == UnitInfo::NEUTRAL) {
+            if (cur->goal_gender == df::pronoun_type::it) {
                 if (cur->achieved_goal) {
                     fg = COLOR_LIGHTGREEN;
                 } else {
                     fg = COLOR_BROWN;
                 }
-            } else if (cur->goal_gender == UnitInfo::FEMALE) {
+            } else if (cur->goal_gender == df::pronoun_type::she) {
                 if (cur->achieved_goal) {
                     fg = COLOR_LIGHTRED;
                 }

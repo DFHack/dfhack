@@ -1439,7 +1439,7 @@ int8_t Units::getCasteProfessionColor(int race, int casteid, df::profession pid)
     return 3;
 }
 
-df::goal_type Units::getGoalType(df::unit *unit, int goalIndex)
+df::goal_type Units::getGoalType(df::unit *unit, size_t goalIndex)
 {
     CHECK_NULL_POINTER(unit);
 
@@ -1452,7 +1452,7 @@ df::goal_type Units::getGoalType(df::unit *unit, int goalIndex)
     return goal;
 }
 
-std::string Units::getGoalName(df::unit *unit, int goalIndex)
+std::string Units::getGoalName(df::unit *unit, size_t goalIndex)
 {
     CHECK_NULL_POINTER(unit);
 
@@ -1471,7 +1471,7 @@ std::string Units::getGoalName(df::unit *unit, int goalIndex)
     return goal_name;
 }
 
-bool Units::isGoalAchieved(df::unit *unit, int goalIndex)
+bool Units::isGoalAchieved(df::unit *unit, size_t goalIndex)
 {
     CHECK_NULL_POINTER(unit);
 

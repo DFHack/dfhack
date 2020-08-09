@@ -307,6 +307,13 @@ message SpatterPile
     repeated Spatter spatters = 1;
 }
 
+message FoodIngredient
+{
+    optional int32 item_type = 1;
+    optional MatPair material = 2;
+    optional int32 quality = 3;
+}
+
 message Item
 {
     optional int32 id = 1;
@@ -327,6 +334,7 @@ message Item
     optional int32 volume = 16;
     repeated ItemImprovement improvements = 17;
     optional ArtImage image = 18;
+    repeated FoodIngredient ingredients = 19;
 }
 
 message PlantTile

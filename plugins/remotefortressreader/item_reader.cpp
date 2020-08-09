@@ -21,12 +21,14 @@
 #include "df/instrument_register.h"
 #include "df/item_type.h"
 #include "df/item_constructed.h"
+#include "df/item_foodst.h"
 #include "df/item_gemst.h"
 #include "df/item_smallgemst.h"
 #include "df/item_statuest.h"
 #include "df/item_threadst.h"
 #include "df/item_toolst.h"
 #include "df/itemdef_armorst.h"
+#include "df/itemdef_foodst.h"
 #include "df/itemdef_glovesst.h"
 #include "df/itemdef_helmst.h"
 #include "df/itemdef_instrumentst.h"
@@ -373,6 +375,18 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
     case df::enums::item_type::CHEESE:
         break;
     case df::enums::item_type::FOOD:
+    {
+        VIRTUAL_CAST_VAR(food, df::item_foodst, DfItem);
+        for (size_t i = 0; i < food->ingredients.size(); i++)
+        {
+            auto netIngredient = NetItem->add_ingredients();
+            auto dfIngredient = food->ingredients[i];
+            auto mat = netIngredient->mutable_material();
+            mat->set_mat_index(dfIngredient->mat_index);
+            mat->set_mat_type(dfIngredient->mat_type);
+            netIngredient->set_item_type(dfIngredient->item_type);
+        }
+    }
         break;
     case df::enums::item_type::LIQUID_MISC:
         break;

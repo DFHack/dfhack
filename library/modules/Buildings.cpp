@@ -141,6 +141,8 @@ void buildings_onUpdate(color_ostream &out)
 
     df::job_list_link *link = world->jobs.list.next;
     for (; link; link = link->next) {
+        if (!link->item)
+            continue;
         df::job *job = link->item;
 
         if (job->job_type != job_type::ConstructBuilding)

@@ -433,11 +433,13 @@ if(BUILD_LIBRARY)
             IMPORTED_LOCATION ${LIBZIP_INSTALL_DIR}/lib64/libzip.a)
     add_dependencies(zip libzip_project)
 
-    # just pull from the system until I figure out how to integrate these deps
-    # into the build
-    add_library(expat SHARED IMPORTED)
+    ExternalProject_Get_Property(libexpat_project INSTALL_DIR)
+    set(LIBEXPAT_INSTALL_DIR ${INSTALL_DIR})
+    include_directories(${LIBEXPAT_INSTALL_DIR}/include)
+    add_library(expat STATIC IMPORTED)
     set_target_properties(expat PROPERTIES
-            IMPORTED_LOCATION /usr/lib64/libexpat.so)
+            IMPORTED_LOCATION ${LIBEXPAT_INSTALL_DIR}/lib64/libexpat.a)
+    add_dependencies(expat libexpat_project)
 
     add_subdirectory(library)
     install(FILES LICENSE.rst docs/changelog.txt DESTINATION ${DFHACK_USERDOC_DESTINATION})

@@ -2939,10 +2939,11 @@ Lua API
 =======
 
 Some plugins consist solely of native libraries exposed to Lua. They are listed
-in the `lua-api` file under `lua-plugins`:
+in the `lua-api` file under `lua-plugins`::
 
 * `eventful`
 * `building-hacks`
 * `luasocket`
 * `map-render`
 * `cxxrandom`
+* `xlsxreader`

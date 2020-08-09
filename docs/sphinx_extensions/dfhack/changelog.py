@@ -29,6 +29,7 @@ CHANGELOG_SECTIONS = [
     'Lua',
     'Ruby',
     'Structures',
+    'Documentation',
 ]
 
 REPLACEMENTS = {

@@ -33,6 +33,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
+# 0.47.04-r2
+
 ## New Tweaks
 - `tweak` do-job-now: adds a job priority toggle to the jobs list
 - `tweak` reaction-gloves: adds an option to make reactions produce gloves in sets with correct handedness
@@ -43,28 +45,41 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Linux: fixed ``dfhack.getDFPath()`` (Lua) and ``Process::getPath()`` (C++) to always return the DF root path, even if the working directory has changed
 - `getplants`: fixed issues causing plants to be collected even if they have no growths (or unripe growths)
 - `labormanager`: fixed handling of new jobs in 0.47
+- `labormanager`: fixed an issue preventing custom furnaces from being built
 - `embark-assistant`: fixed a couple of incursion handling bugs.
 - Fixed ``Units::isEggLayer``, ``Units::isGrazer``, ``Units::isMilkable``, ``Units::isTrainableHunting``, ``Units::isTrainableWar``, and ``Units::isTamable`` ignoring the unit's caste
 - `RemoteFortressReader`: fixed a couple crashes that could result from decoding invalid enum items (``site_realization_building_type`` and ``improvement_type``)
+- `RemoteFortressReader`: fixed an issue that could cause block coordinates to be incorrect
+- `rendermax`: fixed a hang that could occur when enabling some renderers, notably on Linux
+- `stonesense`: fixed a crash when launching Stonesense
+- `stonesense`: fixed some issues that could cause the splash screen to hang
 
 ## Misc Improvements
+- Linux/macOS: Added console keybindings for deleting words (Alt+Backspace and Alt+d in most terminals)
 - `blueprint`: now writes blueprints to the ``blueprints/`` subfolder instead of the df root folder
 - `blueprint`: now automatically creates folder trees when organizing blueprints into subfolders (e.g. ``blueprint 30 30 1 rooms/dining dig`` will create the file ``blueprints/rooms/dining-dig.csv``); previously it would fail if the ``blueprints/rooms/`` directory didn't already exist
 - `confirm`: added a confirmation dialog for convicting dwarves of crimes
+- `manipulator`: added a new column option to display units' goals
 
 ## API
 - Added ``Filesystem::mkdir_recursive``
 - Extended ``Filesystem::listdir_recursive`` to optionally make returned filenames relative to the start directory
+- ``Units``: added goal-related functions: ``getGoalType()``, ``getGoalName()``, ``isGoalAchieved()``
 
 ## Internals
-- Linux/macOS: Added console keybindings for deleting words (Alt+Backspace and Alt+d in most terminals)
 - Added support for splitting scripts into multiple files in the ``scripts/internal`` folder without polluting the output of `ls`
 
 ## Lua
 - Added a ``ref_target`` field to primitive field references, corresponding to the ``ref-target`` XML attribute
+- Made ``dfhack.units.getRaceNameById()``, ``dfhack.units.getRaceBabyNameById()``, and ``dfhack.units.getRaceChildNameById()`` available to Lua
 
 ## Ruby
 - Updated ``item_find`` and ``building_find`` to use centralized logic that works on more screens
+
+## Documentation
+- Expanded the installation guide
+- Added some new dev-facing pages, including dedicated pages about the remote API, memory research, and documentation
+- Made a couple theme adjustments
 
 # 0.47.04-r1
 

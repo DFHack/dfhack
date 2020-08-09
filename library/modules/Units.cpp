@@ -61,6 +61,7 @@ using namespace std;
 #include "df/identity_type.h"
 #include "df/game_mode.h"
 #include "df/histfig_entity_link_positionst.h"
+#include "df/histfig_relationship_type.h"
 #include "df/historical_entity.h"
 #include "df/historical_figure.h"
 #include "df/historical_figure_info.h"
@@ -1436,6 +1437,47 @@ int8_t Units::getCasteProfessionColor(int race, int casteid, df::profession pid)
 
     // default to dwarven peasant color
     return 3;
+}
+
+df::goal_type Units::getGoalType(df::unit *unit, size_t goalIndex)
+{
+    CHECK_NULL_POINTER(unit);
+
+    df::goal_type goal = df::goal_type::STAY_ALIVE;
+    if (unit->status.current_soul
+        && unit->status.current_soul->personality.dreams.size() > goalIndex)
+    {
+        goal = unit->status.current_soul->personality.dreams[goalIndex]->type;
+    }
+    return goal;
+}
+
+std::string Units::getGoalName(df::unit *unit, size_t goalIndex)
+{
+    CHECK_NULL_POINTER(unit);
+
+    df::goal_type goal = getGoalType(unit, goalIndex);
+    bool achieved_goal = isGoalAchieved(unit, goalIndex);
+
+    std::string goal_name = achieved_goal ? ENUM_ATTR(goal_type, achieved_short_name, goal) : ENUM_ATTR(goal_type, short_name, goal);
+    if (goal == df::goal_type::START_A_FAMILY) {
+        std::string parent = ENUM_KEY_STR(histfig_relationship_type, histfig_relationship_type::Parent);
+        size_t start_pos = goal_name.find(parent);
+        if (start_pos != std::string::npos) {
+            df::histfig_relationship_type parent_type = isFemale(unit) ? histfig_relationship_type::Mother : histfig_relationship_type::Father;
+            goal_name.replace(start_pos, parent.length(), ENUM_KEY_STR(histfig_relationship_type, parent_type));
+        }
+    }
+    return goal_name;
+}
+
+bool Units::isGoalAchieved(df::unit *unit, size_t goalIndex)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return unit->status.current_soul
+        && unit->status.current_soul->personality.dreams.size() > goalIndex
+        && unit->status.current_soul->personality.dreams[goalIndex]->flags.whole != 0;
 }
 
 std::string Units::getSquadName(df::unit *unit)

@@ -32,6 +32,7 @@ distribution.
 #include "DataDefs.h"
 
 #include "df/caste_raw_flags.h"
+#include "df/goal_type.h"
 #include "df/job_skill.h"
 #include "df/mental_attribute_type.h"
 #include "df/misc_trait_type.h"
@@ -179,6 +180,10 @@ DFHACK_EXPORT std::string getCasteProfessionName(int race, int caste, df::profes
 
 DFHACK_EXPORT int8_t getProfessionColor(df::unit *unit, bool ignore_noble = false);
 DFHACK_EXPORT int8_t getCasteProfessionColor(int race, int caste, df::profession pid);
+
+DFHACK_EXPORT df::goal_type getGoalType(df::unit *unit, size_t goalIndex = 0);
+DFHACK_EXPORT std::string getGoalName(df::unit *unit, size_t goalIndex = 0);
+DFHACK_EXPORT bool isGoalAchieved(df::unit *unit, size_t goalIndex = 0);
 
 DFHACK_EXPORT std::string getSquadName(df::unit *unit);
 

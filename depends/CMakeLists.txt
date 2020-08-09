@@ -35,9 +35,11 @@ endforeach()
 if(WIN32)
   set(EXPAT_LIB_SUFFIX "MD.lib")
   set(LIB_SUFFIX ".lib")
+  set(XLSXIO_LIB_PREFIX "")
 else()
   set(EXPAT_LIB_SUFFIX ".a")
   set(LIB_SUFFIX ".a")
+  set(XLSXIO_LIB_PREFIX "lib")
 endif()
 
 set(LIBEXPAT_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/libexpat)
@@ -64,7 +66,7 @@ ExternalProject_Add(libzip_project
 
 set(XLSXIO_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/xlsxio)
 set(XLSXIO_INSTALL_DIR ${XLSXIO_INSTALL_DIR} PARENT_SCOPE)
-set(XLSXIO_LIB ${XLSXIO_INSTALL_DIR}/lib/libxlsxio_read${LIB_SUFFIX})
+set(XLSXIO_LIB ${XLSXIO_INSTALL_DIR}/lib/${XLSXIO_LIB_PREFIX}xlsxio_read${LIB_SUFFIX})
 set(XLSXIO_LIB ${XLSXIO_LIB} PARENT_SCOPE)
 ExternalProject_Add(xlsxio_project
     PREFIX      xlsxio

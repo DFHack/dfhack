@@ -21,12 +21,12 @@ ide_folder(clsocket "Depends")
 # assemble environment args to pass on to dependency projects
 get_cmake_property(vars CACHE_VARIABLES)
 foreach(var ${vars})
-  get_property(currentHelpString CACHE "${var}" PROPERTY HELPSTRING)
-    if("${currentHelpString}" MATCHES "No help, variable specified on the command line." OR "${currentHelpString}" STREQUAL "")
-        message("${var} = [${${var}}]  --  ${currentHelpString}") # uncomment to see the variables being processed
-        list(APPEND CL_ARGS "-D${var}=${${var}}")
-    endif()
+  if(var MATCHES "^CMAKE_" AND NOT var MATCHES "^CMAKE_CACHE" AND NOT var MATCHES "^CMAKE_HOME" AND NOT var MATCHES "^CMAKE_PROJECT")
+    message("${var} = [${${var}}]")
+    list(APPEND CL_ARGS "-D${var}=${${var}}")
+  endif()
 endforeach()
+message("final CL_ARGS = ${CL_ARGS}")
 
 set(LIBEXPAT_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/libexpat)
 ExternalProject_Add(libexpat_project

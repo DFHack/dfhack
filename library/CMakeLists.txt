@@ -4,6 +4,8 @@ cmake_minimum_required(VERSION 2.8.12)
 # prevent CMake warnings about INTERFACE_LINK_LIBRARIES vs LINK_INTERFACE_LIBRARIES
 cmake_policy(SET CMP0022 NEW)
 
+set(CMAKE_VERBOSE_MAKEFILE ON)
+
 # build options
 option(BUILD_DEVEL "Install/package files required for development(For SDK)." OFF)
 if(UNIX)

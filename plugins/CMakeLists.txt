@@ -86,7 +86,7 @@ add_library(expat STATIC IMPORTED)
 set_target_properties(expat PROPERTIES IMPORTED_LOCATION ${LIBEXPAT_LIB})
 
 if(WIN32)
-  set(LIB_Z_LIB "zlib.lib")
+  set(LIB_Z_LIB "depends/zlib/lib/zlib.lib")
 else()
   set(LIB_Z_LIB "z")
 endif()

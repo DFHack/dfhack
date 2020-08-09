@@ -425,11 +425,16 @@ if(BUILD_LIBRARY)
             IMPORTED_LOCATION ${XLSXIO_INSTALL_DIR}/lib/libxlsxio_read.a)
     add_dependencies(xlsxio_read xlsxio_project)
 
+    ExternalProject_Get_Property(libzip_project INSTALL_DIR)
+    set(LIBZIP_INSTALL_DIR ${INSTALL_DIR})
+    include_directories(${LIBZIP_INSTALL_DIR}/include)
+    add_library(zip STATIC IMPORTED)
+    set_target_properties(zip PROPERTIES
+            IMPORTED_LOCATION ${LIBZIP_INSTALL_DIR}/lib64/libzip.a)
+    add_dependencies(zip libzip_project)
+
     # just pull from the system until I figure out how to integrate these deps
     # into the build
-    add_library(zip SHARED IMPORTED)
-    set_target_properties(zip PROPERTIES
-            IMPORTED_LOCATION /usr/lib64/libzip.so)
     add_library(expat SHARED IMPORTED)
     set_target_properties(expat PROPERTIES
             IMPORTED_LOCATION /usr/lib64/libexpat.so)

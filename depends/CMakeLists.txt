@@ -32,6 +32,8 @@ foreach(var ${vars})
   endif()
 endforeach()
 
+include(ExternalProject)
+
 if(WIN32)
   set(EXPAT_LIB_SUFFIX "MD.lib")
   set(LIB_SUFFIX ".lib")

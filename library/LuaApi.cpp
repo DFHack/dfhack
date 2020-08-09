@@ -60,7 +60,6 @@ distribution.
 #include "modules/Translation.h"
 #include "modules/Units.h"
 #include "modules/World.h"
-#include "modules/XlsxReader.h"
 
 #include "LuaWrapper.h"
 #include "LuaTools.h"
@@ -2481,65 +2480,6 @@ static const LuaWrapper::FunctionReg dfhack_kitchen_module[] = {
     {NULL, NULL}
 };
 
-/***** XlsxReader module *****/
-
-static const LuaWrapper::FunctionReg dfhack_xlsxreader_module[] = {
-    WRAPM(XlsxReader, open_xlsx_file),
-    WRAPM(XlsxReader, close_xlsx_file),
-    WRAPM(XlsxReader, open_sheet),
-    WRAPM(XlsxReader, close_sheet),
-    {NULL, NULL}
-};
-
-// internal function to factor out handle extraction
-static void * get_xlsxreader_handle(lua_State *L)
-{
-    if (lua_gettop(L) < 1 || lua_isnil(L, 1))
-    {
-        luaL_error(L, "invalid xlsxreader handle");
-    }
-    luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
-    return lua_touserdata(L, 1);
-}
-
-// takes a file handle and returns a table-list of sheet names
-static int xlsxreader_list_sheets(lua_State *L)
-{
-    XlsxReader::xlsx_file_handle file_handle = get_xlsxreader_handle(L);
-    Lua::PushVector(L, XlsxReader::list_sheets(file_handle), true);
-    return 1;
-}
-
-// takes the sheet handle and returns a table-list of strings, or nil if we
-// already processed the last row in the file.
-static int xlsxreader_get_row(lua_State *L)
-{
-    XlsxReader::xlsx_sheet_handle sheet_handle = get_xlsxreader_handle(L);
-    bool ok = XlsxReader::get_next_row(sheet_handle);
-    if (!ok)
-    {
-        lua_pushnil(L);
-    }
-    else
-    {
-        std::string value;
-        auto cells = std::vector<std::string>();
-        while (XlsxReader::get_next_cell(sheet_handle, value))
-        {
-            cells.push_back(value);
-        }
-        Lua::PushVector(L, cells, true);
-    }
-
-    return 1;
-}
-
-static const luaL_Reg dfhack_xlsxreader_funcs[] = {
-    {"list_sheets", xlsxreader_list_sheets},
-    {"get_row", xlsxreader_get_row},
-    {NULL, NULL}
-};
-
 /***** Console module *****/
 
 namespace console {
@@ -3093,7 +3033,6 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "filesystem", dfhack_filesystem_module, dfhack_filesystem_funcs);
     OpenModule(state, "designations", dfhack_designations_module, dfhack_designations_funcs);
     OpenModule(state, "kitchen", dfhack_kitchen_module);
-    OpenModule(state, "xlsxreader", dfhack_xlsxreader_module, dfhack_xlsxreader_funcs);
     OpenModule(state, "console", dfhack_console_module);
     OpenModule(state, "internal", dfhack_internal_module, dfhack_internal_funcs);
 }

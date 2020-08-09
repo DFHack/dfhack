@@ -364,8 +364,6 @@ endif()
 
 #### expose depends ####
 
-include(ExternalProject)
-
 if(UNIX)
     # Rescan for pthread and zlib if the build arch changed
     if(NOT "${DFHACK_BUILD_ARCH}" STREQUAL "${DFHACK_BUILD_ARCH_PREV}")
@@ -417,18 +415,8 @@ endif()
 
 # build the lib itself
 if(BUILD_LIBRARY)
-    include_directories(${XLSXIO_INSTALL_DIR}/include)
-    add_library(xlsxio_read STATIC IMPORTED)
-    set_target_properties(xlsxio_read PROPERTIES IMPORTED_LOCATION ${XLSXIO_LIB})
-    add_library(zip STATIC IMPORTED)
-    set_target_properties(zip PROPERTIES IMPORTED_LOCATION ${LIBZIP_LIB})
-    add_library(expat STATIC IMPORTED)
-    set_target_properties(expat PROPERTIES IMPORTED_LOCATION ${LIBEXPAT_LIB})
-
     add_subdirectory(library)
     install(FILES LICENSE.rst docs/changelog.txt DESTINATION ${DFHACK_USERDOC_DESTINATION})
-
-    add_dependencies(dfhack xlsxio_project)
 endif()
 
 file(WRITE "${CMAKE_BINARY_DIR}/dfhack_setarch.txt" ${DFHACK_SETARCH})

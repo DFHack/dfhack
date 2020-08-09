@@ -2486,39 +2486,57 @@ static const LuaWrapper::FunctionReg dfhack_kitchen_module[] = {
 static const LuaWrapper::FunctionReg dfhack_xlsxreader_module[] = {
     WRAPM(XlsxReader, open_xlsx_file),
     WRAPM(XlsxReader, close_xlsx_file),
-    WRAPM(XlsxReader, list_sheets),
     WRAPM(XlsxReader, open_sheet),
     WRAPM(XlsxReader, close_sheet),
-    WRAPM(XlsxReader, get_next_row),
     {NULL, NULL}
 };
 
-// takes the sheet handle and returns a string, or nil if there is no next cell
-// in the current row.
-static int xlsxreader_get_next_cell(lua_State *L)
+// internal function to factor out handle extraction
+static void * get_xlsxreader_handle(lua_State *L)
 {
-    if (lua_gettop(L) != 1 || lua_isnil(L, 1))
+    if (lua_gettop(L) < 1 || lua_isnil(L, 1))
     {
-        luaL_error(L, "invalid sheet handle");
+        luaL_error(L, "invalid xlsxreader handle");
     }
-    luaL_checktype(L, 1, LUA_TUSERDATA);
-    XlsxReader::xlsx_sheet_handle sheet_handle = lua_touserdata(L, 1);
+    luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
+    return lua_touserdata(L, 1);
+}
 
-    std::string value;
-    bool ok = XlsxReader::get_next_cell(sheet_handle, value);
+// takes a file handle and returns a table-list of sheet names
+static int xlsxreader_list_sheets(lua_State *L)
+{
+    XlsxReader::xlsx_file_handle file_handle = get_xlsxreader_handle(L);
+    Lua::PushVector(L, XlsxReader::list_sheets(file_handle), true);
+    return 1;
+}
+
+// takes the sheet handle and returns a table-list of strings, or nil if we
+// already processed the last row in the file.
+static int xlsxreader_get_row(lua_State *L)
+{
+    XlsxReader::xlsx_sheet_handle sheet_handle = get_xlsxreader_handle(L);
+    bool ok = XlsxReader::get_next_row(sheet_handle);
     if (!ok)
     {
         lua_pushnil(L);
     }
     else
     {
-        lua_pushstring(L, value.c_str());
+        std::string value;
+        auto cells = std::vector<std::string>();
+        while (XlsxReader::get_next_cell(sheet_handle, value))
+        {
+            cells.push_back(value);
+        }
+        Lua::PushVector(L, cells, true);
     }
+
     return 1;
 }
 
 static const luaL_Reg dfhack_xlsxreader_funcs[] = {
-    {"get_next_cell", xlsxreader_get_next_cell},
+    {"list_sheets", xlsxreader_list_sheets},
+    {"get_row", xlsxreader_get_row},
     {NULL, NULL}
 };
 

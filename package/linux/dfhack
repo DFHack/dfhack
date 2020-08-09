@@ -146,6 +146,11 @@ case "$1" in
     exec setarch "$setarch_arch" -R env LD_PRELOAD="$PRELOAD_LIB" ./libs/Dwarf_Fortress "$@"
     # script does not resume
     ;;
+  --sc | --sizecheck)
+    PRELOAD_LIB="${PRELOAD_LIB:+$PRELOAD_LIB:}./hack/libsizecheck.so"
+    MALLOC_PERTURB_=45 setarch "$setarch_arch" -R env LD_PRELOAD="$PRELOAD_LIB" ./libs/Dwarf_Fortress "$@"
+    ret=$?
+    ;;
   *)
     setarch "$setarch_arch" -R env LD_PRELOAD="$PRELOAD_LIB" ./libs/Dwarf_Fortress "$@"
     ret=$?

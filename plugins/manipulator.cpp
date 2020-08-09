@@ -32,6 +32,8 @@
 #include "df/caste_raw.h"
 #include "df/historical_entity.h"
 #include "df/entity_raw.h"
+#include "df/goal_type.h"
+#include "df/unit_personality.h"
 
 #include "uicommon.h"
 #include "listcolumn.h"
@@ -287,6 +289,9 @@ struct UnitInfo
     string name;
     string transname;
     string profession;
+    string goal;
+    df::pronoun_type goal_gender;
+    bool achieved_goal;
     int8_t color;
     int active_index;
     string squad_effective_name;
@@ -310,7 +315,8 @@ struct UnitInfo
 enum detail_cols {
     DETAIL_MODE_PROFESSION,
     DETAIL_MODE_SQUAD,
-    DETAIL_MODE_JOB
+    DETAIL_MODE_JOB,
+    DETAIL_MODE_GOAL
 };
 enum altsort_mode {
     ALTSORT_NAME,
@@ -346,6 +352,21 @@ bool sortByProfession (const UnitInfo *d1, const UnitInfo *d2)
         return (d1->profession > d2->profession);
     else
         return (d1->profession < d2->profession);
+}
+
+bool sortByGoal (const UnitInfo *d1, const UnitInfo *d2)
+{
+    if (!d1->unit->status.current_soul)
+        return !descending;
+    if (!d2->unit->status.current_soul)
+        return descending;
+
+    df::goal_type goal1 = Units::getGoalType(d1->unit);
+    df::goal_type goal2 = Units::getGoalType(d2->unit);
+    if (descending)
+        return (goal1 > goal2);
+    else
+        return (goal1 < goal2);
 }
 
 bool sortBySquad (const UnitInfo *d1, const UnitInfo *d2)
@@ -583,6 +604,8 @@ namespace unit_ops {
     }
     string get_profname(UnitInfo *u)
         { return Units::getProfessionName(u->unit); }
+    string get_goalname(UnitInfo *u)
+        { return Units::getGoalName(u->unit); }
     string get_real_profname(UnitInfo *u)
     {
         string tmp = u->unit->custom_profession;
@@ -1237,6 +1260,14 @@ void viewscreen_unitlaborsst::refreshNames()
         cur->name = Translation::TranslateName(Units::getVisibleName(unit), false);
         cur->transname = Translation::TranslateName(Units::getVisibleName(unit), true);
         cur->profession = Units::getProfessionName(unit);
+        cur->goal = Units::getGoalName(unit);
+        df::goal_type goal = Units::getGoalType(unit);
+        if (goal == df::goal_type::START_A_FAMILY) {
+            cur->goal_gender = unit->sex;
+        } else {
+            cur->goal_gender = df::pronoun_type::it;
+        }
+        cur->achieved_goal = Units::isGoalAchieved(unit);
 
         if (unit->job.current_job == NULL) {
             df::activity_event *event = Units::getMainSocialEvent(unit);
@@ -1298,8 +1329,10 @@ void viewscreen_unitlaborsst::calcSize()
             detail_cmp = units[i]->squad_info.size();
         } else if (detail_mode == DETAIL_MODE_JOB) {
             detail_cmp = units[i]->job_desc.size();
-        } else {
+        } else if (detail_mode == DETAIL_MODE_PROFESSION) {
             detail_cmp = units[i]->profession.size();
+        } else {
+            detail_cmp = units[i]->goal.size();
         }
         if (size_t(col_maxwidth[DISP_COLUMN_DETAIL]) < detail_cmp)
             col_maxwidth[DISP_COLUMN_DETAIL] = detail_cmp;
@@ -1736,8 +1769,10 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
                 std::stable_sort(units.begin(), units.end(), sortBySquad);
             } else if (detail_mode == DETAIL_MODE_JOB) {
                 std::stable_sort(units.begin(), units.end(), sortByJob);
-            } else {
+            } else if (detail_mode == DETAIL_MODE_PROFESSION) {
                 std::stable_sort(units.begin(), units.end(), sortByProfession);
+            } else {
+                std::stable_sort(units.begin(), units.end(), sortByGoal);
             }
             break;
         case ALTSORT_STRESS:
@@ -1777,10 +1812,13 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         if (detail_mode == DETAIL_MODE_SQUAD) {
             detail_mode = DETAIL_MODE_JOB;
         } else if (detail_mode == DETAIL_MODE_JOB) {
-            detail_mode = DETAIL_MODE_PROFESSION;
-        } else {
+            detail_mode = DETAIL_MODE_GOAL;
+        } else if (detail_mode == DETAIL_MODE_PROFESSION) {
             detail_mode = DETAIL_MODE_SQUAD;
+        } else {
+            detail_mode = DETAIL_MODE_PROFESSION;
         }
+        calcSize();
     }
 
     if (events->count(interface_key::CUSTOM_SHIFT_X))
@@ -1888,8 +1926,10 @@ void viewscreen_unitlaborsst::render()
         detail_str = "Squad";
     } else if (detail_mode == DETAIL_MODE_JOB) {
         detail_str = "Job";
-    } else {
+    } else if (detail_mode == DETAIL_MODE_PROFESSION) {
         detail_str = "Profession";
+    } else {
+        detail_str = "Goal";
     }
     Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_DETAIL], 2, detail_str);
 
@@ -1978,9 +2018,32 @@ void viewscreen_unitlaborsst::render()
             } else {
                 fg = COLOR_LIGHTCYAN;
             }
-        } else {
+        } else if (detail_mode == DETAIL_MODE_PROFESSION) {
             fg = cur->color;
             detail_str = cur->profession;
+        } else {
+            if (cur->goal_gender == df::pronoun_type::it) {
+                if (cur->achieved_goal) {
+                    fg = COLOR_LIGHTGREEN;
+                } else {
+                    fg = COLOR_BROWN;
+                }
+            } else if (cur->goal_gender == df::pronoun_type::she) {
+                if (cur->achieved_goal) {
+                    fg = COLOR_LIGHTRED;
+                }
+                else {
+                    fg = COLOR_MAGENTA;
+                }
+            } else {
+                if (cur->achieved_goal) {
+                    fg = COLOR_LIGHTCYAN;
+                }
+                else {
+                    fg = COLOR_BLUE;
+                }
+            }
+            detail_str = cur->goal;
         }
         detail_str.resize(col_widths[DISP_COLUMN_DETAIL]);
         Screen::paintString(Screen::Pen(' ', fg, bg), col_offsets[DISP_COLUMN_DETAIL], 4 + row, detail_str);
@@ -2140,8 +2203,10 @@ void viewscreen_unitlaborsst::render()
             OutputString(15, x, y, "Squad");
         } else if (detail_mode == DETAIL_MODE_JOB) {
             OutputString(15, x, y, "Job");
-        } else {
+        } else if (detail_mode == DETAIL_MODE_PROFESSION) {
             OutputString(15, x, y, "Profession");
+        } else {
+            OutputString(15, x, y, "Goal");
         }
         break;
     case ALTSORT_STRESS:

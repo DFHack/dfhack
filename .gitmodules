@@ -20,3 +20,6 @@
 	path = depends/xlsxio
 	url = ../../brechtsanders/xlsxio.git
 	shallow = true
+[submodule "depends/libzip"]
+	path = depends/libzip
+	url = ../../nih-at/libzip.git

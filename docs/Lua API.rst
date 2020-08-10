@@ -4119,19 +4119,31 @@ following API methods:
 
     local xlsxreader = require('plugins.xlsxreader')
 
-    local filepath = "path/to/some_file.xlsx"
-    local xlsx_file = xlsxreader.open_xlsx_file(filepath)
-    for _, sheet_name in ipairs(xlsxreader.list_sheets(xlsx_file)) do
+    local function dump_sheet(xlsx_file, sheet_name)
         print('reading sheet: '..sheet_name)
         local xlsx_sheet = xlsxreader.open_sheet(xlsx_file, sheet_name)
-        local row_cells = xlsxreader.get_row(xlsx_sheet)
-        while row_cells do
-            printall(row_cells)
-            row_cells = xlsxreader.get_row(xlsx_sheet)
-        end
-        xlsxreader.close_sheet(xlsx_sheet)
+        dfhack.with_finalize(
+            function () xlsxreader.close_sheet(xlsx_sheet) end,
+            function ()
+                local row_cells = xlsxreader.get_row(xlsx_sheet)
+                while row_cells do
+                    printall(row_cells)
+                    row_cells = xlsxreader.get_row(xlsx_sheet)
+                end
+            end
+        )
     end
-    xlsxreader.close_xlsx_file(xlsx_file)
+
+    local filepath = "path/to/some_file.xlsx"
+    local xlsx_file = xlsxreader.open_xlsx_file(filepath)
+    dfhack.with_finalize(
+        function () xlsxreader.close_xlsx_file(xlsx_file) end,
+        function ()
+            for _, sheet_name in ipairs(xlsxreader.list_sheets(xlsx_file)) do
+                dump_sheet(xlsx_file, sheet_name)
+            end
+        end
+    )
 
 =======
 Scripts

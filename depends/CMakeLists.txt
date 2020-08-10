@@ -35,19 +35,15 @@ endforeach()
 include(ExternalProject)
 
 if(WIN32)
-  set(EXPAT_LIB_SUFFIX "MD.lib")
-  set(LIB_SUFFIX ".lib")
-  set(LIB_PREFIX "")
+  set(EXPAT_LIB_NAME_SUFFIX "MD")
   set(XLSXIO_C_FLAGS "${CMAKE_C_FLAGS} /DXML_STATIC")
 else()
-  set(EXPAT_LIB_SUFFIX ".a")
-  set(LIB_SUFFIX ".a")
-  set(LIB_PREFIX "lib")
+  set(EXPAT_LIB_NAME_SUFFIX "")
   set(XLSXIO_C_FLAGS "${CMAKE_C_FLAGS} -DXML_STATIC")
 endif()
 
 set(LIBEXPAT_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/libexpat)
-set(LIBEXPAT_LIB ${LIBEXPAT_INSTALL_DIR}/lib/libexpat${EXPAT_LIB_SUFFIX})
+set(LIBEXPAT_LIB ${LIBEXPAT_INSTALL_DIR}/lib/libexpat${EXPAT_LIB_NAME_SUFFIX}${CMAKE_STATIC_LIBRARY_SUFFIX})
 set(LIBEXPAT_LIB ${LIBEXPAT_LIB} PARENT_SCOPE)
 ExternalProject_Add(libexpat_project
     PREFIX      libexpat
@@ -58,7 +54,7 @@ ExternalProject_Add(libexpat_project
 )
 
 set(LIBZIP_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/libzip)
-set(LIBZIP_LIB ${LIBZIP_INSTALL_DIR}/lib/${LIB_PREFIX}zip${LIB_SUFFIX})
+set(LIBZIP_LIB ${LIBZIP_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}zip${CMAKE_STATIC_LIBRARY_SUFFIX})
 set(LIBZIP_LIB ${LIBZIP_LIB} PARENT_SCOPE)
 ExternalProject_Add(libzip_project
     PREFIX      libzip
@@ -70,7 +66,7 @@ ExternalProject_Add(libzip_project
 
 set(XLSXIO_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/xlsxio)
 set(XLSXIO_INSTALL_DIR ${XLSXIO_INSTALL_DIR} PARENT_SCOPE)
-set(XLSXIO_LIB ${XLSXIO_INSTALL_DIR}/lib/${LIB_PREFIX}xlsxio_read${LIB_SUFFIX})
+set(XLSXIO_LIB ${XLSXIO_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}xlsxio_read${CMAKE_STATIC_LIBRARY_SUFFIX})
 set(XLSXIO_LIB ${XLSXIO_LIB} PARENT_SCOPE)
 ExternalProject_Add(xlsxio_project
     PREFIX      xlsxio

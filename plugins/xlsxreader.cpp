@@ -37,6 +37,7 @@
  *  return true;
  */
 
+#define BUILD_XLSXIO_STATIC
 #include <xlsxio_read.h>
 
 #include "DataFuncs.h"

@@ -1,40 +1,5 @@
 /*
  * Wrapper for xlsxio_read library functions.
- *
- * Sample usage:
- *
- *  std::string filename = "sample_file.xlsx";
- *  xlsxioreader xlsxfile = XlsxReader::open_xlsx_file(filename);
- *  if (xlsxfile == NULL) {
- *      printf("cannot open file: '%s'", filename.c_str());
- *      return false;
- *  }
- *  auto sheetNames = XlsxReader::list_sheets(xlsxfile);
- *  for (auto sheetName = sheetNames.begin();
- *       sheetName != sheetNames.end();
- *       ++sheetName) {
- *      printf("reading sheet: %s\n", sheetName->c_str());
- *      xlsxioreadersheet xlsxsheet =
- *              XlsxReader::open_sheet(xlsxfile, *sheetName);
- *      if (xlsxsheet == NULL) {
- *          printf("cannot open sheet: '%s'", sheetName->c_str());
- *          continue;
- *      }
- *      std::string value;
- *      int row_num = 1;
- *      while (XlsxReader::GetNextRow(xlsxsheet)) {
- *          std::string s;
- *          printf("%d:\t", row_num);
- *          while (XlsxReader::GetNextCell(xlsxsheet, s)) {
- *              printf("%s\t", s.c_str());
- *          }
- *          printf("\n");
- *          ++row_num;
- *      }
- *      XlsxReader::close_sheet(xlsxsheet);
- *  }
- *  XlsxReader::close_xlsx_file(xlsxfile);
- *  return true;
  */
 
 #define BUILD_XLSXIO_STATIC

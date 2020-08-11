@@ -4102,6 +4102,8 @@ Lua plugin classes
 - ``shuffle()``: shuffles the sequence of numbers
 - ``next()``: returns next number in the sequence
 
+.. _xlsxreader:
+
 xlsxreader
 ==========
 

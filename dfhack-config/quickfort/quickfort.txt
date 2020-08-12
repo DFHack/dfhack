@@ -11,6 +11,12 @@
 # path. If set to a relative path, resolves to a directory under the DF folder.
 blueprints_dir=blueprints
 
+# Force all blueprint buildings that could be built with any building material
+# to only use blocks. The prevents logs, boulders, and bars (e.g. potash and
+# coal) from being wasted on constructions. If set to false, buildings will be
+# built with any available building material.
+buildings_use_blocks=true
+
 # Set to "true" or "false". If true, will designate dig blueprints in marker
 # mode. If false, only cells with dig codes explicitly prefixed with an "m" will
 # be designated in marker mode.

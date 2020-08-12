@@ -1,9 +1,0 @@
-# quickfort materials preference configuration file
-#
-# Defines forbidden materials and material preferences for build blueprints.
-# Settings in this file take precedence over any settings in the baseline
-# materials configuration file at hack/data/quickfort/materials-common.txt. See
-# that file to view the global defaults.
-#
-# Syntax TBD
-

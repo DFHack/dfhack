@@ -1,3 +1,11 @@
+/*
+ * This file and the companion PluginStatics.cpp contain static structures used
+ * by DFHack plugins. Linking them here, into the dfhack library, instead of
+ * into the plugins themselves allows the plugins to be freely unloaded and
+ * reloaded without fear of causing cached references to static data becoming
+ * corrupted.
+ */
+
 #pragma once
 
 #include "DataIdentity.h"

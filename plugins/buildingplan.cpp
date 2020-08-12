@@ -1,3 +1,4 @@
+#include "LuaTools.h"
 #include "buildingplan-lib.h"
 
 DFHACK_PLUGIN("buildingplan");
@@ -414,3 +415,24 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
     return CR_OK;
 }
+
+// Lua API section
+
+static bool isPlannableBuilding(df::building_type type) {
+    return planner.isPlanableBuilding(type);
+}
+
+static void addPlannedBuilding(df::building *bld) {
+    planner.addPlannedBuilding(bld);
+}
+
+static void doCycle() {
+    planner.doCycle();
+}
+
+DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(isPlannableBuilding),
+    DFHACK_LUA_FUNCTION(addPlannedBuilding),
+    DFHACK_LUA_FUNCTION(doCycle),
+    DFHACK_LUA_END
+};

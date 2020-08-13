@@ -13,7 +13,7 @@ The original idea and 1.0 codebase came from [Valdemar's](https://dwarffortressw
 
 This document focuses on DFHack Quickfort's capabilities and teaches players how to understand and build blueprint files.  Much of the text was originally written by Joel Thornton, reused here with his permission.
 
-For those just looking to apply blueprints, check out the [quickfort command syntax](https://docs.dfhack.org/en/stable/docs/_auto/base.html#quickfort) in the DFHack Scripts documentation. There are many ready-to-use blueprints available in the `blueprints/library` subfolder in your DFHack installation. Browse them on your computer or [online](https://github.com/DFHack/dfhack/tree/develop/data/blueprints/library), or run `quickfort list -l` at the `DFHack#` prompt to list them, and then `quickfort run` to apply them to your fort!
+For those just looking to apply blueprints, check out the [quickfort command syntax](https://docs.dfhack.org/en/stable/docs/_auto/base.html#quickfort) in the DFHack Scripts documentation. There are also many ready-to-use blueprints available in the `blueprints/library` subfolder in your DFHack installation. Browse them on your computer or [online](https://github.com/DFHack/dfhack/tree/develop/data/blueprints/library), or run `quickfort list -l` at the `DFHack#` prompt to list them, and then `quickfort run` to apply them to your fort!
 
 See the [Links section](#links) for more information and online resources.
 
@@ -25,7 +25,7 @@ Table of Contents
 * [Editing Blueprints](#editing-blueprints)
   * [Area expansion syntax](#area-expansion-syntax)
   * [Automatic area expansion](#automatic-area-expansion)
-  * [Specifying a starting position](#specifying-a-starting-position)
+  * [Blueprint labels and cursor offsets](#blueprint-labels-and-cursor-offsets)
   * [Multilevel blueprints](#multilevel-blueprints)
   * [Minecart tracks](#minecart-tracks)
 * [Packaging a set of blueprints](#packaging-a-set-of-blueprints)
@@ -40,6 +40,7 @@ Features
 * General
   * Manages complete blueprints to handle the four main phases of DF construction
   * Supports .csv and multi-worksheet .xlsx blueprint files
+  * Supports multiple blueprints per .csv file/spreadsheet sheet
   * Near-instant application, even for very large and complex blueprints
   * Blueprints can span multiple z-levels
   * Undo functionality for dig, build, and place blueprints
@@ -250,21 +251,28 @@ This style can be convenient for laying out multiple buildings of the same type.
 Quickfort will intelligently break large areas of the same designation into appropriately-sized chunks.
 
 
-Specifying a starting position
-------------------------------
+Blueprint labels and cursor offsets
+-----------------------------------
 
-You can optionally specify a cursor starting position for a particular blueprint, simplifying the task of blueprint alignment. This can be helpful for blueprints that are based on a central staircase, for example.
+The modeline has some additional components that we haven't talked about yet. You can give a blueprint a label by adding a `label()` marker and a cursor offset by adding a `start()` marker.
 
-To specify a cursor starting position, use the following modified format for the header line of your blueprint:
+Labels are displayed in the `quickfort list` output and are used for addressing specific blueprints when there are multiple blueprints in a single file or spreadsheet sheet (see [Packaging a set of blueprints](#packaging-a-set-of-blueprints) below). If a blueprint has no label, the label becomes the ordinal of the blueprint's position in the file or sheet. For example, the label of the first blueprint will be "1" if it is not otherwise set, the label of the second blueprint will be "2" if it is not otherwise set, etc. Labels that are explicitly defined must start with a letter to ensure the auto-generated labels don't conflict with user-defined labels.
 
-    #mode start(X;Y;STARTCOMMENT) comment
+Start positions specify a cursor offset for a particular blueprint, simplifying the task of blueprint alignment. This can be helpful for blueprints that are based on a central staircase, for example.
 
-where X and Y specify the starting cursor position (1;1 is the top left cell) and STARTCOMMENT (optional) is information about where to position the cursor. This information appears in the `quickfort list` output.
+The full modeline syntax is:
+
+    #mode label(mylabel) start(X;Y;STARTCOMMENT) comment
+
+where X and Y specify the starting cursor position (1;1 is the top left cell) and STARTCOMMENT (optional) is information about where to position the cursor. This information also appears in the `quickfort list` output.
+
+Note that all elements are optional except for the initial `#mode`, and, of course, if `label` is specified, there must be a label string, and if `start()` is specified, values for X and Y must be present.
 
 A couple examples:
 
     #dig start(3; 3; Center tile of a 5-tile square) Regular blueprint comment
-    #build start(10;15)
+    #build label(noblebedroom) start(10;15)
+    #query label(configstockpiles) No explicit start()  means cursor is at upper left corner
 
 
 Multilevel blueprints
@@ -408,18 +416,54 @@ Which would result in a carved track simliar to a constructed track of the form:
 Packaging a set of blueprints
 -----------------------------
 
-A complete QF specification for a section of your fortress may contain 4 or more separate blueprints, one for each "phase" of construction (dig, build, place stockpiles, query building adjustments).
+A complete specification for a section of your fortress may contain 4 or more separate blueprints, one for each "phase" of construction (dig, build, place stockpiles, query building adjustments).
 
-To manage all the separate blueprints, it is often convenient to keep related blueprints in a single .xlsx file, with each blueprint in a separate sheet within the file. Online spreadsheet applications like [Google Sheets](https://sheets.new) make it easy to work with multiple related blueprints, and, as a bonus, they retain any formatting you've set, like column sizes and coloring.
+To manage all the separate blueprints, it is often convenient to keep related blueprints in a single file. For .xlsx spreadsheets, you can keep each blueprint in a separate sheet. Online spreadsheet applications like [Google Sheets](https://sheets.new) make it easy to work with multiple related blueprints, and, as a bonus, they retain any formatting you've set, like column sizes and coloring.
 
-Of course, you could still choose to keep your blueprints in single-sheet .csv files and just give related blueprints similar names. The blueprint modes suggest a convenient naming scheme for .csv-based blueprint "stacks":
+For both .csv files and .xlsx spreadsheets you can also add as many blueprints as you want in a single file or sheet. Just add a modeline in the first column to indicate the start of a new blueprint. Instead of multiple .csv files, you can concatenate them into one single file.
+
+For example, you can store multiple blueprints together like this:
+
+    #dig label(digbed)
+    d d d d #
+    d d d d #
+    d d d d #
+    d d d d #
+    # # # # #
+    #build label(buildbed)
+    b   f h #
+            #
+            #
+    n       #
+    # # # # #
+    #place label(placebed)
+            #
+    f(2x2)  #
+            #
+            #
+    # # # # #
+    #query label(boozebed)
+            #
+    booze   #
+            #
+            #
+    # # # # #
+    #query label(roombed)
+    r{+ 3}& #
+            #
+            #
+            #
+    # # # # #
+
+
+Of course, you could still choose to keep your blueprints in single-sheet .csv files and just give related blueprints similar names:
 
     bedroom.1.dig.csv
     bedroom.2.build.csv
     bedroom.3.place.csv
     bedroom.4.query.csv
 
-But the naming is completely up to you, of course.
+But the naming and organization is completely up to you.
 
 
 Tips and Tricks

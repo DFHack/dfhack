@@ -25,10 +25,11 @@ Table of Contents
 * [Editing Blueprints](#editing-blueprints)
   * [Area expansion syntax](#area-expansion-syntax)
   * [Automatic area expansion](#automatic-area-expansion)
-  * [Blueprint labels and cursor offsets](#blueprint-labels-and-cursor-offsets)
-  * [Multilevel blueprints](#multilevel-blueprints)
   * [Minecart tracks](#minecart-tracks)
-* [Packaging a set of blueprints](#packaging-a-set-of-blueprints)
+  * [Multilevel blueprints](#multilevel-blueprints)
+  * [Blueprint labels and cursor offsets](#blueprint-labels-and-cursor-offsets)
+  * [Packaging a set of blueprints](#packaging-a-set-of-blueprints)
+  * [Meta blueprints](#meta-blueprints)
 * [Troubleshooting](#troubleshooting)
 * [Tips and tricks](#tips-and-tricks)
 * [Links](#links)
@@ -40,14 +41,15 @@ Features
 * General
   * Manages complete blueprints to handle the four main phases of DF construction
   * Supports .csv and multi-worksheet .xlsx blueprint files
-  * Supports multiple blueprints per .csv file/spreadsheet sheet
   * Near-instant application, even for very large and complex blueprints
+  * Supports multiple blueprints per .csv file/spreadsheet sheet
+  * "meta" blueprints that automate the application of sequences of blueprints
   * Blueprints can span multiple z-levels
   * Undo functionality for dig, build, and place blueprints
   * Automatic cropping of blueprints so you don't get errors if the blueprint extends off the map
   * Can generate manager orders for everything required to apply build blueprints
   * Library of ready-to-use blueprints included
-  * Verbose output mode for debugging blueprints
+  * Verbose output mode for debugging
 * Dig mode
   * Supports all types of designations, including dumping/forbidding items and setting traffic areas
   * Supports applying dig blueprints in marker mode
@@ -86,6 +88,8 @@ The keyword "dig" tells Quickfort we are going to be using the Designations menu
     build   Build menu (b)
     place   Place stockpiles menu (p)
     query   Set building tasks/prefs menu (q)
+
+There are also "meta" blueprints, but we'll talk about those [later](#meta-blueprints).
 
 Optionally following this keyword and a space, you may enter a comment. This comment will appear in the output of `quickfort list` when run from the `DFHack#` prompt. You can use this space for explanations, attribution, etc.
 
@@ -251,46 +255,6 @@ This style can be convenient for laying out multiple buildings of the same type.
 Quickfort will intelligently break large areas of the same designation into appropriately-sized chunks.
 
 
-Blueprint labels and cursor offsets
------------------------------------
-
-The modeline has some additional components that we haven't talked about yet. You can give a blueprint a label by adding a `label()` marker and a cursor offset by adding a `start()` marker.
-
-Labels are displayed in the `quickfort list` output and are used for addressing specific blueprints when there are multiple blueprints in a single file or spreadsheet sheet (see [Packaging a set of blueprints](#packaging-a-set-of-blueprints) below). If a blueprint has no label, the label becomes the ordinal of the blueprint's position in the file or sheet. For example, the label of the first blueprint will be "1" if it is not otherwise set, the label of the second blueprint will be "2" if it is not otherwise set, etc. Labels that are explicitly defined must start with a letter to ensure the auto-generated labels don't conflict with user-defined labels.
-
-Start positions specify a cursor offset for a particular blueprint, simplifying the task of blueprint alignment. This can be helpful for blueprints that are based on a central staircase, for example.
-
-The full modeline syntax is:
-
-    #mode label(mylabel) start(X;Y;STARTCOMMENT) comment
-
-where X and Y specify the starting cursor position (1;1 is the top left cell) and STARTCOMMENT (optional) is information about where to position the cursor. This information also appears in the `quickfort list` output.
-
-Note that all elements are optional except for the initial `#mode`, and, of course, if `label` is specified, there must be a label string, and if `start()` is specified, values for X and Y must be present.
-
-A couple examples:
-
-    #dig start(3; 3; Center tile of a 5-tile square) Regular blueprint comment
-    #build label(noblebedroom) start(10;15)
-    #query label(configstockpiles) No explicit start()  means cursor is at upper left corner
-
-
-Multilevel blueprints
----------------------
-
-Multilevel blueprints are accommodated by separating Z-levels of the blueprint with #> (go down one z-level) or #< (go up one z-level) at the end of each floor.
-
-    #dig Stairs leading down to a small room below
-    j  `  `  #
-    `  `  `  #
-    `  `  `  #
-    #> #  #  #
-    u  d  d  #
-    d  d  d  #
-    d  d  d  #
-    #  #  #  #
-
-
 Minecart tracks
 ---------------
 
@@ -413,6 +377,48 @@ Which would result in a carved track simliar to a constructed track of the form:
     #        #        #        #
 
 
+Multilevel blueprints
+---------------------
+
+Multilevel blueprints are accommodated by separating Z-levels of the blueprint with `#>` (go down one z-level) or `#<` (go up one z-level) at the end of each floor.
+
+    #dig Stairs leading down to a small room below
+    j  `  `  #
+    `  `  `  #
+    `  `  `  #
+    #> #  #  #
+    u  d  d  #
+    d  d  d  #
+    d  d  d  #
+    #  #  #  #
+
+The marker must appear in the first column of the row to be recognized, just like a modeline.
+
+
+Blueprint labels and cursor offsets
+-----------------------------------
+
+The modeline has some additional components that we haven't talked about yet. You can give a blueprint a label by adding a `label()` marker and a cursor offset by adding a `start()` marker.
+
+Labels are displayed in the `quickfort list` output and are used for addressing specific blueprints when there are multiple blueprints in a single file or spreadsheet sheet (see [Packaging a set of blueprints](#packaging-a-set-of-blueprints) below). If a blueprint has no label, the label becomes the ordinal of the blueprint's position in the file or sheet. For example, the label of the first blueprint will be "1" if it is not otherwise set, the label of the second blueprint will be "2" if it is not otherwise set, etc. Labels that are explicitly defined must start with a letter to ensure the auto-generated labels don't conflict with user-defined labels.
+
+Start positions specify a cursor offset for a particular blueprint, simplifying the task of blueprint alignment. This can be helpful for blueprints that are based on a central staircase, for example.
+
+The full modeline syntax is:
+
+    #mode label(mylabel) start(X;Y;STARTCOMMENT) comment
+
+where X and Y specify the starting cursor position (1;1 is the top left cell) and STARTCOMMENT (optional) is information about where to position the cursor. This information also appears in the `quickfort list` output.
+
+Note that all elements are optional except for the initial `#mode`, and, of course, if `label` is specified, there must be a label string, and if `start()` is specified, values for X and Y must be present.
+
+A couple examples:
+
+    #dig start(3; 3; Center tile of a 5-tile square) Regular blueprint comment
+    #build label(noblebedroom) start(10;15)
+    #query label(configstockpiles) No explicit start()  means cursor is at upper left corner
+
+
 Packaging a set of blueprints
 -----------------------------
 
@@ -464,6 +470,95 @@ Of course, you could still choose to keep your blueprints in single-sheet .csv f
     bedroom.4.query.csv
 
 But the naming and organization is completely up to you.
+
+
+Meta blueprints
+---------------
+
+Meta blueprints are blueprints that script a series of other blueprints. Many blueprint packages follow this pattern:
+
+- Apply dig blueprint to designate dig areas
+- Wait for miners to dig
+- **Apply build buildprint** to designate buildings
+- **Apply place buildprint** to designate stockpiles
+- **Apply query blueprint** to configure stockpiles
+- Wait for buildings to get built
+- Apply a different query blueprint to configure rooms
+
+Those three "apply"s in the middle might as well get done in one command instead of three. A meta blueprint can encode that sequence. A meta blueprint refers to other blueprints by their label (see the [labels and offsets section](#blueprint-labels-and-cursor-offsets) above) in the same format used by the `DFHack#` quickfort command: "<sheet_name>/<label>", or just "/<label>" for blueprints in .csv files or blueprints in the same spreadsheet sheet as the #meta blueprint that references them.
+
+A few examples might make this clearer. Say you have a .csv file with the following blueprints defined:
+
+    #dig label(digbedroom)
+    ...
+    #build label(buildbedroom)
+    ...
+    #place label(placebedroom)
+    ...
+    #query label(querystockpilesbedroom)
+    ...
+    #query label(makeroombedroom)
+    ...
+
+Note how I've given them all labels so we can address them safely. If I hadn't given them labels, they would receive default labels of "1", "2", "3", etc, but those labels would change if I ever add more blueprints at the top. This is not a problem if we're just running the blueprints from the `quickfort list` command, but meta blueprints need a label that isn't going to change over time.
+
+So let's add a meta blueprint to this file that will combine the middle three blueprints into one:
+
+    #meta plan bedroom: combines build, place, and stockpile config blueprints
+    /buildbedroom
+    /placebedroom
+    /querystockpilesbedroom
+
+Now your sequence is shortened to:
+
+- Apply dig blueprint to designate dig areas
+- Wait for miners to dig
+- **Apply meta buildprint** to build buildings and designate/configure stockpiles
+- Wait for buildings to get built
+- Apply the final query blueprint to configure the room
+
+You can use meta blueprints to lay out your fortress at a larger scale as well. The `#<` and `#>` notation is valid in meta blueprints, so you can, for example, store the dig blueprints for all the levels of your fortress in different sheets in a spreadsheet, and then use a meta blueprint to designate your entire fortress for digging at once. For example, say you have a spreadsheet with the following layout:
+
+Sheet name    | contents
+----------    | --------
+dig_farming   | one #dig blueprint, no label
+dig_industry  | one #dig blueprint, no label
+dig_dining    | four #dig blueprints, with labels "main", "basement", "waterway", and "cistern"
+dig_guildhall | one #dig blueprint, no label
+dig_suites    | one #dig blueprint, no label
+dig_bedrooms  | one #dig blueprint, no label
+
+We can add a sheet named "dig_all" with the following contents (we're expecting a big fort, so we're planning for a lot of bedrooms):
+
+    #meta dig the whole fortress (remember to set force_marker_mode to true)
+    dig_farming/1
+    #>
+    dig_industry/1
+    #>
+    #>
+    dig_dining/main
+    #>
+    dig_dining/basement
+    #>
+    dig_dining/waterway
+    #>
+    dig_dining/cistern
+    #>
+    dig_guildhall/1
+    #>
+    dig_suites/1
+    #>
+    dig_bedrooms/1
+    #>
+    dig_bedrooms/1
+    #>
+    dig_bedrooms/1
+    #>
+    dig_bedrooms/1
+    #>
+    dig_bedrooms/1
+
+Note that for blueprints without an explicit label, we still need to address them by their auto-generated numerical label.
 
 
 Tips and Tricks

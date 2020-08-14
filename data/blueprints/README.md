@@ -27,7 +27,7 @@ Table of Contents
   * [Automatic area expansion](#automatic-area-expansion)
   * [Minecart tracks](#minecart-tracks)
   * [Multilevel blueprints](#multilevel-blueprints)
-  * [Blueprint labels and cursor offsets](#blueprint-labels-and-cursor-offsets)
+  * [Modeline optional markers](modeline-optional-markers)
   * [Packaging a set of blueprints](#packaging-a-set-of-blueprints)
   * [Meta blueprints](#meta-blueprints)
 * [Troubleshooting](#troubleshooting)
@@ -395,28 +395,48 @@ Multilevel blueprints are accommodated by separating Z-levels of the blueprint w
 The marker must appear in the first column of the row to be recognized, just like a modeline.
 
 
-Blueprint labels and cursor offsets
------------------------------------
+Modeline optional markers
+-------------------------
 
-The modeline has some additional components that we haven't talked about yet. You can give a blueprint a label by adding a `label()` marker and a cursor offset by adding a `start()` marker.
+The modeline has some additional optional components that we haven't talked about yet. You can:
 
-Labels are displayed in the `quickfort list` output and are used for addressing specific blueprints when there are multiple blueprints in a single file or spreadsheet sheet (see [Packaging a set of blueprints](#packaging-a-set-of-blueprints) below). If a blueprint has no label, the label becomes the ordinal of the blueprint's position in the file or sheet. For example, the label of the first blueprint will be "1" if it is not otherwise set, the label of the second blueprint will be "2" if it is not otherwise set, etc. Labels that are explicitly defined must start with a letter to ensure the auto-generated labels don't conflict with user-defined labels.
+* give a blueprint a label by adding a `label()` marker
+* set a cursor offset by adding a `start()` marker
+* hide a blueprint with a `hidden()` marker
 
-Start positions specify a cursor offset for a particular blueprint, simplifying the task of blueprint alignment. This can be helpful for blueprints that are based on a central staircase, for example.
+The full modeline syntax, when everything is specified, is:
 
-The full modeline syntax is:
+    #mode label(mylabel) start(X;Y;STARTCOMMENT) hidden() comment
 
-    #mode label(mylabel) start(X;Y;STARTCOMMENT) comment
-
-where X and Y specify the starting cursor position (1;1 is the top left cell) and STARTCOMMENT (optional) is information about where to position the cursor. This information also appears in the `quickfort list` output.
-
-Note that all elements are optional except for the initial `#mode`, and, of course, if `label` is specified, there must be a label string, and if `start()` is specified, values for X and Y must be present.
-
-A couple examples:
+Note that all elements are optional except for the initial `#mode`. Here are a few examples of modelines with optional elements before we discuss them in more detail:
 
     #dig start(3; 3; Center tile of a 5-tile square) Regular blueprint comment
     #build label(noblebedroom) start(10;15)
     #query label(configstockpiles) No explicit start()  means cursor is at upper left corner
+    #meta label(digwholefort)
+    #dig label(digdining) hidden() managed by the digwholefort meta blueprint
+
+### Blueprint labels ###
+
+Labels are displayed in the `quickfort list` output and are used for addressing specific blueprints when there are multiple blueprints in a single file or spreadsheet sheet (see [Packaging a set of blueprints](#packaging-a-set-of-blueprints) below). If a blueprint has no label, the label becomes the ordinal of the blueprint's position in the file or sheet. For example, the label of the first blueprint will be "1" if it is not otherwise set, the label of the second blueprint will be "2" if it is not otherwise set, etc. Labels that are explicitly defined must start with a letter to ensure the auto-generated labels don't conflict with user-defined labels.
+
+### Start positions ###
+
+Start positions specify a cursor offset for a particular blueprint, simplifying the task of blueprint alignment. This is very helpful for blueprints that are based on a central staircase, but it helps whenever a blueprint has an obvious "center". For example:
+
+    #build start(2;2;center of workshop) a mason workshop
+    wm wm wm #
+    wm wm wm #
+    wm wm wm #
+    #  #  #  #
+
+will build the workshop *centered* on the cursor, not down and to the right of the cursor.
+
+The two numbers specify the column and row (or X and Y offset) where the cursor is expected to be when you apply the blueprint. Position 1;1 is the top left cell. The optional comment will show up in the `quickfort list` output and should contain information about where to position the cursor.
+
+### Hiding blueprints ###
+
+A blueprint with a `hidden()` marker won't appear in `quickfort list` output unless the `--hidden` flag is specified. The primary reason for hiding a blueprint (rather than, say, deleting it or moving it out of the `blueprints/` folder) is if a blueprint is intended to be run as part of a larger sequence managed by a [meta blueprint](#meta-blueprints).
 
 
 Packaging a set of blueprints
@@ -485,7 +505,7 @@ Meta blueprints are blueprints that script a series of other blueprints. Many bl
 - Wait for buildings to get built
 - Apply a different query blueprint to configure rooms
 
-Those three "apply"s in the middle might as well get done in one command instead of three. A meta blueprint can encode that sequence. A meta blueprint refers to other blueprints by their label (see the [labels and offsets section](#blueprint-labels-and-cursor-offsets) above) in the same format used by the `DFHack#` quickfort command: "<sheet_name>/<label>", or just "/<label>" for blueprints in .csv files or blueprints in the same spreadsheet sheet as the #meta blueprint that references them.
+Those three "apply"s in the middle might as well get done in one command instead of three. A meta blueprint can encode that sequence. A meta blueprint refers to other blueprints by their label (see the [Modeline optional markers](modeline-optional-markers) section above) in the same format used by the `DFHack#` quickfort command: "<sheet_name>/<label>", or just "/<label>" for blueprints in .csv files or blueprints in the same spreadsheet sheet as the #meta blueprint that references them.
 
 A few examples might make this clearer. Say you have a .csv file with the following blueprints defined:
 

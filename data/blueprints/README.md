@@ -32,6 +32,7 @@ Table of Contents
   * [Meta blueprints](#meta-blueprints)
 * [Troubleshooting](#troubleshooting)
 * [Tips and tricks](#tips-and-tricks)
+* [Caveats and limitations](#caveats-and-limitations)
 * [Links](#links)
 
 
@@ -87,6 +88,7 @@ The keyword "dig" tells Quickfort we are going to be using the Designations menu
     dig     Designations menu (d)
     build   Build menu (b)
     place   Place stockpiles menu (p)
+    zone    Activity zones menu (i)
     query   Set building tasks/prefs menu (q)
 
 There are also "meta" blueprints, but we'll talk about those [later](#meta-blueprints).
@@ -581,7 +583,7 @@ We can add a sheet named "dig_all" with the following contents (we're expecting 
 Note that for blueprints without an explicit label, we still need to address them by their auto-generated numerical label.
 
 
-Tips and Tricks
+Tips and tricks
 ---------------
 
 * During blueprint application, especially query blueprints, don't click the mouse on the DF window or type any keys. They can change the state of the game while the blueprint is being applied, resulting in strange errors.
@@ -589,6 +591,24 @@ Tips and Tricks
 * After digging out an area, you may wish to smooth and/or engrave the area before starting the build phase, as dwarves may be unable to access walls or floors that are behind/under built objects.
 
 * As of DF 0.34.x, it is no longer possible to build doors (d) at the same time that you build adjacent walls (Cw). Doors must now be built *after* walls are constructed for them to be next to. This does not affect the more common case where walls exist as a side-effect of having dug-out a room in a #dig blueprint.
+
+
+Caveats and limitations
+-----------------------
+
+* Buildings will be designated regardless of whether you have the required materials, but if materials are not available when the construction job is picked up by a dwarf, the buildings will be canceled and the designations will disappear. Until the buildingplan plugin can be extended to support all building types, you should use `quickfort orders` to pre-manufacture all the materials you need for a `#build`-mode blueprint before you apply it.
+
+* If you use the `jugs` alias in your `#query`-mode blueprints, be aware that there is no way to differentiate jugs from other types of tools in the game. Therefore, `jugs` stockpiles will also take nest boxes and other tools. The only workaround is not to have other tools lying around in your fort.
+
+* `#zone`-mode blueprints can currently only initialize zones with a single activity type.
+
+* Weapon traps and upright spear/spikes can currently only be built with a single weapon.
+
+* Pressure plates can be built, but they cannot be configured yet.
+
+* Building instruments, bookcases, display furniture, and offering places are not yet supported by DFHack.
+
+* This script is relatively new, and there are bound to be bugs! Please report them at the [DFHack issue tracker](https://github.com/DFHack/dfhack/issues) so they can be addressed.
 
 
 Links

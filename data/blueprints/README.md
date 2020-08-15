@@ -406,10 +406,11 @@ The modeline has some additional optional components that we haven't talked abou
 * give a blueprint a label by adding a `label()` marker
 * set a cursor offset by adding a `start()` marker
 * hide a blueprint with a `hidden()` marker
+* register a message to be displayed after the blueprint is successfully applied
 
 The full modeline syntax, when everything is specified, is:
 
-    #mode label(mylabel) start(X;Y;STARTCOMMENT) hidden() comment
+    #mode label(mylabel) start(X;Y;STARTCOMMENT) hidden() message(mymessage) comment
 
 Note that all elements are optional except for the initial `#mode`. Here are a few examples of modelines with optional elements before we discuss them in more detail:
 
@@ -418,6 +419,7 @@ Note that all elements are optional except for the initial `#mode`. Here are a f
     #query label(configstockpiles) No explicit start()  means cursor is at upper left corner
     #meta label(digwholefort)
     #dig label(digdining) hidden() managed by the digwholefort meta blueprint
+    #zone label(pastures) message(remember to assign animals to the new pastures)
 
 ### Blueprint labels ###
 
@@ -440,6 +442,10 @@ The two numbers specify the column and row (or X and Y offset) where the cursor 
 ### Hiding blueprints ###
 
 A blueprint with a `hidden()` marker won't appear in `quickfort list` output unless the `--hidden` flag is specified. The primary reason for hiding a blueprint (rather than, say, deleting it or moving it out of the `blueprints/` folder) is if a blueprint is intended to be run as part of a larger sequence managed by a [meta blueprint](#meta-blueprints).
+
+### Messages ###
+
+A blueprint with a `message()` marker will display a message after the blueprint is applied. This is useful for reminding players to take manual steps that cannot be automated, like assigning animals to a pasture or assigning minecarts to a route.
 
 
 Packaging a set of blueprints

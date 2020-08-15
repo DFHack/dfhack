@@ -32,6 +32,7 @@ Table of Contents
   * [Meta blueprints](#meta-blueprints)
 * [Troubleshooting](#troubleshooting)
 * [Tips and tricks](#tips-and-tricks)
+* [Generating manager orders](#generating-manager-orders)
 * [Caveats and limitations](#caveats-and-limitations)
 * [Links](#links)
 
@@ -581,6 +582,23 @@ We can add a sheet named "dig_all" with the following contents (we're expecting 
     dig_bedrooms/1
 
 Note that for blueprints without an explicit label, we still need to address them by their auto-generated numerical label.
+
+
+Generating manager orders
+-------------------------
+
+Quickfort can generate manager orders to make sure you have the proper items in stock to apply a `build`-mode blueprint.
+
+Many items can be manufactured from different source materials. Orders will always choose rock when it can, then wood, then cloth, then iron. You can always remove orders that don't make sense for your fort and manually enqueue a similar order more to your liking. For example, if you want silk ropes instead of cloth ropes, make a new manager order for silk ropes and then remove the generated cloth rope order.
+
+Anything that requires generic building materials (workshops, constructions, etc.) will result in an order for a rock block. One "Make rock blocks" job produces four blocks per input boulder, so the number of jobs ordered will be the number of blocks you need divided by four (rounded up). You might end up with a few extra blocks, but not too many.
+
+If you want your constructions to be in a consistent color, be sure to choose a rock type for all of your 'Make rock blocks' orders by selecting the order and hitting `d`. You might want to set the rock type for other non-block orders to something different if you fear running out of the type of rock that you want to use for blocks.
+
+There are a few building types that will generate extra manager orders for related materials:
+
+- Track stops will generate an order for a minecart
+- Traction benches will generate orders for a table, mechanism, and rope
 
 
 Tips and tricks

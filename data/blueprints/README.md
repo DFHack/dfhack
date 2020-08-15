@@ -258,6 +258,24 @@ This style can be convenient for laying out multiple buildings of the same type.
 Quickfort will intelligently break large areas of the same designation into appropriately-sized chunks.
 
 
+Stockpiles and zones
+--------------------
+
+It is very common to have stockpiles that accept multiple categories of items or zones that permit more than one activity. Although it is perfectly valid to declare a single-purpose stockpile or zone and then modify it with a `#query` blueprint, quickfort also supports directly declaring all the types on the `#place` and `#zone`blueprints. For example, to declare a 10x10 area that is a pasture, a fruit picking area, and a meeting area all at once, you could write:
+
+    #zone main pasture and picnic area
+    nmg(10x10) #
+
+And similarly, to declare a stockpile that accepts both corpses and refuse, you could write:
+
+    #place refuse heap
+    yr(20x10) #
+
+The order of the individual letters doesn't matter.
+
+Note that while this notation covers most use cases, tweaking low-level zone parameters, like hospital supply levels, must still be done with a `#query` blueprint.
+
+
 Minecart tracks
 ---------------
 
@@ -589,6 +607,8 @@ We can add a sheet named "dig_all" with the following contents (we're expecting 
 
 Note that for blueprints without an explicit label, we still need to address them by their auto-generated numerical label.
 
+You can then hide the blueprints that you now manage with the `meta`-mode blueprint from `quickfort list` by adding a `hidden()` marker to their modelines. That way the output of `quickfort list` won't be cluttered by blueprints that you don't need to run directly. If you ever *do* need to access the managed blueprints individually, you can still see them with `quickfort list --hidden`.
+
 
 Generating manager orders
 -------------------------
@@ -623,8 +643,6 @@ Caveats and limitations
 * Buildings will be designated regardless of whether you have the required materials, but if materials are not available when the construction job is picked up by a dwarf, the buildings will be canceled and the designations will disappear. Until the buildingplan plugin can be extended to support all building types, you should use `quickfort orders` to pre-manufacture all the materials you need for a `#build`-mode blueprint before you apply it.
 
 * If you use the `jugs` alias in your `#query`-mode blueprints, be aware that there is no way to differentiate jugs from other types of tools in the game. Therefore, `jugs` stockpiles will also take nest boxes and other tools. The only workaround is not to have other tools lying around in your fort.
-
-* `#zone`-mode blueprints can currently only initialize zones with a single activity type.
 
 * Weapon traps and upright spear/spikes can currently only be built with a single weapon.
 

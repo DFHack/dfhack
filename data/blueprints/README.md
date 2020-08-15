@@ -445,7 +445,7 @@ A blueprint with a `hidden()` marker won't appear in `quickfort list` output unl
 Packaging a set of blueprints
 -----------------------------
 
-A complete specification for a section of your fortress may contain 4 or more separate blueprints, one for each "phase" of construction (dig, build, place stockpiles, query building adjustments).
+A complete specification for a section of your fortress may contain 5 or more separate blueprints, one for each "phase" of construction (dig, build, place stockpiles, designate zones, query building adjustments).
 
 To manage all the separate blueprints, it is often convenient to keep related blueprints in a single file. For .xlsx spreadsheets, you can keep each blueprint in a separate sheet. Online spreadsheet applications like [Google Sheets](https://sheets.new) make it easy to work with multiple related blueprints, and, as a bonus, they retain any formatting you've set, like column sizes and coloring.
 

@@ -14,13 +14,18 @@ using namespace DFHack;
 
 DFHACK_PLUGIN("xlsxreader");
 
-// returns NULL on error
+// returns NULL if the file failed to open
 xlsx_file_handle* open_xlsx_file(std::string filename) {
-    return new xlsx_file_handle(xlsxioread_open(filename.c_str()));
+    xlsxioreader opaque_file_handle = xlsxioread_open(filename.c_str());
+    if (!opaque_file_handle) {
+        return NULL;
+    }
+    return new xlsx_file_handle(opaque_file_handle);
 }
 
 void close_xlsx_file(xlsx_file_handle *file_handle) {
     CHECK_NULL_POINTER(file_handle);
+    CHECK_NULL_POINTER(file_handle->handle);
     xlsxioread_close(file_handle->handle);
     delete(file_handle);
 }
@@ -29,13 +34,18 @@ void close_xlsx_file(xlsx_file_handle *file_handle) {
 xlsx_sheet_handle* open_sheet(xlsx_file_handle *file_handle,
                               std::string sheet_name) {
     CHECK_NULL_POINTER(file_handle);
-    return new xlsx_sheet_handle(
-        xlsxioread_sheet_open(file_handle->handle,
-                              sheet_name.c_str(), XLSXIOREAD_SKIP_NONE));
+    CHECK_NULL_POINTER(file_handle->handle);
+    xlsxioreadersheet opaque_sheet_handle = xlsxioread_sheet_open(
+        file_handle->handle, sheet_name.c_str(), XLSXIOREAD_SKIP_NONE);
+    if (!opaque_sheet_handle) {
+        return NULL;
+    }
+    return new xlsx_sheet_handle(opaque_sheet_handle);
 }
 
 void close_sheet(xlsx_sheet_handle *sheet_handle) {
     CHECK_NULL_POINTER(sheet_handle);
+    CHECK_NULL_POINTER(sheet_handle->handle);
     xlsxioread_sheet_close(sheet_handle->handle);
     delete(sheet_handle);
 }
@@ -78,6 +88,7 @@ static void * get_xlsxreader_handle(lua_State *L) {
 // takes a file handle and returns a table-list of sheet names
 int list_sheets(lua_State *L) {
     auto file_handle = (xlsx_file_handle *)get_xlsxreader_handle(L);
+    CHECK_NULL_POINTER(file_handle->handle);
     auto sheetNames = std::vector<std::string>();
     xlsxioread_list_sheets(file_handle->handle, list_callback, &sheetNames);
     Lua::PushVector(L, sheetNames, true);
@@ -88,6 +99,7 @@ int list_sheets(lua_State *L) {
 // already processed the last row in the file.
 int get_row(lua_State *L) {
     auto sheet_handle = (xlsx_sheet_handle *)get_xlsxreader_handle(L);
+    CHECK_NULL_POINTER(sheet_handle->handle);
     bool ok = get_next_row(sheet_handle);
     if (!ok) {
         lua_pushnil(L);

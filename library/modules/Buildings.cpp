@@ -576,7 +576,7 @@ bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,
                                df::building_extents *ext,
                                bool create_ext,
                                bool allow_occupied,
-                               bool is_civzone)
+                               bool allow_wall)
 {
     bool found_any = false;
 
@@ -611,7 +611,7 @@ bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,
             else
             {
                 auto tile = block->tiletype[btile.x][btile.y];
-                if (!is_civzone && !HighPassable(tile))
+                if (!allow_wall && !HighPassable(tile))
                     allowed = false;
             }
 

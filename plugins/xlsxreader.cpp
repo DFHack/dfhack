@@ -24,9 +24,12 @@ xlsx_file_handle* open_xlsx_file(std::string filename) {
 }
 
 void close_xlsx_file(xlsx_file_handle *file_handle) {
-    CHECK_NULL_POINTER(file_handle);
-    CHECK_NULL_POINTER(file_handle->handle);
-    xlsxioread_close(file_handle->handle);
+    if (!file_handle) {
+        return;
+    }
+    if (file_handle->handle) {
+        xlsxioread_close(file_handle->handle);
+    }
     delete(file_handle);
 }
 
@@ -44,9 +47,12 @@ xlsx_sheet_handle* open_sheet(xlsx_file_handle *file_handle,
 }
 
 void close_sheet(xlsx_sheet_handle *sheet_handle) {
-    CHECK_NULL_POINTER(sheet_handle);
-    CHECK_NULL_POINTER(sheet_handle->handle);
-    xlsxioread_sheet_close(sheet_handle->handle);
+    if (!sheet_handle) {
+        return;
+    }
+    if (sheet_handle->handle) {
+        xlsxioread_sheet_close(sheet_handle->handle);
+    }
     delete(sheet_handle);
 }
 

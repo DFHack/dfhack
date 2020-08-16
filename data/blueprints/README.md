@@ -25,6 +25,7 @@ Table of Contents
 * [Editing Blueprints](#editing-blueprints)
   * [Area expansion syntax](#area-expansion-syntax)
   * [Automatic area expansion](#automatic-area-expansion)
+  * [Stockpiles and zones](#stockpiles-and-zones)
   * [Minecart tracks](#minecart-tracks)
   * [Multilevel blueprints](#multilevel-blueprints)
   * [Modeline optional markers](modeline-optional-markers)
@@ -273,7 +274,12 @@ And similarly, to declare a stockpile that accepts both corpses and refuse, you 
 
 The order of the individual letters doesn't matter.
 
-Note that while this notation covers most use cases, tweaking low-level zone parameters, like hospital supply levels, must still be done with a `#query` blueprint.
+To toggle the `active` flag for zones, add an `a` character to the string. For example, to create a *disabled* pit zone (that you later intend to turn into a pond and fill carefully to 3-depth water):
+
+    #zone disabled future pond zone
+    pa(1x3) #
+
+Note that while this notation covers most use cases, tweaking low-level zone parameters, like hospital supply levels or converting between pits and ponds, must still be done manually or with a `#query` blueprint.
 
 
 Minecart tracks
@@ -625,6 +631,7 @@ There are a few building types that will generate extra manager orders for relat
 
 - Track stops will generate an order for a minecart
 - Traction benches will generate orders for a table, mechanism, and rope
+- Levers will generate orders for two mechanisms for connecting the lever to a target, in addition to the mechanism required to build the lever itself
 
 
 Tips and tricks

@@ -3607,6 +3607,15 @@ Native functions:
   ``start`` and ``end`` are tables containing positions (see
   ``xyz2pos``). ``name`` is used as the basis for the filename.
 
+buildingplan
+============
+
+Native functions:
+
+* ``bool isPlannableBuilding(df::building_type type)`` returns whether the building type is handled by buildingplan
+* ``void addPlannedBuilding(df::building *bld)`` suspends the building jobs and adds the building to the monitor list
+* ``void doCycle()`` runs a check for whether buildlings in the monitor list can be assigned items and unsuspended. This method runs automatically twice a game day, so you only need to call it directly if you want buildingplan to do a check right now.
+
 burrows
 =======
 
@@ -4101,6 +4110,51 @@ Lua plugin classes
 - ``add(num)``: adds num to the end of the number sequence
 - ``shuffle()``: shuffles the sequence of numbers
 - ``next()``: returns next number in the sequence
+
+.. _xlsxreader:
+
+xlsxreader
+==========
+
+Utility functions to facilitate reading .xlsx spreadsheets. It provides the
+following API methods:
+
+ - ``file_handle open_xlsx_file(filename)``
+ - ``close_xlsx_file(file_handle)``
+ - ``sheet_names list_sheets(file_handle)``
+ - ``sheet_handle open_sheet(file_handle, sheet_name)``
+ - ``close_sheet(sheet_handle)``
+ - ``cell_strings get_row(sheet_handle)``
+
+ Example::
+
+    local xlsxreader = require('plugins.xlsxreader')
+
+    local function dump_sheet(xlsx_file, sheet_name)
+        print('reading sheet: '..sheet_name)
+        local xlsx_sheet = xlsxreader.open_sheet(xlsx_file, sheet_name)
+        dfhack.with_finalize(
+            function () xlsxreader.close_sheet(xlsx_sheet) end,
+            function ()
+                local row_cells = xlsxreader.get_row(xlsx_sheet)
+                while row_cells do
+                    printall(row_cells)
+                    row_cells = xlsxreader.get_row(xlsx_sheet)
+                end
+            end
+        )
+    end
+
+    local filepath = "path/to/some_file.xlsx"
+    local xlsx_file = xlsxreader.open_xlsx_file(filepath)
+    dfhack.with_finalize(
+        function () xlsxreader.close_xlsx_file(xlsx_file) end,
+        function ()
+            for _, sheet_name in ipairs(xlsxreader.list_sheets(xlsx_file)) do
+                dump_sheet(xlsx_file, sheet_name)
+            end
+        end
+    )
 
 =======
 Scripts

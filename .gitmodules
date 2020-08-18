@@ -16,3 +16,15 @@
 [submodule "depends/jsoncpp"]
 	path = depends/jsoncpp-sub
 	url = ../../DFHack/jsoncpp.git
+[submodule "depends/xlsxio"]
+	path = depends/xlsxio
+	url = ../../brechtsanders/xlsxio.git
+	shallow = true
+[submodule "depends/libzip"]
+	path = depends/libzip
+	url = ../../nih-at/libzip.git
+	shallow = true
+[submodule "depends/libexpat"]
+	path = depends/libexpat
+	url = ../../libexpat/libexpat.git
+	shallow = true

@@ -623,11 +623,6 @@ bool Planner::allocatePlannedBuilding(df::building_type type)
         return false;
     }
 
-    for (auto iter = newinst->jobs.begin(); iter != newinst->jobs.end(); iter++)
-    {
-        (*iter)->flags.bits.suspend = true;
-    }
-
     if (type == building_type::Door)
     {
         auto door = virtual_cast<df::building_doorst>(newinst);

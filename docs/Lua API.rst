@@ -3607,6 +3607,15 @@ Native functions:
   ``start`` and ``end`` are tables containing positions (see
   ``xyz2pos``). ``name`` is used as the basis for the filename.
 
+buildingplan
+============
+
+Native functions:
+
+* ``bool isPlannableBuilding(df::building_type type)`` returns whether the building type is handled by buildingplan
+* ``void addPlannedBuilding(df::building *bld)`` suspends the building jobs and adds the building to the monitor list
+* ``void doCycle()`` runs a check for whether buildlings in the monitor list can be assigned items and unsuspended. This method runs automatically twice a game day, so you only need to call it directly if you want buildingplan to do a check right now.
+
 burrows
 =======
 

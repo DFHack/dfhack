@@ -1076,15 +1076,17 @@ Job module
 
   Returns the unit performing the job.
 
-* ``dfhack.job.setJobCooldown(building,worker,timeout)``
+* ``dfhack.job.setJobCooldown(building,worker,cooldown)``
 
-  Prevent the worker from taking jobs at the specified workshop for the specified time.
-  This doesn't decrease the timeout in any circumstances.
+  Prevent the worker from taking jobs at the specified workshop for the
+  specified cooldown period (in ticks). This doesn't decrease the cooldown
+  period in any circumstances.
 
-* ``dfhack.job.removeWorker(job,timeout)``
+* ``dfhack.job.removeWorker(job,cooldown)``
 
-  Removes the worker from the specified workshop job, and sets the cooldown.
-  Returns *true* on success.
+  Removes the worker from the specified workshop job, and sets the cooldown
+  period (using the same logic as ``setJobCooldown``). Returns *true* on
+  success.
 
 * ``dfhack.job.checkBuildingsNow()``
 

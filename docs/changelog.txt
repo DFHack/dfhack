@@ -33,6 +33,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
+## Fixes
+- `stockpiles`: fixed a crash when loading food stockpiles
+
 # 0.47.04-r2
 
 ## New Tweaks

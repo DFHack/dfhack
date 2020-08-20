@@ -69,13 +69,14 @@ animalsprefix:  s
 enableanimals:  {animalsprefix}e^
 disableanimals: {animalsprefix}d^
 
-# enables only the specified type (and disables everything else)
 cages: {animalsprefix}bu^
 traps: {animalsprefix}bj^
 
-# forbids specific items in an already-configured stockpile
 forbidcages: {animalsprefix}u^
 forbidtraps: {animalsprefix}j^
+
+permitcages: {forbidcages}
+permittraps: {forbidtraps}
 
 
 ##################################

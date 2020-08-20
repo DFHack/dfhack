@@ -73,11 +73,10 @@
 # brackets:
 #   &   expands to {Enter}
 #   @   expands to {Shift}{Enter}
-#   +   expands to {Shift}
 #   ~   expands to {Alt}
 #   !   expands to {Ctrl}
 #   ^   expands to {ESC}
 #
 # If you need literal verisons of the shorthand characters, surround them in
-# curly brackets, for example: "{+}"
+# curly brackets, for example: "{~}"
 #

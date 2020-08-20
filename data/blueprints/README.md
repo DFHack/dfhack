@@ -428,7 +428,7 @@ Modeline optional markers
 The modeline has some additional optional components that we haven't talked about yet. You can:
 
 * give a blueprint a label by adding a `label()` marker
-* set a cursor offset by adding a `start()` marker
+* set a cursor offset and/or start hint by adding a `start()` marker
 * hide a blueprint with a `hidden()` marker
 * register a message to be displayed after the blueprint is successfully applied
 
@@ -441,7 +441,7 @@ Note that all elements are optional except for the initial `#mode`. Here are a f
     #dig start(3; 3; Center tile of a 5-tile square) Regular blueprint comment
     #build label(noblebedroom) start(10;15)
     #query label(configstockpiles) No explicit start()  means cursor is at upper left corner
-    #meta label(digwholefort)
+    #meta label(digwholefort) start(center of stairs on surface)
     #dig label(digdining) hidden() managed by the digwholefort meta blueprint
     #zone label(pastures) message(remember to assign animals to the new pastures)
 
@@ -453,7 +453,7 @@ Labels are displayed in the `quickfort list` output and are used for addressing 
 
 Start positions specify a cursor offset for a particular blueprint, simplifying the task of blueprint alignment. This is very helpful for blueprints that are based on a central staircase, but it helps whenever a blueprint has an obvious "center". For example:
 
-    #build start(2;2;center of workshop) a mason workshop
+    #build start(2;2;center of workshop) label(masonw) a mason workshop
     wm wm wm #
     wm wm wm #
     wm wm wm #
@@ -461,7 +461,10 @@ Start positions specify a cursor offset for a particular blueprint, simplifying 
 
 will build the workshop *centered* on the cursor, not down and to the right of the cursor.
 
-The two numbers specify the column and row (or X and Y offset) where the cursor is expected to be when you apply the blueprint. Position 1;1 is the top left cell. The optional comment will show up in the `quickfort list` output and should contain information about where to position the cursor.
+The two numbers specify the column and row (or X and Y offset) where the cursor is expected to be when you apply the blueprint. Position 1;1 is the top left cell. The optional comment will show up in the `quickfort list` output and should contain information about where to position the cursor. If the start position is 1;1, you can omit the numbers and just add a comment describing where to put the cursor. This is useful for meta blueprints that refer to other blueprints that have fully-specified start() markers. For example, a meta blueprint that refers to the `masonw` blueprint above could look like this:
+
+    #meta start(center of workshop) a mason workshop
+    /masonw
 
 ### Hiding blueprints ###
 
@@ -469,8 +472,10 @@ A blueprint with a `hidden()` marker won't appear in `quickfort list` output unl
 
 ### Messages ###
 
-A blueprint with a `message()` marker will display a message after the blueprint is applied. This is useful for reminding players to take manual steps that cannot be automated, like assigning animals to a pasture or assigning minecarts to a route.
+A blueprint with a `message()` marker will display a message after the blueprint is applied with `quickfort run`. This is useful for reminding players to take manual steps that cannot be automated, like assigning animals to a pasture or assigning minecarts to a route, or listing the next step in a series of blueprints. For long or multi-part messages, it is fine to embed newlines:
 
+    "#meta label(surface1) message(This would be a good time to start digging the industry level.
+    Once the area is clear, continue with /surface2.) clear the embark site and set up pastures"
 
 Packaging a set of blueprints
 -----------------------------
@@ -631,7 +636,8 @@ There are a few building types that will generate extra manager orders for relat
 
 - Track stops will generate an order for a minecart
 - Traction benches will generate orders for a table, mechanism, and rope
-- Levers will generate orders for two mechanisms for connecting the lever to a target, in addition to the mechanism required to build the lever itself
+- Levers will generate orders for extra two mechanisms for connecting the lever to a target
+- Cage traps will generate an order for a cage
 
 
 Tips and tricks
@@ -640,6 +646,8 @@ Tips and tricks
 * During blueprint application, especially query blueprints, don't click the mouse on the DF window or type any keys. They can change the state of the game while the blueprint is being applied, resulting in strange errors.
 
 * After digging out an area, you may wish to smooth and/or engrave the area before starting the build phase, as dwarves may be unable to access walls or floors that are behind/under built objects.
+
+* If you are designating more than one level for digging at a time, you can make your miners more efficient by using marker mode (`dM`) on all levels but one. This prevents your miners from digging out a few tiles on one level, then running down/up the stairs to do a few tiles on an adjacent level. With only one level "live" and all other levels in marker mode, your miners can concentrate on one level at a time. You just have to rememer to "unmark" a new level when your miners are done with their current one.
 
 * As of DF 0.34.x, it is no longer possible to build doors (d) at the same time that you build adjacent walls (Cw). Doors must now be built *after* walls are constructed for them to be next to. This does not affect the more common case where walls exist as a side-effect of having dug-out a room in a #dig blueprint.
 
@@ -650,6 +658,8 @@ Caveats and limitations
 * Buildings will be designated regardless of whether you have the required materials, but if materials are not available when the construction job is picked up by a dwarf, the buildings will be canceled and the designations will disappear. Until the buildingplan plugin can be extended to support all building types, you should use `quickfort orders` to pre-manufacture all the materials you need for a `#build`-mode blueprint before you apply it.
 
 * If you use the `jugs` alias in your `#query`-mode blueprints, be aware that there is no way to differentiate jugs from other types of tools in the game. Therefore, `jugs` stockpiles will also take nest boxes and other tools. The only workaround is not to have other tools lying around in your fort.
+
+* Likewise for bags. The game does not differentiate between empty and full bags, so you'll get gabs of gypsum power and sand in your bags stockpile unless you avoid collecting sand and are careful to assign all your gypsum to your hospital.
 
 * Weapon traps and upright spear/spikes can currently only be built with a single weapon.
 

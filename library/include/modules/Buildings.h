@@ -141,7 +141,9 @@ DFHACK_EXPORT bool getCorrectSize(df::coord2d &size, df::coord2d &center,
  */
 DFHACK_EXPORT bool checkFreeTiles(df::coord pos, df::coord2d size,
                                   df::building_extents *ext = NULL,
-                                  bool create_ext = false, bool allow_occupied = false);
+                                  bool create_ext = false,
+                                  bool allow_occupied = false,
+                                  bool allow_wall = false);
 
 /**
  * Returns the number of tiles included by the extent, or defval.

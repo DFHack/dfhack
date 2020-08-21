@@ -1619,11 +1619,13 @@ General
   using width and height for flexible dimensions.
   Returns *is_flexible, width, height, center_x, center_y*.
 
-* ``dfhack.buildings.checkFreeTiles(pos,size[,extents,change_extents,allow_occupied])``
+* ``dfhack.buildings.checkFreeTiles(pos,size[,extents,change_extents,allow_occupied,allow_wall])``
 
   Checks if the rectangle defined by ``pos`` and ``size``, and possibly extents,
   can be used for placing a building. If ``change_extents`` is true, bad tiles
   are removed from extents. If ``allow_occupied``, the occupancy test is skipped.
+  Set ``allow_wall`` to true if the building is unhindered by walls (such as an
+  activity zone).
 
 * ``dfhack.buildings.countExtentTiles(extents,defval)``
 

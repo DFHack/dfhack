@@ -19,6 +19,10 @@ add_subdirectory(clsocket)
 ide_folder(clsocket "Depends")
 
 # assemble environment args to pass on to dependency projects
+if (NOT("${CMAKE_GENERATOR_TOOLSET}" STREQUAL ""))
+  list(APPEND CL_ARGS "-T" "${CMAKE_GENERATOR_TOOLSET}")
+endif()
+
 get_cmake_property(vars CACHE_VARIABLES)
 foreach(var ${vars})
   if(var MATCHES "^CMAKE_"

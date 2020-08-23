@@ -318,7 +318,7 @@ namespace embark_assist {
             aquifer_ranges aquifer;
             river_ranges min_river;
             river_ranges max_river;
-            int8_t min_waterfall; // N/A(-1), Absent, 1-9
+            int8_t min_waterfall; // N/A(-1), Absent, 1-50
             yes_no_ranges flat;
             present_absent_ranges clay;
             present_absent_ranges sand;

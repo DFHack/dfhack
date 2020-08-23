@@ -546,6 +546,9 @@ namespace embark_assist {
                             element->list.push_back({ std::to_string(k), k });
                         }
                     }
+                    for (int16_t k = 10; k <= 50; k+=5) {
+                            element->list.push_back({ std::to_string(k), k });
+                    }
 
                 break;
 

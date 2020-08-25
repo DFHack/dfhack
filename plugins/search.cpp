@@ -1214,8 +1214,11 @@ IMPLEMENT_HOOKS_PRIO(df::viewscreen_unitlistst, unitlist_search, 100);
 //
 // START: Trade screen search
 //
-class trade_search_base : public search_twocolumn_modifiable<df::viewscreen_tradegoodsst, df::item*, char>
+class trade_search_base : public search_multicolumn_modifiable<df::viewscreen_tradegoodsst, df::item*>
 {
+protected:
+    virtual vector<char> *get_selected_list() = 0;
+    virtual vector<int32_t> *get_count_list() = 0;
 
 private:
     string get_element_description(df::item *element) const
@@ -1257,6 +1260,59 @@ private:
         clear_search();
         reset_all();
     }
+
+    void do_post_init()
+    {
+        search_multicolumn_modifiable::do_post_init();
+
+        selected = get_selected_list();
+        count = get_count_list();
+    }
+
+    void save_secondary_values()
+    {
+        selected_s = *selected;
+        count_s = *count;
+    }
+
+    void reset_secondary_viewscreen_vectors()
+    {
+        selected = NULL;
+        count = NULL;
+    }
+
+    void update_saved_secondary_list_item(size_t i, size_t j)
+    {
+        selected_s[i] = (*selected)[j];
+        count_s[i] = (*count)[j];
+    }
+
+    void clear_secondary_viewscreen_vectors()
+    {
+        selected->clear();
+        count->clear();
+    }
+
+    void add_to_filtered_secondary_lists(size_t i)
+    {
+        selected->push_back(selected_s[i]);
+        count->push_back(count_s[i]);
+    }
+
+    void clear_secondary_saved_lists()
+    {
+        selected_s.clear();
+        count_s.clear();
+    }
+
+    void restore_secondary_values()
+    {
+        *selected = selected_s;
+        *count = count_s;
+    }
+
+    std::vector<char> *selected, selected_s;
+    std::vector<int32_t> *count, count_s;
 };
 
 
@@ -1286,11 +1342,6 @@ public:
     }
 
 private:
-    vector<char> *get_secondary_list()
-    {
-        return &viewscreen->trader_selected;
-    }
-
     int32_t *get_viewscreen_cursor()
     {
         return &viewscreen->trader_cursor;
@@ -1299,6 +1350,16 @@ private:
     vector<df::item*> *get_primary_list()
     {
         return &viewscreen->trader_items;
+    }
+
+    vector<char> *get_selected_list()
+    {
+        return &viewscreen->trader_selected;
+    }
+
+    vector<int32_t> *get_count_list()
+    {
+        return &viewscreen->trader_count;
     }
 
     char get_search_select_key()
@@ -1336,11 +1397,6 @@ public:
     }
 
 private:
-    vector<char> *get_secondary_list()
-    {
-        return &viewscreen->broker_selected;
-    }
-
     int32_t *get_viewscreen_cursor()
     {
         return &viewscreen->broker_cursor;
@@ -1349,6 +1405,16 @@ private:
     vector<df::item*> *get_primary_list()
     {
         return &viewscreen->broker_items;
+    }
+
+    vector<char> *get_selected_list()
+    {
+        return &viewscreen->broker_selected;
+    }
+
+    vector<int32_t> *get_count_list()
+    {
+        return &viewscreen->broker_count;
     }
 
     char get_search_select_key()

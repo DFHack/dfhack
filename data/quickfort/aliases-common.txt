@@ -47,18 +47,30 @@ enablesequence: e{Down}
 # put useful clothes or armor in there!)
 quantum: {linksonly}{nocontainers}{enableanimals}{enablefood}{furnitureprefix}{enablestone}{enableammo}{enablecoins}{enablebars}{enablegems}{enablefinishedgoods}{enableleather}{enablecloth}{enablewood}}{enableweapons}{enablearmor}{enablesheet}
 
+
+##################################
+# hauling aliases
+##################################
+
 # Run one of the quantumstopfrom* aliases over a track stop that is set to dump
 # into a quantum stockpile. The alias will set up the stop to accept all types
 # (the actual types stored in the quantum stockpile is controlled by the feeder
 # stockpile) and link the indicated adjacent feeder stockpile. All you need to
 # do afterwards is assign a vehicle to the stop (and optionally give the route a
-# name). The track stop does not need to be constructed yet, but the stockpile
-# needs to be in place so we can link to it.
+# name --see the namelastroute* aliases below). The track stop does not need to
+# be constructed yet, but the feeder stockpile needs to exist so we can link it.
 quantumstopprefix: ^hrs&xxx&{enablesequence 17}^
 quantumstopfromeast: {quantumstopprefix}s{Right}p^{Left}^q
 quantumstopfromsouth: {quantumstopprefix}s{Down}p^{Up}^q
 quantumstopfromwest: {quantumstopprefix}s{Left}p^{Right}^q
 quantumstopfromnorth: {quantumstopprefix}s{Up}p^{Down}^q
+
+# Give a name to the most recently defined route. Keep in mind that names have
+# a maximum length of 22 characters. It assumes that the route has exactly one
+# stop defined. Use it with the quantumstopfrom* aliases above like this:
+#   {quantumstopfromeast}{namelastrouteprefix}Trash Dumper{namelastroutesuffix}
+namelastrouteprefix: ^h--n
+namelastroutesuffix: &^q
 
 
 ##################################

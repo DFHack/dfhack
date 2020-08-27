@@ -25,15 +25,16 @@ Table of Contents
 * [Editing Blueprints](#editing-blueprints)
   * [Area expansion syntax](#area-expansion-syntax)
   * [Automatic area expansion](#automatic-area-expansion)
+  * [Multilevel blueprints](#multilevel-blueprints)
+  * [Marker mode](#marker-mode)
   * [Stockpiles and zones](#stockpiles-and-zones)
   * [Minecart tracks](#minecart-tracks)
-  * [Multilevel blueprints](#multilevel-blueprints)
-  * [Modeline optional markers](modeline-optional-markers)
+  * [Modeline markers](modeline-markers)
   * [Packaging a set of blueprints](#packaging-a-set-of-blueprints)
   * [Meta blueprints](#meta-blueprints)
-* [Troubleshooting](#troubleshooting)
-* [Tips and tricks](#tips-and-tricks)
+* [Buildingplan integration](#buildingplan-integration)
 * [Generating manager orders](#generating-manager-orders)
+* [Tips and tricks](#tips-and-tricks)
 * [Caveats and limitations](#caveats-and-limitations)
 * [Links](#links)
 
@@ -42,36 +43,40 @@ Features
 --------
 
 * General
-  * Manages complete blueprints to handle the four main phases of DF construction
+  * Manages complete blueprints to handle all phases of DF construction
   * Supports .csv and multi-worksheet .xlsx blueprint files
   * Near-instant application, even for very large and complex blueprints
   * Supports multiple blueprints per .csv file/spreadsheet sheet
   * "meta" blueprints that automate the application of sequences of blueprints
   * Blueprints can span multiple z-levels
-  * Undo functionality for dig, build, and place blueprints
+  * Undo functionality for dig, build, place, and zone blueprints
   * Automatic cropping of blueprints so you don't get errors if the blueprint extends off the map
-  * Can generate manager orders for everything required to apply build blueprints
+  * Can generate manager orders for everything required by a build blueprint
   * Library of ready-to-use blueprints included
   * Verbose output mode for debugging
 * Dig mode
-  * Supports all types of designations, including dumping/forbidding items and setting traffic areas
+  * Supports all types of designations, including dumping/forbidding items and setting traffic settings
+  * Supports setting dig priorities
   * Supports applying dig blueprints in marker mode
   * Handles carving arbitrarily complex minecart tracks, including tracks that cross other tracks
-* Build and place modes
-  * Supports stockpiles of all shapes, not just rectangular blocks
-  * Configurable maximums for bins, barrels and wheelbarrows assigned to created stockpiles
+* Build mode
+  * DFHack buildingplan integration
+  * Designate complete constructions at once, without having to wait for each tile to become supported before you can build it
   * Automatic expansion of building footprints to their minimum dimensions, so only the center tile of a multi-tile building needs to be recorded in the blueprint
-  * Designates complete constructions at once, without having to wait for each tile to become supported before you can build it
-  * Automatic splitting of stockpiles and buildings that exceed maximum dimension limits
   * Tile occupancy and validity checking so, for example, buildings that cannot be placed on a certain tile will simply be skipped instead of the blueprint failing to apply. Blueprints that are only partially applied for any reason (for example, you need to dig out some more tiles) can be safely reapplied to build the remaining buildings.
-  * Relaxed rules for farm plot and road placement, allowing tiles that are separated by invalid tiles (e.g. stone tiles for farm plots) to be part of the same structure
+  * Relaxed rules for farm plot and road placement: you can still place the building even if an invalid tile (e.g. stone tiles for farm plots) splits the designated area into two parts
+  * Intelligent boundary detection for adjacent buildings of the same type (e.g. a 6x6 block of `wj` cells will be correctly split into 4 jeweler's workshops)
+* Place and zone modes
+  * Define stockpiles and zones in any shape, not just rectangular blocks
+  * Configurable maximums for bins, barrels and wheelbarrows assigned to created stockpiles
+  * Automatic splitting of stockpiles and zones that exceed maximum dimension limits
 * Query mode
-  * Support sending arbitrary keystroke sequences to the UI -- configure *anything*
+  * Send arbitrary keystroke sequences to the UI -- *anything* you can do through the UI is supported
   * Supports aliases to automate frequent keystroke combos
-  * Supports including aliases in other aliases, and repeating key sequences a specified number of times
   * Includes a library of pre-made and tested aliases to automate most common tasks, such as configuring stockpiles for important item types or creating hauling routes for quantum stockpiles.
-  * Skips sending key sequences when the cursor is over a tile that does not have a stockpile or building
-  * Instant halting of query blueprint application when keystroke errors are detected, such as when a key sequence leaves us stuck in a submenu
+  * Supports including aliases in other aliases, and repeating key sequences a specified number of times
+  * Skips sending key sequences when the cursor is over a tile that does not have a stockpile or building, so missing buildings won't desynchronize your blueprint
+  * Instant halting of query blueprint application when keystroke errors are detected, such as when a key sequence leaves us stuck in a submenu, to make blueprint misconfigurations easier to debug
 
 
 Editing Blueprints
@@ -259,10 +264,48 @@ This style can be convenient for laying out multiple buildings of the same type.
 Quickfort will intelligently break large areas of the same designation into appropriately-sized chunks.
 
 
+Multilevel blueprints
+---------------------
+
+Multilevel blueprints are accommodated by separating Z-levels of the blueprint with `#>` (go down one z-level) or `#<` (go up one z-level) at the end of each floor.
+
+    #dig Stairs leading down to a small room below
+    j  `  `  #
+    `  `  `  #
+    `  `  `  #
+    #> #  #  #
+    u  d  d  #
+    d  d  d  #
+    d  d  d  #
+    #  #  #  #
+
+The marker must appear in the first column of the row to be recognized, just like a modeline.
+
+
+Marker mode
+-----------
+
+Marker mode is useful for when you want to plan out your digging, but you don't want to dig everything just yet. In `#dig` mode, you can add a `m` before any other designation letter to indicate that the tile should be designated in marker mode. For example, to dig out the perimeter of a room, but leave the center of the room marked for digging later:
+
+    #dig
+    d  d  d  d d #
+    d md md md d #
+    d md md md d #
+    d md md md d #
+    d  d  d  d d #
+    #  #  #  # # #
+
+Then you can use "Toggle Standard/Marking" (`d-M`) to convert the center tiles to regular designations at your leisure.
+
+To apply an entire dig blueprint in marker mode, regardless of what the blueprint itself says, you can set the global quickfort setting `force_marker_mode` to `true` before you apply the blueprint.
+
+Note that the in-game UI setting "Standard/Marker Only" (`d-m`) does not have any effect on quickfort.
+
+
 Stockpiles and zones
 --------------------
 
-It is very common to have stockpiles that accept multiple categories of items or zones that permit more than one activity. Although it is perfectly valid to declare a single-purpose stockpile or zone and then modify it with a `#query` blueprint, quickfort also supports directly declaring all the types on the `#place` and `#zone`blueprints. For example, to declare a 10x10 area that is a pasture, a fruit picking area, and a meeting area all at once, you could write:
+It is very common to have stockpiles that accept multiple categories of items or zones that permit more than one activity. Although it is perfectly valid to declare a single-purpose stockpile or zone and then modify it with a `#query` blueprint, quickfort also supports directly declaring all the types on the `#place` and `#zone` blueprints. For example, to declare a 10x10 area that is a pasture, a fruit picking area, and a meeting area all at once, you could write:
 
     #zone main pasture and picnic area
     nmg(10x10) #
@@ -274,7 +317,7 @@ And similarly, to declare a stockpile that accepts both corpses and refuse, you 
 
 The order of the individual letters doesn't matter.
 
-To toggle the `active` flag for zones, add an `a` character to the string. For example, to create a *disabled* pit zone (that you later intend to turn into a pond and fill carefully to 3-depth water):
+To toggle the `active` flag for zones, add an `a` character to the string. For example, to create a *disabled* pit zone (that you later intend to turn into a pond and carefully fill to 3-depth water):
 
     #zone disabled future pond zone
     pa(1x3) #
@@ -404,26 +447,8 @@ Which would result in a carved track simliar to a constructed track of the form:
     #        #        #        #
 
 
-Multilevel blueprints
----------------------
-
-Multilevel blueprints are accommodated by separating Z-levels of the blueprint with `#>` (go down one z-level) or `#<` (go up one z-level) at the end of each floor.
-
-    #dig Stairs leading down to a small room below
-    j  `  `  #
-    `  `  `  #
-    `  `  `  #
-    #> #  #  #
-    u  d  d  #
-    d  d  d  #
-    d  d  d  #
-    #  #  #  #
-
-The marker must appear in the first column of the row to be recognized, just like a modeline.
-
-
-Modeline optional markers
--------------------------
+Modeline markers
+----------------
 
 The modeline has some additional optional components that we haven't talked about yet. You can:
 
@@ -543,7 +568,7 @@ Meta blueprints are blueprints that script a series of other blueprints. Many bl
 - Wait for buildings to get built
 - Apply a different query blueprint to configure rooms
 
-Those three "apply"s in the middle might as well get done in one command instead of three. A meta blueprint can encode that sequence. A meta blueprint refers to other blueprints by their label (see the [Modeline optional markers](modeline-optional-markers) section above) in the same format used by the `DFHack#` quickfort command: "<sheet_name>/<label>", or just "/<label>" for blueprints in .csv files or blueprints in the same spreadsheet sheet as the #meta blueprint that references them.
+Those three "apply"s in the middle might as well get done in one command instead of three. A meta blueprint can encode that sequence. A meta blueprint refers to other blueprints by their label (see the [Modeline markers](modeline-markers) section above) in the same format used by the `DFHack#` quickfort command: "<sheet_name>/<label>", or just "/<label>" for blueprints in .csv files or blueprints in the same spreadsheet sheet as the #meta blueprint that references them.
 
 A few examples might make this clearer. Say you have a .csv file with the following blueprints defined:
 
@@ -621,10 +646,22 @@ Note that for blueprints without an explicit label, we still need to address the
 You can then hide the blueprints that you now manage with the `meta`-mode blueprint from `quickfort list` by adding a `hidden()` marker to their modelines. That way the output of `quickfort list` won't be cluttered by blueprints that you don't need to run directly. If you ever *do* need to access the managed blueprints individually, you can still see them with `quickfort list --hidden`.
 
 
+Buildingplan integration
+------------------------
+
+Buildingplan is a DFHack plugin that keeps jobs in a suspended state until the materials required for the job are available. This prevents a building designation from being canceled when a dwarf picks up the job but can't find the materials.
+
+For all types that buildingplan supports, quickfort using buildingplan to manage construction. Buildings are still constructed immediately if you have the materials, but you now have the freedom to apply build blueprints before you manufacture all required materials, and the jobs will be fulfilled as the materials become available.
+
+If a `#build` blueprint only refers to supported types, the buildingplan integration pairs well with the [workflow](https://docs.dfhack.org/en/stable/docs/Plugins.html#workflow) plugin, which can build items a few at a time continuously as long as they are needed. For building types that are not yet supported by buildingplan, a good pattern to follow is to first run `quickfort orders` on the `#build` blueprint to manufacture all the required items, then apply the blueprint itself.
+
+See [buildingplan documentation](https://docs.dfhack.org/en/stable/docs/Plugins.html#buildingplan) for a list of supported types.
+
+
 Generating manager orders
 -------------------------
 
-Quickfort can generate manager orders to make sure you have the proper items in stock to apply a `build`-mode blueprint.
+Quickfort can generate manager orders to make sure you have the proper items in stock to apply a `#build`-mode blueprint.
 
 Many items can be manufactured from different source materials. Orders will always choose rock when it can, then wood, then cloth, then iron. You can always remove orders that don't make sense for your fort and manually enqueue a similar order more to your liking. For example, if you want silk ropes instead of cloth ropes, make a new manager order for silk ropes and then remove the generated cloth rope order.
 

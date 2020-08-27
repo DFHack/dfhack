@@ -1,77 +1,27 @@
-"#meta label(dreamfort_help) message(Welcome to the Dreamfort Walkthrough!
-It can be difficult applying a set of blueprints that you did not write yourself. This
-walkthrough will guide you through the high-level steps of building Dreamfort.
+"#meta label(help) message(Welcome to the Dreamfort Walkthrough!
+It can be difficult applying a set of blueprints that you did not write yourself. This walkthrough will guide you through the high-level steps of building Dreamfort.
 
-The final fort will have a walled-in area on the surface for livestock, trading, and
-military. One z-level down is the farming level, with related workshops and vents up
-to the surface for miasma control.
+The final fort will have a walled-in area on the surface for livestock, trading, and military. One z-level down is the farming level, with related workshops and vents up to the surface for miasma control. The farming level also has a miniature dining hall for use until you get the services level set up.
 
-Beyond those two, the other layers can be built in any order, at any z-level
-according to your preference and the layout peculiarities of your embark site:
+Beyond those two, the other layers can be built in any order, at any z-level, according to your preference and the layout peculiarities of your embark site:
  - The industry level has a compact, but complete set of workshops and stockpiles
- - The services level has dining, hospital, and justice services, including a well
-     system. This level is 4 z-levels deep.
- - The guildhall level has many rooms for buildling libraries, temples, and
-     guildhalls
+ - The services level has dining, hospital, and justice services, including a well system. This level is 4 z-levels deep.
+ - The guildhall level has many rooms for buildling libraries, temples, and guildhalls
  - The suites level has fancy rooms for your nobles
- - The apartments level(s) has small but well-furnished bedrooms for your other
-     dwarves
+ - The apartments level(s) has small but well-furnished bedrooms for your other dwarves
 
-Dreamfort has a central staircase-based design. Choose a tile for your staircase on
-the surface in a nice, flat area. For all blueprints, the cursor will start on this
-tile on the z-level where you want to apply the blueprint.
+Dreamfort has a central staircase-based design. Choose a tile for your staircase on the surface in a nice, flat area. For all blueprints, the cursor will start on this tile on the z-level where you want to apply the blueprint.
 
-Blueprints that require manual steps (like 'assign animals to pasture') will leave a
-message telling you so after you apply them. Blueprints will also leave messages with
-hints when you might want to run ""quickfort orders"" on specific blueprints to start
-manufacturing needed items.
+Blueprints that require manual steps (like 'assign animals to pasture') will leave a message telling you so after you apply them. Blueprints will also leave messages with hints when you might want to run ""quickfort orders"" on specific blueprints to start manufacturing needed items.
 
-Directly after embark, apply /surface1 on a flat area on the surface and /industry1
-somewhere below (but not immediately below the surface -- that will be for the farming
-level). Work your way through the steps for those levels: apply /surface2 when
-/surface1 is done, /industry2 when /industry1 is done, etc. Once you channel out parts
-of the surface with /surface3, you can start the farming sequence with /farming1. You
-can start the services, guildhall, suites, and apartments sequences as your fort needs
-those levels.
+Directly after embark, apply /surface1 on a flat area on the surface and /industry1 somewhere below, underground (but not immediately below the surface -- that will be for the farming level). Work your way through the steps for those levels: apply /surface2 when /surface1 is done, /industry2 when /industry1 is done, etc. Once you channel out parts of the surface with /surface3, you can start the farming sequence with /farming1. You can start the services, guildhall, suites, and apartments sequences as your fort needs those levels.
 
-This .csv file is generated from source .xlsx files. If you want to look at how these
-blueprints are put together, including full lists of their features, it will be easier
-to look at the .xlsx files than this giant .csv. You can view them online at:
-  https://drive.google.com/drive/folders/1iS90EEVqUkxTeZiiukVj1pLloZqabKuP?usp=sharing
+This .csv file is generated from source .xlsx files. If you want to look at how these blueprints are put together, including full lists of their features, it will be easier to look at the .xlsx files than this giant .csv. You can view them online at:
+  https://drive.google.com/drive/folders/1iS90EEVqUkxTeZiiukVj1pLloZqabKuP
 You are welcome to copy those files and make your own modifications!
 ) run me for help with dreamfort"
 "#dreamfort.csv is generated with the following command:
   for fname in dreamfort*.xlsx; do xlsx2csv -a -E Notes -p '' $fname; done | sed 's/,*$//'"
-""
-""
-""
-""
-""
-""
-""
-""
-""
-""
-""
-""
-""
-""
-""
-""
-""
-""
-""
-""
-""
-""
-""
-""
-""
-""
-""
-""
-""
-""
 "#meta label(surface1) start(staircase center)
 message(This would be a good time to start digging the industry level.
 Once the area is clear, continue with /surface2.) clear an area and set up pastures"
@@ -1073,7 +1023,7 @@ query_stockpiles/farming_query_stockpiles
 ,,,,,,,,,,,,,,,,,,,,,bodyparts,linksonly,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,,,,,,,,,,,`,`,`,`,give2left,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,,,,,,,,,,,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,,,,,,,,,,,,,,,,,,,quantumstopfromnorth,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,,,,,,,,,{quantumstopfromnorth}{namelastrouteprefix}Trash Dumper{namelastroutesuffix},,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,,,,,,,,,,,,quantum,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 
 
@@ -1243,7 +1193,7 @@ query/industry_query
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,{quantum}g{Up}{Left 5}&,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,quantumstopfromsouth,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,{quantumstopfromsouth}{namelastrouteprefix}Stoneworker quantum{namelastroutesuffix},`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,otherstone,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,miscliquid,`,`,`,`,`,`,`,`,`,`,`,`,`,~,nocontainers,~,`,`,`,`,`,`,`,`,`,`,`,`,`,steelbars
 ,,nocontainers,`,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`,`
@@ -1251,15 +1201,15 @@ query/industry_query
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,{cages}{permittraps},,,`,`,`,,,,`,`,`,forbidotherstone,,,`,`,`,`,`,`,`,t{Left 6}{Down}&
-,,`,`,`,`,`,`,{quantum}g{Up 10}{Right 4}&,quantumstopfromeast,~,nocontainers,~,`,,`,,`,,`,,`,~,nocontainers,~,quantumstopfromwest,quantum,`,`,`,`,`,`
-,,`,`,`,`,`,`,`,`,{tallow}{permitdye},,,`,`,`,,,,`,`,`,~,~,~,`,`,`,`,`,`,`,t{Left 6}{Up}&
+,,`,`,`,`,`,`,{quantum}g{Up 10}{Right 4}&,{quantumstopfromeast}{namelastrouteprefix}Goods/Wood quantum{namelastroutesuffix},~,nocontainers,~,`,,`,,`,,`,,`,~,nocontainers,~,{quantumstopfromwest}{namelastrouteprefix}Metalworker quantum{namelastroutesuffix},quantum,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,{tallow}{permitdye},,,`,`,`,,,,`,`,`,forbidpotash,,,`,`,`,`,`,`,`,t{Left 6}{Up}&
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,craftrefuse,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,~,nocontainers,~,`,`,`,`,`,`,`,`,`,`,`,`,`,coal
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,`,`,`,`,`,nocontainers,`,t{Up 7}&,~,~,~,~
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,quantumstopfromnorth,`,`,`,`,`,`,{ironweapons}{permitsteelweapons}{forbidmasterworkweapons}{forbidartifactweapons}
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,{quantumstopfromnorth}{namelastrouteprefix}Clothier/Bones quantum{namelastroutesuffix},`,`,`,`,`,`,{ironweapons}{permitsteelweapons}{forbidmasterworkweapons}{forbidartifactweapons}
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,quantum,`,`,`,`,`,`,{ironarmor}{permitsteelarmor},forbidmasterworkarmor,forbidartifactarmor,~,~,~,~
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,nocontainers,give2up,t{Up 11}&,~,~,~,~
@@ -1804,7 +1754,7 @@ query_stockpiles/services_query_stockpiles
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 
-#meta label(apartments_stack) start(staircase center) digs 6 layers of apartments - enough for 200 dwarves
+#meta label(apartments1_stack) start(staircase center) digs 6 layers of apartments - enough for 200 dwarves
 /apartments1
 #>
 /apartments1
@@ -1817,7 +1767,7 @@ query_stockpiles/services_query_stockpiles
 #>
 /apartments1
 
-"#dig label(apartments1) start(18; 18; staircase center) message(This would be a good time to enqueue manager orders for /apartments2. Once the area is dug out, continue with /apartments2.)"
+"#dig label(apartments1) start(18; 18; staircase center) message(This would be a good time to enqueue manager orders for /apartments2. Once the area is dug out, continue with /apartments2.) apartment complex"
 
 ,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
 ,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d

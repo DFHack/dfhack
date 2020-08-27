@@ -486,7 +486,7 @@ Start positions specify a cursor offset for a particular blueprint, simplifying 
 
 will build the workshop *centered* on the cursor, not down and to the right of the cursor.
 
-The two numbers specify the column and row (or X and Y offset) where the cursor is expected to be when you apply the blueprint. Position 1;1 is the top left cell. The optional comment will show up in the `quickfort list` output and should contain information about where to position the cursor. If the start position is 1;1, you can omit the numbers and just add a comment describing where to put the cursor. This is useful for meta blueprints that refer to other blueprints that have fully-specified start() markers. For example, a meta blueprint that refers to the `masonw` blueprint above could look like this:
+The two numbers specify the column and row (or X and Y offset) where the cursor is expected to be when you apply the blueprint. Position 1;1 is the top left cell. The optional comment will show up in the `quickfort list` output and should contain information about where to position the cursor. If the start position is 1;1, you can omit the numbers and just add a comment describing where to put the cursor. This is useful for meta blueprints that refer to other blueprints that have fully-specified `start()` markers. For example, a meta blueprint that refers to the `masonw` blueprint above could look like this:
 
     #meta start(center of workshop) a mason workshop
     /masonw
@@ -583,11 +583,11 @@ A few examples might make this clearer. Say you have a .csv file with the follow
     #query label(makeroombedroom)
     ...
 
-Note how I've given them all labels so we can address them safely. If I hadn't given them labels, they would receive default labels of "1", "2", "3", etc, but those labels would change if I ever add more blueprints at the top. This is not a problem if we're just running the blueprints from the `quickfort list` command, but meta blueprints need a label that isn't going to change over time.
+Note how I've given them all labels so we can address them safely. If I hadn't given them labels, they would receive default labels of "1", "2", "3", etc, but those labels would change if I ever add more blueprints at the top. This is not a problem if we're just running the blueprints individually from the `quickfort list` command, but meta blueprints need a label name that isn't going to change over time.
 
 So let's add a meta blueprint to this file that will combine the middle three blueprints into one:
 
-    #meta plan bedroom: combines build, place, and stockpile config blueprints
+    "#meta plan bedroom: combines build, place, and stockpile config blueprints"
     /buildbedroom
     /placebedroom
     /querystockpilesbedroom
@@ -643,7 +643,7 @@ We can add a sheet named "dig_all" with the following contents (we're expecting 
 
 Note that for blueprints without an explicit label, we still need to address them by their auto-generated numerical label.
 
-You can then hide the blueprints that you now manage with the `meta`-mode blueprint from `quickfort list` by adding a `hidden()` marker to their modelines. That way the output of `quickfort list` won't be cluttered by blueprints that you don't need to run directly. If you ever *do* need to access the managed blueprints individually, you can still see them with `quickfort list --hidden`.
+You can then hide the blueprints that you now manage with the `#meta`-mode blueprint from `quickfort list` by adding a `hidden()` marker to their modelines. That way the output of `quickfort list` won't be cluttered by blueprints that you don't need to run directly. If you ever *do* need to access the managed blueprints individually, you can still see them with `quickfort list --hidden`.
 
 
 Buildingplan integration
@@ -663,7 +663,7 @@ Generating manager orders
 
 Quickfort can generate manager orders to make sure you have the proper items in stock to apply a `#build`-mode blueprint.
 
-Many items can be manufactured from different source materials. Orders will always choose rock when it can, then wood, then cloth, then iron. You can always remove orders that don't make sense for your fort and manually enqueue a similar order more to your liking. For example, if you want silk ropes instead of cloth ropes, make a new manager order for silk ropes and then remove the generated cloth rope order.
+Many items can be manufactured from different source materials. Orders will always choose rock when it can, then wood, then cloth, then iron. You can always remove orders that don't make sense for your fort and manually enqueue a similar order more to your liking. For example, if you want silk ropes instead of cloth ropes, make a new manager order for an appropriate quantity of silk ropes, and then remove the generated cloth rope order.
 
 Anything that requires generic building materials (workshops, constructions, etc.) will result in an order for a rock block. One "Make rock blocks" job produces four blocks per input boulder, so the number of jobs ordered will be the number of blocks you need divided by four (rounded up). You might end up with a few extra blocks, but not too many.
 
@@ -673,7 +673,7 @@ There are a few building types that will generate extra manager orders for relat
 
 - Track stops will generate an order for a minecart
 - Traction benches will generate orders for a table, mechanism, and rope
-- Levers will generate orders for extra two mechanisms for connecting the lever to a target
+- Levers will generate an order for an extra two mechanisms for connecting the lever to a target
 - Cage traps will generate an order for a cage
 
 
@@ -684,7 +684,7 @@ Tips and tricks
 
 * After digging out an area, you may wish to smooth and/or engrave the area before starting the build phase, as dwarves may be unable to access walls or floors that are behind/under built objects.
 
-* If you are designating more than one level for digging at a time, you can make your miners more efficient by using marker mode (`dM`) on all levels but one. This prevents your miners from digging out a few tiles on one level, then running down/up the stairs to do a few tiles on an adjacent level. With only one level "live" and all other levels in marker mode, your miners can concentrate on one level at a time. You just have to rememer to "unmark" a new level when your miners are done with their current one.
+* If you are designating more than one level for digging at a time, you can make your miners more efficient by using marker mode on all levels but one. This prevents your miners from digging out a few tiles on one level, then running down/up the stairs to do a few tiles on an adjacent level. With only one level "live" and all other levels in marker mode, your miners can concentrate on one level at a time. You just have to rememer to "unmark" a new level when your miners are done with their current one.
 
 * As of DF 0.34.x, it is no longer possible to build doors (d) at the same time that you build adjacent walls (Cw). Doors must now be built *after* walls are constructed for them to be next to. This does not affect the more common case where walls exist as a side-effect of having dug-out a room in a #dig blueprint.
 

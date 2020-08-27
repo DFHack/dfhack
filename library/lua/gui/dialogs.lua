@@ -205,7 +205,7 @@ end
 function ListBox:onRenderFrame(dc,rect)
     ListBox.super.onRenderFrame(self,dc,rect)
     if self.select2_hint then
-        dc:seek(rect.x1+2,rect.y2):key('SEC_SELECT'):string(': '..self.select2_hint,COLOR_DARKGREY)
+        dc:seek(rect.x1+2,rect.y2):key('SEC_SELECT'):string(': '..self.select2_hint,COLOR_GREY)
     end
 end
 

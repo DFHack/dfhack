@@ -34,6 +34,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## Fixes
+- `search`: fixed an issue causing item counts on the trade screen to display inconsistently when searching
 - `stockpiles`: fixed a crash when loading food stockpiles
 
 # 0.47.04-r2

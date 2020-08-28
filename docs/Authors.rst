@@ -52,6 +52,7 @@ expwnent                expwnent
 Feng
 figment                 figment
 gchristopher            gchristopher
+George Murray           GitOnUp
 grubsteak               grubsteak
 Harlan Playford         playfordh
 Hayati Ayguen           hayguen

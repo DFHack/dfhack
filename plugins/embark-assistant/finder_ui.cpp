@@ -535,16 +535,16 @@ namespace embark_assist {
                 break;
 
                 case fields::min_waterfall:
-                    for (int16_t k = -1; k <= 9; k++) {
-                        if (k == -1) {
-                            element->list.push_back({ "N/A", k });
-                        }
-                        else if (k == 0) {
-                            element->list.push_back({ "Absent", k });
-                        }
-                        else {
-                            element->list.push_back({ std::to_string(k), k });
-                        }
+
+                    element->list.push_back({ "N/A", -1 });
+                    element->list.push_back({ "Absent", 0 });
+
+                    for (int16_t k = 1; k <= 9; k++) {
+                        element->list.push_back({ std::to_string(k), k });
+                    }
+
+                    for (int16_t k = 10; k <= 50; k+=5) {
+                        element->list.push_back({ std::to_string(k), k });
                     }
 
                 break;

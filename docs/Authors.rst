@@ -76,6 +76,7 @@ kane-t                  kane-t
 Kelly Kinkade           ab9rf
 KlonZK                  KlonZK
 Kris Parker             kaypy
+Kristjan Moore          kristjanmoore
 Kromtec                 Kromtec
 Kurik Amudnil
 Lethosor                lethosor

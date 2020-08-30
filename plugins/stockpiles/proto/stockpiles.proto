@@ -39,7 +39,7 @@ message StockpileSettings {
       repeated string mats = 3;
       repeated string quality_core = 4;
       repeated string quality_total = 5;
-      optional bool sand_bags = 6;
+      // UNUSED: optional bool sand_bags = 6;
   }
   message RefuseSet {
       repeated string type = 1;

@@ -43,6 +43,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <fstream>
 #include <istream>
 #include <string>
+#include <set>
 #include <stdint.h>
 
 #include "Console.h"

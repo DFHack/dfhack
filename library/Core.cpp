@@ -512,6 +512,36 @@ static bool try_autocomplete(color_ostream &con, const std::string &first, std::
     return false;
 }
 
+static CommandList get_all_commands()
+{
+    CommandList commands;
+    for (auto const &command : built_in_commands)
+            commands.insert(command);
+    
+    auto plug_mgr = Core::getInstance().getPluginManager();
+    for (auto it = plug_mgr->begin(); it != plug_mgr->end(); ++it)
+    {
+        const Plugin *plug = it->second;
+        for (size_t j = 0; j < plug->size(); j++)
+        {
+            const PluginCommand &pcmd = (*plug)[j];
+            if (!pcmd.isHotkeyCommand())
+            {
+                commands.insert(pcmd.name);
+            }
+        }
+    }
+    
+    std::map<string, string> scripts;
+    listAllScripts(scripts, true);
+    for (auto iter = scripts.begin(); iter != scripts.end(); ++iter)
+    {
+        commands.insert(iter->first);
+    }
+
+    return commands;
+}
+
 bool Core::addScriptPath(string path, bool search_before)
 {
     lock_guard<mutex> lock(script_path_mutex);
@@ -1828,6 +1858,8 @@ bool Core::Init()
     if (!listen.get())
         cerr << "TCP listen failed.\n";
 
+    con.update_command_list(get_all_commands());
+    
     if (df::global::ui_sidebar_menus)
     {
         vector<string> args;

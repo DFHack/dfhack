@@ -614,3 +614,9 @@ bool Console::show()
     ShowWindow( GetConsoleWindow(), SW_RESTORE );
     return true;
 }
+
+void Console::update_command_list(const CommandList& command_list)
+{
+    //TODO: Currently not supported
+}
+

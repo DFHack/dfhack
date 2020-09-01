@@ -32,6 +32,7 @@ distribution.
 #include <assert.h>
 #include <iostream>
 #include <string>
+#include <set>
 namespace tthread
 {
     class mutex;
@@ -41,6 +42,7 @@ namespace tthread
 }
 namespace  DFHack
 {
+    using CommandList = std::set<std::string>;
     class CommandHistory
     {
     public:
@@ -167,6 +169,8 @@ namespace  DFHack
 
         bool hide();
         bool show();
+        void update_command_list(const CommandList& command_list);
+        
     private:
         Private * d;
         tthread::recursive_mutex * wlock;

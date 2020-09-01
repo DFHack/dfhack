@@ -213,6 +213,10 @@ namespace DFHack
             supported_terminal = false;
             state = con_unclaimed;
         };
+        void update_command_list(const CommandList& cl)
+        {
+            command_list = cl;
+        };
         virtual ~Private()
         {
             //sync();
@@ -542,26 +546,17 @@ namespace DFHack
                 }
                 lock->lock();
                 const int old_cursor = raw_cursor;
-                /* Only autocomplete when the callback is set. It returns < 0 when
-                 * there was an error reading from fd. Otherwise it will return the
-                 * character that should be handled next. */
+
                 if (c == 9)
                 {
-                    /*
-                    if( completionCallback != NULL) {
-                        c = completeLine(fd,prompt,buf,buflen,&len,&pos,cols);
-                        // Return on errors
-                        if (c < 0) return len;
-                        // Read next character when 0
-                        if (c == 0) continue;
-                    }
-                    else
+                    std::string part = toLocaleMB(raw_buffer);
+                    auto command = command_list.lower_bound(part);
+                    if(command != command_list.end() && command->substr(0, part.size()) == part)
                     {
-                        // ignore tab
-                        continue;
+                        raw_buffer = u32string(command->begin(), command->end());
+                        raw_cursor = command->size();
+                        prompt_refresh();
                     }
-                    */
-                    // just ignore tabs
                     continue;
                 }
 
@@ -813,6 +808,7 @@ namespace DFHack
             }
             return raw_buffer.size();
         }
+        
         FILE * dfout_C;
         bool supported_terminal;
         // state variables
@@ -832,6 +828,8 @@ namespace DFHack
         // thread exit mechanism
         int exit_pipe[2];
         fd_set descriptor_set;
+
+        CommandList command_list;
     };
 }
 
@@ -1002,4 +1000,9 @@ bool Console::show()
 {
     //Warmist: don't know if it's possible...
     return false;
+}
+
+void Console::update_command_list(const CommandList& command_list)
+{
+    d->update_command_list(command_list);
 }

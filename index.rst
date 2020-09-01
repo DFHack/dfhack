@@ -2,33 +2,23 @@
 Welcome to DFHack's documentation!
 ##################################
 
-Introduction
-============
-DFHack is a Dwarf Fortress memory access library, distributed with
-a wide variety of useful scripts and plugins.
+DFHack is a memory editing library for `Dwarf Fortress <https://www.bay12games.com/dwarves/>`_
+that provides a unified, cross-platform environment where tools can be developed
+to extend the game. The default distribution contains a variety of tools, including
+bugfixes, interface improvements, automation tools, modding tools, and more.
+There are also a variety of third-party tools available.
 
-The project is currently hosted at https://www.github.com/DFHack/dfhack,
-and can be downloaded from `the releases page
-<http://github.com/DFHack/dfhack/releases>`_.
+.. _quick-links:
 
-All new releases are announced in :forums:`the bay12 forums thread <139553>`,
-which is also a good place for discussion and questions.
+Quick Links
+===========
 
-For users, it provides a significant suite of bugfixes and interface
-enhancements by default, and more can be enabled.  There are also many tools
-(such as `workflow` or `autodump`) which can make life easier.
-You can even add third-party scripts and plugins to do almost anything!
-
-For modders, DFHack makes many things possible.  Custom reactions, new
-interactions, magic creature abilities, and more can be set through `modtools`
-and custom raws.  Non-standard DFHack scripts and inits can be stored in the
-raw directory, making raws or saves fully self-contained for distribution -
-or for coexistence in a single DF install, even with incompatible components.
-
-For developers, DFHack unites the various ways tools access DF memory and
-allows easier development of new tools.  As an open-source project under
-`various copyleft licences <license>`, contributions are welcome.
-
+* `Downloads <https://www.github.com/DFHack/dfhack/releases>`_
+* `Installation guide <installing>`
+* `Source code <https://www.github.com/DFHack/dfhack>`_
+  (**important:** read `compile` before attempting to build from source)
+* `Bay 12 forums thread <https://dfhack.org/bay12>`_
+* `Bug tracker <https://www.github.com/DFHack/dfhack/issues>`_
 
 User Manual
 ===========
@@ -37,31 +27,9 @@ User Manual
    :maxdepth: 2
 
    /docs/Introduction
+   /docs/Installing
    /docs/Core
    /docs/Plugins
    /docs/Scripts
-
-Other Contents
-==============
-
-.. toctree::
-   :maxdepth: 1
-
-   /docs/Authors
-   /LICENSE
-   /docs/NEWS
-   /docs/Scripts-removed
-
-For Developers
-==============
-
-.. toctree::
-   :maxdepth: 1
-
-   /Contributing
-   /docs/Compile
-   /docs/NEWS-dev
-   /docs/Lua API
-   /library/xml/SYNTAX
-   /library/xml/how-to-update
-   /docs/Binpatches
+   /docs/index-about
+   /docs/index-dev

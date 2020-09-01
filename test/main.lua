@@ -69,6 +69,19 @@ function expect.error(func, ...)
         return true
     end
 end
+function expect.error_match(func, matcher, ...)
+    local ok, err = pcall(func, ...)
+    if ok then
+        return false, 'no error raised by function call'
+    elseif type(matcher) == 'string' then
+        if not tostring(err):match(matcher) then
+            return false, ('error "%s" did not match "%s"'):format(err, matcher)
+        end
+    elseif not matcher(err) then
+        return false, ('error "%s" did not satisfy matcher'):format(err)
+    end
+    return true
+end
 function expect.pairs_contains(table, key, comment)
     for k, v in pairs(table) do
         if k == key then

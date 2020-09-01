@@ -1470,6 +1470,8 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
 
         tile->north_corner_selection[i] = world_data->region_details[0]->edges.biome_corner[i][0];
         tile->west_corner_selection[i] = world_data->region_details[0]->edges.biome_corner[0][i];
+        tile->north_row_biome_x[i] = world_data->region_details[0]->edges.biome_x[i][0];
+        tile->west_column_biome_y[i] = world_data->region_details[0]->edges.biome_y[0][i];
     }
 
     for (uint8_t i = 0; i < 16; i++) {
@@ -1601,7 +1603,7 @@ df::world_region_type embark_assist::survey::region_type_of(embark_assist::defs:
     int16_t effective_y = y;
     int8_t effective_i = i;
     int8_t effective_k = k;
-    adjust_coordinates(&effective_x, &effective_y, &effective_i, &effective_i);
+    adjust_coordinates(&effective_x, &effective_y, &effective_i, &effective_k);
 
     if (effective_x < 0 ||
         effective_x >= world_data->world_width ||
@@ -1639,10 +1641,10 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
     bool n_region_type_active;
     bool w_region_type_active;
     bool home_region_type_active;
-    uint8_t nw_region_type_level;
-    uint8_t n_region_type_level;
-    uint8_t w_region_type_level;
-    uint8_t home_region_type_level;
+    int8_t nw_region_type_level;
+    int8_t n_region_type_level;
+    int8_t w_region_type_level;
+    int8_t home_region_type_level;
 
     if (corner_location == 4) {  //  We're the reference. No change.
     }
@@ -1657,13 +1659,46 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
         effective_k = k + 1;
     }
 
-    adjust_coordinates(&effective_x, &effective_y, &effective_i, &effective_i);
+    adjust_coordinates(&effective_x, &effective_y, &effective_i, &effective_k);
 
     if (effective_x == world_data->world_width) {
         if (effective_y == world_data->world_height) {  //  Only the SE corner of the SE most tile of the world can reference this.
             return 4;
         }
         else {  //  East side corners of the east edge of the world
+            nw_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i - 1, effective_k - 1);
+            w_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i - 1, effective_k);
+
+            if (nw_region_type == df::world_region_type::Lake ||
+                nw_region_type == df::world_region_type::Ocean) {
+                nw_region_type_level = 0;
+            }
+            else if (nw_region_type == df::world_region_type::Mountains) {
+                nw_region_type_level = 1;
+            }
+            else {
+                nw_region_type_level = 2;
+            }
+
+            if (w_region_type == df::world_region_type::Lake ||
+                w_region_type == df::world_region_type::Ocean) {
+                w_region_type_level = 0;
+            }
+            else if (w_region_type == df::world_region_type::Mountains) {
+                w_region_type_level = 1;
+            }
+            else {
+                w_region_type_level = 2;
+            }
+
+            if (nw_region_type_level < w_region_type_level) {
+                return 4;
+            }
+            else if (nw_region_type_level > w_region_type_level) {
+                return 1;
+            }
+
+            //  Neither tile will automatically yield to the other
             if (corner_location == 5) {
                 return 1;
             }
@@ -1673,11 +1708,44 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
         }
     }
     else if (effective_y == world_data->world_height) {
+        nw_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i - 1, effective_k - 1);
+        n_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i, effective_k - 1);
+
+        if (nw_region_type == df::world_region_type::Lake ||
+            nw_region_type == df::world_region_type::Ocean) {
+            nw_region_type_level = 0;
+        }
+        else if (nw_region_type == df::world_region_type::Mountains) {
+            nw_region_type_level = 1;
+        }
+        else {
+            nw_region_type_level = 2;
+        }
+
+        if (n_region_type == df::world_region_type::Lake ||
+            n_region_type == df::world_region_type::Ocean) {
+            n_region_type_level = 0;
+        }
+        else if (n_region_type == df::world_region_type::Mountains) {
+            n_region_type_level = 1;
+        }
+        else {
+            n_region_type_level = 2;
+        }
+
+        if (nw_region_type_level < n_region_type_level) {
+            return 4;
+        }
+        else if (nw_region_type_level > n_region_type_level) {
+            return 5;
+        }
+
+        //  Neither tile will automatically yield to the other
         if (corner_location == 7) {
             return 4;
         }
         else {  //  Can only be corner_location == 8
-            return 3;
+            return 5;
         }
     }
 
@@ -1919,7 +1987,17 @@ uint8_t embark_assist::survey::translate_ns_edge(embark_assist::defs::world_tile
         north_region_type = embark_assist::survey::region_type_of(survey_results, x, y, i, k - 1);
     }
     else {
-        effective_edge = world_data->region_details[0]->edges.biome_x[i][k + 1];
+        if (k < 15) {  //  We're still within the same world tile
+            effective_edge = world_data->region_details[0]->edges.biome_x[i][k + 1];
+        }
+        else {  //  Getting the data from the world tile to the south
+            if (y + 1 == world_data->world_height) {
+                return 4;  //  There's nothing to the south, so we fall back on our own tile.
+            }
+
+            effective_edge = survey_results->at(x).at(y + 1).north_row_biome_x[i];
+        }
+
         north_region_type = embark_assist::survey::region_type_of(survey_results, x, y, i, k);
         south_region_type = embark_assist::survey::region_type_of(survey_results, x, y, i, k + 1);
     }
@@ -1993,7 +2071,16 @@ uint8_t embark_assist::survey::translate_ew_edge(embark_assist::defs::world_tile
         west_region_type = embark_assist::survey::region_type_of(survey_results, x, y, i - 1, k);
     }
     else {
-        effective_edge = world_data->region_details[0]->edges.biome_y[i + 1][k];
+        if (i < 15) {  //  We're still within the same world tile
+            effective_edge = world_data->region_details[0]->edges.biome_y[i + 1][k];
+        }
+        else {  //  Getting the data from the world tile to the east
+            if (x + 1 == world_data->world_width) {
+                return 4;  //  There's nothing to the east, so we fall back on our own tile.
+            }
+
+            effective_edge = survey_results->at(x + 1).at(y).west_column_biome_y[k];
+        }
         west_region_type = embark_assist::survey::region_type_of(survey_results, x, y, i, k);
         east_region_type = embark_assist::survey::region_type_of(survey_results, x, y, i + 1, k);
     }
@@ -2424,7 +2511,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
         }
         else {
             process_embark_incursion_mid_level_tile
-            (translate_ns_edge(survey_results,
+            (translate_ew_edge(survey_results,
                 true,
                 x,
                 y,
@@ -2481,7 +2568,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
         }
         else {
             process_embark_incursion_mid_level_tile
-            (translate_ns_edge(survey_results,
+            (translate_ew_edge(survey_results,
                 false,
                 x,
                 y,

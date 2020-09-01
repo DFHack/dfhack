@@ -184,7 +184,7 @@ endif()
 
 # set up versioning.
 set(DF_VERSION "0.47.04")
-set(DFHACK_RELEASE "r1")
+set(DFHACK_RELEASE "r2")
 set(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
@@ -429,6 +429,7 @@ if(BUILD_PLUGINS)
     add_subdirectory(plugins)
 endif()
 
+add_subdirectory(data)
 add_subdirectory(scripts)
 
 find_package(Sphinx QUIET)

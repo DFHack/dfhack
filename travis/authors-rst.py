@@ -1,6 +1,7 @@
+#!/usr/bin/env python3
 """ Overly-complicated script to check formatting/sorting in Authors.rst """
 
-import re, sys
+import os, re, sys
 
 def main():
     success = [True]
@@ -9,6 +10,8 @@ def main():
         for k in kwargs:
             info += ' %s %s:' % (k, kwargs[k])
         print('line %i:%s %s' % (line, info, msg))
+        if os.environ.get('GITHUB_ACTIONS'):
+            print('::error file=docs/Authors.rst,line=%i::%s %s' % (line, info.lstrip(), msg))
         success[0] = False
     with open('docs/Authors.rst', 'rb') as f:
         lines = list(map(lambda line: line.decode('utf8').replace('\n', ''), f.readlines()))

@@ -258,7 +258,7 @@ static bool skip_plant(const df::plant * plant, bool *restricted)
     const df::plant_raw *plant_raw = df::plant_raw::find(plant->material);
 
     // Skip fruit trees if set.
-    if (skip.fruit_trees && plant_raw->material_defs.type_drink != -1)
+    if (skip.fruit_trees && plant_raw->material_defs.type[plant_material_def::drink] != -1)
     {
         if (restricted)
             *restricted = true;

@@ -261,7 +261,7 @@ bool MaterialInfo::findPlant(const std::string &token, const std::string &subtok
 
         // As a special exception, return the structural material with empty subtoken
         if (subtoken.empty())
-            return decode(p->material_defs.type_basic_mat, p->material_defs.idx_basic_mat);
+            return decode(p->material_defs.type[plant_material_def::basic_mat], p->material_defs.idx[plant_material_def::basic_mat]);
 
         for (size_t j = 0; j < p->material.size(); j++)
             if (p->material[j]->id == subtoken)

@@ -23,11 +23,12 @@ distribution.
 */
 
 #include "Internal.h"
+
 #include <dirent.h>
 #include <errno.h>
-#include <unistd.h>
 #include <sys/mman.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 #include <string>
 #include <vector>
@@ -180,12 +181,28 @@ uint32_t Process::getTickCount()
 
 string Process::getPath()
 {
-    const char * cwd_name = "/proc/self/cwd";
-    char target_name[1024];
-    int target_result;
-    target_result = readlink(cwd_name, target_name, sizeof(target_name));
-    target_name[target_result] = '\0';
-    return(string(target_name));
+    static string cached_path;
+    if (cached_path.empty())
+    {
+        const char *exe_name = "/proc/self/exe";
+        char exe_path[1024];
+        int length = readlink(exe_name, exe_path, sizeof(exe_path));
+        if (length > 0)
+        {
+            exe_path[length] = '\0';
+            string path_string = exe_path;
+            // DF lives in libs, so move up a folder
+            cached_path = path_string.substr(0, path_string.find_last_of("/", path_string.find_last_of("/") - 1));
+        }
+        else
+        {
+            perror("readlink(/proc/self/exe) failed");
+            fprintf(stderr, "  length=%i\n", length);
+            cached_path = ".";
+        }
+        fprintf(stderr, "Resolved DF root to %s\n", cached_path.c_str());
+    }
+    return cached_path;
 }
 
 int Process::getPID()

@@ -6,6 +6,10 @@ jobs:
   build:
     runs-on: ubuntu-18.04
     steps:
+    - name: Set up Python 3
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3
     - name: Install dependencies
       run: |
         sudo apt-get update
@@ -18,18 +22,26 @@ jobs:
             lua5.3 \
             ninja-build \
             zlib1g-dev
-        sudo pip3 install --system sphinx
+        pip install sphinx
     - name: Clone DFHack
       uses: actions/checkout@v1
       with:
+        fetch-depth: 0  # unlimited - we need past tags
         submodules: true
     - name: Set up environment
+      id: env_setup
       run: |
-        echo export DF_VERSION="$(sh travis/get-df-version.sh)" >> "$HOME/.df-env"
-        echo export DF_FOLDER="$HOME/DF/$DF_VERSION/df_linux" >> "$HOME/.df-env"
+        DF_VERSION="$(sh travis/get-df-version.sh)"
+        echo "::set-env name=DF_VERSION::${DF_VERSION}"
+        echo "::set-output name=df_version::${DF_VERSION}"
+        echo "::set-env name=DF_FOLDER::${HOME}/DF/${DF_VERSION}/df_linux"
+    - name: Fetch DF cache
+      uses: actions/cache@v2
+      with:
+        path: ~/DF
+        key: ${{ steps.env_setup.outputs.df_version }}
     - name: Download DF
       run: |
-        source "$HOME/.df-env"
         sh travis/download-df.sh
     - name: Build docs
       run: |
@@ -41,7 +53,6 @@ jobs:
         path: docs/html
     - name: Build DFHack
       run: |
-        source "$HOME/.df-env"
         cmake \
           -S . \
           -B build-ci \
@@ -53,7 +64,6 @@ jobs:
         ninja -C build-ci install
     - name: Run tests
       run: |
-        source "$HOME/.df-env"
         export TERM=dumb
         mv "$DF_FOLDER"/dfhack.init-example "$DF_FOLDER"/dfhack.init
         script -qe -c "python travis/run-tests.py --headless --keep-status \"$DF_FOLDER\""
@@ -66,34 +76,53 @@ jobs:
       with:
         name: test-artifacts
         path: artifacts
+    - name: Clean up DF folder
+      # to prevent DFHack-generated files from ending up in the cache
+      # (download-df.sh also removes them, this is just to save cache space)
+      if: success() || failure()
+      run: |
+        rm -rf "$DF_FOLDER"
+
   lint:
     runs-on: ubuntu-18.04
     steps:
-    - name: Install dependencies
+    - name: Set up Python 3
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3
+    - name: Set up Ruby 2.7
+      uses: actions/setup-ruby@v1
+      with:
+        ruby-version: 2.7
+    - name: Install Lua
       run: |
         sudo apt-get update
-        sudo apt-get install \
-          lua5.3 \
-          ruby
+        sudo apt-get install lua5.3
     - name: Clone DFHack
       uses: actions/checkout@v1
       with:
         submodules: true
+        # don't need tags here
     - name: Check whitespace
       run: |
         python travis/lint.py
     - name: Check Authors.rst
+      if: success() || failure()
       run: |
         python travis/authors-rst.py
     - name: Check for missing documentation
+      if: success() || failure()
       run: |
         python travis/script-docs.py
     - name: Check Lua syntax
+      if: success() || failure()
       run: |
-        python travis/script-syntax.py --ext=lua --cmd="luac5.3 -p"
+        python travis/script-syntax.py --ext=lua --cmd="luac5.3 -p" --github-actions
     - name: Check Ruby syntax
+      if: success() || failure()
       run: |
-        python travis/script-syntax.py --ext=rb --cmd="ruby -c"
+        python travis/script-syntax.py --ext=rb --cmd="ruby -c" --github-actions
+
   check-pr:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'

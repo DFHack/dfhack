@@ -1,3 +1,5 @@
+.. _compile:
+
 ################
 Compiling DFHack
 ################
@@ -13,8 +15,9 @@ DFHack from source, this document will walk you through the build process. Note
 that some steps may be unconventional compared to other projects, so be sure to
 pay close attention if this is your first time compiling DFHack.
 
-.. contents::
-   :depth: 2
+.. contents:: Contents
+  :local:
+  :depth: 1
 
 .. _compile-how-to-get-the-code:
 
@@ -109,7 +112,7 @@ in the platform-specific sections below first, then come back here.
 Generator
 ---------
 
-The ``Ninja`` CMake build generator is the prefered build method on Linux and
+The ``Ninja`` CMake build generator is the preferred build method on Linux and
 macOS, instead of ``Unix Makefiles``, which is the default. You can select Ninja
 by passing ``-G Ninja`` to CMake. Incremental builds using Unix Makefiles can be
 much slower than Ninja builds. Note that you will probably need to install
@@ -160,6 +163,8 @@ in any case.
 
 Note that the scripts in the "build" folder on Windows will set the architecture
 automatically.
+
+.. _compile-build-options:
 
 Other settings
 --------------
@@ -545,23 +550,25 @@ to your binary search PATH so the tool can be later run from anywhere.
 
 Perl / Strawberry Perl
 ^^^^^^^^^^^^^^^^^^^^^^
-For the code generation parts you'll need Perl 5 with XML::LibXML and XML::LibXSLT.
-`Strawberry Perl <http://strawberryperl.com>`_ is recommended as it includes
-all of the required packages in a single, easy install.
+For the code generation stage of the build process, you'll need Perl 5 with
+XML::LibXML and XML::LibXSLT. `Strawberry Perl <http://strawberryperl.com>`_ is
+recommended as it includes all of the required packages in a single, easy
+install.
 
 After install, ensure Perl is in your user's PATH. This can be edited from
 ``Control Panel -> System -> Advanced System Settings -> Environment Variables``.
 
-The following three directories must be in PATH, in this order:
+The following directories must be in your PATH, in this order:
 
 * ``<path to perl>\c\bin``
 * ``<path to perl>\perl\site\bin``
 * ``<path to perl>\perl\bin``
+* ``<path to perl>\perl\vendor\lib\auto\XML\LibXML`` (may only be required on some systems)
 
 Be sure to close and re-open any existing ``cmd.exe`` windows after updating
 your PATH.
 
-If you already have a different version of Perl (for example the one from Cygwin),
+If you already have a different version of Perl installed (for example, from Cygwin),
 you can run into some trouble. Either remove the other Perl install from PATH, or
 install XML::LibXML and XML::LibXSLT for it using CPAN.
 
@@ -656,129 +663,8 @@ Then build the ``INSTALL`` target listed under ``CMakePredefinedTargets``.
 Building the documentation
 ==========================
 
-DFHack documentation, like the file you are reading now, is created as .rst files,
-which are in `reStructuredText (reST) <http://sphinx-doc.org/rest.html>`_ format.
-This is a documenation format that has come from the Python community. It is very
-similar in concept - and in syntax - to Markdown, as found on GitHub and many other
-places. However it is more advanced than Markdown, with more features available when
-compiled to HTML, such as automatic tables of contents, cross-linking, special
-external links (forum, wiki, etc) and more. The documentation is compiled by a
-Python tool, `Sphinx <http://sphinx-doc.org>`_.
-
-The DFHack build process will compile the documentation but this has been disabled
-by default. You only need to build the docs if you're changing them, or perhaps
-if you want a local HTML copy; otherwise, read them easily online at
-`ReadTheDoc's DFHack hosted documentation <https://dfhack.readthedocs.org>`_.
-
-(Note that even if you do want a local copy, it is certainly not necesesary to
-compile the documentation in order to read it. Like Markdown, reST documents are
-designed to be just as readable in a plain-text editor as they are in HTML format.
-The main thing you lose in plain text format is hyperlinking.)
-
-
-Enabling documentation building
--------------------------------
-First, make sure you have followed all the necessary steps for your platform as
-outlined in the rest of this document.
-
-To compile documentation with DFHack, add the following flag to your ``cmake`` command::
-
-  -DBUILD_DOCS:bool=ON
-
-For example::
-
-  cmake .. -DCMAKE_BUILD_TYPE:string=Release -DBUILD_DOCS:bool=ON -DCMAKE_INSTALL_PREFIX=<path to DF>
-
-Alternatively you can use the CMake GUI which allows options to be changed easily.
-
-On Windows you should either use ``generate-msvc-gui.bat`` and set the option
-through the GUI, or else if you want to use an alternate file, such as
-``generate-msvc-all.bat``, you will need to edit it to add the flag.
-Or you could just run ``cmake`` on the command line like in other platforms.
-
-Required dependencies
----------------------
-In order to build the documentation, you must have Python with Sphinx
-version 1.3.1 or later. Both Python 2.x and 3.x are supported.
-
-When installing Sphinx from OS package managers, be aware that there is
-another program called Sphinx, completely unrelated to documentation management.
-Be sure you are installing the right Sphinx; it may be called ``python-sphinx``,
-for example. To avoid doubt, ``pip`` can be used instead as detailed below.
-
-
-Linux
------
-Most Linux distributions will include Python as standard.
-
-Check your package manager to see if Sphinx 1.3.1 or later is available,
-but at the time of writing Ubuntu for example only has 1.2.x.
-
-You can instead install Sphinx with the pip package manager. This may need
-to be installed from your OS package manager; this is the case on Ubuntu.
-On Ubuntu/Debian, use the following to first install pip::
-
-  sudo apt-get install python-pip
-
-Once pip is available, you can then install the Python Sphinx module with::
-
-  pip install sphinx
-
-If you run this as a normal user it will install a local copy for your user only.
-Run it with sudo if you want a system-wide install. Either is fine for DFHack,
-however if installing locally do check that ``sphinx-build`` is in your path.
-It may be installed in a directory such as ``~/.local/bin/``, so after pip
-install, find ``sphinx-build`` and ensure its directory is in your local ``$PATH``.
-
-
-macOS
------
-macOS has Python 2.7 installed by default, but it does not have the pip package manager.
-
-You can install Homebrew's Python 3, which includes pip, and then install the
-latest Sphinx using pip::
-
-  brew install python3
-  pip3 install sphinx
-
-Alternatively, you can simply install Sphinx 1.3.x directly from Homebrew::
-
-  brew install sphinx-doc
-
-This will install Sphinx for macOS's system Python 2.7, without needing pip.
-
-Either method works; if you plan to use Python for other purposes, it might best
-to install Homebrew's Python 3 so that you have the latest Python as well as pip.
-If not, just installing sphinx-doc for macOS's system Python 2.7 is fine.
-
-
-Windows
--------
-Use the Chocolatey package manager to install Python and pip,
-then use pip to install Sphinx.
-
-Run the following commands from an elevated (Admin) ``cmd.exe``, after installing
-Chocolatey as outlined in the `Windows section <compile-windows>`::
-
-  choco install python pip -y
-
-Then close that Admin ``cmd.exe``, re-open another Admin ``cmd.exe``, and run::
-
-  pip install sphinx
-
-.. _build-changelog:
-
-Building the changelogs
------------------------
-If you have Python installed, but do not want to build all of the documentation,
-you can build the changelogs with the ``docs/gen_changelog.py`` script.
-
-All changes should be listed in ``changelog.txt``. A description of this file's
-format follows:
-
-.. include:: /docs/changelog.txt
-   :start-after: ===help
-   :end-before: ===end
+The steps above will not build DFHack's documentation by default. If you are
+editing documentation, see `documentation` for details on how to build it.
 
 Misc. Notes
 ===========

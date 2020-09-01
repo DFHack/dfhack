@@ -13,14 +13,15 @@ appeared. See `build-changelog` for more information.
 
 See `dev-changelog` for a list of changes grouped by development releases.
 
-.. contents::
-   :depth: 2
+.. contents:: Contents
+  :local:
+  :depth: 1
 
 .. include:: /docs/_auto/news.rst
 
 
 Older Changelogs
 ================
-Are kept in a seperate file:  `HISTORY`
+Are kept in a seperate file:  `History`
 
-.. that's ``docs/history.rst``, if you're reading the raw text.
+.. that's ``docs/History.rst``, if you're reading the raw text.

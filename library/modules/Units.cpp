@@ -61,6 +61,7 @@ using namespace std;
 #include "df/identity_type.h"
 #include "df/game_mode.h"
 #include "df/histfig_entity_link_positionst.h"
+#include "df/histfig_relationship_type.h"
 #include "df/historical_entity.h"
 #include "df/historical_figure.h"
 #include "df/historical_figure_info.h"
@@ -204,14 +205,15 @@ void Units::setNickname(df::unit *unit, std::string nick)
             df::historical_figure *id_hfig = NULL;
 
             switch (identity->type) {
+            case df::identity_type::None:
             case df::identity_type::HidingCurse:
-            case df::identity_type::Identity:
             case df::identity_type::FalseIdentity:
+            case df::identity_type::InfiltrationIdentity:
+            case df::identity_type::Identity:
                 break;  //  We want the nickname to end up in the identity
 
-            case df::identity_type::Unk_1:  // Guess, but that's how it worked in the past
+            case df::identity_type::Impersonating:
             case df::identity_type::TrueName:
-            case df::identity_type::Unk_4:  // Pure guess, as this is a new case, still unseen
                 id_hfig = df::historical_figure::find(identity->histfig_id);
                 break;
             }
@@ -636,74 +638,50 @@ bool Units::isEggLayer(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
     df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    for (auto caste = raw->caste.begin(); caste != raw->caste.end(); ++caste)
-    {
-        if ((*caste)->flags.is_set(caste_raw_flags::LAYS_EGGS)
-                || (*caste)->flags.is_set(caste_raw_flags::LAYS_UNUSUAL_EGGS))
-            return true;
-    }
-    return false;
+    df::caste_raw *caste = raw->caste.at(unit->caste);
+    return caste->flags.is_set(caste_raw_flags::LAYS_EGGS)
+        || caste->flags.is_set(caste_raw_flags::LAYS_UNUSUAL_EGGS);
 }
 
 bool Units::isGrazer(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
     df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    for (auto caste = raw->caste.begin(); caste != raw->caste.end(); ++caste)
-    {
-        if((*caste)->flags.is_set(caste_raw_flags::GRAZER))
-            return true;
-    }
-    return false;
+    df::caste_raw *caste = raw->caste.at(unit->caste);
+    return caste->flags.is_set(caste_raw_flags::GRAZER);
 }
 
 bool Units::isMilkable(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
     df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    for (auto caste = raw->caste.begin(); caste != raw->caste.end(); ++caste)
-    {
-        if((*caste)->flags.is_set(caste_raw_flags::MILKABLE))
-            return true;
-    }
-    return false;
+    df::caste_raw *caste = raw->caste.at(unit->caste);
+    return caste->flags.is_set(caste_raw_flags::MILKABLE);
 }
 
 bool Units::isTrainableWar(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
     df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    for (auto caste = raw->caste.begin(); caste != raw->caste.end(); ++caste)
-    {
-        if((*caste)->flags.is_set(caste_raw_flags::TRAINABLE_WAR))
-            return true;
-    }
-    return false;
+    df::caste_raw *caste = raw->caste.at(unit->caste);
+    return caste->flags.is_set(caste_raw_flags::TRAINABLE_WAR);
 }
 
 bool Units::isTrainableHunting(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
     df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    for (auto caste = raw->caste.begin(); caste != raw->caste.end(); ++caste)
-    {
-        if((*caste)->flags.is_set(caste_raw_flags::TRAINABLE_HUNTING))
-            return true;
-    }
-    return false;
+    df::caste_raw *caste = raw->caste.at(unit->caste);
+    return caste->flags.is_set(caste_raw_flags::TRAINABLE_HUNTING);
 }
 
 bool Units::isTamable(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
     df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    for (auto caste = raw->caste.begin(); caste != raw->caste.end(); ++caste)
-    {
-        if((*caste)->flags.is_set(caste_raw_flags::PET) ||
-                (*caste)->flags.is_set(caste_raw_flags::PET_EXOTIC))
-            return true;
-    }
-    return false;
+    df::caste_raw *caste = raw->caste.at(unit->caste);
+    return caste->flags.is_set(caste_raw_flags::PET)
+        || caste->flags.is_set(caste_raw_flags::PET_EXOTIC);
 }
 
 bool Units::isMale(df::unit* unit)
@@ -1459,6 +1437,47 @@ int8_t Units::getCasteProfessionColor(int race, int casteid, df::profession pid)
 
     // default to dwarven peasant color
     return 3;
+}
+
+df::goal_type Units::getGoalType(df::unit *unit, size_t goalIndex)
+{
+    CHECK_NULL_POINTER(unit);
+
+    df::goal_type goal = df::goal_type::STAY_ALIVE;
+    if (unit->status.current_soul
+        && unit->status.current_soul->personality.dreams.size() > goalIndex)
+    {
+        goal = unit->status.current_soul->personality.dreams[goalIndex]->type;
+    }
+    return goal;
+}
+
+std::string Units::getGoalName(df::unit *unit, size_t goalIndex)
+{
+    CHECK_NULL_POINTER(unit);
+
+    df::goal_type goal = getGoalType(unit, goalIndex);
+    bool achieved_goal = isGoalAchieved(unit, goalIndex);
+
+    std::string goal_name = achieved_goal ? ENUM_ATTR(goal_type, achieved_short_name, goal) : ENUM_ATTR(goal_type, short_name, goal);
+    if (goal == df::goal_type::START_A_FAMILY) {
+        std::string parent = ENUM_KEY_STR(histfig_relationship_type, histfig_relationship_type::Parent);
+        size_t start_pos = goal_name.find(parent);
+        if (start_pos != std::string::npos) {
+            df::histfig_relationship_type parent_type = isFemale(unit) ? histfig_relationship_type::Mother : histfig_relationship_type::Father;
+            goal_name.replace(start_pos, parent.length(), ENUM_KEY_STR(histfig_relationship_type, parent_type));
+        }
+    }
+    return goal_name;
+}
+
+bool Units::isGoalAchieved(df::unit *unit, size_t goalIndex)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return unit->status.current_soul
+        && unit->status.current_soul->personality.dreams.size() > goalIndex
+        && unit->status.current_soul->personality.dreams[goalIndex]->flags.whole != 0;
 }
 
 std::string Units::getSquadName(df::unit *unit)

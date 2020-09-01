@@ -45,6 +45,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#include <algorithm>
 #include <string>
 
 #include "modules/Filesystem.h"
@@ -80,6 +81,37 @@ bool Filesystem::mkdir (std::string path)
                    S_IWGRP | S_IXGRP | S_IROTH | S_IXOTH);
 #endif
     return fail == 0;
+}
+
+static bool mkdir_recursive_impl (std::string path)
+{
+    size_t last_slash = path.find_last_of("/");
+    if (last_slash != std::string::npos)
+    {
+        std::string parent_path = path.substr(0, last_slash);
+        bool parent_exists = mkdir_recursive_impl(parent_path);
+        if (!parent_exists)
+        {
+            return false;
+        }
+    }
+    return (Filesystem::mkdir(path) || errno == EEXIST) && Filesystem::isdir(path);
+}
+
+bool Filesystem::mkdir_recursive (std::string path)
+{
+#ifdef _WIN32
+    // normalize to forward slashes
+    std::replace(path.begin(), path.end(), '\\', '/');
+#endif
+
+    if (path.size() > FILENAME_MAX)
+    {
+        // path too long
+        return false;
+    }
+
+    return mkdir_recursive_impl(path);
 }
 
 bool Filesystem::rmdir (std::string path)
@@ -173,34 +205,46 @@ int Filesystem::listdir (std::string dir, std::vector<std::string> &files)
     return 0;
 }
 
-int Filesystem::listdir_recursive (std::string dir, std::map<std::string, bool> &files,
-    int depth /* = 10 */, std::string prefix /* = "" */)
+// prefix is the top-level dir where we started recursing
+// path is the relative path under the prefix; must be empty or end in a '/'
+// files is the output list of files and directories (bool == true for dir)
+// depth is the remaining dir depth to recurse into. function returns -1 if
+//   we haven't finished recursing when we run out of depth.
+// include_prefix controls whether the directory where we started recursing is
+//   included in the filenames returned in files.
+static int listdir_recursive_impl (std::string prefix, std::string path,
+    std::map<std::string, bool> &files, int depth, bool include_prefix)
 {
-    int err;
     if (depth < 0)
         return -1;
-    if (prefix == "")
-        prefix = dir;
-    std::vector<std::string> tmp;
-    err = listdir(dir, tmp);
+    std::string prefixed_path = prefix + "/" + path;
+    std::vector<std::string> curdir_files;
+    int err = Filesystem::listdir(prefixed_path, curdir_files);
     if (err)
         return err;
-    for (auto file = tmp.begin(); file != tmp.end(); ++file)
+    for (auto file = curdir_files.begin(); file != curdir_files.end(); ++file)
     {
         if (*file == "." || *file == "..")
             continue;
-        std::string rel_path = prefix + "/" + *file;
-        if (isdir(rel_path))
+        std::string prefixed_file = prefixed_path + *file;
+        std::string path_file = path + *file;
+        if (Filesystem::isdir(prefixed_file))
         {
-            files.insert(std::pair<std::string, bool>(rel_path, true));
-            err = listdir_recursive(dir + "/" + *file, files, depth - 1, rel_path);
+            files.insert(std::pair<std::string, bool>(include_prefix ? prefixed_file : path_file, true));
+            err = listdir_recursive_impl(prefix, path_file + "/", files, depth - 1, include_prefix);
             if (err)
                 return err;
         }
         else
         {
-            files.insert(std::pair<std::string, bool>(rel_path, false));
+            files.insert(std::pair<std::string, bool>(include_prefix ? prefixed_file : path_file, false));
         }
     }
     return 0;
+}
+
+int Filesystem::listdir_recursive (std::string dir, std::map<std::string, bool> &files,
+    int depth /* = 10 */, bool include_prefix /* = true */)
+{
+    return listdir_recursive_impl(dir, "", files, depth, include_prefix);
 }

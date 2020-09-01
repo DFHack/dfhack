@@ -317,7 +317,7 @@ static void listScripts(PluginManager *plug_mgr, std::map<string,string> &pset, 
                 pset[key] = help;
             }
         }
-        else if (all && !files[i].empty() && files[i][0] != '.')
+        else if (all && !files[i].empty() && files[i][0] != '.' && files[i] != "internal")
         {
             listScripts(plug_mgr, pset, path+files[i]+"/", all, prefix+files[i]+"/");
         }
@@ -1737,18 +1737,35 @@ bool Core::Init()
     virtual_identity::Init(this);
 
     // copy over default config files if necessary
-    std::vector<std::string> config_files;
-    std::vector<std::string> default_config_files;
-    if (Filesystem::listdir("dfhack-config", config_files) != 0)
+    std::map<std::string, bool> config_files;
+    std::map<std::string, bool> default_config_files;
+    if (Filesystem::listdir_recursive("dfhack-config", config_files, 10, false) != 0)
         con.printerr("Failed to list directory: dfhack-config");
-    else if (Filesystem::listdir("dfhack-config/default", default_config_files) != 0)
+    else if (Filesystem::listdir_recursive("dfhack-config/default", default_config_files, 10, false) != 0)
         con.printerr("Failed to list directory: dfhack-config/default");
     else
     {
+        // ensure all config file directories exist before we start copying files
         for (auto it = default_config_files.begin(); it != default_config_files.end(); ++it)
         {
-            std::string filename = *it;
-            if (std::find(config_files.begin(), config_files.end(), filename) == config_files.end())
+            // skip over files
+            if (!it->second)
+                continue;
+            std::string dirname = "dfhack-config/" + it->first;
+            if (!Filesystem::mkdir_recursive(dirname))
+            {
+                con.printerr("Failed to create config directory: '%s'\n", dirname.c_str());
+            }
+        }
+
+        // copy files from the default tree that don't already exist in the config tree
+        for (auto it = default_config_files.begin(); it != default_config_files.end(); ++it)
+        {
+            // skip over directories
+            if (it->second)
+                continue;
+            std::string filename = it->first;
+            if (config_files.find(filename) == config_files.end())
             {
                 std::string src_file = std::string("dfhack-config/default/") + filename;
                 if (!Filesystem::isfile(src_file))

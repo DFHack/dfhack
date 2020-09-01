@@ -334,7 +334,7 @@ virtual_identity *virtual_identity::find(void *vtable)
         return p;
     }
 
-    std::cerr << "UNKNOWN CLASS '" << name << "': vtable = 0x"
+    std::cerr << "Class not in symbols.xml: '" << name << "': vtable = 0x"
               << std::hex << uintptr_t(vtable) << std::dec << std::endl;
 
     known[vtable] = NULL;

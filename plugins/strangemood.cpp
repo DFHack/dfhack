@@ -153,7 +153,7 @@ void selectWord (const df::language_word_table &table, int32_t &word, df::part_o
     }
 }
 
-void generateName(df::language_name &output, int language, int mode, const df::language_word_table &table1, const df::language_word_table &table2)
+void generateName(df::language_name &output, int language, df::language_name_type mode, const df::language_word_table &table1, const df::language_word_table &table2)
 {
     for (int i = 0; i < 100; i++)
     {
@@ -162,7 +162,7 @@ void generateName(df::language_name &output, int language, int mode, const df::l
             output = df::language_name();
             if (language == -1)
                 language = rng.df_trandom(world->raws.language.translations.size());
-            output.unknown = mode;
+            output.type = mode;
             output.language = language;
         }
         output.has_name = 1;
@@ -171,7 +171,9 @@ void generateName(df::language_name &output, int language, int mode, const df::l
         int r, r2, r3;
         switch (mode)
         {
-        case 0: case 9: case 10:
+        case language_name_type::Figure:
+        case language_name_type::FigureNoFirst:
+        case language_name_type::FigureFirstOnly:
             if (mode != 9)
             {
                 int32_t word; df::part_of_speech part;
@@ -182,7 +184,8 @@ void generateName(df::language_name &output, int language, int mode, const df::l
             }
             if (mode != 10)
             {
-        case 4: case 37: // this is not a typo
+        case language_name_type::Site:
+        case language_name_type::Unk37: // this is not a typo
                 if (rng.df_trandom(2))
                 {
                     selectWord(table2, output.words[0], output.parts_of_speech[0], 0);
@@ -196,7 +199,9 @@ void generateName(df::language_name &output, int language, int mode, const df::l
             }
             break;
 
-        case 1: case 13: case 20:
+        case language_name_type::Artifact:
+        case language_name_type::Unk13:
+        case language_name_type::River:
             r = rng.df_trandom(3);
             if (r == 0 || r == 1)
             {
@@ -213,7 +218,9 @@ void generateName(df::language_name &output, int language, int mode, const df::l
             }
             if (r == 1 || r == 2)
             {
-        case 3: case 8: case 11: // this is not a typo either
+        case language_name_type::Squad:
+        case language_name_type::LegendaryFigure:
+        case language_name_type::ArtImage: // this is not a typo either
                 r2 = rng.df_trandom(2);
                 if (r2)
                     selectWord(table1, output.words[5], output.parts_of_speech[5], 2);
@@ -256,9 +263,34 @@ void generateName(df::language_name &output, int language, int mode, const df::l
                 output.parts_of_speech[5] = part_of_speech::NounPlural;
             break;
 
-        case 2: case 5: case 6: case 12: case 14: case 15: case 16: case 17: case 18: case 19:
-        case 21: case 22: case 23: case 24: case 25: case 26: case 27: case 28: case 29: case 30:
-        case 31: case 32: case 33: case 34: case 35: case 36: case 38: case 39:
+        case language_name_type::Civilization:
+        case language_name_type::World:
+        case language_name_type::Region:
+        case language_name_type::AdventuringGroup:
+        case language_name_type::SiteGovernment:
+        case language_name_type::Unk15:
+        case language_name_type::Vessel:
+        case language_name_type::MilitaryUnit:
+        case language_name_type::Religion:
+        case language_name_type::MountainPeak:
+        case language_name_type::Temple:
+        case language_name_type::Keep:
+        case language_name_type::MeadHall:
+        case language_name_type::Unk24:
+        case language_name_type::Unk25:
+        case language_name_type::Unk26:
+        case language_name_type::Market:
+        case language_name_type::Tavern:
+        case language_name_type::War:
+        case language_name_type::Battle:
+        case language_name_type::Siege:
+        case language_name_type::Road:
+        case language_name_type::Wall:
+        case language_name_type::Bridge:
+        case language_name_type::Tunnel:
+        case language_name_type::PretentiousEntityPosition:
+        case language_name_type::Tomb:
+        case language_name_type::MigratingGroup:
             selectWord(table1, output.words[5], output.parts_of_speech[5], 2);
             r3 = rng.df_trandom(3);
             if (rng.df_trandom(50))
@@ -280,7 +312,7 @@ void generateName(df::language_name &output, int language, int mode, const df::l
                 selectWord(table2, output.words[4], output.parts_of_speech[4], 4);
             break;
 
-        case 7:
+        case language_name_type::Dungeon:
             r = rng.df_trandom(3);
             if (r == 0 || r == 1)
             {
@@ -313,6 +345,9 @@ void generateName(df::language_name &output, int language, int mode, const df::l
             }
             if (rng.df_trandom(100))
                 selectWord(table2, output.words[4], output.parts_of_speech[4], 4);
+            break;
+        default:
+            // not handled yet
             break;
         }
         if (output.words[2] != -1 && output.words[3] != -1 &&
@@ -1316,10 +1351,10 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
 
     // Generate the artifact's name
     if (type == mood_type::Fell || type == mood_type::Macabre)
-        generateName(unit->status.artifact_name, unit->name.language, 1, world->raws.language.word_table[0][2], world->raws.language.word_table[1][2]);
+        generateName(unit->status.artifact_name, unit->name.language, language_name_type::Artifact, world->raws.language.word_table[0][2], world->raws.language.word_table[1][2]);
     else
     {
-        generateName(unit->status.artifact_name, unit->name.language, 1, world->raws.language.word_table[0][1], world->raws.language.word_table[1][1]);
+        generateName(unit->status.artifact_name, unit->name.language, language_name_type::Artifact, world->raws.language.word_table[0][1], world->raws.language.word_table[1][1]);
         if (!rng.df_trandom(100))
             unit->status.artifact_name = unit->name;
     }

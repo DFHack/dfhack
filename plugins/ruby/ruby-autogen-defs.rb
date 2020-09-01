@@ -213,6 +213,9 @@ module DFHack
                 end
             end
 
+            def _indexenum
+                self.class._enum
+            end
             def [](i)
                 self.send(self.class._enum.sym(i))
             end

@@ -25,6 +25,7 @@ belal                   jimhester
 Ben Lubar               BenLubar
 Ben Rosser              TC01
 billw2012               billw2012
+BrickViking             brickviking
 brndd                   brndd                   burneddi
 Bumber                  Bumber64
 Caldfir                 caldfir
@@ -42,6 +43,7 @@ Deon
 DoctorVanGogh           DoctorVanGogh
 Donald Ruegsegger       hashaash
 doomchild               doomchild
+ElMendukol              ElMendukol
 enjia2000
 Eric Wald               eswald
 Erik Youngren           Artanis
@@ -56,8 +58,8 @@ Hayati Ayguen           hayguen
 Herwig Hochleitner      bendlas
 Ian S                   kremlin-
 IndigoFenix
+James Gilles            kazimuth
 James Logsdon           jlogsdon
-Japa                    JapaMala
 Jared Adams
 Jeremy Apthorp          nornagon
 Jim Lisi                stonetoad
@@ -98,6 +100,7 @@ Milo Christiansen       milochristiansen
 MithrilTuxedo           MithrilTuxedo
 mizipzor                mizipzor
 moversti                moversti
+Myk Taylor              myk002
 napagokc                napagokc
 Neil Little             nmlittle
 Nick Rart               nickrart                comestible
@@ -106,6 +109,7 @@ Nikolay Amiantov        abbradar
 nocico                  nocico
 Omniclasm
 OwnageIsMagic           OwnageIsMagic
+palenerd                dlmarquis
 Patrik Lundell          PatrikLundell
 Paul Fenwick            pjf
 PeridexisErrant         PeridexisErrant
@@ -131,12 +135,14 @@ Robert Janetzko         robertjanetzko
 RocheLimit
 rofl0r                  rofl0r
 root
+Rose                    RosaryMala
 Roses                   Pheosics
 Ross M                  RossM
 rout
 rubybrowncoat           rubybrowncoat
 Rumrusher               rumrusher
 RusAnon                 RusAnon
+Ryan Bennitt            ryanbennitt
 sami
 scamtank                scamtank
 Sebastian Wolfertz      Enkrod
@@ -159,6 +165,7 @@ Timothy Collett         danaris
 Timur Kelman            TymurGubayev
 Tom Jobbins             TheBloke
 Tom Prince
+Tommy R                 tommy
 TotallyGatsby           TotallyGatsby
 Travis Hoppe            thoppe                  orthographic-pedant
 txtsd                   txtsd
@@ -166,7 +173,7 @@ U-glouglou\\simon
 Valentin Ochs           Cat-Ion
 Vitaly Pronkin          pronvit                 mifki
 ViTuRaS                 ViTuRaS
-Vjek
+Vjek                    vjek
 Warmist                 warmist
 Wes Malone              wesQ3
 Will Rogers             wjrogers

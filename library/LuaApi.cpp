@@ -1604,6 +1604,9 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getCasteProfessionName),
     WRAPM(Units, getProfessionColor),
     WRAPM(Units, getCasteProfessionColor),
+    WRAPM(Units, getGoalType),
+    WRAPM(Units, getGoalName),
+    WRAPM(Units, isGoalAchieved),
     WRAPM(Units, getSquadName),
     WRAPM(Units, isWar),
     WRAPM(Units, isHunter),
@@ -1614,8 +1617,11 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getPhysicalDescription),
     WRAPM(Units, getRaceName),
     WRAPM(Units, getRaceNamePlural),
+    WRAPM(Units, getRaceNameById),
     WRAPM(Units, getRaceBabyName),
+    WRAPM(Units, getRaceBabyNameById),
     WRAPM(Units, getRaceChildName),
+    WRAPM(Units, getRaceChildNameById),
     WRAPM(Units, isBaby),
     WRAPM(Units, isChild),
     WRAPM(Units, isAdult),
@@ -2365,6 +2371,7 @@ static const LuaWrapper::FunctionReg dfhack_filesystem_module[] = {
     WRAPM(Filesystem, getcwd),
     WRAPM(Filesystem, chdir),
     WRAPM(Filesystem, mkdir),
+    WRAPM(Filesystem, mkdir_recursive),
     WRAPM(Filesystem, rmdir),
     WRAPM(Filesystem, exists),
     WRAPM(Filesystem, isfile),
@@ -2403,10 +2410,13 @@ static int filesystem_listdir_recursive(lua_State *L)
     luaL_checktype(L,1,LUA_TSTRING);
     std::string dir=lua_tostring(L,1);
     int depth = 10;
-    if (lua_type(L, 2) == LUA_TNUMBER)
-        depth = lua_tounsigned(L, 2);
+    if (lua_gettop(L) >= 2 && !lua_isnil(L, 2))
+        depth = luaL_checkint(L, 2);
+    bool include_prefix = true;
+    if (lua_gettop(L) >= 3 && !lua_isnil(L, 3))
+        include_prefix = lua_toboolean(L, 3);
     std::map<std::string, bool> files;
-    int err = DFHack::Filesystem::listdir_recursive(dir, files, depth);
+    int err = DFHack::Filesystem::listdir_recursive(dir, files, depth, include_prefix);
     if (err)
     {
         lua_pushnil(L);

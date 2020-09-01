@@ -1,3 +1,5 @@
+.. _scripts-index:
+
 ##############
 DFHack Scripts
 ##############

@@ -95,7 +95,7 @@ void Kitchen::denyPlantSeedCookery(t_materialIndex materialIndex)
     {
         ui->kitchen.item_types.push_back(item_type::SEEDS);
         ui->kitchen.item_subtypes.push_back(organicSubtype);
-        ui->kitchen.mat_types.push_back(type->material_defs.type_seed);
+        ui->kitchen.mat_types.push_back(type->material_defs.type[plant_material_def::seed]);
         ui->kitchen.mat_indices.push_back(materialIndex);
         ui->kitchen.exc_types.push_back(df::kitchen_exc_type::Cook);
     }
@@ -103,7 +103,7 @@ void Kitchen::denyPlantSeedCookery(t_materialIndex materialIndex)
     {
         ui->kitchen.item_types.push_back(item_type::PLANT);
         ui->kitchen.item_subtypes.push_back(organicSubtype);
-        ui->kitchen.mat_types.push_back(type->material_defs.type_basic_mat);
+        ui->kitchen.mat_types.push_back(type->material_defs.type[plant_material_def::basic_mat]);
         ui->kitchen.mat_indices.push_back(materialIndex);
         ui->kitchen.exc_types.push_back(df::kitchen_exc_type::Cook);
     }

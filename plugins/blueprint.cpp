@@ -3,12 +3,14 @@
 //Translates a region of tiles specified by the cursor and arguments/prompts into a series of blueprint files suitable for digfort/buildingplan/quickfort
 
 #include <algorithm>
+#include <sstream>
 
 #include <Console.h>
 #include <PluginManager.h>
 #include "LuaTools.h"
 
 #include "modules/Buildings.h"
+#include "modules/Filesystem.h"
 #include "modules/Gui.h"
 #include "modules/MapCache.h"
 
@@ -62,9 +64,10 @@ command_result help(color_ostream &out)
         << " defaults to generating all blueprints" << endl
         << endl
         << "blueprint translates a portion of your fortress into blueprints suitable for" << endl
-        << " digfort/fortplan/quickfort. Blueprints are created in the DF folder with names" << endl
-        << " following a \"name-phase.csv\" pattern. Translation starts at the current" << endl
-        << " cursor location and includes all tiles in the range specified." << endl;
+        << " digfort/fortplan/quickfort. Blueprints are created in the \"blueprints\"" << endl
+        << " subdirectory of the DF folder with names following a \"name-phase.csv\" pattern." << endl
+        << " Translation starts at the current cursor location and includes all tiles in the" << endl
+        << " range specified." << endl;
     return CR_OK;
 }
 
@@ -557,32 +560,55 @@ string get_tile_query(df::building* b)
     return " ";
 }
 
-command_result do_transform(DFCoord start, DFCoord end, string name, uint32_t phases)
+void init_stream(ofstream &out, std::string basename, std::string target)
+{
+    std::ostringstream out_path;
+    out_path << basename << "-" << target << ".csv";
+    out.open(out_path.str(), ofstream::trunc);
+    out << "#" << target << endl;
+}
+
+command_result do_transform(DFCoord start, DFCoord end, string name, uint32_t phases, std::ostringstream &err)
 {
     ofstream dig, build, place, query;
+
+    std::string basename = "blueprints/" + name;
+
+#ifdef _WIN32
+    // normalize to forward slashes
+    std::replace(basename.begin(), basename.end(), '\\', '/');
+#endif
+
+    size_t last_slash = basename.find_last_of("/");
+    std::string parent_path = basename.substr(0, last_slash);
+
+    // create output directory if it doesn't already exist
+    std::error_code ec;
+    if (!Filesystem::mkdir_recursive(parent_path))
+    {
+        err << "could not create output directory: '" << parent_path << "'";
+        return CR_FAILURE;
+    }
+
     if (phases & QUERY)
     {
         //query = ofstream((name + "-query.csv").c_str(), ofstream::trunc);
-        query.open(name+"-query.csv", ofstream::trunc);
-        query << "#query" << endl;
+        init_stream(query, basename, "query");
     }
     if (phases & PLACE)
     {
         //place = ofstream(name + "-place.csv", ofstream::trunc);
-        place.open(name+"-place.csv", ofstream::trunc);
-        place << "#place" << endl;
+        init_stream(place, basename, "place");
     }
     if (phases & BUILD)
     {
         //build = ofstream(name + "-build.csv", ofstream::trunc);
-        build.open(name+"-build.csv", ofstream::trunc);
-        build << "#build" << endl;
+        init_stream(build, basename, "build");
     }
     if (phases & DIG)
     {
         //dig = ofstream(name + "-dig.csv", ofstream::trunc);
-        dig.open(name+"-dig.csv", ofstream::trunc);
-        dig << "#dig" << endl;
+        init_stream(dig, basename, "dig");
     }
     if (start.x > end.x)
     {
@@ -675,18 +701,27 @@ command_result blueprint(color_ostream &out, vector<string> &parameters)
     }
     DFCoord start (x, y, z);
     DFCoord end (x + stoi(parameters[0]), y + stoi(parameters[1]), z + stoi(parameters[2]));
-    if (parameters.size() == 4)
-        return do_transform(start, end, parameters[3], DIG | BUILD | PLACE | QUERY);
     uint32_t option = 0;
-    if (cmd_option_exists(parameters, "dig"))
-        option |= DIG;
-    if (cmd_option_exists(parameters, "build"))
-        option |= BUILD;
-    if (cmd_option_exists(parameters, "place"))
-        option |= PLACE;
-    if (cmd_option_exists(parameters, "query"))
-        option |= QUERY;
-    return do_transform(start, end, parameters[3], option);
+    if (parameters.size() == 4)
+    {
+        option = DIG | BUILD | PLACE | QUERY;
+    }
+    else
+    {
+        if (cmd_option_exists(parameters, "dig"))
+            option |= DIG;
+        if (cmd_option_exists(parameters, "build"))
+            option |= BUILD;
+        if (cmd_option_exists(parameters, "place"))
+            option |= PLACE;
+        if (cmd_option_exists(parameters, "query"))
+            option |= QUERY;
+    }
+    std::ostringstream err;
+    DFHack::command_result result = do_transform(start, end, parameters[3], option, err);
+    if (result != CR_OK)
+        out.printerr("%s\n", err.str().c_str());
+    return result;
 }
 
 static int create(lua_State *L, uint32_t options) {
@@ -701,9 +736,12 @@ static int create(lua_State *L, uint32_t options) {
         luaL_argerror(L, 2, "invalid end position");
     string filename(lua_tostring(L, 3));
 
-    lua_pushboolean(L, do_transform(start, end, filename, options));
+    std::ostringstream err;
+    DFHack::command_result result = do_transform(start, end, filename, options, err);
+    if (result != CR_OK)
+        luaL_error(L, "%s", err.str().c_str());
+    lua_pushboolean(L, result);
     return 1;
-
 }
 
 static int dig(lua_State *L) {

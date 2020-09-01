@@ -149,6 +149,8 @@ namespace DFHack {
         DFHACK_EXPORT bool chdir (std::string path);
         DFHACK_EXPORT std::string getcwd ();
         DFHACK_EXPORT bool mkdir (std::string path);
+        // returns true on success or if directory already exists
+        DFHACK_EXPORT bool mkdir_recursive (std::string path);
         DFHACK_EXPORT bool rmdir (std::string path);
         DFHACK_EXPORT bool stat (std::string path, STAT_STRUCT &info);
         DFHACK_EXPORT bool exists (std::string path);
@@ -159,7 +161,9 @@ namespace DFHack {
         DFHACK_EXPORT int64_t ctime (std::string path);
         DFHACK_EXPORT int64_t mtime (std::string path);
         DFHACK_EXPORT int listdir (std::string dir, std::vector<std::string> &files);
+        // set include_prefix to false to prevent dir from being prepended to
+        // paths returned in files
         DFHACK_EXPORT int listdir_recursive (std::string dir, std::map<std::string, bool> &files,
-            int depth = 10, std::string prefix = "");
+            int depth = 10, bool include_prefix = true);
     }
 }

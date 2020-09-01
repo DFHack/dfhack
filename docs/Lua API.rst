@@ -24,8 +24,9 @@ implemented by Lua files located in :file:`hack/lua/*`
 (:file:`library/lua/*` in the git repo).
 
 
-.. contents::
-   :depth: 3
+.. contents:: Contents
+  :local:
+  :depth: 2
 
 
 =========================
@@ -41,11 +42,11 @@ to lua code as a tree of objects and functions under the ``df`` global, which
 also broadly maps to the ``df`` namespace in the headers generated for C++.
 
 .. warning::
-    The wrapper provides almost raw access to the memory
-    of the game, so mistakes in manipulating objects are as likely to
-    crash the game as equivalent plain C++ code would be.
 
-    eg. NULL pointer access is safely detected, but dangling pointers aren't.
+    The wrapper provides almost raw access to the memory of the game, so
+    mistakes in manipulating objects are as likely to crash the game as
+    equivalent plain C++ code would be - e.g. null pointer access is safely
+    detected, but dangling pointers aren't.
 
 Objects managed by the wrapper can be broadly classified into the following groups:
 
@@ -157,7 +158,9 @@ that don't fit any of the other reference types. Such
 references can only appear as a value of a pointer field,
 or as a result of calling the ``_field()`` method.
 
-They behave as structs with one field ``value`` of the right type.
+They behave as structs with a ``value`` field of the right type. If the
+object's XML definition has a ``ref-target`` attribute, they will also have
+a read-only ``ref_target`` field set to the corresponding type object.
 
 To make working with numeric buffers easier, they also allow
 numeric indices. Note that other than excluding negative values
@@ -801,6 +804,8 @@ Random number generation
   Dimension may be 1, 2 or 3 (default).
 
 
+.. _lua-cpp-func-wrappers:
+
 C++ function wrappers
 =====================
 
@@ -1272,6 +1277,30 @@ Units module
 
   Retrieves the profession color for the given race/caste using raws.
 
+* ``dfhack.units.getGoalType(unit[,goalIndex])``
+
+  Retrieves the goal type of the dream that the given unit has.
+  By default the goal of the first dream is returned.
+  The goalIndex parameter may be used to retrieve additional dream goals.
+  Currently only one dream per unit is supported by Dwarf Fortress.
+  Support for multiple dreams may be added in future versions of Dwarf Fortress.
+
+* ``dfhack.units.getGoalName(unit[,goalIndex])``
+
+  Retrieves the short name describing the goal of the dream that the given unit has.
+  By default the goal of the first dream is returned.
+  The goalIndex parameter may be used to retrieve additional dream goals.
+  Currently only one dream per unit is supported by Dwarf Fortress.
+  Support for multiple dreams may be added in future versions of Dwarf Fortress.
+
+* ``dfhack.units.isGoalAchieved(unit[,goalIndex])``
+
+  Checks if given unit has achieved the goal of the dream.
+  By default the status of the goal of the first dream is returned.
+  The goalIndex parameter may be used to check additional dream goals.
+  Currently only one dream per unit is supported by Dwarf Fortress.
+  Support for multiple dreams may be added in future versions of Dwarf Fortress.
+
 * ``dfhack.units.getStressCategory(unit)``
 
   Returns a number from 0-6 indicating stress. 0 is most stressed; 6 is least.
@@ -1408,6 +1437,8 @@ Items module
 * ``dfhack.items.isSquadEquipment(item)``
 
   Checks whether the item is assigned to a squad.
+
+.. _lua-maps:
 
 Maps module
 -----------
@@ -2088,6 +2119,11 @@ unless otherwise noted.
 
   Creates a new directory. Returns ``false`` if unsuccessful, including if ``path`` already exists.
 
+* ``dfhack.filesystem.mkdir_recursive(path)``
+
+  Creates a new directory, including any intermediate directories that don't exist yet.
+  Returns ``true`` if the folder was created or already existed, or ``false`` if unsuccessful.
+
 * ``dfhack.filesystem.rmdir(path)``
 
   Removes a directory. Only works if the directory is already empty.
@@ -2106,8 +2142,10 @@ unless otherwise noted.
 * ``dfhack.filesystem.listdir(path)``
 
   Lists files/directories in a directory.  Returns ``{}`` if ``path`` does not exist.
+  Set include_prefix to false if you don't want the ``path`` string prepended to the
+  returned filenames.
 
-* ``dfhack.filesystem.listdir_recursive(path [, depth = 10])``
+* ``dfhack.filesystem.listdir_recursive(path [, depth = 10[, include_prefix = true]])``
 
   Lists all files/directories in a directory and its subdirectories. All directories
   are listed before their contents. Returns a table with subtables of the format::

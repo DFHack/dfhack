@@ -291,11 +291,9 @@ void PlannedBuilding::remove()
 * Planner
 */
 
-Planner::Planner() : in_dummmy_screen(false), quickfort_mode(false) { }
+Planner::Planner() { }
 
-void enable_quickfort_fn(pair<const df::building_type, bool>& pair) { pair.second = true; }
-
-bool Planner::isPlanableBuilding(const df::building_type type) const
+bool Planner::isPlannableBuilding(const df::building_type type) const
 {
     return item_for_building_type.find(type) != item_for_building_type.end();
 }
@@ -321,8 +319,6 @@ void Planner::initialize()
     default_item_filters[df::building_type::btype] =  ItemFilter(); \
     available_item_vectors[df::item_type::itype] = std::vector<df::item *>(); \
     is_relevant_item_type[df::item_type::itype] = true; \
-    if (planmode_enabled.find(df::building_type::btype) == planmode_enabled.end()) \
-        planmode_enabled[df::building_type::btype] = false
 
     FOR_ENUM_ITEMS(item_type, it)
         is_relevant_item_type[it] = false;
@@ -474,22 +470,6 @@ void Planner::adjustMaxQuality(df::building_type type, int amount)
         (*min_quality) = *max_quality;
 }
 
-void Planner::enableQuickfortMode()
-{
-    saved_planmodes = planmode_enabled;
-    for_each_(planmode_enabled, enable_quickfort_fn);
-
-    quickfort_mode = true;
-}
-
-void Planner::disableQuickfortMode()
-{
-    planmode_enabled = saved_planmodes;
-    quickfort_mode = false;
-}
-
-bool Planner::inQuickFortMode() { return quickfort_mode; }
-
 void Planner::boundsCheckItemQuality(item_quality::item_quality *quality)
 {
     *quality = static_cast<df::item_quality>(*quality);
@@ -517,7 +497,7 @@ void Planner::gather_available_items()
     F(in_building); F(construction); F(artifact);
     #undef F
 
-        std::vector<df::item*> &items = df::global::world->items.other[df::items_other_id::IN_PLAY];
+    std::vector<df::item*> &items = df::global::world->items.other[df::items_other_id::IN_PLAY];
 
     for (size_t i = 0; i < items.size(); i++)
     {
@@ -548,5 +528,4 @@ void Planner::gather_available_items()
     }
 }
 
-std::map<df::building_type, bool> planmode_enabled, saved_planmodes;
 Planner planner;

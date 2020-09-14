@@ -3,7 +3,7 @@
 # This file defines custom keycode shortcuts for query mode blueprints.
 # Definitions in this file take precedence over any definitions in the baseline
 # aliases configuration file at hack/data/quickfort/aliases-common.txt. See that
-# file for aliases that are already defined.
+# file for the many useful aliases that are already defined.
 #
 # If possible, build on the baseline aliases when defining your own aliases. If
 # the DF UI screens change, updated baseline aliases may allow your aliases to
@@ -18,36 +18,42 @@
 # matter of mimicking the keys used to navigate through the menus and select
 # options. Use the aliases in your blueprint spreadsheets by writing an alias by
 # itself in a cell, like "nocontainers", or reference an alias in a larger
-# sequence by enclosing in in curly brackets, like "{nocontainers}{linksonly}"
+# sequence by enclosing it in curly brackets, like "{nocontainers}{linksonly}"
 #
 # For example, say you have the following build and place blueprints:
 #
-# #build start(4;1;upper left corner of stockpile) mason stockpile
-# ~,  ~, ~, `, `, `
-# ~, wm, ~, `, `, `
-# ~,  ~, ~, `, `, `
+# #build start(4;1;upper left corner of stockpile) build masonry workshop
+# ~, ~,~,`,`,`
+# ~,wm,~,`,`,`
+# ~, ~,~,`,`,`
 #
-# #place start(4;1;upper left corner of stockpile) build mason
-# ~, ~, ~, s, s, s
-# ~, ~, ~, s, s, s
-# ~, ~, ~, s, s, s
+# #place start(4;1;upper left corner of stockpile) place stockpile for mason
+# ~,~,~,s,s,s
+# ~,~,~,s,s,s
+# ~,~,~,s,s,s
 #
 # and you want to configure the stockpile to hold only non-economic ("other")
 # stone and to give to the adjacent mason workshop. You could write the
 # keystrokes directly:
 #
 # #query start(4;1;upper left corner of stockpile) configure mason
-# ~, ~, ~, s{Down 5}deb{Right}{Down 2}p^, `, `
-# ~, ~, ~, g{Left 2}&, `, `
-# ~, ~, ~, `, `, `
+# ~,~,~,s{Down 5}deb{Right}{Down 2}p^,`,`
+# ~,~,~,g{Left 2}&,                   `,`
+# ~,~,~,`,                            `,`
 #
 # or you could use alias names:
 #
 # #query start(4;1;upper left corner of stockpile) configure mason
-# ~, ~, ~, otherstone, `, `
-# ~, ~, ~, give2left,  `, `
-# ~, ~, ~, `,          `, `
+# ~,~,~,otherstone,`,`
+# ~,~,~,give2left, `,`
+# ~,~,~,`,         `,`
 #
+# you can combine the two aliases above into a single cell as well, if desired:
+#
+# #query start(4;1;upper left corner of stockpile) configure mason
+# ~,~,~,{otherstone}{give2left},`,`
+# ~,~,~,`,                      `,`
+# ~,~,~,`,                      `,`
 #
 # The syntax for defining aliases is:
 #   aliasname: keystrokes
@@ -63,10 +69,10 @@
 #
 # Anything enclosed within curly brackets can also have a number after it,
 # indicating how many times that alias or keycode should be repeated. For
-# example: "{buildblocks 9}" or "{Down 5}".
+# example: "{togglesequence 9}" or "{Down 5}".
 #
 # Ctrl, Alt, and Shift modifiers can be specified for the next keycode by adding
-# them as keycodes. For example, Alt-h is written as "{Alt}h".
+# them into the key sequence. For example, Alt-h is written as "{Alt}h".
 #
 # Some frequently-used keystrokes are assigned shorthand characters. Think of
 # them as single-character aliases that don't need to be surrounded in curly
@@ -80,3 +86,5 @@
 # If you need literal verisons of the shorthand characters, surround them in
 # curly brackets, for example: "{~}"
 #
+#
+# Add your custom aliases here:

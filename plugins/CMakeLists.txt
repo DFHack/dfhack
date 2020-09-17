@@ -82,8 +82,6 @@ add_library(xlsxio_read STATIC IMPORTED)
 set_target_properties(xlsxio_read PROPERTIES IMPORTED_LOCATION ${XLSXIO_LIB})
 add_library(zip STATIC IMPORTED)
 set_target_properties(zip PROPERTIES IMPORTED_LOCATION ${LIBZIP_LIB})
-add_library(expat STATIC IMPORTED)
-set_target_properties(expat PROPERTIES IMPORTED_LOCATION ${LIBEXPAT_LIB})
 
 if(WIN32)
   set(LIB_Z_LIB "depends/zlib/lib/zlib")

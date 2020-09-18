@@ -77,12 +77,6 @@ set_source_files_properties( Brushes.h PROPERTIES HEADER_FILE_ONLY TRUE )
 add_library(buildingplan-lib STATIC buildingplan-lib.cpp)
 target_link_libraries(buildingplan-lib dfhack)
 
-if(WIN32)
-  set(LIB_Z_LIB "depends/zlib/lib/zlib")
-else()
-  set(LIB_Z_LIB "z")
-endif()
-
 # Plugins
 option(BUILD_SUPPORTED "Build the supported plugins (reveal, probe, etc.)." ON)
 if(BUILD_SUPPORTED)
@@ -181,7 +175,7 @@ if(BUILD_SUPPORTED)
     add_subdirectory(tweak)
     dfhack_plugin(workflow workflow.cpp LINK_LIBRARIES lua)
     dfhack_plugin(workNow workNow.cpp)
-    dfhack_plugin(xlsxreader xlsxreader.cpp LINK_LIBRARIES lua xlsxio_read_STATIC zip expat ${LIB_Z_LIB})
+    dfhack_plugin(xlsxreader xlsxreader.cpp LINK_LIBRARIES lua xlsxio_read_STATIC zip expat)
     dfhack_plugin(zone zone.cpp LINK_LIBRARIES lua)
 endif()
 

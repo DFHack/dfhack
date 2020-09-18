@@ -403,6 +403,11 @@ public:
 
     void addPlannedBuilding(df::building *bld)
     {
+        for (auto iter = bld->jobs.begin(); iter != bld->jobs.end(); iter++)
+        {
+            (*iter)->flags.bits.suspend = true;
+        }
+
         PlannedBuilding pb(bld, &default_item_filters[bld->getType()]);
         planned_buildings.push_back(pb);
     }

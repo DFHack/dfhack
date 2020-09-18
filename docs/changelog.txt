@@ -33,6 +33,13 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
+## Fixes
+- `search`: fixed an issue causing item counts on the trade screen to display inconsistently when searching
+- `stockpiles`: fixed a crash when loading food stockpiles
+
+## Misc Improvements
+- `embark-assistant`: added support for searching for taller waterfalls (up to 50 z-levels tall)
+
 # 0.47.04-r2
 
 ## New Tweaks

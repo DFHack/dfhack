@@ -2946,3 +2946,4 @@ in the `lua-api` file under `lua-plugins`:
 * `luasocket`
 * `map-render`
 * `cxxrandom`
+* `xlsxreader`

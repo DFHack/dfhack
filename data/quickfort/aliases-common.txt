@@ -7,7 +7,7 @@
 # The aliases in this file were tested in DF 0.47.04 on 2020 Jul 18.
 #
 # The aliases are generally split into three categories:
-# 1) The aliases that name a type disables everything else for that stockpile
+# 1) The aliases that name a type disable everything else for that stockpile
 #    category and enable only that type. For example, "preparedfood" enables
 #    prepared food and disables all other types of food.
 # 2) The aliases that start with "forbid" only forbid (or toggle) the named type
@@ -17,6 +17,10 @@
 #
 # Aliases that don't fit into those two categories have comments explaining
 # their usage.
+#
+# There is also a non-alphanumeric alias built into the code for the common
+# shorthand for "make room":
+#   r+   expands to r+&
 
 
 ########################################
@@ -47,18 +51,32 @@ enablesequence: e{Down}
 # put useful clothes or armor in there!)
 quantum: {linksonly}{nocontainers}{enableanimals}{enablefood}{furnitureprefix}{enablestone}{enableammo}{enablecoins}{enablebars}{enablegems}{enablefinishedgoods}{enableleather}{enablecloth}{enablewood}}{enableweapons}{enablearmor}{enablesheet}
 
+
+##################################
+# hauling aliases
+##################################
+
 # Run one of the quantumstopfrom* aliases over a track stop that is set to dump
 # into a quantum stockpile. The alias will set up the stop to accept all types
 # (the actual types stored in the quantum stockpile is controlled by the feeder
-# stockpile) and link the indicated adjacent feeder stockpile. All you need to
-# do afterwards is assign a vehicle to the stop (and optionally give the route a
-# name). The track stop does not need to be constructed yet, but the stockpile
-# needs to be in place so we can link to it.
+# stockpile) and link the indicated adjacent feeder stockpile (for example, the
+# quantumstopfromsouth alias will link to a feeder stockpile to the South). All
+# you need to do afterwards is assign a vehicle to the stop (and optionally
+# give the route a name --see the namelastroute* aliases below). The track stop
+# does not need to be constructed yet, but the feeder stockpile needs to exist
+# so we can link it.
 quantumstopprefix: ^hrs&xxx&{enablesequence 17}^
 quantumstopfromeast: {quantumstopprefix}s{Right}p^{Left}^q
 quantumstopfromsouth: {quantumstopprefix}s{Down}p^{Up}^q
 quantumstopfromwest: {quantumstopprefix}s{Left}p^{Right}^q
 quantumstopfromnorth: {quantumstopprefix}s{Up}p^{Down}^q
+
+# Give a name to the most recently defined route. Keep in mind that names have
+# a maximum length of 22 characters. It assumes that the route has exactly one
+# stop defined. Use it with the quantumstopfrom* aliases above like this:
+#   {quantumstopfromeast}{namelastrouteprefix}Trash Dumper{namelastroutesuffix}
+namelastrouteprefix: ^h--n
+namelastroutesuffix: &^q
 
 
 ##################################
@@ -69,13 +87,14 @@ animalsprefix:  s
 enableanimals:  {animalsprefix}e^
 disableanimals: {animalsprefix}d^
 
-# enables only the specified type (and disables everything else)
 cages: {animalsprefix}bu^
 traps: {animalsprefix}bj^
 
-# forbids specific items in an already-configured stockpile
 forbidcages: {animalsprefix}u^
 forbidtraps: {animalsprefix}j^
+
+permitcages: {forbidcages}
+permittraps: {forbidtraps}
 
 
 ##################################
@@ -117,7 +136,7 @@ permitmiscliquid:     {foodprefix}{Right}{Down 18}p^
 noseeds: {disablefood}{enablefood}{forbidseeds}
 
 # enables all food except for the types listed above
-food:    {noseeds}{forbidpreparedfood}{forbidunpreparedfish}{forbidplants}{forbidbooze}{forbiddye}{forbidtallow}{forbidmiscliquid}
+food: {noseeds}{forbidpreparedfood}{forbidunpreparedfish}{forbidplants}{forbidbooze}{forbiddye}{forbidtallow}{forbidmiscliquid}
 
 
 ##################################

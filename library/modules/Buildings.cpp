@@ -576,7 +576,9 @@ bool Buildings::getCorrectSize(df::coord2d &size, df::coord2d &center,
 
 bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,
                                df::building_extents *ext,
-                               bool create_ext, bool allow_occupied)
+                               bool create_ext,
+                               bool allow_occupied,
+                               bool allow_wall)
 {
     bool found_any = false;
 
@@ -611,7 +613,7 @@ bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,
             else
             {
                 auto tile = block->tiletype[btile.x][btile.y];
-                if (!HighPassable(tile))
+                if (!allow_wall && !HighPassable(tile))
                     allowed = false;
             }
 
@@ -661,7 +663,9 @@ static bool checkBuildingTiles(df::building *bld, bool can_change)
 
     return Buildings::checkFreeTiles(psize.first, psize.second, &bld->room,
                                      can_change && bld->isExtentShaped(),
-                                     !bld->isSettingOccupancy());
+                                     !bld->isSettingOccupancy(),
+                                     bld->getType() ==
+                                        df::building_type::Civzone);
 }
 
 int Buildings::countExtentTiles(df::building_extents *ext, int defval)

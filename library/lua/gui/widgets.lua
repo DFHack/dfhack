@@ -792,7 +792,8 @@ function FilteredList:setFilter(filter, pos)
             local ok = true
             local search_key = v.search_key or v.text
             for _,key in ipairs(tokens) do
-                if key ~= '' and not string.match(search_key, '%f[^%s\x00]'..key) then
+                if key ~= '' and
+                        not string.match(search_key, '%f[^%s%p\x00]'..key) then
                     ok = false
                     break
                 end

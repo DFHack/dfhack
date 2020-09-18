@@ -1076,15 +1076,17 @@ Job module
 
   Returns the unit performing the job.
 
-* ``dfhack.job.setJobCooldown(building,worker,timeout)``
+* ``dfhack.job.setJobCooldown(building,worker,cooldown)``
 
-  Prevent the worker from taking jobs at the specified workshop for the specified time.
-  This doesn't decrease the timeout in any circumstances.
+  Prevent the worker from taking jobs at the specified workshop for the
+  specified cooldown period (in ticks). This doesn't decrease the cooldown
+  period in any circumstances.
 
-* ``dfhack.job.removeWorker(job,timeout)``
+* ``dfhack.job.removeWorker(job,cooldown)``
 
-  Removes the worker from the specified workshop job, and sets the cooldown.
-  Returns *true* on success.
+  Removes the worker from the specified workshop job, and sets the cooldown
+  period (using the same logic as ``setJobCooldown``). Returns *true* on
+  success.
 
 * ``dfhack.job.checkBuildingsNow()``
 
@@ -1617,11 +1619,13 @@ General
   using width and height for flexible dimensions.
   Returns *is_flexible, width, height, center_x, center_y*.
 
-* ``dfhack.buildings.checkFreeTiles(pos,size[,extents,change_extents,allow_occupied])``
+* ``dfhack.buildings.checkFreeTiles(pos,size[,extents,change_extents,allow_occupied,allow_wall])``
 
   Checks if the rectangle defined by ``pos`` and ``size``, and possibly extents,
   can be used for placing a building. If ``change_extents`` is true, bad tiles
   are removed from extents. If ``allow_occupied``, the occupancy test is skipped.
+  Set ``allow_wall`` to true if the building is unhindered by walls (such as an
+  activity zone).
 
 * ``dfhack.buildings.countExtentTiles(extents,defval)``
 
@@ -3607,6 +3611,15 @@ Native functions:
   ``start`` and ``end`` are tables containing positions (see
   ``xyz2pos``). ``name`` is used as the basis for the filename.
 
+buildingplan
+============
+
+Native functions:
+
+* ``bool isPlannableBuilding(df::building_type type)`` returns whether the building type is handled by buildingplan
+* ``void addPlannedBuilding(df::building *bld)`` suspends the building jobs and adds the building to the monitor list
+* ``void doCycle()`` runs a check for whether buildlings in the monitor list can be assigned items and unsuspended. This method runs automatically twice a game day, so you only need to call it directly if you want buildingplan to do a check right now.
+
 burrows
 =======
 
@@ -4101,6 +4114,51 @@ Lua plugin classes
 - ``add(num)``: adds num to the end of the number sequence
 - ``shuffle()``: shuffles the sequence of numbers
 - ``next()``: returns next number in the sequence
+
+.. _xlsxreader:
+
+xlsxreader
+==========
+
+Utility functions to facilitate reading .xlsx spreadsheets. It provides the
+following API methods:
+
+ - ``file_handle open_xlsx_file(filename)``
+ - ``close_xlsx_file(file_handle)``
+ - ``sheet_names list_sheets(file_handle)``
+ - ``sheet_handle open_sheet(file_handle, sheet_name)``
+ - ``close_sheet(sheet_handle)``
+ - ``cell_strings get_row(sheet_handle)``
+
+ Example::
+
+    local xlsxreader = require('plugins.xlsxreader')
+
+    local function dump_sheet(xlsx_file, sheet_name)
+        print('reading sheet: '..sheet_name)
+        local xlsx_sheet = xlsxreader.open_sheet(xlsx_file, sheet_name)
+        dfhack.with_finalize(
+            function () xlsxreader.close_sheet(xlsx_sheet) end,
+            function ()
+                local row_cells = xlsxreader.get_row(xlsx_sheet)
+                while row_cells do
+                    printall(row_cells)
+                    row_cells = xlsxreader.get_row(xlsx_sheet)
+                end
+            end
+        )
+    end
+
+    local filepath = "path/to/some_file.xlsx"
+    local xlsx_file = xlsxreader.open_xlsx_file(filepath)
+    dfhack.with_finalize(
+        function () xlsxreader.close_xlsx_file(xlsx_file) end,
+        function ()
+            for _, sheet_name in ipairs(xlsxreader.list_sheets(xlsx_file)) do
+                dump_sheet(xlsx_file, sheet_name)
+            end
+        end
+    )
 
 =======
 Scripts

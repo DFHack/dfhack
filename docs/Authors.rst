@@ -52,6 +52,7 @@ expwnent                expwnent
 Feng
 figment                 figment
 gchristopher            gchristopher
+George Murray           GitOnUp
 grubsteak               grubsteak
 Harlan Playford         playfordh
 Hayati Ayguen           hayguen
@@ -75,6 +76,7 @@ kane-t                  kane-t
 Kelly Kinkade           ab9rf
 KlonZK                  KlonZK
 Kris Parker             kaypy
+Kristjan Moore          kristjanmoore
 Kromtec                 Kromtec
 Kurik Amudnil
 Lethosor                lethosor

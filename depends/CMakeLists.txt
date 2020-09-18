@@ -18,28 +18,6 @@ option(CLSOCKET_DEP_ONLY "Build for use inside other CMake projects as dependenc
 add_subdirectory(clsocket)
 ide_folder(clsocket "Depends")
 
-# assemble environment args to pass on to dependency projects
-get_cmake_property(vars CACHE_VARIABLES)
-foreach(var ${vars})
-  if(var MATCHES "^CMAKE_"
-     AND NOT var MATCHES "^CMAKE_CACHE"
-     AND NOT var MATCHES "^CMAKE_HOME"
-     AND NOT var MATCHES "^CMAKE_PROJECT")
-    list(APPEND CL_ARGS "-D${var}=${${var}}")
-  endif()
-  if(var MATCHES "^ZLIB")
-    list(APPEND CL_ARGS "-D${var}=${${var}}")
-  endif()
-endforeach()
-
-include(ExternalProject)
-
-if(WIN32)
-  set(XLSXIO_C_FLAGS "${CMAKE_C_FLAGS} /DXML_STATIC")
-else()
-  set(XLSXIO_C_FLAGS "${CMAKE_C_FLAGS} -DXML_STATIC")
-endif()
-
 # set the default values of libexpat options - the descriptions are left empty
 # because later option() calls *do* override those
 set(EXPAT_BUILD_EXAMPLES OFF CACHE BOOL "")

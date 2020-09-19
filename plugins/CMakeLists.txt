@@ -177,9 +177,6 @@ if(BUILD_SUPPORTED)
     dfhack_plugin(workNow workNow.cpp)
     dfhack_plugin(xlsxreader xlsxreader.cpp LINK_LIBRARIES lua xlsxio_read_STATIC zip expat)
     dfhack_plugin(zone zone.cpp LINK_LIBRARIES lua)
-
-    target_include_directories(xlsxreader PRIVATE ${XLSXIO_INSTALL_DIR}/include)
-    add_dependencies(xlsxreader xlsxio_project)
 endif()
 
 # this is the skeleton plugin. If you want to make your own, make a copy and then change it

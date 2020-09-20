@@ -40,6 +40,7 @@ build/*ninja*
 build/compile_commands.json
 build/dfhack_setarch.txt
 build/ImportExecutables.cmake
+build/zip_err_str.c
 
 # Python binding binaries
 *.pyc

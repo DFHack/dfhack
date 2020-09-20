@@ -418,6 +418,10 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
 // Lua API section
 
+static bool isEnabled() {
+    return is_enabled;
+}
+
 static bool isPlannableBuilding(df::building_type type) {
     return planner.isPlanableBuilding(type);
 }
@@ -431,6 +435,7 @@ static void doCycle() {
 }
 
 DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(isEnabled),
     DFHACK_LUA_FUNCTION(isPlannableBuilding),
     DFHACK_LUA_FUNCTION(addPlannedBuilding),
     DFHACK_LUA_FUNCTION(doCycle),

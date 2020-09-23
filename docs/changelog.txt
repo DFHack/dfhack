@@ -34,10 +34,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## Fixes
+- `getplants`: fixed a crash that could occur on some maps
 - `search`: fixed an issue causing item counts on the trade screen to display inconsistently when searching
 - `stockpiles`: fixed a crash when loading food stockpiles
 
 ## Misc Improvements
+- `createitem`: added an ``inspect`` subcommand to print the item and material tokens of existing items, which can be used to create additional matching items
 - `embark-assistant`: added support for searching for taller waterfalls (up to 50 z-levels tall)
 
 # 0.47.04-r2

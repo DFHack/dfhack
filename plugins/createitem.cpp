@@ -53,9 +53,12 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector<Plugin
         "                 PET, and EGG, replace this with a creature ID and caste.\n"
         "    [count] - How many of the item you wish to create.\n"
         "\n"
+        "To obtain the item and material of an existing item, run \n"
+        "'createitem inspect' with that item selected in-game.\n"
+        "\n"
         "To use this command, you must select which unit will create the items.\n"
         "By default, items created will be placed at that unit's feet.\n"
-        "To change this, type 'createitem <destination>'.\n"
+        "To change this, run 'createitem <destination>'.\n"
         "Valid destinations:\n"
         "* floor - Place items on floor beneath maker's feet.\n"
         "* item - Place items inside selected container.\n"
@@ -142,7 +145,21 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
 
     if (parameters.size() == 1)
     {
-        if (parameters[0] == "floor")
+        if (parameters[0] == "inspect")
+        {
+            CoreSuspender suspend;
+            df::item *item = Gui::getSelectedItem(out);
+            if (!item)
+            {
+                return CR_FAILURE;
+            }
+
+            ItemTypeInfo iinfo(item->getType(), item->getSubtype());
+            MaterialInfo minfo(item->getMaterial(), item->getMaterialIndex());
+            out.print("%s %s\n", iinfo.getToken().c_str(), minfo.getToken().c_str());
+            return CR_OK;
+        }
+        else if (parameters[0] == "floor")
         {
             dest_container = -1;
             dest_building = -1;

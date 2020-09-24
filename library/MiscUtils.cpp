@@ -150,21 +150,22 @@ static const char *normalized_table[256] = {
 
 std::string to_search_normalized(const std::string &str)
 {
-    std::stringbuf result;
+    std::string result;
+    result.reserve(str.size());
     for (char c : str)
     {
         const char *mapped = normalized_table[(uint8_t)c];
         if (mapped == NULL)
-            result.sputc(tolower(c));
+            result += tolower(c);
         else
             while (*mapped != '\0')
             {
-                result.sputc(tolower(*mapped));
+                result += tolower(*mapped);
                 ++mapped;
             }
     }
 
-    return result.str();
+    return result;
 }
 
 bool word_wrap(std::vector<std::string> *out, const std::string &str, size_t line_length)

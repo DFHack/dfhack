@@ -15,6 +15,9 @@
 #include "uicommon.h"
 
 DFHACK_PLUGIN("fortplan");
+REQUIRE_GLOBAL(gps);
+REQUIRE_GLOBAL(world);
+
 #define PLUGIN_VERSION 0.15
 
 using namespace std;

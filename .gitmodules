@@ -18,13 +18,13 @@
 	url = ../../DFHack/jsoncpp.git
 [submodule "depends/xlsxio"]
 	path = depends/xlsxio
-	url = ../../brechtsanders/xlsxio.git
+	url = ../../DFHack/xlsxio.git
 	shallow = true
 [submodule "depends/libzip"]
 	path = depends/libzip
-	url = ../../nih-at/libzip.git
+	url = ../../DFHack/libzip.git
 	shallow = true
 [submodule "depends/libexpat"]
 	path = depends/libexpat
-	url = ../../libexpat/libexpat.git
+	url = ../../DFHack/libexpat.git
 	shallow = true

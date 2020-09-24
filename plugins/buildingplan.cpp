@@ -287,12 +287,7 @@ void ViewscreenChooseMaterial::render()
 //START Viewscreen Hook
 static bool is_planmode_enabled(df::building_type type)
 {
-    if (planmode_enabled.find(type) == planmode_enabled.end())
-    {
-        return false;
-    }
-
-    return planmode_enabled[type];
+    return planmode_enabled[type] || quickfort_mode;
 }
 
 struct buildingplan_hook : public df::viewscreen_dwarfmodest
@@ -360,13 +355,8 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
             auto type = ui_build_selector->building_type;
             if (input->count(interface_key::CUSTOM_SHIFT_P))
             {
-                if (planmode_enabled.find(type) == planmode_enabled.end())
-                {
-                    planmode_enabled[type] = false;
-                }
-
                 planmode_enabled[type] = !planmode_enabled[type];
-                if (!planmode_enabled[type])
+                if (!is_planmode_enabled(type))
                 {
                     Gui::refreshSidebar();
                     in_dummy_screen = false;

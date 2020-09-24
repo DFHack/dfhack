@@ -3661,6 +3661,13 @@ to lua contexts. They are automatically imported by
 ``mkmodule('plugins.<name>')``; this means that a lua
 module file is still necessary for ``require`` to read.
 
+In addition to any native functions documented here, plugins that can be
+disabled (that is, plugins that support the enable/disable API) will have the
+following functions defined:
+
+* ``isEnabled()`` returns whether the plugin is enabled.
+* ``setEnabled(boolean)`` sets whether the plugin is enabled.
+
 The following plugins have lua support.
 
 blueprint

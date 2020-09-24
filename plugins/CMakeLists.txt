@@ -74,7 +74,7 @@ add_custom_target(generate_proto DEPENDS ${PROJECT_PROTO_TMP_FILES})
 
 set_source_files_properties( Brushes.h PROPERTIES HEADER_FILE_ONLY TRUE )
 
-add_library(buildingplan-lib STATIC buildingplan-lib.cpp)
+add_library(buildingplan-lib STATIC buildingplan-lib.cpp buildingplan-planner.cpp buildingplan-rooms.cpp)
 target_link_libraries(buildingplan-lib dfhack)
 
 # Plugins

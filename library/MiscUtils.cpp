@@ -159,7 +159,7 @@ std::string to_search_normalized(const std::string &str)
         else
             while (*mapped != '\0')
             {
-                result.sputc(tolower(c));
+                result.sputc(tolower(*mapped));
                 ++mapped;
             }
     }

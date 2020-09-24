@@ -1831,9 +1831,27 @@ Screen API
 
 The screen module implements support for drawing to the tiled screen of the game.
 Note that drawing only has any effect when done from callbacks, so it can only
-be feasibly used in the core context.
+be feasibly used in the `core context <lua-core-context>`.
 
-Basic painting functions:
+.. contents::
+  :local:
+
+Basic painting functions
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Common parameters to these functions include:
+
+* ``x``, ``y``: screen coordinates in tiles; the upper left corner of the screen
+  is ``x = 0, y = 0``
+* ``pen``: a `pen object <lua-screen-pen>`
+* ``map``: a boolean indicating whether to draw to a separate map buffer
+  (defaults to false, which is suitable for off-map text or a screen that hides
+  the map entirely). Note that only third-party plugins like TWBT currently
+  implement a separate map buffer. If no such plugins are enabled, passing
+  ``true`` has no effect. However, this parameter should still be used to ensure
+  that scripts work properly with such plugins.
+
+Functions:
 
 * ``dfhack.screen.getWindowSize()``
 
@@ -1849,25 +1867,25 @@ Basic painting functions:
 
 * ``dfhack.screen.paintTile(pen,x,y[,char,tile,map])``
 
-  Paints a tile using given parameters. See below for a description of pen.
+  Paints a tile using given parameters. `See below <lua-screen-pen>` for a description of ``pen``.
 
-  Returns *false* if coordinates out of bounds, or other error.
+  Returns *false* on error, e.g. if coordinates are out of bounds
 
 * ``dfhack.screen.readTile(x,y[,map])``
 
   Retrieves the contents of the specified tile from the screen buffers.
-  Returns a pen object, or *nil* if invalid or TrueType.
+  Returns a `pen object <lua-screen-pen>`, or *nil* if invalid or TrueType.
 
 * ``dfhack.screen.paintString(pen,x,y,text[,map])``
 
   Paints the string starting at *x,y*. Uses the string characters
-  in sequence to override the ``ch`` field of pen.
+  in sequence to override the ``ch`` field of `pen <lua-screen-pen>`.
 
   Returns *true* if painting at least one character succeeded.
 
 * ``dfhack.screen.fillRect(pen,x1,y1,x2,y2[,map])``
 
-  Fills the rectangle specified by the coordinates with the given pen.
+  Fills the rectangle specified by the coordinates with the given `pen <lua-screen-pen>`.
   Returns *true* if painting at least one character succeeded.
 
 * ``dfhack.screen.findGraphicsTile(pagename,x,y)``
@@ -1903,7 +1921,12 @@ Basic painting functions:
   Returns the keybinding representing the given string input
   character, or *nil* if impossible.
 
-The "pen" argument used by functions above may be represented by
+.. _lua-screen-pen:
+
+Pen API
+~~~~~~~
+
+The ``pen`` argument used by ``dfhack.screen`` functions may be represented by
 a table with the following possible fields:
 
   ``ch``
@@ -1958,6 +1981,9 @@ Alternatively, it may be a pre-parsed native object with the following API:
   assigning to ``pen.tile_color`` also resets ``pen.tile_fg`` and
   ``pen.tile_bg`` to *nil*.
 
+Screen management
+~~~~~~~~~~~~~~~~~
+
 In order to actually be able to paint to the screen, it is necessary
 to create and register a viewscreen (basically a modal dialog) with
 the game.
@@ -1986,7 +2012,11 @@ Apart from a native viewscreen object, these functions accept a table
 as a screen. In this case, ``show`` creates a new native viewscreen
 that delegates all processing to methods stored in that table.
 
-.. note:: Lua-implemented screens are only supported in the core context.
+.. note::
+
+  * The `gui.Screen class <lua-gui-screen>` provides stubs for all of the
+    functions listed below, and its use is recommended
+  * Lua-implemented screens are only supported in the `core context <lua-core-context>`.
 
 Supported callbacks and fields are:
 
@@ -2314,11 +2344,13 @@ and are only documented here for completeness:
 
   Returns a numeric identifier of the current thread.
 
+.. _lua-core-context:
+
 Core interpreter context
 ========================
 
 While plugins can create any number of interpreter instances,
-there is one special context managed by dfhack core. It is the
+there is one special context managed by the DFHack core. It is the
 only context that can receive events from DF and plugins.
 
 Core context specific functions:
@@ -2348,7 +2380,8 @@ Core context specific functions:
 
 * ``dfhack.onStateChange.foo = function(code)``
 
-  Event. Receives the same codes as plugin_onstatechange in C++.
+  Creates a handler for state change events. Receives the same
+  `SC_ codes <lua-globals>` as ``plugin_onstatechange()`` in C++.
 
 
 Event type
@@ -2360,7 +2393,7 @@ through the table with next and calls all contained values.
 This is intended as an extensible way to add listeners.
 
 This type itself is available in any context, but only the
-core context has the actual events defined by C++ code.
+`core context <lua-core-context>` has the actual events defined by C++ code.
 
 Features:
 
@@ -2427,6 +2460,8 @@ The following module management functions are provided:
   should be kept limited to the standard Lua library and API described
   in this document.
 
+.. _lua-globals:
+
 Global environment
 ==================
 
@@ -2443,9 +2478,9 @@ environment by the mandatory init file dfhack.lua:
     COLOR_LIGHTBLUE, COLOR_LIGHTGREEN, COLOR_LIGHTCYAN, COLOR_LIGHTRED,
     COLOR_LIGHTMAGENTA, COLOR_YELLOW, COLOR_WHITE
 
-* ``dfhack.onStateChange`` event codes
+* State change event codes, used by ``dfhack.onStateChange``
 
-  Available only in the core context, as is the event itself:
+  Available only in the `core context <lua-core-context>`, as is the event itself:
 
   SC_WORLD_LOADED, SC_WORLD_UNLOADED, SC_MAP_LOADED,
   SC_MAP_UNLOADED, SC_VIEWSCREEN_CHANGED, SC_CORE_INITIALIZED
@@ -2964,7 +2999,9 @@ The painting natives in ``dfhack.screen`` apply to the whole screen, are
 completely stateless and don't implement clipping.
 
 The Painter class inherits from ViewRect to provide clipping and local
-coordinates, and tracks current cursor position and current pen.
+coordinates, and tracks current cursor position and current pen. It also
+supports drawing to a separate map buffer if applicable (see ``map()`` below
+for details).
 
 * ``Painter{ ..., pen = ..., key_pen = ... }``
 
@@ -2989,7 +3026,15 @@ coordinates, and tracks current cursor position and current pen.
 
 * ``painter:cursor()``
 
-  Returns the current cursor *x,y* in local coordinates.
+  Returns the current cursor *x,y* in screen coordinates.
+
+* ``painter:cursorX()``
+
+  Returns just the current *x* cursor coordinate
+
+* ``painter:cursorY()``
+
+  Returns just the current *y* cursor coordinate
 
 * ``painter:seek(x,y)``
 
@@ -3009,9 +3054,21 @@ coordinates, and tracks current cursor position and current pen.
 
   Sets the current pen to ``dfhack.pen.parse(old_pen,...)``, and returns *self*.
 
+* ``painter:color(fg[,bold[,bg]])``
+
+  Sets the specified colors of the current pen and returns *self*.
+
 * ``painter:key_pen(...)``
 
   Sets the current keybinding pen to ``dfhack.pen.parse(old_pen,...)``, and returns *self*.
+
+* ``painter:map(to_map)``
+
+  Enables or disables drawing to a separate map buffer. ``to_map`` is a boolean
+  that will be passed as the ``map`` parameter to any ``dfhack.screen`` functions
+  that accept it. Note that only third-party plugins like TWBT currently implement
+  a separate map buffer; if none are enabled, this function has no effect (but
+  should still be used to ensure proper support for such plugins). Returns *self*.
 
 * ``painter:clear()``
 
@@ -3029,7 +3086,7 @@ coordinates, and tracks current cursor position and current pen.
 
 * ``painter:tile([char, tile[, ...]])``
 
-  Like above, but also allows overriding the ``tile`` property on ad-hoc basis.
+  Like ``char()`` above, but also allows overriding the ``tile`` property on ad-hoc basis.
 
 * ``painter:string(text[, ...])``
 
@@ -3039,7 +3096,13 @@ coordinates, and tracks current cursor position and current pen.
 
   Paints the description of the keycode using ``dfhack.pen.parse(cur_key_pen,...)``; returns *self*.
 
-As noted above, all painting methods return *self*, in order to allow chaining them like this::
+* ``painter:key_string(keycode, text, ...)``
+
+  A convenience wrapper around both ``key()`` and ``string()`` that prints both
+  the specified keycode description and text, separated by ``:``. Any extra
+  arguments are passed directly to ``string()``. Returns *self*.
+
+Unless specified otherwise above, all Painter methods return *self*, in order to allow chaining them like this::
 
   painter:pen(foo):seek(x,y):char(1):advance(1):string('bar')...
 
@@ -3159,6 +3222,8 @@ The class has the following methods:
   sequence in *reverse order*, so that topmost subviews get events first.
   Returns *true* if any of the subviews handled the event.
 
+
+.. _lua-gui-screen:
 
 Screen class
 ------------
@@ -4193,7 +4258,7 @@ Arguments are passed in to the scripts via the **...** built-in
 quasi-variable; when the script is called by the DFHack core,
 they are all guaranteed to be non-nil strings.
 
-DFHack core invokes the scripts in the *core context* (see above);
+DFHack core invokes the scripts in the `core context <lua-core-context>`;
 however it is possible to call them from any lua code (including
 from other scripts) in any context, via the same function the core uses:
 

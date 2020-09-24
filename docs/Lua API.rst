@@ -3656,19 +3656,22 @@ Plugins
 .. contents::
    :local:
 
-DFHack plugins may export native functions and events
-to lua contexts. They are automatically imported by
-``mkmodule('plugins.<name>')``; this means that a lua
-module file is still necessary for ``require`` to read.
+DFHack plugins may export native functions and events to Lua contexts. These are
+exposed as ``plugins.<name>`` modules, which can be imported with
+``require('plugins.<name>')``. The plugins listed in this section expose
+functions and/or data to Lua in this way.
 
 In addition to any native functions documented here, plugins that can be
-disabled (that is, plugins that support the enable/disable API) will have the
-following functions defined:
+enabled (that is, plugins that support the `enable/disable API <enable>`) will
+have the following functions defined:
 
 * ``isEnabled()`` returns whether the plugin is enabled.
 * ``setEnabled(boolean)`` sets whether the plugin is enabled.
 
-The following plugins have lua support.
+For plugin developers, note that a Lua file in ``plugins/lua`` is required for
+``require()`` to work, even if it contains no pure-Lua functions. This file must
+contain ``mkmodule('plugins.<name>')`` to import any native functions defined in
+the plugin. See existing files in ``plugins/lua`` for examples.
 
 blueprint
 =========

@@ -247,6 +247,9 @@ bool picked(const df::plant *plant, int32_t growth_subtype) {
     int32_t pos_y = site->global_min_y + plant->pos.y / 48;
     size_t id = pos_x + pos_y * 16 * world_data->world_width;
     df::world_object_data *object_data = df::world_object_data::find(id);
+    if (!object_data) {
+        return false;
+    }
     df::map_block_column *column = world->map.map_block_columns[(plant->pos.x / 16) * world->map.x_count_block + (plant->pos.y / 16)];
 
     for (size_t i = 0; i < object_data->picked_growths.x.size(); i++) {

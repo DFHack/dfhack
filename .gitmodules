@@ -26,5 +26,5 @@
 	shallow = true
 [submodule "depends/libexpat"]
 	path = depends/libexpat
-	url = ../../libexpat/libexpat.git
+	url = ../../DFHack/libexpat.git
 	shallow = true

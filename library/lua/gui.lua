@@ -355,15 +355,15 @@ function Painter:string(text,pen,...)
     return self:advance(#text, nil)
 end
 
-function Painter:key(code,pen,...)
+function Painter:key(keycode,pen,...)
     return self:string(
-        getKeyDisplay(code),
+        getKeyDisplay(keycode),
         to_pen(self.cur_key_pen, pen, ...)
     )
 end
 
-function Painter:key_string(code, text, ...)
-    return self:key(code):string(': '):string(text, ...)
+function Painter:key_string(keycode, text, ...)
+    return self:key(keycode):string(': '):string(text, ...)
 end
 
 --------------------------

@@ -1,10 +1,27 @@
-#include "buildingplan-lib.h"
 #include <fstream>
 #include <vector>
+
+#include "df/world.h"
+#include "df/trap_type.h"
+
 #include "modules/Filesystem.h"
+#include "modules/Gui.h"
+#include "modules/Maps.h"
+#include "modules/World.h"
+
+#include "PluginManager.h"
+
+#include "buildingplan-lib.h"
+#include "uicommon.h"
 
 DFHACK_PLUGIN("fortplan");
+REQUIRE_GLOBAL(gps);
+REQUIRE_GLOBAL(world);
+
 #define PLUGIN_VERSION 0.15
+
+using namespace std;
+using namespace DFHack;
 
 command_result fortplan(color_ostream &out, vector<string> & params);
 
@@ -88,7 +105,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
 #define DAY_TICKS 1200
 DFhackCExport command_result plugin_onupdate(color_ostream &out)
 {
-    if (Maps::IsValid() && !World::ReadPauseState() && world->frame_counter % (DAY_TICKS/2) == 0)
+    if (Maps::IsValid() && !World::ReadPauseState() && df::global::world->frame_counter % (DAY_TICKS/2) == 0)
     {
         planner.doCycle();
     }
@@ -100,7 +117,7 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 {
-    if (!gps)
+    if (!df::global::gps )
         return CR_FAILURE;
 
     if (enable != is_enabled)

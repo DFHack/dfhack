@@ -27,8 +27,7 @@ by Joel Thornton, reused here with his permission.
 For those just looking to apply blueprints, check out the `quickfort command's
 documentation <quickfort>` for syntax. There are also many ready-to-use blueprints
 available in the ``blueprints/library`` subfolder in your DFHack installation.
-Browse them on your computer or
-`online <https://github.com/DFHack/dfhack/tree/develop/data/blueprints/library>`__,
+Browse them on your computer or :source:`online <data/blueprints/library>`,
 or run ``quickfort list -l`` at the ``[DFHack]#`` prompt to list them, and then
 ``quickfort run`` to apply them to your fort!
 
@@ -231,20 +230,17 @@ over the bed, causing us to 'make room' and "&", which is a special symbol that
 expands to "{Enter}", to indicate that we're done.
 
 In column 2, row 3 we have "booze". This is one of many alias keywords defined
-in the included `baseline aliases
-file <https://github.com/DFHack/dfhack/tree/develop/data/quickfort/aliases-common.txt>`__.
+in the included :source:`baseline aliases file <data/quickfort/aliases-common.txt>`.
 This particular alias sets a food stockpile to carry booze only. It sends the
 keys needed to navigate DF's stockpile settings menu, and then sends an Escape
 character ("^" or "{ESC}") to exit back to the map. It is important to exit out
 of any menus that you enter while in query mode so that the cursor can move to
 the next tile when it is done configuring the current tile.
 
-Check out the included `blueprint
-library <https://github.com/DFHack/dfhack/tree/develop/data/blueprints/library>`__
+Check out the included :source:`blueprint library <data/blueprints/library>`
 to see many more examples. Read the baseline aliases file for helpful
 pre-packaged aliases, or create your own in
-`dfhack-config/quickfort/aliases.txt <https://github.com/DFHack/dfhack/tree/develop/dfhack-config/quickfort/aliases.txt>`__
-in your DFHack installation.
+:source:`dfhack-config/quickfort/aliases.txt` in your DFHack installation.
 
 Area expansion syntax
 ~~~~~~~~~~~~~~~~~~~~~
@@ -1085,9 +1081,7 @@ Caveats and limitations
    not yet supported by DFHack.
 
 -  This script is relatively new, and there are bound to be bugs! Please report
-   them at the `DFHack issue
-   tracker <https://github.com/DFHack/dfhack/issues>`__ so they can be
-   addressed.
+   them at the :issue:`DFHack issue tracker <>` so they can be addressed.
 
 Links
 -----
@@ -1095,13 +1089,10 @@ Links
 **Quickfort links:**
 
 -  `Quickfort command syntax <quickfort>`
--  `Quickfort forum
-   thread <http://www.bay12forums.com/smf/index.php?topic=176889.0>`__
--  `Quickfort blueprints
-   library <https://github.com/DFHack/dfhack/tree/develop/data/blueprints/library>`__
--  `DFHack issue tracker <https://github.com/DFHack/dfhack/issues>`__
--  `Quickfort source
-   code <https://github.com/DFHack/scripts/tree/master/internal/quickfort>`__
+-  :forums:`Quickfort forum thread <176889>`
+-  :source:`Quickfort blueprints library <data/blueprints/library>`
+-  :issue:`DFHack issue tracker <>`
+-  :source:scripts:`Quickfort source code <internal/quickfort>`
 
 **Related tools:**
 

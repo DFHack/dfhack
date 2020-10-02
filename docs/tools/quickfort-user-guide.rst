@@ -34,28 +34,11 @@ or run ``quickfort list -l`` at the ``[DFHack]#`` prompt to list them, and then
 
 See the `Links section <#links>`__ for more information and online resources.
 
-Table of Contents
------------------
 
--  `Features <#features>`__
--  `Editing Blueprints <#editing-blueprints>`__
+.. contents:: Table of Contents
+   :local:
+   :depth: 2
 
-   -  `Area expansion syntax <#area-expansion-syntax>`__
-   -  `Automatic area expansion <#automatic-area-expansion>`__
-   -  `Multilevel blueprints <#multilevel-blueprints>`__
-   -  `Marker mode <#marker-mode>`__
-   -  `Dig priorities <#dig-priorities>`__
-   -  `Stockpiles and zones <#stockpiles-and-zones>`__
-   -  `Minecart tracks <#minecart-tracks>`__
-   -  `Modeline markers <modeline-markers>`__
-   -  `Packaging a set of blueprints <#packaging-a-set-of-blueprints>`__
-   -  `Meta blueprints <#meta-blueprints>`__
-
--  `Buildingplan integration <#buildingplan-integration>`__
--  `Generating manager orders <#generating-manager-orders>`__
--  `Tips and tricks <#tips-and-tricks>`__
--  `Caveats and limitations <#caveats-and-limitations>`__
--  `Links <#links>`__
 
 Features
 --------

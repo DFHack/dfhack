@@ -247,7 +247,7 @@ pre-packaged aliases, or create your own in
 in your DFHack installation.
 
 Area expansion syntax
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 In Quickfort, the following blueprints are equivalent:
 
@@ -333,7 +333,7 @@ size, like bridges. The following blueprints are equivalent:
    #  #  #  #  #
 
 Automatic area expansion
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Buildings larger than 1x1, like workshops, can be represented in any of three
 ways. You can designate just their center tile with empty cells around it to
@@ -384,7 +384,7 @@ Quickfort will intelligently break large areas of the same designation into
 appropriately-sized chunks.
 
 Multilevel blueprints
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 Multilevel blueprints are accommodated by separating Z-levels of the blueprint
 with ``#>`` (go down one z-level) or ``#<`` (go up one z-level) at the end of
@@ -406,7 +406,7 @@ The marker must appear in the first column of the row to be recognized, just
 like a modeline.
 
 Dig priorities
---------------
+~~~~~~~~~~~~~~
 
 DF designation priorities are supported for ``#dig`` blueprints. The full syntax
 is ``[letter][number][expansion]``, where if the ``letter`` is not specified,
@@ -440,7 +440,7 @@ default priority). So each of these blueprints is equivalent:
    #  #  #  #  #  #
 
 Marker mode
------------
+~~~~~~~~~~~
 
 Marker mode is useful for when you want to plan out your digging, but you don't
 want to dig everything just yet. In ``#dig`` mode, you can add a ``m`` before
@@ -469,7 +469,7 @@ Note that the in-game UI setting "Standard/Marker Only" (``d-m``) does not have
 any effect on quickfort.
 
 Stockpiles and zones
---------------------
+~~~~~~~~~~~~~~~~~~~~
 
 It is very common to have stockpiles that accept multiple categories of items or
 zones that permit more than one activity. Although it is perfectly valid to
@@ -508,7 +508,7 @@ parameters, like hospital supply levels or converting between pits and ponds,
 must still be done manually or with a ``#query`` blueprint.
 
 Minecart tracks
----------------
+~~~~~~~~~~~~~~~
 
 There are two ways to produce minecart tracks, and they are handled very
 differently by the game. You can carve them into hard natural floors or you can
@@ -516,7 +516,7 @@ construct them out of building materials. Constructed tracks are conceptually
 simpler, so we'll start with them.
 
 Constructed tracks
-~~~~~~~~~~~~~~~~~~
+``````````````````
 
 Quickfort supports the designation of track stops and rollers through the normal
 mechanisms: a ``#build`` blueprint with ``CS`` and some number of ``d`` and
@@ -605,7 +605,7 @@ DFHack API calls. Only ``#query`` blueprints still send actual keycodes to the
 UI.
 
 Carved tracks
-~~~~~~~~~~~~~
+`````````````
 
 In the game, you carve a minecart track by specifying a beginning and ending
 tile and the game "adds" the designation to the tiles. You cannot designate
@@ -675,7 +675,7 @@ Which would result in a carved track simliar to a constructed track of the form:
    #        #        #        #
 
 Modeline markers
-----------------
+~~~~~~~~~~~~~~~~
 
 The modeline has some additional optional components that we haven't talked
 about yet. You can:
@@ -706,7 +706,7 @@ detail:
    #zone label(pastures) message(remember to assign animals to the new pastures)
 
 Blueprint labels
-~~~~~~~~~~~~~~~~
+````````````````
 
 Labels are displayed in the ``quickfort list`` output and are used for
 addressing specific blueprints when there are multiple blueprints in a single
@@ -719,7 +719,7 @@ otherwise set, etc. Labels that are explicitly defined must start with a letter
 to ensure the auto-generated labels don't conflict with user-defined labels.
 
 Start positions
-~~~~~~~~~~~~~~~
+```````````````
 
 Start positions specify a cursor offset for a particular blueprint, simplifying
 the task of blueprint alignment. This is very helpful for blueprints that are
@@ -753,7 +753,7 @@ to the ``masonw`` blueprint above could look like this:
    /masonw
 
 Hiding blueprints
-~~~~~~~~~~~~~~~~~
+`````````````````
 
 A blueprint with a ``hidden()`` marker won't appear in ``quickfort list`` output
 unless the ``--hidden`` flag is specified. The primary reason for hiding a
@@ -762,7 +762,7 @@ folder) is if a blueprint is intended to be run as part of a larger sequence
 managed by a `meta blueprint <#meta-blueprints>`__.
 
 Messages
-~~~~~~~~
+````````
 
 A blueprint with a ``message()`` marker will display a message after the
 blueprint is applied with ``quickfort run``. This is useful for reminding
@@ -776,7 +776,7 @@ series of blueprints. For long or multi-part messages, you can embed newlines:
    Once the area is clear, continue with /surface2.) clear the embark site and set up pastures"
 
 Packaging a set of blueprints
------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A complete specification for a section of your fortress may contain 5 or more
 separate blueprints, one for each "phase" of construction (dig, build, place
@@ -843,7 +843,7 @@ files and just give related blueprints similar names:
 But the naming and organization is completely up to you.
 
 Meta blueprints
----------------
+~~~~~~~~~~~~~~~
 
 Meta blueprints are blueprints that script a series of other blueprints. Many
 blueprint packages follow this pattern:
@@ -1092,8 +1092,7 @@ Caveats and limitations
 Links
 -----
 
-Quickfort links
-~~~~~~~~~~~~~~~
+**Quickfort links:**
 
 -  `Quickfort command syntax <quickfort>`
 -  `Quickfort forum
@@ -1104,8 +1103,7 @@ Quickfort links
 -  `Quickfort source
    code <https://github.com/DFHack/scripts/tree/master/internal/quickfort>`__
 
-Related tools
-~~~~~~~~~~~~~
+**Related tools:**
 
 -  DFHack's `blueprint plugin <blueprint>` can generate blueprints from actual
    DF maps.

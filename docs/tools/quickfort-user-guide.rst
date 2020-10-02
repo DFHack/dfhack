@@ -1,11 +1,10 @@
 DFHack Quickfort User Manual
 ============================
 
-DFHack Quickfort is a DFHack script that helps you build fortresses from
+`Quickfort <quickfort>` is a DFHack script that helps you build fortresses from
 "blueprint" .csv and .xlsx files. Many applications exist to edit these files,
 such as MS Excel and `Google Sheets <https://sheets.new>`__. You can also build
-your plan "for real" in Dwarf Fortress, and then export your map using DFHack's
-`blueprint <https://docs.dfhack.org/en/stable/docs/Plugins.html#blueprint>`__
+your plan "for real" in Dwarf Fortress, and then export your map using the `blueprint`
 plugin. Most layout and building-oriented DF commands are supported through the
 use of multiple files or spreadsheets, each describing a different phase of DF
 construction: designation, building, placing stockpiles/zones, and setting
@@ -25,13 +24,12 @@ This document focuses on DFHack Quickfort's capabilities and teaches players how
 to understand and build blueprint files. Some of the text was originally written
 by Joel Thornton, reused here with his permission.
 
-For those just looking to apply blueprints, check out the `quickfort command
-syntax <https://docs.dfhack.org/en/stable/docs/_auto/base.html#quickfort>`__ in
-the DFHack Scripts documentation. There are also many ready-to-use blueprints
+For those just looking to apply blueprints, check out the `quickfort command's
+documentation <quickfort>` for syntax. There are also many ready-to-use blueprints
 available in the ``blueprints/library`` subfolder in your DFHack installation.
 Browse them on your computer or
 `online <https://github.com/DFHack/dfhack/tree/develop/data/blueprints/library>`__,
-or run ``quickfort list -l`` at the ``DFHack#`` prompt to list them, and then
+or run ``quickfort list -l`` at the ``[DFHack]#`` prompt to list them, and then
 ``quickfort run`` to apply them to your fort!
 
 See the `Links section <#links>`__ for more information and online resources.
@@ -1007,17 +1005,13 @@ manufacture all required materials, and the jobs will be fulfilled as the
 materials become available.
 
 If a ``#build`` blueprint only refers to supported types, the buildingplan
-integration pairs well with the
-`workflow <https://docs.dfhack.org/en/stable/docs/Plugins.html#workflow>`__
-plugin, which can build items a few at a time continuously as long as they are
-needed. For building types that are not yet supported by buildingplan, a good
-pattern to follow is to first run ``quickfort orders`` on the ``#build``
-blueprint to manufacture all the required items, then apply the blueprint
-itself.
+integration pairs well with the `workflow` plugin, which can build items a few
+at a time continuously as long as they are needed. For building types that are
+not yet supported by buildingplan, a good pattern to follow is to first run
+``quickfort orders`` on the ``#build`` blueprint to manufacture all the required
+items, then apply the blueprint itself.
 
-See `buildingplan
-documentation <https://docs.dfhack.org/en/stable/docs/Plugins.html#buildingplan>`__
-for a list of supported types.
+See the `buildingplan documentation <buildingplan>` for a list of supported types.
 
 Generating manager orders
 -------------------------
@@ -1118,8 +1112,7 @@ Links
 Quickfort links
 ~~~~~~~~~~~~~~~
 
--  `Quickfort command
-   syntax <https://docs.dfhack.org/en/stable/docs/_auto/base.html#quickfort>`__
+-  `Quickfort command syntax <quickfort>`
 -  `Quickfort forum
    thread <http://www.bay12forums.com/smf/index.php?topic=176889.0>`__
 -  `Quickfort blueprints
@@ -1131,8 +1124,7 @@ Quickfort links
 Related tools
 ~~~~~~~~~~~~~
 
--  DFHack's `blueprint
-   plugin <https://docs.dfhack.org/en/stable/docs/Plugins.html#blueprint>`__ can
-   generate blueprints from actual DF maps.
+-  DFHack's `blueprint plugin <blueprint>` can generate blueprints from actual
+   DF maps.
 -  `Python Quickfort <http://joelpt.net/quickfort>`__ is the previous,
    Python-based implementation that DFHack's quickfort script was inspired by.

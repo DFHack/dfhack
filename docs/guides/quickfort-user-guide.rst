@@ -1,3 +1,5 @@
+.. _quickfort-user-guide:
+
 Quickfort User Guide
 ====================
 

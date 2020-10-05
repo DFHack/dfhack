@@ -548,38 +548,7 @@ PlannedBuilding * Planner::getPlannedBuilding(df::building *bld)
 
 bool Planner::isPlannableBuilding(BuildingTypeKey key)
 {
-    if (getNumFilters(key) == 0)
-        return false;
-
-    // restrict supported types to be the same as the previous implementation
-    switch(std::get<0>(key))
-    {
-        case df::enums::building_type::Armorstand:
-        case df::enums::building_type::Bed:
-        case df::enums::building_type::Chair:
-        case df::enums::building_type::Coffin:
-        case df::enums::building_type::Door:
-        case df::enums::building_type::Floodgate:
-        case df::enums::building_type::Hatch:
-        case df::enums::building_type::GrateWall:
-        case df::enums::building_type::GrateFloor:
-        case df::enums::building_type::BarsVertical:
-        case df::enums::building_type::BarsFloor:
-        case df::enums::building_type::Cabinet:
-        case df::enums::building_type::Box:
-        case df::enums::building_type::Weaponrack:
-        case df::enums::building_type::Statue:
-        case df::enums::building_type::Slab:
-        case df::enums::building_type::Table:
-        case df::enums::building_type::WindowGlass:
-        case df::enums::building_type::AnimalTrap:
-        case df::enums::building_type::Chain:
-        case df::enums::building_type::Cage:
-        case df::enums::building_type::TractionBench:
-            return true;
-        default:
-            return false;
-    }
+    return getNumFilters(key) >= 1;
 }
 
 Planner::ItemFiltersWrapper Planner::getItemFilters(BuildingTypeKey key)

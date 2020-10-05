@@ -1,5 +1,6 @@
 #include "df/building_design.h"
 #include "df/building_doorst.h"
+#include "df/building_type.h"
 #include "df/general_ref_building_holderst.h"
 #include "df/job_item.h"
 #include "df/ui_build_selector.h"
@@ -256,7 +257,7 @@ static std::vector<ItemFilter> deserializeFilters(std::string ser)
     return ret;
 }
 
-static int getNumFilters(BuildingTypeKey key)
+static size_t getNumFilters(BuildingTypeKey key)
 {
     auto L = Lua::Core::State;
     color_ostream_proxy out(Core::getInstance().getConsole());
@@ -285,8 +286,8 @@ static int getNumFilters(BuildingTypeKey key)
 }
 
 PlannedBuilding::PlannedBuilding(df::building *building, const std::vector<ItemFilter> &filters)
-    : building(building),
-      building_id(building->id),
+    : building_id(building->id),
+      building(building),
       filters(filters)
 {
     config = DFHack::World::AddPersistentData(planned_building_persistence_key_v2);
@@ -587,7 +588,7 @@ Planner::ItemFiltersWrapper Planner::getItemFilters(BuildingTypeKey key)
     static std::vector<ItemFilter> empty_vector;
     static const ItemFiltersWrapper empty_ret(empty_vector);
 
-    int nfilters = getNumFilters(key);
+    size_t nfilters = getNumFilters(key);
     if (nfilters < 1)
         return empty_ret;
     while (default_item_filters[key].size() < nfilters)

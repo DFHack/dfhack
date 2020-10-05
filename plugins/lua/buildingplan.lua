@@ -80,15 +80,15 @@ function construct_building_from_ui_state()
         direction=direction}
     if err then error(err) end
     -- TODO: assign fields for the types that need them. we can't pass them all
-    -- in to the call to constructBuilding since the unneeded fields will cause
-    -- errors
-    --local fields = {
-    --    friction=uibs.friction,
-    --    use_dump=uibs.use_dump,
-    --    dump_x_shift=uibs.dump_x_shift,
-    --    dump_y_shift=uibs.dump_y_shift,
-    --    speed=uibs.speed
-    --}
+    -- in to the call to constructBuilding since attempting to assign unrelated
+    -- fields to building types that don't support them causes errors.
+    for k,v in pairs(bld) do
+        if k == 'friction' then bld.friction = uibs.friction end
+        if k == 'use_dump' then bld.use_dump = uibs.use_dump end
+        if k == 'dump_x_shift' then bld.dump_x_shift = uibs.dump_x_shift end
+        if k == 'dump_y_shift' then bld.dump_y_shift = uibs.dump_y_shift end
+        if k == 'speed' then bld.speed = uibs.speed end
+    end
     -- TODO: use quickfort's post_construction_fns? maybe move those functions
     -- into the library so they get applied automatically
     return bld

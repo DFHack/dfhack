@@ -439,7 +439,7 @@ void Planner::initialize()
 void Planner::reset()
 {
     debug("resetting Planner state");
-    item_filters.clear();
+    default_item_filters.clear();
     planned_buildings.clear();
 
     std::vector<PersistentDataItem> items;
@@ -549,9 +549,9 @@ Planner::ItemFiltersWrapper Planner::getItemFilters(BuildingTypeKey key)
     int nfilters = getNumFilters(key);
     if (nfilters < 1)
         return empty_ret;
-    std::vector<ItemFilter> ret;
-    ret.push_back(item_filters[std::get<0>(key)]);
-    return ItemFiltersWrapper(ret);
+    while (default_item_filters[key].size() < nfilters)
+        default_item_filters[key].push_back(ItemFilter());
+    return ItemFiltersWrapper(default_item_filters[key]);
 }
 
 void Planner::doCycle()

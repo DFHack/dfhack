@@ -119,7 +119,9 @@ public:
 
 private:
     std::map<df::building_type, df::item_type> item_for_building_type;
-    std::map<df::building_type, ItemFilter> item_filters;
+    std::unordered_map<BuildingTypeKey,
+                       std::vector<ItemFilter>,
+                       BuildingTypeKeyHash> default_item_filters;
     std::map<df::item_type, std::vector<df::item *>> available_item_vectors;
     std::map<df::item_type, bool> is_relevant_item_type; //Needed for fast check when looping over all items
     std::vector<PlannedBuilding> planned_buildings;

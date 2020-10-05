@@ -309,13 +309,12 @@ struct buildingplan_query_hook : public df::viewscreen_dwarfmodest
             return true; // Don't unsuspend planned buildings
         if (input->count(interface_key::DESTROYBUILDING))
         {
-            // remove persistent data
+            // remove persistent data and allow the parent to handle the key
+            // so the building is removed
             planner.getPlannedBuilding(world->selected_building)->remove();
-            // still allow the building to be removed
-            return false;
         }
 
-        return true;
+        return false;
     }
 
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))

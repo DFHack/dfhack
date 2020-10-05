@@ -14,17 +14,19 @@ local _ENV = mkmodule('plugins.buildingplan')
 local guidm = require('gui.dwarfmode')
 require('dfhack.buildings')
 
+-- needs the core suspended
 function construct_building_from_ui_state()
     local uibs = df.global.ui_build_selector
     local world = df.global.world
-    local width = world.building_width
-    local height = world.building_height
+    local direction = world.selected_direction
+    local _, width, height = dfhack.buildings.getCorrectSize(
+        world.building_width, world.building_height, uibs.building_type,
+        uibs.building_subtype, uibs.custom_type, direction)
     -- the cursor is at the center of the building; we need the upper-left
     -- corner of the building
     local pos = guidm.getCursorPos()
     pos.x = pos.x - math.floor(width/2)
     pos.y = pos.y - math.floor(height/2)
-    local direction = world.selected_direction
     local bld, err = dfhack.buildings.constructBuilding{
         type=uibs.building_type, subtype=uibs.building_subtype,
         custom=uibs.custom_type, pos=pos, width=width, height=height,

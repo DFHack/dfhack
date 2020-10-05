@@ -289,6 +289,33 @@ static bool is_planmode_enabled(BuildingTypeKey key)
     return planmode_enabled[key] || quickfort_mode;
 }
 
+static bool construct_planned_building()
+{
+     auto L = Lua::Core::State;
+     color_ostream_proxy out(Core::getInstance().getConsole());
+
+     CoreSuspendClaimer suspend;
+     Lua::StackUnwinder top(L);
+
+    if (!(lua_checkstack(L, 1) &&
+          Lua::PushModulePublic(out, L, "plugins.buildingplan",
+                                "construct_building_from_ui_state") &&
+          Lua::SafeCall(out, L, 0, 1)))
+    {
+        return false;
+    }
+
+    auto bld = static_cast<df::building *>(LuaWrapper::get_object_ref(L, -1));
+    lua_pop(L, 1);
+
+    if (!bld)
+        return false;
+
+    planner.addPlannedBuilding(bld);
+
+    return true;
+}
+
 struct buildingplan_query_hook : public df::viewscreen_dwarfmodest
 {
     typedef df::viewscreen_dwarfmodest interpose_base;
@@ -408,7 +435,7 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
 
         if (input->count(interface_key::SELECT))
         {
-            if (ui_build_selector->errors.size() == 0 && planner.allocatePlannedBuilding(key))
+            if (ui_build_selector->errors.size() == 0 && construct_planned_building())
             {
                 Gui::refreshSidebar();
                 if (quickfort_mode)

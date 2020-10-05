@@ -505,42 +505,6 @@ bool Planner::isPlannableBuilding(BuildingTypeKey key)
     return item_for_building_type.count(std::get<0>(key)) > 0;
 }
 
-bool Planner::allocatePlannedBuilding(BuildingTypeKey key)
-{
-    coord32_t cursor;
-    if (!DFHack::Gui::getCursorCoords(cursor.x, cursor.y, cursor.z))
-        return false;
-
-    auto type = std::get<0>(key);
-    auto newinst = Buildings::allocInstance(cursor.get_coord16(), type);
-    if (!newinst)
-        return false;
-
-    df::job_item *filter = new df::job_item();
-    filter->item_type = item_type::NONE;
-    filter->mat_index = 0;
-    filter->flags2.bits.building_material = true;
-    std::vector<df::job_item*> filters;
-    filters.push_back(filter);
-
-    if (!Buildings::constructWithFilters(newinst, filters))
-    {
-        delete newinst;
-        return false;
-    }
-
-    if (type == building_type::Door)
-    {
-        auto door = virtual_cast<df::building_doorst>(newinst);
-        if (door)
-            door->door_flags.bits.pet_passable = true;
-    }
-
-    addPlannedBuilding(newinst);
-
-    return true;
-}
-
 Planner::ItemFiltersWrapper Planner::getItemFilters(BuildingTypeKey key)
 {
     static std::vector<ItemFilter> empty_vector;

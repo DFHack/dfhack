@@ -14,6 +14,53 @@ local _ENV = mkmodule('plugins.buildingplan')
 local guidm = require('gui.dwarfmode')
 require('dfhack.buildings')
 
+-- does not need the core suspended
+function get_num_filters(btype, subtype, custom)
+    local filters = dfhack.buildings.getFiltersByType(
+        {}, btype, subtype, custom)
+    if filters then return #filters end
+    return 0
+end
+
+local function to_title_case(str)
+    str = str:gsub('(%a)([%w_]*)',
+        function (first, rest) return first:upper()..rest:lower() end)
+    str = str:gsub('_', ' ')
+    return str
+end
+
+-- returns a reasonable label for the item based on the qualities of the filter
+-- does not need the core suspended
+-- reverse_idx is 0-based and is expected to be counted from the *last* filter
+function get_item_label(btype, subtype, custom, reverse_idx)
+    local filters = dfhack.buildings.getFiltersByType(
+        {}, btype, subtype, custom)
+    if not filters then return 'No item' end
+    if reverse_idx < 0 or reverse_idx >= #filters then
+        return 'Invalid index'
+    end
+    local filter = filters[#filters-reverse_idx]
+    if filter.has_tool_use then
+        return to_title_case(df.tool_uses[filter.has_tool_use])
+    end
+    if filter.item_type then
+        return to_title_case(df.item_type[filter.item_type])
+    end
+    if filter.flags2 and filter.flags2.building_material then
+        if filter.flags2.fire_safe then
+            return "Fire-safe building material";
+        end
+        if filter.flags2.magma_safe then
+            return "Magma-safe building material";
+        end
+        return "Generic building material";
+    end
+    if filter.vector_id then
+        return to_title_case(df.job_item_vector_id[filter.vector_id])
+    end
+    return "Unknown";
+end
+
 -- needs the core suspended
 function construct_building_from_ui_state()
     local uibs = df.global.ui_build_selector

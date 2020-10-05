@@ -1,5 +1,3 @@
-#include <unordered_map>
-
 #include "df/entity_position.h"
 #include "df/interface_key.h"
 #include "df/ui_build_selector.h"
@@ -17,7 +15,7 @@
 #include "buildingplan-lib.h"
 
 DFHACK_PLUGIN("buildingplan");
-#define PLUGIN_VERSION 0.15
+#define PLUGIN_VERSION 2.0
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(ui_build_selector);
 REQUIRE_GLOBAL(world);
@@ -289,6 +287,33 @@ static bool is_planmode_enabled(BuildingTypeKey key)
     return planmode_enabled[key] || quickfort_mode;
 }
 
+static std::string get_item_label(const BuildingTypeKey &key, int item_idx)
+{
+     auto L = Lua::Core::State;
+     color_ostream_proxy out(Core::getInstance().getConsole());
+     Lua::StackUnwinder top(L);
+
+    if (!lua_checkstack(L, 5) ||
+        !Lua::PushModulePublic(
+            out, L, "plugins.buildingplan", "get_item_label"))
+        return "Failed push";
+
+    Lua::Push(L, std::get<0>(key));
+    Lua::Push(L, std::get<1>(key));
+    Lua::Push(L, std::get<2>(key));
+    Lua::Push(L, item_idx);
+
+    if (!Lua::SafeCall(out, L, 4, 1))
+        return "Failed call";
+
+    const char *s = lua_tostring(L, -1);
+    if (!s)
+        return "No string";
+
+    lua_pop(L, 1);
+    return s;
+}
+
 static bool construct_planned_building()
 {
      auto L = Lua::Core::State;
@@ -320,6 +345,16 @@ struct buildingplan_query_hook : public df::viewscreen_dwarfmodest
 {
     typedef df::viewscreen_dwarfmodest interpose_base;
 
+    // no non-static fields allowed (according to VTableInterpose.h)
+    static df::building *bld;
+    static PlannedBuilding *pb;
+    static int filter_count;
+    static int filter_idx;
+
+    // logic is reversed since we're starting at the last filter
+    bool hasNextFilter() const { return filter_idx > 0; }
+    bool hasPrevFilter() const { return filter_idx + 1 < filter_count; }
+
     bool isInPlannedBuildingQueryMode()
     {
         return (ui->main.mode == df::ui_sidebar_mode::QueryBuilding ||
@@ -327,21 +362,45 @@ struct buildingplan_query_hook : public df::viewscreen_dwarfmodest
             planner.getPlannedBuilding(world->selected_building);
     }
 
+    // reinit static fields when selected building changes
+    void initStatics()
+    {
+        df::building *cur_bld = world->selected_building;
+        if (bld != cur_bld)
+        {
+            bld = cur_bld;
+            pb = planner.getPlannedBuilding(bld);
+            filter_count = pb->getFilters().size();
+            filter_idx = filter_count - 1;
+        }
+    }
+
     bool handleInput(set<df::interface_key> *input)
     {
         if (!isInPlannedBuildingQueryMode())
             return false;
 
+        initStatics();
+
         if (input->count(interface_key::SUSPENDBUILDING))
             return true; // Don't unsuspend planned buildings
         if (input->count(interface_key::DESTROYBUILDING))
         {
-            // remove persistent data and allow the parent to handle the key
-            // so the building is removed
-            planner.getPlannedBuilding(world->selected_building)->remove();
+            // remove persistent data
+            pb->remove();
+            // still allow the building to be removed
+            return false;
         }
 
-        return false;
+        // ctrl+Right
+        if (input->count(interface_key::A_MOVE_E_DOWN) && hasNextFilter())
+            --filter_idx;
+        // ctrl+Left
+        else if (input->count(interface_key::A_MOVE_W_DOWN) && hasPrevFilter())
+            ++filter_idx;
+        else
+            return false;
+        return true;
     }
 
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
@@ -357,6 +416,8 @@ struct buildingplan_query_hook : public df::viewscreen_dwarfmodest
         if (!isInPlannedBuildingQueryMode())
             return;
 
+        initStatics();
+
         // Hide suspend toggle option
         auto dims = Gui::getDwarfmodeViewDims();
         int left_margin = dims.menu_x1 + 1;
@@ -365,10 +426,13 @@ struct buildingplan_query_hook : public df::viewscreen_dwarfmodest
         Screen::Pen pen(' ', COLOR_BLACK);
         Screen::fillRect(pen, x, y, dims.menu_x2, y);
 
-        // all current buildings only have one filter
-        auto & filter = planner.getPlannedBuilding(world->selected_building)->getFilters()[0];
+        auto & filter = pb->getFilters()[filter_idx];
         y = 24;
-        OutputString(COLOR_WHITE, x, y, "Planned Building Filter", true, left_margin);
+        std::string item_label =
+            stl_sprintf("Item %d of %d", filter_count - filter_idx, filter_count);
+        OutputString(COLOR_WHITE, x, y, "Planned Building Filter", true, left_margin + 1);
+        OutputString(COLOR_WHITE, x, y, item_label.c_str(), true, left_margin + 1);
+        OutputString(COLOR_WHITE, x, y, get_item_label(toBuildingTypeKey(bld), filter_idx).c_str(), true, left_margin);
         ++y;
         OutputString(COLOR_BROWN, x, y, "Min Quality: ", false, left_margin);
         OutputString(COLOR_BLUE, x, y, filter.getMinQuality(), true, left_margin);
@@ -382,12 +446,34 @@ struct buildingplan_query_hook : public df::viewscreen_dwarfmodest
         auto filters = filter.getMaterials();
         for (auto it = filters.begin(); it != filters.end(); ++it)
             OutputString(COLOR_BLUE, x, y, "*" + *it, true, left_margin);
+
+        ++y;
+        if (hasPrevFilter())
+            OutputHotkeyString(x, y, "Prev Item", "Ctrl+Left", true, left_margin);
+        if (hasNextFilter())
+            OutputHotkeyString(x, y, "Next Item", "Ctrl+Right", true, left_margin);
     }
 };
+
+df::building * buildingplan_query_hook::bld;
+PlannedBuilding * buildingplan_query_hook::pb;
+int buildingplan_query_hook::filter_count;
+int buildingplan_query_hook::filter_idx;
 
 struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
 {
     typedef df::viewscreen_dwarfmodest interpose_base;
+
+    // no non-static fields allowed (according to VTableInterpose.h)
+    static BuildingTypeKey key;
+    static std::vector<ItemFilter>::reverse_iterator filter_rbegin;
+    static std::vector<ItemFilter>::reverse_iterator filter_rend;
+    static std::vector<ItemFilter>::reverse_iterator filter;
+    static int filter_count;
+    static int filter_idx;
+
+    bool hasNextFilter() const { return filter + 1 != filter_rend; }
+    bool hasPrevFilter() const { return filter != filter_rbegin; }
 
     bool isInPlannedBuildingPlacementMode()
     {
@@ -397,10 +483,28 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
             planner.isPlannableBuilding(toBuildingTypeKey(ui_build_selector));
     }
 
+    // reinit static fields when selected building type changes
+    void initStatics()
+    {
+        BuildingTypeKey cur_key = toBuildingTypeKey(ui_build_selector);
+        if (key != cur_key)
+        {
+            key = cur_key;
+            auto wrapper = planner.getItemFilters(key);
+            filter_rbegin = wrapper.rbegin();
+            filter_rend = wrapper.rend();
+            filter = filter_rbegin;
+            filter_count = wrapper.get().size();
+            filter_idx = filter_count - 1;
+        }
+    }
+
     bool handleInput(set<df::interface_key> *input)
     {
         if (!isInPlannedBuildingPlacementMode())
             return false;
+        
+        initStatics();
 
         if (in_dummy_screen)
         {
@@ -416,7 +520,6 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
             return true;
         }
 
-        BuildingTypeKey key = toBuildingTypeKey(ui_build_selector);
         if (input->count(interface_key::CUSTOM_SHIFT_P))
         {
             planmode_enabled[key] = !planmode_enabled[key];
@@ -444,8 +547,6 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
             return true;
         }
 
-        // all current buildings only have one filter
-        auto filter = planner.getItemFilters(key).rbegin();
         if (input->count(interface_key::CUSTOM_SHIFT_M))
             Screen::show(dts::make_unique<ViewscreenChooseMaterial>(*filter), plugin_self);
         else if (input->count(interface_key::CUSTOM_Q))
@@ -458,6 +559,18 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
             filter->incMaxQuality();
         else if (input->count(interface_key::CUSTOM_SHIFT_D))
             filter->toggleDecoratedOnly();
+        // ctrl+Right
+        else if (input->count(interface_key::A_MOVE_E_DOWN) && hasNextFilter())
+        {
+            ++filter;
+            --filter_idx;
+        }
+        // ctrl+Left
+        else if (input->count(interface_key::A_MOVE_W_DOWN) && hasPrevFilter())
+        {
+            --filter;
+            ++filter_idx;
+        }
         else
             return false;
         return true;
@@ -472,7 +585,6 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
     DEFINE_VMETHOD_INTERPOSE(void, render, ())
     {
         bool plannable = isInPlannedBuildingPlacementMode();
-        BuildingTypeKey key = toBuildingTypeKey(ui_build_selector);
         if (plannable && is_planmode_enabled(key))
         {
             if (ui_build_selector->stage < 1)
@@ -496,6 +608,8 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
 
         if (!plannable)
             return;
+
+        initStatics();
 
         auto dims = Gui::getDwarfmodeViewDims();
         int left_margin = dims.menu_x1 + 1;
@@ -524,8 +638,13 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
         if (!is_planmode_enabled(key))
             return;
 
-        auto filter = planner.getItemFilters(key).rbegin();
         y += 2;
+        std::string title =
+            stl_sprintf("Filter for Item %d of %d:",
+                        filter_count - filter_idx, filter_count);
+        OutputString(COLOR_WHITE, x, y, title.c_str(), true, left_margin + 1);
+        OutputString(COLOR_WHITE, x, y, get_item_label(key, filter_idx).c_str(), true, left_margin);
+
         OutputHotkeyString(x, y, "Min Quality: ", "qw");
         OutputString(COLOR_BROWN, x, y, filter->getMinQuality(), true, left_margin);
 
@@ -539,8 +658,21 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
         for (auto it = filter_descriptions.begin();
              it != filter_descriptions.end(); ++it)
              OutputString(COLOR_BROWN, x, y, "   *" + *it, true, left_margin);
+
+        y += 2;
+        if (hasPrevFilter())
+            OutputHotkeyString(x, y, "Prev Item", "Ctrl+Left", true, left_margin);
+        if (hasNextFilter())
+            OutputHotkeyString(x, y, "Next Item", "Ctrl+Right", true, left_margin);
     }
 };
+
+BuildingTypeKey buildingplan_place_hook::key;
+std::vector<ItemFilter>::reverse_iterator buildingplan_place_hook::filter_rbegin;
+std::vector<ItemFilter>::reverse_iterator buildingplan_place_hook::filter_rend;
+std::vector<ItemFilter>::reverse_iterator buildingplan_place_hook::filter;
+int buildingplan_place_hook::filter_count;
+int buildingplan_place_hook::filter_idx;
 
 struct buildingplan_room_hook : public df::viewscreen_dwarfmodest
 {
@@ -686,7 +818,6 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         PluginCommand(
         "buildingplan", "Plan building construction before you have materials",
         buildingplan_cmd, false, "Run 'buildingplan debug [on|off]' to toggle debugging, or 'buildingplan version' to query the plugin version."));
-    planner.initialize();
 
     return CR_OK;
 }

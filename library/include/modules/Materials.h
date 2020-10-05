@@ -136,8 +136,8 @@ namespace DFHack
             return findProduct(info.material, name);
         }
 
-        std::string getToken();
-        std::string toString(uint16_t temp = 10015, bool named = true);
+        std::string getToken() const;
+        std::string toString(uint16_t temp = 10015, bool named = true) const;
 
         bool isAnyCloth();
 

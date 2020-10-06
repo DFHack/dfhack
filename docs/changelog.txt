@@ -33,8 +33,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
+## New Plugins
+- `xlsxreader`: provides an API for Lua scripts to read Excel spreadsheets
+
 ## Fixes
 - `buildingplan`: artifacts are now successfully matched when max quality is set to ``artifacts``
+- `buildingplan`: fixed handling of buildings that require buckets
 - `getplants`: fixed a crash that could occur on some maps
 - `search`: fixed an issue causing item counts on the trade screen to display inconsistently when searching
 - `stockpiles`: fixed a crash when loading food stockpiles

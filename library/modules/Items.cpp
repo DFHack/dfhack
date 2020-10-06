@@ -379,6 +379,7 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat, bool ski
         break;
 
     case BUCKET:
+        OK(2,lye_milk_free);
     case FLASK:
         OK(1,milk);
         xmask1.bits.cookable = true;

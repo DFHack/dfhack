@@ -1,4 +1,5 @@
 #include <functional>
+#include <climits> // for CHAR_BIT
 
 #include "df/building_design.h"
 #include "df/building_doorst.h"
@@ -386,11 +387,24 @@ BuildingTypeKey toBuildingTypeKey(df::ui_build_selector *uibs)
         uibs->building_type, uibs->building_subtype, uibs->custom_type);
 }
 
+// rotates a size_t value left by count bits
+// assumes count is not 0 or >= size_t_bits
+// replace this with std::rotl when we move to C++20
+static std::size_t rotl_size_t(size_t val, uint32_t count)
+{
+    static const int size_t_bits = CHAR_BIT * sizeof(std::size_t);
+    return val << count | val >> (size_t_bits - count);
+}
+
 std::size_t BuildingTypeKeyHash::operator() (const BuildingTypeKey & key) const
 {
-    return std::hash<df::building_type>()(std::get<0>(key))
-        ^ std::hash<int16_t>()(std::get<1>(key))
-        ^ std::hash<int32_t>()(std::get<2>(key));
+    // cast first param to appease gcc-4.8, which is missing the enum
+    // specializations for std::hash
+    std::size_t h1 = std::hash<int32_t>()(static_cast<int32_t>(std::get<0>(key)));
+    std::size_t h2 = std::hash<int16_t>()(std::get<1>(key));
+    std::size_t h3 = std::hash<int32_t>()(std::get<2>(key));
+
+    return h1 ^ rotl_size_t(h2, 8) ^ rotl_size_t(h3, 16);
 }
 
 

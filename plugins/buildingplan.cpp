@@ -25,9 +25,6 @@ REQUIRE_GLOBAL(world);
 #define MAX_MASK 10
 #define MAX_MATERIAL 21
 
-using namespace DFHack;
-using namespace df::enums;
-
 bool show_help = false;
 bool quickfort_mode = false;
 bool in_dummy_screen = false;

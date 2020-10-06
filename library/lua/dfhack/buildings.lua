@@ -73,13 +73,13 @@ local building_inputs = {
         {
             item_type=df.item_type.SMALLGEM,
             quantity=3,
-            vector_id=df.job_item_vector_id.ANY_GENERIC35
+            vector_id=df.job_item_vector_id.SMALLGEM
         }
     },
     [df.building_type.Well] = {
         {
             item_type=df.item_type.BLOCKS,
-            vector_id=df.job_item_vector_id.ANY_GENERIC35
+            vector_id=df.job_item_vector_id.BLOCKS
         },
         {
             name='bucket',
@@ -116,7 +116,7 @@ local building_inputs = {
     [df.building_type.ScrewPump] = {
         {
             item_type=df.item_type.BLOCKS,
-            vector_id=df.job_item_vector_id.ANY_GENERIC35
+            vector_id=df.job_item_vector_id.BLOCKS
         },
         {
             name='screw',
@@ -140,10 +140,10 @@ local building_inputs = {
     [df.building_type.GrateWall] = { { item_type=df.item_type.GRATE, vector_id=df.job_item_vector_id.GRATE } },
     [df.building_type.GrateFloor] = { { item_type=df.item_type.GRATE, vector_id=df.job_item_vector_id.GRATE } },
     [df.building_type.BarsVertical] = {
-        { item_type=df.item_type.BAR, vector_id=df.job_item_vector_id.ANY_GENERIC35 }
+        { item_type=df.item_type.BAR, vector_id=df.job_item_vector_id.BAR }
     },
     [df.building_type.BarsFloor] = {
-        { item_type=df.item_type.BAR, vector_id=df.job_item_vector_id.ANY_GENERIC35 }
+        { item_type=df.item_type.BAR, vector_id=df.job_item_vector_id.BAR }
     },
     [df.building_type.GearAssembly] = {
         {
@@ -248,7 +248,7 @@ local workshop_inputs = {
     [df.workshop_type.Ashery] = {
         {
             item_type=df.item_type.BLOCKS,
-            vector_id=df.job_item_vector_id.ANY_GENERIC35
+            vector_id=df.job_item_vector_id.BLOCKS
         },
         {
             name='barrel',

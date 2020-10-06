@@ -1,3 +1,5 @@
+#include <functional>
+
 #include "df/building_design.h"
 #include "df/building_doorst.h"
 #include "df/building_type.h"
@@ -244,8 +246,8 @@ static size_t getNumFilters(BuildingTypeKey key)
 }
 
 PlannedBuilding::PlannedBuilding(df::building *building, const std::vector<ItemFilter> &filters)
-    : building_id(building->id),
-      building(building),
+    : building(building),
+      building_id(building->id),
       filters(filters)
 {
     config = DFHack::World::AddPersistentData(planned_building_persistence_key_v1);
@@ -256,8 +258,8 @@ PlannedBuilding::PlannedBuilding(df::building *building, const std::vector<ItemF
 
 PlannedBuilding::PlannedBuilding(PersistentDataItem &config)
     : config(config),
-      building_id(config.ival(1)),
       building(df::building::find(config.ival(1))),
+      building_id(config.ival(1)),
       filters(deserializeFilters(config))
 { }
 

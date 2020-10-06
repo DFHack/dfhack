@@ -28,6 +28,7 @@ REQUIRE_GLOBAL(world);
 using namespace DFHack;
 using namespace df::enums;
 
+bool show_help = false;
 bool quickfort_mode = false;
 bool in_dummy_screen = false;
 std::unordered_map<BuildingTypeKey, bool, BuildingTypeKeyHash> planmode_enabled;
@@ -373,7 +374,10 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
     bool handleInput(set<df::interface_key> *input)
     {
         if (!isInPlannedBuildingPlacementMode())
+        {
+            show_help = false;
             return false;
+        }
 
         if (in_dummy_screen)
         {
@@ -387,6 +391,14 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
                 return false;
             }
             return true;
+        }
+
+        if (input->count(interface_key::CUSTOM_P) ||
+            input->count(interface_key::CUSTOM_F) ||
+            input->count(interface_key::CUSTOM_D) ||
+            input->count(interface_key::CUSTOM_M))
+        {
+            show_help = true;
         }
 
         BuildingTypeKey key = toBuildingTypeKey(ui_build_selector);
@@ -490,6 +502,12 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
         }
 
         int y = 23;
+
+        if (show_help)
+        {
+            OutputString(COLOR_BROWN, x, y, "Note: ");
+            OutputString(COLOR_WHITE, x, y, "Use Shift-Keys here", true, left_margin);
+        }
 
         OutputToggleString(x, y, "Planning Mode", "P", planmode_enabled[key], true, left_margin);
         OutputToggleString(x, y, "Quickfort Mode", "F", quickfort_mode, true, left_margin);

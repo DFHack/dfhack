@@ -10,6 +10,7 @@ jobs:
       fail-fast: false
       matrix:
         gcc:
+        - 4.8
         - 7
         - 9
     steps:
@@ -30,6 +31,10 @@ jobs:
             ninja-build \
             zlib1g-dev
         pip install sphinx
+    - name: Install GCC
+      if: ${{ matrix.gcc < 7 }}
+      run: |
+        sudo apt-get install gcc-${{ matrix.gcc }} g++-${{ matrix.gcc }}
     - name: Clone DFHack
       uses: actions/checkout@v1
       with:

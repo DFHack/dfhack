@@ -43,14 +43,6 @@ jobs:
     - name: Download DF
       run: |
         sh travis/download-df.sh
-    - name: Build docs
-      run: |
-        sphinx-build -qW -j3 . docs/html
-    - name: Upload docs
-      uses: actions/upload-artifact@v1
-      with:
-        name: docs
-        path: docs/html
     - name: Build DFHack
       run: |
         cmake \
@@ -77,11 +69,34 @@ jobs:
         name: test-artifacts
         path: artifacts
     - name: Clean up DF folder
-      # to prevent DFHack-generated files from ending up in the cache
+      # prevent DFHack-generated files from ending up in the cache
       # (download-df.sh also removes them, this is just to save cache space)
       if: success() || failure()
       run: |
         rm -rf "$DF_FOLDER"
+
+  docs:
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Set up Python 3
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3
+    - name: Install dependencies
+      run: |
+        pip install sphinx
+    - name: Clone DFHack
+      uses: actions/checkout@v1
+      with:
+        submodules: true
+    - name: Build docs
+      run: |
+        sphinx-build -qW -j3 . docs/html
+    - name: Upload docs
+      uses: actions/upload-artifact@v1
+      with:
+        name: docs
+        path: docs/html
 
   lint:
     runs-on: ubuntu-18.04

@@ -442,6 +442,7 @@ if(BUILD_DOCS)
 
     file(GLOB SPHINX_DEPS
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/*.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/guides/*.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/changelog.txt"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/gen_changelog.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/images/*.png"

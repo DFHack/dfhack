@@ -1090,7 +1090,7 @@ Links
 
 **Quickfort links:**
 
--  `Quickfort command syntax <quickfort>`
+-  `Quickfort command reference <quickfort>`
 -  :forums:`Quickfort forum thread <176889>`
 -  :source:`Quickfort blueprints library <data/blueprints/library>`
 -  :issue:`DFHack issue tracker <>`

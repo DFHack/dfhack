@@ -139,8 +139,11 @@ in DF. The following "mode" keywords are understood:
    zone    Activity zones menu (i)
    query   Set building tasks/prefs menu (q)
 
-There are also "meta" blueprints, but we'll talk about those
-`later <#meta-blueprints>`__.
+If no modeline appears in the first cell, the file or sheet is interpreted as a
+``#dig`` blueprint.
+
+There are also "meta" and "notes" blueprints, but we'll talk about
+`those <#meta-blueprints>`__ `later <#notes-blueprints>`__.
 
 Optionally following this keyword and a space, you may enter a comment. This
 comment will appear in the output of ``quickfort list`` when run from the
@@ -690,9 +693,11 @@ The full modeline syntax, when everything is specified, is:
 
    #mode label(mylabel) start(X;Y;STARTCOMMENT) hidden() message(mymessage) comment
 
-Note that all elements are optional except for the initial ``#mode``. Here are a
-few examples of modelines with optional elements before we discuss them in more
-detail:
+Note that all elements are optional except for the initial ``#mode`` (though, as
+mentioned in the first section, if a modeline doesn't appear at all in the first
+cell of a spreadsheet, the blueprint is interpreted as a ``#dig`` blueprint with
+no optional markers). Here are a few examples of modelines with optional
+elements before we discuss them in more detail:
 
 ::
 
@@ -971,6 +976,34 @@ blueprints that you don't need to run directly. If you ever *do* need to access
 the managed blueprints individually, you can still see them with
 ``quickfort list --hidden``.
 
+Notes blueprints
+~~~~~~~~~~~~~~~~
+
+Sometimes you just want to record some information about your blueprints, such
+as when to apply them, what preparations you need to make, or what the
+blueprints contain. The `messages() <#messages>`__ modeline marker is useful for
+small, single-line messages, but a ``#notes`` blueprint is more convenient for
+long messages or messages that span many lines. The lines in a ``#notes``
+blueprint are output as if they were contained within a messages() marker. For
+example, the following two blueprints result in the same output:
+
+::
+
+   "#meta label(help) message(This is the help text for the blueprint set
+   contained in this file.
+
+   More info here...) blueprint set walkthough"
+
+   #notes label(help) blueprint set walkthrough
+   This is the help text for the blueprint set
+   contained in this file
+
+   More info here...
+
+The quotes around the ``#meta`` modeline allow newlines in a single cell's text.
+Each line of the ``#notes`` "blueprint", however, is in a separate cell,
+allowing for much easier viewing and editing.
+
 Buildingplan integration
 ------------------------
 
@@ -992,7 +1025,8 @@ not yet supported by buildingplan, a good pattern to follow is to first run
 ``quickfort orders`` on the ``#build`` blueprint to manufacture all the required
 items, then apply the blueprint itself.
 
-See the `buildingplan documentation <buildingplan>` for a list of supported types.
+See the `buildingplan documentation <buildingplan>` for more information. As of
+this writing, buildingplan only supports basic furniture.
 
 Generating manager orders
 -------------------------

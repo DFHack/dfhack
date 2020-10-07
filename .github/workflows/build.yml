@@ -5,6 +5,12 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-18.04
+    strategy:
+      fail-fast: false
+      matrix:
+        gcc:
+        - 7
+        - 9
     steps:
     - name: Set up Python 3
       uses: actions/setup-python@v2
@@ -44,6 +50,9 @@ jobs:
       run: |
         sh travis/download-df.sh
     - name: Build DFHack
+      env:
+        CC: gcc-${{ matrix.gcc }}
+        CXX: g++-${{ matrix.gcc }}
       run: |
         cmake \
           -S . \

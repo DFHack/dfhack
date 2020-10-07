@@ -4,15 +4,19 @@ on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ${{ matrix.os }}
     name: build (Linux, GCC ${{ matrix.gcc }})
     strategy:
       fail-fast: false
       matrix:
+        os:
+        - ubuntu-18.04
         gcc:
         - 4.8
         - 7
-        - 9
+        include:
+        - os: ubuntu-20.04
+          gcc: 10
     steps:
     - name: Set up Python 3
       uses: actions/setup-python@v2
@@ -32,7 +36,7 @@ jobs:
             zlib1g-dev
         pip install sphinx
     - name: Install GCC
-      if: ${{ matrix.gcc < 7 }}
+      if: ${{ matrix.gcc < 7 || matrix.gcc > 9 }}
       run: |
         sudo apt-get install gcc-${{ matrix.gcc }} g++-${{ matrix.gcc }}
     - name: Clone DFHack

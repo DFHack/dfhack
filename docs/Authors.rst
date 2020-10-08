@@ -33,6 +33,7 @@ Carter Bray             Qartar
 Chris Dombroski         cdombroski
 Clayton Hughes
 Clément Vuchener        cvuchener
+daedsidog               daedsidog
 Dan Amlund              danamlund
 Daniel Brooks           db48x
 David                   Nilsolm
@@ -134,6 +135,7 @@ Rinin                   Rinin
 rndmvar                 rndmvar
 Robert Heinrich         rh73
 Robert Janetzko         robertjanetzko
+Rocco Moretti           roccomoretti
 RocheLimit
 rofl0r                  rofl0r
 root

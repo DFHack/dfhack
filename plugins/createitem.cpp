@@ -390,6 +390,10 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
             // default to empty to display a list of valid growths later
             tokens.push_back("");
         }
+        else if (tokens.size() == 3 && tokens[0] == "PLANT")
+        {
+            tokens.erase(tokens.begin());
+        }
         else if (tokens.size() != 2)
         {
             out.printerr("You must specify a plant and growth ID for this item type!\n");

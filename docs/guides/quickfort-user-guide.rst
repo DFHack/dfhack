@@ -12,8 +12,7 @@ use of multiple files or spreadsheets, each describing a different phase of DF
 construction: designation, building, placing stockpiles/zones, and setting
 configuration.
 
-The original idea and 1.0 codebase came from
-`Valdemar's <https://dwarffortresswiki.org/index.php/User:Valdemar>`__
+The original idea and 1.0 codebase came from :wiki:`Valdemar's <User:Valdemar>`
 auto-designation macro. Joel Thornton (joelpt) reimplemented the core logic in
 Python and extended its functionality with `Quickfort
 2.0 <https://github.com/joelpt/quickfort>`__. This DFHack-native implementation,
@@ -1144,10 +1143,10 @@ or what the best practices are, especially for large and complex blueprint sets.
 This section walks through the "Dreamfort" blueprints found in the DFHack
 blueprint library, highlighting design choices and showcasing practical
 techniques that can help you create better blueprints. Note that this is not a
-guide for how to design the best forts (there is plenty about that `on the wiki
-<https://dwarffortresswiki.org/index.php?title=Design_strategies>`__). This is
-essentially an extended tips and tricks section focused on how to make usable
-and useful quickfort blueprints that will save you time and energy.
+guide for how to design the best forts (there is plenty about that :wiki:`on the
+wiki <Design strategies>`). This is essentially an extended tips and tricks
+section focused on how to make usable and useful quickfort blueprints that will
+save you time and energy.
 
 The Dreamfort blueprints we'll be discussing are available in the library as
 :source:`one large .csv file <data/blueprints/library/dreamfort.csv>`

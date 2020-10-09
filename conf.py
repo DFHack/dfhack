@@ -202,11 +202,11 @@ extensions = [
 # short alias names to a base URL and a prefix.
 # See http://sphinx-doc.org/ext/extlinks.html
 extlinks = {
-    'wiki': ('http://dwarffortresswiki.org/%s', ''),
+    'wiki': ('https://dwarffortresswiki.org/%s', ''),
     'forums': ('http://www.bay12forums.com/smf/index.php?topic=%s',
                'Bay12 forums thread '),
-    'dffd': ('http://dffd.bay12games.com/file.php?id=%s', 'DFFD file '),
-    'bug': ('http://www.bay12games.com/dwarves/mantisbt/view.php?id=%s',
+    'dffd': ('https://dffd.bay12games.com/file.php?id=%s', 'DFFD file '),
+    'bug': ('https://www.bay12games.com/dwarves/mantisbt/view.php?id=%s',
             'Bug '),
     'source': ('https://github.com/DFHack/dfhack/tree/develop/%s', ''),
     'source:scripts': ('https://github.com/DFHack/scripts/tree/master/%s', ''),

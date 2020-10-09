@@ -511,5 +511,5 @@ This section is for odd but important notes that don't fit anywhere else.
   Older versions are available here_.
   *These files will eventually be migrated to GitHub.*  (see :issue:`473`)
 
-  .. _DFFD: http://dffd.bay12games.com/search.php?string=DFHack&id=15&limit=1000
-  .. _here: http://dethware.org/dfhack/download
+  .. _DFFD: https://dffd.bay12games.com/search.php?string=DFHack&id=15&limit=1000
+  .. _here: https://dethware.org/dfhack/download

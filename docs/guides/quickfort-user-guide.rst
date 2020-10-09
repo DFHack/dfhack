@@ -1145,7 +1145,7 @@ This section walks through the "Dreamfort" blueprints found in the DFHack
 blueprint library, highlighting design choices and showcasing practical
 techniques that can help you create better blueprints. Note that this is not a
 guide for how to design the best forts (there is plenty about that `on the wiki
-<http://dwarffortresswiki.org/index.php?title=Design_strategies>`__). This is
+<https://dwarffortresswiki.org/index.php?title=Design_strategies>`__). This is
 essentially an extended tips and tricks section focused on how to make usable
 and useful quickfort blueprints that will save you time and energy.
 

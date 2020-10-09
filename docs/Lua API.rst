@@ -9,7 +9,7 @@ DFHack Lua API
 DFHack has extensive support for
 the Lua_ scripting language, providing access to:
 
-.. _Lua: http://www.lua.org
+.. _Lua: https://www.lua.org
 
 1. Raw data structures used by the game.
 2. Many C++ functions for high-level access to these
@@ -39,7 +39,7 @@ DF data structure wrapper
    :local:
 
 Data structures of the game are defined in XML files located in :file:`library/xml`
-(and `online <http://github.com/DFHack/df-structures>`_, and automatically exported
+(and `online <https://github.com/DFHack/df-structures>`_, and automatically exported
 to lua code as a tree of objects and functions under the ``df`` global, which
 also broadly maps to the ``df`` namespace in the headers generated for C++.
 

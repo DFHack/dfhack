@@ -6,13 +6,13 @@ DFHack Documentation System
 
 
 DFHack documentation, like the file you are reading now, is created as ``.rst`` files,
-which are in `reStructuredText (reST) <http://sphinx-doc.org/rest.html>`_ format.
+which are in `reStructuredText (reST) <https://www.sphinx-doc.org/rest.html>`_ format.
 This is a documentation format common in the Python community. It is very
 similar in concept - and in syntax - to Markdown, as found on GitHub and many other
 places. However it is more advanced than Markdown, with more features available when
 compiled to HTML, such as automatic tables of contents, cross-linking, special
 external links (forum, wiki, etc) and more. The documentation is compiled by a
-Python tool, `Sphinx <http://sphinx-doc.org>`_.
+Python tool, `Sphinx <https://www.sphinx-doc.org>`_.
 
 The DFHack build process will compile the documentation, but this is disabled
 by default due to the additional Python and Sphinx requirements. You typically

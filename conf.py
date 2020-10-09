@@ -195,6 +195,7 @@ needs_sphinx = '1.8'
 extensions = [
     'sphinx.ext.extlinks',
     'dfhack.changelog',
+    'dfhack.lexer',
 ]
 
 # This config value must be a dictionary of external sites, mapping unique
@@ -283,7 +284,7 @@ default_role = 'ref'
 pygments_style = 'sphinx'
 
 # The default language to highlight source code in.
-highlight_language = 'none'
+highlight_language = 'dfhack'
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False

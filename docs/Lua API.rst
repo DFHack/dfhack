@@ -3756,6 +3756,9 @@ Eventful
 This plugin exports some events to lua thus allowing to run lua functions
 on DF world events.
 
+.. contents::
+  :local:
+
 List of events
 --------------
 
@@ -3916,6 +3919,9 @@ Building-hacks
 This plugin overwrites some methods in workshop df class so that mechanical workshops are possible. Although
 plugin export a function it's recommended to use lua decorated function.
 
+.. contents::
+  :local:
+
 Functions
 ---------
 
@@ -3994,6 +4000,9 @@ Luasocket
 
 A way to access csocket from lua. The usage is made similar to luasocket in vanilla lua distributions. Currently
 only subset of functions exist and only tcp mode is implemented.
+
+.. contents::
+  :local:
 
 Socket class
 ------------
@@ -4076,6 +4085,9 @@ cxxrandom
 =========
 
 Exposes some features of the C++11 random number library to Lua.
+
+.. contents::
+  :local:
 
 Native functions (exported to Lua)
 ----------------------------------

@@ -1,3 +1,5 @@
+.. highlight:: shell
+
 .. _compile:
 
 ################
@@ -283,7 +285,9 @@ Dwarf Fortress runs, it uses a libstdc++ shipped in the ``libs`` folder, which
 comes from GCC 4.8 and is incompatible with code compiled with newer GCC
 versions. As of DFHack 0.42.05-alpha1, the ``dfhack`` launcher script attempts
 to fix this by automatically removing the DF-provided libstdc++ on startup.
-In rare cases, this may fail and cause errors such as::
+In rare cases, this may fail and cause errors such as:
+
+.. code-block:: text
 
    ./libs/Dwarf_Fortress: /pathToDF/libs/libstdc++.so.6: version
        `GLIBCXX_3.4.18' not found (required by ./hack/libdfhack.so)

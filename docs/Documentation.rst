@@ -57,7 +57,9 @@ as the in-console documentation by (e.g.) printing it when a ``-help`` argument
 is given.
 
 The docs **must** have a heading which exactly matches the command, underlined
-with ``=====`` to the same length.  For example, a lua file would have::
+with ``=====`` to the same length.  For example, a lua file would have:
+
+.. code-block:: lua
 
     local helpstr = [====[
 
@@ -68,6 +70,8 @@ with ``=====`` to the same length.  For example, a lua file would have::
 
     ]====]
 
+
+.. highlight:: rst
 
 Where the heading for a section is also the name of a command, the spelling
 and case should exactly match the command to enter in the DFHack command line.
@@ -117,6 +121,8 @@ Scripts have link targets created automatically.
 
 Building the documentation
 ==========================
+
+.. highlight:: shell
 
 Required dependencies
 ---------------------

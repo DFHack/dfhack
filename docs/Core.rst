@@ -63,7 +63,9 @@ or at any other time using the ``dfhack-run`` executable.
 
 If DF/DFHack is started with arguments beginning with ``+``, the remaining
 text is treated as a command in the DFHack console.  It is possible to use
-multiple such commands, which are split on ``+``.  For example::
+multiple such commands, which are split on ``+``.  For example:
+
+.. code-block:: shell
 
     ./dfhack +load-save region1
     "Dwarf Fortress.exe" +devel/print-args Hello! +enable workflow
@@ -93,7 +95,9 @@ but ``dfhack-run`` can be useful in a variety of circumstances:
 - from external programs or scripts
 - if DF or DFHack are not responding
 
-Examples::
+Examples:
+
+.. code-block:: shell
 
     ./dfhack-run cursecheck
     dfhack-run kill-lua
@@ -456,7 +460,9 @@ Environment variables
 =====================
 
 DFHack's behavior can be adjusted with some environment variables. For example,
-on UNIX-like systems::
+on UNIX-like systems:
+
+.. code-block:: shell
 
   DFHACK_SOME_VAR=1 ./dfhack
 

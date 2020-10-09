@@ -1,3 +1,5 @@
+.. highlight:: lua
+
 .. _lua-api:
 
 ##############

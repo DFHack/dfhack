@@ -33,7 +33,7 @@ Browse them on your computer or :source:`online <data/blueprints/library>`,
 or run ``quickfort list -l`` at the ``[DFHack]#`` prompt to list them, and then
 ``quickfort run`` to apply them to your fort!
 
-See the `Links section <#links>`__ for more information and online resources.
+See the `Links`_ section for more information and online resources.
 
 
 .. contents:: Table of Contents
@@ -143,7 +143,7 @@ If no modeline appears in the first cell, the file or sheet is interpreted as a
 ``#dig`` blueprint.
 
 There are also "meta" and "notes" blueprints, but we'll talk about
-`those <#meta-blueprints>`__ `later <#notes-blueprints>`__.
+`those <quickfort-meta>` `later <quickfort-notes>`.
 
 Optionally following this keyword and a space, you may enter a comment. This
 comment will appear in the output of ``quickfort list`` when run from the
@@ -405,6 +405,8 @@ each floor.
 
 The marker must appear in the first column of the row to be recognized, just
 like a modeline.
+
+.. _quickfort-dig-priorities:
 
 Dig priorities
 ~~~~~~~~~~~~~~
@@ -675,6 +677,8 @@ Which would result in a carved track simliar to a constructed track of the form:
    trackNE  trackEW  trackNW  #
    #        #        #        #
 
+.. _quickfort-modeline:
+
 Modeline markers
 ~~~~~~~~~~~~~~~~
 
@@ -708,18 +712,20 @@ elements before we discuss them in more detail:
    #dig label(digdining) hidden() managed by the digwholefort meta blueprint
    #zone label(pastures) message(remember to assign animals to the new pastures)
 
+.. _quickfort-label:
+
 Blueprint labels
 ````````````````
 
 Labels are displayed in the ``quickfort list`` output and are used for
 addressing specific blueprints when there are multiple blueprints in a single
-file or spreadsheet sheet (see `Packaging a set of
-blueprints <#packaging-a-set-of-blueprints>`__ below). If a blueprint has no
-label, the label becomes the ordinal of the blueprint's position in the file or
-sheet. For example, the label of the first blueprint will be "1" if it is not
-otherwise set, the label of the second blueprint will be "2" if it is not
-otherwise set, etc. Labels that are explicitly defined must start with a letter
-to ensure the auto-generated labels don't conflict with user-defined labels.
+file or spreadsheet sheet (see `Packaging a set of blueprints`_ below). If a
+blueprint has no label, the label becomes the ordinal of the blueprint's
+position in the file or sheet. For example, the label of the first blueprint
+will be "1" if it is not otherwise set, the label of the second blueprint will
+be "2" if it is not otherwise set, etc. Labels that are explicitly defined must
+start with a letter to ensure the auto-generated labels don't conflict with
+user-defined labels.
 
 Start positions
 ```````````````
@@ -755,6 +761,8 @@ to the ``masonw`` blueprint above could look like this:
    #meta start(center of workshop) a mason workshop
    /masonw
 
+.. _quickfort-hidden:
+
 Hiding blueprints
 `````````````````
 
@@ -762,7 +770,9 @@ A blueprint with a ``hidden()`` marker won't appear in ``quickfort list`` output
 unless the ``--hidden`` flag is specified. The primary reason for hiding a
 blueprint (rather than, say, deleting it or moving it out of the ``blueprints/``
 folder) is if a blueprint is intended to be run as part of a larger sequence
-managed by a `meta blueprint <#meta-blueprints>`__.
+managed by a `meta blueprint <quickfort-meta>`.
+
+.. _quickfort-message:
 
 Messages
 ````````
@@ -777,6 +787,8 @@ series of blueprints. For long or multi-part messages, you can embed newlines:
 
    "#meta label(surface1) message(This would be a good time to start digging the industry level.
    Once the area is clear, continue with /surface2.) clear the embark site and set up pastures"
+
+.. _quickfort-packaging:
 
 Packaging a set of blueprints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -845,6 +857,8 @@ files and just give related blueprints similar names:
 
 But the naming and organization is completely up to you.
 
+.. _quickfort-meta:
+
 Meta blueprints
 ~~~~~~~~~~~~~~~
 
@@ -861,11 +875,10 @@ blueprint packages follow this pattern:
 
 Those three "apply"s in the middle might as well get done in one command instead
 of three. A meta blueprint can encode that sequence. A meta blueprint refers to
-other blueprints by their label (see the `Modeline markers
-<#modeline-markers>`__ section above) in the same format used by the ``DFHack#``
-quickfort command: ``<sheet name>/<label>``, or just ``/<label>`` for blueprints
-in .csv files or blueprints in the same spreadsheet sheet as the ``#meta``
-blueprint that references them.
+other blueprints by their label (see the `Modeline markers`_ section above) in
+the same format used by the `quickfort` command: ``<sheet name>/<label>``, or
+just ``/<label>`` for blueprints in .csv files or blueprints in the same
+spreadsheet sheet as the ``#meta`` blueprint that references them.
 
 A few examples might make this clearer. Say you have a .csv file with the "bed"
 blueprints in the previous section:
@@ -977,16 +990,18 @@ blueprints that you don't need to run directly. If you ever *do* need to access
 the managed blueprints individually, you can still see them with
 ``quickfort list --hidden``.
 
+.. _quickfort-notes:
+
 Notes blueprints
 ~~~~~~~~~~~~~~~~
 
 Sometimes you just want to record some information about your blueprints, such
 as when to apply them, what preparations you need to make, or what the
-blueprints contain. The `messages() <#messages>`__ modeline marker is useful for
-small, single-line messages, but a ``#notes`` blueprint is more convenient for
-long messages or messages that span many lines. The lines in a ``#notes``
-blueprint are output as if they were contained within a messages() marker. For
-example, the following two blueprints result in the same output:
+blueprints contain. The `message() <quickfort-message>` modeline marker is
+useful for small, single-line messages, but a ``#notes`` blueprint is more
+convenient for long messages or messages that span many lines. The lines in a
+``#notes`` blueprint are output as if they were contained within a ``message()``
+marker. For example, the following two blueprints result in the same output:
 
 ::
 
@@ -1178,7 +1193,7 @@ the toil associated with applying so many blueprints.
     quickfort commands you have to run.
 
 The single most effective way to make your blueprint sets easier to use is to
-group them with `meta blueprints <#meta-blueprints>`__. For the Dreamfort set of
+group them with `meta blueprints <quickfort-meta>`. For the Dreamfort set of
 blueprints, each logical "step" generally takes more than one blueprint. For
 example, setting up pastures with a ``#zone`` blueprint, placing starting
 stockpiles with a #place blueprint, building starting workshops with a
@@ -1198,7 +1213,7 @@ it reads them, and we chose to make a one-blueprint meta blueprint to ensure all
 the steps appear in order in the quickfort list output.
 
 By the way, you can define `as many blueprints as you want
-<#packaging-a-set-of-blueprints>`__ on one sheet, but multi-blueprint sheets are
+<quickfort-packaging>` on one sheet, but multi-blueprint sheets are
 especially useful when writing meta blueprints. It's like having a bird's eye
 view of your entire plan in one sheet.
 
@@ -1208,7 +1223,7 @@ view of your entire plan in one sheet.
 
 If a blueprint is bundled into a meta blueprint, it does not need to appear in
 the quickfort list output, since you won't be running it directly. Add a
-`hidden() marker <#hiding-blueprints>`__ to those blueprints to keep the list
+`hidden() marker <quickfort-hidden>` to those blueprints to keep the list
 output tidy. You can still access hidden blueprints with ``quickfort list
 --hidden`` if you need to -- for example to reapply a partially completed #build
 blueprint -- but now they won’t clutter up the normal blueprint list.
@@ -1217,8 +1232,8 @@ blueprint -- but now they won’t clutter up the normal blueprint list.
 
     Name your blueprints with a common prefix so you can find them easily.
 
-This goes for both the file name and the `modeline label()
-<#blueprint-labels>`__. Searching and filtering is implemented for both the
+This goes for both the file name and the `modeline label() <quickfort-label>`.
+Searching and filtering is implemented for both the
 ``quickfort list`` command and the quickfort interactive dialog. If you give
 related blueprints a common prefix, it makes it easy to set the filters to
 display just the blueprints that you're interested in. If you have a lot of
@@ -1234,7 +1249,7 @@ the relevant blueprints.
 
 If you've been away from Dwarf Fortress for a while, it's easy to forget what
 your blueprints actually do. Make use of `modeline comments
-<#modeline-markers>`__ so your descriptions are visible in the blueprint list.
+<quickfort-modeline>` so your descriptions are visible in the blueprint list.
 If you use meta blueprints, all your comments can be conveniently edited on one
 sheet, like in surface's meta sheet.
 
@@ -1242,8 +1257,8 @@ sheet, like in surface's meta sheet.
 
     Use message() markers to remind yourself what to do next.
 
-`Messages <#messages>`__ are displayed after a blueprint is applied. Good things
-to include in messages are:
+`Messages <quickfort-message>` are displayed after a blueprint is applied. Good
+things to include in messages are:
 
 * The name of the next blueprint to apply and when to run it
 * Whether quickfort orders should be run for an upcoming step
@@ -1334,7 +1349,7 @@ The services_ level: handling multi-level dig blueprints
 Services is a multi-level blueprint that includes a well cistern beneath the
 main level. Unwanted ramps caused by channeling are an annoyance, but we can
 avoid getting a ramp at the bottom of the cistern with careful use of `dig
-priorities <#dig-priorities>`__.
+priorities <quickfort-dig-priorities>`.
 
 .. topic:: Tip
 

@@ -2648,6 +2648,8 @@ custom reaction raws, with the following differences:
 * If the item has no subtype, the ``:NONE`` can be omitted
 * If the item is ``REMAINS``, ``FISH``, ``FISH_RAW``, ``VERMIN``, ``PET``, or ``EGG``,
   specify a ``CREATURE:CASTE`` pair instead of a material token.
+* If the item is a ``PLANT_GROWTH``, specify a ``PLANT_ID:GROWTH_ID`` pair
+  instead of a material token.
 
 Corpses, body parts, and prepared meals cannot be created using this tool.
 
@@ -2665,6 +2667,10 @@ Examples:
 * Create tower-cap logs::
 
     createitem WOOD PLANT_MAT:TOWER_CAP:WOOD
+
+* Create bilberries::
+
+    createitem PLANT_GROWTH BILBERRY:FRUIT
 
 For more examples, :wiki:`see this wiki page <Utility:DFHack/createitem>`.
 

@@ -33,6 +33,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
+# 0.47.04-r3
+
 ## New Plugins
 - `xlsxreader`: provides an API for Lua scripts to read Excel spreadsheets
 
@@ -41,6 +43,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `getplants`: fixed a crash that could occur on some maps
 - `search`: fixed an issue causing item counts on the trade screen to display inconsistently when searching
 - `stockpiles`: fixed a crash when loading food stockpiles
+- `stockpiles`: fixed an error when saving furniture stockpiles
 
 ## Misc Improvements
 - `createitem`: added support for plant growths (fruit, berries, leaves, etc.)
@@ -50,6 +53,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `stocks`: added support for searching for items containing non-ASCII characters using their ASCII equivalents
 - `zone`: added an ``enumnick`` subcommand to assign enumerated nicknames (e.g "Hen 1", "Hen 2"...)
 - `zone`: added slaughter indication to ``uinfo`` output
+
+## Documentation
+- Fixed syntax highlighting of most code blocks to use the appropriate language (or no language) instead of Python
+
+## API
+- Added ``DFHack::to_search_normalized()`` (Lua: ``dfhack.toSearchNormalized()``) to convert non-ASCII alphabetic characters to their ASCII equivalents
 
 # 0.47.04-r2
 

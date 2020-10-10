@@ -47,6 +47,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `createitem`: added an ``inspect`` subcommand to print the item and material tokens of existing items, which can be used to create additional matching items
 - `embark-assistant`: added support for searching for taller waterfalls (up to 50 z-levels tall)
 - `search`: added support for searching for names containing non-ASCII characters using their ASCII equivalents
+- `stocks`: added support for searching for items containing non-ASCII characters using their ASCII equivalents
 - `zone`: added an ``enumnick`` subcommand to assign enumerated nicknames (e.g "Hen 1", "Hen 2"...)
 - `zone`: added slaughter indication to ``uinfo`` output
 

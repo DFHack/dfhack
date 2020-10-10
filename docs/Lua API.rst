@@ -881,14 +881,23 @@ can be omitted.
   Convert a string from DF's CP437 encoding to the correct encoding for the
   DFHack console.
 
+.. warning::
+
+  When printing CP437-encoded text to the console (for example, names returned
+  from ``dfhack.TranslateName()``), use ``print(dfhack.df2console(text))`` to
+  ensure proper display on all platforms.
+
+
 * ``dfhack.utf2df(string)``
 
   Convert a string from UTF-8 to DF's CP437 encoding.
 
-**Note:** When printing CP437-encoded text to the console (for example, names
-returned from TranslateName()), use ``print(dfhack.df2console(text)`` to ensure
-proper display on all platforms.
+* ``dfhack.toSearchNormalized(string)``
 
+  Replace non-ASCII alphabetic characters in a CP437-encoded string with their
+  nearest ASCII equivalents, if possible, and returns a CP437-encoded string.
+  Note that the returned string may be longer than the input string. For
+  example, ``ä`` is replaced with ``a``, and ``æ`` is replaced with ``ae``.
 
 Gui module
 ----------

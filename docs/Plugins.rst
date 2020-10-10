@@ -1579,6 +1579,8 @@ Options:
 :nick:        Mass-assign nicknames, must be followed by the name you want
               to set.
 :remnick:     Mass-remove nicknames.
+:enumnick:    Assign enumerated nicknames (e.g. "Hen 1", "Hen 2"...). Must be
+              followed by the prefix to use in nicknames.
 :tocages:     Assign unit(s) to cages inside a pasture.
 :uinfo:       Print info about unit(s). If no filters are set a unit must
               be selected in the in-game ui.

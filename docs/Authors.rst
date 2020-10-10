@@ -113,6 +113,7 @@ nocico                  nocico
 Omniclasm
 OwnageIsMagic           OwnageIsMagic
 palenerd                dlmarquis
+PassionateAngler        PassionateAngler
 Patrik Lundell          PatrikLundell
 Paul Fenwick            pjf
 PeridexisErrant         PeridexisErrant

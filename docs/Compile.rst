@@ -1,3 +1,5 @@
+.. highlight:: shell
+
 .. _compile:
 
 ################
@@ -283,7 +285,9 @@ Dwarf Fortress runs, it uses a libstdc++ shipped in the ``libs`` folder, which
 comes from GCC 4.8 and is incompatible with code compiled with newer GCC
 versions. As of DFHack 0.42.05-alpha1, the ``dfhack`` launcher script attempts
 to fix this by automatically removing the DF-provided libstdc++ on startup.
-In rare cases, this may fail and cause errors such as::
+In rare cases, this may fail and cause errors such as:
+
+.. code-block:: text
 
    ./libs/Dwarf_Fortress: /pathToDF/libs/libstdc++.so.6: version
        `GLIBCXX_3.4.18' not found (required by ./hack/libdfhack.so)
@@ -364,7 +368,7 @@ Dependencies and system set-up
     both 32-bit and 64-bit variants. Homebrew also doesn't require constant use
     of ``sudo``.
 
-    Using `Homebrew <http://brew.sh/>`_ (recommended)::
+    Using `Homebrew <https://brew.sh/>`_ (recommended)::
 
         brew tap homebrew/versions
         brew install git
@@ -399,14 +403,14 @@ Dependencies and system set-up
   * In a separate, local Perl install
 
     Rather than using system Perl, you might also want to consider
-    the Perl manager, `Perlbrew <http://perlbrew.pl>`_.
+    the Perl manager, `Perlbrew <https://perlbrew.pl>`_.
 
     This manages Perl 5 locally under ``~/perl5/``, providing an easy
     way to install Perl and run CPAN against it without ``sudo``.
     It can maintain multiple Perl installs and being local has the
     benefit of easy migration and insulation from OS issues and upgrades.
 
-    See http://perlbrew.pl/ for more details.
+    See https://perlbrew.pl/ for more details.
 
 Building
 --------
@@ -517,7 +521,7 @@ To install Chocolatey and the required dependencies:
 You can now use all of these utilities from any normal ``cmd.exe`` window.
 You only need Admin/elevated ``cmd.exe`` for running ``choco install`` commands;
 for all other purposes, including compiling DFHack, you should use
-a normal ``cmd.exe`` (or, better, an improved terminal like `Cmder <http://cmder.net/>`_;
+a normal ``cmd.exe`` (or, better, an improved terminal like `Cmder <https://cmder.net/>`_;
 details below, under Build.)
 
 **NOTE**: you can run the above ``choco install`` command even if you already have
@@ -544,7 +548,7 @@ Some examples:
 CMake
 ^^^^^
 You can get the win32 installer version from
-`the official site <http://www.cmake.org/cmake/resources/software.html>`_.
+`the official site <https://cmake.org/download/>`_.
 It has the usual installer wizard. Make sure you let it add its binary folder
 to your binary search PATH so the tool can be later run from anywhere.
 
@@ -617,7 +621,7 @@ due to the tiny window size and extremely limited scrollback. For that reason yo
 may prefer to compile in the IDE which will always show all build output.
 
 Alternatively (or additionally), consider installing an improved Windows terminal
-such as `Cmder <http://cmder.net/>`_. Easily installed through Chocolatey with:
+such as `Cmder <https://cmder.net/>`_. Easily installed through Chocolatey with:
 ``choco install cmder -y``.
 
 **Note for Cygwin/msysgit users**: It is also possible to compile DFHack from a

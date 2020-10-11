@@ -31,5 +31,6 @@ User Manual
    /docs/Core
    /docs/Plugins
    /docs/Scripts
+   /docs/guides/index
    /docs/index-about
    /docs/index-dev

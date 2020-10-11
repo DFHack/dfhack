@@ -61,3 +61,7 @@ div.body li > p {
     margin-top: 0;
     margin-bottom: 0;
 }
+
+span.pre {
+    overflow-wrap: break-word;
+}

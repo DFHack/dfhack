@@ -396,7 +396,7 @@ protected:
 
         clear_viewscreen_vectors();
 
-        string search_string_l = toLower(search_string);
+        string search_string_l = to_search_normalized(search_string);
         for (size_t i = 0; i < saved_list1.size(); i++ )
         {
             if (force_in_search(i))
@@ -409,7 +409,7 @@ protected:
                 continue;
 
             T element = saved_list1[i];
-            string desc = toLower(get_element_description(element));
+            string desc = to_search_normalized(get_element_description(element));
             if (desc.find(search_string_l) != string::npos)
             {
                 add_to_filtered_list(i);

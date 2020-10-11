@@ -119,7 +119,9 @@ GDB
 `GDB <https://www.gnu.org/software/gdb/>`_ is technically cross-platform, but
 tends to work best on Linux, and DFHack currently only offers support for using
 GDB on 64-bit Linux. To start with GDB, pass ``-g`` to the DFHack launcher
-script::
+script:
+
+.. code-block:: shell
 
     ./dfhack -g
 

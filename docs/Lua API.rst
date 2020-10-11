@@ -1,3 +1,5 @@
+.. highlight:: lua
+
 .. _lua-api:
 
 ##############
@@ -7,7 +9,7 @@ DFHack Lua API
 DFHack has extensive support for
 the Lua_ scripting language, providing access to:
 
-.. _Lua: http://www.lua.org
+.. _Lua: https://www.lua.org
 
 1. Raw data structures used by the game.
 2. Many C++ functions for high-level access to these
@@ -37,7 +39,7 @@ DF data structure wrapper
    :local:
 
 Data structures of the game are defined in XML files located in :file:`library/xml`
-(and `online <http://github.com/DFHack/df-structures>`_, and automatically exported
+(and `online <https://github.com/DFHack/df-structures>`_, and automatically exported
 to lua code as a tree of objects and functions under the ``df`` global, which
 also broadly maps to the ``df`` namespace in the headers generated for C++.
 
@@ -879,14 +881,23 @@ can be omitted.
   Convert a string from DF's CP437 encoding to the correct encoding for the
   DFHack console.
 
+.. warning::
+
+  When printing CP437-encoded text to the console (for example, names returned
+  from ``dfhack.TranslateName()``), use ``print(dfhack.df2console(text))`` to
+  ensure proper display on all platforms.
+
+
 * ``dfhack.utf2df(string)``
 
   Convert a string from UTF-8 to DF's CP437 encoding.
 
-**Note:** When printing CP437-encoded text to the console (for example, names
-returned from TranslateName()), use ``print(dfhack.df2console(text)`` to ensure
-proper display on all platforms.
+* ``dfhack.toSearchNormalized(string)``
 
+  Replace non-ASCII alphabetic characters in a CP437-encoded string with their
+  nearest ASCII equivalents, if possible, and returns a CP437-encoded string.
+  Note that the returned string may be longer than the input string. For
+  example, ``ä`` is replaced with ``a``, and ``æ`` is replaced with ``ae``.
 
 Gui module
 ----------
@@ -3754,6 +3765,9 @@ Eventful
 This plugin exports some events to lua thus allowing to run lua functions
 on DF world events.
 
+.. contents::
+  :local:
+
 List of events
 --------------
 
@@ -3914,6 +3928,9 @@ Building-hacks
 This plugin overwrites some methods in workshop df class so that mechanical workshops are possible. Although
 plugin export a function it's recommended to use lua decorated function.
 
+.. contents::
+  :local:
+
 Functions
 ---------
 
@@ -3992,6 +4009,9 @@ Luasocket
 
 A way to access csocket from lua. The usage is made similar to luasocket in vanilla lua distributions. Currently
 only subset of functions exist and only tcp mode is implemented.
+
+.. contents::
+  :local:
 
 Socket class
 ------------
@@ -4074,6 +4094,9 @@ cxxrandom
 =========
 
 Exposes some features of the C++11 random number library to Lua.
+
+.. contents::
+  :local:
 
 Native functions (exported to Lua)
 ----------------------------------

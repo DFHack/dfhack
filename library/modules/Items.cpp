@@ -178,7 +178,7 @@ std::string ItemTypeInfo::getToken()
     std::string rv = ENUM_KEY_STR(item_type, type);
     if (custom)
         rv += ":" + custom->id;
-    else if (subtype != -1)
+    else if (subtype != -1 && type != item_type::PLANT_GROWTH)
         rv += stl_sprintf(":%d", subtype);
     return rv;
 }

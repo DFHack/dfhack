@@ -133,6 +133,7 @@ const string zone_help =
     "                 with filters named units are ignored unless specified.\n"
     "  unassign     - unassign selected creature(s) from zone or cage\n"
     "  nick         - give unit(s) nicknames (e.g. all units in a cage)\n"
+    "  enumnick     - give unit(s) enumerated nicknames (e.g Hen 1, Hen 2)\n"
     "  remnick      - remove nicknames\n"
     "  tocages      - assign to (multiple) built cages inside a pen/pasture\n"
     "                 spreads creatures evenly among cages for faster hauling.\n"
@@ -427,6 +428,7 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
     out << ")";
     out << ", age: " << getAge(unit, true);
 
+
     if(isTame(unit))
         out << ", tame";
     if(isOwnCiv(unit))
@@ -445,7 +447,9 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
         out << ", grazer";
     if(isMilkable(unit))
         out << ", milkable";
-
+    if(unit->flags2.bits.slaughter)
+        out << ", slaughter";
+    
     if(verbose)
     {
         out << ". Pos: ("<<unit->pos.x << "/"<< unit->pos.y << "/" << unit->pos.z << ") " << endl;
@@ -1398,7 +1402,7 @@ pair<string, function<bool(df::unit*)>> createAgeFilter(vector<string> &filter_a
 
 pair<string, function<bool(df::unit*)>> createMinAgeFilter(vector<string> &filter_args)
 {
-    int min_age;
+    double min_age;
     stringstream ss(filter_args[0]);
 
     ss >> min_age;
@@ -1424,7 +1428,7 @@ pair<string, function<bool(df::unit*)>> createMinAgeFilter(vector<string> &filte
 
 pair<string, function<bool(df::unit*)>> createMaxAgeFilter(vector<string> &filter_args)
 {
-    int max_age;
+    double max_age;
     stringstream ss(filter_args[0]);
 
     ss >> max_age;
@@ -1489,6 +1493,8 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     bool cagezone_assign = false;
     bool nick_set = false;
     string target_nick;
+    bool enum_nick = true;
+    string enum_prefix;
 
     bool verbose = false;
 
@@ -1693,6 +1699,18 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             target_nick = parameters[1];
             start_index = 2;
             out << "Set nickname to: " << target_nick << endl;
+        }
+        else if(p0 == "enumnick")
+        {
+            if(parameters.size() <= 2)
+            {
+                out.printerr("No prefix specified! Use 'remnick' to remove nicknames!\n");
+                return CR_WRONG_USAGE;
+            }
+            enum_nick = true;
+            enum_prefix = parameters[1];
+            start_index = 2;
+            out << "Set nickname to: " << enum_prefix <<" <N>" << endl;
         }
         else if(p0 == "remnick")
         {
@@ -2070,6 +2088,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     {
         vector <df::unit*> units_for_cagezone;
         int count = 0;
+        int matchedCount = 0;
         for(auto unit_it = world->units.all.begin(); unit_it != world->units.all.end(); ++unit_it)
         {
             df::unit *unit = *unit_it;
@@ -2108,6 +2127,8 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 }
                 continue;
             }
+            
+            matchedCount++;
 
             if(unit_info)
             {
@@ -2117,6 +2138,12 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             else if(nick_set)
             {
                 Units::setNickname(unit, target_nick);
+            }
+            else if(enum_nick)
+            {
+                std::stringstream ss;
+                ss << enum_prefix << " " << matchedCount;
+                Units::setNickname(unit, ss.str());
             }
             else if(cagezone_assign)
             {
@@ -2181,6 +2208,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         }
 
         out.color(COLOR_BLUE);
+        out << "Matched creatures: " << matchedCount << endl;
         out << "Processed creatures: " << count << endl;
         out.reset_color();
     }

@@ -1472,7 +1472,9 @@ can be displayed on the main fortress mode screen:
 The file :file:`dfhack-config/dwarfmonitor.json` can be edited to control the
 positions and settings of all widgets displayed. This file should contain a
 JSON object with the key ``widgets`` containing an array of objects - see the
-included file in the ``dfhack-config`` folder for an example::
+included file in the ``dfhack-config`` folder for an example:
+
+.. code-block:: lua
 
     {
         "widgets": [
@@ -1606,6 +1608,8 @@ Options:
 :nick:        Mass-assign nicknames, must be followed by the name you want
               to set.
 :remnick:     Mass-remove nicknames.
+:enumnick:    Assign enumerated nicknames (e.g. "Hen 1", "Hen 2"...). Must be
+              followed by the prefix to use in nicknames.
 :tocages:     Assign unit(s) to cages inside a pasture.
 :uinfo:       Print info about unit(s). If no filters are set a unit must
               be selected in the in-game ui.
@@ -2675,6 +2679,8 @@ custom reaction raws, with the following differences:
 * If the item has no subtype, the ``:NONE`` can be omitted
 * If the item is ``REMAINS``, ``FISH``, ``FISH_RAW``, ``VERMIN``, ``PET``, or ``EGG``,
   specify a ``CREATURE:CASTE`` pair instead of a material token.
+* If the item is a ``PLANT_GROWTH``, specify a ``PLANT_ID:GROWTH_ID`` pair
+  instead of a material token.
 
 Corpses, body parts, and prepared meals cannot be created using this tool.
 
@@ -2692,6 +2698,10 @@ Examples:
 * Create tower-cap logs::
 
     createitem WOOD PLANT_MAT:TOWER_CAP:WOOD
+
+* Create bilberries::
+
+    createitem PLANT_GROWTH BILBERRY:FRUIT
 
 For more examples, :wiki:`see this wiki page <Utility:DFHack/createitem>`.
 

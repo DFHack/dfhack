@@ -12,8 +12,7 @@ use of multiple files or spreadsheets, each describing a different phase of DF
 construction: designation, building, placing stockpiles/zones, and setting
 configuration.
 
-The original idea and 1.0 codebase came from
-`Valdemar's <https://dwarffortresswiki.org/index.php/User:Valdemar>`__
+The original idea and 1.0 codebase came from :wiki:`Valdemar's <User:Valdemar>`
 auto-designation macro. Joel Thornton (joelpt) reimplemented the core logic in
 Python and extended its functionality with `Quickfort
 2.0 <https://github.com/joelpt/quickfort>`__. This DFHack-native implementation,
@@ -33,7 +32,7 @@ Browse them on your computer or :source:`online <data/blueprints/library>`,
 or run ``quickfort list -l`` at the ``[DFHack]#`` prompt to list them, and then
 ``quickfort run`` to apply them to your fort!
 
-See the `Links section <#links>`__ for more information and online resources.
+See the `Links`_ section for more information and online resources.
 
 
 .. contents:: Table of Contents
@@ -139,8 +138,11 @@ in DF. The following "mode" keywords are understood:
    zone    Activity zones menu (i)
    query   Set building tasks/prefs menu (q)
 
-There are also "meta" blueprints, but we'll talk about those
-`later <#meta-blueprints>`__.
+If no modeline appears in the first cell, the file or sheet is interpreted as a
+``#dig`` blueprint.
+
+There are also "meta" and "notes" blueprints, but we'll talk about
+`those <quickfort-meta>` `later <quickfort-notes>`.
 
 Optionally following this keyword and a space, you may enter a comment. This
 comment will appear in the output of ``quickfort list`` when run from the
@@ -402,6 +404,8 @@ each floor.
 
 The marker must appear in the first column of the row to be recognized, just
 like a modeline.
+
+.. _quickfort-dig-priorities:
 
 Dig priorities
 ~~~~~~~~~~~~~~
@@ -672,6 +676,8 @@ Which would result in a carved track simliar to a constructed track of the form:
    trackNE  trackEW  trackNW  #
    #        #        #        #
 
+.. _quickfort-modeline:
+
 Modeline markers
 ~~~~~~~~~~~~~~~~
 
@@ -690,9 +696,11 @@ The full modeline syntax, when everything is specified, is:
 
    #mode label(mylabel) start(X;Y;STARTCOMMENT) hidden() message(mymessage) comment
 
-Note that all elements are optional except for the initial ``#mode``. Here are a
-few examples of modelines with optional elements before we discuss them in more
-detail:
+Note that all elements are optional except for the initial ``#mode`` (though, as
+mentioned in the first section, if a modeline doesn't appear at all in the first
+cell of a spreadsheet, the blueprint is interpreted as a ``#dig`` blueprint with
+no optional markers). Here are a few examples of modelines with optional
+elements before we discuss them in more detail:
 
 ::
 
@@ -703,18 +711,20 @@ detail:
    #dig label(digdining) hidden() managed by the digwholefort meta blueprint
    #zone label(pastures) message(remember to assign animals to the new pastures)
 
+.. _quickfort-label:
+
 Blueprint labels
 ````````````````
 
 Labels are displayed in the ``quickfort list`` output and are used for
 addressing specific blueprints when there are multiple blueprints in a single
-file or spreadsheet sheet (see `Packaging a set of
-blueprints <#packaging-a-set-of-blueprints>`__ below). If a blueprint has no
-label, the label becomes the ordinal of the blueprint's position in the file or
-sheet. For example, the label of the first blueprint will be "1" if it is not
-otherwise set, the label of the second blueprint will be "2" if it is not
-otherwise set, etc. Labels that are explicitly defined must start with a letter
-to ensure the auto-generated labels don't conflict with user-defined labels.
+file or spreadsheet sheet (see `Packaging a set of blueprints`_ below). If a
+blueprint has no label, the label becomes the ordinal of the blueprint's
+position in the file or sheet. For example, the label of the first blueprint
+will be "1" if it is not otherwise set, the label of the second blueprint will
+be "2" if it is not otherwise set, etc. Labels that are explicitly defined must
+start with a letter to ensure the auto-generated labels don't conflict with
+user-defined labels.
 
 Start positions
 ```````````````
@@ -750,6 +760,8 @@ to the ``masonw`` blueprint above could look like this:
    #meta start(center of workshop) a mason workshop
    /masonw
 
+.. _quickfort-hidden:
+
 Hiding blueprints
 `````````````````
 
@@ -757,7 +769,9 @@ A blueprint with a ``hidden()`` marker won't appear in ``quickfort list`` output
 unless the ``--hidden`` flag is specified. The primary reason for hiding a
 blueprint (rather than, say, deleting it or moving it out of the ``blueprints/``
 folder) is if a blueprint is intended to be run as part of a larger sequence
-managed by a `meta blueprint <#meta-blueprints>`__.
+managed by a `meta blueprint <quickfort-meta>`.
+
+.. _quickfort-message:
 
 Messages
 ````````
@@ -772,6 +786,8 @@ series of blueprints. For long or multi-part messages, you can embed newlines:
 
    "#meta label(surface1) message(This would be a good time to start digging the industry level.
    Once the area is clear, continue with /surface2.) clear the embark site and set up pastures"
+
+.. _quickfort-packaging:
 
 Packaging a set of blueprints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -840,6 +856,8 @@ files and just give related blueprints similar names:
 
 But the naming and organization is completely up to you.
 
+.. _quickfort-meta:
+
 Meta blueprints
 ~~~~~~~~~~~~~~~
 
@@ -856,10 +874,10 @@ blueprint packages follow this pattern:
 
 Those three "apply"s in the middle might as well get done in one command instead
 of three. A meta blueprint can encode that sequence. A meta blueprint refers to
-other blueprints by their label (see the `Modeline markers <modeline-markers>`__
-section above) in the same format used by the ``DFHack#`` quickfort command:
-"/", or just "/" for blueprints in .csv files or blueprints in the same
-spreadsheet sheet as the #meta blueprint that references them.
+other blueprints by their label (see the `Modeline markers`_ section above) in
+the same format used by the `quickfort` command: ``<sheet name>/<label>``, or
+just ``/<label>`` for blueprints in .csv files or blueprints in the same
+spreadsheet sheet as the ``#meta`` blueprint that references them.
 
 A few examples might make this clearer. Say you have a .csv file with the "bed"
 blueprints in the previous section:
@@ -971,6 +989,36 @@ blueprints that you don't need to run directly. If you ever *do* need to access
 the managed blueprints individually, you can still see them with
 ``quickfort list --hidden``.
 
+.. _quickfort-notes:
+
+Notes blueprints
+~~~~~~~~~~~~~~~~
+
+Sometimes you just want to record some information about your blueprints, such
+as when to apply them, what preparations you need to make, or what the
+blueprints contain. The `message() <quickfort-message>` modeline marker is
+useful for small, single-line messages, but a ``#notes`` blueprint is more
+convenient for long messages or messages that span many lines. The lines in a
+``#notes`` blueprint are output as if they were contained within a ``message()``
+marker. For example, the following two blueprints result in the same output:
+
+::
+
+   "#meta label(help) message(This is the help text for the blueprint set
+   contained in this file.
+
+   More info here...) blueprint set walkthough"
+
+   #notes label(help) blueprint set walkthrough
+   This is the help text for the blueprint set
+   contained in this file
+
+   More info here...
+
+The quotes around the ``#meta`` modeline allow newlines in a single cell's text.
+Each line of the ``#notes`` "blueprint", however, is in a separate cell,
+allowing for much easier viewing and editing.
+
 Buildingplan integration
 ------------------------
 
@@ -992,7 +1040,8 @@ not yet supported by buildingplan, a good pattern to follow is to first run
 ``quickfort orders`` on the ``#build`` blueprint to manufacture all the required
 items, then apply the blueprint itself.
 
-See the `buildingplan documentation <buildingplan>` for a list of supported types.
+See the `buildingplan documentation <buildingplan>` for more information. As of
+this writing, buildingplan only supports basic furniture.
 
 Generating manager orders
 -------------------------
@@ -1084,6 +1133,283 @@ Caveats and limitations
 
 -  This script is relatively new, and there are bound to be bugs! Please report
    them at the :issue:`DFHack issue tracker <>` so they can be addressed.
+
+Dreamfort case study: a practical guide to advanced blueprint design
+--------------------------------------------------------------------
+
+While syntax definitions and toy examples will certainly get you started with
+your blueprints, it may not be clear how all the quickfort features fit together
+or what the best practices are, especially for large and complex blueprint sets.
+This section walks through the "Dreamfort" blueprints found in the DFHack
+blueprint library, highlighting design choices and showcasing practical
+techniques that can help you create better blueprints. Note that this is not a
+guide for how to design the best forts (there is plenty about that :wiki:`on the
+wiki <Design strategies>`). This is essentially an extended tips and tricks
+section focused on how to make usable and useful quickfort blueprints that will
+save you time and energy.
+
+The Dreamfort blueprints we'll be discussing are available in the library as
+:source:`one large .csv file <data/blueprints/library/dreamfort.csv>`
+or `online
+<https://drive.google.com/drive/folders/1iS90EEVqUkxTeZiiukVj1pLloZqabKuP>`__ as
+individual spreadsheets. Either can be read and applied by quickfort, but for us
+humans, the online spreadsheets are much easier to work with. Each spreadsheet
+has a "Notes" sheet with some useful details. Flip through some of the
+spreadsheets and read the `walkthrough
+<https://docs.google.com/spreadsheets/d/
+13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=0>`__ to get oriented.
+Also, if you haven't built Dreamfort before, try an embark in a flat area and
+take it for a spin!
+
+Almost every quickfort feature is used somewhere in Dreamfort, so the blueprints
+as a whole are useful as practical examples. You can copy the blueprints and use
+them as starting points for your own, or just refer to them when you create
+something similar.
+
+In this case study, we'll start by discussing the high level organization of the
+Dreamfort blueprint set, using the "surface" blueprints as an example. Then
+we'll walk through the blueprints for each of the remaining fort levels in turn,
+calling out feature usage examples and explaining the parts that might not be
+obvious just from looking at them.
+
+The surface_ level: how to manage complexity
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. _surface: https://docs.google.com/spreadsheets/d/1vlxOuDOTsjsZ5W45Ri1kJKgp3waFo8r505LfZVg5wkU/edit?usp=sharing
+
+For smaller blueprints, packaging and usability are not really that important -
+just write it, run it, and you're done. However, as your blueprints become
+larger and more detailed, there are some best practices that can help you deal
+with the added complexity. Dreamfort's surface level is many steps long since
+there are trees to be cleared, holes to be dug, flooring to be laid, and
+furniture to be built, and each step requires the previous step to be completely
+finished before it can begin. Therefore, a lot of thought went into minimizing
+the toil associated with applying so many blueprints.
+
+.. topic:: Tip
+
+    Use meta blueprints to script blueprint sequences and reduce the number of
+    quickfort commands you have to run.
+
+The single most effective way to make your blueprint sets easier to use is to
+group them with `meta blueprints <quickfort-meta>`. For the Dreamfort set of
+blueprints, each logical "step" generally takes more than one blueprint. For
+example, setting up pastures with a ``#zone`` blueprint, placing starting
+stockpiles with a #place blueprint, building starting workshops with a
+``#build`` blueprint, and configuring the stockpiles with a ``#query`` blueprint
+can all be done at once. Bundling blueprints like this reduced the number of
+steps in Dreamfort from 47 to 24, and it also made it much clearer to see which
+blueprints can be applied at once without unpausing the game. Check out
+dreamfort_surface's "`meta
+<https://docs.google.com/spreadsheets/d/
+1vlxOuDOTsjsZ5W45Ri1kJKgp3waFo8r505LfZVg5wkU/edit#gid=972927200>`__" sheet to
+see how much meta blueprints can simplify your life.
+
+Note that one of the ``#meta`` blueprints just has one line. In this case, the
+``#meta`` blueprint isn't strictly necessary. The referenced blueprint could
+just be applied directly. However, quickfort lists blueprints in the order that
+it reads them, and we chose to make a one-blueprint meta blueprint to ensure all
+the steps appear in order in the quickfort list output.
+
+By the way, you can define `as many blueprints as you want
+<quickfort-packaging>` on one sheet, but multi-blueprint sheets are
+especially useful when writing meta blueprints. It's like having a bird's eye
+view of your entire plan in one sheet.
+
+.. topic:: Tip
+
+    Keep the blueprint list uncluttered with hidden() markers.
+
+If a blueprint is bundled into a meta blueprint, it does not need to appear in
+the quickfort list output, since you won't be running it directly. Add a
+`hidden() marker <quickfort-hidden>` to those blueprints to keep the list
+output tidy. You can still access hidden blueprints with ``quickfort list
+--hidden`` if you need to -- for example to reapply a partially completed #build
+blueprint -- but now they won’t clutter up the normal blueprint list.
+
+.. topic:: Tip
+
+    Name your blueprints with a common prefix so you can find them easily.
+
+This goes for both the file name and the `modeline label() <quickfort-label>`.
+Searching and filtering is implemented for both the
+``quickfort list`` command and the quickfort interactive dialog. If you give
+related blueprints a common prefix, it makes it easy to set the filters to
+display just the blueprints that you're interested in. If you have a lot of
+blueprints, this can save you a lot of time. Dreamfort, of course, uses the
+"dreamfort" prefix for the files and sequence names for the labels, like
+"surface1", "surface2", "farming1", etc. So if I’m in the middle of applying the
+surface blueprints, I’d set the filter to ``dreamfort surface`` to just display
+the relevant blueprints.
+
+.. topic:: Tip
+
+    Add descriptive comments that remind you what the blueprint contains.
+
+If you've been away from Dwarf Fortress for a while, it's easy to forget what
+your blueprints actually do. Make use of `modeline comments
+<quickfort-modeline>` so your descriptions are visible in the blueprint list.
+If you use meta blueprints, all your comments can be conveniently edited on one
+sheet, like in surface's meta sheet.
+
+.. topic:: Tip
+
+    Use message() markers to remind yourself what to do next.
+
+`Messages <quickfort-message>` are displayed after a blueprint is applied. Good
+things to include in messages are:
+
+* The name of the next blueprint to apply and when to run it
+* Whether quickfort orders should be run for an upcoming step
+* Any manual actions that have to happen, like assigning minecarts to hauling
+  routes or pasturing animals after creating zones
+
+These things are just too easy to forget. Adding a message() can save you from
+time-wasting mistakes. Note that message() markers can still appear on the
+hidden() blueprints, and they'll still get shown when the blueprint is run via
+the ``#meta`` blueprint. For an example of this, check out the `zones sheet
+<https://docs.google.com/spreadsheets/d/
+1vlxOuDOTsjsZ5W45Ri1kJKgp3waFo8r505LfZVg5wkU/edit#gid=1226136256>`__ where the
+pastures are defined.
+
+The farming_ level: fun with stockpiles
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. _farming: https://docs.google.com/spreadsheets/d/1iuj807iGVk6vsfYY4j52v9_-wsszA1AnFqoxeoehByg/edit?usp=sharing
+
+It is usually convenient to store closely associated blueprints in the same
+spreadsheet. The farming level is very closely tied to the surface because the
+miasma vents have to perfectly line up. However, surface is a separate z-level
+and, more importantly, already has many many blueprints, so farming is split
+into a separate file.
+
+.. topic:: Tip
+
+    Automate stockpile chains when you can, and write message() reminders when
+    you can't.
+
+The farming level starts doing interesting things with query blueprints and
+stockpiles. Note the `careful customization
+<https://docs.google.com/spreadsheets/d/1iuj807iGVk6vsfYY4j52v9_-
+wsszA1AnFqoxeoehByg/edit#gid=486506218>`__ of the food stockpiles and the
+stockpile chains set up with the ``give*`` aliases. This is so when multiple
+stockpiles can hold the same item, the largest can keep the smaller ones filled.
+If you have multiple stockpiles holding the same type on different z-levels,
+though, this can be tricky to set up with a blueprint. Here, the jugs and pots
+stockpiles must be manually linked to the quantum stockpile on the industry
+level, since we can't know beforehand how many z-levels away that is. Note how
+we call that out in the query blueprint's message().
+
+.. topic:: Tip
+
+    Use aliases to set up hauling routes and quantum stockpiles.
+
+Hauling routes are notoriously fiddly to set up, but they can be automated with
+blueprints. Check out the Southern area of the ``#place`` and ``#query``
+blueprints for how the quantum garbage dump is configured.
+
+Note that aliases that must be applied in a particular order must appear in the
+same cell. Otherwise there are no guarantees for which cell will be processed
+first. For example, look at the track stop cells in the ``#query`` blueprint for
+how the hauling routes are given names.
+
+The industry_ level: when not to use aliases
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. _industry: https://docs.google.com/spreadsheets/d/1gvTJxxRxZ5V4vXkqwhL-qlr_lXCNt8176TK14m4kSOU/edit?usp=sharing
+
+The industry level is densely packed and has more complicated examples of
+stockpile configurations and quantum dumps. However, what I'd like to call out
+are the key sequences that are *not* in aliases.
+
+.. topic:: Tip
+
+     Don't use aliases for ad-hoc cursor movements.
+
+It may be tempting to put all query blueprint key sequences into aliases to make
+them easier to edit, keep them all in one place, and make them reusable, but
+some key sequences just aren't very valuable as aliases.
+
+`Check out <https://docs.google.com/spreadsheets/d/1gvTJxxRxZ5V4vXkqwhL-
+qlr_lXCNt8176TK14m4kSOU/edit#gid=787640554>`__ the Eastern (goods) and Northern
+(stone and gems) quantum stockpiles -- cells I19 and R10. They give to the
+jeweler's workshop to prevent the jeweler from using the gems held in reserve
+for strange moods. The keys are not aliased since they're dependent on the
+relative positions of the tiles where they are interpreted, which is easiest to
+see in the blueprint itself. Also, if you move the workshop, it's easier to fix
+the stockpile link right there in the blueprint instead of editing the separate
+aliases.txt file.
+
+The services_ level: handling multi-level dig blueprints
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. _services: https://docs.google.com/spreadsheets/d/1IBy6_pGEe6WSBCLukDz_5I-4vi_mpHuJJyOp2j6SJlY/edit?usp=sharing
+
+Services is a multi-level blueprint that includes a well cistern beneath the
+main level. Unwanted ramps caused by channeling are an annoyance, but we can
+avoid getting a ramp at the bottom of the cistern with careful use of `dig
+priorities <quickfort-dig-priorities>`.
+
+.. topic:: Tip
+
+    Use dig priorities to control ramp creation.
+
+We can `ensure <https://docs.google.com/spreadsheets/d/1IBy6_pGEe6WSBCLukDz_5I-
+4vi_mpHuJJyOp2j6SJlY/edit#gid=962076234>`__ the bottom level is carved out
+before the layer above is channelled by assigning the channel designations lower
+priorities (row 76). This is easy to do here because it's just one tile and
+there is no chance of cave-in. We could have used this technique on the farming
+level for the miasma vents instead of requiring that the channels be dug before
+the farming level is dug, but that would have been much more fiddly for the
+larger areas.
+
+The alternative is just to have a follow-up blueprint that removes any undesired
+ramps. Using dig priorities to avoid the issue in the first place can be
+cleaner, though.
+
+The guildhall_ level: avoiding smoothing issues
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. _guildhall: https://docs.google.com/spreadsheets/d/1wwKcOpEW-v_kyEnFyXS0FTjvLwJsyWbCUmEGaXWxJyU/edit?usp=sharing
+
+The goal of this level is to provide rooms for locations like guildhalls,
+libraries, and temples. The value of these rooms is very important, so we are
+likely to smooth and engrave everything. To smooth or engrave a wall tile, a
+dwarf has to be adjacent to it, and since some furniture, like statues, block
+dwarves from entering a tile, where you put them affects what you can access.
+
+.. topic:: Tip
+
+    Don't put statues in corners unless you want to smooth everything first.
+
+In the guildhall level, the statues are placed so as not to block any wall
+corners. This gives the player freedom for choosing when to smooth. If statues
+block wall segments, it forces the player to smooth before building the statues,
+or else they have to mess with temporarily removing statues to smooth the walls
+behind them.
+
+The beds_ levels: multi level meta blueprints
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. _beds: https://docs.google.com/spreadsheets/d/1QNHORq6YmYfuVVMP5yGAFCQluary_JbgZ-UXACqKs9g/edit?usp=sharing
+
+The suites and apartments blueprints are straightforward. The only fancy bit
+here is the meta blueprint, which brings us to our final tip:
+
+.. topic:: Tip
+
+    Use meta blueprints to lay out multiple adjacent levels.
+
+We couldn't use this technique for the entire fortress since there is often an
+aquifer between the farming and industry levels, and we can't know beforehand
+how many z-levels we need to skip. Here, though, we can at least provide the
+useful shortcut of designating all apartment levels at once. See the meta
+blueprint for how it applies the apartments on six z-levels using ``#>`` between
+apartment blueprint references.
+
+That's it! I hope this guide was useful to you. Please leave feedback on the
+forums if you have ideas on how this guide (or the dreamfort blueprints) can be
+improved!
 
 Links
 -----

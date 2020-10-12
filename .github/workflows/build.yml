@@ -4,7 +4,19 @@ on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ${{ matrix.os }}
+    name: build (Linux, GCC ${{ matrix.gcc }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+        - ubuntu-18.04
+        gcc:
+        - 4.8
+        - 7
+        include:
+        - os: ubuntu-20.04
+          gcc: 10
     steps:
     - name: Set up Python 3
       uses: actions/setup-python@v2
@@ -14,6 +26,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install \
+            libgtk2.0-0 \
             libsdl-image1.2-dev \
             libsdl-ttf2.0-dev \
             libsdl1.2-dev \
@@ -23,6 +36,10 @@ jobs:
             ninja-build \
             zlib1g-dev
         pip install sphinx
+    - name: Install GCC
+      if: ${{ matrix.gcc < 7 || matrix.gcc > 9 }}
+      run: |
+        sudo apt-get install gcc-${{ matrix.gcc }} g++-${{ matrix.gcc }}
     - name: Clone DFHack
       uses: actions/checkout@v1
       with:
@@ -32,9 +49,9 @@ jobs:
       id: env_setup
       run: |
         DF_VERSION="$(sh travis/get-df-version.sh)"
-        echo "::set-env name=DF_VERSION::${DF_VERSION}"
         echo "::set-output name=df_version::${DF_VERSION}"
-        echo "::set-env name=DF_FOLDER::${HOME}/DF/${DF_VERSION}/df_linux"
+        echo "DF_VERSION=${DF_VERSION}" >> $GITHUB_ENV
+        echo "DF_FOLDER=${HOME}/DF/${DF_VERSION}/df_linux" >> $GITHUB_ENV
     - name: Fetch DF cache
       uses: actions/cache@v2
       with:
@@ -43,15 +60,10 @@ jobs:
     - name: Download DF
       run: |
         sh travis/download-df.sh
-    - name: Build docs
-      run: |
-        sphinx-build -qW -j3 . docs/html
-    - name: Upload docs
-      uses: actions/upload-artifact@v1
-      with:
-        name: docs
-        path: docs/html
     - name: Build DFHack
+      env:
+        CC: gcc-${{ matrix.gcc }}
+        CXX: g++-${{ matrix.gcc }}
       run: |
         cmake \
           -S . \
@@ -77,11 +89,34 @@ jobs:
         name: test-artifacts
         path: artifacts
     - name: Clean up DF folder
-      # to prevent DFHack-generated files from ending up in the cache
+      # prevent DFHack-generated files from ending up in the cache
       # (download-df.sh also removes them, this is just to save cache space)
       if: success() || failure()
       run: |
         rm -rf "$DF_FOLDER"
+
+  docs:
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Set up Python 3
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3
+    - name: Install dependencies
+      run: |
+        pip install sphinx
+    - name: Clone DFHack
+      uses: actions/checkout@v1
+      with:
+        submodules: true
+    - name: Build docs
+      run: |
+        sphinx-build -W --keep-going -j3 . docs/html
+    - name: Upload docs
+      uses: actions/upload-artifact@v1
+      with:
+        name: docs
+        path: docs/html
 
   lint:
     runs-on: ubuntu-18.04

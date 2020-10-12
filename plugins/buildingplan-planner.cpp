@@ -639,10 +639,9 @@ static bool isJobReady(df::job * job)
 {
     int needed_items = 0;
     for (auto job_item : job->job_items) { needed_items += job_item->quantity; }
-    if (job->items.size() < needed_items)
+    if (needed_items)
     {
-        debug("building needs %zd more item(s)",
-              needed_items - job->items.size());
+        debug("building needs %d more item(s)", needed_items);
         return false;
     }
     return true;
@@ -654,6 +653,10 @@ static bool job_item_idx_lt(df::job_item_ref *a, df::job_item_ref *b)
     return a->job_item_idx > b->job_item_idx;
 }
 
+// this function does not remove the job_items since their quantity fields are
+// now all at 0, so there is no risk of having extra items attached. we don't
+// remove them to keep the "finalize with buildingplan active" path as similar
+// as possible to the "finalize with buildingplan disabled" path.
 static void finalizeBuilding(df::building * bld)
 {
     debug("finalizing building %d", bld->id);
@@ -662,13 +665,6 @@ static void finalizeBuilding(df::building * bld)
     // sort the items so they get added to the structure in the correct order
     std::sort(job->items.begin(), job->items.end(), job_item_idx_lt);
 
-    // remove job_item_idx values
-    for (auto item : job->items) { item->job_item_idx = -1; }
-
-    // remove filters (otherwise they'll trigger more items getting attached)
-    for (auto job_item : job->job_items) { delete(job_item); }
-    job->job_items.clear();
-    
     // derive the material properties of the building and job from the first
     // applicable item, though if any boulders are involved, it makes the whole
     // structure "rough".
@@ -708,7 +704,8 @@ void Planner::popInvalidTasks(std::queue<std::pair<df::building *, int>> & task_
         auto & task = task_queue.front();
         auto bld = task.first;
         if (planned_buildings.count(bld) > 0 &&
-            planned_buildings.at(bld).isValid())
+            planned_buildings.at(bld).isValid() &&
+            bld->jobs[0]->job_items[task.second]->quantity)
         {
             break;
         }
@@ -765,6 +762,10 @@ void Planner::doCycle()
                           ENUM_KEY_STR(job_item_vector_id, it->first).c_str(),
                           bucket_it->first.c_str(),
                           building->id, filter_idx);
+                    // keep quantity aligned with the actual number of remaining
+                    // items so if buildingplan is turned off, the building will
+                    // be completed with the correct number of items.
+                    --job->job_items[filter_idx]->quantity;
                     task_queue.pop();
                     if (isJobReady(job))
                     {
@@ -774,7 +775,7 @@ void Planner::doCycle()
                     if (task_queue.empty())
                     {
                         debug(
-                            "removing empty bucket: %s/%s; %zu bucket(s) left",
+                            "removing empty item bucket: %s/%s; %zu remaining",
                             ENUM_KEY_STR(job_item_vector_id, it->first).c_str(),
                             bucket_it->first.c_str(),
                             buckets.size() - 1);

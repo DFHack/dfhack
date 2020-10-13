@@ -725,6 +725,7 @@ static void finalizeBuilding(df::building * bld)
 
     // we're good to go!
     job->flags.bits.suspend = false;
+    Job::checkBuildingsNow();
 }
 
 void Planner::popInvalidTasks(std::queue<std::pair<df::building *, int>> & task_queue)

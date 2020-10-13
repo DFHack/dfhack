@@ -22,12 +22,12 @@
 #
 # For example, say you have the following build and place blueprints:
 #
-# #build start(4;1;upper left corner of stockpile) build masonry workshop
+# #build masonry workshop
 # ~, ~,~,`,`,`
 # ~,wm,~,`,`,`
 # ~, ~,~,`,`,`
 #
-# #place start(4;1;upper left corner of stockpile) place stockpile for mason
+# #place stockpile for mason
 # ~,~,~,s,s,s
 # ~,~,~,s,s,s
 # ~,~,~,s,s,s
@@ -63,9 +63,7 @@
 # keycode from the DF interface definition file (data/init/interface.txt),
 # enclosed in curly brackets like an alias, like: "{Right}" or "{Enter}". In
 # order to avoid naming conflicts between aliases and keycodes, the convention
-# is to start aliases with a lowercase letter. You can add spaces in between
-# keystrokes to make them easier to read. Spaces in keystroke sequences will be
-# ignored. To insert a literal space, use "{Space}"
+# is to start aliases with a lowercase letter.
 #
 # Anything enclosed within curly brackets can also have a number after it,
 # indicating how many times that alias or keycode should be repeated. For

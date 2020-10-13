@@ -33,6 +33,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
+## Fixes
+- `dwarfmonitor`: fixed a crash when opening the ``prefs`` screen if units have vague preferences
+
 # 0.47.04-r3
 
 ## New Plugins

@@ -35,6 +35,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - `buildingplan`: artifacts are now successfully matched when max quality is set to ``artifacts``
+- `dwarfmonitor`: fixed a crash when opening the ``prefs`` screen if units have vague preferences
 
 ## Misc Improvements
 - `buildingplan`: all buildings, furniture, and constructions are now supported (except for the few building types not supported by dfhack itself)

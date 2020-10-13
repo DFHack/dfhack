@@ -775,7 +775,7 @@ void Planner::doCycle()
                     if (task_queue.empty())
                     {
                         debug(
-                            "removing empty item bucket: %s/%s; %zu remaining",
+                            "removing empty item bucket: %s/%s; %zu left",
                             ENUM_KEY_STR(job_item_vector_id, it->first).c_str(),
                             bucket_it->first.c_str(),
                             buckets.size() - 1);

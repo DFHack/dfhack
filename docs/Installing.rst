@@ -150,3 +150,19 @@ DF, DFHack, and other utilities. If you are new to Dwarf Fortress and DFHack,
 these may be easier to set up. Note that these packs are not maintained by the
 DFHack team and vary in their release schedules and contents. Some may make
 significant configuration changes, and some may not include DFHack at all.
+
+Linux packages
+==============
+
+Third-party DFHack packages are available for some Linux distributions,
+including in:
+
+* `AUR <https://aur.archlinux.org/packages/dfhack/>`__, for Arch and related
+  distributions
+* `RPM Fusion <https://admin.rpmfusion.org/pkgdb/package/nonfree/dfhack/>`__,
+  for Fedora and related distributions
+
+Note that these may lag behind DFHack releases. If you want to use a newer
+version of DFHack, we generally recommended installing it in a clean copy of DF
+in your home folder. Attempting to upgrade an installation of DFHack from a
+package manager may break it.

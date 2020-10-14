@@ -2,26 +2,28 @@
 Welcome to the Dreamfort Walkthrough!
 It can be difficult applying a set of blueprints that you did not write yourself. This walkthrough will guide you through the high-level steps of building Dreamfort.
 ""
-"The final fort will have a walled-in area on the surface for livestock, trading, and military. Be sure to bring some blocks with you for the initial set of workshops! One z-level down is the farming level, with related workshops and vents up to the surface for miasma control. The farming level also has a miniature dining hall and dormitory for use until you get the services and apartment levels set up."
+"The final fort will have a walled-in area on the surface for livestock, trading, and military. Be sure to bring some blocks with you for the initial set of workshops! One z-level down is the farming level, with related workshops and vents up to the surface for miasma control. The farming level also has a miniature dining hall and dormitory for use until you get the services and beds levels set up."
 ""
 "Beyond those two, the other layers can be built in any order, at any z-level, according to your preference and the layout peculiarities of your embark site:"
 "- The industry level has a compact, but complete set of workshops and stockpiles (minus what is already provided on the farming level)"
 "- The services level has dining, hospital, and justice services, including a well system. This level is 4 z-levels deep."
-"- The guildhall level has many rooms for building libraries, temples, and guildhalls"
+"- The guildhall level has many empty rooms for building libraries, temples, and guildhalls"
 - The suites level has fancy rooms for your nobles
 - The apartments level(s) has small but well-furnished bedrooms for your other dwarves
 ""
+"Run the ""help"" blueprints for each level for more details."
+""
 "Dreamfort has a central staircase-based design. Choose a tile for your staircase on the surface in a nice, flat area. For all blueprints, the cursor will start on this tile on the z-level where you want to apply the blueprint."
 ""
-"Blueprints that require manual steps (like 'assign animals to pasture') will leave a message telling you so after you apply them. Blueprints will also leave messages with hints when you might want to run ""quickfort orders"" on specific blueprints to start manufacturing needed items."
+"Blueprints that require manual steps (like 'assign minecart to hauling route') will leave a message telling you so after you apply them. Blueprints will also leave messages with hints when you might want to run ""quickfort orders"" on specific blueprints to start manufacturing needed items."
 ""
 "Directly after embark, apply /surface1 on a flat area on the surface and /industry1 somewhere underground (but not immediately below the surface -- that will be for the farming level). Work your way through the steps for those levels: apply /surface2 when /surface1 is done, /industry2 when /industry1 is done, etc. Once you channel out parts of the surface with /surface3, you can start the farming sequence with /farming1. You can start the services, guildhall, suites, and apartments sequences as your fort needs those levels."
 ""
-"This .csv file is generated from source .xlsx files. If you want to look at how these blueprints are put together, including full lists of their features, it will be easier to look at the .xlsx files than this giant .csv. You can view them online at: https://drive.google.com/drive/folders/1iS90EEVqUkxTeZiiukVj1pLloZqabKuP"
+"This .csv file is generated from source .xlsx files. If you want to look at how these blueprints are put together, it will be easier to look at the online spreadsheets than this giant .csv. You can view them at: https://drive.google.com/drive/folders/1iS90EEVqUkxTeZiiukVj1pLloZqabKuP"
 You are welcome to copy those files and make your own modifications!
 "#dreamfort.csv is generated with the following command:
   for fname in dreamfort*.xlsx; do xlsx2csv -a -p '' $fname; done | sed 's/,*$//'"
-#notes label(surface_readme)
+#notes label(surface_help)
 "Sets up a large, protected entrance to your fort in a flat area on the surface."
 ""
 Features:
@@ -46,7 +48,7 @@ Once the area is clear, continue with /surface2.) clear an area and set up pastu
 clear_small/surface_clear_small
 zones/surface_zones
 ""
-"#meta label(surface2) start(staircase center) message(This would be a good time to queue manager orders for /surface4, /surface5, and /surface6. If you want a consistent color for your walls, remember to set the rock material for the manager orders for blocks.
+"#meta label(surface2) start(staircase center) message(This would be a good time to queue manager orders for /surface4, /surface5, and /surface6. If you want a consistent color for your walls, remember to set the rock material in the buildingplan UI and in the manager orders for blocks.
 Once the whole area is clear, continue with /surface3.) set up starting workshops/stockpiles and clear a larger area. if you didn't bring blocks, temporarily turn off the buildings_use_blocks setting so you can use wood or boulders"
 build_start/surface_build_start
 place_start/surface_place_start
@@ -54,14 +56,14 @@ query_start/surface_query_start
 clear/surface_clear
 pick/surface_pick
 ""
-"#meta label(surface3) start(staircase center) message(Once the channels are dug out and you have around 650 blocks, continue with /surface4. You can also start digging out the sub-surface farming level once the channels are done.) channel to prevent miasma in the sub-surface farming level"
+"#meta label(surface3) start(staircase center) message(Once the channels are dug out, continue with /surface4. You can also start digging out the sub-surface farming level once the channels are done.) channel to prevent miasma in the sub-surface farming level"
 dig/surface_channel
 ""
-"#meta label(surface4) start(staircase center) message(Once floors and walls are built and you have completed the manager orders for /surface5, continue with /surface5.) cover up the holes with flooring and build walls"
+"#meta label(surface4) start(staircase center) message(Once floors and walls are built, continue with /surface5.) cover up the holes with flooring and build walls"
 build_floors/surface_floors
 build_walls/surface_walls
 ""
-"#meta label(surface5) start(staircase center) message(Once you have around 1,050 blocks, continue with /surface6) build gates, furniture, the trade depot, and traps"
+"#meta label(surface5) start(staircase center) message(Once buildings have been constructed, continue with /surface6) build gates, furniture, the trade depot, and traps"
 build_bridges/surface_gates
 build_buildings/surface_buildings
 ""
@@ -820,7 +822,7 @@ p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,
 
 
 
-#notes label(farming_readme)
+#notes label(farming_help)
 "Sets up farming, food storage, and related industries. Also provides post-embark necessities that can later be disassembed."
 ""
 Features:
@@ -844,7 +846,7 @@ Screw Press
 Manual steps you have to take:
 Assign the office to your manager
 Assign a minecart to your quantum garbage stockpile hauling route
-"if the industry level is already built, configure the jugs, pots, and bags stockpiles to take from the ""Goods"" quantum stockpile on the industry level"
+"If the industry level is already built, configure the jugs, pots, and bags stockpiles to take from the ""Goods"" quantum stockpile on the industry level"
 "#dig label(farming1) start(23; 25; staircase center) message(This would be a good time to queue up manager orders for /farming2. Once the area is dug out, continue with /farming2.)"
 
 
@@ -985,13 +987,13 @@ query_stockpiles/farming_query_stockpiles
 #place label(farming_place) start(23; 25) hidden() use the meta blueprints for normal application
 
 
-,,,,,,,,,`,`,`,`,`,`,`,`,f(3x6),`,`,,`,,`,,f(14x16),`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,`,f(3x6),,,,`,,`,,f(14x16),,,,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,,,,,,f(8x1),`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,,,,,,b(8x1),`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,f(8x1),,,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,b(8x1),,,`,`,`,`,`,`,`,`,,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,`,,,`,,,`,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,,,f(14x10),`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,,f(14x10),,,,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
@@ -1002,7 +1004,7 @@ query_stockpiles/farming_query_stockpiles
 ,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,`,,,,`,,,,`,,,,`,`,`,,,`,,,,`
-,,,,,,,,u,u,u,u,`,`,`,u(5x3),`,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,,,,,u,u,u,u,`,`,`,u(5x3),,,`,`,,`,`,`,,`,`,`,,`,`,`
 ,,,,,,,,g,`,`,u,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,g,g,g,g,`,`,`,`,`,`,`,`,,`,,`,,`,`,`,,`,`,`
 ,,,,,,,,,`,,,,`,,,,`,,,,`,`,`,,,`,,,,`
@@ -1010,20 +1012,20 @@ query_stockpiles/farming_query_stockpiles
 ,,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`
 ,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,,,,,,,,,,,`,`,`,,,,,`,,,,,`
-,,,,,,,,,`,`,`,,f(7x2),`,`,`,`,`,`,,`,,`,,r(2x3),`,`,`,`,,f(1x3),`,`,`
+,,,,,,,,,`,`,`,,f(7x2),,,`,`,`,`,,`,,`,,r(2x3),,,`,`,,f(1x3),,,`
 ,,,,,,,,,`,`,`,,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`
 ,,,,,,,,,`,`,`,,`,`,`,`,`,`,`,,`,`,`,,,,,`,,,,,`
-,,,,,,,,,`,`,`,,`,`,`,`,`,`,`,,`,`,`,,ry(14x10),`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,,`,`,`,`,`,`,`,,`,`,`,,ry(14x10),,,,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,,,,,,`,`,`,,f(7x2),`,`,`,`,`,`,,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,,f(7x2),,,`,`,`,`,,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,`,`,`,,`,`,`,`,`,`,`,,`,,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,,,,,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,,,,,,,,,,,,,,,,,,ry(3x3),`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,,,,,,,,ry(3x3),,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,,,,,,,,,,,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,,,,,,,,,,,,`,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,,,,,,,,,,,,,,,,,,,ry(1x1),,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,,,,,,,,,ry,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 
 
 "#query label(farming_query_stockpiles) start(23; 25) hidden() message(remember to:
@@ -1116,7 +1118,7 @@ query_stockpiles/farming_query_stockpiles
 ,,,,,,,,,,,,,,,,,,,,,,`,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 
 
-#notes label(industry_readme)
+#notes label(industry_help)
 Sets up workshops for all non-farming industries
 ""
 Features:
@@ -1303,7 +1305,7 @@ query/industry_query
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
 
 
-#notes label(services_readme)
+#notes label(services_help)
 "Sets up public services (dining, hospital, etc.)"
 ""
 Features:
@@ -1319,7 +1321,7 @@ Manual steps you have to take:
 "If you want to declare the dining room as a tavern, the bedrooms at the top can be assigned to the tavern as rented rooms."
 "Configure the soap stockpiles to take from the industry level ""Metalworker"" quantum stockpile (which holds all the bars)"
 "Convert the bath pit zones to pond zones when you are ready to fill them with 3-depth water. This is the only really fiddly bit, since you have to carefully disable the pond zone again when the final bucket to bring the water to an even 3-depth is on the way."
-"Fill the cisterns with water, either with a bucket brigade or by plumbing flowing water. Fill so that there are two z-levels of 7-depth water. If you want to fill with buckets, designate a pond zone on the level below the main floor. If you feel adventurous and are experience with water pressure, you can instead route (depressurized!) water to the second-to-bottom level (the one above the up staircases)."
+"Fill the cisterns with water, either with a bucket brigade or by plumbing flowing water. Fill so that there are two z-levels of 7-depth water. If you want to fill with buckets, designate a pond zone on the level below the main floor. If you feel adventurous and are experienced with water pressure, you can instead route (depressurized!) water to the second-to-bottom level (the one above the up staircases)."
 "#dig label(services1) start(23; 22; staircase center) message(This would be a good time to queue manager orders for /services2. Once the area is dug out, continue with /services2.)"
 
 
@@ -1633,7 +1635,7 @@ query_stockpiles/services_query_stockpiles
 ,,`,`,`,`,`,`,,`,`,`,`,`,`
 
 
-#notes label(guildhall_readme)
+#notes label(guildhall_help)
 "Multiple 7x7 rooms for guildhalls, temples, libraries, etc."
 ""
 Features:
@@ -1738,7 +1740,7 @@ Features:
 ,,`,`,`,`,`,`,`,,,,,,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,,,,,,`,`,`,`,`,`,`
 
 
-#notes label(beds_readme)
+#notes label(beds_help)
 Suites for nobles and apartments for the teeming masses
 ""
 Features:

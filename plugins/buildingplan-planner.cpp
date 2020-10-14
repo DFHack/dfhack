@@ -411,6 +411,50 @@ void migrateV1ToV2()
             continue;
         }
 
+        if (bld->getBuildStage() != 0 || bld->jobs.size() != 1
+            || bld->jobs[0]->job_items.size() != 1)
+        {
+            debug("building in invalid state; removing config");
+            DFHack::World::DeletePersistentData(config);
+            continue;
+        }
+
+        // the v1 filters will match any item. we need to fix them up so they
+        // only match the intended items for the building type.
+        auto filter = bld->jobs[0]->job_items[0];
+        filter->flags2.bits.building_material = false;
+        df::item_type type;
+        switch (bld->getType())
+        {
+        case df::building_type::Armorstand: type = df::item_type::ARMORSTAND; break;
+        case df::building_type::Bed: type = df::item_type::BED; break;
+        case df::building_type::Chair: type = df::item_type::CHAIR; break;
+        case df::building_type::Coffin: type = df::item_type::COFFIN; break;
+        case df::building_type::Door: type = df::item_type::DOOR; break;
+        case df::building_type::Floodgate: type = df::item_type::FLOODGATE; break;
+        case df::building_type::Hatch: type = df::item_type::HATCH_COVER; break;
+        case df::building_type::GrateWall: type = df::item_type::GRATE; break;
+        case df::building_type::GrateFloor: type = df::item_type::GRATE; break;
+        case df::building_type::BarsVertical: type = df::item_type::BAR; break;
+        case df::building_type::BarsFloor: type = df::item_type::BAR; break;
+        case df::building_type::Cabinet: type = df::item_type::CABINET; break;
+        case df::building_type::Box: type = df::item_type::BOX; break;
+        case df::building_type::Weaponrack: type = df::item_type::WEAPONRACK; break;
+        case df::building_type::Statue: type = df::item_type::STATUE; break;
+        case df::building_type::Slab: type = df::item_type::SLAB; break;
+        case df::building_type::Table: type = df::item_type::TABLE; break;
+        case df::building_type::WindowGlass: type = df::item_type::WINDOW; break;
+        case df::building_type::AnimalTrap: type = df::item_type::ANIMALTRAP; break;
+        case df::building_type::Chain: type = df::item_type::CHAIN; break;
+        case df::building_type::Cage: type = df::item_type::CAGE; break;
+        case df::building_type::TractionBench: type = df::item_type::TRACTION_BENCH; break;
+        default:
+            debug("building has unhandled type; removing config");
+            DFHack::World::DeletePersistentData(config);
+            continue;
+        }
+        filter->item_type = type;
+
         std::vector<std::string> tokens;
         split_string(&tokens, config.val(), "/");
         if (tokens.size() != 2)
@@ -420,18 +464,18 @@ void migrateV1ToV2()
             continue;
         }
 
-        ItemFilter filter;
-        filter.deserializeMaterialMask(tokens[0]);
-        filter.deserializeMaterials(tokens[1]);
-        filter.setMinQuality(config.ival(2) - 1);
-        filter.setMaxQuality(config.ival(4) - 1);
+        ItemFilter item_filter;
+        item_filter.deserializeMaterialMask(tokens[0]);
+        item_filter.deserializeMaterials(tokens[1]);
+        item_filter.setMinQuality(config.ival(2) - 1);
+        item_filter.setMaxQuality(config.ival(4) - 1);
         if (config.ival(3) - 1)
-            filter.toggleDecoratedOnly();
+            item_filter.toggleDecoratedOnly();
 
         // create the v2 record
-        std::vector<ItemFilter> filters;
-        filters.push_back(filter);
-        PlannedBuilding pb(bld, filters);
+        std::vector<ItemFilter> item_filters;
+        item_filters.push_back(item_filter);
+        PlannedBuilding pb(bld, item_filters);
 
         // remove the v1 record
         DFHack::World::DeletePersistentData(config);

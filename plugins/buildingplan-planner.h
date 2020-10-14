@@ -120,13 +120,14 @@ private:
     std::unordered_map<BuildingTypeKey,
                        std::vector<ItemFilter>,
                        BuildingTypeKeyHash> default_item_filters;
-    std::unordered_map<df::building *, PlannedBuilding> planned_buildings;
-    // vector id -> filter bucket -> queue of (building, job_item index)
-    std::map<df::job_item_vector_id, std::map<std::string, std::queue<std::pair<df::building *, int>>>> tasks;
+    // building id -> PlannedBuilding
+    std::unordered_map<int32_t, PlannedBuilding> planned_buildings;
+    // vector id -> filter bucket -> queue of (building id, job_item index)
+    std::map<df::job_item_vector_id, std::map<std::string, std::queue<std::pair<int32_t, int>>>> tasks;
 
     bool registerTasks(PlannedBuilding &plannedBuilding);
-    void unregisterBuilding(df::building *bld);
-    void popInvalidTasks(std::queue<std::pair<df::building *, int>> &task_queue);
+    void unregisterBuilding(int32_t id);
+    void popInvalidTasks(std::queue<std::pair<int32_t, int>> &task_queue);
 };
 
 extern Planner planner;

@@ -411,6 +411,50 @@ void migrateV1ToV2()
             continue;
         }
 
+        if (bld->getBuildStage() != 0 || bld->jobs.size() != 1
+            || bld->jobs[0]->job_items.size() != 1)
+        {
+            debug("building in invalid state; removing config");
+            DFHack::World::DeletePersistentData(config);
+            continue;
+        }
+
+        // the v1 filters will match any item. we need to fix them up so they
+        // only match the intended items for the building type.
+        auto filter = bld->jobs[0]->job_items[0];
+        filter->flags2.bits.building_material = false;
+        df::item_type type;
+        switch (bld->getType())
+        {
+        case df::building_type::Armorstand: type = df::item_type::ARMORSTAND; break;
+        case df::building_type::Bed: type = df::item_type::BED; break;
+        case df::building_type::Chair: type = df::item_type::CHAIR; break;
+        case df::building_type::Coffin: type = df::item_type::COFFIN; break;
+        case df::building_type::Door: type = df::item_type::DOOR; break;
+        case df::building_type::Floodgate: type = df::item_type::FLOODGATE; break;
+        case df::building_type::Hatch: type = df::item_type::HATCH_COVER; break;
+        case df::building_type::GrateWall: type = df::item_type::GRATE; break;
+        case df::building_type::GrateFloor: type = df::item_type::GRATE; break;
+        case df::building_type::BarsVertical: type = df::item_type::BAR; break;
+        case df::building_type::BarsFloor: type = df::item_type::BAR; break;
+        case df::building_type::Cabinet: type = df::item_type::CABINET; break;
+        case df::building_type::Box: type = df::item_type::BOX; break;
+        case df::building_type::Weaponrack: type = df::item_type::WEAPONRACK; break;
+        case df::building_type::Statue: type = df::item_type::STATUE; break;
+        case df::building_type::Slab: type = df::item_type::SLAB; break;
+        case df::building_type::Table: type = df::item_type::TABLE; break;
+        case df::building_type::WindowGlass: type = df::item_type::WINDOW; break;
+        case df::building_type::AnimalTrap: type = df::item_type::ANIMALTRAP; break;
+        case df::building_type::Chain: type = df::item_type::CHAIN; break;
+        case df::building_type::Cage: type = df::item_type::CAGE; break;
+        case df::building_type::TractionBench: type = df::item_type::TRACTION_BENCH; break;
+        default:
+            debug("building has unhandled type; removing config");
+            DFHack::World::DeletePersistentData(config);
+            continue;
+        }
+        filter->item_type = type;
+
         std::vector<std::string> tokens;
         split_string(&tokens, config.val(), "/");
         if (tokens.size() != 2)
@@ -420,18 +464,18 @@ void migrateV1ToV2()
             continue;
         }
 
-        ItemFilter filter;
-        filter.deserializeMaterialMask(tokens[0]);
-        filter.deserializeMaterials(tokens[1]);
-        filter.setMinQuality(config.ival(2) - 1);
-        filter.setMaxQuality(config.ival(4) - 1);
+        ItemFilter item_filter;
+        item_filter.deserializeMaterialMask(tokens[0]);
+        item_filter.deserializeMaterials(tokens[1]);
+        item_filter.setMinQuality(config.ival(2) - 1);
+        item_filter.setMaxQuality(config.ival(4) - 1);
         if (config.ival(3) - 1)
-            filter.toggleDecoratedOnly();
+            item_filter.toggleDecoratedOnly();
 
         // create the v2 record
-        std::vector<ItemFilter> filters;
-        filters.push_back(filter);
-        PlannedBuilding pb(bld, filters);
+        std::vector<ItemFilter> item_filters;
+        item_filters.push_back(item_filter);
+        PlannedBuilding pb(bld, item_filters);
 
         // remove the v1 record
         DFHack::World::DeletePersistentData(config);
@@ -463,7 +507,7 @@ void Planner::reset()
         }
 
         if (registerTasks(pb))
-            planned_buildings.insert(std::make_pair(pb.getBuilding(), pb));
+            planned_buildings.insert(std::make_pair(pb.getBuilding()->id, pb));
     }
 }
 
@@ -478,7 +522,7 @@ void Planner::addPlannedBuilding(df::building *bld)
     }
 
     // protect against multiple registrations
-    if (planned_buildings.count(bld) != 0)
+    if (planned_buildings.count(bld->id) != 0)
     {
         debug("failed to add building: already registered");
         return;
@@ -490,7 +534,7 @@ void Planner::addPlannedBuilding(df::building *bld)
         for (auto job : bld->jobs)
             job->flags.bits.suspend = true;
 
-        planned_buildings.insert(std::make_pair(bld, pb));
+        planned_buildings.insert(std::make_pair(bld->id, pb));
     }
     else
     {
@@ -546,11 +590,12 @@ bool Planner::registerTasks(PlannedBuilding & pb)
         auto bucket = getBucket(*job_item, pb.getFilters());
         for (int item_num = 0; item_num < job_item->quantity; ++item_num)
         {
-            tasks[vector_id][bucket].push(std::make_pair(bld, job_item_idx));
+            int32_t id = bld->id;
+            tasks[vector_id][bucket].push(std::make_pair(id, job_item_idx));
             debug("added task: %s/%s/%d,%d; "
                   "%zu vector(s), %zu filter bucket(s), %zu task(s) in bucket",
                   ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
-                  bucket.c_str(), bld->id, job_item_idx, tasks.size(),
+                  bucket.c_str(), id, job_item_idx, tasks.size(),
                   tasks[vector_id].size(), tasks[vector_id][bucket].size());
         }
     }
@@ -559,9 +604,9 @@ bool Planner::registerTasks(PlannedBuilding & pb)
 
 PlannedBuilding * Planner::getPlannedBuilding(df::building *bld)
 {
-    if (planned_buildings.count(bld) == 0)
+    if (planned_buildings.count(bld->id) == 0)
         return NULL;
-    return &planned_buildings.at(bld);
+    return &planned_buildings.at(bld->id);
 }
 
 bool Planner::isPlannableBuilding(BuildingTypeKey key)
@@ -626,12 +671,12 @@ static bool matchesFilters(df::item * item,
 // re-register a building once it has been removed -- if it fails isValid()
 // then it has either been built or desroyed. therefore there is no chance of
 // duplicate tasks getting added to the tasks queues.
-void Planner::unregisterBuilding(df::building * bld)
+void Planner::unregisterBuilding(int32_t id)
 {
-    if (planned_buildings.count(bld) > 0)
+    if (planned_buildings.count(id) > 0)
     {
-        planned_buildings.at(bld).remove();
-        planned_buildings.erase(bld);
+        planned_buildings.at(id).remove();
+        planned_buildings.erase(id);
     }
 }
 
@@ -698,22 +743,25 @@ static void finalizeBuilding(df::building * bld)
     Job::checkBuildingsNow();
 }
 
-void Planner::popInvalidTasks(std::queue<std::pair<df::building *, int>> & task_queue)
+void Planner::popInvalidTasks(std::queue<std::pair<int32_t, int>> & task_queue)
 {
     while (!task_queue.empty())
     {
         auto & task = task_queue.front();
-        auto bld = task.first;
-        if (planned_buildings.count(bld) > 0 &&
-            planned_buildings.at(bld).isValid() &&
-            bld->jobs[0]->job_items[task.second]->quantity)
+        auto id = task.first;
+        if (planned_buildings.count(id) > 0)
         {
-            break;
+            PlannedBuilding & pb = planned_buildings.at(id);
+            if (pb.isValid() &&
+                pb.getBuilding()->jobs[0]->job_items[task.second]->quantity)
+            {
+                break;
+            }
         }
         debug("discarding invalid task: bld=%d, job_item_idx=%d",
-              bld->id, task.second);
+              id, task.second);
         task_queue.pop();
-        unregisterBuilding(bld);
+        unregisterBuilding(id);
     }
 }
 
@@ -751,18 +799,20 @@ void Planner::doCycle()
                     continue;
                 }
                 auto & task = task_queue.front();
-                auto building = task.first;
+                auto id = task.first;
+                auto & pb = planned_buildings.at(id);
+                auto building = pb.getBuilding();
                 auto job = building->jobs[0];
                 auto filter_idx = task.second;
                 if (matchesFilters(item, job->job_items[filter_idx],
-                        planned_buildings.at(building).getFilters()[filter_idx])
+                        pb.getFilters()[filter_idx])
                    && DFHack::Job::attachJobItem(job, item,
                             df::job_item_ref::Hauled, filter_idx))
                 {
                     debug("matched item for: %s/%s/%d,%d",
                           ENUM_KEY_STR(job_item_vector_id, it->first).c_str(),
                           bucket_it->first.c_str(),
-                          building->id, filter_idx);
+                          id, filter_idx);
                     // keep quantity aligned with the actual number of remaining
                     // items so if buildingplan is turned off, the building will
                     // be completed with the correct number of items.
@@ -771,7 +821,7 @@ void Planner::doCycle()
                     if (isJobReady(job))
                     {
                         finalizeBuilding(building);
-                        unregisterBuilding(building);
+                        unregisterBuilding(id);
                     }
                     if (task_queue.empty())
                     {

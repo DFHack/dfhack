@@ -2371,6 +2371,7 @@ static const luaL_Reg dfhack_screen_funcs[] = {
 
 static const LuaWrapper::FunctionReg dfhack_filesystem_module[] = {
     WRAPM(Filesystem, getcwd),
+    WRAPM(Filesystem, restorecwd),
     WRAPM(Filesystem, chdir),
     WRAPM(Filesystem, mkdir),
     WRAPM(Filesystem, mkdir_recursive),

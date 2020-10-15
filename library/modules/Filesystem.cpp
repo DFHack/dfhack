@@ -52,6 +52,18 @@ SOFTWARE.
 
 using namespace DFHack;
 
+static bool initialized = false;
+static std::string initial_cwd;
+
+void Filesystem::init ()
+{
+    if (!initialized)
+    {
+        initialized = true;
+        initial_cwd = Filesystem::getcwd();
+    }
+}
+
 bool Filesystem::chdir (std::string path)
 {
     return ::chdir(path.c_str()) == 0;
@@ -69,6 +81,11 @@ std::string Filesystem::getcwd ()
 #endif
     result = buf;
     return result;
+}
+
+bool Filesystem::restorecwd ()
+{
+    return Filesystem::chdir(initial_cwd);
 }
 
 bool Filesystem::mkdir (std::string path)

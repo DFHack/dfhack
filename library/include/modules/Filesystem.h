@@ -146,8 +146,10 @@ enum _filetype {
 
 namespace DFHack {
     namespace Filesystem {
+        DFHACK_EXPORT void init ();
         DFHACK_EXPORT bool chdir (std::string path);
         DFHACK_EXPORT std::string getcwd ();
+        DFHACK_EXPORT bool restorecwd ();
         DFHACK_EXPORT bool mkdir (std::string path);
         // returns true on success or if directory already exists
         DFHACK_EXPORT bool mkdir_recursive (std::string path);

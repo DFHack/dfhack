@@ -419,10 +419,13 @@ void migrateV1ToV2()
             continue;
         }
 
-        // the v1 filters will match any item. we need to fix them up so they
-        // only match the intended items for the building type.
+        // fix up the building so we can set the material properties later
+        bld->mat_type = -1;
+        bld->mat_index = -1;
+
+        // the v1 filters are not initialized correctly and will match any item.
+        // we need to fix them up a bit.
         auto filter = bld->jobs[0]->job_items[0];
-        filter->flags2.bits.building_material = false;
         df::item_type type;
         switch (bld->getType())
         {
@@ -454,6 +457,19 @@ void migrateV1ToV2()
             continue;
         }
         filter->item_type = type;
+        filter->item_subtype = -1;
+        filter->mat_type = -1;
+        filter->mat_index = -1;
+        filter->flags1.whole = 0;
+        filter->flags2.whole = 0;
+        filter->flags2.bits.allow_artifact = true;
+        filter->flags3.whole = 0;
+        filter->flags4 = 0;
+        filter->flags5 = 0;
+        filter->metal_ore = -1;
+        filter->min_dimension = -1;
+        filter->has_tool_use = df::tool_uses::NONE;
+        filter->quantity = 1;
 
         std::vector<std::string> tokens;
         split_string(&tokens, config.val(), "/");
@@ -603,7 +619,7 @@ bool Planner::registerTasks(PlannedBuilding & pb)
 
 PlannedBuilding * Planner::getPlannedBuilding(df::building *bld)
 {
-    if (planned_buildings.count(bld->id) == 0)
+    if (!bld || planned_buildings.count(bld->id) == 0)
         return NULL;
     return &planned_buildings.at(bld->id);
 }
@@ -688,6 +704,17 @@ static bool matchesFilters(df::item * item,
                            df::job_item * job_item,
                            const ItemFilter & item_filter)
 {
+    if (job_item->item_type > -1 && job_item->item_type != item->getType())
+        return false;
+
+    if (job_item->item_subtype > -1 &&
+        job_item->item_subtype != item->getSubtype())
+        return false;
+
+    if (job_item->has_tool_use > df::tool_uses::NONE
+        && !item->hasToolUse(job_item->has_tool_use))
+        return false;
+
     return DFHack::Job::isSuitableItem(
             job_item, item->getType(), item->getSubtype())
         && DFHack::Job::isSuitableMaterial(
@@ -839,10 +866,18 @@ void Planner::doCycle()
                    && DFHack::Job::attachJobItem(job, item,
                             df::job_item_ref::Hauled, filter_idx))
                 {
-                    debug("matched item for: %s/%s/%d,%d",
+                    MaterialInfo material;
+                    material.decode(item);
+                    ItemTypeInfo item_type;
+                    item_type.decode(item);
+                    debug("attached %s %s to filter %d for %s(%d): %s/%s",
+                          material.toString().c_str(),
+                          item_type.toString().c_str(),
+                          filter_idx,
+                          ENUM_KEY_STR(building_type, building->getType()).c_str(),
+                          id,
                           ENUM_KEY_STR(job_item_vector_id, it->first).c_str(),
-                          bucket_it->first.c_str(),
-                          id, filter_idx);
+                          bucket_it->first.c_str());
                     // keep quantity aligned with the actual number of remaining
                     // items so if buildingplan is turned off, the building will
                     // be completed with the correct number of items.

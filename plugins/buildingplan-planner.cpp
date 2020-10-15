@@ -495,7 +495,9 @@ void migrateV1ToV2()
 
         // remove the v1 record
         DFHack::World::DeletePersistentData(config);
-        debug("v1 record successfully migrated");
+        debug("v1 %s(%d) record successfully migrated",
+              ENUM_KEY_STR(building_type, bld->getType()).c_str(),
+              bld->id);
     }
 }
 

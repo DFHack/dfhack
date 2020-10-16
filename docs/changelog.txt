@@ -34,7 +34,16 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## Fixes
+- `buildingplan`: artifacts are now successfully matched when max quality is set to ``artifacts``
 - `dwarfmonitor`: fixed a crash when opening the ``prefs`` screen if units have vague preferences
+
+## Misc Improvements
+- `buildingplan`: all buildings, furniture, and constructions are now supported (except for the few building types not supported by dfhack itself)
+- `buildingplan`: now respects building job_item filters when matching items
+- `buildingplan`: default filter setting for max quality changed from ``artifact`` to ``masterwork``
+
+## API
+- `buildingplan`: added Lua interface API
 
 # 0.47.04-r3
 

@@ -495,7 +495,9 @@ void migrateV1ToV2()
 
         // remove the v1 record
         DFHack::World::DeletePersistentData(config);
-        debug("v1 record successfully migrated");
+        debug("v1 %s(%d) record successfully migrated",
+              ENUM_KEY_STR(building_type, bld->getType()).c_str(),
+              bld->id);
     }
 }
 
@@ -510,13 +512,14 @@ void Planner::reset()
 
     std::vector<PersistentDataItem> items;
     DFHack::World::GetPersistentData(&items, planned_building_persistence_key_v2);
-    debug("found data for %zu planned buildings", items.size());
+    debug("found data for %zu planned building(s)", items.size());
 
     for (auto i = items.begin(); i != items.end(); i++)
     {
         PlannedBuilding pb(*i);
         if (!pb.isValid())
         {
+            debug("discarding invalid planned building");
             pb.remove();
             continue;
         }
@@ -608,7 +611,7 @@ bool Planner::registerTasks(PlannedBuilding & pb)
             int32_t id = bld->id;
             tasks[vector_id][bucket].push(std::make_pair(id, job_item_idx));
             debug("added task: %s/%s/%d,%d; "
-                  "%zu vectors, %zu buckets, %zu tasks in bucket",
+                  "%zu vector(s), %zu filter bucket(s), %zu task(s) in bucket",
                   ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
                   bucket.c_str(), id, job_item_idx, tasks.size(),
                   tasks[vector_id].size(), tasks[vector_id][bucket].size());
@@ -626,38 +629,7 @@ PlannedBuilding * Planner::getPlannedBuilding(df::building *bld)
 
 bool Planner::isPlannableBuilding(BuildingTypeKey key)
 {
-    if (getNumFilters(key) == 0)
-        return false;
-
-    // restrict supported types to be the same as the previous implementation
-    switch(std::get<0>(key))
-    {
-        case df::enums::building_type::Armorstand:
-        case df::enums::building_type::Bed:
-        case df::enums::building_type::Chair:
-        case df::enums::building_type::Coffin:
-        case df::enums::building_type::Door:
-        case df::enums::building_type::Floodgate:
-        case df::enums::building_type::Hatch:
-        case df::enums::building_type::GrateWall:
-        case df::enums::building_type::GrateFloor:
-        case df::enums::building_type::BarsVertical:
-        case df::enums::building_type::BarsFloor:
-        case df::enums::building_type::Cabinet:
-        case df::enums::building_type::Box:
-        case df::enums::building_type::Weaponrack:
-        case df::enums::building_type::Statue:
-        case df::enums::building_type::Slab:
-        case df::enums::building_type::Table:
-        case df::enums::building_type::WindowGlass:
-        case df::enums::building_type::AnimalTrap:
-        case df::enums::building_type::Chain:
-        case df::enums::building_type::Cage:
-        case df::enums::building_type::TractionBench:
-            return true;
-        default:
-            return false;
-    }
+    return getNumFilters(key) >= 1;
 }
 
 Planner::ItemFiltersWrapper Planner::getItemFilters(BuildingTypeKey key)
@@ -831,7 +803,7 @@ void Planner::doCycle()
         auto & buckets = it->second;
         auto other_id = ENUM_ATTR(job_item_vector_id, other, it->first);
         auto item_vector = df::global::world->items.other[other_id];
-        debug("matching %zu items in vector %s against %zu buckets",
+        debug("matching %zu item(s) in vector %s against %zu filter bucket(s)",
               item_vector.size(),
               ENUM_KEY_STR(job_item_vector_id, it->first).c_str(),
               buckets.size());
@@ -848,7 +820,7 @@ void Planner::doCycle()
                 popInvalidTasks(task_queue);
                 if (task_queue.empty())
                 {
-                    debug("removing empty bucket: %s/%s; %zu buckets left",
+                    debug("removing empty bucket: %s/%s; %zu bucket(s) left",
                           ENUM_KEY_STR(job_item_vector_id, it->first).c_str(),
                           bucket_it->first.c_str(),
                           buckets.size() - 1);
@@ -891,7 +863,7 @@ void Planner::doCycle()
                     if (task_queue.empty())
                     {
                         debug(
-                            "removing empty item bucket: %s/%s; %zu remaining",
+                            "removing empty item bucket: %s/%s; %zu left",
                             ENUM_KEY_STR(job_item_vector_id, it->first).c_str(),
                             bucket_it->first.c_str(),
                             buckets.size() - 1);
@@ -907,7 +879,7 @@ void Planner::doCycle()
         }
         if (buckets.empty())
         {
-            debug("removing empty vector: %s; %zu vectors left",
+            debug("removing empty vector: %s; %zu vector(s) left",
                   ENUM_KEY_STR(job_item_vector_id, it->first).c_str(),
                   tasks.size() - 1);
             it = tasks.erase(it);
@@ -915,7 +887,7 @@ void Planner::doCycle()
         else
             ++it;
     }
-    debug("cycle done; %zu registered buildings left",
+    debug("cycle done; %zu registered building(s) left",
           planned_buildings.size());
 }
 

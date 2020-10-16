@@ -69,7 +69,8 @@ Features
 
 -  Build mode
 
-   -  DFHack buildingplan integration
+   -  DFHack buildingplan integration, so you can place buildings before
+      manufacturing all required source materials
    -  Designate complete constructions at once, without having to wait for each
       tile to become supported before you can build it
    -  Automatic expansion of building footprints to their minimum dimensions, so
@@ -1022,32 +1023,49 @@ allowing for much easier viewing and editing.
 Buildingplan integration
 ------------------------
 
-Buildingplan is a DFHack plugin that keeps jobs in a suspended state until the
-materials required for the job are available. This prevents a building
-designation from being canceled when a dwarf picks up the job but can't find the
-materials.
+Buildingplan is a DFHack plugin that keeps building construction jobs in a
+suspended state until the materials required for the job are available. This
+prevents a building designation from being canceled when a dwarf picks up the
+job but can't find the materials.
 
-For all types that buildingplan supports, quickfort using buildingplan to manage
-construction. Buildings are still constructed immediately if you have the
-materials, but you now have the freedom to apply build blueprints before you
-manufacture all required materials, and the jobs will be fulfilled as the
-materials become available.
+As long as the `buildingplan` plugin is enabled, quickfort will use it to manage
+construction. The buildingplan plugin also has an "enabled" setting for each
+building type, but that setting only applies to the buildingplan user interface;
+quickfort will always use buildingplan to manage everything designated in a
+``#build`` blueprint.
 
-If a ``#build`` blueprint only refers to supported types, the buildingplan
-integration pairs well with the `workflow` plugin, which can build items a few
-at a time continuously as long as they are needed. For building types that are
-not yet supported by buildingplan, a good pattern to follow is to first run
-``quickfort orders`` on the ``#build`` blueprint to manufacture all the required
-items, then apply the blueprint itself.
+However, quickfort *does* use buildingplan's filters for each building type. For
+example, you can use the buildingplan UI to set the stone you want your walls
+made out of. Or you can specify that all buildingplan-managed tables must be of
+Masterful quality. The current filter settings are saved with planned buildings
+when the ``#build`` blueprint is run. This means you can set the filters the way
+you want for one blueprint, run the blueprint, and then freely change them again
+for the next blueprint, even if the first set of buildings haven't been built
+yet.
 
-See the `buildingplan documentation <buildingplan>` for more information. As of
-this writing, buildingplan only supports basic furniture.
+Note that buildings are still constructed immediately if you already have the
+materials. However, with the buildingplan integration you now have the freedom
+to apply ``#build`` blueprints before you manufacture the resources. The
+construction jobs will be fulfilled as the materials become available.
+
+Since it can be difficult to figure out exactly what source materials you need
+for a ``#build`` blueprint, quickfort supplies the ``orders`` command. It
+enqueues manager orders for everything that the buildings in a ``#build``
+blueprint require. See the next section for more details on this.
+
+Alternately, if you know you only need a few types of items, the `workflow`
+plugin can be configured to build those items continuously for as long as they
+are needed.
+
+If the buildingplan plugin is not enabled, run ``quickfort orders`` first and
+make sure all manager orders are fulfilled before applying a ``#build``
+blueprint.
 
 Generating manager orders
 -------------------------
 
 Quickfort can generate manager orders to make sure you have the proper items in
-stock to apply a ``#build`` blueprint.
+stock for a ``#build`` blueprint.
 
 Many items can be manufactured from different source materials. Orders will
 always choose rock when it can, then wood, then cloth, then iron. You can always
@@ -1066,7 +1084,9 @@ If you want your constructions to be in a consistent color, be sure to choose a
 rock type for all of your 'Make rock blocks' orders by selecting the order and
 hitting ``d``. You might want to set the rock type for other non-block orders to
 something different if you fear running out of the type of rock that you want to
-use for blocks.
+use for blocks. You should also set the `buildingplan` material filter for
+construction building types to that type of rock as well so other random blocks
+you might have lying around aren't used.
 
 There are a few building types that will generate extra manager orders for
 related materials:
@@ -1105,23 +1125,16 @@ Tips and tricks
 Caveats and limitations
 -----------------------
 
--  Buildings will be designated regardless of whether you have the required
-   materials, but if materials are not available when the construction job is
-   picked up by a dwarf, the buildings will be canceled and the designations
-   will disappear. Until the buildingplan plugin can be extended to support all
-   building types, you should use ``quickfort orders`` to pre-manufacture all
-   the materials you need for a ``#build`` blueprint before you apply it.
-
 -  If you use the ``jugs`` alias in your ``#query``-mode blueprints, be aware
    that there is no way to differentiate jugs from other types of tools in the
    game. Therefore, ``jugs`` stockpiles will also take nest boxes and other
    tools. The only workaround is not to have other tools lying around in your
    fort.
 
--  Likewise for bags. The game does not differentiate between empty and full
-   bags, so you'll get bags of gypsum power and sand in your bags stockpile
-   unless you avoid collecting sand and are careful to assign all your gypsum to
-   your hospital.
+-  Likewise for the ``bags`` alias. The game does not differentiate between
+   empty and full bags, so you'll get bags of gypsum power and sand in your bags
+   stockpile unless you avoid collecting sand and are careful to assign all your
+   gypsum to your hospital.
 
 -  Weapon traps and upright spear/spike traps can currently only be built with a
    single weapon.
@@ -1260,7 +1273,7 @@ sheet, like in surface's meta sheet.
 things to include in messages are:
 
 * The name of the next blueprint to apply and when to run it
-* Whether quickfort orders should be run for an upcoming step
+* Whether quickfort orders could be run for an upcoming step
 * Any manual actions that have to happen, like assigning minecarts to hauling
   routes or pasturing animals after creating zones
 

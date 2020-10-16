@@ -368,10 +368,19 @@ df::building *Buildings::allocInstance(df::coord pos, df::building_type type, in
             obj->bucket_z = bld->z;
         break;
     }
+    case building_type::Workshop:
+    {
+        if (VIRTUAL_CAST_VAR(obj, df::building_workshopst, bld))
+            obj->profile.max_general_orders = 5;
+        break;
+    }
     case building_type::Furnace:
     {
         if (VIRTUAL_CAST_VAR(obj, df::building_furnacest, bld))
+        {
             obj->melt_remainder.resize(df::inorganic_raw::get_vector().size(), 0);
+            obj->profile.max_general_orders = 5;
+        }
         break;
     }
     case building_type::Coffin:
@@ -417,6 +426,12 @@ df::building *Buildings::allocInstance(df::coord pos, df::building_type type, in
     {
         if (VIRTUAL_CAST_VAR(obj, df::building_bars_floorst, bld))
             obj->gate_flags.bits.closed = true;
+        break;
+    }
+    case building_type::Bridge:
+    {
+        if (VIRTUAL_CAST_VAR(obj, df::building_bridgest, bld))
+            obj->gate_flags.bits.closed = false;
         break;
     }
     default:

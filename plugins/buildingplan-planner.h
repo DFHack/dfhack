@@ -106,7 +106,6 @@ public:
     void initialize();
     void reset();
 
-    bool allocatePlannedBuilding(BuildingTypeKey key);
     void addPlannedBuilding(df::building *bld);
     PlannedBuilding *getPlannedBuilding(df::building *bld);
 

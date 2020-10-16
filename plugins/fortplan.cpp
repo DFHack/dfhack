@@ -130,8 +130,6 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
     buildings.push_back(BuildingInfo("N",df::building_type::NestBox,"Nest Box",1,1));
     buildings.push_back(BuildingInfo("~h",df::building_type::Hive,"Hive",1,1));
 
-    planner.initialize();
-
     return CR_OK;
 }
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <queue>
 #include <unordered_map>
 
 #include "df/building.h"
@@ -16,8 +17,8 @@ public:
     ItemFilter();
 
     void clear();
-    bool deserialize(DFHack::PersistentDataItem &config);
-    void serialize(DFHack::PersistentDataItem &config) const;
+    bool deserialize(std::string ser);
+    std::string serialize() const;
 
     void addMaterialMask(uint32_t mask);
     void clearMaterialMask();
@@ -40,6 +41,9 @@ public:
     bool matches(df::item *item) const;
 
 private:
+    // remove friend declaration when we no longer need v1 deserialization
+    friend void migrateV1ToV2();
+
     df::dfhack_material_category mat_mask;
     std::vector<DFHack::MaterialInfo> materials;
     df::item_quality min_quality;
@@ -59,9 +63,6 @@ public:
     PlannedBuilding(df::building *building, const std::vector<ItemFilter> &filters);
     PlannedBuilding(DFHack::PersistentDataItem &config);
 
-    bool assignClosestItem(std::vector<df::item *> *items_vector);
-    bool assignItem(df::item *item);
-
     bool isValid() const;
     void remove();
 
@@ -71,8 +72,8 @@ public:
 private:
     DFHack::PersistentDataItem config;
     df::building *building;
-    df::building::key_field_type building_id;
-    std::vector<ItemFilter> filters;
+    const df::building::key_field_type building_id;
+    const std::vector<ItemFilter> filters;
 };
 
 // building type, subtype, custom
@@ -103,7 +104,6 @@ public:
         std::vector<ItemFilter> &item_filters;
     };
 
-    void initialize();
     void reset();
 
     void addPlannedBuilding(df::building *bld);
@@ -117,15 +117,17 @@ public:
     void doCycle();
 
 private:
-    std::map<df::building_type, df::item_type> item_for_building_type;
     std::unordered_map<BuildingTypeKey,
                        std::vector<ItemFilter>,
                        BuildingTypeKeyHash> default_item_filters;
-    std::map<df::item_type, std::vector<df::item *>> available_item_vectors;
-    std::map<df::item_type, bool> is_relevant_item_type; //Needed for fast check when looping over all items
-    std::vector<PlannedBuilding> planned_buildings;
+    // building id -> PlannedBuilding
+    std::unordered_map<int32_t, PlannedBuilding> planned_buildings;
+    // vector id -> filter bucket -> queue of (building id, job_item index)
+    std::map<df::job_item_vector_id, std::map<std::string, std::queue<std::pair<int32_t, int>>>> tasks;
 
-    void gather_available_items();
+    bool registerTasks(PlannedBuilding &plannedBuilding);
+    void unregisterBuilding(int32_t id);
+    void popInvalidTasks(std::queue<std::pair<int32_t, int>> &task_queue);
 };
 
 extern Planner planner;

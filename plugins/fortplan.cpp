@@ -48,7 +48,7 @@ struct BuildingInfo {
     }
 
     bool allocate() {
-        return planner.allocatePlannedBuilding(type);
+        return planner.allocatePlannedBuilding(toBuildingTypeKey(type, -1, -1));
     }
 };
 
@@ -122,7 +122,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 
     if (enable != is_enabled)
     {
-        planner.reset(out);
+        planner.reset();
 
         is_enabled = enable;
     }

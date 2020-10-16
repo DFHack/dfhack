@@ -28,6 +28,9 @@ using namespace DFHack;
 using namespace df::enums;
 
 bool show_help = false;
+bool quickfort_mode = false;
+bool in_dummy_screen = false;
+std::map<df::building_type, bool> planmode_enabled;
 
 class ViewscreenChooseMaterial : public dfhack_viewscreen
 {
@@ -284,12 +287,7 @@ void ViewscreenChooseMaterial::render()
 //START Viewscreen Hook
 static bool is_planmode_enabled(df::building_type type)
 {
-    if (planmode_enabled.find(type) == planmode_enabled.end())
-    {
-        return false;
-    }
-
-    return planmode_enabled[type];
+    return planmode_enabled[type] || quickfort_mode;
 }
 
 struct buildingplan_hook : public df::viewscreen_dwarfmodest
@@ -316,7 +314,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
         return ui->main.mode == ui_sidebar_mode::Build &&
             df::global::ui_build_selector &&
             df::global::ui_build_selector->stage < 2 &&
-            planner.isPlanableBuilding(ui_build_selector->building_type);
+            planner.isPlannableBuilding(ui_build_selector->building_type);
     }
 
     std::vector<Units::NoblePosition> getNoblePositionOfSelectedBuildingOwner()
@@ -358,10 +356,10 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
             if (input->count(interface_key::CUSTOM_SHIFT_P))
             {
                 planmode_enabled[type] = !planmode_enabled[type];
-                if (!planmode_enabled[type])
+                if (!is_planmode_enabled(type))
                 {
                     Gui::refreshSidebar();
-                    planner.in_dummmy_screen = false;
+                    in_dummy_screen = false;
                 }
                 return true;
             }
@@ -375,12 +373,12 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
 
             if (is_planmode_enabled(type))
             {
-                if (planner.inQuickFortMode() && planner.in_dummmy_screen)
+                if (quickfort_mode && in_dummy_screen)
                 {
                     if (input->count(interface_key::SELECT) || input->count(interface_key::SEC_SELECT)
                          || input->count(interface_key::LEAVESCREEN))
                     {
-                        planner.in_dummmy_screen = false;
+                        in_dummy_screen = false;
                         send_key(interface_key::LEAVESCREEN);
                     }
 
@@ -392,9 +390,9 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
                     if (ui_build_selector->errors.size() == 0 && planner.allocatePlannedBuilding(type))
                     {
                         Gui::refreshSidebar();
-                        if (planner.inQuickFortMode())
+                        if (quickfort_mode)
                         {
-                            planner.in_dummmy_screen = true;
+                            in_dummy_screen = true;
                         }
                     }
 
@@ -402,14 +400,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
                 }
                 else if (input->count(interface_key::CUSTOM_SHIFT_F))
                 {
-                    if (!planner.inQuickFortMode())
-                    {
-                        planner.enableQuickfortMode();
-                    }
-                    else
-                    {
-                        planner.disableQuickfortMode();
-                    }
+                    quickfort_mode = !quickfort_mode;
                 }
                 else if (input->count(interface_key::CUSTOM_SHIFT_M))
                 {
@@ -509,7 +500,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
         auto type = ui_build_selector->building_type;
         if (plannable)
         {
-            if (planner.inQuickFortMode() && planner.in_dummmy_screen)
+            if (quickfort_mode && in_dummy_screen)
             {
                 Screen::Pen pen(' ',COLOR_BLACK);
                 int y = dims.y1 + 1;
@@ -533,7 +524,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
 
                 if (is_planmode_enabled(type))
                 {
-                    OutputToggleString(x, y, "Quickfort Mode", "F", planner.inQuickFortMode(), true, left_margin);
+                    OutputToggleString(x, y, "Quickfort Mode", "F", quickfort_mode, true, left_margin);
 
                     auto filter = planner.getDefaultItemFilterForType(type);
 
@@ -552,13 +543,13 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
                 }
                 else
                 {
-                    planner.in_dummmy_screen = false;
+                    in_dummy_screen = false;
                 }
             }
         }
         else if (isInPlannedBuildingQueryMode())
         {
-            planner.in_dummmy_screen = false;
+            in_dummy_screen = false;
 
             // Hide suspend toggle option
             int y = 20;
@@ -597,7 +588,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
         }
         else
         {
-            planner.in_dummmy_screen = false;
+            in_dummy_screen = false;
             show_help = false;
         }
     }
@@ -690,7 +681,7 @@ DFhackCExport command_result plugin_shutdown(color_ostream &)
 // Lua API section
 
 static bool isPlannableBuilding(df::building_type type) {
-    return planner.isPlanableBuilding(type);
+    return planner.isPlannableBuilding(type);
 }
 
 static void addPlannedBuilding(df::building *bld) {

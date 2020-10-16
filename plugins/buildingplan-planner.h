@@ -61,11 +61,9 @@ private:
 class Planner
 {
 public:
-    bool in_dummmy_screen;
-
     Planner();
 
-    bool isPlanableBuilding(const df::building_type type) const;
+    bool isPlannableBuilding(const df::building_type type) const;
 
     void reset(DFHack::color_ostream &out);
 
@@ -86,16 +84,11 @@ public:
     void adjustMinQuality(df::building_type type, int amount);
     void adjustMaxQuality(df::building_type type, int amount);
 
-    void enableQuickfortMode();
-    void disableQuickfortMode();
-    bool inQuickFortMode();
-
 private:
     std::map<df::building_type, df::item_type> item_for_building_type;
     std::map<df::building_type, ItemFilter> default_item_filters;
     std::map<df::item_type, std::vector<df::item *>> available_item_vectors;
     std::map<df::item_type, bool> is_relevant_item_type; //Needed for fast check when looping over all items
-    bool quickfort_mode;
 
     std::vector<PlannedBuilding> planned_buildings;
 
@@ -104,5 +97,4 @@ private:
     void gather_available_items();
 };
 
-extern std::map<df::building_type, bool> planmode_enabled, saved_planmodes;
 extern Planner planner;

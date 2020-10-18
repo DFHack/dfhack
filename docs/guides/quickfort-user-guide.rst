@@ -1342,11 +1342,6 @@ Hauling routes are notoriously fiddly to set up, but they can be automated with
 blueprints. Check out the Southern area of the ``#place`` and ``#query``
 blueprints for how the quantum garbage dump is configured.
 
-Note that aliases that must be applied in a particular order must appear in the
-same cell. Otherwise there are no guarantees for which cell will be processed
-first. For example, look at the track stop cells in the ``#query`` blueprint for
-how the hauling routes are given names.
-
 The industry_ level: when not to use aliases
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1354,7 +1349,7 @@ The industry_ level: when not to use aliases
 
 The industry level is densely packed and has more complicated examples of
 stockpile configurations and quantum dumps. However, what I'd like to call out
-are the key sequences that are *not* in aliases.
+first are the key sequences that are *not* in aliases.
 
 .. topic:: Tip
 
@@ -1373,6 +1368,45 @@ relative positions of the tiles where they are interpreted, which is easiest to
 see in the blueprint itself. Also, if you move the workshop, it's easier to fix
 the stockpile link right there in the blueprint instead of editing the separate
 aliases.txt file.
+
+There are also good examples in the query blueprint for how to use the
+``permit`` and ``forbid`` stockpile aliases.
+
+.. topic:: Tip
+
+     Put all configuration that must be applied in a particular order in the
+     same spreadsheet cell.
+
+Most of the baseline aliases distributed with DFHack fall into one of three
+categories:
+
+# Make a stockpile accept only a particular item type in a category
+# Permit an item type, but do not otherwise change the stockpile configuration
+# Forbid an item type, but do not otherwise change the stockpile configuration
+
+If you have a stockpile that covers multiple tiles, it might seem natural to put
+one alias per spreadsheet cell. The aliases still all get applied to the
+stockpile, and with only one alias per cell, you can just type the alias name
+and avoid having to use the messier-looking ``{alias1}{alias2}`` syntax:
+
+::
+
+    #query Incorrectly configure a 3x3 food stockpile to accept tallow and dye
+    tallow
+    permitdye
+
+However, in quickfort there are no guarantees about which cell will be
+processed first. In the example above, we obviously intend for the food
+stockpile to have everything forbidden, then tallow permitted, then dye
+permitted. The algorithm could happen to apply them in the opposite order,
+though, and we'd end up with dye being permitted, then everything being
+forbidden and tallow being enabled. To make sure you always get what you want,
+write order-sensitive aliases on the same line:
+
+::
+
+    #query Properly configure a 3x3 food stockpile to accept tallow and dye
+    {tallow}{permitdye}
 
 The services_ level: handling multi-level dig blueprints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

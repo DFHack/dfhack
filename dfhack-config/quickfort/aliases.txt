@@ -1,6 +1,6 @@
-# aliases for quickfort query mode blueprints
+# Aliases for quickfort #query mode blueprints
 #
-# This file defines custom keycode shortcuts for query mode blueprints.
+# This file defines custom keycode shortcuts for #query mode blueprints.
 # Definitions in this file take precedence over any definitions in the baseline
 # aliases configuration file at hack/data/quickfort/aliases-common.txt. See that
 # file for the many useful aliases that are already defined.
@@ -68,6 +68,20 @@
 # Anything enclosed within curly brackets can also have a number after it,
 # indicating how many times that alias or keycode should be repeated. For
 # example: "{togglesequence 9}" or "{Down 5}".
+#
+# Finally, you can specify sub-aliases that will only be defined while the
+# current alias is being resolved by adding them after the alias name (but
+# before the repetition number, if it is specified), for example:
+#   {quantumstopfromeast name="Trash Dump"}
+# The value of the sub-alias 'name' is used by quantumstopfromeast (or one of
+# the aliases it calls) to give a useful name to your quantum dump hauling
+# route. You can also use this format to temporarily override the value of an
+# existing regularly-defined alias.
+#
+# Sub-aliases must be in one of the following formats:
+#   subaliasname=valwithnospaces
+#   subaliasname="val with spaces"
+#   subaliasname={someotheralias repetitions}
 #
 # Ctrl, Alt, and Shift modifiers can be specified for the next keycode by adding
 # them into the key sequence. For example, Alt-h is written as "{Alt}h".

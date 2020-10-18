@@ -96,6 +96,7 @@ Features
       created stockpiles
    -  Automatic splitting of stockpiles and zones that exceed maximum dimension
       limits
+   -  Full access to all zone settings, such as hospital supply counts
 
 -  Query mode
 
@@ -478,37 +479,57 @@ It is very common to have stockpiles that accept multiple categories of items or
 zones that permit more than one activity. Although it is perfectly valid to
 declare a single-purpose stockpile or zone and then modify it with a ``#query``
 blueprint, quickfort also supports directly declaring all the types on the
-``#place`` and ``#zone`` blueprints. For example, to declare a 10x10 area that
-is a pasture, a fruit picking area, and a meeting area all at once, you could
-write:
-
-::
-
-   #zone main pasture and picnic area
-   nmg(10x10)
-
-And similarly, to declare a stockpile that accepts both corpses and refuse, you
-could write:
+``#place`` and ``#zone`` blueprints. For example, to declare a 20x10 stockpile
+that accepts both corpses and refuse, you could write:
 
 ::
 
    #place refuse heap
    yr(20x10)
 
-The order of the individual letters doesn't matter.
 
-To toggle the ``active`` flag for zones, add an ``a`` character to the string.
-For example, to create a *disabled* pit zone (that you later intend to turn into
-a pond and carefully fill to 3-depth water):
+And similarly, to declare a zone that is a pasture, a fruit picking area, and a
+meeting area all at once:
 
 ::
 
-   #zone disabled future pond zone
-   pa(1x3)
+   #zone main pasture and picnic area
+   nmg(10x10)
 
-Note that while this notation covers most use cases, tweaking low-level zone
-parameters, like hospital supply levels or converting between pits and ponds,
-must still be done manually or with a ``#query`` blueprint.
+The order of the individual letters doesn't matter.
+
+Detailed configuration for zones, such as the pit/pond toggle, can also be set
+by mimicking the hotkeys used to set them. Note that gather flags default to
+true, so specifying them in a blueprint will turn the toggles off. If you need
+to set configuration from multiple zone subscreens, separate the key sections
+with ``^``. Note the special syntax for setting hospital supply levels, which
+have no in-game hotkeys:
+
+::
+
+   #zone a combination hospital and shrub (but not fruit) gathering zone
+   gGtf^hH{hospital buckets=5 splints=20}(10x10)
+
+The valid hospital settings (and their maximum values) are:
+
+::
+
+    thread   (1500000)
+    cloth    (1000000)
+    splints  (100)
+    crutches (100)
+    powder   (15000)
+    buckets  (100)
+    soap     (15000)
+    
+To toggle the ``active`` flag for zones, add an ``a`` character to the string.
+For example, to create a *disabled* pond zone (that you later intend to
+carefully fill with 3-depth water for a dwarven bathtub):
+
+::
+
+   #zone disabled pond zone
+   apPf(1x3)
 
 Minecart tracks
 ~~~~~~~~~~~~~~~

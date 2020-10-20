@@ -3697,6 +3697,88 @@ Native functions:
   ``start`` and ``end`` are tables containing positions (see
   ``xyz2pos``). ``name`` is used as the basis for the filename.
 
+.. _building-hacks:
+
+building-hacks
+==============
+
+This plugin overwrites some methods in workshop df class so that mechanical workshops are possible. Although
+plugin export a function it's recommended to use lua decorated function.
+
+.. contents::
+  :local:
+
+Functions
+---------
+
+``registerBuilding(table)`` where table must contain name, as a workshop raw name, the rest are optional:
+
+    :name:
+        custom workshop id e.g. ``SOAPMAKER``
+
+        .. note:: this is the only mandatory field.
+
+    :fix_impassible:
+        if true make impassible tiles impassible to liquids too
+    :consume:
+        how much machine power is needed to work.
+        Disables reactions if not supplied enough and ``needs_power==1``
+    :produce:
+        how much machine power is produced.
+    :needs_power:
+        if produced in network < consumed stop working, default true
+    :gears:
+        a table or ``{x=?,y=?}`` of connection points for machines.
+    :action:
+        a table of number (how much ticks to skip) and a function which
+        gets called on shop update
+    :animate:
+        a table of frames which can be a table of:
+
+        a. tables of 4 numbers ``{tile,fore,back,bright}`` OR
+        b. empty table (tile not modified) OR
+        c. ``{x=<number> y=<number> + 4 numbers like in first case}``,
+           this generates full frame useful for animations that change little (1-2 tiles)
+
+    :canBeRoomSubset:
+        a flag if this building can be counted in room. 1 means it can, 0 means it can't and -1 default building behaviour
+    :auto_gears:
+        a flag that automatically fills up gears and animate. It looks over building definition for gear icons and maps them.
+
+    Animate table also might contain:
+
+    :frameLength:
+        how many ticks does one frame take OR
+    :isMechanical:
+        a bool that says to try to match to mechanical system (i.e. how gears are turning)
+
+``getPower(building)`` returns two number - produced and consumed power if building can be modified and returns nothing otherwise
+
+``setPower(building,produced,consumed)`` sets current productiona and consumption for a building.
+
+Examples
+--------
+
+Simple mechanical workshop::
+
+  require('plugins.building-hacks').registerBuilding{name="BONE_GRINDER",
+    consume=15,
+    gears={x=0,y=0}, --connection point
+    animate={
+      isMechanical=true, --animate the same conn. point as vanilla gear
+      frames={
+      {{x=0,y=0,42,7,0,0}}, --first frame, 1 changed tile
+      {{x=0,y=0,15,7,0,0}} -- second frame, same
+      }
+    }
+
+Or with auto_gears::
+
+  require('plugins.building-hacks').registerBuilding{name="BONE_GRINDER",
+    consume=15,
+    auto_gears=true
+    }
+
 buildingplan
 ============
 
@@ -3751,15 +3833,134 @@ Native functions:
 
 The lua module file also re-exports functions from ``dfhack.burrows``.
 
-sort
-====
+.. _cxxrandom:
 
-Does not export any native functions as of now. Instead, it
-calls lua code to perform the actual ordering of list items.
+cxxrandom
+=========
+
+Exposes some features of the C++11 random number library to Lua.
+
+.. contents::
+  :local:
+
+Native functions (exported to Lua)
+----------------------------------
+
+- ``GenerateEngine(seed)``
+
+  returns engine id
+
+- ``DestroyEngine(rngID)``
+
+  destroys corresponding engine
+
+- ``NewSeed(rngID, seed)``
+
+  re-seeds engine
+
+- ``rollInt(rngID, min, max)``
+
+  generates random integer
+
+- ``rollDouble(rngID, min, max)``
+
+  generates random double
+
+- ``rollNormal(rngID, avg, stddev)``
+
+  generates random normal[gaus.]
+
+- ``rollBool(rngID, chance)``
+
+  generates random boolean
+
+- ``MakeNumSequence(start, end)``
+
+  returns sequence id
+
+- ``AddToSequence(seqID, num)``
+
+  adds a number to the sequence
+
+- ``ShuffleSequence(rngID, seqID)``
+
+  shuffles the number sequence
+
+- ``NextInSequence(seqID)``
+
+  returns the next number in sequence
+
+
+Lua plugin functions
+--------------------
+
+- ``MakeNewEngine(seed)``
+
+  returns engine id
+
+Lua plugin classes
+------------------
+
+``crng``
+~~~~~~~~
+
+- ``init(id, df, dist)``: constructor
+
+  - ``id``: Reference ID of engine to use in RNGenerations
+  - ``df`` (optional): bool indicating whether to destroy the Engine when the crng object is garbage collected
+  - ``dist`` (optional): lua number distribution to use
+
+- ``changeSeed(seed)``: alters engine's seed value
+- ``setNumDistrib(distrib)``: sets the number distribution crng object should use
+
+  - ``distrib``: number distribution object to use in RNGenerations
+
+- ``next()``: returns the next number in the distribution
+- ``shuffle()``: effectively shuffles the number distribution
+
+``normal_distribution``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+- ``init(avg, stddev)``: constructor
+- ``next(id)``: returns next number in the distribution
+
+  - ``id``: engine ID to pass to native function
+
+``real_distribution``
+~~~~~~~~~~~~~~~~~~~~~
+
+- ``init(min, max)``: constructor
+- ``next(id)``: returns next number in the distribution
+
+  - ``id``: engine ID to pass to native function
+
+``int_distribution``
+~~~~~~~~~~~~~~~~~~~~
+
+- ``init(min, max)``: constructor
+- ``next(id)``: returns next number in the distribution
+
+  - ``id``: engine ID to pass to native function
+
+``bool_distribution``
+~~~~~~~~~~~~~~~~~~~~~
+
+- ``init(min, max)``: constructor
+- ``next(id)``: returns next boolean in the distribution
+
+  - ``id``: engine ID to pass to native function
+
+``num_sequence``
+~~~~~~~~~~~~~~~~
+
+- ``init(a, b)``: constructor
+- ``add(num)``: adds num to the end of the number sequence
+- ``shuffle()``: shuffles the sequence of numbers
+- ``next()``: returns next number in the sequence
 
 .. _eventful:
 
-Eventful
+eventful
 ========
 
 This plugin exports some events to lua thus allowing to run lua functions
@@ -3920,91 +4121,9 @@ Integrated tannery::
   b=require "plugins.eventful"
   b.addReactionToShop("TAN_A_HIDE","LEATHERWORKS")
 
-.. _building-hacks:
-
-Building-hacks
-==============
-
-This plugin overwrites some methods in workshop df class so that mechanical workshops are possible. Although
-plugin export a function it's recommended to use lua decorated function.
-
-.. contents::
-  :local:
-
-Functions
----------
-
-``registerBuilding(table)`` where table must contain name, as a workshop raw name, the rest are optional:
-
-    :name:
-        custom workshop id e.g. ``SOAPMAKER``
-
-        .. note:: this is the only mandatory field.
-
-    :fix_impassible:
-        if true make impassible tiles impassible to liquids too
-    :consume:
-        how much machine power is needed to work.
-        Disables reactions if not supplied enough and ``needs_power==1``
-    :produce:
-        how much machine power is produced.
-    :needs_power:
-        if produced in network < consumed stop working, default true
-    :gears:
-        a table or ``{x=?,y=?}`` of connection points for machines.
-    :action:
-        a table of number (how much ticks to skip) and a function which
-        gets called on shop update
-    :animate:
-        a table of frames which can be a table of:
-
-        a. tables of 4 numbers ``{tile,fore,back,bright}`` OR
-        b. empty table (tile not modified) OR
-        c. ``{x=<number> y=<number> + 4 numbers like in first case}``,
-           this generates full frame useful for animations that change little (1-2 tiles)
-
-    :canBeRoomSubset:
-        a flag if this building can be counted in room. 1 means it can, 0 means it can't and -1 default building behaviour
-    :auto_gears:
-        a flag that automatically fills up gears and animate. It looks over building definition for gear icons and maps them.
-
-    Animate table also might contain:
-
-    :frameLength:
-        how many ticks does one frame take OR
-    :isMechanical:
-        a bool that says to try to match to mechanical system (i.e. how gears are turning)
-
-``getPower(building)`` returns two number - produced and consumed power if building can be modified and returns nothing otherwise
-
-``setPower(building,produced,consumed)`` sets current productiona and consumption for a building.
-
-Examples
---------
-
-Simple mechanical workshop::
-
-  require('plugins.building-hacks').registerBuilding{name="BONE_GRINDER",
-    consume=15,
-    gears={x=0,y=0}, --connection point
-    animate={
-      isMechanical=true, --animate the same conn. point as vanilla gear
-      frames={
-      {{x=0,y=0,42,7,0,0}}, --first frame, 1 changed tile
-      {{x=0,y=0,15,7,0,0}} -- second frame, same
-      }
-    }
-
-Or with auto_gears::
-
-  require('plugins.building-hacks').registerBuilding{name="BONE_GRINDER",
-    consume=15,
-    auto_gears=true
-    }
-
 .. _luasocket:
 
-Luasocket
+luasocket
 =========
 
 A way to access csocket from lua. The usage is made similar to luasocket in vanilla lua distributions. Currently
@@ -4088,130 +4207,11 @@ Functions
 
   returns a table with w*h*4 entries of rendered tiles. The format is same as ``df.global.gps.screen`` (tile,foreground,bright,background).
 
-.. _cxxrandom:
+sort
+====
 
-cxxrandom
-=========
-
-Exposes some features of the C++11 random number library to Lua.
-
-.. contents::
-  :local:
-
-Native functions (exported to Lua)
-----------------------------------
-
-- ``GenerateEngine(seed)``
-
-  returns engine id
-
-- ``DestroyEngine(rngID)``
-
-  destroys corresponding engine
-
-- ``NewSeed(rngID, seed)``
-
-  re-seeds engine
-
-- ``rollInt(rngID, min, max)``
-
-  generates random integer
-
-- ``rollDouble(rngID, min, max)``
-
-  generates random double
-
-- ``rollNormal(rngID, avg, stddev)``
-
-  generates random normal[gaus.]
-
-- ``rollBool(rngID, chance)``
-
-  generates random boolean
-
-- ``MakeNumSequence(start, end)``
-
-  returns sequence id
-
-- ``AddToSequence(seqID, num)``
-
-  adds a number to the sequence
-
-- ``ShuffleSequence(rngID, seqID)``
-
-  shuffles the number sequence
-
-- ``NextInSequence(seqID)``
-
-  returns the next number in sequence
-
-
-Lua plugin functions
---------------------
-
-- ``MakeNewEngine(seed)``
-
-  returns engine id
-
-Lua plugin classes
-------------------
-
-``crng``
-~~~~~~~~
-
-- ``init(id, df, dist)``: constructor
-
-  - ``id``: Reference ID of engine to use in RNGenerations
-  - ``df`` (optional): bool indicating whether to destroy the Engine when the crng object is garbage collected
-  - ``dist`` (optional): lua number distribution to use
-
-- ``changeSeed(seed)``: alters engine's seed value
-- ``setNumDistrib(distrib)``: sets the number distribution crng object should use
-
-  - ``distrib``: number distribution object to use in RNGenerations
-
-- ``next()``: returns the next number in the distribution
-- ``shuffle()``: effectively shuffles the number distribution
-
-``normal_distribution``
-~~~~~~~~~~~~~~~~~~~~~~~
-
-- ``init(avg, stddev)``: constructor
-- ``next(id)``: returns next number in the distribution
-
-  - ``id``: engine ID to pass to native function
-
-``real_distribution``
-~~~~~~~~~~~~~~~~~~~~~
-
-- ``init(min, max)``: constructor
-- ``next(id)``: returns next number in the distribution
-
-  - ``id``: engine ID to pass to native function
-
-``int_distribution``
-~~~~~~~~~~~~~~~~~~~~
-
-- ``init(min, max)``: constructor
-- ``next(id)``: returns next number in the distribution
-
-  - ``id``: engine ID to pass to native function
-
-``bool_distribution``
-~~~~~~~~~~~~~~~~~~~~~
-
-- ``init(min, max)``: constructor
-- ``next(id)``: returns next boolean in the distribution
-
-  - ``id``: engine ID to pass to native function
-
-``num_sequence``
-~~~~~~~~~~~~~~~~
-
-- ``init(a, b)``: constructor
-- ``add(num)``: adds num to the end of the number sequence
-- ``shuffle()``: shuffles the sequence of numbers
-- ``next()``: returns next number in the sequence
+Does not export any native functions as of now. Instead, it
+calls lua code to perform the actual ordering of list items.
 
 .. _xlsxreader:
 

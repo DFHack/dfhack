@@ -134,7 +134,17 @@ single Lua function, in ``hack/lua/plugins/pathable.lua``:
 
 probe
 =====
-Can be used to determine tile properties like temperature.
+
+This plugin provides multiple commands that print low-level properties of the
+selected objects.
+
+* ``probe``: prints some properties of the tile selected with :kbd:`k`. Some of
+  these properties can be passed into `tiletypes`.
+* ``cprobe``: prints some properties of the unit selected with :kbd:`v`, as well
+  as the IDs of any worn items. `gui/gm-unit` and `gui/gm-editor` are more
+  complete in-game alternatives.
+* ``bprobe``: prints some properties of the building selected with :kbd:`q` or
+  :kbd:`t`. `gui/gm-editor` is a more complete in-game alternative.
 
 .. _prospect:
 .. _prospector:
@@ -2488,7 +2498,8 @@ See also `alltraffic`, `filltraffic`, and `restrictice`.
 tiletypes
 =========
 Can be used for painting map tiles and is an interactive command, much like
-`liquids`.  If something goes wrong, `fixveins` may help.
+`liquids`. Some properties of existing tiles can be looked up with `probe`. If
+something goes wrong, `fixveins` may help.
 
 The tool works with two set of options and a brush. The brush determines which
 tiles will be processed. First set of options is the filter, which can exclude

@@ -4207,6 +4207,19 @@ Functions
 
   returns a table with w*h*4 entries of rendered tiles. The format is same as ``df.global.gps.screen`` (tile,foreground,bright,background).
 
+.. _pathable:
+
+pathable
+========
+
+This plugin implements the back end of the `gui/pathable` script. It exports a
+single Lua function, in ``hack/lua/plugins/pathable.lua``:
+
+* ``paintScreen(cursor[,skip_unrevealed])``: Paint each visible of the screen
+  green or red, depending on whether it can be pathed to from the tile at
+  ``cursor``. If ``skip_unrevealed`` is specified and true, do not draw
+  unrevealed tiles.
+
 sort
 ====
 

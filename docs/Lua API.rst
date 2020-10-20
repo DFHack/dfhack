@@ -3687,7 +3687,7 @@ the plugin. See existing files in ``plugins/lua`` for examples.
 blueprint
 =========
 
-Native functions:
+Native functions provided by the `blueprint` plugin:
 
 * ``dig(start, end, name)``
 * ``build(start, end, name)``
@@ -3782,7 +3782,7 @@ Or with auto_gears::
 buildingplan
 ============
 
-Native functions:
+Native functions provided by the `buildingplan` plugin:
 
 * ``bool isPlannableBuilding(df::building_type type)`` returns whether the building type is handled by buildingplan
 * ``void addPlannedBuilding(df::building *bld)`` suspends the building jobs and adds the building to the monitor list
@@ -3791,7 +3791,7 @@ Native functions:
 burrows
 =======
 
-Implements extended burrow manipulations.
+The `burrows` plugin implements extended burrow manipulations.
 
 Events:
 
@@ -4197,8 +4197,9 @@ A class with all the tcp functionality.
 map-render
 ==========
 
-A way to ask df to render a slice of map. This uses native df rendering function so it's highly dependant on
-df settings (e.g. used tileset, colors, if using graphics or not and so on...)
+A way to ask DF to render a section of the fortress mode map. This uses a native
+DF rendering function so it's highly dependent on DF settings (e.g. tileset,
+colors, etc.)
 
 Functions
 ---------
@@ -4223,8 +4224,8 @@ single Lua function, in ``hack/lua/plugins/pathable.lua``:
 sort
 ====
 
-Does not export any native functions as of now. Instead, it
-calls lua code to perform the actual ordering of list items.
+The `sort <sort>` plugin does not export any native functions as of now.
+Instead, it calls Lua code to perform the actual ordering of list items.
 
 .. _xlsxreader:
 

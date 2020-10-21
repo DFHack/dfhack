@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ${{ matrix.os }}
-    name: build (Linux, GCC ${{ matrix.gcc }})
+    name: build (Linux, GCC ${{ matrix.gcc }}, ${{ matrix.plugins }} plugins)
     strategy:
       fail-fast: false
       matrix:
@@ -14,9 +14,18 @@ jobs:
         gcc:
         - 4.8
         - 7
+        plugins:
+        - supported
         include:
         - os: ubuntu-20.04
           gcc: 10
+          plugins: supported
+        - os: ubuntu-20.04
+          gcc: 10
+          plugins: dev
+        - os: ubuntu-20.04
+          gcc: 10
+          plugins: stonesense
     steps:
     - name: Set up Python 3
       uses: actions/setup-python@v2
@@ -37,7 +46,6 @@ jobs:
             zlib1g-dev
         pip install sphinx
     - name: Install GCC
-      if: ${{ matrix.gcc < 7 || matrix.gcc > 9 }}
       run: |
         sudo apt-get install gcc-${{ matrix.gcc }} g++-${{ matrix.gcc }}
     - name: Clone DFHack
@@ -70,11 +78,15 @@ jobs:
           -B build-ci \
           -G Ninja \
           -DDFHACK_BUILD_ARCH=64 \
-          -DBUILD_DOCS:BOOL=ON \
           -DBUILD_TESTS:BOOL=ON \
+          -DBUILD_DEV_PLUGINS:BOOL=${{ matrix.plugins == 'dev' }} \
+          -DBUILD_SIZECHECK:BOOL=${{ matrix.plugins == 'dev' }} \
+          -DBUILD_STONESENSE:BOOL=${{ matrix.plugins == 'stonesense' }} \
+          -DBUILD_SUPPORTED:BOOL=${{ matrix.plugins == 'supported' }} \
           -DCMAKE_INSTALL_PREFIX="$DF_FOLDER"
         ninja -C build-ci install
     - name: Run tests
+      if: ${{ matrix.plugins == 'supported' }}
       run: |
         export TERM=dumb
         mv "$DF_FOLDER"/dfhack.init-example "$DF_FOLDER"/dfhack.init

@@ -100,7 +100,7 @@ jobs:
       if: (success() || failure()) && steps.run_tests.outcome != 'skipped'
       continue-on-error: true
       with:
-        name: test-artifacts
+        name: test-artifacts-${{ matrix.gcc }}
         path: artifacts
     - name: Clean up DF folder
       # prevent DFHack-generated files from ending up in the cache

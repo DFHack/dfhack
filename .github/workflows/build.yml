@@ -86,6 +86,7 @@ jobs:
           -DCMAKE_INSTALL_PREFIX="$DF_FOLDER"
         ninja -C build-ci install
     - name: Run tests
+      id: run_tests
       if: ${{ matrix.plugins == 'supported' }}
       run: |
         export TERM=dumb
@@ -96,7 +97,8 @@ jobs:
         cp "$DF_FOLDER/test_status.json" "$DF_FOLDER"/*.log artifacts
     - name: Upload test artifacts
       uses: actions/upload-artifact@v1
-      if: success() || failure()
+      if: (success() || failure()) && steps.run_tests.outcome != 'skipped'
+      continue-on-error: true
       with:
         name: test-artifacts
         path: artifacts

@@ -18,7 +18,7 @@ DFHACK_PLUGIN("buildingplan");
 #define PLUGIN_VERSION 2.0
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(ui_build_selector);
-REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(world); // used in buildingplan library
 
 #define MAX_MASK 10
 #define MAX_MATERIAL 21
@@ -287,9 +287,9 @@ static bool is_planmode_enabled(BuildingTypeKey key)
 
 static std::string get_item_label(const BuildingTypeKey &key, int item_idx)
 {
-     auto L = Lua::Core::State;
-     color_ostream_proxy out(Core::getInstance().getConsole());
-     Lua::StackUnwinder top(L);
+    auto L = Lua::Core::State;
+    color_ostream_proxy out(Core::getInstance().getConsole());
+    Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, 5) ||
         !Lua::PushModulePublic(
@@ -314,11 +314,11 @@ static std::string get_item_label(const BuildingTypeKey &key, int item_idx)
 
 static bool construct_planned_building()
 {
-     auto L = Lua::Core::State;
-     color_ostream_proxy out(Core::getInstance().getConsole());
+    auto L = Lua::Core::State;
+    color_ostream_proxy out(Core::getInstance().getConsole());
 
-     CoreSuspendClaimer suspend;
-     Lua::StackUnwinder top(L);
+    CoreSuspendClaimer suspend;
+    Lua::StackUnwinder top(L);
 
     if (!(lua_checkstack(L, 1) &&
           Lua::PushModulePublic(out, L, "plugins.buildingplan",
@@ -337,6 +337,36 @@ static bool construct_planned_building()
     planner.addPlannedBuilding(bld);
 
     return true;
+}
+
+static void show_global_settings_dialog()
+{
+    auto L = Lua::Core::State;
+    color_ostream_proxy out(Core::getInstance().getConsole());
+    Lua::StackUnwinder top(L);
+
+    if (!lua_checkstack(L, 2) ||
+        !Lua::PushModulePublic(
+            out, L, "plugins.buildingplan", "show_global_settings_dialog"))
+    {
+        debug("Failed to push the module");
+        return;
+    }
+
+    lua_newtable(L);
+    int ctable = lua_gettop(L);
+    Lua::SetField(L, quickfort_mode, ctable, "quickfort_mode");
+
+    for (auto & setting : planner.getGlobalSettings())
+    {
+        Lua::SetField(L, setting.second, ctable, setting.first.c_str());
+    }
+
+    if (!Lua::SafeCall(out, L, 1, 0))
+    {
+        debug("Failed call to show_global_settings_dialog");
+        return;
+    }
 }
 
 struct buildingplan_query_hook : public df::viewscreen_dwarfmodest
@@ -522,7 +552,7 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
         }
 
         if (input->count(interface_key::CUSTOM_P) ||
-            input->count(interface_key::CUSTOM_F) ||
+            input->count(interface_key::CUSTOM_G) ||
             input->count(interface_key::CUSTOM_D) ||
             input->count(interface_key::CUSTOM_M))
         {
@@ -536,9 +566,9 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
                 Gui::refreshSidebar();
             return true;
         }
-        if (input->count(interface_key::CUSTOM_SHIFT_F))
+        if (input->count(interface_key::CUSTOM_SHIFT_G))
         {
-            quickfort_mode = !quickfort_mode;
+            show_global_settings_dialog();
             return true;
         }
 
@@ -648,7 +678,7 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
         }
 
         OutputToggleString(x, y, "Planning Mode", "P", planmode_enabled[key], true, left_margin);
-        OutputToggleString(x, y, "Quickfort Mode", "F", quickfort_mode, true, left_margin);
+        OutputHotkeyString(x, y, "Global Settings", "G", true, left_margin);
 
         if (!is_planmode_enabled(key))
             return;
@@ -893,10 +923,21 @@ static void scheduleCycle() {
     cycle_requested = true;
 }
 
+static void setSetting(std::string name, bool value) {
+    if (name == "quickfort_mode")
+    {
+        debug("setting quickfort_mode %d -> %d", quickfort_mode, value);
+        quickfort_mode = value;
+        return;
+    }
+    planner.setGlobalSetting(name, value);
+}
+
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(isPlannableBuilding),
     DFHACK_LUA_FUNCTION(addPlannedBuilding),
     DFHACK_LUA_FUNCTION(doCycle),
     DFHACK_LUA_FUNCTION(scheduleCycle),
+    DFHACK_LUA_FUNCTION(setSetting),
     DFHACK_LUA_END
 };

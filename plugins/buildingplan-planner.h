@@ -104,6 +104,9 @@ public:
         std::vector<ItemFilter> &item_filters;
     };
 
+    const std::map<std::string, bool> & getGlobalSettings() const;
+    bool setGlobalSetting(std::string name, bool value);
+
     void reset();
 
     void addPlannedBuilding(df::building *bld);
@@ -117,6 +120,7 @@ public:
     void doCycle();
 
 private:
+    std::map<std::string, bool> global_settings;
     std::unordered_map<BuildingTypeKey,
                        std::vector<ItemFilter>,
                        BuildingTypeKeyHash> default_item_filters;
@@ -128,6 +132,8 @@ private:
     bool registerTasks(PlannedBuilding &plannedBuilding);
     void unregisterBuilding(int32_t id);
     void popInvalidTasks(std::queue<std::pair<int32_t, int>> &task_queue);
+    void doVector(df::job_item_vector_id vector_id,
+        std::map<std::string, std::queue<std::pair<int32_t, int>>> & buckets);
 };
 
 extern Planner planner;

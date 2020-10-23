@@ -641,6 +641,12 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
 
         int y = 23;
 
+        if (ui_build_selector->building_type == df::building_type::Construction)
+        {
+            // try not to conflict with the automaterial plugin UI
+            y = 34;
+        }
+
         if (show_help)
         {
             OutputString(COLOR_BROWN, x, y, "Note: ");

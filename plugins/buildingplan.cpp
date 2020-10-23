@@ -303,7 +303,7 @@ static bool construct_planned_building()
         return false;
     }
 
-    auto bld = static_cast<df::building *>(LuaWrapper::get_object_ref(L, -1));
+    auto bld = Lua::CheckDFObject<df::building>(L, -1);
     lua_pop(L, 1);
 
     if (!bld)

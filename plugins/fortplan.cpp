@@ -1,14 +1,17 @@
 #include <fstream>
 #include <vector>
 
-#include "df/world.h"
+#include "df/job_item.h"
 #include "df/trap_type.h"
+#include "df/world.h"
 
+#include "modules/Buildings.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
 #include "modules/Maps.h"
 #include "modules/World.h"
 
+#include "LuaTools.h"
 #include "PluginManager.h"
 
 #include "buildingplan-lib.h"
@@ -47,8 +50,37 @@ struct BuildingInfo {
         hasCustomOptions = false;
     }
 
-    bool allocate() {
-        return planner.allocatePlannedBuilding(toBuildingTypeKey(type, -1, -1));
+    bool allocate(coord32_t cursor) {
+        auto L = Lua::Core::State;
+        color_ostream_proxy out(Core::getInstance().getConsole());
+
+        CoreSuspendClaimer suspend;
+        Lua::StackUnwinder top(L);
+
+        if (!lua_checkstack(L, 5) ||
+            !Lua::PushModulePublic(out, L, "plugins.fortplan",
+                                   "construct_building_from_params"))
+        {
+            return false;
+        }
+
+        Lua::Push(L, type);
+        Lua::Push(L, cursor.x);
+        Lua::Push(L, cursor.y);
+        Lua::Push(L, cursor.z);
+
+        if (!Lua::SafeCall(out, L, 4, 1))
+            return false;
+
+        auto bld = Lua::CheckDFObject<df::building>(L, -1);
+        lua_pop(L, 1);
+
+        if (!bld)
+            return false;
+
+        planner.addPlannedBuilding(bld);
+
+        return true;
     }
 };
 
@@ -347,13 +379,13 @@ command_result fortplan(color_ostream &out, vector<string> & params) {
                                     offsetCursor.x -= xOffset;
                                     offsetCursor.y -= yOffset;
                                     DFHack::Gui::setCursorCoords(offsetCursor.x, offsetCursor.y, offsetCursor.z);
-                                    if (!buildingInfo.allocate()) {
+                                    if (!buildingInfo.allocate(offsetCursor)) {
                                         con.print("*** There was an error placing building with code '%s' centered at (%zu,%zu).\n",curCode.c_str(),x,y);
                                     }
                                     DFHack::Gui::setCursorCoords(cursor.x, cursor.y, cursor.z);
                                 } else if (block) {
                                     //con.print("Placing a building with code '%s' with corner at (%d,%d) and default size %dx%d.\n",curCode.c_str(),x,y,buildingInfo.defaultWidth,buildingInfo.defaultHeight);
-                                    if (!buildingInfo.allocate()) {
+                                    if (!buildingInfo.allocate(cursor)) {
                                         con.print("*** There was an error placing building with code '%s' with corner at (%zu,%zu).\n",curCode.c_str(),x,y);
                                     }
                                 } else {
@@ -366,7 +398,7 @@ command_result fortplan(color_ostream &out, vector<string> & params) {
                             }
                         } else {
                             //con.print("Building a(n) %s.\n",buildingInfo.name.c_str());
-                            if (!buildingInfo.allocate()) {
+                            if (!buildingInfo.allocate(cursor)) {
                                 con.print("*** There was an error placing the %s at (%zu,%zu).\n",buildingInfo.name.c_str(),x,y);
                             }
                         }

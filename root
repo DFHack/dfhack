@@ -1,0 +1,1 @@
+{"version":1,"ops":[{"type":1,"author":{"id":"be523fe0f95fc478bda36c722e6f106f8f7a41b5"},"timestamp":1457810085,"metadata":{"github-id":"MDU6SXNzdWUxNDA0MDkwMjE=","github-url":"https://github.com/DFHack/dfhack/issues/850","origin":"github"},"title":"Remove digFlood","message":"It's possible to do it with vanilla now.","files":null}]}

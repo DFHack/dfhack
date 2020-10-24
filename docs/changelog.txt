@@ -41,7 +41,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `buildingplan`: all buildings, furniture, and constructions are now supported (except for the few building types not supported by dfhack itself)
 - `buildingplan`: now respects building job_item filters when matching items
 - `buildingplan`: default filter setting for max quality changed from ``artifact`` to ``masterwork``
-- The Dreamfort sample blueprints now have complete walkthroughs for each fort level
+- The Dreamfort sample blueprints now have complete walkthroughs for each fort level and importable orders that automate basic fort stock management
 
 ## API
 - `buildingplan`: added Lua interface API

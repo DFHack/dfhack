@@ -1,0 +1,1 @@
+{"version":1,"ops":[{"type":1,"author":{"id":"e77d0a5f059ed8eaaa1afef6624480d02a2f025a"},"timestamp":1424401815,"metadata":{"github-id":"MDU6SXNzdWU1ODMwNTE3MQ==","github-url":"https://github.com/DFHack/dfhack/issues/560","origin":"github"},"title":"Ruby 1.8 not available on OS X 10.10","message":"This prevents all ruby scripts from working.","files":null}]}

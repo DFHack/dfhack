@@ -50,7 +50,7 @@ enablesequence: e{Down}
 # clothes and armor in this quantum stockpile will rot away. If you want bones
 # in your quantum stockpile, apply this alias to a refuse stockpile (but don't
 # put useful clothes or armor in there!)
-quantum: {linksonly}{nocontainers}{enableanimals}{enablefood}{furnitureprefix}{enablestone}{enableammo}{enablecoins}{enablebars}{enablegems}{enablefinishedgoods}{enableleather}{enablecloth}{enablewood}}{enableweapons}{enablearmor}{enablesheet}
+quantum: {linksonly}{nocontainers}{enableanimals}{enablefood}{enablefurniture}{enablestone}{enableammo}{enablecoins}{enablebars}{enablegems}{enablefinishedgoods}{enableleather}{enablecloth}{enablewood}{enableweapons}{enablearmor}{enablesheet}
 
 
 ##################################

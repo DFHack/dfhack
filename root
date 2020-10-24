@@ -1,0 +1,1 @@
+{"version":1,"ops":[{"type":1,"author":{"id":"da34b451a82ec17b1f50ce14837a2b25db936288"},"timestamp":1283919841,"metadata":{"github-id":"MDU6SXNzdWUzMDcxNzY=","github-url":"https://github.com/DFHack/dfhack/issues/42","origin":"github"},"title":"reveal does not compile with msvc 2008","message":"no usleep() in msvc.","files":null}]}

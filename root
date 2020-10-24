@@ -1,0 +1,1 @@
+{"version":1,"ops":[{"type":1,"author":{"id":"be523fe0f95fc478bda36c722e6f106f8f7a41b5"},"timestamp":1418668614,"metadata":{"github-id":"MDU6SXNzdWU1MjAyMjI2NA==","github-url":"https://github.com/DFHack/dfhack/issues/450","origin":"github"},"title":"digFlood CLEAR doesn't work","message":"I'm told it's missing a break statement.","files":null}]}

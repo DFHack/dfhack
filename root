@@ -1,0 +1,1 @@
+{"version":1,"ops":[{"type":1,"author":{"id":"20b694d874766b15e6137a91b7131cbaa64faed8"},"timestamp":1288024073,"metadata":{"github-id":"MDU6SXNzdWUzODA5OTI=","github-url":"https://github.com/DFHack/dfhack/issues/48","origin":"github"},"title":"missing DLL's for wine","message":"msvcr90.dll and msvcp90.dll\n\nwould be nice to have them bundled in downloads.","files":null}]}

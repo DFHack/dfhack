@@ -303,11 +303,14 @@ static bool construct_planned_building()
         return false;
     }
 
-    auto bld = Lua::CheckDFObject<df::building>(L, -1);
+    auto bld = Lua::GetDFObject<df::building>(L, -1);
     lua_pop(L, 1);
 
     if (!bld)
+    {
+        out.printerr("buildingplan: construct_building_from_ui_state() failed\n");
         return false;
+    }
 
     planner.addPlannedBuilding(bld);
 

@@ -72,11 +72,14 @@ struct BuildingInfo {
         if (!Lua::SafeCall(out, L, 4, 1))
             return false;
 
-        auto bld = Lua::CheckDFObject<df::building>(L, -1);
+        auto bld = Lua::GetDFObject<df::building>(L, -1);
         lua_pop(L, 1);
 
         if (!bld)
+        {
+            out.printerr("fortplan: construct_building_from_params() failed\n");
             return false;
+        }
 
         planner.addPlannedBuilding(bld);
 

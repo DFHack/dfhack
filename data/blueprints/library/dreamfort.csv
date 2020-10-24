@@ -17,7 +17,7 @@ It can be difficult applying a set of blueprints that you did not write yourself
 ""
 "Dreamfort blueprints take care of everything to get the fort up and running. You don't need to clear any trees or create any extra buildings or stockpiles (though of course you are free to do so). Blueprints that do require manual steps (like 'assign minecart to hauling route') will leave a message telling you so when you run them. Blueprints will also leave messages with hints when you might want to run ""quickfort orders"" to start manufacturing needed items."
 ""
-"Dreamfort works best at an embark site that is flat and has at least one soil layer. New players should also avoid aquifers if they are not prepared to deal with them. Bring picks for mining, an axe for woodcutting, and about 10 blocks (of any material) to speed up construction of starting workshops."
+"Dreamfort works best at an embark site that is flat and has at least one soil layer. New players should also avoid aquifers if they are not prepared to deal with them. Bring picks for mining, an axe for woodcutting, and an anvil for a forge."
 ""
 "Directly after embark, apply /surface1 on the surface (see /surface_help for how to select a good spot) and /industry1 on a level least two z-levels underground (the z-level immediately below the surface is reserved for the farming level). The walkthroughs for those levels will guide you. Once you channel out parts of the surface with /surface3, you can start the farming sequence on the z-level below the surface with /farming1. You can start the services, guildhall, suites, and apartments sequences as your fort needs those levels."
 ""
@@ -53,7 +53,7 @@ Surface Walkthrough:
 "6) Once all the constructions are built, run /surface5 build gates, furniture, the trade depot, and traps."
 "7) When at least the beehives are in place, run /surface6 to configure the hives and construct a roof."
 "#meta label(surface1) start(staircase center)
-message(This would be a good time to start digging the industry level.
+message(Once the stairwell is mined out, you should start digging the industry level in a non-aquifer rock layer.
 Once the area is clear of trees, continue with /surface2.) clear trees and set up pastures"
 stair_guide/surface_stair_guide
 clear_small/surface_clear_small
@@ -1200,12 +1200,14 @@ Manual steps you have to take:
 Assign minecarts to your quantum stockpile hauling routes
 "Give from the ""Goods"" quantum stockpile to the jugs, pots, and bags stockpiles on the farming level"
 "If desired, set the stockpiles in the bottom right to auto-melt. This results in melting all weapons and armor that are not masterwork steel. This is great for your military, but it takes a *lot* of fuel. If you enable this, be sure you're in a heavily forested area, enable auto-chop, and set up manager orders to keep your coal stocks high."
+Download automation.json from https://drive.google.com/file/d/17WcN5mK-rnADOm2B_JFpPnByYgkYjxhb/view and put it in your dfhack-config/orders/ directory.
 ""
 Industry Walkthrough:
 1) You can start digging out /industry1 immediately after embark. It is best to choose a stone layer at least two layers underground so the boulders can be used by your starting workshops to manufacture needed items.
 "2) Queue up manufacturing by running ""quickfort orders"" on /industry2."
 "3) Once the area is dug out, run /industry2. Remember to assign minecarts to to your quantum stockpile hauling routes, and if the farming level is already built, give from the ""Goods"" quantum stockpile to the jugs, pots, and bags stockpiles on the farming level."
 "4) If you want to automatically melt goblinite and other low-quality weapons and armor, mark the south-east stockpiles for auto-melt."
+"5) Run ""orders import automation"" to use the provided automation.json to take care of your fort's basic needs."
 "#dig label(industry1) start(18; 18; staircase center) message(This would be a good time to queue manager orders for /industry2. Once the area is dug out, continue with /industry2.)"
 
 
@@ -1321,7 +1323,8 @@ query/industry_query
 "#query label(industry_query) start(18; 18) hidden() message(remember to:
 - assign minecarts to to your quantum stockpile hauling routes
 - if the farming level is already built, give from the ""Goods"" quantum stockpile to the jugs, pots, and bags stockpiles on the farming level
-- if you want to automatically melt goblinite and other low-quality weapons and armor, mark the south-east stockpiles for auto-melt) use the meta blueprints for normal application"
+- if you want to automatically melt goblinite and other low-quality weapons and armor, mark the south-east stockpiles for auto-melt) use the meta blueprints for normal application
+- now that your industry is set up, run ""orders import automation"" to automate your fort's basic needs (download automation.json from https://drive.google.com/file/d/17WcN5mK-rnADOm2B_JFpPnByYgkYjxhb/view?usp=sharing and put it in your dfhack-config/orders/ directory)"
 
 
 ,,,,,,,,,,,roughgems,nocontainers,`,`,`,`,t{Down 6}&,`,`,`,`,`,`

@@ -1,3 +1,4 @@
+#include "df/construction_type.h"
 #include "df/entity_position.h"
 #include "df/interface_key.h"
 #include "df/ui_build_selector.h"
@@ -641,7 +642,9 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
 
         int y = 23;
 
-        if (ui_build_selector->building_type == df::building_type::Construction)
+        if (ui_build_selector->building_type == df::building_type::Construction
+            && ui_build_selector->building_subtype <
+               df::construction_type::TrackN)
         {
             // try not to conflict with the automaterial plugin UI
             y = 34;

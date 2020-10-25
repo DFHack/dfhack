@@ -120,6 +120,7 @@ public:
     void doCycle();
 
 private:
+    DFHack::PersistentDataItem config;
     std::map<std::string, bool> global_settings;
     std::unordered_map<BuildingTypeKey,
                        std::vector<ItemFilter>,

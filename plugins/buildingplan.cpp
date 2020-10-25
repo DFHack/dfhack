@@ -7,6 +7,7 @@
 #include "modules/Maps.h"
 #include "modules/World.h"
 
+#include "Core.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
 
@@ -814,6 +815,33 @@ IMPLEMENT_VMETHOD_INTERPOSE(buildingplan_query_hook, render);
 IMPLEMENT_VMETHOD_INTERPOSE(buildingplan_place_hook, render);
 IMPLEMENT_VMETHOD_INTERPOSE(buildingplan_room_hook, render);
 
+static DFHack::PersistentDataItem get_ui_settings_config()
+{
+    static const std::string settings_persistence_key =
+            "buildingplan/ui_settings";
+
+    bool added;
+    DFHack::PersistentDataItem config =
+            DFHack::World::GetPersistentData(settings_persistence_key, &added);
+    if (added)
+    {
+        config.ival(0) = quickfort_mode;
+    }
+    return config;
+}
+
+static void load_settings()
+{
+    DFHack::PersistentDataItem config = get_ui_settings_config();
+    quickfort_mode = config.ival(0);
+}
+
+static void save_settings()
+{
+    DFHack::PersistentDataItem config = get_ui_settings_config();
+    config.ival(0) = quickfort_mode;
+}
+
 static command_result buildingplan_cmd(color_ostream &out, vector <string> & parameters)
 {
     if (!parameters.empty())
@@ -841,7 +869,11 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 
     if (enable != is_enabled)
     {
-        planner.reset();
+        if (DFHack::Core::getInstance().isMapLoaded())
+        {
+            load_settings();
+            planner.reset();
+        }
 
         if (!INTERPOSE_HOOK(buildingplan_query_hook, feed).apply(enable) ||
             !INTERPOSE_HOOK(buildingplan_place_hook, feed).apply(enable) ||
@@ -871,6 +903,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 {
     switch (event) {
     case SC_MAP_LOADED:
+        load_settings();
         planner.reset();
         roomMonitor.reset(out);
         break;
@@ -928,6 +961,7 @@ static void setSetting(std::string name, bool value) {
     {
         debug("setting quickfort_mode %d -> %d", quickfort_mode, value);
         quickfort_mode = value;
+        save_settings();
         return;
     }
     planner.setGlobalSetting(name, value);

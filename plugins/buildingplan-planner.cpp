@@ -20,6 +20,7 @@
 
 static const std::string planned_building_persistence_key_v1 = "buildingplan/constraints";
 static const std::string planned_building_persistence_key_v2 = "buildingplan/constraints2";
+static const std::string global_settings_persistence_key = "buildingplan/global";
 
 /*
  * ItemFilter
@@ -501,13 +502,69 @@ void migrateV1ToV2()
     }
 }
 
-static void init_global_settings(std::map<std::string, bool> & settings)
+// assumes no setting has '=' or '|' characters
+static std::string serialize_settings(std::map<std::string, bool> & settings)
+{
+    std::ostringstream ser;
+    for (auto & entry : settings)
+    {
+        ser << entry.first << "=" << (entry.second ? "1" : "0") << "|";
+    }
+    return ser.str();
+}
+
+static void deserialize_settings(std::map<std::string, bool> & settings,
+                                 std::string ser)
+{
+    std::vector<std::string> tokens;
+    split_string(&tokens, ser, "|");
+    for (auto token : tokens)
+    {
+        if (token.empty())
+            continue;
+
+        std::vector<std::string> parts;
+        split_string(&parts, token, "=");
+        if (parts.size() != 2)
+        {
+            debug("invalid serialized setting format: '%s'", token.c_str());
+            continue;
+        }
+        std::string key = parts[0];
+        if (settings.count(key) == 0)
+        {
+            debug("unknown serialized setting: '%s", key.c_str());
+            continue;
+        }
+        settings[key] = static_cast<bool>(atoi(parts[1].c_str()));
+        debug("deserialized setting: %s = %d", key.c_str(), settings[key]);
+    }
+}
+
+static DFHack::PersistentDataItem init_global_settings(
+        std::map<std::string, bool> & settings)
 {
     settings.clear();
     settings["blocks"] = true;
     settings["boulders"] = true;
     settings["logs"] = true;
     settings["bars"] = false;
+
+    // load persistent global settings if they exist; otherwise create them
+    std::vector<PersistentDataItem> items;
+    DFHack::World::GetPersistentData(&items, global_settings_persistence_key);
+    if (items.size() == 1)
+    {
+        DFHack::PersistentDataItem & config = items[0];
+        deserialize_settings(settings, config.val());
+        return config;
+    }
+
+    debug("initializing persistent global settings");
+    DFHack::PersistentDataItem config =
+        DFHack::World::AddPersistentData(global_settings_persistence_key);
+    config.val() = serialize_settings(settings);
+    return config;
 }
 
 const std::map<std::string, bool> & Planner::getGlobalSettings() const
@@ -525,6 +582,8 @@ bool Planner::setGlobalSetting(std::string name, bool value)
     debug("global setting '%s' %d -> %d",
           name.c_str(), global_settings[name], value);
     global_settings[name] = value;
+    if (config.isValid())
+        config.val() = serialize_settings(global_settings);
     return true;
 }
 
@@ -535,7 +594,7 @@ void Planner::reset()
     planned_buildings.clear();
     tasks.clear();
 
-    init_global_settings(global_settings);
+    config = init_global_settings(global_settings);
 
     migrateV1ToV2();
 

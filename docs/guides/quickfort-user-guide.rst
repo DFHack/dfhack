@@ -5,32 +5,38 @@ Quickfort User Guide
 
 `Quickfort <quickfort>` is a DFHack script that helps you build fortresses from
 "blueprint" .csv and .xlsx files. Many applications exist to edit these files,
-such as MS Excel and `Google Sheets <https://sheets.new>`__. You can also build
-your plan "for real" in Dwarf Fortress, and then export your map using the `blueprint`
-plugin. Most layout and building-oriented DF commands are supported through the
-use of multiple files or spreadsheets, each describing a different phase of DF
-construction: designation, building, placing stockpiles/zones, and setting
-configuration.
+such as MS Excel and `Google Sheets <https://sheets.new>`__. Most layout and
+building-oriented DF commands are supported through the use of multiple files or
+spreadsheets, each describing a different phase of DF construction: designation,
+building, placing stockpiles/zones, and setting configuration.
 
-The original idea and 1.0 codebase came from :wiki:`Valdemar's <User:Valdemar>`
-auto-designation macro. Joel Thornton (joelpt) reimplemented the core logic in
-Python and extended its functionality with `Quickfort
-2.0 <https://github.com/joelpt/quickfort>`__. This DFHack-native implementation,
-called "DFHack Quickfort" or just "quickfort", builds upon Quickfort 2.0's
-formats and features. DFHack Quickfort is written in Lua and interacts with
-Dwarf Fortress memory structures directly, allowing for instantaneous blueprint
-application, error checking and recovery, and many other advanced features.
+The original idea came from :wiki:`Valdemar's <User:Valdemar>` auto-designation
+macro. Joel Thornton reimplemented the core logic in Python and extended its
+functionality with `Quickfort 2.0 <https://github.com/joelpt/quickfort>`__. This
+DFHack-native implementation, called "DFHack Quickfort" or just "quickfort",
+builds upon Quickfort 2.0's formats and features. Any blueprint that worked in
+Python Quickfort 2.0 should work with DFHack Quickfort. DFHack Quickfort is
+written in Lua and interacts with Dwarf Fortress memory structures directly,
+allowing for instantaneous blueprint application, error checking and recovery,
+and many other advanced features.
 
 This document focuses on DFHack Quickfort's capabilities and teaches players how
-to understand and build blueprint files. Some of the text was originally written
-by Joel Thornton, reused here with his permission.
+to understand and create blueprint files. Some of the text was originally
+written by Joel Thornton, reused here with his permission.
 
-For those just looking to apply blueprints, check out the `quickfort command's
-documentation <quickfort>` for syntax. There are also many ready-to-use blueprints
-available in the ``blueprints/library`` subfolder in your DFHack installation.
-Browse them on your computer or :source:`online <data/blueprints/library>`,
-or run ``quickfort list -l`` at the ``[DFHack]#`` prompt to list them, and then
-``quickfort run`` to apply them to your fort!
+For those just looking to apply existing blueprints, check out the `quickfort
+command's documentation <quickfort>` for syntax. There are many ready-to-use
+blueprints available in the ``blueprints/library`` subfolder in your DFHack
+installation. Browse them on your computer or
+:source:`online <data/blueprints/library>`, or run ``quickfort list -l`` at the
+``[DFHack]#`` prompt to list them, and then ``quickfort run`` to apply them to
+your fort!
+
+Before you become an expert at writing blueprints, though, you should know that
+the easiest way to make a quickfort blueprint is to build your plan "for real"
+in Dwarf Fortress and then export your map using the DFHack `blueprint` plugin.
+You can apply those blueprints as-is in your next fort, or you can fine-tune
+them with additional features from this guide.
 
 See the `Links`_ section for more information and online resources.
 

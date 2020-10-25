@@ -11,7 +11,7 @@ d, ,d, ,d,d,d, ,d, ,d,#
 d,d,d,d,d,d,d,d,d,d,d,#
 d, ,d, ,d, ,d, ,d, ,d,#
 #,#,#,#,#,#,#,#,#,#,#,#
-#build label(urns) start(6;6) 24 urns (use burial script to mark them as usable)
+#build label(urns) start(6;6) message(use burial script to mark urns as usable) 24 urns
 n, ,n, ,n, ,n, ,n, ,n,#
 `,`,`,`,`,`,`,`,`,`,`,#
 n, ,n, ,`,`,`, ,n, ,n,#

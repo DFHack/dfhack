@@ -29,28 +29,34 @@ You are welcome to copy those spreadsheets and make your own modifications!
 "Sets up a large, protected entrance to your fort in a flat area on the surface."
 ""
 Features:
-A starting set of workshops and stockpiles (which you can later remove once you establish your permanent workshops and storage)
-Trade depot area
-"Walls, roof, and lever-controlled gates for security"
-Trap-filled hallways for invaders
-Livestock grazing area with nestbox zones and beehives
-A grid of 1x1 farm plots (meant to be managed with DFHack autofarm)
-An extra room near the entrance for a barracks (once you get your military going)
-Miasma vents for the farming level that is intended to be built in the layer directly beneath the surface
+- A starting set of workshops and stockpiles (which you can later remove once you establish your permanent workshops and storage)
+- Trade depot area
+"- Walls, roof, and lever-controlled gates for security"
+- Trap-filled hallways for invaders
+- Livestock grazing area with nestbox zones and beehives
+- A grid of 1x1 farm plots (meant to be managed with DFHack autofarm)
+- An extra room near the entrance for a barracks (once you get your military going)
+- Miasma vents for the farming level that is intended to be built in the layer directly beneath the surface
 ""
 Manual steps you have to take:
-Assign grazing livestock to the large pasture and dogs to the pasture over the stairwell (DFHack's autonestbox can manage the nestbox zones)
-Connect levers to the gates
+- Assign grazing livestock to the large pasture and dogs to the pasture over the stairwell (DFHack's autonestbox can manage the nestbox zones)
+- Connect levers to the gates
 ""
 Be sure to choose an embark site that has an area flat enough to use these blueprints!
 ""
 Surface Walkthrough:
 "1) Choose a tile for your central staircase. The terrain around that tile should be perfectly flat. Trees are ok, but no slopes, rivers, or lakes. To be sure that the tile you've chosen is in a good spot, set the cursor over that tile and run ""quickfort run library/dreamfort.csv -n /surface4"". This will show you the eventual boundaries of the fort. Some wall segments might be missing due to existing trees, but that's ok. Make sure the area within the exterior wall is flat. Run ""quickfort undo library/dreamfort.csv -n /surface4"" to clean up."
+""
 "2) With the cursor on the chosen tile, run /surface1 to clear surrounding trees and set up your pastures. Remember to assign your dogs to the pasture around the staircase and your grazing animals to the large pasture. You can let your cats roam free."
+""
 "3) Once the trees have been cleared, run /surface2 to set up starting workshops/stockpiles and clear trees from a larger area. Run ""quickfort orders"" for /surface4, /surface5, and /surface6 to get a head start manufacturing items for those blueprints. If you want a consistent color for your walls and floors, remember to set the rock material in the buildingplan UI and in the manager orders for the blocks."
+""
 "4) Once the trees have been cleared from the larger area, run /surface3 to channel out the miasma vents for the farming level."
+""
 "5) When the channels have been dug, run /surface4 to build the protective walls and flooring. You can also start digging out the sub-surface farming level (/farming1) at this point. Although the vents will be covered with flooring, they will still work to prevent miasma."
+""
 "6) Once all the constructions are built, run /surface5 build gates, furniture, the trade depot, and traps."
+""
 "7) When at least the beehives are in place, run /surface6 to configure the hives and construct a roof."
 "#meta label(surface1) start(staircase center)
 message(Once the stairwell is mined out, you should start digging the industry level in a non-aquifer rock layer.
@@ -866,32 +872,35 @@ p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,
 "Sets up farming, food storage, and related industries. Also provides post-embark necessities that can later be disassembed."
 ""
 Features:
-Pairs with the surface blueprints to provide miasma vents
-Farm plots (intended to be managed by DFHack autofarm)
-Plentiful food storage
-Refuse stockpile and quantum dump for useless body parts
-Small dormitory and dining room for post-embark needs
-Small office for your manager
+- Pairs with the surface blueprints to provide miasma vents
+- Farm plots (intended to be managed by DFHack autofarm)
+- Plentiful food storage
+- Refuse stockpile and quantum dump for useless body parts
+- Small dormitory and dining room for post-embark needs
+- Small office for your manager
 ""
 Workshops:
-Kitchen
-Brewery
-Butcher
-Fishery
-Tannery
-Farmer's Workshop
-Quern
-Screw Press
+- Kitchen
+- Brewery
+- Butcher
+- Fishery
+- Tannery
+- Farmer's Workshop
+- Quern
+- Screw Press
 ""
 Manual steps you have to take:
-Assign the office to your manager
-Assign a minecart to your quantum garbage stockpile hauling route
-"If the industry level is already built, configure the jugs, pots, and bags stockpiles to take from the ""Goods"" quantum stockpile on the industry level"
+- Assign the office to your manager
+- Assign a minecart to your quantum garbage stockpile hauling route
+"- If the industry level is already built, configure the jugs, pots, and bags stockpiles to take from the ""Goods"" quantum stockpile on the industry level"
 ""
 Farming Walkthough:
 "1) Wait until you have completed /surface3 before digging out the farming level on the z-level below the surface, otherwise you will likely get caveins as your miners channel out the miasma vents over empty space."
+""
 "2) Start digging with /farming1 and get started on manufacturing furniture by running ""quickfort orders"" on /farming2."
+""
 "3) Once the level is dug out, run /farming2 to build workshops and build and configure stockpiles. Remember to assign a minecart to the newly-designated quantum garbage dump. There are also jugs, pots, and bags stockpiles on this level that should be configured to ""take"" from the industry level stockpiles once we get the industry level built."
+""
 "4) When the furniture is in place, run /farming3 to designate your temporary dining room and dormitory. The blueprint also attempts to assign the office to your manager, but double-check this assignment in case your dwarves are in an unexpected order."
 "#dig label(farming1) start(23; 25; staircase center) message(This would be a good time to queue up manager orders for /farming2. Once the area is dug out, continue with /farming2.)"
 
@@ -1168,45 +1177,49 @@ query_stockpiles/farming_query_stockpiles
 Sets up workshops for all non-farming industries
 ""
 Features:
-Quantum stockpiles
-Space-efficient layout for all workshops
+- Quantum stockpiles
+- Space-efficient layout for all workshops
 with separate stockpiles for:
-A reserve of uncut gems for strange moods that the jeweler's workshop cannot take from
-Steel bars and coal so you can see at a glance if you're low on either
-Liquids that cannot be quantum stockpiled (e.g. lye)
-Meltable weapons and armor
+- A reserve of uncut gems for strange moods that the jeweler's workshop cannot take from
+- Steel bars and coal so you can see at a glance if you're low on either
+- Liquids that cannot be quantum stockpiled (e.g. lye)
+- Meltable weapons and armor
 ""
 Workshops:
-3x Mason
-4x Craftsdwarf
-1x Jeweler
-1x Mechanic
-4x Smelter
-1x Forge
-1x Glassmaker
-1x Kiln
-4x Wood furnace
-1x Ashery
-1x Soap maker
-1x Carpenter
-1x Siege workshop
-1x Bowyer
-1x Dyer
-1x Loom
-1x Clothier
+- 3x Mason
+- 4x Craftsdwarf
+- 1x Jeweler
+- 1x Mechanic
+- 4x Smelter
+- 1x Forge
+- 1x Glassmaker
+- 1x Kiln
+- 4x Wood furnace
+- 1x Ashery
+- 1x Soap maker
+- 1x Carpenter
+- 1x Siege workshop
+- 1x Bowyer
+- 1x Dyer
+- 1x Loom
+- 1x Clothier
 ""
 ""
 Manual steps you have to take:
-Assign minecarts to your quantum stockpile hauling routes
-"Give from the ""Goods"" quantum stockpile to the jugs, pots, and bags stockpiles on the farming level"
-"If desired, set the stockpiles in the bottom right to auto-melt. This results in melting all weapons and armor that are not masterwork steel. This is great for your military, but it takes a *lot* of fuel. If you enable this, be sure you're in a heavily forested area, enable auto-chop, and set up manager orders to keep your coal stocks high."
-Download automation.json from https://drive.google.com/file/d/17WcN5mK-rnADOm2B_JFpPnByYgkYjxhb/view and put it in your dfhack-config/orders/ directory.
+- Assign minecarts to your quantum stockpile hauling routes
+"- Give from the ""Goods"" quantum stockpile to the jugs, pots, and bags stockpiles on the farming level"
+"- If desired, set the stockpiles in the bottom right to auto-melt. This results in melting all weapons and armor that are not masterwork steel. This is great for your military, but it takes a *lot* of fuel. If you enable this, be sure you're in a heavily forested area, enable auto-chop, and set up manager orders to keep your coal stocks high."
+- Download automation.json from https://drive.google.com/file/d/17WcN5mK-rnADOm2B_JFpPnByYgkYjxhb/view and put it in your dfhack-config/orders/ directory.
 ""
 Industry Walkthrough:
 1) You can start digging out /industry1 immediately after embark. It is best to choose a stone layer at least two layers underground so the boulders can be used by your starting workshops to manufacture needed items.
+""
 "2) Queue up manufacturing by running ""quickfort orders"" on /industry2."
+""
 "3) Once the area is dug out, run /industry2. Remember to assign minecarts to to your quantum stockpile hauling routes, and if the farming level is already built, give from the ""Goods"" quantum stockpile to the jugs, pots, and bags stockpiles on the farming level."
+""
 "4) If you want to automatically melt goblinite and other low-quality weapons and armor, mark the south-east stockpiles for auto-melt."
+""
 "5) Run ""orders import automation"" to use the provided automation.json to take care of your fort's basic needs."
 "#dig label(industry1) start(18; 18; staircase center) message(This would be a good time to queue manager orders for /industry2. Once the area is dug out, continue with /industry2.)"
 
@@ -1364,25 +1377,29 @@ query/industry_query
 "Sets up public services (dining, hospital, etc.)"
 ""
 Features:
-Spacious dining room (also usable as a tavern)
-Prepared food and drink stockpiles
-Well system (bring your own water)
-Public baths with soap stockpiles
-Three well-appointed jail cells
-Hospital with beds and storage
-Garbage dump
+- Spacious dining room (also usable as a tavern)
+- Prepared food and drink stockpiles
+- Well system (bring your own water)
+- Public baths with soap stockpiles
+- Three well-appointed jail cells
+- Hospital with beds and storage
+- Garbage dump
 ""
 Manual steps you have to take:
-"If you want to declare the dining room as a tavern, the bedrooms at the top can be assigned to the tavern as rented rooms."
-"Configure the soap stockpiles to take from the industry level ""Metalworker"" quantum stockpile (which holds all the bars)"
-"Activate the bath pond zones when you are ready to fill them with 3-depth water. This is the only really fiddly bit, since you have to carefully disable the pond zone again when the final bucket to bring the water to an even 3-depth is on the way."
-"Fill the cisterns with water, either with a bucket brigade or by plumbing flowing water. Fill so that there are two z-levels of 7-depth water to prevent muddiness. If you want to fill with buckets, designate a pond zone on the level below the main floor. If you feel adventurous and are experienced with water pressure, you can instead route (depressurized!) water to the second-to-bottom level (the one above the up staircases)."
+"- If you want to declare the dining room as a tavern, the bedrooms at the top can be assigned to the tavern as rented rooms."
+"- Configure the soap stockpiles to take from the industry level ""Metalworker"" quantum stockpile (which holds all the bars)"
+"- Activate the bath pond zones when you are ready to fill them with 3-depth water. This is the only really fiddly bit, since you have to carefully disable the pond zone again when the final bucket to bring the water to an even 3-depth is on the way."
+"- Fill the cisterns with water, either with a bucket brigade or by plumbing flowing water. Fill so that there are two z-levels of 7-depth water to prevent muddiness. If you want to fill with buckets, designate a pond zone on the level below the main floor. If you feel adventurous and are experienced with water pressure, you can instead route (depressurized!) water to the second-to-bottom level (the one above the up staircases)."
 ""
 Services Walkthough:
 1) Start this level before your fort grows beyond around 50 dwarves so everyone has a place to eat.
+""
 "2) Start digging with /services1. Note that this digs out the main level and three levels below for the well plumbing. Start manufacturing with ""quickfort orders"" on /services2."
+""
 "3) Once the area is dug out, set up the furniture, stockpiles, and hospital and garbage dump zones with /services2. Fill your soap stockpiles around the bath channels by configuring them to take from the bar quantum stockpile (the one on the right near the forge) on the industry level."
+""
 "4) When all furniture is placed, run /services3 to configure your dining room and jail."
+""
 5) Fill the bath and wells with either a bucket brigade or by carefully routing flowing water to them.
 "#dig label(services1) start(23; 22; staircase center) message(This would be a good time to queue manager orders for /services2. Once the area is dug out, continue with /services2.)"
 
@@ -1701,11 +1718,13 @@ query_stockpiles/services_query_stockpiles
 "Multiple 7x7 rooms for guildhalls, temples, libraries, etc."
 ""
 Features:
-"Big empty rooms. Double-thick walls to ensure engravings add value to the ""correct"" side. Fill with furniture and assign as needed."
+"- Big empty rooms. Double-thick walls to ensure engravings add value to the ""correct"" side. Fill with furniture and assign as needed."
 ""
 Guildhall Walkthrough:
 "1) Dig out the rooms with /guildhall1 and queue up manufacturing by running ""quickfort orders"" on /guildhall2."
+""
 "2) Once the area is dug out, add in generic furniture with /guildhall2."
+""
 "3) Furnish individual rooms as you need specific guildhalls, libraries, and temples."
 "#dig label(guildhall1) start(25; 25; staircase center) message(This would be a good time to queue manager orders for /guildhall2. Once the area is dug out, continue with /guildhall2.)"
 
@@ -1811,17 +1830,20 @@ Guildhall Walkthrough:
 Suites for nobles and apartments for the teeming masses
 ""
 Features:
-Well-appointed suites to satisfy most nobles
-Apartments with beds and storage to keep dwarves happy
-Meta blueprint included for designating 6 levels of apartments for a full 200+ dwarves
+- Well-appointed suites to satisfy most nobles
+- Apartments with beds and storage to keep dwarves happy
+- Meta blueprint included for designating 6 levels of apartments for a full 200+ dwarves
 ""
 Suites Walkthrough:
 "1) Dig out the suites layer with /suites1 and queue up manufacturing by running ""quickfort orders"" on /suites2."
+""
 "2) Once the area is dug out, furnish the suites with /suites2. The rooms are left unconfigured so you can set them up as needed room types and assign them to specific nobles. Each room can serve as a bedroom, a dining hall, an office, or a tomb."
 ""
 Apartments Walkthrough:
 "1) Dig out one layer of apartments with /apartments1, or 6 layers at once (enough for 200 dwarves) with /apartments1_stack. Run ""quickfort orders"" for /apartments2 once for every apartments layer that you are digging."
+""
 "2) Once a layer is dug out, furnish it with /apartments2."
+""
 "3) Once the beds are in place (the other furniture can still be unbuilt), configure the rooms with /apartments3. Once the urns are all in place, run ""burial -pets"" to set them all to accept burials."
 "#dig label(suites1) start(18; 18; staircase center) message(This would be a good time to queue manager orders for /suites2. Once the area is dug out, continue with /suites2) noble suites"
 

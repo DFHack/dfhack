@@ -704,11 +704,18 @@ static bool matchesFilters(df::item * item,
                            df::job_item * job_item,
                            const ItemFilter & item_filter)
 {
+    // check the properties that are not checked by Job::isSuitableItem()
     if (job_item->item_type > -1 && job_item->item_type != item->getType())
         return false;
 
     if (job_item->item_subtype > -1 &&
         job_item->item_subtype != item->getSubtype())
+        return false;
+
+    if (job_item->flags2.bits.building_material && !item->isBuildMat())
+        return false;
+
+    if (job_item->metal_ore > -1 && !item->isMetalOre(job_item->metal_ore))
         return false;
 
     if (job_item->has_tool_use > df::tool_uses::NONE

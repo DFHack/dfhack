@@ -15,17 +15,11 @@ jobs:
         - 4.8
         - 7
         plugins:
-        - supported
+        - default
         include:
         - os: ubuntu-20.04
           gcc: 10
-          plugins: supported
-        - os: ubuntu-20.04
-          gcc: 10
-          plugins: dev
-        - os: ubuntu-20.04
-          gcc: 10
-          plugins: stonesense
+          plugins: all
     steps:
     - name: Set up Python 3
       uses: actions/setup-python@v2
@@ -79,15 +73,14 @@ jobs:
           -G Ninja \
           -DDFHACK_BUILD_ARCH=64 \
           -DBUILD_TESTS:BOOL=ON \
-          -DBUILD_DEV_PLUGINS:BOOL=${{ matrix.plugins == 'dev' }} \
-          -DBUILD_SIZECHECK:BOOL=${{ matrix.plugins == 'dev' }} \
-          -DBUILD_STONESENSE:BOOL=${{ matrix.plugins == 'stonesense' }} \
-          -DBUILD_SUPPORTED:BOOL=${{ matrix.plugins == 'supported' }} \
+          -DBUILD_DEV_PLUGINS:BOOL=${{ matrix.plugins == 'all' }} \
+          -DBUILD_SIZECHECK:BOOL=${{ matrix.plugins == 'all' }} \
+          -DBUILD_STONESENSE:BOOL=${{ matrix.plugins == 'all' }} \
+          -DBUILD_SUPPORTED:BOOL=1 \
           -DCMAKE_INSTALL_PREFIX="$DF_FOLDER"
         ninja -C build-ci install
     - name: Run tests
       id: run_tests
-      if: ${{ matrix.plugins == 'supported' }}
       run: |
         export TERM=dumb
         mv "$DF_FOLDER"/dfhack.init-example "$DF_FOLDER"/dfhack.init

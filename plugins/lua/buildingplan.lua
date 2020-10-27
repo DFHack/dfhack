@@ -194,6 +194,7 @@ function GlobalSettings:init()
         self:make_setting_label_token('Bars', 'CUSTOM_R', 'bars', 10),
             self:make_setting_value_token('bars'), '\n',
         '  Changes to these settings will be applied to newly-planned buildings.\n',
+        '  If no types are enabled above, then any building material is allowed.\n',
         '\n',
         self:make_setting_label_token('Legacy Quickfort Mode', 'CUSTOM_F',
                                       'quickfort_mode', 23),

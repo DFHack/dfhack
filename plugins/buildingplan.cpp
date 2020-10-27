@@ -1,3 +1,4 @@
+#include "df/construction_type.h"
 #include "df/entity_position.h"
 #include "df/interface_key.h"
 #include "df/ui_build_selector.h"
@@ -527,6 +528,10 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
         if (input->count(interface_key::CUSTOM_P) ||
             input->count(interface_key::CUSTOM_F) ||
             input->count(interface_key::CUSTOM_D) ||
+            input->count(interface_key::CUSTOM_Q) ||
+            input->count(interface_key::CUSTOM_W) ||
+            input->count(interface_key::CUSTOM_A) ||
+            input->count(interface_key::CUSTOM_S) ||
             input->count(interface_key::CUSTOM_M))
         {
             show_help = true;
@@ -561,13 +566,13 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
 
         if (input->count(interface_key::CUSTOM_SHIFT_M))
             Screen::show(dts::make_unique<ViewscreenChooseMaterial>(*filter), plugin_self);
-        else if (input->count(interface_key::CUSTOM_Q))
-            filter->decMinQuality();
-        else if (input->count(interface_key::CUSTOM_W))
-            filter->incMinQuality();
         else if (input->count(interface_key::CUSTOM_SHIFT_Q))
-            filter->decMaxQuality();
+            filter->decMinQuality();
         else if (input->count(interface_key::CUSTOM_SHIFT_W))
+            filter->incMinQuality();
+        else if (input->count(interface_key::CUSTOM_SHIFT_A))
+            filter->decMaxQuality();
+        else if (input->count(interface_key::CUSTOM_SHIFT_S))
             filter->incMaxQuality();
         else if (input->count(interface_key::CUSTOM_SHIFT_D))
             filter->toggleDecoratedOnly();
@@ -644,6 +649,14 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
 
         int y = 23;
 
+        if (ui_build_selector->building_type == df::building_type::Construction
+            && ui_build_selector->building_subtype <
+               df::construction_type::TrackN)
+        {
+            // try not to conflict with the automaterial plugin UI
+            y = 34;
+        }
+
         if (show_help)
         {
             OutputString(COLOR_BROWN, x, y, "Note: ");
@@ -663,10 +676,10 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
         OutputString(COLOR_WHITE, x, y, title.c_str(), true, left_margin + 1);
         OutputString(COLOR_WHITE, x, y, get_item_label(key, filter_idx).c_str(), true, left_margin);
 
-        OutputHotkeyString(x, y, "Min Quality: ", "qw");
+        OutputHotkeyString(x, y, "Min Quality: ", "QW");
         OutputString(COLOR_BROWN, x, y, filter->getMinQuality(), true, left_margin);
 
-        OutputHotkeyString(x, y, "Max Quality: ", "QW");
+        OutputHotkeyString(x, y, "Max Quality: ", "AS");
         OutputString(COLOR_BROWN, x, y, filter->getMaxQuality(), true, left_margin);
 
         OutputToggleString(x, y, "Decorated Only", "D", filter->getDecoratedOnly(), true, left_margin);

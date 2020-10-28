@@ -36,6 +36,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 - `dwarfmonitor`: fixed a crash when opening the ``prefs`` screen if units have vague preferences
 
+## Misc Improvements
+- `quickfort`: More blueprints have been added to the blueprints library: several bedroom layouts, the Saracen Crypts, and the complete fortress example from Python Quickfort: TheQuickFortress
+
 # 0.47.04-r3
 
 ## New Plugins

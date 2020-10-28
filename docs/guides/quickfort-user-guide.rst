@@ -527,7 +527,7 @@ The valid hospital settings (and their maximum values) are:
     powder   (15000)
     buckets  (100)
     soap     (15000)
-    
+
 To toggle the ``active`` flag for zones, add an ``a`` character to the string.
 For example, to create a *disabled* pond zone (that you later intend to
 carefully fill with 3-depth water for a dwarven bathtub):
@@ -1386,9 +1386,9 @@ There are also good examples in the query blueprint for how to use the
 Most of the baseline aliases distributed with DFHack fall into one of three
 categories:
 
-# Make a stockpile accept only a particular item type in a category
-# Permit an item type, but do not otherwise change the stockpile configuration
-# Forbid an item type, but do not otherwise change the stockpile configuration
+1. Make a stockpile accept only a particular item type in a category
+2. Permit an item type, but do not otherwise change the stockpile configuration
+3. Forbid an item type, but do not otherwise change the stockpile configuration
 
 If you have a stockpile that covers multiple tiles, it might seem natural to put
 one alias per spreadsheet cell. The aliases still all get applied to the

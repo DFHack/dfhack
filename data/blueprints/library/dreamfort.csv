@@ -1070,7 +1070,7 @@ query_stockpiles/farming_query_stockpiles
 ,,,,,,,,,,,,,,,,,,,,,bodyparts,linksonly,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,,,,,,,,,,,`,`,`,`,give2left,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,,,,,,,,,,,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,,,,,,,,,,,,,,,,,,,{quantumstopfromnorth}{namelastrouteprefix}Trash Dumper{namelastroutesuffix},,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,,,,,,,,,"{quantumstopfromnorth name=""Trash Dumper""}",,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,,,,,,,,,,,,quantum,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 
 
@@ -1279,7 +1279,7 @@ query/industry_query
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,{quantum}g{Up}{Left 5}&,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,{quantumstopfromsouth}{namelastrouteprefix}Stoneworker quantum{namelastroutesuffix},`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"{quantumstopfromsouth name=""Stoneworker quantum""}",`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,otherstone,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,miscliquid,`,`,`,`,`,`,`,`,`,`,`,`,`,~,nocontainers,~,`,`,`,`,`,`,`,`,`,`,`,`,`,steelbars
 ,,nocontainers,`,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`,`
@@ -1287,7 +1287,7 @@ query/industry_query
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,{cages}{permittraps},,,`,`,`,,,,`,`,`,forbidotherstone,,,`,`,`,`,`,`,`,t{Left 6}{Down}&
-,,`,`,`,`,`,`,{quantum}g{Up 10}{Right 4}&,{quantumstopfromeast}{namelastrouteprefix}Goods/Wood quantum{namelastroutesuffix},~,nocontainers,~,`,,`,,`,,`,,`,~,nocontainers,~,{quantumstopfromwest}{namelastrouteprefix}Metalworker quantum{namelastroutesuffix},quantum,`,`,`,`,`,`
+,,`,`,`,`,`,`,{quantum}g{Up 10}{Right 4}&,"{quantumstopfromeast name=""Goods/Wood quantum""}",~,nocontainers,~,`,,`,,`,,`,,`,~,nocontainers,~,"{quantumstopfromwest name=""Metalworker quantum""}",quantum,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,{tallow}{permitdye},,,`,`,`,,,,`,`,`,forbidpotash,,,`,`,`,`,`,`,`,t{Left 6}{Up}&
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
@@ -1295,7 +1295,7 @@ query/industry_query
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,craftrefuse,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,~,nocontainers,~,`,`,`,`,`,`,`,`,`,`,`,`,`,coal
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,`,`,`,`,`,nocontainers,`,t{Up 7}&,~,~,~,~
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,{quantumstopfromnorth}{namelastrouteprefix}Clothier/Bones quantum{namelastroutesuffix},`,`,`,`,`,`,{ironweapons}{permitsteelweapons}{forbidmasterworkweapons}{forbidartifactweapons}
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"{quantumstopfromnorth name=""Clothier/Bones quantum""}",`,`,`,`,`,`,{ironweapons}{permitsteelweapons}{forbidmasterworkweapons}{forbidartifactweapons}
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,quantum,`,`,`,`,`,`,{ironarmor}{permitsteelarmor},forbidmasterworkarmor,forbidartifactarmor,~,~,~,~
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,nocontainers,give2up,t{Up 11}&,~,~,~,~
@@ -1320,7 +1320,7 @@ Garbage dump
 Manual steps you have to take:
 "If you want to declare the dining room as a tavern, the bedrooms at the top can be assigned to the tavern as rented rooms."
 "Configure the soap stockpiles to take from the industry level ""Metalworker"" quantum stockpile (which holds all the bars)"
-"Convert the bath pit zones to pond zones when you are ready to fill them with 3-depth water. This is the only really fiddly bit, since you have to carefully disable the pond zone again when the final bucket to bring the water to an even 3-depth is on the way."
+"Activate the bath pond zones when you are ready to fill them with 3-depth water. This is the only really fiddly bit, since you have to carefully disable the pond zone again when the final bucket to bring the water to an even 3-depth is on the way."
 "Fill the cisterns with water, either with a bucket brigade or by plumbing flowing water. Fill so that there are two z-levels of 7-depth water. If you want to fill with buckets, designate a pond zone on the level below the main floor. If you feel adventurous and are experienced with water pressure, you can instead route (depressurized!) water to the second-to-bottom level (the one above the up staircases)."
 "#dig label(services1) start(23; 22; staircase center) message(This would be a good time to queue manager orders for /services2. Once the area is dug out, continue with /services2.)"
 
@@ -1533,7 +1533,7 @@ query_stockpiles/services_query_stockpiles
 ,,`,`,`,`,`,`,,`,`,`,`,`,`
 
 
-#zone label(services_zone) start(23; 22) hidden() use the meta blueprints for normal application
+#zone label(services_zone) start(23; 22) hidden() message(activate the bath pond zones when you are ready to fill them with 3-depth water) use the meta blueprints for normal application
 
 
 ,,`,`,`,,,`,`,`,,,`,`,`
@@ -1554,9 +1554,9 @@ query_stockpiles/services_query_stockpiles
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,,,,,,,,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,`,`,`,`
-,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,pa,`,`,`,`,`,`,`,`,`,pa,`,`,`,`,`,`,`,`,`,`,`
-,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,pa,`,,`,`,`,`,`,,`,pa,`,,`,`,`,`,`,`,`,`,`
-,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,pa,`,`,`,`,`,`,`,`,`,pa,`,`,`,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,apPf(1x3),`,`,`,`,`,`,`,`,`,apPf(1x3),`,`,`,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,~,`,,`,`,`,`,`,,`,~,`,,`,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,`,`,`,`,,`,`,`,,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,d,,,,,,,,`,`,`,`,`,`,`,`,`
 ,,,,,,`,`,,`,`,,,,,,,,,,,,,,,,,,,,`,`,`,`,`,`,`,`,`

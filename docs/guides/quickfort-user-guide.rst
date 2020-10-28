@@ -5,32 +5,38 @@ Quickfort User Guide
 
 `Quickfort <quickfort>` is a DFHack script that helps you build fortresses from
 "blueprint" .csv and .xlsx files. Many applications exist to edit these files,
-such as MS Excel and `Google Sheets <https://sheets.new>`__. You can also build
-your plan "for real" in Dwarf Fortress, and then export your map using the `blueprint`
-plugin. Most layout and building-oriented DF commands are supported through the
-use of multiple files or spreadsheets, each describing a different phase of DF
-construction: designation, building, placing stockpiles/zones, and setting
-configuration.
+such as MS Excel and `Google Sheets <https://sheets.new>`__. Most layout and
+building-oriented DF commands are supported through the use of multiple files or
+spreadsheets, each describing a different phase of DF construction: designation,
+building, placing stockpiles/zones, and setting configuration.
 
-The original idea and 1.0 codebase came from :wiki:`Valdemar's <User:Valdemar>`
-auto-designation macro. Joel Thornton (joelpt) reimplemented the core logic in
-Python and extended its functionality with `Quickfort
-2.0 <https://github.com/joelpt/quickfort>`__. This DFHack-native implementation,
-called "DFHack Quickfort" or just "quickfort", builds upon Quickfort 2.0's
-formats and features. DFHack Quickfort is written in Lua and interacts with
-Dwarf Fortress memory structures directly, allowing for instantaneous blueprint
-application, error checking and recovery, and many other advanced features.
+The original idea came from :wiki:`Valdemar's <User:Valdemar>` auto-designation
+macro. Joel Thornton reimplemented the core logic in Python and extended its
+functionality with `Quickfort 2.0 <https://github.com/joelpt/quickfort>`__. This
+DFHack-native implementation, called "DFHack Quickfort" or just "quickfort",
+builds upon Quickfort 2.0's formats and features. Any blueprint that worked in
+Python Quickfort 2.0 should work with DFHack Quickfort. DFHack Quickfort is
+written in Lua and interacts with Dwarf Fortress memory structures directly,
+allowing for instantaneous blueprint application, error checking and recovery,
+and many other advanced features.
 
 This document focuses on DFHack Quickfort's capabilities and teaches players how
-to understand and build blueprint files. Some of the text was originally written
-by Joel Thornton, reused here with his permission.
+to understand and create blueprint files. Some of the text was originally
+written by Joel Thornton, reused here with his permission.
 
-For those just looking to apply blueprints, check out the `quickfort command's
-documentation <quickfort>` for syntax. There are also many ready-to-use blueprints
-available in the ``blueprints/library`` subfolder in your DFHack installation.
-Browse them on your computer or :source:`online <data/blueprints/library>`,
-or run ``quickfort list -l`` at the ``[DFHack]#`` prompt to list them, and then
-``quickfort run`` to apply them to your fort!
+For those just looking to apply existing blueprints, check out the `quickfort
+command's documentation <quickfort>` for syntax. There are many ready-to-use
+blueprints available in the ``blueprints/library`` subfolder in your DFHack
+installation. Browse them on your computer or
+:source:`online <data/blueprints/library>`, or run ``quickfort list -l`` at the
+``[DFHack]#`` prompt to list them, and then ``quickfort run`` to apply them to
+your fort!
+
+Before you become an expert at writing blueprints, though, you should know that
+the easiest way to make a quickfort blueprint is to build your plan "for real"
+in Dwarf Fortress and then export your map using the DFHack `blueprint` plugin.
+You can apply those blueprints as-is in your next fort, or you can fine-tune
+them with additional features from this guide.
 
 See the `Links`_ section for more information and online resources.
 
@@ -96,6 +102,7 @@ Features
       created stockpiles
    -  Automatic splitting of stockpiles and zones that exceed maximum dimension
       limits
+   -  Full access to all zone settings, such as hospital supply counts
 
 -  Query mode
 
@@ -478,37 +485,57 @@ It is very common to have stockpiles that accept multiple categories of items or
 zones that permit more than one activity. Although it is perfectly valid to
 declare a single-purpose stockpile or zone and then modify it with a ``#query``
 blueprint, quickfort also supports directly declaring all the types on the
-``#place`` and ``#zone`` blueprints. For example, to declare a 10x10 area that
-is a pasture, a fruit picking area, and a meeting area all at once, you could
-write:
-
-::
-
-   #zone main pasture and picnic area
-   nmg(10x10)
-
-And similarly, to declare a stockpile that accepts both corpses and refuse, you
-could write:
+``#place`` and ``#zone`` blueprints. For example, to declare a 20x10 stockpile
+that accepts both corpses and refuse, you could write:
 
 ::
 
    #place refuse heap
    yr(20x10)
 
-The order of the individual letters doesn't matter.
 
-To toggle the ``active`` flag for zones, add an ``a`` character to the string.
-For example, to create a *disabled* pit zone (that you later intend to turn into
-a pond and carefully fill to 3-depth water):
+And similarly, to declare a zone that is a pasture, a fruit picking area, and a
+meeting area all at once:
 
 ::
 
-   #zone disabled future pond zone
-   pa(1x3)
+   #zone main pasture and picnic area
+   nmg(10x10)
 
-Note that while this notation covers most use cases, tweaking low-level zone
-parameters, like hospital supply levels or converting between pits and ponds,
-must still be done manually or with a ``#query`` blueprint.
+The order of the individual letters doesn't matter.
+
+Detailed configuration for zones, such as the pit/pond toggle, can also be set
+by mimicking the hotkeys used to set them. Note that gather flags default to
+true, so specifying them in a blueprint will turn the toggles off. If you need
+to set configuration from multiple zone subscreens, separate the key sections
+with ``^``. Note the special syntax for setting hospital supply levels, which
+have no in-game hotkeys:
+
+::
+
+   #zone a combination hospital and shrub (but not fruit) gathering zone
+   gGtf^hH{hospital buckets=5 splints=20}(10x10)
+
+The valid hospital settings (and their maximum values) are:
+
+::
+
+    thread   (1500000)
+    cloth    (1000000)
+    splints  (100)
+    crutches (100)
+    powder   (15000)
+    buckets  (100)
+    soap     (15000)
+    
+To toggle the ``active`` flag for zones, add an ``a`` character to the string.
+For example, to create a *disabled* pond zone (that you later intend to
+carefully fill with 3-depth water for a dwarven bathtub):
+
+::
+
+   #zone disabled pond zone
+   apPf(1x3)
 
 Minecart tracks
 ~~~~~~~~~~~~~~~
@@ -1321,11 +1348,6 @@ Hauling routes are notoriously fiddly to set up, but they can be automated with
 blueprints. Check out the Southern area of the ``#place`` and ``#query``
 blueprints for how the quantum garbage dump is configured.
 
-Note that aliases that must be applied in a particular order must appear in the
-same cell. Otherwise there are no guarantees for which cell will be processed
-first. For example, look at the track stop cells in the ``#query`` blueprint for
-how the hauling routes are given names.
-
 The industry_ level: when not to use aliases
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1333,7 +1355,7 @@ The industry_ level: when not to use aliases
 
 The industry level is densely packed and has more complicated examples of
 stockpile configurations and quantum dumps. However, what I'd like to call out
-are the key sequences that are *not* in aliases.
+first are the key sequences that are *not* in aliases.
 
 .. topic:: Tip
 
@@ -1352,6 +1374,45 @@ relative positions of the tiles where they are interpreted, which is easiest to
 see in the blueprint itself. Also, if you move the workshop, it's easier to fix
 the stockpile link right there in the blueprint instead of editing the separate
 aliases.txt file.
+
+There are also good examples in the query blueprint for how to use the
+``permit`` and ``forbid`` stockpile aliases.
+
+.. topic:: Tip
+
+     Put all configuration that must be applied in a particular order in the
+     same spreadsheet cell.
+
+Most of the baseline aliases distributed with DFHack fall into one of three
+categories:
+
+# Make a stockpile accept only a particular item type in a category
+# Permit an item type, but do not otherwise change the stockpile configuration
+# Forbid an item type, but do not otherwise change the stockpile configuration
+
+If you have a stockpile that covers multiple tiles, it might seem natural to put
+one alias per spreadsheet cell. The aliases still all get applied to the
+stockpile, and with only one alias per cell, you can just type the alias name
+and avoid having to use the messier-looking ``{alias1}{alias2}`` syntax:
+
+::
+
+    #query Incorrectly configure a 3x3 food stockpile to accept tallow and dye
+    tallow
+    permitdye
+
+However, in quickfort there are no guarantees about which cell will be
+processed first. In the example above, we obviously intend for the food
+stockpile to have everything forbidden, then tallow permitted, then dye
+permitted. The algorithm could happen to apply them in the opposite order,
+though, and we'd end up with dye being permitted, then everything being
+forbidden and tallow being enabled. To make sure you always get what you want,
+write order-sensitive aliases on the same line:
+
+::
+
+    #query Properly configure a 3x3 food stockpile to accept tallow and dye
+    {tallow}{permitdye}
 
 The services_ level: handling multi-level dig blueprints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

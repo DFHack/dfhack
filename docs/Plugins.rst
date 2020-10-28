@@ -722,10 +722,11 @@ While placing a building, you can set filters for what materials you want the bu
 out of, what quality you want the component items to be, and whether you want the items to
 be decorated.
 
-If a building type takes more than one item to construct, use Ctrl+Left and Ctrl+Right to
-select the item that you want to set filters for. Any filters that you set will be used for
-all buildings of the selected type from that point onward (until you set a new filter or
-clear the current one).
+If a building type takes more than one item to construct, use
+:kbd:`Ctrl`:kbd:`Left` and :kbd:`Ctrl`:kbd:`Right` to select the item that you
+want to set filters for. Any filters that you set will be used for all buildings
+of the selected type from that point onward (until you set a new filter or clear
+the current one).
 
 For example, you can be sure that all your constructed walls are the same color by setting
 a filter to accept only certain types of stone.

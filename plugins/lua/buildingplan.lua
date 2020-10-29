@@ -129,19 +129,25 @@ function GlobalSettings:get_setting_string(name)
     return 'Off'
 end
 
+function GlobalSettings:get_setting_pen(name)
+    if self.settings[name] then return COLOR_LIGHTGREEN end
+    return COLOR_LIGHTRED
+end
+
 function GlobalSettings:is_setting_enabled(name)
     return self.settings[name]
 end
 
 function GlobalSettings:make_setting_label_token(text, key, name, width)
-    return {text=text, key=key, key_sep=': ', key_pen=COLOR_GREEN,
+    return {text=text, key=key, key_sep=': ', key_pen=COLOR_LIGHTGREEN,
             on_activate=self:callback('toggle_setting', name), width=width}
 end
 
 function GlobalSettings:make_setting_value_token(name)
     return {text=self:callback('get_setting_string', name),
             enabled=self:callback('is_setting_enabled', name),
-            pen=COLOR_YELLOW, dpen=COLOR_GRAY}
+            pen=self:callback('get_setting_pen', name),
+            dpen=COLOR_GRAY}
 end
 
 -- mockup:

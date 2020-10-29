@@ -4,6 +4,7 @@ local _ENV = mkmodule('plugins.buildingplan')
 
  Native functions:
 
+ * void setSetting(string name, boolean value)
  * bool isPlannableBuilding(df::building_type type, int16_t subtype, int32_t custom)
  * void addPlannedBuilding(df::building *bld)
  * void doCycle()
@@ -11,6 +12,7 @@ local _ENV = mkmodule('plugins.buildingplan')
 
 --]]
 
+local dialogs = require('gui.dialogs')
 local guidm = require('gui.dwarfmode')
 require('dfhack.buildings')
 
@@ -90,6 +92,116 @@ function construct_building_from_ui_state()
         if k == 'speed' then bld.speed = uibs.speed end
     end
     return bld
+end
+
+--
+-- GlobalSettings dialog
+--
+
+local GlobalSettings = defclass(GlobalSettings, dialogs.MessageBox)
+GlobalSettings.focus_path = 'buildingplan_globalsettings'
+
+GlobalSettings.ATTRS{
+    settings = {}
+}
+
+function GlobalSettings:onDismiss()
+    for k,v in pairs(self.settings) do
+        -- call back into C++ to save changes
+        setSetting(k, v)
+    end
+end
+
+-- does not need the core suspended.
+function show_global_settings_dialog(settings)
+    GlobalSettings{
+        frame_title="Buildingplan Global Settings",
+        settings=settings,
+    }:show()
+end
+
+function GlobalSettings:toggle_setting(name)
+    self.settings[name] = not self.settings[name]
+end
+
+function GlobalSettings:get_setting_string(name)
+    if self.settings[name] then return 'On' end
+    return 'Off'
+end
+
+function GlobalSettings:is_setting_enabled(name)
+    return self.settings[name]
+end
+
+function GlobalSettings:make_setting_label_token(text, key, name, width)
+    return {text=text, key=key, key_sep=': ', key_pen=COLOR_GREEN,
+            on_activate=self:callback('toggle_setting', name), width=width}
+end
+
+function GlobalSettings:make_setting_value_token(name)
+    return {text=self:callback('get_setting_string', name),
+            enabled=self:callback('is_setting_enabled', name),
+            pen=COLOR_YELLOW, dpen=COLOR_GRAY}
+end
+
+-- mockup:
+--[[
+                          Buildingplan Global Settings
+
+  e: Enable all: Off
+    Enables buildingplan for all building types. Use this to avoid having to
+    manually enable buildingplan for each building type that you want to plan.
+    Note that DFHack quickfort will use buildingplan to manage buildings
+    regardless of whether buildingplan is "enabled" for the building type.
+
+  Allowed types for generic, fire-safe, and magma-safe building material:
+  b: Blocks:   On
+  s: Boulders: On
+  w: Wood:     On
+  r: Bars:     Off
+    Changes to these settings will be applied to newly-planned buildings.
+
+  A: Apply building material filter settings to existing planned buildings
+    Use this if your planned buildings can't be completed because the settings
+    above were too restrictive when the buildings were originally planned.
+
+  M: Edit list of materials to avoid
+  potash
+  pearlash
+  ash
+  coal
+    Buildingplan will avoid using these material types when a planned building's
+    material filter is set to 'any'. They can stil be matched when they are
+    explicitly allowed by a planned building's material filter. Changes to this
+    list take effect for existing buildings immediately.
+
+  g: Allow bags: Off
+    This allows bags to be placed where a 'coffer' is planned.
+
+  f: Legacy Quickfort Mode: Off
+    Compatibility mode for the legacy Python-based Quickfort application. This
+    setting is not needed for DFHack quickfort.
+--]]
+function GlobalSettings:init()
+    self.subviews.label:setText{
+        'Allowed types for generic, fire-safe, and magma-safe building material:\n',
+        self:make_setting_label_token('Blocks', 'CUSTOM_B', 'blocks', 10),
+            self:make_setting_value_token('blocks'), '\n',
+        self:make_setting_label_token('Boulders', 'CUSTOM_S', 'boulders', 10),
+            self:make_setting_value_token('boulders'), '\n',
+        self:make_setting_label_token('Wood', 'CUSTOM_W', 'logs', 10),
+            self:make_setting_value_token('logs'), '\n',
+        self:make_setting_label_token('Bars', 'CUSTOM_R', 'bars', 10),
+            self:make_setting_value_token('bars'), '\n',
+        '  Changes to these settings will be applied to newly-planned buildings.\n',
+        '  If no types are enabled above, then any building material is allowed.\n',
+        '\n',
+        self:make_setting_label_token('Legacy Quickfort Mode', 'CUSTOM_F',
+                                      'quickfort_mode', 23),
+            self:make_setting_value_token('quickfort_mode'), '\n',
+        '  Compatibility mode for the legacy Python-based Quickfort application.\n',
+        '  This setting is not needed for DFHack quickfort.'
+    }
 end
 
 return _ENV

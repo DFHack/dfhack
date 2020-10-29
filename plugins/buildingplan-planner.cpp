@@ -501,12 +501,41 @@ void migrateV1ToV2()
     }
 }
 
+static void init_global_settings(std::map<std::string, bool> & settings)
+{
+    settings.clear();
+    settings["blocks"] = true;
+    settings["boulders"] = true;
+    settings["logs"] = true;
+    settings["bars"] = false;
+}
+
+const std::map<std::string, bool> & Planner::getGlobalSettings() const
+{
+    return global_settings;
+}
+
+bool Planner::setGlobalSetting(std::string name, bool value)
+{
+    if (global_settings.count(name) == 0)
+    {
+        debug("attempted to set invalid setting: '%s'", name.c_str());
+        return false;
+    }
+    debug("global setting '%s' %d -> %d",
+          name.c_str(), global_settings[name], value);
+    global_settings[name] = value;
+    return true;
+}
+
 void Planner::reset()
 {
     debug("resetting Planner state");
     default_item_filters.clear();
     planned_buildings.clear();
     tasks.clear();
+
+    init_global_settings(global_settings);
 
     migrateV1ToV2();
 
@@ -584,6 +613,41 @@ static std::string getBucket(const df::job_item & ji,
     return ser.str();
 }
 
+// get a list of item vectors that we should search for matches
+static std::vector<df::job_item_vector_id> getVectorIds(df::job_item *job_item,
+        const std::map<std::string, bool> & global_settings)
+{
+    std::vector<df::job_item_vector_id> ret;
+
+    // if the filter already has the vector_id set to something specific, use it
+    if (job_item->vector_id > df::job_item_vector_id::IN_PLAY)
+    {
+        debug("using vector_id from job_item: %s",
+              ENUM_KEY_STR(job_item_vector_id, job_item->vector_id).c_str());
+        ret.push_back(job_item->vector_id);
+        return ret;
+    }
+
+    // if the filer is for building material, refer to our global settings for
+    // which vectors to search
+    if (job_item->flags2.bits.building_material)
+    {
+        if (global_settings.at("blocks"))
+            ret.push_back(df::job_item_vector_id::BLOCKS);
+        if (global_settings.at("boulders"))
+            ret.push_back(df::job_item_vector_id::BOULDER);
+        if (global_settings.at("logs"))
+            ret.push_back(df::job_item_vector_id::WOOD);
+        if (global_settings.at("bars"))
+            ret.push_back(df::job_item_vector_id::BAR);
+    }
+
+    // fall back to IN_PLAY if no other vector was appropriate
+    if (ret.empty())
+        ret.push_back(df::job_item_vector_id::IN_PLAY);
+    return ret;
+}
+
 bool Planner::registerTasks(PlannedBuilding & pb)
 {
     df::building * bld = pb.getBuilding();
@@ -599,22 +663,27 @@ bool Planner::registerTasks(PlannedBuilding & pb)
         debug("unexpected number of job items: want >0, got %d", num_job_items);
         return false;
     }
+    int32_t id = bld->id;
     for (int job_item_idx = 0; job_item_idx < num_job_items; ++job_item_idx)
     {
-        auto vector_id = df::job_item_vector_id::IN_PLAY;
         auto job_item = job_items[job_item_idx];
-        if (job_item->vector_id)
-          vector_id = job_item->vector_id;
         auto bucket = getBucket(*job_item, pb.getFilters());
-        for (int item_num = 0; item_num < job_item->quantity; ++item_num)
+        auto vector_ids = getVectorIds(job_item, global_settings);
+
+        // if there are multiple vector_ids, schedule duplicate tasks. after
+        // the correct number of items are matched, the extras will get popped
+        // as invalid
+        for (auto vector_id : vector_ids)
         {
-            int32_t id = bld->id;
-            tasks[vector_id][bucket].push(std::make_pair(id, job_item_idx));
-            debug("added task: %s/%s/%d,%d; "
-                  "%zu vector(s), %zu filter bucket(s), %zu task(s) in bucket",
-                  ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
-                  bucket.c_str(), id, job_item_idx, tasks.size(),
-                  tasks[vector_id].size(), tasks[vector_id][bucket].size());
+            for (int item_num = 0; item_num < job_item->quantity; ++item_num)
+            {
+                tasks[vector_id][bucket].push(std::make_pair(id, job_item_idx));
+                debug("added task: %s/%s/%d,%d; "
+                      "%zu vector(s), %zu filter bucket(s), %zu task(s) in bucket",
+                      ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
+                      bucket.c_str(), id, job_item_idx, tasks.size(),
+                      tasks[vector_id].size(), tasks[vector_id][bucket].size());
+            }
         }
     }
     return true;
@@ -801,98 +870,143 @@ void Planner::popInvalidTasks(std::queue<std::pair<int32_t, int>> & task_queue)
     }
 }
 
-void Planner::doCycle()
+void Planner::doVector(df::job_item_vector_id vector_id,
+       std::map<std::string, std::queue<std::pair<int32_t, int>>> & buckets)
 {
-    debug("running cycle for %zu registered buildings",
-          planned_buildings.size());
-    for (auto it = tasks.begin(); it != tasks.end();)
+    auto other_id = ENUM_ATTR(job_item_vector_id, other, vector_id);
+    auto item_vector = df::global::world->items.other[other_id];
+    debug("matching %zu item(s) in vector %s against %zu filter bucket(s)",
+          item_vector.size(),
+          ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
+          buckets.size());
+    for (auto item_it = item_vector.rbegin();
+         item_it != item_vector.rend();
+         ++item_it)
     {
-        auto & buckets = it->second;
-        auto other_id = ENUM_ATTR(job_item_vector_id, other, it->first);
-        auto item_vector = df::global::world->items.other[other_id];
-        debug("matching %zu item(s) in vector %s against %zu filter bucket(s)",
-              item_vector.size(),
-              ENUM_KEY_STR(job_item_vector_id, it->first).c_str(),
-              buckets.size());
-        for (auto item_it = item_vector.rbegin();
-             item_it != item_vector.rend();
-             ++item_it)
+        auto item = *item_it;
+        if (!itemPassesScreen(item))
+            continue;
+        for (auto bucket_it = buckets.begin(); bucket_it != buckets.end();)
         {
-            auto item = *item_it;
-            if (!itemPassesScreen(item))
-                continue;
-            for (auto bucket_it = buckets.begin(); bucket_it != buckets.end();)
+            auto & task_queue = bucket_it->second;
+            popInvalidTasks(task_queue);
+            if (task_queue.empty())
             {
-                auto & task_queue = bucket_it->second;
-                popInvalidTasks(task_queue);
+                debug("removing empty bucket: %s/%s; %zu bucket(s) left",
+                      ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
+                      bucket_it->first.c_str(),
+                      buckets.size() - 1);
+                bucket_it = buckets.erase(bucket_it);
+                continue;
+            }
+            auto & task = task_queue.front();
+            auto id = task.first;
+            auto & pb = planned_buildings.at(id);
+            auto building = pb.getBuilding();
+            auto job = building->jobs[0];
+            auto filter_idx = task.second;
+            if (matchesFilters(item, job->job_items[filter_idx],
+                    pb.getFilters()[filter_idx])
+               && DFHack::Job::attachJobItem(job, item,
+                        df::job_item_ref::Hauled, filter_idx))
+            {
+                MaterialInfo material;
+                material.decode(item);
+                ItemTypeInfo item_type;
+                item_type.decode(item);
+                debug("attached %s %s to filter %d for %s(%d): %s/%s",
+                      material.toString().c_str(),
+                      item_type.toString().c_str(),
+                      filter_idx,
+                      ENUM_KEY_STR(building_type, building->getType()).c_str(),
+                      id,
+                      ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
+                      bucket_it->first.c_str());
+                // keep quantity aligned with the actual number of remaining
+                // items so if buildingplan is turned off, the building will
+                // be completed with the correct number of items.
+                --job->job_items[filter_idx]->quantity;
+                task_queue.pop();
+                if (isJobReady(job))
+                {
+                    finalizeBuilding(building);
+                    unregisterBuilding(id);
+                }
                 if (task_queue.empty())
                 {
-                    debug("removing empty bucket: %s/%s; %zu bucket(s) left",
-                          ENUM_KEY_STR(job_item_vector_id, it->first).c_str(),
-                          bucket_it->first.c_str(),
-                          buckets.size() - 1);
-                    bucket_it = buckets.erase(bucket_it);
-                    continue;
+                    debug(
+                        "removing empty item bucket: %s/%s; %zu left",
+                        ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
+                        bucket_it->first.c_str(),
+                        buckets.size() - 1);
+                    buckets.erase(bucket_it);
                 }
-                auto & task = task_queue.front();
-                auto id = task.first;
-                auto & pb = planned_buildings.at(id);
-                auto building = pb.getBuilding();
-                auto job = building->jobs[0];
-                auto filter_idx = task.second;
-                if (matchesFilters(item, job->job_items[filter_idx],
-                        pb.getFilters()[filter_idx])
-                   && DFHack::Job::attachJobItem(job, item,
-                            df::job_item_ref::Hauled, filter_idx))
-                {
-                    MaterialInfo material;
-                    material.decode(item);
-                    ItemTypeInfo item_type;
-                    item_type.decode(item);
-                    debug("attached %s %s to filter %d for %s(%d): %s/%s",
-                          material.toString().c_str(),
-                          item_type.toString().c_str(),
-                          filter_idx,
-                          ENUM_KEY_STR(building_type, building->getType()).c_str(),
-                          id,
-                          ENUM_KEY_STR(job_item_vector_id, it->first).c_str(),
-                          bucket_it->first.c_str());
-                    // keep quantity aligned with the actual number of remaining
-                    // items so if buildingplan is turned off, the building will
-                    // be completed with the correct number of items.
-                    --job->job_items[filter_idx]->quantity;
-                    task_queue.pop();
-                    if (isJobReady(job))
-                    {
-                        finalizeBuilding(building);
-                        unregisterBuilding(id);
-                    }
-                    if (task_queue.empty())
-                    {
-                        debug(
-                            "removing empty item bucket: %s/%s; %zu left",
-                            ENUM_KEY_STR(job_item_vector_id, it->first).c_str(),
-                            bucket_it->first.c_str(),
-                            buckets.size() - 1);
-                        buckets.erase(bucket_it);
-                    }
-                    // we found a home for this item; no need to look further
-                    break;
-                }
-                ++bucket_it;
-            }
-            if (buckets.empty())
+                // we found a home for this item; no need to look further
                 break;
+            }
+            ++bucket_it;
         }
+        if (buckets.empty())
+            break;
+    }
+}
+
+struct VectorsToScanLast
+{
+    std::vector<df::job_item_vector_id> vectors;
+    VectorsToScanLast()
+    {
+        // order is important here. we want to match boulders before wood and
+        // everything before bars. blocks are not listed here since we'll have
+        // already scanned them when we did the first pass through the buckets.
+        vectors.push_back(df::job_item_vector_id::BOULDER);
+        vectors.push_back(df::job_item_vector_id::WOOD);
+        vectors.push_back(df::job_item_vector_id::BAR);
+    }
+};
+
+void Planner::doCycle()
+{
+    debug("running cycle for %zu registered building(s)",
+          planned_buildings.size());
+    static const VectorsToScanLast vectors_to_scan_last;
+    for (auto it = tasks.begin(); it != tasks.end();)
+    {
+        auto vector_id = it->first;
+        // we could make this a set, but it's only three elements
+        if (std::find(vectors_to_scan_last.vectors.begin(),
+                      vectors_to_scan_last.vectors.end(),
+                      vector_id) != vectors_to_scan_last.vectors.end())
+        {
+            ++it;
+            continue;
+        }
+
+        auto & buckets = it->second;
+        doVector(vector_id, buckets);
         if (buckets.empty())
         {
             debug("removing empty vector: %s; %zu vector(s) left",
-                  ENUM_KEY_STR(job_item_vector_id, it->first).c_str(),
+                  ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
                   tasks.size() - 1);
             it = tasks.erase(it);
         }
         else
             ++it;
+    }
+    for (auto vector_id : vectors_to_scan_last.vectors)
+    {
+        if (tasks.count(vector_id) == 0)
+            continue;
+        auto & buckets = tasks[vector_id];
+        doVector(vector_id, buckets);
+        if (buckets.empty())
+        {
+            debug("removing empty vector: %s; %zu vector(s) left",
+                  ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
+                  tasks.size() - 1);
+            tasks.erase(vector_id);
+        }
     }
     debug("cycle done; %zu registered building(s) left",
           planned_buildings.size());

@@ -1100,7 +1100,7 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
         // Allocation done, reset
         move_cursor(box_second);
 
-        // if we're using buildingplan, we nevef actually leave the placement
+        // if we're using buildingplan, we never actually leave the placement
         // screen, so there's no need to re-enter the screen
         revert_to_last_used_type = saved_revert_setting;
         if (!use_buildingplan && !revert_to_last_used_type)

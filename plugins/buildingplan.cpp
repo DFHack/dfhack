@@ -897,12 +897,19 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     return CR_OK;
 }
 
+static bool is_paused()
+{
+    return World::ReadPauseState() ||
+        ui->main.mode > df::ui_sidebar_mode::Squads ||
+        !strict_virtual_cast<df::viewscreen_dwarfmodest>(Gui::getCurViewscreen(true));
+}
+
 static bool cycle_requested = false;
 
 #define DAY_TICKS 1200
 DFhackCExport command_result plugin_onupdate(color_ostream &)
 {
-    if (Maps::IsValid() && !World::ReadPauseState()
+    if (Maps::IsValid() && !is_paused()
         && (cycle_requested || world->frame_counter % (DAY_TICKS/2) == 0))
     {
         planner.doCycle();

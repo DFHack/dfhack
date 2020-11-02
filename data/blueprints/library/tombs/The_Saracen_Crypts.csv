@@ -1,4 +1,5 @@
-#dig start(24;24) room for 513 corpses
+#dig start(24;25) room for 513 corpses
+# see an image of this blueprint at https://i.imgur.com/Kcjvx6R.png
 d, ,d, ,d, ,d, ,d, ,d, ,d, ,d, ,d, ,d,d,d,d,d,d,d,d,d,d,d, ,d, ,d, ,d, ,d, ,d, ,d, ,d, ,d, ,d,#
 d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d, , , , , , , , , ,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,#
 d, ,d, ,d, ,d, ,d, ,d, ,d, ,d, ,d, ,d, ,d, ,d, ,d, ,d, ,d, ,d, ,d, ,d, ,d, ,d, ,d, ,d, ,d, ,d,#

@@ -31,17 +31,20 @@ local function to_title_case(str)
     return str
 end
 
+local function get_filter(btype, subtype, custom, reverse_idx)
+    local filters = dfhack.buildings.getFiltersByType(
+        {}, btype, subtype, custom)
+    if not filters or reverse_idx < 0 or reverse_idx >= #filters then
+        error(string.format('invalid index: %d', reverse_idx))
+    end
+    return filters[#filters-reverse_idx]
+end
+
 -- returns a reasonable label for the item based on the qualities of the filter
 -- does not need the core suspended
 -- reverse_idx is 0-based and is expected to be counted from the *last* filter
 function get_item_label(btype, subtype, custom, reverse_idx)
-    local filters = dfhack.buildings.getFiltersByType(
-        {}, btype, subtype, custom)
-    if not filters then return 'No item' end
-    if reverse_idx < 0 or reverse_idx >= #filters then
-        return 'Invalid index'
-    end
-    local filter = filters[#filters-reverse_idx]
+    local filter = get_filter(btype, subtype, custom, reverse_idx)
     if filter.has_tool_use then
         return to_title_case(df.tool_uses[filter.has_tool_use])
     end
@@ -61,6 +64,21 @@ function get_item_label(btype, subtype, custom, reverse_idx)
         return to_title_case(df.job_item_vector_id[filter.vector_id])
     end
     return "Unknown";
+end
+
+-- returns whether the items matched by the specified filter can have a quality
+-- rating. This also conveniently indicates whether an item can be decorated.
+-- does not need the core suspended
+-- reverse_idx is 0-based and is expected to be counted from the *last* filter
+function item_can_be_improved(btype, subtype, custom, reverse_idx)
+    local filter = get_filter(btype, subtype, custom, reverse_idx)
+    if filter.flags2 and filter.flags2.building_material then
+        return false;
+    end
+    return filter.item_type ~= df.item_type.WOOD and
+            filter.item_type ~= df.item_type.BLOCKS and
+            filter.item_type ~= df.item_type.BAR and
+            filter.item_type ~= df.item_type.BOULDER
 end
 
 -- needs the core suspended

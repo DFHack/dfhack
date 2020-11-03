@@ -313,6 +313,28 @@ static std::string get_item_label(const BuildingTypeKey &key, int item_idx)
     return s;
 }
 
+static bool item_can_be_improved(const BuildingTypeKey &key, int item_idx)
+{
+    auto L = Lua::Core::State;
+    color_ostream_proxy out(Core::getInstance().getConsole());
+    Lua::StackUnwinder top(L);
+
+    if (!lua_checkstack(L, 5) ||
+        !Lua::PushModulePublic(
+            out, L, "plugins.buildingplan", "item_can_be_improved"))
+        return false;
+
+    Lua::Push(L, std::get<0>(key));
+    Lua::Push(L, std::get<1>(key));
+    Lua::Push(L, std::get<2>(key));
+    Lua::Push(L, item_idx);
+
+    if (!Lua::SafeCall(out, L, 4, 1))
+        return false;
+
+    return lua_toboolean(L, -1);
+}
+
 static bool construct_planned_building()
 {
     auto L = Lua::Core::State;
@@ -466,13 +488,15 @@ struct buildingplan_query_hook : public df::viewscreen_dwarfmodest
         OutputString(COLOR_WHITE, x, y, item_label.c_str(), true, left_margin + 1);
         OutputString(COLOR_WHITE, x, y, get_item_label(toBuildingTypeKey(bld), filter_idx).c_str(), true, left_margin);
         ++y;
-        OutputString(COLOR_BROWN, x, y, "Min Quality: ", false, left_margin);
-        OutputString(COLOR_BLUE, x, y, filter.getMinQuality(), true, left_margin);
-        OutputString(COLOR_BROWN, x, y, "Max Quality: ", false, left_margin);
-        OutputString(COLOR_BLUE, x, y, filter.getMaxQuality(), true, left_margin);
-
-        if (filter.getDecoratedOnly())
-            OutputString(COLOR_BLUE, x, y, "Decorated Only", true, left_margin);
+        if (item_can_be_improved(toBuildingTypeKey(bld), filter_idx))
+        {
+            OutputString(COLOR_BROWN, x, y, "Min Quality: ", false, left_margin);
+            OutputString(COLOR_BLUE, x, y, filter.getMinQuality(), true, left_margin);
+            OutputString(COLOR_BROWN, x, y, "Max Quality: ", false, left_margin);
+            OutputString(COLOR_BLUE, x, y, filter.getMaxQuality(), true, left_margin);
+            if (filter.getDecoratedOnly())
+                OutputString(COLOR_BLUE, x, y, "Decorated Only", true, left_margin);
+        }
 
         OutputString(COLOR_BROWN, x, y, "Materials:", true, left_margin);
         auto filters = filter.getMaterials();
@@ -594,20 +618,27 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
             return true;
         }
 
+
+
         if (input->count(interface_key::CUSTOM_SHIFT_M))
             Screen::show(dts::make_unique<ViewscreenChooseMaterial>(*filter), plugin_self);
-        else if (input->count(interface_key::CUSTOM_SHIFT_Q))
-            filter->decMinQuality();
-        else if (input->count(interface_key::CUSTOM_SHIFT_W))
-            filter->incMinQuality();
-        else if (input->count(interface_key::CUSTOM_SHIFT_A))
-            filter->decMaxQuality();
-        else if (input->count(interface_key::CUSTOM_SHIFT_S))
-            filter->incMaxQuality();
-        else if (input->count(interface_key::CUSTOM_SHIFT_D))
-            filter->toggleDecoratedOnly();
+
+        if (item_can_be_improved(key, filter_idx))
+        {
+            if (input->count(interface_key::CUSTOM_SHIFT_Q))
+                filter->decMinQuality();
+            else if (input->count(interface_key::CUSTOM_SHIFT_W))
+                filter->incMinQuality();
+            else if (input->count(interface_key::CUSTOM_SHIFT_A))
+                filter->decMaxQuality();
+            else if (input->count(interface_key::CUSTOM_SHIFT_S))
+                filter->incMaxQuality();
+            else if (input->count(interface_key::CUSTOM_SHIFT_D))
+                filter->toggleDecoratedOnly();
+        }
+
         // ctrl+Right
-        else if (input->count(interface_key::A_MOVE_E_DOWN) && hasNextFilter())
+        if (input->count(interface_key::A_MOVE_E_DOWN) && hasNextFilter())
         {
             ++filter;
             --filter_idx;
@@ -706,13 +737,16 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
         OutputString(COLOR_WHITE, x, y, title.c_str(), true, left_margin + 1);
         OutputString(COLOR_WHITE, x, y, get_item_label(key, filter_idx).c_str(), true, left_margin);
 
-        OutputHotkeyString(x, y, "Min Quality: ", "QW");
-        OutputString(COLOR_BROWN, x, y, filter->getMinQuality(), true, left_margin);
+        if (item_can_be_improved(key, filter_idx))
+        {
+            OutputHotkeyString(x, y, "Min Quality: ", "QW");
+            OutputString(COLOR_BROWN, x, y, filter->getMinQuality(), true, left_margin);
 
-        OutputHotkeyString(x, y, "Max Quality: ", "AS");
-        OutputString(COLOR_BROWN, x, y, filter->getMaxQuality(), true, left_margin);
+            OutputHotkeyString(x, y, "Max Quality: ", "AS");
+            OutputString(COLOR_BROWN, x, y, filter->getMaxQuality(), true, left_margin);
 
-        OutputToggleString(x, y, "Decorated Only", "D", filter->getDecoratedOnly(), true, left_margin);
+            OutputToggleString(x, y, "Decorated Only", "D", filter->getDecoratedOnly(), true, left_margin);
+        }
 
         OutputHotkeyString(x, y, "Material Filter:", "M", true, left_margin);
         auto filter_descriptions = filter->getMaterials();
@@ -897,12 +931,19 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     return CR_OK;
 }
 
+static bool is_paused()
+{
+    return World::ReadPauseState() ||
+        ui->main.mode > df::ui_sidebar_mode::Squads ||
+        !strict_virtual_cast<df::viewscreen_dwarfmodest>(Gui::getCurViewscreen(true));
+}
+
 static bool cycle_requested = false;
 
 #define DAY_TICKS 1200
 DFhackCExport command_result plugin_onupdate(color_ostream &)
 {
-    if (Maps::IsValid() && !World::ReadPauseState()
+    if (Maps::IsValid() && !is_paused()
         && (cycle_requested || world->frame_counter % (DAY_TICKS/2) == 0))
     {
         planner.doCycle();

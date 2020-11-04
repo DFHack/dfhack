@@ -911,25 +911,74 @@ IMPLEMENT_VMETHOD_INTERPOSE(buildingplan_query_hook, render);
 IMPLEMENT_VMETHOD_INTERPOSE(buildingplan_place_hook, render);
 IMPLEMENT_VMETHOD_INTERPOSE(buildingplan_room_hook, render);
 
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
+static void setSetting(std::string name, bool value);
+
+static bool isTrue(std::string val)
+{
+    return val == "on" || val == "true" || val == "y" || val == "yes";
+}
+
 static command_result buildingplan_cmd(color_ostream &out, vector <string> & parameters)
 {
-    if (!parameters.empty())
+    if (parameters.empty())
+        return CR_OK;
+
+    std::string cmd = toLower(parameters[0]);
+
+    if (cmd.size() >= 1 && cmd[0] == 'v')
     {
-        if (parameters.size() == 1 && toLower(parameters[0])[0] == 'v')
+        out << "buildingplan version: " << PLUGIN_VERSION << endl;
+    }
+    else if (parameters.size() >= 2 && cmd == "debug")
+    {
+        show_debugging = isTrue(toLower(parameters[1]));
+        out << "buildingplan debugging: " <<
+                ((show_debugging) ? "enabled" : "disabled") << endl;
+    }
+    else if (cmd == "set")
+    {
+        if (!is_enabled)
         {
-            out << "Building Plan" << endl << "Version: " << PLUGIN_VERSION << endl;
+            out << "ERROR: buildingplan must be enabled before you can read or "
+                << "set buildingplan global settings." << endl;
+            return CR_FAILURE;
         }
-        else if (parameters.size() == 2 && toLower(parameters[0]) == "debug")
+
+        if (!DFHack::Core::getInstance().isMapLoaded())
         {
-            show_debugging = (toLower(parameters[1]) == "on");
-            out << "Debugging " << ((show_debugging) ? "enabled" : "disabled") << endl;
+            out << "ERROR: A map must be loaded before you can read or set "
+                << "buildingplan global settings. Try adding your "
+                << "'buildingplan set' commands to the onMapLoad.init file."
+                << endl;
+            return CR_FAILURE;
+        }
+
+        if (parameters.size() == 1)
+        {
+            // display current settings
+            out << "active settings:" << endl;
+            for (auto & setting : planner.getGlobalSettings())
+            {
+                out << "  " << setting.first << " = "
+                    << (setting.second ? "true" : "false") << endl;
+            }
+
+            out << "  quickfort_mode = "
+                << (quickfort_mode ? "true" : "false") << endl;
+        }
+        else if (parameters.size() == 3)
+        {
+            // set a setting
+            std::string setting = toLower(parameters[1]);
+            bool val = isTrue(toLower(parameters[2]));
+            setSetting(setting, val);
         }
     }
 
     return CR_OK;
 }
-
-DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 {

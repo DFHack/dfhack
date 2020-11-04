@@ -21,151 +21,149 @@
 
 -- based on https://github.com/LuaDist/alt-getopt/blob/master/alt_getopt.lua
 -- MIT licence
--- modified to support non-options and to not call os.exit()
--- intended to be used via utils.processArgs2()
+-- modified to support aggregation of non-options and to call qerror instead of
+-- os.exit() on error. can be used directly or via the utils.processArgs2()
+-- wrapper.
 
-local _ENV = mkmodule('alt_getopt')
+-- sh_opts should be in standard getopt format: a string of letters that
+-- represent options, each followed by a colon if that option takes an argument.
+-- e.g.: 'ak:hv' has three flags (options with no arguments): 'a', 'h', and 'v'
+-- and one option that takes an argument: 'k'.
+--
+-- Options passed to the module to parse can be in any of the following formats:
+--   -kVALUE, -k VALUE, --key=VALUE, --key VALUE
+--   -abcd is equivalent to -a -b -c -d if none of them accept arguments.
+--   -abckVALUE and -abck VALUE are also acceptable (where k is the only option
+--      in the string that takes a value).
 
-local function convert_short2long (opts)
-   local i = 1
-   local len = #opts
-   local ret = {}
+local _ENV = mkmodule('3rdparty.alt_getopt')
 
-   for short_opt, accept_arg in opts:gmatch("(%w)(:?)") do
-      ret[short_opt]=#accept_arg
-   end
+local function get_opt_map(opts)
+    local i = 1
+    local len = #opts
+    local options = {}
 
-   return ret
+    for short_opt, accept_arg in opts:gmatch('(%w)(:?)') do
+        options[short_opt] = #accept_arg
+    end
+
+    return options
 end
 
-local function exit_with_error (msg, exit_status)
-   io.stderr:write (msg)
-   os.exit (exit_status)
+local function err_unknown_opt(opt)
+    qerror(string.format('Unknown option "-%s%s"', #opt > 1 and '-' or '', opt))
 end
 
-local function err_unknown_opt (opt)
-   exit_with_error ("Unknown option `-" ..
-		    (#opt > 1 and "-" or "") .. opt .. "'\n", 1)
+-- resolve aliases into their canonical forms
+local function canonicalize(options, opt)
+    if not options[opt] then
+        err_unknown_opt(opt)
+    end
+
+    while type(options[opt]) == 'string' do
+        opt = options[opt]
+
+        if not options[opt] then
+             err_unknown_opt(opt)
+        end
+    end
+
+    if type(options[opt]) ~= 'number' then
+        qerror(string.format(
+                'Option "%s" resolves to non-number for has_arg flag', opt))
+    end
+
+    return opt
 end
 
-local function canonize (options, opt)
-   if not options [opt] then
-      err_unknown_opt (opt)
-   end
-
-   while type (options [opt]) == "string" do
-      opt = options [opt]
-
-      if not options [opt] then
-	 err_unknown_opt (opt)
-      end
-   end
-
-   return opt
+local function has_arg(options, opt)
+    return options[canonicalize(options, opt)] == 1
 end
 
-function get_ordered_opts (arg, sh_opts, long_opts)
-   local i      = 1
-   local count  = 1
-   local opts   = {}
-   local optarg = {}
+-- returns vectors for opts, optargs, and nonoptions
+function get_ordered_opts(args, sh_opts, long_opts)
+    local optind, count, opts, optargs, nonoptions = 1, 1, {}, {}, {}
 
-   local options = convert_short2long (sh_opts)
-   for k,v in pairs (long_opts) do
-      options [k] = v
-   end
+    local options = get_opt_map(sh_opts)
+    for k,v in pairs(long_opts) do
+        options[k] = v
+    end
 
-   while i <= #arg do
-      local a = arg [i]
-
-      if a == "--" then
-	 i = i + 1
-	 break
-
-      elseif a == "-" then
-	 break
-
-      elseif a:sub (1, 2) == "--" then
-	 local pos = a:find ("=", 1, true)
-
-	 if pos then
-	    local opt = a:sub (3, pos-1)
-
-	    opt = canonize (options, opt)
-
-	    if options [opt] == 0 then
-	       exit_with_error ("Bad usage of option `" .. a .. "'\n", 1)
-	    end
-
-	    optarg [count] = a:sub (pos+1)
-	    opts [count] = opt
-	 else
-	    local opt = a:sub (3)
-
-	    opt = canonize (options, opt)
-
-	    if options [opt] == 0 then
-	       opts [count] = opt
-	    else
-	       if i == #arg then
-		  exit_with_error ("Missed value for option `" .. a .. "'\n", 1)
-	       end
-
-	       optarg [count] = arg [i+1]
-	       opts [count] = opt
-	       i = i + 1
-	    end
-	 end
-	 count = count + 1
-
-      elseif a:sub (1, 1) == "-" then
-	 local j
-	 for j=2,a:len () do
-	    local opt = canonize (options, a:sub (j, j))
-
-	    if options [opt] == 0 then
-	       opts [count] = opt
-	       count = count + 1
-	    elseif a:len () == j then
-	       if i == #arg then
-		  exit_with_error ("Missed value for option `-" .. opt .. "'\n", 1)
-	       end
-
-	       optarg [count] = arg [i+1]
-	       opts [count] = opt
-	       i = i + 1
-	       count = count + 1
-	       break
-	    else
-	       optarg [count] = a:sub (j+1)
-	       opts [count] = opt
-	       count = count + 1
-	       break
-	    end
-	 end
-      else
-	 break
-      end
-
-      i = i + 1
-   end
-
-   return opts,i,optarg
+    while optind <= #args do
+        local a = args[optind]
+        if a == '--' then
+            optind = optind + 1
+        elseif a:sub(1, 2) == '--' then
+            local pos = a:find('=', 1, true)
+            if pos then
+                local opt = a:sub(3, pos-1)
+                if not has_arg(options, opt) then
+                    qerror(string.format('Bad usage of option "%s"', a))
+                end
+                opts[count] = opt
+                optargs[count] = a:sub(pos+1)
+            else
+                local opt = a:sub(3)
+                opts[count] = opt
+                if has_arg(options, opt) then
+                    if i == #args then
+                        qerror(string.format(
+                                'Missing value for option "%s"', a))
+                    end
+                    optargs[count] = args[optind+1]
+                    optind = optind + 1
+                end
+            end
+            count = count + 1
+        elseif a:sub(1, 1) == '-' then
+            local j
+            for j=2,#a do
+                local opt = canonicalize(options, a:sub(j, j))
+                if not has_arg(options, opt) then
+                    opts[count] = opt
+                    count = count + 1
+                elseif j == #a then
+                    if optind == #args then
+                        qerror(string.format(
+                                'Missing value for option "-%s"', opt))
+                    end
+                    opts[count] = opt
+                    optargs[count] = args[optind+1]
+                    optind = optind + 1
+                    count = count + 1
+                else
+                    opts[count] = opt
+                    optargs[count] = a:sub(j+1)
+                    count = count + 1
+                    break
+                end
+            end
+        else
+            table.insert(nonoptions, args[optind])
+        end
+        optind = optind + 1
+    end
+    for i=optind,#args do
+        table.insert(nonoptions, args[i])
+    end
+    return opts, optargs, nonoptions
 end
 
-function get_opts (arg, sh_opts, long_opts)
-   local ret = {}
+-- returns a map of options to their optargs (or 1 if the option doesn't take an
+-- argument), and a vector for nonoptions
+function get_opts(args, sh_opts, long_opts)
+    local ret = {}
 
-   local opts,optind,optarg = get_ordered_opts (arg, sh_opts, long_opts)
-   for i,v in ipairs (opts) do
-      if optarg [i] then
-	 ret [v] = optarg [i]
-      else
-	 ret [v] = 1
-      end
-   end
+    local opts,optargs,nonoptions = get_ordered_opts(args, sh_opts, long_opts)
+    for i,v in ipairs(opts) do
+        if optarg[i] then
+            ret[v] = optarg[i]
+        else
+            ret[v] = 1
+        end
+    end
 
-   return ret,optind
+    return ret, nonoptions
 end
 
 return _ENV

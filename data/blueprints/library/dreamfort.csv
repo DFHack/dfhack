@@ -11,7 +11,7 @@ It can be difficult applying a set of blueprints that you did not write yourself
 - The suites level has fancy rooms for your nobles.
 - The apartments level(s) has small but well-furnished bedrooms for your other dwarves.
 ""
-"Run each level's ""help"" blueprint (e.g. /surface_help) for more details."
+"Run each level's ""help"" blueprint (e.g. /surface_help) for more details, or run /checklist for a list of all commands you need to run, in order."
 ""
 "Dreamfort has a central staircase-based design. For all Dreamfort levels, place the cursor on the center staircase tile when you apply the blueprints. The first surface blueprint will designate a column of staircases that you can use as a guide."
 ""
@@ -25,6 +25,50 @@ It can be difficult applying a set of blueprints that you did not write yourself
 You are welcome to copy those spreadsheets and make your own modifications!
 "#dreamfort.csv is generated with the following command:
   for fname in dreamfort*.xlsx; do xlsx2csv -a -p '' $fname; done | sed 's/,*$//'"
+#notes label(checklist)
+Here is the recommended order for Dreamfort commands.
+""
+-- Find a good starting spot on the surface --
+quickfort run library/dreamfort.csv -n /surface4
+quickfort undo library/dreamfort.csv -n /surface4
+""
+"-- Surface, industry, and farming --"
+quickfort run library/dreamfort.csv -n /surface1
+quickfort run library/dreamfort.csv -n /industry1
+quickfort run library/dreamfort.csv -n /surface2
+quickfort orders library/dreamfort.csv -n /industry2
+quickfort orders library/dreamfort.csv -n /farming2
+quickfort orders library/dreamfort.csv -n /surface4
+quickfort orders library/dreamfort.csv -n /surface5
+quickfort orders library/dreamfort.csv -n /surface6
+quickfort run library/dreamfort.csv -n /surface3
+quickfort run library/dreamfort.csv -n /industry2
+quickfort run library/dreamfort.csv -n /farming1
+quickfort run library/dreamfort.csv -n /surface4
+quickfort run library/dreamfort.csv -n /farming2
+quickfort run library/dreamfort.csv -n /farming3
+orders import automation
+quickfort run library/dreamfort.csv -n /surface5
+quickfort run library/dreamfort.csv -n /surface6
+""
+-- Everything else -- 
+quickfort orders library/dreamfort.csv -n /services2
+quickfort orders library/dreamfort.csv -n /guildhall2
+quickfort orders library/dreamfort.csv -n /suites2
+quickfort run library/dreamfort.csv -n /services1
+quickfort run library/dreamfort.csv -n /services2
+quickfort run library/dreamfort.csv -n /services3
+quickfort run library/dreamfort.csv -n /guildhall1
+quickfort run library/dreamfort.csv -n /guildhall2
+quickfort run library/dreamfort.csv -n /suites1
+quickfort run library/dreamfort.csv -n /suites2
+quickfort run library/dreamfort.csv -n /apartments1_stack
+""
+-- Repeat for each apartments level --
+quickfort orders library/dreamfort.csv -n /apartments2
+quickfort run library/dreamfort.csv -n /apartments2
+quickfort run library/dreamfort.csv -n /apartments3
+burial -pets
 #notes label(surface_help)
 "Sets up a large, protected entrance to your fort in a flat area on the surface."
 ""
@@ -1220,7 +1264,7 @@ Industry Walkthrough:
 ""
 "4) If you want to automatically melt goblinite and other low-quality weapons and armor, mark the south-east stockpiles for auto-melt."
 ""
-"5) Run ""orders import automation"" to use the provided automation.json to take care of your fort's basic needs."
+"5) Run ""orders import automation"" to use the provided automation.json to take care of your fort's basic needs, such as food, booze, military supplies, and raw material processing."
 "#dig label(industry1) start(18; 18; staircase center) message(This would be a good time to queue manager orders for /industry2. Once the area is dug out, continue with /industry2.)"
 
 

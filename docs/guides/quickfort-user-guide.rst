@@ -502,7 +502,12 @@ meeting area all at once:
    #zone main pasture and picnic area
    nmg(10x10)
 
-The order of the individual letters doesn't matter.
+The order of the individual letters doesn't matter. Note that "custom"
+(:kbd:`c`) stockpiles cannot be declared in a blueprint since what would
+get created would depend on what happens to be set in the "custom stockpile
+settings" in your game. Instead, place stockpiles using the keys that
+represent the types you want to store and then use a ``#query`` blueprint to
+customize them.
 
 Detailed configuration for zones, such as the pit/pond toggle, can also be set
 by mimicking the hotkeys used to set them. Note that gather flags default to

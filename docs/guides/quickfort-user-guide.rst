@@ -1015,6 +1015,11 @@ a big fort, so we're planning for a lot of bedrooms):
 Note that for blueprints without an explicit label, we still need to address
 them by their auto-generated numerical label.
 
+It's worth calling out that ``#meta`` blueprints can only refer to blueprints
+that are defined in the same file. This means that all blueprints that a
+``#meta`` blueprint needs to script must be in sheets within the same
+.xlsx spreadsheet or concatenated into the same .csv file.
+
 You can then hide the blueprints that you now manage with the ``#meta``-mode
 blueprint from ``quickfort list`` by adding a ``hidden()`` marker to their
 modelines. That way the output of ``quickfort list`` won't be cluttered by

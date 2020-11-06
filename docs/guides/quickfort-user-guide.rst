@@ -897,13 +897,13 @@ Meta blueprints
 Meta blueprints are blueprints that script a series of other blueprints. Many
 blueprint packages follow this pattern:
 
--  Apply dig blueprint to designate dig areas
--  Wait for miners to dig
--  **Apply build buildprint** to designate buildings
--  **Apply place buildprint** to designate stockpiles
--  **Apply query blueprint** to configure stockpiles
--  Wait for buildings to get built
--  Apply a different query blueprint to configure rooms
+1.  Apply dig blueprint to designate dig areas
+#.  Wait for miners to dig
+#.  **Apply build buildprint** to designate buildings
+#.  **Apply place buildprint** to designate stockpiles
+#.  **Apply query blueprint** to configure stockpiles
+#.  Wait for buildings to get built
+#.  Apply a different query blueprint to configure rooms
 
 Those three "apply"s in the middle might as well get done in one command instead
 of three. A meta blueprint can encode that sequence. A meta blueprint refers to
@@ -947,12 +947,12 @@ blueprints into one:
 
 Now your sequence is shortened to:
 
--  Apply dig blueprint to designate dig areas
--  Wait for miners to dig
--  **Apply meta buildprint** to build buildings and designate/configure
-   stockpiles
--  Wait for buildings to get built
--  Apply the final query blueprint to configure the room
+1.  Apply dig blueprint to designate dig areas
+#.  Wait for miners to dig
+#.  **Apply meta buildprint** to build buildings and designate/configure
+    stockpiles
+#.  Wait for buildings to get built
+#.  Apply the final query blueprint to configure the room
 
 You can use meta blueprints to lay out your fortress at a larger scale as well.
 The ``#<`` and ``#>`` notation is valid in meta blueprints, so you can, for

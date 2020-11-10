@@ -454,9 +454,55 @@ Other init files
   directory, will be run when any world or that save is loaded.
 
 
+.. _dfhack-config:
+
+Configuration Files
+===================
+
+Some DFHack settings can be changed by modifying files in the ``dfhack-config``
+folder (which is in the DF folder). The default versions of these files, if they
+exist, are in ``dfhack-config/default`` and are installed when DFHack starts if
+necessary.
+
+.. _script-paths:
+
+Script paths
+------------
+
+Script paths are folders that DFHack searches to find a script when a command is
+run. By default, the following folders are searched, in order (relative to the
+root DF folder):
+
+1. :file:`data/save/{<region folder>}/raw/scripts` (only if a save is loaded)
+2. :file:`raw/scripts`
+3. :file:`hack/scripts`
+
+For example, if ``teleport`` is run, these folders are searched in order for
+``teleport.lua`` or ``teleport.rb``, and the first matching file is run.
+
+Script paths can be added by modifying :file:`dfhack-config/script-paths.txt`.
+Each line should start with one of these characters:
+
+- ``+``: adds a script path that is searched *before* the default paths (above)
+- ``-``: adds a script path that is searched *after* the default paths
+- ``#``: a comment (the line is ignored)
+
+Paths can be absolute or relative - relative paths are interpreted relative to
+the root DF folder.
+
+.. admonition:: Tip
+
+    When developing scripts in the :source:scripts:`dfhack/scripts repo <>`,
+    it may be useful to add the path to your local copy of the repo with ``+``.
+    This will allow you to make changes in the repo and have them take effect
+    immediately, without needing to re-install or copy scripts over manually.
+
+
+Script paths can also be modified programmatically through the `Lua API <lua-api-internal>`.
+
 .. _env-vars:
 
-Environment variables
+Environment Variables
 =====================
 
 DFHack's behavior can be adjusted with some environment variables. For example,

@@ -2213,6 +2213,8 @@ Console API
   Flushes all output to the console. This can be useful when printing text that
   does not end in a newline but should still be displayed.
 
+.. _lua-api-internal:
+
 Internal API
 ------------
 
@@ -2311,7 +2313,7 @@ and are only documented here for completeness:
 
 * ``dfhack.internal.addScriptPath(path, search_before)``
 
-  Adds ``path`` to the list of paths searched for scripts (both in Lua and Ruby).
+  Registers ``path`` as a `script path <script-paths>`.
   If ``search_before`` is passed and ``true``, the path will be searched before
   the default paths (e.g. ``raw/scripts``, ``hack/scripts``); otherwise, it will
   be searched after.
@@ -2321,17 +2323,18 @@ and are only documented here for completeness:
 
 * ``dfhack.internal.removeScriptPath(path)``
 
-  Removes ``path`` from the script search paths and returns ``true`` if successful.
+  Removes ``path`` from the list of `script paths <script-paths>` and returns
+  ``true`` if successful.
 
 * ``dfhack.internal.getScriptPaths()``
 
-  Returns the list of script paths in the order they are searched, including defaults.
-  (This can change if a world is loaded.)
+  Returns the list of `script paths <script-paths>` in the order they are
+  searched, including defaults. (This can change if a world is loaded.)
 
 * ``dfhack.internal.findScript(name)``
 
-  Searches script paths for the script ``name`` and returns the path of the first
-  file found, or ``nil`` on failure.
+  Searches `script paths <script-paths>` for the script ``name`` and returns the
+  path of the first file found, or ``nil`` on failure.
 
   .. note::
     This requires an extension to be specified (``.lua`` or ``.rb``) - use
@@ -4280,35 +4283,54 @@ Scripts
 .. contents::
    :local:
 
-Any files with the .lua extension placed into :file:`hack/scripts/*`
-are automatically used by the DFHack core as commands. The
-matching command name consists of the name of the file without
-the extension. First DFHack searches for the script in the :file:`<save_folder>/raw/scripts/` folder. If it is not found there, it searches in the :file:`<DF>/raw/scripts/` folder. If it is not there, it searches in
-:file:`<DF>/hack/scripts/`. If it is not there, it gives up.
+Any files with the ``.lua`` extension placed into the :file:`hack/scripts` folder
+are automatically made avaiable as DFHack commands. The command corresponding to
+a script is simply the script's filename, relative to the scripts folder, with
+the extension omitted. For example:
 
-If the first line of the script is a one-line comment, it is
-used by the built-in ``ls`` and ``help`` commands.
-Such a comment is required for every script in the official DFHack repository.
+* :file:`hack/scripts/add-thought.lua` is invoked as ``add-thought``
+* :file:`hack/scripts/gui/teleport.lua` is invoked as ``gui/teleport``
 
 .. note::
-    Scripts placed in subdirectories still can be accessed, but
-    do not clutter the `ls` command list (unless ``ls -a``; thus it is preferred
-    for obscure developer-oriented scripts and scripts used by tools.
-    When calling such scripts, always use '/' as the separator for
-    directories, e.g. ``devel/lua-example``.
+    Scripts placed in subdirectories can be run as described above, but are not
+    listed by the `ls` command unless ``-a`` is specified. In general, scripts
+    should be placed in subfolders in the following situations:
 
-Scripts are re-read from disk if they have changed since the last time they were read.
-Global variable values persist in memory between calls, unless the file has changed.
-Every script gets its own separate environment for global
-variables.
+    * ``devel``: scripts that are intended exclusively for DFHack development,
+      including examples, or scripts that are experimental and unstable
+    * ``fix``: fixes for specific DF issues
+    * ``gui``: GUI front-ends for existing tools (for example, see the
+      relationship between `teleport` and `gui/teleport`)
+    * ``modtools``: scripts that are intended to be run exclusively as part of
+      mods, not directly by end-users (as a rule of thumb: if someone other than
+      a mod developer would want to run a script from the console, it should
+      not be placed in this folder)
 
-Arguments are passed in to the scripts via the **...** built-in
-quasi-variable; when the script is called by the DFHack core,
-they are all guaranteed to be non-nil strings.
+Scripts can also be placed in other folders - by default, these include
+:file:`raw/scripts` and :file:`data/save/{region}/raw/scripts`, but additional
+folders can be added (for example, a copy of the
+:source:scripts:`scripts repository <>` for local development). See
+`script-paths` for more information on how to configure this behavior.
 
-DFHack core invokes the scripts in the `core context <lua-core-context>`;
-however it is possible to call them from any lua code (including
-from other scripts) in any context, via the same function the core uses:
+If the first line of the script is a one-line comment (starting with ``--``),
+the content of the comment is used by the built-in ``ls`` and ``help`` commands.
+Such a comment is required for every script in the official DFHack repository.
+
+Scripts are read from disk when run for the first time, or if they have changed
+since the last time they were run.
+
+Each script has an isolated environment where global variables set by the script
+are stored. Values of globals persist across script runs in the same DF session.
+See `devel/lua-example` for an example of this behavior. Note that local
+variables do *not* persist.
+
+Arguments are passed in to the scripts via the ``...`` built-in quasi-variable;
+when the script is called by the DFHack core, they are all guaranteed to be
+non-nil strings.
+
+DFHack invokes the scripts in the `core context <lua-core-context>`; however it
+is possible to call them from any lua code (including from other scripts) in any
+context, via the same function the core uses:
 
 * ``dfhack.run_script(name[,args...])``
 

@@ -505,9 +505,9 @@ struct buildingplan_query_hook : public df::viewscreen_dwarfmodest
 
         ++y;
         if (hasPrevFilter())
-            OutputHotkeyString(x, y, "Prev Item", "Ctrl+Left", true, left_margin);
+            OutputHotkeyString(x, y, "Prev Item", "Ctrl+Left", true, left_margin, COLOR_WHITE, COLOR_LIGHTRED);
         if (hasNextFilter())
-            OutputHotkeyString(x, y, "Next Item", "Ctrl+Right", true, left_margin);
+            OutputHotkeyString(x, y, "Next Item", "Ctrl+Right", true, left_margin, COLOR_WHITE, COLOR_LIGHTRED);
     }
 };
 
@@ -562,7 +562,7 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
             show_help = false;
             return false;
         }
-        
+
         initStatics();
 
         if (in_dummy_screen)
@@ -724,8 +724,10 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
             OutputString(COLOR_WHITE, x, y, "Use Shift-Keys here", true, left_margin);
         }
 
-        OutputToggleString(x, y, "Planning Mode", "P", planmode_enabled[key], true, left_margin);
-        OutputHotkeyString(x, y, "Global Settings", "G", true, left_margin);
+        OutputToggleString(x, y, "Planning Mode", interface_key::CUSTOM_SHIFT_P,
+            planmode_enabled[key], true, left_margin, COLOR_WHITE, COLOR_LIGHTRED);
+        OutputHotkeyString(x, y, "Global Settings", interface_key::CUSTOM_SHIFT_G,
+            true, left_margin, COLOR_WHITE, COLOR_LIGHTRED);
 
         if (!is_planmode_enabled(key))
             return;
@@ -739,16 +741,18 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
 
         if (item_can_be_improved(key, filter_idx))
         {
-            OutputHotkeyString(x, y, "Min Quality: ", "QW");
+            OutputHotkeyString(x, y, "Min Quality: ", "QW", false, 0, COLOR_WHITE, COLOR_LIGHTRED);
             OutputString(COLOR_BROWN, x, y, filter->getMinQuality(), true, left_margin);
 
-            OutputHotkeyString(x, y, "Max Quality: ", "AS");
+            OutputHotkeyString(x, y, "Max Quality: ", "AS", false, 0, COLOR_WHITE, COLOR_LIGHTRED);
             OutputString(COLOR_BROWN, x, y, filter->getMaxQuality(), true, left_margin);
 
-            OutputToggleString(x, y, "Decorated Only", "D", filter->getDecoratedOnly(), true, left_margin);
+            OutputToggleString(x, y, "Decorated Only", interface_key::CUSTOM_SHIFT_D,
+                filter->getDecoratedOnly(), true, left_margin, COLOR_WHITE, COLOR_LIGHTRED);
         }
 
-        OutputHotkeyString(x, y, "Material Filter:", "M", true, left_margin);
+        OutputHotkeyString(x, y, "Material Filter:", interface_key::CUSTOM_SHIFT_M, true,
+            left_margin, COLOR_WHITE, COLOR_LIGHTRED);
         auto filter_descriptions = filter->getMaterials();
         for (auto it = filter_descriptions.begin();
              it != filter_descriptions.end(); ++it)
@@ -756,9 +760,11 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
 
         y += 2;
         if (hasPrevFilter())
-            OutputHotkeyString(x, y, "Prev Item", "Ctrl+Left", true, left_margin);
+            OutputHotkeyString(x, y, "Prev Item", "Ctrl+Left", true,
+                left_margin, COLOR_WHITE, COLOR_LIGHTRED);
         if (hasNextFilter())
-            OutputHotkeyString(x, y, "Next Item", "Ctrl+Right", true, left_margin);
+            OutputHotkeyString(x, y, "Next Item", "Ctrl+Right", true,
+                left_margin, COLOR_WHITE, COLOR_LIGHTRED);
     }
 };
 

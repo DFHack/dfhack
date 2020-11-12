@@ -8,6 +8,7 @@
 #include "modules/Maps.h"
 #include "modules/World.h"
 
+#include "Core.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
 
@@ -927,7 +928,8 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 
     if (enable != is_enabled)
     {
-        planner.reset();
+        if (DFHack::Core::getInstance().isMapLoaded())
+            planner.reset();
 
         if (!INTERPOSE_HOOK(buildingplan_query_hook, feed).apply(enable) ||
             !INTERPOSE_HOOK(buildingplan_place_hook, feed).apply(enable) ||

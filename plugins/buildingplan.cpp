@@ -431,7 +431,7 @@ struct buildingplan_query_hook : public df::viewscreen_dwarfmodest
 
     bool handleInput(set<df::interface_key> *input)
     {
-        if (!isInPlannedBuildingQueryMode())
+        if (!isInPlannedBuildingQueryMode() || Gui::inRenameBuilding())
             return false;
 
         initStatics();

@@ -17,10 +17,6 @@
 #
 # Aliases that don't fit into those two categories have comments explaining
 # their usage.
-#
-# There is also a non-alphanumeric alias built into the code for the common
-# shorthand for "make room":
-#   r+   expands to r+&
 
 
 ########################################
@@ -40,6 +36,9 @@ give10up: {give move={Up 10}}
 give10down: {give move={Down 10}}
 give10left: {give move={Left 10}}
 give10right: {give move={Right 10}}
+
+# usage example: {givename name="myname"}
+givename: {Ctrl}n{name}&
 
 # use to toggle a sequence of stockpile options. for example: {togglesequence 5}
 togglesequence: &{Down}

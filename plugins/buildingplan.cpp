@@ -457,6 +457,11 @@ struct buildingplan_query_hook : public df::viewscreen_dwarfmodest
         }
     }
 
+    static void invalidateStatics()
+    {
+        bld = NULL;
+    }
+
     bool handleInput(set<df::interface_key> *input)
     {
         if (!isInPlannedBuildingQueryMode() || Gui::inRenameBuilding())
@@ -581,6 +586,11 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
             filter_count = wrapper.get().size();
             filter_idx = filter_count - 1;
         }
+    }
+
+    static void invalidateStatics()
+    {
+        key = BuildingTypeKey();
     }
 
     bool handleInput(set<df::interface_key> *input)
@@ -959,6 +969,8 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 {
     switch (event) {
     case SC_MAP_LOADED:
+        buildingplan_place_hook::invalidateStatics();
+        buildingplan_query_hook::invalidateStatics();
         planner.reset();
         roomMonitor.reset(out);
         break;

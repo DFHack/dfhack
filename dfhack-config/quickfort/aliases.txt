@@ -95,8 +95,12 @@
 #   !   expands to {Ctrl}
 #   ^   expands to {ESC}
 #
+# There is also a non-standard alias built into the code for the common
+# shorthand for "make room":
+#   r+  expands to r+&
+#
 # If you need literal verisons of the shorthand characters, surround them in
-# curly brackets, for example: "{~}"
+# curly brackets, for example: "{!}"
 #
 #
 # Add your custom aliases here:

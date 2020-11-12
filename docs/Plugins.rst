@@ -37,7 +37,9 @@ For more information, see `the full Stonesense README <stonesense>`.
 
 blueprint
 =========
-Exports a portion of your fortress into QuickFort style blueprint files.::
+Exports a portion of your fortress into QuickFort style blueprint files.
+
+Usage::
 
     blueprint <x> <y> <z> <name> [dig] [build] [place] [query]
 
@@ -117,24 +119,21 @@ A tool for checking how many tiles contain flowing liquids. If you suspect that
 your magma sea leaks into HFS, you can use this tool to be sure without
 revealing the map.
 
-.. _pathable:
-
-pathable
-========
-
-This plugin implements the back end of the `gui/pathable` script. It exports a
-single Lua function, in ``hack/lua/plugins/pathable.lua``:
-
-* ``paintScreen(cursor[,skip_unrevealed])``: Paint each visible of the screen
-  green or red, depending on whether it can be pathed to from the tile at
-  ``cursor``. If ``skip_unrevealed`` is specified and true, do not draw
-  unrevealed tiles.
-
 .. _probe:
 
 probe
 =====
-Can be used to determine tile properties like temperature.
+
+This plugin provides multiple commands that print low-level properties of the
+selected objects.
+
+* ``probe``: prints some properties of the tile selected with :kbd:`k`. Some of
+  these properties can be passed into `tiletypes`.
+* ``cprobe``: prints some properties of the unit selected with :kbd:`v`, as well
+  as the IDs of any worn items. `gui/gm-unit` and `gui/gm-editor` are more
+  complete in-game alternatives.
+* ``bprobe``: prints some properties of the building selected with :kbd:`q` or
+  :kbd:`t`. `gui/gm-editor` is a more complete in-game alternative.
 
 .. _prospect:
 .. _prospector:
@@ -706,14 +705,44 @@ enabled materials, you should be able to place complex constructions more conven
 buildingplan
 ============
 When active (via ``enable buildingplan``), this plugin adds a planning mode for
-furniture placement.  You can then place furniture and other buildings before
-the required materials are available, and the job will be unsuspended when
-the item is created.
+building placement. You can then place furniture, constructions, and other buildings
+before the required materials are available, and they will be created in a suspended
+state. Buildingplan will periodically scan for appropriate items, and the jobs will
+be unsuspended when the items are available.
 
-Very useful when combined with `workflow` - you can set a constraint
+This is very useful when combined with `workflow` - you can set a constraint
 to always have one or two doors/beds/tables/chairs/etc available, and place
-as many as you like.  The plugins then take over and fulfill the orders,
+as many as you like. The plugins then take over and fulfill the orders,
 with minimal space dedicated to stockpiles.
+
+Item filtering
+--------------
+
+While placing a building, you can set filters for what materials you want the building made
+out of, what quality you want the component items to be, and whether you want the items to
+be decorated.
+
+If a building type takes more than one item to construct, use
+:kbd:`Ctrl`:kbd:`Left` and :kbd:`Ctrl`:kbd:`Right` to select the item that you
+want to set filters for. Any filters that you set will be used for all buildings
+of the selected type from that point onward (until you set a new filter or clear
+the current one).
+
+For example, you can be sure that all your constructed walls are the same color by setting
+a filter to accept only certain types of stone.
+
+Quickfort mode
+--------------
+
+If you use the external Python Quickfort to apply building blueprints instead of the native
+DFHack `quickfort` script, you must enable Quickfort mode. This temporarily enables
+buildingplan for all building types and adds an extra blank screen after every building
+placement. This "dummy" screen is needed for Python Quickfort to interact successfully with
+Dwarf Fortress.
+
+Note that Quickfort mode is only for compatibility with the legacy Python Quickfort. The
+DFHack `quickfort` script does not need Quickfort mode to be enabled. The `quickfort` script
+will successfully integrate with buildingplan as long as the buildingplan plugin is enabled.
 
 .. _confirm:
 
@@ -784,6 +813,7 @@ Adds a :kbd:`q` menu for track stops, which is completely blank by default.
 This allows you to view and/or change the track stop's friction and dump
 direction settings, using the keybindings from the track stop building interface.
 
+.. _sort:
 .. _sort-items:
 
 sort-items
@@ -1943,10 +1973,10 @@ Options:
 :L:     Low Traffic
 :R:     Restricted Traffic
 
-.. _burrow:
+.. _burrows:
 
-burrow
-======
+burrows
+=======
 Miscellaneous burrow control. Allows manipulating burrows and automated burrow
 expansion while digging.
 
@@ -2488,7 +2518,8 @@ See also `alltraffic`, `filltraffic`, and `restrictice`.
 tiletypes
 =========
 Can be used for painting map tiles and is an interactive command, much like
-`liquids`.  If something goes wrong, `fixveins` may help.
+`liquids`. Some properties of existing tiles can be looked up with `probe`. If
+something goes wrong, `fixveins` may help.
 
 The tool works with two set of options and a brush. The brush determines which
 tiles will be processed. First set of options is the filter, which can exclude
@@ -2960,9 +2991,10 @@ Lua API
 Some plugins consist solely of native libraries exposed to Lua. They are listed
 in the `lua-api` file under `lua-plugins`:
 
-* `eventful`
 * `building-hacks`
+* `cxxrandom`
+* `eventful`
 * `luasocket`
 * `map-render`
-* `cxxrandom`
+* `pathable`
 * `xlsxreader`

@@ -1,35 +1,207 @@
+#include <functional>
+#include <climits> // for CHAR_BIT
+
+#include "df/building_design.h"
+#include "df/building_doorst.h"
+#include "df/building_type.h"
 #include "df/general_ref_building_holderst.h"
 #include "df/job_item.h"
-#include "df/building_doorst.h"
-#include "df/building_design.h"
+#include "df/ui_build_selector.h"
 
-#include "modules/Job.h"
 #include "modules/Buildings.h"
 #include "modules/Gui.h"
+#include "modules/Job.h"
+
+#include "LuaTools.h"
+#include "uicommon.h"
 
 #include "buildingplan-planner.h"
 #include "buildingplan-lib.h"
-#include "uicommon.h"
+
+static const std::string planned_building_persistence_key_v1 = "buildingplan/constraints";
+static const std::string planned_building_persistence_key_v2 = "buildingplan/constraints2";
+static const std::string global_settings_persistence_key = "buildingplan/global";
 
 /*
-* ItemFilter
-*/
+ * ItemFilter
+ */
 
-ItemFilter::ItemFilter() :
-        min_quality(df::item_quality::Ordinary),
-        max_quality(df::item_quality::Artifact),
-        decorated_only(false),
-        valid(true)
+ItemFilter::ItemFilter()
 {
-    clear(); // mat_mask is not cleared by default (see issue #1047)
+    clear();
 }
 
-bool ItemFilter::matchesMask(DFHack::MaterialInfo &mat)
+void ItemFilter::clear()
 {
-    return (mat_mask.whole) ? mat.matches(mat_mask) : true;
+    min_quality = df::item_quality::Ordinary;
+    max_quality = df::item_quality::Masterful;
+    decorated_only = false;
+    clearMaterialMask();
+    materials.clear();
 }
 
-bool ItemFilter::matches(const df::dfhack_material_category mask) const
+bool ItemFilter::deserialize(std::string ser)
+{
+    clear();
+
+    std::vector<std::string> tokens;
+    split_string(&tokens, ser, "/");
+    if (tokens.size() != 5)
+    {
+        debug("invalid ItemFilter serialization: '%s'", ser.c_str());
+        return false;
+    }
+
+    if (!deserializeMaterialMask(tokens[0]) || !deserializeMaterials(tokens[1]))
+        return false;
+
+    setMinQuality(atoi(tokens[2].c_str()));
+    setMaxQuality(atoi(tokens[3].c_str()));
+    decorated_only = static_cast<bool>(atoi(tokens[4].c_str()));
+    return true;
+}
+
+bool ItemFilter::deserializeMaterialMask(std::string ser)
+{
+    if (ser.empty())
+        return true;
+
+    if (!parseJobMaterialCategory(&mat_mask, ser))
+    {
+        debug("invalid job material category serialization: '%s'", ser.c_str());
+        return false;
+    }
+    return true;
+}
+
+bool ItemFilter::deserializeMaterials(std::string ser)
+{
+    if (ser.empty())
+        return true;
+
+    std::vector<std::string> mat_names;
+    split_string(&mat_names, ser, ",");
+    for (auto m = mat_names.begin(); m != mat_names.end(); m++)
+    {
+        DFHack::MaterialInfo material;
+        if (!material.find(*m) || !material.isValid())
+        {
+            debug("invalid material name serialization: '%s'", ser.c_str());
+            return false;
+        }
+        materials.push_back(material);
+    }
+    return true;
+}
+
+// format: mat,mask,elements/materials,list/minq/maxq/decorated
+std::string ItemFilter::serialize() const
+{
+    std::ostringstream ser;
+    ser << bitfield_to_string(mat_mask, ",") << "/";
+    if (!materials.empty())
+    {
+        ser << materials[0].getToken();
+        for (size_t i = 1; i < materials.size(); ++i)
+            ser << "," << materials[i].getToken();
+    }
+    ser << "/" << static_cast<int>(min_quality);
+    ser << "/" << static_cast<int>(max_quality);
+    ser << "/" << static_cast<int>(decorated_only);
+    return ser.str();
+}
+
+void ItemFilter::clearMaterialMask()
+{
+    mat_mask.whole = 0;
+}
+
+void ItemFilter::addMaterialMask(uint32_t mask)
+{
+    mat_mask.whole |= mask;
+}
+
+void ItemFilter::setMaterials(std::vector<DFHack::MaterialInfo> materials)
+{
+    this->materials = materials;
+}
+
+static void clampItemQuality(df::item_quality *quality)
+{
+    if (*quality > item_quality::Artifact)
+    {
+        debug("clamping quality to Artifact");
+        *quality = item_quality::Artifact;
+    }
+    if (*quality < item_quality::Ordinary)
+    {
+        debug("clamping quality to Ordinary");
+        *quality = item_quality::Ordinary;
+    }
+}
+
+void ItemFilter::setMinQuality(int quality)
+{
+    min_quality = static_cast<df::item_quality>(quality);
+    clampItemQuality(&min_quality);
+    if (max_quality < min_quality)
+        max_quality = min_quality;
+}
+
+void ItemFilter::setMaxQuality(int quality)
+{
+    max_quality = static_cast<df::item_quality>(quality);
+    clampItemQuality(&max_quality);
+    if (max_quality < min_quality)
+        min_quality = max_quality;
+}
+
+void ItemFilter::incMinQuality() { setMinQuality(min_quality + 1); }
+void ItemFilter::decMinQuality() { setMinQuality(min_quality - 1); }
+void ItemFilter::incMaxQuality() { setMaxQuality(max_quality + 1); }
+void ItemFilter::decMaxQuality() { setMaxQuality(max_quality - 1); }
+
+void ItemFilter::toggleDecoratedOnly() { decorated_only = !decorated_only; }
+
+static std::string material_to_string_fn(const MaterialInfo &m) { return m.toString(); }
+
+uint32_t ItemFilter::getMaterialMask() const { return mat_mask.whole; }
+
+std::vector<std::string> ItemFilter::getMaterials() const
+{
+    std::vector<std::string> descriptions;
+    transform_(materials, descriptions, material_to_string_fn);
+
+    if (descriptions.size() == 0)
+        bitfield_to_string(&descriptions, mat_mask);
+
+    if (descriptions.size() == 0)
+        descriptions.push_back("any");
+
+    return descriptions;
+}
+
+std::string ItemFilter::getMinQuality() const
+{
+    return ENUM_KEY_STR(item_quality, min_quality);
+}
+
+std::string ItemFilter::getMaxQuality() const
+{
+    return ENUM_KEY_STR(item_quality, max_quality);
+}
+
+bool ItemFilter::getDecoratedOnly() const
+{
+    return decorated_only;
+}
+
+bool ItemFilter::matchesMask(DFHack::MaterialInfo &mat) const
+{
+    return mat_mask.whole ? mat.matches(mat_mask) : true;
+}
+
+bool ItemFilter::matches(df::dfhack_material_category mask) const
 {
     return mask.whole & mat_mask.whole;
 }
@@ -42,7 +214,7 @@ bool ItemFilter::matches(DFHack::MaterialInfo &material) const
     return false;
 }
 
-bool ItemFilter::matches(df::item *item)
+bool ItemFilter::matches(df::item *item) const
 {
     if (item->getQuality() < min_quality || item->getQuality() > max_quality)
         return false;
@@ -57,496 +229,846 @@ bool ItemFilter::matches(df::item *item)
     return (materials.size() == 0) ? matchesMask(item_mat) : matches(item_mat);
 }
 
-std::string material_to_string_fn(DFHack::MaterialInfo m) { return m.toString(); }
-
-std::vector<std::string> ItemFilter::getMaterialFilterAsVector()
-{
-    std::vector<std::string> descriptions;
-
-    transform_(materials, descriptions, material_to_string_fn);
-
-    if (descriptions.size() == 0)
-        bitfield_to_string(&descriptions, mat_mask);
-
-    if (descriptions.size() == 0)
-        descriptions.push_back("any");
-
-    return descriptions;
-}
-
-std::string ItemFilter::getMaterialFilterAsSerial()
-{
-    std::string str;
-
-    str.append(bitfield_to_string(mat_mask, ","));
-    str.append("/");
-    if (materials.size() > 0)
-    {
-        for (size_t i = 0; i < materials.size(); i++)
-            str.append(materials[i].getToken() + ",");
-
-        if (str[str.size()-1] == ',')
-            str.resize(str.size () - 1);
-    }
-
-    return str;
-}
-
-bool ItemFilter::parseSerializedMaterialTokens(std::string str)
-{
-    valid = false;
-    std::vector<std::string> tokens;
-    split_string(&tokens, str, "/");
-
-    if (tokens.size() > 0 && !tokens[0].empty())
-    {
-        if (!parseJobMaterialCategory(&mat_mask, tokens[0]))
-            return false;
-    }
-
-    if (tokens.size() > 1 && !tokens[1].empty())
-    {
-        std::vector<std::string> mat_names;
-        split_string(&mat_names, tokens[1], ",");
-        for (auto m = mat_names.begin(); m != mat_names.end(); m++)
-        {
-            DFHack::MaterialInfo material;
-            if (!material.find(*m) || !material.isValid())
-                return false;
-
-            materials.push_back(material);
-        }
-    }
-
-    valid = true;
-    return true;
-}
-
-std::string ItemFilter::getMinQuality()
-{
-    return ENUM_KEY_STR(item_quality, min_quality);
-}
-
-std::string ItemFilter::getMaxQuality()
-{
-    return ENUM_KEY_STR(item_quality, max_quality);
-}
-
-bool ItemFilter::isValid()
-{
-    return valid;
-}
-
-void ItemFilter::clear()
-{
-    mat_mask.whole = 0;
-    materials.clear();
-}
 
 /*
-* PlannedBuilding
-*/
+ * PlannedBuilding
+ */
 
-PlannedBuilding::PlannedBuilding(df::building *building, ItemFilter *filter)
+// format: itemfilterser|itemfilterser|...
+static std::string serializeFilters(const std::vector<ItemFilter> &filters)
 {
-    this->building = building;
-    this->filter = *filter;
-    pos = df::coord(building->centerx, building->centery, building->z);
-    config = DFHack::World::AddPersistentData("buildingplan/constraints");
-    config.val() = filter->getMaterialFilterAsSerial();
-    config.ival(1) = building->id;
-    config.ival(2) = filter->min_quality + 1;
-    config.ival(3) = static_cast<int>(filter->decorated_only) + 1;
-    config.ival(4) = filter->max_quality + 1;
+    std::ostringstream ser;
+    if (!filters.empty())
+    {
+        ser << filters[0].serialize();
+        for (size_t i = 1; i < filters.size(); ++i)
+            ser << "|" << filters[i].serialize();
+    }
+    return ser.str();
 }
 
-PlannedBuilding::PlannedBuilding(PersistentDataItem &config, color_ostream &out)
+static std::vector<ItemFilter> deserializeFilters(std::string ser)
 {
-    this->config = config;
-
-    if (!filter.parseSerializedMaterialTokens(config.val()))
+    std::vector<std::string> isers;
+    split_string(&isers, ser, "|");
+    std::vector<ItemFilter> ret;
+    for (auto & iser : isers)
     {
-        out.printerr("Buildingplan: Cannot parse filter: %s\nDiscarding.", config.val().c_str());
-        return;
+        ItemFilter filter;
+        if (filter.deserialize(iser))
+            ret.push_back(filter);
+    }
+    return ret;
+}
+
+static size_t getNumFilters(BuildingTypeKey key)
+{
+    auto L = Lua::Core::State;
+    color_ostream_proxy out(Core::getInstance().getConsole());
+    Lua::StackUnwinder top(L);
+
+    if (!lua_checkstack(L, 4) || !Lua::PushModulePublic(
+            out, L, "plugins.buildingplan", "get_num_filters"))
+    {
+        debug("failed to push the lua method on the stack");
+        return 0;
     }
 
-    building = df::building::find(config.ival(1));
-    if (!building)
-        return;
+    Lua::Push(L, std::get<0>(key));
+    Lua::Push(L, std::get<1>(key));
+    Lua::Push(L, std::get<2>(key));
 
-    pos = df::coord(building->centerx, building->centery, building->z);
-    filter.min_quality = static_cast<df::item_quality>(config.ival(2) - 1);
-    filter.max_quality = static_cast<df::item_quality>(config.ival(4) - 1);
-    filter.decorated_only = config.ival(3) - 1;
-}
-
-bool PlannedBuilding::assignClosestItem(std::vector<df::item *> *items_vector)
-{
-    decltype(items_vector->begin()) closest_item;
-    int32_t closest_distance = -1;
-    for (auto item_iter = items_vector->begin(); item_iter != items_vector->end(); item_iter++)
+    if (!Lua::SafeCall(out, L, 3, 1))
     {
-        auto item = *item_iter;
-        if (!filter.matches(item))
-            continue;
-
-        auto pos = item->pos;
-        auto distance = abs(pos.x - building->centerx) +
-            abs(pos.y - building->centery) +
-            abs(pos.z - building->z) * 50;
-
-        if (closest_distance > -1 && distance >= closest_distance)
-            continue;
-
-        closest_distance = distance;
-        closest_item = item_iter;
+        debug("lua call failed");
+        return 0;
     }
 
-    if (closest_distance > -1 && assignItem(*closest_item))
+    int num_filters = lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    return num_filters;
+}
+
+PlannedBuilding::PlannedBuilding(df::building *building, const std::vector<ItemFilter> &filters)
+    : building(building),
+      building_id(building->id),
+      filters(filters)
+{
+    config = DFHack::World::AddPersistentData(planned_building_persistence_key_v2);
+    config.ival(0) = building_id;
+    config.val() = serializeFilters(filters);
+}
+
+PlannedBuilding::PlannedBuilding(PersistentDataItem &config)
+    : config(config),
+      building(df::building::find(config.ival(0))),
+      building_id(config.ival(0)),
+      filters(deserializeFilters(config.val()))
+{
+    if (building)
     {
-        debug("Item assigned");
-        items_vector->erase(closest_item);
-        remove();
-        return true;
+        if (filters.size() !=
+            getNumFilters(toBuildingTypeKey(building)))
+        {
+            debug("invalid ItemFilter vector serialization: '%s'",
+                config.val().c_str());
+            building = NULL;
+        }
     }
-
-    return false;
 }
 
-void delete_item_fn(df::job_item *x) { delete x; }
-
-bool PlannedBuilding::assignItem(df::item *item)
+// Ensure the building still exists and is in a valid state. It can disappear
+// for lots of reasons, such as running the game with the buildingplan plugin
+// disabled, manually removing the building, modifying it via the API, etc.
+bool PlannedBuilding::isValid() const
 {
-    auto ref = df::allocate<df::general_ref_building_holderst>();
-    if (!ref)
-    {
-        Core::printerr("Could not allocate general_ref_building_holderst\n");
-        return false;
-    }
-
-    ref->building_id = building->id;
-
-    if (building->jobs.size() != 1)
-        return false;
-
-    auto job = building->jobs[0];
-
-    for_each_(job->job_items, delete_item_fn);
-    job->job_items.clear();
-    job->flags.bits.suspend = false;
-
-    bool rough = false;
-    Job::attachJobItem(job, item, df::job_item_ref::Hauled);
-    if (item->getType() == item_type::BOULDER)
-        rough = true;
-    building->mat_type = item->getMaterial();
-    building->mat_index = item->getMaterialIndex();
-
-    job->mat_type = building->mat_type;
-    job->mat_index = building->mat_index;
-
-    if (building->needsDesign())
-    {
-        auto act = (df::building_actual *) building;
-        act->design = new df::building_design();
-        act->design->flags.bits.rough = rough;
-    }
-
-    return true;
-}
-
-bool PlannedBuilding::isValid()
-{
-    bool valid = filter.isValid() &&
-        building && Buildings::findAtTile(pos) == building &&
-        building->getBuildStage() == 0;
-
-    if (!valid)
-        remove();
-
-    return valid;
-}
-
-df::building_type PlannedBuilding::getType()
-{
-    return building->getType();
-}
-
-bool PlannedBuilding::isCurrentlySelectedBuilding()
-{
-    return isValid() && (building == df::global::world->selected_building);
-}
-
-ItemFilter *PlannedBuilding::getFilter()
-{
-    return &filter;
+    return building && df::building::find(building_id)
+        && building->getBuildStage() == 0;
 }
 
 void PlannedBuilding::remove()
 {
     DFHack::World::DeletePersistentData(config);
+    building = NULL;
 }
+
+df::building * PlannedBuilding::getBuilding()
+{
+    return building;
+}
+
+const std::vector<ItemFilter> & PlannedBuilding::getFilters() const
+{
+    // if we want to be able to dynamically change the filters, we'll need to
+    // re-bucket the tasks in Planner.
+    return filters;
+}
+
 
 /*
-* Planner
-*/
+ * BuildingTypeKey
+ */
 
-Planner::Planner() : in_dummmy_screen(false), quickfort_mode(false) { }
-
-void enable_quickfort_fn(pair<const df::building_type, bool>& pair) { pair.second = true; }
-
-bool Planner::isPlanableBuilding(const df::building_type type) const
+BuildingTypeKey toBuildingTypeKey(
+    df::building_type btype, int16_t subtype, int32_t custom)
 {
-    return item_for_building_type.find(type) != item_for_building_type.end();
+    return std::make_tuple(btype, subtype, custom);
 }
 
-void Planner::reset(color_ostream &out)
+BuildingTypeKey toBuildingTypeKey(df::building *bld)
 {
-    planned_buildings.clear();
-    std::vector<PersistentDataItem> items;
-    DFHack::World::GetPersistentData(&items, "buildingplan/constraints");
+    return std::make_tuple(
+        bld->getType(), bld->getSubtype(), bld->getCustomType());
+}
 
-    for (auto i = items.begin(); i != items.end(); i++)
+BuildingTypeKey toBuildingTypeKey(df::ui_build_selector *uibs)
+{
+    return std::make_tuple(
+        uibs->building_type, uibs->building_subtype, uibs->custom_type);
+}
+
+// rotates a size_t value left by count bits
+// assumes count is not 0 or >= size_t_bits
+// replace this with std::rotl when we move to C++20
+static std::size_t rotl_size_t(size_t val, uint32_t count)
+{
+    static const int size_t_bits = CHAR_BIT * sizeof(std::size_t);
+    return val << count | val >> (size_t_bits - count);
+}
+
+std::size_t BuildingTypeKeyHash::operator() (const BuildingTypeKey & key) const
+{
+    // cast first param to appease gcc-4.8, which is missing the enum
+    // specializations for std::hash
+    std::size_t h1 = std::hash<int32_t>()(static_cast<int32_t>(std::get<0>(key)));
+    std::size_t h2 = std::hash<int16_t>()(std::get<1>(key));
+    std::size_t h3 = std::hash<int32_t>()(std::get<2>(key));
+
+    return h1 ^ rotl_size_t(h2, 8) ^ rotl_size_t(h3, 16);
+}
+
+
+/*
+ * Planner
+ */
+
+// convert v1 persistent data into v2 format
+// we can remove this conversion code once v2 has been live for a while
+void migrateV1ToV2()
+{
+    std::vector<PersistentDataItem> configs;
+    DFHack::World::GetPersistentData(&configs, planned_building_persistence_key_v1);
+    if (configs.empty())
+        return;
+
+    debug("migrating %zu persisted configs to new format", configs.size());
+    for (auto config : configs)
     {
-        PlannedBuilding pb(*i, out);
-        if (pb.isValid())
-            planned_buildings.push_back(pb);
+        df::building *bld = df::building::find(config.ival(1));
+        if (!bld)
+        {
+            debug("buliding no longer exists; removing config");
+            DFHack::World::DeletePersistentData(config);
+            continue;
+        }
+
+        if (bld->getBuildStage() != 0 || bld->jobs.size() != 1
+            || bld->jobs[0]->job_items.size() != 1)
+        {
+            debug("building in invalid state; removing config");
+            DFHack::World::DeletePersistentData(config);
+            continue;
+        }
+
+        // fix up the building so we can set the material properties later
+        bld->mat_type = -1;
+        bld->mat_index = -1;
+
+        // the v1 filters are not initialized correctly and will match any item.
+        // we need to fix them up a bit.
+        auto filter = bld->jobs[0]->job_items[0];
+        df::item_type type;
+        switch (bld->getType())
+        {
+        case df::building_type::Armorstand: type = df::item_type::ARMORSTAND; break;
+        case df::building_type::Bed: type = df::item_type::BED; break;
+        case df::building_type::Chair: type = df::item_type::CHAIR; break;
+        case df::building_type::Coffin: type = df::item_type::COFFIN; break;
+        case df::building_type::Door: type = df::item_type::DOOR; break;
+        case df::building_type::Floodgate: type = df::item_type::FLOODGATE; break;
+        case df::building_type::Hatch: type = df::item_type::HATCH_COVER; break;
+        case df::building_type::GrateWall: type = df::item_type::GRATE; break;
+        case df::building_type::GrateFloor: type = df::item_type::GRATE; break;
+        case df::building_type::BarsVertical: type = df::item_type::BAR; break;
+        case df::building_type::BarsFloor: type = df::item_type::BAR; break;
+        case df::building_type::Cabinet: type = df::item_type::CABINET; break;
+        case df::building_type::Box: type = df::item_type::BOX; break;
+        case df::building_type::Weaponrack: type = df::item_type::WEAPONRACK; break;
+        case df::building_type::Statue: type = df::item_type::STATUE; break;
+        case df::building_type::Slab: type = df::item_type::SLAB; break;
+        case df::building_type::Table: type = df::item_type::TABLE; break;
+        case df::building_type::WindowGlass: type = df::item_type::WINDOW; break;
+        case df::building_type::AnimalTrap: type = df::item_type::ANIMALTRAP; break;
+        case df::building_type::Chain: type = df::item_type::CHAIN; break;
+        case df::building_type::Cage: type = df::item_type::CAGE; break;
+        case df::building_type::TractionBench: type = df::item_type::TRACTION_BENCH; break;
+        default:
+            debug("building has unhandled type; removing config");
+            DFHack::World::DeletePersistentData(config);
+            continue;
+        }
+        filter->item_type = type;
+        filter->item_subtype = -1;
+        filter->mat_type = -1;
+        filter->mat_index = -1;
+        filter->flags1.whole = 0;
+        filter->flags2.whole = 0;
+        filter->flags2.bits.allow_artifact = true;
+        filter->flags3.whole = 0;
+        filter->flags4 = 0;
+        filter->flags5 = 0;
+        filter->metal_ore = -1;
+        filter->min_dimension = -1;
+        filter->has_tool_use = df::tool_uses::NONE;
+        filter->quantity = 1;
+
+        std::vector<std::string> tokens;
+        split_string(&tokens, config.val(), "/");
+        if (tokens.size() != 2)
+        {
+            debug("invalid v1 format; removing config");
+            DFHack::World::DeletePersistentData(config);
+            continue;
+        }
+
+        ItemFilter item_filter;
+        item_filter.deserializeMaterialMask(tokens[0]);
+        item_filter.deserializeMaterials(tokens[1]);
+        item_filter.setMinQuality(config.ival(2) - 1);
+        item_filter.setMaxQuality(config.ival(4) - 1);
+        if (config.ival(3) - 1)
+            item_filter.toggleDecoratedOnly();
+
+        // create the v2 record
+        std::vector<ItemFilter> item_filters;
+        item_filters.push_back(item_filter);
+        PlannedBuilding pb(bld, item_filters);
+
+        // remove the v1 record
+        DFHack::World::DeletePersistentData(config);
+        debug("v1 %s(%d) record successfully migrated",
+              ENUM_KEY_STR(building_type, bld->getType()).c_str(),
+              bld->id);
     }
 }
 
-void Planner::initialize()
+// assumes no setting has '=' or '|' characters
+static std::string serialize_settings(std::map<std::string, bool> & settings)
 {
-#define add_building_type(btype, itype) \
-    item_for_building_type[df::building_type::btype] = df::item_type::itype; \
-    default_item_filters[df::building_type::btype] =  ItemFilter(); \
-    available_item_vectors[df::item_type::itype] = std::vector<df::item *>(); \
-    is_relevant_item_type[df::item_type::itype] = true; \
-    if (planmode_enabled.find(df::building_type::btype) == planmode_enabled.end()) \
-        planmode_enabled[df::building_type::btype] = false
+    std::ostringstream ser;
+    for (auto & entry : settings)
+    {
+        ser << entry.first << "=" << (entry.second ? "1" : "0") << "|";
+    }
+    return ser.str();
+}
 
-    FOR_ENUM_ITEMS(item_type, it)
-        is_relevant_item_type[it] = false;
+static void deserialize_settings(std::map<std::string, bool> & settings,
+                                 std::string ser)
+{
+    std::vector<std::string> tokens;
+    split_string(&tokens, ser, "|");
+    for (auto token : tokens)
+    {
+        if (token.empty())
+            continue;
 
-    add_building_type(Armorstand, ARMORSTAND);
-    add_building_type(Bed, BED);
-    add_building_type(Chair, CHAIR);
-    add_building_type(Coffin, COFFIN);
-    add_building_type(Door, DOOR);
-    add_building_type(Floodgate, FLOODGATE);
-    add_building_type(Hatch, HATCH_COVER);
-    add_building_type(GrateWall, GRATE);
-    add_building_type(GrateFloor, GRATE);
-    add_building_type(BarsVertical, BAR);
-    add_building_type(BarsFloor, BAR);
-    add_building_type(Cabinet, CABINET);
-    add_building_type(Box, BOX);
-    // skip kennels, farm plot
-    add_building_type(Weaponrack, WEAPONRACK);
-    add_building_type(Statue, STATUE);
-    add_building_type(Slab, SLAB);
-    add_building_type(Table, TABLE);
-    // skip roads ... furnaces
-    add_building_type(WindowGlass, WINDOW);
-    // skip gem window ... support
-    add_building_type(AnimalTrap, ANIMALTRAP);
-    add_building_type(Chain, CHAIN);
-    add_building_type(Cage, CAGE);
-    // skip archery target
-    add_building_type(TractionBench, TRACTION_BENCH);
-    // skip nest box, hive (tools)
+        std::vector<std::string> parts;
+        split_string(&parts, token, "=");
+        if (parts.size() != 2)
+        {
+            debug("invalid serialized setting format: '%s'", token.c_str());
+            continue;
+        }
+        std::string key = parts[0];
+        if (settings.count(key) == 0)
+        {
+            debug("unknown serialized setting: '%s", key.c_str());
+            continue;
+        }
+        settings[key] = static_cast<bool>(atoi(parts[1].c_str()));
+        debug("deserialized setting: %s = %d", key.c_str(), settings[key]);
+    }
+}
 
-#undef add_building_type
+static DFHack::PersistentDataItem init_global_settings(
+        std::map<std::string, bool> & settings)
+{
+    settings.clear();
+    settings["blocks"] = true;
+    settings["boulders"] = true;
+    settings["logs"] = true;
+    settings["bars"] = false;
+
+    // load persistent global settings if they exist; otherwise create them
+    std::vector<PersistentDataItem> items;
+    DFHack::World::GetPersistentData(&items, global_settings_persistence_key);
+    if (items.size() == 1)
+    {
+        DFHack::PersistentDataItem & config = items[0];
+        deserialize_settings(settings, config.val());
+        return config;
+    }
+
+    debug("initializing persistent global settings");
+    DFHack::PersistentDataItem config =
+        DFHack::World::AddPersistentData(global_settings_persistence_key);
+    config.val() = serialize_settings(settings);
+    return config;
+}
+
+const std::map<std::string, bool> & Planner::getGlobalSettings() const
+{
+    return global_settings;
+}
+
+bool Planner::setGlobalSetting(std::string name, bool value)
+{
+    if (global_settings.count(name) == 0)
+    {
+        debug("attempted to set invalid setting: '%s'", name.c_str());
+        return false;
+    }
+    debug("global setting '%s' %d -> %d",
+          name.c_str(), global_settings[name], value);
+    global_settings[name] = value;
+    if (config.isValid())
+        config.val() = serialize_settings(global_settings);
+    return true;
+}
+
+void Planner::reset()
+{
+    debug("resetting Planner state");
+    default_item_filters.clear();
+    planned_buildings.clear();
+    tasks.clear();
+
+    config = init_global_settings(global_settings);
+
+    migrateV1ToV2();
+
+    std::vector<PersistentDataItem> items;
+    DFHack::World::GetPersistentData(&items, planned_building_persistence_key_v2);
+    debug("found data for %zu planned building(s)", items.size());
+
+    for (auto i = items.begin(); i != items.end(); i++)
+    {
+        PlannedBuilding pb(*i);
+        if (!pb.isValid())
+        {
+            debug("discarding invalid planned building");
+            pb.remove();
+            continue;
+        }
+
+        if (registerTasks(pb))
+            planned_buildings.insert(std::make_pair(pb.getBuilding()->id, pb));
+    }
 }
 
 void Planner::addPlannedBuilding(df::building *bld)
 {
-    for (auto iter = bld->jobs.begin(); iter != bld->jobs.end(); iter++)
+    auto item_filters = getItemFilters(toBuildingTypeKey(bld)).get();
+    // not a supported type
+    if (item_filters.empty())
     {
-        (*iter)->flags.bits.suspend = true;
+        debug("failed to add building: unsupported type");
+        return;
     }
 
-    PlannedBuilding pb(bld, &default_item_filters[bld->getType()]);
-    planned_buildings.push_back(pb);
+    // protect against multiple registrations
+    if (planned_buildings.count(bld->id) != 0)
+    {
+        debug("failed to add building: already registered");
+        return;
+    }
+
+    PlannedBuilding pb(bld, item_filters);
+    if (pb.isValid() && registerTasks(pb))
+    {
+        for (auto job : bld->jobs)
+            job->flags.bits.suspend = true;
+
+        planned_buildings.insert(std::make_pair(bld->id, pb));
+    }
+    else
+    {
+        pb.remove();
+    }
 }
 
-void Planner::doCycle()
+static std::string getBucket(const df::job_item & ji,
+                             const std::vector<ItemFilter> & item_filters)
 {
-    debug("Running Cycle");
-    if (planned_buildings.size() == 0)
-        return;
+    std::ostringstream ser;
 
-    debug("Planned count: " + int_to_string(planned_buildings.size()));
+    // pull out and serialize only known relevant fields. if we miss a few, then
+    // the filter bucket will be slighly less specific than it could be, but
+    // that's probably ok. we'll just end up bucketing slightly different items
+    // together. this is only a problem if the different filter at the front of
+    // the queue doesn't match any available items and blocks filters behind it
+    // that could be matched.
+    ser << ji.item_type << ':' << ji.item_subtype << ':' << ji.mat_type << ':'
+        << ji.mat_index << ':' << ji.flags1.whole << ':' << ji.flags2.whole
+        << ':' << ji.flags3.whole << ':' << ji.flags4 << ':' << ji.flags5 << ':'
+        << ji.metal_ore << ':' << ji.has_tool_use;
 
-    gather_available_items();
-    for (auto building_iter = planned_buildings.begin(); building_iter != planned_buildings.end();)
+    for (auto & item_filter : item_filters)
     {
-        if (building_iter->isValid())
-        {
-            if (show_debugging)
-                debug(std::string("Trying to allocate ") + enum_item_key_str(building_iter->getType()));
+        ser << ':' << item_filter.serialize();
+    }
 
-            auto required_item_type = item_for_building_type[building_iter->getType()];
-            auto items_vector = &available_item_vectors[required_item_type];
-            if (items_vector->size() == 0 || !building_iter->assignClosestItem(items_vector))
+    return ser.str();
+}
+
+// get a list of item vectors that we should search for matches
+static std::vector<df::job_item_vector_id> getVectorIds(df::job_item *job_item,
+        const std::map<std::string, bool> & global_settings)
+{
+    std::vector<df::job_item_vector_id> ret;
+
+    // if the filter already has the vector_id set to something specific, use it
+    if (job_item->vector_id > df::job_item_vector_id::IN_PLAY)
+    {
+        debug("using vector_id from job_item: %s",
+              ENUM_KEY_STR(job_item_vector_id, job_item->vector_id).c_str());
+        ret.push_back(job_item->vector_id);
+        return ret;
+    }
+
+    // if the filer is for building material, refer to our global settings for
+    // which vectors to search
+    if (job_item->flags2.bits.building_material)
+    {
+        if (global_settings.at("blocks"))
+            ret.push_back(df::job_item_vector_id::BLOCKS);
+        if (global_settings.at("boulders"))
+            ret.push_back(df::job_item_vector_id::BOULDER);
+        if (global_settings.at("logs"))
+            ret.push_back(df::job_item_vector_id::WOOD);
+        if (global_settings.at("bars"))
+            ret.push_back(df::job_item_vector_id::BAR);
+    }
+
+    // fall back to IN_PLAY if no other vector was appropriate
+    if (ret.empty())
+        ret.push_back(df::job_item_vector_id::IN_PLAY);
+    return ret;
+}
+
+bool Planner::registerTasks(PlannedBuilding & pb)
+{
+    df::building * bld = pb.getBuilding();
+    if (bld->jobs.size() != 1)
+    {
+        debug("unexpected number of jobs: want 1, got %zu", bld->jobs.size());
+        return false;
+    }
+    auto job_items = bld->jobs[0]->job_items;
+    int num_job_items = job_items.size();
+    if (num_job_items < 1)
+    {
+        debug("unexpected number of job items: want >0, got %d", num_job_items);
+        return false;
+    }
+    int32_t id = bld->id;
+    for (int job_item_idx = 0; job_item_idx < num_job_items; ++job_item_idx)
+    {
+        auto job_item = job_items[job_item_idx];
+        auto bucket = getBucket(*job_item, pb.getFilters());
+        auto vector_ids = getVectorIds(job_item, global_settings);
+
+        // if there are multiple vector_ids, schedule duplicate tasks. after
+        // the correct number of items are matched, the extras will get popped
+        // as invalid
+        for (auto vector_id : vector_ids)
+        {
+            for (int item_num = 0; item_num < job_item->quantity; ++item_num)
             {
-                debug("Unable to allocate an item");
-                ++building_iter;
-                continue;
+                tasks[vector_id][bucket].push(std::make_pair(id, job_item_idx));
+                debug("added task: %s/%s/%d,%d; "
+                      "%zu vector(s), %zu filter bucket(s), %zu task(s) in bucket",
+                      ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
+                      bucket.c_str(), id, job_item_idx, tasks.size(),
+                      tasks[vector_id].size(), tasks[vector_id][bucket].size());
             }
         }
-        debug("Removing building plan");
-        building_iter = planned_buildings.erase(building_iter);
     }
-}
-
-bool Planner::allocatePlannedBuilding(df::building_type type)
-{
-    coord32_t cursor;
-    if (!DFHack::Gui::getCursorCoords(cursor.x, cursor.y, cursor.z))
-        return false;
-
-    auto newinst = Buildings::allocInstance(cursor.get_coord16(), type);
-    if (!newinst)
-        return false;
-
-    df::job_item *filter = new df::job_item();
-    filter->item_type = item_type::NONE;
-    filter->mat_index = 0;
-    filter->flags2.bits.building_material = true;
-    std::vector<df::job_item*> filters;
-    filters.push_back(filter);
-
-    if (!Buildings::constructWithFilters(newinst, filters))
-    {
-        delete newinst;
-        return false;
-    }
-
-    if (type == building_type::Door)
-    {
-        auto door = virtual_cast<df::building_doorst>(newinst);
-        if (door)
-            door->door_flags.bits.pet_passable = true;
-    }
-
-    addPlannedBuilding(newinst);
-
     return true;
 }
 
-PlannedBuilding *Planner::getSelectedPlannedBuilding()
+PlannedBuilding * Planner::getPlannedBuilding(df::building *bld)
 {
-    for (auto building_iter = planned_buildings.begin(); building_iter != planned_buildings.end(); building_iter++)
+    if (!bld || planned_buildings.count(bld->id) == 0)
+        return NULL;
+    return &planned_buildings.at(bld->id);
+}
+
+bool Planner::isPlannableBuilding(BuildingTypeKey key)
+{
+    return getNumFilters(key) >= 1;
+}
+
+Planner::ItemFiltersWrapper Planner::getItemFilters(BuildingTypeKey key)
+{
+    static std::vector<ItemFilter> empty_vector;
+    static const ItemFiltersWrapper empty_ret(empty_vector);
+
+    size_t nfilters = getNumFilters(key);
+    if (nfilters < 1)
+        return empty_ret;
+    while (default_item_filters[key].size() < nfilters)
+        default_item_filters[key].push_back(ItemFilter());
+    return ItemFiltersWrapper(default_item_filters[key]);
+}
+
+// precompute a bitmask with bad item flags
+struct BadFlags
+{
+    uint32_t whole;
+
+    BadFlags()
     {
-        if (building_iter->isCurrentlySelectedBuilding())
+        df::item_flags flags;
+        #define F(x) flags.bits.x = true;
+        F(dump); F(forbid); F(garbage_collect);
+        F(hostile); F(on_fire); F(rotten); F(trader);
+        F(in_building); F(construction); F(in_job);
+        F(owned); F(in_chest); F(removed); F(encased);
+        #undef F
+        whole = flags.whole;
+    }
+};
+
+static bool itemPassesScreen(df::item * item)
+{
+    static BadFlags bad_flags;
+    return !(item->flags.whole & bad_flags.whole)
+        && !item->isAssignedToStockpile()
+        // TODO: make this configurable
+        && !(item->getType() == df::item_type::BOX && item->isBag());
+}
+
+static bool matchesFilters(df::item * item,
+                           df::job_item * job_item,
+                           const ItemFilter & item_filter)
+{
+    // check the properties that are not checked by Job::isSuitableItem()
+    if (job_item->item_type > -1 && job_item->item_type != item->getType())
+        return false;
+
+    if (job_item->item_subtype > -1 &&
+        job_item->item_subtype != item->getSubtype())
+        return false;
+
+    if (job_item->flags2.bits.building_material && !item->isBuildMat())
+        return false;
+
+    if (job_item->metal_ore > -1 && !item->isMetalOre(job_item->metal_ore))
+        return false;
+
+    if (job_item->has_tool_use > df::tool_uses::NONE
+        && !item->hasToolUse(job_item->has_tool_use))
+        return false;
+
+    return DFHack::Job::isSuitableItem(
+            job_item, item->getType(), item->getSubtype())
+        && DFHack::Job::isSuitableMaterial(
+            job_item, item->getMaterial(), item->getMaterialIndex())
+        && item_filter.matches(item);
+}
+
+// note that this just removes the PlannedBuilding. the tasks will get dropped
+// as we discover them in the tasks queues and they fail their isValid() check.
+// this "lazy" task cleaning algorithm works because there is no way to
+// re-register a building once it has been removed -- if it fails isValid()
+// then it has either been built or desroyed. therefore there is no chance of
+// duplicate tasks getting added to the tasks queues.
+void Planner::unregisterBuilding(int32_t id)
+{
+    if (planned_buildings.count(id) > 0)
+    {
+        planned_buildings.at(id).remove();
+        planned_buildings.erase(id);
+    }
+}
+
+static bool isJobReady(df::job * job)
+{
+    int needed_items = 0;
+    for (auto job_item : job->job_items) { needed_items += job_item->quantity; }
+    if (needed_items)
+    {
+        debug("building needs %d more item(s)", needed_items);
+        return false;
+    }
+    return true;
+}
+
+static bool job_item_idx_lt(df::job_item_ref *a, df::job_item_ref *b)
+{
+    // we want the items in the opposite order of the filters
+    return a->job_item_idx > b->job_item_idx;
+}
+
+// this function does not remove the job_items since their quantity fields are
+// now all at 0, so there is no risk of having extra items attached. we don't
+// remove them to keep the "finalize with buildingplan active" path as similar
+// as possible to the "finalize with buildingplan disabled" path.
+static void finalizeBuilding(df::building * bld)
+{
+    debug("finalizing building %d", bld->id);
+    auto job = bld->jobs[0];
+
+    // sort the items so they get added to the structure in the correct order
+    std::sort(job->items.begin(), job->items.end(), job_item_idx_lt);
+
+    // derive the material properties of the building and job from the first
+    // applicable item, though if any boulders are involved, it makes the whole
+    // structure "rough".
+    bool rough = false;
+    for (auto attached_item : job->items)
+    {
+        df::item *item = attached_item->item;
+        rough = rough || item->getType() == item_type::BOULDER;
+        if (bld->mat_type == -1)
         {
-            return &(*building_iter);
+            bld->mat_type = item->getMaterial();
+            job->mat_type = bld->mat_type;
+        }
+        if (bld->mat_index == -1)
+        {
+            bld->mat_index = item->getMaterialIndex();
+            job->mat_index = bld->mat_index;
         }
     }
 
-    return nullptr;
-}
-
-void Planner::removeSelectedPlannedBuilding() { getSelectedPlannedBuilding()->remove(); }
-
-ItemFilter *Planner::getDefaultItemFilterForType(df::building_type type) { return &default_item_filters[type]; }
-
-void Planner::adjustMinQuality(df::building_type type, int amount)
-{
-    auto min_quality = &getDefaultItemFilterForType(type)->min_quality;
-    *min_quality = static_cast<df::item_quality>(*min_quality + amount);
-
-    boundsCheckItemQuality(min_quality);
-    auto max_quality = &getDefaultItemFilterForType(type)->max_quality;
-    if (*min_quality > *max_quality)
-        (*max_quality) = *min_quality;
-
-}
-
-void Planner::adjustMaxQuality(df::building_type type, int amount)
-{
-    auto max_quality = &getDefaultItemFilterForType(type)->max_quality;
-    *max_quality = static_cast<df::item_quality>(*max_quality + amount);
-
-    boundsCheckItemQuality(max_quality);
-    auto min_quality = &getDefaultItemFilterForType(type)->min_quality;
-    if (*max_quality < *min_quality)
-        (*min_quality) = *max_quality;
-}
-
-void Planner::enableQuickfortMode()
-{
-    saved_planmodes = planmode_enabled;
-    for_each_(planmode_enabled, enable_quickfort_fn);
-
-    quickfort_mode = true;
-}
-
-void Planner::disableQuickfortMode()
-{
-    planmode_enabled = saved_planmodes;
-    quickfort_mode = false;
-}
-
-bool Planner::inQuickFortMode() { return quickfort_mode; }
-
-void Planner::boundsCheckItemQuality(item_quality::item_quality *quality)
-{
-    *quality = static_cast<df::item_quality>(*quality);
-    if (*quality > item_quality::Artifact)
-        (*quality) = item_quality::Artifact;
-    if (*quality < item_quality::Ordinary)
-        (*quality) = item_quality::Ordinary;
-}
-
-void Planner::gather_available_items()
-{
-    debug("Gather available items");
-    for (auto iter = available_item_vectors.begin(); iter != available_item_vectors.end(); iter++)
+    if (bld->needsDesign())
     {
-        iter->second.clear();
+        auto act = (df::building_actual *)bld;
+        if (!act->design)
+            act->design = new df::building_design();
+        act->design->flags.bits.rough = rough;
     }
 
-    // Precompute a bitmask with the bad flags
-    df::item_flags bad_flags;
-    bad_flags.whole = 0;
+    // we're good to go!
+    job->flags.bits.suspend = false;
+    Job::checkBuildingsNow();
+}
 
-    #define F(x) bad_flags.bits.x = true;
-    F(dump); F(forbid); F(garbage_collect);
-    F(hostile); F(on_fire); F(rotten); F(trader);
-    F(in_building); F(construction); F(artifact);
-    #undef F
-
-        std::vector<df::item*> &items = df::global::world->items.other[df::items_other_id::IN_PLAY];
-
-    for (size_t i = 0; i < items.size(); i++)
+void Planner::popInvalidTasks(std::queue<std::pair<int32_t, int>> & task_queue)
+{
+    while (!task_queue.empty())
     {
-        df::item *item = items[i];
-
-        if (item->flags.whole & bad_flags.whole)
-            continue;
-
-        df::item_type itype = item->getType();
-        if (!is_relevant_item_type[itype])
-            continue;
-
-        if (itype == df::item_type::BOX && item->isBag())
-            continue; //Skip bags
-
-        if (item->flags.bits.artifact)
-            continue;
-
-        if (item->flags.bits.in_job ||
-            item->isAssignedToStockpile() ||
-            item->flags.bits.owned ||
-            item->flags.bits.in_chest)
+        auto & task = task_queue.front();
+        auto id = task.first;
+        if (planned_buildings.count(id) > 0)
         {
+            PlannedBuilding & pb = planned_buildings.at(id);
+            if (pb.isValid() &&
+                pb.getBuilding()->jobs[0]->job_items[task.second]->quantity)
+            {
+                break;
+            }
+        }
+        debug("discarding invalid task: bld=%d, job_item_idx=%d",
+              id, task.second);
+        task_queue.pop();
+        unregisterBuilding(id);
+    }
+}
+
+void Planner::doVector(df::job_item_vector_id vector_id,
+       std::map<std::string, std::queue<std::pair<int32_t, int>>> & buckets)
+{
+    auto other_id = ENUM_ATTR(job_item_vector_id, other, vector_id);
+    auto item_vector = df::global::world->items.other[other_id];
+    debug("matching %zu item(s) in vector %s against %zu filter bucket(s)",
+          item_vector.size(),
+          ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
+          buckets.size());
+    for (auto item_it = item_vector.rbegin();
+         item_it != item_vector.rend();
+         ++item_it)
+    {
+        auto item = *item_it;
+        if (!itemPassesScreen(item))
+            continue;
+        for (auto bucket_it = buckets.begin(); bucket_it != buckets.end();)
+        {
+            auto & task_queue = bucket_it->second;
+            popInvalidTasks(task_queue);
+            if (task_queue.empty())
+            {
+                debug("removing empty bucket: %s/%s; %zu bucket(s) left",
+                      ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
+                      bucket_it->first.c_str(),
+                      buckets.size() - 1);
+                bucket_it = buckets.erase(bucket_it);
+                continue;
+            }
+            auto & task = task_queue.front();
+            auto id = task.first;
+            auto & pb = planned_buildings.at(id);
+            auto building = pb.getBuilding();
+            auto job = building->jobs[0];
+            auto filter_idx = task.second;
+            if (matchesFilters(item, job->job_items[filter_idx],
+                    pb.getFilters()[filter_idx])
+               && DFHack::Job::attachJobItem(job, item,
+                        df::job_item_ref::Hauled, filter_idx))
+            {
+                MaterialInfo material;
+                material.decode(item);
+                ItemTypeInfo item_type;
+                item_type.decode(item);
+                debug("attached %s %s to filter %d for %s(%d): %s/%s",
+                      material.toString().c_str(),
+                      item_type.toString().c_str(),
+                      filter_idx,
+                      ENUM_KEY_STR(building_type, building->getType()).c_str(),
+                      id,
+                      ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
+                      bucket_it->first.c_str());
+                // keep quantity aligned with the actual number of remaining
+                // items so if buildingplan is turned off, the building will
+                // be completed with the correct number of items.
+                --job->job_items[filter_idx]->quantity;
+                task_queue.pop();
+                if (isJobReady(job))
+                {
+                    finalizeBuilding(building);
+                    unregisterBuilding(id);
+                }
+                if (task_queue.empty())
+                {
+                    debug(
+                        "removing empty item bucket: %s/%s; %zu left",
+                        ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
+                        bucket_it->first.c_str(),
+                        buckets.size() - 1);
+                    buckets.erase(bucket_it);
+                }
+                // we found a home for this item; no need to look further
+                break;
+            }
+            ++bucket_it;
+        }
+        if (buckets.empty())
+            break;
+    }
+}
+
+struct VectorsToScanLast
+{
+    std::vector<df::job_item_vector_id> vectors;
+    VectorsToScanLast()
+    {
+        // order is important here. we want to match boulders before wood and
+        // everything before bars. blocks are not listed here since we'll have
+        // already scanned them when we did the first pass through the buckets.
+        vectors.push_back(df::job_item_vector_id::BOULDER);
+        vectors.push_back(df::job_item_vector_id::WOOD);
+        vectors.push_back(df::job_item_vector_id::BAR);
+    }
+};
+
+void Planner::doCycle()
+{
+    debug("running cycle for %zu registered building(s)",
+          planned_buildings.size());
+    static const VectorsToScanLast vectors_to_scan_last;
+    for (auto it = tasks.begin(); it != tasks.end();)
+    {
+        auto vector_id = it->first;
+        // we could make this a set, but it's only three elements
+        if (std::find(vectors_to_scan_last.vectors.begin(),
+                      vectors_to_scan_last.vectors.end(),
+                      vector_id) != vectors_to_scan_last.vectors.end())
+        {
+            ++it;
             continue;
         }
 
-        available_item_vectors[itype].push_back(item);
+        auto & buckets = it->second;
+        doVector(vector_id, buckets);
+        if (buckets.empty())
+        {
+            debug("removing empty vector: %s; %zu vector(s) left",
+                  ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
+                  tasks.size() - 1);
+            it = tasks.erase(it);
+        }
+        else
+            ++it;
     }
+    for (auto vector_id : vectors_to_scan_last.vectors)
+    {
+        if (tasks.count(vector_id) == 0)
+            continue;
+        auto & buckets = tasks[vector_id];
+        doVector(vector_id, buckets);
+        if (buckets.empty())
+        {
+            debug("removing empty vector: %s; %zu vector(s) left",
+                  ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
+                  tasks.size() - 1);
+            tasks.erase(vector_id);
+        }
+    }
+    debug("cycle done; %zu registered building(s) left",
+          planned_buildings.size());
 }
 
-std::map<df::building_type, bool> planmode_enabled, saved_planmodes;
 Planner planner;

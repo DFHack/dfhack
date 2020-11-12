@@ -305,7 +305,7 @@ bool MaterialInfo::findProduct(df::material *material, const std::string &name)
     return decode(-1);
 }
 
-std::string MaterialInfo::getToken()
+std::string MaterialInfo::getToken() const
 {
     if (isNone())
         return "NONE";
@@ -333,7 +333,7 @@ std::string MaterialInfo::getToken()
     }
 }
 
-std::string MaterialInfo::toString(uint16_t temp, bool named)
+std::string MaterialInfo::toString(uint16_t temp, bool named) const
 {
     if (isNone())
         return "any";

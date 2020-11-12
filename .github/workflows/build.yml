@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ${{ matrix.os }}
-    name: build (Linux, GCC ${{ matrix.gcc }})
+    name: build (Linux, GCC ${{ matrix.gcc }}, ${{ matrix.plugins }} plugins)
     strategy:
       fail-fast: false
       matrix:
@@ -14,9 +14,12 @@ jobs:
         gcc:
         - 4.8
         - 7
+        plugins:
+        - default
         include:
         - os: ubuntu-20.04
           gcc: 10
+          plugins: all
     steps:
     - name: Set up Python 3
       uses: actions/setup-python@v2
@@ -37,7 +40,6 @@ jobs:
             zlib1g-dev
         pip install sphinx
     - name: Install GCC
-      if: ${{ matrix.gcc < 7 || matrix.gcc > 9 }}
       run: |
         sudo apt-get install gcc-${{ matrix.gcc }} g++-${{ matrix.gcc }}
     - name: Clone DFHack
@@ -70,11 +72,15 @@ jobs:
           -B build-ci \
           -G Ninja \
           -DDFHACK_BUILD_ARCH=64 \
-          -DBUILD_DOCS:BOOL=ON \
           -DBUILD_TESTS:BOOL=ON \
+          -DBUILD_DEV_PLUGINS:BOOL=${{ matrix.plugins == 'all' }} \
+          -DBUILD_SIZECHECK:BOOL=${{ matrix.plugins == 'all' }} \
+          -DBUILD_STONESENSE:BOOL=${{ matrix.plugins == 'all' }} \
+          -DBUILD_SUPPORTED:BOOL=1 \
           -DCMAKE_INSTALL_PREFIX="$DF_FOLDER"
         ninja -C build-ci install
     - name: Run tests
+      id: run_tests
       run: |
         export TERM=dumb
         mv "$DF_FOLDER"/dfhack.init-example "$DF_FOLDER"/dfhack.init
@@ -84,9 +90,10 @@ jobs:
         cp "$DF_FOLDER/test_status.json" "$DF_FOLDER"/*.log artifacts
     - name: Upload test artifacts
       uses: actions/upload-artifact@v1
-      if: success() || failure()
+      if: (success() || failure()) && steps.run_tests.outcome != 'skipped'
+      continue-on-error: true
       with:
-        name: test-artifacts
+        name: test-artifacts-${{ matrix.gcc }}
         path: artifacts
     - name: Clean up DF folder
       # prevent DFHack-generated files from ending up in the cache

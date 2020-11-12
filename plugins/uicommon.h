@@ -79,7 +79,7 @@ static void for_each_(map<T, V> &v, Fn func)
 }
 
 template <class T, class V, typename Fn>
-static void transform_(vector<T> &src, vector<V> &dst, Fn func)
+static void transform_(const vector<T> &src, vector<V> &dst, Fn func)
 {
     transform(src.begin(), src.end(), back_inserter(dst), func);
 }

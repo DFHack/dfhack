@@ -309,7 +309,6 @@ static std::string get_item_label(const BuildingTypeKey &key, int item_idx)
     if (!s)
         return "No string";
 
-    lua_pop(L, 1);
     return s;
 }
 
@@ -345,22 +344,27 @@ static bool construct_planned_building()
 
     if (!(lua_checkstack(L, 1) &&
           Lua::PushModulePublic(out, L, "plugins.buildingplan",
-                                "construct_building_from_ui_state") &&
+                                "construct_buildings_from_ui_state") &&
           Lua::SafeCall(out, L, 0, 1)))
     {
         return false;
     }
 
-    auto bld = Lua::GetDFObject<df::building>(L, -1);
-    lua_pop(L, 1);
-
-    if (!bld)
+    // register all returned buildings with planner
+    lua_pushnil(L);
+    while (lua_next(L, -2) != 0)
     {
-        out.printerr("buildingplan: construct_building_from_ui_state() failed\n");
-        return false;
-    }
+        auto bld = Lua::GetDFObject<df::building>(L, -1);
+        if (!bld)
+        {
+            out.printerr(
+                "buildingplan: construct_buildings_from_ui_state() failed\n");
+            return false;
+        }
 
-    planner.addPlannedBuilding(bld);
+        planner.addPlannedBuilding(bld);
+        lua_pop(L, 1);
+    }
 
     return true;
 }
@@ -393,6 +397,29 @@ static void show_global_settings_dialog()
         debug("Failed call to show_global_settings_dialog");
         return;
     }
+}
+
+static bool is_automaterial_enabled()
+{
+    auto L = Lua::Core::State;
+    color_ostream_proxy out(Core::getInstance().getConsole());
+    Lua::StackUnwinder top(L);
+
+    if (!(lua_checkstack(L, 1) &&
+          Lua::PushModulePublic(out, L, "plugins.automaterial", "isEnabled") &&
+          Lua::SafeCall(out, L, 0, 1)))
+    {
+        return false;
+    }
+
+    return lua_toboolean(L, -1);
+}
+
+static bool is_automaterial_managed(df::building_type type, int16_t subtype)
+{
+    return is_automaterial_enabled()
+        && type == df::building_type::Construction
+        && subtype < df::construction_type::TrackN;
 }
 
 struct buildingplan_query_hook : public df::viewscreen_dwarfmodest
@@ -607,7 +634,11 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
         if (!is_planmode_enabled(key))
             return false;
 
-        if (input->count(interface_key::SELECT))
+        // if automaterial is enabled, let it handle building allocation and
+        // registration with planner
+        if (input->count(interface_key::SELECT) &&
+            !is_automaterial_managed(ui_build_selector->building_type,
+                                     ui_build_selector->building_subtype))
         {
             if (ui_build_selector->errors.size() == 0 && construct_planned_building())
             {
@@ -710,12 +741,11 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
 
         int y = 23;
 
-        if (ui_build_selector->building_type == df::building_type::Construction
-            && ui_build_selector->building_subtype <
-               df::construction_type::TrackN)
+        if (is_automaterial_managed(ui_build_selector->building_type,
+                                    ui_build_selector->building_subtype))
         {
-            // try not to conflict with the automaterial plugin UI
-            y = 34;
+            // avoid conflict with the automaterial plugin UI
+            y = 36;
         }
 
         if (show_help)
@@ -967,6 +997,12 @@ DFhackCExport command_result plugin_shutdown(color_ostream &)
 
 // Lua API section
 
+static bool isPlanModeEnabled(df::building_type type,
+                              int16_t subtype,
+                              int32_t custom) {
+    return planmode_enabled[toBuildingTypeKey(type, subtype, custom)];
+}
+
 static bool isPlannableBuilding(df::building_type type,
                                 int16_t subtype,
                                 int32_t custom) {
@@ -997,6 +1033,7 @@ static void setSetting(std::string name, bool value) {
 }
 
 DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(isPlanModeEnabled),
     DFHACK_LUA_FUNCTION(isPlannableBuilding),
     DFHACK_LUA_FUNCTION(addPlannedBuilding),
     DFHACK_LUA_FUNCTION(doCycle),

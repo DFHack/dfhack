@@ -5,6 +5,7 @@ local _ENV = mkmodule('plugins.buildingplan')
  Native functions:
 
  * void setSetting(string name, boolean value)
+ * bool isPlanModeEnabled(df::building_type type, int16_t subtype, int32_t custom)
  * bool isPlannableBuilding(df::building_type type, int16_t subtype, int32_t custom)
  * void addPlannedBuilding(df::building *bld)
  * void doCycle()
@@ -82,7 +83,9 @@ function item_can_be_improved(btype, subtype, custom, reverse_idx)
 end
 
 -- needs the core suspended
-function construct_building_from_ui_state()
+-- returns a vector of constructed buildings (usually of size 1, but potentially
+-- more for constructions)
+function construct_buildings_from_ui_state()
     local uibs = df.global.ui_build_selector
     local world = df.global.world
     local direction = world.selected_direction
@@ -94,22 +97,40 @@ function construct_building_from_ui_state()
     local pos = guidm.getCursorPos()
     pos.x = pos.x - math.floor(width/2)
     pos.y = pos.y - math.floor(height/2)
-    local bld, err = dfhack.buildings.constructBuilding{
-        type=uibs.building_type, subtype=uibs.building_subtype,
-        custom=uibs.custom_type, pos=pos, width=width, height=height,
-        direction=direction}
-    if err then error(err) end
-    -- assign fields for the types that need them. we can't pass them all in to
-    -- the call to constructBuilding since attempting to assign unrelated
-    -- fields to building types that don't support them causes errors.
-    for k,v in pairs(bld) do
-        if k == 'friction' then bld.friction = uibs.friction end
-        if k == 'use_dump' then bld.use_dump = uibs.use_dump end
-        if k == 'dump_x_shift' then bld.dump_x_shift = uibs.dump_x_shift end
-        if k == 'dump_y_shift' then bld.dump_y_shift = uibs.dump_y_shift end
-        if k == 'speed' then bld.speed = uibs.speed end
+    local min_x, max_x = pos.x, pos.x
+    local min_y, max_y = pos.y, pos.y
+    if width == 1 and height == 1 and
+            (world.building_width > 1 or world.building_height > 1) then
+        min_x = math.ceil(pos.x - world.building_width/2)
+        max_x = math.floor(pos.x + world.building_width/2)
+        min_y = math.ceil(pos.y - world.building_height/2)
+        max_y = math.floor(pos.y + world.building_height/2)
     end
-    return bld
+    local blds = {}
+    for y=min_y,max_y do for x=min_x,max_x do
+        local bld, err = dfhack.buildings.constructBuilding{
+            type=uibs.building_type, subtype=uibs.building_subtype,
+            custom=uibs.custom_type, pos=xyz2pos(x, y, pos.z),
+            width=width, height=height, direction=direction}
+        if err then
+            for _,b in ipairs(blds) do
+                dfhack.buildings.deconstruct(b)
+            end
+            error(err)
+        end
+        -- assign fields for the types that need them. we can't pass them all in
+        -- to the call to constructBuilding since attempting to assign unrelated
+        -- fields to building types that don't support them causes errors.
+        for k,v in pairs(bld) do
+            if k == 'friction' then bld.friction = uibs.friction end
+            if k == 'use_dump' then bld.use_dump = uibs.use_dump end
+            if k == 'dump_x_shift' then bld.dump_x_shift = uibs.dump_x_shift end
+            if k == 'dump_y_shift' then bld.dump_y_shift = uibs.dump_y_shift end
+            if k == 'speed' then bld.speed = uibs.speed end
+        end
+        table.insert(blds, bld)
+    end end
+    return blds
 end
 
 --

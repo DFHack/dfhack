@@ -1132,7 +1132,7 @@ Job module
   Does basic sanity checks to verify if the suggested item type matches
   the flags in the job item.
 
-* ``dfhack.job.isSuitableMaterial(job_item, mat_type, mat_index)``
+* ``dfhack.job.isSuitableMaterial(job_item, mat_type, mat_index, item_type)``
 
   Likewise, if replacing material.
 

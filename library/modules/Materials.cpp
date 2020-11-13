@@ -444,18 +444,21 @@ bool MaterialInfo::matches(const df::dfhack_material_category &cat)
 
 #undef TEST
 
-bool MaterialInfo::matches(const df::job_item &item)
+bool MaterialInfo::matches(const df::job_item &item, df::item_type itype)
 {
     if (!isValid()) return false;
 
     df::job_item_flags1 ok1, mask1;
     getMatchBits(ok1, mask1);
 
-    df::job_item_flags2 ok2, mask2;
+    df::job_item_flags2 ok2, mask2, xmask2;
     getMatchBits(ok2, mask2);
 
     df::job_item_flags3 ok3, mask3;
     getMatchBits(ok3, mask3);
+
+    xmask2.bits.non_economic = itype != df::item_type::BOULDER;
+    mask2.whole &= ~xmask2.whole;
 
     return bits_match(item.flags1.whole, ok1.whole, mask1.whole) &&
            bits_match(item.flags2.whole, ok2.whole, mask2.whole) &&

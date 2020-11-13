@@ -825,7 +825,8 @@ static bool matchesFilters(df::item * item,
     return DFHack::Job::isSuitableItem(
             job_item, item->getType(), item->getSubtype())
         && DFHack::Job::isSuitableMaterial(
-            job_item, item->getMaterial(), item->getMaterialIndex())
+            job_item, item->getMaterial(), item->getMaterialIndex(),
+            item->getType())
         && item_filter.matches(item);
 }
 

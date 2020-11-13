@@ -279,12 +279,13 @@ bool ItemTypeInfo::matches(df::job_item_vector_id vec_id)
     return true;
 }
 
-bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat, bool skip_vector)
+bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat,
+                           bool skip_vector, df::item_type itype)
 {
     using namespace df::enums::item_type;
 
     if (!isValid())
-        return mat ? mat->matches(item) : false;
+        return mat ? mat->matches(item, itype) : false;
 
     if (Items::isCasteMaterial(type) && mat && !mat->isNone())
         return false;

@@ -156,7 +156,8 @@ namespace DFHack
 
         bool matches(const df::job_material_category &cat);
         bool matches(const df::dfhack_material_category &cat);
-        bool matches(const df::job_item &item);
+        bool matches(const df::job_item &item,
+                     df::item_type itype = df::item_type::NONE);
     };
 
     DFHACK_EXPORT bool parseJobMaterialCategory(df::job_material_category *cat, const std::string &token);

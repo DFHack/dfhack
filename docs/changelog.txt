@@ -51,6 +51,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## API
 - `buildingplan`: added Lua interface API
+- add item type param to dfhack.job.isSuitableMaterial() so the non_economic flag can be properly handled (it was being matched for all item types instead of just boulders)
 
 # 0.47.04-r3
 

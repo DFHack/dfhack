@@ -44,6 +44,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `search`: fixed an issue causing item counts on the trade screen to display inconsistently when searching
 - `stockpiles`: fixed a crash when loading food stockpiles
 - `stockpiles`: fixed an error when saving furniture stockpiles
+- `embark-assistant`: Fixed issue causing incursion resource matching to skip the checks if those resources were provided only through incursions.
 
 ## Misc Improvements
 - `createitem`: added support for plant growths (fruit, berries, leaves, etc.)

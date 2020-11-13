@@ -66,6 +66,7 @@ void Filesystem::init ()
 
 bool Filesystem::chdir (std::string path)
 {
+    Filesystem::init();
     return ::chdir(path.c_str()) == 0;
 }
 
@@ -83,9 +84,15 @@ std::string Filesystem::getcwd ()
     return result;
 }
 
-bool Filesystem::restorecwd ()
+bool Filesystem::restore_cwd ()
 {
     return Filesystem::chdir(initial_cwd);
+}
+
+std::string Filesystem::get_initial_cwd ()
+{
+    Filesystem::init();
+    return initial_cwd;
 }
 
 bool Filesystem::mkdir (std::string path)

@@ -34,6 +34,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## Fixes
+- Fixed an issue on some Linux systems where DFHack installed through a package manager would attempt to write files to a non-writable folder (notably when running `exportlegends` or `gui/autogems`)
 - `buildingplan`: artifacts are now successfully matched when max quality is set to ``artifacts``
 - `buildingplan`: no longer erroneously matches items to buildings while the game is paused
 - `dwarfmonitor`: fixed a crash when opening the ``prefs`` screen if units have vague preferences

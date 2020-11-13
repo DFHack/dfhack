@@ -2160,6 +2160,14 @@ unless otherwise noted.
 
   Changes the current directory to ``path``. Use with caution.
 
+* ``dfhack.filesystem.restore_cwd()``
+
+  Restores the current working directory to what it was when DF started.
+
+* ``dfhack.filesystem.get_initial_cwd()``
+
+  Returns the value of the working directory when DF was started.
+
 * ``dfhack.filesystem.mkdir(path)``
 
   Creates a new directory. Returns ``false`` if unsuccessful, including if ``path`` already exists.

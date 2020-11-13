@@ -13,6 +13,10 @@ function test.getDFPath()
     expect.eq(clean_path(dfhack.getDFPath()), old_cwd)
 end
 
+function test.get_initial_cwd()
+    expect.eq(clean_path(dfhack.filesystem.get_initial_cwd()), clean_path(dfhack.getDFPath()))
+end
+
 function test.getDFPath_chdir()
     dfhack.with_finalize(restore_cwd, function()
         fs.chdir('data')

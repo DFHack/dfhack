@@ -71,6 +71,10 @@ namespace embark_assist {
 
         struct region_tile_datum {
             bool surveyed = false;
+            bool survey_completed = false;
+            bool neighboring_clay = false;          // These elements are updated after the survey by checking if there are any border MLTs in neighboring tiles that would would provide the resource
+            bool neighboring_sand = false;          // if they actually provided an incursion. This allows the code to add these potential tiles to the ones checked. 
+            aquifer_sizes neighboring_aquifer = aquifer_sizes::NA;
             aquifer_sizes aquifer = aquifer_sizes::NA;
             uint16_t clay_count = 0;
             uint16_t sand_count = 0;

@@ -802,6 +802,10 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
             uint8_t offset_count = 0;
             auto &results = survey_results->at(i).at(k);
             results.surveyed = false;
+            results.survey_completed = false;
+            results.neighboring_sand = false;
+            results.neighboring_clay = false;
+            results.neighboring_aquifer = embark_assist::defs::aquifer_sizes::NA;
             results.aquifer = embark_assist::defs::aquifer_sizes::NA;
             results.clay_count = 0;
             results.sand_count = 0;
@@ -925,7 +929,7 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
 void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data *geo_summary,
     embark_assist::defs::world_tile_data *survey_results,
     embark_assist::defs::mid_level_tiles *mlt) {
-//                color_ostream_proxy out(Core::getInstance().getConsole());
+//              color_ostream_proxy out(Core::getInstance().getConsole());
     auto screen = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
     int16_t x = screen->location.region_pos.x;
     int16_t y = screen->location.region_pos.y;

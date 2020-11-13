@@ -608,7 +608,8 @@ bool Job::isSuitableItem(df::job_item *item, df::item_type itype, int isubtype)
     return iinfo.isValid() && iinfo.matches(*item, &minfo);
 }
 
-bool Job::isSuitableMaterial(df::job_item *item, int mat_type, int mat_index)
+bool Job::isSuitableMaterial(
+    df::job_item *item, int mat_type, int mat_index, df::item_type itype)
 {
     CHECK_NULL_POINTER(item);
 
@@ -616,7 +617,7 @@ bool Job::isSuitableMaterial(df::job_item *item, int mat_type, int mat_index)
         return true;
 
     ItemTypeInfo iinfo(item);
-    MaterialInfo minfo(mat_type, mat_index);
+    MaterialInfo minfo(mat_type, mat_index, itype);
 
     return minfo.isValid() && iinfo.matches(*item, &minfo);
 }

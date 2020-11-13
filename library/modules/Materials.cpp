@@ -75,7 +75,9 @@ bool MaterialInfo::decode(df::item *item)
     if (!item)
         return decode(-1);
     else
-        return decode(item->getActualMaterial(), item->getActualMaterialIndex());
+        return decode(item->getActualMaterial(),
+                      item->getActualMaterialIndex(),
+                      item->getType());
 }
 
 bool MaterialInfo::decode(const df::material_vec_ref &vr, int idx)
@@ -86,10 +88,11 @@ bool MaterialInfo::decode(const df::material_vec_ref &vr, int idx)
         return decode(vr.mat_type[idx], vr.mat_index[idx]);
 }
 
-bool MaterialInfo::decode(int16_t type, int32_t index)
+bool MaterialInfo::decode(int16_t type, int32_t index, df::item_type itype)
 {
     this->type = type;
     this->index = index;
+    this->itype = itype;
 
     material = NULL;
     mode = Builtin; subtype = 0;
@@ -513,7 +516,7 @@ void MaterialInfo::getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &ma
     TEST(fire_safe, material->heat.melting_point > 11000);
     TEST(magma_safe, material->heat.melting_point > 12000);
     TEST(deep_material, FLAG(inorganic, inorganic_flags::SPECIAL));
-    TEST(non_economic, !inorganic || !(ui && vector_get(ui->economic_stone, index)));
+    TEST(non_economic, !inorganic || !(ui && vector_get(ui->economic_stone, index)) || itype == df::item_type::BAR);
 
     TEST(plant, plant);
     TEST(silk, MAT_FLAG(SILK));

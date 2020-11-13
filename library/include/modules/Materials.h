@@ -78,6 +78,7 @@ namespace DFHack
 
         int16_t type;
         int32_t index;
+        df::item_type itype;
 
         df::material *material;
 
@@ -98,7 +99,7 @@ namespace DFHack
         df::historical_figure *figure;
 
     public:
-        MaterialInfo(int16_t type = -1, int32_t index = -1) { decode(type, index); }
+        MaterialInfo(int16_t type = -1, int32_t index = -1, df::item_type itype = df::item_type::NONE) { decode(type, index, itype); }
         MaterialInfo(const t_matpair &mp) { decode(mp.mat_type, mp.mat_index); }
         template<class T> MaterialInfo(T *ptr) { decode(ptr); }
 
@@ -113,7 +114,7 @@ namespace DFHack
         bool isAnyInorganic() const { return type == 0; }
         bool isInorganicWildcard() const { return isAnyInorganic() && isBuiltin(); }
 
-        bool decode(int16_t type, int32_t index = -1);
+        bool decode(int16_t type, int32_t index = -1, df::item_type itype = df::item_type::NONE);
         bool decode(df::item *item);
         bool decode(const df::material_vec_ref &vr, int idx);
         bool decode(const t_matpair &mp) { return decode(mp.mat_type, mp.mat_index); }

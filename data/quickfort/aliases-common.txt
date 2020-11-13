@@ -37,7 +37,8 @@ give10down: {give move={Down 10}}
 give10left: {give move={Left 10}}
 give10right: {give move={Right 10}}
 
-# usage example: {givename name="myname"}
+# Keep in mind that building, stockpile, and zone names have a maximum length
+# of 20 characters. usage example: {givename name="myname"}
 givename: {Ctrl}n{name}&
 
 # use to toggle a sequence of stockpile options. for example: {togglesequence 5}
@@ -49,7 +50,9 @@ enablesequence: e{Down}
 # clothes and armor in this quantum stockpile will rot away. If you want bones
 # in your quantum stockpile, apply this alias to a refuse stockpile (but don't
 # put useful clothes or armor in there!)
-quantum: {linksonly}{nocontainers}{enableanimals}{enablefood}{enablefurniture}{enablestone}{enableammo}{enablecoins}{enablebars}{enablegems}{enablefinishedgoods}{enableleather}{enablecloth}{enablewood}{enableweapons}{enablearmor}{enablesheet}
+# Optionally set a name for the stockpile by specifying the 'name' parameter,
+# for example: {quantum name="my name"}
+quantum: {linksonly}{nocontainers}{enableanimals}{enablefood}{enablefurniture}{enablestone}{enableammo}{enablecoins}{enablebars}{enablegems}{enablefinishedgoods}{enableleather}{enablecloth}{enablewood}{enableweapons}{enablearmor}{enablesheet}{givename}
 
 
 ##################################
@@ -82,6 +85,14 @@ quantumstopfromeast: {quantumstopprefix}s{Right}p^{Left}{quantumstopsuffix}
 quantumstopfromsouth: {quantumstopprefix}s{Down}p^{Up}{quantumstopsuffix}
 quantumstopfromwest: {quantumstopprefix}s{Left}p^{Right}{quantumstopsuffix}
 quantumstopfromnorth: {quantumstopprefix}s{Up}p^{Down}{quantumstopsuffix}
+
+
+##################################
+# zone aliases
+##################################
+
+# usage example: {namezone name="my zone name"}
+namezone: ^i{givename}^q
 
 
 ##################################

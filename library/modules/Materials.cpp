@@ -75,8 +75,7 @@ bool MaterialInfo::decode(df::item *item)
     if (!item)
         return decode(-1);
     else
-        return decode(item->getActualMaterial(),
-                      item->getActualMaterialIndex());
+        return decode(item->getActualMaterial(), item->getActualMaterialIndex());
 }
 
 bool MaterialInfo::decode(const df::material_vec_ref &vr, int idx)
@@ -518,6 +517,7 @@ void MaterialInfo::getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &ma
     TEST(magma_safe, material->heat.melting_point > 12000);
     TEST(deep_material, FLAG(inorganic, inorganic_flags::SPECIAL));
     TEST(non_economic, !inorganic || !(ui && vector_get(ui->economic_stone, index)));
+
     TEST(plant, plant);
     TEST(silk, MAT_FLAG(SILK));
     TEST(leather, MAT_FLAG(LEATHER));

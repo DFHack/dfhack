@@ -1024,6 +1024,10 @@ static bool isPlannableBuilding(df::building_type type,
         toBuildingTypeKey(type, subtype, custom));
 }
 
+static bool isPlannedBuilding(df::building *bld) {
+    return !!planner.getPlannedBuilding(bld);
+}
+
 static void addPlannedBuilding(df::building *bld) {
     planner.addPlannedBuilding(bld);
 }
@@ -1049,6 +1053,7 @@ static void setSetting(std::string name, bool value) {
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(isPlanModeEnabled),
     DFHACK_LUA_FUNCTION(isPlannableBuilding),
+    DFHACK_LUA_FUNCTION(isPlannedBuilding),
     DFHACK_LUA_FUNCTION(addPlannedBuilding),
     DFHACK_LUA_FUNCTION(doCycle),
     DFHACK_LUA_FUNCTION(scheduleCycle),

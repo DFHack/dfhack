@@ -76,8 +76,7 @@ bool MaterialInfo::decode(df::item *item)
         return decode(-1);
     else
         return decode(item->getActualMaterial(),
-                      item->getActualMaterialIndex(),
-                      item->getType());
+                      item->getActualMaterialIndex());
 }
 
 bool MaterialInfo::decode(const df::material_vec_ref &vr, int idx)
@@ -88,11 +87,10 @@ bool MaterialInfo::decode(const df::material_vec_ref &vr, int idx)
         return decode(vr.mat_type[idx], vr.mat_index[idx]);
 }
 
-bool MaterialInfo::decode(int16_t type, int32_t index, df::item_type itype)
+bool MaterialInfo::decode(int16_t type, int32_t index)
 {
     this->type = type;
     this->index = index;
-    this->itype = itype;
 
     material = NULL;
     mode = Builtin; subtype = 0;
@@ -447,18 +445,21 @@ bool MaterialInfo::matches(const df::dfhack_material_category &cat)
 
 #undef TEST
 
-bool MaterialInfo::matches(const df::job_item &item)
+bool MaterialInfo::matches(const df::job_item &item, df::item_type itype)
 {
     if (!isValid()) return false;
 
     df::job_item_flags1 ok1, mask1;
     getMatchBits(ok1, mask1);
 
-    df::job_item_flags2 ok2, mask2;
+    df::job_item_flags2 ok2, mask2, xmask2;
     getMatchBits(ok2, mask2);
 
     df::job_item_flags3 ok3, mask3;
     getMatchBits(ok3, mask3);
+
+    xmask2.bits.non_economic = itype != df::item_type::BOULDER;
+    mask2.whole &= ~xmask2.whole;
 
     return bits_match(item.flags1.whole, ok1.whole, mask1.whole) &&
            bits_match(item.flags2.whole, ok2.whole, mask2.whole) &&
@@ -516,8 +517,7 @@ void MaterialInfo::getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &ma
     TEST(fire_safe, material->heat.melting_point > 11000);
     TEST(magma_safe, material->heat.melting_point > 12000);
     TEST(deep_material, FLAG(inorganic, inorganic_flags::SPECIAL));
-    TEST(non_economic, !inorganic || !(ui && vector_get(ui->economic_stone, index)) || itype == df::item_type::BAR);
-
+    TEST(non_economic, !inorganic || !(ui && vector_get(ui->economic_stone, index)));
     TEST(plant, plant);
     TEST(silk, MAT_FLAG(SILK));
     TEST(leather, MAT_FLAG(LEATHER));

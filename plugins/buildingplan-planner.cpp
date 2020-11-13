@@ -224,7 +224,7 @@ bool ItemFilter::matches(df::item *item) const
 
     auto imattype = item->getActualMaterial();
     auto imatindex = item->getActualMaterialIndex();
-    auto item_mat = DFHack::MaterialInfo(imattype, imatindex, item->getType());
+    auto item_mat = DFHack::MaterialInfo(imattype, imatindex);
 
     return (materials.size() == 0) ? matchesMask(item_mat) : matches(item_mat);
 }

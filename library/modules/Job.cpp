@@ -605,7 +605,7 @@ bool Job::isSuitableItem(df::job_item *item, df::item_type itype, int isubtype)
     ItemTypeInfo iinfo(itype, isubtype);
     MaterialInfo minfo(item);
 
-    return iinfo.isValid() && iinfo.matches(*item, &minfo);
+    return iinfo.isValid() && iinfo.matches(*item, &minfo, true, itype);
 }
 
 bool Job::isSuitableMaterial(
@@ -617,9 +617,9 @@ bool Job::isSuitableMaterial(
         return true;
 
     ItemTypeInfo iinfo(item);
-    MaterialInfo minfo(mat_type, mat_index, itype);
+    MaterialInfo minfo(mat_type, mat_index);
 
-    return minfo.isValid() && iinfo.matches(*item, &minfo);
+    return minfo.isValid() && iinfo.matches(*item, &minfo, true, itype);
 }
 
 std::string Job::getName(df::job *job)

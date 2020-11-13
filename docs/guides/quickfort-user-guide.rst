@@ -502,7 +502,11 @@ meeting area all at once:
    #zone main pasture and picnic area
    nmg(10x10)
 
-The order of the individual letters doesn't matter.
+The order of the individual letters doesn't matter. If you want to configure the
+stockpile from scratch in a ``#query`` blueprint, you can place unconfigured
+"custom" stockpiles with (:kbd:`c`). It is more efficient, though, to place
+stockpiles using the keys that represent the types you want to store, and
+then only use a ``#query`` blueprint if you need fine-grained customization.
 
 Detailed configuration for zones, such as the pit/pond toggle, can also be set
 by mimicking the hotkeys used to set them. Note that gather flags default to
@@ -892,13 +896,13 @@ Meta blueprints
 Meta blueprints are blueprints that script a series of other blueprints. Many
 blueprint packages follow this pattern:
 
--  Apply dig blueprint to designate dig areas
--  Wait for miners to dig
--  **Apply build buildprint** to designate buildings
--  **Apply place buildprint** to designate stockpiles
--  **Apply query blueprint** to configure stockpiles
--  Wait for buildings to get built
--  Apply a different query blueprint to configure rooms
+1.  Apply dig blueprint to designate dig areas
+#.  Wait for miners to dig
+#.  **Apply build buildprint** to designate buildings
+#.  **Apply place buildprint** to designate stockpiles
+#.  **Apply query blueprint** to configure stockpiles
+#.  Wait for buildings to get built
+#.  Apply a different query blueprint to configure rooms
 
 Those three "apply"s in the middle might as well get done in one command instead
 of three. A meta blueprint can encode that sequence. A meta blueprint refers to
@@ -942,12 +946,12 @@ blueprints into one:
 
 Now your sequence is shortened to:
 
--  Apply dig blueprint to designate dig areas
--  Wait for miners to dig
--  **Apply meta buildprint** to build buildings and designate/configure
-   stockpiles
--  Wait for buildings to get built
--  Apply the final query blueprint to configure the room
+1.  Apply dig blueprint to designate dig areas
+#.  Wait for miners to dig
+#.  **Apply meta buildprint** to build buildings and designate/configure
+    stockpiles
+#.  Wait for buildings to get built
+#.  Apply the final query blueprint to configure the room
 
 You can use meta blueprints to lay out your fortress at a larger scale as well.
 The ``#<`` and ``#>`` notation is valid in meta blueprints, so you can, for
@@ -1009,6 +1013,11 @@ a big fort, so we're planning for a lot of bedrooms):
 
 Note that for blueprints without an explicit label, we still need to address
 them by their auto-generated numerical label.
+
+It's worth calling out that ``#meta`` blueprints can only refer to blueprints
+that are defined in the same file. This means that all blueprints that a
+``#meta`` blueprint needs to script must be in sheets within the same
+.xlsx spreadsheet or concatenated into the same .csv file.
 
 You can then hide the blueprints that you now manage with the ``#meta``-mode
 blueprint from ``quickfort list`` by adding a ``hidden()`` marker to their

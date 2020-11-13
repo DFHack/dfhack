@@ -58,12 +58,12 @@
 # The syntax for defining aliases is:
 #   aliasname: keystrokes
 #
-# Where aliasname is at least two letters or digits long and keystrokes are
-# whatever you would type into the DF UI. A keystroke can also be a named
-# keycode from the DF interface definition file (data/init/interface.txt),
-# enclosed in curly brackets like an alias, like: "{Right}" or "{Enter}". In
-# order to avoid naming conflicts between aliases and keycodes, the convention
-# is to start aliases with a lowercase letter.
+# Where aliasname is at least two letters or digits long (including dashes and
+# underscores) and keystrokes are whatever you would type into the DF UI. A
+# keystroke can also be a named keycode from the DF interface definition file
+# (data/init/interface.txt), enclosed in curly brackets like an alias, like:
+# "{Right}" or "{Enter}". In # order to avoid naming conflicts between aliases
+# and keycodes, the convention is to start aliases with a lowercase letter.
 #
 # Anything enclosed within curly brackets can also have a number after it,
 # indicating how many times that alias or keycode should be repeated. For
@@ -95,8 +95,12 @@
 #   !   expands to {Ctrl}
 #   ^   expands to {ESC}
 #
+# There is also a non-standard alias built into the code for the common
+# shorthand for "make room":
+#   r+  expands to r+&
+#
 # If you need literal verisons of the shorthand characters, surround them in
-# curly brackets, for example: "{~}"
+# curly brackets, for example: "{!}"
 #
 #
 # Add your custom aliases here:

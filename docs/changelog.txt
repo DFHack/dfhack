@@ -38,6 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `buildingplan`: artifacts are now successfully matched when max quality is set to ``artifacts``
 - `buildingplan`: no longer erroneously matches items to buildings while the game is paused
 - `dwarfmonitor`: fixed a crash when opening the ``prefs`` screen if units have vague preferences
+- `embark-assistant`: fixed an issue causing incursion resource matching (e.g. sand/clay) to skip some tiles if those resources were provided only through incursions
 
 ## Misc Improvements
 - `buildingplan`: all buildings, furniture, and constructions are now supported (except for instruments)
@@ -64,7 +65,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `search`: fixed an issue causing item counts on the trade screen to display inconsistently when searching
 - `stockpiles`: fixed a crash when loading food stockpiles
 - `stockpiles`: fixed an error when saving furniture stockpiles
-- `embark-assistant`: Fixed issue causing incursion resource matching to skip the checks if those resources were provided only through incursions.
 
 ## Misc Improvements
 - `createitem`: added support for plant growths (fruit, berries, leaves, etc.)

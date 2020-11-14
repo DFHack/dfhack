@@ -1572,7 +1572,7 @@ namespace embark_assist {
                     break;
 
                 case embark_assist::defs::aquifer_ranges::None_Light_Heavy:
-                    if ((tile->aquifer | tile->neighboring_aquifer) != 
+                    if ((tile->aquifer | tile->neighboring_aquifer) !=
                         (embark_assist::defs::None_Aquifer_Bit | embark_assist::defs::Light_Aquifer_Bit | embark_assist::defs::Heavy_Aquifer_Bit)) {
                         if (trace) out.print("matcher::world_tile_match: Aquifer None_Light_Heavy (%i, %i)\n", x, y);
                         return false;

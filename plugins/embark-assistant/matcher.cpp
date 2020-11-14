@@ -29,7 +29,7 @@ namespace embark_assist {
         struct matcher_info {
             bool savagery_found[3] = { false, false, false };
             bool evilness_found[3] = { false, false, false };
-            embark_assist::defs::aquifer_sizes aquifer = embark_assist::defs::aquifer_sizes::NA;
+            uint8_t aquifer = embark_assist::defs::Clear_Aquifer_Bits;
             bool river_found = false;
             uint8_t max_waterfall = 0;
             uint16_t elevation;
@@ -120,14 +120,14 @@ namespace embark_assist {
                 }
 
                 //  Aquifer
-                result->aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(result->aquifer) | static_cast<int8_t>(mlt->aquifer));
+                result->aquifer |= mlt->aquifer;
 
                 switch (finder->aquifer) {
                 case embark_assist::defs::aquifer_ranges::NA:
                     break;
 
                 case embark_assist::defs::aquifer_ranges::None:
-                    if (result->aquifer != embark_assist::defs::aquifer_sizes::None) {
+                    if (result->aquifer != embark_assist::defs::None_Aquifer_Bit) {
                         *failed_match = true;
                         return;
                     }
@@ -135,14 +135,14 @@ namespace embark_assist {
 
                 case embark_assist::defs::aquifer_ranges::At_Most_Light:
                 case embark_assist::defs::aquifer_ranges::None_Plus_Light:
-                    if (static_cast<int8_t>(result->aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::Heavy)) {
+                    if (result->aquifer & embark_assist::defs::Heavy_Aquifer_Bit) {
                         *failed_match = true;
                         return;
                     }
                     break;
 
                 case embark_assist::defs::aquifer_ranges::Light:
-                    if (result->aquifer != embark_assist::defs::aquifer_sizes::Light) {
+                    if (result->aquifer != embark_assist::defs::Light_Aquifer_Bit) {
                         *failed_match = true;
                         return;
                     }
@@ -150,14 +150,14 @@ namespace embark_assist {
 
                 case embark_assist::defs::aquifer_ranges::At_Least_Light:
                 case embark_assist::defs::aquifer_ranges::Light_Plus_Heavy:
-                    if (static_cast<int8_t>(result->aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::None)) {
+                    if (result->aquifer & embark_assist::defs::None_Aquifer_Bit) {
                         *failed_match = true;
                         return;
                     }
                     break;
 
                 case embark_assist::defs::aquifer_ranges::None_Plus_Heavy:
-                    if (static_cast<int8_t>(result->aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::Light)) {
+                    if (result->aquifer & embark_assist::defs::Light_Aquifer_Bit) {
                         *failed_match = true;
                         return;
                     }
@@ -169,7 +169,7 @@ namespace embark_assist {
                     break;
 
                 case embark_assist::defs::aquifer_ranges::Heavy:
-                    if (result->aquifer != embark_assist::defs::aquifer_sizes::Heavy) {
+                    if (result->aquifer != embark_assist::defs::Heavy_Aquifer_Bit) {
                         *failed_match = true;
                         return;
                     }
@@ -645,32 +645,32 @@ namespace embark_assist {
                     }
 
                     //  Aquifer
-                    result.aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(result.aquifer) | static_cast<int8_t>(mlt->at(i).at(k).aquifer));
+                    result.aquifer |= mlt->at(i).at(k).aquifer;
 
                     switch (finder->aquifer) {
                     case embark_assist::defs::aquifer_ranges::NA:
                         break;
 
                     case embark_assist::defs::aquifer_ranges::None:
-                        if (result.aquifer != embark_assist::defs::aquifer_sizes::None) return false;
+                        if (result.aquifer != embark_assist::defs::None_Aquifer_Bit) return false;
                         break;
 
                     case embark_assist::defs::aquifer_ranges::At_Most_Light:
                     case embark_assist::defs::aquifer_ranges::None_Plus_Light:
-                        if (static_cast<int8_t>(result.aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::Heavy)) return false;
+                        if (result.aquifer & embark_assist::defs::Heavy_Aquifer_Bit) return false;
                         break;
 
                     case embark_assist::defs::aquifer_ranges::Light:
-                        if (result.aquifer != embark_assist::defs::aquifer_sizes::Light) return false;
+                        if (result.aquifer != embark_assist::defs::Light_Aquifer_Bit) return false;
                         break;
 
                     case embark_assist::defs::aquifer_ranges::At_Least_Light:
                     case embark_assist::defs::aquifer_ranges::Light_Plus_Heavy:
-                        if (static_cast<int8_t>(result.aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::None)) return false;
+                        if (result.aquifer & embark_assist::defs::None_Aquifer_Bit) return false;
                         break;
 
                     case embark_assist::defs::aquifer_ranges::None_Plus_Heavy:
-                        if (static_cast<int8_t>(result.aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::Light)) return false;
+                        if (result.aquifer & embark_assist::defs::Light_Aquifer_Bit) return false;
                         break;
 
                     case embark_assist::defs::aquifer_ranges::None_Plus_At_Least_Light:
@@ -679,7 +679,7 @@ namespace embark_assist {
                         break;
 
                     case embark_assist::defs::aquifer_ranges::Heavy:
-                        if (result.aquifer != embark_assist::defs::aquifer_sizes::Heavy) return false;
+                        if (result.aquifer != embark_assist::defs::Heavy_Aquifer_Bit) return false;
                         break;
                     }
 
@@ -1223,29 +1223,29 @@ namespace embark_assist {
                 break;
 
             case embark_assist::defs::aquifer_ranges::None_Plus_Light:
-                if (result.aquifer != embark_assist::defs::aquifer_sizes::None_Light) return false;
+                if (result.aquifer != (embark_assist::defs::None_Aquifer_Bit | embark_assist::defs::Light_Aquifer_Bit)) return false;
                 break;
 
             case embark_assist::defs::aquifer_ranges::None_Plus_At_Least_Light:
-                if (result.aquifer != embark_assist::defs::aquifer_sizes::None_Light &&
-                    result.aquifer != embark_assist::defs::aquifer_sizes::None_Heavy) return false;
+                if (result.aquifer != (embark_assist::defs::None_Aquifer_Bit | embark_assist::defs::Light_Aquifer_Bit) &&
+                    result.aquifer != (embark_assist::defs::None_Aquifer_Bit | embark_assist::defs::Heavy_Aquifer_Bit)) return false;
                 break;
 
             case embark_assist::defs::aquifer_ranges::None_Plus_Heavy:
-                if (result.aquifer != embark_assist::defs::aquifer_sizes::None_Heavy) return false;
+                if (result.aquifer != (embark_assist::defs::None_Aquifer_Bit | embark_assist::defs::Heavy_Aquifer_Bit)) return false;
                 break;
 
             case embark_assist::defs::aquifer_ranges::At_Most_Light_Plus_Heavy:
-                if (result.aquifer != embark_assist::defs::aquifer_sizes::None_Heavy &&
-                    result.aquifer != embark_assist::defs::aquifer_sizes::Light_Heavy) return false;
+                if (result.aquifer != (embark_assist::defs::None_Aquifer_Bit | embark_assist::defs::Heavy_Aquifer_Bit) &&
+                    result.aquifer != (embark_assist::defs::Light_Aquifer_Bit | embark_assist::defs::Heavy_Aquifer_Bit)) return false;
                 break;
 
             case embark_assist::defs::aquifer_ranges::Light_Plus_Heavy:
-                if (result.aquifer != embark_assist::defs::aquifer_sizes::Light_Heavy) return false;
+                if (result.aquifer != (embark_assist::defs::Light_Aquifer_Bit | embark_assist::defs::Heavy_Aquifer_Bit)) return false;
                 break;
 
             case embark_assist::defs::aquifer_ranges::None_Light_Heavy:
-                if (result.aquifer != embark_assist::defs::aquifer_sizes::None_Light_Heavy) return false;
+                if (result.aquifer != (embark_assist::defs::None_Aquifer_Bit | embark_assist::defs::Light_Aquifer_Bit | embark_assist::defs::Heavy_Aquifer_Bit)) return false;
                 break;
             }
 
@@ -1504,93 +1504,83 @@ namespace embark_assist {
                     break;
 
                 case embark_assist::defs::aquifer_ranges::None:
-                    if (!(static_cast<int8_t>(tile->aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::None))) {
+                    if (!(tile->aquifer & embark_assist::defs::None_Aquifer_Bit)) {
                         if (trace) out.print("matcher::world_tile_match: Aquifer None (%i, %i)\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::aquifer_ranges::At_Most_Light:
-                    if (tile->aquifer == embark_assist::defs::aquifer_sizes::Heavy) {
-                        if (trace) out.print("matcher::world_tile_match: Aquifer Heavy (%i, %i)\n", x, y);
+                    if (tile->aquifer == embark_assist::defs::Heavy_Aquifer_Bit) {
+                        if (trace) out.print("matcher::world_tile_match: Aquifer At_Most_Light (%i, %i)\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::aquifer_ranges::None_Plus_Light:
-                    if ((!(static_cast<int8_t>(tile->aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::None)) &&
-                        (!(static_cast<int8_t>(tile->neighboring_aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::None)))) ||
-                        (!(static_cast<int8_t>(tile->aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::Light)) &&
-                            (!(static_cast<int8_t>(tile->neighboring_aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::Light))))) {
+                    if (!((tile->aquifer | tile->neighboring_aquifer) & embark_assist::defs::None_Aquifer_Bit) ||
+                        !((tile->aquifer | tile->neighboring_aquifer) & embark_assist::defs::Light_Aquifer_Bit)) {
                         if (trace) out.print("matcher::world_tile_match: Aquifer None_Plus_Light (%i, %i)\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::aquifer_ranges::None_Plus_At_Least_Light:
-                    if ((!(static_cast<int8_t>(tile->aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::None)) &&
-                        (!(static_cast<int8_t>(tile->neighboring_aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::None)))) ||
-                        (!(static_cast<int8_t>(tile->aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::Light_Heavy)) &&
-                            (!(static_cast<int8_t>(tile->neighboring_aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::Light_Heavy))))) {
+                    if (!((tile->aquifer | tile->neighboring_aquifer) & embark_assist::defs::None_Aquifer_Bit) ||
+                        ((tile->aquifer | tile->neighboring_aquifer) == embark_assist::defs::None_Aquifer_Bit)) {
                         if (trace) out.print("matcher::world_tile_match: Aquifer None_Plus_At_Least_Light (%i, %i)\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::aquifer_ranges::Light:
-                    if (!(static_cast<int8_t>(tile->aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::Light))) {
+                    if (!(tile->aquifer & embark_assist::defs::Light_Aquifer_Bit)) {
                         if (trace) out.print("matcher::world_tile_match: Aquifer Light (%i, %i)\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::aquifer_ranges::At_Least_Light:
-                    if (tile->aquifer == embark_assist::defs::aquifer_sizes::None &&
-                        ((static_cast<int8_t>(tile->neighboring_aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::None)))) {
+                    if ((tile->aquifer | tile->neighboring_aquifer) == embark_assist::defs::None_Aquifer_Bit) {
                         if (trace) out.print("matcher::world_tile_match: Aquifer At_Least_Light (%i, %i)\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::aquifer_ranges::None_Plus_Heavy:
-                    if ((!(static_cast<int8_t>(tile->aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::None)) &&
-                        (!(static_cast<int8_t>(tile->neighboring_aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::None)))) ||
-                        (!(static_cast<int8_t>(tile->aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::Heavy)) &&
-                            (!(static_cast<int8_t>(tile->neighboring_aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::Heavy))))) {
+                    if (!((tile->aquifer | tile->neighboring_aquifer) & embark_assist::defs::None_Aquifer_Bit) ||
+                        !((tile->aquifer | tile->neighboring_aquifer) & embark_assist::defs::Heavy_Aquifer_Bit)) {
                         if (trace) out.print("matcher::world_tile_match: Aquifer None_Plus_Heavy (%i, %i)\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::aquifer_ranges::At_Most_Light_Plus_Heavy:
-                    if ((!(static_cast<int8_t>(tile->aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::Heavy)) &&
-                        (!(static_cast<int8_t>(tile->neighboring_aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::Heavy)))) ||
-                        (!(static_cast<int8_t>(tile->aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::None_Light)) &&
-                            (!(static_cast<int8_t>(tile->neighboring_aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::None_Light))))) {
+                    if ((tile->aquifer | tile->neighboring_aquifer) == embark_assist::defs::Heavy_Aquifer_Bit ||
+                        !((tile->aquifer | tile->neighboring_aquifer) & embark_assist::defs::Heavy_Aquifer_Bit)) {
                         if (trace) out.print("matcher::world_tile_match: Aquifer At_Most_Light_Plus_Heavy (%i, %i)\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::aquifer_ranges::Light_Plus_Heavy:
-                    if ((!(static_cast<int8_t>(tile->aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::Light)) &&
-                        (!(static_cast<int8_t>(tile->neighboring_aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::Light)))) ||
-                        (!(static_cast<int8_t>(tile->aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::Heavy)) &&
-                            (!(static_cast<int8_t>(tile->neighboring_aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::Heavy))))) {
+                    if (!((tile->aquifer | tile->neighboring_aquifer) & embark_assist::defs::Light_Aquifer_Bit) ||
+                        !((tile->aquifer | tile->neighboring_aquifer) & embark_assist::defs::Heavy_Aquifer_Bit)) {
                         if (trace) out.print("matcher::world_tile_match: Aquifer Light_Plus_Heavy (%i, %i)\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::aquifer_ranges::None_Light_Heavy:
-                    if (tile->aquifer != embark_assist::defs::aquifer_sizes::None_Light_Heavy) {
+                    if ((tile->aquifer | tile->neighboring_aquifer) != 
+                        (embark_assist::defs::None_Aquifer_Bit | embark_assist::defs::Light_Aquifer_Bit | embark_assist::defs::Heavy_Aquifer_Bit)) {
                         if (trace) out.print("matcher::world_tile_match: Aquifer None_Light_Heavy (%i, %i)\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::aquifer_ranges::Heavy:
-                    if (!(static_cast<int8_t>(tile->aquifer) & static_cast<int8_t>(embark_assist::defs::aquifer_sizes::Heavy))) {
+                    if (!(tile->aquifer & embark_assist::defs::Heavy_Aquifer_Bit)) {
                         if (trace) out.print("matcher::world_tile_match: Aquifer Heavy (%i, %i)\n", x, y);
                         return false;
                     }
@@ -3174,7 +3164,7 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
 
                             current->neighboring_sand |= target->south_row [15].sand;
                             current->neighboring_clay |= target->south_row[15].clay;
-                            current->neighboring_aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(current->neighboring_aquifer) | static_cast<int8_t>(target->south_row[15].aquifer));
+                            current->neighboring_aquifer |= target->south_row[15].aquifer;
                         }
 
                         if (k > 0) {
@@ -3183,7 +3173,7 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
                             for (uint16_t l = 0; l < 16; l++) {
                                 current->neighboring_sand |= target->south_row[l].sand;
                                 current->neighboring_clay |= target->south_row[l].clay;
-                                current->neighboring_aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(current->neighboring_aquifer) | static_cast<int8_t>(target->south_row[l].aquifer));
+                                current->neighboring_aquifer |= target->south_row[l].aquifer;
                             }
                         }
 
@@ -3192,7 +3182,7 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
 
                             current->neighboring_sand |= target->south_row[0].sand;
                             current->neighboring_clay |= target->south_row[0].clay;
-                            current->neighboring_aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(current->neighboring_aquifer) | static_cast<int8_t>(target->south_row[0].aquifer));
+                            current->neighboring_aquifer |= target->south_row[0].aquifer;
                         }
 
                         if (i > 0) {
@@ -3201,7 +3191,7 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
                             for (uint16_t l = 0; l < 16; l++) {
                                 current->neighboring_sand |= target->east_column[l].sand;
                                 current->neighboring_clay |= target->east_column[l].clay;
-                                current->neighboring_aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(current->neighboring_aquifer) | static_cast<int8_t>(target->east_column[l].aquifer));
+                                current->neighboring_aquifer |= target->east_column[l].aquifer;
                             }
                         }
 
@@ -3211,7 +3201,7 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
                             for (uint16_t l = 0; l < 16; l++) {
                                 current->neighboring_sand |= target->west_column[l].sand;
                                 current->neighboring_clay |= target->west_column[l].clay;
-                                current->neighboring_aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(current->neighboring_aquifer) | static_cast<int8_t>(target->west_column[l].aquifer));
+                                current->neighboring_aquifer |= target->west_column[l].aquifer;
                             }
                         }
 
@@ -3220,7 +3210,7 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
 
                             current->neighboring_sand |= target->north_row[15].sand;
                             current->neighboring_clay |= target->north_row[15].clay;
-                            current->neighboring_aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(current->neighboring_aquifer) | static_cast<int8_t>(target->north_row[15].aquifer));
+                            current->neighboring_aquifer |= target->north_row[15].aquifer;
                         }
 
                         if (k < world->worldgen.worldgen_parms.dim_y - 1) {
@@ -3229,7 +3219,7 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
                             for (uint16_t l = 0; l < 16; l++) {
                                 current->neighboring_sand |= target->north_row[l].sand;
                                 current->neighboring_clay |= target->north_row[l].clay;
-                                current->neighboring_aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(current->neighboring_aquifer) | static_cast<int8_t>(target->north_row[l].aquifer));
+                                current->neighboring_aquifer |= target->north_row[l].aquifer;
                             }
                         }
 
@@ -3238,7 +3228,7 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
 
                             current->neighboring_sand |= target->north_row[0].sand;
                             current->neighboring_clay |= target->north_row[0].clay;
-                            current->neighboring_aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(current->neighboring_aquifer) | static_cast<int8_t>(target->north_row[0].aquifer));
+                            current->neighboring_aquifer |= target->north_row[0].aquifer;
                         }
 
                         survey_results->at(i).at(k).survey_completed = true;  //  A bit wasteful to add a flag to every entry when only the very first one is ever read...

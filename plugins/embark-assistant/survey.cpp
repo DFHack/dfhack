@@ -507,7 +507,7 @@ namespace embark_assist {
             int16_t elevation,
             uint16_t x,
             uint16_t y) {
-            site_info->aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(mlt->aquifer) | static_cast<int8_t>(site_info->aquifer));
+            site_info->aquifer |= mlt->aquifer;
 
             if (mlt->soil_depth < site_info->min_soil) {
                 site_info->min_soil = mlt->soil_depth;
@@ -805,8 +805,8 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
             results.survey_completed = false;
             results.neighboring_sand = false;
             results.neighboring_clay = false;
-            results.neighboring_aquifer = embark_assist::defs::aquifer_sizes::NA;
-            results.aquifer = embark_assist::defs::aquifer_sizes::NA;
+            results.neighboring_aquifer = embark_assist::defs::Clear_Aquifer_Bits;
+            results.aquifer = embark_assist::defs::Clear_Aquifer_Bits;
             results.clay_count = 0;
             results.sand_count = 0;
             results.flux_count = 0;
@@ -855,13 +855,13 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
                     geo_index = world_data->region_map[adjusted.x][adjusted.y].geo_index;
 
                     if (geo_summary->at(geo_index).aquifer_absent) {
-                        results.aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(results.aquifer) | 1);
+                        results.aquifer |= embark_assist::defs::None_Aquifer_Bit;
                     }
                     else if (world_data->region_map[adjusted.x][adjusted.y].drainage % 20 == 7) {
-                        results.aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(results.aquifer) | 4);
+                        results.aquifer |= embark_assist::defs::Heavy_Aquifer_Bit;
                     }
                     else {
-                        results.aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(results.aquifer) | 2);
+                        results.aquifer |= embark_assist::defs::Light_Aquifer_Bit;
                     }
 
                     if (!geo_summary->at(geo_index).clay_absent) results.clay_count++;
@@ -1073,7 +1073,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
             int16_t cur_shift = elevation + soil_erosion - 1;
 
             aquifer = false;
-            mlt->at(i).at(k).aquifer = embark_assist::defs::aquifer_sizes::NA;
+            mlt->at(i).at(k).aquifer = embark_assist::defs::Clear_Aquifer_Bits;
             mlt->at(i).at(k).clay = false;
             mlt->at(i).at(k).sand = false;
             mlt->at(i).at(k).flux = false;
@@ -1224,13 +1224,13 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                 }
             }
             if (!aquifer) {
-                mlt->at(i).at(k).aquifer = embark_assist::defs::aquifer_sizes::None;
+                mlt->at(i).at(k).aquifer = embark_assist::defs::None_Aquifer_Bit;
             }
             else if (world_data->region_map[adjusted.x][adjusted.y].drainage % 20 == 7) {
-                mlt->at(i).at(k).aquifer = embark_assist::defs::aquifer_sizes::Heavy;
+                mlt->at(i).at(k).aquifer = embark_assist::defs::Heavy_Aquifer_Bit;
             }
             else {
-                mlt->at(i).at(k).aquifer = embark_assist::defs::aquifer_sizes::Light;
+                mlt->at(i).at(k).aquifer = embark_assist::defs::Light_Aquifer_Bit;
             }
 
             mlt->at(i).at(k).trees = tree_level_of(world_data->regions[world_data->region_map[adjusted.x][adjusted.y].region_id]->type,
@@ -1283,7 +1283,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
         }
     }
 
-    survey_results->at(x).at(y).aquifer = embark_assist::defs::aquifer_sizes::NA;
+    survey_results->at(x).at(y).aquifer = embark_assist::defs::Clear_Aquifer_Bits;
     survey_results->at(x).at(y).clay_count = 0;
     survey_results->at(x).at(y).sand_count = 0;
     survey_results->at(x).at(y).flux_count = 0;
@@ -1299,7 +1299,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
 
     for (uint8_t i = 0; i < 16; i++) {
         for (uint8_t k = 0; k < 16; k++) {
-            survey_results->at(x).at(y).aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(survey_results->at(x).at(y).aquifer) | static_cast<int8_t>(mlt->at(i).at(k).aquifer));
+            survey_results->at(x).at(y).aquifer |= mlt->at(i).at(k).aquifer;
             if (mlt->at(i).at(k).clay) { survey_results->at(x).at(y).clay_count++; }
             if (mlt->at(i).at(k).sand) { survey_results->at(x).at(y).sand_count++; }
             if (mlt->at(i).at(k).flux) { survey_results->at(x).at(y).flux_count++; }
@@ -2249,7 +2249,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
     state->y = y;
 
     site_info->incursions_processed = true;
-    site_info->aquifer = embark_assist::defs::aquifer_sizes::NA;
+    site_info->aquifer = embark_assist::defs::Clear_Aquifer_Bits;
     site_info->min_soil = 10;
     site_info->max_soil = 0;
     site_info->flat = true;
@@ -2270,7 +2270,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
 
     for (uint8_t i = state->local_min_x; i <= state->local_max_x; i++) {
         for (uint8_t k = state->local_min_y; k <= state->local_max_y; k++) {
-            site_info->aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(site_info->aquifer) | static_cast<int8_t>(mlt->at(i).at(k).aquifer));
+            site_info->aquifer |= mlt->at(i).at(k).aquifer;
 
             if (mlt->at(i).at(k).soil_depth < site_info->min_soil) {
                 site_info->min_soil = mlt->at(i).at(k).soil_depth;

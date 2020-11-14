@@ -370,7 +370,7 @@ void embark_assist::overlay::set_embark(embark_assist::defs::site_infos *site_in
         state->embark_info.push_back({ Screen::Pen(' ', COLOR_BROWN), "Flat" });
     }
 
-    if (site_info->aquifer != embark_assist::defs::aquifer_sizes::None) {
+    if (site_info->aquifer != embark_assist::defs::None_Aquifer_Bit) {
         std::string none = "   ";
         std::string light = "   ";
         std::string heavy = "  ";
@@ -379,34 +379,34 @@ void embark_assist::overlay::set_embark(embark_assist::defs::site_infos *site_in
         std::string hv = "Hv";
 
         switch (site_info->aquifer) {
-        case embark_assist::defs::aquifer_sizes::NA:
-        case embark_assist::defs::aquifer_sizes::None:  //  Neither of these should appear
+        case embark_assist::defs::Clear_Aquifer_Bits:
+        case embark_assist::defs::None_Aquifer_Bit:  //  Neither of these should appear
             break;
 
-        case embark_assist::defs::aquifer_sizes::Light:
+        case embark_assist::defs::Light_Aquifer_Bit:
             light = lt;
             break;
 
-        case embark_assist::defs::aquifer_sizes::None_Light:
+            case embark_assist::defs::None_Aquifer_Bit | embark_assist::defs::Light_Aquifer_Bit:
             none = no;
             light = lt;
             break;
 
-        case embark_assist::defs::aquifer_sizes::Heavy:
+        case embark_assist::defs::Heavy_Aquifer_Bit:
             heavy = hv;
             break;
 
-        case embark_assist::defs::aquifer_sizes::None_Heavy:
+            case embark_assist::defs::None_Aquifer_Bit | embark_assist::defs::Heavy_Aquifer_Bit:
             none = no;
             heavy = hv;
             break;
 
-        case embark_assist::defs::aquifer_sizes::Light_Heavy:
+            case embark_assist::defs::Light_Aquifer_Bit | embark_assist::defs::Heavy_Aquifer_Bit:
             light = lt;
             heavy = hv;
             break;
 
-        case embark_assist::defs::aquifer_sizes::None_Light_Heavy:
+            case embark_assist::defs::None_Aquifer_Bit | embark_assist::defs::Light_Aquifer_Bit | embark_assist::defs::Heavy_Aquifer_Bit:
             none = no;
             light = lt;
             heavy = hv;

@@ -26,16 +26,10 @@ namespace embark_assist {
             Major
         };
 
-        enum class aquifer_sizes : int8_t {
-            NA,
-            None,
-            Light,
-            None_Light,
-            Heavy,
-            None_Heavy,
-            Light_Heavy,
-            None_Light_Heavy
-        };
+        const uint8_t Clear_Aquifer_Bits = 0;
+        const uint8_t None_Aquifer_Bit = 1;
+        const uint8_t Light_Aquifer_Bit = 2;
+        const uint8_t Heavy_Aquifer_Bit = 4;
 
         enum class tree_levels : int8_t {
             None,
@@ -46,7 +40,7 @@ namespace embark_assist {
         };
 
         struct mid_level_tile {
-            aquifer_sizes aquifer = aquifer_sizes::NA;
+            uint8_t aquifer = Clear_Aquifer_Bits;
             bool clay = false;
             bool sand = false;
             bool flux = false;
@@ -71,7 +65,11 @@ namespace embark_assist {
 
         struct region_tile_datum {
             bool surveyed = false;
-            aquifer_sizes aquifer = aquifer_sizes::NA;
+            bool survey_completed = false;
+            bool neighboring_clay = false;          // These elements are updated after the survey by checking if there are any border MLTs in neighboring tiles that would would provide the resource
+            bool neighboring_sand = false;          // if they actually provided an incursion. This allows the code to add these potential tiles to the ones checked.
+            uint8_t neighboring_aquifer = Clear_Aquifer_Bits;
+            uint8_t aquifer = Clear_Aquifer_Bits;
             uint16_t clay_count = 0;
             uint16_t sand_count = 0;
             uint16_t flux_count = 0;
@@ -147,7 +145,7 @@ namespace embark_assist {
 
         struct site_infos {
             bool incursions_processed;
-            aquifer_sizes aquifer;
+            uint8_t aquifer;
             uint8_t min_soil;
             uint8_t max_soil;
             bool flat;

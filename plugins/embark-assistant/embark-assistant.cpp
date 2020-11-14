@@ -311,7 +311,11 @@ command_result embark_assistant(color_ostream &out, std::vector <std::string> & 
 
         for (uint16_t k = 0; k < world->worldgen.worldgen_parms.dim_y; k++) {
             embark_assist::main::state->survey_results[i][k].surveyed = false;
-            embark_assist::main::state->survey_results[i][k].aquifer = embark_assist::defs::aquifer_sizes::NA;
+            embark_assist::main::state->survey_results[i][k].survey_completed = false;
+            embark_assist::main::state->survey_results[i][k].neighboring_clay = false;
+            embark_assist::main::state->survey_results[i][k].neighboring_sand = false;
+            embark_assist::main::state->survey_results[i][k].neighboring_aquifer = embark_assist::defs::Clear_Aquifer_Bits;
+            embark_assist::main::state->survey_results[i][k].aquifer = embark_assist::defs::Clear_Aquifer_Bits;
             embark_assist::main::state->survey_results[i][k].clay_count = 0;
             embark_assist::main::state->survey_results[i][k].sand_count = 0;
             embark_assist::main::state->survey_results[i][k].flux_count = 0;

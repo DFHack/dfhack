@@ -4338,48 +4338,125 @@ Arguments are passed in to the scripts via the ``...`` built-in quasi-variable;
 when the script is called by the DFHack core, they are all guaranteed to be
 non-nil strings.
 
+Additional data about how a script is invoked is passed to the script as a
+special ``dfhack_flags`` global, which is unique to each script. This table
+is guaranteed to exist, but individual entries may be present or absent
+depending on how the script was invoked. Flags that are present are described
+in the subsections below.
+
 DFHack invokes the scripts in the `core context <lua-core-context>`; however it
 is possible to call them from any lua code (including from other scripts) in any
-context, via the same function the core uses:
+context with ``dfhack.run_script()`` below.
+
+General script API
+==================
 
 * ``dfhack.run_script(name[,args...])``
 
-  Run a lua script in hack/scripts/, as if it was started from dfhack command-line.
-  The ``name`` argument should be the name stem, as would be used on the command line.
+  Run a Lua script in hack/scripts/, as if it was started from the DFHack
+  command-line. The ``name`` argument should be the name of the script without
+  its extension, as would be used on the command line.
 
-Note that this function lets errors propagate to the caller.
+  Note that this function lets Lua errors propagate to the caller.
 
-* ``dfhack.script_environment(name)``
-
-  Run an Lua script and return its environment.
-  This command allows you to use scripts like modules for increased portability.
-  It is highly recommended that if you are a modder you put your custom modules in ``raw/scripts`` and use ``script_environment`` instead of ``require`` so that saves with your mod installed will be self-contained and can be transferred to people who do have DFHack but do not have your mod installed.
-
-  You can say ``dfhack.script_environment('add-thought').addEmotionToUnit([arguments go here])`` and it will have the desired effect.
-  It will call the script in question with the global ``moduleMode`` set to ``true`` so that the script can return early.
-  This is useful because if the script is called from the console it should deal with its console arguments and if it is called by ``script_environment`` it should only create its global functions and return.
-  You can also access global variables with, for example ``print(dfhack.script_environment('add-thought').validArgs)``
-
-  The function ``script_environment`` is fast enough that it is recommended that you not store its result in a nonlocal variable, because your script might need to load a different version of that script if the save is unloaded and a save with a different mod that overrides the same script with a slightly different functionality is loaded.
-  This will not be an issue in most cases.
-
-  This function also permits circular dependencies of scripts.
-
-* ``dfhack.reqscript(name)`` or ``reqscript(name)``
-
-  Nearly identical to script_environment() but requires scripts being loaded to
-  include a line similar to::
-
-      --@ module = true
-
-  This is intended to only allow scripts that take appropriate action when used
-  as a module to be loaded.
+  To run other types of commands (such as built-in commands, plugin commands, or
+  Ruby scripts), see ``dfhack.run_command()``. Note that this is slightly slower
+  than ``dfhack.run_script()`` for Lua scripts.
 
 * ``dfhack.script_help([name, [extension]])``
 
   Returns the contents of the embedded documentation of the specified script.
   ``extension`` defaults to "lua", and ``name`` defaults to the name of the
-  script where this function was called.
+  script where this function was called. For example, the following can be used
+  to print the current script's help text::
+
+    local args = {...}
+    if args[1] == 'help' then
+        print(script_help())
+        return
+    end
+
+
+Importing scripts
+=================
+
+* ``dfhack.reqscript(name)`` or ``reqscript(name)``
+
+  Loads a Lua script and returns its environment (i.e. a table of all global
+  functions and variables). This is similar to the built-in ``require()``, but
+  searches all script paths for the first matching ``name.lua`` file instead
+  of searching the Lua library paths (like ``hack/lua``).
+
+  Most scripts can be made to support ``reqscript()`` without significant
+  changes (in contrast, ``require()`` requires the use of ``mkmodule()`` and
+  some additional boilerplate). However, because scripts can have side effects
+  when they are loaded (such as printing messages or modifying the game state),
+  scripts that intend to support being imported must satisfy some criteria to
+  ensure that they can be imported safely:
+
+  1. Include the following line - ``reqscript()`` will fail if this line is
+     not present::
+
+      --@ module = true
+
+  2. Include a check for ``dfhack_flags.module``, and avoid running any code
+     that has side-effects if this flag is true. For instance::
+
+      -- (function definitions)
+      if dfhack_flags.module then
+          return
+      end
+      -- (main script code with side-effects)
+
+     or::
+
+      -- (function definitions)
+      function main()
+          -- (main script code with side-effects)
+      end
+      if not dfhack_flags.module then
+          main()
+      end
+
+  Example usage::
+
+    local addThought = reqscript('add-thought')
+    addThought.addEmotionToUnit(unit, ...)
+
+  Circular dependencies between scripts are supported, as long as the scripts
+  have no side-effects at load time (which should already be the case per
+  the above criteria).
+
+  .. warning::
+
+    Avoid caching the table returned by ``reqscript()`` beyond storing it in
+    a local or global variable as in the example above. ``reqscript()`` is fast
+    for scripts that have previously been loaded and haven't changed. If you
+    retain a reference to a table returned by an old ``reqscript()`` call, this
+    may lead to unintended behavior if the location of the script changes
+    (e.g. if a save is loaded or unloaded, or if a `script path <script-paths>`
+    is added in some other way).
+
+  .. admonition:: Tip
+
+    Mods that include custom Lua modules can write these modules to support
+    ``reqscript()`` and distribute them as scripts in ``raw/scripts``. Since the
+    entire ``raw`` folder is copied into new saves, this will allow saves to be
+    successfully transferred to other users who do not have the mod installed
+    (as long as they have DFHack installed).
+
+  .. admonition:: Backwards compatibility notes
+
+    For backwards compatibility, ``moduleMode`` is also defined if
+    ``dfhack_flags.module`` is defined, and is set to the same value.
+    Support for this may be removed in a future version.
+
+* ``dfhack.script_environment(name)``
+
+  Similar to ``reqscript()`` but does not enforce the check for module support.
+  This can be used to import scripts that support being used as a module but do
+  not declare support as described above, although it is preferred to update
+  such scripts so that ``reqscript()`` can be used instead.
 
 Enabling and disabling scripts
 ==============================
@@ -4389,11 +4466,23 @@ by including the following line anywhere in their file::
 
     --@ enable = true
 
-When the ``enable`` and ``disable`` commands are invoked, a ``dfhack_flags``
-table will be passed to the script with the following fields set:
+When the ``enable`` and ``disable`` commands are invoked, the ``dfhack_flags``
+table passed to the script will have the following fields set:
 
-* ``enable``: Always true if the script is being enabled *or* disabled
-* ``enable_state``: True if the script is being enabled, false otherwise
+* ``enable``: Always ``true`` if the script is being enabled *or* disabled
+* ``enable_state``: ``true`` if the script is being enabled, ``false`` otherwise
+
+Example usage::
+
+    -- @enable = true
+    -- (function definitions...)
+    if dfhack_flags.enable then
+        if dfhack_flags.enable_state then
+            start()
+        else
+            stop()
+        end
+    end
 
 Save init script
 ================

@@ -449,7 +449,7 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
         out << ", milkable";
     if(unit->flags2.bits.slaughter)
         out << ", slaughter";
-    
+
     if(verbose)
     {
         out << ". Pos: ("<<unit->pos.x << "/"<< unit->pos.y << "/" << unit->pos.z << ") " << endl;
@@ -1493,7 +1493,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     bool cagezone_assign = false;
     bool nick_set = false;
     string target_nick;
-    bool enum_nick = true;
+    bool enum_nick = false;
     string enum_prefix;
 
     bool verbose = false;
@@ -1552,8 +1552,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 return CR_OK;
             } else {
                 out.color(COLOR_BLUE);
-                out << "Current building unset (no building under"
-                    "cursor)." << endl;
+                out << "Current building unset (no building under cursor)." << endl;
                 out.reset_color();
 
                 return CR_OK;
@@ -2127,7 +2126,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 }
                 continue;
             }
-            
+
             matchedCount++;
 
             if(unit_info)

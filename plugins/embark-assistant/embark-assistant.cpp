@@ -314,7 +314,19 @@ command_result embark_assistant(color_ostream &out, std::vector <std::string> & 
             embark_assist::main::state->survey_results[i][k].survey_completed = false;
             embark_assist::main::state->survey_results[i][k].neighboring_clay = false;
             embark_assist::main::state->survey_results[i][k].neighboring_sand = false;
-            embark_assist::main::state->survey_results[i][k].neighboring_aquifer = embark_assist::defs::Clear_Aquifer_Bits;
+            for (uint8_t l = 0; l <= ENUM_LAST_ITEM(biome_type); l++) {
+                embark_assist::main::state->survey_results[i][k].neighboring_biomes[l] = false;
+            }
+
+            for (uint8_t l = 0; l <= ENUM_LAST_ITEM(world_region_type); l++) {
+                embark_assist::main::state->survey_results[i][k].neighboring_region_types[l] = false;
+            }
+
+            for (uint8_t l = 0; l < 2; l++) {
+                embark_assist::main::state->survey_results[i][k].neighboring_savagery[l] = false;
+                embark_assist::main::state->survey_results[i][k].neighboring_evilness[l] = false;
+            }
+
             embark_assist::main::state->survey_results[i][k].aquifer = embark_assist::defs::Clear_Aquifer_Bits;
             embark_assist::main::state->survey_results[i][k].clay_count = 0;
             embark_assist::main::state->survey_results[i][k].sand_count = 0;

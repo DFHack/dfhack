@@ -1,6 +1,6 @@
-# aliases for quickfort query mode blueprints
+# Aliases for quickfort #query mode blueprints
 #
-# This file defines custom keycode shortcuts for query mode blueprints.
+# This file defines custom keycode shortcuts for #query mode blueprints.
 # Definitions in this file take precedence over any definitions in the baseline
 # aliases configuration file at hack/data/quickfort/aliases-common.txt. See that
 # file for the many useful aliases that are already defined.
@@ -22,12 +22,12 @@
 #
 # For example, say you have the following build and place blueprints:
 #
-# #build start(4;1;upper left corner of stockpile) build masonry workshop
+# #build masonry workshop
 # ~, ~,~,`,`,`
 # ~,wm,~,`,`,`
 # ~, ~,~,`,`,`
 #
-# #place start(4;1;upper left corner of stockpile) place stockpile for mason
+# #place stockpile for mason
 # ~,~,~,s,s,s
 # ~,~,~,s,s,s
 # ~,~,~,s,s,s
@@ -58,18 +58,30 @@
 # The syntax for defining aliases is:
 #   aliasname: keystrokes
 #
-# Where aliasname is at least two letters or digits long and keystrokes are
-# whatever you would type into the DF UI. A keystroke can also be a named
-# keycode from the DF interface definition file (data/init/interface.txt),
-# enclosed in curly brackets like an alias, like: "{Right}" or "{Enter}". In
-# order to avoid naming conflicts between aliases and keycodes, the convention
-# is to start aliases with a lowercase letter. You can add spaces in between
-# keystrokes to make them easier to read. Spaces in keystroke sequences will be
-# ignored. To insert a literal space, use "{Space}"
+# Where aliasname is at least two letters or digits long (including dashes and
+# underscores) and keystrokes are whatever you would type into the DF UI. A
+# keystroke can also be a named keycode from the DF interface definition file
+# (data/init/interface.txt), enclosed in curly brackets like an alias, like:
+# "{Right}" or "{Enter}". In # order to avoid naming conflicts between aliases
+# and keycodes, the convention is to start aliases with a lowercase letter.
 #
 # Anything enclosed within curly brackets can also have a number after it,
 # indicating how many times that alias or keycode should be repeated. For
 # example: "{togglesequence 9}" or "{Down 5}".
+#
+# Finally, you can specify sub-aliases that will only be defined while the
+# current alias is being resolved by adding them after the alias name (but
+# before the repetition number, if it is specified), for example:
+#   {quantumstopfromeast name="Trash Dump"}
+# The value of the sub-alias 'name' is used by quantumstopfromeast (or one of
+# the aliases it calls) to give a useful name to your quantum dump hauling
+# route. You can also use this format to temporarily override the value of an
+# existing regularly-defined alias.
+#
+# Sub-aliases must be in one of the following formats:
+#   subaliasname=valwithnospaces
+#   subaliasname="val with spaces"
+#   subaliasname={someotheralias repetitions}
 #
 # Ctrl, Alt, and Shift modifiers can be specified for the next keycode by adding
 # them into the key sequence. For example, Alt-h is written as "{Alt}h".
@@ -83,8 +95,12 @@
 #   !   expands to {Ctrl}
 #   ^   expands to {ESC}
 #
+# There is also a non-standard alias built into the code for the common
+# shorthand for "make room":
+#   r+  expands to r+&
+#
 # If you need literal verisons of the shorthand characters, surround them in
-# curly brackets, for example: "{~}"
+# curly brackets, for example: "{!}"
 #
 #
 # Add your custom aliases here:

@@ -5,32 +5,38 @@ Quickfort User Guide
 
 `Quickfort <quickfort>` is a DFHack script that helps you build fortresses from
 "blueprint" .csv and .xlsx files. Many applications exist to edit these files,
-such as MS Excel and `Google Sheets <https://sheets.new>`__. You can also build
-your plan "for real" in Dwarf Fortress, and then export your map using the `blueprint`
-plugin. Most layout and building-oriented DF commands are supported through the
-use of multiple files or spreadsheets, each describing a different phase of DF
-construction: designation, building, placing stockpiles/zones, and setting
-configuration.
+such as MS Excel and `Google Sheets <https://sheets.new>`__. Most layout and
+building-oriented DF commands are supported through the use of multiple files or
+spreadsheets, each describing a different phase of DF construction: designation,
+building, placing stockpiles/zones, and setting configuration.
 
-The original idea and 1.0 codebase came from :wiki:`Valdemar's <User:Valdemar>`
-auto-designation macro. Joel Thornton (joelpt) reimplemented the core logic in
-Python and extended its functionality with `Quickfort
-2.0 <https://github.com/joelpt/quickfort>`__. This DFHack-native implementation,
-called "DFHack Quickfort" or just "quickfort", builds upon Quickfort 2.0's
-formats and features. DFHack Quickfort is written in Lua and interacts with
-Dwarf Fortress memory structures directly, allowing for instantaneous blueprint
-application, error checking and recovery, and many other advanced features.
+The original idea came from :wiki:`Valdemar's <User:Valdemar>` auto-designation
+macro. Joel Thornton reimplemented the core logic in Python and extended its
+functionality with `Quickfort 2.0 <https://github.com/joelpt/quickfort>`__. This
+DFHack-native implementation, called "DFHack Quickfort" or just "quickfort",
+builds upon Quickfort 2.0's formats and features. Any blueprint that worked in
+Python Quickfort 2.0 should work with DFHack Quickfort. DFHack Quickfort is
+written in Lua and interacts with Dwarf Fortress memory structures directly,
+allowing for instantaneous blueprint application, error checking and recovery,
+and many other advanced features.
 
 This document focuses on DFHack Quickfort's capabilities and teaches players how
-to understand and build blueprint files. Some of the text was originally written
-by Joel Thornton, reused here with his permission.
+to understand and create blueprint files. Some of the text was originally
+written by Joel Thornton, reused here with his permission.
 
-For those just looking to apply blueprints, check out the `quickfort command's
-documentation <quickfort>` for syntax. There are also many ready-to-use blueprints
-available in the ``blueprints/library`` subfolder in your DFHack installation.
-Browse them on your computer or :source:`online <data/blueprints/library>`,
-or run ``quickfort list -l`` at the ``[DFHack]#`` prompt to list them, and then
-``quickfort run`` to apply them to your fort!
+For those just looking to apply existing blueprints, check out the `quickfort
+command's documentation <quickfort>` for syntax. There are many ready-to-use
+blueprints available in the ``blueprints/library`` subfolder in your DFHack
+installation. Browse them on your computer or
+:source:`online <data/blueprints/library>`, or run ``quickfort list -l`` at the
+``[DFHack]#`` prompt to list them, and then ``quickfort run`` to apply them to
+your fort!
+
+Before you become an expert at writing blueprints, though, you should know that
+the easiest way to make a quickfort blueprint is to build your plan "for real"
+in Dwarf Fortress and then export your map using the DFHack `blueprint` plugin.
+You can apply those blueprints as-is in your next fort, or you can fine-tune
+them with additional features from this guide.
 
 See the `Links`_ section for more information and online resources.
 
@@ -69,7 +75,8 @@ Features
 
 -  Build mode
 
-   -  DFHack buildingplan integration
+   -  DFHack buildingplan integration, so you can place buildings before
+      manufacturing all required source materials
    -  Designate complete constructions at once, without having to wait for each
       tile to become supported before you can build it
    -  Automatic expansion of building footprints to their minimum dimensions, so
@@ -95,6 +102,7 @@ Features
       created stockpiles
    -  Automatic splitting of stockpiles and zones that exceed maximum dimension
       limits
+   -  Full access to all zone settings, such as hospital supply counts
 
 -  Query mode
 
@@ -477,37 +485,61 @@ It is very common to have stockpiles that accept multiple categories of items or
 zones that permit more than one activity. Although it is perfectly valid to
 declare a single-purpose stockpile or zone and then modify it with a ``#query``
 blueprint, quickfort also supports directly declaring all the types on the
-``#place`` and ``#zone`` blueprints. For example, to declare a 10x10 area that
-is a pasture, a fruit picking area, and a meeting area all at once, you could
-write:
-
-::
-
-   #zone main pasture and picnic area
-   nmg(10x10)
-
-And similarly, to declare a stockpile that accepts both corpses and refuse, you
-could write:
+``#place`` and ``#zone`` blueprints. For example, to declare a 20x10 stockpile
+that accepts both corpses and refuse, you could write:
 
 ::
 
    #place refuse heap
    yr(20x10)
 
-The order of the individual letters doesn't matter.
 
-To toggle the ``active`` flag for zones, add an ``a`` character to the string.
-For example, to create a *disabled* pit zone (that you later intend to turn into
-a pond and carefully fill to 3-depth water):
+And similarly, to declare a zone that is a pasture, a fruit picking area, and a
+meeting area all at once:
 
 ::
 
-   #zone disabled future pond zone
-   pa(1x3)
+   #zone main pasture and picnic area
+   nmg(10x10)
 
-Note that while this notation covers most use cases, tweaking low-level zone
-parameters, like hospital supply levels or converting between pits and ponds,
-must still be done manually or with a ``#query`` blueprint.
+The order of the individual letters doesn't matter. If you want to configure the
+stockpile from scratch in a ``#query`` blueprint, you can place unconfigured
+"custom" stockpiles with (:kbd:`c`). It is more efficient, though, to place
+stockpiles using the keys that represent the types you want to store, and
+then only use a ``#query`` blueprint if you need fine-grained customization.
+
+Detailed configuration for zones, such as the pit/pond toggle, can also be set
+by mimicking the hotkeys used to set them. Note that gather flags default to
+true, so specifying them in a blueprint will turn the toggles off. If you need
+to set configuration from multiple zone subscreens, separate the key sections
+with ``^``. Note the special syntax for setting hospital supply levels, which
+have no in-game hotkeys:
+
+::
+
+   #zone a combination hospital and shrub (but not fruit) gathering zone
+   gGtf^hH{hospital buckets=5 splints=20}(10x10)
+
+The valid hospital settings (and their maximum values) are:
+
+::
+
+    thread   (1500000)
+    cloth    (1000000)
+    splints  (100)
+    crutches (100)
+    powder   (15000)
+    buckets  (100)
+    soap     (15000)
+
+To toggle the ``active`` flag for zones, add an ``a`` character to the string.
+For example, to create a *disabled* pond zone (that you later intend to
+carefully fill with 3-depth water for a dwarven bathtub):
+
+::
+
+   #zone disabled pond zone
+   apPf(1x3)
 
 Minecart tracks
 ~~~~~~~~~~~~~~~
@@ -864,13 +896,13 @@ Meta blueprints
 Meta blueprints are blueprints that script a series of other blueprints. Many
 blueprint packages follow this pattern:
 
--  Apply dig blueprint to designate dig areas
--  Wait for miners to dig
--  **Apply build buildprint** to designate buildings
--  **Apply place buildprint** to designate stockpiles
--  **Apply query blueprint** to configure stockpiles
--  Wait for buildings to get built
--  Apply a different query blueprint to configure rooms
+1.  Apply dig blueprint to designate dig areas
+#.  Wait for miners to dig
+#.  **Apply build buildprint** to designate buildings
+#.  **Apply place buildprint** to designate stockpiles
+#.  **Apply query blueprint** to configure stockpiles
+#.  Wait for buildings to get built
+#.  Apply a different query blueprint to configure rooms
 
 Those three "apply"s in the middle might as well get done in one command instead
 of three. A meta blueprint can encode that sequence. A meta blueprint refers to
@@ -914,12 +946,12 @@ blueprints into one:
 
 Now your sequence is shortened to:
 
--  Apply dig blueprint to designate dig areas
--  Wait for miners to dig
--  **Apply meta buildprint** to build buildings and designate/configure
-   stockpiles
--  Wait for buildings to get built
--  Apply the final query blueprint to configure the room
+1.  Apply dig blueprint to designate dig areas
+#.  Wait for miners to dig
+#.  **Apply meta buildprint** to build buildings and designate/configure
+    stockpiles
+#.  Wait for buildings to get built
+#.  Apply the final query blueprint to configure the room
 
 You can use meta blueprints to lay out your fortress at a larger scale as well.
 The ``#<`` and ``#>`` notation is valid in meta blueprints, so you can, for
@@ -982,6 +1014,11 @@ a big fort, so we're planning for a lot of bedrooms):
 Note that for blueprints without an explicit label, we still need to address
 them by their auto-generated numerical label.
 
+It's worth calling out that ``#meta`` blueprints can only refer to blueprints
+that are defined in the same file. This means that all blueprints that a
+``#meta`` blueprint needs to script must be in sheets within the same
+.xlsx spreadsheet or concatenated into the same .csv file.
+
 You can then hide the blueprints that you now manage with the ``#meta``-mode
 blueprint from ``quickfort list`` by adding a ``hidden()`` marker to their
 modelines. That way the output of ``quickfort list`` won't be cluttered by
@@ -1022,32 +1059,49 @@ allowing for much easier viewing and editing.
 Buildingplan integration
 ------------------------
 
-Buildingplan is a DFHack plugin that keeps jobs in a suspended state until the
-materials required for the job are available. This prevents a building
-designation from being canceled when a dwarf picks up the job but can't find the
-materials.
+Buildingplan is a DFHack plugin that keeps building construction jobs in a
+suspended state until the materials required for the job are available. This
+prevents a building designation from being canceled when a dwarf picks up the
+job but can't find the materials.
 
-For all types that buildingplan supports, quickfort using buildingplan to manage
-construction. Buildings are still constructed immediately if you have the
-materials, but you now have the freedom to apply build blueprints before you
-manufacture all required materials, and the jobs will be fulfilled as the
-materials become available.
+As long as the `buildingplan` plugin is enabled, quickfort will use it to manage
+construction. The buildingplan plugin also has an "enabled" setting for each
+building type, but that setting only applies to the buildingplan user interface;
+quickfort will always use buildingplan to manage everything designated in a
+``#build`` blueprint.
 
-If a ``#build`` blueprint only refers to supported types, the buildingplan
-integration pairs well with the `workflow` plugin, which can build items a few
-at a time continuously as long as they are needed. For building types that are
-not yet supported by buildingplan, a good pattern to follow is to first run
-``quickfort orders`` on the ``#build`` blueprint to manufacture all the required
-items, then apply the blueprint itself.
+However, quickfort *does* use buildingplan's filters for each building type. For
+example, you can use the buildingplan UI to set the stone you want your walls
+made out of. Or you can specify that all buildingplan-managed tables must be of
+Masterful quality. The current filter settings are saved with planned buildings
+when the ``#build`` blueprint is run. This means you can set the filters the way
+you want for one blueprint, run the blueprint, and then freely change them again
+for the next blueprint, even if the first set of buildings haven't been built
+yet.
 
-See the `buildingplan documentation <buildingplan>` for more information. As of
-this writing, buildingplan only supports basic furniture.
+Note that buildings are still constructed immediately if you already have the
+materials. However, with the buildingplan integration you now have the freedom
+to apply ``#build`` blueprints before you manufacture the resources. The
+construction jobs will be fulfilled as the materials become available.
+
+Since it can be difficult to figure out exactly what source materials you need
+for a ``#build`` blueprint, quickfort supplies the ``orders`` command. It
+enqueues manager orders for everything that the buildings in a ``#build``
+blueprint require. See the next section for more details on this.
+
+Alternately, if you know you only need a few types of items, the `workflow`
+plugin can be configured to build those items continuously for as long as they
+are needed.
+
+If the buildingplan plugin is not enabled, run ``quickfort orders`` first and
+make sure all manager orders are fulfilled before applying a ``#build``
+blueprint.
 
 Generating manager orders
 -------------------------
 
 Quickfort can generate manager orders to make sure you have the proper items in
-stock to apply a ``#build`` blueprint.
+stock for a ``#build`` blueprint.
 
 Many items can be manufactured from different source materials. Orders will
 always choose rock when it can, then wood, then cloth, then iron. You can always
@@ -1066,7 +1120,9 @@ If you want your constructions to be in a consistent color, be sure to choose a
 rock type for all of your 'Make rock blocks' orders by selecting the order and
 hitting ``d``. You might want to set the rock type for other non-block orders to
 something different if you fear running out of the type of rock that you want to
-use for blocks.
+use for blocks. You should also set the `buildingplan` material filter for
+construction building types to that type of rock as well so other random blocks
+you might have lying around aren't used.
 
 There are a few building types that will generate extra manager orders for
 related materials:
@@ -1105,23 +1161,16 @@ Tips and tricks
 Caveats and limitations
 -----------------------
 
--  Buildings will be designated regardless of whether you have the required
-   materials, but if materials are not available when the construction job is
-   picked up by a dwarf, the buildings will be canceled and the designations
-   will disappear. Until the buildingplan plugin can be extended to support all
-   building types, you should use ``quickfort orders`` to pre-manufacture all
-   the materials you need for a ``#build`` blueprint before you apply it.
-
 -  If you use the ``jugs`` alias in your ``#query``-mode blueprints, be aware
    that there is no way to differentiate jugs from other types of tools in the
    game. Therefore, ``jugs`` stockpiles will also take nest boxes and other
    tools. The only workaround is not to have other tools lying around in your
    fort.
 
--  Likewise for bags. The game does not differentiate between empty and full
-   bags, so you'll get bags of gypsum power and sand in your bags stockpile
-   unless you avoid collecting sand and are careful to assign all your gypsum to
-   your hospital.
+-  Likewise for the ``bags`` alias. The game does not differentiate between
+   empty and full bags, so you'll get bags of gypsum power and sand in your bags
+   stockpile unless you avoid collecting sand and are careful to assign all your
+   gypsum to your hospital.
 
 -  Weapon traps and upright spear/spike traps can currently only be built with a
    single weapon.
@@ -1260,7 +1309,7 @@ sheet, like in surface's meta sheet.
 things to include in messages are:
 
 * The name of the next blueprint to apply and when to run it
-* Whether quickfort orders should be run for an upcoming step
+* Whether quickfort orders could be run for an upcoming step
 * Any manual actions that have to happen, like assigning minecarts to hauling
   routes or pasturing animals after creating zones
 
@@ -1308,11 +1357,6 @@ Hauling routes are notoriously fiddly to set up, but they can be automated with
 blueprints. Check out the Southern area of the ``#place`` and ``#query``
 blueprints for how the quantum garbage dump is configured.
 
-Note that aliases that must be applied in a particular order must appear in the
-same cell. Otherwise there are no guarantees for which cell will be processed
-first. For example, look at the track stop cells in the ``#query`` blueprint for
-how the hauling routes are given names.
-
 The industry_ level: when not to use aliases
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1320,7 +1364,7 @@ The industry_ level: when not to use aliases
 
 The industry level is densely packed and has more complicated examples of
 stockpile configurations and quantum dumps. However, what I'd like to call out
-are the key sequences that are *not* in aliases.
+first are the key sequences that are *not* in aliases.
 
 .. topic:: Tip
 
@@ -1339,6 +1383,45 @@ relative positions of the tiles where they are interpreted, which is easiest to
 see in the blueprint itself. Also, if you move the workshop, it's easier to fix
 the stockpile link right there in the blueprint instead of editing the separate
 aliases.txt file.
+
+There are also good examples in the query blueprint for how to use the
+``permit`` and ``forbid`` stockpile aliases.
+
+.. topic:: Tip
+
+     Put all configuration that must be applied in a particular order in the
+     same spreadsheet cell.
+
+Most of the baseline aliases distributed with DFHack fall into one of three
+categories:
+
+1. Make a stockpile accept only a particular item type in a category
+2. Permit an item type, but do not otherwise change the stockpile configuration
+3. Forbid an item type, but do not otherwise change the stockpile configuration
+
+If you have a stockpile that covers multiple tiles, it might seem natural to put
+one alias per spreadsheet cell. The aliases still all get applied to the
+stockpile, and with only one alias per cell, you can just type the alias name
+and avoid having to use the messier-looking ``{alias1}{alias2}`` syntax:
+
+::
+
+    #query Incorrectly configure a 3x3 food stockpile to accept tallow and dye
+    tallow
+    permitdye
+
+However, in quickfort there are no guarantees about which cell will be
+processed first. In the example above, we obviously intend for the food
+stockpile to have everything forbidden, then tallow permitted, then dye
+permitted. The algorithm could happen to apply them in the opposite order,
+though, and we'd end up with dye being permitted, then everything being
+forbidden and tallow being enabled. To make sure you always get what you want,
+write order-sensitive aliases on the same line:
+
+::
+
+    #query Properly configure a 3x3 food stockpile to accept tallow and dye
+    {tallow}{permitdye}
 
 The services_ level: handling multi-level dig blueprints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

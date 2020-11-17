@@ -1618,7 +1618,10 @@ bool Core::Init()
         freopen("stderr.log", "w", stderr);
     #endif
 
-    fprintf(stderr, "DFHack build: %s\n", Version::git_description());
+    Filesystem::init();
+
+    cerr << "DFHack build: " << Version::git_description() << "\n"
+         << "Starting with working directory: " << Filesystem::getcwd() << endl;
 
     // find out what we are...
     #ifdef LINUX_BUILD

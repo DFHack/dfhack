@@ -201,10 +201,8 @@ def print_changelog(versions, all_entries, path, replace=True, prefix=''):
                         continue
                     elif entry.children:
                         write('- ' + entry.feature + ':')
-                        write('')
                         for child in entry.children:
                             write('    - ' + child)
-                        write('')
                     else:
                         write('- ' + entry.feature)
                 write('')

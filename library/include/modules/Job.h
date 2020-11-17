@@ -102,7 +102,9 @@ namespace DFHack
                                          int filter_idx = -1, int insert_idx = -1);
 
         DFHACK_EXPORT bool isSuitableItem(df::job_item *item, df::item_type itype, int isubtype);
-        DFHACK_EXPORT bool isSuitableMaterial(df::job_item *item, int mat_type, int mat_index);
+        DFHACK_EXPORT bool isSuitableMaterial(df::job_item *item, int mat_type,
+                                              int mat_index,
+                                              df::item_type itype);
         DFHACK_EXPORT std::string getName(df::job *job);
     }
 

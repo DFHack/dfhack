@@ -128,6 +128,46 @@ std::string toLower(const std::string &str)
     return rv;
 }
 
+static const char *normalized_table[256] = {
+    //.0  .1    .2    .3    .4    .5    .6    .7    .8    .9    .A    .B    .C    .D    .E    .F
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // 0.
+    NULL, NULL, NULL, NULL, NULL,  "S", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // 1.
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // 2.
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // 3.
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // 4.
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // 5.
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // 6.
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // 7.
+     "C",  "u",  "e",  "a",  "a",  "a",  "a",  "c",  "e",  "e",  "e",  "i",  "i",  "i",  "A",  "A", // 8.
+     "E", "ae", "Ae",  "o",  "o",  "o",  "u",  "u",  "y",  "O",  "U",  "c",  "L",  "Y", NULL,  "f", // 9.
+     "a",  "i",  "o",  "u",  "n",  "N",  "a",  "o", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // A.
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // B.
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // C.
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // D.
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // E.
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // F.
+};
+
+std::string to_search_normalized(const std::string &str)
+{
+    std::string result;
+    result.reserve(str.size());
+    for (char c : str)
+    {
+        const char *mapped = normalized_table[(uint8_t)c];
+        if (mapped == NULL)
+            result += tolower(c);
+        else
+            while (*mapped != '\0')
+            {
+                result += tolower(*mapped);
+                ++mapped;
+            }
+    }
+
+    return result;
+}
+
 bool word_wrap(std::vector<std::string> *out, const std::string &str, size_t line_length)
 {
     out->clear();

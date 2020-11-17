@@ -139,14 +139,14 @@ public:
     virtual void tokenizeSearch (vector<string> *dest, const string search)
     {
         if (!search.empty())
-            split_string(dest, search, " ");
+            split_string(dest, to_search_normalized(search), " ");
     }
 
     virtual bool showEntry(const ListEntry<T> *entry, const vector<string> &search_tokens)
     {
         if (!search_tokens.empty())
         {
-            string item_string = toLower(entry->text);
+            string item_string = to_search_normalized(entry->text);
             for (auto si = search_tokens.begin(); si != search_tokens.end(); si++)
             {
                 if (!si->empty() && item_string.find(*si) == string::npos &&
@@ -164,9 +164,9 @@ public:
         ListEntry<T> *prev_selected = (getDisplayListSize() > 0) ? display_list[highlighted_index] : NULL;
         display_list.clear();
 
-        search_string = toLower(search_string);
+        search_string = to_search_normalized(search_string);
         vector<string> search_tokens;
-        tokenizeSearch(&search_tokens, search_string);
+        tokenizeSearch(&search_tokens, to_search_normalized(search_string));
 
         for (size_t i = 0; i < list.size(); i++)
         {

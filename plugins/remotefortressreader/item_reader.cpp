@@ -450,7 +450,7 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
 
             auto netImp = NetItem->add_improvements();
 
-            netImp->set_type((ImprovementType)impType);
+            netImp->set_type(impType);
 
             auto mat = netImp->mutable_material();
             mat->set_mat_type(improvement->mat_type);

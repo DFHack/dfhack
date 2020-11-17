@@ -25,6 +25,7 @@ belal                   jimhester
 Ben Lubar               BenLubar
 Ben Rosser              TC01
 billw2012               billw2012
+BrickViking             brickviking
 brndd                   brndd                   burneddi
 Bumber                  Bumber64
 Caldfir                 caldfir
@@ -32,6 +33,7 @@ Carter Bray             Qartar
 Chris Dombroski         cdombroski
 Clayton Hughes
 Clément Vuchener        cvuchener
+daedsidog               daedsidog
 Dan Amlund              danamlund
 Daniel Brooks           db48x
 David                   Nilsolm
@@ -42,6 +44,7 @@ Deon
 DoctorVanGogh           DoctorVanGogh
 Donald Ruegsegger       hashaash
 doomchild               doomchild
+ElMendukol              ElMendukol
 enjia2000
 Eric Wald               eswald
 Erik Youngren           Artanis
@@ -50,14 +53,15 @@ expwnent                expwnent
 Feng
 figment                 figment
 gchristopher            gchristopher
+George Murray           GitOnUp
 grubsteak               grubsteak
 Harlan Playford         playfordh
 Hayati Ayguen           hayguen
 Herwig Hochleitner      bendlas
 Ian S                   kremlin-
 IndigoFenix
+James Gilles            kazimuth
 James Logsdon           jlogsdon
-Japa                    JapaMala
 Jared Adams
 Jeremy Apthorp          nornagon
 Jim Lisi                stonetoad
@@ -73,6 +77,7 @@ kane-t                  kane-t
 Kelly Kinkade           ab9rf
 KlonZK                  KlonZK
 Kris Parker             kaypy
+Kristjan Moore          kristjanmoore
 Kromtec                 Kromtec
 Kurik Amudnil
 Lethosor                lethosor
@@ -98,6 +103,7 @@ Milo Christiansen       milochristiansen
 MithrilTuxedo           MithrilTuxedo
 mizipzor                mizipzor
 moversti                moversti
+Myk Taylor              myk002
 napagokc                napagokc
 Neil Little             nmlittle
 Nick Rart               nickrart                comestible
@@ -106,6 +112,8 @@ Nikolay Amiantov        abbradar
 nocico                  nocico
 Omniclasm
 OwnageIsMagic           OwnageIsMagic
+palenerd                dlmarquis
+PassionateAngler        PassionateAngler
 Patrik Lundell          PatrikLundell
 Paul Fenwick            pjf
 PeridexisErrant         PeridexisErrant
@@ -117,6 +125,7 @@ Priit Laes              plaes
 Putnam                  Putnam3145
 Quietust                quietust                _Q
 Raidau                  Raidau
+Ralph Bisschops         ralpha
 Ramblurr                Ramblurr
 rampaging-poet
 Raoul van Putten
@@ -127,15 +136,18 @@ Rinin                   Rinin
 rndmvar                 rndmvar
 Robert Heinrich         rh73
 Robert Janetzko         robertjanetzko
+Rocco Moretti           roccomoretti
 RocheLimit
 rofl0r                  rofl0r
 root
+Rose                    RosaryMala
 Roses                   Pheosics
 Ross M                  RossM
 rout
 rubybrowncoat           rubybrowncoat
 Rumrusher               rumrusher
 RusAnon                 RusAnon
+Ryan Bennitt            ryanbennitt
 sami
 scamtank                scamtank
 Sebastian Wolfertz      Enkrod
@@ -158,6 +170,7 @@ Timothy Collett         danaris
 Timur Kelman            TymurGubayev
 Tom Jobbins             TheBloke
 Tom Prince
+Tommy R                 tommy
 TotallyGatsby           TotallyGatsby
 Travis Hoppe            thoppe                  orthographic-pedant
 txtsd                   txtsd
@@ -165,7 +178,7 @@ U-glouglou\\simon
 Valentin Ochs           Cat-Ion
 Vitaly Pronkin          pronvit                 mifki
 ViTuRaS                 ViTuRaS
-Vjek
+Vjek                    vjek
 Warmist                 warmist
 Wes Malone              wesQ3
 Will Rogers             wjrogers

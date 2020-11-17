@@ -1,6 +1,6 @@
+//Attempts to provide a complete framework for reading everything from a fortress needed for vizualization
 package RemoteFortressReader;
 
-//Attempts to provide a complete framework for reading everything from a fortress needed for vizualization
 option optimize_for = LITE_RUNTIME;
 
 // Plugin: RemoteFortressReader
@@ -642,33 +642,6 @@ message WorldMap
     repeated RegionTile region_tiles = 25;
 }
 
-enum SiteRealizationBuildingType
-{
-    cottage_plot = 0;
-    castle_wall = 1;
-    castle_tower = 2;
-    castle_courtyard = 3;
-    house = 4;
-    temple = 5;
-    tomb = 6;
-    shop_house = 7;
-    warehouse = 8;
-    market_square = 9;
-    pasture = 10;
-    waste = 11;
-    courtyard = 12;
-    well = 13;
-    vault = 14;
-    great_tower = 15;
-    trenches = 16;
-    tree_house = 17;
-    hillock_house = 18;
-    mead_hall = 19;
-    fortress_entrance = 20;
-    library = 21;
-    tavern = 22;
-}
-
 message SiteRealizationBuildingWall
 {
     optional int32 start_x = 1;
@@ -702,7 +675,6 @@ message SiteRealizationBuildingTrenches
 message SiteRealizationBuilding
 {
     optional int32 id = 1;
-    optional SiteRealizationBuildingType type = 2;
     optional int32 min_x = 3;
     optional int32 min_y = 4;
     optional int32 max_x = 5;
@@ -711,6 +683,7 @@ message SiteRealizationBuilding
     optional SiteRealizationBuildingWall wall_info = 8;
     optional SiteRealizationBuildingTower tower_info = 9;
     optional SiteRealizationBuildingTrenches trench_info = 10;
+    optional int32 type = 11;
 }
 
 message RegionTile
@@ -990,30 +963,13 @@ message Language
     repeated ShapeDescriptior shapes = 1;
 }
 
-enum ImprovementType
-{
-    ART_IMAGE = 0;
-    COVERED = 1;
-    RINGS_HANGING = 2;
-    BANDS = 3;
-    SPIKES = 4;
-    ITEMSPECIFIC = 5;
-    THREAD = 6;
-    CLOTH = 7;
-    SEWN_IMAGE = 8;
-    PAGES = 9;
-    ILLUSTRATION = 10;
-    INSTRUMENT_PIECE = 11;
-    WRITING = 12;
-}
-
 message ItemImprovement
 {
     optional MatPair material = 1;
-    optional ImprovementType type = 2;
     optional int32 shape = 3;
     optional int32 specific_type= 4;
     optional ArtImage image = 5;
+    optional int32 type = 6;
 }
 
 enum ArtImageElementType

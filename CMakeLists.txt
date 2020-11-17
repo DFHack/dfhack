@@ -2,12 +2,19 @@
 
 ## some generic CMake magic
 cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
+cmake_policy(SET CMP0048 NEW)
 project(dfhack)
 
 if("${CMAKE_GENERATOR}" STREQUAL Ninja)
     if("${CMAKE_VERSION}" VERSION_LESS 3.9)
         message(WARNING "You are using an old version of CMake (${CMAKE_VERSION}) with Ninja. This may result in ninja errors - see docs/Compile.rst for more details. Upgrading your CMake version is recommended.")
     endif()
+endif()
+
+if(NOT("${CMAKE_VERSION}" VERSION_LESS 3.12))
+    # make ZLIB_ROOT work in CMake >= 3.12
+    # https://cmake.org/cmake/help/git-stage/policy/CMP0074.html
+    cmake_policy(SET CMP0074 NEW)
 endif()
 
 # Set up build types
@@ -83,6 +90,10 @@ if(MSVC)
     # a smaller type, and most of the time this is just conversion from 64 to 32 bits
     # for things like vector sizes, which are never that big anyway.
     add_definitions("/wd4267")
+
+    # MSVC panics if an object file contains more than 65,279 sections. this
+    # happens quite frequently with code that uses templates, such as vectors.
+    add_definitions("/bigobj")
 endif()
 
 # Automatically detect architecture based on Visual Studio generator
@@ -168,14 +179,14 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 endif()
 
 # make sure all the necessary submodules have been set up
-if(NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/clsocket/CMakeLists.txt)
+if(NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/clsocket/CMakeLists.txt OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/libexpat/expat/CMakeLists.txt OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/libzip/CMakeLists.txt OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/xlsxio/CMakeLists.txt)
     message(SEND_ERROR "One or more required submodules could not be found! Run 'git submodule update --init' from the root DFHack directory. (See the section 'Getting the Code' in docs/Compile.rst)")
 endif()
 
 # set up versioning.
 set(DF_VERSION "0.47.04")
-set(DFHACK_RELEASE "beta1")
-set(DFHACK_PRERELEASE TRUE)
+set(DFHACK_RELEASE "r3")
+set(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 
@@ -396,6 +407,7 @@ endif()
 include_directories(depends/tthread)
 include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(depends/clsocket/src)
+include_directories(depends/xlsxio/include)
 add_subdirectory(depends)
 
 find_package(Git REQUIRED)
@@ -419,6 +431,7 @@ if(BUILD_PLUGINS)
     add_subdirectory(plugins)
 endif()
 
+add_subdirectory(data)
 add_subdirectory(scripts)
 
 find_package(Sphinx QUIET)
@@ -429,6 +442,7 @@ if(BUILD_DOCS)
 
     file(GLOB SPHINX_DEPS
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/*.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/guides/*.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/changelog.txt"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/gen_changelog.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/images/*.png"

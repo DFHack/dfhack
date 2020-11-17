@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import re, os, sys
 
 valid_extensions = ['c', 'cpp', 'h', 'hpp', 'mm', 'lua', 'rb', 'proto',
@@ -18,12 +19,49 @@ def valid_file(filename):
         not len(list(filter(lambda path: path.replace('\\', '/') in filename.replace('\\', '/'), path_blacklist)))
 
 success = True
-def error(msg):
+def error(msg=None):
     global success
     success = False
-    sys.stderr.write(msg + '\n')
+    if msg:
+        sys.stderr.write(msg + '\n')
 
-class LinterError(Exception): pass
+def format_lines(lines, total):
+    if len(lines) == total - 1:
+        return 'entire file'
+    if not len(lines):
+        # should never happen
+        return 'nowhere'
+    if len(lines) == 1:
+        return 'line %i' % lines[0]
+    s = 'lines '
+    range_start = range_end = lines[0]
+    for i, line in enumerate(lines):
+        if line > range_end + 1:
+            if range_start == range_end:
+                s += ('%i, ' % range_end)
+            else:
+                s += ('%i-%i, ' % (range_start, range_end))
+            range_start = range_end = line
+            if i == len(lines) - 1:
+                s += ('%i' % line)
+        else:
+            range_end = line
+            if i == len(lines) - 1:
+                s += ('%i-%i, ' % (range_start, range_end))
+    return s.rstrip(' ').rstrip(',')
+
+class LinterError(Exception):
+    def __init__(self, message, lines, total_lines):
+        self.message = message
+        self.lines = lines
+        self.total_lines = total_lines
+
+    def __str__(self):
+        return '%s: %s' % (self.message, format_lines(self.lines, self.total_lines))
+
+    def github_actions_workflow_command(self, filename):
+        first_line = self.lines[0] if self.lines else 1
+        return '::error file=%s,line=%i::%s' % (filename, first_line, self)
 
 class Linter(object):
     ignore = False
@@ -33,36 +71,12 @@ class Linter(object):
             if not self.check_line(line):
                 failures.append(i + 1)
         if len(failures):
-            raise LinterError('%s: %s' % (self.msg, self.display_lines(failures, len(lines))))
+            raise LinterError(self.msg, failures, len(lines))
 
     def fix(self, lines):
         for i in range(len(lines)):
             lines[i] = self.fix_line(lines[i])
 
-    def display_lines(self, lines, total):
-        if len(lines) == total - 1:
-            return 'entire file'
-        if not len(lines):
-            # should never happen
-            return 'nowhere'
-        if len(lines) == 1:
-            return 'line %i' % lines[0]
-        s = 'lines '
-        range_start = range_end = lines[0]
-        for i, line in enumerate(lines):
-            if line > range_end + 1:
-                if range_start == range_end:
-                    s += ('%i, ' % range_end)
-                else:
-                    s += ('%i-%i, ' % (range_start, range_end))
-                range_start = range_end = line
-                if i == len(lines) - 1:
-                    s += ('%i' % line)
-            else:
-                range_end = line
-                if i == len(lines) - 1:
-                    s += ('%i-%i, ' % (range_start, range_end))
-        return s.rstrip(' ').rstrip(',')
 
 class NewlineLinter(Linter):
     msg = 'Contains DOS-style newlines'
@@ -91,6 +105,7 @@ class TabLinter(Linter):
 linters = [cls() for cls in Linter.__subclasses__() if not cls.ignore]
 
 def main():
+    is_github_actions = bool(os.environ.get('GITHUB_ACTIONS'))
     root_path = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else '.')
     if not os.path.exists(root_path):
         print('Nonexistent path: %s' % root_path)
@@ -112,13 +127,22 @@ def main():
                     try:
                         lines[i] = line.decode('utf-8')
                     except UnicodeDecodeError:
-                        error('%s:%i: Invalid UTF-8 (other errors will be ignored)' % (rel_path, i + 1))
+                        msg_params = (rel_path, i + 1, 'Invalid UTF-8 (other errors will be ignored)')
+                        if is_github_actions:
+                            error()
+                            print('::error file=%s,line=%i::%s' % msg_params)
+                        else:
+                            error('%s:%i: %s' % msg_params)
                         lines[i] = ''
             for linter in linters:
                 try:
                     linter.check(lines)
                 except LinterError as e:
-                    error('%s: %s' % (rel_path, e))
+                    if is_github_actions:
+                        error()
+                        print(e.github_actions_workflow_command(rel_path))
+                    else:
+                        error('%s: %s' % (rel_path, e))
                     if fix:
                         linter.fix(lines)
                         contents = '\n'.join(lines)

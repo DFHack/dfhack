@@ -417,7 +417,7 @@ void StockpileSerializer::serialize_list_itemdef ( FuncWriteExport add_value,  s
         {
             const df::itemdef *a = items.at ( i );
             // skip procedurally generated items
-            if ( a->base_flags.is_set ( 0 ) ) continue;
+            if ( a->base_flags.is_set ( df::itemdef_flags::GENERATED ) ) continue;
             ItemTypeInfo ii;
             if ( !ii.decode ( type,  i ) ) continue;
             add_value ( ii.getToken() );
@@ -828,7 +828,6 @@ void StockpileSerializer::furniture_setup_other_mats()
 void StockpileSerializer::write_furniture()
 {
     StockpileSettings::FurnitureSet *furniture= mBuffer.mutable_furniture();
-    furniture->set_sand_bags ( mPile->settings.furniture.sand_bags );
 
     // FURNITURE type
     using df::enums::furniture_type::furniture_type;
@@ -879,11 +878,6 @@ void StockpileSerializer::read_furniture()
         mPile->settings.flags.bits.furniture = 1;
         const StockpileSettings::FurnitureSet furniture = mBuffer.furniture();
         debug() << "furniture:" <<endl;
-
-        if ( mBuffer.furniture().has_sand_bags() )
-            mPile->settings.furniture.sand_bags = mBuffer.furniture().sand_bags();
-        else
-            mPile->settings.furniture.sand_bags = false;
 
         // type
         using df::enums::furniture_type::furniture_type;

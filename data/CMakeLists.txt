@@ -1,0 +1,2 @@
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/blueprints/ DESTINATION blueprints)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/quickfort/ DESTINATION "${DFHACK_DATA_DESTINATION}/data/quickfort")

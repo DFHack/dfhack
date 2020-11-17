@@ -1417,6 +1417,7 @@ static bool isMapLoaded() { return Core::getInstance().isMapLoaded(); }
 static std::string df2utf(std::string s) { return DF2UTF(s); }
 static std::string utf2df(std::string s) { return UTF2DF(s); }
 static std::string df2console(color_ostream &out, std::string s) { return DF2CONSOLE(out, s); }
+static std::string toSearchNormalized(std::string s) { return to_search_normalized(s); }
 
 #define WRAP_VERSION_FUNC(name, function) WRAPN(name, DFHack::Version::function)
 
@@ -1434,6 +1435,7 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(df2utf),
     WRAP(utf2df),
     WRAP(df2console),
+    WRAP(toSearchNormalized),
     WRAP_VERSION_FUNC(getDFHackVersion, dfhack_version),
     WRAP_VERSION_FUNC(getDFHackRelease, dfhack_release),
     WRAP_VERSION_FUNC(getDFHackBuildID, dfhack_build_id),
@@ -1604,6 +1606,9 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getCasteProfessionName),
     WRAPM(Units, getProfessionColor),
     WRAPM(Units, getCasteProfessionColor),
+    WRAPM(Units, getGoalType),
+    WRAPM(Units, getGoalName),
+    WRAPM(Units, isGoalAchieved),
     WRAPM(Units, getSquadName),
     WRAPM(Units, isWar),
     WRAPM(Units, isHunter),
@@ -1614,8 +1619,11 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getPhysicalDescription),
     WRAPM(Units, getRaceName),
     WRAPM(Units, getRaceNamePlural),
+    WRAPM(Units, getRaceNameById),
     WRAPM(Units, getRaceBabyName),
+    WRAPM(Units, getRaceBabyNameById),
     WRAPM(Units, getRaceChildName),
+    WRAPM(Units, getRaceChildNameById),
     WRAPM(Units, isBaby),
     WRAPM(Units, isChild),
     WRAPM(Units, isAdult),
@@ -1766,6 +1774,7 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, getContainer),
     WRAPM(Items, getHolderBuilding),
     WRAPM(Items, getHolderUnit),
+    WRAPM(Items, getBookTitle),
     WRAPM(Items, getDescription),
     WRAPM(Items, isCasteMaterial),
     WRAPM(Items, getSubtypeCount),
@@ -2362,8 +2371,11 @@ static const luaL_Reg dfhack_screen_funcs[] = {
 
 static const LuaWrapper::FunctionReg dfhack_filesystem_module[] = {
     WRAPM(Filesystem, getcwd),
+    WRAPM(Filesystem, restore_cwd),
+    WRAPM(Filesystem, get_initial_cwd),
     WRAPM(Filesystem, chdir),
     WRAPM(Filesystem, mkdir),
+    WRAPM(Filesystem, mkdir_recursive),
     WRAPM(Filesystem, rmdir),
     WRAPM(Filesystem, exists),
     WRAPM(Filesystem, isfile),
@@ -2402,10 +2414,13 @@ static int filesystem_listdir_recursive(lua_State *L)
     luaL_checktype(L,1,LUA_TSTRING);
     std::string dir=lua_tostring(L,1);
     int depth = 10;
-    if (lua_type(L, 2) == LUA_TNUMBER)
-        depth = lua_tounsigned(L, 2);
+    if (lua_gettop(L) >= 2 && !lua_isnil(L, 2))
+        depth = luaL_checkint(L, 2);
+    bool include_prefix = true;
+    if (lua_gettop(L) >= 3 && !lua_isnil(L, 3))
+        include_prefix = lua_toboolean(L, 3);
     std::map<std::string, bool> files;
-    int err = DFHack::Filesystem::listdir_recursive(dir, files, depth);
+    int err = DFHack::Filesystem::listdir_recursive(dir, files, depth, include_prefix);
     if (err)
     {
         lua_pushnil(L);

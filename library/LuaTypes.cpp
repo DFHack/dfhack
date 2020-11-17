@@ -536,6 +536,7 @@ static void field_reference(lua_State *state, const struct_field_info *field, vo
         case struct_field_info::PRIMITIVE:
         case struct_field_info::SUBSTRUCT:
             push_object_internal(state, field->type, ptr);
+            get_object_ref_header(state, -1)->field_info = field;
             return;
 
         case struct_field_info::POINTER:
@@ -706,6 +707,20 @@ static type_identity *find_primitive_field(lua_State *state, int field, const ch
  */
 static int meta_primitive_index(lua_State *state)
 {
+    if (lua_type(state, -1) == LUA_TSTRING)
+    {
+        const char *attr = lua_tostring(state, -1);
+        if (strcmp(attr, "ref_target") == 0) {
+            const struct_field_info *field_info = get_object_ref_header(state, 1)->field_info;
+            if (field_info && field_info->extra && field_info->extra->ref_target) {
+                LookupInTable(state, field_info->extra->ref_target, &DFHACK_TYPEID_TABLE_TOKEN);
+            } else {
+                lua_pushnil(state);
+            }
+            return 1;
+        }
+    }
+
     uint8_t *ptr = get_object_addr(state, 1, 2, "read");
     auto type = find_primitive_field(state, 2, "read", &ptr);
     if (!type)
@@ -1304,6 +1319,8 @@ static void MakePrimitiveMetatable(lua_State *state, type_identity *type)
     {
         EnableMetaField(state, base+2, "value", type);
         AssociateId(state, base+3, 1, "value");
+
+        EnableMetaField(state, base+2, "ref_target", NULL);
     }
 
     // Add the iteration metamethods
@@ -1418,6 +1435,28 @@ void struct_identity::build_metatable(lua_State *state)
 {
     int base = lua_gettop(state);
     MakeFieldMetatable(state, this, meta_struct_index, meta_struct_newindex);
+    SetStructMethod(state, base+1, base+2, meta_struct_field_reference, "_field");
+    SetPtrMethods(state, base+1, base+2);
+}
+
+void other_vectors_identity::build_metatable(lua_State *state)
+{
+    int base = lua_gettop(state);
+    MakeFieldMetatable(state, this, meta_struct_index, meta_struct_newindex);
+
+    EnableMetaField(state, base+2, "_enum");
+
+    LookupInTable(state, index_enum, &DFHACK_TYPEID_TABLE_TOKEN);
+    lua_setfield(state, base+1, "_enum");
+
+    auto keys = &index_enum->getKeys()[-index_enum->getFirstItem()];
+
+    for (int64_t i = 0; i <= index_enum->getLastItem(); i++)
+    {
+        lua_getfield(state, base+2, keys[i]);
+        lua_rawseti(state, base+2, int(i));
+    }
+
     SetStructMethod(state, base+1, base+2, meta_struct_field_reference, "_field");
     SetPtrMethods(state, base+1, base+2);
 }

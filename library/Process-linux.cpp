@@ -22,28 +22,28 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "Internal.h"
-#include <dirent.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/mman.h>
-#include <sys/time.h>
-
-#include <string>
-#include <vector>
-#include <map>
-#include <set>
 #include <cstdio>
 #include <cstring>
-using namespace std;
+#include <dirent.h>
+#include <errno.h>
+#include <map>
+#include <set>
+#include <string>
+#include <sys/mman.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <vector>
 
-#include <md5wrapper.h>
+#include "Error.h"
+#include "Internal.h"
+#include "md5wrapper.h"
 #include "MemAccess.h"
 #include "Memory.h"
-#include "VersionInfoFactory.h"
+#include "modules/Filesystem.h"
 #include "VersionInfo.h"
-#include "Error.h"
-#include <string.h>
+#include "VersionInfoFactory.h"
+
+using namespace std;
 using namespace DFHack;
 
 Process::Process(const VersionInfoFactory& known_versions) : identified(false), my_pe(0)
@@ -180,12 +180,7 @@ uint32_t Process::getTickCount()
 
 string Process::getPath()
 {
-    const char * cwd_name = "/proc/self/cwd";
-    char target_name[1024];
-    int target_result;
-    target_result = readlink(cwd_name, target_name, sizeof(target_name));
-    target_name[target_result] = '\0';
-    return(string(target_name));
+    return Filesystem::get_initial_cwd();
 }
 
 int Process::getPID()

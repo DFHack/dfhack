@@ -17,12 +17,14 @@ build/VC2010
 # Sphinx generated documentation
 docs/_*
 docs/html/
+docs/pdf/
 
 # in-place build
 build/Makefile
 build/CMakeCache.txt
 build/cmake_install.cmake
 build/CMakeFiles
+build/data
 build/doc
 build/lua
 build/bin

@@ -13,7 +13,7 @@ fi
 
 # attempt to remove quarantine flag: https://github.com/DFHack/dfhack/issues/1465
 if ! test -f hack/quarantine-removed; then
-    find hack/ libs/ dwarfort.exe -name '*.dylib' -or -name '*.exe' -print0 | xargs -0 xattr -d com.apple.quarantine 2>&1 | grep -iv 'no such xattr'
+    find hack/ libs/ dwarfort.exe \( -name '*.dylib' -or -name '*.framework' -or -name '*.exe' \) -print0 | xargs -0 xattr -d com.apple.quarantine 2>&1 | grep -iv 'no such xattr'
     echo "quarantine flag removed on $(date); remove this file to re-run" > hack/quarantine-removed
 fi
 

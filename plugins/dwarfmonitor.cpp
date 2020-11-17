@@ -1155,52 +1155,107 @@ struct preference_map
 
     string getItemLabel()
     {
-        df::world_raws::T_itemdefs &defs = world->raws.itemdefs;
         label = ENUM_ATTR_STR(item_type, caption, pref.item_type);
         switch (pref.item_type)
         {
         case (df::item_type::WEAPON):
-            label = defs.weapons[pref.item_subtype]->name_plural;
+        {
+            auto *def = vector_get(world->raws.itemdefs.weapons, pref.item_subtype);
+            if (def)
+                label = def->name_plural;
             break;
+        }
         case (df::item_type::TRAPCOMP):
-            label = defs.trapcomps[pref.item_subtype]->name_plural;
+        {
+            auto *def = vector_get(world->raws.itemdefs.trapcomps, pref.item_subtype);
+            if (def)
+                label = def->name_plural;
             break;
+        }
         case (df::item_type::TOY):
-            label = defs.toys[pref.item_subtype]->name_plural;
+        {
+            auto *def = vector_get(world->raws.itemdefs.toys, pref.item_subtype);
+            if (def)
+                label = def->name_plural;
             break;
+        }
         case (df::item_type::TOOL):
-            label = defs.tools[pref.item_subtype]->name_plural;
+        {
+            auto *def = vector_get(world->raws.itemdefs.tools, pref.item_subtype);
+            if (def)
+                label = def->name_plural;
             break;
+        }
         case (df::item_type::INSTRUMENT):
-            label = defs.instruments[pref.item_subtype]->name_plural;
+        {
+            auto *def = vector_get(world->raws.itemdefs.instruments, pref.item_subtype);
+            if (def)
+                label = def->name_plural;
             break;
+        }
         case (df::item_type::ARMOR):
-            label = defs.armor[pref.item_subtype]->name_plural;
+        {
+            auto *def = vector_get(world->raws.itemdefs.armor, pref.item_subtype);
+            if (def)
+                label = def->name_plural;
             break;
+        }
         case (df::item_type::AMMO):
-            label = defs.ammo[pref.item_subtype]->name_plural;
+        {
+            auto *def = vector_get(world->raws.itemdefs.ammo, pref.item_subtype);
+            if (def)
+                label = def->name_plural;
             break;
+        }
         case (df::item_type::SIEGEAMMO):
-            label = defs.siege_ammo[pref.item_subtype]->name_plural;
+        {
+            auto *def = vector_get(world->raws.itemdefs.siege_ammo, pref.item_subtype);
+            if (def)
+                label = def->name_plural;
             break;
+        }
         case (df::item_type::GLOVES):
-            label = defs.gloves[pref.item_subtype]->name_plural;
+        {
+            auto *def = vector_get(world->raws.itemdefs.gloves, pref.item_subtype);
+            if (def)
+                label = def->name_plural;
             break;
+        }
         case (df::item_type::SHOES):
-            label = defs.shoes[pref.item_subtype]->name_plural;
+        {
+            auto *def = vector_get(world->raws.itemdefs.shoes, pref.item_subtype);
+            if (def)
+                label = def->name_plural;
             break;
+        }
         case (df::item_type::SHIELD):
-            label = defs.shields[pref.item_subtype]->name_plural;
+        {
+            auto *def = vector_get(world->raws.itemdefs.shields, pref.item_subtype);
+            if (def)
+                label = def->name_plural;
             break;
+        }
         case (df::item_type::HELM):
-            label = defs.helms[pref.item_subtype]->name_plural;
+        {
+            auto *def = vector_get(world->raws.itemdefs.helms, pref.item_subtype);
+            if (def)
+                label = def->name_plural;
             break;
+        }
         case (df::item_type::PANTS):
-            label = defs.pants[pref.item_subtype]->name_plural;
+        {
+            auto *def = vector_get(world->raws.itemdefs.pants, pref.item_subtype);
+            if (def)
+                label = def->name_plural;
             break;
+        }
         case (df::item_type::FOOD):
-            label = defs.food[pref.item_subtype]->name;
+        {
+            auto *def = vector_get(world->raws.itemdefs.food, pref.item_subtype);
+            if (def)
+                label = def->name;
             break;
+        }
 
         default:
             label = ENUM_ATTR_STR(item_type, caption, pref.item_type);

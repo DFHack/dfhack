@@ -1,3 +1,5 @@
+.. _plugins-index:
+
 ##############
 DFHack Plugins
 ##############
@@ -9,8 +11,9 @@ game subsystems or the entire renderer.
 Most commands offered by plugins are listed here,
 hopefully organised in a way you will find useful.
 
-.. contents::
-   :depth: 3
+.. contents:: Contents
+  :local:
+  :depth: 2
 
 ===============================
 Data inspection and visualizers
@@ -34,7 +37,9 @@ For more information, see `the full Stonesense README <stonesense>`.
 
 blueprint
 =========
-Exports a portion of your fortress into QuickFort style blueprint files.::
+Exports a portion of your fortress into QuickFort style blueprint files.
+
+Usage::
 
     blueprint <x> <y> <z> <name> [dig] [build] [place] [query]
 
@@ -56,6 +61,11 @@ remotefortressreader
 An in-development plugin for realtime fortress visualisation.
 See :forums:`Armok Vision <146473>`.
 
+.. _isoworldremote:
+
+isoworldremote
+==============
+A plugin that implements a `remote API <remote>` used by Isoworld.
 
 .. _cursecheck:
 
@@ -109,24 +119,21 @@ A tool for checking how many tiles contain flowing liquids. If you suspect that
 your magma sea leaks into HFS, you can use this tool to be sure without
 revealing the map.
 
-.. _pathable:
-
-pathable
-========
-
-This plugin implements the back end of the `gui/pathable` script. It exports a
-single Lua function, in ``hack/lua/plugins/pathable.lua``:
-
-* ``paintScreen(cursor[,skip_unrevealed])``: Paint each visible of the screen
-  green or red, depending on whether it can be pathed to from the tile at
-  ``cursor``. If ``skip_unrevealed`` is specified and true, do not draw
-  unrevealed tiles.
-
 .. _probe:
 
 probe
 =====
-Can be used to determine tile properties like temperature.
+
+This plugin provides multiple commands that print low-level properties of the
+selected objects.
+
+* ``probe``: prints some properties of the tile selected with :kbd:`k`. Some of
+  these properties can be passed into `tiletypes`.
+* ``cprobe``: prints some properties of the unit selected with :kbd:`v`, as well
+  as the IDs of any worn items. `gui/gm-unit` and `gui/gm-editor` are more
+  complete in-game alternatives.
+* ``bprobe``: prints some properties of the building selected with :kbd:`q` or
+  :kbd:`t`. `gui/gm-editor` is a more complete in-game alternative.
 
 .. _prospect:
 .. _prospector:
@@ -183,7 +190,7 @@ Usage and related commands:
 :revflood:      Hide everything, then reveal tiles with a path to the cursor
                 (useful to make walled-off rooms vanish)
 :revforget:     Discard info about what was visible before revealing the map.
-                Only useful where (eg) you abandoned with the fort revealed
+                Only useful where (e.g.) you abandoned with the fort revealed
                 and no longer want the data.
 
 .. _showmood:
@@ -283,6 +290,8 @@ One-shot subcommands:
 
 Subcommands that persist until disabled or DF quits:
 
+.. comment: sort these alphabetically
+
 :adamantine-cloth-wear: Prevents adamantine clothing from wearing out while being worn (:bug:`6481`).
 :advmode-contained:     Works around :bug:`6202`, custom reactions with container inputs
                         in advmode. The issue is that the screen tries to force you to select
@@ -297,6 +306,7 @@ Subcommands that persist until disabled or DF quits:
 :craft-age-wear:        Fixes the behavior of crafted items wearing out over time (:bug:`6003`).
                         With this tweak, items made from cloth and leather will gain a level of
                         wear  every 20 years.
+:do-job-now:            Adds a job priority toggle to the jobs list
 :embark-profile-name:   Allows the use of lowercase letters when saving embark profiles
 :eggs-fertile:          Displays a fertility indicator on nestboxes
 :farm-plot-select:      Adds "Select all" and "Deselect all" options to farm plot menus
@@ -327,11 +337,14 @@ Subcommands that persist until disabled or DF quits:
                         i.e. stop the rightmost list of the Positions page of the military
                         screen from constantly resetting to the top.
 :nestbox-color:         Fixes the color of built nestboxes
+:reaction-gloves:       Fixes reactions to produce gloves in sets with correct handedness (:bug:`6273`)
 :shift-8-scroll:        Gives Shift-8 (or :kbd:`*`) priority when scrolling menus, instead of scrolling the map
 :stable-cursor:         Saves the exact cursor position between t/q/k/d/b/etc menus of fortress mode.
 :stone-status-all:      Adds an option to toggle the economic status of all stones
 :title-start-rename:    Adds a safe rename option to the title screen "Start Playing" menu
 :tradereq-pet-gender:   Displays pet genders on the trade request screen
+
+.. comment: sort these alphabetically
 
 .. _fix-armory:
 
@@ -692,14 +705,44 @@ enabled materials, you should be able to place complex constructions more conven
 buildingplan
 ============
 When active (via ``enable buildingplan``), this plugin adds a planning mode for
-furniture placement.  You can then place furniture and other buildings before
-the required materials are available, and the job will be unsuspended when
-the item is created.
+building placement. You can then place furniture, constructions, and other buildings
+before the required materials are available, and they will be created in a suspended
+state. Buildingplan will periodically scan for appropriate items, and the jobs will
+be unsuspended when the items are available.
 
-Very useful when combined with `workflow` - you can set a constraint
+This is very useful when combined with `workflow` - you can set a constraint
 to always have one or two doors/beds/tables/chairs/etc available, and place
-as many as you like.  The plugins then take over and fulfill the orders,
+as many as you like. The plugins then take over and fulfill the orders,
 with minimal space dedicated to stockpiles.
+
+Item filtering
+--------------
+
+While placing a building, you can set filters for what materials you want the building made
+out of, what quality you want the component items to be, and whether you want the items to
+be decorated.
+
+If a building type takes more than one item to construct, use
+:kbd:`Ctrl`:kbd:`Left` and :kbd:`Ctrl`:kbd:`Right` to select the item that you
+want to set filters for. Any filters that you set will be used for all buildings
+of the selected type from that point onward (until you set a new filter or clear
+the current one).
+
+For example, you can be sure that all your constructed walls are the same color by setting
+a filter to accept only certain types of stone.
+
+Quickfort mode
+--------------
+
+If you use the external Python Quickfort to apply building blueprints instead of the native
+DFHack `quickfort` script, you must enable Quickfort mode. This temporarily enables
+buildingplan for all building types and adds an extra blank screen after every building
+placement. This "dummy" screen is needed for Python Quickfort to interact successfully with
+Dwarf Fortress.
+
+Note that Quickfort mode is only for compatibility with the legacy Python Quickfort. The
+DFHack `quickfort` script does not need Quickfort mode to be enabled. The `quickfort` script
+will successfully integrate with buildingplan as long as the buildingplan plugin is enabled.
 
 .. _confirm:
 
@@ -728,7 +771,7 @@ by moving the view manually.
 
 mousequery
 ==========
-Adds mouse controls to the DF interface, eg click-and-drag designations.
+Adds mouse controls to the DF interface, e.g. click-and-drag designations.
 
 Options:
 
@@ -770,6 +813,7 @@ Adds a :kbd:`q` menu for track stops, which is completely blank by default.
 This allows you to view and/or change the track stop's friction and dump
 direction settings, using the keybindings from the track stop building interface.
 
+.. _sort:
 .. _sort-items:
 
 sort-items
@@ -831,10 +875,10 @@ See `gui/stockpiles` for an in-game interface.
 
 :savestock:     Saves the currently highlighted stockpile's settings to a file in your Dwarf
                 Fortress folder. This file can be used to copy settings between game saves or
-                players.  eg:  ``savestock food_settings.dfstock``
+                players.  e.g.:  ``savestock food_settings.dfstock``
 
 :loadstock:     Loads a saved stockpile settings file and applies it to the currently selected
-                stockpile.  eg:  ``loadstock food_settings.dfstock``
+                stockpile.  e.g.:  ``loadstock food_settings.dfstock``
 
 To use savestock and loadstock, use the :kbd:`q` command to highlight a stockpile.
 Then run savestock giving it a descriptive filename. Then, in a different (or
@@ -1429,7 +1473,9 @@ can be displayed on the main fortress mode screen:
 The file :file:`dfhack-config/dwarfmonitor.json` can be edited to control the
 positions and settings of all widgets displayed. This file should contain a
 JSON object with the key ``widgets`` containing an array of objects - see the
-included file in the ``dfhack-config`` folder for an example::
+included file in the ``dfhack-config`` folder for an example:
+
+.. code-block:: lua
 
     {
         "widgets": [
@@ -1563,6 +1609,8 @@ Options:
 :nick:        Mass-assign nicknames, must be followed by the name you want
               to set.
 :remnick:     Mass-remove nicknames.
+:enumnick:    Assign enumerated nicknames (e.g. "Hen 1", "Hen 2"...). Must be
+              followed by the prefix to use in nicknames.
 :tocages:     Assign unit(s) to cages inside a pasture.
 :uinfo:       Print info about unit(s). If no filters are set a unit must
               be selected in the in-game ui.
@@ -1925,10 +1973,10 @@ Options:
 :L:     Low Traffic
 :R:     Restricted Traffic
 
-.. _burrow:
+.. _burrows:
 
-burrow
-======
+burrows
+=======
 Miscellaneous burrow control. Allows manipulating burrows and automated burrow
 expansion while digging.
 
@@ -2298,16 +2346,19 @@ by spaces.
 
 Options:
 
-:``-t``: Select trees only (exclude shrubs)
-:``-s``: Select shrubs only (exclude trees)
-:``-c``: Clear designations instead of setting them
-:``-x``: Apply selected action to all plants except those specified (invert
+:``-t``: Tree: Select trees only (exclude shrubs)
+:``-s``: Shrub: Select shrubs only (exclude trees)
+:``-f``: Farming: Designate only shrubs that yield seeds for farming. Implies -s
+:``-c``: Clear: Clear designations instead of setting them
+:``-x``: eXcept: Apply selected action to all plants except those specified (invert
      selection)
-:``-a``: Select every type of plant (obeys ``-t``/``-s``)
-:``-v``: Lists the number of (un)designations per plant
+:``-a``: All: Select every type of plant (obeys ``-t``/``-s``/``-f``)
+:``-v``: Verbose: Lists the number of (un)designations per plant
+:``-n *``: Number: Designate up to * (an integer number) plants of each species
 
-Specifying both ``-t`` and ``-s`` will have no effect. If no plant IDs are specified,
-all valid plant IDs will be listed.
+Specifying both ``-t`` and ``-s`` or ``-f`` will have no effect. If no plant IDs are
+specified, all valid plant IDs will be listed, with ``-t``, ``-s``, and ``-f``
+restricting the list to trees, shrubs, and farmable shrubs, respectively.
 
 .. note::
 
@@ -2318,6 +2369,12 @@ all valid plant IDs will be listed.
     plant gatherer to walk there and do nothing (except clearing the
     designation). See :issue:`1479` for details.
 
+    The implementation another known deficiency: it's incapable of detecting that
+    raw definitions that specify a seed extraction reaction for the structural part
+    but has no other use for it cannot actually yield any seeds, as the part is
+    never used (parts of :bug:`6940`, e.g. Red Spinach), even though DF
+    collects it, unless there's a workshop reaction to do it (which there isn't
+    in vanilla).
 
 .. _infiniteSky:
 
@@ -2347,10 +2404,14 @@ dfhack command line and can't be used from a hotkey. Settings will be remembered
 as long as dfhack runs. Intended for use in combination with the command
 ``liquids-here`` (which can be bound to a hotkey).  See also :issue:`80`.
 
-.. note::
+.. warning::
 
     Spawning and deleting liquids can mess up pathing data and
     temperatures (creating heat traps). You've been warned.
+
+.. note::
+
+    `gui/liquids` is an in-game UI for this script.
 
 Settings will be remembered until you quit DF. You can call `liquids-here` to execute
 the last configured action, which is useful in combination with keybindings.
@@ -2457,7 +2518,8 @@ See also `alltraffic`, `filltraffic`, and `restrictice`.
 tiletypes
 =========
 Can be used for painting map tiles and is an interactive command, much like
-`liquids`.  If something goes wrong, `fixveins` may help.
+`liquids`. Some properties of existing tiles can be looked up with `probe`. If
+something goes wrong, `fixveins` may help.
 
 The tool works with two set of options and a brush. The brush determines which
 tiles will be processed. First set of options is the filter, which can exclude
@@ -2608,25 +2670,40 @@ Usage:
 
 createitem
 ==========
-Allows creating new items of arbitrary types and made of arbitrary materials.
-By default, items created are spawned at the feet of the selected unit.
+Allows creating new items of arbitrary types and made of arbitrary materials. A
+unit must be selected in-game to use this command. By default, items created are
+spawned at the feet of the selected unit.
 
 Specify the item and material information as you would indicate them in
 custom reaction raws, with the following differences:
 
 * Separate the item and material with a space rather than a colon
-* If the item has no subtype, omit the :NONE
-* If the item is REMAINS, FISH, FISH_RAW, VERMIN, PET, or EGG,
-  specify a CREATURE:CASTE pair instead of a material token.
+* If the item has no subtype, the ``:NONE`` can be omitted
+* If the item is ``REMAINS``, ``FISH``, ``FISH_RAW``, ``VERMIN``, ``PET``, or ``EGG``,
+  specify a ``CREATURE:CASTE`` pair instead of a material token.
+* If the item is a ``PLANT_GROWTH``, specify a ``PLANT_ID:GROWTH_ID`` pair
+  instead of a material token.
 
 Corpses, body parts, and prepared meals cannot be created using this tool.
 
-Examples::
+To obtain the item and material tokens of an existing item, run
+``createitem inspect``. Its output can be passed directly as arguments to
+``createitem`` to create new matching items, as long as the item type is
+supported.
+
+Examples:
+
+* Create 2 pairs of steel gauntlets::
 
     createitem GLOVES:ITEM_GLOVES_GAUNTLETS INORGANIC:STEEL 2
-            Create 2 pairs of steel gauntlets.
+
+* Create tower-cap logs::
+
     createitem WOOD PLANT_MAT:TOWER_CAP:WOOD
-            Create tower-cap logs.
+
+* Create bilberries::
+
+    createitem PLANT_GROWTH BILBERRY:FRUIT
 
 For more examples, :wiki:`see this wiki page <Utility:DFHack/createitem>`.
 
@@ -2914,8 +2991,10 @@ Lua API
 Some plugins consist solely of native libraries exposed to Lua. They are listed
 in the `lua-api` file under `lua-plugins`:
 
-* `eventful`
 * `building-hacks`
+* `cxxrandom`
+* `eventful`
 * `luasocket`
 * `map-render`
-* `cxxrandom`
+* `pathable`
+* `xlsxreader`

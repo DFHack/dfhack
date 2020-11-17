@@ -541,6 +541,7 @@ namespace DFHack
                     return Console::SHUTDOWN;
                 }
                 lock->lock();
+                const int old_cursor = raw_cursor;
                 /* Only autocomplete when the callback is set. It returns < 0 when
                  * there was an error reading from fd. Otherwise it will return the
                  * character that should be handled next. */
@@ -596,6 +597,29 @@ namespace DFHack
                     else if (seq[0] == 'f')
                     {
                         forward_word();
+                    }
+                    else if (seq[0] == 127 || seq[0] == 8) // backspace || ctrl-h
+                    {
+                        // delete word
+                        back_word();
+                        if (old_cursor > raw_cursor)
+                        {
+                            yank_buffer = raw_buffer.substr(raw_cursor, old_cursor - raw_cursor);
+                            raw_buffer.erase(raw_cursor, old_cursor - raw_cursor);
+                            prompt_refresh();
+                        }
+                    }
+                    else if (seq[0] == 'd')
+                    {
+                        // delete word forward
+                        forward_word();
+                        if (old_cursor < raw_cursor)
+                        {
+                            yank_buffer = raw_buffer.substr(old_cursor, raw_cursor - old_cursor);
+                            raw_buffer.erase(old_cursor, raw_cursor - old_cursor);
+                            raw_cursor = old_cursor;
+                            prompt_refresh();
+                        }
                     }
                     else if(seq[0] == '[')
                     {

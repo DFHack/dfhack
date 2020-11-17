@@ -369,11 +369,13 @@ namespace embark_assist{
                 embark_assist::screen::paintString(site_pen, 1, 4, "C");
                 embark_assist::screen::paintString(site_pen, 1, 5, "c");
                 embark_assist::screen::paintString(site_pen, 1, 6, "i");
-                embark_assist::screen::paintString(site_pen, 1, 7, "l");
-                embark_assist::screen::paintString(site_pen, 1, 8, "L");
-                embark_assist::screen::paintString(site_pen, 1, 9, "M");
-                embark_assist::screen::paintString(site_pen, 1, 10, "S");
-                embark_assist::screen::paintString(site_pen, 1, 11, "V");
+                embark_assist::screen::paintString(site_pen, 1, 7, "m");
+                embark_assist::screen::paintString(site_pen, 1, 8, "b");
+                embark_assist::screen::paintString(site_pen, 1, 9, "l");
+                embark_assist::screen::paintString(site_pen, 1, 10, "L");
+                embark_assist::screen::paintString(site_pen, 1, 11, "M");
+                embark_assist::screen::paintString(site_pen, 1, 12, "S");
+                embark_assist::screen::paintString(site_pen, 1, 13, "V");
                 break;
 
             case pages::Finder:

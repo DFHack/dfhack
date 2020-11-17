@@ -2025,7 +2025,7 @@ uint8_t embark_assist::survey::translate_ns_edge(embark_assist::defs::world_tile
         if (k < 15) {  //  We're still within the same world tile
             effective_edge = world_data->region_details[0]->edges.biome_x[i][k + 1];
         }
-        else {  
+        else {
             //  Getting the data from the world tile to the south
             if (y + 1 == world_data->world_height) {
                 return embark_assist::defs::directions::Center;  //  There's nothing to the south, so we fall back on our own tile.

@@ -50,6 +50,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `buildingplan`: new global settings for whether generic building materials should match blocks, boulders, logs, and/or bars. defaults are everything but bars.
 - `quickfort`: The Dreamfort sample blueprints now have complete walkthroughs for each fort level and importable orders that automate basic fort stock management
 - `quickfort`: More blueprints have been added to the blueprints library: several bedroom layouts, the Saracen Crypts, and the complete fortress example from Python Quickfort: TheQuickFortress
+- `embark-assistant`: split the lair types displayed on the local map into mound, burrow, and lair
 
 ## API
 - `buildingplan`: added Lua interface API

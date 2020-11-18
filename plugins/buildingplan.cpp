@@ -864,7 +864,7 @@ struct buildingplan_room_hook : public df::viewscreen_dwarfmodest
             && last_token <= interface_key::STRING_A058)
         {
             size_t selection = last_token - interface_key::STRING_A048;
-            if (np.size() < selection)
+            if (np.size() < selection || selection == 0)
                 return false;
             roomMonitor.toggleRoomForPosition(world->selected_building->id, np.at(selection-1).position->code);
             return true;

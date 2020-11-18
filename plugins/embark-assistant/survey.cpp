@@ -567,42 +567,42 @@ namespace embark_assist {
 
             //  Logic can be implemented with modulo and division, but that's harder to read.
             switch (from_direction) {
-            case 0:
+            case embark_assist::defs::directions::Northwest:
                 fetch_i = i - 1;
                 fetch_k = k - 1;
                 break;
 
-            case 1:
+            case embark_assist::defs::directions::North:
                 fetch_k = k - 1;
                 break;
 
-            case 2:
+            case embark_assist::defs::directions::Northeast:
                 fetch_i = i + 1;
                 fetch_k = k - 1;
                 break;
 
-            case 3:
+            case embark_assist::defs::directions::West:
                 fetch_i = i - 1;
                 break;
 
-            case 4:
+            case embark_assist::defs::directions::Center:
                 return;   //  Own tile provides the data, so there's no incursion.
                 break;
 
-            case 5:
+            case embark_assist::defs::directions::East:
                 fetch_i = i + 1;
                 break;
 
-            case 6:
+            case embark_assist::defs::directions::Southwest:
                 fetch_i = i - 1;
                 fetch_k = k + 1;
                 break;
 
-            case 7:
+            case embark_assist::defs::directions::South:
                 fetch_k = k + 1;
                 break;
 
-            case 8:
+            case embark_assist::defs::directions::Southeast:
                 fetch_i = i + 1;
                 fetch_k = k + 1;
                 break;
@@ -803,9 +803,21 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
             auto &results = survey_results->at(i).at(k);
             results.surveyed = false;
             results.survey_completed = false;
-            results.neighboring_sand = false;
             results.neighboring_clay = false;
-            results.neighboring_aquifer = embark_assist::defs::Clear_Aquifer_Bits;
+            results.neighboring_sand = false;
+            for (uint8_t l = 0; l <= ENUM_LAST_ITEM(biome_type); l++) {
+                results.neighboring_biomes[l] = false;
+            }
+
+            for (uint8_t l = 0; l <= ENUM_LAST_ITEM(world_region_type); l++) {
+                results.neighboring_region_types[l] = false;
+            }
+
+            for (uint8_t l = 0; l < 2; l++) {
+                results.neighboring_savagery[l] = false;
+                results.neighboring_evilness[l] = false;
+            }
+
             results.aquifer = embark_assist::defs::Clear_Aquifer_Bits;
             results.clay_count = 0;
             results.sand_count = 0;
@@ -903,10 +915,23 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
                 }
             }
 
-            results.biome_count = 0;
-            for (uint8_t l = 1; l < 10; l++) {
-                if (results.biome[l] != -1) results.biome_count++;
+            bool biomes[ENUM_LAST_ITEM(biome_type) + 1];
+            for (uint8_t l = 0; l <= ENUM_LAST_ITEM(biome_type); l++) {
+                biomes[l] = false;
             }
+
+            for (uint8_t l = 1; l < 10; l++)
+            {
+                if (results.biome[l] != -1) {
+                    biomes[results.biome[l]] = true;
+                }
+            }
+            int count = 0;
+            for (uint8_t l = 0; l <= ENUM_LAST_ITEM(biome_type); l++) {
+                if (biomes[l]) count++;
+            }
+
+            results.biome_count = count;
 
             if (results.clay_count == offset_count) results.clay_count = 256;
             if (results.sand_count == offset_count) results.sand_count = 256;
@@ -1511,41 +1536,41 @@ df::coord2d embark_assist::survey::apply_offset(uint16_t x, uint16_t y, int8_t o
     result.y = y;
 
     switch (offset) {
-    case 1:
+    case embark_assist::defs::offset_directions::Southwest:
         result.x--;
         result.y++;
         break;
 
-    case 2:
+    case embark_assist::defs::offset_directions::South:
         result.y++;
         break;
 
-    case 3:
+    case embark_assist::defs::offset_directions::Southeast:
         result.x++;
         result.y++;
         break;
 
-    case 4:
+    case embark_assist::defs::offset_directions::West:
         result.x--;
         break;
 
-    case 5:
+    case embark_assist::defs::offset_directions::Center:
         break;  // Center. No change
 
-    case 6:
+    case embark_assist::defs::offset_directions::East:
         result.x++;
         break;
 
-    case 7:
+    case embark_assist::defs::offset_directions::Northwest:
         result.x--;
         result.y--;
         break;
 
-    case 8:
+    case embark_assist::defs::offset_directions::North:
         result.y--;
         break;
 
-    case 9:
+    case embark_assist::defs::offset_directions::Northeast:
         result.x++;
         result.y--;
         break;
@@ -1650,12 +1675,12 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
     int8_t w_region_type_level;
     int8_t home_region_type_level;
 
-    if (corner_location == 4) {  //  We're the reference. No change.
+    if (corner_location == embark_assist::defs::directions::Center) {  //  We're the reference. No change.
     }
-    else if (corner_location == 5) {  //  Tile to the east is the reference
+    else if (corner_location == embark_assist::defs::directions::East) {  //  Tile to the east is the reference
         effective_i = i + 1;
     }
-    else if (corner_location == 7) {  //  Tile to the south is the reference
+    else if (corner_location == embark_assist::defs::directions::South) {  //  Tile to the south is the reference
         effective_k = k + 1;
     }
     else {  //  8, tile to the southeast is the reference.
@@ -1667,9 +1692,13 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
 
     if (effective_x == world_data->world_width) {
         if (effective_y == world_data->world_height) {  //  Only the SE corner of the SE most tile of the world can reference this.
-            return 4;
+            return embark_assist::defs::directions::Center;
         }
         else {  //  East side corners of the east edge of the world
+            if (effective_y == 0 && effective_k == 0) {  //  North edge of the world. Only one alternative exists.
+                return embark_assist::defs::directions::Center;
+            }
+
             nw_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i - 1, effective_k - 1);
             w_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i - 1, effective_k);
 
@@ -1696,18 +1725,18 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
             }
 
             if (nw_region_type_level < w_region_type_level) {
-                return 4;
+                return embark_assist::defs::directions::Center;
             }
             else if (nw_region_type_level > w_region_type_level) {
-                return 1;
+                return embark_assist::defs::directions::North;
             }
 
             //  Neither tile will automatically yield to the other
-            if (corner_location == 5) {
-                return 1;
+            if (corner_location == embark_assist::defs::directions::East) {
+                return embark_assist::defs::directions::North;
             }
-            else {  //  Can only be corner_location == 8
-                return 4;
+            else {  //  Can only be corner_location == embark_assist::defs::SE
+                return embark_assist::defs::directions::Center;
             }
         }
     }
@@ -1738,18 +1767,18 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
         }
 
         if (nw_region_type_level < n_region_type_level) {
-            return 4;
+            return embark_assist::defs::directions::Center;
         }
         else if (nw_region_type_level > n_region_type_level) {
-            return 5;
+            return embark_assist::defs::directions::East;
         }
 
         //  Neither tile will automatically yield to the other
-        if (corner_location == 7) {
-            return 4;
+        if (corner_location == embark_assist::defs::directions::South) {
+            return embark_assist::defs::directions::Center;
         }
-        else {  //  Can only be corner_location == 8
-            return 5;
+        else {  //  Can only be corner_location == embark_assist::defs::directions::Southeast
+            return embark_assist::defs::directions::East;
         }
     }
 
@@ -1814,7 +1843,7 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
 
     if (effective_x == 0 && effective_i == 0) {  //  West edge of the world
         if (effective_y == 0 && effective_k == 0) {
-            return 4;  //  Only a single reference to this info, the own tile.
+            return embark_assist::defs::directions::Center;  //  Only a single reference to this info, the own tile.
         }
         else {
             nw_region_type_level = -1;  //  Knock out the unreachable corners
@@ -1826,8 +1855,8 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
         nw_region_type_level = -1;  //  Knock out the unreachable corners
         n_region_type_level = -1;
 
-        if (corner_location == 4 && effective_corner == 1) { // The logic below would select the wrong alternative.
-            effective_corner = 3;
+        if (corner_location == embark_assist::defs::directions::Center && effective_corner == embark_assist::defs::directions::North) { // The logic below would select the wrong alternative.
+            effective_corner = embark_assist::defs::directions::West;
         }
     }
 
@@ -1986,6 +2015,8 @@ uint8_t embark_assist::survey::translate_ns_edge(embark_assist::defs::world_tile
     df::world_region_type south_region_type;
 
     if (own_edge) {
+        if (y == 0 && k == 0) return embark_assist::defs::directions::Center; //  There's nothing to the north, so we fall back on our own tile.
+
         effective_edge = world_data->region_details[0]->edges.biome_x[i][k];
         south_region_type = embark_assist::survey::region_type_of(survey_results, x, y, i, k);
         north_region_type = embark_assist::survey::region_type_of(survey_results, x, y, i, k - 1);
@@ -1994,9 +2025,10 @@ uint8_t embark_assist::survey::translate_ns_edge(embark_assist::defs::world_tile
         if (k < 15) {  //  We're still within the same world tile
             effective_edge = world_data->region_details[0]->edges.biome_x[i][k + 1];
         }
-        else {  //  Getting the data from the world tile to the south
+        else {
+            //  Getting the data from the world tile to the south
             if (y + 1 == world_data->world_height) {
-                return 4;  //  There's nothing to the south, so we fall back on our own tile.
+                return embark_assist::defs::directions::Center;  //  There's nothing to the south, so we fall back on our own tile.
             }
 
             effective_edge = survey_results->at(x).at(y + 1).north_row_biome_x[i];
@@ -2039,18 +2071,18 @@ uint8_t embark_assist::survey::translate_ns_edge(embark_assist::defs::world_tile
 
     if (effective_edge == 0) {
         if (own_edge) {
-            return 1;
+            return embark_assist::defs::directions::North;
         }
         else {
-            return 4;
+            return embark_assist::defs::directions::Center;
         }
     }
     else {
         if (own_edge) {
-            return 4;
+            return embark_assist::defs::directions::Center;
         }
         else {
-            return 7;
+            return embark_assist::defs::directions::South;
         }
     }
 }
@@ -2070,6 +2102,7 @@ uint8_t embark_assist::survey::translate_ew_edge(embark_assist::defs::world_tile
     df::world_region_type east_region_type;
 
     if (own_edge) {
+        if (x == 0 && i == 0) return embark_assist::defs::directions::Center;  //  There's nothing to the west, so we fall back on our own tile.
         effective_edge = world_data->region_details[0]->edges.biome_y[i][k];
         east_region_type = embark_assist::survey::region_type_of(survey_results, x, y, i, k);
         west_region_type = embark_assist::survey::region_type_of(survey_results, x, y, i - 1, k);
@@ -2080,7 +2113,7 @@ uint8_t embark_assist::survey::translate_ew_edge(embark_assist::defs::world_tile
         }
         else {  //  Getting the data from the world tile to the east
             if (x + 1 == world_data->world_width) {
-                return 4;  //  There's nothing to the east, so we fall back on our own tile.
+                return embark_assist::defs::directions::Center;  //  There's nothing to the east, so we fall back on our own tile.
             }
 
             effective_edge = survey_results->at(x + 1).at(y).west_column_biome_y[k];
@@ -2121,18 +2154,18 @@ uint8_t embark_assist::survey::translate_ew_edge(embark_assist::defs::world_tile
     }
     if (effective_edge == 0) {
         if (own_edge) {
-            return 3;
+            return embark_assist::defs::directions::West;
         }
         else {
-            return 4;
+            return embark_assist::defs::directions::Center;
         }
     }
     else {
         if (own_edge) {
-            return 4;
+            return embark_assist::defs::directions::Center;
         }
         else {
-            return 5;
+            return embark_assist::defs::directions::East;
         }
     }
 }
@@ -2190,7 +2223,12 @@ void embark_assist::survey::survey_region_sites(embark_assist::defs::site_lists 
                 break;
 
             case df::lair_type::SIMPLE_MOUND:
+                site_list->push_back({ (uint8_t)site->rgn_min_x , (uint8_t)site->rgn_min_y, 'm' });
+                break;
+
             case df::lair_type::SIMPLE_BURROW:
+                site_list->push_back({ (uint8_t)site->rgn_min_x , (uint8_t)site->rgn_min_y, 'b' });
+                break;
             case df::lair_type::WILDERNESS_LOCATION:
                 site_list->push_back({ (uint8_t)site->rgn_min_x , (uint8_t)site->rgn_min_y, 'l' });
                 break;
@@ -2375,7 +2413,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
         else {
             process_embark_incursion_mid_level_tile
             (translate_corner(survey_results,
-                4,
+                embark_assist::defs::directions::Center,
                 x,
                 y,
                 i,
@@ -2415,7 +2453,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
         else {
             process_embark_incursion_mid_level_tile
             (translate_corner(survey_results,
-                5,
+                embark_assist::defs::directions::East,
                 x,
                 y,
                 i,
@@ -2436,7 +2474,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
         else {
             process_embark_incursion_mid_level_tile
             (translate_corner(survey_results,
-                7,
+                embark_assist::defs::directions::South,
                 x,
                 y,
                 i,
@@ -2476,7 +2514,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
         else {
             process_embark_incursion_mid_level_tile
             (translate_corner(survey_results,
-                8,
+                embark_assist::defs::directions::Southeast,
                 x,
                 y,
                 i,
@@ -2497,7 +2535,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
         else if (k > state->local_min_y) { //  We've already covered the NW corner of the NW, with its complications.
             process_embark_incursion_mid_level_tile
             (translate_corner(survey_results,
-                4,
+                embark_assist::defs::directions::Center,
                 x,
                 y,
                 state->local_min_x,
@@ -2535,7 +2573,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
         else if (k < state->local_max_y) { //  We've already covered the SW corner of the SW tile, with its complicatinons.
             process_embark_incursion_mid_level_tile
             (translate_corner(survey_results,
-                7,
+                embark_assist::defs::directions::South,
                 x,
                 y,
                 state->local_min_x,
@@ -2554,7 +2592,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
         else if (k > state->local_min_y) { //  We've already covered the NE tile's NE corner, with its complications.
             process_embark_incursion_mid_level_tile
             (translate_corner(survey_results,
-                5,
+                embark_assist::defs::directions::East,
                 x,
                 y,
                 state->local_max_x,
@@ -2592,7 +2630,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
         else if (k < state->local_max_y) { //  We've already covered the SE tile's SE corner, with its complications.
             process_embark_incursion_mid_level_tile
             (translate_corner(survey_results,
-                8,
+                embark_assist::defs::directions::Southeast,
                 x,
                 y,
                 state->local_max_x,

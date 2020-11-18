@@ -408,42 +408,42 @@ namespace embark_assist {
 
             //  Logic can be implemented with modulo and division, but that's harder to read.
             switch (from_direction) {
-            case 0:
+            case embark_assist::defs::directions::Northwest:
                 fetch_i = i - 1;
                 fetch_k = k - 1;
                 break;
 
-            case 1:
+            case embark_assist::defs::directions::North:
                 fetch_k = k - 1;
                 break;
 
-            case 2:
+            case embark_assist::defs::directions::Northeast:
                 fetch_i = i + 1;
                 fetch_k = k - 1;
                 break;
 
-            case 3:
+            case embark_assist::defs::directions::West:
                 fetch_i = i - 1;
                 break;
 
-            case 4:
+            case embark_assist::defs::directions::Center:
                 return;   //  Own tile provides the data, so there's no incursion.
                 break;
 
-            case 5:
+            case embark_assist::defs::directions::East:
                 fetch_i = i + 1;
                 break;
 
-            case 6:
+            case embark_assist::defs::directions::Southwest:
                 fetch_i = i - 1;
                 fetch_k = k + 1;
                 break;
 
-            case 7:
+            case embark_assist::defs::directions::South:
                 fetch_k = k + 1;
                 break;
 
-            case 8:
+            case embark_assist::defs::directions::Southeast:
                 fetch_i = i + 1;
                 fetch_k = k + 1;
             }
@@ -910,7 +910,7 @@ namespace embark_assist {
                 else {
                     process_embark_incursion_mid_level_tile
                     (embark_assist::survey::translate_corner(survey_results,
-                        4,
+                        embark_assist::defs::directions::Center,
                         x,
                         y,
                         i,
@@ -958,7 +958,7 @@ namespace embark_assist {
                 else {
                     process_embark_incursion_mid_level_tile
                     (embark_assist::survey::translate_corner(survey_results,
-                        5,
+                        embark_assist::defs::directions::East,
                         x,
                         y,
                         i,
@@ -983,7 +983,7 @@ namespace embark_assist {
                 else {
                     process_embark_incursion_mid_level_tile
                     (embark_assist::survey::translate_corner(survey_results,
-                        7,
+                        embark_assist::defs::directions::South,
                         x,
                         y,
                         i,
@@ -1031,7 +1031,7 @@ namespace embark_assist {
                 else {
                     process_embark_incursion_mid_level_tile
                     (embark_assist::survey::translate_corner(survey_results,
-                        8,
+                        embark_assist::defs::directions::Southeast,
                         x,
                         y,
                         i,
@@ -1058,7 +1058,7 @@ namespace embark_assist {
                else if (k > start_y) { //    We've already covered the NW corner of the NW, with its complications.
                    process_embark_incursion_mid_level_tile
                    (embark_assist::survey::translate_corner(survey_results,
-                       4,
+                       embark_assist::defs::directions::Center,
                        x,
                        y,
                        start_x,
@@ -1104,7 +1104,7 @@ namespace embark_assist {
                else if (k < start_y + finder->y_dim - 1) { //  We've already covered the SW corner of the SW tile, with its complicatinons.
                    process_embark_incursion_mid_level_tile
                    (embark_assist::survey::translate_corner(survey_results,
-                       7,
+                       embark_assist::defs::directions::South,
                        x,
                        y,
                        start_x,
@@ -1127,7 +1127,7 @@ namespace embark_assist {
                else if (k > start_y) { //  We've already covered the NE tile's NE corner, with its complications.
                    process_embark_incursion_mid_level_tile
                    (embark_assist::survey::translate_corner(survey_results,
-                       5,
+                       embark_assist::defs::directions::East,
                        x,
                        y,
                        start_x + finder->x_dim - 1,
@@ -1173,7 +1173,7 @@ namespace embark_assist {
                else if (k < start_y + finder->y_dim - 1) { //  We've already covered the SE tile's SE corner, with its complications.
                    process_embark_incursion_mid_level_tile
                    (embark_assist::survey::translate_corner(survey_results,
-                       8,
+                       embark_assist::defs::directions::Southeast,
                        x,
                        y,
                        start_x + finder->x_dim - 1,
@@ -1450,7 +1450,7 @@ namespace embark_assist {
                         break;
 
                     case embark_assist::defs::evil_savagery_values::Present:
-                        if (tile->savagery_count[i] == 0) {
+                        if (tile->savagery_count[i] == 0 && !tile->neighboring_savagery[i]) {
                             if (trace) out.print("matcher::world_tile_match: Savagery Present (%i, %i)\n", x, y);
                             return false;
                         }
@@ -1480,7 +1480,7 @@ namespace embark_assist {
                         break;
 
                     case embark_assist::defs::evil_savagery_values::Present:
-                        if (tile->evilness_count[i] == 0) {
+                        if (tile->evilness_count[i] == 0 && !tile->neighboring_evilness[i]) {
                             if (trace) out.print("matcher::world_tile_match: Evil Present (%i, %i)\n", x, y);
                             return false;
                         }
@@ -1518,16 +1518,16 @@ namespace embark_assist {
                     break;
 
                 case embark_assist::defs::aquifer_ranges::None_Plus_Light:
-                    if (!((tile->aquifer | tile->neighboring_aquifer) & embark_assist::defs::None_Aquifer_Bit) ||
-                        !((tile->aquifer | tile->neighboring_aquifer) & embark_assist::defs::Light_Aquifer_Bit)) {
+                    if (!(tile->aquifer & embark_assist::defs::None_Aquifer_Bit) ||
+                        !(tile->aquifer & embark_assist::defs::Light_Aquifer_Bit)) {
                         if (trace) out.print("matcher::world_tile_match: Aquifer None_Plus_Light (%i, %i)\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::aquifer_ranges::None_Plus_At_Least_Light:
-                    if (!((tile->aquifer | tile->neighboring_aquifer) & embark_assist::defs::None_Aquifer_Bit) ||
-                        ((tile->aquifer | tile->neighboring_aquifer) == embark_assist::defs::None_Aquifer_Bit)) {
+                    if (!(tile->aquifer & embark_assist::defs::None_Aquifer_Bit) ||
+                        (tile->aquifer == embark_assist::defs::None_Aquifer_Bit)) {
                         if (trace) out.print("matcher::world_tile_match: Aquifer None_Plus_At_Least_Light (%i, %i)\n", x, y);
                         return false;
                     }
@@ -1541,38 +1541,38 @@ namespace embark_assist {
                     break;
 
                 case embark_assist::defs::aquifer_ranges::At_Least_Light:
-                    if ((tile->aquifer | tile->neighboring_aquifer) == embark_assist::defs::None_Aquifer_Bit) {
+                    if (tile->aquifer == embark_assist::defs::None_Aquifer_Bit) {
                         if (trace) out.print("matcher::world_tile_match: Aquifer At_Least_Light (%i, %i)\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::aquifer_ranges::None_Plus_Heavy:
-                    if (!((tile->aquifer | tile->neighboring_aquifer) & embark_assist::defs::None_Aquifer_Bit) ||
-                        !((tile->aquifer | tile->neighboring_aquifer) & embark_assist::defs::Heavy_Aquifer_Bit)) {
+                    if (!(tile->aquifer & embark_assist::defs::None_Aquifer_Bit) ||
+                        !(tile->aquifer & embark_assist::defs::Heavy_Aquifer_Bit)) {
                         if (trace) out.print("matcher::world_tile_match: Aquifer None_Plus_Heavy (%i, %i)\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::aquifer_ranges::At_Most_Light_Plus_Heavy:
-                    if ((tile->aquifer | tile->neighboring_aquifer) == embark_assist::defs::Heavy_Aquifer_Bit ||
-                        !((tile->aquifer | tile->neighboring_aquifer) & embark_assist::defs::Heavy_Aquifer_Bit)) {
+                    if (tile->aquifer == embark_assist::defs::Heavy_Aquifer_Bit ||
+                        !(tile->aquifer & embark_assist::defs::Heavy_Aquifer_Bit)) {
                         if (trace) out.print("matcher::world_tile_match: Aquifer At_Most_Light_Plus_Heavy (%i, %i)\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::aquifer_ranges::Light_Plus_Heavy:
-                    if (!((tile->aquifer | tile->neighboring_aquifer) & embark_assist::defs::Light_Aquifer_Bit) ||
-                        !((tile->aquifer | tile->neighboring_aquifer) & embark_assist::defs::Heavy_Aquifer_Bit)) {
+                    if (!(tile->aquifer & embark_assist::defs::Light_Aquifer_Bit) ||
+                        !(tile->aquifer & embark_assist::defs::Heavy_Aquifer_Bit)) {
                         if (trace) out.print("matcher::world_tile_match: Aquifer Light_Plus_Heavy (%i, %i)\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::aquifer_ranges::None_Light_Heavy:
-                    if ((tile->aquifer | tile->neighboring_aquifer) !=
+                    if (tile->aquifer !=
                         (embark_assist::defs::None_Aquifer_Bit | embark_assist::defs::Light_Aquifer_Bit | embark_assist::defs::Heavy_Aquifer_Bit)) {
                         if (trace) out.print("matcher::world_tile_match: Aquifer None_Light_Heavy (%i, %i)\n", x, y);
                         return false;
@@ -2056,20 +2056,7 @@ namespace embark_assist {
 
                 //  Region Type 1
                 if (finder->region_type_1 != -1) {
-                    found = false;
-
-                    for (uint8_t k = 1; k < 10; k++) {
-                        if (tile->biome_index[k] != -1) {
-                            if (world_data->regions[tile->biome_index[k]]->type == finder->region_type_1) {
-                                found = true;
-                                break;
-                            }
-                        }
-
-                        if (found) break;
-                    }
-
-                    if (!found) {
+                    if (!tile->neighboring_region_types[finder->region_type_1]) {
                         if (trace) out.print("matcher::world_tile_match: Region_Type_1 (%i, %i)\n", x, y);
                         return false;
                     }
@@ -2077,20 +2064,7 @@ namespace embark_assist {
 
                 //  Region Type 2
                 if (finder->region_type_2 != -1) {
-                    found = false;
-
-                    for (uint8_t k = 1; k < 10; k++) {
-                        if (tile->biome_index[k] != -1) {
-                            if (world_data->regions[tile->biome_index[k]]->type == finder->region_type_2) {
-                                found = true;
-                                break;
-                            }
-                        }
-
-                        if (found) break;
-                    }
-
-                    if (!found) {
+                    if (!tile->neighboring_region_types[finder->region_type_2]) {
                         if (trace) out.print("matcher::world_tile_match: Region_Type_2 (%i, %i)\n", x, y);
                         return false;
                     }
@@ -2098,20 +2072,7 @@ namespace embark_assist {
 
                 //  Region Type 3
                 if (finder->region_type_3 != -1) {
-                    found = false;
-
-                    for (uint8_t k = 1; k < 10; k++) {
-                        if (tile->biome_index[k] != -1) {
-                            if (world_data->regions[tile->biome_index[k]]->type == finder->region_type_3) {
-                                found = true;
-                                break;
-                            }
-                        }
-
-                        if (found) break;
-                    }
-
-                    if (!found) {
+                    if (!tile->neighboring_region_types[finder->region_type_3]) {
                         if (trace) out.print("matcher::world_tile_match: Region_Type_3 (%i, %i)\n", x, y);
                         return false;
                     }
@@ -2119,16 +2080,7 @@ namespace embark_assist {
 
                 //  Biome 1
                 if (finder->biome_1 != -1) {
-                    found = false;
-
-                    for (uint8_t i = 1; i < 10; i++) {
-                        if (tile->biome[i] == finder->biome_1) {
-                            found = true;
-                            break;
-                        }
-                    }
-
-                    if (!found) {
+                    if (!tile->neighboring_biomes[finder->biome_1]) {
                         if (trace) out.print("matcher::world_tile_match: Biome_1 (%i, %i)\n", x, y);
                         return false;
                     }
@@ -2136,33 +2088,15 @@ namespace embark_assist {
 
                 //  Biome 2
                 if (finder->biome_2 != -1) {
-                    found = false;
-
-                    for (uint8_t i = 1; i < 10; i++) {
-                        if (tile->biome[i] == finder->biome_2) {
-                            found = true;
-                            break;
-                        }
-                    }
-
-                    if (!found) {
+                    if (!tile->neighboring_biomes[finder->biome_2]) {
                         if (trace) out.print("matcher::world_tile_match: Biome_2 (%i, %i)\n", x, y);
                         return false;
                     }
                 }
-
+ 
                 //  Biome 3
                 if (finder->biome_3 != -1) {
-                    found = false;
-
-                    for (uint8_t i = 1; i < 10; i++) {
-                        if (tile->biome[i] == finder->biome_3) {
-                            found = true;
-                            break;
-                        }
-                    }
-
-                    if (!found) {
+                    if (!tile->neighboring_biomes[finder->biome_3]) {
                         if (trace) out.print("matcher::world_tile_match: Biome_3 (%i, %i)\n", x, y);
                         return false;
                     }
@@ -2798,6 +2732,22 @@ namespace embark_assist {
                 finder,
                 match_results);
         }
+
+        //=======================================================================================
+
+        void merge_incursion_into_world_tile(embark_assist::defs::region_tile_datum* current,
+            embark_assist::defs::region_tile_datum* target_tile,
+            embark_assist::defs::mid_level_tile* target_mlt) {
+            df::world_data* world_data = world->world_data;
+
+            current->aquifer |= target_mlt->aquifer;
+            current->neighboring_sand |= target_mlt->sand;
+            current->neighboring_clay |= target_mlt->clay;
+            if (current->min_region_soil > target_mlt->soil_depth) current->min_region_soil = target_mlt->soil_depth;
+            if (current->max_region_soil < target_mlt->soil_depth) current->max_region_soil = target_mlt->soil_depth;
+            current->neighboring_biomes[target_tile->biome[target_mlt->biome_offset]] = true;
+            current->neighboring_region_types[world_data->regions[target_tile->biome_index[target_mlt->biome_offset]]->type] = true;
+        }
     }
 }
 
@@ -2899,6 +2849,7 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
     embark_assist::defs::match_results *match_results) {
 
     color_ostream_proxy out(Core::getInstance().getConsole());
+    df::world_data* world_data = world->world_data;
     auto screen = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
     uint16_t x_end;
     uint16_t y_end;
@@ -3159,76 +3110,227 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
                     for (uint16_t k = 0; k < world->worldgen.worldgen_parms.dim_y; k++) {
                         embark_assist::defs::region_tile_datum* current = &survey_results->at(i).at(k);
 
-                        if (i > 0 && k > 0) {
-                            embark_assist::defs::region_tile_datum* target = &survey_results->at(i - 1).at(k - 1);
+                        for (uint8_t l = 0; l < 16; l++) {
+                            //  Start with the north row west corners
 
-                            current->neighboring_sand |= target->south_row [15].sand;
-                            current->neighboring_clay |= target->south_row[15].clay;
-                            current->neighboring_aquifer |= target->south_row[15].aquifer;
+                            switch (embark_assist::survey::translate_corner(survey_results,
+                                embark_assist::defs::directions::Center,
+                                i,
+                                k,
+                                l,
+                                0)) {
+
+                            case embark_assist::defs::directions::Northwest:
+                            {
+                                if (l == 0) {
+                                    embark_assist::defs::region_tile_datum* target_tile = &survey_results->at(i - 1).at(k - 1);
+                                    merge_incursion_into_world_tile(current, target_tile, &target_tile->south_row[15]);
+                                }
+                                else {
+                                    embark_assist::defs::region_tile_datum* target_tile = &survey_results->at(i).at(k - 1);
+                                    merge_incursion_into_world_tile(current, target_tile, &target_tile->south_row[l - 1]);
+                                }
+                                break;
+                            }
+
+                            case embark_assist::defs::directions::North:
+                            {
+                                embark_assist::defs::region_tile_datum* target_tile = &survey_results->at(i).at(k - 1);
+                                merge_incursion_into_world_tile(current, target_tile, &target_tile->south_row[l]);
+                                break;
+                            }
+
+                            case embark_assist::defs::directions::West:
+                            {
+                                if (l == 0) {
+                                    embark_assist::defs::region_tile_datum* target_tile = &survey_results->at(i - 1).at(k);
+                                    merge_incursion_into_world_tile(current, target_tile, &target_tile->east_column[0]);
+                                }
+                                break;
+                            }
+                                // Only legal remaining result is Center, and we don't need to do anything for that case.
+                            }
+
+                            //  North row edges
+
+                            if (embark_assist::survey::translate_ns_edge(survey_results,
+                                true,
+                                i,
+                                k,
+                                l,
+                                0) == embark_assist::defs::directions::North) {
+
+                                embark_assist::defs::region_tile_datum* target_tile = &survey_results->at(i).at(k - 1);
+                                merge_incursion_into_world_tile(current, target_tile, &target_tile->south_row[l]);
+                            }
+
+                            //  North row east corners
+                            switch (embark_assist::survey::translate_corner(survey_results,
+                                embark_assist::defs::directions::East,
+                                i,
+                                k,
+                                l,
+                                0)) {
+
+                            case embark_assist::defs::directions::North:
+                            {
+                                embark_assist::defs::region_tile_datum* target_tile = &survey_results->at(i).at(k - 1);
+                                merge_incursion_into_world_tile(current, target_tile, &target_tile->south_row[l]);
+                                break;
+                            }
+                            case embark_assist::defs::directions::Northeast:
+                            {
+                                if (l == 15) {
+                                    embark_assist::defs::region_tile_datum* target_tile = &survey_results->at(i + 1).at(k - 1);
+                                    merge_incursion_into_world_tile(current, target_tile, &target_tile->south_row[0]);
+                                }
+                                else {
+                                    embark_assist::defs::region_tile_datum* target_tile = &survey_results->at(i).at(k - 1);
+                                    merge_incursion_into_world_tile(current, target_tile, &target_tile->south_row[l + 1]);
+                                }
+                                break;
+                            }
+
+                            case embark_assist::defs::directions::East:
+                            {
+                                if (l == 15) {
+                                    embark_assist::defs::region_tile_datum* target_tile = &survey_results->at(i + 1).at(k);
+                                    merge_incursion_into_world_tile(current, target_tile, &target_tile->west_column[0]);
+                                }
+                                break;
+                            }
+
+                                // Only legal remaining result is Center, and we don't need to do anything for that case.
+                            }
+                            //  West column
+
+                            if (embark_assist::survey::translate_ew_edge(survey_results,
+                                true,
+                                i,
+                                k,
+                                0,
+                                l) == embark_assist::defs::directions::West) {
+
+                                embark_assist::defs::region_tile_datum* target_tile = &survey_results->at(i - 1).at(k);
+                                merge_incursion_into_world_tile(current, target_tile, &target_tile->east_column[l]);
+                            }
+
+                            //  East column
+
+                            if (embark_assist::survey::translate_ew_edge(survey_results,
+                                false,
+                                i,
+                                k,
+                                15,
+                                l) == embark_assist::defs::directions::East) {
+                                embark_assist::defs::region_tile_datum* target_tile = &survey_results->at(i + 1).at(k);
+                                merge_incursion_into_world_tile(current, target_tile, &target_tile->west_column[l]);
+                            }
+
+                            //  South row west corners
+
+                            switch (embark_assist::survey::translate_corner(survey_results,
+                                embark_assist::defs::directions::South,
+                                i,
+                                k,
+                                l,
+                                15)) {
+
+                            case embark_assist::defs::directions::West:
+                            {
+                                if (l == 0) {
+                                    embark_assist::defs::region_tile_datum* target_tile = &survey_results->at(i - 1).at(k);
+                                    merge_incursion_into_world_tile(current, target_tile, &target_tile->east_column[15]);
+                                }
+                                break;
+                            }
+
+                            case embark_assist::defs::directions::Southwest:
+                            {
+                                if (l == 0) {
+                                    embark_assist::defs::region_tile_datum* target_tile = &survey_results->at(i - 1).at(k + 1);
+                                    merge_incursion_into_world_tile(current, target_tile, &target_tile->north_row[15]);
+                                }
+                                else {
+                                    embark_assist::defs::region_tile_datum* target_tile = &survey_results->at(i).at(k + 1);
+                                    merge_incursion_into_world_tile(current, target_tile, &target_tile->north_row[l - 1]);
+                                }
+                                break;
+                            }
+
+                            case embark_assist::defs::directions::South:
+                            {
+                                embark_assist::defs::region_tile_datum* target_tile = &survey_results->at(i).at(k + 1);
+                                merge_incursion_into_world_tile(current, target_tile, &target_tile->north_row[l]);
+                                break;
+                            }
+                                // Only legal remaining result is Center, and we don't need to do anything for that case.
+                            }
+
+                            //  South row edges
+
+                            if (embark_assist::survey::translate_ns_edge(survey_results,
+                                false,
+                                i,
+                                k,
+                                l,
+                                15) == embark_assist::defs::directions::South) {
+
+                                embark_assist::defs::region_tile_datum* target_tile = &survey_results->at(i).at(k + 1);
+                                merge_incursion_into_world_tile(current, target_tile, &target_tile->north_row[l]);
+                            }
+
+                            //  South row east corners
+
+                            switch (embark_assist::survey::translate_corner(survey_results,
+                                embark_assist::defs::directions::Southeast,
+                                i,
+                                k,
+                                l,
+                                15)) {
+
+                            case embark_assist::defs::directions::East:
+                            {
+                                if (l == 15) {
+                                    embark_assist::defs::region_tile_datum* target_tile = &survey_results->at(i + 1).at(k);
+                                    merge_incursion_into_world_tile(current, target_tile, &target_tile->west_column[15]);
+                                }
+                                break;
+                            }
+
+                            case embark_assist::defs::directions::South:
+                            {
+                                embark_assist::defs::region_tile_datum* target_tile = &survey_results->at(i).at(k + 1);
+                                merge_incursion_into_world_tile(current, target_tile, &target_tile->north_row[l]);
+                                break;
+                            }
+
+                            case embark_assist::defs::directions::Southeast:
+                            {
+                                if (l == 15) {
+                                    embark_assist::defs::region_tile_datum* target_tile = &survey_results->at(i + 1).at(k + 1);
+                                    merge_incursion_into_world_tile(current, target_tile, &target_tile->north_row[0]);
+                                }
+                                else {
+                                    embark_assist::defs::region_tile_datum* target_tile = &survey_results->at(i).at(k + 1);
+                                    merge_incursion_into_world_tile(current, target_tile, &target_tile->north_row[l + 1]);
+                                }
+                                break;
+                            }
+                            }
                         }
-
-                        if (k > 0) {
-                            embark_assist::defs::region_tile_datum* target = &survey_results->at(i).at(k - 1);
-
-                            for (uint16_t l = 0; l < 16; l++) {
-                                current->neighboring_sand |= target->south_row[l].sand;
-                                current->neighboring_clay |= target->south_row[l].clay;
-                                current->neighboring_aquifer |= target->south_row[l].aquifer;
+ 
+                        //  The complete set of biomes and region types is stored in the "neighboring" elements, which is a little misleading.
+                        for (uint8_t l = 0; l < 10; l++) {
+                            if (current->biome_index[l] != -1) {
+                                current->neighboring_biomes[current->biome[l]] = true;
+                                current->neighboring_region_types[world_data->regions[current->biome_index[l]]->type] = true;
                             }
                         }
 
-                        if (i < world->worldgen.worldgen_parms.dim_x - 1 && k > 0) {
-                            embark_assist::defs::region_tile_datum* target = &survey_results->at(i + 1).at(k - 1);
-
-                            current->neighboring_sand |= target->south_row[0].sand;
-                            current->neighboring_clay |= target->south_row[0].clay;
-                            current->neighboring_aquifer |= target->south_row[0].aquifer;
-                        }
-
-                        if (i > 0) {
-                            embark_assist::defs::region_tile_datum* target = &survey_results->at(i - 1).at(k);
-
-                            for (uint16_t l = 0; l < 16; l++) {
-                                current->neighboring_sand |= target->east_column[l].sand;
-                                current->neighboring_clay |= target->east_column[l].clay;
-                                current->neighboring_aquifer |= target->east_column[l].aquifer;
-                            }
-                        }
-
-                        if (i < world->worldgen.worldgen_parms.dim_x - 1) {
-                            embark_assist::defs::region_tile_datum* target = &survey_results->at(i + 1).at(k);
-
-                            for (uint16_t l = 0; l < 16; l++) {
-                                current->neighboring_sand |= target->west_column[l].sand;
-                                current->neighboring_clay |= target->west_column[l].clay;
-                                current->neighboring_aquifer |= target->west_column[l].aquifer;
-                            }
-                        }
-
-                        if (i > 0 && k < world->worldgen.worldgen_parms.dim_y - 1) {
-                            embark_assist::defs::region_tile_datum* target = &survey_results->at(i - 1).at(k + 1);
-
-                            current->neighboring_sand |= target->north_row[15].sand;
-                            current->neighboring_clay |= target->north_row[15].clay;
-                            current->neighboring_aquifer |= target->north_row[15].aquifer;
-                        }
-
-                        if (k < world->worldgen.worldgen_parms.dim_y - 1) {
-                            embark_assist::defs::region_tile_datum* target = &survey_results->at(i).at(k + 1);
-
-                            for (uint16_t l = 0; l < 16; l++) {
-                                current->neighboring_sand |= target->north_row[l].sand;
-                                current->neighboring_clay |= target->north_row[l].clay;
-                                current->neighboring_aquifer |= target->north_row[l].aquifer;
-                            }
-                        }
-
-                        if (i < world->worldgen.worldgen_parms.dim_x - 1 && k < world->worldgen.worldgen_parms.dim_y - 1) {
-                            embark_assist::defs::region_tile_datum* target = &survey_results->at(i + 1).at(k + 1);
-
-                            current->neighboring_sand |= target->north_row[0].sand;
-                            current->neighboring_clay |= target->north_row[0].clay;
-                            current->neighboring_aquifer |= target->north_row[0].aquifer;
+                        current->biome_count = 0;
+                        for (uint8_t l = 0; l <= ENUM_LAST_ITEM(biome_type); l++) {
+                            if (current->neighboring_biomes[l]) current->biome_count++;
                         }
 
                         survey_results->at(i).at(k).survey_completed = true;  //  A bit wasteful to add a flag to every entry when only the very first one is ever read...

@@ -1173,7 +1173,7 @@ namespace embark_assist {
                else if (k < start_y + finder->y_dim - 1) { //  We've already covered the SE tile's SE corner, with its complications.
                    process_embark_incursion_mid_level_tile
                    (embark_assist::survey::translate_corner(survey_results,
-                       embark_assist::defs::directions::Southwest,
+                       embark_assist::defs::directions::Southeast,
                        x,
                        y,
                        start_x + finder->x_dim - 1,

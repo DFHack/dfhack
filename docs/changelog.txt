@@ -38,6 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `buildingplan`: artifacts are now successfully matched when max quality is set to ``artifacts``
 - `buildingplan`: no longer erroneously matches items to buildings while the game is paused
 - `buildingplan`: fixed a crash when pressing 0 while having a noble room selected
+- `dwarfvet`: fixed a crash that could occur when discharging patients
 - `dwarfmonitor`: fixed a crash when opening the ``prefs`` screen if units have vague preferences
 - `embark-assistant`: fixed an issue causing incursion resource matching (e.g. sand/clay) to skip some tiles if those resources were provided only through incursions
 - `zone`: fixed an issue causing the ``enumnick`` subcommand to run when attempting to run ``assign``, ``unassign``, or ``slaughter``

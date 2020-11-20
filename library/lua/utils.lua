@@ -679,7 +679,7 @@ function df_expr_to_ref(expr)
 end
 
 function addressof(obj)
-    return select(2, obj:sizeof())
+    return select(2, df.sizeof(obj))
 end
 
 function OrderedTable()

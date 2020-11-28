@@ -19,11 +19,13 @@ Reaction name must start with 'SPATTER_ADD_':
 	[REAGENT:object:1:NONE:NONE:NONE:NONE]
 		[PRESERVE_REAGENT]
 		[DOES_NOT_DETERMINE_PRODUCT_AMOUNT]
+		[CAN_USE_ARTIFACT]
 	Need some excuse why the spatter is water-resistant:
 	[REAGENT:grease:1:GLOB:NONE:NONE:NONE][REACTION_CLASS:FAT][UNROTTEN]
 		[DOES_NOT_DETERMINE_PRODUCT_AMOUNT]
 	The probability is used as spatter size; Legendary gives +90%:
 	COVERED = liquid, GLAZED = solid, BANDS = paste, SPIKES = powder
+	[TRANSFER_ARTIFACT_STATUS]
 	[IMPROVEMENT:800:object:COVERED:GET_MATERIAL_FROM_REAGENT:extract:NONE]
 
 [REACTION:SPATTER_ADD_WEAPON_EXTRACT]
@@ -38,6 +40,7 @@ Reaction name must start with 'SPATTER_ADD_':
 		[CONTAINS:extract]
 		[PRESERVE_REAGENT]
 		[DOES_NOT_DETERMINE_PRODUCT_AMOUNT]
+		[CAN_USE_ARTIFACT]
 	The object to improve must be after the input mat, so that it is known:
 	[REAGENT:object:1:WEAPON:NONE:NONE:NONE]
 		[PRESERVE_REAGENT]
@@ -47,6 +50,7 @@ Reaction name must start with 'SPATTER_ADD_':
 		[DOES_NOT_DETERMINE_PRODUCT_AMOUNT]
 	The probability is used as spatter size; Legendary gives +90%:
 	COVERED = liquid, GLAZED = solid, BANDS = paste, SPIKES = powder
+	[TRANSFER_ARTIFACT_STATUS]
 	[IMPROVEMENT:800:object:COVERED:GET_MATERIAL_FROM_REAGENT:extract:NONE]
 
 [REACTION:SPATTER_ADD_AMMO_EXTRACT]
@@ -61,6 +65,7 @@ Reaction name must start with 'SPATTER_ADD_':
 		[CONTAINS:extract]
 		[PRESERVE_REAGENT]
 		[DOES_NOT_DETERMINE_PRODUCT_AMOUNT]
+		[CAN_USE_ARTIFACT]
 	The object to improve must be after the input mat, so that it is known:
 	[REAGENT:object:1:AMMO:NONE:NONE:NONE]
 		[PRESERVE_REAGENT]
@@ -71,6 +76,7 @@ Reaction name must start with 'SPATTER_ADD_':
 		[DOES_NOT_DETERMINE_PRODUCT_AMOUNT]
 	The probability is used as spatter size; Legendary gives +90%:
 	COVERED = liquid, GLAZED = solid, BANDS = paste, SPIKES = powder
+	[TRANSFER_ARTIFACT_STATUS]
 	[IMPROVEMENT:200:object:COVERED:GET_MATERIAL_FROM_REAGENT:extract:NONE]
 
 [REACTION:SPATTER_ADD_WEAPON_GCS]
@@ -87,10 +93,12 @@ Reaction name must start with 'SPATTER_ADD_':
 	The object to improve must be after the input mat, so that it is known:
 	[REAGENT:object:1:WEAPON:NONE:NONE:NONE]
 		[PRESERVE_REAGENT]
+		[CAN_USE_ARTIFACT]
 	Need some excuse why the spatter is water-resistant:
 	[REAGENT:grease:1:GLOB:NONE:NONE:NONE][REACTION_CLASS:TALLOW][UNROTTEN]
 	The probability is used as spatter size; Legendary gives +90%:
 	COVERED = liquid, GLAZED = solid, BANDS = paste, SPIKES = powder
+	[TRANSFER_ARTIFACT_STATUS]
 	[IMPROVEMENT:800:object:COVERED:GET_MATERIAL_FROM_REAGENT:extract:NONE]
 
 [REACTION:SPATTER_ADD_AMMO_GCS]
@@ -107,10 +115,12 @@ Reaction name must start with 'SPATTER_ADD_':
 	The object to improve must be after the input mat, so that it is known:
 	[REAGENT:object:1:AMMO:NONE:NONE:NONE]
 		[PRESERVE_REAGENT]
+		[CAN_USE_ARTIFACT]
 	Need some excuse why the spatter is water-resistant:
 	[REAGENT:grease:1:GLOB:NONE:NONE:NONE][REACTION_CLASS:TALLOW][UNROTTEN]
 	The probability is used as spatter size; Legendary gives +90%:
 	COVERED = liquid, GLAZED = solid, BANDS = paste, SPIKES = powder
+	[TRANSFER_ARTIFACT_STATUS]
 	[IMPROVEMENT:200:object:COVERED:GET_MATERIAL_FROM_REAGENT:extract:NONE]
 
 [REACTION:SPATTER_ADD_WEAPON_GDS]
@@ -127,10 +137,12 @@ Reaction name must start with 'SPATTER_ADD_':
 	The object to improve must be after the input mat, so that it is known:
 	[REAGENT:object:1:WEAPON:NONE:NONE:NONE]
 		[PRESERVE_REAGENT]
+		[CAN_USE_ARTIFACT]
 	Need some excuse why the spatter is water-resistant:
 	[REAGENT:grease:1:GLOB:NONE:NONE:NONE][REACTION_CLASS:TALLOW][UNROTTEN]
 	The probability is used as spatter size; Legendary gives +90%:
 	COVERED = liquid, GLAZED = solid, BANDS = paste, SPIKES = powder
+	[TRANSFER_ARTIFACT_STATUS]
 	[IMPROVEMENT:800:object:COVERED:GET_MATERIAL_FROM_REAGENT:extract:NONE]
 
 [REACTION:SPATTER_ADD_AMMO_GDS]
@@ -147,8 +159,10 @@ Reaction name must start with 'SPATTER_ADD_':
 	The object to improve must be after the input mat, so that it is known:
 	[REAGENT:object:1:AMMO:NONE:NONE:NONE]
 		[PRESERVE_REAGENT]
+		[CAN_USE_ARTIFACT]
 	Need some excuse why the spatter is water-resistant:
 	[REAGENT:grease:1:GLOB:NONE:NONE:NONE][REACTION_CLASS:TALLOW][UNROTTEN]
 	The probability is used as spatter size; Legendary gives +90%:
 	COVERED = liquid, GLAZED = solid, BANDS = paste, SPIKES = powder
+	[TRANSFER_ARTIFACT_STATUS]
 	[IMPROVEMENT:200:object:COVERED:GET_MATERIAL_FROM_REAGENT:extract:NONE]

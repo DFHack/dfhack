@@ -334,7 +334,8 @@ command_result embark_assistant(color_ostream &out, std::vector <std::string> & 
             embark_assist::main::state->survey_results[i][k].min_region_soil = 10;
             embark_assist::main::state->survey_results[i][k].max_region_soil = 0;
             embark_assist::main::state->survey_results[i][k].max_waterfall = 0;
-            embark_assist::main::state->survey_results[i][k].river_size = embark_assist::defs::river_sizes::None;
+            embark_assist::main::state->survey_results[i][k].min_river_size = embark_assist::defs::river_sizes::None;
+            embark_assist::main::state->survey_results[i][k].max_river_size = embark_assist::defs::river_sizes::None;
             embark_assist::main::state->survey_results[i][k].min_tree_level = embark_assist::defs::tree_levels::Heavily_Forested;
             embark_assist::main::state->survey_results[i][k].max_tree_level = embark_assist::defs::tree_levels::None;
 

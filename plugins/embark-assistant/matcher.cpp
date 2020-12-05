@@ -684,13 +684,15 @@ namespace embark_assist {
                     }
 
                     //  River & Waterfall
-                    if (mlt->at(i).at(k).river_present) {
-                        //  Actual size values were checked on the world tile level for min rivers
+                    if (mlt->at(i).at(k).river_size != embark_assist::defs::river_sizes::None) {
+                        if (finder->min_river != embark_assist::defs::river_ranges::NA &&
+                            finder->min_river > static_cast<embark_assist::defs::river_ranges>(mlt->at(i).at(k).river_size)) return false;
+
                         if (finder->max_river != embark_assist::defs::river_ranges::NA &&
-                            finder->max_river < static_cast<embark_assist::defs::river_ranges>(survey_results->at(x).at(y).river_size)) return false;
+                            finder->max_river < static_cast<embark_assist::defs::river_ranges>(mlt->at(i).at(k).river_size)) return false;
 
                         if (i < start_x + finder->x_dim - 2 &&
-                            mlt->at(i + 1).at(k).river_present &&
+                            mlt->at(i + 1).at(k).river_size != embark_assist::defs::river_sizes::None &&
                             abs(mlt->at(i).at(k).river_elevation - mlt->at(i + 1).at(k).river_elevation) > result.max_waterfall) {
                             if (finder->min_waterfall == 0) return false;  // 0 = Absent
                             result.max_waterfall =
@@ -698,7 +700,7 @@ namespace embark_assist {
                         }
 
                         if (k < start_y + finder->y_dim - 2 &&
-                            mlt->at(i).at(k + 1).river_present &&
+                            mlt->at(i).at(k + 1).river_size != embark_assist::defs::river_sizes::None &&
                             abs(mlt->at(i).at(k).river_elevation - mlt->at(i).at(k + 1).river_elevation) > result.max_waterfall) {
                             if (finder->min_waterfall == 0) return false;  // 0 = Absent
                             result.max_waterfall =
@@ -1588,7 +1590,7 @@ namespace embark_assist {
                 }
 
                 // River size. Every tile has riverless tiles, so max rivers has to be checked on the detailed level.
-                switch (tile->river_size) {
+                switch (tile->max_river_size) {
                 case embark_assist::defs::river_sizes::None:
                     if (finder->min_river > embark_assist::defs::river_ranges::None) {
                         if (trace) out.print("matcher::world_tile_match: River_Size None (%i, %i)\n", x, y);
@@ -2204,7 +2206,10 @@ namespace embark_assist {
                     }
                 }
             }
-            else {  //  Not surveyed
+            else {  //  Not surveyed. This code is essentially obsolete size we're now surveying every tile the first time,
+                    //  but it does still provide a hint about the number of matching world tiles, and thus is kept.
+                    //  If designed this way originally the effort to code it wouldn't have been made, though...
+
                     //  Savagery
                 for (uint8_t i = 0; i < 3; i++)
                 {
@@ -2267,54 +2272,11 @@ namespace embark_assist {
 
                 // Aquifer  //  Requires survey
 
-                // River size
-                switch (tile->river_size) {
-                case embark_assist::defs::river_sizes::None:
-                    if (finder->min_river > embark_assist::defs::river_ranges::None) {
-                        if (trace) out.print("matcher::world_tile_match: NS River None (%i, %i)\n", x, y);
-                        return false;
-                    }
-                    break;
-
-                case embark_assist::defs::river_sizes::Brook:
-                    if (finder->min_river > embark_assist::defs::river_ranges::Brook) {
-                        if (trace) out.print("matcher::world_tile_match: NS River Brook (%i, %i)\n", x, y);
-                        return false;
-                    }
-                    break;
-
-                case embark_assist::defs::river_sizes::Stream:
-                    if (finder->min_river > embark_assist::defs::river_ranges::Stream) {
-                        if (trace) out.print("matcher::world_tile_match: NS River Stream (%i, %i)\n", x, y);
-                        return false;
-                    }
-                    break;
-
-                case embark_assist::defs::river_sizes::Minor:
-                    if (finder->min_river > embark_assist::defs::river_ranges::Minor) {
-                        if (trace) out.print("matcher::world_tile_match: NS River Minor (%i, %i)\n", x, y);
-                        return false;
-                    }
-                    break;
-
-                case embark_assist::defs::river_sizes::Medium:
-                    if (finder->min_river > embark_assist::defs::river_ranges::Medium) {
-                        if (trace) out.print("matcher::world_tile_match: NS River Medium (%i, %i)\n", x, y);
-                        return false;
-                    }
-                    break;
-
-                case embark_assist::defs::river_sizes::Major:
-                    if (finder->max_river != embark_assist::defs::river_ranges::NA) {
-                        if (trace) out.print("matcher::world_tile_match: NS River Major (%i, %i)\n", x, y);
-                        return false;
-                    }
-                    break;
-                }
+                // River size  //  Requires survey
 
                 //  Waterfall
                 if (finder->min_waterfall > 0 &&
-                    tile->river_size == embark_assist::defs::river_sizes::None) {
+                    tile->min_river_size == embark_assist::defs::river_sizes::None) {
                     if (trace) out.print("matcher::world_tile_match: NS Waterfall (%i, %i)\n", x, y);
                     return false;
                 }

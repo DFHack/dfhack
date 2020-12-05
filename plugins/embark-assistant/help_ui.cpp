@@ -340,7 +340,7 @@ namespace embark_assist{
                 help_text.push_back("  the N, followed by the one to the W, and lastly the one acting as the");
                 help_text.push_back("  reference. This means there's a risk embarks with such 'trouble' corners");
                 help_text.push_back("  may get affected corner(s) evaluated incorrectly.");
-                help_text.push_back("Version 0.12 2020-11-17");
+                help_text.push_back("Version 0.13 2020-12-03");
 
                 break;
             }

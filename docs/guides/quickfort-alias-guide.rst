@@ -432,7 +432,7 @@ example for how to just give names to everything:
 
     #query message(remember to assign a minecart to the new route)
      ,{quantum name="armory quantum"}
-     ,{quantumstopfromsouth name="Armory quantum" stop_name="Armory quantum stop"}{givename name="armory dumper"}	`
+     ,{quantumstopfromsouth name="Armory quantum" stop_name="Armory quantum stop"}{givename name="armory dumper"}
     {givename name="armory feeder"}
 
 All ``name`` sub-aliases are completely optional, of course. Keep in mind that

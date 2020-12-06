@@ -88,6 +88,23 @@ namespace embark_assist {
 
         //=======================================================================================
 
+        embark_assist::defs::river_sizes river_size_of(uint8_t width) {
+            if (width < 7) {
+                return embark_assist::defs::river_sizes::Stream;
+            }
+            else if (width < 13) {
+                return embark_assist::defs::river_sizes::Minor;
+            }
+            else if (width < 24) {
+                return embark_assist::defs::river_sizes::Medium;
+            }
+            else {
+                return embark_assist::defs::river_sizes::Major;
+            }
+        }
+
+        //=======================================================================================
+
         bool geo_survey(embark_assist::defs::geo_data *geo_summary) {
             color_ostream_proxy out(Core::getInstance().getConsole());
             df::world_data *world_data = world->world_data;
@@ -227,71 +244,6 @@ namespace embark_assist {
                 }
             }
             return true;
-        }
-
-
-        //=================================================================================
-
-        void survey_rivers(embark_assist::defs::world_tile_data *survey_results) {
-            //            color_ostream_proxy out(Core::getInstance().getConsole());
-            df::world_data *world_data = world->world_data;
-            int16_t x;
-            int16_t y;
-
-            for (uint16_t i = 0; i < world_data->rivers.size(); i++) {
-                for (uint16_t k = 0; k < world_data->rivers[i]->path.x.size(); k++) {
-                    x = world_data->rivers[i]->path.x[k];
-                    y = world_data->rivers[i]->path.y[k];
-
-                    if (world_data->rivers[i]->flow[k] < 5000) {
-                        if (world_data->region_map[x][y].flags.is_set(df::region_map_entry_flags::is_brook)) {
-                            survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Brook;
-                        }
-                        else {
-                            survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Stream;
-                        }
-                    }
-                    else if (world_data->rivers[i]->flow[k] < 10000) {
-                        survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Minor;
-                    }
-                    else if (world_data->rivers[i]->flow[k] < 20000) {
-                        survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Medium;
-                    }
-                    else {
-                        survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Major;
-                    }
-                }
-
-                x = world_data->rivers[i]->end_pos.x;
-                y = world_data->rivers[i]->end_pos.y;
-
-                //  Make the guess the river size for the end is the same as the tile next to the end. Note that DF
-                //  doesn't actually recognize this tile as part of the river in the pre embark river name display.
-                //  We also assume the is_river/is_brook flags are actually set properly for the end tile.
-                //
-                if (x >= 0 && y >= 0 && x < world->worldgen.worldgen_parms.dim_x && y < world->worldgen.worldgen_parms.dim_y) {
-                    if (survey_results->at(x).at(y).river_size == embark_assist::defs::river_sizes::None) {
-                        if (world_data->rivers[i]->path.x.size() &&
-                            world_data->rivers[i]->flow[world_data->rivers[i]->path.x.size() - 1] < 5000) {
-                            if (world_data->region_map[x][y].flags.is_set(df::region_map_entry_flags::is_brook)) {
-                                survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Brook;
-                            }
-                            else {
-                                survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Stream;
-                            }
-                        }
-                        else if (world_data->rivers[i]->flow[world_data->rivers[i]->path.x.size() - 1] < 10000) {
-                            survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Minor;
-                        }
-                        else if (world_data->rivers[i]->flow[world_data->rivers[i]->path.x.size() - 1] < 20000) {
-                            survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Medium;
-                        }
-                        else {
-                            survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Major;
-                        }
-                    }
-                }
-            }
         }
 
         //=================================================================================
@@ -945,7 +897,6 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
         }
     }
 
-    embark_assist::survey::survey_rivers(survey_results);
     embark_assist::survey::survey_evil_weather(survey_results);
 }
 
@@ -1112,16 +1063,21 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
             }
             mlt->at(i).at(k).offset = offset;
             mlt->at(i).at(k).elevation = details->elevation[i][k];
-            mlt->at(i).at(k).river_present = false;
+            mlt->at(i).at(k).river_size = embark_assist::defs::river_sizes::None;
             mlt->at(i).at(k).river_elevation = 100;
 
             if (details->rivers_vertical.active[i][k] != 0) {
-                mlt->at(i).at(k).river_present = true;
+                mlt->at(i).at(k).river_size = river_size_of (details->rivers_vertical.x_max[i][k] - details->rivers_vertical.x_min[i][k] + 1);
                 mlt->at(i).at(k).river_elevation = details->rivers_vertical.elevation[i][k];
             }
             else if (details->rivers_horizontal.active[i][k] != 0) {
-                mlt->at(i).at(k).river_present = true;
+                mlt->at(i).at(k).river_size = river_size_of (details->rivers_horizontal.y_max[i][k] - details->rivers_horizontal.y_min[i][k] + 1);
                 mlt->at(i).at(k).river_elevation = details->rivers_horizontal.elevation[i][k];
+            }
+
+            if (mlt->at(i).at(k).river_size != embark_assist::defs::river_sizes::None &&
+                world_tile->flags.is_set(df::region_map_entry_flags::is_brook)) {
+                mlt->at(i).at(k).river_size = embark_assist::defs::river_sizes::Brook;
             }
 
             if (tile->min_region_soil > mlt->at(i).at(k).soil_depth) {
@@ -1277,8 +1233,8 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
         for (uint8_t k = 0; k < 15; k++) {
             if (details->rivers_horizontal.active[i][k] != 0 &&
                 details->rivers_vertical.active[i - 1][k + 1] != 0 &&
-                !mlt->at(i - 1).at(k).river_present) {  //  Probably never true
-                mlt->at(i - 1).at(k).river_present = true;
+                mlt->at(i - 1).at(k).river_size == embark_assist::defs::river_sizes::None) {  //  Probably never true
+                mlt->at(i - 1).at(k).river_size = mlt->at(i).at(k).river_size;
                 mlt->at(i - 1).at(k).river_elevation = mlt->at(i).at(k).river_elevation;
 
                 if (mlt->at(i - 1).at(k).river_elevation > mlt->at(i - 1).at(k + 1).river_elevation) {
@@ -1291,8 +1247,8 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
     for (uint8_t i = 0; i < 16; i++) {
         for (uint8_t k = 1; k < 16; k++) {
             if (details->rivers_vertical.active[i][k] != 0 &&
-                !mlt->at(i).at(k - 1).river_present) {
-                mlt->at(i).at(k - 1).river_present = true;
+                mlt->at(i).at(k - 1).river_size == embark_assist::defs::river_sizes::None) {
+                mlt->at(i).at(k - 1).river_size = mlt->at(i).at(k).river_size;
                 mlt->at(i).at(k - 1).river_elevation = mlt->at(i).at(k).river_elevation;
             }
         }
@@ -1301,8 +1257,8 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
     for (uint8_t i = 1; i < 16; i++) {
         for (uint8_t k = 0; k < 16; k++) {
             if (details->rivers_horizontal.active[i][k] != 0 &&
-                !mlt->at(i - 1).at(k).river_present) {
-                mlt->at(i - 1).at(k).river_present = true;
+                mlt->at(i - 1).at(k).river_size == embark_assist::defs::river_sizes::None) {
+                mlt->at(i - 1).at(k).river_size = mlt->at(i).at(k).river_size;
                 mlt->at(i - 1).at(k).river_elevation = mlt->at(i).at(k).river_elevation;
             }
         }
@@ -1338,9 +1294,18 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                 survey_results->at(x).at(y).max_region_soil = mlt->at(i).at(k).soil_depth;
             }
 
-            if (mlt->at(i).at(k).river_present) {
+            if (mlt->at(i).at(k).river_size != embark_assist::defs::river_sizes::None) {
+                if (survey_results->at(x).at(y).min_river_size == embark_assist::defs::river_sizes::None ||
+                    mlt->at(i).at(k).river_size < survey_results->at(x).at(y).min_river_size) {
+                    survey_results->at(x).at(y).min_river_size = mlt->at(i).at(k).river_size;
+                }
+
+                if (survey_results->at(x).at(y).max_river_size < mlt->at(i).at(k).river_size) {
+                    survey_results->at(x).at(y).max_river_size = mlt->at(i).at(k).river_size;
+                }
+
                 if (i < 15 &&
-                    mlt->at(i + 1).at(k).river_present &&
+                    mlt->at(i + 1).at(k).river_size != embark_assist::defs::river_sizes::None &&
                     abs (mlt->at(i).at(k).river_elevation - mlt->at(i + 1).at(k).river_elevation) >
                     survey_results->at(x).at(y).max_waterfall) {
                     survey_results->at(x).at(y).max_waterfall =
@@ -1348,7 +1313,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                 }
 
                 if (k < 15 &&
-                    mlt->at(i).at(k + 1).river_present &&
+                    mlt->at(i).at(k + 1).river_size != embark_assist::defs::river_sizes::None &&
                     abs(mlt->at(i).at(k).river_elevation - mlt->at(i).at(k + 1).river_elevation) >
                     survey_results->at(x).at(y).max_waterfall) {
                     survey_results->at(x).at(y).max_waterfall =
@@ -1356,7 +1321,6 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                 }
             }
 
-            // River size surveyed separately
             // biome_index handled above
             // biome handled below
             // evil weather handled separately
@@ -1442,10 +1406,10 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
         tile->west_column[i].elevation = mlt->at(0).at(i).elevation;
         tile->east_column[i].elevation = mlt->at(15).at(i).elevation;
 
-        tile->north_row[i].river_present = mlt->at(i).at(0).river_present; //  Not used
-        tile->south_row[i].river_present = mlt->at(i).at(15).river_present;
-        tile->west_column[i].river_present = mlt->at(0).at(i).river_present;
-        tile->east_column[i].river_present = mlt->at(15).at(i).river_present;
+        tile->north_row[i].river_size = mlt->at(i).at(0).river_size; //  Not used
+        tile->south_row[i].river_size = mlt->at(i).at(15).river_size;
+        tile->west_column[i].river_size = mlt->at(0).at(i).river_size;
+        tile->east_column[i].river_size = mlt->at(15).at(i).river_size;
 
         tile->north_row[i].river_elevation = mlt->at(i).at(0).river_elevation; //  Not used
         tile->south_row[i].river_elevation = mlt->at(i).at(15).river_elevation;
@@ -2325,9 +2289,9 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
                 site_info->flat = false;
             }
 
-            if (mlt->at(i).at(k).river_present) {
+            if (mlt->at(i).at(k).river_size != embark_assist::defs::river_sizes::None) {
                 if (i < 15 &&
-                    mlt->at(i + 1).at(k).river_present &&
+                    mlt->at(i + 1).at(k).river_size != embark_assist::defs::river_sizes::None &&
                     abs(mlt->at(i).at(k).river_elevation - mlt->at(i + 1).at(k).river_elevation) >
                     site_info->max_waterfall) {
                     site_info->max_waterfall =
@@ -2335,7 +2299,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
                 }
 
                 if (k < 15 &&
-                    mlt->at(i).at(k + 1).river_present &&
+                    mlt->at(i).at(k + 1).river_size != embark_assist::defs::river_sizes::None &&
                     abs(mlt->at(i).at(k).river_elevation - mlt->at(i).at(k + 1).river_elevation) >
                     site_info->max_waterfall) {
                     site_info->max_waterfall =

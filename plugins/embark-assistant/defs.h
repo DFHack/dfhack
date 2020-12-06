@@ -78,7 +78,7 @@ namespace embark_assist {
             int8_t soil_depth;
             int8_t offset;
             int16_t elevation;
-            bool river_present = false;
+            river_sizes river_size = river_sizes::None;
             int16_t river_elevation = 100;
             int8_t adamantine_level;  // -1 = none, 0 .. 3 = cavern 1 .. magma sea. Currently not used beyond present/absent.
             int8_t magma_level;  // -1 = none, 0 .. 3 = cavern 3 .. surface/volcano
@@ -110,7 +110,8 @@ namespace embark_assist {
             uint8_t min_region_soil = 10;
             uint8_t max_region_soil = 0;
             uint8_t max_waterfall = 0;
-            river_sizes river_size;
+            river_sizes min_river_size = river_sizes::None;  //  The smallest actual river size, with none only if no rivers exist.
+            river_sizes max_river_size = river_sizes::None;
             int16_t biome_index[10];  // Indexed through biome_offset; -1 = null, Index of region, [0] not used
             int16_t biome[10];        // Indexed through biome_offset; -1 = null, df::biome_type, [0] not used
             uint8_t biome_count;

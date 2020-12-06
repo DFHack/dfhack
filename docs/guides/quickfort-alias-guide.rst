@@ -326,7 +326,7 @@ the cursor is over buildings and stockpiles. Example:
     f(10x2)
 
     #query
-    {booze}{givename name="booze"}
+    {booze}{givename name=booze}
 
 ``namezone`` is intended to be used when over an activity zone. It includes
 commands to get into zones mode, set the zone name, and get back to query
@@ -460,7 +460,7 @@ example, you can set the ``route_enable`` sub-alias:
 ::
 
     #query
-    {quantumstopfromsouth name="Armory quantum" route_enable="{enableweapons}{enablearmor}{enableammo}"}
+    {quantumstopfromsouth name="Steel bar quantum" route_enable="{enablebars}{steelbars}"}
 
 Any of the `stockpile configuration aliases <quickfort-stockpile-aliases>` can
 be used for either the ``quantum_enable`` or ``route_enable`` sub-aliases.

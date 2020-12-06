@@ -16,6 +16,7 @@
 # naming aliases
 ##################################
 
+name:     {Right}
 givename: !n{name}&
 namezone: ^i{givename}^q
 
@@ -33,6 +34,7 @@ enter_sp_config_hauling: &
 quantum_enable: {enableanimals}{enablefood}{enablefurniture}{enablestone}{enableammo}{enablecoins}{enablebars}{enablegems}{enablefinishedgoods}{enableleather}{enablecloth}{enablewood}{enableweapons}{enablearmor}{enablesheet}
 quantum: {linksonly}{nocontainers}{quantum_enable}{givename}
 
+stop_name: {Right}
 route_enable: {quantum_enable}{enablecorpses}{enablerefuse}
 quantumstop: ^hrn{name}&sn{stop_name}&&xxx{route_enable enter_sp_config={enter_sp_config_hauling}}s{move}p^{move_back}^q
 quantumstopfromeast: {quantumstop move={Right} move_back={Left}}

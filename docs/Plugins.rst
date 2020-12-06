@@ -187,8 +187,9 @@ Usage and related commands:
 :reveal demon:  Reveals everything and allows unpausing - good luck!
 :unreveal:      Reverts the effects of ``reveal``
 :revtoggle:     Switches between ``reveal`` and ``unreveal``
-:revflood:      Hide everything, then reveal tiles with a path to the cursor
-                (useful to make walled-off rooms vanish)
+:revflood:      Hide everything, then reveal tiles with a path to the cursor.
+                Note that tiles behind constructed walls are also revealed as a
+                workaround for :bug:`1871`.
 :revforget:     Discard info about what was visible before revealing the map.
                 Only useful where (e.g.) you abandoned with the fort revealed
                 and no longer want the data.

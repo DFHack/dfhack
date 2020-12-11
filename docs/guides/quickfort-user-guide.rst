@@ -133,9 +133,7 @@ Sheets <https://sheets.new>`__, or `LibreOffice <https://www.libreoffice.org>`__
 to edit blueprint files, but any text editor will do.
 
 The format of Quickfort-compatible blueprint files is straightforward. The first
-line (or upper-left cell) of the spreadsheet should look like this:
-
-::
+line (or upper-left cell) of the spreadsheet should look like this::
 
    #dig
 
@@ -169,9 +167,7 @@ You can use this space for explanations, attribution, etc.
 Below this line begin entering keys in each spreadsheet cell that represent what
 you want designated in the corresponding game map tile. For example, we could
 dig out a 4x4 room like so (spaces are used as column separators here for
-readability, but a real .csv file would have commas):
-
-::
+readability, but a real .csv file would have commas)::
 
    #dig
    d d d d #
@@ -185,9 +181,7 @@ These are completely optional, but can be helpful to make the row and column
 positions clear.
 
 Once the dwarves have that dug out, let's build a walled-in bedroom within our
-dug-out area:
-
-::
+dug-out area::
 
    #build
    Cw Cw Cw Cw #
@@ -263,9 +257,7 @@ in your DFHack folder.
 Area expansion syntax
 ~~~~~~~~~~~~~~~~~~~~~
 
-In Quickfort, the following blueprints are equivalent:
-
-::
+In Quickfort, the following blueprints are equivalent::
 
    #dig a 3x3 area
    d d d #
@@ -280,17 +272,13 @@ In Quickfort, the following blueprints are equivalent:
    # # # #
 
 The second example uses Quickfort's "area expansion syntax", which takes the
-form:
-
-::
+form::
 
    keys(WxH)
 
 Note that area expansion syntax can only specify rectangular areas. If you want
 to create extent-based structures (e.g. farm plots or stockpiles) in different
-shapes, use the first format above. For example:
-
-::
+shapes, use the first format above. For example::
 
    #place L shaped food stockpile
    f f ` ` #
@@ -300,9 +288,7 @@ shapes, use the first format above. For example:
    # # # # #
 
 Area expansion syntax also sets boundaries, which can be useful if you want
-adjacent, but separate, stockpiles of the same type:
-
-::
+adjacent, but separate, stockpiles of the same type::
 
    #place Two touching but separate food stockpiles
    f(4x2)  #
@@ -313,9 +299,7 @@ adjacent, but separate, stockpiles of the same type:
 
 As mentioned previously, :kbd:`~` characters are ignored as comment characters
 and can be used for visualizing the blueprint layout. This blueprint can be
-equivalently written as:
-
-::
+equivalently written as::
 
    #place Two touching but separate food stockpiles
    f(4x2)  #
@@ -328,9 +312,7 @@ since the area expansion syntax of the upper stockpile prevents it from
 combining with the lower, freeform syntax stockpile.
 
 Area expansion syntax can also be used for buildings which have an adjustable
-size, like bridges. The following blueprints are equivalent:
-
-::
+size, like bridges. The following blueprints are equivalent::
 
    #build a 4x2 bridge from row 1, col 1
    ga(4x2)  `  #
@@ -347,9 +329,7 @@ Automatic area expansion
 
 Buildings larger than 1x1, like workshops, can be represented in any of three
 ways. You can designate just their center tile with empty cells around it to
-leave room for the footprint, like this:
-
-::
+leave room for the footprint, like this::
 
    #build a mason workshop in row 2, col 2 that will occupy the 3x3 area
    ` `  ` #
@@ -357,9 +337,7 @@ leave room for the footprint, like this:
    ` `  ` #
    # #  # #
 
-Or you can fill out the entire footprint like this:
-
-::
+Or you can fill out the entire footprint like this::
 
    #build a mason workshop
    wm wm wm #
@@ -371,9 +349,7 @@ This format may be verbose for regular workshops, but it can be very helpful for
 laying out structures like screw pump towers and waterwheels, whose "center
 point" can be non-obvious.
 
-Finally, you can use area expansion syntax to represent the workshop:
-
-::
+Finally, you can use area expansion syntax to represent the workshop::
 
    #build a mason workshop
    wm(3x3)  #
@@ -383,9 +359,7 @@ Finally, you can use area expansion syntax to represent the workshop:
 
 This style can be convenient for laying out multiple buildings of the same type.
 If you are building a large-scale block factory, for example, this will create
-20 mason workshops all in a row:
-
-::
+20 mason workshops all in a row::
 
    #build line of 20 mason workshops
    wm(60x3)
@@ -423,9 +397,7 @@ Dig priorities
 DF designation priorities are supported for ``#dig`` blueprints. The full syntax
 is ``[letter][number][expansion]``, where if the ``letter`` is not specified,
 ``d`` is assumed, and if ``number`` is not specified, ``4`` is assumed (the
-default priority). So each of these blueprints is equivalent:
-
-::
+default priority). So each of these blueprints is equivalent::
 
    #dig dig the interior of the room at high priority
    d  d  d  d  d  #
@@ -458,9 +430,7 @@ Marker mode is useful for when you want to plan out your digging, but you don't
 want to dig everything just yet. In ``#dig`` mode, you can add a :kbd:`m` before
 any other designation letter to indicate that the tile should be designated in
 marker mode. For example, to dig out the perimeter of a room, but leave the
-center of the room marked for digging later:
-
-::
+center of the room marked for digging later::
 
    #dig
    d  d  d  d d #
@@ -488,17 +458,13 @@ zones that permit more than one activity. Although it is perfectly valid to
 declare a single-purpose stockpile or zone and then modify it with a ``#query``
 blueprint, quickfort also supports directly declaring all the types in the
 ``#place`` and ``#zone`` blueprints. For example, to declare a 20x10 stockpile
-that accepts both corpses and refuse, you could write:
-
-::
+that accepts both corpses and refuse, you could write::
 
    #place refuse heap
    yr(20x10)
 
 And similarly, to declare a zone that is a pasture, a fruit picking area, and a
-meeting area all at once:
-
-::
+meeting area all at once::
 
    #zone main pasture and picnic area
    nmg(10x10)
@@ -515,16 +481,12 @@ by mimicking the hotkeys used to set them. Note that gather flags default to
 true, so specifying them in a blueprint will turn the toggles off. If you need
 to set configuration from multiple zone subscreens, separate the key sections
 with :kbd:`^`. Note the special syntax for setting hospital supply levels, which
-have no in-game hotkeys:
-
-::
+have no in-game hotkeys::
 
    #zone a combination hospital and shrub (but not fruit) gathering zone
    gGtf^hH{hospital buckets=5 splints=20}(10x10)
 
-The valid hospital settings (and their maximum values) are:
-
-::
+The valid hospital settings (and their maximum values) are::
 
     thread   (1500000)
     cloth    (1000000)
@@ -536,9 +498,7 @@ The valid hospital settings (and their maximum values) are:
 
 To toggle the ``active`` flag for zones, add an :kbd:`a` character to the
 string. For example, to create a *disabled* pond zone (that you later intend to
-carefully fill with 3-depth water for a dwarven bathtub):
-
-::
+carefully fill with 3-depth water for a dwarven bathtub)::
 
    #zone disabled pond zone
    apPf(1x3)
@@ -563,9 +523,7 @@ very quickly and is very difficult to read in a blueprint. Moreover, constructed
 track segments don't even have keys associated with them at all!
 
 To solve this problem, Quickfort provides the following keywords for use in
-build blueprints:
-
-::
+build blueprints::
 
    -- Track segments --
    trackN
@@ -625,9 +583,7 @@ build blueprints:
    specified with 'trackstopaaaa'.
 
 As an example, you can create an E-W track with stops at each end that dump to
-their outside directions with the following blueprint:
-
-::
+their outside directions with the following blueprint::
 
    #build Example track
    trackstopW trackEW trackEW trackEW trackstopE
@@ -645,19 +601,15 @@ Carved tracks
 In the game, you carve a minecart track by specifying a beginning and ending
 tile and the game "adds" the designation to the tiles in between. You cannot
 designate single tiles. For example to carve two track segments that cross each
-other, you might use the cursor to designate a line of three vertical tiles like
-this:
-
-::
+other, you might use the cursor to designate a line of three vertical tiles
+like this::
 
    ` start here ` #
    ` `          ` #
    ` end here   ` #
    # #          # #
 
-Then to carve the cross, you'd do a horizonal segment:
-
-::
+Then to carve the cross, you'd do a horizonal segment::
 
    `          ` `        #
    start here ` end here #
@@ -665,9 +617,7 @@ Then to carve the cross, you'd do a horizonal segment:
    #          # #        #
 
 This will result in a carved track that would be equivalent to a constructed
-track of the form:
-
-::
+track of the form::
 
    #build
    `      trackS    `      #
@@ -676,9 +626,7 @@ track of the form:
    #      #         #      #
 
 To carve this same track with a ``#dig`` blueprint, you'd use area expansion
-syntax with a height or width of 1 to indicate the segments to designate:
-
-::
+syntax with a height or width of 1 to indicate the segments to designate::
 
    #dig
    `      T(1x3) ` #
@@ -690,9 +638,7 @@ syntax with a height or width of 1 to indicate the segments to designate:
 to the South and East? You can't put both T(1xH) and T(Wx1) in the same cell!"
 This is true, but you can specify both width and height, and for tracks, QF
 interprets it as an upper-left corner extending to the right W tiles and down H
-tiles. For example, to carve a track in a closed ring, you'd write:
-
-::
+tiles. For example, to carve a track in a closed ring, you'd write::
 
    #dig
    T(3x3) ` T(1x3) #
@@ -700,9 +646,7 @@ tiles. For example, to carve a track in a closed ring, you'd write:
    T(3x1) ` `      #
    #      # #      #
 
-Which would result in a carved track simliar to a constructed track of the form:
-
-::
+Which would result in a carved track simliar to a constructed track of the form::
 
    #build
    trackSE trackEW trackSW #
@@ -724,9 +668,7 @@ about yet. You can:
 -  register a message to be displayed after the blueprint is successfully
    applied
 
-The full modeline syntax, when all optional elements are specified, is:
-
-::
+The full modeline syntax, when all optional elements are specified, is::
 
    #mode label(mylabel) start(X;Y;STARTCOMMENT) hidden() message(mymessage) comment
 
@@ -734,9 +676,7 @@ Note that all elements are optional except for the initial ``#mode`` (though, as
 mentioned in the first section, if a modeline doesn't appear at all in the first
 cell of a spreadsheet, the blueprint is interpreted as a ``#dig`` blueprint with
 no optional markers). Here are a few examples of modelines with optional
-elements before we discuss them in more detail:
-
-::
+elements before we discuss them in more detail::
 
    #dig start(3; 3; Center tile of a 5-tile square) Regular blueprint comment
    #build label(noblebedroom) start(10;15)
@@ -766,9 +706,7 @@ Start positions
 Start positions specify a cursor offset for a particular blueprint, simplifying
 the task of blueprint alignment. This is very helpful for blueprints that are
 based on a central staircase, but it helps whenever a blueprint has an obvious
-"center". For example:
-
-::
+"center". For example::
 
    #build start(2;2;center of workshop) label(masonw) a mason workshop
    wm wm wm #
@@ -787,9 +725,7 @@ position is ``1;1``, you can omit the numbers and just add a comment describing
 where to put the cursor. This is also useful for meta blueprints that don't
 actually care where the cursor is, but that refer to other blueprints that have
 fully-specified ``start()`` markers. For example, a meta blueprint that refers
-to the ``masonw`` blueprint above could look like this:
-
-::
+to the ``masonw`` blueprint above could look like this::
 
    #meta start(center of workshop) a mason workshop
    /masonw
@@ -814,9 +750,7 @@ A blueprint with a ``message()`` marker will display a message after the
 blueprint is applied with ``quickfort run``. This is useful for reminding
 players to take manual steps that cannot be automated, like assigning minecarts
 to a route, or listing the next step in a series of blueprints. For long or
-multi-part messages, you can embed newlines:
-
-::
+multi-part messages, you can embed newlines::
 
    "#meta label(surface1) message(This would be a good time to start digging the industry level.
    Once the area is clear, continue with /surface2.) clear the embark site and set up pastures"
@@ -848,9 +782,7 @@ can concatenate them into one single file. This is especially useful when you
 are sharing your blueprints with others. A single file is much easier to manage
 than a directory of files.
 
-For example, you can store multiple blueprints together like this:
-
-::
+For example, you can store multiple blueprints together like this::
 
    #dig label(bed1)
    d d d d #
@@ -884,9 +816,7 @@ For example, you can store multiple blueprints together like this:
    # # # # #
 
 Of course, you could still choose to keep your blueprints in single-sheet .csv
-files and just give related blueprints similar names:
-
-::
+files and just give related blueprints similar names::
 
    bedroom.1.dig.csv
    bedroom.2.build.csv
@@ -939,9 +869,7 @@ files or blueprints in the same spreadsheet sheet as the ``#meta`` blueprint
 that references them.
 
 A few examples might make this clearer. Say you have a .csv file with the "bed"
-blueprints in the previous section:
-
-::
+blueprints in the previous section::
 
    #dig label(bed1)
    ...
@@ -962,9 +890,7 @@ a problem if we're just running the blueprints individually from the
 going to change over time.
 
 So let's add a meta blueprint to this file that will combine the middle three
-blueprints into one:
-
-::
+blueprints into one::
 
    "#meta plan bedroom: combines build, place, and stockpile config blueprints"
    /bed2
@@ -1000,9 +926,7 @@ dig_bedrooms   one #dig blueprint, no label
 =============  ========
 
 We can add a sheet named "dig_all" with the following contents (we're expecting
-a big fort, so we're planning for a lot of bedrooms):
-
-::
+a big fort, so we're planning for a lot of bedrooms)::
 
    #meta dig the whole fortress (remember to set force_marker_mode to true)
    dig_farming/1
@@ -1059,9 +983,7 @@ useful for small, single-line messages, but a ``#notes`` blueprint is more
 convenient for long messages or messages that span many lines. The lines in a
 ``#notes`` blueprint are output as if they were contained within one large
 multi-line ``message()`` marker. For example, the following two blueprints
-result in the same output:
-
-::
+result in the same output::
 
    "#meta label(help) message(This is the help text for the blueprint set
    contained in this file.
@@ -1426,9 +1348,7 @@ categories:
 If you have a stockpile that covers multiple tiles, it might seem natural to put
 one alias per spreadsheet cell. The aliases still all get applied to the
 stockpile, and with only one alias per cell, you can just type the alias name
-and avoid having to use the messier-looking ``{aliasname}`` syntax:
-
-::
+and avoid having to use the messier-looking ``{aliasname}`` syntax::
 
     #place Declare a food stockpile
     f(3x3)
@@ -1442,9 +1362,7 @@ stockpile to have tallow exclusively permitted, then to add dye. It could happen
 that the two aliases are applied in the opposite order, though, and we'd end up
 with dye being permitted, then everything being forbidden and tallow being
 enabled. To make sure you always get what you want, write order-sensitive
-aliases on the same line:
-
-::
+aliases on the same line::
 
     #place Declare a food stockpile
     f(3x3)

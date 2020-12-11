@@ -6,9 +6,7 @@ Quickfort Alias Guide
 Aliases allow you to use simple words to represent complicated key sequences
 when configuring buildings and stockpiles in quickfort ``#query`` blueprints.
 
-For example, say you have the following ``#build`` and ``#place`` blueprints:
-
-::
+For example, say you have the following ``#build`` and ``#place`` blueprints::
 
     #build masonry workshop
     ~, ~,~,`,`,`
@@ -22,18 +20,14 @@ For example, say you have the following ``#build`` and ``#place`` blueprints:
 
 and you want to configure the stockpile to hold only non-economic ("other")
 stone and to give to the adjacent mason workshop. You could write the
-key sequences directly:
-
-::
+key sequences directly::
 
     #query configure stockpile with expanded key sequences
     ~,~,~,s{Down 5}deb{Right}{Down 2}p^,`,`
     ~,~,~,g{Left 2}&,                   `,`
     ~,~,~,`,                            `,`
 
-or you could use aliases:
-
-::
+or you could use aliases::
 
     #query configure stockpile with aliases
     ~,~,~,otherstone,`,`
@@ -41,9 +35,7 @@ or you could use aliases:
     ~,~,~,`,         `,`
 
 If the stockpile had only a single tile, you could also replay both aliases in
-a single cell:
-
-::
+a single cell::
 
     #query configure mason with multiple aliases in one cell
     ~,~,~,{otherstone}{give2left},`,`
@@ -59,8 +51,9 @@ Alias definition files
 DFHack comes with a library of aliases for you to use that are always
 available when you run a ``#query`` blueprint. Many blueprints can be built
 with just those aliases. This "standard alias library" is stored in
-:source:`data/quickfort/aliases-common.txt`. The aliases in that file are
-described at the `bottom of this document <quickfort-alias-library>`.
+:source:`data/quickfort/aliases-common.txt` (installed under the ``hack`` folder
+in your DFHack installation). The aliases in that file are described at the
+`bottom of this document <quickfort-alias-library>`.
 
 Please do not edit the aliases in the standard library directly. The file will
 get overwritten when DFHack is updated and you'll lose your changes. Instead,
@@ -71,9 +64,7 @@ library.
 Alias syntax and usage
 ----------------------
 
-The syntax for defining aliases is:
-
-::
+The syntax for defining aliases is::
 
     aliasname: expansion
 
@@ -89,9 +80,7 @@ other keys before or after it, the alias name must be surrounded in curly
 brackets (:kbd:`{` and :kbd:`}`). An alias can be surrounded in curly brackets
 even if it is the only text in the cell, it just isn't necesary. For example,
 the following blueprint uses the ``aliasname`` alias by itself in the first
-two rows and uses it as part of a longer sequence in the third row:
-
-::
+two rows and uses it as part of a longer sequence in the third row::
 
     #query apply alias 'aliasname' in three different ways
     aliasname
@@ -100,26 +89,20 @@ two rows and uses it as part of a longer sequence in the third row:
 
 For a more concrete example of an alias definition, a simple alias that
 configures a stockpile to have no bins (:kbd:`C`) and no barrels (:kbd:`E`)
-assigned to it would look like this:
-
-::
+assigned to it would look like this::
 
     nocontainers: CE
 
 The alias definition can also contain references to other aliases by including
 the alias names in curly brackets. For example, ``nocontainers`` could be
-equivalently defined like this:
-
-::
+equivalently defined like this::
 
     nobins: C
     nobarrels: E
     nocontainers: {nobins}{nobarrels}
 
 Aliases used in alias definitions *must* be surrounded by curly brackets, even
-if they are the only text in the definition:
-
-::
+if they are the only text in the definition::
 
     alias1: text1
     alias2: alias1
@@ -140,9 +123,7 @@ aliases with a lowercase letter.
 
 Any keycode name from the DF interface definition file
 (data/init/interface.txt) is valid, but only a few keycodes are actually
-useful for blueprints:
-
-::
+useful for blueprints::
 
     Up
     Down
@@ -168,17 +149,12 @@ Modifier keys
 Ctrl, Alt, and Shift modifiers can be specified for the next key by adding
 them into the key sequence. For example, Alt-h is written as ``{Alt}h``.
 
-Note that DF does not handle keys that have more than a single modifier, so
-sequences like ``{Ctrl}{Alt}a`` will result in an error.
-
 Shorthand characters
 ~~~~~~~~~~~~~~~~~~~~
 
 Some frequently-used keycodes are assigned shorthand characters. Think of them
 as single-character aliases that don't need to be surrounded in curly
-brackets:
-
-::
+brackets::
 
     &   expands to {Enter}
     @   expands to {Shift}{Enter}
@@ -193,9 +169,7 @@ Built-in aliases
 ~~~~~~~~~~~~~~~~
 
 Most aliases that come with DFHack are in ``aliases-common.txt``, but there is
-one alias built into the code for the common shorthand for "make room":
-
-::
+one alias built into the code for the common shorthand for "make room"::
 
     r+  expands to r+{Enter}
 
@@ -208,52 +182,53 @@ Sub-aliases
 
 You can specify sub-aliases that will only be defined while the current alias
 is being resolved. This is useful for "injecting" custom behavior into the
-middle of a larger alias. For example:
+middle of a larger alias. As a simple example, the ``givename`` alias is defined
+like this::
 
-::
+    givename: !n{name}&
 
-    {quantumstopfromeast name="Trash Dump"}
+Note the use of the ``name`` alias inside of the ``givename`` expansion. In your
+``#query`` blueprint, you could write something like this, say, while over your
+main drawbridge::
 
-The value of the sub-alias ``name`` is used in the middle of the definition of
-``quantumstopfromeast`` to give a useful name to your quantum dump hauling
-route. Without sub-aliases, we'd have to write something like:
+    {givename name="Front Gate"}
 
-::
+The value that you give the sub-alias ``name`` will be used when the
+``givename`` alias is expanded. Without sub-aliases, we'd have to define ``givename`` like this::
 
-    {quantumstopfromeastprefix}Trash Dump{quantumstopfromeastsuffix}
+    givenameprefix: !n
+    givenamesuffix: &
+
+and use it like this::
+
+    {givenameprefix}Front Gate{givenamesuffix}
 
 which is more difficult to write and more difficult to understand.
 
 A handy technique is to define an alias with some sort of default
 behavior and then use sub-aliases to override that behavior as necessary. For
 example, here is a simplified version of the standard ``quantum`` alias that
-sets up quantum stockpiles:
-
-::
+sets up quantum stockpiles::
 
     quantum_enable: {enableanimals}{enablefood}{enablefurniture}...
     quantum: {linksonly}{nocontainers}{quantum_enable}
 
 You can use the default behavior of ``quantum_enable`` by just using the
 ``quantum`` alias by itself. But you can override ``quantum_enable`` to just
-enable furniture for some specific stockpile like this:
-
-::
+enable furniture for some specific stockpile like this::
 
     {quantum quantum_enable={enablefurniture}}
 
-Sub-aliases must be in one of the following formats:
+If an alias uses a sub-alias in its expansion, but the sub-alias is not defined when the alias is used, quickfort will halt the ``#query`` blueprint with an error. If you want your aliases to work regardless of whether sub-aliases are defined, then you must define them with default values like ``quantum_enable`` above.
 
-::
+Sub-aliases must be in one of the following formats::
 
     subaliasname=keyswithnospaces
     subaliasname="keys with spaces or {aliases}"
     subaliasname={singlealias}
 
 If you specify both a sub-alias and a number of repetitions, the number for
-repetitions goes last, right before the :kbd:`}`:
-
-::
+repetitions goes last, right before the :kbd:`}`::
 
     {alias subaliasname=value repetitions}
 
@@ -271,9 +246,7 @@ into :kbd:`q`\uery mode at the end of the key sequence. That way quickfort can
 continue on configuring the next tile -- a tile configuration that assumes the
 game is still in query mode.
 
-For example, here is the standard library alias for giving a name to a zone:
-
-::
+For example, here is the standard library alias for giving a name to a zone::
 
     namezone: ^i{givename}^q
 
@@ -318,9 +291,7 @@ namezone  name
 ========  ===========
 
 ``givename`` works anywhere you can hit Ctrl-n to customize a name, like when
-the cursor is over buildings and stockpiles. Example:
-
-::
+the cursor is over buildings and stockpiles. Example::
 
     #place
     f(10x2)
@@ -330,9 +301,7 @@ the cursor is over buildings and stockpiles. Example:
 
 ``namezone`` is intended to be used when over an activity zone. It includes
 commands to get into zones mode, set the zone name, and get back to query
-mode. Example:
-
-::
+mode. Example::
 
     #zone
     n(2x2)
@@ -426,9 +395,7 @@ to the newly-defined hauling route.
 You can define sub-aliases to customize how these aliases work, for example to
 have fine-grained control over what item types are enabled for the route and
 quantum stockpile. We'll go over those options below, but first, here is an
-example for how to just give names to everything:
-
-::
+example for how to just give names to everything::
 
     #query message(remember to assign a minecart to the new route)
      ,{quantum name="armory quantum"}
@@ -445,9 +412,7 @@ stockpile other than what you've configured in the feeder stockpile, you can
 set the ``quantum_enable`` sub-alias for the ``quantum`` alias. This can
 prevent, for example, somebody's knocked-out tooth from being considered part
 of your furniture quantum stockpile when it happened to land on it during a
-fistfight:
-
-::
+fistfight::
 
     #query
     {quantum name="furniture quantum" quantum_enable={enablefurniture}}
@@ -455,9 +420,7 @@ fistfight:
 You can have similar control over the hauling route if you need to be more
 selective about what item types are allowed into the minecart. If you have
 multiple specialized quantum stockpiles that use a common feeder pile, for
-example, you can set the ``route_enable`` sub-alias:
-
-::
+example, you can set the ``route_enable`` sub-alias::
 
     #query
     {quantumstopfromsouth name="Steel bar quantum" route_enable="{enablebars}{steelbars}"}
@@ -478,9 +441,7 @@ most people set them up). If your feeder stockpile is somewhere further away,
 you can use the ``quantumstop`` alias directly. In addition to the
 ``quantumstopfrom*`` sub-aliases, you can also define the ``move`` and
 ``move_back`` sub-aliases, which let you specify the cursor keys required to
-move from the track stop to the feeder stockpile and back again, respectively:
-
-::
+move from the track stop to the feeder stockpile and back again, respectively::
 
     #query
     {quantumstop move="{Right 2}{Up}" move_back="{Down}{Left 2}"}
@@ -535,9 +496,7 @@ setting. It is set to ``0`` by default.
 The ``give*`` aliases set a stockpile to give to a workshop or another
 stockpile located at the indicated number of tiles in the indicated direction
 from the current tile. For example, here we use the ``give2down`` alias to
-connect an ``otherstone`` stockpile with a mason workshop:
-
-::
+connect an ``otherstone`` stockpile with a mason workshop::
 
     #place
     s,s,s,s,s
@@ -558,9 +517,7 @@ connect an ``otherstone`` stockpile with a mason workshop:
     otherstone
 
 and here is a generic stone stockpile that gives to a stockpile that only
-takes flux:
-
-::
+takes flux::
 
     #place
     s(10x1)
@@ -575,9 +532,7 @@ If you want to give to some other tile that is not already covered by the
 ``give2*`` or ``give10*`` aliases, you can use the generic ``give`` alias and
 specify the movement keys yourself in the ``move`` sub-alias. Here is how to
 give to a stockpile or workshop one z-level above, 9 tiles to the left, and 14
-tiles down:
-
-::
+tiles down::
 
     #query
     {give move="<{Left 9}{Down 14}"}
@@ -586,9 +541,7 @@ tiles down:
 ``{Down 2}{Enter}`` to toggle adjacent (or alternating) items in a list. This
 is useful when toggling a bunch of related item types in the stockpile config.
 For example, the ``dye`` and ``tallow`` aliases in the standard alias library
-need to select specific items from long lists:
-
-::
+need to select specific items from long lists::
 
     dye:    {foodprefix}b{Right}{Down 11}{Right}{Down 28}{togglesequence 4}^
     tallow: {foodprefix}b{Right}{Down 13}{Right}{Down}{togglesequence2 811}^
@@ -608,9 +561,7 @@ For each stockpile item category, there are three standard aliases:
   by the standard library aliases. Using the library prefix instead of
   creating your own also allows your stockpile configuration aliases to be
   used for both stockpiles and hauling routes. For example, here is the
-  library definition for ``booze``:
-
-::
+  library definition for ``booze``::
 
     booze: {foodprefix}b{Right}{Down 5}p{Down}p^
 

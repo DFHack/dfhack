@@ -56,6 +56,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `quickfort`: More blueprints have been added to the blueprints library: several bedroom layouts, the Saracen Crypts, and the complete fortress example from Python Quickfort: TheQuickFortress
 - `embark-assistant`: split the lair types displayed on the local map into mound, burrow, and lair
 
+## Documentation
+- `quickfort-alias-guide`: alias syntax and alias standard library documentation for `quickfort` blueprints
+
 ## API
 - `buildingplan`: added Lua interface API
 - add item type param to dfhack.job.isSuitableMaterial() so the non_economic flag can be properly handled (it was being matched for all item types instead of just boulders)

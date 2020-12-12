@@ -1,106 +1,17 @@
-# Aliases for quickfort #query mode blueprints
+# Custom aliases for quickfort query mode blueprints
 #
-# This file defines custom keycode shortcuts for #query mode blueprints.
-# Definitions in this file take precedence over any definitions in the baseline
-# aliases configuration file at hack/data/quickfort/aliases-common.txt. See that
-# file for the many useful aliases that are already defined.
+# This file defines custom key sequence shortcuts for query mode blueprints.
+# Definitions in this file take precedence over any definitions in the
+# baseline aliases configuration file in
+#   hack/data/quickfort/aliases-common.txt
 #
-# If possible, build on the baseline aliases when defining your own aliases. If
-# the DF UI screens change, updated baseline aliases may allow your aliases to
-# automatically adapt to the new UI. For example, if you create an alias to
-# modify particular furniture stockpile settings, start your alias with
-# "{furnitureprefix}" instead of manually writing "s{Down 2}". Then, if the
-# location of the furniture setting changes, your alias will automatically
-# inherit the updated position when DFHack is updated.
-#
-# Aliases simplify repetitive tasks, such as configuring workshop profiles or
-# adjusting a food stockpile to accept only seeds. Making new aliases is just a
-# matter of mimicking the keys used to navigate through the menus and select
-# options. Use the aliases in your blueprint spreadsheets by writing an alias by
-# itself in a cell, like "nocontainers", or reference an alias in a larger
-# sequence by enclosing it in curly brackets, like "{nocontainers}{linksonly}"
-#
-# For example, say you have the following build and place blueprints:
-#
-# #build masonry workshop
-# ~, ~,~,`,`,`
-# ~,wm,~,`,`,`
-# ~, ~,~,`,`,`
-#
-# #place stockpile for mason
-# ~,~,~,s,s,s
-# ~,~,~,s,s,s
-# ~,~,~,s,s,s
-#
-# and you want to configure the stockpile to hold only non-economic ("other")
-# stone and to give to the adjacent mason workshop. You could write the
-# keystrokes directly:
-#
-# #query start(4;1;upper left corner of stockpile) configure mason
-# ~,~,~,s{Down 5}deb{Right}{Down 2}p^,`,`
-# ~,~,~,g{Left 2}&,                   `,`
-# ~,~,~,`,                            `,`
-#
-# or you could use alias names:
-#
-# #query start(4;1;upper left corner of stockpile) configure mason
-# ~,~,~,otherstone,`,`
-# ~,~,~,give2left, `,`
-# ~,~,~,`,         `,`
-#
-# you can combine the two aliases above into a single cell as well, if desired:
-#
-# #query start(4;1;upper left corner of stockpile) configure mason
-# ~,~,~,{otherstone}{give2left},`,`
-# ~,~,~,`,                      `,`
-# ~,~,~,`,                      `,`
-#
-# The syntax for defining aliases is:
-#   aliasname: keystrokes
-#
-# Where aliasname is at least two letters or digits long (including dashes and
-# underscores) and keystrokes are whatever you would type into the DF UI. A
-# keystroke can also be a named keycode from the DF interface definition file
-# (data/init/interface.txt), enclosed in curly brackets like an alias, like:
-# "{Right}" or "{Enter}". In # order to avoid naming conflicts between aliases
-# and keycodes, the convention is to start aliases with a lowercase letter.
-#
-# Anything enclosed within curly brackets can also have a number after it,
-# indicating how many times that alias or keycode should be repeated. For
-# example: "{togglesequence 9}" or "{Down 5}".
-#
-# Finally, you can specify sub-aliases that will only be defined while the
-# current alias is being resolved by adding them after the alias name (but
-# before the repetition number, if it is specified), for example:
-#   {quantumstopfromeast name="Trash Dump"}
-# The value of the sub-alias 'name' is used by quantumstopfromeast (or one of
-# the aliases it calls) to give a useful name to your quantum dump hauling
-# route. You can also use this format to temporarily override the value of an
-# existing regularly-defined alias.
-#
-# Sub-aliases must be in one of the following formats:
-#   subaliasname=valwithnospaces
-#   subaliasname="val with spaces"
-#   subaliasname={someotheralias repetitions}
-#
-# Ctrl, Alt, and Shift modifiers can be specified for the next keycode by adding
-# them into the key sequence. For example, Alt-h is written as "{Alt}h".
-#
-# Some frequently-used keystrokes are assigned shorthand characters. Think of
-# them as single-character aliases that don't need to be surrounded in curly
-# brackets:
-#   &   expands to {Enter}
-#   @   expands to {Shift}{Enter}
-#   ~   expands to {Alt}
-#   !   expands to {Ctrl}
-#   ^   expands to {ESC}
-#
-# There is also a non-standard alias built into the code for the common
-# shorthand for "make room":
-#   r+  expands to r+&
-#
-# If you need literal verisons of the shorthand characters, surround them in
-# curly brackets, for example: "{!}"
+# Please see
+#   https://docs.dfhack.org/en/latest/docs/guides/quickfort-alias-guide.html
+# or
+#   hack/docs/docs/guides/quickfort-alias-guide.html
+# in your DF installation directory for alias syntax documentation and an
+# overview of the DFHack alias standard library.
 #
 #
-# Add your custom aliases here:
+# Add your custom aliases here. Example:
+#   food_stash: {foodprefix}b{Right}{Down 11}p^{permitplants}

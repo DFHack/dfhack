@@ -43,6 +43,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `embark-assistant`: fixed an issue causing incursion resource matching (e.g. sand/clay) to skip some tiles if those resources were provided only through incursions
 - `embark-assistant`: corrected river size determination by performing it at the MLT level rather than the world tile one
 - `search`: fixed an issue where search options might not display if screens were destroyed and recreated programmatically (e.g. with `quickfort`)
+- `workflow`: fixed an error when creating constraints on "mill plants" jobs and some other plant-related jobs
 - `zone`: fixed an issue causing the ``enumnick`` subcommand to run when attempting to run ``assign``, ``unassign``, or ``slaughter``
 
 ## Misc Improvements

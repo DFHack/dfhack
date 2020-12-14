@@ -196,10 +196,8 @@ function job_outputs.MakeCrafts(callback, job)
 end
 
 local plant_products = {
-    BrewDrink = 'DRINK',
     MillPlants = 'MILL',
     ProcessPlants = 'THREAD',
-    ProcessPlantsBag = 'LEAVES',
     ProcessPlantsBarrel = 'EXTRACT_BARREL',
     ProcessPlantsVial = 'EXTRACT_VIAL',
     ExtractFromPlants = 'EXTRACT_STILL_VIAL',

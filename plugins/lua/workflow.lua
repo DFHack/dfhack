@@ -355,4 +355,10 @@ function listWeakenedConstraints(outputs)
     return variants
 end
 
+if dfhack.internal.IN_TEST then
+    test_data = {
+        job_outputs = job_outputs,
+    }
+end
+
 return _ENV

@@ -104,6 +104,16 @@ function delay(frames)
     script.sleep(frames, 'frames')
 end
 
+function clean_require(module)
+    -- wrapper around require() - forces a clean load of every module to ensure
+    -- that modules checking for dfhack.internal.IN_TEST at load time behave
+    -- properly
+    if package.loaded[module] then
+        reload(module)
+    end
+    return require(module)
+end
+
 function ensure_title_screen()
     if df.viewscreen_titlest:is_instance(dfhack.gui.getCurViewscreen()) then
         return
@@ -153,6 +163,7 @@ function build_test_env()
         },
         expect = {},
         delay = delay,
+        require = clean_require,
     }
     local private = {
         checks = 0,

@@ -601,7 +601,7 @@ namespace embark_assist {
                 else {
                     process_embark_incursion(site_info,
                         survey_results,
-                        &survey_results->at(fetch_x).at(fetch_y).south_row[i],
+                        &survey_results->at(fetch_x).at(fetch_y).south_row[fetch_i],
                         mlt->at(i).at(k).elevation,
                         fetch_x,
                         fetch_y);
@@ -627,7 +627,7 @@ namespace embark_assist {
                 else {
                     process_embark_incursion(site_info,
                         survey_results,
-                        &survey_results->at(fetch_x).at(fetch_y).north_row[i],
+                        &survey_results->at(fetch_x).at(fetch_y).north_row[fetch_i],
                         mlt->at(i).at(k).elevation,
                         fetch_x,
                         fetch_y);
@@ -637,7 +637,7 @@ namespace embark_assist {
                 if (fetch_i < 0) {
                     process_embark_incursion(site_info,
                         survey_results,
-                        &survey_results->at(fetch_x).at(fetch_y).east_column[k],
+                        &survey_results->at(fetch_x).at(fetch_y).east_column[fetch_k],
                         mlt->at(i).at(k).elevation,
                         fetch_x,
                         fetch_y);
@@ -645,7 +645,7 @@ namespace embark_assist {
                 else if (fetch_i > 15) {
                     process_embark_incursion(site_info,
                         survey_results,
-                        &survey_results->at(fetch_x).at(fetch_y).west_column[k],
+                        &survey_results->at(fetch_x).at(fetch_y).west_column[fetch_k],
                         mlt->at(i).at(k).elevation,
                         fetch_x,
                         fetch_y);

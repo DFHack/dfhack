@@ -104,6 +104,16 @@ function delay(frames)
     script.sleep(frames, 'frames')
 end
 
+function clean_require(module)
+    -- wrapper around require() - forces a clean load of every module to ensure
+    -- that modules checking for dfhack.internal.IN_TEST at load time behave
+    -- properly
+    if package.loaded[module] then
+        reload(module)
+    end
+    return require(module)
+end
+
 function ensure_title_screen()
     if df.viewscreen_titlest:is_instance(dfhack.gui.getCurViewscreen()) then
         return
@@ -153,6 +163,7 @@ function build_test_env()
         },
         expect = {},
         delay = delay,
+        require = clean_require,
     }
     local private = {
         checks = 0,
@@ -206,6 +217,7 @@ function save_test_status(status)
 end
 
 function finish_tests()
+    dfhack.internal.IN_TEST = false
     if done_command then
         dfhack.run_command(done_command)
     end
@@ -220,7 +232,9 @@ function load_tests(file, tests)
         dfhack.printerr('Failed to load file: ' .. tostring(err))
         return false
     else
+        dfhack.internal.IN_TEST = true
         local ok, err = pcall(code)
+        dfhack.internal.IN_TEST = false
         if not ok then
             dfhack.printerr('Error when running file: ' .. tostring(err))
             return false
@@ -260,7 +274,9 @@ function run_test(test, status, counts)
     test.private.checks = 0
     test.private.checks_ok = 0
     counts.tests = counts.tests + 1
+    dfhack.internal.IN_TEST = true
     local ok, err = pcall(test.func)
+    dfhack.internal.IN_TEST = false
     local passed = false
     if not ok then
         dfhack.printerr('test errored: ' .. test.name .. ': ' .. tostring(err))

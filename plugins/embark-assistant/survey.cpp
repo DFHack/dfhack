@@ -1663,8 +1663,8 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
                 return embark_assist::defs::directions::Center;
             }
 
-            nw_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i - 1, effective_k - 1);
-            w_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i - 1, effective_k);
+            nw_region_type = embark_assist::survey::region_type_of(survey_results, effective_x, effective_y, effective_i - 1, effective_k - 1);
+            w_region_type = embark_assist::survey::region_type_of(survey_results, effective_x, effective_y, effective_i - 1, effective_k);
 
             if (nw_region_type == df::world_region_type::Lake ||
                 nw_region_type == df::world_region_type::Ocean) {
@@ -1705,8 +1705,8 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
         }
     }
     else if (effective_y == world_data->world_height) {
-        nw_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i - 1, effective_k - 1);
-        n_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i, effective_k - 1);
+        nw_region_type = embark_assist::survey::region_type_of(survey_results, effective_x, effective_y, effective_i - 1, effective_k - 1);
+        n_region_type = embark_assist::survey::region_type_of(survey_results, effective_x, effective_y, effective_i, effective_k - 1);
 
         if (nw_region_type == df::world_region_type::Lake ||
             nw_region_type == df::world_region_type::Ocean) {
@@ -1756,10 +1756,10 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
         effective_corner = survey_results->at(effective_x).at(effective_y).west_corner_selection[effective_k];
     }
 
-    nw_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i - 1, effective_k - 1);
-    n_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i, effective_k - 1);
-    w_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i - 1, effective_k);
-    home_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i, effective_k);
+    nw_region_type = embark_assist::survey::region_type_of(survey_results, effective_x, effective_y, effective_i - 1, effective_k - 1);
+    n_region_type = embark_assist::survey::region_type_of(survey_results, effective_x, effective_y, effective_i, effective_k - 1);
+    w_region_type = embark_assist::survey::region_type_of(survey_results, effective_x, effective_y, effective_i - 1, effective_k);
+    home_region_type = embark_assist::survey::region_type_of(survey_results, effective_x, effective_y, effective_i, effective_k);
 
     if (nw_region_type == df::world_region_type::Lake ||
         nw_region_type == df::world_region_type::Ocean) {

@@ -1445,8 +1445,9 @@ Links
 
 -  `Quickfort command reference <quickfort>`
 -  `Quickfort alias guide <quickfort-alias-guide>`
--  :forums:`Quickfort forum thread <176889>`
+-  `Quickfort library guide <quickfort-library-guide>`
 -  :source:`Quickfort blueprints library <data/blueprints/library>`
+-  :forums:`Quickfort forum thread <176889>`
 -  :issue:`DFHack issue tracker <>`
 -  :source:scripts:`Quickfort source code <internal/quickfort>`
 

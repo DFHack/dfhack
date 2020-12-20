@@ -59,6 +59,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Documentation
 - `quickfort-alias-guide`: alias syntax and alias standard library documentation for `quickfort` blueprints
+- `quickfort-library-guide`: overview of the quickfort blueprint library
 
 ## API
 - `buildingplan`: added Lua interface API

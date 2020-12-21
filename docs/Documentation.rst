@@ -315,3 +315,30 @@ Changelog syntax
 .. include:: /docs/changelog.txt
    :start-after: ===help
    :end-before: ===end
+
+.. _docs-ci:
+
+GitHub Actions
+==============
+
+Documentation is built automatically with GitHub Actions (a GitHub-provided
+continuous integration service) for all pull requests and commits in the
+"dfhack" and "scripts" repositories. These builds run with strict settings, i.e.
+warnings are treated as errors. If a build fails, you will see a red "x" next to
+the relevant commit or pull request. You can view detailed output from Sphinx in
+a few ways:
+
+* Click on the red "x" (or green checkmark), then click "Details" next to
+  the "Build / docs" entry
+* For pull requests only: navigate to the "Checks" tab, then click on "Build" in
+  the sidebar to expand it, then "docs" under it
+
+Sphinx output will be visible under the step named "Build docs". If a different
+step failed, or you aren't sure how to interpret the output, leave a comment
+on the pull request (or commit).
+
+You can also download the "docs" artifact from the summary page (typically
+accessible by clicking "Build") if the build succeeded. This is a way to
+visually inspect what the documentation looks like when built without installing
+Sphinx locally, although we recommend installing Sphinx if you are planning to
+do any significant work on the documentation.

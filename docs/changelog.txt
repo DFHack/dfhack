@@ -53,6 +53,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `buildingplan`: min quality adjustment hotkeys changed from 'qw' to 'QW' to avoid conflict with existing hotkeys for setting roller speed. max quality adjustment hotkeys changed from 'QW' to 'AS' to make room for the min quality hotkey changes.
 - `buildingplan`: new global settings page accessible via ``G`` hotkey when on any building build screen; ``Quickfort Mode`` toggle for legacy Python Quickfort has been moved to this page
 - `buildingplan`: new global settings for whether generic building materials should match blocks, boulders, logs, and/or bars. defaults are everything but bars.
+- `probe`: added more output for designations and tile occupancy
 - `quickfort`: The Dreamfort sample blueprints now have complete walkthroughs for each fort level and importable orders that automate basic fort stock management
 - `quickfort`: More blueprints have been added to the blueprints library: several bedroom layouts, the Saracen Crypts, and the complete fortress example from Python Quickfort: TheQuickFortress
 - `embark-assistant`: split the lair types displayed on the local map into mound, burrow, and lair

@@ -162,6 +162,8 @@ DFHACK_EXPORT bool hasSupport(df::coord pos, df::coord2d size);
 
 /**
  * Sets the size of the building, using size and direction as guidance.
+ * Any custom extents set for the building will be cleared if the size passed in
+ * as guidance cannot be applied to the building.
  * Returns true if the building can be created at its position, using that size.
  */
 DFHACK_EXPORT bool setSize(df::building *bld, df::coord2d size, int direction = 0);

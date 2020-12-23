@@ -64,6 +64,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## API
 - `buildingplan`: added Lua interface API
 - add item type param to dfhack.job.isSuitableMaterial() so the non_economic flag can be properly handled (it was being matched for all item types instead of just boulders)
+- reuse existing extents when possible in ``Buildings::setSize()``
 
 ## Lua
 - ``utils.addressof()``: fixed for raw userdata

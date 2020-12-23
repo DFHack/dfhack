@@ -758,17 +758,18 @@ bool Buildings::setSize(df::building *bld, df::coord2d size, int direction)
     CHECK_NULL_POINTER(bld);
     CHECK_INVALID_ARGUMENT(bld->id == -1);
 
-    // Delete old extents
-    if (bld->room.extents)
+    // Compute correct size and apply it
+    df::coord2d old_size = size;
+    df::coord2d center;
+    getCorrectSize(size, center, bld->getType(), bld->getSubtype(),
+                   bld->getCustomType(), direction);
+
+    // Delete old extents if size has changed.
+    if (old_size != size && bld->room.extents)
     {
         delete[] bld->room.extents;
         bld->room.extents = NULL;
     }
-
-    // Compute correct size and apply it
-    df::coord2d center;
-    getCorrectSize(size, center, bld->getType(), bld->getSubtype(),
-                   bld->getCustomType(), direction);
 
     bld->x2 = bld->x1 + size.x - 1;
     bld->y2 = bld->y1 + size.y - 1;

@@ -432,17 +432,17 @@ namespace embark_assist {
             }
 
             if (world->world_data->world_height == 17) {
-                divisor = (57 / steps * lat + 0.4);
+                divisor = ((lat * 57) / steps + 0.4);
             }
             else if (world->world_data->world_height == 33) {
-                divisor = (61 / steps * lat + 0.1);
+                divisor = ((lat * 61) / steps + 0.1);
             }
             else if (world->world_data->world_height == 65) {
-                divisor = (63 / steps * lat);
+                divisor = ((lat * 63) / steps);
             }
             else if (world->world_data->world_height == 129 ||
                 world->world_data->world_height == 257) {
-                divisor = (64 / steps * lat);
+                divisor = ((lat * 64) / steps);
             }
             else {
                 return max_temperature; // Not any standard world height. No formula available

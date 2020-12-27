@@ -860,13 +860,13 @@ struct buildingplan_room_hook : public df::viewscreen_dwarfmodest
             return false;
         auto np = getNoblePositionOfSelectedBuildingOwner();
         df::interface_key last_token = get_string_key(input);
-        if (last_token >= interface_key::STRING_A048
-            && last_token <= interface_key::STRING_A058)
+        if (last_token >= Screen::charToKey('1')
+            && last_token <= Screen::charToKey('9'))
         {
-            size_t selection = last_token - interface_key::STRING_A048;
-            if (np.size() < selection)
+            size_t index = last_token - Screen::charToKey('1');
+            if (index >= np.size())
                 return false;
-            roomMonitor.toggleRoomForPosition(world->selected_building->id, np.at(selection-1).position->code);
+            roomMonitor.toggleRoomForPosition(world->selected_building->id, np.at(index).position->code);
             return true;
         }
 

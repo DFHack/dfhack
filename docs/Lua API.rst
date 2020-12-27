@@ -1679,7 +1679,11 @@ Low-level building creation functions:
   Returns *false* if the building cannot be placed, or *true, width,
   height, rect_area, true_area*. Returned width and height are the
   final values used by the building; true_area is less than rect_area
-  if any tiles were removed from designation.
+  if any tiles were removed from designation. You can specify a non-rectangular
+  designation for building types that support extents by setting the
+  ``room.extents`` bitmap before calling this function. The extents will be
+  reset, however, if the size returned by this function doesn't match the
+  input size parameter.
 
 * ``dfhack.buildings.constructAbstract(building)``
 
@@ -1768,7 +1772,9 @@ Among them are:
 
   - ``fields = { ... }``
 
-    Initializes fields of the building object after creation with ``df.assign``.
+    Initializes fields of the building object after creation with
+    ``df.assign``. If ``room.extents`` is assigned this way and this function
+    returns with error, the memory allocated for the extents is freed.
 
   - ``width = ..., height = ..., direction = ...``
 

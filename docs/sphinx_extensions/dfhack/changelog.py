@@ -156,9 +156,6 @@ def parse_changelog():
 def consolidate_changelog(all_entries):
     for sections in all_entries.values():
         for section, entries in sections.items():
-            # sort() is stable, so reverse entries so that older entries for the
-            # same feature are on top
-            entries.reverse()
             entries.sort(key=lambda entry: entry.sort_key)
             new_entries = []
             for feature, group in itertools.groupby(entries,

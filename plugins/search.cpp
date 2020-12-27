@@ -97,7 +97,7 @@ void make_text_dim(int x1, int x2, int y)
 static bool is_live_screen(const df::viewscreen *screen)
 {
     for (df::viewscreen *cur = &gview->view; cur; cur = cur->child)
-        if (cur == screen)
+        if (cur == screen && cur->breakdown_level == interface_breakdown_types::NONE)
             return true;
     return false;
 }

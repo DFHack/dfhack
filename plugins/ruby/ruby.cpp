@@ -64,10 +64,11 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 {
     onupdate_active = 0;
 
-    // fail silently instead of spamming the console with 'failed to initialize'
-    // if libruby is not present, the error is still logged in stderr.log
     if (!df_loadruby())
-        return CR_OK;
+    {
+        out.printerr("df_loadruby failed - see stderr.log for details\n");
+        return CR_FAILURE;
+    }
 
     // the ruby thread sleeps trying to lock this
     // when it gets it, it runs according to r_type
@@ -350,7 +351,10 @@ static int df_loadruby(void)
 
     // ruby_sysinit is optional (ruby1.9 only)
     ruby_sysinit = (decltype(ruby_sysinit))LookupPlugin(libruby_handle, "ruby_sysinit");
-#define rbloadsyma(s,a) if (!(s = (decltype(s))LookupPlugin(libruby_handle, #a))) return 0
+#define rbloadsyma(s,a) do { if (!(s = (decltype(s))LookupPlugin(libruby_handle, #a))) { \
+        fprintf(stderr, "Symbol not found: %s\n", #a); \
+        return 0; \
+    } } while (0)
 #define rbloadsym(s) rbloadsyma(s,s)
     rbloadsym(ruby_init_stack);
     rbloadsym(ruby_init);

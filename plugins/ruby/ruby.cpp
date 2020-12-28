@@ -307,7 +307,8 @@ ID (*rb_intern)(const char*);
 VALUE (*rb_funcall)(VALUE, ID, int, ...);
 VALUE (*rb_define_module)(const char*);
 void (*rb_define_singleton_method)(VALUE, const char*, VALUE(*)(...), int);
-VALUE (*rb_gv_get)(const char*);
+VALUE (*rb_errinfo)(void);
+void (*rb_set_errinfo)(VALUE);
 VALUE (*rb_str_new)(const char*, long);
 char* (*rb_string_value_ptr)(VALUE*);
 VALUE (*rb_eval_string_protect)(const char*, int*);
@@ -365,7 +366,8 @@ static int df_loadruby(void)
     rbloadsym(rb_funcall);
     rbloadsym(rb_define_module);
     rbloadsym(rb_define_singleton_method);
-    rbloadsym(rb_gv_get);
+    rbloadsym(rb_errinfo);
+    rbloadsym(rb_set_errinfo);
     rbloadsym(rb_str_new);
     rbloadsym(rb_string_value_ptr);
     rbloadsym(rb_eval_string_protect);
@@ -410,7 +412,7 @@ static void dump_rb_error(void)
 {
     VALUE s, err;
 
-    err = rb_gv_get("$!");
+    err = rb_errinfo();
 
     s = rb_funcall(err, rb_intern("class"), 0);
     s = rb_funcall(s, rb_intern("name"), 0);
@@ -423,6 +425,8 @@ static void dump_rb_error(void)
     for (int i=0 ; i<8 ; ++i)
         if ((s = rb_ary_shift(err)) != Qnil)
             printerr(" %s\n", rb_string_value_ptr(&s));
+
+    rb_set_errinfo(Qnil);
 }
 
 // ruby thread main loop

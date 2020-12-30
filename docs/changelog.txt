@@ -35,6 +35,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - `embark-assistant`: fixed order of factors when calculating min temperature
+- `search`: fixed crash when searching the ``k`` sidebar and navigating to another tile with certain keys, like ``<`` or ``>``
 
 # 0.47.04-r4
 

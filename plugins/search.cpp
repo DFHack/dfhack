@@ -115,13 +115,16 @@ static string get_unit_description(df::unit *unit)
     return desc;
 }
 
-static bool cursor_key_pressed (std::set<df::interface_key> *input)
+static bool cursor_key_pressed (std::set<df::interface_key> *input, bool in_entry_mode)
 {
-    // give text input (e.g. "2") priority over cursor keys
-    for (auto it = input->begin(); it != input->end(); ++it)
+    if (in_entry_mode)
     {
-        if (Screen::keyToChar(*it) != -1)
-            return false;
+        // give text input (e.g. "2") priority over cursor keys
+        for (auto it = input->begin(); it != input->end(); ++it)
+        {
+            if (Screen::keyToChar(*it) != -1)
+                return false;
+        }
     }
     return
     input->count(df::interface_key::CURSOR_UP) ||
@@ -249,7 +252,7 @@ public:
                 // ENTER or ESC: leave typing mode
                 end_entry_mode();
             }
-            else if (cursor_key_pressed(input))
+            else if (cursor_key_pressed(input, entry_mode))
             {
                 // Arrow key pressed. Leave entry mode and allow screen to process key
                 end_entry_mode();
@@ -1953,7 +1956,7 @@ public:
             end_entry_mode();
             return false;
         }
-        if (cursor_key_pressed(input))
+        if (cursor_key_pressed(input, in_entry_mode()))
         {
             end_entry_mode();
             clear_search();

@@ -59,7 +59,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "  digFlood 1\n"
         "    enable plugin\n"
         "  digFlood 0 MICROCLINE COAL_BITUMINOUS 1\n"
-        "    disable plugin and remove microcline and bituminous coal from being monitored, then re-enable plugin"
+        "    disable plugin and remove microcline and bituminous coal from being monitored, then re-enable plugin\n"
         "  digFlood 1 MICROCLINE 0 COAL_BITUMINOUS 1\n"
         "    do monitor microcline, don't monitor COAL_BITUMINOUS, then enable plugin\n"
         "  digFlood CLEAR\n"

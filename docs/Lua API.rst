@@ -4480,7 +4480,7 @@ table passed to the script will have the following fields set:
 
 Example usage::
 
-    -- @enable = true
+    --@ enable = true
     -- (function definitions...)
     if dfhack_flags.enable then
         if dfhack_flags.enable_state then

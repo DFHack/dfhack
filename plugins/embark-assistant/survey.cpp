@@ -432,17 +432,17 @@ namespace embark_assist {
             }
 
             if (world->world_data->world_height == 17) {
-                divisor = (57 / steps * lat + 0.4);
+                divisor = ((lat * 57) / steps + 0.4);
             }
             else if (world->world_data->world_height == 33) {
-                divisor = (61 / steps * lat + 0.1);
+                divisor = ((lat * 61) / steps + 0.1);
             }
             else if (world->world_data->world_height == 65) {
-                divisor = (63 / steps * lat);
+                divisor = ((lat * 63) / steps);
             }
             else if (world->world_data->world_height == 129 ||
                 world->world_data->world_height == 257) {
-                divisor = (64 / steps * lat);
+                divisor = ((lat * 64) / steps);
             }
             else {
                 return max_temperature; // Not any standard world height. No formula available
@@ -601,7 +601,7 @@ namespace embark_assist {
                 else {
                     process_embark_incursion(site_info,
                         survey_results,
-                        &survey_results->at(fetch_x).at(fetch_y).south_row[i],
+                        &survey_results->at(fetch_x).at(fetch_y).south_row[fetch_i],
                         mlt->at(i).at(k).elevation,
                         fetch_x,
                         fetch_y);
@@ -627,7 +627,7 @@ namespace embark_assist {
                 else {
                     process_embark_incursion(site_info,
                         survey_results,
-                        &survey_results->at(fetch_x).at(fetch_y).north_row[i],
+                        &survey_results->at(fetch_x).at(fetch_y).north_row[fetch_i],
                         mlt->at(i).at(k).elevation,
                         fetch_x,
                         fetch_y);
@@ -637,7 +637,7 @@ namespace embark_assist {
                 if (fetch_i < 0) {
                     process_embark_incursion(site_info,
                         survey_results,
-                        &survey_results->at(fetch_x).at(fetch_y).east_column[k],
+                        &survey_results->at(fetch_x).at(fetch_y).east_column[fetch_k],
                         mlt->at(i).at(k).elevation,
                         fetch_x,
                         fetch_y);
@@ -645,7 +645,7 @@ namespace embark_assist {
                 else if (fetch_i > 15) {
                     process_embark_incursion(site_info,
                         survey_results,
-                        &survey_results->at(fetch_x).at(fetch_y).west_column[k],
+                        &survey_results->at(fetch_x).at(fetch_y).west_column[fetch_k],
                         mlt->at(i).at(k).elevation,
                         fetch_x,
                         fetch_y);
@@ -1663,8 +1663,8 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
                 return embark_assist::defs::directions::Center;
             }
 
-            nw_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i - 1, effective_k - 1);
-            w_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i - 1, effective_k);
+            nw_region_type = embark_assist::survey::region_type_of(survey_results, effective_x, effective_y, effective_i - 1, effective_k - 1);
+            w_region_type = embark_assist::survey::region_type_of(survey_results, effective_x, effective_y, effective_i - 1, effective_k);
 
             if (nw_region_type == df::world_region_type::Lake ||
                 nw_region_type == df::world_region_type::Ocean) {
@@ -1705,8 +1705,8 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
         }
     }
     else if (effective_y == world_data->world_height) {
-        nw_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i - 1, effective_k - 1);
-        n_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i, effective_k - 1);
+        nw_region_type = embark_assist::survey::region_type_of(survey_results, effective_x, effective_y, effective_i - 1, effective_k - 1);
+        n_region_type = embark_assist::survey::region_type_of(survey_results, effective_x, effective_y, effective_i, effective_k - 1);
 
         if (nw_region_type == df::world_region_type::Lake ||
             nw_region_type == df::world_region_type::Ocean) {
@@ -1756,10 +1756,10 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
         effective_corner = survey_results->at(effective_x).at(effective_y).west_corner_selection[effective_k];
     }
 
-    nw_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i - 1, effective_k - 1);
-    n_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i, effective_k - 1);
-    w_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i - 1, effective_k);
-    home_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i, effective_k);
+    nw_region_type = embark_assist::survey::region_type_of(survey_results, effective_x, effective_y, effective_i - 1, effective_k - 1);
+    n_region_type = embark_assist::survey::region_type_of(survey_results, effective_x, effective_y, effective_i, effective_k - 1);
+    w_region_type = embark_assist::survey::region_type_of(survey_results, effective_x, effective_y, effective_i - 1, effective_k);
+    home_region_type = embark_assist::survey::region_type_of(survey_results, effective_x, effective_y, effective_i, effective_k);
 
     if (nw_region_type == df::world_region_type::Lake ||
         nw_region_type == df::world_region_type::Ocean) {

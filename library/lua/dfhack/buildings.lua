@@ -485,6 +485,11 @@ function buildings.constructBuilding(info)
     local to_delete = instance
     return dfhack.with_finalize(
         function()
+            -- ensure we don't leak extents created by Buildings::checkFreeTiles
+            if to_delete and to_delete.room.extents then
+                df.delete(to_delete.room.extents)
+                to_delete.room.extents = nil
+            end
             df.delete(to_delete)
         end,
         function()

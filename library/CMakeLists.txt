@@ -485,3 +485,5 @@ if(BUILD_DEVEL)
         DESTINATION ${DFHACK_INCLUDES_DESTINATION}
         FILES_MATCHING PATTERN "*.h" PATTERN "*.inc" )
 endif()
+
+add_subdirectory(xml)

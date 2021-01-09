@@ -196,27 +196,24 @@ function job_outputs.MakeCrafts(callback, job)
 end
 
 local plant_products = {
-    BrewDrink = 'DRINK',
     MillPlants = 'MILL',
     ProcessPlants = 'THREAD',
-    ProcessPlantsBag = 'LEAVES',
     ProcessPlantsBarrel = 'EXTRACT_BARREL',
     ProcessPlantsVial = 'EXTRACT_VIAL',
     ExtractFromPlants = 'EXTRACT_STILL_VIAL',
 }
 
 for job,flag in pairs(plant_products) do
-    local ttag = 'type_'..string.lower(flag)
-    local itag = 'idx_'..string.lower(flag)
+    local tag = string.lower(flag)
     job_outputs[job] = function(callback, job)
         local mat_type, mat_index = -1, -1
         local seed_type, seed_index = -1, -1
         local mat = dfhack.matinfo.decode(job.job_items[0])
         if mat and mat.plant and mat.plant.flags[flag] then
-            mat_type = mat.plant.material_defs[ttag]
-            mat_index = mat.plant.material_defs[itag]
-            seed_type = mat.plant.material_defs['type_seed']
-            seed_index = mat.plant.material_defs['idx_seed']
+            mat_type = mat.plant.material_defs.type[tag]
+            mat_index = mat.plant.material_defs.idx[tag]
+            seed_type = mat.plant.material_defs.type.seed
+            seed_index = mat.plant.material_defs.idx.seed
         end
         local mat_mask = { }
         if flag ~= 'LEAVES' then
@@ -356,6 +353,12 @@ function listWeakenedConstraints(outputs)
     for i,cons in ipairs(anymat) do register(cons) end
 
     return variants
+end
+
+if dfhack.internal.IN_TEST then
+    test_data = {
+        job_outputs = job_outputs,
+    }
 end
 
 return _ENV

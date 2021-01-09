@@ -2833,7 +2833,11 @@ static int internal_runCommand(lua_State *L)
     bool use_console = lua_toboolean(L, 2);
     if (use_console)
     {
-        out = &Core::getInstance().getConsole();
+        out = Lua::GetOutput(L);
+        if (!out)
+        {
+            out = &Core::getInstance().getConsole();
+        }
     }
     else
     {

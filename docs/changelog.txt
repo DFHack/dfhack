@@ -36,6 +36,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 - `embark-assistant`: fixed order of factors when calculating min temperature
 
+## Misc Improvements
+- `quickfort`: Dreamfort blueprint set improvements: add a streamlined checklist for all required dreamfort commands and give names to stockpiles levers, bridges, and zones
+
 # 0.47.04-r4
 
 ## Fixes

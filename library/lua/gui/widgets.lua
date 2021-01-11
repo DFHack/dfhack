@@ -436,7 +436,7 @@ function Label:onInput(keys)
                 v = -self.frame_body.height
             end
             self:scroll(v)
-            return true
+            return false
         end
     end
     return check_text_keys(self, keys)

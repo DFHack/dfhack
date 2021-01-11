@@ -36,6 +36,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 - `embark-assistant`: fixed order of factors when calculating min temperature
 
+## Misc Improvements
+- Lua widget library Label class (used in all standard message boxes) is now scrollable with Up/Down/PgUp/PgDn keys
+
 # 0.47.04-r4
 
 ## Fixes

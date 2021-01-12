@@ -201,11 +201,26 @@ public:
     {
         // this algorithm attempts to change as few farms as possible, while ensuring that
         // the number of farms planting each eligible plant is "as equal as possible"
-
-        if (farms.empty() || plants.empty())
-            return; // do nothing if there are no farms or no plantable plants
-
+        
         int season = *df::global::cur_season;
+        
+        if (farms.empty() || plants.empty())
+        {
+            // if no more plants were requested, fallow all farms
+            // if there were no farms, do nothing
+            for (auto farm : farms)
+            {
+                int o = farm->plant_id[season];
+                if (o != -1)
+                {
+                    farm->plant_id[season] = -1;
+                    out << "autofarm: changing farm #" << farm->id <<
+                        " from " << ((o == -1) ? "NONE" : world->raws.plants.all[o]->name) <<
+                        " to NONE" << endl;
+                }
+            }
+            return;
+        }
 
         int min = farms.size() / plants.size(); // the number of farms that should plant each eligible plant, rounded down
         int extra = farms.size() - min * plants.size(); // the remainder that cannot be evenly divided

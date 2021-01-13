@@ -234,11 +234,10 @@ end
 
 function render_text(obj,dc,x0,y0,pen,dpen,disabled)
     local width = 0
-    for iline,line in ipairs(obj.text_lines) do
-        if dc and obj.start_line_num and iline < obj.start_line_num then
-            goto continue
-        end
-        local x = 0
+    -- note that lines outside of the containing frame are not displayed, so
+    -- we only have to bound the start condition, not the end condition
+    for iline = dc and obj.start_line_num or 1, #obj.text_lines do
+        local x, line = 0, obj.text_lines[iline]
         if dc then
             local offset = (obj.start_line_num or 1) - 1
             dc:seek(x+x0,y0+iline-offset-1)
@@ -327,7 +326,6 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
             token.x2 = x
         end
         width = math.max(width, x)
-        ::continue::
     end
     obj.text_width = width
 end

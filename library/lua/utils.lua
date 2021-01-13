@@ -1,6 +1,7 @@
 local _ENV = mkmodule('utils')
 
 local df = df
+local getopt = require('3rdparty.alt_getopt')
 
 -- Comparator function
 function compare(a,b)
@@ -614,7 +615,10 @@ function processArgs(args, validArgs)
 end
 
 -- processes commandline options according to optionActions and returns all
--- argument strings that are not options.
+-- argument strings that are not options. Options and non-option strings can
+-- appear in any order, and single-letter options that do not take arguments
+-- can be combined into a single option string (e.g. '-abc' is the same as
+-- '-a -b -c' if options 'a' and 'b' do not take arguments.
 --
 -- optionActions is a vector with elements in the following format:
 -- {shortOptionName, longOptionAlias, hasArg=boolean, handler=fn}
@@ -627,15 +631,17 @@ end
 --
 -- local filename = nil
 -- local open_readonly = false
--- local nonoptions = processArgs2(args, {
+-- local nonoptions = processArgsGetopt(args, {
 --   {'r', handler=function() open_readonly = true end},
 --   {'f', 'filename', hasArg=true,
 --    handler=function(optarg) filename = optarg end}
 -- })
 --
--- when args is {'first', '-f', 'fname', 'second'}
--- then filename will be fname and nonoptions will contain {'first', 'second'}
-function processArgs2(args, optionActions)
+-- when args is {'first', '-f', 'fname', 'second'} or, equivalently,
+-- {'first', '--filename', 'fname', 'second'} (note the double dash in front of
+-- the long option alias), then filename will be fname and nonoptions will
+-- contain {'first', 'second'}.
+function processArgsGetopt(args, optionActions)
     local sh_opts, long_opts = '', {}
     local handlers = {}
     for _,optionAction in ipairs(optionActions) do
@@ -654,8 +660,8 @@ function processArgs2(args, optionActions)
             handlers[long_opt] = optionAction.handler
         end
     end
-    local getopt = require('3rdparty.alt_getopt').get_ordered_opts
-    local opts, optargs, nonoptions = getopt(args, sh_opts, long_opts)
+    local opts, optargs, nonoptions =
+            getopt.get_ordered_opts(args, sh_opts, long_opts)
     for i,v in ipairs(opts) do
         handlers[v](optargs[i])
     end

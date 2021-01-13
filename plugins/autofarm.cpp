@@ -197,6 +197,27 @@ public:
         }
     }
 
+    string get_plant_name(int plant_id)
+    {
+        df::plant_raw *raw = df::plant_raw::find(plant_id);
+        if (raw)
+            return raw->name;
+        else
+            return "NONE";
+    }
+
+    void set_farm(color_ostream& out, int new_plant_id, df::building_farmplotst* farm, int season)
+    {
+        int old_plant_id = farm->plant_id[season];
+        if (old_plant_id != new_plant_id)
+        {
+            farm->plant_id[season] = new_plant_id;
+            out << "autofarm: changing farm #" << farm->id <<
+                " from " << get_plant_name(old_plant_id) <<
+                " to " << get_plant_name(new_plant_id) << endl;
+        }
+    }
+
     void set_farms(color_ostream& out, set<int> plants, vector<df::building_farmplotst*> farms)
     {
         // this algorithm attempts to change as few farms as possible, while ensuring that
@@ -210,14 +231,7 @@ public:
             // if there were no farms, do nothing
             for (auto farm : farms)
             {
-                int o = farm->plant_id[season];
-                if (o != -1)
-                {
-                    farm->plant_id[season] = -1;
-                    out << "autofarm: changing farm #" << farm->id <<
-                        " from " << ((o == -1) ? "NONE" : world->raws.plants.all[o]->name) <<
-                        " to NONE" << endl;
-                }
+                set_farm(out, -1, farm, season);
             }
             return;
         }
@@ -251,11 +265,7 @@ public:
             {
                 // pick one of the excess farms and change it to plant this plant
                 df::building_farmplotst* farm = toChange.front();
-                int o = farm->plant_id[season];
-                farm->plant_id[season] = n;
-                out << "autofarm: changing farm #" << farm->id <<
-                    " from " << ((o == -1) ? "NONE" : world->raws.plants.all[o]->name) <<
-                    " to " << ((n == -1) ? "NONE" : world->raws.plants.all[n]->name) << endl;
+                set_farm(out, n, farm, season);
                 toChange.pop();
                 if (c++ == min)
                     extra--;

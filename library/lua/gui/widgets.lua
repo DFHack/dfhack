@@ -234,13 +234,14 @@ end
 
 function render_text(obj,dc,x0,y0,pen,dpen,disabled)
     local width = 0
-    -- note that lines outside of the containing frame are not displayed, so
-    -- we only have to bound the start condition, not the end condition
     for iline = dc and obj.start_line_num or 1, #obj.text_lines do
         local x, line = 0, obj.text_lines[iline]
         if dc then
             local offset = (obj.start_line_num or 1) - 1
-            dc:seek(x+x0,y0+iline-offset-1)
+            local y = y0 + iline - offset - 1
+            -- skip text outside of the containing frame
+            if y > dc.height - 1 then break end
+            dc:seek(x+x0, y)
         end
         for _,token in ipairs(line) do
             token.line = iline

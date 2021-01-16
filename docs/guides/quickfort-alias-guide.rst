@@ -135,6 +135,12 @@ useful for blueprints::
     Space
     Tab
 
+There is also one pseudo-keycode that quickfort recognizes::
+
+    Empty
+
+which has an empty expansion. It is primarily useful for defining blank default values for `Sub-aliases`_.
+
 Repetitions
 ~~~~~~~~~~~
 
@@ -194,7 +200,8 @@ main drawbridge::
     {givename name="Front Gate"}
 
 The value that you give the sub-alias ``name`` will be used when the
-``givename`` alias is expanded. Without sub-aliases, we'd have to define ``givename`` like this::
+``givename`` alias is expanded. Without sub-aliases, we'd have to define
+``givename`` like this::
 
     givenameprefix: !n
     givenamesuffix: &
@@ -219,7 +226,14 @@ enable furniture for some specific stockpile like this::
 
     {quantum quantum_enable={enablefurniture}}
 
-If an alias uses a sub-alias in its expansion, but the sub-alias is not defined when the alias is used, quickfort will halt the ``#query`` blueprint with an error. If you want your aliases to work regardless of whether sub-aliases are defined, then you must define them with default values like ``quantum_enable`` above.
+If an alias uses a sub-alias in its expansion, but the sub-alias is not defined
+when the alias is used, quickfort will halt the ``#query`` blueprint with an
+error. If you want your aliases to work regardless of whether sub-aliases are
+defined, then you must define them with default values like ``quantum_enable``
+above. If a default value should be blank, like the ``name`` sub-alias used by
+the ``givename`` alias above, define it with the ``{Empty}`` pesudo-keycode::
+
+    name: {Empty}
 
 Sub-aliases must be in one of the following formats::
 

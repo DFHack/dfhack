@@ -1,4 +1,3 @@
-// This does not work with Linux Dwarf Fortress
 // With thanks to peterix for DFHack and Quietust for information http://www.bay12forums.com/smf/index.php?topic=91166.msg2605147#msg2605147
 
 #include <map>

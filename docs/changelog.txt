@@ -35,6 +35,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - `embark-assistant`: fixed order of factors when calculating min temperature
+- `seedwatch`: don't turn off upon map load
 
 # 0.47.04-r4
 

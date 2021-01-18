@@ -146,10 +146,10 @@ namespace embark_assist {
             std::vector<bool> minerals;
             std::vector<int16_t> neighbors;  //  entity_raw indices
             uint8_t necro_neighbors;
-            mid_level_tile north_row[16];
-            mid_level_tile south_row[16];
-            mid_level_tile west_column[16];
-            mid_level_tile east_column[16];
+            mid_level_tile_incursion_base north_row[16];
+            mid_level_tile_incursion_base south_row[16];
+            mid_level_tile_incursion_base west_column[16];
+            mid_level_tile_incursion_base east_column[16];
             uint8_t north_corner_selection[16]; //  0 - 3. For some reason DF stores everything needed for incursion
             uint8_t west_corner_selection[16];  //  detection in 17:th row/colum data in the region details except
                                                 //  this info, so we have to go to neighboring world tiles to fetch it.

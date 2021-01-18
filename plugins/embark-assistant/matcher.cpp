@@ -68,7 +68,7 @@ namespace embark_assist {
 
         void process_embark_incursion(matcher_info *result,
             embark_assist::defs::world_tile_data *survey_results,
-            embark_assist::defs::mid_level_tile *mlt,  // Note this is a single tile, as opposed to most usages of this variable name.
+            embark_assist::defs::mid_level_tile_incursion_base *mlt,  // Note this is a single tile, as opposed to most usages of this variable name.
             embark_assist::defs::finders *finder,
             int16_t elevation,
             uint16_t x,
@@ -2699,7 +2699,7 @@ namespace embark_assist {
 
         void merge_incursion_into_world_tile(embark_assist::defs::region_tile_datum* current,
             embark_assist::defs::region_tile_datum* target_tile,
-            embark_assist::defs::mid_level_tile* target_mlt) {
+            embark_assist::defs::mid_level_tile_incursion_base* target_mlt) {
             df::world_data* world_data = world->world_data;
 
             current->aquifer |= target_mlt->aquifer;

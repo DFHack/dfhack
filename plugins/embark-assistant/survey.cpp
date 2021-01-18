@@ -455,7 +455,7 @@ namespace embark_assist {
 
         void process_embark_incursion(embark_assist::defs::site_infos *site_info,
             embark_assist::defs::world_tile_data *survey_results,
-            embark_assist::defs::mid_level_tile *mlt,  // Note this is a single tile, as opposed to most usages of this variable name.
+            embark_assist::defs::mid_level_tile_incursion_base *mlt,  // Note this is a single tile, as opposed to most usages of this variable name.
             int16_t elevation,
             uint16_t x,
             uint16_t y) {

@@ -68,24 +68,29 @@ namespace embark_assist {
             Woodland,
             Heavily_Forested
         };
-
-        struct mid_level_tile {
+		
+		// only contains those attributes that are being handled during incursion processing
+		struct mid_level_tile_incursion_base {
             uint8_t aquifer = Clear_Aquifer_Bits;
             bool clay = false;
             bool sand = false;
-            bool flux = false;
-            bool coal = false;
             int8_t soil_depth;
-            int8_t offset;
             int16_t elevation;
-            river_sizes river_size = river_sizes::None;
-            int16_t river_elevation = 100;
-            int8_t adamantine_level;  // -1 = none, 0 .. 3 = cavern 1 .. magma sea. Currently not used beyond present/absent.
-            int8_t magma_level;  // -1 = none, 0 .. 3 = cavern 3 .. surface/volcano
             int8_t biome_offset;
             tree_levels trees;
             uint8_t savagery_level;  // 0 - 2
             uint8_t evilness_level;  // 0 - 2
+        };
+
+		// contains all attributes (some by inheritance), used for regular survey/matching
+        struct mid_level_tile : public mid_level_tile_incursion_base {
+            bool flux = false;
+            bool coal = false;
+            int8_t offset;
+            river_sizes river_size = river_sizes::None;
+            int16_t river_elevation = 100;
+            int8_t adamantine_level;  // -1 = none, 0 .. 3 = cavern 1 .. magma sea. Currently not used beyond present/absent.
+            int8_t magma_level;  // -1 = none, 0 .. 3 = cavern 3 .. surface/volcano
             std::vector<bool> metals;
             std::vector<bool> economics;
             std::vector<bool> minerals;

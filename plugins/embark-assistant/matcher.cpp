@@ -3065,6 +3065,12 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
         iterator->active = !(iterator->i > world->worldgen.worldgen_parms.dim_y / 16);
 
         if (!iterator->active) {
+            // if the cursor was positioned in the lower right corner before the search it has to be moved to a neighbouring tile manually 
+            // to force another call to embark_update when all (incursion) data is finally collected to make sure this specific world tile is properly reevaluated
+            // see the embark_update() in embark-assistant
+            if (iterator->x == world->worldgen.worldgen_parms.dim_x - 1 && iterator->y == world->worldgen.worldgen_parms.dim_y - 1) {
+                embark_assist::matcher::move_cursor(iterator->x - 1, iterator->y);
+            }
             embark_assist::matcher::move_cursor(iterator->x, iterator->y);
 
             if (!survey_results->at(0).at(0).survey_completed) {  // Every world tile has gone through preliminary survey, so add possible incursion resources to each tile.

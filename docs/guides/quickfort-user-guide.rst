@@ -842,6 +842,8 @@ Blueprint mode  Description
 meta            Link sequences of blueprints together
 notes           Display long messages, such as help text or blueprint
                 walkthroughs
+ignore          Hide a section from quickfort, useful for scratch space or
+                personal notes
 ==============  ===========
 
 .. _quickfort-meta:
@@ -999,6 +1001,14 @@ result in the same output::
 The quotes around the ``#meta`` modeline allow newlines in a single cell's text.
 Each line of the ``#notes`` "blueprint", however, is in a separate cell,
 allowing for much easier viewing and editing.
+
+Ignore blueprints
+`````````````````
+
+If you don't want some data to be visible to quickfort at all, use an
+``#ignore`` blueprint. All lines until the next modeline in the file or sheet
+will be completely ignored. This can be useful for personal notes, scratch
+space, or temporarily "commented out" blueprints.
 
 Buildingplan integration
 ------------------------

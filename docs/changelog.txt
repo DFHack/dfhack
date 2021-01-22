@@ -35,6 +35,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - `embark-assistant`: fixed order of factors when calculating min temperature
+- `embark-assistant`: improved performance of surveying
 
 # 0.47.04-r4
 

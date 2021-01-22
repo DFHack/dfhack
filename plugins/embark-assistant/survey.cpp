@@ -996,7 +996,6 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
 
             base_z = elevation - 1;
             features = details->features[i][k];
-            std::map<int, int> layer_bottom, layer_top;
             mlt->at(i).at(k).adamantine_level = -1;
             mlt->at(i).at(k).magma_level = -1;
 
@@ -1027,8 +1026,6 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                     feature->min_z != -30000) {
                     auto layer = world_data->underground_regions[feature->layer];
 
-                    layer_bottom[layer->layer_depth] = feature->min_z;
-                    layer_top[layer->layer_depth] = feature->max_z;
                     base_z = std::min((int)base_z, (int)feature->min_z);
 
                     if (layer->type == df::world_underground_region::MagmaSea) {

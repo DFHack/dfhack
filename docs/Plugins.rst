@@ -723,11 +723,11 @@ While placing a building, you can set filters for what materials you want the bu
 out of, what quality you want the component items to be, and whether you want the items to
 be decorated.
 
-If a building type takes more than one item to construct, use
-:kbd:`Ctrl`:kbd:`Left` and :kbd:`Ctrl`:kbd:`Right` to select the item that you
-want to set filters for. Any filters that you set will be used for all buildings
-of the selected type from that point onward (until you set a new filter or clear
-the current one).
+If a building type takes more than one item to construct, use :kbd:`Ctrl`:kbd:`Left` and
+:kbd:`Ctrl`:kbd:`Right` to select the item that you want to set filters for. Any filters that
+you set will be used for all buildings of the selected type placed from that point onward
+(until you set a new filter or clear the current one). Buildings placed before the filters
+were changed will keep the filter values that were set when the building was placed.
 
 For example, you can be sure that all your constructed walls are the same color by setting
 a filter to accept only certain types of stone.
@@ -744,6 +744,42 @@ Dwarf Fortress.
 Note that Quickfort mode is only for compatibility with the legacy Python Quickfort. The
 DFHack `quickfort` script does not need Quickfort mode to be enabled. The `quickfort` script
 will successfully integrate with buildingplan as long as the buildingplan plugin is enabled.
+
+Global settings
+---------------
+
+The buildingplan plugin has several global settings that can be set from the UI (:kbd:`G`
+from any building placement screen, for example: :kbd:`b`:kbd:`a`:kbd:`G`). These settings
+can also be set from the ``DFHack#`` prompt once a map is loaded (or from your
+``onMapLoad.init`` file) with the syntax::
+
+    buildingplan set <setting> <true|false>
+
+The available settings are:
+
++----------------+---------+---------------------------------------+
+| Setting        | Default | Description                           |
++================+=========+=======================================+
+| blocks         | true    | Allow blocks, boulders, logs, or bars |
++----------------+---------+ to be matched for generic "building   |
+| boulders       | true    | material" items                       |
++----------------+---------+                                       |
+| logs           | true    |                                       |
++----------------+---------+                                       |
+| bars           | false   |                                       |
++----------------+---------+---------------------------------------+
+| quickfort_mode | false   | Enable compatibility mode for the     |
+|                |         | legacy Python Quickfort (not required |
+|                |         | for DFHack quickfort)                 |
++----------------+---------+---------------------------------------+
+
+For example, to ensure you only use blocks when a "building material" item is required, you
+could add this to your ``onMapLoad.init`` file::
+
+    on-new-fortress buildingplan set boulders false; buildingplan set logs false
+
+You only need to set the settings for new fortresses since your current filter settings
+are saved with your game.
 
 .. _confirm:
 

@@ -1020,9 +1020,11 @@ job but can't find the materials.
 
 As long as the `buildingplan` plugin is enabled, quickfort will use it to manage
 construction. The buildingplan plugin also has an "enabled" setting for each
-building type, but that setting only applies to the buildingplan user interface;
-quickfort will use buildingplan to manage everything designated in a ``#build``
-blueprint regardless of the buildingplan UI settings.
+building type, but that setting only applies to the buildingplan user interface.
+In addition, buildingplan has a "quickfort_mode" setting for compatibility with
+legacy Python Quickfort. This setting has no effect on DFHack Quickfort, which
+will use buildingplan to manage everything designated in a ``#build`` blueprint
+regardless of the buildingplan UI settings.
 
 However, quickfort *does* use buildingplan's filters for each building type. For
 example, you can use the buildingplan UI to set the type of stone you want your

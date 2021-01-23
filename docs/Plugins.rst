@@ -716,6 +716,8 @@ to always have one or two doors/beds/tables/chairs/etc available, and place
 as many as you like. The plugins then take over and fulfill the orders,
 with minimal space dedicated to stockpiles.
 
+.. _buildingplan-filters:
+
 Item filtering
 --------------
 
@@ -745,6 +747,8 @@ Note that Quickfort mode is only for compatibility with the legacy Python Quickf
 DFHack `quickfort` script does not need Quickfort mode to be enabled. The `quickfort` script
 will successfully integrate with buildingplan as long as the buildingplan plugin is enabled.
 
+.. _buildingplan-settings:
+
 Global settings
 ---------------
 
@@ -754,6 +758,10 @@ can also be set from the ``DFHack#`` prompt once a map is loaded (or from your
 ``onMapLoad.init`` file) with the syntax::
 
     buildingplan set <setting> <true|false>
+
+and displayed with::
+
+    buildingplan set
 
 The available settings are:
 

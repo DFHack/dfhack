@@ -954,7 +954,7 @@ static command_result buildingplan_cmd(color_ostream &out, vector <string> & par
             out.printerr(
                 "ERROR: A map must be loaded before you can read or set"
                 "buildingplan global settings. Try adding your"
-                "'buildingplan set' commands to the onMapLoad.init" "file.");
+                "'buildingplan set' commands to the onMapLoad.init file.\n");
             return CR_FAILURE;
         }
 
@@ -985,7 +985,7 @@ static command_result buildingplan_cmd(color_ostream &out, vector <string> & par
         }
         else
         {
-            out.printerr("ERROR: invalid syntax");
+            out.printerr("ERROR: invalid syntax\n");
         }
     }
 

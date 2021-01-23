@@ -1019,21 +1019,22 @@ prevents a building designation from being canceled when a dwarf picks up the
 job but can't find the materials.
 
 As long as the `buildingplan` plugin is enabled, quickfort will use it to manage
-construction. The buildingplan plugin also has an "enabled" setting for each
-building type, but that setting only applies to the buildingplan user interface.
-In addition, buildingplan has a "quickfort_mode" setting for compatibility with
-legacy Python Quickfort. This setting has no effect on DFHack Quickfort, which
-will use buildingplan to manage everything designated in a ``#build`` blueprint
+construction. The buildingplan plugin has an `"enabled" setting
+<buildingplan-settings>` for each building type, but those settings only apply
+to buildings created through the buildingplan user interface. In addition,
+buildingplan has a "quickfort_mode" setting for compatibility with legacy Python
+Quickfort. This setting has no effect on DFHack Quickfort, which will use
+buildingplan to manage everything designated in a ``#build`` blueprint
 regardless of the buildingplan UI settings.
 
-However, quickfort *does* use buildingplan's filters for each building type. For
-example, you can use the buildingplan UI to set the type of stone you want your
-walls made out of. Or you can specify that all buildingplan-managed tables must
-be of Masterful quality. The current filter settings are saved with planned
-buildings when the ``#build`` blueprint is run. This means you can set the
-filters the way you want for one blueprint, run the blueprint, and then freely
-change them again for the next blueprint, even if the first set of buildings
-haven't been built yet.
+However, quickfort *does* use `buildingplan's filters <buildingplan-filters>`
+for each building type. For example, you can use the buildingplan UI to set the
+type of stone you want your walls made out of. Or you can specify that all
+buildingplan-managed tables must be of Masterful quality. The current filter
+settings are saved with planned buildings when the ``#build`` blueprint is run.
+This means you can set the filters the way you want for one blueprint, run the
+blueprint, and then freely change them again for the next blueprint, even if the
+first set of buildings haven't been built yet.
 
 Note that buildings are still constructed immediately if you already have the
 materials. However, with buildingplan you now have the freedom to apply

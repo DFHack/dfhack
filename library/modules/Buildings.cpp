@@ -885,7 +885,7 @@ static void linkRooms(df::building *bld)
             continue;
 
         df::building_extents_type *pext = getExtentTile(room->room, df::coord2d(bld->x1, bld->y1));
-        if (!pext || !*pext)
+        if (!pext || !*pext || room == bld)
             continue;
 
         changed = true;

@@ -338,9 +338,9 @@ enableweapons:  {weaponsprefix}e^
 disableweapons: {weaponsprefix}d^
 
 metalweapons:  {forbidtrapcomponents}{forbidstoneweapons}{forbidotherweapons}
-ironweapons:   {metalweapons}{forbidweapons}{permitironweapons}
-copperweapons: {metalweapons}{forbidweapons}{permitcopperweapons}
-steelweapons:  {metalweapons}{forbidweapons}{permitsteelweapons}
+ironweapons:   {metalweapons}{forbidmetalweapons}{permitironweapons}
+copperweapons: {metalweapons}{forbidmetalweapons}{permitcopperweapons}
+steelweapons:  {metalweapons}{forbidmetalweapons}{permitsteelweapons}
 
 forbidweapons:        {weaponsprefix}{Right}f^
 forbidtrapcomponents: {weaponsprefix}{Right}{Down}f^

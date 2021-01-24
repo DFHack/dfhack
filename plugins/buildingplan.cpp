@@ -1124,7 +1124,7 @@ static bool setSetting(std::string name, bool value) {
     {
         debug("setting all_enabled %d -> %d", all_enabled, value);
         all_enabled = value;
-        return;
+        return true;
     }
     return planner.setGlobalSetting(name, value);
 }

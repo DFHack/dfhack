@@ -842,6 +842,8 @@ Blueprint mode  Description
 meta            Link sequences of blueprints together
 notes           Display long messages, such as help text or blueprint
                 walkthroughs
+ignore          Hide a section from quickfort, useful for scratch space or
+                personal notes
 ==============  ===========
 
 .. _quickfort-meta:
@@ -1000,6 +1002,14 @@ The quotes around the ``#meta`` modeline allow newlines in a single cell's text.
 Each line of the ``#notes`` "blueprint", however, is in a separate cell,
 allowing for much easier viewing and editing.
 
+Ignore blueprints
+`````````````````
+
+If you don't want some data to be visible to quickfort at all, use an
+``#ignore`` blueprint. All lines until the next modeline in the file or sheet
+will be completely ignored. This can be useful for personal notes, scratch
+space, or temporarily "commented out" blueprints.
+
 Buildingplan integration
 ------------------------
 
@@ -1009,19 +1019,22 @@ prevents a building designation from being canceled when a dwarf picks up the
 job but can't find the materials.
 
 As long as the `buildingplan` plugin is enabled, quickfort will use it to manage
-construction. The buildingplan plugin also has an "enabled" setting for each
-building type, but that setting only applies to the buildingplan user interface;
-quickfort will use buildingplan to manage everything designated in a ``#build``
-blueprint regardless of the buildingplan UI settings.
+construction. The buildingplan plugin has an `"enabled" setting
+<buildingplan-settings>` for each building type, but those settings only apply
+to buildings created through the buildingplan user interface. In addition,
+buildingplan has a "quickfort_mode" setting for compatibility with legacy Python
+Quickfort. This setting has no effect on DFHack Quickfort, which will use
+buildingplan to manage everything designated in a ``#build`` blueprint
+regardless of the buildingplan UI settings.
 
-However, quickfort *does* use buildingplan's filters for each building type. For
-example, you can use the buildingplan UI to set the type of stone you want your
-walls made out of. Or you can specify that all buildingplan-managed tables must
-be of Masterful quality. The current filter settings are saved with planned
-buildings when the ``#build`` blueprint is run. This means you can set the
-filters the way you want for one blueprint, run the blueprint, and then freely
-change them again for the next blueprint, even if the first set of buildings
-haven't been built yet.
+However, quickfort *does* use `buildingplan's filters <buildingplan-filters>`
+for each building type. For example, you can use the buildingplan UI to set the
+type of stone you want your walls made out of. Or you can specify that all
+buildingplan-managed tables must be of Masterful quality. The current filter
+settings are saved with planned buildings when the ``#build`` blueprint is run.
+This means you can set the filters the way you want for one blueprint, run the
+blueprint, and then freely change them again for the next blueprint, even if the
+first set of buildings haven't been built yet.
 
 Note that buildings are still constructed immediately if you already have the
 materials. However, with buildingplan you now have the freedom to apply

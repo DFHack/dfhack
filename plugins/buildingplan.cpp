@@ -17,7 +17,7 @@
 #include "buildingplan-lib.h"
 
 DFHACK_PLUGIN("buildingplan");
-#define PLUGIN_VERSION 2.0
+#define PLUGIN_VERSION "2.0"
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(ui_build_selector);
 REQUIRE_GLOBAL(world); // used in buildingplan library
@@ -911,25 +911,86 @@ IMPLEMENT_VMETHOD_INTERPOSE(buildingplan_query_hook, render);
 IMPLEMENT_VMETHOD_INTERPOSE(buildingplan_place_hook, render);
 IMPLEMENT_VMETHOD_INTERPOSE(buildingplan_room_hook, render);
 
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
+static bool setSetting(std::string name, bool value);
+
+static bool isTrue(std::string val)
+{
+    val = toLower(val);
+    return val == "on" || val == "true" || val == "y" || val == "yes"
+        || val == "1";
+}
+
 static command_result buildingplan_cmd(color_ostream &out, vector <string> & parameters)
 {
-    if (!parameters.empty())
+    if (parameters.empty())
+        return CR_OK;
+
+    std::string cmd = toLower(parameters[0]);
+
+    if (cmd.size() >= 1 && cmd[0] == 'v')
     {
-        if (parameters.size() == 1 && toLower(parameters[0])[0] == 'v')
+        out.print("buildingplan version: %s\n", PLUGIN_VERSION);
+    }
+    else if (parameters.size() >= 2 && cmd == "debug")
+    {
+        show_debugging = isTrue(parameters[1]);
+        out.print("buildingplan debugging: %s\n",
+                  show_debugging ? "enabled" : "disabled");
+    }
+    else if (cmd == "set")
+    {
+        if (!is_enabled)
         {
-            out << "Building Plan" << endl << "Version: " << PLUGIN_VERSION << endl;
+            out.printerr(
+                "ERROR: buildingplan must be enabled before you can"
+                " read or set buildingplan global settings.");
+            return CR_FAILURE;
         }
-        else if (parameters.size() == 2 && toLower(parameters[0]) == "debug")
+
+        if (!DFHack::Core::getInstance().isMapLoaded())
         {
-            show_debugging = (toLower(parameters[1]) == "on");
-            out << "Debugging " << ((show_debugging) ? "enabled" : "disabled") << endl;
+            out.printerr(
+                "ERROR: A map must be loaded before you can read or set"
+                "buildingplan global settings. Try adding your"
+                "'buildingplan set' commands to the onMapLoad.init file.\n");
+            return CR_FAILURE;
+        }
+
+        if (parameters.size() == 1)
+        {
+            // display current settings
+            out.print("active settings:\n");
+
+            for (auto & setting : planner.getGlobalSettings())
+            {
+                out.print("  %s = %s\n", setting.first.c_str(),
+                          setting.second ? "true" : "false");
+            }
+
+            out.print("  quickfort_mode = %s\n",
+                      quickfort_mode ? "true" : "false");
+        }
+        else if (parameters.size() == 3)
+        {
+            // set a setting
+            std::string setting = toLower(parameters[1]);
+            bool val = isTrue(parameters[2]);
+            if (!setSetting(setting, val))
+            {
+                out.printerr("ERROR: invalid parameter: '%s'\n",
+                    parameters[1].c_str());
+            }
+        }
+        else
+        {
+            out.printerr("ERROR: invalid syntax\n");
         }
     }
 
     return CR_OK;
 }
-
-DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 {
@@ -1040,14 +1101,14 @@ static void scheduleCycle() {
     cycle_requested = true;
 }
 
-static void setSetting(std::string name, bool value) {
+static bool setSetting(std::string name, bool value) {
     if (name == "quickfort_mode")
     {
         debug("setting quickfort_mode %d -> %d", quickfort_mode, value);
         quickfort_mode = value;
-        return;
+        return true;
     }
-    planner.setGlobalSetting(name, value);
+    return planner.setGlobalSetting(name, value);
 }
 
 DFHACK_PLUGIN_LUA_FUNCTIONS {

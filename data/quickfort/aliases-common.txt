@@ -339,6 +339,7 @@ disableweapons: {weaponsprefix}d^
 
 metalweapons:  {forbidtrapcomponents}{forbidstoneweapons}{forbidotherweapons}
 ironweapons:   {metalweapons}{forbidmetalweapons}{permitironweapons}
+bronzeweapons: {metalweapons}{forbidmetalweapons}{permitbronzeweapons}
 copperweapons: {metalweapons}{forbidmetalweapons}{permitcopperweapons}
 steelweapons:  {metalweapons}{forbidmetalweapons}{permitsteelweapons}
 
@@ -348,6 +349,7 @@ forbidmetalweapons:   {weaponsprefix}{Right}{Down 2}f^
 forbidstoneweapons:   {weaponsprefix}{Right}{Down 3}f^
 forbidotherweapons:   {weaponsprefix}{Right}{Down 4}f^
 forbidironweapons:    {weaponsprefix}{Right}{Down 2}{Right}&^
+forbidbronzeweapons:  {weaponsprefix}{Right}{Down 2}{Right}{Down 6}&^
 forbidcopperweapons:  {weaponsprefix}{Right}{Down 2}{Right}{Down 3}&^
 forbidsteelweapons:   {weaponsprefix}{Right}{Down 2}{Right}{Down 8}&^
 
@@ -357,6 +359,7 @@ permitmetalweapons:   {weaponsprefix}{Right}{Down 2}p^
 permitstoneweapons:   {weaponsprefix}{Right}{Down 3}p^
 permitotherweapons:   {weaponsprefix}{Right}{Down 4}p^
 permitironweapons:    {forbidironweapons}
+permitbronzeweapons:  {forbidbronzeweapons}
 permitcopperweapons:  {forbidcopperweapons}
 permitsteelweapons:   {forbidsteelweapons}
 

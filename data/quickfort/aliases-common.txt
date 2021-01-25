@@ -384,18 +384,21 @@ disablearmor: {armorprefix}d^
 metalarmor:  {forbidotherarmor}
 otherarmor:  {forbidmetalarmor}
 ironarmor:   {metalarmor}{forbidmetalarmor}{permitironarmor}
+bronzearmor: {metalarmor}{forbidmetalarmor}{permitbronzearmor}
 copperarmor: {metalarmor}{forbidmetalarmor}{permitcopperarmor}
 steelarmor:  {metalarmor}{forbidmetalarmor}{permitsteelarmor}
 
 forbidmetalarmor:  {armorprefix}{Right}{Down 6}f^
 forbidotherarmor:  {armorprefix}{Right}{Down 7}f^
 forbidironarmor:   {armorprefix}{Right}{Down 6}{Right}&^
+forbidbronzearmor: {armorprefix}{Right}{Down 6}{Right}{Down 6}&^
 forbidcopperarmor: {armorprefix}{Right}{Down 6}{Right}{Down 3}&^
 forbidsteelarmor:  {armorprefix}{Right}{Down 6}{Right}{Down 8}&^
 
 permitmetalarmor:   {armorprefix}{Right}{Down 6}p^
 permitotherarmor:   {armorprefix}{Right}{Down 7}p^
 permitironarmor:    {forbidironarmor}
+permitcopperarmor:  {forbidbronzearmor}
 permitcopperarmor:  {forbidcopperarmor}
 permitsteelarmor:   {forbidsteelarmor}
 

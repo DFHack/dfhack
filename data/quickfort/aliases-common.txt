@@ -398,7 +398,7 @@ forbidsteelarmor:  {armorprefix}{Right}{Down 6}{Right}{Down 8}&^
 permitmetalarmor:   {armorprefix}{Right}{Down 6}p^
 permitotherarmor:   {armorprefix}{Right}{Down 7}p^
 permitironarmor:    {forbidironarmor}
-permitcopperarmor:  {forbidbronzearmor}
+permitbronzearmor:  {forbidbronzearmor}
 permitcopperarmor:  {forbidcopperarmor}
 permitsteelarmor:   {forbidsteelarmor}
 

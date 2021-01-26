@@ -41,7 +41,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `buildingplan`: set global settings from the ``DFHack#`` prompt: e.g.  ``buildingplan set boulders false``
 
 ## Misc Improvements
-- `quickfort`: Dreamfort blueprint set improvements: add a streamlined checklist for all required dreamfort commands and give names to stockpiles levers, bridges, and zones
+- `quickfort`: Dreamfort blueprint set improvements: add a streamlined checklist for all required dreamfort commands and give names to stockpiles, levers, bridges, and zones
 
 # 0.47.04-r4
 

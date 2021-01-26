@@ -57,6 +57,12 @@ namespace embark_assist {
         //===============================================================================
 
         void embark_update() {
+            // not updating the embark overlay during an active find/match/survey phase
+            // which leads to better performance
+            if (state != nullptr && state->match_iterator.active) {
+                return;
+            }
+
             auto screen = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
             embark_assist::defs::mid_level_tiles mlt;
             embark_assist::survey::initiate(&mlt);

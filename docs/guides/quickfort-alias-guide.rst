@@ -760,11 +760,12 @@ cutstone     forbidcutstone
 Finished goods stockpile adjustments
 ````````````````````````````````````
 
-+-----------+
-| Exclusive |
-+===========+
-| jugs      |
-+-----------+
+=========  ============  ============
+Exclusive  Forbid        Permit
+=========  ============  ============
+jugs
+crafts     forbidcrafts  permitcrafts
+=========  ============  ============
 
 Cloth stockpile adjustments
 ```````````````````````````
@@ -793,6 +794,7 @@ metalweapons       forbidmetalweapons        permitmetalweapons
 \                  forbidstoneweapons        permitstoneweapons
 \                  forbidotherweapons        permitotherweapons
 ironweapons        forbidironweapons         permitironweapons
+bronzeweapons      forbidbronzeweapons       permitbronzeweapons
 copperweapons      forbidcopperweapons       permitcopperweapons
 steelweapons       forbidsteelweapons        permitsteelweapons
 masterworkweapons  forbidmasterworkweapons   permitmasterworkweapons
@@ -808,6 +810,7 @@ Exclusive        Forbid                  Permit
 metalarmor       forbidmetalarmor        permitmetalarmor
 otherarmor       forbidotherarmor        permitotherarmor
 ironarmor        forbidironarmor         permitironarmor
+bronzearmor      forbidbronzearmor       permitbronzearmor
 copperarmor      forbidcopperarmor       permitcopperarmor
 steelarmor       forbidsteelarmor        permitsteelarmor
 masterworkarmor  forbidmasterworkarmor   permitmasterworkarmor

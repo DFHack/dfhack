@@ -947,6 +947,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
 
     for (uint8_t i = 0; i < 16; i++) {
         for (uint8_t k = 0; k < 16; k++) {
+            embark_assist::defs::mid_level_tile &mid_level_tile = mlt->at(i).at(k);
             max_soil_depth = -1;
 
             offset = details->biome[i][k];
@@ -954,23 +955,23 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
 
             if (adjusted.x != x || adjusted.y != y)
             {
-                mlt->at(i).at(k).biome_offset = offset;
+                mid_level_tile.biome_offset = offset;
             }
             else
             {
-                mlt->at(i).at(k).biome_offset = 5;
+                mid_level_tile.biome_offset = 5;
             }
 
-            survey_results->at(x).at(y).biome_index[mlt->at(i).at(k).biome_offset] =
+            survey_results->at(x).at(y).biome_index[mid_level_tile.biome_offset] =
                 world_data->region_map[adjusted.x][adjusted.y].region_id;
 
-            mlt->at(i).at(k).savagery_level = world_data->region_map[adjusted.x][adjusted.y].savagery / 33;
-            if (mlt->at(i).at(k).savagery_level == 3) {
-                mlt->at(i).at(k).savagery_level = 2;
+            mid_level_tile.savagery_level = world_data->region_map[adjusted.x][adjusted.y].savagery / 33;
+            if (mid_level_tile.savagery_level == 3) {
+                mid_level_tile.savagery_level = 2;
             }
-            mlt->at(i).at(k).evilness_level = world_data->region_map[adjusted.x][adjusted.y].evilness / 33;
-            if (mlt->at(i).at(k).evilness_level == 3) {
-                mlt->at(i).at(k).evilness_level = 2;
+            mid_level_tile.evilness_level = world_data->region_map[adjusted.x][adjusted.y].evilness / 33;
+            if (mid_level_tile.evilness_level == 3) {
+                mid_level_tile.evilness_level = 2;
             }
 
             elevation = details->elevation[i][k];
@@ -996,8 +997,8 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
 
             base_z = elevation - 1;
             features = details->features[i][k];
-            mlt->at(i).at(k).adamantine_level = -1;
-            mlt->at(i).at(k).magma_level = -1;
+            mid_level_tile.adamantine_level = -1;
+            mid_level_tile.magma_level = -1;
 
             end_check_l = static_cast<uint16_t>(features.size());
             for (size_t l = 0; l < end_check_l; l++) {
@@ -1007,15 +1008,15 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                     switch (world_data->feature_map[x / 16][y / 16].features->feature_init[x % 16][y % 16][feature->feature_idx]->getType())
                     {
                     case df::feature_type::deep_special_tube:
-                        mlt->at(i).at(k).adamantine_level = world_data->feature_map[x / 16][y / 16].features->feature_init[x % 16][y % 16][feature->feature_idx]->start_depth;
+                        mid_level_tile.adamantine_level = world_data->feature_map[x / 16][y / 16].features->feature_init[x % 16][y % 16][feature->feature_idx]->start_depth;
                         break;
 
                     case df::feature_type::magma_pool:
-                        mlt->at(i).at(k).magma_level = 2 - world_data->feature_map[x / 16][y / 16].features->feature_init[x % 16][y % 16][feature->feature_idx]->start_depth;
+                        mid_level_tile.magma_level = 2 - world_data->feature_map[x / 16][y / 16].features->feature_init[x % 16][y % 16][feature->feature_idx]->start_depth;
                         break;
 
                     case df::feature_type::volcano:
-                        mlt->at(i).at(k).magma_level = 3;
+                        mid_level_tile.magma_level = 3;
                         break;
 
                     default:
@@ -1046,43 +1047,43 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
             int16_t cur_shift = elevation + soil_erosion - 1;
 
             aquifer = false;
-            mlt->at(i).at(k).aquifer = embark_assist::defs::Clear_Aquifer_Bits;
-            mlt->at(i).at(k).clay = false;
-            mlt->at(i).at(k).sand = false;
-            mlt->at(i).at(k).flux = false;
-            mlt->at(i).at(k).coal = false;
+            mid_level_tile.aquifer = embark_assist::defs::Clear_Aquifer_Bits;
+            mid_level_tile.clay = false;
+            mid_level_tile.sand = false;
+            mid_level_tile.flux = false;
+            mid_level_tile.coal = false;
 
             if (max_soil_depth == 0) {
-                mlt->at(i).at(k).soil_depth = 0;
+                mid_level_tile.soil_depth = 0;
             }
             else {
-                mlt->at(i).at(k).soil_depth = geo_summary->at(world_data->region_map[adjusted.x][adjusted.y].geo_index).soil_size - soil_erosion;
+                mid_level_tile.soil_depth = geo_summary->at(world_data->region_map[adjusted.x][adjusted.y].geo_index).soil_size - soil_erosion;
             }
-            mlt->at(i).at(k).offset = offset;
-            mlt->at(i).at(k).elevation = details->elevation[i][k];
-            mlt->at(i).at(k).river_size = embark_assist::defs::river_sizes::None;
-            mlt->at(i).at(k).river_elevation = 100;
+            mid_level_tile.offset = offset;
+            mid_level_tile.elevation = details->elevation[i][k];
+            mid_level_tile.river_size = embark_assist::defs::river_sizes::None;
+            mid_level_tile.river_elevation = 100;
 
             if (details->rivers_vertical.active[i][k] != 0) {
-                mlt->at(i).at(k).river_size = river_size_of (details->rivers_vertical.x_max[i][k] - details->rivers_vertical.x_min[i][k] + 1);
-                mlt->at(i).at(k).river_elevation = details->rivers_vertical.elevation[i][k];
+                mid_level_tile.river_size = river_size_of (details->rivers_vertical.x_max[i][k] - details->rivers_vertical.x_min[i][k] + 1);
+                mid_level_tile.river_elevation = details->rivers_vertical.elevation[i][k];
             }
             else if (details->rivers_horizontal.active[i][k] != 0) {
-                mlt->at(i).at(k).river_size = river_size_of (details->rivers_horizontal.y_max[i][k] - details->rivers_horizontal.y_min[i][k] + 1);
-                mlt->at(i).at(k).river_elevation = details->rivers_horizontal.elevation[i][k];
+                mid_level_tile.river_size = river_size_of (details->rivers_horizontal.y_max[i][k] - details->rivers_horizontal.y_min[i][k] + 1);
+                mid_level_tile.river_elevation = details->rivers_horizontal.elevation[i][k];
             }
 
-            if (mlt->at(i).at(k).river_size != embark_assist::defs::river_sizes::None &&
+            if (mid_level_tile.river_size != embark_assist::defs::river_sizes::None &&
                 world_tile->flags.is_set(df::region_map_entry_flags::is_brook)) {
-                mlt->at(i).at(k).river_size = embark_assist::defs::river_sizes::Brook;
+                mid_level_tile.river_size = embark_assist::defs::river_sizes::Brook;
             }
 
-            if (tile->min_region_soil > mlt->at(i).at(k).soil_depth) {
-                tile->min_region_soil = mlt->at(i).at(k).soil_depth;
+            if (tile->min_region_soil > mid_level_tile.soil_depth) {
+                tile->min_region_soil = mid_level_tile.soil_depth;
             }
 
-            if (tile->max_region_soil < mlt->at(i).at(k).soil_depth) {
-                tile->max_region_soil = mlt->at(i).at(k).soil_depth;
+            if (tile->max_region_soil < mid_level_tile.soil_depth) {
+                tile->max_region_soil = mid_level_tile.soil_depth;
             }
 
             end_check_l = static_cast<uint16_t>(world_data->geo_biomes[world_data->region_map[adjusted.x][adjusted.y].geo_index]->layers.size());
@@ -1124,38 +1125,38 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                 if (top_z >= bottom_z) {
                     last_bottom = bottom_z;
 
-                    mlt->at(i).at(k).minerals[layer->mat_index] = true;
+                    mid_level_tile.minerals[layer->mat_index] = true;
 
                     end_check_m = static_cast<uint16_t>(world->raws.inorganics[layer->mat_index]->metal_ore.mat_index.size());
 
                     for (uint16_t m = 0; m < end_check_m; m++) {
-                        mlt->at(i).at(k).metals[world->raws.inorganics[layer->mat_index]->metal_ore.mat_index[m]] = true;
+                        mid_level_tile.metals[world->raws.inorganics[layer->mat_index]->metal_ore.mat_index[m]] = true;
                     }
 
                     if (layer->type == df::geo_layer_type::SOIL ||
                         layer->type == df::geo_layer_type::SOIL_SAND) {
                         if (world->raws.inorganics[layer->mat_index]->flags.is_set(df::inorganic_flags::SOIL_SAND)) {
-                            mlt->at(i).at(k).sand = true;
+                            mid_level_tile.sand = true;
                         }
                     }
 
                     if (world->raws.inorganics[layer->mat_index]->economic_uses.size() > 0) {
-                        mlt->at(i).at(k).economics[layer->mat_index] = true;
+                        mid_level_tile.economics[layer->mat_index] = true;
 
                         end_check_m = static_cast<uint16_t>(world->raws.inorganics[layer->mat_index]->economic_uses.size());
                         for (uint16_t m = 0; m < end_check_m; m++) {
                             if (world->raws.inorganics[layer->mat_index]->economic_uses[m] == state->clay_reaction) {
-                                mlt->at(i).at(k).clay = true;
+                                mid_level_tile.clay = true;
                             }
 
                             else if (world->raws.inorganics[layer->mat_index]->economic_uses[m] == state->flux_reaction) {
-                                mlt->at(i).at(k).flux = true;
+                                mid_level_tile.flux = true;
                             }
                         }
 
                         for (uint16_t m = 0; m < state->coals.size(); m++) {
                             if (layer->mat_index == state->coals[m]) {
-                                mlt->at(i).at(k).coal = true;
+                                mid_level_tile.coal = true;
                                 break;
                             }
                         }
@@ -1164,31 +1165,31 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                     end_check_m = static_cast<uint16_t>(layer->vein_mat.size());
 
                     for (uint16_t m = 0; m < end_check_m; m++) {
-                        mlt->at(i).at(k).minerals[layer->vein_mat[m]] = true;
+                        mid_level_tile.minerals[layer->vein_mat[m]] = true;
 
                         end_check_n = static_cast<uint16_t>(world->raws.inorganics[layer->vein_mat[m]]->metal_ore.mat_index.size());
 
                         for (uint16_t n = 0; n < end_check_n; n++) {
-                            mlt->at(i).at(k).metals[world->raws.inorganics[layer->vein_mat[m]]->metal_ore.mat_index[n]] = true;
+                            mid_level_tile.metals[world->raws.inorganics[layer->vein_mat[m]]->metal_ore.mat_index[n]] = true;
                         }
 
                         if (world->raws.inorganics[layer->vein_mat[m]]->economic_uses.size() > 0) {
-                            mlt->at(i).at(k).economics[layer->vein_mat[m]] = true;
+                            mid_level_tile.economics[layer->vein_mat[m]] = true;
 
                             end_check_n = static_cast<uint16_t>(world->raws.inorganics[layer->vein_mat[m]]->economic_uses.size());
                             for (uint16_t n = 0; n < end_check_n; n++) {
                                 if (world->raws.inorganics[layer->vein_mat[m]]->economic_uses[n] == state->clay_reaction) {
-                                    mlt->at(i).at(k).clay = true;
+                                    mid_level_tile.clay = true;
                                 }
 
                                 else if (world->raws.inorganics[layer->vein_mat[m]]->economic_uses[n] == state->flux_reaction) {
-                                    mlt->at(i).at(k).flux = true;
+                                    mid_level_tile.flux = true;
                                 }
                             }
 
                             for (uint16_t n = 0; n < state->coals.size(); n++) {
                                 if (layer->vein_mat[m] == state->coals[n]) {
-                                    mlt->at(i).at(k).coal = true;
+                                    mid_level_tile.coal = true;
                                     break;
                                 }
                             }
@@ -1202,16 +1203,16 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                 }
             }
             if (!aquifer) {
-                mlt->at(i).at(k).aquifer = embark_assist::defs::None_Aquifer_Bit;
+                mid_level_tile.aquifer = embark_assist::defs::None_Aquifer_Bit;
             }
             else if (world_data->region_map[adjusted.x][adjusted.y].drainage % 20 == 7) {
-                mlt->at(i).at(k).aquifer = embark_assist::defs::Heavy_Aquifer_Bit;
+                mid_level_tile.aquifer = embark_assist::defs::Heavy_Aquifer_Bit;
             }
             else {
-                mlt->at(i).at(k).aquifer = embark_assist::defs::Light_Aquifer_Bit;
+                mid_level_tile.aquifer = embark_assist::defs::Light_Aquifer_Bit;
             }
 
-            mlt->at(i).at(k).trees = tree_level_of(world_data->regions[world_data->region_map[adjusted.x][adjusted.y].region_id]->type,
+            mid_level_tile.trees = tree_level_of(world_data->regions[world_data->region_map[adjusted.x][adjusted.y].region_id]->type,
                 world_data->region_map[adjusted.x][adjusted.y].vegetation);
         }
     }

@@ -312,7 +312,8 @@ finishedgoodsprefix:  {enter_sp_config}{Down 10}
 enablefinishedgoods:  {finishedgoodsprefix}e^
 disablefinishedgoods: {finishedgoodsprefix}d^
 
-jugs: {finishedgoodsprefix}{Right}f{Right}{Up 2}&{Left}{Down 2}f{Down}f{Down}f^
+crafts: {finishedgoodsprefix}{Right}f{Right}{Down 9}{togglesequence 9}^
+jugs:   {finishedgoodsprefix}{Right}f{Right}{Up 2}&{Left}{Down 2}f{Down}f{Down}f^
 
 
 ##################################

@@ -315,6 +315,10 @@ disablefinishedgoods: {finishedgoodsprefix}d^
 crafts: {finishedgoodsprefix}{Right}f{Right}{Down 9}{togglesequence 9}^
 jugs:   {finishedgoodsprefix}{Right}f{Right}{Up 2}&{Left}{Down 2}f{Down}f{Down}f^
 
+forbidcrafts: {finishedgoodsprefix}{Right 2}{Down 9}{togglesequence 9}^
+
+permitcrafts: {forbidcrafts}
+
 
 ##################################
 # cloth

@@ -36,6 +36,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 - `embark-assistant`: fixed order of factors when calculating min temperature
 - `embark-assistant`: improved performance of surveying
+- `quickfort`: creating zones no longer causes eventual crashes
 
 ## Misc Improvements
 - `buildingplan`: set global settings from the ``DFHack#`` prompt: e.g.  ``buildingplan set boulders false``

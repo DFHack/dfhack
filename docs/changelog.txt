@@ -36,7 +36,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 - `embark-assistant`: fixed order of factors when calculating min temperature
 - `embark-assistant`: improved performance of surveying
-- `quickfort`: fix library aliases for iron, copper, and steel weapons; add aliases for bronze weapons and armor
+- `quickfort`: fix library aliases for iron, copper, and steel weapons; add aliases for bronze weapons and armor; add alias for tradeable crafts
 
 ## Misc Improvements
 - `buildingplan`: set global settings from the ``DFHack#`` prompt: e.g.  ``buildingplan set boulders false``

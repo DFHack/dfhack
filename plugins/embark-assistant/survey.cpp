@@ -1278,44 +1278,45 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
 
     for (uint8_t i = 0; i < 16; i++) {
         for (uint8_t k = 0; k < 16; k++) {
-            tile.aquifer |= mlt->at(i).at(k).aquifer;
-            if (mlt->at(i).at(k).clay) { tile.clay_count++; }
-            if (mlt->at(i).at(k).sand) { tile.sand_count++; }
-            if (mlt->at(i).at(k).flux) { tile.flux_count++; }
-            if (mlt->at(i).at(k).coal) { tile.coal_count++; }
+            embark_assist::defs::mid_level_tile &mid_level_tile = mlt->at(i).at(k);
+            tile.aquifer |= mid_level_tile.aquifer;
+            if (mid_level_tile.clay) { tile.clay_count++; }
+            if (mid_level_tile.sand) { tile.sand_count++; }
+            if (mid_level_tile.flux) { tile.flux_count++; }
+            if (mid_level_tile.coal) { tile.coal_count++; }
 
-            if (mlt->at(i).at(k).soil_depth < tile.min_region_soil) {
-                tile.min_region_soil = mlt->at(i).at(k).soil_depth;
+            if (mid_level_tile.soil_depth < tile.min_region_soil) {
+                tile.min_region_soil = mid_level_tile.soil_depth;
             }
 
-            if (mlt->at(i).at(k).soil_depth > tile.max_region_soil) {
-                tile.max_region_soil = mlt->at(i).at(k).soil_depth;
+            if (mid_level_tile.soil_depth > tile.max_region_soil) {
+                tile.max_region_soil = mid_level_tile.soil_depth;
             }
 
-            if (mlt->at(i).at(k).river_size != embark_assist::defs::river_sizes::None) {
+            if (mid_level_tile.river_size != embark_assist::defs::river_sizes::None) {
                 if (tile.min_river_size == embark_assist::defs::river_sizes::None ||
-                    mlt->at(i).at(k).river_size < tile.min_river_size) {
-                    tile.min_river_size = mlt->at(i).at(k).river_size;
+                    mid_level_tile.river_size < tile.min_river_size) {
+                    tile.min_river_size = mid_level_tile.river_size;
                 }
 
-                if (tile.max_river_size < mlt->at(i).at(k).river_size) {
-                    tile.max_river_size = mlt->at(i).at(k).river_size;
+                if (tile.max_river_size < mid_level_tile.river_size) {
+                    tile.max_river_size = mid_level_tile.river_size;
                 }
 
                 if (i < 15 &&
                     mlt->at(i + 1).at(k).river_size != embark_assist::defs::river_sizes::None &&
-                    abs (mlt->at(i).at(k).river_elevation - mlt->at(i + 1).at(k).river_elevation) >
+                    abs (mid_level_tile.river_elevation - mlt->at(i + 1).at(k).river_elevation) >
                     tile.max_waterfall) {
                     tile.max_waterfall =
-                        abs(mlt->at(i).at(k).river_elevation - mlt->at(i + 1).at(k).river_elevation);
+                        abs(mid_level_tile.river_elevation - mlt->at(i + 1).at(k).river_elevation);
                 }
 
                 if (k < 15 &&
                     mlt->at(i).at(k + 1).river_size != embark_assist::defs::river_sizes::None &&
-                    abs(mlt->at(i).at(k).river_elevation - mlt->at(i).at(k + 1).river_elevation) >
+                    abs(mid_level_tile.river_elevation - mlt->at(i).at(k + 1).river_elevation) >
                     tile.max_waterfall) {
                     tile.max_waterfall =
-                        abs(mlt->at(i).at(k).river_elevation - mlt->at(i).at(k + 1).river_elevation);
+                        abs(mid_level_tile.river_elevation - mlt->at(i).at(k + 1).river_elevation);
                 }
             }
 
@@ -1325,16 +1326,16 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
             // reanimating handled separately
             // thralling handled separately
 
-            if (tile.min_tree_level > mlt->at(i).at(k).trees) tile.min_tree_level = mlt->at(i).at(k).trees;
-            if (tile.max_tree_level < mlt->at(i).at(k).trees) tile.max_tree_level = mlt->at(i).at(k).trees;
+            if (tile.min_tree_level > mid_level_tile.trees) tile.min_tree_level = mid_level_tile.trees;
+            if (tile.max_tree_level < mid_level_tile.trees) tile.max_tree_level = mid_level_tile.trees;
 
-            tile.savagery_count[mlt->at(i).at(k).savagery_level]++;
-            tile.evilness_count[mlt->at(i).at(k).evilness_level]++;
+            tile.savagery_count[mid_level_tile.savagery_level]++;
+            tile.evilness_count[mid_level_tile.evilness_level]++;
 
             for (uint16_t l = 0; l < state->max_inorganic; l++) {
-                if (mlt->at(i).at(k).metals[l]) { tile.metals[l] = true; }
-                if (mlt->at(i).at(k).economics[l]) { tile.economics[l] = true; }
-                if (mlt->at(i).at(k).minerals[l]) { tile.minerals[l] = true; }
+                if (mid_level_tile.metals[l]) { tile.metals[l] = true; }
+                if (mid_level_tile.economics[l]) { tile.economics[l] = true; }
+                if (mid_level_tile.minerals[l]) { tile.minerals[l] = true; }
             }
         }
     }

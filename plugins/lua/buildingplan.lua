@@ -229,7 +229,16 @@ end
     setting is not needed for DFHack quickfort.
 --]]
 function GlobalSettings:init()
+
     self.subviews.label:setText{
+        self:make_setting_label_token('Enable all', 'CUSTOM_E', 'all_enabled', 12),
+            self:make_setting_value_token('all_enabled'), '\n',
+        '  Enables buildingplan for all building types. Use this to avoid having\n',
+        '  to manually enable buildingplan for each building type that you want\n',
+        '  to plan. Note that DFHack quickfort will use buildingplan to manage\n',
+        '  buildings regardless of whether buildingplan is "enabled" for the\n',
+        '  building type.\n',
+        '\n',
         'Allowed types for generic, fire-safe, and magma-safe building material:\n',
         self:make_setting_label_token('Blocks', 'CUSTOM_B', 'blocks', 10),
             self:make_setting_value_token('blocks'), '\n',

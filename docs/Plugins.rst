@@ -765,29 +765,32 @@ and displayed with::
 
 The available settings are:
 
-+----------------+---------+---------------------------------------+
-| Setting        | Default | Description                           |
-+================+=========+=======================================+
-| blocks         | true    | Allow blocks, boulders, logs, or bars |
-+----------------+---------+ to be matched for generic "building   |
-| boulders       | true    | material" items                       |
-+----------------+---------+                                       |
-| logs           | true    |                                       |
-+----------------+---------+                                       |
-| bars           | false   |                                       |
-+----------------+---------+---------------------------------------+
-| quickfort_mode | false   | Enable compatibility mode for the     |
-|                |         | legacy Python Quickfort (not required |
-|                |         | for DFHack quickfort)                 |
-+----------------+---------+---------------------------------------+
++----------------+---------+-----------+---------------------------------------+
+| Setting        | Default | Persisted | Description                           |
++================+=========+===========+=======================================+
+| all_enabled    | false   | no        | Enable planning mode for all building |
+|                |         |           | types.                                |
++----------------+---------+-----------+---------------------------------------+
+| blocks         | true    | yes       | Allow blocks, boulders, logs, or bars |
++----------------+---------+           | to be matched for generic "building   |
+| boulders       | true    |           | material" items                       |
++----------------+---------+           |                                       |
+| logs           | true    |           |                                       |
++----------------+---------+           |                                       |
+| bars           | false   |           |                                       |
++----------------+---------+-----------+---------------------------------------+
+| quickfort_mode | false   | no        | Enable compatibility mode for the     |
+|                |         |           | legacy Python Quickfort (not required |
+|                |         |           | for DFHack quickfort)                 |
++----------------+---------+-----------+---------------------------------------+
 
 For example, to ensure you only use blocks when a "building material" item is required, you
 could add this to your ``onMapLoad.init`` file::
 
     on-new-fortress buildingplan set boulders false; buildingplan set logs false
 
-You only need to set the settings for new fortresses since your current filter settings
-are saved with your game.
+Persisted settings (i.e. ``blocks``, ``boulders``, ``logs``, and ``bars``) are saved with
+your game, so you only need to set them to the values you want once.
 
 .. _confirm:
 

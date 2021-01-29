@@ -647,10 +647,10 @@ function processArgsGetopt(args, optionActions)
     for _,optionAction in ipairs(optionActions) do
         local sh_opt,long_opt = optionAction[1], optionAction[2]
         if not sh_opt or type(sh_opt) ~= 'string' or #sh_opt ~= 1 then
-            qerror('optionAction missing option letter at index 1')
+            error('optionAction missing option letter at index 1')
         end
         if not optionAction.handler then
-            qerror(string.format('handler missing for option "%s"', sh_opt))
+            error(string.format('handler missing for option "%s"', sh_opt))
         end
         sh_opts = sh_opts .. sh_opt
         if optionAction.hasArg then sh_opts = sh_opts .. ':' end

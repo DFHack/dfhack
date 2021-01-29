@@ -45,7 +45,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `quickfort`: Dreamfort blueprint set improvements: add a streamlined checklist for all required dreamfort commands and give names to stockpiles, levers, bridges, and zones
 
 ## Lua
-- ``processArgs2()`` added to utils.lua, providing a callback interface for parameter parsing and getopt-like flexibility for parameter ordering and combination (see docs in ``library/lua/utils.lua`` and ``library/lua/3rdparty/alt_getopt.lua`` for details).
+- ``processArgsGetopt()`` added to utils.lua, providing a callback interface for parameter parsing and getopt-like flexibility for parameter ordering and combination (see docs in ``library/lua/utils.lua`` and ``library/lua/3rdparty/alt_getopt.lua`` for details).
 
 # 0.47.04-r4
 

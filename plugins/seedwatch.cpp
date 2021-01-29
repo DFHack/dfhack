@@ -297,7 +297,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
         break;
     case SC_MAP_UNLOADED:
         if (running)
-            out.printerr("seedwatch deactivated due to game load/unload\n");
+            out.printerr("seedwatch deactivated due to game unload\n");
         running = false;
         break;
     default:

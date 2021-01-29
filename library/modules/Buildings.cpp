@@ -881,7 +881,7 @@ static void linkRooms(df::building *bld)
     for (size_t i = 0; i < vec.size(); i++)
     {
         auto room = vec[i];
-        if (!room->is_room || room->z != bld->z)
+        if (!room->is_room || room->z != bld->z || room == bld)
             continue;
 
         df::building_extents_type *pext = getExtentTile(room->room, df::coord2d(bld->x1, bld->y1));

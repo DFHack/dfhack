@@ -1,6 +1,7 @@
 local _ENV = mkmodule('utils')
 
 local df = df
+local getopt = require('3rdparty.alt_getopt')
 
 -- Comparator function
 function compare(a,b)
@@ -611,6 +612,60 @@ function processArgs(args, validArgs)
         end
     end
     return result
+end
+
+-- processes commandline options according to optionActions and returns all
+-- argument strings that are not options. Options and non-option strings can
+-- appear in any order, and single-letter options that do not take arguments
+-- can be combined into a single option string (e.g. '-abc' is the same as
+-- '-a -b -c' if options 'a' and 'b' do not take arguments.
+--
+-- optionActions is a vector with elements in the following format:
+-- {shortOptionName, longOptionAlias, hasArg=boolean, handler=fn}
+-- shortOptionName and handler are required. If the option takes an argument,
+-- it will be passed to the handler function.
+-- longOptionAlias is optional.
+-- hasArgument defaults to false.
+--
+-- example usage:
+--
+-- local filename = nil
+-- local open_readonly = false
+-- local nonoptions = processArgsGetopt(args, {
+--   {'r', handler=function() open_readonly = true end},
+--   {'f', 'filename', hasArg=true,
+--    handler=function(optarg) filename = optarg end}
+-- })
+--
+-- when args is {'first', '-f', 'fname', 'second'} or, equivalently,
+-- {'first', '--filename', 'fname', 'second'} (note the double dash in front of
+-- the long option alias), then filename will be fname and nonoptions will
+-- contain {'first', 'second'}.
+function processArgsGetopt(args, optionActions)
+    local sh_opts, long_opts = '', {}
+    local handlers = {}
+    for _,optionAction in ipairs(optionActions) do
+        local sh_opt,long_opt = optionAction[1], optionAction[2]
+        if not sh_opt or type(sh_opt) ~= 'string' or #sh_opt ~= 1 then
+            qerror('optionAction missing option letter at index 1')
+        end
+        if not optionAction.handler then
+            qerror(string.format('handler missing for option "%s"', sh_opt))
+        end
+        sh_opts = sh_opts .. sh_opt
+        if optionAction.hasArg then sh_opts = sh_opts .. ':' end
+        handlers[sh_opt] = optionAction.handler
+        if long_opt then
+            long_opts[long_opt] = sh_opt
+            handlers[long_opt] = optionAction.handler
+        end
+    end
+    local opts, optargs, nonoptions =
+            getopt.get_ordered_opts(args, sh_opts, long_opts)
+    for i,v in ipairs(opts) do
+        handlers[v](optargs[i])
+    end
+    return nonoptions
 end
 
 function fillTable(table1,table2)

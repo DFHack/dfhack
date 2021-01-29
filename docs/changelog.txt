@@ -44,6 +44,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 - `quickfort`: Dreamfort blueprint set improvements: add a streamlined checklist for all required dreamfort commands and give names to stockpiles, levers, bridges, and zones
 
+## Lua
+- ``processArgs2()`` added to utils.lua, providing a callback interface for parameter parsing and getopt-like flexibility for parameter ordering and combination (see docs in ``library/lua/utils.lua`` and ``library/lua/3rdparty/alt_getopt.lua`` for details).
+
 # 0.47.04-r4
 
 ## Fixes
@@ -1176,4 +1179,3 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - The ``ui_menu_width`` global is now a 2-byte array; the second item is the former ``ui_area_map_width`` global, which is now removed
 - The former ``announcements`` global is now a field in ``d_init``
 - ``world`` fields formerly beginning with ``job_`` are now fields of ``world.jobs``, e.g. ``world.job_list`` is now ``world.jobs.list``
-

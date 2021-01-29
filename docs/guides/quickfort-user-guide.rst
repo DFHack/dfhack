@@ -1211,20 +1211,13 @@ dreamfort_surface's "`meta
 1vlxOuDOTsjsZ5W45Ri1kJKgp3waFo8r505LfZVg5wkU/edit#gid=972927200>`__" sheet to
 see how much meta blueprints can simplify your life.
 
-Note that one of the ``#meta`` blueprints just has one line. In this case, the
-``#meta`` blueprint isn't strictly necessary. The referenced blueprint could
-just be applied directly. However, quickfort lists blueprints in the order that
-it reads them, and we chose to make a one-blueprint meta blueprint to ensure all
-the steps appear in order in the quickfort list output.
-
-By the way, you can define `as many blueprints as you want
-<quickfort-packaging>` on one sheet, but multi-blueprint sheets are
-especially useful when writing meta blueprints. It's like having a bird's eye
-view of your entire plan in one sheet.
+You can define `as many blueprints as you want <quickfort-packaging>` on one
+sheet, but multi-blueprint sheets are especially useful when writing meta
+blueprints. It's like having a bird's eye view of your entire plan in one sheet.
 
 .. topic:: Tip
 
-    Keep the blueprint list uncluttered with hidden() markers.
+    Keep the blueprint list uncluttered by using ``hidden()`` markers.
 
 If a blueprint is bundled into a meta blueprint, it does not need to appear in
 the quickfort list output since you won't be running it directly. Add a
@@ -1301,11 +1294,13 @@ stockpiles. Note the `careful customization
 wsszA1AnFqoxeoehByg/edit#gid=486506218>`__ of the food stockpiles and the
 stockpile chains set up with the ``give*`` aliases. This is so when multiple
 stockpiles can hold the same item, the largest can keep the smaller ones filled.
-If you have multiple stockpiles holding the same type on different z-levels,
-though, this can be tricky to set up with a blueprint. Here, the jugs and pots
-stockpiles must be manually linked to the quantum stockpile on the industry
-level, since we can't know beforehand how many z-levels away that is. Note how
-we call that out in the ``#query`` blueprint's ``message()``.
+For example the ``give2left`` alias funnels seeds from the seeds feeder pile to
+the container-enabled seed storage pile. If you have multiple stockpiles holding
+the same type on different z-levels, though, this can be tricky to set up with a
+blueprint. Here, the jugs and pots stockpiles must be manually linked to the
+quantum stockpile on the industry level, since we can't know beforehand how many
+z-levels away that is. Note how we call that out in the ``#query`` blueprint's
+``message()``.
 
 .. topic:: Tip
 
@@ -1373,9 +1368,9 @@ However, in quickfort there are no guarantees about which cell will be
 processed first. In the example above, we obviously intend for the food
 stockpile to have tallow exclusively permitted, then to add dye. It could happen
 that the two aliases are applied in the opposite order, though, and we'd end up
-with dye being permitted, then everything being forbidden and tallow being
-enabled. To make sure you always get what you want, write order-sensitive
-aliases on the same line::
+with dye being permitted, then everything (including dye) being forbidden, and,
+finally, tallow being enabled. To make sure you always get what you want, write
+order-sensitive aliases on the same line::
 
     #place Declare a food stockpile
     f(3x3)
@@ -1396,15 +1391,13 @@ priorities <quickfort-dig-priorities>`.
 
     Use dig priorities to control ramp creation.
 
-We can `ensure <https://docs.google.com/spreadsheets/d/1IBy6_pGEe6WSBCLukDz_5I-
-4vi_mpHuJJyOp2j6SJlY/edit#gid=962076234>`__ the bottom level is carved out
-before the layer above is channelled by assigning the channel designations lower
-priorities (row 76). This is easy to do here because it's just one tile and
-there is no chance of cave-in.
+We can `ensure <https://docs.google.com/spreadsheets/d/1IBy6_pGEe6WSBCLukDz_5I-4vi_mpHuJJyOp2j6SJlY/edit#gid=962076234>`__
+the bottom level is carved out before the layer above is channelled by assigning
+the channel designations lower priorities (the ``h5``s in the third layer).
 
 An alternative is to have a follow-up blueprint that removes any undesired
-ramps. We did this on the surface and farming levels with the miasma vents to
-avoid the complication of setting detailed dig priorities over such large areas.
+ramps. We did this on the surface and farming levels with the miasma vents since
+it would be too complicated to synchronize the digging between the two layers.
 
 The guildhall_ level: avoiding smoothing issues
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

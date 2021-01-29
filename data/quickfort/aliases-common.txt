@@ -104,7 +104,7 @@ plants:         {foodprefix}b{Right}{Down 4}p^
 booze:          {foodprefix}b{Right}{Down 5}p{Down}p^
 seeds:          {foodprefix}b{Right}{Down 9}p^
 dye:            {foodprefix}b{Right}{Down 11}{Right}{Down 28}{togglesequence 4}^
-tallow:         {foodprefix}b{Right}{Down 13}{Right}{Down}{togglesequence2 822}^
+tallow:         {foodprefix}b{Right}{Down 13}{Right}stallow&p^
 miscliquid:     {foodprefix}b{Right}{Down 18}p^
 
 forbidpreparedfood:   {foodprefix}u^
@@ -113,7 +113,7 @@ forbidplants:         {foodprefix}{Right}{Down 4}f^
 forbidbooze:          {foodprefix}{Right}{Down 5}f{Down}f^
 forbidseeds:          {foodprefix}{Right}{Down 9}f^
 forbiddye:            {foodprefix}{Right}{Down 11}{Right}{Down 28}{togglesequence 4}^
-forbidtallow:         {foodprefix}{Right}{Down 13}{Right}{Down}{togglesequence2 822}^
+forbidtallow:         {foodprefix}{Right}{Down 13}{Right}stallow&f^
 forbidmiscliquid:     {foodprefix}{Right}{Down 18}f^
 
 permitpreparedfood:   {forbidpreparedfood}
@@ -122,7 +122,7 @@ permitplants:         {foodprefix}{Right}{Down 4}p^
 permitbooze:          {foodprefix}{Right}{Down 5}p{Down}p^
 permitseeds:          {foodprefix}{Right}{Down 9}p^
 permitdye:            {forbiddye}
-permittallow:         {forbidtallow}
+permittallow:         {foodprefix}{Right}{Down 13}{Right}stallow&p^
 permitmiscliquid:     {foodprefix}{Right}{Down 18}p^
 
 # the next two aliases are for compatibility with previous implementations of

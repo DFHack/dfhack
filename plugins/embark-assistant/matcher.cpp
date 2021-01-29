@@ -68,7 +68,7 @@ namespace embark_assist {
 
         void process_embark_incursion(matcher_info *result,
             embark_assist::defs::world_tile_data *survey_results,
-            embark_assist::defs::mid_level_tile *mlt,  // Note this is a single tile, as opposed to most usages of this variable name.
+            embark_assist::defs::mid_level_tile_incursion_base *mlt,  // Note this is a single tile, as opposed to most usages of this variable name.
             embark_assist::defs::finders *finder,
             int16_t elevation,
             uint16_t x,
@@ -2699,7 +2699,7 @@ namespace embark_assist {
 
         void merge_incursion_into_world_tile(embark_assist::defs::region_tile_datum* current,
             embark_assist::defs::region_tile_datum* target_tile,
-            embark_assist::defs::mid_level_tile* target_mlt) {
+            embark_assist::defs::mid_level_tile_incursion_base* target_mlt) {
             df::world_data* world_data = world->world_data;
 
             current->aquifer |= target_mlt->aquifer;
@@ -3065,6 +3065,12 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
         iterator->active = !(iterator->i > world->worldgen.worldgen_parms.dim_y / 16);
 
         if (!iterator->active) {
+            // if the cursor was positioned in the lower right corner before the search it has to be moved to a neighbouring tile manually
+            // to force another call to embark_update when all (incursion) data is finally collected to make sure this specific world tile is properly reevaluated
+            // see the embark_update() in embark-assistant
+            if (iterator->x == world->worldgen.worldgen_parms.dim_x - 1 && iterator->y == world->worldgen.worldgen_parms.dim_y - 1) {
+                embark_assist::matcher::move_cursor(iterator->x - 1, iterator->y);
+            }
             embark_assist::matcher::move_cursor(iterator->x, iterator->y);
 
             if (!survey_results->at(0).at(0).survey_completed) {  // Every world tile has gone through preliminary survey, so add possible incursion resources to each tile.

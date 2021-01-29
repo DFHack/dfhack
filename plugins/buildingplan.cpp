@@ -17,7 +17,7 @@
 #include "buildingplan-lib.h"
 
 DFHACK_PLUGIN("buildingplan");
-#define PLUGIN_VERSION 2.0
+#define PLUGIN_VERSION "2.0"
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(ui_build_selector);
 REQUIRE_GLOBAL(world); // used in buildingplan library
@@ -27,6 +27,7 @@ REQUIRE_GLOBAL(world); // used in buildingplan library
 
 bool show_help = false;
 bool quickfort_mode = false;
+bool all_enabled = false;
 bool in_dummy_screen = false;
 std::unordered_map<BuildingTypeKey, bool, BuildingTypeKeyHash> planmode_enabled;
 
@@ -284,7 +285,7 @@ void ViewscreenChooseMaterial::render()
 //START Viewscreen Hook
 static bool is_planmode_enabled(BuildingTypeKey key)
 {
-    return planmode_enabled[key] || quickfort_mode;
+    return planmode_enabled[key] || quickfort_mode || all_enabled;
 }
 
 static std::string get_item_label(const BuildingTypeKey &key, int item_idx)
@@ -387,6 +388,7 @@ static void show_global_settings_dialog()
     lua_newtable(L);
     int ctable = lua_gettop(L);
     Lua::SetField(L, quickfort_mode, ctable, "quickfort_mode");
+    Lua::SetField(L, all_enabled, ctable, "all_enabled");
 
     for (auto & setting : planner.getGlobalSettings())
     {
@@ -629,7 +631,8 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
             show_help = true;
         }
 
-        if (input->count(interface_key::CUSTOM_SHIFT_P))
+        if (!quickfort_mode && !all_enabled
+            && input->count(interface_key::CUSTOM_SHIFT_P))
         {
             planmode_enabled[key] = !planmode_enabled[key];
             if (!is_planmode_enabled(key))
@@ -765,8 +768,16 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
             OutputString(COLOR_WHITE, x, y, "Use Shift-Keys here", true, left_margin);
         }
 
-        OutputToggleString(x, y, "Planning Mode", interface_key::CUSTOM_SHIFT_P,
-            planmode_enabled[key], true, left_margin, COLOR_WHITE, COLOR_LIGHTRED);
+        OutputHotkeyString(x, y, "Planning Mode", interface_key::CUSTOM_SHIFT_P);
+        OutputString(COLOR_WHITE, x, y, ": ");
+        if (quickfort_mode)
+            OutputString(COLOR_YELLOW, x, y, "Quickfort", true, left_margin);
+        else if (all_enabled)
+            OutputString(COLOR_YELLOW, x, y, "All", true, left_margin);
+        else if (planmode_enabled[key])
+            OutputString(COLOR_GREEN, x, y, "On", true, left_margin);
+        else
+            OutputString(COLOR_GREY, x, y, "Off", true, left_margin);
         OutputHotkeyString(x, y, "Global Settings", interface_key::CUSTOM_SHIFT_G,
             true, left_margin, COLOR_WHITE, COLOR_LIGHTRED);
 
@@ -911,25 +922,87 @@ IMPLEMENT_VMETHOD_INTERPOSE(buildingplan_query_hook, render);
 IMPLEMENT_VMETHOD_INTERPOSE(buildingplan_place_hook, render);
 IMPLEMENT_VMETHOD_INTERPOSE(buildingplan_room_hook, render);
 
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
+static bool setSetting(std::string name, bool value);
+
+static bool isTrue(std::string val)
+{
+    val = toLower(val);
+    return val == "on" || val == "true" || val == "y" || val == "yes"
+        || val == "1";
+}
+
 static command_result buildingplan_cmd(color_ostream &out, vector <string> & parameters)
 {
-    if (!parameters.empty())
+    if (parameters.empty())
+        return CR_OK;
+
+    std::string cmd = toLower(parameters[0]);
+
+    if (cmd.size() >= 1 && cmd[0] == 'v')
     {
-        if (parameters.size() == 1 && toLower(parameters[0])[0] == 'v')
+        out.print("buildingplan version: %s\n", PLUGIN_VERSION);
+    }
+    else if (parameters.size() >= 2 && cmd == "debug")
+    {
+        show_debugging = isTrue(parameters[1]);
+        out.print("buildingplan debugging: %s\n",
+                  show_debugging ? "enabled" : "disabled");
+    }
+    else if (cmd == "set")
+    {
+        if (!is_enabled)
         {
-            out << "Building Plan" << endl << "Version: " << PLUGIN_VERSION << endl;
+            out.printerr(
+                "ERROR: buildingplan must be enabled before you can"
+                " read or set buildingplan global settings.");
+            return CR_FAILURE;
         }
-        else if (parameters.size() == 2 && toLower(parameters[0]) == "debug")
+
+        if (!DFHack::Core::getInstance().isMapLoaded())
         {
-            show_debugging = (toLower(parameters[1]) == "on");
-            out << "Debugging " << ((show_debugging) ? "enabled" : "disabled") << endl;
+            out.printerr(
+                "ERROR: A map must be loaded before you can read or set"
+                "buildingplan global settings. Try adding your"
+                "'buildingplan set' commands to the onMapLoad.init file.\n");
+            return CR_FAILURE;
+        }
+
+        if (parameters.size() == 1)
+        {
+            // display current settings
+            out.print("active settings:\n");
+
+            out.print("  all_enabled = %s\n", all_enabled ? "true" : "false");
+            for (auto & setting : planner.getGlobalSettings())
+            {
+                out.print("  %s = %s\n", setting.first.c_str(),
+                          setting.second ? "true" : "false");
+            }
+
+            out.print("  quickfort_mode = %s\n",
+                      quickfort_mode ? "true" : "false");
+        }
+        else if (parameters.size() == 3)
+        {
+            // set a setting
+            std::string setting = toLower(parameters[1]);
+            bool val = isTrue(parameters[2]);
+            if (!setSetting(setting, val))
+            {
+                out.printerr("ERROR: invalid parameter: '%s'\n",
+                    parameters[1].c_str());
+            }
+        }
+        else
+        {
+            out.printerr("ERROR: invalid syntax\n");
         }
     }
 
     return CR_OK;
 }
-
-DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 {
@@ -1040,14 +1113,20 @@ static void scheduleCycle() {
     cycle_requested = true;
 }
 
-static void setSetting(std::string name, bool value) {
+static bool setSetting(std::string name, bool value) {
     if (name == "quickfort_mode")
     {
         debug("setting quickfort_mode %d -> %d", quickfort_mode, value);
         quickfort_mode = value;
-        return;
+        return true;
     }
-    planner.setGlobalSetting(name, value);
+    if (name == "all_enabled")
+    {
+        debug("setting all_enabled %d -> %d", all_enabled, value);
+        all_enabled = value;
+        return true;
+    }
+    return planner.setGlobalSetting(name, value);
 }
 
 DFHACK_PLUGIN_LUA_FUNCTIONS {

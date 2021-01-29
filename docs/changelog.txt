@@ -36,6 +36,19 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 - `embark-assistant`: fixed order of factors when calculating min temperature
 - `seedwatch`: don't turn off upon map load
+- `embark-assistant`: improved performance of surveying
+- `quickfort`: creating zones no longer causes eventual crashes
+
+## Misc Improvements
+- `buildingplan`: set global settings from the ``DFHack#`` prompt: e.g.  ``buildingplan set boulders false``
+- `buildingplan`: add 'enable all' option for buildingplan (so you don't have to enable all building types individually). this setting is not persisted (just like quickfort_mode is not persisted), but it can be set from onMapLoad.init
+- `buildingplan`: modified ``Planning Mode`` status in the UI to show whether we're in quickfort mode, enable all mode, or whether just the building type is enabled.
+
+## Misc Improvements
+- `quickfort`: Dreamfort blueprint set improvements: add a streamlined checklist for all required dreamfort commands and give names to stockpiles, levers, bridges, and zones
+
+## Lua
+- ``processArgsGetopt()`` added to utils.lua, providing a callback interface for parameter parsing and getopt-like flexibility for parameter ordering and combination (see docs in ``library/lua/utils.lua`` and ``library/lua/3rdparty/alt_getopt.lua`` for details).
 
 # 0.47.04-r4
 
@@ -1169,4 +1182,3 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - The ``ui_menu_width`` global is now a 2-byte array; the second item is the former ``ui_area_map_width`` global, which is now removed
 - The former ``announcements`` global is now a field in ``d_init``
 - ``world`` fields formerly beginning with ``job_`` are now fields of ``world.jobs``, e.g. ``world.job_list`` is now ``world.jobs.list``
-

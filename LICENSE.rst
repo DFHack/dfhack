@@ -34,6 +34,7 @@ tinythread_     Zlib          \(c\) 2010, Marcus Geelnard
 tinyxml_        Zlib          \(c\) 2000-2006, Lee Thomason
 UTF-8-decoder_  MIT           \(c\) 2008-2010, Bjoern Hoehrmann
 xlsxio_         MIT           \(c\) 2016-2020, Brecht Sanders
+alt-getopt_     MIT           \(c\) 2009 Aleksey Cheusov
 =============== ============= =================================================
 
 .. _DFHack: https://github.com/DFHack/dfhack
@@ -52,6 +53,7 @@ xlsxio_         MIT           \(c\) 2016-2020, Brecht Sanders
 .. _tinyxml: http://www.sourceforge.net/projects/tinyxml
 .. _UTF-8-decoder: http://bjoern.hoehrmann.de/utf-8/decoder/dfa
 .. _xlsxio: https://github.com/brechtsanders/xlsxio
+.. _alt-getopt: https://github.com/LuaDist/alt-getopt
 
 .. _CC-BY-SA: http://creativecommons.org/licenses/by/3.0/deed.en_US
 

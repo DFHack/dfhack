@@ -1956,7 +1956,9 @@ public:
             end_entry_mode();
             return false;
         }
-        if (cursor_key_pressed(input, in_entry_mode()))
+        bool hotkey_pressed =
+            input->lower_bound(interface_key::D_HOTKEY1) != input->upper_bound(interface_key::D_HOTKEY16);
+        if (cursor_key_pressed(input, in_entry_mode()) || hotkey_pressed)
         {
             end_entry_mode();
             clear_search();

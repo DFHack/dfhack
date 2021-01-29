@@ -142,8 +142,17 @@ command_result df_seedwatch(color_ostream &out, vector<string>& parameters)
         }
         else if(par == "start")
         {
-            running = true;
-            out.print("seedwatch supervision started.\n");
+            if(Core::getInstance().isWorldLoaded())
+            {
+                running = true;
+                out.print("seedwatch supervision started.\n");
+            } else {
+                out.printerr(
+                    "This plugin needs a fortress to be loaded and will deactivate automatically otherwise.\n"
+                    "Activate with 'seedwatch start' after you load the game.\n"
+                    );
+            }
+
         }
         else if(par == "stop")
         {

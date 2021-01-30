@@ -35,9 +35,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - `embark-assistant`: fixed order of factors when calculating min temperature
-- `seedwatch`: don't turn off upon map load
 - `embark-assistant`: improved performance of surveying
 - `quickfort`: creating zones no longer causes eventual crashes
+- `seedwatch`: fixed an issue where the plugin would disable itself on map load
 - `search`: fixed crash when searching the ``k`` sidebar and navigating to another tile with certain keys, like ``<`` or ``>``
 - `stockflow`: fixed ``j`` character being intercepted when naming stockpiles
 

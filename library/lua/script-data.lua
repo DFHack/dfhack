@@ -44,7 +44,7 @@ There are a few limitations of DFhack's particular json implementation (``jf-jso
 
 Example
 -------
-This is a simple counter that counts how many times the code has been run in the current save, maintaining its count between sessions. Because it's world data, the value will be differ between each save game::
+This is a simple counter that counts how many times the code has been run in the current save, maintaining its count between sessions. Because it's world data, the value will differ between each save game::
 
   local my_data = require("script-data").load_world("my_counter_data", true)
 

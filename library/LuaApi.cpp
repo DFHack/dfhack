@@ -2822,13 +2822,29 @@ static int internal_diffscan(lua_State *L)
 
 static int internal_runCommand(lua_State *L)
 {
-    buffered_color_ostream out;
+    color_ostream *out = NULL;
+    std::unique_ptr<buffered_color_ostream> out_buffer;
     command_result res;
     if (lua_gettop(L) == 0)
     {
         lua_pushstring(L, "");
     }
     int type_1 = lua_type(L, 1);
+    bool use_console = lua_toboolean(L, 2);
+    if (use_console)
+    {
+        out = Lua::GetOutput(L);
+        if (!out)
+        {
+            out = &Core::getInstance().getConsole();
+        }
+    }
+    else
+    {
+        out_buffer.reset(new buffered_color_ostream());
+        out = out_buffer.get();
+    }
+
     if (type_1 == LUA_TTABLE)
     {
         std::string command = "";
@@ -2843,13 +2859,13 @@ static int internal_runCommand(lua_State *L)
             lua_pop(L, 1);  // remove value, leave key
         }
         CoreSuspender suspend;
-        res = Core::getInstance().runCommand(out, command, args);
+        res = Core::getInstance().runCommand(*out, command, args);
     }
     else if (type_1 == LUA_TSTRING)
     {
         std::string command = lua_tostring(L, 1);
         CoreSuspender suspend;
-        res = Core::getInstance().runCommand(out, command);
+        res = Core::getInstance().runCommand(*out, command);
     }
     else
     {
@@ -2857,22 +2873,28 @@ static int internal_runCommand(lua_State *L)
         lua_pushfstring(L, "Expected table, got %s", lua_typename(L, type_1));
         return 2;
     }
-    auto fragments = out.fragments();
+
     lua_newtable(L);
     lua_pushinteger(L, (int)res);
     lua_setfield(L, -2, "status");
-    int i = 1;
-    for (auto iter = fragments.begin(); iter != fragments.end(); iter++, i++)
+
+    if (out_buffer)
     {
-        int color = iter->first;
-        std::string output = iter->second;
-        lua_createtable(L, 2, 0);
-        lua_pushinteger(L, color);
-        lua_rawseti(L, -2, 1);
-        lua_pushstring(L, output.c_str());
-        lua_rawseti(L, -2, 2);
-        lua_rawseti(L, -2, i);
+        auto fragments = out_buffer->fragments();
+        int i = 1;
+        for (auto iter = fragments.begin(); iter != fragments.end(); iter++, i++)
+        {
+            int color = iter->first;
+            std::string output = iter->second;
+            lua_createtable(L, 2, 0);
+            lua_pushinteger(L, color);
+            lua_rawseti(L, -2, 1);
+            lua_pushstring(L, output.c_str());
+            lua_rawseti(L, -2, 2);
+            lua_rawseti(L, -2, i);
+        }
     }
+
     lua_pushvalue(L, -1);
     return 1;
 }

@@ -915,7 +915,6 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
     int16_t elevation;
     int16_t last_bottom;
     int16_t top_z;
-    int16_t base_z;
     int16_t min_z = 0;  //  Initialized to silence warning about potential usage of uninitialized data.
     int16_t bottom_z;
     df::coord2d adjusted;
@@ -994,7 +993,6 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                 }
             }
 
-            base_z = elevation - 1;
             features = details->features[i][k];
             mid_level_tile.adamantine_level = -1;
             mid_level_tile.magma_level = -1;
@@ -1025,8 +1023,6 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                 else if (feature->layer != -1 &&
                     feature->min_z != -30000) {
                     auto layer = world_data->underground_regions[feature->layer];
-
-                    base_z = std::min((int)base_z, (int)feature->min_z);
 
                     if (layer->type == df::world_underground_region::MagmaSea) {
                         min_z = feature->min_z;  //  The features are individual per region tile

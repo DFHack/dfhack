@@ -43,12 +43,14 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `buildingplan`: set global settings from the ``DFHack#`` prompt: e.g.  ``buildingplan set boulders false``
 - `buildingplan`: add 'enable all' option for buildingplan (so you don't have to enable all building types individually). this setting is not persisted (just like quickfort_mode is not persisted), but it can be set from onMapLoad.init
 - `buildingplan`: modified ``Planning Mode`` status in the UI to show whether we're in quickfort mode, enable all mode, or whether just the building type is enabled.
-
-## Misc Improvements
 - `quickfort`: Dreamfort blueprint set improvements: add a streamlined checklist for all required dreamfort commands and give names to stockpiles, levers, bridges, and zones
 
 ## Lua
+- ``dfhack.run_command()``: changed to interface directly with the console when possible, which allows interactive commands and commands that detect the console encoding to work properly
 - ``processArgsGetopt()`` added to utils.lua, providing a callback interface for parameter parsing and getopt-like flexibility for parameter ordering and combination (see docs in ``library/lua/utils.lua`` and ``library/lua/3rdparty/alt_getopt.lua`` for details).
+
+## Documentation
+- Added documentation for Lua's ``dfhack.run_command()`` and variants
 
 # 0.47.04-r4
 

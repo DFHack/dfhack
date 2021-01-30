@@ -27,6 +27,7 @@ REQUIRE_GLOBAL(world); // used in buildingplan library
 
 bool show_help = false;
 bool quickfort_mode = false;
+bool all_enabled = false;
 bool in_dummy_screen = false;
 std::unordered_map<BuildingTypeKey, bool, BuildingTypeKeyHash> planmode_enabled;
 
@@ -284,7 +285,7 @@ void ViewscreenChooseMaterial::render()
 //START Viewscreen Hook
 static bool is_planmode_enabled(BuildingTypeKey key)
 {
-    return planmode_enabled[key] || quickfort_mode;
+    return planmode_enabled[key] || quickfort_mode || all_enabled;
 }
 
 static std::string get_item_label(const BuildingTypeKey &key, int item_idx)
@@ -387,6 +388,7 @@ static void show_global_settings_dialog()
     lua_newtable(L);
     int ctable = lua_gettop(L);
     Lua::SetField(L, quickfort_mode, ctable, "quickfort_mode");
+    Lua::SetField(L, all_enabled, ctable, "all_enabled");
 
     for (auto & setting : planner.getGlobalSettings())
     {
@@ -629,7 +631,8 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
             show_help = true;
         }
 
-        if (input->count(interface_key::CUSTOM_SHIFT_P))
+        if (!quickfort_mode && !all_enabled
+            && input->count(interface_key::CUSTOM_SHIFT_P))
         {
             planmode_enabled[key] = !planmode_enabled[key];
             if (!is_planmode_enabled(key))
@@ -765,8 +768,16 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
             OutputString(COLOR_WHITE, x, y, "Use Shift-Keys here", true, left_margin);
         }
 
-        OutputToggleString(x, y, "Planning Mode", interface_key::CUSTOM_SHIFT_P,
-            planmode_enabled[key], true, left_margin, COLOR_WHITE, COLOR_LIGHTRED);
+        OutputHotkeyString(x, y, "Planning Mode", interface_key::CUSTOM_SHIFT_P);
+        OutputString(COLOR_WHITE, x, y, ": ");
+        if (quickfort_mode)
+            OutputString(COLOR_YELLOW, x, y, "Quickfort", true, left_margin);
+        else if (all_enabled)
+            OutputString(COLOR_YELLOW, x, y, "All", true, left_margin);
+        else if (planmode_enabled[key])
+            OutputString(COLOR_GREEN, x, y, "On", true, left_margin);
+        else
+            OutputString(COLOR_GREY, x, y, "Off", true, left_margin);
         OutputHotkeyString(x, y, "Global Settings", interface_key::CUSTOM_SHIFT_G,
             true, left_margin, COLOR_WHITE, COLOR_LIGHTRED);
 
@@ -963,6 +974,7 @@ static command_result buildingplan_cmd(color_ostream &out, vector <string> & par
             // display current settings
             out.print("active settings:\n");
 
+            out.print("  all_enabled = %s\n", all_enabled ? "true" : "false");
             for (auto & setting : planner.getGlobalSettings())
             {
                 out.print("  %s = %s\n", setting.first.c_str(),
@@ -1106,6 +1118,12 @@ static bool setSetting(std::string name, bool value) {
     {
         debug("setting quickfort_mode %d -> %d", quickfort_mode, value);
         quickfort_mode = value;
+        return true;
+    }
+    if (name == "all_enabled")
+    {
+        debug("setting all_enabled %d -> %d", all_enabled, value);
+        all_enabled = value;
         return true;
     }
     return planner.setGlobalSetting(name, value);

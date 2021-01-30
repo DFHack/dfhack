@@ -376,6 +376,8 @@ namespace DFHack
         }
         int lineedit(const std::string & prompt, std::string & output, recursive_mutex * lock, CommandHistory & ch)
         {
+            if(state == con_lineedit)
+                return Console::FAILURE;
             output.clear();
             reset_color();
             int count;

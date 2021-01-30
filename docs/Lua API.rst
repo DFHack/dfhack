@@ -833,6 +833,9 @@ can be omitted.
 * ``dfhack.getCompiledDFVersion()``
 * ``dfhack.getGitDescription()``
 * ``dfhack.getGitCommit()``
+* ``dfhack.getGitXmlCommit()``
+* ``dfhack.getGitXmlExpectedCommit()``
+* ``dfhack.gitXmlMatch()``
 * ``dfhack.isRelease()``
 
   Return information about the DFHack build in use.
@@ -898,6 +901,28 @@ can be omitted.
   nearest ASCII equivalents, if possible, and returns a CP437-encoded string.
   Note that the returned string may be longer than the input string. For
   example, ``ä`` is replaced with ``a``, and ``æ`` is replaced with ``ae``.
+
+* ``dfhack.run_command(command[, ...])``
+
+  Run an arbitrary DFHack command, with the core suspended, and send output to
+  the DFHack console. The command can be passed as a table, multiple string
+  arguments, or a single string argument (not recommended - in this case, the
+  usual DFHack console tokenization is used).
+
+  A ``command_result`` constant starting with ``CR_`` is returned, where ``CR_OK``
+  indicates success.
+
+  The following examples are equivalent::
+
+    dfhack.run_command({'ls', '-a'})
+    dfhack.run_command('ls', '-a')
+    dfhack.run_command('ls -a')  -- not recommended
+
+* ``dfhack.run_command_silent(command[, ...])``
+
+  Similar to ``run_command()``, but instead of printing to the console,
+  returns an ``output, command_result`` pair. ``output`` is a single string -
+  see ``dfhack.internal.runCommand()`` to obtain colors as well.
 
 Gui module
 ----------
@@ -2235,11 +2260,6 @@ Internal API
 These functions are intended for the use by dfhack developers,
 and are only documented here for completeness:
 
-* ``dfhack.internal.scripts``
-
-  The table used by ``dfhack.run_script()`` to give every script its own
-  global environment, persistent between calls to the script.
-
 * ``dfhack.internal.getPE()``
 
   Returns the PE timestamp of the DF executable (only on Windows)
@@ -2353,6 +2373,21 @@ and are only documented here for completeness:
   .. note::
     This requires an extension to be specified (``.lua`` or ``.rb``) - use
     ``dfhack.findScript()`` to include the ``.lua`` extension automatically.
+
+* ``dfhack.internal.runCommand(command[, use_console])``
+
+  Runs a DFHack command with the core suspended. Used internally by the
+  ``dfhack.run_command()`` family of functions.
+
+  - ``command``: either a table of strings or a single string which is parsed by
+    the default console tokenization strategy (not recommended)
+  - ``use_console``: if true, output is sent directly to the DFHack console
+
+  Returns a table with a ``status`` key set to a ``command_result`` constant
+  (``status = CR_OK`` indicates success). Additionally, if ``use_console`` is
+  not true, enumerated table entries of the form ``{color, text}`` are included,
+  e.g. ``result[1][0]`` is the color of the first piece of text printed (a
+  ``COLOR_`` constant). These entries can be iterated over with ``ipairs()``.
 
 * ``dfhack.internal.md5(string)``
 
@@ -2512,6 +2547,12 @@ environment by the mandatory init file dfhack.lua:
 
   SC_WORLD_LOADED, SC_WORLD_UNLOADED, SC_MAP_LOADED,
   SC_MAP_UNLOADED, SC_VIEWSCREEN_CHANGED, SC_CORE_INITIALIZED
+
+* Command result constants (equivalent to ``command_result`` in C++), used by
+  ``dfhack.run_command()`` and related functions:
+
+  CR_OK, CR_LINK_FAILURE, CR_NEEDS_CONSOLE, CR_NOT_IMPLEMENTED, CR_FAILURE,
+  CR_WRONG_USAGE, CR_NOT_FOUND
 
 * Functions already described above
 

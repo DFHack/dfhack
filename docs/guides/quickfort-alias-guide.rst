@@ -291,8 +291,8 @@ with your aliases just like they do with library aliases. In this case, using
 with both stockpiles and hauling routes.
 
 Note that some aliases use the DFHack-provided search prompts. If you get errors
-while running ``#query`` blueprints, ensure the DFHack `search <search-plugin>`
-plugin is enabled.
+while running ``#query`` blueprints, ensure the DFHack `search-plugin` plugin is
+enabled.
 
 Naming aliases
 ~~~~~~~~~~~~~~

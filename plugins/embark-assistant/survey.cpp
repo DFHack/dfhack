@@ -961,15 +961,15 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
             {
                 mid_level_tile.biome_offset = 5;
             }
+            const df::region_map_entry &region_map_entry = world_data->region_map[adjusted.x][adjusted.y];
 
-            tile.biome_index[mid_level_tile.biome_offset] =
-                world_data->region_map[adjusted.x][adjusted.y].region_id;
+            tile.biome_index[mid_level_tile.biome_offset] = region_map_entry.region_id;
 
-            mid_level_tile.savagery_level = world_data->region_map[adjusted.x][adjusted.y].savagery / 33;
+            mid_level_tile.savagery_level = region_map_entry.savagery / 33;
             if (mid_level_tile.savagery_level == 3) {
                 mid_level_tile.savagery_level = 2;
             }
-            mid_level_tile.evilness_level = world_data->region_map[adjusted.x][adjusted.y].evilness / 33;
+            mid_level_tile.evilness_level = region_map_entry.evilness / 33;
             if (mid_level_tile.evilness_level == 3) {
                 mid_level_tile.evilness_level = 2;
             }
@@ -977,12 +977,11 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
             elevation = details->elevation[i][k];
 
             // Special biome adjustments
-            if (!world_data->region_map[adjusted.x][adjusted.y].flags.is_set(region_map_entry_flags::is_lake)) {
-                if (world_data->region_map[adjusted.x][adjusted.y].elevation >= 150) {  //  Mountain
+            if (!region_map_entry.flags.is_set(region_map_entry_flags::is_lake)) {
+                if (region_map_entry.elevation >= 150) {  //  Mountain
                     max_soil_depth = 0;
-
                 }
-                else if (world_data->region_map[adjusted.x][adjusted.y].elevation < 100) {  // Ocean
+                else if (region_map_entry.elevation < 100) {  // Ocean
                     if (elevation == 99) {
                         elevation = 98;
                     }
@@ -1041,8 +1040,8 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                 max_soil_depth = std::max((154 - elevation) / 5, 1);
             }
 
-            soil_erosion = geo_summary->at(world_data->region_map[adjusted.x][adjusted.y].geo_index).soil_size -
-                std::min((int)geo_summary->at(world_data->region_map[adjusted.x][adjusted.y].geo_index).soil_size, (int)max_soil_depth);
+            soil_erosion = geo_summary->at(region_map_entry.geo_index).soil_size -
+                std::min((int)geo_summary->at(region_map_entry.geo_index).soil_size, (int)max_soil_depth);
             int16_t layer_shift[16];
             int16_t cur_shift = elevation + soil_erosion - 1;
 
@@ -1057,7 +1056,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                 mid_level_tile.soil_depth = 0;
             }
             else {
-                mid_level_tile.soil_depth = geo_summary->at(world_data->region_map[adjusted.x][adjusted.y].geo_index).soil_size - soil_erosion;
+                mid_level_tile.soil_depth = geo_summary->at(region_map_entry.geo_index).soil_size - soil_erosion;
             }
             mid_level_tile.offset = offset;
             mid_level_tile.elevation = details->elevation[i][k];
@@ -1086,11 +1085,11 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                 tile.max_region_soil = mid_level_tile.soil_depth;
             }
 
-            end_check_l = static_cast<uint16_t>(world_data->geo_biomes[world_data->region_map[adjusted.x][adjusted.y].geo_index]->layers.size());
+            end_check_l = static_cast<uint16_t>(world_data->geo_biomes[region_map_entry.geo_index]->layers.size());
             if (end_check_l > 16) end_check_l = 16;
 
             for (uint16_t l = 0; l < end_check_l; l++) {
-                auto layer = world_data->geo_biomes[world_data->region_map[adjusted.x][adjusted.y].geo_index]->layers[l];
+                auto layer = world_data->geo_biomes[region_map_entry.geo_index]->layers[l];
                 layer_shift[l] = cur_shift;
 
                 if (layer->type == df::geo_layer_type::SOIL ||
@@ -1114,7 +1113,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
             //  Don't have to set up the end_check as we can reuse the one above.
 
             for (uint16_t l = 0; l < end_check_l; l++) {
-                auto layer = world_data->geo_biomes[world_data->region_map[adjusted.x][adjusted.y].geo_index]->layers[l];
+                auto layer = world_data->geo_biomes[region_map_entry.geo_index]->layers[l];
                 top_z = last_bottom - 1;
                 bottom_z = std::max((int)layer->bottom_height + layer_shift[l], (int)min_z);
 
@@ -1205,15 +1204,15 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
             if (!aquifer) {
                 mid_level_tile.aquifer = embark_assist::defs::None_Aquifer_Bit;
             }
-            else if (world_data->region_map[adjusted.x][adjusted.y].drainage % 20 == 7) {
+            else if (region_map_entry.drainage % 20 == 7) {
                 mid_level_tile.aquifer = embark_assist::defs::Heavy_Aquifer_Bit;
             }
             else {
                 mid_level_tile.aquifer = embark_assist::defs::Light_Aquifer_Bit;
             }
 
-            mid_level_tile.trees = tree_level_of(world_data->regions[world_data->region_map[adjusted.x][adjusted.y].region_id]->type,
-                world_data->region_map[adjusted.x][adjusted.y].vegetation);
+            mid_level_tile.trees = tree_level_of(world_data->regions[region_map_entry.region_id]->type, 
+                region_map_entry.vegetation);
         }
     }
 
@@ -1278,7 +1277,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
 
     for (uint8_t i = 0; i < 16; i++) {
         for (uint8_t k = 0; k < 16; k++) {
-            embark_assist::defs::mid_level_tile &mid_level_tile = mlt->at(i).at(k);
+            const embark_assist::defs::mid_level_tile &mid_level_tile = mlt->at(i).at(k);
             tile.aquifer |= mid_level_tile.aquifer;
             if (mid_level_tile.clay) { tile.clay_count++; }
             if (mid_level_tile.sand) { tile.sand_count++; }

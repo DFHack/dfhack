@@ -38,6 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `embark-assistant`: improved performance of surveying
 - `quickfort`: creating zones no longer causes eventual crashes
 - `search`: fixed crash when searching the ``k`` sidebar and navigating to another tile with certain keys, like ``<`` or ``>``
+- `stockflow`: fixed ``j`` character being intercepted when naming stockpiles
 
 ## Misc Improvements
 - `buildingplan`: set global settings from the ``DFHack#`` prompt: e.g.  ``buildingplan set boulders false``

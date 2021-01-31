@@ -985,8 +985,8 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                         elevation = 98;
                     }
 
-                    if ((world_data->geo_biomes[world_data->region_map[x][y].geo_index]->unk1 == 4 ||
-                        world_data->geo_biomes[world_data->region_map[x][y].geo_index]->unk1 == 5) &&
+                    if ((world_data->geo_biomes[region_map_entry.geo_index]->unk1 == 4 ||
+                        world_data->geo_biomes[region_map_entry.geo_index]->unk1 == 5) &&
                         details->unk12e8 < 500) {
                         max_soil_depth = 0;
                     }

@@ -41,6 +41,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `seedwatch`: fixed an issue where the plugin would disable itself on map load
 - `search`: fixed crash when searching the ``k`` sidebar and navigating to another tile with certain keys, like ``<`` or ``>``
 - `stockflow`: fixed ``j`` character being intercepted when naming stockpiles
+- `stockpiles`: no longer outputs hotkey help text beneath `stockflow` hotkey help text
 
 ## Misc Improvements
 - Lua label widgets (used in all standard message boxes) are now scrollable with Up/Down/PgUp/PgDn keys

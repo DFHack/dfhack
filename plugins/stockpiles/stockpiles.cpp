@@ -409,7 +409,7 @@ struct stockpiles_import_hook : public df::viewscreen_dwarfmodest
         auto dims = Gui::getDwarfmodeViewDims();
         int left_margin = dims.menu_x1 + 1;
         int x = left_margin;
-        int y = dims.y2 - 7; // above automelt, autotrade, stocks, and stockflow
+        int y = dims.y2 - 3; // below autodump, automelt, autotrade, stocks; above stockflow
         OutputHotkeyString ( x, y, "Load/Save Settings", "l", true, left_margin, COLOR_WHITE, COLOR_LIGHTRED );
     }
 };

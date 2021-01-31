@@ -212,7 +212,7 @@ public:
         auto dims = Gui::getDwarfmodeViewDims();
         int left_margin = dims.menu_x1 + 1;
         int x = left_margin;
-        int y = dims.y2 - 3;
+        int y = dims.y2 - 2; // below autodump, automelt, autotrade, stocks, stockpiles
 
         int links = 0;
         links += sp->links.give_to_pile.size();

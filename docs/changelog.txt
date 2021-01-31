@@ -42,6 +42,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `stockflow`: fixed ``j`` character being intercepted when naming stockpiles
 
 ## Misc Improvements
+- Lua label widgets (used in all standard message boxes) are now scrollable with Up/Down/PgUp/PgDn keys
 - `autofarm`: now fallows farms if all plants have reached the desired count
 - `buildingplan`: set global settings from the ``DFHack#`` prompt: e.g.  ``buildingplan set boulders false``
 - `buildingplan`: add 'enable all' option for buildingplan (so you don't have to enable all building types individually). this setting is not persisted (just like quickfort_mode is not persisted), but it can be set from onMapLoad.init
@@ -54,9 +55,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Documentation
 - Added documentation for Lua's ``dfhack.run_command()`` and variants
-
-## Misc Improvements
-- Lua widget library Label class (used in all standard message boxes) is now scrollable with Up/Down/PgUp/PgDn keys
 
 # 0.47.04-r4
 

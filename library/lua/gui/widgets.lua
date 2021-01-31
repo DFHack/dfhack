@@ -29,6 +29,20 @@ local function map_opttab(tab,idx)
     end
 end
 
+STANDARDSCROLL = {
+    STANDARDSCROLL_UP = -1,
+    STANDARDSCROLL_DOWN = 1,
+    STANDARDSCROLL_PAGEUP = '-page',
+    STANDARDSCROLL_PAGEDOWN = '+page',
+}
+
+SECONDSCROLL = {
+    SECONDSCROLL_UP = -1,
+    SECONDSCROLL_DOWN = 1,
+    SECONDSCROLL_PAGEUP = '-page',
+    SECONDSCROLL_PAGEDOWN = '+page',
+}
+
 ------------
 -- Widget --
 ------------
@@ -344,13 +358,6 @@ end
 
 Label = defclass(Label, Widget)
 
-STANDARDSCROLL = {
-    STANDARDSCROLL_UP = -1,
-    STANDARDSCROLL_DOWN = 1,
-    STANDARDSCROLL_PAGEUP = '-page',
-    STANDARDSCROLL_PAGEDOWN = '+page',
-}
-
 Label.ATTRS{
     text_pen = COLOR_WHITE,
     text_dpen = COLOR_DARKGREY, -- disabled
@@ -414,7 +421,7 @@ end
 
 function Label:scroll(nlines)
     local n = self.start_line_num + nlines
-    n = math.min(n, self:getTextHeight() - self.frame_body.height)
+    n = math.min(n, self:getTextHeight() - self.frame_body.height + 1)
     n = math.max(n, 1)
     self.start_line_num = n
 end
@@ -446,13 +453,6 @@ end
 ----------
 
 List = defclass(List, Widget)
-
-SECONDSCROLL = {
-    SECONDSCROLL_UP = -1,
-    SECONDSCROLL_DOWN = 1,
-    SECONDSCROLL_PAGEUP = '-page',
-    SECONDSCROLL_PAGEDOWN = '+page',
-}
 
 List.ATTRS{
     text_pen = COLOR_CYAN,

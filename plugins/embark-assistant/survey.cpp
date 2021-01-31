@@ -1298,20 +1298,20 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                     tile.max_river_size = mid_level_tile.river_size;
                 }
 
-                if (i < 15 &&
-                    mlt->at(i + 1).at(k).river_size != embark_assist::defs::river_sizes::None &&
-                    abs (mid_level_tile.river_elevation - mlt->at(i + 1).at(k).river_elevation) >
-                    tile.max_waterfall) {
-                    tile.max_waterfall =
-                        abs(mid_level_tile.river_elevation - mlt->at(i + 1).at(k).river_elevation);
+                if (i < 15) {
+                    const embark_assist::defs::mid_level_tile &eastern_neighbour = mlt->at(i + 1).at(k);
+                    if (eastern_neighbour.river_size != embark_assist::defs::river_sizes::None &&
+                        abs(mid_level_tile.river_elevation - eastern_neighbour.river_elevation) > tile.max_waterfall) {
+                        tile.max_waterfall = abs(mid_level_tile.river_elevation - eastern_neighbour.river_elevation);
+                    }
                 }
 
-                if (k < 15 &&
-                    mlt->at(i).at(k + 1).river_size != embark_assist::defs::river_sizes::None &&
-                    abs(mid_level_tile.river_elevation - mlt->at(i).at(k + 1).river_elevation) >
-                    tile.max_waterfall) {
-                    tile.max_waterfall =
-                        abs(mid_level_tile.river_elevation - mlt->at(i).at(k + 1).river_elevation);
+                if (k < 15) {
+                    const embark_assist::defs::mid_level_tile &southern_neighbour = mlt->at(i).at(k + 1);
+                    if (southern_neighbour.river_size != embark_assist::defs::river_sizes::None &&
+                        abs(mid_level_tile.river_elevation - southern_neighbour.river_elevation) > tile.max_waterfall) {
+                        tile.max_waterfall = abs(mid_level_tile.river_elevation - southern_neighbour.river_elevation);
+                    }
                 }
             }
 

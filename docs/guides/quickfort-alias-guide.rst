@@ -282,13 +282,17 @@ library, discussing their intended usage and detailing sub-aliases that you
 can define to customize their behavior.
 
 If you do define your own custom aliases in
-``dfhack-config/quickfort/aliases.txt``, try to build on the library aliases.
-For example, if you create an alias to modify particular furniture stockpile
-settings, start your alias with ``{furnitureprefix}`` instead of
-``s{Down 2}``. Using library prefixes will allow sub-aliases to work with your
-aliases just like they do with library aliases. In this case, using
+``dfhack-config/quickfort/aliases.txt``, try to build on library alias
+components. For example, if you create an alias to modify particular furniture
+stockpile settings, start your alias with ``{furnitureprefix}`` instead of
+``s{Down 2}``. Using library prefixes will allow library sub-aliases to work
+with your aliases just like they do with library aliases. In this case, using
 ``{furnitureprefix}`` will allow your stockpile customization alias to work
 with both stockpiles and hauling routes.
+
+Note that some aliases use the DFHack-provided search prompts. If you get errors
+while running ``#query`` blueprints, ensure the DFHack `search-plugin` plugin is
+enabled.
 
 Naming aliases
 ~~~~~~~~~~~~~~
@@ -760,11 +764,12 @@ cutstone     forbidcutstone
 Finished goods stockpile adjustments
 ````````````````````````````````````
 
-+-----------+
-| Exclusive |
-+===========+
-| jugs      |
-+-----------+
+=========  ============  ============
+Exclusive  Forbid        Permit
+=========  ============  ============
+jugs
+crafts     forbidcrafts  permitcrafts
+=========  ============  ============
 
 Cloth stockpile adjustments
 ```````````````````````````
@@ -793,6 +798,7 @@ metalweapons       forbidmetalweapons        permitmetalweapons
 \                  forbidstoneweapons        permitstoneweapons
 \                  forbidotherweapons        permitotherweapons
 ironweapons        forbidironweapons         permitironweapons
+bronzeweapons      forbidbronzeweapons       permitbronzeweapons
 copperweapons      forbidcopperweapons       permitcopperweapons
 steelweapons       forbidsteelweapons        permitsteelweapons
 masterworkweapons  forbidmasterworkweapons   permitmasterworkweapons
@@ -808,6 +814,7 @@ Exclusive        Forbid                  Permit
 metalarmor       forbidmetalarmor        permitmetalarmor
 otherarmor       forbidotherarmor        permitotherarmor
 ironarmor        forbidironarmor         permitironarmor
+bronzearmor      forbidbronzearmor       permitbronzearmor
 copperarmor      forbidcopperarmor       permitcopperarmor
 steelarmor       forbidsteelarmor        permitsteelarmor
 masterworkarmor  forbidmasterworkarmor   permitmasterworkarmor

@@ -33,11 +33,13 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
+# 0.47.04-r5
+
 ## Fixes
 - `embark-assistant`: fixed order of factors when calculating min temperature
 - `embark-assistant`: improved performance of surveying
-- `quickfort`: creating zones no longer causes eventual crashes
-- `quickfort`: fix library aliases for tallow and iron, copper, and steel weapons; add aliases for bronze weapons and armor; add alias for tradeable crafts
+- `quickfort`: fixed eventual crashes when creating zones
+- `quickfort`: fixed library aliases for tallow and iron, copper, and steel weapons
 - `seedwatch`: fixed an issue where the plugin would disable itself on map load
 - `search`: fixed crash when searching the ``k`` sidebar and navigating to another tile with certain keys, like ``<`` or ``>``
 - `stockflow`: fixed ``j`` character being intercepted when naming stockpiles
@@ -46,10 +48,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 - Lua label widgets (used in all standard message boxes) are now scrollable with Up/Down/PgUp/PgDn keys
 - `autofarm`: now fallows farms if all plants have reached the desired count
-- `buildingplan`: set global settings from the ``DFHack#`` prompt: e.g.  ``buildingplan set boulders false``
-- `buildingplan`: add 'enable all' option for buildingplan (so you don't have to enable all building types individually). this setting is not persisted (just like quickfort_mode is not persisted), but it can be set from onMapLoad.init
-- `buildingplan`: modified ``Planning Mode`` status in the UI to show whether we're in quickfort mode, enable all mode, or whether just the building type is enabled.
-- `quickfort`: Dreamfort blueprint set improvements: add a streamlined checklist for all required dreamfort commands and give names to stockpiles, levers, bridges, and zones
+- `buildingplan`: added ability to set global settings from the console, e.g.  ``buildingplan set boulders false``
+- `buildingplan`: added "enable all" option for buildingplan (so you don't have to enable all building types individually). This setting is not persisted (just like quickfort_mode is not persisted), but it can be set from onMapLoad.init
+- `buildingplan`: modified ``Planning Mode`` status in the UI to show whether the plugin is in quickfort mode, "enable all" mode, or whether just the building type is enabled.
+- `quickfort`: Dreamfort blueprint set improvements: added a streamlined checklist for all required dreamfort commands and gave names to stockpiles, levers, bridges, and zones
+- `quickfort`: added aliases for bronze weapons and armor
+- `quickfort`: added alias for tradeable crafts
 
 ## Lua
 - ``dfhack.run_command()``: changed to interface directly with the console when possible, which allows interactive commands and commands that detect the console encoding to work properly

@@ -1158,19 +1158,18 @@ The Dreamfort blueprints we'll be discussing are available in the library as
 :source:`one large .csv file <data/blueprints/library/dreamfort.csv>`
 or `online
 <https://drive.google.com/drive/folders/1iS90EEVqUkxTeZiiukVj1pLloZqabKuP>`__ as
-individual spreadsheets. Either can be read and applied by quickfort, but for us
-humans, the online spreadsheets are much easier to work with. Each spreadsheet
-has a "Notes" sheet with some useful details. Flip through some of the
-spreadsheets and read the `walkthrough
-<https://docs.google.com/spreadsheets/d/
-13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=0>`__ to get oriented.
-Also, if you haven't built Dreamfort before, try an embark in a flat area and
-take it for a spin!
+individual spreadsheets. Either the .csv file or the exported spreadsheet .xlsx
+files can be read and applied by quickfort, but for us humans, the online
+spreadsheets are much easier to work with. Each spreadsheet has a "Notes" sheet
+with some useful details. Flip through some of the spreadsheets and read the
+`walkthrough <https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=0>`__
+to get oriented. Also, if you haven't built Dreamfort before, try an embark in a
+flat area and take it for a spin!
 
 Almost every quickfort feature is used somewhere in Dreamfort, so the blueprints
-as a whole are useful as practical examples. You can copy the blueprints and use
-them as starting points for your own, or just refer to them when you create
-something similar.
+are useful as practical examples. You can copy the blueprints and use them as
+starting points for your own, or just refer to them when you create something
+similar.
 
 In this case study, we'll start by discussing the high level organization of the
 Dreamfort blueprint set, using the "surface" blueprints as an example. Then
@@ -1200,16 +1199,15 @@ the toil associated with applying so many blueprints.
 The single most effective way to make your blueprint sets easier to use is to
 group them with `meta blueprints <quickfort-meta>`. For the Dreamfort set of
 blueprints, each logical "step" generally takes more than one blueprint. For
-example, setting up pastures with a ``#zone`` blueprint, placing starting
-stockpiles with a #place blueprint, building starting workshops with a
-``#build`` blueprint, and configuring the stockpiles with a ``#query`` blueprint
-can all be done at once. Bundling blueprints like this reduced the number of
-steps in Dreamfort from 47 to 24, and it also made it much clearer to see which
-blueprints can be applied at once without unpausing the game. Check out
-dreamfort_surface's "`meta
-<https://docs.google.com/spreadsheets/d/
-1vlxOuDOTsjsZ5W45Ri1kJKgp3waFo8r505LfZVg5wkU/edit#gid=972927200>`__" sheet to
-see how much meta blueprints can simplify your life.
+example, with ``#meta`` blueprints, setting up pastures with a ``#zone``
+blueprint, placing starting stockpiles with a ``#place`` blueprint, building
+starting workshops with a ``#build`` blueprint, and configuring the stockpiles
+with a ``#query`` blueprint can all be done with a single command. Bundling
+blueprints with ``#meta`` blueprints reduced the number of steps in Dreamfort
+from 61 to 23, and it also made it much clearer to see which blueprints can be
+applied at once without unpausing the game. Check out dreamfort_surface's "`meta
+<https://docs.google.com/spreadsheets/d/1vlxOuDOTsjsZ5W45Ri1kJKgp3waFo8r505LfZVg5wkU/edit#gid=972927200>`__"
+sheet to see how much meta blueprints can simplify your life.
 
 You can define `as many blueprints as you want <quickfort-packaging>` on one
 sheet, but multi-blueprint sheets are especially useful when writing meta
@@ -1220,7 +1218,7 @@ blueprints. It's like having a bird's eye view of your entire plan in one sheet.
     Keep the blueprint list uncluttered by using ``hidden()`` markers.
 
 If a blueprint is bundled into a meta blueprint, it does not need to appear in
-the quickfort list output since you won't be running it directly. Add a
+the ``quickfort list`` output since you won't be running it directly. Add a
 `hidden() marker <quickfort-hidden>` to those blueprints to keep the list
 output tidy. You can still access hidden blueprints with ``quickfort list
 --hidden`` if you need to -- for example to reapply a partially completed
@@ -1253,7 +1251,7 @@ sheet, like in surface's meta sheet.
 
 .. topic:: Tip
 
-    Use message() markers to remind yourself what to do next.
+    Use ``message()`` markers to remind yourself what to do next.
 
 `Messages <quickfort-message>` are displayed after a blueprint is applied. Good
 things to include in messages are:
@@ -1265,12 +1263,11 @@ things to include in messages are:
   zones
 
 These things are just too easy to forget. Adding a ``message()`` can save you
-from time-wasting mistakes. Note that message() markers can still appear on the
-``hidden()`` blueprints, and they'll still get shown when the blueprint is run
-via a ``#meta`` blueprint. For an example of this, check out the `zones sheet
-<https://docs.google.com/spreadsheets/d/
-1vlxOuDOTsjsZ5W45Ri1kJKgp3waFo8r505LfZVg5wkU/edit#gid=1226136256>`__ where the
-pastures are defined.
+from time-wasting mistakes. Note that ``message()`` markers can still appear on
+the ``hidden()`` blueprints, and they'll still get shown when the blueprint is
+run via a ``#meta`` blueprint. For an example of this, check out the `zones
+sheet <https://docs.google.com/spreadsheets/d/1vlxOuDOTsjsZ5W45Ri1kJKgp3waFo8r505LfZVg5wkU/edit#gid=1226136256>`__
+where the pastures are defined.
 
 The farming_ level: fun with stockpiles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1294,7 +1291,7 @@ stockpiles. Note the `careful customization
 wsszA1AnFqoxeoehByg/edit#gid=486506218>`__ of the food stockpiles and the
 stockpile chains set up with the ``give*`` aliases. This is so when multiple
 stockpiles can hold the same item, the largest can keep the smaller ones filled.
-For example the ``give2left`` alias funnels seeds from the seeds feeder pile to
+For example the ``give2up`` alias funnels seeds from the seeds feeder pile to
 the container-enabled seed storage pile. If you have multiple stockpiles holding
 the same type on different z-levels, though, this can be tricky to set up with a
 blueprint. Here, the jugs and pots stockpiles must be manually linked to the
@@ -1308,7 +1305,7 @@ z-levels away that is. Note how we call that out in the ``#query`` blueprint's
 
 Hauling routes are notoriously fiddly to set up, but they can be automated with
 blueprints. Check out the Southern area of the ``#place`` and ``#query``
-blueprints for how the quantum garbage dump is configured with simple aliases
+blueprints for how the quantum refuse dump is configured with simple aliases
 from the alias library.
 
 The industry_ level: when not to use aliases
@@ -1328,15 +1325,14 @@ It may be tempting to put all query blueprint key sequences into aliases to make
 them easier to edit, keep them all in one place, and make them reusable, but
 some key sequences just aren't very valuable as aliases.
 
-`Check out <https://docs.google.com/spreadsheets/d/1gvTJxxRxZ5V4vXkqwhL-
-qlr_lXCNt8176TK14m4kSOU/edit#gid=787640554>`__ the Eastern (goods) and Northern
-(stone and gems) quantum stockpiles -- cells I19 and R10. They give to the
-jeweler's workshop to prevent the jeweler from using the gems held in reserve
-for strange moods. The keys are not aliased since they're dependent on the
-relative positions of the tiles where they are interpreted, which is easiest to
-see in the blueprint itself. Also, if you move the workshop, it's easier to fix
-the stockpile link right there in the blueprint instead of editing a separate
-alias definition.
+`Check out <https://docs.google.com/spreadsheets/d/1gvTJxxRxZ5V4vXkqwhL-qlr_lXCNt8176TK14m4kSOU/edit#gid=787640554>`__
+the Eastern (goods) and Northern (stone and gems) quantum stockpiles -- cells
+I19 and R10. They give to the jeweler's workshop to prevent the jeweler from
+using the gems held in reserve for strange moods. The keys are not aliased since
+they're dependent on the relative positions of the tiles where they are
+interpreted, which is easiest to see in the blueprint itself. Also, if you move
+the workshop, it's easier to fix the stockpile link right there in the blueprint
+instead of editing a separate alias definition.
 
 There are also good examples in the ``#query`` blueprint for how to use the
 ``permit`` and ``forbid`` stockpile aliases.
@@ -1377,6 +1373,10 @@ order-sensitive aliases on the same line::
     #query Properly configure a food stockpile to accept tallow and dye
     {tallow}{permitdye}
 
+You can see a more complex example of this with the ``meltables`` stockpiles in
+the `lower right corner <https://docs.google.com/spreadsheets/d/1gvTJxxRxZ5V4vXkqwhL-qlr_lXCNt8176TK14m4kSOU/edit#gid=787640554>`__
+of the industry level.
+
 The services_ level: handling multi-level dig blueprints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1393,11 +1393,16 @@ priorities <quickfort-dig-priorities>`.
 
 We can `ensure <https://docs.google.com/spreadsheets/d/1IBy6_pGEe6WSBCLukDz_5I-4vi_mpHuJJyOp2j6SJlY/edit#gid=962076234>`__
 the bottom level is carved out before the layer above is channelled by assigning
-the channel designations lower priorities (the ``h5``\s in the third layer).
+the channel designations lower priorities (the ``h5``\s in the third layer --
+scroll down).
 
 An alternative is to have a follow-up blueprint that removes any undesired
-ramps. We did this on the surface and farming levels with the miasma vents since
-it would be too complicated to synchronize the digging between the two layers.
+ramps. We did this on the
+`surface <https://docs.google.com/spreadsheets/d/1vlxOuDOTsjsZ5W45Ri1kJKgp3waFo8r505LfZVg5wkU/edit#gid=1790750180>`__
+and
+`farming <https://docs.google.com/spreadsheets/d/1iuj807iGVk6vsfYY4j52v9_-wsszA1AnFqoxeoehByg/edit#gid=436537058>`__
+levels with the miasma vents since it would be too complicated to synchronize
+the digging between the two layers.
 
 The guildhall_ level: avoiding smoothing issues
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

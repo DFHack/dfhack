@@ -51,9 +51,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `buildingplan`: added ability to set global settings from the console, e.g.  ``buildingplan set boulders false``
 - `buildingplan`: added "enable all" option for buildingplan (so you don't have to enable all building types individually). This setting is not persisted (just like quickfort_mode is not persisted), but it can be set from onMapLoad.init
 - `buildingplan`: modified ``Planning Mode`` status in the UI to show whether the plugin is in quickfort mode, "enable all" mode, or whether just the building type is enabled.
-- `quickfort`: Dreamfort blueprint set improvements: added a streamlined checklist for all required dreamfort commands and gave names to stockpiles, levers, bridges, and zones
-- `quickfort`: added aliases for bronze weapons and armor
-- `quickfort`: added alias for tradeable crafts
+- `quickfort`: Dreamfort blueprint set improvements: in addition to `significant <http://www.bay12forums.com/smf/index.php?topic=176889.msg8239017#msg8239017>`_ changes to the blueprints themselves, added a streamlined checklist for all required dreamfort commands for easy reference
+- `quickfort`: added aliases for tradeable crafts and bronze weapons/armor
 
 ## Lua
 - ``dfhack.run_command()``: changed to interface directly with the console when possible, which allows interactive commands and commands that detect the console encoding to work properly

@@ -1393,7 +1393,7 @@ priorities <quickfort-dig-priorities>`.
 
 We can `ensure <https://docs.google.com/spreadsheets/d/1IBy6_pGEe6WSBCLukDz_5I-4vi_mpHuJJyOp2j6SJlY/edit#gid=962076234>`__
 the bottom level is carved out before the layer above is channelled by assigning
-the channel designations lower priorities (the ``h5``s in the third layer).
+the channel designations lower priorities (the ``h5``\s in the third layer).
 
 An alternative is to have a follow-up blueprint that removes any undesired
 ramps. We did this on the surface and farming levels with the miasma vents since

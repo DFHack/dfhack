@@ -1207,7 +1207,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                 mid_level_tile.aquifer = embark_assist::defs::Light_Aquifer_Bit;
             }
 
-            mid_level_tile.trees = tree_level_of(world_data->regions[region_map_entry.region_id]->type, 
+            mid_level_tile.trees = tree_level_of(world_data->regions[region_map_entry.region_id]->type,
                 region_map_entry.vegetation);
         }
     }

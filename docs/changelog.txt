@@ -55,6 +55,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Documentation
 - Added documentation for Lua's ``dfhack.run_command()`` and variants
 
+## Misc Improvements
+- Lua widget library Label class (used in all standard message boxes) is now scrollable with Up/Down/PgUp/PgDn keys
+
 # 0.47.04-r4
 
 ## Fixes

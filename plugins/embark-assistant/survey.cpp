@@ -1044,8 +1044,9 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                 max_soil_depth = std::max((154 - elevation) / 5, 1);
             }
 
-            soil_erosion = geo_summary->at(region_map_entry.geo_index).soil_size -
-                std::min((int)geo_summary->at(region_map_entry.geo_index).soil_size, (int)max_soil_depth);
+            auto geo_datum = geo_summary->at(region_map_entry.geo_index);
+            soil_erosion = geo_datum.soil_size -
+                std::min((int)geo_datum.soil_size, (int)max_soil_depth);
             int16_t layer_shift[16];
             int16_t cur_shift = elevation + soil_erosion - 1;
 
@@ -1060,7 +1061,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                 mid_level_tile.soil_depth = 0;
             }
             else {
-                mid_level_tile.soil_depth = geo_summary->at(region_map_entry.geo_index).soil_size - soil_erosion;
+                mid_level_tile.soil_depth = geo_datum.soil_size - soil_erosion;
             }
             mid_level_tile.offset = offset;
             mid_level_tile.elevation = details->elevation[i][k];
@@ -1138,7 +1139,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                     }
 
                     if (layer->type == df::geo_layer_type::SOIL ||
-                        layer->type == df::geo_layer_type::SOIL_SAND) { 
+                        layer->type == df::geo_layer_type::SOIL_SAND) {
                         if (inorganic_layer->flags.is_set(df::inorganic_flags::SOIL_SAND)) {
                             mid_level_tile.sand = true;
                         }
@@ -1233,14 +1234,15 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
     //
     for (uint8_t i = 1; i < 16; i++) {
         for (uint8_t k = 0; k < 15; k++) {
+            auto western_neighbour = mlt->at(i - 1).at(k);
             if (details->rivers_horizontal.active[i][k] != 0 &&
                 details->rivers_vertical.active[i - 1][k + 1] != 0 &&
-                mlt->at(i - 1).at(k).river_size == embark_assist::defs::river_sizes::None) {  //  Probably never true
-                mlt->at(i - 1).at(k).river_size = mlt->at(i).at(k).river_size;
-                mlt->at(i - 1).at(k).river_elevation = mlt->at(i).at(k).river_elevation;
+                western_neighbour.river_size == embark_assist::defs::river_sizes::None) {  //  Probably never true
+                western_neighbour.river_size = mlt->at(i).at(k).river_size;
+                western_neighbour.river_elevation = mlt->at(i).at(k).river_elevation;
 
-                if (mlt->at(i - 1).at(k).river_elevation > mlt->at(i - 1).at(k + 1).river_elevation) {
-                    mlt->at(i - 1).at(k).river_elevation = mlt->at(i - 1).at(k + 1).river_elevation;
+                if (western_neighbour.river_elevation > mlt->at(i - 1).at(k + 1).river_elevation) {
+                    western_neighbour.river_elevation = mlt->at(i - 1).at(k + 1).river_elevation;
                 }
             }
         }
@@ -1248,10 +1250,11 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
 
     for (uint8_t i = 0; i < 16; i++) {
         for (uint8_t k = 1; k < 16; k++) {
+            auto northern_neighbour = mlt->at(i).at(k - 1);
             if (details->rivers_vertical.active[i][k] != 0 &&
-                mlt->at(i).at(k - 1).river_size == embark_assist::defs::river_sizes::None) {
-                mlt->at(i).at(k - 1).river_size = mlt->at(i).at(k).river_size;
-                mlt->at(i).at(k - 1).river_elevation = mlt->at(i).at(k).river_elevation;
+                northern_neighbour.river_size == embark_assist::defs::river_sizes::None) {
+                northern_neighbour.river_size = mlt->at(i).at(k).river_size;
+                northern_neighbour.river_elevation = mlt->at(i).at(k).river_elevation;
             }
         }
     }

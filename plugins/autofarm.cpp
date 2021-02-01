@@ -197,15 +197,44 @@ public:
         }
     }
 
+    string get_plant_name(int plant_id)
+    {
+        df::plant_raw *raw = df::plant_raw::find(plant_id);
+        if (raw)
+            return raw->name;
+        else
+            return "NONE";
+    }
+
+    void set_farm(color_ostream& out, int new_plant_id, df::building_farmplotst* farm, int season)
+    {
+        int old_plant_id = farm->plant_id[season];
+        if (old_plant_id != new_plant_id)
+        {
+            farm->plant_id[season] = new_plant_id;
+            out << "autofarm: changing farm #" << farm->id <<
+                " from " << get_plant_name(old_plant_id) <<
+                " to " << get_plant_name(new_plant_id) << endl;
+        }
+    }
+
     void set_farms(color_ostream& out, set<int> plants, vector<df::building_farmplotst*> farms)
     {
         // this algorithm attempts to change as few farms as possible, while ensuring that
         // the number of farms planting each eligible plant is "as equal as possible"
-
-        if (farms.empty() || plants.empty())
-            return; // do nothing if there are no farms or no plantable plants
-
+        
         int season = *df::global::cur_season;
+        
+        if (farms.empty() || plants.empty())
+        {
+            // if no more plants were requested, fallow all farms
+            // if there were no farms, do nothing
+            for (auto farm : farms)
+            {
+                set_farm(out, -1, farm, season);
+            }
+            return;
+        }
 
         int min = farms.size() / plants.size(); // the number of farms that should plant each eligible plant, rounded down
         int extra = farms.size() - min * plants.size(); // the remainder that cannot be evenly divided
@@ -236,11 +265,7 @@ public:
             {
                 // pick one of the excess farms and change it to plant this plant
                 df::building_farmplotst* farm = toChange.front();
-                int o = farm->plant_id[season];
-                farm->plant_id[season] = n;
-                out << "autofarm: changing farm #" << farm->id <<
-                    " from " << ((o == -1) ? "NONE" : world->raws.plants.all[o]->name) <<
-                    " to " << ((n == -1) ? "NONE" : world->raws.plants.all[n]->name) << endl;
+                set_farm(out, n, farm, season);
                 toChange.pop();
                 if (c++ == min)
                     extra--;

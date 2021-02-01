@@ -10,6 +10,7 @@ or make a pull request!
 Name                    Github                  Other
 ======================= ======================= ===========================
 8Z                      8Z
+Abel                    abstern
 acwatkins               acwatkins
 Alexander Gavrilov      angavrilov              ag
 Amostubal               Amostubal
@@ -158,6 +159,7 @@ simon
 Simon Jackson           sizeak
 stolencatkarma
 Stoyan Gaydarov         sgayda2
+Su                      Moth-Tolias
 suokko                  suokko                  shrieker
 sv-esk                  sv-esk
 Tachytaenius            wolfboyft

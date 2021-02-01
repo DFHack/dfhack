@@ -33,6 +33,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
+## Fixes
+- `embark-assistant`: fixed an issue that could result in "false positive" ocean tile matches in some cases when a soil depth criteria was specified
+
 # 0.47.04-r5
 
 ## Fixes

@@ -476,6 +476,40 @@ stockpiles using the keys that represent the categories of items that you want
 to store, and then only use a ``#query`` blueprint if you need fine-grained
 customization.
 
+Stockpile bins, barrels, and wheelbarrows
+`````````````````````````````````````````
+
+Quickfort has global settings for default values for the number of bins,
+barrels, and wheelbarrows assigned to stockpiles, but these numbers can be set
+for individual stockpiles as well.
+
+To set the number of bins, barrels, or wheelbarrows, just add a number after the
+letter that indicates what type of stockpile it is. For example::
+
+    #place a stone stockpile with 5 wheelbarrows
+    s5(3x3)
+
+    #place a bar, ammo, weapon, and armor stockpile with 20 bins
+    bzpd20(5x5)
+
+If the specified number exceeds the number of available stockpile tiles, the
+number of available tiles is used. For wheelbarrows, that limit is reduced by 1
+to ensure there is at least one non-wheelbarrow tile available in the stockpile.
+Otherwise no stone would ever be brought to the stockpile since all tiles would
+be occupied by wheelbarrows!
+
+Quickfort figures out which container type is being set by looking at the letter
+that comes just before the number. For example ``zf10`` means 10 barrels in a
+stockpile that accepts both ammo and food whereas ``z10f`` means 10 bins. If
+the stockpile category doesn't usually use any container type, like refuse or
+corpses, wheelbarrows are assumed::
+
+    #place a corpse stockpile with 3 wheelbarrows
+    y3(3x3)
+
+Zone detailed configuration
+```````````````````````````
+
 Detailed configuration for zones, such as the pit/pond toggle, can also be set
 by mimicking the hotkeys used to set them. Note that gather flags default to
 true, so specifying them in a blueprint will turn the toggles off. If you need

@@ -981,7 +981,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
 
             elevation = details->elevation[i][k];
 
-            df::world_geo_biome* world_geo_biome = world_data->geo_biomes[region_map_entry.geo_index];
+            const df::world_geo_biome* world_geo_biome = world_data->geo_biomes[region_map_entry.geo_index];
             // Special biome adjustments
             if (!region_map_entry.flags.is_set(region_map_entry_flags::is_lake)) {
                 if (region_map_entry.elevation >= 150) {  //  Mountain
@@ -1009,14 +1009,15 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                 auto feature = features[l];
 
                 if (feature->feature_idx != -1) {
-                    switch (world_data->feature_map[x / 16][y / 16].features->feature_init[x % 16][y % 16][feature->feature_idx]->getType())
+                    auto feature_init = world_data->feature_map[x / 16][y / 16].features->feature_init[x % 16][y % 16][feature->feature_idx];
+                    switch (feature_init->getType())
                     {
                     case df::feature_type::deep_special_tube:
-                        mid_level_tile.adamantine_level = world_data->feature_map[x / 16][y / 16].features->feature_init[x % 16][y % 16][feature->feature_idx]->start_depth;
+                        mid_level_tile.adamantine_level = feature_init->start_depth;
                         break;
 
                     case df::feature_type::magma_pool:
-                        mid_level_tile.magma_level = 2 - world_data->feature_map[x / 16][y / 16].features->feature_init[x % 16][y % 16][feature->feature_idx]->start_depth;
+                        mid_level_tile.magma_level = 2 - feature_init->start_depth;
                         break;
 
                     case df::feature_type::volcano:

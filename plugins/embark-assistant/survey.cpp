@@ -1169,9 +1169,10 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                     end_check_m = static_cast<uint16_t>(layer->vein_mat.size());
 
                     for (uint16_t m = 0; m < end_check_m; m++) {
-                        mid_level_tile.minerals[layer->vein_mat[m]] = true;
+                        const int vein_mat_index = layer->vein_mat[m];
+                        mid_level_tile.minerals[vein_mat_index] = true;
 
-                        const df::inorganic_raw* inorganic_vein = world->raws.inorganics[layer->vein_mat[m]];
+                        const df::inorganic_raw* inorganic_vein = world->raws.inorganics[vein_mat_index];
                         end_check_n = static_cast<uint16_t>(inorganic_vein->metal_ore.mat_index.size());
 
                         for (uint16_t n = 0; n < end_check_n; n++) {
@@ -1179,7 +1180,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                         }
 
                         if (inorganic_vein->economic_uses.size() > 0) {
-                            mid_level_tile.economics[layer->vein_mat[m]] = true;
+                            mid_level_tile.economics[vein_mat_index] = true;
 
                             end_check_n = static_cast<uint16_t>(inorganic_vein->economic_uses.size());
                             for (uint16_t n = 0; n < end_check_n; n++) {
@@ -1193,7 +1194,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                             }
 
                             for (uint16_t n = 0; n < state->coals.size(); n++) {
-                                if (layer->vein_mat[m] == state->coals[n]) {
+                                if (vein_mat_index == state->coals[n]) {
                                     mid_level_tile.coal = true;
                                     break;
                                 }
@@ -1261,10 +1262,11 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
             
     for (uint8_t i = 1; i < 16; i++) {
         for (uint8_t k = 0; k < 16; k++) {
+            auto western_neighbour = mlt->at(i - 1).at(k);
             if (details->rivers_horizontal.active[i][k] != 0 &&
-                mlt->at(i - 1).at(k).river_size == embark_assist::defs::river_sizes::None) {
-                mlt->at(i - 1).at(k).river_size = mlt->at(i).at(k).river_size;
-                mlt->at(i - 1).at(k).river_elevation = mlt->at(i).at(k).river_elevation;
+                western_neighbour.river_size == embark_assist::defs::river_sizes::None) {
+                western_neighbour.river_size = mlt->at(i).at(k).river_size;
+                western_neighbour.river_elevation = mlt->at(i).at(k).river_elevation;
             }
         }
     }

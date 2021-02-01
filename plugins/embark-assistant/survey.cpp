@@ -902,6 +902,21 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
 
 //=================================================================================
 
+void inline copy_incursion_values(embark_assist::defs::mid_level_tile_incursion_base &target,
+    const embark_assist::defs::mid_level_tile_incursion_base &source) {
+    target.aquifer = source.aquifer;
+    target.clay = source.clay;
+    target.sand = source.sand;
+    target.soil_depth = source.soil_depth;
+    target.elevation = source.elevation;
+    target.biome_offset = source.biome_offset;
+    target.trees = source.trees;
+    target.savagery_level = source.savagery_level;
+    target.evilness_level = source.evilness_level;
+}
+
+//=================================================================================
+
 void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data *geo_summary,
     embark_assist::defs::world_tile_data *survey_results,
     embark_assist::defs::mid_level_tiles *mlt) {
@@ -1360,50 +1375,10 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
     tile.biome_count = count;
 
     for (uint8_t i = 0; i < 16; i++) {
-        tile.north_row[i].aquifer = mlt->at(i).at(0).aquifer;
-        tile.south_row[i].aquifer = mlt->at(i).at(15).aquifer;
-        tile.west_column[i].aquifer = mlt->at(0).at(i).aquifer;
-        tile.east_column[i].aquifer = mlt->at(15).at(i).aquifer;
-
-        tile.north_row[i].clay= mlt->at(i).at(0).clay;
-        tile.south_row[i].clay = mlt->at(i).at(15).clay;
-        tile.west_column[i].clay = mlt->at(0).at(i).clay;
-        tile.east_column[i].clay = mlt->at(15).at(i).clay;
-
-        tile.north_row[i].sand = mlt->at(i).at(0).sand;
-        tile.south_row[i].sand = mlt->at(i).at(15).sand;
-        tile.west_column[i].sand = mlt->at(0).at(i).sand;
-        tile.east_column[i].sand = mlt->at(15).at(i).sand;
-
-        tile.north_row[i].soil_depth = mlt->at(i).at(0).soil_depth;
-        tile.south_row[i].soil_depth = mlt->at(i).at(15).soil_depth;
-        tile.west_column[i].soil_depth = mlt->at(0).at(i).soil_depth;
-        tile.east_column[i].soil_depth = mlt->at(15).at(i).soil_depth;
-
-        tile.north_row[i].elevation = mlt->at(i).at(0).elevation;
-        tile.south_row[i].elevation = mlt->at(i).at(15).elevation;
-        tile.west_column[i].elevation = mlt->at(0).at(i).elevation;
-        tile.east_column[i].elevation = mlt->at(15).at(i).elevation;
-
-        tile.north_row[i].biome_offset = mlt->at(i).at(0).biome_offset;
-        tile.south_row[i].biome_offset = mlt->at(i).at(15).biome_offset;
-        tile.west_column[i].biome_offset = mlt->at(0).at(i).biome_offset;
-        tile.east_column[i].biome_offset = mlt->at(15).at(i).biome_offset;
-
-        tile.north_row[i].trees = mlt->at(i).at(0).trees;
-        tile.south_row[i].trees = mlt->at(i).at(15).trees;
-        tile.west_column[i].trees = mlt->at(0).at(i).trees;
-        tile.east_column[i].trees = mlt->at(15).at(i).trees;
-        
-        tile.north_row[i].savagery_level = mlt->at(i).at(0).savagery_level;
-        tile.south_row[i].savagery_level = mlt->at(i).at(15).savagery_level;
-        tile.west_column[i].savagery_level = mlt->at(0).at(i).savagery_level;
-        tile.east_column[i].savagery_level = mlt->at(15).at(i).savagery_level;
-
-        tile.north_row[i].evilness_level = mlt->at(i).at(0).evilness_level;
-        tile.south_row[i].evilness_level = mlt->at(i).at(15).evilness_level;
-        tile.west_column[i].evilness_level = mlt->at(0).at(i).evilness_level;
-        tile.east_column[i].evilness_level = mlt->at(15).at(i).evilness_level;
+        copy_incursion_values(tile.north_row[i], mlt->at(i).at(0));
+        copy_incursion_values(tile.south_row[i], mlt->at(i).at(15));
+        copy_incursion_values(tile.west_column[i], mlt->at(0).at(i));
+        copy_incursion_values(tile.east_column[i], mlt->at(15).at(i));
 
         tile.north_corner_selection[i] = world_data->region_details[0]->edges.biome_corner[i][0];
         tile.west_corner_selection[i] = world_data->region_details[0]->edges.biome_corner[0][i];

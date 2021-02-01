@@ -71,6 +71,12 @@ give10right: {give move={Right 10}}
 togglesequence: &{Down}
 togglesequence2: &{Down 2}
 
+masterworkonly: {prefix}{Right}{Up 2}f{Right}{Up 2}&^
+artifactonly:   {prefix}{Right}{Up 2}f{Right}{Up}&^
+
+togglemasterwork: {prefix}{Right}{Up 2}{Right}{Up 2}&^
+toggleartifact:   {prefix}{Right}{Up 2}{Right}{Up}&^
+
 
 ##################################
 # animal stockpile adjustments
@@ -145,6 +151,15 @@ pots:    {furnitureprefix}de{Right}f{Right}{Up 5}&^
 bags:    {furnitureprefix}de{Right}f{Right}{Up 10}&{Left}{Down}f{Down}f{Down}f{Right}{Down}&{Down 6}&{Down}&{Down 6}&^
 buckets: {furnitureprefix}de{Right}f{Right}{Up 12}&^
 sand:    {furnitureprefix}de{Right}f{Right}{Up}&^
+
+masterworkfurniture: {masterworkonly prefix={furnitureprefix}}
+artifactfurniture:   {artifactonly prefix={furnitureprefix}}
+
+forbidmasterworkfurniture: {togglemasterwork prefix={furnitureprefix}}
+forbidartifactfurniture:   {toggleartifact prefix={furnitureprefix}}
+
+permitmasterworkfurniture: {togglemasterwork prefix={furnitureprefix}}
+permitartifactfurniture:   {toggleartifact prefix={furnitureprefix}}
 
 
 ###########################################
@@ -247,6 +262,15 @@ forbidmetalbolts:  {ammoprefix}{Right}{Down}f^
 forbidwoodenbolts: {ammoprefix}{Right}{Down 2}{Right}&^
 forbidbonebolts:   {ammoprefix}{Right}{Down 2}{Right}{Down}&^
 
+masterworkammo: {masterworkonly prefix={ammoprefix}}
+artifactammo:   {artifactonly prefix={ammoprefix}}
+
+forbidmasterworkammo: {togglemasterwork prefix={ammoprefix}}
+forbidartifactammo:   {toggleartifact prefix={ammoprefix}}
+
+permitmasterworkammo: {togglemasterwork prefix={ammoprefix}}
+permitartifactammo:   {toggleartifact prefix={ammoprefix}}
+
 
 ##################################
 # bar stockpile adjustments
@@ -319,6 +343,15 @@ forbidcrafts: {finishedgoodsprefix}{Right 2}{Down 9}{togglesequence 9}^
 
 permitcrafts: {forbidcrafts}
 
+masterworkfinishedgoods: {masterworkonly prefix={finishedgoodsprefix}}
+artifactfinishedgoods:   {artifactonly prefix={finishedgoodsprefix}}
+
+forbidmasterworkfinishedgoods: {togglemasterwork prefix={finishedgoodsprefix}}
+forbidartifactfinishedgoods:   {toggleartifact prefix={finishedgoodsprefix}}
+
+permitmasterworkfinishedgoods: {togglemasterwork prefix={finishedgoodsprefix}}
+permitartifactfinishedgoods:   {toggleartifact prefix={finishedgoodsprefix}}
+
 
 ##################################
 # cloth
@@ -368,14 +401,14 @@ permitbronzeweapons:  {forbidbronzeweapons}
 permitcopperweapons:  {forbidcopperweapons}
 permitsteelweapons:   {forbidsteelweapons}
 
-masterworkweapons: {weaponsprefix}{Right}{Down 5}f{Right}{Down 5}&^
-artifactweapons:   {weaponsprefix}{Right}{Down 5}f{Right}{Down 6}&^
+masterworkweapons: {masterworkonly prefix={weaponsprefix}}
+artifactweapons:   {artifactonly prefix={weaponsprefix}}
 
-forbidmasterworkweapons: {weaponsprefix}{Right}{Down 5}{Right}{Down 5}&^
-forbidartifactweapons:   {weaponsprefix}{Right}{Down 5}{Right}{Down 6}&^
+forbidmasterworkweapons: {togglemasterwork prefix={weaponsprefix}}
+forbidartifactweapons:   {toggleartifact prefix={weaponsprefix}}
 
-permitmasterworkweapons: {forbidmasterworkweapons}
-permitartifactweapons:   {forbidartifactweapons}
+permitmasterworkweapons: {togglemasterwork prefix={weaponsprefix}}
+permitartifactweapons:   {toggleartifact prefix={weaponsprefix}}
 
 
 ##################################
@@ -407,14 +440,14 @@ permitbronzearmor:  {forbidbronzearmor}
 permitcopperarmor:  {forbidcopperarmor}
 permitsteelarmor:   {forbidsteelarmor}
 
-masterworkarmor: {armorprefix}{Right}{Down 8}f{Right}{Down 5}&^
-artifactarmor:   {armorprefix}{Right}{Down 8}f{Right}{Down 6}&^
+masterworkarmor: {masterworkonly prefix={armorprefix}}
+artifactarmor:   {artifactonly prefix={armorprefix}}
 
-forbidmasterworkarmor: {armorprefix}{Right}{Down 8}{Right}{Down 5}&^
-forbidartifactarmor:   {armorprefix}{Right}{Down 8}{Right}{Down 6}&^
+forbidmasterworkarmor: {togglemasterwork prefix={armorprefix}}
+forbidartifactarmor:   {toggleartifact prefix={armorprefix}}
 
-permitmasterworkarmor: {forbidmasterworkarmor}
-permitartifactarmor:   {forbidartifactarmor}
+permitmasterworkarmor: {togglemasterwork prefix={armorprefix}}
+permitartifactarmor:   {toggleartifact prefix={armorprefix}}
 
 
 ##################################

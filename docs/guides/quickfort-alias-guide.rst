@@ -486,9 +486,9 @@ Instead of these aliases, though, it might be more useful to use the DFHack
 Stockpile configuration utility aliases
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-===============  ===========
-Alias            Sub-aliases
-===============  ===========
+================  ===========
+Alias             Sub-aliases
+================  ===========
 linksonly
 nocontainers
 give2up
@@ -499,10 +499,14 @@ give10up
 give10down
 give10left
 give10right
-give             move
+give              move
 togglesequence
 togglesequence2
-===============  ===========
+masterworkonly    prefix
+artifactonly      prefix
+togglemasterwork  prefix
+toggleartifact    prefix
+================  ===========
 
 ``linksonly`` and ``nocontainers`` set the named basic properties on
 stockpiles. ``nocontainers`` sets bins and barrels to 0, but does not affect
@@ -558,11 +562,15 @@ tiles down::
 ``togglesequence`` and ``togglesequence2`` send ``{Down}{Enter}`` or
 ``{Down 2}{Enter}`` to toggle adjacent (or alternating) items in a list. This
 is useful when toggling a bunch of related item types in the stockpile config.
-For example, the ``dye`` and ``tallow`` aliases in the standard alias library
-need to select specific items from long lists::
+For example, the ``dye`` alias in the standard alias library needs to select
+four adjacent items::
 
-    dye:    {foodprefix}b{Right}{Down 11}{Right}{Down 28}{togglesequence 4}^
-    tallow: {foodprefix}b{Right}{Down 13}{Right}{Down}{togglesequence2 811}^
+    dye: {foodprefix}b{Right}{Down 11}{Right}{Down 28}{togglesequence 4}^
+
+Finally, the ``masterwork`` and ``artifact`` group of aliases configure the
+corresponding allowable core quality for the stockpile categories that have
+them. This alias is used to implement category-specific aliases below, like
+``artifactweapons`` and ``forbidartifactweapons``.
 
 .. _quickfort-stockpile-aliases:
 
@@ -658,17 +666,16 @@ miscliquid       forbidmiscliquid      permitmiscliquid
 Furniture stockpile adjustments
 ```````````````````````````````
 
-+-----------+
-| Exclusive |
-+===========+
-| pots      |
-+-----------+
-| bags      |
-+-----------+
-| buckets   |
-+-----------+
-| sand      |
-+-----------+
+===================  =========================  =========================
+Exclusive            Forbid                     Permit
+===================  =========================  =========================
+pots
+bags
+buckets
+sand
+masterworkfurniture  forbidmasterworkfurniture  permitmasterworkfurniture
+artifactfurniture    forbidartifactfurniture    permitartifactfurniture
+===================  =========================  =========================
 
 Notes:
 
@@ -719,14 +726,16 @@ clay           forbidclay            permitclay
 Ammo stockpile adjustments
 ``````````````````````````
 
-===============  ====================
-Exclusive        Forbid
-===============  ====================
+==============  ====================  ====================
+Exclusive       Forbid                Permit
+==============  ====================  ====================
 bolts
-\                forbidmetalbolts
-\                forbidwoodenbolts
-\                forbidbonebolts
-===============  ====================
+\               forbidmetalbolts
+\               forbidwoodenbolts
+\               forbidbonebolts
+masterworkammo  forbidmasterworkammo  permitmasterworkammo
+artifactammo    forbidartifactammo    permitartifactammo
+==============  ====================  ====================
 
 Bar stockpile adjustments
 `````````````````````````
@@ -764,12 +773,14 @@ cutstone     forbidcutstone
 Finished goods stockpile adjustments
 ````````````````````````````````````
 
-=========  ============  ============
-Exclusive  Forbid        Permit
-=========  ============  ============
+=======================  =============================  =============================
+Exclusive                Forbid                         Permit
+=======================  =============================  =============================
 jugs
-crafts     forbidcrafts  permitcrafts
-=========  ============  ============
+crafts                   forbidcrafts                   permitcrafts
+masterworkfinishedgoods  forbidmasterworkfinishedgoods  permitmasterworkfinishedgoods
+artifactfinishedgoods    forbidartifactfinishedgoods    permitartifactfinishedgoods
+=======================  =============================  =============================
 
 Cloth stockpile adjustments
 ```````````````````````````
@@ -789,9 +800,9 @@ Cloth stockpile adjustments
 Weapon stockpile adjustments
 ````````````````````````````
 
-=================  ========================  ====================
+=================  ========================  =======================
 Exclusive          Forbid                    Permit
-=================  ========================  ====================
+=================  ========================  =======================
 \                  forbidweapons             permitweapons
 \                  forbidtrapcomponents      permittrapcomponents
 metalweapons       forbidmetalweapons        permitmetalweapons
@@ -803,14 +814,14 @@ copperweapons      forbidcopperweapons       permitcopperweapons
 steelweapons       forbidsteelweapons        permitsteelweapons
 masterworkweapons  forbidmasterworkweapons   permitmasterworkweapons
 artifactweapons    forbidartifactweapons     permitartifactweapons
-=================  ========================  ====================
+=================  ========================  =======================
 
 Armor stockpile adjustments
 ```````````````````````````
 
-===============  ======================  ====================
+===============  ======================  =====================
 Exclusive        Forbid                  Permit
-===============  ======================  ====================
+===============  ======================  =====================
 metalarmor       forbidmetalarmor        permitmetalarmor
 otherarmor       forbidotherarmor        permitotherarmor
 ironarmor        forbidironarmor         permitironarmor
@@ -819,4 +830,4 @@ copperarmor      forbidcopperarmor       permitcopperarmor
 steelarmor       forbidsteelarmor        permitsteelarmor
 masterworkarmor  forbidmasterworkarmor   permitmasterworkarmor
 artifactarmor    forbidartifactarmor     permitartifactarmor
-===============  ======================  ====================
+===============  ======================  =====================

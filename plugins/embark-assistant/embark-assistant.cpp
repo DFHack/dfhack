@@ -57,6 +57,12 @@ namespace embark_assist {
         //===============================================================================
 
         void embark_update() {
+            // not updating the embark overlay during an active find/match/survey phase
+            // which leads to better performance
+            if (state != nullptr && state->match_iterator.active) {
+                return;
+            }
+
             auto screen = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
             embark_assist::defs::mid_level_tiles mlt;
             embark_assist::survey::initiate(&mlt);
@@ -311,14 +317,31 @@ command_result embark_assistant(color_ostream &out, std::vector <std::string> & 
 
         for (uint16_t k = 0; k < world->worldgen.worldgen_parms.dim_y; k++) {
             embark_assist::main::state->survey_results[i][k].surveyed = false;
-            embark_assist::main::state->survey_results[i][k].aquifer = embark_assist::defs::aquifer_sizes::NA;
+            embark_assist::main::state->survey_results[i][k].survey_completed = false;
+            embark_assist::main::state->survey_results[i][k].neighboring_clay = false;
+            embark_assist::main::state->survey_results[i][k].neighboring_sand = false;
+            for (uint8_t l = 0; l <= ENUM_LAST_ITEM(biome_type); l++) {
+                embark_assist::main::state->survey_results[i][k].neighboring_biomes[l] = false;
+            }
+
+            for (uint8_t l = 0; l <= ENUM_LAST_ITEM(world_region_type); l++) {
+                embark_assist::main::state->survey_results[i][k].neighboring_region_types[l] = false;
+            }
+
+            for (uint8_t l = 0; l < 2; l++) {
+                embark_assist::main::state->survey_results[i][k].neighboring_savagery[l] = false;
+                embark_assist::main::state->survey_results[i][k].neighboring_evilness[l] = false;
+            }
+
+            embark_assist::main::state->survey_results[i][k].aquifer = embark_assist::defs::Clear_Aquifer_Bits;
             embark_assist::main::state->survey_results[i][k].clay_count = 0;
             embark_assist::main::state->survey_results[i][k].sand_count = 0;
             embark_assist::main::state->survey_results[i][k].flux_count = 0;
             embark_assist::main::state->survey_results[i][k].min_region_soil = 10;
             embark_assist::main::state->survey_results[i][k].max_region_soil = 0;
             embark_assist::main::state->survey_results[i][k].max_waterfall = 0;
-            embark_assist::main::state->survey_results[i][k].river_size = embark_assist::defs::river_sizes::None;
+            embark_assist::main::state->survey_results[i][k].min_river_size = embark_assist::defs::river_sizes::None;
+            embark_assist::main::state->survey_results[i][k].max_river_size = embark_assist::defs::river_sizes::None;
             embark_assist::main::state->survey_results[i][k].min_tree_level = embark_assist::defs::tree_levels::Heavily_Forested;
             embark_assist::main::state->survey_results[i][k].max_tree_level = embark_assist::defs::tree_levels::None;
 

@@ -63,7 +63,9 @@ or at any other time using the ``dfhack-run`` executable.
 
 If DF/DFHack is started with arguments beginning with ``+``, the remaining
 text is treated as a command in the DFHack console.  It is possible to use
-multiple such commands, which are split on ``+``.  For example::
+multiple such commands, which are split on ``+``.  For example:
+
+.. code-block:: shell
 
     ./dfhack +load-save region1
     "Dwarf Fortress.exe" +devel/print-args Hello! +enable workflow
@@ -93,7 +95,9 @@ but ``dfhack-run`` can be useful in a variety of circumstances:
 - from external programs or scripts
 - if DF or DFHack are not responding
 
-Examples::
+Examples:
+
+.. code-block:: shell
 
     ./dfhack-run cursecheck
     dfhack-run kill-lua
@@ -450,13 +454,61 @@ Other init files
   directory, will be run when any world or that save is loaded.
 
 
+.. _dfhack-config:
+
+Configuration Files
+===================
+
+Some DFHack settings can be changed by modifying files in the ``dfhack-config``
+folder (which is in the DF folder). The default versions of these files, if they
+exist, are in ``dfhack-config/default`` and are installed when DFHack starts if
+necessary.
+
+.. _script-paths:
+
+Script paths
+------------
+
+Script paths are folders that DFHack searches to find a script when a command is
+run. By default, the following folders are searched, in order (relative to the
+root DF folder):
+
+1. :file:`data/save/{<region folder>}/raw/scripts` (only if a save is loaded)
+2. :file:`raw/scripts`
+3. :file:`hack/scripts`
+
+For example, if ``teleport`` is run, these folders are searched in order for
+``teleport.lua`` or ``teleport.rb``, and the first matching file is run.
+
+Script paths can be added by modifying :file:`dfhack-config/script-paths.txt`.
+Each line should start with one of these characters:
+
+- ``+``: adds a script path that is searched *before* the default paths (above)
+- ``-``: adds a script path that is searched *after* the default paths
+- ``#``: a comment (the line is ignored)
+
+Paths can be absolute or relative - relative paths are interpreted relative to
+the root DF folder.
+
+.. admonition:: Tip
+
+    When developing scripts in the :source:scripts:`dfhack/scripts repo <>`,
+    it may be useful to add the path to your local copy of the repo with ``+``.
+    This will allow you to make changes in the repo and have them take effect
+    immediately, without needing to re-install or copy scripts over manually.
+
+
+Script paths can also be modified programmatically through the `Lua API <lua-api-internal>`.
+
 .. _env-vars:
 
-Environment variables
+Environment Variables
 =====================
 
 DFHack's behavior can be adjusted with some environment variables. For example,
-on UNIX-like systems::
+on UNIX-like systems:
+
+.. code-block:: shell
 
   DFHACK_SOME_VAR=1 ./dfhack
 
@@ -505,5 +557,5 @@ This section is for odd but important notes that don't fit anywhere else.
   Older versions are available here_.
   *These files will eventually be migrated to GitHub.*  (see :issue:`473`)
 
-  .. _DFFD: http://dffd.bay12games.com/search.php?string=DFHack&id=15&limit=1000
-  .. _here: http://dethware.org/dfhack/download
+  .. _DFFD: https://dffd.bay12games.com/search.php?string=DFHack&id=15&limit=1000
+  .. _here: https://dethware.org/dfhack/download

@@ -40,6 +40,8 @@ set(MAIN_HEADERS
     include/Module.h
     include/Pragma.h
     include/MemAccess.h
+    include/PluginManager.h
+    include/PluginStatics.h
     include/Signal.hpp
     include/TileTypes.h
     include/Types.h
@@ -72,6 +74,7 @@ set(MAIN_SOURCES
     MiscUtils.cpp
     Types.cpp
     PluginManager.cpp
+    PluginStatics.cpp
     TileTypes.cpp
     VersionInfoFactory.cpp
     RemoteClient.cpp
@@ -482,3 +485,5 @@ if(BUILD_DEVEL)
         DESTINATION ${DFHACK_INCLUDES_DESTINATION}
         FILES_MATCHING PATTERN "*.h" PATTERN "*.inc" )
 endif()
+
+add_subdirectory(xml)

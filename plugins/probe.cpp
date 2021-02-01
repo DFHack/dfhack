@@ -309,10 +309,17 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
     if(des.bits.water_stagnant)
         out << "stagnant" << endl;
 
-    out.print("%-16s= %s\n", "dig", ENUM_KEY_STR(tile_dig_designation, des.bits.dig).c_str());
-    out.print("%-16s= %s\n", "traffic", ENUM_KEY_STR(tile_traffic, des.bits.traffic).c_str());
-
     #define PRINT_FLAG( FIELD, BIT )  out.print("%-16s= %c\n", #BIT , ( FIELD.bits.BIT ? 'Y' : ' ' ) )
+
+    out.print("%-16s= %s\n", "dig", enum_item_key(des.bits.dig).c_str());
+    PRINT_FLAG(occ, dig_marked);
+    PRINT_FLAG(occ, dig_auto);
+    out.print("%-16s= %s\n", "traffic", enum_item_key(des.bits.traffic).c_str());
+    PRINT_FLAG(occ, carve_track_north);
+    PRINT_FLAG(occ, carve_track_south);
+    PRINT_FLAG(occ, carve_track_east);
+    PRINT_FLAG(occ, carve_track_west);
+
     PRINT_FLAG( des, hidden );
     PRINT_FLAG( des, light );
     PRINT_FLAG( des, outside );
@@ -344,12 +351,19 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
         out.print(" (%2d)", global.type);
         out.print(" %s\n", sa_feature(global.type));
     }
-    #undef PRINT_FLAG
     out << "local feature idx: " << block.local_feature
         << endl;
     out << "global feature idx: " << block.global_feature
         << endl;
-    out << std::endl;
+    out << endl;
+
+    out << "Occupancy:" << endl;
+    out.print("%-16s= %s\n", "building", enum_item_key(occ.bits.building).c_str());
+    PRINT_FLAG(occ, unit);
+    PRINT_FLAG(occ, unit_grounded);
+    PRINT_FLAG(occ, item);
+    PRINT_FLAG(occ, moss);
+    out << endl;
 
     if(block.occupancy[tileX][tileY].bits.no_grow)
         out << "no grow" << endl;
@@ -382,7 +396,7 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
         }
     }
 
-
+    #undef PRINT_FLAG
     return CR_OK;
 }
 

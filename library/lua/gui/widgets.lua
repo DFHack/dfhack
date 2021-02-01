@@ -29,6 +29,20 @@ local function map_opttab(tab,idx)
     end
 end
 
+STANDARDSCROLL = {
+    STANDARDSCROLL_UP = -1,
+    STANDARDSCROLL_DOWN = 1,
+    STANDARDSCROLL_PAGEUP = '-page',
+    STANDARDSCROLL_PAGEDOWN = '+page',
+}
+
+SECONDSCROLL = {
+    SECONDSCROLL_UP = -1,
+    SECONDSCROLL_DOWN = 1,
+    SECONDSCROLL_PAGEUP = '-page',
+    SECONDSCROLL_PAGEDOWN = '+page',
+}
+
 ------------
 -- Widget --
 ------------
@@ -234,10 +248,14 @@ end
 
 function render_text(obj,dc,x0,y0,pen,dpen,disabled)
     local width = 0
-    for iline,line in ipairs(obj.text_lines) do
-        local x = 0
+    for iline = dc and obj.start_line_num or 1, #obj.text_lines do
+        local x, line = 0, obj.text_lines[iline]
         if dc then
-            dc:seek(x+x0,y0+iline-1)
+            local offset = (obj.start_line_num or 1) - 1
+            local y = y0 + iline - offset - 1
+            -- skip text outside of the containing frame
+            if y > dc.height - 1 then break end
+            dc:seek(x+x0, y)
         end
         for _,token in ipairs(line) do
             token.line = iline
@@ -350,9 +368,11 @@ Label.ATTRS{
     auto_width = false,
     on_click = DEFAULT_NIL,
     on_rclick = DEFAULT_NIL,
+    scroll_keys = STANDARDSCROLL,
 }
 
 function Label:init(args)
+    self.start_line_num = 1
     self:setText(args.text)
     if not self.text_hpen then
         self.text_hpen = ((tonumber(self.text_pen) or tonumber(self.text_pen.fg) or 0) + 8) % 16
@@ -399,16 +419,33 @@ function Label:onRenderBody(dc)
     render_text(self,dc,0,0,text_pen,self.text_dpen,is_disabled(self))
 end
 
+function Label:scroll(nlines)
+    local n = self.start_line_num + nlines
+    n = math.min(n, self:getTextHeight() - self.frame_body.height + 1)
+    n = math.max(n, 1)
+    self.start_line_num = n
+end
+
 function Label:onInput(keys)
-    if not is_disabled(self) then
-        if keys._MOUSE_L_DOWN and self:getMousePos() and self.on_click then
-            self:on_click()
-        end
-        if keys._MOUSE_R_DOWN and self:getMousePos() and self.on_rclick then
-            self:on_rclick()
-        end
-        return check_text_keys(self, keys)
+    if is_disabled(self) then return false end
+    if keys._MOUSE_L_DOWN and self:getMousePos() and self.on_click then
+        self:on_click()
     end
+    if keys._MOUSE_R_DOWN and self:getMousePos() and self.on_rclick then
+        self:on_rclick()
+    end
+    for k,v in pairs(self.scroll_keys) do
+        if keys[k] then
+            if v == '+page' then
+                v = self.frame_body.height
+            elseif v == '-page' then
+                v = -self.frame_body.height
+            end
+            self:scroll(v)
+            return false
+        end
+    end
+    return check_text_keys(self, keys)
 end
 
 ----------
@@ -416,20 +453,6 @@ end
 ----------
 
 List = defclass(List, Widget)
-
-STANDARDSCROLL = {
-    STANDARDSCROLL_UP = -1,
-    STANDARDSCROLL_DOWN = 1,
-    STANDARDSCROLL_PAGEUP = '-page',
-    STANDARDSCROLL_PAGEDOWN = '+page',
-}
-
-SECONDSCROLL = {
-    SECONDSCROLL_UP = -1,
-    SECONDSCROLL_DOWN = 1,
-    SECONDSCROLL_PAGEUP = '-page',
-    SECONDSCROLL_PAGEDOWN = '+page',
-}
 
 List.ATTRS{
     text_pen = COLOR_CYAN,
@@ -792,7 +815,8 @@ function FilteredList:setFilter(filter, pos)
             local ok = true
             local search_key = v.search_key or v.text
             for _,key in ipairs(tokens) do
-                if key ~= '' and not string.match(search_key, '%f[^%s\x00]'..key) then
+                if key ~= '' and
+                        not string.match(search_key, '%f[^%s%p\x00]'..key) then
                     ok = false
                     break
                 end

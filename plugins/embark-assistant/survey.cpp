@@ -88,6 +88,23 @@ namespace embark_assist {
 
         //=======================================================================================
 
+        embark_assist::defs::river_sizes river_size_of(uint8_t width) {
+            if (width < 7) {
+                return embark_assist::defs::river_sizes::Stream;
+            }
+            else if (width < 13) {
+                return embark_assist::defs::river_sizes::Minor;
+            }
+            else if (width < 24) {
+                return embark_assist::defs::river_sizes::Medium;
+            }
+            else {
+                return embark_assist::defs::river_sizes::Major;
+            }
+        }
+
+        //=======================================================================================
+
         bool geo_survey(embark_assist::defs::geo_data *geo_summary) {
             color_ostream_proxy out(Core::getInstance().getConsole());
             df::world_data *world_data = world->world_data;
@@ -227,71 +244,6 @@ namespace embark_assist {
                 }
             }
             return true;
-        }
-
-
-        //=================================================================================
-
-        void survey_rivers(embark_assist::defs::world_tile_data *survey_results) {
-            //            color_ostream_proxy out(Core::getInstance().getConsole());
-            df::world_data *world_data = world->world_data;
-            int16_t x;
-            int16_t y;
-
-            for (uint16_t i = 0; i < world_data->rivers.size(); i++) {
-                for (uint16_t k = 0; k < world_data->rivers[i]->path.x.size(); k++) {
-                    x = world_data->rivers[i]->path.x[k];
-                    y = world_data->rivers[i]->path.y[k];
-
-                    if (world_data->rivers[i]->flow[k] < 5000) {
-                        if (world_data->region_map[x][y].flags.is_set(df::region_map_entry_flags::is_brook)) {
-                            survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Brook;
-                        }
-                        else {
-                            survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Stream;
-                        }
-                    }
-                    else if (world_data->rivers[i]->flow[k] < 10000) {
-                        survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Minor;
-                    }
-                    else if (world_data->rivers[i]->flow[k] < 20000) {
-                        survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Medium;
-                    }
-                    else {
-                        survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Major;
-                    }
-                }
-
-                x = world_data->rivers[i]->end_pos.x;
-                y = world_data->rivers[i]->end_pos.y;
-
-                //  Make the guess the river size for the end is the same as the tile next to the end. Note that DF
-                //  doesn't actually recognize this tile as part of the river in the pre embark river name display.
-                //  We also assume the is_river/is_brook flags are actually set properly for the end tile.
-                //
-                if (x >= 0 && y >= 0 && x < world->worldgen.worldgen_parms.dim_x && y < world->worldgen.worldgen_parms.dim_y) {
-                    if (survey_results->at(x).at(y).river_size == embark_assist::defs::river_sizes::None) {
-                        if (world_data->rivers[i]->path.x.size() &&
-                            world_data->rivers[i]->flow[world_data->rivers[i]->path.x.size() - 1] < 5000) {
-                            if (world_data->region_map[x][y].flags.is_set(df::region_map_entry_flags::is_brook)) {
-                                survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Brook;
-                            }
-                            else {
-                                survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Stream;
-                            }
-                        }
-                        else if (world_data->rivers[i]->flow[world_data->rivers[i]->path.x.size() - 1] < 10000) {
-                            survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Minor;
-                        }
-                        else if (world_data->rivers[i]->flow[world_data->rivers[i]->path.x.size() - 1] < 20000) {
-                            survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Medium;
-                        }
-                        else {
-                            survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Major;
-                        }
-                    }
-                }
-            }
         }
 
         //=================================================================================
@@ -480,17 +432,17 @@ namespace embark_assist {
             }
 
             if (world->world_data->world_height == 17) {
-                divisor = (57 / steps * lat + 0.4);
+                divisor = ((lat * 57) / steps + 0.4);
             }
             else if (world->world_data->world_height == 33) {
-                divisor = (61 / steps * lat + 0.1);
+                divisor = ((lat * 61) / steps + 0.1);
             }
             else if (world->world_data->world_height == 65) {
-                divisor = (63 / steps * lat);
+                divisor = ((lat * 63) / steps);
             }
             else if (world->world_data->world_height == 129 ||
                 world->world_data->world_height == 257) {
-                divisor = (64 / steps * lat);
+                divisor = ((lat * 64) / steps);
             }
             else {
                 return max_temperature; // Not any standard world height. No formula available
@@ -503,11 +455,11 @@ namespace embark_assist {
 
         void process_embark_incursion(embark_assist::defs::site_infos *site_info,
             embark_assist::defs::world_tile_data *survey_results,
-            embark_assist::defs::mid_level_tile *mlt,  // Note this is a single tile, as opposed to most usages of this variable name.
+            embark_assist::defs::mid_level_tile_incursion_base *mlt,  // Note this is a single tile, as opposed to most usages of this variable name.
             int16_t elevation,
             uint16_t x,
             uint16_t y) {
-            site_info->aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(mlt->aquifer) | static_cast<int8_t>(site_info->aquifer));
+            site_info->aquifer |= mlt->aquifer;
 
             if (mlt->soil_depth < site_info->min_soil) {
                 site_info->min_soil = mlt->soil_depth;
@@ -567,42 +519,42 @@ namespace embark_assist {
 
             //  Logic can be implemented with modulo and division, but that's harder to read.
             switch (from_direction) {
-            case 0:
+            case embark_assist::defs::directions::Northwest:
                 fetch_i = i - 1;
                 fetch_k = k - 1;
                 break;
 
-            case 1:
+            case embark_assist::defs::directions::North:
                 fetch_k = k - 1;
                 break;
 
-            case 2:
+            case embark_assist::defs::directions::Northeast:
                 fetch_i = i + 1;
                 fetch_k = k - 1;
                 break;
 
-            case 3:
+            case embark_assist::defs::directions::West:
                 fetch_i = i - 1;
                 break;
 
-            case 4:
+            case embark_assist::defs::directions::Center:
                 return;   //  Own tile provides the data, so there's no incursion.
                 break;
 
-            case 5:
+            case embark_assist::defs::directions::East:
                 fetch_i = i + 1;
                 break;
 
-            case 6:
+            case embark_assist::defs::directions::Southwest:
                 fetch_i = i - 1;
                 fetch_k = k + 1;
                 break;
 
-            case 7:
+            case embark_assist::defs::directions::South:
                 fetch_k = k + 1;
                 break;
 
-            case 8:
+            case embark_assist::defs::directions::Southeast:
                 fetch_i = i + 1;
                 fetch_k = k + 1;
                 break;
@@ -649,7 +601,7 @@ namespace embark_assist {
                 else {
                     process_embark_incursion(site_info,
                         survey_results,
-                        &survey_results->at(fetch_x).at(fetch_y).south_row[i],
+                        &survey_results->at(fetch_x).at(fetch_y).south_row[fetch_i],
                         mlt->at(i).at(k).elevation,
                         fetch_x,
                         fetch_y);
@@ -675,7 +627,7 @@ namespace embark_assist {
                 else {
                     process_embark_incursion(site_info,
                         survey_results,
-                        &survey_results->at(fetch_x).at(fetch_y).north_row[i],
+                        &survey_results->at(fetch_x).at(fetch_y).north_row[fetch_i],
                         mlt->at(i).at(k).elevation,
                         fetch_x,
                         fetch_y);
@@ -685,7 +637,7 @@ namespace embark_assist {
                 if (fetch_i < 0) {
                     process_embark_incursion(site_info,
                         survey_results,
-                        &survey_results->at(fetch_x).at(fetch_y).east_column[k],
+                        &survey_results->at(fetch_x).at(fetch_y).east_column[fetch_k],
                         mlt->at(i).at(k).elevation,
                         fetch_x,
                         fetch_y);
@@ -693,7 +645,7 @@ namespace embark_assist {
                 else if (fetch_i > 15) {
                     process_embark_incursion(site_info,
                         survey_results,
-                        &survey_results->at(fetch_x).at(fetch_y).west_column[k],
+                        &survey_results->at(fetch_x).at(fetch_y).west_column[fetch_k],
                         mlt->at(i).at(k).elevation,
                         fetch_x,
                         fetch_y);
@@ -802,7 +754,23 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
             uint8_t offset_count = 0;
             auto &results = survey_results->at(i).at(k);
             results.surveyed = false;
-            results.aquifer = embark_assist::defs::aquifer_sizes::NA;
+            results.survey_completed = false;
+            results.neighboring_clay = false;
+            results.neighboring_sand = false;
+            for (uint8_t l = 0; l <= ENUM_LAST_ITEM(biome_type); l++) {
+                results.neighboring_biomes[l] = false;
+            }
+
+            for (uint8_t l = 0; l <= ENUM_LAST_ITEM(world_region_type); l++) {
+                results.neighboring_region_types[l] = false;
+            }
+
+            for (uint8_t l = 0; l < 2; l++) {
+                results.neighboring_savagery[l] = false;
+                results.neighboring_evilness[l] = false;
+            }
+
+            results.aquifer = embark_assist::defs::Clear_Aquifer_Bits;
             results.clay_count = 0;
             results.sand_count = 0;
             results.flux_count = 0;
@@ -851,13 +819,13 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
                     geo_index = world_data->region_map[adjusted.x][adjusted.y].geo_index;
 
                     if (geo_summary->at(geo_index).aquifer_absent) {
-                        results.aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(results.aquifer) | 1);
+                        results.aquifer |= embark_assist::defs::None_Aquifer_Bit;
                     }
                     else if (world_data->region_map[adjusted.x][adjusted.y].drainage % 20 == 7) {
-                        results.aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(results.aquifer) | 4);
+                        results.aquifer |= embark_assist::defs::Heavy_Aquifer_Bit;
                     }
                     else {
-                        results.aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(results.aquifer) | 2);
+                        results.aquifer |= embark_assist::defs::Light_Aquifer_Bit;
                     }
 
                     if (!geo_summary->at(geo_index).clay_absent) results.clay_count++;
@@ -899,10 +867,23 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
                 }
             }
 
-            results.biome_count = 0;
-            for (uint8_t l = 1; l < 10; l++) {
-                if (results.biome[l] != -1) results.biome_count++;
+            bool biomes[ENUM_LAST_ITEM(biome_type) + 1];
+            for (uint8_t l = 0; l <= ENUM_LAST_ITEM(biome_type); l++) {
+                biomes[l] = false;
             }
+
+            for (uint8_t l = 1; l < 10; l++)
+            {
+                if (results.biome[l] != -1) {
+                    biomes[results.biome[l]] = true;
+                }
+            }
+            int count = 0;
+            for (uint8_t l = 0; l <= ENUM_LAST_ITEM(biome_type); l++) {
+                if (biomes[l]) count++;
+            }
+
+            results.biome_count = count;
 
             if (results.clay_count == offset_count) results.clay_count = 256;
             if (results.sand_count == offset_count) results.sand_count = 256;
@@ -916,7 +897,6 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
         }
     }
 
-    embark_assist::survey::survey_rivers(survey_results);
     embark_assist::survey::survey_evil_weather(survey_results);
 }
 
@@ -925,7 +905,7 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
 void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data *geo_summary,
     embark_assist::defs::world_tile_data *survey_results,
     embark_assist::defs::mid_level_tiles *mlt) {
-//                color_ostream_proxy out(Core::getInstance().getConsole());
+//              color_ostream_proxy out(Core::getInstance().getConsole());
     auto screen = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
     int16_t x = screen->location.region_pos.x;
     int16_t y = screen->location.region_pos.y;
@@ -1016,7 +996,6 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
 
             base_z = elevation - 1;
             features = details->features[i][k];
-            std::map<int, int> layer_bottom, layer_top;
             mlt->at(i).at(k).adamantine_level = -1;
             mlt->at(i).at(k).magma_level = -1;
 
@@ -1047,8 +1026,6 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                     feature->min_z != -30000) {
                     auto layer = world_data->underground_regions[feature->layer];
 
-                    layer_bottom[layer->layer_depth] = feature->min_z;
-                    layer_top[layer->layer_depth] = feature->max_z;
                     base_z = std::min((int)base_z, (int)feature->min_z);
 
                     if (layer->type == df::world_underground_region::MagmaSea) {
@@ -1069,7 +1046,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
             int16_t cur_shift = elevation + soil_erosion - 1;
 
             aquifer = false;
-            mlt->at(i).at(k).aquifer = embark_assist::defs::aquifer_sizes::NA;
+            mlt->at(i).at(k).aquifer = embark_assist::defs::Clear_Aquifer_Bits;
             mlt->at(i).at(k).clay = false;
             mlt->at(i).at(k).sand = false;
             mlt->at(i).at(k).flux = false;
@@ -1083,16 +1060,21 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
             }
             mlt->at(i).at(k).offset = offset;
             mlt->at(i).at(k).elevation = details->elevation[i][k];
-            mlt->at(i).at(k).river_present = false;
+            mlt->at(i).at(k).river_size = embark_assist::defs::river_sizes::None;
             mlt->at(i).at(k).river_elevation = 100;
 
             if (details->rivers_vertical.active[i][k] != 0) {
-                mlt->at(i).at(k).river_present = true;
+                mlt->at(i).at(k).river_size = river_size_of (details->rivers_vertical.x_max[i][k] - details->rivers_vertical.x_min[i][k] + 1);
                 mlt->at(i).at(k).river_elevation = details->rivers_vertical.elevation[i][k];
             }
             else if (details->rivers_horizontal.active[i][k] != 0) {
-                mlt->at(i).at(k).river_present = true;
+                mlt->at(i).at(k).river_size = river_size_of (details->rivers_horizontal.y_max[i][k] - details->rivers_horizontal.y_min[i][k] + 1);
                 mlt->at(i).at(k).river_elevation = details->rivers_horizontal.elevation[i][k];
+            }
+
+            if (mlt->at(i).at(k).river_size != embark_assist::defs::river_sizes::None &&
+                world_tile->flags.is_set(df::region_map_entry_flags::is_brook)) {
+                mlt->at(i).at(k).river_size = embark_assist::defs::river_sizes::Brook;
             }
 
             if (tile->min_region_soil > mlt->at(i).at(k).soil_depth) {
@@ -1220,13 +1202,13 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                 }
             }
             if (!aquifer) {
-                mlt->at(i).at(k).aquifer = embark_assist::defs::aquifer_sizes::None;
+                mlt->at(i).at(k).aquifer = embark_assist::defs::None_Aquifer_Bit;
             }
             else if (world_data->region_map[adjusted.x][adjusted.y].drainage % 20 == 7) {
-                mlt->at(i).at(k).aquifer = embark_assist::defs::aquifer_sizes::Heavy;
+                mlt->at(i).at(k).aquifer = embark_assist::defs::Heavy_Aquifer_Bit;
             }
             else {
-                mlt->at(i).at(k).aquifer = embark_assist::defs::aquifer_sizes::Light;
+                mlt->at(i).at(k).aquifer = embark_assist::defs::Light_Aquifer_Bit;
             }
 
             mlt->at(i).at(k).trees = tree_level_of(world_data->regions[world_data->region_map[adjusted.x][adjusted.y].region_id]->type,
@@ -1248,8 +1230,8 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
         for (uint8_t k = 0; k < 15; k++) {
             if (details->rivers_horizontal.active[i][k] != 0 &&
                 details->rivers_vertical.active[i - 1][k + 1] != 0 &&
-                !mlt->at(i - 1).at(k).river_present) {  //  Probably never true
-                mlt->at(i - 1).at(k).river_present = true;
+                mlt->at(i - 1).at(k).river_size == embark_assist::defs::river_sizes::None) {  //  Probably never true
+                mlt->at(i - 1).at(k).river_size = mlt->at(i).at(k).river_size;
                 mlt->at(i - 1).at(k).river_elevation = mlt->at(i).at(k).river_elevation;
 
                 if (mlt->at(i - 1).at(k).river_elevation > mlt->at(i - 1).at(k + 1).river_elevation) {
@@ -1262,8 +1244,8 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
     for (uint8_t i = 0; i < 16; i++) {
         for (uint8_t k = 1; k < 16; k++) {
             if (details->rivers_vertical.active[i][k] != 0 &&
-                !mlt->at(i).at(k - 1).river_present) {
-                mlt->at(i).at(k - 1).river_present = true;
+                mlt->at(i).at(k - 1).river_size == embark_assist::defs::river_sizes::None) {
+                mlt->at(i).at(k - 1).river_size = mlt->at(i).at(k).river_size;
                 mlt->at(i).at(k - 1).river_elevation = mlt->at(i).at(k).river_elevation;
             }
         }
@@ -1272,14 +1254,14 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
     for (uint8_t i = 1; i < 16; i++) {
         for (uint8_t k = 0; k < 16; k++) {
             if (details->rivers_horizontal.active[i][k] != 0 &&
-                !mlt->at(i - 1).at(k).river_present) {
-                mlt->at(i - 1).at(k).river_present = true;
+                mlt->at(i - 1).at(k).river_size == embark_assist::defs::river_sizes::None) {
+                mlt->at(i - 1).at(k).river_size = mlt->at(i).at(k).river_size;
                 mlt->at(i - 1).at(k).river_elevation = mlt->at(i).at(k).river_elevation;
             }
         }
     }
 
-    survey_results->at(x).at(y).aquifer = embark_assist::defs::aquifer_sizes::NA;
+    survey_results->at(x).at(y).aquifer = embark_assist::defs::Clear_Aquifer_Bits;
     survey_results->at(x).at(y).clay_count = 0;
     survey_results->at(x).at(y).sand_count = 0;
     survey_results->at(x).at(y).flux_count = 0;
@@ -1295,7 +1277,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
 
     for (uint8_t i = 0; i < 16; i++) {
         for (uint8_t k = 0; k < 16; k++) {
-            survey_results->at(x).at(y).aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(survey_results->at(x).at(y).aquifer) | static_cast<int8_t>(mlt->at(i).at(k).aquifer));
+            survey_results->at(x).at(y).aquifer |= mlt->at(i).at(k).aquifer;
             if (mlt->at(i).at(k).clay) { survey_results->at(x).at(y).clay_count++; }
             if (mlt->at(i).at(k).sand) { survey_results->at(x).at(y).sand_count++; }
             if (mlt->at(i).at(k).flux) { survey_results->at(x).at(y).flux_count++; }
@@ -1309,9 +1291,18 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                 survey_results->at(x).at(y).max_region_soil = mlt->at(i).at(k).soil_depth;
             }
 
-            if (mlt->at(i).at(k).river_present) {
+            if (mlt->at(i).at(k).river_size != embark_assist::defs::river_sizes::None) {
+                if (survey_results->at(x).at(y).min_river_size == embark_assist::defs::river_sizes::None ||
+                    mlt->at(i).at(k).river_size < survey_results->at(x).at(y).min_river_size) {
+                    survey_results->at(x).at(y).min_river_size = mlt->at(i).at(k).river_size;
+                }
+
+                if (survey_results->at(x).at(y).max_river_size < mlt->at(i).at(k).river_size) {
+                    survey_results->at(x).at(y).max_river_size = mlt->at(i).at(k).river_size;
+                }
+
                 if (i < 15 &&
-                    mlt->at(i + 1).at(k).river_present &&
+                    mlt->at(i + 1).at(k).river_size != embark_assist::defs::river_sizes::None &&
                     abs (mlt->at(i).at(k).river_elevation - mlt->at(i + 1).at(k).river_elevation) >
                     survey_results->at(x).at(y).max_waterfall) {
                     survey_results->at(x).at(y).max_waterfall =
@@ -1319,7 +1310,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                 }
 
                 if (k < 15 &&
-                    mlt->at(i).at(k + 1).river_present &&
+                    mlt->at(i).at(k + 1).river_size != embark_assist::defs::river_sizes::None &&
                     abs(mlt->at(i).at(k).river_elevation - mlt->at(i).at(k + 1).river_elevation) >
                     survey_results->at(x).at(y).max_waterfall) {
                     survey_results->at(x).at(y).max_waterfall =
@@ -1327,7 +1318,6 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                 }
             }
 
-            // River size surveyed separately
             // biome_index handled above
             // biome handled below
             // evil weather handled separately
@@ -1388,50 +1378,15 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
         tile->west_column[i].sand = mlt->at(0).at(i).sand;
         tile->east_column[i].sand = mlt->at(15).at(i).sand;
 
-        tile->north_row[i].flux = mlt->at(i).at(0).flux;  //  Not used
-        tile->south_row[i].flux = mlt->at(i).at(15).flux;
-        tile->west_column[i].flux = mlt->at(0).at(i).flux;
-        tile->east_column[i].flux = mlt->at(15).at(i).flux;
-
-        tile->north_row[i].coal = mlt->at(i).at(0).coal; //  Not used
-        tile->south_row[i].coal = mlt->at(i).at(15).coal;
-        tile->west_column[i].coal = mlt->at(0).at(i).coal;
-        tile->east_column[i].coal = mlt->at(15).at(i).coal;
-
         tile->north_row[i].soil_depth = mlt->at(i).at(0).soil_depth;
         tile->south_row[i].soil_depth = mlt->at(i).at(15).soil_depth;
         tile->west_column[i].soil_depth = mlt->at(0).at(i).soil_depth;
         tile->east_column[i].soil_depth = mlt->at(15).at(i).soil_depth;
 
-        tile->north_row[i].offset = mlt->at(i).at(0).offset; //  Not used
-        tile->south_row[i].offset = mlt->at(i).at(15).offset;
-        tile->west_column[i].offset = mlt->at(0).at(i).offset;
-        tile->east_column[i].offset = mlt->at(15).at(i).offset;
-
         tile->north_row[i].elevation = mlt->at(i).at(0).elevation;
         tile->south_row[i].elevation = mlt->at(i).at(15).elevation;
         tile->west_column[i].elevation = mlt->at(0).at(i).elevation;
         tile->east_column[i].elevation = mlt->at(15).at(i).elevation;
-
-        tile->north_row[i].river_present = mlt->at(i).at(0).river_present; //  Not used
-        tile->south_row[i].river_present = mlt->at(i).at(15).river_present;
-        tile->west_column[i].river_present = mlt->at(0).at(i).river_present;
-        tile->east_column[i].river_present = mlt->at(15).at(i).river_present;
-
-        tile->north_row[i].river_elevation = mlt->at(i).at(0).river_elevation; //  Not used
-        tile->south_row[i].river_elevation = mlt->at(i).at(15).river_elevation;
-        tile->west_column[i].river_elevation = mlt->at(0).at(i).river_elevation;
-        tile->east_column[i].river_elevation = mlt->at(15).at(i).river_elevation;
-
-        tile->north_row[i].adamantine_level = mlt->at(i).at(0).adamantine_level; //  Not used
-        tile->south_row[i].adamantine_level = mlt->at(i).at(15).adamantine_level;
-        tile->west_column[i].adamantine_level = mlt->at(0).at(i).adamantine_level;
-        tile->east_column[i].adamantine_level = mlt->at(15).at(i).adamantine_level;
-
-        tile->north_row[i].magma_level = mlt->at(i).at(0).magma_level; //  Not used
-        tile->south_row[i].magma_level = mlt->at(i).at(15).magma_level;
-        tile->west_column[i].magma_level = mlt->at(0).at(i).magma_level;
-        tile->east_column[i].magma_level = mlt->at(15).at(i).magma_level;
 
         tile->north_row[i].biome_offset = mlt->at(i).at(0).biome_offset;
         tile->south_row[i].biome_offset = mlt->at(i).at(15).biome_offset;
@@ -1452,21 +1407,6 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
         tile->south_row[i].evilness_level = mlt->at(i).at(15).evilness_level;
         tile->west_column[i].evilness_level = mlt->at(0).at(i).evilness_level;
         tile->east_column[i].evilness_level = mlt->at(15).at(i).evilness_level;
-
-        tile->north_row[i].metals.resize(0);  //  Not used
-        tile->south_row[i].metals.resize(0);
-        tile->west_column[i].metals.resize(0);
-        tile->east_column[i].metals.resize(0);
-
-        tile->north_row[i].economics.resize(0);  //  Not used
-        tile->south_row[i].economics.resize(0);
-        tile->west_column[i].economics.resize(0);
-        tile->east_column[i].economics.resize(0);
-
-        tile->north_row[i].minerals.resize(0);  //  Not used
-        tile->south_row[i].minerals.resize(0);
-        tile->west_column[i].minerals.resize(0);
-        tile->east_column[i].minerals.resize(0);
 
         tile->north_corner_selection[i] = world_data->region_details[0]->edges.biome_corner[i][0];
         tile->west_corner_selection[i] = world_data->region_details[0]->edges.biome_corner[0][i];
@@ -1507,41 +1447,41 @@ df::coord2d embark_assist::survey::apply_offset(uint16_t x, uint16_t y, int8_t o
     result.y = y;
 
     switch (offset) {
-    case 1:
+    case embark_assist::defs::offset_directions::Southwest:
         result.x--;
         result.y++;
         break;
 
-    case 2:
+    case embark_assist::defs::offset_directions::South:
         result.y++;
         break;
 
-    case 3:
+    case embark_assist::defs::offset_directions::Southeast:
         result.x++;
         result.y++;
         break;
 
-    case 4:
+    case embark_assist::defs::offset_directions::West:
         result.x--;
         break;
 
-    case 5:
+    case embark_assist::defs::offset_directions::Center:
         break;  // Center. No change
 
-    case 6:
+    case embark_assist::defs::offset_directions::East:
         result.x++;
         break;
 
-    case 7:
+    case embark_assist::defs::offset_directions::Northwest:
         result.x--;
         result.y--;
         break;
 
-    case 8:
+    case embark_assist::defs::offset_directions::North:
         result.y--;
         break;
 
-    case 9:
+    case embark_assist::defs::offset_directions::Northeast:
         result.x++;
         result.y--;
         break;
@@ -1646,12 +1586,12 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
     int8_t w_region_type_level;
     int8_t home_region_type_level;
 
-    if (corner_location == 4) {  //  We're the reference. No change.
+    if (corner_location == embark_assist::defs::directions::Center) {  //  We're the reference. No change.
     }
-    else if (corner_location == 5) {  //  Tile to the east is the reference
+    else if (corner_location == embark_assist::defs::directions::East) {  //  Tile to the east is the reference
         effective_i = i + 1;
     }
-    else if (corner_location == 7) {  //  Tile to the south is the reference
+    else if (corner_location == embark_assist::defs::directions::South) {  //  Tile to the south is the reference
         effective_k = k + 1;
     }
     else {  //  8, tile to the southeast is the reference.
@@ -1663,11 +1603,15 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
 
     if (effective_x == world_data->world_width) {
         if (effective_y == world_data->world_height) {  //  Only the SE corner of the SE most tile of the world can reference this.
-            return 4;
+            return embark_assist::defs::directions::Center;
         }
         else {  //  East side corners of the east edge of the world
-            nw_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i - 1, effective_k - 1);
-            w_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i - 1, effective_k);
+            if (effective_y == 0 && effective_k == 0) {  //  North edge of the world. Only one alternative exists.
+                return embark_assist::defs::directions::Center;
+            }
+
+            nw_region_type = embark_assist::survey::region_type_of(survey_results, effective_x, effective_y, effective_i - 1, effective_k - 1);
+            w_region_type = embark_assist::survey::region_type_of(survey_results, effective_x, effective_y, effective_i - 1, effective_k);
 
             if (nw_region_type == df::world_region_type::Lake ||
                 nw_region_type == df::world_region_type::Ocean) {
@@ -1692,24 +1636,24 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
             }
 
             if (nw_region_type_level < w_region_type_level) {
-                return 4;
+                return embark_assist::defs::directions::Center;
             }
             else if (nw_region_type_level > w_region_type_level) {
-                return 1;
+                return embark_assist::defs::directions::North;
             }
 
             //  Neither tile will automatically yield to the other
-            if (corner_location == 5) {
-                return 1;
+            if (corner_location == embark_assist::defs::directions::East) {
+                return embark_assist::defs::directions::North;
             }
-            else {  //  Can only be corner_location == 8
-                return 4;
+            else {  //  Can only be corner_location == embark_assist::defs::SE
+                return embark_assist::defs::directions::Center;
             }
         }
     }
     else if (effective_y == world_data->world_height) {
-        nw_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i - 1, effective_k - 1);
-        n_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i, effective_k - 1);
+        nw_region_type = embark_assist::survey::region_type_of(survey_results, effective_x, effective_y, effective_i - 1, effective_k - 1);
+        n_region_type = embark_assist::survey::region_type_of(survey_results, effective_x, effective_y, effective_i, effective_k - 1);
 
         if (nw_region_type == df::world_region_type::Lake ||
             nw_region_type == df::world_region_type::Ocean) {
@@ -1734,18 +1678,18 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
         }
 
         if (nw_region_type_level < n_region_type_level) {
-            return 4;
+            return embark_assist::defs::directions::Center;
         }
         else if (nw_region_type_level > n_region_type_level) {
-            return 5;
+            return embark_assist::defs::directions::East;
         }
 
         //  Neither tile will automatically yield to the other
-        if (corner_location == 7) {
-            return 4;
+        if (corner_location == embark_assist::defs::directions::South) {
+            return embark_assist::defs::directions::Center;
         }
-        else {  //  Can only be corner_location == 8
-            return 5;
+        else {  //  Can only be corner_location == embark_assist::defs::directions::Southeast
+            return embark_assist::defs::directions::East;
         }
     }
 
@@ -1759,10 +1703,10 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
         effective_corner = survey_results->at(effective_x).at(effective_y).west_corner_selection[effective_k];
     }
 
-    nw_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i - 1, effective_k - 1);
-    n_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i, effective_k - 1);
-    w_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i - 1, effective_k);
-    home_region_type = embark_assist::survey::region_type_of(survey_results, x, y, effective_i, effective_k);
+    nw_region_type = embark_assist::survey::region_type_of(survey_results, effective_x, effective_y, effective_i - 1, effective_k - 1);
+    n_region_type = embark_assist::survey::region_type_of(survey_results, effective_x, effective_y, effective_i, effective_k - 1);
+    w_region_type = embark_assist::survey::region_type_of(survey_results, effective_x, effective_y, effective_i - 1, effective_k);
+    home_region_type = embark_assist::survey::region_type_of(survey_results, effective_x, effective_y, effective_i, effective_k);
 
     if (nw_region_type == df::world_region_type::Lake ||
         nw_region_type == df::world_region_type::Ocean) {
@@ -1810,7 +1754,7 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
 
     if (effective_x == 0 && effective_i == 0) {  //  West edge of the world
         if (effective_y == 0 && effective_k == 0) {
-            return 4;  //  Only a single reference to this info, the own tile.
+            return embark_assist::defs::directions::Center;  //  Only a single reference to this info, the own tile.
         }
         else {
             nw_region_type_level = -1;  //  Knock out the unreachable corners
@@ -1822,8 +1766,8 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
         nw_region_type_level = -1;  //  Knock out the unreachable corners
         n_region_type_level = -1;
 
-        if (corner_location == 4 && effective_corner == 1) { // The logic below would select the wrong alternative.
-            effective_corner = 3;
+        if (corner_location == embark_assist::defs::directions::Center && effective_corner == embark_assist::defs::directions::North) { // The logic below would select the wrong alternative.
+            effective_corner = embark_assist::defs::directions::West;
         }
     }
 
@@ -1982,6 +1926,8 @@ uint8_t embark_assist::survey::translate_ns_edge(embark_assist::defs::world_tile
     df::world_region_type south_region_type;
 
     if (own_edge) {
+        if (y == 0 && k == 0) return embark_assist::defs::directions::Center; //  There's nothing to the north, so we fall back on our own tile.
+
         effective_edge = world_data->region_details[0]->edges.biome_x[i][k];
         south_region_type = embark_assist::survey::region_type_of(survey_results, x, y, i, k);
         north_region_type = embark_assist::survey::region_type_of(survey_results, x, y, i, k - 1);
@@ -1990,9 +1936,10 @@ uint8_t embark_assist::survey::translate_ns_edge(embark_assist::defs::world_tile
         if (k < 15) {  //  We're still within the same world tile
             effective_edge = world_data->region_details[0]->edges.biome_x[i][k + 1];
         }
-        else {  //  Getting the data from the world tile to the south
+        else {
+            //  Getting the data from the world tile to the south
             if (y + 1 == world_data->world_height) {
-                return 4;  //  There's nothing to the south, so we fall back on our own tile.
+                return embark_assist::defs::directions::Center;  //  There's nothing to the south, so we fall back on our own tile.
             }
 
             effective_edge = survey_results->at(x).at(y + 1).north_row_biome_x[i];
@@ -2035,18 +1982,18 @@ uint8_t embark_assist::survey::translate_ns_edge(embark_assist::defs::world_tile
 
     if (effective_edge == 0) {
         if (own_edge) {
-            return 1;
+            return embark_assist::defs::directions::North;
         }
         else {
-            return 4;
+            return embark_assist::defs::directions::Center;
         }
     }
     else {
         if (own_edge) {
-            return 4;
+            return embark_assist::defs::directions::Center;
         }
         else {
-            return 7;
+            return embark_assist::defs::directions::South;
         }
     }
 }
@@ -2066,6 +2013,7 @@ uint8_t embark_assist::survey::translate_ew_edge(embark_assist::defs::world_tile
     df::world_region_type east_region_type;
 
     if (own_edge) {
+        if (x == 0 && i == 0) return embark_assist::defs::directions::Center;  //  There's nothing to the west, so we fall back on our own tile.
         effective_edge = world_data->region_details[0]->edges.biome_y[i][k];
         east_region_type = embark_assist::survey::region_type_of(survey_results, x, y, i, k);
         west_region_type = embark_assist::survey::region_type_of(survey_results, x, y, i - 1, k);
@@ -2076,7 +2024,7 @@ uint8_t embark_assist::survey::translate_ew_edge(embark_assist::defs::world_tile
         }
         else {  //  Getting the data from the world tile to the east
             if (x + 1 == world_data->world_width) {
-                return 4;  //  There's nothing to the east, so we fall back on our own tile.
+                return embark_assist::defs::directions::Center;  //  There's nothing to the east, so we fall back on our own tile.
             }
 
             effective_edge = survey_results->at(x + 1).at(y).west_column_biome_y[k];
@@ -2117,18 +2065,18 @@ uint8_t embark_assist::survey::translate_ew_edge(embark_assist::defs::world_tile
     }
     if (effective_edge == 0) {
         if (own_edge) {
-            return 3;
+            return embark_assist::defs::directions::West;
         }
         else {
-            return 4;
+            return embark_assist::defs::directions::Center;
         }
     }
     else {
         if (own_edge) {
-            return 4;
+            return embark_assist::defs::directions::Center;
         }
         else {
-            return 5;
+            return embark_assist::defs::directions::East;
         }
     }
 }
@@ -2186,7 +2134,12 @@ void embark_assist::survey::survey_region_sites(embark_assist::defs::site_lists 
                 break;
 
             case df::lair_type::SIMPLE_MOUND:
+                site_list->push_back({ (uint8_t)site->rgn_min_x , (uint8_t)site->rgn_min_y, 'm' });
+                break;
+
             case df::lair_type::SIMPLE_BURROW:
+                site_list->push_back({ (uint8_t)site->rgn_min_x , (uint8_t)site->rgn_min_y, 'b' });
+                break;
             case df::lair_type::WILDERNESS_LOCATION:
                 site_list->push_back({ (uint8_t)site->rgn_min_x , (uint8_t)site->rgn_min_y, 'l' });
                 break;
@@ -2245,7 +2198,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
     state->y = y;
 
     site_info->incursions_processed = true;
-    site_info->aquifer = embark_assist::defs::aquifer_sizes::NA;
+    site_info->aquifer = embark_assist::defs::Clear_Aquifer_Bits;
     site_info->min_soil = 10;
     site_info->max_soil = 0;
     site_info->flat = true;
@@ -2266,7 +2219,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
 
     for (uint8_t i = state->local_min_x; i <= state->local_max_x; i++) {
         for (uint8_t k = state->local_min_y; k <= state->local_max_y; k++) {
-            site_info->aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(site_info->aquifer) | static_cast<int8_t>(mlt->at(i).at(k).aquifer));
+            site_info->aquifer |= mlt->at(i).at(k).aquifer;
 
             if (mlt->at(i).at(k).soil_depth < site_info->min_soil) {
                 site_info->min_soil = mlt->at(i).at(k).soil_depth;
@@ -2283,9 +2236,9 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
                 site_info->flat = false;
             }
 
-            if (mlt->at(i).at(k).river_present) {
+            if (mlt->at(i).at(k).river_size != embark_assist::defs::river_sizes::None) {
                 if (i < 15 &&
-                    mlt->at(i + 1).at(k).river_present &&
+                    mlt->at(i + 1).at(k).river_size != embark_assist::defs::river_sizes::None &&
                     abs(mlt->at(i).at(k).river_elevation - mlt->at(i + 1).at(k).river_elevation) >
                     site_info->max_waterfall) {
                     site_info->max_waterfall =
@@ -2293,7 +2246,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
                 }
 
                 if (k < 15 &&
-                    mlt->at(i).at(k + 1).river_present &&
+                    mlt->at(i).at(k + 1).river_size != embark_assist::defs::river_sizes::None &&
                     abs(mlt->at(i).at(k).river_elevation - mlt->at(i).at(k + 1).river_elevation) >
                     site_info->max_waterfall) {
                     site_info->max_waterfall =
@@ -2371,7 +2324,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
         else {
             process_embark_incursion_mid_level_tile
             (translate_corner(survey_results,
-                4,
+                embark_assist::defs::directions::Center,
                 x,
                 y,
                 i,
@@ -2411,7 +2364,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
         else {
             process_embark_incursion_mid_level_tile
             (translate_corner(survey_results,
-                5,
+                embark_assist::defs::directions::East,
                 x,
                 y,
                 i,
@@ -2432,7 +2385,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
         else {
             process_embark_incursion_mid_level_tile
             (translate_corner(survey_results,
-                7,
+                embark_assist::defs::directions::South,
                 x,
                 y,
                 i,
@@ -2472,7 +2425,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
         else {
             process_embark_incursion_mid_level_tile
             (translate_corner(survey_results,
-                8,
+                embark_assist::defs::directions::Southeast,
                 x,
                 y,
                 i,
@@ -2493,7 +2446,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
         else if (k > state->local_min_y) { //  We've already covered the NW corner of the NW, with its complications.
             process_embark_incursion_mid_level_tile
             (translate_corner(survey_results,
-                4,
+                embark_assist::defs::directions::Center,
                 x,
                 y,
                 state->local_min_x,
@@ -2531,7 +2484,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
         else if (k < state->local_max_y) { //  We've already covered the SW corner of the SW tile, with its complicatinons.
             process_embark_incursion_mid_level_tile
             (translate_corner(survey_results,
-                7,
+                embark_assist::defs::directions::South,
                 x,
                 y,
                 state->local_min_x,
@@ -2550,7 +2503,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
         else if (k > state->local_min_y) { //  We've already covered the NE tile's NE corner, with its complications.
             process_embark_incursion_mid_level_tile
             (translate_corner(survey_results,
-                5,
+                embark_assist::defs::directions::East,
                 x,
                 y,
                 state->local_max_x,
@@ -2588,7 +2541,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
         else if (k < state->local_max_y) { //  We've already covered the SE tile's SE corner, with its complications.
             process_embark_incursion_mid_level_tile
             (translate_corner(survey_results,
-                8,
+                embark_assist::defs::directions::Southeast,
                 x,
                 y,
                 state->local_max_x,

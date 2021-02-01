@@ -2,6 +2,7 @@
 
 ## some generic CMake magic
 cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
+cmake_policy(SET CMP0048 NEW)
 project(dfhack)
 
 if("${CMAKE_GENERATOR}" STREQUAL Ninja)
@@ -178,14 +179,14 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 endif()
 
 # make sure all the necessary submodules have been set up
-if(NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/clsocket/CMakeLists.txt)
+if(NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/clsocket/CMakeLists.txt OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/libexpat/expat/CMakeLists.txt OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/libzip/CMakeLists.txt OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/xlsxio/CMakeLists.txt)
     message(SEND_ERROR "One or more required submodules could not be found! Run 'git submodule update --init' from the root DFHack directory. (See the section 'Getting the Code' in docs/Compile.rst)")
 endif()
 
 # set up versioning.
-set(DF_VERSION "0.47.04")
-set(DFHACK_RELEASE "r2")
-set(DFHACK_PRERELEASE FALSE)
+set(DF_VERSION "0.47.05")
+set(DFHACK_RELEASE "alpha0")
+set(DFHACK_PRERELEASE TRUE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 
@@ -406,6 +407,7 @@ endif()
 include_directories(depends/tthread)
 include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(depends/clsocket/src)
+include_directories(depends/xlsxio/include)
 add_subdirectory(depends)
 
 find_package(Git REQUIRED)
@@ -440,6 +442,7 @@ if(BUILD_DOCS)
 
     file(GLOB SPHINX_DEPS
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/*.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/guides/*.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/changelog.txt"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/gen_changelog.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/images/*.png"

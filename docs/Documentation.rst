@@ -6,13 +6,13 @@ DFHack Documentation System
 
 
 DFHack documentation, like the file you are reading now, is created as ``.rst`` files,
-which are in `reStructuredText (reST) <http://sphinx-doc.org/rest.html>`_ format.
+which are in `reStructuredText (reST) <https://www.sphinx-doc.org/rest.html>`_ format.
 This is a documentation format common in the Python community. It is very
 similar in concept - and in syntax - to Markdown, as found on GitHub and many other
 places. However it is more advanced than Markdown, with more features available when
 compiled to HTML, such as automatic tables of contents, cross-linking, special
 external links (forum, wiki, etc) and more. The documentation is compiled by a
-Python tool, `Sphinx <http://sphinx-doc.org>`_.
+Python tool, `Sphinx <https://www.sphinx-doc.org>`_.
 
 The DFHack build process will compile the documentation, but this is disabled
 by default due to the additional Python and Sphinx requirements. You typically
@@ -57,7 +57,9 @@ as the in-console documentation by (e.g.) printing it when a ``-help`` argument
 is given.
 
 The docs **must** have a heading which exactly matches the command, underlined
-with ``=====`` to the same length.  For example, a lua file would have::
+with ``=====`` to the same length.  For example, a lua file would have:
+
+.. code-block:: lua
 
     local helpstr = [====[
 
@@ -68,6 +70,8 @@ with ``=====`` to the same length.  For example, a lua file would have::
 
     ]====]
 
+
+.. highlight:: rst
 
 Where the heading for a section is also the name of a command, the spelling
 and case should exactly match the command to enter in the DFHack command line.
@@ -115,13 +119,13 @@ Add link targets if you need them, but otherwise plain headings are preferred.
 Scripts have link targets created automatically.
 
 
-Building the documentation
-==========================
-
 Required dependencies
----------------------
+=====================
+
+.. highlight:: shell
+
 In order to build the documentation, you must have Python with Sphinx
-version |sphinx_min_version| or later. Both Python 2.x and 3.x are supported.
+version |sphinx_min_version| or later. Python 3 is recommended.
 
 When installing Sphinx from OS package managers, be aware that there is
 another program called Sphinx, completely unrelated to documentation management.
@@ -140,7 +144,7 @@ For more detailed platform-specific instructions, see the sections below:
 
 
 Linux
-~~~~~
+-----
 Most Linux distributions will include Python by default. If not, start by
 installing Python (preferably Python 3). On Debian-based distros::
 
@@ -166,7 +170,7 @@ system-wide by running pip with ``sudo``. In any case, you will need the folder
 containing ``sphinx-build`` to be in your ``$PATH``.
 
 macOS
-~~~~~
+-----
 macOS has Python 2.7 installed by default, but it does not have the pip package manager.
 
 You can install Homebrew's Python 3, which includes pip, and then install the
@@ -187,7 +191,7 @@ If not, just installing sphinx-doc for macOS's system Python 2.7 is fine.
 
 
 Windows
-~~~~~~~
+-------
 Python for Windows can be downloaded `from python.org <https://www.python.org/downloads/>`_.
 The latest version of Python 3 is recommended, as it includes pip already.
 
@@ -204,6 +208,11 @@ Once you have pip available, you can install Sphinx with the following command::
 Note that this may require opening a new (admin) command prompt if you just
 installed pip from the same command prompt.
 
+Building the documentation
+==========================
+
+Once the required dependencies are installed, there are multiple ways to run
+Sphinx to build the docs:
 
 Using CMake
 -----------
@@ -224,7 +233,7 @@ ways to do this:
 
 * You can edit the ``BUILD_DOCS`` setting in CMakeCache.txt directly
 
-* You can use the CMake GUI to change ``BUILD_DOCS``
+* You can use the CMake GUI or ``ccmake`` to change the ``BUILD_DOCS`` setting
 
 * On Windows, if you prefer to use the batch scripts, you can run
   ``generate-msvc-gui.bat`` and set ``BUILD_DOCS`` through the GUI. If you are
@@ -232,18 +241,27 @@ ways to do this:
   it to add the flag. You can also run ``cmake`` on the command line, similar to
   other platforms.
 
+The generated documentation will be stored in ``docs/html`` in the root DFHack
+folder, and will be installed to ``hack/docs`` when you next install DFHack in a
+DF folder.
+
 Running Sphinx manually
 -----------------------
 
-You can also build the documentation without going through CMake, which may be
-faster. There is a ``docs/build.sh`` script provided for Linux and macOS that
-will run essentially the same command that CMake runs - see the script for
-additional options.
+You can also build the documentation without running CMake - this is faster if
+you only want to rebuild the documentation regardless of any code changes. There
+is a ``docs/build.sh`` script provided for Linux and macOS that will run
+essentially the same command that CMake runs when building the docs - see the
+script for additional options.
 
 To build the documentation with default options, run the following command from
 the root DFHack folder::
 
     sphinx-build . docs/html
+
+The resulting documentation will be stored in ``docs/html`` (you can specify
+a different path when running ``sphinx-build`` manually, but be warned that
+Sphinx may overwrite existing files in this folder).
 
 Sphinx has many options to enable clean builds, parallel builds, logging, and
 more - run ``sphinx-build --help`` for details.
@@ -257,7 +275,7 @@ want to build a PDF version locally, you will need ``pdflatex``, which is part
 of a TeX distribution. The following command will then build a PDF, located in
 ``docs/pdf/latex/DFHack.pdf``, with default options::
 
-  sphinx-build -M latexpdf . ./docs/pdf
+  sphinx-build -M latexpdf . docs/pdf
 
 There is a ``docs/build-pdf.sh`` script provided for Linux and macOS that runs
 this command for convenience - see the script for additional options.
@@ -266,10 +284,11 @@ this command for convenience - see the script for additional options.
 
 Building the changelogs
 =======================
-If you have Python installed, but do not want to build all of the documentation,
-you can build the changelogs with the ``docs/gen_changelog.py`` script. This
-script provides additional options, including one to build individual changelogs
-for all DFHack versions - run ``python docs/gen_changelog.py --help`` for details.
+If you have Python installed, you can build just the changelogs without building
+the rest of the documentation by running the ``docs/gen_changelog.py`` script.
+This script provides additional options, including one to build individual
+changelogs for all DFHack versions - run ``python docs/gen_changelog.py --help``
+for details.
 
 Changelog entries are obtained from ``changelog.txt`` files in multiple repos.
 This allows changes to be listed in the same repo where they were made. These
@@ -296,3 +315,30 @@ Changelog syntax
 .. include:: /docs/changelog.txt
    :start-after: ===help
    :end-before: ===end
+
+.. _docs-ci:
+
+GitHub Actions
+==============
+
+Documentation is built automatically with GitHub Actions (a GitHub-provided
+continuous integration service) for all pull requests and commits in the
+"dfhack" and "scripts" repositories. These builds run with strict settings, i.e.
+warnings are treated as errors. If a build fails, you will see a red "x" next to
+the relevant commit or pull request. You can view detailed output from Sphinx in
+a few ways:
+
+* Click on the red "x" (or green checkmark), then click "Details" next to
+  the "Build / docs" entry
+* For pull requests only: navigate to the "Checks" tab, then click on "Build" in
+  the sidebar to expand it, then "docs" under it
+
+Sphinx output will be visible under the step named "Build docs". If a different
+step failed, or you aren't sure how to interpret the output, leave a comment
+on the pull request (or commit).
+
+You can also download the "docs" artifact from the summary page (typically
+accessible by clicking "Build") if the build succeeded. This is a way to
+visually inspect what the documentation looks like when built without installing
+Sphinx locally, although we recommend installing Sphinx if you are planning to
+do any significant work on the documentation.

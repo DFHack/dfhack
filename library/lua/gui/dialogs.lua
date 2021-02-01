@@ -155,6 +155,7 @@ ListBox.ATTRS{
     on_select = DEFAULT_NIL,
     on_select2 = DEFAULT_NIL,
     select2_hint = DEFAULT_NIL,
+    row_height = DEFAULT_NIL,
 }
 
 function ListBox:preinit(info)
@@ -196,6 +197,7 @@ function ListBox:init(info)
             end,
             on_submit2 = on_submit2,
             frame = { l = 0, r = 0 },
+            row_height = info.row_height,
         }
     }
 end
@@ -203,7 +205,7 @@ end
 function ListBox:onRenderFrame(dc,rect)
     ListBox.super.onRenderFrame(self,dc,rect)
     if self.select2_hint then
-        dc:seek(rect.x1+2,rect.y2):key('SEC_SELECT'):string(': '..self.select2_hint,COLOR_DARKGREY)
+        dc:seek(rect.x1+2,rect.y2):key('SEC_SELECT'):string(': '..self.select2_hint,COLOR_GREY)
     end
 end
 

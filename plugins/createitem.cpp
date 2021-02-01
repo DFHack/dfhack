@@ -26,6 +26,9 @@
 #include "df/reaction_reagent.h"
 #include "df/reaction_product_itemst.h"
 #include "df/tool_uses.h"
+#include "df/item_plant_growthst.h"
+#include "df/plant_growth.h"
+#include "df/plant_growth_print.h"
 
 using std::string;
 using std::vector;
@@ -37,6 +40,7 @@ REQUIRE_GLOBAL(cursor);
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(gametype);
+REQUIRE_GLOBAL(cur_year_tick);
 
 int dest_container = -1, dest_building = -1;
 
@@ -51,11 +55,15 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector<Plugin
         "    <material> - The material you want the item to be made of, as specified\n"
         "                 in custom reactions. For REMAINS, FISH, FISH_RAW, VERMIN,\n"
         "                 PET, and EGG, replace this with a creature ID and caste.\n"
+        "                 For PLANT_GROWTH, replace this with a plant ID and growth ID.\n"
         "    [count] - How many of the item you wish to create.\n"
+        "\n"
+        "To obtain the item and material of an existing item, run \n"
+        "'createitem inspect' with that item selected in-game.\n"
         "\n"
         "To use this command, you must select which unit will create the items.\n"
         "By default, items created will be placed at that unit's feet.\n"
-        "To change this, type 'createitem <destination>'.\n"
+        "To change this, run 'createitem <destination>'.\n"
         "Valid destinations:\n"
         "* floor - Place items on floor beneath maker's feet.\n"
         "* item - Place items inside selected container.\n"
@@ -69,7 +77,7 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_item = false, bool move_to_cursor = false)
+bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_item = false, bool move_to_cursor = false, int32_t growth_print = -1)
 {
     vector<df::reaction_product*> out_products;
     vector<df::item *> out_items;
@@ -115,6 +123,8 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_it
             out_items[i]->moveToGround(cursor->x, cursor->y, cursor->z);
         else
             out_items[i]->moveToGround(unit->pos.x, unit->pos.y, unit->pos.z);
+
+        // Special logic for making gloves
         if (is_gloves)
         {
             // if the reaction creates gloves without handedness, then create 2 sets (left and right)
@@ -123,9 +133,14 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_it
             else
                 out_items[i]->setGloveHandedness(second_item ? 2 : 1);
         }
+
+        // Special logic for making plant growths
+        auto growth = virtual_cast<df::item_plant_growthst>(out_items[i]);
+        if (growth)
+            growth->growth_print = growth_print;
     }
     if ((is_gloves || is_shoes) && !second_item)
-        return makeItem(prod, unit, true, move_to_cursor);
+        return makeItem(prod, unit, true, move_to_cursor, growth_print);
 
     return true;
 }
@@ -137,12 +152,27 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
     int16_t item_subtype = -1;
     int16_t mat_type = -1;
     int32_t mat_index = -1;
+    int32_t growth_print = -1;
     int count = 1;
     bool move_to_cursor = false;
 
     if (parameters.size() == 1)
     {
-        if (parameters[0] == "floor")
+        if (parameters[0] == "inspect")
+        {
+            CoreSuspender suspend;
+            df::item *item = Gui::getSelectedItem(out);
+            if (!item)
+            {
+                return CR_FAILURE;
+            }
+
+            ItemTypeInfo iinfo(item->getType(), item->getSubtype());
+            MaterialInfo minfo(item->getMaterial(), item->getMaterialIndex());
+            out.print("%s %s\n", iinfo.getToken().c_str(), minfo.getToken().c_str());
+            return CR_OK;
+        }
+        else if (parameters[0] == "floor")
         {
             dest_container = -1;
             dest_building = -1;
@@ -353,6 +383,77 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
         }
         break;
 
+    case item_type::PLANT_GROWTH:
+        split_string(&tokens, material_str, ":");
+        if (tokens.size() == 1)
+        {
+            // default to empty to display a list of valid growths later
+            tokens.push_back("");
+        }
+        else if (tokens.size() == 3 && tokens[0] == "PLANT")
+        {
+            tokens.erase(tokens.begin());
+        }
+        else if (tokens.size() != 2)
+        {
+            out.printerr("You must specify a plant and growth ID for this item type!\n");
+            return CR_FAILURE;
+        }
+
+        for (size_t i = 0; i < world->raws.plants.all.size(); i++)
+        {
+            string growths = "";
+            df::plant_raw *plant = world->raws.plants.all[i];
+            if (plant->id != tokens[0])
+                continue;
+
+            for (size_t j = 0; j < plant->growths.size(); j++)
+            {
+                df::plant_growth *growth = plant->growths[j];
+                growths += " " + growth->id;
+                if (growth->id != tokens[1])
+                    continue;
+
+                // Plant growths specify the actual item type/subtype
+                // so that certain growths can drop as SEEDS items
+                item_type = growth->item_type;
+                item_subtype = growth->item_subtype;
+                mat_type = growth->mat_type;
+                mat_index = growth->mat_index;
+
+                // Try and find a growth print matching the current time
+                // (in practice, only tree leaves use this for autumn color changes)
+                for (size_t k = 0; k < growth->prints.size(); k++)
+                {
+                    df::plant_growth_print *print = growth->prints[k];
+                    if (print->timing_start <= *cur_year_tick && *cur_year_tick <= print->timing_end)
+                    {
+                        growth_print = k;
+                        break;
+                    }
+                }
+                // If we didn't find one, then pick the first one (if it exists)
+                if (growth_print == -1 && growth->prints.size() > 0)
+                    growth_print = 0;
+                break;
+            }
+            if (mat_type == -1)
+            {
+                if (tokens[1].empty())
+                    out.printerr("You must also specify a growth ID.\n");
+                else
+                    out.printerr("The plant you specified has no such growth!\n");
+                out.printerr("Valid growths:%s\n", growths.c_str());
+                return CR_FAILURE;
+            }
+        }
+        if (mat_type == -1)
+        {
+            out.printerr("Unrecognized plant ID!\n");
+            return CR_FAILURE;
+        }
+        break;
+
     case item_type::CORPSE:
     case item_type::CORPSEPIECE:
     case item_type::FOOD:
@@ -432,7 +533,7 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
         out.printerr("Previously selected building no longer exists - item will be placed on the floor.\n");
     }
 
-    bool result = makeItem(prod, unit, false, move_to_cursor);
+    bool result = makeItem(prod, unit, false, move_to_cursor, growth_print);
     delete prod;
     if (!result)
     {

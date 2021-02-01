@@ -1,4 +1,3 @@
-// This does not work with Linux Dwarf Fortress
 // With thanks to peterix for DFHack and Quietust for information http://www.bay12forums.com/smf/index.php?topic=91166.msg2605147#msg2605147
 
 #include <map>
@@ -101,7 +100,23 @@ string searchAbbreviations(string in)
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 {
-    running = enable;
+    if(enable == true)
+    {
+        if(Core::getInstance().isWorldLoaded())
+        {
+            running = true;
+            out.print("seedwatch supervision started.\n");
+        } else {
+            out.printerr(
+                "This plugin needs a fortress to be loaded and will deactivate automatically otherwise.\n"
+                "Activate with 'seedwatch start' after you load the game.\n"
+                );
+        }
+    } else {
+        running = false;
+        out.print("seedwatch supervision stopped.\n");
+    }
+
     return CR_OK;
 }
 
@@ -143,13 +158,12 @@ command_result df_seedwatch(color_ostream &out, vector<string>& parameters)
         }
         else if(par == "start")
         {
-            running = true;
-            out.print("seedwatch supervision started.\n");
+            plugin_enable(out, true);
+
         }
         else if(par == "stop")
         {
-            running = false;
-            out.print("seedwatch supervision stopped.\n");
+            plugin_enable(out, false);
         }
         else if(par == "clear")
         {
@@ -282,15 +296,10 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginComman
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
-    switch (event) {
-    case SC_MAP_LOADED:
-    case SC_MAP_UNLOADED:
+    if (event == SC_MAP_UNLOADED) {
         if (running)
-            out.printerr("seedwatch deactivated due to game load/unload\n");
+            out.print("seedwatch deactivated due to game unload\n");
         running = false;
-        break;
-    default:
-        break;
     }
 
     return CR_OK;

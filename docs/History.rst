@@ -227,7 +227,7 @@ Internals
 
 Lua
 ---
-- Lua has been updated to 5.3 - see http://www.lua.org/manual/5.3/readme.html for details
+- Lua has been updated to 5.3 - see https://www.lua.org/manual/5.3/readme.html for details
 
     - Floats are no longer implicitly converted to integers in DFHack API calls
 

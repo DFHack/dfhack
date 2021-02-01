@@ -866,7 +866,6 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         }
 
         // case #1: migrants who have the resident flag set
-        // see http://dffd.wimbli.com/file.php?id=6139 for a save
         if (unit->flags2.bits.resident)
             unit->flags2.bits.resident = 0;
 

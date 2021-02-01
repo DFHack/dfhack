@@ -33,6 +33,101 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
+# 0.47.04-r5
+
+## Fixes
+- `embark-assistant`: fixed order of factors when calculating min temperature
+- `embark-assistant`: improved performance of surveying
+- `quickfort`: fixed eventual crashes when creating zones
+- `quickfort`: fixed library aliases for tallow and iron, copper, and steel weapons
+- `seedwatch`: fixed an issue where the plugin would disable itself on map load
+- `search`: fixed crash when searching the ``k`` sidebar and navigating to another tile with certain keys, like ``<`` or ``>``
+- `stockflow`: fixed ``j`` character being intercepted when naming stockpiles
+- `stockpiles`: no longer outputs hotkey help text beneath `stockflow` hotkey help text
+
+## Misc Improvements
+- Lua label widgets (used in all standard message boxes) are now scrollable with Up/Down/PgUp/PgDn keys
+- `autofarm`: now fallows farms if all plants have reached the desired count
+- `buildingplan`: added ability to set global settings from the console, e.g.  ``buildingplan set boulders false``
+- `buildingplan`: added "enable all" option for buildingplan (so you don't have to enable all building types individually). This setting is not persisted (just like quickfort_mode is not persisted), but it can be set from onMapLoad.init
+- `buildingplan`: modified ``Planning Mode`` status in the UI to show whether the plugin is in quickfort mode, "enable all" mode, or whether just the building type is enabled.
+- `quickfort`: Dreamfort blueprint set improvements: added a streamlined checklist for all required dreamfort commands and gave names to stockpiles, levers, bridges, and zones
+- `quickfort`: added aliases for bronze weapons and armor
+- `quickfort`: added alias for tradeable crafts
+
+## Lua
+- ``dfhack.run_command()``: changed to interface directly with the console when possible, which allows interactive commands and commands that detect the console encoding to work properly
+- ``processArgsGetopt()`` added to utils.lua, providing a callback interface for parameter parsing and getopt-like flexibility for parameter ordering and combination (see docs in ``library/lua/utils.lua`` and ``library/lua/3rdparty/alt_getopt.lua`` for details).
+
+## Documentation
+- Added documentation for Lua's ``dfhack.run_command()`` and variants
+
+# 0.47.04-r4
+
+## Fixes
+- Fixed an issue on some Linux systems where DFHack installed through a package manager would attempt to write files to a non-writable folder (notably when running `exportlegends` or `gui/autogems`)
+- `buildingplan`: fixed an issue preventing artifacts from being matched when the maximum item quality is set to ``artifacts``
+- `buildingplan`: stopped erroneously matching items to buildings while the game is paused
+- `buildingplan`: fixed a crash when pressing 0 while having a noble room selected
+- `dwarfvet`: fixed a crash that could occur when discharging patients
+- `dwarfmonitor`: fixed a crash when opening the ``prefs`` screen if units have vague preferences
+- `embark-assistant`: fixed an issue causing incursion resource matching (e.g. sand/clay) to skip some tiles if those resources were provided only through incursions
+- `embark-assistant`: corrected river size determination by performing it at the MLT level rather than the world tile level
+- `search`: fixed an issue where search options might not display if screens were destroyed and recreated programmatically (e.g. with `quickfort`)
+- `workflow`: fixed an error when creating constraints on "mill plants" jobs and some other plant-related jobs
+- `zone`: fixed an issue causing the ``enumnick`` subcommand to run when attempting to run ``assign``, ``unassign``, or ``slaughter``
+
+## Misc Improvements
+- `buildingplan`: added support for all buildings, furniture, and constructions (except for instruments)
+- `buildingplan`: added support for respecting building job_item filters when matching items, so you can set your own programmatic filters for buildings before submitting them to buildingplan
+- `buildingplan`: changed default filter setting for max quality from ``artifact`` to ``masterwork``
+- `buildingplan`: changed min quality adjustment hotkeys from 'qw' to 'QW' to avoid conflict with existing hotkeys for setting roller speed - also changed max quality adjustment hotkeys from 'QW' to 'AS' to make room for the min quality hotkey changes
+- `buildingplan`: added a new global settings page accessible via the ``G`` hotkey when on any building build screen; ``Quickfort Mode`` toggle for legacy Python Quickfort has been moved to this page
+- `buildingplan`: added new global settings for whether generic building materials should match blocks, boulders, logs, and/or bars - defaults are everything but bars
+- `embark-assistant`: split the lair types displayed on the local map into mound, burrow, and lair
+- `probe`: added more output for designations and tile occupancy
+- `quickfort`: The Dreamfort sample blueprints now have complete walkthroughs for each fort level and importable orders that automate basic fort stock management
+- `quickfort`: added more blueprints to the blueprints library: several bedroom layouts, the Saracen Crypts, and the complete fortress example from Python Quickfort: TheQuickFortress
+
+## Documentation
+- `quickfort-alias-guide`: alias syntax and alias standard library documentation for `quickfort` blueprints
+- `quickfort-library-guide`: overview of the quickfort blueprint library
+
+## API
+- `buildingplan`: added Lua interface API
+- ``dfhack.job.isSuitableMaterial()``: added an item type parameter so the ``non_economic`` flag can be properly handled (it was being matched for all item types instead of just boulders)
+- ``Buildings::setSize()``: changed to reuse existing extents when possible
+
+## Lua
+- ``utils.addressof()``: fixed for raw userdata
+
+# 0.47.04-r3
+
+## New Plugins
+- `xlsxreader`: provides an API for Lua scripts to read Excel spreadsheets
+
+## Fixes
+- `buildingplan`: fixed handling of buildings that require buckets
+- `getplants`: fixed a crash that could occur on some maps
+- `search`: fixed an issue causing item counts on the trade screen to display inconsistently when searching
+- `stockpiles`: fixed a crash when loading food stockpiles
+- `stockpiles`: fixed an error when saving furniture stockpiles
+
+## Misc Improvements
+- `createitem`: added support for plant growths (fruit, berries, leaves, etc.)
+- `createitem`: added an ``inspect`` subcommand to print the item and material tokens of existing items, which can be used to create additional matching items
+- `embark-assistant`: added support for searching for taller waterfalls (up to 50 z-levels tall)
+- `search`: added support for searching for names containing non-ASCII characters using their ASCII equivalents
+- `stocks`: added support for searching for items containing non-ASCII characters using their ASCII equivalents
+- `zone`: added an ``enumnick`` subcommand to assign enumerated nicknames (e.g "Hen 1", "Hen 2"...)
+- `zone`: added slaughter indication to ``uinfo`` output
+
+## Documentation
+- Fixed syntax highlighting of most code blocks to use the appropriate language (or no language) instead of Python
+
+## API
+- Added ``DFHack::to_search_normalized()`` (Lua: ``dfhack.toSearchNormalized()``) to convert non-ASCII alphabetic characters to their ASCII equivalents
+
 # 0.47.04-r2
 
 ## New Tweaks
@@ -1099,4 +1194,3 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - The ``ui_menu_width`` global is now a 2-byte array; the second item is the former ``ui_area_map_width`` global, which is now removed
 - The former ``announcements`` global is now a field in ``d_init``
 - ``world`` fields formerly beginning with ``job_`` are now fields of ``world.jobs``, e.g. ``world.job_list`` is now ``world.jobs.list``
-

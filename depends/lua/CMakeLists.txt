@@ -100,6 +100,7 @@ if(MSVC)
     target_compile_options(lua PRIVATE "/FIdfhack_llimits.h")
 else()
     target_compile_options(lua PRIVATE -include dfhack_llimits.h)
+    set_source_files_properties(src/lstring.c PROPERTIES COMPILE_FLAGS "-Wno-stringop-overflow")
 endif()
 
 install(TARGETS lua

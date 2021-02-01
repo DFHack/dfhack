@@ -73,13 +73,13 @@ local building_inputs = {
         {
             item_type=df.item_type.SMALLGEM,
             quantity=3,
-            vector_id=df.job_item_vector_id.ANY_GENERIC35
+            vector_id=df.job_item_vector_id.SMALLGEM
         }
     },
     [df.building_type.Well] = {
         {
             item_type=df.item_type.BLOCKS,
-            vector_id=df.job_item_vector_id.ANY_GENERIC35
+            vector_id=df.job_item_vector_id.BLOCKS
         },
         {
             name='bucket',
@@ -116,7 +116,7 @@ local building_inputs = {
     [df.building_type.ScrewPump] = {
         {
             item_type=df.item_type.BLOCKS,
-            vector_id=df.job_item_vector_id.ANY_GENERIC35
+            vector_id=df.job_item_vector_id.BLOCKS
         },
         {
             name='screw',
@@ -140,10 +140,10 @@ local building_inputs = {
     [df.building_type.GrateWall] = { { item_type=df.item_type.GRATE, vector_id=df.job_item_vector_id.GRATE } },
     [df.building_type.GrateFloor] = { { item_type=df.item_type.GRATE, vector_id=df.job_item_vector_id.GRATE } },
     [df.building_type.BarsVertical] = {
-        { item_type=df.item_type.BAR, vector_id=df.job_item_vector_id.ANY_GENERIC35 }
+        { item_type=df.item_type.BAR, vector_id=df.job_item_vector_id.BAR }
     },
     [df.building_type.BarsFloor] = {
-        { item_type=df.item_type.BAR, vector_id=df.job_item_vector_id.ANY_GENERIC35 }
+        { item_type=df.item_type.BAR, vector_id=df.job_item_vector_id.BAR }
     },
     [df.building_type.GearAssembly] = {
         {
@@ -179,6 +179,9 @@ local building_inputs = {
     [df.building_type.Slab] = { { item_type=df.item_type.SLAB } },
     [df.building_type.NestBox] = { { has_tool_use=df.tool_uses.NEST_BOX, item_type=df.item_type.TOOL } },
     [df.building_type.Hive] = { { has_tool_use=df.tool_uses.HIVE, item_type=df.item_type.TOOL } },
+    [df.building_type.OfferingPlace] = { { has_tool_use=df.tool_uses.PLACE_OFFERING, item_type=df.item_type.TOOL } },
+    [df.building_type.Bookcase] = { { has_tool_use=df.tool_uses.BOOKCASE, item_type=df.item_type.TOOL } },
+    [df.building_type.DisplayFurniture] = { { has_tool_use=df.tool_uses.DISPLAY_OBJECT, item_type=df.item_type.TOOL } },
     [df.building_type.Rollers] = {
         {
             name='mechanism',
@@ -248,7 +251,7 @@ local workshop_inputs = {
     [df.workshop_type.Ashery] = {
         {
             item_type=df.item_type.BLOCKS,
-            vector_id=df.job_item_vector_id.ANY_GENERIC35
+            vector_id=df.job_item_vector_id.BLOCKS
         },
         {
             name='barrel',
@@ -482,6 +485,11 @@ function buildings.constructBuilding(info)
     local to_delete = instance
     return dfhack.with_finalize(
         function()
+            -- ensure we don't leak extents created by Buildings::checkFreeTiles
+            if to_delete and to_delete.room.extents then
+                df.delete(to_delete.room.extents)
+                to_delete.room.extents = nil
+            end
             df.delete(to_delete)
         end,
         function()

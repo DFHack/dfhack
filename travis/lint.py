@@ -128,21 +128,17 @@ def main():
                         lines[i] = line.decode('utf-8')
                     except UnicodeDecodeError:
                         msg_params = (rel_path, i + 1, 'Invalid UTF-8 (other errors will be ignored)')
+                        error('%s:%i: %s' % msg_params)
                         if is_github_actions:
-                            error()
                             print('::error file=%s,line=%i::%s' % msg_params)
-                        else:
-                            error('%s:%i: %s' % msg_params)
                         lines[i] = ''
             for linter in linters:
                 try:
                     linter.check(lines)
                 except LinterError as e:
+                    error('%s: %s' % (rel_path, e))
                     if is_github_actions:
-                        error()
                         print(e.github_actions_workflow_command(rel_path))
-                    else:
-                        error('%s: %s' % (rel_path, e))
                     if fix:
                         linter.fix(lines)
                         contents = '\n'.join(lines)

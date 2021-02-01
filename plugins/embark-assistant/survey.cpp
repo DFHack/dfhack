@@ -981,6 +981,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
 
             elevation = details->elevation[i][k];
 
+            df::world_geo_biome* world_geo_biome = world_data->geo_biomes[region_map_entry.geo_index];
             // Special biome adjustments
             if (!region_map_entry.flags.is_set(region_map_entry_flags::is_lake)) {
                 if (region_map_entry.elevation >= 150) {  //  Mountain
@@ -991,8 +992,8 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                         elevation = 98;
                     }
 
-                    if ((world_data->geo_biomes[region_map_entry.geo_index]->unk1 == 4 ||
-                        world_data->geo_biomes[region_map_entry.geo_index]->unk1 == 5) &&
+                    if ((world_geo_biome->unk1 == 4 ||
+                        world_geo_biome->unk1 == 5) &&
                         details->unk12e8 < 500) {
                         max_soil_depth = 0;
                     }
@@ -1087,11 +1088,11 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                 tile.max_region_soil = mid_level_tile.soil_depth;
             }
 
-            end_check_l = static_cast<uint16_t>(world_data->geo_biomes[region_map_entry.geo_index]->layers.size());
+            end_check_l = static_cast<uint16_t>(world_geo_biome->layers.size());
             if (end_check_l > 16) end_check_l = 16;
 
             for (uint16_t l = 0; l < end_check_l; l++) {
-                auto layer = world_data->geo_biomes[region_map_entry.geo_index]->layers[l];
+                auto layer = world_geo_biome->layers[l];
                 layer_shift[l] = cur_shift;
 
                 if (layer->type == df::geo_layer_type::SOIL ||
@@ -1115,7 +1116,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
             //  Don't have to set up the end_check as we can reuse the one above.
 
             for (uint16_t l = 0; l < end_check_l; l++) {
-                auto layer = world_data->geo_biomes[region_map_entry.geo_index]->layers[l];
+                auto layer = world_geo_biome->layers[l];
                 top_z = last_bottom - 1;
                 bottom_z = std::max((int)layer->bottom_height + layer_shift[l], (int)min_z);
 

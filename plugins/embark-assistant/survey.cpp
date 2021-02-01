@@ -1137,29 +1137,29 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
 
                     mid_level_tile.minerals[layer->mat_index] = true;
 
-                    end_check_m = static_cast<uint16_t>(world->raws.inorganics[layer->mat_index]->metal_ore.mat_index.size());
+                    const df::inorganic_raw* inorganic_layer = world->raws.inorganics[layer->mat_index];
+                    end_check_m = static_cast<uint16_t>(inorganic_layer->metal_ore.mat_index.size());
 
                     for (uint16_t m = 0; m < end_check_m; m++) {
-                        mid_level_tile.metals[world->raws.inorganics[layer->mat_index]->metal_ore.mat_index[m]] = true;
+                        mid_level_tile.metals[inorganic_layer->metal_ore.mat_index[m]] = true;
                     }
 
                     if (layer->type == df::geo_layer_type::SOIL ||
-                        layer->type == df::geo_layer_type::SOIL_SAND) {
-                        if (world->raws.inorganics[layer->mat_index]->flags.is_set(df::inorganic_flags::SOIL_SAND)) {
+                        layer->type == df::geo_layer_type::SOIL_SAND) { 
+                        if (inorganic_layer->flags.is_set(df::inorganic_flags::SOIL_SAND)) {
                             mid_level_tile.sand = true;
                         }
                     }
 
-                    if (world->raws.inorganics[layer->mat_index]->economic_uses.size() > 0) {
+                    if (inorganic_layer->economic_uses.size() > 0) {
                         mid_level_tile.economics[layer->mat_index] = true;
 
-                        end_check_m = static_cast<uint16_t>(world->raws.inorganics[layer->mat_index]->economic_uses.size());
+                        end_check_m = static_cast<uint16_t>(inorganic_layer->economic_uses.size());
                         for (uint16_t m = 0; m < end_check_m; m++) {
-                            if (world->raws.inorganics[layer->mat_index]->economic_uses[m] == state->clay_reaction) {
+                            if (inorganic_layer->economic_uses[m] == state->clay_reaction) {
                                 mid_level_tile.clay = true;
                             }
-
-                            else if (world->raws.inorganics[layer->mat_index]->economic_uses[m] == state->flux_reaction) {
+                            else if (inorganic_layer->economic_uses[m] == state->flux_reaction) {
                                 mid_level_tile.flux = true;
                             }
                         }
@@ -1177,22 +1177,23 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                     for (uint16_t m = 0; m < end_check_m; m++) {
                         mid_level_tile.minerals[layer->vein_mat[m]] = true;
 
-                        end_check_n = static_cast<uint16_t>(world->raws.inorganics[layer->vein_mat[m]]->metal_ore.mat_index.size());
+                        const df::inorganic_raw* inorganic_vein = world->raws.inorganics[layer->vein_mat[m]];
+                        end_check_n = static_cast<uint16_t>(inorganic_vein->metal_ore.mat_index.size());
 
                         for (uint16_t n = 0; n < end_check_n; n++) {
-                            mid_level_tile.metals[world->raws.inorganics[layer->vein_mat[m]]->metal_ore.mat_index[n]] = true;
+                            mid_level_tile.metals[inorganic_vein->metal_ore.mat_index[n]] = true;
                         }
 
-                        if (world->raws.inorganics[layer->vein_mat[m]]->economic_uses.size() > 0) {
+                        if (inorganic_vein->economic_uses.size() > 0) {
                             mid_level_tile.economics[layer->vein_mat[m]] = true;
 
-                            end_check_n = static_cast<uint16_t>(world->raws.inorganics[layer->vein_mat[m]]->economic_uses.size());
+                            end_check_n = static_cast<uint16_t>(inorganic_vein->economic_uses.size());
                             for (uint16_t n = 0; n < end_check_n; n++) {
-                                if (world->raws.inorganics[layer->vein_mat[m]]->economic_uses[n] == state->clay_reaction) {
+                                if (inorganic_vein->economic_uses[n] == state->clay_reaction) {
                                     mid_level_tile.clay = true;
                                 }
 
-                                else if (world->raws.inorganics[layer->vein_mat[m]]->economic_uses[n] == state->flux_reaction) {
+                                else if (inorganic_vein->economic_uses[n] == state->flux_reaction) {
                                     mid_level_tile.flux = true;
                                 }
                             }
@@ -1207,7 +1208,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                     }
 
                     if (bottom_z <= elevation - 3 &&
-                        world->raws.inorganics[layer->mat_index]->flags.is_set(df::inorganic_flags::AQUIFER)) {
+                        inorganic_layer->flags.is_set(df::inorganic_flags::AQUIFER)) {
                         aquifer = true;
                     }
                 }

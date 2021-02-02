@@ -72,3 +72,4 @@ tags
 
 # custom plugins
 /plugins/CMakeLists.custom.txt
+out/

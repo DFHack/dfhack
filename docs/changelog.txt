@@ -33,6 +33,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
+## Fixes
+- `orders`: don't crash when importing orders with malformed JSON
+
 # 0.47.04-r5
 
 ## Fixes

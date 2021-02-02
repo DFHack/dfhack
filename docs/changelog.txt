@@ -33,6 +33,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
+## Misc Improvements
+- `manipulator`: allow Alchemist skill to be toggled since `autohauler` uses it as a flag.
+
 # 0.47.04-r5
 
 ## Fixes

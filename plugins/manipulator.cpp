@@ -1700,7 +1700,9 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     UnitInfo *cur = units[input_row];
     df::unit *unit = cur->unit;
     df::unit_labor cur_labor = columns[input_column].labor;
-    if (events->count(interface_key::SELECT) && (cur->allowEdit) && Units::isValidLabor(unit, cur_labor))
+    // Allow Alchemist for individual selection since autohauler uses it as a flag.
+    if (events->count(interface_key::SELECT) && (cur->allowEdit) &&
+        (cur_labor == df::unit_labor::ALCHEMIST || Units::isValidLabor(unit, cur_labor)))
     {
         const SkillColumn &col = columns[input_column];
         bool newstatus = !unit->status.labors[col.labor];
@@ -1718,6 +1720,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         }
         unit->status.labors[col.labor] = newstatus;
     }
+    // Don't autoselect Alchemist when selecting all
     if (events->count(interface_key::SELECT_ALL) && (cur->allowEdit) && Units::isValidLabor(unit, cur_labor))
     {
         const SkillColumn &col = columns[input_column];
@@ -2089,6 +2092,7 @@ void viewscreen_unitlaborsst::render()
 
     UnitInfo *cur = units[sel_row];
     bool canToggle = false;
+    bool canToggleAll = false;
     if (cur != NULL)
     {
         df::unit *unit = cur->unit;
@@ -2158,7 +2162,11 @@ void viewscreen_unitlaborsst::render()
 
         }
 
-        canToggle = (cur->allowEdit) && Units::isValidLabor(unit, columns[sel_column].labor);
+        if (cur->allowEdit) {
+            df::unit_labor sel_labor = columns[sel_column].labor;
+            canToggleAll = Units::isValidLabor(unit, sel_labor);
+            canToggle = canToggleAll || sel_labor == df::unit_labor::ALCHEMIST;
+        }
     }
 
     int x = 2, y = dim.y - 4;
@@ -2166,7 +2174,7 @@ void viewscreen_unitlaborsst::render()
     OutputString(canToggle ? 15 : 8, x, y, ": Toggle labor, ");
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SELECT_ALL));
-    OutputString(canToggle ? 15 : 8, x, y, ": Toggle Group, ");
+    OutputString(canToggleAll ? 15 : 8, x, y, ": Toggle Group, ");
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::UNITJOB_VIEW_UNIT));
     OutputString(15, x, y, ": ViewCre, ");

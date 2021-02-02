@@ -3,6 +3,7 @@
 #include <array>
 #include <string>
 #include <vector>
+#include "df/biome_type.h"
 #include "df/world_region_type.h"
 
 using namespace std;
@@ -26,15 +27,38 @@ namespace embark_assist {
             Major
         };
 
-        enum class aquifer_sizes : int8_t {
-            NA,
-            None,
-            Light,
-            None_Light,
-            Heavy,
-            None_Heavy,
-            Light_Heavy,
-            None_Light_Heavy
+        const uint8_t Clear_Aquifer_Bits = 0;
+        const uint8_t None_Aquifer_Bit = 1;
+        const uint8_t Light_Aquifer_Bit = 2;
+        const uint8_t Heavy_Aquifer_Bit = 4;
+
+        namespace directions {
+            enum directions {
+                Northwest,
+                North,
+                Northeast,
+                West,
+                Center,
+                East,
+                Southwest,
+                South,
+                Southeast
+            };
+        };
+
+        namespace offset_directions {
+            enum offset_directions {
+                NA,  // 0 isn't used for offsets
+                Southwest,
+                South,
+                Southeast,
+                West,
+                Center,
+                East,
+                Northwest,
+                North,
+                Northeast
+            };
         };
 
         enum class tree_levels : int8_t {
@@ -44,24 +68,29 @@ namespace embark_assist {
             Woodland,
             Heavily_Forested
         };
-
-        struct mid_level_tile {
-            aquifer_sizes aquifer = aquifer_sizes::NA;
+        
+        // only contains those attributes that are being handled during incursion processing
+        struct mid_level_tile_incursion_base {
+            uint8_t aquifer = Clear_Aquifer_Bits;
             bool clay = false;
             bool sand = false;
-            bool flux = false;
-            bool coal = false;
             int8_t soil_depth;
-            int8_t offset;
             int16_t elevation;
-            bool river_present = false;
-            int16_t river_elevation = 100;
-            int8_t adamantine_level;  // -1 = none, 0 .. 3 = cavern 1 .. magma sea. Currently not used beyond present/absent.
-            int8_t magma_level;  // -1 = none, 0 .. 3 = cavern 3 .. surface/volcano
             int8_t biome_offset;
             tree_levels trees;
             uint8_t savagery_level;  // 0 - 2
             uint8_t evilness_level;  // 0 - 2
+        };
+
+        // contains all attributes (some by inheritance), used for regular survey/matching
+        struct mid_level_tile : public mid_level_tile_incursion_base {
+            bool flux = false;
+            bool coal = false;
+            int8_t offset;
+            river_sizes river_size = river_sizes::None;
+            int16_t river_elevation = 100;
+            int8_t adamantine_level;  // -1 = none, 0 .. 3 = cavern 1 .. magma sea. Currently not used beyond present/absent.
+            int8_t magma_level;  // -1 = none, 0 .. 3 = cavern 3 .. surface/volcano
             std::vector<bool> metals;
             std::vector<bool> economics;
             std::vector<bool> minerals;
@@ -71,7 +100,14 @@ namespace embark_assist {
 
         struct region_tile_datum {
             bool surveyed = false;
-            aquifer_sizes aquifer = aquifer_sizes::NA;
+            bool survey_completed = false;
+            bool neighboring_clay = false;          // These elements are updated after the survey by checking if there are any border MLTs in neighboring tiles that
+            bool neighboring_sand = false;          // provide the resource through an incursion.
+            bool neighboring_biomes[ENUM_LAST_ITEM(biome_type) + 1];
+            bool neighboring_region_types[ENUM_LAST_ITEM(world_region_type) + 1];
+            bool neighboring_savagery[3];
+            bool neighboring_evilness[3];
+            uint8_t aquifer = Clear_Aquifer_Bits;
             uint16_t clay_count = 0;
             uint16_t sand_count = 0;
             uint16_t flux_count = 0;
@@ -79,7 +115,8 @@ namespace embark_assist {
             uint8_t min_region_soil = 10;
             uint8_t max_region_soil = 0;
             uint8_t max_waterfall = 0;
-            river_sizes river_size;
+            river_sizes min_river_size = river_sizes::None;  //  The smallest actual river size, with none only if no rivers exist.
+            river_sizes max_river_size = river_sizes::None;
             int16_t biome_index[10];  // Indexed through biome_offset; -1 = null, Index of region, [0] not used
             int16_t biome[10];        // Indexed through biome_offset; -1 = null, df::biome_type, [0] not used
             uint8_t biome_count;
@@ -109,10 +146,10 @@ namespace embark_assist {
             std::vector<bool> minerals;
             std::vector<int16_t> neighbors;  //  entity_raw indices
             uint8_t necro_neighbors;
-            mid_level_tile north_row[16];
-            mid_level_tile south_row[16];
-            mid_level_tile west_column[16];
-            mid_level_tile east_column[16];
+            mid_level_tile_incursion_base north_row[16];
+            mid_level_tile_incursion_base south_row[16];
+            mid_level_tile_incursion_base west_column[16];
+            mid_level_tile_incursion_base east_column[16];
             uint8_t north_corner_selection[16]; //  0 - 3. For some reason DF stores everything needed for incursion
             uint8_t west_corner_selection[16];  //  detection in 17:th row/colum data in the region details except
                                                 //  this info, so we have to go to neighboring world tiles to fetch it.
@@ -147,7 +184,7 @@ namespace embark_assist {
 
         struct site_infos {
             bool incursions_processed;
-            aquifer_sizes aquifer;
+            uint8_t aquifer;
             uint8_t min_soil;
             uint8_t max_soil;
             bool flat;

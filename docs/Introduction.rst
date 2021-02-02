@@ -8,7 +8,7 @@ DFHack is a Dwarf Fortress memory access library, distributed with
 a wide variety of useful scripts and plugins.
 
 The project is currently hosted `on GitHub <https://www.github.com/DFHack/dfhack>`_,
-and can be downloaded from `the releases page <http://github.com/DFHack/dfhack/releases>`_
+and can be downloaded from `the releases page <https://github.com/DFHack/dfhack/releases>`_
 - see `installing` for installation instructions. This is also where the
 `DFHack bug tracker <https://www.github.com/DFHack/dfhack>`_ is hosted.
 

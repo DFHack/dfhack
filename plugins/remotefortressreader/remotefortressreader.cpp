@@ -1081,7 +1081,7 @@ void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * N
             if (gamemode && (*gamemode == game_mode::ADVENTURE))
             {
                 auto fog_of_war = DfBlock->fog_of_war[xx][yy];
-                NetBlock->add_hidden(designation.bits.dig == TileDigDesignation::NO_DIG || designation.bits.hidden);
+                NetBlock->add_hidden((TileDigDesignation)designation.bits.dig == TileDigDesignation::NO_DIG || designation.bits.hidden);
                 NetBlock->add_tile_dig_designation(TileDigDesignation::NO_DIG);
                 NetBlock->add_tile_dig_designation_marker(false);
                 NetBlock->add_tile_dig_designation_auto(false);

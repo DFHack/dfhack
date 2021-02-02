@@ -37,7 +37,9 @@ For more information, see `the full Stonesense README <stonesense>`.
 
 blueprint
 =========
-Exports a portion of your fortress into QuickFort style blueprint files.::
+Exports a portion of your fortress into QuickFort style blueprint files.
+
+Usage::
 
     blueprint <x> <y> <z> <name> [dig] [build] [place] [query]
 
@@ -117,24 +119,21 @@ A tool for checking how many tiles contain flowing liquids. If you suspect that
 your magma sea leaks into HFS, you can use this tool to be sure without
 revealing the map.
 
-.. _pathable:
-
-pathable
-========
-
-This plugin implements the back end of the `gui/pathable` script. It exports a
-single Lua function, in ``hack/lua/plugins/pathable.lua``:
-
-* ``paintScreen(cursor[,skip_unrevealed])``: Paint each visible of the screen
-  green or red, depending on whether it can be pathed to from the tile at
-  ``cursor``. If ``skip_unrevealed`` is specified and true, do not draw
-  unrevealed tiles.
-
 .. _probe:
 
 probe
 =====
-Can be used to determine tile properties like temperature.
+
+This plugin provides multiple commands that print low-level properties of the
+selected objects.
+
+* ``probe``: prints some properties of the tile selected with :kbd:`k`. Some of
+  these properties can be passed into `tiletypes`.
+* ``cprobe``: prints some properties of the unit selected with :kbd:`v`, as well
+  as the IDs of any worn items. `gui/gm-unit` and `gui/gm-editor` are more
+  complete in-game alternatives.
+* ``bprobe``: prints some properties of the building selected with :kbd:`q` or
+  :kbd:`t`. `gui/gm-editor` is a more complete in-game alternative.
 
 .. _prospect:
 .. _prospector:
@@ -188,8 +187,9 @@ Usage and related commands:
 :reveal demon:  Reveals everything and allows unpausing - good luck!
 :unreveal:      Reverts the effects of ``reveal``
 :revtoggle:     Switches between ``reveal`` and ``unreveal``
-:revflood:      Hide everything, then reveal tiles with a path to the cursor
-                (useful to make walled-off rooms vanish)
+:revflood:      Hide everything, then reveal tiles with a path to the cursor.
+                Note that tiles behind constructed walls are also revealed as a
+                workaround for :bug:`1871`.
 :revforget:     Discard info about what was visible before revealing the map.
                 Only useful where (e.g.) you abandoned with the fort revealed
                 and no longer want the data.
@@ -706,14 +706,91 @@ enabled materials, you should be able to place complex constructions more conven
 buildingplan
 ============
 When active (via ``enable buildingplan``), this plugin adds a planning mode for
-furniture placement.  You can then place furniture and other buildings before
-the required materials are available, and the job will be unsuspended when
-the item is created.
+building placement. You can then place furniture, constructions, and other buildings
+before the required materials are available, and they will be created in a suspended
+state. Buildingplan will periodically scan for appropriate items, and the jobs will
+be unsuspended when the items are available.
 
-Very useful when combined with `workflow` - you can set a constraint
+This is very useful when combined with `workflow` - you can set a constraint
 to always have one or two doors/beds/tables/chairs/etc available, and place
-as many as you like.  The plugins then take over and fulfill the orders,
+as many as you like. The plugins then take over and fulfill the orders,
 with minimal space dedicated to stockpiles.
+
+.. _buildingplan-filters:
+
+Item filtering
+--------------
+
+While placing a building, you can set filters for what materials you want the building made
+out of, what quality you want the component items to be, and whether you want the items to
+be decorated.
+
+If a building type takes more than one item to construct, use :kbd:`Ctrl`:kbd:`Left` and
+:kbd:`Ctrl`:kbd:`Right` to select the item that you want to set filters for. Any filters that
+you set will be used for all buildings of the selected type placed from that point onward
+(until you set a new filter or clear the current one). Buildings placed before the filters
+were changed will keep the filter values that were set when the building was placed.
+
+For example, you can be sure that all your constructed walls are the same color by setting
+a filter to accept only certain types of stone.
+
+Quickfort mode
+--------------
+
+If you use the external Python Quickfort to apply building blueprints instead of the native
+DFHack `quickfort` script, you must enable Quickfort mode. This temporarily enables
+buildingplan for all building types and adds an extra blank screen after every building
+placement. This "dummy" screen is needed for Python Quickfort to interact successfully with
+Dwarf Fortress.
+
+Note that Quickfort mode is only for compatibility with the legacy Python Quickfort. The
+DFHack `quickfort` script does not need Quickfort mode to be enabled. The `quickfort` script
+will successfully integrate with buildingplan as long as the buildingplan plugin is enabled.
+
+.. _buildingplan-settings:
+
+Global settings
+---------------
+
+The buildingplan plugin has several global settings that can be set from the UI (:kbd:`G`
+from any building placement screen, for example: :kbd:`b`:kbd:`a`:kbd:`G`). These settings
+can also be set from the ``DFHack#`` prompt once a map is loaded (or from your
+``onMapLoad.init`` file) with the syntax::
+
+    buildingplan set <setting> <true|false>
+
+and displayed with::
+
+    buildingplan set
+
+The available settings are:
+
++----------------+---------+-----------+---------------------------------------+
+| Setting        | Default | Persisted | Description                           |
++================+=========+===========+=======================================+
+| all_enabled    | false   | no        | Enable planning mode for all building |
+|                |         |           | types.                                |
++----------------+---------+-----------+---------------------------------------+
+| blocks         | true    | yes       | Allow blocks, boulders, logs, or bars |
++----------------+---------+           | to be matched for generic "building   |
+| boulders       | true    |           | material" items                       |
++----------------+---------+           |                                       |
+| logs           | true    |           |                                       |
++----------------+---------+           |                                       |
+| bars           | false   |           |                                       |
++----------------+---------+-----------+---------------------------------------+
+| quickfort_mode | false   | no        | Enable compatibility mode for the     |
+|                |         |           | legacy Python Quickfort (not required |
+|                |         |           | for DFHack quickfort)                 |
++----------------+---------+-----------+---------------------------------------+
+
+For example, to ensure you only use blocks when a "building material" item is required, you
+could add this to your ``onMapLoad.init`` file::
+
+    on-new-fortress buildingplan set boulders false; buildingplan set logs false
+
+Persisted settings (i.e. ``blocks``, ``boulders``, ``logs``, and ``bars``) are saved with
+your game, so you only need to set them to the values you want once.
 
 .. _confirm:
 
@@ -784,6 +861,7 @@ Adds a :kbd:`q` menu for track stops, which is completely blank by default.
 This allows you to view and/or change the track stop's friction and dump
 direction settings, using the keybindings from the track stop building interface.
 
+.. _sort:
 .. _sort-items:
 
 sort-items
@@ -1443,7 +1521,9 @@ can be displayed on the main fortress mode screen:
 The file :file:`dfhack-config/dwarfmonitor.json` can be edited to control the
 positions and settings of all widgets displayed. This file should contain a
 JSON object with the key ``widgets`` containing an array of objects - see the
-included file in the ``dfhack-config`` folder for an example::
+included file in the ``dfhack-config`` folder for an example:
+
+.. code-block:: lua
 
     {
         "widgets": [
@@ -1577,6 +1657,8 @@ Options:
 :nick:        Mass-assign nicknames, must be followed by the name you want
               to set.
 :remnick:     Mass-remove nicknames.
+:enumnick:    Assign enumerated nicknames (e.g. "Hen 1", "Hen 2"...). Must be
+              followed by the prefix to use in nicknames.
 :tocages:     Assign unit(s) to cages inside a pasture.
 :uinfo:       Print info about unit(s). If no filters are set a unit must
               be selected in the in-game ui.
@@ -1939,10 +2021,10 @@ Options:
 :L:     Low Traffic
 :R:     Restricted Traffic
 
-.. _burrow:
+.. _burrows:
 
-burrow
-======
+burrows
+=======
 Miscellaneous burrow control. Allows manipulating burrows and automated burrow
 expansion while digging.
 
@@ -2484,7 +2566,8 @@ See also `alltraffic`, `filltraffic`, and `restrictice`.
 tiletypes
 =========
 Can be used for painting map tiles and is an interactive command, much like
-`liquids`.  If something goes wrong, `fixveins` may help.
+`liquids`. Some properties of existing tiles can be looked up with `probe`. If
+something goes wrong, `fixveins` may help.
 
 The tool works with two set of options and a brush. The brush determines which
 tiles will be processed. First set of options is the filter, which can exclude
@@ -2646,6 +2729,8 @@ custom reaction raws, with the following differences:
 * If the item has no subtype, the ``:NONE`` can be omitted
 * If the item is ``REMAINS``, ``FISH``, ``FISH_RAW``, ``VERMIN``, ``PET``, or ``EGG``,
   specify a ``CREATURE:CASTE`` pair instead of a material token.
+* If the item is a ``PLANT_GROWTH``, specify a ``PLANT_ID:GROWTH_ID`` pair
+  instead of a material token.
 
 Corpses, body parts, and prepared meals cannot be created using this tool.
 
@@ -2663,6 +2748,10 @@ Examples:
 * Create tower-cap logs::
 
     createitem WOOD PLANT_MAT:TOWER_CAP:WOOD
+
+* Create bilberries::
+
+    createitem PLANT_GROWTH BILBERRY:FRUIT
 
 For more examples, :wiki:`see this wiki page <Utility:DFHack/createitem>`.
 
@@ -2950,9 +3039,10 @@ Lua API
 Some plugins consist solely of native libraries exposed to Lua. They are listed
 in the `lua-api` file under `lua-plugins`:
 
-* `eventful`
 * `building-hacks`
+* `cxxrandom`
+* `eventful`
 * `luasocket`
 * `map-render`
-* `cxxrandom`
+* `pathable`
 * `xlsxreader`

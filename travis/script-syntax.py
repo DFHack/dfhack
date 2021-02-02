@@ -11,6 +11,7 @@ def print_stderr(stderr, args):
         return
 
     for line in stderr.split('\n'):
+        print(line)
         parts = list(map(str.strip, line.split(':')))
         # e.g. luac prints "luac:" in front of messages, so find the first part
         # containing the actual filename
@@ -18,7 +19,6 @@ def print_stderr(stderr, args):
             if parts[i].endswith('.' + args.ext) and parts[i + 1].isdigit():
                 print('::error file=%s,line=%s::%s' % (parts[i], parts[i + 1], ':'.join(parts[i + 2:])))
                 break
-        print(line)
 
 
 def main(args):

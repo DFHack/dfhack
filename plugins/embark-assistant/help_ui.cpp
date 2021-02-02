@@ -157,7 +157,9 @@ namespace embark_assist{
                 help_text.push_back("C: Camp");
                 help_text.push_back("c: Cave. Only displayed if the DF worldgen parameter does not display caves.");
                 help_text.push_back("i: Important Location. The author doesn't actually know what those are.");
-                help_text.push_back("l: Lair");
+                help_text.push_back("m: Lair (Simple Mound)");
+                help_text.push_back("b: Lair (Simple Burrow)");
+                help_text.push_back("l: Lair (Wilderness Location)");
                 help_text.push_back("L: Labyrinth");
                 help_text.push_back("M: Monument. The author is unsure how/if this is broken down further.");
                 help_text.push_back("S: Shrine");
@@ -338,7 +340,7 @@ namespace embark_assist{
                 help_text.push_back("  the N, followed by the one to the W, and lastly the one acting as the");
                 help_text.push_back("  reference. This means there's a risk embarks with such 'trouble' corners");
                 help_text.push_back("  may get affected corner(s) evaluated incorrectly.");
-                help_text.push_back("Version 0.11 2020-03-03");
+                help_text.push_back("Version 0.13 2020-12-03");
 
                 break;
             }
@@ -367,11 +369,13 @@ namespace embark_assist{
                 embark_assist::screen::paintString(site_pen, 1, 4, "C");
                 embark_assist::screen::paintString(site_pen, 1, 5, "c");
                 embark_assist::screen::paintString(site_pen, 1, 6, "i");
-                embark_assist::screen::paintString(site_pen, 1, 7, "l");
-                embark_assist::screen::paintString(site_pen, 1, 8, "L");
-                embark_assist::screen::paintString(site_pen, 1, 9, "M");
-                embark_assist::screen::paintString(site_pen, 1, 10, "S");
-                embark_assist::screen::paintString(site_pen, 1, 11, "V");
+                embark_assist::screen::paintString(site_pen, 1, 7, "m");
+                embark_assist::screen::paintString(site_pen, 1, 8, "b");
+                embark_assist::screen::paintString(site_pen, 1, 9, "l");
+                embark_assist::screen::paintString(site_pen, 1, 10, "L");
+                embark_assist::screen::paintString(site_pen, 1, 11, "M");
+                embark_assist::screen::paintString(site_pen, 1, 12, "S");
+                embark_assist::screen::paintString(site_pen, 1, 13, "V");
                 break;
 
             case pages::Finder:

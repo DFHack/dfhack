@@ -178,7 +178,7 @@ std::string ItemTypeInfo::getToken()
     std::string rv = ENUM_KEY_STR(item_type, type);
     if (custom)
         rv += ":" + custom->id;
-    else if (subtype != -1)
+    else if (subtype != -1 && type != item_type::PLANT_GROWTH)
         rv += stl_sprintf(":%d", subtype);
     return rv;
 }
@@ -279,12 +279,13 @@ bool ItemTypeInfo::matches(df::job_item_vector_id vec_id)
     return true;
 }
 
-bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat, bool skip_vector)
+bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat,
+                           bool skip_vector, df::item_type itype)
 {
     using namespace df::enums::item_type;
 
     if (!isValid())
-        return mat ? mat->matches(item) : false;
+        return mat ? mat->matches(item, itype) : false;
 
     if (Items::isCasteMaterial(type) && mat && !mat->isNone())
         return false;
@@ -379,6 +380,7 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat, bool ski
         break;
 
     case BUCKET:
+        OK(2,lye_milk_free);
     case FLASK:
         OK(1,milk);
         xmask1.bits.cookable = true;

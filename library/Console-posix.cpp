@@ -405,6 +405,8 @@ namespace DFHack
         /// A simple line edit (raw mode)
         int lineedit(const std::string& prompt, std::string& output, recursive_mutex * lock, CommandHistory & ch)
         {
+            if(state == con_lineedit)
+                return Console::FAILURE;
             output.clear();
             reset_color();
             this->prompt = prompt;
@@ -414,7 +416,9 @@ namespace DFHack
                 fflush(dfout_C);
                 // FIXME: what do we do here???
                 //SDL_recursive_mutexV(lock);
+                state = con_lineedit;
                 std::getline(std::cin, output);
+                state = con_unclaimed;
                 //SDL_recursive_mutexP(lock);
                 return output.size();
             }
@@ -422,8 +426,6 @@ namespace DFHack
             {
                 int count;
                 if (enable_raw() == -1) return 0;
-                if(state == con_lineedit)
-                    return Console::FAILURE;
                 state = con_lineedit;
                 count = prompt_loop(lock,ch);
                 state = con_unclaimed;

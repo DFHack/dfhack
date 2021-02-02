@@ -97,7 +97,7 @@ void make_text_dim(int x1, int x2, int y)
 static bool is_live_screen(const df::viewscreen *screen)
 {
     for (df::viewscreen *cur = &gview->view; cur; cur = cur->child)
-        if (cur == screen)
+        if (cur == screen && cur->breakdown_level == interface_breakdown_types::NONE)
             return true;
     return false;
 }
@@ -115,13 +115,16 @@ static string get_unit_description(df::unit *unit)
     return desc;
 }
 
-static bool cursor_key_pressed (std::set<df::interface_key> *input)
+static bool cursor_key_pressed (std::set<df::interface_key> *input, bool in_entry_mode)
 {
-    // give text input (e.g. "2") priority over cursor keys
-    for (auto it = input->begin(); it != input->end(); ++it)
+    if (in_entry_mode)
     {
-        if (Screen::keyToChar(*it) != -1)
-            return false;
+        // give text input (e.g. "2") priority over cursor keys
+        for (auto it = input->begin(); it != input->end(); ++it)
+        {
+            if (Screen::keyToChar(*it) != -1)
+                return false;
+        }
     }
     return
     input->count(df::interface_key::CURSOR_UP) ||
@@ -249,7 +252,7 @@ public:
                 // ENTER or ESC: leave typing mode
                 end_entry_mode();
             }
-            else if (cursor_key_pressed(input))
+            else if (cursor_key_pressed(input, entry_mode))
             {
                 // Arrow key pressed. Leave entry mode and allow screen to process key
                 end_entry_mode();
@@ -396,7 +399,7 @@ protected:
 
         clear_viewscreen_vectors();
 
-        string search_string_l = toLower(search_string);
+        string search_string_l = to_search_normalized(search_string);
         for (size_t i = 0; i < saved_list1.size(); i++ )
         {
             if (force_in_search(i))
@@ -409,7 +412,7 @@ protected:
                 continue;
 
             T element = saved_list1[i];
-            string desc = toLower(get_element_description(element));
+            string desc = to_search_normalized(get_element_description(element));
             if (desc.find(search_string_l) != string::npos)
             {
                 add_to_filtered_list(i);
@@ -1953,7 +1956,9 @@ public:
             end_entry_mode();
             return false;
         }
-        if (cursor_key_pressed(input))
+        bool hotkey_pressed =
+            input->lower_bound(interface_key::D_HOTKEY1) != input->upper_bound(interface_key::D_HOTKEY16);
+        if (cursor_key_pressed(input, in_entry_mode()) || hotkey_pressed)
         {
             end_entry_mode();
             clear_search();

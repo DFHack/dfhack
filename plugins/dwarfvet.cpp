@@ -72,21 +72,22 @@ struct hospital_spot {
 class Patient {
   public:
     // Constructor/Deconstrctor
-    Patient(int32_t id, int spot_index, int32_t x, int32_t y, int32_t z);
+    Patient(int32_t id, size_t spot_index, int32_t x, int32_t y, int32_t z);
     int32_t getID() { return this->id; };
-    int32_t getSpotIndex() { return this->spot_index; };
+    size_t getSpotIndex() { return this->spot_index; };
     int32_t returnX() { return this->spot_in_hospital.x; };
     int32_t returnY() { return this->spot_in_hospital.y; };
     int32_t returnZ() { return this->spot_in_hospital.z; };
 
   private:
     struct hospital_spot spot_in_hospital;
-    int id;
-    int spot_index;
+    int32_t id;
+    size_t spot_index;
 };
 
-Patient::Patient(int32_t id, int32_t spot_index, int32_t x, int32_t y, int32_t z){
+Patient::Patient(int32_t id, size_t spot_index, int32_t x, int32_t y, int32_t z){
     this->id = id;
+    this->spot_index = spot_index;
     this->spot_in_hospital.x = x;
     this->spot_in_hospital.y = y;
     this->spot_in_hospital.z = z;

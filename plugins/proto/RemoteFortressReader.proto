@@ -394,6 +394,7 @@ message MapBlock
     repeated bool tile_dig_designation_auto = 28;
     repeated int32 grass_percent = 29;
     repeated FlowInfo flows = 30;
+    repeated Coord fluid_flow_direction = 31;
 }
 
 message MatPair {

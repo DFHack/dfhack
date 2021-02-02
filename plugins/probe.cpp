@@ -382,6 +382,10 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
         }
     }
 
+    df::tile_liquid_flow flow = block.liquid_flow[tileX][tileY];
+
+    out << "Flow Direction: " << ENUM_KEY_STR(tile_liquid_flow_dir, flow.bits.perm_flow_dir) << endl;
+
 
     return CR_OK;
 }

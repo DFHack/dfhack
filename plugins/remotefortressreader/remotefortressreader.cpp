@@ -1121,6 +1121,51 @@ void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * N
                     break;
                 }
             }
+            df::tile_liquid_flow liquid_flow = DfBlock->liquid_flow[xx][yy];
+            auto flowDir = NetBlock->add_fluid_flow_direction();
+            switch (liquid_flow.bits.perm_flow_dir)
+            {
+            case tile_liquid_flow_dir::none:
+                flowDir->set_x(0);
+                flowDir->set_y(0);
+                break;
+            case tile_liquid_flow_dir::south:
+                flowDir->set_x(0);
+                flowDir->set_y(1);
+                break;
+            case tile_liquid_flow_dir::east:
+                flowDir->set_x(1);
+                flowDir->set_y(0);
+                break;
+            case tile_liquid_flow_dir::northeast:
+                flowDir->set_x(1);
+                flowDir->set_y(-1);
+                break;
+            case tile_liquid_flow_dir::west:
+                flowDir->set_x(-1);
+                flowDir->set_y(0);
+                break;
+            case tile_liquid_flow_dir::northwest:
+                flowDir->set_x(-1);
+                flowDir->set_y(-1);
+                break;
+            case tile_liquid_flow_dir::southeast:
+                flowDir->set_x(1);
+                flowDir->set_y(1);
+                break;
+            case tile_liquid_flow_dir::southwest:
+                flowDir->set_x(-1);
+                flowDir->set_y(1);
+                break;
+            case tile_liquid_flow_dir::north:
+                flowDir->set_x(0);
+                flowDir->set_y(-1);
+                break;
+            default:
+                flowDir->set_x(0);
+                flowDir->set_y(0);
+                break;
+            }
         }
 #if DF_VERSION_INT > 34011
     for (size_t i = 0; i < world->jobs.postings.size(); i++)

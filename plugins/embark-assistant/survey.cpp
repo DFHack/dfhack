@@ -902,6 +902,21 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
 
 //=================================================================================
 
+void reset_mlt_inorganics(embark_assist::defs::mid_level_tiles *mlts, const uint16_t max_inorganic) {
+    for (uint8_t i = 0; i < 16; i++) {
+        for (uint8_t k = 0; k < 16; k++) {
+            embark_assist::defs::mid_level_tile &mlt = mlts->at(i).at(k);
+            for (uint16_t i = 0; i < max_inorganic; i++) {
+                mlt.metals[i] = false;
+                mlt.economics[i] = false;
+                mlt.minerals[i] = false;
+            }
+        }
+    }
+}
+
+//=================================================================================
+
 void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data *geo_summary,
     embark_assist::defs::world_tile_data *survey_results,
     embark_assist::defs::mid_level_tiles *mlt) {
@@ -935,13 +950,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
         tile->minerals[i] = 0;
     }
 
-    for (uint8_t i = 0; i < 16; i++) {
-        for (uint8_t k = 0; k < 16; k++) {
-            mlt->at(i).at(k).metals.resize(state->max_inorganic);
-            mlt->at(i).at(k).economics.resize(state->max_inorganic);
-            mlt->at(i).at(k).minerals.resize(state->max_inorganic);
-        }
-    }
+    reset_mlt_inorganics(mlt, state->max_inorganic);
 
     for (uint8_t i = 1; i < 10; i++) survey_results->at(x).at(y).biome_index[i] = -1;
 

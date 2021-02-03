@@ -36,7 +36,9 @@ quantum: {linksonly}{nocontainers}{quantum_enable}{givename}
 
 stop_name: {Empty}
 route_enable: {quantum_enable}{enablecorpses}{enablerefuse}
-quantumstop: ^hrn{name}&sn{stop_name}&&xxx{route_enable enter_sp_config={enter_sp_config_hauling}}s{move}p^{move_back}^q
+sp_link: s{move}p{move_back}
+sp_links: {sp_link}
+quantumstop: ^hrn{name}&sn{stop_name}&&xxx{route_enable enter_sp_config={enter_sp_config_hauling}}{sp_links}^^q
 quantumstopfromeast: {quantumstop move={Right} move_back={Left}}
 quantumstopfromsouth: {quantumstop move={Down} move_back={Up}}
 quantumstopfromwest: {quantumstop move={Left} move_back={Right}}

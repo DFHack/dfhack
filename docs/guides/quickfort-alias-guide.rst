@@ -346,11 +346,15 @@ These aliases make it easy to create :wiki:`minecart stop-based quantum stockpil
 +----------------------+                  |
 | quantumstopfromwest  |                  |
 +----------------------+------------------+
+| sp_link              | | move           |
+|                      | | move_back      |
++----------------------+------------------+
 | quantumstop          | | name           |
 |                      | | stop_name      |
 |                      | | route_enable   |
 |                      | | move           |
 |                      | | move_back      |
+|                      | | sp_links       |
 +----------------------+------------------+
 
 The idea is to use a minecart on a track stop to dump an infinite number of
@@ -453,16 +457,26 @@ building your aliases on the ``*prefix`` aliases described later in this
 guide.
 
 Finally, the ``quantumstop`` alias is a more general version of the
-``quantumstopfrom*`` aliases. The ``quantumstopfrom*`` aliases assume that the
-feeder stockpile is orthogonally adjacent to your track stop (which is how
-most people set them up). If your feeder stockpile is somewhere further away,
-you can use the ``quantumstop`` alias directly. In addition to the
-``quantumstopfrom*`` sub-aliases, you can also define the ``move`` and
-``move_back`` sub-aliases, which let you specify the cursor keys required to
-move from the track stop to the feeder stockpile and back again, respectively::
+``quantumstopfrom*`` aliases. The ``quantumstopfrom*`` aliases assume that a
+single feeder stockpile is orthogonally adjacent to your track stop (which is
+how most people set them up). If your feeder stockpile is somewhere further
+away, or you have multiple feeder stockpiles to link, you can use the
+``quantumstop`` alias directly. In addition to the sub-aliases used in the
+``quantumstopfrom*`` alias, you can define the ``move`` and ``move_back``
+sub-aliases, which let you specify the cursor keys required to move from the
+track stop to the (single) feeder stockpile and back again, respectively::
 
     #query
     {quantumstop move="{Right 2}{Up}" move_back="{Down}{Left 2}"}
+
+If you have multiple stockpiles to link, define the ``sp_links`` sub-alias,
+which can chain several ``sp_link`` aliases together, each with their own
+movement configuration::
+
+    #query
+    {quantumstop sp_links="{sp_link move=""{Right}{Up}"" move_back=""{Down}{Left}""}{sp_link move=""{Right}{Down}"" move_back=""{Up}{Left}""}"}
+
+Note the doubled quotes for quoted elements that are within the outer quotes.
 
 Farm plots
 ~~~~~~~~~~

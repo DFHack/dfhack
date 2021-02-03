@@ -13,7 +13,7 @@ Welcome to the Dreamfort Walkthrough!
 ""
 "Run each level's ""help"" blueprint (e.g. /surface_help) for more details."
 ""
-"Dreamfort has a central ramp-based design. For all Dreamfort levels, place the cursor on the center tile of the 3x3 ramp area when you apply the blueprints. The first surface blueprint will designate a column of ramps that you can use as a guide. If you need to extend the ramps down further to lower levels, run ""quickfort run library/dreamfort.csv -n /central_ramp"" with the cursor on the bottom z-level where there are only up ramps."
+"Dreamfort has a central stairs-based design. For all Dreamfort levels, place the cursor on the center tile of the 3x3 stairs area when you apply the blueprints. The first surface blueprint will designate a column of stairs that you can use as a guide. If you need to extend the stairs down further to lower levels, run ""quickfort run library/dreamfort.csv -n /central_stairs"" with the cursor on the z-level below the lowest current stairs."
 ""
 "Dreamfort blueprints take care of everything to get the fort up and running. You don't need to clear any extra trees or create any extra buildings/stockpiles (though of course you are free to do so). Blueprints that do require manual steps (like 'assign minecart to hauling route') will leave a message telling you so when you run them. Blueprints will also leave messages with hints when you might want to run ""quickfort orders"" to start manufacturing needed items, like blocks or tables. Make sure you appoint a manager to handle all the incoming work orders!"
 ""
@@ -44,12 +44,13 @@ quickfort undo library/dreamfort.csv -n /perimeter
 
 -- Dig and  preload important orders --
 quickfort run library/dreamfort.csv -n /surface1,# Run at embark
-quickfort run library/dreamfort.csv -n /industry1,"# Run when you find a suitable rock layer. Note that we'll dig the farming level a bit later, so be sure to leave room for it. Alternately, instead of each of the dig blueprints individually, run /dig_all_underground, which designates digging for industry, services, guildhall, suites, and apartments all in one go. It is more efficient for your miners if you designate your digging before they dig the central ramp past that level."
+quickfort run library/dreamfort.csv -n /industry1,"# Run when you find a suitable rock layer. Note that we'll dig the farming level a bit later, so be sure to leave room for it. Alternately, instead of each of the dig blueprints individually, run /dig_all_underground, which designates digging for industry, services, guildhall, suites, and apartments all in one go. It is more efficient for your miners if you designate your digging before they dig the central stairs past that level."
 quickfort run library/dreamfort.csv -n /services1
 quickfort run library/dreamfort.csv -n /guildhall1
 quickfort run library/dreamfort.csv -n /suites1
 quickfort run library/dreamfort.csv -n /apartments1_stack
 quickfort orders library/dreamfort.csv -n /farming2,# Queue up orders required to get the fort minimally functional and secure
+quickfort orders library/dreamfort.csv -n /surface2
 quickfort orders library/dreamfort.csv -n /surface3
 quickfort orders library/dreamfort.csv -n /industry2
 quickfort orders library/dreamfort.csv -n /services2
@@ -57,17 +58,17 @@ quickfort orders library/dreamfort.csv -n /services2
 -- Core fort (should finish at about the third migration wave) -- 
 quickfort run library/dreamfort.csv -n /surface2,# Run after initial trees are cleared
 quickfort run library/dreamfort.csv -n /surface3,# Run when channels are dug and trees are cleared
-quickfort run library/dreamfort.csv -n /farming1,# Run when trees are cleared on the surface
+quickfort run library/dreamfort.csv -n /farming1,# Run when trees are cleared on the surface (there may be more from /surface3)
 quickfort run library/dreamfort.csv -n /farming2,# Run when the farming level has been dug out
 quickfort run library/dreamfort.csv -n /farming3,# Run when furniture has been placed and the farm plots have been constructed
 quickfort run library/dreamfort.csv -n /industry2,# Run when the industry level has been dug out
-quickfort orders library/dreamfort.csv -n /farming3,# We wait this long to order /farming3 because all the doors slow down block production needed for /industry2 and /surface3.
+quickfort orders library/dreamfort.csv -n /farming3,# Run after surface walls and floors are finished. We wait this long to order /farming3 because all the doors slow down needed block production.
 quickfort run library/dreamfort.csv -n /surface4,"# Run anytime after /industry2 (as long as the walls and floors are built on the surface). You can run /surface4 as early as /farming1 if you need to rush the surface build, but we wait until after /industry2 so that surface walls, floors, and roofing don't prevent your workshops from being built (due to lack of blocks)."
 quickfort orders library/dreamfort.csv -n /surface4
-orders import automation,# Run once industry workshops are built
 quickfort run library/dreamfort.csv -n /services2,# Run when the services level has been dug out
 quickfort run library/dreamfort.csv -n /surface5,"# Run when all marked trees on the surface are chopped down and walls and floors have been constructed, including the roof section over the future barracks"
 quickfort orders library/dreamfort.csv -n /surface5
+orders import automation
 quickfort run library/dreamfort.csv -n /services3,# Run when the table and chair have been constructed
 quickfort orders library/dreamfort.csv -n /services3
 quickfort run library/dreamfort.csv -n /surface6,"# Run when at least the beehives and weapon rack are constructed. You probably want to wait until all of /surface5 has been completed, though, since building the remaining walls and floors will suck up a lot of your dwarves' time."
@@ -93,7 +94,7 @@ quickfort orders library/dreamfort.csv -n /apartments3
 burial -pets,# Run once the coffins are placed to set them to allow for burial
 
 See this checklist online at https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=1459509569
-"#meta label(dig_all_underground) start(central ramp on industry level) hidden() dig industry, services, guildhall, suites, and apartments levels"
+"#meta label(dig_all_underground) start(central stairs on industry level) hidden() dig industry, services, guildhall, suites, and apartments levels"
 # Note that this blueprint will only work for the unified dreamfort.csv. It won't work for the individual .xlsx files (since #meta blueprints can't cross file boundaries).
 ""
 /industry1
@@ -112,8 +113,8 @@ See this checklist online at https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x
 "Here are the minimal skills needed for essential tasks in getting Dreamfort up and running, along with suggestions for which dwarves to assign them to. You can enable additional skills as you wish. Skills with an asterisk (*) are worth putting points into on the embark preparation screen."
 Manager / Bookkeeper / Broker,Dwarf2,Dwarf3,Dwarf4,Dwarf5,Dwarf6,Dwarf7
 Carpenter (*),Miner (*),Miner (*),Mason (*),Mason (*),Wood Cutter,Wood Cutter
-Clothesmaker,,,Architect/Building Designer,Architect/Building Designer,Brewer,Cook
-Bee Keeper,,,,,Mechanic (*),Mechanic (*)
+Weaver,,,Architect/Building Designer,Architect/Building Designer,Brewer,Cook
+Clothesmaker,,,,,Mechanic (*),Mechanic (*)
 Judge of Intent (*),,,Bee Keeper,Bee Keeper,,Grower/Farmer (*)
 ,,,,Stone Crafter
 
@@ -127,6 +128,10 @@ We suggest bringing at least:
 7 blocks,for starting workshops and the temporary trade depot. necessary if you have buildingplan configured for blocks only.
 many boulders,for quickly turning into more blocks. blocks are the limiting factor in the early stages.
 12 thread,to make into cloth to make into rope for traction benches and the jail cells
+leather,for bags
+food and seeds,as per usual
+dogs and cats
+turkeys
 #notes label(surface_help)
 Sets up a protected entrance to your fort in a flat area on the surface.
 ""
@@ -141,19 +146,19 @@ Features:
 - Miasma vent covers for the farming level that is intended to be built in the layer directly beneath the surface
 ""
 Manual steps you have to take:
-- Assign grazing livestock to the large pasture and dogs to the pasture over the central ramp (DFHack's autonestbox can manage the nestbox zones)
+- Assign grazing livestock to the large pasture and dogs to the pasture over the central stairs (DFHack's autonestbox can manage the nestbox zones)
 - Connect levers to the gates that match the names of the levers
 ""
 Be sure to choose an embark site that has an area flat enough to use these blueprints!
 ""
 Surface Walkthrough:
-"1) Choose a center tile for your central fortress ramp. The terrain around that tile should be perfectly flat. Trees are ok, but no slopes, rivers, or lakes. To be sure that the tile you've chosen is in a good spot, set the cursor over that tile and run ""quickfort run library/dreamfort.csv -n /perimeter"". This will show you the eventual boundaries of the fort. Some wall segments might be missing due to existing trees, but that's ok. Make sure the area within the exterior wall is flat. Run ""quickfort undo library/dreamfort.csv -n /perimeter"" to clean up."
+"1) Choose a center tile for your central fortress stairs. The terrain around that tile should be perfectly flat. Trees are ok, but no slopes, rivers, or lakes. To be sure that the tile you've chosen is in a good spot, set the cursor over that tile and run ""quickfort run library/dreamfort.csv -n /perimeter"". This will show you the eventual boundaries of the fort. Some wall segments might be missing due to existing trees, but that's ok. Make sure the area within the exterior wall is flat. Run ""quickfort undo library/dreamfort.csv -n /perimeter"" to clean up."
 ""
 "2) With the cursor on the chosen tile, run /surface1 to clear surrounding trees and set up your pastures. Deconstruct your wagon to get it out of the way of our upcoming walls and floors. Remember to assign your dogs to the pasture around the staircase and your grazing animals to the large pasture. You can let your cats roam free. Run ""quickfort orders"" for /surface3 to get a head start in manufacturing."
 ""
 "3) Once the marked trees have been cleared, run /surface2 to set up starting workshops/stockpiles, channel out the miasma vents for the farming level, and start clearing trees from a larger area. Run ""quickfort orders"" for /surface3. Make sure you have appointed a manager so the orders get fulfilled! If you haven't done it already, now is a good time to configure buildingplan to only build buildings with blocks, not logs or raw boulders. Do this by entering buildingplan's global configuration (""baG"") and ensuring the only generic building material allowed is ""blocks""."
 ""
-"4) Once the channels are dug out and the trees are cleared, continue with /surface3 to cover the vents and build an enclosure around your central ramp. Although the vents will be covered with flooring, they will still work to prevent miasma on the farming level."
+"4) Once the channels are dug out and the trees are cleared, continue with /surface3 to cover the vents and build an enclosure around your central stairs. Although the vents will be covered with flooring, they will still work to prevent miasma on the farming level."
 ""
 "5) Once all marked trees are chopped down and walls and floors have been constructed, run /surface4 to build floors and walls to support upcoming buildings and furniture. Run ""quickfort orders"" for /surface4. You can also start digging out the sub-surface farming level (/farming1) at this point."
 ""
@@ -166,38 +171,38 @@ Surface Walkthrough:
 "9) For extra security, you can run /surface8 any time after /surface7 to extend the trap corridors. Run ""quickfort orders"" for /surface8."
 ""
 "10) Once your industry and farming levels are set up and running, you can disassemble the surface workshops and remove the surface stockpiles. Disassembling a workshop scatters the items stored within it and cancels any pending jobs that happen to use those items. In order to avoid job cancellations, first set the surface workshops to not accept general work orders. Do this by entering query mode (""q""), selecting a workshop, entering the workshop profile (""P""), moving to work orders (right arrow), and hitting Enter. Then enter view mode (""t"") and check to see if any items in a workshop are marked with ""TSK"". Once no items in the workshop have that marker, you are free to disassemble that workshop."
-#meta label(perimeter) start(central ramp) message(Run quickfort undo on this blueprint to clean up.) show the eventual perimeter of the surface fort
+#meta label(perimeter) start(central stairs) message(Run quickfort undo on this blueprint to clean up.) show the eventual perimeter of the surface fort
 walls/surface_walls
 corridor/surface_corridor
 ""
-"#meta label(surface1) start(central ramp)
-message(Once the central ramp is mined out deeply enough, you should start digging the industry level in a non-aquifer rock layer. You'll need the boulders from the digging to make blocks.
+"#meta label(surface1) start(central stairs)
+message(Once the central stairs is mined out deeply enough, you should start digging the industry level in a non-aquifer rock layer. You'll need the boulders from the digging to make blocks.
 If your wagon is within the fort perimeter, deconstruct it to get it out of the way.
 Enqueue manager orders for /surface3 to get a head start on building required materials.
 Once the marked trees are all chopped down (if any), continue with /surface2.) clear trees and set up pastures"
-central_ramp/central_ramp
+central_stairs/central_stairs
 clear_small/surface_clear_small
 zones/surface_zones
 name_zones/surface_name_zones
 ""
-"#meta label(surface2) start(central ramp) message(Once the channels are dug out and the marked trees are cleared, continue with /surface3.) set up starting workshops/stockpiles, channel miasma vents, and clear more trees"
+"#meta label(surface2) start(central stairs) message(Once the channels are dug out and the marked trees are cleared, continue with /surface3.) set up starting workshops/stockpiles, channel miasma vents, and clear more trees"
 build_start/surface_build_start
 place_start/surface_place_start
 query_start/surface_query_start
 channel/surface_channel
-clear_ramp/surface_clear_ramp
+clear_stairs/surface_clear_stairs
 ""
-"#meta label(surface3) start(central ramp) message(Once the marked trees are cleared and walls and floors have been constructed, continue with /surface4.) Cover vents and protect the central ramp."
+"#meta label(surface3) start(central stairs) message(Once the marked trees are cleared and walls and floors have been constructed, continue with /surface4.) Cover vents and protect the central stairs."
 cover_vents/surface_cover_vents
-cover_ramp/surface_cover_ramp
+cover_stairs/surface_cover_stairs
 clear/surface_clear
 ""
-"#meta label(surface4) start(central ramp) message(Remember to enqueue manager orders for this blueprint.
+"#meta label(surface4) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
 Once the walls and floors have been constructed, continue with /surface5. Be sure to check one z-level above the surface to ensure the roof segment above the future barracks has been finished.) build walls and flooring to support upcoming buildings and furniture"
-ramp_doors/surface_ramp_doors
+stairs_doors/surface_stairs_doors
 pre_building/surface_pre_building
 ""
-"#meta label(surface5) start(central ramp) message(Remember to enqueue manager orders for this blueprint.
+"#meta label(surface5) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
 Disassemble the temporary trade depot in the pasture once the new one is constructed (and no merchants are using the old one).
 Once the marked trees are cleared and at least the beehives and the weapon rack have been constructed, continue with /surface6.) build gates, furniture, and trade stockpile/depot"
 place/surface_place
@@ -205,102 +210,102 @@ build/surface_build
 query/surface_query
 clear_large/surface_clear_large
 ""
-"#meta label(surface6) start(central ramp) message(Remember to enqueue manager orders for this blueprint.
+"#meta label(surface6) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
 Continue with /surface7 whenever you have enough dwarves to build the roof without starving other important construction tasks.) configure hives and barracks, build remaining walls and floors"
 query2/surface_query2
 walls/surface_walls
 floors/surface_floors
 clear_large/surface_clear_large
 ""
-"#meta label(surface7) start(central ramp (on ground level)) message(Remember to enqueue manager orders for this blueprint. For extra security, you can run /surface8 at any time to extend the trap corridors.) build roof"
+"#meta label(surface7) start(central stairs (on ground level)) message(Remember to enqueue manager orders for this blueprint. For extra security, you can run /surface8 at any time to extend the trap corridors.) build roof"
 #<
 roof/surface_roof
 roof2/surface_roof2
 ""
-#meta label(surface8) start(central ramp) message(Remember to enqueue manager orders for this blueprint.) build extended trap corridors
+#meta label(surface8) start(central stairs) message(Remember to enqueue manager orders for this blueprint.) build extended trap corridors
 corridor/surface_corridor
 corridor_traps/surface_corridor_traps
 query_corridor/surface_query_corridor
-#dig label(central_ramp) start(2;2) hidden() ramp that goes down 20 levels
-`,h7,d6
-`,d6,`
-d6,h7,`
+#dig label(central_stairs) start(2;2) hidden() stairs that goes down 20 levels
+`,u,`
+j7,`,j7
+`,u,`
 #>
-d6,`,`
-h7,d6,h7
-`,`,d6
+`,j7,`
+u,`,u
+`,j7,`
 #>
-`,h7,d6
-`,d6,`
-d6,h7,`
+`,u,`
+j7,`,j7
+`,u,`
 #>
-d6,`,`
-h7,d6,h7
-`,`,d6
+`,j7,`
+u,`,u
+`,j7,`
 #>
-`,h7,d6
-`,d6,`
-d6,h7,`
+`,u,`
+j7,`,j7
+`,u,`
 #>
-d6,`,`
-h7,d6,h7
-`,`,d6
+`,j7,`
+u,`,u
+`,j7,`
 #>
-`,h7,d6
-`,d6,`
-d6,h7,`
+`,u,`
+j7,`,j7
+`,u,`
 #>
-d6,`,`
-h7,d6,h7
-`,`,d6
+`,j7,`
+u,`,u
+`,j7,`
 #>
-`,h7,d6
-`,d6,`
-d6,h7,`
+`,u,`
+j7,`,j7
+`,u,`
 #>
-d6,`,`
-h7,d6,h7
-`,`,d6
+`,j7,`
+u,`,u
+`,j7,`
 #>
-`,h7,d6
-`,d6,`
-d6,h7,`
+`,u,`
+j7,`,j7
+`,u,`
 #>
-d6,`,`
-h7,d6,h7
-`,`,d6
+`,j7,`
+u,`,u
+`,j7,`
 #>
-`,h7,d6
-`,d6,`
-d6,h7,`
+`,u,`
+j7,`,j7
+`,u,`
 #>
-d6,`,`
-h7,d6,h7
-`,`,d6
+`,j7,`
+u,`,u
+`,j7,`
 #>
-`,h7,d6
-`,d6,`
-d6,h7,`
+`,u,`
+j7,`,j7
+`,u,`
 #>
-d6,`,`
-h7,d6,h7
-`,`,d6
+`,j7,`
+u,`,u
+`,j7,`
 #>
-`,h7,d6
-`,d6,`
-d6,h7,`
+`,u,`
+j7,`,j7
+`,u,`
 #>
-d6,`,`
-h7,d6,h7
-`,`,d6
+`,j7,`
+u,`,u
+`,j7,`
 #>
-`,h7,d6
-`,d6,`
-d6,h7,`
+`,u,`
+j7,`,j7
+`,u,`
 #>
-d6,`,`
-h7,d6,h7
-`,`,d6
+`,j7,`
+u,`,u
+`,j7,`
 #dig label(surface_clear_small) start(23; 25) hidden() clear trees for starting workshops and stockpiles
 
 
@@ -324,7 +329,7 @@ h7,d6,h7
 ,,,,,,,`,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`,,`
 ,,,,,,,`,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`,,`
 ,,,,,,,`,,`,`,`,`,`,t,`,`,`,`,`,`,,`,,`,`,`,`,`,t,`,`,`,t,`,`,,`
-,,,,,,,`,,`,,`,,,,,,,,`,,,,,,`,,,,,,,,,,`,,`
+,,,,,,,`,,`,,`,t,t,,,,,,`,,,,,,`,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,`,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,`,,`,`,`,,`,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,`,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
@@ -351,7 +356,7 @@ h7,d6,h7
 
 
 
-"#zone label(surface_zones) start(23; 25) hidden() message(Remember to assign your dogs to the pasture surrounding the central ramp and your grazing animals to the large pasture.
+"#zone label(surface_zones) start(23; 25) hidden() message(Remember to assign your dogs to the pasture surrounding the central stairs and your grazing animals to the large pasture.
 Feel free to assign an unimportant animal to the pasture in the main entranceway to use as bait during sieges.) pastures and training areas"
 
 
@@ -376,9 +381,9 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`
 ,,,,,,,`,,`,,`,n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),`,n,n,n,n,n,`,t(9x5),,,,,,,,,`,,`
-,,,,,,,`,,`,,`,,,,,,,,,n,n,`,n,n,,,,,,,,,,,`,,`
-,,,,,,,`,,`,,,,,,,,,,`,n,n,`,n,n,`,,,,,,,,,,`,,`
-,,,,,,,`,,`,,`,,,,,,,,,n,n,`,n,n,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,`,,,,,,,,,n,n,n,n,n,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,,`,n,,,,n,`,,,,,,,,,,`,,`
+,,,,,,,`,,`,,`,,,,,,,,,n,n,n,n,n,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,`,n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),`,n,n,n,n,n,`,,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,,`,`,`,`,,`,,`,`,`,`,,`,`,`,`,`,`,`,,`
 ,,,,,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
@@ -475,7 +480,7 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`
-,,,,,,,`,,`,,`,,,,,,,,`,,,,,,`,,,,,,,,,,`,,`
+,,,,,,,`,,`,,`,N,N,,,,,,`,,,,,,`,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,`,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,`,,`,`,`,,`,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,`,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
@@ -652,7 +657,7 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 
 
 
-#dig label(surface_clear_ramp) start(23; 25) hidden() clear trees for starting workshops and stockpiles
+#dig label(surface_clear_stairs) start(23; 25) hidden() clear trees for starting workshops and stockpiles
 
 
 
@@ -752,7 +757,7 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 
 
 
-#build label(surface_cover_ramp) start(23; 25) hidden() protect the central ramp
+#build label(surface_cover_stairs) start(23; 25) hidden() protect the central stairs
 
 
 
@@ -773,12 +778,12 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,,,,,`,,`,,,,,,,,,,,,,Cu,,,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,,,,,Cr,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,Cw,Cw,Cf,Cw,Cf,Cw,Cw,`,`,`,`,`,`,`,`,`,`,,`
 ,,,,,,,`,,`,,`,,,,,,,,Cw,,,,,,Cw,,,,,,,,,,`,,`
-,,,,,,,`,,`,,`,,,,,,,,Cf,,`,H,`,,Cf,,,,,,,,,,`,,`
-,,,,,,,`,,`,,,,,,,,,,Cw,,`,`,`,,Cw,,,,,,,,,,`,,`
-,,,,,,,`,,`,,`,,,,,,,,Cf,,`,H,`,,Cf,,,,,,,,,,`,,`
+,,,,,,,`,,`,,`,,,,,,,,Cf,,`,`,`,,Cf,,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,,Cw,,H,`,H,,Cw,,,,,,,,,,`,,`
+,,,,,,,`,,`,,`,,,,,,,,Cf,,`,`,`,,Cf,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,`,,,,,,,,Cw,,,,,,Cw,,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,,`,`,Cw,Cw,Cf,Cw,Cf,Cw,Cw,`,`,,`,`,`,`,`,`,`,,`
 ,,,,,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
@@ -812,7 +817,7 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,,,,,`,,`,,,,,,,,,,,,,Cd,,,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,Cf,`,Cf,`,`,`,`,`,`,`,`,`,`,`,`,,`
 ,,,,,,,`,,`,,`,,,,,,,,`,Cf,Cf,Cf,Cf,Cf,`,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,`,,,,,,,,Cf,Cf,Cf,Cf,Cf,Cf,Cf,,,,,,,,,,`,,`
@@ -891,7 +896,7 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 
 
 
-#build label(surface_ramp_doors) start(23; 25) hidden()
+#build label(surface_stairs_doors) start(23; 25) hidden()
 
 
 
@@ -1104,7 +1109,7 @@ Remember to connect the levers to the gates once they are built.) gates, traps, 
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`
-,,,,,,,`,,`,~h,`,N,N,N,N,N,N,N,`,Tl,,Tl,,Tl,`,,,,,,,,,,`,,`
+,,,,,,,`,,`,~h,`,~,~,N,N,N,N,N,`,Tl,,Tl,,Tl,`,,,,,,,,,,`,,`
 ,,,,,,,`,,`,~h,`,p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),,,`,`,`,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,~h,d,p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),`,,`,`,`,,`,,,,,,,,,,`,,`
 ,,,,,,,`,,`,~h,`,p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),,,`,`,`,,,,,,,,,,,,`,,`
@@ -1708,7 +1713,7 @@ Farming Walkthough:
 "4) When the furniture is in place and the farm plots have been constructed, run /farming3 to enable seasonal plot fertilization and designate your starter dining room and dormitory. The blueprint also attempts to assign the lower office to your manager, but double-check this assignment in case your dwarves are in an unexpected order. Run ""quickfort orders"" for /farming3."
 ""
 "5) You can disassemble the dining room and dormitory once the services and apartments levels are up and running, if you like."
-"#dig label(farming1) start(23; 25; central ramp) message(This would be a good time to queue up manager orders for /farming2. Once the area is dug out, continue with /farming2.)"
+"#dig label(farming1) start(23; 25; central stairs) message(This would be a good time to queue up manager orders for /farming2. Once the area is dug out, continue with /farming2.)"
 # this level is dug at priority 3 since it is dug in soil. it's worth the miner's time to stop digging the industry level and
 # quickly dig out this one.
 
@@ -1758,12 +1763,12 @@ Farming Walkthough:
 
 
 
-"#meta label(farming2) start(central ramp) message(Once furniture has been placed and the farm plots have been constructed, continue with /farming3.) workshops, stockpiles, and important furniture"
+"#meta label(farming2) start(central stairs) message(Once furniture has been placed and the farm plots have been constructed, continue with /farming3.) workshops, stockpiles, and important furniture"
 build/farming_build
 place/farming_place
 query_stockpiles/farming_query_stockpiles
 ""
-#meta label(farming3) start(central ramp) configure rooms and build remaining furniture
+#meta label(farming3) start(central stairs) configure rooms and build remaining furniture
 build2/farming_build2
 query_rooms/farming_rooms
 #build label(farming_build) start(23; 25) hidden() workshops and important furniture
@@ -1978,7 +1983,7 @@ query_rooms/farming_rooms
 
 
 
-,,,,,,,,,,,,,,`,`,`,,,,s,`,`,`,`,,,,`,`,`,r++&d,,,`
+,,,,,,,,,,,,,,`,`,`,,,,s,`,`,`,`,,,,`,`,`,r+&d,,,`
 ,,,,,,,,,,,,,,r&,`,`,`,`,,s,`,`,`,`,,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,,,,`,`,`,,`,,s,`,`,`,`,,`,,`,`,`,`,`,`,`
 ,,,,,,,,,,,,,,,,,,`,,s,`,`,`,`,,`
@@ -2066,7 +2071,7 @@ Industry Walkthrough:
 "4) If you want to automatically melt goblinite and other low-quality weapons and armor, mark the south-east stockpiles for auto-melt."
 ""
 "5) Run ""orders import automation"" to use the provided automation.json to take care of your fort's basic needs, such as food, booze, military supplies, and raw material processing. If you get job cancelation spam about not being able to make soap, manually queue up a few ""Make lye"" jobs at your ashery. That should get the soap-making jobs back on track."
-"#dig label(industry1) start(18; 18; central ramp) message(This would be a good time to queue manager orders for /industry2. Once the area is dug out, continue with /industry2.)"
+"#dig label(industry1) start(18; 18; central stairs) message(This would be a good time to queue manager orders for /industry2. Once the area is dug out, continue with /industry2.)"
 
 
 ,,,,,,,,,,,d,d,d,d,d,d,d,d,d,d,d,d,d
@@ -2102,7 +2107,7 @@ Industry Walkthrough:
 ,,,,,,,,,,,d,d,d,d,d,d,d,d,d,d,d,d,d
 
 
-"#meta label(industry2) start(central ramp) build workshops and stockpiles, configure stockpiles"
+"#meta label(industry2) start(central stairs) build workshops and stockpiles, configure stockpiles"
 build/industry_build
 place/industry_place
 query/industry_query
@@ -2245,14 +2250,14 @@ Services Walkthough:
 5) Fill the wells with either bucket brigades or by carefully routing flowing water.
 ""
 "6) When your fort is mature enough to need a jail and/or an extra barracks, run /services4 to set those rooms up. You also get some decorative statues to increase the value of your dining hall. Run ""quickfort orders"" for /services4."
-"#dig label(services1) start(23; 22; central ramp) message(This would be a good time to queue manager orders for /services2 and /services3. Once the area is dug out, continue with /services2.)"
+"#dig label(services1) start(23; 22; central stairs) message(This would be a good time to queue manager orders for /services2 and /services3. Once the area is dug out, continue with /services2.)"
 
 
 ,,,,d,d,d,,,d,d,d,,,d,d,d
 ,,,,d,d,d,,,d,d,d,,,d,d,d
 ,,,,d,d,d,,,d,d,d,,,d,d,d
 ,,,,,d,,,,,d,,,,,d
-,,,,d,d,d,d,d,d,d,d,d,d,d,d,d,,d,h,d,,j1,,d,h,d
+,,,,d,d,d,d,d,d,d,d,d,d,d,d,d,,d,h,d,,,,d,h,d
 ,,,,d,d,d,d,d,d,d,d,d,d,d,d,d,,d,d,d,d,d,d,d,d,d
 ,,,,d,d,d,d,d,d,d,d,d,d,d,d,d,,d,d,d,,d,,d,d,d
 ,,,,d,d,d,d,d,d,d,d,d,d,d,d,d,,,,,,d
@@ -2284,12 +2289,12 @@ Services Walkthough:
 
 
 
-,,,,,,,,,,,,,,,,,,j,h,j,,u1,,j,h,j
-,,,,,,,,,,,,,,,,,,d,d,d,d,d,d,d,d,d
+,,,,,,,,,,,,,,,,,,,h6,j,,,,j,h6
+,,,,,,,,,,,,,,,,,,,6,6,6,d,6,6,6
 ,,,,,,,,,,,,,,,,,,,,,,d
 ,,,,,,,,,,,,,,,,,,,,,,d
-,,,,,,,,,,,,,,,,,,j,h,j,,d,,j,h,j
-,,,,,,,,,,,,,,,,,,d,d,d,d,d,d,d,d,d
+,,,,,,,,,,,,,,,,,,,h6,j,,d,,j,h6
+,,,,,,,,,,,,,,,,,,,6,6,6,d,6,6,6
 ,,,,,,,,,,,,,,,,,,,,,,d
 ,,,,,,,,,,,,,,,,,,,,,,d
 ,,,,,,,,,,,,,,,,,,,,,,d
@@ -2299,8 +2304,8 @@ Services Walkthough:
 ,,,,,,,,,,,,,,,,,,,,,,d
 ,,,,,,,,,,,,,,,,,,,,d,d,d,d,d
 ,,,,,,,,,,,,,,,,,,,,d,`,`,`,d
-,,,,,,,,,,,,,,,,,,,,d,`,`,`,d,,,,,,,j,h,j
-,,,,,,,,,,,,,,,,,,,,d,`,`,`,d,,,,,,,d,d,d
+,,,,,,,,,,,,,,,,,,,,d,`,`,`,d,,,,,,,j,h6
+,,,,,,,,,,,,,,,,,,,,d,`,`,`,d,,,,,,,d6,d6
 ,,,,,,,,,,,,,,,,,,,,d,d,d,d,d,,,,,,,,d
 ,,,,,,,,,,,,,,,,,,,,,,d,,,,,,,,,,d
 ,,,,,,,,,,,,,,,,,,,,,,d,d,d,d,d,d,d,d,d,d,d
@@ -2311,11 +2316,11 @@ Services Walkthough:
 
 
 
-,,,,,,,,,,,,,,,,,,i5,h5,i,,,,i5,h5,i
+,,,,,,,,,,,,,,,,,,,h5,i,,,,i,h5
 
 
 
-,,,,,,,,,,,,,,,,,,i5,h5,i,,,,i5,h5,i
+,,,,,,,,,,,,,,,,,,,h5,i,,,,i,h5
 
 
 
@@ -2326,7 +2331,7 @@ Services Walkthough:
 
 ,,,,,,,,,,,,,,,,,,,,d,d,d,d,d
 ,,,,,,,,,,,,,,,,,,,,d,`,`,`,d
-,,,,,,,,,,,,,,,,,,,,d,`,`,`,d,,,,,,,i5,h5,i
+,,,,,,,,,,,,,,,,,,,,d,`,`,`,d,,,,,,,i,h5
 ,,,,,,,,,,,,,,,,,,,,d,`,`,`,d
 ,,,,,,,,,,,,,,,,,,,,d,d,d,d,d
 #>
@@ -2336,11 +2341,11 @@ Services Walkthough:
 
 
 
-,,,,,,,,,,,,,,,,,,u,d,u,,,,u,d,u
+,,,,,,,,,,,,,,,,,,,d,u,,,,u,d
 
 
 
-,,,,,,,,,,,,,,,,,,u,d,u,,,,u,d,u
+,,,,,,,,,,,,,,,,,,,d,u,,,,u,d
 
 
 
@@ -2351,23 +2356,23 @@ Services Walkthough:
 
 ,,,,,,,,,,,,,,,,,,,,d,d,d,d,d
 ,,,,,,,,,,,,,,,,,,,,d,`,`,`,d
-,,,,,,,,,,,,,,,,,,,,d,`,`,`,d,,,,,,,u,d,u
+,,,,,,,,,,,,,,,,,,,,d,`,`,`,d,,,,,,,u,d
 ,,,,,,,,,,,,,,,,,,,,d,`,`,`,d
 ,,,,,,,,,,,,,,,,,,,,d,d,d,d,d
 
 
-"#meta label(services2) start(central ramp) message(Once furniture has been placed, continue with /services3.) dining hall anchors, stockpiles, hospital, garbage dump"
+"#meta label(services2) start(central stairs) message(Once furniture has been placed, continue with /services3.) dining hall anchors, stockpiles, hospital, garbage dump"
 build/services_build
 place/services_place
 zones/services_zones
 name_zones/services_name_zones
 query_stockpiles/services_query_stockpiles
 ""
-"#meta label(services3) start(central ramp) configure dining room, build dining hall and hospital furniture"
+"#meta label(services3) start(central stairs) configure dining room, build dining hall and hospital furniture"
 query_dining/services_query_dining
 build2/services_build2
 ""
-#meta label(services4) start(central ramp) complete jail and build decorative furniture
+#meta label(services4) start(central stairs) complete jail and build decorative furniture
 build3/services_build3
 place_jail/services_place_jail
 query_jail/services_query_jail
@@ -2378,7 +2383,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,,,`,`,`,,,`,`,`
 ,,,,`,`,`,,,`,`,`,,,`,`,`
 ,,,,,d,,,,,d,,,,,d
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,,,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`
@@ -2412,7 +2417,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,,,`,`,`,,,`,`,`
 ,,,,`,`,`,,,`,`,`,,,`,`,`
 ,,,,,`,,,,,`,,,,,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,,,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`
@@ -2446,7 +2451,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,,,`,`,`,,,`,`,`
 ,,,,`,`,`,,,`,`,`,,,`,`,`
 ,,,,,`,,,,,`,,,,,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,,,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`
@@ -2480,7 +2485,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,,,`,`,`,,,`,`,`
 ,,,,`,`,`,,,`,`,`,,,`,`,`
 ,,,,,`,,,,,`,,,,,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,,,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`
@@ -2514,7 +2519,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,,,`,`,`,,,`,`,`
 ,,,,`,`,`,,,`,`,`,,,`,`,`
 ,,,,,`,,,,,`,,,,,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,,,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`
@@ -2548,7 +2553,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,,,`,`,`,,,`,`,`
 ,,,,`,`,`,,,`,`,`,,,`,`,`
 ,,,,,`,,,,,`,,,,,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,,,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`
@@ -2582,7 +2587,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,,,`,`,`,,,`,`,`
 ,,,,f,`,h,,,f,`,h,,,f,`,h
 ,,,,,~,,,,,~,,,,,~
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,,,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,v,`,d,`,d,`,v,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`
@@ -2645,7 +2650,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,,,`,`,`,,,`,`,`
 ,,,,~,`,~,,,~,`,~,,,~,`,~
 ,,,,,~,,,,,~,,,,,~
-,,,,s,`,`,s,s,`,`,`,s,s,`,`,s,,t,l,b,,`,,t,l,b
+,,,,s,`,`,s,s,`,`,`,s,s,`,`,s,,t,l,b,,,,t,l,b
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,c,~,`,~,`,~,c,~,`
 ,,,,s,`,`,`,`,`,`,`,`,`,`,`,s,,`,`,`,,`,,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`
@@ -2679,7 +2684,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,,,`,`,`,,,`,`,`
 ,,,,`,`,`,,,`,`,`,,,`,`,`
 ,,,,,`,,,,,`,,,,,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,,,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,f(1x2),`,`,`,`,`,f(1x2)
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,f(2x1),`,`,,`,,f(2x1),`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`
@@ -2706,14 +2711,14 @@ query_jail/services_query_jail
 ,,,,`,`,`,`,`,`,,`,`,`,`,`,`
 
 
-#query label(services_query_jail) start(23; 22) set up barracks and jail
+#query label(services_query_jail) start(23; 22) hidden() set up barracks and jail
 
 
 ,,,,`,`,`,,,`,`,`,,,`,`,`
 ,,,,`,`,`,,,`,`,`,,,`,`,`
 ,,,,`,`,`,,,`,`,`,,,`,`,`
 ,,,,,`,,,,,`,,,,,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,,,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,"r--&j{givename name=""jail3""}","{booze}{givename name=""booze""}",`,`,`,`,"r--&j{givename name=""jail4""}","{booze}{givename name=""booze""}"
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,"{preparedfood}{givename name=""prepared food""}",t{Down 4}&,t{Down 4}&,,`,,"{preparedfood}{givename name=""prepared food""}",t{Down 4}&,t{Down 4}&
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`
@@ -2752,7 +2757,7 @@ Guildhall Walkthrough:
 "2) Once the area is dug out, add in generic furniture with /guildhall2. Run ""quickfort orders"" for /guildhall2."
 ""
 "3) Furnish individual rooms manually as you need specific guildhalls, libraries, and temples."
-"#dig label(guildhall1) start(25; 25; central ramp) message(This would be a good time to queue manager orders for /guildhall2. Once the area is dug out, continue with /guildhall2.)"
+"#dig label(guildhall1) start(25; 25; central stairs) message(This would be a good time to queue manager orders for /guildhall2. Once the area is dug out, continue with /guildhall2.)"
 
 
 ,,d,d,d,d,d,d,d,,,,,,d,d,d,d,d,d,d,,,,,,,,d,d,d,d,d,d,d,,,,,,d,d,d,d,d,d,d
@@ -2802,7 +2807,7 @@ Guildhall Walkthrough:
 ,,d,d,d,d,d,d,d,,,,,,d,d,d,d,d,d,d,,,,,,,,d,d,d,d,d,d,d,,,,,,d,d,d,d,d,d,d
 
 
-#build label(guildhall2) start(25; 25; central ramp) message(Smooth tiles and furnish/declare locations as required.) build basic furniture
+#build label(guildhall2) start(25; 25; central stairs) message(Smooth tiles and furnish/declare locations as required.) build basic furniture
 
 
 ,,`,`,`,`,`,`,`,,,,,,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,,,,,,`,`,`,`,`,`,`

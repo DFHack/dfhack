@@ -902,14 +902,15 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
 
 //=================================================================================
 
-void reset_mlt_inorganics(embark_assist::defs::mid_level_tiles *mlts, const uint16_t max_inorganic) {
+void reset_mlt_inorganics(embark_assist::defs::mid_level_tiles &mlts) {
+    const uint16_t size = mlts[0][0].metals.size();
     for (uint8_t i = 0; i < 16; i++) {
         for (uint8_t k = 0; k < 16; k++) {
-            embark_assist::defs::mid_level_tile &mlt = mlts->at(i).at(k);
-            for (uint16_t i = 0; i < max_inorganic; i++) {
-                mlt.metals[i] = false;
-                mlt.economics[i] = false;
-                mlt.minerals[i] = false;
+            embark_assist::defs::mid_level_tile &mlt = mlts[i][k];
+            for (uint16_t l = 0; l < size; l++) {
+                mlt.metals[l] = false;
+                mlt.economics[l] = false;
+                mlt.minerals[l] = false;
             }
         }
     }
@@ -950,7 +951,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
         tile->minerals[i] = 0;
     }
 
-    reset_mlt_inorganics(mlt, state->max_inorganic);
+    reset_mlt_inorganics(*mlt);
 
     for (uint8_t i = 1; i < 10; i++) survey_results->at(x).at(y).biome_index[i] = -1;
 

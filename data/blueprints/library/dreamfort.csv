@@ -66,17 +66,17 @@ quickfort run library/dreamfort.csv -n /industry2,# Run when the industry level 
 quickfort run library/dreamfort.csv -n /surface4,"# Run after the walls and floors are built on the surface. Even if the surface is finished befor you run /industry2, though, wait until after /industry2 so that surface walls, floors, and roofing don't prevent your workshops from being built (due to lack of blocks)."
 quickfort orders library/dreamfort.csv -n /surface4
 quickfort run library/dreamfort.csv -n /services2,# Run when the services level has been dug out
+orders import automation
 quickfort run library/dreamfort.csv -n /surface5,"# Run when all marked trees on the surface are chopped down and walls and floors have been constructed, including the roof section over the future barracks"
 quickfort orders library/dreamfort.csv -n /surface5
-orders import automation
-quickfort run library/dreamfort.csv -n /services3,# Run after the table and chair have been constructed. Also wait until after you run /surface5 because surface defenses are more important than a grand dining hall.
-quickfort orders library/dreamfort.csv -n /services3
-quickfort run library/dreamfort.csv -n /surface6,"# Run when at least the beehives and weapon rack are constructed. You probably want to wait until all of /surface5 has been completed, though, since building the remaining walls and floors will suck up a lot of your dwarves' time."
+quickfort run library/dreamfort.csv -n /surface6,# Run when at least the beehives and weapon rack are constructed and you have linked all levers to their respective bridges.
 quickfort orders library/dreamfort.csv -n /surface6
-quickfort run library/dreamfort.csv -n /surface7,# Run after the surface walls are completed
+quickfort run library/dreamfort.csv -n /surface7,# Run after the surface walls are completed and any marked trees are chopped down
 quickfort orders library/dreamfort.csv -n /surface7
 
 -- Mature fort (third migration wave onward) -- 
+quickfort run library/dreamfort.csv -n /services3,# Run after the table and chair have been constructed. Also wait until after you run /surface5 because surface defenses are more important than a grand dining hall.
+quickfort orders library/dreamfort.csv -n /services3
 quickfort run library/dreamfort.csv -n /guildhall2,# Run when the guildhall level has been dug out
 quickfort orders library/dreamfort.csv -n /guildhall2
 quickfort run library/dreamfort.csv -n /suites2,# Run when the suites level has been dug out
@@ -114,14 +114,16 @@ See this checklist online at https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x
 #ignore
 "Here are the minimal skills needed for essential tasks in getting Dreamfort up and running, along with suggestions for which dwarves to assign them to. You can enable additional skills as you wish. Skills with an asterisk (*) are especially worth putting points into on the embark preparation screen."
 Manager / Bookkeeper / Broker,Dwarf2,Dwarf3,Dwarf4,Dwarf5,Dwarf6,Dwarf7
-Cook,Miner (*),Miner (*),Mason (*),Mason (*),Wood Cutter,Wood Cutter
-Weaver,,,Architect/Building Designer,Architect/Building Designer,Brewer,Carpenter (*)
-Clothesmaker,,,,,Mechanic,Mechanic
-Grower/Farmer,,,Bee Keeper,Bee Keeper
-Judge of Intent (*),,,Stone Crafter,Stone Crafter
+Cook (*),Miner (*),Miner (*),Mason (*),Mason (*),Wood Cutter (*),Carpenter (*)
+Weaver,,,Architect/Building Designer,Architect/Building Designer,Brewer,Mechanic
+Clothesmaker,,,,,Mechanic (*)
+Grower/Farmer,,,Stone Crafter (*),Stone Crafter (*)
+Wood Cutter,,,Bee Keeper,Bee Keeper
+Judge of Intent (*)
+All other labors until you can assign them to a migrant
 
-"The most time-comsuming tasks in Dreamfort are: mining, chopping down trees, and making blocks. Assuming your embark has trees, having at least two miners, two woodcutters, and two masons is essential to keeping the fort from stalling."
-"Moreover, it is important to have one more mason than you have Mason's Workshops so other buildings that require masonry can get built (like bridges). Give the masons Beekeeping for the same reason -- it is a low-priority task, but it's important to have someone free to do it since otherwise the surface set of blueprints can stall."
+"The most time-comsuming tasks in early Dreamfort are: mining, chopping down trees, and making blocks. Starting with at least two miners, two woodcutters (assuming your embark has trees), and two masons is essential to keeping the fort from stalling. Note you may have to turn off all other labors for your wood cutters to get them focused on wood cutting when there are trees to clear before you can run the next surface blueprint."
+"Moreover, it is important to always have one more mason than you have Mason's Workshops so other buildings that require masonry can get built (like bridges). Give the masons Beekeeping for the same reason -- it is a low-priority task, but it's important to have someone free to do it since otherwise the surface set of blueprints can stall."
 
 We suggest bringing at least:
 2 picks,for the two miners
@@ -129,11 +131,10 @@ We suggest bringing at least:
 1 anvil,for the forge
 7 blocks,for starting workshops and the temporary trade depot. necessary if you have buildingplan configured for blocks only.
 many boulders,for quickly turning into more blocks. blocks are the limiting factor in the early stages.
-12 cloth,to make into rope for traction benches and the jail cells
-leather,for bags
+12 cloth,"to make into rope for traction benches and the jail cells. you could try thread, but that tends to get eaten by the hospital"
 food and seeds,as per usual
-dogs and cats
-turkeys
+dogs and cats,for protection and vermin control
+turkeys,for eggs and leather
 #notes label(surface_help)
 Sets up a protected entrance to your fort in a flat area on the surface.
 ""
@@ -213,7 +214,7 @@ query/surface_query
 clear_large/surface_clear_large
 ""
 "#meta label(surface6) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
-Continue with /surface7 sometime after the walls are completed, whenever you have enough dwarves to build the roof without starving other important construction tasks.) configure hives and barracks, build traps and remaining walls/floors"
+Continue with /surface7 sometime after the walls are completed and any marked trees are chopped down, whenever you have enough dwarves to build the roof without starving other important construction tasks.) configure hives and barracks, build traps and remaining walls/floors"
 query2/surface_query2
 walls/surface_walls
 floors/surface_floors
@@ -1126,8 +1127,8 @@ Remember to connect the levers to the gates once they are built.) gates, barrack
 ,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
 ,,,,,,,`,,ga,ga,,,,,,,gd,gd,,,,,,,,ga,ga,,,,,,,gd,gd,,`
 ,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,gw,gw,gw,gw,gw,gw,gw,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,,,,,,,,,,,,,,Tc,Tc,gw,gw,gw,gw,gw,gw,gw,Tc,Tc
-,,,,,,,,,,,,,,,,,Tc,Tc,gw,gw,gw,gw,gw,gw,gw,Tc,Tc
+,,,,,,,,,,,,,,,,,,,gw,gw,gw,gw,gw,gw,gw
+,,,,,,,,,,,,,,,,,,,gw,gw,gw,gw,gw,gw,gw
 
 
 
@@ -1272,7 +1273,7 @@ You might also want to set the ""trade goods quantum"" stockpile to Auto Trade i
 ,,,,,,,`,,`,`,`,`,`,`,`,,`,`,`,`,,`,,`,`,`,`,,`,`,`,`,`,`,`,,`
 ,,,,,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,r+&,,,`,,`
+,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,r&,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
@@ -1428,8 +1429,8 @@ You might also want to set the ""trade goods quantum"" stockpile to Auto Trade i
 ,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
 ,,,,,,,`,,,,Tc,Tc,Tc,Tc,Tc,Tc,,,,,,,,,,,,Tc,Tc,Tc,Tc,Tc,Tc,,,,`
 ,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
-
-
+,,,,,,,,,,,,,,,,,Tc,Tc,,,,,,,,Tc,Tc
+,,,,,,,,,,,,,,,,,Tc,Tc,,,,,,,,Tc,Tc
 
 
 
@@ -1818,12 +1819,12 @@ Farming Walkthough:
 
 
 
-"#meta label(farming2) start(central stairs) message(Once furniture has been placed and the farm plots have been constructed, continue with /farming3.) workshops, stockpiles, and important furniture"
+"#meta label(farming2) start(central stairs) message(Once furniture has been placed, continue with /farming3.) workshops, stockpiles, and important furniture"
 build/farming_build
 place/farming_place
 query_stockpiles/farming_query_stockpiles
 ""
-#meta label(farming3) start(central stairs) configure rooms and build more furniture
+#meta label(farming3) start(central stairs) configure rooms and build farm plots and more furniture
 query_rooms/farming_rooms
 build2/farming_build2
 ""
@@ -2329,7 +2330,7 @@ query/industry_query
 ,,f,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,f,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,f,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,f,`,`,`,`,`,`,`,`,`,`,`,`,`,s(2x3),,bpdz(3x3),`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,f,`,`,`,`,`,`,`,`,`,`,`,`,`,s(2x3),,bpdz(1x3),`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,f,`,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,`,`,`,`,`,pd(6x3),,,~,~,~,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,~,`
@@ -2755,7 +2756,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,d
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,r,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,f,`,`,`,`,b,~,b,b
 ,,,,`,`,c,t,t,c,`,c,t,t,c,`,`,,`,`,`,`,`,`,`,`,`,,~,`,`,`,`,`,`,`,b
 ,,,,`,`,c,t,t,c,`,c,t,t,c,`,`,,,,,d,,d,,,,,f,`,`,`,`,`,~,`,b

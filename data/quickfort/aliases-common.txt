@@ -58,7 +58,11 @@ growfirstcropall: a&b&c&d&
 ########################################
 
 linksonly: a
-nocontainers: CE
+maxbins: V
+maxbarrels: R
+nobins: C
+nobarrels: E
+nocontainers: {nobins}{nobarrels}
 
 give: g{move}&
 give2up: {give move={Up 2}}
@@ -176,8 +180,7 @@ refuseprefix:  {enter_sp_config}{Down 4}
 enablerefuse:  {refuseprefix}e^
 disablerefuse: {refuseprefix}d^
 
-# bodyparts include remains/corpses and rotten rawhdes
-bodyparts:   {refuseprefix}b{Right 2}&{Down 2}&{Left}{Down}p{Down}p^
+corpses:     {refuseprefix}b{Right}{Down}p^
 rawhides:    {refuseprefix}b{Right 2}{Down}&^
 tannedhides: {refuseprefix}b{Right 2}{Down 53}&^
 skulls:      {refuseprefix}b{Right}{Down 3}p^
@@ -188,7 +191,7 @@ horns:       {refuseprefix}b{Right}{Down 7}p^
 hair:        {refuseprefix}b{Right}{Down 8}p^
 craftrefuse: {skulls}{permitbones}{permitshells}{permitteeth}{permithorns}{permithair}
 
-forbidbodyparts:   {refuseprefix}{Right 2}&{Down 2}&{Left}{Down}f{Down}f^
+forbidcorpses:     {refuseprefix}{Right}{Down}f^
 forbidrawhides:    {refuseprefix}{Right 2}{Down}&^
 forbidtannedhides: {refuseprefix}{Right 2}{Down 53}&^
 forbidskulls:      {refuseprefix}{Right}{Down 3}f^
@@ -199,7 +202,7 @@ forbidhorns:       {refuseprefix}{Right}{Down 7}f^
 forbidhair:        {refuseprefix}{Right}{Down 8}f^
 forbidcraftrefuse: {forbidskulls}{forbidbones}{forbidshells}{forbidteeth}{forbidhorns}{forbidhair}
 
-permitbodyparts:   {refuseprefix}{Right 2}&{Down 2}&{Left}{Down}p{Down}p^
+permitcorpses:     {refuseprefix}{Right}{Down}p^
 permitrawhides:    {forbidrawhides}
 permittannedhides: {forbidtannedhides}
 permitskulls:      {refuseprefix}{Right}{Down 3}p^

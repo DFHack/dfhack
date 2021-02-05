@@ -49,9 +49,10 @@ quickfort run library/dreamfort.csv -n /services1
 quickfort run library/dreamfort.csv -n /guildhall1
 quickfort run library/dreamfort.csv -n /suites1
 quickfort run library/dreamfort.csv -n /apartments1_stack
-quickfort orders library/dreamfort.csv -n /farming2,# Queue up orders required to get the fort minimally functional and secure
-quickfort orders library/dreamfort.csv -n /surface2
+quickfort orders library/dreamfort.csv -n /surface2,# Queue up orders required to get the fort minimally functional and secure
 quickfort orders library/dreamfort.csv -n /surface3
+quickfort orders library/dreamfort.csv -n /farming2
+quickfort orders library/dreamfort.csv -n /farming3
 quickfort orders library/dreamfort.csv -n /industry2
 quickfort orders library/dreamfort.csv -n /services2
 
@@ -60,20 +61,19 @@ quickfort run library/dreamfort.csv -n /surface2,# Run after initial trees are c
 quickfort run library/dreamfort.csv -n /surface3,# Run when channels are dug and trees are cleared
 quickfort run library/dreamfort.csv -n /farming1,# Run when trees are cleared on the surface (there may be more from /surface3)
 quickfort run library/dreamfort.csv -n /farming2,# Run when the farming level has been dug out
-quickfort run library/dreamfort.csv -n /farming3,# Run when furniture has been placed and the farm plots have been constructed
+quickfort run library/dreamfort.csv -n /farming3,# Run when furniture has been placed
 quickfort run library/dreamfort.csv -n /industry2,# Run when the industry level has been dug out
-quickfort orders library/dreamfort.csv -n /farming3,# Run after surface walls and floors are finished. We wait this long to order /farming3 because all the doors slow down needed block production.
-quickfort run library/dreamfort.csv -n /surface4,"# Run anytime after /industry2 (as long as the walls and floors are built on the surface). You can run /surface4 as early as /farming1 if you need to rush the surface build, but we wait until after /industry2 so that surface walls, floors, and roofing don't prevent your workshops from being built (due to lack of blocks)."
+quickfort run library/dreamfort.csv -n /surface4,"# Run after the walls and floors are built on the surface. Even if the surface is finished befor you run /industry2, though, wait until after /industry2 so that surface walls, floors, and roofing don't prevent your workshops from being built (due to lack of blocks)."
 quickfort orders library/dreamfort.csv -n /surface4
 quickfort run library/dreamfort.csv -n /services2,# Run when the services level has been dug out
 quickfort run library/dreamfort.csv -n /surface5,"# Run when all marked trees on the surface are chopped down and walls and floors have been constructed, including the roof section over the future barracks"
 quickfort orders library/dreamfort.csv -n /surface5
 orders import automation
-quickfort run library/dreamfort.csv -n /services3,# Run when the table and chair have been constructed
+quickfort run library/dreamfort.csv -n /services3,# Run after the table and chair have been constructed. Also wait until after you run /surface5 because surface defenses are more important than a grand dining hall.
 quickfort orders library/dreamfort.csv -n /services3
 quickfort run library/dreamfort.csv -n /surface6,"# Run when at least the beehives and weapon rack are constructed. You probably want to wait until all of /surface5 has been completed, though, since building the remaining walls and floors will suck up a lot of your dwarves' time."
 quickfort orders library/dreamfort.csv -n /surface6
-quickfort run library/dreamfort.csv -n /surface7,# Run once you have enough dwarves available to build the roof without starving other important construction tasks -- anytime after you run /surface6.
+quickfort run library/dreamfort.csv -n /surface7,# Run after the surface walls are completed
 quickfort orders library/dreamfort.csv -n /surface7
 
 -- Mature fort (third migration wave onward) -- 
@@ -81,6 +81,8 @@ quickfort run library/dreamfort.csv -n /guildhall2,# Run when the guildhall leve
 quickfort orders library/dreamfort.csv -n /guildhall2
 quickfort run library/dreamfort.csv -n /suites2,# Run when the suites level has been dug out
 quickfort orders library/dreamfort.csv -n /suites2
+quickfort run library/dreamfort.csv -n /farming4,# Run right after /suites2
+quickfort orders library/dreamfort.csv -n /farming4
 quickfort run library/dreamfort.csv -n /surface8,"# Run if/when you need longer trap corridors on the surface, anytime after you run /surface7"
 quickfort orders library/dreamfort.csv -n /surface8
 quickfort run library/dreamfort.csv -n /services4,"# Run when you need a jail and/or fancy statues in the dining room, anytime after the restraints are placed from /services3"
@@ -110,13 +112,13 @@ See this checklist online at https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x
 #>
 /apartments1_stack
 #ignore
-"Here are the minimal skills needed for essential tasks in getting Dreamfort up and running, along with suggestions for which dwarves to assign them to. You can enable additional skills as you wish. Skills with an asterisk (*) are worth putting points into on the embark preparation screen."
+"Here are the minimal skills needed for essential tasks in getting Dreamfort up and running, along with suggestions for which dwarves to assign them to. You can enable additional skills as you wish. Skills with an asterisk (*) are especially worth putting points into on the embark preparation screen."
 Manager / Bookkeeper / Broker,Dwarf2,Dwarf3,Dwarf4,Dwarf5,Dwarf6,Dwarf7
-Carpenter (*),Miner (*),Miner (*),Mason (*),Mason (*),Wood Cutter,Wood Cutter
-Weaver,,,Architect/Building Designer,Architect/Building Designer,Brewer,Cook
-Clothesmaker,,,,,Mechanic (*),Mechanic (*)
-Judge of Intent (*),,,Bee Keeper,Bee Keeper,,Grower/Farmer (*)
-,,,,Stone Crafter
+Cook,Miner (*),Miner (*),Mason (*),Mason (*),Wood Cutter,Wood Cutter
+Weaver,,,Architect/Building Designer,Architect/Building Designer,Brewer,Carpenter (*)
+Clothesmaker,,,,,Mechanic,Mechanic
+Grower/Farmer,,,Bee Keeper,Bee Keeper
+Judge of Intent (*),,,Stone Crafter,Stone Crafter
 
 "The most time-comsuming tasks in Dreamfort are: mining, chopping down trees, and making blocks. Assuming your embark has trees, having at least two miners, two woodcutters, and two masons is essential to keeping the fort from stalling."
 "Moreover, it is important to have one more mason than you have Mason's Workshops so other buildings that require masonry can get built (like bridges). Give the masons Beekeeping for the same reason -- it is a low-priority task, but it's important to have someone free to do it since otherwise the surface set of blueprints can stall."
@@ -127,7 +129,7 @@ We suggest bringing at least:
 1 anvil,for the forge
 7 blocks,for starting workshops and the temporary trade depot. necessary if you have buildingplan configured for blocks only.
 many boulders,for quickly turning into more blocks. blocks are the limiting factor in the early stages.
-12 thread,to make into cloth to make into rope for traction benches and the jail cells
+12 cloth,to make into rope for traction benches and the jail cells
 leather,for bags
 food and seeds,as per usual
 dogs and cats
@@ -204,17 +206,18 @@ pre_building/surface_pre_building
 ""
 "#meta label(surface5) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
 Disassemble the temporary trade depot in the pasture once the new one is constructed (and no merchants are using the old one).
-Once the marked trees are cleared and at least the beehives and the weapon rack have been constructed, continue with /surface6.) build gates, furniture, and trade stockpile/depot"
+Once the marked trees are cleared and at least the beehives and weapon rack have been constructed, continue with /surface6.) build gates, furniture, and trade stockpile/depot"
 place/surface_place
 build/surface_build
 query/surface_query
 clear_large/surface_clear_large
 ""
 "#meta label(surface6) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
-Continue with /surface7 whenever you have enough dwarves to build the roof without starving other important construction tasks.) configure hives and barracks, build remaining walls and floors"
+Continue with /surface7 sometime after the walls are completed, whenever you have enough dwarves to build the roof without starving other important construction tasks.) configure hives and barracks, build traps and remaining walls/floors"
 query2/surface_query2
 walls/surface_walls
 floors/surface_floors
+traps/surface_traps
 clear_large/surface_clear_large
 ""
 "#meta label(surface7) start(central stairs (on ground level)) message(Remember to enqueue manager orders for this blueprint. For extra security, you can run /surface8 at any time to extend the trap corridors.) build roof"
@@ -336,12 +339,12 @@ u,`,u
 ,,,,,,,`,,`,,`,,,,,,,,`,,,,,,`,,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,,`,`,`,`,,`,,`,`,`,`,,`,`,`,`,`,`,`,,`
 ,,,,,,,`,,`,,,,,,,,,`,t,,,,,,t,`,,,,,,,,,`,,`
-,,,,,,,`,,`,,,,,,,,,t,t,,t,t,t,,t,t,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,t,t,,,,,,t,t,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,t,t,,t,t,t,,t,t,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,t,t,t,,,,,,,,,,,,`,,`
-,,,,,,,`,,`,,,,,,,,,t,,,,,,,,t,,,,,,,,,`,,`
-,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,,,,t,,,,`,`,`,`,`,`,`,`,`,`,,`
-,,,,,,,`,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,`
+,,,,,,,`,,`,,,,,,,,,t,,,t,t,t,,,t,,,,,,,,,`,,`
+,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
+,,,,,,,`,,,,,,,,,,,,,,,t,,,,,,,,,,,,,,,`
 ,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
 
 
@@ -380,16 +383,16 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`
-,,,,,,,`,,`,,`,n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),`,n,n,n,n,n,`,t(9x5),,,,,,,,,`,,`
+,,,,,,,`,,`,,`,n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),`,,,,,,`,t(9x5),,,,,,,,,`,,`
 ,,,,,,,`,,`,,`,,,,,,,,,n,n,n,n,n,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,`,n,,,,n,`,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,`,,,,,,,,,n,n,n,n,n,,,,,,,,,,,`,,`
-,,,,,,,`,,`,,`,n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),`,n,n,n,n,n,`,,,,,,,,,,`,,`
+,,,,,,,`,,`,,`,n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),`,,,,,,`,,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,,`,`,`,`,,`,,`,`,`,`,,`,`,`,`,`,`,`,,`
 ,,,,,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,n,,,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
 ,,,,,,,`,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,`
@@ -430,16 +433,16 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`
-,,,,,,,`,,`,,`,"{namezone name=""nestbox1""}","{namezone name=""nestbox2""}","{namezone name=""nestbox3""}","{namezone name=""nestbox4""}","{namezone name=""nestbox5""}","{namezone name=""nestbox6""}","{namezone name=""nestbox7""}",`,"{namezone name=""guard dogs""}",,,,,`,"{namezone name=""taming area""}",,,,,,,,,`,,`
-,,,,,,,`,,`,,`,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,`,"{namezone name=""nestbox1""}","{namezone name=""nestbox2""}","{namezone name=""nestbox3""}","{namezone name=""nestbox4""}","{namezone name=""nestbox5""}","{namezone name=""nestbox6""}","{namezone name=""nestbox7""}",`,,,,,,`,"{namezone name=""taming area""}",,,,,,,,,`,,`
+,,,,,,,`,,`,,`,,,,,,,,,,`,`,`,"{namezone name=""guard dogs""}",,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,`,,`,`,`,,`,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,`,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,`,"{namezone name=""nestbox8""}","{namezone name=""nestbox9""}","{namezone name=""nestbox10""}","{namezone name=""nestbox11""}","{namezone name=""nestbox12""}","{namezone name=""nestbox13""}","{namezone name=""nestbox14""}",`,,,,,,`,,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,,`,`,`,`,,`,,`,`,`,`,,`,`,`,`,`,`,`,,`
 ,,,,,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,"{namezone name=""siege bait""}",,,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
 ,,,,,,,`,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,`
@@ -520,7 +523,7 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 ,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,,,,,`,,`,f(8x4),,,,,,,,w(4x4),,,,,s(4x4),,,,gunbzSpd(4x4),,,,hl(4x4),,,,`,,`
+,,,,,,,`,,`,f(8x4),,,,,,,,w(4x4),,,,s(5x4),,,,,gunbzSpd(4x4),,,,hl(4x4),,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
@@ -570,8 +573,8 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 ,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,,,,,`,,`,"{givename name=""starting food""}",,,,,,,,"{givename name=""starting wood""}",,,,,"{givename name=""starting stone""}",,,,"{givename name=""starting misc""}",,,,"{givename name=""starting textile""}",,,,`,,`
-,,,,,,,`,,`,,,,,,,,,,,,,,otherstone,,,,nocontainers,,,,nocontainers,,,,`,,`
+,,,,,,,`,,`,"{givename name=""starting food""}",,,,,,,,"{givename name=""starting wood""}",,,,"{givename name=""starting stone""}",,,,,"{givename name=""starting misc""}",,,,"{givename name=""starting textile""}",,,,`,,`
+,,,,,,,`,,`,,,,,,,,,,,,,otherstone,,,,,nocontainers,,,,nocontainers,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
@@ -637,12 +640,12 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 ,,,,,,,`,,`,,`,,,,,,,,`,,,,,,`,,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,,`,`,`,`,,`,,`,`,`,`,,`,`,`,`,`,`,`,,`
 ,,,,,,,`,,`,,,,,,,,,`,h1,,,,,,h1,`,,,,,,,,,`,,`
-,,,,,,,`,,`,,,,,,,,,h1,h1,,h1,h1,h1,,h1,h1,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,h1,h1,,,,,,h1,h1,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,h1,h1,,h1,h1,h1,,h1,h1,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,h1,h1,h1,,,,,,,,,,,,`,,`
-,,,,,,,`,,`,,,,,,,,,h1,,,,,,,,h1,,,,,,,,,`,,`
-,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,,,,h1,,,,`,`,`,`,`,`,`,`,`,`,,`
-,,,,,,,`,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,`
+,,,,,,,`,,`,,,,,,,,,h1,,,h1,h1,h1,,,h1,,,,,,,,,`,,`
+,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
+,,,,,,,`,,,,,,,,,,,,,,,h1,,,,,,,,,,,,,,,`
 ,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
 
 
@@ -677,17 +680,17 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,t,t,t,t,t,t,t,`,`,`,`,`,`,`,`,`,`,,`
-,,,,,,,`,,`,,`,,,,,,,,t,t,t,t,t,t,t,,,,,,,,,,`,,`
-,,,,,,,`,,`,,`,,,,,,,,t,t,t,t,t,t,t,,,,,,,,,,`,,`
-,,,,,,,`,,`,,,,,,,,,,t,t,t,t,t,t,t,,,,,,,,,,`,,`
-,,,,,,,`,,`,,`,,,,,,,,t,t,t,t,t,t,t,,,,,,,,,,`,,`
-,,,,,,,`,,`,,`,,,,,,,,t,t,t,t,t,t,t,,,,,,,,,,`,,`
-,,,,,,,`,,`,`,`,`,`,`,`,,`,`,t,t,t,t,t,t,t,`,`,,`,`,`,`,`,`,`,,`
-,,,,,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
-,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,t,t,t,t,t,t,t,t,t,t,t,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,t,t,t,t,t,t,t,t,t,t,t,,,,,,,,`,,`
+,,,,,,,`,,`,`,`,`,`,`,`,`,t,t,t,t,t,t,t,t,t,t,t,`,`,`,`,`,`,`,`,,`
+,,,,,,,`,,`,,`,,,,,,t,t,t,t,t,t,t,t,t,t,t,,,,,,,,`,,`
+,,,,,,,`,,`,,`,,,,,,t,t,t,t,t,t,t,t,t,t,t,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,t,t,t,t,t,t,t,t,t,t,t,,,,,,,,`,,`
+,,,,,,,`,,`,,`,,,,,,t,t,t,t,t,t,t,t,t,t,t,,,,,,,,`,,`
+,,,,,,,`,,`,,`,,,,,,t,t,t,t,t,t,t,t,t,t,t,,,,,,,,`,,`
+,,,,,,,`,,`,`,`,`,`,`,`,,t,t,t,t,t,t,t,t,t,t,t,,`,`,`,`,`,`,`,,`
+,,,,,,,`,,`,,,,,,,,t,t,t,t,t,t,t,t,t,t,t,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,t,t,t,t,t,t,t,t,t,t,t,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
@@ -737,12 +740,12 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 ,,,,,,,`,,`,,`,,,,,,,,`,,,,,,`,,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,,`,`,`,`,,`,,`,`,`,`,,`,`,`,`,`,`,`,,`
 ,,,,,,,`,,`,,,,,,,,,`,Cf,,,,,,Cf,`,,,,,,,,,`,,`
-,,,,,,,`,,`,,,,,,,,,Cf,Cf,,Cf,Cf,Cf,,Cf,Cf,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,Cf,Cf,,,,,,Cf,Cf,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,Cf,Cf,,Cf,Cf,Cf,,Cf,Cf,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,Cf,Cf,Cf,,,,,,,,,,,,`,,`
-,,,,,,,`,,`,,,,,,,,,Cw,,,,,,,,Cw,,,,,,,,,`,,`
-,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,,,,Cf,,,,`,`,`,`,`,`,`,`,`,`,,`
-,,,,,,,`,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,`
+,,,,,,,`,,`,,,,,,,,,Cw,,,Cf,Cf,Cf,,,Cw,,,,,,,,,`,,`
+,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
+,,,,,,,`,,,,,,,,,,,,,,,Cf,,,,,,,,,,,,,,,`
 ,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
 
 
@@ -855,35 +858,35 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 
 
 
-
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,,`
-,,,,,,,`,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`,`
-,,,,,,,,,,,,,,,,,,,t,t,t,t,t,t,t
+,,,,,,,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,`,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,`
+,,,,,,,,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t,t
 ,,,,,,,,,,,,,,,,,,,t,t,t,t,t,t,t
 
 
@@ -975,13 +978,13 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 ,,,,,,,`,,`,,Cw,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,`,,,,,,,,`,Cf,Cf,Cf,Cf,Cf,`,,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,Cw,Cf,Cw,`,`,`,,`,,`,`,`,Cw,Cf,Cw,`,`,`,`,`,`,,`
-,,,,,,,`,,`,Cf,Cf,Cf,Cf,Cf,Cf,Cf,Cf,`,~,,,,,,~,`,,,,,Cf,,Cf,Cf,`,,`
-,,,,,,,`,,`,Cf,Cf,Cf,Cf,Cf,Cf,Cf,Cf,~,~,Cf,~,~,~,Cf,~,~,,,,,,,,Cf,`,,`
-,,,,,,,`,,`,Cf,Cf,Cf,Cf,Cf,Cf,Cf,Cf,~,~,,~,~,~,,~,~,,,,,,,,Cf,`,,`
+,,,,,,,`,,`,Cf,Cf,Cf,Cf,Cf,Cf,Cf,Cf,`,~,,,,,,~,`,,,,,,,Cf,Cf,`,,`
+,,,,,,,`,,`,Cf,Cf,Cf,Cf,Cf,Cf,Cf,Cf,~,~,Cf,Cf,Cf,Cf,Cf,~,~,,,,,,,,Cf,`,,`
+,,,,,,,`,,`,Cf,Cf,Cf,Cf,Cf,Cf,Cf,Cf,~,~,,~,~,~,,~,~,,,,,Cf,Cf,,Cf,`,,`
 ,,,,,,,`,,`,,Cf,,Cf,Cf,Cf,Cf,Cf,,Cf,,~,~,~,,Cf,,,,,,,,,Cf,`,,`
-,,,,,,,`,,`,,Cf,,Cf,Cf,Cf,Cf,Cf,`,,,,,,,,`,,,,,Cf,,Cf,Cf,`,,`
-,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,,,,~,,,,`,`,`,`,`,`,`,`,`,`,,`
-,,,,,,,`,,,Cf,,,,,,,,,,,,,,,,,,,,,,,,Cf,,,`
+,,,,,,,`,,`,,Cf,,Cf,Cf,Cf,Cf,Cf,`,,,~,~,~,,,`,,,,,,,Cf,Cf,`,,`
+,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
+,,,,,,,`,,,Cf,,,,,,,Cf,,,,,~,,,,,Cf,,,,,,,Cf,,,`
 ,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
 
 
@@ -1086,7 +1089,7 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 
 
 "#build label(surface_build) start(23; 25) hidden() message(Use autofarm to manage farm crop selection.
-Remember to connect the levers to the gates once they are built.) gates, traps, barracks, farm area, and trade area"
+Remember to connect the levers to the gates once they are built.) gates, barracks, farm area, and trade area"
 
 
 
@@ -1115,13 +1118,13 @@ Remember to connect the levers to the gates once they are built.) gates, traps, 
 ,,,,,,,`,,`,~h,`,p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),p(1x1),,,`,`,`,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,~h,`,N,N,N,N,N,N,N,`,Tl,Tl,Tl,Tl,Tl,`,,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,d,`,`,`,`,,`,,`,`,`,`,d,`,`,`,`,`,`,`,,`
-,,,,,,,`,,`,,,,,,,,,`,,gw,gw,gw,gw,gw,,`,,,,,r,,h,b,`,,`
+,,,,,,,`,,`,,,,,,,,,`,,gw,gw,gw,gw,gw,,`,,,,,,,h,b,`,,`
 ,,,,,,,`,,`,,,,,,,,,ga,ga,gw,gw,gw,gw,gw,gd,gd,,,,,,,,b,`,,`
-,,,,,,,`,,`,,,,,,D,,,ga,ga,,,,,,gd,gd,,,,,,,,b,`,,`
+,,,,,,,`,,`,,,,,,D,,,ga,ga,,,,,,gd,gd,,,,,a,r,,b,`,,`
 ,,,,,,,`,,`,,trackstopS,,,,,,,ga,ga,,,,,,gd,gd,,,,,,,,b,`,,`
-,,,,,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,a,,h,b,`,,`
+,,,,,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,h,b,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
-,,,,,,,`,,ga,ga,Tc,Tc,Tc,Tc,Tc,Tc,gd,gd,,,,,,,,ga,ga,Tc,Tc,Tc,Tc,Tc,Tc,gd,gd,,`
+,,,,,,,`,,ga,ga,,,,,,,gd,gd,,,,,,,,ga,ga,,,,,,,gd,gd,,`
 ,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,gw,gw,gw,gw,gw,gw,gw,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,,,,,,,Tc,Tc,gw,gw,gw,gw,gw,gw,gw,Tc,Tc
 ,,,,,,,,,,,,,,,,,Tc,Tc,gw,gw,gw,gw,gw,gw,gw,Tc,Tc
@@ -1267,9 +1270,9 @@ You might also want to set the ""trade goods quantum"" stockpile to Auto Trade i
 ,,,,,,,`,,`,cg,`,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,cg,`,,,,,,,,`,,,,,,`,,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,,`,`,`,`,,`,,`,`,`,`,,`,`,`,`,`,`,`,,`
-,,,,,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,r++&,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,r+&,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
@@ -1362,18 +1365,68 @@ You might also want to set the ""trade goods quantum"" stockpile to Auto Trade i
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,~,`,~,`,`,`,`,`,`,`,`,`,`,`,`,,`
 ,,,,,,,`,,`,,`,,,,,,,,`,~,Cf,~,Cf,~,`,,,,,,,,,,`,,`
-,,,,,,,`,,`,,`,,,,,,,,~,Cf,Cf,`,Cf,Cf,~,,,,,,,,,,`,,`
-,,,,,,,`,,`,,~,,,,,,,,`,Cf,Cf,Cf,Cf,Cf,`,,,,,,,,,,`,,`
-,,,,,,,`,,`,,`,,,,,,,,~,Cf,Cf,`,Cf,Cf,~,,,,,,,,,,`,,`
+,,,,,,,`,,`,,`,,,,,,,,~,Cf,Cf,Cf,Cf,Cf,~,,,,,,,,,,`,,`
+,,,,,,,`,,`,,~,,,,,,,,`,Cf,`,Cf,`,Cf,`,,,,,,,,,,`,,`
+,,,,,,,`,,`,,`,,,,,,,,~,Cf,Cf,Cf,Cf,Cf,~,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,`,,,,,,,,`,~,~,~,~,~,`,,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,~,`,`,`,`,~,`,~,`,`,`,`,~,`,`,`,`,`,`,`,,`
-,,,,,,,`,,`,~,~,~,~,~,~,~,~,`,~,~,~,~,~,~,~,`,Cf,Cf,Cf,Cf,~,Cf,~,~,`,,`
-,,,,,,,`,,`,~,~,~,~,~,~,~,~,~,~,~,~,~,~,~,~,~,Cf,Cf,Cf,Cf,Cf,Cf,Cf,~,`,,`
+,,,,,,,`,,`,~,~,~,~,~,~,~,~,`,~,~,~,~,~,~,~,`,Cf,Cf,Cf,Cf,Cf,Cf,~,~,`,,`
+,,,,,,,`,,`,~,~,~,~,~,~,~,~,~,~,~,~,~,~,~,~,~,Cf,Cf,Cf,Cf,~,Cf,Cf,~,`,,`
 ,,,,,,,`,,`,~,~,~,~,~,~,~,~,~,~,Cf,~,~,~,Cf,~,~,Cf,Cf,Cf,Cf,Cf,Cf,Cf,~,`,,`
-,,,,,,,`,,`,Cf,~,Cf,~,~,~,~,~,~,~,Cf,~,~,~,Cf,~,~,Cf,Cf,Cf,Cf,Cf,Cf,Cf,~,`,,`
-,,,,,,,`,,`,Cf,~,Cf,~,~,~,~,~,`,Cf,Cf,Cf,Cf,Cf,Cf,Cf,`,Cf,Cf,Cf,Cf,~,Cf,~,~,`,,`
-,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,Cf,Cf,Cf,~,Cf,Cf,Cf,`,`,`,`,`,`,`,`,`,`,,`
-,,,,,,,`,,,,~,,,,,,,,Cf,Cf,Cf,Cf,Cf,Cf,Cf,,,,,,,,,~,,,`
+,,,,,,,`,,`,Cf,~,Cf,~,~,~,~,~,~,~,Cf,~,~,~,Cf,~,~,Cf,Cf,Cf,Cf,~,Cf,Cf,~,`,,`
+,,,,,,,`,,`,Cf,~,Cf,~,~,~,~,~,`,Cf,Cf,~,~,~,Cf,Cf,`,Cf,Cf,Cf,Cf,Cf,Cf,~,~,`,,`
+,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,Cf,Cf,Cf,Cf,Cf,Cf,Cf,`,`,`,`,`,`,`,`,`,`,,`
+,,,,,,,`,,,~,,,,,,,,,Cf,Cf,Cf,~,Cf,Cf,Cf,,,,,,,,,~,,,`
+,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
+
+
+
+
+
+
+
+
+
+
+
+
+
+#build label(surface_traps) start(23; 25) hidden()
+
+
+
+
+
+
+
+
+
+,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`
+,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`
+,,,,,,,`,,`,,`,,,,,,,,`,,,,,,`,,,,,,,,,,`,,`
+,,,,,,,`,,`,,`,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,,`,,`,`,`,,`,,,,,,,,,,`,,`
+,,,,,,,`,,`,,`,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,`,,,,,,,,`,,,,,,`,,,,,,,,,,`,,`
+,,,,,,,`,,`,`,`,`,`,`,`,,`,`,`,`,,`,,`,`,`,`,,`,`,`,`,`,`,`,,`
+,,,,,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
+,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
+,,,,,,,`,,,,Tc,Tc,Tc,Tc,Tc,Tc,,,,,,,,,,,,Tc,Tc,Tc,Tc,Tc,Tc,,,,`
 ,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
 
 
@@ -1706,13 +1759,15 @@ Manual steps you have to take:
 Farming Walkthough:
 "1) Wait until you have channeled the miasma vents and cleared trees on the surface before digging out the farming level on the z-level below the surface, otherwise you will end up with extra ramps on the farming level and unprotected holes through the surface when you later chop down trees growing above empty space."
 ""
-"2) Start digging with /farming1 and get started on manufacturing furniture by running ""quickfort orders"" on /farming2."
+"2) Start digging with /farming1 and get started on manufacturing furniture by running ""quickfort orders"" on /farming2 and /farming3."
 ""
-"3) Once the level is dug out, run /farming2 to build workshops and build and configure stockpiles. Remember to assign a minecart to the newly-designated quantum refuse dump. There are also jugs, pots, and bags stockpiles on this level that should be configured to ""take"" from the industry level stockpiles once we get the industry level built."
+"3) Once the level is dug out, run /farming2 to build workshops, stockpiles, and the furniture we need to declare the rooms. Remember to assign a minecart to the newly-designated quantum refuse dump. There are also jugs, pots, and bags stockpiles on this level that should be configured to ""take"" from the industry level stockpiles once we get the industry level built."
 ""
-"4) When the furniture is in place and the farm plots have been constructed, run /farming3 to enable seasonal plot fertilization and designate your starter dining room and dormitory. The blueprint also attempts to assign the lower office to your manager, but double-check this assignment in case your dwarves are in an unexpected order. Run ""quickfort orders"" for /farming3."
+"4) When the furniture is in place, run /farming3 to designate your starter dining room and dormitory and build the farm plots and remaining furniture. The blueprint also attempts to assign the lower office to your manager, but double-check this assignment in case your dwarves are in an unexpected order."
 ""
-"5) You can disassemble the dining room and dormitory once the services and apartments levels are up and running, if you like."
+"5) Once your fort has enough free time to build the remaining doors, run /farming4. This will also enable seasonal fertilization for your farm plots. Run ""quickfort orders"" for /farming4."
+""
+"6) You can disassemble the dining room and dormitory once the services and apartments levels are up and running, if you like."
 "#dig label(farming1) start(23; 25; central stairs) message(This would be a good time to queue up manager orders for /farming2. Once the area is dug out, continue with /farming2.)"
 # this level is dug at priority 3 since it is dug in soil. it's worth the miner's time to stop digging the industry level and
 # quickly dig out this one.
@@ -1723,16 +1778,16 @@ Farming Walkthough:
 
 
 
-,,,,,,,,,,,,,,3,3,3,,,,3,3,3,3,3,,,,3,3,3,3,3,3,3
-,,,,,,,,,,,,,,3,3,3,3,3,,3,3,3,3,3,,3,3,3,3,3,3,3,3,3
-,,,,,,,,,,,,,,3,3,3,,3,,3,3,3,3,3,,3,,3,3,3,3,3,3,3
+,,,,,,,,,,,,,,3,3,3,,,,3,3,3,3,3,,,,3,3,3
+,,,,,,,,,,,,,,3,3,3,3,3,,3,3,3,3,3,,3,3,3,3,3
+,,,,,,,,,,,,,,3,3,3,,3,,3,3,3,3,3,,3,,3,3,3
 ,,,,,,,,,,,,,,,,,,3,,3,3,3,3,3,,3
-,,,,,,,,,,,,,,3,3,3,,3,,3,3,3,3,3,,3,,3,3,3,3,3,3,3
-,,,,,,,,,,,,,,3,3,3,3,3,,3,3,3,3,3,,3,3,3,3,3,3,3,3,3
-,,,,,,,,,,,,,,3,3,3,,3,,3,3,3,3,3,,3,,3,3,3,3,3,3,3
-,,,,,,,,,,,,,,,,,,3,,3,3,3,3,3,,3,,3,3,3,3,3,3,3
-,,,,,,,,,,,,,3,3,3,3,,3,,3,3,3,3,3,,3,3,3,3,3,3,3,3,3
-,,,,,,,,,,,,,3,3,3,3,,3,,3,3,3,3,3,,3,,3,3,3,3,3,3,3
+,,,,,,,,,,,,,,3,3,3,,3,,3,3,3,3,3,,3,,3,3,3,3
+,,,,,,,,,,,,,,3,3,3,3,3,,3,3,3,3,3,,3,3,3,3,3,3
+,,,,,,,,,,,,,,3,3,3,,3,,3,3,3,3,3,,3,,3,3,3,3
+,,,,,,,,,,,,,,,,,,3,,3,3,3,3,3,,3,,3,3,3,3
+,,,,,,,,,,,,,3,3,3,3,,3,,3,3,3,3,3,,3,3,3,3,3,3
+,,,,,,,,,,,,,3,3,3,3,,3,,3,3,3,3,3,,3,,3,3,3,3
 ,,,,,,,,,,3,3,,3,3,3,3,,3,,3,3,3,3,3,,3
 ,,,,,,,,,3,3,3,,3,3,3,3,,3,,3,3,3,3,3,,3,,3,3,3,,3,3,3
 ,,,,,,,,,3,3,3,3,3,z3,3,3,3,3,,,3,,3,,,3,3,3,z3,3,3,3,z3,3
@@ -1743,12 +1798,12 @@ Farming Walkthough:
 ,,,,,,,,,3,3,3,3,3,3,3,3,3,3,,3,3,3,3,3,,3,3,3,3,3,3,3,3,3,3
 ,,,,,,,,,3,3,3,3,3,3,3,3,3,,,,3,,3,,,,3,3,3,3,3,3,3,3,3
 ,,,,,,,,,3,3,3,3,3,3,3,3,,,z3,3,3,3,3,3,z3,,,3,3,3,3,3,3,3,3
-,,,,,,,,,3,3,3,3,3,3,3,3,,z3,z3,,z3,z3,z3,,z3,z3,,3,3,3,3,3,3,3,3
+,,,,,,,,,3,3,3,3,3,3,3,3,,z3,z3,,,3,,,z3,z3,,3,3,3,3,3,3,3,3
 ,,,,,,,,,3,3,3,3,3,3,3,,,z3,z3,,z3,z3,z3,,z3,z3,,,3,3,3,3,3,3,3
 ,,,,,,,,,3,3,3,3,3,3,3,,3,3,3,,z3,z3,z3,,3,3,3,,3,3,3,3,3,3,3,,,,,,,,`
-,,,,,,,,,3,3,3,3,3,3,3,,3,z3,3,,,3,,,3,z3,3,,3,3,3,3,3,3,3
-,,,,,,,,,3,3,3,3,3,3,3,,3,3,3,,,z3,,,3,3,3,,3,3,3,3,3,3,3
-
+,,,,,,,,,3,3,3,3,3,3,3,,3,z3,3,,z3,z3,z3,,3,z3,3,,3,3,3,3,3,3,3
+,,,,,,,,,3,3,3,3,3,3,3,,3,3,3,,,3,,,3,3,3,,3,3,3,3,3,3,3
+,,,,,,,,,,,,,,,,,,,,,,z3
 
 
 
@@ -1768,9 +1823,13 @@ build/farming_build
 place/farming_place
 query_stockpiles/farming_query_stockpiles
 ""
-#meta label(farming3) start(central stairs) configure rooms and build remaining furniture
-build2/farming_build2
+#meta label(farming3) start(central stairs) configure rooms and build more furniture
 query_rooms/farming_rooms
+build2/farming_build2
+""
+#meta label(farming4) start(central stairs) configure farm plots and build remaining furniture
+query_plots/farming_query_plots
+build3/farming_build3
 #build label(farming_build) start(23; 25) hidden() workshops and important furniture
 
 
@@ -1781,16 +1840,16 @@ query_rooms/farming_rooms
 
 
 
-,,,,,,,,,,,,,,`,`,`,,,,p(3x1),,,`,`,,,,`,`,`,b,`,`,`
-,,,,,,,,,,,,,,c,t,`,`,`,,p(3x1),,,`,`,,`,`,`,`,`,`,`,`,`
-,,,,,,,,,,,,,,`,`,`,,`,,p(3x1),,,`,`,,`,,`,`,`,`,`,`,`
-,,,,,,,,,,,,,,,,,,`,,p(3x1),,,`,`,,`
-,,,,,,,,,,,,,,`,`,`,,`,,p(3x1),,,`,`,,`,,`,`,`,`,`,`,`
-,,,,,,,,,,,,,,c,t,`,`,`,,p(3x1),,,`,`,,`,`,`,`,`,c,`,`,`
-,,,,,,,,,,,,,,`,`,`,,`,,p(3x1),,,`,`,,`,,`,`,`,t,`,`,`
-,,,,,,,,,,,,,,,,,,`,,p(3x1),,,`,`,,`,,`,`,`,`,`,`,`
-,,,,,,,,,,,,,`,`,`,`,,`,,p(3x1),,,`,`,,`,`,`,`,`,`,`,`,`
-,,,,,,,,,,,,,`,wl,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,`,`,`,,,,`,`,`,`,`,,,,`,`,b
+,,,,,,,,,,,,,,c,t,`,`,`,,`,`,`,`,`,,`,`,`,`,`
+,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`
+,,,,,,,,,,,,,,,,,,`,,`,`,`,`,`,,`
+,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`
+,,,,,,,,,,,,,,c,t,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`
+,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,,`,`,t,c
+,,,,,,,,,,,,,,,,,,`,,`,`,`,`,`,,`,,`,`,`,`
+,,,,,,,,,,,,,`,`,`,`,,`,,`,`,`,`,`,,`,`,`,`,`,`
+,,,,,,,,,,,,,`,wl,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`
 ,,,,,,,,,,`,`,,`,`,`,`,,`,,`,`,`,`,`,,`
 ,,,,,,,,,wq,`,`,,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,,`,`,`
 ,,,,,,,,,wp,`,`,`,`,ww,`,`,`,`,,,`,,`,,,`,`,`,wu,`,`,`,wz,`
@@ -1801,12 +1860,12 @@ query_rooms/farming_rooms
 ,,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,`,`,`,`,`,`,`,`,`,,,,`,,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`
-,,,,,,,,,`,`,`,`,`,`,`,`,,`,`,,`,`,`,,`,`,,`,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,`,,`,`,,,`,,,`,`,,`,`,`,`,`,`,`,`
 ,,,,,,,,,`,`,`,`,`,`,`,,,`,`,,`,`,`,,`,`,,,`,`,`,`,`,`,`
 ,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,`,`,`,`,,,,,,,,`
-,,,,,,,,,`,`,`,`,`,`,`,,`,wh,`,,,trackstopS,,,`,wn,`,,`,`,`,`,`,`,`
-,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,,`,,,`,`,`,,`,`,`,`,`,`,`
-
+,,,,,,,,,`,`,`,`,`,`,`,,`,wh,`,,`,`,`,,`,wn,`,,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,,trackstopS,,,`,`,`,,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,,,,,,,,,`
 
 
 
@@ -1831,16 +1890,16 @@ query_rooms/farming_rooms
 
 
 
-,,,,,,,,,,,,,,`,`,`,,,,`,`,`,f(1x9),b(1x12),,,,`,`,`,`,`,`,`
-,,,,,,,,,,,,,,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
-,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,`,`,`,,,,`,`,`,f(1x9),b(1x12),,,,`,`,`
+,,,,,,,,,,,,,,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`
+,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`
 ,,,,,,,,,,,,,,,,,,`,,`,`,`,`,`,,`
-,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,,f(7x1),,,`,`,`,`
-,,,,,,,,,,,,,,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
-,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`
-,,,,,,,,,,,,,,,,,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`
-,,,,,,,,,,,,,`,`,`,u,,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
-,,,,,,,,,,,,,`,`,`,u,,`,,f(4x3),,,`,`,,`,,f(7x1),,,`,`,`,`
+,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,,f(4x2),,,`
+,,,,,,,,,,,,,,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`
+,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`
+,,,,,,,,,,,,,,,,,,`,,`,`,`,`,`,,`,,`,`,`,`
+,,,,,,,,,,,,,`,`,`,u,,`,,`,`,`,`,`,,`,`,f(4x2),,,`
+,,,,,,,,,,,,,`,`,`,u,,`,,f(4x3),,,`,`,,`,,`,`,`,`
 ,,,,,,,,,,u,u,,`,`,`,u,,`,,`,`,`,`,`,,`
 ,,,,,,,,,`,u,u,,`,`,`,u,,`,,`,`,`,`,`,,`,,`,`,`,,`,`,`
 ,,,,,,,,,`,g,g,`,`,`,`,u,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`
@@ -1851,12 +1910,12 @@ query_rooms/farming_rooms
 ,,,,,,,,,f,f,f,f,f,f,f,f,f,f,,`,`,`,`,`,,f,f,f,f,f,f,f,f,f,f
 ,,,,,,,,,f,f,f,f,f,f,f,f,f,,,,`,,`,,,,f,f,f,f,f,f,f,f,f
 ,,,,,,,,,f,f,f,f,f,f,f,f,,,f,`,`,`,`,`,r,,,f,f,f,f,f,f,f,f
-,,,,,,,,,f,f,f,f,f,f,f,f,,f,f,,ry(3x3),,,,r,r,,f,f,f,f,f,f,f,f
-,,,,,,,,,f,f,f,f,f,f,f,,,f,f,,`,`,`,,r,r,,,f,f,f,f,f,f,f
+,,,,,,,,,f,f,f,f,f,f,f,f,,f,f,,,`,,,r,r,,f,f,f,f,f,f,f,f
+,,,,,,,,,f,f,f,f,f,f,f,,,f,f,,r(2x3),,ry(1x3),,r,r,,,f,f,f,f,f,f,f
 ,,,,,,,,,f,f,f,f,f,f,f,,`,`,`,,`,`,`,,`,`,`,,f,f,f,f,f,f,f,,,,,,,,`
+,,,,,,,,,f,f,f,f,f,f,f,,`,`,`,,`,`,`,,`,`,`,,f,f,f,f,f,f,f
 ,,,,,,,,,f,f,f,f,f,f,f,,`,`,`,,,`,,,`,`,`,,f,f,f,f,f,f,f
-,,,,,,,,,f,f,f,f,f,f,f,,`,`,`,,,ry,,,`,`,`,,f,f,f,f,f,f,f
-
+,,,,,,,,,,,,,,,,,,,,,,ry
 
 
 
@@ -1883,16 +1942,16 @@ query_rooms/farming_rooms
 
 
 
-,,,,,,,,,,,,,,`,`,`,,,,`,`,`,seeds,potash,,,,`,`,`,`,`,`,`
-,,,,,,,,,,,,,,`,`,`,`,`,,`,`,`,linksonly,nocontainers,,`,`,`,`,`,`,`,`,`
-,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,"{givename name=""seeds""}","{givename name=""potash""}",,`,,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,`,`,`,,,,`,`,`,seeds,potash,,,,`,`,`
+,,,,,,,,,,,,,,`,`,`,`,`,,`,`,`,linksonly,nocontainers,,`,`,`,`,`
+,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,"{givename name=""seeds""}","{givename name=""potash""}",,`,,`,`,`
 ,,,,,,,,,,,,,,,,,,`,,`,`,`,`,`,,`
-,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,,preparedfood,"{givename name=""prepared food""}",`,`,`,`,`
-,,,,,,,,,,,,,,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
-,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`
-,,,,,,,,,,,,,,,,,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`
-,,,,,,,,,,,,,`,`,`,pots,,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
-,,,,,,,,,,,,,`,`,`,"{givename name=""pots""}",,`,,seeds,nocontainers,"{givename name=""seeds feeder""}",give2up,`,,`,,booze,"{givename name=""booze""}",`,`,`,`,`
+,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,,preparedfood,"{givename name=""prepared food""}",`,`
+,,,,,,,,,,,,,,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`
+,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`
+,,,,,,,,,,,,,,,,,,`,,`,`,`,`,`,,`,,`,`,`,`
+,,,,,,,,,,,,,`,`,`,pots,,`,,`,`,`,`,`,,`,`,`,`,`,`
+,,,,,,,,,,,,,`,`,`,"{givename name=""pots""}",,`,,seeds,nocontainers,"{givename name=""seeds feeder""}",give2up,`,,`,,booze,"{givename name=""booze""}",`,`
 ,,,,,,,,,,bags,"{givename name=""bags""}",,`,`,`,`,,`,,`,`,`,`,`,,`
 ,,,,,,,,,`,nocontainers,`,,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,,`,`,`
 ,,,,,,,,,`,jugs,"{givename name=""jugs""}",`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`
@@ -1903,62 +1962,12 @@ query_rooms/farming_rooms
 ,,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,forbidtallow,`,`,`,`,`,`
 ,,,,,,,,,`,`,`,`,`,`,`,`,`,,,,`,,`,,,,`,`,forbiddye,`,`,`,`,`,`
 ,,,,,,,,,`,`,`,`,`,`,`,`,,,unpreparedfish,`,`,`,`,`,rawhides,,,`,forbidunpreparedfish,`,`,`,`,`,`
-,,,,,,,,,`,`,`,`,`,`,`,`,,`,nocontainers,,forbidcraftrefuse,"{givename name=""refuse and corpses""}",give2right,,"{givename name=""rawhides""}",`,,`,forbidmiscliquid,`,`,`,`,`,`
-,,,,,,,,,`,`,`,`,`,`,`,,,`,"{givename name=""unprepared fish""}",,`,`,`,,t{Left 3}{Down 3}&,`,,,forbidpreparedfood,`,`,`,`,`,`
-,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,`,`,`,,`,`,`,,forbidbooze,`,`,`,`,`,`
-,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,,"{quantumstopfromnorth name=""Refuse/Corpse Dumper""}",,,`,`,`,,forbidseeds,`,`,`,`,`,`
-,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,,"{quantum name=""refuse/corpse quantum""}",,,`,`,`,,`,`,`,`,`,`,`
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#build label(farming_build2) start(23; 25) hidden() remaining furniture
-
-
-
-
-
-
-
-
-
-,,,,,,,,,,,,,,`,`,`,,,,`,,,`,`,,,,b,b,b,`,b,b,b
-,,,,,,,,,,,,,,`,`,`,d,`,,`,,,`,`,,`,d,`,`,`,`,`,`,h
-,,,,,,,,,,,,,,`,`,`,,`,,`,,,`,`,,`,,b,b,b,b,b,b,b
-,,,,,,,,,,,,,,,,,,`,,`,,,`,`,,`
-,,,,,,,,,,,,,,`,`,`,,`,,`,,,`,`,,`,,`,`,`,`,`,`,`
-,,,,,,,,,,,,,,`,`,`,d,`,,`,,,`,`,,`,d,`,c,c,`,c,c,`
-,,,,,,,,,,,,,,`,`,`,,`,,`,,,`,`,,`,,`,t,t,`,t,t,`
-,,,,,,,,,,,,,,,,,,`,,`,,,`,`,,`,,`,t,t,t,t,t,`
-,,,,,,,,,,,,,`,`,`,`,,`,,`,,,`,`,,`,d,`,c,c,c,c,c,`
-,,,,,,,,,,,,,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`
-,,,,,,,,,,`,`,,`,`,`,`,,`,,`,`,`,`,`,,`
-,,,,,,,,,`,`,`,,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,,`,`,`
-,,,,,,,,,`,`,`,d,`,`,`,`,d,`,,,d,,d,,,`,d,`,`,`,d,`,`,`
-,,,,,,,,,,`,`,,`,`,`,`,,`,d,`,`,`,`,`,d,`,,`,`,`,,`,`,`
-,,,,,,,,,,,d,,,d,,,,,,`,`,`,`,`,,,,,d,,,,d
-,,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`,`,~,`,`,,`,`,`,`,`,`,`,`,`,`
-,,,,,,,,,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`
-,,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`
-,,,,,,,,,`,`,`,`,`,`,`,`,`,,,,d,,d,,,,`,`,`,`,`,`,`,`,`
-,,,,,,,,,`,`,`,`,`,`,`,`,,,`,d,`,`,`,d,`,,,`,`,`,`,`,`,`,`
-,,,,,,,,,`,`,`,`,`,`,`,`,,`,`,,`,`,`,,`,`,,`,`,`,`,`,`,`,`
-,,,,,,,,,`,`,`,`,`,`,`,,,`,`,,`,`,`,,`,`,,,`,`,`,`,`,`,`
-,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,`,`,`,`,,,,,,,,`
-,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,,`,,,`,`,`,,`,`,`,`,`,`,`
-,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,,`,,,`,`,`,,`,`,`,`,`,`,`
-
+,,,,,,,,,`,`,`,`,`,`,`,`,,`,nocontainers,,,`,,,"{givename name=""rawhides""}",`,,`,forbidmiscliquid,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,,,`,"{givename name=""unprepared fish""}",,forbidcraftrefuse,"{givename name=""refuse feeder""}",corpses,,t{Left 3}{Down 4}&,`,,,forbidpreparedfood,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,forbidcorpses,"{give move=""{Right 3}{Up}""}","{givename name=""corpse feeder""}",,`,`,`,,forbidbooze,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,`,`,`,,`,`,`,,forbidseeds,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,,"{quantumstop name=""Refuse/Corpse quantum"" sp_links=""{sp_link move={Up} move_back={Down}}{sp_link move=""""{Right}{Up}"""" move_back=""""{Down}{Left}""""}""}{givename name=""refuse/corpse dumper""}",,,`,`,`,,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,,,,,,,,,"{quantum name=""refuse/corpse quantum""}"
 
 
 
@@ -1983,16 +1992,16 @@ query_rooms/farming_rooms
 
 
 
-,,,,,,,,,,,,,,`,`,`,,,,s,`,`,`,`,,,,`,`,`,r+&d,,,`
-,,,,,,,,,,,,,,r&,`,`,`,`,,s,`,`,`,`,,`,`,`,`,`,`,`,`,`
-,,,,,,,,,,,,,,`,`,`,,`,,s,`,`,`,`,,`,,`,`,`,`,`,`,`
-,,,,,,,,,,,,,,,,,,`,,s,`,`,`,`,,`
-,,,,,,,,,,,,,,`,`,`,,`,,s,`,`,`,`,,`,,`,`,`,`,`,`,`
-,,,,,,,,,,,,,,r&a+&,,,`,`,,s,`,`,`,`,,`,`,`,`,`,`,`,`,`
-,,,,,,,,,,,,,,`,`,`,,`,,s,`,`,`,`,,`,,`,`,`,r++&h,,,`
-,,,,,,,,,,,,,,,,,,`,,s,`,`,`,`,,`,,`,`,`,`,`,`,`
-,,,,,,,,,,,,,`,`,`,`,,`,,s,`,`,`,`,,`,`,`,`,`,`,`,`,`
-,,,,,,,,,,,,,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,`,`,`,,,,`,`,`,`,`,,,,`,`,r&d
+,,,,,,,,,,,,,,r&,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`
+,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`
+,,,,,,,,,,,,,,,,,,`,,`,`,`,`,`,,`
+,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`
+,,,,,,,,,,,,,,r&a+&,,,`,`,,`,`,`,`,`,,`,`,`,`,`,`
+,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,,`,`,r+&h
+,,,,,,,,,,,,,,,,,,`,,`,`,`,`,`,,`,,`,`,`,`
+,,,,,,,,,,,,,`,`,`,`,,`,,`,`,`,`,`,,`,`,`,`,`,`
+,,,,,,,,,,,,,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`
 ,,,,,,,,,,`,`,,`,`,`,`,,`,,`,`,`,`,`,,`
 ,,,,,,,,,`,`,`,,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,,`,`,`
 ,,,,,,,,,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`
@@ -2003,12 +2012,162 @@ query_rooms/farming_rooms
 ,,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,`,`,`,`,`,`,`,`,`,,,,`,,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`
-,,,,,,,,,`,`,`,`,`,`,`,`,,`,`,,`,`,`,,`,`,,`,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,`,,`,`,,,`,,,`,`,,`,`,`,`,`,`,`,`
 ,,,,,,,,,`,`,`,`,`,`,`,,,`,`,,`,`,`,,`,`,,,`,`,`,`,`,`,`
 ,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,`,`,`,`
 ,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,,`,,,`,`,`,,`,`,`,`,`,`,`
-,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,,`,,,`,`,`,,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,,,,,,,,,`
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+"#build label(farming_build2) start(23; 25) hidden() farm plots, remaining furniture, and important doors"
+
+
+
+
+
+
+
+
+
+,,,,,,,,,,,,,,`,`,`,,,,p(3x1),,,`,`,,,,b,b,~
+,,,,,,,,,,,,,,`,`,`,`,`,,p(3x1),,,`,`,,`,`,`,`,h
+,,,,,,,,,,,,,,`,`,`,,`,,p(3x1),,,`,`,,`,,b,b,b
+,,,,,,,,,,,,,,,,,,`,,p(3x1),,,`,`,,`
+,,,,,,,,,,,,,,`,`,`,,`,,p(3x1),,,`,`,,`,,`,`,`,`
+,,,,,,,,,,,,,,`,`,`,`,`,,p(3x1),,,`,`,,`,`,`,`,`,`
+,,,,,,,,,,,,,,`,`,`,,`,,p(3x1),,,`,`,,`,,c,t,~,~
+,,,,,,,,,,,,,,,,,,`,,p(3x1),,,`,`,,`,,c,t,t,c
+,,,,,,,,,,,,,`,`,`,`,,`,,p(3x1),,,`,`,,`,`,`,`,`,`
+,,,,,,,,,,,,,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`
+,,,,,,,,,,`,`,,`,`,`,`,,`,,`,`,`,`,`,,`
+,,,,,,,,,`,`,`,,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`
+,,,,,,,,,,`,`,,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,`,`,,`,`,`
+,,,,,,,,,,,`,,,`,,,,,,`,`,`,`,`,,,,,`,,,,`
+,,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`,`,~,`,`,,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,`,`,,,,`,,`,,,,`,`,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,`,,,`,d,`,`,`,d,`,,,`,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,`,,`,`,,,d,,,`,`,,`,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,,,`,`,,`,`,`,,`,`,,,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,`,`,`,`,,,,,,,,`
+,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,,`,,,`,`,`,,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,,,,,,,,,`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#query label(farming_query_plots) start(23; 25) hidden() configure farm plots for seasonal fertilization
+
+
+
+
+
+
+
+
+
+,,,,,,,,,,,,,,`,`,`,,,,s,`,`,`,`,,,,`,`,`
+,,,,,,,,,,,,,,`,`,`,`,`,,s,`,`,`,`,,`,`,`,`,`
+,,,,,,,,,,,,,,`,`,`,,`,,s,`,`,`,`,,`,,`,`,`
+,,,,,,,,,,,,,,,,,,`,,s,`,`,`,`,,`
+,,,,,,,,,,,,,,`,`,`,,`,,s,`,`,`,`,,`,,`,`,`,`
+,,,,,,,,,,,,,,`,`,`,`,`,,s,`,`,`,`,,`,`,`,`,`,`
+,,,,,,,,,,,,,,`,`,`,,`,,s,`,`,`,`,,`,,`,`,`,`
+,,,,,,,,,,,,,,,,,,`,,s,`,`,`,`,,`,,`,`,`,`
+,,,,,,,,,,,,,`,`,`,`,,`,,s,`,`,`,`,,`,`,`,`,`,`
+,,,,,,,,,,,,,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`
+,,,,,,,,,,`,`,,`,`,`,`,,`,,`,`,`,`,`,,`
+,,,,,,,,,`,`,`,,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`
+,,,,,,,,,,`,`,,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,`,`,,`,`,`
+,,,,,,,,,,,`,,,`,,,,,,`,`,`,`,`,,,,,`,,,,`
+,,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`,`,~,`,`,,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,`,`,,,,`,,`,,,,`,`,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,`,,`,`,,,`,,,`,`,,`,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,,,`,`,,`,`,`,,`,`,,,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,,`,,,`,`,`,,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,,,,,,,,,`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#build label(farming_build3) start(23; 25) hidden() remaining doors
+
+
+
+
+
+
+
+
+
+,,,,,,,,,,,,,,`,`,`,,,,`,`,`,`,`,,,,~,~,~
+,,,,,,,,,,,,,,`,`,`,d,`,,`,`,`,`,`,,`,d,`,`,~
+,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,,~,~,~
+,,,,,,,,,,,,,,,,,,`,,`,`,`,`,`,,`
+,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`
+,,,,,,,,,,,,,,`,`,`,d,`,,`,`,`,`,`,,`,d,`,`,`,`
+,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,,~,~,~,~
+,,,,,,,,,,,,,,,,,,`,,`,`,`,`,`,,`,,~,~,~,~
+,,,,,,,,,,,,,`,`,`,`,,`,,`,`,`,`,`,,`,d,`,`,`,`
+,,,,,,,,,,,,,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`
+,,,,,,,,,,`,`,,`,`,`,`,,`,,`,`,`,`,`,,`
+,,,,,,,,,`,`,`,,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,,`,`,`
+,,,,,,,,,`,`,`,d,`,`,`,`,d,`,,,d,,d,,,`,d,`,`,`,d,`,`,`
+,,,,,,,,,,`,`,,`,`,`,`,,`,d,`,`,`,`,`,d,`,,`,`,`,,`,`,`
+,,,,,,,,,,,d,,,d,,,,,,`,`,`,`,`,,,,,d,,,,d
+,,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`,`,~,`,`,,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,`,`,,,,d,,d,,,,`,`,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,`,,,`,~,`,`,`,~,`,,,`,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,`,,`,`,,,~,,,`,`,,`,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,,,`,`,,`,`,`,,`,`,,,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,`,`,`,`,,,,,,,,`
+,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,`,`,`,`
+,,,,,,,,,`,`,`,`,`,`,`,,`,`,`,,,`,,,`,`,`,,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,,,,,,,,,`
 
 
 
@@ -2037,7 +2196,7 @@ with separate stockpiles for:
 ""
 Workshops:
 - 3x Mason
-- 4x Craftsdwarf
+- 1x Craftsdwarf
 - 1x Jeweler
 - 1x Mechanic
 - 4x Smelter
@@ -2118,10 +2277,10 @@ query/industry_query
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,wm,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,wr,`,`,wr,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,wj,`,`,`,`,`,`,`,wt,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,wr,`,`,wr,`,`,`,`,`,`,`,trackstopN,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,wr,`,`,`,`,`,`,`,wt,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,wj,`,`,`,`,`,`,`,trackstopN,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,wm,`,`,`,`,`,`,`,wm,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
@@ -2158,7 +2317,7 @@ query/industry_query
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,c,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,se(3x3),,,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,s(2x3),,e(1x3),`,`,`,`,`,`,`,`,`,`,`,`
 ,,f,`,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,f,`,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,f,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
@@ -2170,7 +2329,7 @@ query/industry_query
 ,,f,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,f,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,f,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,f,`,`,`,`,`,`,`,`,`,`,`,`,`,sbpdz(3x3),,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,f,`,`,`,`,`,`,`,`,`,`,`,`,`,s(2x3),,bpdz(3x3),`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,f,`,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,`,`,`,`,`,pd(6x3),,,~,~,~,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,~,`
@@ -2194,26 +2353,26 @@ query/industry_query
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,~,`,`,~,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"{quantum name=""stoneworker quantum""}g{Up}{Left 4}&",`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,~,`,`,~,`,`,`,`,`,`,`,"{quantumstopfromsouth name=""Stoneworker quantum""}{givename name=""stoneworker dumper""}",`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,~,`,`,otherstone,,"{givename name=""stoneworker feeder""}",`,`,~,`,`,`,`,`,`,`,`,`
-,,miscliquid,`,`,`,`,`,`,`,`,`,`,`,`,`,~,nocontainers,~,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"{quantum name=""stoneworker quantum""}g{Left 8}{Down}&",`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,~,`,`,`,`,`,`,`,"{quantumstop name=""Stoneworker quantum"" sp_links=""{sp_link move={Down} move_back={Up}}{sp_link move=""""{Right}{Down}"""" move_back=""""{Up}{Left}""""}""}{givename name=""stoneworker dumper""}",`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,~,`,`,otherstone,,"{givename name=""gem feeder""}",`,`,~,`,`,`,`,`,`,`,`,`
+,,miscliquid,`,`,`,`,`,`,`,`,`,`,`,`,`,"{givename name=""stone feeder""}",,nocontainers,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,nocontainers,`,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,"{givename name=""non-quantum liquids""}",`,~,`,`,~,`,`,~,`,`,`,`,`,`,`,`,`,`,`,`,`,~,`,`,~,`,`,`,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,~,`,`,`,`,`,`,`,{cages}{permittraps},,,`,`,`,,,,`,`,`,craftrefuse,,"{givename name=""cloth/bones feeder""}",`,`,`,`,`,`,`,`
-,,~,`,`,~,`,`,"{quantum name=""goods/wood quantum""}g{Up 10}{Right 5}&","{quantumstopfromeast name=""Goods/Wood quantum""}{givename name=""goods/wood dumper""}",forbidcrafts,nocontainers,"{givename name=""goods/wood feeder""}",`,,`,,`,,`,,`,~,nocontainers,~,"{quantumstopfromwest name=""Clothier/Bones quantum""}{givename name=""cloth/bones dumper""}","{quantum name=""cloth/bones quantum""}",`,`,~,`,`,`
+,,~,`,`,~,`,`,"{quantum name=""goods/wood quantum""}g{Up 8}{Right}&","{quantumstopfromeast name=""Goods/Wood quantum""}{givename name=""goods/wood dumper""}",forbidcrafts,nocontainers,"{givename name=""goods/wood feeder""}",`,,`,,`,,`,,`,~,nocontainers,~,"{quantumstopfromwest name=""Clothier/Bones quantum""}{givename name=""cloth/bones dumper""}","{quantum name=""cloth/bones quantum""}",`,`,~,`,`,`
 ,,~,`,`,`,`,`,`,`,{tallow}{permitdye},,,`,`,`,,,,`,`,`,~,~,~,`,`,`,`,`,`,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,~,`,~,`,`,~,`,`,~,`,`,`,`,`,`,`,`,`,`,`,`,`,~,`,`,~,`,`,`,`,`
-,,~,`,`,`,`,`,`,`,`,`,`,`,`,`,forbidotherstone,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,~,`,`,`,`,`,`,`,`,`,`,`,`,`,"{givename name=""metalworker feeder""}",nocontainers,~,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,~,`,`,forbidpotash,,,`,`,~,`,`,nocontainers,"{givename name=""meltable bronze/steel""}",t{Left 9}{Down 2}&
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"{quantumstopfromnorth name=""Metalworker quantum""}{givename name=""metalworker dumper""}",`,`,`,`,`,`,{bronzeweapons}{permitsteelweapons}{forbidmasterworkweapons}{forbidartifactweapons}
+,,~,`,`,`,`,`,`,`,`,`,`,`,`,`,forbidotherstone,,forbidpotash,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,~,`,`,`,`,`,`,`,`,`,`,`,`,`,"{givename name=""ore/clay feeder""}",,nocontainers,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,~,`,`,~,~,"{givename name=""bar/military feeder""}",`,`,~,`,`,nocontainers,"{givename name=""meltable bronze/steel""}",t{Left 9}{Down 2}&
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"{quantumstop name=""Metalworker quantum"" sp_links=""{sp_link move={Up} move_back={Down}}{sp_link move=""""{Right}{Up}"""" move_back=""""{Down}{Left}""""}""}{givename name=""metalworker dumper""}",`,`,`,`,`,`,{bronzeweapons}{permitsteelweapons}{forbidmasterworkweapons}{forbidartifactweapons}
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"{quantum name=""metalworker quantum""}",`,`,`,`,`,`,{bronzearmor}{permitsteelarmor}{forbidmasterworkarmor}{forbidartifactarmor}
 ,,,,`,`,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,nocontainers,t{Left 8}{Up 2}&,"{givename name=""other meltables""}"

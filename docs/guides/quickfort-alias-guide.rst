@@ -456,7 +456,7 @@ your own stockpile configuraiton aliases, you can use the magic yourself by
 building your aliases on the ``*prefix`` aliases described later in this
 guide.
 
-Finally, the ``quantumstop`` alias is a more general version of the
+Finally, the ``quantumstop`` alias is a more general version of the simpler
 ``quantumstopfrom*`` aliases. The ``quantumstopfrom*`` aliases assume that a
 single feeder stockpile is orthogonally adjacent to your track stop (which is
 how most people set them up). If your feeder stockpile is somewhere further
@@ -504,6 +504,10 @@ Stockpile configuration utility aliases
 Alias             Sub-aliases
 ================  ===========
 linksonly
+maxbins
+maxbarrels
+nobins
+nobarrels
 nocontainers
 give2up
 give2down
@@ -522,12 +526,14 @@ togglemasterwork  prefix
 toggleartifact    prefix
 ================  ===========
 
-``linksonly`` and ``nocontainers`` set the named basic properties on
-stockpiles. ``nocontainers`` sets bins and barrels to 0, but does not affect
-wheelbarrows since the hotkeys for changing the number of wheelbarrows depend
-on whether you have the DFHack `stockpiles` plugin active. It is better to set
-the number of wheelbarrows via the `quickfort` ``stockpiles_max_wheelbarrows``
-setting. It is set to ``0`` by default.
+``linksonly``, ``maxbins``, ``maxbarrels``, ``nobins``, ``nobarrels``, and
+``nocontainers`` set the named basic properties on stockpiles. ``nocontainers``
+sets bins and barrels to 0, but does not affect wheelbarrows since the hotkeys
+for changing the number of wheelbarrows depend on whether you have the DFHack
+`stockpiles` plugin active. It is better to set the number of wheelbarrows via
+the `quickfort` ``stockpiles_max_wheelbarrows`` setting (set to ``0`` by
+default), or explicitly when you define the stockpile in the ``#place``
+blueprint.
 
 The ``give*`` aliases set a stockpile to give to a workshop or another
 stockpile located at the indicated number of tiles in the indicated direction
@@ -702,7 +708,7 @@ Refuse stockpile adjustments
 ===========  ==================  ==================
 Exclusive    Forbid              Permit
 ===========  ==================  ==================
-bodyparts    forbidbodyparts     permitbodyparts
+corpses      forbidcorpses       permitcorpses
 rawhides     forbidrawhides      permitrawhides
 tannedhides  forbidtannedhides   permittannedhides
 skulls       forbidskulls        permitskulls
@@ -716,7 +722,6 @@ craftrefuse  forbidcraftrefuse   permitcraftrefuse
 
 Notes:
 
-* ``bodyparts`` includes remains/corpses and rotten rawhdes.
 * ``craftrefuse`` includes everything a craftsdwarf can use: skulls, bones,
   shells, teeth, horns, and hair.
 

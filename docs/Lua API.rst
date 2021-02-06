@@ -1274,10 +1274,11 @@ Units module
 
   Returns whether the indicated labor is settable for the given unit.
 
-* ``dfhack.units.setLaborValidity(unit_labor)``
+* ``dfhack.units.setLaborValidity(unit_labor, isValid)``
 
-  Sets the given labor as valid for all playable units in the game (that is, for
-  all civilizations whose members can be residents of your fort).
+  Sets the given labor to the given (boolean) validity for all playable units in
+  the game (that is, for all civilizations whose members can be residents of
+  your fort).
 
 * ``dfhack.units.getNominalSkill(unit, skill[, use_rust])``
 

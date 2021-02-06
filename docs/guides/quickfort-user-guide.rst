@@ -507,6 +507,16 @@ corpses, wheelbarrows are assumed::
     #place a corpse stockpile with 3 wheelbarrows
     y3(3x3)
 
+Running ``quickfort orders`` on a ``#place`` blueprint with explicitly set
+container/wheelbarrow counts will enqueue manager orders for the specified
+number of containers or wheelbarrows, even if that number exceeds the in-game
+size of the stockpile. For example, ``quickfort orders`` on the following
+blueprint will enqueue 10 rock pots, even though the stockpile only has 9
+tiles::
+
+    #place
+    f10(3x3)
+
 Zone detailed configuration
 ```````````````````````````
 

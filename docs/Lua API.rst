@@ -1270,6 +1270,15 @@ Units module
   Returns the age of the unit in years as a floating-point value.
   If ``true_age`` is true, ignores false identities.
 
+* ``dfhack.units.isValidLabor(unit, unit_labor)``
+
+  Returns whether the indicated labor is settable for the given unit.
+
+* ``dfhack.units.setLaborValidity(unit_labor)``
+
+  Sets the given labor as valid for all playable units in the game (that is, for
+  all civilizations whose members can be residents of your fort).
+
 * ``dfhack.units.getNominalSkill(unit, skill[, use_rust])``
 
   Retrieves the nominal skill level for the given unit. If ``use_rust``

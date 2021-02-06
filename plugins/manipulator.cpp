@@ -2279,6 +2279,16 @@ struct unitlist_hook : df::viewscreen_unitlistst
 IMPLEMENT_VMETHOD_INTERPOSE(unitlist_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(unitlist_hook, render);
 
+static void enable_alchemist(color_ostream &out)
+{
+    if (!Units::setLaborValidity(unit_labor::ALCHEMIST, true))
+    {
+        // informational only; this is a non-fatal error
+        out.printerr("manipulator: Could not flag Alchemist as a valid skill; Alchemist will not"
+                     " be settable from DF or DFHack labor management screens.\n");
+    }
+}
+
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 {
     if (!gps)
@@ -2291,6 +2301,9 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
             return CR_FAILURE;
 
         is_enabled = enable;
+
+        if (is_enabled)
+            enable_alchemist(out);
     }
 
     return CR_OK;
@@ -2303,6 +2316,20 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
         out.printerr("manipulator: Could not create configuration folder: \"%s\"\n", CONFIG_PATH);
         return CR_FAILURE;
     }
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
+{
+    switch (event) {
+    case SC_MAP_LOADED:
+        if (is_enabled)
+            enable_alchemist(out);
+        break;
+    default:
+        break;
+    }
+
     return CR_OK;
 }
 

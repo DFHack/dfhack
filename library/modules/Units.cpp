@@ -893,6 +893,28 @@ bool Units::isValidLabor(df::unit *unit, df::unit_labor labor)
     return true;
 }
 
+bool Units::setLaborValidity(df::unit_labor labor, bool isValid)
+{
+    if (!is_valid_enum_item(labor))
+        return false;
+    if (labor == df::unit_labor::NONE)
+        return false;
+    for (size_t i = 0; i < world->raws.entities.size(); ++i)
+    {
+        if (!world->raws.entities[i] ||
+            world->raws.entities[i]->flags.is_set(df::entity_raw_flags::LAYER_LINKED) ||       // Animal people
+            world->raws.entities[i]->flags.is_set(df::entity_raw_flags::GENERATED) ||          // Vault guardians
+            !world->raws.entities[i]->flags.is_set(df::entity_raw_flags::CIV_CONTROLLABLE) ||  // non-controllable civs
+            world->raws.entities[i]->translation == "")                                        // Kobolds
+        {
+            continue;
+        }
+
+        world->raws.entities[i]->jobs.permitted_labor[labor] = isValid;
+    }
+    return true;
+}
+
 inline void adjust_speed_rating(int &rating, bool is_adventure, int value, int dwarf100, int dwarf200, int adv50, int adv75, int adv100, int adv200)
 {
     if  (is_adventure)

@@ -33,6 +33,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
+## Fixes
+- `prospector`: improved pre embark rough estimates
+
 # 0.47.04-r5
 
 ## Fixes

@@ -66,7 +66,7 @@ quickfort run library/dreamfort.csv -n /industry2,# Run when the industry level 
 quickfort run library/dreamfort.csv -n /surface4,"# Run after the walls and floors are built on the surface. Even if the surface is finished befor you run /industry2, though, wait until after /industry2 so that surface walls, floors, and roofing don't prevent your workshops from being built (due to lack of blocks)."
 quickfort orders library/dreamfort.csv -n /surface4
 quickfort run library/dreamfort.csv -n /services2,# Run when the services level has been dug out
-orders import automation
+orders import automation,"# Run after the first migration wave, so you have dorfs to do all the tasks"
 quickfort run library/dreamfort.csv -n /surface5,"# Run when all marked trees on the surface are chopped down and walls and floors have been constructed, including the roof section over the future barracks"
 quickfort orders library/dreamfort.csv -n /surface5
 quickfort run library/dreamfort.csv -n /surface6,# Run when at least the beehives and weapon rack are constructed and you have linked all levers to their respective bridges.
@@ -573,8 +573,8 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 ,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,,,,,`,,`,"{givename name=""starting food""}",,,,,,,,"{givename name=""starting wood""}",,,,"{givename name=""starting stone""}",,,,,"{givename name=""starting misc""}",,,,"{givename name=""starting textile""}",,,,`,,`
-,,,,,,,`,,`,,,,,,,,,,,,,otherstone,,,,,nocontainers,,,,nocontainers,,,,`,,`
+,,,,,,,`,,`,,,,,,,,"{givename name=""starting food""}",,,,"{givename name=""starting wood""}",,,,,"{givename name=""starting stone""}",,,,"{givename name=""starting misc""}",,,,"{givename name=""starting textile""}",`,,`
+,,,,,,,`,,`,forbidtallow,forbiddye,forbidunpreparedfish,forbidmiscliquid,forbidseeds,,,,,,,,otherstone,,,,,nocontainers,,,,nocontainers,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
@@ -2180,6 +2180,8 @@ Industry Walkthrough:
 "4) If you want to automatically melt goblinite and other low-quality weapons and armor, mark the south-east stockpiles for auto-melt."
 ""
 "5) Run ""orders import automation"" to use the provided automation.json to take care of your fort's basic needs, such as food, booze, military supplies, and raw material processing. If you get job cancelation spam about not being able to make soap, manually queue up a few ""Make lye"" jobs at your ashery. That should get the soap-making jobs back on track."
+""
+"6) You'll need more than 2 Mason's Workshops to keep up with the orders. When you have more masons, make more Mason's Workshops as needed."
 "#dig label(industry1) start(18; 18; central stairs) message(This would be a good time to queue manager orders for /industry2. Once the area is dug out, continue with /industry2.)"
 
 
@@ -2225,12 +2227,12 @@ query/industry_query
 
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,wj,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,wm,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,wr,`,`,`,`,`,`,`,wt,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,ws,`,`,`,`,`,`,`,`,trackstopN,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,wj,`,`,`,`,`,`,`,trackstopN,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,wm,`,`,`,`,`,`,`,wm,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
@@ -2238,7 +2240,7 @@ query/industry_query
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,,d,,d,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,d,`,,,,`,d,`,`,`,`,`,`,`,`,`,`,`,`
-,,`,`,`,wc,`,`,`,trackstopW,`,`,`,`,,`,,`,,`,,`,`,`,`,trackstopE,`,`,`,we,`,`,`
+,,`,`,wc,`,`,`,trackstopW,`,`,`,`,`,,`,,`,,`,,`,`,`,`,`,trackstopE,`,`,`,we,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,d,`,,,,`,d,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,,d,,d,,,`,`,`,`,`,`,`,`,`,`,`,`
@@ -2246,12 +2248,12 @@ query/industry_query
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,es,`,`,`,`,`,`,`,es,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,trackstopS,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,ws,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,es,`,`,`,`,`,`,`,es,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,wf,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,eg,`,`,`,`,`,`,`,ek,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,eg,`,`,`,wf,`,`,`,ek,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
 
@@ -2264,32 +2266,32 @@ query/industry_query
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,c,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,s(2x3),,e(1x3),`,`,`,`,`,`,`,`,`,`,`,`
-,,f,`,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,f,`,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,f,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,s(5x4),,,~,~,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`
+,,f,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,f,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,f,`,`,`,`,`,`,`,`,`,`,`,`,e(5x1),,,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,f,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
-,,f,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`
-,,f,`,`,`,`,`,`,`,afnguwS(3x3),,,`,`,`,,,,`,`,`,rhl(3x3),,,`,`,`,`,`,`,`,`
-,,f,`,`,`,`,`,c,`,~,~,~,`,,`,,`,,`,,`,~,~,~,`,r,`,`,`,`,`,`
-,,f,`,`,`,`,`,`,`,~,~,~,`,`,`,,,,`,`,`,~,~,~,`,`,`,`,`,`,`,`
-,,f,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`
+,,f,`,`,`,`,`,`,w(3x5),,,afnguS(2x5),`,,`,`,`,`,`,,rhl(5x5),,,~,~,`,`,`,`,`,`,`
+,,f,`,`,`,`,`,`,~,~,~,~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,`
+,,f,`,`,`,`,c,`,~,~,~,~,~,,`,,`,,`,,~,~,~,~,~,`,r,`,`,`,`,`
+,,f,`,`,`,`,`,`,~,~,~,~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,`
+,,f,`,`,`,`,`,`,~,~,~,~,~,,`,`,`,`,`,,~,~,~,~,~,`,`,`,`,`,`,`
 ,,f,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
-,,f,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,f,`,`,`,`,`,`,`,`,`,`,`,`,`,s(2x3),,bpdz(1x3),`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,f,`,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,`,`,`,`,`,pd(6x3),,,~,~,~,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,~,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,c,`,`,`,`,`,`,~,~,~,~,~,~,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,pd(6x3),,,~,~,~,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,~,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,~,`
+,,f,`,`,`,`,`,`,`,`,`,`,`,`,bpdz(5x1),,,,~,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,f,`,`,`,`,`,`,`,`,`,`,`,`,s(5x4),,,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,f,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,pd(7x3),,,~,~,~,~
+,,,,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,~,~,~,~,~,~,~
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,~,~
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,c,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,pd(7x3),,,~,~,~,~
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,~,~
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,~,~
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,,,,,,,,b(6x1),`,`,`,`,`,`,b(6x1),`,`,`,`,`
+,,,,,,,,,,,b(6x1),,,~,~,~,`,b(6x1),,,~,~,~
 
 
 "#query label(industry_query) start(18; 18) hidden() message(remember to:
@@ -2301,35 +2303,35 @@ query/industry_query
 
 ,,,,,,,,,,,roughgems,nocontainers,"{givename name=""rough gems for moods""}",,,,t{Down 6}&,,,,,~,~
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"{quantum name=""stoneworker quantum""}g{Left 8}{Down}&",`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,~,`,`,`,`,`,`,`,"{quantumstop name=""Stoneworker quantum"" sp_links=""{sp_link move={Down} move_back={Up}}{sp_link move=""""{Right}{Down}"""" move_back=""""{Up}{Left}""""}""}{givename name=""stoneworker dumper""}",`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,~,`,`,otherstone,,"{givename name=""gem feeder""}",`,`,~,`,`,`,`,`,`,`,`,`
-,,miscliquid,`,`,`,`,`,`,`,`,`,`,`,`,`,"{givename name=""stone feeder""}",,nocontainers,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,nocontainers,`,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,"{givename name=""non-quantum liquids""}",`,~,`,`,~,`,`,~,`,`,`,`,`,`,`,`,`,`,`,`,`,~,`,`,~,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,~,`,`,`,"{quantum name=""stoneworker quantum""}g{Up 3}&",`,`,`,~,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,~,`,`,`,`,`,`,`,`,"{quantumstop name=""Stoneworker quantum"" sp_links=""{sp_link move={Down} move_back={Up}}{sp_link move=""""{Down 5}"""" move_back=""""{Up 5}""""}""}{givename name=""stoneworker dumper""}",`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,otherstone,,,,~,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,~,`,"{givename name=""stone feeder""}",~,~,~,~,`,~,`,`,`,`,`,`,`,`,`
+,,miscliquid,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,nocontainers,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,"{givename name=""non-quantum liquids""}",`,~,`,`,~,`,`,~,`,`,`,`,nocontainers,"{givename name=""gem feeder""}",~,~,~,`,`,`,`,~,`,`,~,`,`,`,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
-,,~,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`
-,,~,`,`,`,`,`,`,`,{cages}{permittraps},,,`,`,`,,,,`,`,`,craftrefuse,,"{givename name=""cloth/bones feeder""}",`,`,`,`,`,`,`,`
-,,~,`,`,~,`,`,"{quantum name=""goods/wood quantum""}g{Up 8}{Right}&","{quantumstopfromeast name=""Goods/Wood quantum""}{givename name=""goods/wood dumper""}",forbidcrafts,nocontainers,"{givename name=""goods/wood feeder""}",`,,`,,`,,`,,`,~,nocontainers,~,"{quantumstopfromwest name=""Clothier/Bones quantum""}{givename name=""cloth/bones dumper""}","{quantum name=""cloth/bones quantum""}",`,`,~,`,`,`
-,,~,`,`,`,`,`,`,`,{tallow}{permitdye},,,`,`,`,,,,`,`,`,~,~,~,`,`,`,`,`,`,`,`
-,,~,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`
+,,~,`,`,`,`,`,`,"{givename name=""wood feeder""}",~,~,"{givename name=""goods feeder""}",~,,`,`,`,`,`,,craftrefuse,,,,~,`,`,`,`,`,`,`
+,,~,`,`,`,`,`,`,~,~,~,{cages}{permittraps},~,`,`,,,,`,`,"{givename name=""cloth/bones feeder""}",~,~,~,~,`,`,`,`,`,`,`
+,,~,`,~,`,`,"{quantum name=""goods/wood quantum""}g{Up 13}{Right 10}&","{quantumstop name=""Goods/Wood quantum"" sp_links=""{sp_link move={Right} move_back={Left}}{sp_link move=""""{Right 5}"""" move_back=""""{Left 5}""""}""}{givename name=""goods/wood dumper""}",~,~,~,{tallow}{permitdye},~,,`,,`,,`,,nocontainers,~,~,~,~,"{quantumstopfromwest name=""Clothier/Bones quantum""}{givename name=""cloth/bones dumper""}","{quantum name=""cloth/bones quantum""}",`,`,~,`,`
+,,~,`,`,`,`,`,`,~,~,~,nocontainers,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,`
+,,~,`,`,`,`,`,`,~,~,~,forbidcrafts,~,,`,`,`,`,`,,~,~,~,~,~,`,`,`,`,`,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
-,,~,`,~,`,`,~,`,`,~,`,`,`,`,`,`,`,`,`,`,`,`,`,~,`,`,~,`,`,`,`,`
-,,~,`,`,`,`,`,`,`,`,`,`,`,`,`,forbidotherstone,,forbidpotash,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,~,`,`,`,`,`,`,`,`,`,`,`,`,`,"{givename name=""ore/clay feeder""}",,nocontainers,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,~,`,`,~,~,"{givename name=""bar/military feeder""}",`,`,~,`,`,nocontainers,"{givename name=""meltable bronze/steel""}",t{Left 9}{Down 2}&
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"{quantumstop name=""Metalworker quantum"" sp_links=""{sp_link move={Up} move_back={Down}}{sp_link move=""""{Right}{Up}"""" move_back=""""{Down}{Left}""""}""}{givename name=""metalworker dumper""}",`,`,`,`,`,`,{bronzeweapons}{permitsteelweapons}{forbidmasterworkweapons}{forbidartifactweapons}
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"{quantum name=""metalworker quantum""}",`,`,`,`,`,`,{bronzearmor}{permitsteelarmor}{forbidmasterworkarmor}{forbidartifactarmor}
-,,,,`,`,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,nocontainers,t{Left 8}{Up 2}&,"{givename name=""other meltables""}"
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,~,`,`,`,`,`,`,{metalweapons}{forbidbronzeweapons}{forbidsteelweapons}{forbidmasterworkweapons}{forbidartifactweapons}
-,,,,`,`,`,`,`,`,`,`,`,~,`,`,`,`,`,`,`,~,`,`,{metalarmor}{forbidbronzearmor}{forbidsteelarmor}{forbidmasterworkarmor}{forbidartifactarmor}
+,,~,`,~,`,`,~,`,`,~,`,`,`,`,forbidpotash,nocontainers,"{givename name=""bar/military feeder""}",~,~,`,`,`,`,~,`,`,~,`,`,`,`,`
+,,~,`,`,`,`,`,`,`,`,`,`,`,`,forbidotherstone,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,~,`,`,`,`,`,`,`,`,`,`,`,`,"{givename name=""ore/clay feeder""}",~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,~,`,~,~,~,~,~,`,~,`,`,nocontainers,t{Left 6}{Up 3}&,t{Left 9}{Down 3}&,"{givename name=""meltable bronze/steel""}"
+,,,,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,{bronzeweapons}{permitsteelweapons}{forbidmasterworkweapons}{forbidartifactweapons}
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"{quantumstop name=""Metalworker quantum"" sp_links=""{sp_link move={Up} move_back={Down}}{sp_link move=""""{Up 5}"""" move_back=""""{Down 5}""""}""}{givename name=""metalworker dumper""}",`,`,`,`,`,`,{bronzearmor}{permitsteelarmor}{forbidmasterworkarmor}{forbidartifactarmor}
+,,,,`,`,`,`,`,`,`,`,`,~,`,`,`,"{quantum name=""metalworker quantum""}",`,`,`,~,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,nocontainers,t{Left 6}{Up 7}&,t{Left 9}{Up 1}&,"{givename name=""other meltables""}"
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,{metalweapons}{forbidbronzeweapons}{forbidsteelweapons}{forbidmasterworkweapons}{forbidartifactweapons}
+,,,,`,`,`,`,`,`,`,`,`,~,`,`,`,~,`,`,`,~,`,`,{metalarmor}{forbidbronzearmor}{forbidsteelarmor}{forbidmasterworkarmor}{forbidartifactarmor}
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,,,,,,,,steelbars,"{givename name=""steel""}",nocontainers,,,t{Up 6}{Right}&,`,t{Up 6}{Left}&,,,nocontainers,"{givename name=""coal""}",coal
+,,,,,,,,,,,coal,"{givename name=""coal""}",nocontainers,,,t{Up 5}{Right}&,`,t{Up 5}{Left}&,,,nocontainers,steelbars,"{givename name=""steel""}"
 
 
 #notes label(services_help)

@@ -35,6 +35,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - `embark-assistant`: fixed bug in soil depth determination for ocean tiles
+- `orders`: don't crash when importing orders with malformed JSON
 
 # 0.47.04-r5
 

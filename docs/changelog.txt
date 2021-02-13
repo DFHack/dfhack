@@ -36,6 +36,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 - `autohauler`: allow the ``Alchemist`` labor to be enabled in `manipulator` and other labor screens so it can be used for its intended purpose of flagging that no hauling labors should be assigned to a dwarf. Before, the only way to set the flag was to use an external program like Dwarf Therapist.
 
+# 0.47.05-beta1
+
+## Fixes
+- `embark-assistant`: fixed bug in soil depth determination for ocean tiles
+- `orders`: don't crash when importing orders with malformed JSON
+
 # 0.47.04-r5
 
 ## Fixes

@@ -35,7 +35,13 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Misc Improvements
 - `quickfort`: Dreamfort blueprint set improvements: `significant <http://www.bay12forums.com/smf/index.php?topic=176889.msg8239017#msg8239017>`_ refinements across the entire blueprint set. Dreamfort is now much faster, much more efficient, and much easier to use. The `checklist <https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=1459509569>`__ now includes a mini-walkthrough for quick reference. The spreadsheet now also includes `embark profile suggestions <https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=149144025>`__
-- `quickfort`: added aliases for configuring masterwork and artifact core quality for all stockpile categories that have them
+- `quickfort`: added aliases for configuring masterwork and artifact core quality for all stockpile categories that have them; made it possible to take from multiple stockpiles in the ``quantumstop`` alias
+
+# 0.47.05-beta1
+
+## Fixes
+- `embark-assistant`: fixed bug in soil depth determination for ocean tiles
+- `orders`: don't crash when importing orders with malformed JSON
 
 # 0.47.04-r5
 

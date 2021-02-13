@@ -426,29 +426,38 @@ static command_result orders_import_command(color_ostream & out, const std::stri
         return CR_WRONG_USAGE;
     }
 
+    const std::string filename("dfhack-config/orders/" + name + ".json");
     Json::Value orders;
 
     {
-        std::ifstream file("dfhack-config/orders/" + name + ".json");
+        std::ifstream file(filename);
 
         if (!file.good())
         {
-            out << COLOR_LIGHTRED << "Cannot find orders file." << std::endl;
+            out << COLOR_LIGHTRED << "Cannot find orders file: " << filename << std::endl;
             return CR_FAILURE;
         }
 
-        file >> orders;
+        try
+        {
+            file >> orders;
+        }
+        catch (const std::exception & e)
+        {
+            out << COLOR_LIGHTRED << "Error reading orders file: " << filename << ": " << e.what() << std::endl;
+            return CR_FAILURE;
+        }
 
         if (!file.good())
         {
-            out << COLOR_LIGHTRED << "Error reading orders file." << std::endl;
+            out << COLOR_LIGHTRED << "Error reading orders file: " << filename << std::endl;
             return CR_FAILURE;
         }
     }
 
     if (orders.type() != Json::arrayValue)
     {
-        out << COLOR_LIGHTRED << "Invalid orders file: expected array" << std::endl;
+        out << COLOR_LIGHTRED << "Invalid orders file: " << filename << ": expected array" << std::endl;
         return CR_FAILURE;
     }
 

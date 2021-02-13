@@ -33,6 +33,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
+## Documentation
+- `fortplan`: fortplan has been replaced by `quickfort`. add deprecation warnings to command output and documentation.
+
 # 0.47.05-beta1
 
 ## Fixes

@@ -298,7 +298,6 @@ static VALUE Qnil = 4;
 #define RUBY_METHOD_FUNC(func) ((VALUE(*)(...))func)
 
 void (*ruby_init_stack)(VALUE*);
-void (*ruby_sysinit)(int *, const char ***);
 void (*ruby_init)(void);
 void (*ruby_init_loadpath)(void);
 void (*ruby_script)(const char*);
@@ -350,8 +349,6 @@ static int df_loadruby(void)
         return 0;
     }
 
-    // ruby_sysinit is optional (ruby1.9 only)
-    ruby_sysinit = (decltype(ruby_sysinit))LookupPlugin(libruby_handle, "ruby_sysinit");
 #define rbloadsyma(s,a) do { if (!(s = (decltype(s))LookupPlugin(libruby_handle, #a))) { \
         fprintf(stderr, "Symbol not found: %s\n", #a); \
         return 0; \
@@ -437,13 +434,6 @@ static void df_rubythread(void *p)
     // may need to be run from df main thread?
     VALUE foo;
     ruby_init_stack(&foo);
-
-    if (ruby_sysinit) {
-        // ruby1.9 specific API
-        static int argc;
-        static const char *argv[] = { "dfhack", 0 };
-        ruby_sysinit(&argc, (const char ***)&argv);
-    }
 
     // initialize the ruby interpreter
     ruby_init();

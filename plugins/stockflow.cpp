@@ -80,15 +80,15 @@ public:
 
         if (found) {
             // Entice the bookkeeper to spend less time update records.
-            ui->bookkeeper_precision += ui->bookkeeper_precision >> 3;
+            ui->nobles.bookkeeper_precision += ui->nobles.bookkeeper_precision >> 3;
             if (!bookkeeping) {
                 command_method("start_bookkeeping", out);
                 bookkeeping = true;
             }
         } else {
             // Entice the bookkeeper to update records more often.
-            ui->bookkeeper_precision -= ui->bookkeeper_precision >> 5;
-            ui->bookkeeper_cooldown -= ui->bookkeeper_cooldown >> 2;
+            ui->nobles.bookkeeper_precision -= ui->nobles.bookkeeper_precision >> 5;
+            ui->nobles.bookkeeper_cooldown -= ui->nobles.bookkeeper_cooldown >> 2;
             if (bookkeeping) {
                 command_method("finish_bookkeeping", out);
                 bookkeeping = false;

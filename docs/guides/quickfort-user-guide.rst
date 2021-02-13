@@ -476,6 +476,8 @@ stockpiles using the keys that represent the categories of items that you want
 to store, and then only use a ``#query`` blueprint if you need fine-grained
 customization.
 
+.. _quickfort-place-containers:
+
 Stockpile bins, barrels, and wheelbarrows
 `````````````````````````````````````````
 
@@ -1126,14 +1128,22 @@ to use for blocks. You should also set the `buildingplan` material filter for
 construction building types to that type of rock as well so other random blocks
 you might have lying around aren't used.
 
-There are a few building types that will generate extra manager orders for
-related materials:
+Extra Manager Orders
+~~~~~~~~~~~~~~~~~~~~
+
+In ``#build`` blueprints, there are a few building types that will generate
+extra manager orders for related materials:
 
 -  Track stops will generate an order for a minecart
 -  Traction benches will generate orders for a table, mechanism, and rope
 -  Levers will generate an order for an extra two mechanisms for connecting the
    lever to a target
 -  Cage traps will generate an order for a cage
+
+
+Stockpiles in ``#place`` blueprints that `specify wheelbarrow or container
+counts <quickfort-place-containers>` will generate orders for the appropriate
+number of bins, pots, or wheelbarrows.
 
 Tips and tricks
 ---------------

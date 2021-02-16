@@ -74,6 +74,8 @@ from other (non-C++) languages, including:
 - `RemoteClientDF-Net <https://github.com/RosaryMala/RemoteClientDF-Net>`_ for C#
 - `dfhackrpc <https://github.com/BenLubar/dfhackrpc>`_ for Go
 - `dfhack-remote <https://github.com/alexchandel/dfhack-remote>`_ for JavaScript
+- `dfhack-client-qt <https://github.com/cvuchener/dfhack-client-qt>`_ for C++ with Qt
+- `dfhack-remote.py <https://github.com/McArcady/dfhack-remote.py>`_ for Python (adapted from :forums:`"Blendwarf" <178089>`)
 
 
 Protocol description

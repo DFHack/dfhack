@@ -1276,9 +1276,10 @@ Units module
 
 * ``dfhack.units.setLaborValidity(unit_labor, isValid)``
 
-  Sets the given labor to the given (boolean) validity for all playable units in
-  the game (that is, for all civilizations whose members can be residents of
-  your fort).
+  Sets the given labor to the given (boolean) validity for all units that are
+  part of your fortress civilization. Valid labors are allowed to be toggled
+  in the in-game labor management screens (including DFHack's labor manipulator
+  screen).
 
 * ``dfhack.units.getNominalSkill(unit, skill[, use_rust])``
 

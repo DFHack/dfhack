@@ -899,19 +899,10 @@ bool Units::setLaborValidity(df::unit_labor labor, bool isValid)
         return false;
     if (labor == df::unit_labor::NONE)
         return false;
-    for (size_t i = 0; i < world->raws.entities.size(); ++i)
-    {
-        if (!world->raws.entities[i] ||
-            world->raws.entities[i]->flags.is_set(df::entity_raw_flags::LAYER_LINKED) ||       // Animal people
-            world->raws.entities[i]->flags.is_set(df::entity_raw_flags::GENERATED) ||          // Vault guardians
-            !world->raws.entities[i]->flags.is_set(df::entity_raw_flags::CIV_CONTROLLABLE) ||  // non-controllable civs
-            world->raws.entities[i]->translation == "")                                        // Kobolds
-        {
-            continue;
-        }
-
-        world->raws.entities[i]->jobs.permitted_labor[labor] = isValid;
-    }
+    df::historical_entity *entity = df::historical_entity::find(ui->civ_id);
+    if (!entity || !entity->entity_raw)
+        return false;
+    entity->entity_raw->jobs.permitted_labor[labor] = isValid;
     return true;
 }
 

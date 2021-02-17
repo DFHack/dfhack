@@ -261,7 +261,7 @@ ammoprefix:  {enter_sp_config}{Down 6}
 enableammo:  {ammoprefix}e^
 disableammo: {ammoprefix}d^
 
-bolts: {ammoprefix}a{Right 2}{Down}{togglesequence 2}^
+bolts: {ammoprefix}a{Right 2}f&^
 
 forbidmetalbolts:  {ammoprefix}{Right}{Down}f^
 forbidwoodenbolts: {ammoprefix}{Right}{Down 2}{Right}&^

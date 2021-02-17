@@ -67,7 +67,7 @@ quickfort run library/dreamfort.csv -n /surface4,"# Run after the walls and floo
 quickfort orders library/dreamfort.csv -n /surface4
 quickfort run library/dreamfort.csv -n /services2,# Run when the services level has been dug out
 orders import automation,"# Run after the first migration wave, so you have dorfs to do all the tasks"
-quickfort run library/dreamfort.csv -n /surface5,"# Run when all marked trees on the surface are chopped down and walls and floors have been constructed, including the roof section over the future barracks"
+quickfort run library/dreamfort.csv -n /surface5
 quickfort orders library/dreamfort.csv -n /surface5
 quickfort run library/dreamfort.csv -n /surface6,# Run when at least the beehives and weapon rack are constructed and you have linked all levers to their respective bridges.
 quickfort orders library/dreamfort.csv -n /surface6
@@ -75,7 +75,7 @@ quickfort run library/dreamfort.csv -n /surface7,# Run after the surface walls a
 quickfort orders library/dreamfort.csv -n /surface7
 
 -- Mature fort (third migration wave onward) -- 
-quickfort run library/dreamfort.csv -n /services3,"# Run after the table and chair have been constructed. Also wait until after you run /surface7, though, because surface defenses are more important than a grand dining hall."
+quickfort run library/dreamfort.csv -n /services3,"# Run after the dining table and chair, weapon rack, and archery targets have been constructed. Also wait until after you run /surface7, though, because surface defenses are more important than a grand dining hall."
 quickfort orders library/dreamfort.csv -n /services3
 quickfort run library/dreamfort.csv -n /guildhall2,# Run when the guildhall level has been dug out
 quickfort orders library/dreamfort.csv -n /guildhall2
@@ -383,10 +383,10 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`
-,,,,,,,`,,`,,`,n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),`,,,,,,`,t(9x5),,,,,,,,,`,,`
-,,,,,,,`,,`,,`,,,,,,,,,n,n,n,n,n,,,,,,,,,,,`,,`
-,,,,,,,`,,`,,,,,,,,,,`,n,,,,n,`,,,,,,,,,,`,,`
-,,,,,,,`,,`,,`,,,,,,,,,n,n,n,n,n,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,`,n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),`,,,,,,`,tn(9x5),,,,,,,,,`,,`
+,,,,,,,`,,`,,`,,,,,,,,,nt,nt,nt,nt,nt,,,,,,,,,,,`,,`
+,,,,,,,`,,`,,,,,,,,,,`,nt,,,,nt,`,,,,,,,,,,`,,`
+,,,,,,,`,,`,,`,,,,,,,,,nt,nt,nt,nt,nt,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,`,n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),n(1x1),`,,,,,,`,,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,,`,`,`,`,,`,,`,`,`,`,,`,`,`,`,`,`,`,,`
 ,,,,,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
@@ -934,7 +934,7 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 ,,,,,,,`,,`,,Cf,,Cf,Cf,Cf,Cf,Cf,,Cf,,~,~,~,,Cf,,,,,,,,,Cf,`,,`
 ,,,,,,,`,,`,,Cf,,Cf,Cf,Cf,Cf,Cf,`,,,~,~,~,,,`,,,,,,,Cf,Cf,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
-,,,,,,,`,,,Cf,,,,,,,Cf,,,,,~,,,,,Cf,,,,,,,Cf,,,`
+,,,,,,,`,Cf,,,,,,,,,Cf,,,,,~,,,,,Cf,,,,,,,,,Cf,`
 ,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
 
 
@@ -1074,7 +1074,7 @@ Remember to connect the levers to the gates once they are built.) gates, barrack
 ,,,,,,,`,,`,,trackstopS,,,,,,,ga,ga,,,,,,gd,gd,,,,,,,,b,`,,`
 ,,,,,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,h,b,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
-,,,,,,,`,,ga,ga,,,,,,,gd,gd,,,,,,,,ga,ga,,,,,,,gd,gd,,`
+,,,,,,,`,gd,gd,,,,,,,,gd,gd,,,,,,,,ga,ga,,,,,,,,ga,ga,`
 ,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,gw,gw,gw,gw,gw,gw,gw,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,,,,,,,,,gw,gw,gw,gw,gw,gw,gw
 ,,,,,,,,,,,,,,,,,,,gw,gw,gw,gw,gw,gw,gw
@@ -1326,7 +1326,7 @@ You might also want to set the ""trade goods quantum"" stockpile to Auto Trade i
 ,,,,,,,`,,`,Cf,~,Cf,~,~,~,~,~,~,~,Cf,~,~,~,Cf,~,~,Cf,Cf,Cf,Cf,Cf,Cf,Cf,~,`,,`
 ,,,,,,,`,,`,Cf,~,Cf,~,~,~,~,~,`,Cf,Cf,~,~,~,Cf,Cf,`,Cf,Cf,Cf,Cf,Cf,Cf,~,~,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,Cf,Cf,Cf,Cf,Cf,Cf,Cf,`,`,`,`,`,`,`,`,`,`,,`
-,,,,,,,`,,,~,,,,,,,,,Cf,Cf,Cf,~,Cf,Cf,Cf,,,,,,,,,~,,,`
+,,,,,,,`,~,,,,,,,,,,,Cf,Cf,Cf,~,Cf,Cf,Cf,,,,,,,,,,,~,`
 ,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
 
 
@@ -1376,7 +1376,7 @@ You might also want to set the ""trade goods quantum"" stockpile to Auto Trade i
 ,,,,,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,,,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
 ,,,,,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
-,,,,,,,`,,,,Tc,Tc,Tc,Tc,Tc,Tc,,,,,,,,,,,,Tc,Tc,Tc,Tc,Tc,Tc,,,,`
+,,,,,,,`,,,Tc,Tc,Tc,Tc,Tc,Tc,Tc,,,,,,,,,,,,Tc,Tc,Tc,Tc,Tc,Tc,Tc,,,`
 ,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,,,,,,,,,,,,,Tc,Tc,,,,,,,,Tc,Tc
 ,,,,,,,,,,,,,,,,,Tc,Tc,,,,,,,,Tc,Tc
@@ -1615,7 +1615,7 @@ You might also want to set the ""trade goods quantum"" stockpile to Auto Trade i
 ,,,,,,,`,Tc,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,Tc,`
 ,,,,,,,`,Tc,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,Tc,`
 ,,,,,,,`,Tc,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,Tc,`
-,,,,,,,`,Tc,,,,,,,,,,,,,,,,,,,,,,,,,,,,Tc,`
+,,,,,,,`,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,`
 ,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
 
 
@@ -1942,9 +1942,9 @@ build3/farming_build3
 
 
 
-,,,,,,,,,,,,,,`,`,`,,,,`,`,`,`,`,,`,`,`,`
-,,,,,,,,,,,,,,r&,`,`,`,`,,`,`,`,`,`,,`,`,`,`
-,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,`,r+&h
+,,,,,,,,,,,,,,,,`,`,`,,`,`,`,`,`,,`,`,`,`
+,,,,,,,,,,,,,,,,r&,`,`,,`,`,`,`,`,,`,`,`,`
+,,,,,,,,,,,,,,,,`,`,`,,`,`,`,`,`,,`,`,r+&h
 ,,,,,,,,,,,,,,,,,,`,,`,`,`,`,`,,`,`,`,`
 ,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,`,`,`
 ,,,,,,,,,,,,,,r&a+&,,,`,`,,`,`,`,`,`,,`,`,`,`
@@ -1992,9 +1992,9 @@ build3/farming_build3
 
 
 
-,,,,,,,,,,,,,,`,`,`,,,,p(3x1),,,`,`,,`,`,`,`
-,,,,,,,,,,,,,,`,`,`,`,`,,p(3x1),,,`,`,,`,`,`,`
-,,,,,,,,,,,,,,`,`,`,,`,,p(3x1),,,`,`,,c,t,~,~
+,,,,,,,,,,,,,,,,`,`,`,,p(3x1),,,`,`,,`,`,`,`
+,,,,,,,,,,,,,,,,`,`,`,,p(3x1),,,`,`,,`,`,`,`
+,,,,,,,,,,,,,,,,`,`,`,,p(3x1),,,`,`,,c,t,~,~
 ,,,,,,,,,,,,,,,,,,`,,p(3x1),,,`,`,,c,t,t,c
 ,,,,,,,,,,,,,,`,`,`,,`,,p(3x1),,,`,`,,`,`,`,`
 ,,,,,,,,,,,,,,`,`,`,`,`,,p(3x1),,,`,`,,`,`,`,`
@@ -2042,9 +2042,9 @@ build3/farming_build3
 
 
 
-,,,,,,,,,,,,,,`,`,`,,,,s,`,`,`,`,,`,`,`,`
-,,,,,,,,,,,,,,`,`,`,`,`,,s,`,`,`,`,,`,`,`,`
-,,,,,,,,,,,,,,`,`,`,,`,,s,`,`,`,`,,`,`,`,`
+,,,,,,,,,,,,,,,,`,`,`,,s,`,`,`,`,,`,`,`,`
+,,,,,,,,,,,,,,,,`,`,`,,s,`,`,`,`,,`,`,`,`
+,,,,,,,,,,,,,,,,`,`,`,,s,`,`,`,`,,`,`,`,`
 ,,,,,,,,,,,,,,,,,,`,,s,`,`,`,`,,`,`,`,`
 ,,,,,,,,,,,,,,`,`,`,,`,,s,`,`,`,`,,`,`,`,`
 ,,,,,,,,,,,,,,`,`,`,`,`,,s,`,`,`,`,,`,`,`,`
@@ -2092,10 +2092,10 @@ build3/farming_build3
 
 
 
-,,,,,,,,,,,,,,`,`,`,,,,`,`,`,`,`,,`,`,`,`
-,,,,,,,,,,,,,,`,`,`,d,`,,`,`,`,`,`,,`,`,`,`
-,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,`,`,,~,~,~,~
-,,,,,,,,,,,,,,,,,,`,,`,`,`,`,`,,~,~,~,~
+,,,,,,,,,,,,,,,,`,`,`,,`,`,`,`,`,,`,`,`,`
+,,,,,,,,,,,,,,,,`,`,`,,`,`,`,`,`,,`,`,`,`
+,,,,,,,,,,,,,,,,`,`,`,,`,`,`,`,`,,~,~,~,~
+,,,,,,,,,,,,,,,,,,d,,`,`,`,`,`,,~,~,~,~
 ,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,`,`,`
 ,,,,,,,,,,,,,,`,`,`,d,`,,`,`,`,`,`,,`,`,`,`
 ,,,,,,,,,,,,,,`,`,`,,`,,`,`,`,`,`,,d
@@ -2280,9 +2280,9 @@ query/industry_query
 ,,f,`,`,`,`,`,`,~,~,~,~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,`
 ,,f,`,`,`,`,`,`,~,~,~,~,~,,`,`,`,`,`,,~,~,~,~,~,`,`,`,`,`,`,`
 ,,f,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
-,,f,`,`,`,`,`,`,`,`,`,`,`,`,bpdz(5x1),,,,~,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,f,`,`,`,`,`,`,`,`,`,`,`,`,s2(5x4),,,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,f,`,`,`,`,`,`,`,`,`,`,`,`,bpdz(5x2),,,,~,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,f,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,f,`,`,`,`,`,`,`,`,`,`,`,`,s2(5x3),,,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,pd(7x3),,,~,~,~,~
 ,,,,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,~,~,~,~,~,~,~
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,~,~
@@ -2321,9 +2321,9 @@ query/industry_query
 ,,~,`,`,`,`,`,`,~,~,~,forbidcrafts,~,,`,`,`,`,`,,~,~,~,~,~,`,`,`,`,`,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,~,`,~,`,`,~,`,`,~,`,`,`,`,forbidpotash,nocontainers,"{givename name=""bar/military feeder""}",~,~,`,`,`,`,~,`,`,~,`,`,`,`,`
+,,~,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,`,forbidotherstone,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,~,`,`,`,`,`,`,`,`,`,`,`,`,"{givename name=""ore/clay feeder""}",~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,~,`,~,~,~,~,~,`,~,`,`,nocontainers,t{Left 6}{Up 3}&,t{Left 9}{Down 3}&,"{givename name=""meltable bronze/steel""}"
+,,,,`,`,`,`,`,`,`,`,`,~,`,"{givename name=""ore/clay feeder""}",~,~,~,~,`,~,`,`,nocontainers,t{Left 6}{Up 3}&,t{Left 9}{Down 3}&,"{givename name=""meltable bronze/steel""}"
 ,,,,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,{bronzeweapons}{permitsteelweapons}{forbidmasterworkweapons}{forbidartifactweapons}
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"{quantumstop name=""Metalworker quantum"" sp_links=""{sp_link move={Up} move_back={Down}}{sp_link move=""""{Up 5}"""" move_back=""""{Down 5}""""}""}{givename name=""metalworker dumper""}",`,`,`,`,`,`,{bronzearmor}{permitsteelarmor}{forbidmasterworkarmor}{forbidartifactarmor}
 ,,,,`,`,`,`,`,`,`,`,`,~,`,`,`,"{quantum name=""metalworker quantum""}",`,`,`,~,`,`,`,`,`,`,`,`,`
@@ -2356,11 +2356,11 @@ Services Walkthough:
 ""
 "3) Once the area is dug out, set up important furniture, stockpiles, hospital zone and garbage dump zone with /services2."
 ""
-"4) When the table and chair have been placed in the dining room, run /services3 to build the rest of the furniture and configure your dining room. Run ""quickfort orders"" for /services3."
+"4) When the table and chair have been placed in the dining room and the weapon rack and archery targets have been constructed in the barracks, run /services3 to build the rest of the furniture and configure your dining room and barracks. Run ""quickfort orders"" for /services3."
 ""
 5) Fill the wells with either bucket brigades or by carefully routing flowing water.
 ""
-"6) When your fort is mature enough to need a jail and/or an extra barracks, run /services4 to set those rooms up. You also get some decorative statues to increase the value of your dining hall. Run ""quickfort orders"" for /services4."
+"6) When your fort is mature enough to need jail cells, run /services4 to set those up. You also get some decorative statues to increase the value of your dining hall. Run ""quickfort orders"" for /services4."
 "#dig label(services1) start(23; 22; central stairs) message(This would be a good time to queue manager orders for /services2 and /services3. Once the area is dug out, continue with /services2.)"
 
 
@@ -2501,12 +2501,12 @@ query_jail/services_query_jail
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,d
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,A,A,A,`,A,A,A,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,r,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,b,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,h,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,`,,`,,,,,`,`,`,`,`,`,t,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,d,,d,,,,,`,`,`,`,`,`,t,`,`
 ,,,,`,`,`,`,t,c,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
@@ -2538,7 +2538,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,z(7x2),`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,`,,`,,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
@@ -2623,7 +2623,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,`,`,`,,`,`,`,`,`,`
 
 
-#query label(services_query_stockpiles) start(23; 22) hidden() configure stockpiles
+#query label(services_query_stockpiles) start(23; 22) hidden() message(Configure the training ammo stockpile to take from the metalworker quantum on the industry level.) configure stockpiles
 
 
 ,,,,`,`,`,,,`,`,`,,,`,`,`
@@ -2640,7 +2640,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,nocontainers,{bolts}{forbidmetalbolts}{forbidartifactammo},"{givename name=""training bolts""}",`,`,`,`,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,`,,`,,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
@@ -2657,7 +2657,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,`,`,`,,`,`,`,`,`,`
 
 
-#query label(services_query_dining) start(23; 22) message(the bedrooms above the tavern are left unconfigured so you can add them as rented rooms) set up dining room and jail
+#query label(services_query_dining) start(23; 22) message(the bedrooms above the tavern are left unconfigured so you can add them as rented rooms) set up dining room and barracks
 
 
 ,,,,`,`,`,,,`,`,`,,,`,`,`
@@ -2672,8 +2672,8 @@ query_jail/services_query_jail
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,r&w,r&w,r&w,`,r&w,r&w,r&w,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,r+++&,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,`,,`,,,,,`,`,`,`,`,`,`,`,`
@@ -2705,12 +2705,12 @@ query_jail/services_query_jail
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,v,`,d,`,d,`,v,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,d
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,r,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,f,`,`,`,`,b,~,b,b
-,,,,`,`,c,t,t,c,`,c,t,t,c,`,`,,`,`,`,`,`,`,`,`,`,,~,`,`,`,`,`,`,`,b
-,,,,`,`,c,t,t,c,`,c,t,t,c,`,`,,,,,d,,d,,,,,f,`,`,`,`,`,~,`,b
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,~
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,b,~,~,~,`,~,~,~,b
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,b,`,`,`,~,`,`,`,b
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,b,`,`,`,a,`,`,`,b,,f,`,`,`,`,b,~,b,b
+,,,,`,`,c,t,t,c,`,c,t,t,c,`,`,,h,`,`,`,`,`,`,`,h,,~,`,`,`,`,`,`,`,b
+,,,,`,`,c,t,t,c,`,c,t,t,c,`,`,,,,,~,,~,,,,,f,`,`,`,`,`,~,`,b
 ,,,,`,`,c,t,~,~,`,c,t,t,c,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,c,t,t,c,`,c,t,t,c,`,`,~,`,d,`,`,`,`,`,d,`,d,`,`,`,`,`,`,`,`,R
 ,,,,`,`,c,t,t,c,`,c,t,t,c,`,`,,,,`,`,`,`,`,,,,`,`,`,`,l,`,`,`,R
@@ -2754,7 +2754,7 @@ query_jail/services_query_jail
 ,,,,,,,,,,,,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`
 
 
-"#build label(services_build3) start(23; 22) hidden() barracks, jail, statues"
+"#build label(services_build3) start(23; 22) hidden() jail, statues"
 
 
 ,,,,~,~,~,,,~,~,~,,,~,~,~
@@ -2769,10 +2769,10 @@ query_jail/services_query_jail
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,c,~,`,~,`,~,c,~,`
 ,,,,s,`,`,`,`,`,`,`,`,`,`,`,s,,`,`,`,,`,,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,~
-,,,,s,`,`,`,`,`,`,`,`,`,`,`,s,,b,`,`,`,`,`,`,`,b
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,b,`,`,`,~,`,`,`,b
-,,,,s,`,`,`,`,`,`,`,`,`,`,`,s,,b,`,`,`,a,`,`,`,b,,~,`,s,s,`,~,~,~,~
-,,,,`,`,~,~,~,~,`,~,~,~,~,`,`,,h,`,`,`,`,`,`,`,h,,~,`,`,`,`,`,`,`,~
+,,,,s,`,`,`,`,`,`,`,`,`,`,`,s,,~,`,`,`,`,`,`,`,~
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,~,`,`,`,~,`,`,`,~
+,,,,s,`,`,`,`,`,`,`,`,`,`,`,s,,~,`,`,`,~,`,`,`,~,,~,`,s,s,`,~,~,~,~
+,,,,`,`,~,~,~,~,`,~,~,~,~,`,`,,~,`,`,`,`,`,`,`,~,,~,`,`,`,`,`,`,`,~
 ,,,,s,`,~,~,~,~,`,~,~,~,~,`,s,,,,,~,,~,,,,,~,`,`,`,`,`,~,`,~
 ,,,,`,`,~,~,~,~,`,~,~,~,~,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,s,`,~,~,~,~,`,~,~,~,~,`,`,~,`,~,`,`,`,`,`,~,`,~,`,`,`,`,`,`,`,`,~
@@ -2838,7 +2838,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,"{preparedfood}{givename name=""prepared food""}",t{Down 14}{Left 10}&,t{Down 14}{Left 4}&,,`,,"{preparedfood}{givename name=""prepared food""}",t{Left 6}&,t{Left 6}&
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,r+++&,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,`,,`,,,,,`,`,`,`,`,`,`,`,`

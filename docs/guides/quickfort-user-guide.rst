@@ -252,7 +252,8 @@ key seqences directly to your blueprints. For more details, check out the
 aliases being used in the query blueprints in the
 :source:`DFHack blueprint library <data/blueprints/library>`. You can create
 your own aliases by adding them to :source:`dfhack-config/quickfort/aliases.txt`
-in your DFHack folder.
+in your DFHack folder or you can add them
+`directly to your blueprint files <quickfort-aliases-blueprints>`.
 
 Area expansion syntax
 ~~~~~~~~~~~~~~~~~~~~~
@@ -842,6 +843,7 @@ Blueprint mode  Description
 meta            Link sequences of blueprints together
 notes           Display long messages, such as help text or blueprint
                 walkthroughs
+aliases         Define aliases that are visible only in the current file
 ignore          Hide a section from quickfort, useful for scratch space or
                 personal notes
 ==============  ===========
@@ -1001,6 +1003,44 @@ result in the same output::
 The quotes around the ``#meta`` modeline allow newlines in a single cell's text.
 Each line of the ``#notes`` "blueprint", however, is in a separate cell,
 allowing for much easier viewing and editing.
+
+.. _quickfort-aliases-blueprints:
+
+Aliases blueprints
+``````````````````
+
+You can define your custom aliases in an ``#aliases`` blueprint. In contrast to
+the aliases that you define in :source:`dfhack-config/quickfort/aliases.txt`,
+which are visible to all blueprints, aliases defined in ``#aliases`` blueprints
+are only visible to blueprints defined in the same .csv or .xlsx file. If you
+want to share your blueprint with others, defining your aliases in an
+``#aliases`` blueprint will make the blueprint much easier for others to use.
+
+Although we're calling them "blueprints", ``#aliases`` blueprints are not actual
+blueprints, and they don't show up when you run ``quickfort list``. The aliases
+are just automatically read in when you run any ``#query`` blueprint that is
+defined in the same file.
+
+Aliases can be in either of two formats, and you can mix formats freely within
+the same ``#aliases`` section. The first format is the same as what is used in
+the ``aliases.txt`` files::
+
+    #aliases
+    aliasname: aliasdefinition
+
+Aliases in this format must appear in the first column of a row.
+
+The second format has the alias name in the first column and the alias
+definition in the second column, with no colon separator::
+
+    #aliases
+    aliasname,aliasdefinition
+
+There can be multiple #aliases sections defined in a .csv file or .xlsx
+spreadsheet. The aliases are simply combined into one list. If an alias is
+defined multiple times, the last definition wins.
+
+See the `quickfort-alias-guide` for help with the alias definition syntax.
 
 Ignore blueprints
 `````````````````

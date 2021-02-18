@@ -57,9 +57,10 @@ in your DFHack installation). The aliases in that file are described at the
 
 Please do not edit the aliases in the standard library directly. The file will
 get overwritten when DFHack is updated and you'll lose your changes. Instead,
-add your custom aliases to :source:`dfhack-config/quickfort/aliases.txt`.
-Definitions in this file take precedence over any definitions in the standard
-library.
+add your custom aliases to :source:`dfhack-config/quickfort/aliases.txt` or
+directly to your blueprints in an `#aliases <quickfort-aliases-blueprints>`
+section. Your custom alias definitions take precedence over any definitions in
+the standard library.
 
 Alias syntax and usage
 ----------------------

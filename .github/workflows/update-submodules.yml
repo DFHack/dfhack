@@ -25,5 +25,5 @@ jobs:
         git config user.name "DFHack-Urist via GitHub Actions"
         git config user.email "DFHack-Urist@users.noreply.github.com"
         if bash -x ci/update-submodules.bash; then
-          git push
+          git push --recurse-submodules=check
         fi

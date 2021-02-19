@@ -203,7 +203,7 @@ command_result fortplan(color_ostream &out, vector<string> & params) {
     con.print("Fortplan is deprecated. Please move your blueprints to the"
     " 'blueprints' folder (under your DF installation directory) and use"
     " DFHack's quickfort command instead:\n  quickfort run example.csv\n"
-    " Fortplan will be removed in a future DFHack release.\n"
+    " Fortplan will be removed in a future DFHack release.\n");
 
     std::vector<std::vector<std::string>> layout(128, std::vector<std::string>(128));
     if (params.size()) {

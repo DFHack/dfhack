@@ -529,10 +529,10 @@ toggleartifact    prefix
 ``linksonly``, ``maxbins``, ``maxbarrels``, ``nobins``, ``nobarrels``, and
 ``nocontainers`` set the named basic properties on stockpiles. ``nocontainers``
 sets bins and barrels to 0, but does not affect wheelbarrows since the hotkeys
-for changing the number of wheelbarrows depend on whether you have the DFHack
-`stockpiles` plugin active. It is better to set the number of wheelbarrows via
-the `quickfort` ``stockpiles_max_wheelbarrows`` setting (set to ``0`` by
-default), or explicitly when you define the stockpile in the ``#place``
+for changing the number of wheelbarrows depend on whether you have DFHack's
+``tweak max-wheelbarrows`` enabled. It is better to set the number of
+wheelbarrows via the `quickfort` ``stockpiles_max_wheelbarrows`` setting (set to
+``0`` by default), or explicitly when you define the stockpile in the ``#place``
 blueprint.
 
 The ``give*`` aliases set a stockpile to give to a workshop or another

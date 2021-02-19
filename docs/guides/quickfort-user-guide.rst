@@ -509,6 +509,16 @@ corpses, wheelbarrows are assumed::
     #place a corpse stockpile with 3 wheelbarrows
     y3(3x3)
 
+Note that if you are not using expansion syntax, each tile of the stockpile must
+have the same text. Otherwise the stockpile boundaries will not be detected
+properly::
+
+    #place a non-rectangular animal stockpile with 5 wheelbarrows
+    a5,a5,a5,a5
+    a5,  ,  ,a5
+    a5,  ,  ,a5
+    a5,a5,a5,a5
+
 Running ``quickfort orders`` on a ``#place`` blueprint with explicitly set
 container/wheelbarrow counts will enqueue manager orders for the specified
 number of containers or wheelbarrows, even if that number exceeds the in-game

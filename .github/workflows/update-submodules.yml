@@ -1,0 +1,27 @@
+name: Update submodules
+
+on:
+  schedule:
+  - cron: '0 7 * * *'
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: DFHack branch to update
+        required: false
+        default: develop
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Clone DFHack
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        ref: ${{ github.event.inputs.branch }}
+        submodules: true
+    - name: Update submodules
+      run: |
+        if bash -x ci/update-submodules.bash; then
+          git push
+        fi

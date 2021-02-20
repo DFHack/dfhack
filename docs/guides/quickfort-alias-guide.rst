@@ -346,11 +346,15 @@ These aliases make it easy to create :wiki:`minecart stop-based quantum stockpil
 +----------------------+                  |
 | quantumstopfromwest  |                  |
 +----------------------+------------------+
+| sp_link              | | move           |
+|                      | | move_back      |
++----------------------+------------------+
 | quantumstop          | | name           |
 |                      | | stop_name      |
 |                      | | route_enable   |
 |                      | | move           |
 |                      | | move_back      |
+|                      | | sp_links       |
 +----------------------+------------------+
 
 The idea is to use a minecart on a track stop to dump an infinite number of
@@ -452,17 +456,27 @@ your own stockpile configuraiton aliases, you can use the magic yourself by
 building your aliases on the ``*prefix`` aliases described later in this
 guide.
 
-Finally, the ``quantumstop`` alias is a more general version of the
-``quantumstopfrom*`` aliases. The ``quantumstopfrom*`` aliases assume that the
-feeder stockpile is orthogonally adjacent to your track stop (which is how
-most people set them up). If your feeder stockpile is somewhere further away,
-you can use the ``quantumstop`` alias directly. In addition to the
-``quantumstopfrom*`` sub-aliases, you can also define the ``move`` and
-``move_back`` sub-aliases, which let you specify the cursor keys required to
-move from the track stop to the feeder stockpile and back again, respectively::
+Finally, the ``quantumstop`` alias is a more general version of the simpler
+``quantumstopfrom*`` aliases. The ``quantumstopfrom*`` aliases assume that a
+single feeder stockpile is orthogonally adjacent to your track stop (which is
+how most people set them up). If your feeder stockpile is somewhere further
+away, or you have multiple feeder stockpiles to link, you can use the
+``quantumstop`` alias directly. In addition to the sub-aliases used in the
+``quantumstopfrom*`` alias, you can define the ``move`` and ``move_back``
+sub-aliases, which let you specify the cursor keys required to move from the
+track stop to the (single) feeder stockpile and back again, respectively::
 
     #query
     {quantumstop move="{Right 2}{Up}" move_back="{Down}{Left 2}"}
+
+If you have multiple stockpiles to link, define the ``sp_links`` sub-alias,
+which can chain several ``sp_link`` aliases together, each with their own
+movement configuration::
+
+    #query
+    {quantumstop sp_links="{sp_link move=""{Right}{Up}"" move_back=""{Down}{Left}""}{sp_link move=""{Right}{Down}"" move_back=""{Up}{Left}""}"}
+
+Note the doubled quotes for quoted elements that are within the outer quotes.
 
 Farm plots
 ~~~~~~~~~~
@@ -486,10 +500,14 @@ Instead of these aliases, though, it might be more useful to use the DFHack
 Stockpile configuration utility aliases
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-===============  ===========
-Alias            Sub-aliases
-===============  ===========
+================  ===========
+Alias             Sub-aliases
+================  ===========
 linksonly
+maxbins
+maxbarrels
+nobins
+nobarrels
 nocontainers
 give2up
 give2down
@@ -499,17 +517,23 @@ give10up
 give10down
 give10left
 give10right
-give             move
+give              move
 togglesequence
 togglesequence2
-===============  ===========
+masterworkonly    prefix
+artifactonly      prefix
+togglemasterwork  prefix
+toggleartifact    prefix
+================  ===========
 
-``linksonly`` and ``nocontainers`` set the named basic properties on
-stockpiles. ``nocontainers`` sets bins and barrels to 0, but does not affect
-wheelbarrows since the hotkeys for changing the number of wheelbarrows depend
-on whether you have the DFHack `stockpiles` plugin active. It is better to set
-the number of wheelbarrows via the `quickfort` ``stockpiles_max_wheelbarrows``
-setting. It is set to ``0`` by default.
+``linksonly``, ``maxbins``, ``maxbarrels``, ``nobins``, ``nobarrels``, and
+``nocontainers`` set the named basic properties on stockpiles. ``nocontainers``
+sets bins and barrels to 0, but does not affect wheelbarrows since the hotkeys
+for changing the number of wheelbarrows depend on whether you have DFHack's
+``tweak max-wheelbarrow`` enabled. It is better to set the number of
+wheelbarrows via the `quickfort` ``stockpiles_max_wheelbarrows`` setting (set to
+``0`` by default), or explicitly when you define the stockpile in the ``#place``
+blueprint.
 
 The ``give*`` aliases set a stockpile to give to a workshop or another
 stockpile located at the indicated number of tiles in the indicated direction
@@ -558,11 +582,15 @@ tiles down::
 ``togglesequence`` and ``togglesequence2`` send ``{Down}{Enter}`` or
 ``{Down 2}{Enter}`` to toggle adjacent (or alternating) items in a list. This
 is useful when toggling a bunch of related item types in the stockpile config.
-For example, the ``dye`` and ``tallow`` aliases in the standard alias library
-need to select specific items from long lists::
+For example, the ``dye`` alias in the standard alias library needs to select
+four adjacent items::
 
-    dye:    {foodprefix}b{Right}{Down 11}{Right}{Down 28}{togglesequence 4}^
-    tallow: {foodprefix}b{Right}{Down 13}{Right}{Down}{togglesequence2 811}^
+    dye: {foodprefix}b{Right}{Down 11}{Right}{Down 28}{togglesequence 4}^
+
+Finally, the ``masterwork`` and ``artifact`` group of aliases configure the
+corresponding allowable core quality for the stockpile categories that have
+them. This alias is used to implement category-specific aliases below, like
+``artifactweapons`` and ``forbidartifactweapons``.
 
 .. _quickfort-stockpile-aliases:
 
@@ -658,17 +686,16 @@ miscliquid       forbidmiscliquid      permitmiscliquid
 Furniture stockpile adjustments
 ```````````````````````````````
 
-+-----------+
-| Exclusive |
-+===========+
-| pots      |
-+-----------+
-| bags      |
-+-----------+
-| buckets   |
-+-----------+
-| sand      |
-+-----------+
+===================  =========================  =========================
+Exclusive            Forbid                     Permit
+===================  =========================  =========================
+pots
+bags
+buckets
+sand
+masterworkfurniture  forbidmasterworkfurniture  permitmasterworkfurniture
+artifactfurniture    forbidartifactfurniture    permitartifactfurniture
+===================  =========================  =========================
 
 Notes:
 
@@ -681,7 +708,7 @@ Refuse stockpile adjustments
 ===========  ==================  ==================
 Exclusive    Forbid              Permit
 ===========  ==================  ==================
-bodyparts    forbidbodyparts     permitbodyparts
+corpses      forbidcorpses       permitcorpses
 rawhides     forbidrawhides      permitrawhides
 tannedhides  forbidtannedhides   permittannedhides
 skulls       forbidskulls        permitskulls
@@ -695,7 +722,6 @@ craftrefuse  forbidcraftrefuse   permitcraftrefuse
 
 Notes:
 
-* ``bodyparts`` includes remains/corpses and rotten rawhdes.
 * ``craftrefuse`` includes everything a craftsdwarf can use: skulls, bones,
   shells, teeth, horns, and hair.
 
@@ -719,14 +745,16 @@ clay           forbidclay            permitclay
 Ammo stockpile adjustments
 ``````````````````````````
 
-===============  ====================
-Exclusive        Forbid
-===============  ====================
+==============  ====================  ====================
+Exclusive       Forbid                Permit
+==============  ====================  ====================
 bolts
-\                forbidmetalbolts
-\                forbidwoodenbolts
-\                forbidbonebolts
-===============  ====================
+\               forbidmetalbolts
+\               forbidwoodenbolts
+\               forbidbonebolts
+masterworkammo  forbidmasterworkammo  permitmasterworkammo
+artifactammo    forbidartifactammo    permitartifactammo
+==============  ====================  ====================
 
 Bar stockpile adjustments
 `````````````````````````
@@ -764,12 +792,14 @@ cutstone     forbidcutstone
 Finished goods stockpile adjustments
 ````````````````````````````````````
 
-=========  ============  ============
-Exclusive  Forbid        Permit
-=========  ============  ============
+=======================  =============================  =============================
+Exclusive                Forbid                         Permit
+=======================  =============================  =============================
 jugs
-crafts     forbidcrafts  permitcrafts
-=========  ============  ============
+crafts                   forbidcrafts                   permitcrafts
+masterworkfinishedgoods  forbidmasterworkfinishedgoods  permitmasterworkfinishedgoods
+artifactfinishedgoods    forbidartifactfinishedgoods    permitartifactfinishedgoods
+=======================  =============================  =============================
 
 Cloth stockpile adjustments
 ```````````````````````````
@@ -789,9 +819,9 @@ Cloth stockpile adjustments
 Weapon stockpile adjustments
 ````````````````````````````
 
-=================  ========================  ====================
+=================  ========================  =======================
 Exclusive          Forbid                    Permit
-=================  ========================  ====================
+=================  ========================  =======================
 \                  forbidweapons             permitweapons
 \                  forbidtrapcomponents      permittrapcomponents
 metalweapons       forbidmetalweapons        permitmetalweapons
@@ -803,14 +833,14 @@ copperweapons      forbidcopperweapons       permitcopperweapons
 steelweapons       forbidsteelweapons        permitsteelweapons
 masterworkweapons  forbidmasterworkweapons   permitmasterworkweapons
 artifactweapons    forbidartifactweapons     permitartifactweapons
-=================  ========================  ====================
+=================  ========================  =======================
 
 Armor stockpile adjustments
 ```````````````````````````
 
-===============  ======================  ====================
+===============  ======================  =====================
 Exclusive        Forbid                  Permit
-===============  ======================  ====================
+===============  ======================  =====================
 metalarmor       forbidmetalarmor        permitmetalarmor
 otherarmor       forbidotherarmor        permitotherarmor
 ironarmor        forbidironarmor         permitironarmor
@@ -819,4 +849,4 @@ copperarmor      forbidcopperarmor       permitcopperarmor
 steelarmor       forbidsteelarmor        permitsteelarmor
 masterworkarmor  forbidmasterworkarmor   permitmasterworkarmor
 artifactarmor    forbidartifactarmor     permitartifactarmor
-===============  ======================  ====================
+===============  ======================  =====================

@@ -476,6 +476,62 @@ stockpiles using the keys that represent the categories of items that you want
 to store, and then only use a ``#query`` blueprint if you need fine-grained
 customization.
 
+.. _quickfort-place-containers:
+
+Stockpile bins, barrels, and wheelbarrows
+`````````````````````````````````````````
+
+Quickfort has global settings for default values for the number of bins,
+barrels, and wheelbarrows assigned to stockpiles, but these numbers can be set
+for individual stockpiles as well.
+
+To set the number of bins, barrels, or wheelbarrows, just add a number after the
+letter that indicates what type of stockpile it is. For example::
+
+    #place a stone stockpile with 5 wheelbarrows
+    s5(3x3)
+
+    #place a bar, ammo, weapon, and armor stockpile with 20 bins
+    bzpd20(5x5)
+
+If the specified number exceeds the number of available stockpile tiles, the
+number of available tiles is used. For wheelbarrows, that limit is reduced by 1
+to ensure there is at least one non-wheelbarrow tile available in the stockpile.
+Otherwise no stone would ever be brought to the stockpile since all tiles would
+be occupied by wheelbarrows!
+
+Quickfort figures out which container type is being set by looking at the letter
+that comes just before the number. For example ``zf10`` means 10 barrels in a
+stockpile that accepts both ammo and food whereas ``z10f`` means 10 bins. If
+the stockpile category doesn't usually use any container type, like refuse or
+corpses, wheelbarrows are assumed::
+
+    #place a corpse stockpile with 3 wheelbarrows
+    y3(3x3)
+
+Note that if you are not using expansion syntax, each tile of the stockpile must
+have the same text. Otherwise the stockpile boundaries will not be detected
+properly::
+
+    #place a non-rectangular animal stockpile with 5 wheelbarrows
+    a5,a5,a5,a5
+    a5,  ,  ,a5
+    a5,  ,  ,a5
+    a5,a5,a5,a5
+
+Running ``quickfort orders`` on a ``#place`` blueprint with explicitly set
+container/wheelbarrow counts will enqueue manager orders for the specified
+number of containers or wheelbarrows, even if that number exceeds the in-game
+size of the stockpile. For example, ``quickfort orders`` on the following
+blueprint will enqueue 10 rock pots, even though the stockpile only has 9
+tiles::
+
+    #place
+    f10(3x3)
+
+Zone detailed configuration
+```````````````````````````
+
 Detailed configuration for zones, such as the pit/pond toggle, can also be set
 by mimicking the hotkeys used to set them. Note that gather flags default to
 true, so specifying them in a blueprint will turn the toggles off. If you need
@@ -1082,14 +1138,22 @@ to use for blocks. You should also set the `buildingplan` material filter for
 construction building types to that type of rock as well so other random blocks
 you might have lying around aren't used.
 
-There are a few building types that will generate extra manager orders for
-related materials:
+Extra Manager Orders
+~~~~~~~~~~~~~~~~~~~~
+
+In ``#build`` blueprints, there are a few building types that will generate
+extra manager orders for related materials:
 
 -  Track stops will generate an order for a minecart
 -  Traction benches will generate orders for a table, mechanism, and rope
 -  Levers will generate an order for an extra two mechanisms for connecting the
    lever to a target
 -  Cage traps will generate an order for a cage
+
+
+Stockpiles in ``#place`` blueprints that `specify wheelbarrow or container
+counts <quickfort-place-containers>` will generate orders for the appropriate
+number of bins, pots, or wheelbarrows.
 
 Tips and tricks
 ---------------

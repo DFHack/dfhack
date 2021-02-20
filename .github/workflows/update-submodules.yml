@@ -20,6 +20,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ github.event.inputs.branch }}
         submodules: true
+        token: ${{ secrets.DFHACK_GITHUB_TOKEN }}
     - name: Update submodules
       run: |
         git config user.name "DFHack-Urist via GitHub Actions"

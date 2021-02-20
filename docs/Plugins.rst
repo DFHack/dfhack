@@ -52,7 +52,7 @@ Options (If only region and name are given, export all):
 :place:     Export stockpile commands to "<name>-place.csv"
 :query:     Export query commands to "<name>-query.csv"
 
-Goes very well with `fortplan`, for re-importing.
+Goes very well with `quickfort`, for re-importing.
 
 .. _remotefortressreader:
 
@@ -2355,8 +2355,12 @@ fortplan
 ========
 Usage: ``fortplan [filename]``
 
+**Fortplan is deprecated.** Please use DFHack's more powerful `quickfort`
+command instead. You can use your existing .csv files. Just move them to the
+``blueprints`` folder in your DF installation, and instead of ``fortplan file.csv`` run ``quickfort run file.csv``.
+
 Designates furniture for building according to a ``.csv`` file with
-quickfort-style syntax. Companion to `digfort`.
+quickfort-style syntax.
 
 The first line of the file must contain the following::
 

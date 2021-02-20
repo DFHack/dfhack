@@ -1,3 +1,8 @@
+/*
+ * Fortplan is deprecated. All functionality has moved to the DFHack quickfort
+ * script. Fortplan will be removed in a future DFHack release.
+ */
+
 #include <fstream>
 #include <vector>
 
@@ -194,8 +199,12 @@ std::vector<std::vector<std::string>> tokenizeFile(std::string filename) {
 }
 
 command_result fortplan(color_ostream &out, vector<string> & params) {
-
     auto & con = out;
+    con.print("Fortplan is deprecated. Please move your blueprints to the"
+    " 'blueprints' folder (under your DF installation directory) and use"
+    " DFHack's quickfort command instead:\n  quickfort run example.csv\n"
+    " Fortplan will be removed in a future DFHack release.\n");
+
     std::vector<std::vector<std::string>> layout(128, std::vector<std::string>(128));
     if (params.size()) {
         coord32_t cursor;

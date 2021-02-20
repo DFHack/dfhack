@@ -68,7 +68,7 @@ namespace embark_assist {
             embark_assist::defs::mid_level_tiles mlt;
         };
 
-        static states *state;
+        static states *state = nullptr;
 
         //=======================================================================================
 
@@ -2731,6 +2731,7 @@ void embark_assist::matcher::setup() {
 
 void embark_assist::matcher::shutdown() {
     delete state;
+    state = nullptr;
 }
 
 //=======================================================================================

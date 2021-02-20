@@ -75,7 +75,7 @@ namespace embark_assist {
             uint16_t max_inorganic;
         };
 
-        static states *state;
+        static states *state = nullptr;
 
         //=======================================================================================
 
@@ -2548,5 +2548,6 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
 
 void embark_assist::survey::shutdown() {
     delete state;
+    state = nullptr;
 }
 

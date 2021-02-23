@@ -47,6 +47,7 @@ namespace embark_assist {
             embark_assist::defs::match_results match_results;
             embark_assist::defs::match_iterators match_iterator;
             uint16_t max_inorganic;
+            embark_assist::defs::mid_level_tiles mlt;
         };
 
         static states *state = nullptr;
@@ -64,14 +65,12 @@ namespace embark_assist {
             }
 
             auto screen = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
-            embark_assist::defs::mid_level_tiles mlt;
-            embark_assist::survey::initiate(&mlt);
 
             embark_assist::survey::survey_mid_level_tile(&state->geo_summary,
                 &state->survey_results,
-                &mlt);
+                &state->mlt);
 
-            embark_assist::survey::survey_embark(&mlt,
+            embark_assist::survey::survey_embark(&state->mlt,
                 &state->survey_results,
                 &state->site_info,
                 false);
@@ -129,6 +128,7 @@ namespace embark_assist {
         void shutdown() {
 //            color_ostream_proxy out(Core::getInstance().getConsole());
             embark_assist::survey::shutdown();
+            embark_assist::matcher::shutdown();
             embark_assist::finder_ui::shutdown();
             embark_assist::overlay::shutdown();
             delete state;
@@ -309,6 +309,8 @@ command_result embark_assistant(color_ostream &out, std::vector <std::string> & 
     }
 
     embark_assist::survey::setup(embark_assist::main::state->max_inorganic);
+    embark_assist::survey::initiate(&embark_assist::main::state->mlt);
+    embark_assist::matcher::setup();
     embark_assist::main::state->geo_summary.resize(world_data->geo_biomes.size());
     embark_assist::main::state->survey_results.resize(world->worldgen.worldgen_parms.dim_x);
 
@@ -378,7 +380,7 @@ command_result embark_assistant(color_ostream &out, std::vector <std::string> & 
     embark_assist::survey::survey_region_sites(&embark_assist::main::state->region_sites);
     embark_assist::overlay::set_sites(&embark_assist::main::state->region_sites);
 
-    embark_assist::defs::mid_level_tiles mlt;
+    embark_assist::defs::mid_level_tiles &mlt = embark_assist::main::state->mlt;
     embark_assist::survey::survey_mid_level_tile(&embark_assist::main::state->geo_summary, &embark_assist::main::state->survey_results, &mlt);
     embark_assist::survey::survey_embark(&mlt, &embark_assist::main::state->survey_results, &embark_assist::main::state->site_info, false);
     embark_assist::overlay::set_embark(&embark_assist::main::state->site_info);

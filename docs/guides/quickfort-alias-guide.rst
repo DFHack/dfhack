@@ -701,9 +701,9 @@ artifactfurniture    forbidartifactfurniture    permitartifactfurniture
 Notes:
 
 * The ``bags`` alias excludes coffers and other boxes by forbidding all
-materials other than cloth, yarn, silk, and leather. Therefore, it is difficult
-to create ``forbidbags`` and ``permitbags`` without affecting other types of
-furniture stored in the same stockpile.
+  materials other than cloth, yarn, silk, and leather. Therefore, it is
+  difficult to create ``forbidbags`` and ``permitbags`` without affecting other
+  types of furniture stored in the same stockpile.
 
 * Because of the limitations of Dwarf Fortress, ``bags`` cannot distinguish
   between empty bags and bags filled with gypsum powder.

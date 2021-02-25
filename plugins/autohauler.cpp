@@ -570,8 +570,8 @@ static void enable_alchemist(color_ostream &out)
     if (!Units::setLaborValidity(unit_labor::ALCHEMIST, true))
     {
         // informational only; this is a non-fatal error
-        out.printerr("manipulator: Could not flag Alchemist as a valid skill; Alchemist will not"
-                     " be settable from DF or DFHack labor management screens.\n");
+        out.printerr("%s: Could not flag Alchemist as a valid skill; Alchemist will not"
+                     " be settable from DF or DFHack labor management screens.\n", plugin_name);
     }
 }
 

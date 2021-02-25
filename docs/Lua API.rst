@@ -1278,8 +1278,8 @@ Units module
 
   Sets the given labor to the given (boolean) validity for all units that are
   part of your fortress civilization. Valid labors are allowed to be toggled
-  in the in-game labor management screens (including DFHack's labor manipulator
-  screen).
+  in the in-game labor management screens (including DFHack's `labor manipulator
+  screen <manipulator>`).
 
 * ``dfhack.units.getNominalSkill(unit, skill[, use_rust])``
 

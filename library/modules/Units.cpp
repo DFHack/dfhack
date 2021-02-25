@@ -893,6 +893,19 @@ bool Units::isValidLabor(df::unit *unit, df::unit_labor labor)
     return true;
 }
 
+bool Units::setLaborValidity(df::unit_labor labor, bool isValid)
+{
+    if (!is_valid_enum_item(labor))
+        return false;
+    if (labor == df::unit_labor::NONE)
+        return false;
+    df::historical_entity *entity = df::historical_entity::find(ui->civ_id);
+    if (!entity || !entity->entity_raw)
+        return false;
+    entity->entity_raw->jobs.permitted_labor[labor] = isValid;
+    return true;
+}
+
 inline void adjust_speed_rating(int &rating, bool is_adventure, int value, int dwarf100, int dwarf200, int adv50, int adv75, int adv100, int adv200)
 {
     if  (is_adventure)

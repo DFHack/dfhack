@@ -47,6 +47,7 @@ alt-getopt_     MIT           \(c\) 2009 Aleksey Cheusov
 .. _libzip: https://github.com/nih-at/libzip
 .. _linenoise: http://github.com/antirez/linenoise
 .. _lua: http://www.lua.org
+.. _luacov: https://github.com/keplerproject/luacov
 .. _luafilesystem: https://github.com/keplerproject/luafilesystem
 .. _lua-profiler: http://lua-users.org/wiki/PepperfishProfiler
 .. _protobuf: https://github.com/google/protobuf

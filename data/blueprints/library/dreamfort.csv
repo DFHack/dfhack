@@ -2141,7 +2141,7 @@ Features:
 with separate stockpiles for:
 - A reserve of uncut gems for strange moods that the jeweler's workshop cannot take from
 - Steel bars and coal so you can see at a glance if you're low on either
-- Liquids that cannot be quantum stockpiled (e.g. lye)
+- Items that cannot be quantum stockpiled (e.g. lye and sand bags)
 - Meltable weapons and armor
 ""
 Workshops:
@@ -2274,7 +2274,7 @@ query/industry_query
 ,,f,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,f,`,`,`,`,`,`,`,`,`,`,`,`,e(5x1),,,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,f,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
-,,f,`,`,`,`,`,`,w(3x5),,,afnguS(2x5),`,,`,`,`,`,`,,rhl(5x5),,,~,~,`,`,`,`,`,`,`
+,,f,`,`,`,`,`,`,w(2x5),,afnguS(3x5),,`,,`,`,`,`,`,,rhl(5x5),,,~,~,`,`,`,`,`,`,`
 ,,f,`,`,`,`,`,`,~,~,~,~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,`
 ,,f,`,`,`,`,c,`,~,~,~,~,~,,`,,`,,`,,~,~,~,~,~,`,r,`,`,`,`,`
 ,,f,`,`,`,`,`,`,~,~,~,~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,`
@@ -2286,12 +2286,12 @@ query/industry_query
 ,,,,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,pd(7x3),,,~,~,~,~
 ,,,,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,~,~,~,~,~,~,~
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,~,~
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,c,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,pd(7x3),,,~,~,~,~
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,~,~
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,~,~
+,,,,`,`,`,`,`,`,`,`,`,`,`,b,`,c,`,b,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,b,b,b,b,b,`,`,`,`,pd(7x3),,,~,~,~,~
+,,,,`,`,`,`,`,`,`,`,`,`,`,b,`,`,`,b,`,`,`,`,~,~,~,~,~,~,~
+,,,,`,`,`,`,`,`,`,`,`,`,`,b,`,`,`,b,`,`,`,`,~,~,~,~,~,~,~
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,,,,,,,,b(6x1),,,~,~,~,`,b(6x1),,,~,~,~
+,,,,,,,,,,,u(6x1),,,~,~,~,`,b(6x1),,,~,~,~
 
 
 "#query label(industry_query) start(18; 18) hidden() message(remember to:
@@ -2314,11 +2314,11 @@ query/industry_query
 ,,nocontainers,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,"{givename name=""non-quantum liquids""}",`,~,`,`,~,`,`,~,`,`,`,`,nocontainers,"{givename name=""gem feeder""}",~,~,~,`,`,`,`,~,`,`,~,`,`,`,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
-,,~,`,`,`,`,`,`,"{givename name=""wood feeder""}",~,~,"{givename name=""goods feeder""}",~,,`,`,`,`,`,,craftrefuse,,,,~,`,`,`,`,`,`,`
-,,~,`,`,`,`,`,`,~,~,~,{cages}{permittraps},~,`,`,,,,`,`,"{givename name=""cloth/bones feeder""}",~,~,~,~,`,`,`,`,`,`,`
-,,~,`,~,`,`,"{quantum name=""goods/wood quantum""}g{Up 13}{Right 10}&","{quantumstop name=""Goods/Wood quantum"" sp_links=""{sp_link move={Right} move_back={Left}}{sp_link move=""""{Right 5}"""" move_back=""""{Left 5}""""}""}{givename name=""goods/wood dumper""}",~,~,~,{tallow}{permitdye},~,,`,,`,,`,,nocontainers,~,~,~,~,"{quantumstopfromwest name=""Clothier/Bones quantum""}{givename name=""cloth/bones dumper""}","{quantum name=""cloth/bones quantum""}",`,`,~,`,`
-,,~,`,`,`,`,`,`,~,~,~,nocontainers,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,`
-,,~,`,`,`,`,`,`,~,~,~,forbidcrafts,~,,`,`,`,`,`,,~,~,~,~,~,`,`,`,`,`,`,`
+,,~,`,`,`,`,`,`,"{givename name=""wood feeder""}",~,"{givename name=""goods feeder""}",nocontainers,~,,`,`,`,`,`,,craftrefuse,,,,~,`,`,`,`,`,`,`
+,,~,`,`,`,`,`,`,~,~,{cages}{permittraps},~,~,`,`,,,,`,`,"{givename name=""cloth/bones feeder""}",~,~,~,~,`,`,`,`,`,`,`
+,,~,`,~,`,`,"{quantum name=""goods/wood quantum""}g{Up 13}{Right 10}&","{quantumstop name=""Goods/Wood quantum"" sp_links=""{sp_link move={Right} move_back={Left}}{sp_link move=""""{Right 5}"""" move_back=""""{Left 5}""""}""}{givename name=""goods/wood dumper""}",~,~,{tallow}{permitdye},~,~,,`,,`,,`,,nocontainers,~,~,~,~,"{quantumstopfromwest name=""Clothier/Bones quantum""}{givename name=""cloth/bones dumper""}","{quantum name=""cloth/bones quantum""}",`,`,~,`,`
+,,~,`,`,`,`,`,`,~,~,forbidsand,~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,`
+,,~,`,`,`,`,`,`,~,~,forbidcrafts,~,~,,`,`,`,`,`,,~,~,~,~,~,`,`,`,`,`,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,~,`,~,`,`,~,`,`,~,`,`,`,`,forbidpotash,nocontainers,"{givename name=""bar/military feeder""}",~,~,`,`,`,`,~,`,`,~,`,`,`,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
@@ -2327,11 +2327,11 @@ query/industry_query
 ,,,,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,{bronzeweapons}{permitsteelweapons}{forbidmasterworkweapons}{forbidartifactweapons}
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"{quantumstop name=""Metalworker quantum"" sp_links=""{sp_link move={Up} move_back={Down}}{sp_link move=""""{Up 5}"""" move_back=""""{Down 5}""""}""}{givename name=""metalworker dumper""}",`,`,`,`,`,`,{bronzearmor}{permitsteelarmor}{forbidmasterworkarmor}{forbidartifactarmor}
 ,,,,`,`,`,`,`,`,`,`,`,~,`,`,`,"{quantum name=""metalworker quantum""}",`,`,`,~,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,nocontainers,t{Left 6}{Up 7}&,t{Left 9}{Up 1}&,"{givename name=""other meltables""}"
+,,,,`,`,`,`,`,`,`,`,`,`,`,coal,"{givename name=""coal""}",t{Up}&,nocontainers,`,`,`,`,`,nocontainers,t{Left 6}{Up 7}&,t{Left 9}{Up 1}&,"{givename name=""other meltables""}"
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,{metalweapons}{forbidbronzeweapons}{forbidsteelweapons}{forbidmasterworkweapons}{forbidartifactweapons}
 ,,,,`,`,`,`,`,`,`,`,`,~,`,`,`,~,`,`,`,~,`,`,{metalarmor}{forbidbronzearmor}{forbidsteelarmor}{forbidmasterworkarmor}{forbidartifactarmor}
 ,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,,,,,,,,coal,"{givename name=""coal""}",nocontainers,,,t{Up 5}{Right}&,`,t{Up 5}{Left}&,,,nocontainers,steelbars,"{givename name=""steel""}"
+,,,,,,,,,,,sand,"{givename name=""sand bags""}",nocontainers,~,~,~,`,t{Up 5}{Left}&,,,nocontainers,steelbars,"{givename name=""steel""}"
 
 
 #notes label(services_help)
@@ -2940,13 +2940,13 @@ Guildhall Walkthrough:
 ,,`,`,`,`,`,`,`,,,`,,,`,`,`,`,`,`,`,,,`,`,`,,,`,`,`,`,`,`,`,,,`,,,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,d,`,`,,,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,,,`,`,d,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,,,`,,,`,`,`,`,`,`,`,,,`,s,`,,,`,`,`,`,`,`,`,,,`,,,`,`,`,`,`,`,`
-,,,,,,,d,,,,`,,,,,,,,d,,,,`,,`,,,,d,,,,,,,,`,,,,d
+,,,,,,,d,,,,`,,,,,,,,d,,,,d,,d,,,,d,,,,,,,,`,,,,d
 ,,,,,,,`,,,,`,,,,,,,,`,,,,`,`,`,,,,`,,,,,,,,`,,,,`
-,,,,,,t,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,t
+,,,,,,t,`,`,`,`,`,`,`,`,`,`,`,`,`,`,d,`,,,,`,d,`,`,`,`,`,`,`,`,`,`,`,`,`,`,t
 ,,,,,,s,`,`,`,`,`,`,`,`,`,`,`,`,`,s,,`,,`,,`,,s,`,`,`,`,`,`,`,`,`,`,`,`,`,s
-,,,,,,t,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,t
+,,,,,,t,`,`,`,`,`,`,`,`,`,`,`,`,`,`,d,`,,,,`,d,`,`,`,`,`,`,`,`,`,`,`,`,`,`,t
 ,,,,,,,`,,,,`,,,,,,,,`,,,,`,`,`,,,,`,,,,,,,,`,,,,`
-,,,,,,,d,,,,`,,,,,,,,d,,,,`,,`,,,,d,,,,,,,,`,,,,d
+,,,,,,,d,,,,`,,,,,,,,d,,,,d,,d,,,,d,,,,,,,,`,,,,d
 ,,`,`,`,`,`,`,`,,,`,,,`,`,`,`,`,`,`,,,`,s,`,,,`,`,`,`,`,`,`,,,`,,,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,d,`,`,,,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,,,`,`,d,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,,,`,,,`,`,`,`,`,`,`,,,`,`,`,,,`,`,`,`,`,`,`,,,`,,,`,`,`,`,`,`,`

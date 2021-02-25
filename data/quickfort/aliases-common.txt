@@ -158,6 +158,14 @@ bags:    {furnitureprefix}de{Right}f{Right}{Up 10}&{Left}{Down}f{Down}f{Down}f{R
 buckets: {furnitureprefix}de{Right}f{Right}{Up 12}&^
 sand:    {furnitureprefix}de{Right}f{Right}{Up}&^
 
+forbidpots:    {furnitureprefix}{Right 2}{Up 5}&^
+forbidbuckets: {furnitureprefix}{Right 2}{Up 12}&^
+forbidsand:    {furnitureprefix}{Right 2}{Up}&^
+
+permitpots:    {forbidpots}
+permitbuckets: {forbidbuckets}
+permitsand:    {forbidsand}
+
 masterworkfurniture: {masterworkonly prefix={furnitureprefix}}
 artifactfurniture:   {artifactonly prefix={furnitureprefix}}
 

@@ -211,7 +211,7 @@ function convict.intercept_key(key)
         screen.cur_column == df.viewscreen_justicest.T_cur_column.ConvictChoices
 end
 function convict.get_message()
-    name = dfhack.TranslateName(screen.convict_choices[screen.cursor_right].name)
+    name = dfhack.TranslateName(dfhack.units.getVisibleName(screen.convict_choices[screen.cursor_right]))
     if name == "" then
         name = "this creature"
     end

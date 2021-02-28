@@ -1757,7 +1757,7 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
         // reads config from .luacov or uses defaults if file doesn't exist.
         // note that luacov overrides the debug hook installed by
         // interrupt_init() above.
-        if (PushModulePublic(out, state, "luacov_helper", "init") &&
+        if (PushModulePublic(out, state, "luacov.runner", "init") &&
             SafeCall(out, state, 0, 0))
         {
             out.print("Initialized luacov coverage monitoring\n");

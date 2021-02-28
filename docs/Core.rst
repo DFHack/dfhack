@@ -535,6 +535,10 @@ on UNIX-like systems:
 - ``DFHACK_LOG_MEM_RANGES`` (macOS only): if set, logs memory ranges to
   ``stderr.log``. Note that `devel/lsmem` can also do this.
 
+- ``DFHACK_ENABLE_LUACOV``: if set, enables coverage analysis of Lua scripts.
+  Use the `devel/luacov` script to generage coverage reports from the gathered
+  metrics.
+
 Other (non-DFHack-specific) variables that affect DFHack:
 
 - ``TERM``: if this is set to ``dumb`` or ``cons25`` on \*nix, the console will

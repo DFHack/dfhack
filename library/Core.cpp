@@ -1186,7 +1186,13 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                     force = true;
             }
             if (!Lua::Interrupt(force))
-                con.printerr("Failed to register hook - use 'kill-lua force' to force\n");
+            {
+                con.printerr(
+                    "Failed to register hook. This can happen if you have"
+                    " lua profiling or coverage monitoring enabled. Use"
+                    " 'kill-lua force' to force, but this will disable"
+                    " profiling and coverage monitoring.\n");
+            }
         }
         else if (builtin == "script")
         {

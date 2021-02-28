@@ -51,6 +51,26 @@ if dfhack.is_core_context then
     SC_UNPAUSED = 8
 end
 
+-- redirect any output explicitly sent to io.stdout or io.stderr to the standard
+-- output sinks. note that although the functions take and pass ...,
+-- only the first string argument will be printed by dfhack.printerr().
+if not io_write_rerouted then
+    local io_file_methods = getmetatable(io.stderr).__index
+    local std_io_file_write = io_file_methods.write
+    io_file_methods.write = function(f, ...)
+            if f == io.stdout then
+                print(...)
+                return f
+            end
+            if f == io.stderr then
+                dfhack.printerr(...)
+                return f
+            end
+            return std_io_file_write(f, ...)
+        end
+    io_write_rerouted = true
+end
+
 -- Error handling
 
 safecall = dfhack.safecall

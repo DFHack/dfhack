@@ -163,40 +163,26 @@ namespace trade {
 }
 
 namespace conf_lua {
-    static color_ostream_proxy *out;
-    static lua_State *l_state;
-    bool init (color_ostream &dfout)
-    {
-        out = new color_ostream_proxy(Core::getInstance().getConsole());
-        l_state = Lua::Open(*out);
-        return l_state;
-    }
-    void cleanup()
-    {
-        if (out)
-        {
-            delete out;
-            out = nullptr;
-        }
-        lua_close(l_state);
-    }
     bool call (const char *func, int nargs = 0, int nres = 0)
     {
-        if (!Lua::PushModulePublic(*out, l_state, "plugins.confirm", func))
+        auto L = Lua::Core::State;
+        color_ostream_proxy out(Core::getInstance().getConsole());
+
+        if (!Lua::PushModulePublic(out, L, "plugins.confirm", func))
             return false;
         if (nargs > 0)
-            lua_insert(l_state, lua_gettop(l_state) - nargs);
-        return Lua::SafeCall(*out, l_state, nargs, nres);
+            lua_insert(L, lua_gettop(L) - nargs);
+        return Lua::SafeCall(out, L, nargs, nres);
     }
     bool simple_call (const char *func)
     {
-        Lua::StackUnwinder top(l_state);
+        Lua::StackUnwinder top(Lua::Core::State);
         return call(func, 0, 0);
     }
     template <typename T>
     void push (T val)
     {
-        Lua::Push(l_state, val);
+        Lua::Push(Lua::Core::State, val);
     }
     namespace api {
         int get_ids (lua_State *L)
@@ -377,37 +363,40 @@ public:
         }
     }
     virtual string get_id() override = 0;
-    #define CONF_LUA_START using namespace conf_lua; Lua::StackUnwinder unwind(l_state); push(screen); push(get_id());
+    #define CONF_LUA_START using namespace conf_lua; Lua::StackUnwinder unwind(Lua::Core::State); push(screen); push(get_id());
     bool intercept_key (df::interface_key key)
     {
         CONF_LUA_START;
         push(key);
         if (call("intercept_key", 3, 1))
-            return lua_toboolean(l_state, -1);
+            return lua_toboolean(Lua::Core::State, -1);
         else
             return false;
     };
     string get_title()
     {
         CONF_LUA_START;
-        if (call("get_title", 2, 1) && lua_isstring(l_state, -1))
-            return lua_tostring(l_state, -1);
+        auto L = Lua::Core::State;
+        if (call("get_title", 2, 1) && lua_isstring(L, -1))
+            return lua_tostring(L, -1);
         else
             return "Confirm";
     }
     string get_message()
     {
         CONF_LUA_START;
-        if (call("get_message", 2, 1) && lua_isstring(l_state, -1))
-            return lua_tostring(l_state, -1);
+        auto L = Lua::Core::State;
+        if (call("get_message", 2, 1) && lua_isstring(L, -1))
+            return lua_tostring(L, -1);
         else
             return "<Message generation failed>";
     };
     UIColor get_color()
     {
         CONF_LUA_START;
-        if (call("get_color", 2, 1) && lua_isnumber(l_state, -1))
-            return lua_tointeger(l_state, -1) % 16;
+        auto L = Lua::Core::State;
+        if (call("get_color", 2, 1) && lua_isnumber(L, -1))
+            return lua_tointeger(L, -1) % 16;
         else
             return COLOR_YELLOW;
     }
@@ -484,8 +473,6 @@ DEFINE_CONFIRMATION(convict,            viewscreen_justicest);
 
 DFhackCExport command_result plugin_init (color_ostream &out, vector <PluginCommand> &commands)
 {
-    if (!conf_lua::init(out))
-        return CR_FAILURE;
     commands.push_back(PluginCommand(
         "confirm",
         "Confirmation dialogs",
@@ -520,7 +507,6 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out)
 {
     if (plugin_enable(out, false) != CR_OK)
         return CR_FAILURE;
-    conf_lua::cleanup();
 
     for (auto item : confirmations)
     {

@@ -2,8 +2,41 @@ local json = require 'json'
 local script = require 'gui.script'
 local utils = require 'utils'
 
-local args = {...}
-local done_command = args[1]
+local help_text =
+[[
+Run DFHack tests.
+
+Usage:
+    test/main [<options>] <post-test command>
+
+Options:
+    -h, --help      display this help message and exit.
+    -n, --nocache   don't skip tests marked as completed in test_status.json.
+    -m, --modes     only run tests in the given comma separated list of modes.
+                    valid modes are 'none' and 'title'. if not specified, no
+                    modes are filtered.
+    -t, --tests     only run tests that match one of the comma separated list of
+                    patterns. if not specified, no tests are filtered.
+
+Examples:
+    test/main                 runs all tests that haven't been run before
+    test/main -n              reruns all tests
+    test/main -nm none        reruns tests that don't need the game to be in a
+                              specific mode
+    test/main -nt quickfort   reruns quickfort tests
+]]
+
+local help, nocache, mode_filter, test_filter = false, false, {}, {}
+local done_command = utils.processArgsGetopt({...}, {
+        {'h', 'help', handler=function() help = true end},
+        {'n', 'nocache', handler=function() nocache = true end},
+        {'m', 'modes', hasArg=true,
+         handler=function(arg) mode_filter = arg:split(',') end},
+        {'t', 'tests', hasArg=true,
+         handler=function(arg) test_filter = arg:split(',') end},
+    })
+
+if help then print(help_text) return end
 
 local CONFIG_FILE = 'test_config.json'
 local STATUS_FILE = 'test_status.json'
@@ -152,6 +185,10 @@ function load_test_config(config_file)
         error('Invalid test folder: ' .. config.test_dir)
     end
 
+    -- override config with any params specified on the commandline
+    if #mode_filter > 0 then config.modes = mode_filter end
+    if #test_filter > 0 then config.tests = test_filter end
+
     return config
 end
 
@@ -207,7 +244,7 @@ function get_test_files(test_dir)
 end
 
 function load_test_status()
-    if dfhack.filesystem.isfile(STATUS_FILE) then
+    if not nocache and dfhack.filesystem.isfile(STATUS_FILE) then
         return json.decode_file(STATUS_FILE)
     end
 end
@@ -218,7 +255,7 @@ end
 
 function finish_tests()
     dfhack.internal.IN_TEST = false
-    if done_command then
+    if #done_command > 0 then
         dfhack.run_command(done_command)
     end
 end
@@ -305,8 +342,6 @@ function main()
     }
     local passed = true
 
-    ensure_title_screen()
-
     print('Loading tests')
     local tests = {}
     for _, file in ipairs(files) do
@@ -316,15 +351,32 @@ function main()
         end
     end
 
-    print('Filtering tests')
-    if config.tests then
+    if config.tests or config.modes then
+        print('Filtering tests')
         local orig_length = #tests
         for i = #tests, 1, -1 do
-            for _, pattern in pairs(config.tests) do
-                if not tests[i].name:match(pattern) then
-                    table.remove(tests, i)
+            local remove = false
+            if config.modes then
+                remove = true
+                -- allow test if it matches any of the given modes
+                for _, mode in pairs(config.modes) do
+                    if tests[i].config.mode == mode then
+                        remove = false
+                        break
+                    end
                 end
             end
+            if config.tests and not remove then
+                remove = true
+                -- allow test if it matches any of the given patterns
+                for _, pattern in pairs(config.tests) do
+                    if tests[i].name:match(pattern) then
+                        remove = false
+                        break
+                    end
+                end
+            end
+            if remove then table.remove(tests, i) end
         end
         print('Selected tests: ' .. #tests .. '/' .. orig_length)
     end

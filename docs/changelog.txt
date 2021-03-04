@@ -35,6 +35,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - `confirm`: stopped exposing alternate names when convicting units
+- `prospector`: improved pre embark rough estimates, particularly for small clusters
 
 ## Misc Improvements
 - `autohauler`: allow the ``Alchemist`` labor to be enabled in `manipulator` and other labor screens so it can be used for its intended purpose of flagging that no hauling labors should be assigned to a dwarf. Before, the only way to set the flag was to use an external program like Dwarf Therapist.

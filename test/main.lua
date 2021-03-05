@@ -79,20 +79,56 @@ end
 function expect.ge(a, b, comment)
     return a >= b, comment, ('%s < %s'):format(a, b)
 end
-function expect.table_eq(a, b, comment)
+local function table_eq_recurse(a, b, keys, known_eq)
+    if a == b then return true end
     local checked = {}
-    for k, v in pairs(a) do
-        if a[k] ~= b[k] then
-            return false, comment, ('key "%s": %s ~= %s'):format(k, a[k], b[k])
+    for k,v in pairs(a) do
+        if type(a[k]) == 'table' then
+            if known_eq[a[k]] and known_eq[a[k]][b[k]] then goto skip end
+            table.insert(keys, tostring(k))
+            if type(b[k]) ~= 'table' then
+                return false, keys, {tostring(a[k]), tostring(b[k])}
+            end
+            if not known_eq[a[k]] then known_eq[a[k]] = {} end
+            for eq_tab,_ in pairs(known_eq[a[k]]) do
+                known_eq[eq_tab][b[k]] = true
+            end
+            known_eq[a[k]][b[k]] = true
+            if not known_eq[b[k]] then known_eq[b[k]] = {} end
+            for eq_tab,_ in pairs(known_eq[b[k]]) do
+                known_eq[eq_tab][a[k]] = true
+            end
+            known_eq[b[k]][a[k]] = true
+            local matched, keys_at_diff, diff =
+                    table_eq_recurse(a[k], b[k], keys, known_eq)
+            if not matched then return false, keys_at_diff, diff end
+            keys[#keys] = nil
+        elseif a[k] ~= b[k] then
+            table.insert(keys, tostring(k))
+            return false, keys, {tostring(a[k]), tostring(b[k])}
         end
+        ::skip::
         checked[k] = true
     end
     for k in pairs(b) do
         if not checked[k] then
-            return false, comment, ('key "%s": %s ~= %s'):format(k, a[k], b[k])
+            table.insert(keys, tostring(k))
+            return false, keys, {tostring(a[k]), tostring(b[k])}
         end
     end
     return true
+end
+function expect.table_eq(a, b, comment)
+    if type(a) ~= 'table' or type(b) ~= 'table' then
+        return false, comment, 'both operands to table_eq must be tables'
+    end
+    local keys, known_eq = {}, {}
+    local matched, keys_at_diff, diff = table_eq_recurse(a, b, keys, known_eq)
+    if matched then return true end
+    local keystr = '['..keys_at_diff[1]..']'
+    for i=2,#keys_at_diff do keystr = keystr..'['..keys_at_diff[i]..']' end
+    return false, comment,
+            ('key %s: "%s" ~= "%s"'):format(keystr, diff[1], diff[2])
 end
 function expect.error(func, ...)
     local ok, ret = pcall(func, ...)
@@ -199,6 +235,7 @@ function build_test_env()
             mode = 'none',
         },
         expect = {},
+        expect_raw = expect,
         delay = delay,
         require = clean_require,
     }
@@ -342,7 +379,7 @@ function main()
     }
     local passed = true
 
-    print('Loading tests')
+    print('Loading tests from ' .. config.test_dir)
     local tests = {}
     for _, file in ipairs(files) do
         if not load_tests(file, tests) then

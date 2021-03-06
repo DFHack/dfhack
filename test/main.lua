@@ -37,7 +37,7 @@ local done_command = utils.processArgsGetopt({...}, {
         {'h', 'help', handler=function() help = true end},
         {'n', 'nocache', handler=function() nocache = true end},
         {'d', 'test_dir', hasArg=true,
-         handler=function(arg) mode_filter = arg:split(',') end},
+         handler=function(arg) test_dir = arg end},
         {'m', 'modes', hasArg=true,
          handler=function(arg) mode_filter = arg:split(',') end},
         {'t', 'tests', hasArg=true,
@@ -127,8 +127,9 @@ local function table_eq_recurse(a, b, keys, known_eq)
     return true
 end
 function expect.table_eq(a, b, comment)
-    if type(a) ~= 'table' or type(b) ~= 'table' then
-        return false, comment, 'both operands to table_eq must be tables'
+    if (type(a) ~= 'table' and type(a) ~= 'userdata') or
+            (type(b) ~= 'table' and type(b) ~= 'userdata') then
+        return false, comment, 'operands to table_eq must be tables or userdata'
     end
     local keys, known_eq = {}, {}
     local matched, keys_at_diff, diff = table_eq_recurse(a, b, keys, known_eq)

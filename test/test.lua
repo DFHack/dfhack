@@ -8,6 +8,9 @@ function test.table_eq()
     expect.true_(expect_raw.table_eq({{'a', k='val'}, 'b'},
                                      {{'a', k='val'}, 'b'}))
 
+    expect.false_(expect_raw.table_eq(nil, nil)) -- operands must be non-nil
+    expect.false_(expect_raw.table_eq({}, nil))
+    expect.false_(expect_raw.table_eq(nil, {}))
     expect.false_(expect_raw.table_eq({}, {''}))
     expect.false_(expect_raw.table_eq({''}, {}))
     expect.false_(expect_raw.table_eq({'a', {}}, {'a'}))

@@ -31,3 +31,4 @@
 [submodule "depends/luacov"]
 	path = depends/luacov
 	url = ../../keplerproject/luacov.git
+	shallow = true

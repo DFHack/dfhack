@@ -1190,7 +1190,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                 con.printerr(
                     "Failed to register hook. This can happen if you have"
                     " lua profiling or coverage monitoring enabled. Use"
-                    " 'kill-lua force' to force, but this will disable"
+                    " 'kill-lua force' to force, but this may disable"
                     " profiling and coverage monitoring.\n");
             }
         }

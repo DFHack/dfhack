@@ -536,7 +536,7 @@ on UNIX-like systems:
   ``stderr.log``. Note that `devel/lsmem` can also do this.
 
 - ``DFHACK_ENABLE_LUACOV``: if set, enables coverage analysis of Lua scripts.
-  Use the `devel/luacov` script to generage coverage reports from the gathered
+  Use the `devel/luacov` script to generate coverage reports from the collected
   metrics.
 
 Other (non-DFHack-specific) variables that affect DFHack:

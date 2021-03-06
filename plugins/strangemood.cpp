@@ -185,7 +185,7 @@ void generateName(df::language_name &output, int language, df::language_name_typ
             if (mode != 10)
             {
         case language_name_type::Site:
-        case language_name_type::Unk37: // this is not a typo
+        case language_name_type::Monument:
                 if (rng.df_trandom(2))
                 {
                     selectWord(table2, output.words[0], output.parts_of_speech[0], 0);
@@ -268,7 +268,7 @@ void generateName(df::language_name &output, int language, df::language_name_typ
         case language_name_type::Region:
         case language_name_type::AdventuringGroup:
         case language_name_type::SiteGovernment:
-        case language_name_type::Unk15:
+        case language_name_type::NomadicGroup:
         case language_name_type::Vessel:
         case language_name_type::MilitaryUnit:
         case language_name_type::Religion:
@@ -290,7 +290,7 @@ void generateName(df::language_name &output, int language, df::language_name_typ
         case language_name_type::Tunnel:
         case language_name_type::PretentiousEntityPosition:
         case language_name_type::Tomb:
-        case language_name_type::MigratingGroup:
+        case language_name_type::OutcastGroup:
             selectWord(table1, output.words[5], output.parts_of_speech[5], 2);
             r3 = rng.df_trandom(3);
             if (rng.df_trandom(50))

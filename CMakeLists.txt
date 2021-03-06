@@ -491,6 +491,9 @@ endif()
 
 option(BUILD_TESTS "Include tests (currently just installs Lua tests into the scripts folder)" OFF)
 if(BUILD_TESTS)
+    if(EXISTS "${dfhack_SOURCE_DIR}/test/scripts")
+        message(SEND_ERROR "test/scripts must not exist in the dfhack repo since it would conflict with the tests installed from the scripts repo.")
+    endif()
     install(DIRECTORY ${dfhack_SOURCE_DIR}/test
         DESTINATION ${DFHACK_DATA_DESTINATION}/scripts)
 endif()

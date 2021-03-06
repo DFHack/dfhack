@@ -12,6 +12,8 @@ Usage:
 Options:
     -h, --help      display this help message and exit.
     -n, --nocache   don't skip tests marked as completed in test_status.json.
+    -d, --test_dir  specifies which directory to look in for tests. defaults to
+                    the "hack/scripts/test" folder in your DF installation.
     -m, --modes     only run tests in the given comma separated list of modes.
                     valid modes are 'none' and 'title'. if not specified, no
                     modes are filtered.
@@ -24,12 +26,18 @@ Examples:
     test/main -nm none        reruns tests that don't need the game to be in a
                               specific mode
     test/main -nt quickfort   reruns quickfort tests
+    test/main -nd /path/to/dfhack-scripts/repo/test
+                              runs tests in your in-development branch of the
+                              scripts repo
 ]]
 
-local help, nocache, mode_filter, test_filter = false, false, {}, {}
+local help, nocache, test_dir, mode_filter, test_filter =
+        false, false, nil, {}, {}
 local done_command = utils.processArgsGetopt({...}, {
         {'h', 'help', handler=function() help = true end},
         {'n', 'nocache', handler=function() nocache = true end},
+        {'d', 'test_dir', hasArg=true,
+         handler=function(arg) mode_filter = arg:split(',') end},
         {'m', 'modes', hasArg=true,
          handler=function(arg) mode_filter = arg:split(',') end},
         {'t', 'tests', hasArg=true,
@@ -214,16 +222,17 @@ function load_test_config(config_file)
         config = json.decode_file(config_file)
     end
 
+    -- override config with any params specified on the commandline
+    if test_dir then config.test_dir = test_dir end
+    if #mode_filter > 0 then config.modes = mode_filter end
+    if #test_filter > 0 then config.tests = test_filter end
+
     if not config.test_dir then
         config.test_dir = dfhack.getHackPath() .. 'scripts/test'
     end
     if not dfhack.filesystem.isdir(config.test_dir) then
         error('Invalid test folder: ' .. config.test_dir)
     end
-
-    -- override config with any params specified on the commandline
-    if #mode_filter > 0 then config.modes = mode_filter end
-    if #test_filter > 0 then config.tests = test_filter end
 
     return config
 end

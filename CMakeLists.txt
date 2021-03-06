@@ -419,7 +419,8 @@ endif()
 # build the lib itself
 if(BUILD_LIBRARY)
     add_subdirectory(library)
-    install(FILES LICENSE.rst docs/changelog.txt DESTINATION ${DFHACK_USERDOC_DESTINATION})
+    install(FILES LICENSE.rst DESTINATION ${DFHACK_USERDOC_DESTINATION})
+    install(FILES docs/changelog-placeholder.txt DESTINATION ${DFHACK_USERDOC_DESTINATION} RENAME changelog.txt)
 endif()
 
 file(WRITE "${CMAKE_BINARY_DIR}/dfhack_setarch.txt" ${DFHACK_SETARCH})

@@ -1,9 +1,16 @@
+-- DFHack developer test harness
+--@ module = true
+
 local json = require 'json'
 local script = require 'gui.script'
 local utils = require 'utils'
 
 local help_text =
-[[
+[====[
+
+test/main
+=========
+
 Run DFHack tests.
 
 Usage:
@@ -29,22 +36,7 @@ Examples:
     test/main -nd /path/to/dfhack-scripts/repo/test
                               runs tests in your in-development branch of the
                               scripts repo
-]]
-
-local help, nocache, test_dir, mode_filter, test_filter =
-        false, false, nil, {}, {}
-local done_command = utils.processArgsGetopt({...}, {
-        {'h', 'help', handler=function() help = true end},
-        {'n', 'nocache', handler=function() nocache = true end},
-        {'d', 'test_dir', hasArg=true,
-         handler=function(arg) test_dir = arg end},
-        {'m', 'modes', hasArg=true,
-         handler=function(arg) mode_filter = arg:split(',') end},
-        {'t', 'tests', hasArg=true,
-         handler=function(arg) test_filter = arg:split(',') end},
-    })
-
-if help then print(help_text) return end
+]====]
 
 local CONFIG_FILE = 'test_config.json'
 local STATUS_FILE = 'test_status.json'
@@ -177,12 +169,12 @@ function expect.not_pairs_contains(table, key, comment)
     return true
 end
 
-function delay(frames)
+local function delay(frames)
     frames = frames or 1
     script.sleep(frames, 'frames')
 end
 
-function clean_require(module)
+local function clean_require(module)
     -- wrapper around require() - forces a clean load of every module to ensure
     -- that modules checking for dfhack.internal.IN_TEST at load time behave
     -- properly
@@ -192,7 +184,7 @@ function clean_require(module)
     return require(module)
 end
 
-function ensure_title_screen()
+local function ensure_title_screen()
     if df.viewscreen_titlest:is_instance(dfhack.gui.getCurViewscreen()) then
         return
     end
@@ -217,35 +209,26 @@ local MODE_NAVIGATE_FNS = {
     title = ensure_title_screen,
 }
 
-function load_test_config(config_file)
+local function load_test_config(config_file)
     local config = {}
     if dfhack.filesystem.isfile(config_file) then
         config = json.decode_file(config_file)
     end
 
-    -- override config with any params specified on the commandline
-    if test_dir then config.test_dir = test_dir end
-    if #mode_filter > 0 then config.modes = mode_filter end
-    if #test_filter > 0 then config.tests = test_filter end
-
     if not config.test_dir then
         config.test_dir = dfhack.getHackPath() .. 'scripts/test'
-    end
-    if not dfhack.filesystem.isdir(config.test_dir) then
-        error('Invalid test folder: ' .. config.test_dir)
     end
 
     return config
 end
 
-function build_test_env()
+local function build_test_env()
     local env = {
         test = utils.OrderedTable(),
         config = {
             mode = 'none',
         },
         expect = {},
-        expect_raw = expect,
         delay = delay,
         require = clean_require,
     }
@@ -279,8 +262,9 @@ function build_test_env()
     return env, private
 end
 
-function get_test_files(test_dir)
+local function get_test_files(test_dir)
     local files = {}
+    print('Loading tests from ' .. test_dir)
     for _, entry in ipairs(dfhack.filesystem.listdir_recursive(test_dir)) do
         if not entry.isdir and not entry.path:match('main.lua') then
             table.insert(files, entry.path)
@@ -290,25 +274,25 @@ function get_test_files(test_dir)
     return files
 end
 
-function load_test_status()
-    if not nocache and dfhack.filesystem.isfile(STATUS_FILE) then
+local function load_test_status()
+    if dfhack.filesystem.isfile(STATUS_FILE) then
         return json.decode_file(STATUS_FILE)
     end
 end
 
-function save_test_status(status)
+local function save_test_status(status)
     json.encode_file(status, STATUS_FILE)
 end
 
-function finish_tests()
+local function finish_tests(done_command)
     dfhack.internal.IN_TEST = false
     if #done_command > 0 then
         dfhack.run_command(done_command)
     end
 end
 
-function load_tests(file, tests)
-    local short_filename = file:sub(file:find('test'), -1)
+local function load_tests(file, tests)
+    local short_filename = file:sub((file:find('test') or -4)+5, -1)
     print('Loading file: ' .. short_filename)
     local env, env_private = build_test_env()
     local code, err = loadfile(file, 't', env)
@@ -342,7 +326,7 @@ function load_tests(file, tests)
     return true
 end
 
-function sort_tests(tests)
+local function sort_tests(tests)
     -- to make sort stable
     local test_index = utils.invert(tests)
     table.sort(tests, function(a, b)
@@ -354,7 +338,7 @@ function sort_tests(tests)
     end)
 end
 
-function run_test(test, status, counts)
+local function run_test(test, status, counts)
     test.private.checks = 0
     test.private.checks_ok = 0
     counts.tests = counts.tests + 1
@@ -376,28 +360,17 @@ function run_test(test, status, counts)
     return passed
 end
 
-function main()
-    local config = load_test_config(CONFIG_FILE)
-    local files = get_test_files(config.test_dir)
-
-    local counts = {
-        tests = 0,
-        tests_ok = 0,
-        checks = 0,
-        checks_ok = 0,
-        file_errors = 0,
-    }
-    local passed = true
-
-    print('Loading tests from ' .. config.test_dir)
+local function get_tests(test_files, counts)
     local tests = {}
-    for _, file in ipairs(files) do
+    for _, file in ipairs(test_files) do
         if not load_tests(file, tests) then
-            passed = false
             counts.file_errors = counts.file_errors + 1
         end
     end
+    return tests
+end
 
+local function filter_tests(tests, config)
     if config.tests or config.modes then
         print('Filtering tests')
         local orig_length = #tests
@@ -427,18 +400,27 @@ function main()
         end
         print('Selected tests: ' .. #tests .. '/' .. orig_length)
     end
-    local status = load_test_status() or {}
-    for i = #tests, 1, -1 do
-        local test = tests[i]
-        if not status[test.full_name] then
-            status[test.full_name] = TestStatus.PENDING
-        elseif status[test.full_name] ~= TestStatus.PENDING then
-            print('skipping test: ' .. test.name .. ': state = ' .. status[test.full_name] .. ')')
-            table.remove(tests, i)
+
+    local status = {}
+    if not config.nocache then
+        status = load_test_status() or status
+        for i = #tests, 1, -1 do
+            local test = tests[i]
+            if not status[test.full_name] then
+                status[test.full_name] = TestStatus.PENDING
+            elseif status[test.full_name] ~= TestStatus.PENDING then
+                print(('skipping test: %s: state = %s)'):format(
+                        test.name, status[test.full_name]))
+                table.remove(tests, i)
+            end
         end
     end
-    sort_tests(tests)
 
+    sort_tests(tests)
+    return status
+end
+
+local function run_tests(tests, status, counts)
     print('Running ' .. #tests .. ' tests')
     for _, test in pairs(tests) do
         MODE_NAVIGATE_FNS[test.config.mode]()
@@ -453,6 +435,53 @@ function main()
     print(('%d test files failed to load'):format(counts.file_errors))
 end
 
-script.start(function()
-    dfhack.with_finalize(finish_tests, main)
-end)
+local function main(args)
+    local help, nocache, test_dir, mode_filter, test_filter =
+            false, false, nil, {}, {}
+    local done_command = utils.processArgsGetopt(args, {
+            {'h', 'help', handler=function() help = true end},
+            {'n', 'nocache', handler=function() nocache = true end},
+            {'d', 'test_dir', hasArg=true,
+            handler=function(arg) test_dir = arg end},
+            {'m', 'modes', hasArg=true,
+            handler=function(arg) mode_filter = arg:split(',') end},
+            {'t', 'tests', hasArg=true,
+            handler=function(arg) test_filter = arg:split(',') end},
+        })
+
+    if help then print(help_text) return end
+
+    local config = load_test_config(CONFIG_FILE)
+
+    -- override config with any params specified on the commandline
+    if test_dir then config.test_dir = test_dir end
+    if nocache then config.nocache = true end
+    if #mode_filter > 0 then config.modes = mode_filter end
+    if #test_filter > 0 then config.tests = test_filter end
+
+    if not dfhack.filesystem.isdir(config.test_dir) then
+        qerror(('Invalid test folder: "%s"'):format(config.test_dir))
+    end
+
+    local counts = {
+        tests = 0,
+        tests_ok = 0,
+        checks = 0,
+        checks_ok = 0,
+        file_errors = 0,
+    }
+
+    local test_files = get_test_files(config.test_dir)
+    local tests = get_tests(test_files, counts)
+    local status = filter_tests(tests, config)
+
+    script.start(function()
+        dfhack.call_with_finalizer(1, true,
+                              finish_tests, done_command,
+                              run_tests, tests, status, counts)
+    end)
+end
+
+if not dfhack_flags.module then
+    main({...})
+end

@@ -305,7 +305,7 @@ end
 
 local function finish_tests(done_command)
     dfhack.internal.IN_TEST = false
-    if #done_command > 0 then
+    if done_command and #done_command > 0 then
         dfhack.run_command(done_command)
     end
 end

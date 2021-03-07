@@ -15,16 +15,16 @@ Run DFHack tests.
 
 Usage:
 
-    test/main [<options>] [<post-test command>]
+    test/main [<options>] [<done_command>]
 
-If a post-test command is specified, it will be run after the tests complete.
+If a done_command is specified, it will be run after the tests complete.
 
 Options:
 
     -h, --help      display this help message and exit.
-    -n, --nocache   don't skip tests marked as completed in test_status.json.
     -d, --test_dir  specifies which directory to look in for tests. defaults to
                     the "hack/scripts/test" folder in your DF installation.
+    -n, --nocache   don't skip tests marked as completed in test_status.json.
     -m, --modes     only run tests in the given comma separated list of modes.
                     valid modes are 'none' (test can be run on any screen) and
                     'title' (test must be run on the DF title screen). if not
@@ -50,7 +50,9 @@ arrays. For example:
     {
         "test_dir": "/home/myk/src/dfhack-scripts/test",
         "nocache": true,
-        "tests": [ "quickfort" ]
+        "modes": [ "none" ],
+        "tests": [ "quickfort", "devel" ],
+        "done_command": "devel/luacov"
     }
 
 ]====]
@@ -464,9 +466,9 @@ local function main(args)
             false, false, nil, {}, {}
     local other_args = utils.processArgsGetopt(args, {
             {'h', 'help', handler=function() help = true end},
-            {'n', 'nocache', handler=function() nocache = true end},
             {'d', 'test_dir', hasArg=true,
             handler=function(arg) test_dir = arg end},
+            {'n', 'nocache', handler=function() nocache = true end},
             {'m', 'modes', hasArg=true,
             handler=function(arg) mode_filter = arg:split(',') end},
             {'t', 'tests', hasArg=true,
@@ -475,6 +477,7 @@ local function main(args)
 
     if help then print(help_text) return end
 
+    local done_command = table.concat(other_args, ' ')
     local config = load_test_config(CONFIG_FILE)
 
     -- override config with any params specified on the commandline
@@ -482,6 +485,7 @@ local function main(args)
     if nocache then config.nocache = true end
     if #mode_filter > 0 then config.modes = mode_filter end
     if #test_filter > 0 then config.tests = test_filter end
+    if #done_command > 0 then config.done_command = done_command end
 
     if not dfhack.filesystem.isdir(config.test_dir) then
         qerror(('Invalid test folder: "%s"'):format(config.test_dir))
@@ -498,11 +502,10 @@ local function main(args)
     local test_files = get_test_files(config.test_dir)
     local tests = get_tests(test_files, counts)
     local status = filter_tests(tests, config)
-    local done_command = table.concat(other_args, ' ')
 
     script.start(function()
         dfhack.call_with_finalizer(1, true,
-                              finish_tests, done_command,
+                              finish_tests, config.done_command,
                               run_tests, tests, status, counts)
     end)
 end

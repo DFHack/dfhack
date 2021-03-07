@@ -14,20 +14,26 @@ test/main
 Run DFHack tests.
 
 Usage:
-    test/main [<options>] <post-test command>
+
+    test/main [<options>] [<post-test command>]
+
+If a post-test command is specified, it will be run after the tests complete.
 
 Options:
+
     -h, --help      display this help message and exit.
     -n, --nocache   don't skip tests marked as completed in test_status.json.
     -d, --test_dir  specifies which directory to look in for tests. defaults to
                     the "hack/scripts/test" folder in your DF installation.
     -m, --modes     only run tests in the given comma separated list of modes.
-                    valid modes are 'none' and 'title'. if not specified, no
-                    modes are filtered.
+                    valid modes are 'none' (test can be run on any screen) and
+                    'title' (test must be run on the DF title screen). if not
+                    specified, no modes are filtered.
     -t, --tests     only run tests that match one of the comma separated list of
                     patterns. if not specified, no tests are filtered.
 
 Examples:
+
     test/main                 runs all tests that haven't been run before
     test/main -n              reruns all tests
     test/main -nm none        reruns tests that don't need the game to be in a
@@ -36,6 +42,17 @@ Examples:
     test/main -nd /path/to/dfhack-scripts/repo/test
                               runs tests in your in-development branch of the
                               scripts repo
+
+Default values for the options may be set in a file named test_config.json in
+your DF folder. Options with comma-separated values should be written as json
+arrays. For example:
+
+    {
+        "test_dir": "/home/myk/src/dfhack-scripts/test",
+        "nocache": true,
+        "tests": [ "quickfort" ]
+    }
+
 ]====]
 
 local CONFIG_FILE = 'test_config.json'
@@ -372,7 +389,14 @@ end
 
 local function filter_tests(tests, config)
     if config.tests or config.modes then
-        print('Filtering tests')
+        for _,filter in ipairs({{'tests', 'name pattern'},{'modes', 'mode'}}) do
+            if config[filter[1]] and #config[filter[1]] > 0 then
+                print(string.format('Filtering tests by %s:', filter[2]))
+                for _,v in ipairs(config[filter[1]]) do
+                    print(string.format('  %s', v))
+                end
+            end
+        end
         local orig_length = #tests
         for i = #tests, 1, -1 do
             local remove = false
@@ -421,7 +445,7 @@ local function filter_tests(tests, config)
 end
 
 local function run_tests(tests, status, counts)
-    print('Running ' .. #tests .. ' tests')
+    print(('Running %d tests'):format(#tests))
     for _, test in pairs(tests) do
         MODE_NAVIGATE_FNS[test.config.mode]()
         local passed = run_test(test, status, counts)
@@ -438,7 +462,7 @@ end
 local function main(args)
     local help, nocache, test_dir, mode_filter, test_filter =
             false, false, nil, {}, {}
-    local done_command = utils.processArgsGetopt(args, {
+    local other_args = utils.processArgsGetopt(args, {
             {'h', 'help', handler=function() help = true end},
             {'n', 'nocache', handler=function() nocache = true end},
             {'d', 'test_dir', hasArg=true,
@@ -474,6 +498,7 @@ local function main(args)
     local test_files = get_test_files(config.test_dir)
     local tests = get_tests(test_files, counts)
     local status = filter_tests(tests, config)
+    local done_command = table.concat(other_args, ' ')
 
     script.start(function()
         dfhack.call_with_finalizer(1, true,

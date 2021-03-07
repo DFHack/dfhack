@@ -36,6 +36,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Documentation
 - Added more client library implementations to the `remote interface docs <remote-client-libs>`
 
+## Internals
+- Ensure no tests are checked in to the dfhack repo in the test/scripts directory; that directory is reserved for tests in the scripts repo
+
 # 0.47.05-r1
 
 ## Fixes

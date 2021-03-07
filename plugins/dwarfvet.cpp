@@ -524,9 +524,7 @@ void tickHandler(color_ostream& out, void* data) {
     }
 
     if (!count_of_hospitals && !hospitals_cached) {
-        // No hospitals found, delete any cache, and return
-        delete_animal_hospital_vector(out);
-        out.print("No hospitals found, plugin sleeping ...\n");
+        // No hospitals found, cache is empty, just return
         goto cleanup;
     }
 

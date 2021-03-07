@@ -36,6 +36,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Documentation
 - Added more client library implementations to the `remote interface docs <remote-client-libs>`
 
+## Internals
+- The DFHack test harness is now much easier to use for iterative development.  Configuration can now be specified on the commandline, there are more test filter options, and the test harness can now easily rerun tests that have been run before.
+
 # 0.47.05-r1
 
 ## Fixes

@@ -33,6 +33,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
+## Lua
+- `xlsxreader`: Added Lua class wrappers for the xlsxreader plugin API
+
 ## Documentation
 - Added more client library implementations to the `remote interface docs <remote-client-libs>`
 

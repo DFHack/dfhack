@@ -1,47 +1,55 @@
 local _ENV = mkmodule('plugins.xlsxreader')
 
---[[
+XlsxioSheetReader = defclass(XlsxioSheetReader, nil)
+XlsxioSheetReader.ATTRS{
+    -- handle to the open sheet. required.
+    sheet_handle = DEFAULT_NIL,
+}
 
- Native functions:
-
- * file_handle open_xlsx_file(filename)
- * close_xlsx_file(file_handle)
- * sheet_names list_sheets(file_handle)
-
- * sheet_handle open_sheet(file_handle, sheet_name)
- * close_sheet(sheet_handle)
- * cell_strings get_row(sheet_handle)
-
-Sample usage:
-
-    local xlsxreader = require('plugins.xlsxreader')
-
-    local function dump_sheet(xlsx_file, sheet_name)
-        print('reading sheet: '..sheet_name)
-        local xlsx_sheet = xlsxreader.open_sheet(xlsx_file, sheet_name)
-        dfhack.with_finalize(
-            function () xlsxreader.close_sheet(xlsx_sheet) end,
-            function ()
-                local row_cells = xlsxreader.get_row(xlsx_sheet)
-                while row_cells do
-                    printall(row_cells)
-                    row_cells = xlsxreader.get_row(xlsx_sheet)
-                end
-            end
-        )
+function XlsxioSheetReader:init()
+    if not self.sheet_handle then
+        error('XlsxSheetReader: sheet_handle is required')
     end
+end
 
-    local filepath = "path/to/some_file.xlsx"
-    local xlsx_file = xlsxreader.open_xlsx_file(filepath)
-    dfhack.with_finalize(
-        function () xlsxreader.close_xlsx_file(xlsx_file) end,
-        function ()
-            for _, sheet_name in ipairs(xlsxreader.list_sheets(xlsx_file)) do
-                dump_sheet(xlsx_file, sheet_name)
-            end
-        end
-    )
+function XlsxioSheetReader:close()
+    close_sheet(self.sheet_handle)
+    self.sheet_handle = nil
+end
 
---]]
+function XlsxioSheetReader:get_row(max_tokens)
+    return get_row(self.sheet_handle, max_tokens)
+end
+
+XlsxioReader = defclass(XlsxioReader, nil)
+XlsxioReader.ATTRS{
+    -- full or relative path to the target .xlsx file. required.
+    filepath = DEFAULT_NIL,
+}
+
+function XlsxioReader:init()
+    if not self.filepath then
+        error('XlsxReader: filepath is required')
+    end
+    self.xlsx_handle = open_xlsx_file(self.filepath)
+    if not self.xlsx_handle then
+        qerror(('failed to open "%s"'):format(self.filepath))
+    end
+end
+
+function XlsxioReader:close()
+    close_xlsx_file(self.xlsx_handle)
+    self.xlsx_handle = nil
+end
+
+function XlsxioReader:list_sheets()
+    return list_sheets(self.xlsx_handle)
+end
+
+-- if sheet_name is empty or nil, opens the first sheet
+function XlsxioReader:open_sheet(sheet_name)
+    local sheet_handle = open_sheet(self.xlsx_handle, sheet_name)
+    return XlsxioSheetReader{sheet_handle=sheet_handle}
+end
 
 return _ENV

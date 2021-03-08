@@ -101,11 +101,13 @@ int list_sheets(lua_State *L) {
     return 1;
 }
 
-// takes the sheet handle and returns a table-list of strings, or nil if we
-// already processed the last row in the file.
+// takes the sheet handle and returns a table-list of strings, limited to the
+// requested number of tokens if specified and > 0, or nil if we already
+// processed the last row in the file.
 int get_row(lua_State *L) {
     auto sheet_handle = (xlsx_sheet_handle *)get_xlsxreader_handle(L);
     CHECK_NULL_POINTER(sheet_handle->handle);
+    lua_Integer max_tokens = luaL_optinteger(L, 2, 0);
     bool ok = get_next_row(sheet_handle);
     if (!ok) {
         lua_pushnil(L);
@@ -114,6 +116,8 @@ int get_row(lua_State *L) {
         auto cells = std::vector<std::string>();
         while (get_next_cell(sheet_handle, value)) {
             cells.push_back(value);
+            if (max_tokens > 0 && cells.size() >= max_tokens)
+                break;
         }
         Lua::PushVector(L, cells, true);
     }

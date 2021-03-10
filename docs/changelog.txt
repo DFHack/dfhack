@@ -36,9 +36,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Documentation
 - Added more client library implementations to the `remote interface docs <remote-client-libs>`
 
-## Internals
-- Lua test files are no longer required to start with standard script documentation (since they aren't runnable scripts)
-
 # 0.47.05-r1
 
 ## Fixes

@@ -27,6 +27,7 @@ libexpat_       MIT           \(c\) 1998-2000 Thai Open Source Software Center L
 libzip_         BSD 3-clause  \(c\) 1999-2020 Dieter Baron and Thomas Klausner
 linenoise_      BSD 2-clause  \(c\) 2010, Salvatore Sanfilippo & Pieter Noordhuis
 lua_            MIT           \(c\) 1994-2008, Lua.org, PUC-Rio.
+luacov_         MIT           \(c\) 2007 - 2018 Hisham Muhammad
 luafilesystem_  MIT           \(c\) 2003-2014, Kepler Project
 lua-profiler_   MIT           \(c\) 2002,2003,2004 Pepperfish
 protobuf_       BSD 3-clause  \(c\) 2008, Google Inc.
@@ -46,6 +47,7 @@ alt-getopt_     MIT           \(c\) 2009 Aleksey Cheusov
 .. _libzip: https://github.com/nih-at/libzip
 .. _linenoise: http://github.com/antirez/linenoise
 .. _lua: http://www.lua.org
+.. _luacov: https://github.com/keplerproject/luacov
 .. _luafilesystem: https://github.com/keplerproject/luafilesystem
 .. _lua-profiler: http://lua-users.org/wiki/PepperfishProfiler
 .. _protobuf: https://github.com/google/protobuf

@@ -800,7 +800,7 @@ static void add_luacov_coroutine_wrapper(lua_State *L)
 }
 
 lua_State *DFHack::Lua::NewCoroutine(lua_State *L) {
-    if (getenv("DFHACK_ENABLE_LUACOV"))
+    if (Lua::IsCoreContext(L) && getenv("DFHACK_ENABLE_LUACOV"))
         add_luacov_coroutine_wrapper(L);
     lua_State *NL = lua_newthread(L);
     lua_swap(L);
@@ -1631,7 +1631,7 @@ void DFHack::Lua::Notification::bind(lua_State *state, const char *name)
 void OpenDFHackApi(lua_State *state);
 
 namespace DFHack { namespace Lua { namespace Core {
-    static void InitCoreContext();
+    static void InitCoreContext(color_ostream &);
 }}}
 
 lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
@@ -1750,24 +1750,7 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
 
     // Init core-context specific stuff before loading dfhack.lua
     if (IsCoreContext(state))
-        Lua::Core::InitCoreContext();
-
-    if (getenv("DFHACK_ENABLE_LUACOV"))
-    {
-        // reads config from .luacov or uses defaults if file doesn't exist.
-        // note that luacov overrides the debug hook installed by
-        // interrupt_init() above.
-        if (PushModulePublic(out, state, "luacov.runner", "init") &&
-            SafeCall(out, state, 0, 0))
-        {
-            out.print("Initialized luacov coverage monitoring\n");
-        }
-        else
-        {
-            out.printerr("Failed to initialize luacov coverage monitoring\n");
-            // non-fatal error
-        }
-    }
+        Lua::Core::InitCoreContext(out);
 
     // load dfhack.lua
     if (!Require(out, state, "dfhack"))
@@ -1954,7 +1937,7 @@ bool DFHack::Lua::Core::Init(color_ostream &out)
     return (Lua::Open(out, State) != NULL);
 }
 
-static void Lua::Core::InitCoreContext()
+static void Lua::Core::InitCoreContext(color_ostream &out)
 {
     lua_newtable(State);
     lua_rawsetp(State, LUA_REGISTRYINDEX, &DFHACK_TIMEOUTS_TOKEN);
@@ -1971,6 +1954,23 @@ static void Lua::Core::InitCoreContext()
     lua_setfield(State, -2, "timeout_active");
 
     lua_pop(State, 1);
+
+    if (getenv("DFHACK_ENABLE_LUACOV"))
+    {
+        // reads config from .luacov or uses defaults if file doesn't exist.
+        // note that luacov overrides the debug hook installed by
+        // interrupt_init() above.
+        if (Lua::PushModulePublic(out, State, "luacov.runner", "init") &&
+            Lua::SafeCall(out, State, 0, 0))
+        {
+            out.print("Initialized luacov coverage monitoring\n");
+        }
+        else
+        {
+            out.printerr("Failed to initialize luacov coverage monitoring\n");
+            // non-fatal error
+        }
+    }
 }
 
 void DFHack::Lua::Core::Reset(color_ostream &out, const char *where)

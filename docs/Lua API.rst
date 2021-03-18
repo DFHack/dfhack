@@ -4079,10 +4079,11 @@ DFHack core invokes the scripts in the *core context* (see above);
 however it is possible to call them from any lua code (including
 from other scripts) in any context, via the same function the core uses:
 
-* ``dfhack.run_script(name[,args...])``
-
+* ``dfhack.run_script("name arg1 arg2 arg3")``
+   
   Run a lua script in hack/scripts/, as if it was started from dfhack command-line.
-  The ``name`` argument should be the name stem, as would be used on the command line.
+  The argument should be the exact command that would be written to the command line.
+  For example: dfhack.run_command("createitem WEAPON:ITEM_WEAPON_PICK COPPER 9999")
 
 Note that this function lets errors propagate to the caller.
 

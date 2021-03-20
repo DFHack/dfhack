@@ -4415,29 +4415,22 @@ General script API
   command-line. The ``name`` argument should be the name of the script without
   its extension, as would be used on the command line.
 
-  Example::
-     dfhack.run_script("armoks-blessing", "all")
-  Scipts that use a dash(``-``) in their arguments still require one when called
-  from ``dfhack.run_script``.
-  Example::
-     dfhack.run_script("gaydar", "-all")
+  Example:
 
-  Unlike ``dfhack.run_command``, ``dfhack.run_script`` allows a different
-  different script to be executed and its value passed as an argument to the main
-  function called by ``dfhack.run_script``.
+  In DFHack prompt::
 
-  Example::
-      dfhack.run_script("some_script", dfhack.gui.getDwarfmodeViewDims());
+    repeat -time 14 -timeUnits days -command [ workorder ShearCreature ] -name autoShearCreature
 
-  While this implmenation is currently a functional, its purpose and stability
-  are limited. As such, ``dfhack.reqscript(name)`` should be used.
+  In lua script::
 
-  Note that the ``dfhack.run_script()`` function allows Lua errors propagate to the caller.
+    dfhack.run_script("repeat", "-time", "14", "-timeUnits", "days", "-command", "[", "workorder", "ShearCreature", "]", "-name", "autoShearCreature")
+
+  Note that the ``dfhack.run_script()`` function allows Lua errors to propagate to the caller.
 
   To run other types of commands (such as built-in commands, plugin commands, or
   Ruby scripts), see ``dfhack.run_command()``. Note that this is slightly slower
   than ``dfhack.run_script()`` for Lua scripts.
- 
+
 * ``dfhack.script_help([name, [extension]])``
 
   Returns the contents of the embedded documentation of the specified script.

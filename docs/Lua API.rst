@@ -4411,9 +4411,9 @@ General script API
 
 * ``dfhack.run_script(name[,args...])``
 
-  Run a Lua script in hack/scripts/, as if it was started from the DFHack
+  Run a Lua script in hack/scripts/, as if it were started from the DFHack
   command-line. The ``name`` argument should be the name of the script without
-  its extension, as would be used on the command line.
+  its extension, as it would be used on the command line.
 
   Example:
 
@@ -4421,7 +4421,7 @@ General script API
 
     repeat -time 14 -timeUnits days -command [ workorder ShearCreature ] -name autoShearCreature
 
-  In lua script::
+  In Lua script::
 
     dfhack.run_script("repeat", "-time", "14", "-timeUnits", "days", "-command", "[", "workorder", "ShearCreature", "]", "-name", "autoShearCreature")
 

@@ -54,6 +54,7 @@ Espen Wiborg
 expwnent                expwnent
 Feng
 figment                 figment
+Gabe Rau                gaberau
 gchristopher            gchristopher
 George Murray           GitOnUp
 grubsteak               grubsteak

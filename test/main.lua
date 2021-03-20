@@ -1,9 +1,61 @@
+-- DFHack developer test harness
+--@ module = true
+
 local json = require 'json'
 local script = require 'gui.script'
 local utils = require 'utils'
 
-local args = {...}
-local done_command = args[1]
+local help_text =
+[====[
+
+test/main
+=========
+
+Run DFHack tests.
+
+Usage:
+
+    test/main [<options>] [<done_command>]
+
+If a done_command is specified, it will be run after the tests complete.
+
+Options:
+
+    -h, --help      display this help message and exit.
+    -d, --test_dir  specifies which directory to look in for tests. defaults to
+                    the "hack/scripts/test" folder in your DF installation.
+    -n, --nocache   don't skip tests marked as completed in test_status.json.
+    -m, --modes     only run tests in the given comma separated list of modes.
+                    valid modes are 'none' (test can be run on any screen) and
+                    'title' (test must be run on the DF title screen). if not
+                    specified, no modes are filtered.
+    -t, --tests     only run tests that match one of the comma separated list of
+                    patterns. if not specified, no tests are filtered.
+
+Examples:
+
+    test/main                 runs all tests that haven't been run before
+    test/main -n              reruns all tests
+    test/main -nm none        reruns tests that don't need the game to be in a
+                              specific mode
+    test/main -nt quickfort   reruns quickfort tests
+    test/main -nd /path/to/dfhack-scripts/repo/test
+                              runs tests in your in-development branch of the
+                              scripts repo
+
+Default values for the options may be set in a file named test_config.json in
+your DF folder. Options with comma-separated values should be written as json
+arrays. For example:
+
+    {
+        "test_dir": "/home/myk/src/dfhack-scripts/test",
+        "nocache": true,
+        "modes": [ "none" ],
+        "tests": [ "quickfort", "devel" ],
+        "done_command": "devel/luacov"
+    }
+
+]====]
 
 local CONFIG_FILE = 'test_config.json'
 local STATUS_FILE = 'test_status.json'
@@ -46,20 +98,57 @@ end
 function expect.ge(a, b, comment)
     return a >= b, comment, ('%s < %s'):format(a, b)
 end
-function expect.table_eq(a, b, comment)
+local function table_eq_recurse(a, b, keys, known_eq)
+    if a == b then return true end
     local checked = {}
-    for k, v in pairs(a) do
-        if a[k] ~= b[k] then
-            return false, comment, ('key "%s": %s ~= %s'):format(k, a[k], b[k])
+    for k,v in pairs(a) do
+        if type(a[k]) == 'table' then
+            if known_eq[a[k]] and known_eq[a[k]][b[k]] then goto skip end
+            table.insert(keys, tostring(k))
+            if type(b[k]) ~= 'table' then
+                return false, keys, {tostring(a[k]), tostring(b[k])}
+            end
+            if not known_eq[a[k]] then known_eq[a[k]] = {} end
+            for eq_tab,_ in pairs(known_eq[a[k]]) do
+                known_eq[eq_tab][b[k]] = true
+            end
+            known_eq[a[k]][b[k]] = true
+            if not known_eq[b[k]] then known_eq[b[k]] = {} end
+            for eq_tab,_ in pairs(known_eq[b[k]]) do
+                known_eq[eq_tab][a[k]] = true
+            end
+            known_eq[b[k]][a[k]] = true
+            local matched, keys_at_diff, diff =
+                    table_eq_recurse(a[k], b[k], keys, known_eq)
+            if not matched then return false, keys_at_diff, diff end
+            keys[#keys] = nil
+        elseif a[k] ~= b[k] then
+            table.insert(keys, tostring(k))
+            return false, keys, {tostring(a[k]), tostring(b[k])}
         end
+        ::skip::
         checked[k] = true
     end
     for k in pairs(b) do
         if not checked[k] then
-            return false, comment, ('key "%s": %s ~= %s'):format(k, a[k], b[k])
+            table.insert(keys, tostring(k))
+            return false, keys, {tostring(a[k]), tostring(b[k])}
         end
     end
     return true
+end
+function expect.table_eq(a, b, comment)
+    if (type(a) ~= 'table' and type(a) ~= 'userdata') or
+            (type(b) ~= 'table' and type(b) ~= 'userdata') then
+        return false, comment, 'operands to table_eq must be tables or userdata'
+    end
+    local keys, known_eq = {}, {}
+    local matched, keys_at_diff, diff = table_eq_recurse(a, b, keys, known_eq)
+    if matched then return true end
+    local keystr = '['..keys_at_diff[1]..']'
+    for i=2,#keys_at_diff do keystr = keystr..'['..keys_at_diff[i]..']' end
+    return false, comment,
+            ('key %s: "%s" ~= "%s"'):format(keystr, diff[1], diff[2])
 end
 function expect.error(func, ...)
     local ok, ret = pcall(func, ...)
@@ -99,12 +188,12 @@ function expect.not_pairs_contains(table, key, comment)
     return true
 end
 
-function delay(frames)
+local function delay(frames)
     frames = frames or 1
     script.sleep(frames, 'frames')
 end
 
-function clean_require(module)
+local function clean_require(module)
     -- wrapper around require() - forces a clean load of every module to ensure
     -- that modules checking for dfhack.internal.IN_TEST at load time behave
     -- properly
@@ -114,7 +203,7 @@ function clean_require(module)
     return require(module)
 end
 
-function ensure_title_screen()
+local function ensure_title_screen()
     if df.viewscreen_titlest:is_instance(dfhack.gui.getCurViewscreen()) then
         return
     end
@@ -139,7 +228,7 @@ local MODE_NAVIGATE_FNS = {
     title = ensure_title_screen,
 }
 
-function load_test_config(config_file)
+local function load_test_config(config_file)
     local config = {}
     if dfhack.filesystem.isfile(config_file) then
         config = json.decode_file(config_file)
@@ -148,14 +237,11 @@ function load_test_config(config_file)
     if not config.test_dir then
         config.test_dir = dfhack.getHackPath() .. 'scripts/test'
     end
-    if not dfhack.filesystem.isdir(config.test_dir) then
-        error('Invalid test folder: ' .. config.test_dir)
-    end
 
     return config
 end
 
-function build_test_env()
+local function build_test_env()
     local env = {
         test = utils.OrderedTable(),
         config = {
@@ -195,8 +281,9 @@ function build_test_env()
     return env, private
 end
 
-function get_test_files(test_dir)
+local function get_test_files(test_dir)
     local files = {}
+    print('Loading tests from ' .. test_dir)
     for _, entry in ipairs(dfhack.filesystem.listdir_recursive(test_dir)) do
         if not entry.isdir and not entry.path:match('main.lua') then
             table.insert(files, entry.path)
@@ -206,25 +293,25 @@ function get_test_files(test_dir)
     return files
 end
 
-function load_test_status()
+local function load_test_status()
     if dfhack.filesystem.isfile(STATUS_FILE) then
         return json.decode_file(STATUS_FILE)
     end
 end
 
-function save_test_status(status)
+local function save_test_status(status)
     json.encode_file(status, STATUS_FILE)
 end
 
-function finish_tests()
+local function finish_tests(done_command)
     dfhack.internal.IN_TEST = false
-    if done_command then
+    if done_command and #done_command > 0 then
         dfhack.run_command(done_command)
     end
 end
 
-function load_tests(file, tests)
-    local short_filename = file:sub(file:find('test'), -1)
+local function load_tests(file, tests)
+    local short_filename = file:sub((file:find('test') or -4)+5, -1)
     print('Loading file: ' .. short_filename)
     local env, env_private = build_test_env()
     local code, err = loadfile(file, 't', env)
@@ -258,7 +345,7 @@ function load_tests(file, tests)
     return true
 end
 
-function sort_tests(tests)
+local function sort_tests(tests)
     -- to make sort stable
     local test_index = utils.invert(tests)
     table.sort(tests, function(a, b)
@@ -270,7 +357,7 @@ function sort_tests(tests)
     end)
 end
 
-function run_test(test, status, counts)
+local function run_test(test, status, counts)
     test.private.checks = 0
     test.private.checks_ok = 0
     counts.tests = counts.tests + 1
@@ -292,55 +379,75 @@ function run_test(test, status, counts)
     return passed
 end
 
-function main()
-    local config = load_test_config(CONFIG_FILE)
-    local files = get_test_files(config.test_dir)
-
-    local counts = {
-        tests = 0,
-        tests_ok = 0,
-        checks = 0,
-        checks_ok = 0,
-        file_errors = 0,
-    }
-    local passed = true
-
-    ensure_title_screen()
-
-    print('Loading tests')
+local function get_tests(test_files, counts)
     local tests = {}
-    for _, file in ipairs(files) do
+    for _, file in ipairs(test_files) do
         if not load_tests(file, tests) then
-            passed = false
             counts.file_errors = counts.file_errors + 1
         end
     end
+    return tests
+end
 
-    print('Filtering tests')
-    if config.tests then
-        local orig_length = #tests
-        for i = #tests, 1, -1 do
-            for _, pattern in pairs(config.tests) do
-                if not tests[i].name:match(pattern) then
-                    table.remove(tests, i)
+local function filter_tests(tests, config)
+    if config.tests or config.modes then
+        for _,filter in ipairs({{'tests', 'name pattern'},{'modes', 'mode'}}) do
+            if config[filter[1]] and #config[filter[1]] > 0 then
+                print(string.format('Filtering tests by %s:', filter[2]))
+                for _,v in ipairs(config[filter[1]]) do
+                    print(string.format('  %s', v))
                 end
             end
         end
+        local orig_length = #tests
+        for i = #tests, 1, -1 do
+            local remove = false
+            if config.modes then
+                remove = true
+                -- allow test if it matches any of the given modes
+                for _, mode in pairs(config.modes) do
+                    if tests[i].config.mode == mode then
+                        remove = false
+                        break
+                    end
+                end
+            end
+            if config.tests and not remove then
+                remove = true
+                -- allow test if it matches any of the given patterns
+                for _, pattern in pairs(config.tests) do
+                    if tests[i].name:match(pattern) then
+                        remove = false
+                        break
+                    end
+                end
+            end
+            if remove then table.remove(tests, i) end
+        end
         print('Selected tests: ' .. #tests .. '/' .. orig_length)
     end
-    local status = load_test_status() or {}
-    for i = #tests, 1, -1 do
-        local test = tests[i]
-        if not status[test.full_name] then
-            status[test.full_name] = TestStatus.PENDING
-        elseif status[test.full_name] ~= TestStatus.PENDING then
-            print('skipping test: ' .. test.name .. ': state = ' .. status[test.full_name] .. ')')
-            table.remove(tests, i)
+
+    local status = {}
+    if not config.nocache then
+        status = load_test_status() or status
+        for i = #tests, 1, -1 do
+            local test = tests[i]
+            if not status[test.full_name] then
+                status[test.full_name] = TestStatus.PENDING
+            elseif status[test.full_name] ~= TestStatus.PENDING then
+                print(('skipping test: %s: state = %s)'):format(
+                        test.name, status[test.full_name]))
+                table.remove(tests, i)
+            end
         end
     end
-    sort_tests(tests)
 
-    print('Running ' .. #tests .. ' tests')
+    sort_tests(tests)
+    return status
+end
+
+local function run_tests(tests, status, counts)
+    print(('Running %d tests'):format(#tests))
     for _, test in pairs(tests) do
         MODE_NAVIGATE_FNS[test.config.mode]()
         local passed = run_test(test, status, counts)
@@ -354,6 +461,55 @@ function main()
     print(('%d test files failed to load'):format(counts.file_errors))
 end
 
-script.start(function()
-    dfhack.with_finalize(finish_tests, main)
-end)
+local function main(args)
+    local help, nocache, test_dir, mode_filter, test_filter =
+            false, false, nil, {}, {}
+    local other_args = utils.processArgsGetopt(args, {
+            {'h', 'help', handler=function() help = true end},
+            {'d', 'test_dir', hasArg=true,
+            handler=function(arg) test_dir = arg end},
+            {'n', 'nocache', handler=function() nocache = true end},
+            {'m', 'modes', hasArg=true,
+            handler=function(arg) mode_filter = arg:split(',') end},
+            {'t', 'tests', hasArg=true,
+            handler=function(arg) test_filter = arg:split(',') end},
+        })
+
+    if help then print(help_text) return end
+
+    local done_command = table.concat(other_args, ' ')
+    local config = load_test_config(CONFIG_FILE)
+
+    -- override config with any params specified on the commandline
+    if test_dir then config.test_dir = test_dir end
+    if nocache then config.nocache = true end
+    if #mode_filter > 0 then config.modes = mode_filter end
+    if #test_filter > 0 then config.tests = test_filter end
+    if #done_command > 0 then config.done_command = done_command end
+
+    if not dfhack.filesystem.isdir(config.test_dir) then
+        qerror(('Invalid test folder: "%s"'):format(config.test_dir))
+    end
+
+    local counts = {
+        tests = 0,
+        tests_ok = 0,
+        checks = 0,
+        checks_ok = 0,
+        file_errors = 0,
+    }
+
+    local test_files = get_test_files(config.test_dir)
+    local tests = get_tests(test_files, counts)
+    local status = filter_tests(tests, config)
+
+    script.start(function()
+        dfhack.call_with_finalizer(1, true,
+                              finish_tests, config.done_command,
+                              run_tests, tests, status, counts)
+    end)
+end
+
+if not dfhack_flags.module then
+    main({...})
+end

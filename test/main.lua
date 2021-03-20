@@ -435,7 +435,7 @@ local function filter_tests(tests, config)
             if not status[test.full_name] then
                 status[test.full_name] = TestStatus.PENDING
             elseif status[test.full_name] ~= TestStatus.PENDING then
-                print(('skipping test: %s: state = %s)'):format(
+                print(('skipping test: %s: state = %s'):format(
                         test.name, status[test.full_name]))
                 table.remove(tests, i)
             end

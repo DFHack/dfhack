@@ -72,21 +72,22 @@ struct hospital_spot {
 class Patient {
   public:
     // Constructor/Deconstrctor
-    Patient(int32_t id, int spot_index, int32_t x, int32_t y, int32_t z);
+    Patient(int32_t id, size_t spot_index, int32_t x, int32_t y, int32_t z);
     int32_t getID() { return this->id; };
-    int32_t getSpotIndex() { return this->spot_index; };
+    size_t getSpotIndex() { return this->spot_index; };
     int32_t returnX() { return this->spot_in_hospital.x; };
     int32_t returnY() { return this->spot_in_hospital.y; };
     int32_t returnZ() { return this->spot_in_hospital.z; };
 
   private:
     struct hospital_spot spot_in_hospital;
-    int id;
-    int spot_index;
+    int32_t id;
+    size_t spot_index;
 };
 
-Patient::Patient(int32_t id, int32_t spot_index, int32_t x, int32_t y, int32_t z){
+Patient::Patient(int32_t id, size_t spot_index, int32_t x, int32_t y, int32_t z){
     this->id = id;
+    this->spot_index = spot_index;
     this->spot_in_hospital.x = x;
     this->spot_in_hospital.y = y;
     this->spot_in_hospital.z = z;
@@ -414,7 +415,9 @@ void AnimalHospital::processPatients(color_ostream &out) {
 static vector<AnimalHospital*> animal_hospital_zones;
 
 void delete_animal_hospital_vector(color_ostream &out) {
-    out.print("Clearing all animal hospitals\n");
+    if (dwarfvet_enabled) {
+        out.print("Clearing all animal hospitals\n");
+    }
     for (vector<AnimalHospital*>::iterator animal_hospital = animal_hospital_zones.begin(); animal_hospital != animal_hospital_zones.end(); animal_hospital++) {
         delete (*animal_hospital);
     }
@@ -521,9 +524,7 @@ void tickHandler(color_ostream& out, void* data) {
     }
 
     if (!count_of_hospitals && !hospitals_cached) {
-        // No hospitals found, delete any cache, and return
-        delete_animal_hospital_vector(out);
-        out.print("No hospitals found, plugin sleeping ...\n");
+        // No hospitals found, cache is empty, just return
         goto cleanup;
     }
 

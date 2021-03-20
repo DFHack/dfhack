@@ -5,10 +5,15 @@
 #include "MemAccess.h"
 #include "PluginManager.h"
 
+#include "df/init.h"
+
 using namespace DFHack;
+using namespace df::enums;
 
 DFHACK_PLUGIN("title-folder");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
+REQUIRE_GLOBAL(init);
 
 // SDL frees the old window title when changed
 static std::string original_title;
@@ -36,6 +41,12 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out);
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
+    if (init->display.flag.is_set(init_display_flags::TEXT))
+    {
+        // Don't bother initializing in text mode.
+        return CR_OK;
+    }
+
     for (auto it = sdl_libs.begin(); it != sdl_libs.end(); ++it)
     {
         if ((sdl_handle = OpenPlugin(it->c_str())))
@@ -92,6 +103,12 @@ DFhackCExport command_result plugin_enable (color_ostream &out, bool state)
 
     if (state)
     {
+        if (init->display.flag.is_set(init_display_flags::TEXT))
+        {
+            out.printerr("title-folder: cannot enable with PRINT_MODE:TEXT.\n");
+            return CR_FAILURE;
+        }
+
         std::string path = Core::getInstance().p->getPath();
         std::string folder;
         size_t pos = path.find_last_of('/');

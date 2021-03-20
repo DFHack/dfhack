@@ -405,6 +405,8 @@ namespace DFHack
         /// A simple line edit (raw mode)
         int lineedit(const std::string& prompt, std::string& output, recursive_mutex * lock, CommandHistory & ch)
         {
+            if(state == con_lineedit)
+                return Console::FAILURE;
             output.clear();
             reset_color();
             this->prompt = prompt;
@@ -414,7 +416,9 @@ namespace DFHack
                 fflush(dfout_C);
                 // FIXME: what do we do here???
                 //SDL_recursive_mutexV(lock);
+                state = con_lineedit;
                 std::getline(std::cin, output);
+                state = con_unclaimed;
                 //SDL_recursive_mutexP(lock);
                 return output.size();
             }
@@ -422,8 +426,6 @@ namespace DFHack
             {
                 int count;
                 if (enable_raw() == -1) return 0;
-                if(state == con_lineedit)
-                    return Console::FAILURE;
                 state = con_lineedit;
                 count = prompt_loop(lock,ch);
                 state = con_unclaimed;
@@ -480,7 +482,7 @@ namespace DFHack
         {
             char seq[64];
             int cols = get_columns();
-            int plen = prompt.size();
+            int plen = prompt.size() % cols;
             int len = raw_buffer.size();
             int begin = 0;
             int cooked_cursor = raw_cursor;
@@ -493,7 +495,15 @@ namespace DFHack
             }
             if (plen+len > cols)
                 len -= plen+len - cols;
-            std::string mbstr = toLocaleMB(raw_buffer.substr(begin,len));
+            std::string mbstr;
+            try {
+                mbstr = toLocaleMB(raw_buffer.substr(begin,len));
+            }
+            catch (std::out_of_range&) {
+                // fallback check in case begin is still out of range
+                // (this behaves badly but at least doesn't crash)
+                mbstr = toLocaleMB(raw_buffer);
+            }
             /* Cursor to left edge */
             snprintf(seq,64,"\x1b[1G");
             if (::write(STDIN_FILENO,seq,strlen(seq)) == -1) return;
@@ -533,6 +543,7 @@ namespace DFHack
                     return Console::SHUTDOWN;
                 }
                 lock->lock();
+                const int old_cursor = raw_cursor;
                 /* Only autocomplete when the callback is set. It returns < 0 when
                  * there was an error reading from fd. Otherwise it will return the
                  * character that should be handled next. */
@@ -588,6 +599,29 @@ namespace DFHack
                     else if (seq[0] == 'f')
                     {
                         forward_word();
+                    }
+                    else if (seq[0] == 127 || seq[0] == 8) // backspace || ctrl-h
+                    {
+                        // delete word
+                        back_word();
+                        if (old_cursor > raw_cursor)
+                        {
+                            yank_buffer = raw_buffer.substr(raw_cursor, old_cursor - raw_cursor);
+                            raw_buffer.erase(raw_cursor, old_cursor - raw_cursor);
+                            prompt_refresh();
+                        }
+                    }
+                    else if (seq[0] == 'd')
+                    {
+                        // delete word forward
+                        forward_word();
+                        if (old_cursor < raw_cursor)
+                        {
+                            yank_buffer = raw_buffer.substr(old_cursor, raw_cursor - old_cursor);
+                            raw_buffer.erase(old_cursor, raw_cursor - old_cursor);
+                            raw_cursor = old_cursor;
+                            prompt_refresh();
+                        }
                     }
                     else if(seq[0] == '[')
                     {
@@ -819,21 +853,29 @@ Console::~Console()
         delete d;
 }
 
-bool Console::init(bool sharing)
+bool Console::init(bool dont_redirect)
 {
-    if(sharing)
-    {
-        inited = false;
-        return false;
-    }
-    if (!freopen("stdout.log", "w", stdout))
-        ;
     d = new Private();
     // make our own weird streams so our IO isn't redirected
-    d->dfout_C = fopen("/dev/tty", "w");
+    if (dont_redirect)
+    {
+        d->dfout_C = fopen("/dev/stdout", "w");
+    }
+    else
+    {
+        if (!freopen("stdout.log", "w", stdout))
+            ;
+        d->dfout_C = fopen("/dev/tty", "w");
+        if (!d->dfout_C)
+        {
+            fprintf(stderr, "could not open tty\n");
+            d->dfout_C = fopen("/dev/stdout", "w");
+            return false;
+        }
+    }
     std::cin.tie(this);
     clear();
-    d->supported_terminal = !isUnsupportedTerm() &&  isatty(STDIN_FILENO);
+    d->supported_terminal = !isUnsupportedTerm() && isatty(STDIN_FILENO);
     // init the exit mechanism
     if (pipe(d->exit_pipe) == -1)
         ;
@@ -848,8 +890,11 @@ bool Console::shutdown(void)
 {
     if(!d)
         return true;
+    d->reset_color();
     lock_guard <recursive_mutex> g(*wlock);
     close(d->exit_pipe[1]);
+    if (d->state != Private::con_lineedit)
+        inited = false;
     return true;
 }
 

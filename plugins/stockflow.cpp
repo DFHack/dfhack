@@ -80,15 +80,15 @@ public:
 
         if (found) {
             // Entice the bookkeeper to spend less time update records.
-            ui->bookkeeper_precision += ui->bookkeeper_precision >> 3;
+            ui->nobles.bookkeeper_precision += ui->nobles.bookkeeper_precision >> 3;
             if (!bookkeeping) {
                 command_method("start_bookkeeping", out);
                 bookkeeping = true;
             }
         } else {
             // Entice the bookkeeper to update records more often.
-            ui->bookkeeper_precision -= ui->bookkeeper_precision >> 5;
-            ui->bookkeeper_cooldown -= ui->bookkeeper_cooldown >> 2;
+            ui->nobles.bookkeeper_precision -= ui->nobles.bookkeeper_precision >> 5;
+            ui->nobles.bookkeeper_cooldown -= ui->nobles.bookkeeper_cooldown >> 2;
             if (bookkeeping) {
                 command_method("finish_bookkeeping", out);
                 bookkeeping = false;
@@ -212,7 +212,7 @@ public:
         auto dims = Gui::getDwarfmodeViewDims();
         int left_margin = dims.menu_x1 + 1;
         int x = left_margin;
-        int y = dims.y2 - 3;
+        int y = dims.y2 - 2; // below autodump, automelt, autotrade, stocks, stockpiles
 
         int links = 0;
         links += sp->links.give_to_pile.size();
@@ -266,6 +266,9 @@ struct stockflow_hook : public df::viewscreen_dwarfmodest {
     typedef df::viewscreen_dwarfmodest interpose_base;
 
     bool handleInput(set<df::interface_key> *input) {
+        if (Gui::inRenameBuilding())
+            return false;
+
         building_stockpilest *sp = get_selected_stockpile();
         if (!sp)
             return false;

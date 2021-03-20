@@ -26,6 +26,7 @@ distribution.
 #include "TileTypes.h"
 #include "Export.h"
 
+#include <cassert>
 #include <map>
 
 using namespace DFHack;

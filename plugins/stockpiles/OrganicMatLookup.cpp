@@ -152,4 +152,4 @@ MaterialInfo OrganicMatLookup::food_mat_by_token ( std::ostream &out, const std:
 }
 
 bool OrganicMatLookup::index_built = false;
-std::vector<OrganicMatLookup::FoodMatMap> OrganicMatLookup::food_index = std::vector<OrganicMatLookup::FoodMatMap> ( 37 );
+std::vector<OrganicMatLookup::FoodMatMap> OrganicMatLookup::food_index = std::vector<OrganicMatLookup::FoodMatMap> ( df::enum_traits< df::organic_mat_category >::last_item_value + 1 );

@@ -1,3 +1,5 @@
+.. highlight:: lua
+
 .. _lua-api:
 
 ##############
@@ -7,7 +9,7 @@ DFHack Lua API
 DFHack has extensive support for
 the Lua_ scripting language, providing access to:
 
-.. _Lua: http://www.lua.org
+.. _Lua: https://www.lua.org
 
 1. Raw data structures used by the game.
 2. Many C++ functions for high-level access to these
@@ -24,8 +26,9 @@ implemented by Lua files located in :file:`hack/lua/*`
 (:file:`library/lua/*` in the git repo).
 
 
-.. contents::
-   :depth: 3
+.. contents:: Contents
+  :local:
+  :depth: 2
 
 
 =========================
@@ -36,16 +39,16 @@ DF data structure wrapper
    :local:
 
 Data structures of the game are defined in XML files located in :file:`library/xml`
-(and `online <http://github.com/DFHack/df-structures>`_, and automatically exported
+(and `online <https://github.com/DFHack/df-structures>`_, and automatically exported
 to lua code as a tree of objects and functions under the ``df`` global, which
 also broadly maps to the ``df`` namespace in the headers generated for C++.
 
 .. warning::
-    The wrapper provides almost raw access to the memory
-    of the game, so mistakes in manipulating objects are as likely to
-    crash the game as equivalent plain C++ code would be.
 
-    eg. NULL pointer access is safely detected, but dangling pointers aren't.
+    The wrapper provides almost raw access to the memory of the game, so
+    mistakes in manipulating objects are as likely to crash the game as
+    equivalent plain C++ code would be - e.g. null pointer access is safely
+    detected, but dangling pointers aren't.
 
 Objects managed by the wrapper can be broadly classified into the following groups:
 
@@ -157,7 +160,9 @@ that don't fit any of the other reference types. Such
 references can only appear as a value of a pointer field,
 or as a result of calling the ``_field()`` method.
 
-They behave as structs with one field ``value`` of the right type.
+They behave as structs with a ``value`` field of the right type. If the
+object's XML definition has a ``ref-target`` attribute, they will also have
+a read-only ``ref_target`` field set to the corresponding type object.
 
 To make working with numeric buffers easier, they also allow
 numeric indices. Note that other than excluding negative values
@@ -801,6 +806,8 @@ Random number generation
   Dimension may be 1, 2 or 3 (default).
 
 
+.. _lua-cpp-func-wrappers:
+
 C++ function wrappers
 =====================
 
@@ -826,6 +833,9 @@ can be omitted.
 * ``dfhack.getCompiledDFVersion()``
 * ``dfhack.getGitDescription()``
 * ``dfhack.getGitCommit()``
+* ``dfhack.getGitXmlCommit()``
+* ``dfhack.getGitXmlExpectedCommit()``
+* ``dfhack.gitXmlMatch()``
 * ``dfhack.isRelease()``
 
   Return information about the DFHack build in use.
@@ -874,14 +884,45 @@ can be omitted.
   Convert a string from DF's CP437 encoding to the correct encoding for the
   DFHack console.
 
+.. warning::
+
+  When printing CP437-encoded text to the console (for example, names returned
+  from ``dfhack.TranslateName()``), use ``print(dfhack.df2console(text))`` to
+  ensure proper display on all platforms.
+
+
 * ``dfhack.utf2df(string)``
 
   Convert a string from UTF-8 to DF's CP437 encoding.
 
-**Note:** When printing CP437-encoded text to the console (for example, names
-returned from TranslateName()), use ``print(dfhack.df2console(text)`` to ensure
-proper display on all platforms.
+* ``dfhack.toSearchNormalized(string)``
 
+  Replace non-ASCII alphabetic characters in a CP437-encoded string with their
+  nearest ASCII equivalents, if possible, and returns a CP437-encoded string.
+  Note that the returned string may be longer than the input string. For
+  example, ``ä`` is replaced with ``a``, and ``æ`` is replaced with ``ae``.
+
+* ``dfhack.run_command(command[, ...])``
+
+  Run an arbitrary DFHack command, with the core suspended, and send output to
+  the DFHack console. The command can be passed as a table, multiple string
+  arguments, or a single string argument (not recommended - in this case, the
+  usual DFHack console tokenization is used).
+
+  A ``command_result`` constant starting with ``CR_`` is returned, where ``CR_OK``
+  indicates success.
+
+  The following examples are equivalent::
+
+    dfhack.run_command({'ls', '-a'})
+    dfhack.run_command('ls', '-a')
+    dfhack.run_command('ls -a')  -- not recommended
+
+* ``dfhack.run_command_silent(command[, ...])``
+
+  Similar to ``run_command()``, but instead of printing to the console,
+  returns an ``output, command_result`` pair. ``output`` is a single string -
+  see ``dfhack.internal.runCommand()`` to obtain colors as well.
 
 Gui module
 ----------
@@ -1071,15 +1112,17 @@ Job module
 
   Returns the unit performing the job.
 
-* ``dfhack.job.setJobCooldown(building,worker,timeout)``
+* ``dfhack.job.setJobCooldown(building,worker,cooldown)``
 
-  Prevent the worker from taking jobs at the specified workshop for the specified time.
-  This doesn't decrease the timeout in any circumstances.
+  Prevent the worker from taking jobs at the specified workshop for the
+  specified cooldown period (in ticks). This doesn't decrease the cooldown
+  period in any circumstances.
 
-* ``dfhack.job.removeWorker(job,timeout)``
+* ``dfhack.job.removeWorker(job,cooldown)``
 
-  Removes the worker from the specified workshop job, and sets the cooldown.
-  Returns *true* on success.
+  Removes the worker from the specified workshop job, and sets the cooldown
+  period (using the same logic as ``setJobCooldown``). Returns *true* on
+  success.
 
 * ``dfhack.job.checkBuildingsNow()``
 
@@ -1114,7 +1157,7 @@ Job module
   Does basic sanity checks to verify if the suggested item type matches
   the flags in the job item.
 
-* ``dfhack.job.isSuitableMaterial(job_item, mat_type, mat_index)``
+* ``dfhack.job.isSuitableMaterial(job_item, mat_type, mat_index, item_type)``
 
   Likewise, if replacing material.
 
@@ -1227,6 +1270,17 @@ Units module
   Returns the age of the unit in years as a floating-point value.
   If ``true_age`` is true, ignores false identities.
 
+* ``dfhack.units.isValidLabor(unit, unit_labor)``
+
+  Returns whether the indicated labor is settable for the given unit.
+
+* ``dfhack.units.setLaborValidity(unit_labor, isValid)``
+
+  Sets the given labor to the given (boolean) validity for all units that are
+  part of your fortress civilization. Valid labors are allowed to be toggled
+  in the in-game labor management screens (including DFHack's `labor manipulator
+  screen <manipulator>`).
+
 * ``dfhack.units.getNominalSkill(unit, skill[, use_rust])``
 
   Retrieves the nominal skill level for the given unit. If ``use_rust``
@@ -1272,6 +1326,30 @@ Units module
 
   Retrieves the profession color for the given race/caste using raws.
 
+* ``dfhack.units.getGoalType(unit[,goalIndex])``
+
+  Retrieves the goal type of the dream that the given unit has.
+  By default the goal of the first dream is returned.
+  The goalIndex parameter may be used to retrieve additional dream goals.
+  Currently only one dream per unit is supported by Dwarf Fortress.
+  Support for multiple dreams may be added in future versions of Dwarf Fortress.
+
+* ``dfhack.units.getGoalName(unit[,goalIndex])``
+
+  Retrieves the short name describing the goal of the dream that the given unit has.
+  By default the goal of the first dream is returned.
+  The goalIndex parameter may be used to retrieve additional dream goals.
+  Currently only one dream per unit is supported by Dwarf Fortress.
+  Support for multiple dreams may be added in future versions of Dwarf Fortress.
+
+* ``dfhack.units.isGoalAchieved(unit[,goalIndex])``
+
+  Checks if given unit has achieved the goal of the dream.
+  By default the status of the goal of the first dream is returned.
+  The goalIndex parameter may be used to check additional dream goals.
+  Currently only one dream per unit is supported by Dwarf Fortress.
+  Support for multiple dreams may be added in future versions of Dwarf Fortress.
+
 * ``dfhack.units.getStressCategory(unit)``
 
   Returns a number from 0-6 indicating stress. 0 is most stressed; 6 is least.
@@ -1291,6 +1369,12 @@ Items module
 * ``dfhack.items.getPosition(item)``
 
   Returns true *x,y,z* of the item, or *nil* if invalid; may be not equal to item.pos if in inventory.
+
+* ``dfhack.items.getBookTitle(item)``
+
+  Returns the title of the "book" item, or an empty string if the item isn't a "book" or it doesn't
+  have a title. A "book" is a codex or a tool item that has page or writings improvements, such as
+  scrolls and quires.
 
 * ``dfhack.items.getDescription(item, type[, decorate])``
 
@@ -1402,6 +1486,8 @@ Items module
 * ``dfhack.items.isSquadEquipment(item)``
 
   Checks whether the item is assigned to a squad.
+
+.. _lua-maps:
 
 Maps module
 -----------
@@ -1580,11 +1666,13 @@ General
   using width and height for flexible dimensions.
   Returns *is_flexible, width, height, center_x, center_y*.
 
-* ``dfhack.buildings.checkFreeTiles(pos,size[,extents,change_extents,allow_occupied])``
+* ``dfhack.buildings.checkFreeTiles(pos,size[,extents,change_extents,allow_occupied,allow_wall])``
 
   Checks if the rectangle defined by ``pos`` and ``size``, and possibly extents,
   can be used for placing a building. If ``change_extents`` is true, bad tiles
   are removed from extents. If ``allow_occupied``, the occupancy test is skipped.
+  Set ``allow_wall`` to true if the building is unhindered by walls (such as an
+  activity zone).
 
 * ``dfhack.buildings.countExtentTiles(extents,defval)``
 
@@ -1627,7 +1715,11 @@ Low-level building creation functions:
   Returns *false* if the building cannot be placed, or *true, width,
   height, rect_area, true_area*. Returned width and height are the
   final values used by the building; true_area is less than rect_area
-  if any tiles were removed from designation.
+  if any tiles were removed from designation. You can specify a non-rectangular
+  designation for building types that support extents by setting the
+  ``room.extents`` bitmap before calling this function. The extents will be
+  reset, however, if the size returned by this function doesn't match the
+  input size parameter.
 
 * ``dfhack.buildings.constructAbstract(building)``
 
@@ -1716,7 +1808,9 @@ Among them are:
 
   - ``fields = { ... }``
 
-    Initializes fields of the building object after creation with ``df.assign``.
+    Initializes fields of the building object after creation with
+    ``df.assign``. If ``room.extents`` is assigned this way and this function
+    returns with error, the memory allocated for the extents is freed.
 
   - ``width = ..., height = ..., direction = ...``
 
@@ -1790,9 +1884,27 @@ Screen API
 
 The screen module implements support for drawing to the tiled screen of the game.
 Note that drawing only has any effect when done from callbacks, so it can only
-be feasibly used in the core context.
+be feasibly used in the `core context <lua-core-context>`.
 
-Basic painting functions:
+.. contents::
+  :local:
+
+Basic painting functions
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Common parameters to these functions include:
+
+* ``x``, ``y``: screen coordinates in tiles; the upper left corner of the screen
+  is ``x = 0, y = 0``
+* ``pen``: a `pen object <lua-screen-pen>`
+* ``map``: a boolean indicating whether to draw to a separate map buffer
+  (defaults to false, which is suitable for off-map text or a screen that hides
+  the map entirely). Note that only third-party plugins like TWBT currently
+  implement a separate map buffer. If no such plugins are enabled, passing
+  ``true`` has no effect. However, this parameter should still be used to ensure
+  that scripts work properly with such plugins.
+
+Functions:
 
 * ``dfhack.screen.getWindowSize()``
 
@@ -1808,25 +1920,25 @@ Basic painting functions:
 
 * ``dfhack.screen.paintTile(pen,x,y[,char,tile,map])``
 
-  Paints a tile using given parameters. See below for a description of pen.
+  Paints a tile using given parameters. `See below <lua-screen-pen>` for a description of ``pen``.
 
-  Returns *false* if coordinates out of bounds, or other error.
+  Returns *false* on error, e.g. if coordinates are out of bounds
 
 * ``dfhack.screen.readTile(x,y[,map])``
 
   Retrieves the contents of the specified tile from the screen buffers.
-  Returns a pen object, or *nil* if invalid or TrueType.
+  Returns a `pen object <lua-screen-pen>`, or *nil* if invalid or TrueType.
 
 * ``dfhack.screen.paintString(pen,x,y,text[,map])``
 
   Paints the string starting at *x,y*. Uses the string characters
-  in sequence to override the ``ch`` field of pen.
+  in sequence to override the ``ch`` field of `pen <lua-screen-pen>`.
 
   Returns *true* if painting at least one character succeeded.
 
 * ``dfhack.screen.fillRect(pen,x1,y1,x2,y2[,map])``
 
-  Fills the rectangle specified by the coordinates with the given pen.
+  Fills the rectangle specified by the coordinates with the given `pen <lua-screen-pen>`.
   Returns *true* if painting at least one character succeeded.
 
 * ``dfhack.screen.findGraphicsTile(pagename,x,y)``
@@ -1862,7 +1974,12 @@ Basic painting functions:
   Returns the keybinding representing the given string input
   character, or *nil* if impossible.
 
-The "pen" argument used by functions above may be represented by
+.. _lua-screen-pen:
+
+Pen API
+~~~~~~~
+
+The ``pen`` argument used by ``dfhack.screen`` functions may be represented by
 a table with the following possible fields:
 
   ``ch``
@@ -1917,6 +2034,9 @@ Alternatively, it may be a pre-parsed native object with the following API:
   assigning to ``pen.tile_color`` also resets ``pen.tile_fg`` and
   ``pen.tile_bg`` to *nil*.
 
+Screen management
+~~~~~~~~~~~~~~~~~
+
 In order to actually be able to paint to the screen, it is necessary
 to create and register a viewscreen (basically a modal dialog) with
 the game.
@@ -1945,7 +2065,11 @@ Apart from a native viewscreen object, these functions accept a table
 as a screen. In this case, ``show`` creates a new native viewscreen
 that delegates all processing to methods stored in that table.
 
-.. note:: Lua-implemented screens are only supported in the core context.
+.. note::
+
+  * The `gui.Screen class <lua-gui-screen>` provides stubs for all of the
+    functions listed below, and its use is recommended
+  * Lua-implemented screens are only supported in the `core context <lua-core-context>`.
 
 Supported callbacks and fields are:
 
@@ -2078,9 +2202,22 @@ unless otherwise noted.
 
   Changes the current directory to ``path``. Use with caution.
 
+* ``dfhack.filesystem.restore_cwd()``
+
+  Restores the current working directory to what it was when DF started.
+
+* ``dfhack.filesystem.get_initial_cwd()``
+
+  Returns the value of the working directory when DF was started.
+
 * ``dfhack.filesystem.mkdir(path)``
 
   Creates a new directory. Returns ``false`` if unsuccessful, including if ``path`` already exists.
+
+* ``dfhack.filesystem.mkdir_recursive(path)``
+
+  Creates a new directory, including any intermediate directories that don't exist yet.
+  Returns ``true`` if the folder was created or already existed, or ``false`` if unsuccessful.
 
 * ``dfhack.filesystem.rmdir(path)``
 
@@ -2100,8 +2237,10 @@ unless otherwise noted.
 * ``dfhack.filesystem.listdir(path)``
 
   Lists files/directories in a directory.  Returns ``{}`` if ``path`` does not exist.
+  Set include_prefix to false if you don't want the ``path`` string prepended to the
+  returned filenames.
 
-* ``dfhack.filesystem.listdir_recursive(path [, depth = 10])``
+* ``dfhack.filesystem.listdir_recursive(path [, depth = 10[, include_prefix = true]])``
 
   Lists all files/directories in a directory and its subdirectories. All directories
   are listed before their contents. Returns a table with subtables of the format::
@@ -2124,16 +2263,13 @@ Console API
   Flushes all output to the console. This can be useful when printing text that
   does not end in a newline but should still be displayed.
 
+.. _lua-api-internal:
+
 Internal API
 ------------
 
 These functions are intended for the use by dfhack developers,
 and are only documented here for completeness:
-
-* ``dfhack.internal.scripts``
-
-  The table used by ``dfhack.run_script()`` to give every script its own
-  global environment, persistent between calls to the script.
 
 * ``dfhack.internal.getPE()``
 
@@ -2222,7 +2358,7 @@ and are only documented here for completeness:
 
 * ``dfhack.internal.addScriptPath(path, search_before)``
 
-  Adds ``path`` to the list of paths searched for scripts (both in Lua and Ruby).
+  Registers ``path`` as a `script path <script-paths>`.
   If ``search_before`` is passed and ``true``, the path will be searched before
   the default paths (e.g. ``raw/scripts``, ``hack/scripts``); otherwise, it will
   be searched after.
@@ -2232,21 +2368,37 @@ and are only documented here for completeness:
 
 * ``dfhack.internal.removeScriptPath(path)``
 
-  Removes ``path`` from the script search paths and returns ``true`` if successful.
+  Removes ``path`` from the list of `script paths <script-paths>` and returns
+  ``true`` if successful.
 
 * ``dfhack.internal.getScriptPaths()``
 
-  Returns the list of script paths in the order they are searched, including defaults.
-  (This can change if a world is loaded.)
+  Returns the list of `script paths <script-paths>` in the order they are
+  searched, including defaults. (This can change if a world is loaded.)
 
 * ``dfhack.internal.findScript(name)``
 
-  Searches script paths for the script ``name`` and returns the path of the first
-  file found, or ``nil`` on failure.
+  Searches `script paths <script-paths>` for the script ``name`` and returns the
+  path of the first file found, or ``nil`` on failure.
 
   .. note::
     This requires an extension to be specified (``.lua`` or ``.rb``) - use
     ``dfhack.findScript()`` to include the ``.lua`` extension automatically.
+
+* ``dfhack.internal.runCommand(command[, use_console])``
+
+  Runs a DFHack command with the core suspended. Used internally by the
+  ``dfhack.run_command()`` family of functions.
+
+  - ``command``: either a table of strings or a single string which is parsed by
+    the default console tokenization strategy (not recommended)
+  - ``use_console``: if true, output is sent directly to the DFHack console
+
+  Returns a table with a ``status`` key set to a ``command_result`` constant
+  (``status = CR_OK`` indicates success). Additionally, if ``use_console`` is
+  not true, enumerated table entries of the form ``{color, text}`` are included,
+  e.g. ``result[1][0]`` is the color of the first piece of text printed (a
+  ``COLOR_`` constant). These entries can be iterated over with ``ipairs()``.
 
 * ``dfhack.internal.md5(string)``
 
@@ -2266,11 +2418,13 @@ and are only documented here for completeness:
 
   Returns a numeric identifier of the current thread.
 
+.. _lua-core-context:
+
 Core interpreter context
 ========================
 
 While plugins can create any number of interpreter instances,
-there is one special context managed by dfhack core. It is the
+there is one special context managed by the DFHack core. It is the
 only context that can receive events from DF and plugins.
 
 Core context specific functions:
@@ -2300,7 +2454,8 @@ Core context specific functions:
 
 * ``dfhack.onStateChange.foo = function(code)``
 
-  Event. Receives the same codes as plugin_onstatechange in C++.
+  Creates a handler for state change events. Receives the same
+  `SC_ codes <lua-globals>` as ``plugin_onstatechange()`` in C++.
 
 
 Event type
@@ -2312,7 +2467,7 @@ through the table with next and calls all contained values.
 This is intended as an extensible way to add listeners.
 
 This type itself is available in any context, but only the
-core context has the actual events defined by C++ code.
+`core context <lua-core-context>` has the actual events defined by C++ code.
 
 Features:
 
@@ -2379,6 +2534,8 @@ The following module management functions are provided:
   should be kept limited to the standard Lua library and API described
   in this document.
 
+.. _lua-globals:
+
 Global environment
 ==================
 
@@ -2395,12 +2552,18 @@ environment by the mandatory init file dfhack.lua:
     COLOR_LIGHTBLUE, COLOR_LIGHTGREEN, COLOR_LIGHTCYAN, COLOR_LIGHTRED,
     COLOR_LIGHTMAGENTA, COLOR_YELLOW, COLOR_WHITE
 
-* ``dfhack.onStateChange`` event codes
+* State change event codes, used by ``dfhack.onStateChange``
 
-  Available only in the core context, as is the event itself:
+  Available only in the `core context <lua-core-context>`, as is the event itself:
 
   SC_WORLD_LOADED, SC_WORLD_UNLOADED, SC_MAP_LOADED,
   SC_MAP_UNLOADED, SC_VIEWSCREEN_CHANGED, SC_CORE_INITIALIZED
+
+* Command result constants (equivalent to ``command_result`` in C++), used by
+  ``dfhack.run_command()`` and related functions:
+
+  CR_OK, CR_LINK_FAILURE, CR_NEEDS_CONSOLE, CR_NOT_IMPLEMENTED, CR_FAILURE,
+  CR_WRONG_USAGE, CR_NOT_FOUND
 
 * Functions already described above
 
@@ -2916,7 +3079,9 @@ The painting natives in ``dfhack.screen`` apply to the whole screen, are
 completely stateless and don't implement clipping.
 
 The Painter class inherits from ViewRect to provide clipping and local
-coordinates, and tracks current cursor position and current pen.
+coordinates, and tracks current cursor position and current pen. It also
+supports drawing to a separate map buffer if applicable (see ``map()`` below
+for details).
 
 * ``Painter{ ..., pen = ..., key_pen = ... }``
 
@@ -2941,7 +3106,15 @@ coordinates, and tracks current cursor position and current pen.
 
 * ``painter:cursor()``
 
-  Returns the current cursor *x,y* in local coordinates.
+  Returns the current cursor *x,y* in screen coordinates.
+
+* ``painter:cursorX()``
+
+  Returns just the current *x* cursor coordinate
+
+* ``painter:cursorY()``
+
+  Returns just the current *y* cursor coordinate
 
 * ``painter:seek(x,y)``
 
@@ -2961,9 +3134,21 @@ coordinates, and tracks current cursor position and current pen.
 
   Sets the current pen to ``dfhack.pen.parse(old_pen,...)``, and returns *self*.
 
+* ``painter:color(fg[,bold[,bg]])``
+
+  Sets the specified colors of the current pen and returns *self*.
+
 * ``painter:key_pen(...)``
 
   Sets the current keybinding pen to ``dfhack.pen.parse(old_pen,...)``, and returns *self*.
+
+* ``painter:map(to_map)``
+
+  Enables or disables drawing to a separate map buffer. ``to_map`` is a boolean
+  that will be passed as the ``map`` parameter to any ``dfhack.screen`` functions
+  that accept it. Note that only third-party plugins like TWBT currently implement
+  a separate map buffer; if none are enabled, this function has no effect (but
+  should still be used to ensure proper support for such plugins). Returns *self*.
 
 * ``painter:clear()``
 
@@ -2981,7 +3166,7 @@ coordinates, and tracks current cursor position and current pen.
 
 * ``painter:tile([char, tile[, ...]])``
 
-  Like above, but also allows overriding the ``tile`` property on ad-hoc basis.
+  Like ``char()`` above, but also allows overriding the ``tile`` property on ad-hoc basis.
 
 * ``painter:string(text[, ...])``
 
@@ -2991,7 +3176,13 @@ coordinates, and tracks current cursor position and current pen.
 
   Paints the description of the keycode using ``dfhack.pen.parse(cur_key_pen,...)``; returns *self*.
 
-As noted above, all painting methods return *self*, in order to allow chaining them like this::
+* ``painter:key_string(keycode, text, ...)``
+
+  A convenience wrapper around both ``key()`` and ``string()`` that prints both
+  the specified keycode description and text, separated by ``:``. Any extra
+  arguments are passed directly to ``string()``. Returns *self*.
+
+Unless specified otherwise above, all Painter methods return *self*, in order to allow chaining them like this::
 
   painter:pen(foo):seek(x,y):char(1):advance(1):string('bar')...
 
@@ -3111,6 +3302,8 @@ The class has the following methods:
   sequence in *reverse order*, so that topmost subviews get events first.
   Returns *true* if any of the subviews handled the event.
 
+
+.. _lua-gui-screen:
 
 Screen class
 ------------
@@ -3543,17 +3736,27 @@ Plugins
 .. contents::
    :local:
 
-DFHack plugins may export native functions and events
-to lua contexts. They are automatically imported by
-``mkmodule('plugins.<name>')``; this means that a lua
-module file is still necessary for ``require`` to read.
+DFHack plugins may export native functions and events to Lua contexts. These are
+exposed as ``plugins.<name>`` modules, which can be imported with
+``require('plugins.<name>')``. The plugins listed in this section expose
+functions and/or data to Lua in this way.
 
-The following plugins have lua support.
+In addition to any native functions documented here, plugins that can be
+enabled (that is, plugins that support the `enable/disable API <enable>`) will
+have the following functions defined:
+
+* ``isEnabled()`` returns whether the plugin is enabled.
+* ``setEnabled(boolean)`` sets whether the plugin is enabled.
+
+For plugin developers, note that a Lua file in ``plugins/lua`` is required for
+``require()`` to work, even if it contains no pure-Lua functions. This file must
+contain ``mkmodule('plugins.<name>')`` to import any native functions defined in
+the plugin. See existing files in ``plugins/lua`` for examples.
 
 blueprint
 =========
 
-Native functions:
+Native functions provided by the `blueprint` plugin:
 
 * ``dig(start, end, name)``
 * ``build(start, end, name)``
@@ -3563,10 +3766,104 @@ Native functions:
   ``start`` and ``end`` are tables containing positions (see
   ``xyz2pos``). ``name`` is used as the basis for the filename.
 
+.. _building-hacks:
+
+building-hacks
+==============
+
+This plugin overwrites some methods in workshop df class so that mechanical workshops are possible. Although
+plugin export a function it's recommended to use lua decorated function.
+
+.. contents::
+  :local:
+
+Functions
+---------
+
+``registerBuilding(table)`` where table must contain name, as a workshop raw name, the rest are optional:
+
+    :name:
+        custom workshop id e.g. ``SOAPMAKER``
+
+        .. note:: this is the only mandatory field.
+
+    :fix_impassible:
+        if true make impassible tiles impassible to liquids too
+    :consume:
+        how much machine power is needed to work.
+        Disables reactions if not supplied enough and ``needs_power==1``
+    :produce:
+        how much machine power is produced.
+    :needs_power:
+        if produced in network < consumed stop working, default true
+    :gears:
+        a table or ``{x=?,y=?}`` of connection points for machines.
+    :action:
+        a table of number (how much ticks to skip) and a function which
+        gets called on shop update
+    :animate:
+        a table of frames which can be a table of:
+
+        a. tables of 4 numbers ``{tile,fore,back,bright}`` OR
+        b. empty table (tile not modified) OR
+        c. ``{x=<number> y=<number> + 4 numbers like in first case}``,
+           this generates full frame useful for animations that change little (1-2 tiles)
+
+    :canBeRoomSubset:
+        a flag if this building can be counted in room. 1 means it can, 0 means it can't and -1 default building behaviour
+    :auto_gears:
+        a flag that automatically fills up gears and animate. It looks over building definition for gear icons and maps them.
+
+    Animate table also might contain:
+
+    :frameLength:
+        how many ticks does one frame take OR
+    :isMechanical:
+        a bool that says to try to match to mechanical system (i.e. how gears are turning)
+
+``getPower(building)`` returns two number - produced and consumed power if building can be modified and returns nothing otherwise
+
+``setPower(building,produced,consumed)`` sets current productiona and consumption for a building.
+
+Examples
+--------
+
+Simple mechanical workshop::
+
+  require('plugins.building-hacks').registerBuilding{name="BONE_GRINDER",
+    consume=15,
+    gears={x=0,y=0}, --connection point
+    animate={
+      isMechanical=true, --animate the same conn. point as vanilla gear
+      frames={
+      {{x=0,y=0,42,7,0,0}}, --first frame, 1 changed tile
+      {{x=0,y=0,15,7,0,0}} -- second frame, same
+      }
+    }
+
+Or with auto_gears::
+
+  require('plugins.building-hacks').registerBuilding{name="BONE_GRINDER",
+    consume=15,
+    auto_gears=true
+    }
+
+buildingplan
+============
+
+Native functions provided by the `buildingplan` plugin:
+
+* ``bool isPlannableBuilding(df::building_type type, int16_t subtype, int32_t custom)`` returns whether the building type is handled by buildingplan.
+* ``bool isPlanModeEnabled(df::building_type type, int16_t subtype, int32_t custom)`` returns whether the buildingplan UI is enabled for the specified building type.
+* ``bool isPlannedBuilding(df::building *bld)`` returns whether the given building is managed by buildingplan.
+* ``void addPlannedBuilding(df::building *bld)`` suspends the building jobs and adds the building to the monitor list.
+* ``void doCycle()`` runs a check for whether buildlings in the monitor list can be assigned items and unsuspended. This method runs automatically twice a game day, so you only need to call it directly if you want buildingplan to do a check right now.
+* ``void scheduleCycle()`` schedules a cycle to be run during the next non-paused game frame. Can be called multiple times while the game is paused and only one cycle will be scheduled.
+
 burrows
 =======
 
-Implements extended burrow manipulations.
+The `burrows` plugin implements extended burrow manipulations.
 
 Events:
 
@@ -3608,19 +3905,141 @@ Native functions:
 
 The lua module file also re-exports functions from ``dfhack.burrows``.
 
-sort
-====
+.. _cxxrandom:
 
-Does not export any native functions as of now. Instead, it
-calls lua code to perform the actual ordering of list items.
+cxxrandom
+=========
+
+Exposes some features of the C++11 random number library to Lua.
+
+.. contents::
+  :local:
+
+Native functions (exported to Lua)
+----------------------------------
+
+- ``GenerateEngine(seed)``
+
+  returns engine id
+
+- ``DestroyEngine(rngID)``
+
+  destroys corresponding engine
+
+- ``NewSeed(rngID, seed)``
+
+  re-seeds engine
+
+- ``rollInt(rngID, min, max)``
+
+  generates random integer
+
+- ``rollDouble(rngID, min, max)``
+
+  generates random double
+
+- ``rollNormal(rngID, avg, stddev)``
+
+  generates random normal[gaus.]
+
+- ``rollBool(rngID, chance)``
+
+  generates random boolean
+
+- ``MakeNumSequence(start, end)``
+
+  returns sequence id
+
+- ``AddToSequence(seqID, num)``
+
+  adds a number to the sequence
+
+- ``ShuffleSequence(rngID, seqID)``
+
+  shuffles the number sequence
+
+- ``NextInSequence(seqID)``
+
+  returns the next number in sequence
+
+
+Lua plugin functions
+--------------------
+
+- ``MakeNewEngine(seed)``
+
+  returns engine id
+
+Lua plugin classes
+------------------
+
+``crng``
+~~~~~~~~
+
+- ``init(id, df, dist)``: constructor
+
+  - ``id``: Reference ID of engine to use in RNGenerations
+  - ``df`` (optional): bool indicating whether to destroy the Engine when the crng object is garbage collected
+  - ``dist`` (optional): lua number distribution to use
+
+- ``changeSeed(seed)``: alters engine's seed value
+- ``setNumDistrib(distrib)``: sets the number distribution crng object should use
+
+  - ``distrib``: number distribution object to use in RNGenerations
+
+- ``next()``: returns the next number in the distribution
+- ``shuffle()``: effectively shuffles the number distribution
+
+``normal_distribution``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+- ``init(avg, stddev)``: constructor
+- ``next(id)``: returns next number in the distribution
+
+  - ``id``: engine ID to pass to native function
+
+``real_distribution``
+~~~~~~~~~~~~~~~~~~~~~
+
+- ``init(min, max)``: constructor
+- ``next(id)``: returns next number in the distribution
+
+  - ``id``: engine ID to pass to native function
+
+``int_distribution``
+~~~~~~~~~~~~~~~~~~~~
+
+- ``init(min, max)``: constructor
+- ``next(id)``: returns next number in the distribution
+
+  - ``id``: engine ID to pass to native function
+
+``bool_distribution``
+~~~~~~~~~~~~~~~~~~~~~
+
+- ``init(min, max)``: constructor
+- ``next(id)``: returns next boolean in the distribution
+
+  - ``id``: engine ID to pass to native function
+
+``num_sequence``
+~~~~~~~~~~~~~~~~
+
+- ``init(a, b)``: constructor
+- ``add(num)``: adds num to the end of the number sequence
+- ``shuffle()``: shuffles the sequence of numbers
+- ``next()``: returns next number in the sequence
 
 .. _eventful:
 
-Eventful
+eventful
 ========
 
 This plugin exports some events to lua thus allowing to run lua functions
 on DF world events.
+
+.. contents::
+  :local:
 
 List of events
 --------------
@@ -3774,92 +4193,16 @@ Integrated tannery::
   b=require "plugins.eventful"
   b.addReactionToShop("TAN_A_HIDE","LEATHERWORKS")
 
-.. _building-hacks:
-
-Building-hacks
-==============
-
-This plugin overwrites some methods in workshop df class so that mechanical workshops are possible. Although
-plugin export a function it's recommended to use lua decorated function.
-
-Functions
----------
-
-``registerBuilding(table)`` where table must contain name, as a workshop raw name, the rest are optional:
-
-    :name:
-        custom workshop id e.g. ``SOAPMAKER``
-
-        .. note:: this is the only mandatory field.
-
-    :fix_impassible:
-        if true make impassible tiles impassible to liquids too
-    :consume:
-        how much machine power is needed to work.
-        Disables reactions if not supplied enough and ``needs_power==1``
-    :produce:
-        how much machine power is produced.
-    :needs_power:
-        if produced in network < consumed stop working, default true
-    :gears:
-        a table or ``{x=?,y=?}`` of connection points for machines.
-    :action:
-        a table of number (how much ticks to skip) and a function which
-        gets called on shop update
-    :animate:
-        a table of frames which can be a table of:
-
-        a. tables of 4 numbers ``{tile,fore,back,bright}`` OR
-        b. empty table (tile not modified) OR
-        c. ``{x=<number> y=<number> + 4 numbers like in first case}``,
-           this generates full frame useful for animations that change little (1-2 tiles)
-
-    :canBeRoomSubset:
-        a flag if this building can be counted in room. 1 means it can, 0 means it can't and -1 default building behaviour
-    :auto_gears:
-        a flag that automatically fills up gears and animate. It looks over building definition for gear icons and maps them.
-
-    Animate table also might contain:
-
-    :frameLength:
-        how many ticks does one frame take OR
-    :isMechanical:
-        a bool that says to try to match to mechanical system (i.e. how gears are turning)
-
-``getPower(building)`` returns two number - produced and consumed power if building can be modified and returns nothing otherwise
-
-``setPower(building,produced,consumed)`` sets current productiona and consumption for a building.
-
-Examples
---------
-
-Simple mechanical workshop::
-
-  require('plugins.building-hacks').registerBuilding{name="BONE_GRINDER",
-    consume=15,
-    gears={x=0,y=0}, --connection point
-    animate={
-      isMechanical=true, --animate the same conn. point as vanilla gear
-      frames={
-      {{x=0,y=0,42,7,0,0}}, --first frame, 1 changed tile
-      {{x=0,y=0,15,7,0,0}} -- second frame, same
-      }
-    }
-
-Or with auto_gears::
-
-  require('plugins.building-hacks').registerBuilding{name="BONE_GRINDER",
-    consume=15,
-    auto_gears=true
-    }
-
 .. _luasocket:
 
-Luasocket
+luasocket
 =========
 
 A way to access csocket from lua. The usage is made similar to luasocket in vanilla lua distributions. Currently
 only subset of functions exist and only tcp mode is implemented.
+
+.. contents::
+  :local:
 
 Socket class
 ------------
@@ -3920,127 +4263,86 @@ A class with all the tcp functionality.
 
   Tries connecting to that address and port. Returns ``client`` object.
 
-.. _cxxrandom:
 
-cxxrandom
-=========
+.. _map-render:
 
-Exposes some features of the C++11 random number library to Lua.
+map-render
+==========
 
-Native functions (exported to Lua)
-----------------------------------
+A way to ask DF to render a section of the fortress mode map. This uses a native
+DF rendering function so it's highly dependent on DF settings (e.g. tileset,
+colors, etc.)
 
-- ``GenerateEngine(seed)``
+Functions
+---------
 
-  returns engine id
+- ``render_map_rect(x,y,z,w,h)``
 
-- ``DestroyEngine(rngID)``
+  returns a table with w*h*4 entries of rendered tiles. The format is same as ``df.global.gps.screen`` (tile,foreground,bright,background).
 
-  destroys corresponding engine
+.. _pathable:
 
-- ``NewSeed(rngID, seed)``
+pathable
+========
 
-  re-seeds engine
+This plugin implements the back end of the `gui/pathable` script. It exports a
+single Lua function, in ``hack/lua/plugins/pathable.lua``:
 
-- ``rollInt(rngID, min, max)``
+* ``paintScreen(cursor[,skip_unrevealed])``: Paint each visible of the screen
+  green or red, depending on whether it can be pathed to from the tile at
+  ``cursor``. If ``skip_unrevealed`` is specified and true, do not draw
+  unrevealed tiles.
 
-  generates random integer
+sort
+====
 
-- ``rollDouble(rngID, min, max)``
+The `sort <sort>` plugin does not export any native functions as of now.
+Instead, it calls Lua code to perform the actual ordering of list items.
 
-  generates random double
+.. _xlsxreader:
 
-- ``rollNormal(rngID, avg, stddev)``
+xlsxreader
+==========
 
-  generates random normal[gaus.]
+Utility functions to facilitate reading .xlsx spreadsheets. It provides the
+following API methods:
 
-- ``rollBool(rngID, chance)``
+ - ``file_handle open_xlsx_file(filename)``
+ - ``close_xlsx_file(file_handle)``
+ - ``sheet_names list_sheets(file_handle)``
+ - ``sheet_handle open_sheet(file_handle, sheet_name)``
+ - ``close_sheet(sheet_handle)``
+ - ``cell_strings get_row(sheet_handle)``
 
-  generates random boolean
+ Example::
 
-- ``MakeNumSequence(start, end)``
+    local xlsxreader = require('plugins.xlsxreader')
 
-  returns sequence id
+    local function dump_sheet(xlsx_file, sheet_name)
+        print('reading sheet: '..sheet_name)
+        local xlsx_sheet = xlsxreader.open_sheet(xlsx_file, sheet_name)
+        dfhack.with_finalize(
+            function () xlsxreader.close_sheet(xlsx_sheet) end,
+            function ()
+                local row_cells = xlsxreader.get_row(xlsx_sheet)
+                while row_cells do
+                    printall(row_cells)
+                    row_cells = xlsxreader.get_row(xlsx_sheet)
+                end
+            end
+        )
+    end
 
-- ``AddToSequence(seqID, num)``
-
-  adds a number to the sequence
-
-- ``ShuffleSequence(rngID, seqID)``
-
-  shuffles the number sequence
-
-- ``NextInSequence(seqID)``
-
-  returns the next number in sequence
-
-
-Lua plugin functions
---------------------
-
-- ``MakeNewEngine(seed)``
-
-  returns engine id
-
-Lua plugin classes
-------------------
-
-``crng``
-~~~~~~~~
-
-- ``init(id, df, dist)``: constructor
-
-  - ``id``: Reference ID of engine to use in RNGenerations
-  - ``df`` (optional): bool indicating whether to destroy the Engine when the crng object is garbage collected
-  - ``dist`` (optional): lua number distribution to use
-
-- ``changeSeed(seed)``: alters engine's seed value
-- ``setNumDistrib(distrib)``: sets the number distribution crng object should use
-
-  - ``distrib``: number distribution object to use in RNGenerations
-
-- ``next()``: returns the next number in the distribution
-- ``shuffle()``: effectively shuffles the number distribution
-
-``normal_distribution``
-~~~~~~~~~~~~~~~~~~~~~~~
-
-- ``init(avg, stddev)``: constructor
-- ``next(id)``: returns next number in the distribution
-
-  - ``id``: engine ID to pass to native function
-
-``real_distribution``
-~~~~~~~~~~~~~~~~~~~~~
-
-- ``init(min, max)``: constructor
-- ``next(id)``: returns next number in the distribution
-
-  - ``id``: engine ID to pass to native function
-
-``int_distribution``
-~~~~~~~~~~~~~~~~~~~~
-
-- ``init(min, max)``: constructor
-- ``next(id)``: returns next number in the distribution
-
-  - ``id``: engine ID to pass to native function
-
-``bool_distribution``
-~~~~~~~~~~~~~~~~~~~~~
-
-- ``init(min, max)``: constructor
-- ``next(id)``: returns next boolean in the distribution
-
-  - ``id``: engine ID to pass to native function
-
-``num_sequence``
-~~~~~~~~~~~~~~~~
-
-- ``init(a, b)``: constructor
-- ``add(num)``: adds num to the end of the number sequence
-- ``shuffle()``: shuffles the sequence of numbers
-- ``next()``: returns next number in the sequence
+    local filepath = "path/to/some_file.xlsx"
+    local xlsx_file = xlsxreader.open_xlsx_file(filepath)
+    dfhack.with_finalize(
+        function () xlsxreader.close_xlsx_file(xlsx_file) end,
+        function ()
+            for _, sheet_name in ipairs(xlsxreader.list_sheets(xlsx_file)) do
+                dump_sheet(xlsx_file, sheet_name)
+            end
+        end
+    )
 
 =======
 Scripts
@@ -4049,86 +4351,187 @@ Scripts
 .. contents::
    :local:
 
-Any files with the .lua extension placed into :file:`hack/scripts/*`
-are automatically used by the DFHack core as commands. The
-matching command name consists of the name of the file without
-the extension. First DFHack searches for the script in the :file:`<save_folder>/raw/scripts/` folder. If it is not found there, it searches in the :file:`<DF>/raw/scripts/` folder. If it is not there, it searches in
-:file:`<DF>/hack/scripts/`. If it is not there, it gives up.
+Any files with the ``.lua`` extension placed into the :file:`hack/scripts` folder
+are automatically made avaiable as DFHack commands. The command corresponding to
+a script is simply the script's filename, relative to the scripts folder, with
+the extension omitted. For example:
 
-If the first line of the script is a one-line comment, it is
-used by the built-in ``ls`` and ``help`` commands.
-Such a comment is required for every script in the official DFHack repository.
+* :file:`hack/scripts/add-thought.lua` is invoked as ``add-thought``
+* :file:`hack/scripts/gui/teleport.lua` is invoked as ``gui/teleport``
 
 .. note::
-    Scripts placed in subdirectories still can be accessed, but
-    do not clutter the `ls` command list (unless ``ls -a``; thus it is preferred
-    for obscure developer-oriented scripts and scripts used by tools.
-    When calling such scripts, always use '/' as the separator for
-    directories, e.g. ``devel/lua-example``.
+    Scripts placed in subdirectories can be run as described above, but are not
+    listed by the `ls` command unless ``-a`` is specified. In general, scripts
+    should be placed in subfolders in the following situations:
 
-Scripts are re-read from disk if they have changed since the last time they were read.
-Global variable values persist in memory between calls, unless the file has changed.
-Every script gets its own separate environment for global
-variables.
+    * ``devel``: scripts that are intended exclusively for DFHack development,
+      including examples, or scripts that are experimental and unstable
+    * ``fix``: fixes for specific DF issues
+    * ``gui``: GUI front-ends for existing tools (for example, see the
+      relationship between `teleport` and `gui/teleport`)
+    * ``modtools``: scripts that are intended to be run exclusively as part of
+      mods, not directly by end-users (as a rule of thumb: if someone other than
+      a mod developer would want to run a script from the console, it should
+      not be placed in this folder)
 
-Arguments are passed in to the scripts via the **...** built-in
-quasi-variable; when the script is called by the DFHack core,
-they are all guaranteed to be non-nil strings.
+Scripts can also be placed in other folders - by default, these include
+:file:`raw/scripts` and :file:`data/save/{region}/raw/scripts`, but additional
+folders can be added (for example, a copy of the
+:source:scripts:`scripts repository <>` for local development). See
+`script-paths` for more information on how to configure this behavior.
 
-DFHack core invokes the scripts in the *core context* (see above);
-however it is possible to call them from any lua code (including
-from other scripts) in any context, via the same function the core uses:
+If the first line of the script is a one-line comment (starting with ``--``),
+the content of the comment is used by the built-in ``ls`` and ``help`` commands.
+Such a comment is required for every script in the official DFHack repository.
 
-* ``dfhack.run_script(command[, ...])``
-   
-  Run a lua script in hack/scripts/, as if it was started from dfhack command-line.
-  The syntax for the argument is similar to dfhack.run_command.
-  The command can be passed as a table, multiple string
-  arguments, or a single string argument (not recommended - in this case, the
-  usual DFHack console tokenization is used).
-  The following examples are equivalent::
-        dfhack.run_script({'ls', '-a'})
-        dfhack.run_script('ls', '-a')
-        dfhack.run_script('ls -a')  -- not recommended
+Scripts are read from disk when run for the first time, or if they have changed
+since the last time they were run.
+
+Each script has an isolated environment where global variables set by the script
+are stored. Values of globals persist across script runs in the same DF session.
+See `devel/lua-example` for an example of this behavior. Note that local
+variables do *not* persist.
+
+Arguments are passed in to the scripts via the ``...`` built-in quasi-variable;
+when the script is called by the DFHack core, they are all guaranteed to be
+non-nil strings.
+
+Additional data about how a script is invoked is passed to the script as a
+special ``dfhack_flags`` global, which is unique to each script. This table
+is guaranteed to exist, but individual entries may be present or absent
+depending on how the script was invoked. Flags that are present are described
+in the subsections below.
+
+DFHack invokes the scripts in the `core context <lua-core-context>`; however it
+is possible to call them from any lua code (including from other scripts) in any
+context with ``dfhack.run_script()`` below.
+
+General script API
+==================
+
+* ``dfhack.run_script(name[,args...])``
+
+  Run a Lua script in hack/scripts/, as if it was started from the DFHack
+  command-line. The ``name`` argument should be the name of the script without
+  its extension, as would be used on the command line.
+
+  Example::
+     dfhack.run_script("armoks-blessing", "all")
+  Scipts that use a dash(``-``) in their arguments still require one when called
+  from ``dfhack.run_script``. 
+  Example::
+     dfhack.run_script("gaydar", "-all")
   
-  Unlike ``dfhack.run_command``, ``dfhack.run_script`` is capable of taking the 
-  return value of a lua script as an argument. 
-  For example::
-        dfhack.run_scipt("process", dfhack.gui.getDwarfmodeViewDims());
+  Unlike ``dfhack.run_command``, ``dfhack.run_script`` allows a different 
+  different script to be executed and its value passed as an argument to the main 
+  function called by ``dfhack.run_script``.
+  
+  Example::
+      dfhack.run_script("some_script", dfhack.gui.getDwarfmodeViewDims());
+  
+  While this implmenation is currently a functional, its purpose and stability
+  are limited. As such, ``dfhack.reqscript(name)`` should be used.
+  
+  Note that the ``dfhack.run_script()`` function allows Lua errors propagate to the caller.
 
-Note that this function lets errors propagate to the caller.
-
-* ``dfhack.script_environment(name)``
-
-  Run an Lua script and return its environment.
-  This command allows you to use scripts like modules for increased portability.
-  It is highly recommended that if you are a modder you put your custom modules in ``raw/scripts`` and use ``script_environment`` instead of ``require`` so that saves with your mod installed will be self-contained and can be transferred to people who do have DFHack but do not have your mod installed.
-
-  You can say ``dfhack.script_environment('add-thought').addEmotionToUnit([arguments go here])`` and it will have the desired effect.
-  It will call the script in question with the global ``moduleMode`` set to ``true`` so that the script can return early.
-  This is useful because if the script is called from the console it should deal with its console arguments and if it is called by ``script_environment`` it should only create its global functions and return.
-  You can also access global variables with, for example ``print(dfhack.script_environment('add-thought').validArgs)``
-
-  The function ``script_environment`` is fast enough that it is recommended that you not store its result in a nonlocal variable, because your script might need to load a different version of that script if the save is unloaded and a save with a different mod that overrides the same script with a slightly different functionality is loaded.
-  This will not be an issue in most cases.
-
-  This function also permits circular dependencies of scripts.
-
-* ``dfhack.reqscript(name)`` or ``reqscript(name)``
-
-  Nearly identical to script_environment() but requires scripts being loaded to
-  include a line similar to::
-
-      --@ module = true
-
-  This is intended to only allow scripts that take appropriate action when used
-  as a module to be loaded.
-
+  To run other types of commands (such as built-in commands, plugin commands, or
+  Ruby scripts), see ``dfhack.run_command()``. Note that this is slightly slower
+  than ``dfhack.run_script()`` for Lua scripts.
+ 
 * ``dfhack.script_help([name, [extension]])``
 
   Returns the contents of the embedded documentation of the specified script.
   ``extension`` defaults to "lua", and ``name`` defaults to the name of the
-  script where this function was called.
+  script where this function was called. For example, the following can be used
+  to print the current script's help text::
+
+    local args = {...}
+    if args[1] == 'help' then
+        print(script_help())
+        return
+    end
+
+
+Importing scripts
+=================
+
+* ``dfhack.reqscript(name)`` or ``reqscript(name)``
+
+  Loads a Lua script and returns its environment (i.e. a table of all global
+  functions and variables). This is similar to the built-in ``require()``, but
+  searches all script paths for the first matching ``name.lua`` file instead
+  of searching the Lua library paths (like ``hack/lua``).
+
+  Most scripts can be made to support ``reqscript()`` without significant
+  changes (in contrast, ``require()`` requires the use of ``mkmodule()`` and
+  some additional boilerplate). However, because scripts can have side effects
+  when they are loaded (such as printing messages or modifying the game state),
+  scripts that intend to support being imported must satisfy some criteria to
+  ensure that they can be imported safely:
+
+  1. Include the following line - ``reqscript()`` will fail if this line is
+     not present::
+
+      --@ module = true
+
+  2. Include a check for ``dfhack_flags.module``, and avoid running any code
+     that has side-effects if this flag is true. For instance::
+
+      -- (function definitions)
+      if dfhack_flags.module then
+          return
+      end
+      -- (main script code with side-effects)
+
+     or::
+
+      -- (function definitions)
+      function main()
+          -- (main script code with side-effects)
+      end
+      if not dfhack_flags.module then
+          main()
+      end
+
+  Example usage::
+
+    local addThought = reqscript('add-thought')
+    addThought.addEmotionToUnit(unit, ...)
+
+  Circular dependencies between scripts are supported, as long as the scripts
+  have no side-effects at load time (which should already be the case per
+  the above criteria).
+
+  .. warning::
+
+    Avoid caching the table returned by ``reqscript()`` beyond storing it in
+    a local or global variable as in the example above. ``reqscript()`` is fast
+    for scripts that have previously been loaded and haven't changed. If you
+    retain a reference to a table returned by an old ``reqscript()`` call, this
+    may lead to unintended behavior if the location of the script changes
+    (e.g. if a save is loaded or unloaded, or if a `script path <script-paths>`
+    is added in some other way).
+
+  .. admonition:: Tip
+
+    Mods that include custom Lua modules can write these modules to support
+    ``reqscript()`` and distribute them as scripts in ``raw/scripts``. Since the
+    entire ``raw`` folder is copied into new saves, this will allow saves to be
+    successfully transferred to other users who do not have the mod installed
+    (as long as they have DFHack installed).
+
+  .. admonition:: Backwards compatibility notes
+
+    For backwards compatibility, ``moduleMode`` is also defined if
+    ``dfhack_flags.module`` is defined, and is set to the same value.
+    Support for this may be removed in a future version.
+
+* ``dfhack.script_environment(name)``
+
+  Similar to ``reqscript()`` but does not enforce the check for module support.
+  This can be used to import scripts that support being used as a module but do
+  not declare support as described above, although it is preferred to update
+  such scripts so that ``reqscript()`` can be used instead.
 
 Enabling and disabling scripts
 ==============================
@@ -4138,11 +4541,23 @@ by including the following line anywhere in their file::
 
     --@ enable = true
 
-When the ``enable`` and ``disable`` commands are invoked, a ``dfhack_flags``
-table will be passed to the script with the following fields set:
+When the ``enable`` and ``disable`` commands are invoked, the ``dfhack_flags``
+table passed to the script will have the following fields set:
 
-* ``enable``: Always true if the script is being enabled *or* disabled
-* ``enable_state``: True if the script is being enabled, false otherwise
+* ``enable``: Always ``true`` if the script is being enabled *or* disabled
+* ``enable_state``: ``true`` if the script is being enabled, ``false`` otherwise
+
+Example usage::
+
+    --@ enable = true
+    -- (function definitions...)
+    if dfhack_flags.enable then
+        if dfhack_flags.enable_state then
+            start()
+        else
+            stop()
+        end
+    end
 
 Save init script
 ================

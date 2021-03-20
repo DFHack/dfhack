@@ -1,6 +1,6 @@
+//Attempts to provide a complete framework for reading everything from a fortress needed for vizualization
 package RemoteFortressReader;
 
-//Attempts to provide a complete framework for reading everything from a fortress needed for vizualization
 option optimize_for = LITE_RUNTIME;
 
 // Plugin: RemoteFortressReader
@@ -42,6 +42,7 @@ import "ItemdefInstrument.proto";
 // RPC MovementSelectCommand : IntMessage -> EmptyMessage
 // RPC MiscMoveCommand : MiscMoveParams -> EmptyMessage
 // RPC GetLanguage : EmptyMessage -> Language
+// RPC GetGameValidity : EmptyMessage -> SingleBool
 
 //We use shapes, etc, because the actual tiletypes may differ between DF versions.
 enum TiletypeShape
@@ -201,6 +202,14 @@ enum InventoryMode
       Strapped = 10;
 }
 
+enum ArmorLayer
+{
+    LAYER_UNDER = 0;
+    LAYER_OVER = 1;
+    LAYER_ARMOR = 2;
+    LAYER_COVER = 3;
+}
+
 message Coord
 {
     optional int32 x = 1;
@@ -320,6 +329,31 @@ message Item
     optional ArtImage image = 18;
 }
 
+message PlantTile
+{
+    optional bool trunk = 1;
+    optional bool connection_east = 2;
+    optional bool connection_south = 3;
+    optional bool connection_west = 4;
+    optional bool connection_north = 5;
+    optional bool branches = 6;
+    optional bool twigs = 7;
+    optional TiletypeSpecial tile_type = 8;
+}
+
+message TreeInfo
+{
+    optional Coord size = 1;
+    repeated PlantTile tiles = 2;
+}
+
+message PlantInstance
+{
+    optional int32 plant_type = 1;
+    optional Coord pos = 2;
+    optional TreeInfo tree_info = 3;
+}
+
 message MapBlock
 {
     required int32 map_x = 1;
@@ -371,6 +405,9 @@ message MaterialDefinition{
     optional string name = 3;
     optional ColorDefinition state_color = 4; //Simplifying colors to assume room temperature.
     optional ItemdefInstrument.InstrumentDef instrument = 5;
+    optional int32 up_step = 6;
+    optional int32 down_step = 7;
+    optional ArmorLayer layer = 8;
 }
 
 message BuildingType
@@ -420,12 +457,27 @@ message UnitAppearance
     optional Hair beard = 6;
     optional Hair moustache = 7;
     optional Hair sideburns = 8;
+    optional string physical_description = 9;
 }
 
 message InventoryItem
 {
     optional InventoryMode mode = 1;
     optional Item item = 2;
+    optional int32 body_part_id = 3;
+}
+
+message WoundPart
+{
+     optional int32 global_layer_idx = 1;
+     optional int32 body_part_id = 2;
+     optional int32 layer_idx = 3;
+}
+
+message UnitWound
+{
+    repeated WoundPart parts = 1;
+    optional bool severed_part = 2;
 }
 
 message UnitDefinition
@@ -453,6 +505,9 @@ message UnitDefinition
     optional float subpos_x = 21;
     optional float subpos_y = 22;
     optional float subpos_z = 23;
+    optional Coord facing = 24;
+    optional int32 age = 25;
+    repeated UnitWound wounds = 26;
 }
 
 message UnitList
@@ -587,33 +642,6 @@ message WorldMap
     repeated RegionTile region_tiles = 25;
 }
 
-enum SiteRealizationBuildingType
-{
-    cottage_plot = 0;
-    castle_wall = 1;
-    castle_tower = 2;
-    castle_courtyard = 3;
-    house = 4;
-    temple = 5;
-    tomb = 6;
-    shop_house = 7;
-    warehouse = 8;
-    market_square = 9;
-    pasture = 10;
-    waste = 11;
-    courtyard = 12;
-    well = 13;
-    vault = 14;
-    great_tower = 15;
-    trenches = 16;
-    tree_house = 17;
-    hillock_house = 18;
-    mead_hall = 19;
-    fortress_entrance = 20;
-    library = 21;
-    tavern = 22;
-}
-
 message SiteRealizationBuildingWall
 {
     optional int32 start_x = 1;
@@ -647,7 +675,6 @@ message SiteRealizationBuildingTrenches
 message SiteRealizationBuilding
 {
     optional int32 id = 1;
-    optional SiteRealizationBuildingType type = 2;
     optional int32 min_x = 3;
     optional int32 min_y = 4;
     optional int32 max_x = 5;
@@ -656,6 +683,7 @@ message SiteRealizationBuilding
     optional SiteRealizationBuildingWall wall_info = 8;
     optional SiteRealizationBuildingTower tower_info = 9;
     optional SiteRealizationBuildingTrenches trench_info = 10;
+    optional int32 type = 11;
 }
 
 message RegionTile
@@ -787,6 +815,7 @@ message CreatureRaw
     optional int32 adultsize = 9;
     repeated CasteRaw caste = 10;
     repeated TissueRaw tissues = 11;
+    repeated bool flags = 12;
 }
 
 message CreatureRawList
@@ -934,30 +963,13 @@ message Language
     repeated ShapeDescriptior shapes = 1;
 }
 
-enum ImprovementType
-{
-    ART_IMAGE = 0;
-    COVERED = 1;
-    RINGS_HANGING = 2;
-    BANDS = 3;
-    SPIKES = 4;
-    ITEMSPECIFIC = 5;
-    THREAD = 6;
-    CLOTH = 7;
-    SEWN_IMAGE = 8;
-    PAGES = 9;
-    ILLUSTRATION = 10;
-    INSTRUMENT_PIECE = 11;
-    WRITING = 12;
-}
-
 message ItemImprovement
 {
     optional MatPair material = 1;
-    optional ImprovementType type = 2;
     optional int32 shape = 3;
     optional int32 specific_type= 4;
     optional ArtImage image = 5;
+    optional int32 type = 6;
 }
 
 enum ArtImageElementType

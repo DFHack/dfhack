@@ -222,6 +222,8 @@ namespace DFHack
         void onUpdate(color_ostream &out);
         void onStateChange(color_ostream &out, state_change_event event);
         void handleLoadAndUnloadScripts(color_ostream &out, state_change_event event);
+        void doSaveData(color_ostream &out);
+        void doLoadData(color_ostream &out);
 
         Core(Core const&);              // Don't Implement
         void operator=(Core const&);    // Don't implement
@@ -283,7 +285,7 @@ namespace DFHack
         df::viewscreen *top_viewscreen;
         bool last_pause_state;
         // Very important!
-        bool started;
+        std::atomic<bool> started;
         // Additional state change scripts
         std::vector<StateChangeScript> state_change_scripts;
 
@@ -308,7 +310,6 @@ namespace DFHack
         friend class CoreSuspenderBase;
         friend struct CoreSuspendClaimMain;
         friend struct CoreSuspendReleaseMain;
-        ServerMain *server;
     };
 
     class CoreSuspenderBase  : protected std::unique_lock<std::recursive_mutex> {

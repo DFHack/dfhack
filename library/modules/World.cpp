@@ -24,6 +24,7 @@ distribution.
 
 
 #include "Internal.h"
+#include <array>
 #include <string>
 #include <vector>
 #include <map>
@@ -55,10 +56,6 @@ using namespace DFHack;
 using namespace df::enums;
 
 using df::global::world;
-
-static int next_persistent_id = 0;
-static std::multimap<std::string, int> persistent_index;
-typedef std::pair<std::string, int> T_persistent_item;
 
 bool World::ReadPauseState()
 {
@@ -183,117 +180,14 @@ bool World::isLegends(df::game_type t)
     return (t == game_type::VIEW_LEGENDS);
 }
 
-static PersistentDataItem dataFromHFig(df::historical_figure *hfig)
-{
-    return PersistentDataItem(hfig->id, hfig->name.first_name, &hfig->name.nickname, hfig->name.words);
-}
-
-// Hide fake histfigs from legends xml export
-static bool in_export_xml = false;
-
-struct hide_fake_histfigs_hook : df::viewscreen_legendsst {
-    typedef df::viewscreen_legendsst interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
-    {
-        if (input->count(interface_key::LEGENDS_EXPORT_XML))
-        {
-            auto &figs = df::historical_figure::get_vector();
-
-            auto it = figs.begin();
-            while (it != figs.end() && (*it)->id <= -100)
-                ++it;
-
-            // Move our histfigs to a temporary vector
-            std::vector<df::historical_figure*> fakes(figs.begin(), it);
-            figs.erase(figs.begin(), it);
-            in_export_xml = true;
-
-            INTERPOSE_NEXT(feed)(input);
-
-            in_export_xml = false;
-            figs.insert(figs.begin(), fakes.begin(), fakes.end());
-        }
-        else
-            INTERPOSE_NEXT(feed)(input);
-    }
-};
-
-IMPLEMENT_VMETHOD_INTERPOSE_PRIO(hide_fake_histfigs_hook, feed, -10000);
-
-void World::ClearPersistentCache()
-{
-    next_persistent_id = 0;
-    persistent_index.clear();
-
-    INTERPOSE_HOOK(hide_fake_histfigs_hook, feed).apply(Core::getInstance().isWorldLoaded());
-}
-
-static bool BuildPersistentCache()
-{
-    if (in_export_xml)
-        return false;
-    if (next_persistent_id)
-        return true;
-    if (!Core::getInstance().isWorldLoaded())
-        return false;
-
-    std::vector<df::historical_figure*> &hfvec = df::historical_figure::get_vector();
-
-    // Determine the next entry id as min(-100, lowest_id-1)
-    next_persistent_id = -100;
-
-    if (hfvec.size() > 0 && hfvec[0]->id <= -100)
-        next_persistent_id = hfvec[0]->id-1;
-
-    // Add the entries to the lookup table
-    persistent_index.clear();
-
-    for (size_t i = 0; i < hfvec.size() && hfvec[i]->id <= -100; i++)
-    {
-        if (!hfvec[i]->name.has_name || hfvec[i]->name.first_name.empty())
-            continue;
-
-        persistent_index.insert(T_persistent_item(hfvec[i]->name.first_name, -hfvec[i]->id));
-    }
-
-    return true;
-}
-
 PersistentDataItem World::AddPersistentData(const std::string &key)
 {
-    if (!BuildPersistentCache() || key.empty())
-        return PersistentDataItem();
-
-    std::vector<df::historical_figure*> &hfvec = df::historical_figure::get_vector();
-
-    df::historical_figure *hfig = new df::historical_figure();
-    hfig->id = next_persistent_id;
-    hfig->name.has_name = true;
-    hfig->name.first_name = key;
-    memset(hfig->name.words, 0xFF, sizeof(hfig->name.words));
-
-    if (!hfvec.empty())
-        hfig->id = std::min(hfig->id, hfvec[0]->id-1);
-    next_persistent_id = hfig->id-1;
-
-    hfvec.insert(hfvec.begin(), hfig);
-
-    persistent_index.insert(T_persistent_item(key, -hfig->id));
-
-    return dataFromHFig(hfig);
+    return Persistence::addItem(key);
 }
 
 PersistentDataItem World::GetPersistentData(const std::string &key)
 {
-    if (!BuildPersistentCache())
-        return PersistentDataItem();
-
-    auto it = persistent_index.find(key);
-    if (it != persistent_index.end())
-        return GetPersistentData(it->second);
-
-    return PersistentDataItem();
+    return Persistence::getByKey(key);
 }
 
 PersistentDataItem World::GetPersistentData(int entry_id)
@@ -301,96 +195,45 @@ PersistentDataItem World::GetPersistentData(int entry_id)
     if (entry_id < 100)
         return PersistentDataItem();
 
-    auto hfig = df::historical_figure::find(-entry_id);
-    if (hfig && hfig->name.has_name)
-        return dataFromHFig(hfig);
-
-    return PersistentDataItem();
+    return Persistence::getByIndex(size_t(entry_id - 100));
 }
 
 PersistentDataItem World::GetPersistentData(const std::string &key, bool *added)
 {
-    if (added) *added = false;
+    bool temp = false;
+    if (!added)
+        added = &temp;
 
-    PersistentDataItem rv = GetPersistentData(key);
-
-    if (!rv.isValid())
-    {
-        if (added) *added = true;
-        rv = AddPersistentData(key);
-    }
-
-    return rv;
+    return Persistence::getByKey(key, added);
 }
 
 void World::GetPersistentData(std::vector<PersistentDataItem> *vec, const std::string &key, bool prefix)
 {
-    vec->clear();
-
-    if (!BuildPersistentCache())
-        return;
-
-    auto eqrange = persistent_index.equal_range(key);
-
-    if (prefix)
+    if (prefix && key.empty())
     {
-        if (key.empty())
-        {
-            eqrange.first = persistent_index.begin();
-            eqrange.second = persistent_index.end();
-        }
-        else
-        {
-            std::string bound = key;
-            if (bound[bound.size()-1] != '/')
-                bound += "/";
-            eqrange.first = persistent_index.lower_bound(bound);
-
-            bound[bound.size()-1]++;
-            eqrange.second = persistent_index.lower_bound(bound);
-        }
+        Persistence::getAll(*vec);
     }
-
-    for (auto it = eqrange.first; it != eqrange.second; ++it)
+    else if (prefix)
     {
-        auto hfig = df::historical_figure::find(-it->second);
-        if (hfig && hfig->name.has_name)
-            vec->push_back(dataFromHFig(hfig));
+        std::string min = key;
+        if (min.back() != '/')
+        {
+            min.push_back('/');
+        }
+        std::string max = min;
+        ++max.back();
+
+        Persistence::getAllByKeyRange(*vec, min, max);
+    }
+    else
+    {
+        Persistence::getAllByKey(*vec, key);
     }
 }
 
 bool World::DeletePersistentData(const PersistentDataItem &item)
 {
-    int id = item.raw_id();
-    if (id > -100)
-        return false;
-    if (!BuildPersistentCache())
-        return false;
-
-    std::vector<df::historical_figure*> &hfvec = df::historical_figure::get_vector();
-
-    auto eqrange = persistent_index.equal_range(item.key());
-
-    for (auto it2 = eqrange.first; it2 != eqrange.second; )
-    {
-        auto it = it2; ++it2;
-
-        if (it->second != -id)
-            continue;
-
-        persistent_index.erase(it);
-
-        int idx = binsearch_index(hfvec, id);
-
-        if (idx >= 0) {
-            delete hfvec[idx];
-            hfvec.erase(hfvec.begin()+idx);
-        }
-
-        return true;
-    }
-
-    return false;
+    return Persistence::deleteItem(item);
 }
 
 df::tile_bitmask *World::getPersistentTilemask(const PersistentDataItem &item, df::map_block *block, bool create)

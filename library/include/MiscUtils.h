@@ -45,6 +45,17 @@ using std::endl;
     #define DFHACK_FUNCTION_SIG __func__
 #endif
 
+#ifdef _WIN32
+// On x86 MSVC, __thiscall passes |this| in ECX. On x86_64, __thiscall is the
+// same as the standard calling convention.
+// See https://docs.microsoft.com/en-us/cpp/cpp/thiscall for more info.
+#define THISCALL __thiscall
+#else
+// On other platforms, there's no special calling convention for calling member
+// functions.
+#define THISCALL
+#endif
+
 namespace DFHack {
     class color_ostream;
 }
@@ -355,6 +366,7 @@ DFHACK_EXPORT std::string join_strings(const std::string &separator, const std::
 
 DFHACK_EXPORT std::string toUpper(const std::string &str);
 DFHACK_EXPORT std::string toLower(const std::string &str);
+DFHACK_EXPORT std::string to_search_normalized(const std::string &str);
 
 DFHACK_EXPORT bool word_wrap(std::vector<std::string> *out,
                              const std::string &str,

@@ -1922,6 +1922,10 @@ static void Lua::Core::InitCoreContext()
 
 void DFHack::Lua::Core::Reset(color_ostream &out, const char *where)
 {
+    // This can happen if DFHack fails to initialize.
+    if (!State)
+        return;
+
     int top = lua_gettop(State);
 
     if (top != 0)

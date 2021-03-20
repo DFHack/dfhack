@@ -385,6 +385,9 @@ static const dwarf_state dwarf_states[] = {
     BUSY /* MakeBracelet */,
     BUSY /* MakeGem */,
     BUSY /* PutItemOnDisplay */,
+    OTHER /* unk_fake_no_job */,
+    OTHER /* InterrogateSubject */,
+    OTHER /* unk_fake_no_activity */,
 };
 
 struct labor_info

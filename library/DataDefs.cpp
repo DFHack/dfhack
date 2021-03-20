@@ -224,13 +224,32 @@ std::string df::buffer_container_identity::getFullName(type_identity *item)
            (size > 0 ? stl_sprintf("[%d]", size) : std::string("[]"));
 }
 
-virtual_identity::virtual_identity(size_t size, TAllocateFn alloc,
-                                   const char *dfhack_name, const char *original_name,
-                                   virtual_identity *parent, const struct_field_info *fields)
-    : struct_identity(size, alloc, NULL, dfhack_name, parent, fields), original_name(original_name),
-      vtable_ptr(NULL)
+union_identity::union_identity(size_t size, TAllocateFn alloc,
+        compound_identity *scope_parent, const char *dfhack_name,
+        struct_identity *parent, const struct_field_info *fields)
+    : struct_identity(size, alloc, scope_parent, dfhack_name, parent, fields)
 {
 }
+
+virtual_identity::virtual_identity(size_t size, TAllocateFn alloc,
+                                   const char *dfhack_name, const char *original_name,
+                                   virtual_identity *parent, const struct_field_info *fields,
+                                   bool is_plugin)
+    : struct_identity(size, alloc, NULL, dfhack_name, parent, fields), original_name(original_name),
+      vtable_ptr(NULL), is_plugin(is_plugin)
+{
+    // Plugins are initialized after Init was called, so they need to be added to the name table here
+    if (is_plugin)
+    {
+        doInit(&Core::getInstance());
+    }
+}
+
+/* Vtable name to identity lookup. */
+static std::map<std::string, virtual_identity*> name_lookup;
+
+/* Vtable pointer to identity lookup. */
+std::map<void*, virtual_identity*> virtual_identity::known;
 
 virtual_identity::~virtual_identity()
 {
@@ -239,13 +258,16 @@ virtual_identity::~virtual_identity()
         if (it->second)
             it->second->on_host_delete(this);
     interpose_list.clear();
+
+    // Remove global lookup table entries if we're from a plugin
+    if (is_plugin)
+    {
+        name_lookup.erase(getOriginalName());
+
+        if (vtable_ptr)
+            known.erase(vtable_ptr);
+    }
 }
-
-/* Vtable name to identity lookup. */
-static std::map<std::string, virtual_identity*> name_lookup;
-
-/* Vtable pointer to identity lookup. */
-std::map<void*, virtual_identity*> virtual_identity::known;
 
 void virtual_identity::doInit(Core *core)
 {
@@ -312,7 +334,7 @@ virtual_identity *virtual_identity::find(void *vtable)
         return p;
     }
 
-    std::cerr << "UNKNOWN CLASS '" << name << "': vtable = 0x"
+    std::cerr << "Class not in symbols.xml: '" << name << "': vtable = 0x"
               << std::hex << uintptr_t(vtable) << std::dec << std::endl;
 
     known[vtable] = NULL;
@@ -431,4 +453,113 @@ void DFHack::flagarrayToString(std::vector<std::string> *pvec, const void *p,
             pvec->push_back(format_key(name, i));
         }
     }
+}
+
+static const struct_field_info *find_union_tag_candidate(const struct_field_info *fields, const struct_field_info *union_field)
+{
+    if (union_field->extra && union_field->extra->union_tag_field)
+    {
+        auto defined_field_name = union_field->extra->union_tag_field;
+        for (auto field = fields; field->mode != struct_field_info::END; field++)
+        {
+            if (!strcmp(field->name, defined_field_name))
+            {
+                return field;
+            }
+        }
+        return nullptr;
+    }
+
+    std::string name(union_field->name);
+    if (name.length() >= 4 && name.substr(name.length() - 4) == "data")
+    {
+        name.erase(name.length() - 4, 4);
+        name += "type";
+
+        for (auto field = fields; field->mode != struct_field_info::END; field++)
+        {
+            if (field->name == name)
+            {
+                return field;
+            }
+        }
+    }
+
+    if (name.length() > 7 &&
+            name.substr(name.length() - 7) == "_target" &&
+            fields != union_field &&
+            (union_field - 1)->name == name.substr(0, name.length() - 7))
+    {
+        return union_field - 1;
+    }
+
+    return union_field + 1;
+}
+
+const struct_field_info *DFHack::find_union_tag(const struct_field_info *fields, const struct_field_info *union_field)
+{
+    CHECK_NULL_POINTER(fields);
+    CHECK_NULL_POINTER(union_field);
+
+    auto tag_candidate = find_union_tag_candidate(fields, union_field);
+
+    if (union_field->mode == struct_field_info::SUBSTRUCT &&
+            union_field->type &&
+            union_field->type->type() == IDTYPE_UNION)
+    {
+        // union field
+
+        if (tag_candidate->mode == struct_field_info::PRIMITIVE &&
+                tag_candidate->type &&
+                tag_candidate->type->type() == IDTYPE_ENUM)
+        {
+            return tag_candidate;
+        }
+
+        return nullptr;
+    }
+
+    if (union_field->mode != struct_field_info::CONTAINER ||
+            !union_field->type ||
+            union_field->type->type() != IDTYPE_CONTAINER)
+    {
+        // not a union field or a vector; bail
+        return nullptr;
+    }
+
+    auto container_type = static_cast<container_identity *>(union_field->type);
+    if (container_type->getFullName(nullptr) != "vector<void>" ||
+            !container_type->getItemType() ||
+            container_type->getItemType()->type() != IDTYPE_UNION)
+    {
+        // not a vector of unions
+        return nullptr;
+    }
+
+    if (tag_candidate->mode != struct_field_info::CONTAINER ||
+            !tag_candidate->type ||
+            tag_candidate->type->type() != IDTYPE_CONTAINER)
+    {
+        // candidate is not a vector
+        return nullptr;
+    }
+
+    auto tag_container_type = static_cast<container_identity *>(tag_candidate->type);
+    if (tag_container_type->getFullName(nullptr) == "vector<void>" &&
+            tag_container_type->getItemType() &&
+            tag_container_type->getItemType()->type() == IDTYPE_ENUM)
+    {
+        return tag_candidate;
+    }
+
+    auto union_fields = ((struct_identity*)union_field->type)->getFields();
+    if (tag_container_type->getFullName() == "vector<bool>" &&
+            union_fields[0].mode != struct_field_info::END &&
+            union_fields[1].mode != struct_field_info::END &&
+            union_fields[2].mode == struct_field_info::END)
+    {
+        return tag_candidate;
+    }
+
+    return nullptr;
 }

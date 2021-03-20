@@ -28,6 +28,8 @@ distribution.
 #include "RemoteClient.h"
 #include "Core.h"
 
+#include <future>
+
 class CPassiveSocket;
 class CActiveSocket;
 class CSimpleSocket;
@@ -233,26 +235,25 @@ namespace  DFHack
         CoreService *core_service;
         std::map<std::string, RPCService*> plugin_services;
 
-        tthread::thread *thread;
-        static void threadFn(void *);
         void threadFn();
+        ServerConnection(CActiveSocket* socket);
+        ~ServerConnection();
 
     public:
-        ServerConnection(CActiveSocket *socket);
-        ~ServerConnection();
+
+        static void Accepted(CActiveSocket* socket);
 
         ServerFunctionBase *findFunction(color_ostream &out, const std::string &plugin, const std::string &name);
     };
 
     class ServerMain {
-        CPassiveSocket *socket;
+        static std::mutex access_;
+        static bool blocked_;
+        friend struct BlockGuard;
 
-        tthread::thread *thread;
-        static void threadFn(void *);
     public:
-        ServerMain();
-        ~ServerMain();
 
-        bool listen(int port);
+        static std::future<bool> listen(int port);
+        static void block();
     };
 }

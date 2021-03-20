@@ -134,7 +134,7 @@ module DFHack
         # does not include ghosts / wildlife
         def unit_ishostile(u)
             # return true if u.flags3.ghostly and not u.flags1.inactive
-            return unless unit_category(u) == :Others
+            return false unless unit_category(u) == :Others
 
             case unit_other_category(u)
             when :Berserk, :Undead, :Hostile, :Invader, :Underworld
@@ -152,6 +152,8 @@ module DFHack
                     case unit_checkdiplomacy_hf_ent(histfig, group)
                     when 4, 5
                         true
+                    else
+                        false
                     end
 
                 elsif diplo = u.civ_tg.unknown1b.diplomacy.binsearch(df.ui.group_id, :group_id)

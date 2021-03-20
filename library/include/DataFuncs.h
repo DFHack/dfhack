@@ -32,6 +32,10 @@ distribution.
 #include "DataIdentity.h"
 #include "LuaWrapper.h"
 
+namespace DFHack {
+    class color_ostream;
+}
+
 namespace df {
     // A very simple and stupid implementation of some stuff from boost
     template<class U, class V> struct is_same_type { static const bool value = false; };

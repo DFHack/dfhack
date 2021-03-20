@@ -6,6 +6,9 @@
 #include <Export.h>
 #include <PluginManager.h>
 
+// If you need to save data per-world:
+//#include "modules/Persistence.h"
+
 // DF data structure definition headers
 #include "DataDefs.h"
 //#include "df/world.h"
@@ -82,6 +85,25 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
     // whetever. You don't need to suspend DF execution here.
+    return CR_OK;
+}
+*/
+
+// If you need to save or load world-specific data, define these functions.
+// plugin_save_data is called when the game might be about to save the world,
+// and plugin_load_data is called whenever a new world is loaded. If the plugin
+// is loaded or unloaded while a world is active, plugin_save_data or
+// plugin_load_data will be called immediately.
+/*
+DFhackCExport command_result plugin_save_data (color_ostream &out)
+{
+    // Call functions in the Persistence module here.
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_load_data (color_ostream &out)
+{
+    // Call functions in the Persistence module here.
     return CR_OK;
 }
 */

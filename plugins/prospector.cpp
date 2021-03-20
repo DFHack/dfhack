@@ -49,7 +49,7 @@ struct matdata
     const static int invalid_z = -30000;
     matdata()
     {
-        count = 0;
+        count = 0.0;
         lower_z = invalid_z;
         upper_z = invalid_z;
     }
@@ -59,7 +59,7 @@ struct matdata
         lower_z = copyme.lower_z;
         upper_z = copyme.upper_z;
     }
-    unsigned int add( int z_level = invalid_z, int delta = 1 )
+    float add(int z_level = invalid_z, float delta = 1.0)
     {
         count += delta;
         if(z_level != invalid_z)
@@ -75,7 +75,7 @@ struct matdata
         }
         return count;
     }
-    unsigned int count;
+    float count;
     int lower_z;
     int upper_z;
 };
@@ -120,7 +120,7 @@ struct compare_pair_second
 static void printMatdata(color_ostream &con, const matdata &data, bool only_z = false)
 {
     if (!only_z)
-        con << std::setw(9) << data.count;
+        con << std::setw(9) << int(data.count);
 
     if(data.lower_z != data.upper_z)
         con <<" Z:" << std::setw(4) << data.lower_z << ".." <<  data.upper_z << std::endl;
@@ -373,7 +373,7 @@ bool estimate_underground(color_ostream &out, EmbarkTileLayout &tile, df::world_
 void add_materials(EmbarkTileLayout &tile, matdata &data, float amount, int min_z, int max_z)
 {
     for (int z = min_z; z <= max_z; z++)
-        data.add(z, int(map_find(tile.penalty, z, 1)*amount));
+         data.add(z, map_find(tile.penalty, z, 1) * amount);
 }
 
 bool estimate_materials(color_ostream &out, EmbarkTileLayout &tile, MatMap &layerMats, MatMap &veinMats)
@@ -445,6 +445,9 @@ bool estimate_materials(color_ostream &out, EmbarkTileLayout &tile, MatMap &laye
         float layer_size = 48*48;
 
         int sums[ENUM_LAST_ITEM(inclusion_type)+1] = { 0 };
+        // Small clusters actually belong to different groups depending on whether they are enclosed by layers, clusters, or veins.
+        // Similarly, veins belong to different groups depending on whether they are enclosed by layers or clusters.
+        // However, these fine details probably drown in the uncertainty inherent in estimating amounts based on RNG distributed proportions.
 
         for (unsigned j = 0; j < layer->vein_mat.size(); j++)
             if (is_valid_enum_item<df::inclusion_type>(layer->vein_type[j]))
@@ -458,21 +461,50 @@ bool estimate_materials(color_ostream &out, EmbarkTileLayout &tile, MatMap &laye
             float size = float(layer->vein_unk_38[j]);
             df::inclusion_type type = layer->vein_type[j];
 
+            // There doesn't seem to be any relation between mineral scarcity and the number or size of clusters and veins,
+            // apart from when it leads to them being completely absent, e.g. either there are 10 small clusters or there are none.
             switch (type)
             {
             case inclusion_type::VEIN:
-                // 3 veins of 80 tiles avg
-                size = size * 80 * 3 / sums[type];
+                if (layer->vein_nested_in[j] == -1) {  // Veins directly in the layer, i.e. the normal case
+                    // 2-4 veins with a guessed average of 100 tiles each
+                    size = size * 300 / sums[type];
+                }
+                else {  // Should only be veins in clusters
+                    // 1 vein with a very shaky guessed average of 50 tiles
+                    // TODO: Veins in clusters do not share the pool with normal veins but are added on top of it, but this will have to do for now
+                    size = size * 50 / sums[type];
+                }
                 break;
             case inclusion_type::CLUSTER:
-                // 1 cluster of 700 tiles avg
-                size = size * 700 * 1 / sums[type];
+                // 1 cluster of 750 tiles avg. The average size can be refined.
+                size = size * 750 / sums[type];
                 break;
             case inclusion_type::CLUSTER_SMALL:
-                size = size * 6 * 7 / sums[type];
+                if (layer->vein_nested_in[j] == -1 ||
+                    layer->vein_type[layer->vein_nested_in[j]] != inclusion_type::VEIN) {
+                    // Small clusters in the layer and in clusters share a common pool of 10 clusters
+                    // An estimate is that the average sum of these is 52, but there is room for refinement
+                    size = size * 52 / sums[type];
+                }
+                else {
+                    // A very shaky guess of an average of 3 clusters with 15.6->16 tiles
+                    // TODO: Small clusters in veins appear in addition to the regular set, but this will have to do for now
+                    size = size * 16 / sums[type];
+                }
                 break;
             case inclusion_type::CLUSTER_ONE:
-                size = size * 1 * 5 / sums[type];
+                if (layer->vein_nested_in[j] == -1 ||
+                    layer->vein_type[layer->vein_nested_in[j]] != inclusion_type::CLUSTER_SMALL) {
+                    //  Doesn't happen with vanilla raws, so this is just a wild guess that it might happen 5 times
+                    size = size * 5 / sums[type];
+                }
+                else {
+                    // Vanilla only has single clusters nested in small ones. We weigh the estimate based on the proportion of
+                    // the small clusters out of the 10 standard ones. Note that this does not distinguish between enclosing small
+                    // clusters that are actually in standard pool of 10 and those in veins (TODO)
+                    size = size * layer->vein_unk_38[layer->vein_nested_in[j]] * 10 / sums[inclusion_type::CLUSTER_SMALL] / sums[type];
+                }
                 break;
             default:
                 // shouldn't actually happen

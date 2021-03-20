@@ -1,6 +1,7 @@
 #include <modules/Gui.h>
 
 #include "df/coord2d.h"
+#include "df/entity_raw.h"
 #include "df/inorganic_raw.h"
 #include "df/dfhack_material_category.h"
 #include "df/interface_key.h"
@@ -54,6 +55,9 @@ namespace embark_assist {
             uint16_t match_count = 0;
 
             uint16_t max_inorganic;
+
+            bool fileresult = false;
+            uint8_t fileresult_pass = 0;
         };
 
         static states *state = nullptr;
@@ -113,7 +117,7 @@ namespace embark_assist {
                 }
                 else if (input->count(df::interface_key::CUSTOM_F)) {
                     if (!state->match_active && !state->matching) {
-                        embark_assist::finder_ui::init(embark_assist::overlay::plugin_self, state->find_callback, state->max_inorganic);
+                        embark_assist::finder_ui::init(embark_assist::overlay::plugin_self, state->find_callback, state->max_inorganic, false);
                     }
                 }
                 else if (input->count(df::interface_key::CUSTOM_I)) {
@@ -311,6 +315,7 @@ void embark_assist::overlay::match_progress(uint16_t count, embark_assist::defs:
 //    color_ostream_proxy out(Core::getInstance().getConsole());
     state->matching = !done;
     state->match_count = count;
+
     for (uint16_t i = 0; i < world->worldgen.worldgen_parms.dim_x; i++) {
         for (uint16_t k = 0; k < world->worldgen.worldgen_parms.dim_y; k++) {
             if (match_results->at(i).at(k).preliminary_match) {
@@ -324,12 +329,28 @@ void embark_assist::overlay::match_progress(uint16_t count, embark_assist::defs:
             }
         }
     }
+
+    if (done && state->fileresult) {
+        state->fileresult_pass++;
+        if (state->fileresult_pass == 1) {
+            embark_assist::finder_ui::init(embark_assist::overlay::plugin_self, state->find_callback, state->max_inorganic, true);
+        }
+        else {
+            FILE* outfile = fopen(fileresult_file_name, "w");
+            fprintf(outfile, "%i\n", count);
+            fclose(outfile);
+        }
+    }
 }
 
 //====================================================================
 
 void embark_assist::overlay::set_embark(embark_assist::defs::site_infos *site_info) {
     state->embark_info.clear();
+
+    if (!site_info->incursions_processed) {
+        state->embark_info.push_back({ Screen::Pen(' ', COLOR_LIGHTRED), "Incomp. Survey" });
+    }
 
     if (site_info->sand) {
         state->embark_info.push_back({ Screen::Pen(' ', COLOR_YELLOW), "Sand" });
@@ -349,18 +370,103 @@ void embark_assist::overlay::set_embark(embark_assist::defs::site_infos *site_in
         state->embark_info.push_back({ Screen::Pen(' ', COLOR_BROWN), "Flat" });
     }
 
-    if (site_info->aquifer) {
-        if (site_info->aquifer_full) {
-            state->embark_info.push_back({ Screen::Pen(' ', COLOR_BLUE), "Aquifer" });
+    if (site_info->aquifer != embark_assist::defs::None_Aquifer_Bit) {
+        std::string none = "   ";
+        std::string light = "   ";
+        std::string heavy = "  ";
+        std::string no = "No ";
+        std::string lt = "Lt ";
+        std::string hv = "Hv";
 
+        switch (site_info->aquifer) {
+        case embark_assist::defs::Clear_Aquifer_Bits:
+        case embark_assist::defs::None_Aquifer_Bit:  //  Neither of these should appear
+            break;
+
+        case embark_assist::defs::Light_Aquifer_Bit:
+            light = lt;
+            break;
+
+            case embark_assist::defs::None_Aquifer_Bit | embark_assist::defs::Light_Aquifer_Bit:
+            none = no;
+            light = lt;
+            break;
+
+        case embark_assist::defs::Heavy_Aquifer_Bit:
+            heavy = hv;
+            break;
+
+            case embark_assist::defs::None_Aquifer_Bit | embark_assist::defs::Heavy_Aquifer_Bit:
+            none = no;
+            heavy = hv;
+            break;
+
+            case embark_assist::defs::Light_Aquifer_Bit | embark_assist::defs::Heavy_Aquifer_Bit:
+            light = lt;
+            heavy = hv;
+            break;
+
+            case embark_assist::defs::None_Aquifer_Bit | embark_assist::defs::Light_Aquifer_Bit | embark_assist::defs::Heavy_Aquifer_Bit:
+            none = no;
+            light = lt;
+            heavy = hv;
+            break;
         }
-        else {
-            state->embark_info.push_back({ Screen::Pen(' ', COLOR_LIGHTBLUE), "Aquifer" });
-        }
+
+        state->embark_info.push_back({ Screen::Pen(' ', COLOR_LIGHTBLUE), "Aq: " + none + light + heavy });
     }
 
-    if (site_info->waterfall) {
-        state->embark_info.push_back({ Screen::Pen(' ', COLOR_BLUE), "Waterfall" });
+    if (site_info->max_waterfall > 0) {
+        state->embark_info.push_back({ Screen::Pen(' ', COLOR_LIGHTBLUE), "Waterfall " + std::to_string(site_info->max_waterfall) });
+    }
+
+    if (site_info->blood_rain ||
+        site_info->permanent_syndrome_rain ||
+        site_info->temporary_syndrome_rain ||
+        site_info->reanimating ||
+        site_info->thralling) {
+        std::string blood_rain;
+        std::string permanent_syndrome_rain;
+        std::string temporary_syndrome_rain;
+        std::string reanimating;
+        std::string thralling;
+
+        if (site_info->blood_rain) {
+            blood_rain = "BR ";
+        }
+        else {
+            blood_rain = "   ";
+        }
+
+        if (site_info->permanent_syndrome_rain) {
+            permanent_syndrome_rain = "PS ";
+        }
+        else {
+            permanent_syndrome_rain = "   ";
+        }
+
+        if (site_info->temporary_syndrome_rain) {
+            temporary_syndrome_rain = "TS ";
+        }
+        else {
+            permanent_syndrome_rain = "   ";
+        }
+
+        if (site_info->reanimating) {
+            reanimating = "Re ";
+        }
+        else {
+            reanimating = "   ";
+        }
+
+        if (site_info->thralling) {
+            thralling = "Th";
+        }
+        else {
+            thralling = "  ";
+        }
+
+        state->embark_info.push_back({ Screen::Pen(' ', COLOR_LIGHTRED), blood_rain + temporary_syndrome_rain + permanent_syndrome_rain + reanimating + thralling });
     }
 
     if (site_info->flux) {
@@ -373,6 +479,20 @@ void embark_assist::overlay::set_embark(embark_assist::defs::site_infos *site_in
 
     for (auto const& i : site_info->economics) {
         state->embark_info.push_back({ Screen::Pen(' ', COLOR_WHITE), world->raws.inorganics[i]->id });
+    }
+
+    for (uint16_t i = 0; i < site_info->neighbors.size(); i++) {
+        if (world->raws.entities[site_info->neighbors[i]]->translation == "") {
+            state->embark_info.push_back({ Screen::Pen(' ', COLOR_YELLOW), world->raws.entities[site_info->neighbors[i]]->code });  //  Kobolds have an empty translation field
+        }
+        else
+        {
+            state->embark_info.push_back({ Screen::Pen(' ', COLOR_YELLOW), world->raws.entities[site_info->neighbors[i]]->translation });
+        }
+    }
+
+    if (site_info->necro_neighbors > 0) {
+        state->embark_info.push_back({ Screen::Pen(' ', COLOR_LIGHTRED), "Towers: " + std::to_string(site_info->necro_neighbors) });
     }
 }
 
@@ -406,6 +526,14 @@ void embark_assist::overlay::clear_match_results() {
             state->local_match_grid[i][k] = empty_pen;
         }
     }
+}
+
+//====================================================================
+
+void embark_assist::overlay::fileresult() {
+    //  Have to search twice, as the first pass cannot be complete due to mutual dependencies.
+    state->fileresult = true;
+    embark_assist::finder_ui::init(embark_assist::overlay::plugin_self, state->find_callback, state->max_inorganic, true);
 }
 
 //====================================================================

@@ -15,14 +15,13 @@ serve to show the default.
 
 # pylint:disable=redefined-builtin
 
+import datetime
 from io import open
 import os
 import re
 import shlex  # pylint:disable=unused-import
 import sys
 
-sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'docs'))
-from gen_changelog import generate_changelog
 
 # -- Support :dfhack-keybind:`command` ------------------------------------
 # this is a custom directive that pulls info from dfhack.init-example
@@ -152,9 +151,10 @@ def write_script_docs():
         'gui': 'GUI Scripts',
         'modtools': 'Scripts for Modders'}
     for k in head:
-        title = ('.. _{k}:\n\n{l}\n{t}\n{l}\n\n'
+        title = ('.. _scripts-{k}:\n\n{l}\n{t}\n{l}\n\n'
                  '.. include:: /scripts/{a}about.txt\n\n'
-                 '.. contents::\n\n').format(
+                 '.. contents:: Contents\n'
+                 '  :local:\n\n').format(
                      k=k, t=head[k],
                      l=len(head[k])*'#',
                      a=('' if k == 'base' else k + '/')
@@ -174,41 +174,48 @@ def all_keybinds_documented():
         plugin_binds = set(re.findall(':dfhack-keybind:`(.*?)`', f.read()))
     undocumented_binds = configured_binds - script_commands - plugin_binds
     if undocumented_binds:
-        raise ValueError('The following DFHack commands have undocumented'
+        raise ValueError('The following DFHack commands have undocumented '
                          'keybindings: {}'.format(sorted(undocumented_binds)))
 
 
 # Actually call the docs generator and run test
-generate_changelog()
 write_script_docs()
 all_keybinds_documented()
 
 # -- General configuration ------------------------------------------------
 
+sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'docs', 'sphinx_extensions'))
+
 # If your documentation needs a minimal Sphinx version, state it here.
-needs_sphinx = '1.3'
+needs_sphinx = '1.8'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.extlinks']
+extensions = [
+    'sphinx.ext.extlinks',
+    'dfhack.changelog',
+    'dfhack.lexer',
+]
 
 # This config value must be a dictionary of external sites, mapping unique
 # short alias names to a base URL and a prefix.
 # See http://sphinx-doc.org/ext/extlinks.html
 extlinks = {
-    'wiki': ('http://dwarffortresswiki.org/%s', ''),
+    'wiki': ('https://dwarffortresswiki.org/%s', ''),
     'forums': ('http://www.bay12forums.com/smf/index.php?topic=%s',
                'Bay12 forums thread '),
-    'dffd': ('http://dffd.bay12games.com/file.php?id=%s', 'DFFD file '),
-    'bug': ('http://www.bay12games.com/dwarves/mantisbt/view.php?id=%s',
+    'dffd': ('https://dffd.bay12games.com/file.php?id=%s', 'DFFD file '),
+    'bug': ('https://www.bay12games.com/dwarves/mantisbt/view.php?id=%s',
             'Bug '),
+    'source': ('https://github.com/DFHack/dfhack/tree/develop/%s', ''),
+    'source:scripts': ('https://github.com/DFHack/scripts/tree/master/%s', ''),
     'issue': ('https://github.com/DFHack/dfhack/issues/%s', 'Issue '),
     'commit': ('https://github.com/DFHack/dfhack/commit/%s', 'Commit '),
 }
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = []
+templates_path = ["docs/templates"]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -222,7 +229,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'DFHack'
-copyright = '2015, The DFHack Team'
+copyright = '2015-%d, The DFHack Team' % datetime.datetime.now().year
 author = 'The DFHack Team'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -276,16 +283,25 @@ default_role = 'ref'
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
+# The default language to highlight source code in.
+highlight_language = 'dfhack'
+
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
+rst_prolog = """
+.. |sphinx_min_version| replace:: {sphinx_min_version}
+.. |dfhack_version| replace:: {dfhack_version}
+""".format(
+    sphinx_min_version=needs_sphinx,
+    dfhack_version=version,
+)
 
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 html_theme = 'alabaster'
-html_style = 'dfhack.css'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -296,6 +312,7 @@ html_theme_options = {
     'github_repo': 'dfhack',
     'github_button': False,
     'travis_button': False,
+    'fixed_sidebar': True,
 }
 
 # The name for this set of Sphinx documents.  If None, it defaults to
@@ -335,6 +352,10 @@ html_domain_indices = False
 # If false, no index is generated.
 html_use_index = False
 
+html_css_files = [
+    'dfhack.css',
+]
+
 # -- Options for LaTeX output ---------------------------------------------
 
 # Grouping the document tree into LaTeX files. List of tuples
@@ -344,3 +365,5 @@ latex_documents = [
     (master_doc, 'DFHack.tex', 'DFHack Documentation',
      'The DFHack Team', 'manual'),
 ]
+
+latex_toplevel_sectioning = 'part'

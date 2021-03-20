@@ -170,18 +170,24 @@ void LuaWrapper::push_object_ref(lua_State *state, void *ptr)
     // stack: [metatable]
     auto ref = (DFRefHeader*)lua_newuserdata(state, sizeof(DFRefHeader));
     ref->ptr = ptr;
+    ref->field_info = NULL;
 
     lua_swap(state);
     lua_setmetatable(state, -2);
     // stack: [userdata]
 }
 
-void *LuaWrapper::get_object_ref(lua_State *state, int val_index)
+DFRefHeader *LuaWrapper::get_object_ref_header(lua_State *state, int val_index)
 {
     assert(!lua_islightuserdata(state, val_index));
 
     auto ref = (DFRefHeader*)lua_touserdata(state, val_index);
-    return ref->ptr;
+    return ref;
+}
+
+void *LuaWrapper::get_object_ref(lua_State *state, int val_index)
+{
+    return get_object_ref_header(state, val_index)->ptr;
 }
 
 /**
@@ -296,6 +302,7 @@ bool LuaWrapper::is_type_compatible(lua_State *state, type_identity *type1, int 
     }
 
     case IDTYPE_STRUCT:
+    case IDTYPE_UNION:
     case IDTYPE_CLASS:
     {
         auto b1 = (struct_identity*)type1;
@@ -1607,8 +1614,8 @@ static void RenderType(lua_State *state, compound_identity *node)
     lua_dup(state);
     lua_setfield(state, ix_meta, "__index");
 
-    // pairs table
-    lua_newtable(state);
+    // pairs table - reuse index table
+    lua_dup(state);
     int ptable = base+4;
 
     lua_pushvalue(state, ptable);
@@ -1618,6 +1625,7 @@ static void RenderType(lua_State *state, compound_identity *node)
     switch (node->type())
     {
     case IDTYPE_STRUCT:
+    case IDTYPE_UNION: // TODO: change this to union-type? what relies on this?
         lua_pushstring(state, "struct-type");
         lua_setfield(state, ftable, "_kind");
         IndexStatics(state, ix_meta, ftable, (struct_identity*)node);

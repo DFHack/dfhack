@@ -565,10 +565,20 @@ static void cleanup_state()
     labor_infos.clear();
 }
 
+static void enable_alchemist(color_ostream &out)
+{
+    if (!Units::setLaborValidity(unit_labor::ALCHEMIST, true))
+    {
+        // informational only; this is a non-fatal error
+        out.printerr("%s: Could not flag Alchemist as a valid skill; Alchemist will not"
+                     " be settable from DF or DFHack labor management screens.\n", plugin_name);
+    }
+}
+
 /**
  * Initialize the plugin labor lists
  */
-static void init_state()
+static void init_state(color_ostream &out)
 {
     // This obtains the persistent data from the world save file
     config = World::GetPersistentData("autohauler/config");
@@ -656,6 +666,9 @@ static void init_state()
         reset_labor((df::unit_labor) i);
     }
 
+    // Allow Alchemist to be set in the labor-related UI screens so the player
+    // can actually use it as a flag without having to run Dwarf Therapist
+    enable_alchemist(out);
 }
 
 /**
@@ -681,7 +694,7 @@ static void enable_plugin(color_ostream &out)
     cleanup_state();
 
     // Initialize the plugin
-    init_state();
+    init_state(out);
 }
 
 /**
@@ -740,7 +753,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     ));
 
     // Initialize plugin labor lists
-    init_state();
+    init_state(out);
 
     return CR_OK;
 }
@@ -763,7 +776,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     switch (event) {
     case SC_MAP_LOADED:
         cleanup_state();
-        init_state();
+        init_state(out);
         break;
     case SC_MAP_UNLOADED:
         cleanup_state();

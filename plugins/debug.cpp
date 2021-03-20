@@ -537,7 +537,7 @@ command_result FilterManager::saveConfig(DFHack::color_ostream& out) const noexc
         if (!ofs.good())
             throw std::runtime_error{"Failed to open configuration file for writing"};
         ofs << archive;
-    } catch(std::exception e) {
+    } catch(std::exception & e) {
         ERR(command, out) << "Serializing filters to '" << configPath << "' failed: "
             << e.what() << std::endl;
         return CR_FAILURE;
@@ -584,7 +584,7 @@ static command_result parseRegexParam(std::regex& target,
     try {
         std::regex temp{parameters[pos], defaultRegex};
         target = std::move(temp);
-    } catch(std::regex_error e) {
+    } catch(std::regex_error & e) {
         ERR(command,out) << "Failed to parse regular expression '"
             << parameters[pos] << "'\n";
         ERR(command,out) << "Parser message: " <<  e.what() << std::endl;

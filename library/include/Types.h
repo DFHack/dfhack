@@ -25,6 +25,8 @@ distribution.
 
 #pragma once
 
+#include <algorithm>
+
 #include "Pragma.h"
 #include "Export.h"
 

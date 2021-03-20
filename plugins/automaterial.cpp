@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "Core.h"
+#include "LuaTools.h"
 #include <Console.h>
 #include <Export.h>
 #include <PluginManager.h>
@@ -504,7 +505,7 @@ static bool find_anchor_in_spiral(const df::coord &start)
     return found;
 }
 
-static bool find_valid_building_sites(bool in_future_placement_mode)
+static bool find_valid_building_sites(bool in_future_placement_mode, bool use_buildingplan)
 {
     valid_building_sites.clear();
     open_air_sites.clear();
@@ -519,7 +520,8 @@ static bool find_valid_building_sites(bool in_future_placement_mode)
                 continue;
 
             building_site site(df::coord(xB, yB, box_second.z), false);
-            if (is_valid_building_site(site, false, true, in_future_placement_mode))
+            // if we're using buildingplan, it will take care of filtering out bad tiles
+            if (use_buildingplan || is_valid_building_site(site, false, true, in_future_placement_mode))
                 valid_building_sites.push_back(site);
             else if (site.in_open_air)
             {
@@ -531,23 +533,113 @@ static bool find_valid_building_sites(bool in_future_placement_mode)
         }
     }
 
-    size_t last_open_air_count = 0;
-    while (valid_building_sites.size() > 0 && open_air_sites.size() != last_open_air_count)
+    if (!use_buildingplan)
     {
-        last_open_air_count = open_air_sites.size();
-        deque<building_site> current_open_air_list = open_air_sites;
-        open_air_sites.clear();
-        for (deque<building_site>::iterator it = current_open_air_list.begin(); it != current_open_air_list.end(); it++)
+        size_t last_open_air_count = 0;
+        while (valid_building_sites.size() > 0 && open_air_sites.size() != last_open_air_count)
         {
-            if (is_orthogonal_to_pending_construction(*it))
-                valid_building_sites.push_back(*it);
-            else
-                open_air_sites.push_back(*it);
-        }
+            last_open_air_count = open_air_sites.size();
+            deque<building_site> current_open_air_list = open_air_sites;
+            open_air_sites.clear();
+            for (deque<building_site>::iterator it = current_open_air_list.begin(); it != current_open_air_list.end(); it++)
+            {
+                if (is_orthogonal_to_pending_construction(*it))
+                    valid_building_sites.push_back(*it);
+                else
+                    open_air_sites.push_back(*it);
+            }
 
+        }
     }
 
     return valid_building_sites.size() > 0;
+}
+
+static bool is_buildingplan_enabled()
+{
+    auto L = Lua::Core::State;
+    color_ostream_proxy out(Core::getInstance().getConsole());
+    Lua::StackUnwinder top(L);
+
+    if (!(lua_checkstack(L, 1) &&
+          Lua::PushModulePublic(out, L, "plugins.buildingplan", "isEnabled") &&
+          Lua::SafeCall(out, L, 0, 1)))
+    {
+        return false;
+    }
+
+    return lua_toboolean(L, -1);
+}
+
+static bool is_buildingplan_planmode_enabled(
+        df::building_type type, int16_t subtype, int32_t custom)
+{
+    auto L = Lua::Core::State;
+    color_ostream_proxy out(Core::getInstance().getConsole());
+    Lua::StackUnwinder top(L);
+
+    if (!lua_checkstack(L, 4) ||
+        !Lua::PushModulePublic(
+            out, L, "plugins.buildingplan", "isPlanModeEnabled"))
+        return false;
+
+    Lua::Push(L, type);
+    Lua::Push(L, subtype);
+    Lua::Push(L, custom);
+
+    if (!Lua::SafeCall(out, L, 3, 1))
+        return false;
+
+    return lua_toboolean(L, -1);
+}
+
+static bool is_buildingplan_managed()
+{
+    return is_buildingplan_enabled() &&
+        is_buildingplan_planmode_enabled(ui_build_selector->building_type,
+                                         ui_build_selector->building_subtype,
+                                         ui_build_selector->custom_type);
+}
+
+static bool build_with_buildingplan_box_select(const df::coord &pos)
+{
+    auto L = Lua::Core::State;
+    color_ostream_proxy out(Core::getInstance().getConsole());
+
+    CoreSuspendClaimer suspend;
+    Lua::StackUnwinder top(L);
+
+    if (!lua_checkstack(L, 5) ||
+        !Lua::PushModulePublic(
+                out, L, "plugins.automaterial",
+                "build_with_buildingplan_box_select"))
+    {
+        return false;
+    }
+
+    Lua::Push(L, ui_build_selector->building_subtype);
+    Lua::Push(L, pos.x);
+    Lua::Push(L, pos.y);
+    Lua::Push(L, pos.z);
+
+    if (!Lua::SafeCall(out, L, 4, 1))
+        return false;
+
+    return lua_toboolean(L, -1);
+}
+
+static bool build_with_buildingplan_ui()
+{
+    auto L = Lua::Core::State;
+    color_ostream_proxy out(Core::getInstance().getConsole());
+
+    CoreSuspendClaimer suspend;
+    Lua::StackUnwinder top(L);
+
+    return lua_checkstack(L, 1) &&
+            Lua::PushModulePublic(out, L, "plugins.automaterial",
+                                  "build_with_buildingplan_ui") &&
+            Lua::SafeCall(out, L, 0, 1);
 }
 
 static bool designate_new_construction(df::coord &pos, df::construction_type &type, df::item *item)
@@ -722,11 +814,13 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
         }
         else if (in_placement_stage())
         {
-            if (input->count(interface_key::CUSTOM_A))
+            bool use_buildingplan = is_buildingplan_managed();
+
+            if (!use_buildingplan && input->count(interface_key::CUSTOM_A))
             {
                 auto_choose_materials = !auto_choose_materials;
             }
-            else if (input->count(interface_key::CUSTOM_T))
+            else if (!use_buildingplan && input->count(interface_key::CUSTOM_T))
             {
                 revert_to_last_used_type = !revert_to_last_used_type;
             }
@@ -739,7 +833,7 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
 
                 return;
             }
-            else if (input->count(interface_key::CUSTOM_O))
+            else if (!use_buildingplan && input->count(interface_key::CUSTOM_O))
             {
                 allow_future_placement = !allow_future_placement;
             }
@@ -816,6 +910,15 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
                     return;
                 }
             }
+            else if (use_buildingplan
+                     && ui_build_selector->errors.size() == 0
+                     && input->count(interface_key::SELECT))
+            {
+                build_with_buildingplan_ui();
+                Gui::refreshSidebar();
+                input->clear();
+                return;
+            }
         }
     }
     //END UI Methods
@@ -876,16 +979,17 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
         static bool saved_revert_setting = false;
         static bool auto_select_applied = false;
 
+        bool use_buildingplan = is_buildingplan_managed();
         box_select_mode = SELECT_MATERIALS;
         if (new_start)
         {
             bool ok_to_continue = false;
             bool in_future_placement_mode = false;
-            if (!find_valid_building_sites(false))
+            if (!find_valid_building_sites(false, use_buildingplan))
             {
                 if (allow_future_placement)
                 {
-                    in_future_placement_mode = find_valid_building_sites(true);
+                    in_future_placement_mode = find_valid_building_sites(true, use_buildingplan);
                 }
             }
             else
@@ -893,7 +997,8 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
                 ok_to_continue = true;
             }
 
-            if (in_future_placement_mode)
+            // if using buildingplan, we don't need an anchor
+            if (!use_buildingplan && in_future_placement_mode)
             {
                 ok_to_continue = find_anchor_in_spiral(valid_building_sites[0].pos);
             }
@@ -924,6 +1029,15 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
         {
             building_site site = valid_building_sites.front();
             valid_building_sites.pop_front();
+
+            if (use_buildingplan)
+            {
+                // we don't actually care if this fails. buildingplan will return
+                // false when it filters out bad tiles, and that's ok.
+                build_with_buildingplan_box_select(site.pos);
+                continue;
+            }
+
             if (box_select_materials.size() > 0)
             {
                 df::construction_type type = (df::construction_type) ui_build_selector->building_subtype;
@@ -986,8 +1100,10 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
         // Allocation done, reset
         move_cursor(box_second);
 
+        // if we're using buildingplan, we never actually leave the placement
+        // screen, so there's no need to re-enter the screen
         revert_to_last_used_type = saved_revert_setting;
-        if (!revert_to_last_used_type)
+        if (!use_buildingplan && !revert_to_last_used_type)
         {
             send_key(df::interface_key::LEAVESCREEN);
         }
@@ -1091,9 +1207,18 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
         }
         else if (in_placement_stage() && ui_build_selector->building_subtype < 7)
         {
-            OutputString(COLOR_BROWN, x, y, "DFHack Options", true, left_margin);
-            AMOutputToggleString(x, y, "Auto Mat-select", "a", auto_choose_materials, true, left_margin);
-            AMOutputToggleString(x, y, "Reselect Type", "t", revert_to_last_used_type, true, left_margin);
+            bool use_buildingplan = is_buildingplan_managed();
+
+            OutputString(COLOR_BROWN, x, y, "DFHack Automaterial Options", true, left_margin);
+            if (use_buildingplan)
+            {
+                y += 2;
+            }
+            else
+            {
+                AMOutputToggleString(x, y, "Auto Mat-select", "a", auto_choose_materials, true, left_margin);
+                AMOutputToggleString(x, y, "Reselect Type", "t", revert_to_last_used_type, true, left_margin);
+            }
 
             ++y;
             AMOutputToggleString(x, y, "Box Select", "b", box_select_enabled, true, left_margin);
@@ -1101,9 +1226,20 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
             {
                 AMOutputToggleString(x, y, "Show Box Mask", "x", show_box_selection, true, left_margin);
                 OutputHotkeyString(x, y, (hollow_selection) ? "Make Solid" : "Make Hollow", "h", true, left_margin);
-                AMOutputToggleString(x, y, "Open Placement", "o", allow_future_placement, true, left_margin);
+
+                if (use_buildingplan)
+                    ++y;
+                else
+                    AMOutputToggleString(x, y, "Open Placement", "o", allow_future_placement, true, left_margin);
             }
-            ++y;
+            else
+            {
+                y += 3;
+            }
+            y += 2;
+            if (is_buildingplan_enabled())
+                OutputString(COLOR_BROWN, x, y, "DFHack Buildingplan Options", true, left_margin);
+
             if (box_select_enabled)
             {
                 Screen::Pen pen(' ',COLOR_BLACK);

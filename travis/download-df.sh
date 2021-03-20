@@ -1,8 +1,9 @@
 #!/bin/sh
 
+set -e
+
 tardest="df.tar.bz2"
 
-which md5sum && alias md5=md5sum
 selfmd5=$(openssl md5 < "$0")
 echo $selfmd5
 
@@ -10,31 +11,46 @@ cd "$(dirname "$0")"
 echo "DF_VERSION: $DF_VERSION"
 echo "DF_FOLDER: $DF_FOLDER"
 mkdir -p "$DF_FOLDER"
-cd "$DF_FOLDER"
+# back out of df_linux
+cd "$DF_FOLDER/.."
 
 if [ -f receipt ]; then
     if [ "$selfmd5" != "$(cat receipt)" ]; then
         echo "download-df.sh changed; removing DF"
+        rm receipt
     else
         echo "Already downloaded $DF_VERSION"
-        exit 0
     fi
 fi
 
-rm -rif "$tardest" df_linux
+if [ ! -f receipt ]; then
+    rm -f "$tardest"
+    minor=$(echo "$DF_VERSION" | cut -d. -f2)
+    patch=$(echo "$DF_VERSION" | cut -d. -f3)
+    url="http://www.bay12games.com/dwarves/df_${minor}_${patch}_linux.tar.bz2"
+    echo Downloading
+    while read url; do
+        echo "Attempting download: ${url}"
+        if wget -v "$url" -O "$tardest"; then
+            break
+        fi
+    done <<URLS
+    https://www.bay12games.com/dwarves/df_${minor}_${patch}_linux.tar.bz2
+    https://files.dfhack.org/DF/0.${minor}.${patch}/df_${minor}_${patch}_linux.tar.bz2
+URLS
+    echo $tardest
+    if ! test -f "$tardest"; then
+        echo "DF failed to download: $tardest not found"
+        exit 1
+    fi
+fi
 
-minor=$(echo "$DF_VERSION" | cut -d. -f2)
-patch=$(echo "$DF_VERSION" | cut -d. -f3)
-url="http://www.bay12games.com/dwarves/df_${minor}_${patch}_linux.tar.bz2"
+rm -rf df_linux
+mkdir df_linux
 
-echo Downloading
-wget "$url" -O "$tardest"
 echo Extracting
-tar xf "$tardest" --strip-components=1
-echo Changing settings
-echo '' >> "$DF_FOLDER/data/init/init.txt"
-echo '[PRINT_MODE:TEXT]' >> "$DF_FOLDER/data/init/init.txt"
-echo '[SOUND:NO]' >> "$DF_FOLDER/data/init/init.txt"
+tar xf "$tardest" --strip-components=1 -C df_linux
 echo Done
 
 echo "$selfmd5" > receipt
+ls

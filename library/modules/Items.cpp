@@ -59,6 +59,8 @@ using namespace std;
 #include "df/general_ref_unit_holderst.h"
 #include "df/historical_entity.h"
 #include "df/item.h"
+#include "df/item_bookst.h"
+#include "df/item_toolst.h"
 #include "df/item_type.h"
 #include "df/itemdef_ammost.h"
 #include "df/itemdef_armorst.h"
@@ -74,6 +76,9 @@ using namespace std;
 #include "df/itemdef_toyst.h"
 #include "df/itemdef_trapcompst.h"
 #include "df/itemdef_weaponst.h"
+#include "df/itemimprovement.h"
+#include "df/itemimprovement_pagesst.h"
+#include "df/itemimprovement_writingst.h"
 #include "df/job_item.h"
 #include "df/mandate.h"
 #include "df/map_block.h"
@@ -90,6 +95,7 @@ using namespace std;
 #include "df/viewscreen_itemst.h"
 #include "df/world.h"
 #include "df/world_site.h"
+#include "df/written_content.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -172,7 +178,7 @@ std::string ItemTypeInfo::getToken()
     std::string rv = ENUM_KEY_STR(item_type, type);
     if (custom)
         rv += ":" + custom->id;
-    else if (subtype != -1)
+    else if (subtype != -1 && type != item_type::PLANT_GROWTH)
         rv += stl_sprintf(":%d", subtype);
     return rv;
 }
@@ -273,12 +279,13 @@ bool ItemTypeInfo::matches(df::job_item_vector_id vec_id)
     return true;
 }
 
-bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat, bool skip_vector)
+bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat,
+                           bool skip_vector, df::item_type itype)
 {
     using namespace df::enums::item_type;
 
     if (!isValid())
-        return mat ? mat->matches(item) : false;
+        return mat ? mat->matches(item, itype) : false;
 
     if (Items::isCasteMaterial(type) && mat && !mat->isNone())
         return false;
@@ -373,6 +380,7 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat, bool ski
         break;
 
     case BUCKET:
+        OK(2,lye_milk_free);
     case FLASK:
         OK(1,milk);
         xmask1.bits.cookable = true;
@@ -658,7 +666,7 @@ df::coord Items::getPosition(df::item *item)
             switch (ref->type)
             {
             case specific_ref_type::VERMIN_ESCAPED_PET:
-                return ref->vermin->pos;
+                return ref->data.vermin->pos;
 
             default:
                 break;
@@ -679,6 +687,87 @@ static void addQuality(std::string &tmp, int quality)
         char c = quality_table[quality];
         tmp = c + tmp + c;
     }
+}
+
+//  It's not impossible the functionality of this operation is provided by one of the unmapped item functions.
+std::string Items::getBookTitle(df::item *item)
+{
+    CHECK_NULL_POINTER(item);
+
+    std::string tmp;
+
+    if (item->getType() == df::item_type::BOOK)
+    {
+        auto book = virtual_cast<df::item_bookst>(item);
+
+        if (book->title != "")
+        {
+            return book->title;
+        }
+        else
+        {
+            for (size_t i = 0; i < book->improvements.size(); i++)
+            {
+                if (auto page = virtual_cast<df::itemimprovement_pagesst>(book->improvements[i]))
+                {
+                    for (size_t k = 0; k < page->contents.size(); k++)
+                    {
+                        df::written_content *contents = world->written_contents.all[page->contents[k]];
+                        if (contents->title != "")
+                        {
+                            return contents->title;
+                        }
+                    }
+                }
+                else if (auto writing = virtual_cast<df::itemimprovement_writingst>(book->improvements[i]))
+                {
+                    for (size_t k = 0; k < writing->contents.size(); k++)
+                    {
+                        df::written_content *contents = world->written_contents.all[writing->contents[k]];
+                        if (contents->title != "")
+                        {
+                            return contents->title;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else if (item->getType() == df::item_type::TOOL)
+    {
+        auto book = virtual_cast<df::item_toolst>(item);
+
+        if (book->hasToolUse(df::tool_uses::CONTAIN_WRITING))
+        {
+            for (size_t i = 0; i < book->improvements.size(); i++)
+            {
+                if (auto page = virtual_cast<df::itemimprovement_pagesst>(book->improvements[i]))
+                {
+                    for (size_t k = 0; k < page->contents.size(); k++)
+                    {
+                        df::written_content *contents = world->written_contents.all[page->contents[k]];
+                        if (contents->title != "")
+                        {
+                            return contents->title;
+                        }
+                    }
+                }
+                else if (auto writing = virtual_cast<df::itemimprovement_writingst>(book->improvements[i]))
+                {
+                    for (size_t k = 0; k < writing->contents.size(); k++)
+                    {
+                        df::written_content *contents = world->written_contents.all[writing->contents[k]];
+                        if (contents->title != "")
+                        {
+                            return contents->title;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return "";
 }
 
 std::string Items::getDescription(df::item *item, int type, bool decorate)
@@ -1390,9 +1479,9 @@ int32_t Items::createItem(df::item_type item_type, int16_t item_subtype, int16_t
 
     df::enums::game_type::game_type type = *df::global::gametype;
     prod->produce(unit, &out_products, &out_items, &in_reag, &in_items, 1, job_skill::NONE,
-            df::historical_entity::find(unit->civ_id), 0,
+            0, df::historical_entity::find(unit->civ_id),
             ((type == df::enums::game_type::DWARF_MAIN) || (type == df::enums::game_type::DWARF_RECLAIM)) ? df::world_site::find(df::global::ui->site_id) : NULL,
-            0);
+            NULL);
     if ( out_items.size() != 1 )
         return -1;
 

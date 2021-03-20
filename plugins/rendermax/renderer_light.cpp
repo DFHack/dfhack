@@ -270,7 +270,7 @@ rgbf blend(const rgbf& a,const rgbf& b)
 void lightingEngineViewscreen::clear()
 {
     lightMap.assign(lightMap.size(),rgbf(1,1,1));
-    tthread::lock_guard<tthread::fast_mutex> guard(myRenderer->dataMutex);
+    std::lock_guard<std::mutex> guard{myRenderer->dataMutex};
     if(lightMap.size()==myRenderer->lightGrid.size())
     {
         std::swap(myRenderer->lightGrid,lightMap);
@@ -299,7 +299,7 @@ void lightingEngineViewscreen::calculate()
 }
 void lightingEngineViewscreen::updateWindow()
 {
-    tthread::lock_guard<tthread::fast_mutex> guard(myRenderer->dataMutex);
+    std::lock_guard<std::mutex> guard{myRenderer->dataMutex};
     if(lightMap.size()!=myRenderer->lightGrid.size())
     {
         reinit();

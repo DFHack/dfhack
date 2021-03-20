@@ -175,8 +175,15 @@ void unitAttack(color_ostream& out, void* ptr) {
     EventManager::UnitAttackData* data = (EventManager::UnitAttackData*)ptr;
     out.print("unit %d attacks unit %d\n", data->attacker, data->defender);
     df::unit* defender = df::unit::find(data->defender);
+    if (!defender) {
+        out.printerr("defender %d does not exist\n", data->defender);
+        return;
+    }
     int32_t woundIndex = df::unit_wound::binsearch_index(defender->body.wounds, data->wound);
-    df::unit_wound* wound = defender->body.wounds[woundIndex];
+    df::unit_wound* wound = vector_get(defender->body.wounds, woundIndex);
+    if (!wound) {
+        return;
+    }
     set<int32_t> parts;
     for ( auto a = wound->parts.begin(); a != wound->parts.end(); a++ ) {
         parts.insert((*a)->body_part_id);

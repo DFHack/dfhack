@@ -313,9 +313,23 @@ public:
                 return workshop_build_labor[ws->type];
         }
         break;
+        case df::building_type::Furnace:
+        {
+            df::building_furnacest* frn = (df::building_furnacest*) bld;
+            if (frn->design && !frn->design->flags.bits.designed)
+                return df::unit_labor::ARCHITECT;
+            if (frn->type == df::furnace_type::Custom)
+            {
+                df::building_def* def = df::building_def::find(frn->custom_type);
+                return def->build_labors[0];
+            }
+            else
+                // cast to building_actual should be safe here because at this point the building has been designed
+                return construction_build_labor((df::building_actual*)bld);
+        }
+        break;
         case df::building_type::Construction:
             return df::unit_labor::BUILD_CONSTRUCTION;
-        case df::building_type::Furnace:
         case df::building_type::TradeDepot:
         case df::building_type::Bridge:
         case df::building_type::ArcheryTarget:
@@ -373,6 +387,7 @@ public:
             return df::unit_labor::TRAPPER;
         case df::building_type::Civzone:
         case df::building_type::Nest:
+        case df::building_type::OfferingPlace:
         case df::building_type::Stockpile:
         case df::building_type::Weapon:
             return df::unit_labor::NONE;
@@ -417,15 +432,26 @@ public:
                 return workshop_build_labor[ws->type];
         }
         break;
+        case df::building_type::Furnace:
+        {
+            df::building_furnacest* frn = (df::building_furnacest*) bld;
+            if (frn->type == df::furnace_type::Custom)
+            {
+                df::building_def* def = df::building_def::find(frn->custom_type);
+                return def->build_labors[0];
+            }
+            else
+                // can't destroy a building if doesn't actually exist
+                return construction_build_labor((df::building_actual*)bld);
+        }
+        break;
         case df::building_type::Construction:
             return df::unit_labor::REMOVE_CONSTRUCTION;
-        case df::building_type::Furnace:
         case df::building_type::TradeDepot:
         case df::building_type::Wagon:
         case df::building_type::Bridge:
         case df::building_type::ScrewPump:
         case df::building_type::ArcheryTarget:
-        case df::building_type::RoadPaved:
         case df::building_type::Shop:
         case df::building_type::Support:
         case df::building_type::WaterWheel:
@@ -436,6 +462,8 @@ public:
             return construction_build_labor(b);
         }
         break;
+        case df::building_type::RoadPaved:
+            return df::unit_labor::BUILD_ROAD;
         case df::building_type::FarmPlot:
             return df::unit_labor::PLANT;
         case df::building_type::Trap:
@@ -475,6 +503,7 @@ public:
             return df::unit_labor::TRAPPER;
         case df::building_type::Civzone:
         case df::building_type::Nest:
+        case df::building_type::OfferingPlace:
         case df::building_type::RoadDirt:
         case df::building_type::Stockpile:
         case df::building_type::Weapon:
@@ -894,6 +923,10 @@ JobLaborMapper::JobLaborMapper()
     job_to_labor_table[df::job_type::PutItemOnDisplay] = jlf_const(df::unit_labor::HAUL_ITEM);
 
     job_to_labor_table[df::job_type::StoreItemInLocation] = jlf_no_labor; // StoreItemInLocation
+
+    job_to_labor_table[df::job_type::unk_fake_no_job] = jlf_no_labor; // added for 47.04 - see #1561
+    job_to_labor_table[df::job_type::InterrogateSubject] = jlf_no_labor; // added for 47.04 - see #1561
+    job_to_labor_table[df::job_type::unk_fake_no_activity] = jlf_no_labor; // added for 47.04 - see #1561
 };
 
 df::unit_labor JobLaborMapper::find_job_labor(df::job* j)

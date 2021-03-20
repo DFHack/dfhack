@@ -45,6 +45,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <stdint.h>
 
+#include "Console.h"
 #include "RemoteClient.h"
 
 #include <cstdio>
@@ -55,15 +56,27 @@ POSSIBILITY OF SUCH DAMAGE.
 
 using namespace DFHack;
 using namespace dfproto;
-using std::cout;
 
 int main (int argc, char *argv[])
 {
-    color_ostream_wrapper out(cout);
+    Console out;
 
     if (argc <= 1)
     {
-        fprintf(stderr, "Usage: dfhack-run <command> [args...]\n");
+        fprintf(stderr, "Usage: dfhack-run <command> [args...]\n\n");
+        fprintf(stderr, "Note: this command does not start DFHack; it is intended to connect\n"
+                        "to a running DFHack instance. If you were trying to start DFHack, run\n"
+#ifdef _WIN32
+                        "   Dwarf Fortress.exe\n"
+#else
+                        "   ./dfhack\n"
+#endif
+                        "or see the documentation in hack/docs/index.html for more help.\n"
+        );
+#ifdef _WIN32
+        fprintf(stderr, "\nPress Enter to quit.\n");
+        fgetc(stdin);
+#endif
         return 2;
     }
 
@@ -72,12 +85,15 @@ int main (int argc, char *argv[])
     if (!client.connect())
         return 2;
 
+    out.init(true);
+
     command_result rv;
 
     if (strcmp(argv[1], "--lua") == 0)
     {
         if (argc <= 3)
         {
+            out.shutdown();
             fprintf(stderr, "Usage: dfhack-run --lua <module> <function> [args...]\n");
             return 2;
         }
@@ -86,6 +102,7 @@ int main (int argc, char *argv[])
 
         if (!run_call.bind(&client, "RunLua"))
         {
+            out.shutdown();
             fprintf(stderr, "No RunLua protocol function found.");
             return 3;
         }
@@ -117,6 +134,7 @@ int main (int argc, char *argv[])
     }
 
     out.flush();
+    out.shutdown();
 
     if (rv != CR_OK)
         return 1;

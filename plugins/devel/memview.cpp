@@ -76,7 +76,7 @@ void outputHex(uint8_t *buf,uint8_t *lbuf,size_t len,size_t start,color_ostream 
     for(size_t i=0;i<len;i+=page_size)
     {
         //con.gotoxy(1,i/page_size+1);
-        con.print("0x%08lX ",i+start);
+        con.print("0x%08zX ",i+start);
         for(size_t j=0;(j<page_size) && (i+j<len);j++)
             {
                 if(j%sizeof(void*)==0)
@@ -116,8 +116,8 @@ void Deinit()
 
 size_t detect_size(void *addr) {
     size_t *size = (size_t*)((char*)addr - 16);
-    int32_t *tag = (int32_t*)((char*)addr - 8);
-    if (isAddr(size, memdata.ranges) && *tag == 0x11223344) {
+    uint32_t *tag = (uint32_t*)((char*)addr - 8);
+    if (isAddr(size, memdata.ranges) && (*tag == 0x11223344 || *tag == 0xdfdf4ac8)) {
         return *size;
     }
     // default
@@ -217,7 +217,8 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out)
 {
     mymutex->lock();
     Deinit();
-    delete mymutex;
     mymutex->unlock();
+    delete mymutex;
+    mymutex = nullptr;
     return CR_OK;
 }

@@ -1,10 +1,35 @@
-#include "buildingplan-lib.h"
+/*
+ * Fortplan is deprecated. All functionality has moved to the DFHack quickfort
+ * script. Fortplan will be removed in a future DFHack release.
+ */
+
 #include <fstream>
 #include <vector>
+
+#include "df/job_item.h"
+#include "df/trap_type.h"
+#include "df/world.h"
+
+#include "modules/Buildings.h"
 #include "modules/Filesystem.h"
+#include "modules/Gui.h"
+#include "modules/Maps.h"
+#include "modules/World.h"
+
+#include "LuaTools.h"
+#include "PluginManager.h"
+
+#include "buildingplan-lib.h"
+#include "uicommon.h"
 
 DFHACK_PLUGIN("fortplan");
+REQUIRE_GLOBAL(gps);
+REQUIRE_GLOBAL(world);
+
 #define PLUGIN_VERSION 0.15
+
+using namespace std;
+using namespace DFHack;
 
 command_result fortplan(color_ostream &out, vector<string> & params);
 
@@ -30,8 +55,40 @@ struct BuildingInfo {
         hasCustomOptions = false;
     }
 
-    bool allocate() {
-        return planner.allocatePlannedBuilding(type);
+    bool allocate(coord32_t cursor) {
+        auto L = Lua::Core::State;
+        color_ostream_proxy out(Core::getInstance().getConsole());
+
+        CoreSuspendClaimer suspend;
+        Lua::StackUnwinder top(L);
+
+        if (!lua_checkstack(L, 5) ||
+            !Lua::PushModulePublic(out, L, "plugins.fortplan",
+                                   "construct_building_from_params"))
+        {
+            return false;
+        }
+
+        Lua::Push(L, type);
+        Lua::Push(L, cursor.x);
+        Lua::Push(L, cursor.y);
+        Lua::Push(L, cursor.z);
+
+        if (!Lua::SafeCall(out, L, 4, 1))
+            return false;
+
+        auto bld = Lua::GetDFObject<df::building>(L, -1);
+        lua_pop(L, 1);
+
+        if (!bld)
+        {
+            out.printerr("fortplan: construct_building_from_params() failed\n");
+            return false;
+        }
+
+        planner.addPlannedBuilding(bld);
+
+        return true;
     }
 };
 
@@ -80,15 +137,13 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
     buildings.push_back(BuildingInfo("N",df::building_type::NestBox,"Nest Box",1,1));
     buildings.push_back(BuildingInfo("~h",df::building_type::Hive,"Hive",1,1));
 
-    planner.initialize();
-
     return CR_OK;
 }
 
 #define DAY_TICKS 1200
 DFhackCExport command_result plugin_onupdate(color_ostream &out)
 {
-    if (Maps::IsValid() && !World::ReadPauseState() && world->frame_counter % (DAY_TICKS/2) == 0)
+    if (Maps::IsValid() && !World::ReadPauseState() && df::global::world->frame_counter % (DAY_TICKS/2) == 0)
     {
         planner.doCycle();
     }
@@ -100,12 +155,12 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 {
-    if (!gps)
+    if (!df::global::gps )
         return CR_FAILURE;
 
     if (enable != is_enabled)
     {
-        planner.reset(out);
+        planner.reset();
 
         is_enabled = enable;
     }
@@ -144,8 +199,12 @@ std::vector<std::vector<std::string>> tokenizeFile(std::string filename) {
 }
 
 command_result fortplan(color_ostream &out, vector<string> & params) {
-
     auto & con = out;
+    con.print("Fortplan is deprecated. Please move your blueprints to the"
+    " 'blueprints' folder (under your DF installation directory) and use"
+    " DFHack's quickfort command instead:\n  quickfort run example.csv\n"
+    " Fortplan will be removed in a future DFHack release.\n");
+
     std::vector<std::vector<std::string>> layout(128, std::vector<std::string>(128));
     if (params.size()) {
         coord32_t cursor;
@@ -330,13 +389,13 @@ command_result fortplan(color_ostream &out, vector<string> & params) {
                                     offsetCursor.x -= xOffset;
                                     offsetCursor.y -= yOffset;
                                     DFHack::Gui::setCursorCoords(offsetCursor.x, offsetCursor.y, offsetCursor.z);
-                                    if (!buildingInfo.allocate()) {
+                                    if (!buildingInfo.allocate(offsetCursor)) {
                                         con.print("*** There was an error placing building with code '%s' centered at (%zu,%zu).\n",curCode.c_str(),x,y);
                                     }
                                     DFHack::Gui::setCursorCoords(cursor.x, cursor.y, cursor.z);
                                 } else if (block) {
                                     //con.print("Placing a building with code '%s' with corner at (%d,%d) and default size %dx%d.\n",curCode.c_str(),x,y,buildingInfo.defaultWidth,buildingInfo.defaultHeight);
-                                    if (!buildingInfo.allocate()) {
+                                    if (!buildingInfo.allocate(cursor)) {
                                         con.print("*** There was an error placing building with code '%s' with corner at (%zu,%zu).\n",curCode.c_str(),x,y);
                                     }
                                 } else {
@@ -349,7 +408,7 @@ command_result fortplan(color_ostream &out, vector<string> & params) {
                             }
                         } else {
                             //con.print("Building a(n) %s.\n",buildingInfo.name.c_str());
-                            if (!buildingInfo.allocate()) {
+                            if (!buildingInfo.allocate(cursor)) {
                                 con.print("*** There was an error placing the %s at (%zu,%zu).\n",buildingInfo.name.c_str(),x,y);
                             }
                         }

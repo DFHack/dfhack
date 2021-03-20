@@ -1,16 +1,10 @@
 === Scroll down for changes
 
 ===[[[
-===help
+The text below is included in docs/Documentation.rst - see that file for more details on the changelog setup.
+This is kept in this file as a quick syntax reference.
 
-Entries in docs/NEWS.rst and docs/NEWS-dev.rst are generated from
-docs/changelog.txt. NEWS.rst groups entries by stable releases, and NEWS-dev.rst
-groups them by all releases (stable and development). For example, an entry
-listed under "0.44.05-alpha1" in changelog.txt will be listed under that in
-NEWS-dev.rst as well, but under "0.44.05-r1" in NEWS.rst (assuming that is the
-closest stable release after 0.44.05-alpha1). An entry listed under a stable
-release in changelog.txt will be listed under that release in both NEWS.rst and
-NEWS-dev.rst.
+===help
 
 changelog.txt uses a syntax similar to RST, with a few special sequences:
 
@@ -33,9 +27,462 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ================================================================================
 ======== IMPORTANT: rename this, and add a new "future" section, BEFORE ========
-======== making a new DFHack release!                                   ========
+======== making a new DFHack release, even if the only changes made     ========
+======== were in submodules with their own changelogs!                  ========
 ================================================================================
+
 # Future
+
+## Documentation
+- Added more client library implementations to the `remote interface docs <remote-client-libs>`
+
+# 0.47.05-r1
+
+## Fixes
+- `confirm`: stopped exposing alternate names when convicting units
+- `prospector`: improved pre embark rough estimates, particularly for small clusters
+
+## Misc Improvements
+- `autohauler`: allowed the ``Alchemist`` labor to be enabled in `manipulator` and other labor screens so it can be used for its intended purpose of flagging that no hauling labors should be assigned to a dwarf. Before, the only way to set the flag was to use an external program like Dwarf Therapist.
+- `embark-assistant`: slightly improved performance of surveying
+- `quickfort`: Dreamfort blueprint set improvements: `significant <http://www.bay12forums.com/smf/index.php?topic=176889.msg8239017#msg8239017>`_ refinements across the entire blueprint set. Dreamfort is now much faster, much more efficient, and much easier to use. The `checklist <https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=1459509569>`__ now includes a mini-walkthrough for quick reference. The spreadsheet now also includes `embark profile suggestions <https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=149144025>`__
+- `quickfort`: added aliases for configuring masterwork and artifact core quality for all stockpile categories that have them; made it possible to take from multiple stockpiles in the ``quantumstop`` alias
+
+## Documentation
+- `fortplan`: added deprecation warnings - fortplan has been replaced by `quickfort`
+
+# 0.47.05-beta1
+
+## Fixes
+- `embark-assistant`: fixed bug in soil depth determination for ocean tiles
+- `orders`: don't crash when importing orders with malformed JSON
+
+# 0.47.04-r5
+
+## Fixes
+- `embark-assistant`: fixed order of factors when calculating min temperature
+- `embark-assistant`: improved performance of surveying
+- `quickfort`: fixed eventual crashes when creating zones
+- `quickfort`: fixed library aliases for tallow and iron, copper, and steel weapons
+- `seedwatch`: fixed an issue where the plugin would disable itself on map load
+- `search`: fixed crash when searching the ``k`` sidebar and navigating to another tile with certain keys, like ``<`` or ``>``
+- `stockflow`: fixed ``j`` character being intercepted when naming stockpiles
+- `stockpiles`: no longer outputs hotkey help text beneath `stockflow` hotkey help text
+
+## Misc Improvements
+- Lua label widgets (used in all standard message boxes) are now scrollable with Up/Down/PgUp/PgDn keys
+- `autofarm`: now fallows farms if all plants have reached the desired count
+- `buildingplan`: added ability to set global settings from the console, e.g.  ``buildingplan set boulders false``
+- `buildingplan`: added "enable all" option for buildingplan (so you don't have to enable all building types individually). This setting is not persisted (just like quickfort_mode is not persisted), but it can be set from onMapLoad.init
+- `buildingplan`: modified ``Planning Mode`` status in the UI to show whether the plugin is in quickfort mode, "enable all" mode, or whether just the building type is enabled.
+- `quickfort`: Dreamfort blueprint set improvements: added a streamlined checklist for all required dreamfort commands and gave names to stockpiles, levers, bridges, and zones
+- `quickfort`: added aliases for bronze weapons and armor
+- `quickfort`: added alias for tradeable crafts
+
+## Lua
+- ``dfhack.run_command()``: changed to interface directly with the console when possible, which allows interactive commands and commands that detect the console encoding to work properly
+- ``processArgsGetopt()`` added to utils.lua, providing a callback interface for parameter parsing and getopt-like flexibility for parameter ordering and combination (see docs in ``library/lua/utils.lua`` and ``library/lua/3rdparty/alt_getopt.lua`` for details).
+
+## Documentation
+- Added documentation for Lua's ``dfhack.run_command()`` and variants
+
+# 0.47.04-r4
+
+## Fixes
+- Fixed an issue on some Linux systems where DFHack installed through a package manager would attempt to write files to a non-writable folder (notably when running `exportlegends` or `gui/autogems`)
+- `buildingplan`: fixed an issue preventing artifacts from being matched when the maximum item quality is set to ``artifacts``
+- `buildingplan`: stopped erroneously matching items to buildings while the game is paused
+- `buildingplan`: fixed a crash when pressing 0 while having a noble room selected
+- `dwarfvet`: fixed a crash that could occur when discharging patients
+- `dwarfmonitor`: fixed a crash when opening the ``prefs`` screen if units have vague preferences
+- `embark-assistant`: fixed an issue causing incursion resource matching (e.g. sand/clay) to skip some tiles if those resources were provided only through incursions
+- `embark-assistant`: corrected river size determination by performing it at the MLT level rather than the world tile level
+- `search`: fixed an issue where search options might not display if screens were destroyed and recreated programmatically (e.g. with `quickfort`)
+- `workflow`: fixed an error when creating constraints on "mill plants" jobs and some other plant-related jobs
+- `zone`: fixed an issue causing the ``enumnick`` subcommand to run when attempting to run ``assign``, ``unassign``, or ``slaughter``
+
+## Misc Improvements
+- `buildingplan`: added support for all buildings, furniture, and constructions (except for instruments)
+- `buildingplan`: added support for respecting building job_item filters when matching items, so you can set your own programmatic filters for buildings before submitting them to buildingplan
+- `buildingplan`: changed default filter setting for max quality from ``artifact`` to ``masterwork``
+- `buildingplan`: changed min quality adjustment hotkeys from 'qw' to 'QW' to avoid conflict with existing hotkeys for setting roller speed - also changed max quality adjustment hotkeys from 'QW' to 'AS' to make room for the min quality hotkey changes
+- `buildingplan`: added a new global settings page accessible via the ``G`` hotkey when on any building build screen; ``Quickfort Mode`` toggle for legacy Python Quickfort has been moved to this page
+- `buildingplan`: added new global settings for whether generic building materials should match blocks, boulders, logs, and/or bars - defaults are everything but bars
+- `embark-assistant`: split the lair types displayed on the local map into mound, burrow, and lair
+- `probe`: added more output for designations and tile occupancy
+- `quickfort`: The Dreamfort sample blueprints now have complete walkthroughs for each fort level and importable orders that automate basic fort stock management
+- `quickfort`: added more blueprints to the blueprints library: several bedroom layouts, the Saracen Crypts, and the complete fortress example from Python Quickfort: TheQuickFortress
+
+## Documentation
+- `quickfort-alias-guide`: alias syntax and alias standard library documentation for `quickfort` blueprints
+- `quickfort-library-guide`: overview of the quickfort blueprint library
+
+## API
+- `buildingplan`: added Lua interface API
+- ``dfhack.job.isSuitableMaterial()``: added an item type parameter so the ``non_economic`` flag can be properly handled (it was being matched for all item types instead of just boulders)
+- ``Buildings::setSize()``: changed to reuse existing extents when possible
+
+## Lua
+- ``utils.addressof()``: fixed for raw userdata
+
+# 0.47.04-r3
+
+## New Plugins
+- `xlsxreader`: provides an API for Lua scripts to read Excel spreadsheets
+
+## Fixes
+- `buildingplan`: fixed handling of buildings that require buckets
+- `getplants`: fixed a crash that could occur on some maps
+- `search`: fixed an issue causing item counts on the trade screen to display inconsistently when searching
+- `stockpiles`: fixed a crash when loading food stockpiles
+- `stockpiles`: fixed an error when saving furniture stockpiles
+
+## Misc Improvements
+- `createitem`: added support for plant growths (fruit, berries, leaves, etc.)
+- `createitem`: added an ``inspect`` subcommand to print the item and material tokens of existing items, which can be used to create additional matching items
+- `embark-assistant`: added support for searching for taller waterfalls (up to 50 z-levels tall)
+- `search`: added support for searching for names containing non-ASCII characters using their ASCII equivalents
+- `stocks`: added support for searching for items containing non-ASCII characters using their ASCII equivalents
+- `zone`: added an ``enumnick`` subcommand to assign enumerated nicknames (e.g "Hen 1", "Hen 2"...)
+- `zone`: added slaughter indication to ``uinfo`` output
+
+## Documentation
+- Fixed syntax highlighting of most code blocks to use the appropriate language (or no language) instead of Python
+
+## API
+- Added ``DFHack::to_search_normalized()`` (Lua: ``dfhack.toSearchNormalized()``) to convert non-ASCII alphabetic characters to their ASCII equivalents
+
+# 0.47.04-r2
+
+## New Tweaks
+- `tweak` do-job-now: adds a job priority toggle to the jobs list
+- `tweak` reaction-gloves: adds an option to make reactions produce gloves in sets with correct handedness
+
+## Fixes
+- Fixed a segfault when attempting to start a headless session with a graphical PRINT_MODE setting
+- Fixed an issue with the macOS launcher failing to un-quarantine some files
+- Linux: fixed ``dfhack.getDFPath()`` (Lua) and ``Process::getPath()`` (C++) to always return the DF root path, even if the working directory has changed
+- `getplants`: fixed issues causing plants to be collected even if they have no growths (or unripe growths)
+- `labormanager`: fixed handling of new jobs in 0.47
+- `labormanager`: fixed an issue preventing custom furnaces from being built
+- `embark-assistant`: fixed a couple of incursion handling bugs.
+- Fixed ``Units::isEggLayer``, ``Units::isGrazer``, ``Units::isMilkable``, ``Units::isTrainableHunting``, ``Units::isTrainableWar``, and ``Units::isTamable`` ignoring the unit's caste
+- `RemoteFortressReader`: fixed a couple crashes that could result from decoding invalid enum items (``site_realization_building_type`` and ``improvement_type``)
+- `RemoteFortressReader`: fixed an issue that could cause block coordinates to be incorrect
+- `rendermax`: fixed a hang that could occur when enabling some renderers, notably on Linux
+- `stonesense`: fixed a crash when launching Stonesense
+- `stonesense`: fixed some issues that could cause the splash screen to hang
+
+## Misc Improvements
+- Linux/macOS: Added console keybindings for deleting words (Alt+Backspace and Alt+d in most terminals)
+- `blueprint`: now writes blueprints to the ``blueprints/`` subfolder instead of the df root folder
+- `blueprint`: now automatically creates folder trees when organizing blueprints into subfolders (e.g. ``blueprint 30 30 1 rooms/dining dig`` will create the file ``blueprints/rooms/dining-dig.csv``); previously it would fail if the ``blueprints/rooms/`` directory didn't already exist
+- `confirm`: added a confirmation dialog for convicting dwarves of crimes
+- `manipulator`: added a new column option to display units' goals
+
+## API
+- Added ``Filesystem::mkdir_recursive``
+- Extended ``Filesystem::listdir_recursive`` to optionally make returned filenames relative to the start directory
+- ``Units``: added goal-related functions: ``getGoalType()``, ``getGoalName()``, ``isGoalAchieved()``
+
+## Internals
+- Added support for splitting scripts into multiple files in the ``scripts/internal`` folder without polluting the output of `ls`
+
+## Lua
+- Added a ``ref_target`` field to primitive field references, corresponding to the ``ref-target`` XML attribute
+- Made ``dfhack.units.getRaceNameById()``, ``dfhack.units.getRaceBabyNameById()``, and ``dfhack.units.getRaceChildNameById()`` available to Lua
+
+## Ruby
+- Updated ``item_find`` and ``building_find`` to use centralized logic that works on more screens
+
+## Documentation
+- Expanded the installation guide
+- Added some new dev-facing pages, including dedicated pages about the remote API, memory research, and documentation
+- Made a couple theme adjustments
+
+# 0.47.04-r1
+
+## Fixes
+- Fixed translation of certain types of in-game names
+- Fixed a crash in ``find()`` for some types when no world is loaded
+- `autogems`: fixed an issue with binned gems being ignored in linked stockpiles
+- `stocks`: fixed display of book titles
+- `tweak` embark-profile-name: fixed handling of the native shift+space key
+
+## Misc Improvements
+- ``dfhack.init-example``: enabled `autodump`
+- `getplants`: added switches for designations for farming seeds and for max number designated per plant
+- `manipulator`: added intrigue to displayed skills
+- `search`: added support for the fortress mode justice screen
+
+## API
+- Added ``Items::getBookTitle`` to get titles of books. Catches titles buried in improvements, unlike getDescription.
+
+## Lua
+- ``pairs()`` now returns available class methods for DF types
+
+# 0.47.04-beta1
+
+## Fixes
+- Fixed a crash when starting DFHack in headless mode with no terminal
+
+## Misc Improvements
+- Added "bit" suffix to downloads (e.g. 64-bit)
+- Tests:
+    - moved from DF folder to hack/scripts folder, and disabled installation by default
+    - made test runner script more flexible
+- `dfhack-run`: added color output support
+- `embark-assistant`:
+    - updated embark aquifer info to show all aquifer kinds present
+    - added neighbor display, including kobolds (SKULKING) and necro tower count
+    - updated aquifer search criteria to handle the new variation
+    - added search criteria for embark initial tree cover
+    - added search criteria for necro tower count, neighbor civ count, and specific neighbors. Should handle additional entities, but not tested
+
+## Internals
+- Improved support for tagged unions, allowing tools to access union fields more safely
+- Added separate changelogs in the scripts and df-structures repos
+- Moved ``reversing`` scripts to df_misc repo
+
+# 0.47.03-beta1
+
+## New Scripts
+- `devel/sc`: checks size of structures
+- `devel/visualize-structure`: displays the raw memory of a structure
+
+## Fixes
+- @ `adv-max-skills`: fixed for 0.47
+- `deep-embark`:
+    - prevented running in non-fortress modes
+    - ensured that only the newest wagon is deconstructed
+- `full-heal`:
+    - fixed issues with removing corpses
+    - fixed resurrection for non-historical figures
+- @ `modtools/create-unit`: added handling for arena tame setting
+- `teleport`: fixed setting new tile occupancy
+
+## Misc Improvements
+- `deep-embark`:
+    - improved support for using directly from the DFHack console
+    - added a ``-clear`` option to cancel
+- `exportlegends`:
+    - added identity information
+    - added creature raw names and flags
+- `gui/prerelease-warning`: updated links and information about nightly builds
+- `modtools/syndrome-trigger`: enabled simultaneous use of ``-synclass`` and ``-syndrome``
+- `repeat`: added ``-list`` option
+
+## Structures
+- Dropped support for 0.44.12-0.47.02
+- ``abstract_building_type``: added types (and subclasses) new to 0.47
+- ``agreement_details_type``: added enum
+- ``agreement_details``: added struct type (and many associated data types)
+- ``agreement_party``: added struct type
+- ``announcement_type``: added types new to 0.47
+- ``artifact_claim_type``: added enum
+- ``artifact_claim``: added struct type
+- ``breath_attack_type``: added ``SHARP_ROCK``
+- ``building_offering_placest``: new class
+- ``building_type``: added ``OfferingPlace``
+- ``creature_interaction_effect``: added subclasses new to 0.47
+- ``creature_raw_flags``: identified several more items
+- ``creature_raw_flags``: renamed many items to match DF names
+- ``caste_raw_flags``: renamed many items to match DF names
+- ``d_init``: added settings new to 0.47
+- ``entity_name_type``: added ``MERCHANT_COMPANY``, ``CRAFT_GUILD``
+- ``entity_position_responsibility``: added values new to 0.47
+- ``fortress_type``: added enum
+- ``general_ref_type``: added ``UNIT_INTERROGATEE``
+- ``ghost_type``: added ``None`` value
+- ``goal_type``: added goals types new to 0.47
+- ``histfig_site_link``: added subclasses new to 0.47
+- ``history_event_collection``: added subtypes new to 0.47
+- ``history_event_context``: added lots of new fields
+- ``history_event_reason``: added captions for all items
+- ``history_event_reason``: added items new to 0.47
+- ``history_event_type``: added types for events new to 0.47, as well as corresponding ``history_event`` subclasses (too many to list here)
+- ``honors_type``: added struct type
+- ``interaction_effect``: added subtypes new to 0.47
+- ``interaction_source_experimentst``: added class type
+- ``interaction_source_usage_hint``: added values new to 0.47
+- ``interface_key``: added items for keys new to 0.47
+- ``job_skill``: added ``INTRIGUE``, ``RIDING``
+- ``lair_type``: added enum
+- ``monument_type``: added enum
+- ``next_global_id``: added enum
+- ``poetic_form_action``: added ``Beseech``
+- ``setup_character_info``: expanded significantly in 0.47
+- ``text_system``: added layout for struct
+- ``tile_occupancy``: added ``varied_heavy_aquifer``
+- ``tool_uses``: added items: ``PLACE_OFFERING``, ``DIVINATION``, ``GAMES_OF_CHANCE``
+- ``viewscreen_counterintelligencest``: new class (only layout identified so far)
+
+# 0.44.12-r3
+
+## New Plugins
+- `autoclothing`: automatically manage clothing work orders
+- `autofarm`: replaces the previous Ruby script of the same name, with some fixes
+- `map-render`: allows programmatically rendering sections of the map that are off-screen
+- `tailor`: automatically manages keeping your dorfs clothed
+
+## New Scripts
+- `assign-attributes`: changes the attributes of a unit
+- `assign-beliefs`: changes the beliefs of a unit
+- `assign-facets`: changes the facets (traits) of a unit
+- `assign-goals`: changes the goals of a unit
+- `assign-preferences`: changes the preferences of a unit
+- `assign-profile`: sets a dwarf's characteristics according to a predefined profile
+- `assign-skills`: changes the skills of a unit
+- `combat-harden`: sets a unit's combat-hardened value to a given percent
+- `deep-embark`: allows embarking underground
+- `devel/find-twbt`: finds a TWBT-related offset needed by the new `map-render` plugin
+- `dwarf-op`: optimizes dwarves for fort-mode work; makes managing labors easier
+- `forget-dead-body`: removes emotions associated with seeing a dead body
+- `gui/create-tree`: creates a tree at the selected tile
+- `linger`: takes over your killer in adventure mode
+- `modtools/create-tree`: creates a tree
+- `modtools/pref-edit`: add, remove, or edit the preferences of a unit
+- `modtools/set-belief`: changes the beliefs (values) of units
+- `modtools/set-need`: sets and edits unit needs
+- `modtools/set-personality`: changes the personality of units
+- `modtools/spawn-liquid`: spawns water or lava at the specified coordinates
+- `set-orientation`: edits a unit's orientation
+- `unretire-anyone`: turns any historical figure into a playable adventurer
+
+## Fixes
+- Fixed a crash in the macOS/Linux console when the prompt was wider than the screen width
+- Fixed some cases where Lua filtered lists would not properly intercept keys, potentially triggering other actions on the same screen
+- Fixed inconsistent results from ``Units::isGay`` for asexual units
+- `autofarm`:
+    - fixed biome detection to properly determine crop assignments on surface farms
+    - reimplemented as a C++ plugin to make proper biome detection possible
+- `bodyswap`: fixed companion list not being updated often enough
+- `cxxrandom`: removed some extraneous debug information
+- `digfort`: now accounts for z-level changes when calculating maximum y dimension
+- `embark-assistant`:
+    - fixed bug causing crash on worlds without generated metals (as well as pruning vectors as originally intended).
+    - fixed bug causing mineral matching to fail to cut off at the magma sea, reporting presence of things that aren't (like DF does currently).
+    - fixed bug causing half of the river tiles not to be recognized.
+    - added logic to detect some river tiles DF doesn't generate data for (but are definitely present).
+- `eventful`: fixed invalid building ID in some building events
+- `exportlegends`: now escapes special characters in names properly
+- `getplants`: fixed designation of plants out of season (note that picked plants are still designated incorrectly)
+- `gui/autogems`: fixed error when no world is loaded
+- `gui/companion-order`:
+    - fixed error when resetting group leaders
+    - ``leave`` now properly removes companion links
+- `gui/create-item`: fixed module support - can now be used from other scripts
+- `gui/stamper`:
+    - stopped "invert" from resetting the designation type
+    - switched to using DF's designation keybindings instead of custom bindings
+    - fixed some typos and text overlapping
+- `modtools/create-unit`:
+    - fixed an error associating historical entities with units
+    - stopped recalculating health to avoid newly-created citizens triggering a "recover wounded" job
+    - fixed units created in arena mode having blank names
+    - fixed units created in arena mode having the wrong race and/or interaction effects applied after creating units manually in-game
+    - stopped units from spawning with extra items or skills previously selected in the arena
+    - stopped setting some unneeded flags that could result in glowing creature tiles
+    - set units created in adventure mode to have no family, instead of being related to the first creature in the world
+- `modtools/reaction-product-trigger`:
+    - fixed an error dealing with reactions in adventure mode
+    - blocked ``\\BUILDING_ID`` for adventure mode reactions
+    - fixed ``-clear`` to work without passing other unneeded arguments
+- `modtools/reaction-trigger`:
+    - fixed a bug when determining whether a command was run
+    - fixed handling of ``-resetPolicy``
+- `mousequery`: fixed calculation of map dimensions, which was sometimes preventing scrolling the map with the mouse when TWBT was enabled
+- `RemoteFortressReader`:
+    - fixed a crash when a unit's path has a length of 0
+- `stonesense`:
+    - fixed crash due to wagons and other soul-less creatures
+- `tame`: now sets the civ ID of tamed animals (fixes compatibility with `autobutcher`)
+- `title-folder`: silenced error when ``PRINT_MODE`` is set to ``TEXT``
+
+## Misc Improvements
+- Added a note to `dfhack-run` when called with no arguments (which is usually unintentional)
+- On macOS, the launcher now attempts to un-quarantine the rest of DFHack
+- `bodyswap`: added arena mode support
+- `createitem`: added a list of valid castes to the "invalid caste" error message, for convenience
+- `combine-drinks`: added more default output, similar to `combine-plants`
+- `devel/export-dt-ini`: added more size information needed by newer Dwarf Therapist versions
+- `dwarfmonitor`: enabled widgets to access other scripts and plugins by switching to the core Lua context
+- `embark-assistant`:
+    - added an in-game option to activate on the embark screen
+    - changed waterfall detection to look for level drop rather than just presence
+    - changed matching to take incursions, i.e. parts of other biomes, into consideration when evaluating tiles. This allows for e.g. finding multiple biomes on single tile embarks.
+    - changed overlay display to show when incursion surveying is incomplete
+    - changed overlay display to show evil weather
+    - added optional parameter "fileresult" for crude external harness automated match support
+    - improved focus movement logic to go to only required world tiles, increasing speed of subsequent searches considerably
+- `exportlegends`: added rivers to custom XML export
+- `exterminate`: added support for a special ``enemy`` caste
+- `gui/gm-unit`: added support for editing:
+    - added attribute editor
+    - added orientation editor
+    - added editor for bodies and body parts
+    - added color editor
+    - added belief editor
+    - added personality editor
+- `modtools/create-item`:
+    - documented already-existing ``-quality`` option
+- `modtools/create-unit`:
+    - added the ability to specify ``\\LOCAL`` for the fort group entity
+    - now enables the default labours for adult units with CAN_LEARN.
+    - now sets historical figure orientation.
+    - improved speed of creating multiple units at once
+    - made the script usable as a module (from other scripts)
+- `modtools/reaction-trigger`:
+    - added ``-ignoreWorker``: ignores the worker when selecting the targets
+    - changed the default behavior to skip inactive/dead units; added ``-dontSkipInactive`` to include creatures that are inactive
+    - added ``-range``: controls how far elligible targets can be from the workshop
+    - syndromes now are applied before commands are run, not after
+    - if both a command and a syndrome are given, the command only runs if the syndrome could be applied
+- `mousequery`: made it more clear when features are enabled
+- `RemoteFortressReader`:
+    - added a basic framework for controlling and reading the menus in DF (currently only supports the building menu)
+    - added support for reading item raws
+    - added a check for whether or not the game is currently saving or loading, for utilities to check if it's safe to read from DF
+    - added unit facing direction estimate and position within tiles
+    - added unit age
+    - added unit wounds
+    - added tree information
+    - added check for units' current jobs when calculating the direction they are facing
+
+## API
+- Added ``Maps::GetBiomeType`` and ``Maps::GetBiomeTypeByRef`` to infer biome types properly
+- Added ``Units::getPhysicalDescription`` (note that this depends on the ``unit_get_physical_description`` offset, which is not yet available for all DF builds)
+- Added new ``plugin_load_data`` and ``plugin_save_data`` events for plugins to load/save persistent data
+
+## Internals
+- Added new Persistence module
+- Persistent data is now stored in JSON files instead of historical figures - existing data will be migrated when saving
+- Cut down on internal DFHack dependencies to improve build times
+- Improved concurrency in event and server handlers
+- `stonesense`: fixed some OpenGL build issues on Linux
+
+## Lua
+- Exposed ``gui.dwarfmode.get_movement_delta`` and ``gui.dwarfmode.get_hotkey_target``
+- ``dfhack.run_command`` now returns the command's return code
+
+## Ruby
+- Made ``unit_ishostile`` consistently return a boolean
+
+## Structures
+- Added ``unit_get_physical_description`` function offset on some platforms
+- Added/identified types:
+    - ``assume_identity_mode``
+    - ``musical_form_purpose``
+    - ``musical_form_style``
+    - ``musical_form_pitch_style``
+    - ``musical_form_feature``
+    - ``musical_form_vocals``
+    - ``musical_form_melodies``
+    - ``musical_form_interval``
+    - ``unit_emotion_memory``
+- ``twbt_render_map``: added for 64-bit 0.44.12 (for `map-render`)
+- ``personality_facet_type``, ``value_type``: added ``NONE`` values
+- ``need_type``: fixed ``PrayOrMeditate`` typo
 
 # 0.44.12-r2
 
@@ -771,4 +1218,3 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - The ``ui_menu_width`` global is now a 2-byte array; the second item is the former ``ui_area_map_width`` global, which is now removed
 - The former ``announcements`` global is now a field in ``d_init``
 - ``world`` fields formerly beginning with ``job_`` are now fields of ``world.jobs``, e.g. ``world.job_list`` is now ``world.jobs.list``
-

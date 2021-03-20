@@ -285,8 +285,8 @@ do_print_recurse = function(printfn, value, seen, indent)
     return recurse_type_map[t](printfn, value, seen, indent)
 end
 
-function printall_recurse(value)
-    local seen = {}
+function printall_recurse(value, seen)
+    local seen = seen or {}
     do_print_recurse(dfhack.println, value, seen, 0)
 end
 
@@ -735,8 +735,7 @@ function dfhack.script_help(script_name, extension)
     return help
 end
 
-local function _run_command(...)
-    args = {...}
+local function _run_command(args, use_console)
     if type(args[1]) == 'table' then
         command = args[1]
     elseif #args > 1 and type(args[2]) == 'table' then
@@ -750,11 +749,11 @@ local function _run_command(...)
     else
         error('Invalid arguments')
     end
-    return internal.runCommand(command)
+    return internal.runCommand(command, use_console)
 end
 
 function dfhack.run_command_silent(...)
-    local result = _run_command(...)
+    local result = _run_command({...})
     local output = ""
     for i, f in pairs(result) do
         if type(f) == 'table' then
@@ -765,14 +764,8 @@ function dfhack.run_command_silent(...)
 end
 
 function dfhack.run_command(...)
-    local output, status = _run_command(...)
-    for i, fragment in pairs(output) do
-        if type(fragment) == 'table' then
-            dfhack.color(fragment[1])
-            dfhack.print(fragment[2])
-        end
-    end
-    dfhack.color(COLOR_RESET)
+    local result = _run_command({...}, true)
+    return result.status
 end
 
 -- Per-save init file

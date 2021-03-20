@@ -23,14 +23,19 @@ clsocket_       BSD 3-clause  \(c\) 2007-2009, CarrierLabs, LLC.
 dirent_         MIT           \(c\) 2006, Toni Ronkko
 JSON.lua_       CC-BY-SA_     \(c\) 2010-2014, Jeffrey Friedl
 jsoncpp_        MIT           \(c\) 2007-2010, Baptiste Lepilleur
+libexpat_       MIT           \(c\) 1998-2000 Thai Open Source Software Center Ltd and Clark Cooper \(c\) 2001-2019 Expat maintainers
+libzip_         BSD 3-clause  \(c\) 1999-2020 Dieter Baron and Thomas Klausner
 linenoise_      BSD 2-clause  \(c\) 2010, Salvatore Sanfilippo & Pieter Noordhuis
 lua_            MIT           \(c\) 1994-2008, Lua.org, PUC-Rio.
+luacov_         MIT           \(c\) 2007 - 2018 Hisham Muhammad
 luafilesystem_  MIT           \(c\) 2003-2014, Kepler Project
 lua-profiler_   MIT           \(c\) 2002,2003,2004 Pepperfish
 protobuf_       BSD 3-clause  \(c\) 2008, Google Inc.
 tinythread_     Zlib          \(c\) 2010, Marcus Geelnard
 tinyxml_        Zlib          \(c\) 2000-2006, Lee Thomason
 UTF-8-decoder_  MIT           \(c\) 2008-2010, Bjoern Hoehrmann
+xlsxio_         MIT           \(c\) 2016-2020, Brecht Sanders
+alt-getopt_     MIT           \(c\) 2009 Aleksey Cheusov
 =============== ============= =================================================
 
 .. _DFHack: https://github.com/DFHack/dfhack
@@ -38,14 +43,19 @@ UTF-8-decoder_  MIT           \(c\) 2008-2010, Bjoern Hoehrmann
 .. _dirent: https://github.com/tronkko/dirent
 .. _JSON.lua: http://regex.info/blog/lua/json
 .. _jsoncpp: https://github.com/open-source-parsers/jsoncpp
+.. _libexpat: https://github.com/libexpat/libexpat
+.. _libzip: https://github.com/nih-at/libzip
 .. _linenoise: http://github.com/antirez/linenoise
 .. _lua: http://www.lua.org
+.. _luacov: https://github.com/keplerproject/luacov
 .. _luafilesystem: https://github.com/keplerproject/luafilesystem
+.. _lua-profiler: http://lua-users.org/wiki/PepperfishProfiler
 .. _protobuf: https://github.com/google/protobuf
 .. _tinythread: http://tinythreadpp.bitsnbites.eu/
 .. _tinyxml: http://www.sourceforge.net/projects/tinyxml
 .. _UTF-8-decoder: http://bjoern.hoehrmann.de/utf-8/decoder/dfa
-.. _lua-profiler: http://lua-users.org/wiki/PepperfishProfiler
+.. _xlsxio: https://github.com/brechtsanders/xlsxio
+.. _alt-getopt: https://github.com/LuaDist/alt-getopt
 
 .. _CC-BY-SA: http://creativecommons.org/licenses/by/3.0/deed.en_US
 

@@ -256,8 +256,8 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
             vector<df::reaction_reagent*> in_reag;
             vector<df::item*> in_items;
             prod->produce(firstInvader, &out_products, &out_items, &in_reag, &in_items, 1, df::job_skill::NONE,
-                df::historical_entity::find(firstInvader->civ_id), 0,
-                df::world_site::find(df::global::ui->site_id), 0);
+                0, df::historical_entity::find(firstInvader->civ_id),
+                df::world_site::find(df::global::ui->site_id), NULL);
 
             if ( out_items.size() != 1 ) {
                 out.print("%s, %d: wrong size: %zu.\n", __FILE__, __LINE__, out_items.size());

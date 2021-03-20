@@ -167,6 +167,16 @@ void create_jobs() {
                         stockpiled.insert(item->id);
                         piled[item->getMaterialIndex()] += 1;
                     }
+                    else if (item->flags.bits.container) {
+                        std::vector<df::item*> binneditems;
+                        Items::getContainedItems(item, &binneditems);
+                        for (df::item *it : binneditems) {
+                            if (valid_gem(it)) {
+                                stockpiled.insert(it->id);
+                                piled[it->getMaterialIndex()] += 1;
+                            }
+                        }
+                    }
                 }
 
                 // Decrement current jobs from all linked workshops, not just this one.

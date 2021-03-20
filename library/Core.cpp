@@ -54,6 +54,7 @@ using namespace std;
 #include "modules/World.h"
 #include "modules/Graphic.h"
 #include "modules/Windows.h"
+#include "modules/Persistence.h"
 #include "RemoteServer.h"
 #include "RemoteTools.h"
 #include "LuaTools.h"
@@ -135,6 +136,9 @@ struct Core::Private
 {
     std::thread iothread;
     std::thread hotkeythread;
+
+    bool last_autosave_request{false};
+    bool was_load_save{false};
 };
 
 struct CommandDepthCounter
@@ -313,7 +317,7 @@ static void listScripts(PluginManager *plug_mgr, std::map<string,string> &pset, 
                 pset[key] = help;
             }
         }
-        else if (all && !files[i].empty() && files[i][0] != '.')
+        else if (all && !files[i].empty() && files[i][0] != '.' && files[i] != "internal" && files[i] != "test")
         {
             listScripts(plug_mgr, pset, path+files[i]+"/", all, prefix+files[i]+"/");
         }
@@ -1427,6 +1431,7 @@ bool Core::loadScriptFile(color_ostream &out, string fname, bool silent)
 
 static void run_dfhack_init(color_ostream &out, Core *core)
 {
+    CoreSuspender lock;
     if (!df::global::world || !df::global::ui || !df::global::gview)
     {
         out.printerr("Key globals are missing, skipping loading dfhack.init.\n");
@@ -1528,6 +1533,7 @@ Core::Core() :
     HotkeyMutex{},
     HotkeyCond{},
     alias_mutex{},
+    started{false},
     misc_data_mutex{},
     CoreSuspendMutex{},
     CoreWakeup{},
@@ -1537,7 +1543,7 @@ Core::Core() :
     // init the console. This must be always the first step!
     plug_mgr = 0;
     errorstate = false;
-    started = false;
+    vinfo = 0;
     memset(&(s_mods), 0, sizeof(s_mods));
 
     // set up hotkey capture
@@ -1547,7 +1553,6 @@ Core::Core() :
     last_pause_state = false;
     top_viewscreen = NULL;
     screen_window = NULL;
-    server = NULL;
 
     color_ostream::log_errors_to_stderr = true;
 
@@ -1574,6 +1579,12 @@ void Core::fatal (std::string output)
 #else
     cout << "DFHack fatal error: " << out.str() << std::endl;
 #endif
+
+    bool is_headless = bool(getenv("DFHACK_HEADLESS"));
+    if (is_headless)
+    {
+        exit('f');
+    }
 }
 
 std::string Core::getHackPath()
@@ -1607,7 +1618,10 @@ bool Core::Init()
         freopen("stderr.log", "w", stderr);
     #endif
 
-    fprintf(stderr, "DFHack build: %s\n", Version::git_description());
+    Filesystem::init();
+
+    cerr << "DFHack build: " << Version::git_description() << "\n"
+         << "Starting with working directory: " << Filesystem::getcwd() << endl;
 
     // find out what we are...
     #ifdef LINUX_BUILD
@@ -1681,14 +1695,21 @@ bool Core::Init()
     if (is_headless)
     {
 #ifdef LINUX_BUILD
-        auto endwin = (int(*)(void))dlsym(RTLD_DEFAULT, "endwin");
-        if (endwin)
+        if (is_text_mode)
         {
-            endwin();
+            auto endwin = (int(*)(void))dlsym(RTLD_DEFAULT, "endwin");
+            if (endwin)
+            {
+                endwin();
+            }
+            else
+            {
+                cerr << "endwin(): bind failed" << endl;
+            }
         }
         else
         {
-            cerr << "endwin(): bind failed" << endl;
+            cerr << "Headless mode requires PRINT_MODE:TEXT" << endl;
         }
 #else
         cerr << "Headless mode not supported on Windows" << endl;
@@ -1696,7 +1717,6 @@ bool Core::Init()
     }
     if (is_text_mode && !is_headless)
     {
-        con.init(true);
         cerr << "Console is not available. Use dfhack-run to send commands.\n";
         if (!is_text_mode)
         {
@@ -1720,18 +1740,35 @@ bool Core::Init()
     virtual_identity::Init(this);
 
     // copy over default config files if necessary
-    std::vector<std::string> config_files;
-    std::vector<std::string> default_config_files;
-    if (Filesystem::listdir("dfhack-config", config_files) != 0)
+    std::map<std::string, bool> config_files;
+    std::map<std::string, bool> default_config_files;
+    if (Filesystem::listdir_recursive("dfhack-config", config_files, 10, false) != 0)
         con.printerr("Failed to list directory: dfhack-config");
-    else if (Filesystem::listdir("dfhack-config/default", default_config_files) != 0)
+    else if (Filesystem::listdir_recursive("dfhack-config/default", default_config_files, 10, false) != 0)
         con.printerr("Failed to list directory: dfhack-config/default");
     else
     {
+        // ensure all config file directories exist before we start copying files
         for (auto it = default_config_files.begin(); it != default_config_files.end(); ++it)
         {
-            std::string filename = *it;
-            if (std::find(config_files.begin(), config_files.end(), filename) == config_files.end())
+            // skip over files
+            if (!it->second)
+                continue;
+            std::string dirname = "dfhack-config/" + it->first;
+            if (!Filesystem::mkdir_recursive(dirname))
+            {
+                con.printerr("Failed to create config directory: '%s'\n", dirname.c_str());
+            }
+        }
+
+        // copy files from the default tree that don't already exist in the config tree
+        for (auto it = default_config_files.begin(); it != default_config_files.end(); ++it)
+        {
+            // skip over directories
+            if (it->second)
+                continue;
+            std::string filename = it->first;
+            if (config_files.find(filename) == config_files.end())
             {
                 std::string src_file = std::string("dfhack-config/default/") + filename;
                 if (!Filesystem::isfile(src_file))
@@ -1765,6 +1802,8 @@ bool Core::Init()
     // create plugin manager
     plug_mgr = new PluginManager(this);
     plug_mgr->init();
+    cerr << "Starting the TCP listener.\n";
+    auto listen = ServerMain::listen(RemoteClient::GetDefaultPort());
     IODATA *temp = new IODATA;
     temp->core = this;
     temp->plug_mgr = plug_mgr;
@@ -1789,9 +1828,7 @@ bool Core::Init()
     started = true;
     modstate = 0;
 
-    cerr << "Starting the TCP listener.\n";
-    server = new ServerMain();
-    if (!server->listen(RemoteClient::GetDefaultPort()))
+    if (!listen.get())
         cerr << "TCP listen failed.\n";
 
     if (df::global::ui_sidebar_menus)
@@ -1968,6 +2005,13 @@ void Core::doUpdate(color_ostream &out, bool first_update)
         strict_virtual_cast<df::viewscreen_loadgamest>(screen) ||
         strict_virtual_cast<df::viewscreen_savegamest>(screen);
 
+    // save data (do this before updating last_world_data_ptr and triggering unload events)
+    if ((df::global::ui->main.autosave_request && !d->last_autosave_request) ||
+        (is_load_save && !d->was_load_save && strict_virtual_cast<df::viewscreen_savegamest>(screen)))
+    {
+        doSaveData(out);
+    }
+
     // detect if the game was loaded or unloaded in the meantime
     void *new_wdata = NULL;
     void *new_mapdata = NULL;
@@ -1989,8 +2033,6 @@ void Core::doUpdate(color_ostream &out, bool first_update)
         last_world_data_ptr = new_wdata;
         last_local_map_ptr = new_mapdata;
 
-        World::ClearPersistentCache();
-
         // and if the world is going away, we report the map change first
         if(had_map)
             onStateChange(out, SC_MAP_UNLOADED);
@@ -2007,7 +2049,6 @@ void Core::doUpdate(color_ostream &out, bool first_update)
 
         if (isMapLoaded() != had_map)
         {
-            World::ClearPersistentCache();
             onStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
         }
     }
@@ -2026,6 +2067,9 @@ void Core::doUpdate(color_ostream &out, bool first_update)
 
     // Execute per-frame handlers
     onUpdate(out);
+
+    d->last_autosave_request = df::global::ui->main.autosave_request;
+    d->was_load_save = is_load_save;
 
     out << std::flush;
 }
@@ -2270,6 +2314,27 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     Lua::Core::onStateChange(out, event);
 
     handleLoadAndUnloadScripts(out, event);
+
+    if (event == SC_WORLD_UNLOADED)
+    {
+        Persistence::Internal::clear();
+    }
+    if (event == SC_WORLD_LOADED)
+    {
+        doLoadData(out);
+    }
+}
+
+void Core::doSaveData(color_ostream &out)
+{
+    plug_mgr->doSaveData(out);
+    Persistence::Internal::save();
+}
+
+void Core::doLoadData(color_ostream &out)
+{
+    Persistence::Internal::load();
+    plug_mgr->doLoadData(out);
 }
 
 int Core::Shutdown ( void )
@@ -2293,6 +2358,8 @@ int Core::Shutdown ( void )
         hotkey_set = SHUTDOWN;
         HotkeyCond.notify_one();
     }
+
+    ServerMain::block();
 
     d->hotkeythread.join();
     d->iothread.join();

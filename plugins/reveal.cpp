@@ -91,7 +91,8 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
         "Toggles between reveal and unreveal.\n"));
     commands.push_back(PluginCommand("revflood","Hide all, and reveal tiles reachable from the cursor.",revflood,false,
         "This command hides the whole map. Then, starting from the cursor,\n"
-        "reveals all accessible tiles. Allows repairing parma-revealed maps.\n"));
+        "reveals all accessible tiles. Allows repairing perma-revealed maps.\n"
+        "Note that constructed walls are considered passable to work around DF bug 1871.\n"));
     commands.push_back(PluginCommand("revforget", "Forget the current reveal data.",revforget,false,
         "Forget the current reveal data, allowing to use reveal again.\n"));
     commands.push_back(PluginCommand("nopause","Disable manual and automatic pausing.",nopause,false,

@@ -311,7 +311,7 @@ void DFHack::Job::disconnectJobItem(df::job *job, df::job_item_ref *ref) {
         auto ref = item->specific_refs[refIndex];
 
         if (ref->type == df::specific_ref_type::JOB) {
-            if (ref->job == job) {
+            if (ref->data.job == job) {
                 vector_erase_at(item->specific_refs, refIndex);
                 delete ref;
             } else {
@@ -579,7 +579,7 @@ bool DFHack::Job::attachJobItem(df::job *job, df::item *item,
 
     auto item_link = new df::specific_ref();
     item_link->type = specific_ref_type::JOB;
-    item_link->job = job;
+    item_link->data.job = job;
     item->specific_refs.push_back(item_link);
 
     auto job_link = new df::job_item_ref();
@@ -605,10 +605,11 @@ bool Job::isSuitableItem(df::job_item *item, df::item_type itype, int isubtype)
     ItemTypeInfo iinfo(itype, isubtype);
     MaterialInfo minfo(item);
 
-    return iinfo.isValid() && iinfo.matches(*item, &minfo);
+    return iinfo.isValid() && iinfo.matches(*item, &minfo, false, itype);
 }
 
-bool Job::isSuitableMaterial(df::job_item *item, int mat_type, int mat_index)
+bool Job::isSuitableMaterial(
+    df::job_item *item, int mat_type, int mat_index, df::item_type itype)
 {
     CHECK_NULL_POINTER(item);
 
@@ -618,7 +619,7 @@ bool Job::isSuitableMaterial(df::job_item *item, int mat_type, int mat_index)
     ItemTypeInfo iinfo(item);
     MaterialInfo minfo(mat_type, mat_index);
 
-    return minfo.isValid() && iinfo.matches(*item, &minfo);
+    return minfo.isValid() && iinfo.matches(*item, &minfo, false, itype);
 }
 
 std::string Job::getName(df::job *job)

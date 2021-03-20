@@ -127,7 +127,7 @@ bool DFHack::removeRef(std::vector<df::specific_ref*> &vec, df::specific_ref_typ
     for (int i = vec.size()-1; i >= 0; i--)
     {
         df::specific_ref *ref = vec[i];
-        if (ref->type != type || ref->object != ptr)
+        if (ref->type != type || ref->data.object != ptr)
             continue;
 
         vector_erase_at(vec, i);

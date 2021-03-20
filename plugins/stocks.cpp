@@ -30,7 +30,7 @@
 #include "df/ui_advmode.h"
 
 DFHACK_PLUGIN("stocks");
-#define PLUGIN_VERSION 0.12
+#define PLUGIN_VERSION 0.13
 
 REQUIRE_GLOBAL(world);
 
@@ -179,8 +179,8 @@ static map<df::item *, bool> items_in_cages;
 static df::job *get_item_job(df::item *item)
 {
     auto ref = Items::getSpecificRef(item, specific_ref_type::JOB);
-    if (ref && ref->job)
-        return ref->job;
+    if (ref && ref->data.job)
+        return ref->data.job;
 
     return nullptr;
 }
@@ -248,7 +248,11 @@ static string get_keywords(df::item *item)
 
 static string get_item_label(df::item *item, bool trim = false)
 {
-    auto label = Items::getDescription(item, 0, false);
+    auto label = Items::getBookTitle(item);
+    if (label == "")
+    {
+        label = Items::getDescription(item, 0, false);
+    }
     if (trim && item->getType() == item_type::BIN)
     {
         auto pos = label.find("<#");
@@ -562,7 +566,11 @@ class StockListColumn : public ListColumn<T>
         if (!ListColumn<T>::showEntry(entry, search_tokens))
             return false;
 
-        string item_name = toLower(Items::getDescription(entry->elem->entries[0], 0, false));
+        string item_name = toLower(Items::getBookTitle(entry->elem->entries[0]));
+        if (item_name == "")
+        {
+            item_name = toLower(Items::getDescription(entry->elem->entries[0], 0, false));
+        }
 
         if ((match_start || match_end) && raw_search.size() > item_name.size())
             return false;
@@ -1008,12 +1016,12 @@ private:
             if (item->flags.bits.in_job)
             {
                 auto ref = Items::getSpecificRef(item, specific_ref_type::JOB);
-                if (ref && ref->job)
+                if (ref && ref->data.job)
                 {
-                    if (ref->job->job_type == job_type::Eat || ref->job->job_type == job_type::Drink)
+                    if (ref->data.job->job_type == job_type::Eat || ref->data.job->job_type == job_type::Drink)
                         return pos;
 
-                    auto unit = Job::getWorker(ref->job);
+                    auto unit = Job::getWorker(ref->data.job);
                     if (unit)
                         return unit->pos;
                 }

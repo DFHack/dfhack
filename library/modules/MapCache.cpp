@@ -79,6 +79,8 @@ using df::global::world;
 
 extern bool GetLocalFeature(t_feature &feature, df::coord2d rgn_pos, int32_t index);
 
+constexpr unsigned MapExtras::BiomeInfo::MAX_LAYERS;
+
 const BiomeInfo MapCache::biome_stub = {
     df::coord2d(),
     -1, -1, -1, -1,
@@ -897,8 +899,8 @@ t_matpair MapExtras::BlockInfo::getBaseMaterial(df::tiletype tt, df::coord2d pos
         {
             if (auto raw = df::plant_raw::find(plant->material))
             {
-                rv.mat_type = raw->material_defs.type_basic_mat;
-                rv.mat_index = raw->material_defs.idx_basic_mat;
+                rv.mat_type = raw->material_defs.type[plant_material_def::basic_mat];
+                rv.mat_index = raw->material_defs.idx[plant_material_def::basic_mat];
             }
         }
         break;
@@ -910,8 +912,8 @@ t_matpair MapExtras::BlockInfo::getBaseMaterial(df::tiletype tt, df::coord2d pos
         rv.mat_type = MaterialInfo::PLANT_BASE;
         if (auto raw = df::plant_raw::find(grass[x][y]))
         {
-            rv.mat_type = raw->material_defs.type_basic_mat;
-            rv.mat_index = raw->material_defs.idx_basic_mat;
+            rv.mat_type = raw->material_defs.type[plant_material_def::basic_mat];
+            rv.mat_index = raw->material_defs.idx[plant_material_def::basic_mat];
         }
         break;
 

@@ -205,6 +205,25 @@ module DFHack
             end
         end
 
+        class OtherVectors < Compound
+            class << self
+                attr_accessor :_enum
+                def ienum(enum)
+                    @_enum = enum
+                end
+            end
+
+            def _indexenum
+                self.class._enum
+            end
+            def [](i)
+                self.send(self.class._enum.sym(i))
+            end
+            def []=(i, v)
+                self.send((self.class._enum.sym(i).to_s + "=").to_sym, v)
+            end
+        end
+
         class Enum
             # number -> symbol
             def self.enum

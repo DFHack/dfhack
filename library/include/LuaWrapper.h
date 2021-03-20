@@ -126,22 +126,15 @@ namespace LuaWrapper {
      */
     struct DFRefHeader {
         void *ptr;
+        const struct_field_info *field_info;
     };
 
     /**
      * Push the pointer as DF object ref using metatable on the stack.
      */
     void push_object_ref(lua_State *state, void *ptr);
-    void *get_object_ref(lua_State *state, int val_index);
-
-    /*
-     * The system might be extended to carry some simple
-     * objects inline inside the reference buffer.
-     */
-    inline bool is_self_contained(DFRefHeader *ptr) {
-        void **pp = &ptr->ptr;
-        return **(void****)pp == (pp + 1);
-    }
+    DFHACK_EXPORT void *get_object_ref(lua_State *state, int val_index);
+    DFHACK_EXPORT DFRefHeader *get_object_ref_header(lua_State *state, int val_index);
 
     /**
     * Report an error while accessing a field (index = field name).
@@ -165,6 +158,7 @@ namespace LuaWrapper {
     bool is_type_compatible(lua_State *state, type_identity *type1, int meta1,
                             type_identity *type2, int meta2, bool exact_equal);
 
+    DFHACK_EXPORT
     type_identity *get_object_identity(lua_State *state, int objidx,
                                        const char *ctx, bool allow_type = false,
                                        bool keep_metatable = false);

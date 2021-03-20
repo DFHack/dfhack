@@ -1,6 +1,6 @@
-PROJECT (tweak)
-SET(PROJECT_SRCS
+project(tweak)
+set(PROJECT_SRCS
     tweak.cpp
 )
 
-DFHACK_PLUGIN(tweak ${PROJECT_SRCS})
+dfhack_plugin(tweak ${PROJECT_SRCS})

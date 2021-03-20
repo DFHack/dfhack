@@ -32,7 +32,6 @@ distribution.
 #include <utility>
 #include <vector>
 
-#include "Core.h"
 #include "BitArray.h"
 
 // Stop some MS stupidity
@@ -48,6 +47,7 @@ typedef struct lua_State lua_State;
 
 namespace DFHack
 {
+    class Core;
     class virtual_class {};
 
     enum identity_type {
@@ -64,7 +64,15 @@ namespace DFHack
         IDTYPE_CLASS,
         IDTYPE_BUFFER,
         IDTYPE_STL_PTR_VECTOR,
-        IDTYPE_OPAQUE
+        IDTYPE_OPAQUE,
+        IDTYPE_UNION
+    };
+
+    // pointer flags (bitfield), stored in the count field of struct_field_info
+    // if mode is POINTER.
+    enum pointer_identity_flags {
+        PTRFLAG_IS_ARRAY = 1,
+        PTRFLAG_HAS_BAD_POINTERS = 2,
     };
 
     typedef void *(*TAllocateFn)(void*,const void*);
@@ -158,7 +166,12 @@ namespace DFHack
 
     // Bitfields
     struct bitfield_item_info {
+        // the name of the field, or null if the field is unnamed
         const char *name;
+        // size is positive for defined fields, zero for bits past the end
+        // of the field, and negative for padding on multi-bit fields
+        //
+        // ex. if bits[2].size is -2, then bits[0].size is at least 3
         int size;
     };
 
@@ -246,6 +259,13 @@ namespace DFHack
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
     };
 
+    struct struct_field_info_extra {
+        enum_identity *index_enum;
+        type_identity *ref_target;
+        const char *union_tag_field;
+        const char *union_tag_attr;
+    };
+
     struct struct_field_info {
         enum Mode {
             END,
@@ -264,7 +284,7 @@ namespace DFHack
         size_t offset;
         type_identity *type;
         size_t count;
-        enum_identity *eid;
+        const struct_field_info_extra *extra;
     };
 
     class DFHACK_EXPORT struct_identity : public compound_identity {
@@ -279,8 +299,8 @@ namespace DFHack
 
     public:
         struct_identity(size_t size, TAllocateFn alloc,
-                        compound_identity *scope_parent, const char *dfhack_name,
-                        struct_identity *parent, const struct_field_info *fields);
+                compound_identity *scope_parent, const char *dfhack_name,
+                struct_identity *parent, const struct_field_info *fields);
 
         virtual identity_type type() { return IDTYPE_STRUCT; }
 
@@ -305,6 +325,32 @@ namespace DFHack
         virtual void build_metatable(lua_State *state);
     };
 
+    class DFHACK_EXPORT union_identity : public struct_identity {
+    public:
+        union_identity(size_t size, TAllocateFn alloc,
+                compound_identity *scope_parent, const char *dfhack_name,
+                struct_identity *parent, const struct_field_info *fields);
+
+        virtual identity_type type() { return IDTYPE_UNION; }
+    };
+
+    class DFHACK_EXPORT other_vectors_identity : public struct_identity {
+        enum_identity *index_enum;
+
+    public:
+        other_vectors_identity(size_t size, TAllocateFn alloc,
+                compound_identity *scope_parent, const char *dfhack_name,
+                struct_identity *parent, const struct_field_info *fields,
+                enum_identity *index_enum) :
+            struct_identity(size, alloc, scope_parent, dfhack_name, parent, fields),
+            index_enum(index_enum)
+        {}
+
+        enum_identity *getIndexEnum() { return index_enum; }
+
+        virtual void build_metatable(lua_State *state);
+    };
+
 #ifdef _MSC_VER
     typedef void *virtual_ptr;
 #else
@@ -320,6 +366,8 @@ namespace DFHack
         const char *original_name;
 
         void *vtable_ptr;
+
+        bool is_plugin;
 
         friend class VMethodInterposeLinkBase;
         std::map<int,VMethodInterposeLinkBase*> interpose_list;
@@ -337,7 +385,8 @@ namespace DFHack
     public:
         virtual_identity(size_t size, TAllocateFn alloc,
                          const char *dfhack_name, const char *original_name,
-                         virtual_identity *parent, const struct_field_info *fields);
+                         virtual_identity *parent, const struct_field_info *fields,
+                         bool is_plugin = false);
         ~virtual_identity();
 
         virtual identity_type type() { return IDTYPE_CLASS; }
@@ -432,7 +481,10 @@ namespace df
     using DFHack::virtual_class;
     using DFHack::global_identity;
     using DFHack::struct_identity;
+    using DFHack::union_identity;
+    using DFHack::other_vectors_identity;
     using DFHack::struct_field_info;
+    using DFHack::struct_field_info_extra;
     using DFHack::bitfield_item_info;
     using DFHack::bitfield_identity;
     using DFHack::enum_identity;
@@ -440,6 +492,7 @@ namespace df
     using DFHack::BitArray;
     using DFHack::DfArray;
     using DFHack::DfLinkedList;
+    using DFHack::DfOtherVectors;
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdelete-non-virtual-dtor"
@@ -481,7 +534,7 @@ namespace df
         template<class T>
         enum_field(enum_field<EnumType,T> ev) : value(IntType(ev.value)) {}
 
-        operator EnumType () { return EnumType(value); }
+        operator EnumType () const { return EnumType(value); }
         enum_field<EnumType,IntType> &operator=(EnumType ev) {
             value = IntType(ev); return *this;
         }
@@ -777,6 +830,19 @@ namespace DFHack {
         flagarray_to_string<T>(&tmp, val);
         return join_strings(sep, tmp);
     }
+
+    /**
+     * Finds the tag field for a given union field.
+     *
+     * The returned tag field is a primitive enum field or nullptr.
+     *
+     * If the union field is a container type, the returned tag field is
+     * a container of primitive enum types.
+     *
+     * As a special case, a container-type union can have a tag field that is
+     * a bit vector if it has exactly two members.
+     */
+    DFHACK_EXPORT const struct_field_info *find_union_tag(const struct_field_info *fields, const struct_field_info *union_field);
 }
 
 #define ENUM_ATTR(enum,attr,val) (df::enum_traits<df::enum>::attrs(val).attr)

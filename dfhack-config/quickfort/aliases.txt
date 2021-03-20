@@ -1,0 +1,17 @@
+# Custom aliases for quickfort query mode blueprints
+#
+# This file defines custom key sequence shortcuts for query mode blueprints.
+# Definitions in this file take precedence over any definitions in the
+# baseline aliases configuration file in
+#   hack/data/quickfort/aliases-common.txt
+#
+# Please see
+#   https://docs.dfhack.org/en/latest/docs/guides/quickfort-alias-guide.html
+# or
+#   hack/docs/docs/guides/quickfort-alias-guide.html
+# in your DF installation directory for alias syntax documentation and an
+# overview of the DFHack alias standard library.
+#
+#
+# Add your custom aliases here. Example:
+#   food_stash: {foodprefix}b{Right}{Down 11}p^{permitplants}

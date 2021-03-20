@@ -4079,11 +4079,22 @@ DFHack core invokes the scripts in the *core context* (see above);
 however it is possible to call them from any lua code (including
 from other scripts) in any context, via the same function the core uses:
 
-* ``dfhack.run_script("name arg1 arg2 arg3")``
+* ``dfhack.run_script(command[, ...])``
    
   Run a lua script in hack/scripts/, as if it was started from dfhack command-line.
-  The argument should be the exact command that would be written to the command line.
-  For example: dfhack.run_command("createitem WEAPON:ITEM_WEAPON_PICK COPPER 9999")
+  The syntax for the argument is similar to dfhack.run_command.
+  The command can be passed as a table, multiple string
+  arguments, or a single string argument (not recommended - in this case, the
+  usual DFHack console tokenization is used).
+  The following examples are equivalent::
+        dfhack.run_script({'ls', '-a'})
+        dfhack.run_script('ls', '-a')
+        dfhack.run_script('ls -a')  -- not recommended
+  
+  Unlike ``dfhack.run_command``, ``dfhack.run_script`` is capable of taking the 
+  return value of a lua script as an argument. 
+  For example::
+        dfhack.run_scipt("process", dfhack.gui.getDwarfmodeViewDims());
 
 Note that this function lets errors propagate to the caller.
 

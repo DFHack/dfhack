@@ -4418,20 +4418,20 @@ General script API
   Example::
      dfhack.run_script("armoks-blessing", "all")
   Scipts that use a dash(``-``) in their arguments still require one when called
-  from ``dfhack.run_script``. 
+  from ``dfhack.run_script``.
   Example::
      dfhack.run_script("gaydar", "-all")
-  
-  Unlike ``dfhack.run_command``, ``dfhack.run_script`` allows a different 
-  different script to be executed and its value passed as an argument to the main 
+
+  Unlike ``dfhack.run_command``, ``dfhack.run_script`` allows a different
+  different script to be executed and its value passed as an argument to the main
   function called by ``dfhack.run_script``.
-  
+
   Example::
       dfhack.run_script("some_script", dfhack.gui.getDwarfmodeViewDims());
-  
+
   While this implmenation is currently a functional, its purpose and stability
   are limited. As such, ``dfhack.reqscript(name)`` should be used.
-  
+
   Note that the ``dfhack.run_script()`` function allows Lua errors propagate to the caller.
 
   To run other types of commands (such as built-in commands, plugin commands, or

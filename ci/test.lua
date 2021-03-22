@@ -82,6 +82,14 @@ local function clean_require(module)
     return require(module)
 end
 
+-- similar to clean_require above; forces clean load of scripts directly
+-- included from a test file. note that this does *not* force transitively
+-- loaded scripts to be reloaded.
+local function clean_reqscript(name)
+    dfhack.internal.scripts[dfhack.findScript(name)] = nil
+    return reqscript(name)
+end
+
 local function ensure_title_screen()
     if df.viewscreen_titlest:is_instance(dfhack.gui.getCurViewscreen()) then
         return
@@ -129,6 +137,7 @@ local function build_test_env()
         expect = {},
         delay = delay,
         require = clean_require,
+        reqscript = clean_reqscript,
     }
     local private = {
         checks = 0,
@@ -182,8 +191,18 @@ local function save_test_status(status)
     json.encode_file(status, STATUS_FILE)
 end
 
+-- causes scripts to be reloaded the next time they are reqscript()'d. this
+-- allows scripts that change their behavior based on the value of
+-- dfhack.internal.IN_TEST to return to non-test behavior after tests are run.
+local function invalidate_scripts()
+    for k,_ in pairs(dfhack.internal.scripts) do
+        dfhack.internal.scripts[k] = nil
+    end
+end
+
 local function finish_tests(done_command)
     dfhack.internal.IN_TEST = false
+    invalidate_scripts()
     if done_command and #done_command > 0 then
         dfhack.run_command(done_command)
     end

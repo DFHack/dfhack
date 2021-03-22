@@ -27,6 +27,10 @@ XlsxioReader.ATTRS{
     filepath = DEFAULT_NIL,
 }
 
+function open(filepath)
+    return XlsxioReader{filepath=filepath}
+end
+
 function XlsxioReader:init()
     if not self.filepath then
         error('XlsxReader: filepath is required')

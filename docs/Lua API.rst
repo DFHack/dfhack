@@ -4307,17 +4307,40 @@ xlsxreader
 Utility functions to facilitate reading .xlsx spreadsheets. It provides the
 following low-level API methods:
 
- - ``file_handle open_xlsx_file(filename)``
+ - ``open_xlsx_file(filename)`` returns a file_handle
  - ``close_xlsx_file(file_handle)``
- - ``sheet_names list_sheets(file_handle)``
- - ``sheet_handle open_sheet(file_handle, sheet_name)``
+ - ``list_sheets(file_handle)`` returns a list of strings representing sheet
+  names
+ - ``open_sheet(file_handle, sheet_name)`` returns a sheet_handle
  - ``close_sheet(sheet_handle)``
- - ``cell_strings get_row(sheet_handle, max_tokens)`` The ``max_tokens``
-   parameter is optional. If set to a number > 0, it limits the number of cells
-   read and returned for the row.
+ - ``get_row(sheet_handle, max_tokens)`` returns a list of strings representing
+  the contents of the cells in the next row. The ``max_tokens`` parameter is
+  optional. If set to a number > 0, it limits the number of cells read and
+  returned for the row.
 
- Lua users would be better off using the Lua class wrappers, though. For
- example::
+The plugin also provides Lua class wrappers for ease of use:
+
+- ``XlsxioReader`` provides access to .xlsx files
+- ``XlsxioSheetReader`` provides access to sheets within .xlsx files
+- ``open(filepath)`` initializes and returns an ``XlsxioReader`` object
+
+The ``XlsxioReader`` class has the following methods:
+
+- ``XlsxioReader:close()`` closes the file. Be sure to close any open child
+  sheet handles first!
+- ``XlsxioReader:list_sheets()`` returns a list of strings representing sheet
+  names
+- ``XlsxioReader:open_sheet(sheet_name)`` returns an initialized
+  ``XlsxioSheetReader`` object
+
+The ``XlsxioSheetReader`` class has the following methods:
+
+- ``XlsxioSheetReader:close()`` closes the sheet
+- ``XlsxioSheetReader:get_row(max_tokens)`` reads the next row from the sheet.
+  If ``max_tokens`` is specified and is a positive integer, only the first
+  ``max_tokens`` elements of the row are returned.
+
+Here is an end-to-end example::
 
     local xlsxreader = require('plugins.xlsxreader')
 
@@ -4337,7 +4360,7 @@ following low-level API methods:
     end
 
     local filepath = 'path/to/some_file.xlsx'
-    local reader = xlsxreader.XlsxioReader{filepath=filepath}
+    local reader = xlsxreader.open(filepath)
     dfhack.with_finalize(
         function() reader:close() end,
         function()

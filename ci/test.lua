@@ -8,14 +8,14 @@ local utils = require 'utils'
 local help_text =
 [====[
 
-test/main
-=========
+test
+====
 
 Run DFHack tests.
 
 Usage:
 
-    test/main [<options>] [<done_command>]
+    test [<options>] [<done_command>]
 
 If a done_command is specified, it will be run after the tests complete.
 
@@ -35,14 +35,13 @@ Options:
 
 Examples:
 
-    test/main                 runs all tests
-    test/main -r              runs all tests that haven't been run before
-    test/main -m none         runs tests that don't need the game to be in a
-                              specific mode
-    test/main -t quickfort    runs quickfort tests
-    test/main -d /path/to/dfhack-scripts/repo/test
-                              runs tests in your in-development branch of the
-                              scripts repo
+    test                 runs all tests
+    test -r              runs all tests that haven't been run before
+    test -m none         runs tests that don't need the game to be in a
+                         specific mode
+    test -t quickfort    runs quickfort tests
+    test -d /path/to/dfhack-scripts/repo/test
+                         runs tests in your dev scripts repo
 
 Default values for the options may be set in a file named test_config.json in
 your DF folder. Options with comma-separated values should be written as json
@@ -285,7 +284,7 @@ local function get_test_files(test_dir)
     local files = {}
     print('Loading tests from ' .. test_dir)
     for _, entry in ipairs(dfhack.filesystem.listdir_recursive(test_dir)) do
-        if not entry.isdir and not entry.path:match('main.lua') then
+        if not entry.isdir then
             table.insert(files, entry.path)
         end
     end

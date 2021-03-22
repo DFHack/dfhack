@@ -4307,13 +4307,13 @@ xlsxreader
 Utility functions to facilitate reading .xlsx spreadsheets. It provides the
 following low-level API methods:
 
- - ``open_xlsx_file(filename)`` returns a file_handle
- - ``close_xlsx_file(file_handle)``
- - ``list_sheets(file_handle)`` returns a list of strings representing sheet
+- ``open_xlsx_file(filename)`` returns an open file_handle
+- ``close_xlsx_file(file_handle)``
+- ``list_sheets(file_handle)`` returns a list of strings representing sheet
   names
- - ``open_sheet(file_handle, sheet_name)`` returns a sheet_handle
- - ``close_sheet(sheet_handle)``
- - ``get_row(sheet_handle, max_tokens)`` returns a list of strings representing
+- ``open_sheet(file_handle, sheet_name)`` returns a sheet_handle
+- ``close_sheet(sheet_handle)``
+- ``get_row(sheet_handle, max_tokens)`` returns a list of strings representing
   the contents of the cells in the next row. The ``max_tokens`` parameter is
   optional. If set to a number > 0, it limits the number of cells read and
   returned for the row.

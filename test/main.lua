@@ -24,22 +24,23 @@ Options:
     -h, --help      display this help message and exit.
     -d, --test_dir  specifies which directory to look in for tests. defaults to
                     the "hack/scripts/test" folder in your DF installation.
-    -n, --nocache   don't skip tests marked as completed in test_status.json.
     -m, --modes     only run tests in the given comma separated list of modes.
                     valid modes are 'none' (test can be run on any screen) and
                     'title' (test must be run on the DF title screen). if not
                     specified, no modes are filtered.
+    -r, --resume    skip tests that have already been run. remove the
+                    test_status.json file to reset the record.
     -t, --tests     only run tests that match one of the comma separated list of
                     patterns. if not specified, no tests are filtered.
 
 Examples:
 
-    test/main                 runs all tests that haven't been run before
-    test/main -n              reruns all tests
-    test/main -nm none        reruns tests that don't need the game to be in a
+    test/main                 runs all tests
+    test/main -r              runs all tests that haven't been run before
+    test/main -m none         runs tests that don't need the game to be in a
                               specific mode
-    test/main -nt quickfort   reruns quickfort tests
-    test/main -nd /path/to/dfhack-scripts/repo/test
+    test/main -t quickfort    runs quickfort tests
+    test/main -d /path/to/dfhack-scripts/repo/test
                               runs tests in your in-development branch of the
                               scripts repo
 
@@ -49,10 +50,9 @@ arrays. For example:
 
     {
         "test_dir": "/home/myk/src/dfhack-scripts/test",
-        "nocache": true,
         "modes": [ "none" ],
         "tests": [ "quickfort", "devel" ],
-        "done_command": "devel/luacov"
+        "done_command": "devel/luacov -c"
     }
 
 ]====]
@@ -428,7 +428,7 @@ local function filter_tests(tests, config)
     end
 
     local status = {}
-    if not config.nocache then
+    if config.resume then
         status = load_test_status() or status
         for i = #tests, 1, -1 do
             local test = tests[i]
@@ -462,15 +462,15 @@ local function run_tests(tests, status, counts)
 end
 
 local function main(args)
-    local help, nocache, test_dir, mode_filter, test_filter =
+    local help, resume, test_dir, mode_filter, test_filter =
             false, false, nil, {}, {}
     local other_args = utils.processArgsGetopt(args, {
             {'h', 'help', handler=function() help = true end},
             {'d', 'test_dir', hasArg=true,
             handler=function(arg) test_dir = arg end},
-            {'n', 'nocache', handler=function() nocache = true end},
             {'m', 'modes', hasArg=true,
             handler=function(arg) mode_filter = arg:split(',') end},
+            {'r', 'resume', handler=function() resume = true end},
             {'t', 'tests', hasArg=true,
             handler=function(arg) test_filter = arg:split(',') end},
         })
@@ -482,7 +482,7 @@ local function main(args)
 
     -- override config with any params specified on the commandline
     if test_dir then config.test_dir = test_dir end
-    if nocache then config.nocache = true end
+    if resume then config.resume = true end
     if #mode_filter > 0 then config.modes = mode_filter end
     if #test_filter > 0 then config.tests = test_filter end
     if #done_command > 0 then config.done_command = done_command end

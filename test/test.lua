@@ -1,4 +1,4 @@
-local expect_raw = reqscript('test/main').expect
+local expect_raw = require('test.expect')
 
 function test.internal_in_test()
     expect.true_(dfhack.internal.IN_TEST)

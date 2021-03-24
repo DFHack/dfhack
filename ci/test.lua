@@ -454,10 +454,25 @@ local function run_tests(tests, status, counts)
         save_test_status(status)
     end
 
+    local function print_summary_line(ok, message)
+        local print_fn = print
+        if not ok then
+            status['*'] = TestStatus.FAILED
+            print_fn = dfhack.printerr
+        end
+        print_fn(message)
+    end
+
+    status['*'] = status['*'] or TestStatus.PASSED
     print('\nTest summary:')
-    print(('%d/%d tests passed'):format(counts.tests_ok, counts.tests))
-    print(('%d/%d checks passed'):format(counts.checks_ok, counts.checks))
-    print(('%d test files failed to load'):format(counts.file_errors))
+    print_summary_line(counts.tests_ok == counts.tests,
+        ('%d/%d tests passed'):format(counts.tests_ok, counts.tests))
+    print_summary_line(counts.checks_ok == counts.checks,
+        ('%d/%d checks passed'):format(counts.checks_ok, counts.checks))
+    print_summary_line(counts.file_errors == 0,
+        ('%d test files failed to load'):format(counts.file_errors))
+
+    save_test_status(status)
 end
 
 local function main(args)

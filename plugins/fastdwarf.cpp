@@ -179,6 +179,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
                 case unit_action_type::Block:
                 case unit_action_type::HoldItem:
                 case unit_action_type::ReleaseItem:
+                default:
                     break;
                 }
             }

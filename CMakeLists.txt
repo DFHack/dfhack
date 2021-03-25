@@ -503,6 +503,7 @@ if(BUILD_TESTS)
     endif()
     install(DIRECTORY ${dfhack_SOURCE_DIR}/test
         DESTINATION ${DFHACK_DATA_DESTINATION}/scripts)
+    install(FILES ci/test.lua DESTINATION ${DFHACK_DATA_DESTINATION}/scripts)
 endif()
 
 # Packaging with CPack!

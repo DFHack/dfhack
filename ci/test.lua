@@ -83,8 +83,9 @@ local function clean_require(module)
 end
 
 -- similar to clean_require above; forces clean load of scripts directly
--- included from a test file. note that this does *not* force transitively
--- loaded scripts to be reloaded.
+-- included from a test file. note that this does *not* force indirectly loaded
+-- scripts (that is, scripts that are reqscript()'d by the scripts that are
+-- reqscript()'d by the test file) to be reloaded.
 local function clean_reqscript(name)
     dfhack.internal.scripts[dfhack.findScript(name)] = nil
     return reqscript(name)

@@ -167,6 +167,7 @@ Tachytaenius            wolfboyft
 Tacomagic
 thefriendlyhacker       thefriendlyhacker
 TheHologram             TheHologram
+Theo Kalfas             teolandon
 therahedwig             therahedwig
 ThiagoLira              ThiagoLira
 thurin                  thurin

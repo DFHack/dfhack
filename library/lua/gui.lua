@@ -246,7 +246,7 @@ function Painter:isValidPos()
 end
 
 function Painter:viewport(x,y,w,h)
-    local vp = ViewRect.viewport(x,y,w,h)
+    local vp = ViewRect.viewport(self,x,y,w,h)
     vp.cur_pen = self.cur_pen
     vp.cur_key_pen = self.cur_key_pen
     return mkinstance(Painter, vp):seek(0,0)

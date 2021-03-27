@@ -118,7 +118,7 @@ int get_row(lua_State *L) {
             // read all cells in the row, even if we don't need to;
             // otherwise xlsxio will return a spurious empty row on
             // next call
-            if (max_tokens <= 0 || cells.size() < max_tokens) {
+            if (max_tokens <= 0 || int(cells.size()) < max_tokens) {
                 cells.push_back(value);
             }
         }

@@ -115,9 +115,12 @@ int get_row(lua_State *L) {
         std::string value;
         auto cells = std::vector<std::string>();
         while (get_next_cell(sheet_handle, value)) {
-            cells.push_back(value);
-            if (max_tokens > 0 && cells.size() >= max_tokens)
-                break;
+            // read all cells in the row, even if we don't need to;
+            // otherwise xlsxio will return a spurious empty row on
+            // next call
+            if (max_tokens <= 0 || cells.size() < max_tokens) {
+                cells.push_back(value);
+            }
         }
         Lua::PushVector(L, cells, true);
     }

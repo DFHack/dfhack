@@ -127,6 +127,8 @@ namespace LuaWrapper {
     struct DFRefHeader {
         void *ptr;
         const struct_field_info *field_info;
+        const void *tag_ptr;
+        const type_identity *tag_identity;
     };
 
     /**

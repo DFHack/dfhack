@@ -333,6 +333,8 @@ namespace DFHack
                 struct_identity *parent, const struct_field_info *fields);
 
         virtual identity_type type() { return IDTYPE_UNION; }
+
+        virtual void build_metatable(lua_State *state);
     };
 
     class DFHACK_EXPORT other_vectors_identity : public struct_identity {

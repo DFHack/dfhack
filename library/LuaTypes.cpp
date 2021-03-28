@@ -616,6 +616,15 @@ static int meta_struct_index(lua_State *state)
     if (!field)
         return 1;
     read_field(state, field, ptr + field->offset);
+    if (field->mode == struct_field_info::SUBSTRUCT || field->mode == struct_field_info::CONTAINER)
+    {
+        auto struct_type = (struct_identity*)get_object_identity(state, 1, "read", false);
+        if (auto tag_field = find_union_tag(struct_type->getFields(), field))
+        {
+            get_object_ref_header(state, -1)->tag_ptr = ptr + tag_field->offset;
+            get_object_ref_header(state, -1)->tag_identity = tag_field->type;
+        }
+    }
     return 1;
 }
 
@@ -631,6 +640,15 @@ static int meta_struct_field_reference(lua_State *state)
     if (!field)
         field_error(state, 2, "builtin property or method", "reference");
     field_reference(state, field, ptr + field->offset);
+    if (field->mode == struct_field_info::SUBSTRUCT || field->mode == struct_field_info::CONTAINER)
+    {
+        auto struct_type = (struct_identity*)get_object_identity(state, 1, "reference", false);
+        if (auto tag_field = find_union_tag(struct_type->getFields(), field))
+        {
+            get_object_ref_header(state, -1)->tag_ptr = ptr + tag_field->offset;
+            get_object_ref_header(state, -1)->tag_identity = tag_field->type;
+        }
+    }
     return 1;
 }
 
@@ -673,6 +691,25 @@ static int meta_struct_next(lua_State *state)
     if (idx == len)
         return 0;
 
+    lua_rawgeti(state, UPVAL_FIELDTABLE, idx+1);
+    lua_dup(state);
+    lua_gettable(state, 1);
+    return 2;
+}
+
+/**
+ * Metamethod: iterator for unions.
+ */
+static int meta_union_next(lua_State *state)
+{
+    if (lua_gettop(state) < 2) lua_pushnil(state);
+
+    int len = lua_rawlen(state, UPVAL_FIELDTABLE);
+    int idx = cur_iter_index(state, len+1, 2, 0);
+    if (idx == len)
+        return 0;
+
+    // TODO: only allow fields that are valid in this context (tagged union)
     lua_rawgeti(state, UPVAL_FIELDTABLE, idx+1);
     lua_dup(state);
     lua_gettable(state, 1);
@@ -816,6 +853,7 @@ static int meta_container_index(lua_State *state)
     if (!iidx)
         return 1;
 
+    // TODO: tagged union
     auto id = (container_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
     int len = id->lua_item_count(state, ptr, container_identity::COUNT_READ);
     int idx = check_container_index(state, len, 2, iidx, "read");
@@ -833,6 +871,7 @@ static int meta_container_field_reference(lua_State *state)
     uint8_t *ptr = get_object_addr(state, 1, 2, "reference");
     int iidx = lookup_container_field(state, 2, "reference");
 
+    // TODO: tagged union
     auto id = (container_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
     int len = id->lua_item_count(state, ptr, container_identity::COUNT_WRITE);
     int idx = check_container_index(state, len, 2, iidx, "reference");
@@ -873,6 +912,7 @@ static int meta_container_nexti(lua_State *state)
 
     lua_pushinteger(state, idx);
     id->lua_item_read(state, 2, ptr, idx);
+    // TODO: tagged union
     return 2;
 }
 
@@ -1194,7 +1234,6 @@ static void IndexFields(lua_State *state, int base, struct_identity *pstruct, bo
         lua_pop(state, 1);
 
         bool add_to_enum = true;
-        const struct_field_info *tag_field = nullptr;
 
         // Handle the field
         switch (fields[i].mode)
@@ -1213,11 +1252,6 @@ static void IndexFields(lua_State *state, int base, struct_identity *pstruct, bo
                 add_to_enum = false;
             break;
 
-        case struct_field_info::SUBSTRUCT:
-        case struct_field_info::CONTAINER:
-            tag_field = find_union_tag(fields, &fields[i]);
-            break;
-
         default:
             break;
         }
@@ -1228,17 +1262,6 @@ static void IndexFields(lua_State *state, int base, struct_identity *pstruct, bo
 
         if (add_to_enum)
             AssociateId(state, base+3, ++cnt, name.c_str());
-
-        if (tag_field)
-        {
-            // TODO: handle tagged unions
-            //
-            // tagged unions are treated as if they have at most one field,
-            // with the same name as the corresponding enumeration value.
-            //
-            // if no field's name matches the enumeration value's name,
-            // the tagged union is treated as a structure with no fields.
-        }
 
         lua_pushlightuserdata(state, (void*)&fields[i]);
         lua_setfield(state, base+2, name.c_str());
@@ -1275,7 +1298,8 @@ void LuaWrapper::IndexStatics(lua_State *state, int meta_idx, int ftable_idx, st
  * Make a struct-style object metatable.
  */
 static void MakeFieldMetatable(lua_State *state, struct_identity *pstruct,
-                               lua_CFunction reader, lua_CFunction writer, bool globals = false)
+                               lua_CFunction reader, lua_CFunction writer,
+                               lua_CFunction iterator, bool globals = false)
 {
     int base = lua_gettop(state);
 
@@ -1287,7 +1311,7 @@ static void MakeFieldMetatable(lua_State *state, struct_identity *pstruct,
     IndexFields(state, base, pstruct, globals);
 
     // Add the iteration metamethods
-    PushStructMethod(state, base+1, base+3, meta_struct_next);
+    PushStructMethod(state, base+1, base+3, iterator);
     SetPairsMethod(state, base+1, "__pairs");
     lua_pushnil(state);
     SetPairsMethod(state, base+1, "__ipairs");
@@ -1434,7 +1458,15 @@ void bitfield_identity::build_metatable(lua_State *state)
 void struct_identity::build_metatable(lua_State *state)
 {
     int base = lua_gettop(state);
-    MakeFieldMetatable(state, this, meta_struct_index, meta_struct_newindex);
+    MakeFieldMetatable(state, this, meta_struct_index, meta_struct_newindex, meta_struct_next);
+    SetStructMethod(state, base+1, base+2, meta_struct_field_reference, "_field");
+    SetPtrMethods(state, base+1, base+2);
+}
+
+void union_identity::build_metatable(lua_State *state)
+{
+    int base = lua_gettop(state);
+    MakeFieldMetatable(state, this, meta_struct_index, meta_struct_newindex, meta_union_next);
     SetStructMethod(state, base+1, base+2, meta_struct_field_reference, "_field");
     SetPtrMethods(state, base+1, base+2);
 }
@@ -1442,7 +1474,7 @@ void struct_identity::build_metatable(lua_State *state)
 void other_vectors_identity::build_metatable(lua_State *state)
 {
     int base = lua_gettop(state);
-    MakeFieldMetatable(state, this, meta_struct_index, meta_struct_newindex);
+    MakeFieldMetatable(state, this, meta_struct_index, meta_struct_newindex, meta_struct_next);
 
     EnableMetaField(state, base+2, "_enum");
 
@@ -1464,7 +1496,7 @@ void other_vectors_identity::build_metatable(lua_State *state)
 void global_identity::build_metatable(lua_State *state)
 {
     int base = lua_gettop(state);
-    MakeFieldMetatable(state, this, meta_global_index, meta_global_newindex, true);
+    MakeFieldMetatable(state, this, meta_global_index, meta_global_newindex, meta_struct_next, true);
     SetStructMethod(state, base+1, base+2, meta_global_field_reference, "_field");
     SetPtrMethods(state, base+1, base+2);
 }

@@ -554,6 +554,17 @@ static int dfhack_error(lua_State *L)
     return lua_error(L);
 }
 
+// replaces os.exit with a thrown exception
+static int dfhack_exit_error(lua_State *L)
+{
+    int exit_code = luaL_checkint(L, 1);
+    lua_pop(L, 1);
+    lua_pushfstring(L,
+                    "prevented execution of os.exit(%d); please use error()"
+                    " or qerror() instead.", exit_code);
+    return dfhack_error(L);
+}
+
 static int dfhack_exception_tostring(lua_State *L)
 {
     luaL_checktype(L, 1, LUA_TTABLE);
@@ -775,7 +786,22 @@ static int dfhack_cowrap (lua_State *L) {
     return 1;
 }
 
+static void add_luacov_coroutine_wrapper(lua_State *L)
+{
+    color_ostream *out = Lua::GetOutput(L);
+    if (!Lua::PushModulePublic(*out, L, "luacov_helper", "with_luacov"))
+    {
+        out->printerr("Failed to load luacov_helper.with_luacov.\n");
+        return;
+    }
+    lua_swap(L);
+    if (!Lua::SafeCall(*out, L, 1, 1))
+        out->printerr("Failed to set luacov monitoring wrapper.\n");
+}
+
 lua_State *DFHack::Lua::NewCoroutine(lua_State *L) {
+    if (Lua::IsCoreContext(L) && getenv("DFHACK_ENABLE_LUACOV"))
+        add_luacov_coroutine_wrapper(L);
     lua_State *NL = lua_newthread(L);
     lua_swap(L);
     lua_xmove(L, NL, 1); /* move function from L to NL */
@@ -1328,6 +1354,11 @@ static const luaL_Reg dfhack_coro_funcs[] = {
     { NULL, NULL }
 };
 
+static const luaL_Reg dfhack_os_funcs[] = {
+    { "exit", dfhack_exit_error },
+    { NULL, NULL }
+};
+
 /************
  *  Events  *
  ************/
@@ -1600,7 +1631,7 @@ void DFHack::Lua::Notification::bind(lua_State *state, const char *name)
 void OpenDFHackApi(lua_State *state);
 
 namespace DFHack { namespace Lua { namespace Core {
-    static void InitCoreContext();
+    static void InitCoreContext(color_ostream &);
 }}}
 
 lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
@@ -1701,6 +1732,11 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
     luaL_setfuncs(state, dfhack_coro_funcs, 0);
     lua_pop(state, 1);
 
+    // replace some os functions
+    lua_getglobal(state, "os");
+    luaL_setfuncs(state, dfhack_os_funcs, 0);
+    lua_pop(state, 1);
+
     // split the global environment
     lua_newtable(state);
     lua_newtable(state);
@@ -1714,7 +1750,7 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
 
     // Init core-context specific stuff before loading dfhack.lua
     if (IsCoreContext(state))
-        Lua::Core::InitCoreContext();
+        Lua::Core::InitCoreContext(out);
 
     // load dfhack.lua
     if (!Require(out, state, "dfhack"))
@@ -1901,7 +1937,7 @@ bool DFHack::Lua::Core::Init(color_ostream &out)
     return (Lua::Open(out, State) != NULL);
 }
 
-static void Lua::Core::InitCoreContext()
+static void Lua::Core::InitCoreContext(color_ostream &out)
 {
     lua_newtable(State);
     lua_rawsetp(State, LUA_REGISTRYINDEX, &DFHACK_TIMEOUTS_TOKEN);
@@ -1918,6 +1954,23 @@ static void Lua::Core::InitCoreContext()
     lua_setfield(State, -2, "timeout_active");
 
     lua_pop(State, 1);
+
+    if (getenv("DFHACK_ENABLE_LUACOV"))
+    {
+        // reads config from .luacov or uses defaults if file doesn't exist.
+        // note that luacov overrides the debug hook installed by
+        // interrupt_init() above.
+        if (Lua::PushModulePublic(out, State, "luacov.runner", "init") &&
+            Lua::SafeCall(out, State, 0, 0))
+        {
+            out.print("Initialized luacov coverage monitoring\n");
+        }
+        else
+        {
+            out.printerr("Failed to initialize luacov coverage monitoring\n");
+            // non-fatal error
+        }
+    }
 }
 
 void DFHack::Lua::Core::Reset(color_ostream &out, const char *where)

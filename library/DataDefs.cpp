@@ -159,6 +159,14 @@ enum_identity::enum_identity(size_t size,
     }
 }
 
+enum_identity::enum_identity(enum_identity *base_enum, type_identity *override_base_type)
+    : enum_identity(override_base_type->byte_size(), base_enum->getScopeParent(),
+                    base_enum->getName(), override_base_type, base_enum->first_item_value,
+                    base_enum->last_item_value, base_enum->keys, base_enum->complex,
+                    base_enum->attrs, base_enum->attr_type)
+{
+}
+
 enum_identity::ComplexData::ComplexData(std::initializer_list<int64_t> values)
 {
     size_t i = 0;

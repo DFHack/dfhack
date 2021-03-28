@@ -239,6 +239,7 @@ namespace DFHack
                       const char *const *keys,
                       const ComplexData *complex,
                       const void *attrs, struct_identity *attr_type);
+        enum_identity(enum_identity *enum_type, type_identity *override_base_type);
 
         virtual identity_type type() { return IDTYPE_ENUM; }
 

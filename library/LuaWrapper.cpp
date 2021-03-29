@@ -173,6 +173,7 @@ void LuaWrapper::push_object_ref(lua_State *state, void *ptr)
     ref->field_info = NULL;
     ref->tag_ptr = NULL;
     ref->tag_identity = NULL;
+    ref->tag_attr = NULL;
 
     lua_swap(state);
     lua_setmetatable(state, -2);

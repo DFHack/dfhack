@@ -623,6 +623,7 @@ static int meta_struct_index(lua_State *state)
         {
             get_object_ref_header(state, -1)->tag_ptr = ptr + tag_field->offset;
             get_object_ref_header(state, -1)->tag_identity = tag_field->type;
+            get_object_ref_header(state, -1)->tag_attr = field->extra ? field->extra->union_tag_attr : nullptr;
         }
     }
     return 1;
@@ -647,6 +648,7 @@ static int meta_struct_field_reference(lua_State *state)
         {
             get_object_ref_header(state, -1)->tag_ptr = ptr + tag_field->offset;
             get_object_ref_header(state, -1)->tag_identity = tag_field->type;
+            get_object_ref_header(state, -1)->tag_attr = field->extra ? field->extra->union_tag_attr : nullptr;
         }
     }
     return 1;
@@ -709,7 +711,63 @@ static int meta_union_next(lua_State *state)
     if (idx == len)
         return 0;
 
-    // TODO: only allow fields that are valid in this context (tagged union)
+    auto header = get_object_ref_header(state, 1);
+    if (header->tag_ptr)
+    {
+        if (idx != 0)
+            return 0;
+
+        auto enum_id = (enum_identity*)header->tag_identity;
+        auto tag_val = *(int64_t*)header->tag_ptr;
+        size_t tag_shift = 64 - 8 * enum_id->byte_size();
+        tag_val <<= tag_shift;
+        tag_val >>= tag_shift;
+
+        size_t tag_index = tag_val - enum_id->getFirstItem();
+        if (auto complex = enum_id->getComplex())
+            tag_index = complex->value_index_map.count(tag_val) ? complex->value_index_map.at(tag_val) : size_t(-1);
+
+        if (tag_index >= size_t(enum_id->getCount()))
+            return 0;
+
+        const char *tag_name = nullptr;
+        if (header->tag_attr)
+        {
+            for (auto enum_field = enum_id->getAttrType()->getFields(); enum_field->mode != struct_field_info::END; enum_field++)
+            {
+                if (!strcmp(enum_field->name, header->tag_attr))
+                {
+                    if (enum_field->type == df::identity_traits<const char*>::get())
+                    {
+                        auto attrs = ((uint8_t*)enum_id->getAttrs()) + (tag_index * enum_id->getAttrType()->byte_size());
+                        tag_name = *(const char **)(attrs + enum_field->offset);
+                    }
+                    break;
+                }
+            }
+        }
+        else
+        {
+            tag_name = enum_id->getKeys()[tag_index];
+        }
+
+        if (!tag_name)
+            return 0;
+
+        lua_getfield(state, UPVAL_FIELDTABLE, tag_name);
+        if (lua_isnil(state, lua_gettop(state)))
+        {
+            lua_pop(state, 1);
+            return 0;
+        }
+
+        lua_pop(state, 1);
+        lua_pushstring(state, tag_name);
+        lua_getfield(state, 1, tag_name);
+
+        return 2;
+    }
+
     lua_rawgeti(state, UPVAL_FIELDTABLE, idx+1);
     lua_dup(state);
     lua_gettable(state, 1);
@@ -843,6 +901,25 @@ static int check_container_index(lua_State *state, int len,
     return idx;
 }
 
+static void attach_container_item_tagged_union(lua_State *state, int container, int item, int idx)
+{
+    auto header = get_object_ref_header(state, container);
+    if (header->tag_ptr)
+    {
+        // TODO: handle bit vector for tag
+
+        auto tag_container = (container_identity*)header->tag_identity;
+
+        auto ref = get_object_ref_header(state, item);
+
+        // on both msvc and gcc, vectors have the same memory layout
+        auto item_type = tag_container->getItemType();
+        ref->tag_ptr = (*(uint8_t**)header->tag_ptr) + size_t(idx) * item_type->byte_size();
+        ref->tag_identity = item_type;
+        ref->tag_attr = header->tag_attr;
+    }
+}
+
 /**
  * Metamethod: __index for containers.
  */
@@ -853,11 +930,11 @@ static int meta_container_index(lua_State *state)
     if (!iidx)
         return 1;
 
-    // TODO: tagged union
     auto id = (container_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
     int len = id->lua_item_count(state, ptr, container_identity::COUNT_READ);
     int idx = check_container_index(state, len, 2, iidx, "read");
     id->lua_item_read(state, 2, ptr, idx);
+    attach_container_item_tagged_union(state, 1, -1, idx);
     return 1;
 }
 
@@ -871,11 +948,11 @@ static int meta_container_field_reference(lua_State *state)
     uint8_t *ptr = get_object_addr(state, 1, 2, "reference");
     int iidx = lookup_container_field(state, 2, "reference");
 
-    // TODO: tagged union
     auto id = (container_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
     int len = id->lua_item_count(state, ptr, container_identity::COUNT_WRITE);
     int idx = check_container_index(state, len, 2, iidx, "reference");
     id->lua_item_reference(state, 2, ptr, idx);
+    attach_container_item_tagged_union(state, 1, -1, idx);
     return 1;
 }
 
@@ -912,7 +989,7 @@ static int meta_container_nexti(lua_State *state)
 
     lua_pushinteger(state, idx);
     id->lua_item_read(state, 2, ptr, idx);
-    // TODO: tagged union
+    attach_container_item_tagged_union(state, 1, -1, idx);
     return 2;
 }
 

@@ -619,7 +619,7 @@ static int meta_struct_index(lua_State *state)
     if (field->mode == struct_field_info::SUBSTRUCT || field->mode == struct_field_info::CONTAINER)
     {
         auto struct_type = (struct_identity*)get_object_identity(state, 1, "read", false);
-        if (auto tag_field = find_union_tag(struct_type->getFields(), field))
+        if (auto tag_field = find_union_tag(struct_type, field))
         {
             get_object_ref_header(state, -1)->tag_ptr = ptr + tag_field->offset;
             get_object_ref_header(state, -1)->tag_identity = tag_field->type;
@@ -644,7 +644,7 @@ static int meta_struct_field_reference(lua_State *state)
     if (field->mode == struct_field_info::SUBSTRUCT || field->mode == struct_field_info::CONTAINER)
     {
         auto struct_type = (struct_identity*)get_object_identity(state, 1, "reference", false);
-        if (auto tag_field = find_union_tag(struct_type->getFields(), field))
+        if (auto tag_field = find_union_tag(struct_type, field))
         {
             get_object_ref_header(state, -1)->tag_ptr = ptr + tag_field->offset;
             get_object_ref_header(state, -1)->tag_identity = tag_field->type;

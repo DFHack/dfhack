@@ -845,7 +845,7 @@ namespace DFHack {
      * As a special case, a container-type union can have a tag field that is
      * a bit vector if it has exactly two members.
      */
-    DFHACK_EXPORT const struct_field_info *find_union_tag(const struct_field_info *fields, const struct_field_info *union_field);
+    DFHACK_EXPORT const struct_field_info *find_union_tag(struct_identity *structure, const struct_field_info *union_field);
 }
 
 #define ENUM_ATTR(enum,attr,val) (df::enum_traits<df::enum>::attrs(val).attr)

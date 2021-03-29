@@ -562,7 +562,6 @@ function Script:get_flags()
 end
 
 internal.scripts = internal.scripts or {}
-local scripts = internal.scripts
 
 local hack_path = dfhack.getHackPath()
 
@@ -583,6 +582,7 @@ local valid_script_flags = {
     module_strict = {required = false},
     alias = {required = false},
     alias_count = {required = false},
+    scripts = {required = false},
 }
 
 function dfhack.run_script(name,...)
@@ -602,13 +602,18 @@ function dfhack.reqscript(name)
 end
 reqscript = dfhack.reqscript
 
-function dfhack.script_environment(name, strict)
+function dfhack.script_environment(name, strict, envVars, scripts)
+    scripts = scripts or internal.scripts
     local path = dfhack.findScript(name)
     if not scripts[path] or scripts[path]:needs_update() then
-        local _, env = dfhack.run_script_with_env(nil, name, {
-            module=true,
-            module_strict=(strict and true or false)  -- ensure that this key is present if 'strict' is nil
-        })
+        local _, env = dfhack.run_script_with_env(
+            envVars,
+            name,
+            {
+                scripts=scripts,
+                module=true,
+                module_strict=(strict and true or false)  -- ensure that this key is present if 'strict' is nil
+            })
         return env
     else
         if strict and not scripts[path]:get_flags().module then
@@ -625,6 +630,7 @@ function dfhack.run_script_with_env(envVars, name, flags, ...)
         error('Could not find script ' .. name)
     end
 
+    local scripts = flags.scripts or internal.scripts
     if scripts[file] == nil then
         scripts[file] = Script(file)
     end

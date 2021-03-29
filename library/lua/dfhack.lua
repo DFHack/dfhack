@@ -602,15 +602,13 @@ function dfhack.reqscript(name)
 end
 reqscript = dfhack.reqscript
 
-function dfhack.script_environment(name, strict, envVars, scripts)
-    scripts = scripts or internal.scripts
+function dfhack.script_environment(name, strict)
+    local scripts = internal.scripts
     local path = dfhack.findScript(name)
     if not scripts[path] or scripts[path]:needs_update() then
-        local _, env = dfhack.run_script_with_env(
-            envVars,
+        local _, env = dfhack.run_script_with_env(nil,
             name,
             {
-                scripts=scripts,
                 module=true,
                 module_strict=(strict and true or false)  -- ensure that this key is present if 'strict' is nil
             })

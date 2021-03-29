@@ -88,7 +88,17 @@ end
 local test_scripts = {is_test_scripts=true}
 local test_envvars = {}
 local function clean_reqscript(name)
-    return dfhack.script_environment(name, true, test_envvars, test_scripts)
+    local path = dfhack.findScript(name)
+    if test_scripts[path] then return test_scripts[path].env end
+    local _, env = dfhack.run_script_with_env(
+        test_envvars,
+        name,
+        {
+            scripts=test_scripts,
+            module=true,
+            module_strict=true
+        })
+    return env
 end
 test_envvars.require = clean_require
 test_envvars.reqscript = clean_reqscript

@@ -85,7 +85,7 @@ end
 -- forces clean load of scripts directly or indirectly included from the test
 -- file. we use our own scripts table instead of the one in dfhack.internal so
 -- we don't affect the state scripts that are used outside the test harness.
-local test_scripts = {is_test_scripts=true}
+local test_scripts = {}
 local test_envvars = {}
 local function clean_reqscript(name)
     local path = dfhack.findScript(name)

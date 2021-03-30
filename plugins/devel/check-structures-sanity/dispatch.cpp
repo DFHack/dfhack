@@ -528,11 +528,11 @@ void Checker::dispatch_struct(const QueueItem & item, const CheckedStructure & c
 
         for (auto field = fields; field->mode != struct_field_info::END; field++)
         {
-            dispatch_field(item, cs, fields, field);
+            dispatch_field(item, cs, identity, field);
         }
     }
 }
-void Checker::dispatch_field(const QueueItem & item, const CheckedStructure & cs, const struct_field_info *fields, const struct_field_info *field)
+void Checker::dispatch_field(const QueueItem & item, const CheckedStructure & cs, struct_identity *identity, const struct_field_info *field)
 {
     if (field->mode == struct_field_info::OBJ_METHOD ||
         field->mode == struct_field_info::CLASS_METHOD)
@@ -544,7 +544,7 @@ void Checker::dispatch_field(const QueueItem & item, const CheckedStructure & cs
     QueueItem field_item(item, field->name, field_ptr);
     CheckedStructure field_cs(field);
 
-    auto tag_field = find_union_tag(fields, field);
+    auto tag_field = find_union_tag(identity, field);
     if (tag_field)
     {
         auto tag_ptr = PTR_ADD(item.ptr, tag_field->offset);

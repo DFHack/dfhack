@@ -239,6 +239,7 @@ namespace DFHack
                       const char *const *keys,
                       const ComplexData *complex,
                       const void *attrs, struct_identity *attr_type);
+        enum_identity(enum_identity *enum_type, type_identity *override_base_type);
 
         virtual identity_type type() { return IDTYPE_ENUM; }
 
@@ -332,6 +333,8 @@ namespace DFHack
                 struct_identity *parent, const struct_field_info *fields);
 
         virtual identity_type type() { return IDTYPE_UNION; }
+
+        virtual void build_metatable(lua_State *state);
     };
 
     class DFHACK_EXPORT other_vectors_identity : public struct_identity {
@@ -842,7 +845,7 @@ namespace DFHack {
      * As a special case, a container-type union can have a tag field that is
      * a bit vector if it has exactly two members.
      */
-    DFHACK_EXPORT const struct_field_info *find_union_tag(const struct_field_info *fields, const struct_field_info *union_field);
+    DFHACK_EXPORT const struct_field_info *find_union_tag(struct_identity *structure, const struct_field_info *union_field);
 }
 
 #define ENUM_ATTR(enum,attr,val) (df::enum_traits<df::enum>::attrs(val).attr)

@@ -159,6 +159,14 @@ enum_identity::enum_identity(size_t size,
     }
 }
 
+enum_identity::enum_identity(enum_identity *base_enum, type_identity *override_base_type)
+    : enum_identity(override_base_type->byte_size(), base_enum->getScopeParent(),
+                    base_enum->getName(), override_base_type, base_enum->first_item_value,
+                    base_enum->last_item_value, base_enum->keys, base_enum->complex,
+                    base_enum->attrs, base_enum->attr_type)
+{
+}
+
 enum_identity::ComplexData::ComplexData(std::initializer_list<int64_t> values)
 {
     size_t i = 0;
@@ -455,18 +463,22 @@ void DFHack::flagarrayToString(std::vector<std::string> *pvec, const void *p,
     }
 }
 
-static const struct_field_info *find_union_tag_candidate(const struct_field_info *fields, const struct_field_info *union_field)
+static const struct_field_info *find_union_tag_candidate(struct_identity *structure, const struct_field_info *union_field)
 {
     if (union_field->extra && union_field->extra->union_tag_field)
     {
         auto defined_field_name = union_field->extra->union_tag_field;
-        for (auto field = fields; field->mode != struct_field_info::END; field++)
+        for (auto p = structure; p; p = p->getParent())
         {
-            if (!strcmp(field->name, defined_field_name))
+            for (auto field = p->getFields(); field && field->mode != struct_field_info::END; field++)
             {
-                return field;
+                if (!strcmp(field->name, defined_field_name))
+                {
+                    return field;
+                }
             }
         }
+
         return nullptr;
     }
 
@@ -476,32 +488,32 @@ static const struct_field_info *find_union_tag_candidate(const struct_field_info
         name.erase(name.length() - 4, 4);
         name += "type";
 
-        for (auto field = fields; field->mode != struct_field_info::END; field++)
+        for (auto p = structure; p; p = p->getParent())
         {
-            if (field->name == name)
+            for (auto field = p->getFields(); field && field->mode != struct_field_info::END; field++)
             {
-                return field;
+                if (field->name == name)
+                {
+                    return field;
+                }
             }
         }
     }
 
-    if (name.length() > 7 &&
-            name.substr(name.length() - 7) == "_target" &&
-            fields != union_field &&
-            (union_field - 1)->name == name.substr(0, name.length() - 7))
-    {
-        return union_field - 1;
-    }
-
-    return union_field + 1;
+    return nullptr;
 }
 
-const struct_field_info *DFHack::find_union_tag(const struct_field_info *fields, const struct_field_info *union_field)
+const struct_field_info *DFHack::find_union_tag(struct_identity *structure, const struct_field_info *union_field)
 {
-    CHECK_NULL_POINTER(fields);
+    CHECK_NULL_POINTER(structure);
     CHECK_NULL_POINTER(union_field);
 
-    auto tag_candidate = find_union_tag_candidate(fields, union_field);
+    auto tag_candidate = find_union_tag_candidate(structure, union_field);
+
+    if (!tag_candidate)
+    {
+        return nullptr;
+    }
 
     if (union_field->mode == struct_field_info::SUBSTRUCT &&
             union_field->type &&

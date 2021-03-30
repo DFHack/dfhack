@@ -578,7 +578,7 @@ namespace df
 
 #ifdef BUILD_DFHACK_LIB
     template<class Enum, class FT> struct identity_traits<enum_field<Enum,FT> > {
-        static primitive_identity *get();
+        static enum_identity *get();
     };
 #endif
 
@@ -631,8 +631,9 @@ namespace df
 
 #ifdef BUILD_DFHACK_LIB
     template<class Enum, class FT>
-    inline primitive_identity *identity_traits<enum_field<Enum,FT> >::get() {
-        return identity_traits<FT>::get();
+    inline enum_identity *identity_traits<enum_field<Enum,FT> >::get() {
+        static enum_identity identity(identity_traits<Enum>::get(), identity_traits<FT>::get());
+        return &identity;
     }
 #endif
 

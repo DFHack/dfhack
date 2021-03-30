@@ -131,7 +131,7 @@ private:
     void dispatch_bitfield(const QueueItem &, const CheckedStructure &);
     void dispatch_enum(const QueueItem &, const CheckedStructure &);
     void dispatch_struct(const QueueItem &, const CheckedStructure &);
-    void dispatch_field(const QueueItem &, const CheckedStructure &, const struct_field_info *, const struct_field_info *);
+    void dispatch_field(const QueueItem &, const CheckedStructure &, struct_identity *, const struct_field_info *);
     void dispatch_class(const QueueItem &, const CheckedStructure &);
     void dispatch_buffer(const QueueItem &, const CheckedStructure &);
     void dispatch_stl_ptr_vector(const QueueItem &, const CheckedStructure &);

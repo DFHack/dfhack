@@ -12,6 +12,7 @@ on:
 
 jobs:
   run:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.repository_owner == 'DFHack' }}
     runs-on: ubuntu-latest
     steps:
     - name: Clone DFHack

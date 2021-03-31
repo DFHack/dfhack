@@ -82,6 +82,27 @@ local function clean_require(module)
     return require(module)
 end
 
+-- forces clean load of scripts directly or indirectly included from the test
+-- file. we use our own scripts table instead of the one in dfhack.internal so
+-- we don't affect the state scripts that are used outside the test harness.
+local test_scripts = {}
+local test_envvars = {}
+local function clean_reqscript(name)
+    local path = dfhack.findScript(name)
+    if test_scripts[path] then return test_scripts[path].env end
+    local _, env = dfhack.run_script_with_env(
+        test_envvars,
+        name,
+        {
+            scripts=test_scripts,
+            module=true,
+            module_strict=true
+        })
+    return env
+end
+test_envvars.require = clean_require
+test_envvars.reqscript = clean_reqscript
+
 local function ensure_title_screen()
     if df.viewscreen_titlest:is_instance(dfhack.gui.getCurViewscreen()) then
         return
@@ -129,6 +150,7 @@ local function build_test_env()
         expect = {},
         delay = delay,
         require = clean_require,
+        reqscript = clean_reqscript,
     }
     local private = {
         checks = 0,

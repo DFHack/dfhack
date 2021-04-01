@@ -33,6 +33,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
+## Fixes
+- `buildingplan`: fixed an issue where planned constructions designated with DF's sizing keys (``umkh``) would sometimes be larger than requested
+
 ## Lua
 - ``gui.Painter``: fixed error when calling ``viewport()`` method
 - `xlsxreader`: Added Lua class wrappers for the xlsxreader plugin API

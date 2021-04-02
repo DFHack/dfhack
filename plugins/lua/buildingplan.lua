@@ -103,9 +103,9 @@ function construct_buildings_from_ui_state()
     if width == 1 and height == 1 and
             (world.building_width > 1 or world.building_height > 1) then
         min_x = math.ceil(pos.x - world.building_width/2)
-        max_x = math.floor(pos.x + world.building_width/2)
+        max_x = min_x + world.building_width - 1
         min_y = math.ceil(pos.y - world.building_height/2)
-        max_y = math.floor(pos.y + world.building_height/2)
+        max_y = min_y + world.building_height - 1
     end
     local blds = {}
     for y=min_y,max_y do for x=min_x,max_x do

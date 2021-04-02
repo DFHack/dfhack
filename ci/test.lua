@@ -141,6 +141,49 @@ local function load_test_config(config_file)
     return config
 end
 
+local function run_expect_func(func, ...)
+    local args = {...}
+    local saved_printerr = dfhack.printerr
+    local printerr_called = false
+    dfhack.printerr = function(msg) printerr_called = true end
+    return dfhack.with_finalize(
+        function() dfhack.printerr = saved_printerr end,
+        function()
+            local ret = {func(table.unpack(args))}
+            if printerr_called then
+                return {false,
+                        "dfhack.printerr was called outside of" ..
+                        " expect.printerr_match(). please wrap your test" ..
+                        " with expect.printerr_match()."}
+            end
+            return ret
+        end
+    )
+end
+
+local function wrap_expect(func, private)
+    return function(...)
+        private.checks = private.checks + 1
+        local ret = run_expect_func(func, ...)
+        local ok = table.remove(ret, 1)
+        if ok then
+            private.checks_ok = private.checks_ok + 1
+            return
+        end
+        local msg = ''
+        for _, part in pairs(ret) do
+            if part then
+                msg = msg .. ': ' .. tostring(part)
+            end
+        end
+        msg = msg:sub(3) -- strip leading ': '
+        dfhack.printerr('Check failed! ' .. (msg or '(no message)'))
+        local info = debug.getinfo(2)
+        dfhack.printerr(('  at %s:%d'):format(info.short_src, info.currentline))
+        print('')
+    end
+end
+
 local function build_test_env()
     local env = {
         test = utils.OrderedTable(),
@@ -157,26 +200,7 @@ local function build_test_env()
         checks_ok = 0,
     }
     for name, func in pairs(expect) do
-        env.expect[name] = function(...)
-            private.checks = private.checks + 1
-            local ret = {func(...)}
-            local ok = table.remove(ret, 1)
-            local msg = ''
-            for _, part in pairs(ret) do
-                if part then
-                    msg = msg .. ': ' .. tostring(part)
-                end
-            end
-            msg = msg:sub(3) -- strip leading ': '
-            if ok then
-                private.checks_ok = private.checks_ok + 1
-            else
-                dfhack.printerr('Check failed! ' .. (msg or '(no message)'))
-                local info = debug.getinfo(2)
-                dfhack.printerr(('  at %s:%d'):format(info.short_src, info.currentline))
-                print('')
-            end
-        end
+        env.expect[name] = wrap_expect(func, private)
     end
     setmetatable(env, {__index = _G})
     return env, private

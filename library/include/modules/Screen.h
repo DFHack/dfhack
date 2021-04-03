@@ -308,12 +308,15 @@ namespace DFHack
 
         //! Temporary hide a screen until destructor is called
         struct DFHACK_EXPORT Hide {
-            Hide(df::viewscreen* screen);
+            Hide(df::viewscreen* screen, int flags = 0);
             ~Hide();
+
+            static const int RESTORE_AT_TOP = 0x1;
         private:
             void extract(df::viewscreen*);
             void merge(df::viewscreen*);
-            df::viewscreen* screen_;
+            df::viewscreen* screen;
+            int flags;
         };
     }
 

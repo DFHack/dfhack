@@ -378,16 +378,16 @@ bool Screen::hasActiveScreens(Plugin *plugin)
 
 namespace DFHack { namespace Screen {
 
-Hide::Hide(df::viewscreen* screen) :
-    screen_{screen}
+Hide::Hide(df::viewscreen* screen, int flags) :
+    screen{screen}, flags{flags}
 {
-    extract(screen_);
+    extract(screen);
 }
 
 Hide::~Hide()
 {
-    if (screen_)
-        merge(screen_);
+    if (screen)
+        merge(screen);
 }
 
 void Hide::extract(df::viewscreen* a)
@@ -402,6 +402,13 @@ void Hide::extract(df::viewscreen* a)
 
 void Hide::merge(df::viewscreen* a)
 {
+    if (flags & RESTORE_AT_TOP) {
+        a->parent = NULL;
+        a->child = NULL;
+        Screen::show(std::unique_ptr<df::viewscreen>(a));
+        return;
+    }
+
     df::viewscreen* ap = a->parent;
     df::viewscreen* ac = a->parent->child;
 

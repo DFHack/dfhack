@@ -201,7 +201,7 @@ void viewscreen_commandpromptst::submit()
     submitted = true;
     prompt_ostream out(this);
     {
-        Screen::Hide hide_guard(this);
+        Screen::Hide hide_guard(this, Screen::Hide::RESTORE_AT_TOP);
         Core::getInstance().runCommand(out, get_entry());
     }
     if(out.empty() && responses.empty())

@@ -30,5 +30,5 @@
 	shallow = true
 [submodule "depends/luacov"]
 	path = depends/luacov
-	url = ../../keplerproject/luacov.git
+	url = ../../DFHack/luacov.git
 	shallow = true

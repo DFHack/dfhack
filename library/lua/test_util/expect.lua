@@ -5,7 +5,7 @@
 -- these functions directly will not work as expected.
 
 
-local expect = mkmodule('internal.expect')
+local expect = mkmodule('test_util.expect')
 
 function expect.true_(value, comment)
     return not not value, comment, 'expected true, got ' .. tostring(value)

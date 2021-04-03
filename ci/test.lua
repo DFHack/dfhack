@@ -1,7 +1,7 @@
 -- DFHack developer test harness
 --@ module = true
 
-local expect = require 'internal.expect'
+local expect = require 'test_util.expect'
 local json = require 'json'
 local script = require 'gui.script'
 local utils = require 'utils'

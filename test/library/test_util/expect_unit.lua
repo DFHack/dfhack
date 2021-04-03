@@ -1,4 +1,4 @@
-local expect_raw = require('internal.expect')
+local expect_raw = require('test_util.expect')
 
 function test.table_eq()
     expect.true_(expect_raw.table_eq({}, {}))

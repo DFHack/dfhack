@@ -88,21 +88,9 @@ assistance.
 
 
 Contributing to DFHack
-======================
-To contribute to DFHack on GitHub, you will need a GitHub account. Only some
-DFHack developers can push directly to the DFHack repositories; we recommend
-making a fork of whatever repos you are interested in contributing to, making
-changes there, and submitting pull requests.  `GitHub's pull request tutorial
-<https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/proposing-changes-to-your-work-with-pull-requests>`_
-is a good resource for getting started with pull requests (some things to note:
-our work mainly happens on the ``develop`` branch, and you will need to use
-your own fork, assuming that you don't have write access to the DFHack repos).
+----------------------
 
-Most development-related discussion happens on IRC or in individual GitHub
-issues and pull requests, but there are also other ways to reach out - see
-`support` for details.
-
-For more details on contributing to DFHack, including pull requests, code
+For details on contributing to DFHack, including pull requests, code
 format, and more, please see `contributing-code`.
 
 

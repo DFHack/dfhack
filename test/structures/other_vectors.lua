@@ -5,9 +5,9 @@ function test.index_name()
 end
 
 function test.index_name_bad()
-    expect.error_match(function()
+    expect.error_match('not found.$', function()
         expect.eq(df.global.world.units.other.SOME_FAKE_NAME, 'container')
-    end, 'not found.$')
+    end)
 end
 
 function test.index_id()
@@ -17,11 +17,11 @@ function test.index_id()
 end
 
 function test.index_id_bad()
-    expect.error_match(function()
+    expect.error_match('Cannot read field', function()
         expect.eq(df.global.world.units.other[df.units_other_id._first_item - 1], 'container')
-    end, 'Cannot read field')
-    expect.error_match(function()
+    end)
+    expect.error_match('Cannot read field', function()
         expect.eq(df.global.world.units.other[df.units_other_id._last_item + 1], 'container')
-    end, 'Cannot read field')
+    end)
 end
 

@@ -77,16 +77,16 @@ end
 
 function test.index_read_negative()
     with_temp_ref(function(x)
-        expect.error_match(function()
+        expect.error_match('negative index', function()
             expect.true_(x:_displace(1)[-1])
-        end, 'negative index')
+        end)
     end)
 end
 
 function test.index_write_negative()
     with_temp_ref(function(x)
-        expect.error_match(function()
+        expect.error_match('negative index', function()
             x:_displace(1)[-1] = 7
-        end, 'negative index')
+        end)
     end)
 end

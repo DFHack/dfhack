@@ -5,7 +5,7 @@
 -- these functions directly will not work as expected.
 
 
-local expect = mkmodule('test.expect')
+local expect = mkmodule('internal.expect')
 
 function expect.true_(value, comment)
     return not not value, comment, 'expected true, got ' .. tostring(value)
@@ -101,20 +101,8 @@ function expect.table_eq(a, b, comment)
             ('key %s: "%s" ~= "%s"'):format(keystr, diff[1], diff[2])
 end
 
-function expect.error(func, comment)
-    local ok = pcall(func)
-    if ok then
-        return false, comment, 'no error raised by function call'
-    else
-        return true
-    end
-end
-
 local function matches(obj, matcher)
-    if not matcher then return false end
-    if type(matcher) == 'boolean' then
-        return true
-    elseif type(matcher) == 'string' then
+    if type(matcher) == 'string' then
         return tostring(obj):match(matcher)
     elseif type(matcher) == 'function' then
         return matcher(obj)
@@ -128,7 +116,6 @@ end
 -- matcher can be:
 --  a string, interpreted as a lua pattern that matches the error message
 --  a function that takes an err object and returns a boolean (true means match)
---  the literal value true, which matches any thrown error
 function expect.error_match(matcher, func, comment)
     local ok, err = pcall(func)
     if ok then
@@ -139,8 +126,12 @@ function expect.error_match(matcher, func, comment)
     if type(matcher) == 'string' then
         matcher_str = (': "%s"'):format(matcher)
     end
-    return false,
+    return false, comment,
             ('error "%s" did not satisfy matcher%s'):format(err, matcher_str)
+end
+
+function expect.error(func, comment)
+    return expect.error_match('.*', func, comment)
 end
 
 -- matches error messages output from dfhack.printerr() when the specified
@@ -151,24 +142,18 @@ end
 --  a string, interpreted as a lua pattern that matches a message
 --  a function that takes the string message and returns a boolean (true means
 --    match)
---  the literal value true, which matches any message
---  the literal value false, nil, or an empty table, which match the absence of
---    printerr messages
 --  a populated table that can be used to match multiple messages (explained
 --    in more detail below)
 --
 -- if matcher is a table, it can contain:
---  a list of strings, literal true values, and/or functions which will be
---    matched in order
---  a map of strings, literal true values, and/or functions to positive
---    integers, which will be matched (in any order) the number of times
---    specified
+--  a list of strings and/or functions which will be matched in order
+--  a map of strings and/or functions to positive integers, which will be
+--    matched (in any order) the number of times specified
 --
 -- when this function attempts to match a message, it will first try the next
 -- matcher in the list (that is, the next numeric key). if that matcher doesn't
 -- exist or doesn't match, it will try all string and function keys whose values
--- are numeric and > 0. if none of those match, it will check for a key equal to
--- true with a value > 0.
+-- are numeric and > 0.
 --
 -- if a mapped matcher is matched, it will have its value decremented by 1.
 function expect.printerr_match(matcher, func, comment)
@@ -178,25 +163,17 @@ function expect.printerr_match(matcher, func, comment)
     dfhack.with_finalize(
         function() dfhack.printerr = saved_printerr end,
         func)
-    if not matcher then
-        local num_messages = #messages
-        if num_messages == 0 then return true end
-        return false, comment, ('expected 0 calls to dfhack.printerr but got' ..
-                                ' %d'):format(num_messages)
-    end
     if type(matcher) ~= 'table' then matcher = {matcher} end
-    local true_count = matcher[true] or 0
-    matcher[true] = nil
-    for _,msg in ipairs(messages) do
-        local m = matcher[1]
-        if matches(msg, m) then
+    while messages[1] do
+        local msg = messages[1]
+        if matches(msg, matcher[1]) then
             table.remove(matcher, 1)
             goto continue
         end
         for k,v in pairs(matcher) do
             if type(v) == 'number' and v > 0 and matches(msg, k) then
                 local remaining = v - 1
-                if v == 0 then
+                if remaining == 0 then
                     matcher[k] = nil
                 else
                     matcher[k] = remaining
@@ -204,27 +181,34 @@ function expect.printerr_match(matcher, func, comment)
                 goto continue
             end
         end
-        if true_count > 0 then
-            true_count = true_count - 1
-            goto continue
-        end
-        return false, comment, ('unmatched printerr message: "%s"'):format(msg)
+        break -- failed to match message
         ::continue::
+        table.remove(messages, 1)
     end
-    local extra_matchers = {}
+    local errmsgs, unmatched_messages, extra_matchers = {}, {}, {}
+    for _,msg in ipairs(messages) do
+        table.insert(unmatched_messages, ('"%s"'):format(msg))
+    end
+    if #unmatched_messages > 0 then
+        table.insert(errmsgs,
+                     ('unmatched dfhack.printerr() messages: %s'):format(
+                        table.concat(unmatched_messages, ', ')))
+    end
     for k,v in ipairs(matcher) do
-        table.insert(extra_matchers, ('"%s"'):format(v))
+        table.insert(extra_matchers, ('"%s"'):format(tostring(v)))
         matcher[k] = nil
     end
     for k,v in pairs(matcher) do
-        table.insert(extra_matchers, ('"%s"=%d'):format(k, v))
-    end
-    if true_count > 0 then
-        table.insert(extra_matchers, ('true=%d'):format(true_count))
+        table.insert(extra_matchers,
+                     ('"%s"=%s'):format(tostring(k), tostring(v)))
     end
     if #extra_matchers > 0 then
-        return false, comment, ('unmatched or invalid matchers: %s'):format(
-            table.concat(extra_matchers, ', '))
+        table.insert(errmsgs,
+                     ('unmatched or invalid matchers: %s'):format(
+                        table.concat(extra_matchers, ', ')))
+    end
+    if #errmsgs > 0 then
+        return false, comment, table.concat(errmsgs, '; ')
     end
     return true
 end

@@ -141,30 +141,14 @@ local function load_test_config(config_file)
     return config
 end
 
-local function run_expect_func(func, ...)
-    local args = {...}
-    local saved_printerr = dfhack.printerr
-    local printerr_called = false
-    dfhack.printerr = function(msg) printerr_called = true end
-    return dfhack.with_finalize(
-        function() dfhack.printerr = saved_printerr end,
-        function()
-            local ret = {func(table.unpack(args))}
-            if printerr_called then
-                return {false,
-                        "dfhack.printerr was called outside of" ..
-                        " expect.printerr_match(). please wrap your test" ..
-                        " with expect.printerr_match()."}
-            end
-            return ret
-        end
-    )
-end
-
+-- we have to save and use the original dfhack.printerr here so our test harness
+-- output doesn't trigger its own dfhack.printerr usage detection (see
+-- detect_printerr below)
+local orig_printerr = dfhack.printerr
 local function wrap_expect(func, private)
     return function(...)
         private.checks = private.checks + 1
-        local ret = run_expect_func(func, ...)
+        local ret = {func(...)}
         local ok = table.remove(ret, 1)
         if ok then
             private.checks_ok = private.checks_ok + 1
@@ -177,9 +161,9 @@ local function wrap_expect(func, private)
             end
         end
         msg = msg:sub(3) -- strip leading ': '
-        dfhack.printerr('Check failed! ' .. (msg or '(no message)'))
+        orig_printerr('Check failed! ' .. (msg or '(no message)'))
         local info = debug.getinfo(2)
-        dfhack.printerr(('  at %s:%d'):format(info.short_src, info.currentline))
+        orig_printerr(('  at %s:%d'):format(info.short_src, info.currentline))
         print('')
     end
 end
@@ -282,12 +266,34 @@ local function sort_tests(tests)
     end)
 end
 
+local function detect_printerr(func)
+    local saved_printerr = dfhack.printerr
+    local printerr_called = false
+    dfhack.printerr = function(msg)
+            saved_printerr(msg)
+            printerr_called = true
+        end
+    return dfhack.with_finalize(
+        function() dfhack.printerr = saved_printerr end,
+        function()
+            local ok, err = pcall(func)
+            if printerr_called then
+                return false,
+                       "dfhack.printerr was called outside of" ..
+                            " expect.printerr_match(). please wrap your test" ..
+                            " with expect.printerr_match()."
+            end
+            return ok, err
+        end
+    )
+end
+
 local function run_test(test, status, counts)
     test.private.checks = 0
     test.private.checks_ok = 0
     counts.tests = counts.tests + 1
     dfhack.internal.IN_TEST = true
-    local ok, err = pcall(test.func)
+    local ok, err = detect_printerr(test.func)
     dfhack.internal.IN_TEST = false
     local passed = false
     if not ok then

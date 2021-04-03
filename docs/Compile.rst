@@ -49,7 +49,13 @@ find yourself cloning DFHack frequently as part of your development process, or
 getting stuck on anything else Git-related, feel free to reach out to us for
 assistance.
 
-.. admonition:: A note on submodules
+.. admonition:: Offline builds
+
+  If you plan to build DFHack on a machine without an internet connection (or
+  with an unreliable connection), see `note-offline-builds` for additional
+  instructions.
+
+.. admonition:: Working with submodules
 
   DFHack uses submodules extensively to manage its subprojects (including the
   ``scripts`` folder and DF-structures in ``library/xml``). Failing to keep
@@ -80,10 +86,6 @@ assistance.
   are also able to help with any submodule-related (or Git-related) issues
   you may encounter.
 
-**More notes**:
-
-* `note-offline-builds` - read this if your build machine may not have an internet connection!
-* `note-old-git-and-dfhack`
 
 Contributing to DFHack
 ======================
@@ -210,11 +212,11 @@ through your package manager, if possible.
 
 You also need zlib, libsdl (1.2, not sdl2, like DF), perl, and the XML::LibXML
 and XML::LibXSLT perl packages (for the code generation parts). You should be
-able to find them in your distro repositories.
+able to find them in your distribution's repositories.
 
 To build `stonesense`, you'll also need OpenGL headers.
 
-Here are some package install commands for various platforms:
+Here are some package install commands for various distributions:
 
 * On Arch linux:
 
@@ -224,11 +226,11 @@ Here are some package install commands for various platforms:
 
     apt-get install gcc cmake ninja-build git zlib1g-dev libsdl1.2-dev libxml-libxml-perl libxml-libxslt-perl
 
+  * Other Debian-based distributions should have similar requirements.
+
 * On Fedora::
 
     yum install gcc-c++ cmake ninja-build git zlib-devel SDL-devel perl-core perl-XML-LibXML perl-XML-LibXSLT ruby
-
-* Debian and derived distros should have similar requirements to Ubuntu.
 
 
 Multilib dependencies
@@ -710,18 +712,3 @@ a command starting with ``cmake .. -G Ninja`` on Linux and macOS, following the
 instructions in the sections above. CMake should automatically locate files that
 you placed in ``CMake/downloads``, and use them instead of attempting to
 download them.
-
-.. _note-old-git-and-dfhack:
-
-Note on using very old git versions with pre-0.43.03 DFHack versions
---------------------------------------------------------------------
-
-If you are using git 1.8.0 or older, and cloned DFHack before commit 85a920d
-(around DFHack v0.43.03-alpha1), you may run into fatal git errors when updating
-submodules after switching branches. This is due to those versions of git being
-unable to handle our change from "scripts/3rdparty/name" submodules to a single
-"scripts" submodule. This may be fixable by renaming .git/modules/scripts to
-something else and re-running ``git submodule update --init`` on the branch with
-the single scripts submodule (and running it again when switching back to the
-one with multiple submodules, if necessary), but it is usually much simpler to
-upgrade your git version.

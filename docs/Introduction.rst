@@ -77,6 +77,12 @@ If  the search function in this documentation isn't enough and
 
 - the `#dfhack IRC channel on freenode <https://webchat.freenode.net/?channels=dfhack>`_
 - the `Bay12 DFHack thread <https://dfhack.org/bay12>`_
+- on GitHub:
+    - for bugs, use the :issue:`issue tracker <>`
+    - for more open-ended questions, use the `discussion board
+      <https://github.com/DFHack/dfhack/discussions>`__. Note that this is a
+      relatively-new feature as of 2021, but maintainers should still be
+      notified of any discussions here.
 - the `/r/dwarffortress <https://dwarffortress.reddit.com>`_ questions thread
 - the thread for the mod or Starter Pack you're using (if any)
 

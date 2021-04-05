@@ -270,6 +270,7 @@ local function detect_printerr(func)
     local saved_printerr = dfhack.printerr
     local printerr_called = false
     dfhack.printerr = function(msg)
+            if msg == nil then return end
             saved_printerr(msg)
             printerr_called = true
         end

@@ -59,20 +59,6 @@ function test.printerr_match()
     local oneprint = function()
         dfhack.printerr('a')
     end
-    local twoprint = function()
-        dfhack.printerr('a')
-        dfhack.printerr('b')
-    end
-    local threeprint = function()
-        dfhack.printerr('a')
-        dfhack.printerr('b')
-        dfhack.printerr('c')
-    end
-    local multiprint = function()
-        dfhack.printerr('a')
-        dfhack.printerr('b')
-        dfhack.printerr('a')
-    end
 
     expect.true_(expect_raw.printerr_match(nil, noprint))
     expect.true_(expect_raw.printerr_match({}, noprint))
@@ -90,6 +76,10 @@ function test.printerr_match()
     expect.false_(expect_raw.printerr_match({b=1}, oneprint))
     expect.false_(expect_raw.printerr_match({a=1,b=1}, oneprint))
 
+    local twoprint = function()
+        dfhack.printerr('a')
+        dfhack.printerr('b')
+    end
     expect.true_(expect_raw.printerr_match({'a','b'}, twoprint))
     expect.true_(expect_raw.printerr_match({a=1,b=1}, twoprint))
     expect.false_(expect_raw.printerr_match({'b','a'}, twoprint))
@@ -98,8 +88,29 @@ function test.printerr_match()
     expect.false_(expect_raw.printerr_match({a=1,b=2}, twoprint))
     expect.false_(expect_raw.printerr_match({a=1,b=1,c=1}, twoprint))
 
+    local threeprint = function()
+        dfhack.printerr('a')
+        dfhack.printerr('b')
+        dfhack.printerr('c')
+    end
     expect.true_(expect_raw.printerr_match({a=1,b=1,c=1}, threeprint))
 
+    local multiprint = function()
+        dfhack.printerr('a')
+        dfhack.printerr('b')
+        dfhack.printerr('a')
+    end
     expect.true_(expect_raw.printerr_match({a=2,b=1}, multiprint))
     expect.false_(expect_raw.printerr_match({a=1,b=1}, multiprint))
+
+    local nilprint = function()
+        dfhack.printerr()
+    end
+    expect.true_(expect_raw.printerr_match({}, nilprint))
+
+    local nilaprint = function()
+        dfhack.printerr()
+        dfhack.printerr('a')
+    end
+    expect.true_(expect_raw.printerr_match({'a'}, nilaprint))
 end

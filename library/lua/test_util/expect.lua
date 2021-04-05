@@ -164,7 +164,7 @@ function expect.printerr_match(matcher, func, comment)
         function() dfhack.printerr = saved_printerr end,
         func)
     if type(matcher) ~= 'table' then matcher = {matcher} end
-    while messages[1] do
+    while #messages > 0 do
         local msg = messages[1]
         if matches(msg, matcher[1]) then
             table.remove(matcher, 1)

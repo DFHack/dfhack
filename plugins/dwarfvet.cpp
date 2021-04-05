@@ -159,7 +159,7 @@ bool AnimalHospital::acceptPatient(int32_t id, color_ostream &out) {
 
     // Yup, let's find the next open spot,
     // and give it to our patient
-    int spot_cur = 0; // fuck the STL for requiring a second counter to make this usable
+    int spot_cur = 0;
     for (vector<bool>::iterator spot = this->spots_in_use.begin(); spot != this->spots_in_use.end(); spot++) {
         if (*spot == false) {
             *spot = true;
@@ -324,7 +324,7 @@ void AnimalHospital::calculateHospital(bool force, color_ostream &out) {
         /* Start marking! */
         for (int i = 0; i < building_height; i++) {
             for (int j = 0; j < building_length; j++) {
-                spots_in_use[spot_cur+j] = true;
+                spots_in_use.at(spot_cur+j) = true;
             }
 
             // Wind the cursor to the start of the next row
@@ -348,7 +348,7 @@ void AnimalHospital::dischargePatient(Patient * patient, color_ostream &out) {
         if ( (*accepted_patient)->getID() == id) {
             out.print("Discharging unit %d from hospital %d\n", id, this->id);
             // Reclaim their spot
-            spots_in_use[(*accepted_patient)->getSpotIndex()] = false;
+            spots_in_use.at((*accepted_patient)->getSpotIndex()) = false;
             this->spots_open++;
             delete (*accepted_patient);
             this->accepted_patients.erase(accepted_patient);
@@ -371,17 +371,7 @@ void AnimalHospital::processPatients(color_ostream &out) {
     // Where the magic happens
     for (vector<Patient*>::iterator patient = this->accepted_patients.begin(); patient != this->accepted_patients.end(); patient++) {
         int id = (*patient)->getID();
-        df::unit * real_unit = nullptr;
-        // Appears the health bits can get freed/realloced too -_-;, Find the unit from the main
-        // index and check it there.
-        auto units = world->units.all;
-
-        for ( size_t a = 0; a < units.size(); a++ ) {
-            real_unit = units[a];
-            if (real_unit->id == id) {
-                break;
-            }
-        }
+        df::unit *real_unit = df::unit::find(id);
 
         // Check to make sure the unit hasn't expired before assigning a job, or if they've been healed
         if (!real_unit || !Units::isActive(real_unit) || !real_unit->health->flags.bits.needs_healthcare) {
@@ -474,8 +464,6 @@ void tickHandler(color_ostream& out, void* data) {
         return;
     CoreSuspender suspend;
     int32_t own_race_id = df::global::ui->race_id;
-    int32_t own_civ_id = df::global::ui->civ_id;
-    auto units = world->units.all;
 
     /**
      * Generate a list of animal hospitals on the map
@@ -496,8 +484,7 @@ void tickHandler(color_ostream& out, void* data) {
 
 
     // Walk the building tree, and generate a list of animal hospitals on the map
-    for (size_t b =0 ; b < world->buildings.all.size(); b++) {
-        df::building* building = world->buildings.all[b];
+    for (df::building* building : df::building::get_vector()) {
         if (isActiveAnimalHospital(building)) {
             hospitals_on_map.push_back(building);
         }
@@ -621,9 +608,7 @@ void tickHandler(color_ostream& out, void* data) {
 */
 processUnits:
     /* Code borrowed from petcapRemover.cpp */
-    for ( size_t a = 0; a < units.size(); a++ ) {
-        df::unit* unit = units[a];
-
+    for (df::unit *unit : df::unit::get_vector()) {
         /* As hilarious as it would be, lets not treat FB :) */
         if ( !Units::isActive(unit) || unit->flags1.bits.active_invader || unit->flags2.bits.underworld || unit->flags2.bits.visitor_uninvited || unit->flags2.bits.visitor ) {
             continue;

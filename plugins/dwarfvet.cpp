@@ -198,7 +198,7 @@ void AnimalHospital::reportUsage(color_ostream &out) {
         if (spot) out.print("X");
         else out.print("-");
         length_cursor--;
-        if (length_cursor < 0) {
+        if (length_cursor <= 0) {
             out.print("\n");
             length_cursor = this->length;
         }

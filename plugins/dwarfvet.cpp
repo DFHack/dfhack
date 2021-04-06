@@ -195,8 +195,8 @@ void AnimalHospital::reportUsage(color_ostream &out) {
     int length_cursor = this->length;
 
     for (bool spot : this->spots_in_use) {
-        if (spot) out.print("t");
-        else out.print("f");
+        if (spot) out.print("X");
+        else out.print("-");
         length_cursor--;
         if (length_cursor < 0) {
             out.print("\n");
@@ -748,8 +748,7 @@ command_result dwarfvet (color_ostream &out, std::vector <std::string> & paramet
         }
         if ( parameters[a] == "report") {
             out.print("Current animal hospitals are:\n");
-            for (size_t b =0 ; b < world->buildings.all.size(); b++) {
-                df::building* building = world->buildings.all[b];
+            for (df::building *building : df::building::get_vector()) {
                 if (isActiveAnimalHospital(building)) {
                     out.print("  at x1: %d, x2: %d, y1: %d, y2: %d, z: %d\n", building->x1, building->x2, building->y1, building->y2, building->z);
                 }

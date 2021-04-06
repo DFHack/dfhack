@@ -82,11 +82,23 @@ local function clean_require(module)
     return require(module)
 end
 
--- forces clean load of scripts directly or indirectly included from the test
--- file. we use our own scripts table instead of the one in dfhack.internal so
--- we don't affect the state scripts that are used outside the test harness.
+-- clean_run_script and clean_reqscript force a clean load of scripts directly
+-- or indirectly included from the test file. we use our own scripts table
+-- instead of the one in dfhack.internal so we don't affect the state scripts
+-- that are used outside the test harness.
 local test_scripts = {}
 local test_envvars = {}
+
+-- clean_run_script is accessed via the dfhack table, not directly from the env.
+-- therefore we use this function in wrap_test() below and not in test_envvars.
+local function clean_run_script(name, ...)
+    return dfhack.run_script_with_env(
+        test_envvars,
+        name,
+        {scripts=test_scripts},
+        ...)
+end
+
 local function clean_reqscript(name)
     local path = dfhack.findScript(name)
     if test_scripts[path] then return test_scripts[path].env end
@@ -266,16 +278,20 @@ local function sort_tests(tests)
     end)
 end
 
-local function detect_printerr(func)
-    local saved_printerr = dfhack.printerr
+local function wrap_test(func)
+    local saved_printerr, saved_run_script = dfhack.printerr, dfhack.run_script
     local printerr_called = false
     dfhack.printerr = function(msg)
             if msg == nil then return end
             saved_printerr(msg)
             printerr_called = true
         end
+    dfhack.run_script = clean_run_script
     return dfhack.with_finalize(
-        function() dfhack.printerr = saved_printerr end,
+        function()
+            dfhack.printerr = saved_printerr
+            dfhack.run_script = saved_run_script
+        end,
         function()
             local ok, err = pcall(func)
             if printerr_called then
@@ -294,7 +310,7 @@ local function run_test(test, status, counts)
     test.private.checks_ok = 0
     counts.tests = counts.tests + 1
     dfhack.internal.IN_TEST = true
-    local ok, err = detect_printerr(test.func)
+    local ok, err = wrap_test(test.func)
     dfhack.internal.IN_TEST = false
     local passed = false
     if not ok then

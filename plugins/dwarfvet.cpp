@@ -46,6 +46,7 @@
 #include "df/world.h"
 
 #include <map>
+#include <unordered_set>
 #include <vector>
 
 using namespace DFHack;
@@ -60,7 +61,7 @@ DFHACK_PLUGIN_IS_ENABLED(dwarfvet_enabled);
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(world);
 
-static vector<int32_t> tracked_units;
+static unordered_set<int32_t> tracked_units;
 static int32_t howOften = 100;
 
 struct hospital_spot {
@@ -357,12 +358,7 @@ void AnimalHospital::dischargePatient(Patient * patient, color_ostream &out) {
     }
 
     // And the master list
-    for (vector<int32_t>::iterator it = tracked_units.begin(); it != tracked_units.end(); it++) {
-        if ((*it) == id) {
-            tracked_units.erase(it);
-            break;
-        }
-    }
+    tracked_units.erase(id);
 
     return;
 }
@@ -708,12 +704,7 @@ processUnits:
              */
 
             // Now we need to find if this unit can be accepted at a hospital
-            bool awareOfUnit = false;
-            for (vector<int32_t>::iterator it = tracked_units.begin(); it != tracked_units.end(); it++) {
-                if ((*it) == unit->id) {
-                    awareOfUnit = true;
-                }
-            }
+            bool awareOfUnit = tracked_units.count(unit->id);
             // New unit for dwarfvet to be aware of!
             if (!awareOfUnit) {
                 // The master list handles all patients which are accepted
@@ -722,7 +713,7 @@ processUnits:
                 for (auto animal_hospital : animal_hospital_zones) {
                     if (animal_hospital->acceptPatient(unit->id, out)) {
                         out.print("Accepted patient %d at hospital %d\n", unit->id, animal_hospital->getID());
-                        tracked_units.push_back(unit->id);
+                        tracked_units.insert(unit->id);
                         break;
                     }
                 }

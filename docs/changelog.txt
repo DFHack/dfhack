@@ -37,6 +37,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `buildingplan`: fixed an issue where planned constructions designated with DF's sizing keys (``umkh``) would sometimes be larger than requested
 - `command-prompt`: fixed issues where overlays created by running certain commands (e.g. `gui/liquids`, `gui/teleport`) would not update the parent screen correctly
 
+## Misc Improvements
+- `tweak` hide-priority: changed so that priorities stay hidden (or visible) when exiting and re-entering the designations menu
+
 ## Lua
 - ``gui.Painter``: fixed error when calling ``viewport()`` method
 - `xlsxreader`: Added Lua class wrappers for the xlsxreader plugin API

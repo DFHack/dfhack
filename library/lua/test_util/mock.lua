@@ -34,7 +34,7 @@ function mock.patch(...)
         table.insert(patches, p)
     end
 
-    dfhack.with_finalize(
+    return dfhack.with_finalize(
         function()
             for _, p in ipairs(patches) do
                 p.table[p.key] = p.old_value
@@ -44,7 +44,7 @@ function mock.patch(...)
             for _, p in ipairs(patches) do
                 p.table[p.key] = p.new_value
             end
-            callback()
+            return callback()
         end
     )
 end

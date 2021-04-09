@@ -90,3 +90,11 @@ function test.patch_complex_key()
     end)
     expect.eq(t[key], 'value')
 end
+
+function test.patch_callback_return_value()
+    local a, b = mock.patch({}, 'k', 'v', function()
+        return 3, 4
+    end)
+    expect.eq(a, 3)
+    expect.eq(b, 4)
+end

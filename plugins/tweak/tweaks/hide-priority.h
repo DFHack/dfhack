@@ -7,6 +7,11 @@ using df::global::ui_sidebar_menus;
 
 struct hide_priority_hook : df::viewscreen_dwarfmodest {
     typedef df::viewscreen_dwarfmodest interpose_base;
+
+    static bool was_valid_mode;
+    static bool toggled_manually;
+    static bool last_show_priorities_setting;
+
     inline bool valid_mode ()
     {
         switch (ui->main.mode)
@@ -35,6 +40,9 @@ struct hide_priority_hook : df::viewscreen_dwarfmodest {
     }
     DEFINE_VMETHOD_INTERPOSE(void, render, ())
     {
+        if (!was_valid_mode && valid_mode() && toggled_manually) {
+            ui_sidebar_menus->designation.priority_set = last_show_priorities_setting;
+        }
         INTERPOSE_NEXT(render)();
         if (valid_mode())
         {
@@ -47,15 +55,24 @@ struct hide_priority_hook : df::viewscreen_dwarfmodest {
                     COLOR_WHITE, COLOR_LIGHTRED);
             }
         }
+        was_valid_mode = valid_mode();
     }
     DEFINE_VMETHOD_INTERPOSE(void, feed, (std::set<df::interface_key> *input))
     {
         if (valid_mode() && input->count(df::interface_key::CUSTOM_ALT_P))
+        {
             ui_sidebar_menus->designation.priority_set = !ui_sidebar_menus->designation.priority_set;
+            toggled_manually = true;
+            last_show_priorities_setting = ui_sidebar_menus->designation.priority_set;
+        }
         else
             INTERPOSE_NEXT(feed)(input);
     }
 };
+
+bool hide_priority_hook::was_valid_mode = false;
+bool hide_priority_hook::toggled_manually = false;
+bool hide_priority_hook::last_show_priorities_setting = false;
 
 IMPLEMENT_VMETHOD_INTERPOSE(hide_priority_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(hide_priority_hook, render);

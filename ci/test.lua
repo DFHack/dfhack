@@ -281,19 +281,20 @@ local function sort_tests(tests)
 end
 
 local function wrap_test(func)
-    local saved_printerr, saved_run_script = dfhack.printerr, dfhack.run_script
+    local saved_printerr = dfhack.printerr
     local printerr_called = false
-    dfhack.printerr = function(msg)
-            if msg == nil then return end
-            saved_printerr(msg)
-            printerr_called = true
-        end
-    dfhack.run_script = clean_run_script
-    return dfhack.with_finalize(
-        function()
-            dfhack.printerr = saved_printerr
-            dfhack.run_script = saved_run_script
-        end,
+    local printerr_wrapper = function(msg)
+        if msg == nil then return end
+        saved_printerr(msg)
+        printerr_called = true
+    end
+
+    return mock.patch(
+        {
+            {dfhack, 'printerr', printerr_wrapper},
+            {dfhack, 'run_script', clean_run_script},
+            {dfhack, 'reqscript', clean_reqscript},
+        },
         function()
             local ok, err = pcall(func)
             if printerr_called then

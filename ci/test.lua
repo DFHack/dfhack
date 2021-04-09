@@ -3,6 +3,7 @@
 
 local expect = require 'test_util.expect'
 local json = require 'json'
+local mock = require 'test_util.mock'
 local script = require 'gui.script'
 local utils = require 'utils'
 
@@ -187,6 +188,7 @@ local function build_test_env()
             mode = 'none',
         },
         expect = {},
+        mock = mock,
         delay = delay,
         require = clean_require,
         reqscript = clean_reqscript,

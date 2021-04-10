@@ -98,3 +98,39 @@ function test.patch_callback_return_value()
     expect.eq(a, 3)
     expect.eq(b, 4)
 end
+
+function test.func_call_count()
+    local f = mock.func()
+    expect.eq(f.call_count, 0)
+    f()
+    expect.eq(f.call_count, 1)
+    f()
+    expect.eq(f.call_count, 2)
+end
+
+function test.func_call_args()
+    local f = mock.func()
+    expect.eq(#f.call_args, 0)
+    f()
+    f(7)
+    expect.eq(#f.call_args, 2)
+    expect.eq(#f.call_args[1], 0)
+    expect.eq(#f.call_args[2], 1)
+    expect.eq(f.call_args[2][1], 7)
+end
+
+function test.func_call_args_nil()
+    local f = mock.func()
+    f(nil)
+    f(2, nil, 4)
+    expect.table_eq(f.call_args[1], {nil})
+    expect.table_eq(f.call_args[2], {2, nil, 4})
+    expect.eq(#f.call_args[2], 3)
+end
+
+function test.func_call_return_value()
+    local f = mock.func(7)
+    expect.eq(f(), 7)
+    f.return_value = 9
+    expect.eq(f(), 9)
+end

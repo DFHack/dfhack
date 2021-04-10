@@ -1,6 +1,5 @@
 local mock = mkmodule('test_util.mock')
 
-
 --[[
 Usage:
     patch(table, key, value, callback)
@@ -47,6 +46,24 @@ function mock.patch(...)
             return callback()
         end
     )
+end
+
+function mock.func(return_value)
+    local f = {
+        return_value = return_value,
+        call_count = 0,
+        call_args = {},
+    }
+
+    setmetatable(f, {
+        __call = function(self, ...)
+            self.call_count = self.call_count + 1
+            table.insert(self.call_args, {...})
+            return self.return_value
+        end,
+    })
+
+    return f
 end
 
 return mock

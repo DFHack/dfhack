@@ -243,7 +243,7 @@ local function load_tests(file, tests)
         return false
     else
         dfhack.internal.IN_TEST = true
-        local ok, err = pcall(code)
+        local ok, err = dfhack.pcall(code)
         dfhack.internal.IN_TEST = false
         if not ok then
             dfhack.printerr('Error when running file: ' .. tostring(err))
@@ -296,7 +296,7 @@ local function wrap_test(func)
             {dfhack, 'reqscript', clean_reqscript},
         },
         function()
-            local ok, err = pcall(func)
+            local ok, err = dfhack.pcall(func)
             if printerr_called then
                 return false,
                        "dfhack.printerr was called outside of" ..
@@ -317,7 +317,8 @@ local function run_test(test, status, counts)
     dfhack.internal.IN_TEST = false
     local passed = false
     if not ok then
-        dfhack.printerr('test errored: ' .. test.name .. ': ' .. tostring(err))
+        dfhack.printerr('error: ' .. tostring(err) .. '\n')
+        dfhack.printerr('test errored: ' .. test.name)
     elseif test.private.checks ~= test.private.checks_ok then
         dfhack.printerr('test failed: ' .. test.name)
     else

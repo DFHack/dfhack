@@ -277,62 +277,16 @@ void AnimalHospital::calculateHospital(bool force, color_ostream &out) {
         // NOTE: under some conditions, this generates a false warning. Not a lot I can do about it
 
         // Mark spots used by that building as used; FIXME: handle special logic for traction benches and such
-        int building_offset_x = building->x1 - this->x1;
-        int building_offset_y = building->y1 - this->y1;
-        int building_length = building->x2 - building->x1 + 1;
-        int building_height = building->y2 - building->y1 + 1;
-
-        // Cap the used calculation to only include the part in the hospital
-        if (this->x1 > building->x1) {
-            building_offset_x -= (this->x1 - building->x1);
-        }
-
-        if (this->y1 > building->y1) {
-            building_offset_y -= (building->y1 - this->y1);
-        }
-
-        if ((this->x2 < building->x2) && building_offset_x) {
-            building_length -= (this->x2 - building->x2) + 1;
-        }
-
-        if ((this->y2 < building->y2) && building_offset_y) {
-            building_height = (building->y2 - this->y2) + 1;
-        }
-
-        // Quick explination, if a building is north or east of the activity zone,
-        // we get a negative offset, we'll just skip those lines below. If its
-        // south or west, we make the building length/height lower to compinsate.
-
-        /* if we have a negative x offset, we correct that */
-        if (building_offset_x < 0) {
-            building_height += building_offset_x;
-            building_offset_x = 0;
-        }
-
-        /* Handle negative y offset */
-        if (building_offset_y < 0) {
-            building_length += building_offset_y;
-            building_offset_y = 0;
-        };
-
-        /* Advance the pointer to first row we need to mark */
-        int spot_cur = 0;
-        if (building_offset_y) {
-            spot_cur = (length+1) * building_offset_y;
-        }
-
-        spot_cur += building_offset_x;
-        /* Start marking! */
-        for (int i = 0; i < building_height; i++) {
-            for (int j = 0; j < building_length; j++) {
-                spots_in_use.at(spot_cur+j) = true;
+        int overlap_x1 = std::max(building->x1, this->x1);
+        int overlap_y1 = std::max(building->y1, this->y1);
+        int overlap_x2 = std::min(building->x2, this->x2);
+        int overlap_y2 = std::min(building->y2, this->y2);
+        for (int x = overlap_x1; x <= overlap_x2; x++) {
+            for (int y = overlap_y1; y <= overlap_y2; y++) {
+                int spot_index = (x - this->x1) + (this->length * (y - this->y1));
+                spots_in_use.at(spot_index) = true;
             }
-
-            // Wind the cursor to the start of the next row
-            spot_cur += length+1;
         }
-
-        // *phew*, done. Now repeat the process for the next building!
     }
 
 }

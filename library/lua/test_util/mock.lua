@@ -1,27 +1,8 @@
 local mock = mkmodule('test_util.mock')
 
---[[
-Usage:
-    patch(table, key, value, callback)
-    patch({
-        {table, key, value},
-        {table2, key2, value2}
-    }, callback)
-]]
-function mock.patch(...)
-    local args = {...}
-    if #args == 4 then
-        args = {{
-            {args[1], args[2], args[3]}
-        }, args[4]}
-    end
-    if #args ~= 2 then
-        error('expected 2 or 4 arguments')
-    end
-
-    local callback = args[2]
+function _patch_impl(patches_raw, callback, restore_only)
     local patches = {}
-    for _, v in ipairs(args[1]) do
+    for _, v in ipairs(patches_raw) do
         local p = {
             table = v[1],
             key = v[2],
@@ -40,12 +21,64 @@ function mock.patch(...)
             end
         end,
         function()
-            for _, p in ipairs(patches) do
-                p.table[p.key] = p.new_value
+            if not restore_only then
+                for _, p in ipairs(patches) do
+                    p.table[p.key] = p.new_value
+                end
             end
             return callback()
         end
     )
+end
+
+--[[
+Usage:
+    patch(table, key, value, callback)
+    patch({
+        {table, key, value},
+        {table2, key2, value2},
+    }, callback)
+]]
+function mock.patch(...)
+    local args = {...}
+    local patches
+    local callback
+    if #args == 4 then
+        patches = {{args[1], args[2], args[3]}}
+        callback = args[4]
+    elseif #args == 2 then
+        patches = args[1]
+        callback = args[2]
+    else
+        error('expected 2 or 4 arguments')
+    end
+
+    return _patch_impl(patches, callback)
+end
+
+--[[
+Usage:
+    restore(table, key, callback)
+    restore({
+        {table, key},
+        {table2, key2},
+    }, callback)
+]]
+function mock.restore(...)
+    local args = {...}
+    local patches
+    local callback
+    if #args == 3 then
+        patches = {{args[1], args[2]}}
+        callback = args[3]
+    elseif #args == 2 then
+        patches = args[1]
+        callback = args[2]
+    else
+        error('expected 2 or 3 arguments')
+    end
+
+    return _patch_impl(patches, callback, true)
 end
 
 function mock.func(return_value)

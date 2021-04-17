@@ -175,8 +175,25 @@ local function wrap_expect(func, private)
         end
         msg = msg:sub(3) -- strip leading ': '
         orig_printerr('Check failed! ' .. (msg or '(no message)'))
-        local info = debug.getinfo(2)
-        orig_printerr(('  at %s:%d'):format(info.short_src, info.currentline))
+        -- Generate a stack trace with all function calls in the same file as the caller to expect.*()
+        -- (this produces better stack traces when using helpers in tests)
+        -- Skip any frames corresponding to C calls, which could be pcall() / with_finalize()
+        local frame = 2
+        local caller_src
+        while true do
+            info = debug.getinfo(frame)
+            if not info then break end
+            if not caller_src then
+                caller_src = info.short_src
+            end
+            if info.what == 'Lua' then
+                if info.short_src ~= caller_src then
+                    break
+                end
+                orig_printerr(('  at %s:%d'):format(info.short_src, info.currentline))
+            end
+            frame = frame + 1
+        end
         print('')
     end
 end

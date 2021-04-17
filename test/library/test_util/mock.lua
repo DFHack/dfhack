@@ -99,6 +99,78 @@ function test.patch_callback_return_value()
     expect.eq(b, 4)
 end
 
+function test.patch_invalid_value()
+    dfhack.with_temp_object(df.new('int8_t'), function(i)
+        i.value = 1
+        local called = false
+        expect.error_match('integer expected', function()
+            mock.patch(i, 'value', 2, function()
+                expect.eq(i.value, 2)
+                called = true
+                i.value = 'a'
+            end)
+        end)
+        expect.true_(called)
+        expect.eq(i.value, 1)
+    end)
+end
+
+function test.patch_invalid_value_initial()
+    dfhack.with_temp_object(df.new('int8_t'), function(i)
+        i.value = 1
+        expect.error_match('integer expected', function()
+            mock.patch(i, 'value', 'a', function()
+                expect.fail('patch() callback called unexpectedly')
+            end)
+        end)
+        expect.eq(i.value, 1)
+    end)
+end
+
+function test.patch_invalid_value_initial_multiple()
+    dfhack.with_temp_object(df.new('int8_t', 2), function(i)
+        i[0] = 1
+        i[1] = 2
+        expect.error_match('integer expected', function()
+            mock.patch({
+                {i, 0, 3},
+                {i, 1, 'a'},
+            }, function()
+                expect.fail('patch() callback called unexpectedly')
+            end)
+        end)
+        expect.eq(i[0], 1)
+        expect.eq(i[1], 2)
+    end)
+end
+
+function test.restore_single()
+    local t = {k = 1}
+    mock.restore(t, 'k', function()
+        expect.eq(t.k, 1)
+        t.k = 2
+        expect.eq(t.k, 2)
+    end)
+    expect.eq(t.k, 1)
+end
+
+function test.restore_multiple()
+    local t = {a = 1, b = 2}
+    mock.restore({
+        {t, 'a'},
+        {t, 'b'},
+    }, function()
+        expect.eq(t.a, 1)
+        expect.eq(t.b, 2)
+        t.a = 3
+        t.b = 4
+        expect.eq(t.a, 3)
+        expect.eq(t.b, 4)
+    end)
+    expect.eq(t.a, 1)
+    expect.eq(t.b, 2)
+end
+
 function test.func_call_count()
     local f = mock.func()
     expect.eq(f.call_count, 0)

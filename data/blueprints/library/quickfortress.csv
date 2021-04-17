@@ -1,29 +1,29 @@
 #notes label(help)
 "This is Buketgeshud, or translated from Dwarvish, The Quick Fortress. It is a set of basic blueprints for quickfort, demonstrating its use in assembling an entire basic (if incomplete) fort."
-""
+
 Buketgeshud is designed around a 30x20 footprint with a common 2x2 central staircase. Blueprints can be repeated in any direction to connect in a modular fashion with adjacent 30x20 areas. A fortresswide example recirculating waterfall/plumbing system is included as an overlay if you're feeling hardcore.
-""
+
 Walkthrough:
 1) Embark!
-""
+
 2) Clear a 30 wide x 20 high region of trees on the surface. This should be uninterrupted flat ground with soil (so that we can place farms below). Deconstruct your wagon.
-""
+
 "3) Run /surface1. You'll want to put the cursor in the middle of the 30x20 cleared area (14 right, 8 down from the top left corner). This digs out stairs on the surface, a farm/depot/workshop level below, as well as the beginnings of an entrance moat. The beginnings of a 3rd z-level are also dug out; don't build anything here if you'd like to put waterfall plumbing in later."
-""
+
 "4) After /surface1 is dug out, run /surface2 (beginning from the same starting position as you used for /surface1). This puts down a basic set of workshops commonly needed soon after embark, a couple farm plots, and a depot. It also places and configures starting stockpiles."
-""
+
 "5) If your embark site is near any enemies, run /surface3 to build walls and traps on the surface to protect against invaders."
-""
+
 "6) Dig out the central shaft and tunnels for several z-levels below our surface/depot level. Place the cursor THREE Z-levels below the surface, where no digging has occurred yet, and run /basic1 for 6 z-levels down starting from that level."
-""
+
 "7) Optionally run /basic2 to designate booze-only stockpiles around the central stairs on every z-level below the farming level. The stockpiles are configured to take booze from the level above, so be sure to apply /basic2 on the top level first and work your way down."
-""
+
 "8) Run workshops, bedrooms, and storeroom blueprints on any desired Z-level along our central shaft."
-""
+
 "9) If desired, add a fortresswide waterfall system, bathing your dwarves in tile after tile of lovely waterfall mist as they go about their day. Run /waterfall1 on the z-level immediately below your farm/depot level (you left that space empty, didn't you?) and run /plumbing1 on z-levels below that, down to the bottom of your fort. Each application of /plumbing1 will dig out two floors. On the bottommost level, the screw pumps that will be placed there require 2 floor tiles to sit on, so remove or refloor the 2 northern channel designations  in the lower right corner on that z-level. You'll also need a reservior in the z-level below that (not included)."
-""
+
 "10) After all levels are dug out, apply /plumbing2 on the *bottommost* level, just above the reservior. The blueprint will build screw pumps on that level and the level above. Repeat on every alternate level up to the level below where you applied /waterfall1."
-""
+
 "11) Finally, apply /waterfall2 on the z-level where you applied /waterfall1. Route flowing water to the 2 tiles in lower right."
 "#dig label(surface1) start(15;10; top left corner of central stairs) message(The 3rd z-level just digs stairs; if you want to install the waterfall plumbing system later, leave this 3rd level EMPTY for now and start the base proper below that; use /basic1 to dig out areas for future use below.) Surface and farm/depot levels"
 `,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,#
@@ -182,8 +182,8 @@ w(4x2),,,,,f(9x2),,,,,,,,,`,`,f(1x2),,,,,,`,,,,,,,`,#
 #,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#
 #query label(surface2_query) hidden() start(15;10; top left corner of central stairs) message(remember to set the farm plots to grow plump helmets) Adjust surface/depot level stockpiles
 `,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,#
-`,bodyparts,,,,,~,,,,,,,rawhides,,,craftrefuse,,,,,,`,`,,,,,~,~,#
-`,,,,,,,,,,,,,,,,,,,,,,`,`,,`,`,,~,~,#
+`,forbidrawhides,,,,,~,,,,,,,rawhides,,,craftrefuse,,,,,,`,`,,,,,~,~,#
+`,forbidcraftrefuse,,,,,,,,,,,,,,,,,,,,,`,`,,`,`,,~,~,#
 `,,,,,,,,,,,,,,,,,,,,,,`,`,,,`,,~,~,#
 `,,,,,,,,,,,,,,,,,,,,,,`,`,`,,`,`,`,`,#
 `,,,,,,,,,,,,,,,,,,,,,,`,`,,,`,`,`,`,#
@@ -202,7 +202,7 @@ w(4x2),,,,,f(9x2),,,,,,,,,`,`,f(1x2),,,,,,`,,,,,,,`,#
 `,,,,,,,,,,,,`,,,,,`,,,,,`,`,`,`,`,`,`,`,#
 `,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`,#
 #>,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#
-noseeds,,,,,,,,,,,,,,`,`,,,,,,,`,`,`,`,`,`,`,`,#
+forbidseeds,,,,,,,,,,,,,,`,`,,,,,,,`,`,`,`,`,`,`,`,#
 ,,,,,,,,,,,,,,seeds,,,,,,,,`,,,,,,,`,#
 ,,,,,,,,,,,,,,,,,,,,,,`,,,,,,,`,#
 ,,,,,,,,,,,,,,,,,,,,,,`,,,,,,,`,#
@@ -496,7 +496,7 @@ d,d,d,d,d,d,d,d,d,d,d,d,d,,d,d,,d,d,d,d,d,d,d,d,d,,,,,#
 d,d,d,d,d,d,d,d,d,d,d,d,d,,d,d,,d,d,d,d,d,d,d,d,d,,,,,#
 d,d,d,d,d,d,d,d,d,d,d,d,d,,d,d,,d,d,d,d,d,d,d,d,d,,,,,#
 d,d,d,d,d,d,d,d,d,d,d,d,d,,d,d,,d,d,d,d,d,d,d,d,d,,,,,#
-d,d,d,d,d,d,d,d,d,d,d,d,d,d,i,i,d,d,d,d,d,d,d,d,d,d,,,,,#
+d,d,d,d,i,d,d,d,d,d,d,d,d,d,i,i,d,d,d,d,d,d,d,d,d,i,,,,,#
 #,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#
 #meta label(storeroom2a) General stockpiles
 /storeroom2a_place
@@ -505,48 +505,48 @@ d,d,d,d,d,d,d,d,d,d,d,d,d,d,i,i,d,d,d,d,d,d,d,d,d,d,,,,,#
 /storeroom2b_place
 /storeroom2_doors
 #place label(storeroom2a_place) hidden() start(15;10; top left corner of central stairs) General stockpiles
-g(6x8),,,,x(1x1),,l(7x8),,,,,,,,,,,d(7x5),,,,,,,p(6x5),x(1x1),,,,,#
-,,,,,,,,,,,,,`,,,`,,,,,,,,,,,,,,#
-,,,,,,,,,,,,,`,,,`,,,,,,,,,,,,,,#
-,,,,,,,,,,,,,`,,,`,,,,,,,,,,,,,,#
-,,,,,,,,,,,,,`,,,`,,,,,,,,,,,,,,#
-,,,,,,,,,,,,,`,,,`,b(7x3),,,,,,,z(6x3),,,,,,#
-,,,,,,,,,,,,,`,,,`,,,,,,,,,,,,,,#
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,#
+g,g,g,g,~,g,l(7x8),,,,,,,,,,,d(7x5),,,,,,,p,~,p,p,p,p,#
+g,g,g,g,g,g,,,,,,,,`,,,`,,,,,,,,p,p,p,p,p,p,#
+g,g,g,g,g,g,,,,,,,,`,,,`,,,,,,,,p,p,p,p,p,p,#
+g,g,g,g,g,g,,,,,,,,`,,,`,,,,,,,,p,p,p,p,p,p,#
+g,g,g,g,g,g,,,,,,,,`,,,`,,,,,,,,p,p,p,p,p,p,#
+g,g,g,g,g,g,,,,,,,,`,,,`,b(7x3),,,,,,,z(6x3),,,,,,#
+g,g,g,g,g,g,,,,,,,,`,,,`,,,,,,,,,,,,,,#
+g,g,g,g,g,g,,,,,,,,,,,,,,,,,,,,,,,,,#
 `,`,`,`,,`,`,`,`,`,`,`,,`,,,`,,`,`,`,`,`,`,`,,`,`,`,`,#
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,#
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,#
 `,`,`,`,,`,`,`,`,`,`,`,,`,,,`,,`,`,`,`,`,`,`,,`,`,`,`,#
-u(13x8),,,,,,,,,,,,,,,,,u(7x8),,,,,,,w(6x8),,,,,,#
-,,,,,,,,,,,,,`,,,`,,,,,,,,,,,,,,#
-,,,,,,,,,,,,,`,,,`,,,,,,,,,,,,,,#
-,,,,,,,,,,,,,`,,,`,,,,,,,,,,x(4x5),,,`,#
-,,,,,,,,,,,,,`,,,`,,,,,,,,,,`,,,,#
-,,,,,,,,,,,,,`,,,`,,,,,,,,,,`,,,,#
-,,,,,,,,,,,,,`,,,`,,,,,,,,,,`,,,,#
-,,,,,,,,,,,,,,,,,,,,,,,,,,`,,,,#
+u,u,u,u,u,u,u,u,u,u,u,u,u,,,,,u(7x8),,,,,,,w,w,w,w,w,w,#
+u,u,u,u,u,u,u,u,u,u,u,u,u,`,,,`,,,,,,,,w,w,w,w,w,w,#
+u,u,u,u,u,u,u,u,u,u,u,u,u,`,,,`,,,,,,,,w,w,w,w,w,w,#
+u,u,u,u,u,u,u,u,u,u,u,u,u,`,,,`,,,,,,,,w,w,`,`,`,`,#
+u,u,u,u,u,u,u,u,u,u,u,u,u,`,,,`,,,,,,,,w,w,`,,,,#
+u,u,u,u,u,u,u,u,u,u,u,u,u,`,,,`,,,,,,,,w,w,`,,,,#
+u,u,u,u,u,u,u,u,u,u,u,u,u,`,,,`,,,,,,,,w,w,`,,,,#
+u,u,u,u,~,u,u,u,u,u,u,u,u,,,,,,,,,,,,w,~,`,,,,#
 #,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#
 "#place label(storeroom2b_place) hidden() start(15;10; top left corner of central stairs) Extra storage for wood, food and furniture"
-w(13x8),,,,x(1x1),,,,,,,,,,,,,f(13x8),,,,,,,,x(1x1),,,,,#
-,,,,,,,,,,,,,`,,,`,,,,,,,,,,,,,,#
-,,,,,,,,,,,,,`,,,`,,,,,,,,,,,,,,#
-,,,,,,,,,,,,,`,,,`,,,,,,,,,,,,,,#
-,,,,,,,,,,,,,`,,,`,,,,,,,,,,,,,,#
-,,,,,,,,,,,,,`,,,`,,,,,,,,,,,,,,#
-,,,,,,,,,,,,,`,,,`,,,,,,,,,,,,,,#
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,#
+w,w,w,w,~,w,w,w,w,w,w,w,w,,,,,f,f,f,f,f,f,f,f,~,f,f,f,f,#
+w,w,w,w,w,w,w,w,w,w,w,w,w,`,,,`,f,f,f,f,f,f,f,f,f,f,f,f,f,#
+w,w,w,w,w,w,w,w,w,w,w,w,w,`,,,`,f,f,f,f,f,f,f,f,f,f,f,f,f,#
+w,w,w,w,w,w,w,w,w,w,w,w,w,`,,,`,f,f,f,f,f,f,f,f,f,f,f,f,f,#
+w,w,w,w,w,w,w,w,w,w,w,w,w,`,,,`,f,f,f,f,f,f,f,f,f,f,f,f,f,#
+w,w,w,w,w,w,w,w,w,w,w,w,w,`,,,`,f,f,f,f,f,f,f,f,f,f,f,f,f,#
+w,w,w,w,w,w,w,w,w,w,w,w,w,`,,,`,f,f,f,f,f,f,f,f,f,f,f,f,f,#
+w,w,w,w,w,w,w,w,w,w,w,w,w,,,,,f,f,f,f,f,f,f,f,f,f,f,f,f,#
 `,`,`,`,,`,`,`,`,`,`,`,,`,,,`,,`,`,`,`,`,`,`,,`,`,`,`,#
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,#
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,#
 `,`,`,`,,`,`,`,`,`,`,`,,`,,,`,,`,`,`,`,`,`,`,,`,`,`,`,#
-u(13x8),,,,,,,,,,,,,,,,,u(13x8),,,,,,,,,,,,,#
-,,,,,,,,,,,,,`,,,`,,,,,,,,,,,,,,#
-,,,,,,,,,,,,,`,,,`,,,,,,,,,,,,,,#
-,,,,,,,,,,,,,`,,,`,,,,,,,,,,x(4x5),,,`,#
-,,,,,,,,,,,,,`,,,`,,,,,,,,,,`,,,,#
-,,,,,,,,,,,,,`,,,`,,,,,,,,,,`,,,,#
-,,,,,,,,,,,,,`,,,`,,,,,,,,,,`,,,,#
-,,,,,,,,,,,,,,,,,,,,,,,,,,`,,,,#
+u,u,u,u,u,u,u,u,u,u,u,u,u,,,,,u,u,u,u,u,u,u,u,u,u,u,u,u,#
+u,u,u,u,u,u,u,u,u,u,u,u,u,`,,,`,u,u,u,u,u,u,u,u,u,u,u,u,u,#
+u,u,u,u,u,u,u,u,u,u,u,u,u,`,,,`,u,u,u,u,u,u,u,u,u,u,u,u,u,#
+u,u,u,u,u,u,u,u,u,u,u,u,u,`,,,`,u,u,u,u,u,u,u,u,u,`,`,`,`,#
+u,u,u,u,u,u,u,u,u,u,u,u,u,`,,,`,u,u,u,u,u,u,u,u,u,`,,,,#
+u,u,u,u,u,u,u,u,u,u,u,u,u,`,,,`,u,u,u,u,u,u,u,u,u,`,,,,#
+u,u,u,u,u,u,u,u,u,u,u,u,u,`,,,`,u,u,u,u,u,u,u,u,u,`,,,,#
+u,u,u,u,~,u,u,u,u,u,u,u,u,,,,,u,u,u,u,u,u,u,u,~,`,,,,#
 #,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#
 #build label(storeroom2_doors) hidden() start(15;10; top left corner of central stairs) Build storeroom doors
 ,,,,,,,,,,,,,d,,,d,,,,,,,,,,,,,,#

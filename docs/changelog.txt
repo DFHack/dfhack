@@ -80,6 +80,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `embark-assistant`: improved performance of surveying
 - `quickfort`: fixed eventual crashes when creating zones
 - `quickfort`: fixed library aliases for tallow and iron, copper, and steel weapons
+- `quickfort blueprint library <quickfort-library-guide>`: fix refuse stockpile config and prevent stockpiles from covering stairways in the quickfortress.csv library blueprint
 - `seedwatch`: fixed an issue where the plugin would disable itself on map load
 - `search`: fixed crash when searching the ``k`` sidebar and navigating to another tile with certain keys, like ``<`` or ``>``
 - `stockflow`: fixed ``j`` character being intercepted when naming stockpiles

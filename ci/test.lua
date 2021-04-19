@@ -66,8 +66,6 @@ local TestStatus = {
     FAILED = 'failed',
 }
 
-local VALID_MODES = utils.invert{'none', 'title', 'fortress'}
-
 local function delay(frames)
     frames = frames or 1
     script.sleep(frames, 'frames')
@@ -116,29 +114,87 @@ end
 test_envvars.require = clean_require
 test_envvars.reqscript = clean_reqscript
 
-local function ensure_title_screen()
-    if df.viewscreen_titlest:is_instance(dfhack.gui.getCurViewscreen()) then
-        return
-    end
-    print('Looking for title screen...')
-    for i = 0, 100 do
-        local scr = dfhack.gui.getCurViewscreen()
-        if df.viewscreen_titlest:is_instance(scr) then
-            print('Found title screen')
-            break
-        else
-            scr:feed_key(df.interface_key.LEAVESCREEN)
-            delay(10)
-        end
-    end
-    if not df.viewscreen_titlest:is_instance(dfhack.gui.getCurViewscreen()) then
-        error('Could not find title screen')
-    end
+local function is_title_screen(scr)
+    scr = scr or dfhack.gui.getCurViewscreen()
+    return df.viewscreen_titlest:is_instance(scr)
 end
 
-local MODE_NAVIGATE_FNS = {
-    none = function() end,
-    title = ensure_title_screen,
+-- This only handles pre-fortress-load screens. It will time out if the player
+-- has already loaded a fortress or is in any screen that can't get to the title
+-- screen by sending ESC keys.
+local function ensure_title_screen()
+    for i = 1, 100 do
+        local scr = dfhack.gui.getCurViewscreen()
+        if is_title_screen(scr) then
+            print('Found title screen')
+            return
+        end
+        scr:feed_key(df.interface_key.LEAVESCREEN)
+        delay(10)
+        if i % 10 == 0 then print('Looking for title screen...') end
+    end
+    qerror(string.format('Could not find title screen (timed out at %s)',
+                         dfhack.gui.getCurFocus(true)))
+end
+
+local function is_fortress(focus_string)
+    focus_string = focus_string or dfhack.gui.getCurFocus(true)
+    return focus_string == 'dwarfmode/Default'
+end
+
+-- Requires that a fortress game is already loaded or is ready to be loaded via
+-- the "Continue Playing" option in the title screen. Otherwise the function
+-- will time out and/or exit with error.
+local function ensure_fortress()
+    local focus_string = dfhack.gui.getCurFocus(true)
+    for screen_timeout = 1,10 do
+        if is_fortress(focus_string) then
+            print('Loaded fortress map')
+            -- pause the game (if it's not already paused)
+            dfhack.gui.resetDwarfmodeView(true)
+            return
+        end
+        local scr = dfhack.gui.getCurViewscreen()
+        if focus_string == 'title' then
+            scr:feed_key(df.interface_key.SELECT)
+            scr:feed_key(df.interface_key.SELECT)
+        elseif focus_string == 'dfhack/lua/load_screen' or
+                focus_string == 'dfhack/lua' then
+            scr:feed_key(df.interface_key.SELECT)
+        elseif focus_string == 'new_region' or
+                focus_string == 'adopt_region' then
+            qerror('Please ensure a fortress save exists in region1/')
+        elseif focus_string ~= 'loadgame' then
+            -- if we're not actively loading a game, assume we're in
+            -- a loaded fortress, but in some subscreen
+            scr:feed_key(df.interface_key.LEAVESCREEN)
+        end
+        -- wait for active screen to change
+        local prev_focus_string = focus_string
+        for frame_timeout = 1,100 do
+            delay(10)
+            focus_string = dfhack.gui.getCurFocus(true)
+            if focus_string ~= prev_focus_string then
+                goto next_screen
+            end
+            if frame_timeout % 10 == 0 then
+                print(string.format(
+                    'Loading fortress (currently at screen: %s)',
+                    focus_string))
+            end
+        end
+        print('Timed out waiting for screen to change')
+        break
+        ::next_screen::
+    end
+    qerror(string.format('Could not load fortress (timed out at %s)',
+                         focus_string))
+end
+
+local MODES = {
+    none = {order=1, detect=function() return true end},
+    title = {order=2, detect=is_title_screen, navigate=ensure_title_screen},
+    fortress = {order=3, detect=is_fortress, navigate=ensure_fortress},
 }
 
 local function load_test_config(config_file)
@@ -266,7 +322,7 @@ local function load_tests(file, tests)
             dfhack.printerr('Error when running file: ' .. tostring(err))
             return false
         else
-            if not VALID_MODES[env.config.mode] then
+            if not MODES[env.config.mode] then
                 dfhack.printerr('Invalid config.mode: ' .. tostring(env.config.mode))
                 return false
             end
@@ -290,10 +346,9 @@ local function sort_tests(tests)
     local test_index = utils.invert(tests)
     table.sort(tests, function(a, b)
         if a.config.mode ~= b.config.mode then
-            return VALID_MODES[a.config.mode] < VALID_MODES[b.config.mode]
-        else
-            return test_index[a] < test_index[b]
+            return MODES[a.config.mode].order < MODES[b.config.mode].order
         end
+        return test_index[a] < test_index[b]
     end)
 end
 
@@ -418,9 +473,19 @@ end
 local function run_tests(tests, status, counts)
     print(('Running %d tests'):format(#tests))
     for _, test in pairs(tests) do
-        MODE_NAVIGATE_FNS[test.config.mode]()
-        local passed = run_test(test, status, counts)
-        status[test.full_name] = passed and TestStatus.PASSED or TestStatus.FAILED
+        status[test.full_name] = TestStatus.FAILED
+        if MODES[test.config.mode].failed then goto skip end
+        if not MODES[test.config.mode].detect() then
+            local ok, err = pcall(MODES[test.config.mode].navigate)
+            if not ok then
+                MODES[test.config.mode].failed = true
+                dfhack.printerr(tostring(err))
+                goto skip
+            end
+        end
+        status[test.full_name] = run_test(test, status, counts) and
+                TestStatus.PASSED or TestStatus.FAILED
+        ::skip::
         save_test_status(status)
     end
 

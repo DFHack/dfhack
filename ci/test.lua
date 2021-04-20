@@ -484,21 +484,28 @@ end
 
 local function run_tests(tests, status, counts, config)
     print(('Running %d tests'):format(#tests))
+    local num_skipped = 0
     for _, test in pairs(tests) do
-        status[test.full_name] = TestStatus.FAILED
-        if MODES[test.config.mode].failed then goto skip end
+        if MODES[test.config.mode].failed then
+            num_skipped = num_skipped + 1
+            goto skip
+        end
         if not MODES[test.config.mode].detect() then
             local ok, err = pcall(MODES[test.config.mode].navigate, config)
             if not ok then
                 MODES[test.config.mode].failed = true
                 dfhack.printerr(tostring(err))
+                num_skipped = num_skipped + 1
                 goto skip
             end
         end
-        status[test.full_name] = run_test(test, status, counts) and
-                TestStatus.PASSED or TestStatus.FAILED
-        ::skip::
+        if run_test(test, status, counts) then
+            status[test.full_name] = TestStatus.PASSED
+        else
+            status[test.full_name] = TestStatus.FAILED
+        end
         save_test_status(status)
+        ::skip::
     end
 
     local function print_summary_line(ok, message)
@@ -518,6 +525,8 @@ local function run_tests(tests, status, counts, config)
         ('%d/%d checks passed'):format(counts.checks_ok, counts.checks))
     print_summary_line(counts.file_errors == 0,
         ('%d test files failed to load'):format(counts.file_errors))
+    print_summary_line(num_skipped == 0,
+        ('%d tests in unreachable modes'):format(num_skipped))
 
     save_test_status(status)
 end

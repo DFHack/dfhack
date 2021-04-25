@@ -81,7 +81,8 @@ pair<uint32_t, uint32_t> get_building_size(df::building* b)
 
 char get_tile_dig(int32_t x, int32_t y, int32_t z)
 {
-    df::tiletype_shape ts = tileShape(*Maps::getTileType(x, y , z));
+    df::tiletype *tt = Maps::getTileType(x, y , z);
+    df::tiletype_shape ts = tileShape(tt ? *tt : tiletype::Void);
     switch (ts)
     {
     case tiletype_shape::EMPTY:

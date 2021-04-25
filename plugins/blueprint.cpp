@@ -11,11 +11,11 @@
 #include <Console.h>
 #include <PluginManager.h>
 #include "LuaTools.h"
+#include "TileTypes.h"
 
 #include "modules/Buildings.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
-#include "modules/MapCache.h"
 
 #include "df/building_axle_horizontalst.h"
 #include "df/building_bridgest.h"

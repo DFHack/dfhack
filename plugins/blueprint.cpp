@@ -8,9 +8,11 @@
 #include <algorithm>
 #include <sstream>
 
-#include <Console.h>
-#include <PluginManager.h>
+#include "Console.h"
+#include "DataDefs.h"
+#include "DataIdentity.h"
 #include "LuaTools.h"
+#include "PluginManager.h"
 #include "TileTypes.h"
 
 #include "modules/Buildings.h"
@@ -27,22 +29,63 @@
 #include "df/building_trapst.h"
 #include "df/building_water_wheelst.h"
 #include "df/building_workshopst.h"
+#include "df/world.h"
 
 using std::string;
 using std::endl;
 using std::vector;
 using std::ofstream;
-using std::swap;
-using std::find;
 using std::pair;
 using namespace DFHack;
-using namespace df::enums;
 
 DFHACK_PLUGIN("blueprint");
+REQUIRE_GLOBAL(world);
 
-enum phase {DIG=1, BUILD=2, PLACE=4, QUERY=8};
+struct blueprint_options {
+    // whether to display help
+    bool help = false;
 
-command_result blueprint(color_ostream &out, vector <string> &parameters);
+    // starting tile coordinate of the translation area (if not set then all
+    // coordinates are set to -30000)
+    df::coord start;
+
+    // dimensions of translation area. width and height are guaranteed to be
+    // greater than 0. depth can be positive or negative, but not zero.
+    int32_t width  = 0;
+    int32_t height = 0;
+    int32_t depth  = 0;
+
+    // base name to use for generated files
+    string name;
+
+    // whether to autodetect which phases to output
+    bool auto_phase = false;
+
+    // if not autodetecting, which phases to output
+    bool dig   = false;
+    bool build = false;
+    bool place = false;
+    bool query = false;
+
+    static struct_identity _identity;
+};
+static const struct_field_info blueprint_options_fields[] = {
+    { struct_field_info::PRIMITIVE, "help",         offsetof(blueprint_options, help),         &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::SUBSTRUCT, "start",        offsetof(blueprint_options, start),        &df::coord::_identity,                   0, 0 },
+    { struct_field_info::PRIMITIVE, "width",        offsetof(blueprint_options, width),        &df::identity_traits<int32_t>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "height",       offsetof(blueprint_options, height),       &df::identity_traits<int32_t>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "depth",        offsetof(blueprint_options, depth),        &df::identity_traits<int32_t>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "name",         offsetof(blueprint_options, name),          df::identity_traits<string>::get(),     0, 0 },
+    { struct_field_info::PRIMITIVE, "auto_phase",   offsetof(blueprint_options, auto_phase),   &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::PRIMITIVE, "dig",          offsetof(blueprint_options, dig),          &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::PRIMITIVE, "build",        offsetof(blueprint_options, build),        &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::PRIMITIVE, "place",        offsetof(blueprint_options, place),        &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::PRIMITIVE, "query",        offsetof(blueprint_options, query),        &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::END }
+};
+struct_identity blueprint_options::_identity(sizeof(blueprint_options), &df::allocator_fn<blueprint_options>, NULL, "blueprint_options", NULL, blueprint_options_fields);
+
+command_result blueprint(color_ostream &out, vector<string> &parameters);
 
 DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginCommand> &commands)
 {
@@ -52,25 +95,6 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginComman
 
 DFhackCExport command_result plugin_shutdown(color_ostream &out)
 {
-    return CR_OK;
-}
-
-command_result help(color_ostream &out)
-{
-    out << "blueprint width height depth name [dig] [build] [place] [query]" << endl
-        << " width, height, depth: area to translate in tiles" << endl
-        << " name: base name for blueprint files" << endl
-        << " dig: generate blueprints for digging" << endl
-        << " build: generate blueprints for building" << endl
-        << " place: generate blueprints for stockpiles" << endl
-        << " query: generate blueprints for querying (room designations)" << endl
-        << " defaults to generating all blueprints" << endl
-        << endl
-        << "blueprint translates a portion of your fortress into blueprints suitable for" << endl
-        << " digfort/fortplan/quickfort. Blueprints are created in the \"blueprints\"" << endl
-        << " subdirectory of the DF folder with names following a \"name-phase.csv\" pattern." << endl
-        << " Translation starts at the current cursor location and includes all tiles in the" << endl
-        << " range specified." << endl;
     return CR_OK;
 }
 
@@ -562,7 +586,7 @@ string get_tile_query(df::building* b)
     return " ";
 }
 
-void init_stream(ofstream &out, std::string basename, std::string target)
+void init_stream(ofstream &out, string basename, string target)
 {
     std::ostringstream out_path;
     out_path << basename << "-" << target << ".csv";
@@ -570,19 +594,15 @@ void init_stream(ofstream &out, std::string basename, std::string target)
     out << "#" << target << endl;
 }
 
-command_result do_transform(DFCoord start, DFCoord end, string name, uint32_t phases, std::ostringstream &err)
+command_result do_transform(const DFCoord &start, const DFCoord &end,
+                            const blueprint_options &options,
+                            std::ostringstream &err)
 {
     ofstream dig, build, place, query;
 
-    std::string basename = "blueprints/" + name;
-
-#ifdef _WIN32
-    // normalize to forward slashes
-    std::replace(basename.begin(), basename.end(), '\\', '/');
-#endif
-
+    string basename = "blueprints/" + options.name;
     size_t last_slash = basename.find_last_of("/");
-    std::string parent_path = basename.substr(0, last_slash);
+    string parent_path = basename.substr(0, last_slash);
 
     // create output directory if it doesn't already exist
     std::error_code ec;
@@ -592,179 +612,200 @@ command_result do_transform(DFCoord start, DFCoord end, string name, uint32_t ph
         return CR_FAILURE;
     }
 
-    if (phases & QUERY)
+    if (options.auto_phase || options.query)
     {
-        //query = ofstream((name + "-query.csv").c_str(), ofstream::trunc);
         init_stream(query, basename, "query");
     }
-    if (phases & PLACE)
+    if (options.auto_phase || options.place)
     {
-        //place = ofstream(name + "-place.csv", ofstream::trunc);
         init_stream(place, basename, "place");
     }
-    if (phases & BUILD)
+    if (options.auto_phase || options.build)
     {
-        //build = ofstream(name + "-build.csv", ofstream::trunc);
         init_stream(build, basename, "build");
     }
-    if (phases & DIG)
+    if (options.auto_phase || options.dig)
     {
-        //dig = ofstream(name + "-dig.csv", ofstream::trunc);
         init_stream(dig, basename, "dig");
     }
-    if (start.x > end.x)
-    {
-        swap(start.x, end.x);
-        start.x++;
-        end.x++;
-    }
-    if (start.y > end.y)
-    {
-        swap(start.y, end.y);
-        start.y++;
-        end.y++;
-    }
-    if (start.z > end.z)
-    {
-        swap(start.z, end.z);
-        start.z++;
-        end.z++;
-    }
 
-    for (int32_t z = start.z; z < end.z; z++)
+    const int32_t z_inc = start.z < end.z ? 1 : -1;
+    const string z_key = start.z < end.z ? "#<" : "#>";
+    for (int32_t z = start.z; z != end.z; z += z_inc)
     {
         for (int32_t y = start.y; y < end.y; y++)
         {
             for (int32_t x = start.x; x < end.x; x++)
             {
-                df::building* b = DFHack::Buildings::findAtTile(DFCoord(x, y, z));
-                if (phases & QUERY)
+                df::building* b = Buildings::findAtTile(DFCoord(x, y, z));
+                if (options.auto_phase || options.query)
                     query << get_tile_query(b) << ',';
-                if (phases & PLACE)
+                if (options.auto_phase || options.place)
                     place << get_tile_place(x, y, b) << ',';
-                if (phases & BUILD)
+                if (options.auto_phase || options.build)
                     build << get_tile_build(x, y, b) << ',';
-                if (phases & DIG)
+                if (options.auto_phase || options.dig)
                     dig << get_tile_dig(x, y, z) << ',';
             }
-            if (phases & QUERY)
+            if (options.auto_phase || options.query)
                 query << "#" << endl;
-            if (phases & PLACE)
+            if (options.auto_phase || options.place)
                 place << "#" << endl;
-            if (phases & BUILD)
+            if (options.auto_phase || options.build)
                 build << "#" << endl;
-            if (phases & DIG)
+            if (options.auto_phase || options.dig)
                 dig << "#" << endl;
         }
-        if (z < end.z - 1)
+        if (z != end.z - z_inc)
         {
-            if (phases & QUERY)
-                query << "#<" << endl;
-            if (phases & PLACE)
-                place << "#<" << endl;
-            if (phases & BUILD)
-                build << "#<" << endl;
-            if (phases & DIG)
-                dig << "#<" << endl;
+            if (options.auto_phase || options.query)
+                query << z_key << endl;
+            if (options.auto_phase || options.place)
+                place << z_key << endl;
+            if (options.auto_phase || options.build)
+                build << z_key << endl;
+            if (options.auto_phase || options.dig)
+                dig << z_key << endl;
         }
     }
-    if (phases & QUERY)
+    if (options.auto_phase || options.query)
         query.close();
-    if (phases & PLACE)
+    if (options.auto_phase || options.place)
         place.close();
-    if (phases & BUILD)
+    if (options.auto_phase || options.build)
         build.close();
-    if (phases & DIG)
+    if (options.auto_phase || options.dig)
         dig.close();
+
     return CR_OK;
 }
 
-bool cmd_option_exists(vector<string>& parameters, const string& option)
+static bool get_options(blueprint_options &opts,
+                        const vector<string> &parameters)
 {
-    return  find(parameters.begin(), parameters.end(), option) != parameters.end();
+    auto L = Lua::Core::State;
+    color_ostream_proxy out(Core::getInstance().getConsole());
+    Lua::StackUnwinder top(L);
+
+    if (!lua_checkstack(L, parameters.size() + 2) ||
+        !Lua::PushModulePublic(
+            out, L, "plugins.blueprint", "parse_commandline"))
+    {
+        out.printerr("Failed to load blueprint Lua code");
+        return false;
+    }
+
+    Lua::Push(L, &opts);
+
+    for (const string &param : parameters)
+        Lua::Push(L, param);
+
+    if (!Lua::SafeCall(out, L, parameters.size() + 1, 0))
+        return false;
+
+    return true;
+}
+
+static bool do_gui(const vector<string> &parameters)
+{
+    auto L = Lua::Core::State;
+    color_ostream_proxy out(Core::getInstance().getConsole());
+    Lua::StackUnwinder top(L);
+
+    if (!lua_checkstack(L, parameters.size() + 1) ||
+        !Lua::PushModulePublic(out, L, "plugins.blueprint", "do_gui"))
+    {
+        out.printerr("Failed to load blueprint Lua code");
+        return false;
+    }
+
+    for (const string &param : parameters)
+        Lua::Push(L, param);
+
+    if (!Lua::SafeCall(out, L, parameters.size(), 0))
+        return false;
+
+    return true;
+}
+
+static void print_help()
+{
+    auto L = Lua::Core::State;
+    color_ostream_proxy out(Core::getInstance().getConsole());
+    Lua::StackUnwinder top(L);
+
+    if (!lua_checkstack(L, 1) ||
+        !Lua::PushModulePublic(out, L, "plugins.blueprint", "print_help") ||
+        !Lua::SafeCall(out, L, 0, 0))
+    {
+        out.printerr("Failed to load blueprint Lua code");
+    }
 }
 
 command_result blueprint(color_ostream &out, vector<string> &parameters)
 {
-    if (parameters.size() < 4 || parameters.size() > 8)
-        return help(out);
+    if (parameters.size() >= 1 and parameters[0] == "gui")
+    {
+        return do_gui(parameters) ? CR_OK : CR_FAILURE;
+    }
+
+    blueprint_options options;
+    if (!get_options(options, parameters) || options.help)
+    {
+        print_help();
+        return options.help ? CR_OK : CR_FAILURE;
+    }
+
     CoreSuspender suspend;
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
-    int32_t x, y, z;
-    if (!Gui::getCursorCoords(x, y, z))
+
+    // start coordinates can come from either the commandline or the map cursor
+    DFCoord start(options.start);
+    if (options.start.x == -30000)
     {
-        out.printerr("Can't get cursor coords! Make sure you have an active cursor in DF.\n");
+        int32_t x, y, z;
+        if (!Gui::getCursorCoords(x, y, z))
+        {
+            out.printerr("Can't get cursor coords! Make sure you specify the"
+                    " --cursor parameter or have an active cursor in DF.\n");
+            return CR_FAILURE;
+        }
+        start.x = x;
+        start.y = y;
+        start.z = z;
+    }
+    if (!Maps::isValidTilePos(start))
+    {
+        out.printerr("Invalid start position: %d,%d,%d\n",
+                     start.x, start.y, start.z);
         return CR_FAILURE;
     }
-    DFCoord start (x, y, z);
-    DFCoord end (x + stoi(parameters[0]), y + stoi(parameters[1]), z + stoi(parameters[2]));
-    uint32_t option = 0;
-    if (parameters.size() == 4)
-    {
-        option = DIG | BUILD | PLACE | QUERY;
-    }
-    else
-    {
-        if (cmd_option_exists(parameters, "dig"))
-            option |= DIG;
-        if (cmd_option_exists(parameters, "build"))
-            option |= BUILD;
-        if (cmd_option_exists(parameters, "place"))
-            option |= PLACE;
-        if (cmd_option_exists(parameters, "query"))
-            option |= QUERY;
-    }
+
+    // end coords are one beyond the last processed coordinate. note that
+    // options.depth can be negative.
+    DFCoord end(start.x + options.width, start.y + options.height,
+                start.z + options.depth);
+
+    // crop end coordinate to map bounds. we've already verified that start is
+    // a valid coordinate, and width, height, and depth are non-zero, so our
+    // final are is always going to be at least 1x1x1.
+    df::world::T_map &map = df::global::world->map;
+    if (end.x > map.x_count)
+        end.x = map.x_count;
+    if (end.y > map.y_count)
+        end.y = map.y_count;
+    if (end.z > map.z_count)
+        end.z = map.z_count;
+    if (end.z < -1)
+        end.z = -1;
+
     std::ostringstream err;
-    DFHack::command_result result = do_transform(start, end, parameters[3], option, err);
+    command_result result = do_transform(start, end, options, err);
     if (result != CR_OK)
         out.printerr("%s\n", err.str().c_str());
     return result;
 }
-
-static int create(lua_State *L, uint32_t options) {
-    df::coord start, end;
-
-    lua_settop(L, 3);
-    Lua::CheckDFAssign(L, &start, 1);
-    if (!start.isValid())
-        luaL_argerror(L, 1, "invalid start position");
-    Lua::CheckDFAssign(L, &end, 2);
-    if (!end.isValid())
-        luaL_argerror(L, 2, "invalid end position");
-    string filename(lua_tostring(L, 3));
-
-    std::ostringstream err;
-    DFHack::command_result result = do_transform(start, end, filename, options, err);
-    if (result != CR_OK)
-        luaL_error(L, "%s", err.str().c_str());
-    lua_pushboolean(L, result);
-    return 1;
-}
-
-static int dig(lua_State *L) {
-    return create(L, DIG);
-}
-
-static int build(lua_State *L) {
-    return create(L, BUILD);
-}
-
-static int place(lua_State *L) {
-    return create(L, PLACE);
-}
-
-static int query(lua_State *L) {
-    return create(L, QUERY);
-}
-
-DFHACK_PLUGIN_LUA_COMMANDS {
-    DFHACK_LUA_COMMAND(dig),
-    DFHACK_LUA_COMMAND(build),
-    DFHACK_LUA_COMMAND(place),
-    DFHACK_LUA_COMMAND(query),
-    DFHACK_LUA_END
-};

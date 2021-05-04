@@ -138,7 +138,7 @@ end
 
 function do_gui(command, ...)
     local args = {...}
-    print('launching gui/blueprint')
+    print(('launching gui/blueprint %s'):format(table.concat(args, ' ')))
     dfhack.timeout(1, 'frames',
                    function() dfhack.run_script('gui/blueprint',
                                                 table.unpack(args)) end)

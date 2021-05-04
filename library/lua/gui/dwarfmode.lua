@@ -154,10 +154,10 @@ end
 function Viewport:isVisibleXY(target,gap)
     gap = gap or 0
 
-    return math.max(target.x-gap,0) >= self.x1
-       and math.min(target.x+gap,world_map.x_count-1) <= self.x2
-       and math.max(target.y-gap,0) >= self.y1
-       and math.min(target.y+gap,world_map.y_count-1) <= self.y2
+    return target.x - gap >= self.x1
+       and target.x + gap <= self.x2
+       and target.y - gap >= self.y1
+       and target.y + gap <= self.y2
 end
 
 function Viewport:isVisible(target,gap)

@@ -43,6 +43,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Lua
 - ``gui.Painter``: fixed error when calling ``viewport()`` method
+- ``guidm.Viewport:isVisibleXY()``: properly return false for coordinates outside of the viewport
 - `xlsxreader`: Added Lua class wrappers for the xlsxreader plugin API
 
 ## Documentation

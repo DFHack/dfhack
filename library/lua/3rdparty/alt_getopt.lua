@@ -100,6 +100,7 @@ function get_ordered_opts(args, sh_opts, long_opts)
         local a = args[optind]
         if a == '--' then
             optind = optind + 1
+            break
         elseif a:sub(1, 2) == '--' then
             local pos = a:find('=', 1, true)
             if pos then
@@ -113,7 +114,7 @@ function get_ordered_opts(args, sh_opts, long_opts)
                 local opt = a:sub(3)
                 opts[count] = opt
                 if has_arg(options, opt) then
-                    if i == #args then
+                    if optind == #args then
                         qerror(string.format(
                                 'Missing value for option "%s"', a))
                     end

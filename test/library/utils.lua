@@ -91,9 +91,13 @@ function test.processArgsGetopt_happy_path()
     args = {'nonopt1', '-nfoo', 'nonopt2', '-1', '-10', '-0v'}
     expect.table_eq({'nonopt1', 'nonopt2', '-1', '-10', '-0v'},
                     process(args, false, false, 'foo'))
+
+    args = {'nonopt1', '--', '-nfoo', '--nonopt2', 'nonopt3'}
+    expect.table_eq({'nonopt1', '-nfoo', '--nonopt2', 'nonopt3'},
+                    process(args, false, false, nil))
 end
 
-function test.processArgsGetopt_errors()
+function test.processArgsGetopt_action_errors()
     expect.error_match('missing option letter',
         function() utils.processArgsGetopt({}, {{handler=function() end}}) end)
 
@@ -105,4 +109,38 @@ function test.processArgsGetopt_errors()
 
     expect.error_match('handler missing',
         function() utils.processArgsGetopt({}, {{'r'}}) end)
+end
+
+function test.processArgsGetopt_parsing_errors()
+    expect.error_match('Unknown option',
+                       function() utils.processArgsGetopt({'-abc'},
+                                    {{'a', handler=function() end}})
+                       end,
+                       'use undefined short option')
+
+    expect.error_match('Unknown option',
+                       function() utils.processArgsGetopt({'--abc'},
+                                    {{'a', handler=function() end}})
+                       end,
+                       'use undefined long option')
+
+    expect.error_match('Bad usage',
+                       function() utils.processArgsGetopt({'--ab=c'},
+                                    {{'a', 'ab', handler=function() end}})
+                       end,
+                       'pass value to param that does not take one')
+
+    expect.error_match('Missing value',
+                       function() utils.processArgsGetopt({'-a'},
+                                    {{'a', 'ab', hasArg=true,
+                                      handler=function() end}})
+                       end,
+                       'fail to pass value to short param that requires one')
+
+    expect.error_match('Missing value',
+                       function() utils.processArgsGetopt({'--ab'},
+                                    {{'a', 'ab', hasArg=true,
+                                      handler=function() end}})
+                       end,
+                       'fail to pass value to long param that requires one')
 end

@@ -44,7 +44,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Lua
 - ``gui.Painter``: fixed error when calling ``viewport()`` method
 - `xlsxreader`: Added Lua class wrappers for the xlsxreader plugin API
-- ``utils.processArgsGetopt()``: now returns negative numbers (e.g. ``-10``) in the list of positional parameters instead of treating it as an option string equivalent to ``-1 -0``.
+- ``utils.processArgsGetopt()``: now returns negative numbers (e.g. ``-10``) in the list of positional parameters instead of treating it as an option string equivalent to ``-1 -0``
+- ``utils.processArgsGetopt()``: now properly handles ``--`` as a marker to treat all further parameters as non-options
+- ``utils.processArgsGetopt()``: now detects when a required arguments to long-form options are missing
 
 ## Documentation
 - Added more client library implementations to the `remote interface docs <remote-client-libs>`

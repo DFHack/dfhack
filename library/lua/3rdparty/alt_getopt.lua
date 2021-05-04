@@ -21,10 +21,10 @@
 
 -- based on https://github.com/LuaDist/alt-getopt/blob/master/alt_getopt.lua
 -- MIT licence
--- modified to support aggregation of non-options and to call qerror instead of
--- os.exit() on error. can be used directly or via the utils.processArgs2()
--- wrapper.
-
+-- modified to support negative numbers as non-options, to aggregate non-options
+-- for return, and to call error/qerror instead of os.exit on error. can be used
+-- directly or via the utils.processArgsGetopt() wrapper.
+--
 -- sh_opts should be in standard getopt format: a string of letters that
 -- represent options, each followed by a colon if that option takes an argument.
 -- e.g.: 'ak:hv' has three flags (options with no arguments): 'a', 'h', and 'v'
@@ -35,6 +35,13 @@
 --   -abcd is equivalent to -a -b -c -d if none of them accept arguments.
 --   -abckVALUE and -abck VALUE are also acceptable (where k is the only option
 --      in the string that takes a value).
+--
+-- Note that arguments that have a number as the second character are
+-- interpreted as positional parameters and not options. For example, the
+-- following strings are never interpreted as options:
+--   -10
+--   -0
+--   -1a
 
 local _ENV = mkmodule('3rdparty.alt_getopt')
 
@@ -69,7 +76,7 @@ local function canonicalize(options, opt)
     end
 
     if type(options[opt]) ~= 'number' then
-        qerror(string.format(
+        error(string.format(
                 'Option "%s" resolves to non-number for has_arg flag', opt))
     end
 
@@ -115,7 +122,7 @@ function get_ordered_opts(args, sh_opts, long_opts)
                 end
             end
             count = count + 1
-        elseif a:sub(1, 1) == '-' then
+        elseif a:sub(1, 1) == '-' and not tonumber(a:sub(2, 2)) then
             local j
             for j=2,#a do
                 local opt = canonicalize(options, a:sub(j, j))

@@ -107,6 +107,7 @@ local function process_args(opts, args)
         })
 end
 
+-- used by the gui/blueprint script
 function parse_gui_commandline(opts, args)
     local positionals = process_args(opts, args)
     if opts.help then return end

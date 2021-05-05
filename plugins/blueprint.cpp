@@ -792,7 +792,7 @@ command_result blueprint(color_ostream &out, vector<string> &parameters)
 
     // crop end coordinate to map bounds. we've already verified that start is
     // a valid coordinate, and width, height, and depth are non-zero, so our
-    // final are is always going to be at least 1x1x1.
+    // final area is always going to be at least 1x1x1.
     df::world::T_map &map = df::global::world->map;
     if (end.x > map.x_count)
         end.x = map.x_count;

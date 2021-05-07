@@ -5,8 +5,7 @@ local utils = require('utils')
 -- the info here is very basic and minimal, so hopefully we won't need to change
 -- it when features are added and the full blueprint docs in Plugins.rst are
 -- updated.
-local help_text =
-[=[
+local help_text = [=[
 
 blueprint
 =========
@@ -32,16 +31,14 @@ blueprint 30 40 bedrooms
 See the online DFHack documentation for more examples and details.
 ]=]
 
+function print_help() print(help_text) end
+
 valid_phases = utils.invert{
     'dig',
     'build',
     'place',
     'query',
 }
-
-function print_help()
-    print(help_text)
-end
 
 local function parse_cursor(opts, arg)
     local _, _, x, y, z = arg:find('^(%d+),(%d+),(%d+)$')
@@ -57,16 +54,8 @@ local function parse_cursor(opts, arg)
     opts.start.z = tonumber(z)
 end
 
--- dimension must be a non-nil integer that is >= 1 (or at least non-zero if
--- negative_ok is true)
-local function is_bad_dim(dim, negative_ok)
-    return not dim
-            or (not negative_ok and dim < 1 or dim == 0)
-            or dim ~= math.floor(dim)
-end
-
 local function parse_positionals(opts, args, start_argidx)
-    local argidx = start_argidx
+    local argidx = start_argidx or 1
 
     -- set defaults
     opts.name, opts.auto_phase = 'blueprint', true
@@ -111,7 +100,15 @@ end
 function parse_gui_commandline(opts, args)
     local positionals = process_args(opts, args)
     if opts.help then return end
-    parse_positionals(opts, positionals, 1)
+    parse_positionals(opts, positionals)
+end
+
+-- dimension must be a non-nil integer that is >= 1 (or at least non-zero if
+-- negative_ok is true)
+local function is_bad_dim(dim, negative_ok)
+    return not dim or
+            (not negative_ok and dim < 1 or dim == 0) or
+            dim ~= math.floor(dim)
 end
 
 function parse_commandline(opts, ...)
@@ -120,7 +117,7 @@ function parse_commandline(opts, ...)
 
     local width, height = tonumber(positionals[1]), tonumber(positionals[2])
     if is_bad_dim(width) or is_bad_dim(height) then
-        qerror(('invalid width and height: "%s" "%s"; width and height must' ..
+        qerror(('invalid width or height: "%s" "%s"; width and height must' ..
                 ' be positive integers'):format(positionals[1], positionals[2]))
     end
     opts.width, opts.height, opts.depth = width, height, 1
@@ -160,8 +157,10 @@ local function do_blueprint(start_pos, end_pos, name, phase)
 
     local cursor = ('--cursor=%d,%d,%d'):format(x, y, z)
 
-    return dfhack.run_command{'blueprint',
-                              width, height, depth, name, phase, cursor}
+    return dfhack.run_command('blueprint',
+                              tostring(width), tostring(height),
+                              tostring(depth), tostring(name),
+                              phase, cursor)
 end
 for phase in pairs(valid_phases) do
     _ENV[phase] = function(s, e, n) do_blueprint(s, e, n, phase) end

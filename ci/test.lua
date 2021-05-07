@@ -166,7 +166,7 @@ local function ensure_fortress(config)
             dfhack.gui.resetDwarfmodeView(true)
             return
         end
-        local scr = dfhack.gui.getCurViewscreen()
+        local scr = dfhack.gui.getCurViewscreen(true)
         if focus_string == 'title' or
                 focus_string == 'dfhack/lua/load_screen' then
             -- qerror()'s on falure

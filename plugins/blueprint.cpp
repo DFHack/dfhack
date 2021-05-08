@@ -744,7 +744,7 @@ static void print_help()
 
 command_result blueprint(color_ostream &out, vector<string> &parameters)
 {
-    if (parameters.size() >= 1 and parameters[0] == "gui")
+    if (parameters.size() >= 1 && parameters[0] == "gui")
     {
         return do_gui(parameters) ? CR_OK : CR_FAILURE;
     }

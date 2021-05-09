@@ -52,6 +52,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - The DFHack test harness is now much easier to use for iterative development.  Configuration can now be specified on the commandline, there are more test filter options, and the test harness can now easily rerun tests that have been run before.
 - The ``test/main`` command to invoke the test harness has been renamed to just ``test``
 - DFHack unit tests must now match any output expected to be printed via ``dfhack.printerr()``
+- ``fortress mode`` is now supported for unit tests (tests that require a fortress map to be loaded). Note that fortress mode tests will be skipped by the continuous integration framework for now. They'll be re-enabled once we get a reusable fortress save set up.
 
 # 0.47.05-r1
 

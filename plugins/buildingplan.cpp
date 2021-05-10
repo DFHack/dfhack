@@ -1087,7 +1087,7 @@ DFhackCExport command_result plugin_shutdown(color_ostream &)
 static bool isPlanModeEnabled(df::building_type type,
                               int16_t subtype,
                               int32_t custom) {
-    return planmode_enabled[toBuildingTypeKey(type, subtype, custom)];
+    return is_planmode_enabled(toBuildingTypeKey(type, subtype, custom));
 }
 
 static bool isPlannableBuilding(df::building_type type,

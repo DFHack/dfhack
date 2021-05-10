@@ -35,7 +35,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - `buildingplan`: fixed an issue where planned constructions designated with DF's sizing keys (``umkh``) would sometimes be larger than requested
+- `buildingplan`: fixed an issue preventing other plugins like `automaterial` from planning constructions if the "enable all" buildingplan setting was turned on
 - `command-prompt`: fixed issues where overlays created by running certain commands (e.g. `gui/liquids`, `gui/teleport`) would not update the parent screen correctly
+- `dwarfvet`: fixed a crash that could occur with hospitals overlapping with other buildings in certain ways
 - ``quickfortress.csv`` blueprint: fixed refuse stockpile config and prevented stockpiles from covering stairways
 
 ## Misc Improvements
@@ -43,10 +45,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Lua
 - ``gui.Painter``: fixed error when calling ``viewport()`` method
-- `xlsxreader`: Added Lua class wrappers for the xlsxreader plugin API
 - ``utils.processArgsGetopt()``: now returns negative numbers (e.g. ``-10``) in the list of positional parameters instead of treating it as an option string equivalent to ``-1 -0``
-- ``utils.processArgsGetopt()``: now properly handles ``--`` as a marker to treat all further parameters as non-options
-- ``utils.processArgsGetopt()``: now detects when a required arguments to long-form options are missing
+- ``utils.processArgsGetopt()``: now properly handles ``--`` like GNU ``getopt`` as a marker to treat all further parameters as non-options
+- ``utils.processArgsGetopt()``: now detects when required arguments to long-form options are missing
+- `xlsxreader`: Added Lua class wrappers for the xlsxreader plugin API
 
 ## Documentation
 - Added more client library implementations to the `remote interface docs <remote-client-libs>`
@@ -55,6 +57,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - The DFHack test harness is now much easier to use for iterative development.  Configuration can now be specified on the commandline, there are more test filter options, and the test harness can now easily rerun tests that have been run before.
 - The ``test/main`` command to invoke the test harness has been renamed to just ``test``
 - DFHack unit tests must now match any output expected to be printed via ``dfhack.printerr()``
+- Fortress mode is now supported for unit tests (allowing tests that require a fortress map to be loaded) - note that these tests are skipped by continuous integration for now, pending a suitable test fortress
 
 # 0.47.05-r1
 

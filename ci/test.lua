@@ -27,13 +27,25 @@ Options:
     -d, --test_dir  specifies which directory to look in for tests. defaults to
                     the "hack/scripts/test" folder in your DF installation.
     -m, --modes     only run tests in the given comma separated list of modes.
-                    valid modes are 'none' (test can be run on any screen) and
-                    'title' (test must be run on the DF title screen). if not
-                    specified, no modes are filtered.
+                    see the next section for a list of valid modes. if not
+                    specified, the tests are not filtered by modes.
     -r, --resume    skip tests that have already been run. remove the
                     test_status.json file to reset the record.
+    -s, --save_dir  the save folder to load for "fortress" mode tests. this
+                    save is only loaded if a fort is not already loaded when
+                    a "fortress" mode test is run. if not specified, defaults to
+                    'region1'.
     -t, --tests     only run tests that match one of the comma separated list of
                     patterns. if not specified, no tests are filtered.
+
+Modes:
+
+    none      the test can be run on any screen
+    title     the test must be run on the DF title screen. note that if the game
+              has a map loaded, "title" mode tests cannot be run
+    fortress  the test must be run while a map is loaded. if the game is
+              currently on the title screen, the save specified by the save_dir
+              parameter will be loaded.
 
 Examples:
 
@@ -65,8 +77,6 @@ local TestStatus = {
     PASSED = 'passed',
     FAILED = 'failed',
 }
-
-local VALID_MODES = utils.invert{'none', 'title', 'fortress'}
 
 local function delay(frames)
     frames = frames or 1
@@ -116,29 +126,83 @@ end
 test_envvars.require = clean_require
 test_envvars.reqscript = clean_reqscript
 
-local function ensure_title_screen()
-    if df.viewscreen_titlest:is_instance(dfhack.gui.getCurViewscreen()) then
-        return
-    end
-    print('Looking for title screen...')
-    for i = 0, 100 do
-        local scr = dfhack.gui.getCurViewscreen()
-        if df.viewscreen_titlest:is_instance(scr) then
-            print('Found title screen')
-            break
-        else
-            scr:feed_key(df.interface_key.LEAVESCREEN)
-            delay(10)
-        end
-    end
-    if not df.viewscreen_titlest:is_instance(dfhack.gui.getCurViewscreen()) then
-        error('Could not find title screen')
-    end
+local function is_title_screen(scr)
+    scr = scr or dfhack.gui.getCurViewscreen()
+    return df.viewscreen_titlest:is_instance(scr)
 end
 
-local MODE_NAVIGATE_FNS = {
-    none = function() end,
-    title = ensure_title_screen,
+-- This only handles pre-fortress-load screens. It will time out if the player
+-- has already loaded a fortress or is in any screen that can't get to the title
+-- screen by sending ESC keys.
+local function ensure_title_screen()
+    for i = 1, 100 do
+        local scr = dfhack.gui.getCurViewscreen()
+        if is_title_screen(scr) then
+            print('Found title screen')
+            return
+        end
+        scr:feed_key(df.interface_key.LEAVESCREEN)
+        delay(10)
+        if i % 10 == 0 then print('Looking for title screen...') end
+    end
+    qerror(string.format('Could not find title screen (timed out at %s)',
+                         dfhack.gui.getCurFocus(true)))
+end
+
+local function is_fortress(focus_string)
+    focus_string = focus_string or dfhack.gui.getCurFocus(true)
+    return focus_string == 'dwarfmode/Default'
+end
+
+-- Requires that a fortress game is already loaded or is ready to be loaded via
+-- the "Continue Playing" option in the title screen. Otherwise the function
+-- will time out and/or exit with error.
+local function ensure_fortress(config)
+    local focus_string = dfhack.gui.getCurFocus(true)
+    for screen_timeout = 1,10 do
+        if is_fortress(focus_string) then
+            print('Loaded fortress map')
+            -- pause the game (if it's not already paused)
+            dfhack.gui.resetDwarfmodeView(true)
+            return
+        end
+        local scr = dfhack.gui.getCurViewscreen(true)
+        if focus_string == 'title' or
+                focus_string == 'dfhack/lua/load_screen' then
+            -- qerror()'s on falure
+            dfhack.run_script('load-save', config.save_dir)
+        elseif focus_string ~= 'loadgame' then
+            -- if we're not actively loading a game, hope we're in
+            -- a screen where hitting ESC will get us to the game map
+            -- or the title screen
+            scr:feed_key(df.interface_key.LEAVESCREEN)
+        end
+        -- wait for current screen to change
+        local prev_focus_string = focus_string
+        for frame_timeout = 1,100 do
+            delay(10)
+            focus_string = dfhack.gui.getCurFocus(true)
+            if focus_string ~= prev_focus_string then
+                goto next_screen
+            end
+            if frame_timeout % 10 == 0 then
+                print(string.format(
+                    'Loading fortress (currently at screen: %s)',
+                    focus_string))
+            end
+        end
+        print('Timed out waiting for screen to change')
+        break
+        ::next_screen::
+    end
+    qerror(string.format('Could not load fortress (timed out at %s)',
+                         focus_string))
+end
+
+local MODES = {
+    none = {order=1, detect=function() return true end},
+    title = {order=2, detect=is_title_screen, navigate=ensure_title_screen},
+    fortress = {order=3, detect=is_fortress, navigate=ensure_fortress},
 }
 
 local function load_test_config(config_file)
@@ -149,6 +213,10 @@ local function load_test_config(config_file)
 
     if not config.test_dir then
         config.test_dir = dfhack.getHackPath() .. 'scripts/test'
+    end
+
+    if not config.save_dir then
+        config.save_dir = 'region1'
     end
 
     return config
@@ -266,7 +334,7 @@ local function load_tests(file, tests)
             dfhack.printerr('Error when running file: ' .. tostring(err))
             return false
         else
-            if not VALID_MODES[env.config.mode] then
+            if not MODES[env.config.mode] then
                 dfhack.printerr('Invalid config.mode: ' .. tostring(env.config.mode))
                 return false
             end
@@ -290,10 +358,9 @@ local function sort_tests(tests)
     local test_index = utils.invert(tests)
     table.sort(tests, function(a, b)
         if a.config.mode ~= b.config.mode then
-            return VALID_MODES[a.config.mode] < VALID_MODES[b.config.mode]
-        else
-            return test_index[a] < test_index[b]
+            return MODES[a.config.mode].order < MODES[b.config.mode].order
         end
+        return test_index[a] < test_index[b]
     end)
 end
 
@@ -415,13 +482,30 @@ local function filter_tests(tests, config)
     return status
 end
 
-local function run_tests(tests, status, counts)
+local function run_tests(tests, status, counts, config)
     print(('Running %d tests'):format(#tests))
+    local num_skipped = 0
     for _, test in pairs(tests) do
-        MODE_NAVIGATE_FNS[test.config.mode]()
-        local passed = run_test(test, status, counts)
-        status[test.full_name] = passed and TestStatus.PASSED or TestStatus.FAILED
+        if MODES[test.config.mode].failed then
+            num_skipped = num_skipped + 1
+            goto skip
+        end
+        if not MODES[test.config.mode].detect() then
+            local ok, err = pcall(MODES[test.config.mode].navigate, config)
+            if not ok then
+                MODES[test.config.mode].failed = true
+                dfhack.printerr(tostring(err))
+                num_skipped = num_skipped + 1
+                goto skip
+            end
+        end
+        if run_test(test, status, counts) then
+            status[test.full_name] = TestStatus.PASSED
+        else
+            status[test.full_name] = TestStatus.FAILED
+        end
         save_test_status(status)
+        ::skip::
     end
 
     local function print_summary_line(ok, message)
@@ -441,22 +525,26 @@ local function run_tests(tests, status, counts)
         ('%d/%d checks passed'):format(counts.checks_ok, counts.checks))
     print_summary_line(counts.file_errors == 0,
         ('%d test files failed to load'):format(counts.file_errors))
+    print_summary_line(num_skipped == 0,
+        ('%d tests in unreachable modes'):format(num_skipped))
 
     save_test_status(status)
 end
 
 local function main(args)
-    local help, resume, test_dir, mode_filter, test_filter =
-            false, false, nil, {}, {}
+    local help, resume, test_dir, mode_filter, save_dir, test_filter =
+            false, false, nil, {}, nil, {}
     local other_args = utils.processArgsGetopt(args, {
             {'h', 'help', handler=function() help = true end},
             {'d', 'test_dir', hasArg=true,
-            handler=function(arg) test_dir = arg end},
+             handler=function(arg) test_dir = arg end},
             {'m', 'modes', hasArg=true,
-            handler=function(arg) mode_filter = arg:split(',') end},
+             handler=function(arg) mode_filter = arg:split(',') end},
             {'r', 'resume', handler=function() resume = true end},
+            {'s', 'save_dir', hasArg=true,
+             handler=function(arg) save_dir = arg end},
             {'t', 'tests', hasArg=true,
-            handler=function(arg) test_filter = arg:split(',') end},
+             handler=function(arg) test_filter = arg:split(',') end},
         })
 
     if help then print(help_text) return end
@@ -467,6 +555,7 @@ local function main(args)
     -- override config with any params specified on the commandline
     if test_dir then config.test_dir = test_dir end
     if resume then config.resume = true end
+    if save_dir then config.save_dir = save_dir end
     if #mode_filter > 0 then config.modes = mode_filter end
     if #test_filter > 0 then config.tests = test_filter end
     if #done_command > 0 then config.done_command = done_command end
@@ -490,7 +579,7 @@ local function main(args)
     script.start(function()
         dfhack.call_with_finalizer(1, true,
                               finish_tests, config.done_command,
-                              run_tests, tests, status, counts)
+                              run_tests, tests, status, counts, config)
     end)
 end
 

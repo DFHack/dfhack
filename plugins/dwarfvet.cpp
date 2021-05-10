@@ -46,6 +46,7 @@
 #include "df/world.h"
 
 #include <map>
+#include <unordered_set>
 #include <vector>
 
 using namespace DFHack;
@@ -60,7 +61,7 @@ DFHACK_PLUGIN_IS_ENABLED(dwarfvet_enabled);
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(world);
 
-static vector<int32_t> tracked_units;
+static unordered_set<int32_t> tracked_units;
 static int32_t howOften = 100;
 
 struct hospital_spot {
@@ -145,8 +146,8 @@ AnimalHospital::AnimalHospital(df::building * building, color_ostream &out) {
 
 AnimalHospital::~AnimalHospital() {
     // Go through and delete all the patients
-    for (vector<Patient*>::iterator accepted_patient = this->accepted_patients.begin(); accepted_patient != this->accepted_patients.end(); accepted_patient++) {
-        delete (*accepted_patient);
+    for (Patient* accepted_patient : this->accepted_patients) {
+        delete accepted_patient;
    }
 }
 
@@ -159,7 +160,7 @@ bool AnimalHospital::acceptPatient(int32_t id, color_ostream &out) {
 
     // Yup, let's find the next open spot,
     // and give it to our patient
-    int spot_cur = 0; // fuck the STL for requiring a second counter to make this usable
+    int spot_cur = 0;
     for (vector<bool>::iterator spot = this->spots_in_use.begin(); spot != this->spots_in_use.end(); spot++) {
         if (*spot == false) {
             *spot = true;
@@ -193,11 +194,11 @@ void AnimalHospital::reportUsage(color_ostream &out) {
     // Debugging tool to see parts of the hospital in use
     int length_cursor = this->length;
 
-    for (vector<bool>::iterator spot = this->spots_in_use.begin(); spot != this->spots_in_use.end(); spot++) {
-        if (*spot) out.print("t");
-        if (!(*spot)) out.print("f");
+    for (bool spot : this->spots_in_use) {
+        if (spot) out.print("X");
+        else out.print("-");
         length_cursor--;
-        if (length_cursor < 0) {
+        if (length_cursor <= 0) {
             out.print("\n");
             length_cursor = this->length;
         }
@@ -276,62 +277,16 @@ void AnimalHospital::calculateHospital(bool force, color_ostream &out) {
         // NOTE: under some conditions, this generates a false warning. Not a lot I can do about it
 
         // Mark spots used by that building as used; FIXME: handle special logic for traction benches and such
-        int building_offset_x = building->x1 - this->x1;
-        int building_offset_y = building->y1 - this->y1;
-        int building_length = building->x2 - building->x1 + 1;
-        int building_height = building->y2 - building->y1 + 1;
-
-        // Cap the used calculation to only include the part in the hospital
-        if (this->x1 > building->x1) {
-            building_offset_x -= (this->x1 - building->x1);
-        }
-
-        if (this->y1 > building->y1) {
-            building_offset_y -= (building->y1 - this->y1);
-        }
-
-        if ((this->x2 < building->x2) && building_offset_x) {
-            building_length -= (this->x2 - building->x2) + 1;
-        }
-
-        if ((this->y2 < building->y2) && building_offset_y) {
-            building_height = (building->y2 - this->y2) + 1;
-        }
-
-        // Quick explination, if a building is north or east of the activity zone,
-        // we get a negative offset, we'll just skip those lines below. If its
-        // south or west, we make the building length/height lower to compinsate.
-
-        /* if we have a negative x offset, we correct that */
-        if (building_offset_x < 0) {
-            building_height += building_offset_x;
-            building_offset_x = 0;
-        }
-
-        /* Handle negative y offset */
-        if (building_offset_y < 0) {
-            building_length += building_offset_y;
-            building_offset_y = 0;
-        };
-
-        /* Advance the pointer to first row we need to mark */
-        int spot_cur = 0;
-        if (building_offset_y) {
-            spot_cur = (length+1) * building_offset_y;
-        }
-
-        spot_cur += building_offset_x;
-        /* Start marking! */
-        for (int i = 0; i < building_height; i++) {
-            for (int j = 0; j < building_length; j++) {
-                spots_in_use[spot_cur+j] = true;
+        int overlap_x1 = std::max(building->x1, this->x1);
+        int overlap_y1 = std::max(building->y1, this->y1);
+        int overlap_x2 = std::min(building->x2, this->x2);
+        int overlap_y2 = std::min(building->y2, this->y2);
+        for (int x = overlap_x1; x <= overlap_x2; x++) {
+            for (int y = overlap_y1; y <= overlap_y2; y++) {
+                int spot_index = (x - this->x1) + (this->length * (y - this->y1));
+                spots_in_use.at(spot_index) = true;
             }
-
-            // Wind the cursor to the start of the next row
-            spot_cur += length+1;
         }
-
-        // *phew*, done. Now repeat the process for the next building!
     }
 
 }
@@ -348,7 +303,7 @@ void AnimalHospital::dischargePatient(Patient * patient, color_ostream &out) {
         if ( (*accepted_patient)->getID() == id) {
             out.print("Discharging unit %d from hospital %d\n", id, this->id);
             // Reclaim their spot
-            spots_in_use[(*accepted_patient)->getSpotIndex()] = false;
+            spots_in_use.at((*accepted_patient)->getSpotIndex()) = false;
             this->spots_open++;
             delete (*accepted_patient);
             this->accepted_patients.erase(accepted_patient);
@@ -357,36 +312,21 @@ void AnimalHospital::dischargePatient(Patient * patient, color_ostream &out) {
     }
 
     // And the master list
-    for (vector<int32_t>::iterator it = tracked_units.begin(); it != tracked_units.end(); it++) {
-        if ((*it) == id) {
-            tracked_units.erase(it);
-            break;
-        }
-    }
+    tracked_units.erase(id);
 
     return;
 }
 
 void AnimalHospital::processPatients(color_ostream &out) {
     // Where the magic happens
-    for (vector<Patient*>::iterator patient = this->accepted_patients.begin(); patient != this->accepted_patients.end(); patient++) {
-        int id = (*patient)->getID();
-        df::unit * real_unit = nullptr;
-        // Appears the health bits can get freed/realloced too -_-;, Find the unit from the main
-        // index and check it there.
-        auto units = world->units.all;
-
-        for ( size_t a = 0; a < units.size(); a++ ) {
-            real_unit = units[a];
-            if (real_unit->id == id) {
-                break;
-            }
-        }
+    for (Patient *patient : this->accepted_patients) {
+        int id = patient->getID();
+        df::unit *real_unit = df::unit::find(id);
 
         // Check to make sure the unit hasn't expired before assigning a job, or if they've been healed
         if (!real_unit || !Units::isActive(real_unit) || !real_unit->health->flags.bits.needs_healthcare) {
             // discharge the patient from the hospital
-            this->dischargePatient(*patient, out);
+            this->dischargePatient(patient, out);
             return;
         }
 
@@ -396,9 +336,9 @@ void AnimalHospital::processPatients(color_ostream &out) {
             df::job * job = new df::job;
             DFHack::Job::linkIntoWorld(job);
 
-            job->pos.x = (*patient)->returnX();
-            job->pos.y = (*patient)->returnY();
-            job->pos.z = (*patient)->returnZ();
+            job->pos.x = patient->returnX();
+            job->pos.y = patient->returnY();
+            job->pos.z = patient->returnZ();
             job->flags.bits.special = 1;
             job->job_type = df::enums::job_type::Rest;
             df::general_ref *ref = df::allocate<df::general_ref_unit_workerst>();
@@ -418,8 +358,8 @@ void delete_animal_hospital_vector(color_ostream &out) {
     if (dwarfvet_enabled) {
         out.print("Clearing all animal hospitals\n");
     }
-    for (vector<AnimalHospital*>::iterator animal_hospital = animal_hospital_zones.begin(); animal_hospital != animal_hospital_zones.end(); animal_hospital++) {
-        delete (*animal_hospital);
+    for (AnimalHospital *animal_hospital : animal_hospital_zones) {
+        delete animal_hospital;
     }
     animal_hospital_zones.clear();
 }
@@ -474,8 +414,6 @@ void tickHandler(color_ostream& out, void* data) {
         return;
     CoreSuspender suspend;
     int32_t own_race_id = df::global::ui->race_id;
-    int32_t own_civ_id = df::global::ui->civ_id;
-    auto units = world->units.all;
 
     /**
      * Generate a list of animal hospitals on the map
@@ -496,8 +434,7 @@ void tickHandler(color_ostream& out, void* data) {
 
 
     // Walk the building tree, and generate a list of animal hospitals on the map
-    for (size_t b =0 ; b < world->buildings.all.size(); b++) {
-        df::building* building = world->buildings.all[b];
+    for (df::building* building : df::building::get_vector()) {
         if (isActiveAnimalHospital(building)) {
             hospitals_on_map.push_back(building);
         }
@@ -531,7 +468,7 @@ void tickHandler(color_ostream& out, void* data) {
     // Now walk our list of known hospitals, do a bit of checking, then compare
     // TODO: this doesn't handle zone resizes at all
 
-    for (vector<AnimalHospital*>::iterator animal_hospital = animal_hospital_zones.begin(); animal_hospital != animal_hospital_zones.end(); animal_hospital++) {
+    for (AnimalHospital *animal_hospital : animal_hospital_zones) {
         // If a zone is changed at all, DF seems to reallocate it.
         //
         // Each AnimalHospital has a "to_be_deleted" bool. We're going to set that to true, and clear it if we can't
@@ -540,13 +477,13 @@ void tickHandler(color_ostream& out, void* data) {
         //
         // Surviving hospitals will be copied to scratch which will become the new AHZ vector
 
-        (*animal_hospital)->to_be_deleted = true;
-        for (vector<df::building*>::iterator current_hospital = hospitals_on_map.begin(); current_hospital != hospitals_on_map.end(); current_hospital++) {
+        animal_hospital->to_be_deleted = true;
+        for (df::building *current_hospital : hospitals_on_map) {
 
             /* Keep the hospital if its still valid */
-            if ((*animal_hospital)->getID() == (*current_hospital)->id) {
-                ahz_scratch.push_back(*animal_hospital);
-                (*animal_hospital)->to_be_deleted = false;
+            if (animal_hospital->getID() == current_hospital->id) {
+                ahz_scratch.push_back(animal_hospital);
+                animal_hospital->to_be_deleted = false;
                 break;
             }
 
@@ -556,20 +493,20 @@ void tickHandler(color_ostream& out, void* data) {
     // Report what we're deleting by checking the to_be_deleted bool.
     //
     // Whatsever left is added to the pending add list
-    for (vector<AnimalHospital*>::iterator animal_hospital = animal_hospital_zones.begin(); animal_hospital != animal_hospital_zones.end(); animal_hospital++) {
-        if ((*animal_hospital)->to_be_deleted) {
-            out.print("Hospital #%d removed\n", (*animal_hospital)->getID());
-            delete *animal_hospital;
+    for (AnimalHospital *animal_hospital : animal_hospital_zones) {
+        if (animal_hospital->to_be_deleted) {
+            out.print("Hospital #%d removed\n", animal_hospital->getID());
+            delete animal_hospital;
         }
     }
 
     /* Now we need to walk the scratch and add anything that is a hospital and wasn't in the vector */
 
-    for (vector<df::building*>::iterator current_hospital = hospitals_on_map.begin(); current_hospital != hospitals_on_map.end(); current_hospital++) {
+    for (df::building *current_hospital : hospitals_on_map) {
         bool new_hospital = true;
 
-        for (vector<AnimalHospital*>::iterator animal_hospital = ahz_scratch.begin(); animal_hospital != ahz_scratch.end(); animal_hospital++) {
-            if ((*animal_hospital)->getID() == (*current_hospital)->id) {
+        for (AnimalHospital *animal_hospital : ahz_scratch) {
+            if (animal_hospital->getID() == current_hospital->id) {
                 // Next if we're already here
                 new_hospital = false;
                 break;
@@ -577,19 +514,19 @@ void tickHandler(color_ostream& out, void* data) {
         }
 
         // Add it if its new
-        if (new_hospital == true) to_be_added.push_back(*current_hospital);
+        if (new_hospital == true) to_be_added.push_back(current_hospital);
     }
 
     /* Now add it to the scratch AHZ */
-    for (vector<df::building*>::iterator current_hospital = to_be_added.begin(); current_hospital != to_be_added.end(); current_hospital++) {
+    for (df::building *current_hospital : to_be_added) {
         // Add it to the vector
         out.print("Adding new hospital #id: %d at x1 %d y1: %d z: %d\n",
-                (*current_hospital)->id,
-                (*current_hospital)->x1,
-                (*current_hospital)->y1,
-                (*current_hospital)->z
+                current_hospital->id,
+                current_hospital->x1,
+                current_hospital->y1,
+                current_hospital->z
                 );
-        AnimalHospital * hospital = new AnimalHospital(*current_hospital, out);
+        AnimalHospital * hospital = new AnimalHospital(current_hospital, out);
         ahz_scratch.push_back(hospital);
     }
 
@@ -621,9 +558,7 @@ void tickHandler(color_ostream& out, void* data) {
 */
 processUnits:
     /* Code borrowed from petcapRemover.cpp */
-    for ( size_t a = 0; a < units.size(); a++ ) {
-        df::unit* unit = units[a];
-
+    for (df::unit *unit : df::unit::get_vector()) {
         /* As hilarious as it would be, lets not treat FB :) */
         if ( !Units::isActive(unit) || unit->flags1.bits.active_invader || unit->flags2.bits.underworld || unit->flags2.bits.visitor_uninvited || unit->flags2.bits.visitor ) {
             continue;
@@ -723,12 +658,7 @@ processUnits:
              */
 
             // Now we need to find if this unit can be accepted at a hospital
-            bool awareOfUnit = false;
-            for (vector<int32_t>::iterator it = tracked_units.begin(); it != tracked_units.end(); it++) {
-                if ((*it) == unit->id) {
-                    awareOfUnit = true;
-                }
-            }
+            bool awareOfUnit = tracked_units.count(unit->id);
             // New unit for dwarfvet to be aware of!
             if (!awareOfUnit) {
                 // The master list handles all patients which are accepted
@@ -737,7 +667,7 @@ processUnits:
                 for (auto animal_hospital : animal_hospital_zones) {
                     if (animal_hospital->acceptPatient(unit->id, out)) {
                         out.print("Accepted patient %d at hospital %d\n", unit->id, animal_hospital->getID());
-                        tracked_units.push_back(unit->id);
+                        tracked_units.insert(unit->id);
                         break;
                     }
                 }
@@ -746,9 +676,9 @@ processUnits:
     }
 
     // The final step, process all patients!
-    for (vector<AnimalHospital*>::iterator animal_hospital = animal_hospital_zones.begin(); animal_hospital != animal_hospital_zones.end(); animal_hospital++) {
-        (*animal_hospital)->calculateHospital(true, out);
-        (*animal_hospital)->processPatients(out);
+    for (AnimalHospital *animal_hospital : animal_hospital_zones) {
+        animal_hospital->calculateHospital(true, out);
+        animal_hospital->processPatients(out);
     }
 
 cleanup:
@@ -772,8 +702,7 @@ command_result dwarfvet (color_ostream &out, std::vector <std::string> & paramet
         }
         if ( parameters[a] == "report") {
             out.print("Current animal hospitals are:\n");
-            for (size_t b =0 ; b < world->buildings.all.size(); b++) {
-                df::building* building = world->buildings.all[b];
+            for (df::building *building : df::building::get_vector()) {
                 if (isActiveAnimalHospital(building)) {
                     out.print("  at x1: %d, x2: %d, y1: %d, y2: %d, z: %d\n", building->x1, building->x2, building->y1, building->y2, building->z);
                 }
@@ -782,9 +711,9 @@ command_result dwarfvet (color_ostream &out, std::vector <std::string> & paramet
         }
         if ( parameters[a] == "report-usage") {
             out.print("Current animal hospitals are:\n");
-            for (vector<AnimalHospital*>::iterator animal_hospital = animal_hospital_zones.begin(); animal_hospital != animal_hospital_zones.end(); animal_hospital++) {
-                (*animal_hospital)->calculateHospital(true, out);
-                (*animal_hospital)->reportUsage(out);
+            for (AnimalHospital *animal_hospital : animal_hospital_zones) {
+                animal_hospital->calculateHospital(true, out);
+                animal_hospital->reportUsage(out);
             }
             return CR_OK;
         }

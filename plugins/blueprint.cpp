@@ -1,6 +1,9 @@
-//Blueprint
-//By cdombroski
-//Translates a region of tiles specified by the cursor and arguments/prompts into a series of blueprint files suitable for digfort/buildingplan/quickfort
+/**
+ * Translates a region of tiles specified by the cursor and arguments/prompts
+ * into a series of blueprint files suitable for replay via quickfort.
+ *
+ * Written by cdombroski.
+ */
 
 #include <algorithm>
 #include <sstream>
@@ -8,11 +11,11 @@
 #include <Console.h>
 #include <PluginManager.h>
 #include "LuaTools.h"
+#include "TileTypes.h"
 
 #include "modules/Buildings.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
-#include "modules/MapCache.h"
 
 #include "df/building_axle_horizontalst.h"
 #include "df/building_bridgest.h"
@@ -43,7 +46,7 @@ command_result blueprint(color_ostream &out, vector <string> &parameters);
 
 DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("blueprint", "Convert map tiles into a blueprint", blueprint, false));
+    commands.push_back(PluginCommand("blueprint", "Record the structure of a live game map in a quickfort blueprint", blueprint, false));
     return CR_OK;
 }
 
@@ -76,10 +79,10 @@ pair<uint32_t, uint32_t> get_building_size(df::building* b)
     return pair<uint32_t, uint32_t>(b->x2 - b->x1 + 1, b->y2 - b->y1 + 1);
 }
 
-char get_tile_dig(MapExtras::MapCache mc, int32_t x, int32_t y, int32_t z)
+char get_tile_dig(int32_t x, int32_t y, int32_t z)
 {
-    df::tiletype tt = mc.tiletypeAt(DFCoord(x, y, z));
-    df::tiletype_shape ts = tileShape(tt);
+    df::tiletype *tt = Maps::getTileType(x, y , z);
+    df::tiletype_shape ts = tileShape(tt ? *tt : tiletype::Void);
     switch (ts)
     {
     case tiletype_shape::EMPTY:
@@ -102,7 +105,6 @@ char get_tile_dig(MapExtras::MapCache mc, int32_t x, int32_t y, int32_t z)
         return 'r';
     default:
         return ' ';
-
     }
 }
 
@@ -629,7 +631,6 @@ command_result do_transform(DFCoord start, DFCoord end, string name, uint32_t ph
         end.z++;
     }
 
-    MapExtras::MapCache mc;
     for (int32_t z = start.z; z < end.z; z++)
     {
         for (int32_t y = start.y; y < end.y; y++)
@@ -644,7 +645,7 @@ command_result do_transform(DFCoord start, DFCoord end, string name, uint32_t ph
                 if (phases & BUILD)
                     build << get_tile_build(x, y, b) << ',';
                 if (phases & DIG)
-                    dig << get_tile_dig(mc, x, y, z) << ',';
+                    dig << get_tile_dig(x, y, z) << ',';
             }
             if (phases & QUERY)
                 query << "#" << endl;

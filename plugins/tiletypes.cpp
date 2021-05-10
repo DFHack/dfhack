@@ -316,7 +316,7 @@ std::ostream &operator<<(std::ostream &stream, const TileType &paint)
             needSpace = false;
         }
 
-        stream << (paint.dig ? "DESIGNATED" : "UNDESIGATNED");
+        stream << (paint.dig ? "DESIGNATED" : "UNDESIGNATED");
         used = true;
         needSpace = true;
     }

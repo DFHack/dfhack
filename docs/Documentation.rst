@@ -127,10 +127,6 @@ Required dependencies
 In order to build the documentation, you must have Python with Sphinx
 version |sphinx_min_version| or later. Python 3 is recommended.
 
-.. warning::
-
-  Sphinx 4 is currently not supported. See :issue:`1851` for details.
-
 When installing Sphinx from OS package managers, be aware that there is
 another program called Sphinx, completely unrelated to documentation management.
 Be sure you are installing the right Sphinx; it may be called ``python-sphinx``,

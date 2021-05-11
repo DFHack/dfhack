@@ -111,7 +111,7 @@ jobs:
         python-version: 3
     - name: Install dependencies
       run: |
-        pip install 'sphinx<4'
+        pip install sphinx
     - name: Clone DFHack
       uses: actions/checkout@v1
       with:

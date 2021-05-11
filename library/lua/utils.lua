@@ -620,6 +620,9 @@ end
 -- can be combined into a single option string (e.g. '-abc' is the same as
 -- '-a -b -c' if options 'a' and 'b' do not take arguments.
 --
+-- Numbers cannot be options and negative numbers (e.g. -10) will be interpreted
+-- as positional parameters and returned in the nonoptions list.
+--
 -- optionActions is a vector with elements in the following format:
 -- {shortOptionName, longOptionAlias, hasArg=boolean, handler=fn}
 -- shortOptionName and handler are required. If the option takes an argument,

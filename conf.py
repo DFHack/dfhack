@@ -209,7 +209,7 @@ extlinks = {
     'bug': ('https://www.bay12games.com/dwarves/mantisbt/view.php?id=%s',
             'Bug '),
     'source': ('https://github.com/DFHack/dfhack/tree/develop/%s', ''),
-    'source:scripts': ('https://github.com/DFHack/scripts/tree/master/%s', ''),
+    'source-scripts': ('https://github.com/DFHack/scripts/tree/master/%s', ''),
     'issue': ('https://github.com/DFHack/dfhack/issues/%s', 'Issue '),
     'commit': ('https://github.com/DFHack/dfhack/commit/%s', 'Commit '),
 }

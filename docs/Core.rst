@@ -492,7 +492,7 @@ the root DF folder.
 
 .. admonition:: Tip
 
-    When developing scripts in the :source:scripts:`dfhack/scripts repo <>`,
+    When developing scripts in the :source-scripts:`dfhack/scripts repo <>`,
     it may be useful to add the path to your local copy of the repo with ``+``.
     This will allow you to make changes in the repo and have them take effect
     immediately, without needing to re-install or copy scripts over manually.

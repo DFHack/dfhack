@@ -1564,7 +1564,7 @@ Links
 -  :source:`Quickfort blueprints library <data/blueprints/library>`
 -  :forums:`Quickfort forum thread <176889>`
 -  :issue:`DFHack issue tracker <>`
--  :source:scripts:`Quickfort source code <internal/quickfort>`
+-  :source-scripts:`Quickfort source code <internal/quickfort>`
 
 **Related tools:**
 

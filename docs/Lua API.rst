@@ -4405,7 +4405,7 @@ the extension omitted. For example:
 Scripts can also be placed in other folders - by default, these include
 :file:`raw/scripts` and :file:`data/save/{region}/raw/scripts`, but additional
 folders can be added (for example, a copy of the
-:source:scripts:`scripts repository <>` for local development). See
+:source-scripts:`scripts repository <>` for local development). See
 `script-paths` for more information on how to configure this behavior.
 
 If the first line of the script is a one-line comment (starting with ``--``),

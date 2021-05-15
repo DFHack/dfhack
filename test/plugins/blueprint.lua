@@ -120,45 +120,6 @@ function test.parse_commandline()
                        'zero depth')
 end
 
-function test.do_gui_no_arg()
-    local mock_print, mock_timeout, mock_run_script =
-            mock.func(), mock.func(), mock.func()
-    mock.patch(
-        {
-            {b, 'print', mock_print},
-            {dfhack, 'timeout', mock_timeout},
-            {dfhack, 'run_script', mock_run_script},
-        },
-        function()
-            b.do_gui('gui')
-            expect.eq(1, mock_print.call_count)
-            expect.eq(1, mock_timeout.call_count)
-            mock_timeout.call_args[1][3]()
-            expect.eq(1, mock_run_script.call_count)
-            expect.table_eq({'gui/blueprint'}, mock_run_script.call_args[1])
-        end)
-end
-
-function test.do_gui_with_args()
-    local mock_print, mock_timeout, mock_run_script =
-            mock.func(), mock.func(), mock.func()
-    mock.patch(
-        {
-            {b, 'print', mock_print},
-            {dfhack, 'timeout', mock_timeout},
-            {dfhack, 'run_script', mock_run_script},
-        },
-        function()
-            b.do_gui('gui', 'arg1', 'arg2', 'arg3')
-            expect.eq(1, mock_print.call_count)
-            expect.eq(1, mock_timeout.call_count)
-            mock_timeout.call_args[1][3]()
-            expect.eq(1, mock_run_script.call_count)
-            expect.table_eq({'gui/blueprint', 'arg1', 'arg2', 'arg3'},
-                            mock_run_script.call_args[1])
-        end)
-end
-
 function test.do_blueprint_positive_dims()
     local mock_run_command = mock.func()
     mock.patch(dfhack, 'run_command', mock_run_command,

@@ -46,38 +46,40 @@ selected interactively with the ``blueprint gui`` command or, if the GUI is not
 used, starts at the active cursor location and extends right and down for the
 requested width and height.
 
-Usage:
+Usage::
 
     blueprint <width> <height> [<depth>] [<name> [<phases>]] [<options>]
     blueprint gui [<name> [<phases>]] [<options>]
 
 Examples:
 
-blueprint gui
+``blueprint gui``
     Runs `gui/blueprint`, the interactive blueprint frontend, where all
     configuration for a ``blueprint`` command can be set visually and
     interactively.
 
-blueprint gui bedrooms dig -\-cursor 108,100,150
-    Starts ``gui/blueprint`` with some configuration options preset to custom
-    values.
-
-blueprint 30 40 bedrooms
+``blueprint 30 40 bedrooms``
     Generates blueprints for an area 30 tiles wide by 40 tiles tall, starting
-    from the active cursor on the current z-level. Output is written to the
-    ``bedrooms.csv`` file in the ``blueprints`` directory.
+    from the active cursor on the current z-level. Output is written to files
+    with names matching the pattern ``bedrooms-PHASE.csv`` in the ``blueprints``
+    directory.
+
+``blueprint 30 40 bedrooms dig --cursor 108,100,150``
+    Generates only the ``bedrooms-dig.csv`` file from the previous example, and
+    the blueprint start coordinate is set to a specific value instead of using
+    the in-game cursor position.
 
 Positional Parameters:
 
-:width:   Width of the area (in tiles) to translate.
-:height:  Height of the area (in tiles) to translate.
-:depth:   Number of z-levels to translate. Positive numbers go *up* from the
-          cursor and negative numbers go *down*. Defaults to 1 if not specified,
-          indicating that the blueprint should only include the current z-level.
-:name:    Base name for blueprint files created in the ``blueprints`` directory.
-          If no name is specified, "blueprint" is used by default. The string
-          must contain some characters other than numbers so the name won't be
-          confused with the optional ``depth`` parameter.
+:``width``:   Width of the area (in tiles) to translate.
+:``height``:  Height of the area (in tiles) to translate.
+:``depth``:   Number of z-levels to translate. Positive numbers go *up* from the
+    cursor and negative numbers go *down*. Defaults to 1 if not specified,
+    indicating that the blueprint should only include the current z-level.
+:``name``:    Base name for blueprint files created in the ``blueprints``
+    directory. If no name is specified, "blueprint" is used by default. The
+    string must contain some characters other than numbers so the name won't be
+    confused with the optional ``depth`` parameter.
 
 Phases:
 
@@ -85,21 +87,21 @@ If you want to generate blueprints only for specific phases, add their names to
 the commandline, anywhere after the blueprint base name. You can list multiple
 phases; just separate them with a space.
 
-:dig:    Generate quickfort ``#dig`` blueprints.
-:build:  Generate quickfort ``#build`` blueprints for constructions and
-         buildings.
-:place:  Generate quickfort ``#place`` blueprints for placing stockpiles.
-:query:  Generate quickfort ``#query`` blueprints for configuring rooms.
+:``dig``:    Generate quickfort ``#dig`` blueprints.
+:``build``:  Generate quickfort ``#build`` blueprints for constructions and
+    buildings.
+:``place``:  Generate quickfort ``#place`` blueprints for placing stockpiles.
+:``query``:  Generate quickfort ``#query`` blueprints for configuring rooms.
 
 If no phases are specified, all blueprints are created.
 
 Options:
 
-:-c, -\-cursor <x>,<y>,<z>:
+:``-c``, ``--cursor <x>,<y>,<z>``:
     Use the specified map coordinates instead of the current cursor position for
     the upper left corner of the blueprint range. If this option is specified,
     then an active game map cursor is not necessary.
-:-h, -\-help:
+:``-h``, ``--help``:
     Show command help text.
 
 .. _remotefortressreader:

@@ -25,8 +25,8 @@ blueprint gui
 
 blueprint 30 40 bedrooms
     Generates blueprints for an area 30 tiles wide by 40 tiles tall, starting
-    from the active cursor on the current z-level. Output is written to the
-    "bedrooms.csv" file in the "blueprints" directory.
+    from the active cursor on the current z-level. Output files are written to
+    the "blueprints" directory.
 
 See the online DFHack documentation for more examples and details.
 ]=]

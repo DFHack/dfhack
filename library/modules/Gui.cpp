@@ -648,13 +648,18 @@ bool Gui::item_details_hotkey(df::viewscreen *top)
     return !!strict_virtual_cast<df::viewscreen_itemst>(top);
 }
 
+static bool has_cursor()
+{
+    return df::global::cursor && df::global::cursor->x != -30000;
+}
+
 bool Gui::cursor_hotkey(df::viewscreen *top)
 {
     if (!dwarfmode_hotkey(top))
         return false;
 
     // Also require the cursor.
-    if (!df::global::cursor || df::global::cursor->x == -30000)
+    if (!has_cursor())
         return false;
 
     return true;
@@ -1788,7 +1793,15 @@ bool Gui::getCursorCoords (int32_t &x, int32_t &y, int32_t &z)
     x = df::global::cursor->x;
     y = df::global::cursor->y;
     z = df::global::cursor->z;
-    return (x == -30000) ? false : true;
+    return has_cursor();
+}
+
+bool Gui::getCursorCoords (df::coord &pos)
+{
+    pos.x = df::global::cursor->x;
+    pos.y = df::global::cursor->y;
+    pos.z = df::global::cursor->z;
+    return has_cursor();
 }
 
 //FIXME: confine writing of coords to map bounds?

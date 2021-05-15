@@ -134,14 +134,6 @@ function parse_commandline(opts, ...)
     parse_positionals(opts, positionals, depth and 4 or 3)
 end
 
-function do_gui(command, ...)
-    local args = {...}
-    print(('launching gui/blueprint %s'):format(table.concat(args, ' ')))
-    dfhack.timeout(1, 'frames',
-                   function() dfhack.run_script('gui/blueprint',
-                                                table.unpack(args)) end)
-end
-
 -- compatibility with old exported API. we route the request back through
 -- run_command so we have a unified path for parameter processing and invariant
 -- checking.

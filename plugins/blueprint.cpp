@@ -691,7 +691,7 @@ static bool get_options(blueprint_options &opts,
         !Lua::PushModulePublic(
             out, L, "plugins.blueprint", "parse_commandline"))
     {
-        out.printerr("Failed to load blueprint Lua code");
+        out.printerr("Failed to load blueprint Lua code\n");
         return false;
     }
 
@@ -701,28 +701,6 @@ static bool get_options(blueprint_options &opts,
         Lua::Push(L, param);
 
     if (!Lua::SafeCall(out, L, parameters.size() + 1, 0))
-        return false;
-
-    return true;
-}
-
-static bool do_gui(const vector<string> &parameters)
-{
-    auto L = Lua::Core::State;
-    color_ostream_proxy out(Core::getInstance().getConsole());
-    Lua::StackUnwinder top(L);
-
-    if (!lua_checkstack(L, parameters.size() + 1) ||
-        !Lua::PushModulePublic(out, L, "plugins.blueprint", "do_gui"))
-    {
-        out.printerr("Failed to load blueprint Lua code");
-        return false;
-    }
-
-    for (const string &param : parameters)
-        Lua::Push(L, param);
-
-    if (!Lua::SafeCall(out, L, parameters.size(), 0))
         return false;
 
     return true;
@@ -738,7 +716,7 @@ static void print_help()
         !Lua::PushModulePublic(out, L, "plugins.blueprint", "print_help") ||
         !Lua::SafeCall(out, L, 0, 0))
     {
-        out.printerr("Failed to load blueprint Lua code");
+        out.printerr("Failed to load blueprint Lua code\n");
     }
 }
 
@@ -746,7 +724,17 @@ command_result blueprint(color_ostream &out, vector<string> &parameters)
 {
     if (parameters.size() >= 1 && parameters[0] == "gui")
     {
-        return do_gui(parameters) ? CR_OK : CR_FAILURE;
+        std::ostringstream command;
+        command << "gui/blueprint";
+        for (const string &param : parameters)
+        {
+            command << " " << param;
+        }
+        string command_str = command.str();
+        out.print("launching %s\n", command_str.c_str());
+
+        Core::getInstance().setHotkeyCmd(command_str);
+        return CR_OK;
     }
 
     blueprint_options options;

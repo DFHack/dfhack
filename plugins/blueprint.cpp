@@ -722,6 +722,8 @@ static void print_help()
 
 command_result blueprint(color_ostream &out, vector<string> &parameters)
 {
+    CoreSuspender suspend;
+
     if (parameters.size() >= 1 && parameters[0] == "gui")
     {
         std::ostringstream command;
@@ -744,7 +746,6 @@ command_result blueprint(color_ostream &out, vector<string> &parameters)
         return options.help ? CR_OK : CR_FAILURE;
     }
 
-    CoreSuspender suspend;
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");
@@ -755,16 +756,12 @@ command_result blueprint(color_ostream &out, vector<string> &parameters)
     DFCoord start(options.start);
     if (options.start.x == -30000)
     {
-        int32_t x, y, z;
-        if (!Gui::getCursorCoords(x, y, z))
+        if (!Gui::getCursorCoords(options.start))
         {
             out.printerr("Can't get cursor coords! Make sure you specify the"
                     " --cursor parameter or have an active cursor in DF.\n");
             return CR_FAILURE;
         }
-        start.x = x;
-        start.y = y;
-        start.z = z;
     }
     if (!Maps::isValidTilePos(start))
     {

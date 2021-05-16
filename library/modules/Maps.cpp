@@ -106,7 +106,7 @@ bool Maps::IsValid ()
     return (world->map.block_index != NULL);
 }
 
-// getter for map size
+// getter for map size in blocks
 void Maps::getSize (uint32_t& x, uint32_t& y, uint32_t& z)
 {
     if (!IsValid())
@@ -117,6 +117,14 @@ void Maps::getSize (uint32_t& x, uint32_t& y, uint32_t& z)
     x = world->map.x_count_block;
     y = world->map.y_count_block;
     z = world->map.z_count_block;
+}
+
+// getter for map size in tiles
+void Maps::getTileSize (uint32_t& x, uint32_t& y, uint32_t& z)
+{
+    getSize(x, y, z);
+    x *= 16;
+    y *= 16;
 }
 
 // getter for map position

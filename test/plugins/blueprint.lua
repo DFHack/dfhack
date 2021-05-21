@@ -121,44 +121,44 @@ function test.parse_commandline()
                        'zero depth')
 end
 
-function test.do_blueprint_positive_dims()
-    local mock_run_command = mock.func()
-    mock.patch(dfhack, 'run_command', mock_run_command,
+function test.do_phase_positive_dims()
+    local mock_run = mock.func()
+    mock.patch(b, 'run', mock_run,
         function()
               local spos = {x=10, y=20, z=30}
               local epos = {x=11, y=21, z=31}
               b.query(spos, epos, 'imaname')
-              expect.eq(1, mock_run_command.call_count)
-              expect.table_eq({'blueprint', '2', '2', '2', 'imaname', 'query',
+              expect.eq(1, mock_run.call_count)
+              expect.table_eq({'2', '2', '2', 'imaname', 'query',
                                '--cursor=10,20,30'},
-                              mock_run_command.call_args[1])
+                              mock_run.call_args[1])
         end)
 end
 
-function test.do_blueprint_negative_dims()
-    local mock_run_command = mock.func()
-    mock.patch(dfhack, 'run_command', mock_run_command,
+function test.do_phase_negative_dims()
+    local mock_run = mock.func()
+    mock.patch(b, 'run', mock_run,
         function()
               local spos = {x=11, y=21, z=31}
               local epos = {x=10, y=20, z=30}
               b.query(spos, epos, 'imaname')
-              expect.eq(1, mock_run_command.call_count)
-              expect.table_eq({'blueprint', '2', '2', '-2', 'imaname', 'query',
+              expect.eq(1, mock_run.call_count)
+              expect.table_eq({'2', '2', '-2', 'imaname', 'query',
                                '--cursor=10,20,31'},
-                              mock_run_command.call_args[1])
+                              mock_run.call_args[1])
         end)
 end
 
-function test.do_blueprint_ensure_cursor_is_at_upper_left()
-    local mock_run_command = mock.func()
-    mock.patch(dfhack, 'run_command', mock_run_command,
+function test.do_phase_ensure_cursor_is_at_upper_left()
+    local mock_run = mock.func()
+    mock.patch(b, 'run', mock_run,
         function()
               local spos = {x=11, y=20, z=30}
               local epos = {x=10, y=21, z=31}
               b.query(spos, epos, 'imaname')
-              expect.eq(1, mock_run_command.call_count)
-              expect.table_eq({'blueprint', '2', '2', '2', 'imaname', 'query',
+              expect.eq(1, mock_run.call_count)
+              expect.table_eq({'2', '2', '2', 'imaname', 'query',
                                '--cursor=10,20,30'},
-                              mock_run_command.call_args[1])
+                              mock_run.call_args[1])
         end)
 end

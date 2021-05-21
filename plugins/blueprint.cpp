@@ -754,9 +754,9 @@ command_result blueprint(color_ostream &out, vector<string> &parameters)
 
     // start coordinates can come from either the commandline or the map cursor
     DFCoord start(options.start);
-    if (options.start.x == -30000)
+    if (start.x == -30000)
     {
-        if (!Gui::getCursorCoords(options.start))
+        if (!Gui::getCursorCoords(start))
         {
             out.printerr("Can't get cursor coords! Make sure you specify the"
                     " --cursor parameter or have an active cursor in DF.\n");

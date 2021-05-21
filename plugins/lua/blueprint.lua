@@ -33,12 +33,14 @@ See the online DFHack documentation for more examples and details.
 
 function print_help() print(help_text) end
 
-valid_phases = utils.invert{
+local valid_phase_list = {
     'dig',
     'build',
     'place',
     'query',
 }
+
+valid_phases = utils.invert(valid_phase_list)
 
 local function parse_cursor(opts, arg)
     local _, _, x, y, z = arg:find('^(%d+),(%d+),(%d+)$')
@@ -73,10 +75,12 @@ local function parse_positionals(opts, args, start_argidx)
     local auto_phase = true
     local phase = args[argidx]
     while phase do
-        if valid_phases[phase] then
-            auto_phase = false
-            opts[phase] = true
+        if not valid_phases[phase] then
+            qerror(('unknown phase: "%s"; expected one of: %s'):
+                   format(phase, table.concat(valid_phase_list, ', ')))
         end
+        auto_phase = false
+        opts[phase] = true
         argidx = argidx + 1
         phase = args[argidx]
     end

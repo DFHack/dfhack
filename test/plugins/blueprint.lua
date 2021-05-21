@@ -49,8 +49,9 @@ function test.parse_gui_commandline()
                     opts)
 
     opts = {}
-    b.parse_gui_commandline(opts, {'imaname', 'garbagephase'})
-    expect.table_eq({auto_phase=true, name='imaname'}, opts)
+    expect.error_match('unknown phase',
+                       function() b.parse_gui_commandline(
+                                        opts, {'imaname', 'garbagephase'}) end)
 end
 
 function test.parse_commandline()

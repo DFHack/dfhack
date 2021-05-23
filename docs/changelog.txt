@@ -42,6 +42,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Misc Improvements
 - `tweak` hide-priority: changed so that priorities stay hidden (or visible) when exiting and re-entering the designations menu
+- `embark-assistant`: slightly improved performance of surveying and improved code a little
 
 ## Lua
 - ``gui.Painter``: fixed error when calling ``viewport()`` method

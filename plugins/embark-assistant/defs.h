@@ -91,9 +91,12 @@ namespace embark_assist {
             int16_t river_elevation = 100;
             int8_t adamantine_level;  // -1 = none, 0 .. 3 = cavern 1 .. magma sea. Currently not used beyond present/absent.
             int8_t magma_level;  // -1 = none, 0 .. 3 = cavern 3 .. surface/volcano
-            std::vector<bool> metals;
-            std::vector<bool> economics;
-            std::vector<bool> minerals;
+            // using uint8_t instead of bool as vector<bool> gets optimized for a small memory footprint which leads to a significant overhead when iterating over all entries, 
+            // also there seems to be no template specialization for std::fill in MSVS C++11 in regards to std::vector<bool> and std::memset does not work as expected (=> not at all that is)
+            // have a look here https://github.com/DFHack/dfhack/pull/1771#discussion_r579498636 for the related discussion and furter resources
+            std::vector<uint8_t> metals;
+            std::vector<uint8_t> economics;
+            std::vector<uint8_t> minerals;
         };
 
         typedef std::array<std::array<mid_level_tile, 16>, 16> mid_level_tiles;

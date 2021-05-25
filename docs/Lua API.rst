@@ -3756,15 +3756,19 @@ the plugin. See existing files in ``plugins/lua`` for examples.
 blueprint
 =========
 
-Native functions provided by the `blueprint` plugin:
+Lua functions provided by the `blueprint` plugin to programmatically generate
+blueprint files:
 
 * ``dig(start, end, name)``
 * ``build(start, end, name)``
 * ``place(start, end, name)``
 * ``query(start, end, name)``
 
-  ``start`` and ``end`` are tables containing positions (see
-  ``xyz2pos``). ``name`` is used as the basis for the filename.
+  ``start`` and ``end`` are tables containing positions (see ``xyz2pos``).
+  ``name`` is used as the basis for the generated filenames.
+
+The names of the functions are also available as the keys of the
+``valid_phases`` table.
 
 .. _building-hacks:
 

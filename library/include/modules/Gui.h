@@ -156,6 +156,7 @@ namespace DFHack
         DFHACK_EXPORT bool setViewCoords (const int32_t x, const int32_t y, const int32_t z);
 
         DFHACK_EXPORT bool getCursorCoords (int32_t &x, int32_t &y, int32_t &z);
+        DFHACK_EXPORT bool getCursorCoords (df::coord &pos);
         DFHACK_EXPORT bool setCursorCoords (const int32_t x, const int32_t y, const int32_t z);
 
         DFHACK_EXPORT bool getDesignationCoords (int32_t &x, int32_t &y, int32_t &z);

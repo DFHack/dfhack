@@ -37,22 +37,72 @@ For more information, see `the full Stonesense README <stonesense>`.
 
 blueprint
 =========
-Exports a portion of your fortress into QuickFort style blueprint files.
+The ``blueprint`` command exports the structure of a portion of your fortress in
+a blueprint file that you (or anyone else) can later play back with `quickfort`.
+
+Blueprints are ``.csv`` or ``.xlsx`` files created in the ``blueprints``
+subdirectory of your DF folder. The map area to turn into a blueprint is either
+selected interactively with the ``blueprint gui`` command or, if the GUI is not
+used, starts at the active cursor location and extends right and down for the
+requested width and height.
 
 Usage::
 
-    blueprint <x> <y> <z> <name> [dig] [build] [place] [query]
+    blueprint <width> <height> [<depth>] [<name> [<phases>]] [<options>]
+    blueprint gui [<name> [<phases>]] [<options>]
 
-Options (If only region and name are given, export all):
+Examples:
 
-:x,y,z:     Size of map area to export
-:name:      Name of export files
-:dig:       Export dig commands to "<name>-dig.csv"
-:build:     Export build commands to "<name>-build.csv"
-:place:     Export stockpile commands to "<name>-place.csv"
-:query:     Export query commands to "<name>-query.csv"
+``blueprint gui``
+    Runs `gui/blueprint`, the interactive blueprint frontend, where all
+    configuration for a ``blueprint`` command can be set visually and
+    interactively.
 
-Goes very well with `quickfort`, for re-importing.
+``blueprint 30 40 bedrooms``
+    Generates blueprints for an area 30 tiles wide by 40 tiles tall, starting
+    from the active cursor on the current z-level. Output is written to files
+    with names matching the pattern ``bedrooms-PHASE.csv`` in the ``blueprints``
+    directory.
+
+``blueprint 30 40 bedrooms dig --cursor 108,100,150``
+    Generates only the ``bedrooms-dig.csv`` file from the previous example, and
+    the blueprint start coordinate is set to a specific value instead of using
+    the in-game cursor position.
+
+Positional Parameters:
+
+:``width``:   Width of the area (in tiles) to translate.
+:``height``:  Height of the area (in tiles) to translate.
+:``depth``:   Number of z-levels to translate. Positive numbers go *up* from the
+    cursor and negative numbers go *down*. Defaults to 1 if not specified,
+    indicating that the blueprint should only include the current z-level.
+:``name``:    Base name for blueprint files created in the ``blueprints``
+    directory. If no name is specified, "blueprint" is used by default. The
+    string must contain some characters other than numbers so the name won't be
+    confused with the optional ``depth`` parameter.
+
+Phases:
+
+If you want to generate blueprints only for specific phases, add their names to
+the commandline, anywhere after the blueprint base name. You can list multiple
+phases; just separate them with a space.
+
+:``dig``:    Generate quickfort ``#dig`` blueprints.
+:``build``:  Generate quickfort ``#build`` blueprints for constructions and
+    buildings.
+:``place``:  Generate quickfort ``#place`` blueprints for placing stockpiles.
+:``query``:  Generate quickfort ``#query`` blueprints for configuring rooms.
+
+If no phases are specified, all blueprints are created.
+
+Options:
+
+:``-c``, ``--cursor <x>,<y>,<z>``:
+    Use the specified map coordinates instead of the current cursor position for
+    the upper left corner of the blueprint range. If this option is specified,
+    then an active game map cursor is not necessary.
+:``-h``, ``--help``:
+    Show command help text.
 
 .. _remotefortressreader:
 

@@ -1,5 +1,6 @@
 #include <math.h>
 #include <vector>
+#include <cstring>
 
 #include "Core.h"
 #include <Console.h>

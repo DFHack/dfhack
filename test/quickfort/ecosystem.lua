@@ -22,8 +22,6 @@ config = {
 }
 
 local guidm = require('gui.dwarfmode')
-local quickfort_command = reqscript('internal/quickfort/command')
-local quickfort_list = reqscript('internal/quickfort/list')
 
 local blueprints_dir = 'blueprints/'
 local input_dir = 'library/test/ecosystem/in/'
@@ -44,8 +42,12 @@ local function get_positive_int(numstr, varname, basename)
     return num
 end
 
+-- internal/quickfort scripts are loaded inside the function here so the test
+-- file itself can load when a fortress map is not active. this is required
+-- because quickfort depends on stockflow, which fails outside of fort mode.
 local function get_blueprint_sets()
     -- find test blueprints with `quickfort list`
+    local quickfort_list = reqscript('internal/quickfort/list')
     local mock_print = mock.func()
     mock.patch(quickfort_list, 'print', mock_print,
         function()
@@ -69,6 +71,7 @@ local function get_blueprint_sets()
     end
 
     -- load test specs
+    local quickfort_command = reqscript('internal/quickfort/command')
     for basename,set in pairs(sets) do
         local spec, notes = set.spec, set.modes.notes
 

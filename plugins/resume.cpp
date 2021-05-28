@@ -41,6 +41,7 @@ DFHACK_PLUGIN("resume");
 #define PLUGIN_VERSION 0.2
 
 REQUIRE_GLOBAL(gps);
+REQUIRE_GLOBAL(process_jobs);
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(world);
 
@@ -222,6 +223,11 @@ struct resume_hook : public df::viewscreen_dwarfmodest
 
         if (enabled && DFHack::World::ReadPauseState() && ui->main.mode == ui_sidebar_mode::Default)
         {
+            if (*process_jobs)
+            {
+                // something just created some buildings. rescan.
+                clear_scanned();
+            }
             scan_for_suspended_buildings();
             show_suspended_buildings();
         }

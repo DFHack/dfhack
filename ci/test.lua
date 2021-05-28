@@ -539,12 +539,12 @@ local function main(args)
             {'d', 'test_dir', hasArg=true,
              handler=function(arg) test_dir = arg end},
             {'m', 'modes', hasArg=true,
-             handler=function(arg) mode_filter = arg:split(',') end},
+             handler=function(arg) mode_filter = utils.split_string(arg, ',') end},
             {'r', 'resume', handler=function() resume = true end},
             {'s', 'save_dir', hasArg=true,
              handler=function(arg) save_dir = arg end},
             {'t', 'tests', hasArg=true,
-             handler=function(arg) test_filter = arg:split(',') end},
+             handler=function(arg) test_filter = utils.split_string(arg, ',') end},
         })
 
     if help then print(help_text) return end

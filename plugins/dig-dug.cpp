@@ -34,7 +34,7 @@ static bool unhide(int32_t x, int32_t y, int32_t z) {
     return true;
 }
 
-// unhide self and adjacent tiles if hidden and flood fill unhidden state
+// unhide adjacent tiles if hidden and flood fill unhidden state
 static void flood_unhide(int32_t x, int32_t y, int32_t z) {
     df::tiletype tt = *Maps::getTileType(x, y, z);
     if (tileShape(tt) == df::tiletype_shape::WALL
@@ -90,62 +90,185 @@ static void propagate_vertical_flags(int32_t x, int32_t y, int32_t z) {
     }
 }
 
+static bool can_dig_default(df::tiletype tt) {
+    df::tiletype_shape shape = tileShape(tt);
+    return shape == df::tiletype_shape::WALL ||
+        shape == df::tiletype_shape::FORTIFICATION ||
+        shape == df::tiletype_shape::RAMP ||
+        shape == df::tiletype_shape::STAIR_UP ||
+        shape == df::tiletype_shape::STAIR_UPDOWN;
+}
+
+static bool can_dig_channel(df::tiletype tt) {
+    df::tiletype_shape shape = tileShape(tt);
+    return shape != df::tiletype_shape::EMPTY &&
+        shape != df::tiletype_shape::ENDLESS_PIT &&
+        shape != df::tiletype_shape::NONE &&
+        shape != df::tiletype_shape::RAMP_TOP &&
+        shape != df::tiletype_shape::TRUNK_BRANCH;
+}
+
+static bool can_dig_up_stair(df::tiletype tt) {
+    df::tiletype_shape shape = tileShape(tt);
+    return shape == df::tiletype_shape::WALL ||
+        shape == df::tiletype_shape::FORTIFICATION;
+}
+
+static bool can_dig_down_stair(df::tiletype tt) {
+    df::tiletype_shape shape = tileShape(tt);
+    return shape == df::tiletype_shape::BOULDER ||
+        shape == df::tiletype_shape::BROOK_BED ||
+        shape == df::tiletype_shape::BROOK_TOP ||
+        shape == df::tiletype_shape::FLOOR ||
+        shape == df::tiletype_shape::FORTIFICATION ||
+        shape == df::tiletype_shape::PEBBLES ||
+        shape == df::tiletype_shape::RAMP ||
+        shape == df::tiletype_shape::SAPLING ||
+        shape == df::tiletype_shape::SHRUB ||
+        shape == df::tiletype_shape::TWIG ||
+        shape == df::tiletype_shape::WALL;
+}
+
+static bool can_dig_up_down_stair(df::tiletype tt) {
+    df::tiletype_shape shape = tileShape(tt);
+    return shape == df::tiletype_shape::WALL ||
+        shape == df::tiletype_shape::FORTIFICATION ||
+        shape == df::tiletype_shape::STAIR_UP;
+}
+
+static bool can_dig_ramp(df::tiletype tt) {
+    df::tiletype_shape shape = tileShape(tt);
+    return shape == df::tiletype_shape::WALL ||
+        shape == df::tiletype_shape::FORTIFICATION;
+}
+
 static void set_tile_type(int32_t x, int32_t y, int32_t z,
                           df::tiletype target_type) {
-    if (target_type == df::tiletype::Void)
-        return;
     df::map_block *block = Maps::getTileBlock(x, y, z);
     block->tiletype[x&15][y&15] = target_type;
 }
 
+static void remove_ramp_top(int32_t x, int32_t y, int32_t z) {
+    if (!Maps::ensureTileBlock(x, y, z))
+        return;
+
+    if (tileShape(*Maps::getTileType(x, y, z)) == df::tiletype_shape::RAMP_TOP)
+        set_tile_type(x, y, z, df::tiletype::OpenSpace);
+}
+
+static bool is_wall(int32_t x, int32_t y, int32_t z) {
+    if (!Maps::ensureTileBlock(x, y, z))
+        return false;
+    return tileShape(*Maps::getTileType(x, y, z)) == df::tiletype_shape::WALL;
+}
+
+static void clean_ramp(int32_t x, int32_t y, int32_t z) {
+    if (!Maps::ensureTileBlock(x, y, z))
+        return;
+
+    df::tiletype tt = *Maps::getTileType(x, y, z);
+    if (tileShape(tt) != df::tiletype_shape::RAMP)
+        return;
+
+    if (is_wall(x+1, y, z) || is_wall(x-1, y, z) ||
+            is_wall(x, y+1, z) || is_wall(x, y-1, z))
+        return;
+
+    remove_ramp_top(x, y, z+1);
+    set_tile_type(x, y, z, findSimilarTileType(tt, df::tiletype_shape::FLOOR));
+}
+
+// removes self and/or orthogonally adjacent ramps that are no longer adjacent
+// to a wall
+static void clean_ramps(int32_t x, int32_t y, int32_t z) {
+    clean_ramp(x, y, z);
+    clean_ramp(x-1, y, z);
+    clean_ramp(x+1, y, z);
+    clean_ramp(x, y-1, z);
+    clean_ramp(x, y+1, z);
+}
+
 // TODO: if requested, create boulders
-static void dig_tile(color_ostream &out, int32_t x, int32_t y, int32_t z,
+static bool dig_tile(color_ostream &out, int32_t x, int32_t y, int32_t z,
                      df::tile_dig_designation designation) {
     df::tiletype tt = *Maps::getTileType(x, y, z);
+
+    // TODO: handle trees
+    if (!isGroundMaterial(tileMaterial(tt)))
+        return false;
+
     df::tiletype target_type = df::tiletype::Void;
     switch(designation) {
         case df::tile_dig_designation::Default:
-            target_type = findSimilarTileType(tt, df::tiletype_shape::FLOOR);
-            break;
-        case df::tile_dig_designation::UpDownStair:
-            target_type =
-                    findSimilarTileType(tt, df::tiletype_shape::STAIR_UPDOWN);
+            // TODO: should not leave a smooth floor when removing stairs/ramps
+            if (can_dig_default(tt)) {
+                df::tiletype_shape shape = tileShape(tt);
+                df::tiletype_shape target_shape = df::tiletype_shape::FLOOR;
+                if (shape == df::tiletype_shape::STAIR_UPDOWN)
+                    target_shape = df::tiletype_shape::STAIR_DOWN;
+                else if (shape == df::tiletype_shape::RAMP)
+                    remove_ramp_top(x, y, z+1);
+                target_type = findSimilarTileType(tt, target_shape);
+            }
             break;
         case df::tile_dig_designation::Channel:
-        {
-            if (Maps::ensureTileBlock(x, y, z+1)) {
-                df::tiletype tt_above = *Maps::getTileType(x, y, z+1);
-                if (tileShape(tt_above) == df::tiletype_shape::RAMP_TOP)
-                    set_tile_type(x, y, z+1, tiletype::OpenSpace);
+            if (can_dig_channel(tt)) {
+                remove_ramp_top(x, y, z+1);
+                target_type = df::tiletype::OpenSpace;
+                if (Maps::ensureTileBlock(x, y, z-1) &&
+                        dig_tile(out, x, y, z-1,
+                                 df::tile_dig_designation::Ramp)) {
+                    // if we successfully dug out the ramp below, that took care
+                    // of the ramp top here
+                    target_type = df::tiletype::Void;
+                    clean_ramps(x, y, z-1);
+                }
+                break;
             }
-            target_type = tiletype::OpenSpace;
-            if (Maps::ensureTileBlock(x, y, z-1)) {
-                df::tiletype tt_below = *Maps::getTileType(x, y, z-1);
-                if (tileShape(tt_below) == df::tiletype_shape::WALL
-                        && isGroundMaterial(tileMaterial(tt_below))) {
-                    dig_tile(out, x, y, z-1, df::tile_dig_designation::Ramp);
-                    target_type =
-                        findSimilarTileType(tt, df::tiletype_shape::RAMP_TOP);
+        case df::tile_dig_designation::UpStair:
+            if (can_dig_up_stair(tt))
+                target_type =
+                        findSimilarTileType(tt, df::tiletype_shape::STAIR_UP);
+            break;
+        case df::tile_dig_designation::DownStair:
+            if (can_dig_down_stair(tt)) {
+                target_type =
+                        findSimilarTileType(tt, df::tiletype_shape::STAIR_DOWN);
+
+            }
+            break;
+        case df::tile_dig_designation::UpDownStair:
+            if (can_dig_up_down_stair(tt)) {
+                target_type =
+                        findSimilarTileType(tt,
+                                            df::tiletype_shape::STAIR_UPDOWN);
+            }
+            break;
+        case df::tile_dig_designation::Ramp:
+        {
+            if (can_dig_ramp(tt)) {
+                target_type = findSimilarTileType(tt, df::tiletype_shape::RAMP);
+                if (target_type != tt && Maps::ensureTileBlock(x, y, z+1)) {
+                    // set tile type directly instead of calling dig_tile
+                    // because we need to use *this* tile's material, not the
+                    // material of the tile above
+                    set_tile_type(x, y, z+1,
+                            findSimilarTileType(tt,
+                                                df::tiletype_shape::RAMP_TOP));
                 }
             }
             break;
         }
-        case df::tile_dig_designation::Ramp:
-            target_type = findSimilarTileType(tt, df::tiletype_shape::RAMP);
-            break;
-        case df::tile_dig_designation::DownStair:
-            target_type = findSimilarTileType(tt, df::tiletype_shape::STAIR_DOWN);
-            break;
-        case df::tile_dig_designation::UpStair:
-            target_type = findSimilarTileType(tt, df::tiletype_shape::STAIR_UP);
-            break;
         case df::tile_dig_designation::No:
         default:
             out.printerr(
                 "unhandled dig designation for tile (%d, %d, %d): %d\n",
                 x, y, z, designation);
-            return;
     }
+
+    // fail if no change to tile
+    if (target_type == df::tiletype::Void || target_type == tt)
+        return false;
 
     // TODO: set tile to use layer material
     set_tile_type(x, y, z, target_type);
@@ -154,6 +277,8 @@ static void dig_tile(color_ostream &out, int32_t x, int32_t y, int32_t z,
     unhide(x, y, z);
     flood_unhide(x, y, z); // in case we breached a cavern
     propagate_vertical_flags(x, y, z); // for new channels
+
+    return true;
 }
 
 static void smooth_tile(color_ostream &out, int32_t x, int32_t y, int32_t z,

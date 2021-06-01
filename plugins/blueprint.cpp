@@ -685,11 +685,11 @@ static bool do_transform(const DFCoord &start, const DFCoord &end,
     return true;
 }
 
-static bool get_options(blueprint_options &opts,
+static bool get_options(color_ostream &out,
+                        blueprint_options &opts,
                         const vector<string> &parameters)
 {
     auto L = Lua::Core::State;
-    color_ostream_proxy out(Core::getInstance().getConsole());
     Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, parameters.size() + 2) ||
@@ -711,10 +711,9 @@ static bool get_options(blueprint_options &opts,
     return true;
 }
 
-static void print_help()
+static void print_help(color_ostream &out)
 {
     auto L = Lua::Core::State;
-    color_ostream_proxy out(Core::getInstance().getConsole());
     Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, 1) ||
@@ -749,9 +748,9 @@ static bool do_blueprint(color_ostream &out,
     }
 
     blueprint_options options;
-    if (!get_options(options, parameters) || options.help)
+    if (!get_options(out, options, parameters) || options.help)
     {
-        print_help();
+        print_help(out);
         return options.help;
     }
 
@@ -821,7 +820,10 @@ static int run(lua_State *L)
     }
 
     vector<string> files;
-    if (do_blueprint(Core::getInstance().getConsole(), argv, files))
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    if (do_blueprint(*out, argv, files))
     {
         Lua::PushVector(L, files);
         return 1;
@@ -833,7 +835,7 @@ static int run(lua_State *L)
 command_result blueprint(color_ostream &out, vector<string> &parameters)
 {
     vector<string> files;
-    if (do_blueprint(Core::getInstance().getConsole(), parameters, files))
+    if (do_blueprint(out, parameters, files))
     {
         out.print("Generated blueprint file(s):\n");
         for (string &fname : files)

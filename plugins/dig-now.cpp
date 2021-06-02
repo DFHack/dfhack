@@ -13,7 +13,7 @@
 #include <df/world.h>
 #include <df/map_block.h>
 
-DFHACK_PLUGIN("dig-dug");
+DFHACK_PLUGIN("dig-now");
 REQUIRE_GLOBAL(world);
 
 using namespace DFHack;
@@ -389,7 +389,7 @@ command_result dig_dug(color_ostream &out, std::vector<std::string> &) {
 DFhackCExport command_result plugin_init(color_ostream &,
                                          std::vector<PluginCommand> &commands) {
     commands.push_back(PluginCommand(
-        "dig-dug", "Simulate completion of dig designations", dig_dug, false));
+        "dig-now", "Simulate completion of dig designations", dig_dug, false));
     return CR_OK;
 }
 

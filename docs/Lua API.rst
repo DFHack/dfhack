@@ -4297,6 +4297,21 @@ single Lua function, in ``hack/lua/plugins/pathable.lua``:
   ``cursor``. If ``skip_unrevealed`` is specified and true, do not draw
   unrevealed tiles.
 
+reveal
+======
+
+Native functions provided by the `reveal` plugin:
+
+* ``void unhideFlood(pos)``: Unhides map tiles according to visibility rules,
+  starting from the given coordinates. This algorithm only processes adjacent
+  hidden tiles, so it must start on a hidden tile in order to have any effect.
+  It will not reveal hidden sections separated by already-unhidden tiles.
+
+Example of revealing a cavern that happens to have an open tile at the specified
+coordinate::
+
+    unhideFlood({x=25, y=38, z=140})
+
 sort
 ====
 

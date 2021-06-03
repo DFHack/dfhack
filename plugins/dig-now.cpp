@@ -287,27 +287,14 @@ static bool carve_tile(color_ostream &out, MapExtras::MapCache &map,
     return false;
 }
 
-command_result dig_dug(color_ostream &out, std::vector<std::string> &) {
-    CoreSuspender suspend;
-
-    if (!Maps::IsValid()) {
-        out.printerr("Map is not available!\n");
-        return CR_FAILURE;
-    }
-
-    // scan the whole map for now. we can add in boundaries later.
-    uint32_t endx, endy, endz;
-    Maps::getTileSize(endx, endy, endz);
-
+static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
+                   const DFCoord &start, const DFCoord &end) {
     // use the proxy layer for the layer material-setting ease-of-use functions.
     MapExtras::MapCache map;
 
-    // tracks which positions to unhide
-    std::vector<DFCoord> dug_coords;
-
-    for (uint32_t z = 0; z <= endz; ++z) {
-        for (uint32_t y = 0; y <= endy; ++y) {
-            for (uint32_t x = 0; x <= endx; ++x) {
+    for (uint32_t z = start.z; z <= end.z; ++z) {
+        for (uint32_t y = start.y; y <= end.y; ++y) {
+            for (uint32_t x = start.x; x <= end.x; ++x) {
                 // this will return NULL if the map block hasn't been allocated
                 // yet, but that means there aren't any designations anyway.
                 if (!Maps::getTileBlock(x, y, z))
@@ -348,16 +335,36 @@ command_result dig_dug(color_ostream &out, std::vector<std::string> &) {
     }
 
     map.WriteAll();
+}
 
-    // unhide newly dug tiles. we can't do this in the loop above since our
-    // MapCache wouldn't detect the changes made by reveal.unhideFlood() without
-    // invalidating and reinitializing on every call.
+command_result dig_now(color_ostream &out, std::vector<std::string> &) {
+    CoreSuspender suspend;
+
+    if (!Maps::IsValid()) {
+        out.printerr("Map is not available!\n");
+        return CR_FAILURE;
+    }
+
+    // tracks which positions to unhide
+    std::vector<DFCoord> dug_coords;
+
+    // scan the whole map for now. we can add in configurable boundaries later
+    DFCoord start(0, 0, 0);
+    uint32_t endx, endy, endz;
+    Maps::getTileSize(endx, endy, endz);
+    DFCoord end(endx, endy, endz);
+
+    do_dig(out, dug_coords, start, end);
+
+    // unhide newly dug tiles. we can't do this in do_dig() since our MapCache
+    // wouldn't detect the changes made by reveal.unhideFlood() without
+    // invalidating and reinitializing on every call
     for (DFCoord pos : dug_coords) {
         if (Maps::getTileDesignation(pos)->bits.hidden)
             flood_unhide(out, pos);
     }
 
-    // Force the game to recompute its walkability cache
+    // force the game to recompute its walkability cache
     world->reindex_pathfinding = true;
 
     return CR_OK;
@@ -366,7 +373,7 @@ command_result dig_dug(color_ostream &out, std::vector<std::string> &) {
 DFhackCExport command_result plugin_init(color_ostream &,
                                          std::vector<PluginCommand> &commands) {
     commands.push_back(PluginCommand(
-        "dig-now", "Simulate completion of dig designations", dig_dug, false));
+        "dig-now", "Instantly complete dig designations", dig_now, false));
     return CR_OK;
 }
 

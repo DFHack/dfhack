@@ -5,7 +5,9 @@
 #include "DataFuncs.h"
 #include "PluginManager.h"
 #include "TileTypes.h"
+#include "LuaTools.h"
 
+#include "modules/Maps.h"
 #include "modules/MapCache.h"
 
 #include <df/tile_designation.h>
@@ -18,50 +20,16 @@ REQUIRE_GLOBAL(world);
 
 using namespace DFHack;
 
-// returns true iff tile is in map bounds and was hidden before this function
-// unhid it.
-static bool unhide(MapExtras::MapCache &map, const DFCoord &pos) {
-    // ensures coords are in map bounds and ensures that the map block exists
-    // so we can unhide the tiles
-    if (!map.ensureBlockAt(pos))
-        return false;
+static void flood_unhide(color_ostream &out, const DFCoord &pos) {
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
 
-    df::tile_designation td = map.designationAt(pos);
-    if (!td.bits.hidden)
-        return false;
-
-    td.bits.hidden = false;
-    return map.setDesignationAt(pos, td);
-}
-
-// unhide adjacent tiles if hidden and flood fill unhidden state
-static void flood_unhide(MapExtras::MapCache &map, const DFCoord &pos) {
-    df::tiletype tt = map.tiletypeAt(pos);
-    if (tileShape(tt) == df::tiletype_shape::WALL
-            && tileMaterial(tt) != df::tiletype_material::TREE)
+    if (!lua_checkstack(L, 2)
+            || !Lua::PushModulePublic(out, L, "plugins.reveal", "unhideFlood"))
         return;
 
-    for (int32_t xoff = -1; xoff <= 1; ++xoff) {
-        for (int32_t yoff = -1; yoff <= 1; ++yoff) {
-            if (xoff == 0 && yoff == 0)
-                continue;
-            if (unhide(map, DFCoord(pos.x+xoff, pos.y+yoff, pos.z)))
-                flood_unhide(map, DFCoord(pos.x+xoff, pos.y+yoff, pos.z));
-        }
-    }
-
-    DFCoord pos_below(pos.x, pos.y, pos.z-1);
-    if (LowPassable(tt) && unhide(map, pos_below))
-        flood_unhide(map, pos_below);
-
-    // note that checking HighPassable for the current tile gives false
-    // positives. You have to check LowPassable for the tile above.
-    DFCoord pos_above(pos.x, pos.y, pos.z+1);
-    if (map.ensureBlockAt(pos_above)
-            && LowPassable(map.tiletypeAt(pos_above))
-            && unhide(map, pos_above)) {
-        flood_unhide(map, pos_above);
-    }
+    Lua::Push(L, pos);
+    Lua::SafeCall(out, L, 1, 0);
 }
 
 // inherit flags from passable tiles above and propagate to passable tiles below
@@ -69,7 +37,7 @@ static void propagate_vertical_flags(MapExtras::MapCache &map,
                                      const DFCoord &pos) {
     df::tile_designation td = map.designationAt(pos);
 
-    if (!map.ensureBlockAt(DFCoord(pos.x, pos.y, pos.z-1))) {
+    if (!map.ensureBlockAt(DFCoord(pos.x, pos.y, pos.z+1))) {
         // only the sky above
         td.bits.light = true;
         td.bits.outside = true;
@@ -248,7 +216,6 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                         dig_tile(out, map, pos_below,
                                  df::tile_dig_designation::Ramp)) {
                     clean_ramps(map, pos_below);
-                    flood_unhide(map, pos);
                     // if we successfully dug out the ramp below, that took care
                     // of the ramp top here
                     return true;
@@ -296,16 +263,14 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                 pos.x, pos.y, pos.z, designation);
     }
 
-    // fail if no change to tile
+    // fail if unhandled or no change to tile
     if (target_type == df::tiletype::Void || target_type == tt)
         return false;
 
     dig_type(map, pos, target_type);
 
-    // set flags for current and adjacent tiles
-    unhide(map, pos);
-    flood_unhide(map, pos); // in case we breached a cavern
-    propagate_vertical_flags(map, pos); // for new channels
+    // let light filter down to newly exposed tiles
+    propagate_vertical_flags(map, pos);
 
     return true;
 }
@@ -334,8 +299,11 @@ command_result dig_dug(color_ostream &out, std::vector<std::string> &) {
     uint32_t endx, endy, endz;
     Maps::getTileSize(endx, endy, endz);
 
-    // use the proxy layer for the layer material-setting ease-of-use functions
+    // use the proxy layer for the layer material-setting ease-of-use functions.
     MapExtras::MapCache map;
+
+    // tracks which positions to unhide
+    std::vector<DFCoord> dug_coords;
 
     for (uint32_t z = 0; z <= endz; ++z) {
         for (uint32_t y = 0; y <= endy; ++y) {
@@ -353,6 +321,7 @@ command_result dig_dug(color_ostream &out, std::vector<std::string> &) {
                         td = map.designationAt(pos);
                         td.bits.dig = df::tile_dig_designation::No;
                         map.setDesignationAt(pos, td);
+                        dug_coords.push_back(pos);
                     }
                 } else if (td.bits.smooth > 0) {
                     bool want_engrave = td.bits.smooth == 2;
@@ -379,6 +348,14 @@ command_result dig_dug(color_ostream &out, std::vector<std::string> &) {
     }
 
     map.WriteAll();
+
+    // unhide newly dug tiles. we can't do this in the loop above since our
+    // MapCache wouldn't detect the changes made by reveal.unhideFlood() without
+    // invalidating and reinitializing on every call.
+    for (DFCoord pos : dug_coords) {
+        if (Maps::getTileDesignation(pos)->bits.hidden)
+            flood_unhide(out, pos);
+    }
 
     // Force the game to recompute its walkability cache
     world->reindex_pathfinding = true;

@@ -9,16 +9,64 @@
 
 #include "modules/Maps.h"
 #include "modules/MapCache.h"
+#include "modules/Random.h"
+#include "modules/World.h"
 
+#include <df/historical_entity.h>
+#include <df/map_block.h>
+#include <df/reaction_product_itemst.h>
 #include <df/tile_designation.h>
 #include <df/tile_occupancy.h>
+#include <df/ui.h>
+#include <df/unit.h>
 #include <df/world.h>
-#include <df/map_block.h>
+#include <df/world_site.h>
 
 DFHACK_PLUGIN("dig-now");
+REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(world);
 
 using namespace DFHack;
+
+struct dig_now_options {
+    DFCoord start; // upper-left coordinate, min z-level
+    DFCoord end;   // lower-right coordinate, max z-level
+
+    // whether to unhide dug regions that are unreachable from the main fortress
+    bool unhide_unreachable;
+
+    // percent chance ([0..100]) for creating a boulder for the given rock type
+    uint32_t boulder_percent_layer;
+    uint32_t boulder_percent_vein;
+    uint32_t boulder_percent_small_cluster;
+    uint32_t boulder_percent_deep;
+
+    // whether to generate boulders at the cursor position instead of at their
+    // dig locations
+    bool dump_boulders;
+
+    // if set to the pos of a walkable tile, will dump at this position instead
+    // of the in-game cursor
+    DFCoord cursor;
+
+    static DFCoord getMapSize() {
+        uint32_t endx, endy, endz;
+        Maps::getTileSize(endx, endy, endz);
+        return DFCoord(endx, endy, endz);
+    }
+
+    // boulder percentage defaults from
+    // https://dwarffortresswiki.org/index.php/DF2014:Mining
+    dig_now_options() :
+        start(0, 0, 0),
+        end(getMapSize()),
+        unhide_unreachable(false),
+        boulder_percent_layer(25),
+        boulder_percent_vein(33),
+        boulder_percent_small_cluster(100),
+        boulder_percent_deep(100),
+        dump_boulders(false) { }
+};
 
 static void flood_unhide(color_ostream &out, const DFCoord &pos) {
     auto L = Lua::Core::State;
@@ -184,19 +232,37 @@ static void clean_ramps(MapExtras::MapCache &map, const DFCoord &pos) {
     clean_ramp(map, DFCoord(pos.x, pos.y+1, pos.z));
 }
 
-// TODO: if requested, create boulders
+// returns material type of walls at the given position, or -1 if not a wall
+static int16_t get_wall_mat(MapExtras::MapCache &map, const DFCoord &pos) {
+    df::tiletype tt = map.tiletypeAt(pos);
+    df::tiletype_shape shape = tileShape(tt);
+
+    if (shape != df::tiletype_shape::WALL)
+        return -1;
+
+    t_matpair matpair;
+    if (map.isVeinAt(pos))
+        matpair = map.veinMaterialAt(pos);
+    else if (map.isLayerAt(pos))
+        matpair = map.layerMaterialAt(pos);
+    return matpair.mat_type;
+}
+
 static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
-                     const DFCoord &pos, df::tile_dig_designation designation) {
+                     const DFCoord &pos, df::tile_dig_designation designation,
+                     int16_t *wall_mat) {
     df::tiletype tt = map.tiletypeAt(pos);
 
     // TODO: handle tree trunks, roots, and surface tiles
-    if (!isGroundMaterial(tileMaterial(tt)))
+    df::tiletype_material tile_mat = tileMaterial(tt);
+    if (!isGroundMaterial(tile_mat))
         return false;
+
+    *wall_mat = get_wall_mat(map, pos);
 
     df::tiletype target_type = df::tiletype::Void;
     switch(designation) {
         case df::tile_dig_designation::Default:
-            // TODO: should not leave a smooth floor when removing stairs/ramps
             if (can_dig_default(tt)) {
                 df::tiletype_shape shape = tileShape(tt);
                 df::tiletype_shape target_shape = df::tiletype_shape::FLOOR;
@@ -214,7 +280,7 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                 DFCoord pos_below(pos.x, pos.y, pos.z-1);
                 if (map.ensureBlockAt(pos_below) &&
                         dig_tile(out, map, pos_below,
-                                 df::tile_dig_designation::Ramp)) {
+                                 df::tile_dig_designation::Ramp, wall_mat)) {
                     clean_ramps(map, pos_below);
                     // if we successfully dug out the ramp below, that took care
                     // of the ramp top here
@@ -246,6 +312,7 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
             if (can_dig_ramp(tt)) {
                 target_type = findSimilarTileType(tt, df::tiletype_shape::RAMP);
                 DFCoord pos_above(pos.x, pos.y, pos.z+1);
+                wall_mat[1] = get_wall_mat(map, pos_above);
                 if (target_type != tt && map.ensureBlockAt(pos_above)) {
                     // set tile type directly instead of calling dig_shape
                     // because we need to use *this* tile's material, not the
@@ -287,14 +354,38 @@ static bool carve_tile(color_ostream &out, MapExtras::MapCache &map,
     return false;
 }
 
-static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
-                   const DFCoord &start, const DFCoord &end) {
-    // use the proxy layer for the layer material-setting ease-of-use functions.
-    MapExtras::MapCache map;
+static bool produces_boulder(const dig_now_options &options,
+                             Random::MersenneRNG &rng,
+                             df::inclusion_type vein_type) {
+    uint32_t probability;
+    switch (vein_type) {
+        case df::inclusion_type::CLUSTER:
+        case df::inclusion_type::VEIN:
+            probability = options.boulder_percent_vein;
+            break;
+        case df::inclusion_type::CLUSTER_ONE:
+        case df::inclusion_type::CLUSTER_SMALL:
+            probability = options.boulder_percent_small_cluster;
+            break;
+        default:
+            probability = options.boulder_percent_layer;
+            break;
+    }
 
-    for (uint32_t z = start.z; z <= end.z; ++z) {
-        for (uint32_t y = start.y; y <= end.y; ++y) {
-            for (uint32_t x = start.x; x <= end.x; ++x) {
+    return rng.random(100) < probability;
+}
+
+static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
+                   std::map<int16_t, std::vector<DFCoord>> &boulder_coords,
+                   const dig_now_options &options) {
+    MapExtras::MapCache map;
+    Random::MersenneRNG rng;
+
+    rng.init();
+
+    for (uint32_t z = options.start.z; z <= options.end.z; ++z) {
+        for (uint32_t y = options.start.y; y <= options.end.y; ++y) {
+            for (uint32_t x = options.start.x; x <= options.end.x; ++x) {
                 // this will return NULL if the map block hasn't been allocated
                 // yet, but that means there aren't any designations anyway.
                 if (!Maps::getTileBlock(x, y, z))
@@ -304,11 +395,21 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
                 df::tile_designation td = map.designationAt(pos);
                 df::tile_occupancy to = map.occupancyAt(pos);
                 if (td.bits.dig != df::tile_dig_designation::No) {
-                    if (dig_tile(out, map, pos, td.bits.dig)) {
+                    int16_t wall_mat[2];
+                    memset(wall_mat, -1, sizeof(wall_mat));
+                    if (dig_tile(out, map, pos, td.bits.dig, wall_mat)) {
                         td = map.designationAt(pos);
                         td.bits.dig = df::tile_dig_designation::No;
                         map.setDesignationAt(pos, td);
                         dug_coords.push_back(pos);
+                        for (size_t i = 0; i < 2; ++i) {
+                            if (wall_mat[i] < 0)
+                                continue;
+                            if (produces_boulder(options, rng,
+                                    map.BlockAtTile(pos)->veinTypeAt(pos))) {
+                                boulder_coords[wall_mat[i]].push_back(pos);
+                            }
+                        }
                     }
                 } else if (td.bits.smooth > 0) {
                     bool want_engrave = td.bits.smooth == 2;
@@ -337,6 +438,89 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
     map.WriteAll();
 }
 
+// if pos is empty space, teleport to floor below
+// if we fall out of the world, z coordinate will be negative (invalid)
+static DFCoord simulate_fall(const DFCoord &pos) {
+    DFCoord resting_pos(pos);
+
+    while (resting_pos.z >= 0) {
+        df::tiletype tt = *Maps::getTileType(resting_pos);
+        df::tiletype_shape_basic basic_shape = tileShapeBasic(tileShape(tt));
+        if (isWalkable(tt) && basic_shape != df::tiletype_shape_basic::Open)
+            break;
+        --resting_pos.z;
+    }
+
+    return resting_pos;
+}
+
+static void create_boulders(color_ostream &out,
+                const std::map<int16_t, std::vector<DFCoord>> &boulder_coords,
+                const dig_now_options &options) {
+    df::unit *unit = world->units.active[0];
+    df::historical_entity *civ = df::historical_entity::find(unit->civ_id);
+    df::world_site *site = World::isFortressMode() ?
+            df::world_site::find(ui->site_id) : NULL;
+
+    std::vector<df::reaction_reagent *> in_reag;
+    std::vector<df::item *> in_items;
+
+    // TODO: if options.dump_boulders is set, define and use dump coordinates
+
+    for (auto entry : boulder_coords) {
+        df::reaction_product_itemst *prod =
+                df::allocate<df::reaction_product_itemst>();
+        const std::vector<DFCoord> &coords = entry.second;
+
+        prod->item_type = df::item_type::BOULDER;
+        prod->item_subtype = -1;
+        prod->mat_type = 0;
+        prod->mat_index = entry.first;
+        prod->probability = 100;
+        prod->count = coords.size();
+        prod->product_dimension = 1;
+
+        std::vector<df::reaction_product*> out_products;
+        std::vector<df::item *> out_items;
+
+        prod->produce(unit, &out_products, &out_items, &in_reag, &in_items, 1,
+                      job_skill::NONE, 0, civ, site, NULL);
+
+        size_t num_items = out_items.size();
+        if (num_items != coords.size()) {
+            out.printerr("unexpected number of boulders produced; "
+                         "some boulders may be missing.\n");
+            num_items = min(num_items, entry.second.size());
+        }
+
+        for (size_t i = 0; i < num_items; ++i) {
+            DFCoord pos = simulate_fall(coords[i]);
+            if (pos.z < 0) {
+                out.printerr("unable to place boulder at (%d, %d, %d)\n",
+                             coords[i].x, coords[i].y, coords[i].z);
+                continue;
+            }
+            out_items[i]->moveToGround(pos.x, pos.y, pos.z);
+        }
+
+        delete(prod);
+    }
+}
+
+static void unhide_dug_tiles(color_ostream &out,
+                             const std::vector<DFCoord> &dug_coords,
+                             const dig_now_options &options) {
+    if (options.unhide_unreachable) {
+        for (DFCoord pos : dug_coords) {
+            if (Maps::getTileDesignation(pos)->bits.hidden)
+                flood_unhide(out, pos);
+        }
+        return;
+    }
+
+    // TODO: hide all then flood unreveal starting from an active fortress unit
+}
+
 command_result dig_now(color_ostream &out, std::vector<std::string> &) {
     CoreSuspender suspend;
 
@@ -345,24 +529,21 @@ command_result dig_now(color_ostream &out, std::vector<std::string> &) {
         return CR_FAILURE;
     }
 
-    // tracks which positions to unhide
-    std::vector<DFCoord> dug_coords;
-
-    // scan the whole map for now. we can add in configurable boundaries later
-    DFCoord start(0, 0, 0);
-    uint32_t endx, endy, endz;
-    Maps::getTileSize(endx, endy, endz);
-    DFCoord end(endx, endy, endz);
-
-    do_dig(out, dug_coords, start, end);
-
-    // unhide newly dug tiles. we can't do this in do_dig() since our MapCache
-    // wouldn't detect the changes made by reveal.unhideFlood() without
-    // invalidating and reinitializing on every call
-    for (DFCoord pos : dug_coords) {
-        if (Maps::getTileDesignation(pos)->bits.hidden)
-            flood_unhide(out, pos);
+    if (world->units.active.size() == 0) {
+        out.printerr("At least one unit must be alive!\n");
+        return CR_FAILURE;
     }
+
+    dig_now_options options;
+
+    // track which positions were modified and where to produce boulders of a
+    // give material
+    std::vector<DFCoord> dug_coords;
+    std::map<int16_t, std::vector<DFCoord>> boulder_coords;
+
+    do_dig(out, dug_coords, boulder_coords, options);
+    create_boulders(out, boulder_coords, options);
+    unhide_dug_tiles(out, dug_coords, options);
 
     // force the game to recompute its walkability cache
     world->reindex_pathfinding = true;

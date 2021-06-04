@@ -46,6 +46,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `blueprint`: add the ``--cursor`` option to set the starting coordinate for the generated blueprints. a game cursor is no longer necessary if this option is used.
 - `quickfort`: the Dreamfort blueprint set can now be comfortably built in a 1x1 embark
 - `tweak` hide-priority: changed so that priorities stay hidden (or visible) when exiting and re-entering the designations menu
+- `embark-assistant`: slightly improved performance of surveying and improved code a little
 
 ## Lua
 - ``gui.Painter``: fixed error when calling ``viewport()`` method

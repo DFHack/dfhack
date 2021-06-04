@@ -1,5 +1,6 @@
 #include <math.h>
 #include <vector>
+#include <cstring>
 
 #include "Core.h"
 #include <Console.h>
@@ -909,15 +910,14 @@ void inline copy_incursion_values(embark_assist::defs::mid_level_tile_incursion_
 //=================================================================================
 
 void reset_mlt_inorganics(embark_assist::defs::mid_level_tiles &mlts) {
-    const uint16_t size = mlts[0][0].metals.size();
     for (uint8_t i = 0; i < 16; i++) {
         for (uint8_t k = 0; k < 16; k++) {
             embark_assist::defs::mid_level_tile &mlt = mlts[i][k];
-            for (uint16_t l = 0; l < size; l++) {
-                mlt.metals[l] = false;
-                mlt.economics[l] = false;
-                mlt.minerals[l] = false;
-            }
+            // std::memset is much faster than std::fill and also faster than direct assignment - also std::fill might be compiled to std::memset but is not guaranteed to happen
+            // have a look here for why: https://travisdowns.github.io/blog/2020/01/20/zero.html
+            std::memset(&mlt.metals[0], false, mlt.metals.size() * sizeof(mlt.metals[0]));
+            std::memset(&mlt.economics[0], false, mlt.economics.size() * sizeof(mlt.economics[0]));
+            std::memset(&mlt.minerals[0], false, mlt.minerals.size() * sizeof(mlt.minerals[0]));
         }
     }
 }

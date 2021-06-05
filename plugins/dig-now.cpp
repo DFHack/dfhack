@@ -7,6 +7,7 @@
 #include "TileTypes.h"
 #include "LuaTools.h"
 
+#include "modules/Gui.h"
 #include "modules/Maps.h"
 #include "modules/MapCache.h"
 #include "modules/Random.h"
@@ -31,9 +32,6 @@ using namespace DFHack;
 struct dig_now_options {
     DFCoord start; // upper-left coordinate, min z-level
     DFCoord end;   // lower-right coordinate, max z-level
-
-    // whether to unhide dug regions that are unreachable from the main fortress
-    bool unhide_unreachable;
 
     // percent chance ([0..100]) for creating a boulder for the given rock type
     uint32_t boulder_percent_layer;
@@ -60,25 +58,12 @@ struct dig_now_options {
     dig_now_options() :
         start(0, 0, 0),
         end(getMapSize()),
-        unhide_unreachable(false),
         boulder_percent_layer(25),
         boulder_percent_vein(33),
         boulder_percent_small_cluster(100),
         boulder_percent_deep(100),
         dump_boulders(false) { }
 };
-
-static void flood_unhide(color_ostream &out, const DFCoord &pos) {
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!lua_checkstack(L, 2)
-            || !Lua::PushModulePublic(out, L, "plugins.reveal", "unhideFlood"))
-        return;
-
-    Lua::Push(L, pos);
-    Lua::SafeCall(out, L, 1, 0);
-}
 
 // inherit flags from passable tiles above and propagate to passable tiles below
 static void propagate_vertical_flags(MapExtras::MapCache &map,
@@ -343,7 +328,7 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
 }
 
 static bool smooth_tile(color_ostream &out, MapExtras::MapCache &map,
-                        const DFCoord &pos, bool engrave) {
+                        const DFCoord &pos) {
     // TODO
     return false;
 }
@@ -411,9 +396,8 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
                             }
                         }
                     }
-                } else if (td.bits.smooth > 0) {
-                    bool want_engrave = td.bits.smooth == 2;
-                    if (smooth_tile(out, map, pos, want_engrave)) {
+                } else if (td.bits.smooth == 1) {
+                    if (smooth_tile(out, map, pos)) {
                         to = map.occupancyAt(pos);
                         td.bits.smooth = 0;
                         map.setDesignationAt(pos, td);
@@ -439,11 +423,11 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
 }
 
 // if pos is empty space, teleport to floor below
-// if we fall out of the world, z coordinate will be negative (invalid)
+// if we fall out of the world, returned position will be invalid
 static DFCoord simulate_fall(const DFCoord &pos) {
     DFCoord resting_pos(pos);
 
-    while (resting_pos.z >= 0) {
+    while (Maps::ensureTileBlock(resting_pos)) {
         df::tiletype tt = *Maps::getTileType(resting_pos);
         df::tiletype_shape_basic basic_shape = tileShapeBasic(tileShape(tt));
         if (isWalkable(tt) && basic_shape != df::tiletype_shape_basic::Open)
@@ -465,7 +449,25 @@ static void create_boulders(color_ostream &out,
     std::vector<df::reaction_reagent *> in_reag;
     std::vector<df::item *> in_items;
 
-    // TODO: if options.dump_boulders is set, define and use dump coordinates
+    DFCoord dump_pos;
+    if (options.dump_boulders) {
+        if (Maps::isValidTilePos(options.cursor))
+            dump_pos = simulate_fall(options.cursor);
+        else {
+            DFCoord cursor;
+            if (!Gui::getCursorCoords(cursor)) {
+                out.printerr(
+                    "Can't get dump tile coordinates! Make sure you specify the"
+                    " --cursor parameter or have an active cursor in DF.\n");
+                return;
+            }
+            dump_pos = simulate_fall(cursor);
+        }
+        if (!Maps::isValidTilePos(dump_pos))
+            out.printerr("Invalid dump tile coordinates! Ensure the --cursor"
+                " option or the in-game cursor specifies an open, non-wall"
+                " tile.");
+    }
 
     for (auto entry : boulder_coords) {
         df::reaction_product_itemst *prod =
@@ -494,10 +496,12 @@ static void create_boulders(color_ostream &out,
         }
 
         for (size_t i = 0; i < num_items; ++i) {
-            DFCoord pos = simulate_fall(coords[i]);
-            if (pos.z < 0) {
-                out.printerr("unable to place boulder at (%d, %d, %d)\n",
-                             coords[i].x, coords[i].y, coords[i].z);
+            DFCoord pos = Maps::isValidTilePos(dump_pos) ?
+                    dump_pos : simulate_fall(coords[i]);
+            if (!Maps::isValidTilePos(pos)) {
+                out.printerr(
+                        "unable to place boulder generated at (%d, %d, %d)\n",
+                        coords[i].x, coords[i].y, coords[i].z);
                 continue;
             }
             out_items[i]->moveToGround(pos.x, pos.y, pos.z);
@@ -507,18 +511,24 @@ static void create_boulders(color_ostream &out,
     }
 }
 
-static void unhide_dug_tiles(color_ostream &out,
-                             const std::vector<DFCoord> &dug_coords,
-                             const dig_now_options &options) {
-    if (options.unhide_unreachable) {
-        for (DFCoord pos : dug_coords) {
-            if (Maps::getTileDesignation(pos)->bits.hidden)
-                flood_unhide(out, pos);
-        }
-        return;
-    }
+static void flood_unhide(color_ostream &out, const DFCoord &pos) {
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
 
-    // TODO: hide all then flood unreveal starting from an active fortress unit
+    if (!lua_checkstack(L, 2)
+            || !Lua::PushModulePublic(out, L, "plugins.reveal", "unhideFlood"))
+        return;
+
+    Lua::Push(L, pos);
+    Lua::SafeCall(out, L, 1, 0);
+}
+
+static void unhide_dug_tiles(color_ostream &out,
+                             const std::vector<DFCoord> &dug_coords) {
+    for (DFCoord pos : dug_coords) {
+        if (Maps::getTileDesignation(pos)->bits.hidden)
+            flood_unhide(out, pos);
+    }
 }
 
 command_result dig_now(color_ostream &out, std::vector<std::string> &) {
@@ -543,7 +553,7 @@ command_result dig_now(color_ostream &out, std::vector<std::string> &) {
 
     do_dig(out, dug_coords, boulder_coords, options);
     create_boulders(out, boulder_coords, options);
-    unhide_dug_tiles(out, dug_coords, options);
+    unhide_dug_tiles(out, dug_coords);
 
     // force the game to recompute its walkability cache
     world->reindex_pathfinding = true;

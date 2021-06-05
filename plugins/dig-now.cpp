@@ -333,10 +333,27 @@ static bool smooth_tile(color_ostream &out, MapExtras::MapCache &map,
     return false;
 }
 
-static bool carve_tile(color_ostream &out, MapExtras::MapCache &map,
+static bool carve_tile(MapExtras::MapCache &map,
                        const DFCoord &pos, df::tile_occupancy &to) {
-    // TODO
-    return false;
+    df::tiletype tt = map.tiletypeAt(pos);
+    TileDirection tdir = tileDirection(tt);
+
+    if (to.bits.carve_track_north)
+        tdir.north = 1;
+    if (to.bits.carve_track_east)
+        tdir.east = 1;
+    if (to.bits.carve_track_south)
+        tdir.south = 1;
+    if (to.bits.carve_track_west)
+        tdir.west = 1;
+
+    tt = findTileType(tileShape(tt), tileMaterial(tt), tileVariant(tt),
+                      df::tiletype_special::TRACK, tdir);
+    if (tt == df::tiletype::Void)
+        return false;
+
+    map.setTiletypeAt(pos, tt);
+    return true;
 }
 
 static bool produces_boulder(const dig_now_options &options,
@@ -406,7 +423,7 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
                                 || to.bits.carve_track_east == 1
                                 || to.bits.carve_track_south == 1
                                 || to.bits.carve_track_west == 1) {
-                    if (carve_tile(out, map, pos, to)) {
+                    if (carve_tile(map, pos, to)) {
                         to = map.occupancyAt(pos);
                         to.bits.carve_track_north = 0;
                         to.bits.carve_track_east = 0;

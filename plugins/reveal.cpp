@@ -453,11 +453,9 @@ static void unhideFlood_internal(MapCache *MCache, const DFCoord &xy)
 // Lua entrypoint for unhideFlood_internal
 static void unhideFlood(DFCoord pos)
 {
-    CoreSuspender suspend;
-
     MapCache MCache;
-    // no bounds checking needed for pos. if it's invalid, unhideFlood_internal
-    // will just exit immeditately
+    // no environment or bounds checking needed. if anything is invalid,
+    // unhideFlood_internal will just exit immeditately
     unhideFlood_internal(&MCache, pos);
     MCache.WriteAll();
 }

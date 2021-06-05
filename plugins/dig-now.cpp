@@ -43,8 +43,8 @@ struct dig_now_options {
     // dig locations
     bool dump_boulders;
 
-    // if set to the pos of a walkable tile, will dump at this position instead
-    // of the in-game cursor
+    // if set to the pos of a walkable tile (or somewhere above such a tile),
+    // will dump at this position instead of the in-game cursor
     DFCoord cursor;
 
     static DFCoord getMapSize() {
@@ -65,7 +65,7 @@ struct dig_now_options {
         dump_boulders(false) { }
 };
 
-// inherit flags from passable tiles above and propagate to passable tiles below
+// propagate light, outside, and subterranean flags to open tiles below this one
 static void propagate_vertical_flags(MapExtras::MapCache &map,
                                      const DFCoord &pos) {
     df::tile_designation td = map.designationAt(pos);
@@ -491,8 +491,9 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
     map.WriteAll();
 }
 
-// if pos is empty space, teleport to floor below
-// if we fall out of the world, returned position will be invalid
+// if pos is empty space, teleport to a floor somewhere below
+// if we fall out of the world (e.g. empty space or walls all the way down),
+// returned position will be invalid
 static DFCoord simulate_fall(const DFCoord &pos) {
     DFCoord resting_pos(pos);
 
@@ -594,10 +595,9 @@ static void flood_unhide(color_ostream &out, const DFCoord &pos) {
 
 static void unhide_dug_tiles(color_ostream &out,
                              const std::vector<DFCoord> &dug_coords) {
-    for (DFCoord pos : dug_coords) {
+    for (DFCoord pos : dug_coords)
         if (Maps::getTileDesignation(pos)->bits.hidden)
             flood_unhide(out, pos);
-    }
 }
 
 command_result dig_now(color_ostream &out, std::vector<std::string> &) {
@@ -608,6 +608,7 @@ command_result dig_now(color_ostream &out, std::vector<std::string> &) {
         return CR_FAILURE;
     }
 
+    // required for boulder generation
     if (world->units.active.size() == 0) {
         out.printerr("At least one unit must be alive!\n");
         return CR_FAILURE;
@@ -616,7 +617,7 @@ command_result dig_now(color_ostream &out, std::vector<std::string> &) {
     dig_now_options options;
 
     // track which positions were modified and where to produce boulders of a
-    // give material
+    // given material
     std::vector<DFCoord> dug_coords;
     std::map<int16_t, std::vector<DFCoord>> boulder_coords;
 

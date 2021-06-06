@@ -1572,6 +1572,7 @@ static const luaL_Reg dfhack_job_funcs[] = {
 /***** Units module *****/
 
 static const LuaWrapper::FunctionReg dfhack_units_module[] = {
+    WRAPM(Units, teleport),
     WRAPM(Units, getGeneralRef),
     WRAPM(Units, getSpecificRef),
     WRAPM(Units, getContainer),

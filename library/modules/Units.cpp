@@ -71,6 +71,7 @@ using namespace std;
 #include "df/job.h"
 #include "df/nemesis_record.h"
 #include "df/squad.h"
+#include "df/tile_occupancy.h"
 #include "df/ui.h"
 #include "df/unit_inventory_item.h"
 #include "df/unit_misc_trait.h"
@@ -142,6 +143,49 @@ df::coord Units::getPosition(df::unit *unit)
     }
 
     return unit->pos;
+}
+
+bool Units::teleport(df::unit *unit, df::coord target_pos)
+{
+    // make sure source and dest map blocks are valid
+    auto old_occ = Maps::getTileOccupancy(unit->pos);
+    auto new_occ = Maps::getTileOccupancy(target_pos);
+    if (!old_occ || !new_occ)
+        return false;
+
+    // clear appropriate occupancy flags at old tile
+    if (unit->flags1.bits.on_ground)
+        // this is potentially wrong, but the game will recompute this as needed
+        old_occ->bits.unit_grounded = 0;
+    else
+        old_occ->bits.unit = 0;
+
+    // if there's already somebody standing at the destination, then force the
+    // unit to lay down
+    if (new_occ->bits.unit)
+        unit->flags1.bits.on_ground = 1;
+
+    // set appropriate occupancy flags at new tile
+    if (unit->flags1.bits.on_ground)
+        new_occ->bits.unit_grounded = 1;
+    else
+        new_occ->bits.unit = 1;
+
+    // move unit to destination
+    unit->pos = target_pos;
+
+    // move unit's riders (including babies) to destination
+    if (unit->flags1.bits.ridden)
+    {
+        for (size_t j = 0; j < world->units.other[units_other_id::ANY_RIDER].size(); j++)
+        {
+            df::unit *rider = world->units.other[units_other_id::ANY_RIDER][j];
+            if (rider->relationship_ids[df::unit_relationship_type::RiderMount] == unit->id)
+                rider->pos = unit->pos;
+        }
+    }
+
+    return true;
 }
 
 df::general_ref *Units::getGeneralRef(df::unit *unit, df::general_ref_type type)

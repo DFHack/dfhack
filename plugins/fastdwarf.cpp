@@ -54,7 +54,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         if (!Units::isCitizen(unit))
             continue;
 
-        if (enable_teledwarf) do
+        if (enable_teledwarf)
         {
             // skip dwarves that are dragging creatures or being dragged
             if ((unit->relationship_ids[df::unit_relationship_type::Draggee] != -1) ||
@@ -74,44 +74,11 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
                 break;
             }
 
-            // make sure source and dest map blocks are valid
-            auto old_occ = Maps::getTileOccupancy(unit->pos);
-            auto new_occ = Maps::getTileOccupancy(unit->path.dest);
-            if (!old_occ || !new_occ)
+            if (!Units::teleport(unit, unit->path.dest))
                 break;
 
-            // clear appropriate occupancy flags at old tile
-            if (unit->flags1.bits.on_ground)
-                // this is technically wrong, but the game will recompute this as needed
-                old_occ->bits.unit_grounded = 0;
-            else
-                old_occ->bits.unit = 0;
-
-            // if there's already somebody standing at the destination, then force the unit to lay down
-            if (new_occ->bits.unit)
-                unit->flags1.bits.on_ground = 1;
-
-            // set appropriate occupancy flags at new tile
-            if (unit->flags1.bits.on_ground)
-                new_occ->bits.unit_grounded = 1;
-            else
-                new_occ->bits.unit = 1;
-
-            // move unit to destination
-            unit->pos = unit->path.dest;
             unit->path.path.clear();
-
-            //move unit's riders(including babies) to destination
-            if (unit->flags1.bits.ridden)
-            {
-                for (size_t j = 0; j < world->units.other[units_other_id::ANY_RIDER].size(); j++)
-                {
-                    df::unit *rider = world->units.other[units_other_id::ANY_RIDER][j];
-                    if (rider->relationship_ids[df::unit_relationship_type::RiderMount] == unit->id)
-                        rider->pos = unit->pos;
-                }
-            }
-        } while (0);
+        }
 
         if (enable_fastdwarf)
         {

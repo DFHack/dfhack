@@ -363,18 +363,49 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
     return true;
 }
 
+static bool is_smooth_wall(MapExtras::MapCache &map, const DFCoord &pos) {
+    df::tiletype tt = map.tiletypeAt(pos);
+    return tileSpecial(tt) == df::tiletype_special::SMOOTH
+                && tileShape(tt) == df::tiletype_shape::WALL;
+}
+
+// adds adjacent smooth walls to the given tdir
+static TileDirection get_adjacent_smooth_walls(MapExtras::MapCache &map,
+                                               const DFCoord &pos,
+                                               TileDirection tdir) {
+    if (is_smooth_wall(map, DFCoord(pos.x, pos.y-1, pos.z)))
+        tdir.north = 1;
+    if (is_smooth_wall(map, DFCoord(pos.x, pos.y+1, pos.z)))
+        tdir.south = 1;
+    if (is_smooth_wall(map, DFCoord(pos.x-1, pos.y, pos.z)))
+        tdir.west = 1;
+    if (is_smooth_wall(map, DFCoord(pos.x+1, pos.y, pos.z)))
+        tdir.east = 1;
+    return tdir;
+}
+
+// ensure we have at least two directions enabled so we can find a matching
+// tiletype
+static TileDirection ensure_valid_tdir(TileDirection tdir) {
+    if (tdir.sum() < 2) {
+        if (tdir.north) tdir.south = 1;
+        else if (tdir.south) tdir.north = 1;
+        else if (tdir.east) tdir.west = 1;
+        else if (tdir.west) tdir.east = 1;
+    }
+    return tdir;
+}
+
 // connects adjacent smooth walls to our new smooth wall
 static bool adjust_smooth_wall_dir(MapExtras::MapCache &map,
                                    const DFCoord &pos,
-                                   TileDirection adjacent_tdir) {
-    df::tiletype tt = map.tiletypeAt(pos);
-    if (tileSpecial(tt) != df::tiletype_special::SMOOTH
-                || tileShape(tt) != df::tiletype_shape::WALL)
+                                   TileDirection tdir) {
+    if (!is_smooth_wall(map, pos))
         return false;
 
-    TileDirection tdir = tileDirection(tt);
-    tdir.whole |= adjacent_tdir.whole;
+    tdir = ensure_valid_tdir(get_adjacent_smooth_walls(map, pos, tdir));
 
+    df::tiletype tt = map.tiletypeAt(pos);
     tt = findTileType(tileShape(tt), tileMaterial(tt), tileVariant(tt),
                       tileSpecial(tt), tdir);
     if (tt == df::tiletype::Void)
@@ -393,17 +424,18 @@ static bool smooth_tile(color_ostream &out, MapExtras::MapCache &map,
     TileDirection tdir;
     if (tileShape(tt) == df::tiletype_shape::WALL) {
         if (adjust_smooth_wall_dir(map, DFCoord(pos.x, pos.y-1, pos.z),
-                                TileDirection(1, 1, 0, 0)))
-            tdir.north = tdir.south = 1;
+                                   TileDirection(0, 1, 0, 0)))
+            tdir.north = 1;
         if (adjust_smooth_wall_dir(map, DFCoord(pos.x, pos.y+1, pos.z),
-                                TileDirection(1, 1, 0, 0)))
-            tdir.north = tdir.south = 1;
+                                TileDirection(1, 0, 0, 0)))
+            tdir.south = 1;
         if (adjust_smooth_wall_dir(map, DFCoord(pos.x-1, pos.y, pos.z),
-                                TileDirection(0, 0, 1, 1)))
-            tdir.east = tdir.west = 1;
+                                TileDirection(0, 0, 0, 1)))
+            tdir.west = 1;
         if (adjust_smooth_wall_dir(map, DFCoord(pos.x+1, pos.y, pos.z),
-                                TileDirection(0, 0, 1, 1)))
-            tdir.east = tdir.west = 1;
+                                TileDirection(0, 0, 1, 0)))
+            tdir.east = 1;
+        tdir = ensure_valid_tdir(tdir);
     }
 
     tt = findTileType(tileShape(tt), tileMaterial(tt), tileVariant(tt),

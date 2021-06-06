@@ -54,7 +54,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         if (!Units::isCitizen(unit))
             continue;
 
-        if (enable_teledwarf)
+        if (enable_teledwarf) do
         {
             // skip dwarves that are dragging creatures or being dragged
             if ((unit->relationship_ids[df::unit_relationship_type::Draggee] != -1) ||
@@ -78,7 +78,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
                 break;
 
             unit->path.path.clear();
-        }
+        } while (0);
 
         if (enable_fastdwarf)
         {

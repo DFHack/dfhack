@@ -29,23 +29,41 @@ REQUIRE_GLOBAL(world);
 
 using namespace DFHack;
 
+struct boulder_percent_options {
+    // percent chance ([0..100]) for creating a boulder for the given rock type
+    uint32_t layer;
+    uint32_t vein;
+    uint32_t small_cluster;
+    uint32_t deep;
+
+    // defaults from
+    // https://dwarffortresswiki.org/index.php/DF2014:Mining
+    boulder_percent_options() :
+            layer(25), vein(33), small_cluster(100), deep(100) { }
+
+    static struct_identity _identity;
+};
+static const struct_field_info boulder_percent_options_fields[] = {
+    { struct_field_info::PRIMITIVE, "layer",         offsetof(boulder_percent_options, layer),         &df::identity_traits<uint32_t>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "vein",          offsetof(boulder_percent_options, vein),          &df::identity_traits<uint32_t>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "small_cluster", offsetof(boulder_percent_options, small_cluster), &df::identity_traits<uint32_t>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "deep",          offsetof(boulder_percent_options, deep),          &df::identity_traits<uint32_t>::identity, 0, 0 },
+    { struct_field_info::END }
+};
+struct_identity boulder_percent_options::_identity(sizeof(boulder_percent_options), &df::allocator_fn<boulder_percent_options>, NULL, "boulder_percents", NULL, boulder_percent_options_fields);
+
 struct dig_now_options {
+    bool help; // whether to show the short help
+
     DFCoord start; // upper-left coordinate, min z-level
     DFCoord end;   // lower-right coordinate, max z-level
 
-    // percent chance ([0..100]) for creating a boulder for the given rock type
-    uint32_t boulder_percent_layer;
-    uint32_t boulder_percent_vein;
-    uint32_t boulder_percent_small_cluster;
-    uint32_t boulder_percent_deep;
-
-    // whether to generate boulders at the cursor position instead of at their
-    // dig locations
-    bool dump_boulders;
+    boulder_percent_options boulder_percents;
 
     // if set to the pos of a walkable tile (or somewhere above such a tile),
-    // will dump at this position instead of the in-game cursor
-    DFCoord cursor;
+    // will dump generated boulders at this position instead of at their dig
+    // locations
+    DFCoord dump_pos;
 
     static DFCoord getMapSize() {
         uint32_t endx, endy, endz;
@@ -53,17 +71,19 @@ struct dig_now_options {
         return DFCoord(endx, endy, endz);
     }
 
-    // boulder percentage defaults from
-    // https://dwarffortresswiki.org/index.php/DF2014:Mining
-    dig_now_options() :
-        start(0, 0, 0),
-        end(getMapSize()),
-        boulder_percent_layer(25),
-        boulder_percent_vein(33),
-        boulder_percent_small_cluster(100),
-        boulder_percent_deep(100),
-        dump_boulders(false) { }
+    dig_now_options() : help(false), start(0, 0, 0), end(getMapSize()) { }
+
+    static struct_identity _identity;
 };
+static const struct_field_info dig_now_options_fields[] = {
+    { struct_field_info::PRIMITIVE, "help",             offsetof(dig_now_options, help),             &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::SUBSTRUCT, "start",            offsetof(dig_now_options, start),            &df::coord::_identity,                0, 0 },
+    { struct_field_info::SUBSTRUCT, "end",              offsetof(dig_now_options, end),              &df::coord::_identity,                0, 0 },
+    { struct_field_info::SUBSTRUCT, "boulder_percents", offsetof(dig_now_options, boulder_percents), &boulder_percent_options::_identity,  0, 0 },
+    { struct_field_info::SUBSTRUCT, "dump_pos",         offsetof(dig_now_options, dump_pos),         &df::coord::_identity,                0, 0 },
+    { struct_field_info::END }
+};
+struct_identity dig_now_options::_identity(sizeof(dig_now_options), &df::allocator_fn<dig_now_options>, NULL, "dig_now_options", NULL, dig_now_options_fields);
 
 // propagate light, outside, and subterranean flags to open tiles below this one
 static void propagate_vertical_flags(MapExtras::MapCache &map,
@@ -408,23 +428,27 @@ static bool carve_tile(MapExtras::MapCache &map,
     return true;
 }
 
-static bool produces_boulder(const dig_now_options &options,
+static bool produces_boulder(const boulder_percent_options &options,
                              Random::MersenneRNG &rng,
+                             df::tiletype_material tmat,
                              df::inclusion_type vein_type) {
     uint32_t probability;
     switch (vein_type) {
         case df::inclusion_type::CLUSTER:
         case df::inclusion_type::VEIN:
-            probability = options.boulder_percent_vein;
+            probability = options.vein;
             break;
         case df::inclusion_type::CLUSTER_ONE:
         case df::inclusion_type::CLUSTER_SMALL:
-            probability = options.boulder_percent_small_cluster;
+            probability = options.small_cluster;
             break;
         default:
-            probability = options.boulder_percent_layer;
+            probability = options.layer;
             break;
     }
+
+    if (tmat == df::tiletype_material::FEATURE)
+        probability = options.deep;
 
     return rng.random(100) < probability;
 }
@@ -451,6 +475,8 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
                 if (td.bits.dig != df::tile_dig_designation::No) {
                     int16_t boulder_mat[2];
                     memset(boulder_mat, -1, sizeof(boulder_mat));
+                    df::tiletype_material tmat =
+                            tileMaterial(map.tiletypeAt(pos));
                     if (dig_tile(out, map, pos, td.bits.dig, boulder_mat)) {
                         td = map.designationAt(pos);
                         td.bits.dig = df::tile_dig_designation::No;
@@ -459,8 +485,8 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
                         for (size_t i = 0; i < 2; ++i) {
                             if (boulder_mat[i] < 0)
                                 continue;
-                            if (produces_boulder(options, rng,
-                                    map.BlockAtTile(pos)->veinTypeAt(pos))) {
+                            if (produces_boulder(options.boulder_percents, rng,
+                                    tmat, map.BlockAtTile(pos)->veinTypeAt(pos))) {
                                 boulder_coords[boulder_mat[i]].push_back(pos);
                             }
                         }
@@ -520,23 +546,11 @@ static void create_boulders(color_ostream &out,
     std::vector<df::item *> in_items;
 
     DFCoord dump_pos;
-    if (options.dump_boulders) {
-        if (Maps::isValidTilePos(options.cursor))
-            dump_pos = simulate_fall(options.cursor);
-        else {
-            DFCoord cursor;
-            if (!Gui::getCursorCoords(cursor)) {
-                out.printerr(
-                    "Can't get dump tile coordinates! Make sure you specify the"
-                    " --cursor parameter or have an active cursor in DF.\n");
-                return;
-            }
-            dump_pos = simulate_fall(cursor);
-        }
+    if (Maps::isValidTilePos(options.dump_pos)) {
+        dump_pos = simulate_fall(options.dump_pos);
         if (!Maps::isValidTilePos(dump_pos))
-            out.printerr("Invalid dump tile coordinates! Ensure the --cursor"
-                " option or the in-game cursor specifies an open, non-wall"
-                " tile.");
+            out.printerr("Invalid dump tile coordinates! Ensure the --dump"
+                " option specifies an open, non-wall tile.");
     }
 
     for (auto entry : boulder_coords) {
@@ -600,8 +614,50 @@ static void unhide_dug_tiles(color_ostream &out,
             flood_unhide(out, pos);
 }
 
-command_result dig_now(color_ostream &out, std::vector<std::string> &) {
+static bool get_options(color_ostream &out,
+                        dig_now_options &opts,
+                        const std::vector<std::string> &parameters) {
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
+
+    if (!lua_checkstack(L, parameters.size() + 2) ||
+        !Lua::PushModulePublic(
+            out, L, "plugins.dig-now", "parse_commandline")) {
+        out.printerr("Failed to load dig-now Lua code\n");
+        return false;
+    }
+
+    Lua::Push(L, &opts);
+
+    for (const std::string &param : parameters)
+        Lua::Push(L, param);
+
+    if (!Lua::SafeCall(out, L, parameters.size() + 1, 0))
+        return false;
+
+    return true;
+}
+
+static void print_help(color_ostream &out) {
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
+
+    if (!lua_checkstack(L, 1) ||
+        !Lua::PushModulePublic(out, L, "plugins.dig-now", "print_help") ||
+        !Lua::SafeCall(out, L, 0, 0)) {
+        out.printerr("Failed to load dig-now Lua code\n");
+    }
+}
+
+command_result dig_now(color_ostream &out, std::vector<std::string> &params) {
     CoreSuspender suspend;
+
+    dig_now_options options;
+    if (!get_options(out, options, params) || options.help)
+    {
+        print_help(out);
+        return options.help ? CR_OK : CR_FAILURE;
+    }
 
     if (!Maps::IsValid()) {
         out.printerr("Map is not available!\n");
@@ -613,8 +669,6 @@ command_result dig_now(color_ostream &out, std::vector<std::string> &) {
         out.printerr("At least one unit must be alive!\n");
         return CR_FAILURE;
     }
-
-    dig_now_options options;
 
     // track which positions were modified and where to produce boulders of a
     // given material

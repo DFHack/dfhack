@@ -11,6 +11,7 @@
 #include "modules/Maps.h"
 #include "modules/MapCache.h"
 #include "modules/Random.h"
+#include "modules/Units.h"
 #include "modules/World.h"
 
 #include <df/historical_entity.h>
@@ -272,7 +273,6 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                      std::vector<dug_tile_info> &dug_tiles) {
     df::tiletype tt = map.tiletypeAt(pos);
 
-    // TODO: handle tree trunks, roots, and surface tiles
     df::tiletype_material tile_mat = tileMaterial(tt);
     if (!isGroundMaterial(tile_mat))
         return false;
@@ -593,7 +593,7 @@ static void create_boulders(color_ostream &out,
     DFCoord dump_pos;
     if (Maps::isValidTilePos(options.dump_pos)) {
         dump_pos = simulate_fall(options.dump_pos);
-        if (!Maps::isValidTilePos(dump_pos))
+        if (!Maps::ensureTileBlock(dump_pos))
             out.printerr("Invalid dump tile coordinates! Ensure the --dump"
                 " option specifies an open, non-wall tile.");
     }
@@ -627,7 +627,7 @@ static void create_boulders(color_ostream &out,
         for (size_t i = 0; i < num_items; ++i) {
             DFCoord pos = Maps::isValidTilePos(dump_pos) ?
                     dump_pos : simulate_fall(coords[i]);
-            if (!Maps::isValidTilePos(pos)) {
+            if (!Maps::ensureTileBlock(pos)) {
                 out.printerr(
                         "unable to place boulder generated at (%d, %d, %d)\n",
                         coords[i].x, coords[i].y, coords[i].z);
@@ -652,11 +652,43 @@ static void flood_unhide(color_ostream &out, const DFCoord &pos) {
     Lua::SafeCall(out, L, 1, 0);
 }
 
-static void unhide_dug_tiles(color_ostream &out,
+static void post_process_dug_tiles(color_ostream &out,
                              const std::vector<DFCoord> &dug_coords) {
-    for (DFCoord pos : dug_coords)
+    for (DFCoord pos : dug_coords) {
         if (Maps::getTileDesignation(pos)->bits.hidden)
             flood_unhide(out, pos);
+
+        df::tile_occupancy &to = *Maps::getTileOccupancy(pos);
+        if (to.bits.unit or to.bits.item) {
+            DFCoord resting_pos = simulate_fall(pos);
+            if (resting_pos == pos)
+                continue;
+
+            if (!Maps::ensureTileBlock(resting_pos)) {
+                out.printerr("No valid tile beneath (%d, %d, %d); can't move"
+                             " units and items to floor",
+                             pos.x, pos.y, pos.z);
+                continue;
+            }
+
+            if (to.bits.unit) {
+                std::vector<df::unit*> units;
+                Units::getUnitsInBox(units, pos.x, pos.y, pos.z,
+                                     pos.x, pos.y, pos.z);
+                for (auto unit : units)
+                    Units::teleport(unit, resting_pos);
+            }
+
+            if (to.bits.item) {
+                for (auto item : world->items.other.IN_PLAY) {
+                    if (item->pos == pos and item->flags.bits.on_ground)
+                        item->moveToGround(
+                                resting_pos.x, resting_pos.y, resting_pos.z);
+                }
+            }
+        }
+
+    }
 }
 
 static bool get_options(color_ostream &out,
@@ -721,7 +753,7 @@ command_result dig_now(color_ostream &out, std::vector<std::string> &params) {
 
     do_dig(out, dug_coords, item_coords, options);
     create_boulders(out, item_coords, options);
-    unhide_dug_tiles(out, dug_coords);
+    post_process_dug_tiles (out, dug_coords);
 
     // force the game to recompute its walkability cache
     world->reindex_pathfinding = true;

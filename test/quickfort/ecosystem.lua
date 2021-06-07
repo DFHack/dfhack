@@ -131,7 +131,8 @@ local function get_test_area(area, spec)
 
     -- keep this simple for now. just go down the layers and check the region
     -- starting at the upper left corner of each level.
-    for z_start = df.global.world.map.z_count-1,0,-1 do
+    local startz = area.pos and area.pos.z or df.global.world.map.z_count-1
+    for z_start = startz,0,-1 do
         local z_end = z_start - spec.depth + 1
         if z_end < 1 then return false end
         for z = z_start,z_end,-1 do

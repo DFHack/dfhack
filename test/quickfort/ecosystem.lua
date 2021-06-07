@@ -189,17 +189,22 @@ local function run_blueprint(basename, set, pos)
 end
 
 local function reset_area(area, spec)
+    -- include the area border tiles that can get unhidden
+    local width, height, depth = spec.width+2, spec.height+2, spec.depth
     local commands = {
         'f', 'any', ';',
         'p', 'any', ';',
         'p', 's', 'wall', ';',
         'p', 'sp', 'normal', ';',
         'p', 'h', '1', ';',
-        'r', tostring(spec.width), tostring(spec.height), tostring(spec.depth)}
+        'r', tostring(width), tostring(height), tostring(depth)}
     dfhack.run_command('tiletypes-command', table.unpack(commands))
 
-    -- tiletypes goes up z's, so adjust starting zlevel accordingly
     local pos = copyall(area.pos)
+    -- include the border tiles
+    pos.x = pos.x - 1
+    pos.y = pos.y - 1
+    -- tiletypes goes up z's, so adjust starting zlevel accordingly
     pos.z = pos.z - spec.depth + 1
 
     dfhack.run_command('tiletypes-here', '--quiet', get_cursor_arg(pos))

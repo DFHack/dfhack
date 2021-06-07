@@ -34,6 +34,7 @@ using std::set;
 #include "Console.h"
 #include "Core.h"
 #include "Export.h"
+#include "LuaTools.h"
 #include "PluginManager.h"
 #include "TileTypes.h"
 
@@ -52,6 +53,25 @@ using namespace df::enums;
 
 DFHACK_PLUGIN("tiletypes");
 REQUIRE_GLOBAL(world);
+
+struct tiletypes_options {
+    // whether to display help
+    bool help = false;
+    bool quiet = false;
+
+    // if set, then use this position instead of the active game cursor
+    df::coord cursor;
+
+    static struct_identity _identity;
+};
+static const struct_field_info tiletypes_options_fields[] = {
+    { struct_field_info::PRIMITIVE, "help",   offsetof(tiletypes_options, help),   &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "quiet",  offsetof(tiletypes_options, quiet),  &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::SUBSTRUCT, "cursor", offsetof(tiletypes_options, cursor), &df::coord::_identity,                0, 0 },
+    { struct_field_info::END }
+};
+struct_identity tiletypes_options::_identity(sizeof(tiletypes_options), &df::allocator_fn<tiletypes_options>, NULL, "tiletypes_options", NULL, tiletypes_options_fields);
+
 
 CommandHistory tiletypes_hist;
 
@@ -713,7 +733,8 @@ bool processTileType(color_ostream & out, TileType &paint, std::vector<std::stri
     return found;
 }
 
-command_result executePaintJob(color_ostream &out)
+command_result executePaintJob(color_ostream &out,
+                               const tiletypes_options &opts)
 {
     if (paint.empty())
     {
@@ -722,24 +743,36 @@ command_result executePaintJob(color_ostream &out)
     }
 
     CoreSuspender suspend;
-    uint32_t x_max = 0, y_max = 0, z_max = 0;
-    int32_t x = 0, y = 0, z = 0;
 
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
+
+    uint32_t x_max = 0, y_max = 0, z_max = 0;
     Maps::getSize(x_max, y_max, z_max);
 
-    if (!Gui::getCursorCoords(x,y,z))
+    DFCoord cursor;
+    if (Maps::isValidTilePos(opts.cursor))
     {
-        out.printerr("Can't get cursor coords! Make sure you have a cursor active in DF.\n");
-        return CR_FAILURE;
+        cursor = opts.cursor;
     }
-    out.print("Cursor coords: (%d, %d, %d)\n", x, y, z);
+    else
+    {
+        int32_t x = 0, y = 0, z = 0;
+        if (!Gui::getCursorCoords(x,y,z))
+        {
+            out.printerr("Can't get cursor coords! Make sure you have a cursor active in DF or specify the --cursor option.\n");
+            return CR_FAILURE;
+        }
+        cursor = DFCoord(x, y, z);
+    }
 
-    DFHack::DFCoord cursor(x,y,z);
+    if (!opts.quiet)
+        out.print("Cursor coords: (%d, %d, %d)\n",
+                  cursor.x, cursor.y, cursor.z);
+
     MapExtras::MapCache map;
     coord_vec all_tiles = brush->points(map, cursor);
     out.print("working...\n");
@@ -877,12 +910,13 @@ command_result executePaintJob(color_ostream &out)
 
     if (failures > 0)
         out.printerr("Could not update %d tiles of %zu.\n", failures, all_tiles.size());
-    else
+    else if (!opts.quiet)
         out.print("Processed %zu tiles.\n", all_tiles.size());
 
     if (map.WriteAll())
     {
-        out.print("OK\n");
+        if (!opts.quiet)
+            out.print("OK\n");
         return CR_OK;
     }
     else
@@ -894,9 +928,10 @@ command_result executePaintJob(color_ostream &out)
 
 command_result processCommand(color_ostream &out, std::vector<std::string> &commands, int start, int end, bool & endLoop, bool hasConsole = false)
 {
+    tiletypes_options opts;
     if (commands.size() == size_t(start))
     {
-        return executePaintJob(out);
+        return executePaintJob(out, opts);
     }
 
     int loc = start;
@@ -951,7 +986,7 @@ command_result processCommand(color_ostream &out, std::vector<std::string> &comm
     }
     else if (command == "run" || command.empty())
     {
-        executePaintJob(out);
+        executePaintJob(out, opts);
     }
 
     return CR_OK;
@@ -1028,43 +1063,71 @@ command_result df_tiletypes_command (color_ostream &out, vector <string> & param
     return CR_OK;
 }
 
-command_result df_tiletypes_here (color_ostream &out, vector <string> & parameters)
+static bool get_options(color_ostream &out,
+                        tiletypes_options &opts,
+                        const vector<string> &parameters)
 {
-    for(size_t i = 0; i < parameters.size();i++)
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
+
+    if (!lua_checkstack(L, parameters.size() + 2) ||
+        !Lua::PushModulePublic(
+            out, L, "plugins.tiletypes", "parse_commandline"))
     {
-        if(parameters[i] == "help" || parameters[i] == "?")
-        {
-            out << "This command is supposed to be mapped to a hotkey." << endl;
-            out << "It will use the current/last parameters set in tiletypes (including brush settings!)." << endl;
-            return CR_OK;
-        }
+        out.printerr("Failed to load tiletypes Lua code\n");
+        return false;
     }
 
-    out.print("Run tiletypes-here with these parameters: ");
-    printState(out);
+    Lua::Push(L, &opts);
 
-    return executePaintJob(out);
+    for (const string &param : parameters)
+        Lua::Push(L, param);
+
+    if (!Lua::SafeCall(out, L, parameters.size() + 1, 0))
+        return false;
+
+    return true;
+}
+
+command_result df_tiletypes_here (color_ostream &out, vector <string> & parameters)
+{
+    tiletypes_options opts;
+    if (!get_options(out, opts, parameters) || opts.help)
+    {
+        out << "This command is supposed to be mapped to a hotkey." << endl;
+        out << "It will use the current/last parameters set in tiletypes (including brush settings!)." << endl;
+        return opts.help ? CR_OK : CR_FAILURE;
+    }
+
+    if (!opts.quiet)
+    {
+        out.print("Run tiletypes-here with these parameters: ");
+        printState(out);
+    }
+
+    return executePaintJob(out, opts);
 }
 
 command_result df_tiletypes_here_point (color_ostream &out, vector <string> & parameters)
 {
-    for(size_t i = 0; i < parameters.size();i++)
+    tiletypes_options opts;
+    if (!get_options(out, opts, parameters) || opts.help)
     {
-        if(parameters[i] == "help" || parameters[i] == "?")
-        {
-            out << "This command is supposed to be mapped to a hotkey." << endl;
-            out << "It will use the current/last parameters set in tiletypes (except with a point brush)." << endl;
-            return CR_OK;
-        }
+        out << "This command is supposed to be mapped to a hotkey." << endl;
+        out << "It will use the current/last parameters set in tiletypes (except with a point brush)." << endl;
+        return opts.help ? CR_OK : CR_FAILURE;
     }
 
     Brush *old = brush;
     brush = new RectangleBrush(1, 1);
 
-    out.print("Run tiletypes-here with these parameters: ");
-    printState(out);
+    if (!opts.quiet)
+    {
+        out.print("Run tiletypes-here-point with these parameters: ");
+        printState(out);
+    }
 
-    command_result rv = executePaintJob(out);
+    command_result rv = executePaintJob(out, opts);
 
     delete brush;
     brush = old;

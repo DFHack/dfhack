@@ -777,7 +777,8 @@ command_result executePaintJob(color_ostream &out,
 
     MapExtras::MapCache map;
     coord_vec all_tiles = brush->points(map, cursor);
-    out.print("working...\n");
+    if (!opts.quiet)
+        out.print("working...\n");
 
     // Force the game to recompute its walkability cache
     world->reindex_pathfinding = true;

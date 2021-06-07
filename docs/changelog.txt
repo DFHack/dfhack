@@ -39,12 +39,14 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `command-prompt`: fixed issues where overlays created by running certain commands (e.g. `gui/liquids`, `gui/teleport`) would not update the parent screen correctly
 - `dwarfvet`: fixed a crash that could occur with hospitals overlapping with other buildings in certain ways
 - ``quickfortress.csv`` blueprint: fixed refuse stockpile config and prevented stockpiles from covering stairways
+- `stonesense`: fixed a crash that could occur when ctrl+scrolling or closing the Stonesense window
 
 ## Misc Improvements
 - `blueprint`: make ``depth`` and ``name`` parameters optional. ``depth`` now defaults to ``1`` (current level only) and ``name`` defaults to "blueprint"
 - `blueprint`: allow ``depth`` to be negative, which will result in the blueprints being written from the highest z-level to the lowest. before, blueprints were always written from the lowest z-level to the highest.
 - `blueprint`: add the ``--cursor`` option to set the starting coordinate for the generated blueprints. a game cursor is no longer necessary if this option is used.
 - `quickfort`: the Dreamfort blueprint set can now be comfortably built in a 1x1 embark
+- `stonesense`: sped up startup time
 - `tweak` hide-priority: changed so that priorities stay hidden (or visible) when exiting and re-entering the designations menu
 - `embark-assistant`: slightly improved performance of surveying and improved code a little
 

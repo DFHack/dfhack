@@ -1,5 +1,5 @@
 -- tests the quickfort ecosystem end-to-end via:
---   .csv -> quickfort/buildingplan/dig-dug -> blueprint -> .csv
+--   .csv -> quickfort/buildingplan/dig-now -> blueprint -> .csv
 --
 -- test cases are sets of .csv files in the
 -- blueprints/library/test/ecosystem/in directory
@@ -10,7 +10,8 @@
 --   height (required)
 --   depth (default is 1)
 --
--- blueprint, buildingplan, and dig-dug plugins must be loaded and enabled
+-- depends on blueprint, buildingplan, and dig-now plugins (as well as the
+-- quickfort script, of course)
 --
 -- note that this test harness cannot (yet) test #query blueprints that define
 -- rooms since furniture is not actually built during the test. It also cannot

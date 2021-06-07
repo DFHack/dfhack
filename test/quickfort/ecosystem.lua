@@ -21,8 +21,6 @@ config = {
     mode = 'fortress',
 }
 
-local guidm = require('gui.dwarfmode')
-
 local blueprints_dir = 'blueprints/'
 local input_dir = 'library/test/ecosystem/in/'
 local output_dir = 'library/test/ecosystem/out/'
@@ -191,22 +189,20 @@ local function run_blueprint(basename, set, pos)
 end
 
 local function reset_area(area, spec)
-    dfhack.run_command('tiletypes-command', 'f', 'any')
-    dfhack.run_command('tiletypes-command', 'p', 'any')
-    dfhack.run_command('tiletypes-command', 'p', 's', 'wall')
-    dfhack.run_command('tiletypes-command', 'p', 'sp', 'normal')
-    dfhack.run_command('tiletypes-command', 'p', 'h', '1')
-    dfhack.run_command('tiletypes-command', 'r', tostring(spec.width),
-                       tostring(spec.height), tostring(spec.depth))
-    local tiletypes_pos = copyall(area.pos)
-    tiletypes_pos.z = tiletypes_pos.z - spec.depth + 1 -- tiletypes goes up z's
+    local commands = {
+        'f', 'any', ';',
+        'p', 'any', ';',
+        'p', 's', 'wall', ';',
+        'p', 'sp', 'normal', ';',
+        'p', 'h', '1', ';',
+        'r', tostring(spec.width), tostring(spec.height), tostring(spec.depth)}
+    dfhack.run_command('tiletypes-command', table.unpack(commands))
 
-    -- we fake the cursor position so 'tiletypes-here' works even if there is no
-    -- actual live game cursor
-    local saved_cursor = guidm.getCursorPos()
-    guidm.setCursorPos(tiletypes_pos)
-    dfhack.run_command('tiletypes-here')
-    if saved_cursor then guidm.setCursorPos(saved_cursor) end
+    -- tiletypes goes up z's, so adjust starting zlevel accordingly
+    local pos = copyall(area.pos)
+    pos.z = pos.z - spec.depth + 1
+
+    dfhack.run_command('tiletypes-here', '--quiet', get_cursor_arg(pos))
 end
 
 function test.end_to_end()
@@ -234,8 +230,8 @@ function test.end_to_end()
             designate_area(area.pos, set.spec)
         end
 
-        -- run dig-dug to dig out designated tiles
-        dfhack.run_command('dig-dug')
+        -- run dig-now to dig out designated tiles
+        dfhack.run_command('dig-now')
 
         -- quickfort run remaining blueprints
         for _,mode_name in pairs(mode_names) do

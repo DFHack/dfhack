@@ -21,6 +21,8 @@ config = {
     mode = 'fortress',
 }
 
+local blueprint = require('plugins.blueprint')
+
 local blueprints_dir = 'blueprints/'
 local input_dir = 'library/test/ecosystem/in/'
 local output_dir = 'library/test/ecosystem/out/'
@@ -42,7 +44,8 @@ end
 
 -- internal/quickfort scripts are loaded inside the function here so the test
 -- file itself can load when a fortress map is not active. this is required
--- because quickfort depends on stockflow, which fails outside of fort mode.
+-- because quickfort depends on stockflow, which fails to load outside of fort
+-- mode.
 local function get_blueprint_sets()
     -- find test blueprints with `quickfort list`
     local quickfort_list = reqscript('internal/quickfort/list')
@@ -178,14 +181,14 @@ local function designate_area(pos, spec)
 end
 
 local function run_blueprint(basename, set, pos)
-    local blueprint_args = {'blueprint', tostring(set.spec.width),
+    local blueprint_args = {tostring(set.spec.width),
                             tostring(set.spec.height),
                             tostring(-set.spec.depth),
                             output_dir..basename, get_cursor_arg(pos)}
     for _,mode_name in pairs(mode_names) do
         if set.modes[mode_name] then table.insert(blueprint_args, mode_name) end
     end
-    dfhack.run_command(blueprint_args)
+    blueprint.run(table.unpack(blueprint_args))
 end
 
 local function reset_area(area, spec)

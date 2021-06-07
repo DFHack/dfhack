@@ -63,6 +63,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - The ``test/main`` command to invoke the test harness has been renamed to just ``test``
 - DFHack unit tests must now match any output expected to be printed via ``dfhack.printerr()``
 - Fortress mode is now supported for unit tests (allowing tests that require a fortress map to be loaded) - note that these tests are skipped by continuous integration for now, pending a suitable test fortress
+- Room definitions and extents are now created for abstract buildings so callers don't have to initialize the room structure themselves
 
 # 0.47.05-r1
 

@@ -57,6 +57,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `stonesense`: sped up startup time
 - `tweak` hide-priority: changed so that priorities stay hidden (or visible) when exiting and re-entering the designations menu
 - `embark-assistant`: slightly improved performance of surveying and improved code a little
+- `tiletypes-here`, `tiletypes-here-point`: add --cursor and --quiet options to support scripted invocation
 
 ## Lua
 - new string utility functions:

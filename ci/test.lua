@@ -426,7 +426,9 @@ local function run_test(test, status, counts)
     test.private.checks_ok = 0
     counts.tests = counts.tests + 1
     dfhack.internal.IN_TEST = true
+    local start_ms = dfhack.getTickCount()
     local ok, err = wrap_test(test.func)
+    local elapsed_ms = dfhack.getTickCount() - start_ms
     dfhack.internal.IN_TEST = false
     local passed = false
     if not ok then
@@ -435,7 +437,7 @@ local function run_test(test, status, counts)
     elseif test.private.checks ~= test.private.checks_ok then
         dfhack.printerr('test failed: ' .. test.name)
     else
-        print('test passed: ' .. test.name)
+        print(('test passed in %d ms: %s'):format(elapsed_ms, test.name))
         passed = true
         counts.tests_ok = counts.tests_ok + 1
     end
@@ -513,6 +515,7 @@ end
 
 local function run_tests(tests, status, counts, config)
     print(('Running %d tests'):format(#tests))
+    local start_ms = dfhack.getTickCount()
     local num_skipped = 0
     for _, test in pairs(tests) do
         if MODES[test.config.mode].failed then
@@ -536,6 +539,7 @@ local function run_tests(tests, status, counts, config)
         save_test_status(status)
         ::skip::
     end
+    local elapsed_ms = dfhack.getTickCount() - start_ms
 
     local function print_summary_line(ok, message)
         local print_fn = print
@@ -543,11 +547,11 @@ local function run_tests(tests, status, counts, config)
             status['*'] = TestStatus.FAILED
             print_fn = dfhack.printerr
         end
-        print_fn(message)
+        print_fn('  ' .. message)
     end
 
     status['*'] = status['*'] or TestStatus.PASSED
-    print('\nTest summary:')
+    print(('\nTests completed in %d ms:'):format(elapsed_ms))
     print_summary_line(counts.tests_ok == counts.tests,
         ('%d/%d tests passed'):format(counts.tests_ok, counts.tests))
     print_summary_line(counts.checks_ok == counts.checks,

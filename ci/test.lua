@@ -421,6 +421,10 @@ local function wrap_test(func)
     )
 end
 
+local function get_elapsed_str(elapsed)
+    return elapsed < 1 and "<1" or tostring(elapsed)
+end
+
 local function run_test(test, status, counts)
     test.private.checks = 0
     test.private.checks_ok = 0
@@ -437,7 +441,8 @@ local function run_test(test, status, counts)
     elseif test.private.checks ~= test.private.checks_ok then
         dfhack.printerr('test failed: ' .. test.name)
     else
-        print(('test passed in %d ms: %s'):format(elapsed_ms, test.name))
+        local elapsed_str = get_elapsed_str(elapsed_ms)
+        print(('test passed in %s ms: %s'):format(elapsed_str, test.name))
         passed = true
         counts.tests_ok = counts.tests_ok + 1
     end
@@ -551,7 +556,7 @@ local function run_tests(tests, status, counts, config)
     end
 
     status['*'] = status['*'] or TestStatus.PASSED
-    print(('\nTests completed in %d ms:'):format(elapsed_ms))
+    print(('\nTests completed in %s ms:'):format(get_elapsed_str(elapsed_ms)))
     print_summary_line(counts.tests_ok == counts.tests,
         ('%d/%d tests passed'):format(counts.tests_ok, counts.tests))
     print_summary_line(counts.checks_ok == counts.checks,

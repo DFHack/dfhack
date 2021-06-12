@@ -21,6 +21,7 @@
 #include <df/tile_occupancy.h>
 #include <df/ui.h>
 #include <df/unit.h>
+#include <df/vermin.h>
 #include <df/world.h>
 #include <df/world_site.h>
 
@@ -238,6 +239,21 @@ static void clean_ramps(MapExtras::MapCache &map, const DFCoord &pos) {
     clean_ramp(map, DFCoord(pos.x, pos.y+1, pos.z));
 }
 
+// destroys any colonies located at pos
+static void destroy_colony(const DFCoord &pos) {
+    auto same_pos = [&](df::vermin *colony){ return colony->pos == pos; };
+
+    auto &colonies = world->vermin.colonies;
+    auto found_colony = std::find_if(begin(colonies), end(colonies), same_pos);
+    if (found_colony == end(colonies))
+        return;
+    colonies.erase(found_colony);
+
+    auto &all_vermin = world->vermin.all;
+    all_vermin.erase(
+        std::find_if(begin(all_vermin), end(all_vermin), same_pos));
+}
+
 struct dug_tile_info {
     DFCoord pos;
     df::tiletype_material tmat;
@@ -333,6 +349,7 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                     // here via the Channel case above
                     if (dug_tiles.size() == 0)
                         dug_tiles.push_back(dug_tile_info(map, pos_above));
+                    destroy_colony(pos_above);
                     // set tile type directly instead of calling dig_shape
                     // because we need to use *this* tile's material, not the
                     // material of the tile above

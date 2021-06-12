@@ -716,6 +716,8 @@ static void post_process_dug_tiles(color_ostream &out,
             }
         }
 
+        // refresh block metadata and flows
+        Maps::enableBlockUpdates(Maps::getTileBlock(pos), true, true);
     }
 }
 

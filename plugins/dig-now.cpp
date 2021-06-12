@@ -284,13 +284,24 @@ struct dug_tile_info {
     }
 };
 
+static bool is_tree(df::tiletype tt) {
+    df::tiletype_material mat = tileMaterial(tt);
+    switch (mat) {
+    case df::tiletype_material::TREE:
+    case df::tiletype_material::ROOT:
+        return true;
+    default:
+        return false;
+    }
+}
+
 static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                      const DFCoord &pos, df::tile_dig_designation designation,
                      std::vector<dug_tile_info> &dug_tiles) {
     df::tiletype tt = map.tiletypeAt(pos);
 
-    df::tiletype_material tile_mat = tileMaterial(tt);
-    if (!isGroundMaterial(tile_mat))
+    // TODO: handle trees, roots, and log generation
+    if (is_tree(tt))
         return false;
 
     df::tiletype target_type = df::tiletype::Void;

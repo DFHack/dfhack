@@ -10,6 +10,7 @@
 
 #include "Console.h"
 #include "DataDefs.h"
+#include "DataFuncs.h"
 #include "DataIdentity.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
@@ -85,27 +86,27 @@ static const struct_field_info blueprint_options_fields[] = {
 };
 struct_identity blueprint_options::_identity(sizeof(blueprint_options), &df::allocator_fn<blueprint_options>, NULL, "blueprint_options", NULL, blueprint_options_fields);
 
-command_result blueprint(color_ostream &out, vector<string> &parameters);
+command_result blueprint(color_ostream &, vector<string> &);
 
-DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginCommand> &commands)
+DFhackCExport command_result plugin_init(color_ostream &, vector<PluginCommand> &commands)
 {
     commands.push_back(PluginCommand("blueprint", "Record the structure of a live game map in a quickfort blueprint", blueprint, false));
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown(color_ostream &out)
+DFhackCExport command_result plugin_shutdown(color_ostream &)
 {
     return CR_OK;
 }
 
-pair<uint32_t, uint32_t> get_building_size(df::building* b)
+static pair<uint32_t, uint32_t> get_building_size(df::building* b)
 {
     return pair<uint32_t, uint32_t>(b->x2 - b->x1 + 1, b->y2 - b->y1 + 1);
 }
 
-char get_tile_dig(int32_t x, int32_t y, int32_t z)
+static char get_tile_dig(int32_t x, int32_t y, int32_t z)
 {
-    df::tiletype *tt = Maps::getTileType(x, y , z);
+    df::tiletype *tt = Maps::getTileType(x, y, z);
     df::tiletype_shape ts = tileShape(tt ? *tt : tiletype::Void);
     switch (ts)
     {
@@ -132,7 +133,7 @@ char get_tile_dig(int32_t x, int32_t y, int32_t z)
     }
 }
 
-string get_tile_build(uint32_t x, uint32_t y, df::building* b)
+static string get_tile_build(uint32_t x, uint32_t y, df::building* b)
 {
     if (! b)
         return " ";
@@ -513,7 +514,7 @@ string get_tile_build(uint32_t x, uint32_t y, df::building* b)
     }
 }
 
-string get_tile_place(uint32_t x, uint32_t y, df::building* b)
+static string get_tile_place(uint32_t x, uint32_t y, df::building* b)
 {
     if (! b || b->getType() != building_type::Stockpile)
         return " ";
@@ -579,24 +580,28 @@ string get_tile_place(uint32_t x, uint32_t y, df::building* b)
     return out.str();
 }
 
-string get_tile_query(df::building* b)
+static string get_tile_query(df::building* b)
 {
     if (b && b->is_room)
         return "r+";
     return " ";
 }
 
-void init_stream(ofstream &out, string basename, string target)
+// returns filename
+static string init_stream(ofstream &out, string basename, string target)
 {
     std::ostringstream out_path;
     out_path << basename << "-" << target << ".csv";
-    out.open(out_path.str(), ofstream::trunc);
+    string path = out_path.str();
+    out.open(path, ofstream::trunc);
     out << "#" << target << endl;
+    return path;
 }
 
-command_result do_transform(const DFCoord &start, const DFCoord &end,
-                            const blueprint_options &options,
-                            std::ostringstream &err)
+static bool do_transform(const DFCoord &start, const DFCoord &end,
+                         const blueprint_options &options,
+                         vector<string> &files,
+                         std::ostringstream &err)
 {
     ofstream dig, build, place, query;
 
@@ -609,24 +614,24 @@ command_result do_transform(const DFCoord &start, const DFCoord &end,
     if (!Filesystem::mkdir_recursive(parent_path))
     {
         err << "could not create output directory: '" << parent_path << "'";
-        return CR_FAILURE;
+        return false;
     }
 
-    if (options.auto_phase || options.query)
+    if (options.auto_phase || options.dig)
     {
-        init_stream(query, basename, "query");
-    }
-    if (options.auto_phase || options.place)
-    {
-        init_stream(place, basename, "place");
+        files.push_back(init_stream(dig, basename, "dig"));
     }
     if (options.auto_phase || options.build)
     {
-        init_stream(build, basename, "build");
+        files.push_back(init_stream(build, basename, "build"));
     }
-    if (options.auto_phase || options.dig)
+    if (options.auto_phase || options.place)
     {
-        init_stream(dig, basename, "dig");
+        files.push_back(init_stream(place, basename, "place"));
+    }
+    if (options.auto_phase || options.query)
+    {
+        files.push_back(init_stream(query, basename, "query"));
     }
 
     const int32_t z_inc = start.z < end.z ? 1 : -1;
@@ -677,14 +682,14 @@ command_result do_transform(const DFCoord &start, const DFCoord &end,
     if (options.auto_phase || options.dig)
         dig.close();
 
-    return CR_OK;
+    return true;
 }
 
-static bool get_options(blueprint_options &opts,
+static bool get_options(color_ostream &out,
+                        blueprint_options &opts,
                         const vector<string> &parameters)
 {
     auto L = Lua::Core::State;
-    color_ostream_proxy out(Core::getInstance().getConsole());
     Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, parameters.size() + 2) ||
@@ -706,10 +711,9 @@ static bool get_options(blueprint_options &opts,
     return true;
 }
 
-static void print_help()
+static void print_help(color_ostream &out)
 {
     auto L = Lua::Core::State;
-    color_ostream_proxy out(Core::getInstance().getConsole());
     Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, 1) ||
@@ -720,7 +724,11 @@ static void print_help()
     }
 }
 
-command_result blueprint(color_ostream &out, vector<string> &parameters)
+// returns whether blueprint generation was successful. populates files with the
+// names of the files that were generated
+static bool do_blueprint(color_ostream &out,
+                         const vector<string> &parameters,
+                         vector<string> &files)
 {
     CoreSuspender suspend;
 
@@ -740,16 +748,16 @@ command_result blueprint(color_ostream &out, vector<string> &parameters)
     }
 
     blueprint_options options;
-    if (!get_options(options, parameters) || options.help)
+    if (!get_options(out, options, parameters) || options.help)
     {
-        print_help();
-        return options.help ? CR_OK : CR_FAILURE;
+        print_help(out);
+        return options.help;
     }
 
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");
-        return CR_FAILURE;
+        return false;
     }
 
     // start coordinates can come from either the commandline or the map cursor
@@ -760,14 +768,14 @@ command_result blueprint(color_ostream &out, vector<string> &parameters)
         {
             out.printerr("Can't get cursor coords! Make sure you specify the"
                     " --cursor parameter or have an active cursor in DF.\n");
-            return CR_FAILURE;
+            return false;
         }
     }
     if (!Maps::isValidTilePos(start))
     {
         out.printerr("Invalid start position: %d,%d,%d\n",
                      start.x, start.y, start.z);
-        return CR_FAILURE;
+        return false;
     }
 
     // end coords are one beyond the last processed coordinate. note that
@@ -789,8 +797,55 @@ command_result blueprint(color_ostream &out, vector<string> &parameters)
         end.z = -1;
 
     std::ostringstream err;
-    command_result result = do_transform(start, end, options, err);
-    if (result != CR_OK)
+    if (!do_transform(start, end, options, files, err))
+    {
         out.printerr("%s\n", err.str().c_str());
-    return result;
+        return false;
+    }
+    return true;
 }
+
+// entrypoint when called from Lua. returns the names of the generated files
+static int run(lua_State *L)
+{
+    int argc = lua_gettop(L);
+    vector<string> argv;
+
+    for (int i = 1; i <= argc; ++i)
+    {
+        const char *s = lua_tostring(L, i);
+        if (s == NULL)
+            luaL_error(L, "all parameters must be strings");
+        argv.push_back(s);
+    }
+
+    vector<string> files;
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+    if (do_blueprint(*out, argv, files))
+    {
+        Lua::PushVector(L, files);
+        return 1;
+    }
+
+    return 0;
+}
+
+command_result blueprint(color_ostream &out, vector<string> &parameters)
+{
+    vector<string> files;
+    if (do_blueprint(out, parameters, files))
+    {
+        out.print("Generated blueprint file(s):\n");
+        for (string &fname : files)
+            out.print("  %s\n", fname.c_str());
+        return CR_OK;
+    }
+    return CR_FAILURE;
+}
+
+DFHACK_PLUGIN_LUA_COMMANDS {
+    DFHACK_LUA_COMMAND(run),
+    DFHACK_LUA_END
+};

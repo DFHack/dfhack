@@ -138,10 +138,8 @@ function parse_commandline(opts, ...)
     parse_positionals(opts, positionals, depth and 4 or 3)
 end
 
--- compatibility with old exported API. we route the request back through
--- run_command so we have a unified path for parameter processing and invariant
--- checking.
-local function do_blueprint(start_pos, end_pos, name, phase)
+-- compatibility with old exported API.
+local function do_phase(start_pos, end_pos, name, phase)
     local width = math.abs(start_pos.x - end_pos.x) + 1
     local height = math.abs(start_pos.y - end_pos.y) + 1
     local depth = math.abs(start_pos.z - end_pos.z) + 1
@@ -153,13 +151,11 @@ local function do_blueprint(start_pos, end_pos, name, phase)
 
     local cursor = ('--cursor=%d,%d,%d'):format(x, y, z)
 
-    return dfhack.run_command('blueprint',
-                              tostring(width), tostring(height),
-                              tostring(depth), tostring(name),
-                              phase, cursor)
+    run(tostring(width), tostring(height), tostring(depth), tostring(name),
+        phase, cursor)
 end
 for phase in pairs(valid_phases) do
-    _ENV[phase] = function(s, e, n) do_blueprint(s, e, n, phase) end
+    _ENV[phase] = function(s, e, n) do_phase(s, e, n, phase) end
 end
 
 return _ENV

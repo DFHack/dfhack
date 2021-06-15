@@ -28,6 +28,7 @@ User Manual
 
    /docs/Introduction
    /docs/Installing
+   /docs/Support
    /docs/Core
    /docs/Plugins
    /docs/Scripts

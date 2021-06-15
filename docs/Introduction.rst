@@ -60,29 +60,6 @@ used by the DFHack console.
   background managing or changing some aspect of the game if you `enable` them.
 
 
-.. _troubleshooting:
-.. _support:
-
-Troubleshooting
-===============
-Don't panic!  Even if you need this section, it'll be OK :)
-
-If something goes wrong, check the log files in DF's folder
-(``stderr.log`` and ``stdout.log``). Looking at these might help you -
-or someone else - solve the problem.  Take screenshots of any weird
-error messages, and take notes on what you did to cause them.
-
-If  the search function in this documentation isn't enough and
-:wiki:`the DF Wiki <>` hasn't helped, try asking in:
-
-- the `#dfhack IRC channel on freenode <https://webchat.freenode.net/?channels=dfhack>`_
-- the `Bay12 DFHack thread <https://dfhack.org/bay12>`_
-- on GitHub:
-    - for bugs, use the :issue:`issue tracker <>`
-    - for more open-ended questions, use the `discussion board
-      <https://github.com/DFHack/dfhack/discussions>`__. Note that this is a
-      relatively-new feature as of 2021, but maintainers should still be
-      notified of any discussions here.
-- the `/r/dwarffortress <https://dwarffortress.reddit.com>`_ questions thread
-- the thread for the mod or Starter Pack you're using (if any)
-
+Getting help
+============
+There are several support channels available - see `support` for details.

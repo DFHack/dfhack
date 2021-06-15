@@ -203,6 +203,14 @@ end
 function test.func_call_return_value()
     local f = mock.func(7)
     expect.eq(f(), 7)
-    f.return_value = 9
+    f.return_values = {9}
     expect.eq(f(), 9)
+end
+
+function test.func_call_return_multiple_values()
+    local f = mock.func(7,5,{imatable='snarfsnarf'})
+    local a, b, c = f()
+    expect.eq(7, a)
+    expect.eq(5, b)
+    expect.table_eq({imatable='snarfsnarf'}, c)
 end

@@ -81,9 +81,9 @@ function mock.restore(...)
     return _patch_impl(patches, callback, true)
 end
 
-function mock.func(return_value)
+function mock.func(...)
     local f = {
-        return_value = return_value,
+        return_values = {...},
         call_count = 0,
         call_args = {},
     }
@@ -92,7 +92,7 @@ function mock.func(return_value)
         __call = function(self, ...)
             self.call_count = self.call_count + 1
             table.insert(self.call_args, {...})
-            return self.return_value
+            return table.unpack(self.return_values)
         end,
     })
 

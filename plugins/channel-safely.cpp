@@ -12,12 +12,13 @@ Updated: Jun. 15 2021
 
 using namespace DFHack;
 
-bool enabled = false;
+DFHACK_PLUGIN("channel-safely");
+DFHACK_PLUGIN_IS_ENABLED(enabled);
+REQUIRE_GLOBAL(world);
 
 void onTick(color_ostream &out, void* tick_ptr);
 void onStart(color_ostream &out, void* job);
 void onComplete(color_ostream &out, void* job);
-void manage_designations();
 
 void cancelJob(df::job* job);
 bool is_dig(df::job* job);
@@ -35,36 +36,66 @@ DFhackCExport command_result plugin_init( color_ostream &out, std::vector<Plugin
                                      manage_channel_designations,
                                      false,
                                      "\n"));
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     namespace EM = EventManager;
-    using namespace EM::EventType;
-    EM::EventHandler tickHandler(onTick, 100);
-    EM::EventHandler jobStartHandler(onStart, 0);
-    EM::EventHandler jobCompletionHandler(onComplete, 0);
-    EM::registerTick(tickHandler, 100, plugin_self);
-    EM::registerListener(EventType::JOB_INITIATED, jobStartHandler, plugin_self);
-    EM::registerListener(EventType::JOB_COMPLETED, jobCompletionHandler, plugin_self);
+    if(enable && !enabled) {
+        using namespace EM::EventType;
+        EM::EventHandler tickHandler(onTick, 1000);
+        EM::EventHandler jobStartHandler(onStart, 0);
+        EM::EventHandler jobCompletionHandler(onComplete, 0);
+        EM::registerTick(tickHandler, 1000, plugin_self);
+        EM::registerListener(EventType::JOB_INITIATED, jobStartHandler, plugin_self);
+        EM::registerListener(EventType::JOB_COMPLETED, jobCompletionHandler, plugin_self);
+    } else if (!enable) {
+        EM::unregisterAll(plugin_self);
+    }
+    enabled = enable;
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_shutdown(color_ostream &out) {
+    namespace EM = EventManager;
+    EM::unregisterAll(plugin_self);
+    enabled = false;
     return CR_OK;
 }
 
 command_result manage_channel_designations(color_ostream &out, std::vector<std::string> &parameters){
-    out.print("m_c_d()\n");
-    manage_designations();
+    if(parameters.empty()){
+        out.print("Checking for unsafe designations!\n");
+        ChannelManager m;
+        m.manage_designations(out);
+    } else if (parameters.size() == 1 && parameters[0] == "enable") {
+        if (plugin_enable(out, true) == CR_OK){
+            out.print("channel-safely enabled!\n");
+        }
+    } else if (parameters.size() == 1 && parameters[0] == "disable") {
+        if (plugin_enable(out, false) == CR_OK){
+            out.print("channel-safely disabled!\n");
+        }
+    } else {
+        return CR_FAILURE;
+    }
     return CR_OK;
 }
 
 void onTick(color_ostream &out, void* tick_ptr){
-    if(enabled) {
+    if(enabled && World::isFortressMode()) {
         static int32_t last_tick_counter = 0;
         int32_t tick_counter = (int32_t) ((intptr_t) tick_ptr);
-        if ((tick_counter - last_tick_counter) >= 100) {
+        if ((tick_counter - last_tick_counter) >= 1000) {
             last_tick_counter = tick_counter;
-            manage_designations();
+            ChannelManager m;
+            m.manage_designations(out);
         }
     }
 }
 
 void onStart(color_ostream &out, void* job_ptr){
-    if(enabled) {
+    if(enabled && World::isFortressMode()) {
         df::job* job = (df::job*) job_ptr;
         if (is_dig(job) || is_channel(job)) {
             // channeling from above would be unsafe
@@ -81,7 +112,7 @@ void onStart(color_ostream &out, void* job_ptr){
 }
 
 void onComplete(color_ostream &out, void* job_ptr){
-    if(enabled) {
+    if(enabled && World::isFortressMode()) {
         df::job* job = (df::job*) job_ptr;
         if (is_dig(job) || is_channel(job)) {
             //above isn't safe to channel
@@ -103,16 +134,13 @@ void onComplete(color_ostream &out, void* job_ptr){
     }
 }
 
-void manage_designations(){
-    ChannelManager m;
-    m.manage_designations();
-}
-
-
-void ChannelManager::manage_designations() {
+void ChannelManager::manage_designations(color_ostream &out) {
+//    out.print("isValid: %d\nworld: %d\nmap: %d\n", Maps::IsValid(), world, &world->map);
+//    out.print("map count block (%d, %d, %d)\n", world->map.x_count, world->map.y_count, world->map.z_count);
+//    out.print("map block index (%d, %d, %d)\n", world->map.x_count, world->map.y_count, world->map.z_count);
     dig_jobs.clear();
     find_dig_jobs();
-    foreach_block_column();
+    foreach_block_column(out);
 }
 
 df::job* ChannelManager::find_job(df::coord &tile_pos) {
@@ -127,24 +155,24 @@ df::job* ChannelManager::find_job(df::coord &tile_pos) {
     return nullptr;
 }
 
-void ChannelManager::foreach_block_column() {
+void ChannelManager::foreach_block_column(color_ostream &out) {
     uint32_t x, y, z;
     Maps::getSize(x, y, z);
+    //out.print("map size in blocks: %d, %d, %d\n", x,y,z);
     for (int ix = 0; ix < x; ++ix) {
         for (int iy = 0; iy < y; ++iy) {
-            for (int iz = z - 1; iz > 0; --iz) { //
-                df::map_block* top = Maps::getBlock(x, y, iz);
-                df::map_block* bottom = Maps::getBlock(x, y, iz - 1);
-                if (top->flags.bits.designated &&
-                    bottom->flags.bits.designated) {
-                    foreach_tile(top, bottom);
+            for (int iz = z - 1; iz > 0; --iz) {
+                df::map_block* top = Maps::getBlock(ix, iy, iz);
+                df::map_block* bottom = Maps::getBlock(ix, iy, iz - 1);
+                if(top && bottom && (top->flags.bits.designated || bottom->flags.bits.designated)) {
+                    foreach_tile(out, top, bottom);
                 }
             }
         }
     }
 }
 
-void ChannelManager::foreach_tile(df::map_block* top, df::map_block* bottom) {
+void ChannelManager::foreach_tile(color_ostream &out, df::map_block* top, df::map_block* bottom) {
     /** Safety checks
      * is the top tile being channeled or designated to be channeled
      * - Yes
@@ -166,11 +194,11 @@ void ChannelManager::foreach_tile(df::map_block* top, df::map_block* bottom) {
             df::job* top_job = find_job(top->map_pos);
             df::job* bottom_job = find_job(bottom->map_pos);
             if (top_job || is_channel(top_d)) {
-                if (bottom_job || !is_marked(bottom_o) && is_designated(bottom_d)) {
+                if (bottom_job || (!is_marked(bottom_o) && is_designated(bottom_d))) {
                     cancelJob(bottom_job);
                     bottom_o.bits.dig_marked = true;
                 }
-            } else if (is_marked(bottom_o) && is_designated(bottom_d)) {
+            } else if (is_marked(bottom_o) && is_channel(bottom_d)) {
                 bottom_o.bits.dig_marked = false;
             }
         }
@@ -189,7 +217,7 @@ void ChannelManager::find_dig_jobs() {
 }
 
 void cancelJob(df::job* job) {
-    if(job) {
+    if(job != nullptr) {
         df::coord &pos = job->pos;
         df::map_block *job_block = Maps::getTileBlock(pos);
         uint16_t x, y;

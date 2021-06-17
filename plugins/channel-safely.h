@@ -4,6 +4,7 @@
 
 #pragma once
 #include <PluginManager.h>
+#include <modules/World.h>
 #include <modules/Maps.h>
 #include <modules/Job.h>
 #include <df/map_block.h>
@@ -13,19 +14,16 @@
 
 using namespace DFHack;
 
-DFHACK_PLUGIN("channel-safely");
-DFHACK_PLUGIN_IS_ENABLED(is_enabled);
-
 class ChannelManager {
 public:
-    void manage_designations();
+    void manage_designations(color_ostream &out);
 
 private:
     std::multimap<int16_t, df::job*> dig_jobs;
 
 protected:
     df::job* find_job(df::coord &tile_pos);
-    void foreach_block_column();
-    void foreach_tile(df::map_block* top, df::map_block* bottom);
+    void foreach_block_column(color_ostream &out);
+    void foreach_tile(color_ostream &out, df::map_block* top, df::map_block* bottom);
     void find_dig_jobs();
 };

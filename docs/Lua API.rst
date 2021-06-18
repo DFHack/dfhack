@@ -1172,12 +1172,17 @@ Units module
 
   Returns true *x,y,z* of the unit, or *nil* if invalid; may be not equal to unit.pos if caged.
 
-* ``dfhack.getUnitsInBox(x1,y1,z1,x2,y2,z2[,filter])``
+* ``dfhack.units.getUnitsInBox(x1,y1,z1,x2,y2,z2[,filter])``
 
   Returns a table of all units within the specified coordinates. If the ``filter``
   argument is given, only units where ``filter(unit)`` returns true will be included.
   Note that ``pos2xyz()`` cannot currently be used to convert coordinate objects to
   the arguments required by this function.
+
+* ``dfhack.units.teleport(unit, pos)``
+
+  Moves the specified unit and any riders to the target coordinates, setting
+  tile occupancy flags appropriately. Returns true if successful.
 
 * ``dfhack.units.getGeneralRef(unit, type)``
 

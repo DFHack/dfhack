@@ -316,6 +316,7 @@ namespace DFHack
 #ifdef DEV_PLUGIN
 #define DFHACK_PLUGIN(m_plugin_name) DFHACK_PLUGIN_AUX(m_plugin_name, true)
 #else
+// Expose the plugin name to the DFHack core, as well as metadata like the DFHack version.
 #define DFHACK_PLUGIN(m_plugin_name) DFHACK_PLUGIN_AUX(m_plugin_name, false)
 #endif
 

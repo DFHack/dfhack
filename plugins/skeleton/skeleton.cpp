@@ -19,7 +19,7 @@
 using namespace DFHack;
 using namespace df::enums;
 
-// A plugin must be able to return its name and version.
+// Expose the plugin name to the DFHack core, as well as metadata like the DFHack version.
 // The name string provided must correspond to the filename -
 // skeleton.plug.so, skeleton.plug.dylib, or skeleton.plug.dll in this case
 DFHACK_PLUGIN("skeleton");
@@ -58,6 +58,18 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out)
     // in a zombie state, but things won't crash.
     return CR_OK;
 }
+
+// Used by `plug` to track this plugin's status.
+// Called to enable/disable this plugin's state.
+// Is called when using `enable` or `disable` in the console
+/*
+DFHACK_PLUGIN_IS_ENABLED(enabled);
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
+    enabled = enable;
+    // other code
+    return CR_OK;
+}
+*/
 
 // Called to notify the plugin about important state changes.
 // Invoked with DF suspended, and always before the matching plugin_onupdate.

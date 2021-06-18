@@ -195,7 +195,7 @@ the visible part of the map is scanned.
 
 Options:
 
-:all:   Scan the whole map, as if it was revealed.
+:all:   Scan the whole map, as if it were revealed.
 :value: Show material value in the output. Most useful for gems.
 :hell:  Show the Z range of HFS tubes. Implies 'all'.
 
@@ -2586,8 +2586,6 @@ Subcommands:
               (e.g. TOWER_CAP). The cursor must be located on a dirt or grass floor tile.
 :grow:        Turns saplings into trees; under the cursor if a sapling is selected,
               or every sapling on the map if the cursor is hidden.
-:extirpate:   Kills the tree or shrub under the cursor, instantly turning them to ashes.
-:immolate:    Sets the plants on fire instead. The fires can and *will* spread ;)
 
 For mass effects, use one of the additional options:
 

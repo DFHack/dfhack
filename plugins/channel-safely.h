@@ -14,6 +14,30 @@
 
 using namespace DFHack;
 
+struct dig_job{
+    enum {
+        NONE,
+        JOB,
+        DESIGNATED
+    } type;
+    union{
+        df::job* job;
+        df::map_block* block;
+    } pointer;
+    df::coord map_pos;
+
+    dig_job(df::job* job){
+        type = JOB;
+        pointer.job = job;
+        map_pos = job->pos;
+    }
+    dig_job(df::map_block* block, df::coord pos){
+        type = DESIGNATED;
+        pointer.block = block;
+        map_pos = pos;
+    }
+};
+
 class ChannelManager {
 public:
     void manage_designations(color_ostream &out);

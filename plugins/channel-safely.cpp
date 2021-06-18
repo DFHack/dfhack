@@ -12,9 +12,16 @@ Updated: Jun. 15 2021
 
 using namespace DFHack;
 
+/* todo list:
+ * 1) we should track channel designations as groups of designations (presumably part of the same project) designations which are collectively adjacent to one another
+ * 2) check if there is a group above a given tile
+ *
+ */
+
 DFHACK_PLUGIN("channel-safely");
 DFHACK_PLUGIN_IS_ENABLED(enabled);
 REQUIRE_GLOBAL(world);
+#define tickFreq 5
 
 void onTick(color_ostream &out, void* tick_ptr);
 void onStart(color_ostream &out, void* job);
@@ -43,10 +50,11 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     namespace EM = EventManager;
     if(enable && !enabled) {
         using namespace EM::EventType;
-        EM::EventHandler tickHandler(onTick, 1000);
+        EM::EventHandler tickHandler(onTick, tickFreq);
         EM::EventHandler jobStartHandler(onStart, 0);
         EM::EventHandler jobCompletionHandler(onComplete, 0);
-        EM::registerTick(tickHandler, 1000, plugin_self);
+        //EM::registerTick(tickHandler, tickFreq, plugin_self, true);
+        EM::registerListener(EventType::TICK, tickHandler, plugin_self);
         EM::registerListener(EventType::JOB_INITIATED, jobStartHandler, plugin_self);
         EM::registerListener(EventType::JOB_COMPLETED, jobCompletionHandler, plugin_self);
     } else if (!enable) {
@@ -62,6 +70,12 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out) {
     enabled = false;
     return CR_OK;
 }
+
+//DFhackCExport command_result plugin_onupdate(color_ostream &out) {
+//    static uint64_t count = 0;
+//    out.print("onupdate() - %d\n", ++count);
+//    return CR_OK;
+//}
 
 command_result manage_channel_designations(color_ostream &out, std::vector<std::string> &parameters){
     if(parameters.empty()){
@@ -83,15 +97,19 @@ command_result manage_channel_designations(color_ostream &out, std::vector<std::
 }
 
 void onTick(color_ostream &out, void* tick_ptr){
+    out.print("the only once onTick()! Come one, come ALL!\n");
     if(enabled && World::isFortressMode()) {
+        static uint64_t count = 0;
         static int32_t last_tick_counter = 0;
         int32_t tick_counter = (int32_t) ((intptr_t) tick_ptr);
-        if ((tick_counter - last_tick_counter) >= 1000) {
+        out.print("onTick() - %d, %d\n", ++count, tick_counter);
+        if ((tick_counter - last_tick_counter) >= tickFreq) {
             last_tick_counter = tick_counter;
             ChannelManager m;
             m.manage_designations(out);
         }
     }
+    CoreSuspender suspend;
 }
 
 void onStart(color_ostream &out, void* job_ptr){
@@ -128,7 +146,7 @@ void onComplete(color_ostream &out, void* job_ptr){
             df::tile_designation &belowd = *Maps::getTileDesignation(pos);
             if (is_channel(belowd) || is_dig(belowd)) {
                 df::tile_occupancy &belowo = *Maps::getTileOccupancy(pos);
-                belowo.bits.dig_marked = false;
+                //todo: belowo.bits.dig_marked = false;
             }
         }
     }

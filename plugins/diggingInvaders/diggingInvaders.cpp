@@ -372,8 +372,6 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
         clearDijkstra();
         return;
     }
-    EventManager::unregister(EventManager::EventType::TICK, findJobTickHandler, plugin_self);
-    EventManager::registerTick(findJobTickHandler, 1, plugin_self);
 
     if ( fringe.empty() ) {
         df::unit* lastDigger = df::unit::find(lastInvasionDigger);

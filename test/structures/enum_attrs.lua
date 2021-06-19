@@ -12,9 +12,9 @@ end
 function test.valid_items()
     for i in ipairs(df.item_type) do
         check_valid_attr_entry(df.item_type, i)
-        -- expect.true_(df.item_type.attrs[i])
-        -- expect.true_(df.item_type._attr_entry_type:is_instance(df.item_type.attrs[i]))
     end
+    check_valid_attr_entry(df.item_type, df.item_type._first_item)
+    check_valid_attr_entry(df.item_type, df.item_type._last_item)
 end
 
 function test.valid_items_name()
@@ -62,7 +62,7 @@ function test.pairs()
             break
         end
     end
-    expect.eq(i, 0)
+    expect.eq(i, 0, 'pairs() returned wrong number of items')
 end
 
 function test.ipairs()
@@ -79,5 +79,5 @@ function test.ipairs()
         expect.eq(value, df.item_type.attrs[i + df.item_type._first_item],
             'ipairs() returned incorrect attrs for item at index: ' .. tostring(index))
     end
-    expect.eq(i, max_attrs_length(df.item_type))
+    expect.eq(i, max_attrs_length(df.item_type), 'ipairs() returned wrong number of items')
 end

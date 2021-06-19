@@ -2817,6 +2817,8 @@ Options:
 :building:  Subsequent items will become part of the currently selected building.
             Good for loading traps; do not use with workshops (or deconstruct to use the item).
 
+.. _dig-now:
+
 dig-now
 =======
 

@@ -706,7 +706,7 @@ static void post_process_dug_tiles(color_ostream &out,
             flood_unhide(out, pos);
 
         df::tile_occupancy &to = *Maps::getTileOccupancy(pos);
-        if (to.bits.unit or to.bits.item) {
+        if (to.bits.unit || to.bits.item) {
             DFCoord resting_pos = simulate_fall(pos);
             if (resting_pos == pos)
                 continue;

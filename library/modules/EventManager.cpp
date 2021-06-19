@@ -434,9 +434,6 @@ static void manageJobCompletedEvent(color_ostream& out) {
         return;
     static int32_t last_tick = -1;
     int32_t tick = df::global::world->frame_counter;
-    if(tick < last_tick){
-        last_tick = tick;
-    }
 
     multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_COMPLETED].begin(), handlers[EventType::JOB_COMPLETED].end());
     map<int32_t, df::job*> nowJobs;
@@ -508,58 +505,56 @@ static void manageJobCompletedEvent(color_ostream& out) {
     }
 #endif
 
-    for(auto &iter : copy) {
-        auto &handler = iter.second;
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
-            eventLastTick[handler.eventHandler] = tick;
-            for ( auto i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
-                //if it happened within a tick, must have been cancelled by the user or a plugin: not completed
-                if (tick <= last_tick )
-                    continue;
+    //if it happened within a tick, must have been cancelled by the user or a plugin: not completed
+    if (last_tick < tick ) {
+        last_tick = tick;
+        for (auto &iter : copy) {
+            auto &handler = iter.second;
+            if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
+                eventLastTick[handler.eventHandler] = tick;
+                for (auto job_iter = prevJobs.begin(); job_iter != prevJobs.end(); ++job_iter) {
+                    if (nowJobs.find((*job_iter).first) != nowJobs.end()) {
+                        //could have just finished if it's a repeat job
+                        df::job &job0 = *(*job_iter).second;
+                        if (!job0.flags.bits.repeat)
+                            continue;
+                        df::job &job1 = *nowJobs[(*job_iter).first];
+                        if (job0.completion_timer != 0)
+                            continue;
+                        if (job1.completion_timer != -1)
+                            continue;
 
-                if ( nowJobs.find((*i).first) != nowJobs.end() ) {
-                    //could have just finished if it's a repeat job
-                    df::job& job0 = *(*i).second;
-                    if ( !job0.flags.bits.repeat )
+                        //still false positive if cancelled at EXACTLY the right time, but experiments show this doesn't happen
+                        handler.eventHandler(out, (void*) &job0);
                         continue;
-                    df::job& job1 = *nowJobs[(*i).first];
-                    if ( job0.completion_timer != 0 )
-                        continue;
-                    if ( job1.completion_timer != -1 )
-                        continue;
+                    }
 
-                    //still false positive if cancelled at EXACTLY the right time, but experiments show this doesn't happen
+                    //recently finished or cancelled job
+                    df::job &job0 = *(*job_iter).second;
+                    if (job0.flags.bits.repeat || job0.completion_timer != 0)
+                        continue;
                     handler.eventHandler(out, (void*) &job0);
-                    continue;
                 }
-
-                //recently finished or cancelled job
-                df::job& job0 = *(*i).second;
-                if ( job0.flags.bits.repeat || job0.completion_timer != 0 )
-                    continue;
-
-                handler.eventHandler(out, (void*) &job0);
             }
         }
     }
 
     //erase old jobs, copy over possibly altered jobs
-    for ( auto i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
-        Job::deleteJobStruct((*i).second, true);
+    for (auto job_iter = prevJobs.begin(); job_iter != prevJobs.end(); ++job_iter ) {
+        Job::deleteJobStruct((*job_iter).second, true);
     }
     prevJobs.clear();
 
     //create new jobs
-    for ( auto j = nowJobs.begin(); j != nowJobs.end(); j++ ) {
-        /*map<int32_t, df::job*>::iterator i = prevJobs.find((*j).first);
+    for (auto job_iter = nowJobs.begin(); job_iter != nowJobs.end(); ++job_iter ) {
+        /*map<int32_t, df::job*>::iterator i = prevJobs.find((*job_iter).first);
         if ( i != prevJobs.end() ) {
             continue;
         }*/
 
-        df::job* newJob = Job::cloneJobStruct((*j).second, true);
+        df::job* newJob = Job::cloneJobStruct((*job_iter).second, true);
         prevJobs[newJob->id] = newJob;
     }
-    last_tick = tick;
 }
 
 static void manageUnitDeathEvent(color_ostream& out) {
@@ -657,21 +652,21 @@ static void manageBuildingEvent(color_ostream& out) {
                 handler.eventHandler(out, (void*)intptr_t(a));
 
             }
-            nextBuilding = *df::global::building_next_id;
 
             //now alert people about destroyed buildings
-            for ( auto a = buildings.begin(); a != buildings.end(); ) {
-                int32_t id = *a;
+            for (auto building_iter = buildings.begin(); building_iter != buildings.end(); ) {
+                int32_t id = *building_iter;
                 int32_t index = df::building::binsearch_index(df::global::world->buildings.all,id);
                 if ( index != -1 ) {
-                    a++;
+                    ++building_iter;
                     continue;
                 }
                 handler.eventHandler(out, (void*)intptr_t(id));
-                a = buildings.erase(a);
+                building_iter = buildings.erase(building_iter);
             }
         }
     }
+    nextBuilding = *df::global::building_next_id;
 }
 
 static void manageConstructionEvent(color_ostream& out) {
@@ -685,27 +680,25 @@ static void manageConstructionEvent(color_ostream& out) {
         auto &handler = iter.second;
         if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
-            for ( auto a = constructions.begin(); a != constructions.end(); ) {
-                df::construction& construction = (*a).second;
-                if ( df::construction::find(construction.pos) != NULL ) {
-                    a++;
+            for (auto constru_iter = constructions.begin(); constru_iter != constructions.end();) {
+                df::construction &construction = (*constru_iter).second;
+                if (df::construction::find(construction.pos) != NULL) {
+                    ++constru_iter;
                     continue;
                 }
                 //construction removed
                 //out.print("Removed construction (%d,%d,%d)\n", construction.pos.x,construction.pos.y,construction.pos.z);
-                handler.eventHandler(out, (void*)&construction);
-                a = constructions.erase(a);
+                handler.eventHandler(out, (void*) &construction);
+                constru_iter = constructions.erase(constru_iter);
             }
-            //for ( auto a = constructionsNow.begin(); a != constructionsNow.end(); a++ ) {
-            for ( auto a = df::global::world->constructions.begin(); a != df::global::world->constructions.end(); a++ ) {
-                df::construction* construction = *a;
-                bool b = constructions.find(construction->pos) != constructions.end();
-                constructions[construction->pos] = *construction;
-                if ( b )
-                    continue;
+            //for ( auto a = constructionsNow.begin(); a != constructionsNow.end(); ++a ) {
+            for (auto constru_iter = df::global::world->constructions.begin(); constru_iter != df::global::world->constructions.end(); ++constru_iter) {
+                df::construction* construction = *constru_iter;
+                if (!constructions.emplace(construction->pos, *construction).second)
+                    continue; //not a new insertion, skip
                 //construction created
                 //out.print("Created construction (%d,%d,%d)\n", construction->pos.x,construction->pos.y,construction->pos.z);
-                handler.eventHandler(out, (void*)construction);
+                handler.eventHandler(out, (void*) construction);
             }
         }
     }

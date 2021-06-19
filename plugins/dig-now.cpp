@@ -728,7 +728,7 @@ static void post_process_dug_tiles(color_ostream &out,
 
             if (to.bits.item) {
                 for (auto item : world->items.other.IN_PLAY) {
-                    if (item->pos == pos and item->flags.bits.on_ground)
+                    if (item->pos == pos && item->flags.bits.on_ground)
                         item->moveToGround(
                                 resting_pos.x, resting_pos.y, resting_pos.z);
                 }

@@ -284,15 +284,32 @@ struct dug_tile_info {
     }
 };
 
-static bool is_tree(df::tiletype tt) {
+static bool is_diggable(MapExtras::MapCache &map, const DFCoord &pos,
+                        df::tiletype tt) {
     df::tiletype_material mat = tileMaterial(tt);
     switch (mat) {
+    case df::tiletype_material::CONSTRUCTION:
+    case df::tiletype_material::POOL:
+    case df::tiletype_material::RIVER:
     case df::tiletype_material::TREE:
     case df::tiletype_material::ROOT:
-        return true;
-    default:
+    case df::tiletype_material::LAVA_STONE:
+    case df::tiletype_material::MAGMA:
+    case df::tiletype_material::HFS:
+    case df::tiletype_material::UNDERWORLD_GATE:
         return false;
+    default:
+        break;
     }
+
+    if (mat == df::tiletype_material::FEATURE) {
+        // adamantine is the only is diggable feature
+        t_feature feature;
+        return map.BlockAtTile(pos)->GetLocalFeature(&feature)
+                && feature.type == feature_type::deep_special_tube;
+    }
+
+    return true;
 }
 
 static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
@@ -300,8 +317,7 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                      std::vector<dug_tile_info> &dug_tiles) {
     df::tiletype tt = map.tiletypeAt(pos);
 
-    // TODO: handle trees, roots, and log generation
-    if (is_tree(tt))
+    if (!is_diggable(map, pos, tt))
         return false;
 
     df::tiletype target_type = df::tiletype::Void;

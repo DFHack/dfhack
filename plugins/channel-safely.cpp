@@ -21,28 +21,17 @@ using namespace DFHack;
 DFHACK_PLUGIN("channel-safely");
 DFHACK_PLUGIN_IS_ENABLED(enabled);
 REQUIRE_GLOBAL(world);
-#define tickFreq 5
+#define tickFreq 75
 
 #include <type_traits>
-
-
 #define DECLARE_HASA(what) \
 template<typename T, typename = int> struct has_##what : std::false_type { };\
 template<typename T> struct has_##what<T, decltype((void) T::what, 0)> : std::true_type {};
 
 DECLARE_HASA(when) //declares above statement with 'when' replacing 'what'
-// if 
+// end usage is: `has_when<T>::value`
+// the only use is to allow reliance on pull request #1876 which introduces a refactor which prevents some manual management
 
-
-
-
-/*
-template <int X>
-struct MyMacro { int value = X; };
-using myShortcut = MyMacro<X>::value;
-
-myShortcut<x>
-*/
 void onTick(color_ostream &out, void* tick_ptr);
 void onStart(color_ostream &out, void* job);
 void onComplete(color_ostream &out, void* job);

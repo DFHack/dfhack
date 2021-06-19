@@ -336,6 +336,9 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
         case df::tile_dig_designation::Channel:
             if (can_dig_channel(tt)) {
                 target_type = df::tiletype::OpenSpace;
+                DFCoord pos_above(pos.x, pos.y, pos.z+1);
+                if (map.ensureBlockAt(pos_above))
+                    remove_ramp_top(map, pos_above);
                 DFCoord pos_below(pos.x, pos.y, pos.z-1);
                 if (map.ensureBlockAt(pos_below) &&
                         dig_tile(out, map, pos_below,

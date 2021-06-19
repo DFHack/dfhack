@@ -67,7 +67,7 @@ end
 
 function test.ipairs()
     local i = 0
-    for index in ipairs(df.item_type.attrs) do
+    for index, value in ipairs(df.item_type.attrs) do
         if i == 0 then
             expect.eq(index, df.item_type._first_item, 'ipairs() returned wrong start index')
         end
@@ -76,6 +76,8 @@ function test.ipairs()
             expect.fail('ipairs() returned too many items: ' .. tostring(i))
             break
         end
+        expect.eq(value, df.item_type.attrs[i + df.item_type._first_item],
+            'ipairs() returned incorrect attrs for item at index: ' .. tostring(index))
     end
     expect.eq(i, max_attrs_length(df.item_type))
 end

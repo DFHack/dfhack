@@ -23,6 +23,26 @@ DFHACK_PLUGIN_IS_ENABLED(enabled);
 REQUIRE_GLOBAL(world);
 #define tickFreq 5
 
+#include <type_traits>
+
+
+#define DECLARE_HASA(what) \
+template<typename T, typename = int> struct has_##what : std::false_type { };\
+template<typename T> struct has_##what<T, decltype((void) T::what, 0)> : std::true_type {};
+
+DECLARE_HASA(when) //declares above statement with 'when' replacing 'what'
+// if 
+
+
+
+
+/*
+template <int X>
+struct MyMacro { int value = X; };
+using myShortcut = MyMacro<X>::value;
+
+myShortcut<x>
+*/
 void onTick(color_ostream &out, void* tick_ptr);
 void onStart(color_ostream &out, void* job);
 void onComplete(color_ostream &out, void* job);
@@ -34,6 +54,7 @@ bool is_channel(df::job* job);
 bool is_channel(df::tile_designation &designation);
 bool is_designated(df::tile_designation &designation);
 bool is_marked(df::tile_occupancy &occupancy);
+
 
 command_result manage_channel_designations (color_ostream &out, std::vector <std::string> &parameters);
 
@@ -53,8 +74,12 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         EM::EventHandler tickHandler(onTick, tickFreq);
         EM::EventHandler jobStartHandler(onStart, 0);
         EM::EventHandler jobCompletionHandler(onComplete, 0);
-        //EM::registerTick(tickHandler, tickFreq, plugin_self, true);
-        EM::registerListener(EventType::TICK, tickHandler, plugin_self);
+
+        if(!has_when<EM::EventHandler>::value){
+            EM::registerTick(tickHandler, tickFreq, plugin_self);
+        } else {
+            EM::registerListener(EventType::TICK, tickHandler, plugin_self);
+        }
         EM::registerListener(EventType::JOB_INITIATED, jobStartHandler, plugin_self);
         EM::registerListener(EventType::JOB_COMPLETED, jobCompletionHandler, plugin_self);
     } else if (!enable) {
@@ -108,6 +133,11 @@ void onTick(color_ostream &out, void* tick_ptr){
             ChannelManager m;
             m.manage_designations(out);
         }
+    }
+    namespace EM = EventManager;
+    if(!has_when<EM::EventHandler>::value){
+        EM::EventHandler tickHandler(onTick, tickFreq);
+        EM::registerTick(tickHandler, tickFreq, plugin_self);
     }
     CoreSuspender suspend;
 }

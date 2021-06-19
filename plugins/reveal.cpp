@@ -2,10 +2,12 @@
 #include <iostream>
 #include <map>
 #include <vector>
+
 #include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
+
 #include "modules/Maps.h"
 #include "modules/World.h"
 #include "modules/MapCache.h"
@@ -329,66 +331,12 @@ command_result revtoggle (color_ostream &out, vector<string> & params)
     }
 }
 
-command_result revflood(color_ostream &out, vector<string> & params)
+// Unhides map tiles according to visibility, starting from the given
+// coordinates. This algorithm only processes adjacent hidden tiles, so it must
+// start on a hidden tile and it will not reveal hidden sections separated by
+// already-unhidden tiles.
+static void unhideFlood_internal(MapCache *MCache, const DFCoord &xy)
 {
-    for(size_t i = 0; i < params.size();i++)
-    {
-        if(params[i] == "help" || params[i] == "?")
-            return CR_WRONG_USAGE;
-    }
-    CoreSuspender suspend;
-    uint32_t x_max,y_max,z_max;
-    if (!Maps::IsValid())
-    {
-        out.printerr("Map is not available!\n");
-        return CR_FAILURE;
-    }
-    if(revealed != NOT_REVEALED)
-    {
-        out.printerr("This is only safe to use with non-revealed map.\n");
-        return CR_FAILURE;
-    }
-    t_gamemodes gm;
-    World::ReadGameMode(gm);
-    if(!World::isFortressMode(gm.g_type) || gm.g_mode != game_mode::DWARF )
-    {
-        out.printerr("Only in proper dwarf mode.\n");
-        return CR_FAILURE;
-    }
-    int32_t cx, cy, cz;
-    Maps::getSize(x_max,y_max,z_max);
-    uint32_t tx_max = x_max * 16;
-    uint32_t ty_max = y_max * 16;
-
-    Gui::getCursorCoords(cx,cy,cz);
-    if(cx == -30000)
-    {
-        out.printerr("Cursor is not active. Point the cursor at some empty space you want to be unhidden.\n");
-        return CR_FAILURE;
-    }
-    DFCoord xy ((uint32_t)cx,(uint32_t)cy,cz);
-    MapCache * MCache = new MapCache;
-    df::tiletype tt = MCache->tiletypeAt(xy);
-    if(isWallTerrain(tt))
-    {
-        out.printerr("Point the cursor at some empty space you want to be unhidden.\n");
-        delete MCache;
-        return CR_FAILURE;
-    }
-    // hide all tiles, flush cache
-    Maps::getSize(x_max,y_max,z_max);
-
-    for(size_t i = 0; i < world->map.map_blocks.size(); i++)
-    {
-        df::map_block * b = world->map.map_blocks[i];
-        // change the hidden flag to 0
-        for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)
-        {
-            b->designation[x][y].bits.hidden = 1;
-        }
-    }
-    MCache->trash();
-
     typedef std::pair <DFCoord, bool> foo;
     std::stack < foo > flood;
     flood.push( foo(xy,false) );
@@ -500,8 +448,82 @@ command_result revflood(color_ostream &out, vector<string> & params)
             flood.push(foo(DFCoord(current.x, current.y, current.z - 1), false));
         }
     }
+}
+
+// Lua entrypoint for unhideFlood_internal
+static void unhideFlood(DFCoord pos)
+{
+    MapCache MCache;
+    // no environment or bounds checking needed. if anything is invalid,
+    // unhideFlood_internal will just exit immeditately
+    unhideFlood_internal(&MCache, pos);
+    MCache.WriteAll();
+}
+
+command_result revflood(color_ostream &out, vector<string> & params)
+{
+    for(size_t i = 0; i < params.size();i++)
+    {
+        if(params[i] == "help" || params[i] == "?")
+            return CR_WRONG_USAGE;
+    }
+    CoreSuspender suspend;
+    uint32_t x_max,y_max,z_max;
+    if (!Maps::IsValid())
+    {
+        out.printerr("Map is not available!\n");
+        return CR_FAILURE;
+    }
+    if(revealed != NOT_REVEALED)
+    {
+        out.printerr("This is only safe to use with non-revealed map.\n");
+        return CR_FAILURE;
+    }
+    t_gamemodes gm;
+    World::ReadGameMode(gm);
+    if(!World::isFortressMode(gm.g_type) || gm.g_mode != game_mode::DWARF )
+    {
+        out.printerr("Only in proper dwarf mode.\n");
+        return CR_FAILURE;
+    }
+    int32_t cx, cy, cz;
+    Maps::getSize(x_max,y_max,z_max);
+    uint32_t tx_max = x_max * 16;
+    uint32_t ty_max = y_max * 16;
+
+    Gui::getCursorCoords(cx,cy,cz);
+    if(cx == -30000)
+    {
+        out.printerr("Cursor is not active. Point the cursor at some empty space you want to be unhidden.\n");
+        return CR_FAILURE;
+    }
+    DFCoord xy ((uint32_t)cx,(uint32_t)cy,cz);
+    MapCache * MCache = new MapCache;
+    df::tiletype tt = MCache->tiletypeAt(xy);
+    if(isWallTerrain(tt))
+    {
+        out.printerr("Point the cursor at some empty space you want to be unhidden.\n");
+        delete MCache;
+        return CR_FAILURE;
+    }
+    // hide all tiles, flush cache
+    Maps::getSize(x_max,y_max,z_max);
+
+    for(size_t i = 0; i < world->map.map_blocks.size(); i++)
+    {
+        df::map_block * b = world->map.map_blocks[i];
+        // change the hidden flag to 0
+        for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)
+        {
+            b->designation[x][y].bits.hidden = 1;
+        }
+    }
+    MCache->trash();
+
+    unhideFlood_internal(MCache, xy);
     MCache->WriteAll();
     delete MCache;
+
     return CR_OK;
 }
 
@@ -525,3 +547,8 @@ command_result revforget(color_ostream &out, vector<string> & params)
     con.print("Reveal data forgotten!\n");
     return CR_OK;
 }
+
+DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(unhideFlood),
+    DFHACK_LUA_END
+};

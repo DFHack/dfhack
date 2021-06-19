@@ -52,6 +52,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Lua
 - ``gui.Painter``: fixed error when calling ``viewport()`` method
+- `reveal`: now exposes ``unhideFlood(pos)`` functionality to Lua
 - ``utils.processArgsGetopt()``: now returns negative numbers (e.g. ``-10``) in the list of positional parameters instead of treating it as an option string equivalent to ``-1 -0``
 - ``utils.processArgsGetopt()``: now properly handles ``--`` like GNU ``getopt`` as a marker to treat all further parameters as non-options
 - ``utils.processArgsGetopt()``: now detects when required arguments to long-form options are missing

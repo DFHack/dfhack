@@ -1534,6 +1534,25 @@ static void FillEnumKeys(lua_State *state, int ix_meta, int ftable, enum_identit
         lua_pushcclosure(state, meta_enum_attr_index, 3);
 
         freeze_table(state, false, (eid->getFullName()+".attrs").c_str());
+        int ix_attrs = lua_gettop(state);
+
+        // add metamethods to metatable of .attrs
+        if (lua_getmetatable(state, ix_attrs))
+        {
+            int ix_attrs_meta = lua_gettop(state);
+
+            if (eid->getFirstItem() <= eid->getLastItem())
+            {
+                lua_pushvalue(state, ix_attrs);
+                lua_pushinteger(state, eid->getFirstItem() - 1);
+                lua_pushinteger(state, eid->getLastItem());
+                lua_pushcclosure(state, wtype_ipairs, 3);
+                lua_setfield(state, ix_attrs_meta, "__ipairs");
+            }
+
+            lua_pop(state, 1); // pop metatable
+        }
+
         lua_setfield(state, ftable, "attrs");
     }
 

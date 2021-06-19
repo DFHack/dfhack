@@ -246,7 +246,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         gameLoaded = false;
 
         multimap<Plugin*,EventHandler> copy(handlers[EventType::UNLOAD].begin(), handlers[EventType::UNLOAD].end());
-        for (auto a = copy.begin(); a != copy.end(); a++ ) {
+        for (auto a = copy.begin(); a != copy.end(); ++a ) {
             (*a).second.eventHandler(out, NULL);
         }
     } else if ( event == DFHack::SC_MAP_LOADED ) {
@@ -292,15 +292,15 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
             }
             constructions[constr->pos] = *constr;
         }
-        for ( size_t a = 0; a < df::global::world->buildings.all.size(); a++ ) {
+        for ( size_t a = 0; a < df::global::world->buildings.all.size(); ++a ) {
             df::building* b = df::global::world->buildings.all[a];
             Buildings::updateBuildings(out, (void*)intptr_t(b->id));
             buildings.insert(b->id);
         }
         lastSyndromeTime = -1;
-        for ( size_t a = 0; a < df::global::world->units.all.size(); a++ ) {
+        for ( size_t a = 0; a < df::global::world->units.all.size(); ++a ) {
             df::unit* unit = df::global::world->units.all[a];
-            for ( size_t b = 0; b < unit->syndromes.active.size(); b++ ) {
+            for ( size_t b = 0; b < unit->syndromes.active.size(); ++b ) {
                 df::unit_syndrome* syndrome = unit->syndromes.active[b];
                 int32_t startTime = syndrome->year*ticksPerYear + syndrome->year_time;
                 if ( startTime > lastSyndromeTime )
@@ -315,10 +315,10 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         lastReportInteraction = -1;
         reportToRelevantUnitsTime = -1;
         reportToRelevantUnits.clear();
-//        for ( size_t a = 0; a < EventType::EVENT_MAX; a++ ) {
+//        for ( size_t a = 0; a < EventType::EVENT_MAX; ++a ) {
 //            eventLastTick[a] = -1;//-1000000;
 //        }
-        for ( size_t a = 0; a < df::global::world->history.figures.size(); a++ ) {
+        for ( size_t a = 0; a < df::global::world->history.figures.size(); ++a ) {
             df::historical_figure* unit = df::global::world->history.figures[a];
             if ( unit->id < 0 && unit->name.language < 0 )
                 unit->name.language = 0;
@@ -571,7 +571,7 @@ static void manageUnitDeathEvent(color_ostream& out) {
         auto &handler = iter.second;
         if(tick - eventLastTick[handler.eventHandler] >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
-            for ( size_t a = 0; a < df::global::world->units.all.size(); a++ ) {
+            for ( size_t a = 0; a < df::global::world->units.all.size(); ++a ) {
                 df::unit* unit = df::global::world->units.all[a];
                 //if ( unit->counters.death_id == -1 ) {
                 if ( Units::isActive(unit) ) {
@@ -606,7 +606,7 @@ static void manageItemCreationEvent(color_ostream& out) {
         auto &handler = iter.second;
         if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
-            for (size_t a = index; a < df::global::world->items.all.size(); a++) {
+            for (size_t a = index; a < df::global::world->items.all.size(); ++a) {
                 df::item* item = df::global::world->items.all[a];
                 //already processed
                 if (item->id < nextItem)
@@ -646,7 +646,7 @@ static void manageBuildingEvent(color_ostream& out) {
         auto &handler = iter.second;
         if(tick - eventLastTick[handler.eventHandler] >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
-            for ( int32_t a = nextBuilding; a < *df::global::building_next_id; a++ ) {
+            for ( int32_t a = nextBuilding; a < *df::global::building_next_id; ++a ) {
                 int32_t index = df::building::binsearch_index(df::global::world->buildings.all, a);
                 if ( index == -1 ) {
                     //out.print("%s, line %d: Couldn't find new building with id %d.\n", __FILE__, __LINE__, a);
@@ -721,13 +721,13 @@ static void manageSyndromeEvent(color_ostream& out) {
         auto &handler = iter.second;
         if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
-            for ( auto a = df::global::world->units.all.begin(); a != df::global::world->units.all.end(); a++ ) {
+            for ( auto a = df::global::world->units.all.begin(); a != df::global::world->units.all.end(); ++a ) {
                 df::unit* unit = *a;
 /*
         if ( unit->flags1.bits.inactive )
             continue;
 */
-                for ( size_t b = 0; b < unit->syndromes.active.size(); b++ ) {
+                for ( size_t b = 0; b < unit->syndromes.active.size(); ++b ) {
                     df::unit_syndrome* syndrome = unit->syndromes.active[b];
                     int32_t startTime = syndrome->year*ticksPerYear + syndrome->year_time;
                     if ( startTime > highestTime )
@@ -795,7 +795,7 @@ static void manageEquipmentEvent(color_ostream& out) {
                 for (auto &item : v) {
                     itemIdToInventoryItem[item.itemId] = item;
                 }
-                for (size_t b = 0; b < unit->inventory.size(); b++) {
+                for (size_t b = 0; b < unit->inventory.size(); ++b) {
                     df::unit_inventory_item* dfitem_new = unit->inventory[b];
                     currentlyEquipped.insert(dfitem_new->item->id);
                     InventoryItem item_new(dfitem_new->item->id, *dfitem_new);
@@ -819,7 +819,7 @@ static void manageEquipmentEvent(color_ostream& out) {
                     handler.eventHandler(out, (void*) &data);
                 }
                 //check for dropped items
-                for (auto b = v.begin(); b != v.end(); b++) {
+                for (auto b = v.begin(); b != v.end(); ++b) {
                     InventoryItem i = *b;
                     if (currentlyEquipped.find(i.itemId) != currentlyEquipped.end())
                         continue;
@@ -833,7 +833,7 @@ static void manageEquipmentEvent(color_ostream& out) {
                 //update equipment
                 vector<InventoryItem> &equipment = equipmentLog[unit->id];
                 equipment.clear();
-                for (size_t b = 0; b < unit->inventory.size(); b++) {
+                for (size_t b = 0; b < unit->inventory.size(); ++b) {
                     df::unit_inventory_item* dfitem = unit->inventory[b];
                     InventoryItem item(dfitem->item->id, *dfitem);
                     equipment.push_back(item);
@@ -850,9 +850,9 @@ static void updateReportToRelevantUnits() {
         return;
     reportToRelevantUnitsTime = df::global::world->frame_counter;
 
-    for ( size_t a = 0; a < df::global::world->units.all.size(); a++ ) {
+    for ( size_t a = 0; a < df::global::world->units.all.size(); ++a ) {
         df::unit* unit = df::global::world->units.all[a];
-        for ( int16_t b = df::enum_traits<df::unit_report_type>::first_item_value; b <= df::enum_traits<df::unit_report_type>::last_item_value; b++ ) {
+        for ( int16_t b = df::enum_traits<df::unit_report_type>::first_item_value; b <= df::enum_traits<df::unit_report_type>::last_item_value; ++b ) {
             if ( b == df::unit_report_type::Sparring )
                 continue;
             for ( size_t c = 0; c < unit->reports.log[b].size(); c++ ) {
@@ -873,14 +873,14 @@ static void manageReportEvent(color_ostream& out) {
     size_t a = df::report::binsearch_index(reports, lastReport, false);
     //this may or may not be needed: I don't know if binsearch_index goes earlier or later if it can't hit the target exactly
     while (a < reports.size() && reports[a]->id <= lastReport) {
-        a++;
+        ++a;
     }
     int32_t tick = df::global::world->frame_counter;
     for (auto &iter : copy) {
         auto &handler = iter.second;
         if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
-            for (; a < reports.size(); a++) {
+            for (; a < reports.size(); ++a) {
                 df::report* report = reports[a];
                 handler.eventHandler(out, (void*) intptr_t(report->id));
                 lastReport = report->id;
@@ -890,7 +890,7 @@ static void manageReportEvent(color_ostream& out) {
 }
 
 static df::unit_wound* getWound(df::unit* attacker, df::unit* defender) {
-    for ( size_t a = 0; a < defender->body.wounds.size(); a++ ) {
+    for ( size_t a = 0; a < defender->body.wounds.size(); ++a ) {
         df::unit_wound* wound = defender->body.wounds[a];
         if ( wound->age <= 1 && wound->attacker_unit_id == attacker->id ) {
             return wound;
@@ -907,10 +907,10 @@ static void manageUnitAttackEvent(color_ostream& out) {
     size_t a = df::report::binsearch_index(reports, lastReportUnitAttack, false);
     //this may or may not be needed: I don't know if binsearch_index goes earlier or later if it can't hit the target exactly
     while (a < reports.size() && reports[a]->id <= lastReportUnitAttack) {
-        a++;
+        ++a;
     }
     std::set<int32_t> strikeReports;
-    for ( ; a < reports.size(); a++ ) {
+    for ( ; a < reports.size(); ++a ) {
         df::report* report = reports[a];
         lastReportUnitAttack = report->id;
         if ( report->flags.bits.continuation )
@@ -935,7 +935,7 @@ static void manageUnitAttackEvent(color_ostream& out) {
                 if ( !report )
                     continue; //TODO: error
                 std::string reportStr = report->text;
-                for ( int32_t b = reportId+1; ; b++ ) {
+                for ( int32_t b = reportId+1; ; ++b ) {
                     df::report* report2 = df::report::find(b);
                     if ( !report2 )
                         break;
@@ -1047,7 +1047,7 @@ static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, 
 
     //find valid interactions: TODO
     /*map<int32_t,vector<df::interaction*> > validInteractions;
-    for ( size_t a = 0; a < relevantUnits.size(); a++ ) {
+    for ( size_t a = 0; a < relevantUnits.size(); ++a ) {
         df::unit* unit = relevantUnits[a];
         vector<df::interaction*>& interactions = validInteractions[unit->id];
         for ( size_t b = 0; b < unit->body.
@@ -1060,7 +1060,7 @@ static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, 
     std::string attackVerb;
     if ( attackEvent ) {
 //out.print("%s,%d\n",__FILE__,__LINE__);
-        for ( size_t a = 0; a < attackers.size(); a++ ) {
+        for ( size_t a = 0; a < attackers.size(); ++a ) {
             if ( attackers[a]->pos != attackEvent->pos ) {
                 attackers.erase(attackers.begin()+a);
                 a--;
@@ -1089,7 +1089,7 @@ static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, 
     std::string defendVerb;
     if ( defendEvent ) {
 //out.print("%s,%d\n",__FILE__,__LINE__);
-        for ( size_t a = 0; a < defenders.size(); a++ ) {
+        for ( size_t a = 0; a < defenders.size(); ++a ) {
             if ( defenders[a]->pos != defendEvent->pos ) {
                 defenders.erase(defenders.begin()+a);
                 a--;
@@ -1164,7 +1164,7 @@ static vector<df::unit*> gatherRelevantUnits(color_ostream& out, df::report* r1,
     vector<df::unit*> result;
     unordered_set<int32_t> ids;
 //out.print("%s,%d\n",__FILE__,__LINE__);
-    for ( size_t a = 0; a < reports.size(); a++ ) {
+    for ( size_t a = 0; a < reports.size(); ++a ) {
 //out.print("%s,%d\n",__FILE__,__LINE__);
         vector<int32_t>& units = reportToRelevantUnits[reports[a]->id];
         if ( units.size() > 2 ) {
@@ -1172,7 +1172,7 @@ static vector<df::unit*> gatherRelevantUnits(color_ostream& out, df::report* r1,
                 out.print("%s,%d: too many relevant units. On report\n \'%s\'\n", __FILE__, __LINE__, reports[a]->text.c_str());
             }
         }
-        for ( size_t b = 0; b < units.size(); b++ )
+        for ( size_t b = 0; b < units.size(); ++b )
             if ( ids.find(units[b]) == ids.end() ) {
                 ids.insert(units[b]);
                 result.push_back(df::unit::find(units[b]));
@@ -1189,7 +1189,7 @@ static void manageInteractionEvent(color_ostream& out) {
     std::vector<df::report*>& reports = df::global::world->status.reports;
     size_t a = df::report::binsearch_index(reports, lastReportInteraction, false);
     while (a < reports.size() && reports[a]->id <= lastReportInteraction) {
-        a++;
+        ++a;
     }
     if ( a < reports.size() )
         updateReportToRelevantUnits();
@@ -1203,7 +1203,7 @@ static void manageInteractionEvent(color_ostream& out) {
         auto &handler = iter.second;
         if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
-            for ( ; a < reports.size(); a++ ) {
+            for ( ; a < reports.size(); ++a ) {
                 df::report* report = reports[a];
                 lastReportInteraction = report->id;
                 df::announcement_type type = report->type;
@@ -1231,7 +1231,7 @@ static void manageInteractionEvent(color_ostream& out) {
                     if ( data.attacker == data2.attacker && (data.defender == -1 || data.defender == data2.defender) ) {
 //out.print("%s,%d\n",__FILE__,__LINE__);
                         data = data2;
-                        a++;
+                        ++a;
                     }
                 }
                 {

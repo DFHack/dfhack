@@ -44,6 +44,7 @@ void onNewDay(color_ostream &out, void* tick_ptr);
 void onStart(color_ostream &out, void* job);
 void onComplete(color_ostream &out, void* job);
 
+void getNeighbours(const df::coord &tile, df::coord(&neighbours)[8]);
 void manageNeighbours(color_ostream &out, const df::coord &tile);
 void cancelJob(df::job* job);
 bool is_group_done(const GroupData::Group &group);
@@ -216,9 +217,12 @@ void ChannelManager::manage_designations(color_ostream &out, bool full_scan) {
         if (full_scan) {
             out.print("Work safe inspection! Now checking for unsafe work conditions..\n");
         }
-        static std::once_flag getMapSize;
+        static bool getMapSize = false;
         static uint32_t t1, t2, zmax;
-        std::call_once(getMapSize, Maps::getSize, t1, t2, zmax);
+        if(!getMapSize){
+            getMapSize = true;
+            Maps::getSize(t1, t2, zmax);
+        }
         //debug_out = &out;
         build_groups(full_scan);
         debug_out = nullptr;
@@ -268,26 +272,30 @@ void ChannelManager::manage_safety(color_ostream &out, df::map_block* block, con
     }
 }
 
-void manageNeighbours(color_ostream &out, const df::coord &tile){
-    df::coord neighbors[8];
-    neighbors[0] = tile;
-    neighbors[1] = tile;
-    neighbors[2] = tile;
-    neighbors[3] = tile;
-    neighbors[4] = tile;
-    neighbors[5] = tile;
-    neighbors[6] = tile;
-    neighbors[7] = tile;
-    neighbors[0].x--; neighbors[0].y--;
-    neighbors[1].y--;
-    neighbors[2].x++; neighbors[2].y--;
-    neighbors[3].x--;
-    neighbors[4].x++;
-    neighbors[5].x--; neighbors[5].y++;
-    neighbors[6].y++;
-    neighbors[7].x++; neighbors[7].y++;
+void getNeighbours(const df::coord &tile, df::coord(&neighbours)[8]){
+    neighbours[0] = tile;
+    neighbours[1] = tile;
+    neighbours[2] = tile;
+    neighbours[3] = tile;
+    neighbours[4] = tile;
+    neighbours[5] = tile;
+    neighbours[6] = tile;
+    neighbours[7] = tile;
+    neighbours[0].x--; neighbours[0].y--;
+    neighbours[1].y--;
+    neighbours[2].x++; neighbours[2].y--;
+    neighbours[3].x--;
+    neighbours[4].x++;
+    neighbours[5].x--; neighbours[5].y++;
+    neighbours[6].y++;
+    neighbours[7].x++; neighbours[7].y++;
+}
 
-    for(auto &position : neighbors){
+void manageNeighbours(color_ostream &out, const df::coord &tile){
+    df::coord neighbours[8];
+    getNeighbours(tile, neighbours);
+
+    for(auto &position : neighbours){
         df::coord local(position);
         local.x = local.x % 16;
         local.y = local.y % 16;
@@ -346,9 +354,13 @@ void GroupData::read(bool full_scan){
 }
 
 void GroupData::foreach_block(bool full_scan) {
-    static std::once_flag getMapSize;
+    static bool getMapSize = false;
     static uint32_t x, y, z;
-    std::call_once(getMapSize, Maps::getSize, x, y, z);
+    if(!getMapSize){
+        getMapSize = true;
+        Maps::getSize(x, y, z);
+    }
+
     if(debug_out) debug_out->print("map size: %d, %d, %d\n", x,y,z);
     if(debug_out) debug_out->print("full_scan: %s\n", full_scan ? "true" : "false");
     for (int ix = 0; ix < x; ++ix) {
@@ -380,22 +392,7 @@ void GroupData::foreach_tile(df::map_block* block, int z) {
 void GroupData::add(df::coord world_pos, df::map_block* block) {
     if(groups_map.find(world_pos) == groups_map.end()) {
         df::coord neighbors[8];
-        neighbors[0] = world_pos;
-        neighbors[1] = world_pos;
-        neighbors[2] = world_pos;
-        neighbors[3] = world_pos;
-        neighbors[4] = world_pos;
-        neighbors[5] = world_pos;
-        neighbors[6] = world_pos;
-        neighbors[7] = world_pos;
-        neighbors[0].x--; neighbors[0].y--;
-        neighbors[1].y--;
-        neighbors[2].x++; neighbors[2].y--;
-        neighbors[3].x--;
-        neighbors[4].x++;
-        neighbors[5].x--; neighbors[5].y++;
-        neighbors[6].y++;
-        neighbors[7].x++; neighbors[7].y++;
+        getNeighbours(world_pos, neighbors);
 
         int group_index = -1;
         bool populated = false;

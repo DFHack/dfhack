@@ -6,7 +6,12 @@ Updated: Jun. 15 2021
 
 #include <PluginManager.h>
 #include <modules/EventManager.h>
+#include <modules/World.h>
+#include <modules/Maps.h>
 #include <modules/Job.h>
+#include <df/map_block.h>
+#include <df/world.h>
+#include <df/block_square_event_designation_priorityst.h>
 
 #include "channel-safely.h"
 
@@ -21,7 +26,8 @@ using namespace DFHack;
 DFHACK_PLUGIN("channel-safely");
 DFHACK_PLUGIN_IS_ENABLED(enabled);
 REQUIRE_GLOBAL(world);
-#define tickFreq 75
+#define hourTicks 50
+#define dayTicks 1200 //ie. fullBuildFreq = 24 dwarf hours
 
 #include <type_traits>
 #define DECLARE_HASA(what) \
@@ -33,17 +39,19 @@ DECLARE_HASA(when) //declares above statement with 'when' replacing 'what'
 // the only use is to allow reliance on pull request #1876 which introduces a refactor which prevents some manual management
 
 ChannelManager manager;
-void onTick(color_ostream &out, void* tick_ptr);
+void onNewHour(color_ostream &out, void* tick_ptr);
+void onNewDay(color_ostream &out, void* tick_ptr);
 void onStart(color_ostream &out, void* job);
 void onComplete(color_ostream &out, void* job);
 
-void manageNeighbours(const df::coord &tile);
+void manageNeighbours(color_ostream &out, const df::coord &tile);
 void cancelJob(df::job* job);
 bool is_group_done(const GroupData::Group &group);
 bool is_dig(df::job* job);
 bool is_channel(df::job* job);
 bool is_channel(df::tile_designation &designation);
 
+color_ostream* debug_out = nullptr;
 
 command_result manage_channel_designations (color_ostream &out, std::vector <std::string> &parameters);
 
@@ -60,23 +68,56 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     namespace EM = EventManager;
     if(enable && !enabled) {
         using namespace EM::EventType;
-        EM::EventHandler tickHandler(onTick, tickFreq);
+        EM::EventHandler hoursHandler(onNewHour, hourTicks);
+        EM::EventHandler daysHandler(onNewDay, dayTicks);
         EM::EventHandler jobStartHandler(onStart, 0);
         EM::EventHandler jobCompletionHandler(onComplete, 0);
 
         if(!has_when<EM::EventHandler>::value){
-            EM::registerTick(tickHandler, tickFreq, plugin_self);
+            EM::registerTick(hoursHandler, hourTicks, plugin_self);
+            EM::registerTick(daysHandler, dayTicks, plugin_self);
         } else {
-            EM::registerListener(EventType::TICK, tickHandler, plugin_self);
+            EM::registerListener(EventType::TICK, hoursHandler, plugin_self);
+            EM::registerListener(EventType::TICK, daysHandler, plugin_self);
         }
         EM::registerListener(EventType::JOB_INITIATED, jobStartHandler, plugin_self);
         EM::registerListener(EventType::JOB_COMPLETED, jobCompletionHandler, plugin_self);
-        manager.build_groups();
-        manager.manage_all_designations(out);
+        manager.manage_designations(out, true);
+        out.print("channel-safely enabled!\n");
     } else if (!enable) {
         EM::unregisterAll(plugin_self);
+        out.print("channel-safely disabled!\n");
     }
     enabled = enable;
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
+    if(enabled && World::isFortressMode()) {
+        switch (event) {
+            case SC_UNKNOWN:
+                break;
+            case SC_WORLD_LOADED:
+                break;
+            case SC_WORLD_UNLOADED:
+                break;
+            case SC_MAP_LOADED:
+                manager.manage_designations(out, true);
+                break;
+            case SC_MAP_UNLOADED:
+                break;
+            case SC_VIEWSCREEN_CHANGED:
+                break;
+            case SC_CORE_INITIALIZED:
+                break;
+            case SC_BEGIN_UNLOAD:
+                break;
+            case SC_PAUSED:
+                break;
+            case SC_UNPAUSED:
+                break;
+        }
+    }
     return CR_OK;
 }
 
@@ -87,49 +128,53 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out) {
     return CR_OK;
 }
 
-// todo: figure out if useful to perhaps rebuild group data
-//DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-//    static uint64_t count = 0;
-//    out.print("onupdate() - %d\n", ++count);
-//    return CR_OK;
-//}
-
 command_result manage_channel_designations(color_ostream &out, std::vector<std::string> &parameters){
     if(parameters.empty()){
-        out.print("Work safe inspection! Now checking for unsafe work conditions..\n");
-        manager.build_groups();
-        manager.manage_all_designations(out);
+        manager.manage_designations(out, true);
     } else if (parameters.size() == 1 && parameters[0] == "enable") {
-        if (plugin_enable(out, true) == CR_OK){
-            out.print("channel-safely enabled!\n");
-        }
+        return plugin_enable(out, true);
     } else if (parameters.size() == 1 && parameters[0] == "disable") {
-        if (plugin_enable(out, false) == CR_OK){
-            out.print("channel-safely disabled!\n");
-        }
+        return plugin_enable(out, false);
+    } else if (parameters.size() == 1 && parameters[0] == "debug") {
+        debug_out = &out;
+        manager.debug();
+        debug_out = nullptr;
     } else {
         return CR_FAILURE;
     }
     return CR_OK;
 }
 
-void onTick(color_ostream &out, void* tick_ptr){
+void onNewHour(color_ostream &out, void* tick_ptr){
     if(enabled && World::isFortressMode()) {
-        static uint64_t count = 0;
         static int32_t last_tick_counter = 0;
         int32_t tick_counter = (int32_t) ((intptr_t) tick_ptr);
-        //out.print("onTick() - %d, %d\n", ++count, tick_counter);
-        if ((tick_counter - last_tick_counter) >= tickFreq) {
+        if ((tick_counter - last_tick_counter) >= hourTicks) {
             last_tick_counter = tick_counter;
-            manager.build_groups();
+            manager.manage_designations(out, false);
         }
     }
     namespace EM = EventManager;
     if(!has_when<EM::EventHandler>::value){
-        EM::EventHandler tickHandler(onTick, tickFreq);
-        EM::registerTick(tickHandler, tickFreq, plugin_self);
+        EM::EventHandler tickHandler(onNewHour, hourTicks);
+        EM::registerTick(tickHandler, hourTicks, plugin_self);
     }
-    CoreSuspender suspend;
+}
+
+void onNewDay(color_ostream &out, void* tick_ptr){
+    if(enabled && World::isFortressMode()) {
+        static int32_t last_tick_counter = 0;
+        int32_t tick_counter = (int32_t) ((intptr_t) tick_ptr);
+        if ((tick_counter - last_tick_counter) >= dayTicks) {
+            last_tick_counter = tick_counter;
+            manager.manage_designations(out, true);
+        }
+    }
+    namespace EM = EventManager;
+    if(!has_when<EM::EventHandler>::value){
+        EM::EventHandler tickHandler(onNewDay, dayTicks);
+        EM::registerTick(tickHandler, dayTicks, plugin_self);
+    }
 }
 
 void onStart(color_ostream &out, void* job_ptr){
@@ -143,13 +188,13 @@ void onStart(color_ostream &out, void* job_ptr){
             above.z++;
             df::map_block* block = Maps::getTileBlock(job->pos);
             //postpone job if above isn't done
-            manager.manage_safety(block, local, job->pos, above);
+            manager.manage_safety(out, block, local, job->pos, above);
         }
     }
 }
 
-void onComplete(color_ostream &out, void* job_ptr){
-    if(enabled && World::isFortressMode()) {
+void onComplete(color_ostream &out, void* job_ptr) {
+    if (enabled && World::isFortressMode()) {
         auto job = (df::job*) job_ptr;
         if (is_channel(job)) {
             df::coord local(job->pos);
@@ -159,29 +204,35 @@ void onComplete(color_ostream &out, void* job_ptr){
             below.z--;
             df::map_block* block = Maps::getTileBlock(below);
             //activate designation below if group is done now, postpone if not
-            manager.manage_safety(block, local, below, job->pos);
             manager.mark_done(job->pos);
-            manageNeighbours(job->pos);
+            manager.manage_safety(out, block, local, below, job->pos);
+            manageNeighbours(out, job->pos);
         }
     }
 }
 
-void ChannelManager::manage_all_designations(color_ostream &out) {
+void ChannelManager::manage_designations(color_ostream &out, bool full_scan) {
+    if(full_scan) {
+        out.print("Work safe inspection! Now checking for unsafe work conditions..\n");
+    }
     static std::once_flag getMapSize;
     static uint32_t t1, t2, zmax;
     std::call_once(getMapSize, Maps::getSize, t1, t2, zmax);
-    for(auto &map_pair : groups){
-        GroupData::Group group = map_pair.second;
-        for(auto &group_pair : group){
-            const df::coord &world_pos = group_pair.first;
-            df::map_block* block = group_pair.second;
+
+    //debug_out = &out;
+    build_groups(full_scan);
+    debug_out = nullptr;
+    for (auto &group : groups) {
+        for (auto &tile : group) {
+            const df::coord &world_pos = tile.first;
+            df::map_block* block = tile.second;
             df::coord local(world_pos);
             local.x = local.x % 16;
             local.y = local.y % 16;
-            if(world_pos.z < zmax - 1){
+            if (world_pos.z < zmax - 1) {
                 df::coord above(world_pos);
                 above.z++;
-                manage_safety(block, local, world_pos, above);
+                manage_safety(out, block, local, world_pos, above);
             } else {
                 block->occupancy[local.x][local.y].bits.dig_marked = false;
             }
@@ -189,19 +240,16 @@ void ChannelManager::manage_all_designations(color_ostream &out) {
     }
 }
 
-//#include <df/block_square_event.h>
-#include <df/block_square_event_designation_priorityst.h>
-
-void ChannelManager::manage_safety(df::map_block* block, const df::coord &local, const df::coord &tile, const df::coord &tile_above) {
-    auto iter = groups.find(tile_above);
+void ChannelManager::manage_safety(color_ostream &out, df::map_block* block, const df::coord &local, const df::coord &tile, const df::coord &tile_above) {
     df::tile_occupancy &tile_occupancy = block->occupancy[local.x][local.y];
-    for(df::block_square_event* event : block->block_events){
-        switch(event->getType()){
-            case block_square_event_type::designation_priority:
-                auto evT = (df::block_square_event_designation_priorityst*)event;
-                if(evT->priority[local.x][local.y] < 6000) {
-                    if (iter != groups.end()) {
-                        GroupData::Group group = iter->second;
+    for (df::block_square_event* event : block->block_events) {
+        switch (event->getType()) {
+            case df::block_square_event_type::designation_priority:
+                auto evT = (df::block_square_event_designation_priorityst*) event;
+                if (evT->priority[local.x][local.y] < 6000) {
+                    auto group_iter = groups.find(tile_above);
+                    if (group_iter != groups.end()) {
+                        const GroupData::Group &group = *group_iter;
                         if (is_group_done(group)) {
                             tile_occupancy.bits.dig_marked = false;
                         } else {
@@ -209,8 +257,7 @@ void ChannelManager::manage_safety(df::map_block* block, const df::coord &local,
                             tile_occupancy.bits.dig_marked = true;
                             jobs.cancel_job(tile); //cancels job if designation is an open/active job
                         }
-                    }
-                    else {
+                    } else {
                         // no group above tile
                         tile_occupancy.bits.dig_marked = false;
                     }
@@ -220,16 +267,7 @@ void ChannelManager::manage_safety(df::map_block* block, const df::coord &local,
     }
 }
 
-void ChannelManager::mark_done(const df::coord &tile) {
-    auto iter = groups.find(tile);
-    if(iter != groups.end()){
-        GroupData::Group group = iter->second;
-        df::map_block* block = Maps::getTileBlock(tile);
-        group.erase(std::make_pair(tile,block));
-    }
-}
-
-void manageNeighbours(const df::coord &tile){
+void manageNeighbours(color_ostream &out, const df::coord &tile){
     df::coord neighbors[8];
     neighbors[0] = tile;
     neighbors[1] = tile;
@@ -240,13 +278,13 @@ void manageNeighbours(const df::coord &tile){
     neighbors[6] = tile;
     neighbors[7] = tile;
     neighbors[0].x--; neighbors[0].y--;
-    neighbors[1].x++; neighbors[1].y++;
+    neighbors[1].y--;
     neighbors[2].x++; neighbors[2].y--;
-    neighbors[3].x--; neighbors[3].y++;
+    neighbors[3].x--;
     neighbors[4].x++;
-    neighbors[5].x--;
-    neighbors[6].y--;
-    neighbors[7].y++;
+    neighbors[5].x--; neighbors[5].y++;
+    neighbors[6].y++;
+    neighbors[7].x++; neighbors[7].y++;
 
     for(auto &position : neighbors){
         df::coord local(position);
@@ -256,7 +294,7 @@ void manageNeighbours(const df::coord &tile){
         above.z++;
         df::map_block* block = Maps::getTileBlock(position);
         //activate designation if group is done now, postpone if not
-        manager.manage_safety(block, local, position, above);
+        manager.manage_safety(out, block, local, position, above);
     }
 }
 
@@ -290,9 +328,13 @@ bool is_channel(df::tile_designation &designation){
     return designation.bits.dig == df::tile_dig_designation::Channel;
 }
 
-void GroupData::read(){
-    groups.clear();
-    foreach_block();
+void GroupData::read(bool full_scan){
+    if(full_scan){
+        free_spots.clear();
+        groups.clear();
+        groups_map.clear();
+    }
+    foreach_block(full_scan);
     jobs.read();
     for(auto &map_entry : jobs){
         df::job* job = map_entry.second;
@@ -302,7 +344,7 @@ void GroupData::read(){
     }
 }
 
-void GroupData::foreach_block() {
+void GroupData::foreach_block(bool full_scan) {
     static std::once_flag getMapSize;
     static uint32_t x, y, z;
     std::call_once(getMapSize, Maps::getSize, x, y, z);
@@ -310,7 +352,7 @@ void GroupData::foreach_block() {
         for (int iy = 0; iy < y; ++iy) {
             for (int iz = z - 1; iz >= 0; --iz) {
                 df::map_block* block = Maps::getBlock(ix, iy, iz);
-                if(block->flags.bits.designated) {
+                if(full_scan || block->flags.bits.designated) {
                     foreach_tile(block, iz);
                 }
             }
@@ -323,8 +365,8 @@ void GroupData::foreach_tile(df::map_block* block, int z) {
         for (int16_t local_y = 0; local_y < 16; ++local_y) {
             if(is_channel(block->designation[local_x][local_y])){
                 df::coord world_pos(block->map_pos);
-                world_pos.x = local_x + (world_pos.x << 4);
-                world_pos.y = local_y + (world_pos.y << 4);
+                world_pos.x += local_x;
+                world_pos.y += local_y;
                 world_pos.z = z;
                 add(world_pos, block);
             }
@@ -332,36 +374,85 @@ void GroupData::foreach_tile(df::map_block* block, int z) {
     }
 }
 
-void GroupData::add(df::coord pos, df::map_block* block) {
-    df::coord neighbors[8];
-    neighbors[0] = pos;
-    neighbors[1] = pos;
-    neighbors[2] = pos;
-    neighbors[3] = pos;
-    neighbors[4] = pos;
-    neighbors[5] = pos;
-    neighbors[6] = pos;
-    neighbors[7] = pos;
-    neighbors[0].x--; neighbors[0].y--;
-    neighbors[1].x++; neighbors[1].y++;
-    neighbors[2].x++; neighbors[2].y--;
-    neighbors[3].x--; neighbors[3].y++;
-    neighbors[4].x++;
-    neighbors[5].x--;
-    neighbors[6].y--;
-    neighbors[7].y++;
+void GroupData::add(df::coord world_pos, df::map_block* block) {
+    if(groups_map.find(world_pos) == groups_map.end()) {
+        df::coord neighbors[8];
+        neighbors[0] = world_pos;
+        neighbors[1] = world_pos;
+        neighbors[2] = world_pos;
+        neighbors[3] = world_pos;
+        neighbors[4] = world_pos;
+        neighbors[5] = world_pos;
+        neighbors[6] = world_pos;
+        neighbors[7] = world_pos;
+        neighbors[0].x--; neighbors[0].y--;
+        neighbors[1].y--;
+        neighbors[2].x++; neighbors[2].y--;
+        neighbors[3].x--;
+        neighbors[4].x++;
+        neighbors[5].x--; neighbors[5].y++;
+        neighbors[6].y++;
+        neighbors[7].x++; neighbors[7].y++;
 
-    Group return_group;
-    return_group.insert(std::make_pair(pos, block));
-    for(auto &position : neighbors){
-        auto group_iter = groups.find(position);
-        if(group_iter != groups.end()){
-            Group &group = group_iter->second;
-            return_group.insert(group.begin(), group.end());
+        int group_index = -1;
+        bool populated = false;
+        for (auto &neighbour : neighbors) {
+            auto groups_map_iter = groups_map.find(neighbour);
+            // does neighbour belong to a group?
+            if (groups_map_iter != groups_map.end()) {
+                if(groups_map_iter->second >= groups.size()){
+                    if(debug_out) debug_out->print("ERROR!!!\n");
+                }
+                // get the group
+                Group &group = *(groups.begin() + groups_map_iter->second);
+                if (!populated) {
+                    // this is the first group we found, use it to merge others into
+                    if(debug_out) debug_out->print("found adjacent merge host\n");
+                    populated = true;
+                    group_index = groups_map_iter->second;
+                } else if (group_index != groups_map_iter->second) {
+                    // merge group into host
+                    if(debug_out) debug_out->print("found adjacent group. host size: %d. group size: %d\n", groups[group_index].size(), group.size());
+                    groups[group_index].insert(group.begin(), group.end());
+                    if(debug_out) debug_out->print("merged size: %d\n", groups[group_index].size());
+                    group.clear();
+                    free_spots.emplace(groups_map_iter->second);
+                }
+            }
         }
+
+        if (!populated) {
+            if(debug_out) debug_out->print("brand new group\n");
+            if(!free_spots.empty()){
+                if(debug_out) debug_out->print("being clever and re-using old merged positions\n");
+                group_index = *free_spots.begin();
+                free_spots.erase(free_spots.begin());
+            } else {
+                groups.push_back(Group());
+                group_index = groups.size() - 1;
+            }
+        }
+        groups[group_index].emplace(std::make_pair(world_pos, block));
+        if(debug_out) debug_out->print("final size: %d\n", groups[group_index].size());
+        for (auto &pair : groups[group_index]) {
+            const df::coord &world_pos = pair.first;
+            groups_map.erase(world_pos);
+            groups_map.emplace(world_pos, group_index);
+        }
+        if(debug_out) debug_out->print("group index: %d\n", group_index);
+        //debug();
     }
-    for(auto &pair : return_group){
-        groups.emplace(pair.first, return_group);
+}
+
+void GroupData::debug() {
+    int idx = 0;
+    if(debug_out) debug_out->print("debugging group data\n");
+    for(auto &group : groups){
+        if(debug_out) debug_out->print("group %d (size: %d)\n", idx++, group.size());
+        for(auto &pair : group){
+            if(debug_out) debug_out->print("(%d,%d,%d)\n", pair.first.x, pair.first.y, pair.first.z);
+        }
+        idx++;
     }
 }
 

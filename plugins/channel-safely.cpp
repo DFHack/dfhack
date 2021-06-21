@@ -257,6 +257,7 @@ void ChannelManager::manage_safety(color_ostream &out, df::map_block* block, con
                         const GroupData::Group &group = *group_iter;
                         if (is_group_done(group)) {
                             tile_occupancy.bits.dig_marked = false;
+                            block->flags.bits.designated = true;
                         } else {
                             // not safe
                             tile_occupancy.bits.dig_marked = true;
@@ -265,6 +266,7 @@ void ChannelManager::manage_safety(color_ostream &out, df::map_block* block, con
                     } else {
                         // no group above tile
                         tile_occupancy.bits.dig_marked = false;
+                        block->flags.bits.designated = true;
                     }
                 }
                 break;

@@ -212,29 +212,30 @@ void onComplete(color_ostream &out, void* job_ptr) {
 }
 
 void ChannelManager::manage_designations(color_ostream &out, bool full_scan) {
-    if(full_scan) {
-        out.print("Work safe inspection! Now checking for unsafe work conditions..\n");
-    }
-    static std::once_flag getMapSize;
-    static uint32_t t1, t2, zmax;
-    std::call_once(getMapSize, Maps::getSize, t1, t2, zmax);
-
-    //debug_out = &out;
-    build_groups(full_scan);
-    debug_out = nullptr;
-    for (auto &group : groups) {
-        for (auto &tile : group) {
-            const df::coord &world_pos = tile.first;
-            df::map_block* block = tile.second;
-            df::coord local(world_pos);
-            local.x = local.x % 16;
-            local.y = local.y % 16;
-            if (world_pos.z < zmax - 1) {
-                df::coord above(world_pos);
-                above.z++;
-                manage_safety(out, block, local, world_pos, above);
-            } else {
-                block->occupancy[local.x][local.y].bits.dig_marked = false;
+    if (World::isFortressMode()) {
+        if (full_scan) {
+            out.print("Work safe inspection! Now checking for unsafe work conditions..\n");
+        }
+        static std::once_flag getMapSize;
+        static uint32_t t1, t2, zmax;
+        std::call_once(getMapSize, Maps::getSize, t1, t2, zmax);
+        //debug_out = &out;
+        build_groups(full_scan);
+        debug_out = nullptr;
+        for (auto &group : groups) {
+            for (auto &tile : group) {
+                const df::coord &world_pos = tile.first;
+                df::map_block* block = tile.second;
+                df::coord local(world_pos);
+                local.x = local.x % 16;
+                local.y = local.y % 16;
+                if (world_pos.z < zmax - 1) {
+                    df::coord above(world_pos);
+                    above.z++;
+                    manage_safety(out, block, local, world_pos, above);
+                } else {
+                    block->occupancy[local.x][local.y].bits.dig_marked = false;
+                }
             }
         }
     }
@@ -348,6 +349,8 @@ void GroupData::foreach_block(bool full_scan) {
     static std::once_flag getMapSize;
     static uint32_t x, y, z;
     std::call_once(getMapSize, Maps::getSize, x, y, z);
+    if(debug_out) debug_out->print("map size: %d, %d, %d\n", x,y,z);
+    if(debug_out) debug_out->print("full_scan: %s\n", full_scan ? "true" : "false");
     for (int ix = 0; ix < x; ++ix) {
         for (int iy = 0; iy < y; ++iy) {
             for (int iz = z - 1; iz >= 0; --iz) {

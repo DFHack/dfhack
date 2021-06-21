@@ -27,7 +27,7 @@ DFHACK_PLUGIN("channel-safely");
 DFHACK_PLUGIN_IS_ENABLED(enabled);
 REQUIRE_GLOBAL(world);
 #define hourTicks 50
-#define dayTicks 1200 //ie. fullBuildFreq = 24 dwarf hours
+//#define dayTicks 1200 //ie. fullBuildFreq = 24 dwarf hours
 
 #include <type_traits>
 #define DECLARE_HASA(what) \
@@ -40,7 +40,6 @@ DECLARE_HASA(when) //declares above statement with 'when' replacing 'what'
 
 ChannelManager manager;
 void onNewHour(color_ostream &out, void* tick_ptr);
-void onNewDay(color_ostream &out, void* tick_ptr);
 void onStart(color_ostream &out, void* job);
 void onComplete(color_ostream &out, void* job);
 
@@ -70,22 +69,23 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if(enable && !enabled) {
         using namespace EM::EventType;
         EM::EventHandler hoursHandler(onNewHour, hourTicks);
-        EM::EventHandler daysHandler(onNewDay, dayTicks);
+        //EM::EventHandler daysHandler(onNewDay, dayTicks);
         EM::EventHandler jobStartHandler(onStart, 0);
         EM::EventHandler jobCompletionHandler(onComplete, 0);
 
         if(!has_when<EM::EventHandler>::value){
             EM::registerTick(hoursHandler, hourTicks, plugin_self);
-            EM::registerTick(daysHandler, dayTicks, plugin_self);
+            //EM::registerTick(daysHandler, dayTicks, plugin_self);
         } else {
             EM::registerListener(EventType::TICK, hoursHandler, plugin_self);
-            EM::registerListener(EventType::TICK, daysHandler, plugin_self);
+            //EM::registerListener(EventType::TICK, daysHandler, plugin_self);
         }
         EM::registerListener(EventType::JOB_INITIATED, jobStartHandler, plugin_self);
         EM::registerListener(EventType::JOB_COMPLETED, jobCompletionHandler, plugin_self);
-        manager.manage_designations(out, true);
+        manager.manage_designations(out);
         out.print("channel-safely enabled!\n");
     } else if (!enable) {
+        manager.delete_groups();
         EM::unregisterAll(plugin_self);
         out.print("channel-safely disabled!\n");
     }
@@ -103,7 +103,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
             case SC_WORLD_UNLOADED:
                 break;
             case SC_MAP_LOADED:
-                manager.manage_designations(out, true);
+                manager.manage_designations(out);
                 break;
             case SC_MAP_UNLOADED:
                 break;
@@ -131,7 +131,10 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out) {
 
 command_result manage_channel_designations(color_ostream &out, std::vector<std::string> &parameters){
     if(parameters.empty()){
-        manager.manage_designations(out, true);
+        manager.manage_designations(out);
+        if(!enabled) {
+            manager.delete_groups();
+        }
     } else if (parameters.size() == 1 && parameters[0] == "enable") {
         return plugin_enable(out, true);
     } else if (parameters.size() == 1 && parameters[0] == "disable") {
@@ -152,29 +155,13 @@ void onNewHour(color_ostream &out, void* tick_ptr){
         int32_t tick_counter = (int32_t) ((intptr_t) tick_ptr);
         if ((tick_counter - last_tick_counter) >= hourTicks) {
             last_tick_counter = tick_counter;
-            manager.manage_designations(out, false);
+            manager.manage_designations(out);
         }
     }
     namespace EM = EventManager;
     if(!has_when<EM::EventHandler>::value){
         EM::EventHandler tickHandler(onNewHour, hourTicks);
         EM::registerTick(tickHandler, hourTicks, plugin_self);
-    }
-}
-
-void onNewDay(color_ostream &out, void* tick_ptr){
-    if(enabled && World::isFortressMode()) {
-        static int32_t last_tick_counter = 0;
-        int32_t tick_counter = (int32_t) ((intptr_t) tick_ptr);
-        if ((tick_counter - last_tick_counter) >= dayTicks) {
-            last_tick_counter = tick_counter;
-            manager.manage_designations(out, true);
-        }
-    }
-    namespace EM = EventManager;
-    if(!has_when<EM::EventHandler>::value){
-        EM::EventHandler tickHandler(onNewDay, dayTicks);
-        EM::registerTick(tickHandler, dayTicks, plugin_self);
     }
 }
 
@@ -212,11 +199,8 @@ void onComplete(color_ostream &out, void* job_ptr) {
     }
 }
 
-void ChannelManager::manage_designations(color_ostream &out, bool full_scan) {
+void ChannelManager::manage_designations(color_ostream &out) {
     if (World::isFortressMode()) {
-        if (full_scan) {
-            out.print("Work safe inspection! Now checking for unsafe work conditions..\n");
-        }
         static bool getMapSize = false;
         static uint32_t t1, t2, zmax;
         if(!getMapSize){
@@ -224,7 +208,7 @@ void ChannelManager::manage_designations(color_ostream &out, bool full_scan) {
             Maps::getSize(t1, t2, zmax);
         }
         //debug_out = &out;
-        build_groups(full_scan);
+        build_groups();
         debug_out = nullptr;
         for (auto &group : groups) {
             for (auto &tile : group) {
@@ -339,13 +323,8 @@ bool is_channel(df::tile_designation &designation){
     return designation.bits.dig == df::tile_dig_designation::Channel;
 }
 
-void GroupData::read(bool full_scan){
-    if(full_scan){
-        free_spots.clear();
-        groups.clear();
-        groups_map.clear();
-    }
-    foreach_block(full_scan);
+void GroupData::read() {
+    foreach_block();
     jobs.read();
     for(auto &map_entry : jobs){
         df::job* job = map_entry.second;
@@ -355,7 +334,7 @@ void GroupData::read(bool full_scan){
     }
 }
 
-void GroupData::foreach_block(bool full_scan) {
+void GroupData::foreach_block() {
     static bool getMapSize = false;
     static uint32_t x, y, z;
     if(!getMapSize){
@@ -363,15 +342,11 @@ void GroupData::foreach_block(bool full_scan) {
         Maps::getSize(x, y, z);
     }
 
-    if(debug_out) debug_out->print("map size: %d, %d, %d\n", x,y,z);
-    if(debug_out) debug_out->print("full_scan: %s\n", full_scan ? "true" : "false");
     for (int ix = 0; ix < x; ++ix) {
         for (int iy = 0; iy < y; ++iy) {
             for (int iz = z - 1; iz >= 0; --iz) {
                 df::map_block* block = Maps::getBlock(ix, iy, iz);
-                if(full_scan || block->flags.bits.designated) {
-                    foreach_tile(block, iz);
-                }
+                foreach_tile(block, iz);
             }
         }
     }

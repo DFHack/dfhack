@@ -47,6 +47,7 @@ void getNeighbours(const df::coord &tile, df::coord(&neighbours)[8]);
 void manageNeighbours(color_ostream &out, const df::coord &tile);
 void cancelJob(df::job* job);
 bool is_group_done(const GroupData::Group &group);
+bool is_group_ready(const GroupData &groups, const GroupData::Group &below_group);
 bool is_dig(df::job* job);
 bool is_channel(df::job* job);
 bool is_channel(df::tile_designation &designation);
@@ -247,10 +248,16 @@ void ChannelManager::manage_safety(color_ostream &out, df::map_block* block, con
                             tile_occupancy.bits.dig_marked = true;
                             jobs.cancel_job(tile); //cancels job if designation is an open/active job
                         }
-                    } else {
+                    } else if (tile_occupancy.bits.dig_marked) {
                         // no group above tile
-                        tile_occupancy.bits.dig_marked = false;
-                        block->flags.bits.designated = true;
+                        group_iter = groups.find(tile);
+                        if(group_iter != groups.end()){
+                            const GroupData::Group &group = *group_iter;
+                            if(is_group_ready(groups, group)){
+                                tile_occupancy.bits.dig_marked = false;
+                                block->flags.bits.designated = true;
+                            }
+                        }
                     }
                 }
                 break;
@@ -307,8 +314,25 @@ void cancelJob(df::job* job) {
     }
 }
 
+// todo: replace is_group_done logic with cleanup code that deletes GroupMap entries for finished groups
+
 bool is_group_done(const GroupData::Group &group){
     return group.empty();
+}
+
+bool is_group_ready(const GroupData &groups, const GroupData::Group &below_group) {
+    for(auto &group_tile : below_group){
+        df::coord world_pos(group_tile.first);
+        world_pos.z++; 
+        auto group_iter = groups.find(world_pos);
+        if(group_iter != groups.end()){
+            const GroupData::Group &group = *group_iter;
+            if(!is_group_done(group)){
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 bool is_dig(df::job* job) {

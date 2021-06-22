@@ -49,7 +49,7 @@ public:
     }
     Groups::const_iterator find(const df::coord &pos) const {
         const auto iter = groups_map.find(pos);
-        if(iter != groups_map.end()){
+        if (iter != groups_map.end()) {
             return groups.begin() + iter->second;
         }
         return groups.end();

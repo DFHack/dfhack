@@ -42,10 +42,27 @@ public:
     GroupData(DigJobs &jobs) : jobs(jobs) { groups.reserve(200); }
     void read();
     void cancel_job(const df::coord &pos) { jobs.cancel_job(pos); }
-    void clear() {
+    void clear() { // to allow deleting group data when the plugin isn't enabled
         free_spots.clear();
         groups.clear();
         groups_map.clear();
+    }
+    void mark_done(const df::coord &tile) {
+        auto iter = groups_map.find(tile);
+        int group_index = iter->second;
+        if(iter != groups_map.end()){
+            Group &group = groups[group_index];
+            df::map_block* block = Maps::getTileBlock(tile);
+            group.erase(std::make_pair(tile, block));
+            if (group.empty()) {
+                for(auto &group_map_pair : groups_map){
+                    if(group_index == group_map_pair.second){
+                        groups_map.erase(group_map_pair.first);
+                    }
+                }
+                free_spots.insert(group_index);
+            }
+        }
     }
     Groups::const_iterator find(const df::coord &pos) const {
         const auto iter = groups_map.find(pos);
@@ -70,14 +87,7 @@ public:
     void manage_designations(color_ostream &out);
     void manage_safety(color_ostream &out, df::map_block* block, const df::coord &local, const df::coord &tile, const df::coord &tile_above);
     void delete_groups() { groups.clear(); }
-    void mark_done(const df::coord &tile) {
-        auto iter = groups.find(tile);
-        if (iter != groups.end()) {
-            GroupData::Group group = *iter;
-            df::map_block* block = Maps::getTileBlock(tile);
-            group.erase(std::make_pair(tile, block));
-        }
-    }
+    void mark_done(const df::coord &tile) { groups.mark_done(tile); }
     void debug(){
         groups.debug();
     }

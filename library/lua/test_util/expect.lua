@@ -24,7 +24,7 @@ function expect.nil_(value, comment)
 end
 
 function expect.eq(a, b, comment)
-    return a == b, comment, ('%s ~= %s'):format(a, b)
+    return a == b, comment, ('"%s" ~= "%s"'):format(a, b)
 end
 
 function expect.ne(a, b, comment)

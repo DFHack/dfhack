@@ -16,6 +16,50 @@ MENU_WIDTH = 30
 
 refreshSidebar = dfhack.gui.refreshSidebar
 
+-- maps a ui_sidebar_mode to the keycode that would activate that mode when the
+-- current screen is 'dwarfmode/Default'
+SIDEBAR_MODE_KEYS = {
+    [df.ui_sidebar_mode.Default]='',
+    [df.ui_sidebar_mode.QueryBuilding]='D_BUILDJOB',
+    [df.ui_sidebar_mode.LookAround]='D_LOOK',
+    [df.ui_sidebar_mode.BuildingItems]='D_BUILDITEM',
+    [df.ui_sidebar_mode.Stockpiles]='D_STOCKPILES',
+    [df.ui_sidebar_mode.Zones]='D_CIVZONE',
+}
+
+-- Sends ESC keycodes until we get to dwarfmode/Default and then enters the
+-- specified sidebar mode with the corresponding keycode. If we don't get to
+-- Default after max_esc presses of ESC (default value is 10), we throw an
+-- error. The target sidebar mode must be a member of SIDEBAR_MODE_KEYS
+function enterSidebarMode(sidebar_mode, max_esc)
+    local navkey = SIDEBAR_MODE_KEYS[sidebar_mode]
+    if not navkey then
+        error(('Invalid or unsupported sidebar mode: %s (%s)')
+              :format(sidebar_mode, df.ui_sidebar_mode[sidebar_mode]))
+    end
+    local max_esc_num = tonumber(max_esc)
+    if max_esc and (not max_esc_num or max_esc_num <= 0) then
+        error(('max_esc must be a positive number: got %s')
+              :format(tostring(max_esc)))
+    end
+    local remaining_esc = max_esc_num or 10
+    local focus_string = ''
+    while remaining_esc > 0 do
+        local screen = dfhack.gui.getCurViewscreen(true)
+        focus_string = dfhack.gui.getFocusString(screen)
+        if df.global.ui.main.mode == df.ui_sidebar_mode.Default and
+                focus_string == 'dwarfmode/Default' then
+            if #navkey > 0 then gui.simulateInput(screen, navkey) end
+            return
+        end
+        gui.simulateInput(screen, 'LEAVESCREEN')
+        remaining_esc = remaining_esc - 1
+    end
+    error(('Unable to get into target sidebar mode (%s) from' ..
+           ' current UI viewscreen (%s).'):format(
+                    df.ui_sidebar_mode[sidebar_mode], focus_string))
+end
+
 function getPanelLayout()
     local dims = dfhack.gui.getDwarfmodeViewDims()
     local area_pos = df.global.ui_menu_width[1]

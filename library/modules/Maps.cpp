@@ -55,10 +55,12 @@ using namespace std;
 #include "df/burrow.h"
 #include "df/feature_init.h"
 #include "df/flow_info.h"
+#include "df/map_block_column.h"
 #include "df/plant.h"
+#include "df/plant_tree_info.h"
+#include "df/plant_tree_tile.h"
 #include "df/region_map_entry.h"
 #include "df/world.h"
-#include "df/world_data.h"
 #include "df/world_data.h"
 #include "df/world_geo_biome.h"
 #include "df/world_geo_layer.h"
@@ -711,6 +713,50 @@ bool Maps::canStepBetween(df::coord pos1, df::coord pos2)
     }
 
     return false;
+}
+
+/*
+* Plants
+*/
+df::plant *Maps::getPlantAtCoords(int32_t x, int32_t y, int32_t z)
+{
+    if (x < 0 || x >= world->map.x_count || y < 0 || y >= world->map.y_count || !world->map.column_index)
+        return NULL;
+
+    df::map_block_column *mbc = world->map.column_index[(x / 48) * 3][(y / 48) * 3];
+    if (!mbc)
+        return NULL;
+
+    int32_t x_mod_48 = x % 48;
+    int32_t y_mod_48 = y % 48;
+    for (size_t i = 0; i < mbc->plants.size(); i++)
+    {
+        df::plant *p = mbc->plants[i];
+        if (p->pos.x == x && p->pos.y == y && p->pos.z == z)
+            return p;
+
+        df::plant_tree_info *t = p->tree_info;
+        if (!t)
+            continue;
+
+        int32_t x_index = t->dim_x / 2 - p->pos.x % 48 + x_mod_48;
+        int32_t y_index = t->dim_y / 2 - p->pos.y % 48 + y_mod_48;
+        int32_t z_dis = z - p->pos.z;
+        if (x_index < 0 || x_index >= t->dim_x || y_index < 0 || y_index >= t->dim_y || z_dis >= t->body_height)
+            continue;
+
+        if (z_dis < 0)
+        {
+            if (z_dis < -(t->roots_depth))
+                continue;
+            else if ((t->roots[-1 - z_dis][x_index + y_index * t->dim_x].whole & 0x7F) != 0) //any non-blocked tree_tile
+                return p;
+        }
+        else if ((t->body[z_dis][x_index + y_index * t->dim_x].whole & 0x7F) != 0)
+            return p;
+    }
+
+    return NULL;
 }
 
 /* The code below is a heavily refactored version of code found at

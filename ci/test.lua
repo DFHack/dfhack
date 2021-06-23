@@ -83,6 +83,19 @@ local function delay(frames)
     script.sleep(frames, 'frames')
 end
 
+-- Will call the predicate_fn every frame until it returns true. If it fails to
+-- return true before timeout_frames have elapsed, throws an error. If
+-- timeout_frames is not specified, defaults to 100.
+local function delay_until(predicate_fn, timeout_frames)
+    timeout_frames = tonumber(timeout_frames) or 100
+    repeat
+        delay()
+        if predicate_fn() then return end
+        timeout_frames = timeout_frames - 1
+    until timeout_frames < 0
+    error('timed out while waiting for predicate to return true')
+end
+
 local function clean_require(module)
     -- wrapper around require() - forces a clean load of every module to ensure
     -- that modules checking for dfhack.internal.IN_TEST at load time behave
@@ -275,6 +288,7 @@ local function build_test_env()
         expect = {},
         mock = mock,
         delay = delay,
+        delay_until = delay_until,
         require = clean_require,
         reqscript = clean_reqscript,
     }

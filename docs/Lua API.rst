@@ -1558,6 +1558,10 @@ Maps module
 
   Returns *x, y* for use with ``getRegionBiome``.
 
+* ``dfhack.maps.getPlantAtCoords(pos)``, or ``getPlantAtCoords(x,y,z)``
+
+  Returns the plant struct that owns the tile at the specified position.
+
 * ``dfhack.maps.canWalkBetween(pos1, pos2)``
 
   Checks if a dwarf may be able to walk between the two tiles,

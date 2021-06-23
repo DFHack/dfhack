@@ -237,12 +237,12 @@ void ViewscreenChooseMaterial::feed(set<df::interface_key> *input)
 
         Screen::dismiss(this);
     }
-    else if (input->count(interface_key::CURSOR_LEFT))
+    else if (input->count(interface_key::STANDARDSCROLL_LEFT))
     {
         --selected_column;
         validateColumn();
     }
-    else if (input->count(interface_key::CURSOR_RIGHT))
+    else if (input->count(interface_key::STANDARDSCROLL_RIGHT))
     {
         selected_column++;
         validateColumn();

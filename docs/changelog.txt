@@ -51,6 +51,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `embark-assistant`: slightly improved performance of surveying and improved code a little
 
 ## Lua
+- new string utility function: ``string:wrap(width)`` wraps a string at space-separated word boundaries
 - ``gui.Painter``: fixed error when calling ``viewport()`` method
 - `reveal`: now exposes ``unhideFlood(pos)`` functionality to Lua
 - ``utils.processArgsGetopt()``: now returns negative numbers (e.g. ``-10``) in the list of positional parameters instead of treating it as an option string equivalent to ``-1 -0``
@@ -69,6 +70,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - The ``test/main`` command to invoke the test harness has been renamed to just ``test``
 - DFHack unit tests must now match any output expected to be printed via ``dfhack.printerr()``
 - Fortress mode is now supported for unit tests (allowing tests that require a fortress map to be loaded) - note that these tests are skipped by continuous integration for now, pending a suitable test fortress
+- Unit tests can now use ``delay_until(predicate_fn, timeout_frames)`` to delay until a condition is met
 
 # 0.47.05-r1
 

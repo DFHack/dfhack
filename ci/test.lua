@@ -83,6 +83,19 @@ local function delay(frames)
     script.sleep(frames, 'frames')
 end
 
+-- Will call the predicate_fn every frame until it returns true. If it fails to
+-- return true before timeout_frames have elapsed, throws an error. If
+-- timeout_frames is not specified, defaults to 100.
+local function delay_until(predicate_fn, timeout_frames)
+    timeout_frames = tonumber(timeout_frames) or 100
+    repeat
+        delay()
+        if predicate_fn() then return end
+        timeout_frames = timeout_frames - 1
+    until timeout_frames < 0
+    error('timed out while waiting for predicate to return true')
+end
+
 local function clean_require(module)
     -- wrapper around require() - forces a clean load of every module to ensure
     -- that modules checking for dfhack.internal.IN_TEST at load time behave
@@ -245,7 +258,6 @@ local function wrap_expect(func, private)
         orig_printerr('Check failed! ' .. (msg or '(no message)'))
         -- Generate a stack trace with all function calls in the same file as the caller to expect.*()
         -- (this produces better stack traces when using helpers in tests)
-        -- Skip any frames corresponding to C calls, which could be pcall() / with_finalize()
         local frame = 2
         local caller_src
         while true do
@@ -254,10 +266,9 @@ local function wrap_expect(func, private)
             if not caller_src then
                 caller_src = info.short_src
             end
-            if info.what == 'Lua' then
-                if info.short_src ~= caller_src then
-                    break
-                end
+            -- Skip any frames corresponding to C calls, or Lua functions defined in another file
+            -- these could include pcall(), with_finalize(), etc.
+            if info.what == 'Lua' and info.short_src == caller_src then
                 orig_printerr(('  at %s:%d'):format(info.short_src, info.currentline))
             end
             frame = frame + 1
@@ -275,6 +286,7 @@ local function build_test_env()
         expect = {},
         mock = mock,
         delay = delay,
+        delay_until = delay_until,
         require = clean_require,
         reqscript = clean_reqscript,
     }

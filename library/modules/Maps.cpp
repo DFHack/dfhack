@@ -718,7 +718,7 @@ bool Maps::canStepBetween(df::coord pos1, df::coord pos2)
 /*
 * Plants
 */
-df::plant *Maps::getPlantAtCoords(int32_t x, int32_t y, int32_t z)
+df::plant *Maps::getPlantAtTile(int32_t x, int32_t y, int32_t z)
 {
     if (x < 0 || x >= world->map.x_count || y < 0 || y >= world->map.y_count || !world->map.column_index)
         return NULL;
@@ -727,8 +727,6 @@ df::plant *Maps::getPlantAtCoords(int32_t x, int32_t y, int32_t z)
     if (!mbc)
         return NULL;
 
-    int32_t x_mod_48 = x % 48;
-    int32_t y_mod_48 = y % 48;
     for (size_t i = 0; i < mbc->plants.size(); i++)
     {
         df::plant *p = mbc->plants[i];
@@ -739,8 +737,8 @@ df::plant *Maps::getPlantAtCoords(int32_t x, int32_t y, int32_t z)
         if (!t)
             continue;
 
-        int32_t x_index = t->dim_x / 2 - p->pos.x % 48 + x_mod_48;
-        int32_t y_index = t->dim_y / 2 - p->pos.y % 48 + y_mod_48;
+        int32_t x_index = (t->dim_x / 2) - (p->pos.x % 48) + (x % 48);
+        int32_t y_index = (t->dim_y / 2) - (p->pos.y % 48) + (y % 48);
         int32_t z_dis = z - p->pos.z;
         if (x_index < 0 || x_index >= t->dim_x || y_index < 0 || y_index >= t->dim_y || z_dis >= t->body_height)
             continue;

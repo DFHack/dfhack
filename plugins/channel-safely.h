@@ -55,9 +55,11 @@ public:
             df::map_block* block = Maps::getTileBlock(tile);
             group.erase(std::make_pair(tile, block));
             if (group.empty()) {
-                for(auto &group_map_pair : groups_map){
-                    if(group_index == group_map_pair.second){
-                        groups_map.erase(group_map_pair.first);
+                for(auto iter = groups_map.begin(); iter != groups_map.end();){
+                    if(group_index == iter->second){
+                        iter = groups_map.erase(iter);
+                    } else {
+                        ++iter;
                     }
                 }
                 free_spots.insert(group_index);

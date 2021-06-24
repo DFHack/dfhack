@@ -149,7 +149,8 @@ command_result manage_channel_designations(color_ostream &out, std::vector<std::
 }
 
 void onNewHour(color_ostream &out, void* tick_ptr) {
-    out.print("onNewHour()\n");
+    //debug_out = &out;
+    if (debug_out) debug_out->print("onNewHour()\n");
     if (enabled && World::isFortressMode()) {
         static int32_t last_tick_counter = 0;
         int32_t tick_counter = (int32_t) ((intptr_t) tick_ptr);
@@ -163,11 +164,13 @@ void onNewHour(color_ostream &out, void* tick_ptr) {
         EM::EventHandler tickHandler(onNewHour, hourTicks);
         EM::registerTick(tickHandler, hourTicks, plugin_self);
     }
-    out.print("onNewHour() - return\n");
+    if (debug_out) debug_out->print("onNewHour() - return\n");
+    debug_out = nullptr;
 }
 
 void onStart(color_ostream &out, void* job_ptr) {
-    out.print("onStart()\n");
+    //debug_out = &out;
+    if (debug_out) debug_out->print("onStart()\n");
     if (enabled && World::isFortressMode()) {
         auto job = (df::job*) job_ptr;
         if (is_dig(job) || is_channel(job)) {
@@ -181,11 +184,13 @@ void onStart(color_ostream &out, void* job_ptr) {
             manager.manage_safety(out, block, local, job->pos, above);
         }
     }
-    out.print("onStart() - return\n");
+    if (debug_out) debug_out->print("onStart() - return\n");
+    debug_out = nullptr;
 }
 
 void onComplete(color_ostream &out, void* job_ptr) {
-    out.print("onComplete()\n");
+    //debug_out = &out;
+    if (debug_out) debug_out->print("onComplete()\n");
     if (enabled && World::isFortressMode()) {
         auto job = (df::job*) job_ptr;
         if (is_channel(job)) {
@@ -196,16 +201,16 @@ void onComplete(color_ostream &out, void* job_ptr) {
             below.z--;
             df::map_block* block = Maps::getTileBlock(below);
             //activate designation below if group is done now, postpone if not
-            out.print("mark_done()\n");
-            manager.mark_done(job->pos); //todo: fix crash (on last job?)
-
-//            out.print("manage_safety()\n");
-//            manager.manage_safety(out, block, local, below, job->pos);
-//            out.print("manageNeighbours()\n");
-//            manageNeighbours(out, job->pos);
+            if (debug_out) debug_out->print("mark_done()\n");
+            manager.mark_done(job->pos);
+            if (debug_out) debug_out->print("manage_safety()\n");
+            manager.manage_safety(out, block, local, below, job->pos);
+            if (debug_out) debug_out->print("manageNeighbours()\n");
+            manageNeighbours(out, job->pos);
         }
     }
-    out.print("onComplete() - return\n");
+    if (debug_out) debug_out->print("onComplete() - return\n");
+    debug_out = nullptr;
 }
 
 void ChannelManager::manage_designations(color_ostream &out) {
@@ -216,7 +221,6 @@ void ChannelManager::manage_designations(color_ostream &out) {
             getMapSize = true;
             Maps::getSize(t1, t2, zmax);
         }
-        debug_out = &out;
         build_groups();
         for (auto &group : groups) {
             if (debug_out) debug_out->print("foreach group\n");
@@ -237,40 +241,41 @@ void ChannelManager::manage_designations(color_ostream &out) {
             }
         }
         if (debug_out) debug_out->print("done managing designations\n");
-        debug_out = nullptr;
     }
 }
 
 void ChannelManager::manage_safety(color_ostream &out, df::map_block* block, const df::coord &local, const df::coord &tile, const df::coord &tile_above) {
-    df::tile_occupancy &tile_occupancy = block->occupancy[local.x][local.y];
-    // first we make sure the tile has a designation priority
-    for (df::block_square_event* event : block->block_events) {
-        if (debug_out) debug_out->print("switch(event->getType())\n");
-        switch (event->getType()) {
-            case df::block_square_event_type::designation_priority:
-                auto evT = (df::block_square_event_designation_priorityst*) event;
-                // second we ensure the priority is less than 6 - let the user keep some free from interference
-                if (evT->priority[local.x][local.y] < 6000) {
-                    auto group_iter = groups.find(tile);
-                    if (debug_out) debug_out->print("*group_iter\n");
-                    const GroupData::Group &group = *group_iter;
-                    if (debug_out) debug_out->print("if(is_group_ready())\n");
-                    if (is_group_ready(groups, group)) {
-                        // no pending groups above this group
-                        if (debug_out) debug_out->print("dig_marked = false\n");
-                        tile_occupancy.bits.dig_marked = false;
-                        if (debug_out) debug_out->print("block->flags.bits.designated = true\n");
-                        block->flags.bits.designated = true;
-                        if (debug_out) debug_out->print("after setting.\n");
-                    } else {
-                        // not safe
-                        if (debug_out) debug_out->print("dig_marked = true\n");
-                        tile_occupancy.bits.dig_marked = true;
-                        if (debug_out) debug_out->print("cancel_job()\n");
-                        jobs.cancel_job(tile); //cancels job if designation is an open/active job
+    auto group_iter = groups.find(tile);
+    if(group_iter != groups.end()) {
+        df::tile_occupancy &tile_occupancy = block->occupancy[local.x][local.y];
+        // first we make sure the tile has a designation priority
+        for (df::block_square_event* event : block->block_events) {
+            if (debug_out) debug_out->print("switch(event->getType())\n");
+            switch (event->getType()) {
+                case df::block_square_event_type::designation_priority:
+                    auto evT = (df::block_square_event_designation_priorityst*) event;
+                    // second we ensure the priority is less than 6 - let the user keep some free from interference
+                    if (evT->priority[local.x][local.y] < 6000) {
+                        if (debug_out) debug_out->print("*group_iter\n");
+                        const GroupData::Group &group = *group_iter;
+                        if (debug_out) debug_out->print("if(is_group_ready())\n");
+                        if (is_group_ready(groups, group)) {
+                            // no pending groups above this group
+                            if (debug_out) debug_out->print("dig_marked = false\n");
+                            tile_occupancy.bits.dig_marked = false;
+                            if (debug_out) debug_out->print("block->flags.bits.designated = true\n");
+                            block->flags.bits.designated = true;
+                            if (debug_out) debug_out->print("after setting.\n");
+                        } else {
+                            // not safe
+                            if (debug_out) debug_out->print("dig_marked = true\n");
+                            tile_occupancy.bits.dig_marked = true;
+                            if (debug_out) debug_out->print("cancel_job()\n");
+                            jobs.cancel_job(tile); //cancels job if designation is an open/active job
+                        }
                     }
-                }
-                break;
+                    break;
+            }
         }
     }
 }
@@ -298,16 +303,18 @@ void manageNeighbours(color_ostream &out, const df::coord &tile) {
     df::coord neighbours[8];
     getNeighbours(tile, neighbours);
     for (auto &position : neighbours) {
-        df::coord local(position);
-        local.x = local.x % 16;
-        local.y = local.y % 16;
-        df::coord above(position);
-        above.z++;
-        out.print("getTileBlock()\n");
-        df::map_block* block = Maps::getTileBlock(position);
-        out.print("manage_safety()\n");
-        //activate designation if group is done now, postpone if not
-        manager.manage_safety(out, block, local, position, above);
+        if (Maps::isValidTilePos(position)) {
+            df::coord local(position);
+            local.x = local.x % 16;
+            local.y = local.y % 16;
+            df::coord above(position);
+            above.z++;
+            if (debug_out) debug_out->print("getTileBlock()\n");
+            df::map_block* block = Maps::getTileBlock(position);
+            if (debug_out) debug_out->print("manage_safety()\n");
+            //activate designation if group is done now, postpone if not
+            manager.manage_safety(out, block, local, position, above);
+        }
     }
 }
 
@@ -332,6 +339,7 @@ bool is_group_ready(const GroupData &groups, const GroupData::Group &below_group
         df::coord world_pos(group_tile.first);
         world_pos.z++;
         auto group_iter = groups.find(world_pos);
+        if (debug_out) debug_out->print("if(group_iter != groups.end()) => %d == %d\n", group_iter, groups.end());
         if (group_iter != groups.end()) {
             if (debug_out) debug_out->print("if(!group_iter->empty())\n");
             if (!group_iter->empty()) {

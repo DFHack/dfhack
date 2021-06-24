@@ -369,6 +369,43 @@ function string:endswith(suffix)
     return self:sub(-#suffix) == suffix or #suffix == 0
 end
 
+-- Inserts newlines into a string so no individual line exceeds the given width.
+-- Lines are split at space-separated word boundaries. Any existing newlines are
+-- kept in place. If a single word is longer than width, it is split over
+-- multiple lines.
+function string:wrap(width)
+    local wrapped_text = {}
+    for line in self:gmatch('[^\n]*') do
+        local line_start_pos = 1
+        local wrapped_line = line:gsub(
+            '%s*()(%S+)()',
+            function(start_pos, word, end_pos)
+                -- word fits within the current line
+                if end_pos - line_start_pos <= width then return end
+                -- word needs to go on the next line, but is not itself longer
+                -- than the specified width
+                if #word <= width then
+                    line_start_pos = start_pos
+                    return '\n' .. word
+                end
+                -- word is too long to fit on one line and needs to be split up
+                local num_chars, str = 0, start_pos == 1 and '' or '\n'
+                repeat
+                    local word_frag = word:sub(num_chars + 1, num_chars + width)
+                    str = str .. word_frag
+                    num_chars = num_chars + #word_frag
+                    if num_chars < #word then
+                        str = str .. '\n'
+                    end
+                    line_start_pos = start_pos + num_chars
+                until end_pos - line_start_pos <= width
+                return str .. word:sub(num_chars + 1)
+            end)
+        table.insert(wrapped_text, wrapped_line)
+    end
+    return table.concat(wrapped_text, '\n')
+end
+
 -- String conversions
 
 function dfhack.persistent:__tostring()

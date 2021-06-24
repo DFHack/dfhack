@@ -51,6 +51,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `embark-assistant`: slightly improved performance of surveying and improved code a little
 
 ## Lua
+- new string utility function: ``string:wrap(width)`` wraps a string at space-separated word boundaries
 - ``gui.Painter``: fixed error when calling ``viewport()`` method
 - `reveal`: now exposes ``unhideFlood(pos)`` functionality to Lua
 - ``utils.processArgsGetopt()``: now returns negative numbers (e.g. ``-10``) in the list of positional parameters instead of treating it as an option string equivalent to ``-1 -0``

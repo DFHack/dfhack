@@ -339,9 +339,9 @@ DFHACK_EXPORT bool canStepBetween(df::coord pos1, df::coord pos2);
 /**
  * Get the plant that owns the tile at the specified position
  */
-extern DFHACK_EXPORT df::plant *getPlantAtCoords(int32_t x, int32_t y, int32_t z);
+extern DFHACK_EXPORT df::plant *getPlantAtTile(int32_t x, int32_t y, int32_t z);
 
-inline df::plant *getPlantAtCoords(df::coord pos) { return getPlantAtCoords(pos.x, pos.y, pos.z); }
+inline df::plant *getPlantAtTile(df::coord pos) { return getPlantAtTile(pos.x, pos.y, pos.z); }
 
 DFHACK_EXPORT df::enums::biome_type::biome_type GetBiomeType(int world_coord_x, int world_coord_y);
 DFHACK_EXPORT df::enums::biome_type::biome_type GetBiomeTypeWithRef(int world_coord_x, int world_coord_y, int world_ref_y_coord);

@@ -1558,7 +1558,7 @@ Maps module
 
   Returns *x, y* for use with ``getRegionBiome``.
 
-* ``dfhack.maps.getPlantAtCoords(pos)``, or ``getPlantAtCoords(x,y,z)``
+* ``dfhack.maps.getPlantAtTile(pos)``, or ``getPlantAtTile(x,y,z)``
 
   Returns the plant struct that owns the tile at the specified position.
 

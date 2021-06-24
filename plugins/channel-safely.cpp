@@ -251,30 +251,28 @@ void ChannelManager::manage_safety(color_ostream &out, df::map_block* block, con
         // first we make sure the tile has a designation priority
         for (df::block_square_event* event : block->block_events) {
             if (debug_out) debug_out->print("switch(event->getType())\n");
-            switch (event->getType()) {
-                case df::block_square_event_type::designation_priority:
-                    auto evT = (df::block_square_event_designation_priorityst*) event;
-                    // second we ensure the priority is less than 6 - let the user keep some free from interference
-                    if (evT->priority[local.x][local.y] < 6000) {
-                        if (debug_out) debug_out->print("*group_iter\n");
-                        const GroupData::Group &group = *group_iter;
-                        if (debug_out) debug_out->print("if(is_group_ready())\n");
-                        if (is_group_ready(groups, group)) {
-                            // no pending groups above this group
-                            if (debug_out) debug_out->print("dig_marked = false\n");
-                            tile_occupancy.bits.dig_marked = false;
-                            if (debug_out) debug_out->print("block->flags.bits.designated = true\n");
-                            block->flags.bits.designated = true;
-                            if (debug_out) debug_out->print("after setting.\n");
-                        } else {
-                            // not safe
-                            if (debug_out) debug_out->print("dig_marked = true\n");
-                            tile_occupancy.bits.dig_marked = true;
-                            if (debug_out) debug_out->print("cancel_job()\n");
-                            jobs.cancel_job(tile); //cancels job if designation is an open/active job
-                        }
+            if (event->getType() == df::block_square_event_type::designation_priority) {
+                auto evT = (df::block_square_event_designation_priorityst*) event;
+                // second we ensure the priority is less than 6 - let the user keep some free from interference
+                if (evT->priority[local.x][local.y] < 6000) {
+                    if (debug_out) debug_out->print("*group_iter\n");
+                    const GroupData::Group &group = *group_iter;
+                    if (debug_out) debug_out->print("if(is_group_ready())\n");
+                    if (is_group_ready(groups, group)) {
+                        // no pending groups above this group
+                        if (debug_out) debug_out->print("dig_marked = false\n");
+                        tile_occupancy.bits.dig_marked = false;
+                        if (debug_out) debug_out->print("block->flags.bits.designated = true\n");
+                        block->flags.bits.designated = true;
+                        if (debug_out) debug_out->print("after setting.\n");
+                    } else {
+                        // not safe
+                        if (debug_out) debug_out->print("dig_marked = true\n");
+                        tile_occupancy.bits.dig_marked = true;
+                        if (debug_out) debug_out->print("cancel_job()\n");
+                        jobs.cancel_job(tile); //cancels job if designation is an open/active job
                     }
-                    break;
+                }
             }
         }
     }

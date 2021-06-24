@@ -245,7 +245,6 @@ local function wrap_expect(func, private)
         orig_printerr('Check failed! ' .. (msg or '(no message)'))
         -- Generate a stack trace with all function calls in the same file as the caller to expect.*()
         -- (this produces better stack traces when using helpers in tests)
-        -- Skip any frames corresponding to C calls, which could be pcall() / with_finalize()
         local frame = 2
         local caller_src
         while true do
@@ -254,10 +253,9 @@ local function wrap_expect(func, private)
             if not caller_src then
                 caller_src = info.short_src
             end
-            if info.what == 'Lua' then
-                if info.short_src ~= caller_src then
-                    break
-                end
+            -- Skip any frames corresponding to C calls, or Lua functions defined in another file
+            -- these could include pcall(), with_finalize(), etc.
+            if info.what == 'Lua' and info.short_src == caller_src then
                 orig_printerr(('  at %s:%d'):format(info.short_src, info.currentline))
             end
             frame = frame + 1

@@ -12,6 +12,7 @@ using namespace DFHack;
 class DigJobs {
 private:
     friend class GroupData;
+
     using Jobs = std::map<df::coord, df::job*>;
     Jobs jobs;
 public:
@@ -50,13 +51,13 @@ public:
     void mark_done(const df::coord &tile) {
         auto iter = groups_map.find(tile);
         int group_index = iter->second;
-        if(iter != groups_map.end()){
+        if (iter != groups_map.end()) {
             Group &group = groups[group_index];
             df::map_block* block = Maps::getTileBlock(tile);
             group.erase(std::make_pair(tile, block));
             if (group.empty()) {
-                for(auto iter = groups_map.begin(); iter != groups_map.end();){
-                    if(group_index == iter->second){
+                for (auto iter = groups_map.begin(); iter != groups_map.end();) {
+                    if (group_index == iter->second) {
                         iter = groups_map.erase(iter);
                     } else {
                         ++iter;
@@ -90,7 +91,7 @@ public:
     void manage_safety(color_ostream &out, df::map_block* block, const df::coord &local, const df::coord &tile, const df::coord &tile_above);
     void delete_groups() { groups.clear(); }
     void mark_done(const df::coord &tile) { groups.mark_done(tile); }
-    void debug(){
+    void debug() {
         groups.debug();
     }
 };

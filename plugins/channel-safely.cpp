@@ -17,12 +17,6 @@ Updated: Jun. 15 2021
 
 using namespace DFHack;
 
-/* todo list:
- * 1) we should track channel designations as groups of designations (presumably part of the same project) designations which are collectively adjacent to one another
- * 2) check if there is a group above a given tile
- *
- */
-
 DFHACK_PLUGIN("channel-safely");
 DFHACK_PLUGIN_IS_ENABLED(enabled);
 REQUIRE_GLOBAL(world);
@@ -30,14 +24,15 @@ REQUIRE_GLOBAL(world);
 //#define dayTicks 1200 //ie. fullBuildFreq = 24 dwarf hours
 
 #include <type_traits>
+
 #define DECLARE_HASA(what) \
 template<typename T, typename = int> struct has_##what : std::false_type { };\
 template<typename T> struct has_##what<T, decltype((void) T::what, 0)> : std::true_type {};
-
 DECLARE_HASA(when) //declares above statement with 'when' replacing 'what'
 // end usage is: `has_when<T>::value`
 // the only use is to allow reliance on pull request #1876 which introduces a refactor which prevents some manual management
 
+color_ostream* debug_out = nullptr;
 ChannelManager manager;
 void onNewHour(color_ostream &out, void* tick_ptr);
 void onStart(color_ostream &out, void* job);
@@ -50,12 +45,9 @@ bool is_group_ready(const GroupData &groups, const GroupData::Group &below_group
 bool is_dig(df::job* job);
 bool is_channel(df::job* job);
 bool is_channel(df::tile_designation &designation);
+command_result manage_channel_designations(color_ostream &out, std::vector<std::string> &parameters);
 
-color_ostream* debug_out = nullptr;
-
-command_result manage_channel_designations (color_ostream &out, std::vector <std::string> &parameters);
-
-DFhackCExport command_result plugin_init( color_ostream &out, std::vector<PluginCommand> &commands) {
+DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginCommand> &commands) {
     commands.push_back(PluginCommand("channel-safely",
                                      "A tool to manage active channel designations.",
                                      manage_channel_designations,
@@ -246,7 +238,7 @@ void ChannelManager::manage_designations(color_ostream &out) {
 
 void ChannelManager::manage_safety(color_ostream &out, df::map_block* block, const df::coord &local, const df::coord &tile, const df::coord &tile_above) {
     auto group_iter = groups.find(tile);
-    if(group_iter != groups.end()) {
+    if (group_iter != groups.end()) {
         df::tile_occupancy &tile_occupancy = block->occupancy[local.x][local.y];
         // first we make sure the tile has a designation priority
         for (df::block_square_event* event : block->block_events) {
@@ -278,7 +270,7 @@ void ChannelManager::manage_safety(color_ostream &out, df::map_block* block, con
     }
 }
 
-inline void getNeighbours(const df::coord &tile, df::coord(&neighbours)[8]){
+inline void getNeighbours(const df::coord &tile, df::coord(&neighbours)[8]) {
     neighbours[0] = tile;
     neighbours[1] = tile;
     neighbours[2] = tile;
@@ -330,8 +322,6 @@ void cancelJob(df::job* job) {
     }
 }
 
-// todo: update checks to simple: does group exist
-
 bool is_group_ready(const GroupData &groups, const GroupData::Group &below_group) {
     for (auto &group_tile : below_group) {
         df::coord world_pos(group_tile.first);
@@ -354,11 +344,11 @@ bool is_dig(df::job* job) {
     return job->job_type == df::job_type::Dig;
 }
 
-bool is_channel(df::job* job){
+bool is_channel(df::job* job) {
     return job->job_type == df::job_type::DigChannel;
 }
 
-bool is_channel(df::tile_designation &designation){
+bool is_channel(df::tile_designation &designation) {
     return designation.bits.dig == df::tile_dig_designation::Channel;
 }
 

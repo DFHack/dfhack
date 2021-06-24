@@ -1923,10 +1923,10 @@ static int maps_getTileBiomeRgn(lua_State *L)
     return Lua::PushPosXY(L, Maps::getTileBiomeRgn(pos));
 }
 
-static int maps_getPlantAtCoords(lua_State *L)
+static int maps_getPlantAtTile(lua_State *L)
 {
     auto pos = CheckCoordXYZ(L, 1, true);
-    Lua::PushDFObject(L, Maps::getPlantAtCoords(pos));
+    Lua::PushDFObject(L, Maps::getPlantAtTile(pos));
     return 1;
 }
 
@@ -1939,7 +1939,7 @@ static const luaL_Reg dfhack_maps_funcs[] = {
     { "getTileFlags", maps_getTileFlags },
     { "getRegionBiome", maps_getRegionBiome },
     { "getTileBiomeRgn", maps_getTileBiomeRgn },
-    { "getPlantAtCoords", maps_getPlantAtCoords },
+    { "getPlantAtTile", maps_getPlantAtTile },
     { NULL, NULL }
 };
 

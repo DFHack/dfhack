@@ -61,6 +61,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## API
 - Added ``dfhack.units.teleport(unit, pos)``
+- Added ``dfhack.maps.getPlantAtTile(x, y, z)`` and ``dfhack.maps.getPlantAtTile(pos)``
 
 ## Documentation
 - Added more client library implementations to the `remote interface docs <remote-client-libs>`

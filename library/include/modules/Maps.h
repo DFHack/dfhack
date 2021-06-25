@@ -40,6 +40,7 @@ distribution.
 #include "df/block_flags.h"
 #include "df/feature_type.h"
 #include "df/flow_type.h"
+#include "df/plant.h"
 #include "df/tile_dig_designation.h"
 #include "df/tile_liquid.h"
 #include "df/tile_traffic.h"
@@ -334,6 +335,13 @@ extern DFHACK_EXPORT bool RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, d
 
 DFHACK_EXPORT bool canWalkBetween(df::coord pos1, df::coord pos2);
 DFHACK_EXPORT bool canStepBetween(df::coord pos1, df::coord pos2);
+
+/**
+ * Get the plant that owns the tile at the specified position
+ */
+extern DFHACK_EXPORT df::plant *getPlantAtTile(int32_t x, int32_t y, int32_t z);
+
+inline df::plant *getPlantAtTile(df::coord pos) { return getPlantAtTile(pos.x, pos.y, pos.z); }
 
 DFHACK_EXPORT df::enums::biome_type::biome_type GetBiomeType(int world_coord_x, int world_coord_y);
 DFHACK_EXPORT df::enums::biome_type::biome_type GetBiomeTypeWithRef(int world_coord_x, int world_coord_y, int world_ref_y_coord);

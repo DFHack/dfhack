@@ -157,6 +157,8 @@ command_result manage_channel_designations(color_ostream &out, std::vector<std::
         }
     } else if (parameters.size() == 1 && parameters[0] == "enable") {
         return plugin_enable(out, true);
+    } else if (parameters.size() == 2 && parameters[0] == "enable" && parameters[1] == "cheats") {
+        cheat_mode = true;
     } else if (parameters.size() == 1 && parameters[0] == "disable") {
         return plugin_enable(out, false);
     } else if (parameters.size() == 1 && parameters[0] == "debug") {

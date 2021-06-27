@@ -4,6 +4,7 @@
 #include "channel-safely.h"
 
 color_ostream* debug_out = nullptr;
+bool cheat_mode = false;
 ChannelManager manager;
 
 void ChannelManager::manage_designations(color_ostream &out) {

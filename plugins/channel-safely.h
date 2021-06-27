@@ -104,6 +104,7 @@ public:
 
 extern color_ostream* debug_out;
 extern ChannelManager manager;
+extern bool cheat_mode;
 extern void getNeighbours(const df::coord &tile, df::coord(&neighbours)[8]);
 extern void manageNeighbours(color_ostream &out, const df::coord &tile);
 extern void cancelJob(df::job* job);

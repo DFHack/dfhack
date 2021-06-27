@@ -566,7 +566,8 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
                 DFCoord pos(x, y, z);
                 df::tile_designation td = map.designationAt(pos);
                 df::tile_occupancy to = map.occupancyAt(pos);
-                if (td.bits.dig != df::tile_dig_designation::No) {
+                if (td.bits.dig != df::tile_dig_designation::No &&
+                        !to.bits.dig_marked) {
                     std::vector<dug_tile_info> dug_tiles;
                     if (dig_tile(out, map, pos, td.bits.dig, dug_tiles)) {
                         td = map.designationAt(pos);

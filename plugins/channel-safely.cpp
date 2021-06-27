@@ -31,6 +31,7 @@ template<typename T> struct has_##what<T, decltype((void) T::what, 0)> : std::tr
 DECLARE_HASA(when) //declares above statement with 'when' replacing 'what'
 // end usage is: `has_when<T>::value`
 // the only use is to allow reliance on pull request #1876 which introduces a refactor which prevents some manual management
+//#define CS_DEBUG 1
 
 color_ostream* debug_out = nullptr;
 ChannelManager manager;
@@ -58,6 +59,9 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginC
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     namespace EM = EventManager;
+#ifdef CS_DEBUG
+    debug_out = &out;
+#endif
     if (enable && !enabled) {
         using namespace EM::EventType;
         EM::EventHandler hoursHandler(onNewHour, hourTicks);
@@ -81,35 +85,51 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         out.print("channel-safely disabled!\n");
     }
     enabled = enable;
+    debug_out = nullptr;
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
+#ifdef CS_DEBUG
+    debug_out = &out;
+#endif
+    if (debug_out) debug_out->print("onstatechange()\n");
     if (enabled && World::isFortressMode()) {
         switch (event) {
             case SC_UNKNOWN:
+                if (debug_out) debug_out->print("SC_UNKNOWN\n");
                 break;
             case SC_WORLD_LOADED:
+                if (debug_out) debug_out->print("SC_WORLD_LOADED\n");
                 break;
             case SC_WORLD_UNLOADED:
+                if (debug_out) debug_out->print("SC_WORLD_UNLOADED\n");
                 break;
             case SC_MAP_LOADED:
-                manager.manage_designations(out);
+                if (debug_out) debug_out->print("SC_MAP_LOADED\n");
                 break;
             case SC_MAP_UNLOADED:
+                if (debug_out) debug_out->print("SC_MAP_UNLOADED\n");
                 break;
             case SC_VIEWSCREEN_CHANGED:
                 break;
             case SC_CORE_INITIALIZED:
+                if (debug_out) debug_out->print("SC_CORE_INITIALIZED\n");
                 break;
             case SC_BEGIN_UNLOAD:
+                if (debug_out) debug_out->print("SC_BEGIN_UNLOAD\n");
                 break;
             case SC_PAUSED:
+                if (debug_out) debug_out->print("SC_PAUSED\n");
+                manager.manage_designations(out);
                 break;
             case SC_UNPAUSED:
+                if (debug_out) debug_out->print("SC_UNPAUSED\n");
+                manager.manage_designations(out);
                 break;
         }
     }
+    debug_out = nullptr;
     return CR_OK;
 }
 
@@ -121,7 +141,12 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out) {
 }
 
 command_result manage_channel_designations(color_ostream &out, std::vector<std::string> &parameters) {
+#ifdef CS_DEBUG
+    debug_out = &out;
+#endif
+    if (debug_out) debug_out->print("manage_channel_designations()\n");
     if (parameters.empty()) {
+        if (debug_out) debug_out->print("mcd->manage_designations()\n");
         manager.manage_designations(out);
         if (!enabled) {
             manager.delete_groups();
@@ -135,13 +160,17 @@ command_result manage_channel_designations(color_ostream &out, std::vector<std::
         manager.debug();
         debug_out = nullptr;
     } else {
+        debug_out = nullptr;
         return CR_FAILURE;
     }
+    debug_out = nullptr;
     return CR_OK;
 }
 
 void onNewHour(color_ostream &out, void* tick_ptr) {
-    //debug_out = &out;
+#ifdef CS_DEBUG
+    debug_out = &out;
+#endif
     if (debug_out) debug_out->print("onNewHour()\n");
     if (enabled && World::isFortressMode()) {
         static int32_t last_tick_counter = 0;
@@ -161,7 +190,9 @@ void onNewHour(color_ostream &out, void* tick_ptr) {
 }
 
 void onStart(color_ostream &out, void* job_ptr) {
-    //debug_out = &out;
+#ifdef CS_DEBUG
+    debug_out = &out;
+#endif
     if (debug_out) debug_out->print("onStart()\n");
     if (enabled && World::isFortressMode()) {
         auto job = (df::job*) job_ptr;
@@ -181,7 +212,9 @@ void onStart(color_ostream &out, void* job_ptr) {
 }
 
 void onComplete(color_ostream &out, void* job_ptr) {
-    //debug_out = &out;
+#ifdef CS_DEBUG
+    debug_out = &out;
+#endif
     if (debug_out) debug_out->print("onComplete()\n");
     if (enabled && World::isFortressMode()) {
         auto job = (df::job*) job_ptr;
@@ -206,6 +239,7 @@ void onComplete(color_ostream &out, void* job_ptr) {
 }
 
 void ChannelManager::manage_designations(color_ostream &out) {
+    if (debug_out) debug_out->print("manage_designations()\n");
     if (World::isFortressMode()) {
         static bool getMapSize = false;
         static uint32_t t1, t2, zmax;

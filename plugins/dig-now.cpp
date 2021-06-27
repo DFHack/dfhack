@@ -334,22 +334,24 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
             }
             break;
         case df::tile_dig_designation::Channel:
-            if (can_dig_channel(tt)) {
+        {
+            DFCoord pos_below(pos.x, pos.y, pos.z-1);
+            if (can_dig_channel(tt) && map.ensureBlockAt(pos_below)
+                    && is_diggable(map, pos_below, map.tiletypeAt(pos_below))) {
                 target_type = df::tiletype::OpenSpace;
                 DFCoord pos_above(pos.x, pos.y, pos.z+1);
                 if (map.ensureBlockAt(pos_above))
                     remove_ramp_top(map, pos_above);
-                DFCoord pos_below(pos.x, pos.y, pos.z-1);
-                if (map.ensureBlockAt(pos_below) &&
-                        dig_tile(out, map, pos_below,
-                                 df::tile_dig_designation::Ramp, dug_tiles)) {
+                if (dig_tile(out, map, pos_below,
+                             df::tile_dig_designation::Ramp, dug_tiles)) {
                     clean_ramps(map, pos_below);
                     // if we successfully dug out the ramp below, that took care
                     // of adding the ramp top here
                     return true;
                 }
-                break;
             }
+            break;
+        }
         case df::tile_dig_designation::UpStair:
             if (can_dig_up_stair(tt))
                 target_type =
@@ -374,7 +376,8 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
             if (can_dig_ramp(tt)) {
                 target_type = findSimilarTileType(tt, df::tiletype_shape::RAMP);
                 DFCoord pos_above(pos.x, pos.y, pos.z+1);
-                if (target_type != tt && map.ensureBlockAt(pos_above)) {
+                if (target_type != tt && map.ensureBlockAt(pos_above)
+                        && is_diggable(map, pos, map.tiletypeAt(pos_above))) {
                     // only capture the tile info of pos_above if we didn't get
                     // here via the Channel case above
                     if (dug_tiles.size() == 0)

@@ -656,19 +656,30 @@ static void create_boulders(color_ostream &out,
         prod->mat_type = 0;
         prod->mat_index = entry.first.second;
         prod->probability = 100;
-        prod->count = coords.size();
         prod->product_dimension = 1;
 
         std::vector<df::reaction_product*> out_products;
         std::vector<df::item *> out_items;
 
-        prod->produce(unit, &out_products, &out_items, &in_reag, &in_items, 1,
-                      job_skill::NONE, 0, civ, site, NULL);
+        size_t remaining_items = coords.size();
+        while (remaining_items > 0) {
+            int16_t batch_size = min(remaining_items,
+                                     static_cast<size_t>(INT16_MAX));
+            prod->count = batch_size;
+            remaining_items -= batch_size;
+            prod->produce(unit, &out_products, &out_items, &in_reag, &in_items,
+                          1, job_skill::NONE, 0, civ, site, NULL);
+        }
 
         size_t num_items = out_items.size();
         if (num_items != coords.size()) {
-            out.printerr("unexpected number of boulders produced; "
-                         "some boulders may be missing.\n");
+            MaterialInfo material;
+            material.decode(prod->mat_type, prod->mat_index);
+            out.printerr("unexpected number of %s %s produced: expected %zd,"
+                         " got %zd.\n",
+                         material.toString().c_str(),
+                         ENUM_KEY_STR(item_type, prod->item_type).c_str(),
+                         coords.size(), num_items);
             num_items = min(num_items, entry.second.size());
         }
 

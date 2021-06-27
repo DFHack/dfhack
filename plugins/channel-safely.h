@@ -4,6 +4,12 @@
 
 #pragma once
 #include <PluginManager.h>
+#include <modules/World.h>
+#include <modules/Maps.h>
+#include <modules/Job.h>
+#include <df/map_block.h>
+#include <df/world.h>
+#include <df/block_square_event_designation_priorityst.h>
 #include <map>
 
 using namespace DFHack;
@@ -95,3 +101,13 @@ public:
         groups.debug();
     }
 };
+
+extern color_ostream* debug_out;
+extern ChannelManager manager;
+extern void getNeighbours(const df::coord &tile, df::coord(&neighbours)[8]);
+extern void manageNeighbours(color_ostream &out, const df::coord &tile);
+extern void cancelJob(df::job* job);
+extern bool is_group_ready(const GroupData &groups, const GroupData::Group &below_group);
+extern bool is_dig(df::job* job);
+extern bool is_channel(df::job* job);
+extern bool is_channel(df::tile_designation &designation);

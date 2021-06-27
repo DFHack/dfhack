@@ -20,8 +20,8 @@ using namespace DFHack;
 DFHACK_PLUGIN("channel-safely");
 DFHACK_PLUGIN_IS_ENABLED(enabled);
 REQUIRE_GLOBAL(world);
-#define hourTicks 50
-//#define dayTicks 1200 //ie. fullBuildFreq = 24 dwarf hours
+//#define hourTicks 50
+#define dayTicks 1200 //ie. fullBuildFreq = 24 dwarf hours
 
 #include <type_traits>
 
@@ -35,7 +35,12 @@ DECLARE_HASA(when) //declares above statement with 'when' replacing 'what'
 
 color_ostream* debug_out = nullptr;
 ChannelManager manager;
+#ifdef hourTicks
 void onNewHour(color_ostream &out, void* tick_ptr);
+#endif
+#ifdef dayTicks
+void onNewDay(color_ostream &out, void* tick_ptr);
+#endif
 void onStart(color_ostream &out, void* job);
 void onComplete(color_ostream &out, void* job);
 
@@ -64,16 +69,28 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 #endif
     if (enable && !enabled) {
         using namespace EM::EventType;
+#ifdef hourTicks
         EM::EventHandler hoursHandler(onNewHour, hourTicks);
-        //EM::EventHandler daysHandler(onNewDay, dayTicks);
+#endif
+#ifdef dayTicks
+        EM::EventHandler daysHandler(onNewDay, dayTicks);
+#endif
         EM::EventHandler jobStartHandler(onStart, 0);
         EM::EventHandler jobCompletionHandler(onComplete, 0);
         if (!has_when<EM::EventHandler>::value) {
+#ifdef hourTicks
             EM::registerTick(hoursHandler, hourTicks, plugin_self);
-            //EM::registerTick(daysHandler, dayTicks, plugin_self);
+#endif
+#ifdef dayTicks
+            EM::registerTick(daysHandler, dayTicks, plugin_self);
+#endif
         } else {
+#ifdef hourTicks
             EM::registerListener(EventType::TICK, hoursHandler, plugin_self);
-            //EM::registerListener(EventType::TICK, daysHandler, plugin_self);
+#endif
+#ifdef dayTicks
+            EM::registerListener(EventType::TICK, daysHandler, plugin_self);
+#endif
         }
         EM::registerListener(EventType::JOB_INITIATED, jobStartHandler, plugin_self);
         EM::registerListener(EventType::JOB_COMPLETED, jobCompletionHandler, plugin_self);
@@ -94,7 +111,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     debug_out = &out;
 #endif
     if (debug_out) debug_out->print("onstatechange()\n");
-    if (enabled && World::isFortressMode()) {
+    if (enabled && World::isFortressMode() && Maps::IsValid()) {
         switch (event) {
             case SC_UNKNOWN:
                 if (debug_out) debug_out->print("SC_UNKNOWN\n");
@@ -107,6 +124,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
                 break;
             case SC_MAP_LOADED:
                 if (debug_out) debug_out->print("SC_MAP_LOADED\n");
+                manager.manage_designations(out);
                 break;
             case SC_MAP_UNLOADED:
                 if (debug_out) debug_out->print("SC_MAP_UNLOADED\n");
@@ -167,12 +185,13 @@ command_result manage_channel_designations(color_ostream &out, std::vector<std::
     return CR_OK;
 }
 
+#ifdef hourTicks
 void onNewHour(color_ostream &out, void* tick_ptr) {
 #ifdef CS_DEBUG
     debug_out = &out;
 #endif
     if (debug_out) debug_out->print("onNewHour()\n");
-    if (enabled && World::isFortressMode()) {
+    if (enabled && World::isFortressMode() && Maps::IsValid()) {
         static int32_t last_tick_counter = 0;
         int32_t tick_counter = (int32_t) ((intptr_t) tick_ptr);
         if ((tick_counter - last_tick_counter) >= hourTicks) {
@@ -188,13 +207,38 @@ void onNewHour(color_ostream &out, void* tick_ptr) {
     if (debug_out) debug_out->print("onNewHour() - return\n");
     debug_out = nullptr;
 }
+#endif
+
+#ifdef dayTicks
+void onNewDay(color_ostream &out, void* tick_ptr) {
+#ifdef CS_DEBUG
+    debug_out = &out;
+#endif
+    if (debug_out) debug_out->print("onNewHour()\n");
+    if (enabled && World::isFortressMode() && Maps::IsValid()) {
+        static int32_t last_tick_counter = 0;
+        int32_t tick_counter = (int32_t) ((intptr_t) tick_ptr);
+        if ((tick_counter - last_tick_counter) >= dayTicks) {
+            last_tick_counter = tick_counter;
+            manager.manage_designations(out);
+        }
+    }
+    namespace EM = EventManager;
+    if (!has_when<EM::EventHandler>::value) {
+        EM::EventHandler tickHandler(onNewDay, dayTicks);
+        EM::registerTick(tickHandler, dayTicks, plugin_self);
+    }
+    if (debug_out) debug_out->print("onNewHour() - return\n");
+    debug_out = nullptr;
+}
+#endif
 
 void onStart(color_ostream &out, void* job_ptr) {
 #ifdef CS_DEBUG
     debug_out = &out;
 #endif
     if (debug_out) debug_out->print("onStart()\n");
-    if (enabled && World::isFortressMode()) {
+    if (enabled && World::isFortressMode() && Maps::IsValid()) {
         auto job = (df::job*) job_ptr;
         if (is_dig(job) || is_channel(job)) {
             df::coord local(job->pos);
@@ -216,7 +260,7 @@ void onComplete(color_ostream &out, void* job_ptr) {
     debug_out = &out;
 #endif
     if (debug_out) debug_out->print("onComplete()\n");
-    if (enabled && World::isFortressMode()) {
+    if (enabled && World::isFortressMode() && Maps::IsValid()) {
         auto job = (df::job*) job_ptr;
         if (is_channel(job)) {
             df::coord local(job->pos);
@@ -240,13 +284,14 @@ void onComplete(color_ostream &out, void* job_ptr) {
 
 void ChannelManager::manage_designations(color_ostream &out) {
     if (debug_out) debug_out->print("manage_designations()\n");
-    if (World::isFortressMode()) {
+    if (World::isFortressMode() && Maps::IsValid()) {
         static bool getMapSize = false;
         static uint32_t t1, t2, zmax;
         if (!getMapSize) {
             getMapSize = true;
             Maps::getSize(t1, t2, zmax);
         }
+        if (debug_out) debug_out->print("map size: %d, %d, %d\n", t1, t2, zmax);
         build_groups();
         for (auto &group : groups) {
             if (debug_out) debug_out->print("foreach group\n");
@@ -404,11 +449,15 @@ void GroupData::foreach_block() {
         getMapSize = true;
         Maps::getSize(x, y, z);
     }
+    if (debug_out) debug_out->print("map size: %d, %d, %d\n", x, y, z);
     for (int ix = 0; ix < x; ++ix) {
         for (int iy = 0; iy < y; ++iy) {
             for (int iz = z - 1; iz >= 0; --iz) {
                 df::map_block* block = Maps::getBlock(ix, iy, iz);
-                foreach_tile(block, iz);
+                if (debug_out) debug_out->print("foreach block [%d]\n", block);
+                if (block) {
+                    foreach_tile(block, iz);
+                }
             }
         }
     }
@@ -418,6 +467,7 @@ void GroupData::foreach_tile(df::map_block* block, int z) {
     for (int16_t local_x = 0; local_x < 16; ++local_x) {
         for (int16_t local_y = 0; local_y < 16; ++local_y) {
             if (is_channel(block->designation[local_x][local_y])) {
+                if (debug_out) debug_out->print("foreach tile\n");
                 df::coord world_pos(block->map_pos);
                 world_pos.x += local_x;
                 world_pos.y += local_y;

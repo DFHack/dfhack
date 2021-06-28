@@ -414,6 +414,8 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
 }
 
 static bool is_smooth_wall(MapExtras::MapCache &map, const DFCoord &pos) {
+    if (!map.ensureBlockAt(pos))
+        return false;
     df::tiletype tt = map.tiletypeAt(pos);
     return tileSpecial(tt) == df::tiletype_special::SMOOTH
                 && tileShape(tt) == df::tiletype_shape::WALL;
@@ -447,9 +449,10 @@ static TileDirection ensure_valid_tdir(TileDirection tdir) {
 }
 
 // connects adjacent smooth walls to our new smooth wall
+static TileDirection BLANK_TILE_DIRECTION;
 static bool adjust_smooth_wall_dir(MapExtras::MapCache &map,
                                    const DFCoord &pos,
-                                   TileDirection tdir) {
+                                   TileDirection tdir = BLANK_TILE_DIRECTION) {
     if (!is_smooth_wall(map, pos))
         return false;
 
@@ -463,6 +466,14 @@ static bool adjust_smooth_wall_dir(MapExtras::MapCache &map,
 
     map.setTiletypeAt(pos, tt);
     return true;
+}
+
+static void refresh_adjacent_smooth_walls(MapExtras::MapCache &map,
+                                          const DFCoord &pos) {
+    adjust_smooth_wall_dir(map, DFCoord(pos.x, pos.y-1, pos.z));
+    adjust_smooth_wall_dir(map, DFCoord(pos.x, pos.y+1, pos.z));
+    adjust_smooth_wall_dir(map, DFCoord(pos.x-1, pos.y, pos.z));
+    adjust_smooth_wall_dir(map, DFCoord(pos.x+1, pos.y, pos.z));
 }
 
 // assumes that if the game let you designate a tile for smoothing, it must be
@@ -578,6 +589,7 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
                         map.setDesignationAt(pos, td);
                         for (auto info : dug_tiles) {
                             dug_coords.push_back(info.pos);
+                            refresh_adjacent_smooth_walls(map, info.pos);
                             if (info.imat < 0)
                                 continue;
                             if (produces_item(options.boulder_percents,

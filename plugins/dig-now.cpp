@@ -2,6 +2,8 @@
  * Simulates completion of dig designations.
  */
 
+#include "dig-now.h"
+
 #include "DataFuncs.h"
 #include "PluginManager.h"
 #include "TileTypes.h"
@@ -790,6 +792,32 @@ static void print_help(color_ostream &out) {
     }
 }
 
+bool dig_now_impl(color_ostream &out, const dig_now_options &options) {
+    if (!Maps::IsValid()) {
+        out.printerr("Map is not available!\n");
+        return false;
+    }
+
+    // required for boulder generation
+    if (world->units.active.size() == 0) {
+        out.printerr("At least one unit must be alive!\n");
+        return false;
+    }
+
+    // track which positions were modified and where to produce items
+    std::vector<DFCoord> dug_coords;
+    item_coords_t item_coords;
+
+    do_dig(out, dug_coords, item_coords, options);
+    create_boulders(out, item_coords, options);
+    post_process_dug_tiles(out, dug_coords);
+
+    // force the game to recompute its walkability cache
+    world->reindex_pathfinding = true;
+
+    return true;
+}
+
 command_result dig_now(color_ostream &out, std::vector<std::string> &params) {
     CoreSuspender suspend;
 
@@ -800,29 +828,7 @@ command_result dig_now(color_ostream &out, std::vector<std::string> &params) {
         return options.help ? CR_OK : CR_FAILURE;
     }
 
-    if (!Maps::IsValid()) {
-        out.printerr("Map is not available!\n");
-        return CR_FAILURE;
-    }
-
-    // required for boulder generation
-    if (world->units.active.size() == 0) {
-        out.printerr("At least one unit must be alive!\n");
-        return CR_FAILURE;
-    }
-
-    // track which positions were modified and where to produce items
-    std::vector<DFCoord> dug_coords;
-    item_coords_t item_coords;
-
-    do_dig(out, dug_coords, item_coords, options);
-    create_boulders(out, item_coords, options);
-    post_process_dug_tiles (out, dug_coords);
-
-    // force the game to recompute its walkability cache
-    world->reindex_pathfinding = true;
-
-    return CR_OK;
+    return dig_now_impl(out, options) ? CR_OK : CR_FAILURE;
 }
 
 DFhackCExport command_result plugin_init(color_ostream &,
@@ -834,4 +840,15 @@ DFhackCExport command_result plugin_init(color_ostream &,
 
 DFhackCExport command_result plugin_shutdown(color_ostream &) {
     return CR_OK;
+}
+
+// External API
+
+// runs dig-now for the specified tile. default options apply.
+bool dig_now_tile (color_ostream& out, const DFCoord& pos)
+{
+    dig_now_options options;
+    options.start = pos;
+    options.end = pos;
+    return dig_now_impl(out, options);
 }

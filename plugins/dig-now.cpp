@@ -2,8 +2,6 @@
  * Simulates completion of dig designations.
  */
 
-#include "dig-now.h"
-
 #include "DataFuncs.h"
 #include "PluginManager.h"
 #include "TileTypes.h"

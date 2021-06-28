@@ -856,8 +856,6 @@ static int dig_now_tile(lua_State *L)
     if (!out)
         out = &Core::getInstance().getConsole();
 
-    return 1;
-
     dig_now_options options;
     options.start = pos;
     options.end = pos;

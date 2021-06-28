@@ -25,6 +25,7 @@ SIDEBAR_MODE_KEYS = {
     [df.ui_sidebar_mode.BuildingItems]='D_BUILDITEM',
     [df.ui_sidebar_mode.Stockpiles]='D_STOCKPILES',
     [df.ui_sidebar_mode.Zones]='D_CIVZONE',
+    [df.ui_sidebar_mode.ViewUnits]='D_VIEWUNIT',
 }
 
 -- Sends ESC keycodes until we get to dwarfmode/Default and then enters the

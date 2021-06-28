@@ -726,11 +726,32 @@ static void flood_unhide(color_ostream &out, const DFCoord &pos) {
     Lua::SafeCall(out, L, 1, 0);
 }
 
+static bool needs_unhide(const DFCoord &pos) {
+    return !Maps::ensureTileBlock(pos)
+        || Maps::getTileDesignation(pos)->bits.hidden;
+}
+
+static bool needs_flood_unhide(const DFCoord &pos) {
+    return needs_unhide(pos)
+        || needs_unhide(DFCoord(pos.x-1, pos.y-1, pos.z))
+        || needs_unhide(DFCoord(pos.x, pos.y-1, pos.z))
+        || needs_unhide(DFCoord(pos.x+1, pos.y-1, pos.z))
+        || needs_unhide(DFCoord(pos.x-1, pos.y, pos.z))
+        || needs_unhide(DFCoord(pos.x+1, pos.y, pos.z))
+        || needs_unhide(DFCoord(pos.x-1, pos.y+1, pos.z))
+        || needs_unhide(DFCoord(pos.x, pos.y+1, pos.z))
+        || needs_unhide(DFCoord(pos.x+1, pos.y+1, pos.z));
+}
+
 static void post_process_dug_tiles(color_ostream &out,
                              const std::vector<DFCoord> &dug_coords) {
     for (DFCoord pos : dug_coords) {
-        if (Maps::getTileDesignation(pos)->bits.hidden)
+        if (needs_flood_unhide(pos)) {
+            // set current tile to hidden to allow flood_unhide to work on tiles
+            // that were already visible but that reveal hidden tiles when dug.
+            Maps::getTileDesignation(pos)->bits.hidden = true;
             flood_unhide(out, pos);
+        }
 
         df::tile_occupancy &to = *Maps::getTileOccupancy(pos);
         if (to.bits.unit || to.bits.item) {

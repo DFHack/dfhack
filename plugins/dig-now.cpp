@@ -842,13 +842,33 @@ DFhackCExport command_result plugin_shutdown(color_ostream &) {
     return CR_OK;
 }
 
-// External API
+// Lua API
 
-// runs dig-now for the specified tile. default options apply.
-bool dig_now_tile (color_ostream& out, const DFCoord& pos)
+// runs dig-now for the specified tile coordinate. default options apply.
+static int dig_now_tile(lua_State *L)
 {
+    DFCoord pos;
+    if (lua_gettop(L) <= 1)
+        Lua::CheckDFAssign(L, &pos, 1);
+    else
+        pos = DFCoord(luaL_checkint(L, 1), luaL_checkint(L, 2),
+                      luaL_checkint(L, 3));
+
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+
+    return 1;
+
     dig_now_options options;
     options.start = pos;
     options.end = pos;
-    return dig_now_impl(out, options);
+    lua_pushboolean(L, dig_now_impl(*out, options));
+
+    return 1;
 }
+
+DFHACK_PLUGIN_LUA_COMMANDS {
+    DFHACK_LUA_COMMAND(dig_now_tile),
+    DFHACK_LUA_END
+};

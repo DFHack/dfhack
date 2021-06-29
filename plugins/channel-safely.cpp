@@ -79,13 +79,12 @@ void ChannelManager::manage_safety(color_ostream &out, df::map_block* block, con
                         block->flags.bits.designated = true;
                     } else {
                         // not safe
-                        if(!safe_to_dig_down(tile) && cheat_mode){
-                            if(!is_group_occupied(groups, group)) {
-                                dig_now_tile(out, tile);
-                            }
-                        } else {
-                            tile_occupancy.bits.dig_marked = true;
-                            jobs.cancel_job(tile); //cancels job if designation is an open/active job
+                        tile_occupancy.bits.dig_marked = true;
+                        jobs.cancel_job(tile); //cancels job if designation is an open/active job
+                        // is it permanently unsafe? and is it safe to instantly dig the group of tiles
+                        if (cheat_mode && !safe_to_dig_down(tile) && !is_group_occupied(groups, group)) {
+                            tile_occupancy.bits.dig_marked = false;
+                            dig_now_tile(out, tile);
                         }
                     }
                 }

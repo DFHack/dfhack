@@ -90,9 +90,14 @@ class ChannelManager {
 private:
     DigJobs jobs;
     GroupData groups = GroupData(jobs);
+    ChannelManager(){}
 protected:
     void build_groups() { groups.read(); }
 public:
+    static ChannelManager Get(){
+        static ChannelManager instance;
+        return instance;
+    }
     void manage_designations(color_ostream &out);
     void manage_safety(color_ostream &out, df::map_block* block, const df::coord &local, const df::coord &tile, const df::coord &tile_above);
     void delete_groups() { groups.clear(); }
@@ -103,12 +108,13 @@ public:
 };
 
 extern color_ostream* debug_out;
-extern ChannelManager manager;
 extern bool cheat_mode;
 extern void getNeighbours(const df::coord &tile, df::coord(&neighbours)[8]);
 extern void manageNeighbours(color_ostream &out, const df::coord &tile);
 extern void cancelJob(df::job* job);
-extern bool is_group_ready(const GroupData &groups, const GroupData::Group &below_group);
+extern bool is_group_ready(const GroupData &groups, const GroupData::Group &group);
+extern bool is_group_occupied(const GroupData &groups, const GroupData::Group &group);
+extern bool safe_to_dig_down(const df::coord &tile);
 extern bool is_dig(df::job* job);
 extern bool is_channel(df::job* job);
 extern bool is_channel(df::tile_designation &designation);

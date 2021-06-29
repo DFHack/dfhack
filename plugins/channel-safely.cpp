@@ -2,10 +2,30 @@
 // Created by josh on 6/27/21.
 //
 #include "channel-safely.h"
+#include "LuaTools.h"
+#include "LuaWrapper.h"
+#include "TileTypes.h"
 
 color_ostream* debug_out = nullptr;
 bool cheat_mode = false;
-ChannelManager manager;
+
+// executes dig designations for the specified tile coordinates
+static bool dig_now_tile(color_ostream &out, const df::coord &pos) {
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
+
+    if (!lua_checkstack(L, 2) ||
+        !Lua::PushModulePublic(out, L, "plugins.dig-now", "dig_now_tile"))
+        return false;
+
+    Lua::Push(L, pos);
+
+    if (!Lua::SafeCall(out, L, 1, 1))
+        return false;
+
+    return lua_toboolean(L, -1);
+
+}
 
 void ChannelManager::manage_designations(color_ostream &out) {
     if (debug_out) debug_out->print("manage_designations()\n");
@@ -50,23 +70,23 @@ void ChannelManager::manage_safety(color_ostream &out, df::map_block* block, con
             if (event->getType() == df::block_square_event_type::designation_priority) {
                 auto evT = (df::block_square_event_designation_priorityst*) event;
                 // second we ensure the priority is less than 6 - let the user keep some free from interference
-                if (evT->priority[local.x][local.y] < 6000) {
-                    if (debug_out) debug_out->print("*group_iter\n");
+                if (evT->priority[local.x][local.y] < 6000) {;
                     const GroupData::Group &group = *group_iter;
                     if (debug_out) debug_out->print("if(is_group_ready())\n");
                     if (is_group_ready(groups, group)) {
-                        // no pending groups above this group
-                        if (debug_out) debug_out->print("dig_marked = false\n");
+                        // no pending groups above this group, and safe below
                         tile_occupancy.bits.dig_marked = false;
-                        if (debug_out) debug_out->print("block->flags.bits.designated = true\n");
                         block->flags.bits.designated = true;
-                        if (debug_out) debug_out->print("after setting.\n");
                     } else {
                         // not safe
-                        if (debug_out) debug_out->print("dig_marked = true\n");
-                        tile_occupancy.bits.dig_marked = true;
-                        if (debug_out) debug_out->print("cancel_job()\n");
-                        jobs.cancel_job(tile); //cancels job if designation is an open/active job
+                        if(!safe_to_dig_down(tile) && cheat_mode){
+                            if(!is_group_occupied(groups, group)) {
+                                dig_now_tile(out, tile);
+                            }
+                        } else {
+                            tile_occupancy.bits.dig_marked = true;
+                            jobs.cancel_job(tile); //cancels job if designation is an open/active job
+                        }
                     }
                 }
             }
@@ -107,7 +127,7 @@ void manageNeighbours(color_ostream &out, const df::coord &tile) {
             df::map_block* block = Maps::getTileBlock(position);
             if (debug_out) debug_out->print("manage_safety()\n");
             //activate designation if group is done now, postpone if not
-            manager.manage_safety(out, block, local, position, above);
+            ChannelManager::Get().manage_safety(out, block, local, position, above);
         }
     }
 }
@@ -126,22 +146,48 @@ void cancelJob(df::job* job) {
     }
 }
 
-bool is_group_ready(const GroupData &groups, const GroupData::Group &below_group) {
-    for (auto &group_tile : below_group) {
-        df::coord world_pos(group_tile.first);
-        world_pos.z++;
-        auto group_iter = groups.find(world_pos);
-        if (debug_out) debug_out->print("if(group_iter != groups.end()) => %d == %d\n", group_iter, groups.end());
-        if (group_iter != groups.end()) {
-            if (debug_out) debug_out->print("if(!group_iter->empty())\n");
-            if (!group_iter->empty()) {
+bool is_group_ready(const GroupData &groups, const GroupData::Group &group) {
+    // for each tile in a group
+    for (auto &group_tile : group) {
+        df::coord above(group_tile.first);
+        above.z++;
+        if(!safe_to_dig_down(group_tile.first)){
+            return false;
+        }
+        auto group_above = groups.find(above);
+        if (debug_out) debug_out->print("if(group_above != groups.end()) => %d == %d\n", group_above, groups.end());
+        // check that the group above exists
+        if (group_above != groups.end()) {
+            if (debug_out) debug_out->print("if(!group_above->empty())\n");
+            // if a group above does exist, check that it is not empty
+            if (!group_above->empty()) {
                 if (debug_out) debug_out->print("return false\n");
+                // if not empty, this group (ie. group_below) is not ready
                 return false;
             }
         }
     }
     if (debug_out) debug_out->print("return true\n");
+    // if the below group has no incomplete groups above its tiles then return true that this group is ready
     return true;
+}
+
+bool is_group_occupied(const GroupData &groups, const GroupData::Group &group) {
+    // for each tile in a group
+    for (auto &group_tile : group) {
+        df::tile_occupancy &occupancy = *Maps::getTileOccupancy(group_tile.first);
+        if(occupancy.bits.unit){
+            return true;
+        }
+    }
+    return false;
+}
+
+bool safe_to_dig_down(const df::coord &tile){
+    df::coord below(tile);
+    below.z--;
+    df::tiletype type = *Maps::getTileType(below);
+    return !isOpenTerrain(type);
 }
 
 bool is_dig(df::job* job) {

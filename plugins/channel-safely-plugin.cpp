@@ -52,6 +52,9 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     namespace EM = EventManager;
 #ifdef CS_DEBUG
     debug_out = &out;
+    out.print("debugging enabled\n");
+#else
+    out.print("debugging not enabled\n");
 #endif
     if (enable && !enabled) {
         using namespace EM::EventType;
@@ -80,10 +83,10 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         }
         EM::registerListener(EventType::JOB_INITIATED, jobStartHandler, plugin_self);
         EM::registerListener(EventType::JOB_COMPLETED, jobCompletionHandler, plugin_self);
-        manager.manage_designations(out);
+        ChannelManager::Get().manage_designations(out);
         out.print("channel-safely enabled!\n");
     } else if (!enable) {
-        manager.delete_groups();
+        ChannelManager::Get().delete_groups();
         EM::unregisterAll(plugin_self);
         out.print("channel-safely disabled!\n");
     }
@@ -110,7 +113,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
                 break;
             case SC_MAP_LOADED:
                 if (debug_out) debug_out->print("SC_MAP_LOADED\n");
-                manager.manage_designations(out);
+                ChannelManager::Get().manage_designations(out);
                 break;
             case SC_MAP_UNLOADED:
                 if (debug_out) debug_out->print("SC_MAP_UNLOADED\n");
@@ -125,11 +128,11 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
                 break;
             case SC_PAUSED:
                 if (debug_out) debug_out->print("SC_PAUSED\n");
-                manager.manage_designations(out);
+                ChannelManager::Get().manage_designations(out);
                 break;
             case SC_UNPAUSED:
                 if (debug_out) debug_out->print("SC_UNPAUSED\n");
-                manager.manage_designations(out);
+                ChannelManager::Get().manage_designations(out);
                 break;
         }
     }
@@ -151,9 +154,9 @@ command_result manage_channel_designations(color_ostream &out, std::vector<std::
     if (debug_out) debug_out->print("manage_channel_designations()\n");
     if (parameters.empty()) {
         if (debug_out) debug_out->print("mcd->manage_designations()\n");
-        manager.manage_designations(out);
+        ChannelManager::Get().manage_designations(out);
         if (!enabled) {
-            manager.delete_groups();
+            ChannelManager::Get().delete_groups();
         }
     } else if (parameters.size() == 1 && parameters[0] == "enable") {
         return plugin_enable(out, true);
@@ -161,9 +164,11 @@ command_result manage_channel_designations(color_ostream &out, std::vector<std::
         cheat_mode = true;
     } else if (parameters.size() == 1 && parameters[0] == "disable") {
         return plugin_enable(out, false);
+    } else if (parameters.size() == 2 && parameters[0] == "disable" && parameters[1] == "cheats") {
+        cheat_mode = true;
     } else if (parameters.size() == 1 && parameters[0] == "debug") {
         debug_out = &out;
-        manager.debug();
+        ChannelManager::Get().debug();
         debug_out = nullptr;
     } else {
         debug_out = nullptr;
@@ -184,7 +189,7 @@ void onNewHour(color_ostream &out, void* tick_ptr) {
         int32_t tick_counter = (int32_t) ((intptr_t) tick_ptr);
         if ((tick_counter - last_tick_counter) >= hourTicks) {
             last_tick_counter = tick_counter;
-            manager.manage_designations(out);
+            ChannelManager::Get().manage_designations(out);
         }
     }
     namespace EM = EventManager;
@@ -208,7 +213,7 @@ void onNewDay(color_ostream &out, void* tick_ptr) {
         int32_t tick_counter = (int32_t) ((intptr_t) tick_ptr);
         if ((tick_counter - last_tick_counter) >= dayTicks) {
             last_tick_counter = tick_counter;
-            manager.manage_designations(out);
+            ChannelManager::Get().manage_designations(out);
         }
     }
     namespace EM = EventManager;
@@ -236,7 +241,7 @@ void onStart(color_ostream &out, void* job_ptr) {
             above.z++;
             df::map_block* block = Maps::getTileBlock(job->pos);
             //postpone job if above isn't done
-            manager.manage_safety(out, block, local, job->pos, above);
+            ChannelManager::Get().manage_safety(out, block, local, job->pos, above);
         }
     }
     if (debug_out) debug_out->print("onStart() - return\n");
@@ -259,9 +264,9 @@ void onComplete(color_ostream &out, void* job_ptr) {
             df::map_block* block = Maps::getTileBlock(below);
             //activate designation below if group is done now, postpone if not
             if (debug_out) debug_out->print("mark_done()\n");
-            manager.mark_done(job->pos);
+            ChannelManager::Get().mark_done(job->pos);
             if (debug_out) debug_out->print("manage_safety()\n");
-            manager.manage_safety(out, block, local, below, job->pos);
+            ChannelManager::Get().manage_safety(out, block, local, below, job->pos);
             if (debug_out) debug_out->print("manageNeighbours()\n");
             manageNeighbours(out, job->pos);
         }

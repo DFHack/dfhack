@@ -1,49 +1,125 @@
 /* Prevent channeling down into known open space.
 Author:  Josh Cooper
 Created: Aug. 4 2020
-Updated: Jun. 15 2021
+Updated: Jun. 29 2021
 */
 
 #include <PluginManager.h>
 #include <modules/EventManager.h>
-
-
 #include "channel-safely.h"
+
+// the only use is to allow reliance on pull request #1876 which introduces a refactor which prevents some manual management
+#include <type_traits>
+#define DECLARE_HASA(what) \
+template<typename T, typename = int> struct has_##what : std::false_type { };\
+template<typename T> struct has_##what<T, decltype((void) T::what, 0)> : std::true_type {};
+DECLARE_HASA(when) //declares above statement with 'when' replacing 'what'
+// end usage is: `has_when<T>::value`
 
 using namespace DFHack;
 
 DFHACK_PLUGIN("channel-safely");
 DFHACK_PLUGIN_IS_ENABLED(enabled);
 REQUIRE_GLOBAL(world);
-//#define hourTicks 50
-#define dayTicks 1200 //ie. fullBuildFreq = 24 dwarf hours
-
-#include <type_traits>
-
-#define DECLARE_HASA(what) \
-template<typename T, typename = int> struct has_##what : std::false_type { };\
-template<typename T> struct has_##what<T, decltype((void) T::what, 0)> : std::true_type {};
-DECLARE_HASA(when) //declares above statement with 'when' replacing 'what'
-// end usage is: `has_when<T>::value`
-// the only use is to allow reliance on pull request #1876 which introduces a refactor which prevents some manual management
 //#define CS_DEBUG 1
+bool useTicks = true;
+uint16_t tickFreq = 1200;
 
-#ifdef hourTicks
-void onNewHour(color_ostream &out, void* tick_ptr);
-#endif
-#ifdef dayTicks
-void onNewDay(color_ostream &out, void* tick_ptr);
-#endif
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable);
+void onNewTickEvent(color_ostream &out, void* tick_ptr);
 void onStart(color_ostream &out, void* job);
 void onComplete(color_ostream &out, void* job);
 
-command_result manage_channel_designations(color_ostream &out, std::vector<std::string> &parameters);
+command_result manage_channel_designations(color_ostream &out, std::vector<std::string> &parameters) {
+#ifdef CS_DEBUG
+    debug_out = &out;
+#endif
+    namespace EM = EventManager;
+    using namespace EM::EventType;
+    if (debug_out) debug_out->print("manage_channel_designations()\n");
+    // manually trigger managing designations
+    if (parameters.empty()) {
+        if (debug_out) debug_out->print("mcd->manage_designations()\n");
+        ChannelManager::Get().manage_designations(out);
+        if (!enabled) {
+            ChannelManager::Get().delete_groups();
+        }
+    }
+    // enable options
+    else if (parameters.size() == 1 && parameters[0] == "enable") {
+        return plugin_enable(out, true);
+    } else if (parameters.size() == 2 && parameters[0] == "enable" && parameters[1] == "cheats") {
+        cheat_mode = true;
+    } else if (parameters.size() == 2 && parameters[0] == "enable" && parameters[1] == "ticks") {
+        if(!useTicks){
+            useTicks = true;
+            if (enabled) {
+                EM::EventHandler tickHandler(onNewTickEvent, tickFreq);
+                if (!has_when<EM::EventHandler>::value) {
+                    EM::registerTick(tickHandler, tickFreq, plugin_self);
+                } else {
+                    EM::registerListener(EventType::TICK, tickHandler, plugin_self);
+                }
+            }
+        }
+    }
+    // disable options
+    else if (parameters.size() == 1 && parameters[0] == "disable") {
+        return plugin_enable(out, false);
+    } else if (parameters.size() == 2 && parameters[0] == "disable" && parameters[1] == "cheats") {
+        cheat_mode = false;
+    } else if (parameters.size() == 2 && parameters[0] == "disable" && parameters[1] == "ticks") {
+        if (useTicks) {
+            useTicks = false;
+            if (enabled) {
+                EM::unregisterAll(plugin_self);
+                EM::EventHandler jobStartHandler(onStart, 0);
+                EM::EventHandler jobCompletionHandler(onComplete, 0);
+                EM::registerListener(EventType::JOB_INITIATED, jobStartHandler, plugin_self);
+                EM::registerListener(EventType::JOB_COMPLETED, jobCompletionHandler, plugin_self);
+            }
+        }
+    }
+    // developer debug
+    else if (parameters.size() == 1 && parameters[0] == "debug") {
+        debug_out = &out;
+        ChannelManager::Get().debug();
+        debug_out = nullptr;
+    } else {
+        debug_out = nullptr;
+        return CR_FAILURE;
+    }
+    debug_out = nullptr;
+    return CR_OK;
+}
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginCommand> &commands) {
     commands.push_back(PluginCommand("channel-safely",
-                                     "A tool to manage active channel designations.",
+                                     "Automatically manage channel designations.",
                                      manage_channel_designations,
                                      false,
+                                     "channel-safely <option> <args>\n"
+                                     "With no options given, the command will check all current designations\n"
+                                     "and manage them each accordingly.\n"
+                                     "\n"
+                                     "You can use this plugin to manage your channel designations\n"
+                                     "safely. It will mark unsafe designations and unmark safe ones.\n"
+                                     "\n"
+                                     "Using cheat mode it will even safely get your impossible designations done.\n"
+                                     "\n"
+                                     "options:\n"
+                                     "\tenable (no args)  -enables the plugin's to run on (un)pause/tick/job/map-load events.\n"
+                                     "\tdisable (no args) -disables the plugin's to run on (un)pause/tick/job/map-load events.\n"
+                                     "\ttick-freq <value> -set's the tick event frequency. Default: 1200 (1 day)\n"
+                                     "\n"
+                                     "This plugin has multiple modes that can be toggled on/off.\n"
+                                     "(usage: enable/disable <mode>)\n"
+                                     "modes:\n"
+                                     "\tcheats     -enables the plugin's ability to instantly dig\n"
+                                     "\t            permanently unsafe designations.\n"
+                                     "\t            (disabled by default)\n"
+                                     "\tticks      -enables the plugin to run on tick events specifically.\n"
+                                     "\t            (enabled by default)\n"
                                      "\n"));
     return CR_OK;
 }
@@ -56,28 +132,13 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 #endif
     if (enable && !enabled) {
         using namespace EM::EventType;
-#ifdef hourTicks
-        EM::EventHandler hoursHandler(onNewHour, hourTicks);
-#endif
-#ifdef dayTicks
-        EM::EventHandler daysHandler(onNewDay, dayTicks);
-#endif
+        EM::EventHandler tickHandler(onNewTickEvent, tickFreq);
         EM::EventHandler jobStartHandler(onStart, 0);
         EM::EventHandler jobCompletionHandler(onComplete, 0);
         if (!has_when<EM::EventHandler>::value) {
-#ifdef hourTicks
-            EM::registerTick(hoursHandler, hourTicks, plugin_self);
-#endif
-#ifdef dayTicks
-            EM::registerTick(daysHandler, dayTicks, plugin_self);
-#endif
+            EM::registerTick(tickHandler, tickFreq, plugin_self);
         } else {
-#ifdef hourTicks
-            EM::registerListener(EventType::TICK, hoursHandler, plugin_self);
-#endif
-#ifdef dayTicks
-            EM::registerListener(EventType::TICK, daysHandler, plugin_self);
-#endif
+            EM::registerListener(EventType::TICK, tickHandler, plugin_self);
         }
         EM::registerListener(EventType::JOB_INITIATED, jobStartHandler, plugin_self);
         EM::registerListener(EventType::JOB_COMPLETED, jobCompletionHandler, plugin_self);
@@ -145,39 +206,7 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out) {
     return CR_OK;
 }
 
-command_result manage_channel_designations(color_ostream &out, std::vector<std::string> &parameters) {
-#ifdef CS_DEBUG
-    debug_out = &out;
-#endif
-    if (debug_out) debug_out->print("manage_channel_designations()\n");
-    if (parameters.empty()) {
-        if (debug_out) debug_out->print("mcd->manage_designations()\n");
-        ChannelManager::Get().manage_designations(out);
-        if (!enabled) {
-            ChannelManager::Get().delete_groups();
-        }
-    } else if (parameters.size() == 1 && parameters[0] == "enable") {
-        return plugin_enable(out, true);
-    } else if (parameters.size() == 2 && parameters[0] == "enable" && parameters[1] == "cheats") {
-        cheat_mode = true;
-    } else if (parameters.size() == 1 && parameters[0] == "disable") {
-        return plugin_enable(out, false);
-    } else if (parameters.size() == 2 && parameters[0] == "disable" && parameters[1] == "cheats") {
-        cheat_mode = true;
-    } else if (parameters.size() == 1 && parameters[0] == "debug") {
-        debug_out = &out;
-        ChannelManager::Get().debug();
-        debug_out = nullptr;
-    } else {
-        debug_out = nullptr;
-        return CR_FAILURE;
-    }
-    debug_out = nullptr;
-    return CR_OK;
-}
-
-#ifdef hourTicks
-void onNewHour(color_ostream &out, void* tick_ptr) {
+void onNewTickEvent(color_ostream &out, void* tick_ptr) {
 #ifdef CS_DEBUG
     debug_out = &out;
 #endif
@@ -185,44 +214,19 @@ void onNewHour(color_ostream &out, void* tick_ptr) {
     if (enabled && World::isFortressMode() && Maps::IsValid()) {
         static int32_t last_tick_counter = 0;
         int32_t tick_counter = (int32_t) ((intptr_t) tick_ptr);
-        if ((tick_counter - last_tick_counter) >= hourTicks) {
+        if ((tick_counter - last_tick_counter) >= tickFreq) {
             last_tick_counter = tick_counter;
             ChannelManager::Get().manage_designations(out);
         }
     }
     namespace EM = EventManager;
     if (!has_when<EM::EventHandler>::value) {
-        EM::EventHandler tickHandler(onNewHour, hourTicks);
-        EM::registerTick(tickHandler, hourTicks, plugin_self);
+        EM::EventHandler tickHandler(onNewTickEvent, tickFreq);
+        EM::registerTick(tickHandler, tickFreq, plugin_self);
     }
     if (debug_out) debug_out->print("onNewHour() - return\n");
     debug_out = nullptr;
 }
-#endif
-
-#ifdef dayTicks
-void onNewDay(color_ostream &out, void* tick_ptr) {
-#ifdef CS_DEBUG
-    debug_out = &out;
-#endif
-    if (debug_out) debug_out->print("onNewHour()\n");
-    if (enabled && World::isFortressMode() && Maps::IsValid()) {
-        static int32_t last_tick_counter = 0;
-        int32_t tick_counter = (int32_t) ((intptr_t) tick_ptr);
-        if ((tick_counter - last_tick_counter) >= dayTicks) {
-            last_tick_counter = tick_counter;
-            ChannelManager::Get().manage_designations(out);
-        }
-    }
-    namespace EM = EventManager;
-    if (!has_when<EM::EventHandler>::value) {
-        EM::EventHandler tickHandler(onNewDay, dayTicks);
-        EM::registerTick(tickHandler, dayTicks, plugin_self);
-    }
-    if (debug_out) debug_out->print("onNewHour() - return\n");
-    debug_out = nullptr;
-}
-#endif
 
 void onStart(color_ostream &out, void* job_ptr) {
 #ifdef CS_DEBUG

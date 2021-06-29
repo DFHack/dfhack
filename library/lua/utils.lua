@@ -544,6 +544,13 @@ function check_number(text)
     return nv ~= nil, nv
 end
 
+-- Normalize directory separator slashes across platforms to '/' and collapse
+-- adjacent slashes into a single slash.
+local platformSlash = package.config:sub(1,1)
+function normalizePath(path)
+    return path:gsub(platformSlash, '/'):gsub('/+', '/')
+end
+
 function invert(tab)
     local result = {}
     for k,v in pairs(tab) do

@@ -53,8 +53,6 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 #ifdef CS_DEBUG
     debug_out = &out;
     out.print("debugging enabled\n");
-#else
-    out.print("debugging not enabled\n");
 #endif
     if (enable && !enabled) {
         using namespace EM::EventType;

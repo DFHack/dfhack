@@ -69,8 +69,8 @@ local function parse_positionals(opts, args, start_argidx)
                :format(args[argidx]))
     end
     argidx = argidx + 1
-    -- normalize paths to forward slashes
-    opts.name = name:gsub(package.config:sub(1,1), "/")
+    -- normalize paths and remove leading slashes
+    opts.name = utils.normalizePath(name):gsub('^/', '')
 
     local auto_phase = true
     local phase = args[argidx]

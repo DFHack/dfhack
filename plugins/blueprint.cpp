@@ -587,11 +587,20 @@ static string get_tile_query(df::building* b)
     return " ";
 }
 
+// can remove once we move to C++20
+static bool ends_with(const string &str, const string &sv)
+{
+    if (sv.size() > str.size())
+        return false;
+    return str.substr(str.size() - sv.size()) == sv;
+}
+
 // returns filename
 static string init_stream(ofstream &out, string basename, string target)
 {
     std::ostringstream out_path;
-    out_path << basename << "-" << target << ".csv";
+    string separator = ends_with(basename, "/") ? "" : "-";
+    out_path << basename << separator << target << ".csv";
     string path = out_path.str();
     out.open(path, ofstream::trunc);
     out << "#" << target << endl;

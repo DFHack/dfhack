@@ -755,20 +755,19 @@ command_result executePaintJob(color_ostream &out,
     uint32_t x_max = 0, y_max = 0, z_max = 0;
     Maps::getSize(x_max, y_max, z_max);
 
-    DFCoord cursor;
+    df::coord cursor;
     if (Maps::isValidTilePos(opts.cursor))
     {
         cursor = opts.cursor;
     }
     else
     {
-        int32_t x = 0, y = 0, z = 0;
-        if (!Gui::getCursorCoords(x,y,z))
+        cursor = Gui::getCursorPos();
+        if (!cursor.isValid())
         {
             out.printerr("Can't get cursor coords! Make sure you have a cursor active in DF or specify the --cursor option.\n");
             return CR_FAILURE;
         }
-        cursor = DFCoord(x, y, z);
     }
 
     if (!opts.quiet)

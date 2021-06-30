@@ -55,6 +55,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``gui.Painter``: fixed error when calling ``viewport()`` method
 - ``gui.dwarfmode``: new function: ``enterSidebarMode(sidebar_mode, max_esc)`` which uses keypresses to get into the specified sidebar mode from whatever the current screen is
 - `reveal`: now exposes ``unhideFlood(pos)`` functionality to Lua
+- new utility function: ``utils.normalizePath()``: normalizes directory slashes across platoforms to ``/`` and coaleses adjacent directory separators
 - ``utils.processArgsGetopt()``: now returns negative numbers (e.g. ``-10``) in the list of positional parameters instead of treating it as an option string equivalent to ``-1 -0``
 - ``utils.processArgsGetopt()``: now properly handles ``--`` like GNU ``getopt`` as a marker to treat all further parameters as non-options
 - ``utils.processArgsGetopt()``: now detects when required arguments to long-form options are missing

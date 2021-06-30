@@ -14,6 +14,20 @@ function test.OrderedTable()
     end
 end
 
+function test.normalizePath()
+    expect.eq('imapath/file.csv', utils.normalizePath('imapath/file.csv'))
+    expect.eq('/ima/path', utils.normalizePath('/ima/path'))
+    expect.eq('ima/path', utils.normalizePath('ima//path'))
+
+    expect.eq('imapath', utils.normalizePath('imapath'))
+    expect.eq('/imapath', utils.normalizePath('/imapath'))
+    expect.eq('/imapath', utils.normalizePath('//imapath'))
+    expect.eq('/imapath', utils.normalizePath('///imapath'))
+
+    expect.eq('imapath/', utils.normalizePath('imapath/'))
+    expect.eq('imapath/', utils.normalizePath('imapath//'))
+end
+
 function test.invert()
     local t = {}
     local i = utils.invert{'a', 4.4, false, true, 5, t}

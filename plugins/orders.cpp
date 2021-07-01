@@ -419,50 +419,8 @@ static command_result orders_export_command(color_ostream & out, const std::stri
     return file.good() ? CR_OK : CR_FAILURE;
 }
 
-static command_result orders_import_command(color_ostream & out, const std::string & name)
+static command_result orders_import(color_ostream &out, Json::Value &orders)
 {
-    if (!is_safe_filename(out, name))
-    {
-        return CR_WRONG_USAGE;
-    }
-
-    const std::string filename("dfhack-config/orders/" + name + ".json");
-    Json::Value orders;
-
-    {
-        std::ifstream file(filename);
-
-        if (!file.good())
-        {
-            out << COLOR_LIGHTRED << "Cannot find orders file: " << filename << std::endl;
-            return CR_FAILURE;
-        }
-
-        try
-        {
-            file >> orders;
-        }
-        catch (const std::exception & e)
-        {
-            out << COLOR_LIGHTRED << "Error reading orders file: " << filename << ": " << e.what() << std::endl;
-            return CR_FAILURE;
-        }
-
-        if (!file.good())
-        {
-            out << COLOR_LIGHTRED << "Error reading orders file: " << filename << std::endl;
-            return CR_FAILURE;
-        }
-    }
-
-    if (orders.type() != Json::arrayValue)
-    {
-        out << COLOR_LIGHTRED << "Invalid orders file: " << filename << ": expected array" << std::endl;
-        return CR_FAILURE;
-    }
-
-    CoreSuspender suspend;
-
     std::map<int32_t, int32_t> id_mapping;
     for (auto it : orders)
     {
@@ -791,6 +749,61 @@ static command_result orders_import_command(color_ostream & out, const std::stri
     }
 
     return CR_OK;
+}
+
+static command_result orders_import_command(color_ostream & out, const std::string & name)
+{
+    if (!is_safe_filename(out, name))
+    {
+        return CR_WRONG_USAGE;
+    }
+
+    const std::string filename("dfhack-config/orders/" + name + ".json");
+    Json::Value orders;
+
+    {
+        std::ifstream file(filename);
+
+        if (!file.good())
+        {
+            out << COLOR_LIGHTRED << "Cannot find orders file: " << filename << std::endl;
+            return CR_FAILURE;
+        }
+
+        try
+        {
+            file >> orders;
+        }
+        catch (const std::exception & e)
+        {
+            out << COLOR_LIGHTRED << "Error reading orders file: " << filename << ": " << e.what() << std::endl;
+            return CR_FAILURE;
+        }
+
+        if (!file.good())
+        {
+            out << COLOR_LIGHTRED << "Error reading orders file: " << filename << std::endl;
+            return CR_FAILURE;
+        }
+    }
+
+    if (orders.type() != Json::arrayValue)
+    {
+        out << COLOR_LIGHTRED << "Invalid orders file: " << filename << ": expected array" << std::endl;
+        return CR_FAILURE;
+    }
+
+    CoreSuspender suspend;
+
+    try
+    {
+        return orders_import(out, orders);
+    }
+    catch (const std::exception & e)
+    {
+        out << COLOR_LIGHTRED << "Error reading orders file: " << filename << ": " << e.what() << std::endl;
+        return CR_FAILURE;
+    }
 }
 
 static command_result orders_clear_command(color_ostream & out)

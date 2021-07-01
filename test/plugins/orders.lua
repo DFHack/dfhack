@@ -23,10 +23,13 @@ end
 
 function check_import_fail(file_content, comment, prefix)
     comment = comment or ''
-    prefix = prefix or 'error'
+    local prev_num_orders = #df.global.world.manager_orders
     local output, result = run_orders_import(file_content)
-    expect.eq(result, CR_FAILURE)
-    expect.true_(output:lower():startswith(prefix), ('%s: output missing "%s"'):format(comment, prefix))
+    expect.eq(result, CR_FAILURE, ('%s: was successful'):format(comment))
+    if prefix then
+        expect.true_(output:lower():startswith(prefix), ('%s: "%s" missing "%s"'):format(comment, output, prefix))
+    end
+    expect.eq(prev_num_orders, #df.global.world.manager_orders, ('%s: number of manager orders changed'):format(comment))
 end
 
 function test.import_empty()
@@ -46,16 +49,20 @@ function test.import_invalid_syntax()
     check_import_fail([[
         [
             {
-                    "amount_left" : 0,
-                    "amount_total" : 0,
-                    "frequency" : "OneTime",
-                    "id" : 0,
-                    "is_active" : false,
-                    "is_validated" : true,
-                    "job" : "CustomReaction",
-                    "reaction" : "BRASS_MAKING"
+                "amount_left" : 0,
+                "amount_total" : 0,
+                "frequency" : "OneTime",
+                "id" : 0,
+                "is_active" : false,
+                "is_validated" : true,
+                "job" : "CustomReaction",
+                "reaction" : "BRASS_MAKING"
             }
     ]], 'missing closing bracket')
+end
+
+function test.import_missing_fields()
+    check_import_fail('[{}]', 'empty order', 'invalid')
 end
 
 function test.import_invalid_id()
@@ -76,5 +83,39 @@ function test.import_invalid_id()
                 "material": "INORGANIC:AMBER OPAL"
             }
         ]
-    ]], 'string id instead of int')
+    ]], 'string id instead of int', 'error')
+end
+
+function test.import_valid_and_invalid_orders()
+    check_import_fail([[
+        [
+            {
+                "amount_left" : 1,
+                "amount_total" : 1,
+                "frequency" : "OneTime",
+                "id" : 0,
+                "is_active" : false,
+                "is_validated" : true,
+                "job" : "ConstructTable",
+                "material" : "INORGANIC:IRON"
+            },
+            {}
+        ]
+    ]], 'empty order after valid order')
+
+    check_import_fail([[
+        [
+            {},
+            {
+                "amount_left" : 1,
+                "amount_total" : 1,
+                "frequency" : "OneTime",
+                "id" : 0,
+                "is_active" : false,
+                "is_validated" : true,
+                "job" : "ConstructTable",
+                "material" : "INORGANIC:IRON"
+            }
+        ]
+    ]], 'empty order before valid order')
 end

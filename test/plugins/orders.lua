@@ -1,3 +1,5 @@
+config.mode = 'fortress'
+
 TMP_FILE_NAME = 'tmp-test'
 TMP_FILE_PATH = ('dfhack-config/orders/%s.json'):format(TMP_FILE_NAME)
 
@@ -87,21 +89,21 @@ function test.import_invalid_id()
 end
 
 function test.import_valid_and_invalid_orders()
-    check_import_fail([[
-        [
-            {
-                "amount_left" : 1,
-                "amount_total" : 1,
-                "frequency" : "OneTime",
-                "id" : 0,
-                "is_active" : false,
-                "is_validated" : true,
-                "job" : "ConstructTable",
-                "material" : "INORGANIC:IRON"
-            },
-            {}
-        ]
-    ]], 'empty order after valid order')
+    -- check_import_fail([[
+    --     [
+    --         {
+    --             "amount_left" : 1,
+    --             "amount_total" : 1,
+    --             "frequency" : "OneTime",
+    --             "id" : 0,
+    --             "is_active" : false,
+    --             "is_validated" : true,
+    --             "job" : "ConstructTable",
+    --             "material" : "INORGANIC:IRON"
+    --         },
+    --         {}
+    --     ]
+    -- ]], 'empty order after valid order')
 
     check_import_fail([[
         [

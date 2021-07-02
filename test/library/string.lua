@@ -8,6 +8,9 @@ function test.startswith()
 
     expect.true_((''):startswith(''))
     expect.false_((''):startswith('a'))
+
+    expect.false_(('str'):startswith('.'),
+                  'ensure we match literals, not patterns')
 end
 
 function test.endswith()
@@ -18,6 +21,41 @@ function test.endswith()
 
     expect.true_((''):endswith(''))
     expect.false_((''):endswith('a'))
+
+    expect.false_(('str'):endswith('.'),
+                  'ensure we match literals, not patterns')
+end
+
+-- uncomment once gui/load-screen's string:split implementation is removed
+--[[
+function test.split()
+    expect.table_eq({'hello','world'}, ('hello world'):split())
+    expect.table_eq({'hello','','world'}, ('hello  world'):split())
+    expect.table_eq({'hello','world'}, ('hello   world'):split(' +'))
+
+    expect.table_eq({'hello','world'}, ('hello.world'):split('.', true),
+                    'ensure literal interpretation when plain is true')
+
+    -- we don't actually care what this returns, just that it does return
+    expect.true_(('hello world'):split('.*'), 'ensure no infinite loop')
+
+    expect.table_eq({'hello ', ' world'}, ('hello , world'):split(','),
+                    'ensure spaces are kept when they are not the delimiter')
+    expect.table_eq({'hello'}, ('hello'):split(), 'no delimiter')
+end
+]]
+
+function test.trim()
+    expect.eq('hello', ('hello'):trim())
+    expect.eq('hello', (' hello'):trim())
+    expect.eq('hello', ('hello '):trim())
+    expect.eq('hello', ('  hello  '):trim())
+    expect.eq('', (''):trim())
+    expect.eq('', (' '):trim())
+    expect.eq('', ('  \t  \n  \v  '):trim())
+    expect.eq('hel  lo', ('  hel  lo  '):trim(), 'keep interior spaces')
+    expect.eq('hel \n lo', ('  hel \n lo  '):trim(),
+              'keep interior spaces across newlines')
 end
 
 function test.wrap()
@@ -29,5 +67,5 @@ function test.wrap()
     expect.eq('hello\nworld', ('hello world'):wrap(8))
     expect.eq('hel\nlo\nwor\nld', ('hello world'):wrap(3))
     expect.eq('hel\nloo\nwor\nldo', ('helloo  worldo'):wrap(3))
-    expect.eq('', (''):wrap(10))
+    expect.eq('', (''):wrap())
 end

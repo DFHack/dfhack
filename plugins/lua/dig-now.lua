@@ -1,7 +1,8 @@
 local _ENV = mkmodule('plugins.dig-now')
 
-local utils = require('utils')
+local argparse = require('argparse')
 local guidm = require('gui.dwarfmode')
+local utils = require('utils')
 
 local short_help_text = [=[
 
@@ -35,42 +36,23 @@ See the online DFHack documentation for details on all options.
 function print_help() print(short_help_text) end
 
 local function parse_coords(opts, configname, arg)
-    local x, y, z
-    if arg == 'here' then
-        local cursor = guidm.getCursorPos()
-        if not cursor then
-            qerror('"here" specified for position, but no game cursor found!')
-        end
-        x, y, z = cursor.x, cursor.y, cursor.z
-    else
-        _, _, x, y, z = arg:find('^%s*(%d+)%s*,%s*(%d+)%s*,%s*(%d+)%s*$')
-        if not x then
-            qerror(('invalid position: "%s"; expected "here" or' ..
-                    ' "<x>,<y>,<z>" triple (e.g. "30,60,150")'):format(arg))
-        end
-    end
-    opts[configname].x = tonumber(x)
-    opts[configname].y = tonumber(y)
-    opts[configname].z = tonumber(z)
-end
-
-local function out_of_bounds(percentage)
-    percentage = tonumber(percentage)
-    return percentage < 0 or percentage > 100
+    local cursor = argparse.coords(arg, configname)
+    utils.assign(opts[configname], cursor)
 end
 
 local function parse_percentages(opts, arg)
-    _, _, layer, vein, small, deep =
-            arg:find('^%s*(%d+)%s*,%s*(%d+)%s*,%s*(%d+)%s*,%s*(%d+)%s*$')
-    if not layer or out_of_bounds(layer) or out_of_bounds(vein)
-            or out_of_bounds(small) or out_of_bounds(deep) then
-        qerror(('invalid percentages: "%s"; expected format is "<layer>,' ..
-                '<vein>,<small cluster>,<deep>", where each number is between'..
-                ' 0 and 100, inclusive (e.g. "0,33,100,100")'):format(arg))
+    local nums = argparse.numberList(arg, 'percentages', 4)
+    for _,percentage in ipairs(nums) do
+        if percentage < 0 or percentage > 100 then
+            qerror(('invalid percentages: "%s"; expected format is "<layer>,' ..
+                    '<vein>,<small cluster>,<deep>", where each number is'..
+                    ' between 0 and 100, inclusive (e.g. "0,33,100,100")')
+                   :format(arg))
+        end
     end
     local config = opts.boulder_percents
     config.layer, config.vein, config.small_cluster, config.deep =
-            tonumber(layer), tonumber(vein), tonumber(small), tonumber(deep)
+            nums[1], nums[2], nums[3], nums[4]
 end
 
 local function min_to_max(...)
@@ -81,7 +63,7 @@ end
 
 function parse_commandline(opts, ...)
     local use_zlevel = false
-    local positionals = utils.processArgsGetopt({...}, {
+    local positionals = argparse.processArgsGetopt({...}, {
             {'c', 'clean',
              handler=function() parse_percentages(opts, '0,0,0,0') end},
             {'d', 'dump', hasArg=true,

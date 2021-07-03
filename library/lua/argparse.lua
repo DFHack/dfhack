@@ -167,11 +167,11 @@ function numberList(arg, arg_name, list_length)
     return strings
 end
 
--- throws if val is not a positive integer; otherwise returns val
-local function check_positive_int(val, arg_name)
-    if not val or val <= 0 or val ~= math.floor(val) then
+-- throws if val is not a nonnegative integer; otherwise returns val
+local function check_nonnegative_int(val, arg_name)
+    if not val or val < 0 or val ~= math.floor(val) then
         arg_error(arg_name,
-                  'expected positive integer; got "%s"', tostring(val))
+                  'expected non-negative integer; got "%s"', tostring(val))
     end
     return val
 end
@@ -190,9 +190,9 @@ function coords(arg, arg_name)
         return cursor
     end
     local numbers = numberList(arg, arg_name, 3)
-    return xyz2pos(check_positive_int(numbers[1]),
-                   check_positive_int(numbers[2]),
-                   check_positive_int(numbers[3]))
+    return xyz2pos(check_nonnegative_int(numbers[1]),
+                   check_nonnegative_int(numbers[2]),
+                   check_nonnegative_int(numbers[3]))
 end
 
 return _ENV

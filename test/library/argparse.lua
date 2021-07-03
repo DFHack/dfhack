@@ -153,9 +153,9 @@ function test.numberList()
 end
 
 function test.coords()
-    expect.table_eq({x=5, y=4, z=3}, argparse.coords('5,4 , 3'), 'happy path')
+    expect.table_eq({x=0, y=4, z=3}, argparse.coords('0,4 , 3'), 'happy path')
 
-    expect.error_match('expected positive integer',
+    expect.error_match('expected non%-negative integer',
                        function() argparse.coords('1,-2,3') end,
                        'negative coordinate')
 

@@ -1,20 +1,14 @@
 local _ENV = mkmodule('plugins.tiletypes')
 
+local argparse = require('argparse')
 local utils = require('utils')
 
 local function parse_cursor(opts, arg)
-    local _, _, x, y, z = arg:find('^%s*(%d+)%s*,%s*(%d+)%s*,%s*(%d+)%s*$')
-    if not x then
-        qerror(('invalid argument for --cursor option: "%s"; expected format' ..
-                ' is "<x>,<y>,<z>", for example: "30,60,150"'):format(arg))
-    end
-    opts.cursor.x = tonumber(x)
-    opts.cursor.y = tonumber(y)
-    opts.cursor.z = tonumber(z)
+    utils.assign(opt.cursor, argparse.coords(arg))
 end
 
 function parse_commandline(opts, ...)
-    local positionals = utils.processArgsGetopt({...}, {
+    local positionals = argparse.processArgsGetopt({...}, {
             {'c', 'cursor', hasArg=true,
              handler=function(arg) parse_cursor(opts, arg) end},
             {'h', 'help', handler=function() opts.help = true end},

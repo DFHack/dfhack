@@ -4,7 +4,7 @@ local argparse = require('argparse')
 local utils = require('utils')
 
 local function parse_cursor(opts, arg)
-    utils.assign(opt.cursor, argparse.coords(arg))
+    utils.assign(opts.cursor, argparse.coords(arg))
 end
 
 function parse_commandline(opts, ...)

@@ -54,6 +54,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Lua
 - new string utility function: ``string:wrap(width)`` wraps a string at space-separated word boundaries
 - new string utility function: ``string:trim()`` removes whitespace characters from the beginning and end of the string
+- new string utility function: ``string:split(delimiter, plain)`` splits a string with the given delimiter and returns a table of substrings. if ``plain`` is specified and set to ``true``, ``delimiter`` is interpreted as a literal string instead of as a pattern (the default)
 - new library: ``argparse`` is a collection of commandline argument processing functions
 - ``gui.Painter``: fixed error when calling ``viewport()`` method
 - ``gui.dwarfmode``: new function: ``enterSidebarMode(sidebar_mode, max_esc)`` which uses keypresses to get into the specified sidebar mode from whatever the current screen is

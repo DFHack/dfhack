@@ -26,8 +26,6 @@ function test.endswith()
                   'ensure we match literals, not patterns')
 end
 
--- uncomment once gui/load-screen's string:split implementation is removed
---[[
 function test.split()
     expect.table_eq({'hello','world'}, ('hello world'):split())
     expect.table_eq({'hello','','world'}, ('hello  world'):split())
@@ -43,7 +41,6 @@ function test.split()
                     'ensure spaces are kept when they are not the delimiter')
     expect.table_eq({'hello'}, ('hello'):split(), 'no delimiter')
 end
-]]
 
 function test.trim()
     expect.eq('hello', ('hello'):trim())

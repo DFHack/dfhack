@@ -280,8 +280,21 @@ end
 local function build_test_env()
     local env = {
         test = utils.OrderedTable(),
+        -- config values can be overridden in the test file to define
+        -- requirements for the tests in that file
         config = {
+            -- override with the required game mode
             mode = 'none',
+            -- override with a test wrapper function with common setup and
+            -- teardown for every test, if needed. for example:
+            --   local function test_wrapper(test_fn)
+            --       mock.patch(dfhack.filesystem,
+            --                  'listdir_recursive',
+            --                  mock.func({}),
+            --                  test_fn)
+            --   end
+            --   config.wrapper = test_wrapper
+            wrapper = nil,
         },
         expect = {},
         mock = mock,
@@ -351,6 +364,10 @@ local function load_tests(file, tests)
                 return false
             end
             for name, test_func in pairs(env.test) do
+                if env.config.wrapper then
+                    local fn = test_func
+                    test_func = function() env.config.wrapper(fn) end
+                end
                 local test_data = {
                     full_name = short_filename .. ':' .. name,
                     func = test_func,

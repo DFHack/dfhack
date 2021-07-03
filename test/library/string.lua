@@ -33,6 +33,8 @@ function test.split()
 
     expect.table_eq({'hello','world'}, ('hello.world'):split('.', true),
                     'ensure literal interpretation when plain is true')
+    expect.table_eq({'', '', '', ''}, ('abc'):split('.'),
+                    'ensure pattern interpretation when plain is false')
 
     -- we don't actually care what this returns, just that it does return
     expect.true_(('hello world'):split('.*'), 'ensure no infinite loop')

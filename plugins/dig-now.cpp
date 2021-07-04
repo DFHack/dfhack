@@ -70,7 +70,7 @@ struct dig_now_options {
     static DFCoord getMapSize() {
         uint32_t endx, endy, endz;
         Maps::getTileSize(endx, endy, endz);
-        return DFCoord(endx, endy, endz);
+        return DFCoord(endx - 1, endy - 1, endz - 1);
     }
 
     dig_now_options() : help(false), start(0, 0, 0), end(getMapSize()) { }

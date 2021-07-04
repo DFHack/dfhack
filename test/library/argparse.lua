@@ -153,20 +153,43 @@ function test.numberList()
 end
 
 function test.coords()
-    expect.table_eq({x=0, y=4, z=3}, argparse.coords('0,4 , 3'), 'happy path')
-
-    expect.error_match('expected non%-negative integer',
-                       function() argparse.coords('1,-2,3') end,
-                       'negative coordinate')
-
-    mock.patch(guidm, 'getCursorPos', mock.func({x=1, y=2, z=3}),
+    mock.patch(dfhack.maps, "isValidTilePos", mock.func(true),
         function()
-            expect.table_eq({x=1, y=2, z=3}, argparse.coords('here'))
+            expect.table_eq({x=0, y=4, z=3}, argparse.coords('0,4 , 3'),
+                            'happy path')
+
+            expect.error_match('expected non%-negative integer',
+                            function() argparse.coords('1,-2,3') end,
+                            'negative coordinate')
+
+            mock.patch(guidm, 'getCursorPos', mock.func({x=1, y=2, z=3}),
+                function()
+                    expect.table_eq({x=1, y=2, z=3}, argparse.coords('here'))
+                end)
+            mock.patch(guidm, 'getCursorPos', mock.func(),
+                function()
+                    expect.error_match('cursor is not active',
+                                    function() argparse.coords('here') end,
+                                    'inactive cursor')
+                end)
         end)
-    mock.patch(guidm, 'getCursorPos', mock.func(),
+
+    mock.patch(dfhack.maps, "isValidTilePos", mock.func(false),
         function()
-            expect.error_match('cursor is not active',
-                               function() argparse.coords('here') end,
-                               'inactive cursor')
+            expect.error_match('not on current map',
+                               function() argparse.coords('0,4,300') end)
+            expect.table_eq({x=0, y=4, z=300},
+                            argparse.coords('0,4,300', nil, true))
+
+            mock.patch(guidm, 'getCursorPos', mock.func({x=1, y=2, z=300}),
+                function()
+                    expect.error_match('not on current map',
+                                    function() argparse.coords('here') end)
+                end)
+            mock.patch(guidm, 'getCursorPos', mock.func({x=1, y=2, z=300}),
+                function()
+                    expect.table_eq({x=1, y=2, z=300},
+                                    argparse.coords('here', nil, true))
+                end)
         end)
 end

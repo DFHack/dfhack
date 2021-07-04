@@ -178,8 +178,10 @@ end
 
 -- Parses a comma-separated coordinate string and returns a coordinate table of
 -- {x=x, y=y, z=z}. If the string 'here' is passed, returns the coordinates of
--- the active game cursor, or throws an error if the cursor is not active.
-function coords(arg, arg_name)
+-- the active game cursor, or throws an error if the cursor is not active. This
+-- function also verifies that the coordinates are valid for the current map and
+-- throws if they are not (unless <skip_validation> is set to true).
+function coords(arg, arg_name, skip_validation)
     if arg == 'here' then
         local cursor = guidm.getCursorPos()
         if not cursor then
@@ -187,12 +189,19 @@ function coords(arg, arg_name)
                       '"here" was specified for coordinates, but the game' ..
                       ' cursor is not active!')
         end
+        if not skip_validation and not dfhack.maps.isValidTilePos(cursor) then
+            arg_error(arg_name, 'cursor coordinates not on current map!')
+        end
         return cursor
     end
     local numbers = numberList(arg, arg_name, 3)
-    return xyz2pos(check_nonnegative_int(numbers[1]),
-                   check_nonnegative_int(numbers[2]),
-                   check_nonnegative_int(numbers[3]))
+    local pos = xyz2pos(check_nonnegative_int(numbers[1]),
+                        check_nonnegative_int(numbers[2]),
+                        check_nonnegative_int(numbers[3]))
+    if not skip_validation and not dfhack.maps.isValidTilePos(pos) then
+        arg_error('specified coordinates not on current map: "%s"', arg)
+    end
+    return pos
 end
 
 return _ENV

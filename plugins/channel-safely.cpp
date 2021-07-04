@@ -186,7 +186,7 @@ bool safe_to_dig_down(const df::coord &tile){
     df::coord below(tile);
     below.z--;
     df::tiletype type = *Maps::getTileType(below);
-    return !isOpenTerrain(type);
+    return !isOpenTerrain(type) && !isFloorTerrain(type);
 }
 
 bool is_dig(df::job* job) {

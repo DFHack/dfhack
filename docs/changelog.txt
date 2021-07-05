@@ -44,6 +44,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `embark-assistant`: fixed faulty early exit in first search attempt when searching for waterfalls
 
 ## Misc Improvements
+- Added adjectives to item selection dialogs, used in tools like `gui/create-item` - this makes it possible to differentiate between different types of high/low boots, shields, etc.
 - `blueprint`: make ``depth`` and ``name`` parameters optional. ``depth`` now defaults to ``1`` (current level only) and ``name`` defaults to "blueprint"
 - `blueprint`: allow ``depth`` to be negative, which will result in the blueprints being written from the highest z-level to the lowest. before, blueprints were always written from the lowest z-level to the highest.
 - `blueprint`: add the ``--cursor`` option to set the starting coordinate for the generated blueprints. a game cursor is no longer necessary if this option is used.

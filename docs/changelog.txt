@@ -38,6 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Fixed an issue preventing some external scripts from creating zones and other abstract buildings (see note about room definitions under "Internals")
 - `buildingplan`: fixed an issue where planned constructions designated with DF's sizing keys (``umkh``) would sometimes be larger than requested
 - `buildingplan`: fixed an issue preventing other plugins like `automaterial` from planning constructions if the "enable all" buildingplan setting was turned on
+- `buildingplan`: ensure navigation keys work properly in the materials selection screen when alternate keybindings are used
 - `command-prompt`: fixed issues where overlays created by running certain commands (e.g. `gui/liquids`, `gui/teleport`) would not update the parent screen correctly
 - `dwarfvet`: fixed a crash that could occur with hospitals overlapping with other buildings in certain ways
 - `orders`: don't crash when importing orders with malformed IDs

@@ -41,7 +41,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `orders`: don't crash when importing orders with malformed IDs
 - ``quickfortress.csv`` blueprint: fixed refuse stockpile config and prevented stockpiles from covering stairways
 - `stonesense`: fixed a crash that could occur when ctrl+scrolling or closing the Stonesense window
-- `embark-assistant`: faulty early exit when searching for waterfalls in first search attempt removed
+- `embark-assistant`: fixed faulty early exit in first search attempt when searching for waterfalls
 
 ## Misc Improvements
 - `blueprint`: make ``depth`` and ``name`` parameters optional. ``depth`` now defaults to ``1`` (current level only) and ``name`` defaults to "blueprint"

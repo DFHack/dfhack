@@ -587,6 +587,18 @@ bool Buildings::getCorrectSize(df::coord2d &size, df::coord2d &center,
     }
 }
 
+static void init_extents(df::building_extents *ext, const df::coord &pos,
+                         const df::coord2d &size)
+{
+    ext->extents = new df::building_extents_type[size.x*size.y];
+    ext->x = pos.x;
+    ext->y = pos.y;
+    ext->width = size.x;
+    ext->height = size.y;
+
+    memset(ext->extents, 1, size.x*size.y);
+}
+
 bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,
                                df::building_extents *ext,
                                bool create_ext,
@@ -640,13 +652,7 @@ bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,
 
                 if (!ext->extents)
                 {
-                    ext->extents = new df::building_extents_type[size.x*size.y];
-                    ext->x = pos.x;
-                    ext->y = pos.y;
-                    ext->width = size.x;
-                    ext->height = size.y;
-
-                    memset(ext->extents, 1, size.x*size.y);
+                    init_extents(ext, pos, size);
                     etile = getExtentTile(*ext, tile);
                 }
 
@@ -670,9 +676,16 @@ std::pair<df::coord,df::coord2d> Buildings::getSize(df::building *bld)
     return std::pair<df::coord,df::coord2d>(pos, df::coord2d(bld->x2+1,bld->y2+1) - pos);
 }
 
-static bool checkBuildingTiles(df::building *bld, bool can_change)
+static bool checkBuildingTiles(df::building *bld, bool can_change,
+                               bool force_extents = false)
 {
     auto psize = Buildings::getSize(bld);
+
+    if (force_extents && !bld->room.extents)
+    {
+        // populate the room structure if it's not set already
+        init_extents(&bld->room, psize.first, psize.second);
+    }
 
     return Buildings::checkFreeTiles(psize.first, psize.second, &bld->room,
                                      can_change && bld->isExtentShaped(),
@@ -978,7 +991,7 @@ bool Buildings::constructAbstract(df::building *bld)
     CHECK_INVALID_ARGUMENT(bld->id == -1);
     CHECK_INVALID_ARGUMENT(!bld->isActual());
 
-    if (!checkBuildingTiles(bld, false))
+    if (!checkBuildingTiles(bld, true, true))
         return false;
 
     switch (bld->getType())

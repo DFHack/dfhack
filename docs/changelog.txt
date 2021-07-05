@@ -35,6 +35,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - Fixed an issue where scrollable text in Lua-based screens could prevent other widgets from scrolling
+- Fixed an issue preventing some external scripts from creating zones and other abstract buildings (see note about room definitions under "Internals")
 - `buildingplan`: fixed an issue where planned constructions designated with DF's sizing keys (``umkh``) would sometimes be larger than requested
 - `buildingplan`: fixed an issue preventing other plugins like `automaterial` from planning constructions if the "enable all" buildingplan setting was turned on
 - `command-prompt`: fixed issues where overlays created by running certain commands (e.g. `gui/liquids`, `gui/teleport`) would not update the parent screen correctly
@@ -81,6 +82,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - DFHack unit tests must now match any output expected to be printed via ``dfhack.printerr()``
 - Fortress mode is now supported for unit tests (allowing tests that require a fortress map to be loaded) - note that these tests are skipped by continuous integration for now, pending a suitable test fortress
 - Unit tests can now use ``delay_until(predicate_fn, timeout_frames)`` to delay until a condition is met
+- Room definitions and extents are now created for abstract buildings so callers don't have to initialize the room structure themselves
 
 # 0.47.05-r1
 

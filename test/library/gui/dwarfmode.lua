@@ -70,4 +70,6 @@ function test.enterSidebarMode()
         guidm.enterSidebarMode(k)
         expect.eq(k, df.global.ui.main.mode)
     end
+    -- end test back in default so the test harness doesn't have to autocorrect
+    guidm.enterSidebarMode(df.ui_sidebar_mode.Default)
 end

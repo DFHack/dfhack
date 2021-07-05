@@ -1642,7 +1642,7 @@ namespace embark_assist {
 
                 //  Waterfall
                 if (finder->min_waterfall > tile->max_waterfall) {  //  N/A = -1 is always smaller
-                    if (trace) out.print("matcher::world_tile_match: Waterfall (%i, %i)\n", x, y);
+                    if (trace) out.print("matcher::world_tile_match: Waterfall (%i, %i), finder: %i, tile: %i\n", x, y, finder->min_waterfall, tile->max_waterfall);
                     return false;
                 }
                 if (finder->min_waterfall == 0 &&  // Absent
@@ -2276,16 +2276,11 @@ namespace embark_assist {
                     }
                 }
 
-                // Aquifer  //  Requires survey
+                //  Aquifer  //  Requires survey
 
-                // River size  //  Requires survey
+                //  River size  //  Requires survey
 
-                //  Waterfall
-                if (finder->min_waterfall > 0 &&
-                    tile->min_river_size == embark_assist::defs::river_sizes::None) {
-                    if (trace) out.print("matcher::world_tile_match: NS Waterfall (%i, %i)\n", x, y);
-                    return false;
-                }
+                //  Waterfall  //  Requires survey
 
                 //  Flat. No world tile checks. Need to look at the details
                

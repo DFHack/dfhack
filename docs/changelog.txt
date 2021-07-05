@@ -34,6 +34,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## Fixes
+- Fixed an issue where scrollable text in Lua-based screens could prevent other widgets from scrolling
 - `buildingplan`: fixed an issue where planned constructions designated with DF's sizing keys (``umkh``) would sometimes be larger than requested
 - `buildingplan`: fixed an issue preventing other plugins like `automaterial` from planning constructions if the "enable all" buildingplan setting was turned on
 - `command-prompt`: fixed issues where overlays created by running certain commands (e.g. `gui/liquids`, `gui/teleport`) would not update the parent screen correctly

@@ -24,18 +24,6 @@ function test.parse_gui_commandline()
                     opts)
 
     opts = {}
-    expect.error_match('invalid argument',
-                       function() b.parse_gui_commandline(
-                                        opts, {'--cursor=-1,2,3'}) end,
-                       'negative coordinate')
-
-    opts = {}
-    expect.error_match('invalid argument',
-                       function() b.parse_gui_commandline(
-                                        opts, {'--cursor=1,b,3'}) end,
-                       'non-numeric coordinate')
-
-    opts = {}
     b.parse_gui_commandline(opts, {'imaname'})
     expect.table_eq({auto_phase=true, name='imaname'}, opts)
 

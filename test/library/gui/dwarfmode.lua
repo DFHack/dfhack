@@ -64,4 +64,12 @@ function test.enterSidebarMode()
     guidm.enterSidebarMode(df.ui_sidebar_mode.Default)
     expect.eq(df.ui_sidebar_mode.Default, df.global.ui.main.mode)
     expect.eq('dwarfmode/Default', dfhack.gui.getCurFocus(true))
+
+    -- verify that all supported modes lead where we say they'll go
+    for k,v in pairs(guidm.SIDEBAR_MODE_KEYS) do
+        guidm.enterSidebarMode(k)
+        expect.eq(k, df.global.ui.main.mode)
+    end
+    -- end test back in default so the test harness doesn't have to autocorrect
+    guidm.enterSidebarMode(df.ui_sidebar_mode.Default)
 end

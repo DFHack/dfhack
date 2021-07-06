@@ -68,7 +68,7 @@ function test.enterSidebarMode()
     -- verify that all supported modes lead where we say they'll go
     for k,v in pairs(guidm.SIDEBAR_MODE_KEYS) do
         guidm.enterSidebarMode(k)
-        expect.eq(k, df.global.ui.main.mode)
+        expect.eq(k, df.global.ui.main.mode, df.ui_sidebar_mode[k])
     end
     -- end test back in default so the test harness doesn't have to autocorrect
     guidm.enterSidebarMode(df.ui_sidebar_mode.Default)

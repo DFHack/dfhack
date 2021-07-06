@@ -12,7 +12,7 @@ end
 
 function test.index_id()
     for i in ipairs(df.units_other_id) do
-        expect.eq(df.global.world.units.other[i]._kind, 'container')
+        expect.eq(df.global.world.units.other[i]._kind, 'container', df.units_other_id[i])
     end
 end
 

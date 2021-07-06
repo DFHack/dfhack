@@ -482,16 +482,7 @@ end
 
 -- Split the string by the given delimiter
 function split_string(self, delimiter)
-    local result = { }
-    local from  = 1
-    local delim_from, delim_to = string.find( self, delimiter, from  )
-    while delim_from do
-        table.insert( result, string.sub( self, from , delim_from-1 ) )
-        from  = delim_to + 1
-        delim_from, delim_to = string.find( self, delimiter, from  )
-    end
-    table.insert( result, string.sub( self, from  ) )
-    return result
+    return self:split(delimiter)
 end
 
 -- Ask a yes-no question
@@ -545,9 +536,9 @@ end
 
 -- Normalize directory separator slashes across platforms to '/' and collapse
 -- adjacent slashes into a single slash.
-local platformSlash = package.config:sub(1,1)
+local PLATFORM_SLASH = package.config:sub(1,1)
 function normalizePath(path)
-    return path:gsub(platformSlash, '/'):gsub('/+', '/')
+    return path:gsub(PLATFORM_SLASH, '/'):gsub('/+', '/')
 end
 
 function invert(tab)
@@ -618,7 +609,7 @@ function df_expr_to_ref(expr)
     expr = expr:gsub('%["(.-)"%]', function(field) return '.' .. field end)
         :gsub('%[\'(.-)\'%]', function(field) return '.' .. field end)
         :gsub('%[(%d+)]', function(field) return '.' .. field end)
-    local parts = split_string(expr, '%.')
+    local parts = expr:split('.', true)
     local obj = df_env[parts[1]]
     for i = 2, #parts do
         local key = tonumber(parts[i]) or parts[i]

@@ -19,7 +19,10 @@ function test.parse_gui_commandline()
     expect.table_eq({help=true}, opts)
 
     opts = {}
-    b.parse_gui_commandline(opts, {'--cursor=1,2,3'})
+    mock.patch(dfhack.maps, 'isValidTilePos', mock.func(true),
+               function()
+                   b.parse_gui_commandline(opts, {'--cursor=1,2,3'})
+               end)
     expect.table_eq({auto_phase=true, name='blueprint', start={x=1,y=2,z=3}},
                     opts)
 

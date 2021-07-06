@@ -1,5 +1,6 @@
 local _ENV = mkmodule('plugins.blueprint')
 
+local argparse = require('argparse')
 local utils = require('utils')
 
 -- the info here is very basic and minimal, so hopefully we won't need to change
@@ -43,17 +44,11 @@ local valid_phase_list = {
 valid_phases = utils.invert(valid_phase_list)
 
 local function parse_cursor(opts, arg)
-    local _, _, x, y, z = arg:find('^(%d+),(%d+),(%d+)$')
-    if not x then
-        qerror(('invalid argument for --cursor option: "%s"; expected format' ..
-                ' is "<x>,<y>,<z>", for example: "30,60,150"'):format(arg))
-    end
+    local cursor = argparse.coords(arg)
     -- be careful not to replace struct members when called from C++, but also
     -- create the table as needed when called from lua
     if not opts.start then opts.start = {} end
-    opts.start.x = tonumber(x)
-    opts.start.y = tonumber(y)
-    opts.start.z = tonumber(z)
+    utils.assign(opts.start, cursor)
 end
 
 local function parse_positionals(opts, args, start_argidx)
@@ -93,7 +88,7 @@ local function process_args(opts, args)
         return
     end
 
-    return utils.processArgsGetopt(args, {
+    return argparse.processArgsGetopt(args, {
             {'c', 'cursor', hasArg=true,
              handler=function(optarg) parse_cursor(opts, optarg) end},
             {'h', 'help', handler=function() opts.help = true end},

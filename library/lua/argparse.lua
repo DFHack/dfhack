@@ -199,7 +199,8 @@ function coords(arg, arg_name, skip_validation)
                         check_nonnegative_int(numbers[2]),
                         check_nonnegative_int(numbers[3]))
     if not skip_validation and not dfhack.maps.isValidTilePos(pos) then
-        arg_error('specified coordinates not on current map: "%s"', arg)
+        arg_error(arg_name,
+                  'specified coordinates not on current map: "%s"', arg)
     end
     return pos
 end

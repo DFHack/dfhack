@@ -897,7 +897,24 @@ static int dig_now_tile(lua_State *L)
     return 1;
 }
 
+static int link_adjacent_smooth_walls(lua_State *L)
+{
+    DFCoord pos;
+    if (lua_gettop(L) <= 1)
+        Lua::CheckDFAssign(L, &pos, 1);
+    else
+        pos = DFCoord(luaL_checkint(L, 1), luaL_checkint(L, 2),
+                      luaL_checkint(L, 3));
+
+    MapExtras::MapCache map;
+    adjust_smooth_wall_dir(map, pos);
+    refresh_adjacent_smooth_walls(map, pos);
+    map.WriteAll();
+    return 0;
+}
+
 DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_COMMAND(dig_now_tile),
+    DFHACK_LUA_COMMAND(link_adjacent_smooth_walls),
     DFHACK_LUA_END
 };

@@ -33,41 +33,45 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
+# 0.47.05-r2
+
 ## Fixes
 - Fixed an issue where scrollable text in Lua-based screens could prevent other widgets from scrolling
 - Fixed an issue preventing some external scripts from creating zones and other abstract buildings (see note about room definitions under "Internals")
 - `buildingplan`: fixed an issue where planned constructions designated with DF's sizing keys (``umkh``) would sometimes be larger than requested
 - `buildingplan`: fixed an issue preventing other plugins like `automaterial` from planning constructions if the "enable all" buildingplan setting was turned on
-- `buildingplan`: ensure navigation keys work properly in the materials selection screen when alternate keybindings are used
+- `buildingplan`: made navigation keys work properly in the materials selection screen when alternate keybindings are used
 - `command-prompt`: fixed issues where overlays created by running certain commands (e.g. `gui/liquids`, `gui/teleport`) would not update the parent screen correctly
 - `dwarfvet`: fixed a crash that could occur with hospitals overlapping with other buildings in certain ways
-- `orders`: don't crash when importing orders with malformed IDs
+- `orders`: fixed crash when importing orders with malformed IDs
 - ``quickfortress.csv`` blueprint: fixed refuse stockpile config and prevented stockpiles from covering stairways
 - `stonesense`: fixed a crash that could occur when ctrl+scrolling or closing the Stonesense window
 - `embark-assistant`: fixed faulty early exit in first search attempt when searching for waterfalls
 
 ## Misc Improvements
-- Added adjectives to item selection dialogs, used in tools like `gui/create-item` - this makes it possible to differentiate between different types of high/low boots, shields, etc.
-- `blueprint`: make ``depth`` and ``name`` parameters optional. ``depth`` now defaults to ``1`` (current level only) and ``name`` defaults to "blueprint"
-- `blueprint`: allow ``depth`` to be negative, which will result in the blueprints being written from the highest z-level to the lowest. before, blueprints were always written from the lowest z-level to the highest.
-- `blueprint`: add the ``--cursor`` option to set the starting coordinate for the generated blueprints. a game cursor is no longer necessary if this option is used.
+- Added adjectives to item selection dialogs, used in tools like `gui/create-item` - this makes it possible to differentiate between different types of high/low boots, shields, etc. (some of which are procedurally generated)
+- `blueprint`: made ``depth`` and ``name`` parameters optional. ``depth`` now defaults to ``1`` (current level only) and ``name`` defaults to "blueprint"
+- `blueprint`: ``depth`` can now be negative, which will result in the blueprints being written from the highest z-level to the lowest. Before, blueprints were always written from the lowest z-level to the highest.
+- `blueprint`: added the ``--cursor`` option to set the starting coordinate for the generated blueprints. A game cursor is no longer necessary if this option is used.
 - `quickfort`: the Dreamfort blueprint set can now be comfortably built in a 1x1 embark
 - `stonesense`: sped up startup time
 - `tweak` hide-priority: changed so that priorities stay hidden (or visible) when exiting and re-entering the designations menu
 - `embark-assistant`: slightly improved performance of surveying and improved code a little
 
 ## Lua
-- new string utility function: ``string:wrap(width)`` wraps a string at space-separated word boundaries
-- new string utility function: ``string:trim()`` removes whitespace characters from the beginning and end of the string
-- new string utility function: ``string:split(delimiter, plain)`` splits a string with the given delimiter and returns a table of substrings. if ``plain`` is specified and set to ``true``, ``delimiter`` is interpreted as a literal string instead of as a pattern (the default)
+- new string utility functions:
+    - ``string:wrap(width)`` wraps a string at space-separated word boundaries
+    - ``string:trim()`` removes whitespace characters from the beginning and end of the string
+    - ``string:split(delimiter, plain)`` splits a string with the given delimiter and returns a table of substrings. if ``plain`` is specified and set to ``true``, ``delimiter`` is interpreted as a literal string instead of as a pattern (the default)
 - new library: ``argparse`` is a collection of commandline argument processing functions
 - ``gui.Painter``: fixed error when calling ``viewport()`` method
 - ``gui.dwarfmode``: new function: ``enterSidebarMode(sidebar_mode, max_esc)`` which uses keypresses to get into the specified sidebar mode from whatever the current screen is
 - `reveal`: now exposes ``unhideFlood(pos)`` functionality to Lua
 - new utility function: ``utils.normalizePath()``: normalizes directory slashes across platoforms to ``/`` and coaleses adjacent directory separators
-- ``utils.processArgsGetopt()``: now returns negative numbers (e.g. ``-10``) in the list of positional parameters instead of treating it as an option string equivalent to ``-1 -0``
-- ``utils.processArgsGetopt()``: now properly handles ``--`` like GNU ``getopt`` as a marker to treat all further parameters as non-options
-- ``utils.processArgsGetopt()``: now detects when required arguments to long-form options are missing
+- ``argparse.processArgsGetopt()`` (previously ``utils.processArgsGetopt()``):
+    - now returns negative numbers (e.g. ``-10``) in the list of positional parameters instead of treating it as an option string equivalent to ``-1 -0``
+    - now properly handles ``--`` like GNU ``getopt`` as a marker to treat all further parameters as non-options
+    - now detects when required arguments to long-form options are missing
 - `xlsxreader`: added Lua class wrappers for the xlsxreader plugin API
 
 ## API
@@ -80,8 +84,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Internals
 - The DFHack test harness is now much easier to use for iterative development.  Configuration can now be specified on the commandline, there are more test filter options, and the test harness can now easily rerun tests that have been run before.
 - The ``test/main`` command to invoke the test harness has been renamed to just ``test``
-- DFHack unit tests must now match any output expected to be printed via ``dfhack.printerr()``
-- Fortress mode is now supported for unit tests (allowing tests that require a fortress map to be loaded) - note that these tests are skipped by continuous integration for now, pending a suitable test fortress
+- Unit tests must now match any output expected to be printed via ``dfhack.printerr()``
+- Unit tests now support fortress mode (allowing tests that require a fortress map to be loaded) - note that these tests are skipped by continuous integration for now, pending a suitable test fortress
 - Unit tests can now use ``delay_until(predicate_fn, timeout_frames)`` to delay until a condition is met
 - Room definitions and extents are now created for abstract buildings so callers don't have to initialize the room structure themselves
 

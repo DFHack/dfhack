@@ -2837,11 +2837,12 @@ smoothing and track carving) are handled.
 
 Usage::
 
-    dig-now [<pos> <pos>] [<options>]
+    dig-now [<pos> [<pos>]] [<options>]
 
 Where the optional ``<pos>`` pair can be used to specify the coordinate bounds
 within which ``dig-now`` will operate. If they are not specified, ``dig-now``
-will scan the entire map.
+will scan the entire map. If only one ``<pos>`` is specified, only the tile at
+that coordinate is processed.
 
 Any ``<pos>`` parameters can either be an ``<x>,<y>,<z>`` triple (e.g.
 ``35,12,150``) or the string ``here``, which means the position of the active

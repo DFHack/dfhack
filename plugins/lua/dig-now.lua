@@ -16,12 +16,12 @@ standard game rules, but the behavior is configurable.
 
 Usage:
 
-    dig-now [<pos> <pos>] [<options>]
+    dig-now [<pos> [<pos>]] [<options>]
 
 Examples:
 
 dig-now
-    Dig designated tiles according to standard game rules.
+    Dig all designated tiles according to standard game rules.
 
 dig-now --clean
     Dig designated tiles, but don't generate any boulders, ores, or gems.
@@ -85,12 +85,16 @@ function parse_commandline(opts, ...)
                 df.global.window_z
         parse_coords(opts, 'start', ('0,0,%d'):format(z))
         parse_coords(opts, 'end', ('%d,%d,%d'):format(x, y, z))
-    elseif #positionals >= 2 then
+    elseif #positionals >= 1 then
         parse_coords(opts, 'start', positionals[1])
-        parse_coords(opts, 'end', positionals[2])
-        opts.start.x, opts['end'].x = min_to_max(opts.start.x, opts['end'].x)
-        opts.start.y, opts['end'].y = min_to_max(opts.start.y, opts['end'].y)
-        opts.start.z, opts['end'].z = min_to_max(opts.start.z, opts['end'].z)
+        if #positionals >= 2 then
+            parse_coords(opts, 'end', positionals[2])
+            opts.start.x, opts['end'].x = min_to_max(opts.start.x,opts['end'].x)
+            opts.start.y, opts['end'].y = min_to_max(opts.start.y,opts['end'].y)
+            opts.start.z, opts['end'].z = min_to_max(opts.start.z,opts['end'].z)
+        else
+            utils.assign(opts['end'], opts.start)
+        end
     end
 end
 

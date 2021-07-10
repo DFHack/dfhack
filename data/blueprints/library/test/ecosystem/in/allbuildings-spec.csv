@@ -1,0 +1,9 @@
+#notes
+description=all the buildings that work
+width=24
+height=37
+depth=2
+#ignore
+note that this test is very incomplete since blueprint has incomplete
+or incorrect building detection for many building types. the issues
+will be fixed over time.

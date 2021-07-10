@@ -2702,8 +2702,14 @@ For more details, use ``tiletypes help``.
 
 tiletypes-command
 -----------------
-Runs tiletypes commands, separated by ;. This makes it possible to change
+Runs tiletypes commands, separated by ``;``. This makes it possible to change
 tiletypes modes from a hotkey or via dfhack-run.
+
+Example::
+
+    tiletypes-command p any ; p s wall ; p sp normal
+
+This resets the paint filter to unsmoothed walls.
 
 .. _tiletypes-here:
 
@@ -2712,12 +2718,24 @@ tiletypes-here
 Apply the current tiletypes options at the in-game cursor position, including
 the brush. Can be used from a hotkey.
 
+Options:
+
+:``-c``, ``--cursor <x>,<y>,<z>``:
+    Use the specified map coordinates instead of the current cursor position. If
+    this option is specified, then an active game map cursor is not necessary.
+:``-h``, ``--help``:
+    Show command help text.
+:``-q``, ``--quiet``:
+    Suppress non-error status output.
+
 .. _tiletypes-here-point:
 
 tiletypes-here-point
 --------------------
 Apply the current tiletypes options at the in-game cursor position to a single
 tile. Can be used from a hotkey.
+
+This command supports the same options as `tiletypes-here` above.
 
 .. _tubefill:
 

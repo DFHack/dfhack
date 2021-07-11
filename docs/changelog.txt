@@ -34,7 +34,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## Misc Improvements
-`buildingplan`: now displays which items are attached and which items are still missing for planned buildings
+- `buildingplan`: now displays which items are attached and which items are still missing for planned buildings
 
 # 0.47.05-r2
 

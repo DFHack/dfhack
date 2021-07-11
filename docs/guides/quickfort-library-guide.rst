@@ -25,20 +25,83 @@ Dreamfort
 
 Dreamfort is a fully functional, self-sustaining fortress with defenses,
 farming, a complete set of workshops, self-managing quantum stockpiles, a grand
-dining hall, hospital, jail, fresh water well system, guildhalls, and bedrooms
-for hundreds of dwarves. It also comes with manager work orders to automate
-basic fort needs, such as food and booze production. It can function by itself
-or as the core of a larger, more ambitious fortress. Read the high-level
+dining hall, hospital, jail, fresh water well system, guildhalls, noble suites,
+and bedrooms for hundreds of dwarves. It also comes with manager work orders to
+automate basic fort needs, such as food and booze production. It can function by
+itself or as the core of a larger, more ambitious fortress. Read the high-level
 walkthrough by running ``quickfort run library/dreamfort.csv`` and list the
-walkthroughs for the individual levels by running ``quickfort list dreamfort -l
--m notes`` or by opening the ``quickfort gui`` dialog, enabling the library
-with :kbd:`Alt`:kbd:`l`, and setting the filter to ``dreamfort notes``.
+walkthroughs for the individual levels by running ``quickfort list -l dreamfort
+-m notes`` or ``quickfort gui -l dreamfort notes``.
 
 Dreamfort blueprints are also available for easy viewing and copying `online
 <https://drive.google.com/drive/folders/1iS90EEVqUkxTeZiiukVj1pLloZqabKuP>`__.
 
-The Quick Fortresses
-~~~~~~~~~~~~~~~~~~~~
+The online spreadsheets also include `embark profile suggestions
+<https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=149144025>`__
+and a complete `example embark profile
+<https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=1727884387>`__.
+
+Visual overview
+```````````````
+
+Here are some annotated screenshots of the major levels (or click `here
+<https://drive.google.com/drive/folders/14KdE2E2wQKj4F_E-NAe3G3E4x1wiWtrc>`__
+for the slideshow interface).
+
+Surface level
+\\\\\\\\\\\\\
+
+.. image:: https://drive.google.com/uc?export=download&id=1YL_vQJLB2YnUEFrAg9y3HEdFq3Wpw9WP
+  :alt: Annotated screenshot of the dreamfort surface level
+  :target: https://drive.google.com/file/d/1YL_vQJLB2YnUEFrAg9y3HEdFq3Wpw9WP
+
+Farming level
+\\\\\\\\\\\\\
+
+.. image:: https://drive.google.com/uc?export=download&id=1fBC3G5Y888l4tVe5REAyAd_zeojADVme
+  :alt: Annotated screenshot of the dreamfort farming level
+  :target: https://drive.google.com/file/d/1fBC3G5Y888l4tVe5REAyAd_zeojADVme
+
+Industry level
+\\\\\\\\\\\\\\
+
+.. image:: https://drive.google.com/uc?export=download&id=1emMaHHCaUPcdRbkLQqvr-0ZCs2tdM5X7
+  :alt: Annotated screenshot of the dreamfort industry level
+  :target: https://drive.google.com/file/d/1emMaHHCaUPcdRbkLQqvr-0ZCs2tdM5X7
+
+Services level
+\\\\\\\\\\\\\\
+
+.. image:: https://drive.google.com/uc?export=download&id=13vDIkTVOZGkM84tYf4O5nmRs4VZdE1gh
+  :alt: Annotated screenshot of the dreamfort services level
+  :target: https://drive.google.com/file/d/13vDIkTVOZGkM84tYf4O5nmRs4VZdE1gh
+.. image:: https://drive.google.com/uc?export=download&id=1jlGr6tAhS8i-XFTz8gowTZBhXcfjfL_L
+  :alt: Annotated screenshot of the dreamfort cistern
+  :target: https://drive.google.com/file/d/1jlGr6tAhS8i-XFTz8gowTZBhXcfjfL_L
+
+Guildhall level
+\\\\\\\\\\\\\\\
+
+.. image:: https://drive.google.com/uc?export=download&id=17jHiCKeZm6FSS-CI4V0r0GJZh09nzcO_
+  :alt: Annotated screenshot of the dreamfort guildhall level
+  :target: https://drive.google.com/file/d/17jHiCKeZm6FSS-CI4V0r0GJZh09nzcO_
+
+Noble suites
+\\\\\\\\\\\\
+
+.. image:: https://drive.google.com/uc?export=download&id=1IBqCf6fF3lw7sHiBE_15Euubysl5AAiS
+  :alt: Annotated screenshot of the dreamfort noble suites
+  :target: https://drive.google.com/file/d/1IBqCf6fF3lw7sHiBE_15Euubysl5AAiS
+
+Apartments
+\\\\\\\\\\
+
+.. image:: https://drive.google.com/uc?export=download&id=1mDQQXG8BnXqasRGFC9R5N6xNALiswEyr
+  :alt: Annotated screenshot of the dreamfort apartments
+  :target: https://drive.google.com/file/d/1mDQQXG8BnXqasRGFC9R5N6xNALiswEyr
+
+The Quick Fortress
+~~~~~~~~~~~~~~~~~~
 
 The Quick Fortress is an updated version of the example fortress that came with
 `Python Quickfort 2.0 <https://github.com/joelpt/quickfort>`__ (the program

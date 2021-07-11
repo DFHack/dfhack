@@ -34,6 +34,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## Misc Improvements
+- `buildingplan`: now displays which items are attached and which items are still missing for planned buildings
 - `tiletypes-here`, `tiletypes-here-point`: add --cursor and --quiet options to support non-interactive use cases
 
 # 0.47.05-r2

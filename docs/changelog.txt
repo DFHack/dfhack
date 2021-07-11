@@ -36,6 +36,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 - `tiletypes-here`, `tiletypes-here-point`: add --cursor and --quiet options to support non-interactive use cases
 
+## Documentation
+- `quickfort-library-guide`: updated dreamfort documentation and added screenshots
+
 # 0.47.05-r2
 
 ## Fixes

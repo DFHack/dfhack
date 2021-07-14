@@ -33,6 +33,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
+## Documentation
+- `quickfort-library-guide`: updated dreamfort documentation and added screenshots
+
 # 0.47.05-r2
 
 ## Fixes

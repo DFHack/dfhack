@@ -54,6 +54,7 @@ Surface level
 .. image:: https://drive.google.com/uc?export=download&id=1YL_vQJLB2YnUEFrAg9y3HEdFq3Wpw9WP
   :alt: Annotated screenshot of the dreamfort surface level
   :target: https://drive.google.com/file/d/1YL_vQJLB2YnUEFrAg9y3HEdFq3Wpw9WP
+  :align: center
 
 Farming level
 \\\\\\\\\\\\\
@@ -61,6 +62,7 @@ Farming level
 .. image:: https://drive.google.com/uc?export=download&id=1fBC3G5Y888l4tVe5REAyAd_zeojADVme
   :alt: Annotated screenshot of the dreamfort farming level
   :target: https://drive.google.com/file/d/1fBC3G5Y888l4tVe5REAyAd_zeojADVme
+  :align: center
 
 Industry level
 \\\\\\\\\\\\\\
@@ -75,9 +77,19 @@ Services level
 .. image:: https://drive.google.com/uc?export=download&id=13vDIkTVOZGkM84tYf4O5nmRs4VZdE1gh
   :alt: Annotated screenshot of the dreamfort services level
   :target: https://drive.google.com/file/d/13vDIkTVOZGkM84tYf4O5nmRs4VZdE1gh
+  :align: center
 .. image:: https://drive.google.com/uc?export=download&id=1jlGr6tAhS8i-XFTz8gowTZBhXcfjfL_L
   :alt: Annotated screenshot of the dreamfort cistern
   :target: https://drive.google.com/file/d/1jlGr6tAhS8i-XFTz8gowTZBhXcfjfL_L
+  :align: center
+
+Example plumbing to fill cisterns
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.. image:: https://drive.google.com/uc?export=download&id=1GvhX_pVDOlmqTi2OujoBqCG_qX36ExAv
+  :alt: Annotated screenshot of an example aqueduct addition to the dreamfort cistern
+  :target: https://drive.google.com/file/d/1GvhX_pVDOlmqTi2OujoBqCG_qX36ExAv
+  :align: center
 
 Guildhall level
 \\\\\\\\\\\\\\\
@@ -85,6 +97,7 @@ Guildhall level
 .. image:: https://drive.google.com/uc?export=download&id=17jHiCKeZm6FSS-CI4V0r0GJZh09nzcO_
   :alt: Annotated screenshot of the dreamfort guildhall level
   :target: https://drive.google.com/file/d/17jHiCKeZm6FSS-CI4V0r0GJZh09nzcO_
+  :align: center
 
 Noble suites
 \\\\\\\\\\\\
@@ -92,6 +105,7 @@ Noble suites
 .. image:: https://drive.google.com/uc?export=download&id=1IBqCf6fF3lw7sHiBE_15Euubysl5AAiS
   :alt: Annotated screenshot of the dreamfort noble suites
   :target: https://drive.google.com/file/d/1IBqCf6fF3lw7sHiBE_15Euubysl5AAiS
+  :align: center
 
 Apartments
 \\\\\\\\\\
@@ -99,6 +113,7 @@ Apartments
 .. image:: https://drive.google.com/uc?export=download&id=1mDQQXG8BnXqasRGFC9R5N6xNALiswEyr
   :alt: Annotated screenshot of the dreamfort apartments
   :target: https://drive.google.com/file/d/1mDQQXG8BnXqasRGFC9R5N6xNALiswEyr
+  :align: center
 
 The Quick Fortress
 ~~~~~~~~~~~~~~~~~~

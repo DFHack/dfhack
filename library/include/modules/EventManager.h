@@ -40,6 +40,7 @@ namespace DFHack {
             typedef void (*callback_t)(color_ostream&, void*); //called when the event happens
             callback_t eventHandler;
             int32_t freq;
+            int32_t when;
 
             EventHandler(callback_t eventHandlerIn, int32_t freqIn): eventHandler(eventHandlerIn), freq(freqIn) {
             }

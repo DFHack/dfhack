@@ -498,6 +498,17 @@ struct buildingplan_query_hook : public df::viewscreen_dwarfmodest
             INTERPOSE_NEXT(feed)(input);
     }
 
+    static bool is_filter_satisfied(df::building *bld, int filter_idx)
+    {
+        if (!bld
+                || bld->jobs.size() < 1
+                || bld->jobs[0]->job_items.size() <= filter_idx)
+            return false;
+
+        // if all items for this filter are attached, the quantity will be 0
+        return bld->jobs[0]->job_items[filter_idx]->quantity == 0;
+    }
+
     DEFINE_VMETHOD_INTERPOSE(void, render, ())
     {
         INTERPOSE_NEXT(render)();
@@ -515,10 +526,12 @@ struct buildingplan_query_hook : public df::viewscreen_dwarfmodest
         Screen::Pen pen(' ', COLOR_BLACK);
         Screen::fillRect(pen, x, y, dims.menu_x2, y);
 
+        bool attached = is_filter_satisfied(pb->getBuilding(), filter_idx);
+
         auto & filter = pb->getFilters()[filter_idx];
         y = 24;
         std::string item_label =
-            stl_sprintf("Item %d of %d", filter_count - filter_idx, filter_count);
+            stl_sprintf("Item %d of %d (%s)", filter_count - filter_idx, filter_count, attached ? "attached" : "pending");
         OutputString(COLOR_WHITE, x, y, "Planned Building Filter", true, left_margin + 1);
         OutputString(COLOR_WHITE, x, y, item_label.c_str(), true, left_margin + 1);
         OutputString(COLOR_WHITE, x, y, get_item_label(toBuildingTypeKey(bld), filter_idx).c_str(), true, left_margin);

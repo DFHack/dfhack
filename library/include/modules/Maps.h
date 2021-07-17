@@ -260,8 +260,10 @@ extern DFHACK_EXPORT bool GetGlobalFeature(t_feature &feature, int32_t index);
  * BLOCK DATA
  */
 
-/// get size of the map in tiles
+/// get size of the map in blocks
 extern DFHACK_EXPORT void getSize(uint32_t& x, uint32_t& y, uint32_t& z);
+/// get size of the map in tiles
+extern DFHACK_EXPORT void getTileSize(uint32_t& x, uint32_t& y, uint32_t& z);
 /// get the position of the map on world map
 extern DFHACK_EXPORT void getPosition(int32_t& x, int32_t& y, int32_t& z);
 

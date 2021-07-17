@@ -436,15 +436,18 @@ static TileDirection get_adjacent_smooth_walls(MapExtras::MapCache &map,
     return tdir;
 }
 
-// ensure we have at least two directions enabled so we can find a matching
-// tiletype
+// ensure we have at least two directions enabled (or 0) so we can find a
+// matching tiletype. The game chooses to curve "end piece" walls into
+// orthogonally adjacent hidden tiles, or uses a pillar if there are no such
+// tiles. we take the easier, but not quite conformant, path here and always use
+// a pillar for end pieces. If we want to become faithful to how the game does
+// it, this code should be moved to the post-processing phase after hidden tiles
+// have been revealed. We would also have to scan for wall ends that are no
+// longer adjacent to hidden tiles and convert them to pillars when we dig two
+// tiles away from such a wall end and reveal their adjacent hidden tile.
 static TileDirection ensure_valid_tdir(TileDirection tdir) {
-    if (tdir.sum() < 2) {
-        if (tdir.north) tdir.south = 1;
-        else if (tdir.south) tdir.north = 1;
-        else if (tdir.east) tdir.west = 1;
-        else if (tdir.west) tdir.east = 1;
-    }
+    if (tdir.sum() < 2)
+        tdir.whole = 0;
     return tdir;
 }
 

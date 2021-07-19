@@ -1,7 +1,27 @@
 config.mode = 'fortress'
 
-TMP_FILE_NAME = 'tmp-test'
-TMP_FILE_PATH = ('dfhack-config/orders/%s.json'):format(TMP_FILE_NAME)
+local FILE_PATH_PATTERN = 'dfhack-config/orders/%s.json'
+
+local BACKUP_FILE_NAME = 'tmp-backup'
+local BACKUP_FILE_PATH = FILE_PATH_PATTERN:format(BACKUP_FILE_NAME)
+
+local TMP_FILE_NAME = 'tmp-test'
+local TMP_FILE_PATH = FILE_PATH_PATTERN:format(TMP_FILE_NAME)
+
+local function test_wrapper(test_fn)
+    -- save active orders
+    dfhack.run_command_silent{'orders', 'export', BACKUP_FILE_NAME}
+    return dfhack.with_finalize(
+        function()
+            -- clear test orders, restore original orders, remove temp file
+            dfhack.run_command_silent{'orders', 'clear'}
+            print('reimporting')
+            dfhack.run_command_silent{'orders', 'import', BACKUP_FILE_NAME}
+            os.remove(BACKUP_FILE_PATH)
+        end,
+        test_fn)
+end
+config.wrapper = test_wrapper
 
 function run_orders_import(file_content)
     local f = io.open(TMP_FILE_PATH, 'w')

@@ -17,6 +17,7 @@ local function test_wrapper(test_fn)
         function()
             -- clear test orders, restore original orders, remove temp files
             dfhack.run_command_silent{'orders', 'clear'}
+            df.global.world.manager_order_next_id = 0
             dfhack.run_command_silent{'orders', 'import', BACKUP_FILE_NAME}
             df.global.world.manager_order_next_id =
                     #df.global.world.manager_orders

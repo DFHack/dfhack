@@ -7,6 +7,7 @@
 #include "TileTypes.h"
 #include "LuaTools.h"
 
+#include "modules/Buildings.h"
 #include "modules/Gui.h"
 #include "modules/Maps.h"
 #include "modules/MapCache.h"
@@ -421,17 +422,26 @@ static bool is_smooth_wall(MapExtras::MapCache &map, const DFCoord &pos) {
                 && tileShape(tt) == df::tiletype_shape::WALL;
 }
 
-// adds adjacent smooth walls to the given tdir
+static bool is_smooth_wall_or_door(MapExtras::MapCache &map,
+                                   const DFCoord &pos) {
+    if (is_smooth_wall(map, pos))
+        return true;
+
+    df::building *bld = Buildings::findAtTile(pos);
+    return bld && bld->getType() == df::building_type::Door;
+}
+
+// adds adjacent smooth walls and doors to the given tdir
 static TileDirection get_adjacent_smooth_walls(MapExtras::MapCache &map,
                                                const DFCoord &pos,
                                                TileDirection tdir) {
-    if (is_smooth_wall(map, DFCoord(pos.x, pos.y-1, pos.z)))
+    if (is_smooth_wall_or_door(map, DFCoord(pos.x, pos.y-1, pos.z)))
         tdir.north = 1;
-    if (is_smooth_wall(map, DFCoord(pos.x, pos.y+1, pos.z)))
+    if (is_smooth_wall_or_door(map, DFCoord(pos.x, pos.y+1, pos.z)))
         tdir.south = 1;
-    if (is_smooth_wall(map, DFCoord(pos.x-1, pos.y, pos.z)))
+    if (is_smooth_wall_or_door(map, DFCoord(pos.x-1, pos.y, pos.z)))
         tdir.west = 1;
-    if (is_smooth_wall(map, DFCoord(pos.x+1, pos.y, pos.z)))
+    if (is_smooth_wall_or_door(map, DFCoord(pos.x+1, pos.y, pos.z)))
         tdir.east = 1;
     return tdir;
 }

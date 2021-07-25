@@ -3989,7 +3989,7 @@ Lua plugin classes
 ``crng``
 ~~~~~~~~
 
-- ``init(id, df, dist)``: constructor
+- ``new(id, df, dist)``: constructor
 
   - ``id``: Reference ID of engine to use in RNGenerations
   - ``df`` (optional): bool indicating whether to destroy the Engine when the crng object is garbage collected
@@ -4006,7 +4006,7 @@ Lua plugin classes
 ``normal_distribution``
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-- ``init(avg, stddev)``: constructor
+- ``new(avg, stddev)``: constructor
 - ``next(id)``: returns next number in the distribution
 
   - ``id``: engine ID to pass to native function
@@ -4014,7 +4014,7 @@ Lua plugin classes
 ``real_distribution``
 ~~~~~~~~~~~~~~~~~~~~~
 
-- ``init(min, max)``: constructor
+- ``new(min, max)``: constructor
 - ``next(id)``: returns next number in the distribution
 
   - ``id``: engine ID to pass to native function
@@ -4022,7 +4022,7 @@ Lua plugin classes
 ``int_distribution``
 ~~~~~~~~~~~~~~~~~~~~
 
-- ``init(min, max)``: constructor
+- ``new(min, max)``: constructor
 - ``next(id)``: returns next number in the distribution
 
   - ``id``: engine ID to pass to native function
@@ -4030,7 +4030,7 @@ Lua plugin classes
 ``bool_distribution``
 ~~~~~~~~~~~~~~~~~~~~~
 
-- ``init(min, max)``: constructor
+- ``new(chance)``: constructor
 - ``next(id)``: returns next boolean in the distribution
 
   - ``id``: engine ID to pass to native function
@@ -4038,7 +4038,7 @@ Lua plugin classes
 ``num_sequence``
 ~~~~~~~~~~~~~~~~
 
-- ``init(a, b)``: constructor
+- ``new(a, b)``: constructor
 - ``add(num)``: adds num to the end of the number sequence
 - ``shuffle()``: shuffles the sequence of numbers
 - ``next()``: returns next number in the sequence

@@ -1,0 +1,13 @@
+# autonick config file
+# every line in this file that is not empty and does
+# not start with "#" will be used as a nickname by the
+# autonick script.
+
+Mouse
+River
+Threetoe
+
+# nicknames can be multiple words
+Toady One
+Funny Name for a Dwarf
+

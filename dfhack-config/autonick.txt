@@ -3,11 +3,52 @@
 # not start with "#" will be used as a nickname by the
 # autonick script.
 
-Mouse
-River
-Threetoe
-
 # nicknames can be multiple words
 Toady One
-Funny Name for a Dwarf
+Threetoe
+
+# animals
+Mouse
+Hunter
+Otter
+Snake
+Owl
+Bat
+Fox
+Mouse
+Mole
+Cat
+Badger
+Squirrel
+Kit
+
+# colours
+Flash
+Red
+Gray
+Shadow
+
+# planets
+Mars
+Jupiter
+Saturn
+
+# nature
+River
+Blaze
+River
+Snow
+Bones
+Ash
+
+# other
+Ink
+Echo
+Mint
+Mel
+X
+Sam
+Tango
+King
+Gadget
 

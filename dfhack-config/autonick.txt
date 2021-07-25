@@ -55,6 +55,8 @@ Sky
 Storm
 Clay
 Ember
+Marsh
+Star
 
 # trees
 Ash
@@ -114,6 +116,8 @@ Lex
 Cid
 Miles
 Rotor
+Mesa
+Verse
 
 # from the "300 list"
 Aiden

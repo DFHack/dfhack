@@ -14,7 +14,6 @@ Snake
 Owl
 Bat
 Fox
-Mouse
 Mole
 Cat
 Badger
@@ -43,12 +42,10 @@ Jupiter
 Saturn
 
 # nature
-River
 Blaze
 River
 Snow
 Bones
-Ash
 Rain
 Reed
 Lake
@@ -151,7 +148,6 @@ Remi
 Roan
 Robyn
 Salem
-Sam
 Sean
 Tate
 Tobin

@@ -9,7 +9,6 @@ Threetoe
 
 # animals
 Mouse
-Hunter
 Otter
 Snake
 Owl
@@ -21,12 +20,22 @@ Cat
 Badger
 Squirrel
 Kit
+Wren
+Jay
+Crow
+Raven
+Sparrow
 
 # colours
 Flash
 Red
 Gray
+Grey
+Blue
 Shadow
+Indigo
+Jade
+Umber
 
 # planets
 Mars
@@ -40,6 +49,64 @@ River
 Snow
 Bones
 Ash
+Rain
+Reed
+Lake
+Briar
+Brook
+Sky
+Storm
+Clay
+Ember
+
+# trees
+Ash
+Oak
+Rowan
+Aspen
+Alder
+Apple
+Beech
+Birch
+Box
+Cedar
+Cypress
+Elder
+Elm
+Larch
+Fir
+Juniper
+Lime
+Pine
+Poplar
+Spruce
+Yew
+
+# seasons
+Spring
+Summer
+Autumn
+Winter
+
+# cardinals
+North
+South
+East
+West
+
+# jobs
+Royal
+Sage
+King
+Piper
+Poet
+Sailor
+Tanner
+Mason
+Miller
+Baker
+Archer
+Hunter
 
 # other
 Ink
@@ -49,72 +116,50 @@ Mel
 X
 Sam
 Tango
-King
 Gadget
+Brum
+Wall
+Beam
+Ud
+Tal
+Ren
+Aki
+Jun
+Kei
+Lynn
+Lex
+Cid
 
 # from the "300 list"
 Aiden
-Archer
 Arden
-Ash
-Aspen
 Auden
 August
 Avery
 Avis
-Baker
 Bay
 Blake
-Blue
-Briar
-Brook
-Clay
-Ember
 Erin
 Ezra
-Grey
-Hunter
-Indigo
-Jade
 Kai
-Kit
-Lake
 Lane
 Leah
-Mason
-Miller
 Noel
 Pat
-Piper
-Poet
 Ray
-Rain
-Reed
 Remi
-River
 Roan
 Robyn
-Rowan
-Royal
-Sage
-Sailor
 Salem
 Sam
 Sean
-Sky
-Storm
-Tanner
 Tate
 Tobin
 Tori
 True
-Umber
 Val
-West
 Wilder
-Winter
 Wisdom
-Wren
 Wyatt
 Zephyr
 

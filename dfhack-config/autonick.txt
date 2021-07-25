@@ -29,12 +29,12 @@ Sparrow
 Flash
 Red
 Gray
-Grey
 Blue
 Shadow
 Indigo
 Jade
 Umber
+Silver
 
 # planets
 Mars
@@ -91,20 +91,6 @@ South
 East
 West
 
-# jobs
-Royal
-Sage
-King
-Piper
-Poet
-Sailor
-Tanner
-Mason
-Miller
-Baker
-Archer
-Hunter
-
 # other
 Ink
 Echo
@@ -126,6 +112,8 @@ Kei
 Lynn
 Lex
 Cid
+Miles
+Rotor
 
 # from the "300 list"
 Aiden

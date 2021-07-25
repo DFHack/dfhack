@@ -19,13 +19,14 @@
 using namespace DFHack;
 using namespace df::enums;
 
-// A plugin must be able to return its name and version.
+// Expose the plugin name to the DFHack core, as well as metadata like the DFHack version.
 // The name string provided must correspond to the filename -
 // skeleton.plug.so, skeleton.plug.dylib, or skeleton.plug.dll in this case
 DFHACK_PLUGIN("skeleton");
 
-// A plugin can have a state which can be used to manage how the plugin operates.
-// The state is referred to by this the identifier provided to the macro. eg. `enabled`
+// The identifier declared with this macro (ie. enabled) can be specified by the user
+// and subsequently used to manage the plugin's operations.
+// This will also be tracked by `plug`; when true the plugin will be shown as enabled.
 DFHACK_PLUGIN_IS_ENABLED(enabled);
 
 // Any globals a plugin requires (e.g. world) should be listed here.

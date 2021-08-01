@@ -193,9 +193,13 @@ static void dig_type(MapExtras::MapCache &map, const DFCoord &pos,
     map.setTiletypeAt(pos, tt);
 }
 
+static df::tiletype get_target_type(df::tiletype tt, df::tiletype_shape shape) {
+    return findRandomVariant(findSimilarTileType(tt, shape));
+}
+
 static void dig_shape(MapExtras::MapCache &map, const DFCoord &pos,
                       df::tiletype tt, df::tiletype_shape shape) {
-    dig_type(map, pos, findSimilarTileType(tt, shape));
+    dig_type(map, pos, get_target_type(tt, shape));
 }
 
 static void remove_ramp_top(MapExtras::MapCache &map, const DFCoord &pos) {
@@ -331,7 +335,7 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                     target_shape = df::tiletype_shape::STAIR_DOWN;
                 else if (shape == df::tiletype_shape::RAMP)
                     remove_ramp_top(map, DFCoord(pos.x, pos.y, pos.z+1));
-                target_type = findSimilarTileType(tt, target_shape);
+                target_type = get_target_type(tt, target_shape);
             }
             break;
         case df::tile_dig_designation::Channel:
@@ -355,27 +359,25 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
         }
         case df::tile_dig_designation::UpStair:
             if (can_dig_up_stair(tt))
-                target_type =
-                        findSimilarTileType(tt, df::tiletype_shape::STAIR_UP);
+                target_type = get_target_type(tt, df::tiletype_shape::STAIR_UP);
             break;
         case df::tile_dig_designation::DownStair:
             if (can_dig_down_stair(tt)) {
                 target_type =
-                        findSimilarTileType(tt, df::tiletype_shape::STAIR_DOWN);
+                        get_target_type(tt, df::tiletype_shape::STAIR_DOWN);
 
             }
             break;
         case df::tile_dig_designation::UpDownStair:
             if (can_dig_up_down_stair(tt)) {
                 target_type =
-                        findSimilarTileType(tt,
-                                            df::tiletype_shape::STAIR_UPDOWN);
+                        get_target_type(tt, df::tiletype_shape::STAIR_UPDOWN);
             }
             break;
         case df::tile_dig_designation::Ramp:
         {
             if (can_dig_ramp(tt)) {
-                target_type = findSimilarTileType(tt, df::tiletype_shape::RAMP);
+                target_type = get_target_type(tt, df::tiletype_shape::RAMP);
                 DFCoord pos_above(pos.x, pos.y, pos.z+1);
                 if (target_type != tt && map.ensureBlockAt(pos_above)
                         && is_diggable(map, pos, map.tiletypeAt(pos_above))) {
@@ -388,7 +390,7 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                     // because we need to use *this* tile's material, not the
                     // material of the tile above
                     map.setTiletypeAt(pos_above,
-                        findSimilarTileType(tt, df::tiletype_shape::RAMP_TOP));
+                            get_target_type(tt, df::tiletype_shape::RAMP_TOP));
                     remove_ramp_top(map, DFCoord(pos.x, pos.y, pos.z+2));
                 }
             }

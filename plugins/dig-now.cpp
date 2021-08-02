@@ -178,23 +178,21 @@ static void dig_type(MapExtras::MapCache &map, const DFCoord &pos,
     if (!blk)
         return;
 
-    // ensure we run this even if one of the later steps fails (e.g. OpenSpace)
     map.setTiletypeAt(pos, tt);
 
-    // digging a tile reverts it to the layer soil/stone material
-    if (!blk->setStoneAt(pos, tt, map.layerMaterialAt(pos)) &&
-            !blk->setSoilAt(pos, tt, map.layerMaterialAt(pos)))
-        return;
-
-    // un-smooth dug tiles
-    tt = map.tiletypeAt(pos);
-    tt = findTileType(tileShape(tt), tileMaterial(tt), tileVariant(tt),
-                      df::tiletype_special::NORMAL, tileDirection(tt));
-    map.setTiletypeAt(pos, tt);
+    // digging a tile should revert it to the layer soil/stone material
+    if (!blk->setStoneAt(pos, tt, map.layerMaterialAt(pos)))
+        blk->setSoilAt(pos, tt, map.layerMaterialAt(pos));
 }
 
 static df::tiletype get_target_type(df::tiletype tt, df::tiletype_shape shape) {
-    return findRandomVariant(findSimilarTileType(tt, shape));
+    tt = findSimilarTileType(tt, shape);
+
+    // un-smooth dug tiles
+    tt = findTileType(tileShape(tt), tileMaterial(tt), tileVariant(tt),
+                      df::tiletype_special::NORMAL, tileDirection(tt));
+
+    return findRandomVariant(tt);
 }
 
 static void dig_shape(MapExtras::MapCache &map, const DFCoord &pos,

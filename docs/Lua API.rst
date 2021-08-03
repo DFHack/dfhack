@@ -4043,6 +4043,16 @@ Lua plugin classes
 - ``shuffle()``: shuffles the sequence of numbers
 - ``next()``: returns next number in the sequence
 
+dig-now
+=======
+
+The dig-now plugin exposes the following functions to Lua:
+
+* ``dig_now_tile(pos)`` or ``dig_now_tile(x,y,z)``: Runs dig-now for the
+    specified tile coordinate. Default options apply, as if you were running the
+    command ``dig-now <pos> <pos>``. See the `dig-now` documentation for details
+    on default settings.
+
 .. _eventful:
 
 eventful

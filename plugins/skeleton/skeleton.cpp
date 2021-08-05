@@ -47,7 +47,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginC
                                      "~54 character description of plugin", //to use one line in the ``[DFHack]# ls`` output
                                      command_callback1,
                                      false,
-                                     ""
+                                     "example usage"
                                      " skeleton <option> <args>\n"
                                      "    explanation of plugin/command\n"
                                      "\n"

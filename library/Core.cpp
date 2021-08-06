@@ -2472,13 +2472,20 @@ int UnicodeAwareSym(const SDL::KeyboardEvent& ke)
 //MEMO: return false if event is consumed
 int Core::DFH_SDL_Event(SDL::Event* ev)
 {
-    //static bool alt = 0;
-
     // do NOT process events before we are ready.
     if(!started) return true;
     if(!ev)
         return true;
-    if(ev && (ev->type == SDL::ET_KEYDOWN || ev->type == SDL::ET_KEYUP))
+
+    if(ev->type == SDL::ET_ACTIVEEVENT && ev->active.gain)
+    {
+        // clear modstate when gaining focus in case alt-tab was used when
+        // losing focus and modstate is now incorrectly set
+        modstate = 0;
+        return true;
+    }
+
+    if(ev->type == SDL::ET_KEYDOWN || ev->type == SDL::ET_KEYUP)
     {
         auto ke = (SDL::KeyboardEvent *)ev;
 

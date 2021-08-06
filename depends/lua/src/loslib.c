@@ -1,5 +1,5 @@
 /*
-** $Id: loslib.c,v 1.64 2016/04/18 13:06:55 roberto Exp $
+** $Id: loslib.c,v 1.65.1.1 2017/04/19 17:29:57 roberto Exp $
 ** Standard Operating System library
 ** See Copyright Notice in lua.h
 */
@@ -30,16 +30,16 @@
 */
 #if !defined(LUA_STRFTIMEOPTIONS)	/* { */
 
-/* options for ANSI C 89 */
+/* options for ANSI C 89 (only 1-char options) */
 #define L_STRFTIMEC89		"aAbBcdHIjmMpSUwWxXyYZ%"
 
 /* options for ISO C 99 and POSIX */
 #define L_STRFTIMEC99 "aAbBcCdDeFgGhHIjmMnprRStTuUVwWxXyYzZ%" \
-	"||" "EcECExEXEyEY" "OdOeOHOIOmOMOSOuOUOVOwOWOy"
+    "||" "EcECExEXEyEY" "OdOeOHOIOmOMOSOuOUOVOwOWOy"  /* two-char options */
 
 /* options for Windows */
 #define L_STRFTIMEWIN "aAbBcdHIjmMpSUwWxXyYzZ%" \
-	"||" "#c#x#d#H#I#j#m#M#S#U#w#W#y#Y"
+    "||" "#c#x#d#H#I#j#m#M#S#U#w#W#y#Y"  /* two-char options */
 
 #if defined(LUA_USE_WINDOWS)
 #define LUA_STRFTIMEOPTIONS	L_STRFTIMEWIN
@@ -257,12 +257,13 @@ static int getfield (lua_State *L, const char *key, int d, int delta) {
 }
 
 
-static const char *checkoption (lua_State *L, const char *conv, char *buff) {
-  const char *option;
-  int oplen = 1;
-  for (option = LUA_STRFTIMEOPTIONS; *option != '\0'; option += oplen) {
+static const char *checkoption (lua_State *L, const char *conv,
+                                ptrdiff_t convlen, char *buff) {
+  const char *option = LUA_STRFTIMEOPTIONS;
+  int oplen = 1;  /* length of options being checked */
+  for (; *option != '\0' && oplen <= convlen; option += oplen) {
     if (*option == '|')  /* next block? */
-      oplen++;  /* next length */
+      oplen++;  /* will check options with next length (+1) */
     else if (memcmp(conv, option, oplen) == 0) {  /* match? */
       memcpy(buff, conv, oplen);  /* copy valid option to buffer */
       buff[oplen] = '\0';
@@ -280,8 +281,10 @@ static const char *checkoption (lua_State *L, const char *conv, char *buff) {
 
 
 static int os_date (lua_State *L) {
-  const char *s = luaL_optstring(L, 1, "%c");
+  size_t slen;
+  const char *s = luaL_optlstring(L, 1, "%c", &slen);
   time_t t = luaL_opt(L, l_checktime, 2, time(NULL));
+  const char *se = s + slen;  /* 's' end */
   struct tm tmr, *stm;
   if (*s == '!') {  /* UTC? */
     stm = l_gmtime(&t, &tmr);
@@ -290,7 +293,8 @@ static int os_date (lua_State *L) {
   else
     stm = l_localtime(&t, &tmr);
   if (stm == NULL)  /* invalid date? */
-    luaL_error(L, "time result cannot be represented in this installation");
+    return luaL_error(L,
+                 "time result cannot be represented in this installation");
   if (strcmp(s, "*t") == 0) {
     lua_createtable(L, 0, 9);  /* 9 = number of fields */
     setallfields(L, stm);
@@ -300,13 +304,14 @@ static int os_date (lua_State *L) {
     luaL_Buffer b;
     cc[0] = '%';
     luaL_buffinit(L, &b);
-    while (*s) {
+    while (s < se) {
       if (*s != '%')  /* not a conversion specifier? */
         luaL_addchar(&b, *s++);
       else {
         size_t reslen;
         char *buff = luaL_prepbuffsize(&b, SIZETIMEFMT);
-        s = checkoption(L, s + 1, cc + 1);  /* copy specifier to 'cc' */
+        s++;  /* skip '%' */
+        s = checkoption(L, s, se - s, cc + 1);  /* copy specifier to 'cc' */
         reslen = strftime(buff, SIZETIMEFMT, cc, stm);
         luaL_addsize(&b, reslen);
       }
@@ -336,7 +341,8 @@ static int os_time (lua_State *L) {
     setallfields(L, &ts);  /* update fields with normalized values */
   }
   if (t != (time_t)(l_timet)t || t == (time_t)(-1))
-    luaL_error(L, "time result cannot be represented in this installation");
+    return luaL_error(L,
+                  "time result cannot be represented in this installation");
   l_pushtime(L, t);
   return 1;
 }

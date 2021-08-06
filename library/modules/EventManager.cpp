@@ -438,8 +438,10 @@ static void manageJobStartedEvent(color_ostream& out){
         // build a list of newly started jobs
         for ( df::job_list_link* link = &df::global::world->jobs.list; link != NULL; link = link->next ) {
             df::job* job = link->item;
-            if(Job::getWorker(job) && startedJobs.emplace(job).second){
-                newly_started_jobs.push_back(job);
+            if (job && Job::getWorker(job)) {
+                if (startedJobs.emplace(job).second) {
+                    newly_started_jobs.push_back(job);
+                }
             }
         }
         if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {

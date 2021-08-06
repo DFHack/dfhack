@@ -20,6 +20,7 @@ namespace DFHack {
             enum EventType {
                 TICK,
                 JOB_INITIATED,
+                JOB_STARTED, //has a worker
                 JOB_COMPLETED,
                 UNIT_DEATH,
                 ITEM_CREATED,

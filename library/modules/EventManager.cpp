@@ -144,6 +144,7 @@ void DFHack::EventManager::unregisterAll(Plugin* plugin) {
 
 static void manageTickEvent(color_ostream& out);
 static void manageJobInitiatedEvent(color_ostream& out);
+static void manageJobStartedEvent(color_ostream& out);
 static void manageJobCompletedEvent(color_ostream& out);
 static void manageUnitDeathEvent(color_ostream& out);
 static void manageItemCreationEvent(color_ostream& out);
@@ -162,6 +163,7 @@ typedef void (*eventManager_t)(color_ostream&);
 static const eventManager_t eventManager[] = {
     manageTickEvent,
     manageJobInitiatedEvent,
+    manageJobStartedEvent,
     manageJobCompletedEvent,
     manageUnitDeathEvent,
     manageItemCreationEvent,
@@ -179,6 +181,9 @@ static const eventManager_t eventManager[] = {
 //job initiated
 static int32_t lastJobId = -1;
 
+//job started
+static unordered_set<df::job*> startedJobs;
+
 //job completed
 static unordered_map<int32_t, df::job*> prevJobs;
 
@@ -187,7 +192,6 @@ static unordered_set<int32_t> livingUnits;
 
 //item creation
 static int32_t nextItem;
-
 //building
 static int32_t nextBuilding;
 static unordered_set<int32_t> buildings;
@@ -420,6 +424,32 @@ static void manageJobInitiatedEvent(color_ostream& out) {
     lastJobId = *df::global::job_next_id - 1;
 }
 
+static void manageJobStartedEvent(color_ostream& out){
+    if (!df::global::world)
+        return;
+
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_STARTED].begin(), handlers[EventType::JOB_STARTED].end());
+    int32_t tick = df::global::world->frame_counter;
+
+    std::vector<df::job*> newly_started_jobs;
+
+    for(auto &iter : copy) { //iterate handlers
+        auto &handler = iter.second;
+        // build a list of newly started jobs
+        for ( df::job_list_link* link = &df::global::world->jobs.list; link != NULL; link = link->next ) {
+            df::job* job = link->item;
+            if(Job::getWorker(job) && startedJobs.emplace(job).second){
+                newly_started_jobs.push_back(job);
+            }
+        }
+        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
+            eventLastTick[handler.eventHandler] = tick;
+            for(auto job : newly_started_jobs){
+                handler.eventHandler(out, (void*)job);
+            }
+        }
+    }
+}
 //helper function for manageJobCompletedEvent
 //static int32_t getWorkerID(df::job* job) {
 //    auto ref = findRef(job->general_refs, general_ref_type::UNIT_WORKER);
@@ -542,6 +572,7 @@ static void manageJobCompletedEvent(color_ostream& out) {
     //erase old jobs, copy over possibly altered jobs
     for (auto job_iter = prevJobs.begin(); job_iter != prevJobs.end(); ++job_iter ) {
         Job::deleteJobStruct((*job_iter).second, true);
+        startedJobs.erase(job_iter->second);
     }
     prevJobs.clear();
 

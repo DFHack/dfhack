@@ -410,7 +410,7 @@ static void manageJobInitiatedEvent(color_ostream& out) {
         auto &handler = iter.second;
         if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
-            for ( df::job_list_link* link = &df::global::world->jobs.list; link != NULL; link = link->next ) {
+            for ( df::job_list_link* link = df::global::world->jobs.list.next; link != NULL; link = link->next ) {
                 if ( link->item == NULL )
                     continue;
                 if ( link->item->id <= lastJobId )
@@ -436,7 +436,7 @@ static void manageJobStartedEvent(color_ostream& out){
     for(auto &iter : copy) { //iterate handlers
         auto &handler = iter.second;
         // build a list of newly started jobs
-        for ( df::job_list_link* link = &df::global::world->jobs.list; link != NULL; link = link->next ) {
+        for ( df::job_list_link* link = df::global::world->jobs.list.next; link != NULL; link = link->next ) {
             df::job* job = link->item;
             if (job && Job::getWorker(job)) {
                 if (startedJobs.emplace(job).second) {
@@ -469,7 +469,7 @@ static void manageJobCompletedEvent(color_ostream& out) {
 
     multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_COMPLETED].begin(), handlers[EventType::JOB_COMPLETED].end());
     map<int32_t, df::job*> nowJobs;
-    for ( df::job_list_link* link = &df::global::world->jobs.list; link != NULL; link = link->next ) {
+    for ( df::job_list_link* link = df::global::world->jobs.list.next; link != NULL; link = link->next ) {
         if ( link->item == NULL )
             continue;
         nowJobs[link->item->id] = link->item;

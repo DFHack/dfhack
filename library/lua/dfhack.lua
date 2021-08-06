@@ -163,6 +163,7 @@ COMMA = ","
 PERIOD = "."
 
 function printall(table)
+    if type(table) ~= 'table' then print(tostring(table)) return end
     local ok,f,t,k = pcall(pairs,table)
     if ok then
         for k,v in f,t,k do
@@ -534,11 +535,11 @@ function dfhack.interpreter(prompt,hfile,env)
         end,
         ['~'] = function(data)
             print(table.unpack(data,2,data.n))
-            printall(data[2])
+            if type(data[2]) == 'table' then printall(data[2]) end
         end,
         ['@'] = function(data)
             print(table.unpack(data,2,data.n))
-            printall_ipairs(data[2])
+            if type(data[2]) == 'table' then printall_ipairs(data[2]) end
         end,
         ['^'] = function(data)
             printall_recurse(data[2])

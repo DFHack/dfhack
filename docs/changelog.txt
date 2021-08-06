@@ -36,6 +36,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 - `dig-now`: instantly completes dig designations (including smoothing and carving tracks)
 
+## Fixes
+- Core: ``alt`` keydown state is now cleared when DF loses and regains focus, ensuring the ``alt`` modifier state is not stuck on for systems that don't send standard keyup events in response to ``alt-tab`` window manager events
+
 ## Misc Improvements
 - `tiletypes-here`, `tiletypes-here-point`: add --cursor and --quiet options to support non-interactive use cases
 

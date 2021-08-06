@@ -62,7 +62,7 @@ void onJobCompletion(color_ostream &out, void* job);
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     namespace EM = EventManager;
     if (enable && !enabled) {
-        out.print("Spectator mode enabled!\n");
+        out.print("Spectate mode enabled!\n");
         using namespace EM::EventType;
         EM::EventHandler ticking(onTick, 15);
         EM::EventHandler start(onJobStart, 0);
@@ -72,7 +72,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         EM::registerListener(EventType::JOB_COMPLETED, complete, plugin_self);
         //out.print("spectator mode enabled!\n");
     } else if (!enable && enabled) {
-        out.print("Spectator mode disabled!\n");
+        out.print("Spectate mode disabled!\n");
         EM::unregisterAll(plugin_self);
         job_tracker.clear();
         freq.clear();

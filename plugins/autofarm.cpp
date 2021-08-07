@@ -388,7 +388,7 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
             )
         );
     }
-    autofarmInstance = std::move(std::make_unique<AutoFarm>());
+    autofarmInstance = std::move(dts::make_unique<AutoFarm>());
     return CR_OK;
 }
 

@@ -162,22 +162,28 @@ NEWLINE = "\n"
 COMMA = ","
 PERIOD = "."
 
+-- calls elem_cb(k, v) for each element of the table
+-- returns true if we iterated successfully, false if not
+local function safe_iterate(table, iterate_fn, elem_cb)
+    local function iterate()
+        for k,v in iterate_fn(table) do elem_cb(k, v) end
+    end
+    return pcall(iterate)
+end
+
+local function print_element(k, v)
+    print(string.format("%-23s\t = %s", tostring(k), tostring(v)))
+end
+
 function printall(table)
-    if type(table) ~= 'table' then print(tostring(table)) return end
-    local ok,f,t,k = pcall(pairs,table)
-    if ok then
-        for k,v in f,t,k do
-            print(string.format("%-23s\t = %s",tostring(k),tostring(v)))
-        end
+    if not safe_iterate(table, pairs, print_element) then
+        print(tostring(table))
     end
 end
 
 function printall_ipairs(table)
-    local ok,f,t,k = pcall(ipairs,table)
-    if ok then
-        for k,v in f,t,k do
-            print(string.format("%-23s\t = %s",tostring(k),tostring(v)))
-        end
+    if not safe_iterate(table, ipairs, print_element) then
+        print(tostring(table))
     end
 end
 
@@ -200,15 +206,9 @@ local fill_chars = {
 setmetatable(fill_chars, fill_chars)
 
 local function print_fields(value, seen, indent, prefix)
-    local ok,f,t,k = pcall(pairs,value)
-    if not ok then
-        dfhack.print(prefix)
-        dfhack.println('<Type doesn\'t support iteration with pairs>')
-        return 0
-    end
     local prev_value = "not a value"
     local repeated = 0
-    for k, v in f,t,k do
+    local print_field = function(k, v)
         -- Only show set values of bitfields
         if value._kind ~= "bitfield" or v then
             local continue = false
@@ -234,7 +234,10 @@ local function print_fields(value, seen, indent, prefix)
             end
         end
     end
-    if repeated > 0 then
+    if not safe_iterate(value, pairs, print_field) then
+        dfhack.print(prefix)
+        dfhack.println('<Type doesn\'t support iteration with pairs>')
+    elseif repeated > 0 then
         dfhack.println(prefix .. "<Repeated " .. repeated .. " times>")
     end
     return 0
@@ -535,11 +538,11 @@ function dfhack.interpreter(prompt,hfile,env)
         end,
         ['~'] = function(data)
             print(table.unpack(data,2,data.n))
-            if type(data[2]) == 'table' then printall(data[2]) end
+            printall(data[2])
         end,
         ['@'] = function(data)
             print(table.unpack(data,2,data.n))
-            if type(data[2]) == 'table' then printall_ipairs(data[2]) end
+            printall_ipairs(data[2])
         end,
         ['^'] = function(data)
             printall_recurse(data[2])

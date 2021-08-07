@@ -172,18 +172,18 @@ local function safe_iterate(table, iterate_fn, elem_cb)
 end
 
 local function print_element(k, v)
-    print(string.format("%-23s\t = %s", tostring(k), tostring(v)))
+    dfhack.println(string.format("%-23s\t = %s", tostring(k), tostring(v)))
 end
 
 function printall(table)
     if not safe_iterate(table, pairs, print_element) then
-        print(tostring(table))
+        dfhack.println(tostring(table))
     end
 end
 
 function printall_ipairs(table)
     if not safe_iterate(table, ipairs, print_element) then
-        print(tostring(table))
+        dfhack.println(tostring(table))
     end
 end
 

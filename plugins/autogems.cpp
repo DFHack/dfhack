@@ -155,6 +155,12 @@ void create_jobs() {
             continue;
         }
 
+        auto profile = workshop->getWorkshopProfile();
+        if (profile && profile->blocked_labors[df::unit_labor::CUT_GEM]) {
+            // workshop profile does not allow cut gem jobs (fixes #1263)
+            continue;
+        }
+
         if (links.size() > 0) {
             for (auto l = links.begin(); l != links.end() && workshop->jobs.size() <= MAX_WORKSHOP_JOBS; ++l) {
                 auto stockpile = virtual_cast<df::building_stockpilest>(*l);

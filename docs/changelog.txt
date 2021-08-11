@@ -36,6 +36,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 - `dig-now`: instantly completes dig designations (including smoothing and carving tracks)
 
+## Fixes
+- `autofarm`: autofarm will now count plant growths as well as plants toward its thresholds
+
 ## Misc Improvements
 - `tiletypes-here`, `tiletypes-here-point`: add --cursor and --quiet options to support non-interactive use cases
 

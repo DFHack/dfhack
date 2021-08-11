@@ -38,6 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - Core: ``alt`` keydown state is now cleared when DF loses and regains focus, ensuring the ``alt`` modifier state is not stuck on for systems that don't send standard keyup events in response to ``alt-tab`` window manager events
+- `autogems`: no longer assigns gem cutting jobs to workshops with gem cutting prohibited in the workshop profile
 
 ## Misc Improvements
 - `buildingplan`: now displays which items are attached and which items are still missing for planned buildings

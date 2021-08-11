@@ -1,12 +1,13 @@
 #notes label(help) run me for the dreamfort walkthrough
-Welcome to the Dreamfort Walkthrough!
+"Welcome to Dreamfort! These blueprints will help you build a functional, secure, self-sustaining fortress that you can extend to build the fortress of your dreams!"
+""
 "It can be difficult to apply a set of blueprints that you did not write yourself. This walkthrough will guide you through the high-level steps of building Dreamfort. Run ""quickfort run library/dreamfort.csv -n /checklist"" (or, if you're looking at the online version, switch to the ""checklist"" sheet) for a compact list of all commands you'll be running. Each level also has its own mini-walkthrough with more details."
 ""
 "The final fort will have a walled-in area on the surface for livestock, trading, surface farming, and military. One z-level down is the farming level, with related workshops and vents up to the surface for miasma control. The farming level also has a miniature dining hall and dormitory for use until you get the services and housing levels set up."
 ""
 "Beyond those two, the other layers can be built in any order, at any z-level, according to your preference and the layout peculiarities of your embark site:"
 "- The industry level has a compact, but complete set of workshops and stockpiles (minus what is already provided on the farming level)."
-"- The services level has dining, hospital, marksman barracks, and justice services, plus a well system. Services is 4 z-levels deep."
+"- The services level has dining, hospital, marksman barracks, and justice services, plus a well system. It is 4 z-levels deep."
 "- The guildhall level has many empty rooms for building libraries, temples, and guildhalls."
 - The suites level has fancy rooms for your nobles.
 - The apartments levels have small but well-furnished bedrooms for your other dwarves.
@@ -27,18 +28,18 @@ Welcome to the Dreamfort Walkthrough!
 ""
 "Dreamfort works best at an embark site that is flat and has at least one soil layer. New players should avoid embarks with aquifers if they are not prepared to deal with them. Bring picks for mining, an axe for woodcutting, and an anvil for a forge. Bring a few blocks to speed up initial workshop construction as well. That's all you really need, but see the example embark profile in the online spreadsheets for a more complete setup."
 ""
-"Other DFHack scripts and plugins also work very well with Dreamfort, in particular autofarm, automelt, autonestbox, burial, seedwatch, tailor, and, of course, buildingplan. You can download an onMapLoad.init file that configures all these plugins here: https://drive.google.com/file/d/16JX21nSe0_t84BgoL7DJX1OVD2E6pJgH"
+"Other DFHack scripts and plugins also work very well with Dreamfort, in particular autofarm, automelt, autonestbox, burial, prioritize, seedwatch, tailor, and, of course, buildingplan. You can download an onMapLoad.init file that configures all these plugins here: https://drive.google.com/file/d/16JX21nSe0_t84BgoL7DJX1OVD2E6pJgH"
 Put that file in your Dwarf Fortress directory -- the same directory that has dfhack.init.
 ""
 "Once you have your starting surface workshops up and running, you might want to configure buildingplan (in its global settings, accessible from any building placement screen, e.g.: b-a-G) to only use blocks for constructions so it won't use your precious wood, boulders, and bars to build floors and walls. If you bring at least 7 blocks with you on embark, you can even set this in your onMapLoad.init file like this:"
 on-new-fortress buildingplan set boulders false; buildingplan set logs false
 ""
-"Directly after embark, run ""quickfort run library/dreamfort.csv -n /setup"" to set settings and get started building your fort with ""quickfort run library/dreamfort.csv -n /surface1"" on the surface (see /surface_help for how to select a good spot). Read the walkthroughs for each level to understand what each level does and follow the checklist to keep track of where you are in the building process. Good luck, and have fun building an awesome Dreamfort-based fort!"
+"Directly after embark, run ""quickfort run library/dreamfort.csv -n /setup"" with your cursor on your wagon to set settings, and get started building your fort with ""quickfort run library/dreamfort.csv -n /surface1"" on the surface (see /surface_help for how to select a good spot). Read the walkthroughs for each level to understand what each level does and follow the checklist to keep track of where you are in the building process. Good luck, and have fun building an awesome Dreamfort-based fort!"
 ""
-"The dreamfort.csv file distributed with DFHack is generated from source .xlsx files. If you want to look at how these blueprints are put together, it is easier to look at the online spreadsheets than the giant .csv. You can view them at: https://drive.google.com/drive/folders/1iS90EEVqUkxTeZiiukVj1pLloZqabKuP"
+"The dreamfort.csv file distributed with DFHack is generated from online spreadsheet files. If you want to look at how these blueprints are put together, it is easier to look at the online spreadsheets than the giant .csv. You can view them at: https://drive.google.com/drive/folders/1iS90EEVqUkxTeZiiukVj1pLloZqabKuP"
 You are welcome to copy the Dreamfort spreadsheets and make your own modifications!
 "# dreamfort.csv is generated with the following command:
-  for fname in dreamfort*.xlsx; do xlsx2csv -a -p '' $fname; done | sed 's/,*$//'"
+  for fname in dreamfort*.xlsx; do xlsx2csv -a -p '' ""$fname""; done | sed 's/,*$//'"
 #notes label(checklist) command checklist
 Here is the recommended order for Dreamfort commands. You can copy/paste the quickfort commands directly into the DFHack terminal. See the level walkthroughs for context and details. Also remember to read the messages the blueprints print out after you run them so you don't miss any important manual steps.
 ""
@@ -131,7 +132,7 @@ quickfort undo library/dreamfort.csv -n /perimeter,# Clean up after you find you
 -- Dig  --
 quickfort run library/dreamfort.csv -n /surface1,# Run when you find your center tile.
 quickfort run library/dreamfort.csv -n /dig_all,"# Run when you find a suitable rock layer for the industry level. It designates digging for industry, services, guildhall, suites, and apartments all in one go. This list does not include the farming level, which we'll dig in the uppermost soil layer a bit later. Note that it is more efficient for your miners if you designate your digging before they dig the central stairs past that level since the stairs are dug at a low priority, keeping your miners focused on one level at a time. If you need to designate your levels individually due to caverns interrupting the sequence or just because it is your preference, run the level-specific dig blueprints (i.e. /industry1, /services1, /guildhall1, /suites1, and /apartments1_stack) instead of running /dig_all."
-
+""
 -- Core fort (should finish at about the third migration wave) -- 
 quickfort run library/dreamfort.csv -n /surface2,# Run after initial trees are cleared.
 quickfort run library/dreamfort.csv -n /farming1,# Run when channels are dug and the additional designated trees are cleared.
@@ -154,7 +155,7 @@ quickfort orders library/dreamfort.csv -n /surface7
 ""
 -- Plumbing -- 
 "This is a good time to fill your well cisterns, either with a bucket brigade or by routing water from an aquifer or freshwater stream."
-Also consider bringing magma up to your services level so you can replace the forge and furnaces on your industry level with more powerful magma versions. This is especially important if your embark has insufficient trees to convert into charcoal.
+"Also consider bringing magma up to your services level so you can replace the forge and furnaces on your industry level with more powerful magma versions. This is especially important if your embark has insufficient trees to convert into charcoal. Keep in mind that setting up a powered pump stack is a tricky process and can take a long time. Don't forget to continue making progress through the checklist as you prepare to pump your magma! If you are going to pump magma, I suggest doing it before importing the military and smelting automation orders since they make heavy use of smelters and forges."
 ""
 -- Mature fort (third migration wave onward) -- 
 orders import furnace,# Automated production of basic furnace-related items.
@@ -204,7 +205,7 @@ The following settings are changed:
 ""
 - Hotkeys are created for the 8 most interesting levels. Only the names are set -- it's up to the player to adjust them to actual locations in the (H) menu since the blueprint can't know where the levels will eventually be built. Feel free to replace any hotkeys with locations that *you* think are interesting : )
 ""
-These are all set for your convenience. Nothing in Dreamfort depends on these settings staying as they are. Feel free to change any settings to your personal preference.
+These are all set for your convenience. Nothing in Dreamfort depends on these settings staying as they are. Feel free to change any setting to your personal preference.
 ""
 #aliases
 startnobles: ^n{Down 4}{togglesequence 8}{Up}s{Up}&^^q
@@ -214,9 +215,10 @@ addcloak: A{Right 2}{Down 8}&{Left}{Down}M{Right}{Down 4}&{Left 2}
 metalarmorsetup: {addcloak}A{Right 2}{Down 2}&{Down}&{Left}&{Down}M{Right}{Down}&{Left}{Down}{Right}{Down}&{Left}{Down 2}L{Right}{Down 2}&{Left}{Down 4}&M{Right}{Down}&{Left 2}
 startmilitary: ^mnr{addcloak}{Down}r{metalarmorsetup}{Down}r{addcloak}acNSiege&{Right}&^q
 sethotkey: {fkey}n{name}&
-starthotkeys: ^H{sethotkey fkey={F2} name=Farming}{sethotkey fkey={F3} name=Industry}{sethotkey fkey={F4} name=Services}{sethotkey fkey={F5} name=Guildhall}{sethotkey fkey={F6} name=Suites}{sethotkey fkey={F7} name=Quarry}{sethotkey fkey={F8} name=Magma}^q
+starthotkeys: ^H{sethotkey fkey={F2} name=Farming}{sethotkey fkey={F3} name=Industry}{sethotkey fkey={F4} name=Services}{sethotkey fkey={F5} name=Guildhall}{sethotkey fkey={F6} name=Quarry}{sethotkey fkey={F7} name=Cavern}{sethotkey fkey={F8} name=Magma}^q
 ""
-"#query label(setup) start(on the wagon) message(Please set the zoom targets of the hotkeys (the 'H' menu) according to where you actually end up digging the levels.) assign nobles, set standing orders, create burrows, make adjustments to military settings, and set hotkey names"
+"#query label(setup) start(on the wagon) message(Please set the zoom targets of the hotkeys (the 'H' menu) according to where you actually end up digging the levels.
+Nothing in Dreamfort depends on these settings staying as they are. Feel free to change any setting to your personal preference.) assign nobles, set standing orders, create burrows, make adjustments to military uniforms, and set hotkey names"
 {startnobles}{startorders}{startburrows}{startmilitary}{starthotkeys}
 "#meta label(dig_all) start(central stairs on industry level) dig industry, services, guildhall, suites, and apartments levels. does not include farming."
 # Note that this blueprint will only work for the unified dreamfort.csv. It won't work for the individual .xlsx files (since #meta blueprints can't cross file boundaries).
@@ -243,10 +245,10 @@ Grower/Farmer,,,,,Bee Keeper,Bee Keeper
 Wood Cutter,,,Stone Crafter,Stone Crafter
 Judge of Intent (*)
 All other labors until you can assign them to a migrant
-
+""
 "The most time-consuming tasks in early Dreamfort are: mining, chopping down trees, and making blocks. Starting with at least two miners, two woodcutters (assuming your embark has trees), and two masons helps in keeping the fort from stalling."
 "Moreover, it is important to always have one more mason than you have Mason's Workshops (at least in the beginning of the game) so other buildings that require masonry can get built (like furnaces and bridges/gates). Alternately, run DFHack's tweak do-job-now and manually boost the priority in the jobs list when these kinds of tasks come up."
-
+""
 We suggest bringing at least:
 2 picks,for the two miners
 2 battleaxes,for the two woodcutters
@@ -316,7 +318,7 @@ DFHack manipulator has the ability to save the labor configuration of a dwarf as
 ""
 Starting Dwarves
 Profession,Ideal number,Description
-StartManager,1,"All skills not covered by the other starting professions (Miner, Mason, Outdoorsdwarf, and Craftsdwarf). Individual labors should be turned off as migrants are assigned more specialized professions that cover them."
+StartManager,1,"All skills not covered by the other starting professions (Miner, Mason, Outdoorsdwarf, and Craftsdwarf), plus a few overlapping skills to assist in critical tasks at the beginning of the game. Individual labors should be turned off as migrants are assigned more specialized professions that cover them."
 Miner,02-10,"Mining and Engraving. This profession also has the ""Alchemist"" labor enabled, which disables hauling for those using the autohauler plugin."
 Mason,02-04,"Masonry and Architecture. You may need to run ""prioritize ConstructBuilding"" to get your masons to build wells and bridges if they are too busy crafting stone furniture."
 Outdoorsdwarf,02-03,"Woodcutting, Animal Training, Trapping, Plant Gathering, Beekeeping, and Mechanics. This profession is also the only non-military profession to have Recover wounded enabled (since Outdoorsdwarves will have a battleaxe to defend themselves with)."

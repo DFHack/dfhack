@@ -338,6 +338,33 @@ from your GCC version and distribute that too, it will fail on older OS X
 versions.) For this reason, if you plan on distributing DFHack, it is highly
 recommended to use GCC 4.8 or 7.
 
+Notes for M1 users
+------------------
+
+Alongside the above, you will need to follow these additional steps to get it
+running on Apple silicon.
+
+Install an x86 copy of ``homebrew`` alongside your existing one. `This
+stackoverflow answer <https://stackoverflow.com/a/64951025>` describes the
+process.
+
+Follow the normal macOS steps to install ``cmake`` and ``gcc`` via your x86 copy of
+``homebrew``.
+
+In your terminal, ensure you have your path set to the correct homebrew in
+addition to the normal ``CC`` and ``CXX`` flags above::
+
+  export PATH=/usr/local/bin:$PATH
+
+In order to ignore certain warnings present in later versions of ``gcc``,
+ensure you pass the following flag to ``cmake``::
+
+  -DCMAKE_CXX_FLAGS="-fpermissive"
+
+An example full cmake command::
+
+  cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<path to DF folder> -DDFHACK_BUILD_ARCH=64 -DCMAKE_CXX_FLAGS="-fpermissive"
+
 .. _osx-setup:
 
 Dependencies and system set-up

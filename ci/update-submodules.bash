@@ -23,7 +23,7 @@ cat ci/update-submodules.manifest | while read path branch; do
     test "${git_root}" != "$(get_git_root)"
     git fetch origin "${branch}:${branch}"
     git checkout "${branch}"
-    git branch --set-upstream-to="origin/${branch}" dfhack
+    git branch --set-upstream-to="origin/${branch}" "${branch}"
     git pull --ff-only
     cd "${git_root}"
     if ! git diff --quiet --ignore-submodules=dirty -- "${path}"; then

@@ -345,7 +345,7 @@ Alongside the above, you will need to follow these additional steps to get it
 running on Apple silicon.
 
 Install an x86 copy of ``homebrew`` alongside your existing one. `This
-stackoverflow answer <https://stackoverflow.com/a/64951025>` describes the
+stackoverflow answer <https://stackoverflow.com/a/64951025>`__ describes the
 process.
 
 Follow the normal macOS steps to install ``cmake`` and ``gcc`` via your x86 copy of

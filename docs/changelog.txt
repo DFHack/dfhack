@@ -41,9 +41,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Misc Improvements
 - `tiletypes-here`, `tiletypes-here-point`: add --cursor and --quiet options to support non-interactive use cases
+- `quickfort`: Dreamfort blueprint set improvements: extensive revision based on playtesting and feedback. includes updated ``onMapLoad.init`` settings file and enhanced automation orders. see full changelog at https://github.com/DFHack/dfhack/pull/1921
 
 ## Documentation
-- `quickfort`: Dreamfort blueprint set improvements: extensive revision based on playtesting and feedback. includes updated supporting ``onMapLoad.init`` file and automation orders JSON files. see full changelog at https://github.com/DFHack/dfhack/pull/1921
 - `quickfort-library-guide`: updated dreamfort documentation and added screenshots
 
 # 0.47.05-r2

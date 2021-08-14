@@ -62,9 +62,9 @@ end
 function check_import_success(file_content, comment, num_expected_orders)
     local prev_num_orders = #df.global.world.manager_orders
     local output, result = run_orders_import(file_content)
-    expect.eq(result, CR_OK)
+    expect.eq(result, CR_OK, comment)
     expect.eq(prev_num_orders + num_expected_orders,
-              #df.global.world.manager_orders)
+              #df.global.world.manager_orders, comment)
 end
 
 function check_import_fail(file_content, comment, prefix)

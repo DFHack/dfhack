@@ -42,8 +42,24 @@ function test.printall_function()
     expect.eq(0, mock_print.call_count)
 end
 
+local function new_int_vector()
+    -- create a vector of integers by cloning one from world. we do it this way
+    -- because we can't allocate typed vectors from lua directly.
+    local vector = df.global.world.busy_buildings:new()
+    vector:resize(0)
+    return vector
+end
+
 function test.printall_userdata()
-    -- TODO
+    local utable = new_int_vector()
+    dfhack.with_temp_object(utable, function()
+            utable:insert(0, 10)
+            utable:insert(1, 20)
+            printall(utable)
+            expect.eq(2, mock_print.call_count)
+            expect.true_(mock_print.call_args[1][1]:find('0%s+= 10'))
+            expect.true_(mock_print.call_args[2][1]:find('1%s+= 20'))
+        end)
 end
 
 function test.printall_ipairs_table()
@@ -79,7 +95,15 @@ function test.printall_ipairs_function()
 end
 
 function test.printall_ipairs_userdata()
-    -- TODO
+    local utable = new_int_vector()
+    dfhack.with_temp_object(utable, function()
+            utable:insert(0, 10)
+            utable:insert(1, 20)
+            printall_ipairs(utable)
+            expect.eq(2, mock_print.call_count)
+            expect.true_(mock_print.call_args[1][1]:find('0%s+= 10'))
+            expect.true_(mock_print.call_args[2][1]:find('1%s+= 20'))
+        end)
 end
 
 function test.printall_recurse()

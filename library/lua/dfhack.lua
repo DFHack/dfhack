@@ -176,15 +176,11 @@ local function print_element(k, v)
 end
 
 function printall(table)
-    if not safe_iterate(table, pairs, print_element) then
-        dfhack.println(tostring(table))
-    end
+    safe_iterate(table, pairs, print_element)
 end
 
 function printall_ipairs(table)
-    if not safe_iterate(table, ipairs, print_element) then
-        dfhack.println(tostring(table))
-    end
+    safe_iterate(table, ipairs, print_element)
 end
 
 local do_print_recurse

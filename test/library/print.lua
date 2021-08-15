@@ -19,32 +19,27 @@ end
 
 function test.printall_string()
     printall('a')
-    expect.eq(1, mock_print.call_count)
-    expect.eq('a', mock_print.call_args[1][1])
+    expect.eq(0, mock_print.call_count)
 end
 
 function test.printall_number()
     printall(10)
-    expect.eq(1, mock_print.call_count)
-    expect.eq('10', mock_print.call_args[1][1])
+    expect.eq(0, mock_print.call_count)
 end
 
 function test.printall_nil()
     printall(nil)
-    expect.eq(1, mock_print.call_count)
-    expect.eq('nil', mock_print.call_args[1][1])
+    expect.eq(0, mock_print.call_count)
 end
 
 function test.printall_boolean()
     printall(false)
-    expect.eq(1, mock_print.call_count)
-    expect.eq('false', mock_print.call_args[1][1])
+    expect.eq(0, mock_print.call_count)
 end
 
 function test.printall_function()
     printall(function() end)
-    expect.eq(1, mock_print.call_count)
-    expect.true_(mock_print.call_args[1][1]:find('^function: 0x'))
+    expect.eq(0, mock_print.call_count)
 end
 
 function test.printall_userdata()
@@ -60,32 +55,27 @@ end
 
 function test.printall_ipairs_string()
     printall_ipairs('a')
-    expect.eq(1, mock_print.call_count)
-    expect.eq('a', mock_print.call_args[1][1])
+    expect.eq(0, mock_print.call_count)
 end
 
 function test.printall_ipairs_number()
     printall_ipairs(10)
-    expect.eq(1, mock_print.call_count)
-    expect.eq('10', mock_print.call_args[1][1])
+    expect.eq(0, mock_print.call_count)
 end
 
 function test.printall_ipairs_nil()
     printall_ipairs(nil)
-    expect.eq(1, mock_print.call_count)
-    expect.eq('nil', mock_print.call_args[1][1])
+    expect.eq(0, mock_print.call_count)
 end
 
 function test.printall_ipairs_boolean()
     printall_ipairs(false)
-    expect.eq(1, mock_print.call_count)
-    expect.eq('false', mock_print.call_args[1][1])
+    expect.eq(0, mock_print.call_count)
 end
 
 function test.printall_ipairs_function()
     printall_ipairs(function() end)
-    expect.eq(1, mock_print.call_count)
-    expect.true_(mock_print.call_args[1][1]:find('^function: 0x'))
+    expect.eq(0, mock_print.call_count)
 end
 
 function test.printall_ipairs_userdata()

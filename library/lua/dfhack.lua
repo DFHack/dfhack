@@ -162,11 +162,33 @@ NEWLINE = "\n"
 COMMA = ","
 PERIOD = "."
 
+local function _wrap_iterator(next_fn, ...)
+    local wrapped_iter = function(...)
+        local ret = {pcall(next_fn, ...)}
+        local ok = table.remove(ret, 1)
+        if ok then
+            return table.unpack(ret)
+        end
+    end
+    return wrapped_iter, ...
+end
+
+function safe_pairs(t, iterator_fn)
+    iterator_fn = iterator_fn or pairs
+    if (pcall(pairs, t)) then
+        return _wrap_iterator(iterator_fn(t))
+    else
+        return function() end
+    end
+end
+
 -- calls elem_cb(k, v) for each element of the table
 -- returns true if we iterated successfully, false if not
-local function safe_iterate(table, iterate_fn, elem_cb)
+-- this differs from safe_pairs() above in that it only calls pcall() once per
+-- full iteration and it returns whether iteration succeeded or failed.
+local function safe_iterate(table, iterator_fn, elem_cb)
     local function iterate()
-        for k,v in iterate_fn(table) do elem_cb(k, v) end
+        for k,v in iterator_fn(table) do elem_cb(k, v) end
     end
     return pcall(iterate)
 end

@@ -106,6 +106,69 @@ function test.printall_ipairs_userdata()
         end)
 end
 
+local function validate_patterns(start_idx, patterns)
+    for i,pattern in ipairs(patterns) do
+        expect.true_(mock_print.call_args[start_idx+i-1][1]:find(pattern))
+    end
+    return start_idx + #patterns
+end
+
 function test.printall_recurse()
-    -- TODO
+    local udatatable = new_int_vector()
+    dfhack.with_temp_object(udatatable, function()
+        local udataint = df.new('uint32_t')
+        dfhack.with_temp_object(udataint, function ()
+            udatatable:insert(0, 10)
+            udatatable:insert(1, 20)
+            udatatable:insert(2, 20)
+            udatatable:insert(3, 20)
+            udatatable:insert(4, 0)
+            udatatable:insert(5, 0)
+            local t2 = {}
+            local t = {num=5,
+                    bool=false,
+                    fn=function() end,
+                    udatatable=udatatable,
+                    udataint=udataint,
+                    table=t2}
+            t2.cyclic = t
+            printall_recurse(t)
+            expect.eq(49, mock_print.call_count)
+            expect.true_(mock_print.call_args[1][1]:find('^table: '))
+            local idx = 2
+            local EQ = '^%s+= $'
+            while idx <= 49 do
+                expect.eq('', mock_print.call_args[idx][1])
+                idx = idx + 1
+                local str = mock_print.call_args[idx][1]
+                if str:startswith('num') then
+                    idx = validate_patterns(idx, {'^num$', EQ, '^5$'})
+                elseif str:startswith('bool') then
+                    idx = validate_patterns(idx, {'^bool$', EQ, '^false$'})
+                elseif str:startswith('fn') then
+                    idx = validate_patterns(idx, {'^fn$', EQ, '^function: '})
+                elseif str:startswith('udatatable') then
+                    idx = validate_patterns(idx,
+                            {'^udatatable$', EQ, '^<vector<int32_t>%[6%]: ',
+                             '%s+', '^0$', EQ, '^10$',
+                             '%s+', '^1$', EQ, '^20$',
+                             'Repeated 2 times',
+                             '%s+', '^4$', EQ, '^0$',
+                             'Repeated 1 times'}) -- [sic]
+                elseif str:startswith('udataint') then
+                    idx = validate_patterns(idx,
+                            {'^udataint$', EQ, '^<uint32_t: ',
+                             '%s+', '^value$', EQ, '^0$'})
+                elseif str:startswith('table') then
+                    idx = validate_patterns(idx,
+                            {'^table$', EQ, '^table: ',
+                             '%s+', '^cyclic$', EQ, '^table: ',
+                             '%s+', '^<Cyclic reference'})
+                else
+                    expect.fail('unhandled print output')
+                    break
+                end
+            end
+        end)
+    end)
 end

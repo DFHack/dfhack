@@ -20,6 +20,8 @@ help sections that walk you through how to build the fort, step by step.
 - :source:`library/dreamfort.csv <data/blueprints/library/dreamfort.csv>`
 - :source:`library/quickfortress.csv <data/blueprints/library/quickfortress.csv>`
 
+.. _dreamfort:
+
 Dreamfort
 ~~~~~~~~~
 

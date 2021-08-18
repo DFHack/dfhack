@@ -19,6 +19,7 @@ repeat -name autoShearCreature -time 14 -timeUnits days -command [ workorder She
 repeat -name autoMilkCreature -time 14 -timeUnits days -command [ workorder "{\"job\":\"MilkCreature\",\"item_conditions\":[{\"condition\":\"AtLeast\",\"value\":2,\"flags\":[\"empty\"],\"item_type\":\"BUCKET\"}]}" ]
 
 tweak fast-heat 100
+tweak do-job-now
 fix/blood-del enable
 
 # configure plugins

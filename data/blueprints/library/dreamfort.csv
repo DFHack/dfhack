@@ -47,8 +47,8 @@ Here is the recommended order for Dreamfort commands. You can copy/paste the qui
 ""
 -- Preparation (before you embark!) --
 copy hack/examples/init/onMapLoad_dreamfort.init to your DF directory
-copy the fort automation orders from hack/examples/orders/*.json to dfhack-config/orders/
-copy the premade profession definitions from hack/examples/professions/ to professions/
+copy the fort automation orders from hack/examples/orders/*.json to the dfhack-config/orders/ directory
+copy the premade profession definitions from hack/examples/professions/ to the professions/ directory
 ""
 -- Set settings and preload initial orders --
 quickfort run library/dreamfort.csv -n /setup,# Cursor on your starting wagon. Run before making any manual adjustments to settings! Run the /setup_help blueprint for details on what settings are set.
@@ -83,7 +83,7 @@ prioritize ConstructBuilding,# Run when you see the bridges ready to be built so
 "Also consider bringing magma up to your services level so you can replace the forge and furnaces on your industry level with more powerful magma versions. This is especially important if your embark has insufficient trees to convert into charcoal. Keep in mind that setting up a powered pump stack is a tricky process and can take a long time. Don't forget to continue making progress through the checklist as you prepare to pump your magma! If you are going to pump magma, I suggest doing it before importing the military and smelting automation orders since they make heavy use of smelters and forges."
 ""
 -- Mature fort (third migration wave onward) -- 
-orders import furnace,# Automated production of basic furnace-related items.
+orders import furnace,# Automated production of basic furnace-related items. Don't forget to create a sand collection zone (or remove the sand- and glass-related orders if you have no sand).
 "quickfort run,orders library/dreamfort.csv -n /suites2",# Run when the suites level has been dug out.
 "quickfort run,orders library/dreamfort.csv -n /surface8","# Run if/when you need longer trap corridors on the surface for larger sieges, anytime after you run /surface7."
 "quickfort run,orders library/dreamfort.csv -n /services3","# Run after the dining table and chair, weapon rack, and archery targets have been constructed. Also wait until after you complete /surface7, though, because surface defenses are more important than a grand dining hall."
@@ -136,7 +136,7 @@ starthotkeys: ^H{sethotkey fkey={F2} name=Farming}{sethotkey fkey={F3} name=Indu
 ""
 "#query label(setup) start(on the wagon) message(Please set the zoom targets of the hotkeys (the 'H' menu) according to where you actually end up digging the levels.
 Nothing in Dreamfort depends on these settings staying as they are. Feel free to change any setting to your personal preference.) assign nobles, set standing orders, create burrows, make adjustments to military uniforms, and set hotkey names"
-{startnobles}{startorders}{startburrows}{startmilitary}{starthotkeys}
+{startnobles}{startorders}{startburrows}{startmilitary}{starthotkeys}{F1}
 "#meta label(dig_all) start(central stairs on industry level) dig industry, services, guildhall, suites, and apartments levels. does not include farming."
 # Note that this blueprint will only work for the unified dreamfort.csv. It won't work for the individual .xlsx files (since #meta blueprints can't cross file boundaries).
 ""
@@ -2655,7 +2655,7 @@ Features:
 - Well-appointed suites to satisfy nobles
 - Apartments with beds and storage to keep dwarves happy and the fortress clean
 - Apartments also serve as burial chambers since dwarves like looking at coffins
-- Meta blueprint included for designating 6 levels of apartments for a full 200+ dwarves
+- Meta blueprint included for designating 5 levels of apartments for a full 200+ dwarves
 ""
 Suites Walkthrough:
 1) Dig out the suites layer with /suites1.
@@ -2663,13 +2663,13 @@ Suites Walkthrough:
 "2) Once the area is dug out, furnish the suites with /suites2. The rooms are left unconfigured so you can assign them to specific nobles. Each room can serve as a bedroom, a dining hall, an office, and/or a tomb. Run ""quickfort orders"" for /suites2."
 ""
 Apartments Walkthrough:
-"1) Dig out one layer of apartments with /apartments1, or 6 layers at once (enough for 200 dwarves) with /apartments1_stack."
+"1) Dig out one layer of apartments with /apartments1, or 5 layers at once (enough for 200 dwarves) with /apartments1_stack."
 ""
 "2) Once a layer is dug out, build beds with /apartments2. Run ""quickfort orders"" for /apartments2."
 ""
 "3) Once the beds are built, configure the rooms and build the remaining furniture with /apartments3. Run ""quickfort orders"" for /apartments3."
 ""
-"4) Once the coffins are all in place, run ""burial -pets"" to set them all to accept burials. This is handled for you if you're using the onMapLoad.init file included with Dreamfort."
+"4) Once the coffins are all in place, run ""burial -pets"" to set them all to accept burials. This is handled for you if you're using the onMapLoad_dreamfort.init file included with DFHack."
 "#dig label(suites1) start(18; 18; central ramp) message(This would be a good time to queue manager orders for /suites2. Once the area is dug out, run /suites2) noble suites"
 
 ,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
@@ -2688,7 +2688,7 @@ Apartments Walkthrough:
 ,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,,d,,d,d,d,d,d,,d,d,d,d,d,,d,d
 ,d,d,,,,d,,,,,,d,,,,d,d,d,,,,d,,,,,,d,,,,d,d
 ,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,`,`,`,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,,d,d,d,d,d,d,d,d,d,d,,d,`,`,`,d,,d,d,d,d,d,d,d,d,d,d,,d,d
+,d,d,,d,d,d,d,d,d,d,d,d,d,,d,`,~,`,d,,d,d,d,d,d,d,d,d,d,d,,d,d
 ,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,`,`,`,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
 ,d,d,,,,d,,,,,,d,,,,d,d,d,,,,d,,,,,,d,,,,d,d
 ,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,,d,,d,d,d,d,d,,d,d,d,d,d,,d,d
@@ -2724,7 +2724,7 @@ Apartments Walkthrough:
 ,`,`,,a,r,`,`,h,,h,`,`,r,a,,d,,d,,a,r,`,`,h,,h,`,`,r,a,,`,`
 ,`,`,,,,d,,,,,,d,,,,`,`,`,,,,d,,,,,,d,,,,`,`
 ,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`
-,`,`,,s,`,`,s,`,`,s,`,`,s,,`,`,`,`,`,,s,`,`,s,`,`,s,`,`,s,,`,`
+,`,`,,s,`,`,s,`,`,s,`,`,s,,`,`,~,`,`,,s,`,`,s,`,`,s,`,`,s,,`,`
 ,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`
 ,`,`,,,,d,,,,,,d,,,,`,`,`,,,,d,,,,,,d,,,,`,`
 ,`,`,,a,r,`,`,h,,h,`,`,r,a,,d,,d,,a,r,`,`,h,,h,`,`,r,a,,`,`
@@ -2742,9 +2742,7 @@ Apartments Walkthrough:
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 
-#meta label(apartments1_stack) start(central ramp) digs 6 layers of apartments - enough for 200 dwarves
-/apartments1
-#>
+#meta label(apartments1_stack) start(central ramp) digs 5 layers of apartments - enough for 200 dwarves
 /apartments1
 #>
 /apartments1
@@ -2757,148 +2755,148 @@ Apartments Walkthrough:
 
 "#dig label(apartments1) start(18; 18; central ramp) message(This would be a good time to enqueue manager orders for /apartments2 and /apartments3. Once the area is dug out, continue with /apartments2.) apartment complex"
 
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,,,d,,,,d,,,,d,,,d,,d,,,d,,,,d,,,,d,,,d,d
-,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d
-,d,d,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d,,,d,d
-,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d
-,d,d,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d,,,d,d
-,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,,d,d,d,,d,d,d,,d,d,d,,d,,d,,d,d,d,,d,d,d,,d,d,d,,d,d
-,d,d,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d,,,d,d
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,`,`,`,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,,d,d,d,d,d,d,d,d,d,d,,d,`,`,`,d,,d,d,d,d,d,d,d,d,d,d,,d,d
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,`,`,`,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d,,,d,d
-,d,d,,d,d,d,,d,d,d,,d,d,d,,d,,d,,d,d,d,,d,d,d,,d,d,d,,d,d
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d
-,d,d,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d,,,d,d
-,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d
-,d,d,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d,,,d,d
-,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d
-,d,d,,,d,,,,d,,,,d,,,d,,d,,,d,,,,d,,,,d,,,d,d
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
+,,,,,,,,,,,,,,,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,,d,,,d,d,d,,d,d,d,,d,d,d
+,,,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d
+,,,,,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
+,,,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,,,,,,,,,,,,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,,d,,d,d,d,,d,d,d,,d,d,d
+,,,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d
+,d,d,d,,d,d,d,d,d,d,d,d,d,d,d,`,`,`,d,d,d,d,d,d,d,d,d,d,d,,d,d,d
+,d,d,d,d,d,d,d,d,d,d,d,d,d,,d,`,~,`,d,,d,d,d,d,d,d,d,d,d,d,d,d,d
+,d,d,d,,d,d,d,d,d,d,d,d,d,d,d,`,`,`,d,d,d,d,d,d,d,d,d,d,d,,d,d,d
+,,,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,,d,,d,d,d,,d,d,d,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,,,,,,,,,,,,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d
+,,,,,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
+,,,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d
+,,,,d,d,d,,d,d,d,,d,d,d,,,d,,,d,d,d,,d,d,d,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,,,,,,,,,,,,,d,d,d
 
 "#build label(apartments2) start(18; 18; central ramp) message(Once beds have been placed, continue with /apartments3.) build beds"
 
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,,,`,,,,`,,,,`,,,`,,`,,,`,,,,`,,,,`,,,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,`,`,b,`,`,`,b,`,`,`,b,`,`,`,`,`,`,`,b,`,`,`,b,`,`,`,b,`,`,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`,,,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,`,`,b,`,`,`,b,`,`,`,b,`,`,`,`,`,`,`,b,`,`,`,b,`,`,`,b,`,`,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`,,,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,`,`,b,`,`,`,b,`,`,`,b,`,`,`,`,`,`,`,b,`,`,`,b,`,`,`,b,`,`,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`,,,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`,,,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,`,`,b,`,`,`,b,`,`,`,b,`,`,`,`,`,`,`,b,`,`,`,b,`,`,`,b,`,`,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`,,,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,`,`,b,`,`,`,b,`,`,`,b,`,`,`,`,`,`,`,b,`,`,`,b,`,`,`,b,`,`,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`,,,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,`,`,b,`,`,`,b,`,`,`,b,`,`,`,`,`,`,`,b,`,`,`,b,`,`,`,b,`,`,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,,,`,,,,`,,,,`,,,`,,`,,,`,,,,`,,,,`,,,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,,,`,`,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,b,`,,`,`,`,,`,`,`,,`,`,`
+,,,,`,b,`,,`,b,`,,`,b,`,,`,`,`,,`,b,`,,`,b,`,,`,b,`
+,,,,`,`,`,,`,`,`,,`,`,`,,,`,,,`,`,`,,`,`,`,,`,`,`
+,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,`,b,`,,`,b,`,,`,b,`,,`,`,`,,`,b,`,,`,b,`,,`,b,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,,,,,,,,,,,,,`,`,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,`,b,`,,`,b,`,,`,b,`,,`,`,`,,`,b,`,,`,b,`,,`,b,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,,`,,`,`,`,,`,`,`,,`,`,`
+,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`
+,`,b,`,`,`,`,`,`,`,`,`,`,`,,`,`,~,`,`,,`,`,`,`,`,`,`,`,`,`,`,b,`
+,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`
+,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,,`,,`,`,`,,`,`,`,,`,`,`
+,,,,`,b,`,,`,b,`,,`,b,`,,`,`,`,,`,b,`,,`,b,`,,`,b,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,,,,,,,,,,,,,`,`,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,`,b,`,,`,b,`,,`,b,`,,`,`,`,,`,b,`,,`,b,`,,`,b,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,,,,`,`,`,,`,`,`,,`,`,`,,,`,,,`,`,`,,`,`,`,,`,`,`
+,,,,`,b,`,,`,b,`,,`,b,`,,`,`,`,,`,b,`,,`,b,`,,`,b,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,b,`,,`,`,`,,`,`,`,,`,`,`
+,,,,,,,,,,,,,,,,`,`,`
 
 #meta label(apartments3) start(central ramp) configure rooms and build remaining furniture
 query_apartments/apartments_rooms
 build2_apartments/apartments_build2
 #query label(apartments_rooms) start(18; 18) hidden() configure rooms
 
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,,,`,,,,`,,,,`,,,`,,`,,,`,,,,`,,,,`,,,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,`,`,r-&,`,`,`,r-&,`,`,`,r-&,`,`,`,`,`,`,`,r-&,`,`,`,r-&,`,`,`,r-&,`,`,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`,,,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,`,`,r-&,`,`,`,r-&,`,`,`,r-&,`,`,`,`,`,`,`,r-&,`,`,`,r-&,`,`,`,r-&,`,`,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`,,,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,`,`,r-&,`,`,`,r-&,`,`,`,r-&,`,`,`,`,`,`,`,r-&,`,`,`,r-&,`,`,`,r-&,`,`,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`,,,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`,,,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,`,`,r-&,`,`,`,r-&,`,`,`,r-&,`,`,`,`,`,`,`,r-&,`,`,`,r-&,`,`,`,r-&,`,`,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`,,,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,`,`,r-&,`,`,`,r-&,`,`,`,r-&,`,`,`,`,`,`,`,r-&,`,`,`,r-&,`,`,`,r-&,`,`,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`,,,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,`,`,r-&,`,`,`,r-&,`,`,`,r-&,`,`,`,`,`,`,`,r-&,`,`,`,r-&,`,`,`,r-&,`,`,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,,,`,,,,`,,,,`,,,`,,`,,,`,,,,`,,,,`,,,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,,,`,`,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,r-&,`,,`,`,`,,`,`,`,,`,`,`
+,,,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,`,`,,`,r-&,`,,`,r-&,`,,`,r-&,`
+,,,,`,`,`,,`,`,`,,`,`,`,,,`,,,`,`,`,,`,`,`,,`,`,`
+,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,`,`,,`,r-&,`,,`,r-&,`,,`,r-&,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,,,,,,,,,,,,,`,`,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,`,`,,`,r-&,`,,`,r-&,`,,`,r-&,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,,`,,`,`,`,,`,`,`,,`,`,`
+,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`
+,`,r-&,`,`,`,`,`,`,`,`,`,`,`,,`,`,~,`,`,,`,`,`,`,`,`,`,`,`,`,`,r-&,`
+,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`
+,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,,`,,`,`,`,,`,`,`,,`,`,`
+,,,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,`,`,,`,r-&,`,,`,r-&,`,,`,r-&,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,,,,,,,,,,,,,`,`,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,`,`,,`,r-&,`,,`,r-&,`,,`,r-&,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,,,,`,`,`,,`,`,`,,`,`,`,,,`,,,`,`,`,,`,`,`,,`,`,`
+,,,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,`,`,,`,r-&,`,,`,r-&,`,,`,r-&,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,r-&,`,,`,`,`,,`,`,`,,`,`,`
+,,,,,,,,,,,,,,,,`,`,`
 
 #build label(apartments_build2) start(18; 18) hidden() message(Coffins should be configured with DFHack burial script) build remaining furniture
 
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,,,d,,,,d,,,,d,,,d,,d,,,d,,,,d,,,,d,,,`,`
-,`,`,,f,`,n,,f,`,n,,f,`,n,,`,s,`,,n,`,f,,n,`,f,,n,`,f,,`,`
-,`,`,d,`,~,`,d,`,~,`,d,`,~,`,d,`,`,`,d,`,~,`,d,`,~,`,d,`,~,`,d,`,`
-,`,`,,h,`,n,,h,`,n,,h,`,n,,`,`,`,,n,`,h,,n,`,h,,n,`,h,,`,`
-,`,`,,,d,,,,d,,,,d,,,`,s,`,,,d,,,,d,,,,d,,,`,`
-,`,`,,f,`,n,,f,`,n,,f,`,n,,`,`,`,,n,`,f,,n,`,f,,n,`,f,,`,`
-,`,`,d,`,~,`,d,`,~,`,d,`,~,`,d,`,`,`,d,`,~,`,d,`,~,`,d,`,~,`,d,`,`
-,`,`,,h,`,n,,h,`,n,,h,`,n,,`,s,`,,n,`,h,,n,`,h,,n,`,h,,`,`
-,`,`,,,d,,,,d,,,,d,,,`,`,`,,,d,,,,d,,,,d,,,`,`
-,`,`,,f,`,n,,f,`,n,,f,`,n,,`,`,`,,n,`,f,,n,`,f,,n,`,f,,`,`
-,`,`,d,`,~,`,d,`,~,`,d,`,~,`,d,`,s,`,d,`,~,`,d,`,~,`,d,`,~,`,d,`,`
-,`,`,,h,`,n,,h,`,n,,h,`,n,,d,,d,,n,`,h,,n,`,h,,n,`,h,,`,`
-,`,`,,,d,,,,d,,,,d,,,`,`,`,,,d,,,,d,,,,d,,,`,`
-,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`
-,`,`,,s,`,`,s,`,`,s,`,`,s,,`,`,`,`,`,,s,`,`,s,`,`,s,`,`,s,,`,`
-,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`
-,`,`,,,d,,,,d,,,,d,,,`,`,`,,,d,,,,d,,,,d,,,`,`
-,`,`,,h,`,n,,h,`,n,,h,`,n,,d,,d,,n,`,h,,n,`,h,,n,`,h,,`,`
-,`,`,d,`,~,`,d,`,~,`,d,`,~,`,d,`,s,`,d,`,~,`,d,`,~,`,d,`,~,`,d,`,`
-,`,`,,f,`,n,,f,`,n,,f,`,n,,`,`,`,,n,`,f,,n,`,f,,n,`,f,,`,`
-,`,`,,,d,,,,d,,,,d,,,`,`,`,,,d,,,,d,,,,d,,,`,`
-,`,`,,h,`,n,,h,`,n,,h,`,n,,`,s,`,,n,`,h,,n,`,h,,n,`,h,,`,`
-,`,`,d,`,~,`,d,`,~,`,d,`,~,`,d,`,`,`,d,`,~,`,d,`,~,`,d,`,~,`,d,`,`
-,`,`,,f,`,n,,f,`,n,,f,`,n,,`,`,`,,n,`,f,,n,`,f,,n,`,f,,`,`
-,`,`,,,d,,,,d,,,,d,,,`,s,`,,,d,,,,d,,,,d,,,`,`
-,`,`,,h,`,n,,h,`,n,,h,`,n,,`,`,`,,n,`,h,,n,`,h,,n,`,h,,`,`
-,`,`,d,`,~,`,d,`,~,`,d,`,~,`,d,`,`,`,d,`,~,`,d,`,~,`,d,`,~,`,d,`,`
-,`,`,,f,`,n,,f,`,n,,f,`,n,,`,s,`,,n,`,f,,n,`,f,,n,`,f,,`,`
-,`,`,,,d,,,,d,,,,d,,,d,,d,,,d,,,,d,,,,d,,,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,,,n,`,h
+,,,,n,`,h,,n,`,h,,n,`,h,,`,~,`,,n,`,h,,n,`,h,,n,`,h
+,,,,`,~,`,,`,~,`,,`,~,`,,n,`,f,,`,~,`,,`,~,`,,`,~,`
+,,,,n,`,f,,n,`,f,,n,`,f,,,d,,,n,`,f,,n,`,f,,n,`,f
+,,,,,d,,,,d,,,,d,,,`,`,`,,,d,,,,d,,,,d
+,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,d,,,,d,,,,d,,,`,s,`,,,d,,,,d,,,,d
+,,,,n,`,h,,n,`,h,,n,`,h,,`,`,`,,n,`,h,,n,`,h,,n,`,h
+,,,,`,~,`,,`,~,`,,`,~,`,,`,`,`,,`,~,`,,`,~,`,,`,~,`
+,,,,n,`,f,,n,`,f,,n,`,f,,`,s,`,,n,`,f,,n,`,f,,n,`,f
+,,,,,,,,,,,,,,,,`,`,`
+,,,,n,`,h,,n,`,h,,n,`,h,,`,`,`,,n,`,h,,n,`,h,,n,`,h
+,,,,`,~,`,,`,~,`,,`,~,`,,`,s,`,,`,~,`,,`,~,`,,`,~,`
+,,,,n,`,f,,n,`,f,,n,`,f,,d,,d,,n,`,f,,n,`,f,,n,`,f
+,,,,,d,,,,d,,,,d,,,`,`,`,,,d,,,,d,,,,d
+,n,`,h,,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,,n,`,h
+,`,~,`,d,`,`,s,`,`,s,`,`,s,,`,`,~,`,`,,s,`,`,s,`,`,s,`,`,d,`,~,`
+,n,`,f,,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,,n,`,f
+,,,,,d,,,,d,,,,d,,,`,`,`,,,d,,,,d,,,,d
+,,,,n,`,h,,n,`,h,,n,`,h,,d,,d,,n,`,h,,n,`,h,,n,`,h
+,,,,`,~,`,,`,~,`,,`,~,`,,`,s,`,,`,~,`,,`,~,`,,`,~,`
+,,,,n,`,f,,n,`,f,,n,`,f,,`,`,`,,n,`,f,,n,`,f,,n,`,f
+,,,,,,,,,,,,,,,,`,`,`
+,,,,n,`,h,,n,`,h,,n,`,h,,`,s,`,,n,`,h,,n,`,h,,n,`,h
+,,,,`,~,`,,`,~,`,,`,~,`,,`,`,`,,`,~,`,,`,~,`,,`,~,`
+,,,,n,`,f,,n,`,f,,n,`,f,,`,`,`,,n,`,f,,n,`,f,,n,`,f
+,,,,,d,,,,d,,,,d,,,`,s,`,,,d,,,,d,,,,d
+,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,d,,,,d,,,,d,,,`,`,`,,,d,,,,d,,,,d
+,,,,n,`,h,,n,`,h,,n,`,h,,,d,,,n,`,h,,n,`,h,,n,`,h
+,,,,`,~,`,,`,~,`,,`,~,`,,n,`,h,,`,~,`,,`,~,`,,`,~,`
+,,,,n,`,f,,n,`,f,,n,`,f,,`,~,`,,n,`,f,,n,`,f,,n,`,f
+,,,,,,,,,,,,,,,,n,`,f
 

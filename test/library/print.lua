@@ -62,6 +62,11 @@ function test.printall_userdata()
         end)
 end
 
+function test.printall_noniterable_userdata()
+    printall(df.item._identity)
+    expect.eq(0, mock_print.call_count)
+end
+
 function test.printall_ipairs_table()
     printall_ipairs({'a', 'b'})
     expect.eq(2, mock_print.call_count)
@@ -106,6 +111,11 @@ function test.printall_ipairs_userdata()
         end)
 end
 
+function test.printall_ipairs_noniterable_userdata()
+    printall_ipairs(df.item._identity)
+    expect.eq(0, mock_print.call_count)
+end
+
 local function validate_patterns(start_idx, patterns)
     for i,pattern in ipairs(patterns) do
         expect.true_(mock_print.call_args[start_idx+i-1][1]:find(pattern))
@@ -130,14 +140,15 @@ function test.printall_recurse()
                     fn=function() end,
                     udatatable=udatatable,
                     udataint=udataint,
+                    lightudata=df.item._identity,
                     table=t2}
             t2.cyclic = t
             printall_recurse(t)
-            expect.eq(49, mock_print.call_count)
+            expect.eq(55, mock_print.call_count)
             expect.true_(mock_print.call_args[1][1]:find('^table: '))
             local idx = 2
             local EQ = '^%s+= $'
-            while idx <= 49 do
+            while idx <= 55 do
                 expect.eq('', mock_print.call_args[idx][1])
                 idx = idx + 1
                 local str = mock_print.call_args[idx][1]
@@ -159,6 +170,10 @@ function test.printall_recurse()
                     idx = validate_patterns(idx,
                             {'^udataint$', EQ, '^<uint32_t: ',
                              '%s+', '^value$', EQ, '^0$'})
+                elseif str:startswith('lightudata') then
+                    idx = validate_patterns(idx,
+                            {'^lightudata$', EQ, '',
+                             '', 'iteration with pairs>$'})
                 elseif str:startswith('table') then
                     idx = validate_patterns(idx,
                             {'^table$', EQ, '^table: ',
@@ -170,5 +185,21 @@ function test.printall_recurse()
                 end
             end
         end)
+    end)
+end
+
+function test.printall_recurse_cyclic_userdata()
+    local t = df.job_list_link:new()
+    dfhack.with_temp_object(t, function()
+        t.next = t
+        printall_recurse(t)
+        expect.eq(15, mock_print.call_count)
+        -- conveniently, field order is deterministic
+        validate_patterns(1,
+            {'^<job_list_link: ',
+             '', '^item$', EQ, 'nil',
+             '', '^prev$', EQ, 'nil',
+             '', '^next$', EQ, '^<job_list_link: ',
+             ' +', '^<Cyclic reference'})
     end)
 end

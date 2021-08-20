@@ -819,7 +819,6 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
 
         switch (ref->getType())
         {
-        case general_ref_type::PROJECTILE:
         case general_ref_type::BUILDING_HOLDER:
         case general_ref_type::BUILDING_CAGED:
         case general_ref_type::BUILDING_TRIGGER:
@@ -832,6 +831,26 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
         }
     }
 
+    if (df::general_ref *ref =
+                Items::getGeneralRef(item, general_ref_type::PROJECTILE))
+    {
+        int32_t proj_id = ((df::general_ref_projectile *)ref)->projectile_id;
+        df::proj_list_link *link = world->proj_list.next;
+        for (; link; link = link->next)
+        {
+            if (link->item->id != proj_id)
+                continue;
+
+            link->prev->next = link->next;
+            if (link->next)
+                link->next->prev = link->prev;
+            delete(link);
+            break;
+        }
+        return DFHack::removeRef(item->general_refs,
+                                 general_ref_type::PROJECTILE, ref->getID());
+    }
+
     if (item->flags.bits.on_ground)
     {
         if (!mc.removeItemOnGround(item))
@@ -841,7 +860,8 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
         item->flags.bits.on_ground = false;
         return true;
     }
-    else if (item->flags.bits.in_inventory)
+
+    if (item->flags.bits.in_inventory)
     {
         bool found = false;
 
@@ -906,7 +926,8 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
         item->flags.bits.in_inventory = false;
         return true;
     }
-    else if (item->flags.bits.removed)
+
+    if (item->flags.bits.removed)
     {
         item->flags.bits.removed = false;
 
@@ -918,8 +939,8 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
 
         return true;
     }
-    else
-        return false;
+
+    return false;
 }
 
 static void putOnGround(MapExtras::MapCache &mc, df::item *item, df::coord pos)

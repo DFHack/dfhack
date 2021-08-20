@@ -96,6 +96,7 @@ DEFINE_LUA_EVENT_NH_1(onProjUnitCheckMovement, df::proj_unitst*);
 //event manager
 DEFINE_LUA_EVENT_NH_1(onBuildingCreatedDestroyed, int32_t);
 DEFINE_LUA_EVENT_NH_1(onJobInitiated, df::job*);
+DEFINE_LUA_EVENT_NH_1(onJobStarted, df::job*);
 DEFINE_LUA_EVENT_NH_1(onJobCompleted, df::job*);
 DEFINE_LUA_EVENT_NH_1(onUnitDeath, int32_t);
 DEFINE_LUA_EVENT_NH_1(onItemCreated, int32_t);
@@ -122,6 +123,7 @@ DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_EVENT(onBuildingCreatedDestroyed),
     DFHACK_LUA_EVENT(onConstructionCreatedDestroyed),
     DFHACK_LUA_EVENT(onJobInitiated),
+    DFHACK_LUA_EVENT(onJobStarted),
     DFHACK_LUA_EVENT(onJobCompleted),
     DFHACK_LUA_EVENT(onUnitDeath),
     DFHACK_LUA_EVENT(onItemCreated),
@@ -139,6 +141,11 @@ static void ev_mng_jobInitiated(color_ostream& out, void* job)
 {
     df::job* ptr=reinterpret_cast<df::job*>(job);
     onJobInitiated(out,ptr);
+}
+static void ev_mng_jobStarted(color_ostream& out, void* job)
+{
+    df::job* ptr=reinterpret_cast<df::job*>(job);
+    onJobStarted(out,ptr);
 }
 void ev_mng_jobCompleted(color_ostream& out, void* job)
 {
@@ -211,6 +218,7 @@ typedef void (*handler_t) (color_ostream&,void*);
 static const handler_t eventHandlers[] = {
  NULL,
  ev_mng_jobInitiated,
+ ev_mng_jobStarted,
  ev_mng_jobCompleted,
  ev_mng_unitDeath,
  ev_mng_itemCreate,

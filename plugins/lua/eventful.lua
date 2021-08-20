@@ -152,6 +152,7 @@ end
 eventType=invertTable{
     [0]="TICK",
     "JOB_INITIATED",
+    "JOB_STARTED",
     "JOB_COMPLETED",
     "UNIT_DEATH",
     "ITEM_CREATED",

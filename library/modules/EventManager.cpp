@@ -302,8 +302,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
             buildings.insert(b->id);
         }
         lastSyndromeTime = -1;
-        for ( size_t a = 0; a < df::global::world->units.all.size(); ++a ) {
-            df::unit* unit = df::global::world->units.all[a];
+        for ( df::unit* unit : df::global::world->units.all ) {
             for ( size_t b = 0; b < unit->syndromes.active.size(); ++b ) {
                 df::unit_syndrome* syndrome = unit->syndromes.active[b];
                 int32_t startTime = syndrome->year*ticksPerYear + syndrome->year_time;
@@ -599,8 +598,7 @@ static void manageUnitDeathEvent(color_ostream& out) {
         auto &handler = iter.second;
         if(tick - eventLastTick[handler.eventHandler] >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
-            for ( size_t a = 0; a < df::global::world->units.all.size(); ++a ) {
-                df::unit* unit = df::global::world->units.all[a];
+            for ( df::unit *unit : df::global::world->units.all ) {
                 //if ( unit->counters.death_id == -1 ) {
                 if ( Units::isActive(unit) ) {
                     livingUnits.insert(unit->id);
@@ -747,8 +745,7 @@ static void manageSyndromeEvent(color_ostream& out) {
         auto &handler = iter.second;
         if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
-            for ( auto a = df::global::world->units.all.begin(); a != df::global::world->units.all.end(); ++a ) {
-                df::unit* unit = *a;
+            for ( df::unit *unit : df::global::world->units.all ) {
 /*
         if ( unit->flags1.bits.inactive )
             continue;
@@ -876,8 +873,7 @@ static void updateReportToRelevantUnits() {
         return;
     reportToRelevantUnitsTime = df::global::world->frame_counter;
 
-    for ( size_t a = 0; a < df::global::world->units.all.size(); ++a ) {
-        df::unit* unit = df::global::world->units.all[a];
+    for ( df::unit *unit : df::global::world->units.all ) {
         for ( int16_t b = df::enum_traits<df::unit_report_type>::first_item_value; b <= df::enum_traits<df::unit_report_type>::last_item_value; ++b ) {
             if ( b == df::unit_report_type::Sparring )
                 continue;

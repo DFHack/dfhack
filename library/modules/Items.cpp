@@ -831,8 +831,8 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
         }
     }
 
-    if (df::general_ref *ref =
-                Items::getGeneralRef(item, general_ref_type::PROJECTILE))
+    if (auto *ref =
+        virtual_cast<df::general_ref_projectile>(Items::getGeneralRef(item, general_ref_type::PROJECTILE)))
     {
         int32_t proj_id = ((df::general_ref_projectile *)ref)->projectile_id;
         df::proj_list_link *link = world->proj_list.next;

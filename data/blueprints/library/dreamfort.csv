@@ -1,5 +1,5 @@
 #notes label(help) run me for the dreamfort walkthrough
-"Welcome to Dreamfort! These blueprints will help you build a functional, secure, self-sustaining fortress that you can extend to build the fortress of your dreams!"
+"Welcome to Dreamfort! These blueprints will help you build a functional, secure, self-sustaining fortress that you can use as-is or extend to build the fortress of your dreams!"
 ""
 "It can be difficult to apply a set of blueprints that you did not write yourself. This walkthrough will guide you through the high-level steps of building Dreamfort. Run ""quickfort run library/dreamfort.csv -n /checklist"" (or, if you're looking at the online version, switch to the ""checklist"" sheet) for a compact list of all commands you'll be running. Each level also has its own mini-walkthrough with more details."
 ""
@@ -12,7 +12,7 @@
 - The suites level has fancy rooms for your nobles.
 - The apartments levels have small but well-furnished bedrooms for your other dwarves.
 ""
-"Run each level's ""help"" blueprint (e.g. /surface_help) for more details."
+"Run each level's ""help"" blueprint (e.g. ""quickfort run library/dreamfort.csv -n /surface_help"") for more details."
 ""
 "Dreamfort has a central stairs-based design. For all Dreamfort levels, place the cursor on the center (undug) tile of the 3x3 stairs area when you apply the blueprints for that level. The first surface blueprint will designate a column of stairs that you can use as a guide. If you need to extend the stairs down further to lower levels, run ""quickfort run library/dreamfort.csv -n /central_stairs"" with the cursor on the z-level below the lowest current stairs."
 ""
@@ -28,8 +28,10 @@
 ""
 "Dreamfort works best at an embark site that is flat and has at least one soil layer. New players should avoid embarks with aquifers if they are not prepared to deal with them. Bring picks for mining, an axe for woodcutting, and an anvil for a forge. Bring a few blocks to speed up initial workshop construction as well. That's all you really need, but see the example embark profile in the online spreadsheets for a more complete setup."
 ""
-"Other DFHack scripts and plugins also work very well with Dreamfort, in particular autofarm, automelt, autonestbox, burial, prioritize, seedwatch, tailor, and, of course, buildingplan. You can download an onMapLoad.init file that configures all these plugins here: https://drive.google.com/file/d/16JX21nSe0_t84BgoL7DJX1OVD2E6pJgH"
+"Other DFHack scripts and plugins also work very well with Dreamfort, such as autofarm, automelt, autonestbox, burial, prioritize, seedwatch, tailor, and, of course, buildingplan. An onMapLoad.init file that configures all these plugins Is distributed with DFHack as hack/examples/init/onMapLoad_dreamfort.init."
 Put that file in your Dwarf Fortress directory -- the same directory that has dfhack.init.
+""
+"Also copy the files in hack/examples/orders/ to dfhack-config/orders/ and the files in hack/examples/professions/ to professions/. We'll be using these files later. See https://docs.dfhack.org/en/stable/docs/guides/examples-guide.html for more information, including suggestions on how many dwarves of each profession you are likely to need."
 ""
 "Once you have your starting surface workshops up and running, you might want to configure buildingplan (in its global settings, accessible from any building placement screen, e.g.: b-a-G) to only use blocks for constructions so it won't use your precious wood, boulders, and bars to build floors and walls. If you bring at least 7 blocks with you on embark, you can even set this in your onMapLoad.init file like this:"
 on-new-fortress buildingplan set boulders false; buildingplan set logs false
@@ -43,87 +45,14 @@ You are welcome to copy the Dreamfort spreadsheets and make your own modificatio
 #notes label(checklist) command checklist
 Here is the recommended order for Dreamfort commands. You can copy/paste the quickfort commands directly into the DFHack terminal. See the level walkthroughs for context and details. Also remember to read the messages the blueprints print out after you run them so you don't miss any important manual steps.
 ""
--- Preparation --
-download onMapLoad.init and put in your DF directory: https://drive.google.com/file/d/16JX21nSe0_t84BgoL7DJX1OVD2E6pJgH
-download automation.json and put in dfhack-config/orders: https://drive.google.com/file/d/17WcN5mK-rnADOm2B_JFpPnByYgkYjxhb
-""
--- Find a good starting spot on the surface --
-quickfort run library/dreamfort.csv -n /perimeter,# Run at embark
-quickfort undo library/dreamfort.csv -n /perimeter
-""
--- Dig and preload important orders --
-quickfort run library/dreamfort.csv -n /surface1,# Run at embark
-quickfort run library/dreamfort.csv -n /industry1,"# Run these blueprints when you find a suitable rock layers (one blueprint per layer). Note that we'll dig the farming level in the uppermost soil layer a bit later. Alternately, instead of each of these dig blueprints individually, run /dig_all_underground on the level you want to use for industry, which designates digging for industry, services, guildhall, suites, and apartments all in one go. It is more efficient for your miners if you designate your digging before they dig the central stairs past that level."
-quickfort run library/dreamfort.csv -n /services1
-quickfort run library/dreamfort.csv -n /guildhall1
-quickfort run library/dreamfort.csv -n /suites1
-quickfort run library/dreamfort.csv -n /apartments1_stack
-quickfort orders library/dreamfort.csv -n /surface2,# Queue up orders required to get the fort minimally functional and secure
-quickfort orders library/dreamfort.csv -n /surface3
-quickfort orders library/dreamfort.csv -n /farming2
-quickfort orders library/dreamfort.csv -n /farming3
-quickfort orders library/dreamfort.csv -n /industry2
-quickfort orders library/dreamfort.csv -n /services2
-
--- Core fort (should finish at about the third migration wave) -- 
-quickfort run library/dreamfort.csv -n /surface2,# Run after initial trees are cleared
-quickfort run library/dreamfort.csv -n /farming1,# Run when channels are dug and trees are cleared
-quickfort run library/dreamfort.csv -n /farming2,# Run when the farming level has been dug out
-quickfort run library/dreamfort.csv -n /surface3,# Run after /farming2
-quickfort run library/dreamfort.csv -n /farming3,# Run when furniture has been placed
-quickfort run library/dreamfort.csv -n /industry2,# Run when the industry level has been dug out
-quickfort run library/dreamfort.csv -n /surface4,"# Run after the walls and floors are built on the surface. Even if the surface is finished before you run /industry2, though, wait until after /industry2 so that surface walls, floors, and roofing don't prevent your workshops from being built (due to lack of blocks)."
-quickfort orders library/dreamfort.csv -n /surface4
-quickfort run library/dreamfort.csv -n /services2,# Run when the services level has been dug out
-orders import automation,"# Run after the first migration wave, so you have dorfs to do all the tasks"
-quickfort run library/dreamfort.csv -n /surface5,"# Run when all marked trees on the surface are chopped down and walls and floors have been constructed, including the roof section over the future barracks"
-quickfort orders library/dreamfort.csv -n /surface5
-quickfort run library/dreamfort.csv -n /surface6,# Run when at least the beehives and weapon rack are constructed and you have linked all levers to their respective bridges.
-quickfort orders library/dreamfort.csv -n /surface6
-quickfort run library/dreamfort.csv -n /surface7,# Run after the surface walls are completed and any marked trees are chopped down
-quickfort orders library/dreamfort.csv -n /surface7
-""
--- Mature fort (third migration wave onward) -- 
-quickfort run library/dreamfort.csv -n /services3,"# Run after the dining table and chair, weapon rack, and archery targets have been constructed. Also wait until after you complete /surface7, though, because surface defenses are more important than a grand dining hall."
-quickfort orders library/dreamfort.csv -n /services3
-quickfort run library/dreamfort.csv -n /guildhall2,# Run when the guildhall level has been dug out
-quickfort orders library/dreamfort.csv -n /guildhall2
-quickfort run library/dreamfort.csv -n /suites2,# Run when the suites level has been dug out
-quickfort orders library/dreamfort.csv -n /suites2
-quickfort run library/dreamfort.csv -n /farming4,# Run right after /suites2
-quickfort orders library/dreamfort.csv -n /farming4
-quickfort run library/dreamfort.csv -n /surface8,"# Run if/when you need longer trap corridors on the surface, anytime after you run /surface7"
-quickfort orders library/dreamfort.csv -n /surface8
-quickfort run library/dreamfort.csv -n /services4,"# Run when you need a jail and/or fancy statues in the dining room, anytime after the restraints are placed from /services3"
-quickfort orders library/dreamfort.csv -n /services4
-""
--- Repeat for each apartments level --
-quickfort run library/dreamfort.csv -n /apartments2,# Run when the apartment level has been dug out
-quickfort orders library/dreamfort.csv -n /apartments2
-quickfort run library/dreamfort.csv -n /apartments3,# Run when all beds have been constructed
-quickfort orders library/dreamfort.csv -n /apartments3
-burial -pets,# Run once the coffins are placed to set them to allow for burial
-
-See this checklist online at https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=1459509569
-#notes label(checklist_beta) hidden() command checklist (BETA version! intended for the next version of dreamfort)
-Here is the recommended order for Dreamfort commands. You can copy/paste the quickfort commands directly into the DFHack terminal. See the level walkthroughs for context and details. Also remember to read the messages the blueprints print out after you run them so you don't miss any important manual steps.
-""
 -- Preparation (before you embark!) --
-download onMapLoad.init and put in your DF directory: https://drive.google.com/file/d/16JX21nSe0_t84BgoL7DJX1OVD2E6pJgH
-download the fort automation orders and put them in dfhack-config/orders:
-basic.json,https://drive.google.com/file/d/12XeclU2mNyooI392YC8NpnBiQcNwL9S0
-furnace.json,https://drive.google.com/file/d/1tKoHfc0AiG0l272_75hfetwCHSK5DMx8
-military.json,https://drive.google.com/file/d/1t5UyYeAdqhYmtZfKHQeXkFr2fmXFrjIc
-smelting.json,https://drive.google.com/file/d/1SnKRyZ9r992a1gcZzF3gBppmn5pr_8SL
+copy hack/examples/init/onMapLoad_dreamfort.init to your DF directory
+copy the fort automation orders from hack/examples/orders/*.json to the dfhack-config/orders/ directory
+copy the premade profession definitions from hack/examples/professions/ to the professions/ directory
 ""
 -- Set settings and preload initial orders --
 quickfort run library/dreamfort.csv -n /setup,# Cursor on your starting wagon. Run before making any manual adjustments to settings! Run the /setup_help blueprint for details on what settings are set.
-quickfort orders library/dreamfort.csv -n /surface2,# Queue up orders required to get the fort minimally functional and secure. Feel free to remove the orders for the anvil and the ropes if you already brought them with you.
-quickfort orders library/dreamfort.csv -n /surface3
-quickfort orders library/dreamfort.csv -n /farming2
-quickfort orders library/dreamfort.csv -n /farming3
-quickfort orders library/dreamfort.csv -n /industry2
-quickfort orders library/dreamfort.csv -n /services2
+"quickfort orders library/dreamfort.csv -n ""/surface2, /farming2, /surface3, /farming3, /industry2, /surface4, /services2""",# Queue up orders required to get the fort minimally functional and secure. Feel free to remove the orders for the anvil and the ropes if you already brought them with you.
 ""
 -- Find a good starting spot on the surface --
 quickfort run library/dreamfort.csv -n /perimeter,# Run at embark.
@@ -142,43 +71,31 @@ quickfort run library/dreamfort.csv -n /farming3,# Run when furniture has been p
 quickfort run library/dreamfort.csv -n /industry2,# Run when the industry level has been dug out.
 prioritize ConstructBuilding,# To get those workshops up and running ASAP. You may have to run this several times as the building construction jobs become ready.
 quickfort run library/dreamfort.csv -n /surface4,"# Run after the walls and floors are built on the surface. Even if /surface3 is finished before you run /industry2, though, wait until after /industry2 so that surface walls, floors, and roofing don't prevent your workshops from being built (due to lack of blocks)."
-quickfort orders library/dreamfort.csv -n /surface4
 quickfort run library/dreamfort.csv -n /services2,# Run when the services level has been dug out.
 orders import basic,"# Run after the first migration wave, so you have dorfs to do all the basic tasks. Note that this is the ""orders"" plugin, not the ""quickfort orders"" command."
-quickfort run library/dreamfort.csv -n /surface5,"# Run when all marked trees on the surface are chopped down and walls and floors have been constructed, including the roof section over the future barracks."
-quickfort orders library/dreamfort.csv -n /surface5
+"quickfort run,orders library/dreamfort.csv -n /surface5","# Run when all marked trees on the surface are chopped down and walls and floors have been constructed, including the roof section over the future barracks."
 prioritize ConstructBuilding,# Run when you see the bridges ready to be built so the masons come and actually build them.
-quickfort run library/dreamfort.csv -n /surface6,# Run when at least the beehives and weapon rack are constructed and you have linked all levers to their respective bridges.
-quickfort orders library/dreamfort.csv -n /surface6
-quickfort run library/dreamfort.csv -n /surface7,# Run after the surface walls are completed and any marked trees are chopped down.
-quickfort orders library/dreamfort.csv -n /surface7
+"quickfort run,orders library/dreamfort.csv -n /surface6",# Run when at least the beehives and weapon rack are constructed and you have linked all levers to their respective bridges.
+"quickfort run,orders library/dreamfort.csv -n /surface7",# Run after the surface walls are completed and any marked trees are chopped down.
 ""
 -- Plumbing -- 
 "This is a good time to fill your well cisterns, either with a bucket brigade or by routing water from an aquifer or freshwater stream."
 "Also consider bringing magma up to your services level so you can replace the forge and furnaces on your industry level with more powerful magma versions. This is especially important if your embark has insufficient trees to convert into charcoal. Keep in mind that setting up a powered pump stack is a tricky process and can take a long time. Don't forget to continue making progress through the checklist as you prepare to pump your magma! If you are going to pump magma, I suggest doing it before importing the military and smelting automation orders since they make heavy use of smelters and forges."
 ""
 -- Mature fort (third migration wave onward) -- 
-orders import furnace,# Automated production of basic furnace-related items.
-quickfort run library/dreamfort.csv -n /suites2,# Run when the suites level has been dug out.
-quickfort orders library/dreamfort.csv -n /suites2
-quickfort run library/dreamfort.csv -n /surface8,"# Run if/when you need longer trap corridors on the surface for larger sieges, anytime after you run /surface7."
-quickfort orders library/dreamfort.csv -n /surface8
-quickfort run library/dreamfort.csv -n /services3,"# Run after the dining table and chair, weapon rack, and archery targets have been constructed. Also wait until after you complete /surface7, though, because surface defenses are more important than a grand dining hall."
-quickfort orders library/dreamfort.csv -n /services3
-quickfort run library/dreamfort.csv -n /guildhall2,# Run when the guildhall level has been dug out.
-quickfort orders library/dreamfort.csv -n /guildhall2
-quickfort run library/dreamfort.csv -n /farming4,# Run right after /suites2.
-quickfort orders library/dreamfort.csv -n /farming4
+orders import furnace,# Automated production of basic furnace-related items. Don't forget to create a sand collection zone (or remove the sand- and glass-related orders if you have no sand).
+"quickfort run,orders library/dreamfort.csv -n /suites2",# Run when the suites level has been dug out.
+"quickfort run,orders library/dreamfort.csv -n /surface8","# Run if/when you need longer trap corridors on the surface for larger sieges, anytime after you run /surface7."
+"quickfort run,orders library/dreamfort.csv -n /services3","# Run after the dining table and chair, weapon rack, and archery targets have been constructed. Also wait until after you complete /surface7, though, because surface defenses are more important than a grand dining hall."
+"quickfort run,orders library/dreamfort.csv -n /guildhall2",# Run when the guildhall level has been dug out.
+"quickfort run,orders library/dreamfort.csv -n /farming4",# Run once you have a cache of potash.
 orders import military,# Automated production of military equipment. Turn on automelt in the meltables piles on the industry level to automatically upgrade all metal military equipment to masterwork quality. These orders are optional if you are not using a military.
 orders import smelting,# Automated production of all types of metal bars.
-quickfort run library/dreamfort.csv -n /services4,"# Run when you need a jail and/or fancy statues in the dining room, anytime after the restraints are placed from /services3."
-quickfort orders library/dreamfort.csv -n /services4
+"quickfort run,orders library/dreamfort.csv -n /services4","# Run when you need a jail and/or fancy statues in the dining room, anytime after the restraints are placed from /services3."
 ""
 -- Repeat for each apartments level --
-quickfort run library/dreamfort.csv -n /apartments2,# Run when the apartment level has been dug out.
-quickfort orders library/dreamfort.csv -n /apartments2
-quickfort run library/dreamfort.csv -n /apartments3,# Run when all beds have been constructed.
-quickfort orders library/dreamfort.csv -n /apartments3
+"quickfort run,orders library/dreamfort.csv -n /apartments2",# Run when the apartment level has been dug out.
+"quickfort run,orders library/dreamfort.csv -n /apartments3",# Run when all beds have been constructed.
 burial -pets,# Run once the coffins are placed to set them to allow for burial. This is handled for you if you are using the provided onMapLoad.init file.
 
 See this checklist online at https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=1459509569
@@ -219,7 +136,7 @@ starthotkeys: ^H{sethotkey fkey={F2} name=Farming}{sethotkey fkey={F3} name=Indu
 ""
 "#query label(setup) start(on the wagon) message(Please set the zoom targets of the hotkeys (the 'H' menu) according to where you actually end up digging the levels.
 Nothing in Dreamfort depends on these settings staying as they are. Feel free to change any setting to your personal preference.) assign nobles, set standing orders, create burrows, make adjustments to military uniforms, and set hotkey names"
-{startnobles}{startorders}{startburrows}{startmilitary}{starthotkeys}
+{startnobles}{startorders}{startburrows}{startmilitary}{starthotkeys}{F1}
 "#meta label(dig_all) start(central stairs on industry level) dig industry, services, guildhall, suites, and apartments levels. does not include farming."
 # Note that this blueprint will only work for the unified dreamfort.csv. It won't work for the individual .xlsx files (since #meta blueprints can't cross file boundaries).
 ""
@@ -264,7 +181,7 @@ Also bring logs for beds if embarking in an area without many trees.
 ""
 See ldog's Dreamfort embark profile for a more advanced (and more thoroughly explained!) approach
 https://drive.google.com/file/d/1Et42JTzeYK23iI5wrPMsFJ7lUXwVBQob/view?usp=sharing
-"#ignore Add these lines to the bottom of your ""data/init/embark_profiles.txt"" file to make the ""Dreamfort"" profile available in-game. Also see ldog's embark profile for a more advanced, dwarfy approach."
+"#ignore Add these lines to the bottom of your ""data/init/embark_profiles.txt"" file to make the ""Dreamfort"" profile available in-game. Also see ldog's dreamfort embark profile for a more advanced, dwarfy approach."
 [PROFILE]
 [TITLE:Dreamfort]
 [SKILL:1:COOK:5]
@@ -309,33 +226,6 @@ https://drive.google.com/file/d/1Et42JTzeYK23iI5wrPMsFJ7lUXwVBQob/view?usp=shari
 [PET:1:CAT:MALE:STANDARD]
 [PET:2:BIRD_GOOSE:FEMALE:STANDARD]
 [PET:2:BIRD_GOOSE:MALE:STANDARD]
-#ignore
-DFHack manipulator has the ability to save the labor configuration of a dwarf as a custom profession. This can be very convenient for quickly assigning labors to migrants to ensure that all the tasks in your fort have adequate numbers of dwarves attending to them.
-""
-"You can download pre-made profession definitions here. Put them all in the ""professions"" directory in your DF folder. You may need to create that directory if it doesn't already exist."
-""
-"The ""Ideal number"" column indicates the number of dwarves of each profession that you'll likely need in a mature fort."
-""
-Starting Dwarves
-Profession,Ideal number,Description
-StartManager,1,"All skills not covered by the other starting professions (Miner, Mason, Outdoorsdwarf, and Craftsdwarf), plus a few overlapping skills to assist in critical tasks at the beginning of the game. Individual labors should be turned off as migrants are assigned more specialized professions that cover them."
-Miner,02-10,"Mining and Engraving. This profession also has the ""Alchemist"" labor enabled, which disables hauling for those using the autohauler plugin."
-Mason,02-04,"Masonry and Architecture. You may need to run ""prioritize ConstructBuilding"" to get your masons to build wells and bridges if they are too busy crafting stone furniture."
-Outdoorsdwarf,02-03,"Woodcutting, Animal Training, Trapping, Plant Gathering, Beekeeping, and Mechanics. This profession is also the only non-military profession to have Recover wounded enabled (since Outdoorsdwarves will have a battleaxe to defend themselves with)."
-Craftsdwarf,03-04,"All labors used at Carpenter's workshops, Jeweler's workshops, and Craftsdwarf's workshops."
-
-Other Professions
-Profession,Ideal number,Description
-Chef,2,Cooking. It is important to focus just a few dwarves on cooking since well-crafted meals make dwarves very happy. They are also an excellent trade good.
-Clothier,2,"Textile industry labors: Dying, Leatherworking, Weaving, and Clothesmaking."
-Doctor,02-04,"The full suite of medical labors, plus Animal caretaking for those using the dwarfvet plugin."
-Farmer,5,Food- and animal product-related labors.
-Fisherdwarf,0,"Fishing. If you assign this profession to any dwarf, be prepared to be inundated with fish. Fisherdwarves *never stop fishing*."
-Hauler,>20,All hauling labors plus Mechanic (so haulers can assist in reloading traps).
-Marksdwarf,10,"Same as Hauler, but with a different name so you can find your military dwarves more easily."
-Meleedwarf,50,"Mostly the same as Hauler, but with a different name so you can find your military dwarves more easily. This profession also has the Recover wounded labor enabled."
-Smith,3,"Smithing, Glassmaking, Pottery, and Siege Engineering labors. You will likely want to specialize your smiths to focus on either weapons or armor to maximize equipment quality."
-Unskilled,10-12,"All labors that don't improve quality with skill, such as furnace labors, Soapmaking, and Pump Operating."
 #meta label(all_orders) hidden() references all blueprints that generate orders; for testing only
 /surface2
 /surface3
@@ -1939,7 +1829,7 @@ Manual steps you have to take:
 - Assign minecarts to your quantum stockpile hauling routes
 "- Give from the ""Goods"" quantum stockpile to the jugs, pots, and bags stockpiles on the farming level"
 "- If desired, set one or both stockpiles in the bottom left to auto-melt. This results in melting all weapons and armor that are inferior to masterwork. This is great for upgrading your military, but it takes a *lot* of fuel unless you have first replaced the forge and smelters with magma versions. If you enable automelt and you don't have magma forges and magma smelters, be sure you're in a heavily forested area, enable auto-chop, and keep your coal stocks high."
-- Download the fort automation manager orders (the .json files) from https://drive.google.com/drive/folders/196RS9d-tis7AoOw1t2EzLF6eRWqYwnEm and put them in your dfhack-config/orders/ directory.
+- Copy the fort automation manager orders (the .json files) from hack/examples/orders/ and put them in your dfhack-config/orders/ directory.
 ""
 Industry Walkthrough:
 "1) Start digging out /industry1 as soon as you find a stone layer at least two layers beneath the surface so the boulders can be used by your starting workshops. The services level is intended to be dug beneath this one, and there is space on that level to route magma underneath your furnaces so you can replace the furnaces on this level with magma-powered equivalents."
@@ -2765,7 +2655,7 @@ Features:
 - Well-appointed suites to satisfy nobles
 - Apartments with beds and storage to keep dwarves happy and the fortress clean
 - Apartments also serve as burial chambers since dwarves like looking at coffins
-- Meta blueprint included for designating 6 levels of apartments for a full 200+ dwarves
+- Meta blueprint included for designating 5 levels of apartments for a full 200+ dwarves
 ""
 Suites Walkthrough:
 1) Dig out the suites layer with /suites1.
@@ -2773,13 +2663,13 @@ Suites Walkthrough:
 "2) Once the area is dug out, furnish the suites with /suites2. The rooms are left unconfigured so you can assign them to specific nobles. Each room can serve as a bedroom, a dining hall, an office, and/or a tomb. Run ""quickfort orders"" for /suites2."
 ""
 Apartments Walkthrough:
-"1) Dig out one layer of apartments with /apartments1, or 6 layers at once (enough for 200 dwarves) with /apartments1_stack."
+"1) Dig out one layer of apartments with /apartments1, or 5 layers at once (enough for 200 dwarves) with /apartments1_stack."
 ""
 "2) Once a layer is dug out, build beds with /apartments2. Run ""quickfort orders"" for /apartments2."
 ""
 "3) Once the beds are built, configure the rooms and build the remaining furniture with /apartments3. Run ""quickfort orders"" for /apartments3."
 ""
-"4) Once the coffins are all in place, run ""burial -pets"" to set them all to accept burials. This is handled for you if you're using the onMapLoad.init file included with Dreamfort."
+"4) Once the coffins are all in place, run ""burial -pets"" to set them all to accept burials. This is handled for you if you're using the onMapLoad_dreamfort.init file included with DFHack."
 "#dig label(suites1) start(18; 18; central ramp) message(This would be a good time to queue manager orders for /suites2. Once the area is dug out, run /suites2) noble suites"
 
 ,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
@@ -2798,7 +2688,7 @@ Apartments Walkthrough:
 ,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,,d,,d,d,d,d,d,,d,d,d,d,d,,d,d
 ,d,d,,,,d,,,,,,d,,,,d,d,d,,,,d,,,,,,d,,,,d,d
 ,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,`,`,`,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,,d,d,d,d,d,d,d,d,d,d,,d,`,`,`,d,,d,d,d,d,d,d,d,d,d,d,,d,d
+,d,d,,d,d,d,d,d,d,d,d,d,d,,d,`,~,`,d,,d,d,d,d,d,d,d,d,d,d,,d,d
 ,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,`,`,`,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
 ,d,d,,,,d,,,,,,d,,,,d,d,d,,,,d,,,,,,d,,,,d,d
 ,d,d,,d,d,d,d,d,,d,d,d,d,d,,d,,d,,d,d,d,d,d,,d,d,d,d,d,,d,d
@@ -2834,7 +2724,7 @@ Apartments Walkthrough:
 ,`,`,,a,r,`,`,h,,h,`,`,r,a,,d,,d,,a,r,`,`,h,,h,`,`,r,a,,`,`
 ,`,`,,,,d,,,,,,d,,,,`,`,`,,,,d,,,,,,d,,,,`,`
 ,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`
-,`,`,,s,`,`,s,`,`,s,`,`,s,,`,`,`,`,`,,s,`,`,s,`,`,s,`,`,s,,`,`
+,`,`,,s,`,`,s,`,`,s,`,`,s,,`,`,~,`,`,,s,`,`,s,`,`,s,`,`,s,,`,`
 ,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`
 ,`,`,,,,d,,,,,,d,,,,`,`,`,,,,d,,,,,,d,,,,`,`
 ,`,`,,a,r,`,`,h,,h,`,`,r,a,,d,,d,,a,r,`,`,h,,h,`,`,r,a,,`,`
@@ -2852,9 +2742,7 @@ Apartments Walkthrough:
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 
-#meta label(apartments1_stack) start(central ramp) digs 6 layers of apartments - enough for 200 dwarves
-/apartments1
-#>
+#meta label(apartments1_stack) start(central ramp) digs 5 layers of apartments - enough for 200 dwarves
 /apartments1
 #>
 /apartments1
@@ -2867,148 +2755,148 @@ Apartments Walkthrough:
 
 "#dig label(apartments1) start(18; 18; central ramp) message(This would be a good time to enqueue manager orders for /apartments2 and /apartments3. Once the area is dug out, continue with /apartments2.) apartment complex"
 
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,,,d,,,,d,,,,d,,,d,,d,,,d,,,,d,,,,d,,,d,d
-,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d
-,d,d,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d,,,d,d
-,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d
-,d,d,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d,,,d,d
-,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,,d,d,d,,d,d,d,,d,d,d,,d,,d,,d,d,d,,d,d,d,,d,d,d,,d,d
-,d,d,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d,,,d,d
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,`,`,`,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,,d,d,d,d,d,d,d,d,d,d,,d,`,`,`,d,,d,d,d,d,d,d,d,d,d,d,,d,d
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,`,`,`,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d,,,d,d
-,d,d,,d,d,d,,d,d,d,,d,d,d,,d,,d,,d,d,d,,d,d,d,,d,d,d,,d,d
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d
-,d,d,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d,,,d,d
-,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d
-,d,d,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d,,,d,d
-,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d
-,d,d,,,d,,,,d,,,,d,,,d,,d,,,d,,,,d,,,,d,,,d,d
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
+,,,,,,,,,,,,,,,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,,d,,,d,d,d,,d,d,d,,d,d,d
+,,,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d
+,,,,,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
+,,,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,,,,,,,,,,,,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,,d,,d,d,d,,d,d,d,,d,d,d
+,,,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d
+,d,d,d,,d,d,d,d,d,d,d,d,d,d,d,`,`,`,d,d,d,d,d,d,d,d,d,d,d,,d,d,d
+,d,d,d,d,d,d,d,d,d,d,d,d,d,,d,`,~,`,d,,d,d,d,d,d,d,d,d,d,d,d,d,d
+,d,d,d,,d,d,d,d,d,d,d,d,d,d,d,`,`,`,d,d,d,d,d,d,d,d,d,d,d,,d,d,d
+,,,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,,d,,d,d,d,,d,d,d,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,,,,,,,,,,,,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d
+,,,,,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
+,,,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d
+,,,,d,d,d,,d,d,d,,d,d,d,,,d,,,d,d,d,,d,d,d,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,,,,,,,,,,,,,d,d,d
 
 "#build label(apartments2) start(18; 18; central ramp) message(Once beds have been placed, continue with /apartments3.) build beds"
 
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,,,`,,,,`,,,,`,,,`,,`,,,`,,,,`,,,,`,,,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,`,`,b,`,`,`,b,`,`,`,b,`,`,`,`,`,`,`,b,`,`,`,b,`,`,`,b,`,`,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`,,,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,`,`,b,`,`,`,b,`,`,`,b,`,`,`,`,`,`,`,b,`,`,`,b,`,`,`,b,`,`,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`,,,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,`,`,b,`,`,`,b,`,`,`,b,`,`,`,`,`,`,`,b,`,`,`,b,`,`,`,b,`,`,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`,,,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`,,,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,`,`,b,`,`,`,b,`,`,`,b,`,`,`,`,`,`,`,b,`,`,`,b,`,`,`,b,`,`,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`,,,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,`,`,b,`,`,`,b,`,`,`,b,`,`,`,`,`,`,`,b,`,`,`,b,`,`,`,b,`,`,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`,,,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,`,`,b,`,`,`,b,`,`,`,b,`,`,`,`,`,`,`,b,`,`,`,b,`,`,`,b,`,`,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,,,`,,,,`,,,,`,,,`,,`,,,`,,,,`,,,,`,,,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,,,`,`,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,b,`,,`,`,`,,`,`,`,,`,`,`
+,,,,`,b,`,,`,b,`,,`,b,`,,`,`,`,,`,b,`,,`,b,`,,`,b,`
+,,,,`,`,`,,`,`,`,,`,`,`,,,`,,,`,`,`,,`,`,`,,`,`,`
+,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,`,b,`,,`,b,`,,`,b,`,,`,`,`,,`,b,`,,`,b,`,,`,b,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,,,,,,,,,,,,,`,`,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,`,b,`,,`,b,`,,`,b,`,,`,`,`,,`,b,`,,`,b,`,,`,b,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,,`,,`,`,`,,`,`,`,,`,`,`
+,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`
+,`,b,`,`,`,`,`,`,`,`,`,`,`,,`,`,~,`,`,,`,`,`,`,`,`,`,`,`,`,`,b,`
+,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`
+,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,,`,,`,`,`,,`,`,`,,`,`,`
+,,,,`,b,`,,`,b,`,,`,b,`,,`,`,`,,`,b,`,,`,b,`,,`,b,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,,,,,,,,,,,,,`,`,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,`,b,`,,`,b,`,,`,b,`,,`,`,`,,`,b,`,,`,b,`,,`,b,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,,,,`,`,`,,`,`,`,,`,`,`,,,`,,,`,`,`,,`,`,`,,`,`,`
+,,,,`,b,`,,`,b,`,,`,b,`,,`,`,`,,`,b,`,,`,b,`,,`,b,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,b,`,,`,`,`,,`,`,`,,`,`,`
+,,,,,,,,,,,,,,,,`,`,`
 
 #meta label(apartments3) start(central ramp) configure rooms and build remaining furniture
 query_apartments/apartments_rooms
 build2_apartments/apartments_build2
 #query label(apartments_rooms) start(18; 18) hidden() configure rooms
 
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,,,`,,,,`,,,,`,,,`,,`,,,`,,,,`,,,,`,,,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,`,`,r-&,`,`,`,r-&,`,`,`,r-&,`,`,`,`,`,`,`,r-&,`,`,`,r-&,`,`,`,r-&,`,`,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`,,,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,`,`,r-&,`,`,`,r-&,`,`,`,r-&,`,`,`,`,`,`,`,r-&,`,`,`,r-&,`,`,`,r-&,`,`,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`,,,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,`,`,r-&,`,`,`,r-&,`,`,`,r-&,`,`,`,`,`,`,`,r-&,`,`,`,r-&,`,`,`,r-&,`,`,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`,,,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`,,,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,`,`,r-&,`,`,`,r-&,`,`,`,r-&,`,`,`,`,`,`,`,r-&,`,`,`,r-&,`,`,`,r-&,`,`,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`,,,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,`,`,r-&,`,`,`,r-&,`,`,`,r-&,`,`,`,`,`,`,`,r-&,`,`,`,r-&,`,`,`,r-&,`,`,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`,,,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,`,`,r-&,`,`,`,r-&,`,`,`,r-&,`,`,`,`,`,`,`,r-&,`,`,`,r-&,`,`,`,r-&,`,`,`,`
-,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`
-,`,`,,,`,,,,`,,,,`,,,`,,`,,,`,,,,`,,,,`,,,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,,,`,`,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,r-&,`,,`,`,`,,`,`,`,,`,`,`
+,,,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,`,`,,`,r-&,`,,`,r-&,`,,`,r-&,`
+,,,,`,`,`,,`,`,`,,`,`,`,,,`,,,`,`,`,,`,`,`,,`,`,`
+,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,`,`,,`,r-&,`,,`,r-&,`,,`,r-&,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,,,,,,,,,,,,,`,`,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,`,`,,`,r-&,`,,`,r-&,`,,`,r-&,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,,`,,`,`,`,,`,`,`,,`,`,`
+,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`
+,`,r-&,`,`,`,`,`,`,`,`,`,`,`,,`,`,~,`,`,,`,`,`,`,`,`,`,`,`,`,`,r-&,`
+,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`
+,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,,`,,`,`,`,,`,`,`,,`,`,`
+,,,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,`,`,,`,r-&,`,,`,r-&,`,,`,r-&,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,,,,,,,,,,,,,`,`,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,`,`,,`,r-&,`,,`,r-&,`,,`,r-&,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,,,,`,`,`,,`,`,`,,`,`,`,,,`,,,`,`,`,,`,`,`,,`,`,`
+,,,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,`,`,,`,r-&,`,,`,r-&,`,,`,r-&,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,r-&,`,,`,`,`,,`,`,`,,`,`,`
+,,,,,,,,,,,,,,,,`,`,`
 
 #build label(apartments_build2) start(18; 18) hidden() message(Coffins should be configured with DFHack burial script) build remaining furniture
 
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,,,d,,,,d,,,,d,,,d,,d,,,d,,,,d,,,,d,,,`,`
-,`,`,,f,`,n,,f,`,n,,f,`,n,,`,s,`,,n,`,f,,n,`,f,,n,`,f,,`,`
-,`,`,d,`,~,`,d,`,~,`,d,`,~,`,d,`,`,`,d,`,~,`,d,`,~,`,d,`,~,`,d,`,`
-,`,`,,h,`,n,,h,`,n,,h,`,n,,`,`,`,,n,`,h,,n,`,h,,n,`,h,,`,`
-,`,`,,,d,,,,d,,,,d,,,`,s,`,,,d,,,,d,,,,d,,,`,`
-,`,`,,f,`,n,,f,`,n,,f,`,n,,`,`,`,,n,`,f,,n,`,f,,n,`,f,,`,`
-,`,`,d,`,~,`,d,`,~,`,d,`,~,`,d,`,`,`,d,`,~,`,d,`,~,`,d,`,~,`,d,`,`
-,`,`,,h,`,n,,h,`,n,,h,`,n,,`,s,`,,n,`,h,,n,`,h,,n,`,h,,`,`
-,`,`,,,d,,,,d,,,,d,,,`,`,`,,,d,,,,d,,,,d,,,`,`
-,`,`,,f,`,n,,f,`,n,,f,`,n,,`,`,`,,n,`,f,,n,`,f,,n,`,f,,`,`
-,`,`,d,`,~,`,d,`,~,`,d,`,~,`,d,`,s,`,d,`,~,`,d,`,~,`,d,`,~,`,d,`,`
-,`,`,,h,`,n,,h,`,n,,h,`,n,,d,,d,,n,`,h,,n,`,h,,n,`,h,,`,`
-,`,`,,,d,,,,d,,,,d,,,`,`,`,,,d,,,,d,,,,d,,,`,`
-,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`
-,`,`,,s,`,`,s,`,`,s,`,`,s,,`,`,`,`,`,,s,`,`,s,`,`,s,`,`,s,,`,`
-,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`,d,`,`
-,`,`,,,d,,,,d,,,,d,,,`,`,`,,,d,,,,d,,,,d,,,`,`
-,`,`,,h,`,n,,h,`,n,,h,`,n,,d,,d,,n,`,h,,n,`,h,,n,`,h,,`,`
-,`,`,d,`,~,`,d,`,~,`,d,`,~,`,d,`,s,`,d,`,~,`,d,`,~,`,d,`,~,`,d,`,`
-,`,`,,f,`,n,,f,`,n,,f,`,n,,`,`,`,,n,`,f,,n,`,f,,n,`,f,,`,`
-,`,`,,,d,,,,d,,,,d,,,`,`,`,,,d,,,,d,,,,d,,,`,`
-,`,`,,h,`,n,,h,`,n,,h,`,n,,`,s,`,,n,`,h,,n,`,h,,n,`,h,,`,`
-,`,`,d,`,~,`,d,`,~,`,d,`,~,`,d,`,`,`,d,`,~,`,d,`,~,`,d,`,~,`,d,`,`
-,`,`,,f,`,n,,f,`,n,,f,`,n,,`,`,`,,n,`,f,,n,`,f,,n,`,f,,`,`
-,`,`,,,d,,,,d,,,,d,,,`,s,`,,,d,,,,d,,,,d,,,`,`
-,`,`,,h,`,n,,h,`,n,,h,`,n,,`,`,`,,n,`,h,,n,`,h,,n,`,h,,`,`
-,`,`,d,`,~,`,d,`,~,`,d,`,~,`,d,`,`,`,d,`,~,`,d,`,~,`,d,`,~,`,d,`,`
-,`,`,,f,`,n,,f,`,n,,f,`,n,,`,s,`,,n,`,f,,n,`,f,,n,`,f,,`,`
-,`,`,,,d,,,,d,,,,d,,,d,,d,,,d,,,,d,,,,d,,,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,,,n,`,h
+,,,,n,`,h,,n,`,h,,n,`,h,,`,~,`,,n,`,h,,n,`,h,,n,`,h
+,,,,`,~,`,,`,~,`,,`,~,`,,n,`,f,,`,~,`,,`,~,`,,`,~,`
+,,,,n,`,f,,n,`,f,,n,`,f,,,d,,,n,`,f,,n,`,f,,n,`,f
+,,,,,d,,,,d,,,,d,,,`,`,`,,,d,,,,d,,,,d
+,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,d,,,,d,,,,d,,,`,s,`,,,d,,,,d,,,,d
+,,,,n,`,h,,n,`,h,,n,`,h,,`,`,`,,n,`,h,,n,`,h,,n,`,h
+,,,,`,~,`,,`,~,`,,`,~,`,,`,`,`,,`,~,`,,`,~,`,,`,~,`
+,,,,n,`,f,,n,`,f,,n,`,f,,`,s,`,,n,`,f,,n,`,f,,n,`,f
+,,,,,,,,,,,,,,,,`,`,`
+,,,,n,`,h,,n,`,h,,n,`,h,,`,`,`,,n,`,h,,n,`,h,,n,`,h
+,,,,`,~,`,,`,~,`,,`,~,`,,`,s,`,,`,~,`,,`,~,`,,`,~,`
+,,,,n,`,f,,n,`,f,,n,`,f,,d,,d,,n,`,f,,n,`,f,,n,`,f
+,,,,,d,,,,d,,,,d,,,`,`,`,,,d,,,,d,,,,d
+,n,`,h,,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,,n,`,h
+,`,~,`,d,`,`,s,`,`,s,`,`,s,,`,`,~,`,`,,s,`,`,s,`,`,s,`,`,d,`,~,`
+,n,`,f,,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,,n,`,f
+,,,,,d,,,,d,,,,d,,,`,`,`,,,d,,,,d,,,,d
+,,,,n,`,h,,n,`,h,,n,`,h,,d,,d,,n,`,h,,n,`,h,,n,`,h
+,,,,`,~,`,,`,~,`,,`,~,`,,`,s,`,,`,~,`,,`,~,`,,`,~,`
+,,,,n,`,f,,n,`,f,,n,`,f,,`,`,`,,n,`,f,,n,`,f,,n,`,f
+,,,,,,,,,,,,,,,,`,`,`
+,,,,n,`,h,,n,`,h,,n,`,h,,`,s,`,,n,`,h,,n,`,h,,n,`,h
+,,,,`,~,`,,`,~,`,,`,~,`,,`,`,`,,`,~,`,,`,~,`,,`,~,`
+,,,,n,`,f,,n,`,f,,n,`,f,,`,`,`,,n,`,f,,n,`,f,,n,`,f
+,,,,,d,,,,d,,,,d,,,`,s,`,,,d,,,,d,,,,d
+,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,d,,,,d,,,,d,,,`,`,`,,,d,,,,d,,,,d
+,,,,n,`,h,,n,`,h,,n,`,h,,,d,,,n,`,h,,n,`,h,,n,`,h
+,,,,`,~,`,,`,~,`,,`,~,`,,n,`,h,,`,~,`,,`,~,`,,`,~,`
+,,,,n,`,f,,n,`,f,,n,`,f,,`,~,`,,n,`,f,,n,`,f,,n,`,f
+,,,,,,,,,,,,,,,,n,`,f
 

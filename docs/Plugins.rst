@@ -1039,6 +1039,226 @@ Job and Fortress management
 .. contents::
    :local:
 
+
+.. _autobutcher:
+
+autobutcher
+===========
+Assigns lifestock for slaughter once it reaches a specific count. Requires that
+you add the target race(s) to a watch list. Only tame units will be processed.
+
+Units will be ignored if they are:
+
+* Nicknamed (for custom protection; you can use the `rename` ``unit`` tool
+  individually, or `zone` ``nick`` for groups)
+* Caged, if and only if the cage is defined as a room (to protect zoos)
+* Trained for war or hunting
+
+Creatures who will not reproduce (because they're not interested in the
+opposite sex or have been gelded) will be butchered before those who will.
+Older adults and younger children will be butchered first if the population
+is above the target (default 1 male, 5 female kids and adults).  Note that
+you may need to set a target above 1 to have a reliable breeding population
+due to asexuality etc.  See `fix-ster` if this is a problem.
+
+Options:
+
+:example:      Print some usage examples.
+:start:        Start running every X frames (df simulation ticks).
+               Default: X=6000, which would be every 60 seconds at 100fps.
+:stop:         Stop running automatically.
+:sleep <x>:    Changes the timer to sleep X frames between runs.
+:watch R:      Start watching a race. R can be a valid race RAW id (ALPACA,
+               BIRD_TURKEY, etc) or a list of ids seperated by spaces or
+               the keyword 'all' which affects all races on your current
+               watchlist.
+:unwatch R:    Stop watching race(s). The current target settings will be
+               remembered. R can be a list of ids or the keyword 'all'.
+:forget R:     Stop watching race(s) and forget it's/their target settings.
+               R can be a list of ids or the keyword 'all'.
+:autowatch:    Automatically adds all new races (animals you buy from merchants,
+               tame yourself or get from migrants) to the watch list using
+               default target count.
+:noautowatch:  Stop auto-adding new races to the watchlist.
+:list:         Print the current status and watchlist.
+:list_export:  Print the commands needed to set up status and watchlist,
+               which can be used to import them to another save (see notes).
+:target <fk> <mk> <fa> <ma> <R>:
+               Set target count for specified race(s).  The first four arguments
+               are the number of female and male kids, and female and male adults.
+               R can be a list of spceies ids, or the keyword ``all`` or ``new``.
+               ``R = 'all'``: change target count for all races on watchlist
+               and set the new default for the future. ``R = 'new'``: don't touch
+               current settings on the watchlist, only set the new default
+               for future entries.
+:list_export:  Print the commands required to rebuild your current settings.
+
+.. note::
+
+    Settings and watchlist are stored in the savegame, so that you can have
+    different settings for each save. If you want to copy your watchlist to
+    another savegame you must export the commands required to recreate your settings.
+
+    To export, open an external terminal in the DF directory, and run
+    ``dfhack-run autobutcher list_export > filename.txt``.  To import, load your
+    new save and run ``script filename.txt`` in the DFHack terminal.
+
+
+Examples:
+
+You want to keep max 7 kids (4 female, 3 male) and max 3 adults (2 female,
+1 male) of the race alpaca. Once the kids grow up the oldest adults will get
+slaughtered. Excess kids will get slaughtered starting with the youngest
+to allow that the older ones grow into adults. Any unnamed cats will
+be slaughtered as soon as possible. ::
+
+     autobutcher target 4 3 2 1 ALPACA BIRD_TURKEY
+     autobutcher target 0 0 0 0 CAT
+     autobutcher watch ALPACA BIRD_TURKEY CAT
+     autobutcher start
+
+Automatically put all new races onto the watchlist and mark unnamed tame units
+for slaughter as soon as they arrive in your fort. Settings already made
+for specific races will be left untouched. ::
+
+     autobutcher target 0 0 0 0 new
+     autobutcher autowatch
+     autobutcher start
+
+Stop watching the races alpaca and cat, but remember the target count
+settings so that you can use 'unwatch' without the need to enter the
+values again. Note: 'autobutcher unwatch all' works, but only makes sense
+if you want to keep the plugin running with the 'autowatch' feature or manually
+add some new races with 'watch'. If you simply want to stop it completely use
+'autobutcher stop' instead. ::
+
+    autobutcher unwatch ALPACA CAT
+
+.. _autochop:
+
+autochop
+========
+Automatically manage tree cutting designation to keep available logs withing given
+quotas.
+
+Open the dashboard by running::
+
+    enable autochop
+
+The plugin must be activated (with :kbd:`d`-:kbd:`t`-:kbd:`c`-:kbd:`a`) before
+it can be used. You can then set logging quotas and restrict designations to
+specific burrows (with 'Enter') if desired. The plugin's activity cycle runs
+once every in game day.
+
+If you add ``enable autochop`` to your dfhack.init there will be a hotkey to
+open the dashboard from the chop designation menu.
+
+.. _autoclothing:
+
+autoclothing
+============
+
+Automatically manage clothing work orders, allowing the user to set how many of
+each clothing type every citizen should have. Usage::
+
+    autoclothing <material> <item> [number]
+
+Examples:
+
+* ``autoclothing cloth "short skirt" 10``:
+    Sets the desired number of cloth short skirts available per citizen to 10.
+* ``autoclothing cloth dress``:
+    Displays the currently set number of cloth dresses chosen per citizen.
+
+.. _autodump:
+
+autodump
+========
+This plugin adds an option to the :kbd:`q` menu for stckpiles when `enabled <enable>`.
+When autodump is enabled for a stockpile, any items placed in the stockpile will
+automatically be designated to be dumped.
+
+Alternatively, you can use it to quickly move all items designated to be dumped.
+Items are instantly moved to the cursor position, the dump flag is unset,
+and the forbid flag is set, as if it had been dumped normally.
+Be aware that any active dump item tasks still point at the item.
+
+Cursor must be placed on a floor tile so the items can be dumped there.
+
+Options:
+
+:destroy:            Destroy instead of dumping. Doesn't require a cursor.
+                     If called again before the game is resumed, cancels destroy.
+:destroy-here:       As ``destroy``, but only the selected item in the :kbd:`k` list,
+                     or inside a container.
+                     Alias ``autodump-destroy-here``, for keybindings.
+                     :dfhack-keybind:`autodump-destroy-here`
+:visible:            Only process items that are not hidden.
+:hidden:             Only process hidden items.
+:forbidden:          Only process forbidden items (default: only unforbidden).
+
+``autodump-destroy-item`` destroys the selected item, which may be selected
+in the :kbd:`k` list, or inside a container. If called again before the game
+is resumed, cancels destruction of the item.
+:dfhack-keybind:`autodump-destroy-item`
+
+.. _autofarm:
+
+autofarm
+========
+
+Automatically handles crop selection in farm plots based on current plant
+stocks, and selects crops for planting if current stock is below a threshold.
+Selected crops are dispatched on all farmplots. (Note that this plugin replaces
+an older Ruby script of the same name.)
+
+Use the `enable` or `disable <disable>` commands to change whether this plugin is
+enabled.
+
+Usage:
+
+* ``autofarm runonce``:
+    Updates all farm plots once, without enabling the plugin
+* ``autofarm status``:
+    Prints status information, including any applied limits
+* ``autofarm default 30``:
+    Sets the default threshold
+* ``autofarm threshold 150 helmet_plump tail_pig``:
+    Sets thresholds of individual plants
+
+.. _autogems:
+
+autogems
+========
+Creates a new Workshop Order setting, automatically cutting rough gems
+when `enabled <enable>`.
+
+See `gui/autogems` for a configuration UI. If necessary, the ``autogems-reload``
+command reloads the configuration file produced by that script.
+
+.. _autohauler:
+
+autohauler
+==========
+Autohauler is an autolabor fork.
+
+Rather than the all-of-the-above means of autolabor, autohauler will instead
+only manage hauling labors and leave skilled labors entirely to the user, who
+will probably use Dwarf Therapist to do so.
+
+Idle dwarves will be assigned the hauling labors; everyone else (including
+those currently hauling) will have the hauling labors removed. This is to
+encourage every dwarf to do their assigned skilled labors whenever possible,
+but resort to hauling when those jobs are not available. This also implies
+that the user will have a very tight skill assignment, with most skilled
+labors only being assigned to just one dwarf, no dwarf having more than two
+active skilled labors, and almost every non-military dwarf having at least
+one skilled labor assigned.
+
+Autohauler allows skills to be flagged as to prevent hauling labors from
+being assigned when the skill is present. By default this is the unused
+ALCHEMIST labor but can be changed by the user.
+
 .. _autolabor:
 
 autolabor
@@ -1112,6 +1332,28 @@ Examples:
 ``autolabor CUTWOOD disable``
         Turn off autolabor for wood cutting.
 
+.. _autonestbox:
+
+autonestbox
+===========
+Assigns unpastured female egg-layers to nestbox zones. Requires that you create
+pen/pasture zones above nestboxes. If the pen is bigger than 1x1 the nestbox
+must be in the top left corner. Only 1 unit will be assigned per pen, regardless
+of the size. The age of the units is currently not checked, most birds grow up
+quite fast. Egglayers who are also grazers will be ignored, since confining them
+to a 1x1 pasture is not a good idea. Only tame and domesticated own units are
+processed since pasturing half-trained wild egglayers could destroy your neat
+nestbox zones when they revert to wild. When called without options autonestbox
+will instantly run once.
+
+Options:
+
+:start:        Start running every X frames (df simulation ticks).
+               Default: X=6000, which would be every 60 seconds at 100fps.
+:stop:         Stop running automatically.
+:sleep:        Must be followed by number X. Changes the timer to sleep X
+               frames between runs.
+
 .. _channel-safely:
 
 channel-safely
@@ -1164,353 +1406,6 @@ Advanced usage:
 ``channel-safely tick-freq <value>``
     Set's the tick event frequency. Default: 1200 (1 day)
 
-
-.. _labormanager:
-
-labormanager
-============
-Automatically manage dwarf labors to efficiently complete jobs.
-Labormanager is derived from autolabor (above) but uses a completely
-different approach to assigning jobs to dwarves. While autolabor tries
-to keep as many dwarves busy as possible, labormanager instead strives
-to get jobs done as quickly as possible.
-
-Labormanager frequently scans the current job list, current list of
-dwarfs, and the map to determine how many dwarves need to be assigned to
-what labors in order to meet all current labor needs without starving
-any particular type of job.
-
-.. warning::
-
-    *As with autolabor, labormanager will override any manual changes you
-    make to labors while it is enabled, including through other tools such
-    as Dwarf Therapist*
-
-Simple usage:
-
-:enable labormanager: Enables the plugin with default settings.
-    (Persistent per fortress)
-
-:disable labormanager: Disables the plugin.
-
-Anything beyond this is optional - labormanager works fairly well on the
-default settings.
-
-The default priorities for each labor vary (some labors are higher
-priority by default than others). The way the plugin works is that, once
-it determines how many of each labor is needed, it then sorts them by
-adjusted priority. (Labors other than hauling have a bias added to them
-based on how long it's been since they were last used, to prevent job
-starvation.) The labor with the highest priority is selected, the "best
-fit" dwarf for that labor is assigned to that labor, and then its
-priority is *halved*. This process is repeated until either dwarfs or
-labors run out.
-
-Because there is no easy way to detect how many haulers are actually
-needed at any moment, the plugin always ensures that at least one dwarf
-is assigned to each of the hauling labors, even if no hauling jobs are
-detected. At least one dwarf is always assigned to construction removing
-and cleaning because these jobs also cannot be easily detected. Lever
-pulling is always assigned to everyone. Any dwarfs for which there are
-no jobs will be assigned hauling, lever pulling, and cleaning labors. If
-you use animal trainers, note that labormanager will misbehave if you
-assign specific trainers to specific animals; results are only guaranteed
-if you use "any trainer", and animal trainers will probably be
-overallocated in any case.
-
-Labormanager also sometimes assigns extra labors to currently busy
-dwarfs so that when they finish their current job, they will go off and
-do something useful instead of standing around waiting for a job.
-
-There is special handling to ensure that at least one dwarf is assigned
-to haul food whenever food is detected left in a place where it will rot
-if not stored. This will cause a dwarf to go idle if you have no
-storepiles to haul food to.
-
-Dwarfs who are unable to work (child, in the military, wounded,
-handless, asleep, in a meeting) are entirely excluded from labor
-assignment. Any dwarf explicitly assigned to a burrow will also be
-completely ignored by labormanager.
-
-The fitness algorithm for assigning jobs to dwarfs generally attempts to
-favor dwarfs who are more skilled over those who are less skilled. It
-also tries to avoid assigning female dwarfs with children to jobs that
-are "outside", favors assigning "outside" jobs to dwarfs who are
-carrying a tool that could be used as a weapon, and tries to minimize
-how often dwarfs have to reequip.
-
-Labormanager automatically determines medical needs and reserves health
-care providers as needed. Note that this may cause idling if you have
-injured dwarfs but no or inadequate hospital facilities.
-
-Hunting is never assigned without a butchery, and fishing is never
-assigned without a fishery, and neither of these labors is assigned
-unless specifically enabled.
-
-The method by which labormanager determines what labor is needed for a
-particular job is complicated and, in places, incomplete. In some
-situations, labormanager will detect that it cannot determine what labor
-is required. It will, by default, pause and print an error message on
-the dfhack console, followed by the message "LABORMANAGER: Game paused
-so you can investigate the above message.". If this happens, please open
-an issue on github, reporting the lines that immediately preceded this
-message. You can tell labormanager to ignore this error and carry on by
-typing ``labormanager pause-on-error no``, but be warned that some job may go
-undone in this situation.
-
-Advanced usage:
-
-:labormanager enable:                      Turn plugin on.
-:labormanager disable:                     Turn plugin off.
-:labormanager priority <labor> <value>:    Set the priority value (see above) for labor <labor> to <value>.
-:labormanager reset <labor>:               Reset the priority value of labor <labor> to its default.
-:labormanager reset-all:                   Reset all priority values to their defaults.
-:labormanager allow-fishing:               Allow dwarfs to fish. *Warning* This tends to result in most of the fort going fishing.
-:labormanager forbid-fishing:              Forbid dwarfs from fishing. Default behavior.
-:labormanager allow-hunting:               Allow dwarfs to hunt. *Warning* This tends to result in as many dwarfs going hunting as you have crossbows.
-:labormanager forbid-hunting:              Forbid dwarfs from hunting. Default behavior.
-:labormanager list:                        Show current priorities and current allocation stats.
-:labormanager pause-on-error yes:          Make labormanager pause if the labor inference engine fails. See above.
-:labormanager pause-on-error no:           Allow labormanager to continue past a labor inference engine failure.
-
-
-.. _autohauler:
-
-autohauler
-==========
-Autohauler is an autolabor fork.
-
-Rather than the all-of-the-above means of autolabor, autohauler will instead
-only manage hauling labors and leave skilled labors entirely to the user, who
-will probably use Dwarf Therapist to do so.
-
-Idle dwarves will be assigned the hauling labors; everyone else (including
-those currently hauling) will have the hauling labors removed. This is to
-encourage every dwarf to do their assigned skilled labors whenever possible,
-but resort to hauling when those jobs are not available. This also implies
-that the user will have a very tight skill assignment, with most skilled
-labors only being assigned to just one dwarf, no dwarf having more than two
-active skilled labors, and almost every non-military dwarf having at least
-one skilled labor assigned.
-
-Autohauler allows skills to be flagged as to prevent hauling labors from
-being assigned when the skill is present. By default this is the unused
-ALCHEMIST labor but can be changed by the user.
-
-
-.. _job:
-
-job
-===
-Command for general job query and manipulation.
-
-Options:
-
-*no extra options*
-    Print details of the current job. The job can be selected
-    in a workshop, or the unit/jobs screen.
-**list**
-    Print details of all jobs in the selected workshop.
-**item-material <item-idx> <material[:subtoken]>**
-    Replace the exact material id in the job item.
-**item-type <item-idx> <type[:subtype]>**
-    Replace the exact item type id in the job item.
-
-.. _job-material:
-
-job-material
-============
-Alter the material of the selected job.  Similar to ``job item-material ...``
-
-Invoked as::
-
-    job-material <inorganic-token>
-
-:dfhack-keybind:`job-material`
-
-* In :kbd:`q` mode, when a job is highlighted within a workshop or furnace,
-  changes the material of the job. Only inorganic materials can be used
-  in this mode.
-* In :kbd:`b` mode, during selection of building components positions the cursor
-  over the first available choice with the matching material.
-
-.. _job-duplicate:
-
-job-duplicate
-=============
-In :kbd:`q` mode, when a job is highlighted within a workshop or furnace
-building, calling ``job-duplicate`` instantly duplicates the job.
-
-:dfhack-keybind:`job-duplicate`
-
-.. _autogems:
-
-autogems
-========
-Creates a new Workshop Order setting, automatically cutting rough gems
-when `enabled <enable>`.
-
-See `gui/autogems` for a configuration UI. If necessary, the ``autogems-reload``
-command reloads the configuration file produced by that script.
-
-.. _stockflow:
-
-stockflow
-=========
-Allows the fortress bookkeeper to queue jobs through the manager,
-based on space or items available in stockpiles.
-
-Inspired by `workflow`.
-
-Usage:
-
-``stockflow enable``
-    Enable the plugin.
-``stockflow disable``
-    Disable the plugin.
-``stockflow fast``
-    Enable the plugin in fast mode.
-``stockflow list``
-    List any work order settings for your stockpiles.
-``stockflow status``
-    Display whether the plugin is enabled.
-
-While enabled, the :kbd:`q` menu of each stockpile will have two new options:
-
-* :kbd:`j`:  Select a job to order, from an interface like the manager's screen.
-* :kbd:`J`:  Cycle between several options for how many such jobs to order.
-
-Whenever the bookkeeper updates stockpile records, new work orders will
-be placed on the manager's queue for each such selection, reduced by the
-number of identical orders already in the queue.
-
-In fast mode, new work orders will be enqueued once per day, instead of
-waiting for the bookkeeper.
-
-.. _workflow:
-
-workflow
-========
-Manage control of repeat jobs.  `gui/workflow` provides a simple
-front-end integrated in the game UI.
-
-Usage:
-
-``workflow enable [option...], workflow disable [option...]``
-   If no options are specified, enables or disables the plugin.
-   Otherwise, enables or disables any of the following options:
-
-   - drybuckets: Automatically empty abandoned water buckets.
-   - auto-melt: Resume melt jobs when there are objects to melt.
-``workflow jobs``
-   List workflow-controlled jobs (if in a workshop, filtered by it).
-``workflow list``
-   List active constraints, and their job counts.
-``workflow list-commands``
-   List active constraints as workflow commands that re-create them;
-   this list can be copied to a file, and then reloaded using the
-   ``script`` built-in command.
-``workflow count <constraint-spec> <cnt-limit> [cnt-gap]``
-   Set a constraint, counting every stack as 1 item.
-``workflow amount <constraint-spec> <cnt-limit> [cnt-gap]``
-   Set a constraint, counting all items within stacks.
-``workflow unlimit <constraint-spec>``
-   Delete a constraint.
-``workflow unlimit-all``
-   Delete all constraints.
-
-Function
---------
-When the plugin is enabled, it protects all repeat jobs from removal.
-If they do disappear due to any cause, they are immediately re-added to their
-workshop and suspended.
-
-In addition, when any constraints on item amounts are set, repeat jobs that
-produce that kind of item are automatically suspended and resumed as the item
-amount goes above or below the limit. The gap specifies how much below the limit
-the amount has to drop before jobs are resumed; this is intended to reduce
-the frequency of jobs being toggled.
-
-Constraint format
------------------
-The constraint spec consists of 4 parts, separated with ``/`` characters::
-
-    ITEM[:SUBTYPE]/[GENERIC_MAT,...]/[SPECIFIC_MAT:...]/[LOCAL,<quality>]
-
-The first part is mandatory and specifies the item type and subtype,
-using the raw tokens for items (the same syntax used custom reaction inputs).
-For more information, see :wiki:`this wiki page <Material_token>`.
-
-The subsequent parts are optional:
-
-- A generic material spec constrains the item material to one of
-  the hard-coded generic classes, which currently include::
-
-    PLANT WOOD CLOTH SILK LEATHER BONE SHELL SOAP TOOTH HORN PEARL YARN
-    METAL STONE SAND GLASS CLAY MILK
-
-- A specific material spec chooses the material exactly, using the
-  raw syntax for reaction input materials, e.g. ``INORGANIC:IRON``,
-  although for convenience it also allows just ``IRON``, or ``ACACIA:WOOD`` etc.
-  See the link above for more details on the unabbreviated raw syntax.
-
-- A comma-separated list of miscellaneous flags, which currently can
-  be used to ignore imported items or items below a certain quality.
-
-Constraint examples
--------------------
-Keep metal bolts within 900-1000, and wood/bone within 150-200::
-
-    workflow amount AMMO:ITEM_AMMO_BOLTS/METAL 1000 100
-    workflow amount AMMO:ITEM_AMMO_BOLTS/WOOD,BONE 200 50
-
-Keep the number of prepared food & drink stacks between 90 and 120::
-
-    workflow count FOOD 120 30
-    workflow count DRINK 120 30
-
-Make sure there are always 25-30 empty bins/barrels/bags::
-
-    workflow count BIN 30
-    workflow count BARREL 30
-    workflow count BOX/CLOTH,SILK,YARN 30
-
-Make sure there are always 15-20 coal and 25-30 copper bars::
-
-    workflow count BAR//COAL 20
-    workflow count BAR//COPPER 30
-
-Produce 15-20 gold crafts::
-
-    workflow count CRAFTS//GOLD 20
-
-Collect 15-20 sand bags and clay boulders::
-
-    workflow count POWDER_MISC/SAND 20
-    workflow count BOULDER/CLAY 20
-
-Make sure there are always 80-100 units of dimple dye::
-
-    workflow amount POWDER_MISC//MUSHROOM_CUP_DIMPLE:MILL 100 20
-
-.. note::
-
-  In order for this to work, you have to set the material of the PLANT input
-  on the Mill Plants job to MUSHROOM_CUP_DIMPLE using the `job item-material <job>`
-  command. Otherwise the plugin won't be able to deduce the output material.
-
-Maintain 10-100 locally-made crafts of exceptional quality::
-
-    workflow count CRAFTS///LOCAL,EXCEPTIONAL 100 90
-
-.. _fix-job-postings:
-
-fix-job-postings
-----------------
-This command fixes crashes caused by previous versions of workflow, mostly in
-DFHack 0.40.24-r4, and should be run automatically when loading a world (but can
-also be run manually if desired).
-
 .. _clean:
 
 clean
@@ -1529,47 +1424,6 @@ Extra options for ``map``:
 
 :mud:          Remove mud in addition to the normal stuff.
 :snow:         Also remove snow coverings.
-
-.. _spotclean:
-
-spotclean
-=========
-Works like ``clean map snow mud``, but only for the tile under the cursor. Ideal
-if you want to keep that bloody entrance ``clean map`` would clean up.
-
-:dfhack-keybind:`spotclean`
-
-.. _autodump:
-
-autodump
-========
-This plugin adds an option to the :kbd:`q` menu for stckpiles when `enabled <enable>`.
-When autodump is enabled for a stockpile, any items placed in the stockpile will
-automatically be designated to be dumped.
-
-Alternatively, you can use it to quickly move all items designated to be dumped.
-Items are instantly moved to the cursor position, the dump flag is unset,
-and the forbid flag is set, as if it had been dumped normally.
-Be aware that any active dump item tasks still point at the item.
-
-Cursor must be placed on a floor tile so the items can be dumped there.
-
-Options:
-
-:destroy:            Destroy instead of dumping. Doesn't require a cursor.
-                     If called again before the game is resumed, cancels destroy.
-:destroy-here:       As ``destroy``, but only the selected item in the :kbd:`k` list,
-                     or inside a container.
-                     Alias ``autodump-destroy-here``, for keybindings.
-                     :dfhack-keybind:`autodump-destroy-here`
-:visible:            Only process items that are not hidden.
-:hidden:             Only process hidden items.
-:forbidden:          Only process forbidden items (default: only unforbidden).
-
-``autodump-destroy-item`` destroys the selected item, which may be selected
-in the :kbd:`k` list, or inside a container. If called again before the game
-is resumed, cancels destruction of the item.
-:dfhack-keybind:`autodump-destroy-item`
 
 .. _cleanowned:
 
@@ -1696,20 +1550,180 @@ Options:
 :disable:       Turns off the plguin
 :report:        Reports all zones that the game considers animal hospitals
 
-.. _workNow:
+.. _job:
 
-workNow
-=======
-Don't allow dwarves to idle if any jobs are available.
+job
+===
+Command for general job query and manipulation.
 
-When workNow is active, every time the game pauses, DF will make dwarves
-perform any appropriate available jobs.  This includes when you one step
-through the game using the pause menu.  Usage:
+Options:
 
-:workNow:       print workNow status
-:workNow 0:     deactivate workNow
-:workNow 1:     activate workNow (look for jobs on pause, and only then)
-:workNow 2:     make dwarves look for jobs whenever a job completes
+*no extra options*
+    Print details of the current job. The job can be selected
+    in a workshop, or the unit/jobs screen.
+**list**
+    Print details of all jobs in the selected workshop.
+**item-material <item-idx> <material[:subtoken]>**
+    Replace the exact material id in the job item.
+**item-type <item-idx> <type[:subtype]>**
+    Replace the exact item type id in the job item.
+
+.. _job-material:
+
+job-material
+============
+Alter the material of the selected job.  Similar to ``job item-material ...``
+
+Invoked as::
+
+    job-material <inorganic-token>
+
+:dfhack-keybind:`job-material`
+
+* In :kbd:`q` mode, when a job is highlighted within a workshop or furnace,
+  changes the material of the job. Only inorganic materials can be used
+  in this mode.
+* In :kbd:`b` mode, during selection of building components positions the cursor
+  over the first available choice with the matching material.
+
+.. _job-duplicate:
+
+job-duplicate
+=============
+In :kbd:`q` mode, when a job is highlighted within a workshop or furnace
+building, calling ``job-duplicate`` instantly duplicates the job.
+
+:dfhack-keybind:`job-duplicate`
+
+
+.. _labormanager:
+
+labormanager
+============
+Automatically manage dwarf labors to efficiently complete jobs.
+Labormanager is derived from autolabor (above) but uses a completely
+different approach to assigning jobs to dwarves. While autolabor tries
+to keep as many dwarves busy as possible, labormanager instead strives
+to get jobs done as quickly as possible.
+
+Labormanager frequently scans the current job list, current list of
+dwarfs, and the map to determine how many dwarves need to be assigned to
+what labors in order to meet all current labor needs without starving
+any particular type of job.
+
+.. warning::
+
+    *As with autolabor, labormanager will override any manual changes you
+    make to labors while it is enabled, including through other tools such
+    as Dwarf Therapist*
+
+Simple usage:
+
+:enable labormanager: Enables the plugin with default settings.
+    (Persistent per fortress)
+
+:disable labormanager: Disables the plugin.
+
+Anything beyond this is optional - labormanager works fairly well on the
+default settings.
+
+The default priorities for each labor vary (some labors are higher
+priority by default than others). The way the plugin works is that, once
+it determines how many of each labor is needed, it then sorts them by
+adjusted priority. (Labors other than hauling have a bias added to them
+based on how long it's been since they were last used, to prevent job
+starvation.) The labor with the highest priority is selected, the "best
+fit" dwarf for that labor is assigned to that labor, and then its
+priority is *halved*. This process is repeated until either dwarfs or
+labors run out.
+
+Because there is no easy way to detect how many haulers are actually
+needed at any moment, the plugin always ensures that at least one dwarf
+is assigned to each of the hauling labors, even if no hauling jobs are
+detected. At least one dwarf is always assigned to construction removing
+and cleaning because these jobs also cannot be easily detected. Lever
+pulling is always assigned to everyone. Any dwarfs for which there are
+no jobs will be assigned hauling, lever pulling, and cleaning labors. If
+you use animal trainers, note that labormanager will misbehave if you
+assign specific trainers to specific animals; results are only guaranteed
+if you use "any trainer", and animal trainers will probably be
+overallocated in any case.
+
+Labormanager also sometimes assigns extra labors to currently busy
+dwarfs so that when they finish their current job, they will go off and
+do something useful instead of standing around waiting for a job.
+
+There is special handling to ensure that at least one dwarf is assigned
+to haul food whenever food is detected left in a place where it will rot
+if not stored. This will cause a dwarf to go idle if you have no
+storepiles to haul food to.
+
+Dwarfs who are unable to work (child, in the military, wounded,
+handless, asleep, in a meeting) are entirely excluded from labor
+assignment. Any dwarf explicitly assigned to a burrow will also be
+completely ignored by labormanager.
+
+The fitness algorithm for assigning jobs to dwarfs generally attempts to
+favor dwarfs who are more skilled over those who are less skilled. It
+also tries to avoid assigning female dwarfs with children to jobs that
+are "outside", favors assigning "outside" jobs to dwarfs who are
+carrying a tool that could be used as a weapon, and tries to minimize
+how often dwarfs have to reequip.
+
+Labormanager automatically determines medical needs and reserves health
+care providers as needed. Note that this may cause idling if you have
+injured dwarfs but no or inadequate hospital facilities.
+
+Hunting is never assigned without a butchery, and fishing is never
+assigned without a fishery, and neither of these labors is assigned
+unless specifically enabled.
+
+The method by which labormanager determines what labor is needed for a
+particular job is complicated and, in places, incomplete. In some
+situations, labormanager will detect that it cannot determine what labor
+is required. It will, by default, pause and print an error message on
+the dfhack console, followed by the message "LABORMANAGER: Game paused
+so you can investigate the above message.". If this happens, please open
+an issue on github, reporting the lines that immediately preceded this
+message. You can tell labormanager to ignore this error and carry on by
+typing ``labormanager pause-on-error no``, but be warned that some job may go
+undone in this situation.
+
+Advanced usage:
+
+:labormanager enable:                      Turn plugin on.
+:labormanager disable:                     Turn plugin off.
+:labormanager priority <labor> <value>:    Set the priority value (see above) for labor <labor> to <value>.
+:labormanager reset <labor>:               Reset the priority value of labor <labor> to its default.
+:labormanager reset-all:                   Reset all priority values to their defaults.
+:labormanager allow-fishing:               Allow dwarfs to fish. *Warning* This tends to result in most of the fort going fishing.
+:labormanager forbid-fishing:              Forbid dwarfs from fishing. Default behavior.
+:labormanager allow-hunting:               Allow dwarfs to hunt. *Warning* This tends to result in as many dwarfs going hunting as you have crossbows.
+:labormanager forbid-hunting:              Forbid dwarfs from hunting. Default behavior.
+:labormanager list:                        Show current priorities and current allocation stats.
+:labormanager pause-on-error yes:          Make labormanager pause if the labor inference engine fails. See above.
+:labormanager pause-on-error no:           Allow labormanager to continue past a labor inference engine failure.
+
+.. _nestboxes:
+
+nestboxes
+=========
+
+Automatically scan for and forbid fertile eggs incubating in a nestbox.
+Toggle status with `enable` or `disable <disable>`.
+
+.. _orders:
+
+orders
+======
+
+A plugin for manipulating manager orders.
+
+Subcommands:
+
+:export NAME: Exports the current list of manager orders to a file named ``dfhack-config/orders/NAME.json``.
+:import NAME: Imports manager orders from a file named ``dfhack-config/orders/NAME.json``.
+:clear: Deletes all manager orders in the current embark.
 
 .. _seedwatch:
 
@@ -1740,6 +1754,203 @@ Examples:
     removes ``MUSHROOM_HELMET_PLUMP`` from the watch list.
 ``seedwatch all 30``
     adds all plants from the abbreviation list to the watch list, the limit being 30.
+
+.. _spotclean:
+
+spotclean
+=========
+Works like ``clean map snow mud``, but only for the tile under the cursor. Ideal
+if you want to keep that bloody entrance ``clean map`` would clean up.
+
+:dfhack-keybind:`spotclean`
+
+.. _stockflow:
+
+stockflow
+=========
+Allows the fortress bookkeeper to queue jobs through the manager,
+based on space or items available in stockpiles.
+
+Inspired by `workflow`.
+
+Usage:
+
+``stockflow enable``
+    Enable the plugin.
+``stockflow disable``
+    Disable the plugin.
+``stockflow fast``
+    Enable the plugin in fast mode.
+``stockflow list``
+    List any work order settings for your stockpiles.
+``stockflow status``
+    Display whether the plugin is enabled.
+
+While enabled, the :kbd:`q` menu of each stockpile will have two new options:
+
+* :kbd:`j`:  Select a job to order, from an interface like the manager's screen.
+* :kbd:`J`:  Cycle between several options for how many such jobs to order.
+
+Whenever the bookkeeper updates stockpile records, new work orders will
+be placed on the manager's queue for each such selection, reduced by the
+number of identical orders already in the queue.
+
+In fast mode, new work orders will be enqueued once per day, instead of
+waiting for the bookkeeper.
+
+.. _tailor:
+
+tailor
+======
+
+Whenever the bookkeeper updates stockpile records, this plugin will scan every unit in the fort,
+count up the number that are worn, and then order enough more made to replace all worn items.
+If there are enough replacement items in inventory to replace all worn items, the units wearing them
+will have the worn items confiscated (in the same manner as the `cleanowned` plugin) so that they'll
+reeequip with replacement items.
+
+Use the `enable` and `disable <disable>` commands to toggle this plugin's status, or run
+``tailor status`` to check its current status.
+
+.. _workflow:
+
+workflow
+========
+Manage control of repeat jobs.  `gui/workflow` provides a simple
+front-end integrated in the game UI.
+
+Usage:
+
+``workflow enable [option...], workflow disable [option...]``
+   If no options are specified, enables or disables the plugin.
+   Otherwise, enables or disables any of the following options:
+
+   - drybuckets: Automatically empty abandoned water buckets.
+   - auto-melt: Resume melt jobs when there are objects to melt.
+``workflow jobs``
+   List workflow-controlled jobs (if in a workshop, filtered by it).
+``workflow list``
+   List active constraints, and their job counts.
+``workflow list-commands``
+   List active constraints as workflow commands that re-create them;
+   this list can be copied to a file, and then reloaded using the
+   ``script`` built-in command.
+``workflow count <constraint-spec> <cnt-limit> [cnt-gap]``
+   Set a constraint, counting every stack as 1 item.
+``workflow amount <constraint-spec> <cnt-limit> [cnt-gap]``
+   Set a constraint, counting all items within stacks.
+``workflow unlimit <constraint-spec>``
+   Delete a constraint.
+``workflow unlimit-all``
+   Delete all constraints.
+
+Function
+--------
+When the plugin is enabled, it protects all repeat jobs from removal.
+If they do disappear due to any cause, they are immediately re-added to their
+workshop and suspended.
+
+In addition, when any constraints on item amounts are set, repeat jobs that
+produce that kind of item are automatically suspended and resumed as the item
+amount goes above or below the limit. The gap specifies how much below the limit
+the amount has to drop before jobs are resumed; this is intended to reduce
+the frequency of jobs being toggled.
+
+Constraint format
+-----------------
+The constraint spec consists of 4 parts, separated with ``/`` characters::
+
+    ITEM[:SUBTYPE]/[GENERIC_MAT,...]/[SPECIFIC_MAT:...]/[LOCAL,<quality>]
+
+The first part is mandatory and specifies the item type and subtype,
+using the raw tokens for items (the same syntax used custom reaction inputs).
+For more information, see :wiki:`this wiki page <Material_token>`.
+
+The subsequent parts are optional:
+
+- A generic material spec constrains the item material to one of
+  the hard-coded generic classes, which currently include::
+
+    PLANT WOOD CLOTH SILK LEATHER BONE SHELL SOAP TOOTH HORN PEARL YARN
+    METAL STONE SAND GLASS CLAY MILK
+
+- A specific material spec chooses the material exactly, using the
+  raw syntax for reaction input materials, e.g. ``INORGANIC:IRON``,
+  although for convenience it also allows just ``IRON``, or ``ACACIA:WOOD`` etc.
+  See the link above for more details on the unabbreviated raw syntax.
+
+- A comma-separated list of miscellaneous flags, which currently can
+  be used to ignore imported items or items below a certain quality.
+
+Constraint examples
+-------------------
+Keep metal bolts within 900-1000, and wood/bone within 150-200::
+
+    workflow amount AMMO:ITEM_AMMO_BOLTS/METAL 1000 100
+    workflow amount AMMO:ITEM_AMMO_BOLTS/WOOD,BONE 200 50
+
+Keep the number of prepared food & drink stacks between 90 and 120::
+
+    workflow count FOOD 120 30
+    workflow count DRINK 120 30
+
+Make sure there are always 25-30 empty bins/barrels/bags::
+
+    workflow count BIN 30
+    workflow count BARREL 30
+    workflow count BOX/CLOTH,SILK,YARN 30
+
+Make sure there are always 15-20 coal and 25-30 copper bars::
+
+    workflow count BAR//COAL 20
+    workflow count BAR//COPPER 30
+
+Produce 15-20 gold crafts::
+
+    workflow count CRAFTS//GOLD 20
+
+Collect 15-20 sand bags and clay boulders::
+
+    workflow count POWDER_MISC/SAND 20
+    workflow count BOULDER/CLAY 20
+
+Make sure there are always 80-100 units of dimple dye::
+
+    workflow amount POWDER_MISC//MUSHROOM_CUP_DIMPLE:MILL 100 20
+
+.. note::
+
+  In order for this to work, you have to set the material of the PLANT input
+  on the Mill Plants job to MUSHROOM_CUP_DIMPLE using the `job item-material <job>`
+  command. Otherwise the plugin won't be able to deduce the output material.
+
+Maintain 10-100 locally-made crafts of exceptional quality::
+
+    workflow count CRAFTS///LOCAL,EXCEPTIONAL 100 90
+
+.. _fix-job-postings:
+
+fix-job-postings
+----------------
+This command fixes crashes caused by previous versions of workflow, mostly in
+DFHack 0.40.24-r4, and should be run automatically when loading a world (but can
+also be run manually if desired).
+
+
+.. _workNow:
+
+workNow
+=======
+Don't allow dwarves to idle if any jobs are available.
+
+When workNow is active, every time the game pauses, DF will make dwarves
+perform any appropriate available jobs.  This includes when you one step
+through the game using the pause menu.  Usage:
+
+:workNow:       print workNow status
+:workNow 0:     deactivate workNow
+:workNow 1:     activate workNow (look for jobs on pause, and only then)
+:workNow 2:     make dwarves look for jobs whenever a job completes
 
 .. _zone:
 
@@ -1873,217 +2084,6 @@ Examples
 ``zone tocages count 50 own tame male not grazer``
    Stuff up to 50 owned tame male animals who are not grazers into cages built
    on the current default zone.
-
-.. _autonestbox:
-
-autonestbox
-===========
-Assigns unpastured female egg-layers to nestbox zones. Requires that you create
-pen/pasture zones above nestboxes. If the pen is bigger than 1x1 the nestbox
-must be in the top left corner. Only 1 unit will be assigned per pen, regardless
-of the size. The age of the units is currently not checked, most birds grow up
-quite fast. Egglayers who are also grazers will be ignored, since confining them
-to a 1x1 pasture is not a good idea. Only tame and domesticated own units are
-processed since pasturing half-trained wild egglayers could destroy your neat
-nestbox zones when they revert to wild. When called without options autonestbox
-will instantly run once.
-
-Options:
-
-:start:        Start running every X frames (df simulation ticks).
-               Default: X=6000, which would be every 60 seconds at 100fps.
-:stop:         Stop running automatically.
-:sleep:        Must be followed by number X. Changes the timer to sleep X
-               frames between runs.
-
-.. _autobutcher:
-
-autobutcher
-===========
-Assigns lifestock for slaughter once it reaches a specific count. Requires that
-you add the target race(s) to a watch list. Only tame units will be processed.
-
-Units will be ignored if they are:
-
-* Nicknamed (for custom protection; you can use the `rename` ``unit`` tool
-  individually, or `zone` ``nick`` for groups)
-* Caged, if and only if the cage is defined as a room (to protect zoos)
-* Trained for war or hunting
-
-Creatures who will not reproduce (because they're not interested in the
-opposite sex or have been gelded) will be butchered before those who will.
-Older adults and younger children will be butchered first if the population
-is above the target (default 1 male, 5 female kids and adults).  Note that
-you may need to set a target above 1 to have a reliable breeding population
-due to asexuality etc.  See `fix-ster` if this is a problem.
-
-Options:
-
-:example:      Print some usage examples.
-:start:        Start running every X frames (df simulation ticks).
-               Default: X=6000, which would be every 60 seconds at 100fps.
-:stop:         Stop running automatically.
-:sleep <x>:    Changes the timer to sleep X frames between runs.
-:watch R:      Start watching a race. R can be a valid race RAW id (ALPACA,
-               BIRD_TURKEY, etc) or a list of ids seperated by spaces or
-               the keyword 'all' which affects all races on your current
-               watchlist.
-:unwatch R:    Stop watching race(s). The current target settings will be
-               remembered. R can be a list of ids or the keyword 'all'.
-:forget R:     Stop watching race(s) and forget it's/their target settings.
-               R can be a list of ids or the keyword 'all'.
-:autowatch:    Automatically adds all new races (animals you buy from merchants,
-               tame yourself or get from migrants) to the watch list using
-               default target count.
-:noautowatch:  Stop auto-adding new races to the watchlist.
-:list:         Print the current status and watchlist.
-:list_export:  Print the commands needed to set up status and watchlist,
-               which can be used to import them to another save (see notes).
-:target <fk> <mk> <fa> <ma> <R>:
-               Set target count for specified race(s).  The first four arguments
-               are the number of female and male kids, and female and male adults.
-               R can be a list of spceies ids, or the keyword ``all`` or ``new``.
-               ``R = 'all'``: change target count for all races on watchlist
-               and set the new default for the future. ``R = 'new'``: don't touch
-               current settings on the watchlist, only set the new default
-               for future entries.
-:list_export:  Print the commands required to rebuild your current settings.
-
-.. note::
-
-    Settings and watchlist are stored in the savegame, so that you can have
-    different settings for each save. If you want to copy your watchlist to
-    another savegame you must export the commands required to recreate your settings.
-
-    To export, open an external terminal in the DF directory, and run
-    ``dfhack-run autobutcher list_export > filename.txt``.  To import, load your
-    new save and run ``script filename.txt`` in the DFHack terminal.
-
-
-Examples:
-
-You want to keep max 7 kids (4 female, 3 male) and max 3 adults (2 female,
-1 male) of the race alpaca. Once the kids grow up the oldest adults will get
-slaughtered. Excess kids will get slaughtered starting with the youngest
-to allow that the older ones grow into adults. Any unnamed cats will
-be slaughtered as soon as possible. ::
-
-     autobutcher target 4 3 2 1 ALPACA BIRD_TURKEY
-     autobutcher target 0 0 0 0 CAT
-     autobutcher watch ALPACA BIRD_TURKEY CAT
-     autobutcher start
-
-Automatically put all new races onto the watchlist and mark unnamed tame units
-for slaughter as soon as they arrive in your fort. Settings already made
-for specific races will be left untouched. ::
-
-     autobutcher target 0 0 0 0 new
-     autobutcher autowatch
-     autobutcher start
-
-Stop watching the races alpaca and cat, but remember the target count
-settings so that you can use 'unwatch' without the need to enter the
-values again. Note: 'autobutcher unwatch all' works, but only makes sense
-if you want to keep the plugin running with the 'autowatch' feature or manually
-add some new races with 'watch'. If you simply want to stop it completely use
-'autobutcher stop' instead. ::
-
-    autobutcher unwatch ALPACA CAT
-
-.. _autochop:
-
-autochop
-========
-Automatically manage tree cutting designation to keep available logs withing given
-quotas.
-
-Open the dashboard by running::
-
-    enable autochop
-
-The plugin must be activated (with :kbd:`d`-:kbd:`t`-:kbd:`c`-:kbd:`a`) before
-it can be used. You can then set logging quotas and restrict designations to
-specific burrows (with 'Enter') if desired. The plugin's activity cycle runs
-once every in game day.
-
-If you add ``enable autochop`` to your dfhack.init there will be a hotkey to
-open the dashboard from the chop designation menu.
-
-.. _orders:
-
-orders
-======
-
-A plugin for manipulating manager orders.
-
-Subcommands:
-
-:export NAME: Exports the current list of manager orders to a file named ``dfhack-config/orders/NAME.json``.
-:import NAME: Imports manager orders from a file named ``dfhack-config/orders/NAME.json``.
-:clear: Deletes all manager orders in the current embark.
-
-.. _nestboxes:
-
-nestboxes
-=========
-
-Automatically scan for and forbid fertile eggs incubating in a nestbox.
-Toggle status with `enable` or `disable <disable>`.
-
-.. _tailor:
-
-tailor
-======
-
-Whenever the bookkeeper updates stockpile records, this plugin will scan every unit in the fort,
-count up the number that are worn, and then order enough more made to replace all worn items.
-If there are enough replacement items in inventory to replace all worn items, the units wearing them
-will have the worn items confiscated (in the same manner as the `cleanowned` plugin) so that they'll
-reeequip with replacement items.
-
-Use the `enable` and `disable <disable>` commands to toggle this plugin's status, or run
-``tailor status`` to check its current status.
-
-.. _autoclothing:
-
-autoclothing
-============
-
-Automatically manage clothing work orders, allowing the user to set how many of
-each clothing type every citizen should have. Usage::
-
-    autoclothing <material> <item> [number]
-
-Examples:
-
-* ``autoclothing cloth "short skirt" 10``:
-    Sets the desired number of cloth short skirts available per citizen to 10.
-* ``autoclothing cloth dress``:
-    Displays the currently set number of cloth dresses chosen per citizen.
-
-.. _autofarm:
-
-autofarm
-========
-
-Automatically handles crop selection in farm plots based on current plant
-stocks, and selects crops for planting if current stock is below a threshold.
-Selected crops are dispatched on all farmplots. (Note that this plugin replaces
-an older Ruby script of the same name.)
-
-Use the `enable` or `disable <disable>` commands to change whether this plugin is
-enabled.
-
-Usage:
-
-* ``autofarm runonce``:
-    Updates all farm plots once, without enabling the plugin
-* ``autofarm status``:
-    Prints status information, including any applied limits
-* ``autofarm default 30``:
-    Sets the default threshold
-* ``autofarm threshold 150 helmet_plump tail_pig``:
-    Sets thresholds of individual plants
 
 
 ================

@@ -1112,6 +1112,59 @@ Examples:
 ``autolabor CUTWOOD disable``
         Turn off autolabor for wood cutting.
 
+.. _channel-safely:
+
+channel-safely
+==============
+Automatically manage channel designations to safely complete them.
+Channel-safely keeps dwarves safe by marking unsafe designations for
+later. A designation is unsafe if it is under another designation or
+over empty space. The latter situation will never be safe, but with
+cheat mode enabled you can have them automatically and instantly completed.
+
+Simple usage:
+
+``channel-safely``
+    Manually runs the channel-safely management procedure to (un)mark
+    designations as needed.
+``enable channel-safely``
+    Enables the plugin with default settings.
+``disable channel-safely``
+    Disables the plugin.
+
+The procedures that detect unsafe designations do so by pre-processing all
+the designations on the map and then looking at what's above the designation's
+group. So it works best if it has complete channeling projects on layers above
+the designation it's considering. Designations that are on the same layer and
+adjacent to one another are considered one project and if you add more
+designations adjacent to this group they will be added to it.
+
+Advanced usage:
+
+``channel-safely <option> <args>``
+    You can use this plugin to manage your channel designations safely. It will
+    mark unsafe designations and unmark safe ones.
+
+``channel-safely enable``
+    Enables the plugin to automatically run the management procedure. The plugin
+    can run on tick events and will run on (un)pause/job events and map load
+    state changes.
+``channel-safely enable cheats``
+    Enables the plugin to instantly dig permanently unsafe designations.
+``channel-safely enable ontick``
+    Enables on tick events. Enabled by default.
+
+``channel-safely disable``
+    Disables the plugin. Will not automatically do anything.
+``channel-safely disable cheats``
+    Disables instantly digging permanently unsafe designations.
+``channel-safely disable ontick``
+    Disables on tick events. Enabled by default.
+
+``channel-safely tick-freq <value>``
+    Set's the tick event frequency. Default: 1200 (1 day)
+
+
 .. _labormanager:
 
 labormanager

@@ -175,7 +175,7 @@ end
 
 function safe_pairs(t, iterator_fn)
     iterator_fn = iterator_fn or pairs
-    if (pcall(pairs, t)) then
+    if (pcall(iterator_fn, t)) then
         return _wrap_iterator(iterator_fn(t))
     else
         return function() end

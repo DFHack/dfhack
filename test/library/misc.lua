@@ -22,3 +22,19 @@ function test.safe_pairs()
     end
     expect.eq(3, iterated)
 end
+
+function test.safe_pairs_ipairs()
+    local t = {1, 2}
+    setmetatable(t, {
+        __pairs = function()
+            expect.fail('pairs() should not be called')
+        end,
+    })
+
+    local iterated = 0
+    for k,v in safe_pairs(t, ipairs) do
+        expect.eq(k, v)
+        iterated = iterated + 1
+    end
+    expect.eq(#t, iterated)
+end

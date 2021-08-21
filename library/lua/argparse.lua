@@ -79,7 +79,7 @@ end
 -- shortOptionName and handler are required. If the option takes an argument,
 -- it will be passed to the handler function.
 -- longOptionAlias is optional.
--- hasArgument defaults to false.
+-- hasArg defaults to false.
 --
 -- example usage:
 --

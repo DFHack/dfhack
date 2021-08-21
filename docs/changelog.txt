@@ -396,6 +396,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 - `autoclothing`: automatically manage clothing work orders
 - `autofarm`: replaces the previous Ruby script of the same name, with some fixes
+- `channel-safely`: allows dwarves to channel safely by managing active designations and markings
 - `map-render`: allows programmatically rendering sections of the map that are off-screen
 - `tailor`: automatically manages keeping your dorfs clothed
 

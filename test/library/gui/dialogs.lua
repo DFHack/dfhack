@@ -1,5 +1,3 @@
-config.mode = 'fortress'
-
 local gui = require('gui')
 local function send_keys(...)
     local keys = {...}

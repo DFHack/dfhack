@@ -17,7 +17,7 @@
 				"condition" : "AtMost",
 				"item_type" : "BAR",
 				"material" : "COAL",
-				"value" : 100
+				"value" : 150
 			},
 			{
 				"condition" : "AtMost",
@@ -183,8 +183,8 @@
 		"reaction" : "MAKE_PEARLASH"
 	},
 	{
-		"amount_left" : 1,
-		"amount_total" : 1,
+		"amount_left" : 4,
+		"amount_total" : 4,
 		"frequency" : "Daily",
 		"id" : 40,
 		"is_active" : false,
@@ -199,7 +199,7 @@
 					"bag"
 				],
 				"item_type" : "BOX",
-				"value" : 5
+				"value" : 10
 			},
 			{
 				"condition" : "AtMost",
@@ -207,7 +207,7 @@
 				[
 					"sand_bearing"
 				],
-				"value" : 10
+				"value" : 30
 			}
 		],
 		"job" : "CollectSand"
@@ -396,7 +396,7 @@
 				"condition" : "AtLeast",
 				"item_type" : "BAR",
 				"material" : "COAL",
-				"value" : 150
+				"value" : 100
 			}
 		],
 		"job" : "MeltMetalObject"

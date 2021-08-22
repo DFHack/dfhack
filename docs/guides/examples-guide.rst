@@ -177,20 +177,27 @@ Chef           0         2     Cooking. It is important to focus just a few
                                dwarves on cooking since well-crafted meals make
                                dwarves very happy. They are also an excellent
                                trade good.
-Clothier       0         2     Textile industry labors: Dying, Leatherworking,
+Tailor         0         2     Textile industry labors: Dying, Leatherworking,
                                Weaving, and Clothesmaking.
 Doctor         0         2-4   The full suite of medical labors, plus Animal
                                Caretaking for those using the dwarfvet plugin.
 Farmer         0         5     Food- and animal product-related labors.
-Fisherdwarf    0         0     Fishing. If you assign this profession to any
-                               dwarf, be prepared to be inundated with fish.
-                               Fisherdwarves *never stop fishing*.
+Fisherdwarf    0         0     Fishing and fish cleaning. If you assign this
+                               profession to any dwarf, be prepared to be
+                               inundated with fish. Fisherdwarves *never stop
+                               fishing*. Be sure to also run `prioritize -a
+                               PrepareRawFish ExtractFromRawFish` (or use the
+                               ``onMapLoad_dreamfort.init`` file above) or else
+                               caught fish will just be left to rot.
 Hauler         0         >20   All hauling labors plus Mechanic (so haulers can
                                assist in reloading traps) and Architecture (so
                                haulers can help build massive windmill farms and
                                pump stacks). As you accumulate enough Haulers,
                                you can turn off hauling labors for other dwarves
-                               so they can focus on their skilled tasks.
+                               so they can focus on their skilled tasks. You may
+                               also want to restrict your Mechanic's workshops
+                               to only skilled mechanics so your haulers don't
+                               make low-quality mechanisms.
 Marksdwarf     0         10    Same as Hauler, but with a different name so you
                                can find your military dwarves more easily.
 Meleedwarf     0         50    Mostly the same as Hauler, but with a different
@@ -201,7 +208,20 @@ Smith          0         4     Smithing, Glassmaking, Pottery, and Siege
                                Engineering labors. You will likely want to
                                specialize your Smiths to focus on either weapons
                                or armor to maximize equipment quality.
-Unskilled      0         10-12 All labors that don't improve quality with skill,
+Laborer        0         10-12 All labors that don't improve quality with skill,
                                such as furnace labors, Soapmaking, and Pump
                                Operating.
 =============  ========  ===== =================================================
+
+A note on autohauler
+~~~~~~~~~~~~~~~~~~~~
+
+These profession definitions are designed to work well with or without the
+`autohauler` plugin. If you do want to use autohauler, adding the following
+lines to your ``onMapLoad.init`` file will configure it to let the professions
+manage the "Feed water to civilians" and "Recover wounded" labors instead of
+enabling those labors for all hauling dwarves::
+
+    on-new-fortress enable autohauler
+    on-new-fortress autohauler FEED_WATER_CIVILIANS allow
+    on-new-fortress autohauler RECOVER_WOUNDED allow

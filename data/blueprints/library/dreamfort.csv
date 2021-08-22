@@ -80,12 +80,14 @@ prioritize ConstructBuilding,# Run when you see the bridges ready to be built so
 ""
 -- Plumbing -- 
 "This is a good time to fill your well cisterns, either with a bucket brigade or by routing water from an aquifer or freshwater stream."
-"Also consider bringing magma up to your services level so you can replace the forge and furnaces on your industry level with more powerful magma versions. This is especially important if your embark has insufficient trees to convert into charcoal. Keep in mind that setting up a powered pump stack is a tricky process and can take a long time. Don't forget to continue making progress through the checklist as you prepare to pump your magma! If you are going to pump magma, I suggest doing it before importing the military and smelting automation orders since they make heavy use of smelters and forges."
+"Also consider bringing magma up to your services level so you can replace the forge and furnaces on your industry level with more powerful magma versions. This is especially important if your embark has insufficient trees to convert into charcoal. Keep in mind that setting up a powered pump stack is a tricky process and can take a long time. Don't forget to continue making progress through the checklist as you prepare to pump your magma! If you are going to pump magma, I suggest doing it before importing the military and smelting automation orders since they make heavy use of furnaces and forges."
 ""
 -- Mature fort (third migration wave onward) -- 
 orders import furnace,# Automated production of basic furnace-related items. Don't forget to create a sand collection zone (or remove the sand- and glass-related orders if you have no sand).
 "quickfort run,orders library/dreamfort.csv -n /suites2",# Run when the suites level has been dug out.
 "quickfort run,orders library/dreamfort.csv -n /surface8","# Run if/when you need longer trap corridors on the surface for larger sieges, anytime after you run /surface7."
+"quickfort run,orders library/dreamfort.csv -n /apartments2",# Run when the first apartment level has been dug out.
+"quickfort run,orders library/dreamfort.csv -n /apartments3",# Run when all beds have been constructed on the first apartments level.
 "quickfort run,orders library/dreamfort.csv -n /services3","# Run after the dining table and chair, weapon rack, and archery targets have been constructed. Also wait until after you complete /surface7, though, because surface defenses are more important than a grand dining hall."
 "quickfort run,orders library/dreamfort.csv -n /guildhall2",# Run when the guildhall level has been dug out.
 "quickfort run,orders library/dreamfort.csv -n /farming4",# Run once you have a cache of potash.
@@ -93,7 +95,7 @@ orders import military,# Automated production of military equipment. Turn on aut
 orders import smelting,# Automated production of all types of metal bars.
 "quickfort run,orders library/dreamfort.csv -n /services4","# Run when you need a jail and/or fancy statues in the dining room, anytime after the restraints are placed from /services3."
 ""
--- Repeat for each apartments level --
+-- Repeat for each remaining apartments level as needed --
 "quickfort run,orders library/dreamfort.csv -n /apartments2",# Run when the apartment level has been dug out.
 "quickfort run,orders library/dreamfort.csv -n /apartments3",# Run when all beds have been constructed.
 burial -pets,# Run once the coffins are placed to set them to allow for burial. This is handled for you if you are using the provided onMapLoad.init file.
@@ -112,13 +114,14 @@ The following settings are changed:
   - gather refuse from outside (incl. vermin)
   - no autoloom (we'll be managing cloth production with automated orders)
 ""
-"- A burrow named ""Inside"" is created (it's up to the player to define the area, though). An alert named ""Siege"" is also created and associated with the ""Inside"" burrow, intended for use in getting your civilians to safety during sieges."
+"- A burrow named ""Inside"" is created (it's up to the player to define the area). It is intended for use in getting your civilians to safety during sieges. An alert named ""Siege"" is also created and associated with the ""Inside"" burrow."
 ""
 - Military uniforms get the following modifications:
   - all default uniforms set to replace clothing
-  - all default uniforms get a leather cloak
 "  - in the ""Metal armor"" uniform, the ""metal armor"" item is removed and replaced by ""metal breastplate"" and ""metal mail shirt"""
 "  - in the ""Metal armor"" uniform, the ""metal legwear"" item is removed and replaced by ""metal greaves"""
+""
+"All default uniforms should also have a leather cloak added, but the position of the cloak in the equipment list changes for every embark. We suggest manually adding a leather cloak to your uniforms after running the /setup blueprint."
 ""
 - Hotkeys are created for the 8 most interesting levels. Only the names are set -- it's up to the player to adjust them to actual locations in the (H) menu since the blueprint can't know where the levels will eventually be built. Feel free to replace any hotkeys with locations that *you* think are interesting : )
 ""
@@ -128,13 +131,14 @@ These are all set for your convenience. Nothing in Dreamfort depends on these se
 startnobles: ^n{Down 4}{togglesequence 8}{Up}s{Up}&^^q
 startorders: ^ohrov^Wl^^q
 startburrows: ^wa&nInside&^^q
-addcloak: A{Right 2}{Down 8}&{Left}{Down}M{Right}{Down 4}&{Left 2}
-metalarmorsetup: {addcloak}A{Right 2}{Down 2}&{Down}&{Left}&{Down}M{Right}{Down}&{Left}{Down}{Right}{Down}&{Left}{Down 2}L{Right}{Down 2}&{Left}{Down 4}&M{Right}{Down}&{Left 2}
-startmilitary: ^mnr{addcloak}{Down}r{metalarmorsetup}{Down}r{addcloak}acNSiege&{Right}&^q
+metalarmorsetup: A{Right 2}{Down 2}&{Down}&{Left}&M{Right}{Down}&{Left}{Down}{Right}{Down}&{Left}{Down 2}L{Right}{Down 2}&{Left}{Down 3}&M{Right}{Down}&{Left 2}
+startmilitary: ^mnr{Down}r{metalarmorsetup}{Down}racNSiege&{Right}&^q
 sethotkey: {fkey}n{name}&
 starthotkeys: ^H{sethotkey fkey={F2} name=Farming}{sethotkey fkey={F3} name=Industry}{sethotkey fkey={F4} name=Services}{sethotkey fkey={F5} name=Guildhall}{sethotkey fkey={F6} name=Quarry}{sethotkey fkey={F7} name=Cavern}{sethotkey fkey={F8} name=Magma}^q
 ""
 "#query label(setup) start(on the wagon) message(Please set the zoom targets of the hotkeys (the 'H' menu) according to where you actually end up digging the levels.
+As you build your fort, expand the Inside burrow to include new civilian-safe areas.
+Optionally, add a leather cloak to your military uniforms to enhance the protection of the uniforms.
 Nothing in Dreamfort depends on these settings staying as they are. Feel free to change any setting to your personal preference.) assign nobles, set standing orders, create burrows, make adjustments to military uniforms, and set hotkey names"
 {startnobles}{startorders}{startburrows}{startmilitary}{starthotkeys}{F1}
 "#meta label(dig_all) start(central stairs on industry level) dig industry, services, guildhall, suites, and apartments levels. does not include farming."
@@ -1806,8 +1810,8 @@ with separate stockpiles for:
 - Meltable weapons and armor
 ""
 Workshops:
-- 3x Mason
-- 1x Craftsdwarf
+- 2x Mason
+- 3x Craftsdwarf
 - 1x Jeweler
 - 1x Mechanic
 - 4x Smelter
@@ -1828,8 +1832,12 @@ Workshops:
 Manual steps you have to take:
 - Assign minecarts to your quantum stockpile hauling routes
 "- Give from the ""Goods"" quantum stockpile to the jugs, pots, and bags stockpiles on the farming level"
-"- If desired, set one or both stockpiles in the bottom left to auto-melt. This results in melting all weapons and armor that are inferior to masterwork. This is great for upgrading your military, but it takes a *lot* of fuel unless you have first replaced the forge and smelters with magma versions. If you enable automelt and you don't have magma forges and magma smelters, be sure you're in a heavily forested area, enable auto-chop, and keep your coal stocks high."
 - Copy the fort automation manager orders (the .json files) from hack/examples/orders/ and put them in your dfhack-config/orders/ directory.
+""
+Optional manual steps you can take:
+- Restrict the Mechanic's workshop to only allow skilled workers so unskilled trap-resetters won't be tasked to build mechanisms.
+"- Restrict the Craftsdwarf's workshops to only allow labors that take from the adjacent stockpiles. That is, only allow Woodcrafting for the Craftsdwarf's workshop on the left near the wood stockpile, Stonecrafting for the Craftsdwarf's workship near the Mason's workshops, and Bonecrafting for the Craftsdwarf's workshop near the Clothier's workshop."
+"- If desired, set one or both stockpiles in the bottom left to auto-melt. This results in melting all weapons and armor that are inferior to masterwork. This is great for upgrading your military, but it takes a *lot* of fuel unless you have first replaced the forge and smelters with magma versions. If you enable automelt and you don't have magma forges and magma smelters, be sure to be in a heavily forested area, enable auto-chop, and keep your coal stocks high."
 ""
 Industry Walkthrough:
 "1) Start digging out /industry1 as soon as you find a stone layer at least two layers beneath the surface so the boulders can be used by your starting workshops. The services level is intended to be dug beneath this one, and there is space on that level to route magma underneath your furnaces so you can replace the furnaces on this level with magma-powered equivalents."
@@ -1894,12 +1902,12 @@ query/industry_query
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,wr,`,`,`,`,`,`,`,wt,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,ws,`,`,`,`,`,`,`,`,trackstopN,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,trackstopN,`,`,`,`,`,`,`,`,ws,`,`,`,`
+,,,,`,`,`,`,`,wr,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,wm,`,`,`,`,`,`,`,wm,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,`,`,wy,`,`,ew,`,`,ew,`,`,`,`,`,`,`,`,`,`,`,`,`,wk,`,`,wo,`,`,`,`,`
+,,`,`,wy,`,`,ew,`,`,ew,`,`,`,`,`,`,`,`,`,`,`,`,`,wk,`,`,wo,`,`,wr,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,,d,,d,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,d,`,,,,`,d,`,`,`,`,`,`,`,`,`,`,`,`
@@ -1961,7 +1969,8 @@ query/industry_query
 - assign minecarts to to your quantum stockpile hauling routes
 - if the farming level is already built, give from the ""Goods"" quantum stockpile to the jugs, pots, and bags stockpiles on the farming level
 - if you want to automatically melt goblinite and other low-quality weapons and armor, mark the south-east stockpiles for auto-melt
-- once you have enough dwarves, run ""orders import basic"" to automate your fort's basic needs (download the automation orders from https://drive.google.com/drive/folders/196RS9d-tis7AoOw1t2EzLF6eRWqYwnEm and put it in your dfhack-config/orders/ directory))"
+- once you have enough dwarves, run ""orders import basic"" to automate your fort's basic needs (see /industry_help for more info on this file)
+- optionally, restrict the labors for your Craftsdwarf's and Mechanic's workshops as per the guidance in /industry_help)"
 
 
 ,,,,,,,,,,,roughgems,,,,nocontainers,"{givename name=""rough gems for moods""}",t{Down 5}&,,,,,~,~
@@ -1970,8 +1979,8 @@ query/industry_query
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,~,`,`,`,"{quantum name=""stoneworker quantum""}g{Up 3}&",`,`,`,~,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,~,`,`,`,`,`,`,`,`,"{quantumstop name=""Stoneworker quantum"" sp_links=""{sp_link move={Down} move_back={Up}}{sp_link move=""""{Down 5}"""" move_back=""""{Up 5}""""}""}{givename name=""stoneworker dumper""}",`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,otherstone,,,,~,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"{quantumstop name=""Stoneworker quantum"" sp_links=""{sp_link move={Down} move_back={Up}}{sp_link move=""""{Down 5}"""" move_back=""""{Up 5}""""}""}{givename name=""stoneworker dumper""}",`,`,`,`,`,`,`,`,~,`,`,`,`
+,,,,`,`,`,`,`,~,`,`,`,`,`,otherstone,,,,~,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,~,`,"{givename name=""stone feeder""}",~,~,~,~,`,~,`,`,`,`,`,`,`,`,`
 ,,"{givename name=""wood""}",`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
@@ -2755,11 +2764,11 @@ Apartments Walkthrough:
 
 "#dig label(apartments1) start(18; 18; central ramp) message(This would be a good time to enqueue manager orders for /apartments2 and /apartments3. Once the area is dug out, continue with /apartments2.) apartment complex"
 
-,,,,,,,,,,,,,,,,d,d,d
 ,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
 ,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
-,,,,d,d,d,,d,d,d,,d,d,d,,,d,,,d,d,d,,d,d,d,,d,d,d
-,,,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
+,,,,,d,,,,d,,,,d,,,,d,,,,d,,,,d,,,,d
+,,,,,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
 ,,,,,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
 ,,,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d
 ,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
@@ -2783,19 +2792,19 @@ Apartments Walkthrough:
 ,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
 ,,,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d
 ,,,,,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,,,,,d,,,,d,,,,d,,,d,d,d,,,d,,,,d,,,,d
-,,,,d,d,d,,d,d,d,,d,d,d,,,d,,,d,d,d,,d,d,d,,d,d,d
+,,,,,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
+,,,,,d,,,,d,,,,d,,,,d,,,,d,,,,d,,,,d
 ,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
 ,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
-,,,,,,,,,,,,,,,,d,d,d
+,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
 
 "#build label(apartments2) start(18; 18; central ramp) message(Once beds have been placed, continue with /apartments3.) build beds"
 
-,,,,,,,,,,,,,,,,`,`,`
-,,,,`,`,`,,`,`,`,,`,`,`,,`,b,`,,`,`,`,,`,`,`,,`,`,`
-,,,,`,b,`,,`,b,`,,`,b,`,,`,`,`,,`,b,`,,`,b,`,,`,b,`
-,,,,`,`,`,,`,`,`,,`,`,`,,,`,,,`,`,`,,`,`,`,,`,`,`
-,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,`,b,`,,`,b,`,,`,b,`,,`,b,`,,`,b,`,,`,b,`,,`,b,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`
+,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
 ,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
@@ -2819,22 +2828,22 @@ Apartments Walkthrough:
 ,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
 ,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
 ,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
-,,,,`,`,`,,`,`,`,,`,`,`,,,`,,,`,`,`,,`,`,`,,`,`,`
-,,,,`,b,`,,`,b,`,,`,b,`,,`,`,`,,`,b,`,,`,b,`,,`,b,`
-,,,,`,`,`,,`,`,`,,`,`,`,,`,b,`,,`,`,`,,`,`,`,,`,`,`
-,,,,,,,,,,,,,,,,`,`,`
+,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,`,b,`,,`,b,`,,`,b,`,,`,b,`,,`,b,`,,`,b,`,,`,b,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
 
 #meta label(apartments3) start(central ramp) configure rooms and build remaining furniture
 query_apartments/apartments_rooms
 build2_apartments/apartments_build2
 #query label(apartments_rooms) start(18; 18) hidden() configure rooms
 
-,,,,,,,,,,,,,,,,`,`,`
-,,,,`,`,`,,`,`,`,,`,`,`,,`,r-&,`,,`,`,`,,`,`,`,,`,`,`
-,,,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,`,`,,`,r-&,`,,`,r-&,`,,`,r-&,`
-,,,,`,`,`,,`,`,`,,`,`,`,,,`,,,`,`,`,,`,`,`,,`,`,`
-,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,r-&,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`
+,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
 ,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
@@ -2858,19 +2867,19 @@ build2_apartments/apartments_build2
 ,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
 ,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
 ,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,,`,,,,`,,,,`,,,`,`,`,,,`,,,,`,,,,`
-,,,,`,`,`,,`,`,`,,`,`,`,,,`,,,`,`,`,,`,`,`,,`,`,`
-,,,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,`,`,,`,r-&,`,,`,r-&,`,,`,r-&,`
-,,,,`,`,`,,`,`,`,,`,`,`,,`,r-&,`,,`,`,`,,`,`,`,,`,`,`
-,,,,,,,,,,,,,,,,`,`,`
+,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`,,,,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
+,,,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,r-&,`
+,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
 
 #build label(apartments_build2) start(18; 18) hidden() message(Coffins should be configured with DFHack burial script) build remaining furniture
 
-,,,,,,,,,,,,,,,,n,`,h
-,,,,n,`,h,,n,`,h,,n,`,h,,`,~,`,,n,`,h,,n,`,h,,n,`,h
-,,,,`,~,`,,`,~,`,,`,~,`,,n,`,f,,`,~,`,,`,~,`,,`,~,`
-,,,,n,`,f,,n,`,f,,n,`,f,,,d,,,n,`,f,,n,`,f,,n,`,f
-,,,,,d,,,,d,,,,d,,,`,`,`,,,d,,,,d,,,,d
+,,,,n,`,h,,n,`,h,,n,`,h,,n,`,h,,n,`,h,,n,`,h,,n,`,h
+,,,,`,~,`,,`,~,`,,`,~,`,,`,~,`,,`,~,`,,`,~,`,,`,~,`
+,,,,n,`,f,,n,`,f,,n,`,f,,n,`,f,,n,`,f,,n,`,f,,n,`,f
+,,,,,d,,,,d,,,,d,,,,d,,,,d,,,,d,,,,d
+,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,d,,,,d,,,,d,,,`,s,`,,,d,,,,d,,,,d
 ,,,,n,`,h,,n,`,h,,n,`,h,,`,`,`,,n,`,h,,n,`,h,,n,`,h
@@ -2894,9 +2903,9 @@ build2_apartments/apartments_build2
 ,,,,n,`,f,,n,`,f,,n,`,f,,`,`,`,,n,`,f,,n,`,f,,n,`,f
 ,,,,,d,,,,d,,,,d,,,`,s,`,,,d,,,,d,,,,d
 ,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,,d,,,,d,,,,d,,,`,`,`,,,d,,,,d,,,,d
-,,,,n,`,h,,n,`,h,,n,`,h,,,d,,,n,`,h,,n,`,h,,n,`,h
-,,,,`,~,`,,`,~,`,,`,~,`,,n,`,h,,`,~,`,,`,~,`,,`,~,`
-,,,,n,`,f,,n,`,f,,n,`,f,,`,~,`,,n,`,f,,n,`,f,,n,`,f
-,,,,,,,,,,,,,,,,n,`,f
+,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,d,,,,d,,,,d,,,,d,,,,d,,,,d,,,,d
+,,,,n,`,h,,n,`,h,,n,`,h,,n,`,h,,n,`,h,,n,`,h,,n,`,h
+,,,,`,~,`,,`,~,`,,`,~,`,,`,~,`,,`,~,`,,`,~,`,,`,~,`
+,,,,n,`,f,,n,`,f,,n,`,f,,n,`,f,,n,`,f,,n,`,f,,n,`,f
 

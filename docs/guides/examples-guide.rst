@@ -185,8 +185,8 @@ Farmer         0         5     Food- and animal product-related labors.
 Fisherdwarf    0         0     Fishing and fish cleaning. If you assign this
                                profession to any dwarf, be prepared to be
                                inundated with fish. Fisherdwarves *never stop
-                               fishing*. Be sure to also run `prioritize -a
-                               PrepareRawFish ExtractFromRawFish` (or use the
+                               fishing*. Be sure to also run ``prioritize -a
+                               PrepareRawFish ExtractFromRawFish`` (or use the
                                ``onMapLoad_dreamfort.init`` file above) or else
                                caught fish will just be left to rot.
 Hauler         0         >20   All hauling labors plus Mechanic (so haulers can

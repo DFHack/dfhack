@@ -50,6 +50,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## API
 - The ``Items`` module ``moveTo*`` and ``remove`` functions now handle projectiles
 
+## Lua
+- new global function: ``safe_pairs(iterable[, iterator_fn])`` will iterate over the ``iterable`` (a table or iterable userdata)  with the ``iterator_fn`` (``pairs`` if not otherwise specified) if iteration is possible. If iteration is not possible or would throw an error, for example if ``nil`` is passed as the ``iterable``, the iteration is just silently skipped.
+
 ## Documentation
 - `quickfort-library-guide`: updated dreamfort documentation and added screenshots
 - `dfhack-examples-guide`: documentation for all of `dreamfort`'s supporting files (useful for all forts, not just Dreamfort!)

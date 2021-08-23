@@ -349,12 +349,15 @@ finishedgoodsprefix:  {enter_sp_config}{Down 10}
 enablefinishedgoods:  {finishedgoodsprefix}e^
 disablefinishedgoods: {finishedgoodsprefix}d^
 
-crafts: {finishedgoodsprefix}{Right}f{Right}{Down 9}{togglesequence 9}^
-jugs:   {finishedgoodsprefix}{Right}f{Right}{Up 2}&{Left}{Down 2}f{Down}f{Down}f^
+crafts:  {finishedgoodsprefix}{Right}f{Right}{Down 9}{togglesequence 9}^
+goblets: {finishedgoodsprefix}{Right}f{Right}{Down 2}&^
+jugs:    {finishedgoodsprefix}{Right}f{Right}{Up 2}&{Left}{Down 2}f{Down}f{Down}f^
 
-forbidcrafts: {finishedgoodsprefix}{Right 2}{Down 9}{togglesequence 9}^
+forbidcrafts:  {finishedgoodsprefix}{Right 2}{Down 9}{togglesequence 9}^
+forbidgoblets: {finishedgoodsprefix}{Right 2}{Down 2}&^
 
-permitcrafts: {forbidcrafts}
+permitcrafts:  {forbidcrafts}
+permitgoblets: {forbidgoblets}
 
 masterworkfinishedgoods: {masterworkonly prefix={finishedgoodsprefix}}
 artifactfinishedgoods:   {artifactonly prefix={finishedgoodsprefix}}

@@ -44,7 +44,7 @@ seedwatch start
 prioritize -a StoreItemInVehicle StoreItemInBag StoreItemInBarrel PullLever
 prioritize -a DestroyBuilding RemoveConstruction RecoverWounded DumpItem
 prioritize -a CleanSelf SlaughterAnimal PrepareRawFish ExtractFromRawFish
-prioritize -a --hauler-type=Food StoreItemInStockpile
+prioritize -a --haul-labor=Food StoreItemInStockpile
 
 # autobutcher settings are saved in the savegame, so we only need to set them once.
 # this way, any custom settings you set during gameplay are not overwritten

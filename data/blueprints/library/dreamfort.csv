@@ -43,16 +43,16 @@ You are welcome to copy the Dreamfort spreadsheets and make your own modificatio
 "# dreamfort.csv is generated with the following command:
   for fname in dreamfort*.xlsx; do xlsx2csv -a -p '' ""$fname""; done | sed 's/,*$//'"
 #notes label(checklist) command checklist
-Here is the recommended order for Dreamfort commands. You can copy/paste the quickfort commands directly into the DFHack terminal. See the level walkthroughs for context and details. Also remember to read the messages the blueprints print out after you run them so you don't miss any important manual steps.
+Here is the recommended order for Dreamfort commands. You can copy/paste the command lines directly into the DFHack terminal. You can run the quickfort commands from gui/quickfort if you prefer. See the level walkthroughs for context and details. Also remember to read the messages the blueprints print out after you run them so you don't miss any important manual steps.
 ""
 -- Preparation (before you embark!) --
-copy hack/examples/init/onMapLoad_dreamfort.init to your DF directory
-copy the fort automation orders from hack/examples/orders/*.json to the dfhack-config/orders/ directory
-copy the premade profession definitions from hack/examples/professions/ to the professions/ directory
+Copy hack/examples/init/onMapLoad_dreamfort.init to your DF directory
+Copy the fort automation orders from hack/examples/orders/*.json to the dfhack-config/orders/ directory
+Optionally copy the premade profession definitions from hack/examples/professions/ to the professions/ directory
 ""
 -- Set settings and preload initial orders --
-quickfort run library/dreamfort.csv -n /setup,# Cursor on your starting wagon. Run before making any manual adjustments to settings! Run the /setup_help blueprint for details on what settings are set.
-"quickfort orders library/dreamfort.csv -n ""/surface2, /farming2, /surface3, /farming3, /industry2, /surface4, /services2""",# Queue up orders required to get the fort minimally functional and secure. Feel free to remove the orders for the anvil and the ropes if you already brought them with you.
+quickfort run library/dreamfort.csv -n /setup,# Cursor on the center of your starting wagon. Run before making any manual adjustments to settings! Run the /setup_help blueprint for details on what this blueprint does.
+"quickfort orders library/dreamfort.csv -n ""/surface2, /farming2, /surface3, /farming3, /industry2, /surface4""","# Queue up orders required to get the fort minimally functional and secure. You can remove the order for the anvil (you brought one with you, right?)."
 ""
 -- Find a good starting spot on the surface --
 quickfort run library/dreamfort.csv -n /perimeter,# Run at embark.
@@ -60,7 +60,7 @@ quickfort undo library/dreamfort.csv -n /perimeter,# Clean up after you find you
 ""
 -- Dig  --
 quickfort run library/dreamfort.csv -n /surface1,# Run when you find your center tile.
-quickfort run library/dreamfort.csv -n /dig_all,"# Run when you find a suitable rock layer for the industry level. It designates digging for industry, services, guildhall, suites, and apartments all in one go. This list does not include the farming level, which we'll dig in the uppermost soil layer a bit later. Note that it is more efficient for your miners if you designate your digging before they dig the central stairs past that level since the stairs are dug at a low priority, keeping your miners focused on one level at a time. If you need to designate your levels individually due to caverns interrupting the sequence or just because it is your preference, run the level-specific dig blueprints (i.e. /industry1, /services1, /guildhall1, /suites1, and /apartments1_stack) instead of running /dig_all."
+quickfort run library/dreamfort.csv -n /dig_all,"# Run when you find a suitable rock layer for the industry level. It designates digging for industry, services, guildhall, suites, and apartments all in one go. This list does not include the farming level, which we'll dig in the uppermost soil layer a bit later. Note that it is more efficient for your miners if you designate your digging before they dig the central stairs past that level since the stairs are dug at a low priority. This keeps your miners focused on one level at a time. If you need to designate your levels individually due to caverns interrupting the sequence or just because it is your preference, run the level-specific dig blueprints (i.e. /industry1, /services1, /guildhall1, /suites1, and /apartments1_stack) instead of running /dig_all."
 ""
 -- Core fort (should finish at about the third migration wave) -- 
 quickfort run library/dreamfort.csv -n /surface2,# Run after initial trees are cleared.
@@ -69,9 +69,9 @@ quickfort run library/dreamfort.csv -n /farming2,# Run when the farming level ha
 quickfort run library/dreamfort.csv -n /surface3,# Run right after /farming2.
 quickfort run library/dreamfort.csv -n /farming3,# Run when furniture has been placed.
 quickfort run library/dreamfort.csv -n /industry2,# Run when the industry level has been dug out.
-prioritize ConstructBuilding,# To get those workshops up and running ASAP. You may have to run this several times as the building construction jobs become ready.
+prioritize ConstructBuilding,# To get those workshops up and running ASAP. You may have to run this several times as the materials for the building construction jobs become ready.
 quickfort run library/dreamfort.csv -n /surface4,"# Run after the walls and floors are built on the surface. Even if /surface3 is finished before you run /industry2, though, wait until after /industry2 so that surface walls, floors, and roofing don't prevent your workshops from being built (due to lack of blocks)."
-quickfort run library/dreamfort.csv -n /services2,# Run when the services level has been dug out.
+"quickfort run,orders library/dreamfort.csv -n /services2",# Run when the services level has been dug out. Feel free to remove the orders for the ropes if you already brought them with you.
 orders import basic,"# Run after the first migration wave, so you have dorfs to do all the basic tasks. Note that this is the ""orders"" plugin, not the ""quickfort orders"" command."
 "quickfort run,orders library/dreamfort.csv -n /surface5","# Run when all marked trees on the surface are chopped down and walls and floors have been constructed, including the roof section over the future barracks."
 prioritize ConstructBuilding,# Run when you see the bridges ready to be built so the masons come and actually build them.
@@ -847,39 +847,6 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 
 
 #build label(surface_pre_building) start(19; 19) hidden() flooring and anchoring walls for future buildings/doors
-
-
-
-,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`
-,,,`,,`,,`,,,,,,,,`,Cf,,Cf,,Cf,`,,,,,,,,,,`,,`
-,,,`,,`,,Cw,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
-,,,`,,`,,Cf,,,,,,,,`,,`,`,`,,`,,,,,,,,,,`,,`
-,,,`,,`,,Cw,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
-,,,`,,`,,`,,,,,,,,`,Cf,Cf,Cf,Cf,Cf,`,,,,,,,,,,`,,`
-,,,`,,`,`,`,`,`,`,Cw,Cf,Cw,`,`,`,,`,,`,`,`,Cw,Cf,Cw,`,`,`,`,`,`,,`
-,,,`,,`,Cf,Cf,Cf,Cf,Cf,Cf,Cf,Cf,`,~,,,,,,~,`,,,,,,,Cf,Cf,`,,`
-,,,`,,`,Cf,Cf,Cf,Cf,Cf,Cf,Cf,Cf,~,~,Cf,Cf,Cf,Cf,Cf,~,~,,,,,,,,Cf,`,,`
-,,,`,,`,Cf,Cf,Cf,Cf,Cf,Cf,Cf,Cf,~,~,,~,~,~,,~,~,,,,,Cf,Cf,,Cf,`,,`
-,,,`,,`,,Cf,,Cf,Cf,Cf,Cf,Cf,,Cf,,~,~,~,,Cf,,,,,,,,,Cf,`,,`
-,,,`,,`,,Cf,,Cf,Cf,Cf,Cf,Cf,`,,,~,~,~,,,`,,,,,,,Cf,Cf,`,,`
-,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
-,,,`,Cf,,,,,,,,,Cf,,,,,~,,,,,Cf,,,,,,,,,Cf,`
-,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
-
-
-
 #<
 
 
@@ -910,6 +877,40 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 ,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,Cf,`,,`
 ,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
 ,,,`,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,`
+,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
+
+
+
+#>
+
+
+
+,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`
+,,,`,,`,,`,,,,,,,,`,Cf,,Cf,,Cf,`,,,,,,,,,,`,,`
+,,,`,,`,,Cw,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
+,,,`,,`,,Cf,,,,,,,,`,,`,`,`,,`,,,,,,,,,,`,,`
+,,,`,,`,,Cw,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
+,,,`,,`,,`,,,,,,,,`,Cf,Cf,Cf,Cf,Cf,`,,,,,,,,,,`,,`
+,,,`,,`,`,`,`,`,`,Cw,Cf,Cw,`,`,`,,`,,`,`,`,Cw,Cf,Cw,`,`,`,`,`,`,,`
+,,,`,,`,Cf,Cf,Cf,Cf,Cf,Cf,Cf,Cf,`,~,,,,,,~,`,,,,,,,Cf,Cf,`,,`
+,,,`,,`,Cf,Cf,Cf,Cf,Cf,Cf,Cf,Cf,~,~,Cf,Cf,Cf,Cf,Cf,~,~,,,,,,,,Cf,`,,`
+,,,`,,`,Cf,Cf,Cf,Cf,Cf,Cf,Cf,Cf,~,~,,~,~,~,,~,~,,,,,Cf,Cf,,Cf,`,,`
+,,,`,,`,,Cf,,Cf,Cf,Cf,Cf,Cf,,Cf,,~,~,~,,Cf,,,,,,,,,Cf,`,,`
+,,,`,,`,,Cf,,Cf,Cf,Cf,Cf,Cf,`,,,~,~,~,,,`,,,,,,,Cf,Cf,`,,`
+,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
+,,,`,Cf,,,,,,,,,Cf,,,,,~,,,,,Cf,,,,,,,,,Cf,`
 ,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
 
 
@@ -1811,7 +1812,7 @@ with separate stockpiles for:
 ""
 Workshops:
 - 2x Mason
-- 3x Craftsdwarf
+- 4x Craftsdwarf
 - 1x Jeweler
 - 1x Mechanic
 - 4x Smelter
@@ -1836,7 +1837,8 @@ Manual steps you have to take:
 ""
 Optional manual steps you can take:
 - Restrict the Mechanic's workshop to only allow skilled workers so unskilled trap-resetters won't be tasked to build mechanisms.
-"- Restrict the Craftsdwarf's workshops to only allow labors that take from the adjacent stockpiles. That is, only allow Woodcrafting for the Craftsdwarf's workshop on the left near the wood stockpile, Stonecrafting for the Craftsdwarf's workship near the Mason's workshops, and Bonecrafting for the Craftsdwarf's workshop near the Clothier's workshop."
+"- Restrict the Craftsdwarf's workshops to only allow labors that take from the adjacent stockpiles. That is, only allow Woodcrafting for the Craftsdwarf's workshop on the left near the wood stockpile, Stonecrafting for the Craftsdwarf's workshop near the Mason's workshops, and Bonecrafting for the Craftsdwarf's workshop near the Clothier's workshop. The last Craftdwarf's workshop next to the Dyer's workshop can hold all the remaining labors, or it can be a secondary workshop for a labor that you want more dwarves working on."
+"- To encourage your masons to concentrate on building blocks and other high-volume orders, it helps to set one of your Mason's workshops to service a maximum of 2 manager orders at a time."
 "- If desired, set one or both stockpiles in the bottom left to auto-melt. This results in melting all weapons and armor that are inferior to masterwork. This is great for upgrading your military, but it takes a *lot* of fuel unless you have first replaced the forge and smelters with magma versions. If you enable automelt and you don't have magma forges and magma smelters, be sure to be in a heavily forested area, enable auto-chop, and keep your coal stocks high."
 ""
 Industry Walkthrough:
@@ -1903,11 +1905,11 @@ query/industry_query
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,wr,`,`,`,`,`,`,`,wt,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,trackstopN,`,`,`,`,`,`,`,`,ws,`,`,`,`
-,,,,`,`,`,`,`,wr,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,wS,`,`,wb,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,wm,`,`,`,`,`,`,`,wm,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,`,`,wy,`,`,ew,`,`,ew,`,`,`,`,`,`,`,`,`,`,`,`,`,wk,`,`,wo,`,`,wr,`,`
+,,`,`,wy,`,`,ew,`,`,ew,`,`,`,`,`,`,`,`,`,`,`,`,`,wk,`,`,wo,`,`,wd,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,,d,,d,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,d,`,,,,`,d,`,`,`,`,`,`,`,`,`,`,`,`
@@ -1915,7 +1917,7 @@ query/industry_query
 ,,`,`,`,`,`,`,`,`,`,`,`,`,d,`,,,,`,d,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,,,d,,d,,,`,`,`,`,`,`,`,`,`,`,`,`
-,,`,`,wS,`,`,ew,`,`,ew,`,`,`,`,`,`,`,`,`,`,`,`,`,wb,`,`,wd,`,`,`,`,`
+,,`,`,wr,`,`,ew,`,`,ew,`,`,`,`,`,`,`,`,`,`,`,`,`,wr,`,`,wr,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,es,`,`,`,`,`,`,`,es,`,`,`,`,`,`,`,`,`
@@ -1980,17 +1982,17 @@ query/industry_query
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,~,`,`,`,"{quantum name=""stoneworker quantum""}g{Up 3}&",`,`,`,~,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,"{quantumstop name=""Stoneworker quantum"" sp_links=""{sp_link move={Down} move_back={Up}}{sp_link move=""""{Down 5}"""" move_back=""""{Up 5}""""}""}{givename name=""stoneworker dumper""}",`,`,`,`,`,`,`,`,~,`,`,`,`
-,,,,`,`,`,`,`,~,`,`,`,`,`,otherstone,,,,~,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,~,`,`,~,`,`,`,`,`,otherstone,,,,~,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,~,`,"{givename name=""stone feeder""}",~,~,~,~,`,~,`,`,`,`,`,`,`,`,`
 ,,"{givename name=""wood""}",`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,~,`,~,`,`,~,`,`,~,`,`,`,`,nocontainers,"{givename name=""gem feeder""}",~,~,~,`,`,`,`,~,`,`,~,`,`,`,`,`
+,,~,`,~,`,`,~,`,`,~,`,`,`,`,nocontainers,"{givename name=""gem feeder""}",~,~,~,`,`,`,`,~,`,`,~,`,`,~,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,~,`,`,`,`,`,`,"{givename name=""wood feeder""}",~,"{givename name=""goods feeder""}",nocontainers,~,,`,`,`,`,`,,craftrefuse,,,,~,`,`,`,`,`,`,`
 ,,t{Right 5}{Down}&,`,`,`,`,`,`,~,~,{cages}{permittraps},~,~,`,`,,,,`,`,"{givename name=""cloth/bones feeder""}",~,~,~,~,`,`,`,`,`,`,`
 ,,`,`,~,`,`,"{quantum name=""goods/wood quantum""}g{Up 13}{Right 10}&","{quantumstop name=""Goods/Wood quantum"" sp_links=""{sp_link move={Right} move_back={Left}}{sp_link move=""""{Right 5}"""" move_back=""""{Left 5}""""}""}{givename name=""goods/wood dumper""}",~,~,{tallow}{permitdye},~,~,,`,,`,,`,,nocontainers,~,~,~,~,"{quantumstopfromwest name=""Clothier/Bones quantum""}{givename name=""cloth/bones dumper""}","{quantum name=""cloth/bones quantum""}",`,`,~,`,`
 ,,miscliquid,`,`,`,`,`,`,~,~,forbidsand,~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,`
-,,"{givename name=""miscliquid""}",`,`,`,`,`,`,~,~,forbidcrafts,~,~,,`,`,`,`,`,,~,~,~,~,~,`,`,`,`,`,`,`
+,,"{givename name=""miscliquid""}",`,`,`,`,`,`,~,~,{forbidcrafts}{forbidgoblets},~,~,,`,`,`,`,`,,~,~,~,~,~,`,`,`,`,`,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,~,`,~,`,`,~,`,`,~,`,`,`,`,forbidpotash,nocontainers,"{givename name=""bar/military feeder""}",~,~,`,`,`,`,~,`,`,~,`,`,`,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
@@ -2599,20 +2601,20 @@ Guildhall Walkthrough:
 
 
 ,,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d
-,,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d
-,,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d
-,,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d
-,,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d
-,,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
-,,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d
-,,,,,,,d,,,,,,d,,d,,,,,,d
-,,,,,,,d,,,,,,d,d,d,,,,,,d
-,,d,d,d,d,d,d,d,,,,,d,,d,,,,,d,d,d,d,d,d,d
-,,d,d,d,d,d,d,d,,,,d,d,d,d,d,,,,d,d,d,d,d,d,d
-,,d,d,d,d,d,d,d,d,d,d,d,`,`,`,d,d,d,d,d,d,d,d,d,d,d
-,,d,d,d,d,d,d,d,,d,,d,`,`,`,d,,d,,d,d,d,d,d,d,d
-,,d,d,d,d,d,d,d,d,d,d,d,`,`,`,d,d,d,d,d,d,d,d,d,d,d
-,,d,d,d,d,d,d,d,,,,d,d,d,d,d,,,,d,d,d,d,d,d,d
+,,d,d,d,d,d,d,d,,,3,3,3,3,3,3,3,,,d,d,d,d,d,d,d
+,,d,d,d,d,d,d,d,,,d,d,3,d,d,d,d,,,d,d,d,d,d,d,d
+,,d,d,d,d,d,d,d,,,d,d,3,d,d,d,d,,,d,d,d,d,d,d,d
+,,d,d,d,d,d,d,d,,,d,d,3,d,d,d,d,,,d,d,d,d,d,d,d
+,,d,d,d,d,d,d,d,d,d,d,d,3,d,d,d,d,d,d,d,d,d,d,d,d,d
+,,d,d,d,d,d,d,d,,,d,d,3,d,d,d,d,,,d,d,d,d,d,d,d
+,,,,,,,d,,,,,,3,,d,,,,,,d
+,,,,,,,d,,,,,,3,d,d,,,,,,d
+,,d,d,d,d,d,d,d,,,,,3,,d,,,,,d,d,d,d,d,d,d
+,,d,d,d,d,d,d,d,,,,3,3,3,3,3,,,,d,d,d,d,d,d,d
+,,d,d,d,d,d,d,d,d,d,d,3,`,`,`,3,3,3,3,3,d,d,d,d,d,d
+,,d,d,d,d,d,d,d,,d,,3,`,`,`,3,,d,,3,3,3,3,3,d,d
+,,d,d,d,d,d,d,d,d,d,d,3,`,`,`,3,d,d,d,d,d,d,d,d,d,d
+,,d,d,d,d,d,d,d,,,,3,3,3,3,3,,,,d,d,d,d,d,d,d
 ,,d,d,d,d,d,d,d,,,,,d,,d,,,,,d,d,d,d,d,d,d
 ,,,,,,,d,,,,,,d,d,d,,,,,,d
 ,,,,,,,d,,,,,,d,,d,,,,,,d

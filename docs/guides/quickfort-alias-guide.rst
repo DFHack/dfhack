@@ -803,6 +803,7 @@ Exclusive                Forbid                         Permit
 =======================  =============================  =============================
 jugs
 crafts                   forbidcrafts                   permitcrafts
+goblets                  forbidgoblets                  permitgoblets
 masterworkfinishedgoods  forbidmasterworkfinishedgoods  permitmasterworkfinishedgoods
 artifactfinishedgoods    forbidartifactfinishedgoods    permitartifactfinishedgoods
 =======================  =============================  =============================

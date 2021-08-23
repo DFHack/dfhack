@@ -945,12 +945,9 @@
 			},
 			{
 				"condition" : "AtMost",
-				"contains" : 
-				[
-					"lye"
-				],
-				"reaction_id" : "MAKE_SOAP_FROM_TALLOW",
-				"value" : 3
+				"item_type" : "LIQUID_MISC",
+				"material" : "LYE",
+				"value" : 5
 			}
 		],
 		"job" : "MakeLye"
@@ -977,12 +974,9 @@
 			},
 			{
 				"condition" : "AtLeast",
-				"contains" : 
-				[
-					"lye"
-				],
-				"reaction_id" : "MAKE_SOAP_FROM_TALLOW",
-				"value" : 2
+				"item_type" : "LIQUID_MISC",
+				"material" : "LYE",
+				"value" : 3
 			},
 			{
 				"condition" : "AtMost",
@@ -1014,12 +1008,9 @@
 			},
 			{
 				"condition" : "AtLeast",
-				"contains" : 
-				[
-					"lye"
-				],
-				"reaction_id" : "MAKE_SOAP_FROM_OIL",
-				"value" : 2
+				"item_type" : "LIQUID_MISC",
+				"material" : "LYE",
+				"value" : 3
 			},
 			{
 				"condition" : "AtMost",

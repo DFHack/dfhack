@@ -53,12 +53,12 @@ function test.enterSidebarMode()
     -- move from default to some other mode
     guidm.enterSidebarMode(df.ui_sidebar_mode.QueryBuilding)
     expect.eq(df.ui_sidebar_mode.QueryBuilding, df.global.ui.main.mode)
-    expect.true_(dfhack.gui.getCurFocus(true):find('^dwarfmode/QueryBuilding'))
+    expect.str_find('^dwarfmode/QueryBuilding', dfhack.gui.getCurFocus(true))
 
     -- move between non-default modes
     guidm.enterSidebarMode(df.ui_sidebar_mode.LookAround)
     expect.eq(df.ui_sidebar_mode.LookAround, df.global.ui.main.mode)
-    expect.true_(dfhack.gui.getCurFocus(true):find('^dwarfmode/LookAround'))
+    expect.str_find('^dwarfmode/LookAround', dfhack.gui.getCurFocus(true))
 
     -- get back into default from a supported mode
     guidm.enterSidebarMode(df.ui_sidebar_mode.Default)

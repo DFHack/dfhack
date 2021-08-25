@@ -47,6 +47,14 @@ function expect.ge(a, b, comment)
     return a >= b, comment, ('%s < %s'):format(a, b)
 end
 
+function expect.str_find(pattern, str_to_match, comment)
+    if type(str_to_match) ~= 'string' then
+        return false, comment, 'expected string, got ' .. type(str_to_match)
+    end
+    return str_to_match:find(pattern), comment,
+            ('pattern "%s" not matched in "%s"'):format(pattern, str_to_match)
+end
+
 local function table_eq_recurse(a, b, keys, known_eq)
     if a == b then return true end
     local checked = {}

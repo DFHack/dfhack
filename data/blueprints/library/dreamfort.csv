@@ -1004,8 +1004,8 @@ You might also want to set the ""trade goods quantum"" stockpile to Auto Trade i
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`
 ,,,`,,`,,`,,,,,,,,`,"{givename name=""trade depo gate""}",,"{givename name=""inner main gate""}",,"{givename name=""barracks gate""}",`,"{givename name=""prison/training area""}",,,,,,,,,`,,`
-,,,`,,`,,`,,,,,,,,,,`,`,`,,,forbidcages,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,`,,`,`,`,,`,forbidtraps,,,,,,,,,`,,`
+,,,`,,`,,`,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,`,,`,`,`,,`,,,,,,,,,,`,,`
 ,,,`,,`,,`,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
 ,,,`,,`,,`,,,,,,,,`,"{givename name=""left outer gate""}","{givename name=""left inner gate""}","{givename name=""outer main gate""}","{givename name=""right inner gate""}","{givename name=""right outer gate""}",`,,,,,,,,,,`,,`
 ,,,`,,`,`,`,`,`,`,`,,`,`,`,`,,`,,`,`,`,`,,`,`,`,`,`,`,`,,`
@@ -1839,6 +1839,7 @@ Optional manual steps you can take:
 - Restrict the Mechanic's workshop to only allow skilled workers so unskilled trap-resetters won't be tasked to build mechanisms.
 "- Restrict the Craftsdwarf's workshops to only allow labors that take from the adjacent stockpiles. That is, only allow Woodcrafting for the Craftsdwarf's workshop on the left near the wood stockpile, Stonecrafting for the Craftsdwarf's workshop near the Mason's workshops, and Bonecrafting for one of the Craftsdwarf's workshop near the Clothier's workshop. The last Craftdwarf's workshop can hold all the remaining labors, or it can be a secondary workshop for a labor that you want more dwarves working on."
 "- To encourage your masons to concentrate on building blocks and other high-volume orders, it helps to set one of your Mason's workshops to service a maximum of 2 manager orders at a time."
+"- Once you have enough haulers, you can increase the rate of stone and ore hauling jobs by building more wheelbarrows and adding them to the stone and ore feeder stockpiles."
 "- If desired, set one or both stockpiles in the bottom left to auto-melt. This results in melting all weapons and armor that are inferior to masterwork. This is great for upgrading your military, but it takes a *lot* of fuel unless you have first replaced the forge and smelters with magma versions. If you enable automelt and you don't have magma forges and magma smelters, be sure to be in a heavily forested area, enable auto-chop, and keep your coal stocks high."
 ""
 Industry Walkthrough:
@@ -1947,16 +1948,16 @@ query/industry_query
 ,,w,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,w,`,`,`,`,`,`,`,`,`,`,`,`,e(5x1),,,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,w,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
-,,w,`,`,`,`,`,`,w(2x5),,afnguS(3x5),,`,,`,`,`,`,`,,rhl(5x5),,,~,~,`,`,`,`,`,`,`
+,,w,`,`,`,`,`,`,w(2x5),,fngS(3x3),,`,,`,`,`,`,`,,rhl(5x5),,,~,~,`,`,`,`,`,`,`
 ,,w,`,`,`,`,`,`,~,~,~,~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,`
 ,,`,`,`,`,`,c,`,~,~,~,~,~,,`,,`,,`,,~,~,~,~,~,`,r,`,`,`,`,`
-,,f2,`,`,`,`,`,`,~,~,~,~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,`
+,,f2,`,`,`,`,`,`,~,~,u2(3x2),~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,`
 ,,f2,`,`,`,`,`,`,~,~,~,~,~,,`,`,`,`,`,,~,~,~,~,~,`,`,`,`,`,`,`
 ,,f2,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
-,,f2,`,`,`,`,`,`,`,`,`,`,`,`,bpdz(5x2),,,,~,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,f2,`,`,`,`,`,`,`,`,`,`,`,`,bpdz(5x3),,,,~,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,f2,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,f2,`,`,`,`,`,`,`,`,`,`,`,`,s2(5x3),,,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,pd(7x3),,,~,~,~,~,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`
+,,f2,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,pd(7x3),,,~,~,~,~,`,`,`,`,s2(5x2),,,~,~,`,`,`,`,`,`,`,`,`,`,`
 ,,,,~,~,~,~,~,~,~,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`
 ,,,,~,~,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,b,`,c,`,b,`,`,`,`,`,`,`,`,`,`,`
@@ -1989,16 +1990,16 @@ query/industry_query
 ,,~,`,~,`,`,~,`,`,~,`,`,`,`,nocontainers,"{givename name=""gem feeder""}",~,~,~,`,`,`,`,~,`,`,~,`,`,~,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,~,`,`,`,`,`,`,"{givename name=""wood feeder""}",~,"{givename name=""goods feeder""}",nocontainers,~,,`,`,`,`,`,,craftrefuse,,,,~,`,`,`,`,`,`,`
-,,t{Right 5}{Down}&,`,`,`,`,`,`,~,~,{cages}{permittraps},~,~,`,`,,,,`,`,"{givename name=""cloth/bones feeder""}",~,~,~,~,`,`,`,`,`,`,`
-,,`,`,~,`,`,"{quantum name=""goods/wood quantum""}g{Up 13}{Right 10}&","{quantumstop name=""Goods/Wood quantum"" sp_links=""{sp_link move={Right} move_back={Left}}{sp_link move=""""{Right 5}"""" move_back=""""{Left 5}""""}""}{givename name=""goods/wood dumper""}",~,~,{tallow}{permitdye},~,~,,`,,`,,`,,nocontainers,~,~,~,~,"{quantumstopfromwest name=""Clothier/Bones quantum""}{givename name=""cloth/bones dumper""}","{quantum name=""cloth/bones quantum""}",`,`,~,`,`
-,,miscliquid,`,`,`,`,`,`,~,~,forbidsand,~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,`
-,,"{givename name=""miscliquid""}",`,`,`,`,`,`,~,~,{forbidcrafts}{forbidgoblets},~,~,,`,`,`,`,`,,~,~,~,~,~,`,`,`,`,`,`,`
+,,t{Right 5}{Down}&,`,`,`,`,`,`,~,~,{tallow}{permitdye},~,~,`,`,,,,`,`,"{givename name=""cloth/bones feeder""}",~,~,~,~,`,`,`,`,`,`,`
+,,`,`,~,`,`,"{quantum name=""goods/wood quantum""}g{Up 13}{Right 10}&","{quantumstop name=""Goods/Wood quantum"" sp_links=""{sp_link move={Right} move_back={Left}}{sp_link move=""""{Right 5}"""" move_back=""""{Left 5}""""}{sp_link move=""""{Down}{Right 5}"""" move_back=""""{Left 5}{Up}""""}""}{givename name=""goods/wood dumper""}",~,~,{forbidcrafts}{forbidgoblets},~,~,,`,,`,,`,,nocontainers,~,~,~,~,"{quantumstopfromwest name=""Clothier/Bones quantum""}{givename name=""cloth/bones dumper""}","{quantum name=""cloth/bones quantum""}",`,`,~,`,`
+,,miscliquid,`,`,`,`,`,`,~,~,"{givename name=""furniture feeder""}",~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,`
+,,"{givename name=""miscliquid""}",`,`,`,`,`,`,~,~,forbidsand,~,~,,`,`,`,`,`,,~,~,~,~,~,`,`,`,`,`,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,~,`,~,`,`,~,`,`,~,`,`,`,`,forbidpotash,nocontainers,"{givename name=""bar/military feeder""}",~,~,`,`,`,`,~,`,`,~,`,`,`,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,~,`,`,`,`,`,`,`,`,`,`,`,`,forbidotherstone,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,nocontainers,t{Right 12}{Up 3}&,t{Right 11}{Down 3}&,"{givename name=""meltable steel/brnze""}",,,,`,`,~,`,"{givename name=""ore/clay feeder""}",~,~,~,~,`,~,`,`,`,`,`,`,`,`,`
-,,,,{bronzeweapons}{permitsteelweapons}{forbidmasterworkweapons}{forbidartifactweapons},,,,,,,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`
+,,~,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,nocontainers,t{Right 12}{Up 3}&,t{Right 11}{Down 3}&,"{givename name=""meltable steel/brnze""}",,,,`,`,~,`,forbidotherstone,,,,,`,~,`,`,`,`,`,`,`,`,`
+,,,,{bronzeweapons}{permitsteelweapons}{forbidmasterworkweapons}{forbidartifactweapons},,,,,,,`,`,`,`,"{givename name=""ore/clay feeder""}",~,~,~,~,`,`,`,`,`,`,`,`,`,`,`
 ,,,,{bronzearmor}{permitsteelarmor}{forbidmasterworkarmor}{forbidartifactarmor},,,,,,,`,`,`,`,`,`,"{quantumstop name=""Metalworker quantum"" sp_links=""{sp_link move={Up} move_back={Down}}{sp_link move=""""{Up 5}"""" move_back=""""{Down 5}""""}""}{givename name=""metalworker dumper""}",`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,~,`,`,`,"{quantum name=""metalworker quantum""}",`,`,`,~,`,`,`,`,`,`,`,`,`
 ,,,,nocontainers,t{Right 12}{Up 7}&,t{Right 11}{Up 1}&,"{givename name=""other meltables""}",,,,`,`,`,`,coal,"{givename name=""coal""}",t{Up}&,nocontainers,`,`,`,`,`,`,`,`,`,`,`,`

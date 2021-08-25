@@ -1,6 +1,6 @@
 local expect_raw = require('test_util.expect')
 
-function test.find()
+function test.str_find()
     expect.true_(expect_raw.str_find('a ', 'a str', 'a comment'))
 
     local ok, comment, msg = expect_raw.str_find('ab', 'a str', 'a comment')

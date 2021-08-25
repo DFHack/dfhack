@@ -14,7 +14,7 @@ config.wrapper = test_wrapper
 function test.printall_table()
     printall({a='b'})
     expect.eq(1, mock_print.call_count)
-    expect.true_(mock_print.call_args[1][1]:find('a%s+= b'))
+    expect.str_find('a%s+= b', mock_print.call_args[1][1])
 end
 
 function test.printall_string()
@@ -57,8 +57,8 @@ function test.printall_userdata()
             utable:insert(1, 20)
             printall(utable)
             expect.eq(2, mock_print.call_count)
-            expect.true_(mock_print.call_args[1][1]:find('0%s+= 10'))
-            expect.true_(mock_print.call_args[2][1]:find('1%s+= 20'))
+            expect.str_find('0%s+= 10', mock_print.call_args[1][1])
+            expect.str_find('1%s+= 20', mock_print.call_args[2][1])
         end)
 end
 
@@ -70,8 +70,8 @@ end
 function test.printall_ipairs_table()
     printall_ipairs({'a', 'b'})
     expect.eq(2, mock_print.call_count)
-    expect.true_(mock_print.call_args[1][1]:find('1%s+= a'))
-    expect.true_(mock_print.call_args[2][1]:find('2%s+= b'))
+    expect.str_find('1%s+= a', mock_print.call_args[1][1])
+    expect.str_find('2%s+= b', mock_print.call_args[2][1])
 end
 
 function test.printall_ipairs_string()
@@ -106,8 +106,8 @@ function test.printall_ipairs_userdata()
             utable:insert(1, 20)
             printall_ipairs(utable)
             expect.eq(2, mock_print.call_count)
-            expect.true_(mock_print.call_args[1][1]:find('0%s+= 10'))
-            expect.true_(mock_print.call_args[2][1]:find('1%s+= 20'))
+            expect.str_find('0%s+= 10', mock_print.call_args[1][1])
+            expect.str_find('1%s+= 20', mock_print.call_args[2][1])
         end)
 end
 
@@ -118,7 +118,7 @@ end
 
 local function validate_patterns(start_idx, patterns)
     for i,pattern in ipairs(patterns) do
-        expect.true_(mock_print.call_args[start_idx+i-1][1]:find(pattern))
+        expect.str_find(pattern, mock_print.call_args[start_idx+i-1][1])
     end
     return start_idx + #patterns
 end
@@ -145,7 +145,7 @@ function test.printall_recurse()
             t2.cyclic = t
             printall_recurse(t)
             expect.eq(55, mock_print.call_count)
-            expect.true_(mock_print.call_args[1][1]:find('^table: '))
+            expect.str_find('^table: ', mock_print.call_args[1][1])
             local idx = 2
             local EQ = '^%s+= $'
             while idx <= 55 do

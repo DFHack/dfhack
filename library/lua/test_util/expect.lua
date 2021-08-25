@@ -47,7 +47,7 @@ function expect.ge(a, b, comment)
     return a >= b, comment, ('%s < %s'):format(a, b)
 end
 
-function expect.find(pattern, str_to_match, comment)
+function expect.str_find(pattern, str_to_match, comment)
     if type(str_to_match) ~= 'string' then
         return false, comment, 'expected string, got ' .. type(str_to_match)
     end

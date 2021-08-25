@@ -1,18 +1,18 @@
 local expect_raw = require('test_util.expect')
 
 function test.find()
-    expect.true_(expect_raw.find('a ', 'a str', 'a comment'))
+    expect.true_(expect_raw.str_find('a ', 'a str', 'a comment'))
 
-    local ok, comment, msg = expect_raw.find('ab', 'a str', 'a comment')
+    local ok, comment, msg = expect_raw.str_find('ab', 'a str', 'a comment')
     expect.false_(ok)
     expect.eq('a comment', comment)
     expect.eq('pattern "ab" not matched in "a str"', msg)
 
-    ok, _, msg = expect_raw.find('pattern', nil)
+    ok, _, msg = expect_raw.str_find('pattern', nil)
     expect.false_(ok)
     expect.eq('expected string, got nil', msg)
 
-    ok, _, msg = expect_raw.find('pattern', {})
+    ok, _, msg = expect_raw.str_find('pattern', {})
     expect.false_(ok)
     expect.eq('expected string, got table', msg)
 end

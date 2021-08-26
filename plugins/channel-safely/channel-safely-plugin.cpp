@@ -129,6 +129,8 @@ command_result manage_channel_designations(color_ostream &out, std::vector<std::
         debug_out = &out;
         ChannelManager::Get().debug();
         debug_out = nullptr;
+    } else if (parameters.size() == 1 && parameters[0] == "help") {
+        return CR_WRONG_USAGE;
     } else {
         debug_out = nullptr;
         out.color(color_value::COLOR_RED);

@@ -346,7 +346,7 @@ static int do_chop_designation(bool chop, bool count_only, int *skipped = nullpt
             {
                 if (Designations::markPlant(plant))
                 {
-                    estimated_yield += estimate_logs(*plant);
+                    estimated_yield += estimate_logs(plant);
                     count++;
                 }
             }

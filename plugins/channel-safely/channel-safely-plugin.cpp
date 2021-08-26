@@ -131,7 +131,10 @@ command_result manage_channel_designations(color_ostream &out, std::vector<std::
         debug_out = nullptr;
     } else {
         debug_out = nullptr;
-        return CR_FAILURE;
+        out.color(color_value::COLOR_RED);
+        out.print("Invalid argument.\n\n");
+        out.color(color_value::COLOR_RESET);
+        return CR_WRONG_USAGE;
     }
     debug_out = nullptr;
     return CR_OK;

@@ -67,25 +67,23 @@ void ChannelManager::manage_safety(color_ostream &out, df::map_block* block, con
         // first we make sure the tile has a designation priority
         for (df::block_square_event* event : block->block_events) {
             if (debug_out) debug_out->print("switch(event->getType())\n");
-            if (event->getType() == df::block_square_event_type::designation_priority) {
-                auto evT = (df::block_square_event_designation_priorityst*) event;
-                // second we ensure the priority is less than 6 - let the user keep some free from interference
-                if (evT->priority[local.x][local.y] < 6000) {;
-                    const GroupData::Group &group = *group_iter;
-                    if (debug_out) debug_out->print("if(is_group_ready())\n");
-                    if (is_group_ready(groups, group)) {
-                        // no pending groups above this group, and safe below
+            auto evT = virtual_cast<df::block_square_event_designation_priorityst>(event);
+            // second we ensure the priority is less than 6 - let the user keep some free from interference
+            if (evT && evT->priority[local.x][local.y] < 6000) {
+                const GroupData::Group &group = *group_iter;
+                if (debug_out) debug_out->print("if(is_group_ready())\n");
+                if (is_group_ready(groups, group)) {
+                    // no pending groups above this group, and safe below
+                    tile_occupancy.bits.dig_marked = false;
+                    block->flags.bits.designated = true;
+                } else {
+                    // not safe
+                    tile_occupancy.bits.dig_marked = true;
+                    jobs.cancel_job(tile); //cancels job if designation is an open/active job
+                    // is it permanently unsafe? and is it safe to instantly dig the group of tiles
+                    if (cheat_mode && !safe_to_dig_down(tile) && !is_group_occupied(groups, group)) {
                         tile_occupancy.bits.dig_marked = false;
-                        block->flags.bits.designated = true;
-                    } else {
-                        // not safe
-                        tile_occupancy.bits.dig_marked = true;
-                        jobs.cancel_job(tile); //cancels job if designation is an open/active job
-                        // is it permanently unsafe? and is it safe to instantly dig the group of tiles
-                        if (cheat_mode && !safe_to_dig_down(tile) && !is_group_occupied(groups, group)) {
-                            tile_occupancy.bits.dig_marked = false;
-                            dig_now_tile(out, tile);
-                        }
+                        dig_now_tile(out, tile);
                     }
                 }
             }

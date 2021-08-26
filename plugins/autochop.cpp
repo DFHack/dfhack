@@ -288,7 +288,7 @@ static bool skip_plant(const df::plant * plant, bool *restricted)
     return false;
 }
 
-static int estimate_logs(df::plant *plant)
+static int estimate_logs(const df::plant *plant)
 {
     //adapted from code by aljohnston112 @ github
     df::plant_tree_tile** tiles = plant->tree_info->body;

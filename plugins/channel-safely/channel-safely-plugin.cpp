@@ -179,29 +179,9 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     if (debug_out) debug_out->print("onstatechange()\n");
     if (enabled && World::isFortressMode() && Maps::IsValid()) {
         switch (event) {
-            case SC_UNKNOWN:
-                if (debug_out) debug_out->print("SC_UNKNOWN\n");
-                break;
-            case SC_WORLD_LOADED:
-                if (debug_out) debug_out->print("SC_WORLD_LOADED\n");
-                break;
-            case SC_WORLD_UNLOADED:
-                if (debug_out) debug_out->print("SC_WORLD_UNLOADED\n");
-                break;
             case SC_MAP_LOADED:
                 if (debug_out) debug_out->print("SC_MAP_LOADED\n");
                 ChannelManager::Get().manage_designations(out);
-                break;
-            case SC_MAP_UNLOADED:
-                if (debug_out) debug_out->print("SC_MAP_UNLOADED\n");
-                break;
-            case SC_VIEWSCREEN_CHANGED:
-                break;
-            case SC_CORE_INITIALIZED:
-                if (debug_out) debug_out->print("SC_CORE_INITIALIZED\n");
-                break;
-            case SC_BEGIN_UNLOAD:
-                if (debug_out) debug_out->print("SC_BEGIN_UNLOAD\n");
                 break;
             case SC_PAUSED:
                 if (debug_out) debug_out->print("SC_PAUSED\n");

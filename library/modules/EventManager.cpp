@@ -91,7 +91,10 @@ int32_t DFHack::EventManager::registerTick(EventHandler handler, int32_t when, P
     handler.when = when;
     tickQueue.insert(pair<int32_t, EventHandler>(handler.when, handler));
     eventLastTick[handler.eventHandler] = -1;
-    handlers[EventType::TICK].insert(pair<Plugin*,EventHandler>(plugin,handler));
+    //this commented line ensures "Registered Ticks" are not added back to the queue after execution
+    //handlers[EventType::TICK].insert(pair<Plugin*,EventHandler>(plugin,handler));
+
+    // since the event isn't added to the handlers, we don't need to unregister these events
     return when;
 }
 

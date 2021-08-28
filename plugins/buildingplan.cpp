@@ -502,7 +502,7 @@ struct buildingplan_query_hook : public df::viewscreen_dwarfmodest
     {
         if (!bld
                 || bld->jobs.size() < 1
-                || bld->jobs[0]->job_items.size() <= filter_idx)
+                || int(bld->jobs[0]->job_items.size()) <= filter_idx)
             return false;
 
         // if all items for this filter are attached, the quantity will be 0

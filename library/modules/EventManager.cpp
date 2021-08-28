@@ -380,13 +380,16 @@ static void manageTickEvent(color_ostream& out) {
         return;
     for (auto iter = handlers[EventType::TICK].begin(); iter != handlers[EventType::TICK].end(); ) {
         EventHandler &handle = iter->second;
+        //check if we find a handler registered
         if ( toRemove.find(handle) == toRemove.end() ) {
+            //the event is from registerTick, so things are already cleaned up
             ++iter;
             continue;
         }
         iter = handlers[EventType::TICK].erase(iter);
         toRemove.erase(handle);
-        registerTick(handle, handle.freq, iter->first);
+        //the handler is registered with the listeners, so we want it to keep listening
+        registerListener(DFHack::EventManager::EventType::TICK, handle, iter->first);
         if ( toRemove.empty() )
             break;
     }

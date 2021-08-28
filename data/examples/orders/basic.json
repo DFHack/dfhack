@@ -698,6 +698,36 @@
 		[
 			{
 				"condition" : "AtLeast",
+				"item_type" : "WOOD",
+				"value" : 150
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"empty"
+				],
+				"item_type" : "CAGE",
+				"value" : 30
+			}
+		],
+		"job" : "MakeCage",
+		"material_category" : 
+		[
+			"wood"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 22,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
 				"item_type" : "SKIN_TANNED",
 				"value" : 10
 			},
@@ -722,7 +752,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 22,
+		"id" : 23,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -758,7 +788,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 23,
+		"id" : 24,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -794,7 +824,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 24,
+		"id" : 25,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -830,7 +860,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 25,
+		"id" : 26,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -849,7 +879,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 26,
+		"id" : 27,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -871,7 +901,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 27,
+		"id" : 28,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -897,7 +927,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 28,
+		"id" : 29,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -923,7 +953,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 29,
+		"id" : 30,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -956,7 +986,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 30,
+		"id" : 31,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -995,7 +1025,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 31,
+		"id" : 32,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -1029,7 +1059,7 @@
 		"amount_left" : 4,
 		"amount_total" : 4,
 		"frequency" : "Daily",
-		"id" : 32,
+		"id" : 33,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -1052,7 +1082,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 33,
+		"id" : 34,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 

@@ -283,35 +283,6 @@
 			},
 			{
 				"condition" : "AtMost",
-				"item_type" : "TRAPPARTS",
-				"value" : 10
-			}
-		],
-		"job" : "ConstructMechanisms",
-		"material" : "INORGANIC"
-	},
-	{
-		"amount_left" : 1,
-		"amount_total" : 1,
-		"frequency" : "Daily",
-		"id" : 10,
-		"is_active" : false,
-		"is_validated" : false,
-		"item_conditions" : 
-		[
-			{
-				"condition" : "AtLeast",
-				"flags" : 
-				[
-					"non_economic",
-					"hard"
-				],
-				"item_type" : "BOULDER",
-				"material" : "INORGANIC",
-				"value" : 50
-			},
-			{
-				"condition" : "AtMost",
 				"item_type" : "SLAB",
 				"value" : 2
 			}
@@ -323,7 +294,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 11,
+		"id" : 10,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -352,7 +323,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 12,
+		"id" : 11,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -381,7 +352,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 13,
+		"id" : 12,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -410,7 +381,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 14,
+		"id" : 13,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -439,7 +410,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 15,
+		"id" : 14,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -470,7 +441,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 16,
+		"id" : 15,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -501,7 +472,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 17,
+		"id" : 16,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 

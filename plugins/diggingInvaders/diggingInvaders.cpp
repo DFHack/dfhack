@@ -373,6 +373,9 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
         return;
     }
 
+    //this line is actually redundant now: EventManager::unregister(EventManager::EventType::TICK, findJobTickHandler, plugin_self);
+    EventManager::registerTick(findJobTickHandler, 1, plugin_self);
+
     if ( fringe.empty() ) {
         df::unit* lastDigger = df::unit::find(lastInvasionDigger);
         if ( lastDigger && lastDigger->job.current_job && lastDigger->job.current_job->id == lastInvasionJob ) {

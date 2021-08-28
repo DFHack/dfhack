@@ -373,7 +373,8 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
         return;
     }
 
-    //this line is actually redundant now: EventManager::unregister(EventManager::EventType::TICK, findJobTickHandler, plugin_self);
+    //we're going to unregister just in case this function has been called 20 times or something.
+    EventManager::unregister(EventManager::EventType::TICK, findJobTickHandler, plugin_self);
     EventManager::registerTick(findJobTickHandler, 1, plugin_self);
 
     if ( fringe.empty() ) {

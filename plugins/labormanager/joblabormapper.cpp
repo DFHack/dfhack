@@ -50,6 +50,8 @@
 
 #include <vector>
 #include <set>
+#include <exception>
+#include <ostream>
 
 using namespace std;
 using std::string;
@@ -399,7 +401,7 @@ public:
 
         debug("LABORMANAGER: Cannot deduce labor for construct building job of type %s\n",
             ENUM_KEY_STR(building_type, bld->getType()).c_str());
-        debug_pause();
+        
 
         return df::unit_labor::NONE;
     }
@@ -514,7 +516,7 @@ public:
 
         debug("LABORMANAGER: Cannot deduce labor for destroy building job of type %s\n",
             ENUM_KEY_STR(building_type, bld->getType()).c_str());
-        debug_pause();
+        
 
         return df::unit_labor::NONE;
     }
@@ -551,7 +553,7 @@ public:
                     else
                     {
                         debug("LABORMANAGER: Cannot deduce labor for make crafts job (not bone)\n");
-                        debug_pause();
+                        
                         return df::unit_labor::NONE;
                     }
                 case df::item_type::WOOD:
@@ -563,7 +565,7 @@ public:
                 default:
                     debug("LABORMANAGER: Cannot deduce labor for make crafts job, item type %s\n",
                         ENUM_KEY_STR(item_type, jobitem).c_str());
-                    debug_pause();
+                    
                     return df::unit_labor::NONE;
                 }
             }
@@ -583,7 +585,7 @@ public:
             default:
                 debug("LABORMANAGER: Cannot deduce labor for make job, workshop type %s\n",
                     ENUM_KEY_STR(workshop_type, type).c_str());
-                debug_pause();
+                
                 return df::unit_labor::NONE;
             }
         }
@@ -598,14 +600,14 @@ public:
             default:
                 debug("LABORMANAGER: Cannot deduce labor for make job, furnace type %s\n",
                     ENUM_KEY_STR(furnace_type, type).c_str());
-                debug_pause();
+                
                 return df::unit_labor::NONE;
             }
         }
 
         debug("LABORMANAGER: Cannot deduce labor for make job, building type %s\n",
             ENUM_KEY_STR(building_type, bld->getType()).c_str());
-        debug_pause();
+        
 
         return df::unit_labor::NONE;
     }
@@ -674,6 +676,16 @@ JobLaborMapper::~JobLaborMapper()
     }
 
 }
+
+static void debug(const char* fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    std::string err= stl_vsprintf(fmt, args);
+    va_end(args);
+    throw std::runtime_error(err);
+}
+    
 
 JobLaborMapper::JobLaborMapper()
 {
@@ -949,7 +961,7 @@ df::unit_labor JobLaborMapper::find_job_labor(df::job* j)
     if (job_to_labor_table.count(j->job_type) == 0)
     {
         debug("LABORMANAGER: job has no job to labor table entry: %s (%d)\n", ENUM_KEY_STR(job_type, j->job_type).c_str(), j->job_type);
-        debug_pause();
+        
         labor = df::unit_labor::NONE;
     }
     else {

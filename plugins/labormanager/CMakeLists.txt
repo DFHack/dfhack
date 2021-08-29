@@ -3,11 +3,15 @@ project(labormanager)
 set(PROJECT_SRCS
     labormanager.cpp
     joblabormapper.cpp
+    AutoLaborManager.cpp
+    LaborManagerClassic.cpp
 )
 # A list of headers
 set(PROJECT_HDRS
     labormanager.h
     joblabormapper.h
+    AutoLaborManager.h
+    LaborManagerClassic.h
 )
 set_source_files_properties(${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE)
 

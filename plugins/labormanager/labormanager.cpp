@@ -96,8 +96,6 @@ command_result labormanager(color_ostream& out, std::vector <std::string>& param
 // The name string provided must correspond to the filename - labormanager.plug.so or labormanager.plug.dll in this case
 DFHACK_PLUGIN("labormanager");
 
-static void generate_labor_to_skill_map();
-
 static std::unique_ptr<AutoLaborManager> currentManager;
 
 static bool initialized = false;

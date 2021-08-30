@@ -8,6 +8,7 @@
 #include <stdexcept>
 
 #include "DataDefs.h"
+
 #include "modules/Units.h"
 #include "modules/Persistence.h"
 #include "modules/Maps.h"
@@ -17,7 +18,7 @@
 #include "df/job.h"
 #include "df/world.h"
 #include "df/historical_figure.h"
-#include <df/historical_entity.h>
+#include "df/historical_entity.h"
 #include "df/histfig_entity_link.h"
 #include "df/histfig_entity_link_positionst.h"
 #include "df/entity_position.h"
@@ -38,6 +39,10 @@
 #include "df/cultural_identity.h"
 #include "df/ethic_type.h"
 #include "df/vehicle.h"
+#include "df/job_type.h"
+#include "df/job_skill.h"
+#include "df/profession.h"
+
 #include <queue>
 
 #define ARRAY_COUNT(array) (sizeof(array)/sizeof((array)[0]))
@@ -98,10 +103,6 @@ private:
                 has_tool[e] = false;
         }
 
-        ~dwarf_info_t()
-        {
-        }
-
     };
 
     const char* state_names[5] = {
@@ -112,7 +113,7 @@ private:
         "OTHER",
     };
 
-    const dwarf_state dwarf_states[ENUM_LAST_ITEM(job_type)+1] = {
+    const dwarf_state dwarf_states[ENUM_LAST_ITEM(job_type) + 1] = {
         BUSY /* CarveFortification */,
         BUSY /* DetailWall */,
         BUSY /* DetailFloor */,
@@ -542,9 +543,6 @@ private:
     color_ostream* out;
     color_ostream* debug_stream;
 
-    friend JobLaborMapper;
-
-
     void debug(const char* fmt, ...)
     {
         if (debug_stream)
@@ -810,11 +808,11 @@ private:
                 b->getType() != df::building_type::TradeDepot)
             {
                 int fjid = -1;
-                for (size_t jn = 0; jn < b->jobs.size(); jn++)
+                for (auto& jj : b->jobs)
                 {
-                    if (b->jobs[jn]->flags.bits.suspend)
+                    if (jj->flags.bits.suspend)
                         continue;
-                    fjid = b->jobs[jn]->id;
+                    fjid = jj->id;
                     break;
                 }
                 if (fjid != j->id)
@@ -826,7 +824,7 @@ private:
         try {
             labor = labor_mapper->find_job_labor(j);
         }
-        catch (std::exception& e) {
+        catch (const std::exception& e) {
             debug("Exception while mapping job labor: %s", e.what());
             labor = df::unit_labor::NONE;
         }
@@ -838,7 +836,7 @@ private:
             {
                 if (j->pos.isValid())
                 {
-                    df::tile_designation* d = Maps::getTileDesignation(j->pos);
+                    auto d = Maps::getTileDesignation(j->pos);
                     if (d->bits.outside)
                         labor_outside[labor] = true;
                 }
@@ -871,7 +869,7 @@ private:
             }
             else if (df::enums::building_type::TradeDepot == type)
             {
-                df::building_tradedepotst* depot = virtual_cast<df::building_tradedepotst>(build);
+                auto depot = virtual_cast<df::building_tradedepotst>(build);
                 trader_requested = depot->trade_flags.bits.trader_requested;
 
                 if (print_debug)
@@ -944,7 +942,7 @@ private:
         df::item_flags bad_flags;
         bad_flags.whole = 0;
 
-#define F(x) bad_flags.bits.x = true;
+#define F(x) bad_flags.bits.x = true
         F(dump); F(forbid); F(garbage_collect);
         F(hostile); F(on_fire); F(rotten); F(trader);
         F(in_building); F(construction);
@@ -967,9 +965,9 @@ private:
             if (!item->isWeapon())
                 continue;
 
-            df::itemdef_weaponst* weapondef = ((df::item_weaponst*)item)->subtype;
-            df::job_skill weaponsk = (df::job_skill)weapondef->skill_melee;
-            df::job_skill weaponsk2 = (df::job_skill)weapondef->skill_ranged;
+            auto weapondef = virtual_cast<df::item_weaponst>(item)->subtype;
+            auto weaponsk = weapondef->skill_melee;
+            auto weaponsk2 = weapondef->skill_ranged;
             if (weaponsk == df::job_skill::AXE)
                 tool_count[TOOL_AXE]++;
             else if (weaponsk == df::job_skill::MINING)
@@ -1023,28 +1021,27 @@ private:
             {
                 dwarf_info_t* dwarf = add_dwarf(cre);
 
-                df::historical_figure* hf = df::historical_figure::find(dwarf->dwarf->hist_figure_id);
-                for (size_t i = 0; i < hf->entity_links.size(); i++)
+                auto hf = df::historical_figure::find(dwarf->dwarf->hist_figure_id);
+                for (auto& hfelink : hf->entity_links) 
                 {
-                    df::histfig_entity_link* hfelink = hf->entity_links.at(i);
                     if (hfelink->getType() == df::histfig_entity_link_type::POSITION)
                     {
-                        df::histfig_entity_link_positionst* epos =
+                        auto epos =
                             virtual_cast<df::histfig_entity_link_positionst>(hfelink);
 
-                        df::historical_entity* entity = df::historical_entity::find(epos->entity_id);
+                        auto entity = df::historical_entity::find(epos->entity_id);
                         if (!entity)
                             continue;
-                        df::entity_position_assignment* assignment = binsearch_in_vector(entity->positions.assignments, epos->assignment_id);
+                        auto assignment = binsearch_in_vector(entity->positions.assignments, epos->assignment_id);
                         if (!assignment)
                             continue;
-                        df::entity_position* position = binsearch_in_vector(entity->positions.own, assignment->position_id);
+                        auto position = binsearch_in_vector(entity->positions.own, assignment->position_id);
                         if (!position)
                             continue;
 
-                        if (position->responsibilities[df::entity_position_responsibility::TRADE])
-                            if (trader_requested)
-                                dwarf->clear_all = true;
+                        if (position->responsibilities[df::entity_position_responsibility::TRADE] &&
+                            trader_requested)
+                            dwarf->clear_all = true;
                     }
 
                 }
@@ -1063,7 +1060,7 @@ private:
                             (other->job.current_job &&
                                 (other->job.current_job->job_type == df::job_type::Sleep ||
                                     other->job.current_job->job_type == df::job_type::Rest)) ||
-                            ENUM_ATTR(profession, military, other->profession))) {
+                                    ENUM_ATTR(profession, military, other->profession))) {
                             dwarf->clear_all = true;
                             if (print_debug)
                                 out->print("Dwarf \"%s\" has a meeting, will be cleared of all labors\n", dwarf->dwarf->name.first_name.c_str());
@@ -1129,7 +1126,7 @@ private:
                         is_migrant = true;
                 }
 
-                if (dwarf->dwarf->social_activities.size() > 0)
+                if (!dwarf->dwarf->social_activities.empty())
                 {
                     if (print_debug)
                         out->print("Dwarf %s is engaged in a social activity. Info only.\n", dwarf->dwarf->name.first_name.c_str());
@@ -1183,7 +1180,7 @@ private:
                         try {
                             labor = labor_mapper->find_job_labor(dwarf->dwarf->job.current_job);
                         }
-                        catch (std::exception& e) {
+                        catch (const std::exception& e) {
                             debug("Exception while mapping job labor: %s", e.what());
                             labor = df::unit_labor::NONE;
                         }
@@ -1369,12 +1366,10 @@ private:
         if (labor == df::unit_labor::BUTCHER || labor == df::unit_labor::HAUL_ANIMALS || labor == df::unit_labor::CUTWOOD)
         {
             int nature = 0;
-            for (auto i = d->dwarf->status.current_soul->personality.values.begin();
-                i != d->dwarf->status.current_soul->personality.values.end();
-                i++)
+            for (auto& i : d->dwarf->status.current_soul->personality.values)
             {
-                if ((*i)->type == df::value_type::NATURE)
-                    nature = (*i)->strength;
+                if (i->type == df::value_type::NATURE)
+                    nature = i->strength;
             }
 
             if (nature <= -11)
@@ -1471,8 +1466,8 @@ public:
 
         labor_needed.clear();
 
-        for (int e = 0; e < TOOLS_MAX; e++)
-            tool_count[e] = 0;
+        for (auto& e : tool_count)
+            e = 0;
 
         trader_requested = false;
 
@@ -1656,10 +1651,10 @@ public:
 
         if (print_debug)
         {
-            for (auto i = labor_needed.begin(); i != labor_needed.end(); i++)
+            for (auto& i : labor_needed)
             {
-                out->print("labor_needed [%s] = %d, busy = %d, outside = %d, idle = %d\n", ENUM_KEY_STR(unit_labor, i->first).c_str(), i->second,
-                    labor_infos[i->first].busy_dwarfs, labor_outside[i->first], labor_infos[i->first].idle_dwarfs);
+                out->print("labor_needed [%s] = %d, busy = %d, outside = %d, idle = %d\n", ENUM_KEY_STR(unit_labor, i.first).c_str(), i.second,
+                    labor_infos[i.first].busy_dwarfs, labor_outside[i.first], labor_infos[i.first].idle_dwarfs);
             }
         }
 
@@ -1747,12 +1742,12 @@ public:
             int best_score = INT_MIN;
             df::unit_labor best_labor = df::unit_labor::NONE;
 
-            for (auto j = to_assign.begin(); j != to_assign.end(); j++)
+            for (const auto& j : to_assign)
             {
-                if (j->second <= 0)
+                if (j.second <= 0)
                     continue;
 
-                df::unit_labor labor = j->first;
+                df::unit_labor labor = j.first;
 
                 for (std::list<dwarf_info_t*>::iterator k = available_dwarfs.begin(); k != available_dwarfs.end(); k++)
                 {
@@ -1831,22 +1826,22 @@ public:
             available_dwarfs.erase(bestdwarf);
         }
 
-        for (auto d = busy_dwarfs.begin(); d != busy_dwarfs.end(); d++)
+        for (auto& d : busy_dwarfs)
         {
-            int current_score = score_labor(*d, (*d)->using_labor);
+            int current_score = score_labor(d, d->using_labor);
 
             FOR_ENUM_ITEMS(unit_labor, l)
             {
                 if (l == df::unit_labor::NONE || labor_infos[l].is_unmanaged())
                     continue;
-                if (l == (*d)->using_labor)
+                if (l == d->using_labor)
                     continue;
                 if (labor_needed[l] <= 0)
                     continue;
-                if (!Units::isValidLabor((*d)->dwarf, l))
+                if (!Units::isValidLabor(d->dwarf, l))
                     continue;
 
-                int score = score_labor(*d, l);
+                int score = score_labor(d, l);
 
                 if (l == df::unit_labor::HAUL_FOOD && priority_food > 0)
                     score += 1000000;
@@ -1854,29 +1849,29 @@ public:
                 if (score > current_score)
                 {
                     tools_enum t = default_labor_infos[l].tool;
-                    if (t == TOOL_NONE || (*d)->has_tool[t])
+                    if (t == TOOL_NONE || d->has_tool[t])
                     {
-                        set_labor(*d, l, true);
+                        set_labor(d, l, true);
                     }
 
                     if (score < 0)
-                        set_labor(*d, df::unit_labor::CLEAN, true);
+                        set_labor(d, df::unit_labor::CLEAN, true);
 
-                    if ((*d)->using_labor != df::unit_labor::NONE &&
-                        (score > current_score + 5000 || base_priority[(*d)->using_labor] < base_priority[l]) &&
-                        default_labor_infos[(*d)->using_labor].tool == TOOL_NONE)
-                        set_labor(*d, (*d)->using_labor, false);
+                    if (d->using_labor != df::unit_labor::NONE &&
+                        (score > current_score + 5000 || base_priority[d->using_labor] < base_priority[l]) &&
+                        default_labor_infos[d->using_labor].tool == TOOL_NONE)
+                        set_labor(d, d->using_labor, false);
                 }
             }
         }
 
 
-        dwarf_info_t* canary_dwarf = 0;
+        dwarf_info_t* canary_dwarf = nullptr;
 
-        for (auto di = busy_dwarfs.begin(); di != busy_dwarfs.end(); di++)
-            if (!(*di)->clear_all)
+        for (auto& di : busy_dwarfs)
+            if (!di->clear_all)
             {
-                canary_dwarf = *di;
+                canary_dwarf = di;
                 break;
             }
 
@@ -1920,15 +1915,15 @@ public:
         if (print_debug)
             out->print("After assignment, %zu dwarfs left over\n", available_dwarfs.size());
 
-        for (auto d = available_dwarfs.begin(); d != available_dwarfs.end(); d++)
+        for (auto& d : available_dwarfs)
         {
             FOR_ENUM_ITEMS(unit_labor, l)
             {
                 if (l == df::unit_labor::NONE || labor_infos[l].is_unmanaged())
                     continue;
 
-                if (Units::isValidLabor((*d)->dwarf, l))
-                    set_labor(*d, l,
+                if (Units::isValidLabor(d->dwarf, l))
+                    set_labor(d, l,
                         (l >= df::unit_labor::HAUL_STONE && l <= df::unit_labor::HAUL_ANIMALS) ||
                         l == df::unit_labor::CLEAN ||
                         l == df::unit_labor::HAUL_WATER ||
@@ -1939,9 +1934,9 @@ public:
         }
 
         /* check for dwarfs assigned no labors and assign them the bucket list if there are */
-        for (auto d = dwarf_info.begin(); d != dwarf_info.end(); d++)
+        for (auto& d : dwarf_info)
         {
-            if ((*d)->state == CHILD)
+            if (d->state == CHILD)
                 continue;
 
             bool any = false;
@@ -1949,7 +1944,7 @@ public:
             {
                 if (l == df::unit_labor::NONE)
                     continue;
-                if ((*d)->dwarf->status.labors[l])
+                if (d->dwarf->status.labors[l])
                 {
                     any = true;
                     break;
@@ -1958,7 +1953,7 @@ public:
 
             if (!labor_infos[df::unit_labor::PULL_LEVER].is_unmanaged())
             {
-                set_labor(*d, df::unit_labor::PULL_LEVER, true);
+                set_labor(d, df::unit_labor::PULL_LEVER, true);
             }
 
             if (any) continue;
@@ -1969,19 +1964,19 @@ public:
                     continue;
 
                 if (to_assign[l] > 0 || l == df::unit_labor::CLEAN)
-                    set_labor(*d, l, true);
+                    set_labor(d, l, true);
             }
         }
 
 
         /* set reequip on any dwarfs who are carrying tools needed by others */
 
-        for (auto d = dwarf_info.begin(); d != dwarf_info.end(); d++)
+        for (auto& d : dwarf_info)
         {
-            if ((*d)->dwarf->job.current_job && (*d)->dwarf->job.current_job->job_type == df::job_type::PickupEquipment)
+            if (d->dwarf->job.current_job && d->dwarf->job.current_job->job_type == df::job_type::PickupEquipment)
                 continue;
 
-            if ((*d)->dwarf->military.pickup_flags.bits.update)
+            if (d->dwarf->military.pickup_flags.bits.update)
                 continue;
 
             FOR_ENUM_ITEMS(unit_labor, l)
@@ -1993,21 +1988,25 @@ public:
                 if (t == TOOL_NONE)
                     continue;
 
-                bool has_tool = (*d)->has_tool[t];
-                bool needs_tool = (*d)->dwarf->status.labors[l];
+                bool has_tool = d->has_tool[t];
+                bool needs_tool = d->dwarf->status.labors[l];
 
                 if ((needs_tool && !has_tool) ||
                     (has_tool && !needs_tool && tool_in_use[t] >= tool_count[t]))
                 {
                     df::job_type j = df::job_type::NONE;
 
-                    if ((*d)->dwarf->job.current_job)
-                        j = (*d)->dwarf->job.current_job->job_type;
+                    if (d->dwarf->job.current_job)
+                        j = d->dwarf->job.current_job->job_type;
 
                     if (print_debug)
-                        out->print("LABORMANAGER: asking %s to %s tools, current job %s, %d %d \n", (*d)->dwarf->name.first_name.c_str(), (has_tool) ? "drop" : "pick up", ENUM_KEY_STR(job_type, j).c_str(), has_tool, needs_tool);
+                        out->print("LABORMANAGER: asking %s to %s tools, current job %s, %d %d \n", 
+                            d->dwarf->name.first_name.c_str(), 
+                            has_tool ? "drop" : "pick up", 
+                            ENUM_KEY_STR(job_type, j).c_str(), 
+                            has_tool, needs_tool);
 
-                    (*d)->dwarf->military.pickup_flags.bits.update = true;
+                    d->dwarf->military.pickup_flags.bits.update = true;
                     labors_changed = true;
 
                     if (needs_tool)
@@ -2028,9 +2027,9 @@ public:
             *df::global::pause_state = true;
         }
 
-        print_debug = 0;
+        print_debug = false;
 
-        out = NULL;
+        out = nullptr;
 
     }
 
@@ -2057,13 +2056,13 @@ public:
         std::vector<PersistentDataItem> items;
         World::GetPersistentData(&items, "labormanager/2.0/labors/", true);
 
-        for (auto p = items.begin(); p != items.end(); p++)
+        for (auto& p : items)
         {
-            std::string key = p->key();
-            df::unit_labor labor = (df::unit_labor)atoi(key.substr(strlen("labormanager/2.0/labors/")).c_str());
+            std::string key = p.key();
+            auto labor = (df::unit_labor)atoi(key.substr(strlen("labormanager/2.0/labors/")).c_str());
             if (labor >= 0 && size_t(labor) < labor_infos.size())
             {
-                labor_infos[labor].config = *p;
+                labor_infos[labor].config = p;
                 labor_infos[labor].active_dwarfs = 0;
             }
         }
@@ -2198,9 +2197,9 @@ public:
     }
 
     ~impl() {
-        for (auto d = dwarf_info.begin(); d != dwarf_info.end(); d++)
+        for (auto& d : dwarf_info)
         {
-            delete (*d);
+            delete d;
         }
         labor_mapper.release();
     }

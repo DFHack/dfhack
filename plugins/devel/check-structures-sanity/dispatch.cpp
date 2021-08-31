@@ -767,7 +767,7 @@ void Checker::dispatch_untagged_union(const QueueItem & item, const CheckedStruc
         return;
     }
 
-    UNEXPECTED;
+    FAIL("unhandled untagged union: " << item.path);
 }
 
 void Checker::check_unknown_pointer(const QueueItem & item)

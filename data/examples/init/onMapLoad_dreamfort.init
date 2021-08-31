@@ -44,7 +44,9 @@ seedwatch start
 prioritize -a StoreItemInVehicle StoreItemInBag StoreItemInBarrel PullLever
 prioritize -a DestroyBuilding RemoveConstruction RecoverWounded DumpItem
 prioritize -a CleanSelf SlaughterAnimal PrepareRawFish ExtractFromRawFish
-prioritize -a --haul-labor=Food StoreItemInStockpile
+prioritize -a TradeAtDepot BringItemToDepot CleanTrap ManageWorkOrders
+prioritize -a --haul-labor=Food,Body StoreItemInStockpile
+prioritize -a --reaction-name=TAN_A_HIDE CustomReaction
 
 # autobutcher settings are saved in the savegame, so we only need to set them once.
 # this way, any custom settings you set during gameplay are not overwritten

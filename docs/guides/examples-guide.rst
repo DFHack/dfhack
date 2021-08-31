@@ -16,6 +16,8 @@ The :source:`init/ <data/examples/init>` subfolder contains useful DFHack
 `init-files` that you can copy into your main Dwarf Fortress folder -- the same
 directory as ``dfhack.init``.
 
+.. _onMapLoad-dreamfort-init
+
 :source:`onMapLoad_dreamfort.init <data/examples/init/onMapLoad_dreamfort.init>`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -31,9 +33,10 @@ it is useful (and customizable) for any fort. It includes the following config:
 - Sets up `autofarm` to grow 30 units of every crop, except for pig tails, which
   is set to 150 units to support the textile industry.
 - Sets up `seedwatch` to keep 30 of every type of seed.
-- Configures `prioritize` to automatically boost the priority of important tasks
-  that could otherwise get ignored in busy forts, like storing items in
-  vehicles, pulling levers, and removing constructions.
+- Configures `prioritize` to automatically boost the priority of important and
+  time-sensitive tasks that could otherwise get ignored in busy forts, like
+  hauling food, tanning hides, storing items in vehicles, pulling levers, and
+  removing constructions.
 - Optimizes `autobutcher` settings for raising geese, alpacas, sheep, llamas,
   and pigs. Adds sensible defaults for all other animals, including dogs and
   cats. There are instructions in the file for customizing the settings for
@@ -60,6 +63,7 @@ This collection of orders handles basic fort necessities:
 - thread/cloth/dye
 - pots/jugs/buckets/bags (of leather, cloth, silk, and yarn)
 - crafts and totems from otherwise unusable by-products
+- mechanisms/cages
 - splints/crutches
 - lye/soap
 - ash/potash
@@ -112,6 +116,36 @@ already managed by ``military.json``, but has lower limits. This ensures all
 ores will be covered if a player imports smelting but not military, but the
 higher-volume military orders will take priority if both are imported.
 
+:source:`rockstock.json <data/examples/orders/rockstock.json>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This collection of orders keeps a small stock of all types of rock furniture.
+This allows you to do ad-hoc furnishings of guildhalls, libraries, temples, or
+other rooms with `buildingplan` and your masons will make sure there is always
+stock on hand to fulfill the plans.
+
+:source:`glassstock.json <data/examples/orders/glassstock.json>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Similar to ``rockstock`` above, this collection keeps a small stock of all types
+of glass furniture. If you have a functioning glass industry, this is more
+sustainable than ``rockstock`` since you can never run out of sand. If you have
+plenty of rock and just want the variety, you can import both ``rockstock`` and
+``glassstock`` to get a mixture of rock and glass furnishings in your fort.
+
+There are a few items that ``glassstock`` produces that ``rockstock`` does not,
+since there are some items that can not be made out of rock, for example:
+
+- tubes and corkscrews for building magma-safe screw pumps
+- windows
+- terrariums (as an alternative to wooden cages)
+
+:source:`otherstock.json <data/examples/orders/otherstock.json>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This last collection keeps a small stock of other commonly needed items, like
+beds, wheelbarrows, and minecarts.
+
 The ``professions/`` subfolder
 ------------------------------
 
@@ -134,7 +168,7 @@ want to import to a dwarf. Once you have assigned a profession to at least one
 dwarf, you can select "Import Professions from DF" in the DT "File" menu. The
 professions will then be available for use in DT.
 
-In the charts below the "At Start" and "Max" columns indicate the approximate
+In the charts below, the "At Start" and "Max" columns indicate the approximate
 number of dwarves of each profession that you are likely to need at the start of
 the game and how many you are likely to need in a mature fort.
 
@@ -148,9 +182,8 @@ StartManager   1         0     All skills not covered by the other starting
                                game. Individual labors should be turned off as
                                migrants are assigned more specialized
                                professions that cover them, and the StartManager
-                               dwarf convert to some other profession once there
-                               are enough dwarves to cover all the specialized
-                               professions.
+                               dwarf can eventually convert to some other
+                               profession.
 Miner          2         2-10  Mining and Engraving. This profession also has
                                the ``Alchemist`` labor enabled, which disables
                                hauling for those using the `autohauler` plugin.
@@ -158,69 +191,73 @@ Miner          2         2-10  Mining and Engraving. This profession also has
                                game, dwarves with this profession make good
                                military dwarves, wielding their picks as
                                weapons.
-Mason          2         2-4   Masonry and Architecture. In the early game, you
-                               may need to run "`prioritize` ConstructBuilding"
-                               to get your masons to build wells and bridges if
-                               they are too busy crafting stone furniture. Late
-                               game, you can turn off their Architcture labors
-                               since that will be better handled by your
-                               Haulers.
-Outdoorsdwarf  1         2-3   Woodcutting, Animal Training, Trapping, Plant
-                               Gathering, Beekeeping, and Mechanics. This
-                               profession is also the only non-military
-                               profession to have Recover wounded enabled (since
-                               Outdoorsdwarves will have a battleaxe to defend
-                               themselves with).
-Craftsdwarf    1         3-4   All labors used at Carpenter's workshops,
-                               Jeweler's workshops, and Craftsdwarf's workshops.
-Chef           0         2     Cooking. It is important to focus just a few
-                               dwarves on cooking since well-crafted meals make
-                               dwarves very happy. They are also an excellent
-                               trade good.
+Mason          2         2-4   Masonry, Gem Cutting/Encrusting, and
+                               Architecture. In the early game, you may need to
+                               run "`prioritize` ConstructBuilding" to get your
+                               masons to build wells and bridges if they are too
+                               busy crafting stone furniture. Late game, you can
+                               turn off their Architecture labor since that will
+                               be better handled by your Haulers.
+Outdoorsdwarf  1         2-4   Carpentry, Bowyery, Woodcutting, Animal Training,
+                               Trapping, Plant Gathering, Beekeeping, and Siege
+                               Engineering.
+Craftsdwarf    1         4-6   All labors used at Craftsdwarf's workshops,
+                               Glassmaker's workshops, and kilns.
+Chef           0         2     Buchery, Tanning, and Cooking. It is important to
+                               focus just a few dwarves on cooking since
+                               well-crafted meals make dwarves very happy. They
+                               are also an excellent trade good.
 Tailor         0         2     Textile industry labors: Dying, Leatherworking,
                                Weaving, and Clothesmaking.
 Doctor         0         2-4   The full suite of medical labors, plus Animal
                                Caretaking for those using the dwarfvet plugin.
-Farmer         0         5     Food- and animal product-related labors.
-Fisherdwarf    0         0     Fishing and fish cleaning. If you assign this
+Farmer         0         5     Food- and animal product-related labors. This
+                               profession also has the ``Alchemist`` labor
+                               enabled since they need to focus on food-related
+                               jobs.
+Fisherdwarf    0         0-1   Fishing and fish cleaning. If you assign this
                                profession to any dwarf, be prepared to be
                                inundated with fish. Fisherdwarves *never stop
                                fishing*. Be sure to also run ``prioritize -a
                                PrepareRawFish ExtractFromRawFish`` (or use the
                                ``onMapLoad_dreamfort.init`` file above) or else
                                caught fish will just be left to rot.
-Hauler         0         >20   All hauling labors plus Mechanic (so haulers can
-                               assist in reloading traps) and Architecture (so
-                               haulers can help build massive windmill farms and
-                               pump stacks). As you accumulate enough Haulers,
-                               you can turn off hauling labors for other dwarves
-                               so they can focus on their skilled tasks. You may
-                               also want to restrict your Mechanic's workshops
-                               to only skilled mechanics so your haulers don't
-                               make low-quality mechanisms.
+Hauler         0         >20   All hauling labors plus Siege Operating, Mechanic
+                               (so haulers can assist in reloading traps) and
+                               Architecture (so haulers can help build massive
+                               windmill farms and pump stacks). As you
+                               accumulate enough Haulers, you can turn off
+                               hauling labors for other dwarves so they can
+                               focus on their skilled tasks. You may also want
+                               to restrict your Mechanic's workshops to only
+                               skilled mechanics so your haulers don't make
+                               low-quality mechanisms.
 Marksdwarf     0         10    Same as Hauler, but with a different name so you
                                can find your military dwarves more easily.
 Meleedwarf     0         50    Mostly the same as Hauler, but with a different
                                name so you can find your military dwarves more
                                easily. This profession also has the Recover
-                               Wounded labor enabled.
-Smith          0         4     Smithing, Glassmaking, Pottery, and Siege
-                               Engineering labors. You will likely want to
-                               specialize your Smiths to focus on either weapons
-                               or armor to maximize equipment quality.
+                               Wounded labor enabled. Meleedwarves and
+                               Marksdwarves are similar to Haulers so you can
+                               temporarily deactivate your military after sieges
+                               to allow your military dwarves to help clean up.
+Smith          0         4     Smithing labors. You may want to specialize your
+                               Smiths to focus on a single smithing skill to
+                               maximize equipment quality.
 Laborer        0         10-12 All labors that don't improve quality with skill,
-                               such as furnace labors, Soapmaking, and Pump
-                               Operating.
+                               such as Soapmaking or furnace labors.
 =============  ========  ===== =================================================
 
 A note on autohauler
 ~~~~~~~~~~~~~~~~~~~~
 
 These profession definitions are designed to work well with or without the
-`autohauler` plugin. If you do want to use autohauler, adding the following
-lines to your ``onMapLoad.init`` file will configure it to let the professions
-manage the "Feed water to civilians" and "Recover wounded" labors instead of
-enabling those labors for all hauling dwarves::
+`autohauler` plugin (which helps to keep your dwarves focused on skilled labors
+instead of constantly being distracted by hauling). If you do want to use
+autohauler, adding the following lines to your ``onMapLoad.init`` file will
+configure it to let the professions manage the "Feed water to civilians" and
+"Recover wounded" labors instead of enabling those labors for all hauling
+dwarves::
 
     on-new-fortress enable autohauler
     on-new-fortress autohauler FEED_WATER_CIVILIANS allow

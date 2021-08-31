@@ -16,7 +16,7 @@ The :source:`init/ <data/examples/init>` subfolder contains useful DFHack
 `init-files` that you can copy into your main Dwarf Fortress folder -- the same
 directory as ``dfhack.init``.
 
-.. _onMapLoad-dreamfort-init
+.. _onMapLoad-dreamfort-init:
 
 :source:`onMapLoad_dreamfort.init <data/examples/init/onMapLoad_dreamfort.init>`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

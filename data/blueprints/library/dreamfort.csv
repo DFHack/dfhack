@@ -80,7 +80,7 @@ prioritize ConstructBuilding,# Run when you see the bridges ready to be built so
 ""
 -- Plumbing -- 
 "This is a good time to fill your well cisterns, either with a bucket brigade or by routing water from an aquifer or freshwater stream."
-"Also consider bringing magma up to your services level so you can replace the forge and furnaces on your industry level with more powerful magma versions. This is especially important if your embark has insufficient trees to convert into charcoal. Keep in mind that setting up a powered pump stack is a tricky process and can take a long time. Don't forget to continue making progress through the checklist as you prepare to pump your magma! If you are going to pump magma, I suggest doing it before importing the military and smelting automation orders since they make heavy use of furnaces and forges."
+"Also consider bringing magma up to your services level so you can replace the forge and furnaces on your industry level with more powerful magma versions. This is especially important if your embark has insufficient trees to convert into charcoal. Keep in mind that moving magma is a tricky process and can take a long time. Don't forget to continue making progress through the checklist! If you choose to use magma, I suggest getting it in place before importing the military and smelting automation orders since they make heavy use of furnaces and forges."
 ""
 -- Mature fort (third migration wave onward) -- 
 orders import furnace,# Automated production of basic furnace-related items. Don't forget to create a sand collection zone (or remove the sand- and glass-related orders if you have no sand).
@@ -94,6 +94,9 @@ orders import furnace,# Automated production of basic furnace-related items. Don
 orders import military,# Automated production of military equipment. Turn on automelt in the meltables piles on the industry level to automatically upgrade all metal military equipment to masterwork quality. These orders are optional if you are not using a military.
 orders import smelting,# Automated production of all types of metal bars.
 "quickfort run,orders library/dreamfort.csv -n /services4","# Run when you need a jail and/or fancy statues in the dining room, anytime after the restraints are placed from /services3."
+orders import rockstock,# Maintains a small stock of all types of rock furniture.
+orders import glassstock,# Maintains a small stock of all types of glass furniture and parts.
+orders import otherstock,# Maintains a small stock of other types of items (like beds).
 ""
 -- Repeat for each remaining apartments level as needed --
 "quickfort run,orders library/dreamfort.csv -n /apartments2",# Run when the apartment level has been dug out.
@@ -136,7 +139,7 @@ startmilitary: ^mnr{Down}r{metalarmorsetup}{Down}racNSiege&{Right}&^q
 sethotkey: {fkey}n{name}&
 starthotkeys: ^H{sethotkey fkey={F2} name=Farming}{sethotkey fkey={F3} name=Industry}{sethotkey fkey={F4} name=Services}{sethotkey fkey={F5} name=Guildhall}{sethotkey fkey={F6} name=Quarry}{sethotkey fkey={F7} name=Cavern}{sethotkey fkey={F8} name=Magma}^q
 ""
-"#query label(setup) start(on the wagon) message(Please set the zoom targets of the hotkeys (the 'H' menu) according to where you actually end up digging the levels.
+"#query label(setup) start(center tile of the wagon) message(Please set the zoom targets of the hotkeys (the 'H' menu) according to where you actually end up digging the levels.
 As you build your fort, expand the Inside burrow to include new civilian-safe areas.
 Optionally, add a leather cloak to your military uniforms to enhance the protection of the uniforms.
 Nothing in Dreamfort depends on these settings staying as they are. Feel free to change any setting to your personal preference.) assign nobles, set standing orders, create burrows, make adjustments to military uniforms, and set hotkey names"

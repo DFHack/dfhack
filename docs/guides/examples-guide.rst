@@ -29,6 +29,8 @@ it is useful (and customizable) for any fort. It includes the following config:
   started, so later manual changes will not be overridden.
 - Automates calling of various fort maintenance and `scripts-fix`, like
   `cleanowned` and `fix/stuckdoors`.
+- Keeps your manager orders intelligently ordered with `orders` ``sort`` so no
+  orders block other orders from ever getting completed.
 - Periodically enqueues orders to shear and milk shearable and milkable pets.
 - Sets up `autofarm` to grow 30 units of every crop, except for pig tails, which
   is set to 150 units to support the textile industry.

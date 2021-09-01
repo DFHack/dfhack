@@ -17,6 +17,7 @@ repeat -name feeding-timers -time 1 -timeUnits months -command [ fix/feeding-tim
 repeat -name stuckdoors -time 1 -timeUnits months -command [ fix/stuckdoors ]
 repeat -name autoShearCreature -time 14 -timeUnits days -command [ workorder ShearCreature ]
 repeat -name autoMilkCreature -time 14 -timeUnits days -command [ workorder "{\"job\":\"MilkCreature\",\"item_conditions\":[{\"condition\":\"AtLeast\",\"value\":2,\"flags\":[\"empty\"],\"item_type\":\"BUCKET\"}]}" ]
+repeat -name orders-sort -time 1 -timeUnits days -command [ orders sort ]
 
 tweak fast-heat 100
 tweak do-job-now

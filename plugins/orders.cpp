@@ -56,6 +56,8 @@ DFhackCExport command_result plugin_init(color_ostream & out, std::vector<Plugin
         "    Imports manager orders from a file named dfhack-config/orders/[name].json.\n"
         "  orders clear\n"
         "    Deletes all manager orders in the current embark.\n"
+        "  orders sort\n"
+        "    Sorts current manager orders by repeat frequency so they don't conflict.\n"
     ));
     return CR_OK;
 }
@@ -68,6 +70,7 @@ DFhackCExport command_result plugin_shutdown(color_ostream & out)
 static command_result orders_export_command(color_ostream & out, const std::string & name);
 static command_result orders_import_command(color_ostream & out, const std::string & name);
 static command_result orders_clear_command(color_ostream & out);
+static command_result orders_sort_command(color_ostream & out);
 
 static command_result orders_command(color_ostream & out, std::vector<std::string> & parameters)
 {
@@ -98,6 +101,11 @@ static command_result orders_command(color_ostream & out, std::vector<std::strin
     if (parameters[0] == "clear" && parameters.size() == 1)
     {
         return orders_clear_command(out);
+    }
+
+    if (parameters[0] == "sort" && parameters.size() == 1)
+    {
+        return orders_sort_command(out);
     }
 
     return CR_WRONG_USAGE;
@@ -921,6 +929,26 @@ static command_result orders_clear_command(color_ostream & out)
     out << "Deleted " << world->manager_orders.size() << " manager orders." << std::endl;
 
     world->manager_orders.clear();
+
+    return CR_OK;
+}
+
+static bool compare_freq(df::manager_order *a, df::manager_order *b)
+{
+    if (a->frequency == df::manager_order::T_frequency::OneTime
+            || b->frequency == df::manager_order::T_frequency::OneTime)
+        return a->frequency < b->frequency;
+    return a->frequency > b->frequency;
+}
+
+static command_result orders_sort_command(color_ostream & out)
+{
+    CoreSuspender suspend;
+
+    std::stable_sort(world->manager_orders.begin(), world->manager_orders.end(),
+                     compare_freq);
+
+    out << "Sorted " << world->manager_orders.size() << " manager orders." << std::endl;
 
     return CR_OK;
 }

@@ -1968,6 +1968,14 @@ Subcommands:
 :export NAME: Exports the current list of manager orders to a file named ``dfhack-config/orders/NAME.json``.
 :import NAME: Imports manager orders from a file named ``dfhack-config/orders/NAME.json``.
 :clear: Deletes all manager orders in the current embark.
+:sort: Sorts current manager orders by repeat frequency so daily orders don't
+    prevent other orders from ever being completed: one-time orders first, then
+    yearly, seasonally, monthly, then finally daily.
+
+You can keep your orders automatically sorted by adding the following command to
+your ``onMapLoad.init`` file::
+
+    repeat -name orders-sort -time 1 -timeUnits days -command [ orders sort ]
 
 .. _nestboxes:
 

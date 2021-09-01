@@ -945,10 +945,15 @@ static command_result orders_sort_command(color_ostream & out)
 {
     CoreSuspender suspend;
 
-    std::stable_sort(world->manager_orders.begin(), world->manager_orders.end(),
-                     compare_freq);
-
-    out << "Sorted " << world->manager_orders.size() << " manager orders." << std::endl;
+    if (!std::is_sorted(world->manager_orders.begin(),
+                        world->manager_orders.end(),
+                        compare_freq))
+    {
+        std::stable_sort(world->manager_orders.begin(),
+                         world->manager_orders.end(),
+                         compare_freq);
+        out << "Fixed priority of manager orders." << std::endl;
+    }
 
     return CR_OK;
 }

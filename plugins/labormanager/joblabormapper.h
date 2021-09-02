@@ -4,13 +4,12 @@
 
 #include <Core.h>
 
-using namespace DFHack;
-using namespace df::enums;
-
 #include "df/job.h"
 #include "df/job_type.h"
 #include "df/unit_labor.h"
 
+using namespace DFHack;
+using namespace df::enums;
 
 class jlfunc;
 

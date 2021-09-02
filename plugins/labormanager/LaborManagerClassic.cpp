@@ -1003,10 +1003,8 @@ private:
         state_count.clear();
         state_count.resize(NUM_STATE);
         
-        for (auto &u : df::global::world->units.active)
+        for (auto &cre : df::global::world->units.active)
         {
-            df::unit* cre = u;
-
             // following tests shamelessly stolen from Dwarf Manipulator plugin
 
             bool isAssignable =
@@ -1017,281 +1015,282 @@ private:
                 (!cre->flags3.bits.ghostly) &&
                 (ENUM_ATTR(profession, can_assign_labor, cre->profession));
 
-            if (isAssignable)
+            if (!isAssignable)
+                continue;
+
+            dwarf_info_t* dwarf = add_dwarf(cre);
+
+            auto hf = df::historical_figure::find(dwarf->dwarf->hist_figure_id);
+            for (auto& hfelink : hf->entity_links)
             {
-                dwarf_info_t* dwarf = add_dwarf(cre);
-
-                auto hf = df::historical_figure::find(dwarf->dwarf->hist_figure_id);
-                for (auto& hfelink : hf->entity_links) 
+                if (hfelink->getType() == df::histfig_entity_link_type::POSITION)
                 {
-                    if (hfelink->getType() == df::histfig_entity_link_type::POSITION)
-                    {
-                        auto epos =
-                            virtual_cast<df::histfig_entity_link_positionst>(hfelink);
+                    auto epos =
+                        virtual_cast<df::histfig_entity_link_positionst>(hfelink);
 
-                        auto entity = df::historical_entity::find(epos->entity_id);
-                        if (!entity)
-                            continue;
-                        auto assignment = binsearch_in_vector(entity->positions.assignments, epos->assignment_id);
-                        if (!assignment)
-                            continue;
-                        auto position = binsearch_in_vector(entity->positions.own, assignment->position_id);
-                        if (!position)
-                            continue;
+                    auto entity = df::historical_entity::find(epos->entity_id);
+                    if (!entity)
+                        continue;
+                    auto assignment = binsearch_in_vector(entity->positions.assignments, epos->assignment_id);
+                    if (!assignment)
+                        continue;
+                    auto position = binsearch_in_vector(entity->positions.own, assignment->position_id);
+                    if (!position)
+                        continue;
 
-                        if (position->responsibilities[df::entity_position_responsibility::TRADE] &&
-                            trader_requested)
-                            dwarf->clear_all = true;
-                    }
-
+                    if (position->responsibilities[df::entity_position_responsibility::TRADE] &&
+                        trader_requested)
+                        dwarf->clear_all = true;
                 }
 
-                // identify dwarfs who are needed for meetings and mark them for exclusion
+            }
 
-                for (auto& act : df::global::ui->activities)
+            // identify dwarfs who are needed for meetings and mark them for exclusion
+
+            for (auto& act : df::global::ui->activities)
+            {
+                bool p1 = act->unit_actor == dwarf->dwarf;
+                bool p2 = act->unit_noble == dwarf->dwarf;
+
+                if (p1 || p2)
                 {
-                    bool p1 = act->unit_actor == dwarf->dwarf;
-                    bool p2 = act->unit_noble == dwarf->dwarf;
-
-                    if (p1 || p2)
-                    {
-                        df::unit* other = p1 ? act->unit_noble : act->unit_actor;
-                        if (other && !(!Units::isActive(other) ||
-                            (other->job.current_job &&
-                                (other->job.current_job->job_type == df::job_type::Sleep ||
-                                    other->job.current_job->job_type == df::job_type::Rest)) ||
-                                    ENUM_ATTR(profession, military, other->profession))) {
-                            dwarf->clear_all = true;
-                            if (print_debug)
-                                out->print("Dwarf \"%s\" has a meeting, will be cleared of all labors\n", dwarf->dwarf->name.first_name.c_str());
-                            break;
-                        }
-                        else
-                        {
-                            if (print_debug)
-                                out->print("Dwarf \"%s\" has a meeting, but with someone who can't make the meeting.\n", dwarf->dwarf->name.first_name.c_str());
-                        }
-                    }
-                }
-
-                // check to see if dwarf has minor children
-
-                for (auto& u2 : df::global::world->units.active)
-                {
-                    if (u2->relationship_ids[df::unit_relationship_type::Mother] == dwarf->dwarf->id &&
-                        Units::isActive(u2) &&
-                        (u2->profession == df::profession::CHILD || u2->profession == df::profession::BABY))
-                    {
-                        dwarf->has_children = true;
+                    df::unit* other = p1 ? act->unit_noble : act->unit_actor;
+                    if (other && !(!Units::isActive(other) ||
+                        (other->job.current_job &&
+                            (other->job.current_job->job_type == df::job_type::Sleep ||
+                                other->job.current_job->job_type == df::job_type::Rest)) ||
+                        ENUM_ATTR(profession, military, other->profession))) {
+                        dwarf->clear_all = true;
                         if (print_debug)
-                            out->print("Dwarf %s has minor children\n", dwarf->dwarf->name.first_name.c_str());
+                            out->print("Dwarf \"%s\" has a meeting, will be cleared of all labors\n", dwarf->dwarf->name.first_name.c_str());
                         break;
-                    }
-                }
-
-                // check if dwarf has an axe, pick, or crossbow
-
-                for (auto& ui : dwarf->dwarf->inventory)
-                {
-                    if (ui->mode == df::unit_inventory_item::Weapon && ui->item->isWeapon())
-                    {
-                        dwarf->armed = true;
-                        df::itemdef_weaponst* weapondef = (virtual_cast<df::item_weaponst>(ui->item))->subtype;
-                        df::job_skill weaponsk = weapondef->skill_melee;
-                        df::job_skill rangesk = weapondef->skill_ranged;
-
-                        if (weaponsk == df::job_skill::AXE)
-                        {
-                            dwarf->has_tool[TOOL_AXE] = true;
-                        }
-                        else if (weaponsk == df::job_skill::MINING)
-                        {
-                            dwarf->has_tool[TOOL_PICK] = true;
-                        }
-                        else if (rangesk == df::job_skill::CROSSBOW)
-                        {
-                            dwarf->has_tool[TOOL_CROSSBOW] = true;
-                        }
-                    }
-                }
-
-                // Find the activity state for each dwarf
-
-                bool is_migrant = false;
-                dwarf_state state = OTHER;
-
-                for (auto& p : dwarf->dwarf->status.misc_traits)
-                {
-                    if (p->id == df::misc_trait_type::Migrant)
-                        is_migrant = true;
-                }
-
-                if (!dwarf->dwarf->social_activities.empty())
-                {
-                    if (print_debug)
-                        out->print("Dwarf %s is engaged in a social activity. Info only.\n", dwarf->dwarf->name.first_name.c_str());
-                }
-
-                if (dwarf->dwarf->profession == df::profession::BABY ||
-                    dwarf->dwarf->profession == df::profession::CHILD ||
-                    dwarf->dwarf->profession == df::profession::DRUNK)
-                {
-                    state = CHILD;
-                }
-
-                else if (ENUM_ATTR(profession, military, dwarf->dwarf->profession))
-                    state = MILITARY;
-
-                else if (dwarf->dwarf->burrows.size() > 0)
-                    state = OTHER;        // dwarfs assigned to burrows are treated as if permanently busy
-
-                else if (dwarf->dwarf->job.current_job == NULL)
-                {
-                    if (is_migrant || dwarf->dwarf->flags1.bits.chained || dwarf->dwarf->flags1.bits.caged)
-                    {
-                        state = OTHER;
-                        dwarf->clear_all = true;
-                    }
-                    else if (dwarf->dwarf->status2.limbs_grasp_count == 0)
-                    {
-                        state = OTHER;      // dwarfs unable to grasp are incapable of nearly all labors
-                        dwarf->clear_all = true;
-                        if (print_debug)
-                            out->print("Dwarf %s is disabled, will not be assigned labors\n", dwarf->dwarf->name.first_name.c_str());
                     }
                     else
                     {
-                        state = IDLE;
+                        if (print_debug)
+                            out->print("Dwarf \"%s\" has a meeting, but with someone who can't make the meeting.\n", dwarf->dwarf->name.first_name.c_str());
                     }
+                }
+            }
+
+            // check to see if dwarf has minor children
+
+            for (auto& u2 : df::global::world->units.active)
+            {
+                if (u2->relationship_ids[df::unit_relationship_type::Mother] == dwarf->dwarf->id &&
+                    Units::isActive(u2) &&
+                    (u2->profession == df::profession::CHILD || u2->profession == df::profession::BABY))
+                {
+                    dwarf->has_children = true;
+                    if (print_debug)
+                        out->print("Dwarf %s has minor children\n", dwarf->dwarf->name.first_name.c_str());
+                    break;
+                }
+            }
+
+            // check if dwarf has an axe, pick, or crossbow
+
+            for (auto& ui : dwarf->dwarf->inventory)
+            {
+                if (ui->mode == df::unit_inventory_item::Weapon && ui->item->isWeapon())
+                {
+                    dwarf->armed = true;
+                    df::itemdef_weaponst* weapondef = (virtual_cast<df::item_weaponst>(ui->item))->subtype;
+                    df::job_skill weaponsk = weapondef->skill_melee;
+                    df::job_skill rangesk = weapondef->skill_ranged;
+
+                    if (weaponsk == df::job_skill::AXE)
+                    {
+                        dwarf->has_tool[TOOL_AXE] = true;
+                    }
+                    else if (weaponsk == df::job_skill::MINING)
+                    {
+                        dwarf->has_tool[TOOL_PICK] = true;
+                    }
+                    else if (rangesk == df::job_skill::CROSSBOW)
+                    {
+                        dwarf->has_tool[TOOL_CROSSBOW] = true;
+                    }
+                }
+            }
+
+            // Find the activity state for each dwarf
+
+            bool is_migrant = false;
+            dwarf_state state = OTHER;
+
+            for (auto& p : dwarf->dwarf->status.misc_traits)
+            {
+                if (p->id == df::misc_trait_type::Migrant)
+                    is_migrant = true;
+            }
+
+            if (!dwarf->dwarf->social_activities.empty())
+            {
+                if (print_debug)
+                    out->print("Dwarf %s is engaged in a social activity. Info only.\n", dwarf->dwarf->name.first_name.c_str());
+            }
+
+            if (dwarf->dwarf->profession == df::profession::BABY ||
+                dwarf->dwarf->profession == df::profession::CHILD ||
+                dwarf->dwarf->profession == df::profession::DRUNK)
+            {
+                state = CHILD;
+            }
+
+            else if (ENUM_ATTR(profession, military, dwarf->dwarf->profession))
+                state = MILITARY;
+
+            else if (dwarf->dwarf->burrows.size() > 0)
+                state = OTHER;        // dwarfs assigned to burrows are treated as if permanently busy
+
+            else if (dwarf->dwarf->job.current_job == NULL)
+            {
+                if (is_migrant || dwarf->dwarf->flags1.bits.chained || dwarf->dwarf->flags1.bits.caged)
+                {
+                    state = OTHER;
+                    dwarf->clear_all = true;
+                }
+                else if (dwarf->dwarf->status2.limbs_grasp_count == 0)
+                {
+                    state = OTHER;      // dwarfs unable to grasp are incapable of nearly all labors
+                    dwarf->clear_all = true;
+                    if (print_debug)
+                        out->print("Dwarf %s is disabled, will not be assigned labors\n", dwarf->dwarf->name.first_name.c_str());
                 }
                 else
                 {
-                    df::job_type job = dwarf->dwarf->job.current_job->job_type;
-                    if (job >= 0 && size_t(job) < ARRAY_COUNT(dwarf_states))
-                        state = dwarf_states[job];
-                    else
-                    {
-                        debug("Dwarf \"%s\" has unknown job %i\n", dwarf->dwarf->name.first_name.c_str(), job);
-                        state = OTHER;
-                    }
-                    if (state == BUSY)
-                    {
-                        df::unit_labor labor;
-                        try {
-                            labor = labor_mapper->find_job_labor(dwarf->dwarf->job.current_job);
-                        }
-                        catch (const std::exception& e) {
-                            debug("Exception while mapping job labor: %s", e.what());
-                            labor = df::unit_labor::NONE;
-                        }
-                        
-                        dwarf->using_labor = labor;
-
-                        if (labor != df::unit_labor::NONE)
-                        {
-                            labor_infos[labor].busy_dwarfs++;
-                            if (default_labor_infos[labor].tool != TOOL_NONE)
-                            {
-                                tool_in_use[default_labor_infos[labor].tool]++;
-                            }
-                        }
-                    }
-                }
-
-                dwarf->state = state;
-
-                dwarf->unmanaged_labors_assigned = 0;
-
-                FOR_ENUM_ITEMS(unit_labor, l)
-                {
-                    if (l == df::unit_labor::NONE)
-                        continue;
-                    if (dwarf->dwarf->status.labors[l])
-                        if (state == IDLE)
-                            labor_infos[l].idle_dwarfs++;
-                    if (labor_infos[l].is_unmanaged())
-                        dwarf->unmanaged_labors_assigned++;
-                }
-
-
-                if (print_debug)
-                    out->print("Dwarf \"%s\": state %s %d\n", dwarf->dwarf->name.first_name.c_str(), state_names[dwarf->state], dwarf->clear_all);
-
-                state_count[dwarf->state]++;
-
-                // determine if dwarf has medical needs
-                if (dwarf->dwarf->health && !(
-                    // on-duty military will not necessarily break to get minor injuries attended
-                    ENUM_ATTR(profession, military, dwarf->dwarf->profession) ||
-                    // babies cannot currently receive health care even if they need it
-                    dwarf->dwarf->profession == df::profession::BABY)
-                    )
-                {
-                    if (dwarf->dwarf->health->flags.bits.needs_recovery)
-                        cnt_recover_wounded++;
-                    if (dwarf->dwarf->health->flags.bits.rq_diagnosis)
-                        cnt_diagnosis++;
-                    if (dwarf->dwarf->health->flags.bits.rq_immobilize)
-                        cnt_immobilize++;
-                    if (dwarf->dwarf->health->flags.bits.rq_dressing)
-                        cnt_dressing++;
-                    if (dwarf->dwarf->health->flags.bits.rq_cleaning)
-                        cnt_cleaning++;
-                    if (dwarf->dwarf->health->flags.bits.rq_surgery)
-                        cnt_surgery++;
-                    if (dwarf->dwarf->health->flags.bits.rq_suture)
-                        cnt_suture++;
-                    if (dwarf->dwarf->health->flags.bits.rq_setting)
-                        cnt_setting++;
-                    if (dwarf->dwarf->health->flags.bits.rq_traction)
-                        cnt_traction++;
-                    if (dwarf->dwarf->health->flags.bits.rq_crutch)
-                        cnt_crutch++;
-                }
-
-                if (dwarf->dwarf->counters2.hunger_timer > 60000 || dwarf->dwarf->counters2.thirst_timer > 40000)
-                    need_food_water++;
-
-                // find dwarf's highest effective skill
-
-                int high_skill = 0;
-
-                FOR_ENUM_ITEMS(unit_labor, labor)
-                {
-                    if (labor == df::unit_labor::NONE || labor_infos[labor].is_unmanaged())
-                        continue;
-
-                    df::job_skill skill = labor_to_skill[labor];
-                    if (skill != df::job_skill::NONE)
-                    {
-                        int    skill_level = Units::getNominalSkill(dwarf->dwarf, skill, false);
-                        high_skill = std::max(high_skill, skill_level);
-                    }
-                }
-
-                dwarf->high_skill = high_skill;
-
-
-                // clear labors of dwarfs with clear_all set
-
-                if (dwarf->clear_all)
-                {
-                    FOR_ENUM_ITEMS(unit_labor, labor)
-                    {
-                        if (labor == df::enums::unit_labor::NONE || labor_infos[labor].is_unmanaged())
-                            continue;
-                        if (Units::isValidLabor(dwarf->dwarf, labor))
-                            set_labor(dwarf, labor, false);
-                    }
-                }
-                else {
-                    if (state == IDLE)
-                        available_dwarfs.push_back(dwarf);
-
-                    if (state == BUSY)
-                        busy_dwarfs.push_back(dwarf);
+                    state = IDLE;
                 }
             }
+            else
+            {
+                df::job_type job = dwarf->dwarf->job.current_job->job_type;
+                if (job >= 0 && size_t(job) < ARRAY_COUNT(dwarf_states))
+                    state = dwarf_states[job];
+                else
+                {
+                    debug("Dwarf \"%s\" has unknown job %i\n", dwarf->dwarf->name.first_name.c_str(), job);
+                    state = OTHER;
+                }
+                if (state == BUSY)
+                {
+                    df::unit_labor labor;
+                    try {
+                        labor = labor_mapper->find_job_labor(dwarf->dwarf->job.current_job);
+                    }
+                    catch (const std::exception& e) {
+                        debug("Exception while mapping job labor: %s", e.what());
+                        labor = df::unit_labor::NONE;
+                    }
+
+                    dwarf->using_labor = labor;
+
+                    if (labor != df::unit_labor::NONE)
+                    {
+                        labor_infos[labor].busy_dwarfs++;
+                        if (default_labor_infos[labor].tool != TOOL_NONE)
+                        {
+                            tool_in_use[default_labor_infos[labor].tool]++;
+                        }
+                    }
+                }
+            }
+
+            dwarf->state = state;
+
+            dwarf->unmanaged_labors_assigned = 0;
+
+            FOR_ENUM_ITEMS(unit_labor, l)
+            {
+                if (l == df::unit_labor::NONE)
+                    continue;
+                if (dwarf->dwarf->status.labors[l])
+                    if (state == IDLE)
+                        labor_infos[l].idle_dwarfs++;
+                if (labor_infos[l].is_unmanaged())
+                    dwarf->unmanaged_labors_assigned++;
+            }
+
+
+            if (print_debug)
+                out->print("Dwarf \"%s\": state %s %d\n", dwarf->dwarf->name.first_name.c_str(), state_names[dwarf->state], dwarf->clear_all);
+
+            state_count[dwarf->state]++;
+
+            // determine if dwarf has medical needs
+            if (dwarf->dwarf->health && !(
+                // on-duty military will not necessarily break to get minor injuries attended
+                ENUM_ATTR(profession, military, dwarf->dwarf->profession) ||
+                // babies cannot currently receive health care even if they need it
+                dwarf->dwarf->profession == df::profession::BABY)
+                )
+            {
+                if (dwarf->dwarf->health->flags.bits.needs_recovery)
+                    cnt_recover_wounded++;
+                if (dwarf->dwarf->health->flags.bits.rq_diagnosis)
+                    cnt_diagnosis++;
+                if (dwarf->dwarf->health->flags.bits.rq_immobilize)
+                    cnt_immobilize++;
+                if (dwarf->dwarf->health->flags.bits.rq_dressing)
+                    cnt_dressing++;
+                if (dwarf->dwarf->health->flags.bits.rq_cleaning)
+                    cnt_cleaning++;
+                if (dwarf->dwarf->health->flags.bits.rq_surgery)
+                    cnt_surgery++;
+                if (dwarf->dwarf->health->flags.bits.rq_suture)
+                    cnt_suture++;
+                if (dwarf->dwarf->health->flags.bits.rq_setting)
+                    cnt_setting++;
+                if (dwarf->dwarf->health->flags.bits.rq_traction)
+                    cnt_traction++;
+                if (dwarf->dwarf->health->flags.bits.rq_crutch)
+                    cnt_crutch++;
+            }
+
+            if (dwarf->dwarf->counters2.hunger_timer > 60000 || dwarf->dwarf->counters2.thirst_timer > 40000)
+                need_food_water++;
+
+            // find dwarf's highest effective skill
+
+            int high_skill = 0;
+
+            FOR_ENUM_ITEMS(unit_labor, labor)
+            {
+                if (labor == df::unit_labor::NONE || labor_infos[labor].is_unmanaged())
+                    continue;
+
+                df::job_skill skill = labor_to_skill[labor];
+                if (skill != df::job_skill::NONE)
+                {
+                    int    skill_level = Units::getNominalSkill(dwarf->dwarf, skill, false);
+                    high_skill = std::max(high_skill, skill_level);
+                }
+            }
+
+            dwarf->high_skill = high_skill;
+
+
+            // clear labors of dwarfs with clear_all set
+
+            if (dwarf->clear_all)
+            {
+                FOR_ENUM_ITEMS(unit_labor, labor)
+                {
+                    if (labor == df::enums::unit_labor::NONE || labor_infos[labor].is_unmanaged())
+                        continue;
+                    if (Units::isValidLabor(dwarf->dwarf, labor))
+                        set_labor(dwarf, labor, false);
+                }
+            }
+            else {
+                if (state == IDLE)
+                    available_dwarfs.push_back(dwarf);
+
+                if (state == BUSY)
+                    busy_dwarfs.push_back(dwarf);
+            }
+
 
         }
     }

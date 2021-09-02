@@ -146,7 +146,7 @@ def parse_changelog():
                             '%s:%i: Sub-entry without parent' % (fpath, line_id))
                     last_entry.children.append(line.strip('- \n'))
                 else:
-                    raise ValueError('Invalid line: ' + line)
+                    raise ValueError('%s:%i: Invalid line: %s' % (fpath, line_id, line))
 
     if not entries:
         raise RuntimeError('No changelog files with contents found')

@@ -1568,8 +1568,8 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
     {
         auto wave = world->ocean_waves[i];
         auto netWave = out->add_ocean_waves();
-        ConvertDFCoord(wave->x1, wave->y1, wave->z, netWave->mutable_dest());
-        ConvertDFCoord(wave->x2, wave->y2, wave->z, netWave->mutable_pos());
+        ConvertDFCoord(wave->dest.x, wave->dest.y, wave->z, netWave->mutable_dest());
+        ConvertDFCoord(wave->cur.x, wave->cur.y, wave->z, netWave->mutable_pos());
     }
     MC.trash();
     return CR_OK;

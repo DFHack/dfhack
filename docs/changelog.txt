@@ -48,6 +48,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `orders`: new ``sort`` command. sorts orders according to their repeat frequency. this prevents daily orders from blocking other orders for simlar items from ever getting completed.
 - `tiletypes-here`, `tiletypes-here-point`: add ``--cursor`` and ``--quiet`` options to support non-interactive use cases
 - `quickfort`: Dreamfort blueprint set improvements: extensive revision based on playtesting and feedback. includes updated ``onMapLoad_dreamfort.init`` settings file, enhanced automation orders, and premade profession definitions.  see full changelog at https://github.com/DFHack/dfhack/pull/1921 and https://github.com/DFHack/dfhack/pull/1925
+- `tailor`: allow user to specify which materials to be used, and in what order
 
 ## API
 - The ``Items`` module ``moveTo*`` and ``remove`` functions now handle projectiles

@@ -1091,9 +1091,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_WEAPON_MACE",
 				"item_type" : "WEAPON",
-				"material" : "INORGANIC:SILVER",
 				"value" : 10
 			}
 		],
@@ -1130,9 +1133,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_WEAPON_HAMMER_WAR",
 				"item_type" : "WEAPON",
-				"material" : "INORGANIC:SILVER",
 				"value" : 10
 			}
 		],
@@ -1169,9 +1175,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_WEAPON_CROSSBOW",
 				"item_type" : "WEAPON",
-				"material" : "INORGANIC:SILVER",
 				"value" : 10
 			}
 		],
@@ -1732,9 +1741,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_WEAPON_MACE",
 				"item_type" : "WEAPON",
-				"material" : "INORGANIC:IRON",
 				"value" : 10
 			}
 		],
@@ -1765,9 +1777,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_SHIELD_SHIELD",
 				"item_type" : "SHIELD",
-				"material" : "INORGANIC:IRON",
 				"value" : 10
 			},
 			{
@@ -1804,9 +1819,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
 				"item_type" : "ARMOR",
-				"material" : "INORGANIC:IRON",
 				"value" : 10
 			},
 			{
@@ -1843,9 +1861,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_HELM_HELM",
 				"item_type" : "HELM",
-				"material" : "INORGANIC:IRON",
 				"value" : 10
 			},
 			{
@@ -1882,9 +1903,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_SHOES_BOOTS",
 				"item_type" : "SHOES",
-				"material" : "INORGANIC:IRON",
 				"value" : 10
 			},
 			{
@@ -1921,9 +1945,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_PANTS_GREAVES",
 				"item_type" : "PANTS",
-				"material" : "INORGANIC:IRON",
 				"value" : 10
 			},
 			{
@@ -1934,9 +1961,12 @@
 			},
 			{
 				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
 				"item_type" : "ARMOR",
-				"material" : "INORGANIC:IRON",
 				"value" : 10
 			}
 		],
@@ -1967,9 +1997,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_GLOVES_GAUNTLETS",
 				"item_type" : "GLOVES",
-				"material" : "INORGANIC:IRON",
 				"value" : 10
 			},
 			{
@@ -2006,9 +2039,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_ARMOR_BREASTPLATE",
 				"item_type" : "ARMOR",
-				"material" : "INORGANIC:IRON",
 				"value" : 10
 			},
 			{
@@ -2019,9 +2055,12 @@
 			},
 			{
 				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
 				"item_type" : "ARMOR",
-				"material" : "INORGANIC:IRON",
 				"value" : 10
 			}
 		],
@@ -2052,9 +2091,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_WEAPON_SPEAR",
 				"item_type" : "WEAPON",
-				"material" : "INORGANIC:IRON",
 				"value" : 10
 			},
 			{
@@ -2091,9 +2133,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_WEAPON_SWORD_SHORT",
 				"item_type" : "WEAPON",
-				"material" : "INORGANIC:IRON",
 				"value" : 10
 			},
 			{
@@ -2130,9 +2175,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_WEAPON_AXE_BATTLE",
 				"item_type" : "WEAPON",
-				"material" : "INORGANIC:IRON",
 				"value" : 10
 			},
 			{
@@ -2187,9 +2235,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_WEAPON_HAMMER_WAR",
 				"item_type" : "WEAPON",
-				"material" : "INORGANIC:IRON",
 				"value" : 10
 			}
 		],
@@ -2220,9 +2271,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_WEAPON_PICK",
 				"item_type" : "WEAPON",
-				"material" : "INORGANIC:IRON",
 				"value" : 10
 			},
 			{
@@ -2277,9 +2331,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_WEAPON_CROSSBOW",
 				"item_type" : "WEAPON",
-				"material" : "INORGANIC:IRON",
 				"value" : 10
 			}
 		],
@@ -2334,9 +2391,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_WEAPON_MACE",
 				"item_type" : "WEAPON",
-				"material" : "INORGANIC:BRONZE",
 				"value" : 10
 			}
 		],
@@ -2367,9 +2427,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_SHIELD_SHIELD",
 				"item_type" : "SHIELD",
-				"material" : "INORGANIC:BRONZE",
 				"value" : 10
 			},
 			{
@@ -2412,9 +2475,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
 				"item_type" : "ARMOR",
-				"material" : "INORGANIC:BRONZE",
 				"value" : 10
 			},
 			{
@@ -2457,9 +2523,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_HELM_HELM",
 				"item_type" : "HELM",
-				"material" : "INORGANIC:BRONZE",
 				"value" : 10
 			},
 			{
@@ -2502,9 +2571,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_SHOES_BOOTS",
 				"item_type" : "SHOES",
-				"material" : "INORGANIC:BRONZE",
 				"value" : 10
 			},
 			{
@@ -2547,9 +2619,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_PANTS_GREAVES",
 				"item_type" : "PANTS",
-				"material" : "INORGANIC:BRONZE",
 				"value" : 10
 			},
 			{
@@ -2566,9 +2641,12 @@
 			},
 			{
 				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
 				"item_type" : "ARMOR",
-				"material" : "INORGANIC:BRONZE",
 				"value" : 10
 			}
 		],
@@ -2599,9 +2677,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_GLOVES_GAUNTLETS",
 				"item_type" : "GLOVES",
-				"material" : "INORGANIC:BRONZE",
 				"value" : 10
 			},
 			{
@@ -2644,9 +2725,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_ARMOR_BREASTPLATE",
 				"item_type" : "ARMOR",
-				"material" : "INORGANIC:BRONZE",
 				"value" : 10
 			},
 			{
@@ -2663,9 +2747,12 @@
 			},
 			{
 				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
 				"item_type" : "ARMOR",
-				"material" : "INORGANIC:BRONZE",
 				"value" : 10
 			}
 		],
@@ -2696,9 +2783,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_WEAPON_SPEAR",
 				"item_type" : "WEAPON",
-				"material" : "INORGANIC:BRONZE",
 				"value" : 10
 			},
 			{
@@ -2741,9 +2831,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_WEAPON_SWORD_SHORT",
 				"item_type" : "WEAPON",
-				"material" : "INORGANIC:BRONZE",
 				"value" : 10
 			},
 			{
@@ -2786,9 +2879,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_WEAPON_AXE_BATTLE",
 				"item_type" : "WEAPON",
-				"material" : "INORGANIC:BRONZE",
 				"value" : 10
 			},
 			{
@@ -2855,9 +2951,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_WEAPON_HAMMER_WAR",
 				"item_type" : "WEAPON",
-				"material" : "INORGANIC:BRONZE",
 				"value" : 10
 			}
 		],
@@ -2888,9 +2987,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_WEAPON_PICK",
 				"item_type" : "WEAPON",
-				"material" : "INORGANIC:BRONZE",
 				"value" : 10
 			},
 			{
@@ -2957,9 +3059,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_WEAPON_CROSSBOW",
 				"item_type" : "WEAPON",
-				"material" : "INORGANIC:BRONZE",
 				"value" : 10
 			}
 		],
@@ -3020,9 +3125,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_WEAPON_MACE",
 				"item_type" : "WEAPON",
-				"material" : "INORGANIC:COPPER",
 				"value" : 10
 			}
 		],
@@ -3053,9 +3161,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_SHIELD_SHIELD",
 				"item_type" : "SHIELD",
-				"material" : "INORGANIC:COPPER",
 				"value" : 10
 			},
 			{
@@ -3104,9 +3215,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
 				"item_type" : "ARMOR",
-				"material" : "INORGANIC:COPPER",
 				"value" : 10
 			},
 			{
@@ -3155,9 +3269,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_HELM_HELM",
 				"item_type" : "HELM",
-				"material" : "INORGANIC:COPPER",
 				"value" : 10
 			},
 			{
@@ -3206,9 +3323,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_SHOES_BOOTS",
 				"item_type" : "SHOES",
-				"material" : "INORGANIC:COPPER",
 				"value" : 10
 			},
 			{
@@ -3257,9 +3377,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_PANTS_GREAVES",
 				"item_type" : "PANTS",
-				"material" : "INORGANIC:COPPER",
 				"value" : 10
 			},
 			{
@@ -3282,9 +3405,12 @@
 			},
 			{
 				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
 				"item_type" : "ARMOR",
-				"material" : "INORGANIC:COPPER",
 				"value" : 10
 			}
 		],
@@ -3315,9 +3441,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_GLOVES_GAUNTLETS",
 				"item_type" : "GLOVES",
-				"material" : "INORGANIC:COPPER",
 				"value" : 10
 			},
 			{
@@ -3366,9 +3495,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_ARMOR_BREASTPLATE",
 				"item_type" : "ARMOR",
-				"material" : "INORGANIC:COPPER",
 				"value" : 10
 			},
 			{
@@ -3391,9 +3523,12 @@
 			},
 			{
 				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
 				"item_type" : "ARMOR",
-				"material" : "INORGANIC:COPPER",
 				"value" : 10
 			}
 		],
@@ -3424,9 +3559,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_WEAPON_SPEAR",
 				"item_type" : "WEAPON",
-				"material" : "INORGANIC:COPPER",
 				"value" : 10
 			},
 			{
@@ -3475,9 +3613,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_WEAPON_SWORD_SHORT",
 				"item_type" : "WEAPON",
-				"material" : "INORGANIC:COPPER",
 				"value" : 10
 			},
 			{
@@ -3526,9 +3667,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_WEAPON_AXE_BATTLE",
 				"item_type" : "WEAPON",
-				"material" : "INORGANIC:COPPER",
 				"value" : 10
 			},
 			{
@@ -3607,9 +3751,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_WEAPON_HAMMER_WAR",
 				"item_type" : "WEAPON",
-				"material" : "INORGANIC:COPPER",
 				"value" : 10
 			}
 		],
@@ -3640,9 +3787,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_WEAPON_PICK",
 				"item_type" : "WEAPON",
-				"material" : "INORGANIC:COPPER",
 				"value" : 10
 			},
 			{
@@ -3721,9 +3871,12 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
 				"item_subtype" : "ITEM_WEAPON_CROSSBOW",
 				"item_type" : "WEAPON",
-				"material" : "INORGANIC:COPPER",
 				"value" : 10
 			}
 		],

@@ -29,11 +29,11 @@ Dreamfort is a fully functional, self-sustaining fortress with defenses,
 farming, a complete set of workshops, self-managing quantum stockpiles, a grand
 dining hall, hospital, jail, fresh water well system, guildhalls, noble suites,
 and bedrooms for hundreds of dwarves. It also comes with manager work orders to
-automate basic fort needs, such as food and booze production. It can function by
-itself or as the core of a larger, more ambitious fortress. Read the high-level
-walkthrough by running ``quickfort run library/dreamfort.csv`` and list the
-walkthroughs for the individual levels by running ``quickfort list -l dreamfort
--m notes`` or ``quickfort gui -l dreamfort notes``.
+automate basic fort needs, such as food, booze, and item production. It can
+function by itself or as the core of a larger, more ambitious fortress. Read the
+high-level walkthrough by running ``quickfort run library/dreamfort.csv`` and
+list the walkthroughs for the individual levels by running ``quickfort list -l
+dreamfort -m notes`` or ``quickfort gui -l dreamfort notes``.
 
 Dreamfort blueprints are also available for easy viewing and copying `online
 <https://drive.google.com/drive/folders/1iS90EEVqUkxTeZiiukVj1pLloZqabKuP>`__.
@@ -42,6 +42,10 @@ The online spreadsheets also include `embark profile suggestions
 <https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=149144025>`__
 and a complete `example embark profile
 <https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=1727884387>`__.
+
+You can downlaod a fully built Dreamfort-based fort from `dffd
+<https://dffd.bay12games.com/file.php?id=15434>`__, load it, and explore it
+interactively.
 
 Visual overview
 ```````````````

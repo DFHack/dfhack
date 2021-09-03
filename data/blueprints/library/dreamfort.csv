@@ -72,10 +72,10 @@ quickfort run library/dreamfort.csv -n /industry2,# Run when the industry level 
 prioritize ConstructBuilding,# To get those workshops up and running ASAP. You may have to run this several times as the materials for the building construction jobs become ready.
 quickfort run library/dreamfort.csv -n /surface4,"# Run after the walls and floors are built on the surface. Even if /surface3 is finished before you run /industry2, though, wait until after /industry2 so that surface walls, floors, and roofing don't prevent your workshops from being built (due to lack of blocks)."
 "quickfort run,orders library/dreamfort.csv -n /services2",# Run when the services level has been dug out. Feel free to remove the orders for the ropes if you already brought them with you.
-orders import basic,"# Run after the first migration wave, so you have dorfs to do all the basic tasks. Note that this is the ""orders"" plugin, not the ""quickfort orders"" command."
 "quickfort run,orders library/dreamfort.csv -n /surface5","# Run when all marked trees on the surface are chopped down and walls and floors have been constructed, including the roof section over the future barracks."
 prioritize ConstructBuilding,# Run when you see the bridges ready to be built so the masons come and actually build them.
 "quickfort run,orders library/dreamfort.csv -n /surface6",# Run when at least the beehives and weapon rack are constructed and you have linked all levers to their respective bridges.
+orders import basic,"# Run after the first migration wave, so you have dorfs to do all the basic tasks. Note that this is the ""orders"" plugin, not the ""quickfort orders"" command."
 "quickfort run,orders library/dreamfort.csv -n /surface7",# Run after the surface walls are completed and any marked trees are chopped down.
 ""
 -- Plumbing -- 
@@ -95,8 +95,7 @@ orders import military,# Automated production of military equipment. Turn on aut
 orders import smelting,# Automated production of all types of metal bars.
 "quickfort run,orders library/dreamfort.csv -n /services4","# Run when you need a jail and/or fancy statues in the dining room, anytime after the restraints are placed from /services3."
 orders import rockstock,# Maintains a small stock of all types of rock furniture.
-orders import glassstock,# Maintains a small stock of all types of glass furniture and parts.
-orders import otherstock,# Maintains a small stock of other types of items (like beds).
+orders import glassstock,# Maintains a small stock of all types of glass furniture and parts (only import if you have sand).
 ""
 -- Repeat for each remaining apartments level as needed --
 "quickfort run,orders library/dreamfort.csv -n /apartments2",# Run when the apartment level has been dug out.

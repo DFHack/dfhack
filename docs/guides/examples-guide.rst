@@ -69,9 +69,10 @@ This collection of orders handles basic fort necessities:
 - splints/crutches
 - lye/soap
 - ash/potash
+- beds/wheelbarrows/minecarts
 
-You should import it as soon as you have enough dwarves to perform the
-maintenance tasks. Right after the first migration wave is usually a good time.
+You should import it as soon as you have enough dwarves to perform the tasks.
+Right after the first migration wave is usually a good time.
 
 :source:`furnace.json <data/examples/orders/furnace.json>`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -142,12 +143,6 @@ since there are some items that can not be made out of rock, for example:
 - windows
 - terrariums (as an alternative to wooden cages)
 
-:source:`otherstock.json <data/examples/orders/otherstock.json>`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This last collection keeps a small stock of other commonly needed items, like
-beds, wheelbarrows, and minecarts.
-
 The ``professions/`` subfolder
 ------------------------------
 
@@ -177,7 +172,7 @@ the game and how many you are likely to need in a mature fort.
 =============  ========  ===== =================================================
 Profession     At Start  Max   Description
 =============  ========  ===== =================================================
-Chef           0         2     Buchery, Tanning, and Cooking. It is important to
+Chef           0         3     Buchery, Tanning, and Cooking. It is important to
                                focus just a few dwarves on cooking since
                                well-crafted meals make dwarves very happy. They
                                are also an excellent trade good.
@@ -185,7 +180,7 @@ Craftsdwarf    1         4-6   All labors used at Craftsdwarf's workshops,
                                Glassmaker's workshops, and kilns.
 Doctor         0         2-4   The full suite of medical labors, plus Animal
                                Caretaking for those using the dwarfvet plugin.
-Farmer         0         5     Food- and animal product-related labors. This
+Farmer         0         4     Food- and animal product-related labors. This
                                profession also has the ``Alchemist`` labor
                                enabled since they need to focus on food-related
                                jobs.
@@ -208,7 +203,7 @@ Hauler         0         >20   All hauling labors plus Siege Operating, Mechanic
                                low-quality mechanisms.
 Laborer        0         10-12 All labors that don't improve quality with skill,
                                such as Soapmaking or furnace labors.
-Marksdwarf     0         10    Same as Hauler, but with a different name so you
+Marksdwarf     0         10-30 Same as Hauler, but with a different name so you
                                can find your military dwarves more easily.
 Mason          2         2-4   Masonry, Gem Cutting/Encrusting, and
                                Architecture. In the early game, you may need to
@@ -217,7 +212,7 @@ Mason          2         2-4   Masonry, Gem Cutting/Encrusting, and
                                busy crafting stone furniture. Late game, you can
                                turn off their Architecture labor since that will
                                be better handled by your Haulers.
-Meleedwarf     0         50    Mostly the same as Hauler, but with a different
+Meleedwarf     0         20-50 Mostly the same as Hauler, but with a different
                                name so you can find your military dwarves more
                                easily. This profession also has the Recover
                                Wounded labor enabled. Meleedwarves and
@@ -239,7 +234,7 @@ Miner          2         2-10  Mining and Engraving. This profession also has
 Outdoorsdwarf  1         2-4   Carpentry, Bowyery, Woodcutting, Animal Training,
                                Trapping, Plant Gathering, Beekeeping, and Siege
                                Engineering.
-Smith          0         4     Smithing labors. You may want to specialize your
+Smith          0         2-4   Smithing labors. You may want to specialize your
                                Smiths to focus on a single smithing skill to
                                maximize equipment quality.
 StartManager   1         0     All skills not covered by the other starting

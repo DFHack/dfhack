@@ -33,6 +33,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
+# 0.47.05-r3
+
 ## New Plugins
 - `dig-now`: instantly completes dig designations (including smoothing and carving tracks)
 

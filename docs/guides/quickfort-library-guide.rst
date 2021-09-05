@@ -43,7 +43,7 @@ The online spreadsheets also include `embark profile suggestions
 and a complete `example embark profile
 <https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=1727884387>`__.
 
-You can downlaod a fully built Dreamfort-based fort from `dffd
+You can download a fully built Dreamfort-based fort from `dffd
 <https://dffd.bay12games.com/file.php?id=15434>`__, load it, and explore it
 interactively.
 

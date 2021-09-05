@@ -1,5 +1,4 @@
-#include "buildingplan-rooms.h"
-#include "buildingplan-lib.h"
+#include "buildingplan.h"
 
 #include <df/entity_position.h>
 #include <df/job_type.h>

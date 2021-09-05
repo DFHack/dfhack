@@ -2450,40 +2450,10 @@ Example:
 
 fortplan
 ========
-Usage: ``fortplan [filename]``
-
-**Fortplan is deprecated.** Please use DFHack's more powerful `quickfort`
-command instead. You can use your existing .csv files. Just move them to the
-``blueprints`` folder in your DF installation, and instead of ``fortplan file.csv`` run ``quickfort run file.csv``.
-
-Designates furniture for building according to a ``.csv`` file with
-quickfort-style syntax.
-
-The first line of the file must contain the following::
-
-   #build start(X; Y; <start location description>)
-
-...where X and Y are the offset from the top-left corner of the file's area
-where the in-game cursor should be located, and ``<start location description>``
-is an optional description of where that is. You may also leave a description
-of the contents of the file itself following the closing parenthesis on the
-same line.
-
-The syntax of the file itself is similar to `digfort` or :forums:`quickfort <35931>`.
-At present, only buildings constructed of an item with the same name as the building
-are supported. All other characters are ignored. For example::
-
-    `,`,d,`,`
-    `,f,`,t,`
-    `,s,b,c,`
-
-This section of a file would designate for construction a door and some
-furniture inside a bedroom: specifically, clockwise from top left, a cabinet,
-a table, a chair, a bed, and a statue.
-
-All of the building designation uses `buildingplan`, so you do not need to
-have the items available to construct all the buildings when you run
-fortplan with the .csv file.
+**Fortplan has been removed.** Please use DFHack's more powerful `quickfort`
+script instead. You can use your existing .csv files. Just move them to the
+``blueprints`` folder in your DF installation, and instead of
+``fortplan file.csv`` run ``quickfort run file.csv``.
 
 .. _getplants:
 

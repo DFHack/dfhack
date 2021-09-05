@@ -74,9 +74,6 @@ add_custom_target(generate_proto DEPENDS ${PROJECT_PROTO_TMP_FILES})
 
 set_source_files_properties( Brushes.h PROPERTIES HEADER_FILE_ONLY TRUE )
 
-add_library(buildingplan-lib STATIC buildingplan-lib.cpp buildingplan-planner.cpp buildingplan-rooms.cpp)
-target_link_libraries(buildingplan-lib dfhack)
-
 # Plugins
 option(BUILD_SUPPORTED "Build the supported plugins (reveal, probe, etc.)." ON)
 if(BUILD_SUPPORTED)
@@ -96,7 +93,7 @@ if(BUILD_SUPPORTED)
     dfhack_plugin(blueprint blueprint.cpp LINK_LIBRARIES lua)
     dfhack_plugin(burrows burrows.cpp LINK_LIBRARIES lua)
     dfhack_plugin(building-hacks building-hacks.cpp LINK_LIBRARIES lua)
-    dfhack_plugin(buildingplan buildingplan.cpp LINK_LIBRARIES lua buildingplan-lib)
+    dfhack_plugin(buildingplan buildingplan.cpp buildingplan-lib.cpp buildingplan-planner.cpp buildingplan-rooms.cpp LINK_LIBRARIES lua)
     dfhack_plugin(changeitem changeitem.cpp)
     dfhack_plugin(changelayer changelayer.cpp)
     dfhack_plugin(changevein changevein.cpp)

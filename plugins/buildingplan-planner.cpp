@@ -15,8 +15,7 @@
 #include "LuaTools.h"
 #include "uicommon.h"
 
-#include "buildingplan-planner.h"
-#include "buildingplan-lib.h"
+#include "buildingplan.h"
 
 static const std::string planned_building_persistence_key_v1 = "buildingplan/constraints";
 static const std::string planned_building_persistence_key_v2 = "buildingplan/constraints2";

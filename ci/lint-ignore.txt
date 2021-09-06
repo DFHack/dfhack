@@ -6,7 +6,6 @@
 plugins/isoworld/*.txt
 plugins/raw/*.txt
 plugins/stonesense/*.txt
-plugins/stonesense/utilities/*
 
 # Generated files
 *.pb.h

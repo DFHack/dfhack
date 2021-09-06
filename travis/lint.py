@@ -143,7 +143,7 @@ def main():
                         linter.fix(lines)
                         contents = '\n'.join(lines)
                         with open(full_path, 'wb') as f:
-                            f.write(contents)
+                            f.write(contents.encode('utf-8'))
 
     if success:
         print('All linters completed successfully')

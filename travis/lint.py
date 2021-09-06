@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-import re, os, sys
+import argparse
+import re
+import os
+import sys
 
 valid_extensions = ['c', 'cpp', 'h', 'hpp', 'mm', 'lua', 'rb', 'proto',
                     'init', 'init-example', 'rst']
@@ -104,13 +107,12 @@ class TabLinter(Linter):
 
 linters = [cls() for cls in Linter.__subclasses__() if not cls.ignore]
 
-def main():
-    is_github_actions = bool(os.environ.get('GITHUB_ACTIONS'))
-    root_path = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else '.')
-    if not os.path.exists(root_path):
+def main(args):
+    root_path = os.path.abspath(args.path)
+    if not os.path.exists(args.path):
         print('Nonexistent path: %s' % root_path)
         sys.exit(2)
-    fix = (len(sys.argv) > 2 and sys.argv[2] == '--fix')
+
     global path_blacklist
     path_blacklist = list(map(lambda s: os.path.join(root_path, s.replace('^', '')) if s.startswith('^') else s, path_blacklist))
 
@@ -129,7 +131,7 @@ def main():
                     except UnicodeDecodeError:
                         msg_params = (rel_path, i + 1, 'Invalid UTF-8 (other errors will be ignored)')
                         error('%s:%i: %s' % msg_params)
-                        if is_github_actions:
+                        if args.github_actions:
                             print('::error file=%s,line=%i::%s' % msg_params)
                         lines[i] = ''
             for linter in linters:
@@ -137,9 +139,9 @@ def main():
                     linter.check(lines)
                 except LinterError as e:
                     error('%s: %s' % (rel_path, e))
-                    if is_github_actions:
+                    if args.github_actions:
                         print(e.github_actions_workflow_command(rel_path))
-                    if fix:
+                    if args.fix:
                         linter.fix(lines)
                         contents = '\n'.join(lines)
                         with open(full_path, 'wb') as f:
@@ -152,4 +154,12 @@ def main():
         sys.exit(1)
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('path', nargs='?', default='.',
+        help='Path to scan (default: current directory)')
+    parser.add_argument('--fix', action='store_true',
+        help='Attempt to modify files in-place to fix identified issues')
+    parser.add_argument('--github-actions', action='store_true',
+        help='Enable GitHub Actions workflow command output')
+    args = parser.parse_args()
+    main(args)

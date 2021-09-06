@@ -1,8 +1,23 @@
-library/include/df/*
-plugins/stonesense/allegro/*
-plugins/isoworld/allegro/*
-plugins/isoworld/agui/*
-depends/*
+# Files that lint.py should ignore
+
 .git/*
-build*/*
+
+# Old files exempt from checks for now
+plugins/isoworld/*.txt
+plugins/raw/*.txt
+plugins/stonesense/*.txt
+plugins/stonesense/utilities/*
+
+# Generated files
 *.pb.h
+build*/*
+docs/_*
+docs/html/*
+docs/pdf/*
+library/include/df/*
+
+# Dependencies that we don't control
+depends/*
+plugins/isoworld/agui/*
+plugins/isoworld/allegro/*
+plugins/stonesense/allegro/*

@@ -147,7 +147,7 @@ jobs:
         # don't need tags here
     - name: Check whitespace
       run: |
-        python ci/lint.py --github-actions
+        python ci/lint.py --git-only --github-actions
     - name: Check Authors.rst
       if: success() || failure()
       run: |

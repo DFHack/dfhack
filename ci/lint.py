@@ -3,6 +3,7 @@ import argparse
 import fnmatch
 import re
 import os
+import subprocess
 import sys
 
 DFHACK_ROOT = os.path.normpath(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -109,6 +110,21 @@ class TabLinter(Linter):
 
 linters = [cls() for cls in Linter.__subclasses__() if not cls.ignore]
 
+def walk_all(root_path):
+    for cur, dirnames, filenames in os.walk(root_path):
+        for filename in filenames:
+            full_path = os.path.join(cur, filename)
+            yield full_path
+
+def walk_git_files(root_path):
+    p = subprocess.Popen(['git', '-C', root_path, 'ls-files', root_path], stdout=subprocess.PIPE)
+    for line in p.stdout.readlines():
+        path = line.decode('utf-8').strip()
+        full_path = os.path.join(root_path, path)
+        yield full_path
+    if p.wait() != 0:
+        raise RuntimeError('git exited with %r' % p.returncode)
+
 def main(args):
     root_path = os.path.abspath(args.path)
     if not os.path.exists(args.path):
@@ -118,38 +134,40 @@ def main(args):
     check_patterns = load_pattern_files(args.check_patterns)
     ignore_patterns = load_pattern_files(args.ignore_patterns)
 
-    for cur, dirnames, filenames in os.walk(root_path):
-        for filename in filenames:
-            full_path = os.path.join(cur, filename)
-            rel_path = full_path.replace(root_path, '').replace('\\', '/').lstrip('/')
-            if not valid_file(rel_path, check_patterns, ignore_patterns):
-                continue
-            if args.verbose:
-                print('Checking:', rel_path)
-            lines = []
-            with open(full_path, 'rb') as f:
-                lines = f.read().split(b'\n')
-                for i, line in enumerate(lines):
-                    try:
-                        lines[i] = line.decode('utf-8')
-                    except UnicodeDecodeError:
-                        msg_params = (rel_path, i + 1, 'Invalid UTF-8 (other errors will be ignored)')
-                        error('%s:%i: %s' % msg_params)
-                        if args.github_actions:
-                            print('::error file=%s,line=%i::%s' % msg_params)
-                        lines[i] = ''
-            for linter in linters:
+    walk_iter = walk_all
+    if args.git_only:
+        walk_iter = walk_git_files
+
+    for full_path in walk_iter(root_path):
+        rel_path = full_path.replace(root_path, '').replace('\\', '/').lstrip('/')
+        if not valid_file(rel_path, check_patterns, ignore_patterns):
+            continue
+        if args.verbose:
+            print('Checking:', rel_path)
+        lines = []
+        with open(full_path, 'rb') as f:
+            lines = f.read().split(b'\n')
+            for i, line in enumerate(lines):
                 try:
-                    linter.check(lines)
-                except LinterError as e:
-                    error('%s: %s' % (rel_path, e))
+                    lines[i] = line.decode('utf-8')
+                except UnicodeDecodeError:
+                    msg_params = (rel_path, i + 1, 'Invalid UTF-8 (other errors will be ignored)')
+                    error('%s:%i: %s' % msg_params)
                     if args.github_actions:
-                        print(e.github_actions_workflow_command(rel_path))
-                    if args.fix:
-                        linter.fix(lines)
-                        contents = '\n'.join(lines)
-                        with open(full_path, 'wb') as f:
-                            f.write(contents.encode('utf-8'))
+                        print('::error file=%s,line=%i::%s' % msg_params)
+                    lines[i] = ''
+        for linter in linters:
+            try:
+                linter.check(lines)
+            except LinterError as e:
+                error('%s: %s' % (rel_path, e))
+                if args.github_actions:
+                    print(e.github_actions_workflow_command(rel_path))
+                if args.fix:
+                    linter.fix(lines)
+                    contents = '\n'.join(lines)
+                    with open(full_path, 'wb') as f:
+                        f.write(contents.encode('utf-8'))
 
     if success:
         print('All linters completed successfully')
@@ -163,6 +181,8 @@ if __name__ == '__main__':
         help='Path to scan (default: current directory)')
     parser.add_argument('--fix', action='store_true',
         help='Attempt to modify files in-place to fix identified issues')
+    parser.add_argument('--git-only', action='store_true',
+        help='Only check files tracked by git')
     parser.add_argument('--github-actions', action='store_true',
         help='Enable GitHub Actions workflow command output')
     parser.add_argument('-v', '--verbose', action='store_true',

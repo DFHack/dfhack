@@ -1,0 +1,8 @@
+library/include/df/*
+plugins/stonesense/allegro/*
+plugins/isoworld/allegro/*
+plugins/isoworld/agui/*
+depends/*
+.git/*
+build*/*
+*.pb.h

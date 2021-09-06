@@ -1,25 +1,27 @@
 #!/usr/bin/env python3
 import argparse
+import fnmatch
 import re
 import os
 import sys
 
-valid_extensions = ['c', 'cpp', 'h', 'hpp', 'mm', 'lua', 'rb', 'proto',
-                    'init', 'init-example', 'rst']
-path_blacklist = [
-    '^library/include/df/',
-    '^plugins/stonesense/allegro',
-    '^plugins/isoworld/allegro',
-    '^plugins/isoworld/agui',
-    '^depends/',
-    '^.git/',
-    '^build',
-    '.pb.h',
-]
+DFHACK_ROOT = os.path.normpath(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-def valid_file(filename):
-    return len(list(filter(lambda ext: filename.endswith('.' + ext), valid_extensions))) and \
-        not len(list(filter(lambda path: path.replace('\\', '/') in filename.replace('\\', '/'), path_blacklist)))
+def load_pattern_files(paths):
+    patterns = []
+    for p in paths:
+        with open(p) as f:
+            for line in f.readlines():
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    patterns.append(line)
+    return patterns
+
+def valid_file(rel_path, check_patterns, ignore_patterns):
+    return (
+        any(fnmatch.fnmatch(rel_path, pattern) for pattern in check_patterns)
+        and not any(fnmatch.fnmatch(rel_path, pattern) for pattern in ignore_patterns)
+    )
 
 success = True
 def error(msg=None):
@@ -113,15 +115,17 @@ def main(args):
         print('Nonexistent path: %s' % root_path)
         sys.exit(2)
 
-    global path_blacklist
-    path_blacklist = list(map(lambda s: os.path.join(root_path, s.replace('^', '')) if s.startswith('^') else s, path_blacklist))
+    check_patterns = load_pattern_files(args.check_patterns)
+    ignore_patterns = load_pattern_files(args.ignore_patterns)
 
     for cur, dirnames, filenames in os.walk(root_path):
         for filename in filenames:
             full_path = os.path.join(cur, filename)
-            rel_path = full_path.replace(root_path, '.')
-            if not valid_file(full_path):
+            rel_path = full_path.replace(root_path, '').replace('\\', '/').lstrip('/')
+            if not valid_file(rel_path, check_patterns, ignore_patterns):
                 continue
+            if args.verbose:
+                print('Checking:', rel_path)
             lines = []
             with open(full_path, 'rb') as f:
                 lines = f.read().split(b'\n')
@@ -161,5 +165,13 @@ if __name__ == '__main__':
         help='Attempt to modify files in-place to fix identified issues')
     parser.add_argument('--github-actions', action='store_true',
         help='Enable GitHub Actions workflow command output')
+    parser.add_argument('-v', '--verbose', action='store_true',
+        help='Log files as they are checked')
+    parser.add_argument('--check-patterns', action='append',
+        default=[os.path.join(DFHACK_ROOT, 'ci', 'lint-check.txt')],
+        help='File(s) containing filename patterns to check')
+    parser.add_argument('--ignore-patterns', action='append',
+        default=[os.path.join(DFHACK_ROOT, 'ci', 'lint-ignore.txt')],
+        help='File(s) containing filename patterns to ignore')
     args = parser.parse_args()
     main(args)

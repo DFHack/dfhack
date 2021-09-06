@@ -1,0 +1,11 @@
+*.c
+*.cpp
+*.h
+*.hpp
+*.init
+*.init-example
+*.lua
+*.mm
+*.proto
+*.rb
+*.rst

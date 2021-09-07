@@ -1,4 +1,9 @@
 #!/bin/sh
-cd "$(dirname "$0")"
-cd ..
-grep -i 'set(DF_VERSION' CMakeLists.txt | perl -ne 'print "$&\n" if /[\d\.]+/'
+
+script_name="$(basename "$0")"
+new_script_path="$(dirname "$0")/../ci/${script_name}"
+
+printf >&2 "\nNote: travis/%s is deprecated. Use ci/%s instead.\n\n" "${script_name}" "${script_name}"
+
+"${new_script_path}" "$@"
+exit $?

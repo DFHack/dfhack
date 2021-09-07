@@ -571,15 +571,15 @@ DFhackCExport command_result plugin_onupdate(color_ostream& out)
 
 static command_result tailor_cmd(color_ostream& out, vector <string>& parameters) {
     bool desired = enabled;
-    if (parameters.size() == 1 && parameters[0] == "enable" || parameters[0] == "on" || parameters[0] == "1")
+    if (parameters.size() == 1 && (parameters[0] == "enable" || parameters[0] == "on" || parameters[0] == "1"))
     {
         desired = true;
     }
-    else if (parameters.size() == 1 && parameters[0] == "disable" || parameters[0] == "off" || parameters[0] == "0")
+    else if (parameters.size() == 1 && (parameters[0] == "disable" || parameters[0] == "off" || parameters[0] == "0"))
     {
         desired = false;
     }
-    else if (parameters.size() == 1 && parameters[0] == "usage" || parameters[0] == "help" || parameters[0] == "?")
+    else if (parameters.size() == 1 && (parameters[0] == "usage" || parameters[0] == "help" || parameters[0] == "?"))
     {
         out.print("%s: %s\nUsage:\n%s", plugin_name, tagline, usage);
         return CR_OK;

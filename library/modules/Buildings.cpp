@@ -173,7 +173,6 @@ uint32_t Buildings::getNumBuildings()
 
 bool Buildings::Read (const uint32_t index, t_building & building)
 {
-    Core & c = Core::getInstance();
     df::building *bld = world->buildings.all[index];
 
     building.x1 = bld->x1;
@@ -193,12 +192,10 @@ bool Buildings::Read (const uint32_t index, t_building & building)
 bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
 {
     vector <building_def *> & bld_def = world->raws.buildings.all;
-    uint32_t size = bld_def.size();
     btypes.clear();
 
-    for (auto iter = bld_def.begin(); iter != bld_def.end();iter++)
+    for (building_def *temp : bld_def)
     {
-        building_def * temp = *iter;
         btypes[temp->id] = temp->code;
     }
     return true;

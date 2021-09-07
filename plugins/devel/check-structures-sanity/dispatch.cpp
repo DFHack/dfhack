@@ -299,13 +299,13 @@ void Checker::dispatch_primitive(const QueueItem & item, const CheckedStructure 
             FAIL("invalid value for bool: " << int(val));
         }
     }
-    else if (auto int_id = dynamic_cast<df::integer_identity_base *>(cs.identity))
+    else if (dynamic_cast<df::integer_identity_base *>(cs.identity))
     {
         check_possible_pointer(item, cs);
 
         // TODO check ints?
     }
-    else if (auto float_id = dynamic_cast<df::float_identity_base *>(cs.identity))
+    else if (dynamic_cast<df::float_identity_base *>(cs.identity))
     {
         // TODO check floats?
     }
@@ -876,6 +876,7 @@ void Checker::check_stl_string(const QueueItem & item)
     ptrdiff_t capacity = (string->ptr - 1)->capacity;
 #endif
 
+    (void)start;
     if (length < 0)
     {
         FAIL("string length is negative (" << length << ")");

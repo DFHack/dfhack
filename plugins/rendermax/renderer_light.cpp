@@ -535,7 +535,6 @@ coord2d lightingEngineViewscreen::worldToViewportCoord(const coord2d& in,const r
     return in-window2d+r.first;
 }
 
-static size_t max_list_size = 100000; // Avoid iterating over huge lists
 void lightingEngineViewscreen::doSun(const lightSource& sky,MapExtras::MapCache& map)
 {
     //TODO fix this mess
@@ -673,7 +672,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             df::tiletype_shape shape = ENUM_ATTR(tiletype,shape,type);
             bool is_wall=!ENUM_ATTR(tiletype_shape,passable_high,shape);
             bool is_floor=!ENUM_ATTR(tiletype_shape,passable_low,shape);
-            df::tiletype_shape_basic basic_shape = ENUM_ATTR(tiletype_shape, basic_shape, shape);
+            // df::tiletype_shape_basic basic_shape = ENUM_ATTR(tiletype_shape, basic_shape, shape);
             df::tiletype_material tileMat= ENUM_ATTR(tiletype,material,type);
 
             DFHack::t_matpair mat=b->staticMaterialAt(gpos);

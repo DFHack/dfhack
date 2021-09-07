@@ -1333,19 +1333,17 @@ namespace embark_assist {
             //  off to compensate for the list starting with 1 at index 0.
             //
             auto screen = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
-            int16_t x = screen->location.region_pos.x;
-            int16_t y = screen->location.region_pos.y;
             state->ui[static_cast<int8_t>(fields::x_dim)]->current_display_value =
-                Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0)->location.embark_pos_max.x -
-                Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0)->location.embark_pos_min.x;
+                screen->location.embark_pos_max.x -
+                screen->location.embark_pos_min.x;
             state->ui[static_cast<int8_t>(fields::x_dim)]->current_index =
                 state->ui[static_cast<int8_t>(fields::x_dim)]->current_display_value;
             state->ui[static_cast<int8_t>(fields::x_dim)]->current_value =
                 state->ui[static_cast<int8_t>(fields::x_dim)]->current_display_value + 1;
 
             state->ui[static_cast<int8_t>(fields::y_dim)]->current_display_value =
-                Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0)->location.embark_pos_max.y -
-                Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0)->location.embark_pos_min.y;
+                screen->location.embark_pos_max.y -
+                screen->location.embark_pos_min.y;
             state->ui[static_cast<int8_t>(fields::y_dim)]->current_index =
                 state->ui[static_cast<int8_t>(fields::y_dim)]->current_display_value;
             state->ui[static_cast<int8_t>(fields::y_dim)]->current_value =

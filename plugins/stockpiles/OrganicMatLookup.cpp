@@ -129,7 +129,6 @@ int16_t OrganicMatLookup::food_idx_by_token ( std::ostream &out, organic_mat_cat
         MaterialInfo mat_info = food_mat_by_token ( out, token );
         int16_t type = mat_info.type;
         int32_t index = mat_info.index;
-        int16_t food_idx2 = -1;
         auto it = food_index[mat_category].find ( std::make_pair ( type, index ) );
         if ( it != food_index[mat_category].end() )
         {

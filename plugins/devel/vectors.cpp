@@ -217,8 +217,6 @@ command_result df_vectors (color_ostream &con, vector <string> & parameters)
         return CR_FAILURE;
     }
 
-    uintptr_t pos = start;
-
     const size_t ptr_size = sizeof(void*);
 
     for (uintptr_t pos = start; pos < end; pos += ptr_size)

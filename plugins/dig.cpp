@@ -1282,7 +1282,6 @@ command_result digl (color_ostream &out, vector <string> & parameters)
     stack <DFHack::DFCoord> flood;
     flood.push(xy);
 
-    int i = 0;
     while( !flood.empty() )
     {
         DFHack::DFCoord current = flood.top();

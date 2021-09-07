@@ -244,7 +244,7 @@ if(UNIX)
     # enable C++11 features
     add_definitions(-DLINUX_BUILD)
     add_definitions(-D_GLIBCXX_USE_C99)
-    set(GCC_COMMON_FLAGS "-fvisibility=hidden -mtune=generic -Wall -Werror -Wno-unused-variable")
+    set(GCC_COMMON_FLAGS "-fvisibility=hidden -mtune=generic -Wall -Werror")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COMMON_FLAGS}")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${GCC_COMMON_FLAGS}")

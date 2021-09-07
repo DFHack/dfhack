@@ -474,7 +474,6 @@ command_result SetSideMenu(DFHack::color_ostream &stream, const DwarfControl::Si
     default:
         break;
     }
-    auto viewScreen = getCurViewscreen();
     if (in->has_action())
     {
         switch (in->action())

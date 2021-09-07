@@ -604,7 +604,8 @@ static command_result parseRegexParam(std::regex& target,
 template<typename Callable1, typename Callable2, typename Callable3>
 static command_result applyCategoryFilters(color_ostream& out,
         std::vector<std::string>& parameters,
-        size_t pos, Callable1 header,
+        size_t pos,
+        Callable1 header,
         Callable2 categoryMatch,
         Callable3 listComplete)
 {
@@ -626,7 +627,7 @@ static command_result applyCategoryFilters(color_ostream& out,
     auto& manager = DebugManager::getInstance();
     std::lock_guard<std::mutex> lock(manager.access_mutex_);
     out << std::left;
-    auto guard = header(manager, categoryRegex, pluginRegex);
+    auto VARIABLE_IS_NOT_USED guard = header(manager, categoryRegex, pluginRegex);
     for (auto* category: manager) {
         DebugCategory::cstring_ref p = category->plugin();
         DebugCategory::cstring_ref c = category->category();

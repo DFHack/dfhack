@@ -261,7 +261,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     case ViewUnits:
         if (ui_selected_unit)
         {
-            if (auto unit = vector_get(world->units.active, *ui_selected_unit))
+            if (vector_get(world->units.active, *ui_selected_unit))
             {
                 focus += "/Some";
 

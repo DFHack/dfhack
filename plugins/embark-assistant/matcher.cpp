@@ -605,8 +605,6 @@ namespace embark_assist {
             result.mineral_3 = finder->mineral_3 == -1;
             bool failed_match = false;
 
-            const uint16_t embark_size = finder->x_dim * finder->y_dim;
-
             if (finder->biome_count_min != -1 ||
                 finder->biome_count_max != -1 ||
                 finder->biome_1 != -1 ||

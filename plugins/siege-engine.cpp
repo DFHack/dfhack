@@ -1400,7 +1400,7 @@ static int proposeUnitHits(lua_State *L)
 
 static int computeNearbyWeight(lua_State *L)
 {
-    auto engine = find_engine(L, 1);
+    find_engine(L, 1);
     luaL_checktype(L, 2, LUA_TTABLE);
     luaL_checktype(L, 3, LUA_TTABLE);
     const char *fname = luaL_optstring(L, 4, "nearby_weight");
@@ -1606,7 +1606,6 @@ struct projectile_hook : df::proj_itemst {
         df::coord target, last_passable;
         df::coord tbase = engine->target.first;
         df::coord tsize = engine->getTargetSize();
-        bool success = false;
 
         for (int i = 0; i < 50; i++)
         {
@@ -1851,7 +1850,6 @@ struct building_hook : df::building_siegeenginest {
         if (auto engine = find_engine(this))
         {
             auto job = jobs[0];
-            bool save_op = false;
             bool load_op = false;
 
             switch (job->job_type)

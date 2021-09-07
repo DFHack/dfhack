@@ -105,7 +105,6 @@ private:
 
         for (size_t i = 0; i < raws.inorganics.size(); i++)
         {
-            df::inorganic_raw *p = raws.inorganics[i];
             MaterialInfo material;
             material.decode(0, i);
             addMaterialEntry(selected_category, material, material.toString());
@@ -120,7 +119,6 @@ private:
                 df::plant_raw *p = raws.plants.all[i];
                 for (size_t j = 0; p->material.size() > 1 && j < p->material.size(); j++)
                 {
-                    auto t = p->material[j];
                     if (p->material[j]->id != "WOOD")
                         continue;
 

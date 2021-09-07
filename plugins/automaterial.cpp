@@ -103,7 +103,6 @@ static map< int16_t, vector<MaterialDescriptor> > preferred_materials;
 static map< int16_t, df::interface_key > hotkeys;
 static bool last_used_moved = false;
 static bool auto_choose_materials = true;
-static bool auto_choose_attempted = true;
 static bool revert_to_last_used_type = false;
 static bool allow_future_placement = false;
 

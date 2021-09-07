@@ -50,8 +50,6 @@ using namespace DFHack;
 
 Process::Process(const VersionInfoFactory& known_versions) : identified(false), my_pe(0)
 {
-    int target_result;
-
     char path[1024];
     char *real_path;
     uint32_t size = sizeof(path);

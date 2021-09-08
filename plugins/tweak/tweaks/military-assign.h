@@ -77,7 +77,7 @@ struct military_assign_hook : df::viewscreen_layer_militaryst {
             int i1 = plist->getFirstVisible(), i2 = plist->getLastVisible();
             int si = plist->getListCursor();
 
-            for (int y = y1, i = i1; i <= i2; i++, y++)
+            for (int y = y1, i = i1; i <= i2 && y <= y2; i++, y++)
             {
                 auto unit = vector_get(positions.candidates, i);
                 if (!unit || unit->military.squad_id < 0)

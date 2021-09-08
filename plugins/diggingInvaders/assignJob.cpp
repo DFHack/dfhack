@@ -68,11 +68,6 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
     }
     //out.print("first important edge: (%d,%d,%d) -> (%d,%d,%d)\n", pt1.x,pt1.y,pt1.z, pt2.x,pt2.y,pt2.z);
 
-    df::map_block* block1 = Maps::getTileBlock(pt1);
-    df::map_block* block2 = Maps::getTileBlock(pt2);
-    bool passable1 = block1->walkable[pt1.x&0xF][pt1.y&0xF];
-    bool passable2 = block2->walkable[pt2.x&0xF][pt2.y&0xF];
-
     df::coord location;
     df::building* building = Buildings::findAtTile(pt2);
     df::coord buildingPos = pt2;

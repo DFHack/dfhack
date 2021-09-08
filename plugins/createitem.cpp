@@ -353,8 +353,8 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
                 for (size_t j = 0; j < creature->caste.size(); j++)
                 {
                     df::caste_raw *caste = creature->caste[j];
-                    castes += " " + creature->caste[j]->caste_id;
-                    if (creature->caste[j]->caste_id == tokens[1])
+                    castes += " " + caste->caste_id;
+                    if (caste->caste_id == tokens[1])
                     {
                         mat_type = i;
                         mat_index = j;

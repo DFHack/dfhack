@@ -488,8 +488,6 @@ command_result revflood(color_ostream &out, vector<string> & params)
     }
     int32_t cx, cy, cz;
     Maps::getSize(x_max,y_max,z_max);
-    uint32_t tx_max = x_max * 16;
-    uint32_t ty_max = y_max * 16;
 
     Gui::getCursorCoords(cx,cy,cz);
     if(cx == -30000)

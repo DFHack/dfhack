@@ -470,7 +470,6 @@ public:
     {
         selected_column = 0;
 
-        auto last_selected_index = burrows_column.highlighted_index;
         burrows_column.clear();
 
         for (df::burrow *burrow : ui->burrows.list)
@@ -825,7 +824,6 @@ struct autochop_hook : public df::viewscreen_dwarfmodest
         if (dims.menu_x1 <= 0)
             return;
 
-        df::ui_sidebar_mode d = ui->main.mode;
         if (!isInDesignationMenu())
             return;
 

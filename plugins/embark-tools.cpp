@@ -247,7 +247,6 @@ public:
         {
             df::interface_key key = *iter;
             bool is_motion = false;
-            int dx = 0, dy = 0;
             switch (key)
             {
                 case df::interface_key::CURSOR_UP:
@@ -481,7 +480,6 @@ public:
     virtual void after_render(start_sitest* screen)
     {
         GET_EMBARK_POS(screen, x1, x2, y1, y2, width, height);
-        int mouse_x = gps->mouse_x, mouse_y = gps->mouse_y;
         int local_x = prev_x - 1;
         int local_y = prev_y - 2;
         if (local_x >= x1 && local_x <= x2 && local_y >= y1 && local_y <= y2)

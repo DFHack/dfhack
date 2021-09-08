@@ -3626,7 +3626,6 @@ static void autobutcher_unbutcherRace(color_ostream &out, unsigned id)
 // push autobutcher settings on lua stack
 static int autobutcher_getSettings(lua_State *L)
 {
-    color_ostream &out = *Lua::GetOutput(L);
     lua_newtable(L);
     int ctable = lua_gettop(L);
     Lua::SetField(L, enable_autobutcher, ctable, "enable_autobutcher");
@@ -3642,7 +3641,6 @@ static int autobutcher_getSettings(lua_State *L)
 // push the watchlist vector as nested table on the lua stack
 static int autobutcher_getWatchList(lua_State *L)
 {
-    color_ostream &out = *Lua::GetOutput(L);
     lua_newtable(L);
 
     for(size_t i=0; i<watched_races.size(); i++)

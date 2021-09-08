@@ -38,11 +38,7 @@ command_result df_dumpmats (color_ostream &out, vector<string> &parameters)
         out.print("\n[MATERIAL:%s] - reconstructed from data extracted from memory\n", mat->id.c_str());
 
         int32_t def_color[6] = {-1,-1,-1,-1,-1,-1};
-        bool name_all = false;
-        bool name_all_solid = false;
         string def_name[6];
-        bool adj_all = false;
-        bool adj_all_solid = false;
         string def_adj[6];
 
         int32_t solid_color = mat->state_color[matter_state::Solid];

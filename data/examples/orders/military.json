@@ -1722,6 +1722,12 @@
 				"value" : 100
 			},
 			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 20
+			},
+			{
 				"condition" : "AtMost",
 				"item_type" : "BAR",
 				"material" : "INORGANIC:STEEL",
@@ -1776,6 +1782,12 @@
 				"value" : 100
 			},
 			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 20
+			},
+			{
 				"condition" : "AtMost",
 				"flags" : 
 				[
@@ -1816,6 +1828,12 @@
 				"item_type" : "BAR",
 				"material" : "COAL",
 				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 20
 			},
 			{
 				"condition" : "AtMost",
@@ -1860,6 +1878,12 @@
 				"value" : 100
 			},
 			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 20
+			},
+			{
 				"condition" : "AtMost",
 				"flags" : 
 				[
@@ -1902,6 +1926,12 @@
 				"value" : 100
 			},
 			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 20
+			},
+			{
 				"condition" : "AtMost",
 				"flags" : 
 				[
@@ -1942,6 +1972,12 @@
 				"item_type" : "BAR",
 				"material" : "COAL",
 				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 20
 			},
 			{
 				"condition" : "AtMost",
@@ -1996,6 +2032,12 @@
 				"value" : 100
 			},
 			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 20
+			},
+			{
 				"condition" : "AtMost",
 				"flags" : 
 				[
@@ -2036,6 +2078,12 @@
 				"item_type" : "BAR",
 				"material" : "COAL",
 				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 20
 			},
 			{
 				"condition" : "AtMost",
@@ -2090,6 +2138,12 @@
 				"value" : 100
 			},
 			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 20
+			},
+			{
 				"condition" : "AtMost",
 				"flags" : 
 				[
@@ -2130,6 +2184,12 @@
 				"item_type" : "BAR",
 				"material" : "COAL",
 				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 20
 			},
 			{
 				"condition" : "AtMost",
@@ -2174,6 +2234,12 @@
 				"value" : 100
 			},
 			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 20
+			},
+			{
 				"condition" : "AtMost",
 				"flags" : 
 				[
@@ -2214,6 +2280,12 @@
 				"item_type" : "BAR",
 				"material" : "COAL",
 				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 20
 			},
 			{
 				"condition" : "AtMost",
@@ -2270,6 +2342,12 @@
 				"value" : 100
 			},
 			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 20
+			},
+			{
 				"condition" : "AtMost",
 				"flags" : 
 				[
@@ -2310,6 +2388,12 @@
 				"item_type" : "BAR",
 				"material" : "COAL",
 				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 20
 			},
 			{
 				"condition" : "AtMost",

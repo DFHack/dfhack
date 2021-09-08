@@ -258,3 +258,9 @@ function test.import_invalid_reaction_conditions()
     ]], 'condition ignored for bad reagent name', 1)
     expect.eq(0, #get_last_order().item_conditions)
 end
+
+function test.list()
+    local output, status = dfhack.run_command_silent('orders', 'list')
+    expect.eq(CR_OK, status)
+    expect.str_find(BACKUP_FILE_NAME:gsub('%-', '%%-'), output)
+end

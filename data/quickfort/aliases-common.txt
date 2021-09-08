@@ -118,6 +118,7 @@ seeds:          {foodprefix}b{Right}{Down 9}p^
 dye:            {foodprefix}b{Right}{Down 11}{Right}{Down 28}{togglesequence 4}^
 tallow:         {foodprefix}b{Right}{Down 13}{Right}stallow&p^
 miscliquid:     {foodprefix}b{Right}{Down 18}p^
+wax:            {foodprefix}b{Right}{Down 15}{Right}{Down 6}&^
 
 forbidpreparedfood:   {foodprefix}u^
 forbidunpreparedfish: {foodprefix}{Right}{Down 2}f^
@@ -127,6 +128,7 @@ forbidseeds:          {foodprefix}{Right}{Down 9}f^
 forbiddye:            {foodprefix}{Right}{Down 11}{Right}{Down 28}{togglesequence 4}^
 forbidtallow:         {foodprefix}{Right}{Down 13}{Right}stallow&f^
 forbidmiscliquid:     {foodprefix}{Right}{Down 18}f^
+forbidwax:            {foodprefix}{Right}{Down 15}{Right}{Down 6}&^
 
 permitpreparedfood:   {forbidpreparedfood}
 permitunpreparedfish: {foodprefix}{Right}{Down 2}p^
@@ -136,6 +138,7 @@ permitseeds:          {foodprefix}{Right}{Down 9}p^
 permitdye:            {forbiddye}
 permittallow:         {foodprefix}{Right}{Down 13}{Right}stallow&p^
 permitmiscliquid:     {foodprefix}{Right}{Down 18}p^
+permitwax:            {forbidwax}
 
 # the next two aliases are for compatibility with previous implementations of
 # Quickfort and are not documented.

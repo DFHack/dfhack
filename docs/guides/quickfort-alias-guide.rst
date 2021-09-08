@@ -682,6 +682,7 @@ seeds            forbidseeds           permitseeds
 dye              forbiddye             permitdye
 tallow           forbidtallow          permittallow
 miscliquid       forbidmiscliquid      permitmiscliquid
+wax              forbidwax             permitwax
 ===============  ====================  ====================
 
 Furniture stockpile adjustments

@@ -36,6 +36,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 - `tailor`: fixed some inconsistencies (and possible crashes) when parsing certain subcommands, e.g. ``tailor help``
 
+## Misc Improvements
+- `automaterial`: ensure construction tiles are laid down in order when using `buildingplan` to plan the constructions
+
 # 0.47.05-r3
 
 ## New Plugins

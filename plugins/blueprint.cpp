@@ -745,9 +745,9 @@ static bool do_blueprint(color_ostream &out,
     {
         std::ostringstream command;
         command << "gui/blueprint";
-        for (const string &param : parameters)
+        for (size_t i = 1; i < parameters.size(); ++i)
         {
-            command << " " << param;
+            command << " " << parameters[i];
         }
         string command_str = command.str();
         out.print("launching %s\n", command_str.c_str());

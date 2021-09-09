@@ -32,11 +32,11 @@
 #include "df/building_workshopst.h"
 #include "df/world.h"
 
-using std::string;
 using std::endl;
-using std::vector;
 using std::ofstream;
 using std::pair;
+using std::string;
+using std::vector;
 using namespace DFHack;
 
 DFHACK_PLUGIN("blueprint");
@@ -49,6 +49,10 @@ struct blueprint_options {
     // starting tile coordinate of the translation area (if not set then all
     // coordinates are set to -30000)
     df::coord start;
+
+    // file splitting strategy. this could be an enum if we set up the
+    // boilerplate for it.
+    string split_strategy;
 
     // dimensions of translation area. width and height are guaranteed to be
     // greater than 0. depth can be positive or negative, but not zero.
@@ -71,17 +75,18 @@ struct blueprint_options {
     static struct_identity _identity;
 };
 static const struct_field_info blueprint_options_fields[] = {
-    { struct_field_info::PRIMITIVE, "help",       offsetof(blueprint_options, help),       &df::identity_traits<bool>::identity,    0, 0 },
-    { struct_field_info::SUBSTRUCT, "start",      offsetof(blueprint_options, start),      &df::coord::_identity,                   0, 0 },
-    { struct_field_info::PRIMITIVE, "width",      offsetof(blueprint_options, width),      &df::identity_traits<int32_t>::identity, 0, 0 },
-    { struct_field_info::PRIMITIVE, "height",     offsetof(blueprint_options, height),     &df::identity_traits<int32_t>::identity, 0, 0 },
-    { struct_field_info::PRIMITIVE, "depth",      offsetof(blueprint_options, depth),      &df::identity_traits<int32_t>::identity, 0, 0 },
-    { struct_field_info::PRIMITIVE, "name",       offsetof(blueprint_options, name),        df::identity_traits<string>::get(),     0, 0 },
-    { struct_field_info::PRIMITIVE, "auto_phase", offsetof(blueprint_options, auto_phase), &df::identity_traits<bool>::identity,    0, 0 },
-    { struct_field_info::PRIMITIVE, "dig",        offsetof(blueprint_options, dig),        &df::identity_traits<bool>::identity,    0, 0 },
-    { struct_field_info::PRIMITIVE, "build",      offsetof(blueprint_options, build),      &df::identity_traits<bool>::identity,    0, 0 },
-    { struct_field_info::PRIMITIVE, "place",      offsetof(blueprint_options, place),      &df::identity_traits<bool>::identity,    0, 0 },
-    { struct_field_info::PRIMITIVE, "query",      offsetof(blueprint_options, query),      &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::PRIMITIVE, "help",           offsetof(blueprint_options, help),          &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::SUBSTRUCT, "start",          offsetof(blueprint_options, start),         &df::coord::_identity,                   0, 0 },
+    { struct_field_info::PRIMITIVE, "split_strategy", offsetof(blueprint_options, split_strategy), df::identity_traits<string>::get(),     0, 0 },
+    { struct_field_info::PRIMITIVE, "width",          offsetof(blueprint_options, width),         &df::identity_traits<int32_t>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "height",         offsetof(blueprint_options, height),        &df::identity_traits<int32_t>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "depth",          offsetof(blueprint_options, depth),         &df::identity_traits<int32_t>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "name",           offsetof(blueprint_options, name),           df::identity_traits<string>::get(),     0, 0 },
+    { struct_field_info::PRIMITIVE, "auto_phase",     offsetof(blueprint_options, auto_phase),    &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::PRIMITIVE, "dig",            offsetof(blueprint_options, dig),           &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::PRIMITIVE, "build",          offsetof(blueprint_options, build),         &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::PRIMITIVE, "place",          offsetof(blueprint_options, place),         &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::PRIMITIVE, "query",          offsetof(blueprint_options, query),         &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::END }
 };
 struct_identity blueprint_options::_identity(sizeof(blueprint_options), &df::allocator_fn<blueprint_options>, NULL, "blueprint_options", NULL, blueprint_options_fields);
@@ -90,7 +95,7 @@ command_result blueprint(color_ostream &, vector<string> &);
 
 DFhackCExport command_result plugin_init(color_ostream &, vector<PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("blueprint", "Record the structure of a live game map in a quickfort blueprint", blueprint, false));
+    commands.push_back(PluginCommand("blueprint", "Record the structure of a live game map in a quickfort blueprint file", blueprint, false));
     return CR_OK;
 }
 
@@ -587,34 +592,68 @@ static string get_tile_query(df::building* b)
     return " ";
 }
 
-// can remove once we move to C++20
-static bool ends_with(const string &str, const string &sv)
+static bool get_filename(string &fname,
+                         color_ostream &out,
+                         blueprint_options opts, // copy because we can't const
+                         const string &phase)
 {
-    if (sv.size() > str.size())
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
+
+    if (!lua_checkstack(L, 3) ||
+        !Lua::PushModulePublic(
+            out, L, "plugins.blueprint", "get_filename"))
+    {
+        out.printerr("Failed to load blueprint Lua code\n");
         return false;
-    return str.substr(str.size() - sv.size()) == sv;
+    }
+
+    Lua::Push(L, &opts);
+    Lua::Push(L, phase);
+
+    if (!Lua::SafeCall(out, L, 2, 1))
+    {
+        out.printerr("Failed Lua call to get_filename\n");
+        return false;
+    }
+
+    const char *s = lua_tostring(L, -1);
+    if (!s)
+    {
+        out.printerr("Failed to retrieve filename from get_filename\n");
+        return false;
+    }
+
+    fname = s;
+    return true;
 }
 
-// returns filename
-static string init_stream(ofstream &out, string basename, string target)
+static bool write_blueprint(color_ostream &out,
+                            std::map<string, ofstream*> &output_files,
+                            const blueprint_options &opts,
+                            const string &phase,
+                            const std::ostringstream &stream)
 {
-    std::ostringstream out_path;
-    string separator = ends_with(basename, "/") ? "" : "-";
-    out_path << basename << separator << target << ".csv";
-    string path = out_path.str();
-    out.open(path, ofstream::trunc);
-    out << "#" << target << endl;
-    return path;
+    string fname;
+    if (!get_filename(fname, out, opts, phase))
+        return false;
+    if (!output_files.count(fname))
+        output_files[fname] = new ofstream(fname, ofstream::trunc);
+
+    ofstream &ofile = *output_files[fname];
+    ofile << "#" << phase << endl;
+    ofile << stream.str();
+    return true;
 }
 
-static bool do_transform(const DFCoord &start, const DFCoord &end,
-                         const blueprint_options &options,
-                         vector<string> &files,
-                         std::ostringstream &err)
+static bool do_transform(color_ostream &out,
+                         const DFCoord &start, const DFCoord &end,
+                         const blueprint_options &opts,
+                         vector<string> &filenames)
 {
-    ofstream dig, build, place, query;
+    std::ostringstream dig, build, place, query;
 
-    string basename = "blueprints/" + options.name;
+    string basename = "blueprints/" + opts.name;
     size_t last_slash = basename.find_last_of("/");
     string parent_path = basename.substr(0, last_slash);
 
@@ -622,25 +661,9 @@ static bool do_transform(const DFCoord &start, const DFCoord &end,
     std::error_code ec;
     if (!Filesystem::mkdir_recursive(parent_path))
     {
-        err << "could not create output directory: '" << parent_path << "'";
+        out.printerr("could not create output directory: '%s'\n",
+                     parent_path.c_str());
         return false;
-    }
-
-    if (options.auto_phase || options.dig)
-    {
-        files.push_back(init_stream(dig, basename, "dig"));
-    }
-    if (options.auto_phase || options.build)
-    {
-        files.push_back(init_stream(build, basename, "build"));
-    }
-    if (options.auto_phase || options.place)
-    {
-        files.push_back(init_stream(place, basename, "place"));
-    }
-    if (options.auto_phase || options.query)
-    {
-        files.push_back(init_stream(query, basename, "query"));
     }
 
     const int32_t z_inc = start.z < end.z ? 1 : -1;
@@ -652,44 +675,66 @@ static bool do_transform(const DFCoord &start, const DFCoord &end,
             for (int32_t x = start.x; x < end.x; x++)
             {
                 df::building* b = Buildings::findAtTile(DFCoord(x, y, z));
-                if (options.auto_phase || options.query)
+                if (opts.auto_phase || opts.query)
                     query << get_tile_query(b) << ',';
-                if (options.auto_phase || options.place)
+                if (opts.auto_phase || opts.place)
                     place << get_tile_place(x, y, b) << ',';
-                if (options.auto_phase || options.build)
+                if (opts.auto_phase || opts.build)
                     build << get_tile_build(x, y, b) << ',';
-                if (options.auto_phase || options.dig)
+                if (opts.auto_phase || opts.dig)
                     dig << get_tile_dig(x, y, z) << ',';
             }
-            if (options.auto_phase || options.query)
+            if (opts.auto_phase || opts.query)
                 query << "#" << endl;
-            if (options.auto_phase || options.place)
+            if (opts.auto_phase || opts.place)
                 place << "#" << endl;
-            if (options.auto_phase || options.build)
+            if (opts.auto_phase || opts.build)
                 build << "#" << endl;
-            if (options.auto_phase || options.dig)
+            if (opts.auto_phase || opts.dig)
                 dig << "#" << endl;
         }
         if (z != end.z - z_inc)
         {
-            if (options.auto_phase || options.query)
+            if (opts.auto_phase || opts.query)
                 query << z_key << endl;
-            if (options.auto_phase || options.place)
+            if (opts.auto_phase || opts.place)
                 place << z_key << endl;
-            if (options.auto_phase || options.build)
+            if (opts.auto_phase || opts.build)
                 build << z_key << endl;
-            if (options.auto_phase || options.dig)
+            if (opts.auto_phase || opts.dig)
                 dig << z_key << endl;
         }
     }
-    if (options.auto_phase || options.query)
-        query.close();
-    if (options.auto_phase || options.place)
-        place.close();
-    if (options.auto_phase || options.build)
-        build.close();
-    if (options.auto_phase || options.dig)
-        dig.close();
+
+    std::map<string, ofstream*> output_files;
+    string fname;
+    if (opts.auto_phase || opts.dig)
+    {
+        if (!write_blueprint(out, output_files, opts, "dig", dig))
+            return false;
+    }
+    if (opts.auto_phase || opts.build)
+    {
+        if (!write_blueprint(out, output_files, opts, "build", build))
+            return false;
+    }
+    if (opts.auto_phase || opts.place)
+    {
+        if (!write_blueprint(out, output_files, opts, "place", place))
+            return false;
+    }
+    if (opts.auto_phase || opts.query)
+    {
+        if (!write_blueprint(out, output_files, opts, "query", query))
+            return false;
+    }
+
+    for (auto &it : output_files)
+    {
+        filenames.push_back(it.first);
+        it.second->close();
+        delete(it.second);
+    }
 
     return true;
 }
@@ -805,13 +850,7 @@ static bool do_blueprint(color_ostream &out,
     if (end.z < -1)
         end.z = -1;
 
-    std::ostringstream err;
-    if (!do_transform(start, end, options, files, err))
-    {
-        out.printerr("%s\n", err.str().c_str());
-        return false;
-    }
-    return true;
+    return do_transform(out, start, end, options, files);
 }
 
 // entrypoint when called from Lua. returns the names of the generated files

@@ -4,7 +4,8 @@ local b = require('plugins.blueprint')
 function test.parse_gui_commandline()
     local opts = {}
     b.parse_gui_commandline(opts, {})
-    expect.table_eq({auto_phase=true, name='blueprint'}, opts)
+    expect.table_eq({auto_phase=true, split_strategy='none', name='blueprint'},
+                    opts)
 
     opts = {}
     b.parse_gui_commandline(opts, {'help'})
@@ -23,12 +24,29 @@ function test.parse_gui_commandline()
                function()
                    b.parse_gui_commandline(opts, {'--cursor=1,2,3'})
                end)
-    expect.table_eq({auto_phase=true, name='blueprint', start={x=1,y=2,z=3}},
+    expect.table_eq({auto_phase=true, split_strategy='none', name='blueprint',
+                     start={x=1,y=2,z=3}},
                     opts)
 
     opts = {}
+    b.parse_gui_commandline(opts, {'-tnone'})
+    expect.table_eq({auto_phase=true, split_strategy='none', name='blueprint'},
+                    opts)
+
+    opts = {}
+    b.parse_gui_commandline(opts, {'--splitby', 'phase'})
+    expect.table_eq({auto_phase=true, split_strategy='phase', name='blueprint'},
+                    opts)
+
+    opts = {}
+    expect.error_match('unknown split strategy',
+                       function() b.parse_gui_commandline(opts, {'-tfoo'}) end)
+
+    opts = {}
     b.parse_gui_commandline(opts, {'imaname'})
-    expect.table_eq({auto_phase=true, name='imaname'}, opts)
+    expect.table_eq({auto_phase=true, split_strategy='none',
+                     name='imaname'},
+                    opts)
 
     opts = {}
     expect.error_match('invalid basename',
@@ -36,7 +54,8 @@ function test.parse_gui_commandline()
 
     opts = {}
     b.parse_gui_commandline(opts, {'imaname', 'dig', 'query'})
-    expect.table_eq({auto_phase=false, name='imaname', dig=true, query=true},
+    expect.table_eq({auto_phase=false, split_strategy='none', name='imaname',
+                     dig=true, query=true},
                     opts)
 
     opts = {}
@@ -48,37 +67,44 @@ end
 function test.parse_commandline()
     local opts = {}
     b.parse_commandline(opts, '1', '2')
-    expect.table_eq({auto_phase=true,name='blueprint',width=1,height=2,depth=1},
+    expect.table_eq({auto_phase=true, split_strategy='none', name='blueprint',
+                     width=1, height=2, depth=1},
                     opts)
 
     opts = {}
     b.parse_commandline(opts, '1', '2', '3')
-    expect.table_eq({auto_phase=true,name='blueprint',width=1,height=2,depth=3},
+    expect.table_eq({auto_phase=true, split_strategy='none', name='blueprint',
+                     width=1, height=2, depth=3},
                     opts)
 
     opts = {}
     b.parse_commandline(opts, '1', '2', '-3')
-    expect.table_eq({auto_phase=true,name='blueprint',width=1,height=2,depth=-3},
+    expect.table_eq({auto_phase=true, split_strategy='none', name='blueprint',
+                     width=1, height=2, depth=-3},
                     opts)
 
     opts = {}
     b.parse_commandline(opts, '1', '2', 'imaname')
-    expect.table_eq({auto_phase=true,name='imaname',width=1,height=2,depth=1},
+    expect.table_eq({auto_phase=true, split_strategy='none', name='imaname',
+                     width=1, height=2, depth=1},
                     opts)
 
     opts = {}
     b.parse_commandline(opts, '1', '2', '10imaname')
-    expect.table_eq({auto_phase=true,name='10imaname',width=1,height=2,depth=1},
+    expect.table_eq({auto_phase=true, split_strategy='none', name='10imaname',
+                     width=1, height=2, depth=1},
                     opts, 'invalid depth is considered a basename')
 
     opts = {}
     b.parse_commandline(opts, '1', '2', '-10imaname')
-    expect.table_eq({auto_phase=true,name='-10imaname',width=1,height=2,depth=1},
+    expect.table_eq({auto_phase=true, split_strategy='none', name='-10imaname',
+                     width=1, height=2, depth=1},
                     opts, 'invalid negative depth is considered a basename')
 
     opts = {}
     b.parse_commandline(opts, '1', '2', '3', 'imaname')
-    expect.table_eq({auto_phase=true,name='imaname',width=1,height=2,depth=3},
+    expect.table_eq({auto_phase=true, split_strategy='none', name='imaname',
+                     width=1, height=2, depth=3},
                     opts)
 
     opts = {}
@@ -151,5 +177,23 @@ function test.do_phase_ensure_cursor_is_at_upper_left()
               expect.table_eq({'2', '2', '2', 'imaname', 'query',
                                '--cursor=10,20,30'},
                               mock_run.call_args[1])
+        end)
+end
+
+function test.get_filename()
+    local opts = {name='a', split_strategy='none'}
+    expect.eq('blueprints/a.csv', b.get_filename(opts, 'dig'))
+
+    opts = {name='a/', split_strategy='none'}
+    expect.eq('blueprints/a/a.csv', b.get_filename(opts, 'dig'))
+
+    opts = {name='a', split_strategy='phase'}
+    expect.eq('blueprints/a-dig.csv', b.get_filename(opts, 'dig'))
+
+    opts = {name='a/', split_strategy='phase'}
+    expect.eq('blueprints/a/a-dig.csv', b.get_filename(opts, 'dig'))
+
+    expect.error_match('could not parse basename', function()
+            b.get_filename({name='', split_strategy='none'})
         end)
 end

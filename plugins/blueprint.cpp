@@ -628,6 +628,14 @@ static bool get_filename(string &fname,
     return true;
 }
 
+static string get_modeline(const string &phase)
+{
+    std::ostringstream modeline;
+    modeline << "#" << phase << " label(" << phase << ")";
+
+    return modeline.str();
+}
+
 static bool write_blueprint(color_ostream &out,
                             std::map<string, ofstream*> &output_files,
                             const blueprint_options &opts,
@@ -641,7 +649,7 @@ static bool write_blueprint(color_ostream &out,
         output_files[fname] = new ofstream(fname, ofstream::trunc);
 
     ofstream &ofile = *output_files[fname];
-    ofile << "#" << phase << endl;
+    ofile << get_modeline(phase) << endl;
     ofile << stream.str();
     return true;
 }

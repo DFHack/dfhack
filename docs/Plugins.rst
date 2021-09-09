@@ -54,9 +54,8 @@ Usage::
 Examples:
 
 ``blueprint gui``
-    Runs `gui/blueprint`, the interactive blueprint frontend, where all
-    configuration for a ``blueprint`` command can be set visually and
-    interactively.
+    Runs `gui/blueprint`, the interactive frontend, where all configuration for
+    a ``blueprint`` command can be set visually and interactively.
 
 ``blueprint 30 40 bedrooms``
     Generates blueprints for an area 30 tiles wide by 40 tiles tall, starting
@@ -103,6 +102,21 @@ Options:
     then an active game map cursor is not necessary.
 :``-h``, ``--help``:
     Show command help text.
+:``-t``, ``--splitby <strategy>``:
+    Split blueprints into multiple files. See the ``Splitting output into
+    multiple files`` section below for details. If not specified, defaults to
+    "none", which will create a standard quickfort
+    `multi-blueprint <quickfort-packaging>` file.
+
+Splitting output into multiple files:
+
+The ``--splitby`` flag can take any of the following values:
+
+:``none``:
+    Writes all blueprints into a single file. This is the standard format for
+    quickfort fortress blueprint bundles and is the default.
+:``phase``:
+    Creates a separate file for each phase.
 
 .. _remotefortressreader:
 

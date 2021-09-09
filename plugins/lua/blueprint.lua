@@ -40,8 +40,13 @@ local valid_phase_list = {
     'place',
     'query',
 }
-
 valid_phases = utils.invert(valid_phase_list)
+
+local valid_split_strategies_list = {
+    'none',
+    'phase',
+}
+valid_split_strategies = utils.invert(valid_split_strategies_list)
 
 local function parse_cursor(opts, arg)
     local cursor = argparse.coords(arg)
@@ -49,6 +54,15 @@ local function parse_cursor(opts, arg)
     -- create the table as needed when called from lua
     if not opts.start then opts.start = {} end
     utils.assign(opts.start, cursor)
+end
+
+local function parse_split_strategy(opts, strategy)
+    if not valid_split_strategies[strategy] then
+        qerror(('unknown split strategy: "%s"; expected one of: %s')
+               :format(strategy,
+                       table.concat(valid_split_strategies_list, ', ')))
+    end
+    opts.split_strategy = strategy
 end
 
 local function parse_positionals(opts, args, start_argidx)
@@ -71,8 +85,8 @@ local function parse_positionals(opts, args, start_argidx)
     local phase = args[argidx]
     while phase do
         if not valid_phases[phase] then
-            qerror(('unknown phase: "%s"; expected one of: %s'):
-                   format(phase, table.concat(valid_phase_list, ', ')))
+            qerror(('unknown phase: "%s"; expected one of: %s')
+                   :format(phase, table.concat(valid_phase_list, ', ')))
         end
         auto_phase = false
         opts[phase] = true
@@ -88,11 +102,20 @@ local function process_args(opts, args)
         return
     end
 
-    return argparse.processArgsGetopt(args, {
+    local positionals = argparse.processArgsGetopt(args, {
             {'c', 'cursor', hasArg=true,
              handler=function(optarg) parse_cursor(opts, optarg) end},
             {'h', 'help', handler=function() opts.help = true end},
+            {'t', 'splitby', hasArg=true,
+             handler=function(optarg) parse_split_strategy(opts, optarg) end},
         })
+
+    if opts.help then
+        return
+    end
+
+    opts.split_strategy = opts.split_strategy or valid_split_strategies_list[1]
+    return positionals
 end
 
 -- used by the gui/blueprint script
@@ -131,6 +154,24 @@ function parse_commandline(opts, ...)
     end
 
     parse_positionals(opts, positionals, depth and 4 or 3)
+end
+
+-- returns the name of the output file for the given context
+function get_filename(opts, phase)
+    local fullname = 'blueprints/' .. opts.name
+    local _,_,basename = fullname:find('/([^/]+)/?$')
+    if not basename then
+        -- should not happen since opts.name should already be validated
+        error(('could not parse basename out of "%s"'):format(fullname))
+    end
+    if fullname:endswith('/') then
+        fullname = fullname .. basename
+    end
+    if opts.split_strategy == 'phase' then
+        return ('%s-%s.csv'):format(fullname, phase)
+    end
+    -- no splitting
+    return ('%s.csv'):format(fullname)
 end
 
 -- compatibility with old exported API.

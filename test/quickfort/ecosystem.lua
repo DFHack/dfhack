@@ -18,9 +18,7 @@
 -- test blueprints that #build flooring and then #build a workshop on top, again
 -- since the flooring is never actually built.
 
-config = {
-    mode = 'fortress',
-}
+config.mode = 'fortress'
 
 local blueprint = require('plugins.blueprint')
 local quickfort_list = reqscript('internal/quickfort/list')
@@ -31,6 +29,19 @@ local input_dir = 'library/test/ecosystem/in/'
 local output_dir = 'library/test/ecosystem/out/'
 
 local mode_names = {'dig', 'build', 'place', 'query'}
+
+-- clear the output dir before each test run (but not after -- to allow
+-- inspection of the results)
+local function test_wrapper(test_fn)
+    local outdir = blueprints_dir .. output_dir
+    for _, v in ipairs(dfhack.filesystem.listdir_recursive(outdir)) do
+        if not v.isdir then
+            os.remove(v.path)
+        end
+    end
+    test_fn()
+end
+config.wrapper = test_wrapper
 
 local function bad_spec(expected, varname, basename, bad_value)
     qerror(('expected %s for %s in "%s" test spec; got "%s"'):
@@ -182,7 +193,8 @@ local function run_blueprint(basename, set, pos)
     local blueprint_args = {tostring(set.spec.width),
                             tostring(set.spec.height),
                             tostring(-set.spec.depth),
-                            output_dir..basename, get_cursor_arg(pos)}
+                            output_dir..basename, get_cursor_arg(pos),
+                            '-tphase'}
     for _,mode_name in pairs(mode_names) do
         if set.modes[mode_name] then table.insert(blueprint_args, mode_name) end
     end

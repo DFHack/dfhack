@@ -4,7 +4,8 @@ local b = require('plugins.blueprint')
 function test.parse_gui_commandline()
     local opts = {}
     b.parse_gui_commandline(opts, {})
-    expect.table_eq({auto_phase=true, split_strategy='none', name='blueprint'},
+    expect.table_eq({auto_phase=true, format='minimal', split_strategy='none',
+                     name='blueprint'},
                     opts)
 
     opts = {}
@@ -13,38 +14,56 @@ function test.parse_gui_commandline()
 
     opts = {}
     b.parse_gui_commandline(opts, {'--help'})
-    expect.table_eq({help=true}, opts)
+    expect.table_eq({help=true, format='minimal', split_strategy='none'}, opts)
 
     opts = {}
     b.parse_gui_commandline(opts, {'-h'})
-    expect.table_eq({help=true}, opts)
+    expect.table_eq({help=true, format='minimal', split_strategy='none'}, opts)
 
     opts = {}
     mock.patch(dfhack.maps, 'isValidTilePos', mock.func(true),
                function()
                    b.parse_gui_commandline(opts, {'--cursor=1,2,3'})
                end)
-    expect.table_eq({auto_phase=true, split_strategy='none', name='blueprint',
-                     start={x=1,y=2,z=3}},
+    expect.table_eq({auto_phase=true, format='minimal', split_strategy='none',
+                     name='blueprint', start={x=1,y=2,z=3}},
                     opts)
 
     opts = {}
+    b.parse_gui_commandline(opts, {'-fminimal'})
+    expect.table_eq({auto_phase=true, format='minimal', split_strategy='none',
+                     name='blueprint'},
+                    opts)
+
+    opts = {}
+    b.parse_gui_commandline(opts, {'--format', 'pretty'})
+    expect.table_eq({auto_phase=true, format='pretty', split_strategy='none',
+                     name='blueprint'},
+                    opts)
+
+    opts = {}
+    expect.error_match('unknown format',
+                       function() b.parse_gui_commandline(opts, {'-ffoo'}) end)
+
+    opts = {}
     b.parse_gui_commandline(opts, {'-tnone'})
-    expect.table_eq({auto_phase=true, split_strategy='none', name='blueprint'},
+    expect.table_eq({auto_phase=true, format='minimal', split_strategy='none',
+                     name='blueprint'},
                     opts)
 
     opts = {}
     b.parse_gui_commandline(opts, {'--splitby', 'phase'})
-    expect.table_eq({auto_phase=true, split_strategy='phase', name='blueprint'},
+    expect.table_eq({auto_phase=true, format='minimal', split_strategy='phase',
+                     name='blueprint'},
                     opts)
 
     opts = {}
-    expect.error_match('unknown split strategy',
+    expect.error_match('unknown split_strategy',
                        function() b.parse_gui_commandline(opts, {'-tfoo'}) end)
 
     opts = {}
     b.parse_gui_commandline(opts, {'imaname'})
-    expect.table_eq({auto_phase=true, split_strategy='none',
+    expect.table_eq({auto_phase=true, format='minimal', split_strategy='none',
                      name='imaname'},
                     opts)
 
@@ -54,8 +73,8 @@ function test.parse_gui_commandline()
 
     opts = {}
     b.parse_gui_commandline(opts, {'imaname', 'dig', 'query'})
-    expect.table_eq({auto_phase=false, split_strategy='none', name='imaname',
-                     dig=true, query=true},
+    expect.table_eq({auto_phase=false, format='minimal', split_strategy='none',
+                     name='imaname', dig=true, query=true},
                     opts)
 
     opts = {}
@@ -67,44 +86,44 @@ end
 function test.parse_commandline()
     local opts = {}
     b.parse_commandline(opts, '1', '2')
-    expect.table_eq({auto_phase=true, split_strategy='none', name='blueprint',
-                     width=1, height=2, depth=1},
+    expect.table_eq({auto_phase=true, format='minimal', split_strategy='none',
+                     name='blueprint', width=1, height=2, depth=1},
                     opts)
 
     opts = {}
     b.parse_commandline(opts, '1', '2', '3')
-    expect.table_eq({auto_phase=true, split_strategy='none', name='blueprint',
-                     width=1, height=2, depth=3},
+    expect.table_eq({auto_phase=true, format='minimal', split_strategy='none',
+                     name='blueprint', width=1, height=2, depth=3},
                     opts)
 
     opts = {}
     b.parse_commandline(opts, '1', '2', '-3')
-    expect.table_eq({auto_phase=true, split_strategy='none', name='blueprint',
-                     width=1, height=2, depth=-3},
+    expect.table_eq({auto_phase=true, format='minimal', split_strategy='none',
+                     name='blueprint', width=1, height=2, depth=-3},
                     opts)
 
     opts = {}
     b.parse_commandline(opts, '1', '2', 'imaname')
-    expect.table_eq({auto_phase=true, split_strategy='none', name='imaname',
-                     width=1, height=2, depth=1},
+    expect.table_eq({auto_phase=true, format='minimal', split_strategy='none',
+                     name='imaname', width=1, height=2, depth=1},
                     opts)
 
     opts = {}
     b.parse_commandline(opts, '1', '2', '10imaname')
-    expect.table_eq({auto_phase=true, split_strategy='none', name='10imaname',
-                     width=1, height=2, depth=1},
+    expect.table_eq({auto_phase=true, format='minimal', split_strategy='none',
+                     name='10imaname', width=1, height=2, depth=1},
                     opts, 'invalid depth is considered a basename')
 
     opts = {}
     b.parse_commandline(opts, '1', '2', '-10imaname')
-    expect.table_eq({auto_phase=true, split_strategy='none', name='-10imaname',
-                     width=1, height=2, depth=1},
+    expect.table_eq({auto_phase=true, format='minimal', split_strategy='none',
+                     name='-10imaname', width=1, height=2, depth=1},
                     opts, 'invalid negative depth is considered a basename')
 
     opts = {}
     b.parse_commandline(opts, '1', '2', '3', 'imaname')
-    expect.table_eq({auto_phase=true, split_strategy='none', name='imaname',
-                     width=1, height=2, depth=3},
+    expect.table_eq({auto_phase=true, format='minimal', split_strategy='none',
+                     name='imaname', width=1, height=2, depth=3},
                     opts)
 
     opts = {}

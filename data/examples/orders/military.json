@@ -1725,7 +1725,7 @@
 				"condition" : "LessThan",
 				"item_type" : "BOULDER",
 				"reaction_class" : "FLUX",
-				"value" : 20
+				"value" : 5
 			},
 			{
 				"condition" : "AtMost",
@@ -1785,7 +1785,7 @@
 				"condition" : "LessThan",
 				"item_type" : "BOULDER",
 				"reaction_class" : "FLUX",
-				"value" : 20
+				"value" : 5
 			},
 			{
 				"condition" : "AtMost",
@@ -1833,7 +1833,7 @@
 				"condition" : "LessThan",
 				"item_type" : "BOULDER",
 				"reaction_class" : "FLUX",
-				"value" : 20
+				"value" : 5
 			},
 			{
 				"condition" : "AtMost",
@@ -1881,7 +1881,7 @@
 				"condition" : "LessThan",
 				"item_type" : "BOULDER",
 				"reaction_class" : "FLUX",
-				"value" : 20
+				"value" : 5
 			},
 			{
 				"condition" : "AtMost",
@@ -1929,7 +1929,7 @@
 				"condition" : "LessThan",
 				"item_type" : "BOULDER",
 				"reaction_class" : "FLUX",
-				"value" : 20
+				"value" : 5
 			},
 			{
 				"condition" : "AtMost",
@@ -1977,7 +1977,7 @@
 				"condition" : "LessThan",
 				"item_type" : "BOULDER",
 				"reaction_class" : "FLUX",
-				"value" : 20
+				"value" : 5
 			},
 			{
 				"condition" : "AtMost",
@@ -2035,7 +2035,7 @@
 				"condition" : "LessThan",
 				"item_type" : "BOULDER",
 				"reaction_class" : "FLUX",
-				"value" : 20
+				"value" : 5
 			},
 			{
 				"condition" : "AtMost",
@@ -2083,7 +2083,7 @@
 				"condition" : "LessThan",
 				"item_type" : "BOULDER",
 				"reaction_class" : "FLUX",
-				"value" : 20
+				"value" : 5
 			},
 			{
 				"condition" : "AtMost",
@@ -2141,7 +2141,7 @@
 				"condition" : "LessThan",
 				"item_type" : "BOULDER",
 				"reaction_class" : "FLUX",
-				"value" : 20
+				"value" : 5
 			},
 			{
 				"condition" : "AtMost",
@@ -2189,7 +2189,7 @@
 				"condition" : "LessThan",
 				"item_type" : "BOULDER",
 				"reaction_class" : "FLUX",
-				"value" : 20
+				"value" : 5
 			},
 			{
 				"condition" : "AtMost",
@@ -2237,7 +2237,7 @@
 				"condition" : "LessThan",
 				"item_type" : "BOULDER",
 				"reaction_class" : "FLUX",
-				"value" : 20
+				"value" : 5
 			},
 			{
 				"condition" : "AtMost",
@@ -2285,7 +2285,7 @@
 				"condition" : "LessThan",
 				"item_type" : "BOULDER",
 				"reaction_class" : "FLUX",
-				"value" : 20
+				"value" : 5
 			},
 			{
 				"condition" : "AtMost",
@@ -2345,7 +2345,7 @@
 				"condition" : "LessThan",
 				"item_type" : "BOULDER",
 				"reaction_class" : "FLUX",
-				"value" : 20
+				"value" : 5
 			},
 			{
 				"condition" : "AtMost",
@@ -2393,7 +2393,7 @@
 				"condition" : "LessThan",
 				"item_type" : "BOULDER",
 				"reaction_class" : "FLUX",
-				"value" : 20
+				"value" : 5
 			},
 			{
 				"condition" : "AtMost",

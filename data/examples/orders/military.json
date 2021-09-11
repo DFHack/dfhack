@@ -2893,7 +2893,7 @@
 		"frequency" : "Daily",
 		"id" : 72,
 		"is_active" : false,
-		"is_validated" : true,
+		"is_validated" : false,
 		"item_conditions" : 
 		[
 			{

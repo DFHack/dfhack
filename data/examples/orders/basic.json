@@ -41,8 +41,8 @@
 		"meal_ingredients" : 4
 	},
 	{
-		"amount_left" : 1,
-		"amount_total" : 1,
+		"amount_left" : 2,
+		"amount_total" : 2,
 		"frequency" : "Daily",
 		"id" : 1,
 		"is_active" : false,
@@ -78,8 +78,8 @@
 		"reaction" : "BREW_DRINK_FROM_PLANT"
 	},
 	{
-		"amount_left" : 1,
-		"amount_total" : 1,
+		"amount_left" : 2,
+		"amount_total" : 2,
 		"frequency" : "Daily",
 		"id" : 2,
 		"is_active" : false,

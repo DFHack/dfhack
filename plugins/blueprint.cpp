@@ -113,11 +113,13 @@ struct tile_context {
     df::building* b = NULL;
 };
 
-// the number of different strings we use is very small so we use a string cache
-// to limit the number of string instances we store. this significantly speeds
-// up processing and allows us to handle very large maps (e.g. 16x16 embarks)
-// without running out of memory.
-// if NULL is passed as the str, the cache is cleared
+// We use const char * throughout this code instead of std::string to avoid
+// having to allocate memory for all the small string literals. This
+// significantly speeds up processing and allows us to handle very large maps
+// (e.g. 16x16 embarks) without running out of memory. This cache provides a
+// mechanism for storing dynamically created strings so their memory stays
+// allocated until we write out the blueprints at the end.
+// If NULL is passed as the str, the cache is cleared.
 static const char * cache(const char *str) {
     // this local static assumes that no two blueprints are being generated at
     // the same time, which is currently ensured by the higher-level DFHack
@@ -129,6 +131,16 @@ static const char * cache(const char *str) {
         return NULL;
     }
     return _cache.emplace(str).first->c_str();
+}
+
+// Convenience wrapper for std::string.
+static const char * cache(const string &str) {
+    return cache(str.c_str());
+}
+
+// Convenience wrapper for std::ostringstream.
+static const char * cache(std::ostringstream &str) {
+    return cache(str.str());
 }
 
 static const char * get_tile_dig(const df::coord &pos, const tile_context &) {
@@ -164,7 +176,7 @@ static pair<uint32_t, uint32_t> get_building_size(df::building *b) {
 }
 
 static const char * if_pretty(const tile_context &ctx, const char *c) {
-    return ctx.pretty ? c : "";
+    return ctx.pretty ? c : NULL;
 }
 
 static const char * do_block_building(const tile_context &ctx, const char *s,
@@ -339,7 +351,7 @@ static const char * get_trap_str(df::building *b) {
             case 500:   buf << "a";
             case 10000: buf << "a";
             }
-            return cache(buf.str().c_str());
+            return cache(buf);
         }
     default:
         return "~";
@@ -518,7 +530,7 @@ static const char * add_expansion_syntax(const tile_context &ctx,
     std::ostringstream s;
     pair<uint32_t, uint32_t> size = get_building_size(ctx.b);
     s << keys << "(" << size.first << "x" << size.second << ")";
-    return cache(s.str().c_str());
+    return cache(s);
 }
 
 static const char * get_tile_build(const df::coord &pos,

@@ -166,8 +166,9 @@ Nothing in Dreamfort depends on these settings staying as they are. Feel free to
 ""
 Manager / Bookkeeper / Broker,Miner,Miner,Mason,Mason,Outdoorsdwarf,Farmer
 Mechanic (*),Miner (*),Miner (*),Mason (*),Mason (*),Carpenter (*),Grower (*)
-Wood Cutter,,,,,Wood Cutter (*)
-Architect,,,,,Bee Keeper
+Stonecrafter,,,,,Wood Cutter (*)
+Wood Cutter,,,,,Bee Keeper
+Architect
 Misc. labors needed for constructing workshops
 ""
 "The most time-consuming tasks in early Dreamfort are: mining, chopping down trees, and making blocks. Starting with at least two miners, two woodcutters (assuming your embark has trees), and two masons helps in keeping the fort from stalling."

@@ -100,6 +100,10 @@ Options:
     Use the specified map coordinates instead of the current cursor position for
     the upper left corner of the blueprint range. If this option is specified,
     then an active game map cursor is not necessary.
+:``-f``, ``--format <format>``:
+    Select the output format of the generated files. See the ``Output Formats``
+    section below for options. If not specified, the output format defaults to
+    "minimal", which will produce a small, fast ``.csv`` file.
 :``-h``, ``--help``:
     Show command help text.
 :``-t``, ``--splitby <strategy>``:
@@ -107,6 +111,17 @@ Options:
     multiple files`` section below for details. If not specified, defaults to
     "none", which will create a standard quickfort
     `multi-blueprint <quickfort-packaging>` file.
+
+Output formats:
+
+Here are the values that can be passed to the ``--format`` flag:
+
+:minimal:
+    Creates ``.csv`` files with minimal file size that are fast to read and
+    write. This is the default.
+:pretty:
+    Makes the blueprints in the ``.csv`` files easier to read and edit with a text
+    editor by adding extra spacing and alignment markers.
 
 Splitting output into multiple files:
 

@@ -158,7 +158,6 @@ local function get_test_area(area, spec)
             area.width, area.height, area.depth =
                     spec.width, spec.height, spec.depth
             area.pos = {x=1, y=1, z=z_start}
-            area.endpos = {x=area.width, y=area.height, z=z_start-area.depth+1}
             return true
         end
         ::continue::
@@ -224,10 +223,6 @@ local function reset_area(area, spec)
     dfhack.run_command('tiletypes-here', '--quiet', get_cursor_arg(pos))
 end
 
-local function format_pos(pos)
-    return ('%s,%s,%s'):format(pos.x, pos.y, pos.z)
-end
-
 function test.end_to_end()
     -- read in test plan
     local sets = get_blueprint_sets()
@@ -254,8 +249,7 @@ function test.end_to_end()
         end
 
         -- run dig-now to dig out designated tiles
-        dfhack.run_command('dig-now', format_pos(area.pos),
-                           format_pos(area.endpos), '--clean')
+        dfhack.run_command('dig-now', '--clean')
 
         -- quickfort run remaining blueprints
         for _,mode_name in pairs(mode_names) do

@@ -115,9 +115,11 @@ try:
         out, err = process.communicate()
         if err:
             print('WARN: DF produced stderr: ' + repr(err[:5000]))
+            with open('df-raw-stderr.log', 'wb') as f:
+                f.write(err)
         if process.returncode != 0:
             print('ERROR: DF exited with ' + repr(process.returncode))
-            print('DF stdout: %r' + repr(out[:5000]))
+            print('DF stdout: ' + repr(out[:5000]))
 finally:
     print('\nRestoring original init.txt')
     shutil.copyfile(init_txt_path + '.orig', init_txt_path)

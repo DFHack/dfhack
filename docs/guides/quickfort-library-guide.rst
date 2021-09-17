@@ -35,13 +35,16 @@ high-level walkthrough by running ``quickfort run library/dreamfort.csv`` and
 list the walkthroughs for the individual levels by running ``quickfort list -l
 dreamfort -m notes`` or ``quickfort gui -l dreamfort notes``.
 
-Dreamfort blueprints are also available for easy viewing and copying `online
+Dreamfort blueprints are available for easy viewing and copying `online
 <https://drive.google.com/drive/folders/1iS90EEVqUkxTeZiiukVj1pLloZqabKuP>`__.
 
 The online spreadsheets also include `embark profile suggestions
-<https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=149144025>`__
-and a complete `example embark profile
-<https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=1727884387>`__.
+<https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=149144025>`__,
+a complete `example embark profile
+<https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=1727884387>`__,
+and a convenient `checklist
+<https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=1459509569>`__
+from which you can copy the ``quickfort`` commands.
 
 You can download a fully built Dreamfort-based fort from `dffd
 <https://dffd.bay12games.com/file.php?id=15434>`__, load it, and explore it
@@ -52,7 +55,7 @@ Visual overview
 
 Here are some annotated screenshots of the major levels (or click `here
 <https://drive.google.com/drive/folders/14KdE2E2wQKj4F_E-NAe3G3E4x1wiWtrc>`__
-for the slideshow interface).
+for a slideshow).
 
 Surface level
 \\\\\\\\\\\\\

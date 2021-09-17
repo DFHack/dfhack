@@ -113,52 +113,6 @@ struct tile_context {
     df::building* b = NULL;
 };
 
-// the number of different strings we use is very small so we use a string cache
-// to limit the number of memory allocations we make. this significantly speeds
-// up processing and allows us to handle very large maps (e.g. 16x16 embarks)
-// without running out of memory.
-// if NULL is passed as the str, the cache is cleared
-static const char * cache(const char *str) {
-    // this local static assumes that no two blueprints are being generated at
-    // the same time, which is currently ensured by the higher-level DFHack
-    // command handling code. if this assumption ever becomes untrue, we'll
-    // need to protect the cache with thread synchronization primitives.
-    static std::set<string> _cache;
-    if (!str) {
-        _cache.clear();
-        return NULL;
-    }
-    return _cache.emplace(str).first->c_str();
-}
-
-static const char * get_tile_dig(const df::coord &pos, const tile_context &) {
-    df::tiletype *tt = Maps::getTileType(pos);
-    switch (tileShape(tt ? *tt : tiletype::Void))
-    {
-    case tiletype_shape::EMPTY:
-    case tiletype_shape::RAMP_TOP:
-        return "h";
-    case tiletype_shape::FLOOR:
-    case tiletype_shape::BOULDER:
-    case tiletype_shape::PEBBLES:
-    case tiletype_shape::BROOK_TOP:
-        return "d";
-    case tiletype_shape::FORTIFICATION:
-        return "F";
-    case tiletype_shape::STAIR_UP:
-        return "u";
-    case tiletype_shape::STAIR_DOWN:
-        return "j";
-    case tiletype_shape::STAIR_UPDOWN:
-        return "i";
-    case tiletype_shape::RAMP:
-        return "r";
-    case tiletype_shape::WALL:
-    default:
-        return NULL;
-    }
-}
-
 static pair<uint32_t, uint32_t> get_building_size(df::building *b) {
     return pair<uint32_t, uint32_t>(b->x2 - b->x1 + 1, b->y2 - b->y1 + 1);
 }
@@ -167,18 +121,47 @@ static const char * if_pretty(const tile_context &ctx, const char *c) {
     return ctx.pretty ? c : "";
 }
 
-static const char * do_block_building(const tile_context &ctx, const char *s,
-                                      bool at_target_pos,
-                                      bool *add_size = NULL) {
-    if(!at_target_pos) {
-        return if_pretty(ctx, "`");
+static void get_tile_dig(const df::coord &pos, const tile_context &,
+                         string &str) {
+    df::tiletype *tt = Maps::getTileType(pos);
+    switch (tileShape(tt ? *tt : tiletype::Void))
+    {
+    case tiletype_shape::EMPTY:
+    case tiletype_shape::RAMP_TOP:
+        str = "h"; break;
+    case tiletype_shape::FLOOR:
+    case tiletype_shape::BOULDER:
+    case tiletype_shape::PEBBLES:
+    case tiletype_shape::BROOK_TOP:
+        str = "d"; break;
+    case tiletype_shape::FORTIFICATION:
+        str = "F"; break;
+    case tiletype_shape::STAIR_UP:
+        str = "u"; break;
+    case tiletype_shape::STAIR_DOWN:
+        str = "j"; break;
+    case tiletype_shape::STAIR_UPDOWN:
+        str = "i"; break;
+    case tiletype_shape::RAMP:
+        str = "r"; break;
+    case tiletype_shape::WALL:
+    default:
+        break;
     }
-    if (add_size)
-        *add_size = true;
-    return s;
 }
 
-static const char * get_bridge_str(df::building *b) {
+static void do_block_building(const tile_context &ctx, string &str, string s,
+                              bool at_target_pos, bool *add_size = NULL) {
+    if(!at_target_pos) {
+        str = if_pretty(ctx, "`");
+        return;
+    }
+    str = s;
+    if (add_size)
+        *add_size = true;
+}
+
+static string get_bridge_str(df::building *b) {
     df::building_bridgest *bridge = virtual_cast<df::building_bridgest>(b);
     if (!bridge)
         return "g";
@@ -194,13 +177,13 @@ static const char * get_bridge_str(df::building *b) {
     }
 }
 
-static const char * get_siege_str(df::building *b) {
+static string get_siege_str(df::building *b) {
     df::building_siegeenginest *se =
             virtual_cast<df::building_siegeenginest>(b);
     return !se || se->type == df::siegeengine_type::Catapult ? "ic" : "ib";
 }
 
-static const char * get_workshop_str(df::building *b) {
+static string get_workshop_str(df::building *b) {
     df::building_workshopst *ws = virtual_cast<df::building_workshopst>(b);
     if (!ws)
         return "~";
@@ -236,7 +219,7 @@ static const char * get_workshop_str(df::building *b) {
     }
 }
 
-static const char * get_furnace_str(df::building *b) {
+static string get_furnace_str(df::building *b) {
     df::building_furnacest *furnace = virtual_cast<df::building_furnacest>(b);
     if (!furnace)
         return "~";
@@ -255,7 +238,7 @@ static const char * get_furnace_str(df::building *b) {
     }
 }
 
-static const char * get_construction_str(df::building *b) {
+static string get_construction_str(df::building *b) {
     df::building_constructionst *cons =
             virtual_cast<df::building_constructionst>(b);
     if (!cons)
@@ -305,7 +288,7 @@ static const char * get_construction_str(df::building *b) {
     }
 }
 
-static const char * get_trap_str(df::building *b) {
+static string get_trap_str(df::building *b) {
     df::building_trapst *trap = virtual_cast<df::building_trapst>(b);
     if (!trap)
         return "~";
@@ -339,14 +322,14 @@ static const char * get_trap_str(df::building *b) {
             case 500:   buf << "a";
             case 10000: buf << "a";
             }
-            return cache(buf.str().c_str());
+            return buf.str();
         }
     default:
         return "~";
     }
 }
 
-static const char * get_screw_pump_str(df::building *b) {
+static string get_screw_pump_str(df::building *b) {
     df::building_screw_pumpst *sp = virtual_cast<df::building_screw_pumpst>(b);
     if (!sp)
         return "~";
@@ -362,7 +345,7 @@ static const char * get_screw_pump_str(df::building *b) {
     }
 }
 
-static const char * get_water_wheel_str(df::building *b) {
+static string get_water_wheel_str(df::building *b) {
     df::building_water_wheelst *ww =
             virtual_cast<df::building_water_wheelst>(b);
     if (!ww)
@@ -371,7 +354,7 @@ static const char * get_water_wheel_str(df::building *b) {
     return ww->is_vertical ? "Mw" : "Mws";
 }
 
-static const char * get_axle_str(df::building *b) {
+static string get_axle_str(df::building *b) {
     df::building_axle_horizontalst *ah =
             virtual_cast<df::building_axle_horizontalst>(b);
     if (!ah)
@@ -380,7 +363,7 @@ static const char * get_axle_str(df::building *b) {
     return ah->is_vertical ? "Mhs" : "Mh";
 }
 
-static const char * get_roller_str(df::building *b) {
+static string get_roller_str(df::building *b) {
     df::building_rollersst *r = virtual_cast<df::building_rollersst>(b);
     if (!r)
         return "~";
@@ -395,192 +378,192 @@ static const char * get_roller_str(df::building *b) {
     }
 }
 
-static const char * get_build_keys(const df::coord &pos,
-                                   const tile_context &ctx,
-                                   bool &add_size) {
+static string get_expansion_str(df::building *b) {
+    pair<uint32_t, uint32_t> size = get_building_size(b);
+    std::ostringstream s;
+    s << "(" << size.first << "x" << size.second << ")";
+    return s.str();
+}
+
+static void get_tile_build(const df::coord &pos, const tile_context &ctx,
+                           string &str) {
+    if (!ctx.b || ctx.b->getType() == building_type::Stockpile) {
+        return;
+    }
+
     bool at_nw_corner = static_cast<int32_t>(pos.x) == ctx.b->x1
                             && static_cast<int32_t>(pos.y) == ctx.b->y1;
     bool at_se_corner = static_cast<int32_t>(pos.x) == ctx.b->x2
                             && static_cast<int32_t>(pos.y) == ctx.b->y2;
     bool at_center = static_cast<int32_t>(pos.x) == ctx.b->centerx
                             && static_cast<int32_t>(pos.y) == ctx.b->centery;
+    bool add_size = false;
 
     switch(ctx.b->getType()) {
     case building_type::Armorstand:
-        return "a";
+        str = "a"; break;
     case building_type::Bed:
-        return "b";
+        str = "b"; break;
     case building_type::Chair:
-        return "c";
+        str = "c"; break;
     case building_type::Door:
-        return "d";
+        str = "d"; break;
     case building_type::Floodgate:
-        return "x";
+        str = "x"; break;
     case building_type::Cabinet:
-        return "f";
+        str = "f"; break;
     case building_type::Box:
-        return "h";
+        str = "h"; break;
     //case building_type::Kennel is missing
     case building_type::FarmPlot:
-        return do_block_building(ctx, "p", at_nw_corner, &add_size);
+        do_block_building(ctx, str, "p", at_nw_corner, &add_size); break;
     case building_type::Weaponrack:
-        return "r";
+        str = "r"; break;
     case building_type::Statue:
-        return "s";
+        str = "s"; break;
     case building_type::Table:
-        return "t";
+        str = "t"; break;
     case building_type::RoadPaved:
-        return do_block_building(ctx, "o", at_nw_corner, &add_size);
+        do_block_building(ctx, str, "o", at_nw_corner, &add_size); break;
     case building_type::RoadDirt:
-        return do_block_building(ctx, "O", at_nw_corner, &add_size);
+        do_block_building(ctx, str, "O", at_nw_corner, &add_size); break;
     case building_type::Bridge:
-        return do_block_building(ctx, get_bridge_str(ctx.b), at_nw_corner,
+        do_block_building(ctx, str, get_bridge_str(ctx.b), at_nw_corner,
                           &add_size);
+        break;
     case building_type::Well:
-        return "l";
+        str = "l"; break;
     case building_type::SiegeEngine:
-        return do_block_building(ctx, get_siege_str(ctx.b), at_center);
+        do_block_building(ctx, str, get_siege_str(ctx.b), at_center);
+        break;
     case building_type::Workshop:
-        return do_block_building(ctx, get_workshop_str(ctx.b), at_center);
+        do_block_building(ctx, str, get_workshop_str(ctx.b), at_center);
+        break;
     case building_type::Furnace:
-        return do_block_building(ctx, get_furnace_str(ctx.b), at_center);
+        do_block_building(ctx, str, get_furnace_str(ctx.b), at_center);
+        break;
     case building_type::WindowGlass:
-        return "y";
+        str = "y"; break;
     case building_type::WindowGem:
-        return "Y";
+        str = "Y"; break;
     case building_type::Construction:
-        return get_construction_str(ctx.b);
+        str = get_construction_str(ctx.b); break;
     case building_type::Shop:
-        return do_block_building(ctx, "z", at_center);
+        do_block_building(ctx, str, "z", at_center);
+        break;
     case building_type::AnimalTrap:
-        return "m";
+        str = "m"; break;
     case building_type::Chain:
-        return "v";
+        str = "v"; break;
     case building_type::Cage:
-        return "j";
+        str = "j"; break;
     case building_type::TradeDepot:
-        return do_block_building(ctx, "D", at_center);
+        do_block_building(ctx, str, "D", at_center); break;
     case building_type::Trap:
-        return get_trap_str(ctx.b);
+        str = get_trap_str(ctx.b); break;
     case building_type::ScrewPump:
-        return do_block_building(ctx, get_screw_pump_str(ctx.b), at_se_corner);
+        do_block_building(ctx, str, get_screw_pump_str(ctx.b), at_se_corner);
+        break;
     case building_type::WaterWheel:
-        return do_block_building(ctx, get_water_wheel_str(ctx.b), at_center);
+        do_block_building(ctx, str, get_water_wheel_str(ctx.b), at_center);
+        break;
     case building_type::Windmill:
-        return do_block_building(ctx, "Mm", at_center);
+        do_block_building(ctx, str, "Mm", at_center); break;
     case building_type::GearAssembly:
-        return "Mg";
+        str = "Mg"; break;
     case building_type::AxleHorizontal:
-        return do_block_building(ctx, get_axle_str(ctx.b), at_nw_corner,
-                                 &add_size);
+        do_block_building(ctx, str, get_axle_str(ctx.b), at_nw_corner,
+                          &add_size);
+        break;
     case building_type::AxleVertical:
-        return "Mv";
+        str = "Mv"; break;
     case building_type::Rollers:
-        return do_block_building(ctx, get_roller_str(ctx.b), at_nw_corner,
-                                 &add_size);
+        do_block_building(ctx, str, get_roller_str(ctx.b), at_nw_corner,
+                          &add_size);
+        break;
     case building_type::Support:
-        return "S";
+        str = "S"; break;
     case building_type::ArcheryTarget:
-        return "A";
+        str = "A"; break;
     case building_type::TractionBench:
-        return "R";
+        str = "R"; break;
     case building_type::Hatch:
-        return "H";
+        str = "H"; break;
     case building_type::Slab:
         //how to mine alt key?!?
         //alt+s
-        return "~";
+        str = "~"; break;
     case building_type::NestBox:
-        return "N";
+        str = "N"; break;
     case building_type::Hive:
         //alt+h
-        return "~";
+        str = "~"; break;
     case building_type::GrateWall:
-        return "W";
+        str = "W"; break;
     case building_type::GrateFloor:
-        return "G";
+        str = "G"; break;
     case building_type::BarsVertical:
-        return "B";
+        str = "B"; break;
     case building_type::BarsFloor:
         //alt+b
-        return "~";
+        str = "~"; break;
     default:
-        return "~";
-    }
-}
-
-// returns "~" if keys is NULL; otherwise returns the keys with the building
-// dimensions in the expansion syntax
-static const char * add_expansion_syntax(const tile_context &ctx,
-                                         const char *keys) {
-    if (!keys)
-        return "~";
-    std::ostringstream s;
-    pair<uint32_t, uint32_t> size = get_building_size(ctx.b);
-    s << keys << "(" << size.first << "x" << size.second << ")";
-    return cache(s.str().c_str());
-}
-
-static const char * get_tile_build(const df::coord &pos,
-                                   const tile_context &ctx) {
-    if (!ctx.b || ctx.b->getType() == building_type::Stockpile) {
-        return NULL;
+        str = if_pretty(ctx, "~");
+        break;
     }
 
-    bool add_size = false;
-    const char *keys = get_build_keys(pos, ctx, add_size);
-
-    if (!add_size)
-        return keys;
-    return add_expansion_syntax(ctx, keys);
+    if (add_size)
+        str.append(get_expansion_str(ctx.b));
 }
 
-static const char * get_place_keys(const tile_context &ctx) {
-    df::building_stockpilest* sp =
-            virtual_cast<df::building_stockpilest>(ctx.b);
-    if (!sp) {
-        return NULL;
-    }
-
-    switch (sp->settings.flags.whole) {
-    case df::stockpile_group_set::mask_animals:        return "a";
-    case df::stockpile_group_set::mask_food:           return "f";
-    case df::stockpile_group_set::mask_furniture:      return "u";
-    case df::stockpile_group_set::mask_corpses:        return "y";
-    case df::stockpile_group_set::mask_refuse:         return "r";
-    case df::stockpile_group_set::mask_wood:           return "w";
-    case df::stockpile_group_set::mask_stone:          return "s";
-    case df::stockpile_group_set::mask_gems:           return "e";
-    case df::stockpile_group_set::mask_bars_blocks:    return "b";
-    case df::stockpile_group_set::mask_cloth:          return "h";
-    case df::stockpile_group_set::mask_leather:        return "l";
-    case df::stockpile_group_set::mask_ammo:           return "z";
-    case df::stockpile_group_set::mask_coins:          return "n";
-    case df::stockpile_group_set::mask_finished_goods: return "g";
-    case df::stockpile_group_set::mask_weapons:        return "p";
-    case df::stockpile_group_set::mask_armor:          return "d";
-    default: // TODO: handle stockpiles with multiple types
-        return NULL;
-    }
-}
-
-static const char * get_tile_place(const df::coord &pos,
-                                   const tile_context &ctx) {
+static void get_tile_place(const df::coord &pos, const tile_context &ctx,
+                           string &str) {
     if (!ctx.b || ctx.b->getType() != building_type::Stockpile)
-        return NULL;
+        return;
 
     if (ctx.b->x1 != static_cast<int32_t>(pos.x)
             || ctx.b->y1 != static_cast<int32_t>(pos.y)) {
-        return if_pretty(ctx, "`");
+        str = if_pretty(ctx, "`");
+        return;
     }
 
-    return add_expansion_syntax(ctx, get_place_keys(ctx));
+    df::building_stockpilest* sp =
+            virtual_cast<df::building_stockpilest>(ctx.b);
+    if (!sp) {
+        str = "~";
+        return;
+    }
+
+    switch (sp->settings.flags.whole)
+    {
+    case df::stockpile_group_set::mask_animals:        str = "a"; break;
+    case df::stockpile_group_set::mask_food:           str = "f"; break;
+    case df::stockpile_group_set::mask_furniture:      str = "u"; break;
+    case df::stockpile_group_set::mask_corpses:        str = "y"; break;
+    case df::stockpile_group_set::mask_refuse:         str = "r"; break;
+    case df::stockpile_group_set::mask_wood:           str = "w"; break;
+    case df::stockpile_group_set::mask_stone:          str = "s"; break;
+    case df::stockpile_group_set::mask_gems:           str = "e"; break;
+    case df::stockpile_group_set::mask_bars_blocks:    str = "b"; break;
+    case df::stockpile_group_set::mask_cloth:          str = "h"; break;
+    case df::stockpile_group_set::mask_leather:        str = "l"; break;
+    case df::stockpile_group_set::mask_ammo:           str = "z"; break;
+    case df::stockpile_group_set::mask_coins:          str = "n"; break;
+    case df::stockpile_group_set::mask_finished_goods: str = "g"; break;
+    case df::stockpile_group_set::mask_weapons:        str = "p"; break;
+    case df::stockpile_group_set::mask_armor:          str = "d"; break;
+    default: // multiple stockpile types
+        str = "~";
+        return;
+    }
+
+    str.append(get_expansion_str(ctx.b));
 }
 
-static const char * get_tile_query(const df::coord &, const tile_context &ctx) {
-    if (!ctx.b || !ctx.b->is_room)
-        return NULL;
-    return "r+";
+static void get_tile_query(const df::coord &, const tile_context &ctx,
+                           string &str) {
+    if (ctx.b && ctx.b->is_room)
+        str = "r+";
 }
 
 static bool create_output_dir(color_ostream &out,
@@ -630,22 +613,22 @@ static bool get_filename(string &fname,
     return true;
 }
 
-typedef map<int16_t /* x */, const char *> bp_row;
+typedef map<int16_t /* x */, string> bp_row;
 typedef map<int16_t /* y */, bp_row> bp_area;
 typedef map<int16_t /* z */, bp_area> bp_volume;
 
 static const bp_area NEW_AREA;
 static const bp_row NEW_ROW;
 
-typedef const char * (get_tile_fn)(const df::coord &pos,
-                                   const tile_context &ctx);
+typedef void (get_tile_fn)(const df::coord &pos, const tile_context &ctx,
+                           string &str);
 typedef void (init_ctx_fn)(const df::coord &pos, tile_context &ctx);
 
 struct blueprint_processor {
     bp_volume mapdata;
-    const string phase;
-    get_tile_fn * const get_tile;
-    init_ctx_fn * const init_ctx;
+    string phase;
+    get_tile_fn *get_tile;
+    init_ctx_fn *init_ctx;
     blueprint_processor(const string &phase, get_tile_fn *get_tile,
                         init_ctx_fn *init_ctx = NULL)
         : phase(phase), get_tile(get_tile), init_ctx(init_ctx) { }
@@ -691,10 +674,10 @@ static void write_pretty(ofstream &ofile, const blueprint_options &opts,
             if (area && area->count(y))
                 row = &area->at(y);
             for (int16_t x = 0; x < opts.width; ++x) {
-                const char *tile = NULL;
+                const string *tile = NULL;
                 if (row && row->count(x))
-                    tile = row->at(x);
-                ofile << (tile ? tile : " ") << ",";
+                    tile = &row->at(x);
+                ofile << (tile ? *tile : " ") << ",";
             }
             ofile << "#" << endl;
         }
@@ -775,8 +758,9 @@ static bool do_transform(color_ostream &out,
                 for (blueprint_processor &processor : processors) {
                     if (processor.init_ctx)
                         processor.init_ctx(pos, ctx);
-                    const char *tile_str = processor.get_tile(pos, ctx);
-                    if (tile_str) {
+                    string tile_str;
+                    processor.get_tile(pos, ctx, tile_str);
+                    if (!tile_str.empty()) {
                         // ensure our z-index is in the order we want to write
                         auto area = processor.mapdata.emplace(abs(z - start.z),
                                                               NEW_AREA);
@@ -906,9 +890,7 @@ static bool do_blueprint(color_ostream &out,
     if (end.z < -1)
         end.z = -1;
 
-    bool ok = do_transform(out, start, end, options, files);
-    cache(NULL);
-    return ok;
+    return do_transform(out, start, end, options, files);
 }
 
 // entrypoint when called from Lua. returns the names of the generated files

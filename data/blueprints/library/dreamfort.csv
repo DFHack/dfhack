@@ -1,14 +1,14 @@
 #notes label(help) run me for the dreamfort walkthrough
-"Welcome to Dreamfort! These blueprints will help you build a functional, secure, self-sustaining fortress that you can use as-is or extend to build the fortress of your dreams!"
+"Welcome to Dreamfort! These blueprints will help you build a functional, secure, fully self-sustaining fortress that you can use as-is or extend to build the fortress of your dreams!"
 ""
-"It can be difficult to apply a set of blueprints that you did not write yourself. This walkthrough will guide you through the high-level steps of building Dreamfort. Run ""quickfort run library/dreamfort.csv -n /checklist"" (or, if you're looking at the online version, switch to the ""checklist"" sheet) for a compact list of all commands you'll be running. Each level also has its own mini-walkthrough with more details."
+"It can be difficult to apply a set of blueprints that you did not write yourself. This walkthrough will guide you through the high-level steps of building Dreamfort. Run ""quickfort run library/dreamfort.csv -n /checklist"" (or, if you're looking at the online version, switch to the ""checklist"" sheet) for a compact list of the commands you'll be running. Each level also has its own mini-walkthrough with more details."
 ""
-"The final fort will have a walled-in area on the surface for livestock, trading, surface farming, and military. One z-level down is the farming level, with related workshops and vents up to the surface for miasma control. The farming level also has a miniature dining hall and dormitory for use until you get the services and housing levels set up."
+"The final fort will have a walled-in area on the surface for livestock, trading, aboveground farming, and military training. One z-level down is the farming level, with related workshops and vents up to the surface for miasma prevention. The farming level also has a miniature dining hall and dormitory for use until you get the services and housing levels set up."
 ""
 "Beyond those two, the other layers can be built in any order, at any z-level, according to your preference and the layout peculiarities of your embark site:"
 "- The industry level has a compact, but complete set of workshops and stockpiles (minus what is already provided on the farming level)."
 "- The services level has dining, hospital, marksman barracks, and justice services, plus a well system. It is 4 z-levels deep."
-"- The guildhall level has many empty rooms for building libraries, temples, and guildhalls."
+"- The guildhall level has large, empty rooms for building libraries, temples, and guildhalls."
 - The suites level has fancy rooms for your nobles.
 - The apartments levels have small but well-furnished bedrooms for your other dwarves.
 ""
@@ -16,14 +16,14 @@
 ""
 "Dreamfort has a central stairs-based design. For all Dreamfort levels, place the cursor on the center (undug) tile of the 3x3 stairs area when you apply the blueprints for that level. The first surface blueprint will designate a column of stairs that you can use as a guide. If you need to extend the stairs down further to lower levels, run ""quickfort run library/dreamfort.csv -n /central_stairs"" with the cursor on the z-level below the lowest current stairs."
 ""
-"Dreamfort blueprints take care of everything to get the fort up and running. You don't need to clear any extra trees or create any extra buildings or stockpiles (though of course you are free to do so). Blueprints that do require manual steps, like 'assign minecart to hauling route', will leave a message telling you so when you run them. Blueprints will also leave messages with hints when you might want to run ""quickfort orders"" to start manufacturing needed items, like blocks or tables. Make sure your manager is available to validate all the incoming work orders!"
+"Dreamfort blueprints take care of everything to get the fort up and running. You don't need to clear any extra trees or create any extra buildings or stockpiles (though of course you are free to do so). Blueprints that do require manual steps, like 'assign minecart to hauling route', will leave a message telling you so when you run them. Note that blueprints will designate buildings to build even if you don't have the materials needed to build them. You can use ""quickfort orders"" to automatically create the manager orders for all the needed items. Make sure your manager is available to validate all the incoming work orders!"
 ""
 "There are some tasks common to all forts that Dreamfort doesn't specifically handle for you. For example, Dreamfort sets up a barracks, but managing squads is up to you. Here are some other common tasks that may need to be done manually (or with some other tool):"
 - Exploratory mining for specific resources like iron
 - Filling the well system with water
 - Bringing magma up to the industry level to power magma forges/furnaces
 - Manufacturing trade goods
-- Assigning skilled labors to migrants
+- Assigning skilled labors to migrants (although the example professions included with DFHack will help with this)
 "- Custom stockpile setups to assist with, for example, encrusting only high-quality items"
 ""
 "Dreamfort works best at an embark site that is flat and has at least one soil layer. New players should avoid embarks with aquifers if they are not prepared to deal with them. Bring picks for mining, an axe for woodcutting, and an anvil for a forge. Bring a few blocks to speed up initial workshop construction as well. That's all you really need, but see the example embark profile in the online spreadsheets for a more complete setup."
@@ -36,7 +36,7 @@ Put that file in your Dwarf Fortress directory -- the same directory that has df
 "Once you have your starting surface workshops up and running, you might want to configure buildingplan (in its global settings, accessible from any building placement screen, e.g.: b-a-G) to only use blocks for constructions so it won't use your precious wood, boulders, and bars to build floors and walls. If you bring at least 7 blocks with you on embark, you can even set this in your onMapLoad.init file like this:"
 on-new-fortress buildingplan set boulders false; buildingplan set logs false
 ""
-"Directly after embark, run ""quickfort run library/dreamfort.csv -n /setup"" with your cursor on your wagon to set settings, and get started building your fort with ""quickfort run library/dreamfort.csv -n /surface1"" on the surface (see /surface_help for how to select a good spot). Read the walkthroughs for each level to understand what each level does and follow the checklist to keep track of where you are in the building process. Good luck, and have fun building an awesome Dreamfort-based fort!"
+"Directly after embark, run ""quickfort run library/dreamfort.csv -n /setup"" with your cursor on your wagon to set settings, and get started building your fort with ""quickfort run library/dreamfort.csv -n /surface1"" on the surface (see /surface_help for how to select a good spot). Read the walkthroughs for each level to understand what's going on and follow the checklist to keep track of where you are in the building process. Good luck, and have fun building an awesome Dreamfort-based fort!"
 ""
 "The dreamfort.csv file distributed with DFHack is generated from online spreadsheet files. If you want to look at how these blueprints are put together, it is easier to look at the online spreadsheets than the giant .csv. You can view them at: https://drive.google.com/drive/folders/1iS90EEVqUkxTeZiiukVj1pLloZqabKuP"
 You are welcome to copy the Dreamfort spreadsheets and make your own modifications!
@@ -46,7 +46,7 @@ interactively."
 "# dreamfort.csv is generated with the following command:
   for fname in dreamfort*.xlsx; do xlsx2csv -a -p '' ""$fname""; done | sed 's/,*$//'"
 #notes label(checklist) command checklist
-Here is the recommended order for Dreamfort commands. You can copy/paste the command lines directly into the DFHack terminal. You can run the quickfort commands from gui/quickfort if you prefer. See the level walkthroughs for context and details. Also remember to read the messages the blueprints print out after you run them so you don't miss any important manual steps.
+"Here is the recommended order for Dreamfort commands. You can copy/paste the command lines directly into the DFHack terminal, or, if you prefer, you can run the blueprints in the UI with gui/quickfort. See the level walkthroughs for context and details. Also remember to read the messages the blueprints print out after you run them so you don't miss any important manual steps."
 ""
 -- Preparation (before you embark!) --
 Copy hack/examples/init/onMapLoad_dreamfort.init to your DF directory
@@ -54,7 +54,7 @@ Copy the fort automation orders from hack/examples/orders/*.json to the dfhack-c
 Optionally copy the premade profession definitions from hack/examples/professions/ to the professions/ directory
 ""
 -- Set settings and preload initial orders --
-quickfort run library/dreamfort.csv -n /setup,# Cursor on the center of your starting wagon. Run before making any manual adjustments to settings! Run the /setup_help blueprint for details on what this blueprint does.
+quickfort run library/dreamfort.csv -n /setup,# Place the cursor on the center of your starting wagon. Run before making any manual adjustments to settings! Run the /setup_help blueprint for details on what this blueprint does.
 "quickfort orders library/dreamfort.csv -n ""/surface2, /farming2, /surface3, /farming3, /industry2, /surface4""","# Queue up orders required to get the fort minimally functional and secure. You can remove the order for the anvil (you brought one with you, right?)."
 ""
 -- Find a good starting spot on the surface --
@@ -73,7 +73,7 @@ quickfort run library/dreamfort.csv -n /surface3,# Run right after /farming2.
 quickfort run library/dreamfort.csv -n /farming3,# Run when furniture has been placed.
 quickfort run library/dreamfort.csv -n /industry2,# Run when the industry level has been dug out.
 prioritize ConstructBuilding,# To get those workshops up and running ASAP. You may have to run this several times as the materials for the building construction jobs become ready.
-quickfort run library/dreamfort.csv -n /surface4,"# Run after the walls and floors are built on the surface. Even if /surface3 is finished before you run /industry2, though, wait until after /industry2 so that surface walls, floors, and roofing don't prevent your workshops from being built (due to lack of blocks)."
+quickfort run library/dreamfort.csv -n /surface4,"# Run after the walls and floors are built on the surface. Even if /surface3 is finished before you run /industry2, though, wait until after /industry2 to run this blueprint so that surface walls, floors, and roofing don't prevent your workshops from being built (due to lack of blocks)."
 "quickfort run,orders library/dreamfort.csv -n /services2",# Run when the services level has been dug out. Feel free to remove the orders for the ropes if you already brought them with you.
 orders import basic,"# Run after the first migration wave, so you have dorfs to do all the basic tasks. Note that this is the ""orders"" plugin, not the ""quickfort orders"" command."
 "quickfort run,orders library/dreamfort.csv -n /surface5","# Run when all marked trees on the surface are chopped down and walls and floors have been constructed, including the roof section over the future barracks."
@@ -103,13 +103,13 @@ orders import glassstock,# Maintains a small stock of all types of glass furnitu
 -- Repeat for each remaining apartments level as needed --
 "quickfort run,orders library/dreamfort.csv -n /apartments2",# Run when the apartment level has been dug out.
 "quickfort run,orders library/dreamfort.csv -n /apartments3",# Run when all beds have been constructed.
-burial -pets,# Run once the coffins are placed to set them to allow for burial. This is handled for you if you are using the provided onMapLoad.init file.
+burial -pets,# Run once the coffins are placed to set them to allow for burial. This is handled for you if you are using the provided onMapLoad_dreamfort.init file.
 
 See this checklist online at https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=1459509569
 #notes label(setup_help)
 Makes common initial adjustments to in-game settings.
 ""
-"The /setup blueprint is intended to be run at the start of the game, before anything else is changed. Players are welcome to make any further customizations after this blueprint is run. Please be sure to run the /setup blueprint before making any other changes, though, so your settings are not overridden!"
+"The /setup blueprint is intended to be run once at the start of the game, before anything else is changed. Players are welcome to make any further customizations after this blueprint is run. Please be sure to run the /setup blueprint before making any other changes, though, so your settings are not overwritten!"
 ""
 The following settings are changed:
 "- The manager, chief medical dwarf, broker, and bookkeeper noble roles are assigned to the first suggested dwarf. This is likely to be the expedition leader, but the game could suggest others if they have relevant skills. Bookkeeping is also set to the highest precision."
@@ -162,7 +162,7 @@ Nothing in Dreamfort depends on these settings staying as they are. Feel free to
 #>
 /apartments1_stack
 #ignore
-"Here are the minimal skills needed for essential tasks in getting Dreamfort up and running, along with suggestions for which dwarves to assign them to. You can enable additional skills as you wish. Skills with an asterisk (*) are especially worth putting points into on the embark preparation screen."
+"Here are the minimal labors needed for essential tasks in getting Dreamfort up and running, along with suggestions for which dwarves to assign them to. You can enable additional labors as you wish. Skills with an asterisk (*) are especially worth putting points into on the embark preparation screen."
 ""
 Manager / Bookkeeper / Broker,Miner,Miner,Mason,Mason,Outdoorsdwarf,Farmer
 Mechanic (*),Miner (*),Miner (*),Mason (*),Mason (*),Carpenter (*),Grower (*)
@@ -286,11 +286,11 @@ Be sure to choose an embark site that has a flat area large enough to use these 
 Surface Walkthrough:
 "1) Choose a tile for your central fortress stairs. The terrain around that tile should be perfectly flat. Trees are ok, but no slopes, rivers, or lakes. To be sure that the tile you've chosen is in a good spot, set the cursor over that tile and run ""quickfort run library/dreamfort.csv -n /perimeter"". This will show you the eventual boundaries of the fort. Some wall segments might be missing due to existing trees, but that's ok. Make sure the area within the exterior wall is flat. Run ""quickfort undo library/dreamfort.csv -n /perimeter"" to clean up."
 ""
-"2) With the cursor on the chosen tile, run /surface1 to clear surrounding trees and set up your pastures. Deconstruct your wagon to get it out of the way of our upcoming walls and floors. Remember to assign your dogs to the pasture around the staircase and your grazing animals to the large pasture. You can let your cats roam free. Run ""quickfort orders"" for /surface2 and /surface3 to get a head start in manufacturing."
+"2) With the cursor on the chosen tile, run /surface1 to clear surrounding trees and set up your pastures. Deconstruct your wagon to get it out of the way of our upcoming walls and floors. Remember to assign your dogs to the pasture around the staircase and your grazing animals to the large pasture. Your egg-layers will automatically get assigned to nestbox zones once the nestboxes are built, so you don't need to worry about them. You can let your cats roam free to chase vermin."
 ""
-"3) Once the marked trees have been cleared, run /surface2 to setup starting workshops/stockpiles, channel out the miasma vents for the farming level, and start clearing trees from a larger area. If you haven't done it already, now is a good time to configure buildingplan to only build buildings with blocks, not logs or raw boulders. Do this by entering buildingplan's global configuration (""baG"") and ensuring the only generic building material allowed is ""blocks""."
+"3) Once the marked trees have been cleared, run /surface2 to setup starting workshops/stockpiles, channel out the miasma vents for the farming level, and start clearing trees from a larger area. If you haven't done it already, now is a good time to configure buildingplan to only build buildings with blocks, not logs or raw boulders. Do this by entering buildingplan's global configuration (""baG"") and ensuring the only generic building material allowed is ""blocks"". Run ""quickfort orders"" for /surface2."
 ""
-"4) Once the channels are dug out and the trees are cleared, start digging the farming level one z-level down. Once you have run /farming2, come back to the surface and run /surface3 to cover the vents and build an enclosure around your central stairs. Although the vents will be covered with flooring, they will still work to prevent miasma on the farming level."
+"4) Once the channels are dug out and the trees are cleared, start digging the farming level one z-level down. Once you have run /farming2, come back to the surface and run /surface3 to cover the vents and build an enclosure around your central stairs. Although the vents will be covered with flooring, they will still work to prevent miasma on the farming level. Run ""quickfort orders"" for /surface3."
 ""
 "5) Once all walls and floors have been constructed around the stairwell, run /surface4 to build floors and walls to support upcoming buildings and furniture. Run ""quickfort orders"" for /surface4."
 ""
@@ -308,23 +308,24 @@ walls/surface_walls
 corridor/surface_corridor
 ""
 "#meta label(surface1) start(central stairs)
-message(Once the central stairs is mined out deeply enough, you should start digging the industry level in a non-aquifer rock layer. You'll need the boulders from the digging to make blocks.
+message(Once the central stairs are mined out deeply enough, you should start digging the industry level in a non-aquifer rock layer. You'll need the boulders from the digging to make blocks.
 If your wagon is within the fort perimeter, deconstruct it to get it out of the way.
-Enqueue manager orders for /surface3 to get a head start on building required materials.
 Once the marked trees are all chopped down (if any), continue with /surface2.) clear trees and set up pastures"
 central_stairs/central_stairs
 clear_small/surface_clear_small
 zones/surface_zones
 name_zones/surface_name_zones
 ""
-"#meta label(surface2) start(central stairs) message(Once the channels are dug out and the marked trees are cleared, continue with /surface3.) set up starting workshops/stockpiles, channel miasma vents, and clear more trees"
+"#meta label(surface2) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
+Once the channels are dug out and the marked trees are cleared, continue with /surface3.) set up starting workshops/stockpiles, channel miasma vents, and clear more trees"
 build_start/surface_build_start
 place_start/surface_place_start
 query_start/surface_query_start
 channel/surface_channel
 clear/surface_clear
 ""
-"#meta label(surface3) start(central stairs) message(Once the walls and floors have been constructed, continue with /surface4.) Cover vents and protect the central stairs."
+"#meta label(surface3) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
+Once the walls and floors have been constructed, continue with /surface4.) Cover vents and protect the central stairs."
 cover_vents/surface_cover_vents
 cover_stairs/surface_cover_stairs
 ""
@@ -349,7 +350,8 @@ floors/surface_floors
 traps/surface_traps
 clear_large/surface_clear_large
 ""
-"#meta label(surface7) start(central stairs (on ground level)) message(Remember to enqueue manager orders for this blueprint. For extra security, you can run /surface8 at any time to extend the trap corridors.) build roof"
+"#meta label(surface7) start(central stairs (on ground level)) message(Remember to enqueue manager orders for this blueprint.
+For extra security, you can run /surface8 at any time to extend the trap corridors.) build roof"
 #<
 roof/surface_roof
 roof2/surface_roof2
@@ -1504,7 +1506,7 @@ Farming Walkthrough:
 "5) Once your fort has enough free time to build the remaining doors, run /farming4. This will also enable seasonal fertilization for your farm plots. Run ""quickfort orders"" for /farming4."
 ""
 "6) You can disassemble the dining room and dormitory once the services and apartments levels are up and running, if you like."
-"#dig label(farming1) start(16; 18; central stairs) message(This would be a good time to queue up manager orders for /farming2. Once the area is dug out, continue with /farming2.)"
+"#dig label(farming1) start(16; 18; central stairs) message(Once the area is dug out, continue with /farming2.)"
 # this level is dug at priority 2 since it is dug in soil. it's worth the miner's time to stop digging the industry level and
 # quickly dig out this one.
 ,,,,,,,,,2,2,2,,2,2,2,2,2,,2,2,2,2
@@ -1535,17 +1537,18 @@ Farming Walkthrough:
 ,,,,,,,,,,,,,,,z2
 
 
-"#meta label(farming2) start(central stairs) message(Once furniture has been placed, continue with /farming3.) workshops, stockpiles, and important furniture"
+"#meta label(farming2) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
+Once furniture has been placed, continue with /farming3.) workshops, stockpiles, and important furniture"
 build/farming_build
 place/farming_place
 query_stockpiles/farming_query_stockpiles
 link_stockpiles/farming_link
 ""
-#meta label(farming3) start(central stairs) configure rooms and build farm plots and more furniture
+#meta label(farming3) start(central stairs) message(Remember to enqueue manager orders for this blueprint.) configure rooms and build farm plots and more furniture
 query_rooms/farming_rooms
 build2/farming_build2
 ""
-#meta label(farming4) start(central stairs) configure farm plots and build remaining furniture
+#meta label(farming4) start(central stairs) message(Remember to enqueue manager orders for this blueprint.) configure farm plots and build remaining furniture
 query_plots/farming_query_plots
 build3/farming_build3
 #build label(farming_build) start(16; 18) hidden() workshops and important furniture
@@ -1859,7 +1862,7 @@ Industry Walkthrough:
 "6) Once you have magma furnaces (or abundant fuel) and more dwarves, run ""orders import furnace"", ""orders import military"", and ""orders import smelting"" to import the remaining fort automation orders. The military orders are optional if you are not planning to have a military, of course."
 ""
 "7) At any time, feel free to build extra workshops or designate custom stockpiles in the unused space in the top and bottom right. The space is there for you to use!"
-"#dig label(industry1) start(18; 18; central stairs) message(This would be a good time to queue manager orders for /industry2. Once the area is dug out, continue with /industry2.)"
+"#dig label(industry1) start(18; 18; central stairs) message(Once the area is dug out, continue with /industry2.)"
 
 
 ,,,,,,,,,,,d,d,d,d,d,d,d,d,d,d,d,d,d
@@ -1895,7 +1898,7 @@ Industry Walkthrough:
 ,,,,,,,,,,,d,d,d,d,d,d,d,d,d,d,d,d,d
 
 
-"#meta label(industry2) start(central stairs) build workshops and stockpiles, configure stockpiles"
+"#meta label(industry2) start(central stairs) message(Remember to enqueue manager orders for this blueprint.) build workshops and stockpiles, configure stockpiles"
 build/industry_build
 place/industry_place
 query/industry_query
@@ -2034,16 +2037,16 @@ Manual steps you have to take:
 Services Walkthrough:
 1) Start this level when your fort grows to about 50 dwarves so everyone has a place to eat.
 ""
-"2) Start digging with /services1. Note that this digs out the main level and three levels below for the wells. Start manufacturing with ""quickfort orders"" on /services2."
+2) Start digging with /services1. Note that this digs out the main level and three levels below for the wells.
 ""
-"3) Once the area is dug out, set up important furniture, stockpiles, hospital zone and garbage dump zone with /services2."
+"3) Once the area is dug out, set up important furniture, stockpiles, hospital zone and garbage dump zone with /services2. Run ""quickfort orders"" for /services2."
 ""
 "4) When the table and chair have been placed in the dining room and the weapon rack and archery targets have been constructed in the barracks, run /services3 to build the rest of the furniture and configure your dining room and barracks. Run ""quickfort orders"" for /services3."
 ""
 5) Fill the wells with either bucket brigades or by carefully routing flowing water.
 ""
 "6) When your fort is mature enough to need jail cells, run /services4 to set those up -- anytime after the restraints are built in the jail cell block. You also get some decorative statues to increase the value of your dining hall. Run ""quickfort orders"" for /services4."
-"#dig label(services1) start(23; 22; central stairs) message(This would be a good time to queue manager orders for /services2 and /services3. Once the area is dug out, continue with /services2.)"
+"#dig label(services1) start(23; 22; central stairs) message(Once the area is dug out, continue with /services2.)"
 
 
 ,,,,d,d,d,,,d,d,d,,,d,d,d
@@ -2154,18 +2157,19 @@ Services Walkthrough:
 ,,,,,,,,,,,,,,,,,,,,d,d,d,d,d
 
 
-"#meta label(services2) start(central stairs) message(Once furniture has been placed, continue with /services3.) dining hall anchors, stockpiles, hospital, garbage dump"
+"#meta label(services2) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
+Once furniture has been placed, continue with /services3.) dining hall anchors, stockpiles, hospital, garbage dump"
 build/services_build
 place/services_place
 zones/services_zones
 name_zones/services_name_zones
 query_stockpiles/services_query_stockpiles
 ""
-"#meta label(services3) start(central stairs) configure dining room, build dining hall and hospital furniture"
+"#meta label(services3) start(central stairs) message(Remember to enqueue manager orders for this blueprint.) configure dining room, build dining hall and hospital furniture"
 query_dining/services_query_dining
 build2/services_build2
 ""
-#meta label(services4) start(central stairs) complete jail and build decorative furniture
+#meta label(services4) start(central stairs) message(Remember to enqueue manager orders for this blueprint.) complete jail and build decorative furniture
 build3/services_build3
 place_jail/services_place_jail
 query_jail/services_query_jail
@@ -2600,8 +2604,8 @@ Guildhall Walkthrough:
 ""
 "2) Once the area is dug out, add in generic furniture with /guildhall2. Run ""quickfort orders"" for /guildhall2."
 ""
-"3) Furnish individual rooms manually as you need guildhalls, libraries, and temples."
-"#dig label(guildhall1) start(15; 15; central stairs) message(This would be a good time to queue manager orders for /guildhall2. Once the area is dug out, continue with /guildhall2.)"
+"3) Furnish individual rooms manually and declare appropriate locations as you need guildhalls, libraries, and temples. If you need more rooms, you can dig another /guildhall1 in an unused z-level."
+"#dig label(guildhall1) start(15; 15; central stairs) message(Once the area is dug out, continue with /guildhall2.)"
 
 
 ,,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d
@@ -2631,7 +2635,8 @@ Guildhall Walkthrough:
 ,,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d
 
 
-#build label(guildhall2) start(15; 15; central stairs) message(Smooth tiles and furnish/declare locations as required.) build basic furniture
+"#build label(guildhall2) start(15; 15; central stairs) message(Remember to enqueue manager orders for this blueprint.
+Smooth/engrave tiles, furnish rooms, and declare locations as required.) build basic furniture"
 
 
 ,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
@@ -2685,7 +2690,7 @@ Apartments Walkthrough:
 "3) Once the beds are built, configure the rooms and build the remaining furniture with /apartments3. Run ""quickfort orders"" for /apartments3."
 ""
 "4) Once the coffins are all in place, run ""burial -pets"" to set them all to accept burials. This is handled for you if you're using the onMapLoad_dreamfort.init file included with DFHack."
-"#dig label(suites1) start(18; 18; central ramp) message(This would be a good time to queue manager orders for /suites2. Once the area is dug out, run /suites2) noble suites"
+"#dig label(suites1) start(18; 18; central ramp) message(Once the area is dug out, run /suites2) noble suites"
 
 ,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
 ,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
@@ -2721,7 +2726,8 @@ Apartments Walkthrough:
 ,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
 ,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d
 
-#build label(suites2) start(18; 18; central ramp) message(bedrooms are left unconfigured so you can assign them to specific nobles)
+"#build label(suites2) start(18; 18; central ramp) message(Remember to enqueue manager orders for this blueprint.
+bedrooms are left unconfigured so you can assign them to specific nobles)"
 
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
@@ -2768,7 +2774,7 @@ Apartments Walkthrough:
 #>
 /apartments1
 
-"#dig label(apartments1) start(18; 18; central ramp) message(This would be a good time to enqueue manager orders for /apartments2 and /apartments3. Once the area is dug out, continue with /apartments2.) apartment complex"
+"#dig label(apartments1) start(18; 18; central ramp) message(Once the area is dug out, continue with /apartments2.) apartment complex"
 
 ,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
 ,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
@@ -2804,7 +2810,8 @@ Apartments Walkthrough:
 ,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
 ,,,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d,,d,d,d
 
-"#build label(apartments2) start(18; 18; central ramp) message(Once beds have been placed, continue with /apartments3.) build beds"
+"#build label(apartments2) start(18; 18; central ramp) message(Remember to enqueue manager orders for this blueprint.
+Once beds have been placed, continue with /apartments3.) build beds"
 
 ,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
 ,,,,`,b,`,,`,b,`,,`,b,`,,`,b,`,,`,b,`,,`,b,`,,`,b,`
@@ -2840,7 +2847,7 @@ Apartments Walkthrough:
 ,,,,`,b,`,,`,b,`,,`,b,`,,`,b,`,,`,b,`,,`,b,`,,`,b,`
 ,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
 
-#meta label(apartments3) start(central ramp) configure rooms and build remaining furniture
+#meta label(apartments3) start(central ramp) message(Remember to enqueue manager orders for this blueprint.) configure rooms and build remaining furniture
 query_apartments/apartments_rooms
 build2_apartments/apartments_build2
 #query label(apartments_rooms) start(18; 18) hidden() configure rooms
@@ -2879,7 +2886,7 @@ build2_apartments/apartments_build2
 ,,,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,r-&,`,,`,r-&,`
 ,,,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,`,`
 
-#build label(apartments_build2) start(18; 18) hidden() message(Coffins should be configured with DFHack burial script) build remaining furniture
+"#build label(apartments_build2) start(18; 18) hidden() message(Coffins should be configured with DFHack ""burial"" script) build remaining furniture"
 
 ,,,,n,`,h,,n,`,h,,n,`,h,,n,`,h,,n,`,h,,n,`,h,,n,`,h
 ,,,,`,~,`,,`,~,`,,`,~,`,,`,~,`,,`,~,`,,`,~,`,,`,~,`

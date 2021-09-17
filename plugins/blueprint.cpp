@@ -630,9 +630,12 @@ static bool get_filename(string &fname,
     return true;
 }
 
-typedef vector<const char *> bp_row;     // index is x coordinate
-typedef map<int16_t, bp_row> bp_area;    // key is y coordinate
-typedef map<int16_t, bp_area> bp_volume; // key is z coordinate
+typedef map<int16_t /* x */, const char *> bp_row;
+typedef map<int16_t /* y */, bp_row> bp_area;
+typedef map<int16_t /* z */, bp_area> bp_volume;
+
+static const bp_area NEW_AREA;
+static const bp_row NEW_ROW;
 
 typedef const char * (get_tile_fn)(const df::coord &pos,
                                    const tile_context &ctx);
@@ -663,15 +666,11 @@ static void write_minimal(ofstream &ofile, const blueprint_options &opts,
         for (auto row : area.second) {
             for ( ; yprev < row.first; ++yprev)
                 ofile << endl;
-            size_t xprev = 0;
-            auto &tiles = row.second;
-            size_t rowsize = tiles.size();
-            for (size_t x = 0; x < rowsize; ++x) {
-                if (!tiles[x])
-                    continue;
-                for ( ; xprev < x; ++xprev)
+            int16_t xprev = 0;
+            for (auto tile : row.second) {
+                for ( ; xprev < tile.first; ++xprev)
                     ofile << ",";
-                ofile << tiles[x];
+                ofile << tile.second;
             }
         }
         ofile << endl;
@@ -693,7 +692,7 @@ static void write_pretty(ofstream &ofile, const blueprint_options &opts,
                 row = &area->at(y);
             for (int16_t x = 0; x < opts.width; ++x) {
                 const char *tile = NULL;
-                if (row)
+                if (row && row->count(x))
                     tile = row->at(x);
                 ofile << (tile ? tile : " ") << ",";
             }
@@ -743,10 +742,6 @@ static bool do_transform(color_ostream &out,
                          const df::coord &start, const df::coord &end,
                          const blueprint_options &opts,
                          vector<string> &filenames) {
-    // empty map instances to pass to emplace() below
-    static const bp_area EMPTY_AREA;
-    static const bp_row EMPTY_ROW;
-
     vector<blueprint_processor> processors;
 
     if (opts.auto_phase || opts.dig)
@@ -784,13 +779,10 @@ static bool do_transform(color_ostream &out,
                     if (tile_str) {
                         // ensure our z-index is in the order we want to write
                         auto area = processor.mapdata.emplace(abs(z - start.z),
-                                                              EMPTY_AREA);
+                                                              NEW_AREA);
                         auto row = area.first->second.emplace(y - start.y,
-                                                              EMPTY_ROW);
-                        auto &tiles = row.first->second;
-                        if (row.second)
-                            tiles.resize(opts.width);
-                        tiles[x - start.x] = tile_str;
+                                                              NEW_ROW);
+                        row.first->second[x - start.x] = tile_str;
                     }
                 }
             }

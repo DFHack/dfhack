@@ -194,7 +194,7 @@ local function run_blueprint(basename, set, pos)
                             tostring(set.spec.height),
                             tostring(-set.spec.depth),
                             output_dir..basename, get_cursor_arg(pos),
-                            '-tphase', '-fpretty'}
+                            '-tphase'}
     for _,mode_name in pairs(mode_names) do
         if set.modes[mode_name] then table.insert(blueprint_args, mode_name) end
     end
@@ -249,7 +249,7 @@ function test.end_to_end()
         end
 
         -- run dig-now to dig out designated tiles
-        dfhack.run_command('dig-now', '--clean')
+        dfhack.run_command('dig-now')
 
         -- quickfort run remaining blueprints
         for _,mode_name in pairs(mode_names) do

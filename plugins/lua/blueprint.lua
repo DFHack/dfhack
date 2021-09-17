@@ -42,12 +42,6 @@ local valid_phase_list = {
 }
 valid_phases = utils.invert(valid_phase_list)
 
-local valid_formats_list = {
-    'minimal',
-    'pretty',
-}
-valid_formats = utils.invert(valid_formats_list)
-
 local valid_split_strategies_list = {
     'none',
     'phase',
@@ -62,20 +56,13 @@ local function parse_cursor(opts, arg)
     utils.assign(opts.start, cursor)
 end
 
-local function parse_enum(opts, valid, name, val)
-    if not valid[val] then
-        qerror(('unknown %s: "%s"; expected one of: %s')
-               :format(name, val, table.concat(valid, ', ')))
-    end
-    opts[name] = val
-end
-
 local function parse_split_strategy(opts, strategy)
-    parse_enum(opts, valid_split_strategies, 'split_strategy', strategy)
-end
-
-local function parse_format(opts, file_format)
-    parse_enum(opts, valid_formats, 'format', file_format)
+    if not valid_split_strategies[strategy] then
+        qerror(('unknown split strategy: "%s"; expected one of: %s')
+               :format(strategy,
+                       table.concat(valid_split_strategies_list, ', ')))
+    end
+    opts.split_strategy = strategy
 end
 
 local function parse_positionals(opts, args, start_argidx)
@@ -115,15 +102,9 @@ local function process_args(opts, args)
         return
     end
 
-    -- set defaults
-    opts.format = valid_formats_list[1]
-    opts.split_strategy = valid_split_strategies_list[1]
-
     local positionals = argparse.processArgsGetopt(args, {
             {'c', 'cursor', hasArg=true,
              handler=function(optarg) parse_cursor(opts, optarg) end},
-            {'f', 'format', hasArg=true,
-             handler=function(optarg) parse_format(opts, optarg) end},
             {'h', 'help', handler=function() opts.help = true end},
             {'t', 'splitby', hasArg=true,
              handler=function(optarg) parse_split_strategy(opts, optarg) end},
@@ -133,6 +114,7 @@ local function process_args(opts, args)
         return
     end
 
+    opts.split_strategy = opts.split_strategy or valid_split_strategies_list[1]
     return positionals
 end
 

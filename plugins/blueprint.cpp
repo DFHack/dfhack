@@ -55,6 +55,11 @@ struct blueprint_options {
     // for it.
     string format;
 
+    // offset and comment to write in the quickfort start() modeline marker
+    // if not set, coordinates are set to 0 and the comment will be empty
+    df::coord2d playback_start = df::coord2d(0, 0);
+    string playback_start_comment;
+
     // file splitting strategy. this could be an enum if we set up the
     // boilerplate for it.
     string split_strategy;
@@ -80,19 +85,21 @@ struct blueprint_options {
     static struct_identity _identity;
 };
 static const struct_field_info blueprint_options_fields[] = {
-    { struct_field_info::PRIMITIVE, "help",           offsetof(blueprint_options, help),          &df::identity_traits<bool>::identity,    0, 0 },
-    { struct_field_info::SUBSTRUCT, "start",          offsetof(blueprint_options, start),         &df::coord::_identity,                   0, 0 },
-    { struct_field_info::PRIMITIVE, "format",         offsetof(blueprint_options, format),         df::identity_traits<string>::get(),     0, 0 },
-    { struct_field_info::PRIMITIVE, "split_strategy", offsetof(blueprint_options, split_strategy), df::identity_traits<string>::get(),     0, 0 },
-    { struct_field_info::PRIMITIVE, "width",          offsetof(blueprint_options, width),         &df::identity_traits<int32_t>::identity, 0, 0 },
-    { struct_field_info::PRIMITIVE, "height",         offsetof(blueprint_options, height),        &df::identity_traits<int32_t>::identity, 0, 0 },
-    { struct_field_info::PRIMITIVE, "depth",          offsetof(blueprint_options, depth),         &df::identity_traits<int32_t>::identity, 0, 0 },
-    { struct_field_info::PRIMITIVE, "name",           offsetof(blueprint_options, name),           df::identity_traits<string>::get(),     0, 0 },
-    { struct_field_info::PRIMITIVE, "auto_phase",     offsetof(blueprint_options, auto_phase),    &df::identity_traits<bool>::identity,    0, 0 },
-    { struct_field_info::PRIMITIVE, "dig",            offsetof(blueprint_options, dig),           &df::identity_traits<bool>::identity,    0, 0 },
-    { struct_field_info::PRIMITIVE, "build",          offsetof(blueprint_options, build),         &df::identity_traits<bool>::identity,    0, 0 },
-    { struct_field_info::PRIMITIVE, "place",          offsetof(blueprint_options, place),         &df::identity_traits<bool>::identity,    0, 0 },
-    { struct_field_info::PRIMITIVE, "query",          offsetof(blueprint_options, query),         &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::PRIMITIVE, "help",                   offsetof(blueprint_options, help),                  &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::SUBSTRUCT, "start",                  offsetof(blueprint_options, start),                 &df::coord::_identity,                   0, 0 },
+    { struct_field_info::PRIMITIVE, "format",                 offsetof(blueprint_options, format),                 df::identity_traits<string>::get(),     0, 0 },
+    { struct_field_info::SUBSTRUCT, "playback_start",         offsetof(blueprint_options, playback_start),        &df::coord2d::_identity,                 0, 0 },
+    { struct_field_info::PRIMITIVE, "playback_start_comment", offsetof(blueprint_options, playback_start_comment), df::identity_traits<string>::get(),     0, 0 },
+    { struct_field_info::PRIMITIVE, "split_strategy",         offsetof(blueprint_options, split_strategy),         df::identity_traits<string>::get(),     0, 0 },
+    { struct_field_info::PRIMITIVE, "width",                  offsetof(blueprint_options, width),                 &df::identity_traits<int32_t>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "height",                 offsetof(blueprint_options, height),                &df::identity_traits<int32_t>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "depth",                  offsetof(blueprint_options, depth),                 &df::identity_traits<int32_t>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "name",                   offsetof(blueprint_options, name),                   df::identity_traits<string>::get(),     0, 0 },
+    { struct_field_info::PRIMITIVE, "auto_phase",             offsetof(blueprint_options, auto_phase),            &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::PRIMITIVE, "dig",                    offsetof(blueprint_options, dig),                   &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::PRIMITIVE, "build",                  offsetof(blueprint_options, build),                 &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::PRIMITIVE, "place",                  offsetof(blueprint_options, place),                 &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::PRIMITIVE, "query",                  offsetof(blueprint_options, query),                 &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::END }
 };
 struct_identity blueprint_options::_identity(sizeof(blueprint_options), &df::allocator_fn<blueprint_options>, NULL, "blueprint_options", NULL, blueprint_options_fields);
@@ -716,9 +723,17 @@ static void write_pretty(ofstream &ofile, const blueprint_options &opts,
     }
 }
 
-static string get_modeline(const string &phase) {
+static string get_modeline(const blueprint_options &opts, const string &phase) {
     std::ostringstream modeline;
     modeline << "#" << phase << " label(" << phase << ")";
+    if (opts.playback_start.x > 0) {
+        modeline << " start(" << opts.playback_start.x
+                << ";" << opts.playback_start.y;
+        if (!opts.playback_start_comment.empty()) {
+            modeline << ";" << opts.playback_start_comment;
+        }
+        modeline << ")";
+    }
 
     return modeline.str();
 }
@@ -735,7 +750,7 @@ static bool write_blueprint(color_ostream &out,
         output_files[fname] = new ofstream(fname, ofstream::trunc);
 
     ofstream &ofile = *output_files[fname];
-    ofile << get_modeline(processor.phase) << endl;
+    ofile << get_modeline(opts, processor.phase) << endl;
 
     if (pretty)
         write_pretty(ofile, opts, processor.mapdata);

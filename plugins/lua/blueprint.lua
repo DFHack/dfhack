@@ -70,12 +70,34 @@ local function parse_enum(opts, valid, name, val)
     opts[name] = val
 end
 
-local function parse_split_strategy(opts, strategy)
-    parse_enum(opts, valid_split_strategies, 'split_strategy', strategy)
-end
-
 local function parse_format(opts, file_format)
     parse_enum(opts, valid_formats, 'format', file_format)
+end
+
+local function is_int(val)
+    return val and val == math.floor(val)
+end
+
+local function is_positive_int(val)
+    return is_int(val) and val > 0
+end
+
+local function parse_start(opts, args)
+    local arg_list = argparse.stringList(args)
+    local x_str, y_str = table.remove(arg_list, 1), table.remove(arg_list, 1)
+    local x, y = tonumber(x_str), tonumber(y_str)
+    if not is_positive_int(x) or not is_positive_int(y) then
+        qerror(('playback start offsets must be positive integers: "%s", "%s"')
+               :format(x_str, y_str))
+    end
+
+    if not opts.playback_start then opts.playback_start = {} end
+    opts.playback_start.x, opts.start.y = x, y
+    opts.playback_start_comment = table.concat(arg_list, ', ')
+end
+
+local function parse_split_strategy(opts, strategy)
+    parse_enum(opts, valid_split_strategies, 'split_strategy', strategy)
 end
 
 local function parse_positionals(opts, args, start_argidx)
@@ -125,6 +147,8 @@ local function process_args(opts, args)
             {'f', 'format', hasArg=true,
              handler=function(optarg) parse_format(opts, optarg) end},
             {'h', 'help', handler=function() opts.help = true end},
+            {'s', 'playback-start', hasArg=true,
+             handler=function(optarg) parse_start(opts, optarg) end},
             {'t', 'splitby', hasArg=true,
              handler=function(optarg) parse_split_strategy(opts, optarg) end},
         })
@@ -146,9 +170,8 @@ end
 -- dimension must be a non-nil integer that is >= 1 (or at least non-zero if
 -- negative_ok is true)
 local function is_bad_dim(dim, negative_ok)
-    return not dim or
-            (not negative_ok and dim < 1 or dim == 0) or
-            dim ~= math.floor(dim)
+    return not is_int(dim) or
+            (not negative_ok and dim < 1 or dim == 0)
 end
 
 function parse_commandline(opts, ...)
@@ -169,6 +192,17 @@ function parse_commandline(opts, ...)
                    :format(positionals[3]))
         end
         opts.depth = depth
+    end
+
+    if opts.playback_start and opts.playback_start.x > 0 then
+        if opts.playback_start.x > width then
+            qerror(('playback start x offset outside width of blueprint: %d')
+                   :format(opts.playback_start.x))
+        end
+        if opts.playback_start.y > height then
+            qerror(('playback start y offset outside height of blueprint: %d')
+                   :format(opts.playback_start.y))
+        end
     end
 
     parse_positionals(opts, positionals, depth and 4 or 3)

@@ -757,6 +757,8 @@ be "2" if it is not otherwise set, etc. Labels that are explicitly defined must
 start with a letter to ensure the auto-generated labels don't conflict with
 user-defined labels.
 
+.. _quickfort-start:
+
 Start positions
 ```````````````
 
@@ -786,6 +788,9 @@ to the ``masonw`` blueprint above could look like this::
 
    #meta start(center of workshop) a mason workshop
    /masonw
+
+You can use semicolons, commas, or spaces to separate the elements of the
+``start()`` marker, whatever is most convenient.
 
 .. _quickfort-hidden:
 

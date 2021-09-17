@@ -46,12 +46,13 @@ selected interactively with the ``blueprint gui`` command or, if the GUI is not
 used, starts at the active cursor location and extends right and down for the
 requested width and height.
 
-Usage::
+**Usage:**
 
-    blueprint <width> <height> [<depth>] [<name> [<phases>]] [<options>]
-    blueprint gui [<name> [<phases>]] [<options>]
+    ``blueprint <width> <height> [<depth>] [<name> [<phases>]] [<options>]``
 
-Examples:
+    ``blueprint gui [<name> [<phases>]] [<options>]``
+
+**Examples:**
 
 ``blueprint gui``
     Runs `gui/blueprint`, the interactive frontend, where all configuration for
@@ -68,7 +69,7 @@ Examples:
     the blueprint start coordinate is set to a specific value instead of using
     the in-game cursor position.
 
-Positional Parameters:
+**Positional Parameters:**
 
 :``width``:   Width of the area (in tiles) to translate.
 :``height``:  Height of the area (in tiles) to translate.
@@ -80,7 +81,7 @@ Positional Parameters:
     string must contain some characters other than numbers so the name won't be
     confused with the optional ``depth`` parameter.
 
-Phases:
+**Phases:**
 
 If you want to generate blueprints only for specific phases, add their names to
 the commandline, anywhere after the blueprint base name. You can list multiple
@@ -94,36 +95,45 @@ phases; just separate them with a space.
 
 If no phases are specified, all blueprints are created.
 
-Options:
+**Options:**
 
-:``-c``, ``--cursor <x>,<y>,<z>``:
+``-c``, ``--cursor <x>,<y>,<z>``:
     Use the specified map coordinates instead of the current cursor position for
     the upper left corner of the blueprint range. If this option is specified,
     then an active game map cursor is not necessary.
-:``-f``, ``--format <format>``:
-    Select the output format of the generated files. See the ``Output Formats``
+``-f``, ``--format <format>``:
+    Select the output format of the generated files. See the ``Output formats``
     section below for options. If not specified, the output format defaults to
     "minimal", which will produce a small, fast ``.csv`` file.
-:``-h``, ``--help``:
+``-h``, ``--help``:
     Show command help text.
-:``-t``, ``--splitby <strategy>``:
+``-s``, ``--playback-start <x>,<y>,<comment>``:
+    Specify the column and row offsets (relative to the upper-left corner of the
+    blueprint, which is ``1,1``) where the player should put the cursor when the
+    blueprint is played back with `quickfort`, in
+    `quickfort start marker <quickfort-start>` format, for example:
+    ``10,10,central stairs``. If there is a space in the comment, you will need
+    to surround the parameter string in double quotes: ``"-s10,10,central stairs"`` or
+    ``--playback-start "10,10,central stairs"`` or
+    ``"--playback-start=10,10,central stairs"``.
+``-t``, ``--splitby <strategy>``:
     Split blueprints into multiple files. See the ``Splitting output into
     multiple files`` section below for details. If not specified, defaults to
     "none", which will create a standard quickfort
     `multi-blueprint <quickfort-packaging>` file.
 
-Output formats:
+**Output formats:**
 
 Here are the values that can be passed to the ``--format`` flag:
 
-:minimal:
+:``minimal``:
     Creates ``.csv`` files with minimal file size that are fast to read and
     write. This is the default.
-:pretty:
+:``pretty``:
     Makes the blueprints in the ``.csv`` files easier to read and edit with a text
     editor by adding extra spacing and alignment markers.
 
-Splitting output into multiple files:
+**Splitting output into multiple files:**
 
 The ``--splitby`` flag can take any of the following values:
 

@@ -114,7 +114,7 @@ struct tile_context {
 };
 
 // the number of different strings we use is very small so we use a string cache
-// to limit the number of string instances we store. this significantly speeds
+// to limit the number of memory allocations we make. this significantly speeds
 // up processing and allows us to handle very large maps (e.g. 16x16 embarks)
 // without running out of memory.
 // if NULL is passed as the str, the cache is cleared
@@ -732,7 +732,7 @@ static bool write_blueprint(color_ostream &out,
     return true;
 }
 
-static void ensure_building(const df::coord &pos, tile_context &ctx) {
+void ensure_building(const df::coord &pos, tile_context &ctx) {
     if (ctx.b)
         return;
     ctx.b = Buildings::findAtTile(pos);
@@ -792,7 +792,7 @@ static bool do_transform(color_ostream &out,
     std::map<string, ofstream*> output_files;
     for (blueprint_processor &processor : processors) {
         if (!write_blueprint(out, output_files, opts, processor, pretty))
-            break;
+            return false;
     }
 
     for (auto &it : output_files) {
@@ -800,6 +800,7 @@ static bool do_transform(color_ostream &out,
         it.second->close();
         delete(it.second);
     }
+    output_files.clear();
 
     return true;
 }

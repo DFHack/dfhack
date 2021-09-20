@@ -88,12 +88,14 @@ local function parse_start(opts, args)
     local x, y = tonumber(x_str), tonumber(y_str)
     if not is_positive_int(x) or not is_positive_int(y) then
         qerror(('playback start offsets must be positive integers: "%s", "%s"')
-               :format(x_str, y_str))
+               :format(x_str or '', y_str or ''))
     end
 
     if not opts.playback_start then opts.playback_start = {} end
-    opts.playback_start.x, opts.start.y = x, y
-    opts.playback_start_comment = table.concat(arg_list, ', ')
+    opts.playback_start.x, opts.playback_start.y = x, y
+    if #arg_list > 0 then
+        opts.playback_start_comment = table.concat(arg_list, ', ')
+    end
 end
 
 local function parse_split_strategy(opts, strategy)

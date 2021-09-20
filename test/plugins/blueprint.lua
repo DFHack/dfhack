@@ -41,9 +41,8 @@ function test.parse_gui_commandline()
                      name='blueprint'},
                     opts)
 
-    opts = {}
     expect.error_match('unknown format',
-                       function() b.parse_gui_commandline(opts, {'-ffoo'}) end)
+                       function() b.parse_gui_commandline({}, {'-ffoo'}) end)
 
     opts = {}
     b.parse_gui_commandline(opts, {'-tnone'})
@@ -52,14 +51,37 @@ function test.parse_gui_commandline()
                     opts)
 
     opts = {}
+    b.parse_gui_commandline(opts, {'--playback-start', '2,3,imacomment'})
+    expect.table_eq({auto_phase=true, format='minimal', split_strategy='none',
+                     name='blueprint', playback_start={x=2, y=3},
+                     playback_start_comment='imacomment'},
+                    opts)
+
+    opts = {}
+    b.parse_gui_commandline(opts, {'-s2,3'})
+    expect.table_eq({auto_phase=true, format='minimal', split_strategy='none',
+                     name='blueprint', playback_start={x=2, y=3}},
+                    opts)
+
+    expect.error_match('must be positive integers',
+                       function() b.parse_gui_commandline({}, {'-s10'}) end)
+    expect.error_match('must be positive integers',
+                       function() b.parse_gui_commandline({}, {'-s1,-1'}) end)
+    expect.error_match('must be positive integers',
+                       function() b.parse_gui_commandline({}, {'-s-1,1'}) end)
+    expect.error_match('must be positive integers',
+                       function() b.parse_gui_commandline({}, {'-s1,0'}) end)
+    expect.error_match('must be positive integers',
+                       function() b.parse_gui_commandline({}, {'-s0,1'}) end)
+
+    opts = {}
     b.parse_gui_commandline(opts, {'--splitby', 'phase'})
     expect.table_eq({auto_phase=true, format='minimal', split_strategy='phase',
                      name='blueprint'},
                     opts)
 
-    opts = {}
     expect.error_match('unknown split_strategy',
-                       function() b.parse_gui_commandline(opts, {'-tfoo'}) end)
+                       function() b.parse_gui_commandline({}, {'-tfoo'}) end)
 
     opts = {}
     b.parse_gui_commandline(opts, {'imaname'})
@@ -67,9 +89,8 @@ function test.parse_gui_commandline()
                      name='imaname'},
                     opts)
 
-    opts = {}
     expect.error_match('invalid basename',
-                       function() b.parse_gui_commandline(opts, {''}) end)
+                       function() b.parse_gui_commandline({}, {''}) end)
 
     opts = {}
     b.parse_gui_commandline(opts, {'imaname', 'dig', 'query'})
@@ -77,10 +98,9 @@ function test.parse_gui_commandline()
                      name='imaname', dig=true, query=true},
                     opts)
 
-    opts = {}
     expect.error_match('unknown phase',
                        function() b.parse_gui_commandline(
-                                        opts, {'imaname', 'garbagephase'}) end)
+                                        {}, {'imaname', 'garbagephase'}) end)
 end
 
 function test.parse_commandline()
@@ -126,35 +146,31 @@ function test.parse_commandline()
                      name='imaname', width=1, height=2, depth=3},
                     opts)
 
-    opts = {}
     expect.error_match('invalid width or height',
-                       function() b.parse_commandline(opts) end,
+                       function() b.parse_commandline({}) end,
                        'missing width')
-
-    opts = {}
     expect.error_match('invalid width or height',
-                       function() b.parse_commandline(opts, '10') end,
+                       function() b.parse_commandline({}, '10') end,
                        'missing height')
-
-    opts = {}
     expect.error_match('invalid width or height',
-                       function() b.parse_commandline(opts, '0') end,
+                       function() b.parse_commandline({}, '0') end,
                        'zero height')
-
-    opts = {}
     expect.error_match('invalid width or height',
-                       function() b.parse_commandline(opts, 'hi') end,
+                       function() b.parse_commandline({}, 'hi') end,
                        'invalid width')
-
-    opts = {}
     expect.error_match('invalid width or height',
-                       function() b.parse_commandline(opts, '10', 'hi') end,
+                       function() b.parse_commandline({}, '10', 'hi') end,
                        'invalid height')
-
-    opts = {}
     expect.error_match('invalid depth',
-                       function() b.parse_commandline(opts, '1', '2', '0') end,
+                       function() b.parse_commandline({}, '1', '2', '0') end,
                        'zero depth')
+
+    expect.error_match('x offset outside width of blueprint',
+                       function() b.parse_commandline(
+                                {}, '3', '2', '1', '-s4,1') end)
+    expect.error_match('y offset outside height of blueprint',
+                       function() b.parse_commandline(
+                                {}, '3', '2', '1', '-s1,3') end)
 end
 
 function test.do_phase_positive_dims()

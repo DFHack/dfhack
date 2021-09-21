@@ -42,6 +42,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `blueprint`: all blueprint phases are now written to a single file, using `quickfort` multi-blueprint file syntax. to get the old behavior of each phase in its own file, pass the ``--splitby=phase`` parameter to ``blueprint``
 - `blueprint`: you can now specify the position where the cursor should be when the blueprint is played back with `quickfort` by passing the ``--playback-start`` parameter
 - `blueprint`: generated blueprints now have labels so `quickfort` can address them by name
+- `quickfort`, `dfhack-examples-guide`: Dreamfort blueprint set improvements based on playtesting and feedback. includes updated profession definitions.
 
 # 0.47.05-r3
 

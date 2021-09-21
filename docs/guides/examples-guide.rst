@@ -63,13 +63,15 @@ This collection of orders handles basic fort necessities:
 - prepared meals and food products (and by-products like oil)
 - booze/mead
 - thread/cloth/dye
-- pots/jugs/buckets/bags (of leather, cloth, silk, and yarn)
+- pots/jugs/buckets
+- bags of leather, cloth, silk, and yarn
 - crafts and totems from otherwise unusable by-products
 - mechanisms/cages
 - splints/crutches
 - lye/soap
 - ash/potash
 - beds/wheelbarrows/minecarts
+- scrolls
 
 You should import it as soon as you have enough dwarves to perform the tasks.
 Right after the first migration wave is usually a good time.
@@ -82,12 +84,14 @@ This collection creates basic items that require heat. It is separated out from
 order to save resources. It handles:
 
 - charcoal (including smelting of bituminous coal and lignite)
-- plaster
 - pearlash
 - sand
 - green/clear/crystal glass
 - adamantine processing
 - item melting
+
+Orders are missing for plaster powder until DF `bug 11803
+<https://www.bay12games.com/dwarves/mantisbt/view.php?id=11803>`_ is fixed.
 
 :source:`military.json <data/examples/orders/military.json>`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -97,11 +101,11 @@ produces weapons and armor:
 
 - leather backpacks/waterskins/cloaks/quivers/armor
 - bone/wooden bolts
-- smelting for platinum, silver, steel, bronze, and copper (and their
-  dependencies)
-- bronze/copper bolts
-- platinum/silver/steel/iron/bronze/copper weapons and armor, with checks to
-  ensure only the best available materials are being used
+- smelting for platinum, silver, steel, bronze, bismuth bronze, and copper (and
+  their dependencies)
+- bronze/bismuth bronze/copper bolts
+- platinum/silver/steel/iron/bismuth bronze/bronze/copper weapons and armor,
+  with checks to ensure only the best available materials are being used
 
 If you set a stockpile to take weapons and armor of less than masterwork quality
 and turn on `automelt` (like what `dreamfort` provides on its industry level),
@@ -116,8 +120,8 @@ This file should only be imported, of course, if you need to equip a military.
 
 This collection adds smelting jobs for all ores. It includes handling the ores
 already managed by ``military.json``, but has lower limits. This ensures all
-ores will be covered if a player imports smelting but not military, but the
-higher-volume military orders will take priority if both are imported.
+ores will be covered if a player imports ``smelting`` but not ``military``, but
+the higher-volume ``military`` orders will take priority if both are imported.
 
 :source:`rockstock.json <data/examples/orders/rockstock.json>`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -176,14 +180,16 @@ Chef           0         3     Buchery, Tanning, and Cooking. It is important to
                                focus just a few dwarves on cooking since
                                well-crafted meals make dwarves very happy. They
                                are also an excellent trade good.
-Craftsdwarf    1         4-6   All labors used at Craftsdwarf's workshops,
+Craftsdwarf    0         4-6   All labors used at Craftsdwarf's workshops,
                                Glassmaker's workshops, and kilns.
 Doctor         0         2-4   The full suite of medical labors, plus Animal
                                Caretaking for those using the dwarfvet plugin.
-Farmer         0         4     Food- and animal product-related labors. This
+Farmer         1         4     Food- and animal product-related labors. This
                                profession also has the ``Alchemist`` labor
                                enabled since they need to focus on food-related
-                               jobs.
+                               jobs, though you might want to disable
+                               ``Alchemist`` for your first farmer until there
+                               are actual farming duties to perform.
 Fisherdwarf    0         0-1   Fishing and fish cleaning. If you assign this
                                profession to any dwarf, be prepared to be
                                inundated with fish. Fisherdwarves *never stop
@@ -202,9 +208,9 @@ Hauler         0         >20   All hauling labors plus Siege Operating, Mechanic
                                skilled mechanics so your haulers don't make
                                low-quality mechanisms.
 Laborer        0         10-12 All labors that don't improve quality with skill,
-                               such as Soapmaking or furnace labors.
-Marksdwarf     0         10-30 Same as Hauler, but with a different name so you
-                               can find your military dwarves more easily.
+                               such as Soapmaking and furnace labors.
+Marksdwarf     0         10-30 Similar to Hauler. See the description for
+                               Meleedwarf below for more details.
 Mason          2         2-4   Masonry, Gem Cutting/Encrusting, and
                                Architecture. In the early game, you may need to
                                run "`prioritize` ConstructBuilding" to get your
@@ -212,13 +218,13 @@ Mason          2         2-4   Masonry, Gem Cutting/Encrusting, and
                                busy crafting stone furniture. Late game, you can
                                turn off their Architecture labor since that will
                                be better handled by your Haulers.
-Meleedwarf     0         20-50 Mostly the same as Hauler, but with a different
-                               name so you can find your military dwarves more
-                               easily. This profession also has the Recover
-                               Wounded labor enabled. Meleedwarves and
-                               Marksdwarves are similar to Haulers so you can
-                               temporarily deactivate your military after sieges
-                               to allow your military dwarves to help clean up.
+Meleedwarf     0         20-50 Similar to Hauler, but without most civilian
+                               labors. This profession is separate from Hauler
+                               so you can find your military dwarves easily.
+                               Meleedwarves and Marksdwarves have Mechanics and
+                               hauling labors enabled so you can temporarily
+                               deactivate your military after sieges and allow
+                               your military dwarves to help clean up.
 Migrant        0         0     You can assign this profession to new migrants
                                temporarily while you sort them into professions.
                                Like Marksdwarf and Meleedwarf, the purpose of
@@ -239,7 +245,7 @@ Smith          0         2-4   Smithing labors. You may want to specialize your
                                maximize equipment quality.
 StartManager   1         0     All skills not covered by the other starting
                                professions (Miner, Mason, Outdoorsdwarf, and
-                               Craftsdwarf), plus a few overlapping skills to
+                               Farmer), plus a few overlapping skills to
                                assist in critical tasks at the beginning of the
                                game. Individual labors should be turned off as
                                migrants are assigned more specialized

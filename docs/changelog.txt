@@ -39,6 +39,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `tailor`: fixed some inconsistencies (and possible crashes) when parsing certain subcommands, e.g. ``tailor help``
 
 ## Misc Improvements
+- Core: DFHack now prints the name of the init script it is running to the console and stderr
 - `automaterial`: ensure construction tiles are laid down in order when using `buildingplan` to plan the constructions
 - `blueprint`: all blueprint phases are now written to a single file, using `quickfort` multi-blueprint file syntax. to get the old behavior of each phase in its own file, pass the ``--splitby=phase`` parameter to ``blueprint``
 - `blueprint`: you can now specify the position where the cursor should be when the blueprint is played back with `quickfort` by passing the ``--playback-start`` parameter

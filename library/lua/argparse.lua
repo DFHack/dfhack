@@ -80,6 +80,7 @@ end
 -- it will be passed to the handler function.
 -- longOptionAlias is optional.
 -- hasArg defaults to false.
+-- to have an option that has only a long form, pass '' as the shortOptionName.
 --
 -- example usage:
 --
@@ -100,17 +101,28 @@ function processArgsGetopt(args, optionActions)
     local handlers = {}
     for _,optionAction in ipairs(optionActions) do
         local sh_opt,long_opt = optionAction[1], optionAction[2]
-        if not sh_opt or type(sh_opt) ~= 'string' or #sh_opt ~= 1 then
-            error('optionAction missing option letter at index 1')
+        -- sh_opt can be zero-length if long_opt is specified
+        if not sh_opt or type(sh_opt) ~= 'string'  or
+                (#sh_opt ~= 1 and not (#sh_opt == 0 and long_opt)) then
+            error('option letter not found')
+        end
+        if long_opt and (type(long_opt) ~= 'string' or #long_opt == 0) then
+            error('long option name must be a string with length >0')
         end
         if not optionAction.handler then
             error(string.format('handler missing for option "%s"', sh_opt))
         end
-        sh_opts = sh_opts .. sh_opt
-        if optionAction.hasArg then sh_opts = sh_opts .. ':' end
-        handlers[sh_opt] = optionAction.handler
+        if #sh_opt > 0 then
+            sh_opts = sh_opts .. sh_opt
+            if optionAction.hasArg then sh_opts = sh_opts .. ':' end
+            handlers[sh_opt] = optionAction.handler
+        end
         if long_opt then
-            long_opts[long_opt] = sh_opt
+            if #sh_opt > 0 then
+                long_opts[long_opt] = sh_opt
+            else
+                long_opts[long_opt] = optionAction.hasArg and 1 or 0
+            end
             handlers[long_opt] = optionAction.handler
         end
     end

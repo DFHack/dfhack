@@ -75,12 +75,13 @@ end
 -- as positional parameters and returned in the nonoptions list.
 --
 -- optionActions is a vector with elements in the following format:
--- {shortOptionName, longOptionAlias, hasArg=boolean, handler=fn}
+--   {shortOptionName, longOptionAlias, hasArg=boolean, handler=fn}
 -- shortOptionName and handler are required. If the option takes an argument,
 -- it will be passed to the handler function.
 -- longOptionAlias is optional.
 -- hasArg defaults to false.
--- to have an option that has only a long form, pass '' as the shortOptionName.
+-- To have an option that has only a long form, pass nil or '' as the
+-- shortOptionName.
 --
 -- example usage:
 --
@@ -101,16 +102,21 @@ function processArgsGetopt(args, optionActions)
     local handlers = {}
     for _,optionAction in ipairs(optionActions) do
         local sh_opt,long_opt = optionAction[1], optionAction[2]
-        -- sh_opt can be zero-length if long_opt is specified
-        if not sh_opt or type(sh_opt) ~= 'string'  or
-                (#sh_opt ~= 1 and not (#sh_opt == 0 and long_opt)) then
+        if sh_opt and (type(sh_opt) ~= 'string'  or #sh_opt > 1) then
             error('option letter not found')
         end
         if long_opt and (type(long_opt) ~= 'string' or #long_opt == 0) then
             error('long option name must be a string with length >0')
         end
+        if not sh_opt then
+            sh_opt = ''
+        end
+        if not long_opt and #sh_opt == 0 then
+            error('at least one of sh_opt and long_opt must be specified')
+        end
         if not optionAction.handler then
-            error(string.format('handler missing for option "%s"', sh_opt))
+            error(string.format('handler missing for option "%s"',
+                                #sh_opt > 0 and sh_opt or long_opt))
         end
         if #sh_opt > 0 then
             sh_opts = sh_opts .. sh_opt

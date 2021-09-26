@@ -58,7 +58,7 @@ function test.processArgsGetopt_happy_path()
 end
 
 function test.processArgsGetopt_action_errors()
-    expect.error_match('option letter not found',
+    expect.error_match('at least one of sh_opt and long_opt',
         function()
             argparse.processArgsGetopt({}, {{handler=function() end}})
         end)
@@ -71,6 +71,9 @@ function test.processArgsGetopt_action_errors()
 
     expect.error_match('long option name',
         function() argparse.processArgsGetopt({}, {{'', ''}}) end)
+
+    expect.error_match('long option name',
+        function() argparse.processArgsGetopt({}, {{nil, ''}}) end)
 
     expect.error_match('long option name',
         function() argparse.processArgsGetopt({}, {{'a', ''}}) end)
@@ -118,6 +121,13 @@ function test.processArgsGetopt_long_opt_without_short_opt()
     local nonoptions = argparse.processArgsGetopt(
                             {'--long'},
                             {{'', 'long', handler=function() var = true end}})
+    expect.true_(var)
+    expect.table_eq({}, nonoptions)
+
+    var = false
+    nonoptions = argparse.processArgsGetopt(
+                    {'--long'},
+                    {{nil, 'long', handler=function() var = true end}})
     expect.true_(var)
     expect.table_eq({}, nonoptions)
 end

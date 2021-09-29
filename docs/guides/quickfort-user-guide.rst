@@ -503,7 +503,7 @@ be occupied by wheelbarrows!
 
 Quickfort figures out which container type is being set by looking at the letter
 that comes just before the number. For example ``zf10`` means 10 barrels in a
-stockpile that accepts both ammo and food whereas ``z10f`` means 10 bins. If
+stockpile that accepts both ammo and food, whereas ``z10f`` means 10 bins. If
 the stockpile category doesn't usually use any container type, like refuse or
 corpses, wheelbarrows are assumed::
 
@@ -657,9 +657,10 @@ Carved tracks
 
 In the game, you carve a minecart track by specifying a beginning and ending
 tile and the game "adds" the designation to the tiles in between. You cannot
-designate single tiles. For example to carve two track segments that cross each
-other, you might use the cursor to designate a line of three vertical tiles
-like this::
+designate single tiles because DF needs a multi-tile track to figure out which
+direction the track should go on each tile. For example to carve two track
+segments that cross each other, you might use the cursor to designate a line of
+three vertical tiles like this::
 
    ` start here ` #
    ` `          ` #
@@ -682,8 +683,10 @@ track of the form::
    `      trackN    `      #
    #      #         #      #
 
-To carve this same track with a ``#dig`` blueprint, you'd use area expansion
-syntax with a height or width of 1 to indicate the segments to designate::
+Quickfort supports both styles of specification for carving tracks with ``#dig``
+blueprints. You can use the "additive" style to carve tracks in segments or you
+can use the aliases to specify the track tile by tile. To designate track
+segments, use area expansion syntax with a height or width of 1::
 
    #dig
    `      T(1x3) ` #
@@ -693,9 +696,9 @@ syntax with a height or width of 1 to indicate the segments to designate::
 
 "But wait!", I can hear you say, "How do you designate a track corner that opens
 to the South and East? You can't put both T(1xH) and T(Wx1) in the same cell!"
-This is true, but you can specify both width and height, and for tracks, QF
-interprets it as an upper-left corner extending to the right W tiles and down H
-tiles. For example, to carve a track in a closed ring, you'd write::
+This is true, but you can specify both width and height greater than 1, and for
+tracks, QF interprets it as an upper-left corner extending to the right W tiles
+and down H tiles. For example, to carve a track in a closed ring, you'd write::
 
    #dig
    T(3x3) ` T(1x3) #
@@ -703,13 +706,31 @@ tiles. For example, to carve a track in a closed ring, you'd write::
    T(3x1) ` `      #
    #      # #      #
 
-Which would result in a carved track simliar to a constructed track of the form::
+Or, using the aliases::
 
-   #build
+   #dig
    trackSE trackEW trackSW #
    trackNS `       trackNS #
    trackNE trackEW trackNW #
    #       #       #       #
+
+The aliases can also be used to designate a solid block of track. This is
+epecially useful for obliterating low-quality engravings so you can re-smooth
+and re-engrave with higher quality. For example, you could use the following
+sequence of blueprints to ensure a 10x10 floor area contains only masterwork
+engravings::
+
+    #dig smooth floor
+    s(10x10)
+    #dig engrave floor
+    e(10x10)
+    #dig erase low-quality engravings
+    trackNSEW(10x10)
+
+The tracks only remove low-quality engravings since quickfort won't designate
+masterwork engravings for destruction unless forced by a commandline
+parameter. You would run (and let your dwarves complete the jobs for) the
+sequence of blueprints until no tiles are designated by the "erase" blueprint.
 
 .. _quickfort-modeline:
 

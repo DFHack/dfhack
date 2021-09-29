@@ -89,7 +89,7 @@ jobs:
         script -qe -c "python ci/run-tests.py --headless --keep-status \"$DF_FOLDER\"" || status=$((status + 1))
         python ci/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt" || status=$((status + 2))
         mkdir -p artifacts
-        cp "$DF_FOLDER/test_status.json" "$DF_FOLDER"/*.log artifacts || status=$((status + 4))
+        cp "$DF_FOLDER"/test*.json "$DF_FOLDER"/*.log artifacts || status=$((status + 4))
         exit $status
     - name: Upload test artifacts
       uses: actions/upload-artifact@v1

@@ -150,14 +150,32 @@ static const char * cache(std::ostringstream &str) {
     return cache(str.str());
 }
 
+static const char * get_track_str(const char *prefix, df::tiletype tt) {
+    TileDirection tdir = tileDirection(tt);
+
+    string dir;
+    if (tdir.north) dir += "N";
+    if (tdir.south) dir += "S";
+    if (tdir.east)  dir += "E";
+    if (tdir.west)  dir += "W";
+
+    return cache(prefix + dir);
+}
+
 static const char * get_tile_dig(const df::coord &pos, const tile_context &) {
     df::tiletype *tt = Maps::getTileType(pos);
-    switch (tileShape(tt ? *tt : tiletype::Void))
+    if (!tt)
+        return NULL;
+
+    switch (tileShape(*tt))
     {
     case tiletype_shape::EMPTY:
     case tiletype_shape::RAMP_TOP:
         return "h";
     case tiletype_shape::FLOOR:
+        if (tileSpecial(*tt) == tiletype_special::TRACK)
+            return get_track_str("track", *tt);
+        // fallthrough
     case tiletype_shape::BOULDER:
     case tiletype_shape::PEBBLES:
     case tiletype_shape::BROOK_TOP:
@@ -171,6 +189,8 @@ static const char * get_tile_dig(const df::coord &pos, const tile_context &) {
     case tiletype_shape::STAIR_UPDOWN:
         return "i";
     case tiletype_shape::RAMP:
+        if (tileSpecial(*tt) == tiletype_special::TRACK)
+            return get_track_str("trackramp", *tt);
         return "r";
     case tiletype_shape::WALL:
     default:

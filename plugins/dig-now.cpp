@@ -597,10 +597,11 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
                         !to.bits.dig_marked) {
                     std::vector<dug_tile_info> dug_tiles;
                     if (dig_tile(out, map, pos, td.bits.dig, dug_tiles)) {
-                        td = map.designationAt(pos);
-                        td.bits.dig = df::tile_dig_designation::No;
-                        map.setDesignationAt(pos, td);
                         for (auto info : dug_tiles) {
+                            td = map.designationAt(info.pos);
+                            td.bits.dig = df::tile_dig_designation::No;
+                            map.setDesignationAt(info.pos, td);
+
                             dug_coords.push_back(info.pos);
                             refresh_adjacent_smooth_walls(map, info.pos);
                             if (info.imat < 0)

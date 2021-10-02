@@ -189,6 +189,19 @@ static const char * if_pretty(const tile_context &ctx, const char *c) {
     return ctx.pretty ? c : NULL;
 }
 
+static bool is_rectangular(const tile_context &ctx) {
+    df::building_extents &room = ctx.b->room;
+    if (!room.extents)
+        return true;
+    for (int32_t y = 0; y < room.height; ++y) {
+        for (int32_t x = 0; x < room.width; ++x) {
+            if (!room.extents[y * room.width + x])
+                return false;
+        }
+    }
+    return true;
+}
+
 static const char * do_block_building(const tile_context &ctx, const char *s,
                                       bool at_target_pos,
                                       bool *add_size = NULL) {
@@ -586,32 +599,42 @@ static const char * get_place_keys(const tile_context &ctx) {
         return NULL;
     }
 
-    switch (sp->settings.flags.whole) {
-    case df::stockpile_group_set::mask_animals:        return "a";
-    case df::stockpile_group_set::mask_food:           return "f";
-    case df::stockpile_group_set::mask_furniture:      return "u";
-    case df::stockpile_group_set::mask_corpses:        return "y";
-    case df::stockpile_group_set::mask_refuse:         return "r";
-    case df::stockpile_group_set::mask_wood:           return "w";
-    case df::stockpile_group_set::mask_stone:          return "s";
-    case df::stockpile_group_set::mask_gems:           return "e";
-    case df::stockpile_group_set::mask_bars_blocks:    return "b";
-    case df::stockpile_group_set::mask_cloth:          return "h";
-    case df::stockpile_group_set::mask_leather:        return "l";
-    case df::stockpile_group_set::mask_ammo:           return "z";
-    case df::stockpile_group_set::mask_coins:          return "n";
-    case df::stockpile_group_set::mask_finished_goods: return "g";
-    case df::stockpile_group_set::mask_weapons:        return "p";
-    case df::stockpile_group_set::mask_armor:          return "d";
-    default: // TODO: handle stockpiles with multiple types
+    string keys;
+    df::stockpile_group_set &flags = sp->settings.flags;
+    if (flags.bits.animals) keys += 'a';
+    if (flags.bits.food) keys += 'f';
+    if (flags.bits.furniture) keys += 'u';
+    if (flags.bits.coins) keys += 'n';
+    if (flags.bits.corpses) keys += 'y';
+    if (flags.bits.refuse) keys += 'r';
+    if (flags.bits.stone) keys += 's';
+    if (flags.bits.wood) keys += 'w';
+    if (flags.bits.gems) keys += 'e';
+    if (flags.bits.bars_blocks) keys += 'b';
+    if (flags.bits.cloth) keys += 'h';
+    if (flags.bits.leather) keys += 'l';
+    if (flags.bits.ammo) keys += 'z';
+    if (flags.bits.sheet) keys += 'S';
+    if (flags.bits.finished_goods) keys += 'g';
+    if (flags.bits.weapons) keys += 'p';
+    if (flags.bits.armor) keys += 'd';
+
+    if (keys.empty())
         return NULL;
-    }
+    return cache(keys);
+}
+
+static bool is_single_tile(const tile_context &ctx) {
+    return ctx.b->x1 == ctx.b->x2 && ctx.b->y1 == ctx.b->y2;
 }
 
 static const char * get_tile_place(const df::coord &pos,
                                    const tile_context &ctx) {
     if (!ctx.b || ctx.b->getType() != building_type::Stockpile)
         return NULL;
+
+    if (!is_rectangular(ctx) || is_single_tile(ctx))
+        return get_place_keys(ctx);
 
     if (ctx.b->x1 != static_cast<int32_t>(pos.x)
             || ctx.b->y1 != static_cast<int32_t>(pos.y)) {

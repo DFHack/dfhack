@@ -68,7 +68,7 @@ local function get_blueprint_sets()
     local sets = {}
     for _,args in ipairs(mock_print.call_args) do
         local line = args[1]
-        local _,_,listnum,fname,mode = line:find('(%d+)%) (%S+) %((%S+)%)$')
+        local _,_,listnum,fname,mode = line:find('(%d+)%) (%S+).-%((%S+)%)$')
         if listnum then
             local _,_,file_part = fname:find('/([^/]+)$')
             local _,_,basename = file_part:find('^([^-.]+)')
@@ -134,6 +134,7 @@ local function get_test_area(area, spec)
     if spec.width > df.global.world.map.x_count - 2 or
             spec.height > df.global.world.map.y_count - 2 or
             spec.depth > df.global.world.map.z_count then
+        print('map too small to accomodate test')
         return false
     end
 
@@ -195,7 +196,7 @@ local function run_blueprint(basename, set, pos)
                             tostring(set.spec.height),
                             tostring(-set.spec.depth),
                             output_dir..basename, get_cursor_arg(pos),
-                            '-tphase', '-fpretty'}
+                            '-tphase'}
     for _,mode_name in pairs(mode_names) do
         if set.modes[mode_name] then table.insert(blueprint_args, mode_name) end
     end
@@ -281,6 +282,7 @@ function test.end_to_end()
         local md5File = dfhack.internal.md5File
         for mode,mode_data in pairs(modes) do
             if mode == 'notes' then goto continue end
+            print(('  verifying phase: %s'):format(mode))
             local input_filepath = mode_data.input_filepath
             local output_filepath = mode_data.output_filepath
             local input_hash, input_size = md5File(input_filepath)

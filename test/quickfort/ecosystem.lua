@@ -192,15 +192,9 @@ local function designate_area(pos, spec)
 end
 
 local function run_blueprint(basename, set, pos)
-    local blueprint_args = {tostring(set.spec.width),
-                            tostring(set.spec.height),
-                            tostring(-set.spec.depth),
-                            output_dir..basename, get_cursor_arg(pos),
-                            '-tphase'}
-    for _,mode_name in pairs(mode_names) do
-        if set.modes[mode_name] then table.insert(blueprint_args, mode_name) end
-    end
-    blueprint.run(table.unpack(blueprint_args))
+    blueprint.run(tostring(set.spec.width), tostring(set.spec.height),
+                  tostring(-set.spec.depth), output_dir..basename,
+                  get_cursor_arg(pos), '-tphase')
 end
 
 local function reset_area(area, spec)

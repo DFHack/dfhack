@@ -345,11 +345,13 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                 DFCoord pos_above(pos.x, pos.y, pos.z+1);
                 if (map.ensureBlockAt(pos_above))
                     remove_ramp_top(map, pos_above);
+                df::tile_dig_designation td_below =
+                        map.designationAt(pos_below).bits.dig;
                 if (dig_tile(out, map, pos_below,
                              df::tile_dig_designation::Ramp, dug_tiles)) {
                     clean_ramps(map, pos_below);
-                    // if we successfully dug out the ramp below, that took care
-                    // of adding the ramp top here
+                    if (td_below == df::tile_dig_designation::Default)
+                        dig_tile(out, map, pos_below, td_below, dug_tiles);
                     return true;
                 }
             }

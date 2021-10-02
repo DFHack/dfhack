@@ -44,6 +44,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `blueprint`: you can now specify the position where the cursor should be when the blueprint is played back with `quickfort` by passing the ``--playback-start`` parameter
 - `blueprint`: generated blueprints now have labels so `quickfort` can address them by name
 - `blueprint`: all building types are now supported
+- `blueprint`: multi-type and non-rectangular stockpiles are now supported
 - `dig-now`: no longer leaves behind a designated tile when a tile was designated beneath a tile designated for channeling
 - `quickfort`, `dfhack-examples-guide`: Dreamfort blueprint set improvements based on playtesting and feedback. includes updated profession definitions.
 

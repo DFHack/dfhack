@@ -20,6 +20,7 @@ refreshSidebar = dfhack.gui.refreshSidebar
 -- current screen is 'dwarfmode/Default'
 SIDEBAR_MODE_KEYS = {
     [df.ui_sidebar_mode.Default]='',
+    [df.ui_sidebar_mode.DesignateMine]='D_DESIGNATE',
     [df.ui_sidebar_mode.QueryBuilding]='D_BUILDJOB',
     [df.ui_sidebar_mode.LookAround]='D_LOOK',
     [df.ui_sidebar_mode.BuildingItems]='D_BUILDITEM',

@@ -35,6 +35,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - `blueprint`: fixed passing incorrect parameters to `gui/blueprint` when you run ``blueprint gui`` with optional params
+- `blueprint`: key sequences for constructed walls and down stairs are now correct
 - `tailor`: fixed some inconsistencies (and possible crashes) when parsing certain subcommands, e.g. ``tailor help``
 
 ## Misc Improvements
@@ -42,6 +43,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `blueprint`: all blueprint phases are now written to a single file, using `quickfort` multi-blueprint file syntax. to get the old behavior of each phase in its own file, pass the ``--splitby=phase`` parameter to ``blueprint``
 - `blueprint`: you can now specify the position where the cursor should be when the blueprint is played back with `quickfort` by passing the ``--playback-start`` parameter
 - `blueprint`: generated blueprints now have labels so `quickfort` can address them by name
+- `blueprint`: all building types are now supported
+- `dig-now`: no longer leaves behind a designated tile when a tile was designated beneath a tile designated for channeling
 - `quickfort`, `dfhack-examples-guide`: Dreamfort blueprint set improvements based on playtesting and feedback. includes updated profession definitions.
 
 ## Lua
@@ -57,11 +60,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Lua: ``memscan.field_offset()``: fixed an issue causing `devel/export-dt-ini` to crash sometimes, especially on Windows
 - `autofarm`: autofarm will now count plant growths as well as plants toward its thresholds
 - `autogems`: no longer assigns gem cutting jobs to workshops with gem cutting prohibited in the workshop profile
-- `blueprint`: key sequences for constructed walls and down stairs are now correct
-- `dig-now`: no longer leaves behind a designated tile when a tile was designated beneath a tile designated for channeling
 
 ## Misc Improvements
-- `blueprint`: all building types are now supported
 - `buildingplan`: now displays which items are attached and which items are still missing for planned buildings
 - `orders`: support importing and exporting reaction-specific item conditions, like "lye-containing" for soap production orders
 - `orders`: new ``sort`` command. sorts orders according to their repeat frequency. this prevents daily orders from blocking other orders for simlar items from ever getting completed.

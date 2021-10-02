@@ -1,6 +1,6 @@
 #build label(build)
- , ,d, , ,#
- ,f, , , ,#
-d, ,b, ,d,#
- ,h, , , ,#
- , ,d, , ,#
+,,d
+,f
+d,,b,,d
+,h
+,,d

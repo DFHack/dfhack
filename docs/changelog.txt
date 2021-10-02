@@ -57,8 +57,11 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Lua: ``memscan.field_offset()``: fixed an issue causing `devel/export-dt-ini` to crash sometimes, especially on Windows
 - `autofarm`: autofarm will now count plant growths as well as plants toward its thresholds
 - `autogems`: no longer assigns gem cutting jobs to workshops with gem cutting prohibited in the workshop profile
+- `blueprint`: key sequences for constructed walls and down stairs are now correct
+- `dig-now`: no longer leaves behind a designated tile when a tile was designated beneath a tile designated for channeling
 
 ## Misc Improvements
+- `blueprint`: all building types are now supported
 - `buildingplan`: now displays which items are attached and which items are still missing for planned buildings
 - `orders`: support importing and exporting reaction-specific item conditions, like "lye-containing" for soap production orders
 - `orders`: new ``sort`` command. sorts orders according to their repeat frequency. this prevents daily orders from blocking other orders for simlar items from ever getting completed.

@@ -150,18 +150,6 @@ static const char * cache(std::ostringstream &str) {
     return cache(str.str());
 }
 
-static const char * get_track_str(const char *prefix, df::tiletype tt) {
-    TileDirection tdir = tileDirection(tt);
-
-    string dir;
-    if (tdir.north) dir += "N";
-    if (tdir.south) dir += "S";
-    if (tdir.east)  dir += "E";
-    if (tdir.west)  dir += "W";
-
-    return cache(prefix + dir);
-}
-
 static const char * get_tile_dig(const df::coord &pos, const tile_context &) {
     df::tiletype *tt = Maps::getTileType(pos);
     if (!tt)
@@ -173,9 +161,6 @@ static const char * get_tile_dig(const df::coord &pos, const tile_context &) {
     case tiletype_shape::RAMP_TOP:
         return "h";
     case tiletype_shape::FLOOR:
-        if (tileSpecial(*tt) == tiletype_special::TRACK)
-            return get_track_str("track", *tt);
-        // fallthrough
     case tiletype_shape::BOULDER:
     case tiletype_shape::PEBBLES:
     case tiletype_shape::BROOK_TOP:
@@ -189,8 +174,6 @@ static const char * get_tile_dig(const df::coord &pos, const tile_context &) {
     case tiletype_shape::STAIR_UPDOWN:
         return "i";
     case tiletype_shape::RAMP:
-        if (tileSpecial(*tt) == tiletype_special::TRACK)
-            return get_track_str("trackramp", *tt);
         return "r";
     case tiletype_shape::WALL:
     default:
@@ -269,6 +252,12 @@ static const char * get_workshop_str(df::building *b) {
     case workshop_type::Dyers:            return "wd";
     case workshop_type::Kennels:          return "k";
     case workshop_type::Custom:
+    {
+        int32_t custom = b->getCustomType();
+        if (custom == 0) return "wS";
+        if (custom == 1) return "wp";
+    }
+    // fallthrough
     case workshop_type::Tool:
     default:
         return "~";
@@ -302,10 +291,10 @@ static const char * get_construction_str(df::building *b) {
 
     switch (cons->type) {
     case construction_type::Fortification: return "CF";
-    case construction_type::Wall:          return "CW";
+    case construction_type::Wall:          return "Cw";
     case construction_type::Floor:         return "Cf";
     case construction_type::UpStair:       return "Cu";
-    case construction_type::DownStair:     return "Cj";
+    case construction_type::DownStair:     return "Cd";
     case construction_type::UpDownStair:   return "Cx";
     case construction_type::Ramp:          return "Cr";
     case construction_type::TrackN:        return "trackN";
@@ -419,16 +408,27 @@ static const char * get_axle_str(df::building *b) {
     return ah->is_vertical ? "Mhs" : "Mh";
 }
 
+static const char * add_speed_suffix(df::building_rollersst *r,
+                                     const char *prefix) {
+    int32_t speed = r->speed;
+    if (speed >= 50000) return prefix;
+    string sprefix(prefix);
+    if (speed >= 40000) return cache(sprefix + "q");
+    if (speed >= 30000) return cache(sprefix + "qq");
+    if (speed >= 20000) return cache(sprefix + "qqq");
+    return cache(sprefix + "qqqq");
+}
+
 static const char * get_roller_str(df::building *b) {
     df::building_rollersst *r = virtual_cast<df::building_rollersst>(b);
     if (!r)
         return "~";
 
     switch (r->direction) {
-    case screw_pump_direction::FromNorth: return "Mr";
-    case screw_pump_direction::FromEast:  return "Mrs";
-    case screw_pump_direction::FromSouth: return "Mrss";
-    case screw_pump_direction::FromWest:  return "Mrsss";
+    case screw_pump_direction::FromNorth: return add_speed_suffix(r, "Mr");
+    case screw_pump_direction::FromEast:  return add_speed_suffix(r, "Mrs");
+    case screw_pump_direction::FromSouth: return add_speed_suffix(r, "Mrss");
+    case screw_pump_direction::FromWest:  return add_speed_suffix(r, "Mrsss");
     default:
         return "~";
     }
@@ -459,7 +459,6 @@ static const char * get_build_keys(const df::coord &pos,
         return "f";
     case building_type::Box:
         return "h";
-    //case building_type::Kennel is missing
     case building_type::FarmPlot:
         return do_block_building(ctx, "p", at_nw_corner, &add_size);
     case building_type::Weaponrack:
@@ -468,6 +467,8 @@ static const char * get_build_keys(const df::coord &pos,
         return "s";
     case building_type::Table:
         return "t";
+    case building_type::Coffin:
+        return "n";
     case building_type::RoadPaved:
         return do_block_building(ctx, "o", at_nw_corner, &add_size);
     case building_type::RoadDirt:
@@ -501,6 +502,8 @@ static const char * get_build_keys(const df::coord &pos,
         return do_block_building(ctx, "D", at_center);
     case building_type::Trap:
         return get_trap_str(ctx.b);
+    case building_type::Weapon:
+        return "TS";
     case building_type::ScrewPump:
         return do_block_building(ctx, get_screw_pump_str(ctx.b), at_se_corner);
     case building_type::WaterWheel:
@@ -526,14 +529,11 @@ static const char * get_build_keys(const df::coord &pos,
     case building_type::Hatch:
         return "H";
     case building_type::Slab:
-        //how to mine alt key?!?
-        //alt+s
-        return "~";
+        return "~s";
     case building_type::NestBox:
         return "N";
     case building_type::Hive:
-        //alt+h
-        return "~";
+        return "~h";
     case building_type::GrateWall:
         return "W";
     case building_type::GrateFloor:
@@ -541,8 +541,13 @@ static const char * get_build_keys(const df::coord &pos,
     case building_type::BarsVertical:
         return "B";
     case building_type::BarsFloor:
-        //alt+b
-        return "~";
+        return "~b";
+    case building_type::Bookcase:
+        return "~c";
+    case building_type::DisplayFurniture:
+        return "F";
+    case building_type::OfferingPlace:
+        return "~a";
     default:
         return "~";
     }

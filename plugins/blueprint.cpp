@@ -708,11 +708,13 @@ typedef void (init_ctx_fn)(const df::coord &pos, tile_context &ctx);
 struct blueprint_processor {
     bp_volume mapdata;
     const string phase;
+    const bool force_create;
     get_tile_fn * const get_tile;
     init_ctx_fn * const init_ctx;
-    blueprint_processor(const string &phase, get_tile_fn *get_tile,
-                        init_ctx_fn *init_ctx = NULL)
-        : phase(phase), get_tile(get_tile), init_ctx(init_ctx) { }
+    blueprint_processor(const string &phase, bool force_create,
+                        get_tile_fn *get_tile, init_ctx_fn *init_ctx = NULL)
+        : phase(phase), force_create(force_create), get_tile(get_tile),
+          init_ctx(init_ctx) { }
 };
 
 static void write_minimal(ofstream &ofile, const blueprint_options &opts,
@@ -825,16 +827,17 @@ static bool do_transform(color_ostream &out,
     vector<blueprint_processor> processors;
 
     if (opts.auto_phase || opts.dig)
-        processors.push_back(blueprint_processor("dig", get_tile_dig));
+        processors.push_back(blueprint_processor("dig", opts.dig,
+                                                 get_tile_dig));
     if (opts.auto_phase || opts.build)
-        processors.push_back(blueprint_processor("build", get_tile_build,
-                                                 ensure_building));
+        processors.push_back(blueprint_processor("build", opts.build,
+                                            get_tile_build, ensure_building));
     if (opts.auto_phase || opts.place)
-        processors.push_back(blueprint_processor("place", get_tile_place,
-                                                 ensure_building));
+        processors.push_back(blueprint_processor("place", opts.place,
+                                            get_tile_place, ensure_building));
     if (opts.auto_phase || opts.query)
-        processors.push_back(blueprint_processor("query", get_tile_query,
-                                                 ensure_building));
+        processors.push_back(blueprint_processor("query", opts.query,
+                                            get_tile_query, ensure_building));
 
     if (processors.empty()) {
         out.printerr("no phases requested! nothing to do!\n");
@@ -874,6 +877,8 @@ static bool do_transform(color_ostream &out,
 
     std::map<string, ofstream*> output_files;
     for (blueprint_processor &processor : processors) {
+        if (processor.mapdata.empty() && !processor.force_create)
+            continue;
         if (!write_blueprint(out, output_files, opts, processor, pretty))
             break;
     }

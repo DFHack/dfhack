@@ -213,6 +213,16 @@ static const char * do_block_building(const tile_context &ctx, const char *s,
     return s;
 }
 
+static const char * do_extent_building(const tile_context &ctx, const char *s,
+                                       bool at_target_pos,
+                                       bool *add_size = NULL) {
+    // use expansion syntax for rectangular or one-tile buildings
+    if (is_rectangular(ctx))
+        return do_block_building(ctx, s, at_target_pos, add_size);
+
+    return s;
+}
+
 static const char * get_bridge_str(df::building *b) {
     df::building_bridgest *bridge = virtual_cast<df::building_bridgest>(b);
     if (!bridge)
@@ -473,7 +483,7 @@ static const char * get_build_keys(const df::coord &pos,
     case building_type::Box:
         return "h";
     case building_type::FarmPlot:
-        return do_block_building(ctx, "p", at_nw_corner, &add_size);
+        return do_extent_building(ctx, "p", at_nw_corner, &add_size);
     case building_type::Weaponrack:
         return "r";
     case building_type::Statue:
@@ -483,9 +493,9 @@ static const char * get_build_keys(const df::coord &pos,
     case building_type::Coffin:
         return "n";
     case building_type::RoadPaved:
-        return do_block_building(ctx, "o", at_nw_corner, &add_size);
+        return do_extent_building(ctx, "o", at_nw_corner, &add_size);
     case building_type::RoadDirt:
-        return do_block_building(ctx, "O", at_nw_corner, &add_size);
+        return do_extent_building(ctx, "O", at_nw_corner, &add_size);
     case building_type::Bridge:
         return do_block_building(ctx, get_bridge_str(ctx.b), at_nw_corner,
                           &add_size);

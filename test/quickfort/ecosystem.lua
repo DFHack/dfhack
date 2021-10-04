@@ -23,15 +23,16 @@ config.mode = 'fortress'
 local blueprint = require('plugins.blueprint')
 local quickfort_list = reqscript('internal/quickfort/list')
 local quickfort_command = reqscript('internal/quickfort/command')
+local utils = require('utils')
 
 local blueprints_dir = 'blueprints/'
 local input_dir = 'library/test/ecosystem/in/'
 local output_dir = 'library/test/ecosystem/out/'
 
-local mode_names = {'dig', 'build', 'place', 'query'}
+local phase_names = utils.invert(blueprint.valid_phases)
 
 -- clear the output dir before each test run (but not after -- to allow
--- inspection of the results)
+-- inspection of failed results)
 local function test_wrapper(test_fn)
     local outdir = blueprints_dir .. output_dir
     for _, v in ipairs(dfhack.filesystem.listdir_recursive(outdir)) do
@@ -68,12 +69,13 @@ local function get_blueprint_sets()
     local sets = {}
     for _,args in ipairs(mock_print.call_args) do
         local line = args[1]
-        local _,_,listnum,fname,mode = line:find('(%d+)%) (%S+).-%((%S+)%)$')
+        -- phase is the label or, if the label doesn't exist, the mode
+        local _,_,listnum,fname,phase = line:find('(%d+)%) (%S+).-[/(]([^ )]+)')
         if listnum then
             local _,_,file_part = fname:find('/([^/]+)$')
             local _,_,basename = file_part:find('^([^-.]+)')
-            if not sets[basename] then sets[basename] = {spec={}, modes={}} end
-            sets[basename].modes[mode] = {
+            if not sets[basename] then sets[basename] = {spec={}, phases={}} end
+            sets[basename].phases[phase] = {
                 listnum=listnum,
                 input_filepath=blueprints_dir..fname,
                 output_filepath=blueprints_dir..output_dir..file_part}
@@ -82,7 +84,7 @@ local function get_blueprint_sets()
 
     -- load test specs
     for basename,set in pairs(sets) do
-        local spec, notes = set.spec, set.modes.notes
+        local spec, notes = set.spec, set.phases.notes
 
         -- set defaults
         spec.depth = '1'
@@ -191,6 +193,15 @@ local function designate_area(pos, spec)
     end end end
 end
 
+local function format_pos(pos)
+    return ('%s,%s,%s'):format(pos.x, pos.y, pos.z)
+end
+
+local function run_dig_now(area)
+    dfhack.run_command('dig-now', format_pos(area.pos),
+                       format_pos(area.endpos), '--clean')
+end
+
 local function run_blueprint(basename, set, pos)
     blueprint.run(tostring(set.spec.width), tostring(set.spec.height),
                   tostring(-set.spec.depth), output_dir..basename,
@@ -217,10 +228,18 @@ local function reset_area(area, spec)
     pos.z = pos.z - spec.depth + 1
 
     dfhack.run_command('tiletypes-here', '--quiet', get_cursor_arg(pos))
-end
 
-local function format_pos(pos)
-    return ('%s,%s,%s'):format(pos.x, pos.y, pos.z)
+    -- patch up tiles where the material couldn't be automatically determined
+    -- we don't just set all tiles to 'stone' so we don't obliterate veins
+    commands = {
+        'f', 's', 'empty', ';',
+        'p', 'm', 'stone'}
+    dfhack.run_command('tiletypes-command', table.unpack(commands))
+    dfhack.run_command('tiletypes-here', '--quiet', get_cursor_arg(pos))
+
+    commands = {'f', 's', 'ramp_top'}
+    dfhack.run_command('tiletypes-command', table.unpack(commands))
+    dfhack.run_command('tiletypes-here', '--quiet', get_cursor_arg(pos))
 end
 
 function test.end_to_end()
@@ -229,7 +248,7 @@ function test.end_to_end()
 
     local area = {width=0, height=0, depth=0}
     for basename,set in pairs(sets) do
-        print(('running quickfort test: "%s": %s'):
+        print(('running quickfort ecosystem test: "%s": %s'):
                     format(basename, set.spec.description))
 
         -- find an unused area of the map that meets requirements, else skip
@@ -241,21 +260,23 @@ function test.end_to_end()
 
         -- quickfort run #dig blueprint (or just designate the whole block if
         -- there is no #dig blueprint)
-        local modes = set.modes
-        if modes.dig then
-            quickfort_run(modes.dig.listnum, area.pos)
+        local phases = set.phases
+        if phases.dig then
+            quickfort_run(phases.dig.listnum, area.pos)
         else
             designate_area(area.pos, set.spec)
         end
 
         -- run dig-now to dig out designated tiles
-        dfhack.run_command('dig-now', format_pos(area.pos),
-                           format_pos(area.endpos), '--clean')
+        run_dig_now(area)
 
         -- quickfort run remaining blueprints
-        for _,mode_name in pairs(mode_names) do
-            if mode_name ~= 'dig' and modes[mode_name] then
-                quickfort_run(modes[mode_name].listnum, area.pos)
+        for _,phase_name in ipairs(phase_names) do
+            if phase_name ~= 'dig' and phases[phase_name] then
+                quickfort_run(phases[phase_name].listnum, area.pos)
+                if phase_name == 'track' then
+                    run_dig_now(area)
+                end
             end
         end
 
@@ -263,9 +284,9 @@ function test.end_to_end()
         run_blueprint(basename, set, area.pos)
 
         -- quickfort undo blueprints
-        for _,mode_name in pairs(mode_names) do
-            if modes[mode_name] then
-                quickfort_undo(modes[mode_name].listnum, area.pos)
+        for _,phase_name in ipairs(phase_names) do
+            if phases[phase_name] then
+                quickfort_undo(phases[phase_name].listnum, area.pos)
             end
         end
 
@@ -274,11 +295,11 @@ function test.end_to_end()
 
         -- compare md5sum of input and output files
         local md5File = dfhack.internal.md5File
-        for mode,mode_data in pairs(modes) do
-            if mode == 'notes' then goto continue end
-            print(('  verifying phase: %s'):format(mode))
-            local input_filepath = mode_data.input_filepath
-            local output_filepath = mode_data.output_filepath
+        for phase,phase_data in pairs(phases) do
+            if phase == 'notes' then goto continue end
+            print(('  verifying phase: %s'):format(phase))
+            local input_filepath = phase_data.input_filepath
+            local output_filepath = phase_data.output_filepath
             local input_hash, input_size = md5File(input_filepath)
             local output_hash, output_size = md5File(output_filepath)
             expect.eq(input_hash, output_hash,

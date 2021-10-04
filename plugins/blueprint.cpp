@@ -22,6 +22,7 @@
 
 #include "df/building_axle_horizontalst.h"
 #include "df/building_bridgest.h"
+#include "df/building_civzonest.h"
 #include "df/building_constructionst.h"
 #include "df/building_furnacest.h"
 #include "df/building_rollersst.h"
@@ -81,6 +82,7 @@ struct blueprint_options {
     bool track = false;
     bool build = false;
     bool place = false;
+    bool zone  = false;
     bool query = false;
 
     static struct_identity _identity;
@@ -101,6 +103,7 @@ static const struct_field_info blueprint_options_fields[] = {
     { struct_field_info::PRIMITIVE, "track",                  offsetof(blueprint_options, track),                 &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "build",                  offsetof(blueprint_options, build),                 &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "place",                  offsetof(blueprint_options, place),                 &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::PRIMITIVE, "zone",                   offsetof(blueprint_options, zone),                  &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "query",                  offsetof(blueprint_options, query),                 &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::END }
 };
@@ -217,7 +220,7 @@ static const char * get_tile_track(const df::coord &pos, const tile_context &) {
     return NULL;
 }
 
-static pair<uint32_t, uint32_t> get_building_size(df::building *b) {
+static pair<uint32_t, uint32_t> get_building_size(const df::building *b) {
     return pair<uint32_t, uint32_t>(b->x2 - b->x1 + 1, b->y2 - b->y1 + 1);
 }
 
@@ -225,8 +228,8 @@ static const char * if_pretty(const tile_context &ctx, const char *c) {
     return ctx.pretty ? c : NULL;
 }
 
-static bool is_rectangular(const tile_context &ctx) {
-    df::building_extents &room = ctx.b->room;
+static bool is_rectangular(const df::building *bld) {
+    const df::building_extents &room = bld->room;
     if (!room.extents)
         return true;
     for (int32_t y = 0; y < room.height; ++y) {
@@ -236,6 +239,10 @@ static bool is_rectangular(const tile_context &ctx) {
         }
     }
     return true;
+}
+
+static bool is_rectangular(const tile_context &ctx) {
+    return is_rectangular(ctx.b);
 }
 
 static const char * do_block_building(const tile_context &ctx, const char *s,
@@ -614,14 +621,19 @@ static const char * get_build_keys(const df::coord &pos,
 
 // returns "~" if keys is NULL; otherwise returns the keys with the building
 // dimensions in the expansion syntax
-static const char * add_expansion_syntax(const tile_context &ctx,
+static const char * add_expansion_syntax(const df::building *bld,
                                          const char *keys) {
     if (!keys)
         return "~";
     std::ostringstream s;
-    pair<uint32_t, uint32_t> size = get_building_size(ctx.b);
+    pair<uint32_t, uint32_t> size = get_building_size(bld);
     s << keys << "(" << size.first << "x" << size.second << ")";
     return cache(s);
+}
+
+static const char * add_expansion_syntax(const tile_context &ctx,
+                                         const char *keys) {
+    return add_expansion_syntax(ctx.b, keys);
 }
 
 static const char * get_tile_build(const df::coord &pos,
@@ -688,6 +700,113 @@ static const char * get_tile_place(const df::coord &pos,
     }
 
     return add_expansion_syntax(ctx, get_place_keys(ctx));
+}
+
+static bool hospital_maximums_eq(const df::hospital_supplies &a,
+                                 const df::hospital_supplies &b) {
+    return a.max_thread == b.max_thread &&
+            a.max_cloth == b.max_cloth &&
+            a.max_splints == b.max_splints &&
+            a.max_crutches == b.max_crutches &&
+            a.max_plaster == b.max_plaster &&
+            a.max_buckets == b.max_buckets &&
+            a.max_soap == b.max_soap;
+}
+
+static const char * get_zone_keys(const df::building_civzonest *zone) {
+    static const uint32_t DEFAULT_GATHER_FLAGS =
+            df::building_civzonest::T_gather_flags::mask_pick_trees |
+            df::building_civzonest::T_gather_flags::mask_pick_shrubs |
+            df::building_civzonest::T_gather_flags::mask_gather_fallen;
+    static const df::hospital_supplies DEFAULT_HOSPITAL;
+
+    std::ostringstream keys;
+    const df::building_civzonest::T_zone_flags &flags = zone->zone_flags;
+
+    // inverted logic for Active since it's on by default
+    if (!flags.bits.active) keys << 'a';
+
+    // in UI order
+    if (flags.bits.water_source) keys << 'w';
+    if (flags.bits.fishing) keys << 'f';
+    if (flags.bits.gather) {
+        keys << 'g';
+        if (zone->gather_flags.whole != DEFAULT_GATHER_FLAGS) {
+            keys << 'G';
+            // logic is inverted since they're all on by default
+            if (!zone->gather_flags.bits.pick_trees) keys << 't';
+            if (!zone->gather_flags.bits.pick_shrubs) keys << 's';
+            if (!zone->gather_flags.bits.gather_fallen) keys << 'f';
+            keys << '^';
+        }
+    }
+    if (flags.bits.garbage_dump) keys << 'd';
+    if (flags.bits.pen_pasture) keys << 'n';
+    if (flags.bits.pit_pond) {
+        keys << 'p';
+        if (zone->pit_flags.bits.is_pond)
+            keys << "Pf^";
+    }
+    if (flags.bits.sand) keys << 's';
+    if (flags.bits.clay) keys << 'c';
+    if (flags.bits.meeting_area) keys << 'm';
+    if (flags.bits.hospital) {
+        keys << 'h';
+        const df::hospital_supplies &hospital = zone->hospital;
+        if (!hospital_maximums_eq(hospital, DEFAULT_HOSPITAL)) {
+            keys << "H{hospital";
+            if (hospital.max_thread != DEFAULT_HOSPITAL.max_thread)
+                keys << " thread=" << hospital.max_thread;
+            if (hospital.max_cloth != DEFAULT_HOSPITAL.max_cloth)
+                keys << " cloth=" << hospital.max_cloth;
+            if (hospital.max_splints != DEFAULT_HOSPITAL.max_splints)
+                keys << " splints=" << hospital.max_splints;
+            if (hospital.max_crutches != DEFAULT_HOSPITAL.max_crutches)
+                keys << " crutches=" << hospital.max_crutches;
+            if (hospital.max_plaster != DEFAULT_HOSPITAL.max_plaster)
+                keys << " plaster=" << hospital.max_plaster;
+            if (hospital.max_buckets != DEFAULT_HOSPITAL.max_buckets)
+                keys << " buckets=" << hospital.max_buckets;
+            if (hospital.max_soap != DEFAULT_HOSPITAL.max_soap)
+                keys << " soap=" << hospital.max_soap;
+            keys << "}^";
+        }
+    }
+    if (flags.bits.animal_training) keys << 't';
+
+    string keys_str = keys.str();
+
+    // there is no way to represent an active, but empty zone in quickfort
+    if (keys_str.empty())
+        return NULL;
+
+    // remove final '^' character if there is one
+    if (keys_str.back() == '^')
+        keys_str.pop_back();
+
+    return cache(keys_str);
+}
+
+static const char * get_tile_zone(const df::coord &pos,
+                                  const tile_context &ctx) {
+    vector<df::building_civzonest*> civzones;
+    if (!Buildings::findCivzonesAt(&civzones, pos))
+        return NULL;
+
+    // we only have one "zone" blueprint, so use the "topmost" zone (that is,
+    // the one that is highlighted when the cursor is over this tile).
+    // overlapping zones are outside the scope of this plugin, I think.
+    df::building_civzonest *zone = civzones.back();
+
+    if (!is_rectangular(zone))
+        return get_zone_keys(zone);
+
+    if (zone->x1 != static_cast<int32_t>(pos.x)
+            || zone->y1 != static_cast<int32_t>(pos.y)) {
+        return if_pretty(ctx, "`");
+    }
+
+    return add_expansion_syntax(zone, get_zone_keys(zone));
 }
 
 static const char * get_tile_query(const df::coord &, const tile_context &ctx) {
@@ -760,7 +879,7 @@ struct blueprint_processor {
     init_ctx_fn * const init_ctx;
     blueprint_processor(const string &mode, const string &phase,
                         bool force_create, get_tile_fn *get_tile,
-                        init_ctx_fn *init_ctx = NULL)
+                        init_ctx_fn *init_ctx)
         : mode(mode), phase(phase), force_create(force_create),
           get_tile(get_tile), init_ctx(init_ctx) { }
 };
@@ -865,6 +984,16 @@ static void ensure_building(const df::coord &pos, tile_context &ctx) {
     ctx.b = Buildings::findAtTile(pos);
 }
 
+static void add_processor(vector<blueprint_processor> &processors,
+                          const blueprint_options &opts, const char *mode,
+                          const char *phase, bool require_phase,
+                          get_tile_fn * const get_tile,
+                          init_ctx_fn * const init_ctx = NULL) {
+    if (opts.auto_phase || require_phase)
+        processors.push_back(blueprint_processor(mode, phase, require_phase,
+                                                 get_tile, init_ctx));
+}
+
 static bool do_transform(color_ostream &out,
                          const df::coord &start, const df::coord &end,
                          const blueprint_options &opts,
@@ -875,21 +1004,15 @@ static bool do_transform(color_ostream &out,
 
     vector<blueprint_processor> processors;
 
-    if (opts.auto_phase || opts.dig)
-        processors.push_back(blueprint_processor("dig", "dig", opts.dig,
-                                                 get_tile_dig));
-    if (opts.auto_phase || opts.track)
-        processors.push_back(blueprint_processor("dig", "track", opts.track,
-                                                 get_tile_track));
-    if (opts.auto_phase || opts.build)
-        processors.push_back(blueprint_processor("build", "build", opts.build,
-                                            get_tile_build, ensure_building));
-    if (opts.auto_phase || opts.place)
-        processors.push_back(blueprint_processor("place", "place", opts.place,
-                                            get_tile_place, ensure_building));
-    if (opts.auto_phase || opts.query)
-        processors.push_back(blueprint_processor("query", "query", opts.query,
-                                            get_tile_query, ensure_building));
+    add_processor(processors, opts, "dig", "dig", opts.dig, get_tile_dig);
+    add_processor(processors, opts, "dig", "track", opts.track, get_tile_track);
+    add_processor(processors, opts, "build", "build", opts.build,
+                  get_tile_build, ensure_building);
+    add_processor(processors, opts, "place", "place", opts.place,
+                  get_tile_place, ensure_building);
+    add_processor(processors, opts, "zone", "zone", opts.zone, get_tile_zone);
+    add_processor(processors, opts, "query", "query", opts.query,
+                  get_tile_query, ensure_building);
 
     if (processors.empty()) {
         out.printerr("no phases requested! nothing to do!\n");

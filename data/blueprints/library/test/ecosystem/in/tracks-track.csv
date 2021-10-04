@@ -1,0 +1,6 @@
+#dig label(track)
+trackSE,trackEW,trackEW,trackEW,trackSW
+trackNE,,,,trackNW
+#>
+
+,trackrampEW,trackEW,trackrampEW

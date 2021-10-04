@@ -78,6 +78,7 @@ struct blueprint_options {
 
     // if not autodetecting, which phases to output
     bool dig   = false;
+    bool track = false;
     bool build = false;
     bool place = false;
     bool query = false;
@@ -97,6 +98,7 @@ static const struct_field_info blueprint_options_fields[] = {
     { struct_field_info::PRIMITIVE, "name",                   offsetof(blueprint_options, name),                   df::identity_traits<string>::get(),     0, 0 },
     { struct_field_info::PRIMITIVE, "auto_phase",             offsetof(blueprint_options, auto_phase),            &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "dig",                    offsetof(blueprint_options, dig),                   &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::PRIMITIVE, "track",                  offsetof(blueprint_options, track),                 &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "build",                  offsetof(blueprint_options, build),                 &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "place",                  offsetof(blueprint_options, place),                 &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "query",                  offsetof(blueprint_options, query),                 &df::identity_traits<bool>::identity,    0, 0 },
@@ -179,6 +181,40 @@ static const char * get_tile_dig(const df::coord &pos, const tile_context &) {
     default:
         return NULL;
     }
+}
+
+static const char * get_track_str(const char *prefix, df::tiletype tt) {
+    TileDirection tdir = tileDirection(tt);
+
+    string dir;
+    if (tdir.north) dir += "N";
+    if (tdir.south) dir += "S";
+    if (tdir.east)  dir += "E";
+    if (tdir.west)  dir += "W";
+
+    return cache(prefix + dir);
+}
+
+static const char * get_tile_track(const df::coord &pos, const tile_context &) {
+    df::tiletype *tt = Maps::getTileType(pos);
+    if (!tt)
+        return NULL;
+
+    switch (tileShape(*tt))
+    {
+    case tiletype_shape::FLOOR:
+        if (tileSpecial(*tt) == tiletype_special::TRACK)
+            return get_track_str("track", *tt);
+        break;
+    case tiletype_shape::RAMP:
+        if (tileSpecial(*tt) == tiletype_special::TRACK)
+            return get_track_str("trackramp", *tt);
+        break;
+    default:
+        break;
+    }
+
+    return NULL;
 }
 
 static pair<uint32_t, uint32_t> get_building_size(df::building *b) {
@@ -630,7 +666,7 @@ static const char * get_place_keys(const tile_context &ctx) {
     if (flags.bits.armor) keys += 'd';
 
     if (keys.empty())
-        return NULL;
+        return "c";
     return cache(keys);
 }
 
@@ -717,14 +753,16 @@ typedef void (init_ctx_fn)(const df::coord &pos, tile_context &ctx);
 
 struct blueprint_processor {
     bp_volume mapdata;
+    const string mode;
     const string phase;
     const bool force_create;
     get_tile_fn * const get_tile;
     init_ctx_fn * const init_ctx;
-    blueprint_processor(const string &phase, bool force_create,
-                        get_tile_fn *get_tile, init_ctx_fn *init_ctx = NULL)
-        : phase(phase), force_create(force_create), get_tile(get_tile),
-          init_ctx(init_ctx) { }
+    blueprint_processor(const string &mode, const string &phase,
+                        bool force_create, get_tile_fn *get_tile,
+                        init_ctx_fn *init_ctx = NULL)
+        : mode(mode), phase(phase), force_create(force_create),
+          get_tile(get_tile), init_ctx(init_ctx) { }
 };
 
 static void write_minimal(ofstream &ofile, const blueprint_options &opts,
@@ -783,9 +821,10 @@ static void write_pretty(ofstream &ofile, const blueprint_options &opts,
     }
 }
 
-static string get_modeline(const blueprint_options &opts, const string &phase) {
+static string get_modeline(const blueprint_options &opts, const string &mode,
+                           const string &phase) {
     std::ostringstream modeline;
-    modeline << "#" << phase << " label(" << phase << ")";
+    modeline << "#" << mode << " label(" << phase << ")";
     if (opts.playback_start.x > 0) {
         modeline << " start(" << opts.playback_start.x
                 << ";" << opts.playback_start.y;
@@ -810,7 +849,7 @@ static bool write_blueprint(color_ostream &out,
         output_files[fname] = new ofstream(fname, ofstream::trunc);
 
     ofstream &ofile = *output_files[fname];
-    ofile << get_modeline(opts, processor.phase) << endl;
+    ofile << get_modeline(opts, processor.mode, processor.phase) << endl;
 
     if (pretty)
         write_pretty(ofile, opts, processor.mapdata);
@@ -837,16 +876,19 @@ static bool do_transform(color_ostream &out,
     vector<blueprint_processor> processors;
 
     if (opts.auto_phase || opts.dig)
-        processors.push_back(blueprint_processor("dig", opts.dig,
+        processors.push_back(blueprint_processor("dig", "dig", opts.dig,
                                                  get_tile_dig));
+    if (opts.auto_phase || opts.track)
+        processors.push_back(blueprint_processor("dig", "track", opts.track,
+                                                 get_tile_track));
     if (opts.auto_phase || opts.build)
-        processors.push_back(blueprint_processor("build", opts.build,
+        processors.push_back(blueprint_processor("build", "build", opts.build,
                                             get_tile_build, ensure_building));
     if (opts.auto_phase || opts.place)
-        processors.push_back(blueprint_processor("place", opts.place,
+        processors.push_back(blueprint_processor("place", "place", opts.place,
                                             get_tile_place, ensure_building));
     if (opts.auto_phase || opts.query)
-        processors.push_back(blueprint_processor("query", opts.query,
+        processors.push_back(blueprint_processor("query", "query", opts.query,
                                             get_tile_query, ensure_building));
 
     if (processors.empty()) {

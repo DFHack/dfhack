@@ -39,6 +39,7 @@ local valid_phase_list = {
     'track',
     'build',
     'place',
+    'zone',
     'query',
 }
 valid_phases = utils.invert(valid_phase_list)

@@ -549,7 +549,7 @@ The valid hospital settings (and their maximum values) are::
     cloth    (1000000)
     splints  (100)
     crutches (100)
-    powder   (15000)
+    plaster  (15000)
     buckets  (100)
     soap     (15000)
 

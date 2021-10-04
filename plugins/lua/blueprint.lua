@@ -36,6 +36,7 @@ function print_help() print(help_text) end
 
 local valid_phase_list = {
     'dig',
+    'track',
     'build',
     'place',
     'query',

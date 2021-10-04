@@ -48,6 +48,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `blueprint`: non-rectangular stockpiles and buildings are now supported
 - `blueprint`: blueprints are no longer generated for phases that have nothing to do (unless those phases are explicitly enabled on the commandline or gui)
 - `blueprint`: new "track" phase that discovers and records carved tracks
+- `blueprint`: new "zone" phase that discovers and records activity zones, including custom configuration for ponds, gathering, and hospitals
 - `dig-now`: no longer leaves behind a designated tile when a tile was designated beneath a tile designated for channeling
 - `quickfort`, `dfhack-examples-guide`: Dreamfort blueprint set improvements based on playtesting and feedback. includes updated profession definitions.
 

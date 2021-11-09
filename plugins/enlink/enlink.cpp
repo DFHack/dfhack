@@ -28,6 +28,51 @@ REQUIRE_GLOBAL(ui);
 
 using building_id = int32_t;
 
+struct building_pos_seri
+{
+    int32_t type;
+    int32_t x, y, z;
+    inline void set(const df::building_type t, const int32_t cx, const int32_t cy, const int32_t cz)
+    {
+        type = t;
+        x = cx;
+        y = cy;
+        z = cz;
+        LocTools::loc2glob(x, y, z);
+    }
+    inline void get(df::building_type& t, int32_t &cx, int32_t &cy, int32_t &cz) const
+    {
+        t = df::building_type(type);
+        cx = x;
+        cy = y;
+        cz = z;
+        LocTools::glob2loc(cx, cy, cz);
+    }
+
+    inline bool operator==(const building_pos_seri & other) const
+    {
+        return (type == other.type && x == other.x && y == other.y && z == other.z);
+    }
+};
+
+namespace std
+{
+    template <>
+    struct hash<building_pos_seri>
+    {
+        size_t operator()(const building_pos_seri& bps) const noexcept
+        {
+            // Compute individual hash values for the fields
+            // http://stackoverflow.com/a/1646913/126995
+            size_t ret = 17;
+            ret = ret * 31 + hash<int32_t>()(bps.type);
+            ret = ret * 31 + hash<int32_t>()(bps.x);
+            ret = ret * 31 + hash<int32_t>()(bps.y);
+            ret = ret * 31 + hash<int32_t>()(bps.z);
+            return ret;
+        }
+    };
+}
 
 struct enlinker
 {
@@ -119,45 +164,46 @@ struct enlinker
         }
 
         inline int evaluate_count(const uint32_t active_count) const
-        //returns -1 if it should shut down,
-        //         1 if it should turn on,
-        //         0 otherwise.
-        //
-        //Visually,
-        //                 \
-        //                 |> Turns on
-        //  on_threshold  -/
-        //
-        //                 \
-        //                 |> Keeps state
-        //                 /
-        //
-        //  off_threshold -\
-        //                 |> Turns off
-        //                 /
-        // ---------------------------------
-        //                 \
-        //                 |> Turns off
-        //  off_threshold -/
-        //
-        //                 \
-        //                 |> Keeps state
-        //                 /
-        //
-        //  on_threshold  -\
-        //                 |> Turns on
-        //                 /
-        //---------------------------------------------
-        //                            \
-        //                            |> Turns on
-        //                            /
-        //
-        // on_threshold off_threshold -> Keeps state
-        //
-        //                            \
-        //                            |> Turns off
-        //                            /
-        //
+     /*
+          returns -1 if it should shut down,
+                   1 if it should turn on,
+                   0 otherwise.
+          
+          Visually,
+                           \
+                           |> Turns on
+            on_threshold  -/
+          
+                           \
+                           |> Keeps state
+                           /
+          
+            off_threshold -\
+                           |> Turns off
+                           /
+           ---------------------------------
+                           \
+                           |> Turns off
+            off_threshold -/
+          
+                           \
+                           |> Keeps state
+                           /
+          
+            on_threshold  -\
+                           |> Turns on
+                           /
+         ---------------------------------------------
+                                      \
+                                      |> Turns on
+                                      /
+          
+           on_threshold off_threshold -> Keeps state
+          
+                                      \
+                                      |> Turns off
+                                      /
+                                                              */
         {
             if (on_threshold > off_threshold)
             {
@@ -550,34 +596,6 @@ struct enlinker
         }
         return false;
     }
-
-    struct building_pos_seri
-    {
-        int32_t type;
-        int32_t x, y, z;
-        inline void set(const df::building_type t, const int32_t cx, const int32_t cy, const int32_t cz)
-        {
-            type = t;
-            x = cx;
-            y = cy;
-            z = cz;
-            LocTools::loc2glob(x, y, z);
-        }
-        inline void get(df::building_type& t, int32_t &cx, int32_t &cy, int32_t &cz) const
-        {
-            t = df::building_type(type);
-            cx = x;
-            cy = y;
-            cz = z;
-            LocTools::glob2loc(cx, cy, cz);
-        }
-
-        inline bool operator==(const building_pos_seri & other) const
-        {
-            return (type == other.type && x == other.x && y == other.y && z == other.z);
-        }
-    };
-
     template <class Stream>
     bool write_position_bin(Stream & s)
     {
@@ -731,25 +749,6 @@ struct enlinker
 
 
 };
-
-namespace std
-{
-    template <>
-    struct hash<enlinker::building_pos_seri>
-    {
-        size_t operator()(const enlinker::building_pos_seri& bps) const noexcept
-        {
-            // Compute individual hash values for the fields
-            // http://stackoverflow.com/a/1646913/126995
-            size_t ret = 17;
-            ret = ret * 31 + hash<int32_t>()(bps.type);
-            ret = ret * 31 + hash<int32_t>()(bps.x);
-            ret = ret * 31 + hash<int32_t>()(bps.y);
-            ret = ret * 31 + hash<int32_t>()(bps.z);
-            return ret;
-        }
-    };
-}
 
 static std::unique_ptr<enlinker> globie;
 

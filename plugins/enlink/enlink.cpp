@@ -514,7 +514,7 @@ struct enlinker
         bin_out(s, map.size());
         for (const auto& kv : map)
         {
-            MapT::key_type tempk = kv.first;
+            typename MapT::key_type tempk = kv.first;
             bin_out(s, tempk);
             kv.second.binary_output(s);
             if (!s.good())
@@ -737,7 +737,7 @@ namespace std
     template <>
     struct hash<enlinker::building_pos_seri>
     {
-        size_t operator()(const enlinker::building_pos_seri& bps) const
+        size_t operator()(const enlinker::building_pos_seri& bps) const noexcept
         {
             // Compute individual hash values for the fields
             // http://stackoverflow.com/a/1646913/126995
@@ -1012,7 +1012,8 @@ DFhackCExport DFHack::command_result plugin_save_data(DFHack::color_ostream &out
     if (DFHack::World::isFortressMode())
     {
         out.print("Saving enlinker.\n");
-        return enlinker_save(out, std::vector<std::string> {});
+        std::vector<std::string> dummy;
+        return enlinker_save(out, dummy);
     }
     return DFHack::CR_OK;
 }
@@ -1020,7 +1021,8 @@ DFhackCExport DFHack::command_result plugin_save_data(DFHack::color_ostream &out
 DFhackCExport DFHack::command_result plugin_load_data(DFHack::color_ostream &out)
 {
     out.print("Loading enlinker.\n");
-    return enlinker_load(out, std::vector<std::string> {});
+    std::vector<std::string> dummy;
+    return enlinker_load(out, dummy);
 }
 
 
@@ -1033,7 +1035,10 @@ DFhackCExport DFHack::command_result plugin_onstatechange(DFHack::color_ostream 
         cachie->clear();
         break;
     case SC_MAP_LOADED:
-        enlinker_load(out, std::vector<std::string> {});
+        {
+            std::vector<std::string> dummy;
+            enlinker_load(out, dummy);
+        }
         break;
     default:
         break;
@@ -1048,7 +1053,8 @@ DFhackCExport DFHack::command_result plugin_onupdate(DFHack::color_ostream &out)
     {
         return CR_OK;
     }
-    return enlinker_update(out, std::vector<std::string> {});
+    std::vector<std::string> dummy;
+    return enlinker_update(out, dummy);
 }
 
 static bool make_enlinked(building_id id)

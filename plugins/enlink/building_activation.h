@@ -207,61 +207,61 @@ namespace BuildingActivation
           case building_type::Door:
             {
               df::building_doorst *ptr = DFHack::virtual_cast<df::building_doorst>(b_ptr);
-              if (ptr) return std::make_unique<door_flagged>(ptr);
+              if (ptr) return dts::make_unique<door_flagged>(ptr);
               std::cerr << "d" << std::endl;
             }
           case building_type::Floodgate:
             {
               df::building_floodgatest *ptr = DFHack::virtual_cast<df::building_floodgatest>(b_ptr);
-              if (ptr) return std::make_unique<timed_activator<int8_t, gate_flagged>>(ptr->timer, ptr);
+              if (ptr) return dts::make_unique<timed_activator<int8_t, gate_flagged>>(ptr->timer, ptr);
               std::cerr << "s" << std::endl;
             }
           case building_type::Bridge:
             {
               df::building_bridgest *ptr = DFHack::virtual_cast<df::building_bridgest>(b_ptr);
-              if (ptr) return std::make_unique<gate_flagged>(ptr);
+              if (ptr) return dts::make_unique<gate_flagged>(ptr);
               std::cerr << "a" << std::endl;
             }
           case building_type::Weapon:
             {
               df::building_weaponst *ptr = DFHack::virtual_cast<df::building_weaponst>(b_ptr);
-              if (ptr) return std::make_unique<timed_activator<int8_t, gate_flagged>>(ptr->timer, ptr);
+              if (ptr) return dts::make_unique<timed_activator<int8_t, gate_flagged>>(ptr->timer, ptr);
               std::cerr << "m" << std::endl;
             }
           case building_type::Hatch:
             {
               df::building_hatchst *ptr = DFHack::virtual_cast<df::building_hatchst>(b_ptr);
-              if (ptr) return std::make_unique<door_flagged>(ptr);
+              if (ptr) return dts::make_unique<door_flagged>(ptr);
               std::cerr << "n" << std::endl;
             }
           case building_type::GrateWall:
             {
               df::building_grate_wallst *ptr = DFHack::virtual_cast<df::building_grate_wallst>(b_ptr);
-              if (ptr) return std::make_unique<timed_activator<int8_t, gate_flagged>>(ptr->timer, ptr);
+              if (ptr) return dts::make_unique<timed_activator<int8_t, gate_flagged>>(ptr->timer, ptr);
               std::cerr << "b" << std::endl;
             }
           case building_type::GrateFloor:
             {
               df::building_grate_floorst *ptr = DFHack::virtual_cast<df::building_grate_floorst>(b_ptr);
-              if (ptr) return std::make_unique<timed_activator<int8_t, gate_flagged>>(ptr->timer, ptr);
+              if (ptr) return dts::make_unique<timed_activator<int8_t, gate_flagged>>(ptr->timer, ptr);
               std::cerr << "v" << std::endl;
             }
           case building_type::BarsVertical:
             {
               df::building_bars_verticalst *ptr = DFHack::virtual_cast<df::building_bars_verticalst>(b_ptr);
-              if (ptr) return std::make_unique<timed_activator<int8_t, gate_flagged>>(ptr->timer, ptr);
+              if (ptr) return dts::make_unique<timed_activator<int8_t, gate_flagged>>(ptr->timer, ptr);
               std::cerr << "c" << std::endl;
             }
           case building_type::BarsFloor:
             {
               df::building_bars_floorst *ptr = DFHack::virtual_cast<df::building_bars_floorst>(b_ptr);
-              if (ptr) return std::make_unique<timed_activator<int8_t, gate_flagged>>(ptr->timer, ptr);
+              if (ptr) return dts::make_unique<timed_activator<int8_t, gate_flagged>>(ptr->timer, ptr);
               std::cerr << "x" << std::endl;
             }
           case building_type::GearAssembly:
             {
               df::building_gear_assemblyst *ptr = DFHack::virtual_cast<df::building_gear_assemblyst>(b_ptr);
-              if (ptr) return std::make_unique<gear_flagged>(ptr);
+              if (ptr) return dts::make_unique<gear_flagged>(ptr);
               std::cerr << "z" << std::endl;
             }
           case building_type::Trap:
@@ -272,14 +272,14 @@ namespace BuildingActivation
                   switch (ptr->trap_type)
                   {
                     case trap_type::Lever:
-                      return std::make_unique<trapstate_flagged>(ptr);
+                      return dts::make_unique<trapstate_flagged>(ptr);
                     case trap_type::PressurePlate:
-                      return std::make_unique<timed_activator<int16_t, trapstate_flagged>>(ptr->ready_timeout, ptr);
+                      return dts::make_unique<timed_activator<int16_t, trapstate_flagged>>(ptr->ready_timeout, ptr);
                     case trap_type::WeaponTrap:
-                      return std::make_unique< timed_activator< int16_t, timed_activator< int16_t, trapstate_flagged > > >
+                      return dts::make_unique< timed_activator< int16_t, timed_activator< int16_t, trapstate_flagged > > >
                                     (ptr->ready_timeout, ptr->fill_timer, ptr);
                     case trap_type::TrackStop:
-                      return std::make_unique<timed_activator<int8_t, stop_flagged>>(ptr->stop_trigger_timer, ptr);
+                      return dts::make_unique<timed_activator<int8_t, stop_flagged>>(ptr->stop_trigger_timer, ptr);
                     default:
                       std::cerr << "INVALID TRAPTYPE!" << std::endl;
                       return nullptr;

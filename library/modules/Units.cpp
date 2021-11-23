@@ -647,7 +647,7 @@ bool Units::isHidden(df::unit *unit)
     CHECK_NULL_POINTER(unit);
     //Reverse-engineered from ambushing unit code
 
-    if (df::global::debug_showambush)
+    if (*df::global::debug_showambush)
         return false;
     
     if (gamemode && *gamemode == game_mode::ADVENTURE)

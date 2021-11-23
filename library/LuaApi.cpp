@@ -1594,7 +1594,9 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isSane),
     WRAPM(Units, isDwarf),
     WRAPM(Units, isCitizen),
+	WRAPM(Units, isFortControlled),
     WRAPM(Units, isVisible),
+	WRAPM(Units, isHidden),
     WRAPM(Units, getAge),
     WRAPM(Units, getKillCount),
     WRAPM(Units, getNominalSkill),
@@ -1655,6 +1657,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getMainSocialEvent),
     WRAPM(Units, getStressCategory),
     WRAPM(Units, getStressCategoryRaw),
+	WRAPN(getOuterContainerRef, (df::specific_ref(*)(df::unit*))Units::getOuterContainerRef),
     { NULL, NULL }
 };
 
@@ -1774,7 +1777,7 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, getOwner),
     WRAPM(Items, setOwner),
     WRAPM(Items, getContainer),
-    WRAPM(Items, getHolderBuilding),
+	WRAPM(Items, getHolderBuilding),
     WRAPM(Items, getHolderUnit),
     WRAPM(Items, getBookTitle),
     WRAPM(Items, getDescription),
@@ -1789,7 +1792,8 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, canTradeWithContents),
     WRAPM(Items, isRouteVehicle),
     WRAPM(Items, isSquadEquipment),
-    WRAPN(moveToGround, items_moveToGround),
+	WRAPN(getOuterContainerRef, (df::specific_ref (*)(df::item*))Items::getOuterContainerRef),
+	WRAPN(moveToGround, items_moveToGround),
     WRAPN(moveToContainer, items_moveToContainer),
     WRAPN(moveToInventory, items_moveToInventory),
     WRAPN(makeProjectile, items_makeProjectile),

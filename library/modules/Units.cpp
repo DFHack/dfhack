@@ -212,22 +212,22 @@ df::item *Units::getContainer(df::unit *unit)
 
 void Units::getOuterContainerRef(df::specific_ref &spec_ref, df::unit *unit, bool init_ref)
 {
-	CHECK_NULL_POINTER(unit);
-	//Reverse-engineered from ambushing unit code
+    CHECK_NULL_POINTER(unit);
+    //Reverse-engineered from ambushing unit code
 
-	if (init_ref)
-	{
-		spec_ref.type = specific_ref_type::UNIT;
-		spec_ref.data.unit = unit;
-	}
+    if (init_ref)
+    {
+        spec_ref.type = specific_ref_type::UNIT;
+        spec_ref.data.unit = unit;
+    }
 
-	if (unit->flags1.bits.caged)
-	{
-		df::item *cage = getContainer(unit);
-		if (cage)
-			return Items::getOuterContainerRef(spec_ref, cage);
-	}
-	return;
+    if (unit->flags1.bits.caged)
+    {
+        df::item *cage = getContainer(unit);
+        if (cage)
+            return Items::getOuterContainerRef(spec_ref, cage);
+    }
+    return;
 }
 
 static df::identity *getFigureIdentity(df::historical_figure *figure)
@@ -525,40 +525,40 @@ bool Units::isCitizen(df::unit *unit)
 }
 
 bool Units::isFortControlled(df::unit *unit)
-{	// Reverse-engineered from ambushing unit code
-	CHECK_NULL_POINTER(unit);
+{   // Reverse-engineered from ambushing unit code
+    CHECK_NULL_POINTER(unit);
 
-	if (!gamemode || *gamemode != game_mode::DWARF)
-		return false;
+    if (!gamemode || *gamemode != game_mode::DWARF)
+        return false;
 
-	if (unit->mood == mood_type::Berserk ||
-		Units::isCrazed(unit) ||
-		Units::isOpposedToLife(unit) ||
-		unit->enemy.undead ||
-		unit->flags3.bits.ghostly)
-		return false;
+    if (unit->mood == mood_type::Berserk ||
+        Units::isCrazed(unit) ||
+        Units::isOpposedToLife(unit) ||
+        unit->enemy.undead ||
+        unit->flags3.bits.ghostly)
+        return false;
 
-	if (unit->flags1.bits.marauder ||
-		unit->flags1.bits.invader_origin ||
-		unit->flags1.bits.active_invader ||
-		unit->flags1.bits.forest ||
-		unit->flags1.bits.merchant ||
-		unit->flags1.bits.diplomat)
-		return false;
+    if (unit->flags1.bits.marauder ||
+        unit->flags1.bits.invader_origin ||
+        unit->flags1.bits.active_invader ||
+        unit->flags1.bits.forest ||
+        unit->flags1.bits.merchant ||
+        unit->flags1.bits.diplomat)
+        return false;
 
-	if (unit->flags1.bits.tame)
-		return true;
+    if (unit->flags1.bits.tame)
+        return true;
 
-	if (unit->flags2.bits.visitor ||
-		unit->flags2.bits.visitor_uninvited ||
-		unit->flags2.bits.underworld ||
-		unit->flags2.bits.resident)
-		return false;
+    if (unit->flags2.bits.visitor ||
+        unit->flags2.bits.visitor_uninvited ||
+        unit->flags2.bits.underworld ||
+        unit->flags2.bits.resident)
+        return false;
 
-	if (unit->civ_id == -1 || unit->civ_id != ui->civ_id)
-		return false;
-	else
-		return true;
+    if (unit->civ_id == -1 || unit->civ_id != ui->civ_id)
+        return false;
+    else
+        return true;
 }
 
 bool Units::isDwarf(df::unit *unit)
@@ -644,38 +644,38 @@ bool Units::isVisible(df::unit* unit)
 
 bool Units::isHidden(df::unit *unit)
 {
-	CHECK_NULL_POINTER(unit);
-	//Reverse-engineered from ambushing unit code
+    CHECK_NULL_POINTER(unit);
+    //Reverse-engineered from ambushing unit code
 
-	if (df::global::debug_showambush)
-		return false;
-	
-	if (gamemode && *gamemode == game_mode::ADVENTURE)
-	{
-		if (unit == world->units.active[0])
-			return false;
-		else if (unit->flags1.bits.hidden_in_ambush)
-			return true;
-	}
-	else
-	{
-		if (!gametype || *gametype == game_type::DWARF_ARENA)
-			return false;
-		else if (unit->flags1.bits.hidden_in_ambush && !isFortControlled(unit))
-			return true;
-	}
+    if (df::global::debug_showambush)
+        return false;
+    
+    if (gamemode && *gamemode == game_mode::ADVENTURE)
+    {
+        if (unit == world->units.active[0])
+            return false;
+        else if (unit->flags1.bits.hidden_in_ambush)
+            return true;
+    }
+    else
+    {
+        if (!gametype || *gametype == game_type::DWARF_ARENA)
+            return false;
+        else if (unit->flags1.bits.hidden_in_ambush && !isFortControlled(unit))
+            return true;
+    }
 
-	if (unit->flags1.bits.caged)
-	{
-		auto spec_ref = getOuterContainerRef(unit);
-		if (spec_ref.type == specific_ref_type::UNIT)
-			return isHidden(spec_ref.data.unit);
-	}
+    if (unit->flags1.bits.caged)
+    {
+        auto spec_ref = getOuterContainerRef(unit);
+        if (spec_ref.type == specific_ref_type::UNIT)
+            return isHidden(spec_ref.data.unit);
+    }
 
-	if ((gamemode && *gamemode == game_mode::ADVENTURE) || isFortControlled(unit))
-		return false;
-	else
-		return Maps::isTileVisible(Units::getPosition(unit));
+    if ((gamemode && *gamemode == game_mode::ADVENTURE) || isFortControlled(unit))
+        return false;
+    else
+        return Maps::isTileVisible(Units::getPosition(unit));
 }
 
 // get race name by id or unit pointer

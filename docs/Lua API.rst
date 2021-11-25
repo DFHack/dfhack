@@ -1196,10 +1196,6 @@ Units module
 
   Returns the container (cage) item or *nil*.
 
-* ``dfhack.units.getOuterContainerRef(unit)``
-
-  Returns a specific_ref struct of the outermost object that contains the unit (or one of the unit itself.) Possible ref types are ``UNIT``, ``ITEM_GENERAL``, or ``VERMIN_EVENT``.
-
 * ``dfhack.units.setNickname(unit,nick)``
 
   Sets the unit's nickname properly.
@@ -1418,10 +1414,6 @@ Items module
 * ``dfhack.items.getContainer(item)``
 
   Returns the container item or *nil*.
-
-* ``dfhack.items.getOuterContainerRef(item)``
-
-  Returns a specific_ref struct of the outermost object that contains the item (or one of the item itself.) Possible ref types are ``UNIT``, ``ITEM_GENERAL``, or ``VERMIN_EVENT``.
 
 * ``dfhack.items.getContainedItems(item)``
 

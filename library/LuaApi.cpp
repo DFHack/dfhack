@@ -1657,7 +1657,6 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getMainSocialEvent),
     WRAPM(Units, getStressCategory),
     WRAPM(Units, getStressCategoryRaw),
-    WRAPN(getOuterContainerRef, (df::specific_ref(*)(df::unit*))Units::getOuterContainerRef),
     { NULL, NULL }
 };
 
@@ -1792,7 +1791,6 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, canTradeWithContents),
     WRAPM(Items, isRouteVehicle),
     WRAPM(Items, isSquadEquipment),
-    WRAPN(getOuterContainerRef, (df::specific_ref (*)(df::item*))Items::getOuterContainerRef),
     WRAPN(moveToGround, items_moveToGround),
     WRAPN(moveToContainer, items_moveToContainer),
     WRAPN(moveToInventory, items_moveToInventory),

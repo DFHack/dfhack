@@ -675,7 +675,7 @@ bool Units::isHidden(df::unit *unit)
     if ((gamemode && *gamemode == game_mode::ADVENTURE) || isFortControlled(unit))
         return false;
     else
-        return Maps::isTileVisible(Units::getPosition(unit));
+        return !Maps::isTileVisible(Units::getPosition(unit));
 }
 
 // get race name by id or unit pointer

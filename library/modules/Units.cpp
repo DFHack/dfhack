@@ -528,7 +528,7 @@ bool Units::isFortControlled(df::unit *unit)
 {   // Reverse-engineered from ambushing unit code
     CHECK_NULL_POINTER(unit);
 
-    if (!gamemode || *gamemode != game_mode::DWARF)
+    if (*gamemode != game_mode::DWARF)
         return false;
 
     if (unit->mood == mood_type::Berserk ||
@@ -650,7 +650,7 @@ bool Units::isHidden(df::unit *unit)
     if (*df::global::debug_showambush)
         return false;
     
-    if (gamemode && *gamemode == game_mode::ADVENTURE)
+    if (*gamemode == game_mode::ADVENTURE)
     {
         if (unit == world->units.active[0])
             return false;
@@ -659,7 +659,7 @@ bool Units::isHidden(df::unit *unit)
     }
     else
     {
-        if (!gametype || *gametype == game_type::DWARF_ARENA)
+        if (*gametype == game_type::DWARF_ARENA)
             return false;
         else if (unit->flags1.bits.hidden_in_ambush && !isFortControlled(unit))
             return true;
@@ -672,7 +672,7 @@ bool Units::isHidden(df::unit *unit)
             return isHidden(spec_ref.data.unit);
     }
 
-    if ((gamemode && *gamemode == game_mode::ADVENTURE) || isFortControlled(unit))
+    if (*gamemode == game_mode::ADVENTURE || isFortControlled(unit))
         return false;
     else
         return !Maps::isTileVisible(Units::getPosition(unit));

@@ -61,7 +61,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Lua wrappers for functions reverse-engineered from ambushing unit code: ``isHidden(unit)``, ``isFortControlled(unit)``
 
 ## Documentation
-- Lua API.rst added: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
+- Lua API.rst added: ``isHidden(unit)``, ``isFortControlled(unit)``
 
 # 0.47.05-r3
 

@@ -1268,7 +1268,7 @@ Units module
 
 * ``dfhack.units.isFortControlled(unit)``
 
-  Similar to ``dfhack.units.isCitizen(unit)``, but is based on checks for units hidden in ambush. Returns *false* if not in fort mode.
+  Similar to ``dfhack.units.isCitizen(unit)``, but is based on checks for units hidden in ambush, and includes tame animals. Returns *false* if not in fort mode.
 
 * ``dfhack.units.isVisible(unit)``
 

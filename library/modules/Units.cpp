@@ -213,7 +213,7 @@ df::item *Units::getContainer(df::unit *unit)
 void Units::getOuterContainerRef(df::specific_ref &spec_ref, df::unit *unit, bool init_ref)
 {
     CHECK_NULL_POINTER(unit);
-    //Reverse-engineered from ambushing unit code
+    // Reverse-engineered from ambushing unit code
 
     if (init_ref)
     {
@@ -645,7 +645,7 @@ bool Units::isVisible(df::unit* unit)
 bool Units::isHidden(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
-    //Reverse-engineered from ambushing unit code
+    // Reverse-engineered from ambushing unit code
 
     if (*df::global::debug_showambush)
         return false;

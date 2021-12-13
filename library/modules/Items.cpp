@@ -593,7 +593,7 @@ df::item *Items::getContainer(df::item * item)
 void Items::getOuterContainerRef(df::specific_ref &spec_ref, df::item *item, bool init_ref)
 {
     CHECK_NULL_POINTER(item);
-    //Reverse-engineered from ambushing unit code
+    // Reverse-engineered from ambushing unit code
 
     if (init_ref)
     {

@@ -1502,7 +1502,17 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     { NULL, NULL }
 };
 
+static int gui_getCursorPos(lua_State *state)
+{
+    lua_newtable(state);
+    Lua::TableInsert(state, "x", df::global::cursor->x);
+    Lua::TableInsert(state, "y", df::global::cursor->y);
+    Lua::TableInsert(state, "z", df::global::cursor->z);
+    return 1;
+}
+
 static const luaL_Reg dfhack_gui_funcs[] = {
+    { "getCursorPos", gui_getCursorPos},
     { "getDwarfmodeViewDims", gui_getDwarfmodeViewDims },
     { NULL, NULL }
 };

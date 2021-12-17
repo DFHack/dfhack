@@ -1076,6 +1076,10 @@ Announcements
 Other
 ~~~~~
 
+* ``dfhack.gui.getCursorPos()``
+
+  Equivalent to ``xyz2pos(pos2xyz(df.global.cursor))``
+
 * ``dfhack.gui.getDepthAt(x, y)``
 
   Returns the distance from the z-level of the tile at map coordinates (x, y) to

@@ -1012,7 +1012,7 @@ Fortress mode
 
     {x = 5, y = 7, z = 11}
     getSelectedUnit().pos
-    xyz2pos(pos2xyz(df.global.cursor))
+    copyall(df.global.cursor)
 
   Returns false if unsuccessful.
 

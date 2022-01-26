@@ -607,13 +607,14 @@ static void manageNewUnitActiveEvent(color_ostream& out) {
     multimap<Plugin*,EventHandler> copy(handlers[EventType::NEW_UNIT_ACTIVE].begin(), handlers[EventType::NEW_UNIT_ACTIVE].end());
     int32_t tick = df::global::world->frame_counter;
     for (auto unit : df::global::world->units.active) {
-        activeUnits_replacement.emplace(unit);
-        if(activeUnits.find(unit) == activeUnits.end()){
+        int32_t id = unit->id;
+        activeUnits_replacement.emplace(id);
+        if(activeUnits.find(id) == activeUnits.end()){
             for (auto &iter : copy) {
                 auto &handler = iter.second;
                 if(tick - eventLastTick[handler.eventHandler] >= handler.freq) {
                     eventLastTick[handler.eventHandler] = tick;
-                    handler.eventHandler(out, (void*) intptr_t(unit->id));
+                    handler.eventHandler(out, (void*) intptr_t(id)); // intptr_t() avoids cast from smaller type warning
                 }
             }
         }
@@ -640,7 +641,7 @@ static void manageUnitDeathEvent(color_ostream& out) {
                 if ( livingUnits.find(unit->id) == livingUnits.end() )
                     continue;
 
-                handler.eventHandler(out, (void*) intptr_t(unit->id));
+                handler.eventHandler(out, (void*) intptr_t(unit->id)); // intptr_t() avoids cast from smaller type warning
                 livingUnits.erase(unit->id);
             }
         }

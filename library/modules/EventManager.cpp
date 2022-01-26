@@ -149,6 +149,7 @@ static void manageTickEvent(color_ostream& out);
 static void manageJobInitiatedEvent(color_ostream& out);
 static void manageJobStartedEvent(color_ostream& out);
 static void manageJobCompletedEvent(color_ostream& out);
+static void manageNewUnitActiveEvent(color_ostream& out);
 static void manageUnitDeathEvent(color_ostream& out);
 static void manageItemCreationEvent(color_ostream& out);
 static void manageBuildingEvent(color_ostream& out);
@@ -168,6 +169,7 @@ static const eventManager_t eventManager[] = {
     manageJobInitiatedEvent,
     manageJobStartedEvent,
     manageJobCompletedEvent,
+    manageNewUnitActiveEvent,
     manageUnitDeathEvent,
     manageItemCreationEvent,
     manageBuildingEvent,
@@ -189,6 +191,9 @@ static unordered_set<df::job*> startedJobs;
 
 //job completed
 static unordered_map<int32_t, df::job*> prevJobs;
+
+//new unit active
+static unordered_set<int32_t> activeUnits;
 
 //unit death
 static unordered_set<int32_t> livingUnits;
@@ -593,6 +598,27 @@ static void manageJobCompletedEvent(color_ostream& out) {
         df::job* newJob = Job::cloneJobStruct((*job_iter).second, true);
         prevJobs[newJob->id] = newJob;
     }
+}
+
+static void manageNewUnitActiveEvent(color_ostream& out) {
+    if (!df::global::world)
+        return;
+    unordered_set<int32_t> activeUnits_replacement;
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::NEW_UNIT_ACTIVE].begin(), handlers[EventType::NEW_UNIT_ACTIVE].end());
+    int32_t tick = df::global::world->frame_counter;
+    for (auto unit : world->units.active) {
+        activeUnits_replacement.emplace(unit);
+        if(activeUnits.find(unit) == activeUnits.end()){
+            for (auto &iter : copy) {
+                auto &handler = iter.second;
+                if(tick - eventLastTick[handler.eventHandler] >= handler.freq) {
+                    eventLastTick[handler.eventHandler] = tick;
+                    handler.eventHandler(out, (void*) intptr_t(unit->id));
+                }
+            }
+        }
+    }
+    activeUnits.swap(activeUnits_replacement);
 }
 
 static void manageUnitDeathEvent(color_ostream& out) {

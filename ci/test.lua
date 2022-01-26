@@ -72,6 +72,7 @@ arrays. For example:
 
 local CONFIG_FILE = 'test_config.json'
 local STATUS_FILE = 'test_status.json'
+local DF_STATE_FILE = 'test_df_state.json'
 local TestStatus = {
     PENDING = 'pending',
     PASSED = 'passed',
@@ -81,6 +82,19 @@ local TestStatus = {
 local function delay(frames)
     frames = frames or 1
     script.sleep(frames, 'frames')
+end
+
+-- Will call the predicate_fn every frame until it returns true. If it fails to
+-- return true before timeout_frames have elapsed, throws an error. If
+-- timeout_frames is not specified, defaults to 100.
+local function delay_until(predicate_fn, timeout_frames)
+    timeout_frames = tonumber(timeout_frames) or 100
+    repeat
+        delay()
+        if predicate_fn() then return end
+        timeout_frames = timeout_frames - 1
+    until timeout_frames < 0
+    error('timed out while waiting for predicate to return true')
 end
 
 local function clean_require(module)
@@ -245,7 +259,6 @@ local function wrap_expect(func, private)
         orig_printerr('Check failed! ' .. (msg or '(no message)'))
         -- Generate a stack trace with all function calls in the same file as the caller to expect.*()
         -- (this produces better stack traces when using helpers in tests)
-        -- Skip any frames corresponding to C calls, which could be pcall() / with_finalize()
         local frame = 2
         local caller_src
         while true do
@@ -254,10 +267,9 @@ local function wrap_expect(func, private)
             if not caller_src then
                 caller_src = info.short_src
             end
-            if info.what == 'Lua' then
-                if info.short_src ~= caller_src then
-                    break
-                end
+            -- Skip any frames corresponding to C calls, or Lua functions defined in another file
+            -- these could include pcall(), with_finalize(), etc.
+            if info.what == 'Lua' and info.short_src == caller_src then
                 orig_printerr(('  at %s:%d'):format(info.short_src, info.currentline))
             end
             frame = frame + 1
@@ -269,12 +281,26 @@ end
 local function build_test_env()
     local env = {
         test = utils.OrderedTable(),
+        -- config values can be overridden in the test file to define
+        -- requirements for the tests in that file
         config = {
+            -- override with the required game mode
             mode = 'none',
+            -- override with a test wrapper function with common setup and
+            -- teardown for every test, if needed. for example:
+            --   local function test_wrapper(test_fn)
+            --       mock.patch(dfhack.filesystem,
+            --                  'listdir_recursive',
+            --                  mock.func({}),
+            --                  test_fn)
+            --   end
+            --   config.wrapper = test_wrapper
+            wrapper = nil,
         },
         expect = {},
         mock = mock,
         delay = delay,
+        delay_until = delay_until,
         require = clean_require,
         reqscript = clean_reqscript,
     }
@@ -339,6 +365,10 @@ local function load_tests(file, tests)
                 return false
             end
             for name, test_func in pairs(env.test) do
+                if env.config.wrapper then
+                    local fn = test_func
+                    test_func = function() env.config.wrapper(fn) end
+                end
                 local test_data = {
                     full_name = short_filename .. ':' .. name,
                     func = test_func,
@@ -392,12 +422,18 @@ local function wrap_test(func)
     )
 end
 
+local function get_elapsed_str(elapsed)
+    return elapsed < 1 and "<1" or tostring(elapsed)
+end
+
 local function run_test(test, status, counts)
     test.private.checks = 0
     test.private.checks_ok = 0
     counts.tests = counts.tests + 1
     dfhack.internal.IN_TEST = true
+    local start_ms = dfhack.getTickCount()
     local ok, err = wrap_test(test.func)
+    local elapsed_ms = dfhack.getTickCount() - start_ms
     dfhack.internal.IN_TEST = false
     local passed = false
     if not ok then
@@ -406,7 +442,8 @@ local function run_test(test, status, counts)
     elseif test.private.checks ~= test.private.checks_ok then
         dfhack.printerr('test failed: ' .. test.name)
     else
-        print('test passed: ' .. test.name)
+        local elapsed_str = get_elapsed_str(elapsed_ms)
+        print(('test passed in %s ms: %s'):format(elapsed_str, test.name))
         passed = true
         counts.tests_ok = counts.tests_ok + 1
     end
@@ -484,6 +521,7 @@ end
 
 local function run_tests(tests, status, counts, config)
     print(('Running %d tests'):format(#tests))
+    local start_ms = dfhack.getTickCount()
     local num_skipped = 0
     for _, test in pairs(tests) do
         if MODES[test.config.mode].failed then
@@ -507,6 +545,7 @@ local function run_tests(tests, status, counts, config)
         save_test_status(status)
         ::skip::
     end
+    local elapsed_ms = dfhack.getTickCount() - start_ms
 
     local function print_summary_line(ok, message)
         local print_fn = print
@@ -514,11 +553,11 @@ local function run_tests(tests, status, counts, config)
             status['*'] = TestStatus.FAILED
             print_fn = dfhack.printerr
         end
-        print_fn(message)
+        print_fn('  ' .. message)
     end
 
     status['*'] = status['*'] or TestStatus.PASSED
-    print('\nTest summary:')
+    print(('\nTests completed in %s ms:'):format(get_elapsed_str(elapsed_ms)))
     print_summary_line(counts.tests_ok == counts.tests,
         ('%d/%d tests passed'):format(counts.tests_ok, counts.tests))
     print_summary_line(counts.checks_ok == counts.checks,
@@ -529,6 +568,23 @@ local function run_tests(tests, status, counts, config)
         ('%d tests in unreachable modes'):format(num_skipped))
 
     save_test_status(status)
+end
+
+local function dump_df_state()
+    local state = {
+        enabler = {
+            fps = df.global.enabler.fps,
+            gfps = df.global.enabler.gfps,
+            fullscreen = df.global.enabler.fullscreen,
+        },
+        gps = {
+            dimx = df.global.gps.dimx,
+            dimy = df.global.gps.dimy,
+            display_frames = df.global.gps.display_frames,
+        },
+    }
+    json.encode_file(state, DF_STATE_FILE)
+    print('DF global state: ' .. json.encode(state, {pretty = false}))
 end
 
 local function main(args)
@@ -572,6 +628,7 @@ local function main(args)
         file_errors = 0,
     }
 
+    dump_df_state()
     local test_files = get_test_files(config.test_dir)
     local tests = get_tests(test_files, counts)
     local status = filter_tests(tests, config)

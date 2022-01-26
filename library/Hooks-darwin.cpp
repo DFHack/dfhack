@@ -314,8 +314,6 @@ DFhackCExport int DFH_SDL_Init(uint32_t flags)
     // prevent any subprocesses from trying to load libdfhack.dylib
     setenv("DYLD_INSERT_LIBRARIES", "", 1);
 
-    DFHack::Core & c = DFHack::Core::getInstance();
-
     int ret = SDL_Init(flags);
     return ret;
 }

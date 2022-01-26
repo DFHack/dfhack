@@ -499,7 +499,6 @@ static std::vector<std::string> clean_dfstock_list ( const std::string &path )
 static int stockpiles_list_settings ( lua_State *L )
 {
     auto path = luaL_checkstring ( L, 1 );
-    color_ostream &out = *Lua::GetOutput ( L );
     if ( Filesystem::exists ( path ) && !Filesystem::isdir ( path ) )
     {
         lua_pushfstring ( L,  "stocksettings path invalid: %s",  path );

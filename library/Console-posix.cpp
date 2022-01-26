@@ -534,7 +534,6 @@ namespace DFHack
             while(1)
             {
                 unsigned char c;
-                int isok;
                 unsigned char seq[2], seq2;
                 lock->unlock();
                 if(!read_char(c))

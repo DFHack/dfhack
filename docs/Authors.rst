@@ -19,6 +19,7 @@ AndreasPK               AndreasPK
 Angus Mezick            amezick
 Antalia                 tamarakorr
 Anuradha Dissanayake    falconne
+arzyu                   arzyu
 Atkana                  Atkana
 AtomicChicken           AtomicChicken
 Bearskie                Bearskie
@@ -30,7 +31,6 @@ Benjamin Seiller        bseiller                RedDwarfStepper
 billw2012               billw2012
 BrickViking             brickviking
 brndd                   brndd                   burneddi
-Bumber                  Bumber64
 Caldfir                 caldfir
 Carter Bray             Qartar
 Chris Dombroski         cdombroski
@@ -152,6 +152,7 @@ rubybrowncoat           rubybrowncoat
 Rumrusher               rumrusher
 RusAnon                 RusAnon
 Ryan Bennitt            ryanbennitt
+Ryan Williams           Bumber64                Bumber
 sami
 scamtank                scamtank
 Sebastian Wolfertz      Enkrod

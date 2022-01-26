@@ -38,6 +38,9 @@ there are a few important standards for completeness and consistent style.  Trea
 this section as a guide rather than iron law, match the surrounding text, and you'll
 be fine.
 
+Command documentation
+---------------------
+
 Each command should have a short (~54 character) help string, which is shown
 by the `ls` command.  For scripts, this is a comment on the first line
 (the comment marker and whitespace is stripped).  For plugins it's the second
@@ -80,6 +83,9 @@ Try to keep lines within 80-100 characters, so it's readable in plain text
 in the terminal - Sphinx (our documentation system) will make sure
 paragraphs flow.
 
+Command usage
+-------------
+
 If there aren't many options or examples to show, they can go in a paragraph of
 text.  Use double-backticks to put commands in monospaced font, like this::
 
@@ -103,6 +109,9 @@ describe the effect::
     ``resume all``
             Resumes all suspended constructions.
 
+Links
+-----
+
 If it would be helpful to mention another DFHack command, don't just type the
 name - add a hyperlink!  Specify the link target in backticks, and it will be
 replaced with the corresponding title and linked:  e.g. ```autolabor```
@@ -118,6 +127,17 @@ section like this::
 Add link targets if you need them, but otherwise plain headings are preferred.
 Scripts have link targets created automatically.
 
+Note that the DFHack documentation is configured so that single backticks (with
+no prefix or suffix) produce links to internal link targets, such as the
+``autolabor`` target shown above. This is different from the reStructuredText
+default behavior of rendering such text in italics (as a reference to a title).
+For alternative link behaviors, see:
+
+- `The reStructuredText documentation on roles <https://docutils.sourceforge.io/docs/ref/rst/roles.html>`__
+- `The reStructuredText documentation on external links <https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#hyperlink-targets>`__
+- `The Sphinx documentation on roles <https://www.sphinx-doc.org/en/master/usage/restructuredtext/roles.html>`__
+
+    - ``:doc:`` is useful for linking to another document
 
 Required dependencies
 =====================

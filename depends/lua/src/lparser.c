@@ -1,5 +1,5 @@
 /*
-** $Id: lparser.c,v 2.153 2016/05/13 19:10:16 roberto Exp $
+** $Id: lparser.c,v 2.155.1.2 2017/04/29 18:11:40 roberto Exp $
 ** Lua Parser
 ** See Copyright Notice in lua.h
 */
@@ -323,6 +323,8 @@ static void adjust_assign (LexState *ls, int nvars, int nexps, expdesc *e) {
       luaK_nil(fs, reg, extra);
     }
   }
+  if (nexps > nvars)
+    ls->fs->freereg -= nexps - nvars;  /* remove extra values */
 }
 
 
@@ -542,6 +544,7 @@ static void open_func (LexState *ls, FuncState *fs, BlockCnt *bl) {
   fs->bl = NULL;
   f = fs->f;
   f->source = ls->source;
+  luaC_objbarrier(ls->L, f, f->source);
   f->maxstacksize = 2;  /* registers 0/1 are always valid */
   enterblock(fs, bl, 0);
 }
@@ -764,7 +767,7 @@ static void parlist (LexState *ls) {
         }
         case TK_DOTS: {  /* param -> '...' */
           luaX_next(ls);
-          f->is_vararg = 2;  /* declared vararg */
+          f->is_vararg = 1;  /* declared vararg */
           break;
         }
         default: luaX_syntaxerror(ls, "<name> or '...' expected");
@@ -960,7 +963,6 @@ static void simpleexp (LexState *ls, expdesc *v) {
       FuncState *fs = ls->fs;
       check_condition(ls, fs->f->is_vararg,
                       "cannot use '...' outside a vararg function");
-      fs->f->is_vararg = 1;  /* function actually uses vararg */
       init_exp(v, VVARARG, luaK_codeABC(fs, OP_VARARG, 0, 1, 0));
       break;
     }
@@ -1160,11 +1162,8 @@ static void assignment (LexState *ls, struct LHS_assign *lh, int nvars) {
     int nexps;
     checknext(ls, '=');
     nexps = explist(ls, &e);
-    if (nexps != nvars) {
+    if (nexps != nvars)
       adjust_assign(ls, nvars, nexps, &e);
-      if (nexps > nvars)
-        ls->fs->freereg -= nexps - nvars;  /* remove extra values */
-    }
     else {
       luaK_setoneret(ls->fs, &e);  /* close last expression */
       luaK_storevar(ls->fs, &lh->v, &e);
@@ -1394,7 +1393,7 @@ static void test_then_block (LexState *ls, int *escapelist) {
     luaK_goiffalse(ls->fs, &v);  /* will jump to label if condition is true */
     enterblock(fs, &bl, 0);  /* must enter block before 'goto' */
     gotostat(ls, v.t);  /* handle goto/break */
-    skipnoopstat(ls);  /* skip other no-op statements */
+    while (testnext(ls, ';')) {}  /* skip colons */
     if (block_follow(ls, 0)) {  /* 'goto' is the entire block? */
       leaveblock(fs);
       return;  /* and that is it */
@@ -1615,9 +1614,10 @@ static void mainfunc (LexState *ls, FuncState *fs) {
   BlockCnt bl;
   expdesc v;
   open_func(ls, fs, &bl);
-  fs->f->is_vararg = 2;  /* main function is always declared vararg */
+  fs->f->is_vararg = 1;  /* main function is always declared vararg */
   init_exp(&v, VLOCAL, 0);  /* create and... */
   newupvalue(fs, ls->envn, &v);  /* ...set environment upvalue */
+  luaC_objbarrier(ls->L, fs->f, ls->envn);
   luaX_next(ls);  /* read first token */
   statlist(ls);  /* parse main body */
   check(ls, TK_EOS);
@@ -1636,6 +1636,7 @@ LClosure *luaY_parser (lua_State *L, ZIO *z, Mbuffer *buff,
   sethvalue(L, L->top, lexstate.h);  /* anchor it */
   luaD_inctop(L);
   funcstate.f = cl->p = luaF_newproto(L);
+  luaC_objbarrier(L, cl, cl->p);
   funcstate.f->source = luaS_new(L, name);  /* create and anchor TString */
   lua_assert(iswhite(funcstate.f));  /* do not need barrier here */
   lexstate.buff = buff;

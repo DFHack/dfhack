@@ -261,7 +261,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     case ViewUnits:
         if (ui_selected_unit)
         {
-            if (auto unit = vector_get(world->units.active, *ui_selected_unit))
+            if (vector_get(world->units.active, *ui_selected_unit))
             {
                 focus += "/Some";
 
@@ -1325,13 +1325,7 @@ df::plant *Gui::getAnyPlant(df::viewscreen *top)
 
         if (ui->main.mode == ui_sidebar_mode::LookAround)
         {
-            for (df::plant *plant : world->plants.all)
-            {
-                if (plant->pos.x == cursor->x && plant->pos.y == cursor->y && plant->pos.z == cursor->z)
-                {
-                    return plant;
-                }
-            }
+            return Maps::getPlantAtTile(cursor->x, cursor->y, cursor->z);
         }
     }
 

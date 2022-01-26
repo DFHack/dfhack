@@ -82,6 +82,9 @@ DFHACK_EXPORT int32_t findIndexById(int32_t id);
 /// Returns the true position of the unit (non-trivial in case of caged).
 DFHACK_EXPORT df::coord getPosition(df::unit *unit);
 
+// moves unit and any riders to the target coordinates
+DFHACK_EXPORT bool teleport(df::unit *unit, df::coord target_pos);
+
 DFHACK_EXPORT df::general_ref *getGeneralRef(df::unit *unit, df::general_ref_type type);
 DFHACK_EXPORT df::specific_ref *getSpecificRef(df::unit *unit, df::specific_ref_type type);
 

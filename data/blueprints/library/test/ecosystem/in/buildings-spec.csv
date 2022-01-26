@@ -1,0 +1,8 @@
+#notes
+description=underground buildings coverage test
+width=24
+height=37
+depth=2
+#ignore
+does not include (p) farm plots or (oO) dirt/paved roads, since they are built
+on dirt and the ecosystem harness only chooses rock areas.

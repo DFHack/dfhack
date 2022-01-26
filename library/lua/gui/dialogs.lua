@@ -150,6 +150,8 @@ ListBox.focus_path = 'ListBox'
 
 ListBox.ATTRS{
     with_filter = false,
+    dismiss_on_select = true,
+    dismiss_on_select2 = true,
     cursor_pen = DEFAULT_NIL,
     select_pen = DEFAULT_NIL,
     on_select = DEFAULT_NIL,
@@ -174,7 +176,7 @@ function ListBox:init(info)
     local on_submit2
     if self.select2_hint or self.on_select2 then
         on_submit2 = function(sel, obj)
-            self:dismiss()
+            if self.dismiss_on_select2 then self:dismiss() end
             if self.on_select2 then self.on_select2(sel, obj) end
             local cb = obj.on_select2
             if cb then cb(obj, sel) end
@@ -190,7 +192,7 @@ function ListBox:init(info)
             text_pen = spen,
             cursor_pen = cpen,
             on_submit = function(sel,obj)
-                self:dismiss()
+                if self.dismiss_on_select then self:dismiss() end
                 if self.on_select then self.on_select(sel, obj) end
                 local cb = obj.on_select or obj[2]
                 if cb then cb(obj, sel) end

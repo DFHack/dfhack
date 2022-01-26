@@ -1,0 +1,4971 @@
+[
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 0,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "SKIN_TANNED",
+				"value" : 10
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BACKPACK",
+				"value" : 10
+			}
+		],
+		"job" : "MakeBackpack",
+		"material_category" : 
+		[
+			"leather"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 1,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "SKIN_TANNED",
+				"value" : 10
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"leather"
+				],
+				"item_type" : "FLASK",
+				"value" : 10
+			}
+		],
+		"job" : "MakeFlask",
+		"material_category" : 
+		[
+			"leather"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 2,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "SKIN_TANNED",
+				"value" : 10
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "QUIVER",
+				"value" : 10
+			}
+		],
+		"job" : "MakeQuiver",
+		"material_category" : 
+		[
+			"leather"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 3,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "SKIN_TANNED",
+				"value" : 10
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"leather"
+				],
+				"item_subtype" : "ITEM_ARMOR_CLOAK",
+				"item_type" : "ARMOR",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_ARMOR_CLOAK",
+		"job" : "MakeArmor",
+		"material_category" : 
+		[
+			"leather"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 4,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "WOOD",
+				"value" : 50
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_WEAPON_CROSSBOW",
+				"item_type" : "WEAPON",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_CROSSBOW",
+		"job" : "MakeWeapon",
+		"material_category" : 
+		[
+			"wood"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 5,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "SKIN_TANNED",
+				"value" : 25
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"leather"
+				],
+				"item_subtype" : "ITEM_SHIELD_SHIELD",
+				"item_type" : "SHIELD",
+				"value" : 1
+			}
+		],
+		"item_subtype" : "ITEM_SHIELD_SHIELD",
+		"job" : "MakeShield",
+		"material_category" : 
+		[
+			"leather"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 6,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "SKIN_TANNED",
+				"value" : 25
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_ARMOR_LEATHER",
+				"item_type" : "ARMOR",
+				"value" : 1
+			}
+		],
+		"item_subtype" : "ITEM_ARMOR_LEATHER",
+		"job" : "MakeArmor",
+		"material_category" : 
+		[
+			"leather"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 7,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "SKIN_TANNED",
+				"value" : 25
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"leather"
+				],
+				"item_subtype" : "ITEM_HELM_HELM",
+				"item_type" : "HELM",
+				"value" : 1
+			}
+		],
+		"item_subtype" : "ITEM_HELM_HELM",
+		"job" : "MakeHelm",
+		"material_category" : 
+		[
+			"leather"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 8,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "SKIN_TANNED",
+				"value" : 25
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"leather"
+				],
+				"item_subtype" : "ITEM_SHOES_BOOTS",
+				"item_type" : "SHOES",
+				"value" : 2
+			}
+		],
+		"item_subtype" : "ITEM_SHOES_BOOTS",
+		"job" : "MakeShoes",
+		"material_category" : 
+		[
+			"leather"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 9,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "SKIN_TANNED",
+				"value" : 25
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"leather"
+				],
+				"item_subtype" : "ITEM_PANTS_LEGGINGS",
+				"item_type" : "PANTS",
+				"value" : 1
+			}
+		],
+		"item_subtype" : "ITEM_PANTS_LEGGINGS",
+		"job" : "MakePants",
+		"material_category" : 
+		[
+			"leather"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 10,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "SKIN_TANNED",
+				"value" : 25
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"leather"
+				],
+				"item_subtype" : "ITEM_GLOVES_GLOVES",
+				"item_type" : "GLOVES",
+				"value" : 2
+			}
+		],
+		"item_subtype" : "ITEM_GLOVES_GLOVES",
+		"job" : "MakeGloves",
+		"material_category" : 
+		[
+			"leather"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 11,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"unrotten",
+					"bone",
+					"body_part"
+				],
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"bone"
+				],
+				"item_subtype" : "ITEM_AMMO_BOLTS",
+				"item_type" : "AMMO",
+				"value" : 1000
+			}
+		],
+		"item_subtype" : "ITEM_AMMO_BOLTS",
+		"job" : "MakeAmmo",
+		"material_category" : 
+		[
+			"bone"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 12,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "WOOD",
+				"value" : 150
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"bone"
+				],
+				"item_subtype" : "ITEM_AMMO_BOLTS",
+				"item_type" : "AMMO",
+				"value" : 200
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"plant"
+				],
+				"item_subtype" : "ITEM_AMMO_BOLTS",
+				"item_type" : "AMMO",
+				"value" : 1000
+			}
+		],
+		"item_subtype" : "ITEM_AMMO_BOLTS",
+		"job" : "MakeAmmo",
+		"material_category" : 
+		[
+			"wood"
+		]
+	},
+	{
+		"amount_left" : 4,
+		"amount_total" : 4,
+		"frequency" : "Daily",
+		"id" : 13,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BOULDER",
+				"material" : "INORGANIC:CASSITERITE",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:TIN",
+				"value" : 20
+			}
+		],
+		"job" : "SmeltOre",
+		"material" : "INORGANIC:CASSITERITE"
+	},
+	{
+		"amount_left" : 4,
+		"amount_total" : 4,
+		"frequency" : "Daily",
+		"id" : 14,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BOULDER",
+				"material" : "INORGANIC:HEMATITE",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 40
+			}
+		],
+		"job" : "SmeltOre",
+		"material" : "INORGANIC:HEMATITE"
+	},
+	{
+		"amount_left" : 4,
+		"amount_total" : 4,
+		"frequency" : "Daily",
+		"id" : 15,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BOULDER",
+				"material" : "INORGANIC:HORN_SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:SILVER",
+				"value" : 10
+			}
+		],
+		"job" : "SmeltOre",
+		"material" : "INORGANIC:HORN_SILVER"
+	},
+	{
+		"amount_left" : 4,
+		"amount_total" : 4,
+		"frequency" : "Daily",
+		"id" : 16,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BOULDER",
+				"material" : "INORGANIC:LIMONITE",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 40
+			}
+		],
+		"job" : "SmeltOre",
+		"material" : "INORGANIC:LIMONITE"
+	},
+	{
+		"amount_left" : 4,
+		"amount_total" : 4,
+		"frequency" : "Daily",
+		"id" : 17,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BOULDER",
+				"material" : "INORGANIC:NATIVE_COPPER",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:COPPER",
+				"value" : 40
+			}
+		],
+		"job" : "SmeltOre",
+		"material" : "INORGANIC:NATIVE_COPPER"
+	},
+	{
+		"amount_left" : 4,
+		"amount_total" : 4,
+		"frequency" : "Daily",
+		"id" : 18,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BOULDER",
+				"material" : "INORGANIC:NATIVE_PLATINUM",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 10
+			}
+		],
+		"job" : "SmeltOre",
+		"material" : "INORGANIC:NATIVE_PLATINUM"
+	},
+	{
+		"amount_left" : 4,
+		"amount_total" : 4,
+		"frequency" : "Daily",
+		"id" : 19,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BOULDER",
+				"material" : "INORGANIC:NATIVE_SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:SILVER",
+				"value" : 10
+			}
+		],
+		"job" : "SmeltOre",
+		"material" : "INORGANIC:NATIVE_SILVER"
+	},
+	{
+		"amount_left" : 4,
+		"amount_total" : 4,
+		"frequency" : "Daily",
+		"id" : 20,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BOULDER",
+				"material" : "INORGANIC:MAGNETITE",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 40
+			}
+		],
+		"job" : "SmeltOre",
+		"material" : "INORGANIC:MAGNETITE"
+	},
+	{
+		"amount_left" : 4,
+		"amount_total" : 4,
+		"frequency" : "Daily",
+		"id" : 21,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BOULDER",
+				"material" : "INORGANIC:MALACHITE",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:COPPER",
+				"value" : 40
+			}
+		],
+		"job" : "SmeltOre",
+		"material" : "INORGANIC:MALACHITE"
+	},
+	{
+		"amount_left" : 4,
+		"amount_total" : 4,
+		"frequency" : "Daily",
+		"id" : 22,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BOULDER",
+				"material" : "INORGANIC:TETRAHEDRITE",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:COPPER",
+				"value" : 40
+			}
+		],
+		"job" : "SmeltOre",
+		"material" : "INORGANIC:TETRAHEDRITE"
+	},
+	{
+		"amount_left" : 4,
+		"amount_total" : 4,
+		"frequency" : "Daily",
+		"id" : 23,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"bearing" : "TIN",
+				"condition" : "AtLeast",
+				"item_type" : "BOULDER",
+				"value" : 5
+			},
+			{
+				"bearing" : "COPPER",
+				"condition" : "AtLeast",
+				"item_type" : "BOULDER",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 40
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "BRONZE_MAKING"
+	},
+	{
+		"amount_left" : 4,
+		"amount_total" : 4,
+		"frequency" : "Daily",
+		"id" : 24,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:TIN",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:COPPER",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 40
+			},
+			{
+				"bearing" : "TIN",
+				"condition" : "AtMost",
+				"item_type" : "BOULDER",
+				"value" : 5
+			},
+			{
+				"bearing" : "COPPER",
+				"condition" : "AtMost",
+				"item_type" : "BOULDER",
+				"value" : 5
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "BRONZE_MAKING2"
+	},
+	{
+		"amount_left" : 4,
+		"amount_total" : 4,
+		"frequency" : "Daily",
+		"id" : 25,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PIG_IRON",
+				"value" : 10
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "PIG_IRON_MAKING"
+	},
+	{
+		"amount_left" : 4,
+		"amount_total" : 4,
+		"frequency" : "Daily",
+		"id" : 26,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PIG_IRON",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 40
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "STEEL_MAKING"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 27,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_AMMO_BOLTS",
+				"item_type" : "AMMO",
+				"value" : 1000
+			}
+		],
+		"item_subtype" : "ITEM_AMMO_BOLTS",
+		"job" : "MakeAmmo",
+		"material" : "INORGANIC:BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 28,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"min_dimension" : 150,
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_AMMO_BOLTS",
+				"item_type" : "AMMO",
+				"value" : 1000
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_AMMO_BOLTS",
+		"job" : "MakeAmmo",
+		"material" : "INORGANIC:BISMUTH_BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 29,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:COPPER",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_AMMO_BOLTS",
+				"item_type" : "AMMO",
+				"value" : 1000
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_AMMO_BOLTS",
+		"job" : "MakeAmmo",
+		"material" : "INORGANIC:COPPER"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 30,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"min_dimension" : 150,
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_AMMO_BOLTS",
+				"item_type" : "AMMO",
+				"value" : 1000
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:COPPER",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_AMMO_BOLTS",
+		"job" : "MakeAmmo",
+		"material" : "INORGANIC:IRON"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 31,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_WEAPON_MACE",
+				"item_type" : "WEAPON",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_MACE",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:PLATINUM"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 32,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_WEAPON_HAMMER_WAR",
+				"item_type" : "WEAPON",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_HAMMER_WAR",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:PLATINUM"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 64,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_WEAPON_CROSSBOW",
+				"item_type" : "WEAPON",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_CROSSBOW",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:PLATINUM"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 35,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_MACE",
+				"item_type" : "WEAPON",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_MACE",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:SILVER"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 35,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_HAMMER_WAR",
+				"item_type" : "WEAPON",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_HAMMER_WAR",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:SILVER"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 64,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:SILVER",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_CROSSBOW",
+				"item_type" : "WEAPON",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_CROSSBOW",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:SILVER"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 37,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_SHIELD_SHIELD",
+				"item_type" : "SHIELD",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_SHIELD_SHIELD",
+		"job" : "MakeShield",
+		"material" : "INORGANIC:STEEL"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 38,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
+				"item_type" : "ARMOR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
+		"job" : "MakeArmor",
+		"material" : "INORGANIC:STEEL"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 39,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_HELM_HELM",
+				"item_type" : "HELM",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_HELM_HELM",
+		"job" : "MakeHelm",
+		"material" : "INORGANIC:STEEL"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 40,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_SHOES_BOOTS",
+				"item_type" : "SHOES",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_SHOES_BOOTS",
+		"job" : "MakeShoes",
+		"material" : "INORGANIC:STEEL"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 41,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_GLOVES_GAUNTLETS",
+				"item_type" : "GLOVES",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_GLOVES_GAUNTLETS",
+		"job" : "MakeGloves",
+		"material" : "INORGANIC:STEEL"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 42,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_PANTS_GREAVES",
+				"item_type" : "PANTS",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
+				"item_type" : "ARMOR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 5
+			}
+		],
+		"item_subtype" : "ITEM_PANTS_GREAVES",
+		"job" : "MakePants",
+		"material" : "INORGANIC:STEEL"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 43,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_ARMOR_BREASTPLATE",
+				"item_type" : "ARMOR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
+				"item_type" : "ARMOR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 5
+			}
+		],
+		"item_subtype" : "ITEM_ARMOR_BREASTPLATE",
+		"job" : "MakeArmor",
+		"material" : "INORGANIC:STEEL"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 44,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_WEAPON_MACE",
+				"item_type" : "WEAPON",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_MACE",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:STEEL"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 45,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_WEAPON_HAMMER_WAR",
+				"item_type" : "WEAPON",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_HAMMER_WAR",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:STEEL"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 46,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_WEAPON_SPEAR",
+				"item_type" : "WEAPON",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_SPEAR",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:STEEL"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 47,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_WEAPON_SWORD_SHORT",
+				"item_type" : "WEAPON",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_SWORD_SHORT",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:STEEL"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 48,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_WEAPON_AXE_BATTLE",
+				"item_type" : "WEAPON",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_AXE_BATTLE",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:STEEL"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 49,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 30
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_WEAPON_PICK",
+				"item_type" : "WEAPON",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_PICK",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:STEEL"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 50,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 30
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_WEAPON_CROSSBOW",
+				"item_type" : "WEAPON",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_CROSSBOW",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:STEEL"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 51,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_SHIELD_SHIELD",
+				"item_type" : "SHIELD",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_SHIELD_SHIELD",
+		"job" : "MakeShield",
+		"material" : "INORGANIC:IRON"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 52,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
+				"item_type" : "ARMOR",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
+		"job" : "MakeArmor",
+		"material" : "INORGANIC:IRON"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 53,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_HELM_HELM",
+				"item_type" : "HELM",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_HELM_HELM",
+		"job" : "MakeHelm",
+		"material" : "INORGANIC:IRON"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 54,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_SHOES_BOOTS",
+				"item_type" : "SHOES",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_SHOES_BOOTS",
+		"job" : "MakeShoes",
+		"material" : "INORGANIC:IRON"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 55,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_GLOVES_GAUNTLETS",
+				"item_type" : "GLOVES",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_GLOVES_GAUNTLETS",
+		"job" : "MakeGloves",
+		"material" : "INORGANIC:IRON"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 56,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_PANTS_GREAVES",
+				"item_type" : "PANTS",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
+				"item_type" : "ARMOR",
+				"value" : 5
+			}
+		],
+		"item_subtype" : "ITEM_PANTS_GREAVES",
+		"job" : "MakePants",
+		"material" : "INORGANIC:IRON"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 57,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_ARMOR_BREASTPLATE",
+				"item_type" : "ARMOR",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
+				"item_type" : "ARMOR",
+				"value" : 5
+			}
+		],
+		"item_subtype" : "ITEM_ARMOR_BREASTPLATE",
+		"job" : "MakeArmor",
+		"material" : "INORGANIC:IRON"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 58,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_MACE",
+				"item_type" : "WEAPON",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_MACE",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:IRON"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 59,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_HAMMER_WAR",
+				"item_type" : "WEAPON",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_HAMMER_WAR",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:IRON"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 60,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_SPEAR",
+				"item_type" : "WEAPON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_SPEAR",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:IRON"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 61,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_SWORD_SHORT",
+				"item_type" : "WEAPON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_SWORD_SHORT",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:IRON"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 62,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_AXE_BATTLE",
+				"item_type" : "WEAPON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_AXE_BATTLE",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:IRON"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 63,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 30
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_PICK",
+				"item_type" : "WEAPON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 30
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_PICK",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:IRON"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 64,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 30
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BOULDER",
+				"reaction_class" : "FLUX",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 30
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_CROSSBOW",
+				"item_type" : "WEAPON",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_CROSSBOW",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:IRON"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 79,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_SHIELD_SHIELD",
+				"item_type" : "SHIELD",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_SHIELD_SHIELD",
+		"job" : "MakeShield",
+		"material" : "INORGANIC:BISMUTH_BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 80,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
+				"item_type" : "ARMOR",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
+		"job" : "MakeArmor",
+		"material" : "INORGANIC:BISMUTH_BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 81,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_HELM_HELM",
+				"item_type" : "HELM",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_HELM_HELM",
+		"job" : "MakeHelm",
+		"material" : "INORGANIC:BISMUTH_BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 82,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_SHOES_BOOTS",
+				"item_type" : "SHOES",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_SHOES_BOOTS",
+		"job" : "MakeShoes",
+		"material" : "INORGANIC:BISMUTH_BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 83,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_GLOVES_GAUNTLETS",
+				"item_type" : "GLOVES",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_GLOVES_GAUNTLETS",
+		"job" : "MakeGloves",
+		"material" : "INORGANIC:BISMUTH_BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 84,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_PANTS_GREAVES",
+				"item_type" : "PANTS",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
+				"item_type" : "ARMOR",
+				"value" : 5
+			}
+		],
+		"item_subtype" : "ITEM_PANTS_GREAVES",
+		"job" : "MakePants",
+		"material" : "INORGANIC:BISMUTH_BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 85,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_ARMOR_BREASTPLATE",
+				"item_type" : "ARMOR",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
+				"item_type" : "ARMOR",
+				"value" : 5
+			}
+		],
+		"item_subtype" : "ITEM_ARMOR_BREASTPLATE",
+		"job" : "MakeArmor",
+		"material" : "INORGANIC:BISMUTH_BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 72,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"min_dimension" : 150,
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_MACE",
+				"item_type" : "WEAPON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_MACE",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:BISMUTH_BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 87,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_HAMMER_WAR",
+				"item_type" : "WEAPON",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_HAMMER_WAR",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:BISMUTH_BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 88,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_SPEAR",
+				"item_type" : "WEAPON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_SPEAR",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:BISMUTH_BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 89,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_SWORD_SHORT",
+				"item_type" : "WEAPON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_SWORD_SHORT",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:BISMUTH_BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 90,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_AXE_BATTLE",
+				"item_type" : "WEAPON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_AXE_BATTLE",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:BISMUTH_BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 91,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 30
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_PICK",
+				"item_type" : "WEAPON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 30
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 30
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_PICK",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:BISMUTH_BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 92,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 30
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 30
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 30
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_CROSSBOW",
+				"item_type" : "WEAPON",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_CROSSBOW",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:BISMUTH_BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 79,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_SHIELD_SHIELD",
+				"item_type" : "SHIELD",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_SHIELD_SHIELD",
+		"job" : "MakeShield",
+		"material" : "INORGANIC:BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 80,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
+				"item_type" : "ARMOR",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
+		"job" : "MakeArmor",
+		"material" : "INORGANIC:BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 81,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_HELM_HELM",
+				"item_type" : "HELM",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_HELM_HELM",
+		"job" : "MakeHelm",
+		"material" : "INORGANIC:BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 82,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_SHOES_BOOTS",
+				"item_type" : "SHOES",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_SHOES_BOOTS",
+		"job" : "MakeShoes",
+		"material" : "INORGANIC:BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 83,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_GLOVES_GAUNTLETS",
+				"item_type" : "GLOVES",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_GLOVES_GAUNTLETS",
+		"job" : "MakeGloves",
+		"material" : "INORGANIC:BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 84,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_PANTS_GREAVES",
+				"item_type" : "PANTS",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
+				"item_type" : "ARMOR",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_PANTS_GREAVES",
+		"job" : "MakePants",
+		"material" : "INORGANIC:BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 85,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_ARMOR_BREASTPLATE",
+				"item_type" : "ARMOR",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
+				"item_type" : "ARMOR",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_ARMOR_BREASTPLATE",
+		"job" : "MakeArmor",
+		"material" : "INORGANIC:BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 86,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_MACE",
+				"item_type" : "WEAPON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_MACE",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 87,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_HAMMER_WAR",
+				"item_type" : "WEAPON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_HAMMER_WAR",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 88,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_SPEAR",
+				"item_type" : "WEAPON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_SPEAR",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 89,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_SWORD_SHORT",
+				"item_type" : "WEAPON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_SWORD_SHORT",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 90,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_AXE_BATTLE",
+				"item_type" : "WEAPON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_AXE_BATTLE",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 91,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 30
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_PICK",
+				"item_type" : "WEAPON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 30
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 30
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 30
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_PICK",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 92,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 30
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 30
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 30
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_CROSSBOW",
+				"item_type" : "WEAPON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 30
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_CROSSBOW",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:BRONZE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 93,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:COPPER",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_SHIELD_SHIELD",
+				"item_type" : "SHIELD",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_SHIELD_SHIELD",
+		"job" : "MakeShield",
+		"material" : "INORGANIC:COPPER"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 94,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:COPPER",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
+				"item_type" : "ARMOR",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
+		"job" : "MakeArmor",
+		"material" : "INORGANIC:COPPER"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 95,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:COPPER",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_HELM_HELM",
+				"item_type" : "HELM",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_HELM_HELM",
+		"job" : "MakeHelm",
+		"material" : "INORGANIC:COPPER"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 96,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:COPPER",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_SHOES_BOOTS",
+				"item_type" : "SHOES",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_SHOES_BOOTS",
+		"job" : "MakeShoes",
+		"material" : "INORGANIC:COPPER"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 97,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:COPPER",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_GLOVES_GAUNTLETS",
+				"item_type" : "GLOVES",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 20
+			}
+		],
+		"item_subtype" : "ITEM_GLOVES_GAUNTLETS",
+		"job" : "MakeGloves",
+		"material" : "INORGANIC:COPPER"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 98,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:COPPER",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_PANTS_GREAVES",
+				"item_type" : "PANTS",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
+				"item_type" : "ARMOR",
+				"value" : 5
+			}
+		],
+		"item_subtype" : "ITEM_PANTS_GREAVES",
+		"job" : "MakePants",
+		"material" : "INORGANIC:COPPER"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 99,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:COPPER",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_ARMOR_BREASTPLATE",
+				"item_type" : "ARMOR",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 20
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_ARMOR_MAIL_SHIRT",
+				"item_type" : "ARMOR",
+				"value" : 5
+			}
+		],
+		"item_subtype" : "ITEM_ARMOR_BREASTPLATE",
+		"job" : "MakeArmor",
+		"material" : "INORGANIC:COPPER"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 100,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:COPPER",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_MACE",
+				"item_type" : "WEAPON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_MACE",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:COPPER"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 101,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:COPPER",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 10
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_HAMMER_WAR",
+				"item_type" : "WEAPON",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_HAMMER_WAR",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:COPPER"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 102,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:COPPER",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_SPEAR",
+				"item_type" : "WEAPON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_SPEAR",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:COPPER"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 103,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:COPPER",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_SWORD_SHORT",
+				"item_type" : "WEAPON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_SWORD_SHORT",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:COPPER"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 104,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:COPPER",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_AXE_BATTLE",
+				"item_type" : "WEAPON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_AXE_BATTLE",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:COPPER"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 105,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:COPPER",
+				"value" : 10
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_PICK",
+				"item_type" : "WEAPON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 30
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 30
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 30
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 30
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_PICK",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:COPPER"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 106,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:COPPER",
+				"value" : 30
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BRONZE",
+				"value" : 30
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:IRON",
+				"value" : 30
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:STEEL",
+				"value" : 30
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"metal"
+				],
+				"item_subtype" : "ITEM_WEAPON_CROSSBOW",
+				"item_type" : "WEAPON",
+				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:BISMUTH_BRONZE",
+				"value" : 30
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_CROSSBOW",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:COPPER"
+	}
+]

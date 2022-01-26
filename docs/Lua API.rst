@@ -1012,7 +1012,7 @@ Fortress mode
 
     {x = 5, y = 7, z = 11}
     getSelectedUnit().pos
-    xyz2pos(pos2xyz(df.global.cursor))
+    copyall(df.global.cursor)
 
   Returns false if unsuccessful.
 
@@ -1172,12 +1172,17 @@ Units module
 
   Returns true *x,y,z* of the unit, or *nil* if invalid; may be not equal to unit.pos if caged.
 
-* ``dfhack.getUnitsInBox(x1,y1,z1,x2,y2,z2[,filter])``
+* ``dfhack.units.getUnitsInBox(x1,y1,z1,x2,y2,z2[,filter])``
 
   Returns a table of all units within the specified coordinates. If the ``filter``
   argument is given, only units where ``filter(unit)`` returns true will be included.
   Note that ``pos2xyz()`` cannot currently be used to convert coordinate objects to
   the arguments required by this function.
+
+* ``dfhack.units.teleport(unit, pos)``
+
+  Moves the specified unit and any riders to the target coordinates, setting
+  tile occupancy flags appropriately. Returns true if successful.
 
 * ``dfhack.units.getGeneralRef(unit, type)``
 
@@ -1552,6 +1557,10 @@ Maps module
 * ``dfhack.maps.getTileBiomeRgn(coords)``, or ``getTileBiomeRgn(x,y,z)``
 
   Returns *x, y* for use with ``getRegionBiome``.
+
+* ``dfhack.maps.getPlantAtTile(pos)``, or ``getPlantAtTile(x,y,z)``
+
+  Returns the plant struct that owns the tile at the specified position.
 
 * ``dfhack.maps.canWalkBetween(pos1, pos2)``
 
@@ -4034,6 +4043,16 @@ Lua plugin classes
 - ``shuffle()``: shuffles the sequence of numbers
 - ``next()``: returns next number in the sequence
 
+dig-now
+=======
+
+The dig-now plugin exposes the following functions to Lua:
+
+* ``dig_now_tile(pos)`` or ``dig_now_tile(x,y,z)``: Runs dig-now for the
+    specified tile coordinate. Default options apply, as if you were running the
+    command ``dig-now <pos> <pos>``. See the `dig-now` documentation for details
+    on default settings.
+
 .. _eventful:
 
 eventful
@@ -4296,6 +4315,21 @@ single Lua function, in ``hack/lua/plugins/pathable.lua``:
   green or red, depending on whether it can be pathed to from the tile at
   ``cursor``. If ``skip_unrevealed`` is specified and true, do not draw
   unrevealed tiles.
+
+reveal
+======
+
+Native functions provided by the `reveal` plugin:
+
+* ``void unhideFlood(pos)``: Unhides map tiles according to visibility rules,
+  starting from the given coordinates. This algorithm only processes adjacent
+  hidden tiles, so it must start on a hidden tile in order to have any effect.
+  It will not reveal hidden sections separated by already-unhidden tiles.
+
+Example of revealing a cavern that happens to have an open tile at the specified
+coordinate::
+
+    unhideFlood({x=25, y=38, z=140})
 
 sort
 ====

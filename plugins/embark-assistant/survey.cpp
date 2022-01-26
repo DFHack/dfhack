@@ -2068,7 +2068,6 @@ void embark_assist::survey::survey_region_sites(embark_assist::defs::site_lists 
     //            color_ostream_proxy out(Core::getInstance().getConsole());
     auto screen = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
     df::world_data *world_data = world->world_data;
-    int8_t index = 0;
 
     site_list->clear();
 

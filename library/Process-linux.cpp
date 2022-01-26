@@ -48,11 +48,7 @@ using namespace DFHack;
 
 Process::Process(const VersionInfoFactory& known_versions) : identified(false), my_pe(0)
 {
-    const char * dir_name = "/proc/self/";
     const char * exe_link_name = "/proc/self/exe";
-    const char * cwd_name = "/proc/self/cwd";
-    const char * cmdline_name = "/proc/self/cmdline";
-    int target_result;
 
     // valgrind replaces readlink for /proc/self/exe, but not open.
     char self_exe[1024];

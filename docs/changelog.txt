@@ -34,28 +34,101 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## Fixes
-- `buildingplan`: fixed an issue where planned constructions designated with DF's sizing keys (``umkh``) would sometimes be larger than requested
-- `buildingplan`: fixed an issue preventing other plugins like `automaterial` from planning constructions if the "enable all" buildingplan setting was turned on
-- `command-prompt`: fixed issues where overlays created by running certain commands (e.g. `gui/liquids`, `gui/teleport`) would not update the parent screen correctly
-- `dwarfvet`: fixed a crash that could occur with hospitals overlapping with other buildings in certain ways
-- ``quickfortress.csv`` blueprint: fixed refuse stockpile config and prevented stockpiles from covering stairways
-- `stonesense`: fixed a crash that could occur when ctrl+scrolling or closing the Stonesense window
+- `blueprint`: fixed passing incorrect parameters to `gui/blueprint` when you run ``blueprint gui`` with optional params
+- `blueprint`: key sequences for constructed walls and down stairs are now correct
+- `tailor`: fixed some inconsistencies (and possible crashes) when parsing certain subcommands, e.g. ``tailor help``
 
 ## Misc Improvements
-- `blueprint`: make ``depth`` and ``name`` parameters optional. ``depth`` now defaults to ``1`` (current level only) and ``name`` defaults to "blueprint"
-- `blueprint`: allow ``depth`` to be negative, which will result in the blueprints being written from the highest z-level to the lowest. before, blueprints were always written from the lowest z-level to the highest.
-- `blueprint`: add the ``--cursor`` option to set the starting coordinate for the generated blueprints. a game cursor is no longer necessary if this option is used.
+- `automaterial`: ensure construction tiles are laid down in order when using `buildingplan` to plan the constructions
+- `blueprint`: all blueprint phases are now written to a single file, using `quickfort` multi-blueprint file syntax. to get the old behavior of each phase in its own file, pass the ``--splitby=phase`` parameter to ``blueprint``
+- `blueprint`: you can now specify the position where the cursor should be when the blueprint is played back with `quickfort` by passing the ``--playback-start`` parameter
+- `blueprint`: generated blueprints now have labels so `quickfort` can address them by name
+- `blueprint`: all building types are now supported
+- `blueprint`: multi-type stockpiles are now supported
+- `blueprint`: non-rectangular stockpiles and buildings are now supported
+- `blueprint`: blueprints are no longer generated for phases that have nothing to do (unless those phases are explicitly enabled on the commandline or gui)
+- `blueprint`: new "track" phase that discovers and records carved tracks
+- `blueprint`: new "zone" phase that discovers and records activity zones, including custom configuration for ponds, gathering, and hospitals
+- `dig-now`: no longer leaves behind a designated tile when a tile was designated beneath a tile designated for channeling
+- `quickfort`, `dfhack-examples-guide`: Dreamfort blueprint set improvements based on playtesting and feedback. includes updated profession definitions.
+
+## Lua
+- ``argparse.processArgsGetopt()``: you can now have long form parameters that are not an alias for a short form parameter. For example, you can now have a parameter like ``--longparam`` without needing to have an equivalent one-letter ``-l`` param.
+- ``dwarfmode.enterSidebarMode()``: ``df.ui_sidebar_mode.DesignateMine`` is now a suported target sidebar mode
+
+# 0.47.05-r3
+
+## New Plugins
+- `dig-now`: instantly completes dig designations (including smoothing and carving tracks)
+
+## Fixes
+- Core: ``alt`` keydown state is now cleared when DF loses and regains focus, ensuring the ``alt`` modifier state is not stuck on for systems that don't send standard keyup events in response to ``alt-tab`` window manager events
+- Lua: ``memscan.field_offset()``: fixed an issue causing `devel/export-dt-ini` to crash sometimes, especially on Windows
+- `autofarm`: autofarm will now count plant growths as well as plants toward its thresholds
+- `autogems`: no longer assigns gem cutting jobs to workshops with gem cutting prohibited in the workshop profile
+
+## Misc Improvements
+- `buildingplan`: now displays which items are attached and which items are still missing for planned buildings
+- `orders`: support importing and exporting reaction-specific item conditions, like "lye-containing" for soap production orders
+- `orders`: new ``sort`` command. sorts orders according to their repeat frequency. this prevents daily orders from blocking other orders for simlar items from ever getting completed.
+- `tiletypes-here`, `tiletypes-here-point`: add ``--cursor`` and ``--quiet`` options to support non-interactive use cases
+- `quickfort`: Dreamfort blueprint set improvements: extensive revision based on playtesting and feedback. includes updated ``onMapLoad_dreamfort.init`` settings file, enhanced automation orders, and premade profession definitions.  see full changelog at https://github.com/DFHack/dfhack/pull/1921 and https://github.com/DFHack/dfhack/pull/1925
+- `tailor`: allow user to specify which materials to be used, and in what order
+
+## API
+- The ``Items`` module ``moveTo*`` and ``remove`` functions now handle projectiles
+
+## Lua
+- new global function: ``safe_pairs(iterable[, iterator_fn])`` will iterate over the ``iterable`` (a table or iterable userdata)  with the ``iterator_fn`` (``pairs`` if not otherwise specified) if iteration is possible. If iteration is not possible or would throw an error, for example if ``nil`` is passed as the ``iterable``, the iteration is just silently skipped.
+
+## Documentation
+- `quickfort-library-guide`: updated dreamfort documentation and added screenshots
+- `dfhack-examples-guide`: documentation for all of `dreamfort`'s supporting files (useful for all forts, not just Dreamfort!)
+
+# 0.47.05-r2
+
+## Fixes
+- Fixed an issue where scrollable text in Lua-based screens could prevent other widgets from scrolling
+- Fixed an issue preventing some external scripts from creating zones and other abstract buildings (see note about room definitions under "Internals")
+- `buildingplan`: fixed an issue where planned constructions designated with DF's sizing keys (``umkh``) would sometimes be larger than requested
+- `buildingplan`: fixed an issue preventing other plugins like `automaterial` from planning constructions if the "enable all" buildingplan setting was turned on
+- `buildingplan`: made navigation keys work properly in the materials selection screen when alternate keybindings are used
+- `command-prompt`: fixed issues where overlays created by running certain commands (e.g. `gui/liquids`, `gui/teleport`) would not update the parent screen correctly
+- `dwarfvet`: fixed a crash that could occur with hospitals overlapping with other buildings in certain ways
+- `orders`: fixed crash when importing orders with malformed IDs
+- ``quickfortress.csv`` blueprint: fixed refuse stockpile config and prevented stockpiles from covering stairways
+- `stonesense`: fixed a crash that could occur when ctrl+scrolling or closing the Stonesense window
+- `embark-assistant`: fixed faulty early exit in first search attempt when searching for waterfalls
+
+## Misc Improvements
+- Added adjectives to item selection dialogs, used in tools like `gui/create-item` - this makes it possible to differentiate between different types of high/low boots, shields, etc. (some of which are procedurally generated)
+- `blueprint`: made ``depth`` and ``name`` parameters optional. ``depth`` now defaults to ``1`` (current level only) and ``name`` defaults to "blueprint"
+- `blueprint`: ``depth`` can now be negative, which will result in the blueprints being written from the highest z-level to the lowest. Before, blueprints were always written from the lowest z-level to the highest.
+- `blueprint`: added the ``--cursor`` option to set the starting coordinate for the generated blueprints. A game cursor is no longer necessary if this option is used.
 - `quickfort`: the Dreamfort blueprint set can now be comfortably built in a 1x1 embark
 - `stonesense`: sped up startup time
 - `tweak` hide-priority: changed so that priorities stay hidden (or visible) when exiting and re-entering the designations menu
 - `embark-assistant`: slightly improved performance of surveying and improved code a little
 
 ## Lua
+- new string utility functions:
+    - ``string:wrap(width)`` wraps a string at space-separated word boundaries
+    - ``string:trim()`` removes whitespace characters from the beginning and end of the string
+    - ``string:split(delimiter, plain)`` splits a string with the given delimiter and returns a table of substrings. if ``plain`` is specified and set to ``true``, ``delimiter`` is interpreted as a literal string instead of as a pattern (the default)
+- new library: ``argparse`` is a collection of commandline argument processing functions
 - ``gui.Painter``: fixed error when calling ``viewport()`` method
-- ``utils.processArgsGetopt()``: now returns negative numbers (e.g. ``-10``) in the list of positional parameters instead of treating it as an option string equivalent to ``-1 -0``
-- ``utils.processArgsGetopt()``: now properly handles ``--`` like GNU ``getopt`` as a marker to treat all further parameters as non-options
-- ``utils.processArgsGetopt()``: now detects when required arguments to long-form options are missing
+- ``gui.dwarfmode``: new function: ``enterSidebarMode(sidebar_mode, max_esc)`` which uses keypresses to get into the specified sidebar mode from whatever the current screen is
+- `reveal`: now exposes ``unhideFlood(pos)`` functionality to Lua
+- new utility function: ``utils.normalizePath()``: normalizes directory slashes across platoforms to ``/`` and coaleses adjacent directory separators
+- ``argparse.processArgsGetopt()`` (previously ``utils.processArgsGetopt()``):
+    - now returns negative numbers (e.g. ``-10``) in the list of positional parameters instead of treating it as an option string equivalent to ``-1 -0``
+    - now properly handles ``--`` like GNU ``getopt`` as a marker to treat all further parameters as non-options
+    - now detects when required arguments to long-form options are missing
 - `xlsxreader`: added Lua class wrappers for the xlsxreader plugin API
+
+## API
+- Added ``dfhack.units.teleport(unit, pos)``
+- Added ``dfhack.maps.getPlantAtTile(x, y, z)`` and ``dfhack.maps.getPlantAtTile(pos)``, and updated ``dfhack.gui.getSelectedPlant()`` to use it
 
 ## Documentation
 - Added more client library implementations to the `remote interface docs <remote-client-libs>`
@@ -63,8 +136,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Internals
 - The DFHack test harness is now much easier to use for iterative development.  Configuration can now be specified on the commandline, there are more test filter options, and the test harness can now easily rerun tests that have been run before.
 - The ``test/main`` command to invoke the test harness has been renamed to just ``test``
-- DFHack unit tests must now match any output expected to be printed via ``dfhack.printerr()``
-- Fortress mode is now supported for unit tests (allowing tests that require a fortress map to be loaded) - note that these tests are skipped by continuous integration for now, pending a suitable test fortress
+- Unit tests must now match any output expected to be printed via ``dfhack.printerr()``
+- Unit tests now support fortress mode (allowing tests that require a fortress map to be loaded) - note that these tests are skipped by continuous integration for now, pending a suitable test fortress
+- Unit tests can now use ``delay_until(predicate_fn, timeout_frames)`` to delay until a condition is met
+- Room definitions and extents are now created for abstract buildings so callers don't have to initialize the room structure themselves
 
 # 0.47.05-r1
 

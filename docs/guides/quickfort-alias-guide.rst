@@ -682,6 +682,7 @@ seeds            forbidseeds           permitseeds
 dye              forbiddye             permitdye
 tallow           forbidtallow          permittallow
 miscliquid       forbidmiscliquid      permitmiscliquid
+wax              forbidwax             permitwax
 ===============  ====================  ====================
 
 Furniture stockpile adjustments
@@ -803,6 +804,7 @@ Exclusive                Forbid                         Permit
 =======================  =============================  =============================
 jugs
 crafts                   forbidcrafts                   permitcrafts
+goblets                  forbidgoblets                  permitgoblets
 masterworkfinishedgoods  forbidmasterworkfinishedgoods  permitmasterworkfinishedgoods
 artifactfinishedgoods    forbidartifactfinishedgoods    permitartifactfinishedgoods
 =======================  =============================  =============================

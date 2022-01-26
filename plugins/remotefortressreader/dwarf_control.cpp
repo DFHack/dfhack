@@ -72,9 +72,10 @@ void GetBuildingSize(
             rad_x_high = world->building_width / 2;
         else
             rad_x_high = (world->building_width / 2) - 1;
-        bool heightOdd = world->building_width % 2;
+
+        bool heightOdd = world->building_height % 2;
         rad_y_low = world->building_height / 2;
-        if (widthOdd)
+        if (heightOdd)
             rad_y_high = world->building_height / 2;
         else
             rad_y_high = (world->building_height / 2) - 1;
@@ -474,7 +475,6 @@ command_result SetSideMenu(DFHack::color_ostream &stream, const DwarfControl::Si
     default:
         break;
     }
-    auto viewScreen = getCurViewscreen();
     if (in->has_action())
     {
         switch (in->action())

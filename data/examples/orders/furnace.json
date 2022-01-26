@@ -1,0 +1,361 @@
+[
+	{
+		"amount_left" : 20,
+		"amount_total" : 20,
+		"frequency" : "Daily",
+		"id" : 0,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "WOOD",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 150
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BOULDER",
+				"material" : "INORGANIC:COAL_BITUMINOUS",
+				"value" : 10
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BOULDER",
+				"material" : "INORGANIC:LIGNITE",
+				"value" : 10
+			}
+		],
+		"job" : "MakeCharcoal"
+	},
+	{
+		"amount_left" : 4,
+		"amount_total" : 4,
+		"frequency" : "Daily",
+		"id" : 1,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "WOOD",
+				"value" : 10
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 20
+			}
+		],
+		"job" : "MakeCharcoal"
+	},
+	{
+		"amount_left" : 4,
+		"amount_total" : 4,
+		"frequency" : "Daily",
+		"id" : 2,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BOULDER",
+				"material" : "INORGANIC:COAL_BITUMINOUS",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 5
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "BITUMINOUS_COAL_TO_COKE"
+	},
+	{
+		"amount_left" : 4,
+		"amount_total" : 4,
+		"frequency" : "Daily",
+		"id" : 3,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BOULDER",
+				"material" : "INORGANIC:LIGNITE",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 5
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "LIGNITE_TO_COKE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 5,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "POTASH",
+				"reaction_id" : "MAKE_PEARLASH",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BAR",
+				"material" : "PEARLASH",
+				"value" : 10
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "MAKE_PEARLASH"
+	},
+	{
+		"amount_left" : 4,
+		"amount_total" : 4,
+		"frequency" : "Daily",
+		"id" : 6,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"empty",
+					"bag"
+				],
+				"item_type" : "BOX",
+				"value" : 10
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"sand_bearing"
+				],
+				"value" : 30
+			}
+		],
+		"job" : "CollectSand"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 7,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"sand_bearing"
+				],
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "ROUGH",
+				"material" : "GLASS_GREEN",
+				"value" : 10
+			}
+		],
+		"job" : "MakeRawGlass",
+		"material" : "GLASS_GREEN"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 8,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"sand_bearing"
+				],
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "PEARLASH",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "ROUGH",
+				"material" : "GLASS_CLEAR",
+				"value" : 10
+			}
+		],
+		"job" : "MakeRawGlass",
+		"material" : "GLASS_CLEAR"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 9,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "PEARLASH",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"glass_making"
+				],
+				"item_type" : "ROUGH",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "ROUGH",
+				"material" : "GLASS_CRYSTAL",
+				"value" : 10
+			}
+		],
+		"job" : "MakeRawGlass",
+		"material" : "GLASS_CRYSTAL"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 10,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BOULDER",
+				"material" : "INORGANIC:RAW_ADAMANTINE",
+				"value" : 5
+			}
+		],
+		"job" : "ExtractMetalStrands",
+		"material" : "INORGANIC:RAW_ADAMANTINE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 11,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "THREAD",
+				"material" : "INORGANIC:ADAMANTINE",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:ADAMANTINE",
+				"value" : 20
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "ADAMANTINE_WAFERS"
+	},
+	{
+		"amount_left" : 4,
+		"amount_total" : 4,
+		"frequency" : "Daily",
+		"id" : 12,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"melt_designated",
+					"allow_melt_dump"
+				],
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			}
+		],
+		"job" : "MeltMetalObject"
+	}
+]

@@ -922,31 +922,6 @@ function matchall(haystack, needles)
     return true
 end
 
-function splitstring(full, pattern)
-    local last = string.len(full)
-    local result = {}
-    local n = 1
-    while n <= last do
-        local start, stop = string.find(full, pattern, n)
-        if not start then
-            result[#result+1] = string.sub(full, n)
-            break
-        elseif start > n then
-            result[#result+1] = string.sub(full, n, start - 1)
-        end
-
-        if stop < n then
-            -- The pattern matches an empty string.
-            -- Avoid an infinite loop.
-            break
-        end
-
-        n = stop + 1
-    end
-
-    return result
-end
-
 function screen:refilter()
     -- Determine which rows to show, and in which colors.
     -- Todo: The official one now has three categories of search results:
@@ -956,7 +931,7 @@ function screen:refilter()
     self.page_size = self.frame_rect.height - ExtraLines
 
     local filtered = {}
-    local needles = splitstring(self.search_string, " ")
+    local needles = self.search_string:split()
     for key, value in ipairs(reaction_list) do
         if matchall(string.upper(value.name), needles) then
             filtered[#filtered+1] = {

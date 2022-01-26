@@ -1,5 +1,5 @@
 /*
-** $Id: lstrlib.c,v 1.251 2016/05/20 14:13:21 roberto Exp $
+** $Id: lstrlib.c,v 1.254.1.1 2017/04/19 17:29:57 roberto Exp $
 ** Standard library for string operations and pattern-matching
 ** See Copyright Notice in lua.h
 */
@@ -839,11 +839,12 @@ static lua_Number adddigit (char *buff, int n, lua_Number x) {
 
 
 static int num2straux (char *buff, int sz, lua_Number x) {
-  if (x != x || x == HUGE_VAL || x == -HUGE_VAL)  /* inf or NaN? */
-    return l_sprintf(buff, sz, LUA_NUMBER_FMT, x);  /* equal to '%g' */
+  /* if 'inf' or 'NaN', format it like '%g' */
+  if (x != x || x == (lua_Number)HUGE_VAL || x == -(lua_Number)HUGE_VAL)
+    return l_sprintf(buff, sz, LUA_NUMBER_FMT, (LUAI_UACNUMBER)x);
   else if (x == 0) {  /* can be -0... */
     /* create "0" or "-0" followed by exponent */
-    return l_sprintf(buff, sz, LUA_NUMBER_FMT "x0p+0", x);
+    return l_sprintf(buff, sz, LUA_NUMBER_FMT "x0p+0", (LUAI_UACNUMBER)x);
   }
   else {
     int e;
@@ -878,7 +879,7 @@ static int lua_number2strx (lua_State *L, char *buff, int sz,
       buff[i] = toupper(uchar(buff[i]));
   }
   else if (fmt[SIZELENMOD] != 'a')
-    luaL_error(L, "modifiers for format '%%a'/'%%A' not implemented");
+    return luaL_error(L, "modifiers for format '%%a'/'%%A' not implemented");
   return n;
 }
 
@@ -933,7 +934,7 @@ static void addquoted (luaL_Buffer *b, const char *s, size_t len) {
 static void checkdp (char *buff, int nb) {
   if (memchr(buff, '.', nb) == NULL) {  /* no dot? */
     char point = lua_getlocaledecpoint();  /* try locale point */
-    char *ppoint = (char*)memchr(buff, point, nb);
+    char *ppoint = (char *)memchr(buff, point, nb);
     if (ppoint) *ppoint = '.';  /* change it to a dot */
   }
 }
@@ -960,7 +961,7 @@ static void addliteral (lua_State *L, luaL_Buffer *b, int arg) {
         const char *format = (n == LUA_MININTEGER)  /* corner case? */
                            ? "0x%" LUA_INTEGER_FRMLEN "x"  /* use hexa */
                            : LUA_INTEGER_FMT;  /* else use default format */
-        nb = l_sprintf(buff, MAX_ITEM, format, n);
+        nb = l_sprintf(buff, MAX_ITEM, format, (LUAI_UACINT)n);
       }
       luaL_addsize(b, nb);
       break;
@@ -1041,7 +1042,7 @@ static int str_format (lua_State *L) {
         case 'o': case 'u': case 'x': case 'X': {
           lua_Integer n = luaL_checkinteger(L, arg);
           addlenmod(form, LUA_INTEGER_FRMLEN);
-          nb = l_sprintf(buff, MAX_ITEM, form, n);
+          nb = l_sprintf(buff, MAX_ITEM, form, (LUAI_UACINT)n);
           break;
         }
         case 'a': case 'A':
@@ -1051,8 +1052,9 @@ static int str_format (lua_State *L) {
           break;
         case 'e': case 'E': case 'f':
         case 'g': case 'G': {
+          lua_Number n = luaL_checknumber(L, arg);
           addlenmod(form, LUA_NUMBER_FRMLEN);
-          nb = l_sprintf(buff, MAX_ITEM, form, luaL_checknumber(L, arg));
+          nb = l_sprintf(buff, MAX_ITEM, form, (LUAI_UACNUMBER)n);
           break;
         }
         case 'q': {
@@ -1197,8 +1199,8 @@ static int getnum (const char **fmt, int df) {
 static int getnumlimit (Header *h, const char **fmt, int df) {
   int sz = getnum(fmt, df);
   if (sz > MAXINTSIZE || sz <= 0)
-    luaL_error(h->L, "integral size (%d) out of limits [1,%d]",
-                     sz, MAXINTSIZE);
+    return luaL_error(h->L, "integral size (%d) out of limits [1,%d]",
+                            sz, MAXINTSIZE);
   return sz;
 }
 

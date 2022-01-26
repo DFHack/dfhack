@@ -162,22 +162,47 @@ NEWLINE = "\n"
 COMMA = ","
 PERIOD = "."
 
-function printall(table)
-    local ok,f,t,k = pcall(pairs,table)
-    if ok then
-        for k,v in f,t,k do
-            print(string.format("%-23s\t = %s",tostring(k),tostring(v)))
+local function _wrap_iterator(next_fn, ...)
+    local wrapped_iter = function(...)
+        local ret = {pcall(next_fn, ...)}
+        local ok = table.remove(ret, 1)
+        if ok then
+            return table.unpack(ret)
         end
+    end
+    return wrapped_iter, ...
+end
+
+function safe_pairs(t, iterator_fn)
+    iterator_fn = iterator_fn or pairs
+    if (pcall(iterator_fn, t)) then
+        return _wrap_iterator(iterator_fn(t))
+    else
+        return function() end
     end
 end
 
-function printall_ipairs(table)
-    local ok,f,t,k = pcall(ipairs,table)
-    if ok then
-        for k,v in f,t,k do
-            print(string.format("%-23s\t = %s",tostring(k),tostring(v)))
-        end
+-- calls elem_cb(k, v) for each element of the table
+-- returns true if we iterated successfully, false if not
+-- this differs from safe_pairs() above in that it only calls pcall() once per
+-- full iteration and it returns whether iteration succeeded or failed.
+local function safe_iterate(table, iterator_fn, elem_cb)
+    local function iterate()
+        for k,v in iterator_fn(table) do elem_cb(k, v) end
     end
+    return pcall(iterate)
+end
+
+local function print_element(k, v)
+    dfhack.println(string.format("%-23s\t = %s", tostring(k), tostring(v)))
+end
+
+function printall(table)
+    safe_iterate(table, pairs, print_element)
+end
+
+function printall_ipairs(table)
+    safe_iterate(table, ipairs, print_element)
 end
 
 local do_print_recurse
@@ -199,15 +224,9 @@ local fill_chars = {
 setmetatable(fill_chars, fill_chars)
 
 local function print_fields(value, seen, indent, prefix)
-    local ok,f,t,k = pcall(pairs,value)
-    if not ok then
-        dfhack.print(prefix)
-        dfhack.println('<Type doesn\'t support iteration with pairs>')
-        return 0
-    end
     local prev_value = "not a value"
     local repeated = 0
-    for k, v in f,t,k do
+    local print_field = function(k, v)
         -- Only show set values of bitfields
         if value._kind ~= "bitfield" or v then
             local continue = false
@@ -233,7 +252,10 @@ local function print_fields(value, seen, indent, prefix)
             end
         end
     end
-    if repeated > 0 then
+    if not safe_iterate(value, pairs, print_field) then
+        dfhack.print(prefix)
+        dfhack.println('<Type doesn\'t support iteration with pairs>')
+    elseif repeated > 0 then
         dfhack.println(prefix .. "<Repeated " .. repeated .. " times>")
     end
     return 0
@@ -361,12 +383,83 @@ function safe_index(obj,idx,...)
     end
 end
 
+-- String class extentions
+
+-- prefix is a literal string, not a pattern
 function string:startswith(prefix)
     return self:sub(1, #prefix) == prefix
 end
 
+-- suffix is a literal string, not a pattern
 function string:endswith(suffix)
     return self:sub(-#suffix) == suffix or #suffix == 0
+end
+
+-- Split a string by the given delimiter. If no delimiter is specified, space
+-- (' ') is used. The delimter is treated as a pattern unless a <plain> is
+-- specified and set to true. To treat multiple successive delimiter characters
+-- as a single delimiter, e.g. to avoid getting empty string elements, pass a
+-- pattern like ' +'. Be aware that passing patterns that match empty strings
+-- (like ' *') will result in improper string splits.
+function string:split(delimiter, plain)
+    delimiter = delimiter or ' '
+    local result = {}
+    local from = 1
+    local delim_from, delim_to = self:find(delimiter, from, plain)
+    -- delim_from will be greater than delim_to when the delimiter matches the
+    -- empty string, which would lead to an infinite loop if we didn't check it
+    while delim_from and delim_from <= delim_to do
+        table.insert(result, self:sub(from, delim_from - 1))
+        from = delim_to + 1
+        delim_from, delim_to = self:find(delimiter, from, plain)
+    end
+    table.insert(result, self:sub(from))
+    return result
+end
+
+-- Removes spaces (i.e. everything that matches '%s') from the start and end of
+-- a string. Spaces between non-space characters are left untouched.
+function string:trim()
+    local _, _, content = self:find('^%s*(.-)%s*$')
+    return content
+end
+
+-- Inserts newlines into a string so no individual line exceeds the given width.
+-- Lines are split at space-separated word boundaries. Any existing newlines are
+-- kept in place. If a single word is longer than width, it is split over
+-- multiple lines. If width is not specified, 72 is used.
+function string:wrap(width)
+    width = width or 72
+    local wrapped_text = {}
+    for line in self:gmatch('[^\n]*') do
+        local line_start_pos = 1
+        local wrapped_line = line:gsub(
+            '%s*()(%S+)()',
+            function(start_pos, word, end_pos)
+                -- word fits within the current line
+                if end_pos - line_start_pos <= width then return end
+                -- word needs to go on the next line, but is not itself longer
+                -- than the specified width
+                if #word <= width then
+                    line_start_pos = start_pos
+                    return '\n' .. word
+                end
+                -- word is too long to fit on one line and needs to be split up
+                local num_chars, str = 0, start_pos == 1 and '' or '\n'
+                repeat
+                    local word_frag = word:sub(num_chars + 1, num_chars + width)
+                    str = str .. word_frag
+                    num_chars = num_chars + #word_frag
+                    if num_chars < #word then
+                        str = str .. '\n'
+                    end
+                    line_start_pos = start_pos + num_chars
+                until end_pos - line_start_pos <= width
+                return str .. word:sub(num_chars + 1)
+            end)
+        table.insert(wrapped_text, wrapped_line)
+    end
+    return table.concat(wrapped_text, '\n')
 end
 
 -- String conversions

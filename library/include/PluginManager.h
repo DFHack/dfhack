@@ -33,6 +33,7 @@ distribution.
 #include <vector>
 
 #include "Core.h"
+#include "DataFuncs.h"
 
 #include "RemoteClient.h"
 

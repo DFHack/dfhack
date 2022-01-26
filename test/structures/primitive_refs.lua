@@ -70,7 +70,7 @@ function test.index_write_multi()
             x[i] = i * i
         end
         for i = 0, len - 1 do
-            expect.eq(x[i], i * i)
+            expect.eq(x[i], i * i, i)
         end
     end)
 end

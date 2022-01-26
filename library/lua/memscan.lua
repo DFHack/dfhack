@@ -310,7 +310,7 @@ function field_ref(handle,...)
 end
 
 function field_offset(type,...)
-    local tmp = df.new('intptr_t')  -- pointer to nullptr
+    local tmp = df.new('int8_t', df.sizeof(type))
     local _, haddr = df.sizeof(tmp)
     local handle = df.reinterpret_cast(type, tmp)
     local _, addr = df.sizeof(field_ref(handle,...))

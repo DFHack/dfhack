@@ -1572,6 +1572,7 @@ static const luaL_Reg dfhack_job_funcs[] = {
 /***** Units module *****/
 
 static const LuaWrapper::FunctionReg dfhack_units_module[] = {
+    WRAPM(Units, teleport),
     WRAPM(Units, getGeneralRef),
     WRAPM(Units, getSpecificRef),
     WRAPM(Units, getContainer),
@@ -1922,6 +1923,13 @@ static int maps_getTileBiomeRgn(lua_State *L)
     return Lua::PushPosXY(L, Maps::getTileBiomeRgn(pos));
 }
 
+static int maps_getPlantAtTile(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    Lua::PushDFObject(L, Maps::getPlantAtTile(pos));
+    return 1;
+}
+
 static const luaL_Reg dfhack_maps_funcs[] = {
     { "isValidTilePos", maps_isValidTilePos },
     { "isTileVisible", maps_isTileVisible },
@@ -1931,6 +1939,7 @@ static const luaL_Reg dfhack_maps_funcs[] = {
     { "getTileFlags", maps_getTileFlags },
     { "getRegionBiome", maps_getRegionBiome },
     { "getTileBiomeRgn", maps_getTileBiomeRgn },
+    { "getPlantAtTile", maps_getPlantAtTile },
     { NULL, NULL }
 };
 

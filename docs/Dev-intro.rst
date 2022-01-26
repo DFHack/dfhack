@@ -22,7 +22,7 @@ Plugins
 
 DFHack plugins are written in C++ and located in the ``plugins`` folder.
 Currently, documentation on how to write plugins is somewhat sparse. There are
-templates that you can get use to get started in the ``plugins/skeleton``
+templates that you can use to get started in the ``plugins/skeleton``
 folder, and the source code of existing plugins can also be helpful.
 
 If you want to compile a plugin that you have just added, you will need to add a

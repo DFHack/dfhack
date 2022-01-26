@@ -1,7 +1,6 @@
 local _ENV = mkmodule('utils')
 
 local df = df
-local getopt = require('3rdparty.alt_getopt')
 
 -- Comparator function
 function compare(a,b)
@@ -483,16 +482,7 @@ end
 
 -- Split the string by the given delimiter
 function split_string(self, delimiter)
-    local result = { }
-    local from  = 1
-    local delim_from, delim_to = string.find( self, delimiter, from  )
-    while delim_from do
-        table.insert( result, string.sub( self, from , delim_from-1 ) )
-        from  = delim_to + 1
-        delim_from, delim_to = string.find( self, delimiter, from  )
-    end
-    table.insert( result, string.sub( self, from  ) )
-    return result
+    return self:split(delimiter)
 end
 
 -- Ask a yes-no question
@@ -544,6 +534,13 @@ function check_number(text)
     return nv ~= nil, nv
 end
 
+-- Normalize directory separator slashes across platforms to '/' and collapse
+-- adjacent slashes into a single slash.
+local PLATFORM_SLASH = package.config:sub(1,1)
+function normalizePath(path)
+    return path:gsub(PLATFORM_SLASH, '/'):gsub('/+', '/')
+end
+
 function invert(tab)
     local result = {}
     for k,v in pairs(tab) do
@@ -552,123 +549,14 @@ function invert(tab)
     return result
 end
 
+-- processArgs() and processArgsGetopt() have been moved to argparse.lua.
+-- The 'require' statements are within the functions to avoid adding hard
+-- dependencies to utils.lua (which could lead to circular dependency issues).
 function processArgs(args, validArgs)
-    --[[
-    standardized argument processing for scripts
-    -argName value
-    -argName [list of values]
-    -argName [list of [nested values] -that can be [whatever] format of matched square brackets]
-    -arg1 \-arg3
-        escape sequences
-    --]]
-    local result = {}
-    local argName
-    local bracketDepth = 0
-    for i,arg in ipairs(args) do
-        if argName then
-            if arg == '[' then
-                if bracketDepth > 0 then
-                    table.insert(result[argName], arg)
-                end
-                bracketDepth = bracketDepth+1
-            elseif arg == ']' then
-                bracketDepth = bracketDepth-1
-                if bracketDepth > 0 then
-                    table.insert(result[argName], arg)
-                else
-                    argName = nil
-                end
-            elseif string.sub(arg,1,1) == '\\' then
-                if bracketDepth == 0 then
-                    result[argName] = string.sub(arg,2)
-                    argName = nil
-                else
-                    table.insert(result[argName], string.sub(arg,2))
-                end
-            else
-                if bracketDepth == 0 then
-                    result[argName] = arg
-                    argName = nil
-                else
-                    table.insert(result[argName], arg)
-                end
-            end
-        elseif string.sub(arg,1,1) == '-' then
-            argName = string.sub(arg,2)
-            if validArgs and not validArgs[argName] then
-                error('error: invalid arg: ' .. i .. ': ' .. argName)
-            end
-            if result[argName] then
-                error('duplicate arg: ' .. i .. ': ' .. argName)
-            end
-            if i+1 > #args or string.sub(args[i+1],1,1) == '-' then
-                result[argName] = ''
-                argName = nil
-            else
-                result[argName] = {}
-            end
-        else
-            error('error parsing arg ' .. i .. ': ' .. arg)
-        end
-    end
-    return result
+    return require('argparse').processArgs(args, validArgs)
 end
-
--- processes commandline options according to optionActions and returns all
--- argument strings that are not options. Options and non-option strings can
--- appear in any order, and single-letter options that do not take arguments
--- can be combined into a single option string (e.g. '-abc' is the same as
--- '-a -b -c' if options 'a' and 'b' do not take arguments.
---
--- Numbers cannot be options and negative numbers (e.g. -10) will be interpreted
--- as positional parameters and returned in the nonoptions list.
---
--- optionActions is a vector with elements in the following format:
--- {shortOptionName, longOptionAlias, hasArg=boolean, handler=fn}
--- shortOptionName and handler are required. If the option takes an argument,
--- it will be passed to the handler function.
--- longOptionAlias is optional.
--- hasArgument defaults to false.
---
--- example usage:
---
--- local filename = nil
--- local open_readonly = false
--- local nonoptions = processArgsGetopt(args, {
---   {'r', handler=function() open_readonly = true end},
---   {'f', 'filename', hasArg=true,
---    handler=function(optarg) filename = optarg end}
--- })
---
--- when args is {'first', '-f', 'fname', 'second'} or, equivalently,
--- {'first', '--filename', 'fname', 'second'} (note the double dash in front of
--- the long option alias), then filename will be fname and nonoptions will
--- contain {'first', 'second'}.
 function processArgsGetopt(args, optionActions)
-    local sh_opts, long_opts = '', {}
-    local handlers = {}
-    for _,optionAction in ipairs(optionActions) do
-        local sh_opt,long_opt = optionAction[1], optionAction[2]
-        if not sh_opt or type(sh_opt) ~= 'string' or #sh_opt ~= 1 then
-            error('optionAction missing option letter at index 1')
-        end
-        if not optionAction.handler then
-            error(string.format('handler missing for option "%s"', sh_opt))
-        end
-        sh_opts = sh_opts .. sh_opt
-        if optionAction.hasArg then sh_opts = sh_opts .. ':' end
-        handlers[sh_opt] = optionAction.handler
-        if long_opt then
-            long_opts[long_opt] = sh_opt
-            handlers[long_opt] = optionAction.handler
-        end
-    end
-    local opts, optargs, nonoptions =
-            getopt.get_ordered_opts(args, sh_opts, long_opts)
-    for i,v in ipairs(opts) do
-        handlers[v](optargs[i])
-    end
-    return nonoptions
+    return require('argparse').processArgsGetopt(args, optionActions)
 end
 
 function fillTable(table1,table2)
@@ -721,7 +609,7 @@ function df_expr_to_ref(expr)
     expr = expr:gsub('%["(.-)"%]', function(field) return '.' .. field end)
         :gsub('%[\'(.-)\'%]', function(field) return '.' .. field end)
         :gsub('%[(%d+)]', function(field) return '.' .. field end)
-    local parts = split_string(expr, '%.')
+    local parts = expr:split('.', true)
     local obj = df_env[parts[1]]
     for i = 2, #parts do
         local key = tonumber(parts[i]) or parts[i]

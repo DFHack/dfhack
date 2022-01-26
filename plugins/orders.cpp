@@ -29,6 +29,8 @@
 #include "df/manager_order.h"
 #include "df/manager_order_condition_item.h"
 #include "df/manager_order_condition_order.h"
+#include "df/reaction.h"
+#include "df/reaction_reagent.h"
 #include "df/world.h"
 
 using namespace DFHack;
@@ -54,6 +56,8 @@ DFhackCExport command_result plugin_init(color_ostream & out, std::vector<Plugin
         "    Imports manager orders from a file named dfhack-config/orders/[name].json.\n"
         "  orders clear\n"
         "    Deletes all manager orders in the current embark.\n"
+        "  orders sort\n"
+        "    Sorts current manager orders by repeat frequency so they don't conflict.\n"
     ));
     return CR_OK;
 }
@@ -66,6 +70,7 @@ DFhackCExport command_result plugin_shutdown(color_ostream & out)
 static command_result orders_export_command(color_ostream & out, const std::string & name);
 static command_result orders_import_command(color_ostream & out, const std::string & name);
 static command_result orders_clear_command(color_ostream & out);
+static command_result orders_sort_command(color_ostream & out);
 
 static command_result orders_command(color_ostream & out, std::vector<std::string> & parameters)
 {
@@ -96,6 +101,11 @@ static command_result orders_command(color_ostream & out, std::vector<std::strin
     if (parameters[0] == "clear" && parameters.size() == 1)
     {
         return orders_clear_command(out);
+    }
+
+    if (parameters[0] == "sort" && parameters.size() == 1)
+    {
+        return orders_sort_command(out);
     }
 
     return CR_WRONG_USAGE;
@@ -377,7 +387,26 @@ static command_result orders_export_command(color_ostream & out, const std::stri
                         condition["tool"] = enum_item_key(it2->has_tool_use);
                     }
 
-                    // TODO: anon_1, anon_2, anon_3
+                    if (it2->min_dimension != -1)
+                    {
+                        condition["min_dimension"] = it2->min_dimension;
+                    }
+
+                    if (it2->reaction_id != -1)
+                    {
+                        df::reaction *reaction = world->raws.reactions.reactions[it2->reaction_id];
+                        condition["reaction_id"] = reaction->code;
+
+                        if (!it2->contains.empty())
+                        {
+                            Json::Value contains(Json::arrayValue);
+                            for (int32_t contains_val : it2->contains)
+                            {
+                                contains.append(reaction->reagents[contains_val]->code);
+                            }
+                            condition["contains"] = contains;
+                        }
+                    }
 
                     conditions.append(condition);
                 }
@@ -419,50 +448,8 @@ static command_result orders_export_command(color_ostream & out, const std::stri
     return file.good() ? CR_OK : CR_FAILURE;
 }
 
-static command_result orders_import_command(color_ostream & out, const std::string & name)
+static command_result orders_import(color_ostream &out, Json::Value &orders)
 {
-    if (!is_safe_filename(out, name))
-    {
-        return CR_WRONG_USAGE;
-    }
-
-    const std::string filename("dfhack-config/orders/" + name + ".json");
-    Json::Value orders;
-
-    {
-        std::ifstream file(filename);
-
-        if (!file.good())
-        {
-            out << COLOR_LIGHTRED << "Cannot find orders file: " << filename << std::endl;
-            return CR_FAILURE;
-        }
-
-        try
-        {
-            file >> orders;
-        }
-        catch (const std::exception & e)
-        {
-            out << COLOR_LIGHTRED << "Error reading orders file: " << filename << ": " << e.what() << std::endl;
-            return CR_FAILURE;
-        }
-
-        if (!file.good())
-        {
-            out << COLOR_LIGHTRED << "Error reading orders file: " << filename << std::endl;
-            return CR_FAILURE;
-        }
-    }
-
-    if (orders.type() != Json::arrayValue)
-    {
-        out << COLOR_LIGHTRED << "Invalid orders file: " << filename << ": expected array" << std::endl;
-        return CR_FAILURE;
-    }
-
-    CoreSuspender suspend;
-
     std::map<int32_t, int32_t> id_mapping;
     for (auto it : orders)
     {
@@ -747,7 +734,72 @@ static command_result orders_import_command(color_ostream & out, const std::stri
                     }
                 }
 
-                // TODO: anon_1, anon_2, anon_3
+                if (it2.isMember("min_dimension"))
+                {
+                    condition->min_dimension = it2["min_dimension"].asInt();
+                }
+
+                if (it2.isMember("reaction_id"))
+                {
+                    std::string reaction_code = it2["reaction_id"].asString();
+                    df::reaction *reaction = NULL;
+                    int32_t reaction_id = -1;
+                    size_t num_reactions = world->raws.reactions.reactions.size();
+                    for (size_t idx = 0; idx < num_reactions; ++idx)
+                    {
+                        reaction = world->raws.reactions.reactions[idx];
+                        if (reaction->code == reaction_code)
+                        {
+                            reaction_id = idx;
+                            break;
+                        }
+                    }
+                    if (reaction_id < 0)
+                    {
+                        delete condition;
+
+                        out << COLOR_YELLOW << "Reaction code not found for imported manager order: " << reaction_code << std::endl;
+
+                        continue;
+                    }
+
+                    condition->reaction_id = reaction_id;
+
+                    if (it2.isMember("contains"))
+                    {
+                        size_t num_reagents = reaction->reagents.size();
+                        std::string bad_reagent_code;
+                        for (Json::Value & contains_val : it2["contains"])
+                        {
+                            std::string reagent_code = contains_val.asString();
+                            bool reagent_found = false;
+                            for (size_t idx = 0; idx < num_reagents; ++idx)
+                            {
+                                df::reaction_reagent *reagent = reaction->reagents[idx];
+                                if (reagent->code == reagent_code)
+                                {
+                                    condition->contains.push_back(idx);
+                                    reagent_found = true;
+                                    break;
+                                }
+                            }
+
+                            if (!reagent_found)
+                            {
+                                bad_reagent_code = reagent_code;
+                                break;
+                            }
+                        }
+                        if (!bad_reagent_code.empty())
+                        {
+                            delete condition;
+
+                            out << COLOR_YELLOW << "Invalid reagent code for imported manager order: " << bad_reagent_code << std::endl;
+
+                            continue;
+                        }
+                    }
+                }
 
                 order->item_conditions.push_back(condition);
             }
@@ -793,6 +845,61 @@ static command_result orders_import_command(color_ostream & out, const std::stri
     return CR_OK;
 }
 
+static command_result orders_import_command(color_ostream & out, const std::string & name)
+{
+    if (!is_safe_filename(out, name))
+    {
+        return CR_WRONG_USAGE;
+    }
+
+    const std::string filename("dfhack-config/orders/" + name + ".json");
+    Json::Value orders;
+
+    {
+        std::ifstream file(filename);
+
+        if (!file.good())
+        {
+            out << COLOR_LIGHTRED << "Cannot find orders file: " << filename << std::endl;
+            return CR_FAILURE;
+        }
+
+        try
+        {
+            file >> orders;
+        }
+        catch (const std::exception & e)
+        {
+            out << COLOR_LIGHTRED << "Error reading orders file: " << filename << ": " << e.what() << std::endl;
+            return CR_FAILURE;
+        }
+
+        if (!file.good())
+        {
+            out << COLOR_LIGHTRED << "Error reading orders file: " << filename << std::endl;
+            return CR_FAILURE;
+        }
+    }
+
+    if (orders.type() != Json::arrayValue)
+    {
+        out << COLOR_LIGHTRED << "Invalid orders file: " << filename << ": expected array" << std::endl;
+        return CR_FAILURE;
+    }
+
+    CoreSuspender suspend;
+
+    try
+    {
+        return orders_import(out, orders);
+    }
+    catch (const std::exception & e)
+    {
+        out << COLOR_LIGHTRED << "Error reading orders file: " << filename << ": " << e.what() << std::endl;
+        return CR_FAILURE;
+    }
+}
+
 static command_result orders_clear_command(color_ostream & out)
 {
     CoreSuspender suspend;
@@ -822,6 +929,31 @@ static command_result orders_clear_command(color_ostream & out)
     out << "Deleted " << world->manager_orders.size() << " manager orders." << std::endl;
 
     world->manager_orders.clear();
+
+    return CR_OK;
+}
+
+static bool compare_freq(df::manager_order *a, df::manager_order *b)
+{
+    if (a->frequency == df::manager_order::T_frequency::OneTime
+            || b->frequency == df::manager_order::T_frequency::OneTime)
+        return a->frequency < b->frequency;
+    return a->frequency > b->frequency;
+}
+
+static command_result orders_sort_command(color_ostream & out)
+{
+    CoreSuspender suspend;
+
+    if (!std::is_sorted(world->manager_orders.begin(),
+                        world->manager_orders.end(),
+                        compare_freq))
+    {
+        std::stable_sort(world->manager_orders.begin(),
+                         world->manager_orders.end(),
+                         compare_freq);
+        out << "Fixed priority of manager orders." << std::endl;
+    }
 
     return CR_OK;
 }

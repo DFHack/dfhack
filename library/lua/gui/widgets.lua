@@ -199,7 +199,7 @@ function parse_label_text(obj)
     for _,v in ipairs(text) do
         local vv
         if type(v) == 'string' then
-            vv = utils.split_string(v, NEWLINE)
+            vv = v:split(NEWLINE)
         else
             vv = { v }
         end
@@ -442,7 +442,6 @@ function Label:onInput(keys)
                 v = -self.frame_body.height
             end
             self:scroll(v)
-            return false
         end
     end
     return check_text_keys(self, keys)
@@ -804,7 +803,7 @@ function FilteredList:setFilter(filter, pos)
     self.edit.text = filter
 
     if filter ~= '' then
-        local tokens = utils.split_string(filter, ' ')
+        local tokens = filter:split()
         local ipos = pos
 
         choices = {}

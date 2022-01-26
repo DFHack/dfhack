@@ -4,3 +4,4 @@ plugins/stonesense master
 depends/libzip dfhack
 depends/libexpat dfhack
 depends/xlsxio dfhack
+depends/luacov dfhack

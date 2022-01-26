@@ -30,6 +30,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install \
             libgtk2.0-0 \
+            libncursesw5 \
             libsdl-image1.2-dev \
             libsdl-ttf2.0-dev \
             libsdl1.2-dev \
@@ -50,7 +51,7 @@ jobs:
     - name: Set up environment
       id: env_setup
       run: |
-        DF_VERSION="$(sh travis/get-df-version.sh)"
+        DF_VERSION="$(sh ci/get-df-version.sh)"
         echo "::set-output name=df_version::${DF_VERSION}"
         echo "DF_VERSION=${DF_VERSION}" >> $GITHUB_ENV
         echo "DF_FOLDER=${HOME}/DF/${DF_VERSION}/df_linux" >> $GITHUB_ENV
@@ -61,7 +62,7 @@ jobs:
         key: ${{ steps.env_setup.outputs.df_version }}
     - name: Download DF
       run: |
-        sh travis/download-df.sh
+        sh ci/download-df.sh
     - name: Build DFHack
       env:
         CC: gcc-${{ matrix.gcc }}
@@ -83,11 +84,13 @@ jobs:
       id: run_tests
       run: |
         export TERM=dumb
+        status=0
         mv "$DF_FOLDER"/dfhack.init-example "$DF_FOLDER"/dfhack.init
-        script -qe -c "python travis/run-tests.py --headless --keep-status \"$DF_FOLDER\""
-        python travis/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt"
+        script -qe -c "python ci/run-tests.py --headless --keep-status \"$DF_FOLDER\"" || status=$((status + 1))
+        python ci/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt" || status=$((status + 2))
         mkdir -p artifacts
-        cp "$DF_FOLDER/test_status.json" "$DF_FOLDER"/*.log artifacts
+        cp "$DF_FOLDER"/test*.json "$DF_FOLDER"/*.log artifacts || status=$((status + 4))
+        exit $status
     - name: Upload test artifacts
       uses: actions/upload-artifact@v1
       if: (success() || failure()) && steps.run_tests.outcome != 'skipped'
@@ -147,23 +150,23 @@ jobs:
         # don't need tags here
     - name: Check whitespace
       run: |
-        python travis/lint.py
+        python ci/lint.py --git-only --github-actions
     - name: Check Authors.rst
       if: success() || failure()
       run: |
-        python travis/authors-rst.py
+        python ci/authors-rst.py
     - name: Check for missing documentation
       if: success() || failure()
       run: |
-        python travis/script-docs.py
+        python ci/script-docs.py
     - name: Check Lua syntax
       if: success() || failure()
       run: |
-        python travis/script-syntax.py --ext=lua --cmd="luac5.3 -p" --github-actions
+        python ci/script-syntax.py --ext=lua --cmd="luac5.3 -p" --github-actions
     - name: Check Ruby syntax
       if: success() || failure()
       run: |
-        python travis/script-syntax.py --ext=rb --cmd="ruby -c" --github-actions
+        python ci/script-syntax.py --ext=rb --cmd="ruby -c" --github-actions
 
   check-pr:
     runs-on: ubuntu-latest

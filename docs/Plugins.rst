@@ -46,17 +46,17 @@ selected interactively with the ``blueprint gui`` command or, if the GUI is not
 used, starts at the active cursor location and extends right and down for the
 requested width and height.
 
-Usage::
+**Usage:**
 
-    blueprint <width> <height> [<depth>] [<name> [<phases>]] [<options>]
-    blueprint gui [<name> [<phases>]] [<options>]
+    ``blueprint <width> <height> [<depth>] [<name> [<phases>]] [<options>]``
 
-Examples:
+    ``blueprint gui [<name> [<phases>]] [<options>]``
+
+**Examples:**
 
 ``blueprint gui``
-    Runs `gui/blueprint`, the interactive blueprint frontend, where all
-    configuration for a ``blueprint`` command can be set visually and
-    interactively.
+    Runs `gui/blueprint`, the interactive frontend, where all configuration for
+    a ``blueprint`` command can be set visually and interactively.
 
 ``blueprint 30 40 bedrooms``
     Generates blueprints for an area 30 tiles wide by 40 tiles tall, starting
@@ -69,7 +69,7 @@ Examples:
     the blueprint start coordinate is set to a specific value instead of using
     the in-game cursor position.
 
-Positional Parameters:
+**Positional Parameters:**
 
 :``width``:   Width of the area (in tiles) to translate.
 :``height``:  Height of the area (in tiles) to translate.
@@ -81,7 +81,7 @@ Positional Parameters:
     string must contain some characters other than numbers so the name won't be
     confused with the optional ``depth`` parameter.
 
-Phases:
+**Phases:**
 
 If you want to generate blueprints only for specific phases, add their names to
 the commandline, anywhere after the blueprint base name. You can list multiple
@@ -95,14 +95,53 @@ phases; just separate them with a space.
 
 If no phases are specified, all blueprints are created.
 
-Options:
+**Options:**
 
-:``-c``, ``--cursor <x>,<y>,<z>``:
+``-c``, ``--cursor <x>,<y>,<z>``:
     Use the specified map coordinates instead of the current cursor position for
     the upper left corner of the blueprint range. If this option is specified,
     then an active game map cursor is not necessary.
-:``-h``, ``--help``:
+``-f``, ``--format <format>``:
+    Select the output format of the generated files. See the ``Output formats``
+    section below for options. If not specified, the output format defaults to
+    "minimal", which will produce a small, fast ``.csv`` file.
+``-h``, ``--help``:
     Show command help text.
+``-s``, ``--playback-start <x>,<y>,<comment>``:
+    Specify the column and row offsets (relative to the upper-left corner of the
+    blueprint, which is ``1,1``) where the player should put the cursor when the
+    blueprint is played back with `quickfort`, in
+    `quickfort start marker <quickfort-start>` format, for example:
+    ``10,10,central stairs``. If there is a space in the comment, you will need
+    to surround the parameter string in double quotes: ``"-s10,10,central stairs"`` or
+    ``--playback-start "10,10,central stairs"`` or
+    ``"--playback-start=10,10,central stairs"``.
+``-t``, ``--splitby <strategy>``:
+    Split blueprints into multiple files. See the ``Splitting output into
+    multiple files`` section below for details. If not specified, defaults to
+    "none", which will create a standard quickfort
+    `multi-blueprint <quickfort-packaging>` file.
+
+**Output formats:**
+
+Here are the values that can be passed to the ``--format`` flag:
+
+:``minimal``:
+    Creates ``.csv`` files with minimal file size that are fast to read and
+    write. This is the default.
+:``pretty``:
+    Makes the blueprints in the ``.csv`` files easier to read and edit with a text
+    editor by adding extra spacing and alignment markers.
+
+**Splitting output into multiple files:**
+
+The ``--splitby`` flag can take any of the following values:
+
+:``none``:
+    Writes all blueprints into a single file. This is the standard format for
+    quickfort fortress blueprint bundles and is the default.
+:``phase``:
+    Creates a separate file for each phase.
 
 .. _remotefortressreader:
 
@@ -195,7 +234,7 @@ the visible part of the map is scanned.
 
 Options:
 
-:all:   Scan the whole map, as if it was revealed.
+:all:   Scan the whole map, as if it were revealed.
 :value: Show material value in the output. Most useful for gems.
 :hell:  Show the Z range of HFS tubes. Implies 'all'.
 
@@ -1968,6 +2007,14 @@ Subcommands:
 :export NAME: Exports the current list of manager orders to a file named ``dfhack-config/orders/NAME.json``.
 :import NAME: Imports manager orders from a file named ``dfhack-config/orders/NAME.json``.
 :clear: Deletes all manager orders in the current embark.
+:sort: Sorts current manager orders by repeat frequency so daily orders don't
+    prevent other orders from ever being completed: one-time orders first, then
+    yearly, seasonally, monthly, then finally daily.
+
+You can keep your orders automatically sorted by adding the following command to
+your ``onMapLoad.init`` file::
+
+    repeat -name orders-sort -time 1 -timeUnits days -command [ orders sort ]
 
 .. _nestboxes:
 
@@ -2586,8 +2633,6 @@ Subcommands:
               (e.g. TOWER_CAP). The cursor must be located on a dirt or grass floor tile.
 :grow:        Turns saplings into trees; under the cursor if a sapling is selected,
               or every sapling on the map if the cursor is hidden.
-:extirpate:   Kills the tree or shrub under the cursor, instantly turning them to ashes.
-:immolate:    Sets the plants on fire instead. The fires can and *will* spread ;)
 
 For mass effects, use one of the additional options:
 
@@ -2704,8 +2749,14 @@ For more details, use ``tiletypes help``.
 
 tiletypes-command
 -----------------
-Runs tiletypes commands, separated by ;. This makes it possible to change
+Runs tiletypes commands, separated by ``;``. This makes it possible to change
 tiletypes modes from a hotkey or via dfhack-run.
+
+Example::
+
+    tiletypes-command p any ; p s wall ; p sp normal
+
+This resets the paint filter to unsmoothed walls.
 
 .. _tiletypes-here:
 
@@ -2714,12 +2765,24 @@ tiletypes-here
 Apply the current tiletypes options at the in-game cursor position, including
 the brush. Can be used from a hotkey.
 
+Options:
+
+:``-c``, ``--cursor <x>,<y>,<z>``:
+    Use the specified map coordinates instead of the current cursor position. If
+    this option is specified, then an active game map cursor is not necessary.
+:``-h``, ``--help``:
+    Show command help text.
+:``-q``, ``--quiet``:
+    Suppress non-error status output.
+
 .. _tiletypes-here-point:
 
 tiletypes-here-point
 --------------------
 Apply the current tiletypes options at the in-game cursor position to a single
 tile. Can be used from a hotkey.
+
+This command supports the same options as `tiletypes-here` above.
 
 .. _tubefill:
 
@@ -2818,6 +2881,70 @@ Options:
 :item:      Subsequent items will be stored inside the currently selected item.
 :building:  Subsequent items will become part of the currently selected building.
             Good for loading traps; do not use with workshops (or deconstruct to use the item).
+
+.. _dig-now:
+
+dig-now
+=======
+
+Instantly completes non-marker dig designations, modifying tile shapes and
+creating boulders, ores, and gems as if a miner were doing the mining or
+engraving. By default, the entire map is processed and boulder generation
+follows standard game rules, but the behavior is configurable.
+
+Note that no units will get mining or engraving experience for the dug/engraved
+tiles.
+
+Trees and roots are not currently handled by this plugin and will be skipped.
+Requests for engravings are also skipped since they would depend on the skill
+and creative choices of individual engravers. Other types of engraving (i.e.
+smoothing and track carving) are handled.
+
+Usage::
+
+    dig-now [<pos> [<pos>]] [<options>]
+
+Where the optional ``<pos>`` pair can be used to specify the coordinate bounds
+within which ``dig-now`` will operate. If they are not specified, ``dig-now``
+will scan the entire map. If only one ``<pos>`` is specified, only the tile at
+that coordinate is processed.
+
+Any ``<pos>`` parameters can either be an ``<x>,<y>,<z>`` triple (e.g.
+``35,12,150``) or the string ``here``, which means the position of the active
+game cursor should be used.
+
+Examples:
+
+``dig-now``
+    Dig designated tiles according to standard game rules.
+
+``dig-now --clean``
+    Dig designated tiles, but don't generate any boulders, ores, or gems.
+
+``dig-now --dump here``
+    Dig tiles and dump all generated boulders, ores, and gems at the tile under
+    the game cursor.
+
+Options:
+
+:``-c``, ``--clean``:
+    Don't generate any boulders, ores, or gems. Equivalent to
+    ``--percentages 0,0,0,0``.
+:``-d``, ``--dump <pos>``:
+    Dump any generated items at the specified coordinates. If the tile at those
+    coordinates is open space or is a wall, items will be generated on the
+    closest walkable tile below.
+:``-e``, ``--everywhere``:
+    Generate a boulder, ore, or gem for every tile that can produce one.
+    Equivalent to ``--percentages 100,100,100,100``.
+:``-h``, ``--help``:
+    Show quick usage help text.
+:``-p``, ``--percentages <layer>,<vein>,<small cluster>,<deep>``:
+    Set item generation percentages for each of the tile categories. The
+    ``vein`` category includes both the large oval clusters and the long stringy
+    mineral veins. Default is ``25,33,100,100``.
+:``-z``, ``--cur-zlevel``:
+    Restricts the bounds to the currently visible z-level.
 
 .. _diggingInvaders:
 

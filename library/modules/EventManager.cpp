@@ -606,7 +606,7 @@ static void manageNewUnitActiveEvent(color_ostream& out) {
     unordered_set<int32_t> activeUnits_replacement;
     multimap<Plugin*,EventHandler> copy(handlers[EventType::NEW_UNIT_ACTIVE].begin(), handlers[EventType::NEW_UNIT_ACTIVE].end());
     int32_t tick = df::global::world->frame_counter;
-    for (auto unit : world->units.active) {
+    for (auto unit : df::global::world->units.active) {
         activeUnits_replacement.emplace(unit);
         if(activeUnits.find(unit) == activeUnits.end()){
             for (auto &iter : copy) {

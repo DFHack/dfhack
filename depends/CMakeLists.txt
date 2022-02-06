@@ -34,7 +34,7 @@ set(EXPAT_BUILD_DOCS OFF CACHE BOOL "")
 set(EXPAT_ENABLE_INSTALL OFF CACHE BOOL "")
 add_subdirectory(libexpat/expat)
 if(UNIX)
-    set_target_properties(expat PROPERTIES COMPILE_FLAGS "-Wno-error")
+    set_target_properties(expat PROPERTIES COMPILE_FLAGS "-Wno-maybe-uninitialized")
 endif()
 
 set(LIBZIP_BUILD_DOC OFF CACHE BOOL "")

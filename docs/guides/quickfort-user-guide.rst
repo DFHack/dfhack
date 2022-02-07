@@ -390,6 +390,14 @@ each floor.
 The marker must appear in the first column of the row to be recognized, just
 like a modeline.
 
+You can go up or down multiple levels by adding a number after the ``<`` or
+``>``. For example::
+
+    #dig Two double-level quarries
+    r(10x10)
+    #>2
+    r(10x10)
+
 .. _quickfort-dig-priorities:
 
 Dig priorities

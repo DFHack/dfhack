@@ -16,7 +16,9 @@
 -- note that this test harness cannot (yet) test #query blueprints that define
 -- rooms since furniture is not actually built during the test. It also cannot
 -- test blueprints that #build flooring and then #build a workshop on top, again
--- since the flooring is never actually built.
+-- since the flooring is never actually built. We can support these features
+-- once we figure out how to programmatically deconstruct buildlings without
+-- crashing the game.
 
 config.mode = 'fortress'
 
@@ -27,6 +29,7 @@ local utils = require('utils')
 
 local blueprints_dir = 'blueprints/'
 local input_dir = 'library/test/ecosystem/in/'
+local golden_dir = 'library/test/ecosystem/golden/'
 local output_dir = 'library/test/ecosystem/out/'
 
 local phase_names = utils.invert(blueprint.valid_phases)
@@ -57,6 +60,10 @@ local function get_positive_int(numstr, varname, basename)
     return num
 end
 
+local function os_exists(path)
+    return os.rename(path, path) and true or false
+end
+
 local function get_blueprint_sets()
     -- find test blueprints with `quickfort list`
     local mock_print = mock.func()
@@ -75,9 +82,13 @@ local function get_blueprint_sets()
             local _,_,file_part = fname:find('/([^/]+)$')
             local _,_,basename = file_part:find('^([^-.]+)')
             if not sets[basename] then sets[basename] = {spec={}, phases={}} end
+            local golden_path = blueprints_dir..golden_dir..file_part
+            if not os_exists(golden_path) then
+                golden_path = blueprints_dir..fname
+            end
             sets[basename].phases[phase] = {
                 listnum=listnum,
-                input_filepath=blueprints_dir..fname,
+                golden_filepath=golden_path,
                 output_filepath=blueprints_dir..output_dir..file_part}
         end
     end
@@ -101,7 +112,7 @@ local function get_blueprint_sets()
                 dfhack.run_script('quickfort', 'run', '-q', notes.listnum)
             end)
 
-        -- validate spec and convert numbers to numeric vars
+        -- validate spec and convert number strings to numeric vars
         if not spec.description or spec.description == '' then
             qerror(('missing description in test spec for "%s"'):
                         format(basename))
@@ -298,9 +309,9 @@ function test.end_to_end()
         for phase,phase_data in pairs(phases) do
             if phase == 'notes' then goto continue end
             print(('  verifying phase: %s'):format(phase))
-            local input_filepath = phase_data.input_filepath
+            local golden_filepath = phase_data.golden_filepath
             local output_filepath = phase_data.output_filepath
-            local input_hash, input_size = md5File(input_filepath)
+            local input_hash, input_size = md5File(golden_filepath)
             local output_hash, output_size = md5File(output_filepath)
             expect.eq(input_hash, output_hash,
                       'compare blueprint contents to input: '..output_filepath)
@@ -310,7 +321,7 @@ function test.end_to_end()
             if input_hash ~= output_hash or input_size ~= output_size then
                 -- show diff
                 local input, output =
-                    io.open(input_filepath, 'r'), io.open(output_filepath, 'r')
+                    io.open(golden_filepath, 'r'), io.open(output_filepath, 'r')
                 local input_lines, output_lines = {}, {}
                 for l in input:lines() do table.insert(input_lines, l) end
                 for l in output:lines() do table.insert(output_lines, l) end

@@ -125,8 +125,8 @@ Features
       detected, such as when a mistake in a key sequence leaves us stuck in a
       submenu, to make query blueprints easier to debug
 
-Editing blueprints
-------------------
+Creating blueprints
+-------------------
 
 We recommend using a spreadsheet editor such as Excel, `Google
 Sheets <https://sheets.new>`__, or `LibreOffice <https://www.libreoffice.org>`__
@@ -281,7 +281,7 @@ Note that area expansion syntax can only specify rectangular areas. If you want
 to create extent-based structures (e.g. farm plots or stockpiles) in different
 shapes, use the first format above. For example::
 
-   #place L shaped food stockpile
+   #place A single L shaped food stockpile
    f f ` ` #
    f f ` ` #
    f f f f #
@@ -292,8 +292,8 @@ Area expansion syntax also sets boundaries, which can be useful if you want
 adjacent, but separate, stockpiles of the same type::
 
    #place Two touching but separate food stockpiles
-   f(4x2)  #
-   ~ ~ ~ ~ #
+   f(2x2)  #
+   ~ ~ ` ` #
    f(4x2)  #
    ~ ~ ~ ~ #
    # # # # #
@@ -303,8 +303,8 @@ and can be used for visualizing the blueprint layout. This blueprint can be
 equivalently written as::
 
    #place Two touching but separate food stockpiles
-   f(4x2)  #
-   ~ ~ ~ ~ #
+   f(2x2)  #
+   ~ ~ ` ` #
    f f f f #
    f f f f #
    # # # # #
@@ -793,8 +793,8 @@ Start positions
 
 Start positions specify a cursor offset for a particular blueprint, simplifying
 the task of blueprint alignment. This is very helpful for blueprints that are
-based on a central staircase, but it helps whenever a blueprint has an obvious
-"center". For example::
+based on a central staircase, but it comes in handy whenever a blueprint has an
+obvious "center". For example::
 
    #build start(2;2;center of workshop) label(masonw) a mason workshop
    wm wm wm #
@@ -850,130 +850,47 @@ The quotes surrounding the cell text are only necessary if you are writing a
 .csv file by hand. Spreadsheet applications will surround multi-line text with
 quotes automatically when they save/export the file.
 
-.. _quickfort-packaging:
-
-Packaging a set of blueprints
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-A complete specification for a section of your fortress may contain 5 or more
-separate blueprints, one for each "phase" of construction (dig, build, place
-stockpiles, designate zones, and query adjustments).
-
-To manage all the separate blueprints, it is often convenient to keep related
-blueprints in a single file. For .xlsx spreadsheets, you can keep each blueprint
-in a separate sheet. Online spreadsheet applications like `Google
-Sheets <https://sheets.new>`__ make it easy to work with multiple related
-blueprints, and, as a bonus, they retain any formatting you've set, like column
-sizes and coloring.
-
-For both .csv files and .xlsx spreadsheets you can also add as many blueprints
-as you want in a single file or sheet. Just add a modeline in the first column
-to indicate the start of a new blueprint. Instead of multiple .csv files, you
-can concatenate them into one single file. This is especially useful when you
-are sharing your blueprints with others. A single file is much easier to manage
-than a directory of files.
-
-For example, you can store multiple blueprints together like this::
-
-   #dig label(bed1)
-   d d d d #
-   d d d d #
-   d d d d #
-   d d d d #
-   # # # # #
-   #build label(bed2)
-   b   f h #
-           #
-           #
-   n       #
-   # # # # #
-   #place label(bed3)
-           #
-   f(2x2)  #
-           #
-           #
-   # # # # #
-   #query label(bed4)
-           #
-   booze   #
-           #
-           #
-   # # # # #
-   #query label(bed5)
-   r{+ 3}& #
-           #
-           #
-           #
-   # # # # #
-
-Of course, you could still choose to keep your blueprints in single-sheet .csv
-files and just give related blueprints similar names::
-
-   bedroom.1.dig.csv
-   bedroom.2.build.csv
-   bedroom.3.place.csv
-   bedroom.4.query.csv
-   bedroom.5.query2.csv
-
-The naming and organization is completely up to you.
-
-.. _quickfort-other-modes:
-
-Other blueprint modes
-~~~~~~~~~~~~~~~~~~~~~
-
-There are a few additional blueprint modes that become useful when you are
-sharing your blueprints with others or managing complex blueprint sets. Instead
-of mapping tile positions to keystroke sequences like the basic modes do, these
-"blueprints" have specialized, higher-level uses:
-
-==============  ===========
-Blueprint mode  Description
-==============  ===========
-meta            Link sequences of blueprints together
-notes           Display long messages, such as help text or blueprint
-                walkthroughs
-aliases         Define aliases that are visible only in the current file
-ignore          Hide a section from quickfort, useful for scratch space or
-                personal notes
-==============  ===========
-
 .. _quickfort-meta:
 
 Meta blueprints
-```````````````
+~~~~~~~~~~~~~~~
 
-Meta blueprints are blueprints that script a series of other blueprints. For
-example, many blueprint sets follow this pattern:
+Meta blueprints are blueprints that control how other blueprints are applied.
+For example, meta blueprints can bundle a group of other blueprints so that they
+can be run with a single command. They can also encode logic, like duplicating a
+blueprint a specified number of times.
 
-1.  Apply dig blueprint to designate dig areas
+A common scenario where meta blueprints are useful is when you have several
+phases to link together. For example you might:
+
+1.  Apply a dig blueprint to designate dig areas
 #.  Wait for miners to dig
-#.  **Apply build buildprint** to designate buildings
-#.  **Apply place buildprint** to designate stockpiles
-#.  **Apply query blueprint** to configure stockpiles
+#.  **Apply a build buildprint** to designate buildings
+#.  **Apply a place buildprint** to designate stockpiles
+#.  **Apply a query blueprint** to configure stockpiles
 #.  Wait for buildings to get built
 #.  Apply a different query blueprint to configure rooms
 
 Those three "apply"s in the middle might as well get done in one command instead
-of three. A ``#meta`` blueprint can encode that sequence. A meta blueprint
-refers to other blueprints in the same file by their label (see the
-`Modeline markers`_ section above) in the same format used by the `quickfort`
-command: ``<sheet name>/<label>``, or just ``/<label>`` for blueprints in .csv
-files or blueprints in the same spreadsheet sheet as the ``#meta`` blueprint
-that references them.
+of three. A ``#meta`` blueprint can help with that. A meta blueprint refers to
+other blueprints in the same file by their label (see the `Modeline markers`_
+section above) in the same format used by the `quickfort` command:
+``<sheet name>/<label>``, or just ``/<label>`` for blueprints in .csv files or
+blueprints in the same spreadsheet sheet as the ``#meta`` blueprint that
+references them.
 
-A few examples might make this clearer. Say you have a .csv file with the "bed"
-blueprints in the previous section::
+A few examples might make this clearer. Say you have a .csv file with blueprints
+that prepare bedrooms for your dwarves::
 
-   #dig label(bed1)
+   #dig label(bed1) dig out the rooms
    ...
-   #build label(bed2)
+   #build label(bed2) build the furniture
    ...
-   #place label(bed3)
+   #place label(bed3) add food stockpiles
    ...
-   #query label(bed4)
+   #query label(bed4) configure stockpiles
    ...
-   #query label(bed5)
+   #query label(bed5) set the built beds as rooms
    ...
 
 Note how I've given them all labels so we can address them safely. If I hadn't
@@ -986,7 +903,7 @@ going to change over time.
 So let's add a meta blueprint to this file that will combine the middle three
 blueprints into one::
 
-   "#meta plan bedroom: combines build, place, and stockpile config blueprints"
+   "#meta label(bed234) combines build, place, and stockpile config blueprints"
    /bed2
    /bed3
    /bed4
@@ -1004,7 +921,7 @@ You can use meta blueprints to lay out your fortress at a larger scale as well.
 The ``#<`` and ``#>`` notation is valid in meta blueprints, so you can, for
 example, store the dig blueprints for all the levels of your fortress in
 different sheets in a spreadsheet, and then use a meta blueprint to designate
-your entire fortress for digging at once. For example, say you have a
+your entire fortress for digging at once. For example, say you have a .xlsx
 spreadsheet with the following layout:
 
 =============  ========
@@ -1020,13 +937,12 @@ dig_bedrooms   one #dig blueprint, no label
 =============  ========
 
 We can add a sheet named "dig_all" with the following contents (we're expecting
-a big fort, so we're planning for a lot of bedrooms)::
+a big fort, so we're digging 5 levels of bedrooms)::
 
-   #meta dig the whole fortress (remember to set force_marker_mode to true)
+   #meta dig the whole fortress
    dig_farming/1
    #>
    dig_industry/1
-   #>
    #>
    dig_dining/main
    #>
@@ -1040,18 +956,10 @@ a big fort, so we're planning for a lot of bedrooms)::
    #>
    dig_suites/1
    #>
-   dig_bedrooms/1
-   #>
-   dig_bedrooms/1
-   #>
-   dig_bedrooms/1
-   #>
-   dig_bedrooms/1
-   #>
-   dig_bedrooms/1
+   dig_bedrooms/1 repeat(down 5)
 
 Note that for blueprints without an explicit label, we still need to address
-them by their auto-generated numerical label.
+them by their auto-generated numeric label.
 
 It's worth repeating that ``#meta`` blueprints can only refer to blueprints that
 are defined in the same file. This means that all blueprints that a meta
@@ -1061,9 +969,64 @@ concatenated into the same .csv file.
 You can then hide the blueprints that you now manage with the meta blueprint
 from ``quickfort list`` by adding a ``hidden()`` marker to their modelines. That
 way the output of ``quickfort list`` won't be cluttered by blueprints that you
-don't need to run directly. If you ever *do* need to access the managed
+don't need to run directly. If you ever *do* need to access the meta-managed
 blueprints individually, you can still see them with
 ``quickfort list --hidden``.
+
+Meta markers
+````````````
+
+You can tag referenced blueprints with markers to modify how they are applied.
+These markers are similar to `Modeline markers`_, but are only usable in meta
+blueprints. Here's a quick list of examples, with more details below:
+
+===============  ===========
+Example          Description
+===============  ===========
+repeat(down 10)  Repeats a blueprint down z-levels 10 times
+===============  ===========
+
+**Repeating blueprints**
+
+Syntax: repeat(<direction>[, ]<number>)
+
+The direction can be ``up`` or ``down``, and the repetition works even for
+blueprints that are themselves multi-level. For example::
+
+    #meta label(2beds) dig 2 levels of bedrooms
+    dig_bedrooms/1 repeat(down 2)
+
+    #meta label(6beds) dig 6 levels of bedrooms
+    /2beds repeat(down 3)
+
+You can use ``<`` and ``>`` for short, instead of ``up`` and ``down``. The comma
+or space between the direction and the number is optional as well. The following
+lines are all equivalent::
+
+    /2beds repeat(down 3)
+    /2beds repeat(down, 3)
+    /2beds repeat(>3)
+
+.. _quickfort-other-modes:
+
+Other blueprint modes
+~~~~~~~~~~~~~~~~~~~~~
+
+There are a few additional blueprint modes that become useful when you are
+sharing your blueprints with others or managing complex blueprint sets. Instead
+of mapping tile positions to keystroke sequences like the basic modes do, these
+"blueprints" have specialized, higher-level uses:
+
+==============  ===========
+Blueprint mode  Description
+==============  ===========
+notes           Display long messages, such as help text or blueprint
+                walkthroughs
+aliases         Define aliases used by other ``#query`` blueprints in the same
+                file
+ignore          Hide a section from quickfort, useful for scratch space or
+                personal notes
+==============  ===========
 
 .. _quickfort-notes:
 
@@ -1139,6 +1102,73 @@ If you don't want some data to be visible to quickfort at all, use an
 ``#ignore`` blueprint. All lines until the next modeline in the file or sheet
 will be completely ignored. This can be useful for personal notes, scratch
 space, or temporarily "commented out" blueprints.
+
+.. _quickfort-packaging:
+
+Packaging a set of blueprints
+-----------------------------
+
+A complete specification for a section of your fortress may contain 5 or more
+separate blueprints, one for each "phase" of construction (dig, build, place
+stockpiles, designate zones, and query adjustments).
+
+To manage all the separate blueprints, it is often convenient to keep related
+blueprints in a single file. For .xlsx spreadsheets, you can keep each blueprint
+in a separate sheet. Online spreadsheet applications like `Google
+Sheets <https://sheets.new>`__ make it easy to work with multiple related
+blueprints, and, as a bonus, they retain any formatting you've set, like column
+sizes and coloring.
+
+For both .csv files and .xlsx spreadsheets you can also add as many blueprints
+as you want in a single file or sheet. Just add a modeline in the first column
+to indicate the start of a new blueprint. Instead of multiple .csv files, you
+can concatenate them into one single file. This is especially useful when you
+are sharing your blueprints with others. A single file is much easier to manage
+than a directory of files.
+
+For example, you can write multiple blueprints in one file like this::
+
+   #dig label(bed1)
+   d d d d #
+   d d d d #
+   d d d d #
+   d d d d #
+   # # # # #
+   #build label(bed2)
+   b   f h #
+           #
+           #
+   n       #
+   # # # # #
+   #place label(bed3)
+           #
+   f(2x2)  #
+           #
+           #
+   # # # # #
+   #query label(bed4)
+           #
+   booze   #
+           #
+           #
+   # # # # #
+   #query label(bed5)
+   r{+ 3}& #
+           #
+           #
+           #
+   # # # # #
+
+Of course, you could still choose to keep your blueprints in separate files and
+just give related blueprints similar names::
+
+   bedroom.1.dig.csv
+   bedroom.2.build.csv
+   bedroom.3.place.csv
+   bedroom.4.query.csv
+   bedroom.5.query2.csv
+
+The naming and organization is completely up to you.
 
 Buildingplan integration
 ------------------------

@@ -857,8 +857,8 @@ Meta blueprints
 
 Meta blueprints are blueprints that control how other blueprints are applied.
 For example, meta blueprints can bundle a group of other blueprints so that they
-can be run with a single command. They can also encode logic, like duplicating a
-blueprint a specified number of times.
+can be run with a single command. They can also encode logic, like rotating the
+blueprint or duplicating it across a specified number of z-levels.
 
 A common scenario where meta blueprints are useful is when you have several
 phases to link together. For example you might:
@@ -980,11 +980,13 @@ You can tag referenced blueprints with markers to modify how they are applied.
 These markers are similar to `Modeline markers`_, but are only usable in meta
 blueprints. Here's a quick list of examples, with more details below:
 
-===============  ===========
-Example          Description
-===============  ===========
-repeat(down 10)  Repeats a blueprint down z-levels 10 times
-===============  ===========
+===================  ===========
+Example              Description
+===================  ===========
+repeat(down 10)      Repeats a blueprint down z-levels 10 times
+shift(0 10)          Adds 10 to the y coordinate of each blueprint tile
+transform(cw flipv)  Rotates a blueprint clockwise and then flips it vertically
+===================  ===========
 
 **Repeating blueprints**
 
@@ -1006,6 +1008,39 @@ lines are all equivalent::
     /2beds repeat(down 3)
     /2beds repeat(down, 3)
     /2beds repeat(>3)
+
+**Shifting blueprints**
+
+Syntax: shift(<x shift>[,] <y shift>)
+
+The values can be positive or negative. Negative values for x shift to the left,
+positive to the right. Negative values for y shift up, positive down.
+
+**Transforming blueprints**
+
+Syntax: transform(<transformation>[[,] <transformation>...])
+
+Applies a geometric transformation to the blueprint. The supported
+transformations are:
+
+:rotcw or cw:   Rotates the blueprint 90 degrees clockwise.
+:rotccw or ccw: Rotates the blueprint 90 degrees counterclockwise.
+:fliph:         Flips the blueprint horizontally (left edge becomes right edge).
+:flipv:         Flips the blueprint vertically (top edge becomes bottom edge).
+
+If you specify more than one transformation, they will be applied in the order
+they appear in.
+
+If you use both ``shift()`` and ``transform()`` markers on the same blueprint,
+shifting is applied after all transformations are complete. If you want shifting
+to be applied before the transformations, or in between transformations, you can
+use nested meta blueprints. For example, the following blueprint will shift the
+``/hallway`` blueprint to the right by 20 units and then rotate it clockwise::
+
+    #meta label(shift_right) hidden()
+    /hallway shift(20)
+    #meta label(rotate_after_shift)
+    /shift_right transform(cw)
 
 .. _quickfort-other-modes:
 

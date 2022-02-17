@@ -153,7 +153,7 @@ end
 -- error messages more useful. If <list_length> is specified and greater than 0,
 -- exactly that number of elements must be found or the function will error.
 -- Example:
---   stringSequence('hello , world,list', 'words') => {'hello', 'world', 'list'}
+--   stringList('hello , world,list', 'words') => {'hello', 'world', 'list'}
 function stringList(arg, arg_name, list_length)
     if not list_length then list_length = 0 end
     local list = arg:split(',')
@@ -172,7 +172,7 @@ end
 -- it is used to make error messages more useful. If <list_length> is specified
 -- and greater than 0, exactly that number of elements must be found or the
 -- function will error. Example:
---   numericSequence('10, -20 ,  30.5') => {10, -20, 30.5}
+--   numberList('10, -20 ,  30.5') => {10, -20, 30.5}
 function numberList(arg, arg_name, list_length)
     local strings = stringList(arg, arg_name, list_length)
     for i,str in ipairs(strings) do

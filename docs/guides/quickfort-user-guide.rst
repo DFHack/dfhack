@@ -1011,10 +1011,13 @@ lines are all equivalent::
 
 **Shifting blueprints**
 
-Syntax: shift(<x shift>[,] <y shift>)
+Syntax: shift(<x shift>[[,] <y shift>])
 
 The values can be positive or negative. Negative values for x shift to the left,
-positive to the right. Negative values for y shift up, positive down.
+positive to the right. Negative values for y shift up, positive down. Note the
+semantics for the y axis are opposite compared to regular graphs on paper. This
+is because the y coordinates in the DF game map start a 0 at the top and
+increase as they go down.
 
 **Transforming blueprints**
 

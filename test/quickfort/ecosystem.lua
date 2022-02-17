@@ -9,6 +9,7 @@
 --   width (required)
 --   height (required)
 --   depth (default is 1)
+--   start (cursor offset for input blueprints, default is 1,1)
 --
 -- depends on blueprint, buildingplan, and dig-now plugins (as well as the
 -- quickfort script, of course)
@@ -22,6 +23,7 @@
 
 config.mode = 'fortress'
 
+local argparse = require('argparse')
 local blueprint = require('plugins.blueprint')
 local quickfort_list = reqscript('internal/quickfort/list')
 local quickfort_command = reqscript('internal/quickfort/command')
@@ -120,6 +122,11 @@ local function get_blueprint_sets()
         spec.width = get_positive_int(spec.width, 'width', basename)
         spec.height = get_positive_int(spec.height, 'height', basename)
         spec.depth = get_positive_int(spec.depth, 'depth', basename)
+        if spec.start then
+            local start_spec = argparse.numberList(spec.start, basename, 2)
+            spec.start = {x=get_positive_int(start_spec[1], 'startx', basename),
+                          y=get_positive_int(start_spec[2], 'starty', basename)}
+        end
     end
 
     return sets
@@ -179,20 +186,22 @@ local function get_test_area(area, spec)
     end
 end
 
-local function get_cursor_arg(pos)
-    return ('--cursor=%d,%d,%d'):format(pos.x, pos.y, pos.z)
+local function get_cursor_arg(pos, start)
+    start = start or {x=1, y=1}
+    return ('--cursor=%d,%d,%d'):format(pos.x+start.x-1, pos.y+start.y-1, pos.z)
 end
 
-local function quickfort_cmd(cmd, listnum, pos)
-    dfhack.run_script('quickfort', cmd, '-q', listnum, get_cursor_arg(pos))
+local function quickfort_cmd(cmd, listnum, pos, start)
+    dfhack.run_script('quickfort', cmd, '-q', listnum,
+                      get_cursor_arg(pos, start))
 end
 
-local function quickfort_run(listnum, pos)
-    quickfort_cmd('run', listnum, pos)
+local function quickfort_run(listnum, pos, start)
+    quickfort_cmd('run', listnum, pos, start)
 end
 
-local function quickfort_undo(listnum, pos)
-    quickfort_cmd('undo', listnum, pos)
+local function quickfort_undo(listnum, pos, start)
+    quickfort_cmd('undo', listnum, pos, start)
 end
 
 local function designate_area(pos, spec)
@@ -259,11 +268,13 @@ function test.end_to_end()
 
     local area = {width=0, height=0, depth=0}
     for basename,set in pairs(sets) do
+        local spec = set.spec
+
         print(('running quickfort ecosystem test: "%s": %s'):
-                    format(basename, set.spec.description))
+                    format(basename, spec.description))
 
         -- find an unused area of the map that meets requirements, else skip
-        if not get_test_area(area, set.spec) then
+        if not get_test_area(area, spec) then
             print(('cannot find unused map area to test set "%s"; skipping'):
                   format(basename))
             goto continue
@@ -273,9 +284,9 @@ function test.end_to_end()
         -- there is no #dig blueprint)
         local phases = set.phases
         if phases.dig then
-            quickfort_run(phases.dig.listnum, area.pos)
+            quickfort_run(phases.dig.listnum, area.pos, spec.start)
         else
-            designate_area(area.pos, set.spec)
+            designate_area(area.pos, spec)
         end
 
         -- run dig-now to dig out designated tiles
@@ -284,7 +295,7 @@ function test.end_to_end()
         -- quickfort run remaining blueprints
         for _,phase_name in ipairs(phase_names) do
             if phase_name ~= 'dig' and phases[phase_name] then
-                quickfort_run(phases[phase_name].listnum, area.pos)
+                quickfort_run(phases[phase_name].listnum, area.pos, spec.start)
                 if phase_name == 'track' then
                     run_dig_now(area)
                 end
@@ -297,7 +308,7 @@ function test.end_to_end()
         -- quickfort undo blueprints
         for _,phase_name in ipairs(phase_names) do
             if phases[phase_name] then
-                quickfort_undo(phases[phase_name].listnum, area.pos)
+                quickfort_undo(phases[phase_name].listnum, area.pos, spec.start)
             end
         end
 

@@ -9,7 +9,7 @@ library blueprints by running ``quickfort list --library`` or by hitting
 :kbd:`Alt`:kbd:`l` in the ``quickfort gui`` interactive dialog.
 
 Each file is hyperlinked to its online version so you can see exactly what the
-blueprints do.
+blueprints do before you run them.
 
 Whole fort blueprint sets
 -------------------------
@@ -128,8 +128,8 @@ The Quick Fortress
 ~~~~~~~~~~~~~~~~~~
 
 The Quick Fortress is an updated version of the example fortress that came with
-`Python Quickfort 2.0 <https://github.com/joelpt/quickfort>`__ (the program
-DFHack quickfort was inspired by). While it is not a complete fortress by
+`Python Quickfort 2.0 <https://github.com/joelpt/quickfort>`__ (the utility that
+inspired DFHack quickfort). While it is not a complete fortress by
 itself, it is much simpler than Dreamfort and is good for a first introduction
 to `quickfort` blueprints. Read its walkthrough with ``quickfort run
 library/quickfortress.csv``.
@@ -174,7 +174,8 @@ Exploratory mining
 ------------------
 
 Several mining patterns to choose from when searching for gems or ores. The
-patterns can be repeated up or down z-levels for exploring through the depths.
+patterns can be repeated up or down z-levels (via quickfort's ``--repeat``
+commandline option) for exploring through the depths.
 
 - :source:`library/exploratory-mining/tunnels.csv <data/blueprints/library/exploratory-mining/tunnels.csv>`
 - :source:`library/exploratory-mining/vertical-mineshafts.csv <data/blueprints/library/exploratory-mining/vertical-mineshafts.csv>`
@@ -186,8 +187,13 @@ Miscellaneous
 Extra blueprints that are useful in specific situations.
 
 - :source:`library/embark.csv <data/blueprints/library/embark.csv>`
+- :source:`library/pump_stack.csv <data/blueprints/library/pump_stack.csv>`
 
 The embark blueprints are useful directly after embark. It contains a ``#build``
 blueprint that builds important starting workshops (mason, carpenter, mechanic,
 and craftsdwarf) and a ``#place`` blueprint that lays down a pattern of useful
 starting stockpiles.
+
+The pump stack blueprints help you move water and magma up to move convenient
+locations in your fort. See the step-by-step guide for using it by running
+``quickfort run library/pump_stack.csv -n /help``.

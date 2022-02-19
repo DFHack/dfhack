@@ -2,13 +2,20 @@
 A pump stack is useful for moving water or magma up through the z-levels.
 ""
 To use these blueprints:
-- Measure how many z-levels the pump stack should span.
-"- Position the cursor on the bottom level of the future pump stack. It should be on the z-level just above the liquid you want to pump. Run ""quickfort run library/pump_stack.csv -n /dig2SN"" to see where the suction hole will end up. Replace ""run"" with ""undo"" in the previous command to clean up."
-"- If you need an East-West pump stack, or if you need the staircase in another spot, use the ""--transform"" commandline option to alter the blueprint to your needs. For example: ""quickfort run library/pump_stack.csv -n /dig2SN --transform rotcw,fliph"". If you use a transformation, be sure to use the same option for the remaining commandlines."
-"- Once you have everything lined up, run ""quickfort run library/pump_stack.csv -n /dig2SN --repeat up,20"" to designate the entire pump stack for digging. Replace that last ""20"" with the height of your pump stack divided by 2 (since each repetition of /dig2SN is two z-levels high). If the height ends up being one too many at the top, manually undesignate the top level."
-"- Since you do not need to transmit power down below the lowest level, replace the channel designation on the middle tile of the bottom-most pump stack level with a regular dig designation. Likewise, replace the Up/Down staircase designation on the lowest level with an Up staircase designation."
-"- After the stack is dug out, prepare for building by setting the buildingplan plugin material filters for screw pumps (b-M-s-M). If you are planning to move magma, be sure to select magma-safe materials."
-"- Finally, position the cursor back on the access stairs on the lowest level and run ""quickfort run library/pump_stack.csv -n /build2SN --repeat up,20"" (with 20 replaced with your desired repetition count and with your --transform command, if any)."
+""
+1) Measure how many z-levels the pump stack should span.
+""
+"2) Position the cursor on the bottom level of the future pump stack. It should be on the z-level just above the liquid you want to pump. Run ""quickfort run library/pump_stack.csv -n /dig2SN"" to see where the suction hole will end up. Replace ""run"" with ""undo"" in the previous command to clean up."
+""
+"3) If you need an East-West pump stack, or if you need the staircase in another spot, use the ""--transform"" commandline option to alter the blueprint to your needs. For example: ""quickfort run library/pump_stack.csv -n /dig2SN --transform rotcw,fliph"". If you use a transformation, be sure to use the same option for the remaining commandlines."
+""
+"4) Once you have everything lined up, run ""quickfort run library/pump_stack.csv -n /dig2SN --repeat up,20"" to designate the entire pump stack for digging. Replace that last ""20"" with the height of your pump stack divided by 2 (since each repetition of /dig2SN is two z-levels high). If the height ends up being one too many at the top, manually undesignate the top level."
+""
+"5) Since you do not need to transmit power down below the lowest level, replace the channel designation on the middle tile of the bottom-most pump stack level with a regular dig designation. Likewise, replace the Up/Down staircase designation on the lowest level with an Up staircase designation."
+""
+"6) After the stack is dug out, prepare for building by setting the buildingplan plugin material filters for screw pumps (b-M-s-M). If you are planning to move magma, be sure to select magma-safe materials."
+""
+"7) Finally, position the cursor back on the access stairs on the lowest level and run ""quickfort run library/pump_stack.csv -n /build2SN --repeat up,20"" (with 20 replaced with your desired repetition count and with your --transform command, if any)."
 ""
 "Sometimes, a screw pump will spontaneously deconstruct while you are building the stack. This will reduce the efficiency of the stack a little, but it's nothing to worry about. Just re-run the /build2SN blueprint over the entire stack to ""fix up"" any broken pieces. The blueprint will harmlessly skip over any correctly-built screw pumps."
 ""

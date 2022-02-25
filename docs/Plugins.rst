@@ -2446,15 +2446,6 @@ Example:
 ``filltraffic H``
   When used in a room with doors, it will set traffic to HIGH in just that room.
 
-.. _fortplan:
-
-fortplan
-========
-**Fortplan has been removed.** Please use DFHack's more powerful `quickfort`
-script instead. You can use your existing .csv files. Just move them to the
-``blueprints`` folder in your DF installation, and instead of
-``fortplan file.csv`` run ``quickfort run file.csv``.
-
 .. _getplants:
 
 getplants

@@ -92,6 +92,8 @@ Services level
   :target: https://drive.google.com/file/d/1jlGr6tAhS8i-XFTz8gowTZBhXcfjfL_L
   :align: center
 
+.. _example-plumbing-to-fill-cisterns:
+
 Example plumbing to fill cisterns
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -186,14 +188,38 @@ Miscellaneous
 
 Extra blueprints that are useful in specific situations.
 
+- :source:`library/aquifer_tap.csv <data/blueprints/library/aquifer_tap.csv>`
 - :source:`library/embark.csv <data/blueprints/library/embark.csv>`
 - :source:`library/pump_stack.csv <data/blueprints/library/pump_stack.csv>`
+
+Light Aquifer Tap
+~~~~~~~~~~~~~~~~~
+
+The aquifer tap helps you create a safe, everlasting source of fresh water from
+a light aquifer. See the step-by-step guide, including informaton on how to
+create a drainage system so your dwarves don't drown when digging the tap, by
+running ``quickfort run library/aquifer_tap.csv -n /help``.
+
+You can see how to nullify the water pressure (so you don't flood your fort) in
+the `Dreamfort screenshot above <example-plumbing-to-fill-cisterns>`.
+
+Blueprint spreadsheet also available
+`online <https://docs.google.com/spreadsheets/d/1kwuCipF9FYAHNP9C_XlMpqVseaPu4SmL9YLUSQkbW4s/edit#gid=611877584>`__
+
+Post-embark
+~~~~~~~~~~~
 
 The embark blueprints are useful directly after embark. It contains a ``#build``
 blueprint that builds important starting workshops (mason, carpenter, mechanic,
 and craftsdwarf) and a ``#place`` blueprint that lays down a pattern of useful
 starting stockpiles.
 
+Pump Stack
+~~~~~~~~~~
+
 The pump stack blueprints help you move water and magma up to move convenient
 locations in your fort. See the step-by-step guide for using it by running
 ``quickfort run library/pump_stack.csv -n /help``.
+
+Blueprint spreadsheet also available
+`online <https://docs.google.com/spreadsheets/d/1TP2n-W-O9f30Dtl6yoTcn6yczWQRu11iM7U6TEE9634/edit#gid=0>`__

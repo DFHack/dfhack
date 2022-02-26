@@ -53,7 +53,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `dig-now`: no longer leaves behind a designated tile when a tile was designated beneath a tile designated for channeling
 - `orders`: added ``list`` subcommand to show existing exported orders
 - `quickfort`, `dfhack-examples-guide`: Dreamfort blueprint set improvements based on playtesting and feedback. includes updated profession definitions.
-- `quickfort-library-guide`: added pump stack blueprints (with step-by-step usage guide) to the quickfort blueprint library
+- `quickfort-library-guide`: added light aquifer tap and pump stack blueprints (with step-by-step usage guides) to the quickfort blueprint library
 - `quickfort`: Dreamfort blueprint set improvements: added iron and flux stock level indicators on the industry level
 
 ## Lua

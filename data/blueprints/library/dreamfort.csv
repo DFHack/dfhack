@@ -74,7 +74,7 @@ quickfort run library/dreamfort.csv -n /farming3,# Run when furniture has been p
 quickfort run library/dreamfort.csv -n /industry2,# Run when the industry level has been dug out.
 prioritize ConstructBuilding,# To get those workshops up and running ASAP. You may have to run this several times as the materials for the building construction jobs become ready.
 quickfort run library/dreamfort.csv -n /surface4,"# Run after the walls and floors are built on the surface. Even if /surface3 is finished before you run /industry2, though, wait until after /industry2 to run this blueprint so that surface walls, floors, and roofing don't prevent your workshops from being built (due to lack of blocks)."
-"quickfort run,orders library/dreamfort.csv -n /services2",# Run when the services level has been dug out. Feel free to remove the orders for the ropes if you already brought them with you.
+"quickfort run,orders library/dreamfort.csv -n /services2",# Run when the services levels have been dug out. Feel free to remove the orders for the ropes if you already brought them with you.
 orders import basic,"# Run after the first migration wave, so you have dorfs to do all the basic tasks. Note that this is the ""orders"" plugin, not the ""quickfort orders"" command."
 "quickfort run,orders library/dreamfort.csv -n /surface5","# Run when all marked trees on the surface are chopped down and walls and floors have been constructed, including the roof section over the future barracks."
 prioritize ConstructBuilding,# Run when you see the bridges ready to be built so the masons come and actually build them.
@@ -142,7 +142,7 @@ sethotkey: {fkey}n{name}&
 starthotkeys: ^H{sethotkey fkey={F2} name=Farming}{sethotkey fkey={F3} name=Industry}{sethotkey fkey={F4} name=Services}{sethotkey fkey={F5} name=Guildhall}{sethotkey fkey={F6} name=Quarry}{sethotkey fkey={F7} name=Cavern}{sethotkey fkey={F8} name=Magma}^q
 ""
 "#query label(setup) start(center tile of the wagon) message(Please set the zoom targets of the hotkeys (the 'H' menu) according to where you actually end up digging the levels.
-As you build your fort, expand the Inside burrow to include new civilian-safe areas.
+As you build your fort, expand the ""Inside"" burrow to include new civilian-safe areas.
 Optionally, add a leather cloak to your military uniforms to enhance the protection of the uniforms.
 Nothing in Dreamfort depends on these settings staying as they are. Feel free to change any setting to your personal preference.) assign nobles, set standing orders, create burrows, make adjustments to military uniforms, and set hotkey names"
 {startnobles}{startorders}{startburrows}{startmilitary}{starthotkeys}{F1}
@@ -267,7 +267,7 @@ Features:
 - A starting set of workshops and stockpiles (which you can later remove once you establish your permanent workshops and storage)
 - Livestock grazing area with nestbox zones and beehives
 "- Walls, roof, and lever-controlled gates for security"
-- Barracks
+- Barracks (with prisoner processing quantum dump)
 - Trap-filled hallways for invaders
 - Optional extended trap hallways (to handle larger sieges)
 - Protected trade depot
@@ -276,9 +276,9 @@ Features:
 Manual steps you have to take:
 - Assign grazing livestock to the large pasture and dogs to the pasture over the central stairs (DFHack's autonestbox can manage the nestbox zones)
 - Connect levers to the gates that match the names of the levers
-- Assign a minecart to the trade goods quantum stockpile hauling route
+- Assign minecarts to the trade goods and prisoner processing quantum stockpile hauling routes
 ""
-Be sure to choose an embark site that has a flat area large enough to use these blueprints!
+Be sure to choose an embark site that has a flat area on the surface large enough to use these blueprints!
 ""
 Surface Walkthrough:
 "1) Choose a tile for your central fortress stairs. The terrain around that tile should be perfectly flat. Trees are ok, but no slopes, rivers, or lakes. To be sure that the tile you've chosen is in a good spot, set the cursor over that tile and run ""quickfort run library/dreamfort.csv -n /perimeter"". This will show you the eventual boundaries of the fort. Some wall segments might be missing due to existing trees, but that's ok. Make sure the area within the exterior wall is flat. Run ""quickfort undo library/dreamfort.csv -n /perimeter"" to clean up."
@@ -300,6 +300,22 @@ Surface Walkthrough:
 "9) For extra security, you can run /surface8 any time after /surface7 to extend the trap corridors. Run ""quickfort orders"" for /surface8."
 ""
 "10) Once your industry and farming levels are set up and running, you can disassemble the surface workshops and remove the surface stockpiles. Disassembling a workshop scatters the items stored within it and cancels any pending jobs that happen to use those items. In order to avoid job cancellations, first set the surface workshops to not accept general work orders. Do this by entering query mode (""q""), selecting a workshop, entering the workshop profile (""P""), moving to work orders (right arrow), and hitting Enter. Then enter view mode (""t"") and check to see if any items in a workshop are marked with ""TSK"". Once no items in the workshop have that marker, you are free to disassemble that workshop."
+""
+Sieges and Prisoner Processing:
+Here are some tips and procedures for handling seiges -- including how to clean up afterwards!
+""
+"- Ensure your ""Inside"" burrow includes only below-ground areas and safe surface areas of your fort. In particular, don't include the ""atrium"" area (where the ""siege bait"" zone is) or the trapped hallways."
+"- When a siege begins, set the alert to ""Siege"" to ensure all your civilians stay out of danger. Immediately pull the lever to close the outer main gate. It is also wise to close the trade depot and inner main gate as well. That way, if enemies get past the traps, they'll have to go through the soldiers in your barracks."
+"- During a siege, use the levers to control how attackers path through the trapped corridors. If there are more enemies than cage traps, time your lever pulling so that the inner gates snap closed before your last cage trap is sprung. Then the remaining attackers will have to backtrack and go through the other trap-filled hallway."
+"- If your cage traps fill up, ensure your hallways are free of uncaged attackers, then close the trap hallway outer gates and open the inner gates. Unset the civilian alert and allow your dwarves to reset all the traps -- make some extra cages in preparation for this! Then re-set the civilian alert to ""Siege"" and open the trap hallway outer gates."
+"- Once the last attacker is caged, open all the gates and unset the civilian alert. Life is normal again!"
+""
+"After a siege, you can use the caged prisoners to safely train your military. Here's how:"
+""
+"- Once the prisoners are hauled to the ""prisoner quantum"" stockpile, run ""stripcaged all"" in the DFHack console."
+"- After all the prisoners' items have been confiscated, bring your military dwarves to the barracks (if they aren't already there)."
+- Use the zone (i) menu to assign a group prisoners to the pasture that overlaps the prisoner quantum stockpile
+"- Hauler dwarves will come and release prisoners one by one. Your military dwarves will immediately pounce on the released prisoner and chop them to bits, saving the hauler dwarves from being attacked. Repeat until all prisoners have been ""processed""."
 #meta label(perimeter) start(central stairs) message(Run quickfort undo on this blueprint to clean up.) show the eventual perimeter of the surface fort; useful for location scouting
 walls/surface_walls
 corridor/surface_corridor
@@ -431,7 +447,7 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,n,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,`,,,,,,,,`,,n,,,,,,,`,,`
 ,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
 ,,,`,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,`
 ,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
@@ -465,7 +481,7 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,"{namezone name=""siege bait""}",,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,`,,,,,,,,`,,"{namezone name=""prisoner processing""}",,,,,,,`,,`
 ,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
 ,,,`,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,`
 ,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
@@ -874,7 +890,7 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,c,,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
+,,,`,,`,,c,,,,,,,`,,,,,,,,`,,c,,,,,,,`,,`
 ,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
 ,,,`,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,`
 ,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
@@ -908,7 +924,7 @@ Remember to connect the levers to the gates once they are built.) gates, barrack
 ,,,`,,`,,,,,,,,,`,,gw,gw,gw,gw,gw,,`,,,,,,,h,b,`,,`
 ,,,`,,`,,,,,,,,,ga,ga,gw,gw,gw,gw,gw,gd,gd,,,,,,,,b,`,,`
 ,,,`,,`,,,,,,D,,,ga,ga,,,,,,gd,gd,,,,,a,r,,b,`,,`
-,,,`,,`,,trackstopS,,,,,,,ga,ga,,,,,,gd,gd,,,,,,,,b,`,,`
+,,,`,,`,,trackstopS,,,,,,,ga,ga,,,,,,gd,gd,,trackstopS,,,,,,b,`,,`
 ,,,`,,`,,,,,,,,,`,,,,,,,,`,,,,,,,h,b,`,,`
 ,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
 ,,,`,gd,gd,,,,,,,,gd,gd,,,,,,,,ga,ga,,,,,,,,ga,ga,`
@@ -916,7 +932,11 @@ Remember to connect the levers to the gates once they are built.) gates, barrack
 ,,,,,,,,,,,,,,,gw,gw,gw,gw,gw,gw,gw
 ,,,,,,,,,,,,,,,gw,gw,gw,gw,gw,gw,gw
 
-"#query label(surface_query) start(19; 19) hidden() message(Remember to assign a minecart to the trade goods quantum stockpile.
+#aliases
+permit_prisoner: {animalsprefix}{Right}s{search}&&^
+prisoner_route_enable: {enableanimals}{cages}{permittraps}{permit_prisoner search=dwarves}{permit_prisoner search=elves}{permit_prisoner search=humans}{permit_prisoner search=giants}{permit_prisoner search=goblins}{permit_prisoner search=ettins}{permit_prisoner search=cyclopes}
+
+"#query label(surface_query) start(19; 19) hidden() message(Remember to assign minecarts to the trade goods and prisoner processing quantum stockpiles.
 Feel free to adjust the configuration of the ""trade goods"" feeder stockpile so it accepts the item types you want to trade away. If those items types are also accepted by other stockpiles, configure those stockpiles to give to the ""trade goods"" stockpile.
 You might also want to set the ""trade goods quantum"" stockpile to Auto Trade if you have the autotrade DFHack plugin enabled.)"
 
@@ -944,8 +964,8 @@ You might also want to set the ""trade goods quantum"" stockpile to Auto Trade i
 ,,,`,,`,nocontainers,crafts,,,,,,,`,,,,"{givename name=""inner main gate""}",,,,`,,,,,,,,,`,,`
 ,,,`,,`,"{givename name=""trade goods""}",,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,{forbidmasterworkfinishedgoods}{forbidartifactfinishedgoods},,,,,,,,"{givename name=""trade depo gate""}",,,,,,,,"{givename name=""barracks gate""}",,,,,,,,,`,,`
-,,,`,,`,,"{quantumstopfromnorth name=""Trade Goods Dumper""}",,,,,,,,,,,,,,,,,,,,,,,,`,,`
-,,,`,,`,,"{quantum name=""trade goods quantum""}",,,,,,,`,,,,,,,,`,,,,,,,,,`,,`
+,,,`,,`,,"{quantumstopfromnorth name=""Trade Goods Dumper""}",,,,,,,,,,,,,,,,,"{quantumstop name=""Prisoner quantum"" move={Up 5} move_back={Down 5} route_enable={prisoner_route_enable}}{givename name=""prisoner dumper""}",,,,,,,`,,`
+,,,`,,`,,"{quantum name=""trade goods quantum""}",,,,,,,`,,,,,,,,`,,"{quantum name=""prisoner quantum"" quantum_enable={enableanimals}}",,,,,,,`,,`
 ,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
 ,,,`,,"{givename name=""left outer gate""}",,,,,,,,,"{givename name=""left inner gate""}",,,,,,,,"{givename name=""right inner gate""}",,,,,,,,,"{givename name=""right outer gate""}",,`
 ,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,"{givename name=""outer main gate""}",,,,`,`,`,`,`,`,`,`,`,`,`,`

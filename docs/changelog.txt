@@ -54,7 +54,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `orders`: added ``list`` subcommand to show existing exported orders
 - `quickfort`, `dfhack-examples-guide`: Dreamfort blueprint set improvements based on playtesting and feedback. includes updated profession definitions.
 - `quickfort-library-guide`: added light aquifer tap and pump stack blueprints (with step-by-step usage guides) to the quickfort blueprint library
-- `quickfort`: Dreamfort blueprint set improvements: added iron and flux stock level indicators on the industry level
+- `quickfort`: Dreamfort blueprint set improvements: added iron and flux stock level indicators on the industry level and a prisoner processing quantum stockpile in the surface barracks. also added help text for how to manage sieges and how to manage prisoners after a siege.
 
 ## API
 - ``Buildings::findCivzonesAt()``: lookups now complete in constant time instead of linearly scanning through all civzones in the game

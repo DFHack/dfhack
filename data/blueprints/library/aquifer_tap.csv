@@ -33,7 +33,7 @@ i <- cistern outlet level
 u <- drainage level
 ""
 "Good luck! If done right, this method is the safest way to supply your fort with clean water."
-#dig start(13 13 center of tap) light aquifer water collector
+#dig label(dig) start(13 13 center of tap) light aquifer water collector
 
 ,,,,,,,,,,,,r
 ,,,,,,,,,,,,r

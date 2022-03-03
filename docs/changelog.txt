@@ -37,6 +37,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `blueprint`: fixed passing incorrect parameters to `gui/blueprint` when you run ``blueprint gui`` with optional params
 - `blueprint`: key sequences for constructed walls and down stairs are now correct
 - `tailor`: fixed some inconsistencies (and possible crashes) when parsing certain subcommands, e.g. ``tailor help``
+- `tiletypes-here`, `tiletypes-here-point`: fix crash when running from an unsuspended core context
 
 ## Misc Improvements
 - Core: DFHack now prints the name of the init script it is running to the console and stderr

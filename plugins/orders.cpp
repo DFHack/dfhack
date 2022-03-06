@@ -40,6 +40,8 @@ DFHACK_PLUGIN("orders");
 
 REQUIRE_GLOBAL(world);
 
+static const std::string ORDERS_DIR = "dfhack-config/orders";
+
 static command_result orders_command(color_ostream & out, std::vector<std::string> & parameters);
 
 DFhackCExport command_result plugin_init(color_ostream & out, std::vector<PluginCommand> & commands)
@@ -50,6 +52,8 @@ DFhackCExport command_result plugin_init(color_ostream & out, std::vector<Plugin
         orders_command,
         false,
         "orders - Manipulate manager orders\n"
+        "  orders list\n"
+        "    Shows the list of previously exported orders."
         "  orders export [name]\n"
         "    Exports the current list of manager orders to a file named dfhack-config/orders/[name].json.\n"
         "  orders import [name]\n"
@@ -67,6 +71,7 @@ DFhackCExport command_result plugin_shutdown(color_ostream & out)
     return CR_OK;
 }
 
+static command_result orders_list_command(color_ostream & out);
 static command_result orders_export_command(color_ostream & out, const std::string & name);
 static command_result orders_import_command(color_ostream & out, const std::string & name);
 static command_result orders_clear_command(color_ostream & out);
@@ -86,6 +91,11 @@ static command_result orders_command(color_ostream & out, std::vector<std::strin
     if (parameters.empty())
     {
         return CR_WRONG_USAGE;
+    }
+
+    if (parameters[0] == "list")
+    {
+        return orders_list_command(out);
     }
 
     if (parameters[0] == "export" && parameters.size() == 2)
@@ -109,6 +119,38 @@ static command_result orders_command(color_ostream & out, std::vector<std::strin
     }
 
     return CR_WRONG_USAGE;
+}
+
+static command_result orders_list_command(color_ostream & out)
+{
+    // use listdir_recursive instead of listdir even though orders doesn't
+    // support subdirs so we can identify and ignore subdirs with ".json" names.
+    // also listdir_recursive will alphabetize the list for us.
+    std::map<std::string, bool> files;
+    if (0 < Filesystem::listdir_recursive(ORDERS_DIR, files, 0, false))
+    {
+        out << COLOR_LIGHTRED << "Unable to list files in directory: " << ORDERS_DIR << std::endl;
+        return CR_FAILURE;
+    }
+
+    if (files.empty())
+    {
+        out << COLOR_YELLOW << "No exported orders yet. Create manager orders and export them with 'orders export <name>', or copy pre-made orders .json files into " << ORDERS_DIR << "." << std::endl;
+        return CR_OK;
+    }
+
+    for (auto it : files)
+    {
+        if (it.second)
+            continue; // skip directories
+        std::string name = it.first;
+        if (name.length() <= 5 || name.rfind(".json") != name.length() - 5)
+            continue; // skip non-.json files
+        name.resize(name.length() - 5);
+        out << name << std::endl;
+    }
+
+    return CR_OK;
 }
 
 static bool is_safe_filename(color_ostream & out, const std::string & name)
@@ -439,9 +481,9 @@ static command_result orders_export_command(color_ostream & out, const std::stri
         }
     }
 
-    Filesystem::mkdir("dfhack-config/orders");
+    Filesystem::mkdir(ORDERS_DIR);
 
-    std::ofstream file("dfhack-config/orders/" + name + ".json");
+    std::ofstream file(ORDERS_DIR + "/" + name + ".json");
 
     file << orders << std::endl;
 
@@ -852,7 +894,7 @@ static command_result orders_import_command(color_ostream & out, const std::stri
         return CR_WRONG_USAGE;
     }
 
-    const std::string filename("dfhack-config/orders/" + name + ".json");
+    const std::string filename(ORDERS_DIR + "/" + name + ".json");
     Json::Value orders;
 
     {

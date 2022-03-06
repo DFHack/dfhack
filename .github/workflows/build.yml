@@ -39,7 +39,7 @@ jobs:
             lua5.3 \
             ninja-build \
             zlib1g-dev
-        pip install sphinx
+        pip install 'sphinx<4.4.0'
     - name: Install GCC
       run: |
         sudo apt-get install gcc-${{ matrix.gcc }} g++-${{ matrix.gcc }}
@@ -114,7 +114,7 @@ jobs:
         python-version: 3
     - name: Install dependencies
       run: |
-        pip install sphinx
+        pip install 'sphinx<4.4.0'
     - name: Clone DFHack
       uses: actions/checkout@v1
       with:

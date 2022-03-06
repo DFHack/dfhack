@@ -37,8 +37,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `blueprint`: fixed passing incorrect parameters to `gui/blueprint` when you run ``blueprint gui`` with optional params
 - `blueprint`: key sequences for constructed walls and down stairs are now correct
 - `tailor`: fixed some inconsistencies (and possible crashes) when parsing certain subcommands, e.g. ``tailor help``
+- `tiletypes-here`, `tiletypes-here-point`: fix crash when running from an unsuspended core context
 
 ## Misc Improvements
+- Core: DFHack now prints the name of the init script it is running to the console and stderr
 - `automaterial`: ensure construction tiles are laid down in order when using `buildingplan` to plan the constructions
 - `blueprint`: all blueprint phases are now written to a single file, using `quickfort` multi-blueprint file syntax. to get the old behavior of each phase in its own file, pass the ``--splitby=phase`` parameter to ``blueprint``
 - `blueprint`: you can now specify the position where the cursor should be when the blueprint is played back with `quickfort` by passing the ``--playback-start`` parameter
@@ -50,11 +52,20 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `blueprint`: new "track" phase that discovers and records carved tracks
 - `blueprint`: new "zone" phase that discovers and records activity zones, including custom configuration for ponds, gathering, and hospitals
 - `dig-now`: no longer leaves behind a designated tile when a tile was designated beneath a tile designated for channeling
+- `orders`: added ``list`` subcommand to show existing exported orders
 - `quickfort`, `dfhack-examples-guide`: Dreamfort blueprint set improvements based on playtesting and feedback. includes updated profession definitions.
+- `quickfort-library-guide`: added light aquifer tap and pump stack blueprints (with step-by-step usage guides) to the quickfort blueprint library
+- `quickfort`: Dreamfort blueprint set improvements: added iron and flux stock level indicators on the industry level and a prisoner processing quantum stockpile in the surface barracks. also added help text for how to manage sieges and how to manage prisoners after a siege.
+
+## API
+- ``Buildings::findCivzonesAt()``: lookups now complete in constant time instead of linearly scanning through all civzones in the game
 
 ## Lua
 - ``argparse.processArgsGetopt()``: you can now have long form parameters that are not an alias for a short form parameter. For example, you can now have a parameter like ``--longparam`` without needing to have an equivalent one-letter ``-l`` param.
 - ``dwarfmode.enterSidebarMode()``: ``df.ui_sidebar_mode.DesignateMine`` is now a suported target sidebar mode
+
+## Removed
+- `fortplan`: please use `quickfort` instead
 
 # 0.47.05-r3
 

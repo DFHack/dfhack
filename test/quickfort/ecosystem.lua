@@ -9,6 +9,7 @@
 --   width (required)
 --   height (required)
 --   depth (default is 1)
+--   start (cursor offset for input blueprints, default is 1,1)
 --
 -- depends on blueprint, buildingplan, and dig-now plugins (as well as the
 -- quickfort script, of course)
@@ -16,10 +17,13 @@
 -- note that this test harness cannot (yet) test #query blueprints that define
 -- rooms since furniture is not actually built during the test. It also cannot
 -- test blueprints that #build flooring and then #build a workshop on top, again
--- since the flooring is never actually built.
+-- since the flooring is never actually built. We can support these features
+-- once we figure out how to programmatically deconstruct buildlings without
+-- crashing the game.
 
 config.mode = 'fortress'
 
+local argparse = require('argparse')
 local blueprint = require('plugins.blueprint')
 local quickfort_list = reqscript('internal/quickfort/list')
 local quickfort_command = reqscript('internal/quickfort/command')
@@ -27,6 +31,7 @@ local utils = require('utils')
 
 local blueprints_dir = 'blueprints/'
 local input_dir = 'library/test/ecosystem/in/'
+local golden_dir = 'library/test/ecosystem/golden/'
 local output_dir = 'library/test/ecosystem/out/'
 
 local phase_names = utils.invert(blueprint.valid_phases)
@@ -57,6 +62,10 @@ local function get_positive_int(numstr, varname, basename)
     return num
 end
 
+local function os_exists(path)
+    return os.rename(path, path) and true or false
+end
+
 local function get_blueprint_sets()
     -- find test blueprints with `quickfort list`
     local mock_print = mock.func()
@@ -75,9 +84,13 @@ local function get_blueprint_sets()
             local _,_,file_part = fname:find('/([^/]+)$')
             local _,_,basename = file_part:find('^([^-.]+)')
             if not sets[basename] then sets[basename] = {spec={}, phases={}} end
+            local golden_path = blueprints_dir..golden_dir..file_part
+            if not os_exists(golden_path) then
+                golden_path = blueprints_dir..fname
+            end
             sets[basename].phases[phase] = {
                 listnum=listnum,
-                input_filepath=blueprints_dir..fname,
+                golden_filepath=golden_path,
                 output_filepath=blueprints_dir..output_dir..file_part}
         end
     end
@@ -101,7 +114,7 @@ local function get_blueprint_sets()
                 dfhack.run_script('quickfort', 'run', '-q', notes.listnum)
             end)
 
-        -- validate spec and convert numbers to numeric vars
+        -- validate spec and convert number strings to numeric vars
         if not spec.description or spec.description == '' then
             qerror(('missing description in test spec for "%s"'):
                         format(basename))
@@ -109,6 +122,11 @@ local function get_blueprint_sets()
         spec.width = get_positive_int(spec.width, 'width', basename)
         spec.height = get_positive_int(spec.height, 'height', basename)
         spec.depth = get_positive_int(spec.depth, 'depth', basename)
+        if spec.start then
+            local start_spec = argparse.numberList(spec.start, basename, 2)
+            spec.start = {x=get_positive_int(start_spec[1], 'startx', basename),
+                          y=get_positive_int(start_spec[2], 'starty', basename)}
+        end
     end
 
     return sets
@@ -168,20 +186,22 @@ local function get_test_area(area, spec)
     end
 end
 
-local function get_cursor_arg(pos)
-    return ('--cursor=%d,%d,%d'):format(pos.x, pos.y, pos.z)
+local function get_cursor_arg(pos, start)
+    start = start or {x=1, y=1}
+    return ('--cursor=%d,%d,%d'):format(pos.x+start.x-1, pos.y+start.y-1, pos.z)
 end
 
-local function quickfort_cmd(cmd, listnum, pos)
-    dfhack.run_script('quickfort', cmd, '-q', listnum, get_cursor_arg(pos))
+local function quickfort_cmd(cmd, listnum, pos, start)
+    dfhack.run_script('quickfort', cmd, '-q', listnum,
+                      get_cursor_arg(pos, start))
 end
 
-local function quickfort_run(listnum, pos)
-    quickfort_cmd('run', listnum, pos)
+local function quickfort_run(listnum, pos, start)
+    quickfort_cmd('run', listnum, pos, start)
 end
 
-local function quickfort_undo(listnum, pos)
-    quickfort_cmd('undo', listnum, pos)
+local function quickfort_undo(listnum, pos, start)
+    quickfort_cmd('undo', listnum, pos, start)
 end
 
 local function designate_area(pos, spec)
@@ -248,11 +268,13 @@ function test.end_to_end()
 
     local area = {width=0, height=0, depth=0}
     for basename,set in pairs(sets) do
+        local spec = set.spec
+
         print(('running quickfort ecosystem test: "%s": %s'):
-                    format(basename, set.spec.description))
+                    format(basename, spec.description))
 
         -- find an unused area of the map that meets requirements, else skip
-        if not get_test_area(area, set.spec) then
+        if not get_test_area(area, spec) then
             print(('cannot find unused map area to test set "%s"; skipping'):
                   format(basename))
             goto continue
@@ -262,9 +284,9 @@ function test.end_to_end()
         -- there is no #dig blueprint)
         local phases = set.phases
         if phases.dig then
-            quickfort_run(phases.dig.listnum, area.pos)
+            quickfort_run(phases.dig.listnum, area.pos, spec.start)
         else
-            designate_area(area.pos, set.spec)
+            designate_area(area.pos, spec)
         end
 
         -- run dig-now to dig out designated tiles
@@ -273,7 +295,7 @@ function test.end_to_end()
         -- quickfort run remaining blueprints
         for _,phase_name in ipairs(phase_names) do
             if phase_name ~= 'dig' and phases[phase_name] then
-                quickfort_run(phases[phase_name].listnum, area.pos)
+                quickfort_run(phases[phase_name].listnum, area.pos, spec.start)
                 if phase_name == 'track' then
                     run_dig_now(area)
                 end
@@ -286,7 +308,7 @@ function test.end_to_end()
         -- quickfort undo blueprints
         for _,phase_name in ipairs(phase_names) do
             if phases[phase_name] then
-                quickfort_undo(phases[phase_name].listnum, area.pos)
+                quickfort_undo(phases[phase_name].listnum, area.pos, spec.start)
             end
         end
 
@@ -298,9 +320,9 @@ function test.end_to_end()
         for phase,phase_data in pairs(phases) do
             if phase == 'notes' then goto continue end
             print(('  verifying phase: %s'):format(phase))
-            local input_filepath = phase_data.input_filepath
+            local golden_filepath = phase_data.golden_filepath
             local output_filepath = phase_data.output_filepath
-            local input_hash, input_size = md5File(input_filepath)
+            local input_hash, input_size = md5File(golden_filepath)
             local output_hash, output_size = md5File(output_filepath)
             expect.eq(input_hash, output_hash,
                       'compare blueprint contents to input: '..output_filepath)
@@ -310,7 +332,7 @@ function test.end_to_end()
             if input_hash ~= output_hash or input_size ~= output_size then
                 -- show diff
                 local input, output =
-                    io.open(input_filepath, 'r'), io.open(output_filepath, 'r')
+                    io.open(golden_filepath, 'r'), io.open(output_filepath, 'r')
                 local input_lines, output_lines = {}, {}
                 for l in input:lines() do table.insert(input_lines, l) end
                 for l in output:lines() do table.insert(output_lines, l) end

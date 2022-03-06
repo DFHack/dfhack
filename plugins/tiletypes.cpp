@@ -1093,6 +1093,8 @@ static bool get_options(color_ostream &out,
 
 command_result df_tiletypes_here (color_ostream &out, vector <string> & parameters)
 {
+    CoreSuspender suspend;
+
     tiletypes_options opts;
     if (!get_options(out, opts, parameters) || opts.help)
     {
@@ -1112,6 +1114,8 @@ command_result df_tiletypes_here (color_ostream &out, vector <string> & paramete
 
 command_result df_tiletypes_here_point (color_ostream &out, vector <string> & parameters)
 {
+    CoreSuspender suspend;
+
     tiletypes_options opts;
     if (!get_options(out, opts, parameters) || opts.help)
     {

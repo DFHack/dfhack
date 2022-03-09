@@ -33,6 +33,22 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 # Future
 
+## New Plugins
+
+## Removed
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+# 0.47.05-r4
+
 ## Fixes
 - `blueprint`: fixed passing incorrect parameters to `gui/blueprint` when you run ``blueprint gui`` with optional params
 - `blueprint`: key sequences for constructed walls and down stairs are now correct

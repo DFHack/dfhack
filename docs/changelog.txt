@@ -38,7 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Removed
 
 ## Fixes
-`luasocket` (and others): return correct status code when closing socket connections
+``luasocket`` (and others): return correct status code when closing socket connections
 
 ## Misc Improvements
 

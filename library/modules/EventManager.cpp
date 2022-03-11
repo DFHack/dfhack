@@ -441,21 +441,26 @@ static void manageJobStartedEvent(color_ostream& out){
     multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_STARTED].begin(), handlers[EventType::JOB_STARTED].end());
     int32_t tick = df::global::world->frame_counter;
 
+    // compile a list of newly started jobs
     std::vector<df::job*> newly_started_jobs;
-
-    for(auto &iter : copy) { //iterate handlers
-        auto &handler = iter.second;
-        // build a list of newly started jobs
-        for ( df::job_list_link* link = df::global::world->jobs.list.next; link != NULL; link = link->next ) {
-            df::job* job = link->item;
-            if (job && Job::getWorker(job)) {
-                if (startedJobs.emplace(job).second) {
-                    newly_started_jobs.push_back(job);
-                }
+    for ( df::job_list_link* link = df::global::world->jobs.list.next; link != NULL; link = link->next ) {
+        df::job* job = link->item;
+        // the jobs must have a worker to start
+        if (job && Job::getWorker(job)) {
+            // cross-reference against existing list of jobs with workers
+            if (startedJobs.emplace(job).second) {
+                // must be new
+                newly_started_jobs.push_back(job);
             }
         }
+    }
+    // iterate the event handlers
+    for(auto &iter : copy) {
+        auto &handler = iter.second;
+        // make sure the frequency of this handler is obeyed
         if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
+            // send the handler the new jobs
             for(auto job : newly_started_jobs){
                 handler.eventHandler(out, (void*)job);
             }

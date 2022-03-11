@@ -57,11 +57,11 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `tiletypes-here`, `tiletypes-here-point`: fix crash when running from an unsuspended core context
 
 ## Misc Improvements
-- EventManager: Adds new event type ``JOB_STARTED``. Triggered when a job first gains a worker.
-- EventManager: Adds new event type ``NEW_UNIT_ACTIVE``. Triggered when a new unit appears on the active list.
-- EventManager: Refactors use of ``EventHandler::freq``. Now indicates allowed frequency of event.
-- EventManager: Adds ``EventHandler::when`` to supplant the old usage of ``EventHandler::freq`` (ie. indicates when an event will fire)
-- Plugins: Updates the plugin skeleton files to be more informative to a newbie
+- Core: Adds new event type ``JOB_STARTED``. Triggered when a job first gains a worker.
+- Core: Adds new event type ``NEW_UNIT_ACTIVE``. Triggered when a new unit appears on the active list.
+- Core: Refactors use of ``EventHandler::freq``. Now indicates allowed frequency of event.
+- Core: Adds ``EventHandler::when`` to supplant the old usage of ``EventHandler::freq`` (ie. indicates when an event will fire)
+- Documentation: Updates the plugin skeleton files to be more informative to a newbie
 - Core: DFHack now prints the name of the init script it is running to the console and stderr
 - `automaterial`: ensure construction tiles are laid down in order when using `buildingplan` to plan the constructions
 - `blueprint`: all blueprint phases are now written to a single file, using `quickfort` multi-blueprint file syntax. to get the old behavior of each phase in its own file, pass the ``--splitby=phase`` parameter to ``blueprint``

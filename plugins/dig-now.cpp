@@ -497,8 +497,19 @@ static bool smooth_tile(color_ostream &out, MapExtras::MapCache &map,
                         const DFCoord &pos) {
     df::tiletype tt = map.tiletypeAt(pos);
 
+    df::tiletype_shape shape = tileShape(tt);
+    df::tiletype_variant variant = tileVariant(tt);
+    df::tiletype_special special = df::tiletype_special::SMOOTH;
+
     TileDirection tdir;
-    if (tileShape(tt) == df::tiletype_shape::WALL) {
+    if (is_smooth_wall(map, pos)) {
+        // engraving is filtered out at a higher level, so this is a
+        // fortification designation
+        shape = tiletype_shape::FORTIFICATION;
+        variant = df::tiletype_variant::NONE;
+        special = df::tiletype_special::NONE;
+    }
+    else if (shape == df::tiletype_shape::WALL) {
         if (adjust_smooth_wall_dir(map, DFCoord(pos.x, pos.y-1, pos.z),
                                    TileDirection(0, 1, 0, 0)))
             tdir.north = 1;
@@ -514,8 +525,7 @@ static bool smooth_tile(color_ostream &out, MapExtras::MapCache &map,
         tdir = ensure_valid_tdir(tdir);
     }
 
-    tt = findTileType(tileShape(tt), tileMaterial(tt), tileVariant(tt),
-                      df::tiletype_special::SMOOTH, tdir);
+    tt = findTileType(shape, tileMaterial(tt), variant, special, tdir);
     if (tt == df::tiletype::Void)
         return false;
 

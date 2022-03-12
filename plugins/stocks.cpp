@@ -206,47 +206,7 @@ static bool is_item_in_cage_cache(df::item *item)
     return items_in_cages.find(item) != items_in_cages.end();
 }
 
-static string get_keywords(df::item *item)
-{
-    string keywords;
-
-    if (item->flags.bits.in_job)
-        keywords += "job ";
-
-    if (item->flags.bits.rotten)
-        keywords += "rotten ";
-
-    if (item->flags.bits.owned)
-        keywords += "owned ";
-
-    if (item->flags.bits.forbid)
-        keywords += "forbid ";
-
-    if (item->flags.bits.dump)
-        keywords += "dump ";
-
-    if (item->flags.bits.on_fire)
-        keywords += "fire ";
-
-    if (item->flags.bits.melt)
-        keywords += "melt ";
-
-    if (is_item_in_cage_cache(item))
-        keywords += "caged ";
-
-    if (is_in_inventory(item))
-        keywords += "inventory ";
-
-    if (depot_info.canTrade())
-    {
-        if (is_marked_for_trade(item))
-            keywords += "trade ";
-    }
-
-    return keywords;
-}
-
-static string get_item_label(df::item *item, bool trim = false)
+static string get_item_label(df::item *item, bool truncate, bool trim)
 {
     auto label = Items::getBookTitle(item);
     if (label == "")
@@ -289,9 +249,49 @@ static string get_item_label(df::item *item, bool trim = false)
         label = wearX + label + wearX;
     }
 
-    label = pad_string(label, MAX_NAME, false, true);
+    label = pad_string(label, MAX_NAME, false, truncate);
 
     return label;
+}
+
+static string get_keywords(df::item *item)
+{
+    string keywords;
+
+    if (item->flags.bits.in_job)
+        keywords += "job ";
+
+    if (item->flags.bits.rotten)
+        keywords += "rotten ";
+
+    if (item->flags.bits.owned)
+        keywords += "owned ";
+
+    if (item->flags.bits.forbid)
+        keywords += "forbid ";
+
+    if (item->flags.bits.dump)
+        keywords += "dump ";
+
+    if (item->flags.bits.on_fire)
+        keywords += "fire ";
+
+    if (item->flags.bits.melt)
+        keywords += "melt ";
+
+    if (is_item_in_cage_cache(item))
+        keywords += "caged ";
+
+    if (is_in_inventory(item))
+        keywords += "inventory ";
+
+    if (depot_info.canTrade())
+    {
+        if (is_marked_for_trade(item))
+            keywords += "trade ";
+    }
+
+    return keywords + get_item_label(item, false, false);
 }
 
 struct item_grouped_entry
@@ -303,7 +303,7 @@ struct item_grouped_entry
         if (entries.size() == 0)
             return "";
 
-        return get_item_label(entries[0], grouped);
+        return get_item_label(entries[0], true, grouped);
     }
 
     string getKeywords() const
@@ -1265,7 +1265,7 @@ private:
                 auto item_group = &grouped_items_store.back();
                 item_group->entries.push_back(item);
 
-                auto label = get_item_label(item);
+                auto label = get_item_label(item, true, false);
                 auto entry = ListEntry<item_grouped_entry *>(label, item_group, item_group->getKeywords());
                 items_column.add(entry);
 
@@ -1304,7 +1304,7 @@ private:
 
     string getItemHash(df::item *item)
     {
-        auto label = get_item_label(item, true);
+        auto label = get_item_label(item, false, true);
         auto quality = static_cast<df::item_quality>(item->getQuality());
         auto quality_enum = static_cast<df::item_quality>(quality);
         auto quality_string = ENUM_KEY_STR(item_quality, quality_enum);

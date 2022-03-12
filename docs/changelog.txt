@@ -41,8 +41,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `luasocket` (and others): return correct status code when closing socket connections
 
 ## Misc Improvements
+- `EventManager`: add new event type ``JOB_STARTED``, triggered when a job first gains a worker
+- `EventManager`: add new event type ``NEW_UNIT_ACTIVE``, triggered when a new unit appears on the active list
+- `EventManager`: now each registered handler for an event can have its own frequency instead of all handlers using the lowest frequency of all handlers
 
 ## Documentation
+- Add more examples to the plugin skeleton files so they are more informative for a newbie
 
 ## API
 
@@ -57,11 +61,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `tiletypes-here`, `tiletypes-here-point`: fix crash when running from an unsuspended core context
 
 ## Misc Improvements
-- Core: Adds new event type ``JOB_STARTED``. Triggered when a job first gains a worker.
-- Core: Adds new event type ``NEW_UNIT_ACTIVE``. Triggered when a new unit appears on the active list.
-- Core: Refactors use of ``EventHandler::freq``. Now indicates allowed frequency of event.
-- Core: Adds ``EventHandler::when`` to supplant the old usage of ``EventHandler::freq`` (ie. indicates when an event will fire)
-- Documentation: Updates the plugin skeleton files to be more informative to a newbie
 - Core: DFHack now prints the name of the init script it is running to the console and stderr
 - `automaterial`: ensure construction tiles are laid down in order when using `buildingplan` to plan the constructions
 - `blueprint`: all blueprint phases are now written to a single file, using `quickfort` multi-blueprint file syntax. to get the old behavior of each phase in its own file, pass the ``--splitby=phase`` parameter to ``blueprint``

@@ -63,7 +63,7 @@ This collection of orders handles basic fort necessities:
 - prepared meals and food products (and by-products like oil)
 - booze/mead
 - thread/cloth/dye
-- pots/jugs/buckets
+- pots/jugs/buckets/mugs
 - bags of leather, cloth, silk, and yarn
 - crafts and totems from otherwise unusable by-products
 - mechanisms/cages

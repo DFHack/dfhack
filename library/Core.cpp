@@ -1400,13 +1400,15 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
 
 bool Core::loadScriptFile(color_ostream &out, string fname, bool silent)
 {
-    if(!silent)
-        out << "Loading script at " << fname << std::endl;
+    if(!silent) {
+        out << "Loading script: " << fname << std::endl;
+        cerr << "Loading script: " << fname << std::endl;
+    }
     ifstream script(fname.c_str());
     if ( !script.good() )
     {
         if(!silent)
-            out.printerr("Error loading script\n");
+            out.printerr("Error loading script: %s\n", fname.c_str());
         return false;
     }
     string command;
@@ -1449,7 +1451,7 @@ static void run_dfhack_init(color_ostream &out, Core *core)
     if (!count || !Filesystem::isfile("dfhack.init"))
     {
         core->runCommand(out, "gui/no-dfhack-init");
-        core->loadScriptFile(out, "dfhack.init-example", true);
+        core->loadScriptFile(out, "dfhack.init-example", false);
     }
 }
 
@@ -2161,7 +2163,10 @@ size_t loadScriptFiles(Core* core, color_ostream& out, const vector<std::string>
     size_t result = 0;
     for ( size_t a = 0; a < scriptFiles.size(); a++ ) {
         result++;
-        core->loadScriptFile(out, folder + "/" + scriptFiles[a], true);
+        std::string path = "";
+        if (folder != ".")
+            path = folder + "/";
+        core->loadScriptFile(out, path + scriptFiles[a], false);
     }
     return result;
 }
@@ -2228,12 +2233,11 @@ void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event eve
         {
             if (!it->save_specific)
             {
-                if (!loadScriptFile(out, it->path, true))
-                    out.printerr("Could not load script: %s\n", it->path.c_str());
+                loadScriptFile(out, it->path, false);
             }
             else if (it->save_specific && isWorldLoaded())
             {
-                loadScriptFile(out, rawFolder + it->path, true);
+                loadScriptFile(out, rawFolder + it->path, false);
             }
         }
     }

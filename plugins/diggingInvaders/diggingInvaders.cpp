@@ -372,6 +372,8 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
         clearDijkstra();
         return;
     }
+
+    //we're going to unregister just in case this function has been called 20 times or something.
     EventManager::unregister(EventManager::EventType::TICK, findJobTickHandler, plugin_self);
     EventManager::registerTick(findJobTickHandler, 1, plugin_self);
 

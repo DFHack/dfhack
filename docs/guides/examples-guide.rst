@@ -63,7 +63,7 @@ This collection of orders handles basic fort necessities:
 - prepared meals and food products (and by-products like oil)
 - booze/mead
 - thread/cloth/dye
-- pots/jugs/buckets
+- pots/jugs/buckets/mugs
 - bags of leather, cloth, silk, and yarn
 - crafts and totems from otherwise unusable by-products
 - mechanisms/cages
@@ -215,9 +215,7 @@ Mason          2         2-4   Masonry, Gem Cutting/Encrusting, and
                                Architecture. In the early game, you may need to
                                run "`prioritize` ConstructBuilding" to get your
                                masons to build wells and bridges if they are too
-                               busy crafting stone furniture. Late game, you can
-                               turn off their Architecture labor since that will
-                               be better handled by your Haulers.
+                               busy crafting stone furniture.
 Meleedwarf     0         20-50 Similar to Hauler, but without most civilian
                                labors. This profession is separate from Hauler
                                so you can find your military dwarves easily.

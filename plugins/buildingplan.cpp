@@ -14,7 +14,7 @@
 
 #include "uicommon.h"
 #include "listcolumn.h"
-#include "buildingplan-lib.h"
+#include "buildingplan.h"
 
 DFHACK_PLUGIN("buildingplan");
 #define PLUGIN_VERSION "2.0"
@@ -30,6 +30,22 @@ bool quickfort_mode = false;
 bool all_enabled = false;
 bool in_dummy_screen = false;
 std::unordered_map<BuildingTypeKey, bool, BuildingTypeKeyHash> planmode_enabled;
+
+bool show_debugging = false;
+
+void debug(const char *fmt, ...)
+{
+    if (!show_debugging)
+        return;
+
+    color_ostream_proxy out(Core::getInstance().getConsole());
+    out.print("DEBUG(buildingplan): ");
+    va_list args;
+    va_start(args, fmt);
+    out.vprint(fmt, args);
+    va_end(args);
+    out.print("\n");
+}
 
 class ViewscreenChooseMaterial : public dfhack_viewscreen
 {

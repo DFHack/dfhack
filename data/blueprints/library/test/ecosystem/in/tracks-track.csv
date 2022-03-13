@@ -1,6 +1,6 @@
 #dig label(track)
-trackSE,trackEW,trackEW,trackEW,trackSW
+T(5x2),,,,T(1x2)
 trackNE,,,,trackNW
 #>
 
-,trackrampEW,trackEW,trackrampEW
+T(5x1)

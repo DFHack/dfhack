@@ -555,10 +555,7 @@ bool Units::isFortControlled(df::unit *unit)
         unit->flags2.bits.resident)
         return false;
 
-    if (unit->civ_id == -1 || unit->civ_id != ui->civ_id)
-        return false;
-    else
-        return true;
+    return unit->civ_id != -1 && unit->civ_id == ui->civ_id;
 }
 
 bool Units::isDwarf(df::unit *unit)

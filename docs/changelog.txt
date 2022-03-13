@@ -50,10 +50,13 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Documentation
 - Add more examples to the plugin skeleton files so they are more informative for a newbie
+- Lua API.rst added: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
 
 ## API
+- Added functions reverse-engineered from ambushing unit code: ``Units::isHidden``, ``Units::isFortControlled``, ``Units::getOuterContainerRef``, ``Items::getOuterContainerRef``
 
 ## Lua
+- Lua wrappers for functions reverse-engineered from ambushing unit code: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
 
 # 0.47.05-r4
 
@@ -85,16 +88,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``Buildings::findCivzonesAt()``: lookups now complete in constant time instead of linearly scanning through all civzones in the game
 - ``Job::remove_postings()``: use the job cancel vmethod graciously provided by The Toady One in place of a synthetic method derived from reverse engineering
 
-## API
-- Added functions reverse-engineered from ambushing unit code: ``Units::isHidden``, ``Units::isFortControlled``, ``Units::getOuterContainerRef``, ``Items::getOuterContainerRef``
-
 ## Lua
 - ``argparse.processArgsGetopt()``: you can now have long form parameters that are not an alias for a short form parameter. For example, you can now have a parameter like ``--longparam`` without needing to have an equivalent one-letter ``-l`` param.
 - ``dwarfmode.enterSidebarMode()``: ``df.ui_sidebar_mode.DesignateMine`` is now a suported target sidebar mode
-- Lua wrappers for functions reverse-engineered from ambushing unit code: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
-
-## Documentation
-- Lua API.rst added: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
 
 ## Removed
 - `fortplan`: please use `quickfort` instead

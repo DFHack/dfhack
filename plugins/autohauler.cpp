@@ -809,10 +809,6 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     // Reset step count since at this point it has reached 60
     step_count = 0;
 
-    // xxx I don't know what this does
-    uint32_t race = ui->race_id;
-    uint32_t civ = ui->civ_id;
-
     // Create a vector of units. This will be populated in the following for loop.
     std::vector<df::unit *> dwarfs;
 

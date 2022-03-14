@@ -414,7 +414,7 @@ public:
         df::building* bld = get_building_from_job(j);
         df::building_type type = bld->getType();
 
-        switch (bld->getType())
+        switch (type)
         {
         case df::building_type::NONE:
             return df::unit_labor::NONE;
@@ -513,7 +513,7 @@ public:
         }
 
         debug("LABORMANAGER: Cannot deduce labor for destroy building job of type %s\n",
-            ENUM_KEY_STR(building_type, bld->getType()).c_str());
+            ENUM_KEY_STR(building_type, type).c_str());
         debug_pause();
 
         return df::unit_labor::NONE;

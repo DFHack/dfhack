@@ -182,11 +182,6 @@ command_result changelayer (color_ostream &out, std::vector <std::string> & para
     }
     DFCoord cursor (cursorX,cursorY,cursorZ);
 
-    uint32_t blockX = cursorX / 16;
-    uint32_t tileX = cursorX % 16;
-    uint32_t blockY = cursorY / 16;
-    uint32_t tileY = cursorY % 16;
-
     MapExtras::Block * b = mc.BlockAt(cursor/16);
     if(!b || !b->is_valid())
     {

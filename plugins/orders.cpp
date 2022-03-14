@@ -29,6 +29,8 @@
 #include "df/manager_order.h"
 #include "df/manager_order_condition_item.h"
 #include "df/manager_order_condition_order.h"
+#include "df/reaction.h"
+#include "df/reaction_reagent.h"
 #include "df/world.h"
 
 using namespace DFHack;
@@ -37,6 +39,8 @@ using namespace df::enums;
 DFHACK_PLUGIN("orders");
 
 REQUIRE_GLOBAL(world);
+
+static const std::string ORDERS_DIR = "dfhack-config/orders";
 
 static command_result orders_command(color_ostream & out, std::vector<std::string> & parameters);
 
@@ -48,12 +52,16 @@ DFhackCExport command_result plugin_init(color_ostream & out, std::vector<Plugin
         orders_command,
         false,
         "orders - Manipulate manager orders\n"
+        "  orders list\n"
+        "    Shows the list of previously exported orders."
         "  orders export [name]\n"
         "    Exports the current list of manager orders to a file named dfhack-config/orders/[name].json.\n"
         "  orders import [name]\n"
         "    Imports manager orders from a file named dfhack-config/orders/[name].json.\n"
         "  orders clear\n"
         "    Deletes all manager orders in the current embark.\n"
+        "  orders sort\n"
+        "    Sorts current manager orders by repeat frequency so they don't conflict.\n"
     ));
     return CR_OK;
 }
@@ -63,9 +71,11 @@ DFhackCExport command_result plugin_shutdown(color_ostream & out)
     return CR_OK;
 }
 
+static command_result orders_list_command(color_ostream & out);
 static command_result orders_export_command(color_ostream & out, const std::string & name);
 static command_result orders_import_command(color_ostream & out, const std::string & name);
 static command_result orders_clear_command(color_ostream & out);
+static command_result orders_sort_command(color_ostream & out);
 
 static command_result orders_command(color_ostream & out, std::vector<std::string> & parameters)
 {
@@ -83,6 +93,11 @@ static command_result orders_command(color_ostream & out, std::vector<std::strin
         return CR_WRONG_USAGE;
     }
 
+    if (parameters[0] == "list")
+    {
+        return orders_list_command(out);
+    }
+
     if (parameters[0] == "export" && parameters.size() == 2)
     {
         return orders_export_command(out, parameters[1]);
@@ -98,7 +113,44 @@ static command_result orders_command(color_ostream & out, std::vector<std::strin
         return orders_clear_command(out);
     }
 
+    if (parameters[0] == "sort" && parameters.size() == 1)
+    {
+        return orders_sort_command(out);
+    }
+
     return CR_WRONG_USAGE;
+}
+
+static command_result orders_list_command(color_ostream & out)
+{
+    // use listdir_recursive instead of listdir even though orders doesn't
+    // support subdirs so we can identify and ignore subdirs with ".json" names.
+    // also listdir_recursive will alphabetize the list for us.
+    std::map<std::string, bool> files;
+    if (0 < Filesystem::listdir_recursive(ORDERS_DIR, files, 0, false))
+    {
+        out << COLOR_LIGHTRED << "Unable to list files in directory: " << ORDERS_DIR << std::endl;
+        return CR_FAILURE;
+    }
+
+    if (files.empty())
+    {
+        out << COLOR_YELLOW << "No exported orders yet. Create manager orders and export them with 'orders export <name>', or copy pre-made orders .json files into " << ORDERS_DIR << "." << std::endl;
+        return CR_OK;
+    }
+
+    for (auto it : files)
+    {
+        if (it.second)
+            continue; // skip directories
+        std::string name = it.first;
+        if (name.length() <= 5 || name.rfind(".json") != name.length() - 5)
+            continue; // skip non-.json files
+        name.resize(name.length() - 5);
+        out << name << std::endl;
+    }
+
+    return CR_OK;
 }
 
 static bool is_safe_filename(color_ostream & out, const std::string & name)
@@ -377,7 +429,26 @@ static command_result orders_export_command(color_ostream & out, const std::stri
                         condition["tool"] = enum_item_key(it2->has_tool_use);
                     }
 
-                    // TODO: anon_1, anon_2, anon_3
+                    if (it2->min_dimension != -1)
+                    {
+                        condition["min_dimension"] = it2->min_dimension;
+                    }
+
+                    if (it2->reaction_id != -1)
+                    {
+                        df::reaction *reaction = world->raws.reactions.reactions[it2->reaction_id];
+                        condition["reaction_id"] = reaction->code;
+
+                        if (!it2->contains.empty())
+                        {
+                            Json::Value contains(Json::arrayValue);
+                            for (int32_t contains_val : it2->contains)
+                            {
+                                contains.append(reaction->reagents[contains_val]->code);
+                            }
+                            condition["contains"] = contains;
+                        }
+                    }
 
                     conditions.append(condition);
                 }
@@ -410,9 +481,9 @@ static command_result orders_export_command(color_ostream & out, const std::stri
         }
     }
 
-    Filesystem::mkdir("dfhack-config/orders");
+    Filesystem::mkdir(ORDERS_DIR);
 
-    std::ofstream file("dfhack-config/orders/" + name + ".json");
+    std::ofstream file(ORDERS_DIR + "/" + name + ".json");
 
     file << orders << std::endl;
 
@@ -705,7 +776,72 @@ static command_result orders_import(color_ostream &out, Json::Value &orders)
                     }
                 }
 
-                // TODO: anon_1, anon_2, anon_3
+                if (it2.isMember("min_dimension"))
+                {
+                    condition->min_dimension = it2["min_dimension"].asInt();
+                }
+
+                if (it2.isMember("reaction_id"))
+                {
+                    std::string reaction_code = it2["reaction_id"].asString();
+                    df::reaction *reaction = NULL;
+                    int32_t reaction_id = -1;
+                    size_t num_reactions = world->raws.reactions.reactions.size();
+                    for (size_t idx = 0; idx < num_reactions; ++idx)
+                    {
+                        reaction = world->raws.reactions.reactions[idx];
+                        if (reaction->code == reaction_code)
+                        {
+                            reaction_id = idx;
+                            break;
+                        }
+                    }
+                    if (reaction_id < 0)
+                    {
+                        delete condition;
+
+                        out << COLOR_YELLOW << "Reaction code not found for imported manager order: " << reaction_code << std::endl;
+
+                        continue;
+                    }
+
+                    condition->reaction_id = reaction_id;
+
+                    if (it2.isMember("contains"))
+                    {
+                        size_t num_reagents = reaction->reagents.size();
+                        std::string bad_reagent_code;
+                        for (Json::Value & contains_val : it2["contains"])
+                        {
+                            std::string reagent_code = contains_val.asString();
+                            bool reagent_found = false;
+                            for (size_t idx = 0; idx < num_reagents; ++idx)
+                            {
+                                df::reaction_reagent *reagent = reaction->reagents[idx];
+                                if (reagent->code == reagent_code)
+                                {
+                                    condition->contains.push_back(idx);
+                                    reagent_found = true;
+                                    break;
+                                }
+                            }
+
+                            if (!reagent_found)
+                            {
+                                bad_reagent_code = reagent_code;
+                                break;
+                            }
+                        }
+                        if (!bad_reagent_code.empty())
+                        {
+                            delete condition;
+
+                            out << COLOR_YELLOW << "Invalid reagent code for imported manager order: " << bad_reagent_code << std::endl;
+
+                            continue;
+                        }
+                    }
+                }
 
                 order->item_conditions.push_back(condition);
             }
@@ -758,7 +894,7 @@ static command_result orders_import_command(color_ostream & out, const std::stri
         return CR_WRONG_USAGE;
     }
 
-    const std::string filename("dfhack-config/orders/" + name + ".json");
+    const std::string filename(ORDERS_DIR + "/" + name + ".json");
     Json::Value orders;
 
     {
@@ -835,6 +971,31 @@ static command_result orders_clear_command(color_ostream & out)
     out << "Deleted " << world->manager_orders.size() << " manager orders." << std::endl;
 
     world->manager_orders.clear();
+
+    return CR_OK;
+}
+
+static bool compare_freq(df::manager_order *a, df::manager_order *b)
+{
+    if (a->frequency == df::manager_order::T_frequency::OneTime
+            || b->frequency == df::manager_order::T_frequency::OneTime)
+        return a->frequency < b->frequency;
+    return a->frequency > b->frequency;
+}
+
+static command_result orders_sort_command(color_ostream & out)
+{
+    CoreSuspender suspend;
+
+    if (!std::is_sorted(world->manager_orders.begin(),
+                        world->manager_orders.end(),
+                        compare_freq))
+    {
+        std::stable_sort(world->manager_orders.begin(),
+                         world->manager_orders.end(),
+                         compare_freq);
+        out << "Fixed priority of manager orders." << std::endl;
+    }
 
     return CR_OK;
 }

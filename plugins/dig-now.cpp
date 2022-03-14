@@ -345,11 +345,13 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                 DFCoord pos_above(pos.x, pos.y, pos.z+1);
                 if (map.ensureBlockAt(pos_above))
                     remove_ramp_top(map, pos_above);
+                df::tile_dig_designation td_below =
+                        map.designationAt(pos_below).bits.dig;
                 if (dig_tile(out, map, pos_below,
                              df::tile_dig_designation::Ramp, dug_tiles)) {
                     clean_ramps(map, pos_below);
-                    // if we successfully dug out the ramp below, that took care
-                    // of adding the ramp top here
+                    if (td_below == df::tile_dig_designation::Default)
+                        dig_tile(out, map, pos_below, td_below, dug_tiles);
                     return true;
                 }
             }
@@ -495,8 +497,19 @@ static bool smooth_tile(color_ostream &out, MapExtras::MapCache &map,
                         const DFCoord &pos) {
     df::tiletype tt = map.tiletypeAt(pos);
 
+    df::tiletype_shape shape = tileShape(tt);
+    df::tiletype_variant variant = tileVariant(tt);
+    df::tiletype_special special = df::tiletype_special::SMOOTH;
+
     TileDirection tdir;
-    if (tileShape(tt) == df::tiletype_shape::WALL) {
+    if (is_smooth_wall(map, pos)) {
+        // engraving is filtered out at a higher level, so this is a
+        // fortification designation
+        shape = tiletype_shape::FORTIFICATION;
+        variant = df::tiletype_variant::NONE;
+        special = df::tiletype_special::NONE;
+    }
+    else if (shape == df::tiletype_shape::WALL) {
         if (adjust_smooth_wall_dir(map, DFCoord(pos.x, pos.y-1, pos.z),
                                    TileDirection(0, 1, 0, 0)))
             tdir.north = 1;
@@ -512,8 +525,7 @@ static bool smooth_tile(color_ostream &out, MapExtras::MapCache &map,
         tdir = ensure_valid_tdir(tdir);
     }
 
-    tt = findTileType(tileShape(tt), tileMaterial(tt), tileVariant(tt),
-                      df::tiletype_special::SMOOTH, tdir);
+    tt = findTileType(shape, tileMaterial(tt), variant, special, tdir);
     if (tt == df::tiletype::Void)
         return false;
 
@@ -597,10 +609,11 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
                         !to.bits.dig_marked) {
                     std::vector<dug_tile_info> dug_tiles;
                     if (dig_tile(out, map, pos, td.bits.dig, dug_tiles)) {
-                        td = map.designationAt(pos);
-                        td.bits.dig = df::tile_dig_designation::No;
-                        map.setDesignationAt(pos, td);
                         for (auto info : dug_tiles) {
+                            td = map.designationAt(info.pos);
+                            td.bits.dig = df::tile_dig_designation::No;
+                            map.setDesignationAt(info.pos, td);
+
                             dug_coords.push_back(info.pos);
                             refresh_adjacent_smooth_walls(map, info.pos);
                             if (info.imat < 0)

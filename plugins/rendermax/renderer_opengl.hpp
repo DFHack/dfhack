@@ -149,7 +149,7 @@ private:
         old_opengl* p=reinterpret_cast<old_opengl*>(parent);
         float *fg = p->fg + tile * 4 * 6;
         float *bg = p->bg + tile * 4 * 6;
-        float *tex = p->tex + tile * 2 * 6;
+        // float *tex = p->tex + tile * 2 * 6;
         const float val=1/2.0;
 
         float r=rFloat()*val - val/2;
@@ -264,7 +264,7 @@ private:
         old_opengl* p=reinterpret_cast<old_opengl*>(parent);
         float *fg = p->fg + tile * 4 * 6;
         float *bg = p->bg + tile * 4 * 6;
-        float *tex = p->tex + tile * 2 * 6;
+        // float *tex = p->tex + tile * 2 * 6;
         rgbf light=lightGrid[tile];
         for (int i = 0; i < 6; i++) {
             *(fg++) *= light.r;
@@ -343,7 +343,7 @@ private:
         old_opengl* p=reinterpret_cast<old_opengl*>(parent);
         float *fg = p->fg + tile * 4 * 6;
         float *bg = p->bg + tile * 4 * 6;
-        float *tex = p->tex + tile * 2 * 6;
+        // float *tex = p->tex + tile * 2 * 6;
         rgbf fm=foreMult[tile];
         rgbf fo=foreOffset[tile];
 

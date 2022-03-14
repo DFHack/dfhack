@@ -75,10 +75,6 @@ void impregnateMany() {
         }
         if ( unit->flags1.bits.caged )
             continue;
-        int32_t race = unit->race;
-        int16_t caste = unit->caste;
-        df::creature_raw* creatureRaw = world->raws.creatures.all[race];
-        df::caste_raw* casteRaw = creatureRaw->caste[caste];
         //must have PET or PET_EXOTIC
         if ( !Units::isTamable(unit))
             continue;

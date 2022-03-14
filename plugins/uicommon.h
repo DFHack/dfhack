@@ -31,7 +31,6 @@ using namespace std;
 using std::string;
 using std::vector;
 using std::map;
-using std::ostringstream;
 using std::set;
 
 using namespace DFHack;
@@ -160,7 +159,9 @@ static inline void OutputToggleString(int &x, int &y, const char *text, df::inte
 
 inline string int_to_string(const int n)
 {
-    return static_cast<ostringstream*>( &(ostringstream() << n) )->str();
+    std::ostringstream ss;
+    ss << n;
+    return ss.str();
 }
 
 static inline void set_to_limit(int &value, const int maximum, const int min = 0)

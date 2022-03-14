@@ -102,6 +102,7 @@ struct CoordHash {
 };
 
 static unordered_map<df::coord, int32_t, CoordHash> locationToBuilding;
+static unordered_map<df::coord, vector<int32_t>, CoordHash> locationToCivzones;
 
 static df::building_extents_type *getExtentTile(df::building_extents &extent, df::coord2d tile)
 {
@@ -173,7 +174,6 @@ uint32_t Buildings::getNumBuildings()
 
 bool Buildings::Read (const uint32_t index, t_building & building)
 {
-    Core & c = Core::getInstance();
     df::building *bld = world->buildings.all[index];
 
     building.x1 = bld->x1;
@@ -193,12 +193,10 @@ bool Buildings::Read (const uint32_t index, t_building & building)
 bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
 {
     vector <building_def *> & bld_def = world->raws.buildings.all;
-    uint32_t size = bld_def.size();
     btypes.clear();
 
-    for (auto iter = bld_def.begin(); iter != bld_def.end();iter++)
+    for (building_def *temp : bld_def)
     {
-        building_def * temp = *iter;
         btypes[temp->id] = temp->code;
     }
     return true;
@@ -308,20 +306,97 @@ df::building *Buildings::findAtTile(df::coord pos)
     return NULL;
 }
 
-bool Buildings::findCivzonesAt(std::vector<df::building_civzonest*> *pvec, df::coord pos)
-{
+static unordered_map<int32_t, df::coord> corner1;
+static unordered_map<int32_t, df::coord> corner2;
+static void cacheBuilding(df::building *building) {
+    int32_t id = building->id;
+    bool is_civzone = !building->isSettingOccupancy();
+    df::coord p1(min(building->x1, building->x2), min(building->y1,building->y2), building->z);
+    df::coord p2(max(building->x1, building->x2), max(building->y1,building->y2), building->z);
+
+    if (!is_civzone) {
+        // civzones can be dynamically shrunk so we don't bother to cache
+        // their boundaries. findCivzonesAt() will trim the cache as needed.
+        corner1[id] = p1;
+        corner2[id] = p2;
+    }
+
+    for (int32_t x = p1.x; x <= p2.x; x++) {
+        for (int32_t y = p1.y; y <= p2.y; y++) {
+            df::coord pt(x, y, building->z);
+            if (Buildings::containsTile(building, pt, is_civzone)) {
+                if (is_civzone)
+                    locationToCivzones[pt].push_back(id);
+                else
+                    locationToBuilding[pt] = id;
+            }
+        }
+    }
+}
+
+static int32_t nextCivzone = 0;
+static void cacheNewCivzones() {
+    if (!world || !building_next_id)
+        return;
+
+    int32_t nextBuildingId = *building_next_id;
+    for (int32_t id = nextCivzone; id < nextBuildingId; ++id) {
+        auto &vec = world->buildings.other[buildings_other_id::ANY_ZONE];
+        int32_t idx = df::building::binsearch_index(vec, id);
+        if (idx > -1)
+            cacheBuilding(vec[idx]);
+    }
+    nextCivzone = nextBuildingId;
+}
+
+bool Buildings::findCivzonesAt(std::vector<df::building_civzonest*> *pvec,
+                               df::coord pos) {
     pvec->clear();
 
-    auto &vec = world->buildings.other[buildings_other_id::ANY_ZONE];
+    // Tiles have an occupancy->bits.building flag to quickly determine if it is
+    // covered by a buildling, but there is no such flag for civzones.
+    // Therefore, we need to make sure that our cache is authoratative.
+    // Otherwise, we would have to fall back to linearly scanning the list of
+    // all civzones on a cache miss.
+    //
+    // Since we guarantee our cache contains *at least* all tiles that are
+    // currently covered by civzones, we can conclude that if a tile is not in
+    // the cache, there is no civzone there. Civzones *can* be dynamically
+    // shrunk, so we still need to verify that civzones that once covered this
+    // tile continue to cover this tile.
+    cacheNewCivzones();
 
-    for (size_t i = 0; i < vec.size(); i++)
-    {
-        auto bld = strict_virtual_cast<df::building_civzonest>(vec[i]);
+    auto civzones_it = locationToCivzones.find(pos);
+    if (civzones_it == locationToCivzones.end())
+        return false;
 
-        if (!bld || bld->z != pos.z || !containsTile(bld, pos))
+    set<int32_t> ids_to_remove;
+    auto &civzones = civzones_it->second;
+    for (int32_t id : civzones) {
+        int32_t idx = df::building::binsearch_index(
+                world->buildings.other[buildings_other_id::ANY_ZONE], id);
+        df::building_civzonest *civzone = NULL;
+        if (idx > -1)
+            civzone = world->buildings.other.ANY_ZONE[idx];
+        if (!civzone || civzone->z != pos.z ||
+                !containsTile(civzone, pos, true)) {
+            ids_to_remove.insert(id);
             continue;
+        }
+        pvec->push_back(civzone);
+    }
 
-        pvec->push_back(bld);
+    // civzone no longer occupies this tile; update the cache
+    if (!ids_to_remove.empty()) {
+        for (auto it = civzones.begin(); it != civzones.end(); ) {
+            if (ids_to_remove.count(*it)) {
+                it = civzones.erase(it);
+                continue;
+            }
+            ++it;
+        }
+        if (civzones.empty())
+            locationToCivzones.erase(pos);
     }
 
     return !pvec->empty();
@@ -1221,47 +1296,29 @@ bool Buildings::markedForRemoval(df::building *bld)
     return false;
 }
 
-static unordered_map<int32_t, df::coord> corner1;
-static unordered_map<int32_t, df::coord> corner2;
-
 void Buildings::clearBuildings(color_ostream& out) {
     corner1.clear();
     corner2.clear();
     locationToBuilding.clear();
+    locationToCivzones.clear();
+    nextCivzone = 0;
 }
 
-void Buildings::updateBuildings(color_ostream& out, void* ptr)
+void Buildings::updateBuildings(color_ostream&, void* ptr)
 {
     int32_t id = (int32_t)(intptr_t)ptr;
     auto building = df::building::find(id);
 
     if (building)
     {
-        // Already cached -> weird, so bail out
-        if (corner1.count(id))
-            return;
-        // Civzones cannot be cached because they can
-        // overlap each other and normal buildings.
-        if (!building->isSettingOccupancy())
-            return;
-
-        df::coord p1(min(building->x1, building->x2), min(building->y1,building->y2), building->z);
-        df::coord p2(max(building->x1, building->x2), max(building->y1,building->y2), building->z);
-
-        corner1[id] = p1;
-        corner2[id] = p2;
-
-        for ( int32_t x = p1.x; x <= p2.x; x++ ) {
-            for ( int32_t y = p1.y; y <= p2.y; y++ ) {
-                df::coord pt(x,y,building->z);
-                if (containsTile(building, pt, false))
-                    locationToBuilding[pt] = id;
-            }
-        }
+        if (!corner1.count(id))
+            cacheBuilding(building);
     }
     else if (corner1.count(id))
     {
-        //existing building: destroy it
+        // existing building: destroy it
+        // note that civzones are lazy-destroyed in findCivzonesAt() and are
+        // not handled here
         df::coord p1 = corner1[id];
         df::coord p2 = corner2[id];
 

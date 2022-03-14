@@ -150,6 +150,9 @@ DFHACK_EXPORT bool setOwner(df::item *item, df::unit *unit);
 
 /// which item is it contained in?
 DFHACK_EXPORT df::item *getContainer(df::item *item);
+/// what is the outermost object it is contained in? Possible ref types: UNIT, ITEM_GENERAL, VERMIN_EVENT
+DFHACK_EXPORT void getOuterContainerRef(df::specific_ref &spec_ref, df::item *item, bool init_ref = true);
+DFHACK_EXPORT inline df::specific_ref getOuterContainerRef(df::item *item) { df::specific_ref s; getOuterContainerRef(s, item); return s; }
 /// which items does it contain?
 DFHACK_EXPORT void getContainedItems(df::item *item, /*output*/ std::vector<df::item*> *items);
 

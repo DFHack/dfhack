@@ -28,4 +28,7 @@ jobs:
         git config user.email "63161697+DFHack-Urist@users.noreply.github.com"
         if bash -x ci/update-submodules.bash; then
           git push --recurse-submodules=check
+        elif ! git diff --exit-code HEAD; then
+          echo "update-submodules.bash failed to commit changes"
+          exit 1
         fi

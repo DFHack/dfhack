@@ -358,7 +358,7 @@ bool sendRemoteMessage(CSimpleSocket *socket, int16_t id, const MessageLite *msg
 
     uint8_t *pstart = data + sizeof(RPCMessageHeader);
     uint8_t *pend = msg->SerializeWithCachedSizesToArray(pstart);
-    assert((pend - pstart) == size);
+    assert((pend - pstart) == size); (void)pend;
 
     int got = socket->Send(data, fullsz);
     delete[] data;

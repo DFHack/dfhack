@@ -89,6 +89,9 @@ DFHACK_EXPORT df::general_ref *getGeneralRef(df::unit *unit, df::general_ref_typ
 DFHACK_EXPORT df::specific_ref *getSpecificRef(df::unit *unit, df::specific_ref_type type);
 
 DFHACK_EXPORT df::item *getContainer(df::unit *unit);
+/// what is the outermost object it is contained in? Possible ref types: UNIT, ITEM_GENERAL, VERMIN_EVENT
+DFHACK_EXPORT void getOuterContainerRef(df::specific_ref &spec_ref, df::unit *unit, bool init_ref=true);
+DFHACK_EXPORT inline df::specific_ref getOuterContainerRef(df::unit *unit) { df::specific_ref s; getOuterContainerRef(s, unit); return s; }
 
 DFHACK_EXPORT void setNickname(df::unit *unit, std::string nick);
 DFHACK_EXPORT df::language_name *getVisibleName(df::unit *unit);
@@ -113,6 +116,7 @@ DFHACK_EXPORT bool isDead(df::unit *unit);
 DFHACK_EXPORT bool isAlive(df::unit *unit);
 DFHACK_EXPORT bool isSane(df::unit *unit);
 DFHACK_EXPORT bool isCitizen(df::unit *unit);
+DFHACK_EXPORT bool isFortControlled(df::unit *unit);
 DFHACK_EXPORT bool isDwarf(df::unit *unit);
 DFHACK_EXPORT bool isWar(df::unit* unit);
 DFHACK_EXPORT bool isHunter(df::unit* unit);
@@ -121,6 +125,8 @@ DFHACK_EXPORT bool isOwnCiv(df::unit* unit);
 DFHACK_EXPORT bool isOwnGroup(df::unit* unit);
 DFHACK_EXPORT bool isOwnRace(df::unit* unit);
 DFHACK_EXPORT bool isVisible(df::unit* unit);
+/// is unit hidden to the player? accounts for ambushing
+DFHACK_EXPORT bool isHidden(df::unit *unit);
 
 DFHACK_EXPORT std::string getRaceNameById(int32_t race_id);
 DFHACK_EXPORT std::string getRaceName(df::unit* unit);

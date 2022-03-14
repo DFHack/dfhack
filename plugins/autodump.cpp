@@ -350,7 +350,6 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
     size_t numItems = world->items.all.size();
 
     MapCache MC;
-    int i = 0;
     int dumped_total = 0;
 
     int cx, cy, cz;

@@ -141,7 +141,7 @@ struct work_hook : df::building_workshopst{
 
     DEFINE_VMETHOD_INTERPOSE(void, getPowerInfo, (df::power_info *info))
     {
-        if (auto def = find_def())
+        if (find_def())
         {
             df::power_info power;
             get_current_power(info);
@@ -420,7 +420,7 @@ static int addBuilding(lua_State* L)
 static void setPower(df::building_workshopst* workshop, int power_produced, int power_consumed)
 {
     work_hook* ptr = static_cast<work_hook*>(workshop);
-    if (workshop_hack_data* def = ptr->find_def())//check if it's really hacked workshop
+    if (ptr->find_def()) // check if it's really hacked workshop
     {
         ptr->set_current_power(power_produced, power_consumed);
     }
@@ -431,7 +431,7 @@ static int getPower(lua_State*L)
     work_hook* ptr = static_cast<work_hook*>(workshop);
     if (!ptr)
         return 0;
-    if (workshop_hack_data* def = ptr->find_def())//check if it's really hacked workshop
+    if (ptr->find_def()) // check if it's really hacked workshop
     {
         df::power_info info;
         ptr->get_current_power(&info);

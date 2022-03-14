@@ -9,6 +9,7 @@
 --   width (required)
 --   height (required)
 --   depth (default is 1)
+--   start (cursor offset for input blueprints, default is 1,1)
 --
 -- depends on blueprint, buildingplan, and dig-now plugins (as well as the
 -- quickfort script, of course)
@@ -16,21 +17,37 @@
 -- note that this test harness cannot (yet) test #query blueprints that define
 -- rooms since furniture is not actually built during the test. It also cannot
 -- test blueprints that #build flooring and then #build a workshop on top, again
--- since the flooring is never actually built.
+-- since the flooring is never actually built. We can support these features
+-- once we figure out how to programmatically deconstruct buildlings without
+-- crashing the game.
 
-config = {
-    mode = 'fortress',
-}
+config.mode = 'fortress'
 
+local argparse = require('argparse')
 local blueprint = require('plugins.blueprint')
 local quickfort_list = reqscript('internal/quickfort/list')
 local quickfort_command = reqscript('internal/quickfort/command')
+local utils = require('utils')
 
 local blueprints_dir = 'blueprints/'
 local input_dir = 'library/test/ecosystem/in/'
+local golden_dir = 'library/test/ecosystem/golden/'
 local output_dir = 'library/test/ecosystem/out/'
 
-local mode_names = {'dig', 'build', 'place', 'query'}
+local phase_names = utils.invert(blueprint.valid_phases)
+
+-- clear the output dir before each test run (but not after -- to allow
+-- inspection of failed results)
+local function test_wrapper(test_fn)
+    local outdir = blueprints_dir .. output_dir
+    for _, v in ipairs(dfhack.filesystem.listdir_recursive(outdir)) do
+        if not v.isdir then
+            os.remove(v.path)
+        end
+    end
+    test_fn()
+end
+config.wrapper = test_wrapper
 
 local function bad_spec(expected, varname, basename, bad_value)
     qerror(('expected %s for %s in "%s" test spec; got "%s"'):
@@ -45,6 +62,10 @@ local function get_positive_int(numstr, varname, basename)
     return num
 end
 
+local function os_exists(path)
+    return os.rename(path, path) and true or false
+end
+
 local function get_blueprint_sets()
     -- find test blueprints with `quickfort list`
     local mock_print = mock.func()
@@ -57,21 +78,26 @@ local function get_blueprint_sets()
     local sets = {}
     for _,args in ipairs(mock_print.call_args) do
         local line = args[1]
-        local _,_,listnum,fname,mode = line:find('(%d+)%) (%S+) %((%S+)%)$')
+        -- phase is the label or, if the label doesn't exist, the mode
+        local _,_,listnum,fname,phase = line:find('(%d+)%) (%S+).-[/(]([^ )]+)')
         if listnum then
             local _,_,file_part = fname:find('/([^/]+)$')
             local _,_,basename = file_part:find('^([^-.]+)')
-            if not sets[basename] then sets[basename] = {spec={}, modes={}} end
-            sets[basename].modes[mode] = {
+            if not sets[basename] then sets[basename] = {spec={}, phases={}} end
+            local golden_path = blueprints_dir..golden_dir..file_part
+            if not os_exists(golden_path) then
+                golden_path = blueprints_dir..fname
+            end
+            sets[basename].phases[phase] = {
                 listnum=listnum,
-                input_filepath=blueprints_dir..fname,
+                golden_filepath=golden_path,
                 output_filepath=blueprints_dir..output_dir..file_part}
         end
     end
 
     -- load test specs
     for basename,set in pairs(sets) do
-        local spec, notes = set.spec, set.modes.notes
+        local spec, notes = set.spec, set.phases.notes
 
         -- set defaults
         spec.depth = '1'
@@ -88,7 +114,7 @@ local function get_blueprint_sets()
                 dfhack.run_script('quickfort', 'run', '-q', notes.listnum)
             end)
 
-        -- validate spec and convert numbers to numeric vars
+        -- validate spec and convert number strings to numeric vars
         if not spec.description or spec.description == '' then
             qerror(('missing description in test spec for "%s"'):
                         format(basename))
@@ -96,6 +122,11 @@ local function get_blueprint_sets()
         spec.width = get_positive_int(spec.width, 'width', basename)
         spec.height = get_positive_int(spec.height, 'height', basename)
         spec.depth = get_positive_int(spec.depth, 'depth', basename)
+        if spec.start then
+            local start_spec = argparse.numberList(spec.start, basename, 2)
+            spec.start = {x=get_positive_int(start_spec[1], 'startx', basename),
+                          y=get_positive_int(start_spec[2], 'starty', basename)}
+        end
     end
 
     return sets
@@ -123,6 +154,7 @@ local function get_test_area(area, spec)
     if spec.width > df.global.world.map.x_count - 2 or
             spec.height > df.global.world.map.y_count - 2 or
             spec.depth > df.global.world.map.z_count then
+        print('map too small to accomodate test')
         return false
     end
 
@@ -147,26 +179,29 @@ local function get_test_area(area, spec)
             area.width, area.height, area.depth =
                     spec.width, spec.height, spec.depth
             area.pos = {x=1, y=1, z=z_start}
+            area.endpos = {x=area.width, y=area.height, z=z_start-area.depth+1}
             return true
         end
         ::continue::
     end
 end
 
-local function get_cursor_arg(pos)
-    return ('--cursor=%d,%d,%d'):format(pos.x, pos.y, pos.z)
+local function get_cursor_arg(pos, start)
+    start = start or {x=1, y=1}
+    return ('--cursor=%d,%d,%d'):format(pos.x+start.x-1, pos.y+start.y-1, pos.z)
 end
 
-local function quickfort_cmd(cmd, listnum, pos)
-    dfhack.run_script('quickfort', cmd, '-q', listnum, get_cursor_arg(pos))
+local function quickfort_cmd(cmd, listnum, pos, start)
+    dfhack.run_script('quickfort', cmd, '-q', listnum,
+                      get_cursor_arg(pos, start))
 end
 
-local function quickfort_run(listnum, pos)
-    quickfort_cmd('run', listnum, pos)
+local function quickfort_run(listnum, pos, start)
+    quickfort_cmd('run', listnum, pos, start)
 end
 
-local function quickfort_undo(listnum, pos)
-    quickfort_cmd('undo', listnum, pos)
+local function quickfort_undo(listnum, pos, start)
+    quickfort_cmd('undo', listnum, pos, start)
 end
 
 local function designate_area(pos, spec)
@@ -178,15 +213,19 @@ local function designate_area(pos, spec)
     end end end
 end
 
+local function format_pos(pos)
+    return ('%s,%s,%s'):format(pos.x, pos.y, pos.z)
+end
+
+local function run_dig_now(area)
+    dfhack.run_command('dig-now', format_pos(area.pos),
+                       format_pos(area.endpos), '--clean')
+end
+
 local function run_blueprint(basename, set, pos)
-    local blueprint_args = {tostring(set.spec.width),
-                            tostring(set.spec.height),
-                            tostring(-set.spec.depth),
-                            output_dir..basename, get_cursor_arg(pos)}
-    for _,mode_name in pairs(mode_names) do
-        if set.modes[mode_name] then table.insert(blueprint_args, mode_name) end
-    end
-    blueprint.run(table.unpack(blueprint_args))
+    blueprint.run(tostring(set.spec.width), tostring(set.spec.height),
+                  tostring(-set.spec.depth), output_dir..basename,
+                  get_cursor_arg(pos), '-tphase')
 end
 
 local function reset_area(area, spec)
@@ -209,6 +248,18 @@ local function reset_area(area, spec)
     pos.z = pos.z - spec.depth + 1
 
     dfhack.run_command('tiletypes-here', '--quiet', get_cursor_arg(pos))
+
+    -- patch up tiles where the material couldn't be automatically determined
+    -- we don't just set all tiles to 'stone' so we don't obliterate veins
+    commands = {
+        'f', 's', 'empty', ';',
+        'p', 'm', 'stone'}
+    dfhack.run_command('tiletypes-command', table.unpack(commands))
+    dfhack.run_command('tiletypes-here', '--quiet', get_cursor_arg(pos))
+
+    commands = {'f', 's', 'ramp_top'}
+    dfhack.run_command('tiletypes-command', table.unpack(commands))
+    dfhack.run_command('tiletypes-here', '--quiet', get_cursor_arg(pos))
 end
 
 function test.end_to_end()
@@ -217,11 +268,13 @@ function test.end_to_end()
 
     local area = {width=0, height=0, depth=0}
     for basename,set in pairs(sets) do
-        print(('running quickfort test: "%s": %s'):
-                    format(basename, set.spec.description))
+        local spec = set.spec
+
+        print(('running quickfort ecosystem test: "%s": %s'):
+                    format(basename, spec.description))
 
         -- find an unused area of the map that meets requirements, else skip
-        if not get_test_area(area, set.spec) then
+        if not get_test_area(area, spec) then
             print(('cannot find unused map area to test set "%s"; skipping'):
                   format(basename))
             goto continue
@@ -229,20 +282,23 @@ function test.end_to_end()
 
         -- quickfort run #dig blueprint (or just designate the whole block if
         -- there is no #dig blueprint)
-        local modes = set.modes
-        if modes.dig then
-            quickfort_run(modes.dig.listnum, area.pos)
+        local phases = set.phases
+        if phases.dig then
+            quickfort_run(phases.dig.listnum, area.pos, spec.start)
         else
-            designate_area(area.pos, set.spec)
+            designate_area(area.pos, spec)
         end
 
         -- run dig-now to dig out designated tiles
-        dfhack.run_command('dig-now')
+        run_dig_now(area)
 
         -- quickfort run remaining blueprints
-        for _,mode_name in pairs(mode_names) do
-            if mode_name ~= 'dig' and modes[mode_name] then
-                quickfort_run(modes[mode_name].listnum, area.pos)
+        for _,phase_name in ipairs(phase_names) do
+            if phase_name ~= 'dig' and phases[phase_name] then
+                quickfort_run(phases[phase_name].listnum, area.pos, spec.start)
+                if phase_name == 'track' then
+                    run_dig_now(area)
+                end
             end
         end
 
@@ -250,9 +306,9 @@ function test.end_to_end()
         run_blueprint(basename, set, area.pos)
 
         -- quickfort undo blueprints
-        for _,mode_name in pairs(mode_names) do
-            if modes[mode_name] then
-                quickfort_undo(modes[mode_name].listnum, area.pos)
+        for _,phase_name in ipairs(phase_names) do
+            if phases[phase_name] then
+                quickfort_undo(phases[phase_name].listnum, area.pos, spec.start)
             end
         end
 
@@ -261,11 +317,12 @@ function test.end_to_end()
 
         -- compare md5sum of input and output files
         local md5File = dfhack.internal.md5File
-        for mode,mode_data in pairs(modes) do
-            if mode == 'notes' then goto continue end
-            local input_filepath = mode_data.input_filepath
-            local output_filepath = mode_data.output_filepath
-            local input_hash, input_size = md5File(input_filepath)
+        for phase,phase_data in pairs(phases) do
+            if phase == 'notes' then goto continue end
+            print(('  verifying phase: %s'):format(phase))
+            local golden_filepath = phase_data.golden_filepath
+            local output_filepath = phase_data.output_filepath
+            local input_hash, input_size = md5File(golden_filepath)
             local output_hash, output_size = md5File(output_filepath)
             expect.eq(input_hash, output_hash,
                       'compare blueprint contents to input: '..output_filepath)
@@ -275,7 +332,7 @@ function test.end_to_end()
             if input_hash ~= output_hash or input_size ~= output_size then
                 -- show diff
                 local input, output =
-                    io.open(input_filepath, 'r'), io.open(output_filepath, 'r')
+                    io.open(golden_filepath, 'r'), io.open(output_filepath, 'r')
                 local input_lines, output_lines = {}, {}
                 for l in input:lines() do table.insert(input_lines, l) end
                 for l in output:lines() do table.insert(output_lines, l) end

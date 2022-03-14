@@ -46,17 +46,17 @@ selected interactively with the ``blueprint gui`` command or, if the GUI is not
 used, starts at the active cursor location and extends right and down for the
 requested width and height.
 
-Usage::
+**Usage:**
 
-    blueprint <width> <height> [<depth>] [<name> [<phases>]] [<options>]
-    blueprint gui [<name> [<phases>]] [<options>]
+    ``blueprint <width> <height> [<depth>] [<name> [<phases>]] [<options>]``
 
-Examples:
+    ``blueprint gui [<name> [<phases>]] [<options>]``
+
+**Examples:**
 
 ``blueprint gui``
-    Runs `gui/blueprint`, the interactive blueprint frontend, where all
-    configuration for a ``blueprint`` command can be set visually and
-    interactively.
+    Runs `gui/blueprint`, the interactive frontend, where all configuration for
+    a ``blueprint`` command can be set visually and interactively.
 
 ``blueprint 30 40 bedrooms``
     Generates blueprints for an area 30 tiles wide by 40 tiles tall, starting
@@ -69,7 +69,7 @@ Examples:
     the blueprint start coordinate is set to a specific value instead of using
     the in-game cursor position.
 
-Positional Parameters:
+**Positional Parameters:**
 
 :``width``:   Width of the area (in tiles) to translate.
 :``height``:  Height of the area (in tiles) to translate.
@@ -81,7 +81,7 @@ Positional Parameters:
     string must contain some characters other than numbers so the name won't be
     confused with the optional ``depth`` parameter.
 
-Phases:
+**Phases:**
 
 If you want to generate blueprints only for specific phases, add their names to
 the commandline, anywhere after the blueprint base name. You can list multiple
@@ -95,14 +95,53 @@ phases; just separate them with a space.
 
 If no phases are specified, all blueprints are created.
 
-Options:
+**Options:**
 
-:``-c``, ``--cursor <x>,<y>,<z>``:
+``-c``, ``--cursor <x>,<y>,<z>``:
     Use the specified map coordinates instead of the current cursor position for
     the upper left corner of the blueprint range. If this option is specified,
     then an active game map cursor is not necessary.
-:``-h``, ``--help``:
+``-f``, ``--format <format>``:
+    Select the output format of the generated files. See the ``Output formats``
+    section below for options. If not specified, the output format defaults to
+    "minimal", which will produce a small, fast ``.csv`` file.
+``-h``, ``--help``:
     Show command help text.
+``-s``, ``--playback-start <x>,<y>,<comment>``:
+    Specify the column and row offsets (relative to the upper-left corner of the
+    blueprint, which is ``1,1``) where the player should put the cursor when the
+    blueprint is played back with `quickfort`, in
+    `quickfort start marker <quickfort-start>` format, for example:
+    ``10,10,central stairs``. If there is a space in the comment, you will need
+    to surround the parameter string in double quotes: ``"-s10,10,central stairs"`` or
+    ``--playback-start "10,10,central stairs"`` or
+    ``"--playback-start=10,10,central stairs"``.
+``-t``, ``--splitby <strategy>``:
+    Split blueprints into multiple files. See the ``Splitting output into
+    multiple files`` section below for details. If not specified, defaults to
+    "none", which will create a standard quickfort
+    `multi-blueprint <quickfort-packaging>` file.
+
+**Output formats:**
+
+Here are the values that can be passed to the ``--format`` flag:
+
+:``minimal``:
+    Creates ``.csv`` files with minimal file size that are fast to read and
+    write. This is the default.
+:``pretty``:
+    Makes the blueprints in the ``.csv`` files easier to read and edit with a text
+    editor by adding extra spacing and alignment markers.
+
+**Splitting output into multiple files:**
+
+The ``--splitby`` flag can take any of the following values:
+
+:``none``:
+    Writes all blueprints into a single file. This is the standard format for
+    quickfort fortress blueprint bundles and is the default.
+:``phase``:
+    Creates a separate file for each phase.
 
 .. _remotefortressreader:
 
@@ -1974,6 +2013,14 @@ Subcommands:
 :export NAME: Exports the current list of manager orders to a file named ``dfhack-config/orders/NAME.json``.
 :import NAME: Imports manager orders from a file named ``dfhack-config/orders/NAME.json``.
 :clear: Deletes all manager orders in the current embark.
+:sort: Sorts current manager orders by repeat frequency so daily orders don't
+    prevent other orders from ever being completed: one-time orders first, then
+    yearly, seasonally, monthly, then finally daily.
+
+You can keep your orders automatically sorted by adding the following command to
+your ``onMapLoad.init`` file::
+
+    repeat -name orders-sort -time 1 -timeUnits days -command [ orders sort ]
 
 .. _nestboxes:
 
@@ -2404,45 +2451,6 @@ Example:
 
 ``filltraffic H``
   When used in a room with doors, it will set traffic to HIGH in just that room.
-
-.. _fortplan:
-
-fortplan
-========
-Usage: ``fortplan [filename]``
-
-**Fortplan is deprecated.** Please use DFHack's more powerful `quickfort`
-command instead. You can use your existing .csv files. Just move them to the
-``blueprints`` folder in your DF installation, and instead of ``fortplan file.csv`` run ``quickfort run file.csv``.
-
-Designates furniture for building according to a ``.csv`` file with
-quickfort-style syntax.
-
-The first line of the file must contain the following::
-
-   #build start(X; Y; <start location description>)
-
-...where X and Y are the offset from the top-left corner of the file's area
-where the in-game cursor should be located, and ``<start location description>``
-is an optional description of where that is. You may also leave a description
-of the contents of the file itself following the closing parenthesis on the
-same line.
-
-The syntax of the file itself is similar to `digfort` or :forums:`quickfort <35931>`.
-At present, only buildings constructed of an item with the same name as the building
-are supported. All other characters are ignored. For example::
-
-    `,`,d,`,`
-    `,f,`,t,`
-    `,s,b,c,`
-
-This section of a file would designate for construction a door and some
-furniture inside a bedroom: specifically, clockwise from top left, a cabinet,
-a table, a chair, a bed, and a statue.
-
-All of the building designation uses `buildingplan`, so you do not need to
-have the items available to construct all the buildings when you run
-fortplan with the .csv file.
 
 .. _getplants:
 

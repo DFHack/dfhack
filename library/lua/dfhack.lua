@@ -162,22 +162,47 @@ NEWLINE = "\n"
 COMMA = ","
 PERIOD = "."
 
-function printall(table)
-    local ok,f,t,k = pcall(pairs,table)
-    if ok then
-        for k,v in f,t,k do
-            print(string.format("%-23s\t = %s",tostring(k),tostring(v)))
+local function _wrap_iterator(next_fn, ...)
+    local wrapped_iter = function(...)
+        local ret = {pcall(next_fn, ...)}
+        local ok = table.remove(ret, 1)
+        if ok then
+            return table.unpack(ret)
         end
+    end
+    return wrapped_iter, ...
+end
+
+function safe_pairs(t, iterator_fn)
+    iterator_fn = iterator_fn or pairs
+    if (pcall(iterator_fn, t)) then
+        return _wrap_iterator(iterator_fn(t))
+    else
+        return function() end
     end
 end
 
-function printall_ipairs(table)
-    local ok,f,t,k = pcall(ipairs,table)
-    if ok then
-        for k,v in f,t,k do
-            print(string.format("%-23s\t = %s",tostring(k),tostring(v)))
-        end
+-- calls elem_cb(k, v) for each element of the table
+-- returns true if we iterated successfully, false if not
+-- this differs from safe_pairs() above in that it only calls pcall() once per
+-- full iteration and it returns whether iteration succeeded or failed.
+local function safe_iterate(table, iterator_fn, elem_cb)
+    local function iterate()
+        for k,v in iterator_fn(table) do elem_cb(k, v) end
     end
+    return pcall(iterate)
+end
+
+local function print_element(k, v)
+    dfhack.println(string.format("%-23s\t = %s", tostring(k), tostring(v)))
+end
+
+function printall(table)
+    safe_iterate(table, pairs, print_element)
+end
+
+function printall_ipairs(table)
+    safe_iterate(table, ipairs, print_element)
 end
 
 local do_print_recurse
@@ -199,15 +224,9 @@ local fill_chars = {
 setmetatable(fill_chars, fill_chars)
 
 local function print_fields(value, seen, indent, prefix)
-    local ok,f,t,k = pcall(pairs,value)
-    if not ok then
-        dfhack.print(prefix)
-        dfhack.println('<Type doesn\'t support iteration with pairs>')
-        return 0
-    end
     local prev_value = "not a value"
     local repeated = 0
-    for k, v in f,t,k do
+    local print_field = function(k, v)
         -- Only show set values of bitfields
         if value._kind ~= "bitfield" or v then
             local continue = false
@@ -233,7 +252,10 @@ local function print_fields(value, seen, indent, prefix)
             end
         end
     end
-    if repeated > 0 then
+    if not safe_iterate(value, pairs, print_field) then
+        dfhack.print(prefix)
+        dfhack.println('<Type doesn\'t support iteration with pairs>')
+    elseif repeated > 0 then
         dfhack.println(prefix .. "<Repeated " .. repeated .. " times>")
     end
     return 0

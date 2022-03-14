@@ -590,6 +590,47 @@ df::item *Items::getContainer(df::item * item)
     return ref ? ref->getItem() : NULL;
 }
 
+void Items::getOuterContainerRef(df::specific_ref &spec_ref, df::item *item, bool init_ref)
+{
+    CHECK_NULL_POINTER(item);
+    // Reverse-engineered from ambushing unit code
+
+    if (init_ref)
+    {
+        spec_ref.type = specific_ref_type::ITEM_GENERAL;
+        spec_ref.data.object = item;
+    }
+
+    if (item->flags.bits.removed || !item->flags.bits.in_inventory)
+        return;
+
+    for (size_t i = 0; i < item->general_refs.size(); i++)
+    {
+        auto g = item->general_refs[i];
+        switch (g->getType())
+        {
+            case general_ref_type::CONTAINED_IN_ITEM:
+                if (auto item2 = g->getItem())
+                    return Items::getOuterContainerRef(spec_ref, item2);
+                break;
+            case general_ref_type::UNIT_HOLDER:
+                if (auto unit = g->getUnit())
+                    return Units::getOuterContainerRef(spec_ref, unit);
+                break;
+            default:
+                break;
+        }
+    }
+
+    auto s = findRef(item->specific_refs, specific_ref_type::VERMIN_ESCAPED_PET);
+    if (s)
+    {
+        spec_ref.type = specific_ref_type::VERMIN_EVENT;
+        spec_ref.data.vermin = s->data.vermin;
+    }
+    return;
+}
+
 void Items::getContainedItems(df::item *item, std::vector<df::item*> *items)
 {
     CHECK_NULL_POINTER(item);
@@ -819,7 +860,6 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
 
         switch (ref->getType())
         {
-        case general_ref_type::PROJECTILE:
         case general_ref_type::BUILDING_HOLDER:
         case general_ref_type::BUILDING_CAGED:
         case general_ref_type::BUILDING_TRIGGER:
@@ -832,6 +872,15 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
         }
     }
 
+    if (auto *ref =
+            virtual_cast<df::general_ref_projectile>(
+                Items::getGeneralRef(item, general_ref_type::PROJECTILE)))
+    {
+        return linked_list_remove(&world->proj_list, ref->projectile_id) &&
+            DFHack::removeRef(item->general_refs,
+                              general_ref_type::PROJECTILE, ref->getID());
+    }
+
     if (item->flags.bits.on_ground)
     {
         if (!mc.removeItemOnGround(item))
@@ -841,7 +890,8 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
         item->flags.bits.on_ground = false;
         return true;
     }
-    else if (item->flags.bits.in_inventory)
+
+    if (item->flags.bits.in_inventory)
     {
         bool found = false;
 
@@ -906,7 +956,8 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
         item->flags.bits.in_inventory = false;
         return true;
     }
-    else if (item->flags.bits.removed)
+
+    if (item->flags.bits.removed)
     {
         item->flags.bits.removed = false;
 
@@ -918,8 +969,8 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
 
         return true;
     }
-    else
-        return false;
+
+    return false;
 }
 
 static void putOnGround(MapExtras::MapCache &mc, df::item *item, df::coord pos)

@@ -139,7 +139,6 @@ static int getGridsSize(lua_State* L)
 {
     if(current_mode!=MODE_LUA)
         return -1;
-    renderer_lua* r=reinterpret_cast<renderer_lua*>(enabler->renderer);
     lua_pushnumber(L,gps->dimx);
     lua_pushnumber(L,gps->dimy);
     return 2;

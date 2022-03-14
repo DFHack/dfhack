@@ -372,6 +372,8 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
         clearDijkstra();
         return;
     }
+
+    //we're going to unregister just in case this function has been called 20 times or something.
     EventManager::unregister(EventManager::EventType::TICK, findJobTickHandler, plugin_self);
     EventManager::registerTick(findJobTickHandler, 1, plugin_self);
 
@@ -472,7 +474,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
     yMax *= 16;
     MapExtras::MapCache cache;
 
-    clock_t t0 = clock();
+    // clock_t t0 = clock();
     clock_t totalEdgeTime = 0;
     int32_t edgesExpanded = 0;
     while(!fringe.empty()) {
@@ -529,7 +531,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
         }
         delete myEdges;
     }
-    clock_t time = clock() - t0;
+    // clock_t time = clock() - t0;
     //out.print("tickTime = %d, time = %d, totalEdgeTime = %d, total points = %d, total edges = %d, time per point = %.3f, time per edge = %.3f, clocks/sec = %d\n", (int32_t)tickTime, time, totalEdgeTime, closedSet.size(), edgeCount, (float)time / closedSet.size(), (float)time / edgeCount, CLOCKS_PER_SEC);
     fringe.clear();
 

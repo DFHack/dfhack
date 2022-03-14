@@ -356,74 +356,16 @@ bool DFHack::Job::disconnectJobGeneralRef(df::job *job, df::general_ref *ref) {
     return true;
 }
 
-bool DFHack::Job::removeJob(df::job *job) {
+bool DFHack::Job::removeJob(df::job* job) {
     using df::global::world;
     CHECK_NULL_POINTER(job);
 
-    if (job->flags.bits.special) //I don't think you can cancel these, because DF wasn't build to expect it?
-        return false;
+    // call the job cancel vmethod graciously provided by The Toady One.
+    // job_handler::cancel_job calls job::~job, and then deletes job (this has been confirmed by disassembly)
+    // this method cannot fail; it will either delete the job or crash/corrupt DF
 
-    //We actually only know how to handle BUILDING_HOLDER and UNIT_WORKER refs- there's probably a great
-    //way to handle them, but until we have a good example, we'll just fail to remove jobs that have other sorts
-    //of refs, or any specific refs
-    if (job->specific_refs.size() > 0)
-        return false;
+    world->jobs.cancel_job(job);
 
-    for (auto genRefItr = job->general_refs.begin(); genRefItr != job->general_refs.end(); ++genRefItr) {
-        auto ref = *genRefItr;
-        if (ref != NULL && (ref->getType() != general_ref_type::BUILDING_HOLDER && ref->getType() != general_ref_type::UNIT_WORKER))
-            return false;
-    }
-
-    //Disconnect, delete, and wipe all general refs
-    while (job->general_refs.size() > 0) {
-        auto ref = job->general_refs[0];
-
-        //Our code above should have ensured that this won't return false- if it does, there's not
-        //a great way of recovering since we can't properly destroy the job & we can't leave it
-        //around.  Better to know the moment that becomes a problem.
-        bool success = disconnectJobGeneralRef(job, ref);
-        assert(success);
-
-        vector_erase_at(job->general_refs, 0);
-        if (ref != NULL) delete ref;
-    }
-
-    //Detach all items from the job
-    while (job->items.size() > 0) {
-        auto itemRef = job->items[0];
-        disconnectJobItem(job, itemRef);
-        vector_erase_at(job->items, 0);
-        if (itemRef != NULL) delete itemRef;
-    }
-
-    //Remove job from job board
-    Job::removePostings(job, true);
-
-    //Clean up job_items
-    while (job->job_items.size() > 0) {
-        auto jobItem = job->job_items[0];
-        vector_erase_at(job->job_items, 0);
-        if (jobItem) {
-            delete jobItem;
-        }
-    }
-
-    //Remove job from global list
-    if (job->list_link) {
-        auto prev = job->list_link->prev;
-        auto next = job->list_link->next;
-
-        if (prev)
-            prev->next = next;
-
-        if (next)
-            next->prev = prev;
-
-        delete job->list_link;
-    }
-
-    delete job;
     return true;
 }
 

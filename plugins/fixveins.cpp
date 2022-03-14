@@ -56,7 +56,7 @@ command_result df_fixveins (color_ostream &out, vector <string> & parameters)
     int mineral_removed = 0, feature_removed = 0;
     int mineral_added = 0, feature_added = 0;
 
-    int num_blocks = 0, blocks_total = world->map.map_blocks.size();
+    int blocks_total = world->map.map_blocks.size();
     for (int i = 0; i < blocks_total; i++)
     {
         df::map_block *block = world->map.map_blocks[i];

@@ -12,6 +12,8 @@
 #include "df/global_objects.h"
 #include "df/item.h"
 #include "df/item_plantst.h"
+#include "df/item_plant_growthst.h"
+#include "df/item_seedsst.h"
 #include "df/items_other_id.h"
 #include "df/unit.h"
 #include "df/building.h"
@@ -179,18 +181,18 @@ public:
 
         for (auto ii : world->items.other[df::items_other_id::SEEDS])
         {
-            df::item_plantst* i = (df::item_plantst*)ii;
-            if ((i->flags.whole & bad_flags.whole) == 0)
+            auto i = virtual_cast<df::item_seedsst>(ii);
+            if (i && (i->flags.whole & bad_flags.whole) == 0)
                 counts[i->mat_index] += i->stack_size;
         }
 
-        for (auto ci : counts)
+        for (auto &ci : counts)
         {
             if (df::global::ui->tasks.discovered_plants[ci.first])
             {
                 df::plant_raw* plant = world->raws.plants.all[ci.first];
                 if (is_plantable(plant))
-                    for (auto flagmap : biomeFlagMap)
+                    for (auto &flagmap : biomeFlagMap)
                         if (plant->flags.is_set(flagmap.first))
                             plantable_plants[plant->index].insert(flagmap.second);
             }
@@ -222,9 +224,9 @@ public:
     {
         // this algorithm attempts to change as few farms as possible, while ensuring that
         // the number of farms planting each eligible plant is "as equal as possible"
-        
+
         int season = *df::global::cur_season;
-        
+
         if (farms.empty() || plants.empty())
         {
             // if no more plants were requested, fallow all farms
@@ -291,20 +293,35 @@ public:
         F(in_building); F(construction); F(artifact);
 #undef F
 
+        // have to scan both items[PLANT] and items[PLANT_GROWTH] because agricultural products can be either
+
         for (auto ii : world->items.other[df::items_other_id::PLANT])
         {
-            df::item_plantst* i = (df::item_plantst*)ii;
-            if ((i->flags.whole & bad_flags.whole) == 0 &&
+            auto i = virtual_cast<df::item_plantst>(ii);
+            if (i &&
+                (i->flags.whole & bad_flags.whole) == 0 &&
                 plantable_plants.count(i->mat_index) > 0)
             {
                 lastCounts[i->mat_index] += i->stack_size;
             }
         }
 
+        for (auto ii : world->items.other[df::items_other_id::PLANT_GROWTH])
+        {
+            auto i = virtual_cast<df::item_plant_growthst>(ii);
+            if (i &&
+                (i->flags.whole & bad_flags.whole) == 0 &&
+                plantable_plants.count(i->mat_index) > 0)
+            {
+                lastCounts[i->mat_index] += i->stack_size;
+            }
+        }
+
+
         map<df::biome_type, set<int>> plants;
         plants.clear();
 
-        for (auto plantable : plantable_plants)
+        for (auto &plantable : plantable_plants)
         {
             df::plant_raw* plant = world->raws.plants.all[plantable.first];
             if (lastCounts[plant->index] < getThreshold(plant->index))
@@ -319,7 +336,7 @@ public:
 
         for (auto bb : world->buildings.other[df::buildings_other_id::FARM_PLOT])
         {
-            df::building_farmplotst* farm = (df::building_farmplotst*) bb;
+            auto farm = virtual_cast<df::building_farmplotst>(bb);
             if (farm->flags.bits.exists)
             {
                 df::biome_type biome;
@@ -333,7 +350,7 @@ public:
             }
         }
 
-        for (auto ff : farms)
+        for (auto &ff : farms)
         {
             set_farms(out, plants[ff.first], ff.second);
         }
@@ -342,13 +359,13 @@ public:
     void status(color_ostream& out)
     {
         out << (enabled ? "Running." : "Stopped.") << endl;
-        for (auto lc : lastCounts)
+        for (auto &lc : lastCounts)
         {
             auto plant = world->raws.plants.all[lc.first];
             out << plant->id << " limit " << getThreshold(lc.first) << " current " << lc.second << endl;
         }
 
-        for (auto th : thresholds)
+        for (auto &th : thresholds)
         {
             if (lastCounts[th.first] > 0)
                 continue;
@@ -359,7 +376,7 @@ public:
     }
 };
 
-static AutoFarm* autofarmInstance;
+static std::unique_ptr<AutoFarm> autofarmInstance;
 
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
@@ -371,13 +388,13 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
             )
         );
     }
-    autofarmInstance = new AutoFarm();
+    autofarmInstance = std::move(dts::make_unique<AutoFarm>());
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
-    delete autofarmInstance;
+    autofarmInstance.release();
 
     return CR_OK;
 }
@@ -442,15 +459,21 @@ static command_result autofarm(color_ostream &out, vector <string> & parameters)
     CoreSuspender suspend;
 
     if (parameters.size() == 1 && parameters[0] == "runonce")
-        autofarmInstance->process(out);
+    {
+        if (autofarmInstance) autofarmInstance->process(out);
+    }
     else if (parameters.size() == 1 && parameters[0] == "enable")
         plugin_enable(out, true);
     else if (parameters.size() == 1 && parameters[0] == "disable")
         plugin_enable(out, false);
     else if (parameters.size() == 2 && parameters[0] == "default")
-        autofarmInstance->setDefault(atoi(parameters[1].c_str()));
+    {
+        if (autofarmInstance) autofarmInstance->setDefault(atoi(parameters[1].c_str()));
+    }
     else if (parameters.size() >= 3 && parameters[0] == "threshold")
-        return setThresholds(out, parameters);
+    {
+        if (autofarmInstance) return setThresholds(out, parameters);
+    }
     else if (parameters.size() == 0 || (parameters.size() == 1 && parameters[0] == "status"))
         autofarmInstance->status(out);
     else

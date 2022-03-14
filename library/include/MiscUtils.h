@@ -310,6 +310,27 @@ Link *linked_list_insert_after(Link *pos, Link *link)
     return link;
 }
 
+/**
+ * Returns true if the item with id idToRemove was found, deleted, and removed
+ * from the list. Otherwise returns false.
+ */
+template<typename Link>
+bool linked_list_remove(Link *head, int32_t idToRemove)
+{
+    for (Link *link = head; link; link = link->next)
+    {
+        if (!link->item || link->item->id != idToRemove)
+            continue;
+
+        link->prev->next = link->next;
+        if (link->next)
+            link->next->prev = link->prev;
+        delete(link);
+        return true;
+    }
+    return false;
+}
+
 template<typename T>
 inline typename T::mapped_type map_find(
     const T &map, const typename T::key_type &key,

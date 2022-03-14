@@ -192,7 +192,7 @@ endif()
 
 # set up versioning.
 set(DF_VERSION "0.47.05")
-set(DFHACK_RELEASE "r2")
+set(DFHACK_RELEASE "r4")
 set(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
@@ -244,9 +244,10 @@ if(UNIX)
     # enable C++11 features
     add_definitions(-DLINUX_BUILD)
     add_definitions(-D_GLIBCXX_USE_C99)
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g -Wall -Wno-unused-variable")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -mtune=generic")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -mtune=generic")
+    set(GCC_COMMON_FLAGS "-fvisibility=hidden -mtune=generic -Wall -Werror")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COMMON_FLAGS}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${GCC_COMMON_FLAGS}")
     if(DFHACK_BUILD_64)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -mno-avx")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m64 -mno-avx")

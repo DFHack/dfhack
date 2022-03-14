@@ -103,7 +103,6 @@ static map< int16_t, vector<MaterialDescriptor> > preferred_materials;
 static map< int16_t, df::interface_key > hotkeys;
 static bool last_used_moved = false;
 static bool auto_choose_materials = true;
-static bool auto_choose_attempted = true;
 static bool revert_to_last_used_type = false;
 static bool allow_future_placement = false;
 
@@ -998,17 +997,22 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
             }
 
             // if using buildingplan, we don't need an anchor
-            if (!use_buildingplan && in_future_placement_mode)
+            if (!use_buildingplan)
             {
-                ok_to_continue = find_anchor_in_spiral(valid_building_sites[0].pos);
-            }
-            else if (ok_to_continue)
-            {
-                // First valid site is guaranteed to be anchored, either on a tile or against a valid orthogonal tile
-                // Use it as an anchor point to generate materials list
-                anchor = valid_building_sites.front();
-                valid_building_sites.pop_front();
-                valid_building_sites.push_back(anchor);
+                if (in_future_placement_mode)
+                {
+                    ok_to_continue =
+                            find_anchor_in_spiral(valid_building_sites[0].pos);
+                }
+                else if (ok_to_continue)
+                {
+                    // First valid site is guaranteed to be anchored, either on
+                    // a tile or against a valid orthogonal tile
+                    // Use it as an anchor point to generate materials list
+                    anchor = valid_building_sites.front();
+                    valid_building_sites.pop_front();
+                    valid_building_sites.push_back(anchor);
+                }
             }
 
             if (!ok_to_continue)

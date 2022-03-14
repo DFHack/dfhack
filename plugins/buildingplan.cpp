@@ -14,7 +14,7 @@
 
 #include "uicommon.h"
 #include "listcolumn.h"
-#include "buildingplan-lib.h"
+#include "buildingplan.h"
 
 DFHACK_PLUGIN("buildingplan");
 #define PLUGIN_VERSION "2.0"
@@ -30,6 +30,22 @@ bool quickfort_mode = false;
 bool all_enabled = false;
 bool in_dummy_screen = false;
 std::unordered_map<BuildingTypeKey, bool, BuildingTypeKeyHash> planmode_enabled;
+
+bool show_debugging = false;
+
+void debug(const char *fmt, ...)
+{
+    if (!show_debugging)
+        return;
+
+    color_ostream_proxy out(Core::getInstance().getConsole());
+    out.print("DEBUG(buildingplan): ");
+    va_list args;
+    va_start(args, fmt);
+    out.vprint(fmt, args);
+    va_end(args);
+    out.print("\n");
+}
 
 class ViewscreenChooseMaterial : public dfhack_viewscreen
 {
@@ -105,7 +121,6 @@ private:
 
         for (size_t i = 0; i < raws.inorganics.size(); i++)
         {
-            df::inorganic_raw *p = raws.inorganics[i];
             MaterialInfo material;
             material.decode(0, i);
             addMaterialEntry(selected_category, material, material.toString());
@@ -120,7 +135,6 @@ private:
                 df::plant_raw *p = raws.plants.all[i];
                 for (size_t j = 0; p->material.size() > 1 && j < p->material.size(); j++)
                 {
-                    auto t = p->material[j];
                     if (p->material[j]->id != "WOOD")
                         continue;
 
@@ -498,6 +512,17 @@ struct buildingplan_query_hook : public df::viewscreen_dwarfmodest
             INTERPOSE_NEXT(feed)(input);
     }
 
+    static bool is_filter_satisfied(df::building *bld, int filter_idx)
+    {
+        if (!bld
+                || bld->jobs.size() < 1
+                || int(bld->jobs[0]->job_items.size()) <= filter_idx)
+            return false;
+
+        // if all items for this filter are attached, the quantity will be 0
+        return bld->jobs[0]->job_items[filter_idx]->quantity == 0;
+    }
+
     DEFINE_VMETHOD_INTERPOSE(void, render, ())
     {
         INTERPOSE_NEXT(render)();
@@ -515,10 +540,12 @@ struct buildingplan_query_hook : public df::viewscreen_dwarfmodest
         Screen::Pen pen(' ', COLOR_BLACK);
         Screen::fillRect(pen, x, y, dims.menu_x2, y);
 
+        bool attached = is_filter_satisfied(pb->getBuilding(), filter_idx);
+
         auto & filter = pb->getFilters()[filter_idx];
         y = 24;
         std::string item_label =
-            stl_sprintf("Item %d of %d", filter_count - filter_idx, filter_count);
+            stl_sprintf("Item %d of %d (%s)", filter_count - filter_idx, filter_count, attached ? "attached" : "pending");
         OutputString(COLOR_WHITE, x, y, "Planned Building Filter", true, left_margin + 1);
         OutputString(COLOR_WHITE, x, y, item_label.c_str(), true, left_margin + 1);
         OutputString(COLOR_WHITE, x, y, get_item_label(toBuildingTypeKey(bld), filter_idx).c_str(), true, left_margin);

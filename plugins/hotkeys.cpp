@@ -72,7 +72,6 @@ static void find_active_keybindings(df::viewscreen *screen)
                     auto list = Core::getInstance().ListKeyBindings(sym);
                     for (auto invoke_cmd = list.begin(); invoke_cmd != list.end(); invoke_cmd++)
                     {
-                        bool add_temp_binding = false;
                         if (invoke_cmd->find(":") == string::npos)
                         {
                             add_binding_if_valid(sym, *invoke_cmd, screen);
@@ -303,7 +302,6 @@ private:
 
 static command_result hotkeys_cmd(color_ostream &out, vector <string> & parameters)
 {
-    bool show_help = false;
     if (parameters.empty())
     {
         if (Maps::IsValid())

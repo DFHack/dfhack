@@ -1,0 +1,6 @@
+#dig label(track)
+T(5x2),,,,T(1x2)
+trackNE,,,,trackNW
+#>
+
+T(5x1)

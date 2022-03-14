@@ -9,7 +9,7 @@ library blueprints by running ``quickfort list --library`` or by hitting
 :kbd:`Alt`:kbd:`l` in the ``quickfort gui`` interactive dialog.
 
 Each file is hyperlinked to its online version so you can see exactly what the
-blueprints do.
+blueprints do before you run them.
 
 Whole fort blueprint sets
 -------------------------
@@ -20,6 +20,8 @@ help sections that walk you through how to build the fort, step by step.
 - :source:`library/dreamfort.csv <data/blueprints/library/dreamfort.csv>`
 - :source:`library/quickfortress.csv <data/blueprints/library/quickfortress.csv>`
 
+.. _dreamfort:
+
 Dreamfort
 ~~~~~~~~~
 
@@ -27,26 +29,33 @@ Dreamfort is a fully functional, self-sustaining fortress with defenses,
 farming, a complete set of workshops, self-managing quantum stockpiles, a grand
 dining hall, hospital, jail, fresh water well system, guildhalls, noble suites,
 and bedrooms for hundreds of dwarves. It also comes with manager work orders to
-automate basic fort needs, such as food and booze production. It can function by
-itself or as the core of a larger, more ambitious fortress. Read the high-level
-walkthrough by running ``quickfort run library/dreamfort.csv`` and list the
-walkthroughs for the individual levels by running ``quickfort list -l dreamfort
--m notes`` or ``quickfort gui -l dreamfort notes``.
+automate basic fort needs, such as food, booze, and item production. It can
+function by itself or as the core of a larger, more ambitious fortress. Read the
+high-level walkthrough by running ``quickfort run library/dreamfort.csv`` and
+list the walkthroughs for the individual levels by running ``quickfort list -l
+dreamfort -m notes`` or ``quickfort gui -l dreamfort notes``.
 
-Dreamfort blueprints are also available for easy viewing and copying `online
+Dreamfort blueprints are available for easy viewing and copying `online
 <https://drive.google.com/drive/folders/1iS90EEVqUkxTeZiiukVj1pLloZqabKuP>`__.
 
 The online spreadsheets also include `embark profile suggestions
-<https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=149144025>`__
-and a complete `example embark profile
-<https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=1727884387>`__.
+<https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=149144025>`__,
+a complete `example embark profile
+<https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=1727884387>`__,
+and a convenient `checklist
+<https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=1459509569>`__
+from which you can copy the ``quickfort`` commands.
+
+You can download a fully built Dreamfort-based fort from `dffd
+<https://dffd.bay12games.com/file.php?id=15434>`__, load it, and explore it
+interactively.
 
 Visual overview
 ```````````````
 
 Here are some annotated screenshots of the major levels (or click `here
 <https://drive.google.com/drive/folders/14KdE2E2wQKj4F_E-NAe3G3E4x1wiWtrc>`__
-for the slideshow interface).
+for a slideshow).
 
 Surface level
 \\\\\\\\\\\\\
@@ -82,6 +91,8 @@ Services level
   :alt: Annotated screenshot of the dreamfort cistern
   :target: https://drive.google.com/file/d/1jlGr6tAhS8i-XFTz8gowTZBhXcfjfL_L
   :align: center
+
+.. _example-plumbing-to-fill-cisterns:
 
 Example plumbing to fill cisterns
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -119,8 +130,8 @@ The Quick Fortress
 ~~~~~~~~~~~~~~~~~~
 
 The Quick Fortress is an updated version of the example fortress that came with
-`Python Quickfort 2.0 <https://github.com/joelpt/quickfort>`__ (the program
-DFHack quickfort was inspired by). While it is not a complete fortress by
+`Python Quickfort 2.0 <https://github.com/joelpt/quickfort>`__ (the utility that
+inspired DFHack quickfort). While it is not a complete fortress by
 itself, it is much simpler than Dreamfort and is good for a first introduction
 to `quickfort` blueprints. Read its walkthrough with ``quickfort run
 library/quickfortress.csv``.
@@ -165,7 +176,8 @@ Exploratory mining
 ------------------
 
 Several mining patterns to choose from when searching for gems or ores. The
-patterns can be repeated up or down z-levels for exploring through the depths.
+patterns can be repeated up or down z-levels (via quickfort's ``--repeat``
+commandline option) for exploring through the depths.
 
 - :source:`library/exploratory-mining/tunnels.csv <data/blueprints/library/exploratory-mining/tunnels.csv>`
 - :source:`library/exploratory-mining/vertical-mineshafts.csv <data/blueprints/library/exploratory-mining/vertical-mineshafts.csv>`
@@ -176,9 +188,38 @@ Miscellaneous
 
 Extra blueprints that are useful in specific situations.
 
+- :source:`library/aquifer_tap.csv <data/blueprints/library/aquifer_tap.csv>`
 - :source:`library/embark.csv <data/blueprints/library/embark.csv>`
+- :source:`library/pump_stack.csv <data/blueprints/library/pump_stack.csv>`
+
+Light Aquifer Tap
+~~~~~~~~~~~~~~~~~
+
+The aquifer tap helps you create a safe, everlasting source of fresh water from
+a light aquifer. See the step-by-step guide, including informaton on how to
+create a drainage system so your dwarves don't drown when digging the tap, by
+running ``quickfort run library/aquifer_tap.csv -n /help``.
+
+You can see how to nullify the water pressure (so you don't flood your fort) in
+the `Dreamfort screenshot above <example-plumbing-to-fill-cisterns>`.
+
+Blueprint spreadsheet also available
+`online <https://docs.google.com/spreadsheets/d/1kwuCipF9FYAHNP9C_XlMpqVseaPu4SmL9YLUSQkbW4s/edit#gid=611877584>`__
+
+Post-embark
+~~~~~~~~~~~
 
 The embark blueprints are useful directly after embark. It contains a ``#build``
 blueprint that builds important starting workshops (mason, carpenter, mechanic,
 and craftsdwarf) and a ``#place`` blueprint that lays down a pattern of useful
 starting stockpiles.
+
+Pump Stack
+~~~~~~~~~~
+
+The pump stack blueprints help you move water and magma up to move convenient
+locations in your fort. See the step-by-step guide for using it by running
+``quickfort run library/pump_stack.csv -n /help``.
+
+Blueprint spreadsheet also available
+`online <https://docs.google.com/spreadsheets/d/1TP2n-W-O9f30Dtl6yoTcn6yczWQRu11iM7U6TEE9634/edit#gid=0>`__

@@ -253,7 +253,7 @@ struct Connected : public ClearMem<Connected> {
         con[pos] = b->signal.connect(
                 [this](uint32_t) {
                     uint32_t old = callee.fetch_add(1);
-                    assert(old != 0xDEDEDEDE);
+                    assert(old != 0xDEDEDEDE); (void)old;
                     std::this_thread::sleep_for(delay);
                     assert(callee != 0xDEDEDEDE);
                 });
@@ -263,7 +263,7 @@ struct Connected : public ClearMem<Connected> {
         b->con[pos] = signal.connect(b,
                 [bptr](int) {
                     uint32_t old = bptr->callee.fetch_add(1);
-                    assert(old != 0xDEDEDEDE);
+                    assert(old != 0xDEDEDEDE); (void)old;
                     std::this_thread::sleep_for(delay);
                     assert(bptr->callee != 0xDEDEDEDE);
                 });
@@ -280,7 +280,7 @@ struct Connected : public ClearMem<Connected> {
         con[pos] = sig->connect(b,
                 [this](uint32_t) {
                     uint32_t old = callee.fetch_add(1);
-                    assert(old != 0xDEDEDEDE);
+                    assert(old != 0xDEDEDEDE); (void)old;
                     std::this_thread::sleep_for(delay);
                     assert(callee != 0xDEDEDEDE);
                 });
@@ -292,7 +292,7 @@ struct Connected : public ClearMem<Connected> {
         con[pos] = b->signal.connect(a,
                 [this](uint32_t) {
                     uint32_t old = callee.fetch_add(1);
-                    assert(old != 0xDEDEDEDE);
+                    assert(old != 0xDEDEDEDE); (void)old;
                     std::this_thread::sleep_for(delay);
                     assert(callee != 0xDEDEDEDE);
                 });
@@ -419,7 +419,7 @@ command_result kittens (color_ostream &out, vector <string> & parameters)
         "NYAN NYAN NYAN NYAN NYAN NYAN NYAN",
         0
     };
-    const char * kittenz1 []=
+    const char VARIABLE_IS_NOT_USED * kittenz1 []=
     {
         "   ____",
         "  (.   \\",

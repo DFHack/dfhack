@@ -50,7 +50,7 @@ local function get_opt_map(opts)
     local len = #opts
     local options = {}
 
-    for short_opt, accept_arg in opts:gmatch('(%w)(:?)') do
+    for short_opt, accept_arg in opts:gmatch('([%w%?])(:?)') do
         options[short_opt] = #accept_arg
     end
 

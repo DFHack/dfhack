@@ -72,6 +72,7 @@ arrays. For example:
 
 local CONFIG_FILE = 'test_config.json'
 local STATUS_FILE = 'test_status.json'
+local DF_STATE_FILE = 'test_df_state.json'
 local TestStatus = {
     PENDING = 'pending',
     PASSED = 'passed',
@@ -569,6 +570,23 @@ local function run_tests(tests, status, counts, config)
     save_test_status(status)
 end
 
+local function dump_df_state()
+    local state = {
+        enabler = {
+            fps = df.global.enabler.fps,
+            gfps = df.global.enabler.gfps,
+            fullscreen = df.global.enabler.fullscreen,
+        },
+        gps = {
+            dimx = df.global.gps.dimx,
+            dimy = df.global.gps.dimy,
+            display_frames = df.global.gps.display_frames,
+        },
+    }
+    json.encode_file(state, DF_STATE_FILE)
+    print('DF global state: ' .. json.encode(state, {pretty = false}))
+end
+
 local function main(args)
     local help, resume, test_dir, mode_filter, save_dir, test_filter =
             false, false, nil, {}, nil, {}
@@ -610,6 +628,7 @@ local function main(args)
         file_errors = 0,
     }
 
+    dump_df_state()
     local test_files = get_test_files(config.test_dir)
     local tests = get_tests(test_files, counts)
     local status = filter_tests(tests, config)

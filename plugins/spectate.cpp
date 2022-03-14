@@ -70,15 +70,11 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         EM::registerListener(EventType::TICK, ticking, plugin_self);
         EM::registerListener(EventType::JOB_STARTED, start, plugin_self);
         EM::registerListener(EventType::JOB_COMPLETED, complete, plugin_self);
-        //out.print("spectator mode enabled!\n");
     } else if (!enable && enabled) {
         out.print("Spectate mode disabled!\n");
         EM::unregisterAll(plugin_self);
         job_tracker.clear();
         freq.clear();
-        //out.print("spectator mode disabled!\n");
-    } else {
-        return CR_FAILURE;
     }
     enabled = enable;
     return CR_OK;
@@ -88,24 +84,24 @@ command_result spectate (color_ostream &out, std::vector <std::string> & paramet
     return plugin_enable(out, !enabled);
 }
 
-void onTick(color_ostream& out, void* ptr){
+void onTick(color_ostream& out, void* ptr) {
     int32_t tick = df::global::world->frame_counter;
-    if(!following_dwarf || (job_watched == nullptr && (tick - timestamp) > 50)) {
+    // || seems to be redundant as the first always evaluates true when job_watched is nullptr.. todo: figure what is supposed to happen
+    if (!following_dwarf || (job_watched == nullptr && (tick - timestamp) > 50)) {
         std::vector<df::unit*> dwarves;
-        for (size_t i = 0; i < df::global::world->units.active.size(); i++) {
-            df::unit* unit = world->units.active[i];
+        for (auto unit: df::global::world->units.active) {
             if (!Units::isCitizen(unit)) {
                 continue;
             }
             dwarves.push_back(unit);
         }
-        std::uniform_int_distribution<> follow_any(0,dwarves.size()-1);
+        std::uniform_int_distribution<uint64_t> follow_any(0, dwarves.size() - 1);
         if (df::global::ui) {
             df::unit* unit = dwarves[follow_any(RNG)];
             df::global::ui->follow_unit = unit->id;
             job_watched = unit->job.current_job;
             following_dwarf = true;
-            if(!job_watched){
+            if (!job_watched) {
                 timestamp = tick;
             }
         }
@@ -114,14 +110,14 @@ void onTick(color_ostream& out, void* ptr){
 
 void onJobStart(color_ostream& out, void* job_ptr) {
     int32_t tick = df::global::world->frame_counter;
-    df::job* job = (df::job*) job_ptr;
-    int zcount = freq[job->pos.z]++;
+    auto job = (df::job*) job_ptr;
+    int zcount = ++freq[job->pos.z];
     job_tracker.emplace(job->id);
     if (!following_dwarf || (job_watched == nullptr && (tick - timestamp) > 50)) {
         following_dwarf = true;
         double p = 0.99 * ((double) zcount / job_tracker.size());
         std::bernoulli_distribution follow_job(p);
-        if (job && !job->flags.bits.special && follow_job(RNG)) {
+        if (!job->flags.bits.special && follow_job(RNG)) {
             job_watched = job_ptr;
             df::unit* unit = Job::getWorker(job);
             if (df::global::ui && unit) {
@@ -130,14 +126,13 @@ void onJobStart(color_ostream& out, void* job_ptr) {
         } else {
             timestamp = tick;
             std::vector<df::unit*> nonworkers;
-            for (size_t i = 0; i < df::global::world->units.active.size(); i++) {
-                df::unit* unit = world->units.active[i];
+            for (auto unit: df::global::world->units.active) {
                 if (!Units::isCitizen(unit) || unit->job.current_job) {
                     continue;
                 }
                 nonworkers.push_back(unit);
             }
-            std::uniform_int_distribution<> follow_drunk(0,nonworkers.size()-1);
+            std::uniform_int_distribution<> follow_drunk(0, nonworkers.size() - 1);
             if (df::global::ui) {
                 df::global::ui->follow_unit = nonworkers[follow_drunk(RNG)]->id;
             }
@@ -146,7 +141,7 @@ void onJobStart(color_ostream& out, void* job_ptr) {
 }
 
 void onJobCompletion(color_ostream &out, void* job_ptr) {
-    df::job* job = (df::job*)job_ptr;
+    auto job = (df::job*)job_ptr;
     freq[job->pos.z]--;
     freq[job->pos.z] = freq[job->pos.z] < 0 ? 0 : freq[job->pos.z];
     job_tracker.erase(job->id);

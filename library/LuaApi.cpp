@@ -98,6 +98,9 @@ distribution.
 #include "df/enabler.h"
 #include "df/feature_init.h"
 #include "df/plant.h"
+#include "df/specific_ref.h"
+#include "df/specific_ref_type.h"
+#include "df/vermin.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -1594,7 +1597,9 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isSane),
     WRAPM(Units, isDwarf),
     WRAPM(Units, isCitizen),
+    WRAPM(Units, isFortControlled),
     WRAPM(Units, isVisible),
+    WRAPM(Units, isHidden),
     WRAPM(Units, getAge),
     WRAPM(Units, getKillCount),
     WRAPM(Units, getNominalSkill),
@@ -1663,6 +1668,31 @@ static int units_getPosition(lua_State *state)
     return Lua::PushPosXYZ(state, Units::getPosition(Lua::CheckDFObject<df::unit>(state,1)));
 }
 
+static int units_getOuterContainerRef(lua_State *state)
+{
+    auto ref = Units::getOuterContainerRef(Lua::CheckDFObject<df::unit>(state, 1));
+
+    lua_newtable(state);
+    Lua::TableInsert(state, "type", ref.type);
+
+    switch (ref.type)
+    {
+        case specific_ref_type::UNIT:
+            Lua::TableInsert(state, "object", ref.data.unit);
+            break;
+        case specific_ref_type::ITEM_GENERAL:
+            Lua::TableInsert(state, "object", (df::item*)ref.data.object);
+            break;
+        case specific_ref_type::VERMIN_EVENT:
+            Lua::TableInsert(state, "object", ref.data.vermin);
+            break;
+        default:
+            Lua::TableInsert(state, "object", NULL);
+    }
+
+    return 1;
+}
+
 static int units_getNoblePositions(lua_State *state)
 {
     std::vector<Units::NoblePosition> np;
@@ -1715,6 +1745,7 @@ static int units_getStressCutoffs(lua_State *L)
 
 static const luaL_Reg dfhack_units_funcs[] = {
     { "getPosition", units_getPosition },
+    { "getOuterContainerRef", units_getOuterContainerRef },
     { "getNoblePositions", units_getNoblePositions },
     { "getUnitsInBox", units_getUnitsInBox },
     { "getStressCutoffs", units_getStressCutoffs },
@@ -1804,6 +1835,31 @@ static int items_getPosition(lua_State *state)
     return Lua::PushPosXYZ(state, Items::getPosition(Lua::CheckDFObject<df::item>(state,1)));
 }
 
+static int items_getOuterContainerRef(lua_State *state)
+{
+    auto ref = Items::getOuterContainerRef(Lua::CheckDFObject<df::item>(state, 1));
+
+    lua_newtable(state);
+    Lua::TableInsert(state, "type", ref.type);
+
+    switch (ref.type)
+    {
+        case specific_ref_type::UNIT:
+            Lua::TableInsert(state, "object", ref.data.unit);
+            break;
+        case specific_ref_type::ITEM_GENERAL:
+            Lua::TableInsert(state, "object", (df::item*)ref.data.object);
+            break;
+        case specific_ref_type::VERMIN_EVENT:
+            Lua::TableInsert(state, "object", ref.data.vermin);
+            break;
+        default:
+            Lua::TableInsert(state, "object", NULL);
+    }
+
+    return 1;
+}
+
 static int items_getContainedItems(lua_State *state)
 {
     std::vector<df::item*> pvec;
@@ -1826,6 +1882,7 @@ static int items_moveToBuilding(lua_State *state)
 
 static const luaL_Reg dfhack_items_funcs[] = {
     { "getPosition", items_getPosition },
+    { "getOuterContainerRef", items_getOuterContainerRef },
     { "getContainedItems", items_getContainedItems },
     { "moveToBuilding", items_moveToBuilding },
     { NULL, NULL }

@@ -1200,6 +1200,12 @@ Units module
 
   Sets the unit's nickname properly.
 
+* ``dfhack.units.getOuterContainerRef(unit)``
+
+  Returns a table (in the style of a ``specific_ref`` struct) of the outermost object that contains the unit (or one of the unit itself.)
+  The ``type`` field contains a ``specific_ref_type`` of ``UNIT``, ``ITEM_GENERAL``, or ``VERMIN_EVENT``.
+  The ``object`` field contains a pointer to a unit, item, or vermin, respectively.
+
 * ``dfhack.units.getVisibleName(unit)``
 
   Returns the language_name object visible in game, accounting for false identities.
@@ -1266,9 +1272,17 @@ Units module
   The unit is an alive sane citizen of the fortress; wraps the
   same checks the game uses to decide game-over by extinction.
 
+* ``dfhack.units.isFortControlled(unit)``
+
+  Similar to ``dfhack.units.isCitizen(unit)``, but is based on checks for units hidden in ambush, and includes tame animals. Returns *false* if not in fort mode.
+
 * ``dfhack.units.isVisible(unit)``
 
   The unit is visible on the map.
+
+* ``dfhack.units.isHidden(unit)``
+
+  The unit is hidden to the player, accounting for sneaking. Works for any game mode.
 
 * ``dfhack.units.getAge(unit[,true_age])``
 
@@ -1406,6 +1420,12 @@ Items module
 * ``dfhack.items.getContainer(item)``
 
   Returns the container item or *nil*.
+
+* ``dfhack.items.getOuterContainerRef(item)``
+
+  Returns a table (in the style of a ``specific_ref`` struct) of the outermost object that contains the item (or one of the item itself.)
+  The ``type`` field contains a ``specific_ref_type`` of ``UNIT``, ``ITEM_GENERAL``, or ``VERMIN_EVENT``.
+  The ``object`` field contains a pointer to a unit, item, or vermin, respectively.
 
 * ``dfhack.items.getContainedItems(item)``
 

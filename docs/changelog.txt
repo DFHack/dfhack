@@ -50,10 +50,13 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Documentation
 - Add more examples to the plugin skeleton files so they are more informative for a newbie
+- Lua API.rst added: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
 
 ## API
+- Added functions reverse-engineered from ambushing unit code: ``Units::isHidden``, ``Units::isFortControlled``, ``Units::getOuterContainerRef``, ``Items::getOuterContainerRef``
 
 ## Lua
+- Lua wrappers for functions reverse-engineered from ambushing unit code: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
 
 # 0.47.05-r4
 

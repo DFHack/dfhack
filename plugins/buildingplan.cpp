@@ -14,7 +14,7 @@
 
 #include "uicommon.h"
 #include "listcolumn.h"
-#include "buildingplan-lib.h"
+#include "buildingplan.h"
 
 DFHACK_PLUGIN("buildingplan");
 #define PLUGIN_VERSION "2.0"
@@ -30,6 +30,22 @@ bool quickfort_mode = false;
 bool all_enabled = false;
 bool in_dummy_screen = false;
 std::unordered_map<BuildingTypeKey, bool, BuildingTypeKeyHash> planmode_enabled;
+
+bool show_debugging = false;
+
+void debug(const char *fmt, ...)
+{
+    if (!show_debugging)
+        return;
+
+    color_ostream_proxy out(Core::getInstance().getConsole());
+    out.print("DEBUG(buildingplan): ");
+    va_list args;
+    va_start(args, fmt);
+    out.vprint(fmt, args);
+    va_end(args);
+    out.print("\n");
+}
 
 class ViewscreenChooseMaterial : public dfhack_viewscreen
 {
@@ -105,7 +121,6 @@ private:
 
         for (size_t i = 0; i < raws.inorganics.size(); i++)
         {
-            df::inorganic_raw *p = raws.inorganics[i];
             MaterialInfo material;
             material.decode(0, i);
             addMaterialEntry(selected_category, material, material.toString());
@@ -120,7 +135,6 @@ private:
                 df::plant_raw *p = raws.plants.all[i];
                 for (size_t j = 0; p->material.size() > 1 && j < p->material.size(); j++)
                 {
-                    auto t = p->material[j];
                     if (p->material[j]->id != "WOOD")
                         continue;
 
@@ -502,7 +516,7 @@ struct buildingplan_query_hook : public df::viewscreen_dwarfmodest
     {
         if (!bld
                 || bld->jobs.size() < 1
-                || bld->jobs[0]->job_items.size() <= filter_idx)
+                || int(bld->jobs[0]->job_items.size()) <= filter_idx)
             return false;
 
         // if all items for this filter are attached, the quantity will be 0

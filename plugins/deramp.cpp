@@ -73,7 +73,7 @@ command_result df_deramp (color_ostream &out, vector <string> & parameters)
         Job::removeJob(job);
     }
 
-    int num_blocks = 0, blocks_total = world->map.map_blocks.size();
+    int blocks_total = world->map.map_blocks.size();
     for (int i = 0; i < blocks_total; i++)
     {
         df::map_block *block = world->map.map_blocks[i];

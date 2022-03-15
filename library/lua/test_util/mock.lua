@@ -91,7 +91,16 @@ function mock.func(...)
     setmetatable(f, {
         __call = function(self, ...)
             self.call_count = self.call_count + 1
-            table.insert(self.call_args, {...})
+            local args = {...}
+            for i,v in ipairs(args) do
+                if type(v) == 'table' then
+                    -- just a shallow copy, but it offers some ability to
+                    -- inspect original values in tables that were altered after
+                    -- the call
+                    args[i] = copyall(v)
+                end
+            end
+            table.insert(self.call_args, args)
             return table.unpack(self.return_values)
         end,
     })

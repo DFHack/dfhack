@@ -34,21 +34,91 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
+
+## Removed
+
+## Fixes
+- `luasocket` (and others): return correct status code when closing socket connections
+
+## Misc Improvements
+- `dig-now`: handle fortification carving
+- `EventManager`: add new event type ``JOB_STARTED``, triggered when a job first gains a worker
+- `EventManager`: add new event type ``NEW_UNIT_ACTIVE``, triggered when a new unit appears on the active list
+- `EventManager`: now each registered handler for an event can have its own frequency instead of all handlers using the lowest frequency of all handlers
+- `stocks`: allow search terms to match the full item label, even when the label is truncated for length
+- `dfhack-examples-guide`: add mugs to ``basic`` manager orders
+
+## Documentation
+- Add more examples to the plugin skeleton files so they are more informative for a newbie
+- Lua API.rst added: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
+
+## API
+- Added functions reverse-engineered from ambushing unit code: ``Units::isHidden``, ``Units::isFortControlled``, ``Units::getOuterContainerRef``, ``Items::getOuterContainerRef``
+
+## Lua
+- Lua wrappers for functions reverse-engineered from ambushing unit code: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
+
+# 0.47.05-r4
+
+## Fixes
+- `blueprint`: fixed passing incorrect parameters to `gui/blueprint` when you run ``blueprint gui`` with optional params
+- `blueprint`: key sequences for constructed walls and down stairs are now correct
+- `tailor`: fixed some inconsistencies (and possible crashes) when parsing certain subcommands, e.g. ``tailor help``
+- `tiletypes-here`, `tiletypes-here-point`: fix crash when running from an unsuspended core context
+
+## Misc Improvements
+- Core: DFHack now prints the name of the init script it is running to the console and stderr
+- `automaterial`: ensure construction tiles are laid down in order when using `buildingplan` to plan the constructions
+- `blueprint`: all blueprint phases are now written to a single file, using `quickfort` multi-blueprint file syntax. to get the old behavior of each phase in its own file, pass the ``--splitby=phase`` parameter to ``blueprint``
+- `blueprint`: you can now specify the position where the cursor should be when the blueprint is played back with `quickfort` by passing the ``--playback-start`` parameter
+- `blueprint`: generated blueprints now have labels so `quickfort` can address them by name
+- `blueprint`: all building types are now supported
+- `blueprint`: multi-type stockpiles are now supported
+- `blueprint`: non-rectangular stockpiles and buildings are now supported
+- `blueprint`: blueprints are no longer generated for phases that have nothing to do (unless those phases are explicitly enabled on the commandline or gui)
+- `blueprint`: new "track" phase that discovers and records carved tracks
+- `blueprint`: new "zone" phase that discovers and records activity zones, including custom configuration for ponds, gathering, and hospitals
+- `dig-now`: no longer leaves behind a designated tile when a tile was designated beneath a tile designated for channeling
+- `orders`: added ``list`` subcommand to show existing exported orders
+- `quickfort`, `dfhack-examples-guide`: Dreamfort blueprint set improvements based on playtesting and feedback. includes updated profession definitions.
+- `quickfort-library-guide`: added light aquifer tap and pump stack blueprints (with step-by-step usage guides) to the quickfort blueprint library
+- `quickfort`: Dreamfort blueprint set improvements: added iron and flux stock level indicators on the industry level and a prisoner processing quantum stockpile in the surface barracks. also added help text for how to manage sieges and how to manage prisoners after a siege.
+
+## API
+- ``Buildings::findCivzonesAt()``: lookups now complete in constant time instead of linearly scanning through all civzones in the game
+- ``Job::remove_postings()``: use the job cancel vmethod graciously provided by The Toady One in place of a synthetic method derived from reverse engineering
+
+## Lua
+- ``argparse.processArgsGetopt()``: you can now have long form parameters that are not an alias for a short form parameter. For example, you can now have a parameter like ``--longparam`` without needing to have an equivalent one-letter ``-l`` param.
+- ``dwarfmode.enterSidebarMode()``: ``df.ui_sidebar_mode.DesignateMine`` is now a suported target sidebar mode
+
+## Removed
+- `fortplan`: please use `quickfort` instead
+
+# 0.47.05-r3
+
+## New Plugins
 - `dig-now`: instantly completes dig designations (including smoothing and carving tracks)
 
 ## Fixes
 - Core: ``alt`` keydown state is now cleared when DF loses and regains focus, ensuring the ``alt`` modifier state is not stuck on for systems that don't send standard keyup events in response to ``alt-tab`` window manager events
 - Lua: ``memscan.field_offset()``: fixed an issue causing `devel/export-dt-ini` to crash sometimes, especially on Windows
+- `autofarm`: autofarm will now count plant growths as well as plants toward its thresholds
 - `autogems`: no longer assigns gem cutting jobs to workshops with gem cutting prohibited in the workshop profile
 
 ## Misc Improvements
 - `buildingplan`: now displays which items are attached and which items are still missing for planned buildings
 - `orders`: support importing and exporting reaction-specific item conditions, like "lye-containing" for soap production orders
-- `tiletypes-here`, `tiletypes-here-point`: add --cursor and --quiet options to support non-interactive use cases
+- `orders`: new ``sort`` command. sorts orders according to their repeat frequency. this prevents daily orders from blocking other orders for simlar items from ever getting completed.
+- `tiletypes-here`, `tiletypes-here-point`: add ``--cursor`` and ``--quiet`` options to support non-interactive use cases
 - `quickfort`: Dreamfort blueprint set improvements: extensive revision based on playtesting and feedback. includes updated ``onMapLoad_dreamfort.init`` settings file, enhanced automation orders, and premade profession definitions.  see full changelog at https://github.com/DFHack/dfhack/pull/1921 and https://github.com/DFHack/dfhack/pull/1925
+- `tailor`: allow user to specify which materials to be used, and in what order
 
 ## API
 - The ``Items`` module ``moveTo*`` and ``remove`` functions now handle projectiles
+
+## Lua
+- new global function: ``safe_pairs(iterable[, iterator_fn])`` will iterate over the ``iterable`` (a table or iterable userdata)  with the ``iterator_fn`` (``pairs`` if not otherwise specified) if iteration is possible. If iteration is not possible or would throw an error, for example if ``nil`` is passed as the ``iterable``, the iteration is just silently skipped.
 
 ## Documentation
 - `quickfort-library-guide`: updated dreamfort documentation and added screenshots

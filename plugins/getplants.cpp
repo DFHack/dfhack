@@ -526,7 +526,6 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
     {
         const df::plant *plant = world->plants.all[i];
         df::map_block *cur = Maps::getTileBlock(plant->pos);
-        bool dirty = false;
 
         int x = plant->pos.x % 16;
         int y = plant->pos.y % 16;

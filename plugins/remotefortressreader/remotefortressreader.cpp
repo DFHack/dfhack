@@ -699,7 +699,6 @@ map<DFCoord, uint16_t> spatterHashes;
 bool IsspatterChanged(DFCoord pos)
 {
     df::map_block * block = Maps::getBlock(pos);
-    bool changed = false;
     std::vector<df::block_square_event_material_spatterst *> materials;
 #if DF_VERSION_INT > 34011
     std::vector<df::block_square_event_item_spatterst *> items;
@@ -807,7 +806,7 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
 
 
     df::world_raws *raws = &world->raws;
-    df::world_history *history = &world->history;
+    // df::world_history *history = &world->history;
     MaterialInfo mat;
     for (size_t i = 0; i < raws->inorganics.size(); i++)
     {
@@ -1080,7 +1079,7 @@ void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * N
             NetBlock->add_water_stagnant(designation.bits.water_stagnant);
             if (gamemode && (*gamemode == game_mode::ADVENTURE))
             {
-                auto fog_of_war = DfBlock->fog_of_war[xx][yy];
+                // auto fog_of_war = DfBlock->fog_of_war[xx][yy];
                 NetBlock->add_hidden((TileDigDesignation)designation.bits.dig == TileDigDesignation::NO_DIG || designation.bits.hidden);
                 NetBlock->add_tile_dig_designation(TileDigDesignation::NO_DIG);
                 NetBlock->add_tile_dig_designation_marker(false);
@@ -1568,8 +1567,8 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
     {
         auto wave = world->ocean_waves[i];
         auto netWave = out->add_ocean_waves();
-        ConvertDFCoord(wave->x1, wave->y1, wave->z, netWave->mutable_dest());
-        ConvertDFCoord(wave->x2, wave->y2, wave->z, netWave->mutable_pos());
+        ConvertDFCoord(wave->dest.x, wave->dest.y, wave->z, netWave->mutable_dest());
+        ConvertDFCoord(wave->cur.x, wave->cur.y, wave->z, netWave->mutable_pos());
     }
     MC.trash();
     return CR_OK;
@@ -2172,7 +2171,7 @@ static command_result GetWorldMapNew(color_ostream &stream, const EmptyMessage *
         for (int xx = 0; xx < width; xx++)
         {
             df::region_map_entry * map_entry = &data->region_map[xx][yy];
-            df::world_region * region = data->regions[map_entry->region_id];
+            // df::world_region * region = data->regions[map_entry->region_id];
 
             auto regionTile = out->add_region_tiles();
             regionTile->set_elevation(map_entry->elevation);

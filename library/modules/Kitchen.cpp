@@ -28,6 +28,12 @@ using namespace df::enums;
 using df::global::world;
 using df::global::ui;
 
+// Special values used by "seedwatch" plugin to store seed limits
+const df::enums::item_type::item_type SEEDLIMIT_ITEMTYPE = df::enums::item_type::BAR;
+const int16_t SEEDLIMIT_ITEMSUBTYPE = 0;
+const int16_t SEEDLIMIT_MAX = 400; // Maximum permitted seed limit
+const df::kitchen_exc_type SEEDLIMIT_EXCTYPE = df::kitchen_exc_type(4);
+
 void Kitchen::debug_print(color_ostream &out)
 {
     out.print("Kitchen Exclusions\n");
@@ -46,150 +52,108 @@ void Kitchen::debug_print(color_ostream &out)
     out.print("\n");
 }
 
-void Kitchen::allowPlantSeedCookery(t_materialIndex materialIndex)
+void Kitchen::allowPlantSeedCookery(int32_t plant_id)
 {
-    bool match = false;
-    do
-    {
-        match = false;
-        std::size_t matchIndex = 0;
-        for(std::size_t i = 0; i < size(); ++i)
-        {
-            if(ui->kitchen.mat_indices[i] == materialIndex
-               && (ui->kitchen.item_types[i] == item_type::SEEDS || ui->kitchen.item_types[i] == item_type::PLANT)
-               && ui->kitchen.exc_types[i] == df::kitchen_exc_type::Cook
-            )
-            {
-                match = true;
-                matchIndex = i;
-            }
-        }
-        if(match)
-        {
-            ui->kitchen.item_types.erase(ui->kitchen.item_types.begin() + matchIndex);
-            ui->kitchen.item_subtypes.erase(ui->kitchen.item_subtypes.begin() + matchIndex);
-            ui->kitchen.mat_indices.erase(ui->kitchen.mat_indices.begin() + matchIndex);
-            ui->kitchen.mat_types.erase(ui->kitchen.mat_types.begin() + matchIndex);
-            ui->kitchen.exc_types.erase(ui->kitchen.exc_types.begin() + matchIndex);
-        }
-    } while(match);
+    df::plant_raw *type = world->raws.plants.all[plant_id];
+
+    removeExclusion(df::kitchen_exc_type::Cook, item_type::SEEDS, -1,
+        type->material_defs.type[plant_material_def::seed],
+        type->material_defs.idx[plant_material_def::seed]);
+
+    removeExclusion(df::kitchen_exc_type::Cook, item_type::PLANT, -1,
+        type->material_defs.type[plant_material_def::basic_mat],
+        type->material_defs.idx[plant_material_def::basic_mat]);
 }
 
-void Kitchen::denyPlantSeedCookery(t_materialIndex materialIndex)
+void Kitchen::denyPlantSeedCookery(int32_t plant_id)
 {
-    df::plant_raw *type = world->raws.plants.all[materialIndex];
-    bool SeedAlreadyIn = false;
-    bool PlantAlreadyIn = false;
-    for(std::size_t i = 0; i < size(); ++i)
-    {
-        if(ui->kitchen.mat_indices[i] == materialIndex
-           && ui->kitchen.exc_types[i] == df::kitchen_exc_type::Cook)
-        {
-            if(ui->kitchen.item_types[i] == item_type::SEEDS)
-                SeedAlreadyIn = true;
-            else if (ui->kitchen.item_types[i] == item_type::PLANT)
-                PlantAlreadyIn = true;
-        }
-    }
-    if(!SeedAlreadyIn)
-    {
-        ui->kitchen.item_types.push_back(item_type::SEEDS);
-        ui->kitchen.item_subtypes.push_back(organicSubtype);
-        ui->kitchen.mat_types.push_back(type->material_defs.type[plant_material_def::seed]);
-        ui->kitchen.mat_indices.push_back(materialIndex);
-        ui->kitchen.exc_types.push_back(df::kitchen_exc_type::Cook);
-    }
-    if(!PlantAlreadyIn)
-    {
-        ui->kitchen.item_types.push_back(item_type::PLANT);
-        ui->kitchen.item_subtypes.push_back(organicSubtype);
-        ui->kitchen.mat_types.push_back(type->material_defs.type[plant_material_def::basic_mat]);
-        ui->kitchen.mat_indices.push_back(materialIndex);
-        ui->kitchen.exc_types.push_back(df::kitchen_exc_type::Cook);
-    }
+    df::plant_raw *type = world->raws.plants.all[plant_id];
+
+    addExclusion(df::kitchen_exc_type::Cook, item_type::SEEDS, -1,
+        type->material_defs.type[plant_material_def::seed],
+        type->material_defs.idx[plant_material_def::seed]);
+
+    addExclusion(df::kitchen_exc_type::Cook, item_type::PLANT, -1,
+        type->material_defs.type[plant_material_def::basic_mat],
+        type->material_defs.idx[plant_material_def::basic_mat]);
 }
 
-void Kitchen::fillWatchMap(std::map<t_materialIndex, unsigned int>& watchMap)
+void Kitchen::fillWatchMap(std::map<int32_t, int16_t>& watchMap)
 {
     watchMap.clear();
-    for(std::size_t i = 0; i < size(); ++i)
+    for (std::size_t i = 0; i < size(); ++i)
     {
-        if(ui->kitchen.item_subtypes[i] == (short)limitType && ui->kitchen.item_subtypes[i] == (short)limitSubtype && ui->kitchen.exc_types[i] == limitExclusion)
+        if (ui->kitchen.item_subtypes[i] == SEEDLIMIT_ITEMTYPE &&
+            ui->kitchen.item_subtypes[i] == SEEDLIMIT_ITEMSUBTYPE &&
+            ui->kitchen.exc_types[i] == SEEDLIMIT_EXCTYPE)
         {
-            watchMap[ui->kitchen.mat_indices[i]] = (unsigned int) ui->kitchen.mat_types[i];
+            watchMap[ui->kitchen.mat_indices[i]] = ui->kitchen.mat_types[i];
         }
     }
 }
 
-void Kitchen::removeLimit(t_materialIndex materialIndex)
+int Kitchen::findLimit(int32_t plant_id)
 {
-    bool match = false;
-    do
+    for (size_t i = 0; i < size(); ++i)
     {
-        match = false;
-        std::size_t matchIndex = 0;
-        for(std::size_t i = 0; i < size(); ++i)
+        if (ui->kitchen.item_types[i] == SEEDLIMIT_ITEMTYPE &&
+            ui->kitchen.item_subtypes[i] == SEEDLIMIT_ITEMSUBTYPE &&
+            ui->kitchen.mat_indices[i] == plant_id &&
+            ui->kitchen.exc_types[i] == SEEDLIMIT_EXCTYPE)
         {
-            if(ui->kitchen.item_types[i] == limitType
-               && ui->kitchen.item_subtypes[i] == limitSubtype
-               && ui->kitchen.mat_indices[i] == materialIndex
-               && ui->kitchen.exc_types[i] == limitExclusion)
-            {
-                match = true;
-                matchIndex = i;
-            }
+            return int(i);
         }
-        if(match)
-        {
-            ui->kitchen.item_types.erase(ui->kitchen.item_types.begin() + matchIndex);
-            ui->kitchen.item_subtypes.erase(ui->kitchen.item_subtypes.begin() + matchIndex);
-            ui->kitchen.mat_types.erase(ui->kitchen.mat_types.begin() + matchIndex);
-            ui->kitchen.mat_indices.erase(ui->kitchen.mat_indices.begin() + matchIndex);
-            ui->kitchen.exc_types.erase(ui->kitchen.exc_types.begin() + matchIndex);
-        }
-    } while(match);
+    }
+    return -1;
 }
 
-void Kitchen::setLimit(t_materialIndex materialIndex, unsigned int limit)
+bool Kitchen::removeLimit(int32_t plant_id)
 {
-    removeLimit(materialIndex);
-    if(limit > seedLimit)
+    int i = findLimit(plant_id);
+    if (i < 0)
+        return false;
+
+    ui->kitchen.item_types.erase(ui->kitchen.item_types.begin() + i);
+    ui->kitchen.item_subtypes.erase(ui->kitchen.item_subtypes.begin() + i);
+    ui->kitchen.mat_types.erase(ui->kitchen.mat_types.begin() + i);
+    ui->kitchen.mat_indices.erase(ui->kitchen.mat_indices.begin() + i);
+    ui->kitchen.exc_types.erase(ui->kitchen.exc_types.begin() + i);
+    return true;
+}
+
+bool Kitchen::setLimit(int32_t plant_id, int16_t limit)
+{
+    if (limit > SEEDLIMIT_MAX)
+        limit = SEEDLIMIT_MAX;
+
+    int i = findLimit(plant_id);
+    if (i < 0)
     {
-        limit = seedLimit;
+        ui->kitchen.item_types.push_back(SEEDLIMIT_ITEMTYPE);
+        ui->kitchen.item_subtypes.push_back(SEEDLIMIT_ITEMSUBTYPE);
+        ui->kitchen.mat_types.push_back(limit);
+        ui->kitchen.mat_indices.push_back(plant_id);
+        ui->kitchen.exc_types.push_back(SEEDLIMIT_EXCTYPE);
     }
-    ui->kitchen.item_types.push_back(limitType);
-    ui->kitchen.item_subtypes.push_back(limitSubtype);
-    ui->kitchen.mat_indices.push_back(materialIndex);
-    ui->kitchen.mat_types.push_back((t_materialType) (limit < seedLimit) ? limit : seedLimit);
-    ui->kitchen.exc_types.push_back(limitExclusion);
+    else
+    {
+        ui->kitchen.mat_types[i] = limit;
+    }
+    return true;
 }
 
 void Kitchen::clearLimits()
 {
-    bool match = false;
-    do
+    for (size_t i = 0; i < size(); ++i)
     {
-        match = false;
-        std::size_t matchIndex;
-        for(std::size_t i = 0; i < size(); ++i)
+        if (ui->kitchen.item_types[i] == SEEDLIMIT_ITEMTYPE &&
+            ui->kitchen.item_subtypes[i] == SEEDLIMIT_ITEMSUBTYPE &&
+            ui->kitchen.exc_types[i] == SEEDLIMIT_EXCTYPE)
         {
-            if(ui->kitchen.item_types[i] == limitType
-               && ui->kitchen.item_subtypes[i] == limitSubtype
-               && ui->kitchen.exc_types[i] == limitExclusion)
-            {
-                match = true;
-                matchIndex = i;
-            }
+            removeLimit(ui->kitchen.mat_indices[i]);
+            --i;
         }
-        if(match)
-        {
-            ui->kitchen.item_types.erase(ui->kitchen.item_types.begin() + matchIndex);
-            ui->kitchen.item_subtypes.erase(ui->kitchen.item_subtypes.begin() + matchIndex);
-            ui->kitchen.mat_indices.erase(ui->kitchen.mat_indices.begin() + matchIndex);
-            ui->kitchen.mat_types.erase(ui->kitchen.mat_types.begin() + matchIndex);
-            ui->kitchen.exc_types.erase(ui->kitchen.exc_types.begin() + matchIndex);
-        }
-    } while(match);
+    }
 }
 
 size_t Kitchen::size()

@@ -650,8 +650,6 @@ command_result prospector (color_ostream &con, vector <string> & parameters)
     matdata aquiferTiles;
     matdata tubeTiles;
 
-    uint32_t vegCount = 0;
-
     for(uint32_t z = 0; z < z_max; z++)
     {
         for(uint32_t b_y = 0; b_y < y_max; b_y++)

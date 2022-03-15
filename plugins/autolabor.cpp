@@ -794,8 +794,6 @@ static void assign_labor(unit_labor::unit_labor labor,
         if (labor_infos[labor].mode() != AUTOMATIC)
             return;
 
-        int best_dwarf = 0;
-        int best_value = -10000;
         int best_skill = 0;
 
         std::vector<int> values(n_dwarfs);
@@ -803,8 +801,6 @@ static void assign_labor(unit_labor::unit_labor labor,
         std::map<int, int> dwarf_skill;
         std::map<int, int> dwarf_skillxp;
         std::vector<bool> previously_enabled(n_dwarfs);
-
-        auto mode = labor_infos[labor].mode();
 
         // Find candidate dwarfs, and calculate a preference value for each dwarf
         for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
@@ -1039,9 +1035,6 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         return CR_OK;
     step_count = 0;
 
-    uint32_t race = ui->race_id;
-    uint32_t civ = ui->civ_id;
-
     std::vector<df::unit *> dwarfs;
 
     bool has_butchers = false;
@@ -1163,7 +1156,6 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             df::job_skill_class skill_class = ENUM_ATTR(job_skill, type, skill);
 
             int skill_level = (*s)->rating;
-            int skill_experience = (*s)->experience;
 
             // Track total & highest skill among normal/medical skills. (We don't care about personal or social skills.)
 

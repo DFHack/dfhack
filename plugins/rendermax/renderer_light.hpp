@@ -51,8 +51,6 @@ private:
     rgbf adapt_to_light(const rgbf& light)
     {
         const float influence=0.0001f;
-        const float max_adapt=1;
-        const float min_adapt=0;
         float intensity=(light.r+light.g+light.b)/3.0;
         light_adaptation=intensity*influence+light_adaptation*(1-influence);
         float delta=light_adaptation-intensity;
@@ -77,7 +75,7 @@ private:
         old_opengl* p=reinterpret_cast<old_opengl*>(parent);
         float *fg = p->fg + tile * 4 * 6;
         float *bg = p->bg + tile * 4 * 6;
-        float *tex = p->tex + tile * 2 * 6;
+        // float *tex = p->tex + tile * 2 * 6;
         rgbf light=lightGrid[tile];//for light adaptation: rgbf light=adapt_to_light(lightGrid[tile]);
 
         for (int i = 0; i < 6; i++) { //oh how sse would do wonders here, or shaders...

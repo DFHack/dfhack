@@ -58,16 +58,25 @@ function test.processArgsGetopt_happy_path()
 end
 
 function test.processArgsGetopt_action_errors()
-    expect.error_match('missing option letter',
+    expect.error_match('at least one of sh_opt and long_opt',
         function()
             argparse.processArgsGetopt({}, {{handler=function() end}})
         end)
 
-    expect.error_match('missing option letter',
+    expect.error_match('option letter not found',
         function() argparse.processArgsGetopt({}, {{'notoneletter'}}) end)
 
-    expect.error_match('missing option letter',
+    expect.error_match('option letter not found',
         function() argparse.processArgsGetopt({}, {{function() end}}) end)
+
+    expect.error_match('long option name',
+        function() argparse.processArgsGetopt({}, {{'', ''}}) end)
+
+    expect.error_match('long option name',
+        function() argparse.processArgsGetopt({}, {{nil, ''}}) end)
+
+    expect.error_match('long option name',
+        function() argparse.processArgsGetopt({}, {{'a', ''}}) end)
 
     expect.error_match('handler missing',
         function() argparse.processArgsGetopt({}, {{'r'}}) end)
@@ -105,6 +114,22 @@ function test.processArgsGetopt_parsing_errors()
                                       handler=function() end}})
                        end,
                        'fail to pass value to long param that requires one')
+end
+
+function test.processArgsGetopt_long_opt_without_short_opt()
+    local var = false
+    local nonoptions = argparse.processArgsGetopt(
+                            {'--long'},
+                            {{'', 'long', handler=function() var = true end}})
+    expect.true_(var)
+    expect.table_eq({}, nonoptions)
+
+    var = false
+    nonoptions = argparse.processArgsGetopt(
+                    {'--long'},
+                    {{nil, 'long', handler=function() var = true end}})
+    expect.true_(var)
+    expect.table_eq({}, nonoptions)
 end
 
 function test.stringList()

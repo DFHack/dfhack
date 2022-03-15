@@ -139,10 +139,7 @@ DFhackCExport int SDL_Init(uint32_t flags)
         fprintf(stderr,"dfhack: something went horribly wrong\n");
         exit(1);
     }
-    /*
-    DFHack::Core & c = DFHack::Core::getInstance();
-    c.Init();
-    */
+
     int ret = _SDL_Init(flags);
     return ret;
 }

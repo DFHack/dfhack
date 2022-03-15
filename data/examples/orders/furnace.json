@@ -3,7 +3,7 @@
 		"amount_left" : 20,
 		"amount_total" : 20,
 		"frequency" : "Daily",
-		"id" : 34,
+		"id" : 0,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -17,7 +17,7 @@
 				"condition" : "AtMost",
 				"item_type" : "BAR",
 				"material" : "COAL",
-				"value" : 100
+				"value" : 150
 			},
 			{
 				"condition" : "AtMost",
@@ -38,7 +38,7 @@
 		"amount_left" : 4,
 		"amount_total" : 4,
 		"frequency" : "Daily",
-		"id" : 35,
+		"id" : 1,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -61,7 +61,7 @@
 		"amount_left" : 4,
 		"amount_total" : 4,
 		"frequency" : "Daily",
-		"id" : 36,
+		"id" : 2,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -86,7 +86,7 @@
 		"amount_left" : 4,
 		"amount_total" : 4,
 		"frequency" : "Daily",
-		"id" : 37,
+		"id" : 3,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -111,50 +111,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 38,
-		"is_active" : false,
-		"is_validated" : false,
-		"item_conditions" : 
-		[
-			{
-				"condition" : "AtLeast",
-				"item_type" : "BOULDER",
-				"reaction_class" : "GYPSUM",
-				"reaction_id" : "MAKE_PLASTER_POWDER",
-				"value" : 5
-			},
-			{
-				"condition" : "AtLeast",
-				"flags" : 
-				[
-					"empty",
-					"bag"
-				],
-				"item_type" : "BOX",
-				"reaction_id" : "MAKE_PLASTER_POWDER",
-				"value" : 5
-			},
-			{
-				"condition" : "AtLeast",
-				"item_type" : "BAR",
-				"material" : "COAL",
-				"value" : 100
-			},
-			{
-				"condition" : "AtMost",
-				"item_type" : "POWDER_MISC",
-				"material" : "INORGANIC:PLASTER",
-				"value" : 1
-			}
-		],
-		"job" : "CustomReaction",
-		"reaction" : "MAKE_PLASTER_POWDER"
-	},
-	{
-		"amount_left" : 1,
-		"amount_total" : 1,
-		"frequency" : "Daily",
-		"id" : 39,
+		"id" : 5,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -183,10 +140,10 @@
 		"reaction" : "MAKE_PEARLASH"
 	},
 	{
-		"amount_left" : 1,
-		"amount_total" : 1,
+		"amount_left" : 4,
+		"amount_total" : 4,
 		"frequency" : "Daily",
-		"id" : 40,
+		"id" : 6,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -199,7 +156,7 @@
 					"bag"
 				],
 				"item_type" : "BOX",
-				"value" : 5
+				"value" : 10
 			},
 			{
 				"condition" : "AtMost",
@@ -207,7 +164,7 @@
 				[
 					"sand_bearing"
 				],
-				"value" : 10
+				"value" : 30
 			}
 		],
 		"job" : "CollectSand"
@@ -216,7 +173,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 41,
+		"id" : 7,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -249,7 +206,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 42,
+		"id" : 8,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -288,7 +245,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 43,
+		"id" : 9,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -328,7 +285,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 44,
+		"id" : 10,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -347,7 +304,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 45,
+		"id" : 11,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -378,7 +335,7 @@
 		"amount_left" : 4,
 		"amount_total" : 4,
 		"frequency" : "Daily",
-		"id" : 46,
+		"id" : 12,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -396,7 +353,7 @@
 				"condition" : "AtLeast",
 				"item_type" : "BAR",
 				"material" : "COAL",
-				"value" : 150
+				"value" : 100
 			}
 		],
 		"job" : "MeltMetalObject"

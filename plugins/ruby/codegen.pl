@@ -787,7 +787,7 @@ sub sizeof {
         } elsif ($subtype eq 'df-linked-list') {
             return 3 * $SIZEOF_PTR;
         } elsif ($subtype eq 'df-flagarray') {
-            return 2 * $SIZEOF_PTR;	# XXX length may be 4 on windows?
+            return 2 * $SIZEOF_PTR;    # XXX length may be 4 on windows?
         } elsif ($subtype eq 'df-static-flagarray') {
             return $field->getAttribute('count');
         } elsif ($subtype eq 'df-array') {

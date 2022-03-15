@@ -41,8 +41,8 @@
 		"meal_ingredients" : 4
 	},
 	{
-		"amount_left" : 1,
-		"amount_total" : 1,
+		"amount_left" : 2,
+		"amount_total" : 2,
 		"frequency" : "Daily",
 		"id" : 1,
 		"is_active" : false,
@@ -78,8 +78,8 @@
 		"reaction" : "BREW_DRINK_FROM_PLANT"
 	},
 	{
-		"amount_left" : 1,
-		"amount_total" : 1,
+		"amount_left" : 2,
+		"amount_total" : 2,
 		"frequency" : "Daily",
 		"id" : 2,
 		"is_active" : false,
@@ -668,6 +668,91 @@
 		[
 			{
 				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"non_economic",
+					"hard"
+				],
+				"item_type" : "BOULDER",
+				"material" : "INORGANIC",
+				"value" : 20
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "GOBLET",
+				"value" : 10
+			}
+		],
+		"job" : "MakeGoblet",
+		"material" : "INORGANIC"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 21,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "WOOD",
+				"value" : 150
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_TOOL_WHEELBARROW",
+				"item_type" : "TOOL",
+				"value" : 2
+			}
+		],
+		"item_subtype" : "ITEM_TOOL_WHEELBARROW",
+		"job" : "MakeTool",
+		"material_category" : 
+		[
+			"wood"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 22,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "WOOD",
+				"value" : 150
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_TOOL_MINECART",
+				"item_type" : "TOOL",
+				"value" : 2
+			}
+		],
+		"item_subtype" : "ITEM_TOOL_MINECART",
+		"job" : "MakeTool",
+		"material_category" : 
+		[
+			"wood"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 23,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
 				"item_type" : "WOOD",
 				"value" : 50
 			},
@@ -691,7 +776,66 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 21,
+		"id" : 24,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "WOOD",
+				"value" : 150
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"empty"
+				],
+				"item_type" : "CAGE",
+				"value" : 30
+			}
+		],
+		"job" : "MakeCage",
+		"material_category" : 
+		[
+			"wood"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 25,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"non_economic",
+					"hard"
+				],
+				"item_type" : "BOULDER",
+				"material" : "INORGANIC",
+				"value" : 50
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "TRAPPARTS",
+				"value" : 20
+			}
+		],
+		"job" : "ConstructMechanisms",
+		"material" : "INORGANIC"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 26,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -709,7 +853,7 @@
 					"sewn_imageless"
 				],
 				"item_type" : "BOX",
-				"value" : 20
+				"value" : 30
 			}
 		],
 		"job" : "ConstructChest",
@@ -722,7 +866,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 22,
+		"id" : 27,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -745,7 +889,7 @@
 					"sewn_imageless"
 				],
 				"item_type" : "BOX",
-				"value" : 20
+				"value" : 30
 			}
 		],
 		"job" : "ConstructChest",
@@ -758,7 +902,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 23,
+		"id" : 28,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -781,7 +925,7 @@
 					"sewn_imageless"
 				],
 				"item_type" : "BOX",
-				"value" : 20
+				"value" : 30
 			}
 		],
 		"job" : "ConstructChest",
@@ -794,7 +938,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 24,
+		"id" : 29,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -817,7 +961,7 @@
 					"sewn_imageless"
 				],
 				"item_type" : "BOX",
-				"value" : 20
+				"value" : 30
 			}
 		],
 		"job" : "ConstructChest",
@@ -830,7 +974,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 25,
+		"id" : 30,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -849,7 +993,33 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 26,
+		"id" : 31,
+		"is_active" : false,
+		"is_validated" : true,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"unrotten",
+					"shell",
+					"body_part"
+				],
+				"value" : 2
+			}
+		],
+		"job" : "MakeCrafts",
+		"material_category" : 
+		[
+			"shell"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 32,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -871,7 +1041,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 27,
+		"id" : 33,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -897,7 +1067,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 28,
+		"id" : 34,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -923,7 +1093,33 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 29,
+		"id" : 35,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "WOOD",
+				"value" : 150
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BED",
+				"value" : 2
+			}
+		],
+		"job" : "ConstructBed",
+		"material_category" : 
+		[
+			"wood"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 36,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -945,12 +1141,9 @@
 			},
 			{
 				"condition" : "AtMost",
-				"contains" : 
-				[
-					"lye"
-				],
-				"reaction_id" : "MAKE_SOAP_FROM_TALLOW",
-				"value" : 3
+				"item_type" : "LIQUID_MISC",
+				"material" : "LYE",
+				"value" : 5
 			}
 		],
 		"job" : "MakeLye"
@@ -959,7 +1152,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 30,
+		"id" : 37,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -977,12 +1170,9 @@
 			},
 			{
 				"condition" : "AtLeast",
-				"contains" : 
-				[
-					"lye"
-				],
-				"reaction_id" : "MAKE_SOAP_FROM_TALLOW",
-				"value" : 2
+				"item_type" : "LIQUID_MISC",
+				"material" : "LYE",
+				"value" : 3
 			},
 			{
 				"condition" : "AtMost",
@@ -1001,7 +1191,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 31,
+		"id" : 38,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -1014,12 +1204,9 @@
 			},
 			{
 				"condition" : "AtLeast",
-				"contains" : 
-				[
-					"lye"
-				],
-				"reaction_id" : "MAKE_SOAP_FROM_OIL",
-				"value" : 2
+				"item_type" : "LIQUID_MISC",
+				"material" : "LYE",
+				"value" : 3
 			},
 			{
 				"condition" : "AtMost",
@@ -1038,7 +1225,7 @@
 		"amount_left" : 4,
 		"amount_total" : 4,
 		"frequency" : "Daily",
-		"id" : 32,
+		"id" : 39,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -1061,7 +1248,7 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 33,
+		"id" : 40,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
@@ -1080,5 +1267,160 @@
 			}
 		],
 		"job" : "MakePotashFromAsh"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 41,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"unrotten"
+				],
+				"item_type" : "PLANT",
+				"reaction_id" : "MAKE_SLURRY_FROM_PLANT",
+				"reaction_product" : "PRESS_PAPER_MAT",
+				"value" : 50
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"non_pressed"
+				],
+				"item_type" : "GLOB",
+				"reaction_class" : "PAPER_SLURRY",
+				"value" : 2
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "MAKE_SLURRY_FROM_PLANT"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 42,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"non_pressed"
+				],
+				"item_type" : "GLOB",
+				"reaction_class" : "PAPER_SLURRY",
+				"reaction_id" : "PRESS_PLANT_PAPER",
+				"value" : 2
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "SHEET",
+				"value" : 10
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "PRESS_PLANT_PAPER"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 43,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"unrotten"
+				],
+				"item_type" : "PLANT",
+				"reaction_class" : "PAPER_PLANT",
+				"reaction_id" : "MAKE_SHEET_FROM_PLANT",
+				"value" : 15
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "SHEET",
+				"value" : 10
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "MAKE_SHEET_FROM_PLANT"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 44,
+		"is_active" : false,
+		"is_validated" : true,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"non_economic",
+					"hard"
+				],
+				"item_type" : "BOULDER",
+				"material" : "INORGANIC",
+				"value" : 50
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_TOOL_SCROLL_ROLLERS",
+				"item_type" : "TOOL",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_TOOL_SCROLL_ROLLERS",
+		"job" : "MakeTool",
+		"material" : "INORGANIC"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 45,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "SHEET",
+				"reaction_id" : "MAKE_SCROLL",
+				"value" : 2
+			},
+			{
+				"condition" : "AtLeast",
+				"item_subtype" : "ITEM_TOOL_SCROLL_ROLLERS",
+				"item_type" : "TOOL",
+				"reaction_id" : "MAKE_SCROLL",
+				"value" : 2
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_TOOL_SCROLL",
+				"item_type" : "TOOL",
+				"value" : 10
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "MAKE_SCROLL"
 	}
 ]

@@ -125,8 +125,8 @@ Features
       detected, such as when a mistake in a key sequence leaves us stuck in a
       submenu, to make query blueprints easier to debug
 
-Editing blueprints
-------------------
+Creating blueprints
+-------------------
 
 We recommend using a spreadsheet editor such as Excel, `Google
 Sheets <https://sheets.new>`__, or `LibreOffice <https://www.libreoffice.org>`__
@@ -281,7 +281,7 @@ Note that area expansion syntax can only specify rectangular areas. If you want
 to create extent-based structures (e.g. farm plots or stockpiles) in different
 shapes, use the first format above. For example::
 
-   #place L shaped food stockpile
+   #place A single L shaped food stockpile
    f f ` ` #
    f f ` ` #
    f f f f #
@@ -292,8 +292,8 @@ Area expansion syntax also sets boundaries, which can be useful if you want
 adjacent, but separate, stockpiles of the same type::
 
    #place Two touching but separate food stockpiles
-   f(4x2)  #
-   ~ ~ ~ ~ #
+   f(2x2)  #
+   ~ ~ ` ` #
    f(4x2)  #
    ~ ~ ~ ~ #
    # # # # #
@@ -303,8 +303,8 @@ and can be used for visualizing the blueprint layout. This blueprint can be
 equivalently written as::
 
    #place Two touching but separate food stockpiles
-   f(4x2)  #
-   ~ ~ ~ ~ #
+   f(2x2)  #
+   ~ ~ ` ` #
    f f f f #
    f f f f #
    # # # # #
@@ -389,6 +389,14 @@ each floor.
 
 The marker must appear in the first column of the row to be recognized, just
 like a modeline.
+
+You can go up or down multiple levels by adding a number after the ``<`` or
+``>``. For example::
+
+    #dig Two double-level quarries
+    r(10x10)
+    #>2
+    r(10x10)
 
 .. _quickfort-dig-priorities:
 
@@ -503,7 +511,7 @@ be occupied by wheelbarrows!
 
 Quickfort figures out which container type is being set by looking at the letter
 that comes just before the number. For example ``zf10`` means 10 barrels in a
-stockpile that accepts both ammo and food whereas ``z10f`` means 10 bins. If
+stockpile that accepts both ammo and food, whereas ``z10f`` means 10 bins. If
 the stockpile category doesn't usually use any container type, like refuse or
 corpses, wheelbarrows are assumed::
 
@@ -549,7 +557,7 @@ The valid hospital settings (and their maximum values) are::
     cloth    (1000000)
     splints  (100)
     crutches (100)
-    powder   (15000)
+    plaster  (15000)
     buckets  (100)
     soap     (15000)
 
@@ -657,9 +665,10 @@ Carved tracks
 
 In the game, you carve a minecart track by specifying a beginning and ending
 tile and the game "adds" the designation to the tiles in between. You cannot
-designate single tiles. For example to carve two track segments that cross each
-other, you might use the cursor to designate a line of three vertical tiles
-like this::
+designate single tiles because DF needs a multi-tile track to figure out which
+direction the track should go on each tile. For example to carve two track
+segments that cross each other, you might use the cursor to designate a line of
+three vertical tiles like this::
 
    ` start here ` #
    ` `          ` #
@@ -682,8 +691,10 @@ track of the form::
    `      trackN    `      #
    #      #         #      #
 
-To carve this same track with a ``#dig`` blueprint, you'd use area expansion
-syntax with a height or width of 1 to indicate the segments to designate::
+Quickfort supports both styles of specification for carving tracks with ``#dig``
+blueprints. You can use the "additive" style to carve tracks in segments or you
+can use the aliases to specify the track tile by tile. To designate track
+segments, use area expansion syntax with a height or width of 1::
 
    #dig
    `      T(1x3) ` #
@@ -693,9 +704,9 @@ syntax with a height or width of 1 to indicate the segments to designate::
 
 "But wait!", I can hear you say, "How do you designate a track corner that opens
 to the South and East? You can't put both T(1xH) and T(Wx1) in the same cell!"
-This is true, but you can specify both width and height, and for tracks, QF
-interprets it as an upper-left corner extending to the right W tiles and down H
-tiles. For example, to carve a track in a closed ring, you'd write::
+This is true, but you can specify both width and height greater than 1, and for
+tracks, QF interprets it as an upper-left corner extending to the right W tiles
+and down H tiles. For example, to carve a track in a closed ring, you'd write::
 
    #dig
    T(3x3) ` T(1x3) #
@@ -703,13 +714,31 @@ tiles. For example, to carve a track in a closed ring, you'd write::
    T(3x1) ` `      #
    #      # #      #
 
-Which would result in a carved track simliar to a constructed track of the form::
+Or, using the aliases::
 
-   #build
+   #dig
    trackSE trackEW trackSW #
    trackNS `       trackNS #
    trackNE trackEW trackNW #
    #       #       #       #
+
+The aliases can also be used to designate a solid block of track. This is
+epecially useful for obliterating low-quality engravings so you can re-smooth
+and re-engrave with higher quality. For example, you could use the following
+sequence of blueprints to ensure a 10x10 floor area contains only masterwork
+engravings::
+
+    #dig smooth floor
+    s(10x10)
+    #dig engrave floor
+    e(10x10)
+    #dig erase low-quality engravings
+    trackNSEW(10x10)
+
+The tracks only remove low-quality engravings since quickfort won't designate
+masterwork engravings for destruction unless forced by a commandline
+parameter. You would run (and let your dwarves complete the jobs for) the
+sequence of blueprints until no tiles are designated by the "erase" blueprint.
 
 .. _quickfort-modeline:
 
@@ -757,13 +786,15 @@ be "2" if it is not otherwise set, etc. Labels that are explicitly defined must
 start with a letter to ensure the auto-generated labels don't conflict with
 user-defined labels.
 
+.. _quickfort-start:
+
 Start positions
 ```````````````
 
 Start positions specify a cursor offset for a particular blueprint, simplifying
 the task of blueprint alignment. This is very helpful for blueprints that are
-based on a central staircase, but it helps whenever a blueprint has an obvious
-"center". For example::
+based on a central staircase, but it comes in handy whenever a blueprint has an
+obvious "center". For example::
 
    #build start(2;2;center of workshop) label(masonw) a mason workshop
    wm wm wm #
@@ -786,6 +817,9 @@ to the ``masonw`` blueprint above could look like this::
 
    #meta start(center of workshop) a mason workshop
    /masonw
+
+You can use semicolons, commas, or spaces to separate the elements of the
+``start()`` marker, whatever is most convenient.
 
 .. _quickfort-hidden:
 
@@ -816,130 +850,47 @@ The quotes surrounding the cell text are only necessary if you are writing a
 .csv file by hand. Spreadsheet applications will surround multi-line text with
 quotes automatically when they save/export the file.
 
-.. _quickfort-packaging:
-
-Packaging a set of blueprints
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-A complete specification for a section of your fortress may contain 5 or more
-separate blueprints, one for each "phase" of construction (dig, build, place
-stockpiles, designate zones, and query adjustments).
-
-To manage all the separate blueprints, it is often convenient to keep related
-blueprints in a single file. For .xlsx spreadsheets, you can keep each blueprint
-in a separate sheet. Online spreadsheet applications like `Google
-Sheets <https://sheets.new>`__ make it easy to work with multiple related
-blueprints, and, as a bonus, they retain any formatting you've set, like column
-sizes and coloring.
-
-For both .csv files and .xlsx spreadsheets you can also add as many blueprints
-as you want in a single file or sheet. Just add a modeline in the first column
-to indicate the start of a new blueprint. Instead of multiple .csv files, you
-can concatenate them into one single file. This is especially useful when you
-are sharing your blueprints with others. A single file is much easier to manage
-than a directory of files.
-
-For example, you can store multiple blueprints together like this::
-
-   #dig label(bed1)
-   d d d d #
-   d d d d #
-   d d d d #
-   d d d d #
-   # # # # #
-   #build label(bed2)
-   b   f h #
-           #
-           #
-   n       #
-   # # # # #
-   #place label(bed3)
-           #
-   f(2x2)  #
-           #
-           #
-   # # # # #
-   #query label(bed4)
-           #
-   booze   #
-           #
-           #
-   # # # # #
-   #query label(bed5)
-   r{+ 3}& #
-           #
-           #
-           #
-   # # # # #
-
-Of course, you could still choose to keep your blueprints in single-sheet .csv
-files and just give related blueprints similar names::
-
-   bedroom.1.dig.csv
-   bedroom.2.build.csv
-   bedroom.3.place.csv
-   bedroom.4.query.csv
-   bedroom.5.query2.csv
-
-The naming and organization is completely up to you.
-
-.. _quickfort-other-modes:
-
-Other blueprint modes
-~~~~~~~~~~~~~~~~~~~~~
-
-There are a few additional blueprint modes that become useful when you are
-sharing your blueprints with others or managing complex blueprint sets. Instead
-of mapping tile positions to keystroke sequences like the basic modes do, these
-"blueprints" have specialized, higher-level uses:
-
-==============  ===========
-Blueprint mode  Description
-==============  ===========
-meta            Link sequences of blueprints together
-notes           Display long messages, such as help text or blueprint
-                walkthroughs
-aliases         Define aliases that are visible only in the current file
-ignore          Hide a section from quickfort, useful for scratch space or
-                personal notes
-==============  ===========
-
 .. _quickfort-meta:
 
 Meta blueprints
-```````````````
+~~~~~~~~~~~~~~~
 
-Meta blueprints are blueprints that script a series of other blueprints. For
-example, many blueprint sets follow this pattern:
+Meta blueprints are blueprints that control how other blueprints are applied.
+For example, meta blueprints can bundle a group of other blueprints so that they
+can be run with a single command. They can also encode logic, like rotating the
+blueprint or duplicating it across a specified number of z-levels.
 
-1.  Apply dig blueprint to designate dig areas
+A common scenario where meta blueprints are useful is when you have several
+phases to link together. For example you might:
+
+1.  Apply a dig blueprint to designate dig areas
 #.  Wait for miners to dig
-#.  **Apply build buildprint** to designate buildings
-#.  **Apply place buildprint** to designate stockpiles
-#.  **Apply query blueprint** to configure stockpiles
+#.  **Apply a build buildprint** to designate buildings
+#.  **Apply a place buildprint** to designate stockpiles
+#.  **Apply a query blueprint** to configure stockpiles
 #.  Wait for buildings to get built
 #.  Apply a different query blueprint to configure rooms
 
 Those three "apply"s in the middle might as well get done in one command instead
-of three. A ``#meta`` blueprint can encode that sequence. A meta blueprint
-refers to other blueprints in the same file by their label (see the
-`Modeline markers`_ section above) in the same format used by the `quickfort`
-command: ``<sheet name>/<label>``, or just ``/<label>`` for blueprints in .csv
-files or blueprints in the same spreadsheet sheet as the ``#meta`` blueprint
-that references them.
+of three. A ``#meta`` blueprint can help with that. A meta blueprint refers to
+other blueprints in the same file by their label (see the `Modeline markers`_
+section above) in the same format used by the `quickfort` command:
+``<sheet name>/<label>``, or just ``/<label>`` for blueprints in .csv files or
+blueprints in the same spreadsheet sheet as the ``#meta`` blueprint that
+references them.
 
-A few examples might make this clearer. Say you have a .csv file with the "bed"
-blueprints in the previous section::
+A few examples might make this clearer. Say you have a .csv file with blueprints
+that prepare bedrooms for your dwarves::
 
-   #dig label(bed1)
+   #dig label(bed1) dig out the rooms
    ...
-   #build label(bed2)
+   #build label(bed2) build the furniture
    ...
-   #place label(bed3)
+   #place label(bed3) add food stockpiles
    ...
-   #query label(bed4)
+   #query label(bed4) configure stockpiles
    ...
-   #query label(bed5)
+   #query label(bed5) set the built beds as rooms
    ...
 
 Note how I've given them all labels so we can address them safely. If I hadn't
@@ -952,7 +903,7 @@ going to change over time.
 So let's add a meta blueprint to this file that will combine the middle three
 blueprints into one::
 
-   "#meta plan bedroom: combines build, place, and stockpile config blueprints"
+   "#meta label(bed234) combines build, place, and stockpile config blueprints"
    /bed2
    /bed3
    /bed4
@@ -970,7 +921,7 @@ You can use meta blueprints to lay out your fortress at a larger scale as well.
 The ``#<`` and ``#>`` notation is valid in meta blueprints, so you can, for
 example, store the dig blueprints for all the levels of your fortress in
 different sheets in a spreadsheet, and then use a meta blueprint to designate
-your entire fortress for digging at once. For example, say you have a
+your entire fortress for digging at once. For example, say you have a .xlsx
 spreadsheet with the following layout:
 
 =============  ========
@@ -986,13 +937,12 @@ dig_bedrooms   one #dig blueprint, no label
 =============  ========
 
 We can add a sheet named "dig_all" with the following contents (we're expecting
-a big fort, so we're planning for a lot of bedrooms)::
+a big fort, so we're digging 5 levels of bedrooms)::
 
-   #meta dig the whole fortress (remember to set force_marker_mode to true)
+   #meta dig the whole fortress
    dig_farming/1
    #>
    dig_industry/1
-   #>
    #>
    dig_dining/main
    #>
@@ -1006,18 +956,10 @@ a big fort, so we're planning for a lot of bedrooms)::
    #>
    dig_suites/1
    #>
-   dig_bedrooms/1
-   #>
-   dig_bedrooms/1
-   #>
-   dig_bedrooms/1
-   #>
-   dig_bedrooms/1
-   #>
-   dig_bedrooms/1
+   dig_bedrooms/1 repeat(down 5)
 
 Note that for blueprints without an explicit label, we still need to address
-them by their auto-generated numerical label.
+them by their auto-generated numeric label.
 
 It's worth repeating that ``#meta`` blueprints can only refer to blueprints that
 are defined in the same file. This means that all blueprints that a meta
@@ -1027,9 +969,102 @@ concatenated into the same .csv file.
 You can then hide the blueprints that you now manage with the meta blueprint
 from ``quickfort list`` by adding a ``hidden()`` marker to their modelines. That
 way the output of ``quickfort list`` won't be cluttered by blueprints that you
-don't need to run directly. If you ever *do* need to access the managed
+don't need to run directly. If you ever *do* need to access the meta-managed
 blueprints individually, you can still see them with
 ``quickfort list --hidden``.
+
+Meta markers
+````````````
+
+You can tag referenced blueprints with markers to modify how they are applied.
+These markers are similar to `Modeline markers`_, but are only usable in meta
+blueprints. Here's a quick list of examples, with more details below:
+
+===================  ===========
+Example              Description
+===================  ===========
+repeat(down 10)      Repeats a blueprint down z-levels 10 times
+shift(0 10)          Adds 10 to the y coordinate of each blueprint tile
+transform(cw flipv)  Rotates a blueprint clockwise and then flips it vertically
+===================  ===========
+
+**Repeating blueprints**
+
+Syntax: repeat(<direction>[, ]<number>)
+
+The direction can be ``up`` or ``down``, and the repetition works even for
+blueprints that are themselves multi-level. For example::
+
+    #meta label(2beds) dig 2 levels of bedrooms
+    dig_bedrooms/1 repeat(down 2)
+
+    #meta label(6beds) dig 6 levels of bedrooms
+    /2beds repeat(down 3)
+
+You can use ``<`` and ``>`` for short, instead of ``up`` and ``down``. The comma
+or space between the direction and the number is optional as well. The following
+lines are all equivalent::
+
+    /2beds repeat(down 3)
+    /2beds repeat(down, 3)
+    /2beds repeat(>3)
+
+**Shifting blueprints**
+
+Syntax: shift(<x shift>[[,] <y shift>])
+
+The values can be positive or negative. Negative values for x shift to the left,
+positive to the right. Negative values for y shift up, positive down. Note the
+semantics for the y axis are opposite compared to regular graphs on paper. This
+is because the y coordinates in the DF game map start a 0 at the top and
+increase as they go down.
+
+**Transforming blueprints**
+
+Syntax: transform(<transformation>[[,] <transformation>...])
+
+Applies a geometric transformation to the blueprint. The supported
+transformations are:
+
+:rotcw or cw:   Rotates the blueprint 90 degrees clockwise.
+:rotccw or ccw: Rotates the blueprint 90 degrees counterclockwise.
+:fliph:         Flips the blueprint horizontally (left edge becomes right edge).
+:flipv:         Flips the blueprint vertically (top edge becomes bottom edge).
+
+If you specify more than one transformation, they will be applied in the order
+they appear in.
+
+If you use both ``shift()`` and ``transform()`` markers on the same blueprint,
+shifting is applied after all transformations are complete. If you want shifting
+to be applied before the transformations, or in between transformations, you can
+use nested meta blueprints. For example, the following blueprint will shift the
+``/hallway`` blueprint to the right by 20 units and then rotate it clockwise::
+
+    #meta label(shift_right) hidden()
+    /hallway shift(20)
+    #meta label(rotate_after_shift)
+    /shift_right transform(cw)
+
+.. _quickfort-other-modes:
+
+Other blueprint modes
+~~~~~~~~~~~~~~~~~~~~~
+
+There are a few additional blueprint modes that become useful when you are
+sharing your blueprints with others or managing complex blueprint sets. Instead
+of mapping tile positions to keystroke sequences like the basic modes do, these
+"blueprints" have specialized, higher-level uses:
+
+==============  ===========
+Blueprint mode  Description
+==============  ===========
+notes           Display long messages, such as help text or blueprint
+                walkthroughs
+aliases         Define aliases used by other ``#query`` blueprints in the same
+                file
+ignore          Hide a section from quickfort, useful for scratch space or
+                personal notes
+==============  ===========
 
 .. _quickfort-notes:
 
@@ -1105,6 +1140,73 @@ If you don't want some data to be visible to quickfort at all, use an
 ``#ignore`` blueprint. All lines until the next modeline in the file or sheet
 will be completely ignored. This can be useful for personal notes, scratch
 space, or temporarily "commented out" blueprints.
+
+.. _quickfort-packaging:
+
+Packaging a set of blueprints
+-----------------------------
+
+A complete specification for a section of your fortress may contain 5 or more
+separate blueprints, one for each "phase" of construction (dig, build, place
+stockpiles, designate zones, and query adjustments).
+
+To manage all the separate blueprints, it is often convenient to keep related
+blueprints in a single file. For .xlsx spreadsheets, you can keep each blueprint
+in a separate sheet. Online spreadsheet applications like `Google
+Sheets <https://sheets.new>`__ make it easy to work with multiple related
+blueprints, and, as a bonus, they retain any formatting you've set, like column
+sizes and coloring.
+
+For both .csv files and .xlsx spreadsheets you can also add as many blueprints
+as you want in a single file or sheet. Just add a modeline in the first column
+to indicate the start of a new blueprint. Instead of multiple .csv files, you
+can concatenate them into one single file. This is especially useful when you
+are sharing your blueprints with others. A single file is much easier to manage
+than a directory of files.
+
+For example, you can write multiple blueprints in one file like this::
+
+   #dig label(bed1)
+   d d d d #
+   d d d d #
+   d d d d #
+   d d d d #
+   # # # # #
+   #build label(bed2)
+   b   f h #
+           #
+           #
+   n       #
+   # # # # #
+   #place label(bed3)
+           #
+   f(2x2)  #
+           #
+           #
+   # # # # #
+   #query label(bed4)
+           #
+   booze   #
+           #
+           #
+   # # # # #
+   #query label(bed5)
+   r{+ 3}& #
+           #
+           #
+           #
+   # # # # #
+
+Of course, you could still choose to keep your blueprints in separate files and
+just give related blueprints similar names::
+
+   bedroom.1.dig.csv
+   bedroom.2.build.csv
+   bedroom.3.place.csv
+   bedroom.4.query.csv
+   bedroom.5.query2.csv
+
+The naming and organization is completely up to you.
 
 Buildingplan integration
 ------------------------

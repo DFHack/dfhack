@@ -1,0 +1,31 @@
+#ignore
+tests recursive meta composition, z-level manipulation, transformations, and
+repeat up/down
+
+#dig label(center_tile) start(2 2) hidden()
+
+,d,
+#dig label(even_up) start(2 2) hidden()
+
+u,,u
+#dig label(even_down) start(2 2) hidden()
+,j
+
+,j
+#meta label(even) hidden()
+/even_up
+/even_down
+#meta label(odd) hidden()
+/even transform(rotcw)
+#meta label(twoz) hidden()
+/even
+#>
+/odd
+#meta label(fourz) hidden()
+/twoz
+#>2
+/twoz
+#>
+/center_tile repeat(up 4)
+#meta label(dig)
+/fourz repeat(>3)

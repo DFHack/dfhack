@@ -75,11 +75,13 @@ end
 -- as positional parameters and returned in the nonoptions list.
 --
 -- optionActions is a vector with elements in the following format:
--- {shortOptionName, longOptionAlias, hasArg=boolean, handler=fn}
+--   {shortOptionName, longOptionAlias, hasArg=boolean, handler=fn}
 -- shortOptionName and handler are required. If the option takes an argument,
 -- it will be passed to the handler function.
 -- longOptionAlias is optional.
--- hasArgument defaults to false.
+-- hasArg defaults to false.
+-- To have an option that has only a long form, pass nil or '' as the
+-- shortOptionName.
 --
 -- example usage:
 --
@@ -100,17 +102,33 @@ function processArgsGetopt(args, optionActions)
     local handlers = {}
     for _,optionAction in ipairs(optionActions) do
         local sh_opt,long_opt = optionAction[1], optionAction[2]
-        if not sh_opt or type(sh_opt) ~= 'string' or #sh_opt ~= 1 then
-            error('optionAction missing option letter at index 1')
+        if sh_opt and (type(sh_opt) ~= 'string'  or #sh_opt > 1) then
+            error('option letter not found')
+        end
+        if long_opt and (type(long_opt) ~= 'string' or #long_opt == 0) then
+            error('long option name must be a string with length >0')
+        end
+        if not sh_opt then
+            sh_opt = ''
+        end
+        if not long_opt and #sh_opt == 0 then
+            error('at least one of sh_opt and long_opt must be specified')
         end
         if not optionAction.handler then
-            error(string.format('handler missing for option "%s"', sh_opt))
+            error(string.format('handler missing for option "%s"',
+                                #sh_opt > 0 and sh_opt or long_opt))
         end
-        sh_opts = sh_opts .. sh_opt
-        if optionAction.hasArg then sh_opts = sh_opts .. ':' end
-        handlers[sh_opt] = optionAction.handler
+        if #sh_opt > 0 then
+            sh_opts = sh_opts .. sh_opt
+            if optionAction.hasArg then sh_opts = sh_opts .. ':' end
+            handlers[sh_opt] = optionAction.handler
+        end
         if long_opt then
-            long_opts[long_opt] = sh_opt
+            if #sh_opt > 0 then
+                long_opts[long_opt] = sh_opt
+            else
+                long_opts[long_opt] = optionAction.hasArg and 1 or 0
+            end
             handlers[long_opt] = optionAction.handler
         end
     end
@@ -135,7 +153,7 @@ end
 -- error messages more useful. If <list_length> is specified and greater than 0,
 -- exactly that number of elements must be found or the function will error.
 -- Example:
---   stringSequence('hello , world,list', 'words') => {'hello', 'world', 'list'}
+--   stringList('hello , world,list', 'words') => {'hello', 'world', 'list'}
 function stringList(arg, arg_name, list_length)
     if not list_length then list_length = 0 end
     local list = arg:split(',')
@@ -154,7 +172,7 @@ end
 -- it is used to make error messages more useful. If <list_length> is specified
 -- and greater than 0, exactly that number of elements must be found or the
 -- function will error. Example:
---   numericSequence('10, -20 ,  30.5') => {10, -20, 30.5}
+--   numberList('10, -20 ,  30.5') => {10, -20, 30.5}
 function numberList(arg, arg_name, list_length)
     local strings = stringList(arg, arg_name, list_length)
     for i,str in ipairs(strings) do

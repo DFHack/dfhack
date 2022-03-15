@@ -3,12 +3,12 @@ project(rendermax)
 # A list of source files
 set(PROJECT_SRCS
     rendermax.cpp
-	renderer_light.cpp
+    renderer_light.cpp
 )
 # A list of headers
 set(PROJECT_HDRS
     renderer_opengl.hpp
-	renderer_light.hpp
+    renderer_light.hpp
 )
 set_source_files_properties(${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE)
 

@@ -76,9 +76,7 @@ public:
                 {
                     size++;
                     DFCoord cursor (x,y,z);
-                    uint32_t blockX = x / 16;
                     uint32_t tileX = x % 16;
-                    uint32_t blockY = y / 16;
                     uint32_t tileY = y % 16;
                     MapExtras::Block * b = mc.BlockAt(cursor/16);
                     if(b && b->is_valid())

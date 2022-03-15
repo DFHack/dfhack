@@ -8,14 +8,6 @@ Updated: Jun. 29 2021
 #include <modules/EventManager.h>
 #include "channel-safely.h"
 
-// the only use is to allow reliance on pull request #1876 which introduces a refactor which prevents some manual management
-#include <type_traits>
-#define DECLARE_HASA(what) \
-template<typename T, typename = int> struct has_##what : std::false_type { };\
-template<typename T> struct has_##what<T, decltype((void) T::what, 0)> : std::true_type {};
-DECLARE_HASA(when) //declares above statement with 'when' replacing 'what'
-// end usage is: `has_when<T>::value`
-
 using namespace DFHack;
 
 DFHACK_PLUGIN("channel-safely");
@@ -100,11 +92,7 @@ command_result manage_channel_designations(color_ostream &out, std::vector<std::
         out.print("channel-safely: ontick events enabled!\n");
         if (enabled) {
             EM::EventHandler tickHandler(onNewEvent, maxTickFreq);
-            if (!has_when<EM::EventHandler>::value) {
-                EM::registerTick(tickHandler, maxTickFreq, plugin_self);
-            } else {
-                EM::registerListener(EventType::TICK, tickHandler, plugin_self);
-            }
+            EM::registerListener(EventType::TICK, tickHandler, plugin_self);
         }
     }
     // disable options
@@ -153,11 +141,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         EM::EventHandler tickHandler(onNewEvent, maxTickFreq);
         EM::EventHandler jobStartHandler(onStart, 0);
         EM::EventHandler jobCompletionHandler(onComplete, 0);
-        if (!has_when<EM::EventHandler>::value) {
-            EM::registerTick(tickHandler, maxTickFreq, plugin_self);
-        } else {
-            EM::registerListener(EventType::TICK, tickHandler, plugin_self);
-        }
+        EM::registerListener(EventType::TICK, tickHandler, plugin_self);
         EM::registerListener(EventType::JOB_INITIATED, jobStartHandler, plugin_self);
         EM::registerListener(EventType::JOB_COMPLETED, jobCompletionHandler, plugin_self);
         ChannelManager::Get().manage_designations(out);
@@ -209,11 +193,6 @@ void onNewEvent(color_ostream &out, void* tick_ptr) {
             last_tick_counter = tick_counter;
             ChannelManager::Get().manage_designations(out);
         }
-    }
-    namespace EM = EventManager;
-    if (!has_when<EM::EventHandler>::value) {
-        EM::EventHandler tickHandler(onNewEvent, maxTickFreq);
-        EM::registerTick(tickHandler, maxTickFreq, plugin_self);
     }
     if (debug_out) debug_out->print("onNewHour() - return\n");
     debug_out = nullptr;

@@ -188,14 +188,11 @@ public:
 
         for (auto &ci : counts)
         {
-            if (df::global::ui->tasks.discovered_plants[ci.first])
-            {
-                df::plant_raw* plant = world->raws.plants.all[ci.first];
-                if (is_plantable(plant))
-                    for (auto &flagmap : biomeFlagMap)
-                        if (plant->flags.is_set(flagmap.first))
-                            plantable_plants[plant->index].insert(flagmap.second);
-            }
+            df::plant_raw* plant = world->raws.plants.all[ci.first];
+            if (is_plantable(plant))
+                for (auto &flagmap : biomeFlagMap)
+                    if (plant->flags.is_set(flagmap.first))
+                        plantable_plants[plant->index].insert(flagmap.second);
         }
     }
 

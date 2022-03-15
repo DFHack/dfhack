@@ -34,6 +34,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
+- `spectate`: automates the following of dwarves more often than not based on job zlevel activity levels, sometimes randomly though.
 
 ## Removed
 

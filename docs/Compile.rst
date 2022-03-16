@@ -485,11 +485,54 @@ other versions won't work against Dwarf Fortress due to ABI and STL incompatibil
 
 You can install Visual Studio 2015_ or 2017_ Community edition for free, which
 include all the features needed by DFHack. You can also download just the
-`build tools`_ if you aren't going to use Visual Studio to edit code.
+Visual C++ 2015 `build tools`_ if you aren't going to use Visual Studio to edit code.
+
+Option 1: Build Tools Only
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+Click `build tools`_ and you will be prompted to login to your Microsoft account.
+Then you should be redirected to a page with various download options with 2015
+in their name. If this redirect doesn't occur, just copy, paste, and enter the
+download link again and you should see the options. You need to get:
+Visual C++ Build Tools for Visual Studio 2015 with Update 3.
+Click the download button next to it and a dropdown of download formats will appear.
+Select the DVD format to download an ISO file. When the donwload is complete,
+click on the ISO file and a folder will popup with the following contents:
+
+* packages (folder)
+* VCPlusPlusBuildTools2015Update3_x64_Files.cat
+* VisualCppBuildTools_Full.exe
+
+The packages folder contains the dependencies that are required by the build tools.
+These include:
+
+* Microsoft .NET Framework 4.6.1 Developer Pack
+* Microsoft Visual C++ 2015 Redistributable (x64) - 14.0.24210
+* Windows 10 Universal SDK - 10.0.10240
+* Windows 8.1 SDK
+
+Click VisualCppBuildTools_Full.exe and use the default options provided by the installer
+wizard that appears. After the installation is completed, add the path where MSBuild.exe
+was installed to your PATH environment variable. The path should be:
+
+* ``C:\Program Files (x86)\MSBuild\14.0\Bin``
+
+Option 2: IDE + Build Tools
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Click Visual Studio 2015_ or 2017_ to download an installer wizard that will prompt you
+to select the optional tools you want to download alongside the IDE. If you are not sure
+what options to check, it can be helpful to download the `build tools`_ and open the
+ISO file to see the required dependencies in the packages folder. For Visual Studio 2017,
+it is important to select the v140 build tools option. DFHack requires v140 and not
+the v141 version that comes in a bundle when you click the Desktop Development with C++
+option from the installer.
+
+.. warning::
+  Do not run the build tools installer together with the Visual Studio installer as they
+  will have conflicts with each other by trying to install the same dependencies.
 
 .. _2015: https://visualstudio.microsoft.com/vs/older-downloads/#visual-studio-2015-and-other-products
 .. _2017: https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&rel=15
-.. _build tools: https://visualstudio.microsoft.com/vs/older-downloads/#microsoft-build-tools-2015-update-3
+.. _build tools: https://my.visualstudio.com/Downloads?q=visual%20studio%202015&wt.mc_id=o~msft~vscom~older-downloads
 
 Additional dependencies: installing with the Chocolatey Package Manager
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

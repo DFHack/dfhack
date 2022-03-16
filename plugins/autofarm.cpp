@@ -278,7 +278,7 @@ public:
 
         // have to scan both items[PLANT] and items[PLANT_GROWTH] because agricultural products can be either
 
-        auto count = [&, this](auto& i) {
+        auto count = [&, this](df::item* i) {
             auto mat = i->getMaterialIndex();
             if ((i->flags.whole & bad_flags) == 0 &&
                 plantable_plants.count(mat) > 0)

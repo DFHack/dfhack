@@ -165,7 +165,7 @@ public:
         std::map<int, int> counts;
 
         const uint32_t bad_flags{
-#define F(x) (df::item_flags::Mask::mask_##x)  
+#define F(x) (df::item_flags::Mask::mask_##x)
         F(dump) | F(forbid) | F(garbage_collect) |
         F(hostile) | F(on_fire) | F(rotten) | F(trader) |
         F(in_building) | F(construction) | F(artifact)
@@ -269,7 +269,7 @@ public:
         lastCounts.clear();
 
         const uint32_t bad_flags{
- #define F(x) (df::item_flags::Mask::mask_##x)  
+ #define F(x) (df::item_flags::Mask::mask_##x)
          F(dump) | F(forbid) | F(garbage_collect) |
          F(hostile) | F(on_fire) | F(rotten) | F(trader) |
          F(in_building) | F(construction) | F(artifact)

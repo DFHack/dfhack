@@ -488,7 +488,7 @@ include all the features needed by DFHack. You can also download just the
 Visual C++ 2015 `build tools`_ if you aren't going to use Visual Studio to edit code.
 
 Option 1: Build Tools Only
-++++++++++++++++++++++++++
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 Click `build tools`_ and you will be prompted to login to your Microsoft account.
 Then you should be redirected to a page with various download options with 2015
 in their name. If this redirect doesn't occur, just copy, paste, and enter the
@@ -517,7 +517,7 @@ was installed to your PATH environment variable. The path should be:
 * ``C:\Program Files (x86)\MSBuild\14.0\Bin``
 
 Option 2: IDE + Build Tools
-+++++++++++++++++++++++++++
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Click Visual Studio 2015_ or 2017_ to download an installer wizard that will prompt you
 to select the optional tools you want to download alongside the IDE. If you are not sure
 what options to check, it can be helpful to download the `build tools`_ and open the

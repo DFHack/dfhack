@@ -172,18 +172,18 @@ public:
 #undef F
         };
 
-        for (auto ii : world->items.other[df::items_other_id::SEEDS])
+        for (auto& ii : world->items.other[df::items_other_id::SEEDS])
         {
             auto i = virtual_cast<df::item_seedsst>(ii);
             if (i && (i->flags.whole & bad_flags) == 0)
                 counts[i->mat_index] += i->stack_size;
         }
 
-        for (auto &ci : counts)
+        for (auto& ci : counts)
         {
             df::plant_raw* plant = world->raws.plants.all[ci.first];
             if (is_plantable(plant))
-                for (auto &flagmap : biomeFlagMap)
+                for (auto& flagmap : biomeFlagMap)
                     if (plant->flags.is_set(flagmap.first))
                         plantable_plants[plant->index].insert(flagmap.second);
         }
@@ -234,7 +234,7 @@ public:
         for (auto farm : farms)
         {
             int o = farm->plant_id[season];
-            if (plants.count(o)==0 || counters[o] > min || (counters[o] == min && extra == 0))
+            if (plants.count(o) == 0 || counters[o] > min || (counters[o] == min && extra == 0))
                 toChange.push(farm); // this farm is an excess instance for the plant it is currently planting
             else
             {
@@ -293,7 +293,6 @@ public:
             count(i);
 
         std::map<df::biome_type, std::set<int>> plants;
-        plants.clear();
 
         for (auto &plantable : plantable_plants)
         {
@@ -332,13 +331,13 @@ public:
     void status(color_ostream& out)
     {
         out << (enabled ? "Running." : "Stopped.") << '\n';
-        for (auto &lc : lastCounts)
+        for (auto& lc : lastCounts)
         {
             auto plant = world->raws.plants.all[lc.first];
             out << plant->id << " limit " << getThreshold(lc.first) << " current " << lc.second << '\n';
         }
 
-        for (auto &th : thresholds)
+        for (auto& th : thresholds)
         {
             if (lastCounts[th.first] > 0)
                 continue;

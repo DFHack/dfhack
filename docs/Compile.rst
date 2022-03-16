@@ -532,7 +532,7 @@ to select the optional tools you want to download alongside the IDE. You may nee
 
 In addition to selecting the workload for "Desktop Development with C++",
 you will also need to go to the "Individual Components" tab in the Installer and
-select the following additional components to get the `v140_xp` toolchain that DFHack
+select the following additional components to get the "``v140_xp``" toolchain that DFHack
 requires for ABI compatibility with recent releases of Dwarf Fortress:
 * MSVC v140 - VS 2015 C++ build tools (v14.00)
 * C++ Windows XP Support for VS 2017 (v141) tools [Deprecated]

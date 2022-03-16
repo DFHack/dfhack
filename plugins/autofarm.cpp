@@ -38,14 +38,14 @@ DFHACK_PLUGIN("autofarm");
 
 DFHACK_PLUGIN_IS_ENABLED(enabled);
 
-const char *tagline = "Automatically handle crop selection in farm plots based on current plant stocks.";
-const char *usage = (
-                "``enable autofarm``: Enables the plugin\n"
-                "``autofarm runonce``: Updates farm plots (one-time only)\n"
-                "``autofarm status``: Prints status information\n"
-                "``autofarm default 30``: Sets the default threshold\n"
-                "``autofarm threshold 150 helmet_plump tail_pig``: Sets thresholds\n"
-                );
+const char* tagline = "Automatically handle crop selection in farm plots based on current plant stocks.";
+const char* usage = (
+    "``enable autofarm``: Enables the plugin\n"
+    "``autofarm runonce``: Updates farm plots (one-time only)\n"
+    "``autofarm status``: Prints status information\n"
+    "``autofarm default 30``: Sets the default threshold\n"
+    "``autofarm threshold 150 helmet_plump tail_pig``: Sets thresholds\n"
+    );
 
 class AutoFarm {
 private:
@@ -191,7 +191,7 @@ public:
 
     std::string get_plant_name(int plant_id)
     {
-        df::plant_raw *raw = df::plant_raw::find(plant_id);
+        df::plant_raw* raw = df::plant_raw::find(plant_id);
         return raw ? raw->name : "NONE";
     }
 
@@ -278,7 +278,7 @@ public:
 
         // have to scan both items[PLANT] and items[PLANT_GROWTH] because agricultural products can be either
 
-        auto count = [&,this](auto& i) {
+        auto count = [&, this](auto& i) {
             auto mat = i->getMaterialIndex();
             if ((i->flags.whole & bad_flags) == 0 &&
                 plantable_plants.count(mat) > 0)
@@ -287,14 +287,14 @@ public:
             }
         };
 
-        for (auto& i : world->items.other[df::items_other_id::PLANT]) 
+        for (auto& i : world->items.other[df::items_other_id::PLANT])
             count(i);
-        for (auto& i : world->items.other[df::items_other_id::PLANT_GROWTH]) 
+        for (auto& i : world->items.other[df::items_other_id::PLANT_GROWTH])
             count(i);
 
         std::map<df::biome_type, std::set<int>> plants;
 
-        for (auto &plantable : plantable_plants)
+        for (auto& plantable : plantable_plants)
         {
             df::plant_raw* plant = world->raws.plants.all[plantable.first];
             if (lastCounts[plant->index] < getThreshold(plant->index))
@@ -351,7 +351,7 @@ public:
 static std::unique_ptr<AutoFarm> autofarmInstance;
 
 
-DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init(color_ostream& out, std::vector <PluginCommand>& commands)
 {
     if (world && ui) {
         commands.push_back(
@@ -364,14 +364,14 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( color_ostream &out )
+DFhackCExport command_result plugin_shutdown(color_ostream& out)
 {
     autofarmInstance.release();
 
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_onupdate(color_ostream &out)
+DFhackCExport command_result plugin_onupdate(color_ostream& out)
 {
     if (!autofarmInstance)
         return CR_OK;

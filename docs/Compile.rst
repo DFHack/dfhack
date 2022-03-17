@@ -524,6 +524,19 @@ was installed to your PATH environment variable. The path should be:
 
 * ``C:\Program Files (x86)\MSBuild\14.0\Bin``
 
+Note that this process may install only the ``v140`` toolchain, not the ``v140_xp`` toolchain that
+is normally used to compile build releases of DFHack. Due to a bug in the Microsoft-provided libraries used with
+the ``v140_xp`` toolchain that Microsoft has never fixed, DFHack (and probably also Dwarf Fortress itself)
+doesn't run reliably on 64-bit XP. Investigations have so far suggested that ``v140`` and
+``v140_xp`` are ABI-compatible. As such, there should be no harm in using ``v140`` instead of
+``v140_xp`` as the build toolchain, at least on 64-bit platforms. However, it is our policy to use
+``v140_xp`` for release builds for both 32-bit and 64-bit Windows,
+since 32-bit releases of Dwarf Fortress work on XP and ``v140_xp`` is required for compatibility with
+XP.
+
+The ``v141`` toolchain, in Visual Studio 2017, has been empirically documented to be incompatible with
+released versions of Dwarf Fortress and cannot be used to make usable builds of DFHack.
+
 Option 2: IDE + Build Tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Click Visual Studio 2022_ or 2019_ to download an installer wizard that will prompt you

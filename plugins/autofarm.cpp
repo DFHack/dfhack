@@ -207,7 +207,7 @@ public:
         }
     }
 
-    void set_farms(color_ostream& out, std::set<int>& plants, std::vector<df::building_farmplotst*>& farms)
+    void set_farms(color_ostream& out, const std::set<int>& plants, const std::vector<df::building_farmplotst*>& farms)
     {
         // this algorithm attempts to change as few farms as possible, while ensuring that
         // the number of farms planting each eligible plant is "as equal as possible"
@@ -287,9 +287,9 @@ public:
             }
         };
 
-        for (auto& i : world->items.other[df::items_other_id::PLANT])
+        for (auto i : world->items.other[df::items_other_id::PLANT])
             count(i);
-        for (auto& i : world->items.other[df::items_other_id::PLANT_GROWTH])
+        for (auto i : world->items.other[df::items_other_id::PLANT_GROWTH])
             count(i);
 
         std::map<df::biome_type, std::set<int>> plants;

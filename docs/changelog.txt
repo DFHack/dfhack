@@ -1361,6 +1361,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Lua
 - Added a new ``dfhack.console`` API
 - API can now wrap functions with 12 or 13 parameters
+- Added ``customRawData`` utility to the Lua library
 
 ## Structures
 - The ``ui_menu_width`` global is now a 2-byte array; the second item is the former ``ui_area_map_width`` global, which is now removed

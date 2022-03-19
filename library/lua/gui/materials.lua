@@ -317,7 +317,11 @@ function ItemTypeDialog(args)
                 local success, chain = pcall(function() return def.props.flags.CHAIN_METAL_TEXT end)
                 local text = success and chain and " (chain) " or " "
                 local success, adjective = pcall(function() return def.adjective end)
-                text = success and adjective ~= "" and text .. adjective .. " " .. def.name or text .. def.name
+                if success and adjective ~= "" then
+                    text = text .. adjective .. " " .. def.name
+                else
+                    text = text .. def.name
+                end
                 if not filter or filter(itype,subtype,def) then
                     table.insert(choices, {
                         icon = '\x1e', text = text, item_type = itype, item_subtype = subtype

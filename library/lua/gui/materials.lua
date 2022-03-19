@@ -314,12 +314,13 @@ function ItemTypeDialog(args)
         if defcnt > 0 then
             for subtype = 0,defcnt-1 do
                 local def = dfhack.items.getSubtypeDef(itype, subtype)
-                local text
+                local success, chain = pcall(function() return def.props.flags.CHAIN_METAL_TEXT end)
+                local text = success and chain and " (chain) " or " "
                 local success, adjective = pcall(function() return def.adjective end)
                 if success and adjective ~= "" then
-                    text = " " .. adjective .. " " .. def.name
+                    text = text .. adjective .. " " .. def.name
                 else
-                    text = " " .. def.name
+                    text = text .. def.name
                 end
                 if not filter or filter(itype,subtype,def) then
                     table.insert(choices, {

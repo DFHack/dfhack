@@ -49,6 +49,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `EventManager`: now each registered handler for an event can have its own frequency instead of all handlers using the lowest frequency of all handlers
 - `stocks`: allow search terms to match the full item label, even when the label is truncated for length
 - `dfhack-examples-guide`: add mugs to ``basic`` manager orders
+- `gui/create-item`: Added "(chain)" annotation text for armours with the [CHAIN_METAL_TEXT] flag set
 
 ## Documentation
 - Add more examples to the plugin skeleton files so they are more informative for a newbie

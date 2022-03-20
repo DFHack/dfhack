@@ -2984,6 +2984,51 @@ Predefined instance methods:
 
 To avoid confusion, these methods cannot be redefined.
 
+customRawData
+=============
+
+A utility allowing for custom tags to be added to the raw definitions for modding purposes. Defines one function:
+
+* ``customRawData.getTag(typeDefinition, tag, ...)``
+
+  Where ``typeDefinition`` is a raw struct as seen in df.global.world.raws[xyz], e.g: ``dfhack.gui.getSelectedItem().subtype``, ``tag`` is the name of the custom tag you want to get, and the remaining arguments correspond to the arguments in the tag as booleans denoting whether the argument in the tag is a string or a number. ``true`` for string, false (or absent) for number. It will then be returned using single or multiple return values. If the tag is not present, the result is false, if it is but has no arguments, the result is true.
+
+  The first call for a ``typeDefinition, tag`` pair caches the result, subsequent calls ignore the tag type arguments and return from the cache. More advanced raw constructs are planned.
+
+  Examples:
+
+  * Using an eventful onReactionComplete hook, something for disturbing dwarven science::
+
+      if customRawData.getTag(reaction, "CAUSES_INSANITY") then
+          -- make unit who performed reaction go insane
+
+  * Using an eventful onProjItemCheckMovement hook, a fast or slow-firing crossbow::
+
+      -- check projectile distance flown is zero, get firer, etc...
+      local multiplier = customRawData.getTag(bow.subtype, "FIRE_RATE_MULTIPLIER") or 1
+      firer.counters.think_counter = firer.counters.think_counter * multiplier
+
+  * Something for a script that prints help text about different types of units::
+
+      local unit = dfhack.gui.getSelectedUnit()
+      if not unit then return end
+      local raceRaw = df.global.world.raws.creatures.all[unit.race]
+      local helpText = customRawData.getTag(raceRaw, "HELP_TEXT")
+      if helpText then print(helpText) end
+
+  * Healing armour::
+
+      -- (per unit every tick)
+      local healAmount = 0
+      for _, entry in ipairs(unit.inventory) do
+          if entry.mode == 2 then -- Worn
+              healAmount = healAmount + (customRawData.getTag(entry.item.subtype, "HEAL_AMOUNT") or 0)
+          end
+      end
+      unit.body.blood_count = math.min(unit.body.blood_max, unit.body.blood_count + healAmount)
+
+This also defines a function it uses at ``eventful.onUnload.clearExtractedCustomRawData``
+
 ==================
 In-game UI Library
 ==================

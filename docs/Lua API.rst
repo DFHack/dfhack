@@ -3024,7 +3024,7 @@ Examples:
     local unit = dfhack.gui.getSelectedUnit()
     if not unit then return end
     local raceRaw = df.global.world.raws.creatures.all[unit.race]
-    local helpText = customRawData.getTag(raceRaw, "HELP_TEXT")
+    local helpText = customRawData.getTag(raceRaw, "HELP_TEXT", true)
     if helpText then print(helpText) end
 
 * Healing armour::

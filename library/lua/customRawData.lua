@@ -23,17 +23,17 @@ Examples usage for
     [QUUZ:40]
     [CORGE:GRAULT]
 
-customRawData(struct, "FOO", true, false) returns "BAR", 20
-customRawData(struct, "BAZ") returns true
-customRawData(struct, "QUX"[, ...]) returns false
-customRawData(struct, "QUUZ", true) returns "40"
-if customRawData(struct, "QUUZ") is called afterwards it will return "40" and not 40 because of how the caching works
-customRawData(struct, "CORGE") will error, because "GRAULT" cannot be converted to a number
+customRawData.getTag(struct, "FOO", true, false) returns "BAR", 20
+customRawData.getTag(struct, "BAZ") returns true
+customRawData.getTag(struct, "QUX"[, ...]) returns false
+customRawData.getTag(struct, "QUUZ", true) returns "40"
+if customRawData.getTag(struct, "QUUZ") is called afterwards it will return "40" and not 40 because of how the caching works
+customRawData.getTag(struct, "CORGE") will error, because "GRAULT" cannot be converted to a number
 
 Yes, custom raw tags do quietly print errors into the error log but the error log gets filled with garbage anyway
 ]]
 
-local _ENV = mkdmodule("customRawData")
+local _ENV = mkmodule("customRawData")
 
 local eventful = require("plugins.eventful")
 
@@ -87,6 +87,9 @@ function getTag(typeDefinition, tag, ...)
             end
         end
     end
+	
+	-- Not present
+	customRawTable[tag] = false
     return false
 end
 

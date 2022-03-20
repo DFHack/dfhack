@@ -33,6 +33,8 @@ customRawData.getTag(struct, "CORGE") will error, because "GRAULT" cannot be con
 Yes, custom raw tags do quietly print errors into the error log but the error log gets filled with garbage anyway
 ]]
 
+-- TODO: Refactor duplicate code away
+
 local _ENV = mkmodule("customRawData")
 
 local eventful = require("plugins.eventful")
@@ -48,10 +50,11 @@ function getTag(typeDefinition, tag, ...)
     -- TODO: more advanced raw constructs
     
     -- Have we got a table for this item subtype/reaction/whatever?
-    local customRawTable = customRaws[typeDefinition]
+    -- tostring is needed here because the same raceDefinition key won't give the same value every time for some reason
+    local customRawTable = customRaws[tostring(typeDefinition)]
     if not customRawTable then
         customRawTable = {}
-        customRaws[typeDefinition] = customRawTable
+        customRaws[tostring(typeDefinition)] = customRawTable
     end
     
     -- Have we already extracted and stored this custom raw tag for this type definition?
@@ -90,6 +93,68 @@ function getTag(typeDefinition, tag, ...)
     -- Not present
     customRawTable[tag] = false
     return false
+end
+
+function getCreatureTag(unit, tag, ...) -- respects both race and caste of a creature
+    local raceDefinition = df.global.world.raws.creatures.all[unit.race]
+    local casteNumber = unit.caste
+    
+    -- Have we got tables for this race/caste pair?
+    -- tostring is needed here because the same raceDefinition key won't give the same value every time for some reason
+    local customRawTable = customRaws[tostring(raceDefinition)]
+    if not customRawTable then
+        customRawTable = {}
+        customRaws[tostring(raceDefinition)] = customRawTable
+    end
+    local customRawTableCaste = customRawTable[casteNumber]
+    if not customRawTableCaste then
+        customRawTableCaste = {}
+        customRawTable[casteNumber] = customRawTableCaste
+    end
+    
+    -- Have we already extracted and stored this custom raw tag for this race/caste pair?
+    local tagData = customRawTableCaste[tag]
+    if tagData ~= nil then
+        if type(tagData) == "table" then
+            return table.unpack(tagData)
+        elseif tagData == false then
+            return getTag(raceDefinition, tag, ...)
+        else
+            return tagData -- true
+        end
+    end
+    
+    -- Get data anew. Here we have to track what caste is currently being written to
+    local casteId = raceDefinition.caste[casteNumber].caste_id
+    local thisCasteActive = false
+    for _, v in ipairs(raceDefinition.raws) do
+        local noBrackets = v.value:sub(2, -2)
+        local iter = noBrackets:gmatch("[^:]*")
+        local vTag = iter()
+        if vTag == "CASTE" or vTag == "SELECT_CASTE" or vTag == "SELECT_ADDITIONAL_CASTE" then
+            local newCaste = iter()
+            thisCasteActive = newCaste == casteId or vTag == "SELECT_CASTE" and newCaste == "ALL"
+        elseif thisCasteActive and tag == vTag then
+            local args = {}
+            for arg in iter do
+                local isString = select(#args+1, ...)
+                if not isString then
+                    arg = tonumber(arg)
+                end
+                args[#args+1] = arg
+            end
+            if #args == 0 then
+                customRawTableCaste[tag] = true
+                return true
+            else
+                customRawTableCaste[tag] = args
+                return table.unpack(args)
+            end
+        end
+    end
+    -- Not present, try with creature only
+    customRawTableCaste[tag] = false
+    return getTag(raceDefinition, tag, ...)
 end
 
 rawStringsFieldNames = {

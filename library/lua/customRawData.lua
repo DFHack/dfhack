@@ -87,9 +87,8 @@ function getTag(typeDefinition, tag, ...)
             end
         end
     end
-	
-	-- Not present
-	customRawTable[tag] = false
+    -- Not present
+    customRawTable[tag] = false
     return false
 end
 

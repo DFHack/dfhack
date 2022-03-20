@@ -2991,13 +2991,20 @@ A utility allowing for custom tags to be added to the raw definitions for moddin
 
 * ``customRawData.getTag(typeDefinition, tag, ...)``
 
-  Where ``typeDefinition`` is a raw struct as seen in df.global.world.raws[xyz], e.g: ``dfhack.gui.getSelectedItem().subtype``, ``tag`` is the name of the custom tag you want to get, and the remaining arguments correspond to the arguments in the tag as booleans denoting whether the argument in the tag is a string or a number. ``true`` for string, false (or absent) for number. It will then be returned using single or multiple return values. If the tag is not present, the result is false, if it is but has no arguments, the result is true.
+  Where ``typeDefinition`` is a raw struct as seen in df.global.world.raws[xyz], e.g:
+  ``dfhack.gui.getSelectedItem().subtype``, ``tag`` is the name of the custom tag you
+  want to get, and the remaining arguments correspond to the arguments in the tag as
+  booleans denoting whether the argument in the tag is a string or a number. ``true``
+  for string, false (or absent) for number. It will then be returned using single or
+  multiple return values. If the tag is not present, the result is false, if it is
+  present but has no arguments, the result is true.
 
 * ``customRawData.getCreatureTag(unit, tag, ...)``
 
 Gets tag from a unit's race or caste instead if applicable. Everything with getTag applies to this.
 
-The first call for a tag-getting function caches the result, subsequent calls ignore the tag type arguments and return from the cache. More advanced raw constructs are planned.
+The first call for a tag-getting function caches the result, subsequent calls ignore the
+tag type arguments and return from the cache. More advanced raw constructs are planned.
 
 Examples:
 

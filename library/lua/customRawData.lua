@@ -33,16 +33,18 @@ customRawData(struct, "CORGE") will error, because "GRAULT" cannot be converted 
 Yes, custom raw tags do quietly print errors into the error log but the error log gets filled with garbage anyway
 ]]
 
+local _ENV = mkdmodule("customRawData")
+
 local eventful = require("plugins.eventful")
 
-local rawStringsFieldNames -- Defined after the main function for file clarity (not state)
+local rawStringsFieldNames -- (Is not state) Defined after the main function for file clarity
 
 local customRaws = {}
 eventful.onUnload.clearExtractedCustomRawData = function()
     customRaws = {}
 end
 
-local function customRawData(typeDefinition, tag, ...)
+function getTag(typeDefinition, tag, ...)
     -- TODO: more advanced raw constructs
     
     -- Have we got a table for this item subtype/reaction/whatever?
@@ -114,4 +116,4 @@ rawStringsFieldNames = {
     [df.interaction] = "str"
 }
 
-return customRawData
+return _ENV

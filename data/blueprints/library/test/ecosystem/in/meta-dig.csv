@@ -2,17 +2,27 @@
 tests recursive meta composition, z-level manipulation, transformations, and
 repeat up/down
 
-#dig label(center_tile) start(2 2) hidden()
+#dig label(border) start(3 3) hidden()
+d(2x1),,,,d(1x3)
 
-,d,
-#dig label(even_up) start(2 2) hidden()
 
-u,,u
-#dig label(even_down) start(2 2) hidden()
-,j
 
-,j
+d(1x-4),,,,d(-2x1)
+#dig label(center_tile) start(3 3) hidden()
+
+
+,,d
+#dig label(even_up) start(3 3) hidden()
+
+
+,u,,u
+#dig label(even_down) start(3 3) hidden()
+
+,,j
+
+,,j
 #meta label(even) hidden()
+/border
 /even_up
 /even_down
 #meta label(odd) hidden()

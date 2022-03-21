@@ -149,17 +149,17 @@ function getRaceCasteTag(raceDefinition, casteNumber, tag, ...)
             local newCaste = iter()
             thisCasteActive = newCaste == casteId or rawStringTag == "SELECT_CASTE" and newCaste == "ALL"
         elseif thisCasteActive and tag == rawStringTag then
-    		local args, i = iterArgs(thisRaceDefCacheCaste, tag, iter, ...)
+            local args, i = iterArgs(thisRaceDefCacheCaste, tag, iter, ...)
             if not args then -- was error
                 error("Tag argument " .. i .. " of " .. rawString.value .. " could not be converted to number.")
             end
-    		if i == 0 then
-    			thisRaceDefCacheCaste[tag] = true
-    			return true
-    		else
-    			thisRaceDefCacheCaste[tag] = args
-    			return table.unpack(args)
-    		end
+            if i == 0 then
+                thisRaceDefCacheCaste[tag] = true
+                return true
+            else
+                thisRaceDefCacheCaste[tag] = args
+                return table.unpack(args)
+            end
         end
     end
     thisRaceDefCacheCaste[tag] = false

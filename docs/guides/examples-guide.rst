@@ -1,6 +1,6 @@
 .. _dfhack-examples-guide:
 
-DFHack Example Configuration File Guide
+DFHack Example Configuration File Index
 =======================================
 
 The :source:`hack/examples <data/examples>` folder contains ready-to-use

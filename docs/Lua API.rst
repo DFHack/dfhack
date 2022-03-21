@@ -2989,7 +2989,7 @@ customRawData
 
 A utility allowing for custom tags to be added to the raw definitions for modding purposes:
 
-* ``customRawData.getTag(typeDefinition, tag, ...)``
+* ``customRawData.getTag(typeDefinition, tag[, ...])``
 
   Where ``typeDefinition`` is a raw struct as seen in ``df.global.world.raws``, e.g:
   ``dfhack.gui.getSelectedItem().subtype``, ``tag`` is the name of the custom tag you
@@ -2999,9 +2999,13 @@ A utility allowing for custom tags to be added to the raw definitions for moddin
   multiple return values. If the tag is not present, the result is false, if it is
   present but has no arguments, the result is true.
 
-* ``customRawData.getCreatureTag(unit, tag, ...)``
+* ``customRawData.getRaceCasteTag(raceDefinition, casteNumber, tag[, ...])
 
-  Gets tag from a unit's race or caste instead if applicable. Everything with getTag applies to this.
+  Gets tag from a race or caste instead if appplicable. Everything with getTag applies to this.
+
+* ``customRawData.getUnitTag(unit, tag[, ...])``
+
+  Gets tag from a unit's race or caste instead if applicable. This is a wrapper over ``getRaceCasteTag``. Everything with getTag applies to this.
 
   The first call for a tag-getting function caches the result, subsequent calls ignore the
   tag type arguments and return from the cache. More advanced raw constructs are planned.

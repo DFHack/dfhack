@@ -59,7 +59,7 @@ function getTag(typeDefinition, tag, ...)
     if not rawStrings then
         error("Expected raw struct (eg plant_raw or item_ammost) for argument 1 of getTag")
     end
-    assert(type(tag == "string"), "Expected string for argument 2 of getTag") 
+    assert(type(tag == "string"), "Expected string for argument 2 of getTag")
     
     -- Is this a race definition?
     if typeDefinition._type == df.creature_raw then
@@ -89,13 +89,13 @@ function getTag(typeDefinition, tag, ...)
             if not args then -- was error
                 error("Tag argument " .. i .. " of " .. rawString.value .. " could not be converted to number.")
             end
-    		if i == 0 then
-    			thisTypeDefCache[tag] = true
-    			return true
-    		else
-    			thisTypeDefCache[tag] = args
-    			return table.unpack(args)
-    		end
+            if i == 0 then
+                thisTypeDefCache[tag] = true
+                return true
+            else
+                thisTypeDefCache[tag] = args
+                return table.unpack(args)
+            end
         end
     end
     -- Not present

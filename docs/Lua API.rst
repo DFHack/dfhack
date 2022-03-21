@@ -2999,7 +2999,7 @@ A utility allowing for custom tags to be added to the raw definitions for moddin
   multiple return values. If the tag is not present, the result is false, if it is
   present but has no arguments, the result is true.
 
-* ``customRawData.getRaceCasteTag(raceDefinition, casteNumber, tag[, ...])
+* ``customRawData.getRaceCasteTag(raceDefinition, casteNumber, tag[, ...])``
 
   Gets tag from a race or caste instead if appplicable. Everything with getTag applies to this.
 

@@ -2984,7 +2984,7 @@ Predefined instance methods:
 
 To avoid confusion, these methods cannot be redefined.
 
-.. _custom-raw-tags
+.. _custom-raw-tags:
 
 custom-raw-tags
 ===============

@@ -3039,8 +3039,6 @@ Examples:
     end
     unit.body.blood_count = math.min(unit.body.blood_max, unit.body.blood_count + healAmount)
 
-The cache is cleared when a map is unloaded.
-
 ==================
 In-game UI Library
 ==================

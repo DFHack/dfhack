@@ -2984,43 +2984,40 @@ Predefined instance methods:
 
 To avoid confusion, these methods cannot be redefined.
 
-customRawData
-=============
+custom-raw-tags
+===============
 
-A utility allowing for custom tags to be added to the raw definitions for modding purposes:
+A module for reading custom tags added to the raws by mods.
 
-* ``customRawData.getTag(typeDefinition, tag[, ...])``
+* ``customRawTags.getTag(typeDefinition, tag)``
 
-  Where ``typeDefinition`` is a raw struct as seen in ``df.global.world.raws``, e.g:
-  ``dfhack.gui.getSelectedItem().subtype``, ``tag`` is the name of the custom tag you
-  want to get, and the remaining arguments correspond to the arguments in the tag as
-  booleans denoting whether the argument in the tag is a string or a number. ``true``
-  for string, false (or absent) for number. It will then be returned using single or
-  multiple return values. If the tag is not present, the result is false, if it is
-  present but has no arguments, the result is true.
+  Where ``typeDefinition`` is a type definition struct as seen in ``df.global.world.raws``
+  (e.g.: ``dfhack.gui.getSelectedItem().subtype``) and ``tag`` is the name of the custom tag you
+  want to read. The arguments from the tag will then be returned as strings using single or
+  multiple return values. If the tag is not present, the result is false, if it is present
+  but has no arguments, the result is true.
 
-* ``customRawData.getRaceCasteTag(raceDefinition, casteNumber, tag[, ...])``
+* ``customRawTags.getRaceCasteTag(raceDefinition, casteNumber)``
 
-  Gets tag from a race or caste instead if appplicable. Everything with getTag applies to this.
+  Gets tag from a race or caste instead if appplicable, where raceDefinition is of type ``creature_raw`` and casteNumber is an ``int`` (can be ``-1`` for no caste).
 
-* ``customRawData.getUnitTag(unit, tag[, ...])``
+* ``customRawTags.getUnitTag(unit, tag)``
 
-  Gets tag from a unit's race or caste instead if applicable. This is a wrapper over ``getRaceCasteTag``. Everything with getTag applies to this.
+  Gets tag from a unit's race or caste instead if applicable. This is a wrapper over ``getRaceCasteTag``.
 
-  The first call for a tag-getting function caches the result, subsequent calls ignore the
-  tag type arguments and return from the cache. More advanced raw constructs are planned.
+The cache is cleared when a map is unloaded.
 
 Examples:
 
 * Using an eventful onReactionComplete hook, something for disturbing dwarven science::
 
-    if customRawData.getTag(reaction, "CAUSES_INSANITY") then
+    if customRawTags.getTag(reaction, "CAUSES_INSANITY") then
         -- make unit who performed reaction go insane
 
 * Using an eventful onProjItemCheckMovement hook, a fast or slow-firing crossbow::
 
     -- check projectile distance flown is zero, get firer, etc...
-    local multiplier = customRawData.getTag(bow.subtype, "FIRE_RATE_MULTIPLIER") or 1
+    local multiplier = tonumber(customRawTags.getTag(bow.subtype, "FIRE_RATE_MULTIPLIER")) or 1
     firer.counters.think_counter = firer.counters.think_counter * multiplier
 
 * Something for a script that prints help text about different types of units::
@@ -3028,7 +3025,7 @@ Examples:
     local unit = dfhack.gui.getSelectedUnit()
     if not unit then return end
     local raceRaw = df.global.world.raws.creatures.all[unit.race]
-    local helpText = customRawData.getTag(raceRaw, "HELP_TEXT", true)
+    local helpText = customRawTags.getTag(raceRaw, "HELP_TEXT")
     if helpText then print(helpText) end
 
 * Healing armour::
@@ -3037,12 +3034,12 @@ Examples:
     local healAmount = 0
     for _, entry in ipairs(unit.inventory) do
         if entry.mode == 2 then -- Worn
-            healAmount = healAmount + (customRawData.getTag(entry.item.subtype, "HEAL_AMOUNT") or 0)
+            healAmount = healAmount + tonumber((customRawTags.getTag(entry.item.subtype, "HEAL_AMOUNT")) or 0)
         end
     end
     unit.body.blood_count = math.min(unit.body.blood_max, unit.body.blood_count + healAmount)
 
-This also defines a function it uses at ``eventful.onUnload.clearExtractedCustomRawData``
+This also defines a function it uses at ``eventful.onUnload.clearExtractedcustomRawTags``
 
 ==================
 In-game UI Library

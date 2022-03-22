@@ -62,7 +62,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Lua
 - Lua wrappers for functions reverse-engineered from ambushing unit code: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
-- Added ``customRawData`` utility to Lua library.
+- Added `custom-raw-tags` utility to Lua library for reading tags added to raws by mods.
 
 # 0.47.05-r4
 

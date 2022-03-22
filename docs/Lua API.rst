@@ -3005,8 +3005,6 @@ A module for reading custom tags added to the raws by mods.
 
   Gets tag from a unit's race or caste instead if applicable. This is a wrapper over ``getRaceCasteTag``.
 
-The cache is cleared when a map is unloaded.
-
 Examples:
 
 * Using an eventful onReactionComplete hook, something for disturbing dwarven science::
@@ -3039,7 +3037,7 @@ Examples:
     end
     unit.body.blood_count = math.min(unit.body.blood_max, unit.body.blood_count + healAmount)
 
-This also defines a function it uses at ``eventful.onUnload.clearExtractedcustomRawTags``
+The cache is cleared when a map is unloaded.
 
 ==================
 In-game UI Library

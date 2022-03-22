@@ -2,7 +2,7 @@
 Allows for reading custom tags added to raws by mods
 by Tachytaenius (wolfboyft)
 
-The first argument to customRawTags.getTag is one of DF's internal structs for the things defined by raws, like item_ammost or 
+The first argument to customRawTags.getTag is one of DF's internal structs for the things defined by raws, like item_ammost or reaction
 For example, dfhack.gui.getSelectedItem().subtype
 The second is the name of the tag
 
@@ -22,7 +22,7 @@ customRawTags.getTag(struct, "FOO") returns "BAR", "20"
 customRawTags.getTag(struct, "BAZ") returns true
 customRawTags.getTag(struct, "QUX") returns false
 
-customRawTags.getRaceCasteTag(raceDefinition, casteNumber, tag) gets a tag respecting the caste tag priority of a race/caste pair 
+customRawTags.getRaceCasteTag(raceDefinition, casteNumber, tag) gets a tag respecting the caste tag priority of a race/caste pair
 casteNumber -1 selects no caste
 calling getTag with a creature_raw will do getRaceCasteTag with a caste number of -1
 customRawTags.getUnitTag(unit, tag) is a wrapper for getRaceCasteTag

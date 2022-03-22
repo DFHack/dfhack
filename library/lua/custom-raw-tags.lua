@@ -75,12 +75,16 @@ function getTag(typeDefinition, tag)
     end
     
     -- Get data anew
+    local currentTagIterator
     for _, rawString in ipairs(rawStrings) do
         local noBrackets = rawString.value:sub(2, -2)
         local iter = noBrackets:gmatch("[^:]*") -- iterate over all the text between colons between the brackets
         if tag == iter() then
-            return doTag(thisTypeDefCache, tag, iter)
+            currentTagIterator = iter -- we return for last instance of tag if multiple instances are present
         end
+    end
+    if currentTagIterator then
+        return doTag(thisRaceDefCacheCaste, tag, currentTagIterator)
     end
     -- Not present
     thisTypeDefCache[tag] = false
@@ -125,6 +129,7 @@ function getRaceCasteTag(raceDefinition, casteNumber, tag)
     else
         thisCasteActive = true
     end
+    local currentTagIterator
     for _, rawString in ipairs(raceDefinition.raws) do
         local noBrackets = rawString.value:sub(2, -2)
         local iter = noBrackets:gmatch("[^:]*")
@@ -133,8 +138,11 @@ function getRaceCasteTag(raceDefinition, casteNumber, tag)
             local newCaste = iter()
             thisCasteActive = newCaste == casteId or rawStringTag == "SELECT_CASTE" and newCaste == "ALL"
         elseif thisCasteActive and tag == rawStringTag then
-            return doTag(thisRaceDefCacheCaste, tag, iter)
+            currentTagIterator = iter
         end
+    end
+    if currentTagIterator then
+        return doTag(thisRaceDefCacheCaste, tag, currentTagIterator)
     end
     thisRaceDefCacheCaste[tag] = false
     if casteNumber ~= -1 then

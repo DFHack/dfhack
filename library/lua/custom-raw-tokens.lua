@@ -1,51 +1,48 @@
 --[[
-custom-raw-tags
-Allows for reading custom tags added to raws by mods
+custom-raw-s
+Allows for reading custom tokens added to raws by mods
 by Tachytaenius (wolfboyft)
 
-Yes, custom raw tags do quietly print errors into the error log but the error log gets filled with garbage anyway
-
-TODO: the rest of the raw constructs
-NOTE: Creature variations are already expanded in creature_raw.raws, so they don't need to be handled
+Yes, custom raw tokens do quietly print errors into the error log but the error log gets filled with garbage anyway
 ]]
 
-local _ENV = mkmodule("custom-raw-tags")
+local _ENV = mkmodule("custom-raw-tokens")
 
 local eventful = require("plugins.eventful")
 local utils = require("utils")
 
-local customRawTagsCache = {}
-eventful.onUnload["custom-raw-tags"] = function()
-    customRawTagsCache = {}
+local customRawTokensCache = {}
+eventful.onUnload["custom-raw-tokens"] = function()
+    customRawTokensCache = {}
 end
 
 -- Not state, defined later:
 local ensureTable, doTable, getSubtype, rawStringsFieldNames
-local getTagCore, getRaceCasteTagCore
+local getTokenCore, getRaceCasteTokenCore
 
 --[[
 Function signatures:
-getTag(rawStruct, tag)
-getTag(rawStructInstance, tag)
-getTag(raceDefinition, casteNumber, tag)
-getTag(raceDefinition, casteString, tag)
+getToken(rawStruct, token)
+getToken(rawStructInstance, token)
+getToken(raceDefinition, casteNumber, token)
+getToken(raceDefinition, casteString, token)
 ]]
-function getTag(a, b, c)
+function getToken(a, b, c)
     -- Argument processing
-    assert(type(a) == "userdata", "Expected userdata for argument 1 to getTag")
+    assert(type(a) == "userdata", "Expected userdata for argument 1 to getToken")
     if df.is_instance(df.creature_raw, a) then
-        local raceDefinition, casteNumber, tag = a
+        local raceDefinition, casteNumber, token = a
         if not c then -- 2 arguments
             casteNumber = -1
-            assert(type(b) == "string", "Invalid argument 2 to getTag, must be a string")
-            tag = b
+            assert(type(b) == "string", "Invalid argument 2 to getToken, must be a string")
+            token = b
         elseif type(b) == "number" then -- 3 arguments, casteNumber
-            assert(b == -1 or b < #raceDefinition.caste and math.floor(b) == b and b >= 0, "Invalid argument 2 to getTag, must be -1 or a caste name or number present in the creature raw")
+            assert(b == -1 or b < #raceDefinition.caste and math.floor(b) == b and b >= 0, "Invalid argument 2 to getToken, must be -1 or a caste name or number present in the creature raw")
             casteNumber = b
-            assert(type(c) == "string", "Invalid argument 3 to getTag, must be a string")
-            tag = c
+            assert(type(c) == "string", "Invalid argument 3 to getToken, must be a string")
+            token = c
         else -- 3 arguments, casteString
-            assert(type(b) == "string", "Invalid argument 2 to getTag, must be -1 or a caste name or number present in the creature raw")
+            assert(type(b) == "string", "Invalid argument 2 to getToken, must be -1 or a caste name or number present in the creature raw")
             local casteString = b
             for i, v in ipairs(raceDefinition.caste) do
                 if v.caste_id == casteString then
@@ -53,17 +50,17 @@ function getTag(a, b, c)
                     break
                 end
             end
-            assert(casteNumber, "Invalid argument 2 to getTag, caste name \"" .. casteString .. "\" not found")
-            assert(type(c) == "string", "Invalid argument 3 to getTag, must be a string")
-            tag = c
+            assert(casteNumber, "Invalid argument 2 to getToken, caste name \"" .. casteString .. "\" not found")
+            assert(type(c) == "string", "Invalid argument 3 to getToken, must be a string")
+            token = c
         end
-        return getRaceCasteTagCore(raceDefinition, casteNumber, tag)
+        return getRaceCasteTokenCore(raceDefinition, casteNumber, token)
     elseif df.is_instance(df.unit, a) then
-        assert(type(b) == "string", "Invalid argument 2 to getTag, must be a string")
-        local unit, tag = a, b
-        return getRaceCasteTagCore(df.global.world.raws.creatures.all[unit.race], unit.caste, tag)
+        assert(type(b) == "string", "Invalid argument 2 to getToken, must be a string")
+        local unit, token = a, b
+        return getRaceCasteTokenCore(df.global.world.raws.creatures.all[unit.race], unit.caste, token)
     else
-        local rawStruct, tag
+        local rawStruct, token
         if df.is_instance(df.historical_entity, a) then
             rawStruct = a.entity_raw
         elseif df.is_instance(df.item, a) then
@@ -81,9 +78,9 @@ function getTag(a, b, c)
             rawStruct = a.item and a.item.subtype
         elseif df.is_instance(df.proj_unitst, a) then
             if not a.unit then return false end
-            assert(type(b) == "string", "Invalid argument 2 to getTag, must be a string")
-            local unit, tag = a.unit, b
-            return getRaceCasteTagCore(df.global.world.raws.creatures.all[unit.race], unit.caste, tag)
+            assert(type(b) == "string", "Invalid argument 2 to getToken, must be a string")
+            local unit, token = a.unit, b
+            return getRaceCasteTokenCore(df.global.world.raws.creatures.all[unit.race], unit.caste, token)
         elseif df.is_instance(df.building_workshopst, a) or df.is_instance(df.building_furnacest, a) then
             rawStruct = df.building_def.find(a.custom_type)
         elseif df.is_instance(df.plant, a) then
@@ -95,24 +92,24 @@ function getTag(a, b, c)
            rawStruct = a
         end
         if not rawStruct then return false end
-        assert(type(b) == "string", "Invalid argument 2 to getTag, must be a string")
-        tag = b
-        return getTagCore(rawStruct, tag)
+        assert(type(b) == "string", "Invalid argument 2 to getToken, must be a string")
+        token = b
+        return getTokenCore(rawStruct, token)
     end
 end
 
-function getTagCore(typeDefinition, tag)
+function getTokenCore(typeDefinition, token)
     -- Have we got a table for this item subtype/reaction/whatever?
     -- tostring is needed here because the same raceDefinition key won't give the same value every time for some reason
-    local thisTypeDefCache = ensureTable(customRawTagsCache, tostring(typeDefinition))
+    local thisTypeDefCache = ensureTable(customRawTokensCache, tostring(typeDefinition))
     
-    -- Have we already extracted and stored this custom raw tag for this type definition?
-    local tagData = thisTypeDefCache[tag]
-    if tagData ~= nil then
-        if type(tagData) == "table" then
-            return table.unpack(tagData)
+    -- Have we already extracted and stored this custom raw token for this type definition?
+    local tokenData = thisTypeDefCache[token]
+    if tokenData ~= nil then
+        if type(tokenData) == "table" then
+            return table.unpack(tokenData)
         else
-            return tagData
+            return tokenData
         end
     end
     
@@ -121,36 +118,36 @@ function getTagCore(typeDefinition, tag)
     if not rawStrings then
         error("Expected a raw type definition or instance in argument 1")
     end
-    local currentTagIterator
+    local currentTokenIterator
     for _, rawString in ipairs(rawStrings) do
         local noBrackets = rawString.value:sub(2, -2)
         local iter = noBrackets:gmatch("[^:]*") -- iterate over all the text between colons between the brackets
-        if tag == iter() then
-            currentTagIterator = iter -- we return for last instance of tag if multiple instances are present
+        if token == iter() then
+            currentTokenIterator = iter -- we return for last instance of token if multiple instances are present
         end
     end
-    if currentTagIterator then
-        return doTag(thisTypeDefCache, tag, currentTagIterator)
+    if currentTokenIterator then
+        return doToken(thisTypeDefCache, token, currentTokenIterator)
     end
     -- Not present
-    thisTypeDefCache[tag] = false
+    thisTypeDefCache[token] = false
     return false
 end
 
-function getRaceCasteTagCore(raceDefinition, casteNumber, tag)
+function getRaceCasteTokenCore(raceDefinition, casteNumber, token)
     -- Have we got tables for this race/caste pair?
-    local thisRaceDefCache = ensureTable(customRawTagsCache, tostring(raceDefinition))
+    local thisRaceDefCache = ensureTable(customRawTokensCache, tostring(raceDefinition))
     local thisRaceDefCacheCaste = ensureTable(thisRaceDefCache, casteNumber)
     
-    -- Have we already extracted and stored this custom raw tag for this race/caste pair?
-    local tagData = thisRaceDefCacheCaste[tag]
-    if tagData ~= nil then
-        if type(tagData) == "table" then
-            return table.unpack(tagData)
-        elseif tagData == false and casteNumber ~= -1 then
-            return getRaceCasteTagCore(raceDefinition, -1, tag)
+    -- Have we already extracted and stored this custom raw token for this race/caste pair?
+    local tokenData = thisRaceDefCacheCaste[token]
+    if tokenData ~= nil then
+        if type(tokenData) == "table" then
+            return table.unpack(Data)
+        elseif Data == false and casteNumber ~= -1 then
+            return getRaceCasteTokenCore(raceDefinition, -1, )
         else
-            return tagData
+            return Data
         end
     end
     
@@ -162,27 +159,27 @@ function getRaceCasteTagCore(raceDefinition, casteNumber, tag)
     else
         thisCasteActive = true
     end
-    local currentTagIterator
+    local currentTokenIterator
     for _, rawString in ipairs(raceDefinition.raws) do
         local noBrackets = rawString.value:sub(2, -2)
         local iter = noBrackets:gmatch("[^:]*")
-        local rawStringTag = iter()
-        if rawStringTag == "CASTE" or rawStringTag == "SELECT_CASTE" or rawStringTag == "SELECT_ADDITIONAL_CASTE" or rawStringTag == "USE_CASTE" then
+        local rawStringToken = iter()
+        if rawStringToken == "CASTE" or rawStringToken == "SELECT_CASTE" or rawStringToken == "SELECT_ADDITIONAL_CASTE" or rawStringToken == "USE_CASTE" then
             local newCaste = iter()
             if newCaste then
-                thisCasteActive = newCaste == casteId or rawStringTag == "SELECT_CASTE" and newCaste == "ALL"
+                thisCasteActive = newCaste == casteId or rawStringToken == "SELECT_CASTE" and newCaste == "ALL"
             end
-        elseif thisCasteActive and tag == rawStringTag then
-            currentTagIterator = iter
+        elseif thisCasteActive and  == rawStringToken then
+            currentTokenIterator = iter
         end
     end
-    if currentTagIterator then
-        return doTag(thisRaceDefCache, tag, currentTagIterator)
+    if currentTokenIterator then
+        return doToken(thisRaceDefCache, , currentTokenIterator)
     end
-    thisRaceDefCacheCaste[tag] = false
+    thisRaceDefCacheCaste[] = false
     if casteNumber ~= -1 then
         -- Not present, try with no caste
-        return getRaceCasteTagCore(raceDefinition, -1, tag)
+        return getRaceCasteTokenCore(raceDefinition, -1, )
     else
         return false -- don't get into an infinite loop!
     end
@@ -197,17 +194,17 @@ function ensureTable(tableToHoldIn, key)
     return ensuredTable
 end
 
-function doTag(cacheTable, tag, iter)
+function doToken(cacheTable, , iter)
     local args, lenArgs = {}, 0
     for arg in iter do
         lenArgs = lenArgs + 1
         args[lenArgs] = arg
     end
     if lenArgs == 0 then
-        cacheTable[tag] = true
+        cacheTable[] = true
         return true
     else
-        cacheTable[tag] = args
+        cacheTable[] = args
         return table.unpack(args)
     end
 end

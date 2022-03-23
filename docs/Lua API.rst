@@ -2984,54 +2984,54 @@ Predefined instance methods:
 
 To avoid confusion, these methods cannot be redefined.
 
-.. _custom-raw-tags:
+.. _custom-raw-tokens:
 
-custom-raw-tags
+custom-raw-tokens
 ===============
 
-A module for reading custom tags added to the raws by mods.
+A module for reading custom tokens added to the raws by mods.
 
-* ``customRawTags.getTag(typeDefinition, tag)``
+* ``customRawTokens.getToken(typeDefinition, token)``
 
   Where ``typeDefinition`` is a type definition struct as seen in ``df.global.world.raws``
-  (e.g.: ``dfhack.gui.getSelectedItem().subtype``) and ``tag`` is the name of the custom tag you
-  want to read. The arguments from the tag will then be returned as strings using single or
-  multiple return values. If the tag is not present, the result is false, if it is present
+  (e.g.: ``dfhack.gui.getSelectedItem().subtype``) and ``token`` is the name of the custom token you
+  want to read. The arguments from the token will then be returned as strings using single or
+  multiple return values. If the token is not present, the result is false, if it is present
   but has no arguments, the result is true. For ``creature_raw``, it checks against no caste.
 
-* ``customRawTags.getTag(typeInstance, tag)``
+* ``customRawTokens.getToken(typeInstance, token)``
 
   Where ``typeInstance`` is a unit, entity, item, job, projectile, building, plant, or interaction
-  instance. Gets ``typeDefinition`` and then returns the same as ``getTag(typeDefinition, tag)``.
-  For units, it gets the tag from the race or caste instead if appplicable.
+  instance. Gets ``typeDefinition`` and then returns the same as ``getToken(typeDefinition, token)``.
+  For units, it gets the token from the race or caste instead if appplicable.
 
-* ``customRawTags.getTag(raceDefinition, casteNumber, tag)``
+* ``customRawTokens.getToken(raceDefinition, casteNumber, token)``
 
-  The same as ``getTag(unit, tag)`` but with a specified race and caste. Caste number -1 is no caste.
+  The same as ``getToken(unit, token)`` but with a specified race and caste. Caste number -1 is no caste.
 
-* ``customRawTags.getTag(raceDefinition, casteName, tag)``
+* ``customRawTokens.getToken(raceDefinition, casteName, token)``
 
-  The same as ``getTag(unit, tag)`` but with a specified race and caste, using caste name (e.g. "FEMALE")
+  The same as ``getToken(unit, token)`` but with a specified race and caste, using caste name (e.g. "FEMALE")
   instead of number.
 
 Examples:
 
 * Using an eventful onReactionComplete hook, something for disturbing dwarven science::
 
-    if customRawTags.getTag(reaction, "CAUSES_INSANITY") then
+    if customRawTokens.getToken(reaction, "CAUSES_INSANITY") then
         -- make unit who performed reaction go insane
 
 * Using an eventful onProjItemCheckMovement hook, a fast or slow-firing crossbow::
 
     -- check projectile distance flown is zero, get firer, etc...
-    local multiplier = tonumber(customRawTags.getTag(bow, "FIRE_RATE_MULTIPLIER")) or 1
+    local multiplier = tonumber(customRawTokens.getToken(bow, "FIRE_RATE_MULTIPLIER")) or 1
     firer.counters.think_counter = firer.counters.think_counter * multiplier
 
 * Something for a script that prints help text about different types of units::
 
     local unit = dfhack.gui.getSelectedUnit()
     if not unit then return end
-    local helpText = customRawTags.getTag(unit, "HELP_TEXT")
+    local helpText = customRawTokens.getToken(unit, "HELP_TEXT")
     if helpText then print(helpText) end
 
 * Healing armour::
@@ -3040,7 +3040,7 @@ Examples:
     local healAmount = 0
     for _, entry in ipairs(unit.inventory) do
         if entry.mode == 2 then -- Worn
-            healAmount = healAmount + tonumber((customRawTags.getTag(entry.item, "HEAL_AMOUNT")) or 0)
+            healAmount = healAmount + tonumber((customRawTokens.getToken(entry.item, "HEAL_AMOUNT")) or 0)
         end
     end
     unit.body.blood_count = math.min(unit.body.blood_max, unit.body.blood_count + healAmount)

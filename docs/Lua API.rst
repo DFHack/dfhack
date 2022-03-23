@@ -2997,15 +2997,22 @@ A module for reading custom tags added to the raws by mods.
   (e.g.: ``dfhack.gui.getSelectedItem().subtype``) and ``tag`` is the name of the custom tag you
   want to read. The arguments from the tag will then be returned as strings using single or
   multiple return values. If the tag is not present, the result is false, if it is present
-  but has no arguments, the result is true.
+  but has no arguments, the result is true. For ``creature_raw``, it checks against no caste.
 
-* ``customRawTags.getRaceCasteTag(raceDefinition, casteNumber)``
+* ``customRawTags.getTag(typeInstance, tag)``
 
-  Gets tag from a race or caste instead if appplicable, where raceDefinition is of type ``creature_raw`` and casteNumber is an ``int`` (can be ``-1`` for no caste).
+  Where ``typeInstance`` is a unit, entity, item, job, projectile, building, plant, or interaction
+  instance. Gets ``typeDefinition`` and then returns the same as ``getTag(typeDefinition, tag)``.
+  For units, it gets the tag from the race or caste instead if appplicable.
 
-* ``customRawTags.getUnitTag(unit, tag)``
+* ``customRawTags.getTag(raceDefinition, casteNumber, tag)``
 
-  Gets tag from a unit's race or caste instead if applicable. This is a wrapper over ``getRaceCasteTag``.
+  The same as ``getTag(unit, tag)`` but with a specified race and caste. Caste number -1 is no caste.
+
+* ``customRawTags.getTag(raceDefinition, casteName, tag)``
+
+  The same as ``getTag(unit, tag)`` but with a specified race and caste, using caste name (e.g. "FEMALE")
+  instead of number.
 
 Examples:
 
@@ -3017,15 +3024,14 @@ Examples:
 * Using an eventful onProjItemCheckMovement hook, a fast or slow-firing crossbow::
 
     -- check projectile distance flown is zero, get firer, etc...
-    local multiplier = tonumber(customRawTags.getTag(bow.subtype, "FIRE_RATE_MULTIPLIER")) or 1
+    local multiplier = tonumber(customRawTags.getTag(bow, "FIRE_RATE_MULTIPLIER")) or 1
     firer.counters.think_counter = firer.counters.think_counter * multiplier
 
 * Something for a script that prints help text about different types of units::
 
     local unit = dfhack.gui.getSelectedUnit()
     if not unit then return end
-    local raceRaw = df.global.world.raws.creatures.all[unit.race]
-    local helpText = customRawTags.getTag(raceRaw, "HELP_TEXT")
+    local helpText = customRawTags.getTag(unit, "HELP_TEXT")
     if helpText then print(helpText) end
 
 * Healing armour::
@@ -3034,7 +3040,7 @@ Examples:
     local healAmount = 0
     for _, entry in ipairs(unit.inventory) do
         if entry.mode == 2 then -- Worn
-            healAmount = healAmount + tonumber((customRawTags.getTag(entry.item.subtype, "HEAL_AMOUNT")) or 0)
+            healAmount = healAmount + tonumber((customRawTags.getTag(entry.item, "HEAL_AMOUNT")) or 0)
         end
     end
     unit.body.blood_count = math.min(unit.body.blood_max, unit.body.blood_count + healAmount)

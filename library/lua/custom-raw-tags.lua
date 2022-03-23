@@ -1,31 +1,7 @@
 --[[
+custom-raw-tags
 Allows for reading custom tags added to raws by mods
 by Tachytaenius (wolfboyft)
-
-The first argument to customRawTags.getTag is one of DF's internal structs for the things defined by raws, like item_ammost or reaction
-For example, dfhack.gui.getSelectedItem().subtype
-The second is the name of the tag
-
-It will return false if the tag is absent
-It will return true for tags with no arguments
-For tags with one or more arguments, it will return each argument as a string
-(Since everything except false and nil implies true you can still use "if customRawTags(...) ..." for things with arguments to determine whether the tag is present)
-
-The results are cached
-All state resets on unload to prepare for potentially different raws
-
-Examples usage for
-    [FOO:BAR:20]
-    [BAZ]
-
-customRawTags.getTag(struct, "FOO") returns "BAR", "20"
-customRawTags.getTag(struct, "BAZ") returns true
-customRawTags.getTag(struct, "QUX") returns false
-
-customRawTags.getRaceCasteTag(raceDefinition, casteNumber, tag) gets a tag respecting the caste tag priority of a race/caste pair
-casteNumber -1 selects no caste
-calling getTag with a creature_raw will do getRaceCasteTag with a caste number of -1
-customRawTags.getUnitTag(unit, tag) is a wrapper for getRaceCasteTag
 
 Yes, custom raw tags do quietly print errors into the error log but the error log gets filled with garbage anyway
 
@@ -36,29 +12,96 @@ NOTE: Creature variations are already expanded in creature_raw.raws, so they don
 local _ENV = mkmodule("custom-raw-tags")
 
 local eventful = require("plugins.eventful")
+local utils = require("utils")
 
 local customRawTagsCache = {}
 eventful.onUnload["custom-raw-tags"] = function()
     customRawTagsCache = {}
 end
 
-local ensureTable, doTable, rawStringsFieldNames -- (Is not state) Defined after the main functions for file clarity
+-- Not state, defined later:
+local ensureTable, doTable, getSubtype, rawStringsFieldNames
+local getTagCore, getRaceCasteTagCore
 
-function getTag(typeDefinition, tag)
-    if type(typeDefinition) ~= "userdata" then
-        error("Expected raw struct (eg plant_raw or item_ammost) for argument 1 of getTag")
+--[[
+Function signatures:
+getTag(rawStruct, tag)
+getTag(rawStructInstance, tag)
+getTag(raceDefinition, casteNumber, tag)
+getTag(raceDefinition, casteString, tag)
+]]
+function getTag(a, b, c)
+    -- Argument processing
+    assert(type(a) == "userdata", "Expected userdata for argument 1 to getTag")
+    if df.is_instance(df.creature_raw, a) then
+        local raceDefinition, casteNumber, tag = a
+        if not c then -- 2 arguments
+            casteNumber = -1
+            assert(type(b) == "string", "Invalid argument 2 to getTag, must be a string")
+            tag = b
+        elseif type(b) == "number" then -- 3 arguments, casteNumber
+            assert(b == -1 or b < #raceDefinition.caste and math.floor(b) == b and b >= 0, "Invalid argument 2 to getTag, must be -1 or a caste name or number present in the creature raw")
+            casteNumber = b
+            assert(type(c) == "string", "Invalid argument 3 to getTag, must be a string")
+            tag = c
+        else -- 3 arguments, casteString
+            assert(type(b) == "string", "Invalid argument 2 to getTag, must be -1 or a caste name or number present in the creature raw")
+            local casteString = b
+            for i, v in ipairs(raceDefinition.caste) do
+                if v.caste_id == casteString then
+                    casteNumber = i
+                    break
+                end
+            end
+            assert(casteNumber, "Invalid argument 2 to getTag, caste name \"" .. casteString .. "\" not found")
+            assert(type(c) == "string", "Invalid argument 3 to getTag, must be a string")
+            tag = c
+        end
+        return getRaceCasteTagCore(raceDefinition, casteNumber, tag)
+    elseif df.is_instance(df.unit, a) then
+        assert(type(b) == "string", "Invalid argument 2 to getTag, must be a string")
+        local unit, tag = a, b
+        return getRaceCasteTagCore(df.global.world.raws.creatures.all[unit.race], unit.caste, tag)
+    else
+        local rawStruct, tag
+        if df.is_instance(df.historical_entity, a) then
+            rawStruct = a.entity_raw
+        elseif df.is_instance(df.item, a) then
+            rawStruct = getSubtype(a)
+        elseif df.is_instance(df.job, a) then
+            if job.job_type == df.job_type.CustomReaction then
+                for i, v in ipairs(df.global.world.raws.reactions.reactions) do
+                    if job.reaction_name == v.code then
+                        rawStruct = v
+                        break
+                    end
+                end
+            end
+        elseif df.is_instance(df.proj_itemst, a) then
+            rawStruct = a.item and a.item.subtype
+        elseif df.is_instance(df.proj_unitst, a) then
+            if not a.unit then return false end
+            assert(type(b) == "string", "Invalid argument 2 to getTag, must be a string")
+            local unit, tag = a.unit, b
+            return getRaceCasteTagCore(df.global.world.raws.creatures.all[unit.race], unit.caste, tag)
+        elseif df.is_instance(df.building_workshopst, a) or df.is_instance(df.building_furnacest, a) then
+            rawStruct = df.building_def.find(a.custom_type)
+        elseif df.is_instance(df.plant, a) then
+            rawStruct = df.global.world.raws.plants.all[a.material]
+        elseif df.is_instance(df.interaction_instance, a) then
+            rawStruct = df.global.world.raws.interactions[a.interaction_id]
+        else
+           -- Assume raw struct *is* argument a
+           rawStruct = a
+        end
+        if not rawStruct then return false end
+        assert(type(b) == "string", "Invalid argument 2 to getTag, must be a string")
+        tag = b
+        return getTagCore(rawStruct, tag)
     end
-    local rawStrings = typeDefinition[rawStringsFieldNames[typeDefinition._type]] -- used when getting data anew below, just used as a boolean here
-    if not rawStrings then
-        error("Expected raw struct (e.g. plant_raw or item_ammost) for argument 1 of getTag")
-    end
-    assert(type(tag == "string"), "Expected string for argument 2 of getTag")
-    
-    -- Is this a race definition?
-    if typeDefinition._type == df.creature_raw then
-        return getRaceCasteTag(typeDefinition, -1, tag)
-    end
-    
+end
+
+function getTagCore(typeDefinition, tag)
     -- Have we got a table for this item subtype/reaction/whatever?
     -- tostring is needed here because the same raceDefinition key won't give the same value every time for some reason
     local thisTypeDefCache = ensureTable(customRawTagsCache, tostring(typeDefinition))
@@ -74,6 +117,10 @@ function getTag(typeDefinition, tag)
     end
     
     -- Get data anew
+    local rawStrings = typeDefinition[rawStringsFieldNames[typeDefinition._type]]
+    if not rawStrings then
+        error("Expected a raw type definition or instance in argument 1")
+    end
     local currentTagIterator
     for _, rawString in ipairs(rawStrings) do
         local noBrackets = rawString.value:sub(2, -2)
@@ -83,27 +130,14 @@ function getTag(typeDefinition, tag)
         end
     end
     if currentTagIterator then
-        return doTag(thisRaceDefCacheCaste, tag, currentTagIterator)
+        return doTag(thisTypeDefCache, tag, currentTagIterator)
     end
     -- Not present
     thisTypeDefCache[tag] = false
     return false
 end
 
-function getUnitTag(unit, tag) -- respects both race and caste of a creature
-    assert(raceDefinition._type == df.unit, "Expected unit for argument 1 of getRaceCasteTag")
-    assert(type(tag == "string"), "Expected string for argument 2 of getUnitTag")
-    
-    local raceDefinition = df.global.world.raws.creatures.all[unit.race]
-    local casteNumber = unit.caste
-    return getRaceCasteTag(raceDefinition, casteNumber, tag)
-end
-
-function getRaceCasteTag(raceDefinition, casteNumber, tag)
-    assert(raceDefinition._type == df.creature_raw, "Expected creature_raw for argument 1 of getRaceCasteTag")
-    assert(type(casteNumber == "number"), "Expected number for argument 2 of getRaceCasteTag")
-    assert(type(tag == "string"), "Expected string for argument 3 of getRaceCasteTag")
-    
+function getRaceCasteTagCore(raceDefinition, casteNumber, tag)
     -- Have we got tables for this race/caste pair?
     local thisRaceDefCache = ensureTable(customRawTagsCache, tostring(raceDefinition))
     local thisRaceDefCacheCaste = ensureTable(thisRaceDefCache, casteNumber)
@@ -114,7 +148,7 @@ function getRaceCasteTag(raceDefinition, casteNumber, tag)
         if type(tagData) == "table" then
             return table.unpack(tagData)
         elseif tagData == false and casteNumber ~= -1 then
-            return getRaceCasteTag(raceDefinition, -1, tag)
+            return getRaceCasteTagCore(raceDefinition, -1, tag)
         else
             return tagData
         end
@@ -143,24 +177,24 @@ function getRaceCasteTag(raceDefinition, casteNumber, tag)
         end
     end
     if currentTagIterator then
-        return doTag(thisRaceDefCacheCaste, tag, currentTagIterator)
+        return doTag(thisRaceDefCache, tag, currentTagIterator)
     end
     thisRaceDefCacheCaste[tag] = false
     if casteNumber ~= -1 then
         -- Not present, try with no caste
-        return getRaceCasteTag(raceDefinition, -1, tag)
+        return getRaceCasteTagCore(raceDefinition, -1, tag)
     else
         return false -- don't get into an infinite loop!
     end
 end
 
 function ensureTable(tableToHoldIn, key)
-   local ensuredTable = tableToHoldIn[key]
-   if not ensuredTable then
-       ensuredTable = {}
-       tableToHoldIn[key] = ensuredTable
-   end
-   return ensuredTable
+    local ensuredTable = tableToHoldIn[key]
+    if not ensuredTable then
+        ensuredTable = {}
+        tableToHoldIn[key] = ensuredTable
+    end
+    return ensuredTable
 end
 
 function doTag(cacheTable, tag, iter)
@@ -176,6 +210,11 @@ function doTag(cacheTable, tag, iter)
         cacheTable[tag] = args
         return table.unpack(args)
     end
+end
+
+function getSubtype(item)
+    if item:getSubtype() == -1 then return nil end
+    return dfhack.items.getSubtypeDef(item:getType(), item:getSubtype())
 end
 
 rawStringsFieldNames = {

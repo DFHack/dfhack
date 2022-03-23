@@ -399,11 +399,6 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
             }
             constructions[constr->pos] = *constr;
         }
-        for ( size_t a = 0; a < df::global::world->buildings.all.size(); ++a ) {
-            df::building* b = df::global::world->buildings.all[a];
-            Buildings::updateBuildings(out, (void*)intptr_t(b->id));
-            buildings.insert(b->id);
-        }
         lastSyndromeTime = -1;
         for ( df::unit* unit : df::global::world->units.all ) {
             for ( size_t b = 0; b < unit->syndromes.active.size(); ++b ) {

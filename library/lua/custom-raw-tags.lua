@@ -135,7 +135,9 @@ function getRaceCasteTag(raceDefinition, casteNumber, tag)
         local rawStringTag = iter()
         if rawStringTag == "CASTE" or rawStringTag == "SELECT_CASTE" or rawStringTag == "SELECT_ADDITIONAL_CASTE" or rawStringTag == "USE_CASTE" then
             local newCaste = iter()
-            thisCasteActive = newCaste == casteId or rawStringTag == "SELECT_CASTE" and newCaste == "ALL"
+            if newCaste then
+                thisCasteActive = newCaste == casteId or rawStringTag == "SELECT_CASTE" and newCaste == "ALL"
+            end
         elseif thisCasteActive and tag == rawStringTag then
             currentTagIterator = iter
         end

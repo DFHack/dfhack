@@ -154,6 +154,8 @@ static void manageNewUnitActiveEvent(color_ostream& out);
 static void manageUnitDeathEvent(color_ostream& out);
 static void manageItemCreationEvent(color_ostream& out);
 static void manageBuildingEvent(color_ostream& out);
+static void manageCreatedBuildingEvent(color_ostream& out);
+static void manageDestroyedBuildingEvent(color_ostream& out);
 static void manageConstructionEvent(color_ostream& out);
 static void manageSyndromeEvent(color_ostream& out);
 static void manageInvasionEvent(color_ostream& out);
@@ -174,6 +176,8 @@ static const eventManager_t eventManager[] = {
     manageUnitDeathEvent,
     manageItemCreationEvent,
     manageBuildingEvent,
+    manageCreatedBuildingEvent,
+    manageDestroyedBuildingEvent,
     manageConstructionEvent,
     manageSyndromeEvent,
     manageInvasionEvent,

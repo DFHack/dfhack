@@ -38,7 +38,7 @@ local _ENV = mkmodule("custom-raw-tags")
 local eventful = require("plugins.eventful")
 
 local customRawTagsCache = {}
-eventful.onUnload.customRawTags = function()
+eventful.onUnload["custom-raw-tags"] = function()
     customRawTagsCache = {}
 end
 

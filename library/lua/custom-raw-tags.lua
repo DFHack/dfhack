@@ -162,12 +162,12 @@ function ensureTable(tableToHoldIn, key)
 end
 
 function doTag(cacheTable, tag, iter)
-    local args, i = {}, 0
+    local args, lenArgs = {}, 0
     for arg in iter do
-        i = i + 1
-        args[i] = arg
+        lenArgs = lenArgs + 1
+        args[lenArgs] = arg
     end
-    if i == 0 then
+    if lenArgs == 0 then
         cacheTable[tag] = true
         return true
     else

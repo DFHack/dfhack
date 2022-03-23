@@ -39,6 +39,7 @@
 #include <cstring>
 #include <map>
 #include <string>
+#include <map>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -183,6 +184,68 @@ static const eventManager_t eventManager[] = {
     manageInteractionEvent,
 };
 
+template<typename T>
+class event_tracker { //todo: use inheritance? stl seems to use variadics, so it's unclear how well that would actually work
+private:
+    std::unordered_map<T, int32_t> seen;
+    std::multimap<int32_t, T> history;
+public:
+    void clear() {
+        seen.clear();
+        history.clear();
+    }
+    bool contains(const T &event_data) {
+        return seen.find(event_data) != seen.end();
+    }
+    typename std::multimap<int32_t, T>::iterator find(const T &event_data) {
+        auto iter = seen.find(event_data);
+        if(iter != seen.end()){
+            auto tick = iter->second;
+            for(auto jter = history.lower_bound(tick); jter != history.end(); ++jter) {
+                if (jter->second == event_data) {
+                    return jter;
+                }
+            }
+        }
+        return history.end();
+    }
+    typename std::multimap<int32_t, T>::iterator begin() {
+        return history.begin();
+    }
+    typename std::multimap<int32_t, T>::iterator end() {
+        return history.end();
+    }
+    typename std::multimap<int32_t, T>::iterator upper_bound(const int32_t &tick) {
+        return history.upper_bound(tick);
+    }
+    std::pair<typename std::multimap<int32_t, T>::iterator, bool> emplace(const int32_t &tick, const T &event_data) {
+        // data structure is replacing uses of std::unordered_set, so we can do this if(!contains)
+        if (!contains(event_data)) {
+            seen.emplace(event_data, tick);
+            return std::make_pair(history.emplace(tick, event_data), true);
+        }
+        return std::make_pair(history.end(), false);
+    }
+    typename std::multimap<int32_t, T>::iterator erase(typename std::multimap<int32_t, T>::iterator &pos) {
+        if (pos != history.end()) {
+            seen.erase(pos->second);
+            return history.erase(pos);
+        }
+    }
+    typename std::multimap<int32_t, T>::iterator erase(const T& event_data) {
+        auto iter = seen.find(event_data);
+        if(iter != seen.end()){
+            auto tick = iter->second;
+            seen.erase(iter);
+            for(auto jter = history.lower_bound(tick); jter != history.end(); ++jter) {
+                if(jter->second == event_data) {
+                    return history.erase(jter);
+                }
+            }
+        }
+        return history.end();
+    }
+};
 //job initiated
 static int32_t lastJobId = -1;
 

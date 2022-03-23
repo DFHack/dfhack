@@ -867,6 +867,26 @@ static void manageBuildingEvent(color_ostream& out) {
         }
     }
 }
+
+static void manageCreatedBuildingEvent(color_ostream& out) {
+    if (!df::global::world)
+        return;
+    if (!df::global::building_next_id)
+        return;
+    int32_t tick = df::global::world->frame_counter;
+    // update created building list
+    for (int32_t id = nextBuilding; id < *df::global::building_next_id; ++id) {
+        int32_t index = df::building::binsearch_index(df::global::world->buildings.all, id);
+        if (index == -1) {
+            //out.print("%s, line %d: Couldn't find new building with id %d.\n", __FILE__, __LINE__, a);
+            //the tricky thing is that when the game first starts, it's ok to skip buildings, but otherwise, if you skip buildings, something is probably wrong. TODO: make this smarter
+            continue;
+        }
+        createdBuildings.emplace(tick, id);
+        destroyedBuildings.erase(id);
+    }
+    nextBuilding = *df::global::building_next_id;
+    multimap<Plugin*, EventHandler> copy(handlers[EventType::CREATED_BUILDING].begin(), handlers[EventType::CREATED_BUILDING].end());
     // iterate event handler callbacks
     for (auto &iter: copy) {
         auto &handler = iter.second;
@@ -875,8 +895,41 @@ static void manageBuildingEvent(color_ostream& out) {
             auto last_tick = eventLastTick[handler.eventHandler];
             eventLastTick[handler.eventHandler] = tick;
             // send the handler all the new & destroyed buildings since it last fired
-            auto jter = buildings.upper_bound(last_tick);
-            for (; jter != buildings.end(); ++jter) {
+            auto jter = createdBuildings.upper_bound(last_tick);
+            for (; jter != createdBuildings.end(); ++jter) {
+                handler.eventHandler(out, (void*) intptr_t(jter->second));
+            }
+        }
+    }
+}
+
+static void manageDestroyedBuildingEvent(color_ostream& out) {
+    if (!df::global::world)
+        return;
+    int32_t tick = df::global::world->frame_counter;
+    // update destroyed building list
+    for (auto &iter: createdBuildings) {
+        int32_t id = iter.second;
+        int32_t index = df::building::binsearch_index(df::global::world->buildings.all, id);
+        // continue if we found the id in world->buildings.all
+        if (index != -1) {
+            continue;
+        }
+        // pretty sure we'd invalidate our loop if we added to buildings here, so we just save the id in an intermediary for now
+        destroyedBuildings.emplace(tick, id);
+        createdBuildings.erase(id);
+    }
+    multimap<Plugin*, EventHandler> copy(handlers[EventType::DESTROYED_BUILDING].begin(), handlers[EventType::DESTROYED_BUILDING].end());
+    // iterate event handler callbacks
+    for (auto &iter: copy) {
+        auto &handler = iter.second;
+        // enforce handler's callback frequency
+        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
+            auto last_tick = eventLastTick[handler.eventHandler];
+            eventLastTick[handler.eventHandler] = tick;
+            // send the handler all the new & destroyed buildings since it last fired
+            auto jter = destroyedBuildings.upper_bound(last_tick);
+            for (; jter != destroyedBuildings.end(); ++jter) {
                 handler.eventHandler(out, (void*) intptr_t(jter->second));
             }
         }

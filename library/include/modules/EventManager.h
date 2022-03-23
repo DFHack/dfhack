@@ -26,6 +26,8 @@ namespace DFHack {
                 UNIT_DEATH,
                 ITEM_CREATED,
                 BUILDING,
+                CREATED_BUILDING,
+                DESTROYED_BUILDING,
                 CONSTRUCTION,
                 SYNDROME,
                 INVASION,

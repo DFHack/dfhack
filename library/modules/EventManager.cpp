@@ -265,7 +265,8 @@ static event_tracker<int32_t> deadUnits;
 static int32_t nextItem;
 //building
 static int32_t nextBuilding;
-static event_tracker<int32_t> buildings;
+static event_tracker<int32_t> createdBuildings;
+static event_tracker<int32_t> destroyedBuildings;
 
 //construction
 static unordered_map<df::coord, df::construction> constructions;
@@ -312,9 +313,12 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         prevJobs.clear();
         activeUnits.clear();
         deadUnits.clear();
-        buildings.clear();
+        createdBuildings.clear();
+        destroyedBuildings.clear();
         constructions.clear();
         equipmentLog.clear();
+        //todo: clear reportToRelevantUnits?
+        tickQueue.clear();
 
         Buildings::clearBuildings(out);
         lastReport = -1;
@@ -380,7 +384,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         for (df::building* building : df::global::world->buildings.all) {
             Buildings::updateBuildings(out, (void*)intptr_t(building->id));
             // building already existed, so emplace to a non-iterable area
-            buildings.emplace(-1, building->id);
+            createdBuildings.emplace(-1, building->id);
         }
 
         constructions.clear();
@@ -807,29 +811,19 @@ static void manageBuildingEvent(color_ostream& out) {
      * consider looking at jobs: building creation / destruction
      **/
     int32_t tick = df::global::world->frame_counter;
-
-    // find destroyed buildings
-    std::vector<int32_t> destroyed;
-    for (auto &iter: buildings) {
+    // update destroyed building list
+    for (auto &iter: createdBuildings) {
         int32_t id = iter.second;
-        // continue if the id represents a previously destroyed building
-        if (id < 0) {
-            continue;
-        }
         int32_t index = df::building::binsearch_index(df::global::world->buildings.all, id);
         // continue if we found the id in world->buildings.all
         if (index != -1) {
             continue;
         }
         // pretty sure we'd invalidate our loop if we added to buildings here, so we just save the id in an intermediary for now
-        destroyed.push_back(id);
+        destroyedBuildings.emplace(tick, id);
+        createdBuildings.erase(id);
     }
-    // update building list with destroyed buildings
-    for (auto id: destroyed) {
-        // we're using negative id values to communicate destruction since we need to save knowledge for future ticks
-        buildings.emplace(tick, -id);
-    }
-    // update building list with new buildings
+    // update created building list
     for (int32_t id = nextBuilding; id < *df::global::building_next_id; ++id) {
         int32_t index = df::building::binsearch_index(df::global::world->buildings.all, id);
         if (index == -1) {
@@ -837,12 +831,42 @@ static void manageBuildingEvent(color_ostream& out) {
             //the tricky thing is that when the game first starts, it's ok to skip buildings, but otherwise, if you skip buildings, something is probably wrong. TODO: make this smarter
             continue;
         }
-        buildings.emplace(tick, id);
+        createdBuildings.emplace(tick, id);
+        destroyedBuildings.erase(id);
     }
     nextBuilding = *df::global::building_next_id;
 
     // todo: maybe we should create static lists, and compare sizes and only copy if they don't match, otherwise every manager function is copying their handlers every single they execute
     multimap<Plugin*, EventHandler> copy(handlers[EventType::BUILDING].begin(), handlers[EventType::BUILDING].end());
+    // iterate event handler callbacks (send handlers CREATED buildings)
+    for (auto &iter: copy) {
+        auto &handler = iter.second;
+        // enforce handler's callback frequency
+        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
+            auto last_tick = eventLastTick[handler.eventHandler];
+            eventLastTick[handler.eventHandler] = tick;
+            // send the handler all the new buildings since it last fired
+            auto jter = createdBuildings.upper_bound(last_tick);
+            for (; jter != createdBuildings.end(); ++jter) {
+                handler.eventHandler(out, (void*) intptr_t(jter->second));
+            }
+        }
+    }
+    // iterate event handler callbacks (send handlers DESTROYED buildings
+    for (auto &iter: copy) {
+        auto &handler = iter.second;
+        // enforce handler's callback frequency
+        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
+            auto last_tick = eventLastTick[handler.eventHandler];
+            eventLastTick[handler.eventHandler] = tick;
+            // send the handler all the destroyed buildings since it last fired
+            auto jter = destroyedBuildings.upper_bound(last_tick);
+            for (; jter != destroyedBuildings.end(); ++jter) {
+                handler.eventHandler(out, (void*) intptr_t(jter->second));
+            }
+        }
+    }
+}
     // iterate event handler callbacks
     for (auto &iter: copy) {
         auto &handler = iter.second;

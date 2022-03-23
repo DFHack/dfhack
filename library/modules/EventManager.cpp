@@ -250,22 +250,22 @@ public:
 static int32_t lastJobId = -1;
 
 //job started
-static unordered_set<df::job*> startedJobs;
+static event_tracker<df::job*> startedJobs;
 
 //job completed
 static unordered_map<int32_t, df::job*> prevJobs;
 
 //new unit active
-static unordered_set<int32_t> activeUnits;
+static event_tracker<int32_t> activeUnits;
 
 //unit death
-static unordered_set<int32_t> livingUnits;
+static event_tracker<int32_t> deadUnits;
 
 //item creation
 static int32_t nextItem;
 //building
 static int32_t nextBuilding;
-static unordered_set<int32_t> buildings;
+static event_tracker<int32_t> buildings;
 
 //construction
 static unordered_map<df::coord, df::construction> constructions;
@@ -308,9 +308,10 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         for ( auto i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
             Job::deleteJobStruct((*i).second, true);
         }
+        startedJobs.clear();
         prevJobs.clear();
-        tickQueue.clear();
-        livingUnits.clear();
+        activeUnits.clear();
+        deadUnits.clear();
         buildings.clear();
         constructions.clear();
         equipmentLog.clear();
@@ -350,6 +351,37 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         nextBuilding = *df::global::building_next_id;
         nextInvasion = df::global::ui->invasions.next_id;
         lastJobId = -1 + *df::global::job_next_id;
+
+        // initialize our started jobs list
+        for ( df::job_list_link* link = df::global::world->jobs.list.next; link != nullptr; link = link->next ) {
+            df::job* job = link->item;
+            if (job && Job::getWorker(job)) {
+                // the job was already started, so emplace to a non-iterable area
+                startedJobs.emplace(-1, job);
+            }
+        }
+        // initialize our active units list
+        for (df::unit* unit : df::global::world->units.active) {
+            int32_t id = unit->id;
+            if (!activeUnits.contains(id)) {
+                // unit is already active, so emplace to a non-iterable area
+                activeUnits.emplace(-1, id);
+            }
+        }
+        // initialize our dead units list
+        for (df::unit* unit: df::global::world->units.all) {
+            //if ( unit->counters.death_id == -1 ) {
+            if (!Units::isActive(unit)) {
+                // unit is already dead, so emplace to a non-iterable area
+                deadUnits.emplace(-1, unit->id);
+            }
+        }
+        // initialize our buildings list
+        for (df::building* building : df::global::world->buildings.all) {
+            Buildings::updateBuildings(out, (void*)intptr_t(building->id));
+            // building already existed, so emplace to a non-iterable area
+            buildings.emplace(-1, building->id);
+        }
 
         constructions.clear();
         for ( auto i = df::global::world->constructions.begin(); i != df::global::world->constructions.end(); i++ ) {
@@ -497,35 +529,33 @@ static void manageJobInitiatedEvent(color_ostream& out) {
     lastJobId = *df::global::job_next_id - 1;
 }
 
-static void manageJobStartedEvent(color_ostream& out){
+static void manageJobStartedEvent(color_ostream& out) {
     if (!df::global::world)
         return;
-
-    multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_STARTED].begin(), handlers[EventType::JOB_STARTED].end());
+    multimap<Plugin*, EventHandler> copy(handlers[EventType::JOB_STARTED].begin(), handlers[EventType::JOB_STARTED].end());
     int32_t tick = df::global::world->frame_counter;
 
-    // compile a list of newly started jobs
-    std::vector<df::job*> newly_started_jobs;
-    for ( df::job_list_link* link = df::global::world->jobs.list.next; link != NULL; link = link->next ) {
+    // update the started jobs list for the current tick
+    for (df::job_list_link* link = df::global::world->jobs.list.next; link != NULL; link = link->next) {
         df::job* job = link->item;
         // the jobs must have a worker to start
         if (job && Job::getWorker(job)) {
-            // cross-reference against existing list of jobs with workers
-            if (startedJobs.emplace(job).second) {
-                // must be new
-                newly_started_jobs.push_back(job);
-            }
+            // the job won't be added if it already exists
+            startedJobs.emplace(tick, job);
         }
     }
     // iterate the event handlers
-    for(auto &iter : copy) {
+    for (auto &iter: copy) {
         auto &handler = iter.second;
         // make sure the frequency of this handler is obeyed
         if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
+            auto last_tick = eventLastTick[handler.eventHandler];
             eventLastTick[handler.eventHandler] = tick;
-            // send the handler the new jobs
-            for(auto job : newly_started_jobs){
-                handler.eventHandler(out, (void*)job);
+            // send the handler all the new jobs since it last fired
+            auto jter = startedJobs.upper_bound(last_tick);
+            for (; jter != startedJobs.end(); ++jter) {
+                // todo: entity check? before/inside handler loop?
+                handler.eventHandler(out, (void*) jter->second);
             }
         }
     }
@@ -671,46 +701,61 @@ static void manageJobCompletedEvent(color_ostream& out) {
 static void manageNewUnitActiveEvent(color_ostream& out) {
     if (!df::global::world)
         return;
-    unordered_set<int32_t> activeUnits_replacement;
     multimap<Plugin*,EventHandler> copy(handlers[EventType::NEW_UNIT_ACTIVE].begin(), handlers[EventType::NEW_UNIT_ACTIVE].end());
     int32_t tick = df::global::world->frame_counter;
-    for (auto unit : df::global::world->units.active) {
+    // update active units list for the current tick
+    for (df::unit* unit : df::global::world->units.active) {
         int32_t id = unit->id;
-        activeUnits_replacement.emplace(id);
-        if(activeUnits.find(id) == activeUnits.end()){
-            for (auto &iter : copy) {
-                auto &handler = iter.second;
-                if(tick - eventLastTick[handler.eventHandler] >= handler.freq) {
-                    eventLastTick[handler.eventHandler] = tick;
-                    handler.eventHandler(out, (void*) intptr_t(id)); // intptr_t() avoids cast from smaller type warning
-                }
+        if (!activeUnits.contains(id)) {
+            activeUnits.emplace(tick, id);
+        }
+    }
+    // iterate event handler callbacks
+    for (auto &iter : copy) {
+        auto &handler = iter.second;
+        // enforce handler's callback frequency
+        if(tick - eventLastTick[handler.eventHandler] >= handler.freq) {
+            auto last_tick = eventLastTick[handler.eventHandler];
+            eventLastTick[handler.eventHandler] = tick;
+            // send the handler all the new active unit id's since it last fired
+            auto jter = activeUnits.upper_bound(last_tick);
+            for(;jter != activeUnits.end(); ++jter){
+                // todo: entity check? before/inside handler loop?
+                handler.eventHandler(out, (void*) intptr_t(jter->second)); // intptr_t() avoids cast from smaller type warning
             }
         }
     }
-    activeUnits.swap(activeUnits_replacement);
 }
 
 static void manageUnitDeathEvent(color_ostream& out) {
     if (!df::global::world)
         return;
-    multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_DEATH].begin(), handlers[EventType::UNIT_DEATH].end());
+    multimap<Plugin*, EventHandler> copy(handlers[EventType::UNIT_DEATH].begin(), handlers[EventType::UNIT_DEATH].end());
     int32_t tick = df::global::world->frame_counter;
-    for (auto &iter : copy) {
+    // update dead units list for the current tick
+    for (df::unit* unit: df::global::world->units.all) {
+        //if ( unit->counters.death_id == -1 ) {
+        if (!Units::isActive(unit)) {
+            if (!deadUnits.contains(unit->id)) {
+                deadUnits.emplace(tick, unit->id);
+                activeUnits.erase(unit->id);
+            }
+        } else if (deadUnits.contains(unit->id)) {
+            // unit must have been revived
+            deadUnits.erase(unit->id);
+        }
+    }
+    // iterate event handler callbacks
+    for (auto &iter: copy) {
         auto &handler = iter.second;
-        if(tick - eventLastTick[handler.eventHandler] >= handler.freq) {
+        // enforce handler's callback frequency
+        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
+            auto last_tick = eventLastTick[handler.eventHandler];
             eventLastTick[handler.eventHandler] = tick;
-            for ( df::unit *unit : df::global::world->units.all ) {
-                //if ( unit->counters.death_id == -1 ) {
-                if ( Units::isActive(unit) ) {
-                    livingUnits.insert(unit->id);
-                    continue;
-                }
-                //dead: if dead since last check, trigger events
-                if ( livingUnits.find(unit->id) == livingUnits.end() )
-                    continue;
-
-                handler.eventHandler(out, (void*) intptr_t(unit->id)); // intptr_t() avoids cast from smaller type warning
-                livingUnits.erase(unit->id);
+            // send the handler all the new dead unit id's since it last fired
+            auto jter = deadUnits.upper_bound(last_tick);
+            for(; jter != deadUnits.end(); ++jter) {
+                handler.eventHandler(out, (void*) intptr_t(jter->second)); // intptr_t() avoids cast from smaller type warning
             }
         }
     }
@@ -766,39 +811,57 @@ static void manageBuildingEvent(color_ostream& out) {
      * TODO: could be faster
      * consider looking at jobs: building creation / destruction
      **/
-    multimap<Plugin*,EventHandler> copy(handlers[EventType::BUILDING].begin(), handlers[EventType::BUILDING].end());
     int32_t tick = df::global::world->frame_counter;
-    //no more separation between new and destroyed events
-    for (auto &iter : copy) {
+
+    // find destroyed buildings
+    std::vector<int32_t> destroyed;
+    for (auto &iter: buildings) {
+        int32_t id = iter.second;
+        // continue if the id represents a previously destroyed building
+        if (id < 0) {
+            continue;
+        }
+        int32_t index = df::building::binsearch_index(df::global::world->buildings.all, id);
+        // continue if we found the id in world->buildings.all
+        if (index != -1) {
+            continue;
+        }
+        // pretty sure we'd invalidate our loop if we added to buildings here, so we just save the id in an intermediary for now
+        destroyed.push_back(id);
+    }
+    // update building list with destroyed buildings
+    for (auto id: destroyed) {
+        // we're using negative id values to communicate destruction since we need to save knowledge for future ticks
+        buildings.emplace(tick, -id);
+    }
+    // update building list with new buildings
+    for (int32_t id = nextBuilding; id < *df::global::building_next_id; ++id) {
+        int32_t index = df::building::binsearch_index(df::global::world->buildings.all, id);
+        if (index == -1) {
+            //out.print("%s, line %d: Couldn't find new building with id %d.\n", __FILE__, __LINE__, a);
+            //the tricky thing is that when the game first starts, it's ok to skip buildings, but otherwise, if you skip buildings, something is probably wrong. TODO: make this smarter
+            continue;
+        }
+        buildings.emplace(tick, id);
+    }
+    nextBuilding = *df::global::building_next_id;
+
+    // todo: maybe we should create static lists, and compare sizes and only copy if they don't match, otherwise every manager function is copying their handlers every single they execute
+    multimap<Plugin*, EventHandler> copy(handlers[EventType::BUILDING].begin(), handlers[EventType::BUILDING].end());
+    // iterate event handler callbacks
+    for (auto &iter: copy) {
         auto &handler = iter.second;
-        if(tick - eventLastTick[handler.eventHandler] >= handler.freq) {
+        // enforce handler's callback frequency
+        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
+            auto last_tick = eventLastTick[handler.eventHandler];
             eventLastTick[handler.eventHandler] = tick;
-            for ( int32_t a = nextBuilding; a < *df::global::building_next_id; ++a ) {
-                int32_t index = df::building::binsearch_index(df::global::world->buildings.all, a);
-                if ( index == -1 ) {
-                    //out.print("%s, line %d: Couldn't find new building with id %d.\n", __FILE__, __LINE__, a);
-                    //the tricky thing is that when the game first starts, it's ok to skip buildings, but otherwise, if you skip buildings, something is probably wrong. TODO: make this smarter
-                    continue;
-                }
-                buildings.insert(a);
-                handler.eventHandler(out, (void*)intptr_t(a));
-
-            }
-
-            //now alert people about destroyed buildings
-            for (auto building_iter = buildings.begin(); building_iter != buildings.end(); ) {
-                int32_t id = *building_iter;
-                int32_t index = df::building::binsearch_index(df::global::world->buildings.all,id);
-                if ( index != -1 ) {
-                    ++building_iter;
-                    continue;
-                }
-                handler.eventHandler(out, (void*)intptr_t(id));
-                building_iter = buildings.erase(building_iter);
+            // send the handler all the new & destroyed buildings since it last fired
+            auto jter = buildings.upper_bound(last_tick);
+            for (; jter != buildings.end(); ++jter) {
+                handler.eventHandler(out, (void*) intptr_t(jter->second));
             }
         }
     }
-    nextBuilding = *df::global::building_next_id;
 }
 
 static void manageConstructionEvent(color_ostream& out) {

@@ -38,8 +38,7 @@ local _ENV = mkmodule("custom-raw-tags")
 local eventful = require("plugins.eventful")
 
 local customRawTagsCache = {}
-clearExtractedcustomRawTagsKey = {} -- table so that it can be unique
-eventful.onUnload[clearExtractedcustomRawTagsKey] = function()
+eventful.onUnload.customRawTags = function()
     customRawTagsCache = {}
 end
 

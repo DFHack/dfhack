@@ -56,6 +56,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Lua API.rst added: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
 - Update download link and installation instructions for Visual C++ 2015 build tools on Windows
 - Updated information regarding obtaining a compatible Windows build environment
+- `confirm`: Correct the command name in the plugin help text
 
 ## API
 - Added functions reverse-engineered from ambushing unit code: ``Units::isHidden``, ``Units::isFortControlled``, ``Units::getOuterContainerRef``, ``Items::getOuterContainerRef``

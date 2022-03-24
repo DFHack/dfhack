@@ -22,6 +22,7 @@ dfhack_plugin(stockcheck stockcheck.cpp)
 dfhack_plugin(stripcaged stripcaged.cpp)
 dfhack_plugin(tilesieve tilesieve.cpp)
 dfhack_plugin(zoom zoom.cpp)
+dfhack_plugin(event-testing event-testing.cpp)
 
 if(UNIX)
     dfhack_plugin(ref-index ref-index.cpp)

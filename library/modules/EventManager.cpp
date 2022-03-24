@@ -235,6 +235,7 @@ public:
             seen.erase(pos->second);
             return history.erase(pos);
         }
+        return history.end();
     }
     typename std::multimap<int32_t, T>::iterator erase(const T& event_data) {
         auto iter = seen.find(event_data);

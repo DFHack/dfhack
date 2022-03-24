@@ -25,7 +25,7 @@ namespace DFHack {
                 NEW_UNIT_ACTIVE,
                 UNIT_DEATH,
                 ITEM_CREATED,
-                BUILDING,
+                BUILDING, // todo: deprecate this event
                 CREATED_BUILDING,
                 DESTROYED_BUILDING,
                 CONSTRUCTION,

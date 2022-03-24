@@ -260,7 +260,7 @@ static std::unordered_set<int32_t> startedJobIDs;
 static event_tracker<df::job*> startedJobs;
 
 //job completed
-//static std::unordered_set<int32_t> completedJobIDs; // disabled because it makes sense to allow duplicate IDs since we test for repeat jobs
+static std::unordered_set<int32_t> completedJobIDs;
 static event_tracker<df::job*> completedJobs;
 
 //new unit active
@@ -522,10 +522,11 @@ static void manageJobInitiatedEvent(color_ostream& out) {
 
     for(auto &iter : copy) {
         auto &handler = iter.second;
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
+        auto last_tick = eventLastTick[handler.eventHandler];
+        if (tick - last_tick >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
-            for ( df::job_list_link* link = df::global::world->jobs.list.next; link != NULL; link = link->next ) {
-                if ( link->item == NULL )
+            for ( df::job_list_link* link = df::global::world->jobs.list.next; link != nullptr; link = link->next ) {
+                if ( link->item == nullptr )
                     continue;
                 if ( link->item->id <= lastJobId )
                     continue;
@@ -766,7 +767,6 @@ static void manageNewUnitActiveEvent(color_ostream& out) {
 static void manageUnitDeathEvent(color_ostream& out) {
     if (!df::global::world)
         return;
-    multimap<Plugin*, EventHandler> copy(handlers[EventType::UNIT_DEATH].begin(), handlers[EventType::UNIT_DEATH].end());
     int32_t tick = df::global::world->frame_counter;
     // update dead units list for the current tick
     for (df::unit* unit: df::global::world->units.all) {
@@ -782,11 +782,12 @@ static void manageUnitDeathEvent(color_ostream& out) {
         }
     }
     // iterate event handler callbacks
+    multimap<Plugin*, EventHandler> copy(handlers[EventType::UNIT_DEATH].begin(), handlers[EventType::UNIT_DEATH].end());
     for (auto &iter: copy) {
         auto &handler = iter.second;
+        auto last_tick = eventLastTick[handler.eventHandler];
         // enforce handler's callback frequency
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
-            auto last_tick = eventLastTick[handler.eventHandler];
+        if (tick - last_tick >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
             // send the handler all the new dead unit id's since it last fired
             auto jter = deadUnits.upper_bound(last_tick);
@@ -812,7 +813,8 @@ static void manageItemCreationEvent(color_ostream& out) {
     if ( index != 0 ) index--;
     for (auto &iter : copy) {
         auto &handler = iter.second;
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
+        auto last_tick = eventLastTick[handler.eventHandler];
+        if (tick - last_tick >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
             for (size_t a = index; a < df::global::world->items.all.size(); ++a) {
                 df::item* item = df::global::world->items.all[a];
@@ -878,9 +880,9 @@ static void manageBuildingEvent(color_ostream& out) {
     // iterate event handler callbacks (send handlers CREATED buildings)
     for (auto &iter: copy) {
         auto &handler = iter.second;
+        auto last_tick = eventLastTick[handler.eventHandler];
         // enforce handler's callback frequency
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
-            auto last_tick = eventLastTick[handler.eventHandler];
+        if (tick - last_tick >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
             // send the handler all the new buildings since it last fired
             auto jter = createdBuildings.upper_bound(last_tick);
@@ -892,9 +894,9 @@ static void manageBuildingEvent(color_ostream& out) {
     // iterate event handler callbacks (send handlers DESTROYED buildings
     for (auto &iter: copy) {
         auto &handler = iter.second;
+        auto last_tick = eventLastTick[handler.eventHandler];
         // enforce handler's callback frequency
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
-            auto last_tick = eventLastTick[handler.eventHandler];
+        if (tick - last_tick >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
             // send the handler all the destroyed buildings since it last fired
             auto jter = destroyedBuildings.upper_bound(last_tick);
@@ -927,9 +929,9 @@ static void manageCreatedBuildingEvent(color_ostream& out) {
     // iterate event handler callbacks
     for (auto &iter: copy) {
         auto &handler = iter.second;
+        auto last_tick = eventLastTick[handler.eventHandler];
         // enforce handler's callback frequency
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
-            auto last_tick = eventLastTick[handler.eventHandler];
+        if (tick - last_tick >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
             // send the handler all the new & destroyed buildings since it last fired
             auto jter = createdBuildings.upper_bound(last_tick);
@@ -960,9 +962,9 @@ static void manageDestroyedBuildingEvent(color_ostream& out) {
     // iterate event handler callbacks
     for (auto &iter: copy) {
         auto &handler = iter.second;
+        auto last_tick = eventLastTick[handler.eventHandler];
         // enforce handler's callback frequency
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
-            auto last_tick = eventLastTick[handler.eventHandler];
+        if (tick - last_tick >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
             // send the handler all the new & destroyed buildings since it last fired
             auto jter = destroyedBuildings.upper_bound(last_tick);
@@ -982,7 +984,8 @@ static void manageConstructionEvent(color_ostream& out) {
     int32_t tick = df::global::world->frame_counter;
     for (auto &iter : copy) {
         auto &handler = iter.second;
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
+        auto last_tick = eventLastTick[handler.eventHandler];
+        if (tick - last_tick >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
             for (auto constru_iter = constructions.begin(); constru_iter != constructions.end();) {
                 df::construction &construction = (*constru_iter).second;
@@ -1016,7 +1019,8 @@ static void manageSyndromeEvent(color_ostream& out) {
     int32_t tick = df::global::world->frame_counter;
     for (auto &iter : copy) {
         auto &handler = iter.second;
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
+        auto last_tick = eventLastTick[handler.eventHandler];
+        if (tick - last_tick >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
             for ( df::unit *unit : df::global::world->units.all ) {
 /*
@@ -1052,7 +1056,8 @@ static void manageInvasionEvent(color_ostream& out) {
     int32_t tick = df::global::world->frame_counter;
     for (auto &iter : copy) {
         auto &handler = iter.second;
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
+        auto last_tick = eventLastTick[handler.eventHandler];
+        if (tick - last_tick >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
             handler.eventHandler(out, (void*) intptr_t(nextInvasion - 1));
         }
@@ -1069,7 +1074,8 @@ static void manageEquipmentEvent(color_ostream& out) {
     int32_t tick = df::global::world->frame_counter;
     for (auto &iter : copy) {
         auto &handler = iter.second;
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
+        auto last_tick = eventLastTick[handler.eventHandler];
+        if (tick - last_tick >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
             for (auto unit : df::global::world->units.all) {
                 itemIdToInventoryItem.clear();
@@ -1173,7 +1179,8 @@ static void manageReportEvent(color_ostream& out) {
     int32_t tick = df::global::world->frame_counter;
     for (auto &iter : copy) {
         auto &handler = iter.second;
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
+        auto last_tick = eventLastTick[handler.eventHandler];
+        if (tick - last_tick >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
             for (; a < reports.size(); ++a) {
                 df::report* report = reports[a];
@@ -1223,7 +1230,8 @@ static void manageUnitAttackEvent(color_ostream& out) {
     int32_t tick = df::global::world->frame_counter;
     for (auto &iter : copy) {
         auto &handler = iter.second;
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
+        auto last_tick = eventLastTick[handler.eventHandler];
+        if (tick - last_tick >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
             for (int reportId : strikeReports) {
                 df::report* report = df::report::find(reportId);
@@ -1496,7 +1504,8 @@ static void manageInteractionEvent(color_ostream& out) {
     int32_t tick = df::global::world->frame_counter;
     for (auto &iter : copy) {
         auto &handler = iter.second;
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
+        auto last_tick = eventLastTick[handler.eventHandler];
+        if (tick - last_tick >= handler.freq) {
             eventLastTick[handler.eventHandler] = tick;
             for ( ; a < reports.size(); ++a ) {
                 df::report* report = reports[a];

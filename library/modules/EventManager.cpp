@@ -331,8 +331,8 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         gameLoaded = false;
 
         multimap<Plugin*,EventHandler> copy(handlers[EventType::UNLOAD].begin(), handlers[EventType::UNLOAD].end());
-        for (auto a = copy.begin(); a != copy.end(); ++a ) {
-            (*a).second.eventHandler(out, NULL);
+        for (auto & plugin_handler_pair : copy) {
+            plugin_handler_pair.second.eventHandler(out, NULL);
         }
     } else if ( event == DFHack::SC_MAP_LOADED ) {
         /*
@@ -393,8 +393,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         }
 
         constructions.clear();
-        for ( auto i = df::global::world->constructions.begin(); i != df::global::world->constructions.end(); i++ ) {
-            df::construction* constr = *i;
+        for (auto constr : df::global::world->constructions) {
             if ( !constr ) {
                 if ( Once::doOnce("EventManager.onLoad null constr") ) {
                     out.print("EventManager.onLoad: null construction.\n");
@@ -402,23 +401,23 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
                 continue;
             }
             if ( constr->pos == df::coord() ) {
-                if ( Once::doOnce("EventManager.onLoad null position of construction.\n") )
+                if ( Once::doOnce("EventManager.onLoad null position of construction.\n") ) {
                     out.print("EventManager.onLoad null position of construction.\n");
+                }
                 continue;
             }
             constructions[constr->pos] = *constr;
         }
         lastSyndromeTime = -1;
         for ( df::unit* unit : df::global::world->units.all ) {
-            for ( size_t b = 0; b < unit->syndromes.active.size(); ++b ) {
-                df::unit_syndrome* syndrome = unit->syndromes.active[b];
+            for (auto syndrome : unit->syndromes.active) {
                 int32_t startTime = syndrome->year*ticksPerYear + syndrome->year_time;
                 if ( startTime > lastSyndromeTime )
                     lastSyndromeTime = startTime;
             }
         }
         lastReport = -1;
-        if ( df::global::world->status.reports.size() > 0 ) {
+        if ( !df::global::world->status.reports.empty() ) {
             lastReport = df::global::world->status.reports[df::global::world->status.reports.size()-1]->id;
         }
         lastReportUnitAttack = -1;
@@ -428,8 +427,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
 //        for ( size_t a = 0; a < EventType::EVENT_MAX; ++a ) {
 //            eventLastTick[a] = -1;//-1000000;
 //        }
-        for ( size_t a = 0; a < df::global::world->history.figures.size(); ++a ) {
-            df::historical_figure* unit = df::global::world->history.figures[a];
+        for (auto unit : df::global::world->history.figures) {
             if ( unit->id < 0 && unit->name.language < 0 )
                 unit->name.language = 0;
         }

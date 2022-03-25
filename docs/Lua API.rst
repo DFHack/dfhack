@@ -2994,16 +2994,19 @@ A module for reading custom tokens added to the raws by mods.
 * ``customRawTokens.getToken(typeDefinition, token)``
 
   Where ``typeDefinition`` is a type definition struct as seen in ``df.global.world.raws``
-  (e.g.: ``dfhack.gui.getSelectedItem().subtype``) and ``token`` is the name of the custom token you
-  want to read. The arguments from the token will then be returned as strings using single or
+  (e.g.: ``dfhack.gui.getSelectedItem().subtype``) and ``token`` is the name of the custom token
+  you want read. The arguments from the token will then be returned as strings using single or
   multiple return values. If the token is not present, the result is false, if it is present
   but has no arguments, the result is true. For ``creature_raw``, it checks against no caste.
+  For ``plant_raw``, it checks against no growth.
 
 * ``customRawTokens.getToken(typeInstance, token)``
 
   Where ``typeInstance`` is a unit, entity, item, job, projectile, building, plant, or interaction
   instance. Gets ``typeDefinition`` and then returns the same as ``getToken(typeDefinition, token)``.
-  For units, it gets the token from the race or caste instead if appplicable.
+  For units, it gets the token from the race or caste instead if appplicable. For plants growth items,
+  it gets the token from the plant or plant growth instead if applicable. For plants it does the same
+  but with growth number -1.
 
 * ``customRawTokens.getToken(raceDefinition, casteNumber, token)``
 
@@ -3013,6 +3016,16 @@ A module for reading custom tokens added to the raws by mods.
 
   The same as ``getToken(unit, token)`` but with a specified race and caste, using caste name (e.g. "FEMALE")
   instead of number.
+
+* ``customRawTokens.getToken(plantDefinition, growthNumber, token)``
+
+  The same as ``getToken(plantGrowthItem, token)`` but with a specified plant and growth. Growth number -1
+  is no growth.
+
+* ``customRawTokens.getToken(plantDefinition, growthName, token)``
+
+  The same as ``getToken(plantGrowthItem, token)`` but with a specified plant and growth, using growth name
+  (e.g. "LEAVES") instead of number.
 
 Examples:
 

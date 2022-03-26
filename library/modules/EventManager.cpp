@@ -479,32 +479,30 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
 static void manageTickEvent(color_ostream& out) {
     if (!df::global::world)
         return;
-    unordered_set<EventHandler> toRemove;
     int32_t tick = df::global::world->frame_counter;
-    while ( !tickQueue.empty() ) {
-        if ( tick < (*tickQueue.begin()).first )
-            break;
-        EventHandler handle = (*tickQueue.begin()).second;
-        tickQueue.erase(tickQueue.begin());
-        handle.eventHandler(out, (void*)intptr_t(tick));
-        toRemove.insert(handle);
+    unordered_set<EventHandler> requeue;
+    // call due tick events
+    for (auto iter = tickQueue.begin(); iter != tickQueue.end() || iter->first > tick;) {
+        EventHandler &handler = iter->second;
+        handler.eventHandler(out, (void*) intptr_t(tick));
+        requeue.emplace(handler);
+        iter = tickQueue.erase(iter);
     }
-    if ( toRemove.empty() )
-        return;
-    for (auto iter = handlers[EventType::TICK].begin(); iter != handlers[EventType::TICK].end(); ) {
-        EventHandler &handle = iter->second;
-        //check if we find a handler registered
-        if ( toRemove.find(handle) == toRemove.end() ) {
-            //the event is from registerTick, so things are already cleaned up
-            ++iter;
-            continue;
-        }
-        iter = handlers[EventType::TICK].erase(iter);
-        toRemove.erase(handle);
-        //the handler is registered with the listeners, so we want it to keep listening
-        registerListener(DFHack::EventManager::EventType::TICK, handle, iter->first);
-        if ( toRemove.empty() )
+    // re-register tick events (only registered tick events though)
+    for (auto &key_value : handlers[EventType::TICK]) {
+        if (requeue.empty()) {
             break;
+        }
+        // check that this handler was fired
+        auto &handler = key_value.second;
+        if (requeue.erase(handler) != 0){
+            /**
+             * todo(1): move re-queue to loop above (would mean ALL tick events get re-queued)
+             * todo(2): don't even use a queue, just follow the same pattern as other managers (fire handler according to freq, removes need for `when` member of handlers)
+             */
+            // any registered handler that was fired must be re-queued
+            enqueueTickEvent(handler);
+        }
     }
 }
 

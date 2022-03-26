@@ -6,6 +6,7 @@
 #include <modules/EventManager.h>
 #include <modules/Job.h>
 #include <df/job.h>
+#include <df/construction.h>
 
 //#include "df/world.h"
 
@@ -17,8 +18,8 @@ DFHACK_PLUGIN_IS_ENABLED(enabled);
 //REQUIRE_GLOBAL(world);
 
 void onTick(color_ostream& out, void* tick);
-void onJobStart(color_ostream &out, void* job);
-void onJobCompletion(color_ostream &out, void* job);
+void onJob(color_ostream &out, void* job);
+void onConstruction(color_ostream &out, void* construction);
 
 command_result skeleton2 (color_ostream &out, std::vector <std::string> & parameters);
 
@@ -44,20 +45,38 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out) {
     EM::unregisterAll(plugin_self);
     return CR_OK;
 }
+const int32_t interval = 500; // 5 dwarf-hours
 
-void enable_job_completed_events() {
+void enable_job_events() {
     namespace EM = EventManager;
     using namespace EM::EventType;
-    EM::EventHandler eventHandler1(onJobCompletion, 0); // constantly
-    EM::EventHandler eventHandler2(onJobCompletion, 500); // every dwarf-hour
-    EM::registerListener(EventType::JOB_COMPLETED, eventHandler1, plugin_self);
-    EM::registerListener(EventType::JOB_COMPLETED, eventHandler2, plugin_self);
+    EM::EventHandler e1(onJob, 0); // constantly
+    EM::EventHandler e2(onJob, interval); // every interval
+    EM::registerListener(EventType::JOB_INITIATED, e1, plugin_self);
+    EM::registerListener(EventType::JOB_INITIATED, e2, plugin_self);
+    EM::EventHandler e3(onJob, 0); // constantly
+    EM::EventHandler e4(onJob, interval); // every interval
+    EM::registerListener(EventType::JOB_STARTED, e3, plugin_self);
+    EM::registerListener(EventType::JOB_STARTED, e4, plugin_self);
+    EM::EventHandler e5(onJob, 0); // constantly
+    EM::EventHandler e6(onJob, interval); // every interval
+    EM::registerListener(EventType::JOB_COMPLETED, e5, plugin_self);
+    EM::registerListener(EventType::JOB_COMPLETED, e6, plugin_self);
+}
+void enable_construction_events() {
+    namespace EM = EventManager;
+    using namespace EM::EventType;
+    EM::EventHandler e1(onConstruction, 0); // constantly
+    EM::EventHandler e2(onConstruction, interval); // every interval
+    EM::registerListener(EventType::CONSTRUCTION_REMOVED, e1, plugin_self);
+    EM::registerListener(EventType::CONSTRUCTION_REMOVED, e2, plugin_self);
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     namespace EM = EventManager;
     if (enable && !enabled) {
-        enable_job_completed_events();
+        enable_job_events();
+        enable_construction_events();
         out.print("plugin enabled!\n");
     } else if (!enable && enabled) {
         EM::unregisterAll(plugin_self);
@@ -67,9 +86,14 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     return CR_OK;
 }
 
-void onJobCompletion(color_ostream &out, void* job) {
+void onJob(color_ostream &out, void* job) {
     auto j = (df::job*)job;
     std::string type = ENUM_KEY_STR(job_type, j->job_type);
-    out.print("onJobCompletion: (id: %d) (type: %s) (expire: %d) (completion: %d) (wait: %d)\n", j->id, type.c_str(), j->expire_timer, j->completion_timer, j->wait_timer);
+    out.print("onJob: (id: %d) (type: %s) (expire: %d) (completion: %d) (wait: %d)\n", j->id, type.c_str(), j->expire_timer, j->completion_timer, j->wait_timer);
 }
 
+void onConstruction(color_ostream &out, void* construction) {
+    auto c = (df::construction*)construction;
+    std::string type = ENUM_KEY_STR(item_type, c->item_type);
+    out.print("onConstruction: (type: %s)\n", type.c_str());
+}

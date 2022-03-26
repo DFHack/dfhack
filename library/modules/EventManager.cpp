@@ -203,7 +203,11 @@ static const eventManager_t eventManager[] = {
         manageUnloadEvent,
         manageInteractionEvent,
 };
-
+namespace std{
+    bool operator==(const df::construction &A, const df::construction &B){
+        return A.pos == B.pos;
+    }
+}
 template<typename T>
 class event_tracker { //todo: use inheritance? stl seems to use variadics, so it's unclear how well that would actually work
 private:

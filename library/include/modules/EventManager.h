@@ -140,9 +140,6 @@ namespace std {
             return r;
         }
     };
-    bool operator==(const df::construction &A, const df::construction &B){
-        return A.pos == B.pos;
-    }
 }
 
 #endif

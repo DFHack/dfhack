@@ -79,7 +79,11 @@ void DFHack::EventManager::registerListener(EventType::EventType e, EventHandler
     if(e == EventType::TICK){
         enqueueTickEvent(handler);
     }
-    eventLastTick[handler] = -1;
+    int32_t tick = 0;
+    if (df::global::world) {
+        tick = df::global::world->frame_counter;
+    }
+    eventLastTick[handler] = tick - 1;
     handlers[e].insert(pair<Plugin*, EventHandler>(plugin, handler));
 }
 
@@ -95,7 +99,11 @@ int32_t DFHack::EventManager::registerTick(EventHandler handler, int32_t when, P
     }
     handler.when = when;
     tickQueue.insert(pair<int32_t, EventHandler>(handler.when, handler));
-    eventLastTick[handler] = -1;
+    int32_t tick = 0;
+    if (df::global::world) {
+        tick = df::global::world->frame_counter;
+    }
+    eventLastTick[handler] = tick - 1;
     //this commented line ensures "Registered Ticks" are not added back to the queue after execution
     //handlers[EventType::TICK].insert(pair<Plugin*,EventHandler>(plugin,handler));
 

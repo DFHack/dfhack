@@ -112,3 +112,19 @@ void onConstruction(color_ostream &out, void* construction) {
     std::string type = ENUM_KEY_STR(item_type, c->item_type);
     out.print("onConstruction: (type: %s)\n", type.c_str());
 }
+
+void onSyndrome(color_ostream &out, void* syndrome) {
+    using EventManager::SyndromeData;
+    auto s = (SyndromeData*)syndrome;
+    out.print("onSyndrome: (unit: %d) (syndrome: %d)\n", s->unitId, s->syndromeIndex);
+}
+
+void onDeath(color_ostream &out, void* unit_id){
+    auto id = (int32_t)(intptr_t)unit_id;
+    out.print("onDeath: (unit: %d)\n", id);
+}
+
+void onNewActive(color_ostream &out, void* unit_id){
+    auto id = (int32_t)(intptr_t)unit_id;
+    out.print("onNewActive: (unit: %d)\n", id);
+}

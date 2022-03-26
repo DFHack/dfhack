@@ -797,7 +797,7 @@ static void manageNewUnitActiveEvent(color_ostream& out) {
             activeUnits.emplace(tick, id);
         }
     }
-    multimap<Plugin*,EventHandler> copy(handlers[EventType::NEW_UNIT_ACTIVE].begin(), handlers[EventType::NEW_UNIT_ACTIVE].end());
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_NEW_ACTIVE].begin(), handlers[EventType::UNIT_NEW_ACTIVE].end());
     // iterate event handler callbacks
     for (auto &key_value : copy) {
         auto &handler = key_value.second;

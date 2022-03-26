@@ -152,7 +152,7 @@ bool is_group_ready(const GroupData &groups, const GroupData::Group &group) {
             return false;
         }
         auto group_above = groups.find(above);
-        if (debug_out) debug_out->print("if(group_above != groups.end()) => %zu == %zu\n", group_above-groups.begin(), groups.end()-groups.begin());
+        if (debug_out) debug_out->print("if(group_above != groups.end()) => %zu == %zu\n", (size_t)(group_above-groups.begin()), (size_t)(groups.end()-groups.begin()));
         // check that the group above exists
         if (group_above != groups.end()) {
             if (debug_out) debug_out->print("if(!group_above->empty())\n");

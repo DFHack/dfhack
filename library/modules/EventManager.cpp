@@ -62,18 +62,22 @@ static std::unordered_map<EventHandler,int32_t> eventLastTick;
 
 static const int32_t ticksPerYear = 403200;
 
+void enqueueTickEvent(EventHandler &handler){
+    int32_t when = 0;
+    df::world* world = df::global::world;
+    if ( world ) {
+        when = world->frame_counter + handler.freq;
+    } else {
+        if ( Once::doOnce("EventManager registerListener unhonored absolute=false") )
+            Core::getInstance().getConsole().print("EventManager::registerTick: warning! absolute flag=false not honored.\n");
+    }
+    handler.when = when;
+    tickQueue.insert(pair<int32_t, EventHandler>(handler.when, handler));
+}
+
 void DFHack::EventManager::registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin) {
     if(e == EventType::TICK){
-        int32_t when = 0;
-        df::world* world = df::global::world;
-        if ( world ) {
-            when = world->frame_counter + handler.freq;
-        } else {
-            if ( Once::doOnce("EventManager registerListener unhonored absolute=false") )
-                Core::getInstance().getConsole().print("EventManager::registerTick: warning! absolute flag=false not honored.\n");
-        }
-        handler.when = when;
-        tickQueue.insert(pair<int32_t, EventHandler>(handler.when, handler));
+        enqueueTickEvent(handler);
     }
     eventLastTick[handler] = -1;
     handlers[e].insert(pair<Plugin*, EventHandler>(plugin, handler));

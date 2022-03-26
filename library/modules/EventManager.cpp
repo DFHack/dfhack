@@ -266,13 +266,14 @@ public:
 
 //job initiated
 static int32_t lastJobId = -1;
+static event_tracker<df::job*> newJobs;
 
 //job started
 static std::unordered_set<int32_t> startedJobIDs;
 static event_tracker<df::job*> startedJobs;
 
 //job completed
-static std::unordered_set<int32_t> completedJobIDs;
+//static std::unordered_set<int32_t> completedJobIDs;
 static event_tracker<df::job*> completedJobs;
 
 //new unit active
@@ -523,30 +524,48 @@ static void manageJobInitiatedEvent(color_ostream& out) {
         lastJobId = *df::global::job_next_id - 1;
         return;
     }
-
     if ( lastJobId+1 == *df::global::job_next_id ) {
         return; //no new jobs
     }
-    multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_INITIATED].begin(), handlers[EventType::JOB_INITIATED].end());
     int32_t tick = df::global::world->frame_counter;
+    int32_t oldest_last_tick = (uint16_t)-1;
 
+    // update new jobs list
+    for ( df::job_list_link* link = df::global::world->jobs.list.next; link != nullptr; link = link->next ) {
+        df::job* job = link->item;
+        // the jobs must come after the last known job id
+        if (job && job->id > lastJobId) {
+            newJobs.emplace(tick, Job::cloneJobStruct(link->item, true));
+        }
+    }
+    lastJobId = *df::global::job_next_id - 1;
+
+    // iterate the event handlers
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_INITIATED].begin(), handlers[EventType::JOB_INITIATED].end());
     for (auto &key_value : copy) {
         auto &handler = key_value.second;
         auto last_tick = eventLastTick[handler];
+        oldest_last_tick = oldest_last_tick < last_tick ? oldest_last_tick : last_tick;
+        // make sure the frequency of this handler is obeyed
         if (tick - last_tick >= handler.freq) {
             eventLastTick[handler] = tick;
-            for ( df::job_list_link* link = df::global::world->jobs.list.next; link != nullptr; link = link->next ) {
-                if ( link->item == nullptr )
-                    continue;
-                if ( link->item->id <= lastJobId )
-                    continue;
-
-                handler.eventHandler(out, (void*)link->item);
+            // send the handler all the new jobs since it last fired
+            auto jter = newJobs.upper_bound(last_tick);
+            for(;jter != newJobs.end(); ++jter){
+                handler.eventHandler(out, (void*) jter->second);
             }
         }
     }
+    // clean up memory we no longer need
+    auto iter = newJobs.begin();
+    for(; iter != newJobs.end() && iter->first < oldest_last_tick;) {
+        // we cloned it we delete it
+        Job::deleteJobStruct(iter->second, true);
+        // if we delete it, we best not reference it
+        iter = newJobs.erase(iter);
+    }
 
-    lastJobId = *df::global::job_next_id - 1;
+
 }
 
 static void manageJobStartedEvent(color_ostream& out) {
@@ -586,7 +605,7 @@ static void manageJobStartedEvent(color_ostream& out) {
     }
     // clean up memory we no longer need
     auto iter = startedJobs.begin();
-    for(; iter != startedJobs.end() && iter->first != oldest_last_tick;) {
+    for(; iter != startedJobs.end() && iter->first < oldest_last_tick;) {
         startedJobIDs.erase(iter->second->id);
         // we cloned it we delete it
         Job::deleteJobStruct(iter->second, true);
@@ -675,7 +694,6 @@ static void manageJobCompletedEvent(color_ostream& out) {
     // clean up memory of job clones which have been sent to all handlers
     auto iter = completedJobs.begin();
     for(; iter != completedJobs.end() && iter->first < oldest_last_tick;) {
-        completedJobIDs.erase(iter->second->id);
         // we cloned it we delete it
         Job::deleteJobStruct(iter->second, true);
         // if we delete it, we best not reference it

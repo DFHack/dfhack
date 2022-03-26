@@ -320,6 +320,7 @@ static event_tracker<SyndromeData> syndromes;
 
 //invasion
 static int32_t nextInvasion;
+static event_tracker<int32_t> invasions;
 
 //equipment change
 //static unordered_map<int32_t, vector<df::unit_inventory_item> > equipmentLog;
@@ -1039,8 +1040,6 @@ static void manageBuildingDestroyedEvent(color_ostream& out) {
     }
 }
 
-
-
 static void manageConstructionEvent(color_ostream& out) {
     if (!df::global::world)
         return;
@@ -1174,22 +1173,29 @@ static void manageSyndromeEvent(color_ostream& out) {
     }
 }
 
+
 static void manageInvasionEvent(color_ostream& out) {
+    if (!df::global::world)
+        return;
     if (!df::global::ui)
         return;
-    multimap<Plugin*,EventHandler> copy(handlers[EventType::INVASION].begin(), handlers[EventType::INVASION].end());
-
-    if ( df::global::ui->invasions.next_id <= nextInvasion )
-        return;
-    nextInvasion = df::global::ui->invasions.next_id;
 
     int32_t tick = df::global::world->frame_counter;
+    invasions.emplace(tick, nextInvasion);
+    nextInvasion = df::global::ui->invasions.next_id;
+
+    // iterate event handler callbacks
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::INVASION].begin(), handlers[EventType::INVASION].end());
     for (auto &key_value : copy) {
         auto &handler = key_value.second;
         auto last_tick = eventLastTick[handler];
+        // enforce handler's callback frequency
         if (tick - last_tick >= handler.freq) {
             eventLastTick[handler] = tick;
-            handler.eventHandler(out, (void*) intptr_t(nextInvasion - 1));
+            // send all new invasions since it last fired
+            for(auto iter = invasions.upper_bound(last_tick); iter != invasions.end(); ++iter){
+                handler.eventHandler(out, (void*)(intptr_t)iter->second);
+            }
         }
     }
 }

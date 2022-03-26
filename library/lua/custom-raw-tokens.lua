@@ -89,8 +89,9 @@ local function getTokenCore(typeDefinition, token)
     end
     
     -- Get data anew
-    local rawStrings = typeDefinition[rawStringsFieldNames[typeDefinition._type]]
-    if not rawStrings then
+    local success, type = pcall(function() return typeDefinition._type end)
+    local rawStrings = typeDefinition[rawStringsFieldNames[type]]
+    if not success or not rawStrings then
         error("Expected a raw type definition or instance in argument 1")
     end
     local currentTokenIterator
@@ -314,9 +315,10 @@ local function getTokenArg1Else(userdata, b, c)
     elseif df.is_instance(df.interaction_instance, userdata) then
         rawStruct = df.global.world.raws.interactions[userdata.interaction_id]
     else
-       -- Assume raw struct *is* argument 1
-       rawStruct = userdata
+        -- Assume raw struct *is* argument 1
+        rawStruct = userdata
     end
+    if not rawStruct then return false end
     assert(type(b) == "string", "Invalid argument 2 to getToken, must be a string")
     token = b
     return getTokenCore(rawStruct, token)
@@ -324,7 +326,7 @@ end
 
 function getToken(a, b, c)
     -- Argument processing
-    assert(type(a) == "userdata", "Expected userdata for argument 1 to getToken")
+    assert(a and type(a) == "userdata", "Expected userdata for argument 1 to getToken")
     if df.is_instance(df.creature_raw, a) then
         -- Signatures from here:
         -- getToken(raceDefinition, casteNumber, token)

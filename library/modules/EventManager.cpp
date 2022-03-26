@@ -1025,10 +1025,24 @@ static void manageDestroyedBuildingEvent(color_ostream& out) {
     }
 }
 
+
+
 static void manageConstructionEvent(color_ostream& out) {
     if (!df::global::world)
         return;
+    // todo: finish the job
     //unordered_set<df::construction*> constructionsNow(df::global::world->constructions.begin(), df::global::world->constructions.end());
+    for (auto constru_iter = constructions.begin(); constru_iter != constructions.end();) {
+        df::construction &construction = (*constru_iter).second;
+        if (df::construction::find(construction.pos) != NULL) {
+            ++constru_iter;
+            continue;
+        }
+        //construction removed
+        //out.print("Removed construction (%d,%d,%d)\n", construction.pos.x,construction.pos.y,construction.pos.z);
+        handler.eventHandler(out, (void*) construction);
+        constru_iter = constructions.erase(constru_iter);
+    }
 
     multimap<Plugin*,EventHandler> copy(handlers[EventType::CONSTRUCTION].begin(), handlers[EventType::CONSTRUCTION].end());
     int32_t tick = df::global::world->frame_counter;
@@ -1037,17 +1051,7 @@ static void manageConstructionEvent(color_ostream& out) {
         auto last_tick = eventLastTick[handler];
         if (tick - last_tick >= handler.freq) {
             eventLastTick[handler] = tick;
-            for (auto constru_iter = constructions.begin(); constru_iter != constructions.end();) {
-                df::construction &construction = (*constru_iter).second;
-                if (df::construction::find(construction.pos) != NULL) {
-                    ++constru_iter;
-                    continue;
-                }
-                //construction removed
-                //out.print("Removed construction (%d,%d,%d)\n", construction.pos.x,construction.pos.y,construction.pos.z);
-                handler.eventHandler(out, (void*) &construction);
-                constru_iter = constructions.erase(constru_iter);
-            }
+
             //for ( auto a = constructionsNow.begin(); a != constructionsNow.end(); ++a ) {
             for (auto constru_iter = df::global::world->constructions.begin(); constru_iter != df::global::world->constructions.end(); ++constru_iter) {
                 df::construction* construction = *constru_iter;

@@ -546,7 +546,7 @@ static void manageJobInitiatedEvent(color_ostream& out) {
     }
     lastJobId = *df::global::job_next_id - 1;
 
-    // iterate the event handlers
+    // iterate event handler callbacks
     multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_INITIATED].begin(), handlers[EventType::JOB_INITIATED].end());
     for (auto &key_value : copy) {
         auto &handler = key_value.second;
@@ -592,7 +592,7 @@ static void manageJobStartedEvent(color_ostream& out) {
             }
         }
     }
-    // iterate the event handlers
+    // iterate event handler callbacks
     multimap<Plugin*, EventHandler> copy(handlers[EventType::JOB_STARTED].begin(), handlers[EventType::JOB_STARTED].end());
     for (auto &key_value : copy) {
         auto &handler = key_value.second;

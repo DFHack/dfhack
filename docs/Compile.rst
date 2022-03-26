@@ -469,7 +469,8 @@ Dependencies
 ------------
 You will need the following:
 
-* Microsoft Visual C++ 2015 or 2017
+* Microsoft Visual C++ 2022, 2019, 2017, or 2015 (optional)
+* Microsoft Visual C++ 2015 Build Tools
 * Git
 * CMake
 * Perl with XML::LibXML and XML::LibXSLT
@@ -478,18 +479,83 @@ You will need the following:
 
 * Python (for documentation; optional, except for release builds)
 
-Microsoft Visual Studio 2015
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-DFHack has to be compiled with the Microsoft Visual C++ 2015 or 2017 toolchain on Windows;
-other versions won't work against Dwarf Fortress due to ABI and STL incompatibilities.
+Microsoft Visual Studio
+~~~~~~~~~~~~~~~~~~~~~~~
+Releases of Dwarf Fortress since roughly 2016 have been compiled for Windows using
+Microsoft's Visual Studio 2015 C++ compiler. In order to guarantee ABI and STL compatibility
+with Dwarf Fortress, DFHack has to be compiled with the same compiler.
 
-You can install Visual Studio 2015_ or 2017_ Community edition for free, which
-include all the features needed by DFHack. You can also download just the
-`build tools`_ if you aren't going to use Visual Studio to edit code.
+Visual Studio 2015 is no longer supported by Microsoft and it can be difficult to obtain
+working installers for this product today. As of 2022, the recommended approach
+is to use Visual Studio 2022 or Visual Studio 2019, installing additional optional
+Visual Studio components which provide the required support for using
+Visual Studio 2015's toolchain. All of the required tools are available from Microsoft as part of
+Visual Studio's Community Edition at no charge.
 
-.. _2015: https://visualstudio.microsoft.com/vs/older-downloads/#visual-studio-2015-and-other-products
-.. _2017: https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&rel=15
-.. _build tools: https://visualstudio.microsoft.com/vs/older-downloads/#microsoft-build-tools-2015-update-3
+You can also download just the Visual C++ 2015 `build tools`_ if you aren't going to use
+Visual Studio to edit code.
+
+Option 1: Build Tools Only
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+Click `build tools`_ and you will be prompted to login to your Microsoft account.
+Then you should be redirected to a page with various download options with 2015
+in their name. If this redirect doesn't occur, just copy, paste, and enter the
+download link again and you should see the options. You need to get:
+Visual C++ Build Tools for Visual Studio 2015 with Update 3.
+Click the download button next to it and a dropdown of download formats will appear.
+Select the DVD format to download an ISO file. When the donwload is complete,
+click on the ISO file and a folder will popup with the following contents:
+
+* packages (folder)
+* VCPlusPlusBuildTools2015Update3_x64_Files.cat
+* VisualCppBuildTools_Full.exe
+
+The packages folder contains the dependencies that are required by the build tools.
+These include:
+
+* Microsoft .NET Framework 4.6.1 Developer Pack
+* Microsoft Visual C++ 2015 Redistributable (x64) - 14.0.24210
+* Windows 10 Universal SDK - 10.0.10240
+* Windows 8.1 SDK
+
+Click VisualCppBuildTools_Full.exe and use the default options provided by the installer
+wizard that appears. After the installation is completed, add the path where MSBuild.exe
+was installed to your PATH environment variable. The path should be:
+
+* ``C:\Program Files (x86)\MSBuild\14.0\Bin``
+
+Note that this process may install only the ``v140`` toolchain, not the ``v140_xp`` toolchain that
+is normally used to compile build releases of DFHack. Due to a bug in the Microsoft-provided libraries used with
+the ``v140_xp`` toolchain that Microsoft has never fixed, DFHack (and probably also Dwarf Fortress itself)
+doesn't run reliably on 64-bit XP. Investigations have so far suggested that ``v140`` and
+``v140_xp`` are ABI-compatible. As such, there should be no harm in using ``v140`` instead of
+``v140_xp`` as the build toolchain, at least on 64-bit platforms. However, it is our policy to use
+``v140_xp`` for release builds for both 32-bit and 64-bit Windows,
+since 32-bit releases of Dwarf Fortress work on XP and ``v140_xp`` is required for compatibility with
+XP.
+
+The ``v141`` toolchain, in Visual Studio 2017, has been empirically documented to be incompatible with
+released versions of Dwarf Fortress and cannot be used to make usable builds of DFHack.
+
+Option 2: IDE + Build Tools
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Click Visual Studio 2022_ or 2019_ to download an installer wizard that will prompt you
+to select the optional tools you want to download alongside the IDE. You may need to log into
+(or create) a Microsoft account in order to download Visual Studio.
+
+In addition to selecting the workload for "Desktop Development with C++",
+you will also need to go to the "Individual Components" tab in the Installer and
+select the following additional components to get the "``v140_xp``" toolchain that DFHack
+requires for ABI compatibility with recent releases of Dwarf Fortress:
+* MSVC v140 - VS 2015 C++ build tools (v14.00)
+* C++ Windows XP Support for VS 2017 (v141) tools [Deprecated]
+
+Yes, this is unintuitive. Installing XP Support for VS 2017 installs XP Support for VS 2015
+if the 2015 toolchain is installed.
+
+.. _2022: https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&channel=Release&version=VS2022&source=VSLandingPage&cid=2030&passive=false
+.. _2019: https://my.visualstudio.com/Downloads?q=visual%20studio%202019&wt.mc_id=o~msft~vscom~older-downloads
+.. _build tools: https://my.visualstudio.com/Downloads?q=visual%20studio%202015&wt.mc_id=o~msft~vscom~older-downloads
 
 Additional dependencies: installing with the Chocolatey Package Manager
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -1,7 +1,7 @@
 .. _quickfort-alias-guide:
 
-Quickfort Alias Guide
-=====================
+Quickfort Keystroke Alias Guide
+===============================
 
 Aliases allow you to use simple words to represent complicated key sequences
 when configuring buildings and stockpiles in quickfort ``#query`` blueprints.

@@ -1,8 +1,8 @@
 .. _quickfort-user-guide:
 .. _quickfort-blueprint-guide:
 
-Quickfort Blueprint Guide
-=========================
+Quickfort Blueprint Editing Guide
+=================================
 
 `Quickfort <quickfort>` is a DFHack script that helps you build fortresses from
 "blueprint" .csv and .xlsx files. Many applications exist to edit these files,

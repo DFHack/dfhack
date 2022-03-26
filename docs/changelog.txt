@@ -34,11 +34,13 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
+- `spectate`: automates the following of dwarves more often than not based on job zlevel activity levels, sometimes randomly though.
 - `channel-safely`: allows dwarves to channel safely by managing active designations and markings
 
 ## Removed
 
 ## Fixes
+- `autofarm` removed restriction on only planting 'discovered' plants
 - `luasocket` (and others): return correct status code when closing socket connections
 
 ## Misc Improvements
@@ -49,10 +51,13 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `EventManager`: now each registered handler for an event can have its own frequency instead of all handlers using the lowest frequency of all handlers
 - `stocks`: allow search terms to match the full item label, even when the label is truncated for length
 - `dfhack-examples-guide`: add mugs to ``basic`` manager orders
+- `gui/create-item`: Added "(chain)" annotation text for armours with the [CHAIN_METAL_TEXT] flag set
 
 ## Documentation
 - Add more examples to the plugin skeleton files so they are more informative for a newbie
 - Lua API.rst added: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
+- Update download link and installation instructions for Visual C++ 2015 build tools on Windows
+- Updated information regarding obtaining a compatible Windows build environment
 
 ## API
 - Added functions reverse-engineered from ambushing unit code: ``Units::isHidden``, ``Units::isFortControlled``, ``Units::getOuterContainerRef``, ``Items::getOuterContainerRef``

@@ -1,6 +1,6 @@
 .. _quickfort-library-guide:
 
-Quickfort Library Guide
+Blueprint Library Index
 =======================
 
 This guide contains a high-level overview of the blueprints available in the

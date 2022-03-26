@@ -13,6 +13,7 @@
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
 #include "df/unit_wound.h"
+#include "df/construction.h"
 
 namespace DFHack {
     namespace EventManager {

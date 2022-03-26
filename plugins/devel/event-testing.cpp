@@ -20,6 +20,9 @@ DFHACK_PLUGIN_IS_ENABLED(enabled);
 void onTick(color_ostream& out, void* tick);
 void onJob(color_ostream &out, void* job);
 void onConstruction(color_ostream &out, void* construction);
+void onSyndrome(color_ostream &out, void* syndrome);
+void onDeath(color_ostream &out, void* unit_id);
+void onNewActive(color_ostream &out, void* unit_id);
 
 command_result skeleton2 (color_ostream &out, std::vector <std::string> & parameters);
 
@@ -72,11 +75,23 @@ void enable_construction_events() {
     EM::registerListener(EventType::CONSTRUCTION_REMOVED, e2, plugin_self);
 }
 
+void enable_unit_events() {
+    namespace EM = EventManager;
+    using namespace EM::EventType;
+    EM::EventHandler e1(onSyndrome, 0); // constantly
+    EM::EventHandler e2(onDeath, 0); // constantly
+    EM::EventHandler e3(onNewActive, 0); // constantly
+    EM::registerListener(EventType::SYNDROME, e1, plugin_self);
+    EM::registerListener(EventType::UNIT_DEATH, e2, plugin_self);
+    EM::registerListener(EventType::UNIT_NEW_ACTIVE, e3, plugin_self);
+}
+
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     namespace EM = EventManager;
     if (enable && !enabled) {
         enable_job_events();
         enable_construction_events();
+        enable_unit_events();
         out.print("plugin enabled!\n");
     } else if (!enable && enabled) {
         EM::unregisterAll(plugin_self);

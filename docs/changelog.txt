@@ -45,7 +45,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 - `dig-now`: handle fortification carving
 - `EventManager`: add new event type ``JOB_STARTED``, triggered when a job first gains a worker
-- `EventManager`: add new event type ``NEW_UNIT_ACTIVE``, triggered when a new unit appears on the active list
+- `EventManager`: add new event type ``UNIT_NEW_ACTIVE``, triggered when a new unit appears on the active list
 - `EventManager`: now each registered handler for an event can have its own frequency instead of all handlers using the lowest frequency of all handlers
 - `stocks`: allow search terms to match the full item label, even when the label is truncated for length
 - `dfhack-examples-guide`: add mugs to ``basic`` manager orders

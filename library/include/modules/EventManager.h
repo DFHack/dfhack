@@ -22,7 +22,7 @@ namespace DFHack {
                 JOB_INITIATED,
                 JOB_STARTED, //has a worker
                 JOB_COMPLETED,
-                NEW_UNIT_ACTIVE,
+                UNIT_NEW_ACTIVE,
                 UNIT_DEATH,
                 ITEM_CREATED,
                 BUILDING, // todo: deprecate this event

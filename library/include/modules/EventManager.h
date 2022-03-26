@@ -126,6 +126,21 @@ namespace std {
             return r;
         }
     };
+    template <>
+    struct hash<df::construction> {
+        std::size_t operator()(const df::construction& construct) const {
+            auto &c = construct.pos;
+            size_t r = 17;
+            const size_t m = 65537;
+            r = m*(r+c.x);
+            r = m*(r+c.y);
+            r = m*(r+c.z);
+            return r;
+        }
+    };
+    bool operator==(const df::construction &A, const df::construction &B){
+        return A.pos == B.pos;
+    }
 }
 
 #endif

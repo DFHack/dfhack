@@ -284,6 +284,8 @@ static event_tracker<int32_t> deadUnits;
 
 //item creation
 static int32_t nextItem;
+static event_tracker<int32_t> newItems;
+
 //building
 static int32_t nextBuilding;
 static event_tracker<int32_t> createdBuildings;
@@ -845,38 +847,46 @@ static void manageItemCreationEvent(color_ostream& out) {
     if ( nextItem >= *df::global::item_next_id ) {
         return;
     }
-
-    multimap<Plugin*,EventHandler> copy(handlers[EventType::ITEM_CREATED].begin(), handlers[EventType::ITEM_CREATED].end());
     int32_t tick = df::global::world->frame_counter;
     size_t index = df::item::binsearch_index(df::global::world->items.all, nextItem, false);
     if ( index != 0 ) index--;
+    for (size_t a = index; a < df::global::world->items.all.size(); ++a) {
+        df::item* item = df::global::world->items.all[a];
+        //already processed
+        if (item->id < nextItem)
+            continue;
+        //invaders
+        if (item->flags.bits.foreign)
+            continue;
+        //traders who bring back your items?
+        if (item->flags.bits.trader)
+            continue;
+        //migrants
+        if (item->flags.bits.owned)
+            continue;
+        //spider webs don't count
+        if (item->flags.bits.spider_web)
+            continue;
+        newItems.emplace(tick, item->id);
+    }
+    nextItem = *df::global::item_next_id;
+
+    // iterate event handlers
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::ITEM_CREATED].begin(), handlers[EventType::ITEM_CREATED].end());
     for (auto &key_value : copy) {
         auto &handler = key_value.second;
         auto last_tick = eventLastTick[handler];
+        // enforce handler's callback frequency
         if (tick - last_tick >= handler.freq) {
             eventLastTick[handler] = tick;
-            for (size_t a = index; a < df::global::world->items.all.size(); ++a) {
-                df::item* item = df::global::world->items.all[a];
-                //already processed
-                if (item->id < nextItem)
-                    continue;
-                //invaders
-                if (item->flags.bits.foreign)
-                    continue;
-                //traders who bring back your items?
-                if (item->flags.bits.trader)
-                    continue;
-                //migrants
-                if (item->flags.bits.owned)
-                    continue;
-                //spider webs don't count
-                if (item->flags.bits.spider_web)
-                    continue;
-                handler.eventHandler(out, (void*) intptr_t(item->id));
+            // send the handler all the new item id's since it last fired
+            auto iter = newItems.upper_bound(last_tick);
+            for (; iter != newItems.end(); ++iter) {
+                handler.eventHandler(out, (void*) intptr_t(iter->second));
             }
         }
     }
-    nextItem = *df::global::item_next_id;
+
 }
 
 static void manageBuildingEvent(color_ostream& out) {

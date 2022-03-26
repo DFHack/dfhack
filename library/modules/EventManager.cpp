@@ -314,11 +314,11 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
     }
     if ( event == DFHack::SC_MAP_UNLOADED ) {
         lastJobId = -1;
-        for (auto &iter : completedJobs) {
-            Job::deleteJobStruct(iter.second, true);
+        for (auto &key_value : completedJobs) {
+            Job::deleteJobStruct(key_value.second, true);
         }
-        for (auto &iter : startedJobs) {
-            Job::deleteJobStruct(iter.second, true);
+        for (auto &key_value : startedJobs) {
+            Job::deleteJobStruct(key_value.second, true);
         }
         startedJobs.clear();
         completedJobs.clear();
@@ -337,8 +337,8 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         gameLoaded = false;
 
         multimap<Plugin*,EventHandler> copy(handlers[EventType::UNLOAD].begin(), handlers[EventType::UNLOAD].end());
-        for (auto & plugin_handler_pair : copy) {
-            plugin_handler_pair.second.eventHandler(out, NULL);
+        for (auto &key_value : copy) {
+            key_value.second.eventHandler(out, NULL);
         }
     } else if ( event == DFHack::SC_MAP_LOADED ) {
         /*
@@ -520,11 +520,11 @@ static void manageJobInitiatedEvent(color_ostream& out) {
     multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_INITIATED].begin(), handlers[EventType::JOB_INITIATED].end());
     int32_t tick = df::global::world->frame_counter;
 
-    for(auto &iter : copy) {
-        auto &handler = iter.second;
-        auto last_tick = eventLastTick[handler.eventHandler];
+    for (auto &key_value : copy) {
+        auto &handler = key_value.second;
+        auto last_tick = eventLastTick[handler];
         if (tick - last_tick >= handler.freq) {
-            eventLastTick[handler.eventHandler] = tick;
+            eventLastTick[handler] = tick;
             for ( df::job_list_link* link = df::global::world->jobs.list.next; link != nullptr; link = link->next ) {
                 if ( link->item == nullptr )
                     continue;
@@ -559,8 +559,8 @@ static void manageJobStartedEvent(color_ostream& out) {
     }
     // iterate the event handlers
     multimap<Plugin*, EventHandler> copy(handlers[EventType::JOB_STARTED].begin(), handlers[EventType::JOB_STARTED].end());
-    for (auto &iter: copy) {
-        auto &handler = iter.second;
+    for (auto &key_value : copy) {
+        auto &handler = key_value.second;
         auto last_tick = eventLastTick[handler];
         oldest_last_tick = oldest_last_tick < last_tick ? oldest_last_tick : last_tick;
         // make sure the frequency of this handler is obeyed
@@ -647,8 +647,8 @@ static void manageJobCompletedEvent(color_ostream& out) {
 
     multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_COMPLETED].begin(), handlers[EventType::JOB_COMPLETED].end());
     // iterate event handler callbacks
-    for (auto &iter : copy) {
-        auto &handler = iter.second;
+    for (auto &key_value : copy) {
+        auto &handler = key_value.second;
         auto last_tick = eventLastTick[handler];
         oldest_last_tick = oldest_last_tick < last_tick ? oldest_last_tick : last_tick;
         // enforce handler's callback frequency
@@ -748,8 +748,8 @@ static void manageNewUnitActiveEvent(color_ostream& out) {
     }
     multimap<Plugin*,EventHandler> copy(handlers[EventType::NEW_UNIT_ACTIVE].begin(), handlers[EventType::NEW_UNIT_ACTIVE].end());
     // iterate event handler callbacks
-    for (auto &iter : copy) {
-        auto &handler = iter.second;
+    for (auto &key_value : copy) {
+        auto &handler = key_value.second;
         auto last_tick = eventLastTick[handler];
         // enforce handler's callback frequency
         if(tick - last_tick >= handler.freq) {
@@ -783,8 +783,8 @@ static void manageUnitDeathEvent(color_ostream& out) {
     }
     // iterate event handler callbacks
     multimap<Plugin*, EventHandler> copy(handlers[EventType::UNIT_DEATH].begin(), handlers[EventType::UNIT_DEATH].end());
-    for (auto &iter: copy) {
-        auto &handler = iter.second;
+    for (auto &key_value : copy) {
+        auto &handler = key_value.second;
         auto last_tick = eventLastTick[handler];
         // enforce handler's callback frequency
         if (tick - last_tick >= handler.freq) {
@@ -811,8 +811,8 @@ static void manageItemCreationEvent(color_ostream& out) {
     int32_t tick = df::global::world->frame_counter;
     size_t index = df::item::binsearch_index(df::global::world->items.all, nextItem, false);
     if ( index != 0 ) index--;
-    for (auto &iter : copy) {
-        auto &handler = iter.second;
+    for (auto &key_value : copy) {
+        auto &handler = key_value.second;
         auto last_tick = eventLastTick[handler];
         if (tick - last_tick >= handler.freq) {
             eventLastTick[handler] = tick;
@@ -878,8 +878,8 @@ static void manageBuildingEvent(color_ostream& out) {
     // todo: maybe we should create static lists, and compare sizes and only copy if they don't match, otherwise every manager function is copying their handlers every single they execute
     multimap<Plugin*, EventHandler> copy(handlers[EventType::BUILDING].begin(), handlers[EventType::BUILDING].end());
     // iterate event handler callbacks (send handlers CREATED buildings)
-    for (auto &iter: copy) {
-        auto &handler = iter.second;
+    for (auto &key_value : copy) {
+        auto &handler = key_value.second;
         auto last_tick = eventLastTick[handler];
         // enforce handler's callback frequency
         if (tick - last_tick >= handler.freq) {
@@ -892,8 +892,8 @@ static void manageBuildingEvent(color_ostream& out) {
         }
     }
     // iterate event handler callbacks (send handlers DESTROYED buildings
-    for (auto &iter: copy) {
-        auto &handler = iter.second;
+    for (auto &key_value : copy) {
+        auto &handler = key_value.second;
         auto last_tick = eventLastTick[handler];
         // enforce handler's callback frequency
         if (tick - last_tick >= handler.freq) {
@@ -927,8 +927,8 @@ static void manageCreatedBuildingEvent(color_ostream& out) {
     nextBuilding = *df::global::building_next_id;
     multimap<Plugin*, EventHandler> copy(handlers[EventType::CREATED_BUILDING].begin(), handlers[EventType::CREATED_BUILDING].end());
     // iterate event handler callbacks
-    for (auto &iter: copy) {
-        auto &handler = iter.second;
+    for (auto &key_value : copy) {
+        auto &handler = key_value.second;
         auto last_tick = eventLastTick[handler];
         // enforce handler's callback frequency
         if (tick - last_tick >= handler.freq) {
@@ -960,8 +960,8 @@ static void manageDestroyedBuildingEvent(color_ostream& out) {
     }
     multimap<Plugin*, EventHandler> copy(handlers[EventType::DESTROYED_BUILDING].begin(), handlers[EventType::DESTROYED_BUILDING].end());
     // iterate event handler callbacks
-    for (auto &iter: copy) {
-        auto &handler = iter.second;
+    for (auto &key_value : copy) {
+        auto &handler = key_value.second;
         auto last_tick = eventLastTick[handler];
         // enforce handler's callback frequency
         if (tick - last_tick >= handler.freq) {
@@ -982,8 +982,8 @@ static void manageConstructionEvent(color_ostream& out) {
 
     multimap<Plugin*,EventHandler> copy(handlers[EventType::CONSTRUCTION].begin(), handlers[EventType::CONSTRUCTION].end());
     int32_t tick = df::global::world->frame_counter;
-    for (auto &iter : copy) {
-        auto &handler = iter.second;
+    for (auto &key_value : copy) {
+        auto &handler = key_value.second;
         auto last_tick = eventLastTick[handler];
         if (tick - last_tick >= handler.freq) {
             eventLastTick[handler] = tick;
@@ -1017,8 +1017,8 @@ static void manageSyndromeEvent(color_ostream& out) {
     multimap<Plugin*,EventHandler> copy(handlers[EventType::SYNDROME].begin(), handlers[EventType::SYNDROME].end());
     int32_t highestTime = -1;
     int32_t tick = df::global::world->frame_counter;
-    for (auto &iter : copy) {
-        auto &handler = iter.second;
+    for (auto &key_value : copy) {
+        auto &handler = key_value.second;
         auto last_tick = eventLastTick[handler];
         if (tick - last_tick >= handler.freq) {
             eventLastTick[handler] = tick;
@@ -1054,8 +1054,8 @@ static void manageInvasionEvent(color_ostream& out) {
     nextInvasion = df::global::ui->invasions.next_id;
 
     int32_t tick = df::global::world->frame_counter;
-    for (auto &iter : copy) {
-        auto &handler = iter.second;
+    for (auto &key_value : copy) {
+        auto &handler = key_value.second;
         auto last_tick = eventLastTick[handler];
         if (tick - last_tick >= handler.freq) {
             eventLastTick[handler] = tick;
@@ -1072,8 +1072,8 @@ static void manageEquipmentEvent(color_ostream& out) {
     unordered_map<int32_t, InventoryItem> itemIdToInventoryItem;
     unordered_set<int32_t> currentlyEquipped;
     int32_t tick = df::global::world->frame_counter;
-    for (auto &iter : copy) {
-        auto &handler = iter.second;
+    for (auto &key_value : copy) {
+        auto &handler = key_value.second;
         auto last_tick = eventLastTick[handler];
         if (tick - last_tick >= handler.freq) {
             eventLastTick[handler] = tick;
@@ -1177,8 +1177,8 @@ static void manageReportEvent(color_ostream& out) {
         ++a;
     }
     int32_t tick = df::global::world->frame_counter;
-    for (auto &iter : copy) {
-        auto &handler = iter.second;
+    for (auto &key_value : copy) {
+        auto &handler = key_value.second;
         auto last_tick = eventLastTick[handler];
         if (tick - last_tick >= handler.freq) {
             eventLastTick[handler] = tick;
@@ -1228,8 +1228,8 @@ static void manageUnitAttackEvent(color_ostream& out) {
     updateReportToRelevantUnits();
     map<int32_t, map<int32_t, int32_t> > alreadyDone;
     int32_t tick = df::global::world->frame_counter;
-    for (auto &iter : copy) {
-        auto &handler = iter.second;
+    for (auto &key_value : copy) {
+        auto &handler = key_value.second;
         auto last_tick = eventLastTick[handler];
         if (tick - last_tick >= handler.freq) {
             eventLastTick[handler] = tick;
@@ -1502,8 +1502,8 @@ static void manageInteractionEvent(color_ostream& out) {
     //df::unit* lastDefender = NULL;
     unordered_map<int32_t,unordered_set<int32_t> > history;
     int32_t tick = df::global::world->frame_counter;
-    for (auto &iter : copy) {
-        auto &handler = iter.second;
+    for (auto &key_value : copy) {
+        auto &handler = key_value.second;
         auto last_tick = eventLastTick[handler];
         if (tick - last_tick >= handler.freq) {
             eventLastTick[handler] = tick;

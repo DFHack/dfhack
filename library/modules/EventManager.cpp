@@ -166,9 +166,11 @@ static void manageNewUnitActiveEvent(color_ostream& out);
 static void manageUnitDeathEvent(color_ostream& out);
 static void manageItemCreationEvent(color_ostream& out);
 static void manageBuildingEvent(color_ostream& out);
-static void manageCreatedBuildingEvent(color_ostream& out);
-static void manageDestroyedBuildingEvent(color_ostream& out);
+static void manageBuildingCreatedEvent(color_ostream& out);
+static void manageBuildingDestroyedEvent(color_ostream& out);
 static void manageConstructionEvent(color_ostream& out);
+static void manageConstructionAddedEvent(color_ostream& out);
+static void manageConstructionRemovedEvent(color_ostream& out);
 static void manageSyndromeEvent(color_ostream& out);
 static void manageInvasionEvent(color_ostream& out);
 static void manageEquipmentEvent(color_ostream& out);
@@ -180,24 +182,26 @@ static void manageInteractionEvent(color_ostream& out);
 typedef void (*eventManager_t)(color_ostream&);
 
 static const eventManager_t eventManager[] = {
-    manageTickEvent,
-    manageJobInitiatedEvent,
-    manageJobStartedEvent,
-    manageJobCompletedEvent,
-    manageNewUnitActiveEvent,
-    manageUnitDeathEvent,
-    manageItemCreationEvent,
-    manageBuildingEvent,
-    manageCreatedBuildingEvent,
-    manageDestroyedBuildingEvent,
-    manageConstructionEvent,
-    manageSyndromeEvent,
-    manageInvasionEvent,
-    manageEquipmentEvent,
-    manageReportEvent,
-    manageUnitAttackEvent,
-    manageUnloadEvent,
-    manageInteractionEvent,
+        manageTickEvent,
+        manageJobInitiatedEvent,
+        manageJobStartedEvent,
+        manageJobCompletedEvent,
+        manageNewUnitActiveEvent,
+        manageUnitDeathEvent,
+        manageItemCreationEvent,
+        manageBuildingEvent,
+        manageBuildingCreatedEvent,
+        manageBuildingDestroyedEvent,
+        manageConstructionEvent,
+        manageConstructionAddedEvent,
+        manageConstructionRemovedEvent,
+        manageSyndromeEvent,
+        manageInvasionEvent,
+        manageEquipmentEvent,
+        manageReportEvent,
+        manageUnitAttackEvent,
+        manageUnloadEvent,
+        manageInteractionEvent,
 };
 
 template<typename T>
@@ -266,6 +270,7 @@ public:
 
 //job initiated
 static int32_t lastJobId = -1;
+static std::unordered_set<int32_t> newJobIDs;
 static event_tracker<df::job*> newJobs;
 
 //job started
@@ -292,7 +297,8 @@ static event_tracker<int32_t> createdBuildings;
 static event_tracker<int32_t> destroyedBuildings;
 
 //construction
-static unordered_map<df::coord, df::construction> constructions;
+static event_tracker<df::construction> createdConstructions;
+static event_tracker<df::construction> destroyedConstructions;
 static bool gameLoaded;
 
 //syndrome
@@ -345,7 +351,8 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         deadUnits.clear();
         createdBuildings.clear();
         destroyedBuildings.clear();
-        constructions.clear();
+        createdConstructions.clear();
+        destroyedConstructions.clear();
         equipmentLog.clear();
         //todo: clear reportToRelevantUnits?
         tickQueue.clear();
@@ -417,22 +424,21 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
             // building already existed, so emplace to a non-iterable area
             createdBuildings.emplace(-1, building->id);
         }
-
-        constructions.clear();
-        for (auto constr : df::global::world->constructions) {
-            if ( !constr ) {
+        // initialize our constructions list
+        for (auto construction : df::global::world->constructions) {
+            if ( !construction ) {
                 if ( Once::doOnce("EventManager.onLoad null constr") ) {
                     out.print("EventManager.onLoad: null construction.\n");
                 }
                 continue;
             }
-            if ( constr->pos == df::coord() ) {
+            if (construction->pos == df::coord() ) {
                 if ( Once::doOnce("EventManager.onLoad null position of construction.\n") ) {
                     out.print("EventManager.onLoad null position of construction.\n");
                 }
                 continue;
             }
-            constructions[constr->pos] = *constr;
+            createdConstructions.emplace(-1, *construction);
         }
         lastSyndromeTime = -1;
         for ( df::unit* unit : df::global::world->units.all ) {
@@ -927,7 +933,7 @@ static void manageBuildingEvent(color_ostream& out) {
 
     // todo: maybe we should create static lists, and compare sizes and only copy if they don't match, otherwise every manager function is copying their handlers every single they execute
     multimap<Plugin*, EventHandler> copy(handlers[EventType::BUILDING].begin(), handlers[EventType::BUILDING].end());
-    // iterate event handler callbacks (send handlers CREATED buildings)
+    // iterate event handler callbacks
     for (auto &key_value : copy) {
         auto &handler = key_value.second;
         auto last_tick = eventLastTick[handler];
@@ -935,29 +941,18 @@ static void manageBuildingEvent(color_ostream& out) {
         if (tick - last_tick >= handler.freq) {
             eventLastTick[handler] = tick;
             // send the handler all the new buildings since it last fired
-            auto jter = createdBuildings.upper_bound(last_tick);
-            for (; jter != createdBuildings.end(); ++jter) {
+            for (auto jter = createdBuildings.upper_bound(last_tick); jter != createdBuildings.end(); ++jter) {
                 handler.eventHandler(out, (void*) intptr_t(jter->second));
             }
-        }
-    }
-    // iterate event handler callbacks (send handlers DESTROYED buildings
-    for (auto &key_value : copy) {
-        auto &handler = key_value.second;
-        auto last_tick = eventLastTick[handler];
-        // enforce handler's callback frequency
-        if (tick - last_tick >= handler.freq) {
-            eventLastTick[handler] = tick;
             // send the handler all the destroyed buildings since it last fired
-            auto jter = destroyedBuildings.upper_bound(last_tick);
-            for (; jter != destroyedBuildings.end(); ++jter) {
+            for (auto jter = destroyedBuildings.upper_bound(last_tick); jter != destroyedBuildings.end(); ++jter) {
                 handler.eventHandler(out, (void*) intptr_t(jter->second));
             }
         }
     }
 }
 
-static void manageCreatedBuildingEvent(color_ostream& out) {
+static void manageBuildingCreatedEvent(color_ostream& out) {
     if (!df::global::world)
         return;
     if (!df::global::building_next_id)
@@ -975,7 +970,7 @@ static void manageCreatedBuildingEvent(color_ostream& out) {
         destroyedBuildings.erase(id);
     }
     nextBuilding = *df::global::building_next_id;
-    multimap<Plugin*, EventHandler> copy(handlers[EventType::CREATED_BUILDING].begin(), handlers[EventType::CREATED_BUILDING].end());
+    multimap<Plugin*, EventHandler> copy(handlers[EventType::BUILDING_CREATED].begin(), handlers[EventType::BUILDING_CREATED].end());
     // iterate event handler callbacks
     for (auto &key_value : copy) {
         auto &handler = key_value.second;
@@ -992,7 +987,7 @@ static void manageCreatedBuildingEvent(color_ostream& out) {
     }
 }
 
-static void manageDestroyedBuildingEvent(color_ostream& out) {
+static void manageBuildingDestroyedEvent(color_ostream& out) {
     if (!df::global::world)
         return;
     int32_t tick = df::global::world->frame_counter;
@@ -1008,7 +1003,7 @@ static void manageDestroyedBuildingEvent(color_ostream& out) {
         destroyedBuildings.emplace(tick, id);
         createdBuildings.erase(id);
     }
-    multimap<Plugin*, EventHandler> copy(handlers[EventType::DESTROYED_BUILDING].begin(), handlers[EventType::DESTROYED_BUILDING].end());
+    multimap<Plugin*, EventHandler> copy(handlers[EventType::BUILDING_DESTROYED].begin(), handlers[EventType::BUILDING_DESTROYED].end());
     // iterate event handler callbacks
     for (auto &key_value : copy) {
         auto &handler = key_value.second;
@@ -1030,36 +1025,96 @@ static void manageDestroyedBuildingEvent(color_ostream& out) {
 static void manageConstructionEvent(color_ostream& out) {
     if (!df::global::world)
         return;
-    // todo: finish the job
-    //unordered_set<df::construction*> constructionsNow(df::global::world->constructions.begin(), df::global::world->constructions.end());
-    for (auto constru_iter = constructions.begin(); constru_iter != constructions.end();) {
-        df::construction &construction = (*constru_iter).second;
-        if (df::construction::find(construction.pos) != NULL) {
-            ++constru_iter;
+
+    int32_t tick = df::global::world->frame_counter;
+    for (auto &c : df::global::world->constructions) {
+        // anything on the global list, obviously exists.. so we ensure that coord is on the created list and isn't on the destroyed list
+        createdConstructions.emplace(tick, *c); // hashes based on c->pos (coord)
+        destroyedConstructions.erase(*c);
+    }
+    for (auto iter = createdConstructions.begin(); iter != createdConstructions.end();) {
+        // if we can't find it, it was removed
+        if (!df::construction::find(iter->second.pos)) {
+            destroyedConstructions.emplace(tick, iter->second);
+            iter = createdConstructions.erase(iter);
             continue;
         }
-        //construction removed
-        //out.print("Removed construction (%d,%d,%d)\n", construction.pos.x,construction.pos.y,construction.pos.z);
-        handler.eventHandler(out, (void*) construction);
-        constru_iter = constructions.erase(constru_iter);
+        ++iter;
     }
 
+    // iterate event handler callbacks
     multimap<Plugin*,EventHandler> copy(handlers[EventType::CONSTRUCTION].begin(), handlers[EventType::CONSTRUCTION].end());
-    int32_t tick = df::global::world->frame_counter;
     for (auto &key_value : copy) {
         auto &handler = key_value.second;
         auto last_tick = eventLastTick[handler];
+        // enforce handler's callback frequency
         if (tick - last_tick >= handler.freq) {
             eventLastTick[handler] = tick;
+            // send the handler all the added constructions since it last fired
+            for(auto iter = createdConstructions.upper_bound(last_tick); iter != createdConstructions.end(); ++iter) {
+                handler.eventHandler(out, &iter->second);
+            }
+            // send the handler all the removed constructions since it last fired
+            for(auto iter = destroyedConstructions.upper_bound(last_tick); iter != destroyedConstructions.end(); ++iter) {
+                handler.eventHandler(out, &iter->second);
+            }
+        }
+    }
+}
 
-            //for ( auto a = constructionsNow.begin(); a != constructionsNow.end(); ++a ) {
-            for (auto constru_iter = df::global::world->constructions.begin(); constru_iter != df::global::world->constructions.end(); ++constru_iter) {
-                df::construction* construction = *constru_iter;
-                if (!constructions.emplace(construction->pos, *construction).second)
-                    continue; //not a new insertion, skip
-                //construction created
-                //out.print("Created construction (%d,%d,%d)\n", construction->pos.x,construction->pos.y,construction->pos.z);
-                handler.eventHandler(out, (void*) construction);
+static void manageConstructionAddedEvent(color_ostream& out) {
+    if (!df::global::world)
+        return;
+
+    int32_t tick = df::global::world->frame_counter;
+    // update created construction list
+    for (auto &c : df::global::world->constructions) {
+        // anything on the global list, obviously exists.. so we ensure that coord is on the created list and isn't on the destroyed list
+        createdConstructions.emplace(tick, *c); // hashes based on c->pos (coord)
+        destroyedConstructions.erase(*c);
+    }
+    // iterate event handler callbacks
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::CONSTRUCTION_ADDED].begin(), handlers[EventType::CONSTRUCTION_ADDED].end());
+    for (auto &key_value : copy) {
+        auto &handler = key_value.second;
+        auto last_tick = eventLastTick[handler];
+        // enforce handler's callback frequency
+        if (tick - last_tick >= handler.freq) {
+            eventLastTick[handler] = tick;
+            // send the handler all the added constructions since it last fired
+            for(auto iter = createdConstructions.upper_bound(last_tick); iter != createdConstructions.end(); ++iter) {
+                handler.eventHandler(out, &iter->second);
+            }
+        }
+    }
+}
+
+static void manageConstructionRemovedEvent(color_ostream& out) {
+    if (!df::global::world)
+        return;
+
+    int32_t tick = df::global::world->frame_counter;
+    // update destroyed constructions list
+    for (auto iter = createdConstructions.begin(); iter != createdConstructions.end();) {
+        // if we can't find it, it was removed
+        if (!df::construction::find(iter->second.pos)) {
+            destroyedConstructions.emplace(tick, iter->second);
+            iter = createdConstructions.erase(iter);
+            continue;
+        }
+        ++iter;
+    }
+    // iterate event handler callbacks
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::CONSTRUCTION_REMOVED].begin(), handlers[EventType::CONSTRUCTION_REMOVED].end());
+    for (auto &key_value : copy) {
+        auto &handler = key_value.second;
+        auto last_tick = eventLastTick[handler];
+        // enforce handler's callback frequency
+        if (tick - last_tick >= handler.freq) {
+            eventLastTick[handler] = tick;
+            // send the handler all the removed constructions since it last fired
+            for(auto iter = destroyedConstructions.upper_bound(last_tick); iter != destroyedConstructions.end(); ++iter) {
+                handler.eventHandler(out, &iter->second);
             }
         }
     }

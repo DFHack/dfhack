@@ -49,7 +49,7 @@ void enable_job_completed_events() {
     namespace EM = EventManager;
     using namespace EM::EventType;
     EM::EventHandler eventHandler1(onJobCompletion, 0); // constantly
-    EM::EventHandler eventHandler2(onJobCompletion, 50); // every dwarf-hour
+    EM::EventHandler eventHandler2(onJobCompletion, 500); // every dwarf-hour
     EM::registerListener(EventType::JOB_COMPLETED, eventHandler1, plugin_self);
     EM::registerListener(EventType::JOB_COMPLETED, eventHandler2, plugin_self);
 }

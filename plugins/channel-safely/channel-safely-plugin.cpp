@@ -14,14 +14,11 @@ DFHACK_PLUGIN("channel-safely");
 DFHACK_PLUGIN_IS_ENABLED(enabled);
 REQUIRE_GLOBAL(world);
 //#define CS_DEBUG 1
-bool useTicks = true;
-uint16_t maxTickFreq = 1200;
 
 command_result manage_channel_designations(color_ostream &out, std::vector<std::string> &parameters);
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable);
-void onNewEvent(color_ostream &out, void* tick_ptr);
-void onStart(color_ostream &out, void* job);
-void onComplete(color_ostream &out, void* job);
+void onJobStart(color_ostream &out, void* job_ptr);
+void onJobComplete(color_ostream &out, void* job_ptr);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginCommand> &commands) {
     commands.push_back(PluginCommand("channel-safely",
@@ -39,22 +36,14 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginC
                                      "\n"
                                      " channel-safely enable\n"
                                      "    Enables the plugin to automatically run the management procedure. The plugin\n"
-                                     "    can run on tick events and will run on (un)pause/job events and map load\n"
-                                     "    state changes.\n"
+                                     "    will run when a job starts/completes and on (un)pause/map load state changes.\n"
                                      " channel-safely enable cheats\n"
                                      "    Enables the plugin to instantly dig permanently unsafe designations.\n"
-                                     " channel-safely enable ontick\n"
-                                     "    Enables on tick events. Enabled by default.\n"
                                      "\n"
                                      " channel-safely disable\n"
                                      "    Disables the plugin. Will not automatically do anything.\n"
                                      " channel-safely disable cheats\n"
                                      "    Disables instantly digging permanently unsafe designations.\n"
-                                     " channel-safely disable ontick\n"
-                                     "    Disables on tick events. Enabled by default.\n"
-                                     "\n"
-                                     " channel-safely tick-freq <value>\n"
-                                     "    Set's the tick event frequency. Default: 1200 (1 day)\n"
                                      "\n"));
     return CR_OK;
 }
@@ -87,13 +76,6 @@ command_result manage_channel_designations(color_ostream &out, std::vector<std::
     } else if (parameters.size() == 2 && parameters[0] == "enable" && parameters[1] == "cheats" && !cheat_mode) {
         cheat_mode = true;
         out.print("channel-safely: cheat mode enabled!\n");
-    } else if (parameters.size() == 2 && parameters[0] == "enable" && parameters[1] == "ontick" && !useTicks) {
-        useTicks = true;
-        out.print("channel-safely: ontick events enabled!\n");
-        if (enabled) {
-            EM::EventHandler tickHandler(onNewEvent, maxTickFreq);
-            EM::registerListener(EventType::TICK, tickHandler, plugin_self);
-        }
     }
     // disable options
     else if (parameters.size() == 1 && parameters[0] == "disable") {
@@ -101,16 +83,6 @@ command_result manage_channel_designations(color_ostream &out, std::vector<std::
     } else if (parameters.size() == 2 && parameters[0] == "disable" && parameters[1] == "cheats" && cheat_mode) {
         cheat_mode = false;
         out.print("channel-safely: ontick events disabled!\n");
-    } else if (parameters.size() == 2 && parameters[0] == "disable" && parameters[1] == "ontick" && useTicks) {
-        useTicks = false;
-        out.print("channel-safely: ontick events disabled!\n");
-        if (enabled) {
-            EM::unregisterAll(plugin_self);
-            EM::EventHandler jobStartHandler(onStart, 0);
-            EM::EventHandler jobCompletionHandler(onComplete, 0);
-            EM::registerListener(EventType::JOB_INITIATED, jobStartHandler, plugin_self);
-            EM::registerListener(EventType::JOB_COMPLETED, jobCompletionHandler, plugin_self);
-        }
     }
     // developer debug
     else if (parameters.size() == 1 && parameters[0] == "debug") {
@@ -138,10 +110,8 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 #endif
     if (enable && !enabled) {
         using namespace EM::EventType;
-        EM::EventHandler tickHandler(onNewEvent, maxTickFreq);
-        EM::EventHandler jobStartHandler(onStart, 0);
-        EM::EventHandler jobCompletionHandler(onComplete, 0);
-        EM::registerListener(EventType::TICK, tickHandler, plugin_self);
+        EM::EventHandler jobStartHandler(onJobStart, 0);
+        EM::EventHandler jobCompletionHandler(onJobComplete, 0);
         EM::registerListener(EventType::JOB_INITIATED, jobStartHandler, plugin_self);
         EM::registerListener(EventType::JOB_COMPLETED, jobCompletionHandler, plugin_self);
         ChannelManager::Get().manage_designations(out);
@@ -191,28 +161,11 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     return CR_OK;
 }
 
-void onNewEvent(color_ostream &out, void* tick_ptr) {
+void onJobStart(color_ostream &out, void* job_ptr) {
 #ifdef CS_DEBUG
     debug_out = &out;
 #endif
-    if (debug_out) debug_out->print("onNewHour()\n");
-    if (enabled && World::isFortressMode() && Maps::IsValid()) {
-        static int32_t last_tick_counter = 0;
-        int32_t tick_counter = (int32_t) ((intptr_t) tick_ptr);
-        if ((tick_counter - last_tick_counter) >= maxTickFreq) {
-            last_tick_counter = tick_counter;
-            ChannelManager::Get().manage_designations(out);
-        }
-    }
-    if (debug_out) debug_out->print("onNewHour() - return\n");
-    debug_out = nullptr;
-}
-
-void onStart(color_ostream &out, void* job_ptr) {
-#ifdef CS_DEBUG
-    debug_out = &out;
-#endif
-    if (debug_out) debug_out->print("onStart()\n");
+    if (debug_out) debug_out->print("onJobStart()\n");
     if (enabled && World::isFortressMode() && Maps::IsValid()) {
         auto job = (df::job*) job_ptr;
         if (is_dig(job) || is_channel(job)) {
@@ -226,15 +179,15 @@ void onStart(color_ostream &out, void* job_ptr) {
             ChannelManager::Get().manage_safety(out, block, local, job->pos, above);
         }
     }
-    if (debug_out) debug_out->print("onStart() - return\n");
+    if (debug_out) debug_out->print("onJobStart() - return\n");
     debug_out = nullptr;
 }
 
-void onComplete(color_ostream &out, void* job_ptr) {
+void onJobComplete(color_ostream &out, void* job_ptr) {
 #ifdef CS_DEBUG
     debug_out = &out;
 #endif
-    if (debug_out) debug_out->print("onComplete()\n");
+    if (debug_out) debug_out->print("onJobComplete()\n");
     if (enabled && World::isFortressMode() && Maps::IsValid()) {
         auto job = (df::job*) job_ptr;
         if (is_channel(job)) {
@@ -253,6 +206,6 @@ void onComplete(color_ostream &out, void* job_ptr) {
             manageNeighbours(out, job->pos);
         }
     }
-    if (debug_out) debug_out->print("onComplete() - return\n");
+    if (debug_out) debug_out->print("onJobComplete() - return\n");
     debug_out = nullptr;
 }

@@ -141,6 +141,16 @@ namespace std {
             return r;
         }
     };
+    template <>
+    struct hash<DFHack::EventManager::SyndromeData> {
+        std::size_t operator()(const DFHack::EventManager::SyndromeData& syndrome){
+            size_t r = 43;
+            const size_t m = 65537;
+            r = m*(r+syndrome.unitId);
+            r = m*(r+syndrome.syndromeIndex);
+            return r;
+        }
+    };
 }
 
 #endif

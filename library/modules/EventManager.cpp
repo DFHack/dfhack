@@ -207,6 +207,9 @@ namespace std{
     bool operator==(const df::construction &A, const df::construction &B){
         return A.pos == B.pos;
     }
+    bool operator==(const DFHack::EventManager::SyndromeData &A, const DFHack::EventManager::SyndromeData &B){
+        return A.unitId == B.unitId && A.syndromeIndex == B.syndromeIndex;
+    }
 }
 template<typename T>
 class event_tracker { //todo: use inheritance? stl seems to use variadics, so it's unclear how well that would actually work
@@ -272,6 +275,13 @@ public:
     }
 };
 
+static int32_t getTime(){
+    if(df::global::world) {
+        return (*df::global::cur_year) * ticksPerYear + (*df::global::cur_year_tick);
+    }
+    return -1;
+}
+
 //job initiated
 static int32_t lastJobId = -1;
 static std::unordered_set<int32_t> newJobIDs;
@@ -306,7 +316,7 @@ static event_tracker<df::construction> destroyedConstructions;
 static bool gameLoaded;
 
 //syndrome
-static int32_t lastSyndromeTime;
+static event_tracker<SyndromeData> syndromes;
 
 //invasion
 static int32_t nextInvasion;
@@ -444,12 +454,17 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
             }
             createdConstructions.emplace(-1, *construction);
         }
-        lastSyndromeTime = -1;
-        for ( df::unit* unit : df::global::world->units.all ) {
-            for (auto syndrome : unit->syndromes.active) {
-                int32_t startTime = syndrome->year*ticksPerYear + syndrome->year_time;
-                if ( startTime > lastSyndromeTime )
-                    lastSyndromeTime = startTime;
+        int32_t current_time = getTime();
+        // initialize our syndromes list
+        for ( df::unit *unit : df::global::world->units.all ) {
+            for (size_t idx = 0; idx < unit->syndromes.active.size(); ++idx) {
+                auto &syndrome = unit->syndromes.active[idx];
+                int32_t startTime = syndrome->year * ticksPerYear + syndrome->year_time;
+                // add the syndrome if it started now or in the past
+                if (startTime <= current_time) {
+                    SyndromeData data(unit->id, (int32_t)idx);
+                    syndromes.emplace(-1, data);
+                }
             }
         }
         lastReport = -1;
@@ -1127,34 +1142,36 @@ static void manageConstructionRemovedEvent(color_ostream& out) {
 static void manageSyndromeEvent(color_ostream& out) {
     if (!df::global::world)
         return;
-    multimap<Plugin*,EventHandler> copy(handlers[EventType::SYNDROME].begin(), handlers[EventType::SYNDROME].end());
-    int32_t highestTime = -1;
     int32_t tick = df::global::world->frame_counter;
-    for (auto &key_value : copy) {
-        auto &handler = key_value.second;
-        auto last_tick = eventLastTick[handler];
-        if (tick - last_tick >= handler.freq) {
-            eventLastTick[handler] = tick;
-            for ( df::unit *unit : df::global::world->units.all ) {
-/*
-        if ( unit->flags1.bits.inactive )
-            continue;
-*/
-                for ( size_t b = 0; b < unit->syndromes.active.size(); ++b ) {
-                    df::unit_syndrome* syndrome = unit->syndromes.active[b];
-                    int32_t startTime = syndrome->year*ticksPerYear + syndrome->year_time;
-                    if ( startTime > highestTime )
-                        highestTime = startTime;
-                    if ( startTime <= lastSyndromeTime )
-                        continue;
 
-                    SyndromeData data(unit->id, b);
-                    handler.eventHandler(out, (void*)&data);
-                }
+    int32_t current_time = getTime();
+    // update syndromes list
+    for ( df::unit *unit : df::global::world->units.all ) {
+        for (size_t idx = 0; idx < unit->syndromes.active.size(); ++idx) {
+            auto &syndrome = unit->syndromes.active[idx];
+            int32_t startTime = syndrome->year * ticksPerYear + syndrome->year_time;
+            // add the syndrome if it started now or in the past
+            if (startTime <= current_time) {
+                SyndromeData data(unit->id, (int32_t)idx);
+                syndromes.emplace(tick, data);
             }
         }
     }
-    lastSyndromeTime = highestTime;
+
+    // iterate event handler callbacks
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::SYNDROME].begin(), handlers[EventType::SYNDROME].end());
+    for (auto &key_value : copy) {
+        auto &handler = key_value.second;
+        auto last_tick = eventLastTick[handler];
+        // enforce handler's callback frequency
+        if (tick - last_tick >= handler.freq) {
+            eventLastTick[handler] = tick;
+            // send all new syndromes since it last fired
+            for(auto iter = syndromes.upper_bound(last_tick); iter != syndromes.end(); ++iter){
+                handler.eventHandler(out, &iter->second);
+            }
+        }
+    }
 }
 
 static void manageInvasionEvent(color_ostream& out) {

@@ -143,7 +143,7 @@ namespace std {
     };
     template <>
     struct hash<DFHack::EventManager::SyndromeData> {
-        std::size_t operator()(const DFHack::EventManager::SyndromeData& syndrome){
+        std::size_t operator()(const DFHack::EventManager::SyndromeData& syndrome) const {
             size_t r = 43;
             const size_t m = 65537;
             r = m*(r+syndrome.unitId);

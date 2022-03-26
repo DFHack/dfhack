@@ -175,6 +175,16 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
                 if (debug_out) debug_out->print("SC_UNPAUSED\n");
                 ChannelManager::Get().manage_designations(out);
                 break;
+            case SC_WORLD_UNLOADED:
+            case SC_MAP_UNLOADED:
+                ChannelManager::Get().delete_groups();
+                break;
+            case SC_UNKNOWN:
+            case SC_WORLD_LOADED:
+            case SC_VIEWSCREEN_CHANGED:
+            case SC_CORE_INITIALIZED:
+            case SC_BEGIN_UNLOAD:
+                break;
         }
     }
     debug_out = nullptr;

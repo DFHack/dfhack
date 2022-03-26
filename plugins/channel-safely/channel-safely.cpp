@@ -31,7 +31,7 @@ void ChannelManager::manage_designations(color_ostream &out) {
     if (debug_out) debug_out->print("manage_designations()\n");
     if (World::isFortressMode() && Maps::IsValid()) {
         static bool getMapSize = false;
-        static uint32_t t1, t2, zmax;
+        static int32_t t1, t2, zmax;
         if (!getMapSize) {
             getMapSize = true;
             Maps::getSize(t1, t2, zmax);
@@ -47,7 +47,7 @@ void ChannelManager::manage_designations(color_ostream &out) {
                 df::coord local(world_pos);
                 local.x = local.x % 16;
                 local.y = local.y % 16;
-                if (world_pos.z < zmax - 1) {
+                if (world_pos.z < (int16_t)zmax - 1) {
                     df::coord above(world_pos);
                     above.z++;
                     manage_safety(out, block, local, world_pos, above);
@@ -152,7 +152,7 @@ bool is_group_ready(const GroupData &groups, const GroupData::Group &group) {
             return false;
         }
         auto group_above = groups.find(above);
-        if (debug_out) debug_out->print("if(group_above != groups.end()) => %d == %d\n", group_above, groups.end());
+        if (debug_out) debug_out->print("if(group_above != groups.end()) => %zu == %zu\n", group_above-groups.begin(), groups.end()-groups.begin());
         // check that the group above exists
         if (group_above != groups.end()) {
             if (debug_out) debug_out->print("if(!group_above->empty())\n");
@@ -212,17 +212,17 @@ void GroupData::read() {
 
 void GroupData::foreach_block() {
     static bool getMapSize = false;
-    static uint32_t x, y, z;
+    static int32_t x, y, z;
     if (!getMapSize) {
         getMapSize = true;
         Maps::getSize(x, y, z);
     }
     if (debug_out) debug_out->print("map size: %d, %d, %d\n", x, y, z);
-    for (int ix = 0; ix < x; ++ix) {
-        for (int iy = 0; iy < y; ++iy) {
-            for (int iz = z - 1; iz >= 0; --iz) {
+    for (int32_t ix = 0; ix < x; ++ix) {
+        for (int32_t iy = 0; iy < y; ++iy) {
+            for (int32_t iz = z - 1; iz >= 0; --iz) {
                 df::map_block* block = Maps::getBlock(ix, iy, iz);
-                if (debug_out) debug_out->print("foreach block [%d]\n", block);
+                if (debug_out) debug_out->print("foreach block [%zu]\n", (size_t)block);
                 if (block) {
                     foreach_tile(block, iz);
                 }
@@ -256,7 +256,7 @@ void GroupData::add(df::coord world_pos, df::map_block* block) {
             auto groups_map_iter = groups_map.find(neighbour);
             // does neighbour belong to a group?
             if (groups_map_iter != groups_map.end()) {
-                if (groups_map_iter->second >= groups.size()) {
+                if ((size_t)groups_map_iter->second >= groups.size()) {
                     if (debug_out) debug_out->print("ERROR!!!\n");
                 }
                 // get the group
@@ -268,9 +268,9 @@ void GroupData::add(df::coord world_pos, df::map_block* block) {
                     group_index = groups_map_iter->second;
                 } else if (group_index != groups_map_iter->second) {
                     // merge group into host
-                    if (debug_out) debug_out->print("found adjacent group. host size: %d. group size: %d\n", groups[group_index].size(), group.size());
+                    if (debug_out) debug_out->print("found adjacent group. host size: %zu. group size: %zu\n", groups[group_index].size(), group.size());
                     groups[group_index].insert(group.begin(), group.end());
-                    if (debug_out) debug_out->print("merged size: %d\n", groups[group_index].size());
+                    if (debug_out) debug_out->print("merged size: %zu\n", groups[group_index].size());
                     group.clear();
                     free_spots.emplace(groups_map_iter->second);
                 }
@@ -288,11 +288,11 @@ void GroupData::add(df::coord world_pos, df::map_block* block) {
             }
         }
         groups[group_index].emplace(std::make_pair(world_pos, block));
-        if (debug_out) debug_out->print("final size: %d\n", groups[group_index].size());
+        if (debug_out) debug_out->print("final size: %zu\n", groups[group_index].size());
         for (auto &pair : groups[group_index]) {
-            const df::coord &world_pos = pair.first;
-            groups_map.erase(world_pos);
-            groups_map.emplace(world_pos, group_index);
+            const df::coord &wpos = pair.first;
+            groups_map.erase(wpos);
+            groups_map.emplace(wpos, group_index);
         }
         if (debug_out) debug_out->print("group index: %d\n", group_index);
         //debug();
@@ -303,7 +303,7 @@ void GroupData::debug() {
     int idx = 0;
     if (debug_out) debug_out->print("debugging group data\n");
     for (auto &group : groups) {
-        if (debug_out) debug_out->print("group %d (size: %d)\n", idx++, group.size());
+        if (debug_out) debug_out->print("group %d (size: %zu)\n", idx++, group.size());
         for (auto &pair : group) {
             if (debug_out) debug_out->print("(%d,%d,%d)\n", pair.first.x, pair.first.y, pair.first.z);
         }

@@ -327,12 +327,16 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
     }
     if ( event == DFHack::SC_MAP_UNLOADED ) {
         lastJobId = -1;
-        for (auto &key_value : completedJobs) {
+        for (auto &key_value : newJobs) {
             Job::deleteJobStruct(key_value.second, true);
         }
         for (auto &key_value : startedJobs) {
             Job::deleteJobStruct(key_value.second, true);
         }
+        for (auto &key_value : completedJobs) {
+            Job::deleteJobStruct(key_value.second, true);
+        }
+        newJobs.clear();
         startedJobs.clear();
         completedJobs.clear();
         activeUnits.clear();

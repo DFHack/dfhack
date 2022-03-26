@@ -668,7 +668,6 @@ static void manageJobCompletedEvent(color_ostream& out) {
             // send the handler all the newly completed jobs since it last fired
             auto iter = completedJobs.upper_bound(last_tick);
             for (; iter != completedJobs.end(); ++iter) {
-                out.print("callback: %zu, freq: %d, last tick: %d\n", (size_t)handler.eventHandler, handler.freq, last_tick);
                 handler.eventHandler(out, iter->second);
             }
         }

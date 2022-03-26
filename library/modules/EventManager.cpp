@@ -598,52 +598,52 @@ TODO: consider checking item creation / experience gain just in case
 static void manageJobCompletedEvent(color_ostream& out) {
     if (!df::global::world)
         return;
+    static std::unordered_map<int32_t, df::job*> last_tick_jobs;
     static int32_t fn_last_tick = -1;
     int32_t tick = df::global::world->frame_counter;
     int32_t oldest_last_tick = (uint16_t)-1;
+    std::unordered_map<int32_t, df::job*> current_jobs;
 
     // update the completed jobs list (this apparently isn't as straight forward as one might think)
     // todo: verify the need for this check
     //if it happened within a tick, must have been cancelled by the user or a plugin: not completed
     if(tick > fn_last_tick) {
         // we're going to need to check if started jobs are still on this list, so we copy the IDs to avoid a linear search into this list for each started_job
-        std::unordered_map<int32_t, df::job*> current_jobs;
         for (df::job_list_link* link = df::global::world->jobs.list.next; link != NULL; link = link->next) {
             df::job* job = link->item;
-            current_jobs.emplace(job->id, job);
+            //can't really minimize the list, because maybe somehow a non-started job will be complete next tick (hax)
+            //if(job && Job::getWorker(job)) {
+            current_jobs.emplace(job->id, Job::cloneJobStruct(job, true)); // clone now so we can swap into last_tick_jobs later
+            //}
         }
         // iterate the started jobs list
-        for (auto &iter: startedJobs) {
-            df::job* started_job = iter.second;
-            int32_t id = started_job->id;
+        for (auto &key_value: last_tick_jobs) {
+            df::job* lt_job = key_value.second;
+            int32_t id = lt_job->id;
             // check for the started job in the current jobs (the jobs we just copied above)
             auto cter = current_jobs.find(id);
             if (cter != current_jobs.end()) {
                 // if we found it, that doesn't mean it didn't complete.. it may be a repeat job
-                df::job* valid_df_job = cter->second;
-                if (!started_job->flags.bits.repeat)
+                df::job* ct_job = cter->second; //ct: current tick
+                if (!lt_job->flags.bits.repeat)
                     continue;
                 // I'd comment these, but I don't know what we're checking exactly.. gl
-                if (started_job->completion_timer != 0)
+                if (lt_job->completion_timer != 0)
                     continue;
-                if (valid_df_job->completion_timer != -1)
+                if (ct_job->completion_timer != -1)
                     continue;
 
                 //still false positive if cancelled at EXACTLY the right time, but experiments show this doesn't happen
 
                 // the job won't be added if it already exists - NOTE: this means a repeat job can't be seen as completed again until it gets cleaned from the list
                 // This is probably going to be a huge problem as it means there is room for an interaction issue between plugins/scripts
-                if (completedJobIDs.emplace(id).second) {
-                    completedJobs.emplace(tick, Job::cloneJobStruct(started_job, true));
-                }
+                completedJobs.emplace(tick, Job::cloneJobStruct(lt_job, true));
                 continue;
             }
             // we didn't find it, so it's a recently finished or cancelled job
-            if (started_job->flags.bits.repeat || started_job->completion_timer != 0)
+            if (lt_job->flags.bits.repeat || lt_job->completion_timer != 0)
                 continue;
-            if (completedJobIDs.emplace(id).second) {
-                completedJobs.emplace(tick, Job::cloneJobStruct(started_job, true));
-            }
+            completedJobs.emplace(tick, Job::cloneJobStruct(lt_job, true));
         }
     }
 
@@ -658,21 +658,29 @@ static void manageJobCompletedEvent(color_ostream& out) {
             eventLastTick[handler] = tick;
             fn_last_tick = tick;
             // send the handler all the newly completed jobs since it last fired
-            auto jter = completedJobs.upper_bound(last_tick);
-            for (; jter != completedJobs.end(); ++jter) {
-                handler.eventHandler(out, jter->second);
+            auto iter = completedJobs.upper_bound(last_tick);
+            for (; iter != completedJobs.end(); ++iter) {
+                out.print("callback: %zu, freq: %d, last tick: %d\n", (size_t)handler.eventHandler, handler.freq, last_tick);
+                handler.eventHandler(out, iter->second);
             }
         }
     }
-    // clean up memory we no longer need
+    // clean up memory of job clones which have been sent to all handlers
     auto iter = completedJobs.begin();
-    for(; iter != completedJobs.end() && iter->first != oldest_last_tick;) {
+    for(; iter != completedJobs.end() && iter->first < oldest_last_tick;) {
         completedJobIDs.erase(iter->second->id);
         // we cloned it we delete it
         Job::deleteJobStruct(iter->second, true);
         // if we delete it, we best not reference it
         iter = completedJobs.erase(iter);
     }
+    // clean up memory of job clones from last tick
+    for(auto &key_value : last_tick_jobs){
+        Job::deleteJobStruct(key_value.second, true);
+    }
+    // last tick jobs takes on the current tick's jobs
+    last_tick_jobs.swap(current_jobs);
+    
     // moved to the bottom to be out of the way, but also all the structures used herein no longer exist
 #if 0
     //testing info on job initiation/completion

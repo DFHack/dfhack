@@ -34,6 +34,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
+- `channel-safely`: allows dwarves to channel safely by managing active designations and markings
 
 ## Removed
 
@@ -41,6 +42,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `luasocket` (and others): return correct status code when closing socket connections
 
 ## Misc Improvements
+- Core/Maps: adds missing int32_t signatures as overloads
 - `dig-now`: handle fortification carving
 - `EventManager`: add new event type ``JOB_STARTED``, triggered when a job first gains a worker
 - `EventManager`: add new event type ``NEW_UNIT_ACTIVE``, triggered when a new unit appears on the active list
@@ -466,7 +468,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 - `autoclothing`: automatically manage clothing work orders
 - `autofarm`: replaces the previous Ruby script of the same name, with some fixes
-- `channel-safely`: allows dwarves to channel safely by managing active designations and markings
 - `map-render`: allows programmatically rendering sections of the map that are off-screen
 - `tailor`: automatically manages keeping your dorfs clothed
 

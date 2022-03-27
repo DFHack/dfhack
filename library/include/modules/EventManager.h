@@ -77,10 +77,14 @@ namespace DFHack {
         };
         struct InventoryChangeData {
             int32_t unitId;
-            InventoryItem* item_old;
-            InventoryItem* item_new;
+            // todo: don't use pointers
+            std::shared_ptr<InventoryItem> item_old;
+            std::shared_ptr<InventoryItem> item_new;
             InventoryChangeData() {}
-            InventoryChangeData(int32_t id_in, InventoryItem* old_in, InventoryItem* new_in): unitId(id_in), item_old(old_in), item_new(new_in) {}
+            InventoryChangeData(int32_t id_in, InventoryItem* old_in, InventoryItem* new_in) :
+                    unitId(id_in),
+                    item_old(old_in),
+                    item_new(new_in) {}
         };
 
         struct UnitAttackData {
@@ -148,6 +152,21 @@ namespace std {
             const size_t m = 65537;
             r = m*(r+syndrome.unitId);
             r = m*(r+syndrome.syndromeIndex);
+            return r;
+        }
+    };
+    template <>
+    struct hash<DFHack::EventManager::InventoryChangeData> {
+        std::size_t operator()(const DFHack::EventManager::InventoryChangeData& icd) const {
+            size_t r = 43;
+            const size_t m = 65537;
+            r = m*(r+icd.unitId);
+            if (icd.item_new) {
+                r=m*(r+icd.item_new->itemId);
+            }
+            if (icd.item_old) {
+                r=m*(r+(2*icd.item_old->itemId));
+            }
             return r;
         }
     };

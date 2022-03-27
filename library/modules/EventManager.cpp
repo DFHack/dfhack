@@ -42,6 +42,7 @@
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
+#include <memory>
 
 using namespace std;
 using namespace DFHack;
@@ -173,7 +174,7 @@ static void manageConstructionAddedEvent(color_ostream& out);
 static void manageConstructionRemovedEvent(color_ostream& out);
 static void manageSyndromeEvent(color_ostream& out);
 static void manageInvasionEvent(color_ostream& out);
-static void manageEquipmentEvent(color_ostream& out);
+static void manageInventoryChangeEvent(color_ostream& out);
 static void manageReportEvent(color_ostream& out);
 static void manageUnitAttackEvent(color_ostream& out);
 static void manageUnloadEvent(color_ostream& out){};
@@ -197,7 +198,7 @@ static const eventManager_t eventManager[] = {
         manageConstructionRemovedEvent,
         manageSyndromeEvent,
         manageInvasionEvent,
-        manageEquipmentEvent,
+        manageInventoryChangeEvent,
         manageReportEvent,
         manageUnitAttackEvent,
         manageUnloadEvent,
@@ -210,6 +211,12 @@ namespace std{
     bool operator==(const DFHack::EventManager::SyndromeData &A, const DFHack::EventManager::SyndromeData &B){
         return A.unitId == B.unitId && A.syndromeIndex == B.syndromeIndex;
     }
+    bool operator==(const DFHack::EventManager::InventoryChangeData &A, const DFHack::EventManager::InventoryChangeData &B) {
+        bool unit = A.unitId == B.unitId;
+        bool newItem = (A.item_new && B.item_new && A.item_new->itemId == B.item_new->itemId) || (!A.item_new && A.item_new == B.item_new);
+        bool oldItem = (A.item_old && B.item_old && A.item_old->itemId == B.item_old->itemId) || (!A.item_old && A.item_old == B.item_old);
+        return unit && newItem && oldItem;
+    }
 }
 template<typename T>
 class event_tracker { //todo: use inheritance? stl seems to use variadics, so it's unclear how well that would actually work
@@ -217,6 +224,7 @@ private:
     std::unordered_map<T, int32_t> seen;
     std::multimap<int32_t, T> history;
 public:
+    event_tracker()= default;
     void clear() {
         seen.clear();
         history.clear();
@@ -284,7 +292,7 @@ static int32_t getTime(){
 
 //job initiated
 static int32_t lastJobId = -1;
-static std::unordered_set<int32_t> newJobIDs;
+// static std::unordered_set<int32_t> newJobIDs; // function fulfilled by lastJobId
 static event_tracker<df::job*> newJobs;
 
 //job started
@@ -323,8 +331,8 @@ static int32_t nextInvasion;
 static event_tracker<int32_t> invasions;
 
 //equipment change
-//static unordered_map<int32_t, vector<df::unit_inventory_item> > equipmentLog;
-static unordered_map<int32_t, vector<InventoryItem> > equipmentLog;
+static unordered_map<int32_t, unordered_map<int32_t, InventoryItem> > inventoryLog;
+event_tracker<InventoryChangeData> equipmentChanges;
 
 //report
 static int32_t lastReport;
@@ -359,6 +367,9 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         for (auto &key_value : completedJobs) {
             Job::deleteJobStruct(key_value.second, true);
         }
+//        for (auto &key_value : inventoryLog) {
+//            //key_value
+//        }
         newJobs.clear();
         startedJobs.clear();
         completedJobs.clear();
@@ -368,7 +379,8 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         destroyedBuildings.clear();
         createdConstructions.clear();
         destroyedConstructions.clear();
-        equipmentLog.clear();
+        inventoryLog.clear();
+        equipmentChanges.clear();
         //todo: clear reportToRelevantUnits?
         tickQueue.clear();
 
@@ -382,15 +394,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
             key_value.second.eventHandler(out, NULL);
         }
     } else if ( event == DFHack::SC_MAP_LOADED ) {
-        /*
-        int32_t tick = df::global::world->frame_counter;
-        multimap<int32_t,EventHandler> newTickQueue;
-        for ( auto i = tickQueue.begin(); i != tickQueue.end(); i++ )
-            newTickQueue.insert(pair<int32_t,EventHandler>(tick+(*i).first, (*i).second));
-        tickQueue.clear();
-        tickQueue.insert(newTickQueue.begin(), newTickQueue.end());
-        //out.print("%s,%d: on load, frame_counter = %d\n", __FILE__, __LINE__, tick);
-        */
+
         //tickQueue.clear();
         if (!df::global::item_next_id)
             return;
@@ -417,22 +421,6 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
                 startedJobs.emplace(-1, Job::cloneJobStruct(job, true));
             }
         }
-        // initialize our active units list
-        for (df::unit* unit : df::global::world->units.active) {
-            int32_t id = unit->id;
-            if (!activeUnits.contains(id)) {
-                // unit is already active, so emplace to a non-iterable area
-                activeUnits.emplace(-1, id);
-            }
-        }
-        // initialize our dead units list
-        for (df::unit* unit: df::global::world->units.all) {
-            //if ( unit->counters.death_id == -1 ) {
-            if (!Units::isActive(unit)) {
-                // unit is already dead, so emplace to a non-iterable area
-                deadUnits.emplace(-1, unit->id);
-            }
-        }
         // initialize our buildings list
         for (df::building* building : df::global::world->buildings.all) {
             Buildings::updateBuildings(out, (void*)intptr_t(building->id));
@@ -456,8 +444,17 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
             createdConstructions.emplace(-1, *construction);
         }
         int32_t current_time = getTime();
+        // initialize our active units list
+        // initialize our dead units list
+        // initialize our inventory lists
         // initialize our syndromes list
         for ( df::unit *unit : df::global::world->units.all ) {
+            // add to either the active or dead list
+            if(Units::isActive(unit)) {
+                activeUnits.emplace(-1, unit->id);
+            } else {
+                deadUnits.emplace(-1, unit->id);
+            }
             for (size_t idx = 0; idx < unit->syndromes.active.size(); ++idx) {
                 auto &syndrome = unit->syndromes.active[idx];
                 int32_t startTime = syndrome->year * ticksPerYear + syndrome->year_time;
@@ -466,6 +463,14 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
                     SyndromeData data(unit->id, (int32_t)idx);
                     syndromes.emplace(-1, data);
                 }
+            }
+            //update equipment
+            unordered_map<int32_t, InventoryItem> &last_tick_inventory = inventoryLog[unit->id];
+            vector<df::unit_inventory_item*> &current_tick_inventory = unit->inventory;
+            last_tick_inventory.clear();
+            for (auto ct_item : current_tick_inventory) {
+                auto itemId = ct_item->item->id;
+                last_tick_inventory.emplace(itemId, InventoryItem(itemId, *ct_item));
             }
         }
         lastReport = -1;
@@ -552,13 +557,6 @@ static void manageJobInitiatedEvent(color_ostream& out) {
         return;
     if (!df::global::job_next_id)
         return;
-    if ( lastJobId == -1 ) {
-        lastJobId = *df::global::job_next_id - 1;
-        return;
-    }
-    if ( lastJobId+1 == *df::global::job_next_id ) {
-        return; //no new jobs
-    }
     int32_t tick = df::global::world->frame_counter;
     int32_t oldest_last_tick = (uint16_t)-1;
 
@@ -1173,7 +1171,6 @@ static void manageSyndromeEvent(color_ostream& out) {
     }
 }
 
-
 static void manageInvasionEvent(color_ostream& out) {
     if (!df::global::world)
         return;
@@ -1200,82 +1197,68 @@ static void manageInvasionEvent(color_ostream& out) {
     }
 }
 
-static void manageEquipmentEvent(color_ostream& out) {
+
+static void manageInventoryChangeEvent(color_ostream& out) {
     if (!df::global::world)
         return;
-    multimap<Plugin*,EventHandler> copy(handlers[EventType::INVENTORY_CHANGE].begin(), handlers[EventType::INVENTORY_CHANGE].end());
 
-    unordered_map<int32_t, InventoryItem> itemIdToInventoryItem;
-    unordered_set<int32_t> currentlyEquipped;
     int32_t tick = df::global::world->frame_counter;
+    for (auto unit : df::global::world->units.all) {
+        auto unitId = unit->id;
+        unordered_map<int32_t, InventoryItem> &last_tick_inventory = inventoryLog[unitId];
+        vector<df::unit_inventory_item*> &current_tick_inventory = unit->inventory;
+        unordered_set<int32_t> currentlyEquipped;
+
+        // iterate current tick's inventory for unit (std::vector)
+        for (auto ct_item : current_tick_inventory) {
+            auto itemId = ct_item->item->id;
+            currentlyEquipped.emplace(itemId);
+
+            // detect new
+            auto lti_iter = last_tick_inventory.find(itemId);
+            if (lti_iter == last_tick_inventory.end()) {
+                // add to list because the item didn't exist before
+                equipmentChanges.emplace(tick, InventoryChangeData(unitId, nullptr, new InventoryItem(itemId, *ct_item)));
+                continue;
+            }
+
+            // detect change - (in how item is equipped)
+            InventoryItem item_old = lti_iter->second;
+            df::unit_inventory_item &item0 = item_old.item;
+            df::unit_inventory_item &item1 = *ct_item;
+            if (item0.mode == item1.mode && item0.body_part_id == item1.body_part_id &&
+                item0.wound_id == item1.wound_id)
+                continue;
+            // add to list because item is not equipped in the same way
+            equipmentChanges.emplace(tick, InventoryChangeData(unit->id, new InventoryItem(item_old.itemId, item_old.item), new InventoryItem(itemId, *ct_item)));
+        }
+        //check for dropped items
+        for (auto &key_value : last_tick_inventory) {
+            auto &item = key_value.second;
+            // add to list if unit doesn't have the item
+            if (currentlyEquipped.find(item.itemId) == currentlyEquipped.end()) {
+                equipmentChanges.emplace(tick, InventoryChangeData(unit->id, new InventoryItem(item.itemId, item.item), nullptr));
+            }
+        }
+
+        //update equipment
+        last_tick_inventory.clear();
+        for (auto ct_item : current_tick_inventory) {
+            auto itemId = ct_item->item->id;
+            last_tick_inventory.emplace(itemId, InventoryItem(itemId, *ct_item));
+        }
+    }
+    // iterate event handler callbacks
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::INVENTORY_CHANGE].begin(), handlers[EventType::INVENTORY_CHANGE].end());
     for (auto &key_value : copy) {
         auto &handler = key_value.second;
         auto last_tick = eventLastTick[handler];
+        // ensure handler's callback frequency
         if (tick - last_tick >= handler.freq) {
             eventLastTick[handler] = tick;
-            for (auto unit : df::global::world->units.all) {
-                itemIdToInventoryItem.clear();
-                currentlyEquipped.clear();
-                /*if ( unit->flags1.bits.inactive )
-                    continue;
-                */
-
-                auto oldEquipment = equipmentLog.find(unit->id);
-                bool hadEquipment = oldEquipment != equipmentLog.end();
-                vector<InventoryItem>* temp;
-                if (hadEquipment) {
-                    temp = &((*oldEquipment).second);
-                } else {
-                    temp = new vector<InventoryItem>;
-                }
-                //vector<InventoryItem>& v = (*oldEquipment).second;
-                vector<InventoryItem> &v = *temp;
-                for (auto &item : v) {
-                    itemIdToInventoryItem[item.itemId] = item;
-                }
-                for (size_t b = 0; b < unit->inventory.size(); ++b) {
-                    df::unit_inventory_item* dfitem_new = unit->inventory[b];
-                    currentlyEquipped.insert(dfitem_new->item->id);
-                    InventoryItem item_new(dfitem_new->item->id, *dfitem_new);
-                    auto c = itemIdToInventoryItem.find(dfitem_new->item->id);
-                    if (c == itemIdToInventoryItem.end()) {
-                        //new item equipped (probably just picked up)
-                        InventoryChangeData data(unit->id, NULL, &item_new);
-                        handler.eventHandler(out, (void*) &data);
-                        continue;
-                    }
-                    InventoryItem item_old = (*c).second;
-
-                    df::unit_inventory_item &item0 = item_old.item;
-                    df::unit_inventory_item &item1 = item_new.item;
-                    if (item0.mode == item1.mode && item0.body_part_id == item1.body_part_id &&
-                        item0.wound_id == item1.wound_id)
-                        continue;
-                    //some sort of change in how it's equipped
-
-                    InventoryChangeData data(unit->id, &item_old, &item_new);
-                    handler.eventHandler(out, (void*) &data);
-                }
-                //check for dropped items
-                for (auto b = v.begin(); b != v.end(); ++b) {
-                    InventoryItem i = *b;
-                    if (currentlyEquipped.find(i.itemId) != currentlyEquipped.end())
-                        continue;
-                    //TODO: delete ptr if invalid
-                    InventoryChangeData data(unit->id, &i, NULL);
-                    handler.eventHandler(out, (void*) &data);
-                }
-                if (!hadEquipment)
-                    delete temp;
-
-                //update equipment
-                vector<InventoryItem> &equipment = equipmentLog[unit->id];
-                equipment.clear();
-                for (size_t b = 0; b < unit->inventory.size(); ++b) {
-                    df::unit_inventory_item* dfitem = unit->inventory[b];
-                    InventoryItem item(dfitem->item->id, *dfitem);
-                    equipment.push_back(item);
-                }
+            // send all new equipment changes since it last fired
+            for(auto iter = equipmentChanges.upper_bound(last_tick); iter != equipmentChanges.end(); ++iter){
+                handler.eventHandler(out, &iter->second);
             }
         }
     }

@@ -23,6 +23,7 @@ void onConstruction(color_ostream &out, void* construction);
 void onSyndrome(color_ostream &out, void* syndrome);
 void onDeath(color_ostream &out, void* unit_id);
 void onNewActive(color_ostream &out, void* unit_id);
+void onItem(color_ostream &out, void* inventory_change_data);
 
 command_result skeleton2 (color_ostream &out, std::vector <std::string> & parameters);
 
@@ -89,9 +90,15 @@ void enable_unit_events() {
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     namespace EM = EventManager;
     if (enable && !enabled) {
-        enable_job_events();
-        enable_construction_events();
-        enable_unit_events();
+        //enable_job_events();
+        //enable_construction_events();
+        //enable_unit_events();
+        namespace EM = EventManager;
+        using namespace EM::EventType;
+        EM::EventHandler e1(onItem, 0);
+        EM::EventHandler e2(onItem, interval);
+        EM::registerListener(EventType::INVENTORY_CHANGE, e1, plugin_self);
+        EM::registerListener(EventType::INVENTORY_CHANGE, e2, plugin_self);
         out.print("plugin enabled!\n");
     } else if (!enable && enabled) {
         EM::unregisterAll(plugin_self);
@@ -128,3 +135,12 @@ void onNewActive(color_ostream &out, void* unit_id){
     auto id = (int32_t)(intptr_t)unit_id;
     out.print("onNewActive: (unit: %d)\n", id);
 }
+
+void onItem(color_ostream &out, void* inventory_change_data) {
+    namespace EM = EventManager;
+    auto data = (EM::InventoryChangeData*)inventory_change_data;
+    int32_t new_id = data->item_new ? data->item_new->itemId : -1;
+    int32_t old_id = data->item_old ? data->item_old->itemId : -1;
+    out.print("onItem: (old id: %d) (new id: %d)\n", old_id, new_id);
+}
+

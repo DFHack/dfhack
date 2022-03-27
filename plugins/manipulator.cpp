@@ -2052,7 +2052,7 @@ void viewscreen_unitlaborsst::render()
         for (int col = 0; col < col_widths[DISP_COLUMN_LABORS]; col++)
         {
             int col_offset = col + first_column;
-            bool is_labor_set = columns[col_offset].labor != unit_labor::NONE;
+            bool is_labor_set = false;
             fg = COLOR_WHITE;
             bg = COLOR_BLACK;
             uint8_t c = 0xFA;
@@ -2071,10 +2071,11 @@ void viewscreen_unitlaborsst::render()
                 else
                     c = '-';
             }
-            if (is_labor_set)
+            if (columns[col_offset].labor != unit_labor::NONE)
             {
                 if (unit->status.labors[columns[col_offset].labor])
                 {
+                    is_labor_set = true;
                     bg = COLOR_GREY;
                     if (columns[col_offset].skill == job_skill::NONE)
                         c = 0xF9;

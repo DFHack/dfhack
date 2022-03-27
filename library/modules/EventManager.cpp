@@ -449,10 +449,10 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         // initialize our inventory lists
         // initialize our syndromes list
         for ( df::unit *unit : df::global::world->units.all ) {
-            // add to either the active or dead list
             if(Units::isActive(unit)) {
                 activeUnits.emplace(-1, unit->id);
-            } else {
+            }
+            if (Units::isDead(unit)) {
                 deadUnits.emplace(-1, unit->id);
             }
             for (size_t idx = 0; idx < unit->syndromes.active.size(); ++idx) {
@@ -836,7 +836,7 @@ static void manageUnitDeathEvent(color_ostream& out) {
     // update dead units list for the current tick
     for (df::unit* unit: df::global::world->units.all) {
         //if ( unit->counters.death_id == -1 ) {
-        if (!Units::isActive(unit)) {
+        if (Units::isDead(unit)) {
             if (!deadUnits.contains(unit->id)) {
                 deadUnits.emplace(tick, unit->id);
                 activeUnits.erase(unit->id);
@@ -1197,7 +1197,6 @@ static void manageInvasionEvent(color_ostream& out) {
     }
 }
 
-
 static void manageInventoryChangeEvent(color_ostream& out) {
     if (!df::global::world)
         return;
@@ -1263,6 +1262,7 @@ static void manageInventoryChangeEvent(color_ostream& out) {
         }
     }
 }
+
 
 static void updateReportToRelevantUnits() {
     if (!df::global::world)

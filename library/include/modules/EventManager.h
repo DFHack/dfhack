@@ -118,6 +118,12 @@ namespace DFHack {
             int32_t defender;
             int32_t attackReport;
             int32_t defendReport;
+            bool operator==(const InteractionData &other) const {
+                bool units = attacker == other.attacker && defender == other.defender;
+                bool reports = attackReport == other.attackReport && defendReport == other.defendReport;
+                // probably doesn't need the verbs I bet
+                return units && reports && attackVerb == other.attackVerb && defendVerb == other.defendVerb;
+            }
         };
 
         DFHACK_EXPORT void registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin);
@@ -197,6 +203,18 @@ namespace std {
             r = m*(r+uad.attacker);
             r = m*(r+uad.defender);
             r = m*(r+uad.wound);
+            return r;
+        }
+    };
+    template <>
+    struct hash<DFHack::EventManager::InteractionData> {
+        std::size_t operator()(const DFHack::EventManager::InteractionData& interactionData) const {
+            size_t r = 43;
+            const size_t m = 65537;
+            r = m*(r+interactionData.attackReport);
+            r = m*(r+interactionData.defendReport);
+            r = m*(r+interactionData.attacker);
+            r = m*(r+interactionData.defender);
             return r;
         }
     };

@@ -934,6 +934,7 @@ static void manageBuildingEvent(color_ostream& out) {
         }
         // pretty sure we'd invalidate our loop if we added to buildings here, so we just save the id in an intermediary for now
         destroyedBuildings.emplace(tick, id);
+        // handlers which haven't handled this building yet aren't going to (it would be very tricky to make this work)
         iter = createdBuildings.erase(iter);
     }
     // update created building list
@@ -945,6 +946,7 @@ static void manageBuildingEvent(color_ostream& out) {
             continue;
         }
         createdBuildings.emplace(tick, id);
+        // handlers which haven't handled this building yet aren't going to (it would be very tricky to make this work)
         destroyedBuildings.erase(id);
     }
     nextBuilding = *df::global::building_next_id;
@@ -985,6 +987,7 @@ static void manageBuildingCreatedEvent(color_ostream& out) {
             continue;
         }
         createdBuildings.emplace(tick, id);
+        // handlers which haven't handled this building yet aren't going to (it would be very tricky to make this work)
         destroyedBuildings.erase(id);
     }
     nextBuilding = *df::global::building_next_id;
@@ -1047,13 +1050,15 @@ static void manageConstructionEvent(color_ostream& out) {
     int32_t tick = df::global::world->frame_counter;
     for (auto &c : df::global::world->constructions) {
         // anything on the global list, obviously exists.. so we ensure that coord is on the created list and isn't on the destroyed list
-        createdConstructions.emplace(tick, *c); // hashes based on c->pos (coord)
+        createdConstructions.emplace(tick, *c); // hashes based on c->pos (coord)\
+        // handlers which haven't handled this construction yet aren't going to (it would be very tricky to make this work)
         destroyedConstructions.erase(*c);
     }
     for (auto iter = createdConstructions.begin(); iter != createdConstructions.end();) {
         // if we can't find it, it was removed
         if (!df::construction::find(iter->second.pos)) {
             destroyedConstructions.emplace(tick, iter->second);
+            // handlers which haven't handled this construction yet aren't going to (it would be very tricky to make this work)
             iter = createdConstructions.erase(iter);
             continue;
         }
@@ -1089,6 +1094,7 @@ static void manageConstructionAddedEvent(color_ostream& out) {
     for (auto &c : df::global::world->constructions) {
         // anything on the global list, obviously exists.. so we ensure that coord is on the created list and isn't on the destroyed list
         createdConstructions.emplace(tick, *c); // hashes based on c->pos (coord)
+        // handlers which haven't handled this construction yet aren't going to (it would be very tricky to make this work)
         destroyedConstructions.erase(*c);
     }
     // iterate event handler callbacks
@@ -1117,6 +1123,7 @@ static void manageConstructionRemovedEvent(color_ostream& out) {
         // if we can't find it, it was removed
         if (!df::construction::find(iter->second.pos)) {
             destroyedConstructions.emplace(tick, iter->second);
+            // handlers which haven't handled this construction yet aren't going to (it would be very tricky to make this work)
             iter = createdConstructions.erase(iter);
             continue;
         }

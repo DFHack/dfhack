@@ -7,6 +7,7 @@
 #include <modules/Job.h>
 #include <df/job.h>
 #include <df/construction.h>
+#include <unordered_set>
 
 //#include "df/world.h"
 
@@ -24,6 +25,7 @@ void onSyndrome(color_ostream &out, void* syndrome);
 void onDeath(color_ostream &out, void* unit_id);
 void onNewActive(color_ostream &out, void* unit_id);
 void onItem(color_ostream &out, void* inventory_change_data);
+void onAttack(color_ostream &out, void* attack_data);
 
 command_result skeleton2 (color_ostream &out, std::vector <std::string> & parameters);
 
@@ -95,10 +97,14 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         //enable_unit_events();
         namespace EM = EventManager;
         using namespace EM::EventType;
-        EM::EventHandler e1(onItem, 0);
-        EM::EventHandler e2(onItem, interval);
-        EM::registerListener(EventType::INVENTORY_CHANGE, e1, plugin_self);
-        EM::registerListener(EventType::INVENTORY_CHANGE, e2, plugin_self);
+//        EM::EventHandler e1(onItem, 0);
+//        EM::EventHandler e2(onItem, interval);
+//        EM::registerListener(EventType::INVENTORY_CHANGE, e1, plugin_self);
+//        EM::registerListener(EventType::INVENTORY_CHANGE, e2, plugin_self);
+        EM::EventHandler e3(onAttack, 0);
+        EM::EventHandler e4(onAttack, interval);
+        EM::registerListener(EventType::UNIT_ATTACK, e3, plugin_self);
+        EM::registerListener(EventType::UNIT_ATTACK, e4, plugin_self);
         out.print("plugin enabled!\n");
     } else if (!enable && enabled) {
         EM::unregisterAll(plugin_self);
@@ -143,4 +149,15 @@ void onItem(color_ostream &out, void* inventory_change_data) {
     int32_t old_id = data->item_old ? data->item_old->itemId : -1;
     out.print("onItem: (old id: %d) (new id: %d)\n", old_id, new_id);
 }
+
+void onAttack(color_ostream &out, void* attack_data){
+    auto* data = (EventManager::UnitAttackData*)attack_data;
+    static std::unordered_set<EventManager::UnitAttackData> seen;
+    out.print("onAttack: (attacker: %d) (defender: %d) (wound: %d)\n", data->attacker, data->defender, data->wound);
+    if(!seen.emplace(*data).second){
+        out.print("onAttack: duplicate event");
+    }
+}
+
+
 

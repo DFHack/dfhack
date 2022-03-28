@@ -1158,8 +1158,7 @@ static void manageSyndromeEvent(color_ostream& out) {
             int32_t startTime = syndrome->year * ticksPerYear + syndrome->year_time;
             // add the syndrome if it started now or in the past
             if (startTime <= current_time) {
-                SyndromeData data(unit->id, (int32_t)idx);
-                syndromes.emplace(tick, data);
+                syndromes.emplace(tick, SyndromeData(unit->id, (int32_t)idx));
             }
         }
     }

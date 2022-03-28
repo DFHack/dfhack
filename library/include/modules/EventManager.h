@@ -100,11 +100,14 @@ namespace DFHack {
         };
 
         struct UnitAttackData {
+            int32_t report_id;
             int32_t attacker;
             int32_t defender;
             int32_t wound;
+
             bool operator==(const UnitAttackData &other) const {
-                return attacker == other.attacker && defender == other.defender && wound == other.wound;
+                // fairly sure the report_id is the only thing that matters
+                return report_id == other.report_id && wound == other.wound;
             }
         };
 
@@ -190,6 +193,7 @@ namespace std {
         std::size_t operator()(const DFHack::EventManager::UnitAttackData& uad) const {
             size_t r = 43;
             const size_t m = 65537;
+            r = m*(r+uad.report_id);
             r = m*(r+uad.attacker);
             r = m*(r+uad.defender);
             r = m*(r+uad.wound);

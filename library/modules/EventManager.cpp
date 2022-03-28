@@ -323,13 +323,14 @@ static event_tracker<int32_t> invasions;
 
 //equipment change
 static unordered_map<int32_t, unordered_map<int32_t, InventoryItem> > inventoryLog;
-event_tracker<InventoryChangeData> equipmentChanges;
+static event_tracker<InventoryChangeData> equipmentChanges;
 
 //report
 static event_tracker<int32_t> newReports;
 
 //unit attack
 static int32_t lastReportUnitAttack;
+static event_tracker<UnitAttackData> attackEvents;
 static std::map<int32_t,std::vector<int32_t> > reportToRelevantUnits;
 static int32_t reportToRelevantUnitsTime = -1;
 
@@ -1321,92 +1322,98 @@ static void manageUnitAttackEvent(color_ostream& out) {
             strikeReports.insert(report->id);
         }
     }
-
-    if ( strikeReports.empty() ) {
-        return;
-    }
     updateReportToRelevantUnits();
     map<int32_t, map<int32_t, int32_t> > alreadyDone;
+    for (int reportId : strikeReports) {
+        df::report* report = df::report::find(reportId);
+        if ( !report )
+            continue; //TODO: error
+        std::string reportStr = report->text;
+        for ( int32_t b = reportId+1; ; ++b ) {
+            df::report* report2 = df::report::find(b);
+            if ( !report2 )
+                break;
+            if ( report2->type != df::announcement_type::COMBAT_STRIKE_DETAILS )
+                break;
+            if ( !report2->flags.bits.continuation )
+                break;
+            reportStr += report2->text;
+        }
+
+        std::vector<int32_t>& relevantUnits = reportToRelevantUnits[report->id];
+        if ( relevantUnits.size() != 2 ) {
+            continue;
+        }
+
+        df::unit* unit1 = df::unit::find(relevantUnits[0]);
+        df::unit* unit2 = df::unit::find(relevantUnits[1]);
+
+        df::unit_wound* wound1 = getWound(unit1,unit2);
+        df::unit_wound* wound2 = getWound(unit2,unit1);
+
+        if ( wound1 && !alreadyDone[unit1->id][unit2->id] ) {
+            UnitAttackData data{};
+            data.report_id = report->id;
+            data.attacker = unit1->id;
+            data.defender = unit2->id;
+            data.wound = wound1->id;
+
+            alreadyDone[data.attacker][data.defender] = 1;
+            attackEvents.emplace(tick, data);
+        }
+
+        if ( wound2 && !alreadyDone[unit1->id][unit2->id] ) {
+            UnitAttackData data{};
+            data.report_id = report->id;
+            data.attacker = unit2->id;
+            data.defender = unit1->id;
+            data.wound = wound2->id;
+
+            alreadyDone[data.attacker][data.defender] = 1;
+            attackEvents.emplace(tick, data);
+        }
+
+        if ( Units::isKilled(unit1) ) {
+            UnitAttackData data{};
+            data.report_id = report->id;
+            data.attacker = unit2->id;
+            data.defender = unit1->id;
+            data.wound = -1;
+
+            alreadyDone[data.attacker][data.defender] = 1;
+            attackEvents.emplace(tick, data);
+        }
+
+        if ( Units::isKilled(unit2) ) {
+            UnitAttackData data{};
+            data.report_id = report->id;
+            data.attacker = unit1->id;
+            data.defender = unit2->id;
+            data.wound = -1;
+
+            alreadyDone[data.attacker][data.defender] = 1;
+            attackEvents.emplace(tick, data);
+        }
+
+        if ( !wound1 && !wound2 ) {
+            //if ( unit1->flags1.bits.inactive || unit2->flags1.bits.inactive )
+            //    continue;
+            if ( reportStr.find("severed part") )
+                continue;
+            if ( Once::doOnce("EventManager neither wound") ) {
+                out.print("%s, %d: neither wound: %s\n", __FILE__, __LINE__, reportStr.c_str());
+            }
+        }
+    }
+
     multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_ATTACK].begin(), handlers[EventType::UNIT_ATTACK].end());
     for (auto &key_value : copy) {
         auto &handler = key_value.second;
         auto last_tick = eventLastTick[handler];
         if (tick - last_tick >= handler.freq) {
             eventLastTick[handler] = tick;
-            for (int reportId : strikeReports) {
-                df::report* report = df::report::find(reportId);
-                if ( !report )
-                    continue; //TODO: error
-                std::string reportStr = report->text;
-                for ( int32_t b = reportId+1; ; ++b ) {
-                    df::report* report2 = df::report::find(b);
-                    if ( !report2 )
-                        break;
-                    if ( report2->type != df::announcement_type::COMBAT_STRIKE_DETAILS )
-                        break;
-                    if ( !report2->flags.bits.continuation )
-                        break;
-                    reportStr = reportStr + report2->text;
-                }
-
-                std::vector<int32_t>& relevantUnits = reportToRelevantUnits[report->id];
-                if ( relevantUnits.size() != 2 ) {
-                    continue;
-                }
-
-                df::unit* unit1 = df::unit::find(relevantUnits[0]);
-                df::unit* unit2 = df::unit::find(relevantUnits[1]);
-
-                df::unit_wound* wound1 = getWound(unit1,unit2);
-                df::unit_wound* wound2 = getWound(unit2,unit1);
-
-                if ( wound1 && !alreadyDone[unit1->id][unit2->id] ) {
-                    UnitAttackData data;
-                    data.attacker = unit1->id;
-                    data.defender = unit2->id;
-                    data.wound = wound1->id;
-
-                    alreadyDone[data.attacker][data.defender] = 1;
-                    handler.eventHandler(out, (void*)&data);
-                }
-
-                if ( wound2 && !alreadyDone[unit1->id][unit2->id] ) {
-                    UnitAttackData data;
-                    data.attacker = unit2->id;
-                    data.defender = unit1->id;
-                    data.wound = wound2->id;
-
-                    alreadyDone[data.attacker][data.defender] = 1;
-                    handler.eventHandler(out, (void*)&data);
-                }
-
-                if ( Units::isKilled(unit1) ) {
-                    UnitAttackData data;
-                    data.attacker = unit2->id;
-                    data.defender = unit1->id;
-                    data.wound = -1;
-                    alreadyDone[data.attacker][data.defender] = 1;
-                    handler.eventHandler(out, (void*)&data);
-                }
-
-                if ( Units::isKilled(unit2) ) {
-                    UnitAttackData data;
-                    data.attacker = unit1->id;
-                    data.defender = unit2->id;
-                    data.wound = -1;
-                    alreadyDone[data.attacker][data.defender] = 1;
-                    handler.eventHandler(out, (void*)&data);
-                }
-
-                if ( !wound1 && !wound2 ) {
-                    //if ( unit1->flags1.bits.inactive || unit2->flags1.bits.inactive )
-                    //    continue;
-                    if ( reportStr.find("severed part") )
-                        continue;
-                    if ( Once::doOnce("EventManager neither wound") ) {
-                        out.print("%s, %d: neither wound: %s\n", __FILE__, __LINE__, reportStr.c_str());
-                    }
-                }
+            for(auto iter = attackEvents.upper_bound(last_tick); iter != attackEvents.end(); ++iter){
+                handler.eventHandler(out, &iter->second);
             }
         }
     }

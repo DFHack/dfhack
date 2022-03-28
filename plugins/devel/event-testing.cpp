@@ -150,11 +150,12 @@ void onItem(color_ostream &out, void* inventory_change_data) {
     out.print("onItem: (old id: %d) (new id: %d)\n", old_id, new_id);
 }
 
-void onAttack(color_ostream &out, void* attack_data){
-    auto* data = (EventManager::UnitAttackData*)attack_data;
+void onAttack(color_ostream &out, void* attack_data) {
+    auto* data = (EventManager::UnitAttackData*) attack_data;
     static std::unordered_set<EventManager::UnitAttackData> seen;
-    out.print(" onAttack: (attacker: %d) (defender: %d) (wound: %d)\n", data->attacker, data->defender, data->wound);
-    if(!seen.emplace(*data).second){
+    out.print(" onAttack: (report id: %d) (attacker: %d) (defender: %d) (wound: %d)\n",
+              data->report_id, data->attacker, data->defender, data->wound);
+    if (!seen.emplace(*data).second) {
         out.print("  onAttack: duplicate event\n");
     }
 }

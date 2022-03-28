@@ -335,7 +335,7 @@ static unordered_map<int32_t, unordered_map<int32_t, InventoryItem> > inventoryL
 event_tracker<InventoryChangeData> equipmentChanges;
 
 //report
-static int32_t lastReport;
+static event_tracker<int32_t> newReports;
 
 //unit attack
 static int32_t lastReportUnitAttack;
@@ -381,11 +381,11 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         destroyedConstructions.clear();
         inventoryLog.clear();
         equipmentChanges.clear();
+        newReports.clear();
         //todo: clear reportToRelevantUnits?
         tickQueue.clear();
 
         Buildings::clearBuildings(out);
-        lastReport = -1;
         lastReportUnitAttack = -1;
         gameLoaded = false;
 
@@ -473,9 +473,9 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
                 last_tick_inventory.emplace(itemId, InventoryItem(itemId, *ct_item));
             }
         }
-        lastReport = -1;
-        if ( !df::global::world->status.reports.empty() ) {
-            lastReport = df::global::world->status.reports[df::global::world->status.reports.size()-1]->id;
+        // initialize our reports list
+        for(auto &r : df::global::world->status.reports){
+            newReports.emplace(-1, r->id);
         }
         lastReportUnitAttack = -1;
         lastReportInteraction = -1;
@@ -1288,23 +1288,25 @@ static void updateReportToRelevantUnits() {
 static void manageReportEvent(color_ostream& out) {
     if (!df::global::world)
         return;
-    multimap<Plugin*,EventHandler> copy(handlers[EventType::REPORT].begin(), handlers[EventType::REPORT].end());
-    std::vector<df::report*>& reports = df::global::world->status.reports;
-    size_t a = df::report::binsearch_index(reports, lastReport, false);
-    //this may or may not be needed: I don't know if binsearch_index goes earlier or later if it can't hit the target exactly
-    while (a < reports.size() && reports[a]->id <= lastReport) {
-        ++a;
-    }
+
     int32_t tick = df::global::world->frame_counter;
+    // update reports list
+    for(auto &r : df::global::world->status.reports){
+        newReports.emplace(tick, r->id);
+    }
+
+    // iterate event handler callbacks
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::REPORT].begin(), handlers[EventType::REPORT].end());
     for (auto &key_value : copy) {
         auto &handler = key_value.second;
         auto last_tick = eventLastTick[handler];
+        // enforce handler's callback frequency
         if (tick - last_tick >= handler.freq) {
             eventLastTick[handler] = tick;
-            for (; a < reports.size(); ++a) {
-                df::report* report = reports[a];
-                handler.eventHandler(out, (void*) intptr_t(report->id));
-                lastReport = report->id;
+            // send all new reports since it last fired
+            auto iter = newReports.upper_bound(last_tick);
+            for(;iter != newReports.end(); ++iter) {
+                handler.eventHandler(out, (void*) intptr_t(iter->second));
             }
         }
     }

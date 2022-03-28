@@ -57,6 +57,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Update download link and installation instructions for Visual C++ 2015 build tools on Windows
 - Updated information regarding obtaining a compatible Windows build environment
 - `confirm`: Correct the command name in the plugin help text
+- ``Quickfort Blueprint Editing Guide``: added screenshots to the Dreamfort case study and overall clarified text
 
 ## API
 - Added functions reverse-engineered from ambushing unit code: ``Units::isHidden``, ``Units::isFortControlled``, ``Units::getOuterContainerRef``, ``Items::getOuterContainerRef``

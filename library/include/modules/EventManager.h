@@ -63,8 +63,11 @@ namespace DFHack {
         struct SyndromeData {
             int32_t unitId;
             int32_t syndromeIndex;
-            SyndromeData(int32_t unitId_in, int32_t syndromeIndex_in): unitId(unitId_in), syndromeIndex(syndromeIndex_in) {
-
+            SyndromeData(int32_t unitId_in, int32_t syndromeIndex_in)
+                    : unitId(unitId_in), syndromeIndex(syndromeIndex_in) {
+            }
+            bool operator==(const SyndromeData &other) const {
+                return unitId == other.unitId && syndromeIndex == other.syndromeIndex;
             }
         };
 
@@ -86,12 +89,23 @@ namespace DFHack {
                     unitId(id_in),
                     item_old(old_in),
                     item_new(new_in) {}
+            bool operator==(const InventoryChangeData &other) const {
+                bool unit = unitId == other.unitId;
+                bool newItem = (item_new && other.item_new && item_new->itemId == other.item_new->itemId) ||
+                               (!item_new && item_new == other.item_new);
+                bool oldItem = (item_old && other.item_old && item_old->itemId == other.item_old->itemId) ||
+                               (!item_old && item_old == other.item_old);
+                return unit && newItem && oldItem;
+            }
         };
 
         struct UnitAttackData {
             int32_t attacker;
             int32_t defender;
             int32_t wound;
+            bool operator==(const UnitAttackData &other) const {
+                return attacker == other.attacker && defender == other.defender && wound == other.wound;
+            }
         };
 
         struct InteractionData {
@@ -168,6 +182,17 @@ namespace std {
             if (icd.item_old) {
                 r=m*(r+(2*icd.item_old->itemId));
             }
+            return r;
+        }
+    };
+    template <>
+    struct hash<DFHack::EventManager::UnitAttackData> {
+        std::size_t operator()(const DFHack::EventManager::UnitAttackData& uad) const {
+            size_t r = 43;
+            const size_t m = 65537;
+            r = m*(r+uad.attacker);
+            r = m*(r+uad.defender);
+            r = m*(r+uad.wound);
             return r;
         }
     };

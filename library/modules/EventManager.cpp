@@ -208,15 +208,6 @@ namespace std{
     bool operator==(const df::construction &A, const df::construction &B){
         return A.pos == B.pos;
     }
-    bool operator==(const DFHack::EventManager::SyndromeData &A, const DFHack::EventManager::SyndromeData &B){
-        return A.unitId == B.unitId && A.syndromeIndex == B.syndromeIndex;
-    }
-    bool operator==(const DFHack::EventManager::InventoryChangeData &A, const DFHack::EventManager::InventoryChangeData &B) {
-        bool unit = A.unitId == B.unitId;
-        bool newItem = (A.item_new && B.item_new && A.item_new->itemId == B.item_new->itemId) || (!A.item_new && A.item_new == B.item_new);
-        bool oldItem = (A.item_old && B.item_old && A.item_old->itemId == B.item_old->itemId) || (!A.item_old && A.item_old == B.item_old);
-        return unit && newItem && oldItem;
-    }
 }
 template<typename T>
 class event_tracker { //todo: use inheritance? stl seems to use variadics, so it's unclear how well that would actually work

@@ -1010,16 +1010,18 @@ static void manageBuildingDestroyedEvent(color_ostream& out) {
         return;
     int32_t tick = df::global::world->frame_counter;
     // update destroyed building list
-    for (auto &iter: createdBuildings) {
-        int32_t id = iter.second;
+    for (auto iter = createdBuildings.begin(); iter != createdBuildings.end();) {
+        int32_t id = iter->second;
         int32_t index = df::building::binsearch_index(df::global::world->buildings.all, id);
         // continue if we found the id in world->buildings.all
         if (index != -1) {
+            ++iter;
             continue;
         }
         // pretty sure we'd invalidate our loop if we added to buildings here, so we just save the id in an intermediary for now
         destroyedBuildings.emplace(tick, id);
-        createdBuildings.erase(id);
+        // handlers which haven't handled this building yet aren't going to (it would be very tricky to make this work)
+        iter = createdBuildings.erase(id);
     }
     multimap<Plugin*, EventHandler> copy(handlers[EventType::BUILDING_DESTROYED].begin(), handlers[EventType::BUILDING_DESTROYED].end());
     // iterate event handler callbacks

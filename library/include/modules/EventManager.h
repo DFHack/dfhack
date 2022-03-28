@@ -75,6 +75,7 @@ namespace DFHack {
             InventoryItem() {}
             InventoryItem(int32_t id_in, df::unit_inventory_item item_in): itemId(id_in), item(item_in) {}
         };
+
         struct InventoryChangeData {
             int32_t unitId;
             // todo: don't use pointers

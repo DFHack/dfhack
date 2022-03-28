@@ -153,9 +153,9 @@ void onItem(color_ostream &out, void* inventory_change_data) {
 void onAttack(color_ostream &out, void* attack_data){
     auto* data = (EventManager::UnitAttackData*)attack_data;
     static std::unordered_set<EventManager::UnitAttackData> seen;
-    out.print("onAttack: (attacker: %d) (defender: %d) (wound: %d)\n", data->attacker, data->defender, data->wound);
+    out.print(" onAttack: (attacker: %d) (defender: %d) (wound: %d)\n", data->attacker, data->defender, data->wound);
     if(!seen.emplace(*data).second){
-        out.print("onAttack: duplicate event");
+        out.print("  onAttack: duplicate event\n");
     }
 }
 

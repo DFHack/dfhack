@@ -1050,7 +1050,7 @@ static void manageConstructionEvent(color_ostream& out) {
     int32_t tick = df::global::world->frame_counter;
     for (auto &c : df::global::world->constructions) {
         // anything on the global list, obviously exists.. so we ensure that coord is on the created list and isn't on the destroyed list
-        createdConstructions.emplace(tick, *c); // hashes based on c->pos (coord)\
+        createdConstructions.emplace(tick, *c); // hashes based on c->pos (coord)
         // handlers which haven't handled this construction yet aren't going to (it would be very tricky to make this work)
         destroyedConstructions.erase(*c);
     }

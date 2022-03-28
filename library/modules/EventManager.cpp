@@ -1267,8 +1267,10 @@ static void manageReportEvent(color_ostream& out) {
         return;
 
     int32_t tick = df::global::world->frame_counter;
+    std::unordered_set<int32_t> valid_reports;
     // update reports list
     for(auto &r : df::global::world->status.reports){
+        valid_reports.emplace(r->id);
         newReports.emplace(tick, r->id);
     }
 
@@ -1282,8 +1284,13 @@ static void manageReportEvent(color_ostream& out) {
             eventLastTick[handler] = tick;
             // send all new reports since it last fired
             auto iter = newReports.upper_bound(last_tick);
-            for(;iter != newReports.end(); ++iter) {
-                handler.eventHandler(out, (void*) intptr_t(iter->second));
+            for(;iter != newReports.end();) {
+                if (valid_reports.count(iter->second)) {
+                    handler.eventHandler(out, (void*) intptr_t(iter->second));
+                    ++iter;
+                } else {
+                    iter = newReports.erase(iter->second);
+                }
             }
         }
     }

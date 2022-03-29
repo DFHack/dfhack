@@ -123,7 +123,9 @@ void DFHack::EventManager::unregisterAll(Plugin* plugin) {
 
 static void manageTickEvent(color_ostream& out);
 static void manageJobInitiatedEvent(color_ostream& out);
+static void manageJobStartedEvent(color_ostream& out);
 static void manageJobCompletedEvent(color_ostream& out);
+static void manageNewUnitActiveEvent(color_ostream& out);
 static void manageUnitDeathEvent(color_ostream& out);
 static void manageItemCreationEvent(color_ostream& out);
 static void manageBuildingEvent(color_ostream& out);
@@ -139,20 +141,22 @@ static void manageInteractionEvent(color_ostream& out);
 typedef void (*eventManager_t)(color_ostream&);
 
 static const eventManager_t eventManager[] = {
-    manageTickEvent,
-    manageJobInitiatedEvent,
-    manageJobCompletedEvent,
-    manageUnitDeathEvent,
-    manageItemCreationEvent,
-    manageBuildingEvent,
-    manageConstructionEvent,
-    manageSyndromeEvent,
-    manageInvasionEvent,
-    manageEquipmentEvent,
-    manageReportEvent,
-    manageUnitAttackEvent,
-    manageUnloadEvent,
-    manageInteractionEvent,
+        manageTickEvent,
+        manageJobInitiatedEvent,
+        manageJobStartedEvent,
+        manageJobCompletedEvent,
+        manageNewUnitActiveEvent,
+        manageUnitDeathEvent,
+        manageItemCreationEvent,
+        manageBuildingEvent,
+        manageConstructionEvent,
+        manageSyndromeEvent,
+        manageInvasionEvent,
+        manageEquipmentEvent,
+        manageReportEvent,
+        manageUnitAttackEvent,
+        manageUnloadEvent,
+        manageInteractionEvent,
 };
 
 //job initiated
@@ -394,6 +398,28 @@ static void manageJobInitiatedEvent(color_ostream& out) {
     lastJobId = *df::global::job_next_id - 1;
 }
 
+static void manageJobStartedEvent(color_ostream& out) {
+    if (!df::global::world)
+        return;
+    int32_t tick = df::global::world->frame_counter;
+    int32_t oldest_last_tick = (uint16_t)-1;
+    static unordered_set<int32_t> startedJobs;
+
+    // iterate event handler callbacks
+    multimap<Plugin*, EventHandler> copy(handlers[EventType::JOB_STARTED].begin(), handlers[EventType::JOB_STARTED].end());
+    for (auto &key_value : copy) {
+        auto &handler = key_value.second;
+        for (df::job_list_link* link = df::global::world->jobs.list.next; link != NULL; link = link->next) {
+            df::job* job = link->item;
+            // the jobs must have a worker to start
+            if (job && Job::getWorker(job) && !startedJobs.count(job->id)) {
+                startedJobs.emplace(job->id);
+                handler.eventHandler(out, job);
+            }
+        }
+    }
+}
+
 //helper function for manageJobCompletedEvent
 //static int32_t getWorkerID(df::job* job) {
 //    auto ref = findRef(job->general_refs, general_ref_type::UNIT_WORKER);
@@ -529,6 +555,26 @@ static void manageJobCompletedEvent(color_ostream& out) {
         prevJobs[newJob->id] = newJob;
     }
 }
+
+static void manageNewUnitActiveEvent(color_ostream& out) {
+    if (!df::global::world)
+        return;
+    int32_t tick = df::global::world->frame_counter;
+    static unordered_set<int32_t> activeUnits;
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_NEW_ACTIVE].begin(), handlers[EventType::UNIT_NEW_ACTIVE].end());
+    // iterate event handler callbacks
+    for (auto &key_value : copy) {
+        auto &handler = key_value.second;
+        for (df::unit* unit : df::global::world->units.active) {
+            int32_t id = unit->id;
+            if (!activeUnits.count(id)) {
+                handler.eventHandler(out, (void*) intptr_t(id)); // intptr_t() avoids cast from smaller type warning
+            }
+        }
+    }
+}
+}
+
 
 static void manageUnitDeathEvent(color_ostream& out) {
     if (!df::global::world)

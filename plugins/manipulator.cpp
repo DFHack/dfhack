@@ -2085,8 +2085,8 @@ void viewscreen_unitlaborsst::render()
                 bg = COLOR_CYAN;
             if ((col_offset == sel_column) && (row_offset == sel_row))
             {
-                fg = is_labor_set ? COLOR_BLUE : COLOR_GREY;
-                bg = COLOR_WHITE;
+                bg = is_labor_set ? COLOR_LIGHTBLUE : COLOR_WHITE;
+                fg = COLOR_BLACK;
             }
             Screen::paintTile(Screen::Pen(c, fg, bg), col_offsets[DISP_COLUMN_LABORS] + col, 4 + row);
         }

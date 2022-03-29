@@ -1274,7 +1274,7 @@ command_result digl (color_ostream &out, vector <string> & parameters)
     int16_t basemat = MCache->layerMaterialAt(xy);
     if( veinmat != -1 )
     {
-        con.printerr("This is a vein. Use vdig instead!\n");
+        con.printerr("This is a vein. Use digv instead!\n");
         delete MCache;
         return CR_FAILURE;
     }

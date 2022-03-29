@@ -52,6 +52,13 @@ function enterSidebarMode(sidebar_mode, max_esc)
         if df.global.ui.main.mode == df.ui_sidebar_mode.Default and
                 focus_string == 'dwarfmode/Default' then
             if #navkey > 0 then gui.simulateInput(screen, navkey) end
+            if navkey == 'D_DESIGNATE' then
+                -- if the z-level happens to be on the surface, the mode will be
+                -- set to DesignateChopTrees. we need an extra step to get to
+                -- DesignateMine
+                gui.simulateInput(dfhack.gui.getCurViewscreen(true),
+                                 'DESIGNATE_DIG')
+            end
             return
         end
         gui.simulateInput(screen, 'LEAVESCREEN')

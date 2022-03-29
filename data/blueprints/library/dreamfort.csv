@@ -28,7 +28,7 @@
 ""
 "Dreamfort works best at an embark site that is flat and has at least one soil layer. New players should avoid embarks with aquifers if they are not prepared to deal with them. Bring picks for mining, an axe for woodcutting, and an anvil for a forge. Bring a few blocks to speed up initial workshop construction as well. That's all you really need, but see the example embark profile in the online spreadsheets for a more complete setup."
 ""
-"Other DFHack scripts and plugins also work very well with Dreamfort, such as autofarm, automelt, autonestbox, burial, prioritize, seedwatch, tailor, and, of course, buildingplan. An init file that configures all these plugins Is distributed with DFHack as hack/examples/init/onMapLoad_dreamfort.init."
+"Other DFHack scripts and plugins also work very well with Dreamfort, such as autofarm, automelt, autonestbox, burial, prioritize, seedwatch, tailor, and, of course, buildingplan. An init file that configures all these plugins is distributed with DFHack as hack/examples/init/onMapLoad_dreamfort.init."
 Put that file in your Dwarf Fortress directory -- the same directory that has dfhack.init.
 ""
 "Also copy the files in hack/examples/orders/ to dfhack-config/orders/ and the files in hack/examples/professions/ to professions/. We'll be using these files later. See https://docs.dfhack.org/en/stable/docs/guides/examples-guide.html for more information, including suggestions on how many dwarves of each profession you are likely to need at each stage of fort maturity."
@@ -43,7 +43,7 @@ You are welcome to copy the Dreamfort spreadsheets and make your own modificatio
 ""
 "If you like, you can download a fully built Dreamfort-based fort from https://dffd.bay12games.com/file.php?id=15434 and explore it
 interactively."
-"# dreamfort.csv is generated with the following command:
+"# The dreamfort.csv distributed with DFHack is generated with the following command:
   for fname in dreamfort*.xlsx; do xlsx2csv -a -p '' ""$fname""; done | sed 's/,*$//'"
 #notes label(checklist) command checklist
 "Here is the recommended order for Dreamfort commands. You can copy/paste the command lines directly into the DFHack terminal, or, if you prefer, you can run the blueprints in the UI with gui/quickfort. See the level walkthroughs for context and details. Also remember to read the messages the blueprints print out after you run them so you don't miss any important manual steps."
@@ -52,6 +52,7 @@ interactively."
 Copy hack/examples/init/onMapLoad_dreamfort.init to your DF directory
 Copy the fort automation orders from hack/examples/orders/*.json to the dfhack-config/orders/ directory
 Optionally copy the premade profession definitions from hack/examples/professions/ to the professions/ directory
+Optionally copy the premade Dreamfort embark profile from the online spreadsheets to the data/init/embark_profiles.txt file
 ""
 -- Set settings and preload initial orders --
 quickfort run library/dreamfort.csv -n /setup,# Place the cursor on the center of your starting wagon. Run before making any manual adjustments to settings! Run the /setup_help blueprint for details on what this blueprint does.
@@ -82,7 +83,7 @@ prioritize ConstructBuilding,# Run when you see the bridges ready to be built so
 "quickfort run,orders library/dreamfort.csv -n /surface7",# Run after the surface walls are completed and any marked trees are chopped down.
 ""
 -- Plumbing -- 
-"This is a good time to fill your well cisterns, either with a bucket brigade or by routing water from an aquifer or freshwater stream."
+"This is a good time to fill your well cisterns, either with a bucket brigade or by routing water from a freshwater stream or an aquifer (see the library/aquifer_tap.csv blueprint for help with this)."
 "Also consider bringing magma up to your services level so you can replace the forge and furnaces on your industry level with more powerful magma versions. This is especially important if your embark has insufficient trees to convert into charcoal. Keep in mind that moving magma is a tricky process and can take a long time. Don't forget to continue making progress through the checklist! If you choose to use magma, I suggest getting it in place before importing the military and smelting automation orders since they make heavy use of furnaces and forges."
 ""
 -- Mature fort (third migration wave onward) -- 
@@ -305,17 +306,26 @@ Sieges and Prisoner Processing:
 Here are some tips and procedures for handling seiges -- including how to clean up afterwards!
 ""
 "- Ensure your ""Inside"" burrow includes only below-ground areas and safe surface areas of your fort. In particular, don't include the ""atrium"" area (where the ""siege bait"" zone is) or the trapped hallways."
-"- When a siege begins, set the alert to ""Siege"" to ensure all your civilians stay out of danger. Immediately pull the lever to close the outer main gate. It is also wise to close the trade depot and inner main gate as well. That way, if enemies get past the traps, they'll have to go through the soldiers in your barracks."
+""
+"- When a siege begins, set the civilian alert to ""Siege"" to ensure all your civilians stay out of danger. Immediately pull the lever to close the outer main gate. It is also wise to close the trade depot and inner main gate as well. That way, if enemies get past the traps, they'll have to go through the soldiers in your barracks."
+""
 "- During a siege, use the levers to control how attackers path through the trapped corridors. If there are more enemies than cage traps, time your lever pulling so that the inner gates snap closed before your last cage trap is sprung. Then the remaining attackers will have to backtrack and go through the other trap-filled hallway."
+""
 "- If your cage traps fill up, ensure your hallways are free of uncaged attackers, then close the trap hallway outer gates and open the inner gates. Unset the civilian alert and allow your dwarves to reset all the traps -- make some extra cages in preparation for this! Then re-set the civilian alert to ""Siege"" and open the trap hallway outer gates."
+""
 "- Once the last attacker is caged, open all the gates and unset the civilian alert. Life is normal again!"
 ""
 "After a siege, you can use the caged prisoners to safely train your military. Here's how:"
 ""
 "- Once the prisoners are hauled to the ""prisoner quantum"" stockpile, run ""stripcaged all"" in the DFHack console."
+""
 "- After all the prisoners' items have been confiscated, bring your military dwarves to the barracks (if they aren't already there)."
+""
 - Use the zone (i) menu to assign a group prisoners to the pasture that overlaps the prisoner quantum stockpile
+""
 "- Hauler dwarves will come and release prisoners one by one. Your military dwarves will immediately pounce on the released prisoner and chop them to bits, saving the hauler dwarves from being attacked. Repeat until all prisoners have been ""processed""."
+""
+"Only types of creatures that you commonly see in sieges are accepted by the prisoner hauling route by default. You can add additional creature types by configuring the hauling route stop in the 'h' menu. Note that generated creature types, like necromancer experiments, can't be explicitly added. You have to (at least temporarily) accept all animals to include them."
 #meta label(perimeter) start(central stairs) message(Run quickfort undo on this blueprint to clean up.) show the eventual perimeter of the surface fort; useful for location scouting
 walls/surface_walls
 corridor/surface_corridor
@@ -2015,7 +2025,7 @@ Services Walkthrough:
 ,,,,d,d,d,d,d,d,d,d,d,d,d,d,d,,,,,d,,d,,,,,d,d,d,d,d,d,d,d,d
 ,,,,d,d,d,d,d,d,d,d,d,d,d,d,d,,,,d,d,d,d,d,,,,d,d,d,d,d,d,d,d,d
 ,,,,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,`,`,`,d,d,d,d,d,d,d,d,d,d,d,d,d
-,,,,d,d,d,d,d,d,d,d,d,d,d,d,d,,,,d,`,`,`,d,,,,d,d,d,d,h,d,d,d,d
+,,,,d,d,d,d,d,d,d,d,d,d,d,d,d,,d,,d,`,`,`,d,,d,,d,d,d,d,h,d,d,d,d
 ,,,,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,`,`,`,d,d,d,d,d,d,d,d,d,d,d,d,d
 ,,,,d,d,d,d,d,d,d,d,d,d,d,d,d,,,,d,d,d,d,d,,,,d,d,d,d,d,d,d,d,d
 ,,,,d,d,d,d,d,d,d,d,d,d,d,d,d,,,,,,d,,,,,,d,d,d,d,d,d,d,d,d
@@ -2142,7 +2152,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,d,,d,,,,,`,`,`,`,`,`,t,`,`
 ,,,,`,`,`,`,t,c,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,R
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,l,`,`,`,R
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,l,`,`,`,R
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,R
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,h,`,`,`,`,`,`,`,`,`,,,,,,`,,,,,,`,`,`,`,`,`,`,`,`
@@ -2176,7 +2186,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,`,,`,,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`,,,,,,`,`,`,`,`,`,`,`,`
@@ -2210,7 +2220,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,`,,`,,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,d,,,,,,`,`,`,`,`,`,`,`,`
@@ -2269,7 +2279,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,`,,`,,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,"{namezone name=""garbage dump""}",,,,,,,,,,,,,,`
@@ -2328,7 +2338,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,`,,`,,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`,,,,,,`,`,`,`,`,`,`,`,`
@@ -2362,7 +2372,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,`,,`,,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,"r{+ 11}&h{givename name=""grand hall""}",,,,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`,,,,,,`,`,`,`,`,`,`,`,`
@@ -2396,7 +2406,7 @@ query_jail/services_query_jail
 ,,,,`,`,c,t,t,c,`,c,t,t,c,`,`,,,,,~,,~,,,,,f,`,`,`,`,`,~,`,b
 ,,,,`,`,c,t,~,~,`,c,t,t,c,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,c,t,t,c,`,c,t,t,c,`,`,~,`,d,`,`,`,`,`,d,`,d,`,`,`,`,`,`,`,`,~
-,,,,`,`,c,t,t,c,`,c,t,t,c,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,~
+,,,,`,`,c,t,t,c,`,c,t,t,c,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,~
 ,,,,`,`,c,t,t,c,`,c,t,t,c,`,`,~,`,d,`,`,`,`,`,d,`,d,`,`,`,`,`,`,`,`,~
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,h,`,`,~,`,`,`,`,`,h,`,`,h,,,,,,`,,,,,,f,`,`,`,`,`,t,`,b
@@ -2459,7 +2469,7 @@ query_jail/services_query_jail
 ,,,,s,`,~,~,~,~,`,~,~,~,~,`,s,,,,,~,,~,,,,,~,`,`,`,`,`,~,`,~
 ,,,,`,`,~,~,~,~,`,~,~,~,~,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,s,`,~,~,~,~,`,~,~,~,~,`,`,~,`,~,`,`,`,`,`,~,`,~,`,`,`,`,`,`,`,`,~
-,,,,`,`,~,~,~,~,`,~,~,~,~,`,`,,,,`,`,`,`,`,,,,`,`,`,`,~,`,`,`,~
+,,,,`,`,~,~,~,~,`,~,~,~,~,`,`,,s,,`,`,`,`,`,,s,,`,`,`,`,~,`,`,`,~
 ,,,,s,`,~,~,~,~,`,~,~,~,~,`,`,~,`,~,`,`,`,`,`,~,`,~,`,`,`,`,`,`,`,`,~
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,~,s,s,~,`,`,`,`,`,~,s,s,~,,,,,,`,,,,,,~,`,`,`,`,`,~,`,~
@@ -2493,7 +2503,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,`,,`,,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`,,,,,,`,`,`,`,`,`,`,`,`
@@ -2527,7 +2537,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,`,,`,,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`,,,,,,`,`,`,`,`,`,`,`,`
@@ -2544,14 +2554,14 @@ query_jail/services_query_jail
 Screenshot: https://drive.google.com/file/d/17jHiCKeZm6FSS-CI4V0r0GJZh09nzcO_
 ""
 Features:
-"- Big empty rooms. Double-thick walls to ensure engravings add value to the ""correct"" side. Fill with furniture and assign as needed."
+"- Big rooms, optionally pre-furnished. Double-thick walls to ensure engravings add value to the ""correct"" side. Fill with furniture and assign as needed."
 ""
 Guildhall Walkthrough:
 1) Dig out the rooms with /guildhall1.
 ""
-"2) Once the area is dug out, add in generic furniture with /guildhall2. Run ""quickfort orders"" for /guildhall2."
+"2) Once the area is dug out, add doors and a few statues with /guildhall2. Run ""quickfort orders"" for /guildhall2."
 ""
-"3) Furnish individual rooms manually and declare appropriate locations as you need guildhalls, libraries, and temples. If you need more rooms, you can dig another /guildhall1 in an unused z-level."
+"3) Furnish individual rooms manually, or alternately get default furnishings for a variety of room types by running /guildhall3. Declare appropriate locations as you need guildhalls, libraries, and temples. If you need more rooms, you can dig another /guildhall1 in an unused z-level."
 "#dig label(guildhall1) start(15; 15; central stairs) message(Once the area is dug out, continue with /guildhall2.)"
 
 
@@ -2583,7 +2593,7 @@ Guildhall Walkthrough:
 
 
 "#build label(guildhall2) start(15; 15; central stairs) message(Remember to enqueue manager orders for this blueprint.
-Smooth/engrave tiles, furnish rooms, and declare locations as required.) build basic furniture"
+Smooth/engrave tiles, furnish rooms, and declare locations as required.) build doors"
 
 
 ,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
@@ -2611,6 +2621,36 @@ Smooth/engrave tiles, furnish rooms, and declare locations as required.) build b
 ,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+
+
+"#build label(guildhall3) start(15; 15; central stairs) message(Remember to enqueue manager orders for this blueprint.) furnish 4 guildhalls, 3 temples, and a library"
+
+
+,,`,`,`,`,s,`,`,,,`,s,`,c,`,`,f,,,`,`,s,`,`,`,`
+,,`,`,c,`,`,`,`,,,`,`,h,~a,`,`,f,,,`,`,`,`,c,`,`
+,,`,c,t,c,`,`,s,,,`,`,`,`,`,`,`,,,s,`,`,c,t,c,`
+,,`,`,c,`,c,`,`,,,`,`,`,`,`,`,`,,,`,`,c,`,c,`,`
+,,s,`,`,c,t,c,`,,,`,`,c,c,c,`,`,,,`,c,t,c,`,`,s
+,,`,`,`,`,c,`,`,~,~,`,`,c,c,c,`,`,~,~,`,`,c,`,`,`,`
+,,`,`,s,`,`,`,t,,,t,`,`,`,`,`,t,,,t,`,`,`,s,`,`
+,,,,,,,~,,,,,,~,,~,,,,,,~
+,,,,,,,~,,,,,,`,~,`,,,,,,~
+,,f,f,`,`,`,`,t,,,,,~,,~,,,,,t,`,`,`,`,f,f
+,,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`
+,,`,`,`,`,c,c,`,~,`,~,`,,,,`,~,`,~,`,c,c,`,`,`,`
+,,c,~a,`,`,c,c,`,,~,,`,,`,,`,,~,,`,c,c,`,`,~a,c
+,,`,h,`,`,c,c,`,~,`,~,`,,,,`,~,`,~,`,c,c,`,`,h,`
+,,s,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,s
+,,`,`,`,`,`,`,t,,,,,~,,~,,,,,t,`,`,`,`,`,`
+,,,,,,,~,,,,,,`,~,`,,,,,,~
+,,,,,,,~,,,,,,~,,~,,,,,,~
+,,`,`,s,`,`,`,t,,,t,`,`,`,`,`,t,,,t,`,`,`,s,`,`
+,,`,`,`,`,c,`,`,~,~,`,`,`,`,`,`,`,~,~,`,`,c,`,`,`,`
+,,s,`,`,c,t,c,`,,,t,c,`,`,`,c,t,,,`,c,t,c,`,`,s
+,,`,`,c,`,c,`,`,,,t,c,`,`,`,c,t,,,`,`,c,`,c,`,`
+,,`,c,t,c,`,`,s,,,t,c,`,`,`,c,t,,,s,`,`,c,t,c,`
+,,`,`,c,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,c,`,`
+,,`,`,`,`,s,`,`,,,h,~c,~c,s,~c,~c,h,,,`,`,s,`,`,`,`
 
 
 #notes label(beds_help)
@@ -2829,29 +2869,29 @@ build2_apartments/apartments_build2
 ,,,,n,`,f,,n,`,f,,n,`,f,,n,`,f,,n,`,f,,n,`,f,,n,`,f
 ,,,,,d,,,,d,,,,d,,,,d,,,,d,,,,d,,,,d
 ,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
-,,,,,d,,,,d,,,,d,,,`,s,`,,,d,,,,d,,,,d
-,,,,n,`,h,,n,`,h,,n,`,h,,`,`,`,,n,`,h,,n,`,h,,n,`,h
-,,,,`,~,`,,`,~,`,,`,~,`,,`,`,`,,`,~,`,,`,~,`,,`,~,`
-,,,,n,`,f,,n,`,f,,n,`,f,,`,s,`,,n,`,f,,n,`,f,,n,`,f
-,,,,,,,,,,,,,,,,`,`,`
-,,,,n,`,h,,n,`,h,,n,`,h,,`,`,`,,n,`,h,,n,`,h,,n,`,h
-,,,,`,~,`,,`,~,`,,`,~,`,,`,s,`,,`,~,`,,`,~,`,,`,~,`
-,,,,n,`,f,,n,`,f,,n,`,f,,d,,d,,n,`,f,,n,`,f,,n,`,f
+,,,,,`,`,`,`,`,`,`,`,`,`,`,`,s,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,d,,,,d,,,,d,,,`,`,`,,,d,,,,d,,,,d
-,n,`,h,,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,,n,`,h
-,`,~,`,d,`,`,s,`,`,s,`,`,s,,`,`,~,`,`,,s,`,`,s,`,`,s,`,`,d,`,~,`
-,n,`,f,,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,,n,`,f
-,,,,,d,,,,d,,,,d,,,`,`,`,,,d,,,,d,,,,d
-,,,,n,`,h,,n,`,h,,n,`,h,,d,,d,,n,`,h,,n,`,h,,n,`,h
+,,,,n,`,h,,n,`,h,,n,`,h,,`,`,`,,n,`,h,,n,`,h,,n,`,h
 ,,,,`,~,`,,`,~,`,,`,~,`,,`,s,`,,`,~,`,,`,~,`,,`,~,`
 ,,,,n,`,f,,n,`,f,,n,`,f,,`,`,`,,n,`,f,,n,`,f,,n,`,f
 ,,,,,,,,,,,,,,,,`,`,`
 ,,,,n,`,h,,n,`,h,,n,`,h,,`,s,`,,n,`,h,,n,`,h,,n,`,h
 ,,,,`,~,`,,`,~,`,,`,~,`,,`,`,`,,`,~,`,,`,~,`,,`,~,`
+,,,,n,`,f,,n,`,f,,n,`,f,,d,,d,,n,`,f,,n,`,f,,n,`,f
+,,,,,d,,,,d,,,,d,,,`,`,`,,,d,,,,d,,,,d
+,n,`,h,,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,,n,`,h
+,`,~,`,d,`,s,`,`,s,`,`,s,`,,`,`,~,`,`,,`,s,`,`,s,`,`,s,`,d,`,~,`
+,n,`,f,,`,`,`,`,`,`,`,`,`,d,`,`,`,`,`,d,`,`,`,`,`,`,`,`,`,,n,`,f
+,,,,,d,,,,d,,,,d,,,`,`,`,,,d,,,,d,,,,d
+,,,,n,`,h,,n,`,h,,n,`,h,,d,,d,,n,`,h,,n,`,h,,n,`,h
+,,,,`,~,`,,`,~,`,,`,~,`,,`,`,`,,`,~,`,,`,~,`,,`,~,`
+,,,,n,`,f,,n,`,f,,n,`,f,,`,s,`,,n,`,f,,n,`,f,,n,`,f
+,,,,,,,,,,,,,,,,`,`,`
+,,,,n,`,h,,n,`,h,,n,`,h,,`,`,`,,n,`,h,,n,`,h,,n,`,h
+,,,,`,~,`,,`,~,`,,`,~,`,,`,s,`,,`,~,`,,`,~,`,,`,~,`
 ,,,,n,`,f,,n,`,f,,n,`,f,,`,`,`,,n,`,f,,n,`,f,,n,`,f
-,,,,,d,,,,d,,,,d,,,`,s,`,,,d,,,,d,,,,d
-,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,d,,,,d,,,,d,,,`,`,`,,,d,,,,d,,,,d
+,,,,,`,`,`,`,`,`,`,`,`,`,`,`,s,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,,d,,,,d,,,,d,,,,d,,,,d,,,,d,,,,d
 ,,,,n,`,h,,n,`,h,,n,`,h,,n,`,h,,n,`,h,,n,`,h,,n,`,h

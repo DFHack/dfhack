@@ -79,6 +79,7 @@ Industry level
 .. image:: https://drive.google.com/uc?export=download&id=1emMaHHCaUPcdRbkLQqvr-0ZCs2tdM5X7
   :alt: Annotated screenshot of the dreamfort industry level
   :target: https://drive.google.com/file/d/1emMaHHCaUPcdRbkLQqvr-0ZCs2tdM5X7
+  :align: center
 
 Services level
 \\\\\\\\\\\\\\

@@ -401,8 +401,7 @@ static void manageJobInitiatedEvent(color_ostream& out) {
 static void manageJobStartedEvent(color_ostream& out) {
     if (!df::global::world)
         return;
-    int32_t tick = df::global::world->frame_counter;
-    int32_t oldest_last_tick = (uint16_t)-1;
+
     static unordered_set<int32_t> startedJobs;
 
     // iterate event handler callbacks
@@ -559,7 +558,7 @@ static void manageJobCompletedEvent(color_ostream& out) {
 static void manageNewUnitActiveEvent(color_ostream& out) {
     if (!df::global::world)
         return;
-    int32_t tick = df::global::world->frame_counter;
+
     static unordered_set<int32_t> activeUnits;
     multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_NEW_ACTIVE].begin(), handlers[EventType::UNIT_NEW_ACTIVE].end());
     // iterate event handler callbacks
@@ -572,7 +571,6 @@ static void manageNewUnitActiveEvent(color_ostream& out) {
             }
         }
     }
-}
 }
 
 

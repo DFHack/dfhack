@@ -119,10 +119,10 @@ namespace DFHack {
             int32_t attackReport;
             int32_t defendReport;
             bool operator==(const InteractionData &other) const {
-                bool units = attacker == other.attacker && defender == other.defender;
                 bool reports = attackReport == other.attackReport && defendReport == other.defendReport;
-                // probably doesn't need the verbs I bet
-                return units && reports && attackVerb == other.attackVerb && defendVerb == other.defendVerb;
+                // based on code in the manager it doesn't need reports or verbs checked.
+                // since the units are deduced (it seems) from the reports... this
+                return reports;
             }
         };
 

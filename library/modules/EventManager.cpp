@@ -57,24 +57,11 @@ static multimap<int32_t, EventHandler> tickQueue;
 
 //TODO: consider unordered_map of pairs, or unordered_map of unordered_set, or whatever
 static multimap<Plugin*, EventHandler> handlers[EventType::EVENT_MAX];
-static map<EventHandler::callback_t,int32_t> eventLastTick;
+static int32_t eventLastTick[EventType::EVENT_MAX];
 
 static const int32_t ticksPerYear = 403200;
 
 void DFHack::EventManager::registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin) {
-    if(e == EventType::TICK){
-        int32_t when = 0;
-        df::world* world = df::global::world;
-        if ( world ) {
-            when = world->frame_counter + handler.freq;
-        } else {
-            if ( Once::doOnce("EventManager registerListener unhonored absolute=false") )
-                Core::getInstance().getConsole().print("EventManager::registerTick: warning! absolute flag=false not honored.\n");
-        }
-        handler.when = when;
-        tickQueue.insert(pair<int32_t, EventHandler>(handler.when, handler));
-    }
-    eventLastTick[handler.eventHandler] = -1;
     handlers[e].insert(pair<Plugin*, EventHandler>(plugin, handler));
 }
 
@@ -88,13 +75,9 @@ int32_t DFHack::EventManager::registerTick(EventHandler handler, int32_t when, P
                 Core::getInstance().getConsole().print("EventManager::registerTick: warning! absolute flag=false not honored.\n");
         }
     }
-    handler.when = when;
-    tickQueue.insert(pair<int32_t, EventHandler>(handler.when, handler));
-    eventLastTick[handler.eventHandler] = -1;
-    //this commented line ensures "Registered Ticks" are not added back to the queue after execution
-    //handlers[EventType::TICK].insert(pair<Plugin*,EventHandler>(plugin,handler));
-
-    // since the event isn't added to the handlers, we don't need to unregister these events
+    handler.freq = when;
+    tickQueue.insert(pair<int32_t, EventHandler>(handler.freq, handler));
+    handlers[EventType::TICK].insert(pair<Plugin*,EventHandler>(plugin,handler));
     return when;
 }
 
@@ -120,36 +103,27 @@ void DFHack::EventManager::unregister(EventType::EventType e, EventHandler handl
             continue;
         }
         i = handlers[e].erase(i);
-        eventLastTick.erase(handler.eventHandler);
         if ( e == EventType::TICK )
             removeFromTickQueue(handler);
     }
 }
 
 void DFHack::EventManager::unregisterAll(Plugin* plugin) {
-    for ( auto i = handlers[EventType::TICK].find(plugin); i != handlers[EventType::TICK].end(); ++i ) {
+    for ( auto i = handlers[EventType::TICK].find(plugin); i != handlers[EventType::TICK].end(); i++ ) {
         if ( (*i).first != plugin )
             break;
 
-        eventLastTick.erase(i->second.eventHandler);
         removeFromTickQueue((*i).second);
     }
-    for (auto &event_type : handlers) {
-        for (auto i = event_type.find(plugin); i != event_type.end(); ++i ) {
-            if ( (*i).first != plugin )
-                break;
-
-            eventLastTick.erase(i->second.eventHandler);
-        }
-        event_type.erase(plugin);
+    for ( size_t a = 0; a < (size_t)EventType::EVENT_MAX; a++ ) {
+        handlers[a].erase(plugin);
     }
+    return;
 }
 
 static void manageTickEvent(color_ostream& out);
 static void manageJobInitiatedEvent(color_ostream& out);
-static void manageJobStartedEvent(color_ostream& out);
 static void manageJobCompletedEvent(color_ostream& out);
-static void manageNewUnitActiveEvent(color_ostream& out);
 static void manageUnitDeathEvent(color_ostream& out);
 static void manageItemCreationEvent(color_ostream& out);
 static void manageBuildingEvent(color_ostream& out);
@@ -167,9 +141,7 @@ typedef void (*eventManager_t)(color_ostream&);
 static const eventManager_t eventManager[] = {
     manageTickEvent,
     manageJobInitiatedEvent,
-    manageJobStartedEvent,
     manageJobCompletedEvent,
-    manageNewUnitActiveEvent,
     manageUnitDeathEvent,
     manageItemCreationEvent,
     manageBuildingEvent,
@@ -186,20 +158,15 @@ static const eventManager_t eventManager[] = {
 //job initiated
 static int32_t lastJobId = -1;
 
-//job started
-static unordered_set<df::job*> startedJobs;
-
 //job completed
 static unordered_map<int32_t, df::job*> prevJobs;
-
-//new unit active
-static unordered_set<int32_t> activeUnits;
 
 //unit death
 static unordered_set<int32_t> livingUnits;
 
 //item creation
 static int32_t nextItem;
+
 //building
 static int32_t nextBuilding;
 static unordered_set<int32_t> buildings;
@@ -258,7 +225,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         gameLoaded = false;
 
         multimap<Plugin*,EventHandler> copy(handlers[EventType::UNLOAD].begin(), handlers[EventType::UNLOAD].end());
-        for (auto a = copy.begin(); a != copy.end(); ++a ) {
+        for (auto a = copy.begin(); a != copy.end(); a++ ) {
             (*a).second.eventHandler(out, NULL);
         }
     } else if ( event == DFHack::SC_MAP_LOADED ) {
@@ -304,14 +271,15 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
             }
             constructions[constr->pos] = *constr;
         }
-        for ( size_t a = 0; a < df::global::world->buildings.all.size(); ++a ) {
+        for ( size_t a = 0; a < df::global::world->buildings.all.size(); a++ ) {
             df::building* b = df::global::world->buildings.all[a];
             Buildings::updateBuildings(out, (void*)intptr_t(b->id));
             buildings.insert(b->id);
         }
         lastSyndromeTime = -1;
-        for ( df::unit* unit : df::global::world->units.all ) {
-            for ( size_t b = 0; b < unit->syndromes.active.size(); ++b ) {
+        for ( size_t a = 0; a < df::global::world->units.all.size(); a++ ) {
+            df::unit* unit = df::global::world->units.all[a];
+            for ( size_t b = 0; b < unit->syndromes.active.size(); b++ ) {
                 df::unit_syndrome* syndrome = unit->syndromes.active[b];
                 int32_t startTime = syndrome->year*ticksPerYear + syndrome->year_time;
                 if ( startTime > lastSyndromeTime )
@@ -326,10 +294,10 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         lastReportInteraction = -1;
         reportToRelevantUnitsTime = -1;
         reportToRelevantUnits.clear();
-//        for ( size_t a = 0; a < EventType::EVENT_MAX; ++a ) {
-//            eventLastTick[a] = -1;//-1000000;
-//        }
-        for ( size_t a = 0; a < df::global::world->history.figures.size(); ++a ) {
+        for ( size_t a = 0; a < EventType::EVENT_MAX; a++ ) {
+            eventLastTick[a] = -1;//-1000000;
+        }
+        for ( size_t a = 0; a < df::global::world->history.figures.size(); a++ ) {
             df::historical_figure* unit = df::global::world->history.figures[a];
             if ( unit->id < 0 && unit->name.language < 0 )
                 unit->name.language = 0;
@@ -350,21 +318,23 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
 
     int32_t tick = df::global::world->frame_counter;
 
-    for (size_t type = 0; type < EventType::EVENT_MAX; type++ ) {
-        if (handlers[type].empty())
+    for ( size_t a = 0; a < EventType::EVENT_MAX; a++ ) {
+        if ( handlers[a].empty() )
             continue;
-        bool call_events = false;
-        for (auto &iter : handlers[type]) {
-            EventHandler handler = iter.second;
-            int32_t last_tick = eventLastTick[handler.eventHandler];
-            if (tick - last_tick >= handler.freq){
-                //todo: integrate into every sub-function
-                //eventLastTick[handler.eventHandler] = tick;
-                call_events = true;
+        int32_t eventFrequency = -100;
+        if ( a != EventType::TICK )
+            for ( auto b = handlers[a].begin(); b != handlers[a].end(); b++ ) {
+                EventHandler bob = (*b).second;
+                if ( bob.freq < eventFrequency || eventFrequency == -100 )
+                    eventFrequency = bob.freq;
             }
-        }
-        if(call_events)
-            eventManager[type](out);
+        else eventFrequency = 1;
+
+        if ( tick >= eventLastTick[a] && tick - eventLastTick[a] < eventFrequency )
+            continue;
+
+        eventManager[a](out);
+        eventLastTick[a] = tick;
     }
 }
 
@@ -383,18 +353,14 @@ static void manageTickEvent(color_ostream& out) {
     }
     if ( toRemove.empty() )
         return;
-    for (auto iter = handlers[EventType::TICK].begin(); iter != handlers[EventType::TICK].end(); ) {
-        EventHandler &handle = iter->second;
-        //check if we find a handler registered
+    for ( auto a = handlers[EventType::TICK].begin(); a != handlers[EventType::TICK].end(); ) {
+        EventHandler handle = (*a).second;
         if ( toRemove.find(handle) == toRemove.end() ) {
-            //the event is from registerTick, so things are already cleaned up
-            ++iter;
+            a++;
             continue;
         }
-        iter = handlers[EventType::TICK].erase(iter);
+        a = handlers[EventType::TICK].erase(a);
         toRemove.erase(handle);
-        //the handler is registered with the listeners, so we want it to keep listening
-        registerListener(DFHack::EventManager::EventType::TICK, handle, iter->first);
         if ( toRemove.empty() )
             break;
     }
@@ -414,59 +380,20 @@ static void manageJobInitiatedEvent(color_ostream& out) {
         return; //no new jobs
     }
     multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_INITIATED].begin(), handlers[EventType::JOB_INITIATED].end());
-    int32_t tick = df::global::world->frame_counter;
 
-    for(auto &iter : copy) {
-        auto &handler = iter.second;
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
-            eventLastTick[handler.eventHandler] = tick;
-            for ( df::job_list_link* link = df::global::world->jobs.list.next; link != NULL; link = link->next ) {
-                if ( link->item == NULL )
-                    continue;
-                if ( link->item->id <= lastJobId )
-                    continue;
-
-                handler.eventHandler(out, (void*)link->item);
-            }
+    for ( df::job_list_link* link = &df::global::world->jobs.list; link != NULL; link = link->next ) {
+        if ( link->item == NULL )
+            continue;
+        if ( link->item->id <= lastJobId )
+            continue;
+        for ( auto i = copy.begin(); i != copy.end(); i++ ) {
+            (*i).second.eventHandler(out, (void*)link->item);
         }
     }
 
     lastJobId = *df::global::job_next_id - 1;
 }
 
-static void manageJobStartedEvent(color_ostream& out){
-    if (!df::global::world)
-        return;
-
-    multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_STARTED].begin(), handlers[EventType::JOB_STARTED].end());
-    int32_t tick = df::global::world->frame_counter;
-
-    // compile a list of newly started jobs
-    std::vector<df::job*> newly_started_jobs;
-    for ( df::job_list_link* link = df::global::world->jobs.list.next; link != NULL; link = link->next ) {
-        df::job* job = link->item;
-        // the jobs must have a worker to start
-        if (job && Job::getWorker(job)) {
-            // cross-reference against existing list of jobs with workers
-            if (startedJobs.emplace(job).second) {
-                // must be new
-                newly_started_jobs.push_back(job);
-            }
-        }
-    }
-    // iterate the event handlers
-    for(auto &iter : copy) {
-        auto &handler = iter.second;
-        // make sure the frequency of this handler is obeyed
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
-            eventLastTick[handler.eventHandler] = tick;
-            // send the handler the new jobs
-            for(auto job : newly_started_jobs){
-                handler.eventHandler(out, (void*)job);
-            }
-        }
-    }
-}
 //helper function for manageJobCompletedEvent
 //static int32_t getWorkerID(df::job* job) {
 //    auto ref = findRef(job->general_refs, general_ref_type::UNIT_WORKER);
@@ -479,12 +406,12 @@ TODO: consider checking item creation / experience gain just in case
 static void manageJobCompletedEvent(color_ostream& out) {
     if (!df::global::world)
         return;
-    static int32_t last_tick = -1;
-    int32_t tick = df::global::world->frame_counter;
+    int32_t tick0 = eventLastTick[EventType::JOB_COMPLETED];
+    int32_t tick1 = df::global::world->frame_counter;
 
     multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_COMPLETED].begin(), handlers[EventType::JOB_COMPLETED].end());
     map<int32_t, df::job*> nowJobs;
-    for ( df::job_list_link* link = df::global::world->jobs.list.next; link != NULL; link = link->next ) {
+    for ( df::job_list_link* link = &df::global::world->jobs.list; link != NULL; link = link->next ) {
         if ( link->item == NULL )
             continue;
         nowJobs[link->item->id] = link->item;
@@ -506,7 +433,7 @@ static void manageJobCompletedEvent(color_ostream& out) {
             "  completion_timer : %d\n"
             "  workerID         : %d\n"
             "  time             : %d -> %d\n"
-            "\n", job1.list_link->item, job1.id, job1.job_type, ENUM_ATTR(job_type, caption, job1.job_type), job1.flags.bits.working, job1.completion_timer, getWorkerID(&job1), last_tick, tick);
+            "\n", job1.list_link->item, job1.id, job1.job_type, ENUM_ATTR(job_type, caption, job1.job_type), job1.flags.bits.working, job1.completion_timer, getWorkerID(&job1), tick0, tick1);
     }
     for ( auto i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
         df::job& job0 = *(*i).second;
@@ -520,7 +447,7 @@ static void manageJobCompletedEvent(color_ostream& out) {
                 "  completion_timer : %d\n"
                 "  workerID         : %d\n"
                 "  time             : %d -> %d\n"
-                ,job0.list_link == NULL ? 0 : job0.list_link->item, job0.id, job0.job_type, ENUM_ATTR(job_type, caption, job0.job_type), job0.flags.bits.working, job0.completion_timer, getWorkerID(&job0), last_tick, tick);
+                ,job0.list_link == NULL ? 0 : job0.list_link->item, job0.id, job0.job_type, ENUM_ATTR(job_type, caption, job0.job_type), job0.flags.bits.working, job0.completion_timer, getWorkerID(&job0), tick0, tick1);
             continue;
         }
         df::job& job1 = *(*j).second;
@@ -547,109 +474,81 @@ static void manageJobCompletedEvent(color_ostream& out) {
             job0.flags.bits.working, job1.flags.bits.working,
             job0.completion_timer, job1.completion_timer,
             getWorkerID(&job0), getWorkerID(&job1),
-            last_tick, tick
+            tick0, tick1
         );
     }
 #endif
 
-    //if it happened within a tick, must have been cancelled by the user or a plugin: not completed
-    if (last_tick < tick ) {
-        last_tick = tick;
-        for (auto &iter : copy) {
-            auto &handler = iter.second;
-            if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
-                eventLastTick[handler.eventHandler] = tick;
-                for (auto job_iter = prevJobs.begin(); job_iter != prevJobs.end(); ++job_iter) {
-                    if (nowJobs.find((*job_iter).first) != nowJobs.end()) {
-                        //could have just finished if it's a repeat job
-                        df::job &job0 = *(*job_iter).second;
-                        if (!job0.flags.bits.repeat)
-                            continue;
-                        df::job &job1 = *nowJobs[(*job_iter).first];
-                        if (job0.completion_timer != 0)
-                            continue;
-                        if (job1.completion_timer != -1)
-                            continue;
+    for ( auto i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
+        //if it happened within a tick, must have been cancelled by the user or a plugin: not completed
+        if ( tick1 <= tick0 )
+            continue;
 
-                        //still false positive if cancelled at EXACTLY the right time, but experiments show this doesn't happen
-                        handler.eventHandler(out, (void*) &job0);
-                        continue;
-                    }
+        if ( nowJobs.find((*i).first) != nowJobs.end() ) {
+            //could have just finished if it's a repeat job
+            df::job& job0 = *(*i).second;
+            if ( !job0.flags.bits.repeat )
+                continue;
+            df::job& job1 = *nowJobs[(*i).first];
+            if ( job0.completion_timer != 0 )
+                continue;
+            if ( job1.completion_timer != -1 )
+                continue;
 
-                    //recently finished or cancelled job
-                    df::job &job0 = *(*job_iter).second;
-                    if (job0.flags.bits.repeat || job0.completion_timer != 0)
-                        continue;
-                    handler.eventHandler(out, (void*) &job0);
-                }
+            //still false positive if cancelled at EXACTLY the right time, but experiments show this doesn't happen
+            for ( auto j = copy.begin(); j != copy.end(); j++ ) {
+                (*j).second.eventHandler(out, (void*)&job0);
             }
+            continue;
+        }
+
+        //recently finished or cancelled job
+        df::job& job0 = *(*i).second;
+        if ( job0.flags.bits.repeat || job0.completion_timer != 0 )
+            continue;
+
+        for ( auto j = copy.begin(); j != copy.end(); j++ ) {
+            (*j).second.eventHandler(out, (void*)&job0);
         }
     }
 
     //erase old jobs, copy over possibly altered jobs
-    for (auto job_iter = prevJobs.begin(); job_iter != prevJobs.end(); ++job_iter ) {
-        Job::deleteJobStruct((*job_iter).second, true);
-        startedJobs.erase(job_iter->second);
+    for ( auto i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
+        Job::deleteJobStruct((*i).second, true);
     }
     prevJobs.clear();
 
     //create new jobs
-    for (auto job_iter = nowJobs.begin(); job_iter != nowJobs.end(); ++job_iter ) {
-        /*map<int32_t, df::job*>::iterator i = prevJobs.find((*job_iter).first);
+    for ( auto j = nowJobs.begin(); j != nowJobs.end(); j++ ) {
+        /*map<int32_t, df::job*>::iterator i = prevJobs.find((*j).first);
         if ( i != prevJobs.end() ) {
             continue;
         }*/
 
-        df::job* newJob = Job::cloneJobStruct((*job_iter).second, true);
+        df::job* newJob = Job::cloneJobStruct((*j).second, true);
         prevJobs[newJob->id] = newJob;
     }
-}
-
-static void manageNewUnitActiveEvent(color_ostream& out) {
-    if (!df::global::world)
-        return;
-    unordered_set<int32_t> activeUnits_replacement;
-    multimap<Plugin*,EventHandler> copy(handlers[EventType::NEW_UNIT_ACTIVE].begin(), handlers[EventType::NEW_UNIT_ACTIVE].end());
-    int32_t tick = df::global::world->frame_counter;
-    for (auto unit : df::global::world->units.active) {
-        int32_t id = unit->id;
-        activeUnits_replacement.emplace(id);
-        if(activeUnits.find(id) == activeUnits.end()){
-            for (auto &iter : copy) {
-                auto &handler = iter.second;
-                if(tick - eventLastTick[handler.eventHandler] >= handler.freq) {
-                    eventLastTick[handler.eventHandler] = tick;
-                    handler.eventHandler(out, (void*) intptr_t(id)); // intptr_t() avoids cast from smaller type warning
-                }
-            }
-        }
-    }
-    activeUnits.swap(activeUnits_replacement);
 }
 
 static void manageUnitDeathEvent(color_ostream& out) {
     if (!df::global::world)
         return;
     multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_DEATH].begin(), handlers[EventType::UNIT_DEATH].end());
-    int32_t tick = df::global::world->frame_counter;
-    for (auto &iter : copy) {
-        auto &handler = iter.second;
-        if(tick - eventLastTick[handler.eventHandler] >= handler.freq) {
-            eventLastTick[handler.eventHandler] = tick;
-            for ( df::unit *unit : df::global::world->units.all ) {
-                //if ( unit->counters.death_id == -1 ) {
-                if ( Units::isActive(unit) ) {
-                    livingUnits.insert(unit->id);
-                    continue;
-                }
-                //dead: if dead since last check, trigger events
-                if ( livingUnits.find(unit->id) == livingUnits.end() )
-                    continue;
-
-                handler.eventHandler(out, (void*) intptr_t(unit->id)); // intptr_t() avoids cast from smaller type warning
-                livingUnits.erase(unit->id);
-            }
+    for ( size_t a = 0; a < df::global::world->units.all.size(); a++ ) {
+        df::unit* unit = df::global::world->units.all[a];
+        //if ( unit->counters.death_id == -1 ) {
+        if ( Units::isActive(unit) ) {
+            livingUnits.insert(unit->id);
+            continue;
         }
+        //dead: if dead since last check, trigger events
+        if ( livingUnits.find(unit->id) == livingUnits.end() )
+            continue;
+
+        for ( auto i = copy.begin(); i != copy.end(); i++ ) {
+            (*i).second.eventHandler(out, (void*)intptr_t(unit->id));
+        }
+        livingUnits.erase(unit->id);
     }
 }
 
@@ -663,32 +562,27 @@ static void manageItemCreationEvent(color_ostream& out) {
     }
 
     multimap<Plugin*,EventHandler> copy(handlers[EventType::ITEM_CREATED].begin(), handlers[EventType::ITEM_CREATED].end());
-    int32_t tick = df::global::world->frame_counter;
     size_t index = df::item::binsearch_index(df::global::world->items.all, nextItem, false);
     if ( index != 0 ) index--;
-    for (auto &iter : copy) {
-        auto &handler = iter.second;
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
-            eventLastTick[handler.eventHandler] = tick;
-            for (size_t a = index; a < df::global::world->items.all.size(); ++a) {
-                df::item* item = df::global::world->items.all[a];
-                //already processed
-                if (item->id < nextItem)
-                    continue;
-                //invaders
-                if (item->flags.bits.foreign)
-                    continue;
-                //traders who bring back your items?
-                if (item->flags.bits.trader)
-                    continue;
-                //migrants
-                if (item->flags.bits.owned)
-                    continue;
-                //spider webs don't count
-                if (item->flags.bits.spider_web)
-                    continue;
-                handler.eventHandler(out, (void*) intptr_t(item->id));
-            }
+    for ( size_t a = index; a < df::global::world->items.all.size(); a++ ) {
+        df::item* item = df::global::world->items.all[a];
+        //already processed
+        if ( item->id < nextItem )
+            continue;
+        //invaders
+        if ( item->flags.bits.foreign )
+            continue;
+        //traders who bring back your items?
+        if ( item->flags.bits.trader )
+            continue;
+        //migrants
+        if ( item->flags.bits.owned )
+            continue;
+        //spider webs don't count
+        if ( item->flags.bits.spider_web )
+            continue;
+        for ( auto i = copy.begin(); i != copy.end(); i++ ) {
+            (*i).second.eventHandler(out, (void*)intptr_t(item->id));
         }
     }
     nextItem = *df::global::item_next_id;
@@ -704,38 +598,37 @@ static void manageBuildingEvent(color_ostream& out) {
      * consider looking at jobs: building creation / destruction
      **/
     multimap<Plugin*,EventHandler> copy(handlers[EventType::BUILDING].begin(), handlers[EventType::BUILDING].end());
-    int32_t tick = df::global::world->frame_counter;
-    //no more separation between new and destroyed events
-    for (auto &iter : copy) {
-        auto &handler = iter.second;
-        if(tick - eventLastTick[handler.eventHandler] >= handler.freq) {
-            eventLastTick[handler.eventHandler] = tick;
-            for ( int32_t a = nextBuilding; a < *df::global::building_next_id; ++a ) {
-                int32_t index = df::building::binsearch_index(df::global::world->buildings.all, a);
-                if ( index == -1 ) {
-                    //out.print("%s, line %d: Couldn't find new building with id %d.\n", __FILE__, __LINE__, a);
-                    //the tricky thing is that when the game first starts, it's ok to skip buildings, but otherwise, if you skip buildings, something is probably wrong. TODO: make this smarter
-                    continue;
-                }
-                buildings.insert(a);
-                handler.eventHandler(out, (void*)intptr_t(a));
-
-            }
-
-            //now alert people about destroyed buildings
-            for (auto building_iter = buildings.begin(); building_iter != buildings.end(); ) {
-                int32_t id = *building_iter;
-                int32_t index = df::building::binsearch_index(df::global::world->buildings.all,id);
-                if ( index != -1 ) {
-                    ++building_iter;
-                    continue;
-                }
-                handler.eventHandler(out, (void*)intptr_t(id));
-                building_iter = buildings.erase(building_iter);
-            }
+    //first alert people about new buildings
+    for ( int32_t a = nextBuilding; a < *df::global::building_next_id; a++ ) {
+        int32_t index = df::building::binsearch_index(df::global::world->buildings.all, a);
+        if ( index == -1 ) {
+            //out.print("%s, line %d: Couldn't find new building with id %d.\n", __FILE__, __LINE__, a);
+            //the tricky thing is that when the game first starts, it's ok to skip buildings, but otherwise, if you skip buildings, something is probably wrong. TODO: make this smarter
+            continue;
+        }
+        buildings.insert(a);
+        for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+            EventHandler bob = (*b).second;
+            bob.eventHandler(out, (void*)intptr_t(a));
         }
     }
     nextBuilding = *df::global::building_next_id;
+
+    //now alert people about destroyed buildings
+    for ( auto a = buildings.begin(); a != buildings.end(); ) {
+        int32_t id = *a;
+        int32_t index = df::building::binsearch_index(df::global::world->buildings.all,id);
+        if ( index != -1 ) {
+            a++;
+            continue;
+        }
+
+        for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+            EventHandler bob = (*b).second;
+            bob.eventHandler(out, (void*)intptr_t(id));
+        }
+        a = buildings.erase(a);
+    }
 }
 
 static void manageConstructionEvent(color_ostream& out) {
@@ -744,31 +637,33 @@ static void manageConstructionEvent(color_ostream& out) {
     //unordered_set<df::construction*> constructionsNow(df::global::world->constructions.begin(), df::global::world->constructions.end());
 
     multimap<Plugin*,EventHandler> copy(handlers[EventType::CONSTRUCTION].begin(), handlers[EventType::CONSTRUCTION].end());
-    int32_t tick = df::global::world->frame_counter;
-    for (auto &iter : copy) {
-        auto &handler = iter.second;
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
-            eventLastTick[handler.eventHandler] = tick;
-            for (auto constru_iter = constructions.begin(); constru_iter != constructions.end();) {
-                df::construction &construction = (*constru_iter).second;
-                if (df::construction::find(construction.pos) != NULL) {
-                    ++constru_iter;
-                    continue;
-                }
-                //construction removed
-                //out.print("Removed construction (%d,%d,%d)\n", construction.pos.x,construction.pos.y,construction.pos.z);
-                handler.eventHandler(out, (void*) &construction);
-                constru_iter = constructions.erase(constru_iter);
-            }
-            //for ( auto a = constructionsNow.begin(); a != constructionsNow.end(); ++a ) {
-            for (auto constru_iter = df::global::world->constructions.begin(); constru_iter != df::global::world->constructions.end(); ++constru_iter) {
-                df::construction* construction = *constru_iter;
-                if (!constructions.emplace(construction->pos, *construction).second)
-                    continue; //not a new insertion, skip
-                //construction created
-                //out.print("Created construction (%d,%d,%d)\n", construction->pos.x,construction->pos.y,construction->pos.z);
-                handler.eventHandler(out, (void*) construction);
-            }
+    for ( auto a = constructions.begin(); a != constructions.end(); ) {
+        df::construction& construction = (*a).second;
+        if ( df::construction::find(construction.pos) != NULL ) {
+            a++;
+            continue;
+        }
+        //construction removed
+        //out.print("Removed construction (%d,%d,%d)\n", construction.pos.x,construction.pos.y,construction.pos.z);
+        for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+            EventHandler handle = (*b).second;
+            handle.eventHandler(out, (void*)&construction);
+        }
+        a = constructions.erase(a);
+    }
+
+    //for ( auto a = constructionsNow.begin(); a != constructionsNow.end(); a++ ) {
+    for ( auto a = df::global::world->constructions.begin(); a != df::global::world->constructions.end(); a++ ) {
+        df::construction* construction = *a;
+        bool b = constructions.find(construction->pos) != constructions.end();
+        constructions[construction->pos] = *construction;
+        if ( b )
+            continue;
+        //construction created
+        //out.print("Created construction (%d,%d,%d)\n", construction->pos.x,construction->pos.y,construction->pos.z);
+        for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+            EventHandler handle = (*b).second;
+            handle.eventHandler(out, (void*)construction);
         }
     }
 }
@@ -778,27 +673,24 @@ static void manageSyndromeEvent(color_ostream& out) {
         return;
     multimap<Plugin*,EventHandler> copy(handlers[EventType::SYNDROME].begin(), handlers[EventType::SYNDROME].end());
     int32_t highestTime = -1;
-    int32_t tick = df::global::world->frame_counter;
-    for (auto &iter : copy) {
-        auto &handler = iter.second;
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
-            eventLastTick[handler.eventHandler] = tick;
-            for ( df::unit *unit : df::global::world->units.all ) {
+    for ( auto a = df::global::world->units.all.begin(); a != df::global::world->units.all.end(); a++ ) {
+        df::unit* unit = *a;
 /*
         if ( unit->flags1.bits.inactive )
             continue;
 */
-                for ( size_t b = 0; b < unit->syndromes.active.size(); ++b ) {
-                    df::unit_syndrome* syndrome = unit->syndromes.active[b];
-                    int32_t startTime = syndrome->year*ticksPerYear + syndrome->year_time;
-                    if ( startTime > highestTime )
-                        highestTime = startTime;
-                    if ( startTime <= lastSyndromeTime )
-                        continue;
+        for ( size_t b = 0; b < unit->syndromes.active.size(); b++ ) {
+            df::unit_syndrome* syndrome = unit->syndromes.active[b];
+            int32_t startTime = syndrome->year*ticksPerYear + syndrome->year_time;
+            if ( startTime > highestTime )
+                highestTime = startTime;
+            if ( startTime <= lastSyndromeTime )
+                continue;
 
-                    SyndromeData data(unit->id, b);
-                    handler.eventHandler(out, (void*)&data);
-                }
+            SyndromeData data(unit->id, b);
+            for ( auto c = copy.begin(); c != copy.end(); c++ ) {
+                EventHandler handle = (*c).second;
+                handle.eventHandler(out, (void*)&data);
             }
         }
     }
@@ -814,13 +706,9 @@ static void manageInvasionEvent(color_ostream& out) {
         return;
     nextInvasion = df::global::ui->invasions.next_id;
 
-    int32_t tick = df::global::world->frame_counter;
-    for (auto &iter : copy) {
-        auto &handler = iter.second;
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
-            eventLastTick[handler.eventHandler] = tick;
-            handler.eventHandler(out, (void*) intptr_t(nextInvasion - 1));
-        }
+    for ( auto a = copy.begin(); a != copy.end(); a++ ) {
+        EventHandler handle = (*a).second;
+        handle.eventHandler(out, (void*)intptr_t(nextInvasion-1));
     }
 }
 
@@ -831,75 +719,78 @@ static void manageEquipmentEvent(color_ostream& out) {
 
     unordered_map<int32_t, InventoryItem> itemIdToInventoryItem;
     unordered_set<int32_t> currentlyEquipped;
-    int32_t tick = df::global::world->frame_counter;
-    for (auto &iter : copy) {
-        auto &handler = iter.second;
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
-            eventLastTick[handler.eventHandler] = tick;
-            for (auto unit : df::global::world->units.all) {
-                itemIdToInventoryItem.clear();
-                currentlyEquipped.clear();
-                /*if ( unit->flags1.bits.inactive )
-                    continue;
-                */
+    for ( auto a = df::global::world->units.all.begin(); a != df::global::world->units.all.end(); a++ ) {
+        itemIdToInventoryItem.clear();
+        currentlyEquipped.clear();
+        df::unit* unit = *a;
+        /*if ( unit->flags1.bits.inactive )
+            continue;
+        */
 
-                auto oldEquipment = equipmentLog.find(unit->id);
-                bool hadEquipment = oldEquipment != equipmentLog.end();
-                vector<InventoryItem>* temp;
-                if (hadEquipment) {
-                    temp = &((*oldEquipment).second);
-                } else {
-                    temp = new vector<InventoryItem>;
+        auto oldEquipment = equipmentLog.find(unit->id);
+        bool hadEquipment = oldEquipment != equipmentLog.end();
+        vector<InventoryItem>* temp;
+        if ( hadEquipment ) {
+            temp = &((*oldEquipment).second);
+        } else {
+            temp = new vector<InventoryItem>;
+        }
+        //vector<InventoryItem>& v = (*oldEquipment).second;
+        vector<InventoryItem>& v = *temp;
+        for ( auto b = v.begin(); b != v.end(); b++ ) {
+            InventoryItem& i = *b;
+            itemIdToInventoryItem[i.itemId] = i;
+        }
+        for ( size_t b = 0; b < unit->inventory.size(); b++ ) {
+            df::unit_inventory_item* dfitem_new = unit->inventory[b];
+            currentlyEquipped.insert(dfitem_new->item->id);
+            InventoryItem item_new(dfitem_new->item->id, *dfitem_new);
+            auto c = itemIdToInventoryItem.find(dfitem_new->item->id);
+            if ( c == itemIdToInventoryItem.end() ) {
+                //new item equipped (probably just picked up)
+                InventoryChangeData data(unit->id, NULL, &item_new);
+                for ( auto h = copy.begin(); h != copy.end(); h++ ) {
+                    EventHandler handle = (*h).second;
+                    handle.eventHandler(out, (void*)&data);
                 }
-                //vector<InventoryItem>& v = (*oldEquipment).second;
-                vector<InventoryItem> &v = *temp;
-                for (auto &item : v) {
-                    itemIdToInventoryItem[item.itemId] = item;
-                }
-                for (size_t b = 0; b < unit->inventory.size(); ++b) {
-                    df::unit_inventory_item* dfitem_new = unit->inventory[b];
-                    currentlyEquipped.insert(dfitem_new->item->id);
-                    InventoryItem item_new(dfitem_new->item->id, *dfitem_new);
-                    auto c = itemIdToInventoryItem.find(dfitem_new->item->id);
-                    if (c == itemIdToInventoryItem.end()) {
-                        //new item equipped (probably just picked up)
-                        InventoryChangeData data(unit->id, NULL, &item_new);
-                        handler.eventHandler(out, (void*) &data);
-                        continue;
-                    }
-                    InventoryItem item_old = (*c).second;
-
-                    df::unit_inventory_item &item0 = item_old.item;
-                    df::unit_inventory_item &item1 = item_new.item;
-                    if (item0.mode == item1.mode && item0.body_part_id == item1.body_part_id &&
-                        item0.wound_id == item1.wound_id)
-                        continue;
-                    //some sort of change in how it's equipped
-
-                    InventoryChangeData data(unit->id, &item_old, &item_new);
-                    handler.eventHandler(out, (void*) &data);
-                }
-                //check for dropped items
-                for (auto b = v.begin(); b != v.end(); ++b) {
-                    InventoryItem i = *b;
-                    if (currentlyEquipped.find(i.itemId) != currentlyEquipped.end())
-                        continue;
-                    //TODO: delete ptr if invalid
-                    InventoryChangeData data(unit->id, &i, NULL);
-                    handler.eventHandler(out, (void*) &data);
-                }
-                if (!hadEquipment)
-                    delete temp;
-
-                //update equipment
-                vector<InventoryItem> &equipment = equipmentLog[unit->id];
-                equipment.clear();
-                for (size_t b = 0; b < unit->inventory.size(); ++b) {
-                    df::unit_inventory_item* dfitem = unit->inventory[b];
-                    InventoryItem item(dfitem->item->id, *dfitem);
-                    equipment.push_back(item);
-                }
+                continue;
             }
+            InventoryItem item_old = (*c).second;
+
+            df::unit_inventory_item& item0 = item_old.item;
+            df::unit_inventory_item& item1 = item_new.item;
+            if ( item0.mode == item1.mode && item0.body_part_id == item1.body_part_id && item0.wound_id == item1.wound_id )
+                continue;
+            //some sort of change in how it's equipped
+
+            InventoryChangeData data(unit->id, &item_old, &item_new);
+            for ( auto h = copy.begin(); h != copy.end(); h++ ) {
+                EventHandler handle = (*h).second;
+                handle.eventHandler(out, (void*)&data);
+            }
+        }
+        //check for dropped items
+        for ( auto b = v.begin(); b != v.end(); b++ ) {
+            InventoryItem i = *b;
+            if ( currentlyEquipped.find(i.itemId) != currentlyEquipped.end() )
+                continue;
+            //TODO: delete ptr if invalid
+            InventoryChangeData data(unit->id, &i, NULL);
+            for ( auto h = copy.begin(); h != copy.end(); h++ ) {
+                EventHandler handle = (*h).second;
+                handle.eventHandler(out, (void*)&data);
+            }
+        }
+        if ( !hadEquipment )
+            delete temp;
+
+        //update equipment
+        vector<InventoryItem>& equipment = equipmentLog[unit->id];
+        equipment.clear();
+        for ( size_t b = 0; b < unit->inventory.size(); b++ ) {
+            df::unit_inventory_item* dfitem = unit->inventory[b];
+            InventoryItem item(dfitem->item->id, *dfitem);
+            equipment.push_back(item);
         }
     }
 }
@@ -911,8 +802,9 @@ static void updateReportToRelevantUnits() {
         return;
     reportToRelevantUnitsTime = df::global::world->frame_counter;
 
-    for ( df::unit *unit : df::global::world->units.all ) {
-        for ( int16_t b = df::enum_traits<df::unit_report_type>::first_item_value; b <= df::enum_traits<df::unit_report_type>::last_item_value; ++b ) {
+    for ( size_t a = 0; a < df::global::world->units.all.size(); a++ ) {
+        df::unit* unit = df::global::world->units.all[a];
+        for ( int16_t b = df::enum_traits<df::unit_report_type>::first_item_value; b <= df::enum_traits<df::unit_report_type>::last_item_value; b++ ) {
             if ( b == df::unit_report_type::Sparring )
                 continue;
             for ( size_t c = 0; c < unit->reports.log[b].size(); c++ ) {
@@ -933,24 +825,20 @@ static void manageReportEvent(color_ostream& out) {
     size_t a = df::report::binsearch_index(reports, lastReport, false);
     //this may or may not be needed: I don't know if binsearch_index goes earlier or later if it can't hit the target exactly
     while (a < reports.size() && reports[a]->id <= lastReport) {
-        ++a;
+        a++;
     }
-    int32_t tick = df::global::world->frame_counter;
-    for (auto &iter : copy) {
-        auto &handler = iter.second;
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
-            eventLastTick[handler.eventHandler] = tick;
-            for (; a < reports.size(); ++a) {
-                df::report* report = reports[a];
-                handler.eventHandler(out, (void*) intptr_t(report->id));
-                lastReport = report->id;
-            }
+    for ( ; a < reports.size(); a++ ) {
+        df::report* report = reports[a];
+        for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+            EventHandler handle = (*b).second;
+            handle.eventHandler(out, (void*)intptr_t(report->id));
         }
+        lastReport = report->id;
     }
 }
 
 static df::unit_wound* getWound(df::unit* attacker, df::unit* defender) {
-    for ( size_t a = 0; a < defender->body.wounds.size(); ++a ) {
+    for ( size_t a = 0; a < defender->body.wounds.size(); a++ ) {
         df::unit_wound* wound = defender->body.wounds[a];
         if ( wound->age <= 1 && wound->attacker_unit_id == attacker->id ) {
             return wound;
@@ -967,10 +855,10 @@ static void manageUnitAttackEvent(color_ostream& out) {
     size_t a = df::report::binsearch_index(reports, lastReportUnitAttack, false);
     //this may or may not be needed: I don't know if binsearch_index goes earlier or later if it can't hit the target exactly
     while (a < reports.size() && reports[a]->id <= lastReportUnitAttack) {
-        ++a;
+        a++;
     }
     std::set<int32_t> strikeReports;
-    for ( ; a < reports.size(); ++a ) {
+    for ( ; a < reports.size(); a++ ) {
         df::report* report = reports[a];
         lastReportUnitAttack = report->id;
         if ( report->flags.bits.continuation )
@@ -985,85 +873,91 @@ static void manageUnitAttackEvent(color_ostream& out) {
         return;
     updateReportToRelevantUnits();
     map<int32_t, map<int32_t, int32_t> > alreadyDone;
-    int32_t tick = df::global::world->frame_counter;
-    for (auto &iter : copy) {
-        auto &handler = iter.second;
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
-            eventLastTick[handler.eventHandler] = tick;
-            for (int reportId : strikeReports) {
-                df::report* report = df::report::find(reportId);
-                if ( !report )
-                    continue; //TODO: error
-                std::string reportStr = report->text;
-                for ( int32_t b = reportId+1; ; ++b ) {
-                    df::report* report2 = df::report::find(b);
-                    if ( !report2 )
-                        break;
-                    if ( report2->type != df::announcement_type::COMBAT_STRIKE_DETAILS )
-                        break;
-                    if ( !report2->flags.bits.continuation )
-                        break;
-                    reportStr = reportStr + report2->text;
-                }
+    for ( auto a = strikeReports.begin(); a != strikeReports.end(); a++ ) {
+        int32_t reportId = *a;
+        df::report* report = df::report::find(reportId);
+        if ( !report )
+            continue; //TODO: error
+        std::string reportStr = report->text;
+        for ( int32_t b = reportId+1; ; b++ ) {
+            df::report* report2 = df::report::find(b);
+            if ( !report2 )
+                break;
+            if ( report2->type != df::announcement_type::COMBAT_STRIKE_DETAILS )
+                break;
+            if ( !report2->flags.bits.continuation )
+                break;
+            reportStr = reportStr + report2->text;
+        }
 
-                std::vector<int32_t>& relevantUnits = reportToRelevantUnits[report->id];
-                if ( relevantUnits.size() != 2 ) {
-                    continue;
-                }
+        std::vector<int32_t>& relevantUnits = reportToRelevantUnits[report->id];
+        if ( relevantUnits.size() != 2 ) {
+            continue;
+        }
 
-                df::unit* unit1 = df::unit::find(relevantUnits[0]);
-                df::unit* unit2 = df::unit::find(relevantUnits[1]);
+        df::unit* unit1 = df::unit::find(relevantUnits[0]);
+        df::unit* unit2 = df::unit::find(relevantUnits[1]);
 
-                df::unit_wound* wound1 = getWound(unit1,unit2);
-                df::unit_wound* wound2 = getWound(unit2,unit1);
+        df::unit_wound* wound1 = getWound(unit1,unit2);
+        df::unit_wound* wound2 = getWound(unit2,unit1);
 
-                if ( wound1 && !alreadyDone[unit1->id][unit2->id] ) {
-                    UnitAttackData data;
-                    data.attacker = unit1->id;
-                    data.defender = unit2->id;
-                    data.wound = wound1->id;
+        if ( wound1 && !alreadyDone[unit1->id][unit2->id] ) {
+            UnitAttackData data;
+            data.attacker = unit1->id;
+            data.defender = unit2->id;
+            data.wound = wound1->id;
 
-                    alreadyDone[data.attacker][data.defender] = 1;
-                    handler.eventHandler(out, (void*)&data);
-                }
+            alreadyDone[data.attacker][data.defender] = 1;
+            for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+                EventHandler handle = (*b).second;
+                handle.eventHandler(out, (void*)&data);
+            }
+        }
 
-                if ( wound2 && !alreadyDone[unit1->id][unit2->id] ) {
-                    UnitAttackData data;
-                    data.attacker = unit2->id;
-                    data.defender = unit1->id;
-                    data.wound = wound2->id;
+        if ( wound2 && !alreadyDone[unit1->id][unit2->id] ) {
+            UnitAttackData data;
+            data.attacker = unit2->id;
+            data.defender = unit1->id;
+            data.wound = wound2->id;
 
-                    alreadyDone[data.attacker][data.defender] = 1;
-                    handler.eventHandler(out, (void*)&data);
-                }
+            alreadyDone[data.attacker][data.defender] = 1;
+            for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+                EventHandler handle = (*b).second;
+                handle.eventHandler(out, (void*)&data);
+            }
+        }
 
-                if ( Units::isKilled(unit1) ) {
-                    UnitAttackData data;
-                    data.attacker = unit2->id;
-                    data.defender = unit1->id;
-                    data.wound = -1;
-                    alreadyDone[data.attacker][data.defender] = 1;
-                    handler.eventHandler(out, (void*)&data);
-                }
+        if ( Units::isKilled(unit1) ) {
+            UnitAttackData data;
+            data.attacker = unit2->id;
+            data.defender = unit1->id;
+            data.wound = -1;
+            alreadyDone[data.attacker][data.defender] = 1;
+            for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+                EventHandler handle = (*b).second;
+                handle.eventHandler(out, (void*)&data);
+            }
+        }
 
-                if ( Units::isKilled(unit2) ) {
-                    UnitAttackData data;
-                    data.attacker = unit1->id;
-                    data.defender = unit2->id;
-                    data.wound = -1;
-                    alreadyDone[data.attacker][data.defender] = 1;
-                    handler.eventHandler(out, (void*)&data);
-                }
+        if ( Units::isKilled(unit2) ) {
+            UnitAttackData data;
+            data.attacker = unit1->id;
+            data.defender = unit2->id;
+            data.wound = -1;
+            alreadyDone[data.attacker][data.defender] = 1;
+            for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+                EventHandler handle = (*b).second;
+                handle.eventHandler(out, (void*)&data);
+            }
+        }
 
-                if ( !wound1 && !wound2 ) {
-                    //if ( unit1->flags1.bits.inactive || unit2->flags1.bits.inactive )
-                    //    continue;
-                    if ( reportStr.find("severed part") )
-                        continue;
-                    if ( Once::doOnce("EventManager neither wound") ) {
-                        out.print("%s, %d: neither wound: %s\n", __FILE__, __LINE__, reportStr.c_str());
-                    }
-                }
+        if ( !wound1 && !wound2 ) {
+            //if ( unit1->flags1.bits.inactive || unit2->flags1.bits.inactive )
+            //    continue;
+            if ( reportStr.find("severed part") )
+                continue;
+            if ( Once::doOnce("EventManager neither wound") ) {
+                out.print("%s, %d: neither wound: %s\n", __FILE__, __LINE__, reportStr.c_str());
             }
         }
     }
@@ -1107,7 +1001,7 @@ static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, 
 
     //find valid interactions: TODO
     /*map<int32_t,vector<df::interaction*> > validInteractions;
-    for ( size_t a = 0; a < relevantUnits.size(); ++a ) {
+    for ( size_t a = 0; a < relevantUnits.size(); a++ ) {
         df::unit* unit = relevantUnits[a];
         vector<df::interaction*>& interactions = validInteractions[unit->id];
         for ( size_t b = 0; b < unit->body.
@@ -1120,7 +1014,7 @@ static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, 
     std::string attackVerb;
     if ( attackEvent ) {
 //out.print("%s,%d\n",__FILE__,__LINE__);
-        for ( size_t a = 0; a < attackers.size(); ++a ) {
+        for ( size_t a = 0; a < attackers.size(); a++ ) {
             if ( attackers[a]->pos != attackEvent->pos ) {
                 attackers.erase(attackers.begin()+a);
                 a--;
@@ -1149,7 +1043,7 @@ static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, 
     std::string defendVerb;
     if ( defendEvent ) {
 //out.print("%s,%d\n",__FILE__,__LINE__);
-        for ( size_t a = 0; a < defenders.size(); ++a ) {
+        for ( size_t a = 0; a < defenders.size(); a++ ) {
             if ( defenders[a]->pos != defendEvent->pos ) {
                 defenders.erase(defenders.begin()+a);
                 a--;
@@ -1224,7 +1118,7 @@ static vector<df::unit*> gatherRelevantUnits(color_ostream& out, df::report* r1,
     vector<df::unit*> result;
     unordered_set<int32_t> ids;
 //out.print("%s,%d\n",__FILE__,__LINE__);
-    for ( size_t a = 0; a < reports.size(); ++a ) {
+    for ( size_t a = 0; a < reports.size(); a++ ) {
 //out.print("%s,%d\n",__FILE__,__LINE__);
         vector<int32_t>& units = reportToRelevantUnits[reports[a]->id];
         if ( units.size() > 2 ) {
@@ -1232,7 +1126,7 @@ static vector<df::unit*> gatherRelevantUnits(color_ostream& out, df::report* r1,
                 out.print("%s,%d: too many relevant units. On report\n \'%s\'\n", __FILE__, __LINE__, reports[a]->text.c_str());
             }
         }
-        for ( size_t b = 0; b < units.size(); ++b )
+        for ( size_t b = 0; b < units.size(); b++ )
             if ( ids.find(units[b]) == ids.end() ) {
                 ids.insert(units[b]);
                 result.push_back(df::unit::find(units[b]));
@@ -1249,7 +1143,7 @@ static void manageInteractionEvent(color_ostream& out) {
     std::vector<df::report*>& reports = df::global::world->status.reports;
     size_t a = df::report::binsearch_index(reports, lastReportInteraction, false);
     while (a < reports.size() && reports[a]->id <= lastReportInteraction) {
-        ++a;
+        a++;
     }
     if ( a < reports.size() )
         updateReportToRelevantUnits();
@@ -1258,66 +1152,62 @@ static void manageInteractionEvent(color_ostream& out) {
     df::unit* lastAttacker = NULL;
     //df::unit* lastDefender = NULL;
     unordered_map<int32_t,unordered_set<int32_t> > history;
-    int32_t tick = df::global::world->frame_counter;
-    for (auto &iter : copy) {
-        auto &handler = iter.second;
-        if (tick - eventLastTick[handler.eventHandler] >= handler.freq) {
-            eventLastTick[handler.eventHandler] = tick;
-            for ( ; a < reports.size(); ++a ) {
-                df::report* report = reports[a];
-                lastReportInteraction = report->id;
-                df::announcement_type type = report->type;
-                if ( type != df::announcement_type::INTERACTION_ACTOR && type != df::announcement_type::INTERACTION_TARGET )
-                    continue;
-                if ( report->flags.bits.continuation )
-                    continue;
-                bool attack = type == df::announcement_type::INTERACTION_ACTOR;
-                if ( attack ) {
-                    lastAttackEvent = report;
-                    lastAttacker = NULL;
-                    //lastDefender = NULL;
-                }
-                vector<df::unit*> relevantUnits = gatherRelevantUnits(out, lastAttackEvent, report);
-                InteractionData data = getAttacker(out, lastAttackEvent, lastAttacker, attack ? NULL : report, relevantUnits);
-                if ( data.attacker < 0 )
-                    continue;
+    for ( ; a < reports.size(); a++ ) {
+        df::report* report = reports[a];
+        lastReportInteraction = report->id;
+        df::announcement_type type = report->type;
+        if ( type != df::announcement_type::INTERACTION_ACTOR && type != df::announcement_type::INTERACTION_TARGET )
+            continue;
+        if ( report->flags.bits.continuation )
+            continue;
+        bool attack = type == df::announcement_type::INTERACTION_ACTOR;
+        if ( attack ) {
+            lastAttackEvent = report;
+            lastAttacker = NULL;
+            //lastDefender = NULL;
+        }
+        vector<df::unit*> relevantUnits = gatherRelevantUnits(out, lastAttackEvent, report);
+        InteractionData data = getAttacker(out, lastAttackEvent, lastAttacker, attack ? NULL : report, relevantUnits);
+        if ( data.attacker < 0 )
+            continue;
 //out.print("%s,%d\n",__FILE__,__LINE__);
-                //if ( !attack && lastAttacker && data.attacker == lastAttacker->id && lastDefender && data.defender == lastDefender->id )
-                //    continue; //lazy way of preventing duplicates
-                if ( attack && a+1 < reports.size() && reports[a+1]->type == df::announcement_type::INTERACTION_TARGET ) {
+        //if ( !attack && lastAttacker && data.attacker == lastAttacker->id && lastDefender && data.defender == lastDefender->id )
+        //    continue; //lazy way of preventing duplicates
+        if ( attack && a+1 < reports.size() && reports[a+1]->type == df::announcement_type::INTERACTION_TARGET ) {
 //out.print("%s,%d\n",__FILE__,__LINE__);
-                    vector<df::unit*> relevants = gatherRelevantUnits(out, lastAttackEvent, reports[a+1]);
-                    InteractionData data2 = getAttacker(out, lastAttackEvent, lastAttacker, reports[a+1], relevants);
-                    if ( data.attacker == data2.attacker && (data.defender == -1 || data.defender == data2.defender) ) {
+            vector<df::unit*> relevants = gatherRelevantUnits(out, lastAttackEvent, reports[a+1]);
+            InteractionData data2 = getAttacker(out, lastAttackEvent, lastAttacker, reports[a+1], relevants);
+            if ( data.attacker == data2.attacker && (data.defender == -1 || data.defender == data2.defender) ) {
 //out.print("%s,%d\n",__FILE__,__LINE__);
-                        data = data2;
-                        ++a;
-                    }
-                }
-                {
+                data = data2;
+                a++;
+            }
+        }
+        {
 #define HISTORY_ITEM 1
 #if HISTORY_ITEM
-                    unordered_set<int32_t>& b = history[data.attacker];
-                    if ( b.find(data.defender) != b.end() )
-                        continue;
-                    history[data.attacker].insert(data.defender);
-                    //b.insert(data.defender);
+            unordered_set<int32_t>& b = history[data.attacker];
+            if ( b.find(data.defender) != b.end() )
+                continue;
+            history[data.attacker].insert(data.defender);
+            //b.insert(data.defender);
 #else
-                    unordered_set<int32_t>& b = history[data.attackReport];
+            unordered_set<int32_t>& b = history[data.attackReport];
             if ( b.find(data.defendReport) != b.end() )
                 continue;
             history[data.attackReport].insert(data.defendReport);
             //b.insert(data.defendReport);
 #endif
-                }
-//out.print("%s,%d\n",__FILE__,__LINE__);
-                lastAttacker = df::unit::find(data.attacker);
-                //lastDefender = df::unit::find(data.defender);
-                //fire event
-                handler.eventHandler(out, (void*)&data);
-                //TODO: deduce attacker from latest defend event first
-            }
         }
+//out.print("%s,%d\n",__FILE__,__LINE__);
+        lastAttacker = df::unit::find(data.attacker);
+        //lastDefender = df::unit::find(data.defender);
+        //fire event
+        for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+            EventHandler handle = (*b).second;
+            handle.eventHandler(out, (void*)&data);
+        }
+        //TODO: deduce attacker from latest defend event first
     }
 }
 

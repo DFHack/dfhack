@@ -2987,7 +2987,7 @@ To avoid confusion, these methods cannot be redefined.
 .. _custom-raw-tokens:
 
 custom-raw-tokens
-===============
+=================
 
 A module for reading custom tokens added to the raws by mods.
 

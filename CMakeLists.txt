@@ -163,7 +163,7 @@ if(HAVE_CUCHAR2)
 endif()
 
 # mixing the build system with the source code is ugly and stupid. enforce the opposite :)
-if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+if("${dfhack_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
     message(FATAL_ERROR "In-source builds are not allowed.")
 endif()
 
@@ -264,7 +264,7 @@ include(CMake/DownloadFile.cmake)
 
 if(WIN32)
     # Download zlib on Windows
-    set(ZLIB_DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/depends/zlib/lib/win${DFHACK_BUILD_ARCH})
+    set(ZLIB_DOWNLOAD_DIR ${dfhack_SOURCE_DIR}/depends/zlib/lib/win${DFHACK_BUILD_ARCH})
     if(${DFHACK_BUILD_ARCH} STREQUAL "64")
         download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win64-zlib.lib"
             ${ZLIB_DOWNLOAD_DIR}/zlib.lib
@@ -277,14 +277,14 @@ if(WIN32)
 
     # Move zlib to the build folder so possible 32 and 64-bit builds
     # in the same source tree don't conflict
-    file(COPY ${CMAKE_SOURCE_DIR}/depends/zlib
+    file(COPY ${dfhack_SOURCE_DIR}/depends/zlib
         DESTINATION ${CMAKE_BINARY_DIR}/depends/)
     file(COPY ${ZLIB_DOWNLOAD_DIR}/zlib.lib
         DESTINATION ${CMAKE_BINARY_DIR}/depends/zlib/lib/)
 
     # Do the same for SDLreal.dll
     # (DFHack doesn't require this at build time, so no need to move it to the build folder)
-    set(SDLREAL_DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/package/windows/win${DFHACK_BUILD_ARCH})
+    set(SDLREAL_DOWNLOAD_DIR ${dfhack_SOURCE_DIR}/package/windows/win${DFHACK_BUILD_ARCH})
     if(${DFHACK_BUILD_ARCH} STREQUAL "64")
         download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win64-SDL.dll"
             ${SDLREAL_DOWNLOAD_DIR}/SDLreal.dll
@@ -299,7 +299,7 @@ endif()
 if(APPLE)
     # libstdc++ (GCC 4.8.5 for OS X 10.6)
     # fixes crash-on-unwind bug in DF's libstdc++
-    set(LIBSTDCXX_DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/package/darwin/osx${DFHACK_BUILD_ARCH})
+    set(LIBSTDCXX_DOWNLOAD_DIR ${dfhack_SOURCE_DIR}/package/darwin/osx${DFHACK_BUILD_ARCH})
 
     if(${GCC_VERSION_OUT} VERSION_LESS "4.9")
         set(LIBSTDCXX_GCC_VER "48")

@@ -11,7 +11,7 @@ endfunction()
 
 function(search_downloads FILE_MD5 VAR)
     set(${VAR} "" PARENT_SCOPE)
-    file(GLOB FILES ${CMAKE_SOURCE_DIR}/CMake/downloads/*)
+    file(GLOB FILES ${dfhack_SOURCE_DIR}/CMake/downloads/*)
     foreach(FILE ${FILES})
         file(MD5 "${FILE}" CUR_MD5)
         if("${CUR_MD5}" STREQUAL "${FILE_MD5}")
@@ -53,7 +53,7 @@ function(download_file_unzip URL ZIP_TYPE ZIP_DEST ZIP_MD5 UNZIP_DEST UNZIP_MD5)
             message("* Decompressing ${FILENAME}")
             if("${ZIP_TYPE}" STREQUAL "gz")
                 execute_process(COMMAND
-                    "${PERL_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/depends/gunzip.pl"
+                    "${PERL_EXECUTABLE}" "${dfhack_SOURCE_DIR}/depends/gunzip.pl"
                     "${ZIP_DEST}" --force)
             else()
                 message(SEND_ERROR "Unknown ZIP_TYPE: ${ZIP_TYPE}")

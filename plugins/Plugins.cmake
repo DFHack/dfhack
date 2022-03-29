@@ -94,7 +94,7 @@ macro(dfhack_plugin)
             COMMAND protoc-bin -I=${CMAKE_CURRENT_SOURCE_DIR}/proto/
                 --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/proto/tmp/
                 ${PLUGIN_PROTOS}
-            COMMAND ${PERL_EXECUTABLE} ${CMAKE_SOURCE_DIR}/depends/copy-if-different.pl
+            COMMAND ${PERL_EXECUTABLE} ${dfhack_SOURCE_DIR}/depends/copy-if-different.pl
                 ${PLUGIN_PROTO_TMP_FILES}
                 ${CMAKE_CURRENT_SOURCE_DIR}/proto/
             COMMENT "Generating plugin ${PLUGIN_NAME} protobufs"

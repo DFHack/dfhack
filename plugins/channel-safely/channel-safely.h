@@ -109,12 +109,36 @@ public:
 
 extern color_ostream* debug_out;
 extern bool cheat_mode;
-extern void getNeighbours(const df::coord &tile, df::coord(&neighbours)[8]);
+inline void getNeighbours(const df::coord &tile, df::coord(&neighbours)[8]) {
+    neighbours[0] = tile;
+    neighbours[1] = tile;
+    neighbours[2] = tile;
+    neighbours[3] = tile;
+    neighbours[4] = tile;
+    neighbours[5] = tile;
+    neighbours[6] = tile;
+    neighbours[7] = tile;
+    neighbours[0].x--; neighbours[0].y--;
+    neighbours[1].y--;
+    neighbours[2].x++; neighbours[2].y--;
+    neighbours[3].x--;
+    neighbours[4].x++;
+    neighbours[5].x--; neighbours[5].y++;
+    neighbours[6].y++;
+    neighbours[7].x++; neighbours[7].y++;
+}
 extern void manageNeighbours(color_ostream &out, const df::coord &tile);
 extern void cancelJob(df::job* job);
 extern bool is_group_ready(const GroupData &groups, const GroupData::Group &group);
 extern bool is_group_occupied(const GroupData &groups, const GroupData::Group &group);
-extern bool safe_to_dig_down(const df::coord &tile);
-extern bool is_dig(df::job* job);
-extern bool is_channel(df::job* job);
-extern bool is_channel(df::tile_designation &designation);
+extern bool is_safe_to_dig_down(const df::coord &tile);
+inline bool is_dig(df::job* job) {
+    return job->job_type == df::job_type::Dig;
+}
+inline bool is_channel_job(df::job* job) {
+    return job->job_type == df::job_type::DigChannel;
+}
+inline bool is_channel_designation(df::tile_designation &designation) {
+    return designation.bits.dig == df::tile_dig_designation::Channel;
+}
+

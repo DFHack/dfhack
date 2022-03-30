@@ -166,7 +166,7 @@ void onJobStart(color_ostream &out, void* job_ptr) {
     if (debug_out) debug_out->print("onJobStart()\n");
     if (enabled && World::isFortressMode() && Maps::IsValid()) {
         auto job = (df::job*) job_ptr;
-        if (is_dig(job) || is_channel(job)) {
+        if (is_dig(job) || is_channel_job(job)) {
             df::coord local(job->pos);
             local.x = local.x % 16;
             local.y = local.y % 16;
@@ -188,7 +188,7 @@ void onJobComplete(color_ostream &out, void* job_ptr) {
     if (debug_out) debug_out->print("onJobComplete()\n");
     if (enabled && World::isFortressMode() && Maps::IsValid()) {
         auto job = (df::job*) job_ptr;
-        if (is_channel(job)) {
+        if (is_channel_job(job)) {
             df::coord local(job->pos);
             local.x = local.x % 16;
             local.y = local.y % 16;

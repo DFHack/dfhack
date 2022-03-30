@@ -81,7 +81,7 @@ void ChannelManager::manage_safety(color_ostream &out, df::map_block* block, con
                     tile_occupancy.bits.dig_marked = true;
                     jobs.cancel_job(tile); //cancels job if designation is an open/active job
                     // is it permanently unsafe? and is it safe to instantly dig the group of tiles
-                    if (cheat_mode && !safe_to_dig_down(tile) && !is_group_occupied(groups, group)) {
+                    if (cheat_mode && !is_safe_to_dig_down(tile) && !is_group_occupied(groups, group)) {
                         tile_occupancy.bits.dig_marked = false;
                         dig_now_tile(out, tile);
                     }
@@ -89,25 +89,6 @@ void ChannelManager::manage_safety(color_ostream &out, df::map_block* block, con
             }
         }
     }
-}
-
-inline void getNeighbours(const df::coord &tile, df::coord(&neighbours)[8]) {
-    neighbours[0] = tile;
-    neighbours[1] = tile;
-    neighbours[2] = tile;
-    neighbours[3] = tile;
-    neighbours[4] = tile;
-    neighbours[5] = tile;
-    neighbours[6] = tile;
-    neighbours[7] = tile;
-    neighbours[0].x--; neighbours[0].y--;
-    neighbours[1].y--;
-    neighbours[2].x++; neighbours[2].y--;
-    neighbours[3].x--;
-    neighbours[4].x++;
-    neighbours[5].x--; neighbours[5].y++;
-    neighbours[6].y++;
-    neighbours[7].x++; neighbours[7].y++;
 }
 
 void manageNeighbours(color_ostream &out, const df::coord &tile) {
@@ -137,7 +118,7 @@ void cancelJob(df::job* job) {
         x = pos.x % 16;
         y = pos.y % 16;
         df::tile_designation &designation = job_block->designation[x][y];
-        designation.bits.dig = is_channel(job) ?
+        designation.bits.dig = is_channel_job(job) ?
                                df::tile_dig_designation::Channel : df::tile_dig_designation::Default;
         Job::removeJob(job);
     }
@@ -148,7 +129,7 @@ bool is_group_ready(const GroupData &groups, const GroupData::Group &group) {
     for (auto &group_tile : group) {
         df::coord above(group_tile.first);
         above.z++;
-        if(!safe_to_dig_down(group_tile.first)){
+        if(!is_safe_to_dig_down(group_tile.first)){
             return false;
         }
         auto group_above = groups.find(above);
@@ -180,23 +161,11 @@ bool is_group_occupied(const GroupData &groups, const GroupData::Group &group) {
     return false;
 }
 
-bool safe_to_dig_down(const df::coord &tile){
+bool is_safe_to_dig_down(const df::coord &tile){
     df::coord below(tile);
     below.z--;
     df::tiletype type = *Maps::getTileType(below);
     return !isOpenTerrain(type) && !isFloorTerrain(type);
-}
-
-bool is_dig(df::job* job) {
-    return job->job_type == df::job_type::Dig;
-}
-
-bool is_channel(df::job* job) {
-    return job->job_type == df::job_type::DigChannel;
-}
-
-bool is_channel(df::tile_designation &designation) {
-    return designation.bits.dig == df::tile_dig_designation::Channel;
 }
 
 void GroupData::read() {
@@ -204,7 +173,7 @@ void GroupData::read() {
     jobs.read();
     for (auto &map_entry : jobs) {
         df::job* job = map_entry.second;
-        if (is_channel(job)) {
+        if (is_channel_job(job)) {
             add(map_entry.first, Maps::getTileBlock(job->pos));
         }
     }
@@ -234,7 +203,7 @@ void GroupData::foreach_block() {
 void GroupData::foreach_tile(df::map_block* block, int z) {
     for (int16_t local_x = 0; local_x < 16; ++local_x) {
         for (int16_t local_y = 0; local_y < 16; ++local_y) {
-            if (is_channel(block->designation[local_x][local_y])) {
+            if (is_channel_designation(block->designation[local_x][local_y])) {
                 if (debug_out) debug_out->print("foreach tile\n");
                 df::coord world_pos(block->map_pos);
                 world_pos.x += local_x;
@@ -317,7 +286,7 @@ void DigJobs::read() {
     while (node) {
         df::job* job = node->item;
         node = node->next;
-        if (is_channel(job)) {
+        if (is_channel_job(job)) {
             jobs.emplace(job->pos, job);
         }
     }

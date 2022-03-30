@@ -2083,7 +2083,10 @@ void viewscreen_unitlaborsst::render()
                 }
             }
             else
+            {
+                fg = COLOR_WHITE;
                 bg = COLOR_CYAN;
+            }
             if ((col_offset == sel_column) && (row_offset == sel_row))
             {
                 fg = is_labor_set ? COLOR_WHITE : COLOR_GREY;

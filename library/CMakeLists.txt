@@ -251,7 +251,7 @@ add_custom_command(
     COMMAND protoc-bin -I=${CMAKE_CURRENT_SOURCE_DIR}/proto/
         --cpp_out=dllexport_decl=DFHACK_EXPORT:${CMAKE_CURRENT_SOURCE_DIR}/proto/tmp/
         ${PROJECT_PROTOS}
-    COMMAND ${PERL_EXECUTABLE} ${CMAKE_SOURCE_DIR}/depends/copy-if-different.pl
+    COMMAND ${PERL_EXECUTABLE} ${dfhack_SOURCE_DIR}/depends/copy-if-different.pl
         ${PROJECT_PROTO_TMP_FILES}
         ${CMAKE_CURRENT_SOURCE_DIR}/proto/
     COMMENT "Generating core protobufs"
@@ -350,15 +350,15 @@ if(DFHACK_PRERELEASE)
 endif()
 
 configure_file(git-describe.cmake.in ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake @ONLY)
-if(EXISTS ${CMAKE_SOURCE_DIR}/.git/index AND EXISTS ${CMAKE_SOURCE_DIR}/.git/modules/library/xml/index)
+if(EXISTS ${dfhack_SOURCE_DIR}/.git/index AND EXISTS ${dfhack_SOURCE_DIR}/.git/modules/library/xml/index)
     add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/git-describe.h
     COMMAND ${CMAKE_COMMAND}
         -D dfhack_SOURCE_DIR:STRING=${dfhack_SOURCE_DIR}
         -D GIT_EXECUTABLE:STRING=${GIT_EXECUTABLE}
         -P ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake
     COMMENT "Obtaining git commit information"
-    DEPENDS ${CMAKE_SOURCE_DIR}/.git/index
-        ${CMAKE_SOURCE_DIR}/.git/modules/library/xml/index
+    DEPENDS ${dfhack_SOURCE_DIR}/.git/index
+        ${dfhack_SOURCE_DIR}/.git/modules/library/xml/index
         ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake
         include/git-describe.h.in
     )

@@ -492,8 +492,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, vector <PluginComm
         df_confirm,
         false, //allow non-interactive use
 
-        "  confirmation enable|disable option|all ...\n"
-        "  confirmation help|status\n"
+        "  confirm enable|disable option|all ...\n"
+        "  confirm help|status\n"
     ));
     return CR_OK;
 }

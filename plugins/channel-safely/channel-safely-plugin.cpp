@@ -86,7 +86,7 @@ command_result manage_channel_designations(color_ostream &out, std::vector<std::
     } else if (parameters.size() == 2 && parameters[0] == "disable" && parameters[1] == "cheats" && cheat_mode) {
         // disable cheat mode for insta-digging permanently unsafe designations
         cheat_mode = false;
-        out.print("channel-safely: ontick events disabled!\n");
+        out.print("channel-safely: cheat mode disabled!\n");
     }
     else if (parameters.size() == 1 && parameters[0] == "debug") {
         // developer debug

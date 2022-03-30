@@ -274,7 +274,7 @@ void GroupData::debug() {
     for (auto &group : groups) {
         if (debug_out) debug_out->print("group %d (size: %zu)\n", idx++, group.size());
         for (auto &pair : group) {
-            if (debug_out) debug_out->print("(%d,%d,%d)\n", pair.first.x, pair.first.y, pair.first.z);
+            if (debug_out) debug_out->print(" (%d,%d,%d)\n", pair.first.x, pair.first.y, pair.first.z);
         }
         idx++;
     }

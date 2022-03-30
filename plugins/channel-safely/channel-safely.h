@@ -52,7 +52,7 @@ protected:
 public:
     GroupData(DigJobs &jobs) : jobs(jobs) { groups.reserve(200); }
     void read();
-    void cancel_job(const df::coord &pos) { jobs.cancel_job(pos); }
+    void cancel_job(const df::coord &pos) { jobs.erase_and_cancel(pos); }
     void clear() { // to allow deleting group data when the plugin isn't enabled
         free_spots.clear();
         groups.clear();

@@ -17,8 +17,8 @@ REQUIRE_GLOBAL(world);
 
 command_result manage_channel_designations(color_ostream &out, std::vector<std::string> &parameters);
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable);
-void onJobStart(color_ostream &out, void* job_ptr);
-void onJobComplete(color_ostream &out, void* job_ptr);
+void onJobStart(color_ostream &out, void* job_ptr); // check a job's safety
+void onJobComplete(color_ostream &out, void* job_ptr); // update tracking when job completes
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginCommand> &commands) {
     commands.push_back(PluginCommand("channel-safely",
@@ -62,39 +62,46 @@ command_result manage_channel_designations(color_ostream &out, std::vector<std::
     namespace EM = EventManager;
     using namespace EM::EventType;
     if (debug_out) debug_out->print("manage_channel_designations()\n");
-    // manually trigger managing designations
     if (parameters.empty()) {
+        // manually trigger managing all designations
         if (debug_out) debug_out->print("mcd->manage_designations()\n");
         ChannelManager::Get().manage_designations(out);
         if (!enabled) {
             ChannelManager::Get().delete_groups();
         }
     }
-    // enable options
+    /// enable options
     else if (parameters.size() == 1 && parameters[0] == "enable") {
+        // enable auto-triggers
         return plugin_enable(out, true);
     } else if (parameters.size() == 2 && parameters[0] == "enable" && parameters[1] == "cheats" && !cheat_mode) {
+        // enable cheat mode for insta-digging permanently unsafe designations
         cheat_mode = true;
         out.print("channel-safely: cheat mode enabled!\n");
     }
-    // disable options
+    /// disable options
     else if (parameters.size() == 1 && parameters[0] == "disable") {
+        // disable auto-triggers
         return plugin_enable(out, false);
     } else if (parameters.size() == 2 && parameters[0] == "disable" && parameters[1] == "cheats" && cheat_mode) {
+        // disable cheat mode for insta-digging permanently unsafe designations
         cheat_mode = false;
         out.print("channel-safely: ontick events disabled!\n");
     }
-    // developer debug
     else if (parameters.size() == 1 && parameters[0] == "debug") {
+        // developer debug
         debug_out = &out;
+        // print out group info
         ChannelManager::Get().debug();
         debug_out = nullptr;
     } else if (parameters.size() == 1 && parameters[0] == "help") {
-        return CR_WRONG_USAGE;
+        // help
+        return CR_WRONG_USAGE; // should tell dfhack to print usage message
     } else {
+        // invalid option given.. maybe a typo
         debug_out = nullptr;
         out.printerr("Invalid argument.\n\n");
-        return CR_WRONG_USAGE;
+        return CR_WRONG_USAGE; // should tell dfhack to print usage message
     }
     debug_out = nullptr;
     return CR_OK;
@@ -137,10 +144,12 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
                 break;
             case SC_PAUSED:
                 if (debug_out) debug_out->print("SC_PAUSED\n");
+                // manage all designations on pause
                 ChannelManager::Get().manage_designations(out);
                 break;
             case SC_UNPAUSED:
                 if (debug_out) debug_out->print("SC_UNPAUSED\n");
+                // manage all designations on unpause
                 ChannelManager::Get().manage_designations(out);
                 break;
             case SC_WORLD_UNLOADED:
@@ -159,6 +168,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     return CR_OK;
 }
 
+// check safety of a job when it starts
 void onJobStart(color_ostream &out, void* job_ptr) {
 #ifdef CS_DEBUG
     debug_out = &out;
@@ -181,6 +191,7 @@ void onJobStart(color_ostream &out, void* job_ptr) {
     debug_out = nullptr;
 }
 
+// update tracking when job completes
 void onJobComplete(color_ostream &out, void* job_ptr) {
 #ifdef CS_DEBUG
     debug_out = &out;

@@ -3,7 +3,7 @@
 #place hidden()
 #zone hidden()
 #query hidden()
-#meta hidden()
-#notes hidden()
 #ignore
 #aliases
+#meta hidden()
+#notes hidden()

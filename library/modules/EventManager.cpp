@@ -76,15 +76,12 @@ void enqueueTickEvent(EventHandler &handler){
     tickQueue.insert(pair<int32_t, EventHandler>(handler.when, handler));
 }
 
-void DFHack::EventManager::registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin) {
+void DFHack::EventManager::registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin, bool backlog) {
     if(e == EventType::TICK){
         enqueueTickEvent(handler);
     }
-    int32_t tick = 0;
-    if (df::global::world) {
-        tick = df::global::world->frame_counter;
-    }
-    eventLastTick[handler] = tick - 1;
+    int32_t tick = backlog ? -2 : (df::global::world ? df::global::world->frame_counter : -1);
+    eventLastTick[handler] = tick; // received ranges.. // backlog: -1,n // !world: 0,n // world: tick,n
     handlers[e].insert(pair<Plugin*, EventHandler>(plugin, handler));
 }
 
@@ -100,14 +97,8 @@ int32_t DFHack::EventManager::registerTick(EventHandler handler, int32_t when, P
     }
     handler.when = when;
     tickQueue.insert(pair<int32_t, EventHandler>(handler.when, handler));
-    int32_t tick = 0;
-    if (df::global::world) {
-        tick = df::global::world->frame_counter;
-    }
-    eventLastTick[handler] = tick - 1;
-    //this commented line ensures "Registered Ticks" are not added back to the queue after execution
+    // we don't track this handler, this allows registerTick to retain the old behaviour of needing to re-register the tick event
     //handlers[EventType::TICK].insert(pair<Plugin*,EventHandler>(plugin,handler));
-
     // since the event isn't added to the handlers, we don't need to unregister these events
     return when;
 }

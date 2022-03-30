@@ -14,12 +14,16 @@
 
 using namespace DFHack;
 
-// Used to read/store/iterate channel digging jobs
+/* Used to read/store/iterate channel digging jobs
+ * jobs: list of coordinates with channel jobs associated to them
+ * read: world->jobs.list to find channel jobs and emplaces them into the `jobs` map
+ * cancel_job: finds a job corresponding to a coord, removes the mapping in jobs, and calls Job::removeJob
+ */
 class DigJobs {
 private:
     friend class GroupData;
 
-    using Jobs = std::map<df::coord, df::job*>;
+    using Jobs = std::map<df::coord, df::job*>; // job* will exist until it is complete, and likely beyond
     Jobs jobs;
 public:
     void read();

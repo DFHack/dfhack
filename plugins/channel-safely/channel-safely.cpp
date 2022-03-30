@@ -79,7 +79,7 @@ void ChannelManager::manage_safety(color_ostream &out, df::map_block* block, con
                 } else {
                     // not safe
                     tile_occupancy.bits.dig_marked = true;
-                    jobs.cancel_job(tile); //cancels job if designation is an open/active job
+                    jobs.erase_and_cancel(tile); //cancels job if designation is an open/active job
                     // is it permanently unsafe? and is it safe to instantly dig the group of tiles
                     if (cheat_mode && !is_safe_to_dig_down(tile) && !is_group_occupied(groups, group)) {
                         tile_occupancy.bits.dig_marked = false;
@@ -292,10 +292,12 @@ void DigJobs::read() {
     }
 }
 
-void DigJobs::cancel_job(const df::coord &pos) {
+ typename std::map<df::coord, df::job*>::iterator DigJobs::erase_and_cancel(const df::coord &pos) {
     auto iter = jobs.find(pos);
     if (iter != jobs.end()) {
         df::job* job = iter->second;
         cancelJob(job);
+        return jobs.erase(iter);
     }
+    return iter;
 }

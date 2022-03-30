@@ -28,7 +28,7 @@ private:
 public:
     void read();
     void clear() { jobs.clear(); }
-    void cancel_job(const df::coord &pos);
+    typename Jobs::iterator erase_and_cancel(const df::coord &pos);
     Jobs::const_iterator find(const df::coord &pos) const { return jobs.find(pos); }
     Jobs::const_iterator begin() const { return jobs.begin(); }
     Jobs::const_iterator end() const { return jobs.end(); }

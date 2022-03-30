@@ -59,9 +59,8 @@ public:
         groups_map.clear();
     }
     void mark_done(const df::coord &tile) {
-        auto iter = groups_map.find(tile);
-        int group_index = iter->second;
-        if (iter != groups_map.end()) {
+        if (groups_map.count(tile)) {
+            int group_index = groups_map.find(tile)->second;
             Group &group = groups[group_index];
             df::map_block* block = Maps::getTileBlock(tile);
             group.erase(std::make_pair(tile, block));

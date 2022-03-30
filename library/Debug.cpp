@@ -83,14 +83,14 @@ static color_value selectColor(const DebugCategory::level msgLevel)
         return COLOR_BROWN;
     case DebugCategory::LDEBUG:
         return COLOR_LIGHTBLUE;
-    case DebugCategory::LINFO:
-        return COLOR_GREY;
     case DebugCategory::LWARNING:
         return COLOR_YELLOW;
     case DebugCategory::LERROR:
         return COLOR_LIGHTRED;
+    case DebugCategory::LINFO:
+    default:
+        return COLOR_RESET;
     }
-    return COLOR_WHITE;
 }
 
 #if __GNUC__

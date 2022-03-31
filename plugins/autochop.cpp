@@ -18,6 +18,8 @@
 #include "df/map_block.h"
 #include "df/material.h"
 #include "df/plant.h"
+#include "df/plant_tree_info.h"
+#include "df/plant_tree_tile.h"
 #include "df/plant_raw.h"
 #include "df/tile_dig_designation.h"
 #include "df/ui.h"
@@ -288,18 +290,41 @@ static bool skip_plant(const df::plant * plant, bool *restricted)
     return false;
 }
 
+static int estimate_logs(const df::plant *plant)
+{
+    //adapted from code by aljohnston112 @ github
+    df::plant_tree_tile** tiles = plant->tree_info->body;
+    df::plant_tree_tile* tilesRow;
+
+    int trunks = 0;
+    for (int i = 0; i < plant->tree_info->body_height; i++) {
+        tilesRow = tiles[i];
+        for (int j = 0; j < plant->tree_info->dim_y*plant->tree_info->dim_x; j++) {
+            trunks += tilesRow[j].bits.trunk;
+        }
+    }
+
+    return trunks;
+}
+
 static int do_chop_designation(bool chop, bool count_only, int *skipped = nullptr)
 {
     int count = 0;
+    int estimated_yield = get_log_count();
+
     if (skipped)
     {
         *skipped = 0;
     }
+
     for (size_t i = 0; i < world->plants.all.size(); i++)
     {
         const df::plant *plant = world->plants.all[i];
-
         bool restricted = false;
+
+        if ((estimated_yield >= max_logs) && chop)
+            continue;
+
         if (skip_plant(plant, &restricted))
         {
             if (restricted && skipped)
@@ -322,7 +347,10 @@ static int do_chop_designation(bool chop, bool count_only, int *skipped = nullpt
             else
             {
                 if (Designations::markPlant(plant))
+                {
+                    estimated_yield += estimate_logs(plant);
                     count++;
+                }
             }
         }
 

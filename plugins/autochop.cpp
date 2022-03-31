@@ -325,7 +325,7 @@ static int do_chop_designation(bool chop, bool count_only, int *skipped = nullpt
         bool restricted = false;
 
         if ((estimated_yield >= max_logs) && chop)
-            continue;
+            break;
 
         if (skip_plant(plant, &restricted))
         {

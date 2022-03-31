@@ -307,6 +307,41 @@ static int estimate_logs(const df::plant *plant)
     return trunks;
 }
 
+static int get_log_count()
+{
+    std::vector<df::item*> &items = world->items.other[items_other_id::IN_PLAY];
+
+    // Pre-compute a bitmask with the bad flags
+    df::item_flags bad_flags;
+    bad_flags.whole = 0;
+
+#define F(x) bad_flags.bits.x = true;
+    F(dump); F(forbid); F(garbage_collect);
+    F(hostile); F(on_fire); F(rotten); F(trader);
+    F(in_building); F(construction); F(artifact);
+    F(spider_web); F(owned); F(in_job);
+#undef F
+
+    size_t valid_count = 0;
+    for (size_t i = 0; i < items.size(); i++)
+    {
+        df::item *item = items[i];
+
+        if (item->getType() != item_type::WOOD)
+            continue;
+
+        if (item->flags.whole & bad_flags.whole)
+            continue;
+
+        if (!is_valid_item(item))
+            continue;
+
+        ++valid_count;
+    }
+
+    return valid_count;
+}
+
 static int do_chop_designation(bool chop, bool count_only, int *skipped = nullptr)
 {
     int count = 0;
@@ -406,41 +441,6 @@ static bool is_valid_item(df::item *item)
     }
 
     return true;
-}
-
-static int get_log_count()
-{
-    std::vector<df::item*> &items = world->items.other[items_other_id::IN_PLAY];
-
-    // Pre-compute a bitmask with the bad flags
-    df::item_flags bad_flags;
-    bad_flags.whole = 0;
-
-#define F(x) bad_flags.bits.x = true;
-    F(dump); F(forbid); F(garbage_collect);
-    F(hostile); F(on_fire); F(rotten); F(trader);
-    F(in_building); F(construction); F(artifact);
-    F(spider_web); F(owned); F(in_job);
-#undef F
-
-    size_t valid_count = 0;
-    for (size_t i = 0; i < items.size(); i++)
-    {
-        df::item *item = items[i];
-
-        if (item->getType() != item_type::WOOD)
-            continue;
-
-        if (item->flags.whole & bad_flags.whole)
-            continue;
-
-        if (!is_valid_item(item))
-            continue;
-
-        ++valid_count;
-    }
-
-    return valid_count;
 }
 
 static void set_threshold_check(bool state)

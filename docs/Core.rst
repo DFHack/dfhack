@@ -497,8 +497,9 @@ the root DF folder.
     This will allow you to make changes in the repo and have them take effect
     immediately, without needing to re-install or copy scripts over manually.
 
+Note that ``script-paths.txt`` is only read at startup, but the paths can also be
+modified programmatically at any time through the `Lua API <lua-api-internal>`.
 
-Script paths can also be modified programmatically through the `Lua API <lua-api-internal>`.
 
 .. _env-vars:
 

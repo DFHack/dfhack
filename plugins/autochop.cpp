@@ -47,6 +47,8 @@ DFHACK_PLUGIN("autochop");
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(ui);
 
+static int get_log_count();
+
 static bool autochop_enabled = false;
 static int min_logs, max_logs;
 static const int LOG_CAP_MAX = 99999;

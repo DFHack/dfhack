@@ -307,6 +307,42 @@ static int estimate_logs(const df::plant *plant)
     return trunks;
 }
 
+static bool is_valid_item(df::item *item)
+{
+    for (size_t i = 0; i < item->general_refs.size(); i++)
+    {
+        df::general_ref *ref = item->general_refs[i];
+
+        switch (ref->getType())
+        {
+        case general_ref_type::CONTAINED_IN_ITEM:
+            return false;
+
+        case general_ref_type::UNIT_HOLDER:
+            return false;
+
+        case general_ref_type::BUILDING_HOLDER:
+            return false;
+
+        default:
+            break;
+        }
+    }
+
+    for (size_t i = 0; i < item->specific_refs.size(); i++)
+    {
+        df::specific_ref *ref = item->specific_refs[i];
+
+        if (ref->type == specific_ref_type::JOB)
+        {
+            // Ignore any items assigned to a job
+            return false;
+        }
+    }
+
+    return true;
+}
+
 static int get_log_count()
 {
     std::vector<df::item*> &items = world->items.other[items_other_id::IN_PLAY];
@@ -405,42 +441,6 @@ static int do_chop_designation(bool chop, bool count_only, int *skipped = nullpt
     }
 
     return count;
-}
-
-static bool is_valid_item(df::item *item)
-{
-    for (size_t i = 0; i < item->general_refs.size(); i++)
-    {
-        df::general_ref *ref = item->general_refs[i];
-
-        switch (ref->getType())
-        {
-        case general_ref_type::CONTAINED_IN_ITEM:
-            return false;
-
-        case general_ref_type::UNIT_HOLDER:
-            return false;
-
-        case general_ref_type::BUILDING_HOLDER:
-            return false;
-
-        default:
-            break;
-        }
-    }
-
-    for (size_t i = 0; i < item->specific_refs.size(); i++)
-    {
-        df::specific_ref *ref = item->specific_refs[i];
-
-        if (ref->type == specific_ref_type::JOB)
-        {
-            // Ignore any items assigned to a job
-            return false;
-        }
-    }
-
-    return true;
 }
 
 static void set_threshold_check(bool state)

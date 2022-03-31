@@ -307,6 +307,71 @@ static int estimate_logs(const df::plant *plant)
     return trunks;
 }
 
+static int do_chop_designation(bool chop, bool count_only, int *skipped = nullptr)
+{
+    int count = 0;
+    int estimated_yield = get_log_count();
+
+    if (skipped)
+    {
+        *skipped = 0;
+    }
+
+    for (size_t i = 0; i < world->plants.all.size(); i++)
+    {
+        const df::plant *plant = world->plants.all[i];
+        bool restricted = false;
+
+        if ((estimated_yield >= max_logs) && chop)
+            continue;
+
+        if (skip_plant(plant, &restricted))
+        {
+            if (restricted && skipped)
+            {
+                ++*skipped;
+            }
+            continue;
+        }
+
+        if (!count_only && !watchedBurrows.isValidPos(plant->pos))
+            continue;
+
+        if (chop && !Designations::isPlantMarked(plant))
+        {
+            if (count_only)
+            {
+                if (Designations::canMarkPlant(plant))
+                    count++;
+            }
+            else
+            {
+                if (Designations::markPlant(plant))
+                {
+                    estimated_yield += estimate_logs(plant);
+                    count++;
+                }
+            }
+        }
+
+        if (!chop && Designations::isPlantMarked(plant))
+        {
+            if (count_only)
+            {
+                if (Designations::canUnmarkPlant(plant))
+                    count++;
+            }
+            else
+            {
+                if (Designations::unmarkPlant(plant))
+                    count++;
+            }
+        }
+    }
+
+    return count;
+}
+
 static bool is_valid_item(df::item *item)
 {
     for (size_t i = 0; i < item->general_refs.size(); i++)
@@ -376,71 +441,6 @@ static int get_log_count()
     }
 
     return valid_count;
-}
-
-static int do_chop_designation(bool chop, bool count_only, int *skipped = nullptr)
-{
-    int count = 0;
-    int estimated_yield = get_log_count();
-
-    if (skipped)
-    {
-        *skipped = 0;
-    }
-
-    for (size_t i = 0; i < world->plants.all.size(); i++)
-    {
-        const df::plant *plant = world->plants.all[i];
-        bool restricted = false;
-
-        if ((estimated_yield >= max_logs) && chop)
-            continue;
-
-        if (skip_plant(plant, &restricted))
-        {
-            if (restricted && skipped)
-            {
-                ++*skipped;
-            }
-            continue;
-        }
-
-        if (!count_only && !watchedBurrows.isValidPos(plant->pos))
-            continue;
-
-        if (chop && !Designations::isPlantMarked(plant))
-        {
-            if (count_only)
-            {
-                if (Designations::canMarkPlant(plant))
-                    count++;
-            }
-            else
-            {
-                if (Designations::markPlant(plant))
-                {
-                    estimated_yield += estimate_logs(plant);
-                    count++;
-                }
-            }
-        }
-
-        if (!chop && Designations::isPlantMarked(plant))
-        {
-            if (count_only)
-            {
-                if (Designations::canUnmarkPlant(plant))
-                    count++;
-            }
-            else
-            {
-                if (Designations::unmarkPlant(plant))
-                    count++;
-            }
-        }
-    }
-
-    return count;
 }
 
 static void set_threshold_check(bool state)

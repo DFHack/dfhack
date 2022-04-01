@@ -321,9 +321,8 @@ static int do_chop_designation(bool chop, bool count_only, int *skipped = nullpt
     }
 
     //get trees
-    for (size_t i = 0; i < world->plants.all.size(); i++)
+    for (auto plant : world->plants.all)
     {
-        const df::plant *plant = world->plants.all[i];
         bool restricted = false;
 
         if (skip_plant(plant, &restricted))

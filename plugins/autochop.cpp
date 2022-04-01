@@ -340,7 +340,7 @@ static int do_chop_designation(bool chop, bool count_only, int *skipped = nullpt
 
     //designate
     multimap<int, int>::iterator itr;
-    for (size_t itr = trees_by_size.begin(); itr != trees_by_size.end(); itr++)
+    for (itr = trees_by_size.begin(); itr != trees_by_size.end(); itr++)
     {
         const df::plant *plant = world->plants.all[itr->second];
 

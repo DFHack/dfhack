@@ -338,7 +338,6 @@ static int do_chop_designation(bool chop, bool count_only, int *skipped = nullpt
     }
 
     //designate
-    multimap<int, int>::iterator itr;
     for (auto & entry : trees_by_size)
     {
         const df::plant * plant = entry.second;
@@ -360,7 +359,7 @@ static int do_chop_designation(bool chop, bool count_only, int *skipped = nullpt
             {
                 if (Designations::markPlant(plant))
                 {
-                    estimated_yield += itr->first;
+                    estimated_yield += entry->first;
                     count++;
                 }
             }

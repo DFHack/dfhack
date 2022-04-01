@@ -30,6 +30,18 @@ function test.parse_gui_commandline()
                     opts)
 
     opts = {}
+    b.parse_gui_commandline(opts, {'-e'})
+    expect.table_eq({auto_phase=true, format='minimal', split_strategy='none',
+                     name='blueprint', engrave=true,},
+                    opts)
+
+    opts = {}
+    b.parse_gui_commandline(opts, {'--engrave'})
+    expect.table_eq({auto_phase=true, format='minimal', split_strategy='none',
+                     name='blueprint', engrave=true,},
+                    opts)
+
+    opts = {}
     b.parse_gui_commandline(opts, {'-fminimal'})
     expect.table_eq({auto_phase=true, format='minimal', split_strategy='none',
                      name='blueprint'},

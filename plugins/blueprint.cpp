@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <sstream>
+#include <unordered_map>
 
 #include "Console.h"
 #include "DataDefs.h"
@@ -31,6 +32,7 @@
 #include "df/building_trapst.h"
 #include "df/building_water_wheelst.h"
 #include "df/building_workshopst.h"
+#include "df/engraving.h"
 #include "df/world.h"
 
 using std::endl;
@@ -74,12 +76,15 @@ struct blueprint_options {
     // base name to use for generated files
     string name;
 
+    // whether to capture engravings and smooth the tiles that will be engraved
+    bool engrave = false;
+
     // whether to autodetect which phases to output
     bool auto_phase = false;
 
     // if not autodetecting, which phases to output
     bool dig   = false;
-    bool track = false;
+    bool carve = false;
     bool build = false;
     bool place = false;
     bool zone  = false;
@@ -98,9 +103,10 @@ static const struct_field_info blueprint_options_fields[] = {
     { struct_field_info::PRIMITIVE, "height",                 offsetof(blueprint_options, height),                &df::identity_traits<int32_t>::identity, 0, 0 },
     { struct_field_info::PRIMITIVE, "depth",                  offsetof(blueprint_options, depth),                 &df::identity_traits<int32_t>::identity, 0, 0 },
     { struct_field_info::PRIMITIVE, "name",                   offsetof(blueprint_options, name),                   df::identity_traits<string>::get(),     0, 0 },
+    { struct_field_info::PRIMITIVE, "engrave",                offsetof(blueprint_options, engrave),               &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "auto_phase",             offsetof(blueprint_options, auto_phase),            &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "dig",                    offsetof(blueprint_options, dig),                   &df::identity_traits<bool>::identity,    0, 0 },
-    { struct_field_info::PRIMITIVE, "track",                  offsetof(blueprint_options, track),                 &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::PRIMITIVE, "carve",                  offsetof(blueprint_options, carve),                 &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "build",                  offsetof(blueprint_options, build),                 &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "place",                  offsetof(blueprint_options, place),                 &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "zone",                   offsetof(blueprint_options, zone),                  &df::identity_traits<bool>::identity,    0, 0 },
@@ -125,6 +131,14 @@ struct tile_context {
     df::building* b = NULL;
 };
 
+// global engravings cache, cleared when the string cache is cleared
+struct PosHash {
+    size_t operator()(const df::coord &c) const {
+        return c.x * 65537 + c.y * 513 + c.z;
+    }
+};
+static std::unordered_map<df::coord, df::engraving *, PosHash> engravings_cache;
+
 // We use const char * throughout this code instead of std::string to avoid
 // having to allocate memory for all the small string literals. This
 // significantly speeds up processing and allows us to handle very large maps
@@ -140,6 +154,7 @@ static const char * cache(const char *str) {
     static std::set<string> _cache;
     if (!str) {
         _cache.clear();
+        engravings_cache.clear();
         return NULL;
     }
     return _cache.emplace(str).first->c_str();
@@ -170,8 +185,6 @@ static const char * get_tile_dig(const df::coord &pos, const tile_context &) {
     case tiletype_shape::PEBBLES:
     case tiletype_shape::BROOK_TOP:
         return "d";
-    case tiletype_shape::FORTIFICATION:
-        return "F";
     case tiletype_shape::STAIR_UP:
         return "u";
     case tiletype_shape::STAIR_DOWN:
@@ -186,6 +199,48 @@ static const char * get_tile_dig(const df::coord &pos, const tile_context &) {
     }
 }
 
+static const char * get_tile_smooth_minimal(const df::coord &pos,
+                                            const tile_context &) {
+    df::tiletype *tt = Maps::getTileType(pos);
+    if (!tt)
+        return NULL;
+
+    switch (tileShape(*tt))
+    {
+    case tiletype_shape::FORTIFICATION:
+        return "s";
+    default:
+        break;
+    }
+
+    return NULL;
+}
+
+static const char * get_tile_smooth(const df::coord &pos,
+                                    const tile_context &tc) {
+    const char * smooth_minimal = get_tile_smooth_minimal(pos, tc);
+    if (smooth_minimal)
+        return smooth_minimal;
+
+    df::tiletype *tt = Maps::getTileType(pos);
+    if (!tt)
+        return NULL;
+
+    switch (tileShape(*tt))
+    {
+    case tiletype_shape::FLOOR:
+    case tiletype_shape::WALL:
+        if (tileSpecial(*tt) == tiletype_special::SMOOTH &&
+                engravings_cache.count(pos))
+            return "s";
+        break;
+    default:
+        break;
+    }
+
+    return NULL;
+}
+
 static const char * get_track_str(const char *prefix, df::tiletype tt) {
     TileDirection tdir = tileDirection(tt);
 
@@ -198,7 +253,8 @@ static const char * get_track_str(const char *prefix, df::tiletype tt) {
     return cache(prefix + dir);
 }
 
-static const char * get_tile_track(const df::coord &pos, const tile_context &) {
+static const char * get_tile_carve_minimal(const df::coord &pos,
+                                           const tile_context &) {
     df::tiletype *tt = Maps::getTileType(pos);
     if (!tt)
         return NULL;
@@ -212,6 +268,32 @@ static const char * get_tile_track(const df::coord &pos, const tile_context &) {
     case tiletype_shape::RAMP:
         if (tileSpecial(*tt) == tiletype_special::TRACK)
             return get_track_str("trackramp", *tt);
+        break;
+    case tiletype_shape::FORTIFICATION:
+        return "F";
+    default:
+        break;
+    }
+
+    return NULL;
+}
+
+static const char * get_tile_carve(const df::coord &pos, const tile_context &tc) {
+    const char * tile_carve_minimal = get_tile_carve_minimal(pos, tc);
+    if (tile_carve_minimal)
+        return tile_carve_minimal;
+
+    df::tiletype *tt = Maps::getTileType(pos);
+    if (!tt)
+        return NULL;
+
+    switch (tileShape(*tt))
+    {
+    case tiletype_shape::FLOOR:
+    case tiletype_shape::WALL:
+        if (tileSpecial(*tt) == tiletype_special::SMOOTH &&
+                engravings_cache.count(pos))
+            return "e";
         break;
     default:
         break;
@@ -1002,10 +1084,20 @@ static bool do_transform(color_ostream &out,
     static const bp_area EMPTY_AREA;
     static const bp_row EMPTY_ROW;
 
+    if (opts.engrave) {
+        // initialize the engravings cache
+        for (auto engraving : world->engravings) {
+            engravings_cache.emplace(engraving->pos, engraving);
+        }
+    }
+
     vector<blueprint_processor> processors;
 
     add_processor(processors, opts, "dig", "dig", opts.dig, get_tile_dig);
-    add_processor(processors, opts, "dig", "track", opts.track, get_tile_track);
+    add_processor(processors, opts, "dig", "smooth", opts.carve,
+                  opts.engrave ? get_tile_smooth : get_tile_smooth_minimal);
+    add_processor(processors, opts, "dig", "carve", opts.carve,
+                  opts.engrave ? get_tile_carve : get_tile_carve_minimal);
     add_processor(processors, opts, "build", "build", opts.build,
                   get_tile_build, ensure_building);
     add_processor(processors, opts, "place", "place", opts.place,

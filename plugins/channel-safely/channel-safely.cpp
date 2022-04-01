@@ -94,7 +94,9 @@ void ChannelManager::manage_safety(color_ostream &out, df::map_block* block, con
 void manageNeighbours(color_ostream &out, const df::coord &tile) {
     df::coord neighbours[8];
     getNeighbours(tile, neighbours);
+    // for all the neighbours to our tile
     for (auto &position : neighbours) {
+        // we need to ensure the position is still within the bounds of the map
         if (Maps::isValidTilePos(position)) {
             df::coord local(position);
             local.x = local.x % 16;

@@ -34,7 +34,21 @@ public:
     Jobs::const_iterator end() const { return jobs.end(); }
 };
 
-// Used to build groups of adjacent channel designations/jobs
+/* Used to build groups of adjacent channel designations/jobs
+ * groups_map: maps coordinates to a group index in `groups`
+ * groups: list of Groups
+ * Group: used to track designations which are connected through adjacency to one another (a group cannot span Z)
+ *     Note: a designation plan may become unsafe if the jobs aren't completed in a specific order;
+ *           the easiest way to programmatically ensure safety is to..
+ *           lock overlapping groups directly adjacent across Z until the above groups are complete, or no longer overlap
+ *           groups may no longer overlap if the adjacent designations are completed, but requires a rebuild of groups
+ * jobs: list of coordinates with channel jobs associated to them
+ * foreach_block:
+ * foreach_tile:
+ * add:
+ * read:
+ * mark_done:
+ */
 class GroupData {
 public:
     using Group = std::set<std::pair<df::coord, df::map_block*>>;

@@ -67,6 +67,7 @@ command_result manage_channel_designations(color_ostream &out, std::vector<std::
         if (debug_out) debug_out->print("mcd->manage_designations()\n");
         ChannelManager::Get().manage_designations(out);
         if (!enabled) {
+            // don't need to keep the groups if the plugin isn't enabled
             ChannelManager::Get().delete_groups();
         }
     }
@@ -115,13 +116,16 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 #endif
     if (enable && !enabled) {
         using namespace EM::EventType;
+        // register events to check jobs / update tracking
         EM::EventHandler jobStartHandler(onJobStart, 0);
         EM::EventHandler jobCompletionHandler(onJobComplete, 0);
         EM::registerListener(EventType::JOB_INITIATED, jobStartHandler, plugin_self);
         EM::registerListener(EventType::JOB_COMPLETED, jobCompletionHandler, plugin_self);
+        // manage designations to start off (first time building groups [very important])
         ChannelManager::Get().manage_designations(out);
         out.print("channel-safely: enabled!\n");
     } else if (!enable) {
+        // don't need the groups if the plugin isn't going to be enabled
         ChannelManager::Get().delete_groups();
         EM::unregisterAll(plugin_self);
         out.print("channel-safely: disabled!\n");
@@ -140,6 +144,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
         switch (event) {
             case SC_MAP_LOADED:
                 if (debug_out) debug_out->print("SC_MAP_LOADED\n");
+                // manage all designations on load (first time building groups [very important])
                 ChannelManager::Get().manage_designations(out);
                 break;
             case SC_PAUSED:
@@ -176,6 +181,7 @@ void onJobStart(color_ostream &out, void* job_ptr) {
     if (debug_out) debug_out->print("onJobStart()\n");
     if (enabled && World::isFortressMode() && Maps::IsValid()) {
         auto job = (df::job*) job_ptr;
+        // we want to disable digs and channels if above it there is a pending channel designation
         if (is_dig(job) || is_channel_job(job)) {
             df::coord local(job->pos);
             local.x = local.x % 16;
@@ -199,6 +205,7 @@ void onJobComplete(color_ostream &out, void* job_ptr) {
     if (debug_out) debug_out->print("onJobComplete()\n");
     if (enabled && World::isFortressMode() && Maps::IsValid()) {
         auto job = (df::job*) job_ptr;
+        // we don't care if the job isn't a channeling one
         if (is_channel_job(job)) {
             df::coord local(job->pos);
             local.x = local.x % 16;

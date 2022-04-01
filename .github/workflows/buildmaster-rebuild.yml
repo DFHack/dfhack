@@ -32,4 +32,4 @@ jobs:
         GITHUB_REPO: ${{ github.repository }}
         GITHUB_TOKEN: ${{ github.token }}
       run: |
-        python ci/buildmaster-rebuild-pr.py --pull-request ${{ inputs.pull_request }}
+        python ci/buildmaster-rebuild-pr.py --pull-request ${{ github.event.inputs.pull_request }}

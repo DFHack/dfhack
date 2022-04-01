@@ -1,5 +1,5 @@
-.. _quickfort-user-guide:
 .. _quickfort-blueprint-guide:
+.. _quickfort-user-guide:
 
 Quickfort Blueprint Editing Guide
 =================================
@@ -1077,12 +1077,13 @@ Other blueprint modes
 In addition to the powerful ``#meta`` mode described above, there are a few
 additional blueprint modes that become useful when you are sharing your
 blueprints with others or managing complex blueprint sets. Instead of mapping
-tile positions to map modifications and keystroke sequences like the basic modes
-do, these "blueprints" have specialized, higher-level uses:
+tile positions to map modifications like the basic modes do, these "blueprints"
+have specialized, higher-level uses:
 
 ==============  ===========
 Blueprint mode  Description
 ==============  ===========
+config          Play back key sequences that are not related to map tiles
 notes           Display long messages, such as help text or blueprint
                 walkthroughs
 aliases         Define aliases that can be used by other ``#query`` blueprints
@@ -1090,6 +1091,44 @@ aliases         Define aliases that can be used by other ``#query`` blueprints
 ignore          Hide a section of your spreadsheet from quickfort, useful for
                 scratch space or personal notes
 ==============  ===========
+
+.. _quickfort-config-blueprints:
+
+Config blueprints
+`````````````````
+
+A ``#config`` blueprint is used to send unfiltered keystrokes directly to the
+DF UI without interacting with specific map tiles. They have access to the same
+keystroke aliases as ``#query`` blueprints, but ``#config`` blueprints differ
+from ``#query`` blueprints in a few critical ways:
+
+- Whereas the "home" mode for ``#query`` blueprints is the "query" mode
+  (:kbd:`q`), ``#config`` blueprints start on the default map screen -- the view
+  you have when you're looking at the map with no sidebar visible. The keystroke
+  or alias sequence in each spreadsheet cell in a ``#config`` blueprint must
+  begin and end on the default map screen.
+- The cursor position is not set for ``#config`` blueprints. This means that it
+  doesn't matter what spreadsheet cell you put your text in. The blueprint cell
+  location does not correspond to a map tile.
+
+A ``#config`` blueprint is best used for accessing game menus that are not
+associated with map tiles, such as the hotkey menu (:kbd:`H`), the military
+menu (:kbd:`m`), or the standing orders menu (:kbd:`o`). In other words, use a
+``#config`` blueprint when you want to configure the game itself, not the tiles
+on the map. A ``#config`` blueprint is better for these menus than a ``#query``
+blueprint because the cursor can jump around in unpredictable ways when
+accessing these non-cursor modes and then re-entering query mode. This will
+cause quickfort to detect a ``#query`` blueprint error and stop executing.
+Also, ``#query`` blueprints will skip playing back a key sequence entirely if
+it doesn't detect a building or zone on the target tile. A ``#config``
+blueprint doesn't need a building or zone to exist in order to run.
+
+Note that you *can* enter any mode you want during a ``#config`` blueprint
+keystroke sequence (as long as you get back to the default map screen by the end
+of the sequence), even modes that provide a cursor on the screen. It's just that
+the position of that cursor is not guaranteed to be on any specific tile. If you
+need access to a cursor, you probably should be using a ``#query`` blueprint
+instead.
 
 .. _quickfort-notes:
 
@@ -1779,10 +1818,10 @@ Links
 
 -  `Quickfort command reference <quickfort>`
 -  `quickfort-alias-guide`
--  `quickfort-library-guide`
+-  `blueprint-library-guide`
 -  :forums:`Quickfort forum thread <176889>`
 -  :issue:`DFHack issue tracker <>`
--  :source:`Quickfort blueprint library source <data/blueprints/library>`
+-  :source:`Blueprint library source <data/blueprints/library>`
 -  :source-scripts:`Quickfort source code <internal/quickfort>`
 
 **Related tools:**

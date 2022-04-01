@@ -1,3 +1,4 @@
+.. _blueprint-library-guide:
 .. _quickfort-library-guide:
 
 Blueprint Library Index

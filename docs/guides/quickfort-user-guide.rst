@@ -1069,6 +1069,17 @@ use nested meta blueprints. For example, the following blueprint will shift the
     #meta label(rotate_after_shift)
     /shift_right transform(cw)
 
+Transforming build blueprints will also change the properties of buildings that
+care about direction. For example, a bridge that opens to the North, rotated
+clockwise, will open to the East when applied to the map.
+
+Direction keys that move the cursor on the map will also be transformed. For
+example, the keys ``g{Up 4}&`` that would cause a stockpile to give to a
+workshop 4 tiles to the North become ``g{Right 4}&`` when played back on a
+clockwise-rotated ``#query`` blueprint. Direction keys that don't move the map
+cursor, for example when on the stockpile configuration screen, are not changed
+by blueprint rotation.
+
 .. _quickfort-other-modes:
 
 Other blueprint modes

@@ -264,6 +264,23 @@ local function reset_area(area, spec)
     dfhack.run_command('tiletypes-here', '--quiet', get_cursor_arg(pos))
 end
 
+local function do_phase(phase_data, area, spec)
+    quickfort_run(phase_data.listnum, area.pos, spec.start)
+end
+
+-- run a #dig blueprint (or just designate the whole block if there is no data)
+-- and then run dig-now to materialize the designations
+local function do_dig_phase(phase_data, area, spec)
+    if phase_data then
+        do_phase(phase_data, area, spec)
+    else
+        designate_area(area.pos, spec)
+    end
+
+    -- run dig-now to dig out designated tiles
+    run_dig_now(area)
+end
+
 function test.end_to_end()
     -- read in test plan
     local sets = get_blueprint_sets()
@@ -282,27 +299,14 @@ function test.end_to_end()
             goto continue
         end
 
-        -- quickfort run #dig blueprint (or just designate the whole block if
-        -- there is no #dig blueprint)
         local phases = set.phases
-        if phases.dig then
-            quickfort_run(phases.dig.listnum, area.pos, spec.start)
-        else
-            designate_area(area.pos, spec)
-        end
-
-        -- run dig-now to dig out designated tiles
-        run_dig_now(area)
-
-        -- quickfort run remaining blueprints
-        for _,phase_name in ipairs(phase_names) do
-            if phase_name ~= 'dig' and phases[phase_name] then
-                quickfort_run(phases[phase_name].listnum, area.pos, spec.start)
-                if phase_name == 'track' then
-                    run_dig_now(area)
-                end
-            end
-        end
+        do_dig_phase(phases.dig, area, spec)
+        if phases.smooth then do_dig_phase(phases.smooth, area, spec) end
+        if phases.carve then do_dig_phase(phases.carve, area, spec) end
+        if phases.build then do_phase(phases.build, area, spec) end
+        if phases.place then do_phase(phases.place, area, spec) end
+        if phases.zone then do_phase(phases.zone, area, spec) end
+        if phases.query then do_phase(phases.query, area, spec) end
 
         -- run blueprint to generate files in output dir
         run_blueprint(basename, set, area.pos)

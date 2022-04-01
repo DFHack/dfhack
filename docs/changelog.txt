@@ -53,6 +53,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - DFHack log messages now have configurable headers (e.g. timestamp, origin plugin name, etc.) via the ``debugfilter`` command of the `debug` plugin
 - Script execution log messages (e.g. "Loading script: dfhack_extras.init" can now be controlled with the ``debugfilter`` command. To hide the messages, add this line to your ``dfhack.init`` file: ``debugfilter set Warning core script``
 - `manipulator`: Tweak colors to make the cursor easier to locate
+- `autochop`: only designate the amount of trees required to reach ``max_logs``
+- `autochop`: preferably designate larger trees over smaller ones
 
 ## Documentation
 - Add more examples to the plugin skeleton files so they are more informative for a newbie

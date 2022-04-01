@@ -339,9 +339,9 @@ static int do_chop_designation(bool chop, bool count_only, int *skipped = nullpt
 
     //designate
     multimap<int, int>::iterator itr;
-    for (itr = trees_by_size.begin(); itr != trees_by_size.end(); itr++)
+    for (auto & entry : trees_by_size)
     {
-        const df::plant *plant = itr->second;
+        const df::plant * plant = entry.second;
 
         if ((estimated_yield >= max_logs) && chop)
             break;

@@ -313,19 +313,18 @@ static int do_chop_designation(bool chop, bool count_only, int *skipped = nullpt
 {
     int count = 0;
     int estimated_yield = get_log_count();
+    multimap<int, int> trees_by_size;
 
     if (skipped)
     {
         *skipped = 0;
     }
 
+    //get trees
     for (size_t i = 0; i < world->plants.all.size(); i++)
     {
         const df::plant *plant = world->plants.all[i];
         bool restricted = false;
-
-        if ((estimated_yield >= max_logs) && chop)
-            break;
 
         if (skip_plant(plant, &restricted))
         {
@@ -335,6 +334,18 @@ static int do_chop_designation(bool chop, bool count_only, int *skipped = nullpt
             }
             continue;
         }
+
+        trees_by_size.insert(pair<int, int>(estimate_logs(plant), i));
+    }
+
+    //designate
+    multimap<int, int>::iterator itr;
+    for (size_t itr = trees_by_size.begin(); itr != trees_by_size.end(); itr++)
+    {
+        const df::plant *plant = world->plants.all[itr->second];
+
+        if ((estimated_yield >= max_logs) && chop)
+            break;
 
         if (!count_only && !watchedBurrows.isValidPos(plant->pos))
             continue;
@@ -350,7 +361,7 @@ static int do_chop_designation(bool chop, bool count_only, int *skipped = nullpt
             {
                 if (Designations::markPlant(plant))
                 {
-                    estimated_yield += estimate_logs(plant);
+                    estimated_yield += itr->first;
                     count++;
                 }
             }

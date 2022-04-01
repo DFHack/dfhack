@@ -334,7 +334,7 @@ static int do_chop_designation(bool chop, bool count_only, int *skipped = nullpt
             continue;
         }
 
-        trees_by_size.insert(pair<int, int>(estimate_logs(plant), plant));
+        trees_by_size.insert(pair<int, df::plant *>(estimate_logs(plant), plant));
     }
 
     //designate

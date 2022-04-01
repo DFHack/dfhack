@@ -313,7 +313,7 @@ static int do_chop_designation(bool chop, bool count_only, int *skipped = nullpt
 {
     int count = 0;
     int estimated_yield = get_log_count();
-    multimap<int, int> trees_by_size;
+    multimap<int, df::plant *> trees_by_size;
 
     if (skipped)
     {
@@ -335,14 +335,14 @@ static int do_chop_designation(bool chop, bool count_only, int *skipped = nullpt
             continue;
         }
 
-        trees_by_size.insert(pair<int, int>(estimate_logs(plant), i));
+        trees_by_size.insert(pair<int, int>(estimate_logs(plant), plant));
     }
 
     //designate
     multimap<int, int>::iterator itr;
     for (itr = trees_by_size.begin(); itr != trees_by_size.end(); itr++)
     {
-        const df::plant *plant = world->plants.all[itr->second];
+        const df::plant *plant = itr->second;
 
         if ((estimated_yield >= max_logs) && chop)
             break;

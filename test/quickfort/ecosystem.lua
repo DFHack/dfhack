@@ -40,9 +40,11 @@ local phase_names = utils.invert(blueprint.valid_phases)
 -- inspection of failed results)
 local function test_wrapper(test_fn)
     local outdir = blueprints_dir .. output_dir
-    for _, v in ipairs(dfhack.filesystem.listdir_recursive(outdir)) do
-        if not v.isdir then
-            os.remove(v.path)
+    if dfhack.filesystem.exists(outdir) then
+        for _, v in ipairs(dfhack.filesystem.listdir_recursive(outdir)) do
+            if not v.isdir then
+                os.remove(v.path)
+            end
         end
     end
     test_fn()

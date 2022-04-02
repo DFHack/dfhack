@@ -33,20 +33,25 @@ void ChannelManager::manage_designations(color_ostream &out) {
     if (World::isFortressMode() && Maps::IsValid()) {
         // read map / analyze designations
         build_groups();
+        // iterate the groups we built/updated
         for (auto &group : groups) {
             if (debug_out) debug_out->print("foreach group\n");
+            // iterate the members of each group (tiles)
             for (auto &tile : group) {
                 if (debug_out) debug_out->print("foreach tile\n");
+                // each tile has a position and a block*
                 const df::coord &world_pos = tile.first;
                 df::map_block* block = tile.second;
+                // we calculate the position inside the block*
                 df::coord local(world_pos);
                 local.x = local.x % 16;
                 local.y = local.y % 16;
+                // check that aren't on the top-most layer
                 if (world_pos.z < (int16_t)mapz - 1) {
-                    df::coord above(world_pos);
-                    above.z++;
-                    manage_safety(out, block, local, world_pos, above);
+                    // we aren't so we gotta check the safety
+                    manage_safety(out, block, local, world_pos);
                 } else {
+                    // if we are though, it should be totally safe to dig
                     block->occupancy[local.x][local.y].bits.dig_marked = false;
                 }
             }

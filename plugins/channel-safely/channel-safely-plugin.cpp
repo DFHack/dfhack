@@ -10,6 +10,8 @@ Updated: Jun. 29 2021
 
 using namespace DFHack;
 
+int32_t mapx,mapy,mapz;
+
 DFHACK_PLUGIN("channel-safely");
 DFHACK_PLUGIN_IS_ENABLED(enabled);
 REQUIRE_GLOBAL(world);
@@ -64,7 +66,9 @@ command_result manage_channel_designations(color_ostream &out, std::vector<std::
     if (debug_out) debug_out->print("manage_channel_designations()\n");
     if (parameters.empty()) {
         // manually trigger managing all designations
+        Maps::getSize(mapx, mapy, mapz);
         if (debug_out) debug_out->print("mcd->manage_designations()\n");
+        if (debug_out) debug_out->print("map size: %d, %d, %d\n", mapx, mapy, mapz);
         ChannelManager::Get().manage_designations(out);
         if (!enabled) {
             // don't need to keep the groups if the plugin isn't enabled
@@ -143,7 +147,10 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     if (enabled && World::isFortressMode() && Maps::IsValid()) {
         switch (event) {
             case SC_MAP_LOADED:
+                // cache the map size
+                Maps::getSize(mapx, mapy, mapz);
                 if (debug_out) debug_out->print("SC_MAP_LOADED\n");
+                if (debug_out) debug_out->print("map size: %d, %d, %d\n", mapx, mapy, mapz);
                 // manage all designations on load (first time building groups [very important])
                 ChannelManager::Get().manage_designations(out);
                 break;

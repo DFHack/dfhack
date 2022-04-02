@@ -14,6 +14,8 @@
 
 using namespace DFHack;
 
+extern int32_t mapx,mapy,mapz;
+
 /* Used to read/store/iterate channel digging jobs
  * jobs: list of coordinates with channel jobs associated to them
  * read: world->jobs.list to find channel jobs and emplaces them into the `jobs` map

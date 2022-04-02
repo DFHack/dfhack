@@ -29,14 +29,9 @@ static bool dig_now_tile(color_ostream &out, const df::coord &pos) {
 
 void ChannelManager::manage_designations(color_ostream &out) {
     if (debug_out) debug_out->print("manage_designations()\n");
+    // make sure we've got a fort map to analyze
     if (World::isFortressMode() && Maps::IsValid()) {
-        static bool getMapSize = false;
-        static int32_t t1, t2, zmax;
-        if (!getMapSize) {
-            getMapSize = true;
-            Maps::getSize(t1, t2, zmax);
-        }
-        if (debug_out) debug_out->print("map size: %d, %d, %d\n", t1, t2, zmax);
+        // read map / analyze designations
         build_groups();
         for (auto &group : groups) {
             if (debug_out) debug_out->print("foreach group\n");
@@ -47,7 +42,7 @@ void ChannelManager::manage_designations(color_ostream &out) {
                 df::coord local(world_pos);
                 local.x = local.x % 16;
                 local.y = local.y % 16;
-                if (world_pos.z < (int16_t)zmax - 1) {
+                if (world_pos.z < (int16_t)mapz - 1) {
                     df::coord above(world_pos);
                     above.z++;
                     manage_safety(out, block, local, world_pos, above);
@@ -182,16 +177,9 @@ void GroupData::read() {
 }
 
 void GroupData::foreach_block() {
-    static bool getMapSize = false;
-    static int32_t x, y, z;
-    if (!getMapSize) {
-        getMapSize = true;
-        Maps::getSize(x, y, z);
-    }
-    if (debug_out) debug_out->print("map size: %d, %d, %d\n", x, y, z);
-    for (int32_t ix = 0; ix < x; ++ix) {
-        for (int32_t iy = 0; iy < y; ++iy) {
-            for (int32_t iz = z - 1; iz >= 0; --iz) {
+    for (int32_t ix = 0; ix < mapx; ++ix) {
+        for (int32_t iy = 0; iy < mapy; ++iy) {
+            for (int32_t iz = mapz - 1; iz >= 0; --iz) {
                 df::map_block* block = Maps::getBlock(ix, iy, iz);
                 if (debug_out) debug_out->print("foreach block [%zu]\n", (size_t)block);
                 if (block) {

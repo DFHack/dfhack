@@ -41,6 +41,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 - `autofarm` removed restriction on only planting 'discovered' plants
 - `luasocket` (and others): return correct status code when closing socket connections
+- `tweak`: stable-cursor now works when the default menu is hidden
 
 ## Misc Improvements
 - `dig-now`: handle fortification carving

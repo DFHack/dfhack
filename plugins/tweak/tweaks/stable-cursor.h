@@ -11,6 +11,7 @@ using df::global::ui_build_selector;
 using df::global::ui_menu_width;
 
 static df::coord last_view, last_cursor;
+const int16_t menu_shift = Gui::MENU_WIDTH / 2 + 1;
 
 struct stable_cursor_hook : df::viewscreen_dwarfmodest
 {
@@ -32,6 +33,11 @@ struct stable_cursor_hook : df::viewscreen_dwarfmodest
         }
     }
 
+    bool check_menu()
+    {
+        return ui_menu_width && (*ui_menu_width)[0] < (*ui_menu_width)[1];
+    }
+
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
     {
         bool was_default = check_default();
@@ -41,10 +47,18 @@ struct stable_cursor_hook : df::viewscreen_dwarfmodest
         INTERPOSE_NEXT(feed)(input);
 
         bool is_default = check_default();
+        bool is_menu = check_menu();
         df::coord cur_cursor = Gui::getCursorPos();
 
         if (is_default && !was_default)
         {
+            if (!is_menu)
+            {
+                // The menu disappeared, but getViewportPos() does not
+                // report the new info yet, so we must predict where the
+                // view has shifted to
+                view.x -= std::min(menu_shift, view.x);
+            }
             last_view = view; last_cursor = cursor;
         }
         else if (!is_default && was_default &&

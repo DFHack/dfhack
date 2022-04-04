@@ -33,68 +33,55 @@ struct stable_cursor_hook : df::viewscreen_dwarfmodest
         }
     }
 
-    bool check_menu()
-    {
-        return ui_menu_width && (*ui_menu_width)[0] < (*ui_menu_width)[1];
-    }
-
-    bool check_area()
-    {
-        return ui_menu_width && (*ui_menu_width)[1] == 2;
-    }
-
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
     {
-        uint32_t mx, my, mz;
-        Maps::getTileSize(mx, my, mz);
-        df::coord map(mx, my, mz);
-
-        // Full window has a 1-cell border on each side
-        int16_t width = Screen::getWindowSize().x - 2;
-
         bool was_default = check_default();
-        //bool was_menu = check_menu();
         df::coord view = Gui::getViewportPos();
         df::coord cursor = Gui::getCursorPos();
+        Gui::DwarfmodeDims dims = Gui::getDwarfmodeViewDims();
 
         INTERPOSE_NEXT(feed)(input);
 
         bool is_default = check_default();
-        bool is_menu = check_menu();
-        //df::coord cur_view = Gui::getViewportPos();
         df::coord cur_cursor = Gui::getCursorPos();
 
         if (is_default && !was_default)
         {
-            if (!is_menu)
+            if (dims.menu_forced)
             {
                 // Menu disappeared, reported view info is wrong
-                view.x -= std::min(menu_shift, view.x);
+                view.x -= min(menu_shift, view.x);
 
-                bool is_area = check_area();
-                if (is_area)
-                {
-                    width -= (Gui::AREA_MAP_WIDTH + 1);
-                }
+                // Map has now expanded to where the menu once was
+                dims.map_x2 += Gui::MENU_WIDTH + 1;
+
+                uint32_t map_x, map_y, map_z;
+                Maps::getTileSize(map_x, map_y, map_z);
 
                 // At the right edge of the map, it's always shifted
                 // over so the right side of the viewport is menu_shift
                 // tiles from the right edge of the map
-                view.x = std::min(view.x, static_cast<int16_t>(map.x - width - menu_shift));
+                view.x = min(view.x, static_cast<int16_t>(map_x - dims.map_x2 - menu_shift));
             }
             last_view = view; last_cursor = cursor;
         }
-        else if (!is_default && cur_cursor.isValid() && last_cursor.isValid())
+        else if (!is_default && last_cursor.isValid() && cur_cursor.isValid())
         {
+            if (was_default && dims.menu_forced)
+            {
+                // The previous state had the menu open in default mode
+                // (i.e., it was the Build menu asking for building type).
+                // So now we need to do menu shift because the reported view
+                // position is already accounting for the menu.
+                view.x -= min(menu_shift, view.x);
+            }
             if (was_default && view == last_view)
             {
                 Gui::setCursorCoords(last_cursor.x, last_cursor.y, last_cursor.z);
                 Gui::refreshSidebar();
             }
-            else
-            {
-                last_cursor = df::coord();
-            }
+
+            last_cursor = df::coord();
         }
     }
 };

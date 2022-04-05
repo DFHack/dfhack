@@ -9,7 +9,6 @@ NOTE: This treats plant growths similarly to creature castes but there is no way
 local _ENV = mkmodule("custom-raw-tokens")
 
 local eventful = require("plugins.eventful")
-local repeatUtil = require("repeat-util")
 local utils = require("utils")
 
 local customRawTokensCache = {}
@@ -24,46 +23,38 @@ end
 
 getLogPosition()
 
-local removeErrorsNextFrame = false
 dfhack.onStateChange.customRawTokens = function(code)
-    if code == SC_WORLD_LOADED then
-        removeErrorsNextFrame = true -- so that all the mods doing registerValidTokens come before this
+    if code == SC_MAP_LOADED then
+        assert(logPosition, "Didn't get log position!")
+        
+        local errorlogFile = io.open("errorlog.txt", "r")
+        if not errorlogFile then
+            print("Couldn't open errorlog.txt, won't be able to suppress errors!")
+            return
+        end
+        local totalErrorlogText = errorlogFile:read("a")
+        errorlogFile:seek("set", logPosition)
+        local thisSessionErrors = errorlogFile:read("a")
+        errorlogFile:close()
+        
+        local modifiedThisSessionErrors = thisSessionErrors
+        local totalErrorsRemoved = 0
+        for i, v in ipairs(suppressedTokenErrorTypes) do
+            local text, errorsRemoved = modifiedThisSessionErrors:gsub("[^\n]+:Unrecognized [^\n]+ Token: " .. v .. "\n", "")
+            modifiedThisSessionErrors = text
+            totalErrorsRemoved = totalErrorsRemoved + errorsRemoved
+        end
+        if totalErrorsRemoved > 0 then
+            modifiedThisSessionErrors = modifiedThisSessionErrors .. "custom-raw-tokens removed " .. totalErrorsRemoved .. " errors\n"
+        end
+        
+        local errorlogFile = io.open("errorlog.txt", "w")
+        assert(errorlogFile, "Couldn't open errorlog.txt for writing!")
+        local finalErrorLogText = totalErrorlogText:sub(1, -(#thisSessionErrors + 1)) .. modifiedThisSessionErrors
+        errorlogFile:write(finalErrorLogText)
+        errorlogFile:close()
     end
 end
-repeatUtil.scheduleEvery("customRawTokens", 1, "frames", function()
-    if not removeErrorsNextFrame then
-        return
-    end
-    removeErrorsNextFrame = false
-	assert(logPosition, "Didn't get log position!")
-
-	local errorlogFile = io.open("errorlog.txt", "r")
-	if not errorlogFile then
-		print("Couldn't open errorlog.txt, won't be able to suppress errors!")
-		return
-	end
-	local totalErrorlogText = errorlogFile:read("a")
-	errorlogFile:seek("set", logPosition)
-	local thisSessionErrors = errorlogFile:read("a")
-	errorlogFile:close()
-
-	local modifiedThisSessionErrors = thisSessionErrors
-	local totalErrorsRemoved = 0
-	for i, v in ipairs(suppressedTokenErrorTypes) do
-		local text, errorsRemoved = modifiedThisSessionErrors:gsub("[^\n]+:Unrecognized [^\n]+ Token: " .. v .. "\n", "")
-		modifiedThisSessionErrors = text
-		totalErrorsRemoved = totalErrorsRemoved + errorsRemoved
-	end
-	if totalErrorsRemoved > 0 then
-		modifiedThisSessionErrors = modifiedThisSessionErrors .. "custom-raw-tokens removed " .. totalErrorsRemoved .. " errors\n"
-	end
-
-	local errorlogFile = io.open("errorlog.txt", "w")
-	assert(errorlogFile, "Couldn't open errorlog.txt for writing!")
-	local finalErrorLogText = totalErrorlogText:sub(1, -(#thisSessionErrors + 1)) .. modifiedThisSessionErrors
-	errorlogFile:write(finalErrorLogText)
-	errorlogFile:close()
-end)
 
 eventful.onUnload.customRawTokens = function()
     customRawTokensCache = {}

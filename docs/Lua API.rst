@@ -3027,6 +3027,14 @@ A module for reading custom tokens added to the raws by mods.
   The same as ``getToken(plantGrowthItem, token)`` but with a specified plant and growth, using growth name
   (e.g. "LEAVES") instead of number.
 
+* ``customRawTokens.registerValidTokens(table)``
+
+  Register a list of valid raw tokens to suppress the errorlog.txt entries of.
+
+* ``customRawTokens.registerValidTokens(string)``
+
+  Register a single raw token instead of a table of them.
+
 Examples:
 
 * Using an eventful onReactionComplete hook, something for disturbing dwarven science::

@@ -3029,7 +3029,7 @@ A module for reading custom tokens added to the raws by mods.
 
 * ``customRawTokens.registerValidTokens(table)``
 
-  Register a list of valid raw tokens to suppress the errorlog.txt entries of.
+  Register a list of valid raw tokens to suppress the errorlog.txt entries of. This is intended for mods to call on world load, e.g. within raw/init.d/*.lua.
 
 * ``customRawTokens.registerValidTokens(string)``
 

@@ -14,7 +14,7 @@ local eventful = require("plugins.eventful")
 local utils = require("utils")
 
 local customRawTokensCache = {}
-eventful.onUnload["custom-raw-tokens"] = function()
+eventful.onUnload.customRawTokens = function()
     customRawTokensCache = {}
 end
 

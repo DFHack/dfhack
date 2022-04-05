@@ -10,12 +10,11 @@ NOTE: This treats plant growths similarly to creature castes but there is no way
 
 local _ENV = mkmodule("custom-raw-tokens")
 
-local eventful = require("plugins.eventful")
-local utils = require("utils")
-
 local customRawTokensCache = {}
-eventful.onUnload.customRawTokens = function()
-    customRawTokensCache = {}
+dfhack.onStateChange.customRawTokens = function(code)
+    if code == SC_WORLD_UNLOADED then
+        customRawTokensCache = {}
+    end
 end
 
 local function ensureTable(tableToHoldIn, key)

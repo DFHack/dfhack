@@ -3,6 +3,8 @@ custom-raw-tokens
 Allows for reading custom tokens added to raws by mods
 by Tachytaenius (wolfboyft)
 
+Yes, non-vanilla raw tokens do quietly print errors into the error log but the error log gets filled with garbage anyway
+
 NOTE: This treats plant growths similarly to creature castes but there is no way to deselect a growth, so don't put a token you want to apply to a whole plant after any growth definitions
 ]]
 
@@ -12,63 +14,8 @@ local eventful = require("plugins.eventful")
 local utils = require("utils")
 
 local customRawTokensCache = {}
-local suppressedTokenErrorTypes = {}
-local logPosition
-
-local function getLogPosition()
-    local errorlogFile = io.open("errorlog.txt")
-    logPosition = errorlogFile:seek("end")
-    errorlogFile:close()
-end
-
-getLogPosition()
-
-dfhack.onStateChange.customRawTokens = function(code)
-    if code == SC_MAP_LOADED then
-        assert(logPosition, "Didn't get log position!")
-        
-        local errorlogFile = io.open("errorlog.txt", "r")
-        if not errorlogFile then
-            print("Couldn't open errorlog.txt, won't be able to suppress errors!")
-            return
-        end
-        local totalErrorlogText = errorlogFile:read("a")
-        errorlogFile:seek("set", logPosition)
-        local thisSessionErrors = errorlogFile:read("a")
-        errorlogFile:close()
-        
-        local modifiedThisSessionErrors = thisSessionErrors
-        local totalErrorsRemoved = 0
-        for i, v in ipairs(suppressedTokenErrorTypes) do
-            local text, errorsRemoved = modifiedThisSessionErrors:gsub("[^\n]+:Unrecognized [^\n]+ Token: " .. v .. "\n", "")
-            modifiedThisSessionErrors = text
-            totalErrorsRemoved = totalErrorsRemoved + errorsRemoved
-        end
-        if totalErrorsRemoved > 0 then
-            modifiedThisSessionErrors = modifiedThisSessionErrors .. "custom-raw-tokens removed " .. totalErrorsRemoved .. " errors\n"
-        end
-        
-        local errorlogFile = io.open("errorlog.txt", "w")
-        assert(errorlogFile, "Couldn't open errorlog.txt for writing!")
-        local finalErrorLogText = totalErrorlogText:sub(1, -(#thisSessionErrors + 1)) .. modifiedThisSessionErrors
-        errorlogFile:write(finalErrorLogText)
-        errorlogFile:close()
-    end
-end
-
-eventful.onUnload.customRawTokens = function()
+eventful.onUnload["custom-raw-tokens"] = function()
     customRawTokensCache = {}
-    getLogPosition()
-end
-
-function registerValidTokens(tokenTable)
-    if type(tokenTable) == "string" then
-        table.insert(suppressedTokenErrorTypes, tokenTable)
-    else
-        for i, v in ipairs(tokenTable) do
-            table.insert(suppressedTokenErrorTypes, v)
-        end
-    end
 end
 
 local function ensureTable(tableToHoldIn, key)

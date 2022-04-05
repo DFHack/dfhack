@@ -285,9 +285,6 @@ view-item-info enable
 # a replacement for the "load game" screen
 gui/load-screen enable
 
-# initialise custom-raw-tokens functionality for removing errors from error log
-:lua require("custom-raw-tokens")
-
 ##############################
 # Extra DFHack command files #
 ##############################

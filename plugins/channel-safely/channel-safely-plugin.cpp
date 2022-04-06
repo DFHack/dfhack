@@ -41,7 +41,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginC
                                      "\n"
                                      " channel-safely enable\n"
                                      "    Enables the plugin to automatically run the management procedure. The plugin\n"
-                                     "    will run when a job starts/completes and on (un)pause/map load state changes.\n"
+                                     "    will run when a job starts/completes and on unpause/map (un)load state changes.\n"
                                      " channel-safely enable cheats\n"
                                      "    Enables the plugin to instantly dig permanently unsafe designations.\n"
                                      "\n"

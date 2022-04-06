@@ -1193,28 +1193,24 @@ designations adjacent to this group they will be added to it.
 
 Advanced usage:
 
-``channel-safely <option> <args>``
+channel-safely <option> <args>
     You can use this plugin to manage your channel designations safely. It will
     mark unsafe designations and unmark safe ones.
 
-``channel-safely enable``
+channel-safely
+    Manually runs the channel-safely management procedure to (un)mark
+    designations as needed.
+
+channel-safely enable
     Enables the plugin to automatically run the management procedure. The plugin
-    can run on tick events and will run on (un)pause/job events and map load
-    state changes.
-``channel-safely enable cheats``
+    will run when a job starts/completes and on unpause/map (un)load state changes.
+channel-safely enable cheats
     Enables the plugin to instantly dig permanently unsafe designations.
-``channel-safely enable ontick``
-    Enables on tick events. Enabled by default.
 
-``channel-safely disable``
+channel-safely disable
     Disables the plugin. Will not automatically do anything.
-``channel-safely disable cheats``
+channel-safely disable cheats
     Disables instantly digging permanently unsafe designations.
-``channel-safely disable ontick``
-    Disables on tick events. Enabled by default.
-
-``channel-safely tick-freq <value>``
-    Set's the tick event frequency. Default: 1200 (1 day)
 
 
 .. _labormanager:

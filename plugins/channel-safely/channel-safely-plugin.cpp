@@ -1,16 +1,19 @@
 /* Prevent channeling down into known open space.
 Author:  Josh Cooper
 Created: Aug. 4 2020
-Updated: Jun. 29 2021
+Updated: Apr. 4 2022
 */
 
 #include <PluginManager.h>
 #include <modules/EventManager.h>
-#include "channel-safely.h"
+#include "channel-manager.h"
+#include "inlines.h"
 
 using namespace DFHack;
 
 int32_t mapx,mapy,mapz;
+color_ostream* debug_out = nullptr;
+bool cheat_mode = false;
 
 DFHACK_PLUGIN("channel-safely");
 DFHACK_PLUGIN_IS_ENABLED(enabled);
@@ -67,9 +70,9 @@ command_result manage_channel_designations(color_ostream &out, std::vector<std::
     if (parameters.empty()) {
         // manually trigger managing all designations
         Maps::getSize(mapx, mapy, mapz);
-        if (debug_out) debug_out->print("mcd->manage_designations()\n");
+        if (debug_out) debug_out->print("mcd->manage_all()\n");
         if (debug_out) debug_out->print("map size: %d, %d, %d\n", mapx, mapy, mapz);
-        ChannelManager::Get().manage_designations(out);
+        ChannelManager::Get().manage_all(out);
         if (!enabled) {
             // don't need to keep the groups if the plugin isn't enabled
             ChannelManager::Get().delete_groups();
@@ -126,7 +129,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         EM::registerListener(EventType::JOB_INITIATED, jobStartHandler, plugin_self);
         EM::registerListener(EventType::JOB_COMPLETED, jobCompletionHandler, plugin_self);
         // manage designations to start off (first time building groups [very important])
-        ChannelManager::Get().manage_designations(out);
+        ChannelManager::Get().manage_all(out);
         out.print("channel-safely: enabled!\n");
     } else if (!enable) {
         // don't need the groups if the plugin isn't going to be enabled
@@ -152,17 +155,17 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
                 if (debug_out) debug_out->print("SC_MAP_LOADED\n");
                 if (debug_out) debug_out->print("map size: %d, %d, %d\n", mapx, mapy, mapz);
                 // manage all designations on load (first time building groups [very important])
-                ChannelManager::Get().manage_designations(out);
+                ChannelManager::Get().manage_all(out);
                 break;
             case SC_PAUSED:
                 if (debug_out) debug_out->print("SC_PAUSED\n");
                 // manage all designations on pause
-                ChannelManager::Get().manage_designations(out);
+                ChannelManager::Get().manage_all(out);
                 break;
             case SC_UNPAUSED:
                 if (debug_out) debug_out->print("SC_UNPAUSED\n");
                 // manage all designations on unpause
-                ChannelManager::Get().manage_designations(out);
+                ChannelManager::Get().manage_all(out);
                 break;
             case SC_WORLD_UNLOADED:
             case SC_MAP_UNLOADED:
@@ -190,14 +193,9 @@ void onJobStart(color_ostream &out, void* job_ptr) {
         auto job = (df::job*) job_ptr;
         // we want to disable digs and channels if above it there is a pending channel designation
         if (is_dig(job) || is_channel_job(job)) {
-            df::coord local(job->pos);
-            local.x = local.x % 16;
-            local.y = local.y % 16;
-            df::coord above(job->pos);
-            above.z++;
             df::map_block* block = Maps::getTileBlock(job->pos);
-            //postpone job if above isn't done
-            ChannelManager::Get().manage_safety(out, block, local, job->pos, above);
+            // check for designations above, postpone job if there are
+            ChannelManager::Get().manage_one(out, job->pos, block);
         }
     }
     if (debug_out) debug_out->print("onJobStart() - return\n");
@@ -214,19 +212,14 @@ void onJobComplete(color_ostream &out, void* job_ptr) {
         auto job = (df::job*) job_ptr;
         // we don't care if the job isn't a channeling one
         if (is_channel_job(job)) {
-            df::coord local(job->pos);
-            local.x = local.x % 16;
-            local.y = local.y % 16;
             df::coord below(job->pos);
             below.z--;
             df::map_block* block = Maps::getTileBlock(below);
             //activate designation below if group is done now, postpone if not
             if (debug_out) debug_out->print("mark_done()\n");
             ChannelManager::Get().mark_done(job->pos);
-            if (debug_out) debug_out->print("manage_safety()\n");
-            ChannelManager::Get().manage_safety(out, block, local, below, job->pos);
-            if (debug_out) debug_out->print("manageNeighbours()\n");
-            manageNeighbours(out, job->pos);
+            if (debug_out) debug_out->print("manage_one()\n");
+            ChannelManager::Get().manage_one(out, below, block, true);
         }
     }
     if (debug_out) debug_out->print("onJobComplete() - return\n");

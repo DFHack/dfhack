@@ -55,7 +55,7 @@ Optionally copy the premade profession definitions from hack/examples/profession
 Optionally copy the premade Dreamfort embark profile from the online spreadsheets to the data/init/embark_profiles.txt file
 ""
 -- Set settings and preload initial orders --
-quickfort run library/dreamfort.csv -n /setup,# Place the cursor on the center of your starting wagon. Run before making any manual adjustments to settings! Run the /setup_help blueprint for details on what this blueprint does.
+quickfort run library/dreamfort.csv -n /setup,# Run before making any manual adjustments to settings! Run the /setup_help blueprint for details on what this blueprint does.
 "quickfort orders library/dreamfort.csv -n ""/surface2, /farming2, /surface3, /farming3, /industry2, /surface4""","# Queue up orders required to get the fort minimally functional and secure. You can remove the order for the anvil (you brought one with you, right?)."
 ""
 -- Find a good starting spot on the surface --
@@ -134,19 +134,19 @@ The following settings are changed:
 These are all set for your convenience. Nothing in Dreamfort depends on these settings staying as they are. Feel free to change any setting to your personal preference.
 ""
 #aliases
-startnobles: ^n{Down 4}{togglesequence 8}{Up}s{Up}&^^q
-startorders: ^ohrov^Wl^^q
-startburrows: ^wa&nInside&^^q
+startnobles: n{Down 4}{togglesequence 8}{Up}s{Up}&^^
+startorders: ohrov^Wl^^
+startburrows: wa&nInside&^^
 metalarmorsetup: A{Right 2}{Down 2}&{Down}&{Left}&M{Right}{Down}&{Left}{Down}{Right}{Down}&{Left}{Down 2}L{Right}{Down 2}&{Left}{Down 3}&M{Right}{Down}&{Left 2}
-startmilitary: ^mnr{Down}r{metalarmorsetup}{Down}racNSiege&{Right}&^q
+startmilitary: mnr{Down}r{metalarmorsetup}{Down}racNSiege&{Right}&^
 sethotkey: {fkey}n{name}&
-starthotkeys: ^H{sethotkey fkey={F2} name=Farming}{sethotkey fkey={F3} name=Industry}{sethotkey fkey={F4} name=Services}{sethotkey fkey={F5} name=Guildhall}{sethotkey fkey={F6} name=Quarry}{sethotkey fkey={F7} name=Cavern}{sethotkey fkey={F8} name=Magma}^q
+starthotkeys: H{sethotkey fkey={F2} name=Farming}{sethotkey fkey={F3} name=Industry}{sethotkey fkey={F4} name=Services}{sethotkey fkey={F5} name=Guildhall}{sethotkey fkey={F6} name=Quarry}{sethotkey fkey={F7} name=Cavern}{sethotkey fkey={F8} name=Magma}^
 ""
-"#query label(setup) start(center tile of the wagon) message(Please set the zoom targets of the hotkeys (the 'H' menu) according to where you actually end up digging the levels.
+"#config label(setup) message(Please set the zoom targets of the hotkeys (the 'H' menu) according to where you actually end up digging the levels.
 As you build your fort, expand the ""Inside"" burrow to include new civilian-safe areas.
 Optionally, add a leather cloak to your military uniforms to enhance the protection of the uniforms.
 Nothing in Dreamfort depends on these settings staying as they are. Feel free to change any setting to your personal preference.) assign nobles, set standing orders, create burrows, make adjustments to military uniforms, and set hotkey names"
-{startnobles}{startorders}{startburrows}{startmilitary}{starthotkeys}{F1}
+{startnobles}{startorders}{startburrows}{startmilitary}{starthotkeys}
 "#meta label(dig_all) start(central stairs on industry level) dig industry, services, guildhall, suites, and apartments levels. does not include farming."
 # Note that this blueprint will only work for the unified dreamfort.csv. It won't work for the individual .xlsx files (since #meta blueprints can't cross file boundaries).
 ""

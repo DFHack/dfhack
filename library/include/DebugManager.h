@@ -72,6 +72,15 @@ public:
         CAT_MODIFIED,
     };
 
+    //! Log message header configuration, controlled via the debug plugin
+    struct HeaderConfig {
+        bool timestamp = false;    // Hour, minute, and seconds
+        bool timestamp_ms = false; // only used if timestamp == true
+        bool thread_id = false;
+        bool plugin = false;
+        bool category = false;
+    };
+
     //! type to help access signal features like Connection and BlockGuard
     using categorySignal_t = Signal<void (signalType, DebugCategory&)>;
 
@@ -91,6 +100,16 @@ public:
         return instance;
     }
 
+    // don't bother to protect these with mutexes. we don't want to pay the
+    // performance cost of locking on every log message, and the consequences
+    // of race conditions are minimal.
+    const HeaderConfig & getHeaderConfig() const {
+        return headerConfig;
+    }
+    void setHeaderConfig(const HeaderConfig &config) {
+        headerConfig = config;
+    }
+
     //! Prevent copies
     DebugManager(const DebugManager&) = delete;
     //! Prevent copies
@@ -101,6 +120,8 @@ public:
     DebugManager& operator=(DebugManager&&) = delete;
 protected:
     DebugManager() = default;
+
+    HeaderConfig headerConfig;
 
     //! Helper for automatic category registering and signaling
     void registerCategory(DebugCategory &);

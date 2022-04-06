@@ -36,7 +36,7 @@ function print_help() print(help_text) end
 
 local valid_phase_list = {
     'dig',
-    'track',
+    'carve',
     'build',
     'place',
     'zone',
@@ -148,6 +148,7 @@ local function process_args(opts, args)
     local positionals = argparse.processArgsGetopt(args, {
             {'c', 'cursor', hasArg=true,
              handler=function(optarg) parse_cursor(opts, optarg) end},
+            {'e', 'engrave', handler=function() opts.engrave = true end},
             {'f', 'format', hasArg=true,
              handler=function(optarg) parse_format(opts, optarg) end},
             {'h', 'help', handler=function() opts.help = true end},

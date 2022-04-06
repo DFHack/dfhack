@@ -41,6 +41,7 @@ using namespace std;
 #include "MemAccess.h"
 #include "Core.h"
 #include "DataDefs.h"
+#include "Debug.h"
 #include "Console.h"
 #include "MiscUtils.h"
 #include "Module.h"
@@ -101,6 +102,9 @@ static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string 
 size_t loadScriptFiles(Core* core, color_ostream& out, const vector<std::string>& prefix, const std::string& folder);
 
 namespace DFHack {
+
+DBG_DECLARE(core,script,DebugCategory::LINFO);
+
 class MainThread {
 public:
     //! MainThread::suspend keeps the main DF thread suspended from Core::Init to
@@ -1401,7 +1405,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
 bool Core::loadScriptFile(color_ostream &out, string fname, bool silent)
 {
     if(!silent) {
-        out << "Loading script: " << fname << std::endl;
+        INFO(script,out) << "Loading script: " << fname << std::endl;
         cerr << "Loading script: " << fname << std::endl;
     }
     ifstream script(fname.c_str());

@@ -3187,9 +3187,9 @@ can easily result in inconsistent state once this plugin is
 available again. The effects may be as weird as negative power
 being generated.
 
-=======
-Lua API
-=======
+==============
+Plugin Lua API
+==============
 
 Some plugins consist solely of native libraries exposed to Lua. They are listed
 in the `lua-api` file under `lua-plugins`:

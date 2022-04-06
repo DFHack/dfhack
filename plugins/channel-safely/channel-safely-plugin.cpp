@@ -157,11 +157,6 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
                 // manage all designations on load (first time building groups [very important])
                 ChannelManager::Get().manage_all(out);
                 break;
-            case SC_PAUSED:
-                if (debug_out) debug_out->print("SC_PAUSED\n");
-                // manage all designations on pause
-                ChannelManager::Get().manage_all(out);
-                break;
             case SC_UNPAUSED:
                 if (debug_out) debug_out->print("SC_UNPAUSED\n");
                 // manage all designations on unpause
@@ -171,6 +166,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
             case SC_MAP_UNLOADED:
                 ChannelManager::Get().delete_groups();
                 break;
+            case SC_PAUSED:
             case SC_UNKNOWN:
             case SC_WORLD_LOADED:
             case SC_VIEWSCREEN_CHANGED:

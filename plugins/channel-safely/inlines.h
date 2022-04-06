@@ -1,19 +1,29 @@
 #pragma once
-#include "channel-groups.h"
+#include "channel-manager.h"
 #include <TileTypes.h>
 #include <modules/Maps.h>
 #include <df/job.h>
 
-inline bool is_dig(df::job* job) {
+inline bool is_dig(const df::job* job) {
     return job->job_type == df::job_type::Dig;
 }
 
-inline bool is_channel_job(df::job* job) {
+inline bool is_channel_job(const df::job* job) {
     return job->job_type == df::job_type::DigChannel;
 }
 
-inline bool is_channel_designation(df::tile_designation &designation) {
+inline bool is_channel_designation(const df::tile_designation &designation) {
     return designation.bits.dig == df::tile_dig_designation::Channel;
+}
+
+inline bool has_channel_designation(const df::coord &map_pos) {
+    if (df::map_block* block = Maps::getTileBlock(map_pos)) {
+        df::coord local(map_pos);
+        local.x %= 16;
+        local.y %= 16;
+        return is_channel_designation(block->designation[local.x][local.y]);
+    }
+    return false;
 }
 
 inline bool is_safe_to_dig_down(const df::coord &map_pos){
@@ -36,7 +46,7 @@ inline bool has_groups_above(const ChannelGroups &groups, const Group &group) {
         auto &tile_pos = key_value.first;
         //auto &block = key_value.second;
         // check if we could potentially fall
-        if(!is_safe_to_dig_down(tile_pos)){
+        if (!is_safe_to_dig_down(tile_pos)) {
             return false;
         }
         df::coord above(tile_pos);
@@ -46,6 +56,11 @@ inline bool has_groups_above(const ChannelGroups &groups, const Group &group) {
             if (!groups.find(above)->empty()) {
                 return true;
             }
+        }
+        // check if there is an untracked designation
+        if (has_channel_designation(above)) {
+            ChannelManager::Get().build_groups();
+            return true;
         }
     }
     // if there are no incomplete groups above this group, then this group is ready

@@ -44,7 +44,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `luasocket` (and others): return correct status code when closing socket connections
 
 ## Misc Improvements
-- Core/Maps: adds missing int32_t signatures as overloads
 - `dig-now`: handle fortification carving
 - `EventManager`: add new event type ``JOB_STARTED``, triggered when a job first gains a worker
 - `EventManager`: add new event type ``NEW_UNIT_ACTIVE``, triggered when a new unit appears on the active list
@@ -68,6 +67,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``Quickfort Blueprint Editing Guide``: added screenshots to the Dreamfort case study and overall clarified text
 
 ## API
+- Core/Maps: adds missing int32_t signatures as overloads
 - Added functions reverse-engineered from ambushing unit code: ``Units::isHidden``, ``Units::isFortControlled``, ``Units::getOuterContainerRef``, ``Items::getOuterContainerRef``
 
 ## Lua

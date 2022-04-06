@@ -107,8 +107,9 @@ bool Maps::IsValid ()
 }
 
 // getter for map size in blocks
-inline void Maps::getSize (int32_t& x, int32_t& y, int32_t& z) {
-    if (!IsValid())
+inline void getSizeInline (int32_t& x, int32_t& y, int32_t& z)
+{
+    if (!Maps::IsValid())
     {
         x = y = z = 0;
         return;
@@ -117,25 +118,34 @@ inline void Maps::getSize (int32_t& x, int32_t& y, int32_t& z) {
     y = world->map.y_count_block;
     z = world->map.z_count_block;
 }
+void Maps::getSize (int32_t& x, int32_t& y, int32_t& z)
+{
+    getSizeInline(x, y, z);
+}
 void Maps::getSize (uint32_t& x, uint32_t& y, uint32_t& z) //todo: deprecate me
 {
-    int32_t sx,sy,sz;
-    getSize(sx,sy,sz);
+    int32_t sx, sy, sz;
+    getSizeInline(sx, sy, sz);
     x = uint32_t(sx);
     y = uint32_t(sy);
     z = uint32_t(sz);
 }
 
 // getter for map size in tiles
-inline void Maps::getTileSize (int32_t& x, int32_t& y, int32_t& z){
-    getSize(x, y, z);
+inline void getTileSizeInline (int32_t& x, int32_t& y, int32_t& z)
+{
+    getSizeInline(x, y, z);
     x *= 16;
     y *= 16;
 }
+void Maps::getTileSize (int32_t& x, int32_t& y, int32_t& z)
+{
+    getTileSizeInline(x, y, z);
+}
 void Maps::getTileSize (uint32_t& x, uint32_t& y, uint32_t& z) //todo: deprecate me
 {
-    int32_t sx,sy,sz;
-    getTileSize(sx,sy,sz);
+    int32_t sx, sy, sz;
+    getTileSizeInline(sx, sy, sz);
     x = uint32_t(sx);
     y = uint32_t(sy);
     z = uint32_t(sz);
@@ -389,15 +399,20 @@ bool GetLocalFeature(t_feature &feature, df::coord2d rgn_pos, int32_t index)
     return true;
 }
 
-inline bool Maps::ReadFeatures(int32_t x, int32_t y, int32_t z, t_feature *local, t_feature *global){
-    df::map_block *block = getBlock(x,y,z);
+inline bool ReadFeaturesInline(int32_t x, int32_t y, int32_t z, t_feature *local, t_feature *global)
+{
+    df::map_block* block = Maps::getBlock(x, y, z);
     if (!block)
         return false;
-    return ReadFeatures(block, local, global);
+    return Maps::ReadFeatures(block, local, global);
+}
+bool Maps::ReadFeatures(int32_t x, int32_t y, int32_t z, t_feature *local, t_feature *global)
+{
+    return ReadFeaturesInline(x, y, z, local, global);
 }
 bool Maps::ReadFeatures(uint32_t x, uint32_t y, uint32_t z, t_feature *local, t_feature *global) //todo: deprecate me
 {
-    return ReadFeatures(int32_t(x), int32_t(y), int32_t(z), local, global);
+    return ReadFeaturesInline(int32_t(x), int32_t(y), int32_t(z), local, global);
 }
 
 bool Maps::ReadFeatures(df::map_block * block, t_feature * local, t_feature * global)
@@ -494,11 +509,11 @@ bool Maps::SortBlockEvents(df::map_block *block,
     return true;
 }
 
-inline bool Maps::RemoveBlockEvent(int32_t x, int32_t y, int32_t z, df::block_square_event * which){
-    df::map_block * block = getBlock(x,y,z);
+inline bool RemoveBlockEventInline(int32_t x, int32_t y, int32_t z, df::block_square_event * which)
+{
+    df::map_block* block = Maps::getBlock(x, y, z);
     if (!block)
         return false;
-
     int idx = linear_index(block->block_events, which);
     if (idx >= 0)
     {
@@ -509,9 +524,13 @@ inline bool Maps::RemoveBlockEvent(int32_t x, int32_t y, int32_t z, df::block_sq
     else
         return false;
 }
+inline bool Maps::RemoveBlockEvent(int32_t x, int32_t y, int32_t z, df::block_square_event * which)
+{
+    return RemoveBlockEventInline(x, y, z, which);
+}
 bool Maps::RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, df::block_square_event * which) //todo: deprecate me
 {
-    return RemoveBlockEvent(int32_t(x), int32_t(y), int32_t(z), which);
+    return RemoveBlockEventInline(int32_t(x), int32_t(y), int32_t(z), which);
 }
 
 static df::coord2d biome_offsets[9] = {

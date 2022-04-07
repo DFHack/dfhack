@@ -944,12 +944,12 @@ static void manageBuildingEvent(color_ostream& out) {
         // enforce handler's callback frequency
         if (tick - last_tick >= handler.freq) {
             eventLastTick[handler] = tick;
-            // send the handler all the new buildings since it last fired
-            for (auto jter = createdBuildings.upper_bound(last_tick); jter != createdBuildings.end(); ++jter) {
-                handler.eventHandler(out, (void*) intptr_t(jter->second));
-            }
             // send the handler all the destroyed buildings since it last fired
             for (auto jter = destroyedBuildings.upper_bound(last_tick); jter != destroyedBuildings.end(); ++jter) {
+                handler.eventHandler(out, (void*) intptr_t(jter->second));
+            }
+            // send the handler all the new buildings since it last fired
+            for (auto jter = createdBuildings.upper_bound(last_tick); jter != createdBuildings.end(); ++jter) {
                 handler.eventHandler(out, (void*) intptr_t(jter->second));
             }
         }
@@ -1057,12 +1057,12 @@ static void manageConstructionEvent(color_ostream& out) {
         // enforce handler's callback frequency
         if (tick - last_tick >= handler.freq) {
             eventLastTick[handler] = tick;
-            // send the handler all the added constructions since it last fired
-            for(auto iter = createdConstructions.upper_bound(last_tick); iter != createdConstructions.end(); ++iter) {
-                handler.eventHandler(out, &iter->second);
-            }
             // send the handler all the removed constructions since it last fired
             for(auto iter = destroyedConstructions.upper_bound(last_tick); iter != destroyedConstructions.end(); ++iter) {
+                handler.eventHandler(out, &iter->second);
+            }
+            // send the handler all the added constructions since it last fired
+            for(auto iter = createdConstructions.upper_bound(last_tick); iter != createdConstructions.end(); ++iter) {
                 handler.eventHandler(out, &iter->second);
             }
         }

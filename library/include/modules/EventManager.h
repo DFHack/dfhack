@@ -30,11 +30,11 @@ namespace DFHack {
                 UNIT_DEATH,
                 ITEM_CREATED,
                 BUILDING, // todo: deprecate this event
-                BUILDING_CREATED,
                 BUILDING_DESTROYED,
+                BUILDING_CREATED,
                 CONSTRUCTION, // todo: deprecate this event
-                CONSTRUCTION_ADDED,
                 CONSTRUCTION_REMOVED,
+                CONSTRUCTION_ADDED,
                 SYNDROME,
                 INVASION,
                 INVENTORY_CHANGE,

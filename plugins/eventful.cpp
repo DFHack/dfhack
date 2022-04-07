@@ -223,26 +223,66 @@ static void ev_mng_interaction(color_ostream& out, void* ptr) {
 std::vector<int> enabledEventManagerEvents(EventManager::EventType::EVENT_MAX,-1);
 typedef void (*handler_t) (color_ostream&,void*);
 
-// NOTICE: keep this list synchronized with the EventManager::EventType enum or
-// else the wrong event handlers will get called.
-static const handler_t eventHandlers[] = {
- NULL,
- ev_mng_jobInitiated,
- ev_mng_jobStarted,
- ev_mng_jobCompleted,
- ev_mng_unitNewActive,
- ev_mng_unitDeath,
- ev_mng_itemCreate,
- ev_mng_building,
- ev_mng_construction,
- ev_mng_syndrome,
- ev_mng_invasion,
- ev_mng_inventory,
- ev_mng_report,
- ev_mng_unitAttack,
- ev_mng_unload,
- ev_mng_interaction,
-};
+// integrate new events into this function, and no longer worry about syncing with the enum list
+handler_t getManager(EventManager::EventType::EventType t) {
+    switch (t) {
+        case EventManager::EventType::TICK:
+            return nullptr;
+        case EventManager::EventType::JOB_INITIATED:
+            return ev_mng_jobInitiated;
+        case EventManager::EventType::JOB_STARTED:
+            return ev_mng_jobStarted;
+        case EventManager::EventType::JOB_COMPLETED:
+            return ev_mng_jobCompleted;
+        case EventManager::EventType::UNIT_NEW_ACTIVE:
+            return ev_mng_unitNewActive;
+        case EventManager::EventType::UNIT_DEATH:
+            return ev_mng_unitDeath;
+        case EventManager::EventType::ITEM_CREATED:
+            return ev_mng_itemCreate;
+        case EventManager::EventType::BUILDING_DESTROYED:
+            return nullptr;
+        case EventManager::EventType::BUILDING_CREATED:
+            return nullptr;
+        case EventManager::EventType::BUILDING:
+            return ev_mng_building;
+        case EventManager::EventType::CONSTRUCTION_REMOVED:
+            return nullptr;
+        case EventManager::EventType::CONSTRUCTION_ADDED:
+            return nullptr;
+        case EventManager::EventType::CONSTRUCTION:
+            return ev_mng_construction;
+        case EventManager::EventType::SYNDROME:
+            return ev_mng_syndrome;
+        case EventManager::EventType::INVASION:
+            return ev_mng_invasion;
+        case EventManager::EventType::INVENTORY_CHANGE:
+            return ev_mng_inventory;
+        case EventManager::EventType::REPORT:
+            return ev_mng_report;
+        case EventManager::EventType::UNIT_ATTACK:
+            return ev_mng_unitAttack;
+        case EventManager::EventType::UNLOAD:
+            return ev_mng_unload;
+        case EventManager::EventType::INTERACTION:
+            return ev_mng_interaction;
+        case EventManager::EventType::EVENT_MAX:
+            return nullptr;
+    }
+    return nullptr;
+}
+
+std::array<handler_t,EventManager::EventType::EVENT_MAX> compileEventHandlerArray() {
+    std::array<handler_t, EventManager::EventType::EVENT_MAX> managers{};
+    auto t = (EventManager::EventType::EventType) 0;
+    while (t < EventManager::EventType::EVENT_MAX) {
+        managers[t] = getManager(t);
+        t = (EventManager::EventType::EventType) int(t + 1);
+    }
+    return managers;
+}
+static const std::array<handler_t,EventManager::EventType::EVENT_MAX> eventHandlers = compileEventHandlerArray();
+
 static void enableEvent(int evType,int freq)
 {
     if (freq < 0)

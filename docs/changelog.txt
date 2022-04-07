@@ -56,6 +56,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `autochop`: only designate the amount of trees required to reach ``max_logs``
 - `autochop`: preferably designate larger trees over smaller ones
 - `blueprint`: ``track`` phase renamed to ``carve``. carved fortifications and (optionally) engravings are now captured in blueprints
+- `tweak` stable-cursor: Keep the cursor stable even when the viewport moves a small amount
 
 ## Documentation
 - Add more examples to the plugin skeleton files so they are more informative for a newbie

@@ -154,7 +154,7 @@ static void manageTickEvent(color_ostream& out);
 static void manageJobInitiatedEvent(color_ostream& out);
 static void manageJobStartedEvent(color_ostream& out);
 static void manageJobCompletedEvent(color_ostream& out);
-static void manageNewUnitActiveEvent(color_ostream& out);
+static void manageUnitNewActiveEvent(color_ostream& out);
 static void manageUnitDeathEvent(color_ostream& out);
 static void manageItemCreationEvent(color_ostream& out);
 static void manageBuildingEvent(color_ostream& out);
@@ -173,28 +173,87 @@ static void manageInteractionEvent(color_ostream& out);
 
 typedef void (*eventManager_t)(color_ostream&);
 
-static const eventManager_t eventManager[] = {
-        manageTickEvent,
-        manageJobInitiatedEvent,
-        manageJobStartedEvent,
-        manageJobCompletedEvent,
-        manageNewUnitActiveEvent,
-        manageUnitDeathEvent,
-        manageItemCreationEvent,
-        manageBuildingEvent,
-        manageBuildingCreatedEvent,
-        manageBuildingDestroyedEvent,
-        manageConstructionEvent,
-        manageConstructionAddedEvent,
-        manageConstructionRemovedEvent,
-        manageSyndromeEvent,
-        manageInvasionEvent,
-        manageInventoryChangeEvent,
-        manageReportEvent,
-        manageUnitAttackEvent,
-        manageUnloadEvent,
-        manageInteractionEvent,
-};
+// integrate new events into this function, and no longer worry about syncing the enum list with the `eventManager` array
+eventManager_t getManager(EventType::EventType t) {
+    switch (t) {
+        case EventType::TICK:
+            return manageTickEvent;
+        case EventType::JOB_INITIATED:
+            return manageJobInitiatedEvent;
+        case EventType::JOB_STARTED:
+            return manageJobStartedEvent;
+        case EventType::JOB_COMPLETED:
+            return manageJobCompletedEvent;
+        case EventType::UNIT_NEW_ACTIVE:
+            return manageUnitNewActiveEvent;
+        case EventType::UNIT_DEATH:
+            return manageUnitDeathEvent;
+        case EventType::ITEM_CREATED:
+            return manageItemCreationEvent;
+        case EventType::BUILDING_DESTROYED:
+            return manageBuildingDestroyedEvent;
+        case EventType::BUILDING_CREATED:
+            return manageBuildingCreatedEvent;
+        case EventType::BUILDING:
+            return manageBuildingEvent;
+        case EventType::CONSTRUCTION_REMOVED:
+            return manageConstructionRemovedEvent;
+        case EventType::CONSTRUCTION_ADDED:
+            return manageConstructionAddedEvent;
+        case EventType::CONSTRUCTION:
+            return manageConstructionEvent;
+        case EventType::SYNDROME:
+            return manageSyndromeEvent;
+        case EventType::INVASION:
+            return manageInvasionEvent;
+        case EventType::INVENTORY_CHANGE:
+            return manageInventoryChangeEvent;
+        case EventType::REPORT:
+            return manageReportEvent;
+        case EventType::UNIT_ATTACK:
+            return manageUnitAttackEvent;
+        case EventType::UNLOAD:
+            return manageUnloadEvent;
+        case EventType::INTERACTION:
+            return manageInteractionEvent;
+        case EventType::EVENT_MAX:
+            return nullptr;
+    }
+}
+
+std::array<eventManager_t,EventType::EVENT_MAX> compileManagerArray() {
+    std::array<eventManager_t, EventType::EVENT_MAX> managers{};
+    auto t = (EventType::EventType) 0;
+    while (t < EventType::EVENT_MAX) {
+        managers[t] = getManager(t);
+        t = (EventType::EventType) int(t + 1);
+    }
+    return managers;
+}
+
+// declaration moved to inside manageEvents
+//static const eventManager_t eventManager[] = {
+//        manageTickEvent,
+//        manageJobInitiatedEvent,
+//        manageJobStartedEvent,
+//        manageJobCompletedEvent,
+//        manageUnitNewActiveEvent,
+//        manageUnitDeathEvent,
+//        manageItemCreationEvent,
+//        manageBuildingEvent,
+//        manageBuildingCreatedEvent,
+//        manageBuildingDestroyedEvent,
+//        manageConstructionEvent,
+//        manageConstructionAddedEvent,
+//        manageConstructionRemovedEvent,
+//        manageSyndromeEvent,
+//        manageInvasionEvent,
+//        manageInventoryChangeEvent,
+//        manageReportEvent,
+//        manageUnitAttackEvent,
+//        manageUnloadEvent,
+//        manageInteractionEvent,
+//};
 namespace std{
     bool operator==(const df::construction &A, const df::construction &B){
         return A.pos == B.pos;
@@ -478,6 +537,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
 }
 
 void DFHack::EventManager::manageEvents(color_ostream& out) {
+    static const std::array<eventManager_t, EventType::EVENT_MAX> eventManager = compileManagerArray();
     if ( !gameLoaded ) {
         return;
     }
@@ -488,21 +548,24 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
 
     int32_t tick = df::global::world->frame_counter;
 
+    // iterate the event types
     for (size_t type = 0; type < EventType::EVENT_MAX; type++ ) {
         if (handlers[type].empty())
             continue;
-        bool call_events = false;
-        for (auto &iter : handlers[type]) {
-            EventHandler handler = iter.second;
+        // events might be missed if we only do the processing when a listener wants to receive the events
+        eventManager[type](out);
+        /*bool call_events = false;
+        // iterate event type's handlers
+        for (auto &key_value : handlers[type]) {
+            const EventHandler &handler = key_value.second;
             int32_t last_tick = eventLastTick[handler];
+            // see if there is at least one handler ready to fire
             if (tick - last_tick >= handler.freq){
-                //todo: integrate into every sub-function
-                //eventLastTick[handler] = tick;
                 call_events = true;
+                break;
             }
         }
-        if(call_events)
-            eventManager[type](out);
+        if(call_events)*/
     }
 }
 
@@ -784,7 +847,7 @@ static void manageJobCompletedEvent(color_ostream& out) {
 #endif
 }
 
-static void manageNewUnitActiveEvent(color_ostream& out) {
+static void manageUnitNewActiveEvent(color_ostream& out) {
     if (!df::global::world)
         return;
     int32_t tick = df::global::world->frame_counter;

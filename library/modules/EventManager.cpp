@@ -216,9 +216,10 @@ eventManager_t getManager(EventType::EventType t) {
             return manageUnloadEvent;
         case EventType::INTERACTION:
             return manageInteractionEvent;
-        default:
+        case EventType::EVENT_MAX:
             return nullptr;
     }
+    return nullptr;
 }
 
 std::array<eventManager_t,EventType::EVENT_MAX> compileManagerArray() {

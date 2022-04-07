@@ -442,7 +442,8 @@ Subcommands that persist until disabled or DF quits:
 :nestbox-color:         Fixes the color of built nestboxes
 :reaction-gloves:       Fixes reactions to produce gloves in sets with correct handedness (:bug:`6273`)
 :shift-8-scroll:        Gives Shift-8 (or :kbd:`*`) priority when scrolling menus, instead of scrolling the map
-:stable-cursor:         Saves the exact cursor position between t/q/k/d/b/etc menus of fortress mode.
+:stable-cursor:         Saves the exact cursor position between t/q/k/d/b/etc menus of fortress mode, if the
+                        map view is near enough to its previous position.
 :stone-status-all:      Adds an option to toggle the economic status of all stones
 :title-start-rename:    Adds a safe rename option to the title screen "Start Playing" menu
 :tradereq-pet-gender:   Displays pet genders on the trade request screen

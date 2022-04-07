@@ -223,50 +223,53 @@ static void ev_mng_interaction(color_ostream& out, void* ptr) {
 std::vector<int> enabledEventManagerEvents(EventManager::EventType::EVENT_MAX,-1);
 typedef void (*handler_t) (color_ostream&,void*);
 
+using namespace EventManager::EventType;
 // integrate new events into this function, and no longer worry about syncing with the enum list
-handler_t getManager(EventManager::EventType::EventType t) {
+handler_t getManager(EventType t) {
     switch (t) {
-        case EventManager::EventType::TICK:
+        case TICK:
             return nullptr;
-        case EventManager::EventType::JOB_INITIATED:
+        case JOB_INITIATED:
             return ev_mng_jobInitiated;
-        case EventManager::EventType::JOB_STARTED:
+        case JOB_STARTED:
             return ev_mng_jobStarted;
-        case EventManager::EventType::JOB_COMPLETED:
+        case JOB_COMPLETED:
             return ev_mng_jobCompleted;
-        case EventManager::EventType::UNIT_NEW_ACTIVE:
+        case UNIT_NEW_ACTIVE:
             return ev_mng_unitNewActive;
-        case EventManager::EventType::UNIT_DEATH:
+        case UNIT_DEATH:
             return ev_mng_unitDeath;
-        case EventManager::EventType::ITEM_CREATED:
+        case ITEM_CREATED:
             return ev_mng_itemCreate;
-        case EventManager::EventType::BUILDING_DESTROYED:
+        //todo: implement these new events
+        case BUILDING_DESTROYED:
+        case BUILDING_CREATED:
             return nullptr;
-        case EventManager::EventType::BUILDING_CREATED:
-            return nullptr;
-        case EventManager::EventType::BUILDING:
+        //todo: deprecate this event
+        case BUILDING:
             return ev_mng_building;
-        case EventManager::EventType::CONSTRUCTION_REMOVED:
+        //todo: implement these new events
+        case CONSTRUCTION_REMOVED:
+        case CONSTRUCTION_ADDED:
             return nullptr;
-        case EventManager::EventType::CONSTRUCTION_ADDED:
-            return nullptr;
-        case EventManager::EventType::CONSTRUCTION:
+        //todo: deprecate this event
+        case CONSTRUCTION:
             return ev_mng_construction;
-        case EventManager::EventType::SYNDROME:
+        case SYNDROME:
             return ev_mng_syndrome;
-        case EventManager::EventType::INVASION:
+        case INVASION:
             return ev_mng_invasion;
-        case EventManager::EventType::INVENTORY_CHANGE:
+        case INVENTORY_CHANGE:
             return ev_mng_inventory;
-        case EventManager::EventType::REPORT:
+        case REPORT:
             return ev_mng_report;
-        case EventManager::EventType::UNIT_ATTACK:
+        case UNIT_ATTACK:
             return ev_mng_unitAttack;
-        case EventManager::EventType::UNLOAD:
+        case UNLOAD:
             return ev_mng_unload;
-        case EventManager::EventType::INTERACTION:
+        case INTERACTION:
             return ev_mng_interaction;
-        case EventManager::EventType::EVENT_MAX:
+        case EVENT_MAX:
             return nullptr;
     }
     return nullptr;
@@ -281,7 +284,7 @@ std::array<handler_t,EventManager::EventType::EVENT_MAX> compileEventHandlerArra
     }
     return managers;
 }
-static const std::array<handler_t,EventManager::EventType::EVENT_MAX> eventHandlers = compileEventHandlerArray();
+static std::array<handler_t,EventManager::EventType::EVENT_MAX> eventHandlers;
 
 static void enableEvent(int evType,int freq)
 {
@@ -523,6 +526,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
+    eventHandlers = compileEventHandlerArray();
     if (Core::getInstance().isWorldLoaded())
         plugin_onstatechange(out, SC_WORLD_LOADED);
     enable_hooks(true);

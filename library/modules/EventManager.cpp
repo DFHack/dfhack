@@ -216,7 +216,7 @@ eventManager_t getManager(EventType::EventType t) {
             return manageUnloadEvent;
         case EventType::INTERACTION:
             return manageInteractionEvent;
-        case EventType::EVENT_MAX:
+        default:
             return nullptr;
     }
 }
@@ -545,8 +545,6 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
         return;
 
     CoreSuspender suspender;
-
-    int32_t tick = df::global::world->frame_counter;
 
     // iterate the event types
     for (size_t type = 0; type < EventType::EVENT_MAX; type++ ) {

@@ -462,6 +462,11 @@ function string:wrap(width)
     return table.concat(wrapped_text, '\n')
 end
 
+-- Escapes regex special chars in a string. E.g. "a+b" -> "a%+b"
+function string:escape()
+    return self:gsub('(['..("%^$()[].*+-?"):gsub("(.)", "%%%1")..'])', "%%%1")
+end
+
 -- String conversions
 
 function dfhack.persistent:__tostring()

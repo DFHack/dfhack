@@ -426,6 +426,8 @@ function DwarfOverlay:simulateCursorMovement(keys, anchor)
 end
 
 function DwarfOverlay:onAboutToShow(parent)
+    DwarfOverlay.super.onAboutToShow(self, parent)
+
     if not df.viewscreen_dwarfmodest:is_instance(parent) then
         error("This screen requires the main dwarfmode view")
     end
@@ -436,18 +438,48 @@ MenuOverlay = defclass(MenuOverlay, DwarfOverlay)
 MenuOverlay.ATTRS {
     frame_inset = 0,
     frame_background = gui.CLEAR_PEN,
+
+    -- if sidebar_mode is set, we will enter the specified sidebar mode on show
+    -- and restore the previous sidebar mode on dismiss. otherwise it is up to
+    -- the caller to ensure we are in a sidebar mode where the menu is visible.
+    sidebar_mode = DEFAULT_NIL,
 }
 
 function MenuOverlay:computeFrame(parent_rect)
     return self.df_layout.menu, gui.inset_frame(self.df_layout.menu, self.frame_inset)
 end
 
-function MenuOverlay:onAboutToShow(below)
-    MenuOverlay.super.onAboutToShow(self,below)
+function MenuOverlay:onAboutToShow(parent)
+    if not dfhack.isMapLoaded() then
+        qerror('Please load a fortress map.')
+    end
+
+    self.saved_sidebar_mode = df.global.ui.main.mode
+    -- if we can't get back to the saved sidebar mode via enterSidebarMode
+    -- then fall back to the default mode
+    if dfhack.gui.getCurFocus(true):find('^dfhack/')
+            or not SIDEBAR_MODE_KEYS[self.saved_sidebar_mode] then
+        self.saved_sidebar_mode = df.ui_sidebar_mode.Default
+    end
+    enterSidebarMode(df.ui_sidebar_mode.Default)
+
+    -- refresh parent since the original parent may have been dismissed
+    parent = dfhack.gui.getCurViewscreen(true)
+    MenuOverlay.super.onAboutToShow(self, parent)
+
+    if self.sidebar_mode then
+        enterSidebarMode(self.sidebar_mode)
+    end
 
     self:updateLayout()
     if not self.df_layout.menu then
         error("The menu panel of dwarfmode is not visible")
+    end
+end
+
+function MenuOverlay:onDismiss()
+    if self.saved_sidebar_mode then
+        enterSidebarMode(self.saved_sidebar_mode)
     end
 end
 

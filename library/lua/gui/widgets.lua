@@ -75,6 +75,8 @@ Panel = defclass(Panel, Widget)
 Panel.ATTRS {
     on_render = DEFAULT_NIL,
     on_layout = DEFAULT_NIL,
+    autoarrange_subviews = false, -- whether to automatically lay out subviews
+    autoarrange_gap = 0, -- how many blank lines to insert between widgets
 }
 
 function Panel:init(args)
@@ -87,6 +89,50 @@ end
 
 function Panel:postComputeFrame(body)
     if self.on_layout then self.on_layout(body) end
+end
+
+-- if self.autoarrange_subviews is true, lay out visible subviews vertically,
+-- adding gaps between widgets according to self.autoarrange_gap.
+function Panel:postUpdateLayout()
+    if not self.autoarrange_subviews then return end
+
+    local gap = self.autoarrange_gap
+    local y = 0
+    for _,subview in ipairs(self.subviews) do
+        subview.frame.t = y
+        if subview.visible then
+            y = y + subview.frame.h + gap
+        end
+    end
+    self.frame_rect.height = y
+
+    -- let widgets adjust to their new positions
+    self:updateSubviewLayout()
+end
+
+-------------------
+-- ResizingPanel --
+-------------------
+
+ResizingPanel = defclass(ResizingPanel, Panel)
+
+function ResizingPanel:init()
+    -- ensure we have a frame so a containing widget can read our dimensions
+    if not self.frame then self.frame = {} end
+end
+
+-- adjust our frame dimensions according to positions and sizes of our subviews
+function ResizingPanel:postUpdateLayout(frame_body)
+    local w, h = 0, 0
+    for _,subview in ipairs(self.subviews) do
+        if subview.visible then
+            w = math.max(w, (subview.frame.l or 0) +
+                            (subview.frame.w or frame_body.width))
+            h = math.max(h, (subview.frame.t or 0) +
+                            (subview.frame.h or frame_body.height))
+        end
+    end
+    self.frame.w, self.frame.h = w, h
 end
 
 -----------

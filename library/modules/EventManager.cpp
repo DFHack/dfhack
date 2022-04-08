@@ -218,6 +218,8 @@ eventManager_t getManager(EventType::EventType t) {
             return manageInteractionEvent;
         case EventType::EVENT_MAX:
             return nullptr;
+        //default:
+            //we don't do this... because then the compiler wouldn't error for missing cases in the enum
     }
     return nullptr;
 }

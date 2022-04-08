@@ -88,13 +88,13 @@ local function getTokenCore(typeDefinition, token)
     end
     
     -- Get data anew
-    local success, type = pcall(function() return typeDefinition._type end)
-    local rawStrings = typeDefinition[rawStringsFieldNames[type]]
+    local success, dftype = pcall(function() return typeDefinition._type end)
+    local rawStrings = typeDefinition[rawStringsFieldNames[dftype]]
     if not success or not rawStrings then
         error("Expected a raw type definition or instance in argument 1")
     end
     local currentTokenIterator
-    for _, rawString in ipairs(rawStrings) do
+    for _, rawString in ipairs(rawStrings) do -- e.g. "[CUSTOM_TOKEN:FOO:2]"
         local noBrackets = rawString.value:sub(2, -2)
         local iter = noBrackets:gmatch("[^:]*") -- iterate over all the text between colons between the brackets
         if token == iter() then
@@ -152,12 +152,11 @@ local function getRaceCasteTokenCore(raceDefinition, casteNumber, token)
         return doToken(thisRaceDefCache, token, currentTokenIterator)
     end
     thisRaceDefCacheCaste[token] = false
-    if casteNumber ~= -1 then
-        -- Not present, try with no caste
-        return getRaceCasteTokenCore(raceDefinition, -1, token)
-    else
-        return false -- don't get into an infinite loop!
+    if casteNumber == -1 then
+        return false -- Don't get into an infinite loop!
     end
+    -- Not present, try with no caste
+    return getRaceCasteTokenCore(raceDefinition, -1, token)
 end
 
 local function getPlantGrowthTokenCore(plantDefinition, growthNumber, token)
@@ -203,12 +202,10 @@ local function getPlantGrowthTokenCore(plantDefinition, growthNumber, token)
         return doToken(thisPlantDefCache, token, currentTokenIterator)
     end
     thisPlantDefCacheGrowth[token] = false
-    if growthNumber ~= -1 then
-        -- Not present, try with no growth
-        return getPlantGrowthTokenCore(plantDefinition, -1, token)
-    else
-        return false -- don't get into an infinite loop!
+    if growthNumber == -1 then
+        return false
     end
+    return getPlantGrowthTokenCore(plantDefinition, -1, token)
 end
 
 --[[

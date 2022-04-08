@@ -68,3 +68,18 @@ function test.wrap()
     expect.eq('hel\nloo\nwor\nldo', ('helloo  worldo'):wrap(3))
     expect.eq('', (''):wrap())
 end
+
+function test.escape()
+    -- no change expected
+    expect.eq('', (''):escape())
+    expect.eq(' ', (' '):escape())
+    expect.eq('abc', ('abc'):escape())
+    expect.eq('a,b', ('a,b'):escape())
+    expect.eq('"a,b"', ('"a,b"'):escape())
+
+    -- excape regex chars
+    expect.eq('iz for me%?', ('iz for me?'):escape())
+    expect.eq('%.%*', ('.*'):escape())
+    expect.eq('%( %) %. %% %+ %- %* %? %[ %] %^ %$',
+              ('( ) . % + - * ? [ ] ^ $'):escape())
+end

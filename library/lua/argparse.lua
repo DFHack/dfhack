@@ -74,9 +74,10 @@ end
 --
 -- In this example, if args is {'first', '-rf', 'fname', 'second'} or,
 -- equivalently, {'first', '-r', '--filename', 'myfile.txt', 'second'} (note the
--- double dash in front of the long option alias), then open_readonly  will be
--- true, filename will be 'myfile.txt' and positionals will be
--- {'first', 'second'}.
+-- double dash in front of the long option alias), then:
+--   open_readonly == true
+--   filename == 'myfile.txt'
+--   positionals == {'first', 'second'}.
 function processArgsGetopt(args, optionActions)
     local sh_opts, long_opts = '', {}
     local handlers = {}
@@ -128,12 +129,6 @@ local function arg_error(arg_name, fmt, ...)
     qerror(('%s'..fmt):format(prefix, ...))
 end
 
--- Parses a comma-separated sequence of strings and returns a lua list. Spaces
--- are trimmed from the strings. If <arg_name> is specified, it is used to make
--- error messages more useful. If <list_length> is specified and greater than 0,
--- exactly that number of elements must be found or the function will error.
--- Example:
---   stringList('hello , world,list', 'words') => {'hello', 'world', 'list'}
 function stringList(arg, arg_name, list_length)
     if not list_length then list_length = 0 end
     local list = arg:split(',')
@@ -147,12 +142,6 @@ function stringList(arg, arg_name, list_length)
     return list
 end
 
--- Parses a comma-separated sequence of numeric strings and returns a list of
--- the discovered numbers (as numbers, not strings). If <arg_name> is specified,
--- it is used to make error messages more useful. If <list_length> is specified
--- and greater than 0, exactly that number of elements must be found or the
--- function will error. Example:
---   numberList('10, -20 ,  30.5') => {10, -20, 30.5}
 function numberList(arg, arg_name, list_length)
     local strings = stringList(arg, arg_name, list_length)
     for i,str in ipairs(strings) do
@@ -174,11 +163,6 @@ local function check_nonnegative_int(val, arg_name)
     return val
 end
 
--- Parses a comma-separated coordinate string and returns a coordinate table of
--- {x=x, y=y, z=z}. If the string 'here' is passed, returns the coordinates of
--- the active game cursor, or throws an error if the cursor is not active. This
--- function also verifies that the coordinates are valid for the current map and
--- throws if they are not (unless <skip_validation> is set to true).
 function coords(arg, arg_name, skip_validation)
     if arg == 'here' then
         local cursor = guidm.getCursorPos()

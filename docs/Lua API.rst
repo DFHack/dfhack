@@ -2266,8 +2266,6 @@ unless otherwise noted.
 * ``dfhack.filesystem.listdir(path)``
 
   Lists files/directories in a directory.  Returns ``{}`` if ``path`` does not exist.
-  Set include_prefix to false if you don't want the ``path`` string prepended to the
-  returned filenames.
 
 * ``dfhack.filesystem.listdir_recursive(path [, depth = 10[, include_prefix = true]])``
 
@@ -2278,7 +2276,8 @@ unless otherwise noted.
 
   Note that ``listdir()`` returns only the base name of each directory entry, while
   ``listdir_recursive()`` returns the initial path and all components following it
-  for each entry.
+  for each entry. Set ``include_prefix`` to false if you don't want the ``path``
+  string prepended to the returned filenames.
 
 Console API
 -----------

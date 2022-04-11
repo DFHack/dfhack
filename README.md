@@ -13,6 +13,4 @@ from the README.html page in the DFHack distribution, or as raw text in the `./d
 If you're an end-user, modder, or interested in contributing to DFHack -
 go read those docs.
 
-If that's unclear or you need more help, try
-[the Bay12 forums thread](http://www.bay12forums.com/smf/index.php?topic=164123)
-or the #dfhack IRC channel on Libera Chat.
+If that's unclear, or you need more help checkout our [support page](https://docs.dfhack.org/en/latest/docs/Support.html) for up-to-date options.

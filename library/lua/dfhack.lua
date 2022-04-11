@@ -463,8 +463,9 @@ function string:wrap(width)
 end
 
 -- Escapes regex special chars in a string. E.g. "a+b" -> "a%+b"
-function string:escape()
-    return self:gsub('(['..("%^$()[].*+-?"):gsub("(.)", "%%%1")..'])', "%%%1")
+local regex_chars_pattern = '(['..('%^$()[].*+-?'):gsub('(.)', '%%%1')..'])'
+function string:escape_patterm()
+    return self:gsub(regex_chars_pattern, '%%%1')
 end
 
 -- String conversions

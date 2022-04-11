@@ -3370,7 +3370,10 @@ It adds the following methods:
 
   Adds the screen to the display stack with the given screen as the parent;
   if parent is not specified, places this one one topmost. Before calling
-  ``dfhack.screen.show``, calls ``self:onAboutToShow(parent)``.
+  ``dfhack.screen.show``, calls ``self:onAboutToShow(parent)``. Note that
+  ``onAboutToShow()`` can dismiss active screens, and therefore change the
+  potential parent. If parent is not specified, this function will re-detect the
+  current topmost window after ``self:onAboutToShow(parent)`` returns.
 
 * ``screen:onAboutToShow(parent)`` *(for overriding)*
 

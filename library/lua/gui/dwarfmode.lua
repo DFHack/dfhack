@@ -470,7 +470,7 @@ function MenuOverlay:onAboutToShow(parent)
     end
     enterSidebarMode(df.ui_sidebar_mode.Default)
 
-    -- refresh parent since the original parent may have been dismissed
+    -- refresh parent since the original parent may have just been dismissed
     parent = dfhack.gui.getCurViewscreen(true)
     MenuOverlay.super.onAboutToShow(self, parent)
 
@@ -485,6 +485,9 @@ function MenuOverlay:onAboutToShow(parent)
 end
 
 function MenuOverlay:onDismiss()
+    -- we have to check that saved_sidebar_mode is set because a subclass may
+    -- have overridden our onAboutToShow() method without calling
+    -- <class>.super.onAboutToShow(self, parent)
     if self.saved_sidebar_mode then
         enterSidebarMode(self.saved_sidebar_mode)
     end

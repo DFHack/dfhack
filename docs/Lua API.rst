@@ -2685,7 +2685,7 @@ functions. These are invoked just like standard string functions, e.g.::
   kept in place. If a single word is longer than width, it is split over
   multiple lines. If width is not specified, 72 is used.
 
-* ``string:escape()``
+* ``string:escape_pattern()``
 
   Escapes regex special chars in a string. E.g. ``'a+b'`` -> ``'a%+b'``.
 

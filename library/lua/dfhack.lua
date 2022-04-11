@@ -464,7 +464,7 @@ end
 
 -- Escapes regex special chars in a string. E.g. "a+b" -> "a%+b"
 local regex_chars_pattern = '(['..('%^$()[].*+-?'):gsub('(.)', '%%%1')..'])'
-function string:escape_patterm()
+function string:escape_pattern()
     return self:gsub(regex_chars_pattern, '%%%1')
 end
 

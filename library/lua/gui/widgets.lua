@@ -814,7 +814,7 @@ function FilteredList:setFilter(filter, pos)
             local ok = true
             local search_key = v.search_key or v.text
             for _,key in ipairs(tokens) do
-                key = key:escape()
+                key = key:escape_pattern()
                 -- start matches at non-space or non-punctuation. this allows
                 -- punctuation itself to be matched if that is useful (e.g.
                 -- filenames or parameter names)

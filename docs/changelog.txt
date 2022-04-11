@@ -64,7 +64,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Updated information regarding obtaining a compatible Windows build environment
 - `confirm`: Correct the command name in the plugin help text
 - ``Quickfort Blueprint Editing Guide``: added screenshots to the Dreamfort case study and overall clarified text
-- Document DFHack `lua-string` (``startswith``, ``endswith``, ``split``, ``trim``, ``wrap``, and ``escape``).
+- Document DFHack `lua-string` (``startswith``, ``endswith``, ``split``, ``trim``, ``wrap``, and ``escape_pattern``).
 
 ## API
 - Added functions reverse-engineered from ambushing unit code: ``Units::isHidden``, ``Units::isFortControlled``, ``Units::getOuterContainerRef``, ``Items::getOuterContainerRef``
@@ -72,7 +72,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Lua
 - Lua wrappers for functions reverse-engineered from ambushing unit code: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
 - ``dwarfmode.enterSidebarMode()``: passing ``df.ui_sidebar_mode.DesignateMine`` now always results in you entering ``DesignateMine`` mode and not ``DesignateChopTrees``, even when you looking at the surface where the default designation mode is ``DesignateChopTrees``
-- New string class function: ``string:escape()`` escapes regex special characters within a string
+- New string class function: ``string:escape_pattern()`` escapes regex special characters within a string
 
 # 0.47.05-r4
 

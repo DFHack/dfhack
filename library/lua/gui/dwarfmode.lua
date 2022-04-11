@@ -455,10 +455,17 @@ function MenuOverlay:onAboutToShow(parent)
     end
 
     self.saved_sidebar_mode = df.global.ui.main.mode
-    -- if we can't get back to the saved sidebar mode via enterSidebarMode
-    -- then fall back to the default mode
-    if dfhack.gui.getCurFocus(true):find('^dfhack/')
-            or not SIDEBAR_MODE_KEYS[self.saved_sidebar_mode] then
+    -- what mode should we restore when this window is dismissed? ideally, we'd
+    -- restore the mode that the user has set, but we should fall back to
+    -- restoring the default mode if either of the following conditions are
+    -- true:
+    -- 1) enterSidebarMode doesn't support getting back into the current mode
+    -- 2) a dfhack viewscreen is currently visible. in this case, we can't trust
+    --    that the current sidebar mode was set by the user. it could just be a
+    --    MenuOverlay subclass that is currently being shown that has set the
+    --    sidebar mode for its own purposes.
+    if not SIDEBAR_MODE_KEYS[self.saved_sidebar_mode]
+            or dfhack.gui.getCurFocus(true):find('^dfhack/') then
         self.saved_sidebar_mode = df.ui_sidebar_mode.Default
     end
     enterSidebarMode(df.ui_sidebar_mode.Default)

@@ -2643,6 +2643,51 @@ environment by the mandatory init file dfhack.lua:
   Walks a sequence of dereferences, which may be represented by numbers or strings.
   Returns *nil* if any of obj or indices is *nil*, or a numeric index is out of array bounds.
 
+.. _lua-string:
+
+String class extentions
+-----------------------
+
+DFHack extends Lua's basic string class to include a number of convenience
+functions. These are invoked just like standard string functions, e.g.::
+
+    if imastring:startswith('imaprefix') then
+
+* ``string:startswith(prefix)``
+
+  Returns ``true`` if the first ``#prefix`` characters of the string are equal
+  to ``prefix``. Note that ``prefix`` is not interpreted as a pattern.
+
+* ``string:endswith(suffix)``
+
+  Returns ``true`` if the last ``#suffix`` characters of the string are equal
+  to ``suffix``. Note that ``suffix`` is not interpreted as a pattern.
+
+* ``string:split([delimiter[, plain]])``
+
+  Split a string by the given delimiter. If no delimiter is specified, space
+  (``' '``) is used. The delimter is treated as a pattern unless a ``plain`` is
+  specified and set to ``true``. To treat multiple successive delimiter
+  characters as a single delimiter, e.g. to avoid getting empty string elements,
+  pass a pattern like ``' +'``. Be aware that passing patterns that match empty
+  strings (like ``' *'``) will result in improper string splits.
+
+* ``string:trim()``
+
+  Removes spaces (i.e. everything that matches ``'%s'``) from the start and end
+  of a string. Spaces between non-space characters are left untouched.
+
+* ``string:wrap([width])``
+
+  Inserts newlines into a string so no individual line exceeds the given width.
+  Lines are split at space-separated word boundaries. Any existing newlines are
+  kept in place. If a single word is longer than width, it is split over
+  multiple lines. If width is not specified, 72 is used.
+
+* ``string:escape_pattern()``
+
+  Escapes regex special chars in a string. E.g. ``'a+b'`` -> ``'a%+b'``.
+
 utils
 =====
 

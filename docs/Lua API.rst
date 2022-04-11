@@ -2855,6 +2855,9 @@ parameters.
     yourscript --optName [ list of [ nested values ] [ in square brackets ] ]
     yourscript --optName \--value
 
+  Note that ``processArgs`` does not support non-option ("positional")
+  parameters. They are supported by ``processArgsGetopt`` (see below).
+
 * ``argparse.processArgsGetopt(args, optionActions)``
 
   A fully-featured commandline processing function, with behavior based on the

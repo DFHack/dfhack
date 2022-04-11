@@ -372,7 +372,9 @@ function safe_index(obj,idx,...)
     if obj == nil or idx == nil then
         return nil
     end
-    if type(idx) == 'number' and (idx < 0 or idx >= #obj) then
+    if type(idx) == 'number' and
+            type(obj) == 'userdata' and -- this check is only relevant for c++
+            (idx < 0 or idx >= #obj) then
         return nil
     end
     obj = obj[idx]

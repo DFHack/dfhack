@@ -69,17 +69,17 @@ function test.wrap()
     expect.eq('', (''):wrap())
 end
 
-function test.escape()
+function test.escape_pattern()
     -- no change expected
-    expect.eq('', (''):escape())
-    expect.eq(' ', (' '):escape())
-    expect.eq('abc', ('abc'):escape())
-    expect.eq('a,b', ('a,b'):escape())
-    expect.eq('"a,b"', ('"a,b"'):escape())
+    expect.eq('', (''):escape_pattern())
+    expect.eq(' ', (' '):escape_pattern())
+    expect.eq('abc', ('abc'):escape_pattern())
+    expect.eq('a,b', ('a,b'):escape_pattern())
+    expect.eq('"a,b"', ('"a,b"'):escape_pattern())
 
     -- excape regex chars
-    expect.eq('iz for me%?', ('iz for me?'):escape())
-    expect.eq('%.%*', ('.*'):escape())
+    expect.eq('iz for me%?', ('iz for me?'):escape_pattern())
+    expect.eq('%.%*', ('.*'):escape_pattern())
     expect.eq('%( %) %. %% %+ %- %* %? %[ %] %^ %$',
-              ('( ) . % + - * ? [ ] ^ $'):escape())
+              ('( ) . % + - * ? [ ] ^ $'):escape_pattern())
 end

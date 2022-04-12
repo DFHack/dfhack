@@ -436,18 +436,51 @@ MenuOverlay = defclass(MenuOverlay, DwarfOverlay)
 MenuOverlay.ATTRS {
     frame_inset = 0,
     frame_background = gui.CLEAR_PEN,
+
+    -- if sidebar_mode is set, we will enter the specified sidebar mode on show
+    -- and restore the previous sidebar mode on dismiss. otherwise it is up to
+    -- the caller to ensure we are in a sidebar mode where the menu is visible.
+    sidebar_mode = DEFAULT_NIL,
 }
 
 function MenuOverlay:computeFrame(parent_rect)
     return self.df_layout.menu, gui.inset_frame(self.df_layout.menu, self.frame_inset)
 end
 
-function MenuOverlay:onAboutToShow(below)
-    MenuOverlay.super.onAboutToShow(self,below)
+function MenuOverlay:onAboutToShow(parent)
+    if not dfhack.isMapLoaded() then
+        -- sidebar menus are only valid when a fort map is loaded
+        error('A fortress map must be loaded.')
+    end
+
+    if self.sidebar_mode then
+        self.saved_sidebar_mode = df.global.ui.main.mode
+        -- what mode should we restore when this window is dismissed? ideally, we'd
+        -- restore the mode that the user has set, but we should fall back to
+        -- restoring the default mode if either of the following conditions are
+        -- true:
+        -- 1) enterSidebarMode doesn't support getting back into the current mode
+        -- 2) a dfhack viewscreen is currently visible. in this case, we can't trust
+        --    that the current sidebar mode was set by the user. it could just be a
+        --    MenuOverlay subclass that is currently being shown that has set the
+        --    sidebar mode for its own purposes.
+        if not SIDEBAR_MODE_KEYS[self.saved_sidebar_mode]
+                or dfhack.gui.getCurFocus(true):find('^dfhack/') then
+            self.saved_sidebar_mode = df.ui_sidebar_mode.Default
+        end
+
+        enterSidebarMode(self.sidebar_mode)
+    end
 
     self:updateLayout()
     if not self.df_layout.menu then
         error("The menu panel of dwarfmode is not visible")
+    end
+end
+
+function MenuOverlay:onDismiss()
+    if self.saved_sidebar_mode then
+        enterSidebarMode(self.saved_sidebar_mode)
     end
 end
 

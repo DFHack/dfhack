@@ -814,8 +814,13 @@ function FilteredList:setFilter(filter, pos)
             local ok = true
             local search_key = v.search_key or v.text
             for _,key in ipairs(tokens) do
+                key = key:escape_pattern()
+                -- start matches at non-space or non-punctuation. this allows
+                -- punctuation itself to be matched if that is useful (e.g.
+                -- filenames or parameter names)
                 if key ~= '' and
-                        not string.match(search_key, '%f[^%s%p\x00]'..key) then
+                        not search_key:match('%f[^%p\x00]'..key) and
+                        not search_key:match('%f[^%s\x00]'..key) then
                     ok = false
                     break
                 end
@@ -839,15 +844,7 @@ function FilteredList:onFilterChange(text)
     self:setFilter(text)
 end
 
-local bad_chars = {
-    ['%'] = true, ['.'] = true, ['+'] = true, ['*'] = true,
-    ['['] = true, [']'] = true, ['('] = true, [')'] = true,
-}
-
 function FilteredList:onFilterChar(char, text)
-    if bad_chars[char] then
-        return false
-    end
     if char == ' ' then
         return string.match(text, '%S$')
     end

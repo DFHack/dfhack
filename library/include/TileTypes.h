@@ -352,4 +352,3 @@ namespace DFHack
      */
     DFHACK_EXPORT df::tiletype matchTileMaterial(df::tiletype source, df::tiletype_material tmat);
 }
-

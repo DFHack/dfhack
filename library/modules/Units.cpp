@@ -646,7 +646,7 @@ bool Units::isHidden(df::unit *unit)
 
     if (*df::global::debug_showambush)
         return false;
-    
+
     if (*gamemode == game_mode::ADVENTURE)
     {
         if (unit == world->units.active[0])

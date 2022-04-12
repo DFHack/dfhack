@@ -57,4 +57,3 @@ struct fast_trade_select_hook : df::viewscreen_tradegoodsst {
 };
 
 IMPLEMENT_VMETHOD_INTERPOSE(fast_trade_select_hook, feed);
-

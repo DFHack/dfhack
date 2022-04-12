@@ -544,7 +544,3 @@ DFHACK_PLUGIN_LUA_COMMANDS
     DFHACK_LUA_COMMAND ( stockpiles_list_settings ),
     DFHACK_LUA_END
 };
-
-
-
-

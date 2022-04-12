@@ -46,7 +46,7 @@ local client=defclass(client,socket)
 function client:receive( pattern )
     local pattern=pattern or "*l"
     local bytes=-1
-    
+
     if type(pattern)== 'number' then
         bytes=pattern
     end

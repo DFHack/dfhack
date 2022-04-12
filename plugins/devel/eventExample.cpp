@@ -194,4 +194,3 @@ void unitAttack(color_ostream& out, void* ptr) {
         out.print(" %s\n", part->name_singular[0]->c_str());
     }
 }
-

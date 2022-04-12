@@ -1269,7 +1269,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
             }
         }
     }
-            
+
     for (uint8_t i = 1; i < 16; i++) {
         for (uint8_t k = 0; k < 16; k++) {
             auto western_neighbour = mlt->at(i - 1).at(k);
@@ -2549,4 +2549,3 @@ void embark_assist::survey::shutdown() {
     delete state;
     state = nullptr;
 }
-

@@ -2458,4 +2458,3 @@ command_result labormanager(color_ostream &out, std::vector <std::string> & para
         return CR_OK;
     }
 }
-

@@ -18,4 +18,3 @@ These are pages relevant to people developing for DFHack.
    /docs/Structures-intro
    /docs/Memory-research
    /docs/Binpatches
-

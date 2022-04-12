@@ -3705,6 +3705,23 @@ Has attributes:
 
   Called from ``onRenderBody``.
 
+* ``autoarrange_subviews = bool`` (default: false)
+* ``autoarrange_gap = int`` (default: 0)
+
+  If ``autoarrange_subviews`` is set to ``true``, the Panel will
+  automatically handle subview layout. Subviews are laid out vertically
+  according to their current height, with ``autoarrange_gap`` empty lines
+  between subviews. This allows you to have widgets dynamically change
+  height or become visible/hidden and you don't have to worry about
+  recalculating subview positions.
+
+ResizingPanel class
+-------------------
+
+Subclass of Panel; automatically adjusts its own frame height according to
+the size, position, and visibility of its subviews. Pairs nicely with a
+parent Panel that has ``autoarrange_subviews`` enabled.
+
 Pages class
 -----------
 

@@ -372,7 +372,9 @@ function safe_index(obj,idx,...)
     if obj == nil or idx == nil then
         return nil
     end
-    if type(idx) == 'number' and (idx < 0 or idx >= #obj) then
+    if type(idx) == 'number' and
+            type(obj) == 'userdata' and -- this check is only relevant for c++
+            (idx < 0 or idx >= #obj) then
         return nil
     end
     obj = obj[idx]
@@ -460,6 +462,12 @@ function string:wrap(width)
         table.insert(wrapped_text, wrapped_line)
     end
     return table.concat(wrapped_text, '\n')
+end
+
+-- Escapes regex special chars in a string. E.g. "a+b" -> "a%+b"
+local regex_chars_pattern = '(['..('%^$()[].*+-?'):gsub('(.)', '%%%1')..'])'
+function string:escape_pattern()
+    return self:gsub(regex_chars_pattern, '%%%1')
 end
 
 -- String conversions

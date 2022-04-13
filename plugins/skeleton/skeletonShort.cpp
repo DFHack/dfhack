@@ -59,4 +59,3 @@ command_result skeleton2 (color_ostream &out, std::vector <std::string> & parame
     out.print("blah");
     return CR_OK;
 }
-

@@ -31,4 +31,3 @@ struct civ_agreement_view_hook : df::viewscreen_entityst {
 };
 
 IMPLEMENT_VMETHOD_INTERPOSE(civ_agreement_view_hook, render);
-

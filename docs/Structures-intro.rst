@@ -31,4 +31,3 @@ of DF-structures:
 
    /library/xml/SYNTAX
    /library/xml/how-to-update
-

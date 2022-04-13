@@ -66,7 +66,7 @@ function test.ListBox_closes_on_select2()
     lb:show()
     wait()
     send_keys('SEC_SELECT')
-    
+
     expect.eq(0, mock_cb.call_count)
     expect.eq(1, mock_cb2.call_count)
 
@@ -96,7 +96,7 @@ function test.ListBox_stays_open_with_multi_select()
 
     send_keys('SEC_SELECT')
     expect.eq(before_scr, dfhack.gui.getCurViewscreen(true), "With default dismiss_on_select2 it should return us to previous screen")
-    
+
     expect.eq(1, mock_cb.call_count)
     expect.eq(1, mock_cb2.call_count)
 end
@@ -124,7 +124,7 @@ function test.ListBox_stays_open_with_multi_select2()
 
     send_keys('SELECT')
     expect.eq(before_scr, dfhack.gui.getCurViewscreen(true), "With default dismiss_on_select it should return us to previous screen")
-    
+
     expect.eq(1, mock_cb.call_count)
     expect.eq(1, mock_cb2.call_count)
 end
@@ -159,12 +159,12 @@ function test.ListBox_with_multi_select()
     send_keys('STANDARDSCROLL_DOWN')
     wait()
     send_keys('SELECT')
-    
+
     expect.eq(2, mock_cb.call_count)
     expect.eq(1, mock_cb2.call_count)
-    
+
     expect.eq(lb_scr, dfhack.gui.getCurViewscreen(true), "With both dismiss_on_select and dismiss_on_select2 false the ListBox should stay open")
-    
+
     send_keys('LEAVESCREEN')
     expect.eq(before_scr, dfhack.gui.getCurViewscreen(true), "Pressing LEAVESCREEN should still return us to previous screen")
 end
@@ -186,7 +186,7 @@ function test.ListBox_with_multi_select_and_visual_indicator()
         if not (args and fnc) then return COLOR_YELLOW end
         return fnc(args) and dpen_active or dpen_not_active
     end
-    
+
     local args = {}
     local choices = {}
     args.choices = choices
@@ -199,7 +199,7 @@ function test.ListBox_with_multi_select_and_visual_indicator()
     end
     args.on_select2 = mock_cb2
     args.dismiss_on_select = false
-    
+
     local mock_is_active_cb_counter = mock.func()
     local is_active = function (args)
         mock_is_active_cb_counter()
@@ -224,10 +224,10 @@ function test.ListBox_with_multi_select_and_visual_indicator()
     local lb = dialogs.ListBox(args)
     lb:show()
     local lb_scr = dfhack.gui.getCurViewscreen(true)
-    
+
     expect.eq(pen_active, choices[1].text[1].pen(), "Pen of the first item should be the pen_active")
     expect.eq(pen_not_active, choices[3].text[1].pen(), "Pen of the third item should be the pen_not_active")
-    
+
     wait()
     send_keys('SELECT')
     send_keys('STANDARDSCROLL_DOWN')
@@ -239,9 +239,9 @@ function test.ListBox_with_multi_select_and_visual_indicator()
     wait(100)
     expect.eq(3, mock_cb.call_count)
     expect.eq(0, mock_cb2.call_count)
-    
+
     expect.lt(0, mock_is_active_cb_counter.call_count, "is_active should be called at least once")
-    
+
     expect.table_eq(
         {
             {text = 'ListBox_with_multi_select', active = false},
@@ -253,9 +253,9 @@ function test.ListBox_with_multi_select_and_visual_indicator()
     )
     expect.eq(pen_not_active, choices[1].text[1].pen(), "Pen of the first now not active item should be the pen_not_active")
     expect.eq(pen_active, choices[3].text[1].pen(), "Pen of the third now active item should be the pen_active")
-    
+
     expect.eq(lb_scr, dfhack.gui.getCurViewscreen(true), "With both dismiss_on_select and dismiss_on_select2 false the ListBox should stay open")
-    
+
     send_keys('LEAVESCREEN')
     expect.eq(before_scr, dfhack.gui.getCurViewscreen(true), "Pressing LEAVESCREEN should still return us to previous screen")
 end

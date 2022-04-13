@@ -212,10 +212,10 @@ function ListBox:onRenderFrame(dc,rect)
 end
 
 function ListBox:getWantedFrameSize()
-    local mw, mh = InputBox.super.getWantedFrameSize(self)
+    local mw, mh = ListBox.super.getWantedFrameSize(self)
     local list = self.subviews.list
     list.frame.t = mh+1
-    return math.max(mw, list:getContentWidth()), mh+1+math.min(20,list:getContentHeight())
+    return math.max(mw, list:getContentWidth()), mh+3+math.min(18,list:getContentHeight())
 end
 
 function ListBox:onInput(keys)

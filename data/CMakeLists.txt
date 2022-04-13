@@ -14,4 +14,3 @@ if(BUILD_TESTS)
             DESTINATION blueprints/library/test
     )
 endif()
-

@@ -276,4 +276,3 @@ bool Burrows::setAssignedBlockTile(df::burrow *burrow, df::map_block *block, df:
 
     return true;
 }
-

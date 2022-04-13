@@ -383,4 +383,3 @@ namespace DFHack
     };
 }
 #endif
-

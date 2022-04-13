@@ -76,5 +76,3 @@ static inline bool is_dfstockfile ( const std::string& filename )
 }
 
 // }}} utility Functions
-
-

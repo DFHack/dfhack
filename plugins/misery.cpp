@@ -204,4 +204,3 @@ command_result misery(color_ostream &out, vector<string>& parameters) {
 
     return CR_OK;
 }
-

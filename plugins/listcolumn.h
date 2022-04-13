@@ -491,4 +491,3 @@ protected:
     int display_max_rows;
     int max_item_width;
 };
-

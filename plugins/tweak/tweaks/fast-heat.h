@@ -45,4 +45,3 @@ struct fast_heat_hook : df::item_actual {
 IMPLEMENT_VMETHOD_INTERPOSE(fast_heat_hook, updateTempFromMap);
 IMPLEMENT_VMETHOD_INTERPOSE(fast_heat_hook, updateTemperature);
 IMPLEMENT_VMETHOD_INTERPOSE(fast_heat_hook, adjustTemperature);
-

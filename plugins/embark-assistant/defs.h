@@ -68,7 +68,7 @@ namespace embark_assist {
             Woodland,
             Heavily_Forested
         };
-        
+
         // only contains those attributes that are being handled during incursion processing
         struct mid_level_tile_incursion_base {
             uint8_t aquifer = Clear_Aquifer_Bits;

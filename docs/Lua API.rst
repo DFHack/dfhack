@@ -4178,6 +4178,10 @@ These events are straight from EventManager module. Each of them first needs to 
 
     Called when a unit uses an interaction on another.
 
+14. ``onUnitAction(unit_id, action, action_id)``
+
+    Called when a unit does an action (movement, attacking, talking and so on).
+
 Functions
 ---------
 

@@ -20,6 +20,7 @@
 #include "df/reaction_reagent_itemst.h"
 #include "df/reaction_product_itemst.h"
 #include "df/unit.h"
+#include "df/unit_action.h"
 #include "df/unit_inventory_item.h"
 #include "df/unit_wound.h"
 #include "df/world.h"
@@ -109,6 +110,7 @@ DEFINE_LUA_EVENT_NH_1(onReport, int32_t);
 DEFINE_LUA_EVENT_NH_3(onUnitAttack, int32_t, int32_t, int32_t);
 DEFINE_LUA_EVENT_NH_0(onUnload);
 DEFINE_LUA_EVENT_NH_6(onInteraction, std::string, std::string, int32_t, int32_t, int32_t, int32_t);
+DEFINE_LUA_EVENT_NH_3(onUnitAction, int32_t, df::unit_action*, int32_t);
 
 DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_EVENT(onWorkshopFillSidebarMenu),
@@ -136,6 +138,7 @@ DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_EVENT(onUnitAttack),
     DFHACK_LUA_EVENT(onUnload),
     DFHACK_LUA_EVENT(onInteraction),
+    DFHACK_LUA_EVENT(onUnitAction),
     DFHACK_LUA_END
 };
 
@@ -220,6 +223,10 @@ static void ev_mng_interaction(color_ostream& out, void* ptr) {
     EventManager::InteractionData* data = (EventManager::InteractionData*)ptr;
     onInteraction(out, data->attackVerb, data->defendVerb, data->attacker, data->defender, data->attackReport, data->defendReport);
 }
+static void ev_mng_action(color_ostream& out, void* ptr) {
+    EventManager::ActionData* data = (EventManager::ActionData*)ptr;
+    onUnitAction(out, data->unitId, data->action, data->actionId);
+}
 std::vector<int> enabledEventManagerEvents(EventManager::EventType::EVENT_MAX,-1);
 typedef void (*handler_t) (color_ostream&,void*);
 
@@ -242,6 +249,7 @@ static const handler_t eventHandlers[] = {
  ev_mng_unitAttack,
  ev_mng_unload,
  ev_mng_interaction,
+ ev_mng_action,
 };
 static void enableEvent(int evType,int freq)
 {

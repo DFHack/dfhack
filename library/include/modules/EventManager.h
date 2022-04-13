@@ -37,6 +37,7 @@ namespace DFHack {
                 UNIT_ATTACK,
                 UNLOAD,
                 INTERACTION,
+                UNIT_ACTION,
                 EVENT_MAX
             };
         }
@@ -93,6 +94,12 @@ namespace DFHack {
             int32_t defender;
             int32_t attackReport;
             int32_t defendReport;
+        };
+
+        struct ActionData {
+            int32_t unitId;
+            df::unit_action* action;
+            int32_t actionId;
         };
 
         DFHACK_EXPORT void registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin);

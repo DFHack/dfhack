@@ -28,6 +28,7 @@
 #include "df/report.h"
 #include "df/ui.h"
 #include "df/unit.h"
+#include "df/unit_action.h"
 #include "df/unit_flags1.h"
 #include "df/unit_inventory_item.h"
 #include "df/unit_report_type.h"
@@ -137,6 +138,7 @@ static void manageReportEvent(color_ostream& out);
 static void manageUnitAttackEvent(color_ostream& out);
 static void manageUnloadEvent(color_ostream& out){};
 static void manageInteractionEvent(color_ostream& out);
+static void manageActionEvent(color_ostream& out);
 
 typedef void (*eventManager_t)(color_ostream&);
 
@@ -157,6 +159,7 @@ static const eventManager_t eventManager[] = {
         manageUnitAttackEvent,
         manageUnloadEvent,
         manageInteractionEvent,
+        manageActionEvent,
 };
 
 //job initiated
@@ -200,6 +203,9 @@ static int32_t reportToRelevantUnitsTime = -1;
 //interaction
 static int32_t lastReportInteraction;
 
+//unit action
+static std::map<int32_t,std::vector<int32_t> > unitToKnownActions;
+
 void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event event) {
     static bool doOnce = false;
 //    const string eventNames[] = {"world loaded", "world unloaded", "map loaded", "map unloaded", "viewscreen changed", "core initialized", "begin unload", "paused", "unpaused"};
@@ -222,6 +228,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         buildings.clear();
         constructions.clear();
         equipmentLog.clear();
+        unitToKnownActions.clear();
 
         Buildings::clearBuildings(out);
         lastReport = -1;
@@ -1255,3 +1262,31 @@ static void manageInteractionEvent(color_ostream& out) {
     }
 }
 
+static void manageActionEvent(color_ostream& out) {
+    if (!df::global::world)
+        return;
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_ACTION].begin(), handlers[EventType::UNIT_ACTION].end());
+    for ( size_t a = 0; a < df::global::world->units.all.size(); a++ ) {
+        df::unit* unit = df::global::world->units.all[a];
+        if ( Units::isActive(unit) ) {
+            auto knownActions = &unitToKnownActions[unit->id];
+            for ( df::unit_action* action : unit->actions ) {
+                if ( action->type != df::unit_action_type::None) {
+                    if ( std::find(knownActions->begin(), knownActions->end(), action->id) == knownActions->end() ) {
+                        knownActions->push_back(action->id);
+                        for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+                            EventHandler handle = (*b).second;
+                            ActionData data = {unit->id, action, action->id};
+                            handle.eventHandler(out, (void*)&data);
+                        }
+                    }
+                } else {
+                    auto newEnd = std::remove(knownActions->begin(), knownActions->end(), action->id);
+                    knownActions->erase(newEnd, knownActions->end());
+                }
+            }
+        } else {
+            unitToKnownActions.erase(unit->id);
+        }
+    }
+}

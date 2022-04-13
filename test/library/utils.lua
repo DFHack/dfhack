@@ -54,4 +54,3 @@ function test.invert_overwrite()
     expect.eq(i.b, 2)
     expect.eq(i.a, 3)
 end
-

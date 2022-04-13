@@ -24,4 +24,3 @@ function test.index_id_bad()
         expect.eq(df.global.world.units.other[df.units_other_id._last_item + 1], 'container')
     end)
 end
-

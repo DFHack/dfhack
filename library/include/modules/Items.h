@@ -207,4 +207,3 @@ DFHACK_EXPORT bool isSquadEquipment(df::item *item);
 
 }
 }
-

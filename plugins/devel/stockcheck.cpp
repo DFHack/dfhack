@@ -273,4 +273,3 @@ static command_result stockcheck(color_ostream &out, vector <string> & parameter
 
     return CR_OK;
 }
-

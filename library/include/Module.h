@@ -57,4 +57,3 @@ namespace DFHack
     };
 }
 #endif //MODULE_H_INCLUDED
-

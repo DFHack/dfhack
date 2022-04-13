@@ -1254,4 +1254,3 @@ static void manageInteractionEvent(color_ostream& out) {
         //TODO: deduce attacker from latest defend event first
     }
 }
-

@@ -230,7 +230,7 @@ if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/CMakeLists.txt")
     file(WRITE "${CMAKE_CURRENT_SOURCE_DIR}/external/CMakeLists.txt" ${content_str})
 endif()
 
-include("${CMAKE_CURRENT_SOURCE_DIR}/external/CMakeLists.txt")
+add_subdirectory(external)
 
 # for backwards compatibility
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.custom.txt")

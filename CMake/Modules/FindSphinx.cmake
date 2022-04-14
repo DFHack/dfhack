@@ -13,4 +13,3 @@ find_package_handle_standard_args(Sphinx DEFAULT_MSG
 )
 
 mark_as_advanced(SPHINX_EXECUTABLE)
-

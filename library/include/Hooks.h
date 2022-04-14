@@ -93,4 +93,3 @@ DFhackCExport int egg_sdl_event(SDL::Event* event);
 
 // hook - ncurses event. return -1 to consume
 DFhackCExport int egg_curses_event(int orig_return);
-

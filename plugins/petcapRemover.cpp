@@ -209,4 +209,3 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 
     return CR_OK;
 }
-

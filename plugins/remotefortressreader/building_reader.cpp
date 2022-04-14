@@ -914,4 +914,3 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
         break;
     }
 }
-

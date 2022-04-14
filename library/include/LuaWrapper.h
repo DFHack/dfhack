@@ -240,4 +240,3 @@ namespace LuaWrapper {
 
     void AttachDFGlobals(lua_State *state);
 }}
-

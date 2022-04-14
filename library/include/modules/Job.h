@@ -112,4 +112,3 @@ namespace DFHack
     DFHACK_EXPORT bool operator== (const df::job &a, const df::job &b);
 }
 #endif
-

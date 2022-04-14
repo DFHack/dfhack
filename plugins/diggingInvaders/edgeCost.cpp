@@ -482,4 +482,3 @@ vector<Edge>* getEdgeSet(color_ostream &out, df::coord point, MapExtras::MapCach
 
     return result;
 }
-

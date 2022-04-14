@@ -175,4 +175,3 @@ The script interface simply lets you designate one of the squads that
 are assigned to the barracks/armory containing the selected stand as
 the intended user. In order to aid in the choice, it shows the number
 of currently assigned racks for every valid squad.
-

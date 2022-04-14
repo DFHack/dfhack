@@ -80,17 +80,17 @@ static color_value selectColor(const DebugCategory::level msgLevel)
 {
     switch(msgLevel) {
     case DebugCategory::LTRACE:
-        return COLOR_GREY;
+        return COLOR_BROWN;
     case DebugCategory::LDEBUG:
         return COLOR_LIGHTBLUE;
-    case DebugCategory::LINFO:
-        return COLOR_CYAN;
     case DebugCategory::LWARNING:
         return COLOR_YELLOW;
     case DebugCategory::LERROR:
         return COLOR_LIGHTRED;
+    case DebugCategory::LINFO:
+    default:
+        return COLOR_RESET;
     }
-    return COLOR_WHITE;
 }
 
 #if __GNUC__
@@ -113,31 +113,56 @@ DebugCategory::ostream_proxy_prefix::ostream_proxy_prefix(
         const DebugCategory::level msgLevel) :
     color_ostream_proxy(target)
 {
+    DebugManager &dm = DebugManager::getInstance();
+    const DebugManager::HeaderConfig &config = dm.getHeaderConfig();
+
     color(selectColor(msgLevel));
-    auto now = std::chrono::system_clock::now();
-    tm local{};
-    //! \todo c++ 2020 will have std::chrono::to_stream(fmt, system_clock::now())
-    //! but none implements it yet.
-    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
-    // Output time in format %02H:%02M:%02S.%03ms
+
+    bool has_header = false;
+    if (config.timestamp) {
+        has_header = true;
+        auto now = std::chrono::system_clock::now();
+        tm local{};
+        //! \todo c++ 2020 will have std::chrono::to_stream(fmt, system_clock::now())
+        //! but none implements it yet.
+        std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+        // Output time in format %02H:%02M:%02S.%03ms
 #if __GNUC__ < 5
-    // Fallback for gcc 4
-    char buffer[32];
-    size_t sz = strftime(buffer, sizeof(buffer)/sizeof(buffer[0]),
-            "%T.", localtime_r(&now_c, &local));
-    *this << (sz > 0 ? buffer : "HH:MM:SS.")
+        // Fallback for gcc 4
+        char buffer[32];
+        size_t sz = strftime(buffer, sizeof(buffer)/sizeof(buffer[0]),
+                             "%T", localtime_r(&now_c, &local));
+        *this << (sz > 0 ? buffer : "HH:MM:SS");
 #else
-    *this << std::put_time(localtime_r(&now_c, &local),"%T.")
+        *this << std::put_time(localtime_r(&now_c, &local),"%T");
 #endif
-        << std::setfill('0') << std::setw(3) << ms.count()
+        if (config.timestamp_ms) {
+            auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    now.time_since_epoch()) % 1000;
+            *this << '.' << std::setfill('0') << std::setw(3) << ms.count();
+        }
+        *this << ':';
+    }
+    if (config.thread_id) {
+        has_header = true;
         // Thread id is allocated in the thread creation order to a thread_local
         // variable
-        << ":t" << thread_id
-        // Output plugin and category names to make it easier to locate where
-        // the message is coming. It would be easy replaces these with __FILE__
-        // and __LINE__ passed from the macro if that would be preferred prefix.
-        << ':' << cat.plugin() << ':' << cat.category() << ": ";
+        *this << 't' << thread_id << ':';
+    }
+    if (config.plugin) {
+        has_header = true;
+        *this << cat.plugin() << ':';
+    }
+    if (config.category) {
+        has_header = true;
+        *this << cat.category() << ':';
+    }
+    // It would be easy to pass __FILE__ and __LINE__ from the logging macros
+    // and include that information as well, if we want to.
+
+    if (has_header) {
+        *this << ' ';
+    }
 }
 
 

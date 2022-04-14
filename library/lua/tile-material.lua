@@ -397,4 +397,3 @@ function GetTileTypeMat(typ, matspec, x, y, z)
 end
 
 return _ENV
-

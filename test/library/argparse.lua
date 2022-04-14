@@ -1,6 +1,53 @@
 local argparse = require('argparse')
 local guidm = require('gui.dwarfmode')
 
+function test.processArgs()
+    local validArgs = {opt1=true, opt2=true}
+
+    expect.table_eq({}, argparse.processArgs({}, validArgs))
+    expect.table_eq({opt1=''}, argparse.processArgs({'-opt1'}, validArgs))
+    expect.table_eq({opt1=''}, argparse.processArgs({'--opt1'}, validArgs))
+
+    expect.table_eq({opt1='arg'},
+                    argparse.processArgs({'-opt1', 'arg'}, validArgs))
+    expect.table_eq({opt1='arg'},
+                    argparse.processArgs({'--opt1', 'arg'}, validArgs))
+
+    expect.table_eq({opt1='', opt2=''},
+                    argparse.processArgs({'--opt1', '-opt2'}, validArgs))
+    expect.table_eq({opt1='', opt2=''},
+                    argparse.processArgs({'--opt1', '--opt2'},validArgs))
+
+    expect.table_eq({opt1='', opt2='arg'},
+                    argparse.processArgs({'--opt1', '-opt2', 'arg'}, validArgs))
+    expect.table_eq({opt1='', opt2='arg'},
+                    argparse.processArgs({'--opt1', '--opt2', 'arg'},validArgs))
+
+    expect.table_eq({opt1={}},
+                    argparse.processArgs({'-opt1', '[', ']'}, validArgs))
+    expect.table_eq({opt1={'a'}},
+                    argparse.processArgs({'--opt1', '[', 'a', ']'}, validArgs))
+    expect.table_eq({opt1={'a', '[', 'nested', 'string', ']'}},
+                    argparse.processArgs({'-opt1', '[', 'a', '[', 'nested',
+                                          'string', ']', ']'},
+                                         validArgs))
+
+    expect.table_eq({opt1='-value'},
+                     argparse.processArgs({'-opt1', '\\-value'}, validArgs))
+    expect.table_eq({opt1='--value'},
+                     argparse.processArgs({'-opt1', '\\--value'}, validArgs))
+
+    expect.table_eq({unvalidated_opt='value'},
+                     argparse.processArgs({'-unvalidated_opt', 'value'}, nil))
+
+    expect.error_match('invalid arg',
+            function() argparse.processArgs({'-opt3'}, validArgs) end)
+    expect.error_match('duplicate arg',
+            function() argparse.processArgs({'-opt1', '--opt1'}, validArgs) end)
+    expect.error_match('error parsing arg',
+            function() argparse.processArgs({'justastring'}, validArgs) end)
+end
+
 function test.processArgsGetopt_happy_path()
     local quiet, verbose, name
 

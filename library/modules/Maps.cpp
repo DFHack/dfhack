@@ -1153,4 +1153,3 @@ df::enums::biome_type::biome_type Maps::GetBiomeType(int world_coord_x, int worl
 {
     return Maps::GetBiomeTypeWithRef(world_coord_x, world_coord_y, world_coord_y);
 }
-

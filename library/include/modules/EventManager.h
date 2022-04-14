@@ -17,12 +17,15 @@
 namespace DFHack {
     namespace EventManager {
         namespace EventType {
+            // NOTICE: keep this list synchronized with the eventHandlers array
+            // in plugins/eventful.cpp or else events will go to the wrong
+            // handlers.
             enum EventType {
                 TICK,
                 JOB_INITIATED,
                 JOB_STARTED, //has a worker
                 JOB_COMPLETED,
-                NEW_UNIT_ACTIVE,
+                UNIT_NEW_ACTIVE,
                 UNIT_DEATH,
                 ITEM_CREATED,
                 BUILDING,
@@ -42,7 +45,6 @@ namespace DFHack {
             typedef void (*callback_t)(color_ostream&, void*); //called when the event happens
             callback_t eventHandler;
             int32_t freq; //how often event is allowed to fire (in ticks) use 0 to always fire when possible
-            int32_t when; //when to fire event (global tick count)
 
             EventHandler(callback_t eventHandlerIn, int32_t freqIn): eventHandler(eventHandlerIn), freq(freqIn) {
             }

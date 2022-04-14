@@ -121,4 +121,3 @@ static command_result nestboxes(color_ostream &out, vector <string> & parameters
     }
     return CR_OK;
 }
-

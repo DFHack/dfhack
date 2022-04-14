@@ -1,0 +1,35 @@
+ci:
+  autofix_prs: false
+repos:
+# shared across repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.1.0
+  hooks:
+    - id: check-added-large-files
+    - id: check-case-conflict
+    - id: check-executables-have-shebangs
+    - id: check-merge-conflict
+    - id: check-shebang-scripts-are-executable
+    - id: check-symlinks
+    - id: check-xml
+    - id: check-yaml
+    - id: destroyed-symlinks
+    - id: end-of-file-fixer
+    - id: mixed-line-ending
+      args: ['--fix=lf']
+    - id: trailing-whitespace
+- repo: https://github.com/python-jsonschema/check-jsonschema
+  rev: 0.14.2
+  hooks:
+    - id: check-github-workflows
+- repo: https://github.com/Lucas-C/pre-commit-hooks
+  rev: v1.1.13
+  hooks:
+    - id: forbid-tabs
+      exclude_types:
+        - json
+    - id: remove-tabs
+      exclude_types:
+        - json
+# specific to dfhack:
+exclude: '^(depends/|data/examples/.*\.json$|.*\.diff$)'

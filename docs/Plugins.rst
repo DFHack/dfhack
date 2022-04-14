@@ -60,13 +60,12 @@ requested width and height.
 
 ``blueprint 30 40 bedrooms``
     Generates blueprints for an area 30 tiles wide by 40 tiles tall, starting
-    from the active cursor on the current z-level. Output is written to files
-    with names matching the pattern ``bedrooms-PHASE.csv`` in the ``blueprints``
-    directory.
+    from the active cursor on the current z-level. Blueprints are written
+    sequentially to ``bedrooms.csv`` in the ``blueprints`` directory.
 
 ``blueprint 30 40 bedrooms dig --cursor 108,100,150``
-    Generates only the ``bedrooms-dig.csv`` file from the previous example, and
-    the blueprint start coordinate is set to a specific value instead of using
+    Generates only the ``#dig`` blueprint in the ``bedrooms.csv`` file, and
+    the start of the blueprint area is set to a specific value instead of using
     the in-game cursor position.
 
 **Positional Parameters:**
@@ -87,13 +86,16 @@ If you want to generate blueprints only for specific phases, add their names to
 the commandline, anywhere after the blueprint base name. You can list multiple
 phases; just separate them with a space.
 
-:``dig``:    Generate quickfort ``#dig`` blueprints.
+:``dig``:    Generate quickfort ``#dig`` blueprints for digging natural stone.
+:``carve``:  Generate quickfort ``#dig`` blueprints for smoothing and carving.
 :``build``:  Generate quickfort ``#build`` blueprints for constructions and
     buildings.
 :``place``:  Generate quickfort ``#place`` blueprints for placing stockpiles.
+:``zone``:   Generate quickfort ``#zone`` blueprints for designating zones.
 :``query``:  Generate quickfort ``#query`` blueprints for configuring rooms.
 
-If no phases are specified, all blueprints are created.
+If no phases are specified, phases are autodetected. For example, a ``#place``
+blueprint will be created only if there are stockpiles in the blueprint area.
 
 **Options:**
 
@@ -101,6 +103,9 @@ If no phases are specified, all blueprints are created.
     Use the specified map coordinates instead of the current cursor position for
     the upper left corner of the blueprint range. If this option is specified,
     then an active game map cursor is not necessary.
+``-e``, ``--engrave``:
+    Record engravings in the ``carve`` phase. If this option is not specified,
+    engravings are ignored.
 ``-f``, ``--format <format>``:
     Select the output format of the generated files. See the ``Output formats``
     section below for options. If not specified, the output format defaults to
@@ -437,7 +442,8 @@ Subcommands that persist until disabled or DF quits:
 :nestbox-color:         Fixes the color of built nestboxes
 :reaction-gloves:       Fixes reactions to produce gloves in sets with correct handedness (:bug:`6273`)
 :shift-8-scroll:        Gives Shift-8 (or :kbd:`*`) priority when scrolling menus, instead of scrolling the map
-:stable-cursor:         Saves the exact cursor position between t/q/k/d/b/etc menus of fortress mode.
+:stable-cursor:         Saves the exact cursor position between t/q/k/d/b/etc menus of fortress mode, if the
+                        map view is near enough to its previous position.
 :stone-status-all:      Adds an option to toggle the economic status of all stones
 :title-start-rename:    Adds a safe rename option to the title screen "Start Playing" menu
 :tradereq-pet-gender:   Displays pet genders on the trade request screen
@@ -3182,9 +3188,9 @@ can easily result in inconsistent state once this plugin is
 available again. The effects may be as weird as negative power
 being generated.
 
-=======
-Lua API
-=======
+==============
+Plugin Lua API
+==============
 
 Some plugins consist solely of native libraries exposed to Lua. They are listed
 in the `lua-api` file under `lua-plugins`:

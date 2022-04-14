@@ -112,4 +112,3 @@ If you're not comfortable programming, you can help by:
 
 All those things are crucial, and often under-represented.  So if that's
 your thing, go get started!
-

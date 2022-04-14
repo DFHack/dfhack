@@ -44,6 +44,7 @@ DBG_DECLARE(debug,filter);
 DBG_DECLARE(debug,init);
 DBG_DECLARE(debug,command);
 DBG_DECLARE(debug,ui);
+DBG_DECLARE(debug,example,DebugCategory::LINFO);
 }
 
 namespace serialization {
@@ -118,14 +119,16 @@ static const char* const commandHelp =
     "    Disable filters matching space separated list of ids from 'filter'.\n"
     "  debugfilter enable <filter id> [<filter id> ...]\n"
     "    Enable filters matching space separated list of ids from 'filter'.\n"
+    "  debugfilter header [enable] | [disable] [<element> ...]\n"
+    "    Control which header metadata is shown along with each log message.\n"
     "  debugfilter help [<subcommand>]\n"
     "    Show detailed help for a command or this help.\n";
 static const char* const commandCategory =
     "  category [<plugin regex> [<category regex>]]\n"
     "    List categories with optional filters. Parameters are passed to\n"
     "    std::regex to limit which once are shown. The first regular\n"
-    "    expression is used to match category and the second is used match\n"
-    "    plugin name.\n";
+    "    expression is used to match the category and the second is used\n"
+    "    to match the plugin name.\n";
 static const char* const commandSet =
     "  set [persistent] <level> [<plugin regex> [<category regex>]]\n"
     "    Set filtering level for matching categories. 'level' must be one of\n"
@@ -161,6 +164,12 @@ static const char* const commandEnable =
     "    It will reset any matching category back to the default 'warning'\n"
     "    level or any other still active matching filter level.\n"
     "    'enable' will print red filters that were already enabled.\n";
+static const char* const commandHeader =
+    "  header [enable] | [disable] [<element> ...]\n"
+    "    'header' allows you to customize what metadata is displayed with\n"
+    "    each log message. Run it without parameters to see the list of\n"
+    "    configurable elements. Include an 'enable' or 'disable' keyword to\n"
+    "    change specific elements.\n";
 static const char* const commandHelpDetails =
     "  help [<subcommand>]\n"
     "    Show help for any of subcommands. Without any parameters it shows\n"
@@ -1063,6 +1072,55 @@ static command_result unsetFilter(color_ostream& out,
             });
 }
 
+static const int welement = 16;
+static const int wsetting = 12;
+
+static void listHeaderSetting(color_ostream& out, color_ostream::color_value c,
+                              const char *name, bool val) {
+    out.color(c);
+    out << std::setw(welement) << name
+        << std::setw(wsetting) << (val ? "Enabled" : "Disabled") << '\n';
+}
+
+static command_result configureHeader(color_ostream& out,
+                                      std::vector<std::string>& parameters)
+{
+    DebugManager &dm = DebugManager::getInstance();
+    DebugManager::HeaderConfig config = dm.getHeaderConfig();
+
+    const size_t nparams = parameters.size();
+    if (nparams >= 2 &&
+        (parameters[1] == "enable" || parameters[1] == "disable")) {
+        bool val = parameters[1] == "enable" ? true : false;
+        for (size_t idx = 1; nparams > idx; ++idx) {
+            const std::string &param = parameters[idx];
+            if (param == "timestamp") config.timestamp = val;
+            else if (param == "timestamp_ms") config.timestamp_ms = val;
+            else if (param == "thread_id") config.thread_id = val;
+            else if (param == "plugin") config.plugin = val;
+            else if (param == "category") config.category = val;
+        }
+
+        dm.setHeaderConfig(config);
+    }
+
+    out.color(COLOR_GREEN);
+    out << std::setw(welement) << "Header element"
+        << std::setw(wsetting) << "Setting" << '\n';
+
+    listHeaderSetting(out, COLOR_CYAN, "timestamp", config.timestamp);
+    listHeaderSetting(out, COLOR_LIGHTCYAN, "timestamp_ms",
+                      config.timestamp_ms);
+    listHeaderSetting(out, COLOR_CYAN, "thread_id", config.thread_id);
+    listHeaderSetting(out, COLOR_LIGHTCYAN, "plugin", config.plugin);
+    listHeaderSetting(out, COLOR_CYAN, "category", config.category);
+    out << std::endl;
+
+    INFO(example, out) << "Example message" << std::endl;
+
+    return CR_OK;
+}
+
 using DFHack::debugPlugin::CommandDispatch;
 
 static command_result printHelp(color_ostream& out,
@@ -1085,6 +1143,7 @@ CommandDispatch::dispatch_t CommandDispatch::dispatch {
     {"unset", {unsetFilter,commandUnset}},
     {"enable", {enableFilter,commandEnable}},
     {"disable", {disableFilter,commandDisable}},
+    {"header", {configureHeader,commandHeader}},
     {"help", {printHelp,commandHelpDetails}},
 };
 

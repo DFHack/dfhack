@@ -1,3 +1,4 @@
+.. _config-examples-guide:
 .. _dfhack-examples-guide:
 
 DFHack Example Configuration File Index

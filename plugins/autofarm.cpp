@@ -453,4 +453,3 @@ static command_result autofarm(color_ostream& out, std::vector<std::string>& par
 
     return CR_OK;
 }
-

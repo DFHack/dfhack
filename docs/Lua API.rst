@@ -2266,8 +2266,6 @@ unless otherwise noted.
 * ``dfhack.filesystem.listdir(path)``
 
   Lists files/directories in a directory.  Returns ``{}`` if ``path`` does not exist.
-  Set include_prefix to false if you don't want the ``path`` string prepended to the
-  returned filenames.
 
 * ``dfhack.filesystem.listdir_recursive(path [, depth = 10[, include_prefix = true]])``
 
@@ -2278,7 +2276,8 @@ unless otherwise noted.
 
   Note that ``listdir()`` returns only the base name of each directory entry, while
   ``listdir_recursive()`` returns the initial path and all components following it
-  for each entry.
+  for each entry. Set ``include_prefix`` to false if you don't want the ``path``
+  string prepended to the returned filenames.
 
 Console API
 -----------
@@ -2644,6 +2643,51 @@ environment by the mandatory init file dfhack.lua:
   Walks a sequence of dereferences, which may be represented by numbers or strings.
   Returns *nil* if any of obj or indices is *nil*, or a numeric index is out of array bounds.
 
+.. _lua-string:
+
+String class extentions
+-----------------------
+
+DFHack extends Lua's basic string class to include a number of convenience
+functions. These are invoked just like standard string functions, e.g.::
+
+    if imastring:startswith('imaprefix') then
+
+* ``string:startswith(prefix)``
+
+  Returns ``true`` if the first ``#prefix`` characters of the string are equal
+  to ``prefix``. Note that ``prefix`` is not interpreted as a pattern.
+
+* ``string:endswith(suffix)``
+
+  Returns ``true`` if the last ``#suffix`` characters of the string are equal
+  to ``suffix``. Note that ``suffix`` is not interpreted as a pattern.
+
+* ``string:split([delimiter[, plain]])``
+
+  Split a string by the given delimiter. If no delimiter is specified, space
+  (``' '``) is used. The delimter is treated as a pattern unless a ``plain`` is
+  specified and set to ``true``. To treat multiple successive delimiter
+  characters as a single delimiter, e.g. to avoid getting empty string elements,
+  pass a pattern like ``' +'``. Be aware that passing patterns that match empty
+  strings (like ``' *'``) will result in improper string splits.
+
+* ``string:trim()``
+
+  Removes spaces (i.e. everything that matches ``'%s'``) from the start and end
+  of a string. Spaces between non-space characters are left untouched.
+
+* ``string:wrap([width])``
+
+  Inserts newlines into a string so no individual line exceeds the given width.
+  Lines are split at space-separated word boundaries. Any existing newlines are
+  kept in place. If a single word is longer than width, it is split over
+  multiple lines. If width is not specified, 72 is used.
+
+* ``string:escape_pattern()``
+
+  Escapes regex special chars in a string. E.g. ``'a+b'`` -> ``'a%+b'``.
+
 utils
 =====
 
@@ -2814,6 +2858,170 @@ utils
 * ``utils.check_number(text)``
 
   A ``prompt_input`` ``checkfun`` that verifies a number input.
+
+argparse
+========
+
+The ``argparse`` module provides functions to help scripts process commandline
+parameters.
+
+* ``argparse.processArgs(args, validArgs)``
+
+  A basic commandline processing function with simple syntax, useful if your
+  script doesn't need the more advanced features of
+  ``argparse.processArgsGetopt()``.
+
+  If ``validArgs`` is specified, it should contain a set of valid option names
+  (without the leading dashes). For example::
+
+    argparse.processArgs(args, utils.invert{'opt1', 'opt2', 'opt3'})
+
+  ``processArgs`` returns a map of option names it found in ``args`` to:
+
+  - the token that came after the option
+  - ``''`` if the next token was another option
+  - a list of strings if the next token was ``'['`` (see below)
+
+  Options in ``args`` from the commandline can be prefixed with either one dash
+  (``'-'``) or two dashes (``'--'``). The user can add a backslash before the
+  dash to allow a string to be identified as an option value instead of another
+  option. For example: ``yourscript --opt1 \-arg1``.
+
+  If a ``'['`` token is found in ``args``, the subsequent tokens will be
+  interpreted as elements of a list until the matching closing ``']'`` is found.
+  Brackets can be nested, but the inner brackets will be added to the list of
+  tokens as literal ``'['`` and ``']'`` strings.
+
+  Example commandlines::
+
+    yourscript --optName --opt2
+    yourscript --optName value
+    yourscript --optName [ list of values ]
+    yourscript --optName [ list of [ nested values ] [ in square brackets ] ]
+    yourscript --optName \--value
+
+  Note that ``processArgs`` does not support non-option ("positional")
+  parameters. They are supported by ``processArgsGetopt`` (see below).
+
+* ``argparse.processArgsGetopt(args, optionActions)``
+
+  A fully-featured commandline processing function, with behavior based on the
+  popular ``getopt`` library. You would use this instead of the simpler
+  ``processArgs`` function if any of the following are true:
+
+  * You want both short (e.g. ``-f``) and aliased long-form (e.g.
+    ``--filename``) options
+  * You have commandline components that are not arguments to options (e.g. you
+    want to run your script like ``yourscript command --verbose arg1 arg2 arg3``
+    instead of
+    ``yourscript command --verbose --opt1 arg1 --opt2 arg2 --opt3 arg3)``.
+  * You want the convenience of combining options into shorter strings (e.g.
+    ``'-abcarg'`` instead of ``'-a -b -c arg``)
+  * You want to be able to parse and validate the option arguments as the
+    commandline is being processed, as opposed to validating everything after
+    commandline processing is complete.
+
+  Commandlines processed by ``processArgsGetopt`` can have both "short" and
+  "long" options, with each short option often having a long-form alias that
+  behaves exactly the same as the short form. Short options have properties that
+  make them very easy to type quickly by users who are familiar with your script
+  options. Long options, on the other hand, are easily understandable by
+  everyone and are useful in places where clarity is more important than
+  brevity, e.g. in example commands. Each option can be configured to take an
+  argument, which will be the string token that follows the option name on the
+  commandline.
+
+  Short options are a single letter long and are specified on a commandline by
+  prefixing them with a single dash (e.g. the short option ``a`` would appear
+  on the commandline as ``-a``). Multiple successive short options that do not
+  take arguments can be combined into a single option string (e.g. ``'-abc'``
+  instead of ``'-a -b -c'``). Moreover, the argument for a short option can be
+  appended directly to the single-letter option without an intervening space
+  (e.g. ``-d param`` can be written as ``-dparam``). These two convenience
+  shorthand forms can be combined, allowing groups of short parameters to be
+  written together, as long as at most the last short option takes an argument
+  (e.g. combining the previous two examples into ``-abcdparam``)
+
+  Long options focus on clarity. They are usually entire words, or several words
+  combined with hypens (``-``) or underscores (``_``). If they take an argument,
+  the argument can be separated from the option name by a space or an equals
+  sign (``=``). For example, the following two commandlines are equivalent:
+  ``yourscript --style pretty`` and ``yourscript --style=pretty``.
+
+  Another reason to use long options is if they represent an esoteric parameter
+  that you don't expect to be commonly used and that you don't want to "waste" a
+  single-letter option on. In this case, you can define a long option without a
+  corresponding short option.
+
+  ``processArgsGetopt`` takes two parameters::
+
+      args: list of space-separated strings the user wrote on the commandline
+      optionActions: list of option specifications
+
+  and returns a list of positional parameters -- that is, all strings that are
+  neither options nor argruments to options. Options and positional parameters
+  can appear in any order on the commandline, as long as arguments to options
+  immediately follow the option itself.
+
+  Each option specification in ``optionActions`` has the following format:
+  ``{shortOptionName, longOptionAlias, hasArg=boolean, handler=fn}``
+
+  * ``shortOptionName`` is a one-character string (or ``''`` or ``nil`` if the
+    parameter only has a long form). Numbers cannot be short options, and
+    negative numbers (e.g. ``'-10'``) will be interpreted as positional
+    parameters and returned in the positional parameters list.
+  * ``longOptionAlias`` is an optional longer form of the short option name. If
+    no short option name is specified, then this element is required.
+  * ``hasArg`` indicates whether the handler function for the option takes a
+    parameter.
+  * ``handler`` is the handler function for the option. If ``hasArg`` is
+    ``true`` then the next token on the commandline is passed to the handler
+    function as an argument.
+
+  Example usage::
+
+    local args = {...}
+    local open_readonly, filename = false, nil     -- set defaults
+
+    local positionals = argparse.processArgsGetopt(args, {
+      {'r', handler=function() open_readonly = true end},
+      {'f', 'filename', hasArg=true,
+       handler=function(optarg) filename = optarg end}
+      })
+
+  In this example, if ``args`` is ``{'first', '-rf', 'fname', 'second'}`` or,
+  equivalently, ``{'first', '-r', '--filename', 'myfile.txt', 'second'}`` (note
+  the double dash in front of the long option alias), then ``open_readonly``
+  will be ``true``, ``filename`` will be ``'myfile.txt'`` and ``positionals``
+  will be ``{'first', 'second'}``.
+
+* ``argparse.stringList(arg, arg_name, list_length)``
+
+  Parses a comma-separated sequence of strings and returns a lua list. Leading
+  and trailing spaces are trimmed from the strings. If ``arg_name`` is
+  specified, it is used to make error messages more useful. If ``list_length``
+  is specified and greater than ``0``, then exactly that number of elements must
+  be found or the function will error. Example::
+
+    stringList('hello , world,alist', 'words') => {'hello', 'world', 'alist'}
+
+* ``argparse.numberList(arg, arg_name, list_length)``
+
+  Parses a comma-separated sequence of numeric strings and returns a list of
+  the discovered numbers (as numbers, not strings). If ``arg_name`` is
+  specified, it is used to make error messages more useful. If ``list_length``
+  is specified and greater than ``0``, exactly that number of elements must be
+  found or the function will error. Example::
+
+    numberList('10, -20 ,  30.5') => {10, -20, 30.5}
+
+* ``argparse.coords(arg, arg_name, skip_validation)``
+
+  Parses a comma-separated coordinate string and returns a coordinate table of
+  ``{x, y, z}``. If the string ``'here'`` is passed, returns the coordinates of
+  the active game cursor, or throws an error if the cursor is not active. This
+  function also verifies that the coordinates are valid for the current map and
+  throws if they are not (unless ``skip_validation`` is set to true).
 
 dumper
 ======
@@ -3370,7 +3578,10 @@ It adds the following methods:
 
   Adds the screen to the display stack with the given screen as the parent;
   if parent is not specified, places this one one topmost. Before calling
-  ``dfhack.screen.show``, calls ``self:onAboutToShow(parent)``.
+  ``dfhack.screen.show``, calls ``self:onAboutToShow(parent)``. Note that
+  ``onAboutToShow()`` can dismiss active screens, and therefore change the
+  potential parent. If parent is not specified, this function will re-detect the
+  current topmost window after ``self:onAboutToShow(parent)`` returns.
 
 * ``screen:onAboutToShow(parent)`` *(for overriding)*
 
@@ -3496,6 +3707,23 @@ Has attributes:
 * ``on_render = function(painter)``
 
   Called from ``onRenderBody``.
+
+* ``autoarrange_subviews = bool`` (default: false)
+* ``autoarrange_gap = int`` (default: 0)
+
+  If ``autoarrange_subviews`` is set to ``true``, the Panel will
+  automatically handle subview layout. Subviews are laid out vertically
+  according to their current height, with ``autoarrange_gap`` empty lines
+  between subviews. This allows you to have widgets dynamically change
+  height or become visible/hidden and you don't have to worry about
+  recalculating subview positions.
+
+ResizingPanel class
+-------------------
+
+Subclass of Panel; automatically adjusts its own frame height according to
+the size, position, and visibility of its subviews. Pairs nicely with a
+parent Panel that has ``autoarrange_subviews`` enabled.
 
 Pages class
 -----------

@@ -8,4 +8,3 @@ namespace DFHack {
         DFHACK_EXPORT bool doOnce(std::string);
     }
 }
-

@@ -55,7 +55,7 @@ Optionally copy the premade profession definitions from hack/examples/profession
 Optionally copy the premade Dreamfort embark profile from the online spreadsheets to the data/init/embark_profiles.txt file
 ""
 -- Set settings and preload initial orders --
-quickfort run library/dreamfort.csv -n /setup,# Place the cursor on the center of your starting wagon. Run before making any manual adjustments to settings! Run the /setup_help blueprint for details on what this blueprint does.
+quickfort run library/dreamfort.csv -n /setup,# Run before making any manual adjustments to settings! Run the /setup_help blueprint for details on what this blueprint does.
 "quickfort orders library/dreamfort.csv -n ""/surface2, /farming2, /surface3, /farming3, /industry2, /surface4""","# Queue up orders required to get the fort minimally functional and secure. You can remove the order for the anvil (you brought one with you, right?)."
 ""
 -- Find a good starting spot on the surface --
@@ -66,7 +66,7 @@ quickfort undo library/dreamfort.csv -n /perimeter,# Clean up after you find you
 quickfort run library/dreamfort.csv -n /surface1,# Run when you find your center tile.
 quickfort run library/dreamfort.csv -n /dig_all,"# Run when you find a suitable rock layer for the industry level. It designates digging for industry, services, guildhall, suites, and apartments all in one go. This list does not include the farming level, which we'll dig in the uppermost soil layer a bit later. Note that it is more efficient for your miners if you designate your digging before they dig the central stairs past that level since the stairs are dug at a low priority. This keeps your miners focused on one level at a time. If you need to designate your levels individually due to caverns interrupting the sequence or just because it is your preference, run the level-specific dig blueprints (i.e. /industry1, /services1, /guildhall1, /suites1, and 5 levels of /apartments1) instead of running /dig_all."
 ""
--- Core fort (should finish at about the third migration wave) -- 
+-- Core fort (should finish at about the third migration wave) --
 quickfort run library/dreamfort.csv -n /surface2,# Run after initial trees are cleared.
 quickfort run library/dreamfort.csv -n /farming1,# Run when channels are dug and the additional designated trees are cleared.
 quickfort run library/dreamfort.csv -n /farming2,# Run when the farming level has been dug out.
@@ -82,11 +82,11 @@ prioritize ConstructBuilding,# Run when you see the bridges ready to be built so
 "quickfort run,orders library/dreamfort.csv -n /surface6",# Run when at least the beehives and weapon rack are constructed and you have linked all levers to their respective bridges.
 "quickfort run,orders library/dreamfort.csv -n /surface7",# Run after the surface walls are completed and any marked trees are chopped down.
 ""
--- Plumbing -- 
+-- Plumbing --
 "This is a good time to fill your well cisterns, either with a bucket brigade or by routing water from a freshwater stream or an aquifer (see the library/aquifer_tap.csv blueprint for help with this)."
 "Also consider bringing magma up to your services level so you can replace the forge and furnaces on your industry level with more powerful magma versions. This is especially important if your embark has insufficient trees to convert into charcoal. Keep in mind that moving magma is a tricky process and can take a long time. Don't forget to continue making progress through the checklist! If you choose to use magma, I suggest getting it in place before importing the military and smelting automation orders since they make heavy use of furnaces and forges."
 ""
--- Mature fort (third migration wave onward) -- 
+-- Mature fort (third migration wave onward) --
 orders import furnace,# Automated production of basic furnace-related items. Don't forget to create a sand collection zone (or remove the sand- and glass-related orders if you have no sand).
 "quickfort run,orders library/dreamfort.csv -n /suites2",# Run when the suites level has been dug out.
 "quickfort run,orders library/dreamfort.csv -n /surface8","# Run if/when you need longer trap corridors on the surface for larger sieges, anytime after you run /surface7."
@@ -134,19 +134,19 @@ The following settings are changed:
 These are all set for your convenience. Nothing in Dreamfort depends on these settings staying as they are. Feel free to change any setting to your personal preference.
 ""
 #aliases
-startnobles: ^n{Down 4}{togglesequence 8}{Up}s{Up}&^^q
-startorders: ^ohrov^Wl^^q
-startburrows: ^wa&nInside&^^q
+startnobles: n{Down 4}{togglesequence 8}{Up}s{Up}&^^
+startorders: ohrov^Wl^^
+startburrows: wa&nInside&^^
 metalarmorsetup: A{Right 2}{Down 2}&{Down}&{Left}&M{Right}{Down}&{Left}{Down}{Right}{Down}&{Left}{Down 2}L{Right}{Down 2}&{Left}{Down 3}&M{Right}{Down}&{Left 2}
-startmilitary: ^mnr{Down}r{metalarmorsetup}{Down}racNSiege&{Right}&^q
+startmilitary: mnr{Down}r{metalarmorsetup}{Down}racNSiege&{Right}&^
 sethotkey: {fkey}n{name}&
-starthotkeys: ^H{sethotkey fkey={F2} name=Farming}{sethotkey fkey={F3} name=Industry}{sethotkey fkey={F4} name=Services}{sethotkey fkey={F5} name=Guildhall}{sethotkey fkey={F6} name=Quarry}{sethotkey fkey={F7} name=Cavern}{sethotkey fkey={F8} name=Magma}^q
+starthotkeys: H{sethotkey fkey={F2} name=Farming}{sethotkey fkey={F3} name=Industry}{sethotkey fkey={F4} name=Services}{sethotkey fkey={F5} name=Guildhall}{sethotkey fkey={F6} name=Quarry}{sethotkey fkey={F7} name=Cavern}{sethotkey fkey={F8} name=Magma}^
 ""
-"#query label(setup) start(center tile of the wagon) message(Please set the zoom targets of the hotkeys (the 'H' menu) according to where you actually end up digging the levels.
+"#config label(setup) message(Please set the zoom targets of the hotkeys (the 'H' menu) according to where you actually end up digging the levels.
 As you build your fort, expand the ""Inside"" burrow to include new civilian-safe areas.
 Optionally, add a leather cloak to your military uniforms to enhance the protection of the uniforms.
 Nothing in Dreamfort depends on these settings staying as they are. Feel free to change any setting to your personal preference.) assign nobles, set standing orders, create burrows, make adjustments to military uniforms, and set hotkey names"
-{startnobles}{startorders}{startburrows}{startmilitary}{starthotkeys}{F1}
+{startnobles}{startorders}{startburrows}{startmilitary}{starthotkeys}
 "#meta label(dig_all) start(central stairs on industry level) dig industry, services, guildhall, suites, and apartments levels. does not include farming."
 # Note that this blueprint will only work for the unified dreamfort.csv. It won't work for the individual .xlsx files (since #meta blueprints can't cross file boundaries).
 ""
@@ -334,7 +334,7 @@ corridor/surface_corridor
 message(Once the central stairs are mined out deeply enough, you should start digging the industry level in a non-aquifer rock layer. You'll need the boulders from the digging to make blocks.
 If your wagon is within the fort perimeter, deconstruct it to get it out of the way.
 Once the marked trees are all chopped down (if any), continue with /surface2.) clear trees and set up pastures"
-central_stairs/central_stairs repeat(down 10)	
+central_stairs/central_stairs repeat(down 10)
 clear_small/surface_clear_small
 zones/surface_zones
 name_zones/surface_name_zones
@@ -2897,4 +2897,3 @@ build2_apartments/apartments_build2
 ,,,,n,`,h,,n,`,h,,n,`,h,,n,`,h,,n,`,h,,n,`,h,,n,`,h
 ,,,,`,~,`,,`,~,`,,`,~,`,,`,~,`,,`,~,`,,`,~,`,,`,~,`
 ,,,,n,`,f,,n,`,f,,n,`,f,,n,`,f,,n,`,f,,n,`,f,,n,`,f
-

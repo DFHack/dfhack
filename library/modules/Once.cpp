@@ -13,4 +13,3 @@ bool DFHack::Once::alreadyDone(string bob) {
 bool DFHack::Once::doOnce(string bob) {
     return thingsDone.insert(bob).second;
 }
-

@@ -885,7 +885,7 @@ namespace embark_assist {
 
                     //  Region Type
                     result.region_types[world_data->regions[survey_results->at(x).at(y).biome_index[mlt->at(i).at(k).biome_offset]]->type] = true;
-                
+
                     //  Metals
                     result.metal_1 = result.metal_1 || mlt->at(i).at(k).metals[finder->metal_1];
                     result.metal_2 = result.metal_2 || mlt->at(i).at(k).metals[finder->metal_2];
@@ -1194,7 +1194,7 @@ namespace embark_assist {
                        k,
                        &failed_match);
                }
- 
+
                 if (failed_match) return false;
            }
 
@@ -1881,7 +1881,7 @@ namespace embark_assist {
                 case embark_assist::defs::tree_ranges::NA:
                 case embark_assist::defs::tree_ranges::None:
                     break;
- 
+
                 case embark_assist::defs::tree_ranges::Very_Scarce:
                     if (tile->max_tree_level < embark_assist::defs::tree_levels::Very_Scarce) {
                         if (trace) out.print("matcher::world_tile_match: Min_Trees Very_Scarce (%i, %i)\n", x, y);
@@ -2099,7 +2099,7 @@ namespace embark_assist {
                         return false;
                     }
                 }
- 
+
                 //  Biome 3
                 if (finder->biome_3 != -1) {
                     if (!tile->neighboring_biomes[finder->biome_3]) {
@@ -2281,7 +2281,7 @@ namespace embark_assist {
                 //  Waterfall  //  Requires survey
 
                 //  Flat. No world tile checks. Need to look at the details
-               
+
                 //  Clay
                 //  With no preliminary survey we don't know if incursions might bring clay, so we can't really exclude any tiles.
 
@@ -3299,7 +3299,7 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
                             }
                             }
                         }
- 
+
                         //  The complete set of biomes and region types is stored in the "neighboring" elements, which is a little misleading.
                         for (uint8_t l = 0; l < 10; l++) {
                             if (current->biome_index[l] != -1) {

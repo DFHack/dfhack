@@ -21,7 +21,7 @@ function crng:new(engineID, destroyEngineOnDestruction, distrib)
     self.__index = self
     local idtype = type(engineID)
     local flagtype = type(destroyEngineOnDestruction)
-    
+
     if idtype == 'number' then
         o.rngID = engineID
     elseif idtype == 'nil' then

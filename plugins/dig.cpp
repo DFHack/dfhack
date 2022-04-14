@@ -1543,4 +1543,3 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
     delete mCache;
     return CR_OK;
 }
-

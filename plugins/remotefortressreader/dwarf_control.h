@@ -11,5 +11,3 @@ DFHack::command_result GetSideMenu(DFHack::color_ostream &stream, const dfproto:
 DFHack::command_result SetSideMenu(DFHack::color_ostream &stream, const DwarfControl::SidebarCommand *in);
 
 #endif // !DWARF_CONTROL_H
-
-

@@ -18,4 +18,3 @@ bool has_assignments()
 {
     return tile_bitmask.has_assignments();
 }
-

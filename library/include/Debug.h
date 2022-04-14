@@ -31,17 +31,17 @@ redistribute it freely, subject to the following restrictions:
 namespace DFHack {
 
 /*! \file Debug.h
- * Light weight wrappers to runtime debug output filtering. Idea is to add as
- * little as possible code compared to debug output without filtering. The
+ * Light weight wrappers for runtime debug output filtering. The idea is to add
+ * as little as possible code compared to debug output without filtering. The
  * effect is archived using #TRACE, #DEBUG, #INFO, #WARN and #ERR macros. They
  * "return" color_ostream object or reference that can be then used normally for
  * either printf or stream style debug output.
  *
  * Internally macros do inline filtering check which allows compiler to have a
- * fast path without debug output only checking unlikely condition. But if
- * output is enabled then runtime code will jump to debug printing function
- * calls. The macro setup code will also print standardized leading part of
- * debug string including time stamp, plugin name and debug category name.
+ * fast path when output is disabled. However, if output is enabled then
+ * parameters are evaluated and the printing function is called. The macro setup
+ * code will also print a standard header for each log message, including
+ * timestamp, plugin name, and category name.
  *
  * \code{.cpp}
  * #include "Debug.h"
@@ -60,9 +60,9 @@ namespace DFHack {
  * }
  * \endcode
  *
- * The debug print filtering levels can be changed using debugger. Following
- * gdb example would automatically setup core/init and core/render to trace
- * level when SDL_init is called.
+ * The debug print filtering levels can be changed using a debugger. The
+ * following gdb example will automatically setup core/init and core/render to
+ * trace level when SDL_init is called.
  *
  * \code{.unparsed}
  * break SDL_init
@@ -101,8 +101,11 @@ namespace DFHack {
 //! \}
 
 #ifdef NDEBUG
-//! Reduce minimum compiled in debug levels if NDEBUG is defined
-#define DBG_FILTER DFHack::DebugCategory::LINFO
+/*!
+ * Reduce minimum compiled in debug levels if NDEBUG is defined. This is LDEBUG
+ * and not LINFO so users can usefully increase logging levels for bug reports.
+ */
+#define DBG_FILTER DFHack::DebugCategory::LDEBUG
 #else
 //! Set default compiled in debug levels to include all prints
 #define DBG_FILTER DFHack::DebugCategory::LTRACE
@@ -172,8 +175,7 @@ public:
         ostream_proxy_prefix(const DebugCategory& cat,
                 color_ostream& target,
                 DebugCategory::level level);
-        ~ostream_proxy_prefix()
-        {
+        ~ostream_proxy_prefix() {
             flush();
         }
     };
@@ -255,10 +257,10 @@ public:
 
 
 /*!
- * Declares a debug category. There must be only a declaration per category.
+ * Declares a debug category. There must be only one declaration per category.
  * Declaration should be in same plugin where it is used. If same category name
  * is used in core and multiple plugins they all are changed with same command
- * unless user specifies explicitly plugin name.
+ * unless user explicitly specifies a plugin name.
  *
  * Must be used in one translation unit only.
  *

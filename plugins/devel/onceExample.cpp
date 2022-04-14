@@ -32,4 +32,3 @@ command_result onceExample (color_ostream &out, std::vector <std::string> & para
     }
     return CR_OK;
 }
-

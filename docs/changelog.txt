@@ -50,6 +50,13 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `stocks`: allow search terms to match the full item label, even when the label is truncated for length
 - `dfhack-examples-guide`: add mugs to ``basic`` manager orders
 - `gui/create-item`: Added "(chain)" annotation text for armours with the [CHAIN_METAL_TEXT] flag set
+- DFHack log messages now have configurable headers (e.g. timestamp, origin plugin name, etc.) via the ``debugfilter`` command of the `debug` plugin
+- Script execution log messages (e.g. "Loading script: dfhack_extras.init" can now be controlled with the ``debugfilter`` command. To hide the messages, add this line to your ``dfhack.init`` file: ``debugfilter set Warning core script``
+- `manipulator`: Tweak colors to make the cursor easier to locate
+- `autochop`: only designate the amount of trees required to reach ``max_logs``
+- `autochop`: preferably designate larger trees over smaller ones
+- `blueprint`: ``track`` phase renamed to ``carve``. carved fortifications and (optionally) engravings are now captured in blueprints
+- `tweak` stable-cursor: Keep the cursor stable even when the viewport moves a small amount
 
 ## Documentation
 - Add more examples to the plugin skeleton files so they are more informative for a newbie
@@ -58,13 +65,21 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Updated information regarding obtaining a compatible Windows build environment
 - `confirm`: Correct the command name in the plugin help text
 - ``Quickfort Blueprint Editing Guide``: added screenshots to the Dreamfort case study and overall clarified text
+- Document DFHack `lua-string` (``startswith``, ``endswith``, ``split``, ``trim``, ``wrap``, and ``escape_pattern``).
 
 ## API
 - Added functions reverse-engineered from ambushing unit code: ``Units::isHidden``, ``Units::isFortControlled``, ``Units::getOuterContainerRef``, ``Items::getOuterContainerRef``
 
 ## Lua
+- ``widgets.FilteredList`` now allows all punctuation to be typed into the filter and can match search keys that start with punctuation.
+- ``widgets.ListBox``: minimum height of dialog is now calculated correctly when there are no items in the list (e.g. when a filter doesn't match anything)
 - Lua wrappers for functions reverse-engineered from ambushing unit code: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
+- ``dwarfmode.MenuOverlay``: if ``sidebar_mode`` attribute is set, automatically manage entering a specific sidebar mode on show and restoring the previous sidebar mode on dismiss
 - ``dwarfmode.enterSidebarMode()``: passing ``df.ui_sidebar_mode.DesignateMine`` now always results in you entering ``DesignateMine`` mode and not ``DesignateChopTrees``, even when you looking at the surface where the default designation mode is ``DesignateChopTrees``
+- New string class function: ``string:escape_pattern()`` escapes regex special characters within a string
+- ``widgets.Panel``: if ``autoarrange_subviews`` is set, ``Panel``\s will now automatically lay out widgets vertically according to their current height.  This allows you to have widgets dynamically change height or become visible/hidden and you don't have to worry about recalculating frame layouts
+- ``widgets.ResizingPanel``: new ``Panel`` subclass that automatically recalculates it's own frame height based on the size, position, and visibility of its subviews
+- ``safe_index`` now properly handles lua sparse tables that are indexed by numbers
 
 # 0.47.05-r4
 

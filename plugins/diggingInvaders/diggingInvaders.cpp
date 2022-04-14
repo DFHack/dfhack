@@ -631,5 +631,3 @@ df::coord getRoot(df::coord point, map<df::coord, df::coord>& rootMap) {
     rootMap[point] = root;
     return root;
 }
-
-

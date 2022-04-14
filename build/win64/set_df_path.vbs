@@ -11,7 +11,7 @@ If fso.FileExists("DF_PATH.txt") Then
     fso.DeleteFile "DF_PATH.txt", True
 End If
 
-If IsValue(objF) Then 
+If IsValue(objF) Then
     If InStr(1, TypeName(objF), "Folder") > 0 Then
         Set spoFile = fso.CreateTextFile("DF_PATH.txt", True)
         spoFile.WriteLine(objF.Self.Path)

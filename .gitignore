@@ -71,5 +71,6 @@ tags
 # CLion
 .idea
 
-# custom plugins
+# external plugins
+/plugins/external/
 /plugins/CMakeLists.custom.txt

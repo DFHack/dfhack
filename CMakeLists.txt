@@ -439,23 +439,6 @@ install(DIRECTORY dfhack-config/ DESTINATION dfhack-config/default)
 # build the plugins
 if(BUILD_PLUGINS)
     add_subdirectory(plugins)
-    macro(SUBDIRLIST result curdir)
-        file(GLOB children ABSOLUTE ${curdir}/ ${curdir}/*/)
-        set(dirlist "")
-        foreach(child ${children})
-            if(IS_DIRECTORY ${child})
-                list(APPEND dirlist ${child})
-            endif()
-        endforeach()
-        SET(${result} ${dirlist})
-    endmacro()
-
-    SUBDIRLIST(SUBDIRS plugins/external)
-
-    foreach(subdir ${SUBDIRS})
-        message("${subdir}")
-        add_subdirectory(${subdir})
-    endforeach()
 endif()
 
 add_subdirectory(data)

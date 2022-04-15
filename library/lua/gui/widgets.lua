@@ -391,6 +391,18 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
     obj.text_width = width
 end
 
+function render_scroll_icons(obj,dc)
+    if obj:getTextHeight() > obj.frame_body.height then
+        if obj.start_line_num ~= 1 then
+            dc:seek(dc.width-1, 0):string(obj.up_arrow_icon, obj.scroll_icon_pen)
+        end
+        local last_visible_line = obj.start_line_num + obj.frame_body.height - 1
+        if last_visible_line < obj:getTextHeight() then
+            dc:seek(dc.width-1, dc.height-1):string(obj.down_arrow_icon, obj.scroll_icon_pen)
+        end
+    end
+end
+
 function check_text_keys(self, keys)
     if self.text_active then
         for _,item in ipairs(self.text_active) do
@@ -415,6 +427,11 @@ Label.ATTRS{
     on_click = DEFAULT_NIL,
     on_rclick = DEFAULT_NIL,
     scroll_keys = STANDARDSCROLL,
+    --
+    show_scroll_icons = true,
+    up_arrow_icon = string.char(24),
+    down_arrow_icon = string.char(25),
+    scroll_icon_pen = COLOR_LIGHTCYAN,
 }
 
 function Label:init(args)
@@ -463,6 +480,9 @@ function Label:onRenderBody(dc)
         text_pen = self.text_hpen
     end
     render_text(self,dc,0,0,text_pen,self.text_dpen,is_disabled(self))
+    if self.show_scroll_icons then
+        render_scroll_icons(self,dc)
+    end
 end
 
 function Label:scroll(nlines)

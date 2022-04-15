@@ -4215,7 +4215,7 @@ Native functions (exported to Lua)
 
   adds a number to the sequence
 
-- ``ShuffleSequence(rngID, seqID)``
+- ``ShuffleSequence(seqID, rngID)``
 
   shuffles the number sequence
 
@@ -4278,7 +4278,7 @@ Lua plugin classes
 ``bool_distribution``
 ~~~~~~~~~~~~~~~~~~~~~
 
-- ``init(min, max)``: constructor
+- ``init(chance)``: constructor
 - ``next(id)``: returns next boolean in the distribution
 
   - ``id``: engine ID to pass to native function

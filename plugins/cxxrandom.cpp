@@ -236,7 +236,7 @@ void     AddToSequence( uint16_t id, int64_t num )
     SequenceKeeper::Instance().AddToSequence( id, num );
 }
 
-void     ShuffleSequence( uint16_t rngID, uint16_t id )
+void     ShuffleSequence( uint16_t id, uint16_t rngID )
 {
     SequenceKeeper::Instance().Shuffle( id, rngID );
 }

@@ -151,7 +151,7 @@ bool_distribution = {}
 function bool_distribution:new(chance)
     local o = {}
     self.__index = self
-    if type(min) ~= 'number' or type(max) ~= 'number' then
+    if type(chance) ~= 'number' then
         error("Invalid arguments in bool_distribution construction. min and max must be numbers.")
     end
     o.p = chance
@@ -208,7 +208,7 @@ function num_sequence:shuffle()
     if self.rngID == 'nil' then
         error("Add num_sequence object to crng as distribution, before attempting to shuffle.")
     end
-    ShuffleSequence(self.rngID, self.seqID)
+    ShuffleSequence(self.seqID, self.rngID)
 end
 
 return _ENV

@@ -28,6 +28,7 @@
 
 #include <string.h>
 #include <stdexcept>
+#include <array>
 
 using std::vector;
 using std::string;
@@ -223,26 +224,61 @@ static void ev_mng_interaction(color_ostream& out, void* ptr) {
 std::vector<int> enabledEventManagerEvents(EventManager::EventType::EVENT_MAX,-1);
 typedef void (*handler_t) (color_ostream&,void*);
 
-// NOTICE: keep this list synchronized with the EventManager::EventType enum or
-// else the wrong event handlers will get called.
-static const handler_t eventHandlers[] = {
- NULL,
- ev_mng_jobInitiated,
- ev_mng_jobStarted,
- ev_mng_jobCompleted,
- ev_mng_unitNewActive,
- ev_mng_unitDeath,
- ev_mng_itemCreate,
- ev_mng_building,
- ev_mng_construction,
- ev_mng_syndrome,
- ev_mng_invasion,
- ev_mng_inventory,
- ev_mng_report,
- ev_mng_unitAttack,
- ev_mng_unload,
- ev_mng_interaction,
-};
+using namespace EventManager::EventType;
+// integrate new events into this function, and no longer worry about syncing with the enum list
+handler_t getManager(EventType t) {
+    switch (t) {
+        case TICK:
+            return nullptr;
+        case JOB_INITIATED:
+            return ev_mng_jobInitiated;
+        case JOB_STARTED:
+            return ev_mng_jobStarted;
+        case JOB_COMPLETED:
+            return ev_mng_jobCompleted;
+        case UNIT_NEW_ACTIVE:
+            return ev_mng_unitNewActive;
+        case UNIT_DEATH:
+            return ev_mng_unitDeath;
+        case ITEM_CREATED:
+            return ev_mng_itemCreate;
+        case BUILDING:
+            return ev_mng_building;
+        case CONSTRUCTION:
+            return ev_mng_construction;
+        case SYNDROME:
+            return ev_mng_syndrome;
+        case INVASION:
+            return ev_mng_invasion;
+        case INVENTORY_CHANGE:
+            return ev_mng_inventory;
+        case REPORT:
+            return ev_mng_report;
+        case UNIT_ATTACK:
+            return ev_mng_unitAttack;
+        case UNLOAD:
+            return ev_mng_unload;
+        case INTERACTION:
+            return ev_mng_interaction;
+        case EVENT_MAX:
+            return nullptr;
+            //default:
+            //we don't do this... because then the compiler wouldn't error for missing cases in the enum
+    }
+    return nullptr;
+}
+
+std::array<handler_t,EventManager::EventType::EVENT_MAX> compileEventHandlerArray() {
+    std::array<handler_t, EventManager::EventType::EVENT_MAX> managers{};
+    auto t = (EventManager::EventType::EventType) 0;
+    while (t < EventManager::EventType::EVENT_MAX) {
+        managers[t] = getManager(t);
+        t = (EventManager::EventType::EventType) int(t + 1);
+    }
+    return managers;
+}
+static std::array<handler_t,EventManager::EventType::EVENT_MAX> eventHandlers;
+
 static void enableEvent(int evType,int freq)
 {
     if (freq < 0)
@@ -483,6 +519,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
+    eventHandlers = compileEventHandlerArray();
     if (Core::getInstance().isWorldLoaded())
         plugin_onstatechange(out, SC_WORLD_LOADED);
     enable_hooks(true);

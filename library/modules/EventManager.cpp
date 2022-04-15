@@ -41,6 +41,7 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <array>
 
 using namespace std;
 using namespace DFHack;
@@ -140,24 +141,58 @@ static void manageInteractionEvent(color_ostream& out);
 
 typedef void (*eventManager_t)(color_ostream&);
 
-static const eventManager_t eventManager[] = {
-        manageTickEvent,
-        manageJobInitiatedEvent,
-        manageJobStartedEvent,
-        manageJobCompletedEvent,
-        manageNewUnitActiveEvent,
-        manageUnitDeathEvent,
-        manageItemCreationEvent,
-        manageBuildingEvent,
-        manageConstructionEvent,
-        manageSyndromeEvent,
-        manageInvasionEvent,
-        manageEquipmentEvent,
-        manageReportEvent,
-        manageUnitAttackEvent,
-        manageUnloadEvent,
-        manageInteractionEvent,
-};
+// integrate new events into this function, and no longer worry about syncing the enum list with the `eventManager` array
+eventManager_t getManager(EventType::EventType t) {
+    switch (t) {
+        case EventType::TICK:
+            return manageTickEvent;
+        case EventType::JOB_INITIATED:
+            return manageJobInitiatedEvent;
+        case EventType::JOB_STARTED:
+            return manageJobStartedEvent;
+        case EventType::JOB_COMPLETED:
+            return manageJobCompletedEvent;
+        case EventType::UNIT_NEW_ACTIVE:
+            return manageNewUnitActiveEvent;
+        case EventType::UNIT_DEATH:
+            return manageUnitDeathEvent;
+        case EventType::ITEM_CREATED:
+            return manageItemCreationEvent;
+        case EventType::BUILDING:
+            return manageBuildingEvent;
+        case EventType::CONSTRUCTION:
+            return manageConstructionEvent;
+        case EventType::SYNDROME:
+            return manageSyndromeEvent;
+        case EventType::INVASION:
+            return manageInvasionEvent;
+        case EventType::INVENTORY_CHANGE:
+            return manageEquipmentEvent;
+        case EventType::REPORT:
+            return manageReportEvent;
+        case EventType::UNIT_ATTACK:
+            return manageUnitAttackEvent;
+        case EventType::UNLOAD:
+            return manageUnloadEvent;
+        case EventType::INTERACTION:
+            return manageInteractionEvent;
+        case EventType::EVENT_MAX:
+            return nullptr;
+            //default:
+            //we don't do this... because then the compiler wouldn't error for missing cases in the enum
+    }
+    return nullptr;
+}
+
+std::array<eventManager_t,EventType::EVENT_MAX> compileManagerArray() {
+    std::array<eventManager_t, EventType::EVENT_MAX> managers{};
+    auto t = (EventType::EventType) 0;
+    while (t < EventType::EVENT_MAX) {
+        managers[t] = getManager(t);
+        t = (EventType::EventType) int(t + 1);
+    }
+    return managers;
+}
 
 //job initiated
 static int32_t lastJobId = -1;
@@ -312,6 +347,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
 }
 
 void DFHack::EventManager::manageEvents(color_ostream& out) {
+    static const std::array<eventManager_t, EventType::EVENT_MAX> eventManager = compileManagerArray();
     if ( !gameLoaded ) {
         return;
     }

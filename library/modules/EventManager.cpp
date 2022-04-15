@@ -1315,7 +1315,7 @@ static void manageActionEvent(color_ostream& out) {
                     knownActions.push_back(action->id);
                     for ( auto b = copy.begin(); b != copy.end(); b++ ) {
                         EventHandler handle = (*b).second;
-                        ActionData data = {unit->id, action, action->id};
+                        ActionData data = {unit->id, action};
                         handle.eventHandler(out, (void*)&data);
                     }
                 }

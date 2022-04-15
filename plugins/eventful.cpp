@@ -111,7 +111,7 @@ DEFINE_LUA_EVENT_NH_1(onReport, int32_t);
 DEFINE_LUA_EVENT_NH_3(onUnitAttack, int32_t, int32_t, int32_t);
 DEFINE_LUA_EVENT_NH_0(onUnload);
 DEFINE_LUA_EVENT_NH_6(onInteraction, std::string, std::string, int32_t, int32_t, int32_t, int32_t);
-DEFINE_LUA_EVENT_NH_3(onUnitAction, int32_t, df::unit_action*, int32_t);
+DEFINE_LUA_EVENT_NH_2(onUnitAction, int32_t, df::unit_action*);
 
 DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_EVENT(onWorkshopFillSidebarMenu),
@@ -226,7 +226,7 @@ static void ev_mng_interaction(color_ostream& out, void* ptr) {
 }
 static void ev_mng_unitAction(color_ostream& out, void* ptr) {
     EventManager::ActionData* data = (EventManager::ActionData*)ptr;
-    onUnitAction(out, data->unitId, data->action);
+    onUnitAction(out, data->unitId);
 }
 std::vector<int> enabledEventManagerEvents(EventManager::EventType::EVENT_MAX,-1);
 typedef void (*handler_t) (color_ostream&,void*);

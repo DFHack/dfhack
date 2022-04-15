@@ -41,6 +41,7 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <array>
 
 using namespace std;
 using namespace DFHack;

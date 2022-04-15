@@ -226,7 +226,7 @@ static void ev_mng_interaction(color_ostream& out, void* ptr) {
 }
 static void ev_mng_unitAction(color_ostream& out, void* ptr) {
     EventManager::ActionData* data = (EventManager::ActionData*)ptr;
-    onUnitAction(out, data->unitId, data->action, data->actionId);
+    onUnitAction(out, data->unitId, data->action);
 }
 std::vector<int> enabledEventManagerEvents(EventManager::EventType::EVENT_MAX,-1);
 typedef void (*handler_t) (color_ostream&,void*);

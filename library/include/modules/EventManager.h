@@ -99,7 +99,6 @@ namespace DFHack {
         struct ActionData {
             int32_t unitId;
             df::unit_action* action;
-            int32_t actionId;
         };
 
         DFHACK_EXPORT void registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin);

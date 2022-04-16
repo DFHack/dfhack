@@ -99,8 +99,8 @@ end
 local function parse_inset(inset)
     local l,r,t,b
     if type(inset) == 'table' then
-        l,r = inset.l or inset.x, inset.r or inset.x
-        t,b = inset.t or inset.y, inset.b or inset.y
+        l,r = inset.l or inset.x or 0, inset.r or inset.x or 0
+        t,b = inset.t or inset.y or 0, inset.b or inset.y or 0
     else
         l = inset or 0
         t,r,b = l,l,l

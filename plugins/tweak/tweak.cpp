@@ -103,6 +103,7 @@
 #include "tweaks/military-assign.h"
 #include "tweaks/pausing-fps-counter.h"
 #include "tweaks/nestbox-color.h"
+#include "tweaks/hive-color.h"
 #include "tweaks/shift-8-scroll.h"
 #include "tweaks/stable-cursor.h"
 #include "tweaks/stone-status-all.h"
@@ -237,6 +238,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Allows assigning more than 3 wheelbarrows to a stockpile\n"
         "  tweak nestbox-color [disable]\n"
         "    Makes built nestboxes use the color of their material\n"
+        "  tweak hive-color [disable]\n"
+        "    Makes built hives use the color of their material\n"
         "  tweak military-color-assigned [disable]\n"
         "    Color squad candidates already assigned to other squads in brown/green\n"
         "    to make them stand out more in the list.\n"
@@ -328,6 +331,7 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     TWEAK_HOOK("military-stable-assign", military_assign_hook, feed);
 
     TWEAK_HOOK("nestbox-color", nestbox_color_hook, drawBuilding);
+    TWEAK_HOOK("hive-color", hive_color_hook, drawBuilding);
 
     TWEAK_HOOK("pausing-fps-counter", dwarfmode_pausing_fps_counter_hook, render);
     TWEAK_HOOK("pausing-fps-counter", title_pausing_fps_counter_hook, render);

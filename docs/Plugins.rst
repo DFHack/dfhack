@@ -182,8 +182,7 @@ Options:
 
 :detail:      Print full name, date of birth, date of curse and some status
               info (some vampires might use fake identities in-game, though).
-:cprobe:      Print some information from creature probe plugin, displaying
-              the creature and race IDs.
+:ids:         Print the creature and race IDs.
 :nick:        Set the type of curse as nickname (does not always show up
               in-game, some vamps don't like nicknames).
 :all:         Include dead and passive cursed creatures (can result in a quite

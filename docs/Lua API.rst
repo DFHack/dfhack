@@ -3689,6 +3689,8 @@ Base of all the widgets. Inherits from View and has the following attributes:
   :x: left/right margin, if ``l`` and/or ``r`` are omitted.
   :y: top/bottom margin, if ``t`` and/or ``b`` are omitted.
 
+  Omitted fields are interpreted as having the value of 0.
+
 * ``frame_background = pen``
 
   The pen to fill the outer frame with. Defaults to no fill.

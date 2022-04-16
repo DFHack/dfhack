@@ -391,18 +391,6 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
     obj.text_width = width
 end
 
-function render_scroll_icons(obj,dc)
-    if obj:getTextHeight() > obj.frame_body.height then
-        if obj.start_line_num ~= 1 then
-            dc:seek(dc.width-1, 0):string(obj.up_arrow_icon, obj.scroll_icon_pen)
-        end
-        local last_visible_line = obj.start_line_num + obj.frame_body.height - 1
-        if last_visible_line < obj:getTextHeight() then
-            dc:seek(dc.width-1, dc.height-1):string(obj.down_arrow_icon, obj.scroll_icon_pen)
-        end
-    end
-end
-
 function check_text_keys(self, keys)
     if self.text_active then
         for _,item in ipairs(self.text_active) do
@@ -428,7 +416,7 @@ Label.ATTRS{
     on_rclick = DEFAULT_NIL,
     scroll_keys = STANDARDSCROLL,
     --
-    show_scroll_icons = true,
+    show_scroll_icons = DEFAULT_NIL, -- DEFAULT_NIL, 'right', 'left', false
     up_arrow_icon = string.char(24),
     down_arrow_icon = string.char(25),
     scroll_icon_pen = COLOR_LIGHTCYAN,
@@ -449,6 +437,47 @@ function Label:setText(text)
     if self.auto_height then
         self.frame = self.frame or {}
         self.frame.h = self:getTextHeight()
+    end
+
+    self._text_dirty = true
+end
+
+function Label:update_scroll_inset()
+    if self.show_scroll_icons == nil then
+        self._show_scroll_icons = self:getTextHeight() > self.frame_body.height and 'right' or false
+    else
+        self._show_scroll_icons = self.show_scroll_icons
+    end    
+    if self._show_scroll_icons then
+        -- here self._show_scroll_icons can only be either
+        -- 'left' or any true value which we interpret as right
+        local l,t,r,b = gui.parse_inset(self.frame_inset)
+        if self._show_scroll_icons == 'left' and l <= 0 then
+            l = 1
+        elseif r <= 0 then
+            r = 1
+        end
+        self.frame_inset = {l=l,t=t,r=r,b=b}
+    end
+end
+
+function Label:render_scroll_icons(dc,rect)
+    if self:getTextHeight() > self.frame_body.height then
+        local x = self._show_scroll_icons == 'left' and 0 or dc.width-1
+        if self.start_line_num ~= 1 then
+            dc:seek(x, 0):char(self.up_arrow_icon, self.scroll_icon_pen)
+        end
+        local last_visible_line = self.start_line_num + self.frame_body.height - 1
+        if last_visible_line < self:getTextHeight() then
+            dc:seek(x, dc.height-1):char(self.down_arrow_icon, self.scroll_icon_pen)
+        end
+    end
+end
+
+function Label:postComputeFrame()
+    if self._text_dirty then
+        self._text_dirty = nil
+        self:update_scroll_inset()
     end
 end
 
@@ -480,8 +509,12 @@ function Label:onRenderBody(dc)
         text_pen = self.text_hpen
     end
     render_text(self,dc,0,0,text_pen,self.text_dpen,is_disabled(self))
-    if self.show_scroll_icons then
-        render_scroll_icons(self,dc)
+end
+
+function Label:onRenderFrame(dc, rect)
+    Label.super.onRenderFrame(self, dc, rect)
+    if self._show_scroll_icons then
+        self:render_scroll_icons(dc, rect)
     end
 end
 

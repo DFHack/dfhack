@@ -2171,6 +2171,34 @@ Features:
             This final '+' may be omitted in burrow name args of commands above.
             Digging 1-wide corridors with the miner inside the burrow is SLOW.
 
+.. _changeitem:
+
+changeitem
+==========
+Allows changing item material and base quality. By default the item currently
+selected in the UI will be changed (you can select items in the 'k' list
+or inside containers/inventory). By default change is only allowed if materials
+is of the same subtype (for example wood<->wood, stone<->stone etc). But since
+some transformations work pretty well and may be desired you can override this
+with 'force'. Note that some attributes will not be touched, possibly resulting
+in weirdness. To get an idea how the RAW id should look like, check some items
+with 'info'. Using 'force' might create items which are not touched by
+crafters/haulers.
+
+Options:
+
+:info:         Don't change anything, print some info instead.
+:here:         Change all items at the cursor position. Requires in-game cursor.
+:material, m:  Change material. Must be followed by valid material RAW id.
+:quality, q:   Change base quality. Must be followed by number (0-5).
+:force:        Ignore subtypes, force change to new material.
+
+Examples:
+
+``changeitem m INORGANIC:GRANITE here``
+   Change material of all items under the cursor to granite.
+``changeitem q 5``
+   Change currently selected item to masterpiece quality.
 
 .. _changelayer:
 
@@ -2248,35 +2276,6 @@ Example:
 ``changevein NATIVE_PLATINUM``
    Convert vein at cursor position into platinum ore.
 
-.. _changeitem:
-
-changeitem
-==========
-Allows changing item material and base quality. By default the item currently
-selected in the UI will be changed (you can select items in the 'k' list
-or inside containers/inventory). By default change is only allowed if materials
-is of the same subtype (for example wood<->wood, stone<->stone etc). But since
-some transformations work pretty well and may be desired you can override this
-with 'force'. Note that some attributes will not be touched, possibly resulting
-in weirdness. To get an idea how the RAW id should look like, check some items
-with 'info'. Using 'force' might create items which are not touched by
-crafters/haulers.
-
-Options:
-
-:info:         Don't change anything, print some info instead.
-:here:         Change all items at the cursor position. Requires in-game cursor.
-:material, m:  Change material. Must be followed by valid material RAW id.
-:quality, q:   Change base quality. Must be followed by number (0-5).
-:force:        Ignore subtypes, force change to new material.
-
-Examples:
-
-``changeitem m INORGANIC:GRANITE here``
-   Change material of all items under the cursor to granite.
-``changeitem q 5``
-   Change currently selected item to masterpiece quality.
-
 .. _cleanconst:
 
 cleanconst
@@ -2323,40 +2322,6 @@ Basic commands:
     where ``#`` is a number from 1 to 7. If a priority is not specified, the
     priority selected in-game is used as the default.
 
-.. _digexp:
-
-digexp
-======
-This command is for :wiki:`exploratory mining <Exploratory_mining>`.
-
-There are two variables that can be set: pattern and filter.
-
-Patterns:
-
-:diag5:            diagonals separated by 5 tiles
-:diag5r:           diag5 rotated 90 degrees
-:ladder:           A 'ladder' pattern
-:ladderr:          ladder rotated 90 degrees
-:clear:            Just remove all dig designations
-:cross:            A cross, exactly in the middle of the map.
-
-Filters:
-
-:all:              designate whole z-level
-:hidden:           designate only hidden tiles of z-level (default)
-:designated:       Take current designation and apply pattern to it.
-
-After you have a pattern set, you can use ``expdig`` to apply it again.
-
-Examples:
-
-``expdig diag5 hidden``
-  Designate the diagonal 5 patter over all hidden tiles
-``expdig``
-  Apply last used pattern and filter
-``expdig ladder designated``
-  Take current designations and replace them with the ladder pattern
-
 .. _digcircle:
 
 digcircle
@@ -2395,27 +2360,39 @@ Examples:
 ``digcircle``
         Do it again.
 
-.. _digtype:
+.. _digexp:
 
-digtype
-=======
-For every tile on the map of the same vein type as the selected tile,
-this command designates it to have the same designation as the
-selected tile. If the selected tile has no designation, they will be
-dig designated.
-If an argument is given, the designation of the selected tile is
-ignored, and all appropriate tiles are set to the specified
-designation.
+digexp
+======
+This command is for :wiki:`exploratory mining <Exploratory_mining>`.
 
-Options:
+There are two variables that can be set: pattern and filter.
 
-:dig:
-:channel:
-:ramp:
-:updown: up/down stairs
-:up:     up stairs
-:down:   down stairs
-:clear:  clear designation
+Patterns:
+
+:diag5:            diagonals separated by 5 tiles
+:diag5r:           diag5 rotated 90 degrees
+:ladder:           A 'ladder' pattern
+:ladderr:          ladder rotated 90 degrees
+:clear:            Just remove all dig designations
+:cross:            A cross, exactly in the middle of the map.
+
+Filters:
+
+:all:              designate whole z-level
+:hidden:           designate only hidden tiles of z-level (default)
+:designated:       Take current designation and apply pattern to it.
+
+After you have a pattern set, you can use ``expdig`` to apply it again.
+
+Examples:
+
+``expdig diag5 hidden``
+  Designate the diagonal 5 patter over all hidden tiles
+``expdig``
+  Apply last used pattern and filter
+``expdig ladder designated``
+  Take current designations and replace them with the ladder pattern
 
 .. _digFlood:
 
@@ -2437,6 +2414,28 @@ Usage:
 :digFlood CLEAR:    remove all inorganics from monitoring
 :digFlood digAll1:  ignore the monitor list and dig any vein
 :digFlood digAll0:  disable digAll mode
+
+.. _digtype:
+
+digtype
+=======
+For every tile on the map of the same vein type as the selected tile,
+this command designates it to have the same designation as the
+selected tile. If the selected tile has no designation, they will be
+dig designated.
+If an argument is given, the designation of the selected tile is
+ignored, and all appropriate tiles are set to the specified
+designation.
+
+Options:
+
+:dig:
+:channel:
+:ramp:
+:updown: up/down stairs
+:up:     up stairs
+:down:   down stairs
+:clear:  clear designation
 
 .. _filltraffic:
 

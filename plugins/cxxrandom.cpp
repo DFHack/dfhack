@@ -50,13 +50,14 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     return CR_OK;
 }
 
+#define EK_ID_BASE 16000
 
 class EnginesKeeper
 {
 private:
     EnginesKeeper() {}
     std::unordered_map<uint16_t, std::mt19937_64> m_engines;
-    uint16_t counter = 0;
+    uint16_t id_counter = EK_ID_BASE;
 public:
     static EnginesKeeper& Instance() {
         static EnginesKeeper instance;
@@ -64,8 +65,8 @@ public:
     }
     uint16_t NewEngine( uint64_t seed ) {
         std::mt19937_64 engine( seed != 0 ? seed : std::chrono::system_clock::now().time_since_epoch().count() );
-        m_engines[++counter] = engine;
-        return counter;
+        m_engines[++id_counter] = engine;
+        return id_counter;
     }
     void DestroyEngine( uint16_t id ) {
         m_engines.erase( id );
@@ -145,7 +146,7 @@ public:
     }
 };
 
-#define SK_ID_BASE 16000
+#define SK_ID_BASE 0
 
 class SequenceKeeper
 {
@@ -175,7 +176,7 @@ public:
     }
     void Shuffle(uint16_t seqID, uint16_t engID ) {
         uint16_t sid = seqID >= SK_ID_BASE ? seqID : engID;
-        uint16_t eid = seqID >= SK_ID_BASE ? engID : seqID;
+        uint16_t eid = engID >= EK_ID_BASE ? engID : seqID;
         CHECK_INVALID_ARGUMENT(m_sequences.find(sid) != m_sequences.end());
         m_sequences[sid].Shuffle(eid);
     }

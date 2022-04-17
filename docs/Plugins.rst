@@ -22,17 +22,6 @@ Data inspection and visualizers
 .. contents::
    :local:
 
-.. _plugin-stonesense:
-
-stonesense
-==========
-An isometric visualizer that runs in a second window. Usage:
-
-:stonesense:        Open the visualiser in a new window.  Alias ``ssense``.
-:ssense overlay:    Overlay DF window, replacing the map area.
-
-For more information, see `the full Stonesense README <stonesense>`.
-
 .. _blueprint:
 
 blueprint
@@ -148,19 +137,6 @@ The ``--splitby`` flag can take any of the following values:
 :``phase``:
     Creates a separate file for each phase.
 
-.. _remotefortressreader:
-
-remotefortressreader
-====================
-An in-development plugin for realtime fortress visualisation.
-See :forums:`Armok Vision <146473>`.
-
-.. _isoworldremote:
-
-isoworldremote
-==============
-A plugin that implements a `remote API <remote>` used by Isoworld.
-
 .. _cursecheck:
 
 cursecheck
@@ -213,6 +189,12 @@ A tool for checking how many tiles contain flowing liquids. If you suspect that
 your magma sea leaks into HFS, you can use this tool to be sure without
 revealing the map.
 
+.. _isoworldremote:
+
+isoworldremote
+==============
+A plugin that implements a `remote API <remote>` used by Isoworld.
+
 .. _probe:
 
 probe
@@ -258,6 +240,13 @@ Options:
 
 :all:    Also estimate vein mineral amounts.
 
+.. _remotefortressreader:
+
+remotefortressreader
+====================
+An in-development plugin for realtime fortress visualisation.
+See :forums:`Armok Vision <146473>`.
+
 .. _reveal:
 .. _unreveal:
 .. _revtoggle:
@@ -301,6 +290,18 @@ spectate
 Simple plugin to automate following random dwarves. Most of the time things will
 be weighted towards z-levels with the highest job activity. Simply enter the
 ``spectate`` command to toggle the plugin's state.
+
+.. _plugin-stonesense:
+
+stonesense
+==========
+An isometric visualizer that runs in a second window. Usage:
+
+:stonesense:        Open the visualiser in a new window.  Alias ``ssense``.
+:ssense overlay:    Overlay DF window, replacing the map area.
+
+For more information, see `the full Stonesense README <stonesense>`.
+
 
 
 ========

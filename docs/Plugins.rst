@@ -3051,28 +3051,14 @@ Examples:
   * You switch to the adventure game mode, assume control of a creature, then save or retire.
   * You just created a returnable mountain home and gained an adventurer.
 
-.. _strangemood:
+.. _power-meter:
 
-strangemood
+power-meter
 ===========
-Creates a strange mood job the same way the game itself normally does it.
+The power-meter plugin implements a modified pressure plate that detects power being
+supplied to gear boxes built in the four adjacent N/S/W/E tiles.
 
-Options:
-
-:-force:        Ignore normal strange mood preconditions (no recent mood, minimum
-                moodable population, artifact limit not reached).
-:-unit:         Make the strange mood strike the selected unit instead of picking
-                one randomly. Unit eligibility is still enforced.
-:-type <T>:     Force the mood to be of a particular type instead of choosing randomly based on happiness.
-                Valid values for T are "fey", "secretive", "possessed", "fell", and "macabre".
-:-skill S:      Force the mood to use a specific skill instead of choosing the highest moodable skill.
-                Valid values are "miner", "carpenter", "engraver", "mason", "tanner", "weaver",
-                "clothier", "weaponsmith",  "armorsmith", "metalsmith", "gemcutter", "gemsetter",
-                "woodcrafter", "stonecrafter", "metalcrafter", "glassmaker", "leatherworker",
-                "bonecarver", "bowyer", and "mechanic".
-
-Known limitations: if the selected unit is currently performing a job, the mood will not be started.
-
+The configuration front-end is implemented by `gui/power-meter`.
 
 .. _siege-engine:
 
@@ -3088,15 +3074,6 @@ this plugin allows you to:
 * aim at a rectangular area in any direction, and across Z-levels
 
 The front-end is implemented by `gui/siege-engine`.
-
-.. _power-meter:
-
-power-meter
-===========
-The power-meter plugin implements a modified pressure plate that detects power being
-supplied to gear boxes built in the four adjacent N/S/W/E tiles.
-
-The configuration front-end is implemented by `gui/power-meter`.
 
 .. _steam-engine:
 
@@ -3184,6 +3161,28 @@ to them, or machines they connect to (including by pulling levers),
 can easily result in inconsistent state once this plugin is
 available again. The effects may be as weird as negative power
 being generated.
+
+.. _strangemood:
+
+strangemood
+===========
+Creates a strange mood job the same way the game itself normally does it.
+
+Options:
+
+:-force:        Ignore normal strange mood preconditions (no recent mood, minimum
+                moodable population, artifact limit not reached).
+:-unit:         Make the strange mood strike the selected unit instead of picking
+                one randomly. Unit eligibility is still enforced.
+:-type <T>:     Force the mood to be of a particular type instead of choosing randomly based on happiness.
+                Valid values for T are "fey", "secretive", "possessed", "fell", and "macabre".
+:-skill S:      Force the mood to use a specific skill instead of choosing the highest moodable skill.
+                Valid values are "miner", "carpenter", "engraver", "mason", "tanner", "weaver",
+                "clothier", "weaponsmith",  "armorsmith", "metalsmith", "gemcutter", "gemsetter",
+                "woodcrafter", "stonecrafter", "metalcrafter", "glassmaker", "leatherworker",
+                "bonecarver", "bowyer", and "mechanic".
+
+Known limitations: if the selected unit is currently performing a job, the mood will not be started.
 
 ==============
 Plugin Lua API

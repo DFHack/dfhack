@@ -174,8 +174,10 @@ public:
         m_sequences[seqID].Add(num);
     }
     void Shuffle(uint16_t seqID, uint16_t engID ) {
-        CHECK_INVALID_ARGUMENT( m_sequences.find( id ) != m_sequences.end() );
-        m_sequences[id].Shuffle( rng_id );
+        uint16_t sid = seqID >= SK_ID_BASE ? seqID : engID;
+        uint16_t eid = seqID >= SK_ID_BASE ? engID : seqID;
+        CHECK_INVALID_ARGUMENT(m_sequences.find(sid) != m_sequences.end());
+        m_sequences[sid].Shuffle(eid);
     }
     int64_t NextInSequence( uint16_t seqID ) {
         CHECK_INVALID_ARGUMENT(m_sequences.find(seqID) != m_sequences.end());

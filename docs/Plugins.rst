@@ -2729,21 +2729,6 @@ could add this to your ``onMapLoad.init`` file::
 Persisted settings (i.e. ``blocks``, ``boulders``, ``logs``, and ``bars``) are saved with
 your game, so you only need to set them to the values you want once.
 
-.. _confirm:
-
-confirm
-=======
-Implements several confirmation dialogs for potentially destructive actions
-(for example, seizing goods from traders or deleting hauling routes).
-
-Usage:
-
-:enable confirm:    Enable all confirmations; alias ``confirm enable all``.
-                    Replace with ``disable`` to disable.
-:confirm help:      List available confirmation dialogues.
-:confirm enable option1 [option2...]:
-                    Enable (or disable) specific confirmation dialogues.
-
 .. _command-prompt:
 
 command-prompt
@@ -2763,6 +2748,20 @@ Otherwise somewhat similar to `gui/quickcmd`.
 
 .. image:: images/command-prompt.png
 
+.. _confirm:
+
+confirm
+=======
+Implements several confirmation dialogs for potentially destructive actions
+(for example, seizing goods from traders or deleting hauling routes).
+
+Usage:
+
+:enable confirm:    Enable all confirmations; alias ``confirm enable all``.
+                    Replace with ``disable`` to disable.
+:confirm help:      List available confirmation dialogues.
+:confirm enable option1 [option2...]:
+                    Enable (or disable) specific confirmation dialogues.
 
 .. _debug:
 

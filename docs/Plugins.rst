@@ -311,6 +311,13 @@ Bugfixes
 .. contents::
    :local:
 
+.. _fix-armory:
+
+fix-armory
+==========
+`This plugin requires a binpatch <binpatches/needs-patch>`, which has not
+been available since DF 0.34.11
+
 .. _fix-unit-occupancy:
 
 fix-unit-occupancy
@@ -450,14 +457,6 @@ Subcommands that persist until disabled or DF quits:
 :tradereq-pet-gender:   Displays pet genders on the trade request screen
 
 .. comment: sort these alphabetically
-
-.. _fix-armory:
-
-fix-armory
-==========
-`This plugin requires a binpatch <binpatches/needs-patch>`, which has not
-been available since DF 0.34.11
-
 
 ===========
 UI Upgrades

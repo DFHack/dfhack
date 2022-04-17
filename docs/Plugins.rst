@@ -15,6 +15,161 @@ hopefully organised in a way you will find useful.
   :local:
   :depth: 2
 
+========
+Bugfixes
+========
+
+.. contents::
+   :local:
+
+.. _fix-armory:
+
+fix-armory
+==========
+`This plugin requires a binpatch <binpatches/needs-patch>`, which has not
+been available since DF 0.34.11
+
+.. _fix-unit-occupancy:
+
+fix-unit-occupancy
+==================
+This plugin fixes issues with unit occupancy, notably phantom
+"unit blocking tile" messages (:bug:`3499`). It can be run manually, or
+periodically when enabled with the built-in enable/disable commands:
+
+:(no argument):         Run the plugin once immediately, for the whole map.
+:-h, here, cursor:      Run immediately, only operate on the tile at the cursor
+:-n, dry, dry-run:      Run immediately, do not write changes to map
+:interval <X>:          Run the plugin every ``X`` ticks (when enabled).
+                        The default is 1200 ticks, or 1 day.
+                        Ticks are only counted when the game is unpaused.
+
+.. _fixveins:
+
+fixveins
+========
+Removes invalid references to mineral inclusions and restores missing ones.
+Use this if you broke your embark with tools like `tiletypes`, or if you
+accidentally placed a construction on top of a valuable mineral floor.
+
+.. _petcapRemover:
+
+petcapRemover
+=============
+Allows you to remove or raise the pet population cap. In vanilla
+DF, pets will not reproduce unless the population is below 50 and the number of
+children of that species is below a certain percentage. This plugin allows
+removing the second restriction and removing or raising the first. Pets still
+require PET or PET_EXOTIC tags in order to reproduce. Type ``help petcapRemover``
+for exact usage. In order to make population more stable and avoid sudden
+population booms as you go below the raised population cap, this plugin counts
+pregnancies toward the new population cap. It can still go over, but only in the
+case of multiple births.
+
+Usage:
+
+:petcapRemover:             cause pregnancies now and schedule the next check
+:petcapRemover every n:     set how often in ticks the plugin checks for possible pregnancies
+:petcapRemover cap n:       set the new cap to n. if n = 0, no cap
+:petcapRemover pregtime n:  sets the pregnancy duration to n ticks. natural pregnancies are
+                            300000 ticks for the current race and 200000 for everyone else
+
+.. _tweak:
+
+tweak
+=====
+Contains various tweaks for minor bugs.
+
+One-shot subcommands:
+
+:clear-missing:  Remove the missing status from the selected unit.
+                 This allows engraving slabs for ghostly, but not yet
+                 found, creatures.
+:clear-ghostly:  Remove the ghostly status from the selected unit and mark
+                 it as dead. This allows getting rid of bugged ghosts
+                 which do not show up in the engraving slab menu at all,
+                 even after using clear-missing. It works, but is
+                 potentially very dangerous - so use with care. Probably
+                 (almost certainly) it does not have the same effects like
+                 a proper burial. You've been warned.
+:fixmigrant:     Remove the resident/merchant flag from the selected unit.
+                 Intended to fix bugged migrants/traders who stay at the
+                 map edge and don't enter your fort. Only works for
+                 dwarves (or generally the player's race in modded games).
+                 Do NOT abuse this for 'real' caravan merchants (if you
+                 really want to kidnap them, use 'tweak makeown' instead,
+                 otherwise they will have their clothes set to forbidden etc).
+:makeown:        Force selected unit to become a member of your fort.
+                 Can be abused to grab caravan merchants and escorts, even if
+                 they don't belong to the player's race. Foreign sentients
+                 (humans, elves) can be put to work, but you can't assign rooms
+                 to them and they don't show up in DwarfTherapist because the
+                 game treats them like pets. Grabbing draft animals from
+                 a caravan can result in weirdness (animals go insane or berserk
+                 and are not flagged as tame), but you are allowed to mark them
+                 for slaughter. Grabbing wagons results in some funny spam, then
+                 they are scuttled.
+
+Subcommands that persist until disabled or DF quits:
+
+.. comment: sort these alphabetically
+
+:adamantine-cloth-wear: Prevents adamantine clothing from wearing out while being worn (:bug:`6481`).
+:advmode-contained:     Works around :bug:`6202`, custom reactions with container inputs
+                        in advmode. The issue is that the screen tries to force you to select
+                        the contents separately from the container. This forcefully skips child
+                        reagents.
+:block-labors:          Prevents labors that can't be used from being toggled
+:burrow-name-cancel:    Implements the "back" option when renaming a burrow,
+                        which currently does nothing (:bug:`1518`)
+:cage-butcher:          Adds an option to butcher units when viewing cages with :kbd:`q`
+:civ-view-agreement:    Fixes overlapping text on the "view agreement" screen
+:condition-material:    Fixes a crash in the work order contition material list (:bug:`9905`).
+:craft-age-wear:        Fixes the behavior of crafted items wearing out over time (:bug:`6003`).
+                        With this tweak, items made from cloth and leather will gain a level of
+                        wear  every 20 years.
+:do-job-now:            Adds a job priority toggle to the jobs list
+:embark-profile-name:   Allows the use of lowercase letters when saving embark profiles
+:eggs-fertile:          Displays a fertility indicator on nestboxes
+:farm-plot-select:      Adds "Select all" and "Deselect all" options to farm plot menus
+:fast-heat:             Further improves temperature update performance by ensuring that 1 degree
+                        of item temperature is crossed in no more than specified number of frames
+                        when updating from the environment temperature. This reduces the time it
+                        takes for stable-temp to stop updates again when equilibrium is disturbed.
+:fast-trade:            Makes Shift-Down in the Move Goods to Depot and Trade screens select
+                        the current item (fully, in case of a stack), and scroll down one line.
+:fps-min:               Fixes the in-game minimum FPS setting
+:hide-priority:         Adds an option to hide designation priority indicators
+:hotkey-clear:          Adds an option to clear currently-bound hotkeys (in the :kbd:`H` menu)
+:import-priority-category:
+                        Allows changing the priority of all goods in a
+                        category when discussing an import agreement with the liaison
+:kitchen-prefs-all:     Adds an option to toggle cook/brew for all visible items in kitchen preferences
+:kitchen-prefs-color:   Changes color of enabled items to green in kitchen preferences
+:kitchen-prefs-empty:   Fixes a layout issue with empty kitchen tabs (:bug:`9000`)
+:max-wheelbarrow:       Allows assigning more than 3 wheelbarrows to a stockpile
+:military-color-assigned:
+                        Color squad candidates already assigned to other squads in yellow/green
+                        to make them stand out more in the list.
+
+                        .. image:: images/tweak-mil-color.png
+
+:military-stable-assign:
+                        Preserve list order and cursor position when assigning to squad,
+                        i.e. stop the rightmost list of the Positions page of the military
+                        screen from constantly resetting to the top.
+:nestbox-color:         Fixes the color of built nestboxes
+:reaction-gloves:       Fixes reactions to produce gloves in sets with correct handedness (:bug:`6273`)
+:shift-8-scroll:        Gives Shift-8 (or :kbd:`*`) priority when scrolling menus, instead of scrolling the map
+:stable-cursor:         Saves the exact cursor position between t/q/k/d/b/etc menus of fortress mode, if the
+                        map view is near enough to its previous position.
+:stone-status-all:      Adds an option to toggle the economic status of all stones
+:title-start-rename:    Adds a safe rename option to the title screen "Start Playing" menu
+:tradereq-pet-gender:   Displays pet genders on the trade request screen
+
+.. comment: sort these alphabetically
+
+
 ===============================
 Data inspection and visualizers
 ===============================
@@ -301,789 +456,6 @@ An isometric visualizer that runs in a second window. Usage:
 :ssense overlay:    Overlay DF window, replacing the map area.
 
 For more information, see `the full Stonesense README <stonesense>`.
-
-
-
-========
-Bugfixes
-========
-
-.. contents::
-   :local:
-
-.. _fix-armory:
-
-fix-armory
-==========
-`This plugin requires a binpatch <binpatches/needs-patch>`, which has not
-been available since DF 0.34.11
-
-.. _fix-unit-occupancy:
-
-fix-unit-occupancy
-==================
-This plugin fixes issues with unit occupancy, notably phantom
-"unit blocking tile" messages (:bug:`3499`). It can be run manually, or
-periodically when enabled with the built-in enable/disable commands:
-
-:(no argument):         Run the plugin once immediately, for the whole map.
-:-h, here, cursor:      Run immediately, only operate on the tile at the cursor
-:-n, dry, dry-run:      Run immediately, do not write changes to map
-:interval <X>:          Run the plugin every ``X`` ticks (when enabled).
-                        The default is 1200 ticks, or 1 day.
-                        Ticks are only counted when the game is unpaused.
-
-.. _fixveins:
-
-fixveins
-========
-Removes invalid references to mineral inclusions and restores missing ones.
-Use this if you broke your embark with tools like `tiletypes`, or if you
-accidentally placed a construction on top of a valuable mineral floor.
-
-.. _petcapRemover:
-
-petcapRemover
-=============
-Allows you to remove or raise the pet population cap. In vanilla
-DF, pets will not reproduce unless the population is below 50 and the number of
-children of that species is below a certain percentage. This plugin allows
-removing the second restriction and removing or raising the first. Pets still
-require PET or PET_EXOTIC tags in order to reproduce. Type ``help petcapRemover``
-for exact usage. In order to make population more stable and avoid sudden
-population booms as you go below the raised population cap, this plugin counts
-pregnancies toward the new population cap. It can still go over, but only in the
-case of multiple births.
-
-Usage:
-
-:petcapRemover:             cause pregnancies now and schedule the next check
-:petcapRemover every n:     set how often in ticks the plugin checks for possible pregnancies
-:petcapRemover cap n:       set the new cap to n. if n = 0, no cap
-:petcapRemover pregtime n:  sets the pregnancy duration to n ticks. natural pregnancies are
-                            300000 ticks for the current race and 200000 for everyone else
-
-.. _tweak:
-
-tweak
-=====
-Contains various tweaks for minor bugs.
-
-One-shot subcommands:
-
-:clear-missing:  Remove the missing status from the selected unit.
-                 This allows engraving slabs for ghostly, but not yet
-                 found, creatures.
-:clear-ghostly:  Remove the ghostly status from the selected unit and mark
-                 it as dead. This allows getting rid of bugged ghosts
-                 which do not show up in the engraving slab menu at all,
-                 even after using clear-missing. It works, but is
-                 potentially very dangerous - so use with care. Probably
-                 (almost certainly) it does not have the same effects like
-                 a proper burial. You've been warned.
-:fixmigrant:     Remove the resident/merchant flag from the selected unit.
-                 Intended to fix bugged migrants/traders who stay at the
-                 map edge and don't enter your fort. Only works for
-                 dwarves (or generally the player's race in modded games).
-                 Do NOT abuse this for 'real' caravan merchants (if you
-                 really want to kidnap them, use 'tweak makeown' instead,
-                 otherwise they will have their clothes set to forbidden etc).
-:makeown:        Force selected unit to become a member of your fort.
-                 Can be abused to grab caravan merchants and escorts, even if
-                 they don't belong to the player's race. Foreign sentients
-                 (humans, elves) can be put to work, but you can't assign rooms
-                 to them and they don't show up in DwarfTherapist because the
-                 game treats them like pets. Grabbing draft animals from
-                 a caravan can result in weirdness (animals go insane or berserk
-                 and are not flagged as tame), but you are allowed to mark them
-                 for slaughter. Grabbing wagons results in some funny spam, then
-                 they are scuttled.
-
-Subcommands that persist until disabled or DF quits:
-
-.. comment: sort these alphabetically
-
-:adamantine-cloth-wear: Prevents adamantine clothing from wearing out while being worn (:bug:`6481`).
-:advmode-contained:     Works around :bug:`6202`, custom reactions with container inputs
-                        in advmode. The issue is that the screen tries to force you to select
-                        the contents separately from the container. This forcefully skips child
-                        reagents.
-:block-labors:          Prevents labors that can't be used from being toggled
-:burrow-name-cancel:    Implements the "back" option when renaming a burrow,
-                        which currently does nothing (:bug:`1518`)
-:cage-butcher:          Adds an option to butcher units when viewing cages with :kbd:`q`
-:civ-view-agreement:    Fixes overlapping text on the "view agreement" screen
-:condition-material:    Fixes a crash in the work order contition material list (:bug:`9905`).
-:craft-age-wear:        Fixes the behavior of crafted items wearing out over time (:bug:`6003`).
-                        With this tweak, items made from cloth and leather will gain a level of
-                        wear  every 20 years.
-:do-job-now:            Adds a job priority toggle to the jobs list
-:embark-profile-name:   Allows the use of lowercase letters when saving embark profiles
-:eggs-fertile:          Displays a fertility indicator on nestboxes
-:farm-plot-select:      Adds "Select all" and "Deselect all" options to farm plot menus
-:fast-heat:             Further improves temperature update performance by ensuring that 1 degree
-                        of item temperature is crossed in no more than specified number of frames
-                        when updating from the environment temperature. This reduces the time it
-                        takes for stable-temp to stop updates again when equilibrium is disturbed.
-:fast-trade:            Makes Shift-Down in the Move Goods to Depot and Trade screens select
-                        the current item (fully, in case of a stack), and scroll down one line.
-:fps-min:               Fixes the in-game minimum FPS setting
-:hide-priority:         Adds an option to hide designation priority indicators
-:hotkey-clear:          Adds an option to clear currently-bound hotkeys (in the :kbd:`H` menu)
-:import-priority-category:
-                        Allows changing the priority of all goods in a
-                        category when discussing an import agreement with the liaison
-:kitchen-prefs-all:     Adds an option to toggle cook/brew for all visible items in kitchen preferences
-:kitchen-prefs-color:   Changes color of enabled items to green in kitchen preferences
-:kitchen-prefs-empty:   Fixes a layout issue with empty kitchen tabs (:bug:`9000`)
-:max-wheelbarrow:       Allows assigning more than 3 wheelbarrows to a stockpile
-:military-color-assigned:
-                        Color squad candidates already assigned to other squads in yellow/green
-                        to make them stand out more in the list.
-
-                        .. image:: images/tweak-mil-color.png
-
-:military-stable-assign:
-                        Preserve list order and cursor position when assigning to squad,
-                        i.e. stop the rightmost list of the Positions page of the military
-                        screen from constantly resetting to the top.
-:nestbox-color:         Fixes the color of built nestboxes
-:reaction-gloves:       Fixes reactions to produce gloves in sets with correct handedness (:bug:`6273`)
-:shift-8-scroll:        Gives Shift-8 (or :kbd:`*`) priority when scrolling menus, instead of scrolling the map
-:stable-cursor:         Saves the exact cursor position between t/q/k/d/b/etc menus of fortress mode, if the
-                        map view is near enough to its previous position.
-:stone-status-all:      Adds an option to toggle the economic status of all stones
-:title-start-rename:    Adds a safe rename option to the title screen "Start Playing" menu
-:tradereq-pet-gender:   Displays pet genders on the trade request screen
-
-.. comment: sort these alphabetically
-
-===========
-UI Upgrades
-===========
-
-.. note::
-    In order to avoid user confusion, as a matter of policy all GUI tools
-    display the word :guilabel:`DFHack` on the screen somewhere while active.
-
-    When that is not appropriate because they merely add keybinding hints to
-    existing DF screens, they deliberately use red instead of green for the key.
-
-.. contents::
-   :local:
-
-
-.. _automaterial:
-
-automaterial
-============
-This makes building constructions (walls, floors, fortifications, etc) a little bit
-easier by saving you from having to trawl through long lists of materials each time
-you place one.
-
-Firstly, it moves the last used material for a given construction type to the top of
-the list, if there are any left. So if you build a wall with chalk blocks, the next
-time you place a wall the chalk blocks will be at the top of the list, regardless of
-distance (it only does this in "grouped" mode, as individual item lists could be huge).
-This should mean you can place most constructions without having to search for your
-preferred material type.
-
-.. image:: images/automaterial-mat.png
-
-Pressing :kbd:`a` while highlighting any material will enable that material for "auto select"
-for this construction type. You can enable multiple materials as autoselect. Now the next
-time you place this type of construction, the plugin will automatically choose materials
-for you from the kinds you enabled. If there is enough to satisfy the whole placement,
-you won't be prompted with the material screen - the construction will be placed and you
-will be back in the construction menu as if you did it manually.
-
-When choosing the construction placement, you will see a couple of options:
-
-.. image:: images/automaterial-pos.png
-
-Use :kbd:`a` here to temporarily disable the material autoselection, e.g. if you need
-to go to the material selection screen so you can toggle some materials on or off.
-
-The other option (auto type selection, off by default) can be toggled on with :kbd:`t`. If you
-toggle this option on, instead of returning you to the main construction menu after selecting
-materials, it returns you back to this screen. If you use this along with several autoselect
-enabled materials, you should be able to place complex constructions more conveniently.
-
-.. _automelt:
-
-automelt
-========
-When automelt is enabled for a stockpile, any meltable items placed
-in it will be designated to be melted.
-This plugin adds an option to the :kbd:`q` menu when `enabled <enable>`.
-
-.. _autotrade:
-
-autotrade
-=========
-When autotrade is enabled for a stockpile, any items placed in it will be
-designated to be taken to the Trade Depot whenever merchants are on the map.
-This plugin adds an option to the :kbd:`q` menu when `enabled <enable>`.
-
-.. _buildingplan:
-
-buildingplan
-============
-When active (via ``enable buildingplan``), this plugin adds a planning mode for
-building placement. You can then place furniture, constructions, and other buildings
-before the required materials are available, and they will be created in a suspended
-state. Buildingplan will periodically scan for appropriate items, and the jobs will
-be unsuspended when the items are available.
-
-This is very useful when combined with `workflow` - you can set a constraint
-to always have one or two doors/beds/tables/chairs/etc available, and place
-as many as you like. The plugins then take over and fulfill the orders,
-with minimal space dedicated to stockpiles.
-
-.. _buildingplan-filters:
-
-Item filtering
---------------
-
-While placing a building, you can set filters for what materials you want the building made
-out of, what quality you want the component items to be, and whether you want the items to
-be decorated.
-
-If a building type takes more than one item to construct, use :kbd:`Ctrl`:kbd:`Left` and
-:kbd:`Ctrl`:kbd:`Right` to select the item that you want to set filters for. Any filters that
-you set will be used for all buildings of the selected type placed from that point onward
-(until you set a new filter or clear the current one). Buildings placed before the filters
-were changed will keep the filter values that were set when the building was placed.
-
-For example, you can be sure that all your constructed walls are the same color by setting
-a filter to accept only certain types of stone.
-
-Quickfort mode
---------------
-
-If you use the external Python Quickfort to apply building blueprints instead of the native
-DFHack `quickfort` script, you must enable Quickfort mode. This temporarily enables
-buildingplan for all building types and adds an extra blank screen after every building
-placement. This "dummy" screen is needed for Python Quickfort to interact successfully with
-Dwarf Fortress.
-
-Note that Quickfort mode is only for compatibility with the legacy Python Quickfort. The
-DFHack `quickfort` script does not need Quickfort mode to be enabled. The `quickfort` script
-will successfully integrate with buildingplan as long as the buildingplan plugin is enabled.
-
-.. _buildingplan-settings:
-
-Global settings
----------------
-
-The buildingplan plugin has several global settings that can be set from the UI (:kbd:`G`
-from any building placement screen, for example: :kbd:`b`:kbd:`a`:kbd:`G`). These settings
-can also be set from the ``DFHack#`` prompt once a map is loaded (or from your
-``onMapLoad.init`` file) with the syntax::
-
-    buildingplan set <setting> <true|false>
-
-and displayed with::
-
-    buildingplan set
-
-The available settings are:
-
-+----------------+---------+-----------+---------------------------------------+
-| Setting        | Default | Persisted | Description                           |
-+================+=========+===========+=======================================+
-| all_enabled    | false   | no        | Enable planning mode for all building |
-|                |         |           | types.                                |
-+----------------+---------+-----------+---------------------------------------+
-| blocks         | true    | yes       | Allow blocks, boulders, logs, or bars |
-+----------------+---------+           | to be matched for generic "building   |
-| boulders       | true    |           | material" items                       |
-+----------------+---------+           |                                       |
-| logs           | true    |           |                                       |
-+----------------+---------+           |                                       |
-| bars           | false   |           |                                       |
-+----------------+---------+-----------+---------------------------------------+
-| quickfort_mode | false   | no        | Enable compatibility mode for the     |
-|                |         |           | legacy Python Quickfort (not required |
-|                |         |           | for DFHack quickfort)                 |
-+----------------+---------+-----------+---------------------------------------+
-
-For example, to ensure you only use blocks when a "building material" item is required, you
-could add this to your ``onMapLoad.init`` file::
-
-    on-new-fortress buildingplan set boulders false; buildingplan set logs false
-
-Persisted settings (i.e. ``blocks``, ``boulders``, ``logs``, and ``bars``) are saved with
-your game, so you only need to set them to the values you want once.
-
-.. _confirm:
-
-confirm
-=======
-Implements several confirmation dialogs for potentially destructive actions
-(for example, seizing goods from traders or deleting hauling routes).
-
-Usage:
-
-:enable confirm:    Enable all confirmations; alias ``confirm enable all``.
-                    Replace with ``disable`` to disable.
-:confirm help:      List available confirmation dialogues.
-:confirm enable option1 [option2...]:
-                    Enable (or disable) specific confirmation dialogues.
-
-.. _command-prompt:
-
-command-prompt
-==============
-An in-game DFHack terminal, where you can enter other commands.
-
-:dfhack-keybind:`command-prompt`
-
-Usage: ``command-prompt [entry]``
-
-If called with an entry, it starts with that text filled in.
-Most useful for developers, who can set a keybinding to open
-a laungage interpreter for lua or Ruby by starting with the
-`:lua <lua>` or `:rb <rb>` commands.
-
-Otherwise somewhat similar to `gui/quickcmd`.
-
-.. image:: images/command-prompt.png
-
-
-.. _debug:
-
-debug
-=====
-Manager for DFHack runtime debug prints. Debug prints are grouped by plugin name,
-category name and print level. Levels are ``trace``, ``debug``, ``info``,
-``warning`` and ``error``.
-
-The runtime message printing is controlled using filters. Filters set the
-visible messages of all matching categories. Matching uses regular expression syntax,
-which allows listing multiple alternative matches or partial name matches.
-This syntax is a C++ version of the ECMA-262 grammar (Javascript regular expressions).
-Details of differences can be found at
-https://en.cppreference.com/w/cpp/regex/ecmascript
-
-Persistent filters are stored in ``dfhack-config/runtime-debug.json``.
-Oldest filters are applied first. That means a newer filter can override the
-older printing level selection.
-
-Usage: ``debugfilter [subcommand] [parameters...]``
-
-The following subcommands are supported:
-
-help
-----
-Give overall help or a detailed help for a subcommand.
-
-Usage: ``debugfilter help [subcommand]``
-
-category
---------
-List available debug plugin and category names.
-
-Usage: ``debugfilter category [plugin regex] [category regex]``
-
-The list can be filtered using optional regex parameters. If filters aren't
-given then the it uses ``"."`` regex which matches any character. The regex
-parameters are good way to test regex before passing them to ``set``.
-
-filter
-------
-List active and passive debug print level changes.
-
-Usage: ``debugfilter filter [id]``
-
-Optional ``id`` parameter is the id listed as first column in the filter list.
-If id is given then the command shows information for the given filter only in
-multi line format that is better format if filter has long regex.
-
-set
----
-Creates a new debug filter to set category printing levels.
-
-Usage: ``debugfilter set [level] [plugin regex] [category regex]``
-
-Adds a filter that will be deleted when DF process exists or plugin is unloaded.
-
-Usage: ``debugfilter set persistent [level] [plugin regex] [category regex]``
-
-Stores the filter in the configuration file to until ``unset`` is used to remove
-it.
-
-Level is the minimum debug printing level to show in log.
-
-* ``trace``: Possibly very noisy messages which can be printed many times per second
-
-* ``debug``: Messages that happen often but they should happen only a couple of times per second
-
-* ``info``: Important state changes that happen rarely during normal execution
-
-* ``warning``: Enabled by default. Shows warnings about unexpected events which code managed to handle correctly.
-
-* ``error``: Enabled by default. Shows errors which code can't handle without user intervention.
-
-unset
------
-Delete a space separated list of filters
-
-Usage: ``debugfilter unset [id...]``
-
-disable
--------
-Disable a space separated list of filters but keep it in the filter list
-
-Usage: ``debugfilter disable [id...]``
-
-enable
-------
-Enable a space sperate list of filters
-
-Usage: ``debugfilter enable [id...]``
-
-.. _embark-assistant:
-
-embark-assistant
-================
-
-This plugin provides embark site selection help. It has to be run with the
-``embark-assistant`` command while the pre-embark screen is displayed and shows
-extended (and correct(?)) resource information for the embark rectangle as well
-as normally undisplayed sites in the current embark region. It also has a site
-selection tool with more options than DF's vanilla search tool. For detailed
-help invoke the in game info screen.
-
-.. _embark-tools:
-
-embark-tools
-============
-A collection of embark-related tools. Usage and available tools::
-
-    embark-tools enable/disable tool [tool]...
-
-:anywhere:      Allows embarking anywhere (including sites, mountain-only biomes,
-                and oceans). Use with caution.
-:mouse:         Implements mouse controls (currently in the local embark region only)
-:sand:          Displays an indicator when sand is present in the currently-selected
-                area, similar to the default clay/stone indicators.
-:sticky:        Maintains the selected local area while navigating the world map
-
-.. _follow:
-
-follow
-======
-Makes the game view follow the currently highlighted unit after you exit from the
-current menu or cursor mode. Handy for watching dwarves running around. Deactivated
-by moving the view manually.
-
-.. _hotkeys:
-
-hotkeys
-=======
-Opens an in-game screen showing which DFHack keybindings are
-active in the current context.  See also `hotkey-notes`.
-
-.. image:: images/hotkeys.png
-
-:dfhack-keybind:`hotkeys`
-
-.. _manipulator:
-
-manipulator
-===========
-An in-game equivalent to the popular program Dwarf Therapist.
-
-To activate, open the unit screen and press :kbd:`l`.
-
-.. image:: images/manipulator.png
-
-The far left column displays the unit's Happiness (color-coded based on its
-value), Name, Profession/Squad, and the right half of the screen displays each
-dwarf's labor settings and skill levels (0-9 for Dabbling through Professional,
-A-E for Great through Grand Master, and U-Z for Legendary through Legendary+5).
-
-Cells with teal backgrounds denote skills not controlled by labors, e.g.
-military and social skills.
-
-.. image:: images/manipulator2.png
-
-Press :kbd:`t` to toggle between Profession, Squad, and Job views.
-
-.. image:: images/manipulator3.png
-
-Use the arrow keys or number pad to move the cursor around, holding :kbd:`Shift` to
-move 10 tiles at a time.
-
-Press the Z-Up (:kbd:`<`) and Z-Down (:kbd:`>`) keys to move quickly between labor/skill
-categories. The numpad Z-Up and Z-Down keys seek to the first or last unit
-in the list. :kbd:`Backspace` seeks to the top left corner.
-
-Press Enter to toggle the selected labor for the selected unit, or Shift+Enter
-to toggle all labors within the selected category.
-
-Press the :kbd:`+`:kbd:`-` keys to sort the unit list according to the currently selected
-skill/labor, and press the :kbd:`*`:kbd:`/` keys to sort the unit list by Name, Profession/Squad,
-Happiness, or Arrival order (using :kbd:`Tab` to select which sort method to use here).
-
-With a unit selected, you can press the :kbd:`v` key to view its properties (and
-possibly set a custom nickname or profession) or the :kbd:`c` key to exit
-Manipulator and zoom to its position within your fortress.
-
-The following mouse shortcuts are also available:
-
-* Click on a column header to sort the unit list. Left-click to sort it in one
-  direction (descending for happiness or labors/skills, ascending for name,
-  profession or squad) and right-click to sort it in the opposite direction.
-* Left-click on a labor cell to toggle that labor. Right-click to move the
-  cursor onto that cell instead of toggling it.
-* Left-click on a unit's name, profession or squad to view its properties.
-* Right-click on a unit's name, profession or squad to zoom to it.
-
-Pressing :kbd:`Esc` normally returns to the unit screen, but :kbd:`Shift`:kbd:`Esc` would exit
-directly to the main dwarf mode screen.
-
-Professions
------------
-
-The manipulator plugin supports saving professions: a named set of labors that can be
-quickly applied to one or multiple dwarves.
-
-To save a profession, highlight a dwarf and press :kbd:`P`. The profession will be saved using
-the custom profession name of the dwarf, or the default for that dwarf if no custom profession
-name has been set.
-
-To apply a profession, either highlight a single dwarf or select multiple with
-:kbd:`x`, and press :kbd:`p` to select the profession to apply. All labors for
-the selected dwarves will be reset to the labors of the chosen profession.
-
-Professions are saved as human-readable text files in the "professions" folder
-within the DF folder, and can be edited or deleted there.
-
-.. _mousequery:
-
-mousequery
-==========
-Adds mouse controls to the DF interface, e.g. click-and-drag designations.
-
-Options:
-
-:plugin:    enable/disable the entire plugin
-:rbutton:   enable/disable right mouse button
-:track:     enable/disable moving cursor in build and designation mode
-:edge:      enable/disable active edge scrolling (when on, will also enable tracking)
-:live:      enable/disable query view when unpaused
-:delay:     Set delay when edge scrolling in tracking mode. Omit amount to display current setting.
-
-Usage::
-
-    mousequery [plugin] [rbutton] [track] [edge] [live] [enable|disable]
-
-.. _nopause:
-
-nopause
-=======
-Disables pausing (both manual and automatic) with the exception of pause forced
-by `reveal` ``hell``. This is nice for digging under rivers.
-
-.. _rename:
-
-rename
-======
-Allows renaming various things.  Use `gui/rename` for an in-game interface.
-
-Options:
-
-``rename squad <index> "name"``
-  Rename squad by index to 'name'.
-``rename hotkey <index> \"name\"``
-  Rename hotkey by index. This allows assigning
-  longer commands to the DF hotkeys.
-``rename unit "nickname"``
-  Rename a unit/creature highlighted in the DF user interface.
-``rename unit-profession "custom profession"``
-  Change proffession name of the highlighted unit/creature.
-``rename building "name"``
-  Set a custom name for the selected building.
-  The building must be one of stockpile, workshop, furnace, trap,
-  siege engine or an activity zone.
-
-.. _rendermax:
-
-rendermax
-=========
-A collection of renderer replacing/enhancing filters. For better effect try changing the
-black color in palette to non totally black. See :forums:`128487` for more info.
-
-Options:
-
-:trippy:                        Randomizes the color of each tiles. Used for fun, or testing.
-:light:                         Enable lighting engine.
-:light reload:                  Reload the settings file.
-:light sun <x>|cycle:           Set time to <x> (in hours) or set it to df time cycle.
-:occlusionON, occlusionOFF:     Show debug occlusion info.
-:disable:                       Disable any filter that is enabled.
-
-An image showing lava and dragon breath. Not pictured here: sunlight, shining items/plants,
-materials that color the light etc...
-
-.. image:: images/rendermax.png
-
-.. _resume:
-
-resume
-======
-Allows automatic resumption of suspended constructions, along with colored
-UI hints for construction status.
-
-.. _rb:
-.. _ruby:
-
-ruby
-====
-Ruby language plugin, which evaluates the following arguments as a ruby string.
-Best used as ``:rb [string]``, for the special parsing mode.  Alias ``rb_eval``.
-
-.. comment - the link target "search" is reserved for the Sphinx search page
-.. _search-plugin:
-
-search
-======
-The search plugin adds search to the Stocks, Animals, Trading, Stockpile,
-Noble (assignment candidates), Military (position candidates), Burrows
-(unit list), Rooms, Announcements, Job List and Unit List screens.
-
-.. image:: images/search.png
-
-Searching works the same way as the search option in :guilabel:`Move to Depot`.
-You will see the Search option displayed on screen with a hotkey (usually :kbd:`s`).
-Pressing it lets you start typing a query and the relevant list will start
-filtering automatically.
-
-Pressing :kbd:`Enter`, :kbd:`Esc` or the arrow keys will return you to browsing the now
-filtered list, which still functions as normal. You can clear the filter
-by either going back into search mode and backspacing to delete it, or
-pressing the "shifted" version of the search hotkey while browsing the
-list (e.g. if the hotkey is :kbd:`s`, then hitting :kbd:`Shift`:kbd:`s` will clear any
-filter).
-
-Leaving any screen automatically clears the filter.
-
-In the Trade screen, the actual trade will always only act on items that
-are actually visible in the list; the same effect applies to the Trade
-Value numbers displayed by the screen. Because of this, the :kbd:`t` key is
-blocked while search is active, so you have to reset the filters first.
-Pressing :kbd:`Alt`:kbd:`C` will clear both search strings.
-
-In the stockpile screen the option only appears if the cursor is in the
-rightmost list:
-
-.. image:: images/search-stockpile.png
-
-Note that the 'Permit XXX'/'Forbid XXX' keys conveniently operate only
-on items actually shown in the rightmost list, so it is possible to select
-only fat or tallow by forbidding fats, then searching for fat/tallow, and
-using Permit Fats again while the list is filtered.
-
-.. _sort:
-.. _sort-items:
-
-sort-items
-==========
-Sort the visible item list::
-
-    sort-items order [order...]
-
-Sort the item list using the given sequence of comparisons.
-The ``<`` prefix for an order makes undefined values sort first.
-The ``>`` prefix reverses the sort order for defined values.
-
-Item order examples::
-
-    description material wear type quality
-
-The orderings are defined in ``hack/lua/plugins/sort/*.lua``
-
-.. _sort-units:
-
-sort-units
-==========
-Sort the visible unit list::
-
-    sort-units order [order...]
-
-Sort the unit list using the given sequence of comparisons.
-The ``<`` prefix for an order makes undefined values sort first.
-The ``>`` prefix reverses the sort order for defined values.
-
-Unit order examples::
-
-    name age arrival squad squad_position profession
-
-The orderings are defined in ``hack/lua/plugins/sort/*.lua``
-
-:dfhack-keybind:`sort-units`
-
-.. _stocksettings:
-.. _stockpiles:
-
-stockpiles
-==========
-Offers the following commands to save and load stockpile settings.
-See `gui/stockpiles` for an in-game interface.
-
-:copystock:     Copies the parameters of the currently highlighted stockpile to the custom
-                stockpile settings and switches to custom stockpile placement mode, effectively
-                allowing you to copy/paste stockpiles easily.
-                :dfhack-keybind:`copystock`
-
-:savestock:     Saves the currently highlighted stockpile's settings to a file in your Dwarf
-                Fortress folder. This file can be used to copy settings between game saves or
-                players.  e.g.:  ``savestock food_settings.dfstock``
-
-:loadstock:     Loads a saved stockpile settings file and applies it to the currently selected
-                stockpile.  e.g.:  ``loadstock food_settings.dfstock``
-
-To use savestock and loadstock, use the :kbd:`q` command to highlight a stockpile.
-Then run savestock giving it a descriptive filename. Then, in a different (or
-the same!) gameworld, you can highlight any stockpile with :kbd:`q` then execute the
-``loadstock`` command passing it the name of that file. The settings will be
-applied to that stockpile.
-
-Note that files are relative to the DF folder, so put your files there or in a
-subfolder for easy access. Filenames should not have spaces.  Generated materials,
-divine metals, etc are not saved as they are different in every world.
-
-.. _stocks:
-
-stocks
-======
-Replaces the DF stocks screen with an improved version.
-
-:dfhack-keybind:`stocks`
-
-
-.. _title-folder:
-
-title-folder
-=============
-Displays the DF folder name in the window title bar when enabled.
-
-.. _title-version:
-
-title-version
-=============
-Displays the DFHack version on DF's title screen when enabled.
-
-.. _trackstop:
-
-trackstop
-=========
-Adds a :kbd:`q` menu for track stops, which is completely blank by default.
-This allows you to view and/or change the track stop's friction and dump
-direction settings, using the keybindings from the track stop building interface.
-
 
 ===========================
 Job and Fortress management
@@ -3198,3 +2570,629 @@ in the `lua-api` file under `lua-plugins`:
 * `map-render`
 * `pathable`
 * `xlsxreader`
+
+===========
+UI Upgrades
+===========
+
+.. note::
+    In order to avoid user confusion, as a matter of policy all GUI tools
+    display the word :guilabel:`DFHack` on the screen somewhere while active.
+
+    When that is not appropriate because they merely add keybinding hints to
+    existing DF screens, they deliberately use red instead of green for the key.
+
+.. contents::
+   :local:
+
+
+.. _automaterial:
+
+automaterial
+============
+This makes building constructions (walls, floors, fortifications, etc) a little bit
+easier by saving you from having to trawl through long lists of materials each time
+you place one.
+
+Firstly, it moves the last used material for a given construction type to the top of
+the list, if there are any left. So if you build a wall with chalk blocks, the next
+time you place a wall the chalk blocks will be at the top of the list, regardless of
+distance (it only does this in "grouped" mode, as individual item lists could be huge).
+This should mean you can place most constructions without having to search for your
+preferred material type.
+
+.. image:: images/automaterial-mat.png
+
+Pressing :kbd:`a` while highlighting any material will enable that material for "auto select"
+for this construction type. You can enable multiple materials as autoselect. Now the next
+time you place this type of construction, the plugin will automatically choose materials
+for you from the kinds you enabled. If there is enough to satisfy the whole placement,
+you won't be prompted with the material screen - the construction will be placed and you
+will be back in the construction menu as if you did it manually.
+
+When choosing the construction placement, you will see a couple of options:
+
+.. image:: images/automaterial-pos.png
+
+Use :kbd:`a` here to temporarily disable the material autoselection, e.g. if you need
+to go to the material selection screen so you can toggle some materials on or off.
+
+The other option (auto type selection, off by default) can be toggled on with :kbd:`t`. If you
+toggle this option on, instead of returning you to the main construction menu after selecting
+materials, it returns you back to this screen. If you use this along with several autoselect
+enabled materials, you should be able to place complex constructions more conveniently.
+
+.. _automelt:
+
+automelt
+========
+When automelt is enabled for a stockpile, any meltable items placed
+in it will be designated to be melted.
+This plugin adds an option to the :kbd:`q` menu when `enabled <enable>`.
+
+.. _autotrade:
+
+autotrade
+=========
+When autotrade is enabled for a stockpile, any items placed in it will be
+designated to be taken to the Trade Depot whenever merchants are on the map.
+This plugin adds an option to the :kbd:`q` menu when `enabled <enable>`.
+
+.. _buildingplan:
+
+buildingplan
+============
+When active (via ``enable buildingplan``), this plugin adds a planning mode for
+building placement. You can then place furniture, constructions, and other buildings
+before the required materials are available, and they will be created in a suspended
+state. Buildingplan will periodically scan for appropriate items, and the jobs will
+be unsuspended when the items are available.
+
+This is very useful when combined with `workflow` - you can set a constraint
+to always have one or two doors/beds/tables/chairs/etc available, and place
+as many as you like. The plugins then take over and fulfill the orders,
+with minimal space dedicated to stockpiles.
+
+.. _buildingplan-filters:
+
+Item filtering
+--------------
+
+While placing a building, you can set filters for what materials you want the building made
+out of, what quality you want the component items to be, and whether you want the items to
+be decorated.
+
+If a building type takes more than one item to construct, use :kbd:`Ctrl`:kbd:`Left` and
+:kbd:`Ctrl`:kbd:`Right` to select the item that you want to set filters for. Any filters that
+you set will be used for all buildings of the selected type placed from that point onward
+(until you set a new filter or clear the current one). Buildings placed before the filters
+were changed will keep the filter values that were set when the building was placed.
+
+For example, you can be sure that all your constructed walls are the same color by setting
+a filter to accept only certain types of stone.
+
+Quickfort mode
+--------------
+
+If you use the external Python Quickfort to apply building blueprints instead of the native
+DFHack `quickfort` script, you must enable Quickfort mode. This temporarily enables
+buildingplan for all building types and adds an extra blank screen after every building
+placement. This "dummy" screen is needed for Python Quickfort to interact successfully with
+Dwarf Fortress.
+
+Note that Quickfort mode is only for compatibility with the legacy Python Quickfort. The
+DFHack `quickfort` script does not need Quickfort mode to be enabled. The `quickfort` script
+will successfully integrate with buildingplan as long as the buildingplan plugin is enabled.
+
+.. _buildingplan-settings:
+
+Global settings
+---------------
+
+The buildingplan plugin has several global settings that can be set from the UI (:kbd:`G`
+from any building placement screen, for example: :kbd:`b`:kbd:`a`:kbd:`G`). These settings
+can also be set from the ``DFHack#`` prompt once a map is loaded (or from your
+``onMapLoad.init`` file) with the syntax::
+
+    buildingplan set <setting> <true|false>
+
+and displayed with::
+
+    buildingplan set
+
+The available settings are:
+
++----------------+---------+-----------+---------------------------------------+
+| Setting        | Default | Persisted | Description                           |
++================+=========+===========+=======================================+
+| all_enabled    | false   | no        | Enable planning mode for all building |
+|                |         |           | types.                                |
++----------------+---------+-----------+---------------------------------------+
+| blocks         | true    | yes       | Allow blocks, boulders, logs, or bars |
++----------------+---------+           | to be matched for generic "building   |
+| boulders       | true    |           | material" items                       |
++----------------+---------+           |                                       |
+| logs           | true    |           |                                       |
++----------------+---------+           |                                       |
+| bars           | false   |           |                                       |
++----------------+---------+-----------+---------------------------------------+
+| quickfort_mode | false   | no        | Enable compatibility mode for the     |
+|                |         |           | legacy Python Quickfort (not required |
+|                |         |           | for DFHack quickfort)                 |
++----------------+---------+-----------+---------------------------------------+
+
+For example, to ensure you only use blocks when a "building material" item is required, you
+could add this to your ``onMapLoad.init`` file::
+
+    on-new-fortress buildingplan set boulders false; buildingplan set logs false
+
+Persisted settings (i.e. ``blocks``, ``boulders``, ``logs``, and ``bars``) are saved with
+your game, so you only need to set them to the values you want once.
+
+.. _confirm:
+
+confirm
+=======
+Implements several confirmation dialogs for potentially destructive actions
+(for example, seizing goods from traders or deleting hauling routes).
+
+Usage:
+
+:enable confirm:    Enable all confirmations; alias ``confirm enable all``.
+                    Replace with ``disable`` to disable.
+:confirm help:      List available confirmation dialogues.
+:confirm enable option1 [option2...]:
+                    Enable (or disable) specific confirmation dialogues.
+
+.. _command-prompt:
+
+command-prompt
+==============
+An in-game DFHack terminal, where you can enter other commands.
+
+:dfhack-keybind:`command-prompt`
+
+Usage: ``command-prompt [entry]``
+
+If called with an entry, it starts with that text filled in.
+Most useful for developers, who can set a keybinding to open
+a laungage interpreter for lua or Ruby by starting with the
+`:lua <lua>` or `:rb <rb>` commands.
+
+Otherwise somewhat similar to `gui/quickcmd`.
+
+.. image:: images/command-prompt.png
+
+
+.. _debug:
+
+debug
+=====
+Manager for DFHack runtime debug prints. Debug prints are grouped by plugin name,
+category name and print level. Levels are ``trace``, ``debug``, ``info``,
+``warning`` and ``error``.
+
+The runtime message printing is controlled using filters. Filters set the
+visible messages of all matching categories. Matching uses regular expression syntax,
+which allows listing multiple alternative matches or partial name matches.
+This syntax is a C++ version of the ECMA-262 grammar (Javascript regular expressions).
+Details of differences can be found at
+https://en.cppreference.com/w/cpp/regex/ecmascript
+
+Persistent filters are stored in ``dfhack-config/runtime-debug.json``.
+Oldest filters are applied first. That means a newer filter can override the
+older printing level selection.
+
+Usage: ``debugfilter [subcommand] [parameters...]``
+
+The following subcommands are supported:
+
+help
+----
+Give overall help or a detailed help for a subcommand.
+
+Usage: ``debugfilter help [subcommand]``
+
+category
+--------
+List available debug plugin and category names.
+
+Usage: ``debugfilter category [plugin regex] [category regex]``
+
+The list can be filtered using optional regex parameters. If filters aren't
+given then the it uses ``"."`` regex which matches any character. The regex
+parameters are good way to test regex before passing them to ``set``.
+
+filter
+------
+List active and passive debug print level changes.
+
+Usage: ``debugfilter filter [id]``
+
+Optional ``id`` parameter is the id listed as first column in the filter list.
+If id is given then the command shows information for the given filter only in
+multi line format that is better format if filter has long regex.
+
+set
+---
+Creates a new debug filter to set category printing levels.
+
+Usage: ``debugfilter set [level] [plugin regex] [category regex]``
+
+Adds a filter that will be deleted when DF process exists or plugin is unloaded.
+
+Usage: ``debugfilter set persistent [level] [plugin regex] [category regex]``
+
+Stores the filter in the configuration file to until ``unset`` is used to remove
+it.
+
+Level is the minimum debug printing level to show in log.
+
+* ``trace``: Possibly very noisy messages which can be printed many times per second
+
+* ``debug``: Messages that happen often but they should happen only a couple of times per second
+
+* ``info``: Important state changes that happen rarely during normal execution
+
+* ``warning``: Enabled by default. Shows warnings about unexpected events which code managed to handle correctly.
+
+* ``error``: Enabled by default. Shows errors which code can't handle without user intervention.
+
+unset
+-----
+Delete a space separated list of filters
+
+Usage: ``debugfilter unset [id...]``
+
+disable
+-------
+Disable a space separated list of filters but keep it in the filter list
+
+Usage: ``debugfilter disable [id...]``
+
+enable
+------
+Enable a space sperate list of filters
+
+Usage: ``debugfilter enable [id...]``
+
+.. _embark-assistant:
+
+embark-assistant
+================
+
+This plugin provides embark site selection help. It has to be run with the
+``embark-assistant`` command while the pre-embark screen is displayed and shows
+extended (and correct(?)) resource information for the embark rectangle as well
+as normally undisplayed sites in the current embark region. It also has a site
+selection tool with more options than DF's vanilla search tool. For detailed
+help invoke the in game info screen.
+
+.. _embark-tools:
+
+embark-tools
+============
+A collection of embark-related tools. Usage and available tools::
+
+    embark-tools enable/disable tool [tool]...
+
+:anywhere:      Allows embarking anywhere (including sites, mountain-only biomes,
+                and oceans). Use with caution.
+:mouse:         Implements mouse controls (currently in the local embark region only)
+:sand:          Displays an indicator when sand is present in the currently-selected
+                area, similar to the default clay/stone indicators.
+:sticky:        Maintains the selected local area while navigating the world map
+
+.. _follow:
+
+follow
+======
+Makes the game view follow the currently highlighted unit after you exit from the
+current menu or cursor mode. Handy for watching dwarves running around. Deactivated
+by moving the view manually.
+
+.. _hotkeys:
+
+hotkeys
+=======
+Opens an in-game screen showing which DFHack keybindings are
+active in the current context.  See also `hotkey-notes`.
+
+.. image:: images/hotkeys.png
+
+:dfhack-keybind:`hotkeys`
+
+.. _manipulator:
+
+manipulator
+===========
+An in-game equivalent to the popular program Dwarf Therapist.
+
+To activate, open the unit screen and press :kbd:`l`.
+
+.. image:: images/manipulator.png
+
+The far left column displays the unit's Happiness (color-coded based on its
+value), Name, Profession/Squad, and the right half of the screen displays each
+dwarf's labor settings and skill levels (0-9 for Dabbling through Professional,
+A-E for Great through Grand Master, and U-Z for Legendary through Legendary+5).
+
+Cells with teal backgrounds denote skills not controlled by labors, e.g.
+military and social skills.
+
+.. image:: images/manipulator2.png
+
+Press :kbd:`t` to toggle between Profession, Squad, and Job views.
+
+.. image:: images/manipulator3.png
+
+Use the arrow keys or number pad to move the cursor around, holding :kbd:`Shift` to
+move 10 tiles at a time.
+
+Press the Z-Up (:kbd:`<`) and Z-Down (:kbd:`>`) keys to move quickly between labor/skill
+categories. The numpad Z-Up and Z-Down keys seek to the first or last unit
+in the list. :kbd:`Backspace` seeks to the top left corner.
+
+Press Enter to toggle the selected labor for the selected unit, or Shift+Enter
+to toggle all labors within the selected category.
+
+Press the :kbd:`+`:kbd:`-` keys to sort the unit list according to the currently selected
+skill/labor, and press the :kbd:`*`:kbd:`/` keys to sort the unit list by Name, Profession/Squad,
+Happiness, or Arrival order (using :kbd:`Tab` to select which sort method to use here).
+
+With a unit selected, you can press the :kbd:`v` key to view its properties (and
+possibly set a custom nickname or profession) or the :kbd:`c` key to exit
+Manipulator and zoom to its position within your fortress.
+
+The following mouse shortcuts are also available:
+
+* Click on a column header to sort the unit list. Left-click to sort it in one
+  direction (descending for happiness or labors/skills, ascending for name,
+  profession or squad) and right-click to sort it in the opposite direction.
+* Left-click on a labor cell to toggle that labor. Right-click to move the
+  cursor onto that cell instead of toggling it.
+* Left-click on a unit's name, profession or squad to view its properties.
+* Right-click on a unit's name, profession or squad to zoom to it.
+
+Pressing :kbd:`Esc` normally returns to the unit screen, but :kbd:`Shift`:kbd:`Esc` would exit
+directly to the main dwarf mode screen.
+
+Professions
+-----------
+
+The manipulator plugin supports saving professions: a named set of labors that can be
+quickly applied to one or multiple dwarves.
+
+To save a profession, highlight a dwarf and press :kbd:`P`. The profession will be saved using
+the custom profession name of the dwarf, or the default for that dwarf if no custom profession
+name has been set.
+
+To apply a profession, either highlight a single dwarf or select multiple with
+:kbd:`x`, and press :kbd:`p` to select the profession to apply. All labors for
+the selected dwarves will be reset to the labors of the chosen profession.
+
+Professions are saved as human-readable text files in the "professions" folder
+within the DF folder, and can be edited or deleted there.
+
+.. _mousequery:
+
+mousequery
+==========
+Adds mouse controls to the DF interface, e.g. click-and-drag designations.
+
+Options:
+
+:plugin:    enable/disable the entire plugin
+:rbutton:   enable/disable right mouse button
+:track:     enable/disable moving cursor in build and designation mode
+:edge:      enable/disable active edge scrolling (when on, will also enable tracking)
+:live:      enable/disable query view when unpaused
+:delay:     Set delay when edge scrolling in tracking mode. Omit amount to display current setting.
+
+Usage::
+
+    mousequery [plugin] [rbutton] [track] [edge] [live] [enable|disable]
+
+.. _nopause:
+
+nopause
+=======
+Disables pausing (both manual and automatic) with the exception of pause forced
+by `reveal` ``hell``. This is nice for digging under rivers.
+
+.. _rename:
+
+rename
+======
+Allows renaming various things.  Use `gui/rename` for an in-game interface.
+
+Options:
+
+``rename squad <index> "name"``
+  Rename squad by index to 'name'.
+``rename hotkey <index> \"name\"``
+  Rename hotkey by index. This allows assigning
+  longer commands to the DF hotkeys.
+``rename unit "nickname"``
+  Rename a unit/creature highlighted in the DF user interface.
+``rename unit-profession "custom profession"``
+  Change proffession name of the highlighted unit/creature.
+``rename building "name"``
+  Set a custom name for the selected building.
+  The building must be one of stockpile, workshop, furnace, trap,
+  siege engine or an activity zone.
+
+.. _rendermax:
+
+rendermax
+=========
+A collection of renderer replacing/enhancing filters. For better effect try changing the
+black color in palette to non totally black. See :forums:`128487` for more info.
+
+Options:
+
+:trippy:                        Randomizes the color of each tiles. Used for fun, or testing.
+:light:                         Enable lighting engine.
+:light reload:                  Reload the settings file.
+:light sun <x>|cycle:           Set time to <x> (in hours) or set it to df time cycle.
+:occlusionON, occlusionOFF:     Show debug occlusion info.
+:disable:                       Disable any filter that is enabled.
+
+An image showing lava and dragon breath. Not pictured here: sunlight, shining items/plants,
+materials that color the light etc...
+
+.. image:: images/rendermax.png
+
+.. _resume:
+
+resume
+======
+Allows automatic resumption of suspended constructions, along with colored
+UI hints for construction status.
+
+.. _rb:
+.. _ruby:
+
+ruby
+====
+Ruby language plugin, which evaluates the following arguments as a ruby string.
+Best used as ``:rb [string]``, for the special parsing mode.  Alias ``rb_eval``.
+
+.. comment - the link target "search" is reserved for the Sphinx search page
+.. _search-plugin:
+
+search
+======
+The search plugin adds search to the Stocks, Animals, Trading, Stockpile,
+Noble (assignment candidates), Military (position candidates), Burrows
+(unit list), Rooms, Announcements, Job List and Unit List screens.
+
+.. image:: images/search.png
+
+Searching works the same way as the search option in :guilabel:`Move to Depot`.
+You will see the Search option displayed on screen with a hotkey (usually :kbd:`s`).
+Pressing it lets you start typing a query and the relevant list will start
+filtering automatically.
+
+Pressing :kbd:`Enter`, :kbd:`Esc` or the arrow keys will return you to browsing the now
+filtered list, which still functions as normal. You can clear the filter
+by either going back into search mode and backspacing to delete it, or
+pressing the "shifted" version of the search hotkey while browsing the
+list (e.g. if the hotkey is :kbd:`s`, then hitting :kbd:`Shift`:kbd:`s` will clear any
+filter).
+
+Leaving any screen automatically clears the filter.
+
+In the Trade screen, the actual trade will always only act on items that
+are actually visible in the list; the same effect applies to the Trade
+Value numbers displayed by the screen. Because of this, the :kbd:`t` key is
+blocked while search is active, so you have to reset the filters first.
+Pressing :kbd:`Alt`:kbd:`C` will clear both search strings.
+
+In the stockpile screen the option only appears if the cursor is in the
+rightmost list:
+
+.. image:: images/search-stockpile.png
+
+Note that the 'Permit XXX'/'Forbid XXX' keys conveniently operate only
+on items actually shown in the rightmost list, so it is possible to select
+only fat or tallow by forbidding fats, then searching for fat/tallow, and
+using Permit Fats again while the list is filtered.
+
+.. _sort:
+.. _sort-items:
+
+sort-items
+==========
+Sort the visible item list::
+
+    sort-items order [order...]
+
+Sort the item list using the given sequence of comparisons.
+The ``<`` prefix for an order makes undefined values sort first.
+The ``>`` prefix reverses the sort order for defined values.
+
+Item order examples::
+
+    description material wear type quality
+
+The orderings are defined in ``hack/lua/plugins/sort/*.lua``
+
+.. _sort-units:
+
+sort-units
+==========
+Sort the visible unit list::
+
+    sort-units order [order...]
+
+Sort the unit list using the given sequence of comparisons.
+The ``<`` prefix for an order makes undefined values sort first.
+The ``>`` prefix reverses the sort order for defined values.
+
+Unit order examples::
+
+    name age arrival squad squad_position profession
+
+The orderings are defined in ``hack/lua/plugins/sort/*.lua``
+
+:dfhack-keybind:`sort-units`
+
+.. _stocksettings:
+.. _stockpiles:
+
+stockpiles
+==========
+Offers the following commands to save and load stockpile settings.
+See `gui/stockpiles` for an in-game interface.
+
+:copystock:     Copies the parameters of the currently highlighted stockpile to the custom
+                stockpile settings and switches to custom stockpile placement mode, effectively
+                allowing you to copy/paste stockpiles easily.
+                :dfhack-keybind:`copystock`
+
+:savestock:     Saves the currently highlighted stockpile's settings to a file in your Dwarf
+                Fortress folder. This file can be used to copy settings between game saves or
+                players.  e.g.:  ``savestock food_settings.dfstock``
+
+:loadstock:     Loads a saved stockpile settings file and applies it to the currently selected
+                stockpile.  e.g.:  ``loadstock food_settings.dfstock``
+
+To use savestock and loadstock, use the :kbd:`q` command to highlight a stockpile.
+Then run savestock giving it a descriptive filename. Then, in a different (or
+the same!) gameworld, you can highlight any stockpile with :kbd:`q` then execute the
+``loadstock`` command passing it the name of that file. The settings will be
+applied to that stockpile.
+
+Note that files are relative to the DF folder, so put your files there or in a
+subfolder for easy access. Filenames should not have spaces.  Generated materials,
+divine metals, etc are not saved as they are different in every world.
+
+.. _stocks:
+
+stocks
+======
+Replaces the DF stocks screen with an improved version.
+
+:dfhack-keybind:`stocks`
+
+
+.. _title-folder:
+
+title-folder
+=============
+Displays the DF folder name in the window title bar when enabled.
+
+.. _title-version:
+
+title-version
+=============
+Displays the DFHack version on DF's title screen when enabled.
+
+.. _trackstop:
+
+trackstop
+=========
+Adds a :kbd:`q` menu for track stops, which is completely blank by default.
+This allows you to view and/or change the track stop's friction and dump
+direction settings, using the keybindings from the track stop building interface.

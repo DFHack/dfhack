@@ -39,7 +39,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Removed
 
 ## Fixes
-- `cxxrandom`: fixed problems with interface and updated docs
+- `cxxrandom`: fixed exception when calling ``bool_distribution``
+- `cxxrandom`: fixed id order for ShuffleSequence, but adds code to detect which parameter is which so each id is used correctly. 16000 limit before things get weird (previous was 16 bits)
 - `autofarm` removed restriction on only planting 'discovered' plants
 - `luasocket` (and others): return correct status code when closing socket connections
 

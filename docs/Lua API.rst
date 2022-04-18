@@ -3864,6 +3864,87 @@ The Label widget implements the following methods:
 
   Computes the width of the text.
 
+TooltipLabel class
+------------------
+
+This Label subclass represents text that you want to be able to dynamically
+hide, like help text in a tooltip.
+
+It has the following attributes:
+
+:tooltip: The string (or a table of strings or a function that returns a string
+    or a table of strings) to display. The text will be autowrapped to the
+    width of the widget, though any existing newlines will be kept.
+:show_tooltip: Boolean or a callback; if true, the widget is visible. Defaults
+    to ``true``.
+:indent: The number of spaces to indent the tooltip from the left margin. The
+    default is ``2``.
+
+The ``text_pen`` attribute of the ``Label`` class is overridden with a default
+of COLOR_GREY.
+
+Note that the text of the tooltip is only refreshed when the widget layout is
+updated (i.e. ``updateLayout()`` is called on this widget or a widget that
+contains this widget) and the tooltip needs to be rewrapped.
+
+HotkeyLabel class
+-----------------
+
+This Label subclass is a convenience class for formatting text that responds to
+a hotkey.
+
+It has the following attributes:
+
+:key: The hotkey keycode to display, e.g. ``'CUSTOM_A'``.
+:label: The string (or a function that returns a string) to display after the
+    hotkey.
+:on_activate: If specified, it is the callback that will be called whenever
+    the hotkey is pressed.
+
+CycleHotkeyLabel class
+----------------------
+
+This Label subclass represents a group of related options that the user can
+cycle through by pressing a specified hotkey.
+
+It has the following attributes:
+
+:key: The hotkey keycode to display, e.g. ``'CUSTOM_A'``.
+:label: The string (or a function that returns a string) to display after the
+    hotkey.
+:label_width: The number of spaces to allocate to the ``label`` (for use in
+    aligning a column of ``CycleHotkeyLabel`` labels).
+:options: A list of strings or tables of ``{label=string, value=string}``.
+    String options use the same string for the label and value.
+:initial_option: The value or numeric index of the initial option.
+:on_change: The callback to call when the selected option changes. It is called
+    as ``on_change(new_option_value, old_option_value)``.
+
+The index of the currently selected option in the ``options`` list is kept in
+the ``option_idx`` instance variable.
+
+The CycleHotkeyLabel widget implements the following methods:
+
+* ``cyclehotkeylabel:cycle()``
+
+    Cycles the selected option and triggers the ``on_change`` callback.
+
+* ``cyclehotkeylabel:getOptionLabel([option_idx])``
+
+    Retrieves the option label at the given index, or the label of the
+    currently selected option if no index is given.
+
+* ``cyclehotkeylabel:getOptionValue([option_idx])``
+
+    Retrieves the option value at the given index, or the value of the
+    currently selected option if no index is given.
+
+ToggleHotkeyLabel
+-----------------
+
+This is a specialized subclass of CycleHotkeyLabel that has two options:
+``On`` (with a value of ``true``) and ``Off`` (with a value of ``false``).
+
 List class
 ----------
 

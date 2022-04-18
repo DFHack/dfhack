@@ -79,6 +79,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - New string class function: ``string:escape_pattern()`` escapes regex special characters within a string
 - ``widgets.Panel``: if ``autoarrange_subviews`` is set, ``Panel``\s will now automatically lay out widgets vertically according to their current height.  This allows you to have widgets dynamically change height or become visible/hidden and you don't have to worry about recalculating frame layouts
 - ``widgets.ResizingPanel``: new ``Panel`` subclass that automatically recalculates it's own frame height based on the size, position, and visibility of its subviews
+- ``widgets.TooltipLabel``:  new ``Label`` subclass that provides tooltip-like behavior
+- ``widgets.HotkeyLabel``: new ``Label`` subclass that displays and reacts to hotkeys
+- ``widgets.CycleHotkeyLabel``: new ``Label`` subclass that allows users to cycle through a list of options by pressing a hotkey
+- ``widgets.ToggleHotkeyLabel``: new ``CycleHotkeyLabel`` subclass that toggles between ``On`` and ``Off`` states
 - ``safe_index`` now properly handles lua sparse tables that are indexed by numbers
 - ``widgets``: unset values in ``frame_inset``-table default to ``0``
 

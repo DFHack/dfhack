@@ -949,6 +949,15 @@ Options:
 **item-type <item-idx> <type[:subtype]>**
     Replace the exact item type id in the job item.
 
+.. _job-duplicate:
+
+job-duplicate
+=============
+In :kbd:`q` mode, when a job is highlighted within a workshop or furnace
+building, calling ``job-duplicate`` instantly duplicates the job.
+
+:dfhack-keybind:`job-duplicate`
+
 .. _job-material:
 
 job-material
@@ -966,15 +975,6 @@ Invoked as::
   in this mode.
 * In :kbd:`b` mode, during selection of building components positions the cursor
   over the first available choice with the matching material.
-
-.. _job-duplicate:
-
-job-duplicate
-=============
-In :kbd:`q` mode, when a job is highlighted within a workshop or furnace
-building, calling ``job-duplicate`` instantly duplicates the job.
-
-:dfhack-keybind:`job-duplicate`
 
 .. _labormanager:
 

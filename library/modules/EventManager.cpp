@@ -233,7 +233,7 @@ std::array<eventManager_t,EventType::EVENT_MAX> compileManagerArray() {
     return managers;
 }
 
-namespace std{
+namespace df{
     bool operator==(const df::construction &A, const df::construction &B){
         return A.pos == B.pos;
     }

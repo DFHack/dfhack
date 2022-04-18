@@ -28,6 +28,7 @@
 
 #include <string.h>
 #include <stdexcept>
+#include <array>
 
 using std::vector;
 using std::string;

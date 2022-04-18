@@ -80,6 +80,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``widgets.Panel``: if ``autoarrange_subviews`` is set, ``Panel``\s will now automatically lay out widgets vertically according to their current height.  This allows you to have widgets dynamically change height or become visible/hidden and you don't have to worry about recalculating frame layouts
 - ``widgets.ResizingPanel``: new ``Panel`` subclass that automatically recalculates it's own frame height based on the size, position, and visibility of its subviews
 - ``safe_index`` now properly handles lua sparse tables that are indexed by numbers
+- ``widgets``: unset values in ``frame_inset``-table default to ``0``
 
 # 0.47.05-r4
 

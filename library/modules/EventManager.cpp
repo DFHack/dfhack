@@ -39,10 +39,9 @@
 #include <cstring>
 #include <map>
 #include <string>
-#include <map>
 #include <unordered_map>
 #include <unordered_set>
-#include <memory>
+#include <array>
 
 using namespace std;
 using namespace DFHack;
@@ -234,29 +233,6 @@ std::array<eventManager_t,EventType::EVENT_MAX> compileManagerArray() {
     return managers;
 }
 
-// declaration moved to inside manageEvents
-//static const eventManager_t eventManager[] = {
-//        manageTickEvent,
-//        manageJobInitiatedEvent,
-//        manageJobStartedEvent,
-//        manageJobCompletedEvent,
-//        manageUnitNewActiveEvent,
-//        manageUnitDeathEvent,
-//        manageItemCreationEvent,
-//        manageBuildingEvent,
-//        manageBuildingCreatedEvent,
-//        manageBuildingDestroyedEvent,
-//        manageConstructionEvent,
-//        manageConstructionAddedEvent,
-//        manageConstructionRemovedEvent,
-//        manageSyndromeEvent,
-//        manageInvasionEvent,
-//        manageInventoryChangeEvent,
-//        manageReportEvent,
-//        manageUnitAttackEvent,
-//        manageUnloadEvent,
-//        manageInteractionEvent,
-//};
 namespace std{
     bool operator==(const df::construction &A, const df::construction &B){
         return A.pos == B.pos;

@@ -210,7 +210,7 @@ static int32_t nextBuilding;
 static unordered_set<int32_t> buildings;
 
 //construction
-static unordered_map<df::coord, df::construction> constructions;
+static unordered_set<df::construction> constructions;
 static bool gameLoaded;
 
 //syndrome
@@ -306,7 +306,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
                     out.print("EventManager.onLoad null position of construction.\n");
                 continue;
             }
-            constructions[c->pos] = *c;
+            constructions.emplace(*c);
         }
         for (auto b : df::global::world->buildings.all) {
             Buildings::updateBuildings(out, (void*)intptr_t(b->id));
@@ -714,33 +714,34 @@ static void manageConstructionEvent(color_ostream& out) {
         return;
     //unordered_set<df::construction*> constructionsNow(df::global::world->constructions.begin(), df::global::world->constructions.end());
 
-    multimap<Plugin*,EventHandler> copy(handlers[EventType::CONSTRUCTION].begin(), handlers[EventType::CONSTRUCTION].end());
-    for (auto iter = constructions.begin(); iter != constructions.end(); ) {
-        df::construction& construction = iter->second;
-        if ( df::construction::find(construction.pos) != nullptr ) {
+    multimap<Plugin*, EventHandler> copy(handlers[EventType::CONSTRUCTION].begin(), handlers[EventType::CONSTRUCTION].end());
+    // find & send construction removals
+    for (auto iter = constructions.begin(); iter != constructions.end();) {
+        auto &construction = *iter;
+        // if we can't find it, it was removed
+        if (df::construction::find(construction.pos) != nullptr) {
             ++iter;
             continue;
         }
-        //construction removed
-        //out.print("Removed construction (%d,%d,%d)\n", construction.pos.x,construction.pos.y,construction.pos.z);
-        for (auto &key_value : copy) {
-            EventHandler &handle = key_value.second;
-            handle.eventHandler(out, (void*)&construction);
+        // send construction to handlers, because it was removed
+        for (const auto &key_value: copy) {
+            EventHandler handle = key_value.second;
+            handle.eventHandler(out, (void*) &construction);
         }
+        // erase from existent constructions
         iter = constructions.erase(iter);
     }
 
-    //for ( auto a = constructionsNow.begin(); a != constructionsNow.end(); a++ ) {
-    for (auto construction : df::global::world->constructions) {
-        if(constructions.count(construction->pos)) {
-            continue;
-        }
-        constructions[construction->pos] = *construction;
-        //construction created
-        //out.print("Created construction (%d,%d,%d)\n", construction->pos.x,construction->pos.y,construction->pos.z);
-        for (auto &key_value : copy) {
-            EventHandler &handle = key_value.second;
-            handle.eventHandler(out, (void*)construction);
+    // find & send construction additions
+    for (auto c: df::global::world->constructions) {
+        auto &construction = *c;
+        // add construction to constructions, if it isn't already present
+        if (constructions.emplace(construction).second) {
+            // send construction to handlers, because it is new
+            for (const auto &key_value: copy) {
+                EventHandler handle = key_value.second;
+                handle.eventHandler(out, (void*) &construction);
+            }
         }
     }
 }

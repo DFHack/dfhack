@@ -970,6 +970,7 @@ static void manageUnitAttackEvent(color_ostream& out) {
         df::unit_wound* wound2 = getWound(unit2,unit1);
 
         UnitAttackData data{};
+        data.report_id = report->id;
         if ( wound1 && !alreadyDone[unit1->id][unit2->id] ) {
             data.attacker = unit1->id;
             data.defender = unit2->id;

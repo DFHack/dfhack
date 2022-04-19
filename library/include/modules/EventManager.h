@@ -13,6 +13,7 @@
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
 #include "df/unit_wound.h"
+#include "df/construction.h"
 
 namespace DFHack {
     namespace EventManager {
@@ -211,7 +212,7 @@ namespace std {
 }
 
 namespace df{
-    bool operator==(const df::construction &A, const df::construction &B){
+    inline bool operator==(const df::construction &A, const df::construction &B){
         return A.pos == B.pos;
     }
 }

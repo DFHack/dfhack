@@ -61,6 +61,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `tweak` stable-cursor: Keep the cursor stable even when the viewport moves a small amount
 
 ## Documentation
+- `cxxrandom`: added usage examples
 - Add more examples to the plugin skeleton files so they are more informative for a newbie
 - Lua API.rst added: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
 - Update download link and installation instructions for Visual C++ 2015 build tools on Windows

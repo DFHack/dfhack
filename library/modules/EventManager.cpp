@@ -895,10 +895,9 @@ static void manageReportEvent(color_ostream& out) {
     multimap<Plugin*,EventHandler> copy(handlers[EventType::REPORT].begin(), handlers[EventType::REPORT].end());
     std::vector<df::report*>& reports = df::global::world->status.reports;
     size_t idx = df::report::binsearch_index(reports, lastReport, false);
-    //this may or may not be needed: I don't know if binsearch_index goes earlier or later if it can't hit the target exactly
-    while (idx < reports.size() && reports[idx]->id <= lastReport) {
-        idx++;
-    }
+    // returns the index to the key equal to or greater than the key provided
+    idx = reports[idx]->id == lastReport ? idx + 1 : idx; // we need the index after (where the new stuff is)
+
     for ( ; idx < reports.size(); idx++ ) {
         df::report* report = reports[idx];
         for (auto &key_value : copy) {
@@ -924,10 +923,9 @@ static void manageUnitAttackEvent(color_ostream& out) {
     multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_ATTACK].begin(), handlers[EventType::UNIT_ATTACK].end());
     std::vector<df::report*>& reports = df::global::world->status.reports;
     size_t idx = df::report::binsearch_index(reports, lastReportUnitAttack, false);
-    //this may or may not be needed: I don't know if binsearch_index goes earlier or later if it can't hit the target exactly
-    while (idx < reports.size() && reports[idx]->id <= lastReportUnitAttack) {
-        idx++;
-    }
+    // returns the index to the key equal to or greater than the key provided
+    idx = reports[idx]->id == lastReportUnitAttack ? idx + 1 : idx; // we need the index after (where the new stuff is)
+
     std::set<int32_t> strikeReports;
     for ( ; idx < reports.size(); idx++ ) {
         df::report* report = reports[idx];

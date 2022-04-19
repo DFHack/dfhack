@@ -1028,8 +1028,8 @@ static void manageUnitAttackEvent(color_ostream& out) {
     }
 }
 
-static std::string getVerb(df::unit* unit, std::string reportStr) {
-    std::string result(std::move(reportStr));
+static std::string getVerb(df::unit* unit, const std::string &reportStr) {
+    std::string result(reportStr);
     std::string name = unit->name.first_name + " ";
     bool match = strncmp(result.c_str(), name.c_str(), name.length()) == 0;
     if ( match ) {

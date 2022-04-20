@@ -242,8 +242,14 @@ handler_t getManager(EventType t) {
             return ev_mng_unitDeath;
         case ITEM_CREATED:
             return ev_mng_itemCreate;
+        case BUILDING_DESTROYED:
+        case BUILDING_CREATED:
+            return nullptr;
         case BUILDING:
             return ev_mng_building;
+        case CONSTRUCTION_REMOVED:
+        case CONSTRUCTION_ADDED:
+            return nullptr;
         case CONSTRUCTION:
             return ev_mng_construction;
         case SYNDROME:

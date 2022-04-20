@@ -29,8 +29,12 @@ namespace DFHack {
                 UNIT_NEW_ACTIVE,
                 UNIT_DEATH,
                 ITEM_CREATED,
-                BUILDING,
-                CONSTRUCTION,
+                BUILDING_DESTROYED,
+                BUILDING_CREATED,
+                BUILDING, // todo: deprecate this event
+                CONSTRUCTION_REMOVED,
+                CONSTRUCTION_ADDED,
+                CONSTRUCTION, // todo: deprecate this event
                 SYNDROME,
                 INVASION,
                 INVENTORY_CHANGE,
@@ -46,9 +50,11 @@ namespace DFHack {
             typedef void (*callback_t)(color_ostream&, void*); //called when the event happens
             callback_t eventHandler;
             int32_t freq; //how often event is allowed to fire (in ticks) use 0 to always fire when possible
+            int32_t when = -1; //when to fire event (global tick count)
 
-            EventHandler(callback_t eventHandlerIn, int32_t freqIn): eventHandler(eventHandlerIn), freq(freqIn) {
-            }
+            EventHandler(callback_t eventHandlerIn, int32_t freqIn) :
+                    eventHandler(eventHandlerIn),
+                    freq(freqIn) {}
 
             bool operator==(const EventHandler& handle) const {
                 return eventHandler == handle.eventHandler && freq == handle.freq;
@@ -61,7 +67,9 @@ namespace DFHack {
         struct SyndromeData {
             int32_t unitId;
             int32_t syndromeIndex;
-            SyndromeData(int32_t unitId_in, int32_t syndromeIndex_in): unitId(unitId_in), syndromeIndex(syndromeIndex_in) {}
+            SyndromeData(int32_t unitId_in, int32_t syndromeIndex_in) :
+                    unitId(unitId_in),
+                    syndromeIndex(syndromeIndex_in) {}
             bool operator==(const SyndromeData &other) const {
                 return unitId == other.unitId && syndromeIndex == other.syndromeIndex;
             }
@@ -69,17 +77,24 @@ namespace DFHack {
 
         struct InventoryItem {
             //it has to keep the id of an item because the item itself may have been deallocated
-            int32_t itemId;
+            int32_t itemId = -1;
             df::unit_inventory_item item;
-            InventoryItem() {}
-            InventoryItem(int32_t id_in, df::unit_inventory_item item_in): itemId(id_in), item(item_in) {}
+            InventoryItem() = default;
+            InventoryItem(int32_t id_in, df::unit_inventory_item item_in) :
+                    itemId(id_in),
+                    item(item_in) {}
         };
+
         struct InventoryChangeData {
-            int32_t unitId;
-            InventoryItem* item_old;
-            InventoryItem* item_new;
-            InventoryChangeData() {}
-            InventoryChangeData(int32_t id_in, InventoryItem* old_in, InventoryItem* new_in): unitId(id_in), item_old(old_in), item_new(new_in) {}
+            int32_t unitId = -1;
+            // todo: don't use pointers
+            std::shared_ptr<InventoryItem> item_old;
+            std::shared_ptr<InventoryItem> item_new;
+            InventoryChangeData() = default;
+            InventoryChangeData(int32_t id_in, InventoryItem* old_in, InventoryItem* new_in) :
+                    unitId(id_in),
+                    item_old(old_in),
+                    item_new(new_in) {}
             bool operator==(const InventoryChangeData &other) const {
                 bool unit = unitId == other.unitId;
                 bool newItem = (item_new && other.item_new && item_new->itemId == other.item_new->itemId) ||
@@ -117,7 +132,7 @@ namespace DFHack {
             }
         };
 
-        DFHACK_EXPORT void registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin);
+        DFHACK_EXPORT void registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin, bool backlog = false);
         DFHACK_EXPORT int32_t registerTick(EventHandler handler, int32_t when, Plugin* plugin, bool absolute=false);
         DFHACK_EXPORT void unregister(EventType::EventType e, EventHandler handler, Plugin* plugin);
         DFHACK_EXPORT void unregisterAll(Plugin* plugin);

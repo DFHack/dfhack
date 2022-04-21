@@ -84,12 +84,10 @@ set(MAIN_SOURCES
 
 if(BUILD_TESTS)
     # TODO Make a function or macro for this
-    add_executable(
-        MiscUtils.test
-        MiscUtils.test.cpp
-        MiscUtils.cpp)
-    add_test(NAME MiscUtils.test
-        COMMAND MiscUtils.test)
+    add_executable(MiscUtils.test MiscUtils.test.cpp)
+    # FIXME Hard-coded "SDL" works on Linux, but probably isn't portable
+    target_link_libraries(MiscUtils.test dfhack SDL)
+    add_test(NAME MiscUtils.test COMMAND MiscUtils.test)
 endif()
 
 if(WIN32)

@@ -391,7 +391,8 @@ DFHACK_EXPORT std::string to_search_normalized(const std::string &str);
 
 DFHACK_EXPORT bool word_wrap(std::vector<std::string> *out,
                              const std::string &str,
-                             size_t line_length = 80);
+                             size_t line_length = 80,
+                             bool collapse_whitespace = false);
 
 inline bool bits_match(unsigned required, unsigned ok, unsigned mask)
 {

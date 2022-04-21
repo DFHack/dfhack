@@ -527,16 +527,30 @@ if(BUILD_DOCS)
     install(FILES "README.html" DESTINATION "${DFHACK_DATA_DESTINATION}")
 endif()
 
-option(BUILD_TESTS "Build 'test' target, and install integration tests in hack/scripts/test" OFF)
-if(BUILD_TESTS)
-    include(CTest)
-    # Install Lua tests into the scripts folder
-    if(EXISTS "${dfhack_SOURCE_DIR}/test/scripts")
-        message(SEND_ERROR "test/scripts must not exist in the dfhack repo since it would conflict with the tests installed from the scripts repo.")
+# Testing with CTest
+include(CTest)
+
+include(CMakeDependentOption)
+cmake_dependent_option(
+    BUILD_TEST_SCRIPTS "Install integration tests in hack/scripts/test" OFF
+    "BUILD_TESTING" OFF)
+mark_as_advanced(FORCE BUILD_TESTS)
+
+# Handle deprecated BUILD_TESTS option
+option(BUILD_TESTS "Deprecated option; please use BUILD_TEST_SCRIPTS=ON" OFF)
+if(BUILD_TESTING AND BUILD_TESTS)
+    set(BUILD_TEST_SCRIPTS ON FORCE)
+endif()
+
+if(BUILD_TESTING)
+    if(BUILD_TEST_SCRIPTS)
+        if(EXISTS "${dfhack_SOURCE_DIR}/test/scripts")
+            message(SEND_ERROR "test/scripts must not exist in the dfhack repo since it would conflict with the tests installed from the scripts repo.")
+        endif()
+        install(DIRECTORY ${dfhack_SOURCE_DIR}/test
+            DESTINATION ${DFHACK_DATA_DESTINATION}/scripts)
+        install(FILES ci/test.lua DESTINATION ${DFHACK_DATA_DESTINATION}/scripts)
     endif()
-    install(DIRECTORY ${dfhack_SOURCE_DIR}/test
-        DESTINATION ${DFHACK_DATA_DESTINATION}/scripts)
-    install(FILES ci/test.lua DESTINATION ${DFHACK_DATA_DESTINATION}/scripts)
 else()
     add_custom_target(test
         COMMENT "Nothing to do: CMake option BUILD_TESTS is OFF"

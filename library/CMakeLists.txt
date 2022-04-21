@@ -82,12 +82,16 @@ set(MAIN_SOURCES
     RemoteTools.cpp
 )
 
-if(BUILD_TESTS)
+if(BUILD_TESTING)
     # TODO Make a function or macro for this
     add_executable(MiscUtils.test MiscUtils.test.cpp)
-    # FIXME Hard-coded "SDL" works on Linux, but probably isn't portable
-    target_link_libraries(MiscUtils.test dfhack SDL)
+    target_link_libraries(MiscUtils.test dfhack)
     add_test(NAME MiscUtils.test COMMAND MiscUtils.test)
+
+    # How to get `test` to ensure everything is up to date before running
+    # tests? This add_dependencies() fails with:
+    #   Cannot add target-level dependencies to non-existent target "test".
+    #add_dependencies(test MiscUtils.test)
 endif()
 
 if(WIN32)
@@ -400,6 +404,8 @@ if(APPLE)
     target_link_libraries(dfhack ncurses)
     set_target_properties(dfhack PROPERTIES VERSION 1.0.0)
     set_target_properties(dfhack PROPERTIES SOVERSION 1.0.0)
+elseif(UNIX)
+    target_link_libraries(dfhack SDL)
 endif()
 
 target_link_libraries(dfhack protobuf-lite clsocket lua jsoncpp_static dfhack-version ${PROJECT_LIBS})

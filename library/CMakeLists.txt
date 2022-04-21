@@ -82,6 +82,16 @@ set(MAIN_SOURCES
     RemoteTools.cpp
 )
 
+if(BUILD_TESTS)
+    # TODO Make a function or macro for this
+    add_executable(
+        MiscUtils.test
+        MiscUtils.test.cpp
+        MiscUtils.cpp)
+    add_test(NAME MiscUtils.test
+        COMMAND MiscUtils.test)
+endif()
+
 if(WIN32)
     set(CONSOLE_SOURCES Console-windows.cpp)
 else()

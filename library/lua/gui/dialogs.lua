@@ -158,6 +158,7 @@ ListBox.ATTRS{
     on_select2 = DEFAULT_NIL,
     select2_hint = DEFAULT_NIL,
     row_height = DEFAULT_NIL,
+    list_frame_inset = DEFAULT_NIL,
 }
 
 function ListBox:preinit(info)
@@ -198,7 +199,8 @@ function ListBox:init(info)
                 if cb then cb(obj, sel) end
             end,
             on_submit2 = on_submit2,
-            frame = { l = 0, r = 0 },
+            frame = { l = 0, r = 0},
+            frame_inset = self.list_frame_inset,
             row_height = info.row_height,
         }
     }

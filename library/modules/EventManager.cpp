@@ -72,7 +72,7 @@ void enqueueTickEvent(EventHandler &handler){
             Core::getInstance().getConsole().print("EventManager::registerTick: warning! absolute flag=false not honored.\n");
     }
     handler.when = when;
-    tickQueue.insert(pair<int32_t, EventHandler>(handler.when, handler));
+    tickQueue.emplace(handler.when, handler);
 }
 
 void DFHack::EventManager::registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin, bool backlog) {
@@ -547,7 +547,8 @@ static void manageTickEvent(color_ostream& out) {
     int32_t tick = df::global::world->frame_counter;
     unordered_set<EventHandler> requeue;
     // call due tick events
-    for (auto iter = tickQueue.begin(); iter != tickQueue.end() || iter->first > tick;) {
+    auto end = tickQueue.upper_bound(tick);
+    for (auto iter = tickQueue.begin(); iter != end;) {
         EventHandler &handler = iter->second;
         handler.eventHandler(out, (void*) intptr_t(tick));
         requeue.emplace(handler);

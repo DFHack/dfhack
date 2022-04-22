@@ -494,39 +494,53 @@ function Label:onInput(keys)
 end
 
 ------------------
--- TooltipLabel --
+-- WrappedLabel --
 ------------------
 
-TooltipLabel = defclass(TooltipLabel, Label)
+WrappedLabel = defclass(WrappedLabel, Label)
 
-TooltipLabel.ATTRS{
-    tooltip=DEFAULT_NIL,
-    show_tooltip=true,
-    indent=2,
-    text_pen=COLOR_GREY,
+WrappedLabel.ATTRS{
+    text_to_wrap=DEFAULT_NIL,
+    indent=0,
 }
 
-function TooltipLabel:getWrappedTooltip()
-    local tooltip = getval(self.tooltip)
-    if type(tooltip) == 'table' then
-        tooltip = table.concat(tooltip, NEWLINE)
+function WrappedLabel:getWrappedText(width)
+    if not self.text_to_wrap then return nil end
+    local text_to_wrap = getval(self.text_to_wrap)
+    if type(text_to_wrap) == 'table' then
+        text_to_wrap = table.concat(text_to_wrap, NEWLINE)
     end
-    return tooltip:wrap(self.frame_body.width - self.indent)
-end
-
-function TooltipLabel:preUpdateLayout()
-    self.visible = getval(self.show_tooltip)
+    return text_to_wrap:wrap(width - self.indent)
 end
 
 -- we can't set the text in init() since we may not yet have a frame that we
 -- can get wrapping bounds from.
-function TooltipLabel:postComputeFrame()
+function WrappedLabel:postComputeFrame()
+    local wrapped_text = self:getWrappedText(self.frame_body.width)
+    if not wrapped_text then return end
     local text = {}
-    for _,line in ipairs(self:getWrappedTooltip():split(NEWLINE)) do
+    for _,line in ipairs(wrapped_text:split(NEWLINE)) do
         table.insert(text, {gap=self.indent, text=line})
+        -- a trailing newline will get ignored so we don't have to manually trim
         table.insert(text, NEWLINE)
     end
     self:setText(text)
+end
+
+------------------
+-- TooltipLabel --
+------------------
+
+TooltipLabel = defclass(TooltipLabel, WrappedLabel)
+
+TooltipLabel.ATTRS{
+    show_tooltip=DEFAULT_NIL,
+    indent=2,
+    text_pen=COLOR_GREY,
+}
+
+function TooltipLabel:preUpdateLayout()
+    self.visible = getval(self.show_tooltip)
 end
 
 -----------------

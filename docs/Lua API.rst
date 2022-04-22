@@ -3864,28 +3864,43 @@ The Label widget implements the following methods:
 
   Computes the width of the text.
 
-TooltipLabel class
+WrappedLabel class
 ------------------
 
 This Label subclass represents text that you want to be able to dynamically
-hide, like help text in a tooltip.
+wrap. This frees you from having to pre-split long strings into multiple lines
+in the Label ``text`` list.
 
 It has the following attributes:
 
-:tooltip: The string (or a table of strings or a function that returns a string
-    or a table of strings) to display. The text will be autowrapped to the
-    width of the widget, though any existing newlines will be kept.
-:show_tooltip: Boolean or a callback; if true, the widget is visible. Defaults
-    to ``true``.
-:indent: The number of spaces to indent the tooltip from the left margin. The
-    default is ``2``.
+:text_to_wrap: The string (or a table of strings or a function that returns a
+    string or a table of strings) to display. The text will be autowrapped to
+    the width of the widget, though any existing newlines will be kept.
+:indent: The number of spaces to indent the text from the left margin. The
+    default is ``0``.
+
+The displayed text is refreshed and rewrapped whenever the widget bounds change.
+To force a refresh (to pick up changes in the string that ``text_to_wrap``
+returns, for example), all ``updateLayout()`` on this widget or on a widget that
+contains this widget.
+
+TooltipLabel class
+------------------
+
+This WrappedLabel subclass represents text that you want to be able to
+dynamically hide, like help text in a tooltip.
+
+It has the following attributes:
+
+:show_tooltip: Boolean or a callback; if true, the widget is visible.
 
 The ``text_pen`` attribute of the ``Label`` class is overridden with a default
-of COLOR_GREY.
+of ``COLOR_GREY`` and the ``indent`` attribute of the ``WrappedLabel`` class is
+overridden with a default of ``2``.
 
-Note that the text of the tooltip is only refreshed when the widget layout is
-updated (i.e. ``updateLayout()`` is called on this widget or a widget that
-contains this widget) and the tooltip needs to be rewrapped.
+The text of the tooltip can be passed in the inherited ``text_to_wrap``
+attribute so it can be autowrapped, or in the basic ``text`` attribute if no
+wrapping is required.
 
 HotkeyLabel class
 -----------------

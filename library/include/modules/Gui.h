@@ -36,6 +36,8 @@ distribution.
 #include "df/ui.h"
 #include "df/announcement_type.h"
 #include "df/announcement_flags.h"
+#include "df/report_init.h"
+#include "df/report_zoom_type.h"
 #include "df/unit_report_type.h"
 
 #include "modules/GuiHooks.h"
@@ -113,6 +115,7 @@ namespace DFHack
         // Low-level API that gives full control over announcements and reports
         DFHACK_EXPORT void writeToGamelog(std::string message);
 
+        DFHACK_EXPORT bool parseReportString(std::vector<std::string> &out, const std::string &str, size_t line_length = 73);
         DFHACK_EXPORT int makeAnnouncement(df::announcement_type type, df::announcement_flags mode, df::coord pos, std::string message, int color = 7, bool bright = true);
         DFHACK_EXPORT bool addCombatReport(df::unit *unit, df::unit_report_type slot, int report_index);
         DFHACK_EXPORT bool addCombatReportAuto(df::unit *unit, df::announcement_flags mode, int report_index);
@@ -124,12 +127,24 @@ namespace DFHack
 
         // Show an announcement with effects determined by announcements.txt
         DFHACK_EXPORT void showAutoAnnouncement(df::announcement_type type, df::coord pos, std::string message, int color = 7, bool bright = true, df::unit *unit1 = NULL, df::unit *unit2 = NULL);
+        
+        // Process an announcement exactly like DF would, which might result in no announcement
+        DFHACK_EXPORT int autoDFAnnouncement(df::report_init r, std::string message);
+        DFHACK_EXPORT int autoDFAnnouncement(df::report_init r, std::string message, bool log_failures);
+        DFHACK_EXPORT int autoDFAnnouncement(df::announcement_type type, df::coord pos, std::string message, int color = 7, bool bright = true, df::unit *unit1 = NULL, df::unit *unit2 = NULL, bool sparring = false, bool log_failures = false);
 
         /*
          * Cursor and window coords
          */
         DFHACK_EXPORT df::coord getViewportPos();
         DFHACK_EXPORT df::coord getCursorPos();
+
+        // Recenter the viewscreen, based on DF code for announcements and scrolling
+        DFHACK_EXPORT void pauseRecenter(int32_t x, int32_t y, int32_t z, bool pause);
+        DFHACK_EXPORT inline void pauseRecenter(df::coord pos, bool pause) { return pauseRecenter(pos.x, pos.y, pos.z, pause); }
+        DFHACK_EXPORT void recenterViewscreen(int32_t x, int32_t y, int32_t z, df::report_zoom_type zoom = df::enums::report_zoom_type::Item);
+        DFHACK_EXPORT inline void recenterViewscreen(df::coord pos, df::report_zoom_type zoom = df::enums::report_zoom_type::Item) { recenterViewscreen(pos.x, pos.y, pos.z, zoom); };
+        DFHACK_EXPORT inline void recenterViewscreen(df::report_zoom_type zoom = df::enums::report_zoom_type::Item) { recenterViewscreen(getCursorPos(), zoom); };
 
         static const int AREA_MAP_WIDTH = 23;
         static const int MENU_WIDTH = 30;

@@ -1004,15 +1004,15 @@ Fortress mode
   Resets the fortress mode sidebar menus and cursors to their default state. If
   ``pause`` is true, also pauses the game.
 
-* ``dfhack.gui.pauseRecenter(pos[,pause])
-* ``dfhack.gui.pauseRecenter(x,y,z[,pause])
+* ``dfhack.gui.pauseRecenter(pos[,pause])``
+* ``dfhack.gui.pauseRecenter(x,y,z[,pause])``
 
   Same as ``resetDwarfmodeView``, but also recenter if ``x`` isn't ``-30000``,
   and respects RECENTER_INTERFACE_SHUTDOWN_MS in DF's init.txt.
 
-* ``dfhack.gui.recenterViewscreen(pos[,zoom])
-* ``dfhack.gui.recenterViewscreen(x,y,z[,zoom])
-* ``dfhack.gui.recenterViewscreen([zoom])
+* ``dfhack.gui.recenterViewscreen(pos[,zoom])``
+* ``dfhack.gui.recenterViewscreen(x,y,z[,zoom])``
+* ``dfhack.gui.recenterViewscreen([zoom])``
 
   Recenter the view on a position using a specific zoom type. If no position is
   given, recenter on ``df.global.cursor``. Zoom types are ``df.report_zoom_type``
@@ -1089,8 +1089,8 @@ Announcements
   Uses the type to look up options from announcements.txt, and calls the above
   operations accordingly. The units are used to call ``addCombatReportAuto``.
 
-* ``dfhack.gui.autoDFAnnouncement(report,text[,log_failures])
-* ``dfhack.gui.autoDFAnnouncement(type,pos,text,color[,is_bright,unit1,unit2,is_sparring,log_failures])
+* ``dfhack.gui.autoDFAnnouncement(report,text[,log_failures])``
+* ``dfhack.gui.autoDFAnnouncement(type,pos,text,color[,is_bright,unit1,unit2,is_sparring,log_failures])``
 
   Takes a ``df.report_init`` and a string and processes them just like DF does.
   Sometimes this means the announcement won't occur. Set ``log_failures`` to ``true`` to

@@ -62,6 +62,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Documentation
 - Add more examples to the plugin skeleton files so they are more informative for a newbie
 - Lua API.rst added: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
+- Lua API.rst added: ``autoDFAnnouncement``, ``pauseRecenter``, ``recenterViewscreen``
 - Update download link and installation instructions for Visual C++ 2015 build tools on Windows
 - Updated information regarding obtaining a compatible Windows build environment
 - `confirm`: Correct the command name in the plugin help text
@@ -70,11 +71,13 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## API
 - Added functions reverse-engineered from ambushing unit code: ``Units::isHidden``, ``Units::isFortControlled``, ``Units::getOuterContainerRef``, ``Items::getOuterContainerRef``
+- Added functions reverse-engineered from announcement code: ``Gui::parseReportString``, ``Gui::autoDFAnnouncement``, ``Gui::pauseRecenter``, ``Gui::recenterViewscreen``
 
 ## Lua
 - ``widgets.FilteredList`` now allows all punctuation to be typed into the filter and can match search keys that start with punctuation.
 - ``widgets.ListBox``: minimum height of dialog is now calculated correctly when there are no items in the list (e.g. when a filter doesn't match anything)
 - Lua wrappers for functions reverse-engineered from ambushing unit code: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
+- Lua wrappers for functions reverse-engineered from announcement code: ``autoDFAnnouncement``, ``pauseRecenter``, ``recenterViewscreen``
 - ``dwarfmode.MenuOverlay``: if ``sidebar_mode`` attribute is set, automatically manage entering a specific sidebar mode on show and restoring the previous sidebar mode on dismiss
 - ``dwarfmode.enterSidebarMode()``: passing ``df.ui_sidebar_mode.DesignateMine`` now always results in you entering ``DesignateMine`` mode and not ``DesignateChopTrees``, even when you looking at the surface where the default designation mode is ``DesignateChopTrees``
 - New string class function: ``string:escape_pattern()`` escapes regex special characters within a string

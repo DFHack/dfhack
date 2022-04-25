@@ -1507,7 +1507,7 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     { NULL, NULL }
 };
 
-static int gui_autoDFAnnouncement(lua_State *state) 
+static int gui_autoDFAnnouncement(lua_State *state)
 {
     int rv;
     df::report_init *r = Lua::GetDFObject<df::report_init>(state, 1);

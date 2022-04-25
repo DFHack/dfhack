@@ -1991,7 +1991,7 @@ df::coord Gui::getCursorPos()
 }
 
 void Gui::recenterViewscreen(int32_t x, int32_t y, int32_t z, df::report_zoom_type zoom)
-{   
+{
     // Reverse-engineered from DF announcement code, also used when scrolling
 
     auto dims = getDwarfmodeViewDims();
@@ -2032,7 +2032,7 @@ void Gui::recenterViewscreen(int32_t x, int32_t y, int32_t z, df::report_zoom_ty
 }
 
 void Gui::pauseRecenter(int32_t x, int32_t y, int32_t z, bool pause)
-{   
+{
     // Reverse-engineered from DF announcement code
 
     if (*gamemode != game_mode::DWARF)

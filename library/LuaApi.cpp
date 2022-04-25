@@ -101,6 +101,8 @@ distribution.
 #include "df/specific_ref.h"
 #include "df/specific_ref_type.h"
 #include "df/vermin.h"
+#include "df/report_init.h"
+#include "df/report_zoom_type.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -1505,7 +1507,127 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     { NULL, NULL }
 };
 
+static int gui_autoDFAnnouncement(lua_State *state) 
+{
+    int rv;
+    df::report_init *r = Lua::GetDFObject<df::report_init>(state, 1);
+
+    if (r)
+    {
+        std::string message = luaL_checkstring(state, 2);
+
+        if (lua_gettop(state) >= 3)
+            rv = Gui::autoDFAnnouncement(*r, message, lua_toboolean(state, 3));
+        else
+            rv = Gui::autoDFAnnouncement(*r, message);
+    }
+    else
+    {
+        df::coord pos;
+        int color;
+        bool bright, sparring, log_failures;
+        df::unit *unit1, *unit2;
+
+        auto type = (df::announcement_type)lua_tointeger(state, 1);
+        Lua::CheckDFAssign(state, &pos, 2);
+        std::string message = luaL_checkstring(state, 3);
+
+        switch (lua_gettop(state))
+        {
+            default:
+            case 9:
+                log_failures = lua_toboolean(state, 9);
+            case 8:
+                sparring = lua_toboolean(state, 8);
+            case 7:
+                unit2 = Lua::CheckDFObject<df::unit>(state, 7);
+            case 6:
+                unit1 = Lua::CheckDFObject<df::unit>(state, 6);
+            case 5:
+                bright = lua_toboolean(state, 5);
+            case 4:
+                color = lua_tointeger(state, 4);
+            case 3:
+                break;
+        }
+
+        switch (lua_gettop(state))
+        {   // Use the defaults in Gui.h
+            default:
+            case 9:
+                rv = Gui::autoDFAnnouncement(type, pos, message, color, bright, unit1, unit2, sparring, log_failures);
+                break;
+            case 8:
+                rv = Gui::autoDFAnnouncement(type, pos, message, color, bright, unit1, unit2, sparring);
+                break;
+            case 7:
+                rv = Gui::autoDFAnnouncement(type, pos, message, color, bright, unit1, unit2);
+                break;
+            case 6:
+                rv = Gui::autoDFAnnouncement(type, pos, message, color, bright, unit1);
+                break;
+            case 5:
+                rv = Gui::autoDFAnnouncement(type, pos, message, color, bright);
+                break;
+            case 4:
+                rv = Gui::autoDFAnnouncement(type, pos, message, color);
+                break;
+            case 3:
+                rv = Gui::autoDFAnnouncement(type, pos, message);
+        }
+    }
+
+    lua_pushinteger(state, rv);
+    return 1;
+}
+
+static int gui_pauseRecenter(lua_State *state)
+{
+    if (lua_gettop(state) == 2)
+    {
+        df::coord p;
+        Lua::CheckDFAssign(state, &p, 1);
+        Gui::pauseRecenter(p, lua_toboolean(state, 2));
+    }
+    else
+        Gui::pauseRecenter(CheckCoordXYZ(state, 1, false), lua_toboolean(state, 4));
+
+    return 1;
+}
+
+static int gui_recenterViewscreen(lua_State *state)
+{
+    df::coord p;
+    switch (lua_gettop(state))
+    {
+        default:
+        case 4:
+            Gui::recenterViewscreen(CheckCoordXYZ(state, 1, false), (df::report_zoom_type)lua_tointeger(state, 4));
+            break;
+        case 3:
+            Gui::recenterViewscreen(CheckCoordXYZ(state, 1, false));
+            break;
+        case 2:
+            Lua::CheckDFAssign(state, &p, 1);
+            Gui::recenterViewscreen(p, (df::report_zoom_type)lua_tointeger(state, 2));
+            break;
+        case 1:
+            if (lua_type(state, 1) == LUA_TNUMBER)
+                Gui::recenterViewscreen((df::report_zoom_type)lua_tointeger(state, 1));
+            else
+                Gui::recenterViewscreen(CheckCoordXYZ(state, 1, true));
+            break;
+        case 0:
+            Gui::recenterViewscreen();
+    }
+
+    return 1;
+}
+
 static const luaL_Reg dfhack_gui_funcs[] = {
+    { "autoDFAnnouncement", gui_autoDFAnnouncement },
+    { "pauseRecenter", gui_pauseRecenter },
+    { "recenterViewscreen", gui_recenterViewscreen },
     { "getDwarfmodeViewDims", gui_getDwarfmodeViewDims },
     { NULL, NULL }
 };

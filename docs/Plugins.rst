@@ -696,7 +696,7 @@ also tries to have dwarves specialize in specific skills.
 The key is that, for almost all labors, once a dwarf begins a job it will finish that
 job even if the associated labor is removed. Autolabor therefore frequently checks
 which dwarf or dwarves should take new jobs for that labor, and sets labors accordingly.
-Labors with equiptment (mining, hunting, and woodcutting), which are abandoned
+Labors with equipment (mining, hunting, and woodcutting), which are abandoned
 if labors change mid-job, are handled slightly differently to minimise churn.
 
 .. warning::

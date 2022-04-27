@@ -278,7 +278,7 @@ local function getTokenArg1PlantDefinition(plantDefinition, b, c)
     return getPlantGrowthTokenCore(plantDefinition, growthNumber, token)
 end
 
-local function getTokenArg1Else(userdata, b, c)
+local function getTokenArg1Else(userdata, b)
     local rawStruct, token
     if df.is_instance(df.historical_entity, userdata) then
         rawStruct = userdata.entity_raw
@@ -365,7 +365,7 @@ function getToken(a, b, c)
         -- Signatures from here:
         -- getToken(rawStruct, token)
         -- getToken(rawStructInstance, token)
-        return getTokenArg1Else(a, b, c)
+        return getTokenArg1Else(a, b)
     end
 end
 

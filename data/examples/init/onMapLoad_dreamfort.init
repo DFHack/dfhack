@@ -24,12 +24,6 @@ repeat -name autoMilkCreature -time 14 -timeUnits days -command [ workorder "{\"
 # Fulfill high-volume orders before slower once-daily orders
 repeat -name orders-sort -time 1 -timeUnits days -command [ orders sort ]
 
-# Reduce performance impact of temperature changes
-tweak fast-heat 100
-
-# Add a hotkey to the job menu to allow boosting the priority of the job
-tweak do-job-now
-
 # Don't let caravans bring barrels of blood and other useless liquids
 fix/blood-del
 

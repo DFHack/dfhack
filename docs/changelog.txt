@@ -90,6 +90,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``widgets.ToggleHotkeyLabel``: new ``CycleHotkeyLabel`` subclass that toggles between ``On`` and ``Off`` states
 - ``safe_index`` now properly handles lua sparse tables that are indexed by numbers
 - ``widgets``: unset values in ``frame_inset``-table default to ``0``
+- ``dialogs``: ``show*`` functions now return a reference to the created dialog
 
 # 0.47.05-r4
 

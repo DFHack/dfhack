@@ -3204,7 +3204,7 @@ A module for reading custom tokens added to the raws by mods.
   Where ``typeDefinition`` is a type definition struct as seen in ``df.global.world.raws``
   (e.g.: ``dfhack.gui.getSelectedItem().subtype``) and ``token`` is the name of the custom token
   you want read. The arguments from the token will then be returned as strings using single or
-  multiple return values. If the token is not present, the result is false, if it is present
+  multiple return values. If the token is not present, the result is false; if it is present
   but has no arguments, the result is true. For ``creature_raw``, it checks against no caste.
   For ``plant_raw``, it checks against no growth.
 

@@ -527,7 +527,8 @@ end
 -- end
 function MenuOverlay:renderMapOverlay(get_overlay_char_fn, bounds_rect)
     local vp = self:getViewport()
-    local rect = gui.ViewRect{rect=vp, clip_view=gui.ViewRect{rect=bounds_rect}}
+    local rect = gui.ViewRect{rect=vp,
+                              clip_view=bounds_rect and gui.ViewRect{rect=bounds_rect} or nil}
 
     -- nothing to do if the viewport is completely separate from the bounds_rect
     if rect:isDefunct() then return end

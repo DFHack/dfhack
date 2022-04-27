@@ -76,7 +76,7 @@ local function getTokenCore(typeDefinition, token)
     -- Have we got a table for this item subtype/reaction/whatever?
     -- tostring is needed here because the same raceDefinition key won't give the same value every time
     local thisTypeDefCache = ensureTable(customRawTokensCache, tostring(typeDefinition))
-    
+
     -- Have we already extracted and stored this custom raw token for this type definition?
     local tokenData = thisTypeDefCache[token]
     if tokenData ~= nil then
@@ -86,7 +86,7 @@ local function getTokenCore(typeDefinition, token)
             return tokenData
         end
     end
-    
+
     -- Get data anew
     local success, dftype = pcall(function() return typeDefinition._type end)
     local rawStrings = typeDefinition[rawStringsFieldNames[dftype]]
@@ -113,7 +113,7 @@ local function getRaceCasteTokenCore(raceDefinition, casteNumber, token)
     -- Have we got tables for this race/caste pair?
     local thisRaceDefCache = ensureTable(customRawTokensCache, tostring(raceDefinition))
     local thisRaceDefCacheCaste = ensureTable(thisRaceDefCache, casteNumber)
-    
+
     -- Have we already extracted and stored this custom raw token for this race/caste pair?
     local tokenData = thisRaceDefCacheCaste[token]
     if tokenData ~= nil then
@@ -125,7 +125,7 @@ local function getRaceCasteTokenCore(raceDefinition, casteNumber, token)
             return tokenData
         end
     end
-    
+
     -- Get data anew. Here we have to track what caste is currently being written to
     local casteId, thisCasteActive
     if casteNumber ~= -1 then
@@ -163,7 +163,7 @@ local function getPlantGrowthTokenCore(plantDefinition, growthNumber, token)
     -- Have we got tables for this plant/growth pair?
     local thisPlantDefCache = ensureTable(customRawTokensCache, tostring(plantDefinition))
     local thisPlantDefCacheGrowth = ensureTable(thisPlantDefCache, growthNumber)
-    
+
     -- Have we already extracted and stored this custom raw token for this plant/growth pair?
     local tokenData = thisPlantDefCacheGrowth[token]
     if tokenData ~= nil then
@@ -175,7 +175,7 @@ local function getPlantGrowthTokenCore(plantDefinition, growthNumber, token)
             return tokenData
         end
     end
-    
+
     -- Get data anew. Here we have to track what growth is currently being written to
     local growthId, thisGrowthActive
     if growthNumber ~= -1 then

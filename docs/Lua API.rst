@@ -2643,6 +2643,12 @@ environment by the mandatory init file dfhack.lua:
   Walks a sequence of dereferences, which may be represented by numbers or strings.
   Returns *nil* if any of obj or indices is *nil*, or a numeric index is out of array bounds.
 
+* ``ensure_key(t, key[, default_value])``
+
+  If the Lua table ``t`` doesn't include the specified ``key``, ``t[key]`` is
+  set to the value of ``default_value``, which defaults to ``{}`` if not set.
+  The new or existing value of ``t[key]`` is then returned.
+
 .. _lua-string:
 
 String class extentions

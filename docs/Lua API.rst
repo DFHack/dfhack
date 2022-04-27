@@ -3239,20 +3239,20 @@ Examples:
 
 * Using an eventful onReactionComplete hook, something for disturbing dwarven science::
 
-    if customRawTokens.getToken(reaction, "CAUSES_INSANITY") then
+    if customRawTokens.getToken(reaction, "DFHACK_CAUSES_INSANITY") then
         -- make unit who performed reaction go insane
 
 * Using an eventful onProjItemCheckMovement hook, a fast or slow-firing crossbow::
 
     -- check projectile distance flown is zero, get firer, etc...
-    local multiplier = tonumber(customRawTokens.getToken(bow, "FIRE_RATE_MULTIPLIER")) or 1
+    local multiplier = tonumber(customRawTokens.getToken(bow, "DFHACK_FIRE_RATE_MULTIPLIER")) or 1
     firer.counters.think_counter = firer.counters.think_counter * multiplier
 
 * Something for a script that prints help text about different types of units::
 
     local unit = dfhack.gui.getSelectedUnit()
     if not unit then return end
-    local helpText = customRawTokens.getToken(unit, "HELP_TEXT")
+    local helpText = customRawTokens.getToken(unit, "DFHACK_HELP_TEXT")
     if helpText then print(helpText) end
 
 * Healing armour::
@@ -3261,7 +3261,7 @@ Examples:
     local healAmount = 0
     for _, entry in ipairs(unit.inventory) do
         if entry.mode == 2 then -- Worn
-            healAmount = healAmount + tonumber((customRawTokens.getToken(entry.item, "HEAL_AMOUNT")) or 0)
+            healAmount = healAmount + tonumber((customRawTokens.getToken(entry.item, "DFHACK_HEAL_AMOUNT")) or 0)
         end
     end
     unit.body.blood_count = math.min(unit.body.blood_max, unit.body.blood_count + healAmount)

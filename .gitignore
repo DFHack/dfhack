@@ -72,5 +72,4 @@ tags
 .idea
 
 # external plugins
-/plugins/external/
 /plugins/CMakeLists.custom.txt

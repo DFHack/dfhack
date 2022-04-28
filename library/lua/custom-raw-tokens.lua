@@ -269,8 +269,9 @@ local function getTokenArg1PlantDefinition(plantDefinition, b, c)
     return getPlantGrowthTokenCore(plantDefinition, growthNumber, token)
 end
 
-local function getTokenArg1Else(userdata, b)
-    local rawStruct, token
+local function getTokenArg1Else(userdata, token)
+    assert(type(token) == "string", "Invalid argument 2 to getToken, must be a string")
+    local rawStruct
     if df.is_instance(df.historical_entity, userdata) then
         rawStruct = userdata.entity_raw
     elseif df.is_instance(df.item, userdata) then
@@ -288,14 +289,13 @@ local function getTokenArg1Else(userdata, b)
         if not userdata.item then return false end
         if df.is_instance(df.item_plantst, userdata.item) or df.is_instance(df.item_plant_growthst, userdata.item) then
             -- use plant behaviour from getToken
-            return getToken(userdata.item, b)
+            return getToken(userdata.item, token)
         end
         rawStruct = userdata.item and userdata.item.subtype
     elseif df.is_instance(df.proj_unitst, userdata) then
         if not usertdata.unit then return false end
         -- special return so do tag here
-        assert(type(b) == "string", "Invalid argument 2 to getToken, must be a string")
-        local unit, token = userdata.unit, b
+        local unit = userdata.unit
         return getRaceCasteTokenCore(df.global.world.raws.creatures.all[unit.race], unit.caste, token)
     elseif df.is_instance(df.building_workshopst, userdata) or df.is_instance(df.building_furnacest, userdata) then
         rawStruct = df.building_def.find(userdata.custom_type)
@@ -306,57 +306,55 @@ local function getTokenArg1Else(userdata, b)
         rawStruct = userdata
     end
     if not rawStruct then return false end
-    assert(type(b) == "string", "Invalid argument 2 to getToken, must be a string")
-    token = b
     return getTokenCore(rawStruct, token)
 end
 
-function getToken(a, b, c)
+function getToken(from, b, c)
     -- Argument processing
-    assert(a and type(a) == "userdata", "Expected userdata for argument 1 to getToken")
-    if df.is_instance(df.creature_raw, a) then
+    assert(from and type(from) == "userdata", "Expected userdata for argument 1 to getToken")
+    if df.is_instance(df.creature_raw, from) then
         -- Signatures from here:
         -- getToken(raceDefinition, casteNumber, token)
         -- getToken(raceDefinition, casteString, token)
-        return getTokenArg1RaceDefinition(a, b, c)
-    elseif df.is_instance(df.unit, a) then
+        return getTokenArg1RaceDefinition(from, b, c)
+    elseif df.is_instance(df.unit, from) then
         -- Signatures from here:
         -- getToken(rawStructInstance, token)
         assert(type(b) == "string", "Invalid argument 2 to getToken, must be a string")
-        local unit, token = a, b
+        local unit, token = from, b
         return getRaceCasteTokenCore(df.global.world.raws.creatures.all[unit.race], unit.caste, token)
-    elseif df.is_instance(df.plant_raw, a) then
+    elseif df.is_instance(df.plant_raw, from) then
         -- Signatures from here:
         -- getToken(plantDefinition, growthNumber, token)
         -- getToken(plantDefinition, growthString, token)
-        return getTokenArg1PlantDefinition(a, b, c)
-    elseif df.is_instance(df.plant, a) then
+        return getTokenArg1PlantDefinition(from, b, c)
+    elseif df.is_instance(df.plant, from) then
         -- Signatures from here:
         -- getToken(rawStructInstance, token)
         assert(type(b) == "string", "Invalid argument 2 to getToken, must be a string")
-        local plantDefinition, plantGrowthNumber, token = df.global.world.raws.plants.all[a.material], -1, b
+        local plantDefinition, plantGrowthNumber, token = df.global.world.raws.plants.all[from.material], -1, b
         return getPlantGrowthTokenCore(plantDefinition, plantGrowthNumber, token)
-    elseif df.is_instance(df.item_plantst, a) then
+    elseif df.is_instance(df.item_plantst, from) then
         -- Signatures from here:
         -- getToken(rawStructInstance, token)
-        local matInfo = dfhack.matinfo.decode(a)
+        local matInfo = dfhack.matinfo.decode(from)
         if matInfo.mode ~= "plant" then return false end
         assert(type(b) == "string", "Invalid argument 2 to getToken, must be a string")
         local plantDefinition, plantGrowthNumber, token = matInfo.plant, -1, b
         return getPlantGrowthTokenCore(plantDefinition, plantGrowthNumber, token)
-    elseif df.is_instance(df.item_plant_growthst, a) then
+    elseif df.is_instance(df.item_plant_growthst, from) then
         -- Signatures from here:
         -- getToken(rawStructInstance, token)
-        local matInfo = dfhack.matinfo.decode(a)
+        local matInfo = dfhack.matinfo.decode(from)
         if matInfo.mode ~= "plant" then return false end
         assert(type(b) == "string", "Invalid argument 2 to getToken, must be a string")
-        local plantDefinition, plantGrowthNumber, token = matInfo.plant, a.growth_print, b
+        local plantDefinition, plantGrowthNumber, token = matInfo.plant, from.growth_print, b
         return getPlantGrowthTokenCore(plantDefinition, plantGrowthNumber, token)
     else
         -- Signatures from here:
         -- getToken(rawStruct, token)
         -- getToken(rawStructInstance, token)
-        return getTokenArg1Else(a, b)
+        return getTokenArg1Else(from, b)
     end
 end
 

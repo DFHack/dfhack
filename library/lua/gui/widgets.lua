@@ -447,7 +447,7 @@ function Label:update_scroll_inset()
         self._show_scroll_icons = self:getTextHeight() > self.frame_body.height and 'right' or false
     else
         self._show_scroll_icons = self.show_scroll_icons
-    end    
+    end
     if self._show_scroll_icons then
         -- here self._show_scroll_icons can only be either
         -- 'left' or any true value which we interpret as right
@@ -510,7 +510,7 @@ function Label:onRenderBody(dc)
 end
 
 function Label:onRenderFrame(dc, rect)
-    if self._show_scroll_icons 
+    if self._show_scroll_icons
     and self:getTextHeight() > self.frame_body.height
     then
         self:render_scroll_icons(dc, rect)

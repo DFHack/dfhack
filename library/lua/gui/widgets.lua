@@ -459,8 +459,7 @@ function Label:update_scroll_inset()
     end
 end
 
-function Label:render_scroll_icons(dc, y1, y2)
-    local x = self._show_scroll_icons == 'left' and 0 or dc.width-1
+function Label:render_scroll_icons(dc, x, y1, y2)
     if self.start_line_num ~= 1 then
         dc:seek(x, y1):char(self.up_arrow_icon, self.scroll_icon_pen)
     end
@@ -471,7 +470,7 @@ function Label:render_scroll_icons(dc, y1, y2)
 end
 
 function Label:postComputeFrame()
-	self:update_scroll_inset()
+    self:update_scroll_inset()
 end
 
 function Label:preUpdateLayout()
@@ -508,7 +507,14 @@ function Label:onRenderFrame(dc, rect)
     if self._show_scroll_icons
     and self:getTextHeight() > self.frame_body.height
     then
-        self:render_scroll_icons(dc, self.frame_body.y1-dc.y1, self.frame_body.y2-dc.y1)
+        local x = self._show_scroll_icons == 'left'
+                and self.frame_body.x1-dc.x1-1
+                or  self.frame_body.x2-dc.x1+1
+        self:render_scroll_icons(dc,
+            x,
+            self.frame_body.y1-dc.y1,
+            self.frame_body.y2-dc.y1
+        )
     end
 end
 

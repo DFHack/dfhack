@@ -510,7 +510,6 @@ function Label:onRenderBody(dc)
 end
 
 function Label:onRenderFrame(dc, rect)
-    Label.super.onRenderFrame(self, dc, rect)
     if self._show_scroll_icons 
     and self:getTextHeight() > self.frame_body.height
     then

@@ -438,8 +438,6 @@ function Label:setText(text)
         self.frame = self.frame or {}
         self.frame.h = self:getTextHeight()
     end
-
-    self._text_dirty = true
 end
 
 function Label:update_scroll_inset()
@@ -473,10 +471,7 @@ function Label:render_scroll_icons(dc, y1, y2)
 end
 
 function Label:postComputeFrame()
-    if self._text_dirty then
-        self._text_dirty = nil
-        self:update_scroll_inset()
-    end
+	self:update_scroll_inset()
 end
 
 function Label:preUpdateLayout()

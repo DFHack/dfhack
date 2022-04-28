@@ -3782,6 +3782,13 @@ It has the following attributes:
 :auto_width: Sets self.frame.w from the text width.
 :on_click: A callback called when the label is clicked (optional)
 :on_rclick: A callback called when the label is right-clicked (optional)
+:show_scroll_icons: Controls scroll icons' behaviour: ``false`` for no icons, ``'right'`` or ``'left'`` for
+     icons next to the text in an additional column (``frame_inset`` is adjusted to have ``.r`` or ``.l`` greater than ``0``),
+     ``nil`` same as ``'right'`` but changes ``frame_inset`` only if a scroll icon is actually necessary
+     (if ``getTextHeight()`` is greater than ``frame_body.height``). Default is ``nil``.
+:up_arrow_icon: The symbol for scroll up arrow.
+:down_arrow_icon: The symbol for scroll down arrow.
+:scroll_icon_pen: Specifies the pen for scroll icons.
 
 The text itself is represented as a complex structure, and passed
 to the object via the ``text`` argument of the constructor, or via

@@ -17,15 +17,6 @@ dfhack.onStateChange.customRawTokens = function(code)
     end
 end
 
-local function ensureTable(tableToHoldIn, key)
-    local ensuredTable = tableToHoldIn[key]
-    if not ensuredTable then
-        ensuredTable = {}
-        tableToHoldIn[key] = ensuredTable
-    end
-    return ensuredTable
-end
-
 local function doToken(cacheTable, token, iter)
     local args, lenArgs = {}, 0
     for arg in iter do
@@ -75,7 +66,7 @@ local rawStringsFieldNames = {
 local function getTokenCore(typeDefinition, token)
     -- Have we got a table for this item subtype/reaction/whatever?
     -- tostring is needed here because the same raceDefinition key won't give the same value every time
-    local thisTypeDefCache = ensureTable(customRawTokensCache, tostring(typeDefinition))
+    local thisTypeDefCache = ensure_key(customRawTokensCache, tostring(typeDefinition))
 
     -- Have we already extracted and stored this custom raw token for this type definition?
     local tokenData = thisTypeDefCache[token]
@@ -111,8 +102,8 @@ end
 
 local function getRaceCasteTokenCore(raceDefinition, casteNumber, token)
     -- Have we got tables for this race/caste pair?
-    local thisRaceDefCache = ensureTable(customRawTokensCache, tostring(raceDefinition))
-    local thisRaceDefCacheCaste = ensureTable(thisRaceDefCache, casteNumber)
+    local thisRaceDefCache = ensure_key(customRawTokensCache, tostring(raceDefinition))
+    local thisRaceDefCacheCaste = ensure_key(thisRaceDefCache, casteNumber)
 
     -- Have we already extracted and stored this custom raw token for this race/caste pair?
     local tokenData = thisRaceDefCacheCaste[token]
@@ -161,8 +152,8 @@ end
 
 local function getPlantGrowthTokenCore(plantDefinition, growthNumber, token)
     -- Have we got tables for this plant/growth pair?
-    local thisPlantDefCache = ensureTable(customRawTokensCache, tostring(plantDefinition))
-    local thisPlantDefCacheGrowth = ensureTable(thisPlantDefCache, growthNumber)
+    local thisPlantDefCache = ensure_key(customRawTokensCache, tostring(plantDefinition))
+    local thisPlantDefCacheGrowth = ensure_key(thisPlantDefCache, growthNumber)
 
     -- Have we already extracted and stored this custom raw token for this plant/growth pair?
     local tokenData = thisPlantDefCacheGrowth[token]

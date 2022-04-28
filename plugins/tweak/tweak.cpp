@@ -49,11 +49,14 @@
 #include "df/item_glovesst.h"
 #include "df/item_shoesst.h"
 #include "df/item_pantsst.h"
+#include "df/item_drinkst.h"
+#include "df/item_globst.h"
 #include "df/item_liquid_miscst.h"
 #include "df/item_powder_miscst.h"
 #include "df/item_barst.h"
 #include "df/item_threadst.h"
 #include "df/item_clothst.h"
+#include "df/item_sheetst.h"
 #include "df/spatter.h"
 #include "df/layer_object.h"
 #include "df/reaction.h"
@@ -68,6 +71,7 @@
 #include "df/job.h"
 #include "df/general_ref_building_holderst.h"
 #include "df/unit_health_info.h"
+#include "df/caste_body_info.h"
 #include "df/activity_entry.h"
 #include "df/activity_event_combat_trainingst.h"
 #include "df/activity_event_individual_skill_drillst.h"
@@ -101,14 +105,15 @@
 #include "tweaks/kitchen-prefs-empty.h"
 #include "tweaks/max-wheelbarrow.h"
 #include "tweaks/military-assign.h"
-#include "tweaks/pausing-fps-counter.h"
 #include "tweaks/nestbox-color.h"
+#include "tweaks/partial-items.h"
+#include "tweaks/pausing-fps-counter.h"
+#include "tweaks/reaction-gloves.h"
 #include "tweaks/shift-8-scroll.h"
 #include "tweaks/stable-cursor.h"
 #include "tweaks/stone-status-all.h"
 #include "tweaks/title-start-rename.h"
 #include "tweaks/tradereq-pet-gender.h"
-#include "tweaks/reaction-gloves.h"
 
 using std::set;
 using std::vector;
@@ -244,6 +249,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Preserve list order and cursor position when assigning to squad,\n"
         "    i.e. stop the rightmost list of the Positions page of the military\n"
         "    screen from constantly jumping to the top.\n"
+        "  tweak partial-items [disable]\n"
+        "    Displays percentages on partially-consumed items such as hospital cloth\n"
         "  tweak pausing-fps-counter [disable]\n"
         "    Replace fortress mode FPS counter with one that stops counting \n"
         "    when paused.\n"
@@ -329,8 +336,19 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 
     TWEAK_HOOK("nestbox-color", nestbox_color_hook, drawBuilding);
 
+    TWEAK_HOOK("partial-items", partial_items_hook_bar, getItemDescription);
+    TWEAK_HOOK("partial-items", partial_items_hook_drink, getItemDescription);
+    TWEAK_HOOK("partial-items", partial_items_hook_glob, getItemDescription);
+    TWEAK_HOOK("partial-items", partial_items_hook_liquid_misc, getItemDescription);
+    TWEAK_HOOK("partial-items", partial_items_hook_powder_misc, getItemDescription);
+    TWEAK_HOOK("partial-items", partial_items_hook_cloth, getItemDescription);
+    TWEAK_HOOK("partial-items", partial_items_hook_sheet, getItemDescription);
+    TWEAK_HOOK("partial-items", partial_items_hook_thread, getItemDescription);
+
     TWEAK_HOOK("pausing-fps-counter", dwarfmode_pausing_fps_counter_hook, render);
     TWEAK_HOOK("pausing-fps-counter", title_pausing_fps_counter_hook, render);
+
+    TWEAK_HOOK("reaction-gloves", reaction_gloves_hook, produce);
 
     TWEAK_HOOK("shift-8-scroll", shift_8_scroll_hook, feed);
 
@@ -343,8 +361,6 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     TWEAK_HOOK("title-start-rename", title_start_rename_hook, render);
 
     TWEAK_HOOK("tradereq-pet-gender", pet_gender_hook, render);
-
-    TWEAK_HOOK("reaction-gloves", reaction_gloves_hook, produce);
 
     return CR_OK;
 }

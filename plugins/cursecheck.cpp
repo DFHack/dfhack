@@ -146,6 +146,7 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
     Gui::getCursorCoords(cursorX,cursorY,cursorZ);
 
     bool giveDetails = false;
+    bool giveUnitID = false;
     bool giveNick = false;
     bool ignoreDead = true;
     bool verbose = false;
@@ -162,6 +163,7 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
                         "  By default dead and passive creatures (aka really dead) are ignored.\n"
                         "Options:\n"
                         "  detail  - show details (name and age shown ingame might differ)\n"
+                        "  ids     - add creature and race IDs to be show on the  output\n"
                         "  nick    - try to set cursetype as nickname (does not always work)\n"
                         "  all     - include dead and passive creatures\n"
                         "  verbose - show all curse tags (if you really want to know it all)\n"
@@ -170,6 +172,8 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
         }
         if(parameters[i] == "detail")
             giveDetails = true;
+        if(parameters[i] == "ids")
+            giveUnitID = true;
         if(parameters[i] == "nick")
             giveNick = true;
         if(parameters[i] == "all")
@@ -268,6 +272,11 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
                         << bitfield_to_string(unit->curse.add_tags1) << endl
                         << bitfield_to_string(unit->curse.add_tags2) << endl;
                 }
+            }
+
+            if (giveUnitID)
+            {
+                out.print("Creature %d, race %d (%x)\n", unit->id, unit->race, unit->race);
             }
         }
     }

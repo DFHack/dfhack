@@ -69,22 +69,26 @@ function MessageBox:onInput(keys)
 end
 
 function showMessage(title, text, tcolor, on_close)
-    MessageBox{
+    local mb = MessageBox{
         frame_title = title,
         text = text,
         text_pen = tcolor,
         on_close = on_close
-    }:show()
+    }
+    mb:show()
+    return mb
 end
 
 function showYesNoPrompt(title, text, tcolor, on_accept, on_cancel)
-    MessageBox{
+    local mb = MessageBox{
         frame_title = title,
         text = text,
         text_pen = tcolor,
         on_accept = on_accept,
         on_cancel = on_cancel,
-    }:show()
+    }
+    mb:show()
+    return mb
 end
 
 InputBox = defclass(InputBox, MessageBox)
@@ -133,7 +137,7 @@ function InputBox:onInput(keys)
 end
 
 function showInputPrompt(title, text, tcolor, input, on_input, on_cancel, min_width)
-    InputBox{
+    local ib = InputBox{
         frame_title = title,
         text = text,
         text_pen = tcolor,
@@ -141,7 +145,9 @@ function showInputPrompt(title, text, tcolor, input, on_input, on_cancel, min_wi
         on_input = on_input,
         on_cancel = on_cancel,
         frame_width = min_width,
-    }:show()
+    }
+    ib:show()
+    return ib
 end
 
 ListBox = defclass(ListBox, MessageBox)
@@ -158,6 +164,7 @@ ListBox.ATTRS{
     on_select2 = DEFAULT_NIL,
     select2_hint = DEFAULT_NIL,
     row_height = DEFAULT_NIL,
+    list_frame_inset = DEFAULT_NIL,
 }
 
 function ListBox:preinit(info)
@@ -198,8 +205,9 @@ function ListBox:init(info)
                 if cb then cb(obj, sel) end
             end,
             on_submit2 = on_submit2,
-            frame = { l = 0, r = 0 },
-            row_height = info.row_height,
+            frame = { l = 0, r = 0},
+            frame_inset = self.list_frame_inset,
+            row_height = self.row_height,
         }
     }
 end
@@ -230,7 +238,7 @@ function ListBox:onInput(keys)
 end
 
 function showListPrompt(title, text, tcolor, choices, on_select, on_cancel, min_width, filter)
-    ListBox{
+    local lb = ListBox{
         frame_title = title,
         text = text,
         text_pen = tcolor,
@@ -239,7 +247,9 @@ function showListPrompt(title, text, tcolor, choices, on_select, on_cancel, min_
         on_cancel = on_cancel,
         frame_width = min_width,
         with_filter = filter,
-    }:show()
+    }
+    lb:show()
+    return lb
 end
 
 return _ENV

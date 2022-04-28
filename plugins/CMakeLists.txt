@@ -77,6 +77,9 @@ set_source_files_properties( Brushes.h PROPERTIES HEADER_FILE_ONLY TRUE )
 # Plugins
 option(BUILD_SUPPORTED "Build the supported plugins (reveal, probe, etc.)." ON)
 if(BUILD_SUPPORTED)
+    # If you are adding a plugin that you do not intend to commit to the DFHack repo,
+    # see instructions for adding "external" plugins at the end of this file.
+
     dfhack_plugin(3dveins 3dveins.cpp)
     dfhack_plugin(add-spatter add-spatter.cpp)
     # dfhack_plugin(advtools advtools.cpp)
@@ -175,6 +178,9 @@ if(BUILD_SUPPORTED)
     dfhack_plugin(workNow workNow.cpp)
     dfhack_plugin(xlsxreader xlsxreader.cpp LINK_LIBRARIES lua xlsxio_read_STATIC zip expat)
     dfhack_plugin(zone zone.cpp LINK_LIBRARIES lua)
+
+    # If you are adding a plugin that you do not intend to commit to the DFHack repo,
+    # see instructions for adding "external" plugins at the end of this file.
 endif()
 
 # this is the skeleton plugin. If you want to make your own, make a copy and then change it
@@ -183,12 +189,50 @@ if(BUILD_SKELETON)
     add_subdirectory(skeleton)
 endif()
 
-if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.custom.txt")
-    file(WRITE "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.custom.txt" "# You can add custom plugins here to avoid touching plugins/CMakeLists.txt,
-# This can be useful if you've made modifications to that file and try to
-# switch between branches that have also made modifications to it.
+macro(subdirlist result subdir)
+    file(GLOB children ABSOLUTE ${subdir}/ ${subdir}/*/)
+    set(dirlist "")
+    foreach(child ${children})
+        if(IS_DIRECTORY ${child})
+            file(RELATIVE_PATH child ${CMAKE_CURRENT_SOURCE_DIR}/${subdir} ${child})
+            list(APPEND dirlist ${child})
+        endif()
+    endforeach()
+    set(${result} ${dirlist})
+endmacro()
 
+# To add "external" plugins without committing them to the DFHack repo:
+#
+# 1. run CMake as you normally do (this is only necessary once if
+#    `external/CMakeLists.txt` does not exist yet)
+# 2. add the plugin to the `external` folder (relative to this file).
+#    - for a multi-file plugin, either clone the repository inside of the
+#      `external` folder, or add the folder there manually.
+#    - for a single-file plugin, simply add the file there.
+# 3. add an entry to `external/CMakeLists.txt`:
+#    - add_subdirectory() for multi-file plugins in a subdirectory
+#    - dfhack_plugin() for single-file plugins
+# 4. build DFHack as normal. The plugins you added will be built as well.
+
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/CMakeLists.txt")
+    set(content_str
+"# Add external plugins here - this file is ignored by git
+
+# Recommended: use add_subdirectory() for folders that you have created within
+# this folder, or dfhack_plugin() for single files that you have added here.
+
+# See the end of /plugins/CMakeLists.txt for more details.
 ")
+    subdirlist(SUBDIRS external)
+    foreach(subdir ${SUBDIRS})
+        set(content_str "${content_str}add_subdirectory(${subdir})\n")
+    endforeach()
+    file(WRITE "${CMAKE_CURRENT_SOURCE_DIR}/external/CMakeLists.txt" ${content_str})
 endif()
 
-include(CMakeLists.custom.txt)
+add_subdirectory(external)
+
+# for backwards compatibility
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.custom.txt")
+    include("${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.custom.txt")
+endif()

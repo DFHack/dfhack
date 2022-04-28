@@ -38,6 +38,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Removed
 
+## New Tweaks
+- `tweak` partial-items: displays percentages on partially-consumed items such as hospital cloth
+
 ## Fixes
 - `autofarm` removed restriction on only planting 'discovered' plants
 - `luasocket` (and others): return correct status code when closing socket connections
@@ -57,6 +60,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `autochop`: preferably designate larger trees over smaller ones
 - `blueprint`: ``track`` phase renamed to ``carve``. carved fortifications and (optionally) engravings are now captured in blueprints
 - `tweak` stable-cursor: Keep the cursor stable even when the viewport moves a small amount
+- `cursecheck`: Added a new parameter, ``ids``, to print creature and race IDs of the cursed creature.
 
 ## Documentation
 - Add more examples to the plugin skeleton files so they are more informative for a newbie
@@ -79,7 +83,15 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - New string class function: ``string:escape_pattern()`` escapes regex special characters within a string
 - ``widgets.Panel``: if ``autoarrange_subviews`` is set, ``Panel``\s will now automatically lay out widgets vertically according to their current height.  This allows you to have widgets dynamically change height or become visible/hidden and you don't have to worry about recalculating frame layouts
 - ``widgets.ResizingPanel``: new ``Panel`` subclass that automatically recalculates it's own frame height based on the size, position, and visibility of its subviews
+- ``widgets.WrappedLabel``:  new ``Label`` subclass that provides autowrapping of text
+- ``widgets.TooltipLabel``:  new ``WrappedLabel`` subclass that provides tooltip-like behavior
+- ``widgets.HotkeyLabel``: new ``Label`` subclass that displays and reacts to hotkeys
+- ``widgets.CycleHotkeyLabel``: new ``Label`` subclass that allows users to cycle through a list of options by pressing a hotkey
+- ``widgets.ToggleHotkeyLabel``: new ``CycleHotkeyLabel`` subclass that toggles between ``On`` and ``Off`` states
 - ``safe_index`` now properly handles lua sparse tables that are indexed by numbers
+- ``widgets``: unset values in ``frame_inset``-table default to ``0``
+- ``dialogs``: ``show*`` functions now return a reference to the created dialog
+- ``ensure_key``: new global function for retrieving or dynamically creating Lua table mappings
 
 # 0.47.05-r4
 

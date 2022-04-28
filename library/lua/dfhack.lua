@@ -385,6 +385,13 @@ function safe_index(obj,idx,...)
     end
 end
 
+function ensure_key(t, key, default_value)
+    if t[key] == nil then
+        t[key] = (default_value ~= nil) and default_value or {}
+    end
+    return t[key]
+end
+
 -- String class extentions
 
 -- prefix is a literal string, not a pattern

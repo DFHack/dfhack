@@ -189,6 +189,17 @@ if(BUILD_SKELETON)
     add_subdirectory(skeleton)
 endif()
 
+macro(subdirlist result subdir)
+    file(GLOB children ABSOLUTE ${subdir}/ ${subdir}/*/)
+    set(dirlist "")
+    foreach(child ${children})
+        if(IS_DIRECTORY ${child})
+            file(RELATIVE_PATH child ${CMAKE_CURRENT_SOURCE_DIR}/${subdir} ${child})
+            list(APPEND dirlist ${child})
+        endif()
+    endforeach()
+    set(${result} ${dirlist})
+endmacro()
 
 # To add "external" plugins without committing them to the DFHack repo:
 #
@@ -204,7 +215,7 @@ endif()
 # 4. build DFHack as normal. The plugins you added will be built as well.
 
 if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/CMakeLists.txt")
-    file(WRITE "${CMAKE_CURRENT_SOURCE_DIR}/external/CMakeLists.txt"
+    set(content_str
 "# Add external plugins here - this file is ignored by git
 
 # Recommended: use add_subdirectory() for folders that you have created within
@@ -212,9 +223,14 @@ if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/CMakeLists.txt")
 
 # See the end of /plugins/CMakeLists.txt for more details.
 ")
+    subdirlist(SUBDIRS external)
+    foreach(subdir ${SUBDIRS})
+        set(content_str "${content_str}add_subdirectory(${subdir})\n")
+    endforeach()
+    file(WRITE "${CMAKE_CURRENT_SOURCE_DIR}/external/CMakeLists.txt" ${content_str})
 endif()
 
-include("${CMAKE_CURRENT_SOURCE_DIR}/external/CMakeLists.txt")
+add_subdirectory(external)
 
 # for backwards compatibility
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.custom.txt")

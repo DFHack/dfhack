@@ -99,10 +99,12 @@ function Panel:postUpdateLayout()
     local gap = self.autoarrange_gap
     local y = 0
     for _,subview in ipairs(self.subviews) do
+        if not subview.frame then goto continue end
         subview.frame.t = y
         if subview.visible then
-            y = y + subview.frame.h + gap
+            y = y + (subview.frame.h or 0) + gap
         end
+        ::continue::
     end
     self.frame_rect.height = y
 
@@ -116,11 +118,6 @@ end
 
 ResizingPanel = defclass(ResizingPanel, Panel)
 
-function ResizingPanel:init()
-    -- ensure we have a frame so a containing widget can read our dimensions
-    if not self.frame then self.frame = {} end
-end
-
 -- adjust our frame dimensions according to positions and sizes of our subviews
 function ResizingPanel:postUpdateLayout(frame_body)
     local w, h = 0, 0
@@ -132,6 +129,7 @@ function ResizingPanel:postUpdateLayout(frame_body)
                             (subview.frame.h or frame_body.height))
         end
     end
+    if not self.frame then self.frame = {} end
     self.frame.w, self.frame.h = w, h
 end
 
@@ -424,7 +422,9 @@ Label.ATTRS{
 
 function Label:init(args)
     self.start_line_num = 1
-    self:setText(args.text)
+    -- use existing saved text if no explicit text was specified. this avoids
+    -- overwriting pre-formatted text that subclasses may have already set
+    self:setText(args.text or self.text)
     if not self.text_hpen then
         self.text_hpen = ((tonumber(self.text_pen) or tonumber(self.text_pen.fg) or 0) + 8) % 16
     end
@@ -545,6 +545,150 @@ function Label:onInput(keys)
     end
     return check_text_keys(self, keys)
 end
+
+------------------
+-- WrappedLabel --
+------------------
+
+WrappedLabel = defclass(WrappedLabel, Label)
+
+WrappedLabel.ATTRS{
+    text_to_wrap=DEFAULT_NIL,
+    indent=0,
+}
+
+function WrappedLabel:getWrappedText(width)
+    if not self.text_to_wrap then return nil end
+    local text_to_wrap = getval(self.text_to_wrap)
+    if type(text_to_wrap) == 'table' then
+        text_to_wrap = table.concat(text_to_wrap, NEWLINE)
+    end
+    return text_to_wrap:wrap(width - self.indent)
+end
+
+-- we can't set the text in init() since we may not yet have a frame that we
+-- can get wrapping bounds from.
+function WrappedLabel:postComputeFrame()
+    local wrapped_text = self:getWrappedText(self.frame_body.width)
+    if not wrapped_text then return end
+    local text = {}
+    for _,line in ipairs(wrapped_text:split(NEWLINE)) do
+        table.insert(text, {gap=self.indent, text=line})
+        -- a trailing newline will get ignored so we don't have to manually trim
+        table.insert(text, NEWLINE)
+    end
+    self:setText(text)
+end
+
+------------------
+-- TooltipLabel --
+------------------
+
+TooltipLabel = defclass(TooltipLabel, WrappedLabel)
+
+TooltipLabel.ATTRS{
+    show_tooltip=DEFAULT_NIL,
+    indent=2,
+    text_pen=COLOR_GREY,
+}
+
+function TooltipLabel:preUpdateLayout()
+    self.visible = getval(self.show_tooltip)
+end
+
+-----------------
+-- HotkeyLabel --
+-----------------
+
+HotkeyLabel = defclass(HotkeyLabel, Label)
+
+HotkeyLabel.ATTRS{
+    key=DEFAULT_NIL,
+    label=DEFAULT_NIL,
+    on_activate=DEFAULT_NIL,
+}
+
+function HotkeyLabel:init()
+    self:setText{{key=self.key, key_sep=': ', text=self.label,
+                   on_activate=self.on_activate}}
+end
+
+----------------------
+-- CycleHotkeyLabel --
+----------------------
+
+CycleHotkeyLabel = defclass(CycleHotkeyLabel, Label)
+
+CycleHotkeyLabel.ATTRS{
+    key=DEFAULT_NIL,
+    label=DEFAULT_NIL,
+    label_width=DEFAULT_NIL,
+    options=DEFAULT_NIL,
+    initial_option=1,
+    on_change=DEFAULT_NIL,
+}
+
+function CycleHotkeyLabel:init()
+    -- initialize option_idx
+    for i in ipairs(self.options) do
+        if self.initial_option == self:getOptionValue(i) then
+            self.option_idx = i
+            break
+        end
+    end
+    if not self.option_idx then
+        error(('cannot find option with value or index: "%s"')
+              :format(self.initial_option))
+    end
+
+    self:setText{
+        {key=self.key, key_sep=': ', text=self.label, width=self.label_width,
+         on_activate=self:callback('cycle')},
+        '  ',
+        {text=self:callback('getOptionLabel')},
+    }
+end
+
+function CycleHotkeyLabel:cycle()
+    local old_option_idx = self.option_idx
+    if self.option_idx == #self.options then
+        self.option_idx = 1
+    else
+        self.option_idx = self.option_idx + 1
+    end
+    if self.on_change then
+        self.on_change(self:getOptionValue(),
+                       self:getOptionValue(old_option_idx))
+    end
+end
+
+function CycleHotkeyLabel:getOptionLabel(option_idx)
+    option_idx = option_idx or self.option_idx
+    local option = self.options[option_idx]
+    if type(option) == 'table' then
+        return option.label
+    end
+    return option
+end
+
+function CycleHotkeyLabel:getOptionValue(option_idx)
+    option_idx = option_idx or self.option_idx
+    local option = self.options[option_idx]
+    if type(option) == 'table' then
+        return option.value
+    end
+    return option
+end
+
+-----------------------
+-- ToggleHotkeyLabel --
+-----------------------
+
+ToggleHotkeyLabel = defclass(ToggleHotkeyLabel, CycleHotkeyLabel)
+ToggleHotkeyLabel.ATTRS{
+    options={{label='On', value=true},
+             {label='Off', value=false}},
+}
 
 ----------
 -- List --

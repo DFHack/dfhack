@@ -9,6 +9,14 @@ function test.cxxrandom_distributions()
     -- no errors, no problem
 end
 
+--[[
+The below tests pass with their given seeds, if they begin failing
+for a given platform, or all around, new seeds should be found.
+
+Note: these tests which assert RNG, are mere sanity checks
+to ensure things haven't been severely broken by any changes
+]]
+
 function test.cxxrandom_seed()
     local nd = rng.normal_distribution:new(0,500000)
     local e1 = rng.MakeNewEngine(1)
@@ -58,7 +66,9 @@ function test.cxxrandom_exports()
     rng.AddToSequence(sid, 9)
     rng.ShuffleSequence(sid, id)
     for i = 1, 10 do
-        expect.ge(rng.NextInSequence(sid), 0)
+        local v = rng.NextInSequence(sid)
+        expect.ge(v, 0)
+        expect.le(v, 9)
     end
     rng.DestroyNumSequence(sid)
     rng.DestroyEngine(id)

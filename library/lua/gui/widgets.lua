@@ -412,8 +412,8 @@ Label.ATTRS{
     auto_width = false,
     on_click = DEFAULT_NIL,
     on_rclick = DEFAULT_NIL,
-    scroll_keys = STANDARDSCROLL,
     --
+    scroll_keys = STANDARDSCROLL,
     show_scroll_icons = DEFAULT_NIL, -- DEFAULT_NIL, 'right', 'left', false
     up_arrow_icon = string.char(24),
     down_arrow_icon = string.char(25),

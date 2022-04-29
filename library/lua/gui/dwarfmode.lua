@@ -443,11 +443,7 @@ MenuOverlay.ATTRS {
     sidebar_mode = DEFAULT_NIL,
 }
 
-function MenuOverlay:computeFrame(parent_rect)
-    return self.df_layout.menu, gui.inset_frame(self.df_layout.menu, self.frame_inset)
-end
-
-function MenuOverlay:onAboutToShow(parent)
+function MenuOverlay:init()
     if not dfhack.isMapLoaded() then
         -- sidebar menus are only valid when a fort map is loaded
         error('A fortress map must be loaded.')
@@ -471,7 +467,13 @@ function MenuOverlay:onAboutToShow(parent)
 
         enterSidebarMode(self.sidebar_mode)
     end
+end
 
+function MenuOverlay:computeFrame(parent_rect)
+    return self.df_layout.menu, gui.inset_frame(self.df_layout.menu, self.frame_inset)
+end
+
+function MenuOverlay:onAboutToShow(parent)
     self:updateLayout()
     if not self.df_layout.menu then
         error("The menu panel of dwarfmode is not visible")

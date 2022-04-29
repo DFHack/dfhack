@@ -151,8 +151,8 @@ bool_distribution = {}
 function bool_distribution:new(chance)
     local o = {}
     self.__index = self
-    if type(chance) ~= 'number' then
-        error("Invalid arguments in bool_distribution construction. min and max must be numbers.")
+    if type(chance) ~= 'number' or chance < 0 or chance > 1 then
+        error("Invalid arguments in bool_distribution construction. chance must be a number between 0.0 and 1.0 (both included).")
     end
     o.p = chance
     setmetatable(o,self)

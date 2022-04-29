@@ -558,7 +558,8 @@ WrappedLabel.ATTRS{
 }
 
 function WrappedLabel:getWrappedText(width)
-    if not self.text_to_wrap then return nil end
+    -- 0 width can happen if the parent has 0 width
+    if not self.text_to_wrap or width <= 0 then return nil end
     local text_to_wrap = getval(self.text_to_wrap)
     if type(text_to_wrap) == 'table' then
         text_to_wrap = table.concat(text_to_wrap, NEWLINE)

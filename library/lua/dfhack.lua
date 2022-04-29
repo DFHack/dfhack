@@ -439,6 +439,7 @@ end
 -- multiple lines. If width is not specified, 72 is used.
 function string:wrap(width)
     width = width or 72
+    if width <= 0 then error('expected width > 0; got: '..tostring(width)) end
     local wrapped_text = {}
     for line in self:gmatch('[^\n]*') do
         local line_start_pos = 1

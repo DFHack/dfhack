@@ -35,7 +35,7 @@ function test.cxxrandom_ranges()
     local g2 = rng.crng:new(e1, true, rng.real_distribution:new(-5,5))
     local g3 = rng.crng:new(e1, true, rng.int_distribution:new(-5,5))
     local g4 = rng.crng:new(e1, true, rng.num_sequence:new(-5,5))
-    for i = 1, 10000 do
+    for i = 1, 10 do
         local a = g1:next()
         local b = g2:next()
         local c = g3:next()

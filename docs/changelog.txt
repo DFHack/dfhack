@@ -81,6 +81,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Lua wrappers for functions reverse-engineered from ambushing unit code: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
 - Added `custom-raw-tokens` utility to Lua library for reading tokens added to raws by mods.
 - ``dwarfmode.MenuOverlay``: if ``sidebar_mode`` attribute is set, automatically manage entering a specific sidebar mode on show and restoring the previous sidebar mode on dismiss
+- ``dwarfmode.MenuOverlay``: new class function ``renderMapOverlay`` to assist with drawing tiles over the visible map
 - ``dwarfmode.enterSidebarMode()``: passing ``df.ui_sidebar_mode.DesignateMine`` now always results in you entering ``DesignateMine`` mode and not ``DesignateChopTrees``, even when you looking at the surface where the default designation mode is ``DesignateChopTrees``
 - New string class function: ``string:escape_pattern()`` escapes regex special characters within a string
 - ``widgets.Panel``: if ``autoarrange_subviews`` is set, ``Panel``\s will now automatically lay out widgets vertically according to their current height.  This allows you to have widgets dynamically change height or become visible/hidden and you don't have to worry about recalculating frame layouts

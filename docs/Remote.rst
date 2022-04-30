@@ -79,6 +79,7 @@ from other (non-C++) languages, including:
 - `dfhack-client-qt <https://github.com/cvuchener/dfhack-client-qt>`_ for C++ with Qt
 - `dfhack-client-python <https://github.com/McArcady/dfhack-client-python>`_ for Python (adapted from :forums:`"Blendwarf" <178089>`)
 - `dfhack-client-java <https://github.com/McArcady/dfhack-client-java>`_ for Java
+- `dfhack-remote <https://github.com/plule/dfhack-remote>`_ for Rust
 
 
 Protocol description

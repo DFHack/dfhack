@@ -50,7 +50,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     return CR_OK;
 }
 
-#define EK_ID_BASE (1l << 40)
+#define EK_ID_BASE (1ll << 40)
 
 class EnginesKeeper
 {
@@ -64,9 +64,11 @@ public:
         return instance;
     }
     uint64_t NewEngine( uint64_t seed ) {
+        auto id = ++id_counter;
+        CHECK_INVALID_ARGUMENT(m_engines.count(id) == 0);
         std::mt19937_64 engine( seed != 0 ? seed : std::chrono::system_clock::now().time_since_epoch().count() );
-        m_engines[++id_counter] = engine;
-        return id_counter;
+        m_engines[id] = engine;
+        return id;
     }
     void DestroyEngine( uint64_t id ) {
         m_engines.erase( id );
@@ -151,7 +153,7 @@ public:
 class SequenceKeeper
 {
 private:
-    SequenceKeeper() {}
+    SequenceKeeper() = default;
     std::unordered_map<uint64_t, NumberSequence> m_sequences;
     uint64_t id_counter = SK_ID_BASE;
 public:
@@ -160,12 +162,16 @@ public:
         return instance;
     }
     uint64_t MakeNumSequence( int64_t start, int64_t end ) {
-        m_sequences[++id_counter] = NumberSequence(start, end);
-        return id_counter;
+        auto id = ++id_counter;
+        CHECK_INVALID_ARGUMENT(m_sequences.count(id) == 0);
+        m_sequences[id] = NumberSequence(start, end);
+        return id;
     }
     uint64_t MakeNumSequence() {
-        m_sequences[++id_counter] = NumberSequence();
-        return id_counter;
+        auto id = ++id_counter;
+        CHECK_INVALID_ARGUMENT(m_sequences.count(id) == 0);
+        m_sequences[id] = NumberSequence();
+        return id;
     }
     void DestroySequence( uint64_t seqID ) {
         m_sequences.erase(seqID);

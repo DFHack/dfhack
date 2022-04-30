@@ -61,6 +61,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `blueprint`: ``track`` phase renamed to ``carve``. carved fortifications and (optionally) engravings are now captured in blueprints
 - `tweak` stable-cursor: Keep the cursor stable even when the viewport moves a small amount
 - `cursecheck`: Added a new parameter, ``ids``, to print creature and race IDs of the cursed creature.
+- Include recently-added tweaks in example dfhack.init file, clean up dreamfort onMapLoad.init file
 
 ## Documentation
 - Add more examples to the plugin skeleton files so they are more informative for a newbie

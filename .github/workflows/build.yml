@@ -29,6 +29,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install \
+            ccache \
             libgtk2.0-0 \
             libncursesw5 \
             libsdl-image1.2-dev \
@@ -38,8 +39,7 @@ jobs:
             libxml-libxslt-perl \
             lua5.3 \
             ninja-build \
-            zlib1g-dev \
-            ccache
+            zlib1g-dev
         pip install 'sphinx<4.4.0'
     - name: Install GCC
       run: |
@@ -65,7 +65,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.ccache
-        key: ${{ matrix.gcc }}
+        key: ccache-${{ matrix.os }}-gcc-${{ matrix.gcc }}
     - name: Download DF
       run: |
         sh ci/download-df.sh

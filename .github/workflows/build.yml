@@ -38,7 +38,8 @@ jobs:
             libxml-libxslt-perl \
             lua5.3 \
             ninja-build \
-            zlib1g-dev
+            zlib1g-dev \
+            ccache
         pip install 'sphinx<4.4.0'
     - name: Install GCC
       run: |
@@ -60,6 +61,11 @@ jobs:
       with:
         path: ~/DF
         key: ${{ steps.env_setup.outputs.df_version }}
+    - name: Fetch ccache
+      uses: actions/cache@v2
+      with:
+        path: ~/.ccache
+        key: ${{ matrix.gcc }}
     - name: Download DF
       run: |
         sh ci/download-df.sh

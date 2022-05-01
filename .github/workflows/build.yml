@@ -121,7 +121,7 @@ jobs:
         submodules: true
     - name: Build docs
       run: |
-        sphinx-build -W --keep-going -j3 . docs/html
+        sphinx-build -W --keep-going -j3 --color . docs/html
     - name: Upload docs
       uses: actions/upload-artifact@v1
       with:

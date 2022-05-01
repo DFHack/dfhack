@@ -47,7 +47,7 @@
 					"unrotten",
 					"cookable"
 				],
-				"value" : 1000
+				"value" : 500
 			},
 			{
 				"condition" : "AtMost",

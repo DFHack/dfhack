@@ -46,7 +46,7 @@ interactively."
 "# The dreamfort.csv distributed with DFHack is generated with the following command:
   for fname in dreamfort*.xlsx; do xlsx2csv -a -p '' ""$fname""; done | sed 's/,*$//'"
 #notes label(checklist) command checklist
-"Here is the recommended order for Dreamfort commands. You can copy/paste the command lines directly into the DFHack terminal, or, if you prefer, you can run the blueprints in the UI with gui/quickfort. See the level walkthroughs for context and details. Also remember to read the messages the blueprints print out after you run them so you don't miss any important manual steps."
+"Here is the recommended order for Dreamfort commands. You can copy/paste the command lines directly into the DFHack terminal, or, if you prefer, you can run the blueprints in the UI with gui/quickfort. See the walkthroughs (the ""help"" blueprints) for context and details. Also remember to read the messages the blueprints print out after you run them so you don't miss any important manual steps."
 ""
 -- Preparation (before you embark!) --
 Copy hack/examples/init/onMapLoad_dreamfort.init to your DF directory
@@ -67,7 +67,7 @@ quickfort run library/dreamfort.csv -n /surface1,# Run when you find your center
 quickfort run library/dreamfort.csv -n /dig_all,"# Run when you find a suitable rock layer for the industry level. It designates digging for industry, services, guildhall, suites, and apartments all in one go. This list does not include the farming level, which we'll dig in the uppermost soil layer a bit later. Note that it is more efficient for your miners if you designate your digging before they dig the central stairs past that level since the stairs are dug at a low priority. This keeps your miners focused on one level at a time. If you need to designate your levels individually due to caverns interrupting the sequence or just because it is your preference, run the level-specific dig blueprints (i.e. /industry1, /services1, /guildhall1, /suites1, and 5 levels of /apartments1) instead of running /dig_all."
 ""
 -- Core fort (should finish at about the third migration wave) --
-quickfort run library/dreamfort.csv -n /surface2,"# Run after initial trees are cleared. If you are deconstructing the wagon now, wait until after the wagon is deconstructed."
+quickfort run library/dreamfort.csv -n /surface2,"# Run after initial trees are cleared. If you are deconstructing the wagon now, wait until after the wagon is deconstructed so the jobs that depend on wagon contents (e.g. blocks) don't get canceled later."
 quickfort run library/dreamfort.csv -n /farming1,# Run when channels are dug and the additional designated trees are cleared.
 quickfort run library/dreamfort.csv -n /farming2,# Run when the farming level has been dug out.
 quickfort run library/dreamfort.csv -n /surface3,# Run right after /farming2.
@@ -114,14 +114,14 @@ Makes common initial adjustments to in-game settings.
 "The /setup blueprint is intended to be run once at the start of the game, before anything else is changed. Players are welcome to make any further customizations after this blueprint is run. Please be sure to run the /setup blueprint before making any other changes, though, so your settings are not overwritten!"
 ""
 The following settings are changed:
-"- The manager, chief medical dwarf, broker, and bookkeeper noble roles are assigned to the first suggested dwarf. This is likely to be the expedition leader, but the game could suggest others if they have relevant skills. Bookkeeping is also set to the highest precision."
+"- The manager, chief medical dwarf, broker, and bookkeeper noble roles are assigned to the first suggested dwarf. This is likely to be the expedition leader, but the game could suggest others if they have relevant skills. Bookkeeping is set to the highest precision."
 ""
 - Standing orders are set to:
   - only farmers harvest
   - gather refuse from outside (incl. vermin)
-  - no autoloom (we'll be managing cloth production with automated orders)
+  - no autoloom (so the hospital always has thread -- we'll be managing cloth production with automated orders)
 ""
-"- A burrow named ""Inside"" is created (it's up to the player to define the area). It is intended for use in getting your civilians to safety during sieges. An alert named ""Siege"" is also created and associated with the ""Inside"" burrow."
+"- A burrow named ""Inside"" is created, but it's up to the player to define the area as the fort expands. It is intended for use in getting your civilians to safety during sieges. A military alert named ""Siege"" is also created and associated with the ""Inside"" burrow."
 ""
 - Military uniforms get the following modifications:
   - all default uniforms set to replace clothing
@@ -145,7 +145,7 @@ starthotkeys: H{sethotkey fkey={F2} name=Farming}{sethotkey fkey={F3} name=Indus
 ""
 "#config label(setup) message(Please set the zoom targets of the hotkeys (the 'H' menu) according to where you actually end up digging the levels.
 As you build your fort, expand the ""Inside"" burrow to include new civilian-safe areas.
-Optionally, add a leather cloak to your military uniforms to enhance the protection of the uniforms.
+Optionally, add a leather cloak to your military uniforms to enhance their protection rating.
 Nothing in Dreamfort depends on these settings staying as they are. Feel free to change any setting to your personal preference.) assign nobles, set standing orders, create burrows, make adjustments to military uniforms, and set hotkey names"
 {startnobles}{startorders}{startburrows}{startmilitary}{starthotkeys}
 "#meta label(dig_all) start(central stairs on industry level) dig industry, services, guildhall, suites, and apartments levels. does not include farming."
@@ -533,7 +533,7 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 
 
 
-"#place label(surface_place_start) start(19; 19) hidden() message(if you haven't already, now is a good time to deconstruct the wagon) starting stockpiles"
+#place label(surface_place_start) start(19; 19) hidden() starting stockpiles
 
 
 
@@ -2627,7 +2627,7 @@ Smooth/engrave tiles, furnish rooms, and declare locations as required.) build d
 ,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
 
 
-#build label(guildhall_zones) start(15; 15; central stairs) hidden() designate zones
+#zone label(guildhall_zones) start(15; 15; central stairs) hidden() designate zones
 
 ,m(9x9),,,,,,,,,m(9x9),,,,,,,,,m(9x9)
 ,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`

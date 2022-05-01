@@ -25,8 +25,9 @@ function test.cxxrandom_seed()
     local g1 = rng.crng:new(e1, true, nd)
     local g2 = rng.crng:new(e2, true, nd)
     local g3 = rng.crng:new(e3, true, nd)
-    expect.eq(g1:next(), g2:next())
-    expect.ne(g1:next(), g3:next())
+    local v1 = g1:next()
+    expect.eq(v1, g2:next())
+    expect.ne(v1, g3:next())
 end
 
 function test.cxxrandom_ranges()

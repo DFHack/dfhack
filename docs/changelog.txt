@@ -71,6 +71,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `confirm`: Correct the command name in the plugin help text
 - ``Quickfort Blueprint Editing Guide``: added screenshots to the Dreamfort case study and overall clarified text
 - Document DFHack `lua-string` (``startswith``, ``endswith``, ``split``, ``trim``, ``wrap``, and ``escape_pattern``).
+- Added a Rust client library to the `remote interface docs <remote-client-libs>`
 
 ## API
 - Added functions reverse-engineered from ambushing unit code: ``Units::isHidden``, ``Units::isFortControlled``, ``Units::getOuterContainerRef``, ``Items::getOuterContainerRef``

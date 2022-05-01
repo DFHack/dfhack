@@ -75,11 +75,11 @@ from other (non-C++) languages, including:
 
 - `RemoteClientDF-Net <https://github.com/RosaryMala/RemoteClientDF-Net>`_ for C#
 - `dfhackrpc <https://github.com/BenLubar/dfhackrpc>`_ for Go
-- `dfhack-remote <https://github.com/alexchandel/dfhack-remote>`_ for JavaScript
+- `dfhack-remote <https://github.com/alexchandel/dfhack-remote>`__ for JavaScript
 - `dfhack-client-qt <https://github.com/cvuchener/dfhack-client-qt>`_ for C++ with Qt
 - `dfhack-client-python <https://github.com/McArcady/dfhack-client-python>`_ for Python (adapted from :forums:`"Blendwarf" <178089>`)
 - `dfhack-client-java <https://github.com/McArcady/dfhack-client-java>`_ for Java
-- `dfhack-remote <https://docs.rs/dfhack-remote/latest/dfhack_remote/index.html>`_ for Rust
+- `dfhack-remote <https://docs.rs/dfhack-remote/latest/dfhack_remote/index.html>`__ for Rust
 
 
 Protocol description

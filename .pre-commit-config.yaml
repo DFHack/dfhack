@@ -32,4 +32,12 @@ repos:
       exclude_types:
         - json
 # specific to dfhack:
+- repo: local
+  hooks:
+    - id: authors-rst
+      name: Check Authors.rst
+      language: python
+      entry: python3 ci/authors-rst.py
+      files: docs/Authors\.rst
+      pass_filenames: false
 exclude: '^(depends/|data/examples/.*\.json$|.*\.diff$)'

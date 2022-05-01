@@ -4401,7 +4401,7 @@ Native functions (exported to Lua)
 
   adds a number to the sequence
 
-- ``ShuffleSequence(rngID, seqID)``
+- ``ShuffleSequence(seqID, rngID)``
 
   shuffles the number sequence
 
@@ -4464,7 +4464,7 @@ Lua plugin classes
 ``bool_distribution``
 ~~~~~~~~~~~~~~~~~~~~~
 
-- ``init(min, max)``: constructor
+- ``init(chance)``: constructor
 - ``next(id)``: returns next boolean in the distribution
 
   - ``id``: engine ID to pass to native function
@@ -4476,6 +4476,41 @@ Lua plugin classes
 - ``add(num)``: adds num to the end of the number sequence
 - ``shuffle()``: shuffles the sequence of numbers
 - ``next()``: returns next number in the sequence
+
+Usage
+-----
+
+The basic idea is you create a number distribution which you generate random numbers along. The C++ relies
+on engines keeping state information to determine the next number along the distribution.
+You're welcome to try and (ab)use this knowledge for your RNG purposes.
+
+Example::
+
+    local rng = require('plugins.cxxrandom')
+    local norm_dist = rng.normal_distribution(6820,116) // avg, stddev
+    local engID = rng.MakeNewEngine(0)
+    -- somewhat reminiscent of the C++ syntax
+    print(norm_dist:next(engID))
+
+    -- a bit more streamlined
+    local cleanup = true --delete engine on cleanup
+    local number_generator = rng.crng:new(engID, cleanup, norm_dist)
+    print(number_generator:next())
+
+    -- simplified
+    print(rng.rollNormal(engID,6820,116))
+
+The number sequences are much simpler. They're intended for where you need to randomly generate an index, perhaps in a loop for an array. You technically don't need an engine to use it, if you don't mind never shuffling.
+
+Example::
+
+    local rng = require('plugins.cxxrandom')
+    local g = rng.crng:new(rng.MakeNewEngine(0), true, rng.num_sequence:new(0,table_size))
+    g:shuffle()
+    for _ = 1, table_size do
+        func(array[g:next()])
+    end
+
 
 dig-now
 =======

@@ -42,6 +42,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `tweak` partial-items: displays percentages on partially-consumed items such as hospital cloth
 
 ## Fixes
+- `cxxrandom`: fixed exception when calling ``bool_distribution``
+- `cxxrandom`: fixed id order for ShuffleSequence, but adds code to detect which parameter is which so each id is used correctly. 16000 limit before things get weird (previous was 16 bits)
 - `autofarm` removed restriction on only planting 'discovered' plants
 - `luasocket` (and others): return correct status code when closing socket connections
 
@@ -64,6 +66,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Include recently-added tweaks in example dfhack.init file, clean up dreamfort onMapLoad.init file
 
 ## Documentation
+- `cxxrandom`: added usage examples
 - Add more examples to the plugin skeleton files so they are more informative for a newbie
 - Lua API.rst added: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
 - Update download link and installation instructions for Visual C++ 2015 build tools on Windows

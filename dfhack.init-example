@@ -34,6 +34,9 @@ keybinding add Ctrl-K autodump-destroy-item
 # quicksave, only in main dwarfmode screen and menu page
 keybinding add Ctrl-Alt-S@dwarfmode/Default quicksave
 
+# gui/quickfort script - apply pre-made blueprints to the map
+keybinding add Ctrl-Shift-Q@dwarfmode gui/quickfort
+
 # gui/rename script - rename units and buildings
 keybinding add Ctrl-Shift-N gui/rename
 keybinding add Ctrl-Shift-T "gui/rename unit-profession"
@@ -155,9 +158,6 @@ keybinding add Alt-W@dfhack/lua/status_overlay "gui/workflow status"
 # autobutcher front-end
 keybinding add Shift-B@pet/List/Unit "gui/autobutcher"
 
-# assign weapon racks to squads so that they can be used
-keybinding add P@dwarfmode/QueryBuilding/Some/Weaponrack gui/assign-rack
-
 # view pathable tiles from active cursor
 keybinding add Alt-Shift-P@dwarfmode/LookAround gui/pathable
 
@@ -186,9 +186,6 @@ tweak military-stable-assign
 # in same list, color units already assigned to squads in brown & green
 tweak military-color-assigned
 
-# remove inverse dependency of squad training speed on unit list size and use more sparring
-# tweak military-training
-
 # make crafted cloth items wear out with time like in old versions (bug 6003)
 tweak craft-age-wear
 
@@ -210,17 +207,22 @@ tweak hotkey-clear
 # Allows lowercase letters in embark profile names, and allows exiting the name prompt without saving
 tweak embark-profile-name
 
+# Reduce performance impact of temperature changes
+tweak fast-heat 100
+
 # Misc. UI tweaks
 tweak block-labors              # Prevents labors that can't be used from being toggled
 tweak burrow-name-cancel
 tweak cage-butcher
 tweak civ-view-agreement
+tweak do-job-now
 tweak eggs-fertile
 tweak fps-min
 tweak hide-priority
 tweak kitchen-prefs-all
 tweak kitchen-prefs-empty
 tweak max-wheelbarrow
+tweak partial-items
 tweak shift-8-scroll
 tweak stone-status-all
 tweak title-start-rename
@@ -289,5 +291,6 @@ gui/load-screen enable
 # Extra DFHack command files #
 ##############################
 
-# Run commands in this file when a world loads
-sc-script add SC_WORLD_LOADED onLoad.init-example
+# Create a file named "onLoad.init" to run commands when a world is loaded
+# and/or create a file named "onMapLoad.init" to run commands when a map is
+# loaded. See the hack/examples/init/ directory for useful pre-made init files.

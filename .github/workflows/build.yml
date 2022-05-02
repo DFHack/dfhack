@@ -29,6 +29,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install \
+            ccache \
             libgtk2.0-0 \
             libncursesw5 \
             libsdl-image1.2-dev \
@@ -60,6 +61,11 @@ jobs:
       with:
         path: ~/DF
         key: ${{ steps.env_setup.outputs.df_version }}
+    - name: Fetch ccache
+      uses: actions/cache@v2
+      with:
+        path: ~/.ccache
+        key: ccache-${{ matrix.os }}-gcc-${{ matrix.gcc }}
     - name: Download DF
       run: |
         sh ci/download-df.sh
@@ -121,7 +127,7 @@ jobs:
         submodules: true
     - name: Build docs
       run: |
-        sphinx-build -W --keep-going -j3 . docs/html
+        sphinx-build -W --keep-going -j3 --color . docs/html
     - name: Upload docs
       uses: actions/upload-artifact@v1
       with:

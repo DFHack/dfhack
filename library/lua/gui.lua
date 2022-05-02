@@ -96,7 +96,7 @@ function compute_frame_rect(wavail,havail,spec,xgap,ygap)
     return rect
 end
 
-local function parse_inset(inset)
+function parse_inset(inset)
     local l,r,t,b
     if type(inset) == 'table' then
         l,r = inset.l or inset.x or 0, inset.r or inset.x or 0

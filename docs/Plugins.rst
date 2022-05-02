@@ -159,6 +159,7 @@ Subcommands that persist until disabled or DF quits:
                         i.e. stop the rightmost list of the Positions page of the military
                         screen from constantly resetting to the top.
 :nestbox-color:         Fixes the color of built nestboxes
+:partial-items:         Displays percentages on partially-consumed items such as hospital cloth
 :reaction-gloves:       Fixes reactions to produce gloves in sets with correct handedness (:bug:`6273`)
 :shift-8-scroll:        Gives Shift-8 (or :kbd:`*`) priority when scrolling menus, instead of scrolling the map
 :stable-cursor:         Saves the exact cursor position between t/q/k/d/b/etc menus of fortress mode, if the
@@ -696,7 +697,7 @@ also tries to have dwarves specialize in specific skills.
 The key is that, for almost all labors, once a dwarf begins a job it will finish that
 job even if the associated labor is removed. Autolabor therefore frequently checks
 which dwarf or dwarves should take new jobs for that labor, and sets labors accordingly.
-Labors with equiptment (mining, hunting, and woodcutting), which are abandoned
+Labors with equipment (mining, hunting, and woodcutting), which are abandoned
 if labors change mid-job, are handled slightly differently to minimise churn.
 
 .. warning::

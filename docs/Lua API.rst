@@ -1007,18 +1007,17 @@ Fortress mode
 * ``dfhack.gui.pauseRecenter(pos[,pause])``
   ``dfhack.gui.pauseRecenter(x,y,z[,pause])``
 
-  Same as ``resetDwarfmodeView``, but also recenter if ``x`` isn't ``-30000``,
-  and respects RECENTER_INTERFACE_SHUTDOWN_MS (the delay before input is recognized when a recenter occurs) in DF's init.txt.
+  Same as ``resetDwarfmodeView``, but also recenter if ``x`` isn't ``-30000``, and respects
+  RECENTER_INTERFACE_SHUTDOWN_MS (the delay before input is recognized when a recenter occurs) in DF's init.txt.
 
 * ``dfhack.gui.recenterViewscreen(pos[,zoom])``
   ``dfhack.gui.recenterViewscreen(x,y,z[,zoom])``
   ``dfhack.gui.recenterViewscreen([zoom])``
 
-  Recenter the view on a position using a specific zoom type. If no position is
-  given, recenter on ``df.global.cursor``. Zoom types are ``df.report_zoom_type``
-  (0 = Generic, 1 = Item, 2 = Unit), where ``Generic`` skips recentering and
-  enforces valid view bounds (the same as x = -30000,) ``Item`` brings the position onscreen, and ``Unit`` centers the screen on the position.
-  Default zoom type is Item.
+  Recenter the view on a position using a specific zoom type. If no position is given,
+  recenter on ``df.global.cursor``. Zoom types are ``df.report_zoom_type`` (0 = Generic, 1 = Item, 2 = Unit),
+  where ``Generic`` skips recentering and enforces valid view bounds (the same as x = -30000,) ``Item`` brings
+  the position onscreen without centering, and ``Unit`` centers the screen on the position. Default zoom type is Item.
   
 * ``dfhack.gui.revealInDwarfmodeMap(pos)``
 
@@ -1090,12 +1089,13 @@ Announcements
   operations accordingly. The units are used to call ``addCombatReportAuto``.
 
 * ``dfhack.gui.autoDFAnnouncement(report,text[,log_failures])``
-  ``dfhack.gui.autoDFAnnouncement(type,pos,text,color[,is_bright,unit1,unit2,not_sparring,log_failures])``
+  ``dfhack.gui.autoDFAnnouncement(type,pos,text,color[,is_bright,unit1,unit2,is_sparring,log_failures])``
 
-  Takes a ``df.report_init`` (see: https://github.com/DFHack/df-structures/blob/master/df.announcements.xml#L451) and a string and processes them just like DF does.
-  Sometimes this means the announcement won't occur. Set ``log_failures`` to ``true`` to
-  log the reason why to the dfhack console (e.g., unrevealed map or wrong gamemode.)
-  Can also be built from parameters instead of a ``report_init``. Setting ``not_sparring`` to ``false`` means it will be added to sparring logs (if applicable) rather than hunting or combat.
+  Takes a ``df.report_init`` (see: https://github.com/DFHack/df-structures/blob/master/df.announcements.xml#L451)
+  and a string and processes them just like DF does. Sometimes this means the announcement won't occur.
+  Set ``log_failures`` to ``true`` to log the reason why to the dfhack console (e.g., unrevealed map or wrong gamemode.)
+  Can also be built from parameters instead of a ``report_init``. Setting ``is_sparring`` to ``true`` means the report
+  will be added to sparring logs (if applicable) rather than hunting or combat.
 
 Other
 ~~~~~

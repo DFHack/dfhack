@@ -1831,7 +1831,7 @@ int Gui::autoDFAnnouncement(df::report_init r, string message)
         {
             if (r.unit1 != NULL)
             {
-                if (r.flags.bits.sparring) // TODO: flags.sparring is inverted
+                if (r.flags.bits.hostile_combat)
                     success |= addCombatReport(r.unit1, unit_report_type::Combat, new_report_index);
                 else if (r.unit1->job.current_job != NULL && r.unit1->job.current_job->job_type == job_type::Hunt)
                     success |= addCombatReport(r.unit1, unit_report_type::Hunting, new_report_index);
@@ -1841,7 +1841,7 @@ int Gui::autoDFAnnouncement(df::report_init r, string message)
 
             if (r.unit2 != NULL)
             {
-                if (r.flags.bits.sparring) // TODO: flags.sparring is inverted
+                if (r.flags.bits.hostile_combat)
                     success |= addCombatReport(r.unit2, unit_report_type::Combat, new_report_index);
                 else if (r.unit2->job.current_job != NULL && r.unit2->job.current_job->job_type == job_type::Hunt)
                     success |= addCombatReport(r.unit2, unit_report_type::Hunting, new_report_index);
@@ -1923,7 +1923,7 @@ int Gui::autoDFAnnouncement(df::report_init r, string message, bool log_failures
     return rv;
 }
 
-int Gui::autoDFAnnouncement(df::announcement_type type, df::coord pos, std::string message, int color, bool bright, df::unit *unit1, df::unit *unit2, bool sparring, bool log_failures)
+int Gui::autoDFAnnouncement(df::announcement_type type, df::coord pos, std::string message, int color, bool bright, df::unit *unit1, df::unit *unit2, bool is_sparring, bool log_failures)
 {
     auto r = df::report_init();
     r.type = type;
@@ -1932,7 +1932,7 @@ int Gui::autoDFAnnouncement(df::announcement_type type, df::coord pos, std::stri
     r.pos = pos;
     r.unit1 = unit1;
     r.unit2 = unit2;
-    r.flags.bits.sparring = !sparring; // TODO: inverted
+    r.flags.bits.hostile_combat = !is_sparring;
 
     if (Maps::isValidTilePos(pos))
         r.zoom_type = report_zoom_type::Unit;

@@ -1525,7 +1525,7 @@ static int gui_autoDFAnnouncement(lua_State *state)
     {
         df::coord pos;
         int color;
-        bool bright, sparring, log_failures;
+        bool bright, is_sparring, log_failures;
         df::unit *unit1, *unit2;
 
         auto type = (df::announcement_type)lua_tointeger(state, 1);
@@ -1538,7 +1538,7 @@ static int gui_autoDFAnnouncement(lua_State *state)
             case 9:
                 log_failures = lua_toboolean(state, 9);
             case 8:
-                sparring = lua_toboolean(state, 8);
+                is_sparring = lua_toboolean(state, 8);
             case 7:
                 unit2 = Lua::CheckDFObject<df::unit>(state, 7);
             case 6:
@@ -1555,10 +1555,10 @@ static int gui_autoDFAnnouncement(lua_State *state)
         {   // Use the defaults in Gui.h
             default:
             case 9:
-                rv = Gui::autoDFAnnouncement(type, pos, message, color, bright, unit1, unit2, sparring, log_failures);
+                rv = Gui::autoDFAnnouncement(type, pos, message, color, bright, unit1, unit2, is_sparring, log_failures);
                 break;
             case 8:
-                rv = Gui::autoDFAnnouncement(type, pos, message, color, bright, unit1, unit2, sparring);
+                rv = Gui::autoDFAnnouncement(type, pos, message, color, bright, unit1, unit2, is_sparring);
                 break;
             case 7:
                 rv = Gui::autoDFAnnouncement(type, pos, message, color, bright, unit1, unit2);

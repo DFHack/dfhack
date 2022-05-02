@@ -38,7 +38,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Removed
 
+## New Tweaks
+- `tweak` partial-items: displays percentages on partially-consumed items such as hospital cloth
+
 ## Fixes
+- `cxxrandom`: fixed exception when calling ``bool_distribution``
+- `cxxrandom`: fixed id order for ShuffleSequence, but adds code to detect which parameter is which so each id is used correctly. 16000 limit before things get weird (previous was 16 bits)
 - `autofarm` removed restriction on only planting 'discovered' plants
 - `luasocket` (and others): return correct status code when closing socket connections
 
@@ -58,8 +63,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `blueprint`: ``track`` phase renamed to ``carve``. carved fortifications and (optionally) engravings are now captured in blueprints
 - `tweak` stable-cursor: Keep the cursor stable even when the viewport moves a small amount
 - `cursecheck`: Added a new parameter, ``ids``, to print creature and race IDs of the cursed creature.
+- Include recently-added tweaks in example dfhack.init file, clean up dreamfort onMapLoad.init file
 
 ## Documentation
+- `cxxrandom`: added usage examples
 - Add more examples to the plugin skeleton files so they are more informative for a newbie
 - Lua API.rst added: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
 - Lua API.rst added: ``autoDFAnnouncement``, ``pauseRecenter``, ``recenterViewscreen``
@@ -68,6 +75,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `confirm`: Correct the command name in the plugin help text
 - ``Quickfort Blueprint Editing Guide``: added screenshots to the Dreamfort case study and overall clarified text
 - Document DFHack `lua-string` (``startswith``, ``endswith``, ``split``, ``trim``, ``wrap``, and ``escape_pattern``).
+- Added a Rust client library to the `remote interface docs <remote-client-libs>`
 
 ## API
 - Added functions reverse-engineered from ambushing unit code: ``Units::isHidden``, ``Units::isFortControlled``, ``Units::getOuterContainerRef``, ``Items::getOuterContainerRef``
@@ -78,7 +86,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``widgets.ListBox``: minimum height of dialog is now calculated correctly when there are no items in the list (e.g. when a filter doesn't match anything)
 - Lua wrappers for functions reverse-engineered from ambushing unit code: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
 - Lua wrappers for functions reverse-engineered from announcement code: ``autoDFAnnouncement``, ``pauseRecenter``, ``recenterViewscreen``
+- Added `custom-raw-tokens` utility to Lua library for reading tokens added to raws by mods.
 - ``dwarfmode.MenuOverlay``: if ``sidebar_mode`` attribute is set, automatically manage entering a specific sidebar mode on show and restoring the previous sidebar mode on dismiss
+- ``dwarfmode.MenuOverlay``: new class function ``renderMapOverlay`` to assist with drawing tiles over the visible map
 - ``dwarfmode.enterSidebarMode()``: passing ``df.ui_sidebar_mode.DesignateMine`` now always results in you entering ``DesignateMine`` mode and not ``DesignateChopTrees``, even when you looking at the surface where the default designation mode is ``DesignateChopTrees``
 - New string class function: ``string:escape_pattern()`` escapes regex special characters within a string
 - ``widgets.Panel``: if ``autoarrange_subviews`` is set, ``Panel``\s will now automatically lay out widgets vertically according to their current height.  This allows you to have widgets dynamically change height or become visible/hidden and you don't have to worry about recalculating frame layouts
@@ -90,6 +100,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``widgets.ToggleHotkeyLabel``: new ``CycleHotkeyLabel`` subclass that toggles between ``On`` and ``Off`` states
 - ``safe_index`` now properly handles lua sparse tables that are indexed by numbers
 - ``widgets``: unset values in ``frame_inset``-table default to ``0``
+- ``dialogs``: ``show*`` functions now return a reference to the created dialog
+- ``ensure_key``: new global function for retrieving or dynamically creating Lua table mappings
 
 # 0.47.05-r4
 

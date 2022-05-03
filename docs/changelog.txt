@@ -34,74 +34,71 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
-- `spectate`: automates the following of dwarves more often than not based on job zlevel activity levels, sometimes randomly though.
-
-## Removed
+- `spectate`: "spectator mode" -- automatically follows dwarves doing things in your fort
 
 ## New Tweaks
-- `tweak` partial-items: displays percentages on partially-consumed items such as hospital cloth
+- `tweak`: ``partial-items`` displays percentage remaining for partially-consumed items such as hospital cloth
 
 ## Fixes
+- `autofarm`: removed restriction on only planting "discovered" plants
 - `cxxrandom`: fixed exception when calling ``bool_distribution``
-- `cxxrandom`: fixed id order for ShuffleSequence, but adds code to detect which parameter is which so each id is used correctly. 16000 limit before things get weird (previous was 16 bits)
-- `autofarm` removed restriction on only planting 'discovered' plants
-- `luasocket` (and others): return correct status code when closing socket connections
+- `luasocket`: return correct status code when closing socket connections so clients can know when to retry
 
 ## Misc Improvements
-- `dig-now`: handle fortification carving
-- `EventManager`: add new event type ``JOB_STARTED``, triggered when a job first gains a worker
-- `EventManager`: add new event type ``NEW_UNIT_ACTIVE``, triggered when a new unit appears on the active list
-- `EventManager`: now each registered handler for an event can have its own frequency instead of all handlers using the lowest frequency of all handlers
-- `stocks`: allow search terms to match the full item label, even when the label is truncated for length
-- `dfhack-examples-guide`: add mugs to ``basic`` manager orders
-- `gui/create-item`: Added "(chain)" annotation text for armours with the [CHAIN_METAL_TEXT] flag set
-- DFHack log messages now have configurable headers (e.g. timestamp, origin plugin name, etc.) via the ``debugfilter`` command of the `debug` plugin
-- Script execution log messages (e.g. "Loading script: dfhack_extras.init" can now be controlled with the ``debugfilter`` command. To hide the messages, add this line to your ``dfhack.init`` file: ``debugfilter set Warning core script``
-- `manipulator`: Tweak colors to make the cursor easier to locate
 - `autochop`: only designate the amount of trees required to reach ``max_logs``
 - `autochop`: preferably designate larger trees over smaller ones
-- `blueprint`: ``track`` phase renamed to ``carve``. carved fortifications and (optionally) engravings are now captured in blueprints
-- `tweak` stable-cursor: Keep the cursor stable even when the viewport moves a small amount
-- `cursecheck`: Added a new parameter, ``ids``, to print creature and race IDs of the cursed creature.
-- Include recently-added tweaks in example dfhack.init file, clean up dreamfort onMapLoad.init file
+- `blueprint`: ``track`` phase renamed to ``carve``
+- `blueprint`: carved fortifications and (optionally) engravings are now captured in generated blueprints
+- `cursecheck`: new option, ``--ids`` prints creature and race IDs of the cursed creature
+- `debug`: DFHack log messages now have configurable headers (e.g. timestamp, origin plugin name, etc.) via the ``debugfilter`` command of the `debug` plugin
+- `debug`: script execution log messages (e.g. "Loading script: dfhack_extras.init" can now be controlled with the ``debugfilter`` command. To hide the messages, add this line to your ``dfhack.init`` file: ``debugfilter set Warning core script``
+- `dfhack-examples-guide`: add mugs to ``basic`` manager orders
+- `dfhack-examples-guide`: ``onMapLoad_dreamfort.init`` remove "cheaty" commands and new tweaks that are now in the default ``dfhack.init-example`` file
+- ``dfhack.init-example``: recently-added tweaks added to example ``dfhack.init`` file
+- `dig-now`: handle fortification carving
+- `EventManager`: add new event type ``JOB_STARTED``, triggered when a job first gains a worker
+- `EventManager`: add new event type ``UNIT_NEW_ACTIVE``, triggered when a new unit appears on the active list
+- `gui/create-item`: Added "(chain)" annotation text for armours with the [CHAIN_METAL_TEXT] flag set
+- `manipulator`: tweak colors to make the cursor easier to locate
+- `stocks`: allow search terms to match the full item label, even when the label is truncated for length
+- `tweak`: ``stable-cursor`` now keeps the cursor stable even when the viewport moves a small amount
 
 ## Documentation
+- add more examples to the plugin example skeleton files so they are more informative for a newbie
+- `confirm`: correct the command name in the plugin help text
 - `cxxrandom`: added usage examples
-- Add more examples to the plugin skeleton files so they are more informative for a newbie
-- Lua API.rst added: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
-- Lua API.rst added: ``autoDFAnnouncement``, ``pauseRecenter``, ``recenterViewscreen``
-- Update download link and installation instructions for Visual C++ 2015 build tools on Windows
-- Updated information regarding obtaining a compatible Windows build environment
-- `confirm`: Correct the command name in the plugin help text
-- ``Quickfort Blueprint Editing Guide``: added screenshots to the Dreamfort case study and overall clarified text
-- Document DFHack `lua-string` (``startswith``, ``endswith``, ``split``, ``trim``, ``wrap``, and ``escape_pattern``).
-- Added a Rust client library to the `remote interface docs <remote-client-libs>`
+- ``Lua API.rst``:  added ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``, ``autoDFAnnouncement``, ``pauseRecenter``, ``recenterViewscreen``
+- `lua-string`: document DFHack string extensions (``startswith()``, ``endswith()``, ``split()``, ``trim()``, ``wrap()``, and ``escape_pattern()``)
+- `quickfort-blueprint-guide`: added screenshots to the Dreamfort case study and overall clarified text
+- `remote-client-libs`: add new Rust client library
+- update download link and installation instructions for Visual C++ 2015 build tools on Windows
+- update information regarding obtaining a compatible Windows build environment
 
 ## API
-- Added functions reverse-engineered from ambushing unit code: ``Units::isHidden``, ``Units::isFortControlled``, ``Units::getOuterContainerRef``, ``Items::getOuterContainerRef``
-- Added functions reverse-engineered from announcement code: ``Gui::parseReportString``, ``Gui::autoDFAnnouncement``, ``Gui::pauseRecenter``, ``Gui::recenterViewscreen``
+- add functions reverse-engineered from ambushing unit code: ``Units::isHidden()``, ``Units::isFortControlled()``, ``Units::getOuterContainerRef()``, ``Items::getOuterContainerRef()``
+- add functions reverse-engineered from announcement code: ``Gui::parseReportString``, ``Gui::autoDFAnnouncement``, ``Gui::pauseRecenter``, ``Gui::recenterViewscreen``
 
 ## Lua
-- ``widgets.FilteredList`` now allows all punctuation to be typed into the filter and can match search keys that start with punctuation.
-- ``widgets.ListBox``: minimum height of dialog is now calculated correctly when there are no items in the list (e.g. when a filter doesn't match anything)
-- Lua wrappers for functions reverse-engineered from ambushing unit code: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
-- Lua wrappers for functions reverse-engineered from announcement code: ``autoDFAnnouncement``, ``pauseRecenter``, ``recenterViewscreen``
-- Added `custom-raw-tokens` utility to Lua library for reading tokens added to raws by mods.
-- ``dwarfmode.MenuOverlay``: if ``sidebar_mode`` attribute is set, automatically manage entering a specific sidebar mode on show and restoring the previous sidebar mode on dismiss
-- ``dwarfmode.MenuOverlay``: new class function ``renderMapOverlay`` to assist with drawing tiles over the visible map
-- ``dwarfmode.enterSidebarMode()``: passing ``df.ui_sidebar_mode.DesignateMine`` now always results in you entering ``DesignateMine`` mode and not ``DesignateChopTrees``, even when you looking at the surface where the default designation mode is ``DesignateChopTrees``
-- New string class function: ``string:escape_pattern()`` escapes regex special characters within a string
-- ``widgets.Panel``: if ``autoarrange_subviews`` is set, ``Panel``\s will now automatically lay out widgets vertically according to their current height.  This allows you to have widgets dynamically change height or become visible/hidden and you don't have to worry about recalculating frame layouts
-- ``widgets.ResizingPanel``: new ``Panel`` subclass that automatically recalculates it's own frame height based on the size, position, and visibility of its subviews
-- ``widgets.WrappedLabel``:  new ``Label`` subclass that provides autowrapping of text
-- ``widgets.TooltipLabel``:  new ``WrappedLabel`` subclass that provides tooltip-like behavior
-- ``widgets.HotkeyLabel``: new ``Label`` subclass that displays and reacts to hotkeys
-- ``widgets.CycleHotkeyLabel``: new ``Label`` subclass that allows users to cycle through a list of options by pressing a hotkey
-- ``widgets.ToggleHotkeyLabel``: new ``CycleHotkeyLabel`` subclass that toggles between ``On`` and ``Off`` states
-- ``safe_index`` now properly handles lua sparse tables that are indexed by numbers
-- ``widgets``: unset values in ``frame_inset``-table default to ``0``
+- `custom-raw-tokens`: library for accessing tokens added to raws by mods
+- ``dfhack.gui``: Lua wrappers for functions reverse-engineered from announcement code: ``autoDFAnnouncement``, ``pauseRecenter``, ``recenterViewscreen``
+- ``dfhack.units``: Lua wrappers for functions reverse-engineered from ambushing unit code: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
 - ``dialogs``: ``show*`` functions now return a reference to the created dialog
+- ``dwarfmode.enterSidebarMode()``: passing ``df.ui_sidebar_mode.DesignateMine`` now always results in you entering ``DesignateMine`` mode and not ``DesignateChopTrees``, even when you looking at the surface (where the default designation mode is ``DesignateChopTrees``)
+- ``dwarfmode.MenuOverlay``: if ``sidebar_mode`` attribute is set, automatically manage entering a specific sidebar mode on show and restoring the previous sidebar mode on dismiss
+- ``dwarfmode.MenuOverlay``: new class function ``renderMapOverlay`` to assist with painting tiles over the visible map
 - ``ensure_key``: new global function for retrieving or dynamically creating Lua table mappings
+- ``safe_index``: now properly handles lua sparse tables that are indexed by numbers
+- ``string``: new function ``escape_pattern()`` escapes regex special characters within a string
+- ``widgets``: unset values in ``frame_inset`` table default to ``0``
+- ``widgets``: ``FilteredList`` class now allows all punctuation to be typed into the filter and can match search keys that start with punctuation
+- ``widgets``: minimum height of ``ListBox`` dialog is now calculated correctly when there are no items in the list (e.g. when a filter doesn't match anything)
+- ``widgets``: if ``autoarrange_subviews`` is set, ``Panel``\s will now automatically lay out widgets vertically according to their current height.  This allows you to have widgets dynamically change height or become visible/hidden and you don't have to worry about recalculating frame layouts
+- ``widgets``: new class ``ResizingPanel`` (subclass of ``Panel``) automatically recalculates its own frame height based on the size, position, and visibility of its subviews
+- ``widgets``: new class ``HotkeyLabel`` (subclass of ``Label``) that displays and reacts to hotkeys
+- ``widgets``: new class ``CycleHotkeyLabel`` (subclass of ``Label``) allows users to cycle through a list of options by pressing a hotkey
+- ``widgets``: new class ``ToggleHotkeyLabel`` (subclass of ``CycleHotkeyLabel``) toggles between ``On`` and ``Off`` states
+- ``widgets``:  new class ``WrappedLabel`` (subclass of ``Label``) provides autowrapping of text
+- ``widgets``:  new class ``TooltipLabel`` (subclass of ``WrappedLabel``) provides tooltip-like behavior
 
 # 0.47.05-r4
 

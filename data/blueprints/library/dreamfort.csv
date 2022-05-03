@@ -28,7 +28,7 @@
 ""
 "Dreamfort works best at an embark site that is flat and has at least one soil layer. New players should avoid embarks with aquifers if they are not prepared to deal with them. Bring picks for mining, an axe for woodcutting, and an anvil for a forge. Bring a few blocks to speed up initial workshop construction as well. That's all you really need, but see the example embark profile in the online spreadsheets for a more complete setup."
 ""
-"Other DFHack scripts and plugins also work very well with Dreamfort, such as autofarm, automelt, autonestbox, burial, prioritize, seedwatch, tailor, and, of course, buildingplan. An init file that configures all these plugins is distributed with DFHack as hack/examples/init/onMapLoad_dreamfort.init."
+"Other DFHack commands also work very well with Dreamfort, such as autofarm, autonestbox, prioritize, seedwatch, tailor, and, of course, buildingplan. An init file that gets everything configured for you is distributed with DFHack as hack/examples/init/onMapLoad_dreamfort.init."
 Put that file in your Dwarf Fortress directory -- the same directory that has dfhack.init.
 ""
 "Also copy the files in hack/examples/orders/ to dfhack-config/orders/ and the files in hack/examples/professions/ to professions/. We'll be using these files later. See https://docs.dfhack.org/en/stable/docs/guides/examples-guide.html for more information, including suggestions on how many dwarves of each profession you are likely to need at each stage of fort maturity."
@@ -46,7 +46,7 @@ interactively."
 "# The dreamfort.csv distributed with DFHack is generated with the following command:
   for fname in dreamfort*.xlsx; do xlsx2csv -a -p '' ""$fname""; done | sed 's/,*$//'"
 #notes label(checklist) command checklist
-"Here is the recommended order for Dreamfort commands. You can copy/paste the command lines directly into the DFHack terminal, or, if you prefer, you can run the blueprints in the UI with gui/quickfort. See the level walkthroughs for context and details. Also remember to read the messages the blueprints print out after you run them so you don't miss any important manual steps."
+"Here is the recommended order for Dreamfort commands. You can copy/paste the command lines directly into the DFHack terminal, or, if you prefer, you can run the blueprints in the UI with gui/quickfort. See the walkthroughs (the ""help"" blueprints) for context and details. Also remember to read the messages the blueprints print out after you run them so you don't miss any important manual steps."
 ""
 -- Preparation (before you embark!) --
 Copy hack/examples/init/onMapLoad_dreamfort.init to your DF directory
@@ -67,7 +67,7 @@ quickfort run library/dreamfort.csv -n /surface1,# Run when you find your center
 quickfort run library/dreamfort.csv -n /dig_all,"# Run when you find a suitable rock layer for the industry level. It designates digging for industry, services, guildhall, suites, and apartments all in one go. This list does not include the farming level, which we'll dig in the uppermost soil layer a bit later. Note that it is more efficient for your miners if you designate your digging before they dig the central stairs past that level since the stairs are dug at a low priority. This keeps your miners focused on one level at a time. If you need to designate your levels individually due to caverns interrupting the sequence or just because it is your preference, run the level-specific dig blueprints (i.e. /industry1, /services1, /guildhall1, /suites1, and 5 levels of /apartments1) instead of running /dig_all."
 ""
 -- Core fort (should finish at about the third migration wave) --
-quickfort run library/dreamfort.csv -n /surface2,# Run after initial trees are cleared.
+quickfort run library/dreamfort.csv -n /surface2,"# Run after initial trees are cleared. If you are deconstructing the wagon now, wait until after the wagon is deconstructed so the jobs that depend on wagon contents (e.g. blocks) don't get canceled later."
 quickfort run library/dreamfort.csv -n /farming1,# Run when channels are dug and the additional designated trees are cleared.
 quickfort run library/dreamfort.csv -n /farming2,# Run when the farming level has been dug out.
 quickfort run library/dreamfort.csv -n /surface3,# Run right after /farming2.
@@ -78,7 +78,7 @@ quickfort run library/dreamfort.csv -n /surface4,"# Run after the walls and floo
 "quickfort run,orders library/dreamfort.csv -n /services2",# Run when the services levels have been dug out. Feel free to remove the orders for the ropes if you already brought them with you.
 orders import basic,"# Run after the first migration wave, so you have dorfs to do all the basic tasks. Note that this is the ""orders"" plugin, not the ""quickfort orders"" command."
 "quickfort run,orders library/dreamfort.csv -n /surface5","# Run when all marked trees on the surface are chopped down and walls and floors have been constructed, including the roof section over the future barracks."
-prioritize ConstructBuilding,# Run when you see the bridges ready to be built so the masons come and actually build them.
+prioritize ConstructBuilding,# Run when you see the bridges ready to be built so the busy masons come and build them.
 "quickfort run,orders library/dreamfort.csv -n /surface6",# Run when at least the beehives and weapon rack are constructed and you have linked all levers to their respective bridges.
 "quickfort run,orders library/dreamfort.csv -n /surface7",# Run after the surface walls are completed and any marked trees are chopped down.
 ""
@@ -94,6 +94,7 @@ orders import furnace,# Automated production of basic furnace-related items. Don
 "quickfort run,orders library/dreamfort.csv -n /apartments3",# Run when all beds have been constructed on the first apartments level.
 "quickfort run,orders library/dreamfort.csv -n /services3","# Run after the dining table and chair, weapon rack, and archery targets have been constructed. Also wait until after you complete /surface7, though, because surface defenses are more important than a grand dining hall."
 "quickfort run,orders library/dreamfort.csv -n /guildhall2",# Run when the guildhall level has been dug out.
+"quickfort run,orders library/dreamfort.csv -n /guildhall3",# Optionally run after /guildhall2 to build default furnishings.
 "quickfort run,orders library/dreamfort.csv -n /farming4",# Run once you have a cache of potash.
 orders import military,# Automated production of military equipment. Turn on automelt in the meltables piles on the industry level to automatically upgrade all metal military equipment to masterwork quality. These orders are optional if you are not using a military.
 orders import smelting,# Automated production of all types of metal bars.
@@ -104,7 +105,7 @@ orders import glassstock,# Maintains a small stock of all types of glass furnitu
 -- Repeat for each remaining apartments level as needed --
 "quickfort run,orders library/dreamfort.csv -n /apartments2",# Run when the apartment level has been dug out.
 "quickfort run,orders library/dreamfort.csv -n /apartments3",# Run when all beds have been constructed.
-burial -pets,# Run once the coffins are placed to set them to allow for burial. This is handled for you if you are using the provided onMapLoad_dreamfort.init file.
+burial -pets,# Run once the coffins are placed to set them to allow for burial.
 
 See this checklist online at https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=1459509569
 #notes label(setup_help)
@@ -113,14 +114,14 @@ Makes common initial adjustments to in-game settings.
 "The /setup blueprint is intended to be run once at the start of the game, before anything else is changed. Players are welcome to make any further customizations after this blueprint is run. Please be sure to run the /setup blueprint before making any other changes, though, so your settings are not overwritten!"
 ""
 The following settings are changed:
-"- The manager, chief medical dwarf, broker, and bookkeeper noble roles are assigned to the first suggested dwarf. This is likely to be the expedition leader, but the game could suggest others if they have relevant skills. Bookkeeping is also set to the highest precision."
+"- The manager, chief medical dwarf, broker, and bookkeeper noble roles are assigned to the first suggested dwarf. This is likely to be the expedition leader, but the game could suggest others if they have relevant skills. Bookkeeping is set to the highest precision."
 ""
 - Standing orders are set to:
   - only farmers harvest
   - gather refuse from outside (incl. vermin)
-  - no autoloom (we'll be managing cloth production with automated orders)
+  - no autoloom (so the hospital always has thread -- we'll be managing cloth production with automated orders)
 ""
-"- A burrow named ""Inside"" is created (it's up to the player to define the area). It is intended for use in getting your civilians to safety during sieges. An alert named ""Siege"" is also created and associated with the ""Inside"" burrow."
+"- A burrow named ""Inside"" is created, but it's up to the player to define the area as the fort expands. It is intended for use in getting your civilians to safety during sieges. A military alert named ""Siege"" is also created and associated with the ""Inside"" burrow."
 ""
 - Military uniforms get the following modifications:
   - all default uniforms set to replace clothing
@@ -144,7 +145,7 @@ starthotkeys: H{sethotkey fkey={F2} name=Farming}{sethotkey fkey={F3} name=Indus
 ""
 "#config label(setup) message(Please set the zoom targets of the hotkeys (the 'H' menu) according to where you actually end up digging the levels.
 As you build your fort, expand the ""Inside"" burrow to include new civilian-safe areas.
-Optionally, add a leather cloak to your military uniforms to enhance the protection of the uniforms.
+Optionally, add a leather cloak to your military uniforms to enhance their protection rating.
 Nothing in Dreamfort depends on these settings staying as they are. Feel free to change any setting to your personal preference.) assign nobles, set standing orders, create burrows, make adjustments to military uniforms, and set hotkey names"
 {startnobles}{startorders}{startburrows}{startmilitary}{starthotkeys}
 "#meta label(dig_all) start(central stairs on industry level) dig industry, services, guildhall, suites, and apartments levels. does not include farming."
@@ -532,7 +533,7 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 
 
 
-"#place label(surface_place_start) start(19; 19) hidden() message(if you haven't already, now is a good time to deconstruct the wagon) starting stockpiles"
+#place label(surface_place_start) start(19; 19) hidden() starting stockpiles
 
 
 
@@ -974,7 +975,7 @@ You might also want to set the ""trade goods quantum"" stockpile to Auto Trade i
 ,,,`,,`,nocontainers,crafts,,,,,,,`,,,,"{givename name=""inner main gate""}",,,,`,,,,,,,,,`,,`
 ,,,`,,`,"{givename name=""trade goods""}",,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,{forbidmasterworkfinishedgoods}{forbidartifactfinishedgoods},,,,,,,,"{givename name=""trade depo gate""}",,,,,,,,"{givename name=""barracks gate""}",,,,,,,,,`,,`
-,,,`,,`,,"{quantumstopfromnorth name=""Trade Goods Dumper""}",,,,,,,,,,,,,,,,,"{quantumstop name=""Prisoner quantum"" move={Up 5} move_back={Down 5} route_enable={prisoner_route_enable}}{givename name=""prisoner dumper""}",,,,,,,`,,`
+,,,`,,`,,"{quantumstopfromnorth name=""Trade Goods quantum""}",,,,,,,,,,,,,,,,,"{quantumstop name=""Prisoner quantum"" move={Up 5} move_back={Down 5} route_enable={prisoner_route_enable}}{givename name=""prisoner dumper""}",,,,,,,`,,`
 ,,,`,,`,,"{quantum name=""trade goods quantum""}",,,,,,,`,,,,,,,,`,,"{quantum name=""prisoner quantum"" quantum_enable={enableanimals}}",,,,,,,`,,`
 ,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
 ,,,`,,"{givename name=""left outer gate""}",,,,,,,,,"{givename name=""left inner gate""}",,,,,,,,"{givename name=""right inner gate""}",,,,,,,,,"{givename name=""right outer gate""}",,`
@@ -2554,14 +2555,14 @@ query_jail/services_query_jail
 Screenshot: https://drive.google.com/file/d/17jHiCKeZm6FSS-CI4V0r0GJZh09nzcO_
 ""
 Features:
-"- Big rooms, optionally pre-furnished. Double-thick walls to ensure engravings add value to the ""correct"" side. Fill with furniture and assign as needed."
+"- Big rooms, optionally pre-furnished. Double-thick walls to ensure engravings add value to the ""correct"" side. Declare locations as needed."
 ""
 Guildhall Walkthrough:
 1) Dig out the rooms with /guildhall1.
 ""
-"2) Once the area is dug out, add doors and a few statues with /guildhall2. Run ""quickfort orders"" for /guildhall2."
+"2) Once the area is dug out, pre-create the zones and add doors and a few statues with /guildhall2. Run ""quickfort orders"" for /guildhall2."
 ""
-"3) Furnish individual rooms manually, or alternately get default furnishings for a variety of room types by running /guildhall3. Declare appropriate locations as you need guildhalls, libraries, and temples. If you need more rooms, you can dig another /guildhall1 in an unused z-level."
+"3) Furnish individual rooms manually, or get default furnishings for a variety of room types by running /guildhall3. Declare appropriate locations from the pre-created zones as you need guildhalls, libraries, and temples. If you need more rooms, you can dig another /guildhall1 in an unused z-level."
 "#dig label(guildhall1) start(15; 15; central stairs) message(Once the area is dug out, continue with /guildhall2.)"
 
 
@@ -2592,7 +2593,10 @@ Guildhall Walkthrough:
 ,,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d,,,d,d,d,d,d,d,d
 
 
-"#build label(guildhall2) start(15; 15; central stairs) message(Remember to enqueue manager orders for this blueprint.
+#meta label(guildhall2)
+doors/guildhall_doors
+zones/guildhall_zones
+"#build label(guildhall_doors) start(15; 15; central stairs) hidden() message(Remember to enqueue manager orders for this blueprint.
 Smooth/engrave tiles, furnish rooms, and declare locations as required.) build doors"
 
 
@@ -2616,6 +2620,36 @@ Smooth/engrave tiles, furnish rooms, and declare locations as required.) build d
 ,,,,,,,d,,,,,,d,,d,,,,,,d
 ,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,d,d,`,`,`,`,`,`,`,d,d,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+
+
+#zone label(guildhall_zones) start(15; 15; central stairs) hidden() designate zones
+
+,m(9x9),,,,,,,,,m(9x9),,,,,,,,,m(9x9)
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,~,~,`,`,`,`,`,`,`,~,~,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,,,,,,~,,,,,,~,,~,,,,,,~
+,m(9x9),,,,,,~,,,,,,`,~,`,,,,m(9x9),,~
+,,`,`,`,`,`,`,`,,,,,~,,~,,,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,~,`,~,`,,,,`,~,`,~,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,~,,`,,`,,`,,~,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,~,`,~,`,,,,`,~,`,~,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,,,~,,~,,,,,`,`,`,`,`,`,`
+,,,,,,,~,,,,,,`,~,`,,,,,,~
+,m(9x9),,,,,,~,,,m(9x9),,,~,,~,,,,m(9x9),,~
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,~,~,`,`,`,`,`,`,`,~,~,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
 ,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
@@ -2676,7 +2710,7 @@ Apartments Walkthrough:
 ""
 "3) Once the beds are built, configure the rooms and build the remaining furniture with /apartments3. Run ""quickfort orders"" for /apartments3."
 ""
-"4) Once the coffins are all in place, run ""burial -pets"" to set them all to accept burials. This is handled for you if you're using the onMapLoad_dreamfort.init file included with DFHack."
+"4) Once the coffins are all in place, run ""burial -pets"" to set them all to accept burials."
 "#dig label(suites1) start(18; 18; central ramp) message(Once the area is dug out, run /suites2) noble suites"
 
 ,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d

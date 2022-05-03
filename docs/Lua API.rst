@@ -1091,11 +1091,12 @@ Announcements
 * ``dfhack.gui.autoDFAnnouncement(report,text[,log_failures])``
   ``dfhack.gui.autoDFAnnouncement(type,pos,text,color[,is_bright,unit1,unit2,is_sparring,log_failures])``
 
-  Takes a ``df.report_init`` (see: https://github.com/DFHack/df-structures/blob/master/df.announcements.xml#L451)
+  Takes a ``df.report_init`` (see: `structure definition <https://github.com/DFHack/df-structures/blob/master/df.announcements.xml#L451>`_)
   and a string and processes them just like DF does. Sometimes this means the announcement won't occur.
   Set ``log_failures`` to ``true`` to log the reason why to the dfhack console (e.g., unrevealed map or wrong gamemode.)
   Can also be built from parameters instead of a ``report_init``. Setting ``is_sparring`` to ``true`` means the report
-  will be added to sparring logs (if applicable) rather than hunting or combat.
+  will be added to sparring logs (if applicable) rather than hunting or combat. Text uses ``&`` as an escape character, with ``&r`` being a newline,
+  ``&&`` being just ``&``, and any other combination causing neither character to display.
 
 Other
 ~~~~~

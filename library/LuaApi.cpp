@@ -1524,9 +1524,9 @@ static int gui_autoDFAnnouncement(lua_State *state)
     else
     {
         df::coord pos;
-        int color;
-        bool bright, is_sparring, log_failures;
-        df::unit *unit1, *unit2;
+        int color = 0; //initialize these to prevent warning
+        bool bright = false, is_sparring = false, log_failures = false;
+        df::unit *unit1 = NULL, *unit2 = NULL;
 
         auto type = (df::announcement_type)lua_tointeger(state, 1);
         Lua::CheckDFAssign(state, &pos, 2);

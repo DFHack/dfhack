@@ -4,6 +4,7 @@
 #include <ColorText.h>
 #include <Console.h>
 #include <Export.h>
+#include <MiscUtils.h>
 #include <PluginManager.h>
 
 #include <modules/Gui.h>
@@ -11,6 +12,7 @@
 
 #include <list>
 #include <set>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -159,13 +161,18 @@ void viewscreen_commandpromptst::render()
     parent->render();
     if (is_response)
     {
-        auto it = responses.begin();
-        for (int i = 0; i < dim.y && it != responses.end(); i++, it++)
+        int y = 0;
+        for (auto &response : responses)
         {
-            Screen::fillRect(Screen::Pen(' ', 7, 0), 0, i, dim.x, i);
-            std::string cur_line = it->second;
-            Screen::paintString(Screen::Pen(' ', it->first, 0), 0, i,
-                    cur_line.substr(0, cur_line.size() - 1));
+            std::vector<std::string> lines;
+            word_wrap(&lines, response.second, dim.x);
+            for (auto &line : lines)
+            {
+                Screen::fillRect(Screen::Pen(' ', 7, 0), 0, y, dim.x, y);
+                Screen::paintString(Screen::Pen(' ', response.first, 0), 0, y, line);
+                if (++y >= dim.y)
+                    return;
+            }
         }
     }
     else

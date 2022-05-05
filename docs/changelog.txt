@@ -34,6 +34,22 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
+
+## New Tweaks
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+# 0.47.05-r5
+
+## New Plugins
 - `spectate`: "spectator mode" -- automatically follows dwarves doing things in your fort
 
 ## New Tweaks

@@ -34,6 +34,25 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
+
+## New Tweaks
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+- ``Lua API.rst``:  added ``autoDFAnnouncement``, ``pauseRecenter``, ``recenterViewscreen``
+
+## API
+- add functions reverse-engineered from announcement code: ``Gui::parseReportString``, ``Gui::autoDFAnnouncement``, ``Gui::pauseRecenter``, ``Gui::recenterViewscreen``
+
+## Lua
+- ``dfhack.gui``: Lua wrappers for functions reverse-engineered from announcement code: ``autoDFAnnouncement``, ``pauseRecenter``, ``recenterViewscreen``
+
+# 0.47.05-r5
+
+## New Plugins
 - `spectate`: "spectator mode" -- automatically follows dwarves doing things in your fort
 
 ## New Tweaks
@@ -67,7 +86,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - add more examples to the plugin example skeleton files so they are more informative for a newbie
 - `confirm`: correct the command name in the plugin help text
 - `cxxrandom`: added usage examples
-- ``Lua API.rst``:  added ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``, ``autoDFAnnouncement``, ``pauseRecenter``, ``recenterViewscreen``
+- ``Lua API.rst``:  added ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
 - `lua-string`: document DFHack string extensions (``startswith()``, ``endswith()``, ``split()``, ``trim()``, ``wrap()``, and ``escape_pattern()``)
 - `quickfort-blueprint-guide`: added screenshots to the Dreamfort case study and overall clarified text
 - `remote-client-libs`: add new Rust client library
@@ -76,11 +95,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## API
 - add functions reverse-engineered from ambushing unit code: ``Units::isHidden()``, ``Units::isFortControlled()``, ``Units::getOuterContainerRef()``, ``Items::getOuterContainerRef()``
-- add functions reverse-engineered from announcement code: ``Gui::parseReportString``, ``Gui::autoDFAnnouncement``, ``Gui::pauseRecenter``, ``Gui::recenterViewscreen``
 
 ## Lua
 - `custom-raw-tokens`: library for accessing tokens added to raws by mods
-- ``dfhack.gui``: Lua wrappers for functions reverse-engineered from announcement code: ``autoDFAnnouncement``, ``pauseRecenter``, ``recenterViewscreen``
 - ``dfhack.units``: Lua wrappers for functions reverse-engineered from ambushing unit code: ``isHidden(unit)``, ``isFortControlled(unit)``, ``getOuterContainerRef(unit)``, ``getOuterContainerRef(item)``
 - ``dialogs``: ``show*`` functions now return a reference to the created dialog
 - ``dwarfmode.enterSidebarMode()``: passing ``df.ui_sidebar_mode.DesignateMine`` now always results in you entering ``DesignateMine`` mode and not ``DesignateChopTrees``, even when you looking at the surface (where the default designation mode is ``DesignateChopTrees``)

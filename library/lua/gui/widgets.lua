@@ -469,8 +469,16 @@ function Label:render_scroll_icons(dc, x, y1, y2)
     end
 end
 
-function Label:postComputeFrame()
-    self:update_scroll_inset()
+function Label:computeFrame(parent_rect)
+    local frame_rect,body_rect = Label.super.computeFrame(self, parent_rect)
+
+    self.frame_rect = frame_rect
+    self.frame_body = parent_rect:viewport(body_rect or frame_rect)
+
+    self:update_scroll_inset() -- frame_body is now set
+
+    -- recalc with updated frame_inset
+    return Label.super.computeFrame(self, parent_rect)
 end
 
 function Label:preUpdateLayout()

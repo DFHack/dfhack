@@ -6,4 +6,4 @@ depends/libzip dfhack
 depends/libexpat dfhack
 depends/xlsxio dfhack
 depends/luacov dfhack
-depends/jsoncpp dfhack
+depends/jsoncpp-sub dfhack

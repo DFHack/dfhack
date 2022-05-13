@@ -12,6 +12,10 @@ endif()
 add_subdirectory(tthread)
 option(JSONCPP_WITH_TESTS "Compile and (for jsoncpp_check) run JsonCpp test executables" OFF)
 option(JSONCPP_WITH_POST_BUILD_UNITTEST "Automatically run unit-tests as a post build step" OFF)
+option(JSONCPP_BUILD_SHARED_LIBS "Build jsoncpp_lib as a shared library." OFF)
+option(JSONCPP_BUILD_STATIC_LIBS "Build jsoncpp_lib as a static library." OFF)
+option(JSONCPP_WITH_CMAKE_PACKAGE "Generate and install cmake package files" OFF)
+
 add_subdirectory(jsoncpp-sub EXCLUDE_FROM_ALL)
 # build clsocket static and only as a dependency. Setting those options here overrides its own default settings.
 option(CLSOCKET_SHARED "Build clsocket lib as shared." OFF)

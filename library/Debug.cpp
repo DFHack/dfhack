@@ -198,7 +198,7 @@ DebugCategory::cstring_ref DebugCategory::plugin() const noexcept
 //! standards only provide runtime checks if an atomic type is lock free
 struct failIfEnumAtomicIsNotLockFree {
     failIfEnumAtomicIsNotLockFree() {
-        std::atomic<DebugCategory::level> test;
+        std::atomic<DebugCategory::level> test(DebugCategory::LINFO);
         if (test.is_lock_free())
             return;
         std::cerr << __FILE__ << ':' << __LINE__

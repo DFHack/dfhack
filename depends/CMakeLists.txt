@@ -38,6 +38,7 @@ if(UNIX)
     set_target_properties(expat PROPERTIES COMPILE_FLAGS "-Wno-maybe-uninitialized")
 endif()
 
+set(CMAKE_REQUIRED_QUIET ON)
 set(LIBZIP_BUILD_DOC OFF CACHE BOOL "")
 set(LIBZIP_BUILD_EXAMPLES OFF CACHE BOOL "")
 set(LIBZIP_BUILD_REGRESS OFF CACHE BOOL "")

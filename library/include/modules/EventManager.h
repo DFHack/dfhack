@@ -38,6 +38,7 @@ namespace DFHack {
                 UNIT_ATTACK,
                 UNLOAD,
                 INTERACTION,
+                UNIT_ACTION,
                 EVENT_MAX
             };
         }
@@ -115,6 +116,11 @@ namespace DFHack {
                 // since the units are deduced (it seems) from the reports... this
                 return reports;
             }
+        };
+
+        struct ActionData {
+            int32_t unitId;
+            df::unit_action* action;
         };
 
         DFHACK_EXPORT void registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin);

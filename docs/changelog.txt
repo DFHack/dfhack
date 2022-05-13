@@ -40,6 +40,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 
 ## Misc Improvements
+- `EventManager`: add new event type ``UNIT_ACTION``, triggered when a unit starts an action
 
 ## Documentation
 

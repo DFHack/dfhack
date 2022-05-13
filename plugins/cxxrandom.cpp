@@ -37,94 +37,82 @@ DFHACK_PLUGIN("cxxrandom");
 #define PLUGIN_VERSION 2.0
 color_ostream *cout = nullptr;
 
-DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
-{
+DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands) {
     cout = &out;
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown (color_ostream &out)
-{
+DFhackCExport command_result plugin_shutdown (color_ostream &out) {
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
-{
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     return CR_OK;
 }
 
+#define EK_ID_BASE (1ll << 40)
 
 class EnginesKeeper
 {
 private:
-    EnginesKeeper() {}
-    std::unordered_map<uint16_t, std::mt19937_64> m_engines;
-    uint16_t counter = 0;
+    EnginesKeeper() = default;
+    std::unordered_map<uint64_t, std::mt19937_64> m_engines;
+    uint64_t id_counter = EK_ID_BASE;
 public:
-    static EnginesKeeper& Instance()
-    {
+    static EnginesKeeper& Instance() {
         static EnginesKeeper instance;
         return instance;
     }
-    uint16_t NewEngine( uint64_t seed )
-    {
+    uint64_t NewEngine( uint64_t seed ) {
+        auto id = ++id_counter;
+        CHECK_INVALID_ARGUMENT(m_engines.count(id) == 0);
         std::mt19937_64 engine( seed != 0 ? seed : std::chrono::system_clock::now().time_since_epoch().count() );
-        m_engines[++counter] = engine;
-        return counter;
+        m_engines[id] = engine;
+        return id;
     }
-    void DestroyEngine( uint16_t id )
-    {
+    void DestroyEngine( uint64_t id ) {
         m_engines.erase( id );
     }
-    void NewSeed( uint16_t id, uint64_t seed )
-    {
+    void NewSeed( uint64_t id, uint64_t seed ) {
         CHECK_INVALID_ARGUMENT( m_engines.find( id ) != m_engines.end() );
         m_engines[id].seed( seed != 0 ? seed : std::chrono::system_clock::now().time_since_epoch().count() );
     }
-    std::mt19937_64& RNG( uint16_t id )
-    {
+    std::mt19937_64& RNG( uint64_t id ) {
         CHECK_INVALID_ARGUMENT( m_engines.find( id ) != m_engines.end() );
         return m_engines[id];
     }
 };
 
 
-uint16_t GenerateEngine( uint64_t seed )
-{
+uint64_t GenerateEngine( uint64_t seed ) {
     return EnginesKeeper::Instance().NewEngine( seed );
 }
 
-void DestroyEngine( uint16_t id )
-{
+void DestroyEngine( uint64_t id ) {
     EnginesKeeper::Instance().DestroyEngine( id );
 }
 
-void NewSeed( uint16_t id, uint64_t seed )
-{
+void NewSeed( uint64_t id, uint64_t seed ) {
     EnginesKeeper::Instance().NewSeed( id, seed );
 }
 
 
-int      rollInt(uint16_t id, int min, int max)
-{
+int      rollInt(uint64_t id, int min, int max) {
     std::uniform_int_distribution<int> ND(min, max);
     return ND(EnginesKeeper::Instance().RNG(id));
 }
 
-double   rollDouble(uint16_t id, double min, double max)
-{
+double   rollDouble(uint64_t id, double min, double max) {
     std::uniform_real_distribution<double> ND(min, max);
     return ND(EnginesKeeper::Instance().RNG(id));
 }
 
-double   rollNormal(uint16_t id, double mean, double stddev)
-{
+double   rollNormal(uint64_t id, double mean, double stddev) {
     std::normal_distribution<double> ND(mean, stddev);
     return ND(EnginesKeeper::Instance().RNG(id));
 }
 
-bool     rollBool(uint16_t id, float p)
-{
+bool     rollBool(uint64_t id, float p) {
     std::bernoulli_distribution ND(p);
     return ND(EnginesKeeper::Instance().RNG(id));
 }
@@ -137,118 +125,104 @@ private:
     std::vector<int64_t> m_numbers;
 public:
     NumberSequence(){}
-    NumberSequence( int64_t start, int64_t end )
-    {
-        for( int64_t i = start; i <= end; ++i )
-        {
+    NumberSequence( int64_t start, int64_t end ) {
+        for( int64_t i = start; i <= end; ++i ) {
             m_numbers.push_back( i );
         }
     }
     void Add( int64_t num ) { m_numbers.push_back( num ); }
-    void Reset()            { m_numbers.clear(); }
-    int64_t Next()
-    {
-        if(m_position >= m_numbers.size())
-        {
+    void Reset() { m_numbers.clear(); }
+    int64_t Next() {
+        if(m_position >= m_numbers.size()) {
             m_position = 0;
         }
         return m_numbers[m_position++];
     }
-    void Shuffle( uint16_t id )
-    {
-        std::shuffle( std::begin( m_numbers ), std::end( m_numbers ), EnginesKeeper::Instance().RNG( id ) );
+    void Shuffle( uint64_t engID ) {
+        std::shuffle( std::begin( m_numbers ), std::end( m_numbers ), EnginesKeeper::Instance().RNG(engID));
     }
-    void Print()
-    {
-        for( auto v : m_numbers )
-        {
+    void Print() {
+        for( auto v : m_numbers ) {
             cout->print( "%" PRId64 " ", v );
         }
     }
 };
 
+#define SK_ID_BASE 0
+
 class SequenceKeeper
 {
 private:
-    SequenceKeeper() {}
-    std::unordered_map<uint16_t, NumberSequence> m_sequences;
-    uint16_t counter = 0;
+    SequenceKeeper() = default;
+    std::unordered_map<uint64_t, NumberSequence> m_sequences;
+    uint64_t id_counter = SK_ID_BASE;
 public:
-    static SequenceKeeper& Instance()
-    {
+    static SequenceKeeper& Instance() {
         static SequenceKeeper instance;
         return instance;
     }
-    uint16_t MakeNumSequence( int64_t start, int64_t end )
-    {
-        m_sequences[++counter] = NumberSequence( start, end );
-        return counter;
+    uint64_t MakeNumSequence( int64_t start, int64_t end ) {
+        auto id = ++id_counter;
+        CHECK_INVALID_ARGUMENT(m_sequences.count(id) == 0);
+        m_sequences[id] = NumberSequence(start, end);
+        return id;
     }
-    uint16_t MakeNumSequence()
-    {
-        m_sequences[++counter] = NumberSequence();
-        return counter;
+    uint64_t MakeNumSequence() {
+        auto id = ++id_counter;
+        CHECK_INVALID_ARGUMENT(m_sequences.count(id) == 0);
+        m_sequences[id] = NumberSequence();
+        return id;
     }
-    void DestroySequence( uint16_t id )
-    {
-        m_sequences.erase( id );
+    void DestroySequence( uint64_t seqID ) {
+        m_sequences.erase(seqID);
     }
-    void AddToSequence( uint16_t id, int64_t num )
-    {
-        CHECK_INVALID_ARGUMENT( m_sequences.find( id ) != m_sequences.end() );
-        m_sequences[id].Add( num );
+    void AddToSequence(uint64_t seqID, int64_t num ) {
+        CHECK_INVALID_ARGUMENT(m_sequences.find(seqID) != m_sequences.end());
+        m_sequences[seqID].Add(num);
     }
-    void Shuffle( uint16_t id, uint16_t rng_id )
-    {
-        CHECK_INVALID_ARGUMENT( m_sequences.find( id ) != m_sequences.end() );
-        m_sequences[id].Shuffle( rng_id );
+    void Shuffle(uint64_t seqID, uint64_t engID ) {
+        uint64_t sid = seqID >= SK_ID_BASE ? seqID : engID;
+        uint64_t eid = engID >= EK_ID_BASE ? engID : seqID;
+        CHECK_INVALID_ARGUMENT(m_sequences.find(sid) != m_sequences.end());
+        m_sequences[sid].Shuffle(eid);
     }
-    int64_t NextInSequence( uint16_t id )
-    {
-        CHECK_INVALID_ARGUMENT( m_sequences.find( id ) != m_sequences.end() );
-        return m_sequences[id].Next();
+    int64_t NextInSequence( uint64_t seqID ) {
+        CHECK_INVALID_ARGUMENT(m_sequences.find(seqID) != m_sequences.end());
+        return m_sequences[seqID].Next();
     }
-    void PrintSequence( uint16_t id )
-    {
-        CHECK_INVALID_ARGUMENT( m_sequences.find( id ) != m_sequences.end() );
-        auto seq = m_sequences[id];
+    void PrintSequence( uint64_t seqID ) {
+        CHECK_INVALID_ARGUMENT(m_sequences.find(seqID) != m_sequences.end());
+        auto seq = m_sequences[seqID];
         seq.Print();
     }
 };
 
 
-uint16_t MakeNumSequence( int64_t start, int64_t end )
-{
-    if( start == end )
-    {
+uint64_t MakeNumSequence( int64_t start, int64_t end ) {
+    if (start == end) {
         return SequenceKeeper::Instance().MakeNumSequence();
     }
-    return SequenceKeeper::Instance().MakeNumSequence( start, end );
+    return SequenceKeeper::Instance().MakeNumSequence(start, end);
 }
 
-void     DestroyNumSequence( uint16_t id )
-{
-    SequenceKeeper::Instance().DestroySequence( id );
+void     DestroyNumSequence( uint64_t seqID ) {
+    SequenceKeeper::Instance().DestroySequence(seqID);
 }
 
-void     AddToSequence( uint16_t id, int64_t num )
-{
-    SequenceKeeper::Instance().AddToSequence( id, num );
+void     AddToSequence(uint64_t seqID, int64_t num ) {
+    SequenceKeeper::Instance().AddToSequence(seqID, num);
 }
 
-void     ShuffleSequence( uint16_t rngID, uint16_t id )
-{
-    SequenceKeeper::Instance().Shuffle( id, rngID );
+void     ShuffleSequence(uint64_t seqID, uint64_t engID ) {
+    SequenceKeeper::Instance().Shuffle(seqID, engID);
 }
 
-int64_t  NextInSequence( uint16_t id )
-{
-    return SequenceKeeper::Instance().NextInSequence( id );
+int64_t  NextInSequence( uint64_t seqID ) {
+    return SequenceKeeper::Instance().NextInSequence(seqID);
 }
 
-void DebugSequence( uint16_t id )
-{
-    SequenceKeeper::Instance().PrintSequence( id );
+void DebugSequence( uint64_t seqID ) {
+    SequenceKeeper::Instance().PrintSequence(seqID);
 }
 
 

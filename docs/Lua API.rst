@@ -2643,6 +2643,12 @@ environment by the mandatory init file dfhack.lua:
   Walks a sequence of dereferences, which may be represented by numbers or strings.
   Returns *nil* if any of obj or indices is *nil*, or a numeric index is out of array bounds.
 
+* ``ensure_key(t, key[, default_value])``
+
+  If the Lua table ``t`` doesn't include the specified ``key``, ``t[key]`` is
+  set to the value of ``default_value``, which defaults to ``{}`` if not set.
+  The new or existing value of ``t[key]`` is then returned.
+
 .. _lua-string:
 
 String class extentions
@@ -3192,6 +3198,80 @@ Predefined instance methods:
 
 To avoid confusion, these methods cannot be redefined.
 
+.. _custom-raw-tokens:
+
+custom-raw-tokens
+=================
+
+A module for reading custom tokens added to the raws by mods.
+
+* ``customRawTokens.getToken(typeDefinition, token)``
+
+  Where ``typeDefinition`` is a type definition struct as seen in ``df.global.world.raws``
+  (e.g.: ``dfhack.gui.getSelectedItem().subtype``) and ``token`` is the name of the custom token
+  you want read. The arguments from the token will then be returned as strings using single or
+  multiple return values. If the token is not present, the result is false; if it is present
+  but has no arguments, the result is true. For ``creature_raw``, it checks against no caste.
+  For ``plant_raw``, it checks against no growth.
+
+* ``customRawTokens.getToken(typeInstance, token)``
+
+  Where ``typeInstance`` is a unit, entity, item, job, projectile, building, plant, or interaction
+  instance. Gets ``typeDefinition`` and then returns the same as ``getToken(typeDefinition, token)``.
+  For units, it gets the token from the race or caste instead if appplicable. For plants growth items,
+  it gets the token from the plant or plant growth instead if applicable. For plants it does the same
+  but with growth number -1.
+
+* ``customRawTokens.getToken(raceDefinition, casteNumber, token)``
+
+  The same as ``getToken(unit, token)`` but with a specified race and caste. Caste number -1 is no caste.
+
+* ``customRawTokens.getToken(raceDefinition, casteName, token)``
+
+  The same as ``getToken(unit, token)`` but with a specified race and caste, using caste name (e.g. "FEMALE")
+  instead of number.
+
+* ``customRawTokens.getToken(plantDefinition, growthNumber, token)``
+
+  The same as ``getToken(plantGrowthItem, token)`` but with a specified plant and growth. Growth number -1
+  is no growth.
+
+* ``customRawTokens.getToken(plantDefinition, growthName, token)``
+
+  The same as ``getToken(plantGrowthItem, token)`` but with a specified plant and growth, using growth name
+  (e.g. "LEAVES") instead of number.
+
+Examples:
+
+* Using an eventful onReactionComplete hook, something for disturbing dwarven science::
+
+    if customRawTokens.getToken(reaction, "DFHACK_CAUSES_INSANITY") then
+        -- make unit who performed reaction go insane
+
+* Using an eventful onProjItemCheckMovement hook, a fast or slow-firing crossbow::
+
+    -- check projectile distance flown is zero, get firer, etc...
+    local multiplier = tonumber(customRawTokens.getToken(bow, "DFHACK_FIRE_RATE_MULTIPLIER")) or 1
+    firer.counters.think_counter = firer.counters.think_counter * multiplier
+
+* Something for a script that prints help text about different types of units::
+
+    local unit = dfhack.gui.getSelectedUnit()
+    if not unit then return end
+    local helpText = customRawTokens.getToken(unit, "DFHACK_HELP_TEXT")
+    if helpText then print(helpText) end
+
+* Healing armour::
+
+    -- (per unit every tick)
+    local healAmount = 0
+    for _, entry in ipairs(unit.inventory) do
+        if entry.mode == 2 then -- Worn
+            healAmount = healAmount + tonumber((customRawTokens.getToken(entry.item, "DFHACK_HEAL_AMOUNT")) or 0)
+        end
+    end
+    unit.body.blood_count = math.min(unit.body.blood_max, unit.body.blood_count + healAmount)
+
 ==================
 In-game UI Library
 ==================
@@ -3689,6 +3769,8 @@ Base of all the widgets. Inherits from View and has the following attributes:
   :x: left/right margin, if ``l`` and/or ``r`` are omitted.
   :y: top/bottom margin, if ``t`` and/or ``b`` are omitted.
 
+  Omitted fields are interpreted as having the value of 0.
+
 * ``frame_background = pen``
 
   The pen to fill the outer frame with. Defaults to no fill.
@@ -3774,6 +3856,14 @@ It has the following attributes:
 :auto_width: Sets self.frame.w from the text width.
 :on_click: A callback called when the label is clicked (optional)
 :on_rclick: A callback called when the label is right-clicked (optional)
+:scroll_keys: Specifies which keys the label should react to as a table. Default is ``STANDARDSCROLL`` (up or down arrows, page up or down).
+:show_scroll_icons: Controls scroll icons' behaviour: ``false`` for no icons, ``'right'`` or ``'left'`` for
+     icons next to the text in an additional column (``frame_inset`` is adjusted to have ``.r`` or ``.l`` greater than ``0``),
+     ``nil`` same as ``'right'`` but changes ``frame_inset`` only if a scroll icon is actually necessary
+     (if ``getTextHeight()`` is greater than ``frame_body.height``). Default is ``nil``.
+:up_arrow_icon: The symbol for scroll up arrow. Default is ``string.char(24)`` (``↑``).
+:down_arrow_icon: The symbol for scroll down arrow. Default is ``string.char(25)`` (``↓``).
+:scroll_icon_pen: Specifies the pen for scroll icons. Default is ``COLOR_LIGHTCYAN``.
 
 The text itself is represented as a complex structure, and passed
 to the object via the ``text`` argument of the constructor, or via
@@ -3861,6 +3951,102 @@ The Label widget implements the following methods:
 * ``label:getTextWidth()``
 
   Computes the width of the text.
+
+WrappedLabel class
+------------------
+
+This Label subclass represents text that you want to be able to dynamically
+wrap. This frees you from having to pre-split long strings into multiple lines
+in the Label ``text`` list.
+
+It has the following attributes:
+
+:text_to_wrap: The string (or a table of strings or a function that returns a
+    string or a table of strings) to display. The text will be autowrapped to
+    the width of the widget, though any existing newlines will be kept.
+:indent: The number of spaces to indent the text from the left margin. The
+    default is ``0``.
+
+The displayed text is refreshed and rewrapped whenever the widget bounds change.
+To force a refresh (to pick up changes in the string that ``text_to_wrap``
+returns, for example), all ``updateLayout()`` on this widget or on a widget that
+contains this widget.
+
+TooltipLabel class
+------------------
+
+This WrappedLabel subclass represents text that you want to be able to
+dynamically hide, like help text in a tooltip.
+
+It has the following attributes:
+
+:show_tooltip: Boolean or a callback; if true, the widget is visible.
+
+The ``text_pen`` attribute of the ``Label`` class is overridden with a default
+of ``COLOR_GREY`` and the ``indent`` attribute of the ``WrappedLabel`` class is
+overridden with a default of ``2``.
+
+The text of the tooltip can be passed in the inherited ``text_to_wrap``
+attribute so it can be autowrapped, or in the basic ``text`` attribute if no
+wrapping is required.
+
+HotkeyLabel class
+-----------------
+
+This Label subclass is a convenience class for formatting text that responds to
+a hotkey.
+
+It has the following attributes:
+
+:key: The hotkey keycode to display, e.g. ``'CUSTOM_A'``.
+:label: The string (or a function that returns a string) to display after the
+    hotkey.
+:on_activate: If specified, it is the callback that will be called whenever
+    the hotkey is pressed.
+
+CycleHotkeyLabel class
+----------------------
+
+This Label subclass represents a group of related options that the user can
+cycle through by pressing a specified hotkey.
+
+It has the following attributes:
+
+:key: The hotkey keycode to display, e.g. ``'CUSTOM_A'``.
+:label: The string (or a function that returns a string) to display after the
+    hotkey.
+:label_width: The number of spaces to allocate to the ``label`` (for use in
+    aligning a column of ``CycleHotkeyLabel`` labels).
+:options: A list of strings or tables of ``{label=string, value=string}``.
+    String options use the same string for the label and value.
+:initial_option: The value or numeric index of the initial option.
+:on_change: The callback to call when the selected option changes. It is called
+    as ``on_change(new_option_value, old_option_value)``.
+
+The index of the currently selected option in the ``options`` list is kept in
+the ``option_idx`` instance variable.
+
+The CycleHotkeyLabel widget implements the following methods:
+
+* ``cyclehotkeylabel:cycle()``
+
+    Cycles the selected option and triggers the ``on_change`` callback.
+
+* ``cyclehotkeylabel:getOptionLabel([option_idx])``
+
+    Retrieves the option label at the given index, or the label of the
+    currently selected option if no index is given.
+
+* ``cyclehotkeylabel:getOptionValue([option_idx])``
+
+    Retrieves the option value at the given index, or the value of the
+    currently selected option if no index is given.
+
+ToggleHotkeyLabel
+-----------------
+
+This is a specialized subclass of CycleHotkeyLabel that has two options:
+``On`` (with a value of ``true``) and ``Off`` (with a value of ``false``).
 
 List class
 ----------
@@ -4215,7 +4401,7 @@ Native functions (exported to Lua)
 
   adds a number to the sequence
 
-- ``ShuffleSequence(rngID, seqID)``
+- ``ShuffleSequence(seqID, rngID)``
 
   shuffles the number sequence
 
@@ -4278,7 +4464,7 @@ Lua plugin classes
 ``bool_distribution``
 ~~~~~~~~~~~~~~~~~~~~~
 
-- ``init(min, max)``: constructor
+- ``init(chance)``: constructor
 - ``next(id)``: returns next boolean in the distribution
 
   - ``id``: engine ID to pass to native function
@@ -4290,6 +4476,41 @@ Lua plugin classes
 - ``add(num)``: adds num to the end of the number sequence
 - ``shuffle()``: shuffles the sequence of numbers
 - ``next()``: returns next number in the sequence
+
+Usage
+-----
+
+The basic idea is you create a number distribution which you generate random numbers along. The C++ relies
+on engines keeping state information to determine the next number along the distribution.
+You're welcome to try and (ab)use this knowledge for your RNG purposes.
+
+Example::
+
+    local rng = require('plugins.cxxrandom')
+    local norm_dist = rng.normal_distribution(6820,116) // avg, stddev
+    local engID = rng.MakeNewEngine(0)
+    -- somewhat reminiscent of the C++ syntax
+    print(norm_dist:next(engID))
+
+    -- a bit more streamlined
+    local cleanup = true --delete engine on cleanup
+    local number_generator = rng.crng:new(engID, cleanup, norm_dist)
+    print(number_generator:next())
+
+    -- simplified
+    print(rng.rollNormal(engID,6820,116))
+
+The number sequences are much simpler. They're intended for where you need to randomly generate an index, perhaps in a loop for an array. You technically don't need an engine to use it, if you don't mind never shuffling.
+
+Example::
+
+    local rng = require('plugins.cxxrandom')
+    local g = rng.crng:new(rng.MakeNewEngine(0), true, rng.num_sequence:new(0,table_size))
+    g:shuffle()
+    for _ = 1, table_size do
+        func(array[g:next()])
+    end
+
 
 dig-now
 =======

@@ -13,6 +13,7 @@
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
 #include "df/unit_wound.h"
+#include "df/construction.h"
 
 namespace DFHack {
     namespace EventManager {
@@ -61,8 +62,9 @@ namespace DFHack {
         struct SyndromeData {
             int32_t unitId;
             int32_t syndromeIndex;
-            SyndromeData(int32_t unitId_in, int32_t syndromeIndex_in): unitId(unitId_in), syndromeIndex(syndromeIndex_in) {
-
+            SyndromeData(int32_t unitId_in, int32_t syndromeIndex_in): unitId(unitId_in), syndromeIndex(syndromeIndex_in) {}
+            bool operator==(const SyndromeData &other) const {
+                return unitId == other.unitId && syndromeIndex == other.syndromeIndex;
             }
         };
 
@@ -79,12 +81,26 @@ namespace DFHack {
             InventoryItem* item_new;
             InventoryChangeData() {}
             InventoryChangeData(int32_t id_in, InventoryItem* old_in, InventoryItem* new_in): unitId(id_in), item_old(old_in), item_new(new_in) {}
+            bool operator==(const InventoryChangeData &other) const {
+                bool unit = unitId == other.unitId;
+                bool newItem = (item_new && other.item_new && item_new->itemId == other.item_new->itemId) ||
+                               (!item_new && item_new == other.item_new);
+                bool oldItem = (item_old && other.item_old && item_old->itemId == other.item_old->itemId) ||
+                               (!item_old && item_old == other.item_old);
+                return unit && newItem && oldItem;
+            }
         };
 
         struct UnitAttackData {
+            int32_t report_id;
             int32_t attacker;
             int32_t defender;
             int32_t wound;
+
+            bool operator==(const UnitAttackData &other) const {
+                // fairly sure the report_id is the only thing that matters
+                return report_id == other.report_id && wound == other.wound;
+            }
         };
 
         struct InteractionData {
@@ -94,6 +110,12 @@ namespace DFHack {
             int32_t defender;
             int32_t attackReport;
             int32_t defendReport;
+            bool operator==(const InteractionData &other) const {
+                bool reports = attackReport == other.attackReport && defendReport == other.defendReport;
+                // based on code in the manager it doesn't need reports or verbs checked.
+                // since the units are deduced (it seems) from the reports... this
+                return reports;
+            }
         };
 
         struct ActionData {
@@ -132,6 +154,73 @@ namespace std {
             return r;
         }
     };
+    template <>
+    struct hash<df::construction> {
+        std::size_t operator()(const df::construction& construct) const {
+            auto &c = construct.pos;
+            size_t r = 17;
+            const size_t m = 65537;
+            r = m*(r+c.x);
+            r = m*(r+c.y);
+            r = m*(r+c.z);
+            return r;
+        }
+    };
+    template <>
+    struct hash<DFHack::EventManager::SyndromeData> {
+        std::size_t operator()(const DFHack::EventManager::SyndromeData& syndrome) const {
+            size_t r = 43;
+            const size_t m = 65537;
+            r = m*(r+syndrome.unitId);
+            r = m*(r+syndrome.syndromeIndex);
+            return r;
+        }
+    };
+    template <>
+    struct hash<DFHack::EventManager::InventoryChangeData> {
+        std::size_t operator()(const DFHack::EventManager::InventoryChangeData& icd) const {
+            size_t r = 43;
+            const size_t m = 65537;
+            r = m*(r+icd.unitId);
+            if (icd.item_new) {
+                r=m*(r+icd.item_new->itemId);
+            }
+            if (icd.item_old) {
+                r=m*(r+(2*icd.item_old->itemId));
+            }
+            return r;
+        }
+    };
+    template <>
+    struct hash<DFHack::EventManager::UnitAttackData> {
+        std::size_t operator()(const DFHack::EventManager::UnitAttackData& uad) const {
+            size_t r = 43;
+            const size_t m = 65537;
+            r = m*(r+uad.report_id);
+            r = m*(r+uad.attacker);
+            r = m*(r+uad.defender);
+            r = m*(r+uad.wound);
+            return r;
+        }
+    };
+    template <>
+    struct hash<DFHack::EventManager::InteractionData> {
+        std::size_t operator()(const DFHack::EventManager::InteractionData& interactionData) const {
+            size_t r = 43;
+            const size_t m = 65537;
+            r = m*(r+interactionData.attackReport);
+            r = m*(r+interactionData.defendReport);
+            r = m*(r+interactionData.attacker);
+            r = m*(r+interactionData.defender);
+            return r;
+        }
+    };
+}
+
+namespace df{
+    inline bool operator==(const df::construction &A, const df::construction &B){
+        return A.pos == B.pos;
+    }
 }
 
 #endif

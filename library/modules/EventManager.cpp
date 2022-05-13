@@ -99,7 +99,7 @@ void DFHack::EventManager::unregister(EventType::EventType e, EventHandler handl
     for ( auto i = handlers[e].find(plugin); i != handlers[e].end(); ) {
         if ( (*i).first != plugin )
             break;
-        EventHandler handle = (*i).second;
+        EventHandler &handle = (*i).second;
         if ( handle != handler ) {
             i++;
             continue;
@@ -117,10 +117,9 @@ void DFHack::EventManager::unregisterAll(Plugin* plugin) {
 
         removeFromTickQueue((*i).second);
     }
-    for ( size_t a = 0; a < (size_t)EventType::EVENT_MAX; a++ ) {
-        handlers[a].erase(plugin);
+    for (auto &handler : handlers) {
+        handler.erase(plugin);
     }
-    return;
 }
 
 static void manageTickEvent(color_ostream& out);
@@ -215,7 +214,7 @@ static int32_t nextBuilding;
 static unordered_set<int32_t> buildings;
 
 //construction
-static unordered_map<df::coord, df::construction> constructions;
+static unordered_set<df::construction> constructions;
 static bool gameLoaded;
 
 //syndrome
@@ -250,13 +249,13 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         //TODO: put this somewhere else
         doOnce = true;
         EventHandler buildingHandler(Buildings::updateBuildings, 100);
-        DFHack::EventManager::registerListener(EventType::BUILDING, buildingHandler, NULL);
+        DFHack::EventManager::registerListener(EventType::BUILDING, buildingHandler, nullptr);
         //out.print("Registered listeners.\n %d", __LINE__);
     }
     if ( event == DFHack::SC_MAP_UNLOADED ) {
         lastJobId = -1;
-        for ( auto i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
-            Job::deleteJobStruct((*i).second, true);
+        for (auto &prevJob : prevJobs) {
+            Job::deleteJobStruct(prevJob.second, true);
         }
         prevJobs.clear();
         tickQueue.clear();
@@ -272,8 +271,8 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         gameLoaded = false;
 
         multimap<Plugin*,EventHandler> copy(handlers[EventType::UNLOAD].begin(), handlers[EventType::UNLOAD].end());
-        for (auto a = copy.begin(); a != copy.end(); a++ ) {
-            (*a).second.eventHandler(out, NULL);
+        for (auto &key_value : copy) {
+            key_value.second.eventHandler(out, nullptr);
         }
     } else if ( event == DFHack::SC_MAP_LOADED ) {
         /*
@@ -303,49 +302,44 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         lastJobId = -1 + *df::global::job_next_id;
 
         constructions.clear();
-        for ( auto i = df::global::world->constructions.begin(); i != df::global::world->constructions.end(); i++ ) {
-            df::construction* constr = *i;
-            if ( !constr ) {
+        for (auto c : df::global::world->constructions) {
+            if ( !c ) {
                 if ( Once::doOnce("EventManager.onLoad null constr") ) {
                     out.print("EventManager.onLoad: null construction.\n");
                 }
                 continue;
             }
-            if ( constr->pos == df::coord() ) {
+            if (c->pos == df::coord() ) {
                 if ( Once::doOnce("EventManager.onLoad null position of construction.\n") )
                     out.print("EventManager.onLoad null position of construction.\n");
                 continue;
             }
-            constructions[constr->pos] = *constr;
+            constructions.emplace(*c);
         }
-        for ( size_t a = 0; a < df::global::world->buildings.all.size(); a++ ) {
-            df::building* b = df::global::world->buildings.all[a];
+        for (auto b : df::global::world->buildings.all) {
             Buildings::updateBuildings(out, (void*)intptr_t(b->id));
             buildings.insert(b->id);
         }
         lastSyndromeTime = -1;
-        for ( size_t a = 0; a < df::global::world->units.all.size(); a++ ) {
-            df::unit* unit = df::global::world->units.all[a];
-            for ( size_t b = 0; b < unit->syndromes.active.size(); b++ ) {
-                df::unit_syndrome* syndrome = unit->syndromes.active[b];
+        for (auto unit : df::global::world->units.all) {
+            for (auto syndrome : unit->syndromes.active) {
                 int32_t startTime = syndrome->year*ticksPerYear + syndrome->year_time;
                 if ( startTime > lastSyndromeTime )
                     lastSyndromeTime = startTime;
             }
         }
         lastReport = -1;
-        if ( df::global::world->status.reports.size() > 0 ) {
+        if ( !df::global::world->status.reports.empty() ) {
             lastReport = df::global::world->status.reports[df::global::world->status.reports.size()-1]->id;
         }
         lastReportUnitAttack = -1;
         lastReportInteraction = -1;
         reportToRelevantUnitsTime = -1;
         reportToRelevantUnits.clear();
-        for ( size_t a = 0; a < EventType::EVENT_MAX; a++ ) {
-            eventLastTick[a] = -1;//-1000000;
+        for (int &last_tick : eventLastTick) {
+            last_tick = -1;//-1000000;
         }
-        for ( size_t a = 0; a < df::global::world->history.figures.size(); a++ ) {
-            df::historical_figure* unit = df::global::world->history.figures[a];
+        for (auto unit : df::global::world->history.figures) {
             if ( unit->id < 0 && unit->name.language < 0 )
                 unit->name.language = 0;
         }
@@ -371,10 +365,10 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
             continue;
         int32_t eventFrequency = -100;
         if ( a != EventType::TICK )
-            for ( auto b = handlers[a].begin(); b != handlers[a].end(); b++ ) {
-                EventHandler bob = (*b).second;
-                if ( bob.freq < eventFrequency || eventFrequency == -100 )
-                    eventFrequency = bob.freq;
+            for (auto &key_value : handlers[a]) {
+                EventHandler &handle = key_value.second;
+                if (handle.freq < eventFrequency || eventFrequency == -100 )
+                    eventFrequency = handle.freq;
             }
         else eventFrequency = 1;
 
@@ -394,7 +388,7 @@ static void manageTickEvent(color_ostream& out) {
     while ( !tickQueue.empty() ) {
         if ( tick < (*tickQueue.begin()).first )
             break;
-        EventHandler handle = (*tickQueue.begin()).second;
+        EventHandler &handle = (*tickQueue.begin()).second;
         tickQueue.erase(tickQueue.begin());
         handle.eventHandler(out, (void*)intptr_t(tick));
         toRemove.insert(handle);
@@ -402,7 +396,7 @@ static void manageTickEvent(color_ostream& out) {
     if ( toRemove.empty() )
         return;
     for ( auto a = handlers[EventType::TICK].begin(); a != handlers[EventType::TICK].end(); ) {
-        EventHandler handle = (*a).second;
+        EventHandler &handle = (*a).second;
         if ( toRemove.find(handle) == toRemove.end() ) {
             a++;
             continue;
@@ -429,13 +423,14 @@ static void manageJobInitiatedEvent(color_ostream& out) {
     }
     multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_INITIATED].begin(), handlers[EventType::JOB_INITIATED].end());
 
-    for ( df::job_list_link* link = &df::global::world->jobs.list; link != NULL; link = link->next ) {
-        if ( link->item == NULL )
+    for ( df::job_list_link* link = &df::global::world->jobs.list; link != nullptr; link = link->next ) {
+        if ( link->item == nullptr )
             continue;
         if ( link->item->id <= lastJobId )
             continue;
-        for ( auto i = copy.begin(); i != copy.end(); i++ ) {
-            (*i).second.eventHandler(out, (void*)link->item);
+        for (auto &key_value : copy) {
+            EventHandler &handle = key_value.second;
+            handle.eventHandler(out, (void*)link->item);
         }
     }
 
@@ -452,7 +447,7 @@ static void manageJobStartedEvent(color_ostream& out) {
     multimap<Plugin*, EventHandler> copy(handlers[EventType::JOB_STARTED].begin(), handlers[EventType::JOB_STARTED].end());
     for (auto &key_value : copy) {
         auto &handler = key_value.second;
-        for (df::job_list_link* link = df::global::world->jobs.list.next; link != NULL; link = link->next) {
+        for (df::job_list_link* link = df::global::world->jobs.list.next; link != nullptr; link = link->next) {
             df::job* job = link->item;
             // the jobs must have a worker to start
             if (job && Job::getWorker(job) && !startedJobs.count(job->id)) {
@@ -480,8 +475,8 @@ static void manageJobCompletedEvent(color_ostream& out) {
 
     multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_COMPLETED].begin(), handlers[EventType::JOB_COMPLETED].end());
     map<int32_t, df::job*> nowJobs;
-    for ( df::job_list_link* link = &df::global::world->jobs.list; link != NULL; link = link->next ) {
-        if ( link->item == NULL )
+    for ( df::job_list_link* link = &df::global::world->jobs.list; link != nullptr; link = link->next ) {
+        if ( link->item == nullptr )
             continue;
         nowJobs[link->item->id] = link->item;
     }
@@ -548,53 +543,55 @@ static void manageJobCompletedEvent(color_ostream& out) {
     }
 #endif
 
-    for ( auto i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
+    for (auto &prevJob : prevJobs) {
         //if it happened within a tick, must have been cancelled by the user or a plugin: not completed
         if ( tick1 <= tick0 )
             continue;
 
-        if ( nowJobs.find((*i).first) != nowJobs.end() ) {
+        if ( nowJobs.find(prevJob.first) != nowJobs.end() ) {
             //could have just finished if it's a repeat job
-            df::job& job0 = *(*i).second;
+            df::job& job0 = *prevJob.second;
             if ( !job0.flags.bits.repeat )
                 continue;
-            df::job& job1 = *nowJobs[(*i).first];
+            df::job& job1 = *nowJobs[prevJob.first];
             if ( job0.completion_timer != 0 )
                 continue;
             if ( job1.completion_timer != -1 )
                 continue;
 
             //still false positive if cancelled at EXACTLY the right time, but experiments show this doesn't happen
-            for ( auto j = copy.begin(); j != copy.end(); j++ ) {
-                (*j).second.eventHandler(out, (void*)&job0);
+            for (auto &key_value : copy) {
+                EventHandler &handle = key_value.second;
+                handle.eventHandler(out, (void*)&job0);
             }
             continue;
         }
 
         //recently finished or cancelled job
-        df::job& job0 = *(*i).second;
+        df::job& job0 = *prevJob.second;
         if ( job0.flags.bits.repeat || job0.completion_timer != 0 )
             continue;
 
-        for ( auto j = copy.begin(); j != copy.end(); j++ ) {
-            (*j).second.eventHandler(out, (void*)&job0);
+        for (auto &key_value : copy) {
+            EventHandler &handle = key_value.second;
+            handle.eventHandler(out, (void*)&job0);
         }
     }
 
     //erase old jobs, copy over possibly altered jobs
-    for ( auto i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
-        Job::deleteJobStruct((*i).second, true);
+    for (auto &prevJob : prevJobs) {
+        Job::deleteJobStruct(prevJob.second, true);
     }
     prevJobs.clear();
 
     //create new jobs
-    for ( auto j = nowJobs.begin(); j != nowJobs.end(); j++ ) {
+    for (auto &nowJob : nowJobs) {
         /*map<int32_t, df::job*>::iterator i = prevJobs.find((*j).first);
         if ( i != prevJobs.end() ) {
             continue;
         }*/
 
-        df::job* newJob = Job::cloneJobStruct((*j).second, true);
+        df::job* newJob = Job::cloneJobStruct(nowJob.second, true);
         prevJobs[newJob->id] = newJob;
     }
 }
@@ -622,8 +619,7 @@ static void manageUnitDeathEvent(color_ostream& out) {
     if (!df::global::world)
         return;
     multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_DEATH].begin(), handlers[EventType::UNIT_DEATH].end());
-    for ( size_t a = 0; a < df::global::world->units.all.size(); a++ ) {
-        df::unit* unit = df::global::world->units.all[a];
+    for (auto unit : df::global::world->units.all) {
         //if ( unit->counters.death_id == -1 ) {
         if ( Units::isActive(unit) ) {
             livingUnits.insert(unit->id);
@@ -633,8 +629,9 @@ static void manageUnitDeathEvent(color_ostream& out) {
         if ( livingUnits.find(unit->id) == livingUnits.end() )
             continue;
 
-        for ( auto i = copy.begin(); i != copy.end(); i++ ) {
-            (*i).second.eventHandler(out, (void*)intptr_t(unit->id));
+        for (auto &key_value : copy) {
+            EventHandler &handle = key_value.second;
+            handle.eventHandler(out, (void*)intptr_t(unit->id));
         }
         livingUnits.erase(unit->id);
     }
@@ -669,8 +666,9 @@ static void manageItemCreationEvent(color_ostream& out) {
         //spider webs don't count
         if ( item->flags.bits.spider_web )
             continue;
-        for ( auto i = copy.begin(); i != copy.end(); i++ ) {
-            (*i).second.eventHandler(out, (void*)intptr_t(item->id));
+        for (auto &key_value : copy) {
+            EventHandler &handle = key_value.second;
+            handle.eventHandler(out, (void*)intptr_t(item->id));
         }
     }
     nextItem = *df::global::item_next_id;
@@ -695,9 +693,9 @@ static void manageBuildingEvent(color_ostream& out) {
             continue;
         }
         buildings.insert(a);
-        for ( auto b = copy.begin(); b != copy.end(); b++ ) {
-            EventHandler bob = (*b).second;
-            bob.eventHandler(out, (void*)intptr_t(a));
+        for (auto &key_value : copy) {
+            EventHandler &handle = key_value.second;
+            handle.eventHandler(out, (void*)intptr_t(a));
         }
     }
     nextBuilding = *df::global::building_next_id;
@@ -711,9 +709,9 @@ static void manageBuildingEvent(color_ostream& out) {
             continue;
         }
 
-        for ( auto b = copy.begin(); b != copy.end(); b++ ) {
-            EventHandler bob = (*b).second;
-            bob.eventHandler(out, (void*)intptr_t(id));
+        for (auto &key_value : copy) {
+            EventHandler &handle = key_value.second;
+            handle.eventHandler(out, (void*)intptr_t(id));
         }
         a = buildings.erase(a);
     }
@@ -724,34 +722,34 @@ static void manageConstructionEvent(color_ostream& out) {
         return;
     //unordered_set<df::construction*> constructionsNow(df::global::world->constructions.begin(), df::global::world->constructions.end());
 
-    multimap<Plugin*,EventHandler> copy(handlers[EventType::CONSTRUCTION].begin(), handlers[EventType::CONSTRUCTION].end());
-    for ( auto a = constructions.begin(); a != constructions.end(); ) {
-        df::construction& construction = (*a).second;
-        if ( df::construction::find(construction.pos) != NULL ) {
-            a++;
+    multimap<Plugin*, EventHandler> copy(handlers[EventType::CONSTRUCTION].begin(), handlers[EventType::CONSTRUCTION].end());
+    // find & send construction removals
+    for (auto iter = constructions.begin(); iter != constructions.end();) {
+        auto &construction = *iter;
+        // if we can't find it, it was removed
+        if (df::construction::find(construction.pos) != nullptr) {
+            ++iter;
             continue;
         }
-        //construction removed
-        //out.print("Removed construction (%d,%d,%d)\n", construction.pos.x,construction.pos.y,construction.pos.z);
-        for ( auto b = copy.begin(); b != copy.end(); b++ ) {
-            EventHandler handle = (*b).second;
-            handle.eventHandler(out, (void*)&construction);
+        // send construction to handlers, because it was removed
+        for (const auto &key_value: copy) {
+            EventHandler handle = key_value.second;
+            handle.eventHandler(out, (void*) &construction);
         }
-        a = constructions.erase(a);
+        // erase from existent constructions
+        iter = constructions.erase(iter);
     }
 
-    //for ( auto a = constructionsNow.begin(); a != constructionsNow.end(); a++ ) {
-    for ( auto a = df::global::world->constructions.begin(); a != df::global::world->constructions.end(); a++ ) {
-        df::construction* construction = *a;
-        bool b = constructions.find(construction->pos) != constructions.end();
-        constructions[construction->pos] = *construction;
-        if ( b )
-            continue;
-        //construction created
-        //out.print("Created construction (%d,%d,%d)\n", construction->pos.x,construction->pos.y,construction->pos.z);
-        for ( auto b = copy.begin(); b != copy.end(); b++ ) {
-            EventHandler handle = (*b).second;
-            handle.eventHandler(out, (void*)construction);
+    // find & send construction additions
+    for (auto c: df::global::world->constructions) {
+        auto &construction = *c;
+        // add construction to constructions, if it isn't already present
+        if (constructions.emplace(construction).second) {
+            // send construction to handlers, because it is new
+            for (const auto &key_value: copy) {
+                EventHandler handle = key_value.second;
+                handle.eventHandler(out, (void*) &construction);
+            }
         }
     }
 }
@@ -761,8 +759,8 @@ static void manageSyndromeEvent(color_ostream& out) {
         return;
     multimap<Plugin*,EventHandler> copy(handlers[EventType::SYNDROME].begin(), handlers[EventType::SYNDROME].end());
     int32_t highestTime = -1;
-    for ( auto a = df::global::world->units.all.begin(); a != df::global::world->units.all.end(); a++ ) {
-        df::unit* unit = *a;
+    for (auto unit : df::global::world->units.all) {
+
 /*
         if ( unit->flags1.bits.inactive )
             continue;
@@ -776,8 +774,8 @@ static void manageSyndromeEvent(color_ostream& out) {
                 continue;
 
             SyndromeData data(unit->id, b);
-            for ( auto c = copy.begin(); c != copy.end(); c++ ) {
-                EventHandler handle = (*c).second;
+            for (auto &key_value : copy) {
+                EventHandler &handle = key_value.second;
                 handle.eventHandler(out, (void*)&data);
             }
         }
@@ -794,8 +792,8 @@ static void manageInvasionEvent(color_ostream& out) {
         return;
     nextInvasion = df::global::ui->invasions.next_id;
 
-    for ( auto a = copy.begin(); a != copy.end(); a++ ) {
-        EventHandler handle = (*a).second;
+    for (auto &key_value : copy) {
+        EventHandler &handle = key_value.second;
         handle.eventHandler(out, (void*)intptr_t(nextInvasion-1));
     }
 }
@@ -807,10 +805,9 @@ static void manageEquipmentEvent(color_ostream& out) {
 
     unordered_map<int32_t, InventoryItem> itemIdToInventoryItem;
     unordered_set<int32_t> currentlyEquipped;
-    for ( auto a = df::global::world->units.all.begin(); a != df::global::world->units.all.end(); a++ ) {
+    for (auto unit : df::global::world->units.all) {
         itemIdToInventoryItem.clear();
         currentlyEquipped.clear();
-        df::unit* unit = *a;
         /*if ( unit->flags1.bits.inactive )
             continue;
         */
@@ -825,8 +822,7 @@ static void manageEquipmentEvent(color_ostream& out) {
         }
         //vector<InventoryItem>& v = (*oldEquipment).second;
         vector<InventoryItem>& v = *temp;
-        for ( auto b = v.begin(); b != v.end(); b++ ) {
-            InventoryItem& i = *b;
+        for (auto & i : v) {
             itemIdToInventoryItem[i.itemId] = i;
         }
         for ( size_t b = 0; b < unit->inventory.size(); b++ ) {
@@ -836,9 +832,9 @@ static void manageEquipmentEvent(color_ostream& out) {
             auto c = itemIdToInventoryItem.find(dfitem_new->item->id);
             if ( c == itemIdToInventoryItem.end() ) {
                 //new item equipped (probably just picked up)
-                InventoryChangeData data(unit->id, NULL, &item_new);
-                for ( auto h = copy.begin(); h != copy.end(); h++ ) {
-                    EventHandler handle = (*h).second;
+                InventoryChangeData data(unit->id, nullptr, &item_new);
+                for (auto &key_value : copy) {
+                    EventHandler &handle = key_value.second;
                     handle.eventHandler(out, (void*)&data);
                 }
                 continue;
@@ -852,20 +848,19 @@ static void manageEquipmentEvent(color_ostream& out) {
             //some sort of change in how it's equipped
 
             InventoryChangeData data(unit->id, &item_old, &item_new);
-            for ( auto h = copy.begin(); h != copy.end(); h++ ) {
-                EventHandler handle = (*h).second;
+            for (auto &key_value : copy) {
+                EventHandler &handle = key_value.second;
                 handle.eventHandler(out, (void*)&data);
             }
         }
         //check for dropped items
-        for ( auto b = v.begin(); b != v.end(); b++ ) {
-            InventoryItem i = *b;
+        for (auto i : v) {
             if ( currentlyEquipped.find(i.itemId) != currentlyEquipped.end() )
                 continue;
             //TODO: delete ptr if invalid
-            InventoryChangeData data(unit->id, &i, NULL);
-            for ( auto h = copy.begin(); h != copy.end(); h++ ) {
-                EventHandler handle = (*h).second;
+            InventoryChangeData data(unit->id, &i, nullptr);
+            for (auto &key_value : copy) {
+                EventHandler &handle = key_value.second;
                 handle.eventHandler(out, (void*)&data);
             }
         }
@@ -875,8 +870,7 @@ static void manageEquipmentEvent(color_ostream& out) {
         //update equipment
         vector<InventoryItem>& equipment = equipmentLog[unit->id];
         equipment.clear();
-        for ( size_t b = 0; b < unit->inventory.size(); b++ ) {
-            df::unit_inventory_item* dfitem = unit->inventory[b];
+        for (auto dfitem : unit->inventory) {
             InventoryItem item(dfitem->item->id, *dfitem);
             equipment.push_back(item);
         }
@@ -890,8 +884,7 @@ static void updateReportToRelevantUnits() {
         return;
     reportToRelevantUnitsTime = df::global::world->frame_counter;
 
-    for ( size_t a = 0; a < df::global::world->units.all.size(); a++ ) {
-        df::unit* unit = df::global::world->units.all[a];
+    for (auto unit : df::global::world->units.all) {
         for ( int16_t b = df::enum_traits<df::unit_report_type>::first_item_value; b <= df::enum_traits<df::unit_report_type>::last_item_value; b++ ) {
             if ( b == df::unit_report_type::Sparring )
                 continue;
@@ -910,15 +903,14 @@ static void manageReportEvent(color_ostream& out) {
         return;
     multimap<Plugin*,EventHandler> copy(handlers[EventType::REPORT].begin(), handlers[EventType::REPORT].end());
     std::vector<df::report*>& reports = df::global::world->status.reports;
-    size_t a = df::report::binsearch_index(reports, lastReport, false);
-    //this may or may not be needed: I don't know if binsearch_index goes earlier or later if it can't hit the target exactly
-    while (a < reports.size() && reports[a]->id <= lastReport) {
-        a++;
-    }
-    for ( ; a < reports.size(); a++ ) {
-        df::report* report = reports[a];
-        for ( auto b = copy.begin(); b != copy.end(); b++ ) {
-            EventHandler handle = (*b).second;
+    size_t idx = df::report::binsearch_index(reports, lastReport, false);
+    // returns the index to the key equal to or greater than the key provided
+    idx = reports[idx]->id == lastReport ? idx + 1 : idx; // we need the index after (where the new stuff is)
+
+    for ( ; idx < reports.size(); idx++ ) {
+        df::report* report = reports[idx];
+        for (auto &key_value : copy) {
+            EventHandler &handle = key_value.second;
             handle.eventHandler(out, (void*)intptr_t(report->id));
         }
         lastReport = report->id;
@@ -926,13 +918,12 @@ static void manageReportEvent(color_ostream& out) {
 }
 
 static df::unit_wound* getWound(df::unit* attacker, df::unit* defender) {
-    for ( size_t a = 0; a < defender->body.wounds.size(); a++ ) {
-        df::unit_wound* wound = defender->body.wounds[a];
+    for (auto wound : defender->body.wounds) {
         if ( wound->age <= 1 && wound->attacker_unit_id == attacker->id ) {
             return wound;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 static void manageUnitAttackEvent(color_ostream& out) {
@@ -940,14 +931,13 @@ static void manageUnitAttackEvent(color_ostream& out) {
         return;
     multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_ATTACK].begin(), handlers[EventType::UNIT_ATTACK].end());
     std::vector<df::report*>& reports = df::global::world->status.reports;
-    size_t a = df::report::binsearch_index(reports, lastReportUnitAttack, false);
-    //this may or may not be needed: I don't know if binsearch_index goes earlier or later if it can't hit the target exactly
-    while (a < reports.size() && reports[a]->id <= lastReportUnitAttack) {
-        a++;
-    }
+    size_t idx = df::report::binsearch_index(reports, lastReportUnitAttack, false);
+    // returns the index to the key equal to or greater than the key provided
+    idx = reports[idx]->id == lastReportUnitAttack ? idx + 1 : idx; // we need the index after (where the new stuff is)
+
     std::set<int32_t> strikeReports;
-    for ( ; a < reports.size(); a++ ) {
-        df::report* report = reports[a];
+    for ( ; idx < reports.size(); idx++ ) {
+        df::report* report = reports[idx];
         lastReportUnitAttack = report->id;
         if ( report->flags.bits.continuation )
             continue;
@@ -961,8 +951,7 @@ static void manageUnitAttackEvent(color_ostream& out) {
         return;
     updateReportToRelevantUnits();
     map<int32_t, map<int32_t, int32_t> > alreadyDone;
-    for ( auto a = strikeReports.begin(); a != strikeReports.end(); a++ ) {
-        int32_t reportId = *a;
+    for (int reportId : strikeReports) {
         df::report* report = df::report::find(reportId);
         if ( !report )
             continue; //TODO: error
@@ -975,7 +964,7 @@ static void manageUnitAttackEvent(color_ostream& out) {
                 break;
             if ( !report2->flags.bits.continuation )
                 break;
-            reportStr = reportStr + report2->text;
+            reportStr += report2->text;
         }
 
         std::vector<int32_t>& relevantUnits = reportToRelevantUnits[report->id];
@@ -989,52 +978,50 @@ static void manageUnitAttackEvent(color_ostream& out) {
         df::unit_wound* wound1 = getWound(unit1,unit2);
         df::unit_wound* wound2 = getWound(unit2,unit1);
 
+        UnitAttackData data{};
+        data.report_id = report->id;
         if ( wound1 && !alreadyDone[unit1->id][unit2->id] ) {
-            UnitAttackData data;
             data.attacker = unit1->id;
             data.defender = unit2->id;
             data.wound = wound1->id;
 
             alreadyDone[data.attacker][data.defender] = 1;
-            for ( auto b = copy.begin(); b != copy.end(); b++ ) {
-                EventHandler handle = (*b).second;
+            for (auto &key_value : copy) {
+                EventHandler &handle = key_value.second;
                 handle.eventHandler(out, (void*)&data);
             }
         }
 
         if ( wound2 && !alreadyDone[unit1->id][unit2->id] ) {
-            UnitAttackData data;
             data.attacker = unit2->id;
             data.defender = unit1->id;
             data.wound = wound2->id;
 
             alreadyDone[data.attacker][data.defender] = 1;
-            for ( auto b = copy.begin(); b != copy.end(); b++ ) {
-                EventHandler handle = (*b).second;
+            for (auto &key_value : copy) {
+                EventHandler &handle = key_value.second;
                 handle.eventHandler(out, (void*)&data);
             }
         }
 
         if ( Units::isKilled(unit1) ) {
-            UnitAttackData data;
             data.attacker = unit2->id;
             data.defender = unit1->id;
             data.wound = -1;
             alreadyDone[data.attacker][data.defender] = 1;
-            for ( auto b = copy.begin(); b != copy.end(); b++ ) {
-                EventHandler handle = (*b).second;
+            for (auto &key_value : copy) {
+                EventHandler &handle = key_value.second;
                 handle.eventHandler(out, (void*)&data);
             }
         }
 
         if ( Units::isKilled(unit2) ) {
-            UnitAttackData data;
             data.attacker = unit1->id;
             data.defender = unit2->id;
             data.wound = -1;
             alreadyDone[data.attacker][data.defender] = 1;
-            for ( auto b = copy.begin(); b != copy.end(); b++ ) {
-                EventHandler handle = (*b).second;
+            for (auto &key_value : copy) {
+                EventHandler &handle = key_value.second;
                 handle.eventHandler(out, (void*)&data);
             }
         }
@@ -1051,7 +1038,7 @@ static void manageUnitAttackEvent(color_ostream& out) {
     }
 }
 
-static std::string getVerb(df::unit* unit, std::string reportStr) {
+static std::string getVerb(df::unit* unit, const std::string &reportStr) {
     std::string result(reportStr);
     std::string name = unit->name.first_name + " ";
     bool match = strncmp(result.c_str(), name.c_str(), name.length()) == 0;
@@ -1172,15 +1159,15 @@ static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, 
         if ( Once::doOnce("EventManager interaction ambiguous attacker") ) {
             out.print("%s,%d: ambiguous attacker on report\n \'%s\'\n '%s'\n", __FILE__, __LINE__, attackEvent ? attackEvent->text.c_str() : "", defendEvent ? defendEvent->text.c_str() : "");
         }
-    } else if ( attackers.size() < 1 ) {
+    } else if ( attackers.empty() ) {
 //out.print("%s,%d\n",__FILE__,__LINE__);
         if ( attackEvent && defendEvent )
-            return getAttacker(out, NULL, NULL, defendEvent, relevantUnits);
+            return getAttacker(out, nullptr, nullptr, defendEvent, relevantUnits);
     } else {
 //out.print("%s,%d\n",__FILE__,__LINE__);
         //attackers.size() == 1
         result.attacker = attackers[0]->id;
-        if ( defenders.size() > 0 )
+        if ( !defenders.empty() )
             result.defender = defenders[0]->id;
         if ( defenders.size() > 1 ) {
             if ( Once::doOnce("EventManager interaction ambiguous defender") ) {
@@ -1200,24 +1187,24 @@ static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, 
 
 static vector<df::unit*> gatherRelevantUnits(color_ostream& out, df::report* r1, df::report* r2) {
     vector<df::report*> reports;
-    if ( r1 == r2 ) r2 = NULL;
+    if ( r1 == r2 ) r2 = nullptr;
     if ( r1 ) reports.push_back(r1);
     if ( r2 ) reports.push_back(r2);
     vector<df::unit*> result;
     unordered_set<int32_t> ids;
 //out.print("%s,%d\n",__FILE__,__LINE__);
-    for ( size_t a = 0; a < reports.size(); a++ ) {
+    for (auto report : reports) {
 //out.print("%s,%d\n",__FILE__,__LINE__);
-        vector<int32_t>& units = reportToRelevantUnits[reports[a]->id];
+        vector<int32_t>& units = reportToRelevantUnits[report->id];
         if ( units.size() > 2 ) {
             if ( Once::doOnce("EventManager interaction too many relevant units") ) {
-                out.print("%s,%d: too many relevant units. On report\n \'%s\'\n", __FILE__, __LINE__, reports[a]->text.c_str());
+                out.print("%s,%d: too many relevant units. On report\n \'%s\'\n", __FILE__, __LINE__, report->text.c_str());
             }
         }
-        for ( size_t b = 0; b < units.size(); b++ )
-            if ( ids.find(units[b]) == ids.end() ) {
-                ids.insert(units[b]);
-                result.push_back(df::unit::find(units[b]));
+        for (int & unit_id : units)
+            if (ids.find(unit_id) == ids.end() ) {
+                ids.insert(unit_id);
+                result.push_back(df::unit::find(unit_id));
             }
     }
 //out.print("%s,%d\n",__FILE__,__LINE__);
@@ -1236,8 +1223,8 @@ static void manageInteractionEvent(color_ostream& out) {
     if ( a < reports.size() )
         updateReportToRelevantUnits();
 
-    df::report* lastAttackEvent = NULL;
-    df::unit* lastAttacker = NULL;
+    df::report* lastAttackEvent = nullptr;
+    df::unit* lastAttacker = nullptr;
     //df::unit* lastDefender = NULL;
     unordered_map<int32_t,unordered_set<int32_t> > history;
     for ( ; a < reports.size(); a++ ) {
@@ -1251,11 +1238,11 @@ static void manageInteractionEvent(color_ostream& out) {
         bool attack = type == df::announcement_type::INTERACTION_ACTOR;
         if ( attack ) {
             lastAttackEvent = report;
-            lastAttacker = NULL;
+            lastAttacker = nullptr;
             //lastDefender = NULL;
         }
         vector<df::unit*> relevantUnits = gatherRelevantUnits(out, lastAttackEvent, report);
-        InteractionData data = getAttacker(out, lastAttackEvent, lastAttacker, attack ? NULL : report, relevantUnits);
+        InteractionData data = getAttacker(out, lastAttackEvent, lastAttacker, attack ? nullptr : report, relevantUnits);
         if ( data.attacker < 0 )
             continue;
 //out.print("%s,%d\n",__FILE__,__LINE__);
@@ -1263,8 +1250,8 @@ static void manageInteractionEvent(color_ostream& out) {
         //    continue; //lazy way of preventing duplicates
         if ( attack && a+1 < reports.size() && reports[a+1]->type == df::announcement_type::INTERACTION_TARGET ) {
 //out.print("%s,%d\n",__FILE__,__LINE__);
-            vector<df::unit*> relevants = gatherRelevantUnits(out, lastAttackEvent, reports[a+1]);
-            InteractionData data2 = getAttacker(out, lastAttackEvent, lastAttacker, reports[a+1], relevants);
+            vector<df::unit*> relevant_units = gatherRelevantUnits(out, lastAttackEvent, reports[a + 1]);
+            InteractionData data2 = getAttacker(out, lastAttackEvent, lastAttacker, reports[a+1], relevant_units);
             if ( data.attacker == data2.attacker && (data.defender == -1 || data.defender == data2.defender) ) {
 //out.print("%s,%d\n",__FILE__,__LINE__);
                 data = data2;
@@ -1291,8 +1278,8 @@ static void manageInteractionEvent(color_ostream& out) {
         lastAttacker = df::unit::find(data.attacker);
         //lastDefender = df::unit::find(data.defender);
         //fire event
-        for ( auto b = copy.begin(); b != copy.end(); b++ ) {
-            EventHandler handle = (*b).second;
+        for (auto &key_value : copy) {
+            EventHandler &handle = key_value.second;
             handle.eventHandler(out, (void*)&data);
         }
         //TODO: deduce attacker from latest defend event first

@@ -192,7 +192,7 @@ endif()
 
 # set up versioning.
 set(DF_VERSION "0.47.05")
-set(DFHACK_RELEASE "r4")
+set(DFHACK_RELEASE "r5")
 set(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")

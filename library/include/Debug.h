@@ -326,7 +326,7 @@ public:
         DFHack::DebugCategory::LDEBUG, ## __VA_ARGS__)
 
 /*!
- * Open a line for error level debug output if enabled
+ * Open a line for info level debug output if enabled
  *
  * Important debug messages when some rarely changed state changes. Example
  * would be when a debug category filtering level changes.

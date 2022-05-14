@@ -713,9 +713,12 @@ static void manageJobCompletedEvent(color_ostream& out) {
 
                 //still false positive if cancelled at EXACTLY the right time, but experiments show this doesn't happen
 
+                auto clone = Job::cloneJobStruct(lt_job, true);
                 // the job won't be added if it already exists - NOTE: this means a repeat job can't be seen as completed again until it gets cleaned from the list
-                // This is probably going to be a huge problem as it means there is room for an interaction issue between plugins/scripts
-                completedJobs.emplace(tick, Job::cloneJobStruct(lt_job, true));
+                if (!completedJobs.emplace(tick, clone).second) {
+                    // the clone wasn't accepted, so we delete it to clean memory
+                    Job::deleteJobStruct(clone, true);
+                }
                 continue;
             }
             // we didn't find it, so it's a recently finished or cancelled job

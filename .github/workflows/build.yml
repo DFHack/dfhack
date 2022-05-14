@@ -83,6 +83,7 @@ jobs:
           -DBUILD_DEV_PLUGINS:BOOL=${{ matrix.plugins == 'all' }} \
           -DBUILD_SIZECHECK:BOOL=${{ matrix.plugins == 'all' }} \
           -DBUILD_STONESENSE:BOOL=${{ matrix.plugins == 'all' }} \
+          -DBUILD_ISOWORLD:BOOL=${{ matrix.plugins == 'all' }} \
           -DBUILD_SUPPORTED:BOOL=1 \
           -DCMAKE_INSTALL_PREFIX="$DF_FOLDER"
     - name: Build DFHack

@@ -2,7 +2,8 @@
 
 set -e
 
-tardest="df.tar.bz2"
+df_tardest="df.tar.bz2"
+save_tardest="test_save.tgz"
 
 selfmd5=$(openssl md5 < "$0")
 echo $selfmd5
@@ -16,31 +17,35 @@ cd "$DF_FOLDER/.."
 
 if [ -f receipt ]; then
     if [ "$selfmd5" != "$(cat receipt)" ]; then
-        echo "download-df.sh changed; removing DF"
+        echo "download-df.sh changed; re-downloading tarballs"
         rm receipt
     else
-        echo "Already downloaded $DF_VERSION"
+        echo "Already downloaded $DF_VERSION tarballs"
     fi
 fi
 
 if [ ! -f receipt ]; then
-    rm -f "$tardest"
+    rm -f "$df_tardest" "$save_tardest"
     minor=$(echo "$DF_VERSION" | cut -d. -f2)
     patch=$(echo "$DF_VERSION" | cut -d. -f3)
-    url="http://www.bay12games.com/dwarves/df_${minor}_${patch}_linux.tar.bz2"
-    echo Downloading
+    echo "Downloading DF $DF_VERSION"
     while read url; do
         echo "Attempting download: ${url}"
-        if wget -v "$url" -O "$tardest"; then
+        if wget -v "$url" -O "$df_tardest"; then
             break
         fi
     done <<URLS
     https://www.bay12games.com/dwarves/df_${minor}_${patch}_linux.tar.bz2
     https://files.dfhack.org/DF/0.${minor}.${patch}/df_${minor}_${patch}_linux.tar.bz2
 URLS
-    echo $tardest
-    if ! test -f "$tardest"; then
-        echo "DF failed to download: $tardest not found"
+    echo $df_tardest
+    if ! test -f "$df_tardest"; then
+        echo "DF failed to download: $df_tardest not found"
+        exit 1
+    fi
+    echo "Downloading test save"
+    if ! wget -v "https://files.dfhack.org/DF/0.${minor}.${patch}/test_save.tgz" -O "$save_tardest"; then
+        echo "failed to download test save"
         exit 1
     fi
 fi
@@ -49,7 +54,8 @@ rm -rf df_linux
 mkdir df_linux
 
 echo Extracting
-tar xf "$tardest" --strip-components=1 -C df_linux
+tar xf "$df_tardest" --strip-components=1 -C df_linux
+tar xf "$save_tardest" -C df_linux/data/save
 echo Done
 
 echo "$selfmd5" > receipt

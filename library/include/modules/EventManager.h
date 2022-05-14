@@ -18,9 +18,8 @@
 namespace DFHack {
     namespace EventManager {
         namespace EventType {
-            // NOTICE: keep this list synchronized with the eventHandlers array
-            // in plugins/eventful.cpp or else events will go to the wrong
-            // handlers.
+            // NOTICE: new events must be integrated into switches for EventType.
+            // At least two exist, in: EventManager.cpp and eventful.cpp
             enum EventType {
                 TICK,
                 JOB_INITIATED,

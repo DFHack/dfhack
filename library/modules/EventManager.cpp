@@ -62,6 +62,7 @@ static std::unordered_map<EventHandler,int32_t> eventLastTick;
 
 static const int32_t ticksPerYear = 403200;
 
+// this function is only used within the file in registerListener and manageTickEvent
 void enqueueTickEvent(EventHandler &handler){
     int32_t when = 0;
     df::world* world = df::global::world;

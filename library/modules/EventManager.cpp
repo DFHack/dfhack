@@ -309,59 +309,59 @@ static int32_t getTime(){
 //job initiated
 static int32_t lastJobId = -1;
 // static std::unordered_set<int32_t> newJobIDs; // function fulfilled by lastJobId
-static event_tracker<df::job*> newJobs;
+static event_tracker<df::job*> newJobs; // we explicitly manage the life cycles of the jobs within the container
 
 //job started
 static std::unordered_set<int32_t> startedJobIDs;
-static event_tracker<df::job*> startedJobs;
+static event_tracker<df::job*> startedJobs; // we explicitly manage the life cycles of the jobs within the container
 
 //job completed
 //static std::unordered_set<int32_t> completedJobIDs;
-static event_tracker<df::job*> completedJobs;
+static event_tracker<df::job*> completedJobs; // we explicitly manage the life cycles of the jobs within the container
 
 //new unit active
-static event_tracker<int32_t> activeUnits;
+static event_tracker<int32_t> activeUnits; // we track ids, so we cannot be certain of the life cycle of what the id references
 
 //unit death
-static event_tracker<int32_t> deadUnits;
+static event_tracker<int32_t> deadUnits; // we track ids, so we cannot be certain of the life cycle of what the id references
 
 //item creation
 static int32_t nextItem;
-static event_tracker<int32_t> newItems;
+static event_tracker<int32_t> newItems; // we track ids, so we cannot be certain of the life cycle of what the id references
 
 //building
 static int32_t nextBuilding;
-static event_tracker<int32_t> createdBuildings;
-static event_tracker<int32_t> destroyedBuildings;
+static event_tracker<int32_t> createdBuildings; // we track ids, so we cannot be certain of the life cycle sent to listeners
+static event_tracker<int32_t> destroyedBuildings; // we track ids, so we cannot be certain of the life cycle sent to listeners
 
 //construction
-static event_tracker<df::construction> createdConstructions;
-static event_tracker<df::construction> destroyedConstructions;
+static event_tracker<df::construction> createdConstructions; // we track POD, and so we just have a copy of the data as long as we need it, though it may not exist in the constructions cache anymore
+static event_tracker<df::construction> destroyedConstructions; // we track POD, and so we just have a copy of the data as long as we need it, though it may not exist in the constructions cache anymore
 static bool gameLoaded;
 
 //syndrome
-static event_tracker<SyndromeData> syndromes;
+static event_tracker<SyndromeData> syndromes; // we track ids as POD, and so we cannot be certain of the life cycle of what those ids reference
 
 //invasion
 static int32_t nextInvasion;
-static event_tracker<int32_t> invasions;
+static event_tracker<int32_t> invasions; // we track ids, and so we cannot be certain of the life cycle of what those ids reference
 
 //equipment change
 static unordered_map<int32_t, unordered_map<int32_t, InventoryItem> > inventoryLog;
-static event_tracker<InventoryChangeData> equipmentChanges;
+static event_tracker<InventoryChangeData> equipmentChanges; // we track ids as POD, and so we cannot be certain of the life cycle of what those ids reference
 
 //report
-static event_tracker<int32_t> newReports;
+static event_tracker<int32_t> newReports; // we track ids, and so we cannot be certain of the life cycle of what those ids reference
 
 //unit attack
 static int32_t lastReportUnitAttack;
-static event_tracker<UnitAttackData> attackEvents;
+static event_tracker<UnitAttackData> attackEvents; // we track ids as POD, and so we cannot be certain of the life cycle of what those ids reference
 static std::map<int32_t,std::vector<int32_t> > reportToRelevantUnits;
 static int32_t reportToRelevantUnitsTime = -1;
 
 //interaction
 static int32_t lastReportInteraction;
-static event_tracker<InteractionData> interactionEvents;
+static event_tracker<InteractionData> interactionEvents; // we track ids as POD, and so we cannot be certain of the life cycle of what those ids reference
 
 void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event event) {
     static bool doOnce = false;

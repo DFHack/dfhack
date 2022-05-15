@@ -44,10 +44,13 @@ URLS
         exit 1
     fi
     echo "Downloading test save"
-    if ! wget -v "https://files.dfhack.org/DF/0.${minor}.${patch}/test_save.tgz" -O "$save_tardest"; then
+    #test_save_url="https://files.dfhack.org/DF/0.${minor}.${patch}/test_save.tgz"
+    test_save_url="https://drive.google.com/uc?export=download&id=1XvYngl-DFONiZ9SD9OC4B2Ooecu8rPFz"
+    if ! wget -v "$test_save_url" -O "$save_tardest"; then
         echo "failed to download test save"
         exit 1
     fi
+    echo $save_tardest
 fi
 
 rm -rf df_linux

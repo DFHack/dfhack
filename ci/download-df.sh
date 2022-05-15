@@ -54,7 +54,7 @@ URLS
 fi
 
 rm -rf df_linux
-mkdir df_linux
+mkdir -p df_linux/data/save
 
 echo Extracting
 tar xf "$df_tardest" --strip-components=1 -C df_linux

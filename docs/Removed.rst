@@ -18,6 +18,27 @@ devel/unforbidall
 Replaced by the `unforbid` script. Run ``unforbid all --quiet`` to match the
 behavior of the original ``devel/unforbidall`` script.
 
+.. _deteriorateclothes
+
+deteriorateclothes
+==================
+Replaced by the new combined `deteriorate` script. Run
+``deteriorate --types=clothes``.
+
+.. _deterioratecorpses
+
+deterioratecorpses
+==================
+Replaced by the new combined `deteriorate` script. Run
+``deteriorate --types=corpses``.
+
+.. _deterioratefood
+
+deterioratefood
+===============
+Replaced by the new combined `deteriorate` script. Run
+``deteriorate --types=food``.
+
 .. _digfort:
 
 digfort

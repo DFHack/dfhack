@@ -1509,23 +1509,19 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
 
 static int gui_autoDFAnnouncement(lua_State *state)
 {
-    int rv;
+    bool rv;
     df::report_init *r = Lua::GetDFObject<df::report_init>(state, 1);
 
     if (r)
     {
         std::string message = luaL_checkstring(state, 2);
-
-        if (lua_gettop(state) >= 3)
-            rv = Gui::autoDFAnnouncement(*r, message, lua_toboolean(state, 3));
-        else
-            rv = Gui::autoDFAnnouncement(*r, message);
+        rv = Gui::autoDFAnnouncement(*r, message);
     }
     else
     {
         df::coord pos;
         int color = 0; //initialize these to prevent warning
-        bool bright = false, is_sparring = false, log_failures = false;
+        bool bright = false, is_sparring = false;
         df::unit *unit1 = NULL, *unit2 = NULL;
 
         auto type = (df::announcement_type)lua_tointeger(state, 1);
@@ -1535,8 +1531,6 @@ static int gui_autoDFAnnouncement(lua_State *state)
         switch (lua_gettop(state))
         {
             default:
-            case 9:
-                log_failures = lua_toboolean(state, 9);
             case 8:
                 is_sparring = lua_toboolean(state, 8);
             case 7:
@@ -1554,9 +1548,6 @@ static int gui_autoDFAnnouncement(lua_State *state)
         switch (lua_gettop(state))
         {   // Use the defaults in Gui.h
             default:
-            case 9:
-                rv = Gui::autoDFAnnouncement(type, pos, message, color, bright, unit1, unit2, is_sparring, log_failures);
-                break;
             case 8:
                 rv = Gui::autoDFAnnouncement(type, pos, message, color, bright, unit1, unit2, is_sparring);
                 break;
@@ -1577,7 +1568,7 @@ static int gui_autoDFAnnouncement(lua_State *state)
         }
     }
 
-    lua_pushinteger(state, rv);
+    lua_pushboolean(state, rv);
     return 1;
 }
 

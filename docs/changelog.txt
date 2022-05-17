@@ -40,15 +40,14 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 
 ## Misc Improvements
+- `dfhack-examples-guide`: refine food preparation orders and fix conditions for making jugs and pots in the ``basic`` manager orders
 
 ## Documentation
-- ``Lua API.rst``:  added ``autoDFAnnouncement``, ``pauseRecenter``, ``recenterViewscreen``
 
 ## API
 - add functions reverse-engineered from announcement code: ``Gui::parseReportString``, ``Gui::autoDFAnnouncement``, ``Gui::pauseRecenter``, ``Gui::recenterViewscreen``
 
 ## Lua
-- ``dfhack.gui``: Lua wrappers for functions reverse-engineered from announcement code: ``autoDFAnnouncement``, ``pauseRecenter``, ``recenterViewscreen``
 
 # 0.47.05-r5
 

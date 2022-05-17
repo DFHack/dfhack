@@ -10,6 +10,14 @@ work (e.g. links from the `changelog`).
   :local:
   :depth: 1
 
+.. _devel/unforbidall:
+
+devel/unforbidall
+=================
+
+Replaced by the `unforbid` script. Run ``unforbid all --quiet`` to match the
+behavior of the original ``devel/unforbidall`` script.
+
 .. _digfort:
 
 digfort

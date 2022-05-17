@@ -1015,7 +1015,7 @@ Fortress mode
   ``dfhack.gui.recenterViewscreen([zoom])``
 
   Recenter the view on a position using a specific zoom type. If no position is given,
-  recenter on ``df.global.cursor``. Zoom types are ``df.report_zoom_type`` (0 = Generic, 1 = Item, 2 = Unit),
+  recenter on ``df.global.cursor``. Zoom types are ``df.report_zoom_type`` (see: `enum definition <https://github.com/DFHack/df-structures/blob/master/df.announcements.xml#L438>`_),
   where ``Generic`` skips recentering and enforces valid view bounds (the same as x = -30000,) ``Item`` brings
   the position onscreen without centering, and ``Unit`` centers the screen on the position. Default zoom type is Item.
   
@@ -1088,15 +1088,14 @@ Announcements
   Uses the type to look up options from announcements.txt, and calls the above
   operations accordingly. The units are used to call ``addCombatReportAuto``.
 
-* ``dfhack.gui.autoDFAnnouncement(report,text[,log_failures])``
-  ``dfhack.gui.autoDFAnnouncement(type,pos,text,color[,is_bright,unit1,unit2,is_sparring,log_failures])``
+* ``dfhack.gui.autoDFAnnouncement(report,text)``
+  ``dfhack.gui.autoDFAnnouncement(type,pos,text,color[,is_bright,unit1,unit2,is_sparring])``
 
   Takes a ``df.report_init`` (see: `structure definition <https://github.com/DFHack/df-structures/blob/master/df.announcements.xml#L451>`_)
   and a string and processes them just like DF does. Sometimes this means the announcement won't occur.
-  Set ``log_failures`` to ``true`` to log the reason why to the dfhack console (e.g., unrevealed map or wrong gamemode.)
   Can also be built from parameters instead of a ``report_init``. Setting ``is_sparring`` to ``true`` means the report
-  will be added to sparring logs (if applicable) rather than hunting or combat. Text uses ``&`` as an escape character, with ``&r`` being a newline,
-  ``&&`` being just ``&``, and any other combination causing neither character to display.
+  will be added to sparring logs (if applicable) rather than hunting or combat. Text is parsed using ``&`` as an escape character, with ``&r``
+  being a newline, ``&&`` being just ``&``, and any other combination causing neither character to display.
 
 Other
 ~~~~~

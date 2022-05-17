@@ -873,7 +873,7 @@ static void assign_labor(unit_labor::unit_labor labor,
         }
 
         int pool = labor_infos[labor].talent_pool();
-        if (pool < 200 && candidates.size() > 1 && abs(pool) < candidates.size())
+        if (pool < 200 && candidates.size() > 1 && size_t(abs(pool)) < candidates.size())
         {
             // Sort in descending order
             std::sort(candidates.begin(), candidates.end(), [&](const int lhs, const int rhs) -> bool {

@@ -69,7 +69,7 @@ jobs:
     - name: Download DF
       run: |
         sh ci/download-df.sh
-    - name: Build DFHack
+    - name: Configure DFHack
       env:
         CC: gcc-${{ matrix.gcc }}
         CXX: g++-${{ matrix.gcc }}
@@ -85,6 +85,8 @@ jobs:
           -DBUILD_STONESENSE:BOOL=${{ matrix.plugins == 'all' }} \
           -DBUILD_SUPPORTED:BOOL=1 \
           -DCMAKE_INSTALL_PREFIX="$DF_FOLDER"
+    - name: Build DFHack
+      run: |
         ninja -C build-ci install
     - name: Run tests
       id: run_tests

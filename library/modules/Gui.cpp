@@ -37,6 +37,7 @@ using namespace std;
 #include "Error.h"
 #include "ModuleFactory.h"
 #include "Core.h"
+#include "Debug.h"
 #include "PluginManager.h"
 #include "MiscUtils.h"
 using namespace DFHack;
@@ -111,6 +112,11 @@ using namespace DFHack;
 #include "df/viewscreen_workquota_conditionst.h"
 #include "df/viewscreen_workshop_profilest.h"
 #include "df/world.h"
+
+namespace DFHack
+{
+    DBG_DECLARE(core, gui, DebugCategory::LINFO);
+}
 
 using namespace df::enums;
 
@@ -1707,22 +1713,28 @@ void Gui::showAutoAnnouncement(
     addCombatReportAuto(unit2, flags, id);
 }
 
-int Gui::autoDFAnnouncement(df::report_init r, string message)
+bool Gui::autoDFAnnouncement(df::report_init r, string message)
 {   // Reverse-engineered from DF announcement code
-
-    if (!world->unk_26a9a8) // TODO: world->show_announcements
-        return 1;
+    
+    if (!world->allow_announcements)
+    {
+        DEBUG(gui).print("Skipped announcement because world->allow_announcements is false:\n%s\n", message.c_str());
+        return false;
+    }
 
     df::announcement_flags a_flags;
     if (is_valid_enum_item(r.type))
         a_flags = df::global::d_init->announcements.flags[r.type];
     else
-        return 2;
+    {
+        WARN(gui).print("Invalid announcement type:\n%s\n", message.c_str());
+        return false;
+    }
 
     if (message.empty())
     {
         Core::printerr("Empty announcement %u\n", r.type); // DF would print this to errorlog.txt
-        return 3;
+        return false;
     }
 
     // Check if the announcement will actually be announced
@@ -1737,28 +1749,41 @@ int Gui::autoDFAnnouncement(df::report_init r, string message)
             if ((world->units.active.empty() || (r.unit1 != world->units.active[0] && r.unit2 != world->units.active[0])) &&
                 ((Maps::getTileDesignation(r.pos)->whole & 0x10) == 0x0)) // Adventure mode uses this bit to determine current visibility
             {
-                return 4;
+                DEBUG(gui).print("Adventure mode announcement not heard:\n%s\n", message.c_str());
+                return false;
             }
         }
     }
     else
     {   // Dwarf mode (or arena?)
         if ((r.unit1 != NULL || r.unit2 != NULL) && (r.unit1 == NULL || Units::isHidden(r.unit1)) && (r.unit2 == NULL || Units::isHidden(r.unit2)))
-            return 5;
+        {
+            DEBUG(gui).print("Dwarf mode announcement not heard:\n%s\n", message.c_str());
+            return false;
+        }
 
         if (!a_flags.bits.D_DISPLAY)
         {
             if (a_flags.bits.UNIT_COMBAT_REPORT)
             {
                 if (r.unit1 == NULL && r.unit2 == NULL)
-                    return 6;
+                {
+                    DEBUG(gui).print("Skipped UNIT_COMBAT_REPORT because it has no units:\n%s\n", message.c_str());
+                    return false;
+                }
             }
             else
             {
                 if (!a_flags.bits.UNIT_COMBAT_REPORT_ALL_ACTIVE)
-                    return 7;
-                if (!recent_report_any(r.unit1) && !recent_report_any(r.unit2))
-                    return 8;
+                {
+                    DEBUG(gui).print("Skipped announcement not enabled for this game mode:\n%s\n", message.c_str());
+                    return false;
+                }
+                else if (!recent_report_any(r.unit1) && !recent_report_any(r.unit2))
+                {
+                    DEBUG(gui).print("Skipped UNIT_COMBAT_REPORT_ALL_ACTIVE because there's no active report:\n%s\n", message.c_str());
+                    return false;
+                }
             }
         }
     }
@@ -1774,7 +1799,10 @@ int Gui::autoDFAnnouncement(df::report_init r, string message)
     parseReportString(results, message, line_length);
 
     if (results.empty())
-        return 9;
+    {
+        DEBUG(gui).print("Skipped announcement because it was empty after parsing:\n%s\n", message.c_str());
+        return false;
+    }
 
     // Check for repeat report
     int32_t repeat_count = check_repeat_report(results);
@@ -1785,7 +1813,8 @@ int Gui::autoDFAnnouncement(df::report_init r, string message)
             world->status.display_timer = r.display_timer;
             Gui::writeToGamelog("x" + to_string(repeat_count + 1));
         }
-        return 0;
+        DEBUG(gui).print("Announcement succeeded as repeat:\n%s\n", message.c_str());
+        return true;
     }
 
     bool success = false; // only print to gamelog if report was used
@@ -1864,66 +1893,25 @@ int Gui::autoDFAnnouncement(df::report_init r, string message)
 
     delete_old_reports();
 
-    if (/*debug_gamelog &&*/ success)
-        Gui::writeToGamelog(message);
-    else if (success)
-        return 10;
-    else
-        return 11;
-
-    return 0;
-}
-
-int Gui::autoDFAnnouncement(df::report_init r, string message, bool log_failures)
-{   // Prints info about failed announcements to DFHack console if log_failures is true
-    int rv = autoDFAnnouncement(r, message);
-
-    if (log_failures)
+    if (/*debug_gamelog &&*/ success) // TODO: Add debug_gamelog to globals?
     {
-        switch (rv)
-        {
-            case 0:
-                break; // success
-            case 1:
-                Core::print("Skipped an announcement because world->show_announcements is false:\n%s\n", message.c_str());
-                break;
-            case 2:
-                Core::printerr("Invalid announcement type!\n");
-                break;
-            case 3:
-                break; // empty announcement, already handled
-            case 4:
-                Core::print("An adventure announcement occured, but nobody heard:\n%s\n", message.c_str());
-                break;
-            case 5:
-                Core::print("An announcement occured, but nobody heard:\n%s\n", message.c_str());
-                break;
-            case 6:
-                Core::print("Skipped a UNIT_COMBAT_REPORT because it has no units:\n%s\n", message.c_str());
-                break;
-            case 7:
-                Core::print("Skipped an announcement not enabled for this game mode:\n%s\n", message.c_str());
-                break;
-            case 8:
-                Core::print("Skipped an announcement because there's no active report:\n%s\n", message.c_str());
-                break;
-            case 9:
-                Core::print("Skipped an announcement because it was empty after parsing:\n%s\n", message.c_str());
-                break;
-            case 10:
-                Core::print("Report added but skipped printing to gamelog.txt because debug_gamelog is false.\n");
-                break;
-            case 11:
-                Core::print("Report added but didn't qualify to be displayed anywhere:\n%s\n", message.c_str());
-                break;
-            default:
-                Core::printerr("autoDFAnnouncement: Unexpected return value!\n");
-        }
+        DEBUG(gui).print("Announcement succeeded and printed to gamelog.txt:\n%s\n", message.c_str());
+        Gui::writeToGamelog(message);
     }
-    return rv;
+    /*else if (success)
+    {
+        DEBUG(gui).print("Announcement succeeded but skipped printing to gamelog.txt because debug_gamelog is false:\n%s\n", message.c_str());
+    }*/
+    else
+    {
+        DEBUG(gui).print("Announcement succeeded internally but didn't qualify to be displayed anywhere:\n%s\n", message.c_str());
+    }
+
+    return true;
 }
 
-int Gui::autoDFAnnouncement(df::announcement_type type, df::coord pos, std::string message, int color, bool bright, df::unit *unit1, df::unit *unit2, bool is_sparring, bool log_failures)
+bool Gui::autoDFAnnouncement(df::announcement_type type, df::coord pos, std::string message, int color,
+                            bool bright, df::unit *unit1, df::unit *unit2, bool is_sparring)
 {
     auto r = df::report_init();
     r.type = type;
@@ -1937,7 +1925,7 @@ int Gui::autoDFAnnouncement(df::announcement_type type, df::coord pos, std::stri
     if (Maps::isValidTilePos(pos))
         r.zoom_type = report_zoom_type::Unit;
 
-    return autoDFAnnouncement(r, message, log_failures);
+    return autoDFAnnouncement(r, message);
 }
 
 df::viewscreen *Gui::getCurViewscreen(bool skip_dismissed)

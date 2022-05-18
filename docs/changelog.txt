@@ -48,6 +48,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## API
 
 ## Lua
+- ``widgets.HotkeyLabel``: the ``key_sep`` string is now configurable
+- ``widgets.EditField``: the ``key_sep`` string is now configurable
+- ``widgets.EditField``: can now display an optional string label in addition to the activation key
 
 # 0.47.05-r5
 

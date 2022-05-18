@@ -3832,6 +3832,7 @@ Subclass of Widget; implements a simple edit field.
 
 Attributes:
 
+:label_text: The optional text label displayed before the editable text.
 :text: The current contents of the field.
 :text_pen: The pen to draw the text with.
 :on_char: Input validation callback; used as ``on_char(new_char,text)``.
@@ -3839,6 +3840,8 @@ Attributes:
 :on_change: Change notification callback; used as ``on_change(new_text,old_text)``.
 :on_submit: Enter key callback; if set the field will handle the key and call ``on_submit(text)``.
 :key: If specified, the field is disabled until this key is pressed. Must be given as a string.
+:key_sep: If specified, will be used to customize how the activation key is
+          displayed. See ``token.key_sep`` in the ``Label`` documentation below.
 
 Label class
 -----------
@@ -3907,8 +3910,8 @@ containing newlines, or a table with the following possible fields:
 * ``token.key_sep = '...'``
 
   Specifies the separator to place between the keybinding label produced
-  by ``token.key``, and the main text of the token. If the separator is
-  '()', the token is formatted as ``text..' ('..binding..')'``. Otherwise
+  by ``token.key``, and the main text of the token. If the separator starts with
+  '()', the token is formatted as ``text..' ('..binding..sep:sub(2)``. Otherwise
   it is simply ``binding..sep..text``.
 
 * ``token.enabled``, ``token.disabled``
@@ -3999,6 +4002,8 @@ a hotkey.
 It has the following attributes:
 
 :key: The hotkey keycode to display, e.g. ``'CUSTOM_A'``.
+:key_sep: If specified, will be used to customize how the activation key is
+          displayed. See ``token.key_sep`` in the ``Label`` documentation.
 :label: The string (or a function that returns a string) to display after the
     hotkey.
 :on_activate: If specified, it is the callback that will be called whenever

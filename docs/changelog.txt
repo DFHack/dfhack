@@ -52,6 +52,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``widgets.HotkeyLabel``: the ``key_sep`` string is now configurable
 - ``widgets.EditField``: the ``key_sep`` string is now configurable
 - ``widgets.EditField``: can now display an optional string label in addition to the activation key
+- ``widgets.EditField``: views that have an ``EditField`` subview no longer need to manually manage the ``EditField`` activation state and input routing.  This is now handled automatically by the new ``gui.View`` keyboard focus subsystem.
 
 # 0.47.05-r5
 

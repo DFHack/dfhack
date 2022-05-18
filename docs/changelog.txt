@@ -38,6 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Tweaks
 
 ## Fixes
+- ``widgets.CycleHotkeyLabel``: allow initial option values to be specified as an index instead of an option value
 
 ## Misc Improvements
 - `dfhack-examples-guide`: refine food preparation orders and fix conditions for making jugs and pots in the ``basic`` manager orders

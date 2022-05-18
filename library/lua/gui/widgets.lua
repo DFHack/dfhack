@@ -638,6 +638,11 @@ function CycleHotkeyLabel:init()
         end
     end
     if not self.option_idx then
+        if self.options[self.initial_option] then
+            self.option_idx = self.initial_option
+        end
+    end
+    if not self.option_idx then
         error(('cannot find option with value or index: "%s"')
               :format(self.initial_option))
     end

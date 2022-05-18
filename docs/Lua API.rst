@@ -3516,14 +3516,24 @@ The class defines the following attributes:
 :visible: Specifies that the view should be painted.
 :active: Specifies that the view should receive events, if also visible.
 :view_id: Specifies an identifier to easily identify the view among subviews.
-          This is reserved for implementation of top-level views, and should
-          not be used by widgets for their internal subviews.
+          This is reserved for use by script writers and should not be set by
+          library widgets for their internal subviews.
+:on_focus: Called when the view gains keyboard focus; see ``setFocus()`` below.
+:on_unfocus: Called when the view loses keyboard focus.
 
 It also always has the following fields:
 
 :subviews: Contains a table of all subviews. The sequence part of the
            table is used for iteration. In addition, subviews are also
-           indexed under their *view_id*, if any; see ``addviews()`` below.
+           indexed under their ``view_id``, if any; see ``addviews()`` below.
+:parent_view: A reference to the parent view. This field is ``nil`` until the
+              view is added as a subview to another view with ``addviews()``.
+:focus_group: The list of widgets in a hierarchy. This table is unique and empty
+              when a view is initialized, but is replaced by a shared table when
+              the view is added to a parent via ``addviews()``. If a view in the
+              focus group has keyboard focus, that widget can be accessed via
+              ``focus_group.cur``.
+:focus: A boolean indicating whether the view currently has keyboard focus.
 
 These fields are computed by the layout process:
 
@@ -3617,8 +3627,27 @@ The class has the following methods:
 
   Calls ``onInput`` on all visible active subviews, iterating the ``subviews``
   sequence in *reverse order*, so that topmost subviews get events first.
-  Returns *true* if any of the subviews handled the event.
+  Returns ``true`` if any of the subviews handled the event. If a subview within
+  the view's ``focus_group`` has focus and it and all of its ancestors are
+  active and visible, that subview is offered the chance to handle the input
+  before any other subviews.
 
+* ``view:getPreferredFocusState()``
+
+  Returns ``false`` by default, but should be overridden by subclasses that may
+  want to take keyboard focus (if it is unclaimed) when they are added to a
+  parent view with ``addviews()``.
+
+* ``view:setFocus(focus)``
+
+  Sets the keyboard focus to the view if ``focus`` is ``true``, or relinquishes
+  keyboard focus if ``focus`` is ``false``. Views that newly acquire keyboard
+  focus will trigger the ``on_focus`` callback, and views that lose keyboard
+  focus will trigger the ``on_unfocus`` callback. While a view has focus, all
+  keyboard input is sent to that view before any of its siblings or parents.
+  Keyboard input is propagated as normal (see ``inputToSubviews()`` above) if
+  there is no view with focus or if the view with focus returns ``false`` from
+  its ``onInput()`` function.
 
 .. _lua-gui-screen:
 

@@ -376,10 +376,21 @@ View.ATTRS {
     active = true,
     visible = true,
     view_id = DEFAULT_NIL,
+    on_focus = DEFAULT_NIL,
+    on_unfocus = DEFAULT_NIL,
 }
 
 function View:init(args)
     self.subviews = {}
+    self.focus_group = {self}
+    self.focus = false
+end
+
+local function inherit_focus_group(view, focus_group)
+    for _,child in ipairs(view.subviews) do
+        inherit_focus_group(child, focus_group)
+    end
+    view.focus_group = focus_group
 end
 
 function View:addviews(list)
@@ -388,6 +399,31 @@ function View:addviews(list)
     local sv = self.subviews
 
     for _,obj in ipairs(list) do
+        -- absorb the focus groups of new children
+        for _,focus_obj in ipairs(obj.focus_group) do
+            table.insert(self.focus_group, focus_obj)
+        end
+        -- if the child's focus group has a focus owner, absorb it if we don't
+        -- already have one. otherwise keep the focus owner we have and clear
+        -- the focus of the child.
+        if obj.focus_group.cur then
+            if not self.focus_group.cur then
+                self.focus_group.cur = obj.focus_group.cur
+            else
+                obj:setFocus(false)
+            end
+        end
+        -- overwrite the child's focus_group hierarchy with ours
+        inherit_focus_group(obj, self.focus_group)
+        -- if we don't have a focus owner, give it to the new child if they want
+        if not self.focus_group.cur and obj:getPreferredFocusState() then
+            obj:setFocus(true)
+        end
+
+        -- set ourselves as the parent view of the new child
+        obj.parent_view = self
+
+        -- add the subview to our child list
         table.insert(sv, obj)
 
         local id = obj.view_id
@@ -401,6 +437,33 @@ function View:addviews(list)
             if id and type(id) ~= 'number' and sv[id] == nil then
                 sv[id] = obj
             end
+        end
+    end
+end
+
+-- should be overridden by widgets that care about capturing keyboard focus
+-- (e.g. widgets.EditField)
+function View:getPreferredFocusState()
+    return false
+end
+
+function View:setFocus(focus)
+    if focus then
+        if self.focus then return end -- nothing to do if we already have focus
+        if self.focus_group.cur then
+            -- steal focus from current owner
+            self.focus_group.cur:setFocus(false)
+        end
+        self.focus_group.cur = self
+        self.focus = true
+        if self.on_focus then
+            self.on_focus()
+        end
+    elseif self.focus then
+        self.focus = false
+        self.focus_group.cur = nil
+        if self.on_unfocus then
+            self.on_unfocus()
         end
     end
 end
@@ -476,12 +539,42 @@ end
 function View:onRenderBody(dc)
 end
 
+-- returns true if all of the following are true:
+-- - the view is not the focus owner
+-- - the view is not a descendent of the focus owner
+-- - the focus owner and all of its ancestors are visible and active
+local function should_send_input_to_focus_owner(view, focus_owner)
+    local iter = view
+    while iter do
+        if iter == focus_owner then
+            return false
+        end
+        iter = iter.parent_view
+    end
+    iter = focus_owner
+    while iter do
+        if not iter.visible or not iter.active then
+            return false
+        end
+        iter = iter.parent_view
+    end
+    return true
+end
+
 function View:inputToSubviews(keys)
     local children = self.subviews
 
+    -- give focus owner first dibs on the input
+    local focus_owner = self.focus_group.cur
+    if focus_owner and should_send_input_to_focus_owner(self, focus_owner) and
+            focus_owner:onInput(keys) then
+        return true
+    end
+
     for i=#children,1,-1 do
         local child = children[i]
-        if child.visible and child.active and child:onInput(keys) then
+        if child.visible and child.active and child ~= focus_owner and
+                child:onInput(keys) then
             return true
         end
     end

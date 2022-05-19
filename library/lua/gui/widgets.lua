@@ -246,6 +246,7 @@ function EditField:onInput(keys)
         end
         if self.on_submit then
             self.on_submit(self.text)
+            return true
         end
         return not not self.key
     end

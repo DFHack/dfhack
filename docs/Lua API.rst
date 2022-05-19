@@ -3842,6 +3842,10 @@ Attributes:
 :key: If specified, the field is disabled until this key is pressed. Must be given as a string.
 :key_sep: If specified, will be used to customize how the activation key is
           displayed. See ``token.key_sep`` in the ``Label`` documentation below.
+:modal: Whether the ``EditField`` should prevent input from propagating to other
+        widgets while it has focus. You can set this to ``true``, for example,
+        if you don't want a ``List`` widget to react to arrow keys while the
+        user is editing.
 
 An ``EditField`` will only read and process text input if it has keyboard focus.
 It will automatically acquire keyboard focus when it is added as a subview to

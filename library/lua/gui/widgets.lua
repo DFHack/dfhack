@@ -186,6 +186,7 @@ EditField.ATTRS{
     on_submit = DEFAULT_NIL,
     key = DEFAULT_NIL,
     key_sep = DEFAULT_NIL,
+    modal = false,
 }
 
 function EditField:init()
@@ -267,6 +268,9 @@ function EditField:onInput(keys)
         end
         return true
     end
+
+    -- if we're modal, then unconditionally eat all the input
+    return self.modal
 end
 
 -----------

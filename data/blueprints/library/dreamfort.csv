@@ -59,8 +59,7 @@ quickfort run library/dreamfort.csv -n /setup,# Run before making any manual adj
 "quickfort orders library/dreamfort.csv -n ""/surface2, /farming2, /surface3, /farming3, /industry2, /surface4""","# Queue up orders required to get the fort minimally functional and secure. You can remove the order for the anvil (you brought one with you, right?)."
 ""
 -- Find a good starting spot on the surface --
-quickfort run library/dreamfort.csv -n /perimeter,# Run at embark.
-quickfort undo library/dreamfort.csv -n /perimeter,# Clean up after you find your center tile.
+gui/quickfort library/dreamfort.csv -n /perimeter,# Run at embark. Don't actually apply the blueprint. Just use the preview shadow to find a good spot on the surface.
 ""
 -- Dig  --
 quickfort run library/dreamfort.csv -n /surface1,# Run when you find your center tile.
@@ -91,10 +90,10 @@ orders import furnace,# Automated production of basic furnace-related items. Don
 "quickfort run,orders library/dreamfort.csv -n /suites2",# Run when the suites level has been dug out.
 "quickfort run,orders library/dreamfort.csv -n /surface8","# Run if/when you need longer trap corridors on the surface for larger sieges, anytime after you run /surface7."
 "quickfort run,orders library/dreamfort.csv -n /apartments2",# Run when the first apartment level has been dug out.
-"quickfort run,orders library/dreamfort.csv -n /apartments3",# Run when all beds have been constructed on the first apartments level.
 "quickfort run,orders library/dreamfort.csv -n /services3","# Run after the dining table and chair, weapon rack, and archery targets have been constructed. Also wait until after you complete /surface7, though, because surface defenses are more important than a grand dining hall."
 "quickfort run,orders library/dreamfort.csv -n /guildhall2",# Run when the guildhall level has been dug out.
-"quickfort run,orders library/dreamfort.csv -n /guildhall3",# Optionally run after /guildhall2 to build default furnishings.
+"quickfort run,orders library/dreamfort.csv -n ""/guildhall3, /guildhall4""",# Optionally run after /guildhall2 to build default furnishings and declare a library and temple.
+"quickfort run,orders library/dreamfort.csv -n /apartments3",# Run when all beds have been constructed on the first apartments level.
 "quickfort run,orders library/dreamfort.csv -n /farming4",# Run once you have a cache of potash.
 orders import military,# Automated production of military equipment. Turn on automelt in the meltables piles on the industry level to automatically upgrade all metal military equipment to masterwork quality. These orders are optional if you are not using a military.
 orders import smelting,# Automated production of all types of metal bars.
@@ -326,7 +325,7 @@ Here are some tips and procedures for handling seiges -- including how to clean 
 ""
 "- Hauler dwarves will come and release prisoners one by one. Your military dwarves will immediately pounce on the released prisoner and chop them to bits, saving the hauler dwarves from being attacked. Repeat until all prisoners have been ""processed""."
 ""
-"Only types of creatures that you commonly see in sieges are accepted by the prisoner hauling route by default. You can add additional creature types by configuring the hauling route stop in the 'h' menu. Note that generated creature types, like necromancer experiments, can't be explicitly added. You have to (at least temporarily) accept all animals to include them."
+"Only common hostile creatures are accepted by the prisoner hauling route by default. You can add additional creature types by configuring the hauling route stop in the 'h' menu. Note that generated creature types, like necromancer experiments, can't be explicitly added. You have to (at least temporarily) accept all animals to include them."
 #meta label(perimeter) start(central stairs) message(Run quickfort undo on this blueprint to clean up.) show the eventual perimeter of the surface fort; useful for location scouting
 walls/surface_walls
 corridor/surface_corridor
@@ -944,10 +943,9 @@ Remember to connect the levers to the gates once they are built.) gates, barrack
 ,,,,,,,,,,,,,,,gw,gw,gw,gw,gw,gw,gw
 
 #aliases
-permit_prisoner: {animalsprefix}{Right}s{search}&&^
-prisoner_route_enable: {enableanimals}{cages}{permittraps}{permit_prisoner search=dwarves}{permit_prisoner search=elves}{permit_prisoner search=humans}{permit_prisoner search=giants}{permit_prisoner search=goblins}{permit_prisoner search=ettins}{permit_prisoner search=cyclopes}
+"prisoner_route_enable: {enableanimals}{cages}{permittraps}{animalsprefix}{Right}{permitsearch search="" men""}{permitsearch search=dwarves}{permitsearch search=elves}{permitsearch search=humans}{permitsearch search=kobolds}{permitsearch search=gremlins}{permitsearch search=giants}{permitsearch search=goblins}{permitsearch search=ettins}{permitsearch search=cyclopes}{permitsearch search=ogres}{permitsearch search=eyes}{permitsearch search=reachers}{permitsearch search=gorlaks}{permitsearch search=trolls}{permitsearch search=minotaurs}^"
 
-"#query label(surface_query) start(19; 19) hidden() message(Remember to assign minecarts to the trade goods and prisoner processing quantum stockpiles.
+"#query label(surface_query) start(19; 19) hidden() message(Remember to assign minecarts to the trade goods and prisoner processing quantum stockpiles (run ""assign-minecarts all"").
 Feel free to adjust the configuration of the ""trade goods"" feeder stockpile so it accepts the item types you want to trade away. If those items types are also accepted by other stockpiles, configure those stockpiles to give to the ""trade goods"" stockpile.
 You might also want to set the ""trade goods quantum"" stockpile to Auto Trade if you have the autotrade DFHack plugin enabled.)"
 
@@ -975,8 +973,8 @@ You might also want to set the ""trade goods quantum"" stockpile to Auto Trade i
 ,,,`,,`,nocontainers,crafts,,,,,,,`,,,,"{givename name=""inner main gate""}",,,,`,,,,,,,,,`,,`
 ,,,`,,`,"{givename name=""trade goods""}",,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,{forbidmasterworkfinishedgoods}{forbidartifactfinishedgoods},,,,,,,,"{givename name=""trade depo gate""}",,,,,,,,"{givename name=""barracks gate""}",,,,,,,,,`,,`
-,,,`,,`,,"{quantumstopfromnorth name=""Trade Goods quantum""}",,,,,,,,,,,,,,,,,"{quantumstop name=""Prisoner quantum"" move={Up 5} move_back={Down 5} route_enable={prisoner_route_enable}}{givename name=""prisoner dumper""}",,,,,,,`,,`
-,,,`,,`,,"{quantum name=""trade goods quantum""}",,,,,,,`,,,,,,,,`,,"{quantum name=""prisoner quantum"" quantum_enable={enableanimals}}",,,,,,,`,,`
+,,,`,,`,,"{quantumstopfromnorth name=""Trade Goods quantum""}",,,,,,,,,,,,,,,,,"{quantumstop name=""Prisoner/Cage quantum"" move={Up 5} move_back={Down 5} route_enable={prisoner_route_enable}}{givename name=""prisoner/cage dumper""}",,,,,,,`,,`
+,,,`,,`,,"{quantum name=""trade goods quantum""}",,,,,,,`,,,,,,,,`,,"{quantum name=""prisoner/cage quantum"" quantum_enable={enableanimals}}",,,,,,,`,,`
 ,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
 ,,,`,,"{givename name=""left outer gate""}",,,,,,,,,"{givename name=""left inner gate""}",,,,,,,,"{givename name=""right inner gate""}",,,,,,,,,"{givename name=""right outer gate""}",,`
 ,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,"{givename name=""outer main gate""}",,,,`,`,`,`,`,`,`,`,`,`,`,`
@@ -1449,7 +1447,7 @@ Workshops:
 ""
 Manual steps you have to take:
 - Check to make sure the lower office is assigned to your manager and assign the upper office to your bookkeeper (if different from your manager)
-- Assign a minecart to your refuse quantum stockpile hauling route
+"- Assign a minecart to your refuse quantum stockpile hauling route (you can run ""assign-minecarts all"" at the DFHack prompt to do this)"
 "- If the industry level is already built, configure the jugs, pots, and bags stockpiles to take from the ""Goods"" quantum stockpile (the one on the left) on the industry level"
 ""
 Farming Walkthrough:
@@ -1572,7 +1570,7 @@ build3/farming_build3
 
 
 "#query label(farming_query_stockpiles) start(16; 18) hidden() message(remember to:
-- assign a minecart to the refuse quantum stockpile
+- assign a minecart to the refuse quantum stockpile (run ""assign-minecarts all"")
 - if the industry level is already built, configure the jugs, pots, and bags stockpiles to take from the ""Goods"" quantum stockpile on the industry level) config stockpiles"
 
 
@@ -1801,7 +1799,7 @@ Manual steps you have to take:
 ""
 Optional manual steps you can take:
 - Restrict the Mechanic's workshop to only allow skilled workers so unskilled trap-resetters won't be tasked to build mechanisms.
-"- Restrict the Craftsdwarf's workshops to only allow labors that take from the adjacent stockpiles. That is, only allow Woodcrafting for the Craftsdwarf's workshop on the left near the wood stockpile, Stonecrafting for the Craftsdwarf's workshop near the Mason's workshops, and Bonecrafting for one of the Craftsdwarf's workshop near the Clothier's workshop. The last Craftdwarf's workshop can hold all the remaining labors, or it can be a secondary workshop for a labor that you want more dwarves working on."
+"- Restrict the Craftsdwarf's workshops to only allow labors that take from the adjacent stockpiles. That is, only allow Woodcrafting for the Craftsdwarf's workshop on the left near the wood stockpile, Stonecrafting and Strand Extraction for the Craftsdwarf's workshop near the Mason's workshops, and Bonecrafting for one of the Craftsdwarf's workshop near the Clothier's workshop. The last Craftdwarf's workshop can hold all the remaining labors, or it can be a secondary workshop for a labor that you want more dwarves working on."
 "- To encourage your masons to concentrate on building blocks and other high-volume orders, it helps to set one of your Mason's workshops to service a maximum of 2 manager orders at a time."
 "- Once you have enough haulers, you can increase the rate of stone and ore hauling jobs by building more wheelbarrows and adding them to the stone and ore feeder stockpiles."
 "- If desired, set one or both stockpiles in the bottom left to auto-melt. This results in melting all weapons and armor that are inferior to masterwork. This is great for upgrading your military, but it takes a *lot* of fuel unless you have first replaced the forge and smelters with magma versions. If you enable automelt and you don't have magma forges and magma smelters, be sure to be in a heavily forested area, enable auto-chop, and keep your coal stocks high."
@@ -1912,13 +1910,13 @@ query/industry_query
 ,,w,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,w,`,`,`,`,`,`,`,`,`,`,`,`,e(5x1),,,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,w,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
-,,w,`,`,`,`,`,`,w(2x5),,fg(3x3),,`,,`,`,`,`,`,,rhlS(5x5),,,~,~,`,`,`,`,`,`,`
+,,w,`,`,`,`,`,`,w(2x5),,fg(3x3),,`,,`,`,`,`,`,,frhlS(5x5),,,~,~,`,`,`,`,`,`,`
 ,,w,`,`,`,`,`,`,~,~,~,~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,`
 ,,`,`,`,`,`,c,`,~,~,~,~,~,,`,,`,,`,,~,~,~,~,~,`,r,`,`,`,`,`
 ,,f3,`,`,`,`,`,`,~,~,u2(3x2),~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,`
 ,,f3,`,`,`,`,`,`,~,~,~,~,~,,`,`,`,`,`,,~,~,~,~,~,`,`,`,`,`,`,`
 ,,f3,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
-,,f3,`,`,`,`,`,`,`,`,`,`,`,`,bnpdz(5x3),,,,~,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,f3,`,`,`,`,`,`,`,`,`,`,`,`,bnpdhz(5x3),,,,~,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,f3,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,f3,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,pd(7x3),,,~,~,~,~,`,`,`,`,s2(5x2),,,~,~,`,`,`,`,`,`,`,`,`,`,`
@@ -1954,13 +1952,13 @@ query/industry_query
 ,,~,`,~,`,`,~,`,`,~,`,`,`,`,nocontainers,"{givename name=""gem feeder""}",~,~,~,`,`,`,`,~,`,`,~,`,`,~,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,~,`,`,`,`,`,`,"{givename name=""wood feeder""}",~,"{givename name=""goods feeder""}",nocontainers,~,,`,`,`,`,`,,craftrefuse,,,,~,`,`,`,`,`,`,`
-,,t{Right 5}{Down}&,`,`,`,`,`,`,~,~,{tallow}{permitdye}{permitwax},~,~,`,`,,,,`,`,"{givename name=""cloth/bones feeder""}",~,~,~,~,`,`,`,`,`,`,`
-,,`,`,~,`,`,"{quantum name=""goods/wood quantum""}g{Up 13}{Right 10}&","{quantumstop name=""Goods/Wood quantum"" sp_links=""{sp_link move={Right} move_back={Left}}{sp_link move=""""{Right 5}"""" move_back=""""{Left 5}""""}{sp_link move=""""{Down}{Right 5}"""" move_back=""""{Left 5}{Up}""""}""}{givename name=""goods/wood dumper""}",~,~,{forbidcrafts}{forbidgoblets},~,~,,`,,`,,`,,nocontainers,~,~,~,~,"{quantumstopfromwest name=""Clothier/Bones quantum""}{givename name=""cloth/bones dumper""}","{quantum name=""cloth/bones quantum""}",`,`,~,`,`
-,,miscliquid,`,`,`,`,`,`,~,~,"{givename name=""furniture feeder""}",~,~,`,`,,,,`,`,~,~,~,~,~,`,`,`,`,`,`,`
-,,"{givename name=""miscliquid""}",`,`,`,`,`,`,~,~,forbidsand,~,~,,`,`,`,`,`,,~,~,~,~,~,`,`,`,`,`,`,`
+,,t{Right 5}{Down}&,`,`,`,`,`,`,~,~,{tallow}{permitwax},~,~,`,`,,,,`,`,"{givename name=""cloth/bones feeder""}",g{Up 3}{Right 2}&,g{Up 3}{Right 4}&,g{Up 3}{Right 6}&,~,`,`,`,`,`,`,`
+,,`,`,~,`,`,"{quantum name=""goods/wood quantum""}g{Up 13}{Right 10}&","{quantumstop name=""Goods/Wood quantum"" sp_links=""{sp_link move={Right} move_back={Left}}{sp_link move=""""{Right 5}"""" move_back=""""{Left 5}""""}{sp_link move=""""{Down}{Right 5}"""" move_back=""""{Left 5}{Up}""""}""}{givename name=""goods/wood dumper""}",~,~,{forbidcrafts}{forbidgoblets},~,~,,`,,`,,`,,nocontainers,~,~,~,~,"{quantumstopfromwest name=""Clothier/Bones quantum""}{givename name=""cloth/bones dumper""}","{quantum name=""cloth/bones quantum""}g{Up 4}{Left 3}g{Up 4}g{Up 4}{Right 3}&",`,`,~,`,`
+,,miscliquid,`,`,`,`,`,`,~,~,"{givename name=""furniture feeder""}",~,~,`,`,,,,`,`,forbidadamantinethread,~,~,~,~,`,`,`,`,`,`,`
+,,"{givename name=""miscliquid""}",`,`,`,`,`,`,~,~,forbidsand,~,~,,`,`,`,`,`,,dye,~,~,~,~,`,`,`,`,`,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,~,`,~,`,`,~,`,`,~,`,`,`,`,forbidpotash,nocontainers,"{givename name=""bar/military feeder""}",~,~,`,`,`,`,~,`,`,~,`,`,`,`,`
-,,~,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,~,`,`,`,`,`,`,`,`,`,`,`,`,adamantinethread,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,`,~,~,~,~,~,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,nocontainers,t{Right 12}{Up 3}&,t{Right 11}{Down 3}&,"{givename name=""meltable steel/brnze""}",,,,`,`,~,`,forbidotherstone,,,,,`,~,`,`,`,`,`,`,`,`,`
 ,,,,{bronzeweapons}{permitsteelweapons}{forbidmasterworkweapons}{forbidartifactweapons},,,,,,,`,`,`,`,"{givename name=""ore/clay feeder""}",~,~,~,~,`,`,`,`,`,`,`,`,`,`,`
@@ -1978,7 +1976,7 @@ query/industry_query
 Screenshot: https://drive.google.com/file/d/13vDIkTVOZGkM84tYf4O5nmRs4VZdE1gh
 ""
 Features:
-- Spacious dining room (also usable as a tavern)
+- Spacious dining room/tavern (tavern is restricted to residents-only by default)
 - Prepared food and drink stockpiles
 - Well cistern system (bring your own water)
 - Hospital with a well for washing
@@ -1988,9 +1986,9 @@ Features:
 Note the hospital also has animal training enabled so it can be used with the dwarfvet plugin if it's enabled.
 ""
 Manual steps you have to take:
-"- If you want to declare the dining room as a tavern, the bedrooms at the top can be assigned to the tavern as rented rooms."
+"- If you want to tavern to attract visitors, change the restriction in the (l)ocation menu."
 "- Fill the cisterns with water, either with a bucket brigade or by plumbing flowing water. Fill so that there are two z-levels of 7-depth water to prevent muddiness. If you want to fill with buckets, designate a pond zone on the level below the main floor. If you feel adventurous and are experienced with water pressure, you can instead route (depressurized!) water to the second-to-bottom level (the one above the up staircases)."
-"- If you are filling the wells with a bucket brigade and at least one well is already constructed, you'll run into issues with the dwarves stealing water from the wells to fill the wells. Temporarily deconstruct the wells or temporarily build grates beneath the wells to block the buckets to avoid this issue. Remember to rebuild the wells or remove the grates afterwards, though!"
+"- If you are filling the wells with a bucket brigade and at least one well is already constructed, you'll run into issues with the dwarves stealing water from one well to fill another. Temporarily deconstruct the wells or temporarily build grates beneath the wells to block the buckets to avoid this issue. Remember to rebuild the wells or remove the grates afterwards, though!"
 ""
 Services Walkthrough:
 1) Start this level when your fort grows to about 50 dwarves so everyone has a place to eat.
@@ -1999,11 +1997,11 @@ Services Walkthrough:
 ""
 "3) Once the area is dug out, set up important furniture, stockpiles, hospital zone and garbage dump zone with /services2. Run ""quickfort orders"" for /services2."
 ""
-"4) When the table and chair have been placed in the dining room and the weapon rack and archery targets have been constructed in the barracks, run /services3 to build the rest of the furniture and configure your dining room and barracks. Run ""quickfort orders"" for /services3."
+"4) When the table and chair have been placed in the dining room, the beds are placed in the rented rooms, and the weapon rack and archery targets are constructed in the barracks, run /services3 to build the rest of the furniture and configure your dining room/tavern and barracks. Run ""quickfort orders"" for /services3."
 ""
 5) Fill the wells with either bucket brigades or by carefully routing flowing water.
 ""
-"6) When your fort is mature enough to need jail cells, run /services4 to set those up -- anytime after the restraints are built in the jail cell block. You also get some decorative statues to increase the value of your dining hall. Run ""quickfort orders"" for /services4."
+"6) When your fort is mature enough to need jail cells, run /services4 to set those up, anytime after the restraints are built in the jail cell block. You also get some decorative statues to increase the value of your dining hall. Run ""quickfort orders"" for /services4."
 "#dig label(services1) start(23; 22; central stairs) message(Once the area is dug out, continue with /services2.)"
 
 
@@ -2123,21 +2121,22 @@ zones/services_zones
 name_zones/services_name_zones
 query_stockpiles/services_query_stockpiles
 ""
-"#meta label(services3) start(central stairs) message(Remember to enqueue manager orders for this blueprint.) configure dining room, build dining hall and hospital furniture"
+"#meta label(services3) start(central stairs) message(Remember to enqueue manager orders for this blueprint.) configure dining room/tavern, build dining hall and hospital furniture"
 query_dining/services_query_dining
+query_rented_rooms/services_query_rented_rooms
 build2/services_build2
 ""
-#meta label(services4) start(central stairs) message(Remember to enqueue manager orders for this blueprint.) complete jail and build decorative furniture
+#meta label(services4) start(central stairs) message(Remember to enqueue manager orders for this blueprint.) declare and furnish jail and build decorative furniture
 build3/services_build3
 place_jail/services_place_jail
 query_jail/services_query_jail
 #build label(services_build) start(23; 22) hidden() build basic hospital and dining room anchor
 
 
+,,,,b,b,b,,,b,b,b,,,b,b,b
 ,,,,`,`,`,,,`,`,`,,,`,`,`
 ,,,,`,`,`,,,`,`,`,,,`,`,`
-,,,,`,`,`,,,`,`,`,,,`,`,`
-,,,,,`,,,,,`,,,,,`
+,,,,,d,,,,,d,,,,,d
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
@@ -2190,7 +2189,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`,,,,,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,c,,,,,,`,`,`,`,`,`,`,`,`
 ,,,,,,,,`,`,,`,`,,,,,,,,,,,,,,,,`,`,`,`,`,`,`,`,`
 ,,,,f(6x5),`,`,`,`,`,,f(6x5),`,`,`,`,`,,,,,,,,,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,,`,`,`,`,`,`
@@ -2342,7 +2341,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`,,,,,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,"{quantum name=""garbage dump""}",,,,,,,,,,,,,`,`
 ,,,,,,,,`,`,,`,`,,,,,,,,,,,,,,,,`,`,`,`,`,`,`,`,`
 ,,,,preparedfood,"{givename name=""prepared food""}",`,`,`,`,,booze,"{givename name=""booze""}",`,`,`,`,,,,,,,,,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,,`,`,`,`,`,`
@@ -2351,7 +2350,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,`,`,`,,`,`,`,`,`,`
 
 
-#query label(services_query_dining) start(23; 22) message(the bedrooms above the tavern are left unconfigured so you can add them as rented rooms) set up dining room and barracks
+"#query label(services_query_dining) start(23; 22) message(The tavern is restricted to residents only by default. If you'd like your tavern to attract vistors, please go to the (l)ocation menu and change the restriction.) set up dining room/tavern and barracks"
 
 
 ,,,,`,`,`,,,`,`,`,,,`,`,`
@@ -2371,7 +2370,41 @@ query_jail/services_query_jail
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,`,,`,,,,,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,"r{+ 11}&h{givename name=""grand hall""}",,,,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,"r{+ 11}&h{givename name=""grand hall""}lai^l{Up}r^q",,,,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`,,,,,,`,`,`,`,`,`,`,`,`
+,,,,,,,,`,`,,`,`,,,,,,,,,,,,,,,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,,`,`,`,`,`,`,,,,,,,,,,,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,,`,`,`,`,`,`
+
+
+#query label(services_query_rented_rooms) start(23; 22) attach rented rooms to tavern
+
+
+,,,,r&l-&,r&l-&,r&l-&,,,r&l-&,r&l-&,r&l-&,,,r&l-&,r&l-&,r&l-&
+,,,,`,`,`,,,`,`,`,,,`,`,`
+,,,,`,`,`,,,`,`,`,,,`,`,`
+,,,,,`,,,,,`,,,,,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,`,,`,,,,,`,`,`,`,`,`,`,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
@@ -2388,10 +2421,10 @@ query_jail/services_query_jail
 "#build label(services_build2) start(23; 22) hidden() build rest of hospital and dining room, doors, prep for jail"
 
 
-,,,,b,b,b,,,b,b,b,,,b,b,b
+,,,,~,~,~,,,~,~,~,,,~,~,~
 ,,,,`,`,`,,,`,`,`,,,`,`,`
 ,,,,f,`,h,,,f,`,h,,,f,`,h
-,,,,,d,,,,,d,,,,,d
+,,,,,~,,,,,~,,,,,~
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,v,`,d,`,d,`,v,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`
@@ -2555,14 +2588,14 @@ query_jail/services_query_jail
 Screenshot: https://drive.google.com/file/d/17jHiCKeZm6FSS-CI4V0r0GJZh09nzcO_
 ""
 Features:
-"- Big rooms, optionally pre-furnished. Double-thick walls to ensure engravings add value to the ""correct"" side. Declare locations as needed."
+"- Big rooms, optionally pre-furnished. Double-thick walls to ensure engravings add value to the ""correct"" side. Declare locations from the pre-created meeting zones as needed."
 ""
 Guildhall Walkthrough:
 1) Dig out the rooms with /guildhall1.
 ""
 "2) Once the area is dug out, pre-create the zones and add doors and a few statues with /guildhall2. Run ""quickfort orders"" for /guildhall2."
 ""
-"3) Furnish individual rooms manually, or get default furnishings for a variety of room types by running /guildhall3. Declare appropriate locations from the pre-created zones as you need guildhalls, libraries, and temples. If you need more rooms, you can dig another /guildhall1 in an unused z-level."
+"3) Furnish individual rooms manually, or get default furnishings for a variety of room types by running /guildhall3. If you use the default furnishings, also run ""quickfort orders"" for /guildhall3. Declare appropriate locations from the pre-created zones as you need guildhalls, libraries, and temples. If you'd like a ""no specific diety"" temple declared for the top room and a library declared for the bottom room, run /guildhall4. Both locations will be ""Residents only"" by default, but you can change this in the (l)ocation menu if you want them to attract visitors. If you need more rooms, you can dig another /guildhall1 in an unused z-level."
 "#dig label(guildhall1) start(15; 15; central stairs) message(Once the area is dug out, continue with /guildhall2.)"
 
 
@@ -2685,6 +2718,36 @@ Smooth/engrave tiles, furnish rooms, and declare locations as required.) build d
 ,,`,c,t,c,`,`,s,,,t,c,`,`,`,c,t,,,s,`,`,c,t,c,`
 ,,`,`,c,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,c,`,`
 ,,`,`,`,`,s,`,`,,,h,~c,~c,s,~c,~c,h,,,`,`,s,`,`,`,`
+
+
+"#query label(guildhall4) start(15; 15; central stairs) message(The library and temple are restricted to residents only by default. If you'd like them to attract vistors, please go to the (l)ocation menu and change the restriction.) declare a library and temple"
+
+
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,`,^ilat&^l{Up)r^q,,`,`,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,,,,,,`,,,,,,`,,`,,,,,,`
+,,,,,,,`,,,,,,`,`,`,,,,,,`
+,,`,`,`,`,`,`,`,,,,,`,,`,,,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,`,,`,,`,,`,,`,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,,,`,,`,,,,,`,`,`,`,`,`,`
+,,,,,,,`,,,,,,`,`,`,,,,,,`
+,,,,,,,`,,,,,,`,,`,,,,,,`
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,`,^ilal&^l{Up)r^q,,`,`,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
+,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`,,,`,`,`,`,`,`,`
 
 
 #notes label(beds_help)

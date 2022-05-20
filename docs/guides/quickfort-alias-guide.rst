@@ -521,6 +521,9 @@ give10right
 give              move
 togglesequence
 togglesequence2
+forbidsearch      search
+permitsearch      search
+togglesearch      search
 masterworkonly    prefix
 artifactonly      prefix
 togglemasterwork  prefix
@@ -587,6 +590,12 @@ For example, the ``dye`` alias in the standard alias library needs to select
 four adjacent items::
 
     dye: {foodprefix}b{Right}{Down 11}{Right}{Down 28}{togglesequence 4}^
+
+``forbidsearch``, ``permitsearch``, and ``togglesearch`` use the DFHack
+`search-plugin` plugin to forbid or permit a filtered list, or toggle the first
+(or only) item in the list. Specify the search string in the ``search``
+sub-alias. Be sure to move the cursor over to the right column before invoking
+these aliases. The search filter will be cleared before this alias completes.
 
 Finally, the ``masterwork`` and ``artifact`` group of aliases configure the
 corresponding allowable core quality for the stockpile categories that have
@@ -724,13 +733,16 @@ shells       forbidshells        permitshells
 teeth        forbidteeth         permitteeth
 horns        forbidhorns         permithorns
 hair         forbidhair          permithair
+usablehair   forbidusablehair    permitusablehair
 craftrefuse  forbidcraftrefuse   permitcraftrefuse
 ===========  ==================  ==================
 
 Notes:
 
-* ``craftrefuse`` includes everything a craftsdwarf can use: skulls, bones,
-  shells, teeth, horns, and hair.
+* ``usablehair`` Only hair and wool that can make usable clothing is included,
+  i.e. from sheep, llamas, alpacas, and trolls.
+* ``craftrefuse`` includes everything a craftsdwarf or tailor can use: skulls,
+  bones, shells, teeth, horns, and "usable" hair/wool (defined above).
 
 Stone stockpile adjustments
 ```````````````````````````
@@ -812,17 +824,18 @@ artifactfinishedgoods    forbidartifactfinishedgoods    permitartifactfinishedgo
 Cloth stockpile adjustments
 ```````````````````````````
 
-+------------------+
-| Exclusive        |
-+==================+
-| thread           |
-+------------------+
-| adamantinethread |
-+------------------+
-| cloth            |
-+------------------+
-| adamantinecloth  |
-+------------------+
+================  ======================  ======================
+Exclusive         Forbid                  Permit
+================  ======================  ======================
+thread            forbidthread            permitthread
+adamantinethread  forbidadamantinethread  permitadamantinethread
+cloth             forbidcloth             permitcloth
+adamantinecloth   forbidadamantinecloth   permitadamantinecloth
+================  ======================  ======================
+
+Notes:
+
+* ``thread`` and ``cloth`` refers to all materials that are not adamantine.
 
 Weapon stockpile adjustments
 ````````````````````````````

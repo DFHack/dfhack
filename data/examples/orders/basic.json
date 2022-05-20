@@ -581,7 +581,7 @@
 					"unrotten",
 					"dye"
 				],
-				"value" : 15
+				"value" : 3
 			}
 		],
 		"job" : "DyeThread"
@@ -611,7 +611,7 @@
 					"unrotten",
 					"dye"
 				],
-				"value" : 15
+				"value" : 3
 			}
 		],
 		"job" : "DyeCloth"

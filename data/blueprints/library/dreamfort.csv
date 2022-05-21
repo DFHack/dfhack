@@ -1931,7 +1931,7 @@ query/industry_query
 
 
 "#query label(industry_query) start(18; 18) hidden() message(remember to:
-- assign minecarts to to your quantum stockpile hauling routes
+- assign minecarts to to your quantum stockpile hauling routes (use ""assign-minecarts all"")
 - if the farming level is already built, give from the ""Goods"" quantum stockpile to the jugs, pots, and bags stockpiles on the farming level
 - if you want to automatically melt goblinite and other low-quality weapons and armor, mark the south-east stockpiles for auto-melt
 - once you have enough dwarves, run ""orders import basic"" to automate your fort's basic needs (see /industry_help for more info on this file)
@@ -1953,7 +1953,7 @@ query/industry_query
 ,,~,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,~,`,`,`,`,`,`,"{givename name=""wood feeder""}",~,"{givename name=""goods feeder""}",nocontainers,~,,`,`,`,`,`,,craftrefuse,,,,~,`,`,`,`,`,`,`
 ,,t{Right 5}{Down}&,`,`,`,`,`,`,~,~,{tallow}{permitwax},~,~,`,`,,,,`,`,"{givename name=""cloth/bones feeder""}",g{Up 3}{Right 2}&,g{Up 3}{Right 4}&,g{Up 3}{Right 6}&,~,`,`,`,`,`,`,`
-,,`,`,~,`,`,"{quantum name=""goods/wood quantum""}g{Up 13}{Right 10}&","{quantumstop name=""Goods/Wood quantum"" sp_links=""{sp_link move={Right} move_back={Left}}{sp_link move=""""{Right 5}"""" move_back=""""{Left 5}""""}{sp_link move=""""{Down}{Right 5}"""" move_back=""""{Left 5}{Up}""""}""}{givename name=""goods/wood dumper""}",~,~,{forbidcrafts}{forbidgoblets},~,~,,`,,`,,`,,nocontainers,~,~,~,~,"{quantumstopfromwest name=""Clothier/Bones quantum""}{givename name=""cloth/bones dumper""}","{quantum name=""cloth/bones quantum""}g{Up 4}{Left 3}g{Up 4}g{Up 4}{Right 3}&",`,`,~,`,`
+,,`,`,~,`,`,"{quantum name=""goods/wood quantum""}g{Up 13}{Right 10}&","{quantumstop name=""Goods/Wood quantum"" sp_links=""{sp_link move={Right} move_back={Left}}{sp_link move=""""{Right 5}"""" move_back=""""{Left 5}""""}{sp_link move=""""{Down}{Right 5}"""" move_back=""""{Left 5}{Up}""""}""}{givename name=""goods/wood dumper""}",~,~,{forbidcrafts}{forbidgoblets},~,~,,`,,`,,`,,nocontainers,~,~,~,~,"{quantumstopfromwest name=""Clothier/Bones quantum""}{givename name=""cloth/bones dumper""}","{quantum name=""cloth/bones quantum""}g{Up 4}{Left 3}&g{Up 4}&g{Up 4}{Right 3}&",`,`,~,`,`
 ,,miscliquid,`,`,`,`,`,`,~,~,"{givename name=""furniture feeder""}",~,~,`,`,,,,`,`,forbidadamantinethread,~,~,~,~,`,`,`,`,`,`,`
 ,,"{givename name=""miscliquid""}",`,`,`,`,`,`,~,~,forbidsand,~,~,,`,`,`,`,`,,dye,~,~,~,~,`,`,`,`,`,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`

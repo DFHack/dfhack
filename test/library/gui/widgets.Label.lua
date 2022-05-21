@@ -8,17 +8,17 @@ local wait = function(n)
     delay(n or 30) -- enable for debugging the tests
 end
 
-function test.Label_correct_frame_body_with_scroll_icons()
-    local fs = defclass(fs, gui.FramedScreen)
-    fs.ATTRS = {
-        frame_style = gui.GREY_LINE_FRAME,
-        frame_title = 'TestFramedScreen',
-        frame_width = 10,
-        frame_height = 10,
-        frame_inset = 0,
-        focus_path = 'test-framed-screen',
-    }
+local fs = defclass(fs, gui.FramedScreen)
+fs.ATTRS = {
+    frame_style = gui.GREY_LINE_FRAME,
+    frame_title = 'TestFramedScreen',
+    frame_width = 10,
+    frame_height = 10,
+    frame_inset = 0,
+    focus_path = 'test-framed-screen',
+}
 
+function test.Label_correct_frame_body_with_scroll_icons()
     local t = {}
     for i = 1, 12 do
         t[#t+1] = tostring(i)
@@ -44,16 +44,6 @@ function test.Label_correct_frame_body_with_scroll_icons()
 end
 
 function test.Label_correct_frame_body_with_few_text_lines()
-    local fs = defclass(fs, gui.FramedScreen)
-    fs.ATTRS = {
-        frame_style = gui.GREY_LINE_FRAME,
-        frame_title = 'TestFramedScreen',
-        frame_width = 10,
-        frame_height = 10,
-        frame_inset = 0,
-        focus_path = 'test-framed-screen',
-    }
-
     local t = {}
     for i = 1, 10 do
         t[#t+1] = tostring(i)
@@ -79,16 +69,6 @@ function test.Label_correct_frame_body_with_few_text_lines()
 end
 
 function test.Label_correct_frame_body_without_show_scroll_icons()
-    local fs = defclass(fs, gui.FramedScreen)
-    fs.ATTRS = {
-        frame_style = gui.GREY_LINE_FRAME,
-        frame_title = 'TestFramedScreen',
-        frame_width = 10,
-        frame_height = 10,
-        frame_inset = 0,
-        focus_path = 'test-framed-screen',
-    }
-
     local t = {}
     for i = 1, 12 do
         t[#t+1] = tostring(i)

@@ -1,8 +1,5 @@
 -- test -dhack/scripts/devel/tests -twidgets.Label
 
---reload('gui')
---reload('gui.widgets')
-
 local gui = require('gui')
 local widgets = require('gui.widgets')
 
@@ -22,7 +19,7 @@ function test.Label_correct_frame_body_with_scroll_icons()
         focus_path = 'test-framed-screen',
     }
 
-    t = {}
+    local t = {}
     for i = 1, 12 do
         t[#t+1] = tostring(i)
         t[#t+1] = NEWLINE
@@ -57,7 +54,7 @@ function test.Label_correct_frame_body_with_few_text_lines()
         focus_path = 'test-framed-screen',
     }
 
-    t = {}
+    local t = {}
     for i = 1, 10 do
         t[#t+1] = tostring(i)
         t[#t+1] = NEWLINE
@@ -92,7 +89,7 @@ function test.Label_correct_frame_body_without_show_scroll_icons()
         focus_path = 'test-framed-screen',
     }
 
-    t = {}
+    local t = {}
     for i = 1, 12 do
         t[#t+1] = tostring(i)
         t[#t+1] = NEWLINE

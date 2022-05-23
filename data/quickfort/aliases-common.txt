@@ -360,9 +360,11 @@ finishedgoodsprefix:  {enter_sp_config}{Down 10}
 enablefinishedgoods:  {finishedgoodsprefix}e^
 disablefinishedgoods: {finishedgoodsprefix}d^
 
-crafts:  {finishedgoodsprefix}{Right}f{Right}{Down 9}{togglesequence 9}^
-goblets: {finishedgoodsprefix}{Right}f{Right}{Down 2}&^
-jugs:    {finishedgoodsprefix}{Right}f{Right}{Up 2}&{Left}{Down 2}f{Down}f{Down}f^
+crafts:      {finishedgoodsprefix}{Right}f{Right}{Down 9}{togglesequence 9}^
+goblets:     {finishedgoodsprefix}{Right}f{Right}{Down 2}&^
+jugs:        {finishedgoodsprefix}{Right}f{Right}{Up 2}&{Left}{Down 2}f{Down}f{Down}f^
+stonetools:  {finishedgoodsprefix}{Right}f{Right}{Up 2}&{Left}{Down 2}f{Down}f{Down}f^
+woodentools: {finishedgoodsprefix}{Right}f{Right}{Up 2}&{Left}{Down}f{Down}f{Down}f{Down}f{Right}&^
 
 forbidcrafts:  {finishedgoodsprefix}{Right 2}{Down 9}{togglesequence 9}^
 forbidgoblets: {finishedgoodsprefix}{Right 2}{Down 2}&^

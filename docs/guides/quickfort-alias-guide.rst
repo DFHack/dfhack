@@ -814,7 +814,8 @@ Finished goods stockpile adjustments
 =======================  =============================  =============================
 Exclusive                Forbid                         Permit
 =======================  =============================  =============================
-jugs
+stonetools
+woodentools
 crafts                   forbidcrafts                   permitcrafts
 goblets                  forbidgoblets                  permitgoblets
 masterworkfinishedgoods  forbidmasterworkfinishedgoods  permitmasterworkfinishedgoods

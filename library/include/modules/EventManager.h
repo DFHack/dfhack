@@ -90,7 +90,7 @@ namespace DFHack {
             std::shared_ptr<InventoryItem> item_old;
             std::shared_ptr<InventoryItem> item_new;
             InventoryChangeData() = default;
-            InventoryChangeData(int32_t id_in, InventoryItem* old_in, InventoryItem* new_in) :
+            InventoryChangeData(int32_t id_in, std::shared_ptr<InventoryItem> &old_in, std::shared_ptr<InventoryItem> &new_in) :
                     unitId(id_in),
                     item_old(old_in),
                     item_new(new_in) {}

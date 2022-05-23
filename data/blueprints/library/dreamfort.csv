@@ -1952,8 +1952,8 @@ query/industry_query
 ,,~,`,~,`,`,~,`,`,~,`,`,`,`,nocontainers,"{givename name=""gem feeder""}",~,~,~,`,`,`,`,~,`,`,~,`,`,~,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
 ,,~,`,`,`,`,`,`,"{givename name=""wood feeder""}",~,"{givename name=""goods feeder""}",nocontainers,~,,`,`,`,`,`,,craftrefuse,,,,~,`,`,`,`,`,`,`
-,,t{Right 5}{Down}&,`,`,`,`,`,`,~,~,{tallow}{permitwax},~,~,`,`,,,,`,`,"{givename name=""cloth/bones feeder""}",g{Up 3}{Right 2}&,g{Up 3}{Right 4}&,g{Up 3}{Right 6}&,~,`,`,`,`,`,`,`
-,,`,`,~,`,`,"{quantum name=""goods/wood quantum""}g{Up 13}{Right 10}&","{quantumstop name=""Goods/Wood quantum"" sp_links=""{sp_link move={Right} move_back={Left}}{sp_link move=""""{Right 5}"""" move_back=""""{Left 5}""""}{sp_link move=""""{Down}{Right 5}"""" move_back=""""{Left 5}{Up}""""}""}{givename name=""goods/wood dumper""}",~,~,{forbidcrafts}{forbidgoblets},~,~,,`,,`,,`,,nocontainers,~,~,~,~,"{quantumstopfromwest name=""Clothier/Bones quantum""}{givename name=""cloth/bones dumper""}","{quantum name=""cloth/bones quantum""}g{Up 4}{Left 3}&g{Up 4}&g{Up 4}{Right 3}&",`,`,~,`,`
+,,t{Right 5}{Down}&,`,`,`,`,`,`,~,~,{tallow}{permitwax},~,~,`,`,,,,`,`,"{givename name=""cloth/bones feeder""}",g{Up 3}{Right 5}&,~,~,~,`,`,`,`,`,`,`
+,,`,`,~,`,`,"{quantum name=""goods/wood quantum""}g{Up 13}{Right 10}&","{quantumstop name=""Goods/Wood quantum"" sp_links=""{sp_link move={Right} move_back={Left}}{sp_link move=""""{Right 5}"""" move_back=""""{Left 5}""""}{sp_link move=""""{Down}{Right 5}"""" move_back=""""{Left 5}{Up}""""}""}{givename name=""goods/wood dumper""}",~,~,{forbidcrafts}{forbidgoblets},~,~,,`,,`,,`,,nocontainers,~,~,~,~,"{quantumstopfromwest name=""Clothier/Bones quantum""}{givename name=""cloth/bones dumper""}","{quantum name=""cloth/bones quantum""}g{Up 4}&",`,`,~,`,`
 ,,miscliquid,`,`,`,`,`,`,~,~,"{givename name=""furniture feeder""}",~,~,`,`,,,,`,`,forbidadamantinethread,~,~,~,~,`,`,`,`,`,`,`
 ,,"{givename name=""miscliquid""}",`,`,`,`,`,`,~,~,forbidsand,~,~,,`,`,`,`,`,,dye,~,~,~,~,`,`,`,`,`,`,`
 ,,~,`,`,`,`,`,`,`,`,`,`,`,,,`,,`,,,`,`,`,`,`,`,`,`,`,`,`,`
@@ -2341,7 +2341,7 @@ query_jail/services_query_jail
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
-,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,"{quantum name=""garbage dump""}",,,,,,,,,,,,,`,`
+,,,,`,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,"{givename name=""garbage dump""}",,,,,,,,,,,,,`,`
 ,,,,,,,,`,`,,`,`,,,,,,,,,,,,,,,,`,`,`,`,`,`,`,`,`
 ,,,,preparedfood,"{givename name=""prepared food""}",`,`,`,`,,booze,"{givename name=""booze""}",`,`,`,`,,,,,,,,,,,,`,`,`,`,`,`,`,`,`
 ,,,,`,`,`,`,`,`,,`,`,`,`,`,`

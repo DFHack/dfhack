@@ -224,8 +224,8 @@ function order_remove.intercept_key(key)
     return key == keys.MANAGER_REMOVE and
         not screen.in_max_workshops
 end
-order_delete.title = "Remove manager order"
-order_delete.message = "Are you sure you want to remove this order?"
+order_remove.title = "Remove manager order"
+order_remove.message = "Are you sure you want to remove this order?"
 
 -- End of confirmation definitions
 

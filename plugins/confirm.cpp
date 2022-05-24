@@ -482,7 +482,7 @@ DEFINE_CONFIRMATION(note_delete,        viewscreen_dwarfmodest);
 DEFINE_CONFIRMATION(route_delete,       viewscreen_dwarfmodest);
 DEFINE_CONFIRMATION(location_retire,    viewscreen_locationsst);
 DEFINE_CONFIRMATION(convict,            viewscreen_justicest);
-DEFINE_CONFIRMATION(order_delete,       viewscreen_jobmanagementst);
+DEFINE_CONFIRMATION(order_remove,       viewscreen_jobmanagementst);
 
 DFhackCExport command_result plugin_init (color_ostream &out, vector <PluginCommand> &commands)
 {

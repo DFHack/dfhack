@@ -38,16 +38,21 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Tweaks
 
 ## Fixes
+- ``widgets.CycleHotkeyLabel``: allow initial option values to be specified as an index instead of an option value
 
 ## Misc Improvements
+- `confirm`: added a confirmation dialog for removing manager orders
 - `dfhack-examples-guide`: refine food preparation orders and fix conditions for making jugs and pots in the ``basic`` manager orders
 
 ## Documentation
 
 ## API
-- add functions reverse-engineered from announcement code: ``Gui::parseReportString``, ``Gui::autoDFAnnouncement``, ``Gui::pauseRecenter``, ``Gui::recenterViewscreen``
+- add functions reverse-engineered from announcement code: ``Gui::autoDFAnnouncement``, ``Gui::pauseRecenter``, ``Gui::recenterViewscreen``
 
 ## Lua
+- ``widgets.HotkeyLabel``: the ``key_sep`` string is now configurable
+- ``widgets.EditField``: the ``key_sep`` string is now configurable
+- ``widgets.EditField``: can now display an optional string label in addition to the activation key
 
 # 0.47.05-r5
 

@@ -115,7 +115,6 @@ namespace DFHack
         // Low-level API that gives full control over announcements and reports
         DFHACK_EXPORT void writeToGamelog(std::string message);
 
-        DFHACK_EXPORT bool parseReportString(std::vector<std::string> &out, const std::string &str, size_t line_length = 73);
         DFHACK_EXPORT int makeAnnouncement(df::announcement_type type, df::announcement_flags mode, df::coord pos, std::string message, int color = 7, bool bright = true);
         DFHACK_EXPORT bool addCombatReport(df::unit *unit, df::unit_report_type slot, int report_index);
         DFHACK_EXPORT bool addCombatReportAuto(df::unit *unit, df::announcement_flags mode, int report_index);
@@ -131,7 +130,7 @@ namespace DFHack
         // Process an announcement exactly like DF would, which might result in no announcement
         DFHACK_EXPORT bool autoDFAnnouncement(df::report_init r, std::string message);
         DFHACK_EXPORT bool autoDFAnnouncement(df::announcement_type type, df::coord pos, std::string message, int color = 7, bool bright = true,
-                                             df::unit *unit1 = NULL, df::unit *unit2 = NULL, bool is_sparring = false);
+                                              df::unit *unit1 = NULL, df::unit *unit2 = NULL, bool is_sparring = false);
         
         /*
          * Cursor and window coords

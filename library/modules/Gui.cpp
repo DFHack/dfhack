@@ -1368,82 +1368,150 @@ DFHACK_EXPORT void Gui::writeToGamelog(std::string message)
     fseed.close();
 }
 
-bool Gui::parseReportString(std::vector<std::string> &out, const std::string &str, size_t line_length)
-{   // out vector will contain strings cut to line_length, avoiding cutting up words
-    // Reverse-engineered from DF announcement code, fixes applied
-
-    if (str.empty() || line_length == 0)
-        return false;
-    out.clear();
-
-    bool ignore_space = false;
-    string current_line = "";
-    size_t iter = 0;
-    do
+namespace
+{   // Utility functions for reports
+    /*bool parseReportString(std::vector<std::string> *out, const std::string &str, size_t line_length = 73)
     {
-        if (ignore_space)
-        {
-            if (str[iter] == ' ')
-                continue;
-            ignore_space = false;
-        }
+        if (str.empty() || line_length == 0)
+            return false;
 
-        if (str[iter] == '&') // escape character
-        {
-            iter++; // ignore the '&' itself
-            if (iter >= str.length())
-                break;
+        string parsed = "";
+        size_t i = 0;
 
-            if (str[iter] == 'r') // "&r" starts new line
+        while (i < str.length())
+        {
+            if (str[i] == '&') // escape character
             {
-                if (!current_line.empty())
-                {
-                    out.push_back(string(current_line));
-                    current_line = "";
-                }
-                out.push_back(" ");
-                continue; // don't add 'r' to current_line
-            }
-            else if (str[iter] != '&')
-            {   // not "&&", don't add character to current_line
-                continue;
-            }
-        }
+                i++; // ignore the '&' itself
+                if (i >= str.length())
+                    break;
 
-        current_line += str[iter];
-        if (current_line.length() > line_length)
-        {
-            size_t i = current_line.length(); // start of current word
-            size_t j; // end of previous word
-            while (--i > 0 && current_line[i] != ' '); // find start of current word
-
-            if (i == 0)
-            {   // need to push at least one char
-                j = i = line_length; // last char ends up on next line
+                if (str[i] == 'r') // "&r" adds a blank line
+                    parsed += "\n \n"; // DF adds a line with a space for some reason
+                else if (str[i] == '&') // "&&" is '&'
+                    parsed += "&";
+                // else next char is ignored
             }
             else
             {
-                j = i;
-                while (j > 1 && current_line[j - 1] == ' ')
-                    j--; // consume excess spaces at the split point
+                parsed += str[i];
             }
-            out.push_back(current_line.substr(0, j)); // push string before j
-
-            if (current_line[i] == ' ')
-                i++; // don't keep this space
-            current_line.erase(0, i); // current_line now starts at last word or is empty
-            ignore_space = current_line.empty(); // ignore leading spaces on new line
+            i++;
         }
-    } while (++iter < str.length());
 
-    if (!current_line.empty())
-        out.push_back(current_line);
+        return word_wrap(out, parsed, line_length, true);
+    }*/
+    /*bool parseReportString(std::vector<std::string> *out, const std::string &str, size_t line_length = 73)
+    {
+        if (str.empty() || line_length == 0)
+            return false;
 
-    return true;
-}
+        string parsed = "";
+        size_t i = 0;
 
-namespace
-{   // Utility functions for reports
+        while (i < str.length())
+        {
+            if (str[i] == '&') // escape character
+            {
+                i++; // ignore the '&' itself
+                if (i >= str.length())
+                    break;
+
+                if (str[i] == 'r') // "&r" adds a blank line
+                {
+                    word_wrap(out, parsed, line_length, true);
+                    out->push_back(" "); // DF adds a line with a space for some reason
+                    parsed = "";
+                }
+                else if (str[i] == '&') // "&&" is '&'
+                    parsed += "&";
+                // else next char is ignored
+            }
+            else
+            {
+                parsed += str[i];
+            }
+            i++;
+        }
+
+        if (parsed != "")
+            word_wrap(out, parsed, line_length, true);
+
+        return true;
+    }*/
+    bool parseReportString(std::vector<std::string> *out, const std::string &str, size_t line_length)
+    {   // out vector will contain strings cut to line_length, avoiding cutting up words
+        // Reverse-engineered from DF announcement code, fixes applied
+
+        if (str.empty() || line_length == 0)
+            return false;
+
+        bool ignore_space = false;
+        string current_line = "";
+        size_t iter = 0;
+        do
+        {
+            if (ignore_space)
+            {
+                if (str[iter] == ' ')
+                    continue;
+                ignore_space = false;
+            }
+
+            if (str[iter] == '&') // escape character
+            {
+                iter++; // ignore the '&' itself
+                if (iter >= str.length())
+                    break;
+
+                if (str[iter] == 'r') // "&r" adds a blank line
+                {
+                    if (!current_line.empty())
+                    {
+                        out->push_back(string(current_line));
+                        current_line = "";
+                    }
+                    out->push_back(" "); // DF adds a line with a space for some reason
+                    continue; // don't add 'r' to current_line
+                }
+                else if (str[iter] != '&')
+                {   // not "&&", don't add character to current_line
+                    continue;
+                }
+            }
+
+            current_line += str[iter];
+            if (current_line.length() > line_length)
+            {
+                size_t i = current_line.length(); // start of current word
+                size_t j; // end of previous word
+                while (--i > 0 && current_line[i] != ' '); // find start of current word
+
+                if (i == 0)
+                {   // need to push at least one char
+                    j = i = line_length; // last char ends up on next line
+                }
+                else
+                {
+                    j = i;
+                    while (j > 1 && current_line[j - 1] == ' ')
+                        j--; // consume excess spaces at the split point
+                }
+                out->push_back(current_line.substr(0, j)); // push string before j
+
+                if (current_line[i] == ' ')
+                    i++; // don't keep this space
+                current_line.erase(0, i); // current_line now starts at last word or is empty
+                ignore_space = current_line.empty(); // ignore leading spaces on new line
+            }
+        } while (++iter < str.length());
+
+        if (!current_line.empty())
+            out->push_back(current_line);
+
+        return true;
+    }
+
     bool recent_report(df::unit *unit, df::unit_report_type slot)
     {
         if (unit && !unit->reports.log[slot].empty() &&
@@ -1755,7 +1823,7 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
         }
     }
     else
-    {   // Dwarf mode (or arena?)
+    {   // Dwarf mode
         if ((r.unit1 != NULL || r.unit2 != NULL) && (r.unit1 == NULL || Units::isHidden(r.unit1)) && (r.unit2 == NULL || Units::isHidden(r.unit2)))
         {
             DEBUG(gui).print("Dwarf mode announcement not heard:\n%s\n", message.c_str());
@@ -1796,16 +1864,16 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
 
     vector<string> results;
     size_t line_length = (r.speaker_id == -1) ? (init->display.grid_x - 7) : (init->display.grid_x - 10);
-    parseReportString(results, message, line_length);
+    parseReportString(&results, message, line_length);
 
-    if (results.empty())
+    if (results.empty()) // DF doesn't do this check
     {
         DEBUG(gui).print("Skipped announcement because it was empty after parsing:\n%s\n", message.c_str());
         return false;
     }
 
     // Check for repeat report
-    int32_t repeat_count = check_repeat_report(results);
+    int32_t repeat_count = check_repeat_report(results); // Does nothing outside dwarf mode
     if (repeat_count > 0)
     {
         if (a_flags.bits.D_DISPLAY)
@@ -1818,7 +1886,7 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
     }
 
     bool success = false; // only print to gamelog if report was used
-    size_t new_report_index = world->status.reports.size();
+    size_t new_report_index = world->status.reports.size(); // we need this for addCombatReport
     for (size_t i = 0; i < results.size(); i++)
     {   // Generate report entries for each line
         auto new_report = new df::report();
@@ -1854,7 +1922,7 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
         }
     }
 
-    if (*gamemode == game_mode::DWARF)
+    if (*gamemode == game_mode::DWARF) // DF does this inside the previous loop, but we're using addCombatReport instead
     {
         if (a_flags.bits.UNIT_COMBAT_REPORT)
         {
@@ -1902,7 +1970,7 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
     {
         DEBUG(gui).print("Announcement succeeded but skipped printing to gamelog.txt because debug_gamelog is false:\n%s\n", message.c_str());
     }*/
-    else
+    else // not sure if this can actually happen; our results.empty() check handles the one edge case I can think of that would get this far
     {
         DEBUG(gui).print("Announcement succeeded internally but didn't qualify to be displayed anywhere:\n%s\n", message.c_str());
     }
@@ -1911,7 +1979,7 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
 }
 
 bool Gui::autoDFAnnouncement(df::announcement_type type, df::coord pos, std::string message, int color,
-                            bool bright, df::unit *unit1, df::unit *unit2, bool is_sparring)
+                             bool bright, df::unit *unit1, df::unit *unit2, bool is_sparring)
 {
     auto r = df::report_init();
     r.type = type;
@@ -1921,9 +1989,6 @@ bool Gui::autoDFAnnouncement(df::announcement_type type, df::coord pos, std::str
     r.unit1 = unit1;
     r.unit2 = unit2;
     r.flags.bits.hostile_combat = !is_sparring;
-
-    if (Maps::isValidTilePos(pos))
-        r.zoom_type = report_zoom_type::Unit;
 
     return autoDFAnnouncement(r, message);
 }

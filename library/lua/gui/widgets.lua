@@ -178,13 +178,26 @@ end
 EditField = defclass(EditField, Widget)
 
 EditField.ATTRS{
+    label_text = DEFAULT_NIL,
     text = '',
     text_pen = DEFAULT_NIL,
     on_char = DEFAULT_NIL,
     on_change = DEFAULT_NIL,
     on_submit = DEFAULT_NIL,
     key = DEFAULT_NIL,
+    key_sep = DEFAULT_NIL,
 }
+
+function EditField:init()
+    self:addviews{HotkeyLabel{frame={t=0,l=0},
+                              key=self.key,
+                              key_sep=self.key_sep,
+                              label=self.label_text}}
+end
+
+function EditField:postUpdateLayout()
+    self.text_offset = self.subviews[1]:getTextWidth()
+end
 
 function EditField:onRenderBody(dc)
     dc:pen(self.text_pen or COLOR_LIGHTCYAN):fill(0,0,dc.width-1,0)
@@ -194,16 +207,11 @@ function EditField:onRenderBody(dc)
         cursor = ' '
     end
     local txt = self.text .. cursor
-    local dx = dc.x
-    if self.key then
-        dc:key_string(self.key, '')
-    end
-    dx = dc.x - dx
-    local max_width = dc.width - dx
+    local max_width = dc.width - self.text_offset
     if #txt > max_width then
         txt = string.char(27)..string.sub(txt, #txt-max_width+2)
     end
-    dc:string(txt)
+    dc:advance(self.text_offset):string(txt)
 end
 
 function EditField:onInput(keys)
@@ -359,12 +367,13 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
 
                     x = x + #keystr
 
-                    if sep == '()' then
+                    if sep:startswith('()') then
                         if dc then
                             dc:string(text)
-                            dc:string(' ('):string(keystr,keypen):string(')')
+                            dc:string(' ('):string(keystr,keypen)
+                            dc:string(sep:sub(2))
                         end
-                        x = x + 3
+                        x = x + 1 + #sep
                     else
                         if dc then
                             dc:string(keystr,keypen):string(sep):string(text)
@@ -605,13 +614,14 @@ HotkeyLabel = defclass(HotkeyLabel, Label)
 
 HotkeyLabel.ATTRS{
     key=DEFAULT_NIL,
+    key_sep=': ',
     label=DEFAULT_NIL,
     on_activate=DEFAULT_NIL,
 }
 
 function HotkeyLabel:init()
-    self:setText{{key=self.key, key_sep=': ', text=self.label,
-                   on_activate=self.on_activate}}
+    self:setText{{key=self.key, key_sep=self.key_sep, text=self.label,
+                  on_activate=self.on_activate}}
 end
 
 ----------------------
@@ -635,6 +645,11 @@ function CycleHotkeyLabel:init()
         if self.initial_option == self:getOptionValue(i) then
             self.option_idx = i
             break
+        end
+    end
+    if not self.option_idx then
+        if self.options[self.initial_option] then
+            self.option_idx = self.initial_option
         end
     end
     if not self.option_idx then

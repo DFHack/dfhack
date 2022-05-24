@@ -167,10 +167,10 @@ static void manageConstructionRemovedEvent(color_ostream& out);
 static void sendSyndromeEvents(color_ostream& out);
 static void manageInvasionEvent(color_ostream& out);
 static void sendInventoryChangeEvents(color_ostream& out);
-static void manageReportEvent(color_ostream& out);
+static void sendReportEvents(color_ostream& out);
 static void sendUnitAttackEvents(color_ostream& out);
 static void manageUnloadEvent(color_ostream& out){};
-static void manageInteractionEvent(color_ostream& out);
+static void sendInteractionEvents(color_ostream& out);
 
 typedef void (*eventManager_t)(color_ostream&);
 
@@ -210,13 +210,13 @@ eventManager_t getManager(EventType::EventType t) {
         case EventType::INVENTORY_CHANGE:
             return sendInventoryChangeEvents;
         case EventType::REPORT:
-            return manageReportEvent;
+            return sendReportEvents;
         case EventType::UNIT_ATTACK:
             return sendUnitAttackEvents;
         case EventType::UNLOAD:
             return manageUnloadEvent;
         case EventType::INTERACTION:
-            return manageInteractionEvent;
+            return sendInteractionEvents;
         case EventType::EVENT_MAX:
             return nullptr;
             //default:
@@ -414,19 +414,49 @@ void scan_jobs(color_ostream &out, const int32_t&);
 void scan_buildings(color_ostream &out, const int32_t&);
 void scan_reports(color_ostream &out, const int32_t&);
 // unit scans
-void scan_inventory(color_ostream &out, const int32_t &tick, df::unit* unit);
+void scan_unit_inventory(color_ostream &out, const int32_t &tick, df::unit* unit);
 void scan_unit_reports(color_ostream &out, const int32_t &tick, df::unit* unit);
 // report scans
-void scan_strike_reports(color_ostream &out, const int32_t &tick, std::unordered_set<int32_t> &strikeReports);
+void parse_strike_report(color_ostream &out, const int32_t &tick, df::report* report);
+
+static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, df::unit* lastAttacker, df::report* defendEvent, vector<df::unit*>& relevantUnits);
+
+static std::vector<df::unit*> gatherRelevantUnits2(color_ostream& out, df::report* r1, df::report* r2) {
+    if ( r1 == r2 ) r2 = nullptr;
+    vector<df::unit*> result;
+    unordered_set<int32_t> ids;
+
+    auto pushbackReportUnits = [&](const df::report* report) {
+        const vector<int32_t> &report_units = reportToRelevantUnits[report->id];
+        if (report_units.size() > 2 && Once::doOnce("EventManager interaction too many relevant units")) {
+            out.print("%s,%d: too many relevant units. On report\n \'%s\'\n", __FILE__, __LINE__, report->text.c_str());
+        }
+        for (int id: report_units) {
+            if (ids.emplace(id).second) {
+                result.push_back(df::unit::find(id));
+            }
+        }
+    };
+    //std::array<df::unit*,2> R = {pushbackReportUnits(r1), pushbackReportUnits(r2)};
+    return result;
+}
 
 /** Move Map
  * scan_units: sendUnitNewActiveEvents
  * scan_units: sendUnitDeathEvents
  * scan_units: sendSyndromeEvents
  * scan_units: sendInventoryChangeEvents
+ * scan_unit_inventory: sendInventoryChangeEvents
+ *
  * scan_jobs: sendJobInitiatedEvents
  * scan_jobs: sendJobStartedEvents
  * scan_jobs: sendJobCompletedEvents
+ *
+ * scan_unit_reports: updateReportToRelevantUnits
+ * scan_reports: sendReportEvents
+ * scan_reports: sendInteractionEvents (todo: comment and simplify/ todos)
+ * scan_reports: sendUnitAttackEvents
+ * parse_strike_report: sendUnitAttackEvents
  *
  * */
 
@@ -436,7 +466,7 @@ inline void scan(color_ostream& out, const int32_t &tick) {
     scan_units(out, tick);
     scan_jobs(out, tick);
     scan_buildings(out, tick);
-    scan_reports(out, tick);
+    scan_reports(out, tick); // depends on scanning units first
 }
 
 void scan_units(color_ostream &out, const int32_t &tick) {
@@ -459,7 +489,7 @@ void scan_units(color_ostream &out, const int32_t &tick) {
                 deadUnits.erase(id);
             }
             // also scan its inventory
-            scan_inventory(out, tick, unit);
+            scan_unit_inventory(out, tick, unit);
         } else {
             // it didn't so it's a new unit
             activeUnits.emplace(tick, id); // won't add if activeUnits has the id already, so we'll miss any such edge case
@@ -558,209 +588,80 @@ void scan_buildings(color_ostream &out, const int32_t &tick) {
 }
 
 void scan_reports(color_ostream &out, const int32_t &tick) {
+    //df::unit* lastDefender = NULL;
+    // todo: see to it that these 2 can't be gotten rid of, or do so
     df::report* lastAttackEvent = nullptr;
     df::unit* lastAttacker = nullptr;
-    //df::unit* lastDefender = NULL;
     std::unordered_set<int32_t> valid_reports;
     std::unordered_set<int32_t> strikeReports;
     unordered_map<int32_t,unordered_set<int32_t> > history;
     auto &reports = df::global::world->status.reports;
-    auto gatherRelevantUnits = [](color_ostream& out, df::report* r1, df::report* r2) {
-        vector<df::report*> reports;
-        if ( r1 == r2 ) r2 = nullptr;
-        if ( r1 ) reports.push_back(r1);
-        if ( r2 ) reports.push_back(r2);
-        vector<df::unit*> result;
-        unordered_set<int32_t> ids;
-//out.print("%s,%d\n",__FILE__,__LINE__);
-        for (auto report : reports) {
-//out.print("%s,%d\n",__FILE__,__LINE__);
-            vector<int32_t>& units = reportToRelevantUnits[report->id];
-            if ( units.size() > 2 ) {
-                if ( Once::doOnce("EventManager interaction too many relevant units") ) {
-                    out.print("%s,%d: too many relevant units. On report\n \'%s\'\n", __FILE__, __LINE__, report->text.c_str());
-                }
-            }
-            for (int & unit_id : units)
-                if (ids.find(unit_id) == ids.end() ) {
-                    ids.insert(unit_id);
-                    result.push_back(df::unit::find(unit_id));
-                }
-        }
-//out.print("%s,%d\n",__FILE__,__LINE__);
-        return result;
-    };
-    auto getAttacker = [gatherRelevantUnits, reports](color_ostream& out, df::report* attackEvent, df::unit* lastAttacker, df::report* defendEvent, vector<df::unit*>& relevantUnits) {
-        auto getVerb = [](df::unit* unit, const std::string &reportStr) {
-            std::string result(reportStr);
-            std::string name = unit->name.first_name + " ";
-            bool match = strncmp(result.c_str(), name.c_str(), name.length()) == 0;
-            if ( match ) {
-                result = result.substr(name.length());
-                result = result.substr(0,result.length()-1);
-                return result;
-            }
-            //use profession name
-            name = "The " + Units::getProfessionName(unit) + " ";
-            match = strncmp(result.c_str(), name.c_str(), name.length()) == 0;
-            if ( match ) {
-                result = result.substr(name.length());
-                result = result.substr(0,result.length()-1);
-                return result;
-            }
-
-            if ( unit->id != 0 ) {
-                return std::string();
-            }
-
-            std::string you = "You ";
-            match = strncmp(result.c_str(), name.c_str(), name.length()) == 0;
-            if ( match ) {
-                result = result.substr(name.length());
-                result = result.substr(0,result.length()-1);
-                return result;
-            }
-            return std::string();
-        };
-        vector<df::unit*> attackers = relevantUnits;
-        vector<df::unit*> defenders = relevantUnits;
-
-        //find valid interactions: TODO
-        /*map<int32_t,vector<df::interaction*> > validInteractions;
-        for ( size_t a = 0; a < relevantUnits.size(); a++ ) {
-            df::unit* unit = relevantUnits[a];
-            vector<df::interaction*>& interactions = validInteractions[unit->id];
-            for ( size_t b = 0; b < unit->body.
-        }*/
-
-        //if attackEvent
-        //  attacker must be same location
-        //  attacker name must start attack str
-        //  attack verb must match valid interaction of this attacker
-        std::string attackVerb;
-        if ( attackEvent ) {
-//out.print("%s,%d\n",__FILE__,__LINE__);
-            for ( size_t a = 0; a < attackers.size(); a++ ) {
-                if ( attackers[a]->pos != attackEvent->pos ) {
-                    attackers.erase(attackers.begin()+a);
-                    a--;
-                    continue;
-                }
-                if ( lastAttacker && attackers[a] != lastAttacker ) {
-                    attackers.erase(attackers.begin()+a);
-                    a--;
-                    continue;
-                }
-
-                std::string verbC = getVerb(attackers[a], attackEvent->text);
-                if ( verbC.length() == 0 ) {
-                    attackers.erase(attackers.begin()+a);
-                    a--;
-                    continue;
-                }
-                attackVerb = verbC;
-            }
-        }
-
-        //if defendEvent
-        //  defender must be same location
-        //  defender name must start defend str
-        //  defend verb must match valid interaction of some attacker
-        std::string defendVerb;
-        if ( defendEvent ) {
-//out.print("%s,%d\n",__FILE__,__LINE__);
-            for ( size_t a = 0; a < defenders.size(); a++ ) {
-                if ( defenders[a]->pos != defendEvent->pos ) {
-                    defenders.erase(defenders.begin()+a);
-                    a--;
-                    continue;
-                }
-                std::string verbC = getVerb(defenders[a], defendEvent->text);
-                if ( verbC.length() == 0 ) {
-                    defenders.erase(defenders.begin()+a);
-                    a--;
-                    continue;
-                }
-                defendVerb = verbC;
-            }
-        }
-
-        //keep in mind one attacker zero defenders is perfectly valid for self-cast
-        if ( attackers.size() == 1 && defenders.size() == 1 && attackers[0] == defenders[0] ) {
-//out.print("%s,%d\n",__FILE__,__LINE__);
-        } else {
-            if ( defenders.size() == 1 ) {
-//out.print("%s,%d\n",__FILE__,__LINE__);
-                auto a = std::find(attackers.begin(),attackers.end(),defenders[0]);
-                if ( a != attackers.end() )
-                    attackers.erase(a);
-            }
-            if ( attackers.size() == 1 ) {
-//out.print("%s,%d\n",__FILE__,__LINE__);
-                auto a = std::find(defenders.begin(),defenders.end(),attackers[0]);
-                if ( a != defenders.end() )
-                    defenders.erase(a);
-            }
-        }
-
-        //if trying attack-defend pair and it fails to find attacker, try defend only
-        InteractionData result = /*(InteractionData)*/ { std::string(), std::string(), -1, -1, -1, -1 };
-        if ( attackers.size() > 1 ) {
-//out.print("%s,%d\n",__FILE__,__LINE__);
-            if ( Once::doOnce("EventManager interaction ambiguous attacker") ) {
-                out.print("%s,%d: ambiguous attacker on report\n \'%s\'\n '%s'\n", __FILE__, __LINE__, attackEvent ? attackEvent->text.c_str() : "", defendEvent ? defendEvent->text.c_str() : "");
-            }
-        } else if ( attackers.empty() ) {
-//out.print("%s,%d\n",__FILE__,__LINE__);
-            if ( attackEvent && defendEvent )
-                return getAttacker(out, nullptr, nullptr, defendEvent, relevantUnits);
-        } else {
-//out.print("%s,%d\n",__FILE__,__LINE__);
-            //attackers.size() == 1
-            result.attacker = attackers[0]->id;
-            if ( !defenders.empty() )
-                result.defender = defenders[0]->id;
-            if ( defenders.size() > 1 ) {
-                if ( Once::doOnce("EventManager interaction ambiguous defender") ) {
-                    out.print("%s,%d: ambiguous defender: shouldn't happen. On report\n \'%s\'\n '%s'\n", __FILE__, __LINE__, attackEvent ? attackEvent->text.c_str() : "", defendEvent ? defendEvent->text.c_str() : "");
-                }
-            }
-            result.attackVerb = attackVerb;
-            result.defendVerb = defendVerb;
-            if ( attackEvent )
-                result.attackReport = attackEvent->id;
-            if ( defendEvent )
-                result.defendReport = defendEvent->id;
-        }
-//out.print("%s,%d\n",__FILE__,__LINE__);
-        return result;
-    };
+    int32_t idx = 0;
 
     // loop the global reports
     for(auto &report : df::global::world->status.reports) {
         auto id = report->id;
         valid_reports.emplace(id);
+        // emplace the report id for sendReportEvents
         newReports.emplace(tick, id);
         // check if the report is a continuation
-        if (!report->flags.bits.continuation) {
-            // we only want combat strike details
-            if (report->type == df::announcement_type::COMBAT_STRIKE_DETAILS) {
-                std::string reportStr = report->text;
-                // prepare our report text
-                for (int32_t id2 = report->id + 1; ; id2++ ) {
-                    df::report* report2 = df::report::find(id2);
-                    if ( !report2 )
-                        break;
-                    if ( report2->type != df::announcement_type::COMBAT_STRIKE_DETAILS )
-                        break;
-                    if ( !report2->flags.bits.continuation )
-                        break;
-                    reportStr += report2->text;
+        if (report->flags.bits.continuation)
+            continue;
+        bool instigator = false;
+        // parse event type
+        switch (report->type) {
+            case df::announcement_type::COMBAT_STRIKE_DETAILS:
+                parse_strike_report(out, tick, report);
+                break;
+            case df::announcement_type::INTERACTION_ACTOR:
+                instigator = true;
+            case df::announcement_type::INTERACTION_TARGET: {
+                // todo: read functions, write comments
+                vector<df::unit*> relevantUnits = gatherRelevantUnits2(out, lastAttackEvent, report);
+                InteractionData data = getAttacker(out, lastAttackEvent, lastAttacker, instigator ? nullptr
+                                                                                                  : report, relevantUnits);
+                if ( instigator ) {
+                    // re-set the last attack event
+                    lastAttackEvent = report;
+                    lastAttacker = nullptr;
                 }
-                // add it to the set
-                strikeReports.emplace(id);
+                // skip if there is no attacker
+                if (data.attacker < 0) {
+                    continue;
+                }
+                // if we're the instigator, then the next report is also important
+                if ( instigator ) {
+                    if (idx + 1 < reports.size() &&
+                        reports[idx + 1]->type == df::announcement_type::INTERACTION_TARGET) {
+
+                        // todo: read functions, write comments
+                        vector<df::unit*> relevant_units = gatherRelevantUnits2(out, lastAttackEvent, reports[idx + 1]);
+                        InteractionData data2 = getAttacker(out, lastAttackEvent, lastAttacker, reports[idx +
+                                                                                                        1], relevant_units);
+                        if (data.attacker == data2.attacker &&
+                            (data.defender == -1 || data.defender == data2.defender)) {
+                            data = data2;
+                            // todo, don't run these cases of the switch for (report+1)->type
+                            //idx++; // todo: this condition meant we could increase the major loop's index https://github.com/DFHack/dfhack/blob/0.47.05-r5/library/modules/EventManager.cpp#L1250
+                        }
+                    }
+                }
+                // the report isn't for the instigator
+                // todo: what is the purpose of `history` is it used somewhere?
+                unordered_set<int32_t>& b = history[data.attacker];
+                if ( b.find(data.defender) != b.end() )
+                    continue;
+                history[data.attacker].insert(data.defender);
+                // todo: explain the journey to this moment
+                lastAttacker = df::unit::find(data.attacker);
+
+                interactionEvents.emplace(tick, data);
+                break;
             }
+            default:
+                continue;
         }
+        ++idx;
     }
     // delete bad id references
     for(auto iter = reportToRelevantUnits.begin(); iter != reportToRelevantUnits.end();) {
@@ -773,16 +674,14 @@ void scan_reports(color_ostream &out, const int32_t &tick) {
     // delete bad id references
     for(auto iter = newReports.begin(); iter != newReports.end();){
         if(!valid_reports.count(iter->first)){
-            iter = newReports.erase(iter->first);
+            iter = newReports.erase(iter);
         } else {
             ++iter;
         }
     }
-    // process the strike reports
-    scan_strike_reports(out, tick, strikeReports);
 }
 
-void scan_inventory(color_ostream &out, const int32_t &tick, df::unit* unit) {
+void scan_unit_inventory(color_ostream &out, const int32_t &tick, df::unit* unit) {
     auto unitId = unit->id;
     static std::shared_ptr<InventoryItem> null_item(nullptr);
     static unordered_map<int32_t, unordered_map<int32_t, std::shared_ptr<InventoryItem>> > previous_inventories;
@@ -829,95 +728,106 @@ void scan_unit_reports(color_ostream &out, const int32_t &tick, df::unit* unit) 
     int idx = 0;
     // loop unit's reports
     for (auto &log : unit->reports.log) {
+        // we don't want unit->reports.log[unit_report_type::Sparring]
         if (idx++ == unit_report_type::Sparring)
             continue;
-        // iterate reports of report types (not sparring though)
+        // iterate reports (not sparring report types though)
         for (auto &report_id: log) {
             auto &units_with_report = reportToRelevantUnits[report_id]; // units with this report
             // todo: optimize search
             if (std::find(units_with_report.begin(), units_with_report.end(), unit->id) == units_with_report.end()) {
+                // build reportToRelevantUnits
                 units_with_report.push_back(unit->id);
             }
         }
     }
 }
 
-void scan_strike_reports(color_ostream &out, const int32_t &tick, std::unordered_set<int32_t> &strikeReports) {
-    // todo: move to inside the strikeReports building loop
+void parse_strike_report(color_ostream &out, const int32_t &tick, df::report* report) {
     std::unordered_map<int32_t, std::unordered_map<int32_t, bool> > alreadyDone;
     // process the strike reports
-    for (int reportId : strikeReports) {
-        df::report* report = df::report::find(reportId);
-        if ( !report )
-            continue; //TODO: error
-        std::string reportStr = report->text;
-        // <moved code>
+    if (!report) {
+        return; //TODO: error
+    }
+    // prepare our report text
+    std::string reportStr = report->text;
+    for (int32_t id2 = report->id + 1;; id2++) {
+        df::report* report2 = df::report::find(id2);
+        if (!report2)
+            break;
+        if (report2->type != df::announcement_type::COMBAT_STRIKE_DETAILS)
+            break;
+        if (!report2->flags.bits.continuation)
+            break;
+        reportStr += report2->text;
+    }
 
-        std::vector<int32_t>& relevantUnits = reportToRelevantUnits[report->id];
-        if ( relevantUnits.size() != 2 ) {
-            continue;
-        }
-
-        df::unit* unit1 = df::unit::find(relevantUnits[0]);
-        df::unit* unit2 = df::unit::find(relevantUnits[1]);
-        auto getWound = [](df::unit* attacker, df::unit* defender) {
-            for (auto wound : defender->body.wounds) {
-                if ( wound->age <= 1 && wound->attacker_unit_id == attacker->id ) {
-                    return wound;
-                }
+    // get relevant units
+    std::vector<int32_t> &relevantUnits = reportToRelevantUnits[report->id];
+    if (relevantUnits.size() != 2) {
+        return;
+    }
+    df::unit* unit1 = df::unit::find(relevantUnits[0]);
+    df::unit* unit2 = df::unit::find(relevantUnits[1]); //todo: we don't check for an error state? (todo: look at logging utils)
+    auto getWound = [](df::unit* defender, df::unit* attacker) {
+        for (auto wound: defender->body.wounds) {
+            // todo/ we might be missing N wounds, we just return the first one we see (albeit N is probably 1 at most)
+            if (wound->age <= 1 && wound->attacker_unit_id == attacker->id) {
+                return wound;
             }
-            return (df::unit_wound*)nullptr;
-        };
-
-        df::unit_wound* wound1 = getWound(unit1,unit2);
-        df::unit_wound* wound2 = getWound(unit2,unit1);
-
-        UnitAttackData data{};
-        data.report_id = report->id;
-        if ( wound1 && !alreadyDone[unit1->id][unit2->id] ) {
-            data.attacker = unit1->id;
-            data.defender = unit2->id;
-            data.wound = wound1->id;
-
-            alreadyDone[data.attacker][data.defender] = true;
-            attackEvents.emplace(tick, data);
         }
+        return (df::unit_wound*) nullptr;
+    };
 
-        if ( wound2 && !alreadyDone[unit1->id][unit2->id] ) {
-            data.attacker = unit2->id;
-            data.defender = unit1->id;
-            data.wound = wound2->id;
+    // get the first wound of the first caused by the second
+    df::unit_wound* unit1_wound = getWound(unit1, unit2);
+    df::unit_wound* unit2_wound = getWound(unit2, unit1);
 
-            alreadyDone[data.attacker][data.defender] = true;
-            attackEvents.emplace(tick, data);
-        }
 
-        if ( Units::isKilled(unit1) ) {
-            data.attacker = unit2->id;
-            data.defender = unit1->id;
-            data.wound = -1;
-
-            alreadyDone[data.attacker][data.defender] = true;
-            attackEvents.emplace(tick, data);
-        }
-
-        if ( Units::isKilled(unit2) ) {
-            data.attacker = unit1->id;
-            data.defender = unit2->id;
-            data.wound = -1;
-
-            alreadyDone[data.attacker][data.defender] = true;
-            attackEvents.emplace(tick, data);
-        }
-
-        if ( !wound1 && !wound2 ) {
-            //if ( unit1->flags1.bits.inactive || unit2->flags1.bits.inactive )
-            //    continue;
-            if ( reportStr.find("severed part") )
-                continue;
-            if ( Once::doOnce("EventManager neither wound") ) {
-                out.print("%s, %d: neither wound: %s\n", __FILE__, __LINE__, reportStr.c_str());
-            }
+    // our data, we use it multiple times (pod copy)
+    UnitAttackData data{};
+    data.report_id = report->id;
+    // honestly, I don't know why we are checking these things and constructing these data arrangements (todo: lookup git blame 0.47.05-r5#L980-L1007)
+    if (unit1_wound && !alreadyDone[unit1->id][unit2->id]) {
+        // emplace a copy of this data, in attackEvents
+        data.attacker = unit1->id;
+        data.defender = unit2->id;
+        data.wound = unit1_wound->id;
+        alreadyDone[data.attacker][data.defender] = true;
+        attackEvents.emplace(tick, data);
+        // we were sending events(0.47.05-r5), now we're just storing; see: https://github.com/DFHack/dfhack/blob/585888c2d36593882f756c5f5de459ec6b42b9ab/library/modules/EventManager.cpp#L980-L1007
+    }
+    if (unit2_wound && !alreadyDone[unit1->id][unit2->id]) {
+        // emplace a copy of this data, in attackEvents
+        data.attacker = unit2->id;
+        data.defender = unit1->id;
+        data.wound = unit2_wound->id;
+        alreadyDone[data.attacker][data.defender] = true;
+        attackEvents.emplace(tick, data);
+    }
+    if (Units::isKilled(unit1)) {
+        // emplace a copy of this data, in attackEvents
+        data.attacker = unit2->id;
+        data.defender = unit1->id;
+        data.wound = -1;
+        alreadyDone[data.attacker][data.defender] = true;
+        attackEvents.emplace(tick, data);
+    }
+    if (Units::isKilled(unit2)) {
+        // emplace a copy of this data, in attackEvents
+        data.attacker = unit1->id;
+        data.defender = unit2->id;
+        data.wound = -1;
+        alreadyDone[data.attacker][data.defender] = true;
+        attackEvents.emplace(tick, data);
+    }
+    if (!unit1_wound && !unit2_wound) {
+        //if ( unit1->flags1.bits.inactive || unit2->flags1.bits.inactive )
+        //    continue;
+        if (reportStr.find("severed part"))
+            return;
+        if (Once::doOnce("EventManager neither wound")) {
+            out.print("%s, %d: neither wound: %s\n", __FILE__, __LINE__, reportStr.c_str());
         }
     }
 }
@@ -1668,17 +1578,10 @@ static void sendInventoryChangeEvents(color_ostream& out) {
 
 static void updateReportToRelevantUnits();
 
-static void manageReportEvent(color_ostream& out) {
+static void sendReportEvents(color_ostream& out) {
     if (!df::global::world)
         return;
-
     int32_t tick = df::global::world->frame_counter;
-    std::unordered_set<int32_t> valid_reports;
-    // update reports list
-    for(auto &r : df::global::world->status.reports){
-        valid_reports.emplace(r->id);
-        newReports.emplace(tick, r->id);
-    }
 
     // iterate event handler callbacks
     multimap<Plugin*,EventHandler> copy(handlers[EventType::REPORT].begin(), handlers[EventType::REPORT].end());
@@ -1872,6 +1775,7 @@ static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, 
     return result;
 }
 
+// moved above (sort of)
 static vector<df::unit*> gatherRelevantUnits(color_ostream& out, df::report* r1, df::report* r2) {
     vector<df::report*> reports;
     if ( r1 == r2 ) r2 = nullptr;
@@ -1882,7 +1786,7 @@ static vector<df::unit*> gatherRelevantUnits(color_ostream& out, df::report* r1,
 //out.print("%s,%d\n",__FILE__,__LINE__);
     for (auto report : reports) {
 //out.print("%s,%d\n",__FILE__,__LINE__);
-        vector<int32_t>& units = reportToRelevantUnits[report->id];
+        vector<int32_t>& units = reportToRelevantUnits[report->id]; // todo: should be const
         if ( units.size() > 2 ) {
             if ( Once::doOnce("EventManager interaction too many relevant units") ) {
                 out.print("%s,%d: too many relevant units. On report\n \'%s\'\n", __FILE__, __LINE__, report->text.c_str());
@@ -1898,98 +1802,13 @@ static vector<df::unit*> gatherRelevantUnits(color_ostream& out, df::report* r1,
     return result;
 }
 
-static void updateReportToRelevantUnits() {
+
+
+
+static void sendInteractionEvents(color_ostream& out) {
     if (!df::global::world)
         return;
-    if ( df::global::world->frame_counter <= reportToRelevantUnitsTime )
-        return;
-    reportToRelevantUnitsTime = df::global::world->frame_counter;
-
-    for (auto unit : df::global::world->units.all) {
-        for ( int16_t b = df::enum_traits<df::unit_report_type>::first_item_value; b <= df::enum_traits<df::unit_report_type>::last_item_value; b++ ) {
-            if ( b == df::unit_report_type::Sparring )
-                continue;
-            for ( size_t c = 0; c < unit->reports.log[b].size(); c++ ) {
-                int32_t report = unit->reports.log[b][c];
-                if ( std::find(reportToRelevantUnits[report].begin(), reportToRelevantUnits[report].end(), unit->id) != reportToRelevantUnits[report].end() )
-                    continue;
-                reportToRelevantUnits[unit->reports.log[b][c]].push_back(unit->id);
-            }
-        }
-    }
-}
-
-static void manageInteractionEvent(color_ostream& out) {
-    if (!df::global::world)
-        return;
-
     int32_t tick = df::global::world->frame_counter;
-    std::vector<df::report*>& reports = df::global::world->status.reports;
-    size_t idx = df::report::binsearch_index(reports, lastReportInteraction, false);
-    // returns the index to the key equal to or greater than the key provided
-    idx = reports[idx]->id == lastReportInteraction ? idx + 1 : idx; // we need the index after (where the new stuff is)
-
-    if (idx < reports.size() )
-        updateReportToRelevantUnits();
-
-    df::report* lastAttackEvent = nullptr;
-    df::unit* lastAttacker = nullptr;
-    //df::unit* lastDefender = NULL;
-    unordered_map<int32_t,unordered_set<int32_t> > history;
-    for ( ; idx < reports.size(); idx++ ) {
-        df::report* report = reports[idx];
-        lastReportInteraction = report->id;
-        df::announcement_type type = report->type;
-        if ( type != df::announcement_type::INTERACTION_ACTOR && type != df::announcement_type::INTERACTION_TARGET )
-            continue;
-        if ( report->flags.bits.continuation )
-            continue;
-        bool attack = type == df::announcement_type::INTERACTION_ACTOR;
-        if ( attack ) {
-            lastAttackEvent = report;
-            lastAttacker = nullptr;
-            //lastDefender = NULL;
-        }
-        vector<df::unit*> relevantUnits = gatherRelevantUnits(out, lastAttackEvent, report);
-        InteractionData data = getAttacker(out, lastAttackEvent, lastAttacker, attack ? nullptr : report, relevantUnits);
-        if ( data.attacker < 0 )
-            continue;
-//out.print("%s,%d\n",__FILE__,__LINE__);
-        //if ( !attack && lastAttacker && data.attacker == lastAttacker->id && lastDefender && data.defender == lastDefender->id )
-        //    continue; //lazy way of preventing duplicates
-        if (attack && idx + 1 < reports.size() && reports[idx + 1]->type == df::announcement_type::INTERACTION_TARGET ) {
-//out.print("%s,%d\n",__FILE__,__LINE__);
-            vector<df::unit*> relevant_units = gatherRelevantUnits(out, lastAttackEvent, reports[idx + 1]);
-            InteractionData data2 = getAttacker(out, lastAttackEvent, lastAttacker, reports[idx + 1], relevant_units);
-            if ( data.attacker == data2.attacker && (data.defender == -1 || data.defender == data2.defender) ) {
-//out.print("%s,%d\n",__FILE__,__LINE__);
-                data = data2;
-                idx++;
-            }
-        }
-        {
-#define HISTORY_ITEM 1
-#if HISTORY_ITEM
-            unordered_set<int32_t>& b = history[data.attacker];
-            if ( b.find(data.defender) != b.end() )
-                continue;
-            history[data.attacker].insert(data.defender);
-            //b.insert(data.defender);
-#else
-            unordered_set<int32_t>& b = history[data.attackReport];
-            if ( b.find(data.defendReport) != b.end() )
-                continue;
-            history[data.attackReport].insert(data.defendReport);
-            //b.insert(data.defendReport);
-#endif
-        }
-//out.print("%s,%d\n",__FILE__,__LINE__);
-        lastAttacker = df::unit::find(data.attacker);
-        //lastDefender = df::unit::find(data.defender);
-        //fire event
-        interactionEvents.emplace(tick, data);
-        //TODO: deduce attacker from latest defend event first
-    }
 
     multimap<Plugin*,EventHandler> copy(handlers[EventType::INTERACTION].begin(), handlers[EventType::INTERACTION].end());
     for (auto &key_value : copy) {

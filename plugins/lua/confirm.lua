@@ -219,10 +219,10 @@ function convict.get_message()
         "This action is irreversible."
 end
 
-order_delete = defconf('order-delete')
-function order_delete.intercept_key(key)
-    return key == keys.D_MANAGER_REMOVE_ORDER and
-        screen.page == screen._type.T_page.ManagerOrders
+order_remove = defconf('order-remove')
+function order_remove.intercept_key(key)
+    return key == keys.MANAGER_REMOVE and
+        not screen.in_max_workshops
 end
 order_delete.title = "Remove manager order"
 order_delete.message = "Are you sure you want to remove this order?"

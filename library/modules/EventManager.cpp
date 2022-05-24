@@ -458,6 +458,14 @@ static std::vector<df::unit*> gatherRelevantUnits2(color_ostream& out, df::repor
  * scan_reports: sendUnitAttackEvents
  * parse_strike_report: sendUnitAttackEvents
  *
+ * todo
+ *  getAttacker
+ *  getWound
+ *  getVerb
+ *  gatherRelevantUnits
+ *  manageInvasionEvent
+ *  manageBuilding.*
+ *  manageConstruction.*
  * */
 
 inline void scan(color_ostream& out, const int32_t &tick) {

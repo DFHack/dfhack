@@ -64,7 +64,7 @@ bool set_conf_state (string name, bool state);
 
 class confirmation_base {
 public:
-    enum cstate { INACTIVE, ACTIVE, SELECTED };
+    enum cstate { INACTIVE, ACTIVE, SELECTED, PAUSED };
     virtual string get_id() = 0;
     virtual bool set_state(cstate) = 0;
 
@@ -281,7 +281,13 @@ public:
         return true;
     }
     bool feed (ikey_set *input) {
-        if (state == INACTIVE)
+        if (state == PAUSED)
+        {
+            if (input->count(df::interface_key::LEAVESCREEN))
+                set_state(INACTIVE);
+            return false;
+        }
+        else if (state == INACTIVE)
         {
             for (df::interface_key key : *input)
             {
@@ -302,6 +308,8 @@ public:
                 set_state(INACTIVE);
             else if (input->count(df::interface_key::SELECT))
                 set_state(SELECTED);
+            else if (input->count(df::interface_key::CUSTOM_P))
+                set_state(PAUSED);
             else if (input->count(df::interface_key::CUSTOM_S))
                 show_options();
             return true;
@@ -325,6 +333,8 @@ public:
         if (state == ACTIVE)
         {
             split_string(&lines, get_message(), "\n");
+            lines.push_back("");
+            lines.push_back("Hit 'p' to pause this confirmation until you exit this screen.");
             size_t max_length = 40;
             for (string line : lines)
                 max_length = std::max(max_length, line.size());

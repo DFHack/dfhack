@@ -973,7 +973,8 @@ static std::vector<df::unit*> gatherRelevantUnits(color_ostream& out, df::report
             }
         }
     };
-    //std::array<df::unit*,2> R = {pushbackReportUnits(r1), pushbackReportUnits(r2)};
+    pushbackReportUnits(r1);
+    pushbackReportUnits(r2);
     return result;
 }
 

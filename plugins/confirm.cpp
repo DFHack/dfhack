@@ -324,6 +324,8 @@ public:
     }
     void render() {
         static vector<string> lines;
+        static const std::string pause_message =
+               "Hit 'p' to pause this confirmation until you exit this screen.";
         Screen::Pen corner_ul = Screen::Pen((char)201, COLOR_GREY, COLOR_BLACK);
         Screen::Pen corner_ur = Screen::Pen((char)187, COLOR_GREY, COLOR_BLACK);
         Screen::Pen corner_dl = Screen::Pen((char)200, COLOR_GREY, COLOR_BLACK);
@@ -333,13 +335,13 @@ public:
         if (state == ACTIVE)
         {
             split_string(&lines, get_message(), "\n");
-            lines.push_back("");
-            lines.push_back("Hit 'p' to pause this confirmation until you exit this screen.");
             size_t max_length = 40;
             for (string line : lines)
                 max_length = std::max(max_length, line.size());
             int width = max_length + 4;
-            int height = lines.size() + 4;
+            vector<string> pause_message_lines;
+            word_wrap(&pause_message_lines, pause_message, max_length);
+            int height = lines.size() + pause_message_lines.size() + 5;
             int x1 = (gps->dimx / 2) - (width / 2);
             int x2 = x1 + width - 1;
             int y1 = (gps->dimy / 2) - (height / 2);
@@ -377,6 +379,11 @@ public:
             for (size_t i = 0; i < lines.size(); i++)
             {
                 Screen::paintString(Screen::Pen(' ', get_color(), COLOR_BLACK), x1 + 2, y1 + 2 + i, lines[i]);
+            }
+            y = y1 + 3 + lines.size();
+            for (size_t i = 0; i < pause_message_lines.size(); i++)
+            {
+                Screen::paintString(Screen::Pen(' ', COLOR_WHITE, COLOR_BLACK), x1 + 2, y + i, pause_message_lines[i]);
             }
         }
         else if (state == SELECTED)

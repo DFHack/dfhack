@@ -753,7 +753,7 @@ void scan_reports(color_ostream &out, const int32_t &tick) {
                 }
                 // if we're the instigator, then the next report is also important
                 if ( instigator ) {
-                    if (idx + 1 < reports.size() &&
+                    if ((size_t)idx + 1 < reports.size() &&
                         reports[idx + 1]->type == df::announcement_type::INTERACTION_TARGET) {
 
                         // todo: read functions, write comments

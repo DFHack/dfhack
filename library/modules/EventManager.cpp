@@ -319,8 +319,8 @@ public:
                     }
                 }
             }
-            return history.end();
         }
+        return history.end();
     }
     void erase_all(const T& event_data) {
         if (has_duplicates) {

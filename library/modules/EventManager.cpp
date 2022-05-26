@@ -511,6 +511,7 @@ void scan_units(color_ostream &out, const int32_t &tick) {
             activeUnits.erase_all(id);
         }
     }
+    // todo: clean up stale id's
     previous_aliveness.swap(current_aliveness);
     previous_active.swap(current_active);
 }
@@ -543,6 +544,7 @@ void scan_items(color_ostream &out, const int32_t &tick){
         newItems.emplace(tick, item->id);
     }
     nextItem = *df::global::item_next_id;
+    // todo: clean up stale item id's
 }
 
 void scan_jobs(color_ostream &out, const int32_t &tick) {
@@ -606,6 +608,7 @@ void scan_jobs(color_ostream &out, const int32_t &tick) {
             }
         }
     }
+    // todo: clean up stale jobs?
     fn_last_tick = tick;
     previous_jobs.swap(current_jobs_cloned);
 }
@@ -698,6 +701,7 @@ void scan_buildings(color_ostream &out, const int32_t &tick) {
             ++iter;
         }
     }
+    // todo: clean up stale building id's
 }
 
 void scan_reports(color_ostream &out, const int32_t &tick) {
@@ -839,6 +843,8 @@ void scan_unit_inventory(color_ostream &out, const int32_t &tick, df::unit* unit
         }
     }
     previous_inventory.swap(current_inventory);
+
+    // todo: investigate cleaning up stale references(?)
 }
 
 void scan_unit_reports(color_ostream &out, const int32_t &tick, df::unit* unit) {
@@ -858,6 +864,8 @@ void scan_unit_reports(color_ostream &out, const int32_t &tick, df::unit* unit) 
             }
         }
     }
+
+    // todo: clean up stale id's
 }
 
 void parse_strike_report(color_ostream &out, const int32_t &tick, df::report* report) {

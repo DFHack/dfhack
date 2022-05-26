@@ -1165,78 +1165,13 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         nextItem = *df::global::item_next_id;
         nextBuilding = *df::global::building_next_id;
         nextInvasion = df::global::ui->invasions.next_id;
-
-        // initialize our started jobs list
-        for ( df::job_list_link* link = df::global::world->jobs.list.next; link != nullptr; link = link->next ) {
-            df::job* job = link->item;
-            if (job && Job::getWorker(job)) {
-                // the job was already started, so emplace to a non-iterable area
-                startedJobs.emplace(-1, job->id);
-            }
-        }
-        // initialize our buildings list
-        for (df::building* building : df::global::world->buildings.all) {
-            Buildings::updateBuildings(out, (void*)intptr_t(building->id));
-            // building already existed, so emplace to a non-iterable area
-            createdBuildings.emplace(-1, building->id);
-        }
-        // initialize our constructions list
-        for (auto construction : df::global::world->constructions) {
-            if ( !construction ) {
-                if ( Once::doOnce("EventManager.onLoad null constr") ) {
-                    out.print("EventManager.onLoad: null construction.\n");
-                }
-                continue;
-            }
-            if (construction->pos == df::coord() ) {
-                if ( Once::doOnce("EventManager.onLoad null position of construction.\n") ) {
-                    out.print("EventManager.onLoad null position of construction.\n");
-                }
-                continue;
-            }
-            createdConstructions.emplace(-1, *construction);
-        }
-        int32_t current_time = getTime();
-        // initialize our active units list
-        // initialize our dead units list
-        // initialize our inventory lists
-        // initialize our syndromes list
-        for ( df::unit *unit : df::global::world->units.all ) {
-            if(Units::isActive(unit)) {
-                activeUnits.emplace(-1, unit->id);
-            }
-            if (Units::isDead(unit)) {
-                deadUnits.emplace(-1, unit->id);
-            }
-            for (size_t idx = 0; idx < unit->syndromes.active.size(); ++idx) {
-                auto &syndrome = unit->syndromes.active[idx];
-                int32_t startTime = syndrome->year * ticksPerYear + syndrome->year_time;
-                // add the syndrome if it started now or in the past
-                if (startTime <= current_time) {
-                    SyndromeData data(unit->id, (int32_t)idx);
-                    syndromes.emplace(-1, data);
-                }
-            }
-            //update equipment
-            unordered_map<int32_t, InventoryItem> &last_tick_inventory = inventoryLog[unit->id];
-            vector<df::unit_inventory_item*> &current_tick_inventory = unit->inventory;
-            last_tick_inventory.clear();
-            for (auto ct_item : current_tick_inventory) {
-                auto itemId = ct_item->item->id;
-                last_tick_inventory.emplace(itemId, InventoryItem(itemId, *ct_item));
-            }
-        }
-        // initialize our reports list
-        for(auto &r : df::global::world->status.reports){
-            newReports.emplace(-1, r->id);
-        }
         lastReportUnitAttack = -1;
         lastReportInteraction = -1;
         reportToRelevantUnitsTime = -1;
         reportToRelevantUnits.clear();
-//        for ( size_t a = 0; a < EventType::EVENT_MAX; ++a ) {
-//            eventLastTick[a] = -1;//-1000000;
-//        }
+        // initialize lists
+        scan(out, -1);
+
         for (auto unit : df::global::world->history.figures) {
             if ( unit->id < 0 && unit->name.language < 0 )
                 unit->name.language = 0;

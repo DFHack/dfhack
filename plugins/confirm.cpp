@@ -17,6 +17,7 @@
 #include "df/building_tradedepotst.h"
 #include "df/general_ref.h"
 #include "df/general_ref_contained_in_itemst.h"
+#include "df/interfacest.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_jobmanagementst.h"
 #include "df/viewscreen_justicest.h"
@@ -44,6 +45,12 @@ static map<string, conf_wrapper*> confirmations;
 string active_id;
 queue<string> cmds;
 
+// true when confirm is paused
+bool paused = false;
+// if set, confirm will unpause when this screen is no longer on the stack
+df::viewscreen *paused_screen = NULL;
+
+
 template <typename VT, typename FT>
 inline bool in_vector (std::vector<VT> &vec, FT item)
 {
@@ -64,7 +71,7 @@ bool set_conf_state (string name, bool state);
 
 class confirmation_base {
 public:
-    enum cstate { INACTIVE, ACTIVE, SELECTED, PAUSED };
+    enum cstate { INACTIVE, ACTIVE, SELECTED };
     virtual string get_id() = 0;
     virtual bool set_state(cstate) = 0;
 
@@ -229,6 +236,18 @@ namespace conf_lua {
                 lua_pushnil(L);
             return 1;
         }
+        int unpause(lua_State *)
+        {
+            Core::getInstance().print("unpausing\n");
+            paused = false;
+            paused_screen = NULL;
+            return 0;
+        }
+        int get_paused (lua_State *L)
+        {
+            Lua::Push(L, paused);
+            return 1;
+        }
     }
 }
 
@@ -247,6 +266,8 @@ DFHACK_PLUGIN_LUA_COMMANDS {
     CONF_LUA_CMD(get_ids),
     CONF_LUA_CMD(get_conf_data),
     CONF_LUA_CMD(get_active_id),
+    CONF_LUA_CMD(unpause),
+    CONF_LUA_CMD(get_paused),
     DFHACK_LUA_END
 };
 
@@ -281,10 +302,12 @@ public:
         return true;
     }
     bool feed (ikey_set *input) {
-        if (state == PAUSED)
+        if (paused)
         {
-            if (input->count(df::interface_key::LEAVESCREEN))
-                set_state(INACTIVE);
+            // we can only detect that we've left the screen by intercepting the
+            // ESC key
+            if (!paused_screen && input->count(df::interface_key::LEAVESCREEN))
+                conf_lua::api::unpause(NULL);
             return false;
         }
         else if (state == INACTIVE)
@@ -309,7 +332,13 @@ public:
             else if (input->count(df::interface_key::SELECT))
                 set_state(SELECTED);
             else if (input->count(df::interface_key::CUSTOM_P))
-                set_state(PAUSED);
+            {
+                Core::getInstance().print("pausing\n");
+                paused = true;
+                if (!df::viewscreen_dwarfmodest::_identity.is_instance(screen))
+                    paused_screen = screen;
+                set_state(INACTIVE);
+            }
             else if (input->count(df::interface_key::CUSTOM_S))
                 show_options();
             return true;
@@ -325,7 +354,7 @@ public:
     void render() {
         static vector<string> lines;
         static const std::string pause_message =
-               "Hit 'p' to pause this confirmation until you exit this screen.";
+               "Pause confirmations until you exit this screen";
         Screen::Pen corner_ul = Screen::Pen((char)201, COLOR_GREY, COLOR_BLACK);
         Screen::Pen corner_ur = Screen::Pen((char)187, COLOR_GREY, COLOR_BLACK);
         Screen::Pen corner_dl = Screen::Pen((char)200, COLOR_GREY, COLOR_BLACK);
@@ -340,7 +369,7 @@ public:
                 max_length = std::max(max_length, line.size());
             int width = max_length + 4;
             vector<string> pause_message_lines;
-            word_wrap(&pause_message_lines, pause_message, max_length);
+            word_wrap(&pause_message_lines, pause_message, max_length - 3);
             int height = lines.size() + pause_message_lines.size() + 5;
             int x1 = (gps->dimx / 2) - (width / 2);
             int x2 = x1 + width - 1;
@@ -383,8 +412,11 @@ public:
             y = y1 + 3 + lines.size();
             for (size_t i = 0; i < pause_message_lines.size(); i++)
             {
-                Screen::paintString(Screen::Pen(' ', COLOR_WHITE, COLOR_BLACK), x1 + 2, y + i, pause_message_lines[i]);
+                Screen::paintString(Screen::Pen(' ', COLOR_WHITE, COLOR_BLACK), x1 + 5, y + i, pause_message_lines[i]);
             }
+            x = x1 + 2;
+            OutputString(COLOR_LIGHTRED, x, y, Screen::getKeyDisplay(df::interface_key::CUSTOM_P));
+            OutputString(COLOR_WHITE, x, y, ":");
         }
         else if (state == SELECTED)
         {
@@ -550,6 +582,22 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out)
     return CR_OK;
 }
 
+static bool screen_found(df::viewscreen *target_screen)
+{
+    if (!df::global::gview)
+        return false;
+
+    df::viewscreen *screen = &df::global::gview->view;
+    while (screen)
+    {
+        if (screen == target_screen)
+            return true;
+        screen = screen->child;
+    }
+
+    return false;
+}
+
 DFhackCExport command_result plugin_onupdate (color_ostream &out)
 {
     while (!cmds.empty())
@@ -557,6 +605,11 @@ DFhackCExport command_result plugin_onupdate (color_ostream &out)
         Core::getInstance().runCommand(out, cmds.front());
         cmds.pop();
     }
+
+    // if the screen that we paused on is no longer on the stack, unpause
+    if (paused_screen && !screen_found(paused_screen))
+        conf_lua::api::unpause(NULL);
+
     return CR_OK;
 }
 

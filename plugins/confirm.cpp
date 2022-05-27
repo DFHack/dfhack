@@ -335,6 +335,10 @@ public:
             {
                 Core::getInstance().print("pausing\n");
                 paused = true;
+                // only record the screen when we're not at the top viewscreen
+                // since this screen will *always* be on the stack. for
+                // dwarfmode screens, use ESC detection to discover when to
+                // unpause
                 if (!df::viewscreen_dwarfmodest::_identity.is_instance(screen))
                     paused_screen = screen;
                 set_state(INACTIVE);

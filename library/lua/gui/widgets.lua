@@ -186,6 +186,7 @@ EditField.ATTRS{
     on_submit = DEFAULT_NIL,
     key = DEFAULT_NIL,
     key_sep = DEFAULT_NIL,
+    frame = {h=1},
     modal = false,
 }
 

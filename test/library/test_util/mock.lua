@@ -208,9 +208,44 @@ function test.func_call_return_value()
 end
 
 function test.func_call_return_multiple_values()
-    local f = mock.func(7,5,{imatable='snarfsnarf'})
+    local f = mock.func(7, 5, {imatable='snarfsnarf'})
     local a, b, c = f()
     expect.eq(7, a)
     expect.eq(5, b)
     expect.table_eq({imatable='snarfsnarf'}, c)
+end
+
+function test.observe_func()
+    -- basic end-to-end test for common cases;
+    -- most edge cases are covered by mock.func() tests
+    local counter = 0
+    local function target()
+        counter = counter + 1
+        return counter
+    end
+    local observer = mock.observe_func(target)
+
+    expect.eq(observer(), 1)
+    expect.eq(counter, 1)
+    expect.eq(observer.call_count, 1)
+    expect.table_eq(observer.call_args, {{}})
+
+    expect.eq(observer('x', 'y'), 2)
+    expect.eq(counter, 2)
+    expect.eq(observer.call_count, 2)
+    expect.table_eq(observer.call_args, {{}, {'x', 'y'}})
+end
+
+function test.observe_func_error()
+    local function target()
+        error('asdf')
+    end
+    local observer = mock.observe_func(target)
+
+    expect.error_match('asdf', function()
+        observer('x')
+    end)
+    -- make sure the call was still tracked
+    expect.eq(observer.call_count, 1)
+    expect.table_eq(observer.call_args, {{'x'}})
 end

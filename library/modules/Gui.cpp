@@ -1388,7 +1388,7 @@ namespace
 
                 if (str[i] == 'r') // "&r" adds a blank line
                 {
-                    word_wrap(out, parsed, line_length, false, true);
+                    word_wrap(out, parsed, line_length, false/*, true*/);
                     out->push_back(" "); // DF adds a line with a space for some reason
                     parsed.clear();
                 }
@@ -1402,7 +1402,7 @@ namespace
         while (++i < str.length());
 
         if (parsed.length())
-            word_wrap(out, parsed, line_length, false, true);
+            word_wrap(out, parsed, line_length, false/*, true*/);
 
         return true;
     }
@@ -1597,11 +1597,11 @@ namespace
     bool add_proper_report(df::unit *unit, bool is_sparring, int report_index)
     {
         if (is_sparring)
-            return addCombatReport(unit, unit_report_type::Sparring, report_index);
+            return Gui::addCombatReport(unit, unit_report_type::Sparring, report_index);
         else if (unit->job.current_job != NULL && unit->job.current_job->job_type == job_type::Hunt)
-            return addCombatReport(unit, unit_report_type::Hunting, report_index);
+            return Gui::addCombatReport(unit, unit_report_type::Hunting, report_index);
         else
-            return addCombatReport(unit, unit_report_type::Combat, report_index);
+            return Gui::addCombatReport(unit, unit_report_type::Combat, report_index);
     }
 }
 

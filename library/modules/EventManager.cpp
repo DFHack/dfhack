@@ -236,7 +236,7 @@ std::array<eventManager_t,EventType::EVENT_MAX> compileManagerArray() {
 }
 
 template<typename T, bool has_duplicates = false>
-class event_tracker { //todo: use inheritance? stl seems to use variadics, so it's unclear how well that would actually work
+class event_tracker {
 private:
     std::unordered_map<T, int32_t> seen;
     std::multimap<int32_t, T> history;
@@ -345,17 +345,15 @@ static int32_t getTime(){
     return -1;
 }
 
-// shared between event types
-std::unordered_map<int32_t, df::job*> current_jobs;
 //job initiated
 // static std::unordered_set<int32_t> newJobIDs; // function fulfilled by lastJobId
 /* TODO
- * track ids instead (int32_t)
- * store current jobs list in unordered_map<int32_t, job*>
- * lookup ids in the current jobs list
- *   found: send to listeners
- *   not-found: remove from tracking
- * re-establish current jobs list every tick
+ *   track ids instead (int32_t)
+ *   store current jobs list in unordered_map<int32_t, job*>
+ *   lookup ids in the current jobs list
+ *     found: send to listeners
+ *     not-found: remove from tracking
+ *   re-establish current jobs list every tick
  * */
 static event_tracker<int32_t> newJobs; // we explicitly manage the life cycles of the jobs within the container
 
@@ -402,25 +400,15 @@ static event_tracker<int32_t> newReports; // we track ids, and so we cannot be c
 //unit attack
 static int32_t lastReportUnitAttack;
 static event_tracker<UnitAttackData> attackEvents; // we track ids as POD, and so we cannot be certain of the life cycle of what those ids reference
-static std::map<int32_t,std::vector<int32_t> > reportToRelevantUnits;
+static std::map<int32_t,std::unordered_set<int32_t> > reportToRelevantUnits;
 static int32_t reportToRelevantUnitsTime = -1;
 
 //interaction
 static int32_t lastReportInteraction;
 static event_tracker<InteractionData> interactionEvents; // we track ids as POD, and so we cannot be certain of the life cycle of what those ids reference
 
-void scan_units(color_ostream &out, const int32_t &tick);
-void scan_items(color_ostream &out, const int32_t &tick);
-void scan_jobs(color_ostream &out, const int32_t &tick);
-void scan_buildings(color_ostream &out, const int32_t &tick);
-void scan_reports(color_ostream &out, const int32_t &tick);
-// unit scans
-void scan_unit_inventory(color_ostream &out, const int32_t &tick, df::unit* unit);
-void scan_unit_reports(color_ostream &out, const int32_t &tick, df::unit* unit);
-// report scans
-void parse_strike_report(color_ostream &out, const int32_t &tick, df::report* report);
-
-static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, df::unit* lastAttacker, df::report* defendEvent, vector<df::unit*>& relevantUnits);
+static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, df::unit* lastAttacker,
+                                   df::report* defendEvent, const vector<df::unit*>& relevantUnits);
 static std::vector<df::unit*> gatherRelevantUnits(color_ostream& out, df::report* r1, df::report* r2);
 
 /** Move Map
@@ -448,514 +436,608 @@ static std::vector<df::unit*> gatherRelevantUnits(color_ostream& out, df::report
  * parse_strike_report: sendUnitAttackEvents
  * */
 
-inline void scan(color_ostream& out, const int32_t &tick) {
-    if (!df::global::world)
-        return;
-    scan_units(out, tick);
-    scan_items(out, tick);
-    scan_jobs(out, tick);
-    scan_buildings(out, tick);
-    scan_reports(out, tick); // depends on scanning units first
-
-    // if there's a new invasion we'll add it
-    if (!df::global::ui)
-        return;
-    invasions.emplace(tick, nextInvasion);
-    nextInvasion = df::global::ui->invasions.next_id;
-}
-
-void scan_units(color_ostream &out, const int32_t &tick) {
-    static std::unordered_map<int32_t, bool> previous_aliveness; // from last tick
-    static std::unordered_set<int32_t> previous_active; // from last tick
-    std::unordered_map<int32_t, bool> current_aliveness; // from this tick
-    std::unordered_set<int32_t> current_active; // from this tick
-    int32_t current_time = getTime();
-    // loop active units
-    for (df::unit* unit: df::global::world->units.active) {
-        int32_t id = unit->id;
-        current_active.emplace(id);
-        current_aliveness.emplace(id, Units::isAlive(unit));
-        // check if this unit was active on the previous tick
-        if (previous_active.count(id)) {
-            // then we compare the ticks
-            if (previous_aliveness[id] && !current_aliveness[id]) {
-                deadUnits.emplace(tick, id);
-            } else if (!previous_aliveness[id] && current_aliveness[id]) {
-                deadUnits.erase(id);
-            }
-            // also scan its inventory
-            scan_unit_inventory(out, tick, unit);
-        } else {
-            // it didn't so it's a new unit
-            activeUnits.emplace(tick, id); // won't add if activeUnits has the id already, so we'll miss any such edge case
-        }
-        // scan the unit for reports
-        scan_unit_reports(out, tick, unit);
-        // scan for new syndromes
-        int32_t idx = 0;
-        for (const auto &syndrome : unit->syndromes.active) {
-            int32_t syndrome_start_time = syndrome->year * ticksPerYear + syndrome->year_time;
-            // emplace the syndrome if it started now or in the past
-            if (syndrome_start_time <= current_time) {
-                // todo: test listener dereferencing of idx [across different tick frequencies (eg. 1 tick, 100, 10000)]
-                syndromes.emplace(tick, SyndromeData(unit->id, (int32_t)idx));
-            }
-            idx++;
-        }
-    }
-    // loop the previous tick's units
-    for(auto &id : previous_active) {
-        // check if this unit is still on the active list
-        if (!current_active.count(id)) {
-            // if it isn't we're not going to reference it, because nobody will be able to look up the unit
-            activeUnits.erase_all(id);
-        }
-    }
-    // todo: clean up stale id's
-    previous_aliveness.swap(current_aliveness);
-    previous_active.swap(current_active);
-}
-
-void scan_items(color_ostream &out, const int32_t &tick){
-    if (!df::global::item_next_id)
-        return;
-    if ( nextItem >= *df::global::item_next_id ) {
-        return;
-    }
-    size_t index = df::item::binsearch_index(df::global::world->items.all, nextItem, false);
-    if ( index != 0 ) index--;
-    for (size_t a = index; a < df::global::world->items.all.size(); ++a) {
-        df::item* item = df::global::world->items.all[a];
-        //already processed
-        if (item->id < nextItem)
-            continue;
-        //invaders
-        if (item->flags.bits.foreign)
-            continue;
-        //traders who bring back your items?
-        if (item->flags.bits.trader)
-            continue;
-        //migrants
-        if (item->flags.bits.owned)
-            continue;
-        //spider webs don't count
-        if (item->flags.bits.spider_web)
-            continue;
-        newItems.emplace(tick, item->id);
-    }
-    nextItem = *df::global::item_next_id;
-    // todo: clean up stale item id's
-}
-
-void scan_jobs(color_ostream &out, const int32_t &tick) {
-    if (!df::global::job_next_id)
-        return;
-    static int32_t fn_last_tick = -1;
-    static std::unordered_map<int32_t, std::shared_ptr<df::job>> previous_jobs; // from last tick
-    std::unordered_map<int32_t, std::shared_ptr<df::job>> current_jobs_cloned; // from this tick
-    current_jobs.clear();
-    for (df::job_list_link* link = df::global::world->jobs.list.next; link != nullptr; link = link->next) {
-        df::job* job = link->item;
-        if (job) {
-            auto id = job->id;
-            // we need to retain this list's information for the next tick to compare and spot changes
-            auto clone = Job::cloneJobStruct(job, true);
-            auto cp = std::shared_ptr<df::job>(clone, [](df::job* p) { Job::deleteJobStruct(p, true); });
-            current_jobs.emplace(id, job);
-            current_jobs_cloned.emplace(id, cp);
-
-            // check if this job existed last tick
-            if (previous_jobs.count(id)) {
-                // it did, so we compare
-                auto lp = previous_jobs.find(id)->second;
-                if (Job::getWorker(cp.get()) && !Job::getWorker(lp.get())) {
-                    // last tick it didn't have a worker, so it must have been started
-                    startedJobs.emplace(tick, id);
-                }
-            } else {
-                // it didn't, so it must be new
-                newJobs.emplace(tick, id);
-            }
-        }
-    }
-    // loop the previous tick's jobs
-    for (auto &key_value : previous_jobs) {
-        if (current_jobs_cloned.count(key_value.first) == 0) {
-            auto job_last_tick = key_value.second;
-            int32_t id = job_last_tick->id;
-            //if it happened within a tick, must have been cancelled by the user or a plugin: not completed
-            if (tick > fn_last_tick) { // todo: this check is probably redundant, we're only keeping it because it came with a comment that suggests it might not be redundant
-                // check for the started job in the current jobs (the jobs we just copied above)
-                if (current_jobs_cloned.count(id)) {
-                    auto job_this_tick = current_jobs_cloned.find(id)->second;
-                    // it needs to be a repeat job
-                    if (!job_last_tick->flags.bits.repeat)
-                        continue;
-                    // the completion counter from last tick must be 0
-                    if (job_last_tick->completion_timer != 0)
-                        continue;
-                    // the completion counter needs to now be -1
-                    if (job_this_tick->completion_timer != -1)
-                        continue;
-                    //still false positive if cancelled at EXACTLY the right time, but experiments show this doesn't happen
-                    completedJobs.emplace(tick, job_this_tick);
-                } else {
-                    // if we didn't find it, we don't need to check much
-                    if (job_last_tick->flags.bits.repeat || job_last_tick->completion_timer != 0)
-                        continue;
-                    completedJobs.emplace(tick, job_last_tick);
-                }
-            }
-        }
-    }
-    // todo: clean up stale jobs?
-    fn_last_tick = tick;
-    previous_jobs.swap(current_jobs_cloned);
-}
-
-void scan_buildings(color_ostream &out, const int32_t &tick) {
-    // update created building list
-    for (int32_t id = nextBuilding; id < *df::global::building_next_id; ++id) {
-        int32_t index = df::building::binsearch_index(df::global::world->buildings.all, id);
-        // check that we can find the id
-        if (index < 0) {
-            //out.print("%s, line %d: Couldn't find new building with id %d.\n", __FILE__, __LINE__, a);
-            //the tricky thing is that when the game first starts, it's ok to skip buildings, but otherwise, if you skip buildings, something is probably wrong. TODO: make this smarter
-            continue;
-        }
-        // this is a new building
-        createdBuildings.emplace(tick, id);
-    }
-    nextBuilding = *df::global::building_next_id;
-    // update destroyed building list
-    for (auto iter = createdBuildings.begin(); iter != createdBuildings.end(); ++iter) {
-        int32_t id = iter->second;
-        int32_t index = df::building::binsearch_index(df::global::world->buildings.all, id);
-        // check whether still exists
-        if (index >= 0) {
-            continue;
-        }
-        // building doesn't exist anymore
-        destroyedBuildings.emplace(tick, id);;
-    }
-    // update created construction list
-    for (auto &c : df::global::world->constructions) {
-        // add construction if unique to position
-        createdConstructions.emplace(tick, *c); // hashes based on c->pos (df::coord)
-    }
-    // update destroyed constructions list
-    for (auto &key_value : createdConstructions) {
-        auto &c = key_value.second;
-        // if we can't find it, it was removed
-        if (!df::construction::find(c.pos)) {
-            destroyedConstructions.emplace(tick, c);
-        }
-    }
-
-    // clean up re-used id's [created list](only keep latest)
-    for (auto iter = createdBuildings.begin(); iter != createdBuildings.end();) {
-        auto td = iter->first;
-        auto id = iter->second;
-        auto diter = destroyedBuildings.find(id);
-        // erase if the building id has been destroyed
-        if (td < diter->first) {
-            iter = createdBuildings.erase(iter);
-        } else {
-            ++iter;
-        }
-    }
-    // clean up re-used id's [destroyed list](only keep latest)
-    for (auto iter = destroyedBuildings.begin(); iter != destroyedBuildings.end();) {
-        // todo: this loop may not serve a purpose, we should check if a destroyed building's id can be re-used.. or if the building can be restored
-        auto td = iter->first;
-        auto id = iter->second;
-        auto citer = createdBuildings.find(id);
-        // erase if the building id has been re-created
-        if (td < citer->first) {
-            iter = destroyedBuildings.erase(iter);
-        } else {
-            ++iter;
-        }
-    }
-    // clean up re-used id's [created list](only keep latest)
-    for (auto iter = createdConstructions.begin(); iter != createdConstructions.end();) {
-        auto td = iter->first;
-        auto construction = iter->second;
-        auto diter = destroyedConstructions.find(construction);
-        // erase if the construction has been destroyed
-        if (td < diter->first) {
-            iter = createdConstructions.erase(iter);
-        } else {
-            ++iter;
-        }
-    }
-    // clean up re-used id's [destroyed list](only keep latest)
-    for (auto iter = destroyedConstructions.begin(); iter != destroyedConstructions.end();) {
-        auto td = iter->first;
-        auto construction = iter->second;
-        auto citer = createdConstructions.find(construction);
-        // erase if the construction has been re-created
-        if (td < citer->first) {
-            iter = destroyedConstructions.erase(iter);
-        } else {
-            ++iter;
-        }
-    }
-    // todo: clean up stale building id's
-}
-
-void scan_reports(color_ostream &out, const int32_t &tick) {
-    //df::unit* lastDefender = NULL;
-    // todo: see to it that these 2 can't be gotten rid of, or do so
-    df::report* lastAttackEvent = nullptr;
-    df::unit* lastAttacker = nullptr;
-    bool ie_skip_next = false; // interaction event, skip next report
+class Scanner{
+private:
+    Scanner() = default;
+    // current tick's data
+    std::unordered_set<int32_t> all_units;
+    std::unordered_set<int32_t> active_units;
     std::unordered_set<int32_t> valid_reports;
-    std::unordered_set<int32_t> strikeReports;
-    unordered_map<int32_t,unordered_set<int32_t> > history;
-    auto &reports = df::global::world->status.reports;
-    int32_t idx = 0;
+    std::unordered_map<int32_t, df::job*> valid_jobs;
 
-    // loop the global reports
-    for(auto &report : df::global::world->status.reports) {
-        auto id = report->id;
-        valid_reports.emplace(id);
-        // emplace the report id for sendReportEvents
-        newReports.emplace(tick, id);
-        // check if the report is a continuation
-        if (report->flags.bits.continuation)
-            continue;
-        bool instigator = false;
-        // parse event type
-        switch (report->type) {
-            case df::announcement_type::COMBAT_STRIKE_DETAILS:
-                parse_strike_report(out, tick, report);
-                break;
-            case df::announcement_type::INTERACTION_ACTOR:
-                instigator = true;
-            case df::announcement_type::INTERACTION_TARGET: {
-                if (ie_skip_next) {
-                    ie_skip_next = false;
-                    continue;
-                }
-                // todo: read functions, write comments
-                vector<df::unit*> relevantUnits = gatherRelevantUnits(out, lastAttackEvent, report);
-                InteractionData data = getAttacker(out, lastAttackEvent, lastAttacker, instigator ? nullptr
-                                                                                                  : report, relevantUnits);
-                if ( instigator ) {
-                    // re-set the last attack event
-                    lastAttackEvent = report;
-                    lastAttacker = nullptr;
-                }
-                // skip if there is no attacker
-                if (data.attacker < 0) {
-                    continue;
-                }
-                // if we're the instigator, then the next report is also important
-                if ( instigator ) {
-                    if ((size_t)idx + 1 < reports.size() &&
-                        reports[idx + 1]->type == df::announcement_type::INTERACTION_TARGET) {
+public:
+    const std::unordered_map<int32_t, df::job*> &current_jobs = valid_jobs;
+    inline void scan(color_ostream& out, const int32_t &tick) {
+        if (!df::global::world)
+            return;
+        scan_units(out, tick);
+        scan_items(out, tick);
+        scan_jobs(out, tick);
+        scan_buildings(out, tick);
+        scan_reports(out, tick); // depends on scanning units first
 
-                        // todo: read functions, write comments
-                        vector<df::unit*> relevant_units = gatherRelevantUnits(out, lastAttackEvent, reports[idx + 1]);
-                        InteractionData data2 = getAttacker(out, lastAttackEvent, lastAttacker, reports[idx +
-                                                                                                        1], relevant_units);
-                        if (data.attacker == data2.attacker &&
-                            (data.defender == -1 || data.defender == data2.defender)) {
-                            data = data2;
-                            ie_skip_next = true;
-                        }
+        // if there's a new invasion we'll add it
+        if (!df::global::ui)
+            return;
+        invasions.emplace(tick, nextInvasion);
+        nextInvasion = df::global::ui->invasions.next_id;
+    }
+    static Scanner& get() {
+        static Scanner instance;
+        return instance;
+    }
+
+protected:
+    void scan_units(color_ostream &out, const int32_t &tick) {
+        static std::unordered_map<int32_t, bool> previous_aliveness; // from last tick
+        static std::unordered_set<int32_t> previous_active; // from last tick
+        std::unordered_map<int32_t, bool> current_aliveness; // from this tick
+        int32_t current_time = getTime();
+        active_units.clear();
+        all_units.clear();
+        // loop active units
+        for (df::unit* unit: df::global::world->units.all) {
+            int32_t id = unit->id;
+            // we'll be using these member sets in other methods (for stale id clean up)
+            all_units.emplace(id);
+            if (Units::isActive(unit)) {
+                active_units.emplace(id);
+            }
+            current_aliveness.emplace(id, Units::isAlive(unit));
+            // check if this unit was active on the previous tick
+            if (previous_active.count(id)) {
+                // then we compare the ticks
+                if (previous_aliveness[id] && !current_aliveness[id]) {
+                    deadUnits.emplace(tick, id);
+                } else if (!previous_aliveness[id] && current_aliveness[id]) {
+                    deadUnits.erase(id);
+                }
+                // also scan its inventory
+                scan_unit_inventory(out, tick, unit);
+            } else {
+                // it didn't so it's a new unit
+                activeUnits.emplace(tick, id); // won't add if activeUnits has the id already, so we'll miss any such edge case
+            }
+            // scan the unit for reports
+            scan_unit_reports(out, tick, unit);
+            // scan for new syndromes
+            int32_t idx = 0;
+            for (const auto &syndrome: unit->syndromes.active) {
+                int32_t syndrome_start_time = syndrome->year * ticksPerYear + syndrome->year_time;
+                // emplace the syndrome if it started now or in the past
+                if (syndrome_start_time <= current_time) {
+                    // todo: test listener dereferencing of idx [across different tick frequencies (eg. 1 tick, 100, 10000)]
+                    syndromes.emplace(tick, SyndromeData(unit->id, (int32_t) idx));
+                }
+                idx++;
+            }
+        }
+        // cleaning up stale id's
+        for(auto iter = activeUnits.begin(); iter != activeUnits.end();) {
+            auto id = iter->second;
+            if (!all_units.count(id)) {
+                iter = activeUnits.erase(iter);
+            } else {
+                ++iter;
+            }
+        }
+        // cleaning up stale id's
+        for(auto iter = deadUnits.begin(); iter != deadUnits.end();) {
+            auto id = iter->second;
+            if (!all_units.count(id)) {
+                iter = deadUnits.erase(iter);
+            } else {
+                ++iter;
+            }
+        }
+
+        previous_aliveness.swap(current_aliveness);
+        previous_active = active_units;
+    }
+
+    void scan_items(color_ostream &out, const int32_t &tick){
+        if (!df::global::item_next_id)
+            return;
+        if ( nextItem >= *df::global::item_next_id ) {
+            return;
+        }
+        size_t index = df::item::binsearch_index(df::global::world->items.all, nextItem, false);
+        if ( index != 0 ) index--;
+        for (df::item* item : df::global::world->items.all) {
+            //already processed
+            if (item->id < nextItem)
+                continue;
+            //invaders
+            if (item->flags.bits.foreign)
+                continue;
+            //traders who bring back your items?
+            if (item->flags.bits.trader)
+                continue;
+            //migrants
+            if (item->flags.bits.owned)
+                continue;
+            //spider webs don't count
+            if (item->flags.bits.spider_web)
+                continue;
+            newItems.emplace(tick, item->id);
+        }
+        nextItem = *df::global::item_next_id;
+
+        // clean up stale item id's
+        for(auto iter = newItems.begin(); iter != newItems.end();) {
+            // check whether a valid index for the id exists
+            if (df::item::binsearch_index(df::global::world->items.all, iter->second) < 0) {
+                newItems.erase(iter);
+            } else {
+                ++iter;
+            }
+        }
+    }
+
+    void scan_jobs(color_ostream &out, const int32_t &tick) {
+        if (!df::global::job_next_id)
+            return;
+        static int32_t fn_last_tick = -1;
+        static std::unordered_map<int32_t, std::shared_ptr<df::job>> previous_jobs; // from last tick
+        std::unordered_map<int32_t, std::shared_ptr<df::job>> current_jobs_cloned; // from this tick
+        valid_jobs.clear();
+        // look current valid jobs
+        for (df::job_list_link* link = df::global::world->jobs.list.next; link != nullptr; link = link->next) {
+            df::job* job = link->item;
+            if (job) {
+                auto id = job->id;
+                // we need to retain this list's information for the next tick to compare and spot changes
+                auto clone = Job::cloneJobStruct(job, true);
+                auto cp = std::shared_ptr<df::job>(clone, [](df::job* p) { Job::deleteJobStruct(p, true); });
+                valid_jobs.emplace(id, job);
+                current_jobs_cloned.emplace(id, cp);
+
+                // check if this job existed last tick
+                if (previous_jobs.count(id)) {
+                    // it did, so we compare
+                    auto lp = previous_jobs.find(id)->second;
+                    if (Job::getWorker(cp.get()) && !Job::getWorker(lp.get())) {
+                        // last tick it didn't have a worker, so it must have been started
+                        startedJobs.emplace(tick, id);
+                    }
+                } else {
+                    // it didn't, so it must be new
+                    newJobs.emplace(tick, id);
+                }
+            }
+        }
+        // loop the previous tick's jobs
+        for (auto &key_value : previous_jobs) {
+            if (current_jobs_cloned.count(key_value.first) == 0) {
+                auto job_last_tick = key_value.second;
+                int32_t id = job_last_tick->id;
+                //if it happened within a tick, must have been cancelled by the user or a plugin: not completed
+                if (tick > fn_last_tick) { // todo: this check is probably redundant, we're only keeping it because it came with a comment that suggests it might not be redundant
+                    // check for the started job in the current jobs (the jobs we just copied above)
+                    if (current_jobs_cloned.count(id)) {
+                        auto job_this_tick = current_jobs_cloned.find(id)->second;
+                        // it needs to be a repeat job
+                        if (!job_last_tick->flags.bits.repeat)
+                            continue;
+                        // the completion counter from last tick must be 0
+                        if (job_last_tick->completion_timer != 0)
+                            continue;
+                        // the completion counter needs to now be -1
+                        if (job_this_tick->completion_timer != -1)
+                            continue;
+                        //still false positive if cancelled at EXACTLY the right time, but experiments show this doesn't happen
+                        completedJobs.emplace(tick, job_this_tick);
+                    } else {
+                        // if we didn't find it, we don't need to check much
+                        if (job_last_tick->flags.bits.repeat || job_last_tick->completion_timer != 0)
+                            continue;
+                        completedJobs.emplace(tick, job_last_tick);
                     }
                 }
-                // the report isn't for the instigator
-                // todo: what is the purpose of `history` is it used somewhere?
-                unordered_set<int32_t>& b = history[data.attacker];
-                if ( b.find(data.defender) != b.end() )
-                    continue;
-                history[data.attacker].insert(data.defender);
-                // todo: explain the journey to this moment
-                lastAttacker = df::unit::find(data.attacker);
-
-                interactionEvents.emplace(tick, data);
-                break;
             }
-            default:
+        }
+        // clean up stale jobs
+        for( auto iter = newJobs.begin(); iter != newJobs.end();) {
+            if (!current_jobs.count(iter->second)) {
+                iter = newJobs.erase(iter);
+            } else {
+                ++iter;
+            }
+        }
+        // clean up stale jobs
+        for( auto iter = startedJobs.begin(); iter != startedJobs.end();) {
+            if (!current_jobs.count(iter->second)) {
+                iter = startedJobs.erase(iter);
+            } else {
+                ++iter;
+            }
+        }
+        // completedJobs doesn't get stale jobs
+        fn_last_tick = tick;
+        previous_jobs.swap(current_jobs_cloned);
+    }
+
+    void scan_buildings(color_ostream &out, const int32_t &tick) {
+        // update created building list
+        for (int32_t id = nextBuilding; id < *df::global::building_next_id; ++id) {
+            int32_t index = df::building::binsearch_index(df::global::world->buildings.all, id);
+            // check that we can find the id
+            if (index < 0) {
+                //out.print("%s, line %d: Couldn't find new building with id %d.\n", __FILE__, __LINE__, a);
+                //the tricky thing is that when the game first starts, it's ok to skip buildings, but otherwise, if you skip buildings, something is probably wrong. TODO: make this smarter
                 continue;
+            }
+            // this is a new building
+            createdBuildings.emplace(tick, id);
         }
-        ++idx;
-    }
-    // delete bad id references
-    for(auto iter = reportToRelevantUnits.begin(); iter != reportToRelevantUnits.end();) {
-        if (!valid_reports.count(iter->first)) {
-            iter = reportToRelevantUnits.erase(iter);
-        } else {
-            ++iter;
+        nextBuilding = *df::global::building_next_id;
+        // update destroyed building list
+        for (auto iter = createdBuildings.begin(); iter != createdBuildings.end(); ++iter) {
+            int32_t id = iter->second;
+            int32_t index = df::building::binsearch_index(df::global::world->buildings.all, id);
+            // check whether still exists
+            if (index >= 0) {
+                continue;
+            }
+            // building doesn't exist anymore
+            destroyedBuildings.emplace(tick, id);;
         }
-    }
-    // delete bad id references
-    for(auto iter = newReports.begin(); iter != newReports.end();){
-        if(!valid_reports.count(iter->first)){
-            iter = newReports.erase(iter);
-        } else {
-            ++iter;
+        // update created construction list
+        for (auto &c: df::global::world->constructions) {
+            // add construction if unique to position
+            createdConstructions.emplace(tick, *c); // hashes based on c->pos (df::coord)
         }
+        // update destroyed constructions list
+        for (auto &key_value: createdConstructions) {
+            auto &c = key_value.second;
+            // if we can't find it, it was removed
+            if (!df::construction::find(c.pos)) {
+                destroyedConstructions.emplace(tick, c);
+            }
+        }
+
+        // clean up re-used id's [created list](only keep latest)
+        for (auto iter = createdBuildings.begin(); iter != createdBuildings.end();) {
+            auto td = iter->first;
+            auto id = iter->second;
+            auto diter = destroyedBuildings.find(id);
+            // erase if the building id has been destroyed
+            if (td < diter->first) {
+                iter = createdBuildings.erase(iter);
+            } else {
+                ++iter;
+            }
+        }
+        // clean up re-used id's [destroyed list](only keep latest)
+        for (auto iter = destroyedBuildings.begin(); iter != destroyedBuildings.end();) {
+            // todo: this loop may not serve a purpose, we should check if a destroyed building's id can be re-used.. or if the building can be restored
+            auto td = iter->first;
+            auto id = iter->second;
+            auto citer = createdBuildings.find(id);
+            // erase if the building id has been re-created
+            if (td < citer->first) {
+                iter = destroyedBuildings.erase(iter);
+            } else {
+                ++iter;
+            }
+        }
+        // clean up re-used id's [created list](only keep latest)
+        for (auto iter = createdConstructions.begin(); iter != createdConstructions.end();) {
+            auto td = iter->first;
+            auto construction = iter->second;
+            auto diter = destroyedConstructions.find(construction);
+            // erase if the construction has been destroyed
+            if (td < diter->first) {
+                iter = createdConstructions.erase(iter);
+            } else {
+                ++iter;
+            }
+        }
+        // clean up re-used id's [destroyed list](only keep latest)
+        for (auto iter = destroyedConstructions.begin(); iter != destroyedConstructions.end();) {
+            auto td = iter->first;
+            auto construction = iter->second;
+            auto citer = createdConstructions.find(construction);
+            // erase if the construction has been re-created
+            if (td < citer->first) {
+                iter = destroyedConstructions.erase(iter);
+            } else {
+                ++iter;
+            }
+        }
+
+        // clean up stale building id's
+        for (auto iter = createdBuildings.begin(); iter != createdBuildings.end();) {
+            if (df::building::binsearch_index(df::global::world->buildings.all, iter->second) < 0) {
+                iter = createdBuildings.erase(iter);
+            } else {
+                ++iter;
+            }
+        }
+        // clean up stale building id's
+        for (auto iter = destroyedBuildings.begin(); iter != destroyedBuildings.end();) {
+            if (df::building::binsearch_index(df::global::world->buildings.all, iter->second) < 0) {
+                iter = destroyedBuildings.erase(iter);
+            } else {
+                ++iter;
+            }
+        }
+        // constructions don't need cleaning up, they never go stale (they are POD)
     }
-}
 
-void scan_unit_inventory(color_ostream &out, const int32_t &tick, df::unit* unit) {
-    auto unitId = unit->id;
-    static std::shared_ptr<InventoryItem> null_item(nullptr);
-    static unordered_map<int32_t, unordered_map<int32_t, std::shared_ptr<InventoryItem>> > previous_inventories;
-    unordered_map<int32_t, std::shared_ptr<InventoryItem>> &previous_inventory = previous_inventories[unitId]; // from last tick
-    unordered_map<int32_t, std::shared_ptr<InventoryItem>> current_inventory; // from this tick
+    void scan_reports(color_ostream &out, const int32_t &tick) {
+        //df::unit* lastDefender = NULL;
+        df::report* lastAttackEvent = nullptr;
+        df::unit* lastAttacker = nullptr;
+        bool ie_skip_next = false; // interaction event, skip next report
+        unordered_map<int32_t,unordered_set<int32_t> > history;
+        auto &reports = df::global::world->status.reports;
+        size_t idx = 0;
+        valid_reports.clear();
 
-    // iterate current tick's inventory for unit (std::vector)
-    for (auto unit_item : unit->inventory) {
-        auto itemId = unit_item->item->id;
-        std::shared_ptr<InventoryItem> inv_item(new InventoryItem(itemId, *unit_item));
-        current_inventory.emplace(itemId, inv_item);
+        // loop the global reports
+        for(auto &report : df::global::world->status.reports) {
+            auto id = report->id;
+            valid_reports.emplace(id);
+            // emplace the report id for sendReportEvents
+            newReports.emplace(tick, id);
+            // check if the report is a continuation
+            if (report->flags.bits.continuation)
+                continue;
+            bool is_actor = false;
+            // parse event type
+            switch (report->type) {
+                case df::announcement_type::COMBAT_STRIKE_DETAILS:
+                    parse_strike_report(out, tick, report);
+                    break;
+                case df::announcement_type::INTERACTION_ACTOR:
+                    is_actor = true;
+                case df::announcement_type::INTERACTION_TARGET: {
+                    if (ie_skip_next) {
+                        ie_skip_next = false;
+                        continue;
+                    }
+                    // todo: read functions, write comments
+                    InteractionData data;
+                    if (is_actor) {
+                        vector<df::unit*> relevant_units = gatherRelevantUnits(out, report, nullptr);
+                        data = getAttacker(out, report, nullptr, nullptr, relevant_units);
+                        lastAttackEvent = report;
+                        lastAttacker = nullptr;
+                        if (idx + 1 < reports.size() &&
+                            reports[idx + 1]->type == df::announcement_type::INTERACTION_TARGET) {
+                            relevant_units = gatherRelevantUnits(out, report, reports[idx + 1]);
+                            InteractionData data2 = getAttacker(out,
+                                                                report,
+                                                                nullptr,
+                                                                reports[idx + 1],
+                                                                relevant_units);
+                            if (data.attacker == data2.attacker &&
+                                (data.defender == -1 || data.defender == data2.defender)) {
+                                data = data2;
+                                ie_skip_next = true;
+                            }
+                        }
+                    } else {
+                        vector<df::unit*> relevant_units = gatherRelevantUnits(out, lastAttackEvent, report);
+                        data = getAttacker(out, lastAttackEvent, lastAttacker, report, relevant_units);
+                    }
 
-        // check if the item existed last tick
-        if (!previous_inventory.count(itemId)) {
-            // it didn't, so it must be new
-            equipmentChanges.emplace(tick, InventoryChangeData(unitId, null_item, inv_item)); // allocate direct to shared_ptr
-        } else {
-            // it did, so we can compare for changes
-            std::shared_ptr<InventoryItem> &inv_item_last_tick = previous_inventory.find(itemId)->second;
-            df::unit_inventory_item &prevTick = inv_item_last_tick->item;
-            df::unit_inventory_item &thisTick = *unit_item;
-            // check whether something changed
-            if (prevTick.mode != thisTick.mode ||
-                prevTick.body_part_id != thisTick.body_part_id ||
-                prevTick.wound_id != thisTick.wound_id) {
-                // something changed
-                equipmentChanges.emplace(tick, InventoryChangeData(unitId, inv_item_last_tick, inv_item));
+                    if (data.attacker < 0) {
+                        continue;
+                    }
+                    if (history[data.attacker].count(data.defender))
+                        continue;
+                    history[data.attacker].emplace(data.defender);
+                    lastAttacker = df::unit::find(data.attacker);
+                    interactionEvents.emplace(tick, data);
+                    break;
+                }
+                default:
+                    continue;
+            }
+            ++idx;
+        }
+        // delete bad id references
+        for(auto iter = reportToRelevantUnits.begin(); iter != reportToRelevantUnits.end();) {
+            if (!valid_reports.count(iter->first)) {
+                iter = reportToRelevantUnits.erase(iter);
+            } else {
+                ++iter;
+            }
+        }
+        // delete bad id references
+        for(auto iter = newReports.begin(); iter != newReports.end();){
+            if(!valid_reports.count(iter->first)){
+                iter = newReports.erase(iter);
+            } else {
+                ++iter;
             }
         }
     }
-    //check for dropped items
-    for (auto &key_value : previous_inventory) {
-        std::shared_ptr<InventoryItem> &inv_item = key_value.second;
-        // check if the unit still has the item
-        if (current_inventory.count(inv_item->itemId)) {
-            // it does not
-            equipmentChanges.emplace(tick, InventoryChangeData(unitId, inv_item, null_item));
-        }
-    }
-    previous_inventory.swap(current_inventory);
 
-    // todo: investigate cleaning up stale references(?)
-}
+    void scan_unit_inventory(color_ostream &out, const int32_t &tick, df::unit* unit) {
+        auto unitId = unit->id;
+        static std::shared_ptr<InventoryItem> null_item(nullptr);
+        static unordered_map<int32_t, unordered_map<int32_t, std::shared_ptr<InventoryItem>>> previous_inventories;
+        unordered_map<int32_t, std::shared_ptr<InventoryItem>> &previous_inventory = previous_inventories[unitId]; // from last tick
+        unordered_map<int32_t, std::shared_ptr<InventoryItem>> current_inventory; // from this tick
 
-void scan_unit_reports(color_ostream &out, const int32_t &tick, df::unit* unit) {
-    int idx = 0;
-    // loop unit's reports
-    for (auto &log : unit->reports.log) {
-        // we don't want unit->reports.log[unit_report_type::Sparring]
-        if (idx++ == unit_report_type::Sparring)
-            continue;
-        // iterate reports (not sparring report types though)
-        for (auto &report_id: log) {
-            auto &units_with_report = reportToRelevantUnits[report_id]; // units with this report
-            // todo: optimize search
-            if (std::find(units_with_report.begin(), units_with_report.end(), unit->id) == units_with_report.end()) {
-                // build reportToRelevantUnits
-                units_with_report.push_back(unit->id);
+        // iterate current tick's inventory for unit (std::vector)
+        for (auto unit_item: unit->inventory) {
+            auto itemId = unit_item->item->id;
+            std::shared_ptr<InventoryItem> inv_item(new InventoryItem(itemId, *unit_item));
+            current_inventory.emplace(itemId, inv_item);
+
+            // check if the item existed last tick
+            if (!previous_inventory.count(itemId)) {
+                // it didn't, so it must be new
+                equipmentChanges.emplace(tick, InventoryChangeData(unitId, null_item, inv_item)); // allocate direct to shared_ptr
+            } else {
+                // it did, so we can compare for changes
+                std::shared_ptr<InventoryItem> &inv_item_last_tick = previous_inventory.find(itemId)->second;
+                df::unit_inventory_item &prevTick = inv_item_last_tick->item;
+                df::unit_inventory_item &thisTick = *unit_item;
+                // check whether something changed
+                if (prevTick.mode != thisTick.mode ||
+                    prevTick.body_part_id != thisTick.body_part_id ||
+                    prevTick.wound_id != thisTick.wound_id) {
+                    // something changed
+                    equipmentChanges.emplace(tick, InventoryChangeData(unitId, inv_item_last_tick, inv_item));
+                }
             }
         }
-    }
-
-    // todo: clean up stale id's
-}
-
-void parse_strike_report(color_ostream &out, const int32_t &tick, df::report* report) {
-    std::unordered_map<int32_t, std::unordered_map<int32_t, bool> > alreadyDone;
-    // process the strike reports
-    if (!report) {
-        return; //TODO: error
-    }
-    // prepare our report text
-    std::string reportStr = report->text;
-    for (int32_t id2 = report->id + 1;; id2++) {
-        df::report* report2 = df::report::find(id2);
-        if (!report2)
-            break;
-        if (report2->type != df::announcement_type::COMBAT_STRIKE_DETAILS)
-            break;
-        if (!report2->flags.bits.continuation)
-            break;
-        reportStr += report2->text;
-    }
-
-    // get relevant units
-    std::vector<int32_t> &relevantUnits = reportToRelevantUnits[report->id];
-    if (relevantUnits.size() != 2) {
-        return;
-    }
-    df::unit* unit1 = df::unit::find(relevantUnits[0]);
-    df::unit* unit2 = df::unit::find(relevantUnits[1]); //todo: we don't check for an error state? (todo: look at logging utils)
-    auto getWound = [](df::unit* defender, df::unit* attacker) {
-        for (auto wound: defender->body.wounds) {
-            // todo/ we might be missing N wounds, we just return the first one we see (albeit N is probably 1 at most)
-            if (wound->age <= 1 && wound->attacker_unit_id == attacker->id) {
-                return wound;
+        //check for dropped items
+        for (auto &key_value: previous_inventory) {
+            std::shared_ptr<InventoryItem> &inv_item = key_value.second;
+            // check if the unit still has the item
+            if (current_inventory.count(inv_item->itemId)) {
+                // it does not
+                equipmentChanges.emplace(tick, InventoryChangeData(unitId, inv_item, null_item));
             }
         }
-        return (df::unit_wound*) nullptr;
-    };
 
-    // get the first wound of the first caused by the second
-    df::unit_wound* unit1_wound = getWound(unit1, unit2);
-    df::unit_wound* unit2_wound = getWound(unit2, unit1);
+        // todo: switch to hashed search? ie. `std::unordered_set<item ids> valid_items`
+        for (auto iter = equipmentChanges.begin(); iter != equipmentChanges.end();) {
+            if (!all_units.count(iter->second.unitId)
+                || df::item::binsearch_index(df::global::world->items.all, iter->second.item_new->itemId, true) < 0
+                || df::item::binsearch_index(df::global::world->items.all, iter->second.item_old->itemId, true) < 0) {
+                // we have stale data
+                iter = equipmentChanges.erase(iter);
+            } else {
+                ++iter;
+            }
+        }
+        previous_inventory.swap(current_inventory);
+    }
 
+    void scan_unit_reports(color_ostream &out, const int32_t &tick, df::unit* unit) {
+        int idx = 0;
+        // loop unit's reports
+        for (auto &log : unit->reports.log) {
+            // we don't want unit_report_type::Sparring
+            switch((unit_report_type::unit_report_type)idx){
+                case unit_report_type::Sparring:
+                    continue;
+                case unit_report_type::Combat:
+                case unit_report_type::Hunting:
+                    for (auto &report_id: log) {
+                        // add the unit onto a set of units belonging to the report `report_id`
+                        reportToRelevantUnits[report_id].emplace(unit->id);
+                    }
+                    break;
+            }
+        }
+        // clean up stale unit id's
+        for (auto &key_value : reportToRelevantUnits){
+            // we want to iterate the units related to various reports
+            auto &units = key_value.second;
+            for(auto iter = units.begin(); iter != units.end();) {
+                // we check for the id in `all_units` to determine whether it's stale
+                if (!all_units.count(*iter)){
+                    iter = units.erase(iter);
+                } else {
+                    ++iter;
+                }
+            }
+        }
+        // stale report id's are cleaned up on the scan_reports stack
+    }
 
-    // our data, we use it multiple times (pod copy)
-    UnitAttackData data{};
-    data.report_id = report->id;
-    // honestly, I don't know why we are checking these things and constructing these data arrangements (todo: lookup git blame 0.47.05-r5#L980-L1007)
-    if (unit1_wound && !alreadyDone[unit1->id][unit2->id]) {
-        // emplace a copy of this data, in attackEvents
-        data.attacker = unit1->id;
-        data.defender = unit2->id;
-        data.wound = unit1_wound->id;
-        alreadyDone[data.attacker][data.defender] = true;
-        attackEvents.emplace(tick, data);
-        // we were sending events(0.47.05-r5), now we're just storing; see: https://github.com/DFHack/dfhack/blob/585888c2d36593882f756c5f5de459ec6b42b9ab/library/modules/EventManager.cpp#L980-L1007
-    }
-    if (unit2_wound && !alreadyDone[unit1->id][unit2->id]) {
-        // emplace a copy of this data, in attackEvents
-        data.attacker = unit2->id;
-        data.defender = unit1->id;
-        data.wound = unit2_wound->id;
-        alreadyDone[data.attacker][data.defender] = true;
-        attackEvents.emplace(tick, data);
-    }
-    if (Units::isKilled(unit1)) {
-        // emplace a copy of this data, in attackEvents
-        data.attacker = unit2->id;
-        data.defender = unit1->id;
-        data.wound = -1;
-        alreadyDone[data.attacker][data.defender] = true;
-        attackEvents.emplace(tick, data);
-    }
-    if (Units::isKilled(unit2)) {
-        // emplace a copy of this data, in attackEvents
-        data.attacker = unit1->id;
-        data.defender = unit2->id;
-        data.wound = -1;
-        alreadyDone[data.attacker][data.defender] = true;
-        attackEvents.emplace(tick, data);
-    }
-    if (!unit1_wound && !unit2_wound) {
-        //if ( unit1->flags1.bits.inactive || unit2->flags1.bits.inactive )
-        //    continue;
-        if (reportStr.find("severed part"))
+    void parse_strike_report(color_ostream &out, const int32_t &tick, df::report* report) {
+        std::unordered_map<int32_t, std::unordered_map<int32_t, bool> > alreadyDone;
+        // process the strike reports
+        if (!report) {
+            return; //TODO: error
+        }
+        // prepare our report text
+        std::string reportStr = report->text;
+        for (int32_t id2 = report->id + 1;; id2++) {
+            df::report* report2 = df::report::find(id2);
+            if (!report2)
+                break;
+            if (report2->type != df::announcement_type::COMBAT_STRIKE_DETAILS)
+                break;
+            if (!report2->flags.bits.continuation)
+                break;
+            reportStr += report2->text;
+        }
+
+        // get relevant units
+        std::unordered_set<int32_t> &relevantUnits = reportToRelevantUnits[report->id];
+        if (relevantUnits.size() != 2) {
             return;
-        if (Once::doOnce("EventManager neither wound")) {
-            out.print("%s, %d: neither wound: %s\n", __FILE__, __LINE__, reportStr.c_str());
+        }
+        auto iter = relevantUnits.begin();
+        // todo: did the order of unit1 vs unit2 matter?
+        df::unit* unit1 = df::unit::find(*iter);
+        df::unit* unit2 = df::unit::find(*++iter); //todo: we don't check for an error state? (todo: look at logging utils)
+        auto getWound = [](df::unit* defender, df::unit* attacker) {
+            for (auto wound: defender->body.wounds) {
+                // todo/ we might be missing N wounds, we just return the first one we see (albeit N is probably 1 at most)
+                if (wound->age <= 1 && wound->attacker_unit_id == attacker->id) {
+                    return wound;
+                }
+            }
+            return (df::unit_wound*) nullptr;
+        };
+
+        // get the first wound of the first caused by the second
+        df::unit_wound* unit1_wound = getWound(unit1, unit2);
+        df::unit_wound* unit2_wound = getWound(unit2, unit1);
+
+
+        // our data, we use it multiple times (pod copy)
+        UnitAttackData data{};
+        data.report_id = report->id;
+        // honestly, I don't know why we are checking these things and constructing these data arrangements (todo: lookup git blame 0.47.05-r5#L980-L1007)
+        if (unit1_wound && !alreadyDone[unit1->id][unit2->id]) {
+            // emplace a copy of this data, in attackEvents
+            data.attacker = unit1->id;
+            data.defender = unit2->id;
+            data.wound = unit1_wound->id;
+            alreadyDone[data.attacker][data.defender] = true;
+            attackEvents.emplace(tick, data);
+            // we were sending events(0.47.05-r5), now we're just storing; see: https://github.com/DFHack/dfhack/blob/585888c2d36593882f756c5f5de459ec6b42b9ab/library/modules/EventManager.cpp#L980-L1007
+        }
+        if (unit2_wound && !alreadyDone[unit1->id][unit2->id]) {
+            // emplace a copy of this data, in attackEvents
+            data.attacker = unit2->id;
+            data.defender = unit1->id;
+            data.wound = unit2_wound->id;
+            alreadyDone[data.attacker][data.defender] = true;
+            attackEvents.emplace(tick, data);
+        }
+        if (Units::isKilled(unit1)) {
+            // emplace a copy of this data, in attackEvents
+            data.attacker = unit2->id;
+            data.defender = unit1->id;
+            data.wound = -1;
+            alreadyDone[data.attacker][data.defender] = true;
+            attackEvents.emplace(tick, data);
+        }
+        if (Units::isKilled(unit2)) {
+            // emplace a copy of this data, in attackEvents
+            data.attacker = unit1->id;
+            data.defender = unit2->id;
+            data.wound = -1;
+            alreadyDone[data.attacker][data.defender] = true;
+            attackEvents.emplace(tick, data);
+        }
+        if (!unit1_wound && !unit2_wound) {
+            //if ( unit1->flags1.bits.inactive || unit2->flags1.bits.inactive )
+            //    continue;
+            if (reportStr.find("severed part"))
+                return;
+            if (Once::doOnce("EventManager neither wound")) {
+                out.print("%s, %d: neither wound: %s\n", __FILE__, __LINE__, reportStr.c_str());
+            }
         }
     }
-}
+};
+
+
+
 
 static std::vector<df::unit*> gatherRelevantUnits(color_ostream& out, df::report* r1, df::report* r2) {
     if ( r1 == r2 ) r2 = nullptr;
@@ -963,7 +1045,7 @@ static std::vector<df::unit*> gatherRelevantUnits(color_ostream& out, df::report
     unordered_set<int32_t> ids;
 
     auto pushbackReportUnits = [&](const df::report* report) {
-        const vector<int32_t> &report_units = reportToRelevantUnits[report->id];
+        const auto &report_units = reportToRelevantUnits[report->id];
         if (report_units.size() > 2 && Once::doOnce("EventManager interaction too many relevant units")) {
             out.print("%s,%d: too many relevant units. On report\n \'%s\'\n", __FILE__, __LINE__, report->text.c_str());
         }
@@ -978,7 +1060,8 @@ static std::vector<df::unit*> gatherRelevantUnits(color_ostream& out, df::report
     return result;
 }
 
-static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, df::unit* lastAttacker, df::report* defendEvent, vector<df::unit*>& relevantUnits) {
+static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, df::unit* lastAttacker,
+                                   df::report* defendEvent, const vector<df::unit*>& relevantUnits) {
     auto getVerb = [](df::unit* unit, const std::string &reportStr) {
         std::string blank = "";
         std::string result(reportStr);
@@ -1179,7 +1262,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         reportToRelevantUnitsTime = -1;
         reportToRelevantUnits.clear();
         // initialize lists
-        scan(out, -1);
+        Scanner::get().scan(out, -1);
 
         for (auto unit : df::global::world->history.figures) {
             if ( unit->id < 0 && unit->name.language < 0 )
@@ -1201,7 +1284,7 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
     CoreSuspender suspender;
 
     // perform data structure scans ahead of the managers that need the scanning, this is to avoid re-iteration
-    scan(out, df::global::world->frame_counter);
+    Scanner::get().scan(out, df::global::world->frame_counter);
 
     // iterate the event types
     for (size_t type = 0; type < EventType::EVENT_MAX; type++ ) {
@@ -1274,9 +1357,9 @@ static void sendJobInitiatedEvents(color_ostream& out) {
             auto jter = newJobs.upper_bound(last_tick);
             for(;jter != newJobs.end();) {
                 auto id = jter->second;
-                if (current_jobs.count(id)) {
+                if (Scanner::get().current_jobs.count(id)) {
                     // send the job* corresponding to the id
-                    auto job = current_jobs.find(id)->second;
+                    auto job = Scanner::get().current_jobs.find(id)->second;
                     handler.eventHandler(out, (void*) job);
                     ++jter;
                 } else {
@@ -1306,9 +1389,9 @@ static void sendJobStartedEvents(color_ostream& out) {
             auto jter = startedJobs.upper_bound(last_tick);
             for (; jter != startedJobs.end(); ++jter) {
                 auto id = jter->second;
-                if (current_jobs.count(id)) {
+                if (Scanner::get().current_jobs.count(id)) {
                     // send the job* corresponding to the id
-                    auto job = current_jobs.find(id)->second;
+                    auto job = Scanner::get().current_jobs.find(id)->second;
                     handler.eventHandler(out, (void*) job);
                     ++jter;
                 } else {

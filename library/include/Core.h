@@ -58,7 +58,6 @@ namespace DFHack
     class Process;
     class Module;
     class Materials;
-    class Notes;
     struct VersionInfo;
     class VersionInfoFactory;
     class PluginManager;
@@ -69,10 +68,6 @@ namespace DFHack
     namespace Lua { namespace Core {
         DFHACK_EXPORT void Reset(color_ostream &out, const char *where);
     } }
-    namespace Windows
-    {
-        class df_window;
-    }
 
     namespace Screen
     {
@@ -146,8 +141,6 @@ namespace DFHack
 
         /// get the materials module
         Materials * getMaterials();
-        /// get the notes module
-        Notes * getNotes();
         /// get the graphic module
         Graphic * getGraphic();
         /// sets the current hotkey command
@@ -193,7 +186,6 @@ namespace DFHack
 
         std::unique_ptr<DFHack::Process> p;
         std::shared_ptr<DFHack::VersionInfo> vinfo;
-        DFHack::Windows::df_window * screen_window;
 
         static void print(const char *format, ...) Wformat(printf,1,2);
         static void printerr(const char *format, ...) Wformat(printf,1,2);
@@ -242,7 +234,6 @@ namespace DFHack
         struct
         {
             Materials * pMaterials;
-            Notes * pNotes;
             Graphic * pGraphic;
         } s_mods;
         std::vector<std::unique_ptr<Module>> allModules;

@@ -138,7 +138,6 @@ set(MODULE_HEADERS
     include/modules/MapCache.h
     include/modules/Maps.h
     include/modules/Materials.h
-    include/modules/Notes.h
     include/modules/Once.h
     include/modules/Persistence.h
     include/modules/Random.h
@@ -165,7 +164,6 @@ set(MODULE_SOURCES
     modules/MapCache.cpp
     modules/Maps.cpp
     modules/Materials.cpp
-    modules/Notes.cpp
     modules/Once.cpp
     modules/Persistence.cpp
     modules/Random.cpp
@@ -173,7 +171,6 @@ set(MODULE_SOURCES
     modules/Screen.cpp
     modules/Translation.cpp
     modules/Units.cpp
-    modules/Windows.cpp
     modules/World.cpp
 )
 

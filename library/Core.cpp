@@ -54,7 +54,6 @@ using namespace std;
 #include "modules/Gui.h"
 #include "modules/World.h"
 #include "modules/Graphic.h"
-#include "modules/Windows.h"
 #include "modules/Persistence.h"
 #include "RemoteServer.h"
 #include "RemoteTools.h"
@@ -1564,7 +1563,6 @@ Core::Core() :
     last_local_map_ptr = NULL;
     last_pause_state = false;
     top_viewscreen = NULL;
-    screen_window = NULL;
 
     color_ostream::log_errors_to_stderr = true;
 
@@ -1835,8 +1833,6 @@ bool Core::Init()
     cerr << "Starting DF input capture thread.\n";
     // set up hotkey capture
     d->hotkeythread = std::thread(fHKthread, (void *) temp);
-    screen_window = new Windows::top_level_window();
-    screen_window->addChild(new Windows::dfhack_dummy(5,10));
     started = true;
     modstate = 0;
 
@@ -1984,7 +1980,6 @@ int Core::TileUpdate()
 {
     if(!started)
         return false;
-    screen_window->paint();
     return true;
 }
 
@@ -2922,5 +2917,4 @@ TYPE * Core::get##TYPE() \
 }
 
 MODULE_GETTER(Materials);
-MODULE_GETTER(Notes);
 MODULE_GETTER(Graphic);

@@ -47,6 +47,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Documentation
 
 ## API
+- Removed ``Notes`` module (C++-only). Access ``ui.waypoints.points`` directly instead.
+- Removed ``Windows`` module (C++-only) - unused.
 
 ## Lua
 - ``tile-material``: fix the order of declarations. The ``GetTileMat`` function now returns the material as intended (always returned nil before). Also changed the license info, with permission of the original author.

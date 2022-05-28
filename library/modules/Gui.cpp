@@ -1688,7 +1688,7 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
     {
         DEBUG(gui).print("Skipped announcement because world->allow_announcements is false:\n%s\n", message.c_str());
         return false;
-    } 
+    }
     else if (!is_valid_enum_item(r.type))
     {
         WARN(gui).print("Invalid announcement type:\n%s\n", message.c_str());

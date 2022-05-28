@@ -410,7 +410,7 @@ function View:addviews(list)
             if not self.focus_group.cur then
                 self.focus_group.cur = obj.focus_group.cur
             else
-                obj:setFocus(false)
+                obj.focus_group.cur:setFocus(false)
             end
         end
         -- overwrite the child's focus_group hierarchy with ours

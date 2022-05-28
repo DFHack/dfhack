@@ -1020,7 +1020,7 @@ Fortress mode
   where ``df.report_zoom_type.Generic`` skips recentering and enforces valid view bounds (the same as x = -30000,)
   ``df.report_zoom_type.Item`` brings the position onscreen without centering, and
   ``df.report_zoom_type.Unit`` centers the screen on the position. Default zoom type is ``df.report_zoom_type.Item``.
-  
+
 * ``dfhack.gui.revealInDwarfmodeMap(pos)``
 
   Centers the view on the given position, which can be a ``df.coord`` instance
@@ -1096,11 +1096,11 @@ Announcements
   Takes a ``df.report_init`` (see: `structure definition <https://github.com/DFHack/df-structures/blob/master/df.announcements.xml>`_)
   and a string and processes them just like DF does. Can also be built from parameters instead of a ``report_init``.
   Setting ``is_sparring`` to *true* means the report will be added to sparring logs (if applicable) rather than hunting or combat.
-  
+
   The announcement will not display if units are involved and the player can't see them (or hear, for adventure mode sound announcement types.)
   Text is parsed using ``&`` as an escape character, with ``&r`` adding a blank line (equivalent to ``\n \n``,)
   ``&&`` being just ``&``, and any other combination causing neither character to display.
-  
+
   If you want a guaranteed announcement without parsing, use ``dfhack.gui.showAutoAnnouncement`` instead.
 
 Other

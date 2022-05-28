@@ -1962,7 +1962,7 @@ void Gui::recenterViewscreen(int32_t x, int32_t y, int32_t z, df::report_zoom_ty
     *df::global::window_x = clip_range(new_win_x, 0, (world->map.x_count - w));
     *df::global::window_y = clip_range(new_win_y, 0, (world->map.y_count - h));
     *df::global::window_z = clip_range(new_win_z, 0, (world->map.z_count - 1));
-    
+
     ui_sidebar_menus->minimap.need_render = true;
     ui_sidebar_menus->minimap.need_scan = true;
 
@@ -1975,7 +1975,7 @@ void Gui::pauseRecenter(int32_t x, int32_t y, int32_t z, bool pause)
         return;
 
     resetDwarfmodeView(pause);
-    
+
     if (x != -30000)
         recenterViewscreen(x, y, z, report_zoom_type::Item);
 

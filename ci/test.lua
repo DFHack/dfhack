@@ -240,7 +240,7 @@ end
 -- output doesn't trigger its own dfhack.printerr usage detection (see
 -- detect_printerr below)
 local orig_printerr = dfhack.printerr
-local function wrap_expect(func, private)
+local function wrap_expect(func, private, path)
     return function(...)
         private.checks = private.checks + 1
         local ret = {func(...)}
@@ -269,7 +269,7 @@ local function wrap_expect(func, private)
             end
             -- Skip any frames corresponding to C calls, or Lua functions defined in another file
             -- these could include pcall(), with_finalize(), etc.
-            if info.what == 'Lua' and info.short_src == caller_src then
+            if info.what == 'Lua' and (info.short_src == caller_src or info.short_src == path) then
                 orig_printerr(('  at %s:%d'):format(info.short_src, info.currentline))
             end
             frame = frame + 1
@@ -278,7 +278,7 @@ local function wrap_expect(func, private)
     end
 end
 
-local function build_test_env()
+local function build_test_env(path)
     local env = {
         test = utils.OrderedTable(),
         -- config values can be overridden in the test file to define
@@ -309,7 +309,7 @@ local function build_test_env()
         checks_ok = 0,
     }
     for name, func in pairs(expect) do
-        env.expect[name] = wrap_expect(func, private)
+        env.expect[name] = wrap_expect(func, private, path)
     end
     setmetatable(env, {__index = _G})
     return env, private
@@ -345,9 +345,9 @@ local function finish_tests(done_command)
 end
 
 local function load_tests(file, tests)
-    local short_filename = file:sub((file:find('test') or -4)+5, -1)
+    local short_filename = file:sub((file:find('test') or -4) + 5, -1)
     print('Loading file: ' .. short_filename)
-    local env, env_private = build_test_env()
+    local env, env_private = build_test_env(file)
     local code, err = loadfile(file, 't', env)
     if not code then
         dfhack.printerr('Failed to load file: ' .. tostring(err))

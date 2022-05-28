@@ -1007,17 +1007,19 @@ Fortress mode
 * ``dfhack.gui.pauseRecenter(pos[,pause])``
   ``dfhack.gui.pauseRecenter(x,y,z[,pause])``
 
-  Same as ``resetDwarfmodeView``, but also recenter if ``x`` isn't ``-30000``, and respects
-  RECENTER_INTERFACE_SHUTDOWN_MS (the delay before input is recognized when a recenter occurs) in DF's init.txt.
+  Same as ``resetDwarfmodeView``, but also recenter if ``x`` isn't ``-30000``. Respects
+  ``RECENTER_INTERFACE_SHUTDOWN_MS`` in DF's ``init.txt`` (the delay before input is recognized when a recenter occurs.)
 
 * ``dfhack.gui.recenterViewscreen(pos[,zoom])``
   ``dfhack.gui.recenterViewscreen(x,y,z[,zoom])``
   ``dfhack.gui.recenterViewscreen([zoom])``
 
   Recenter the view on a position using a specific zoom type. If no position is given,
-  recenter on ``df.global.cursor``. Zoom types are ``df.report_zoom_type`` (see: `enum definition <https://github.com/DFHack/df-structures/blob/master/df.announcements.xml#L438>`_),
-  where ``Generic`` skips recentering and enforces valid view bounds (the same as x = -30000,) ``Item`` brings
-  the position onscreen without centering, and ``Unit`` centers the screen on the position. Default zoom type is Item.
+  recenter on ``df.global.cursor``. Zoom types are ``df.report_zoom_type``
+  (see: `enum definition <https://github.com/DFHack/df-structures/blob/master/df.announcements.xml>`_),
+  where ``df.report_zoom_type.Generic`` skips recentering and enforces valid view bounds (the same as x = -30000,)
+  ``df.report_zoom_type.Item`` brings the position onscreen without centering, and
+  ``df.report_zoom_type.Unit`` centers the screen on the position. Default zoom type is ``df.report_zoom_type.Item``.
   
 * ``dfhack.gui.revealInDwarfmodeMap(pos)``
 
@@ -1091,11 +1093,15 @@ Announcements
 * ``dfhack.gui.autoDFAnnouncement(report,text)``
   ``dfhack.gui.autoDFAnnouncement(type,pos,text,color[,is_bright,unit1,unit2,is_sparring])``
 
-  Takes a ``df.report_init`` (see: `structure definition <https://github.com/DFHack/df-structures/blob/master/df.announcements.xml#L451>`_)
-  and a string and processes them just like DF does. Sometimes this means the announcement won't occur.
-  Can also be built from parameters instead of a ``report_init``. Setting ``is_sparring`` to ``true`` means the report
-  will be added to sparring logs (if applicable) rather than hunting or combat. Text is parsed using ``&`` as an escape character, with ``&r``
-  adding a blank line (equivalent to ``\n \n``,) ``&&`` being just ``&``, and any other combination causing neither character to display.
+  Takes a ``df.report_init`` (see: `structure definition <https://github.com/DFHack/df-structures/blob/master/df.announcements.xml>`_)
+  and a string and processes them just like DF does. Can also be built from parameters instead of a ``report_init``.
+  Setting ``is_sparring`` to *true* means the report will be added to sparring logs (if applicable) rather than hunting or combat.
+  
+  The announcement will not display if units are involved and the player can't see them (or hear, for adventure mode sound announcement types.)
+  Text is parsed using ``&`` as an escape character, with ``&r`` adding a blank line (equivalent to ``\n \n``,)
+  ``&&`` being just ``&``, and any other combination causing neither character to display.
+  
+  If you want a guaranteed announcement without parsing, use ``dfhack.gui.showAutoAnnouncement`` instead.
 
 Other
 ~~~~~

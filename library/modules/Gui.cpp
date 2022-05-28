@@ -1370,144 +1370,39 @@ DFHACK_EXPORT void Gui::writeToGamelog(std::string message)
 
 namespace
 {   // Utility functions for reports
-    /*bool parseReportString(std::vector<std::string> *out, const std::string &str, size_t line_length = 73)
-    {
+    bool parseReportString(std::vector<std::string> *out, const std::string &str, size_t line_length = 73)
+    {   // parse a string into output strings like DF does for reports
         if (str.empty() || line_length == 0)
             return false;
 
-        string parsed = "";
+        string parsed;
         size_t i = 0;
 
-        while (i < str.length())
-        {
-            if (str[i] == '&') // escape character
-            {
-                i++; // ignore the '&' itself
-                if (i >= str.length())
-                    break;
-
-                if (str[i] == 'r') // "&r" adds a blank line
-                    parsed += "\n \n"; // DF adds a line with a space for some reason
-                else if (str[i] == '&') // "&&" is '&'
-                    parsed += "&";
-                // else next char is ignored
-            }
-            else
-            {
-                parsed += str[i];
-            }
-            i++;
-        }
-
-        return word_wrap(out, parsed, line_length, true);
-    }*/
-    /*bool parseReportString(std::vector<std::string> *out, const std::string &str, size_t line_length = 73)
-    {
-        if (str.empty() || line_length == 0)
-            return false;
-
-        string parsed = "";
-        size_t i = 0;
-
-        while (i < str.length())
-        {
-            if (str[i] == '&') // escape character
-            {
-                i++; // ignore the '&' itself
-                if (i >= str.length())
-                    break;
-
-                if (str[i] == 'r') // "&r" adds a blank line
-                {
-                    word_wrap(out, parsed, line_length, true);
-                    out->push_back(" "); // DF adds a line with a space for some reason
-                    parsed = "";
-                }
-                else if (str[i] == '&') // "&&" is '&'
-                    parsed += "&";
-                // else next char is ignored
-            }
-            else
-            {
-                parsed += str[i];
-            }
-            i++;
-        }
-
-        if (parsed != "")
-            word_wrap(out, parsed, line_length, true);
-
-        return true;
-    }*/
-    bool parseReportString(std::vector<std::string> *out, const std::string &str, size_t line_length)
-    {   // out vector will contain strings cut to line_length, avoiding cutting up words
-        // Reverse-engineered from DF announcement code, fixes applied
-
-        if (str.empty() || line_length == 0)
-            return false;
-
-        bool ignore_space = false;
-        string current_line = "";
-        size_t iter = 0;
         do
         {
-            if (ignore_space)
+            if (str[i] == '&') // escape character
             {
-                if (str[iter] == ' ')
-                    continue;
-                ignore_space = false;
-            }
-
-            if (str[iter] == '&') // escape character
-            {
-                iter++; // ignore the '&' itself
-                if (iter >= str.length())
+                i++; // ignore the '&' itself
+                if (i >= str.length())
                     break;
 
-                if (str[iter] == 'r') // "&r" adds a blank line
+                if (str[i] == 'r') // "&r" adds a blank line
                 {
-                    if (!current_line.empty())
-                    {
-                        out->push_back(string(current_line));
-                        current_line = "";
-                    }
+                    word_wrap(out, parsed, line_length, false, true);
                     out->push_back(" "); // DF adds a line with a space for some reason
-                    continue; // don't add 'r' to current_line
+                    parsed.clear();
                 }
-                else if (str[iter] != '&')
-                {   // not "&&", don't add character to current_line
-                    continue;
-                }
+                else if (str[i] == '&') // "&&" is '&'
+                    parsed.push_back('&');
+                // else next char is ignored
             }
+            else
+                parsed.push_back(str[i]);
+        }
+        while (++i < str.length());
 
-            current_line += str[iter];
-            if (current_line.length() > line_length)
-            {
-                size_t i = current_line.length(); // start of current word
-                size_t j; // end of previous word
-                while (--i > 0 && current_line[i] != ' '); // find start of current word
-
-                if (i == 0)
-                {   // need to push at least one char
-                    j = i = line_length; // last char ends up on next line
-                }
-                else
-                {
-                    j = i;
-                    while (j > 1 && current_line[j - 1] == ' ')
-                        j--; // consume excess spaces at the split point
-                }
-                out->push_back(current_line.substr(0, j)); // push string before j
-
-                if (current_line[i] == ' ')
-                    i++; // don't keep this space
-                current_line.erase(0, i); // current_line now starts at last word or is empty
-                ignore_space = current_line.empty(); // ignore leading spaces on new line
-            }
-        } while (++iter < str.length());
-
-        if (!current_line.empty())
-            out->push_back(current_line);
+        if (parsed.length())
+            word_wrap(out, parsed, line_length, false, true);
 
         return true;
     }
@@ -1549,7 +1444,7 @@ namespace
     }
 
     int32_t check_repeat_report(vector<string> &results)
-    {
+    {   // returns the new repeat count, else 0
         if (*gamemode == game_mode::DWARF && !results.empty() && world->status.reports.size() >= results.size())
         {
             auto &reports = world->status.reports;
@@ -1697,6 +1592,19 @@ bool Gui::addCombatReport(df::unit *unit, df::unit_report_type slot, int report_
     return true;
 }
 
+namespace
+{   // An additional utility function for reports
+    bool add_proper_report(df::unit *unit, bool is_sparring, int report_index)
+    {
+        if (is_sparring)
+            return addCombatReport(unit, unit_report_type::Sparring, report_index);
+        else if (unit->job.current_job != NULL && unit->job.current_job->job_type == job_type::Hunt)
+            return addCombatReport(unit, unit_report_type::Hunting, report_index);
+        else
+            return addCombatReport(unit, unit_report_type::Combat, report_index);
+    }
+}
+
 bool Gui::addCombatReportAuto(df::unit *unit, df::announcement_flags mode, int report_index)
 {
     using df::global::world;
@@ -1710,14 +1618,7 @@ bool Gui::addCombatReportAuto(df::unit *unit, df::announcement_flags mode, int r
     bool ok = false;
 
     if (mode.bits.UNIT_COMBAT_REPORT)
-    {
-        if (unit->flags2.bits.sparring)
-            ok |= addCombatReport(unit, unit_report_type::Sparring, report_index);
-        else if (unit->job.current_job && unit->job.current_job->job_type == job_type::Hunt)
-            ok |= addCombatReport(unit, unit_report_type::Hunting, report_index);
-        else
-            ok |= addCombatReport(unit, unit_report_type::Combat, report_index);
-    }
+        ok |= add_proper_report(unit, unit->flags2.bits.sparring, report_index);
 
     if (mode.bits.UNIT_COMBAT_REPORT_ALL_ACTIVE)
     {
@@ -1783,27 +1684,23 @@ void Gui::showAutoAnnouncement(
 
 bool Gui::autoDFAnnouncement(df::report_init r, string message)
 {   // Reverse-engineered from DF announcement code
-    
     if (!world->allow_announcements)
     {
         DEBUG(gui).print("Skipped announcement because world->allow_announcements is false:\n%s\n", message.c_str());
         return false;
-    }
-
-    df::announcement_flags a_flags;
-    if (is_valid_enum_item(r.type))
-        a_flags = df::global::d_init->announcements.flags[r.type];
-    else
+    } 
+    else if (!is_valid_enum_item(r.type))
     {
         WARN(gui).print("Invalid announcement type:\n%s\n", message.c_str());
         return false;
     }
-
-    if (message.empty())
+    else if (message.empty())
     {
         Core::printerr("Empty announcement %u\n", r.type); // DF would print this to errorlog.txt
         return false;
     }
+
+    df::announcement_flags a_flags = df::global::d_init->announcements.flags[r.type];
 
     // Check if the announcement will actually be announced
     if (*gamemode == game_mode::ADVENTURE)
@@ -1814,11 +1711,13 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
             r.type != announcement_type::CONFLICT_CONVERSATION &&
             r.type != announcement_type::MECHANISM_SOUND)
         {   // If not sound, make sure we can see pos
-            if ((world->units.active.empty() || (r.unit1 != world->units.active[0] && r.unit2 != world->units.active[0])) &&
-                ((Maps::getTileDesignation(r.pos)->whole & 0x10) == 0x0)) // Adventure mode uses this bit to determine current visibility
-            {
-                DEBUG(gui).print("Adventure mode announcement not heard:\n%s\n", message.c_str());
-                return false;
+            if (world->units.active.empty() || (r.unit1 != world->units.active[0] && r.unit2 != world->units.active[0]))
+            {   // Adventure mode reuses a dwarf mode digging designation bit to determine current visibility
+                if (!Maps::isValidTilePos(r.pos) || (Maps::getTileDesignation(r.pos)->whole & 0x10) == 0x0)
+                {
+                    DEBUG(gui).print("Adventure mode announcement not detected:\n%s\n", message.c_str());
+                    return false;
+                }
             }
         }
     }
@@ -1826,7 +1725,7 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
     {   // Dwarf mode
         if ((r.unit1 != NULL || r.unit2 != NULL) && (r.unit1 == NULL || Units::isHidden(r.unit1)) && (r.unit2 == NULL || Units::isHidden(r.unit2)))
         {
-            DEBUG(gui).print("Dwarf mode announcement not heard:\n%s\n", message.c_str());
+            DEBUG(gui).print("Dwarf mode announcement not detected:\n%s\n", message.c_str());
             return false;
         }
 
@@ -1927,24 +1826,10 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
         if (a_flags.bits.UNIT_COMBAT_REPORT)
         {
             if (r.unit1 != NULL)
-            {
-                if (r.flags.bits.hostile_combat)
-                    success |= addCombatReport(r.unit1, unit_report_type::Combat, new_report_index);
-                else if (r.unit1->job.current_job != NULL && r.unit1->job.current_job->job_type == job_type::Hunt)
-                    success |= addCombatReport(r.unit1, unit_report_type::Hunting, new_report_index);
-                else
-                    success |= addCombatReport(r.unit1, unit_report_type::Sparring, new_report_index);
-            }
+                success |= add_proper_report(r.unit1, !r.flags.bits.hostile_combat, new_report_index);
 
             if (r.unit2 != NULL)
-            {
-                if (r.flags.bits.hostile_combat)
-                    success |= addCombatReport(r.unit2, unit_report_type::Combat, new_report_index);
-                else if (r.unit2->job.current_job != NULL && r.unit2->job.current_job->job_type == job_type::Hunt)
-                    success |= addCombatReport(r.unit2, unit_report_type::Hunting, new_report_index);
-                else
-                    success |= addCombatReport(r.unit2, unit_report_type::Sparring, new_report_index);
-            }
+                success |= add_proper_report(r.unit2, !r.flags.bits.hostile_combat, new_report_index);
         }
 
         if (a_flags.bits.UNIT_COMBAT_REPORT_ALL_ACTIVE)
@@ -1953,6 +1838,7 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
             {
                 if (recent_report(r.unit1, slot))
                     success |= addCombatReport(r.unit1, slot, new_report_index);
+
                 if (recent_report(r.unit2, slot))
                     success |= addCombatReport(r.unit2, slot, new_report_index);
             }
@@ -2044,9 +1930,7 @@ df::coord Gui::getCursorPos()
 }
 
 void Gui::recenterViewscreen(int32_t x, int32_t y, int32_t z, df::report_zoom_type zoom)
-{
-    // Reverse-engineered from DF announcement code, also used when scrolling
-
+{   // Reverse-engineered from DF announcement code, also used when scrolling
     auto dims = getDwarfmodeViewDims();
     int32_t w = dims.map_x2 - dims.map_x1 + 1;
     int32_t h = dims.map_y2 - dims.map_y1 + 1;
@@ -2062,7 +1946,7 @@ void Gui::recenterViewscreen(int32_t x, int32_t y, int32_t z, df::report_zoom_ty
         }
         else // report_zoom_type::Item
         {
-            if (new_win_x > (x - 5))
+            if (new_win_x > (x - 5)) // equivalent to: "while (new_win_x > x - 5) new_win_x -= 10;"
                 new_win_x -= (new_win_x - (x - 5) - 1) / 10 * 10 + 10;
             if (new_win_y > (y - 5))
                 new_win_y -= (new_win_y - (y - 5) - 1) / 10 * 10 + 10;
@@ -2072,32 +1956,28 @@ void Gui::recenterViewscreen(int32_t x, int32_t y, int32_t z, df::report_zoom_ty
                 new_win_y += ((y + 5 - h) - new_win_y - 1) / 10 * 10 + 10;
         }
 
-        if (new_win_z != z)
-            ui_sidebar_menus->minimap.need_scan = true;
         new_win_z = z;
     }
 
     *df::global::window_x = clip_range(new_win_x, 0, (world->map.x_count - w));
     *df::global::window_y = clip_range(new_win_y, 0, (world->map.y_count - h));
     *df::global::window_z = clip_range(new_win_z, 0, (world->map.z_count - 1));
+    
+    ui_sidebar_menus->minimap.need_render = true;
+    ui_sidebar_menus->minimap.need_scan = true;
 
     return;
 }
 
 void Gui::pauseRecenter(int32_t x, int32_t y, int32_t z, bool pause)
-{
-    // Reverse-engineered from DF announcement code
-
+{   // Reverse-engineered from DF announcement code
     if (*gamemode != game_mode::DWARF)
         return;
 
     resetDwarfmodeView(pause);
+    
     if (x != -30000)
-    {
         recenterViewscreen(x, y, z, report_zoom_type::Item);
-        ui_sidebar_menus->minimap.need_render = true;
-        ui_sidebar_menus->minimap.need_scan = true;
-    }
 
     if (init->input.pause_zoom_no_interface_ms > 0)
     {

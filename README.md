@@ -8,9 +8,9 @@
 DFHack is a Dwarf Fortress memory access library, distributed with scripts
 and plugins implementing a wide variety of useful functions and tools.
 
-The full documentation [is available online here](https://dfhack.readthedocs.org),
-from the README.html page in the DFHack distribution, or as raw text in the `./docs` folder.
+The full documentation [is available online here](https://dfhack.readthedocs.org).
+It is also accessible via the README.html page in the DFHack distribution or as raw text in the `./docs` folder.
 If you're an end-user, modder, or interested in contributing to DFHack -
 go read those docs.
 
-If that's unclear, or you need more help checkout our [support page](https://docs.dfhack.org/en/latest/docs/Support.html) for up-to-date options.
+If the docs are unclear or you need more help, please check out our [support page](https://docs.dfhack.org/en/latest/docs/Support.html) for ways to contact the DFHack developers.

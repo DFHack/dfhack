@@ -539,10 +539,13 @@ end
 function View:onRenderBody(dc)
 end
 
--- returns true if all of the following are true:
--- - the view is not the focus owner
--- - the view is not a descendent of the focus owner
--- - the focus owner and all of its ancestors are visible and active
+-- Returns whether we should invoke the focus owner's onInput() function from
+-- the given view's inputToSubviews() function. That is, returns true if:
+-- - the view is not itself the focus owner since that would be an infinite loop
+-- - the view is not a descendent of the focus owner (same as above)
+-- - the focus owner and all of its ancestors are visible and active, since if
+--   the focus owner is not (directly or transitively) visible or active, then
+--   it shouldn't be getting input.
 local function should_send_input_to_focus_owner(view, focus_owner)
     local iter = view
     while iter do

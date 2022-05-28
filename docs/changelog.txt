@@ -47,6 +47,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Documentation
 
 ## API
+- `word_wrap`: add ``trim_whitespace_after_newline`` option, which trims any whitespace at the beginning of a line after wrapping
 
 ## Lua
 - ``widgets.HotkeyLabel``: the ``key_sep`` string is now configurable

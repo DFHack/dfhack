@@ -192,7 +192,7 @@ bool word_wrap(std::vector<std::string> *out, const std::string &str, size_t lin
 
         if (isspace(c))
         {
-            if (ignore_whitespace || break_pos == line.length() && collapse_whitespace)
+            if (ignore_whitespace || (break_pos == line.length() && collapse_whitespace))
                 continue;
 
             line.push_back(collapse_whitespace ? ' ' : c);

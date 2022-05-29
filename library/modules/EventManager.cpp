@@ -1080,57 +1080,46 @@ static std::vector<df::unit*> gatherRelevantUnits(color_ostream& out, df::report
 static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, df::unit* lastAttacker,
                                    df::report* defendEvent, const vector<df::unit*>& relevantUnits) {
     auto getVerb = [](df::unit* unit, const std::string &reportStr) {
-        std::string result(reportStr);
-        std::string name = unit->name.first_name + " ";
-        // todo: c++20, starts with
-        if (result.compare(0, name.length(), name) == 0) {
-            result = result.substr(name.length());
-            result = result.substr(0, result.length() - 1);
-            return result;
-        }
-        //use profession name
-        name = "The " + Units::getProfessionName(unit) + " ";
-        if (result.substr(0,name.length()) == name) {
-            result = result.substr(name.length());
-            result = result.substr(0, result.length() - 1);
-            return result;
-        }
-        if (unit->id != 0) {
-            return std::string{""};
-        }
-        name = "You "; // this must have been a typo, otherwise the check was the same as above
-        // (before: you = "You ", now: name = "You ")
-        if (result.substr(0,name.length()) == name) {
-            result = result.substr(name.length());
-            result = result.substr(0, result.length() - 1);
-            return result;
+        std::string result;
+        std::array<std::string, 3> names = {
+                unit->name.first_name + " ",
+                "The " + Units::getProfessionName(unit) + " ",
+                "You "
+        };
+        int i = -1;
+        for(auto &name : names) {
+            // todo: check that this doesn't just end up excluding names[2] every single time
+            if (++i == 2 && unit->id != 0) {
+                return std::string{""};
+            }
+            // todo: c++20, starts_with
+            // check that reportStr starts with name
+            if (reportStr.compare(0, name.length(), name) == 0) {
+                result = reportStr.substr(name.length()); // exclude match from result
+                if (!result.empty()) {
+                    result.erase(result.end()-1); // remove last character
+                }
+                return result;
+            }
         }
         return std::string{""};
     };
+    // todo: find valid interactions, and trim relevantUnits
     vector<df::unit*> attackers = relevantUnits;
     vector<df::unit*> defenders = relevantUnits;
-
-    //find valid interactions: TODO
-    /*map<int32_t,vector<df::interaction*> > validInteractions;
-    for ( size_t a = 0; a < relevantUnits.size(); a++ ) {
-        df::unit* unit = relevantUnits[a];
-        vector<df::interaction*>& interactions = validInteractions[unit->id];
-        for ( size_t b = 0; b < unit->body.
-    }*/
-
-    //if attackEvent
-    //  attacker must be same location
-    //  attacker name must start attack str
-    //  attack verb must match valid interaction of this attacker
     std::string attackVerb;
+    std::string defendVerb;
+
+    // we need to prune `attackers` if we received an attackEvent report*
     if ( attackEvent ) {
-//out.print("%s,%d\n",__FILE__,__LINE__);
         for ( size_t a = 0; a < attackers.size(); a++ ) {
+            // attacker's position must match the position of the attack event
             if ( attackers[a]->pos != attackEvent->pos ) {
                 attackers.erase(attackers.begin()+a);
                 a--;
                 continue;
             }
+            // attacker name must start attack str
             if ( lastAttacker && attackers[a] != lastAttacker ) {
                 attackers.erase(attackers.begin()+a);
                 a--;
@@ -1138,6 +1127,7 @@ static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, 
             }
 
             std::string verbC = getVerb(attackers[a], attackEvent->text);
+            // a valid verb must have been parsed
             if ( verbC.length() == 0 ) {
                 attackers.erase(attackers.begin()+a);
                 a--;
@@ -1147,20 +1137,17 @@ static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, 
         }
     }
 
-    //if defendEvent
-    //  defender must be same location
-    //  defender name must start defend str
-    //  defend verb must match valid interaction of some attacker
-    std::string defendVerb;
+    // we need to prune `defenders` if we received an defendEvent report*
     if ( defendEvent ) {
-//out.print("%s,%d\n",__FILE__,__LINE__);
         for ( size_t a = 0; a < defenders.size(); a++ ) {
+            // defender's position must match the position of the defend event
             if ( defenders[a]->pos != defendEvent->pos ) {
                 defenders.erase(defenders.begin()+a);
                 a--;
                 continue;
             }
             std::string verbC = getVerb(defenders[a], defendEvent->text);
+            // a valid verb must have been parsed
             if ( verbC.length() == 0 ) {
                 defenders.erase(defenders.begin()+a);
                 a--;
@@ -1175,13 +1162,11 @@ static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, 
 //out.print("%s,%d\n",__FILE__,__LINE__);
     } else {
         if ( defenders.size() == 1 ) {
-//out.print("%s,%d\n",__FILE__,__LINE__);
             auto a = std::find(attackers.begin(),attackers.end(),defenders[0]);
             if ( a != attackers.end() )
                 attackers.erase(a);
         }
         if ( attackers.size() == 1 ) {
-//out.print("%s,%d\n",__FILE__,__LINE__);
             auto a = std::find(defenders.begin(),defenders.end(),attackers[0]);
             if ( a != defenders.end() )
                 defenders.erase(a);

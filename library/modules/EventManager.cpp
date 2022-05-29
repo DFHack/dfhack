@@ -795,6 +795,7 @@ protected:
                 case df::announcement_type::INTERACTION_TARGET: {
                     if (ie_skip_next) {
                         ie_skip_next = false;
+                        // we already processed this one
                         continue;
                     }
                     // todo: read functions, write comments
@@ -1063,34 +1064,32 @@ static std::vector<df::unit*> gatherRelevantUnits(color_ostream& out, df::report
 static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, df::unit* lastAttacker,
                                    df::report* defendEvent, const vector<df::unit*>& relevantUnits) {
     auto getVerb = [](df::unit* unit, const std::string &reportStr) {
-        std::string blank = "";
         std::string result(reportStr);
         std::string name = unit->name.first_name + " ";
-        bool match = strncmp(result.c_str(), name.c_str(), name.length()) == 0;
-        if (match) {
+        // todo: c++20, starts with
+        if (result.compare(0, name.length(), name) == 0) {
             result = result.substr(name.length());
             result = result.substr(0, result.length() - 1);
             return result;
         }
         //use profession name
         name = "The " + Units::getProfessionName(unit) + " ";
-        match = strncmp(result.c_str(), name.c_str(), name.length()) == 0;
-        if (match) {
+        if (result.substr(0,name.length()) == name) {
             result = result.substr(name.length());
             result = result.substr(0, result.length() - 1);
             return result;
         }
         if (unit->id != 0) {
-            return blank;
+            return std::string{""};
         }
-        std::string you = "You ";
-        match = strncmp(result.c_str(), name.c_str(), name.length()) == 0;
-        if (match) {
+        name = "You "; // this must have been a typo, otherwise the check was the same as above
+        // (before: you = "You ", now: name = "You ")
+        if (result.substr(0,name.length()) == name) {
             result = result.substr(name.length());
             result = result.substr(0, result.length() - 1);
             return result;
         }
-        return blank;
+        return std::string{""};
     };
     vector<df::unit*> attackers = relevantUnits;
     vector<df::unit*> defenders = relevantUnits;

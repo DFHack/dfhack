@@ -778,13 +778,14 @@ protected:
         df::report* lastAttackEvent = nullptr;
         df::unit* lastAttacker = nullptr;
         bool ie_skip_next = false; // interaction event, skip next report
-        unordered_map<int32_t,unordered_set<int32_t> > history;
+        unordered_map<int32_t, unordered_set<int32_t> > history;
         auto &reports = df::global::world->status.reports;
-        size_t idx = 0;
+        size_t idx = -1;
         valid_reports.clear();
 
         // loop the global reports
-        for(auto &report : df::global::world->status.reports) {
+        for (auto &report: df::global::world->status.reports) {
+            ++idx; // too many `continue` to do at the end
             auto id = report->id;
             valid_reports.emplace(id);
             // emplace the report id for sendReportEvents
@@ -803,7 +804,7 @@ protected:
                 case df::announcement_type::INTERACTION_TARGET: {
                     if (ie_skip_next) {
                         ie_skip_next = false;
-                        // we already processed this one
+                        // this report was processed as part of the last report
                         continue;
                     }
                     InteractionData data;
@@ -836,7 +837,6 @@ protected:
                         vector<df::unit*> relevant_units = gatherRelevantUnits(out, lastAttackEvent, report);
                         data = getAttacker(out, lastAttackEvent, lastAttacker, report, relevant_units);
                     }
-
                     if (data.attacker < 0) {
                         continue;
                     }
@@ -850,19 +850,22 @@ protected:
                 default:
                     continue;
             }
-            ++idx;
         }
         // delete bad id references
-        for(auto iter = reportToRelevantUnits.begin(); iter != reportToRelevantUnits.end();) {
+        for (auto iter = reportToRelevantUnits.begin(); iter != reportToRelevantUnits.end();) {
+            // check for a valid reference
             if (!valid_reports.count(iter->first)) {
+                // none found, so remove it
                 iter = reportToRelevantUnits.erase(iter);
             } else {
                 ++iter;
             }
         }
         // delete bad id references
-        for(auto iter = newReports.begin(); iter != newReports.end();){
-            if(!valid_reports.count(iter->first)){
+        for (auto iter = newReports.begin(); iter != newReports.end();) {
+            // check for a valid reference
+            if (!valid_reports.count(iter->first)) {
+                // none found, so remove it
                 iter = newReports.erase(iter);
             } else {
                 ++iter;

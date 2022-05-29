@@ -1,4 +1,5 @@
 #include "Core.h"
+#include "Debug.h"
 #include "Console.h"
 #include "VTableInterpose.h"
 #include "modules/Buildings.h"
@@ -43,6 +44,10 @@
 #include <unordered_set>
 #include <memory>
 #include <array>
+
+namespace DFHack {
+    DBG_DECLARE(core, eventmanager, DebugCategory::LWARNING);
+}
 
 using namespace std;
 using namespace DFHack;
@@ -380,8 +385,8 @@ static event_tracker<int32_t> createdBuildings; // we track ids, so we cannot be
 static event_tracker<int32_t> destroyedBuildings; // we track ids, so we cannot be certain of the life cycle sent to listeners
 
 //construction
-static event_tracker<df::construction> createdConstructions; // we track POD, and so we just have a copy of the data as long as we need it, though it may not exist in the constructions cache anymore
-static event_tracker<df::construction> destroyedConstructions; // we track POD, and so we just have a copy of the data as long as we need it, though it may not exist in the constructions cache anymore
+static event_tracker<df::construction, true> createdConstructions; // we track POD, and so we just have a copy of the data as long as we need it, though it may not exist in the constructions cache anymore
+static event_tracker<df::construction, true> destroyedConstructions; // we track POD, and so we just have a copy of the data as long as we need it, though it may not exist in the constructions cache anymore
 static bool gameLoaded;
 
 //syndrome
@@ -443,7 +448,9 @@ private:
     std::unordered_set<int32_t> all_units;
     std::unordered_set<int32_t> active_units;
     std::unordered_set<int32_t> valid_reports;
+    std::unordered_set<int32_t> valid_buildings;
     std::unordered_map<int32_t, df::job*> valid_jobs;
+    std::unordered_map<df::coord, df::construction*> valid_constructions;
 
 public:
     const std::unordered_map<int32_t, df::job*> &current_jobs = valid_jobs;
@@ -461,6 +468,13 @@ public:
             return;
         invasions.emplace(tick, nextInvasion);
         nextInvasion = df::global::ui->invasions.next_id;
+    }
+    inline void clear() {
+        all_units.clear();
+        active_units.clear();
+        valid_reports.clear();
+        valid_buildings.clear();
+        valid_jobs.clear();
     }
     static Scanner& get() {
         static Scanner instance;
@@ -658,111 +672,85 @@ protected:
     }
 
     void scan_buildings(color_ostream &out, const int32_t &tick) {
-        // update created building list
-        for (int32_t id = nextBuilding; id < *df::global::building_next_id; ++id) {
-            int32_t index = df::building::binsearch_index(df::global::world->buildings.all, id);
-            // check that we can find the id
-            if (index < 0) {
-                //out.print("%s, line %d: Couldn't find new building with id %d.\n", __FILE__, __LINE__, a);
-                //the tricky thing is that when the game first starts, it's ok to skip buildings, but otherwise, if you skip buildings, something is probably wrong. TODO: make this smarter
-                continue;
+        std::unordered_set<int32_t> previous_buildings;
+        std::unordered_map<df::coord, df::construction*> previous_constructions;
+        previous_buildings.swap(valid_buildings); // = valid_buildings.clear()
+        previous_constructions.swap(valid_constructions);
+
+        // loop all current buildings
+        for (auto &building : df::global::world->buildings.all) {
+            auto id = building->id;
+            valid_buildings.emplace(id);
+            // check if it existed last tick
+            if (!previous_buildings.count(id)) {
+                // it's new, add it
+                createdBuildings.emplace(tick, id);
             }
-            // this is a new building
-            createdBuildings.emplace(tick, id);
         }
-        nextBuilding = *df::global::building_next_id;
         // update destroyed building list
-        for (auto iter = createdBuildings.begin(); iter != createdBuildings.end(); ++iter) {
-            int32_t id = iter->second;
-            int32_t index = df::building::binsearch_index(df::global::world->buildings.all, id);
-            // check whether still exists
-            if (index >= 0) {
-                continue;
+        for (const auto &id : previous_buildings) {
+            // check if it exists right now
+            if (!valid_buildings.count(id)) {
+                // it's gone now, add it
+                destroyedBuildings.emplace(tick, id);
             }
-            // building doesn't exist anymore
-            destroyedBuildings.emplace(tick, id);;
         }
-        // update created construction list
+        // loop all current constructions
         for (auto &c: df::global::world->constructions) {
             // add construction if unique to position
-            createdConstructions.emplace(tick, *c); // hashes based on c->pos (df::coord)
+            valid_constructions.emplace(c->pos, c);
+            // check if it existed last tick
+            if (!previous_constructions.count(c->pos)) {
+                createdConstructions.emplace(tick, *c); // hashes based on c->pos (df::coord)
+            }
         }
         // update destroyed constructions list
-        for (auto &key_value: createdConstructions) {
-            auto &c = key_value.second;
-            // if we can't find it, it was removed
-            if (!df::construction::find(c.pos)) {
-                destroyedConstructions.emplace(tick, c);
+        for (auto &key_value: previous_constructions) {
+            const auto &p = key_value.first;
+            const auto &c = key_value.second;
+            // check if it exists right now
+            if (!valid_constructions.count(p)) {
+                // it's gone now, add it
+                destroyedConstructions.emplace(tick, *c);
             }
         }
 
-        // clean up re-used id's [created list](only keep latest)
-        for (auto iter = createdBuildings.begin(); iter != createdBuildings.end();) {
-            auto td = iter->first;
-            auto id = iter->second;
-            auto diter = destroyedBuildings.find(id);
-            // erase if the building id has been destroyed
-            if (td < diter->first) {
-                iter = createdBuildings.erase(iter);
-            } else {
-                ++iter;
+        // clean up stale id's [createdBuildings]
+        for (auto creation_iter = createdBuildings.begin(); creation_iter != createdBuildings.end();) {
+            auto created_tick = creation_iter->first;
+            auto id = creation_iter->second;
+            // if the id has been destroyed we'll need to possibly erase it from createdBuildings
+            auto destruction_iter = destroyedBuildings.find(id);
+            if (destruction_iter != destroyedBuildings.end()) {
+                auto destroyed_tick = destruction_iter->first;
+                // remove if destroyed happened after created
+                if (destroyed_tick > created_tick) {
+                    creation_iter = createdBuildings.erase(creation_iter);
+                    continue; // next
+                }
             }
+            ++creation_iter; // next
         }
         // clean up re-used id's [destroyed list](only keep latest)
-        for (auto iter = destroyedBuildings.begin(); iter != destroyedBuildings.end();) {
-            // todo: this loop may not serve a purpose, we should check if a destroyed building's id can be re-used.. or if the building can be restored
-            auto td = iter->first;
-            auto id = iter->second;
-            auto citer = createdBuildings.find(id);
-            // erase if the building id has been re-created
-            if (td < citer->first) {
-                iter = destroyedBuildings.erase(iter);
-            } else {
-                ++iter;
+        for (auto destruction_iter = destroyedBuildings.begin(); destruction_iter != destroyedBuildings.end();) {
+            // todo: this loop may not serve a purpose, we should check if a destroyed building's id can be re-used..
+            //  or if the building can be restored
+            auto destroyed_tick = destruction_iter->first;
+            auto id = destruction_iter->second;
+            // if the id has been created we need to see if it's been created again
+            auto creation_iter = createdBuildings.find(id);
+            if (creation_iter != createdBuildings.end()){
+                auto created_tick = creation_iter->first;
+                // remove if created happened after destroyed
+                if (created_tick > destroyed_tick) {
+                    destruction_iter = destroyedBuildings.erase(destruction_iter);
+                    continue; // next
+                }
             }
-        }
-        // clean up re-used id's [created list](only keep latest)
-        for (auto iter = createdConstructions.begin(); iter != createdConstructions.end();) {
-            auto td = iter->first;
-            auto construction = iter->second;
-            auto diter = destroyedConstructions.find(construction);
-            // erase if the construction has been destroyed
-            if (td < diter->first) {
-                iter = createdConstructions.erase(iter);
-            } else {
-                ++iter;
-            }
-        }
-        // clean up re-used id's [destroyed list](only keep latest)
-        for (auto iter = destroyedConstructions.begin(); iter != destroyedConstructions.end();) {
-            auto td = iter->first;
-            auto construction = iter->second;
-            auto citer = createdConstructions.find(construction);
-            // erase if the construction has been re-created
-            if (td < citer->first) {
-                iter = destroyedConstructions.erase(iter);
-            } else {
-                ++iter;
-            }
+            ++destruction_iter; // next
         }
 
-        // clean up stale building id's
-        for (auto iter = createdBuildings.begin(); iter != createdBuildings.end();) {
-            if (df::building::binsearch_index(df::global::world->buildings.all, iter->second) < 0) {
-                iter = createdBuildings.erase(iter);
-            } else {
-                ++iter;
-            }
-        }
-        // clean up stale building id's
-        for (auto iter = destroyedBuildings.begin(); iter != destroyedBuildings.end();) {
-            if (df::building::binsearch_index(df::global::world->buildings.all, iter->second) < 0) {
-                iter = destroyedBuildings.erase(iter);
-            } else {
-                ++iter;
-            }
-        }
-        // constructions don't need cleaning up, they never go stale (they are POD)
+        // constructions don't need cleaning up, they never go stale (they are POD) though their originals may be gone
     }
 
     void scan_reports(color_ostream &out, const int32_t &tick) {
@@ -1230,6 +1218,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         newReports.clear();
         //todo: clear reportToRelevantUnits?
         tickQueue.clear();
+        Scanner::get().clear();
 
         Buildings::clearBuildings(out);
         lastReportUnitAttack = -1;

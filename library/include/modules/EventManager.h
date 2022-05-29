@@ -226,8 +226,12 @@ namespace std {
 }
 
 namespace df{
-    inline bool operator==(const df::construction &A, const df::construction &B){
-        return A.pos == B.pos;
+    inline bool operator==(const df::construction &A, const df::construction &B) {
+        return A.pos == B.pos &&
+               A.flags.whole == B.flags.whole &&
+               A.item_type == B.item_type &&
+               A.mat_type == B.mat_type &&
+               A.item_subtype == B.item_subtype;
     }
 }
 

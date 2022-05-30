@@ -1455,6 +1455,16 @@ static int32_t check_repeat_report(vector<string> &results)
     }
     return 0;
 }
+
+static bool add_proper_report(df::unit *unit, bool is_sparring, int report_index)
+{
+    if (is_sparring)
+        return Gui::addCombatReport(unit, unit_report_type::Sparring, report_index);
+    else if (unit->job.current_job != NULL && unit->job.current_job->job_type == job_type::Hunt)
+        return Gui::addCombatReport(unit, unit_report_type::Hunting, report_index);
+    else
+        return Gui::addCombatReport(unit, unit_report_type::Combat, report_index);
+}
 // End of utility functions for reports
 
 DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announcement_flags flags, df::coord pos, std::string message, int color, bool bright)
@@ -1585,17 +1595,6 @@ bool Gui::addCombatReport(df::unit *unit, df::unit_report_type slot, int report_
         rvec.push_back(vec[i]->id);
 
     return true;
-}
-
-// An additional utility function for reports
-static bool add_proper_report(df::unit *unit, bool is_sparring, int report_index)
-{
-    if (is_sparring)
-        return Gui::addCombatReport(unit, unit_report_type::Sparring, report_index);
-    else if (unit->job.current_job != NULL && unit->job.current_job->job_type == job_type::Hunt)
-        return Gui::addCombatReport(unit, unit_report_type::Hunting, report_index);
-    else
-        return Gui::addCombatReport(unit, unit_report_type::Combat, report_index);
 }
 
 bool Gui::addCombatReportAuto(df::unit *unit, df::announcement_flags mode, int report_index)

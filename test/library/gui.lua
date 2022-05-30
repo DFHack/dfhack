@@ -72,9 +72,13 @@ function test.subviews_negotiate_focus()
     expect.ne(regular_child.focus_group, regular_child2.focus_group)
     parent:addviews{regular_child}
     expect.eq(parent.focus_group.cur, focus_child)
+    expect.true_(focus_child.focus)
+    expect.true_(focus_child2.focus)
     parent:addviews{regular_child2}
     expect.eq(parent.focus_group.cur, focus_child)
     expect.eq(regular_child.focus_group, regular_child2.focus_group)
+    expect.true_(focus_child.focus)
+    expect.false_(focus_child2.focus)
 end
 
 MockInputView = defclass(MockInputView, gui.View)

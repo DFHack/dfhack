@@ -18,6 +18,7 @@
 #include "df/general_ref.h"
 #include "df/general_ref_contained_in_itemst.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_jobmanagementst.h"
 #include "df/viewscreen_justicest.h"
 #include "df/viewscreen_layer_militaryst.h"
 #include "df/viewscreen_locationsst.h"
@@ -481,6 +482,7 @@ DEFINE_CONFIRMATION(note_delete,        viewscreen_dwarfmodest);
 DEFINE_CONFIRMATION(route_delete,       viewscreen_dwarfmodest);
 DEFINE_CONFIRMATION(location_retire,    viewscreen_locationsst);
 DEFINE_CONFIRMATION(convict,            viewscreen_justicest);
+DEFINE_CONFIRMATION(order_remove,       viewscreen_jobmanagementst);
 
 DFhackCExport command_result plugin_init (color_ostream &out, vector <PluginCommand> &commands)
 {

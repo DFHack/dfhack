@@ -36,7 +36,13 @@ end
 function MessageBox:getWantedFrameSize()
     local label = self.subviews.label
     local width = math.max(self.frame_width or 0, 20, #(self.frame_title or '') + 4)
-    return math.max(width, label:getTextWidth()), label:getTextHeight()
+    local text_area_width = label:getTextWidth()
+    if label.frame_inset then
+        -- account for scroll icons
+        text_area_width = text_area_width + (label.frame_inset.l or 0)
+        text_area_width = text_area_width + (label.frame_inset.r or 0)
+    end
+    return math.max(width, text_area_width), label:getTextHeight()
 end
 
 function MessageBox:onRenderFrame(dc,rect)

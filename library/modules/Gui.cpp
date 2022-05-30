@@ -1368,99 +1368,94 @@ DFHACK_EXPORT void Gui::writeToGamelog(std::string message)
     fseed.close();
 }
 
-namespace
-{   // Utility functions for reports
-    bool parseReportString(std::vector<std::string> *out, const std::string &str, size_t line_length = 73)
-    {   // parse a string into output strings like DF does for reports
-        if (str.empty() || line_length == 0)
-            return false;
+// Utility functions for reports
+static bool parseReportString(std::vector<std::string> *out, const std::string &str, size_t line_length = 73)
+{   // parse a string into output strings like DF does for reports
+    if (str.empty() || line_length == 0)
+        return false;
 
-        string parsed;
-        size_t i = 0;
+    string parsed;
+    size_t i = 0;
 
-        do
-        {
-            if (str[i] == '&') // escape character
-            {
-                i++; // ignore the '&' itself
-                if (i >= str.length())
-                    break;
-
-                if (str[i] == 'r') // "&r" adds a blank line
-                {
-                    word_wrap(out, parsed, line_length, false/*, true*/);
-                    out->push_back(" "); // DF adds a line with a space for some reason
-                    parsed.clear();
-                }
-                else if (str[i] == '&') // "&&" is '&'
-                    parsed.push_back('&');
-                // else next char is ignored
-            }
-            else
-                parsed.push_back(str[i]);
-        }
-        while (++i < str.length());
-
-        if (parsed.length())
-            word_wrap(out, parsed, line_length, false/*, true*/);
-
-        return true;
-    }
-
-    bool recent_report(df::unit *unit, df::unit_report_type slot)
+    do
     {
-        if (unit && !unit->reports.log[slot].empty() &&
-            *df::global::cur_year == unit->reports.last_year[slot] &&
-            (*df::global::cur_year_tick - unit->reports.last_year_tick[slot]) <= 500)
+        if (str[i] == '&') // escape character
         {
+            i++; // ignore the '&' itself
+            if (i >= str.length())
+                break;
+
+            if (str[i] == 'r') // "&r" adds a blank line
+            {
+                word_wrap(out, parsed, line_length/*, WSMODE_TRIM_LEADING*/);
+                out->push_back(" "); // DF adds a line with a space for some reason
+                parsed.clear();
+            }
+            else if (str[i] == '&') // "&&" is '&'
+                parsed.push_back('&');
+            // else next char is ignored
+        }
+        else
+            parsed.push_back(str[i]);
+    }
+    while (++i < str.length());
+
+    if (parsed.length())
+        word_wrap(out, parsed, line_length/*, WSMODE_TRIM_LEADING*/);
+
+    return true;
+}
+
+static bool recent_report(df::unit *unit, df::unit_report_type slot)
+{
+    return unit && !unit->reports.log[slot].empty() &&
+        *df::global::cur_year == unit->reports.last_year[slot] &&
+        (*df::global::cur_year_tick - unit->reports.last_year_tick[slot]) <= 500;
+}
+
+static bool recent_report_any(df::unit *unit)
+{
+    FOR_ENUM_ITEMS(unit_report_type, slot)
+    {
+        if (recent_report(unit, slot))
             return true;
-        }
-        return false;
     }
+    return false;
+}
 
-    bool recent_report_any(df::unit *unit)
+static void delete_old_reports()
+{
+    auto &reports = world->status.reports;
+    while (reports.size() > 3000)
     {
-        FOR_ENUM_ITEMS(unit_report_type, slot)
+        if (reports[0] != NULL)
         {
-            if (recent_report(unit, slot))
-                return true;
+            if (reports[0]->flags.bits.announcement)
+                erase_from_vector(world->status.announcements, &df::report::id, reports[0]->id);
+            delete reports[0];
         }
-        return false;
-    }
-
-    void delete_old_reports()
-    {
-        auto &reports = world->status.reports;
-        while (reports.size() > 3000)
-        {
-            if (reports[0] != NULL)
-            {
-                if (reports[0]->flags.bits.announcement)
-                    erase_from_vector(world->status.announcements, &df::report::id, reports[0]->id);
-                delete reports[0];
-            }
-            reports.erase(reports.begin());
-        }
-    }
-
-    int32_t check_repeat_report(vector<string> &results)
-    {   // returns the new repeat count, else 0
-        if (*gamemode == game_mode::DWARF && !results.empty() && world->status.reports.size() >= results.size())
-        {
-            auto &reports = world->status.reports;
-            size_t base = reports.size() - results.size(); // index where a repeat would start
-            size_t offset = 0;
-            while (reports[base + offset]->text == results[offset] && ++offset < results.size()); // match each report
-
-            if (offset == results.size()) // all lines matched
-            {
-                reports[base]->duration = 100;
-                return ++(reports[base]->repeat_count);
-            }
-        }
-        return 0;
+        reports.erase(reports.begin());
     }
 }
+
+static int32_t check_repeat_report(vector<string> &results)
+{   // returns the new repeat count, else 0
+    if (*gamemode == game_mode::DWARF && !results.empty() && world->status.reports.size() >= results.size())
+    {
+        auto &reports = world->status.reports;
+        size_t base = reports.size() - results.size(); // index where a repeat would start
+        size_t offset = 0;
+        while (reports[base + offset]->text == results[offset] && ++offset < results.size()); // match each report
+
+        if (offset == results.size()) // all lines matched
+        {
+            reports[base]->duration = 100;
+            return ++(reports[base]->repeat_count);
+        }
+    }
+    return 0;
+}
+// End of utility functions for reports
 
 DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announcement_flags flags, df::coord pos, std::string message, int color, bool bright)
 {
@@ -1592,17 +1587,15 @@ bool Gui::addCombatReport(df::unit *unit, df::unit_report_type slot, int report_
     return true;
 }
 
-namespace
-{   // An additional utility function for reports
-    bool add_proper_report(df::unit *unit, bool is_sparring, int report_index)
-    {
-        if (is_sparring)
-            return Gui::addCombatReport(unit, unit_report_type::Sparring, report_index);
-        else if (unit->job.current_job != NULL && unit->job.current_job->job_type == job_type::Hunt)
-            return Gui::addCombatReport(unit, unit_report_type::Hunting, report_index);
-        else
-            return Gui::addCombatReport(unit, unit_report_type::Combat, report_index);
-    }
+// An additional utility function for reports
+static bool add_proper_report(df::unit *unit, bool is_sparring, int report_index)
+{
+    if (is_sparring)
+        return Gui::addCombatReport(unit, unit_report_type::Sparring, report_index);
+    else if (unit->job.current_job != NULL && unit->job.current_job->job_type == job_type::Hunt)
+        return Gui::addCombatReport(unit, unit_report_type::Hunting, report_index);
+    else
+        return Gui::addCombatReport(unit, unit_report_type::Combat, report_index);
 }
 
 bool Gui::addCombatReportAuto(df::unit *unit, df::announcement_flags mode, int report_index)

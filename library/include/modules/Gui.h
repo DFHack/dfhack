@@ -140,7 +140,7 @@ namespace DFHack
 
         // Recenter the viewscreen, based on DF code for announcements and scrolling
         DFHACK_EXPORT void pauseRecenter(int32_t x, int32_t y, int32_t z, bool pause);
-        DFHACK_EXPORT inline void pauseRecenter(df::coord pos, bool pause) { return pauseRecenter(pos.x, pos.y, pos.z, pause); }
+        DFHACK_EXPORT inline void pauseRecenter(df::coord pos, bool pause) { pauseRecenter(pos.x, pos.y, pos.z, pause); }
         DFHACK_EXPORT void recenterViewscreen(int32_t x, int32_t y, int32_t z, df::report_zoom_type zoom = df::enums::report_zoom_type::Item);
         DFHACK_EXPORT inline void recenterViewscreen(df::coord pos, df::report_zoom_type zoom = df::enums::report_zoom_type::Item) { recenterViewscreen(pos.x, pos.y, pos.z, zoom); };
         DFHACK_EXPORT inline void recenterViewscreen(df::report_zoom_type zoom = df::enums::report_zoom_type::Item) { recenterViewscreen(getCursorPos(), zoom); };

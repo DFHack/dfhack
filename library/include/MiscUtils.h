@@ -389,11 +389,16 @@ DFHACK_EXPORT std::string toUpper(const std::string &str);
 DFHACK_EXPORT std::string toLower(const std::string &str);
 DFHACK_EXPORT std::string to_search_normalized(const std::string &str);
 
+enum word_wrap_wspace_mode {
+    WSMODE_KEEP_ALL,
+    WSMODE_COLLAPSE_ALL,
+    WSMODE_TRIM_LEADING
+};
+
 DFHACK_EXPORT bool word_wrap(std::vector<std::string> *out,
                              const std::string &str,
                              size_t line_length = 80,
-                             bool collapse_whitespace = false,
-                             bool trim_whitespace_after_newline = false);
+                             word_wrap_wspace_mode mode = WSMODE_KEEP_ALL);
 
 inline bool bits_match(unsigned required, unsigned ok, unsigned mask)
 {

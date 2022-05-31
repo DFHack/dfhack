@@ -168,15 +168,15 @@ std::string to_search_normalized(const std::string &str)
     return result;
 }
 
-
-bool word_wrap(std::vector<std::string> *out, const std::string &str,
-               size_t line_length, bool collapse_whitespace)
+bool word_wrap(std::vector<std::string> *out, const std::string &str, size_t line_length,
+               word_wrap_whitespace_mode mode)
 {
     if (line_length == 0)
         line_length = SIZE_MAX;
 
     std::string line;
     size_t break_pos = 0;
+    bool ignore_whitespace = false;
 
     for (auto &c : str)
     {
@@ -185,19 +185,22 @@ bool word_wrap(std::vector<std::string> *out, const std::string &str,
             out->push_back(line);
             line.clear();
             break_pos = 0;
+            ignore_whitespace = (mode == WSMODE_TRIM_LEADING);
             continue;
         }
 
         if (isspace(c))
         {
-            if (break_pos == line.length() && collapse_whitespace)
+            if (ignore_whitespace || (mode == WSMODE_COLLAPSE_ALL && break_pos == line.length()))
                 continue;
 
-            line.push_back(collapse_whitespace ? ' ' : c);
+            line.push_back((mode == WSMODE_COLLAPSE_ALL) ? ' ' : c);
             break_pos = line.length();
         }
-        else {
+        else
+        {
             line.push_back(c);
+            ignore_whitespace = false;
         }
 
         if (line.length() > line_length)
@@ -215,6 +218,7 @@ bool word_wrap(std::vector<std::string> *out, const std::string &str,
             }
             line = line.substr(break_pos);
             break_pos = 0;
+            ignore_whitespace = (mode == WSMODE_TRIM_LEADING);
         }
     }
     if (line.length())

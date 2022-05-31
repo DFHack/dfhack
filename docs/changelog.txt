@@ -47,6 +47,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Documentation
 
 ## API
+- ``word_wrap``: argument ``bool collapse_whitespace`` converted to enum ``word_wrap_whitespace_mode mode``, with valid modes ``WSMODE_KEEP_ALL``, ``WSMODE_COLLAPSE_ALL``, and ``WSMODE_TRIM_LEADING``.
 
 ## Lua
 - ``widgets.HotkeyLabel``: the ``key_sep`` string is now configurable

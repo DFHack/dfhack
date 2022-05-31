@@ -389,7 +389,7 @@ DFHACK_EXPORT std::string toUpper(const std::string &str);
 DFHACK_EXPORT std::string toLower(const std::string &str);
 DFHACK_EXPORT std::string to_search_normalized(const std::string &str);
 
-enum word_wrap_wspace_mode {
+enum word_wrap_whitespace_mode {
     WSMODE_KEEP_ALL,
     WSMODE_COLLAPSE_ALL,
     WSMODE_TRIM_LEADING

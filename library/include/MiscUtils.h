@@ -398,7 +398,7 @@ enum word_wrap_whitespace_mode {
 DFHACK_EXPORT bool word_wrap(std::vector<std::string> *out,
                              const std::string &str,
                              size_t line_length = 80,
-                             word_wrap_wspace_mode mode = WSMODE_KEEP_ALL);
+                             word_wrap_whitespace_mode mode = WSMODE_KEEP_ALL);
 
 inline bool bits_match(unsigned required, unsigned ok, unsigned mask)
 {

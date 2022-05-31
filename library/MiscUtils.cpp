@@ -169,7 +169,7 @@ std::string to_search_normalized(const std::string &str)
 }
 
 bool word_wrap(std::vector<std::string> *out, const std::string &str, size_t line_length,
-               word_wrap_wspace_mode mode)
+               word_wrap_whitespace_mode mode)
 {
     if (line_length == 0)
         line_length = SIZE_MAX;

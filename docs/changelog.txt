@@ -50,6 +50,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``word_wrap``: argument ``bool collapse_whitespace`` converted to enum ``word_wrap_whitespace_mode mode``, with valid modes ``WSMODE_KEEP_ALL``, ``WSMODE_COLLAPSE_ALL``, and ``WSMODE_TRIM_LEADING``.
 
 ## Lua
+- ``gui.View``: all ``View`` subclasses (including all ``Widgets``) can now acquire keyboard focus with the new ``View:setFocus()`` function. See docs for details.
 - ``widgets.HotkeyLabel``: the ``key_sep`` string is now configurable
 - ``widgets.EditField``: the ``key_sep`` string is now configurable
 - ``widgets.EditField``: can now display an optional string label in addition to the activation key

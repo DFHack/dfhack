@@ -3871,6 +3871,23 @@ Attributes:
 :key: If specified, the field is disabled until this key is pressed. Must be given as a string.
 :key_sep: If specified, will be used to customize how the activation key is
           displayed. See ``token.key_sep`` in the ``Label`` documentation below.
+:modal: Whether the ``EditField`` should prevent input from propagating to other
+        widgets while it has focus. You can set this to ``true``, for example,
+        if you don't want a ``List`` widget to react to arrow keys while the
+        user is editing.
+
+An ``EditField`` will only read and process text input if it has keyboard focus.
+It will automatically acquire keyboard focus when it is added as a subview to
+a parent that has not already granted keyboard focus to another widget. If you
+have more than one ``EditField`` on a screen, you can select which has focus by
+calling ``setFocus(true)`` on the field object.
+
+If an activation ``key`` is specified, the ``EditField`` will manage its own
+focus. It will start in the unfocused state, and pressing the activation key
+will acquire keyboard focus. Pressing the Enter key will release keyboard focus
+and then call the ``on_submit`` callback. Pressing the Escape key will also
+release keyboard focus, but first it will restore the text that was displayed
+before the ``EditField`` gained focus and then call the ``on_change`` callback.
 
 Label class
 -----------

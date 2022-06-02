@@ -36,6 +36,7 @@ keybinding add Ctrl-Alt-S@dwarfmode/Default quicksave
 
 # gui/quickfort script - apply pre-made blueprints to the map
 keybinding add Ctrl-Shift-Q@dwarfmode gui/quickfort
+keybinding add Alt-F@dwarfmode gui/quickfort
 
 # gui/rename script - rename units and buildings
 keybinding add Ctrl-Shift-N gui/rename

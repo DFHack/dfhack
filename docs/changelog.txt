@@ -43,7 +43,16 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 - `confirm`: added a confirmation dialog for removing manager orders
 - `confirm`: allow players to pause the confirmation dialog until they exit the current screen
-- `dfhack-examples-guide`: refine food preparation orders and fix conditions for making jugs and pots in the ``basic`` manager orders
+- `dfhack-examples-guide`: refine food preparation orders so meal types are chosen intelligently according to the amount of meals that exist and the number of aviailable items to cook with
+- `dfhack-examples-guide`: reduce required stock of dye for "Dye cloth" orders
+- `dfhack-examples-guide`: fix material conditions for making jugs and pots
+- `dfhack-examples-guide`: make wooden jugs by default to differentiate them from other stone tools. this allows players to more easily select jugs out with a properly-configured stockpile (i.e. the new ``woodentools`` alias)
+- `quickfort-alias-guide`: new aliases: ``forbidsearch``, ``permitsearch``, and ``togglesearch`` use the `search-plugin` plugin to alter the settings for a filtered list of item types when configuring stockpiles
+- `quickfort-alias-guide`: new aliases: ``stonetools`` and ``woodentools``.  the ``jugs`` alias is deprecated. please use ``stonetools`` instead, which is the same as the old ``jugs`` alias.
+- `quickfort-alias-guide`: new aliases: ``usablehair``, ``permitusablehair``, and ``forbidusablehair`` alter settings for the types of hair/wool that can be made into cloth: sheep, llama, alpaca, and troll. The ``craftrefuse`` aliases have been altered to use this alias as well.
+- `quickfort-alias-guide`: new aliases: ``forbidthread``, ``permitthread``, ``forbidadamantinethread``, ``permitadamantinethread``, ``forbidcloth``, ``permitcloth``, ``forbidadamantinecloth``, and ``permitadamantinecloth`` give you more control how adamantine-derived items are stored
+- `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set improvements: automatically create tavern, library, and temple locations (restricted to residents only by default), automatically associate the rented rooms with the tavern
+- `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set improvements: new design for the services level, including a werebeast-proof hospital recovery rooms and an appropriately-themed interrogation room next to the jail! Also fits better in a 1x1 embark for minimalist players.
 
 ## Documentation
 

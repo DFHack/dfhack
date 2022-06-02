@@ -1418,15 +1418,10 @@ Tips and tricks
 Caveats and limitations
 -----------------------
 
--  If you use the ``jugs`` alias in your ``#query``-mode blueprints, be aware
-   that there is no way to differentiate jugs from other types of tools in the
-   game. Therefore, ``jugs`` stockpiles will also take nest boxes, scroll
-   rollers, and other tools. The only workaround is not to have other tools
-   lying around in your fort.
-
--  Likewise for the ``bags`` alias. The game does not differentiate between
-   empty and full bags, so you'll get bags of gypsum power in your "bags"
-   stockpile unless you are careful to assign all your gypsum to your hospital.
+-  If you use the the ``bags`` alias, be aware that the game does not
+   differentiate between empty and full bags. Therefore, you can get bags of
+   gypsum power in your "bags" stockpile unless you are careful to assign all
+   your gypsum to your hospital.
 
 -  Weapon traps and upright spear/spike traps can currently only be built with a
    single weapon.

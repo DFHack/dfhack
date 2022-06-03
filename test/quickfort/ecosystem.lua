@@ -34,6 +34,7 @@ local blueprint = require('plugins.blueprint')
 local confirm = require('plugins.confirm')
 
 local assign_minecarts = reqscript('assign-minecarts')
+local quantum = reqscript('gui/quantum')
 local quickfort = reqscript('quickfort')
 local quickfort_list = reqscript('internal/quickfort/list')
 local quickfort_command = reqscript('internal/quickfort/command')
@@ -419,13 +420,33 @@ function test_gui_quantum(pos)
             end
 
             dfhack.run_script('gui/quantum')
+            local view = quantum.view
+            view:onRender()
             guidm.setCursorPos(pos)
-            -- select the feeder stockpile, rotate the dump direction to the
-            -- south, move the cursor to the dump position, commit, and dismiss
-            -- the dialog
-            send_keys('CURSOR_RIGHT', 'CURSOR_RIGHT', 'SELECT', 'CUSTOM_D',
-                      'CURSOR_DOWN', 'CURSOR_DOWN', 'CURSOR_DOWN', 'SELECT',
-                      'SELECT')
+            -- select the feeder stockpile
+            send_keys('CURSOR_RIGHT', 'CURSOR_RIGHT', 'SELECT')
+            view:onRender()
+            -- deselect the feeder stockpile
+            send_keys('LEAVESCREEN')
+            view:onRender()
+            -- reselect the feeder stockpile
+            send_keys('SELECT')
+            view:onRender()
+            -- set a custom name
+            send_keys('CUSTOM_N')
+            view:onRender()
+            view:onInput({_STRING=string.byte('f')})
+            view:onInput({_STRING=string.byte('o')})
+            view:onInput({_STRING=string.byte('o')})
+            send_keys('SELECT')
+            -- rotate the dump direction to the south
+            send_keys('CUSTOM_D')
+            view:onRender()
+            -- move the cursor to the dump position
+            send_keys('CURSOR_DOWN', 'CURSOR_DOWN', 'CURSOR_DOWN')
+            view:onRender()
+            -- commit and dismiss the dialog
+            send_keys('SELECT', 'SELECT')
 
             -- verify the created route
             expect.eq(num_routes + 1, #routes)

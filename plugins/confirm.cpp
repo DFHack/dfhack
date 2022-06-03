@@ -5,6 +5,7 @@
 #include "Console.h"
 #include "Core.h"
 #include "DataDefs.h"
+#include "Debug.h"
 #include "Error.h"
 #include "Export.h"
 #include "LuaTools.h"
@@ -50,6 +51,9 @@ bool paused = false;
 // if set, confirm will unpause when this screen is no longer on the stack
 df::viewscreen *paused_screen = NULL;
 
+namespace DFHack {
+    DBG_DECLARE(confirm,status);
+}
 
 template <typename VT, typename FT>
 inline bool in_vector (std::vector<VT> &vec, FT item)
@@ -238,7 +242,7 @@ namespace conf_lua {
         }
         int unpause(lua_State *)
         {
-            Core::getInstance().print("unpausing\n");
+            DEBUG(status).print("unpausing\n"),
             paused = false;
             paused_screen = NULL;
             return 0;
@@ -333,7 +337,7 @@ public:
                 set_state(SELECTED);
             else if (input->count(df::interface_key::CUSTOM_P))
             {
-                Core::getInstance().print("pausing\n");
+                DEBUG(status).print("pausing\n"),
                 paused = true;
                 // only record the screen when we're not at the top viewscreen
                 // since this screen will *always* be on the stack. for

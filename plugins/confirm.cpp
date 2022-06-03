@@ -242,7 +242,7 @@ namespace conf_lua {
         }
         int unpause(lua_State *)
         {
-            DEBUG(status).print("unpausing\n"),
+            DEBUG(status).print("unpausing\n");
             paused = false;
             paused_screen = NULL;
             return 0;
@@ -337,7 +337,7 @@ public:
                 set_state(SELECTED);
             else if (input->count(df::interface_key::CUSTOM_P))
             {
-                DEBUG(status).print("pausing\n"),
+                DEBUG(status).print("pausing\n");
                 paused = true;
                 // only record the screen when we're not at the top viewscreen
                 // since this screen will *always* be on the stack. for

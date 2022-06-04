@@ -1015,7 +1015,7 @@ Fortress mode
 
   Centers the view on the given coordinates. If ``center`` is true, make sure the
   position is in the exact center of the view, else just bring it on screen.
-  
+
   ``pos`` can be a ``df.coord`` instance or a table assignable to a ``df.coord`` (see `lua-api-table-assignment`),
   e.g.::
 

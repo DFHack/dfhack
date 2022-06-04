@@ -47,6 +47,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Documentation
 
 ## API
+- Removed ``Engravings`` module (C++-only). Access ``world.engravings`` directly instead.
 - Removed ``Notes`` module (C++-only). Access ``ui.waypoints.points`` directly instead.
 - Removed ``Windows`` module (C++-only) - unused.
 

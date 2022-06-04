@@ -53,7 +53,6 @@ using namespace std;
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
 #include "modules/World.h"
-#include "modules/Graphic.h"
 #include "modules/Persistence.h"
 #include "RemoteServer.h"
 #include "RemoteTools.h"

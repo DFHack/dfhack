@@ -126,7 +126,6 @@ set(MODULE_HEADERS
     include/modules/Burrows.h
     include/modules/Constructions.h
     include/modules/Designations.h
-    include/modules/Engravings.h
     include/modules/EventManager.h
     include/modules/Filesystem.h
     include/modules/Graphic.h
@@ -153,7 +152,6 @@ set(MODULE_SOURCES
     modules/Burrows.cpp
     modules/Constructions.cpp
     modules/Designations.cpp
-    modules/Engravings.cpp
     modules/EventManager.cpp
     modules/Filesystem.cpp
     modules/Graphic.cpp

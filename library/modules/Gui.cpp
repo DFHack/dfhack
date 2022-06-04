@@ -1472,6 +1472,9 @@ static bool add_proper_report(df::unit *unit, bool is_sparring, int report_index
 
 DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announcement_flags flags, df::coord pos, std::string message, int color, bool bright)
 {
+    using df::global::cur_year;
+    using df::global::cur_year_tick;
+
     if (gamemode == NULL || cur_year == NULL || cur_year_tick == NULL)
     {
         return -1;
@@ -1523,8 +1526,8 @@ DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announce
 
         new_rep->color = color;
         new_rep->bright = bright;
-        new_rep->year = *df::global::cur_year;
-        new_rep->time = *df::global::cur_year_tick;
+        new_rep->year = *cur_year;
+        new_rep->time = *cur_year_tick;
 
         new_rep->flags.bits.continuation = continued;
         continued = true;

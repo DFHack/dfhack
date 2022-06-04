@@ -1481,7 +1481,7 @@ DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announce
     }
     else if (message.empty())
     {
-        Core::printerr("Empty announcement %u\n", r.type); // DF would print this to errorlog.txt
+        Core::printerr("Empty announcement %u\n", type); // DF would print this to errorlog.txt
         return -1;
     }
 
@@ -1516,7 +1516,7 @@ DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announce
     // Generate the report objects
     int report_idx = world->status.reports.size();
     bool continued = false;
-    bool display = ((*gamemode == game_mode::ADVENTURE && a_flags.bits.A_DISPLAY) || (*gamemode == game_mode::DWARF && a_flags.bits.D_DISPLAY));
+    bool display = ((*gamemode == game_mode::ADVENTURE && flags.bits.A_DISPLAY) || (*gamemode == game_mode::DWARF && flags.bits.D_DISPLAY));
 
     for (size_t i = 0; i < results.size(); i++)
     {

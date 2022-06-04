@@ -113,6 +113,9 @@ using namespace DFHack;
 #include "df/viewscreen_workshop_profilest.h"
 #include "df/world.h"
 
+const size_t MAX_REPORTS_SIZE = 3000;
+const int32_t RECENT_REPORT_TICKS = 500;
+
 namespace DFHack
 {
     DBG_DECLARE(core, gui, DebugCategory::LINFO);
@@ -1410,7 +1413,7 @@ static bool recent_report(df::unit *unit, df::unit_report_type slot)
 {
     return unit && !unit->reports.log[slot].empty() &&
         *df::global::cur_year == unit->reports.last_year[slot] &&
-        (*df::global::cur_year_tick - unit->reports.last_year_tick[slot]) <= 500;
+        (*df::global::cur_year_tick - unit->reports.last_year_tick[slot]) <= RECENT_REPORT_TICKS;
 }
 
 static bool recent_report_any(df::unit *unit)
@@ -1426,7 +1429,7 @@ static bool recent_report_any(df::unit *unit)
 static void delete_old_reports()
 {
     auto &reports = world->status.reports;
-    while (reports.size() > 3000)
+    while (reports.size() > MAX_REPORTS_SIZE)
     {
         if (reports[0] != NULL)
         {
@@ -1457,7 +1460,7 @@ static int32_t check_repeat_report(vector<string> &results)
 }
 
 static bool add_proper_report(df::unit *unit, bool is_sparring, int report_index)
-{
+{   // add report to proper category based on is_sparring and unit current job
     if (is_sparring)
         return Gui::addCombatReport(unit, unit_report_type::Sparring, report_index);
     else if (unit->job.current_job != NULL && unit->job.current_job->job_type == job_type::Hunt)
@@ -1469,96 +1472,84 @@ static bool add_proper_report(df::unit *unit, bool is_sparring, int report_index
 
 DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announcement_flags flags, df::coord pos, std::string message, int color, bool bright)
 {
-    using df::global::world;
-    using df::global::cur_year;
-    using df::global::cur_year_tick;
-
-    if (message.empty())
+    if (gamemode == NULL || cur_year == NULL || cur_year_tick == NULL)
+    {
         return -1;
-
-    int year = 0, year_time = 0;
-
-    if (cur_year && cur_year_tick)
-    {
-        year = *cur_year;
-        year_time = *cur_year_tick;
     }
-    else if (!world->status.reports.empty())
+    else if (message.empty())
     {
-        // Fallback: copy from the last report
-        df::report *last = world->status.reports.back();
-        year = last->year;
-        year_time = last->time;
+        Core::printerr("Empty announcement %u\n", r.type); // DF would print this to errorlog.txt
+        return -1;
     }
 
     // Apply the requested effects
-    writeToGamelog(message);
 
-    if (flags.bits.DO_MEGA || flags.bits.PAUSE || flags.bits.RECENTER)
+    if (flags.bits.PAUSE || flags.bits.RECENTER)
+        pauseRecenter((flags.bits.RECENTER ? pos : df::coord()), flags.bits.PAUSE);
+
+    bool adv_unconscious = (*gamemode == game_mode::ADVENTURE && !world->units.active.empty() && world->units.active[0]->counters.unconscious > 0);
+
+    if (flags.bits.DO_MEGA && !adv_unconscious)
+        showPopupAnnouncement(message, color, bright);
+
+    vector<string> results;
+    word_wrap(&results, message, init->display.grid_x - 7);
+
+    // Check for repeat report
+    int32_t repeat_count = check_repeat_report(results); // Does nothing outside dwarf mode
+    if (repeat_count > 0)
     {
-        resetDwarfmodeView(flags.bits.DO_MEGA || flags.bits.PAUSE);
-
-        if (flags.bits.RECENTER && pos.isValid())
-            revealInDwarfmodeMap(pos, true);
-
-        if (flags.bits.DO_MEGA)
-            showPopupAnnouncement(message, color, bright);
+        if (flags.bits.D_DISPLAY)
+        {
+            world->status.display_timer = 2000;
+            Gui::writeToGamelog("x" + to_string(repeat_count + 1));
+        }
+        return -1;
     }
 
-    bool display = false;
-
-    if (gamemode == NULL)
-        display = flags.bits.A_DISPLAY || flags.bits.D_DISPLAY;
-    else if (*gamemode == game_mode::ADVENTURE)
-        display = flags.bits.A_DISPLAY;
-    else
-        display = flags.bits.D_DISPLAY;
+    // Not a repeat, write the message to gamelog.txt
+    writeToGamelog(message);
 
     // Generate the report objects
     int report_idx = world->status.reports.size();
     bool continued = false;
+    bool display = ((*gamemode == game_mode::ADVENTURE && a_flags.bits.A_DISPLAY) || (*gamemode == game_mode::DWARF && a_flags.bits.D_DISPLAY));
 
-    while (!message.empty())
+    for (size_t i = 0; i < results.size(); i++)
     {
-        df::report *new_rep = new df::report();
-
+        auto new_rep = new df::report();
         new_rep->type = type;
         new_rep->pos = pos;
 
         new_rep->color = color;
         new_rep->bright = bright;
-        new_rep->year = year;
-        new_rep->time = year_time;
+        new_rep->year = *df::global::cur_year;
+        new_rep->time = *df::global::cur_year_tick;
 
         new_rep->flags.bits.continuation = continued;
-
-        int size = std::min(message.size(), (size_t)73);
-        new_rep->text = message.substr(0, size);
-        message = message.substr(size);
-
         continued = true;
 
-        // Add the object to the lists
+        new_rep->text = results[i];
         new_rep->id = world->status.next_report_id++;
-
         world->status.reports.push_back(new_rep);
+
+        if (adv_unconscious)
+            new_rep->flags.bits.unconscious = true;
 
         if (display)
         {
+            insert_into_vector(world->status.announcements, &df::report::id, new_rep);
             new_rep->flags.bits.announcement = true;
-            world->status.announcements.push_back(new_rep);
             world->status.display_timer = 2000;
         }
     }
 
+    delete_old_reports();
     return report_idx;
 }
 
-
 bool Gui::addCombatReport(df::unit *unit, df::unit_report_type slot, int report_index)
 {
-    using df::global::world;
-
     CHECK_INVALID_ARGUMENT(is_valid_enum_item(slot));
 
     auto &vec = world->status.reports;
@@ -1599,8 +1590,6 @@ bool Gui::addCombatReport(df::unit *unit, df::unit_report_type slot, int report_
 
 bool Gui::addCombatReportAuto(df::unit *unit, df::announcement_flags mode, int report_index)
 {
-    using df::global::world;
-
     auto &vec = world->status.reports;
     auto report = vector_get(vec, report_index);
 
@@ -1616,12 +1605,8 @@ bool Gui::addCombatReportAuto(df::unit *unit, df::announcement_flags mode, int r
     {
         FOR_ENUM_ITEMS(unit_report_type, slot)
         {
-            if (!unit->reports.log[slot].empty() &&
-                unit->reports.last_year[slot] == report->year &&
-                (report->time - unit->reports.last_year_tick[slot]) <= 500)
-            {
+            if (recent_report(unit, slot))
                 ok |= addCombatReport(unit, slot, report_index);
-            }
         }
     }
 
@@ -1647,13 +1632,20 @@ void Gui::showZoomAnnouncement(
 
 void Gui::showPopupAnnouncement(std::string message, int color, bool bright)
 {
-    using df::global::world;
-
     df::popup_message *popup = new df::popup_message();
     popup->text = message;
     popup->color = color;
     popup->bright = bright;
-    world->status.popups.push_back(popup);
+
+    auto &popups = world->status.popups;
+    popups.push_back(popup);
+
+    while (popups.size() > MAX_REPORTS_SIZE)
+    {   // Delete old popups
+        if (popups[0] != NULL)
+            delete popups[0];
+        popups.erase(popups.begin());
+    }
 }
 
 void Gui::showAutoAnnouncement(
@@ -1750,7 +1742,9 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
     if (a_flags.bits.PAUSE || a_flags.bits.RECENTER)
         pauseRecenter((a_flags.bits.RECENTER ? r.pos : df::coord()), a_flags.bits.PAUSE); // Does nothing outside dwarf mode
 
-    if (a_flags.bits.DO_MEGA && (*gamemode != game_mode::ADVENTURE || world->units.active.empty() || world->units.active[0]->counters.unconscious <= 0))
+    bool adv_unconscious = (*gamemode == game_mode::ADVENTURE && !world->units.active.empty() && world->units.active[0]->counters.unconscious > 0);
+
+    if (a_flags.bits.DO_MEGA && !adv_unconscious)
         showPopupAnnouncement(message, r.color, r.bright);
 
     vector<string> results;
@@ -1776,8 +1770,10 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
         return true;
     }
 
-    bool success = false; // only print to gamelog if report was used
     size_t new_report_index = world->status.reports.size(); // we need this for addCombatReport
+    bool success = false; // only print to gamelog if report was used
+    bool display = ((*gamemode == game_mode::ADVENTURE && a_flags.bits.A_DISPLAY) || (*gamemode == game_mode::DWARF && a_flags.bits.D_DISPLAY));
+
     for (size_t i = 0; i < results.size(); i++)
     {   // Generate report entries for each line
         auto new_report = new df::report();
@@ -1801,10 +1797,10 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
         if (i > 0)
             new_report->flags.bits.continuation = true;
 
-        if (*gamemode == game_mode::ADVENTURE && !world->units.active.empty() && world->units.active[0]->counters.unconscious > 0)
+        if (adv_unconscious)
             new_report->flags.bits.unconscious = true;
 
-        if ((*gamemode == game_mode::ADVENTURE && a_flags.bits.A_DISPLAY) || (*gamemode == game_mode::DWARF && a_flags.bits.D_DISPLAY))
+        if (display)
         {
             insert_into_vector(world->status.announcements, &df::report::id, new_report);
             new_report->flags.bits.announcement = true;
@@ -1940,7 +1936,7 @@ Gui::DwarfmodeDims getDwarfmodeViewDims_default()
     int menu_pos = (ui_menu_width ? (*ui_menu_width)[0] : 2);
     int area_pos = (ui_menu_width ? (*ui_menu_width)[1] : 3);
 
-    if (ui && ui->main.mode && menu_pos >= area_pos)
+    if (ui && ui->main.mode != ui_sidebar_mode::Default && ui->main.mode != ui_sidebar_mode::ArenaWeather && menu_pos >= area_pos)
     {
         dims.menu_forced = true;
         menu_pos = area_pos-1;

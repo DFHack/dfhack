@@ -10,9 +10,11 @@
 --   height (required)
 --   depth (default is 1)
 --   start (cursor offset for input blueprints, default is 1,1)
+--   extra_fn (the name of a global function in this file to run after applying
+--             all blueprints but before comparing results)
 --
 -- depends on blueprint, buildingplan, and dig-now plugins (as well as the
--- quickfort script, of course)
+-- quickfort script and anything else run in the extra_fns, of course)
 --
 -- note that this test harness cannot (yet) test #query blueprints that define
 -- rooms since furniture is not actually built during the test. It also cannot
@@ -24,10 +26,18 @@
 config.mode = 'fortress'
 
 local argparse = require('argparse')
+local gui = require('gui')
+local guidm = require('gui.dwarfmode')
+local utils = require('utils')
+
 local blueprint = require('plugins.blueprint')
+local confirm = require('plugins.confirm')
+
+local assign_minecarts = reqscript('assign-minecarts')
+local quantum = reqscript('gui/quantum')
+local quickfort = reqscript('quickfort')
 local quickfort_list = reqscript('internal/quickfort/list')
 local quickfort_command = reqscript('internal/quickfort/command')
-local utils = require('utils')
 
 local blueprints_dir = 'blueprints/'
 local input_dir = 'library/test/ecosystem/in/'
@@ -86,14 +96,14 @@ local function get_blueprint_sets()
             local _,_,file_part = fname:find('/([^/]+)$')
             local _,_,basename = file_part:find('^([^-.]+)')
             if not sets[basename] then sets[basename] = {spec={}, phases={}} end
-            local golden_path = blueprints_dir..golden_dir..file_part
-            if not os_exists(golden_path) then
-                golden_path = blueprints_dir..fname
+            local golden_path = golden_dir..file_part
+            if not os_exists(blueprints_dir..golden_path) then
+                golden_path = fname
             end
             sets[basename].phases[phase] = {
                 listnum=listnum,
                 golden_filepath=golden_path,
-                output_filepath=blueprints_dir..output_dir..file_part}
+                output_filepath=output_dir..file_part}
         end
     end
 
@@ -193,17 +203,17 @@ local function get_cursor_arg(pos, start)
     return ('--cursor=%d,%d,%d'):format(pos.x+start.x-1, pos.y+start.y-1, pos.z)
 end
 
-local function quickfort_cmd(cmd, listnum, pos, start)
-    dfhack.run_script('quickfort', cmd, '-q', listnum,
+local function quickfort_cmd(cmd, listnum_or_path, pos, start)
+    dfhack.run_script('quickfort', cmd, '-q', listnum_or_path,
                       get_cursor_arg(pos, start))
 end
 
-local function quickfort_run(listnum, pos, start)
-    quickfort_cmd('run', listnum, pos, start)
+local function quickfort_run(listnum_or_path, pos, start)
+    quickfort_cmd('run', listnum_or_path, pos, start)
 end
 
-local function quickfort_undo(listnum, pos, start)
-    quickfort_cmd('undo', listnum, pos, start)
+local function quickfort_undo(listnum_or_path, pos, start)
+    quickfort_cmd('undo', listnum_or_path, pos, start)
 end
 
 local function designate_area(pos, spec)
@@ -224,10 +234,20 @@ local function run_dig_now(area)
                        format_pos(area.endpos), '--clean')
 end
 
-local function run_blueprint(basename, set, pos)
-    blueprint.run(tostring(set.spec.width), tostring(set.spec.height),
-                  tostring(-set.spec.depth), output_dir..basename,
-                  get_cursor_arg(pos), '-tphase')
+local function get_playback_start_arg(start)
+    if not start then return end
+    return ('--playback-start=%d,%d'):format(start.x, start.y)
+end
+
+local function run_blueprint(basename, spec, pos)
+    local args = {tostring(spec.width), tostring(spec.height),
+                  tostring(-spec.depth), output_dir..basename,
+                  get_cursor_arg(pos), '-tphase'}
+    local playback_start_arg = get_playback_start_arg(spec.start)
+    if playback_start_arg then
+        table.insert(args, playback_start_arg)
+    end
+    blueprint.run(table.unpack(args))
 end
 
 local function reset_area(area, spec)
@@ -308,13 +328,19 @@ function test.end_to_end()
         if phases.zone then do_phase(phases.zone, area, spec) end
         if phases.query then do_phase(phases.query, area, spec) end
 
-        -- run blueprint to generate files in output dir
-        run_blueprint(basename, set, area.pos)
+        -- run any extra commands, if defined by the blueprint spec
+        if spec.extra_fn then
+            _ENV[spec.extra_fn](area.pos)
+        end
 
-        -- quickfort undo blueprints
+        -- run blueprint to generate files in output dir
+        run_blueprint(basename, spec, area.pos)
+
+        -- quickfort undo blueprints (order shouldn't matter)
         for _,phase_name in ipairs(phase_names) do
             if phases[phase_name] then
-                quickfort_undo(phases[phase_name].listnum, area.pos, spec.start)
+                quickfort_undo(phases[phase_name].golden_filepath,
+                               area.pos, spec.start)
             end
         end
 
@@ -326,8 +352,8 @@ function test.end_to_end()
         for phase,phase_data in pairs(phases) do
             if phase == 'notes' then goto continue end
             print(('  verifying phase: %s'):format(phase))
-            local golden_filepath = phase_data.golden_filepath
-            local output_filepath = phase_data.output_filepath
+            local golden_filepath = blueprints_dir..phase_data.golden_filepath
+            local output_filepath = blueprints_dir..phase_data.output_filepath
             local input_hash, input_size = md5File(golden_filepath)
             local output_hash, output_size = md5File(output_filepath)
             expect.eq(input_hash, output_hash,
@@ -345,10 +371,106 @@ function test.end_to_end()
                 input:close()
                 output:close()
                 expect.table_eq(input_lines, output_lines)
+                return nil
             end
             ::continue::
         end
 
         ::continue::
     end
+end
+
+local function send_keys(...)
+    local keys = {...}
+    for _,key in ipairs(keys) do
+        gui.simulateInput(dfhack.gui.getCurViewscreen(true), key)
+    end
+end
+
+function test_gui_quantum(pos)
+    local vehicles = assign_minecarts.get_free_vehicles()
+    local confirm_state = confirm.isEnabled()
+    local confirm_conf = confirm.get_conf_data()
+    local routes = df.global.ui.hauling.routes
+    local num_routes = #routes
+    local next_order_id = df.global.world.manager_order_next_id
+
+    return dfhack.with_finalize(
+        function()
+            -- unforbid the minecarts we forbade
+            for _,minecart in ipairs(vehicles) do
+                local item = df.item.find(minecart.item_id)
+                if not item then error('could not find item in list') end
+                item.flags.forbid = false
+            end
+
+            if confirm_state then
+                dfhack.run_command('enable confirm')
+                for _,c in pairs(confirm_conf) do
+                    confirm.set_conf_state(c.id, c.enabled)
+                end
+            end
+        end,
+        function()
+            -- forbid all available minecarts
+            for _,minecart in ipairs(vehicles) do
+                local item = df.item.find(minecart.item_id)
+                if not item then error('could not find item in list') end
+                item.flags.forbid = true
+            end
+
+            dfhack.run_script('gui/quantum')
+            local view = quantum.view
+            view:onRender()
+            guidm.setCursorPos(pos)
+            -- select the feeder stockpile
+            send_keys('CURSOR_RIGHT', 'CURSOR_RIGHT', 'SELECT')
+            view:onRender()
+            -- deselect the feeder stockpile
+            send_keys('LEAVESCREEN')
+            view:onRender()
+            -- reselect the feeder stockpile
+            send_keys('SELECT')
+            view:onRender()
+            -- set a custom name
+            send_keys('CUSTOM_N')
+            view:onRender()
+            view:onInput({_STRING=string.byte('f')})
+            view:onInput({_STRING=string.byte('o')})
+            view:onInput({_STRING=string.byte('o')})
+            send_keys('SELECT')
+            -- rotate the dump direction to the south
+            send_keys('CUSTOM_D')
+            view:onRender()
+            -- move the cursor to the dump position
+            send_keys('CURSOR_DOWN', 'CURSOR_DOWN', 'CURSOR_DOWN')
+            view:onRender()
+            -- commit and dismiss the dialog
+            send_keys('SELECT', 'SELECT')
+
+            -- verify the created route
+            expect.eq(num_routes + 1, #routes)
+            local route = routes[#routes-1]
+            expect.eq(0, #route.vehicle_ids, 'minecart should not be assigned')
+            expect.eq(1, #route.stops, 'should have 1 stop')
+            expect.eq(1, #route.stops[0].stockpiles,
+                      'should have 1 link')
+
+            -- verify the created order
+            expect.eq(next_order_id + 1, df.global.world.manager_order_next_id)
+            local orders = df.global.world.manager_orders
+            local order = orders[#orders - 1]
+            expect.eq(df.job_type.MakeTool, order.job_type)
+
+            -- if confirm is enabled, temporarily disable it so we can remove
+            -- the route and manager order via the ui (easier than walking the
+            -- structures and carefully deleting all the memory)
+            if confirm_state then
+                dfhack.run_command('disable confirm')
+            end
+            -- delete last route
+            quickfort.apply_blueprint{mode='config', data='h--x^'}
+            -- delete last manager order
+            quickfort.apply_blueprint{mode='config', data='jm{Up}r^^'}
+        end)
 end

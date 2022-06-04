@@ -1,4 +1,4 @@
-#build label(build)
+#build label(build) start(14;14)
 ,trackNS,trackE,,trackW,trackS,trackN,,gs(1x2),ga(2x1),,gx(1x2),gw(1x2),,gw(1x2),gx(1x2),gd(2x1),,gs(1x2),,trackN,trackS,trackE,,trackW,trackNS
 trackEW,,trackSE,,trackSW,trackNE,trackNW,,,gd(2x1),,,,,,,ga(2x1),,,,trackNE,trackNW,trackSE,,trackSW,,trackEW
 trackS,trackSE,,,trackNSE,trackNSW,trackEW,,Mrsssqq(2x1),,,Msh,,,,,Msk,Mrsqq(2x1),,,trackEW,trackNSE,trackNSW,,,trackSW,trackS

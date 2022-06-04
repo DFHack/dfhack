@@ -73,7 +73,7 @@ with open(test_init_file, 'w') as f:
     f.write('''
     devel/dump-rpc dfhack-rpc.txt
     :lua dfhack.internal.addScriptPath(dfhack.getHackPath())
-    test --resume --modes=none,title "lua scr.breakdown_level=df.interface_breakdown_types.%s"
+    test --resume -- lua scr.breakdown_level=df.interface_breakdown_types.%s
     ''' % ('NONE' if args.no_quit else 'QUIT'))
 
 test_config_file = 'test_config.json'

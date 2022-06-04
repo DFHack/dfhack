@@ -77,6 +77,11 @@ give10right: {give move={Right 10}}
 togglesequence: &{Down}
 togglesequence2: &{Down 2}
 
+# these aliases use the DFHack "search" plugin to filter the right column
+forbidsearch: s{search}&f{Left}{Right}
+permitsearch: s{search}&p{Left}{Right}
+togglesearch: s{search}&&{Left}{Right}
+
 masterworkonly: {prefix}{Right}{Up 2}f{Right}{Up 2}&^
 artifactonly:   {prefix}{Right}{Up 2}f{Right}{Up}&^
 
@@ -116,7 +121,7 @@ plants:         {foodprefix}b{Right}{Down 4}p^
 booze:          {foodprefix}b{Right}{Down 5}p{Down}p^
 seeds:          {foodprefix}b{Right}{Down 9}p^
 dye:            {foodprefix}b{Right}{Down 11}{Right}{Down 28}{togglesequence 4}^
-tallow:         {foodprefix}b{Right}{Down 13}{Right}stallow&p^
+tallow:         {foodprefix}b{Right}{Down 13}{Right}{permitsearch search=tallow}^
 miscliquid:     {foodprefix}b{Right}{Down 18}p^
 wax:            {foodprefix}b{Right}{Down 15}{Right}{Down 6}&^
 
@@ -126,7 +131,7 @@ forbidplants:         {foodprefix}{Right}{Down 4}f^
 forbidbooze:          {foodprefix}{Right}{Down 5}f{Down}f^
 forbidseeds:          {foodprefix}{Right}{Down 9}f^
 forbiddye:            {foodprefix}{Right}{Down 11}{Right}{Down 28}{togglesequence 4}^
-forbidtallow:         {foodprefix}{Right}{Down 13}{Right}stallow&f^
+forbidtallow:         {foodprefix}{Right}{Down 13}{Right}{forbidsearch search=tallow}^
 forbidmiscliquid:     {foodprefix}{Right}{Down 18}f^
 forbidwax:            {foodprefix}{Right}{Down 15}{Right}{Down 6}&^
 
@@ -136,7 +141,7 @@ permitplants:         {foodprefix}{Right}{Down 4}p^
 permitbooze:          {foodprefix}{Right}{Down 5}p{Down}p^
 permitseeds:          {foodprefix}{Right}{Down 9}p^
 permitdye:            {forbiddye}
-permittallow:         {foodprefix}{Right}{Down 13}{Right}stallow&p^
+permittallow:         {foodprefix}{Right}{Down 13}{Right}{permitsearch search=tallow}^
 permitmiscliquid:     {foodprefix}{Right}{Down 18}p^
 permitwax:            {forbidwax}
 
@@ -200,7 +205,8 @@ shells:      {refuseprefix}b{Right}{Down 5}p^
 teeth:       {refuseprefix}b{Right}{Down 6}p^
 horns:       {refuseprefix}b{Right}{Down 7}p^
 hair:        {refuseprefix}b{Right}{Down 8}p^
-craftrefuse: {skulls}{permitbones}{permitshells}{permitteeth}{permithorns}{permithair}
+usablehair:  {refuseprefix}b{Right}{Down 8}{Right}{togglesearch search=sheep}{togglesearch search=llama}{togglesearch search=alpaca}{togglesearch search=troll}^
+craftrefuse: {skulls}{permitbones}{permitshells}{permitteeth}{permithorns}{permitusablehair}
 
 forbidcorpses:     {refuseprefix}{Right}{Down}f^
 forbidrawhides:    {refuseprefix}{Right 2}{Down}&^
@@ -211,7 +217,8 @@ forbidshells:      {refuseprefix}{Right}{Down 5}f^
 forbidteeth:       {refuseprefix}{Right}{Down 6}f^
 forbidhorns:       {refuseprefix}{Right}{Down 7}f^
 forbidhair:        {refuseprefix}{Right}{Down 8}f^
-forbidcraftrefuse: {forbidskulls}{forbidbones}{forbidshells}{forbidteeth}{forbidhorns}{forbidhair}
+forbidusablehair:  {refuseprefix}{Right}{Down 8}{Right}{forbidsearch search=sheep}{forbidsearch search=llama}{forbidsearch search=alpaca}{forbidsearch search=troll}^
+forbidcraftrefuse: {forbidskulls}{forbidbones}{forbidshells}{forbidteeth}{forbidhorns}{forbidusablehair}
 
 permitcorpses:     {refuseprefix}{Right}{Down}p^
 permitrawhides:    {forbidrawhides}
@@ -222,7 +229,8 @@ permitshells:      {refuseprefix}{Right}{Down 5}p^
 permitteeth:       {refuseprefix}{Right}{Down 6}p^
 permithorns:       {refuseprefix}{Right}{Down 7}p^
 permithair:        {refuseprefix}{Right}{Down 8}p^
-permitcraftrefuse: {permitskulls}{permitbones}{permitshells}{permitteeth}{permithorns}{permithair}
+permitusablehair:  {refuseprefix}{Right}{Down 8}{Right}{permitsearch search=sheep}{permitsearch search=llama}{permitsearch search=alpaca}{permitsearch search=troll}^
+permitcraftrefuse: {permitskulls}{permitbones}{permitshells}{permitteeth}{permithorns}{permitusablehair}
 
 
 ##################################
@@ -352,9 +360,11 @@ finishedgoodsprefix:  {enter_sp_config}{Down 10}
 enablefinishedgoods:  {finishedgoodsprefix}e^
 disablefinishedgoods: {finishedgoodsprefix}d^
 
-crafts:  {finishedgoodsprefix}{Right}f{Right}{Down 9}{togglesequence 9}^
-goblets: {finishedgoodsprefix}{Right}f{Right}{Down 2}&^
-jugs:    {finishedgoodsprefix}{Right}f{Right}{Up 2}&{Left}{Down 2}f{Down}f{Down}f^
+crafts:      {finishedgoodsprefix}{Right}f{Right}{Down 9}{togglesequence 9}^
+goblets:     {finishedgoodsprefix}{Right}f{Right}{Down 2}&^
+jugs:        {finishedgoodsprefix}{Right}f{Right}{Up 2}&{Left}{Down 2}f{Down}f{Down}f^
+stonetools:  {finishedgoodsprefix}{Right}f{Right}{Up 2}&{Left}{Down 2}f{Down}f{Down}f^
+woodentools: {finishedgoodsprefix}{Right}f{Right}{Up 2}&{Left}{Down}f{Down}f{Down}f{Down}f{Right}&^
 
 forbidcrafts:  {finishedgoodsprefix}{Right 2}{Down 9}{togglesequence 9}^
 forbidgoblets: {finishedgoodsprefix}{Right 2}{Down 2}&^
@@ -385,6 +395,15 @@ adamantinethread: {clothprefix}b{Right}{Down 3}p^
 cloth:            {clothprefix}b{Right}{Down 4}p{Down}p{Down}p^
 adamantinecloth:  {clothprefix}b{Right}{Up}p^
 
+forbidthread:           {clothprefix}{Right}f{Down}f{Down}f^
+forbidadamantinethread: {clothprefix}{Right}{Down 3}f^
+forbidcloth:            {clothprefix}{Right}{Down 4}f{Down}f{Down}f^
+forbidadamantinecloth:  {clothprefix}{Right}{Up}f^
+
+permitthread:           {clothprefix}{Right}p{Down}p{Down}p^
+permitadamantinethread: {clothprefix}{Right}{Down 3}p^
+permitcloth:            {clothprefix}{Right}{Down 4}p{Down}p{Down}p^
+permitadamantinecloth:  {clothprefix}{Right}{Up}p^
 
 ##################################
 # weapon stockpile adjustments

@@ -824,162 +824,160 @@ misrepresented as being the original software.
 3. This notice may not be removed or altered from any source distribution.
 */
 
-namespace {
-    //----------------------------------------------------------------------------//
-    // Utility function
-    //
-    //----------------------------------------------------------------------------//
-    std::pair<bool, bool> check_tropicality(df::region_map_entry& region,
-        int y_pos
-    )
+//----------------------------------------------------------------------------//
+// Utility function
+//
+//----------------------------------------------------------------------------//
+static std::pair<bool, bool> check_tropicality(df::region_map_entry& region,
+    int y_pos
+)
+{
+    int flip_latitude = df::global::world->world_data->flip_latitude;
+
+    bool is_possible_tropical_area_by_latitude = false;
+    bool is_tropical_area_by_latitude = false;
+
+    if (flip_latitude == -1)  // NO POLES
     {
-        int flip_latitude = df::global::world->world_data->flip_latitude;
-
-        bool is_possible_tropical_area_by_latitude = false;
-        bool is_tropical_area_by_latitude = false;
-
-        if (flip_latitude == -1)  // NO POLES
-        {
-            // If there're no poles, tropical area is determined by temperature
-            is_possible_tropical_area_by_latitude = region.temperature >= 75;
-            is_tropical_area_by_latitude = region.temperature >= 85;
-        }
-
-        else
-        {
-            int v6 = 0;
-
-            df::world_data* wdata = df::global::world->world_data;
-
-            if (flip_latitude == 0) // NORTH POLE ONLY
-            {
-                v6 = y_pos;
-            }
-
-            else if (flip_latitude == 1) // SOUTH_POLE ONLY
-            {
-                v6 = df::global::world->world_data->world_height - y_pos - 1;
-            }
-
-            else if (flip_latitude == 2) // BOTH POLES
-            {
-                if (y_pos < wdata->world_height / 2)
-                    v6 = 2 * y_pos;
-                else
-                {
-                    v6 = wdata->world_height + 2 * (wdata->world_height / 2 - y_pos) - 1;
-                    if (v6 < 0)
-                        v6 = 0;
-                    if (v6 >= wdata->world_height)
-                        v6 = wdata->world_height - 1;
-                }
-            }
-
-            if (wdata->world_height == 17)
-                v6 *= 16;
-            else if (wdata->world_height == 33)
-                v6 *= 8;
-            else if (wdata->world_height == 65)
-                v6 *= 4;
-            else if (wdata->world_height == 129)
-                v6 *= 2;
-
-            is_possible_tropical_area_by_latitude = v6 > 170;
-            is_tropical_area_by_latitude = v6 >= 200;
-        }
-
-        return std::pair<bool, bool>(is_possible_tropical_area_by_latitude,
-            is_tropical_area_by_latitude
-            );
+        // If there're no poles, tropical area is determined by temperature
+        is_possible_tropical_area_by_latitude = region.temperature >= 75;
+        is_tropical_area_by_latitude = region.temperature >= 85;
     }
 
-
-    //----------------------------------------------------------------------------//
-    // Utility function
-    //
-    // return some unknow parameter as a percentage
-    //----------------------------------------------------------------------------//
-    int get_region_parameter(int y,
-        int x
-    )
+    else
     {
-        int world_height = df::global::world->world_data->world_height;
-        if (world_height > 65) // Medium and large worlds
+        int v6 = 0;
+
+        df::world_data* wdata = df::global::world->world_data;
+
+        if (flip_latitude == 0) // NORTH POLE ONLY
         {
-            // access to region 2D array
-            df::region_map_entry& region = df::global::world->world_data->region_map[x][y];
-            int flip_latitude = df::global::world->world_data->flip_latitude;
-            int rainfall = region.rainfall;
-            int result;
-            int y_pos = y;
-            int ypos = y_pos;
+            v6 = y_pos;
+        }
 
-            if (flip_latitude == -1) // NO POLES
-                return 100;
+        else if (flip_latitude == 1) // SOUTH_POLE ONLY
+        {
+            v6 = df::global::world->world_data->world_height - y_pos - 1;
+        }
 
-            else if (flip_latitude == 1) // SOUTH POLE
-                ypos = world_height - y_pos - 1;
-            else if (flip_latitude == 2) // NORTH & SOUTH POLE
-            {
-                if (ypos < world_height / 2)
-                    ypos *= 2;
-                else
-                {
-                    ypos = world_height + 2 * (world_height / 2 - ypos) - 1;
-                    if (ypos < 0)
-                        ypos = 0;
-                    if (ypos >= world_height)
-                        ypos = world_height - 1;
-                }
-            }
-
-            int latitude; // 0 - 256 (size of a large world)
-            switch (world_height)
-            {
-            case 17:                                    // Pocket world
-                latitude = 16 * ypos;
-                break;
-            case 33:                                    // Smaller world
-                latitude = 8 * ypos;
-                break;
-            case 65:                                    // Small world
-                latitude = 4 * ypos;
-                break;
-            case 129:                                  // Medium world
-                latitude = 2 * ypos;
-                break;
-            default:                                  // Large world
-                latitude = ypos;
-                break;
-            }
-
-            // latitude > 220
-            if ((latitude - 171) > 49)
-                return 100;
-
-
-            // Latitude between 191 and 200
-            if ((latitude > 190) && (latitude < 201))
-                return 0;
-
-            // Latitude between 201 and 220
-            if ((latitude > 190) && (latitude >= 201))
-                result = rainfall + 16 * (latitude - 207);
+        else if (flip_latitude == 2) // BOTH POLES
+        {
+            if (y_pos < wdata->world_height / 2)
+                v6 = 2 * y_pos;
             else
-                // Latitude between 0 and 190
-                result = (16 * (184 - latitude) - rainfall);
-
-            if (result < 0)
-                return 0;
-
-            if (result > 100)
-                return 100;
-
-            return result;
+            {
+                v6 = wdata->world_height + 2 * (wdata->world_height / 2 - y_pos) - 1;
+                if (v6 < 0)
+                    v6 = 0;
+                if (v6 >= wdata->world_height)
+                    v6 = wdata->world_height - 1;
+            }
         }
 
-        return 100;
+        if (wdata->world_height == 17)
+            v6 *= 16;
+        else if (wdata->world_height == 33)
+            v6 *= 8;
+        else if (wdata->world_height == 65)
+            v6 *= 4;
+        else if (wdata->world_height == 129)
+            v6 *= 2;
+
+        is_possible_tropical_area_by_latitude = v6 > 170;
+        is_tropical_area_by_latitude = v6 >= 200;
     }
+
+    return std::pair<bool, bool>(is_possible_tropical_area_by_latitude,
+        is_tropical_area_by_latitude
+        );
+}
+
+
+//----------------------------------------------------------------------------//
+// Utility function
+//
+// return some unknow parameter as a percentage
+//----------------------------------------------------------------------------//
+static int get_region_parameter(int y,
+    int x
+)
+{
+    int world_height = df::global::world->world_data->world_height;
+    if (world_height > 65) // Medium and large worlds
+    {
+        // access to region 2D array
+        df::region_map_entry& region = df::global::world->world_data->region_map[x][y];
+        int flip_latitude = df::global::world->world_data->flip_latitude;
+        int rainfall = region.rainfall;
+        int result;
+        int y_pos = y;
+        int ypos = y_pos;
+
+        if (flip_latitude == -1) // NO POLES
+            return 100;
+
+        else if (flip_latitude == 1) // SOUTH POLE
+            ypos = world_height - y_pos - 1;
+        else if (flip_latitude == 2) // NORTH & SOUTH POLE
+        {
+            if (ypos < world_height / 2)
+                ypos *= 2;
+            else
+            {
+                ypos = world_height + 2 * (world_height / 2 - ypos) - 1;
+                if (ypos < 0)
+                    ypos = 0;
+                if (ypos >= world_height)
+                    ypos = world_height - 1;
+            }
+        }
+
+        int latitude; // 0 - 256 (size of a large world)
+        switch (world_height)
+        {
+        case 17:                                    // Pocket world
+            latitude = 16 * ypos;
+            break;
+        case 33:                                    // Smaller world
+            latitude = 8 * ypos;
+            break;
+        case 65:                                    // Small world
+            latitude = 4 * ypos;
+            break;
+        case 129:                                  // Medium world
+            latitude = 2 * ypos;
+            break;
+        default:                                  // Large world
+            latitude = ypos;
+            break;
+        }
+
+        // latitude > 220
+        if ((latitude - 171) > 49)
+            return 100;
+
+
+        // Latitude between 191 and 200
+        if ((latitude > 190) && (latitude < 201))
+            return 0;
+
+        // Latitude between 201 and 220
+        if ((latitude > 190) && (latitude >= 201))
+            result = rainfall + 16 * (latitude - 207);
+        else
+            // Latitude between 0 and 190
+            result = (16 * (184 - latitude) - rainfall);
+
+        if (result < 0)
+            return 0;
+
+        if (result > 100)
+            return 100;
+
+        return result;
+    }
+
+    return 100;
 }
 
 

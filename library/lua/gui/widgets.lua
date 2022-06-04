@@ -186,13 +186,25 @@ EditField.ATTRS{
     on_submit = DEFAULT_NIL,
     key = DEFAULT_NIL,
     key_sep = DEFAULT_NIL,
+    frame = {h=1},
+    modal = false,
 }
 
 function EditField:init()
+    local function on_activate()
+        self.saved_text = self.text
+        self:setFocus(true)
+    end
+
     self:addviews{HotkeyLabel{frame={t=0,l=0},
                               key=self.key,
                               key_sep=self.key_sep,
-                              label=self.label_text}}
+                              label=self.label_text,
+                              on_activate=self.key and on_activate or nil}}
+end
+
+function EditField:getPreferredFocusState()
+    return not self.key
 end
 
 function EditField:postUpdateLayout()
@@ -203,7 +215,7 @@ function EditField:onRenderBody(dc)
     dc:pen(self.text_pen or COLOR_LIGHTCYAN):fill(0,0,dc.width-1,0)
 
     local cursor = '_'
-    if not self.active or gui.blink_visible(300) then
+    if not self.active or not self.focus or gui.blink_visible(300) then
         cursor = ' '
     end
     local txt = self.text .. cursor
@@ -215,12 +227,36 @@ function EditField:onRenderBody(dc)
 end
 
 function EditField:onInput(keys)
-    if self.on_submit and keys.SELECT then
-        self.on_submit(self.text)
+    if not self.focus then
+        -- only react to our hotkey
+        return self:inputToSubviews(keys)
+    end
+
+    if self.key and keys.LEAVESCREEN then
+        local old = self.text
+        self.text = self.saved_text
+        if self.on_change and old ~= self.saved_text then
+            self.on_change(self.text, old)
+        end
+        self:setFocus(false)
         return true
-    elseif keys._STRING then
+    end
+
+    if keys.SELECT then
+        if self.key then
+            self:setFocus(false)
+        end
+        if self.on_submit then
+            self.on_submit(self.text)
+            return true
+        end
+        return not not self.key
+    end
+
+    if keys._STRING then
         local old = self.text
         if keys._STRING == 0 then
+            -- handle backspace
             self.text = string.sub(old, 1, #old-1)
         else
             local cv = string.char(keys._STRING)
@@ -233,6 +269,9 @@ function EditField:onInput(keys)
         end
         return true
     end
+
+    -- if we're modal, then unconditionally eat all the input
+    return self.modal
 end
 
 -----------
@@ -957,7 +996,6 @@ function FilteredList:init(info)
         on_change = self:callback('onFilterChange'),
         on_char = self:callback('onFilterChar'),
         key = self.edit_key,
-        active = (self.edit_key == nil),
     }
     self.list = List{
         frame = { t = 2 },
@@ -1001,19 +1039,6 @@ function FilteredList:init(info)
         self.choices = {}
     end
 end
-
-function FilteredList:onInput(keys)
-    if self.edit_key and keys[self.edit_key] and not self.edit.active then
-        self.edit.active = true
-        return true
-    elseif keys.LEAVESCREEN and self.edit.active then
-        self.edit.active = false
-        return true
-    else
-        return self:inputToSubviews(keys)
-    end
-end
-
 
 function FilteredList:getChoices()
     return self.choices

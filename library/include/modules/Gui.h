@@ -138,13 +138,6 @@ namespace DFHack
         DFHACK_EXPORT df::coord getViewportPos();
         DFHACK_EXPORT df::coord getCursorPos();
 
-        // Recenter the viewscreen, based on DF code for announcements and scrolling
-        DFHACK_EXPORT void pauseRecenter(int32_t x, int32_t y, int32_t z, bool pause);
-        DFHACK_EXPORT inline void pauseRecenter(df::coord pos, bool pause) { pauseRecenter(pos.x, pos.y, pos.z, pause); }
-        DFHACK_EXPORT void recenterViewscreen(int32_t x, int32_t y, int32_t z, df::report_zoom_type zoom = df::enums::report_zoom_type::Item);
-        DFHACK_EXPORT inline void recenterViewscreen(df::coord pos, df::report_zoom_type zoom = df::enums::report_zoom_type::Item) { recenterViewscreen(pos.x, pos.y, pos.z, zoom); };
-        DFHACK_EXPORT inline void recenterViewscreen(df::report_zoom_type zoom = df::enums::report_zoom_type::Item) { recenterViewscreen(getCursorPos(), zoom); };
-
         static const int AREA_MAP_WIDTH = 23;
         static const int MENU_WIDTH = 30;
 
@@ -161,7 +154,10 @@ namespace DFHack
         DFHACK_EXPORT DwarfmodeDims getDwarfmodeViewDims();
 
         DFHACK_EXPORT void resetDwarfmodeView(bool pause = false);
-        DFHACK_EXPORT bool revealInDwarfmodeMap(df::coord pos, bool center = false);
+        DFHACK_EXPORT bool revealInDwarfmodeMap(int32_t x, int32_t y, int32_t z, bool center = false);
+        DFHACK_EXPORT inline bool revealInDwarfmodeMap(df::coord pos, bool center = false) { return revealInDwarfmodeMap(pos.x, pos.y, pos.z, center); };
+        DFHACK_EXPORT bool pauseRecenter(int32_t x, int32_t y, int32_t z, bool pause = true);
+        DFHACK_EXPORT inline bool pauseRecenter(df::coord pos, bool pause = true) { return pauseRecenter(pos.x, pos.y, pos.z, pause); };
         DFHACK_EXPORT bool refreshSidebar();
 
         DFHACK_EXPORT bool inRenameBuilding();

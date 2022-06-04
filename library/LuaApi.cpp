@@ -1457,26 +1457,6 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
 
 /***** Gui module *****/
 
-static int gui_getDwarfmodeViewDims(lua_State *state)
-{
-    auto dims = Gui::getDwarfmodeViewDims();
-    lua_newtable(state);
-    Lua::TableInsert(state, "map_x1", dims.map_x1);
-    Lua::TableInsert(state, "map_x2", dims.map_x2);
-    Lua::TableInsert(state, "menu_x1", dims.menu_x1);
-    Lua::TableInsert(state, "menu_x2", dims.menu_x2);
-    Lua::TableInsert(state, "area_x1", dims.area_x1);
-    Lua::TableInsert(state, "area_x2", dims.area_x2);
-    Lua::TableInsert(state, "y1", dims.y1);
-    Lua::TableInsert(state, "y2", dims.y2);
-    Lua::TableInsert(state, "map_y1", dims.map_y1);
-    Lua::TableInsert(state, "map_y2", dims.map_y2);
-    Lua::TableInsert(state, "menu_on", dims.menu_on);
-    Lua::TableInsert(state, "area_on", dims.area_on);
-    Lua::TableInsert(state, "menu_forced", dims.menu_forced);
-    return 1;
-}
-
 static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, getCurViewscreen),
     WRAPM(Gui, getFocusString),
@@ -1500,7 +1480,6 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, showPopupAnnouncement),
     WRAPM(Gui, showAutoAnnouncement),
     WRAPM(Gui, resetDwarfmodeView),
-    WRAPM(Gui, revealInDwarfmodeMap),
     WRAPM(Gui, refreshSidebar),
     WRAPM(Gui, inRenameBuilding),
     WRAPM(Gui, getDepthAt),
@@ -1520,7 +1499,7 @@ static int gui_autoDFAnnouncement(lua_State *state)
     else
     {
         df::coord pos;
-        int color = 0; //initialize these to prevent warning
+        int color = 0; // initialize these to prevent warning
         bool bright = false, is_sparring = false;
         df::unit *unit1 = NULL, *unit2 = NULL;
 
@@ -1572,54 +1551,85 @@ static int gui_autoDFAnnouncement(lua_State *state)
     return 1;
 }
 
-static int gui_pauseRecenter(lua_State *state)
+static int gui_getDwarfmodeViewDims(lua_State *state)
 {
-    if (lua_gettop(state) == 2)
-    {
-        df::coord p;
-        Lua::CheckDFAssign(state, &p, 1);
-        Gui::pauseRecenter(p, lua_toboolean(state, 2));
-    }
-    else
-        Gui::pauseRecenter(CheckCoordXYZ(state, 1, false), lua_toboolean(state, 4));
-
+    auto dims = Gui::getDwarfmodeViewDims();
+    lua_newtable(state);
+    Lua::TableInsert(state, "map_x1", dims.map_x1);
+    Lua::TableInsert(state, "map_x2", dims.map_x2);
+    Lua::TableInsert(state, "menu_x1", dims.menu_x1);
+    Lua::TableInsert(state, "menu_x2", dims.menu_x2);
+    Lua::TableInsert(state, "area_x1", dims.area_x1);
+    Lua::TableInsert(state, "area_x2", dims.area_x2);
+    Lua::TableInsert(state, "y1", dims.y1);
+    Lua::TableInsert(state, "y2", dims.y2);
+    Lua::TableInsert(state, "map_y1", dims.map_y1);
+    Lua::TableInsert(state, "map_y2", dims.map_y2);
+    Lua::TableInsert(state, "menu_on", dims.menu_on);
+    Lua::TableInsert(state, "area_on", dims.area_on);
+    Lua::TableInsert(state, "menu_forced", dims.menu_forced);
     return 1;
 }
 
-static int gui_recenterViewscreen(lua_State *state)
+static int gui_pauseRecenter(lua_State *state)
 {
+    bool rv;
     df::coord p;
+
     switch (lua_gettop(state))
     {
         default:
         case 4:
-            Gui::recenterViewscreen(CheckCoordXYZ(state, 1, false), (df::report_zoom_type)lua_tointeger(state, 4));
+            rv = Gui::pauseRecenter(CheckCoordXYZ(state, 1, false), lua_toboolean(state, 4));
             break;
         case 3:
-            Gui::recenterViewscreen(CheckCoordXYZ(state, 1, false));
+            rv = Gui::pauseRecenter(CheckCoordXYZ(state, 1, false));
             break;
         case 2:
             Lua::CheckDFAssign(state, &p, 1);
-            Gui::recenterViewscreen(p, (df::report_zoom_type)lua_tointeger(state, 2));
+            rv = Gui::pauseRecenter(p, lua_toboolean(state, 2));
             break;
         case 1:
-            if (lua_type(state, 1) == LUA_TNUMBER)
-                Gui::recenterViewscreen((df::report_zoom_type)lua_tointeger(state, 1));
-            else
-                Gui::recenterViewscreen(CheckCoordXYZ(state, 1, true));
-            break;
-        case 0:
-            Gui::recenterViewscreen();
+            Lua::CheckDFAssign(state, &p, 1);
+            rv = Gui::pauseRecenter(p);
     }
 
+    lua_pushboolean(state, rv);
+    return 1;
+}
+
+static int gui_revealInDwarfmodeMap(lua_State *state)
+{
+    bool rv;
+    df::coord p;
+
+    switch (lua_gettop(state))
+    {
+        default:
+        case 4:
+            rv = Gui::revealInDwarfmodeMap(CheckCoordXYZ(state, 1, false), lua_toboolean(state, 4));
+            break;
+        case 3:
+            rv = Gui::revealInDwarfmodeMap(CheckCoordXYZ(state, 1, false));
+            break;
+        case 2:
+            Lua::CheckDFAssign(state, &p, 1);
+            rv = Gui::revealInDwarfmodeMap(p, lua_toboolean(state, 2));
+            break;
+        case 1:
+            Lua::CheckDFAssign(state, &p, 1);
+            rv = Gui::revealInDwarfmodeMap(p);
+    }
+
+    lua_pushboolean(state, rv);
     return 1;
 }
 
 static const luaL_Reg dfhack_gui_funcs[] = {
     { "autoDFAnnouncement", gui_autoDFAnnouncement },
-    { "pauseRecenter", gui_pauseRecenter },
-    { "recenterViewscreen", gui_recenterViewscreen },
     { "getDwarfmodeViewDims", gui_getDwarfmodeViewDims },
+    { "pauseRecenter", gui_pauseRecenter },
+    { "revealInDwarfmodeMap", gui_revealInDwarfmodeMap },
     { NULL, NULL }
 };
 

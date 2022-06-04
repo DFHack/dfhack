@@ -45,9 +45,11 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `dfhack-examples-guide`: refine food preparation orders and fix conditions for making jugs and pots in the ``basic`` manager orders
 
 ## Documentation
+- ``dfhack.gui.revealInDwarfmodeMap``: document ``center`` bool for lua API
 
 ## API
-- add functions reverse-engineered from announcement code: ``Gui::autoDFAnnouncement``, ``Gui::pauseRecenter``, ``Gui::recenterViewscreen``
+- add functions reverse-engineered from announcement code: ``Gui::autoDFAnnouncement``, ``Gui::pauseRecenter``
+- ``Gui::revealInDwarfmodeMap``: Now enforce valid view bounds when pos invalid, add variant accepting x, y, z
 
 ## Lua
 - ``widgets.HotkeyLabel``: the ``key_sep`` string is now configurable

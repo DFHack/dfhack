@@ -1007,31 +1007,23 @@ Fortress mode
 * ``dfhack.gui.pauseRecenter(pos[,pause])``
   ``dfhack.gui.pauseRecenter(x,y,z[,pause])``
 
-  Same as ``resetDwarfmodeView``, but also recenter if ``x`` isn't ``-30000``. Respects
+  Same as ``resetDwarfmodeView``, but also recenter if position is valid. If ``pause`` is false, skip pausing. Respects
   ``RECENTER_INTERFACE_SHUTDOWN_MS`` in DF's ``init.txt`` (the delay before input is recognized when a recenter occurs.)
 
-* ``dfhack.gui.recenterViewscreen(pos[,zoom])``
-  ``dfhack.gui.recenterViewscreen(x,y,z[,zoom])``
-  ``dfhack.gui.recenterViewscreen([zoom])``
+* ``dfhack.gui.revealInDwarfmodeMap(pos[,center])``
+  ``dfhack.gui.revealInDwarfmodeMap(x,y,z[,center])``
 
-  Recenter the view on a position using a specific zoom type. If no position is given,
-  recenter on ``df.global.cursor``. Zoom types are ``df.report_zoom_type``
-  (see: `enum definition <https://github.com/DFHack/df-structures/blob/master/df.announcements.xml>`_),
-  where ``df.report_zoom_type.Generic`` skips recentering and enforces valid view bounds (the same as x = -30000,)
-  ``df.report_zoom_type.Item`` brings the position onscreen without centering, and
-  ``df.report_zoom_type.Unit`` centers the screen on the position. Default zoom type is ``df.report_zoom_type.Item``.
-
-* ``dfhack.gui.revealInDwarfmodeMap(pos)``
-
-  Centers the view on the given position, which can be a ``df.coord`` instance
-  or a table assignable to a ``df.coord`` (see `lua-api-table-assignment`),
+  Centers the view on the given coordinates. If ``center`` is true, make sure the
+  position is in the exact center of the view, else just bring it on screen.
+  
+  ``pos`` can be a ``df.coord`` instance or a table assignable to a ``df.coord`` (see `lua-api-table-assignment`),
   e.g.::
 
     {x = 5, y = 7, z = 11}
     getSelectedUnit().pos
     copyall(df.global.cursor)
 
-  Returns false if unsuccessful.
+  If the position is invalid, the function will simply ensure the current window position is clamped between valid values.
 
 * ``dfhack.gui.refreshSidebar()``
 

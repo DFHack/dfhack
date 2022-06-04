@@ -1387,7 +1387,7 @@ static bool parseReportString(std::vector<std::string> *out, const std::string &
 
             if (str[i] == 'r') // "&r" adds a blank line
             {
-                word_wrap(out, parsed, line_length/*, WSMODE_TRIM_LEADING*/);
+                word_wrap(out, parsed, line_length, WSMODE_TRIM_LEADING);
                 out->push_back(" "); // DF adds a line with a space for some reason
                 parsed.clear();
             }
@@ -1401,7 +1401,7 @@ static bool parseReportString(std::vector<std::string> *out, const std::string &
     while (++i < str.length());
 
     if (parsed.length())
-        word_wrap(out, parsed, line_length/*, WSMODE_TRIM_LEADING*/);
+        word_wrap(out, parsed, line_length, WSMODE_TRIM_LEADING);
 
     return true;
 }
@@ -1921,65 +1921,6 @@ df::coord Gui::getCursorPos()
     return df::coord(cursor->x, cursor->y, cursor->z);
 }
 
-void Gui::recenterViewscreen(int32_t x, int32_t y, int32_t z, df::report_zoom_type zoom)
-{   // Reverse-engineered from DF announcement code, also used when scrolling
-    auto dims = getDwarfmodeViewDims();
-    int32_t w = dims.map_x2 - dims.map_x1 + 1;
-    int32_t h = dims.map_y2 - dims.map_y1 + 1;
-    int32_t new_win_x, new_win_y, new_win_z;
-    getViewCoords(new_win_x, new_win_y, new_win_z);
-
-    if (zoom != report_zoom_type::Generic && x != -30000)
-    {
-        if (zoom == report_zoom_type::Unit)
-        {
-            new_win_x = x - w / 2;
-            new_win_y = y - h / 2;
-        }
-        else // report_zoom_type::Item
-        {
-            if (new_win_x > (x - 5)) // equivalent to: "while (new_win_x > x - 5) new_win_x -= 10;"
-                new_win_x -= (new_win_x - (x - 5) - 1) / 10 * 10 + 10;
-            if (new_win_y > (y - 5))
-                new_win_y -= (new_win_y - (y - 5) - 1) / 10 * 10 + 10;
-            if (new_win_x < (x + 5 - w))
-                new_win_x += ((x + 5 - w) - new_win_x - 1) / 10 * 10 + 10;
-            if (new_win_y < (y + 5 - h))
-                new_win_y += ((y + 5 - h) - new_win_y - 1) / 10 * 10 + 10;
-        }
-
-        new_win_z = z;
-    }
-
-    *df::global::window_x = clip_range(new_win_x, 0, (world->map.x_count - w));
-    *df::global::window_y = clip_range(new_win_y, 0, (world->map.y_count - h));
-    *df::global::window_z = clip_range(new_win_z, 0, (world->map.z_count - 1));
-
-    ui_sidebar_menus->minimap.need_render = true;
-    ui_sidebar_menus->minimap.need_scan = true;
-
-    return;
-}
-
-void Gui::pauseRecenter(int32_t x, int32_t y, int32_t z, bool pause)
-{   // Reverse-engineered from DF announcement code
-    if (*gamemode != game_mode::DWARF)
-        return;
-
-    resetDwarfmodeView(pause);
-
-    if (x != -30000)
-        recenterViewscreen(x, y, z, report_zoom_type::Item);
-
-    if (init->input.pause_zoom_no_interface_ms > 0)
-    {
-        gview->shutdown_interface_tickcount = Core::getInstance().p->getTickCount();
-        gview->shutdown_interface_for_ms = init->input.pause_zoom_no_interface_ms;
-    }
-
-    return;
-}
-
 Gui::DwarfmodeDims getDwarfmodeViewDims_default()
 {
     Gui::DwarfmodeDims dims;
@@ -2059,38 +2000,68 @@ void Gui::resetDwarfmodeView(bool pause)
         *df::global::pause_state = true;
 }
 
-bool Gui::revealInDwarfmodeMap(df::coord pos, bool center)
-{
+bool Gui::revealInDwarfmodeMap(int32_t x, int32_t y, int32_t z, bool center)
+{   // Reverse-engineered from DF announcement and scrolling code
     using df::global::window_x;
     using df::global::window_y;
     using df::global::window_z;
 
     if (!window_x || !window_y || !window_z || !world)
         return false;
-    if (!Maps::isValidTilePos(pos))
-        return false;
 
     auto dims = getDwarfmodeViewDims();
-    int w = dims.map_x2 - dims.map_x1 + 1;
-    int h = dims.map_y2 - dims.map_y1 + 1;
+    int32_t w = dims.map_x2 - dims.map_x1 + 1;
+    int32_t h = dims.map_y2 - dims.map_y1 + 1;
+    int32_t new_win_x, new_win_y, new_win_z;
+    getViewCoords(new_win_x, new_win_y, new_win_z);
 
-    *window_z = pos.z;
-
-    if (center)
+    if (Maps::isValidTilePos(x, y, z))
     {
-        *window_x = pos.x - w/2;
-        *window_y = pos.y - h/2;
-    }
-    else
-    {
-        while (*window_x + w < pos.x+5) *window_x += 10;
-        while (*window_y + h < pos.y+5) *window_y += 10;
-        while (*window_x + 5 > pos.x) *window_x -= 10;
-        while (*window_y + 5 > pos.y) *window_y -= 10;
+        if (center)
+        {
+            new_win_x = x - w / 2;
+            new_win_y = y - h / 2;
+        }
+        else // just bring it on screen
+        {
+            if (new_win_x > (x - 5)) // equivalent to: "while (new_win_x > x - 5) new_win_x -= 10;"
+                new_win_x -= (new_win_x - (x - 5) - 1) / 10 * 10 + 10;
+            if (new_win_y > (y - 5))
+                new_win_y -= (new_win_y - (y - 5) - 1) / 10 * 10 + 10;
+            if (new_win_x < (x + 5 - w))
+                new_win_x += ((x + 5 - w) - new_win_x - 1) / 10 * 10 + 10;
+            if (new_win_y < (y + 5 - h))
+                new_win_y += ((y + 5 - h) - new_win_y - 1) / 10 * 10 + 10;
+        }
+
+        new_win_z = z;
     }
 
-    *window_x = std::max(0, std::min(*window_x, world->map.x_count-w));
-    *window_y = std::max(0, std::min(*window_y, world->map.y_count-h));
+    *window_x = clip_range(new_win_x, 0, (world->map.x_count - w));
+    *window_y = clip_range(new_win_y, 0, (world->map.y_count - h));
+    *window_z = clip_range(new_win_z, 0, (world->map.z_count - 1));
+    ui_sidebar_menus->minimap.need_render = true;
+    ui_sidebar_menus->minimap.need_scan = true;
+
+    return true;
+}
+
+bool Gui::pauseRecenter(int32_t x, int32_t y, int32_t z, bool pause)
+{   // Reverse-engineered from DF announcement code
+    if (*gamemode != game_mode::DWARF)
+        return false;
+
+    resetDwarfmodeView(pause);
+
+    if (Maps::isValidTilePos(x, y, z))
+        revealInDwarfmodeMap(x, y, z, false);
+
+    if (init->input.pause_zoom_no_interface_ms > 0)
+    {
+        gview->shutdown_interface_tickcount = Core::getInstance().p->getTickCount();
+        gview->shutdown_interface_for_ms = init->input.pause_zoom_no_interface_ms;
+    }
+
     return true;
 }
 

@@ -85,10 +85,10 @@ bool operator>(const matdata & q1, const matdata & q2)
     return q1.count > q2.count;
 }
 
-template<typename _Tp = matdata >
-struct shallower : public binary_function<_Tp, _Tp, bool>
+template<typename Tp = matdata >
+struct shallower
 {
-    bool operator()(const _Tp& top, const _Tp& bottom) const
+    bool operator()(const Tp& top, const Tp& bottom) const
     {
         float topavg = (top.lower_z + top.upper_z)/2.0f;
         float btmavg = (bottom.lower_z + bottom.upper_z)/2.0f;

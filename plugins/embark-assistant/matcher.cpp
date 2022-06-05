@@ -475,7 +475,8 @@ namespace embark_assist {
                 return;  //  We're at the world edge, so no incursions from the outside.
             }
 
-            if (!&survey_results->at(fetch_x).at(fetch_y).surveyed) {
+            if (!survey_results->at(fetch_x).at(fetch_y).surveyed) {
+                // todo: this has never been executed before /*std::cerr << hello, is anybody out there*/
                 *failed_match = true;
                 return;
             }

@@ -52,7 +52,7 @@ static inline size_t find_plant ( const std::string &plant_id )
     return linear_index ( df::global::world->raws.plants.all, &df::plant_raw::id, plant_id );
 }
 
-struct less_than_no_case: public std::binary_function< char,char,bool >
+struct less_than_no_case
 {
    bool operator () (char x, char y) const
    {

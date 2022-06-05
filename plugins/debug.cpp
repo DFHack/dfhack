@@ -511,6 +511,8 @@ private:
     DebugManager::categorySignal_t::Connection connection_;
 };
 
+constexpr const char* FilterManager::configPath;
+
 FilterManager::~FilterManager()
 {
 }

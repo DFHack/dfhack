@@ -17,8 +17,11 @@ jobs:
         plugins:
         - default
         include:
-        - os: ubuntu-20.04
+        - os: ubuntu-22.04
           gcc: 11
+          plugins: all
+        - os: ubuntu-22.04
+          gcc: 12
           plugins: all
     steps:
     - name: Set up Python 3

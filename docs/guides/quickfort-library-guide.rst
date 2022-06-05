@@ -7,10 +7,12 @@ Blueprint Library Index
 This guide contains a high-level overview of the blueprints available in the
 :source:`quickfort blueprint library <data/blueprints/library>`. You can list
 library blueprints by running ``quickfort list --library`` or by hitting
-:kbd:`Alt`:kbd:`l` in the ``quickfort gui`` interactive dialog.
+:kbd:`Alt`:kbd:`l` in the ``gui/quickfort`` file load dialog.
 
 Each file is hyperlinked to its online version so you can see exactly what the
-blueprints do before you run them.
+blueprints do before you run them. Also, if you use `gui/quickfort`, you will
+get a live preview of which tiles will be modified by the blueprint before you
+apply it to your map.
 
 Whole fort blueprint sets
 -------------------------
@@ -34,7 +36,7 @@ automate basic fort needs, such as food, booze, and item production. It can
 function by itself or as the core of a larger, more ambitious fortress. Read the
 high-level walkthrough by running ``quickfort run library/dreamfort.csv`` and
 list the walkthroughs for the individual levels by running ``quickfort list -l
-dreamfort -m notes`` or ``quickfort gui -l dreamfort notes``.
+dreamfort -m notes`` or ``gui/quickfort dreamfort notes``.
 
 Dreamfort blueprints are available for easy viewing and copying `online
 <https://drive.google.com/drive/folders/1iS90EEVqUkxTeZiiukVj1pLloZqabKuP>`__.
@@ -47,14 +49,14 @@ and a convenient `checklist
 <https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=1459509569>`__
 from which you can copy the ``quickfort`` commands.
 
-You can download a fully built Dreamfort-based fort from `dffd
+If you like, you can download a fully built Dreamfort-based fort from `dffd
 <https://dffd.bay12games.com/file.php?id=15434>`__, load it, and explore it
 interactively.
 
 Visual overview
 ```````````````
 
-Here are some annotated screenshots of the major levels (or click `here
+Here are annotated screenshots of the major Dreamfort levels (or click `here
 <https://drive.google.com/drive/folders/14KdE2E2wQKj4F_E-NAe3G3E4x1wiWtrc>`__
 for a slideshow).
 
@@ -136,7 +138,8 @@ The Quick Fortress is an updated version of the example fortress that came with
 inspired DFHack quickfort). While it is not a complete fortress by
 itself, it is much simpler than Dreamfort and is good for a first introduction
 to `quickfort` blueprints. Read its walkthrough with ``quickfort run
-library/quickfortress.csv``.
+library/quickfortress.csv`` or view the blueprints `online
+<https://docs.google.com/spreadsheets/d/1WuLYZBM6S2nt-XsPS30kpDnngpOQCuIdlw4zjrcITdY>`__.
 
 Layout helpers
 --------------
@@ -205,8 +208,8 @@ running ``quickfort run library/aquifer_tap.csv -n /help``.
 You can see how to nullify the water pressure (so you don't flood your fort) in
 the `Dreamfort screenshot above <example-plumbing-to-fill-cisterns>`.
 
-Blueprint spreadsheet also available
-`online <https://docs.google.com/spreadsheets/d/1kwuCipF9FYAHNP9C_XlMpqVseaPu4SmL9YLUSQkbW4s/edit#gid=611877584>`__
+The blueprint spreadsheet is also available
+`online <https://docs.google.com/spreadsheets/d/1kwuCipF9FYAHNP9C_XlMpqVseaPu4SmL9YLUSQkbW4s/edit#gid=611877584>`__.
 
 Post-embark
 ~~~~~~~~~~~
@@ -219,9 +222,9 @@ starting stockpiles.
 Pump Stack
 ~~~~~~~~~~
 
-The pump stack blueprints help you move water and magma up to move convenient
+The pump stack blueprints help you move water and magma up to more convenient
 locations in your fort. See the step-by-step guide for using it by running
 ``quickfort run library/pump_stack.csv -n /help``.
 
-Blueprint spreadsheet also available
-`online <https://docs.google.com/spreadsheets/d/1TP2n-W-O9f30Dtl6yoTcn6yczWQRu11iM7U6TEE9634/edit#gid=0>`__
+The blueprint spreadsheet is also available
+`online <https://docs.google.com/spreadsheets/d/1TP2n-W-O9f30Dtl6yoTcn6yczWQRu11iM7U6TEE9634/edit#gid=0>`__.

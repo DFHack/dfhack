@@ -65,7 +65,9 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.ccache
-        key: ccache-${{ matrix.os }}-gcc-${{ matrix.gcc }}
+        key: ccache-${{ matrix.os }}-gcc-${{ matrix.gcc }}-${{ github.sha }}
+        restore-keys: |
+          ccache-${{ matrix.os }}-gcc-${{ matrix.gcc }}
     - name: Download DF
       run: |
         sh ci/download-df.sh

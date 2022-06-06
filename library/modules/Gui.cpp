@@ -113,8 +113,10 @@ using namespace DFHack;
 #include "df/viewscreen_workshop_profilest.h"
 #include "df/world.h"
 
-const size_t MAX_REPORTS_SIZE = 3000;
-const int32_t RECENT_REPORT_TICKS = 500;
+const size_t MAX_REPORTS_SIZE = 3000; // DF clears old reports to maintain this vector size
+const int32_t RECENT_REPORT_TICKS = 500; // used by UNIT_COMBAT_REPORT_ALL_ACTIVE
+const int32_t ANNOUNCE_LINE_DURATION = 100; // time to display each line in announcement bar; 3.3 sec at 30 GFPS
+const int16_t ANNOUNCE_DISPLAY_TIME = 2000; // DF uses this value for most announcements; 66.6 sec at 30 GFPS
 
 namespace DFHack
 {
@@ -679,8 +681,6 @@ bool Gui::cursor_hotkey(df::viewscreen *top)
 bool Gui::workshop_job_hotkey(df::viewscreen *top)
 {
     using namespace ui_sidebar_mode;
-    using df::global::ui;
-    using df::global::world;
     using df::global::ui_workshop_in_add;
     using df::global::ui_workshop_job_cursor;
 
@@ -717,7 +717,6 @@ bool Gui::workshop_job_hotkey(df::viewscreen *top)
 bool Gui::build_selector_hotkey(df::viewscreen *top)
 {
     using namespace ui_sidebar_mode;
-    using df::global::ui;
     using df::global::ui_build_selector;
 
     if (!dwarfmode_hotkey(top))
@@ -744,8 +743,6 @@ bool Gui::build_selector_hotkey(df::viewscreen *top)
 
 bool Gui::view_unit_hotkey(df::viewscreen *top)
 {
-    using df::global::ui;
-    using df::global::world;
     using df::global::ui_selected_unit;
 
     if (!dwarfmode_hotkey(top))
@@ -772,7 +769,6 @@ bool Gui::unit_inventory_hotkey(df::viewscreen *top)
 
 df::job *Gui::getSelectedWorkshopJob(color_ostream &out, bool quiet)
 {
-    using df::global::world;
     using df::global::ui_workshop_job_cursor;
 
     if (!workshop_job_hotkey(Core::getTopViewscreen())) {
@@ -840,8 +836,6 @@ df::job *Gui::getSelectedJob(color_ostream &out, bool quiet)
 df::unit *Gui::getAnyUnit(df::viewscreen *top)
 {
     using namespace ui_sidebar_mode;
-    using df::global::ui;
-    using df::global::world;
     using df::global::ui_look_cursor;
     using df::global::ui_look_list;
     using df::global::ui_selected_unit;
@@ -1122,13 +1116,10 @@ df::unit *Gui::getSelectedUnit(color_ostream &out, bool quiet)
 df::item *Gui::getAnyItem(df::viewscreen *top)
 {
     using namespace ui_sidebar_mode;
-    using df::global::ui;
-    using df::global::world;
     using df::global::ui_look_cursor;
     using df::global::ui_look_list;
     using df::global::ui_unit_view_mode;
     using df::global::ui_building_item_cursor;
-    using df::global::ui_sidebar_menus;
 
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_textviewerst, top))
     {
@@ -1256,11 +1247,8 @@ df::item *Gui::getSelectedItem(color_ostream &out, bool quiet)
 df::building *Gui::getAnyBuilding(df::viewscreen *top)
 {
     using namespace ui_sidebar_mode;
-    using df::global::ui;
     using df::global::ui_look_list;
     using df::global::ui_look_cursor;
-    using df::global::world;
-    using df::global::ui_sidebar_menus;
 
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_buildinglistst, top))
         return vector_get(screen->buildings, screen->cursor);
@@ -1323,8 +1311,6 @@ df::building *Gui::getSelectedBuilding(color_ostream &out, bool quiet)
 df::plant *Gui::getAnyPlant(df::viewscreen *top)
 {
     using df::global::cursor;
-    using df::global::ui;
-    using df::global::world;
 
     if (auto dfscreen = dfhack_viewscreen::try_cast(top))
         return dfscreen->getSelectedPlant();
@@ -1452,7 +1438,7 @@ static int32_t check_repeat_report(vector<string> &results)
 
         if (offset == results.size()) // all lines matched
         {
-            reports[base]->duration = 100;
+            reports[base]->duration = ANNOUNCE_LINE_DURATION; // display the last line again
             return ++(reports[base]->repeat_count);
         }
     }
@@ -1504,7 +1490,7 @@ DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announce
     {
         if (flags.bits.D_DISPLAY)
         {
-            world->status.display_timer = 2000;
+            world->status.display_timer = ANNOUNCE_DISPLAY_TIME;
             Gui::writeToGamelog("x" + to_string(repeat_count + 1));
         }
         return -1;
@@ -1543,7 +1529,7 @@ DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announce
         {
             insert_into_vector(world->status.announcements, &df::report::id, new_rep);
             new_rep->flags.bits.announcement = true;
-            world->status.display_timer = 2000;
+            world->status.display_timer = ANNOUNCE_DISPLAY_TIME;
         }
     }
 
@@ -1761,7 +1747,7 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
     }
 
     // Check for repeat report
-    int32_t repeat_count = check_repeat_report(results); // Does nothing outside dwarf mode
+    int32_t repeat_count = check_repeat_report(results); // always returns 0 outside dwarf mode
     if (repeat_count > 0)
     {
         if (a_flags.bits.D_DISPLAY)
@@ -1863,6 +1849,7 @@ bool Gui::autoDFAnnouncement(df::announcement_type type, df::coord pos, std::str
     r.color = color;
     r.bright = bright;
     r.pos = pos;
+    r.display_timer = ANNOUNCE_DISPLAY_TIME;
     r.unit1 = unit1;
     r.unit2 = unit2;
     r.flags.bits.hostile_combat = !is_sparring;
@@ -2135,17 +2122,17 @@ bool Gui::setCursorCoords (const int32_t x, const int32_t y, const int32_t z)
 
 bool Gui::getDesignationCoords (int32_t &x, int32_t &y, int32_t &z)
 {
-    x = df::global::selection_rect->start_x;
-    y = df::global::selection_rect->start_y;
-    z = df::global::selection_rect->start_z;
+    x = selection_rect->start_x;
+    y = selection_rect->start_y;
+    z = selection_rect->start_z;
     return (x == -30000) ? false : true;
 }
 
 bool Gui::setDesignationCoords (const int32_t x, const int32_t y, const int32_t z)
 {
-    df::global::selection_rect->start_x = x;
-    df::global::selection_rect->start_y = y;
-    df::global::selection_rect->start_z = z;
+    selection_rect->start_x = x;
+    selection_rect->start_y = y;
+    selection_rect->start_z = z;
     return true;
 }
 
@@ -2189,14 +2176,14 @@ bool Gui::getWindowSize (int32_t &width, int32_t &height)
 
 bool Gui::getMenuWidth(uint8_t &menu_width, uint8_t &area_map_width)
 {
-    menu_width = (*df::global::ui_menu_width)[0];
-    area_map_width = (*df::global::ui_menu_width)[1];
+    menu_width = (*ui_menu_width)[0];
+    area_map_width = (*ui_menu_width)[1];
     return true;
 }
 
 bool Gui::setMenuWidth(const uint8_t menu_width, const uint8_t area_map_width)
 {
-    (*df::global::ui_menu_width)[0] = menu_width;
-    (*df::global::ui_menu_width)[1] = area_map_width;
+    (*ui_menu_width)[0] = menu_width;
+    (*ui_menu_width)[1] = area_map_width;
     return true;
 }

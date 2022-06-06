@@ -360,6 +360,11 @@ bool DFHack::Job::removeJob(df::job* job) {
     using df::global::world;
     CHECK_NULL_POINTER(job);
 
+    // cancel_job below does not disconnect the job items from the job
+    for (auto &item_ref : job->items) {
+       disconnectJobItem(job, item_ref); 
+    }
+
     // call the job cancel vmethod graciously provided by The Toady One.
     // job_handler::cancel_job calls job::~job, and then deletes job (this has been confirmed by disassembly)
     // this method cannot fail; it will either delete the job or crash/corrupt DF

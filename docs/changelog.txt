@@ -39,6 +39,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - ``widgets.CycleHotkeyLabel``: allow initial option values to be specified as an index instead of an option value
+- ``job.removeJob()``: fixes regression in DFHack 0.47.05-r5 where items attached to the job were not disassociated from the job when the job is removed. This allows `build-now` to build buildings whose items are already associated with the job again.
 
 ## Misc Improvements
 - `confirm`: added a confirmation dialog for removing manager orders

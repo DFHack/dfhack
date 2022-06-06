@@ -10,8 +10,10 @@
 --   height (required)
 --   depth (default is 1)
 --   start (cursor offset for input blueprints, default is 1,1)
---   extra_fn (the name of a global function in this file to run after applying
---             all blueprints but before comparing results)
+--   extra_fn (the name of a function in the extra_fns table in this file to
+--             run after applying all blueprints but before comparing results.
+--             this function will get the map coordinate of the upper-left
+--             corner of the test area passed to it)
 --
 -- depends on blueprint, buildingplan, and dig-now plugins (as well as the
 -- quickfort script and anything else run in the extra_fns, of course)
@@ -301,6 +303,8 @@ local function do_dig_phase(phase_data, area, spec)
     run_dig_now(area)
 end
 
+local extra_fns = {}
+
 function test.end_to_end()
     -- read in test plan
     local sets = get_blueprint_sets()
@@ -330,7 +334,7 @@ function test.end_to_end()
 
         -- run any extra commands, if defined by the blueprint spec
         if spec.extra_fn then
-            _ENV[spec.extra_fn](area.pos)
+            extra_fns[spec.extra_fn](area.pos)
         end
 
         -- run blueprint to generate files in output dir
@@ -387,7 +391,7 @@ local function send_keys(...)
     end
 end
 
-function test_gui_quantum(pos)
+function extra_fns.gui_quantum(pos)
     local vehicles = assign_minecarts.get_free_vehicles()
     local confirm_state = confirm.isEnabled()
     local confirm_conf = confirm.get_conf_data()

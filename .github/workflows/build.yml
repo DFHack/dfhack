@@ -60,7 +60,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/DF
-        key: ${{ steps.env_setup.outputs.df_version }}
+        key: ${{ steps.env_setup.outputs.df_version }}-${{ hashFiles('ci/download-df.sh') }}
     - name: Fetch ccache
       uses: actions/cache@v2
       with:

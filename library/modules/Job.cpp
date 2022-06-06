@@ -362,7 +362,7 @@ bool DFHack::Job::removeJob(df::job* job) {
 
     // cancel_job below does not disconnect the job items from the job
     for (auto &item_ref : job->items) {
-       disconnectJobItem(job, item_ref); 
+       disconnectJobItem(job, item_ref);
     }
 
     // call the job cancel vmethod graciously provided by The Toady One.

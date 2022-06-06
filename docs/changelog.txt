@@ -111,6 +111,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## API
 - add functions reverse-engineered from ambushing unit code: ``Units::isHidden()``, ``Units::isFortControlled()``, ``Units::getOuterContainerRef()``, ``Items::getOuterContainerRef()``
+- ``Job::removeJob()``: use the job cancel vmethod graciously provided by The Toady One in place of a synthetic method derived from reverse engineering
 
 ## Lua
 - `custom-raw-tokens`: library for accessing tokens added to raws by mods
@@ -161,7 +162,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## API
 - ``Buildings::findCivzonesAt()``: lookups now complete in constant time instead of linearly scanning through all civzones in the game
-- ``Job::remove_postings()``: use the job cancel vmethod graciously provided by The Toady One in place of a synthetic method derived from reverse engineering
 
 ## Lua
 - ``argparse.processArgsGetopt()``: you can now have long form parameters that are not an alias for a short form parameter. For example, you can now have a parameter like ``--longparam`` without needing to have an equivalent one-letter ``-l`` param.

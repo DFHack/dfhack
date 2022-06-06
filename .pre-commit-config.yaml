@@ -20,11 +20,11 @@ repos:
       args: ['--fix=lf']
     - id: trailing-whitespace
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.14.3
+  rev: 0.16.0
   hooks:
     - id: check-github-workflows
 - repo: https://github.com/Lucas-C/pre-commit-hooks
-  rev: v1.1.13
+  rev: v1.2.0
   hooks:
     - id: forbid-tabs
       exclude_types:

@@ -60,14 +60,15 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/DF
-        key: ${{ steps.env_setup.outputs.df_version }}
+        key: ${{ steps.env_setup.outputs.df_version }}-${{ hashFiles('ci/download-df.sh') }}
     - name: Fetch ccache
       uses: actions/cache@v2
       with:
         path: ~/.ccache
-        key: ccache-${{ matrix.os }}-gcc-${{ matrix.gcc }}-${{ github.sha }}
+        key: ccache-v2-${{ matrix.os }}-gcc-${{ matrix.gcc }}-${{ github.ref_name }}-${{ github.sha }}
         restore-keys: |
-          ccache-${{ matrix.os }}-gcc-${{ matrix.gcc }}
+          ccache-v2-${{ matrix.os }}-gcc-${{ matrix.gcc }}-${{ github.ref_name }}
+          ccache-v2-${{ matrix.os }}-gcc-${{ matrix.gcc }}
     - name: Download DF
       run: |
         sh ci/download-df.sh

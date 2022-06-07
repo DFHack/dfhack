@@ -1415,15 +1415,19 @@ static bool recent_report_any(df::unit *unit)
 static void delete_old_reports()
 {
     auto &reports = world->status.reports;
-    while (reports.size() > MAX_REPORTS_SIZE)
+    if (reports.size() > MAX_REPORTS_SIZE)
     {
-        if (reports[0] != NULL)
+        size_t excess = reports.size() - MAX_REPORTS_SIZE;
+        for (size_t i = 0; i < excess; i++)
         {
-            if (reports[0]->flags.bits.announcement)
-                erase_from_vector(world->status.announcements, &df::report::id, reports[0]->id);
-            delete reports[0];
+            if (reports[i] != NULL)
+            {   // report destructor
+                if (reports[i]->flags.bits.announcement)
+                    erase_from_vector(world->status.announcements, &df::report::id, reports[i]->id);
+                delete reports[i];
+            }
         }
-        reports.erase(reports.begin());
+        reports.erase(reports.begin(), reports.begin() + excess);
     }
 }
 

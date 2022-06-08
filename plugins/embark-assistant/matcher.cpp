@@ -476,7 +476,8 @@ namespace embark_assist {
             }
 
             if (!survey_results->at(fetch_x).at(fetch_y).surveyed) {
-                // todo: this has never been executed before /*std::cerr << hello, is anybody out there*/
+                // If the data has been collected, incursion processing should be performed to evaluate whether a match actually is present.
+                // but if it hasn't we need to return with a failed_match
                 *failed_match = true;
                 return;
             }

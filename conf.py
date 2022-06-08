@@ -201,16 +201,16 @@ extensions = [
 # short alias names to a base URL and a prefix.
 # See http://sphinx-doc.org/ext/extlinks.html
 extlinks = {
-    'wiki': ('https://dwarffortresswiki.org/%s', ''),
+    'wiki': ('https://dwarffortresswiki.org/%s', '%s'),
     'forums': ('http://www.bay12forums.com/smf/index.php?topic=%s',
-               'Bay12 forums thread '),
-    'dffd': ('https://dffd.bay12games.com/file.php?id=%s', 'DFFD file '),
+               'Bay12 forums thread %s'),
+    'dffd': ('https://dffd.bay12games.com/file.php?id=%s', 'DFFD file %s'),
     'bug': ('https://www.bay12games.com/dwarves/mantisbt/view.php?id=%s',
-            'Bug '),
-    'source': ('https://github.com/DFHack/dfhack/tree/develop/%s', ''),
-    'source-scripts': ('https://github.com/DFHack/scripts/tree/master/%s', ''),
-    'issue': ('https://github.com/DFHack/dfhack/issues/%s', 'Issue '),
-    'commit': ('https://github.com/DFHack/dfhack/commit/%s', 'Commit '),
+            'Bug %s'),
+    'source': ('https://github.com/DFHack/dfhack/tree/develop/%s', '%s'),
+    'source-scripts': ('https://github.com/DFHack/scripts/tree/master/%s', '%s'),
+    'issue': ('https://github.com/DFHack/dfhack/issues/%s', 'Issue %s'),
+    'commit': ('https://github.com/DFHack/dfhack/commit/%s', 'Commit %s'),
 }
 
 # Add any paths that contain templates here, relative to this directory.
@@ -259,7 +259,7 @@ version = release = get_version()
 # for a list of supported languages.
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # strftime format for |today| and 'Last updated on:' timestamp at page bottom
 today_fmt = html_last_updated_fmt = '%Y-%m-%d'

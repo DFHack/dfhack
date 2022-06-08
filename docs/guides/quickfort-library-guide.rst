@@ -49,9 +49,8 @@ and a convenient `checklist
 <https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=1459509569>`__
 from which you can copy the ``quickfort`` commands.
 
-If you like, you can download a fully built Dreamfort-based fort from `dffd
-<https://dffd.bay12games.com/file.php?id=15434>`__, load it, and explore it
-interactively.
+If you like, you can download a fully built Dreamfort-based fort from
+:dffd:`dffd <15434>`, load it, and explore it interactively.
 
 Visual overview
 ```````````````

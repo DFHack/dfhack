@@ -1462,8 +1462,7 @@ parts that might not be obvious just from looking at them.
 If you haven't built Dreamfort before, maybe try an embark in a flat area and
 take it for a spin! It will help put the following sections in context. There is
 also a pre-built Dreamfort available for download on
-`dffd <https://dffd.bay12games.com/file.php?id=15434>`__ if you just want an
-interactive reference.
+:dffd:`dffd <15434>` if you just want an interactive reference.
 
 Dreamfort organization and packaging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

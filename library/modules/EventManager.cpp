@@ -199,6 +199,9 @@ static int32_t lastJobId = -1;
 //job completed
 static unordered_map<int32_t, df::job*> prevJobs;
 
+//active units
+static unordered_set<int32_t> activeUnits;
+
 //unit death
 static unordered_set<int32_t> livingUnits;
 
@@ -256,6 +259,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         buildings.clear();
         constructions.clear();
         equipmentLog.clear();
+        activeUnits.clear();
 
         Buildings::clearBuildings(out);
         lastReport = -1;
@@ -314,6 +318,9 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         }
         lastSyndromeTime = -1;
         for (auto unit : df::global::world->units.all) {
+            if (Units::isActive(unit)) {
+                activeUnits.emplace(id);
+            }
             for (auto syndrome : unit->syndromes.active) {
                 int32_t startTime = syndrome->year*ticksPerYear + syndrome->year_time;
                 if ( startTime > lastSyndromeTime )
@@ -592,7 +599,6 @@ static void manageNewUnitActiveEvent(color_ostream& out) {
     if (!df::global::world)
         return;
 
-    static unordered_set<int32_t> activeUnits;
     multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_NEW_ACTIVE].begin(), handlers[EventType::UNIT_NEW_ACTIVE].end());
     // iterate event handler callbacks
     for (auto &key_value : copy) {

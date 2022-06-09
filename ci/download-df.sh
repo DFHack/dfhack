@@ -5,9 +5,6 @@ set -e
 df_tardest="df.tar.bz2"
 save_tardest="test_save.tgz"
 
-selfmd5=$(openssl md5 < "$0")
-echo $selfmd5
-
 cd "$(dirname "$0")"
 echo "DF_VERSION: $DF_VERSION"
 echo "DF_FOLDER: $DF_FOLDER"
@@ -15,17 +12,7 @@ mkdir -p "$DF_FOLDER"
 # back out of df_linux
 cd "$DF_FOLDER/.."
 
-if [ -f receipt ]; then
-    if [ "$selfmd5" != "$(cat receipt)" ]; then
-        echo "download-df.sh changed; re-downloading tarballs"
-        rm receipt
-    else
-        echo "Already downloaded $DF_VERSION tarballs"
-    fi
-fi
-
-if [ ! -f receipt ]; then
-    rm -f "$df_tardest" "$save_tardest"
+if ! test -f "df_tardest"; then
     minor=$(echo "$DF_VERSION" | cut -d. -f2)
     patch=$(echo "$DF_VERSION" | cut -d. -f3)
     echo "Downloading DF $DF_VERSION"
@@ -43,6 +30,7 @@ URLS
         echo "DF failed to download: $df_tardest not found"
         exit 1
     fi
+
     echo "Downloading test save"
     #test_save_url="https://files.dfhack.org/DF/0.${minor}.${patch}/test_save.tgz"
     test_save_url="https://drive.google.com/uc?export=download&id=1XvYngl-DFONiZ9SD9OC4B2Ooecu8rPFz"
@@ -61,5 +49,4 @@ tar xf "$df_tardest" --strip-components=1 -C df_linux
 tar xf "$save_tardest" -C df_linux/data/save
 echo Done
 
-echo "$selfmd5" > receipt
-ls
+ls -l

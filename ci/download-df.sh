@@ -12,7 +12,7 @@ mkdir -p "$DF_FOLDER"
 # back out of df_linux
 cd "$DF_FOLDER/.."
 
-if ! test -f "df_tardest"; then
+if ! test -f "$df_tardest"; then
     minor=$(echo "$DF_VERSION" | cut -d. -f2)
     patch=$(echo "$DF_VERSION" | cut -d. -f3)
     echo "Downloading DF $DF_VERSION"

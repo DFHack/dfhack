@@ -600,6 +600,7 @@ static void manageNewUnitActiveEvent(color_ostream& out) {
         for (df::unit* unit : df::global::world->units.active) {
             int32_t id = unit->id;
             if (!activeUnits.count(id)) {
+                activeUnits.emplace(id);
                 handler.eventHandler(out, (void*) intptr_t(id)); // intptr_t() avoids cast from smaller type warning
             }
         }

@@ -96,6 +96,7 @@ jobs:
     - name: Build DFHack
       run: |
         ninja -C build-ci install
+        ccache --show-stats
     - name: Run tests
       id: run_tests
       run: |

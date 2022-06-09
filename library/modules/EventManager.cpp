@@ -319,7 +319,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         lastSyndromeTime = -1;
         for (auto unit : df::global::world->units.all) {
             if (Units::isActive(unit)) {
-                activeUnits.emplace(id);
+                activeUnits.emplace(unit->id);
             }
             for (auto syndrome : unit->syndromes.active) {
                 int32_t startTime = syndrome->year*ticksPerYear + syndrome->year_time;

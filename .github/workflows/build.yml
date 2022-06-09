@@ -90,6 +90,8 @@ jobs:
           -DBUILD_SIZECHECK:BOOL=${{ matrix.plugins == 'all' }} \
           -DBUILD_STONESENSE:BOOL=${{ matrix.plugins == 'all' }} \
           -DBUILD_SUPPORTED:BOOL=1 \
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
           -DCMAKE_INSTALL_PREFIX="$DF_FOLDER"
     - name: Build DFHack
       run: |

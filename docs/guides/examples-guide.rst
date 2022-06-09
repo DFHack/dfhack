@@ -91,8 +91,7 @@ order to save resources. It handles:
 - adamantine processing
 - item melting
 
-Orders are missing for plaster powder until DF :bug:`bug 11803 <11803>` is
-fixed.
+Orders are missing for plaster powder until DF :bug:`11803` is fixed.
 
 :source:`military.json <data/examples/orders/military.json>`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

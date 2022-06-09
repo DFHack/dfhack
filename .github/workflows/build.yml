@@ -59,6 +59,7 @@ jobs:
         echo "::set-output name=df_version::${DF_VERSION}"
         echo "DF_VERSION=${DF_VERSION}" >> $GITHUB_ENV
         echo "DF_FOLDER=${HOME}/DF/${DF_VERSION}/df_linux" >> $GITHUB_ENV
+        echo "CCACHE_DIR=${HOME}/.ccache" >> $GITHUB_ENV
     - name: Fetch DF cache
       uses: actions/cache@v2
       with:

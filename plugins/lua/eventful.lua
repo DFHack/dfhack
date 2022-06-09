@@ -154,7 +154,7 @@ eventType=invertTable{
     "JOB_INITIATED",
     "JOB_STARTED",
     "JOB_COMPLETED",
-    "NEW_UNIT_ACTIVE",
+    "UNIT_NEW_ACTIVE",
     "UNIT_DEATH",
     "ITEM_CREATED",
     "BUILDING",

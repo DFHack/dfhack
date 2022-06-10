@@ -372,7 +372,7 @@ bool DFHack::Job::removeJob(df::job* job) {
         // This should always succeed because of the check in the preceding loop
         bool success = disconnectJobGeneralRef(job, genRef);
         assert(success); (void)success;
-        if (ref) delete ref;
+        if (genRef) delete genRef;
     }
 
     job->general_refs.resize(0);

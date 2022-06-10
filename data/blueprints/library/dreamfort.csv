@@ -334,10 +334,11 @@ corridor/surface_corridor
 message(Once the central stairs are mined out deeply enough, you should start digging the industry level in a non-aquifer rock layer. You'll need the boulders from the digging to make blocks.
 If your wagon is within the fort perimeter, deconstruct it to get it out of the way.
 Once the marked trees are all chopped down (if any), continue with /surface2.) clear trees and set up pastures"
-central_stairs/central_stairs repeat(down 10)
 clear_small/surface_clear_small
 zones/surface_zones
 name_zones/surface_name_zones
+#>
+central_stairs/central_stairs repeat(down 10)
 ""
 "#meta label(surface2) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
 Once the channels are dug out and the marked trees are cleared, continue with /surface3.) set up starting workshops/stockpiles, channel miasma vents, and clear more trees"
@@ -387,9 +388,9 @@ corridor/surface_corridor
 corridor_traps/surface_corridor_traps
 query_corridor/surface_query_corridor
 #dig label(central_stairs_odd) start(2;2) hidden() spiral stairs odd levels
-`,u,`
-j6,`,j6
-`,u,`
+`,j6,`
+u,`,u
+`,j6,`
 #meta label(central_stairs_even) hidden() spiral stairs even levels
 /central_stairs_odd transform(cw)
 #meta label(central_stairs) two levels of spiral stairs (use --repeat down)
@@ -413,11 +414,11 @@ j6,`,j6
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
 ,,,`,,`,`,`,`,`,t1,`,`,`,`,`,`,,`,,`,`,`,`,`,t1,`,`,`,t1,`,`,,`
-,,,`,,`,,`,t1,t1,,,,,,`,,,,,,`,,,,,,,,,,`,,`
-,,,`,,`,,`,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
-,,,`,,`,,,,,,,,,,`,,`,~,`,,`,,,,,,,,,,`,,`
-,,,`,,`,,`,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
-,,,`,,`,,`,,,,,,,,`,,,,,,`,,,,,,,,,,`,,`
+,,,`,,`,,`,t1,t1,,,,,,`,t1,t1,t1,t1,t1,`,,,,,,,,,,`,,`
+,,,`,,`,,`,,,,,,,,,t1,t1,t1,t1,t1,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,`,t1,j,t1,j,t1,`,,,,,,,,,,`,,`
+,,,`,,`,,`,,,,,,,,,t1,t1,t1,t1,t1,,,,,,,,,,,`,,`
+,,,`,,`,,`,,,,,,,,`,t1,t1,t1,t1,t1,`,,,,,,,,,,`,,`
 ,,,`,,`,`,`,`,`,`,`,,`,`,`,`,,`,,`,`,`,`,,`,`,`,`,`,`,`,,`
 ,,,`,,`,,,,,,,,,`,t1,,,,,,t1,`,,,,,,,,,`,,`
 ,,,`,,`,,,,,,,,,t1,t1,,,,,,t1,t1,,,,,,,,,`,,`

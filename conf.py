@@ -197,20 +197,30 @@ extensions = [
     'dfhack.lexer',
 ]
 
+def get_caption_str(prefix=''):
+    import sphinx
+    sphinx_version = sphinx.version_info[0]
+    return prefix + (sphinx_version >= 5 and '%s' or '')
+
 # This config value must be a dictionary of external sites, mapping unique
 # short alias names to a base URL and a prefix.
 # See http://sphinx-doc.org/ext/extlinks.html
 extlinks = {
-    'wiki': ('https://dwarffortresswiki.org/%s', '%s'),
+    'wiki': ('https://dwarffortresswiki.org/%s', get_caption_str()),
     'forums': ('http://www.bay12forums.com/smf/index.php?topic=%s',
-               'Bay12 forums thread %s'),
-    'dffd': ('https://dffd.bay12games.com/file.php?id=%s', 'DFFD file %s'),
+               get_caption_str('Bay12 forums thread ')),
+    'dffd': ('https://dffd.bay12games.com/file.php?id=%s',
+             get_caption_str('DFFD file ')),
     'bug': ('https://www.bay12games.com/dwarves/mantisbt/view.php?id=%s',
-            'Bug %s'),
-    'source': ('https://github.com/DFHack/dfhack/tree/develop/%s', '%s'),
-    'source-scripts': ('https://github.com/DFHack/scripts/tree/master/%s', '%s'),
-    'issue': ('https://github.com/DFHack/dfhack/issues/%s', 'Issue %s'),
-    'commit': ('https://github.com/DFHack/dfhack/commit/%s', 'Commit %s'),
+            get_caption_str('Bug ')),
+    'source': ('https://github.com/DFHack/dfhack/tree/develop/%s',
+               get_caption_str()),
+    'source-scripts': ('https://github.com/DFHack/scripts/tree/master/%s',
+                       get_caption_str()),
+    'issue': ('https://github.com/DFHack/dfhack/issues/%s',
+               get_caption_str('Issue ')),
+    'commit': ('https://github.com/DFHack/dfhack/commit/%s',
+               get_caption_str('Commit ')),
 }
 
 # Add any paths that contain templates here, relative to this directory.

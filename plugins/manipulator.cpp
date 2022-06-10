@@ -53,8 +53,6 @@ REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(enabler);
 
-#define CONFIG_PATH "manipulator"
-
 struct SkillLevel
 {
     const char *name;
@@ -2307,11 +2305,6 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
-    if (!Filesystem::isdir(CONFIG_PATH) && !Filesystem::mkdir(CONFIG_PATH))
-    {
-        out.printerr("manipulator: Could not create configuration folder: \"%s\"\n", CONFIG_PATH);
-        return CR_FAILURE;
-    }
     return CR_OK;
 }
 

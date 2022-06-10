@@ -360,7 +360,23 @@ bool DFHack::Job::removeJob(df::job* job) {
     using df::global::world;
     CHECK_NULL_POINTER(job);
 
-    // cancel_job below does not disconnect the job items from the job
+    // cancel_job below does not clean up refs, so we have to do that first
+    for (auto genRef : job->general_refs) {
+        // disconnectJobGeneralRef only handles buildings and units
+        if (genRef && (genRef->getType() != general_ref_type::BUILDING_HOLDER &&
+                       genRef->getType() != general_ref_type::UNIT_WORKER))
+            return false;
+    }
+
+    for (auto genRef : job->general_refs) {
+        // This should always succeed because of the check in the preceding loop
+        bool success = disconnectJobGeneralRef(job, genRef);
+        assert(success); (void)success;
+        if (ref) delete ref;
+    }
+
+    job->general_refs.resize(0);
+
     for (auto &item_ref : job->items) {
        disconnectJobItem(job, item_ref);
     }
@@ -368,7 +384,6 @@ bool DFHack::Job::removeJob(df::job* job) {
     // call the job cancel vmethod graciously provided by The Toady One.
     // job_handler::cancel_job calls job::~job, and then deletes job (this has been confirmed by disassembly)
     // this method cannot fail; it will either delete the job or crash/corrupt DF
-
     world->jobs.cancel_job(job);
 
     return true;

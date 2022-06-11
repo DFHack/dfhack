@@ -4587,35 +4587,40 @@ on DF world events.
 List of events
 --------------
 
-1. ``onReactionComplete(reaction,reaction_product,unit,input_items,input_reagents,output_items,call_native)``
+1. ``onReactionCompleting(reaction,reaction_product,unit,input_items,input_reagents,output_items,call_native)``
 
-   Auto activates if detects reactions starting with ``LUA_HOOK_``. Is called when reaction finishes.
+   Is called once per reaction product, before reaction had a chance to call native code for item creation.
+   Setting `call_native.value=false` cancels further processing: no items are created and `onReactionComplete` is not called.
+   
+2. ``onReactionComplete(reaction,reaction_product,unit,input_items,input_reagents,output_items)``
 
-2. ``onItemContaminateWound(item,unit,wound,number1,number2)``
+   Is called once per reaction product, when reaction finishes and has at least one product.
+   
+3. ``onItemContaminateWound(item,unit,wound,number1,number2)``
 
    Is called when item tries to contaminate wound (e.g. stuck in).
 
-3. ``onProjItemCheckMovement(projectile)``
+4. ``onProjItemCheckMovement(projectile)``
 
    Is called when projectile moves.
 
-4. ``onProjItemCheckImpact(projectile,somebool)``
+5. ``onProjItemCheckImpact(projectile,somebool)``
 
    Is called when projectile hits something.
 
-5. ``onProjUnitCheckMovement(projectile)``
+6. ``onProjUnitCheckMovement(projectile)``
 
    Is called when projectile moves.
 
-6. ``onProjUnitCheckImpact(projectile,somebool)``
+7. ``onProjUnitCheckImpact(projectile,somebool)``
 
    Is called when projectile hits something.
 
-7. ``onWorkshopFillSidebarMenu(workshop,callnative)``
+8. ``onWorkshopFillSidebarMenu(workshop,callnative)``
 
    Is called when viewing a workshop in 'q' mode, to populate reactions, useful for custom viewscreens for shops.
 
-8. ``postWorkshopFillSidebarMenu(workshop)``
+9. ``postWorkshopFillSidebarMenu(workshop)``
 
    Is called after calling (or not) native fillSidebarMenu(). Useful for job button
    tweaking (e.g. adding custom reactions)
@@ -4683,7 +4688,7 @@ Functions
 
 1. ``registerReaction(reaction_name,callback)``
 
-   Simplified way of using onReactionComplete; the callback is function (same params as event).
+   Simplified way of using onReactionCompleting; the callback is function (same params as event).
 
 2. ``removeNative(shop_name)``
 

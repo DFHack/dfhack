@@ -93,7 +93,7 @@ end
 function registerReaction(reaction_name,callback)
     _registeredStuff.reactionCallbacks=_registeredStuff.reactionCallbacks or {}
     _registeredStuff.reactionCallbacks[reaction_name]=callback
-    onReactionComplete._library=onReact
+    onReactionCompleting._library=onReact
     dfhack.onStateChange.eventful=unregall
 end
 

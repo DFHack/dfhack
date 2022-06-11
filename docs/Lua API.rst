@@ -4590,7 +4590,7 @@ List of events
 1. ``onReactionCompleting(reaction,reaction_product,unit,input_items,input_reagents,output_items,call_native)``
 
    Is called once per reaction product, before reaction had a chance to call native code for item creation.
-   Setting `call_native.value=false` cancels further processing: no items are created and `onReactionComplete` is not called.
+   Setting ``call_native.value=false`` cancels further processing: no items are created and ``onReactionComplete`` is not called.
    
 2. ``onReactionComplete(reaction,reaction_product,unit,input_items,input_reagents,output_items)``
 
@@ -4720,7 +4720,7 @@ Reaction complete example::
 
   b=require "plugins.eventful"
 
-  b.registerReaction("LUA_HOOK_LAY_BOMB",function(reaction,unit,in_items,in_reag,out_items,call_native)
+  b.registerReaction("LAY_BOMB",function(reaction,unit,in_items,in_reag,out_items,call_native)
     local pos=copyall(unit.pos)
     -- spawn dragonbreath after 100 ticks
     dfhack.timeout(100,"ticks",function() dfhack.maps.spawnFlow(pos,6,0,0,50000) end)

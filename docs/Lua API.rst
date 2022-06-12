@@ -4591,11 +4591,11 @@ List of events
 
    Is called once per reaction product, before reaction had a chance to call native code for item creation.
    Setting ``call_native.value=false`` cancels further processing: no items are created and ``onReactionComplete`` is not called.
-   
+
 2. ``onReactionComplete(reaction,reaction_product,unit,input_items,input_reagents,output_items)``
 
    Is called once per reaction product, when reaction finishes and has at least one product.
-   
+
 3. ``onItemContaminateWound(item,unit,wound,number1,number2)``
 
    Is called when item tries to contaminate wound (e.g. stuck in).

@@ -343,7 +343,7 @@ function ItemTypeDialog(args)
     return dlg.ListBox(args)
 end
 
-function ItemTraitDialog(args)
+function ItemTraitsDialog(args)
     local job_item_flags_map = {}
     for i = 1, 3 do
         for _, f in ipairs(df['job_item_flags'..i]) do

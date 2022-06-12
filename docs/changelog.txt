@@ -40,6 +40,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 - ``widgets.CycleHotkeyLabel``: allow initial option values to be specified as an index instead of an option value
 - ``job.removeJob()``: fixes regression in DFHack 0.47.05-r5 where items/buildings associated with the job were not getting disassociated when the job is removed. Now `build-now` can build buildings and `gui/mass-remove` can cancel building deconstruction again
+- `eventful`: fix ``eventful.registerReaction`` to correctly pass ``call_native`` argument thus allowing canceling vanilla item creation. Updated related documentation.
 
 ## Misc Improvements
 - `confirm`: added a confirmation dialog for removing manager orders

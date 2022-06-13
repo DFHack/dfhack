@@ -19,6 +19,7 @@ from io import open
 import os
 import re
 import shlex  # pylint:disable=unused-import
+import sphinx
 import sys
 
 
@@ -28,6 +29,7 @@ import sys
 from docutils import nodes
 from docutils.parsers.rst import roles
 
+sphinx_major_version = sphinx.version_info[0]
 
 def get_keybinds():
     """Get the implemented keybinds, and return a dict of
@@ -198,9 +200,7 @@ extensions = [
 ]
 
 def get_caption_str(prefix=''):
-    import sphinx
-    sphinx_version = sphinx.version_info[0]
-    return prefix + (sphinx_version >= 5 and '%s' or '')
+    return prefix + (sphinx_major_version >= 5 and '%s' or '')
 
 # This config value must be a dictionary of external sites, mapping unique
 # short alias names to a base URL and a prefix.
@@ -364,6 +364,9 @@ html_use_index = False
 html_css_files = [
     'dfhack.css',
 ]
+
+if sphinx_major_version >= 5:
+    html_css_files.append('sphinx5.css')
 
 # -- Options for LaTeX output ---------------------------------------------
 

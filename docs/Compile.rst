@@ -463,40 +463,132 @@ Building
 
 Windows
 =======
-On Windows, DFHack replaces the SDL library distributed with DF.
+.. contents:: Section Contents
+  :local:
+  :depth: 3
+
+In order to build on windows you'll need to resolve a few dependencies. The dfhack build system uses perl to generate
+source files using xml files detailing various DF structures. Cmake is used to generate build files, or project files
+for visual studio. Read the sections below for more detail.
+
+Note: On Windows, DFHack replaces the SDL library distributed with DF.
 
 Dependencies
 ------------
-You will need the following:
+These are the general dependencies you will need:
 
 * Microsoft Visual C++ 2022, 2019, 2017, or 2015 (optional)
 * Microsoft Visual C++ 2015 Build Tools
 * Git
 * CMake
-* Perl with XML::LibXML and XML::LibXSLT
+* StrawberryPerl
 
-  * It is recommended to install StrawberryPerl, which includes both.
-
+  * Perl
+  * XML:LibXML
+  * XML:LibXLST
 * Python (for documentation; optional, except for release builds)
 
-Microsoft Visual Studio
+Installing Dependencies
 ~~~~~~~~~~~~~~~~~~~~~~~
-Releases of Dwarf Fortress since roughly 2016 have been compiled for Windows using
-Microsoft's Visual Studio 2015 C++ compiler. In order to guarantee ABI and STL compatibility
-with Dwarf Fortress, DFHack has to be compiled with the same compiler.
+.. contents:: Section Contents
+  :local:
+  :depth: 1
+Chocolatey (`fast install instructions`_) is recommended for installing Git, Cmake, Perl, and Python if they
+are not already installed. Put simply, chocolatey is a package manager for windows so you can install/uninstall
+software from the command line.
 
-Visual Studio 2015 is no longer supported by Microsoft and it can be difficult to obtain
-working installers for this product today. As of 2022, the recommended approach
-is to use Visual Studio 2022 or Visual Studio 2019, installing additional optional
-Visual Studio components which provide the required support for using
-Visual Studio 2015's toolchain. All of the required tools are available from Microsoft as part of
-Visual Studio's Community Edition at no charge.
+.. _fast install instructions: https://chocolatey.org/install
 
-You can also download just the Visual C++ 2015 `build tools`_ if you aren't going to use
-Visual Studio to edit code.
+Choco install commands::
 
-Option 1: Build Tools Only
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+   choco install git
+   choco install cmake
+   choco install strawberryperl
+   choco install visualstudio2015community
+
+Note: strictly speaking, you do not need visual studio 2015, or any other visual studio release, but visual studio
+is recommended by these instructions. More advanced options are available to those who seek them.
+
+Alternative to chocolatey, you're also more than free to download and install manually.
+
+Manually [Fun!]
+^^^^^^^^^^^^^^^
+If you prefer to install manually rather than using Chocolatey, details and
+requirements are as below. If you do install manually, please ensure you
+have all PATHs set up correctly.
+
+Git
+...
+Some examples:
+
+* `Git for Windows <https://git-for-windows.github.io>`_ (command-line and GUI)
+* `tortoisegit <https://tortoisegit.org>`_ (GUI and File Explorer integration)
+
+CMake
+.....
+You can get the win32 installer version from
+`the official site <https://cmake.org/download/>`_.
+It has the usual installer wizard. Make sure you let it add its binary folder
+to your binary search PATH so the tool can be later run from anywhere.
+
+Perl / Strawberry Perl
+......................
+For the code generation stage of the build process, you'll need Perl 5 with
+XML::LibXML and XML::LibXSLT. `Strawberry Perl <http://strawberryperl.com>`_ is
+recommended as it includes all of the required packages in a single, easy
+install.
+
+After install, ensure Perl is in your user's PATH. This can be edited from
+``Control Panel -> System -> Advanced System Settings -> Environment Variables``.
+
+The following directories must be in your PATH, in this order:
+
+* ``<path to perl>\c\bin``
+* ``<path to perl>\perl\site\bin``
+* ``<path to perl>\perl\bin``
+* ``<path to perl>\perl\vendor\lib\auto\XML\LibXML`` (may only be required on some systems)
+
+Be sure to close and re-open any existing ``cmd.exe`` windows after updating
+your PATH.
+
+If you already have a different version of Perl installed (for example, from Cygwin),
+you can run into some trouble. Either remove the other Perl install from PATH, or
+install XML::LibXML and XML::LibXSLT for it using CPAN.
+
+Environment 1: Visual Studio
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+It is generally recommended to install any relatively modern version of Visual Studio, so 2019_ or 2022_
+Click Visual Studio 2022_ or 2019_ to download an installer wizard that will prompt you
+to select the optional tools you want to download alongside the IDE. You may need to log into
+(or create) a Microsoft account in order to download Visual Studio.
+
+Once installed, you'll need to ensure several components are also installed through the **Visual Studio Installer**
+(you'll find this installed if you search for it from windows start). From this utility you'll need to find your
+chosen visual studio installation and select modify. From there you'll need to find and put checkmarks for the
+following components:
+
+* "Desktop Development with C++"
+
+  * This provides critical support for all C++ development
+* "C++ Windows XP Support for VS 2017 (v141) tools [Deprecated]"
+
+  * This provides the "``v140_xp``" toolchain that DFHack requires for ABI compatibility with recent releases
+    of Dwarf Fortress, yes it's unintuitive.
+
+* MSVC v140 - VS 2015 C++ build tools (v14.00)
+
+Yes, this is unintuitive. Installing XP Support for VS 2017 installs XP Support for VS 2015
+if the 2015 toolchain is installed.
+
+.. _2022: https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&channel=Release&version=VS2022&source=VSLandingPage&cid=2030&passive=false
+.. _2019: https://my.visualstudio.com/Downloads?q=visual%20studio%202019&wt.mc_id=o~msft~vscom~older-downloads
+
+Environment 2: Command Line
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. contents:: Section Contents
+  :local:
+  :depth: 2
+
 Click `build tools`_ and you will be prompted to login to your Microsoft account.
 Then you should be redirected to a page with various download options with 2015
 in their name. If this redirect doesn't occur, just copy, paste, and enter the
@@ -537,121 +629,62 @@ XP.
 The ``v141`` toolchain, in Visual Studio 2017, has been empirically documented to be incompatible with
 released versions of Dwarf Fortress and cannot be used to make usable builds of DFHack.
 
-Option 2: IDE + Build Tools
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Click Visual Studio 2022_ or 2019_ to download an installer wizard that will prompt you
-to select the optional tools you want to download alongside the IDE. You may need to log into
-(or create) a Microsoft account in order to download Visual Studio.
-
-In addition to selecting the workload for "Desktop Development with C++",
-you will also need to go to the "Individual Components" tab in the Installer and
-select the following additional components to get the "``v140_xp``" toolchain that DFHack
-requires for ABI compatibility with recent releases of Dwarf Fortress:
-* MSVC v140 - VS 2015 C++ build tools (v14.00)
-* C++ Windows XP Support for VS 2017 (v141) tools [Deprecated]
-
-Yes, this is unintuitive. Installing XP Support for VS 2017 installs XP Support for VS 2015
-if the 2015 toolchain is installed.
-
-.. _2022: https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&channel=Release&version=VS2022&source=VSLandingPage&cid=2030&passive=false
-.. _2019: https://my.visualstudio.com/Downloads?q=visual%20studio%202019&wt.mc_id=o~msft~vscom~older-downloads
 .. _build tools: https://my.visualstudio.com/Downloads?q=visual%20studio%202015&wt.mc_id=o~msft~vscom~older-downloads
 
-Additional dependencies: installing with the Chocolatey Package Manager
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Powershell
+..........
+If PATH in windows is configured correctly, then powershell [or cmd] should just work
+[once the dependencies are installed].
 
-The remainder of dependencies - Git, CMake, StrawberryPerl, and Python - can be
-most easily installed using the Chocolatey Package Manger. Chocolatey is a
-\*nix-style package manager for Windows. It's fast, small (8-20MB on disk)
-and very capable. Think "``apt-get`` for Windows."
+.. _git bash:
 
-Chocolatey is a recommended way of installing the required dependencies
-as it's quicker, requires less effort, and will install known-good utilities
-guaranteed to have the correct setup (especially PATH).
+Git Bash
+........
+Git bash can be packaged with its own version of perl which will supersede the user installed version
+(StrawberryPerl) already in Windows' PATH variable. So steps should be taken to ensure the necessary
+dependencies are found/used.
 
-To install Chocolatey and the required dependencies:
+Option 1: configure PATH
+::::::::::::::::::::::::
+Git bash will modify PATH so that its perl is found under /usr/bin. Using ``.bash_profile`` or ``.bashrc``
+file(s) to manually configure PATH will easily solve this issue.
 
-* Go to https://chocolatey.org in a web browser
-* At the top of the page it will give you the install command to copy
+Option 2: perl dependencies
+:::::::::::::::::::::::::::
+Perl is responsible for finding the LibXML and LibXLST dependencies, so installing them for Git bash's perl to
+find will ensure everything is resolved correctly.
 
-  * Copy the first one, which starts ``@powershell ...``
-  * It won't be repeated here in case it changes in future Chocolatey releases.
+Cygwin
+......
+**Note for Cygwin/msysgit users**: It is also possible to compile DFHack from a
+Bash command line. This has three potential benefits:
 
-* Open an elevated (Admin) ``cmd.exe`` window
+* When you've installed Git and are using its Bash, but haven't added Git to your path:
 
-  * On Windows 8 and later this can be easily achieved by:
+  * You can load Git's Bash and as long as it can access Perl and CMake, you can
+    use it for compile without adding Git to your system path.
 
-    * right-clicking on the Start Menu, or pressing Win+X.
-    * choosing "Command Prompt (Admin)"
+* When you've installed Cygwin and its SSH server:
 
-  * On earlier Windows: find ``cmd.exe`` in Start Menu, right click
-    and choose Open As Administrator.
+  * You can now SSH in to your Windows install and compile from a remote terminal;
+    very useful if your Windows installation is a local VM on a \*nix host OS.
 
-* Paste in the Chocolatey install command and hit enter
-* Close this ``cmd.exe`` window and open another Admin ``cmd.exe`` in the same way
-* Run the following command::
+* In general: you can use Bash as your compilation terminal, meaning you have a decent
+  sized window, scrollback, etc.
 
-    choco install git cmake.portable strawberryperl -y
+  * Whether you're accessing it locally as with Git's Bash, or remotely through
+    Cygwin's SSH server, this is far superior to using ``cmd.exe``.
 
-* Close the Admin ``cmd.exe`` window; you're done!
+You don't need to do anything special to compile from Bash. As long as your PATHs
+are set up correctly for Bash, you can run the same generate- and build/install/package- bat
+files as detailed above.
 
-You can now use all of these utilities from any normal ``cmd.exe`` window.
-You only need Admin/elevated ``cmd.exe`` for running ``choco install`` commands;
-for all other purposes, including compiling DFHack, you should use
-a normal ``cmd.exe`` (or, better, an improved terminal like `Cmder <https://cmder.net/>`_;
-details below, under Build.)
+WSL
+...
+For the modern windows developer this is likely the preferred build environment.
+Unfortunately no configuration instructions are currently available. Please submit
+an issue or pull request if you have advice to help users get WSL up and running.
 
-**NOTE**: you can run the above ``choco install`` command even if you already have
-Git, CMake or StrawberryPerl installed. Chocolatey will inform you if any software
-is already installed and won't re-install it. In that case, please check the PATHs
-are correct for that utility as listed in the manual instructions below. Or, better,
-manually uninstall the version you have already and re-install via Chocolatey,
-which will ensure the PATH are set up right and will allow Chocolatey to manage
-that program for you in future.
-
-Additional dependencies: installing manually
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If you prefer to install manually rather than using Chocolatey, details and
-requirements are as below. If you do install manually, please ensure you
-have all PATHs set up correctly.
-
-Git
-^^^
-Some examples:
-
-* `Git for Windows <https://git-for-windows.github.io>`_ (command-line and GUI)
-* `tortoisegit <https://tortoisegit.org>`_ (GUI and File Explorer integration)
-
-CMake
-^^^^^
-You can get the win32 installer version from
-`the official site <https://cmake.org/download/>`_.
-It has the usual installer wizard. Make sure you let it add its binary folder
-to your binary search PATH so the tool can be later run from anywhere.
-
-Perl / Strawberry Perl
-^^^^^^^^^^^^^^^^^^^^^^
-For the code generation stage of the build process, you'll need Perl 5 with
-XML::LibXML and XML::LibXSLT. `Strawberry Perl <http://strawberryperl.com>`_ is
-recommended as it includes all of the required packages in a single, easy
-install.
-
-After install, ensure Perl is in your user's PATH. This can be edited from
-``Control Panel -> System -> Advanced System Settings -> Environment Variables``.
-
-The following directories must be in your PATH, in this order:
-
-* ``<path to perl>\c\bin``
-* ``<path to perl>\perl\site\bin``
-* ``<path to perl>\perl\bin``
-* ``<path to perl>\perl\vendor\lib\auto\XML\LibXML`` (may only be required on some systems)
-
-Be sure to close and re-open any existing ``cmd.exe`` windows after updating
-your PATH.
-
-If you already have a different version of Perl installed (for example, from Cygwin),
-you can run into some trouble. Either remove the other Perl install from PATH, or
-install XML::LibXML and XML::LibXSLT for it using CPAN.
 
 Build
 -----
@@ -680,10 +713,14 @@ solution file(s):
   release builds of DFHack. Note that this includes documentation, which requires
   Python.
 
-Then you can either open the solution with MSVC or use one of the msbuild scripts:
+Then you can either open the solution with MSVC or use one of the msbuild scripts.
 
-Building/installing from the command line:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. contents:: building options
+  :local:
+  :depth: 1
+
+From the command line:
+~~~~~~~~~~~~~~~~~~~~~~
 In the build directory you will find several ``.bat`` files:
 
 * Scripts with ``build`` prefix will only build DFHack.
@@ -697,55 +734,58 @@ during a build.  If you get a failure, you may miss important errors or warnings
 due to the tiny window size and extremely limited scrollback. For that reason you
 may prefer to compile in the IDE which will always show all build output.
 
-Alternatively (or additionally), consider installing an improved Windows terminal
-such as `Cmder <https://cmder.net/>`_. Easily installed through Chocolatey with:
-``choco install cmder -y``.
 
-**Note for Cygwin/msysgit users**: It is also possible to compile DFHack from a
-Bash command line. This has three potential benefits:
 
-* When you've installed Git and are using its Bash, but haven't added Git to your path:
-
-  * You can load Git's Bash and as long as it can access Perl and CMake, you can
-    use it for compile without adding Git to your system path.
-
-* When you've installed Cygwin and its SSH server:
-
-  * You can now SSH in to your Windows install and compile from a remote terminal;
-    very useful if your Windows installation is a local VM on a \*nix host OS.
-
-* In general: you can use Bash as your compilation terminal, meaning you have a decent
-  sized window, scrollback, etc.
-
-  * Whether you're accessing it locally as with Git's Bash, or remotely through
-    Cygwin's SSH server, this is far superior to using ``cmd.exe``.
-
-You don't need to do anything special to compile from Bash. As long as your PATHs
-are set up correctly, you can run the same generate- and build/install/package- bat
-files as detailed above.
-
-Building/installing from the Visual Studio IDE:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+From the Visual Studio IDE:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 After running the CMake generate script you will have a new folder called VC2015
-or VC2015_32, depending on the architecture you specified. Open the file
-``dfhack.sln`` inside that folder. If you have multiple versions of Visual
-Studio installed, make sure you open with Visual Studio 2015.
+or VC2015_32, depending on the architecture you specified.
 
-The first thing you must then do is change the build type. It defaults to Debug,
-but this cannot be used on Windows. Debug is not binary-compatible with DF.
-If you try to use a debug build with DF, you'll only get crashes and for this
-reason the Windows "debug" scripts actually do RelWithDebInfo builds.
-After loading the Solution, change the Build Type to either ``Release``
-or ``RelWithDebInfo``.
+Now, open the file ``dfhack.sln`` inside that folder.
+Note: You will likely be prompted to upgrade, select ``No Upgrade`` because we require this specific version
+of build tools as can be seen specified in the cmake command (ie. ``-T v140_xp``).
 
-Then build the ``INSTALL`` target listed under ``CMakePredefinedTargets``.
+Next, with Visual Studio open, check the build configuration drop downs. Debug does not work, so you must
+select ``RelWithDebInfo`` if you wish for debug information to be generated. Otherwise you can select
+``Release`` if you wish.
 
+Now you're ready to build. You'll find the Cmake defined targed under: ``CMakePredefinedTargets``
+You'll likely want to select ``INSTALL`` or ``ALL_BUILD`` from this folder.
 
-Building the documentation
-==========================
+Note::
 
-The steps above will not build DFHack's documentation by default. If you are
-editing documentation, see `documentation` for details on how to build it.
+  If you're having trouble building, remember Visual Studio sometimes needs you to rebuild or clean targets.
+  So give that a try if you're seeing build errors. Otherwise check the `FAQ`_ or `discord`_
+
+With the documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+To generate documentation, you'll need to enable it when you generate your build/project files.
+
+* When initially running CMake, add ``-DBUILD_DOCS:bool=ON`` to your ``cmake``
+  command. For example::
+
+    cmake .. -DCMAKE_BUILD_TYPE:string=Release -DBUILD_DOCS:bool=ON -DCMAKE_INSTALL_PREFIX=<path to DF>
+
+* If you have already run CMake, you can simply run it again from your build
+  folder to update your configuration::
+
+    cmake .. -DBUILD_DOCS:bool=ON
+
+* You can edit the ``BUILD_DOCS`` setting in CMakeCache.txt directly
+
+* You can use the CMake GUI or ``ccmake`` to change the ``BUILD_DOCS`` setting
+
+* On Windows, if you prefer to use the batch scripts, you can run
+  ``generate-msvc-gui.bat`` and set ``BUILD_DOCS`` through the GUI. If you are
+  running another file, such as ``generate-msvc-all.bat``, you will need to edit
+  it to add the flag. You can also run ``cmake`` on the command line, similar to
+  other platforms.
+
+The generated documentation will be stored in ``docs/html`` in the root DFHack
+folder, and will be installed to ``hack/docs`` when you next install DFHack in a
+DF folder.
+
 
 Misc. Notes
 ===========

@@ -493,6 +493,7 @@ Installing Dependencies
 .. contents:: Section Contents
   :local:
   :depth: 1
+
 Chocolatey (`fast install instructions`_) is recommended for installing Git, Cmake, Perl, and Python if they
 are not already installed. Put simply, chocolatey is a package manager for windows so you can install/uninstall
 software from the command line.

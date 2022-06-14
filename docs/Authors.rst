@@ -134,6 +134,7 @@ potato
 Priit Laes              plaes
 Putnam                  Putnam3145
 Quietust                quietust                _Q
+Rafał Karczmarczyk      CarabusX
 Raidau                  Raidau
 Ralph Bisschops         ralpha
 Ramblurr                Ramblurr

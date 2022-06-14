@@ -689,6 +689,10 @@ an issue or pull request if you have advice to help users get WSL up and running
 
 Build
 -----
+.. contents:: Section Contents
+  :local:
+  :depth: 1
+
 There are several different batch files in the ``win32`` and ``win64``
 subfolders in the ``build`` folder, along with a script that's used for picking
 the DF path. Use the subfolder corresponding to the architecture that you want
@@ -715,10 +719,6 @@ solution file(s):
   Python.
 
 Then you can either open the solution with MSVC or use one of the msbuild scripts.
-
-.. contents:: building options
-  :local:
-  :depth: 1
 
 From the command line:
 ~~~~~~~~~~~~~~~~~~~~~~

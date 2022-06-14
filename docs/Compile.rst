@@ -753,10 +753,11 @@ select ``RelWithDebInfo`` if you wish for debug information to be generated. Oth
 Now you're ready to build. You'll find the Cmake defined targed under: ``CMakePredefinedTargets``
 You'll likely want to select ``INSTALL`` or ``ALL_BUILD`` from this folder.
 
-Note::
+.. note::
 
-  If you're having trouble building, remember Visual Studio sometimes needs you to rebuild or clean targets.
-  So give that a try if you're seeing build errors. Otherwise check the `FAQ`_ or `discord`_
+    If you're having trouble building, remember Visual Studio sometimes needs you
+    to rebuild or clean targets. So give that a try if you're seeing build errors.
+    Otherwise check the `FAQ`_ or `discord`_
 
 With the documentation
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -789,21 +790,31 @@ DF folder.
 
 FAQ
 ---
-I'm getting the error: ``fatal error C1083: Cannot open include file: 'CoreProtocol.pb.h': No such file or directory`` or ``..\zlib\lib\zlib.lib : warning LNK4272: library machine type 'X86' conflicts with target machine type 'x64'``
-What do I do?
-Check the architecture CMake has configured: ``cat CMakeCache.txt | grep ARCH`` if it is 32, and you're building 64 [or vice versa] you'll need to regenerate the project from scratch. Modify the cmake command to include ``-DDFHACK_BUILD_ARCH=64`` or 32 if that's the appropriate value for what you're building. If you didn't use cmake, check the batch file for the cmake command.
 
-When I try to run one of the generate-MSVC-* batch files I get an error `` Failed to run MSBuild command:``
-What can I do?
+**What do I do when I'm getting the error** ``fatal error C1083: Cannot open include file: 'CoreProtocol.pb.h': No such file or directory``
+**or** ``..\zlib\lib\zlib.lib : warning LNK4272: library machine type 'X86' conflicts with target machine type 'x64'``?
+
+* Check the architecture CMake has configured: ``cat CMakeCache.txt | grep ARCH`` if it is 32, and you're building 64 [or vice versa] you'll need to regenerate the project from scratch.
+
+* Modify the cmake command to include ``-DDFHACK_BUILD_ARCH=64`` or 32 if that's the appropriate value for what you're building. If you didn't use cmake, check the batch file for the cmake command.
+
+
+**What should I do if running one of the generate-MSVC- batch files I get an error** ``Failed to run MSBuild command:``?
+
 Modify the batch file, it may be that you haven't installed Visual Studio or that you haven't installed the version used by default as the generator inside the batch files. Simply remove the -G generator option from the cmake command and try again. Remember to delete VC2015/ before running the modified batch file.
 
-When generating project files, or when building.. I see ``Can't locate XML/LibXML.pm in @INC (you may need to install the XML::LibXML module)`` in the output. What does this mean?
-It means perl can't find that dependency.
-You'll first want to check if it finds perl at all, and if it does whether the path matches the version you installed or if it is perhaps a git-bash packaged perl as seen here in this excerpt from a dfhack cmake command being run::
-``-- Found Perl: C:/cmder/vendor/git-for-windows/usr/bin/perl.exe (found version "5.34.0")``
-If it isn't the version you expect to see, read the section about `git bash`.
-If it is, ensure the LibXML and LibXLST dependencies are installed for the detected perl installation.
-If they are, seek help on `discord`_.
+
+**What does it mean if building or running cmake I see the error** ``Can't locate XML/LibXML.pm in @INC (you may need to
+install the XML::LibXML module)``?
+
+* It means perl can't find that dependency.
+* You'll first want to check if cmake finds perl at all
+
+  * then that the path of perl matches what you installed, or if it is perhaps the git-bash packaged perl
+  * cmake output ex: ``-- Found Perl: C:/cmder/vendor/git-for-windows/usr/bin/perl.exe (found version "5.34.0")``
+* If it isn't the version you expect to see, read the section about `git bash`.
+* If it is, ensure the LibXML and LibXLST dependencies are installed for the detected perl installation.
+* If they are, seek help on `discord`_.
 
 .. _discord: https://dfhack.org/discord
 

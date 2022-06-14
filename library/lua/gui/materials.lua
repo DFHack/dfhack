@@ -345,7 +345,8 @@ end
 
 function ItemTraitsDialog(args)
     local job_item_flags_map = {}
-    for i = 1, 3 do
+    for i = 1, 5 do
+        if not df['job_item_flags'..i] then break end
         for _, f in ipairs(df['job_item_flags'..i]) do
             if f then
                 job_item_flags_map[f] = 'flags'..i

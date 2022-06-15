@@ -514,58 +514,30 @@ Alternative to chocolatey, you're also more than free to download and install ma
 
 Manually [Fun!]
 ^^^^^^^^^^^^^^^
-If you prefer to install manually rather than using Chocolatey, details and
-requirements are as below. If you do install manually, please ensure you
-have all PATHs set up correctly.
 
-Git
-...
-Some examples:
+* `Git for Windows <https://git-for-windows.github.io>`_
+* `CMake <https://cmake.org/download/>`_
+* `Strawberry Perl <http://strawberryperl.com>`_
 
-* `Git for Windows <https://git-for-windows.github.io>`_ (command-line and GUI)
-* `tortoisegit <https://tortoisegit.org>`_ (GUI and File Explorer integration)
+Run, be free!
 
-CMake
-.....
-You can get the win32 installer version from
-`the official site <https://cmake.org/download/>`_.
-It has the usual installer wizard. Make sure you let it add its binary folder
-to your binary search PATH so the tool can be later run from anywhere.
-
-Perl / Strawberry Perl
-......................
-For the code generation stage of the build process, you'll need Perl 5 with
-XML::LibXML and XML::LibXSLT. `Strawberry Perl <http://strawberryperl.com>`_ is
-recommended as it includes all of the required packages in a single, easy
-install.
-
-After install, ensure Perl is in your user's PATH. This can be edited from
-``Control Panel -> System -> Advanced System Settings -> Environment Variables``.
-
-The following directories must be in your PATH, in this order:
+Oh, but don't forget.. these need to be in your PATH. (in this order)
 
 * ``<path to perl>\c\bin``
 * ``<path to perl>\perl\site\bin``
 * ``<path to perl>\perl\bin``
 * ``<path to perl>\perl\vendor\lib\auto\XML\LibXML`` (may only be required on some systems)
 
-Be sure to close and re-open any existing ``cmd.exe`` windows after updating
-your PATH.
-
-If you already have a different version of Perl installed (for example, from Cygwin),
-you can run into some trouble. Either remove the other Perl install from PATH, or
-install XML::LibXML and XML::LibXSLT for it using CPAN.
 
 Environment 1: Visual Studio
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-It is generally recommended to install any relatively modern version of Visual Studio, so 2019_ or 2022_
-Click Visual Studio 2022_ or 2019_ to download an installer wizard that will prompt you
-to select the optional tools you want to download alongside the IDE. You may need to log into
-(or create) a Microsoft account in order to download Visual Studio.
-
-or, with choco::
+For ABI compatibility with recent releases of Dwarf Fortress, DFHack requires a particular toolchain.
+To install this toolchain in your visual studio, you'll need to have first installed visual studio.
+For example::
 
     choco install visualstudio2022community
+
+Now that it's installed you'll need to:
 
 1. Open **Visual Studio Installer**.
 2. Select modify, for whichever version you've chosen to utilize.

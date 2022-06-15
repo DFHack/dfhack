@@ -563,20 +563,17 @@ Click Visual Studio 2022_ or 2019_ to download an installer wizard that will pro
 to select the optional tools you want to download alongside the IDE. You may need to log into
 (or create) a Microsoft account in order to download Visual Studio.
 
-Once installed, you'll need to ensure several components are also installed through the **Visual Studio Installer**
-(you'll find this installed if you search for it from windows start). From this utility you'll need to find your
-chosen visual studio installation and select modify. From there you'll need to find and put checkmarks for the
-following components:
+or, with choco::
+
+    choco install visualstudio2022community
+
+1. Open **Visual Studio Installer**.
+2. Select modify, for whichever version you've chosen to utilize.
+3. Check the boxes for the following components:
 
 * "Desktop Development with C++"
-
-  * This provides critical support for all C++ development
 * "C++ Windows XP Support for VS 2017 (v141) tools [Deprecated]"
-
-  * This provides the "``v140_xp``" toolchain that DFHack requires for ABI compatibility with recent releases
-    of Dwarf Fortress, yes it's unintuitive.
-
-* MSVC v140 - VS 2015 C++ build tools (v14.00)
+* "MSVC v140 - VS 2015 C++ build tools (v14.00)"
 
 Yes, this is unintuitive. Installing XP Support for VS 2017 installs XP Support for VS 2015
 if the 2015 toolchain is installed.

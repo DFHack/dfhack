@@ -38,6 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Tweaks
 
 ## Fixes
+- `eventful`: fixed UNIT_NEW_ACTIVE event firing too often
 - ``widgets.CycleHotkeyLabel``: allow initial option values to be specified as an index instead of an option value
 - ``job.removeJob()``: fixes regression in DFHack 0.47.05-r5 where items/buildings associated with the job were not getting disassociated when the job is removed. Now `build-now` can build buildings and `gui/mass-remove` can cancel building deconstruction again
 - `eventful`: fix ``eventful.registerReaction`` to correctly pass ``call_native`` argument thus allowing canceling vanilla item creation. Updated related documentation.
@@ -49,6 +50,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `dfhack-examples-guide`: reduce required stock of dye for "Dye cloth" orders
 - `dfhack-examples-guide`: fix material conditions for making jugs and pots
 - `dfhack-examples-guide`: make wooden jugs by default to differentiate them from other stone tools. this allows players to more easily select jugs out with a properly-configured stockpile (i.e. the new ``woodentools`` alias)
+- `eventful`: renamed NEW_UNIT_ACTIVE event to UNIT_NEW_ACTIVE to match the ``EventManager`` event name
 - `quickfort-alias-guide`: new aliases: ``forbidsearch``, ``permitsearch``, and ``togglesearch`` use the `search-plugin` plugin to alter the settings for a filtered list of item types when configuring stockpiles
 - `quickfort-alias-guide`: new aliases: ``stonetools`` and ``woodentools``.  the ``jugs`` alias is deprecated. please use ``stonetools`` instead, which is the same as the old ``jugs`` alias.
 - `quickfort-alias-guide`: new aliases: ``usablehair``, ``permitusablehair``, and ``forbidusablehair`` alter settings for the types of hair/wool that can be made into cloth: sheep, llama, alpaca, and troll. The ``craftrefuse`` aliases have been altered to use this alias as well.

@@ -505,15 +505,12 @@ Choco install commands::
    choco install git
    choco install cmake
    choco install strawberryperl
-   choco install visualstudio2015community
 
-Note: strictly speaking, you do not need visual studio 2015, or any other visual studio release, but visual studio
-is recommended by these instructions. More advanced options are available to those who seek them.
-
-Alternative to chocolatey, you're also more than free to download and install manually.
+There are more dependencies to worry about depending on your intended environment, so read on.
 
 Manually [Fun!]
 ^^^^^^^^^^^^^^^
+Alternative to chocolatey, you're also more than free to download and install manually.
 
 * `Git for Windows <https://git-for-windows.github.io>`_
 * `CMake <https://cmake.org/download/>`_
@@ -531,7 +528,10 @@ Oh, but don't forget.. these need to be in your PATH. (in this order)
 
 Environment 1: Visual Studio
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-For ABI compatibility with recent releases of Dwarf Fortress, DFHack requires a particular toolchain.
+For ABI compatibility with recent releases of Dwarf Fortress, DFHack requires the ``v140`` or ``v140_xp``
+toolchain to build windows. You'll need ``v140_xp`` if you want to build 32-bit. These instructions will
+help you obtain ``v140_xp`` so you can build both architectures.
+
 To install this toolchain in your visual studio, you'll need to have first installed visual studio.
 For example::
 

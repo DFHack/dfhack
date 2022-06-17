@@ -38,7 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Tweaks
 
 ## Fixes
-- core: Fixed UNIT_NEW_ACTIVE event tracking
+- `eventful`: Fixed UNIT_NEW_ACTIVE event firing too often
 - ``widgets.CycleHotkeyLabel``: allow initial option values to be specified as an index instead of an option value
 
 ## Misc Improvements

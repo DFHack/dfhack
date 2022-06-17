@@ -38,10 +38,23 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Tweaks
 
 ## Fixes
-- `eventful`: fixed UNIT_NEW_ACTIVE event firing too often
-- ``widgets.CycleHotkeyLabel``: allow initial option values to be specified as an index instead of an option value
-- ``job.removeJob()``: fixes regression in DFHack 0.47.05-r5 where items/buildings associated with the job were not getting disassociated when the job is removed. Now `build-now` can build buildings and `gui/mass-remove` can cancel building deconstruction again
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+# 0.47.05-r6
+
+## Fixes
 - `eventful`: fix ``eventful.registerReaction`` to correctly pass ``call_native`` argument thus allowing canceling vanilla item creation. Updated related documentation.
+- `eventful`: renamed NEW_UNIT_ACTIVE event to UNIT_NEW_ACTIVE to match the ``EventManager`` event name
+- `eventful`: fixed UNIT_NEW_ACTIVE event firing too often
+- ``job.removeJob()``: fixes regression in DFHack 0.47.05-r5 where items/buildings associated with the job were not getting disassociated when the job is removed. Now `build-now` can build buildings and `gui/mass-remove` can cancel building deconstruction again
+- ``widgets.CycleHotkeyLabel``: allow initial option values to be specified as an index instead of an option value
 
 ## Misc Improvements
 - `confirm`: added a confirmation dialog for removing manager orders
@@ -50,26 +63,23 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `dfhack-examples-guide`: reduce required stock of dye for "Dye cloth" orders
 - `dfhack-examples-guide`: fix material conditions for making jugs and pots
 - `dfhack-examples-guide`: make wooden jugs by default to differentiate them from other stone tools. this allows players to more easily select jugs out with a properly-configured stockpile (i.e. the new ``woodentools`` alias)
-- `eventful`: renamed NEW_UNIT_ACTIVE event to UNIT_NEW_ACTIVE to match the ``EventManager`` event name
 - `quickfort-alias-guide`: new aliases: ``forbidsearch``, ``permitsearch``, and ``togglesearch`` use the `search-plugin` plugin to alter the settings for a filtered list of item types when configuring stockpiles
 - `quickfort-alias-guide`: new aliases: ``stonetools`` and ``woodentools``.  the ``jugs`` alias is deprecated. please use ``stonetools`` instead, which is the same as the old ``jugs`` alias.
 - `quickfort-alias-guide`: new aliases: ``usablehair``, ``permitusablehair``, and ``forbidusablehair`` alter settings for the types of hair/wool that can be made into cloth: sheep, llama, alpaca, and troll. The ``craftrefuse`` aliases have been altered to use this alias as well.
 - `quickfort-alias-guide`: new aliases: ``forbidthread``, ``permitthread``, ``forbidadamantinethread``, ``permitadamantinethread``, ``forbidcloth``, ``permitcloth``, ``forbidadamantinecloth``, and ``permitadamantinecloth`` give you more control how adamantine-derived items are stored
 - `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set improvements: automatically create tavern, library, and temple locations (restricted to residents only by default), automatically associate the rented rooms with the tavern
-- `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set improvements: new design for the services level, including a werebeast-proof hospital recovery rooms and an appropriately-themed interrogation room next to the jail! Also fits better in a 1x1 embark for minimalist players.
-
-## Documentation
+- `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set improvements: new design for the services level, including were-bitten hospital recovery rooms and an appropriately-themed interrogation room next to the jail! Also fits better in a 1x1 embark for minimalist players.
 
 ## API
 - ``word_wrap``: argument ``bool collapse_whitespace`` converted to enum ``word_wrap_whitespace_mode mode``, with valid modes ``WSMODE_KEEP_ALL``, ``WSMODE_COLLAPSE_ALL``, and ``WSMODE_TRIM_LEADING``.
 
 ## Lua
 - ``gui.View``: all ``View`` subclasses (including all ``Widgets``) can now acquire keyboard focus with the new ``View:setFocus()`` function. See docs for details.
-- ``widgets.HotkeyLabel``: the ``key_sep`` string is now configurable
+- ``materials.ItemTraitsDialog``: new dialog to edit item traits (where "item" is part of a job or work order or similar). The list of traits is the same as in vanilla work order conditions "``t`` change traits".
 - ``widgets.EditField``: the ``key_sep`` string is now configurable
 - ``widgets.EditField``: can now display an optional string label in addition to the activation key
 - ``widgets.EditField``: views that have an ``EditField`` subview no longer need to manually manage the ``EditField`` activation state and input routing.  This is now handled automatically by the new ``gui.View`` keyboard focus subsystem.
-- ``materials.ItemTraitsDialog``: new dialog to edit item traits (where "item" is part of a job or work order or similar). The list of traits is the same as in vanilla work order conditions "``t`` change traits".
+- ``widgets.HotkeyLabel``: the ``key_sep`` string is now configurable
 
 # 0.47.05-r5
 

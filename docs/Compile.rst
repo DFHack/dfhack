@@ -467,7 +467,7 @@ Windows
   :local:
   :depth: 3
 
-In order to build on windows you'll need to resolve a few dependencies. The dfhack build system uses perl to generate
+In order to build on Windows you'll need to install a few dependencies. The DFHack build system uses Perl to generate
 source files using xml files detailing various DF structures. Cmake is used to generate build files, or project files
 for visual studio. Read the sections below for more detail.
 

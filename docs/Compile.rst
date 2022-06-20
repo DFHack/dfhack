@@ -603,8 +603,8 @@ released versions of Dwarf Fortress and cannot be used to make usable builds of 
 
 Powershell
 ..........
-If PATH in windows is configured correctly, then powershell [or cmd] should just work
-[once the dependencies are installed].
+If PATH in Windows is configured correctly, then powershell (or cmd) should just work
+(once the dependencies are installed).
 
 .. _git bash:
 

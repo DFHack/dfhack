@@ -1,7 +1,7 @@
 -- tile-material: Functions to help retrieve the material for a tile.
 
 --[[
-Original code provided by Milo Christiansen in 2015 under the MIT license. Relicensed for ease of maintenance with his permission.
+Original code provided by Milo Christiansen in 2015 under the MIT license. Relicensed under the ZLib license to align with the rest of DFHack, with his permission.
 ]]
 
 local _ENV = mkmodule("tile-material")

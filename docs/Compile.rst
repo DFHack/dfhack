@@ -616,7 +616,7 @@ dependencies are found/used.
 
 Option 1: configure PATH
 ::::::::::::::::::::::::
-Git bash will modify PATH so that its perl is found under /usr/bin. Using ``.bash_profile`` or ``.bashrc``
+Git bash will modify PATH so that its perl is found under ``/usr/bin``. Using ``.bash_profile`` or ``.bashrc``
 file(s) to manually configure PATH will easily solve this issue.
 
 Option 2: perl dependencies

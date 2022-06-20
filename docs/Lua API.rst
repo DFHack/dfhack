@@ -30,6 +30,7 @@ implemented by Lua files located in :file:`hack/lua/*`
   :local:
   :depth: 2
 
+.. _lua-df:
 
 =========================
 DF data structure wrapper

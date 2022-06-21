@@ -43,7 +43,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Documentation
 - Added `modding guide <modding-guide>`
-- Added anchor for DF data structure wrapper in Lua API
 
 ## API
 

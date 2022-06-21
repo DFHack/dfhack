@@ -1,3 +1,5 @@
+.. _modding-guide:
+
 DFHack modding guide
 ====================
 

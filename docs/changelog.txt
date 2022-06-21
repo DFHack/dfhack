@@ -42,6 +42,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 
 ## Documentation
+- Added modding guide
+- Added anchor for DF data structure wrapper in Lua API
 
 ## API
 
@@ -72,8 +74,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set improvements: new design for the services level, including a werebeast-proof hospital recovery rooms and an appropriately-themed interrogation room next to the jail! Also fits better in a 1x1 embark for minimalist players.
 
 ## Documentation
-- Added modding guide
-- Added anchor for DF data structure wrapper in Lua API
 
 ## API
 - ``word_wrap``: argument ``bool collapse_whitespace`` converted to enum ``word_wrap_whitespace_mode mode``, with valid modes ``WSMODE_KEEP_ALL``, ``WSMODE_COLLAPSE_ALL``, and ``WSMODE_TRIM_LEADING``.

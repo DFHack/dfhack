@@ -10,7 +10,7 @@ Why not just use raw modding?
 
 It's much less hacky for many things, easier to maintain, and easier to extend. Of course if you're adding a new creature or whatever do use raw modding, but for things like adding syndromes when certain actions are performed, absolutely try out DFHack. Many things will require a mix of raw modding and DFHack.
 
-What kind of things can we make?
+What kind of mods can we make?
 
 Lots of things, and the list grows as more and more hooks and tools are developed within DFHack. You can modify behaviours by cleverly watching and modifying certain areas of the game with functions that run on every tick or by using hooks. Familiarising yourself with the many structs oof the game will help with ideas immensely, and you can always ask for help in the right places (e.g. DFHack's Discord).
 

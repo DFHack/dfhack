@@ -14,7 +14,7 @@ What kind of things can we make?
 
 Lots of things, and the list grows as more and more hooks and tools are developed within DFHack. You can modify behaviours by cleverly watching and modifying certain areas of the game with functions that run on every tick or by using hooks. Familiarising yourself with the many structs oof the game will help with ideas immensely, and you can always ask for help in the right places (e.g. DFHack's Discord).
 
-You will need to know Lua for the scripting guides herein.
+DFHack scripts are written in Lua. If you don't already know Lua, there's a great primer at <link>.
 
 A script-maker's environment
 ----------------------------

@@ -27,6 +27,8 @@ A script is run by writing its path and name from a script path folder without t
 
 You can make all your scripts in ``hack/scripts/``, but this is not recommended as it makes things much harder to maintain each update. It's recommended to make a folder with a name like "own-scripts" and add it to ``dfhack-config/script-paths.txt``. You should also make a folder for external installed scripts from the internet that are not in ``hack/scripts/``. You can prepend your script paths entries with a ``+`` so that they take precedence over other folders.
 
+If your mod is installed into ``raw/scripts/`` be aware that the copies of the scripts in ``data/save/*/raw/`` are checked first and will run instead of any changes you make to an in-development copy outside of a raw folder.
+
 The structure of the game
 -------------------------
 
@@ -37,19 +39,19 @@ Your first script
 
 So! It's time to write your first script. We are going to make a script that will get the pronoun type of the currently selected unit (there are many contexts where the function that gets the currently selected unit works).
 
-First line, we get the unit.::
+First line, we get the unit. ::
 
     local unit = dfhack.gui.getSelectedUnit()
 
 If no unit is selected, an error message will be printed (which can be silenced by passing ``true`` to ``getSelectedUnit``) and ``unit`` will be ``nil``.
 
-If ``unit`` is ``nil``, we don't want the script to run anymore.::
+If ``unit`` is ``nil``, we don't want the script to run anymore. ::
 
     if not unit then
         return
     end
 
-Now, the field ``sex`` in a unit is an integer, but each integer corresponds to a string value (it, she, or he). We get this value by indexing the bidirectional map ``df.pronoun_type`` with an integer from the unit. Indexing the other way, with one of the strings, will yield its corresponding number. So:::
+Now, the field ``sex`` in a unit is an integer, but each integer corresponds to a string value (it, she, or he). We get this value by indexing the bidirectional map ``df.pronoun_type`` with an integer from the unit. Indexing the other way, with one of the strings, will yield its corresponding number. So: ::
 
     local pronounTypeString = df.pronoun_type[unit.sex]
     print(pronounTypeString)

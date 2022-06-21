@@ -17,7 +17,7 @@ Lots of things, and the list grows as more and more hooks and tools are develope
 DFHack scripts are written in Lua. If you don't already know Lua, there's a great primer at <link>.
 
 A mod-maker's development environment
-----------------------------
+-------------------------------------
 
 A script is run by writing its path and name from a script path folder without the file extension. E.g. gui/gm-editor for hack/scripts/gui/gm-editor.lua. You can make all your scripts in hack/scripts/, but this is not recommended as it makes things much harder to maintain each update. It's recommended to make a folder with a name like "own-scripts" and add it to dfhack-config/script-paths.txt. You should also make a folder for external installed scripts from the internet that are not in hack/scripts/.
 
@@ -27,7 +27,7 @@ The structure of the game
 "The game" is in the global variable `df <lua-df>`. The game's memory can be found in ``df.global``, containing things like the list of all items, whether to reindex pathfinding, et cetera. Also relevant to us in ``df`` are the various types found in the game, e.g. ``df.pronoun_type`` which we will be using.
 
 Your first script
--------------------------------------
+-----------------
 
 So! It's time to write your first script. We are going to make a script that will get the pronoun type of the currently selected unit (there are many contexts where the function that gets the currently selected unit works).
 

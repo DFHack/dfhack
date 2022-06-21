@@ -8,18 +8,24 @@ Preface
 
 Why not just use raw modding?
 
-It's much less hacky for many things, easier to maintain, and easier to extend. Of course if you're adding a new creature or whatever do use raw modding, but for things like adding syndromes when certain actions are performed, absolutely try out DFHack. Many things will require a mix of raw modding and DFHack.
+For many things it's either completely and only (sensibly) doable in raws or completely and only doable with DFHack. For mods where DFHack is an alternative and not the only option, it's much less hacky, easier to maintain, and easier to extend, and is not prone to side-effects. A great example is adding a syndrome when a reaction is performed requiring an exploding boulder in raws but having dedicated tools for it if you use DFHack. Many things will require a mix of raw modding and DFHack.
 
 What kind of mods can we make?
 
-Lots of things, and the list grows as more and more hooks and tools are developed within DFHack. You can modify behaviours by cleverly watching and modifying certain areas of the game with functions that run on every tick or by using hooks. Familiarising yourself with the many structs oof the game will help with ideas immensely, and you can always ask for help in the right places (e.g. DFHack's Discord).
+Lots of things, and the list grows as more and more hooks and tools are developed within DFHack. You can modify behaviours by cleverly watching and modifying certain areas of the game with functions that run on every tick or by using hooks. Familiarising yourself with the many structs of the game will help with ideas immensely, and you can always ask for help in the right places (e.g. DFHack's Discord).
 
-DFHack scripts are written in Lua. If you don't already know Lua, there's a great primer at <link>.
+Examples of things we have mod tools to allow are directly changing skills, spawning liquids, adding new powered buildings, creating items/trees/units based on various conditions (in reactions or similar), running code when certain projectiles hit or move, and much else besides.
+
+DFHack scripts are written in Lua. If you don't already know Lua, there's a great primer at https://www.lua.org/pil/1.html.
 
 A mod-maker's development environment
 -------------------------------------
 
-A script is run by writing its path and name from a script path folder without the file extension. E.g. gui/gm-editor for hack/scripts/gui/gm-editor.lua. You can make all your scripts in hack/scripts/, but this is not recommended as it makes things much harder to maintain each update. It's recommended to make a folder with a name like "own-scripts" and add it to dfhack-config/script-paths.txt. You should also make a folder for external installed scripts from the internet that are not in hack/scripts/.
+Scripts can be run from a world's ``raw/scripts/`` directory, and (configurably) are run by default from ``hack/scripts/``. Scripts in ``raw/init.d/`` are automatically run on world load. Scripts within the raws are a component for more advanced mods.
+
+A script is run by writing its path and name from a script path folder without the file extension into a DFHack command prompt (in-game or the external one). E.g. ``gui/gm-editor`` for ``hack/scripts/gui/gm-editor.lua``.
+
+You can make all your scripts in ``hack/scripts/``, but this is not recommended as it makes things much harder to maintain each update. It's recommended to make a folder with a name like "own-scripts" and add it to ``dfhack-config/script-paths.txt``. You should also make a folder for external installed scripts from the internet that are not in ``hack/scripts/``. You can prepend your script paths entries with a ``+`` so that they take precedence over other folders.
 
 The structure of the game
 -------------------------
@@ -48,20 +54,17 @@ Now, the field ``sex`` in a unit is an integer, but each integer corresponds to 
     local pronounTypeString = df.pronoun_type[unit.sex]
     print(pronounTypeString)
 
-Simple.
+Simple. Save this as a Lua file in your own scripts directory and run it as shown before when focused on a unit one way or another.
 
 Getting used to gm-editor and DFStructs exploration
 ---------------------------------------------------
 
 So how could you have known about the field and type we just used?
 
-A script that prints more complex data from a unit
---------------------------------------------------
-
 s
 
-Something that uses eventful and/or repeat-util
------------------------------------------------
+Detecting triggers
+------------------
 
 s
 
@@ -70,7 +73,7 @@ Setting up an environment for a more advanced modular mod
 
 s
 
-A whole mod with multiple hooks and multiple functions that happen on tick
---------------------------------------------------------------------------
+Your first whole mod
+--------------------
 
 s

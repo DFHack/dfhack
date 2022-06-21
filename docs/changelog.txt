@@ -38,6 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Tweaks
 
 ## Fixes
+- ``job.removeJob()``: ensure jobs are removed from the world list when they are canceled
 
 ## Misc Improvements
 

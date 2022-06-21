@@ -16,7 +16,7 @@ Lots of things, and the list grows as more and more hooks and tools are develope
 
 DFHack scripts are written in Lua. If you don't already know Lua, there's a great primer at <link>.
 
-A script-maker's environment
+A mod-maker's development environment
 ----------------------------
 
 A script is run by writing its path and name from a script path folder without the file extension. E.g. gui/gm-editor for hack/scripts/gui/gm-editor.lua. You can make all your scripts in hack/scripts/, but this is not recommended as it makes things much harder to maintain each update. It's recommended to make a folder with a name like "own-scripts" and add it to dfhack-config/script-paths.txt. You should also make a folder for external installed scripts from the internet that are not in hack/scripts/.

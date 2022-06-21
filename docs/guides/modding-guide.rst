@@ -26,7 +26,7 @@ The structure of the game
 
 "The game" is in the global variable `df <lua-df>`. The game's memory can be found in ``df.global``, containing things like the list of all items, whether to reindex pathfinding, et cetera. Also relevant to us in ``df`` are the various types found in the game, e.g. ``df.pronoun_type`` which we will be using.
 
-A script that prints data from a unit
+Your first script
 -------------------------------------
 
 So! It's time to write your first script. We are going to make a script that will get the pronoun type of the currently selected unit (there are many contexts where the function that gets the currently selected unit works).

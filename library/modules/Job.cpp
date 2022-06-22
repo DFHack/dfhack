@@ -360,27 +360,24 @@ bool DFHack::Job::removeJob(df::job* job) {
     using df::global::world;
     CHECK_NULL_POINTER(job);
 
-    // cancel_job below does not clean up refs, so we have to do that first
+    // cancel_job below does not clean up all refs, so we have to do some work
 
-    // clean up general refs
-    for (auto genRef : job->general_refs) {
-        if (!genRef) continue;
+    // manually handle DESTROY_BUILDING jobs (cancel_job doesn't handle them)
+    if (job->job_type == df::job_type::DestroyBuilding) {
+        for (auto &genRef : job->general_refs) {
+            disconnectJobGeneralRef(job, genRef);
+            if (genRef) delete genRef;
+        }
+        job->general_refs.resize(0);
 
-        // disconnectJobGeneralRef only handles buildings and units
-        if (genRef->getType() != general_ref_type::BUILDING_HOLDER &&
-                genRef->getType() != general_ref_type::UNIT_WORKER)
-            return false;
+        // remove the job from the world
+        job->list_link->prev->next = job->list_link->next;
+        delete job->list_link;
+        delete job;
+        return true;
     }
 
-    for (auto genRef : job->general_refs) {
-        // this should always succeed because of the check in the preceding loop
-        bool success = disconnectJobGeneralRef(job, genRef);
-        assert(success); (void)success;
-        if (genRef) delete genRef;
-    }
-    job->general_refs.resize(0);
-
-    // clean up item refs
+    // clean up item refs and delete them
     for (auto &item_ref : job->items) {
        disconnectJobItem(job, item_ref);
        if (item_ref) delete item_ref;

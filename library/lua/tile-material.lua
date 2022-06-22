@@ -1,25 +1,7 @@
 -- tile-material: Functions to help retrieve the material for a tile.
 
 --[[
-Copyright 2015-2016 Milo Christiansen
-
-This software is provided 'as-is', without any express or implied warranty. In
-no event will the authors be held liable for any damages arising from the use of
-this software.
-
-Permission is granted to anyone to use this software for any purpose, including
-commercial applications, and to alter it and redistribute it freely, subject to
-the following restrictions:
-
-1. The origin of this software must not be misrepresented; you must not claim
-that you wrote the original software. If you use this software in a product, an
-acknowledgment in the product documentation would be appreciated but is not
-required.
-
-2. Altered source versions must be plainly marked as such, and must not be
-misrepresented as being the original software.
-
-3. This notice may not be removed or altered from any source distribution.
+Original code provided by Milo Christiansen in 2015 under the MIT license. Relicensed under the ZLib license to align with the rest of DFHack, with his permission.
 ]]
 
 local _ENV = mkmodule("tile-material")
@@ -84,73 +66,6 @@ local function fixedMat(id)
         return mat
     end
 end
-
--- BasicMats is a matspec table to pass to GetTileMatSpec or GetTileTypeMat. This particular
--- matspec table covers the common case of returning plant materials for plant tiles and other
--- materials for the remaining tiles.
-BasicMats = {
-    [df.tiletype_material.AIR] = nil, -- Empty
-    [df.tiletype_material.SOIL] = GetLayerMat,
-    [df.tiletype_material.STONE] = GetLayerMat,
-    [df.tiletype_material.FEATURE] = GetFeatureMat,
-    [df.tiletype_material.LAVA_STONE] = GetLavaStone,
-    [df.tiletype_material.MINERAL] = GetVeinMat,
-    [df.tiletype_material.FROZEN_LIQUID] = fixedMat("WATER:NONE"),
-    [df.tiletype_material.CONSTRUCTION] = GetConstructionMat,
-    [df.tiletype_material.GRASS_LIGHT] = GetGrassMat,
-    [df.tiletype_material.GRASS_DARK] = GetGrassMat,
-    [df.tiletype_material.GRASS_DRY] = GetGrassMat,
-    [df.tiletype_material.GRASS_DEAD] = GetGrassMat,
-    [df.tiletype_material.PLANT] = GetShrubMat,
-    [df.tiletype_material.HFS] = nil, -- Eerie Glowing Pit
-    [df.tiletype_material.CAMPFIRE] = GetLayerMat,
-    [df.tiletype_material.FIRE] = GetLayerMat,
-    [df.tiletype_material.ASHES] = GetLayerMat,
-    [df.tiletype_material.MAGMA] = nil, -- SMR
-    [df.tiletype_material.DRIFTWOOD] = GetLayerMat,
-    [df.tiletype_material.POOL] = GetLayerMat,
-    [df.tiletype_material.BROOK] = GetLayerMat,
-    [df.tiletype_material.ROOT] = GetLayerMat,
-    [df.tiletype_material.TREE] = GetTreeMat,
-    [df.tiletype_material.MUSHROOM] = GetTreeMat,
-    [df.tiletype_material.UNDERWORLD_GATE] = nil, -- I guess this is for the gates found in vaults?
-}
-
--- NoPlantMats is a matspec table to pass to GetTileMatSpec or GetTileTypeMat. This particular
--- matspec table will ignore plants, returning layer materials (or nil for trees) instead.
-NoPlantMats = {
-    [df.tiletype_material.SOIL] = GetLayerMat,
-    [df.tiletype_material.STONE] = GetLayerMat,
-    [df.tiletype_material.FEATURE] = GetFeatureMat,
-    [df.tiletype_material.LAVA_STONE] = GetLavaStone,
-    [df.tiletype_material.MINERAL] = GetVeinMat,
-    [df.tiletype_material.FROZEN_LIQUID] = fixedMat("WATER:NONE"),
-    [df.tiletype_material.CONSTRUCTION] = GetConstructionMat,
-    [df.tiletype_material.GRASS_LIGHT] = GetLayerMat,
-    [df.tiletype_material.GRASS_DARK] = GetLayerMat,
-    [df.tiletype_material.GRASS_DRY] = GetLayerMat,
-    [df.tiletype_material.GRASS_DEAD] = GetLayerMat,
-    [df.tiletype_material.PLANT] = GetLayerMat,
-    [df.tiletype_material.CAMPFIRE] = GetLayerMat,
-    [df.tiletype_material.FIRE] = GetLayerMat,
-    [df.tiletype_material.ASHES] = GetLayerMat,
-    [df.tiletype_material.DRIFTWOOD] = GetLayerMat,
-    [df.tiletype_material.POOL] = GetLayerMat,
-    [df.tiletype_material.BROOK] = GetLayerMat,
-    [df.tiletype_material.ROOT] = GetLayerMat,
-}
-
--- OnlyPlantMats is a matspec table to pass to GetTileMatSpec or GetTileTypeMat. This particular
--- matspec table will return nil for any non-plant tile. Plant tiles return the plant material.
-OnlyPlantMats = {
-    [df.tiletype_material.GRASS_LIGHT] = GetGrassMat,
-    [df.tiletype_material.GRASS_DARK] = GetGrassMat,
-    [df.tiletype_material.GRASS_DRY] = GetGrassMat,
-    [df.tiletype_material.GRASS_DEAD] = GetGrassMat,
-    [df.tiletype_material.PLANT] = GetShrubMat,
-    [df.tiletype_material.TREE] = GetTreeMat,
-    [df.tiletype_material.MUSHROOM] = GetTreeMat,
-}
 
 -- GetLayerMat returns the layer material for the given tile.
 -- AFAIK this will never return nil.
@@ -348,6 +263,73 @@ function GetFeatureMat(x, y, z)
 
     return nil
 end
+
+-- BasicMats is a matspec table to pass to GetTileMatSpec or GetTileTypeMat. This particular
+-- matspec table covers the common case of returning plant materials for plant tiles and other
+-- materials for the remaining tiles.
+BasicMats = {
+    [df.tiletype_material.AIR] = nil, -- Empty
+    [df.tiletype_material.SOIL] = GetLayerMat,
+    [df.tiletype_material.STONE] = GetLayerMat,
+    [df.tiletype_material.FEATURE] = GetFeatureMat,
+    [df.tiletype_material.LAVA_STONE] = GetLavaStone,
+    [df.tiletype_material.MINERAL] = GetVeinMat,
+    [df.tiletype_material.FROZEN_LIQUID] = fixedMat("WATER:NONE"),
+    [df.tiletype_material.CONSTRUCTION] = GetConstructionMat,
+    [df.tiletype_material.GRASS_LIGHT] = GetGrassMat,
+    [df.tiletype_material.GRASS_DARK] = GetGrassMat,
+    [df.tiletype_material.GRASS_DRY] = GetGrassMat,
+    [df.tiletype_material.GRASS_DEAD] = GetGrassMat,
+    [df.tiletype_material.PLANT] = GetShrubMat,
+    [df.tiletype_material.HFS] = nil, -- Eerie Glowing Pit
+    [df.tiletype_material.CAMPFIRE] = GetLayerMat,
+    [df.tiletype_material.FIRE] = GetLayerMat,
+    [df.tiletype_material.ASHES] = GetLayerMat,
+    [df.tiletype_material.MAGMA] = nil, -- SMR
+    [df.tiletype_material.DRIFTWOOD] = GetLayerMat,
+    [df.tiletype_material.POOL] = GetLayerMat,
+    [df.tiletype_material.BROOK] = GetLayerMat,
+    [df.tiletype_material.ROOT] = GetLayerMat,
+    [df.tiletype_material.TREE] = GetTreeMat,
+    [df.tiletype_material.MUSHROOM] = GetTreeMat,
+    [df.tiletype_material.UNDERWORLD_GATE] = nil, -- I guess this is for the gates found in vaults?
+}
+
+-- NoPlantMats is a matspec table to pass to GetTileMatSpec or GetTileTypeMat. This particular
+-- matspec table will ignore plants, returning layer materials (or nil for trees) instead.
+NoPlantMats = {
+    [df.tiletype_material.SOIL] = GetLayerMat,
+    [df.tiletype_material.STONE] = GetLayerMat,
+    [df.tiletype_material.FEATURE] = GetFeatureMat,
+    [df.tiletype_material.LAVA_STONE] = GetLavaStone,
+    [df.tiletype_material.MINERAL] = GetVeinMat,
+    [df.tiletype_material.FROZEN_LIQUID] = fixedMat("WATER:NONE"),
+    [df.tiletype_material.CONSTRUCTION] = GetConstructionMat,
+    [df.tiletype_material.GRASS_LIGHT] = GetLayerMat,
+    [df.tiletype_material.GRASS_DARK] = GetLayerMat,
+    [df.tiletype_material.GRASS_DRY] = GetLayerMat,
+    [df.tiletype_material.GRASS_DEAD] = GetLayerMat,
+    [df.tiletype_material.PLANT] = GetLayerMat,
+    [df.tiletype_material.CAMPFIRE] = GetLayerMat,
+    [df.tiletype_material.FIRE] = GetLayerMat,
+    [df.tiletype_material.ASHES] = GetLayerMat,
+    [df.tiletype_material.DRIFTWOOD] = GetLayerMat,
+    [df.tiletype_material.POOL] = GetLayerMat,
+    [df.tiletype_material.BROOK] = GetLayerMat,
+    [df.tiletype_material.ROOT] = GetLayerMat,
+}
+
+-- OnlyPlantMats is a matspec table to pass to GetTileMatSpec or GetTileTypeMat. This particular
+-- matspec table will return nil for any non-plant tile. Plant tiles return the plant material.
+OnlyPlantMats = {
+    [df.tiletype_material.GRASS_LIGHT] = GetGrassMat,
+    [df.tiletype_material.GRASS_DARK] = GetGrassMat,
+    [df.tiletype_material.GRASS_DRY] = GetGrassMat,
+    [df.tiletype_material.GRASS_DEAD] = GetGrassMat,
+    [df.tiletype_material.PLANT] = GetShrubMat,
+    [df.tiletype_material.TREE] = GetTreeMat,
+    [df.tiletype_material.MUSHROOM] = GetTreeMat,
+}
 
 -- GetTileMat will return the material of the specified tile as determined by its tile type and the
 -- world geology data, etc.

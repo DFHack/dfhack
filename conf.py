@@ -19,6 +19,7 @@ from io import open
 import os
 import re
 import shlex  # pylint:disable=unused-import
+import sphinx
 import sys
 
 
@@ -28,6 +29,7 @@ import sys
 from docutils import nodes
 from docutils.parsers.rst import roles
 
+sphinx_major_version = sphinx.version_info[0]
 
 def get_keybinds():
     """Get the implemented keybinds, and return a dict of
@@ -197,20 +199,28 @@ extensions = [
     'dfhack.lexer',
 ]
 
+def get_caption_str(prefix=''):
+    return prefix + (sphinx_major_version >= 5 and '%s' or '')
+
 # This config value must be a dictionary of external sites, mapping unique
 # short alias names to a base URL and a prefix.
 # See http://sphinx-doc.org/ext/extlinks.html
 extlinks = {
-    'wiki': ('https://dwarffortresswiki.org/%s', ''),
+    'wiki': ('https://dwarffortresswiki.org/%s', get_caption_str()),
     'forums': ('http://www.bay12forums.com/smf/index.php?topic=%s',
-               'Bay12 forums thread '),
-    'dffd': ('https://dffd.bay12games.com/file.php?id=%s', 'DFFD file '),
+               get_caption_str('Bay12 forums thread ')),
+    'dffd': ('https://dffd.bay12games.com/file.php?id=%s',
+             get_caption_str('DFFD file ')),
     'bug': ('https://www.bay12games.com/dwarves/mantisbt/view.php?id=%s',
-            'Bug '),
-    'source': ('https://github.com/DFHack/dfhack/tree/develop/%s', ''),
-    'source-scripts': ('https://github.com/DFHack/scripts/tree/master/%s', ''),
-    'issue': ('https://github.com/DFHack/dfhack/issues/%s', 'Issue '),
-    'commit': ('https://github.com/DFHack/dfhack/commit/%s', 'Commit '),
+            get_caption_str('Bug ')),
+    'source': ('https://github.com/DFHack/dfhack/tree/develop/%s',
+               get_caption_str()),
+    'source-scripts': ('https://github.com/DFHack/scripts/tree/master/%s',
+                       get_caption_str()),
+    'issue': ('https://github.com/DFHack/dfhack/issues/%s',
+               get_caption_str('Issue ')),
+    'commit': ('https://github.com/DFHack/dfhack/commit/%s',
+               get_caption_str('Commit ')),
 }
 
 # Add any paths that contain templates here, relative to this directory.
@@ -259,7 +269,7 @@ version = release = get_version()
 # for a list of supported languages.
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # strftime format for |today| and 'Last updated on:' timestamp at page bottom
 today_fmt = html_last_updated_fmt = '%Y-%m-%d'
@@ -354,6 +364,9 @@ html_use_index = False
 html_css_files = [
     'dfhack.css',
 ]
+
+if sphinx_major_version >= 5:
+    html_css_files.append('sphinx5.css')
 
 # -- Options for LaTeX output ---------------------------------------------
 

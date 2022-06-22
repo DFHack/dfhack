@@ -687,6 +687,7 @@ function ItemTraitsDialog(args)
             else
                 print('unknown sel')
                 printall(sel)
+                error('Selected entry in ItemTraitsDialog was of unknown type')
             end
         end
 

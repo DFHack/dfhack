@@ -55,6 +55,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `quickfort-alias-guide`: new aliases: ``forbidthread``, ``permitthread``, ``forbidadamantinethread``, ``permitadamantinethread``, ``forbidcloth``, ``permitcloth``, ``forbidadamantinecloth``, and ``permitadamantinecloth`` give you more control how adamantine-derived items are stored
 - `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set improvements: automatically create tavern, library, and temple locations (restricted to residents only by default), automatically associate the rented rooms with the tavern
 - `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set improvements: new design for the services level, including a werebeast-proof hospital recovery rooms and an appropriately-themed interrogation room next to the jail! Also fits better in a 1x1 embark for minimalist players.
+- ``materials.ItemTraitsDialog``: added a default ``on_select``-handler which toggles the traits.
 
 ## Documentation
 

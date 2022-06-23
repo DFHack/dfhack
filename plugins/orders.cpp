@@ -540,9 +540,9 @@ static command_result orders_import(color_ostream &out, Json::Value &orders)
             }
             else
             {
-                delete order;
-
                 out << COLOR_LIGHTRED << "Invalid item subtype for imported manager order: " << enum_item_key(order->item_type) << ":" << it["item_subtype"].asString() << std::endl;
+
+                delete order;
 
                 return CR_FAILURE;
             }
@@ -716,9 +716,9 @@ static command_result orders_import(color_ostream &out, Json::Value &orders)
                     }
                     else
                     {
-                        delete condition;
-
                         out << COLOR_YELLOW << "Invalid item condition item subtype for imported manager order: " << enum_item_key(condition->item_type) << ":" << it2["item_subtype"].asString() << std::endl;
+
+                        delete condition;
 
                         continue;
                     }

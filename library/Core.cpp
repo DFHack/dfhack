@@ -1975,13 +1975,6 @@ bool Core::isSuspended(void)
     return ownerThread.load() == std::this_thread::get_id();
 }
 
-int Core::TileUpdate()
-{
-    if(!started)
-        return false;
-    return true;
-}
-
 void Core::doUpdate(color_ostream &out, bool first_update)
 {
     Lua::Core::Reset(out, "DF code execution");

@@ -206,11 +206,9 @@ set(DFHACK_BUILD_ID "" CACHE STRING "Build ID (should be specified on command li
 if(UNIX)
     # put the lib into DF/hack
     set(DFHACK_LIBRARY_DESTINATION hack)
-    set(DFHACK_EGGY_DESTINATION libs)
 else()
     # windows is crap, therefore we can't do nice things with it. leave the libs on a nasty pile...
     set(DFHACK_LIBRARY_DESTINATION .)
-    set(DFHACK_EGGY_DESTINATION .)
 endif()
 
 # external tools will be installed here:

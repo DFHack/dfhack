@@ -467,7 +467,7 @@ static command_result orders_export_command(color_ostream & out, const std::stri
                     condition["order"] = it2->order_id;
                     condition["condition"] = enum_item_key(it2->condition);
 
-                    // TODO: anon_1
+                    // TODO: unk_1
 
                     conditions.append(condition);
                 }
@@ -475,7 +475,7 @@ static command_result orders_export_command(color_ostream & out, const std::stri
                 order["order_conditions"] = conditions;
             }
 
-            // TODO: anon_1
+            // TODO: items
 
             orders.append(order);
         }
@@ -873,13 +873,13 @@ static command_result orders_import(color_ostream &out, Json::Value &orders)
                     continue;
                 }
 
-                // TODO: anon_1
+                // TODO: unk_1
 
                 order->order_conditions.push_back(condition);
             }
         }
 
-        // TODO: anon_1
+        // TODO: items
 
         world->manager_orders.push_back(order);
     }

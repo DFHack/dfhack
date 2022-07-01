@@ -68,6 +68,10 @@ init_contents = change_setting(init_contents, 'FPS', 'YES')
 if args.headless:
     init_contents = change_setting(init_contents, 'PRINT_MODE', 'TEXT')
 
+try:
+    os.mkdir('dfhack-config/init')
+except OSError as error:
+    pass
 test_init_file = 'dfhack-config/init/dfhackzzz_test.init'  # Core sorts these alphabetically
 with open(test_init_file, 'w') as f:
     f.write('''

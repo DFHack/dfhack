@@ -1451,11 +1451,10 @@ static void run_dfhack_init(color_ostream &out, Core *core)
     }
 
     std::vector<std::string> prefixes(1, "dfhack");
-    size_t count = loadScriptFiles(core, out, prefixes, ".");
-    if (!count || !Filesystem::isfile("dfhack.init"))
+    size_t count = loadScriptFiles(core, out, prefixes, "dfhack-config/init");
+    if (!count || !Filesystem::isfile("dfhack-config/init/dfhack.init"))
     {
         core->runCommand(out, "gui/no-dfhack-init");
-        core->loadScriptFile(out, "dfhack.init-example", false);
     }
 }
 
@@ -2226,7 +2225,7 @@ void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event eve
     auto i = table.find(event);
     if ( i != table.end() ) {
         const std::vector<std::string>& set = i->second;
-        loadScriptFiles(this, out, set, "."      );
+        loadScriptFiles(this, out, set, "dfhack-config/init");
         loadScriptFiles(this, out, set, rawFolder);
         loadScriptFiles(this, out, set, rawFolder + "objects/");
     }

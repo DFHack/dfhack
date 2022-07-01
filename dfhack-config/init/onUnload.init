@@ -1,0 +1,11 @@
+# This file runs when a world is unloaded.
+#
+# You can extend or override DFHack's default configuration by adding commands
+# to the bottom of this file.
+
+# Run DFHack configuration defaults. If you remove these lines, many DFHack
+# tools may not function as expected.
+script hack/init/onUnload.dfhack.init
+
+# Feel free to add your personal commands here:
+

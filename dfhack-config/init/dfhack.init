@@ -1,0 +1,12 @@
+# This file runs when DFHack is initialized, when Dwarf Fortress is first
+# started, before any save data is loaded.
+#
+# You can extend or override DFHack's default configuration by adding commands
+# to the bottom of this file.
+
+# Load DFHack configuration defaults. If you remove these lines, many DFHack
+# tools will not function as expected.
+script hack/init/dfhack.keybindings.init
+script hack/init/dfhack.tools.init
+
+# Feel free to add your personal configuration commands here:

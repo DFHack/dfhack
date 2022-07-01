@@ -24,7 +24,7 @@ import sys
 
 
 # -- Support :dfhack-keybind:`command` ------------------------------------
-# this is a custom directive that pulls info from dfhack.init-example
+# this is a custom directive that pulls info from default keybindings
 
 from docutils import nodes
 from docutils.parsers.rst import roles
@@ -35,7 +35,7 @@ def get_keybinds():
     """Get the implemented keybinds, and return a dict of
     {tool: [(full_command, keybinding, context), ...]}.
     """
-    with open('dfhack.init-example') as f:
+    with open('data/init/dfhack.keybindings.init') as f:
         lines = [l.replace('keybinding add', '').strip() for l in f.readlines()
                  if l.startswith('keybinding add')]
     keybindings = dict()

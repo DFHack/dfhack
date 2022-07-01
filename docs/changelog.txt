@@ -43,6 +43,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 
 - ``materials.ItemTraitsDialog``: added a default ``on_select``-handler which toggles the traits.
+- `orders`: added useful library of manager orders. see them with ``orders list`` and import them with, for example, ``orders import library/basic``
 
 ## Documentation
 

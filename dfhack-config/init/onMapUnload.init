@@ -4,8 +4,8 @@
 # You can extend or override DFHack's default configuration by adding commands
 # to the bottom of this file.
 
-# Run DFHack configuration defaults. If you remove these lines, many DFHack
-# tools may not function as expected.
-script hack/init/onMapUnload.dfhack.init
+# Run DFHack configuration defaults. If you remove this line, DFHack tools may
+# not function as expected.
+script hack/init/onMapUnload.default.init
 
 # Feel free to add your personal commands here:

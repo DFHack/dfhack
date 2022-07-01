@@ -3,20 +3,17 @@
 DFHack modding guide
 ====================
 
-Preface
--------
+What is a mod/script?
+---------------------
 
-Why not just use raw modding?
-
-For many things it's either completely and only (sensibly) doable in raws or completely and only doable with DFHack. For mods where DFHack is an alternative and not the only option, it's much less hacky, easier to maintain, and easier to extend, and is not prone to side-effects. A great example is adding a syndrome when a reaction is performed requiring an exploding boulder in raws but having dedicated tools for it if you use DFHack. Many things will require a mix of raw modding and DFHack.
-
-What kind of mods can we make?
-
-Lots of things, and the list grows as more and more hooks and tools are developed within DFHack. You can modify behaviours by cleverly watching and modifying certain areas of the game with functions that run on every tick or by using hooks. Familiarising yourself with the many structs of the game will help with ideas immensely, and you can always ask for help in the right places (e.g. DFHack's Discord).
-
-Examples of things we have mod tools to allow are directly changing skills, spawning liquids, adding new powered buildings, creating items/trees/units based on various conditions (in reactions or similar), running code when certain projectiles hit or move, and much else besides.
+A script is a single file that can be run as a command in DFHack, like something that modifies or displays game data on request. A mod is something you install to get persistent behavioural changes in the game and/or add new content. DFHack mods contain and use scripts as well as often having a raw mod component.
 
 DFHack scripts are written in Lua. If you don't already know Lua, there's a great primer at https://www.lua.org/pil/1.html.
+
+Why not just use raw modding?
+-----------------------------
+
+For many things it's either completely and only (sensibly) doable in raws or completely and only doable with DFHack. For mods where DFHack is an alternative and not the only option, it's much less hacky, easier to maintain, and easier to extend, and is not prone to side-effects. A great example is adding a syndrome when a reaction is performed requiring an exploding boulder in raws but having dedicated tools for it if you use DFHack. Many things will require a mix of raw modding and DFHack.
 
 A mod-maker's development environment
 -------------------------------------

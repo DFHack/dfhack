@@ -68,7 +68,7 @@ init_contents = change_setting(init_contents, 'FPS', 'YES')
 if args.headless:
     init_contents = change_setting(init_contents, 'PRINT_MODE', 'TEXT')
 
-test_init_file = 'dfhackzzz_test.init'  # Core sorts these alphabetically
+test_init_file = 'dfhack-config/init/dfhackzzz_test.init'  # Core sorts these alphabetically
 with open(test_init_file, 'w') as f:
     f.write('''
     devel/dump-rpc dfhack-rpc.txt

@@ -410,16 +410,16 @@ lines are skipped, so it is possible to comment out parts of a command with the
 
 .. _dfhack.init:
 
-dfhack-config/init/dfhack*.init
-...............................
+dfhack-config/init/dfhack\*.init
+................................
 If your ``dfhack-config/init`` folder contains at least one file named
 ``dfhack*.init`` (where ``*`` is a placeholder for any string, including the
 empty string), then all such files are executed in alphabetical order when DF is
 first started.
 
-DFHack is distributed with a default :download:`/dfhack-config/init/dfhack.init`
-file that loads DFHack's default settings. You can add any commands you like to
-that file to add to or override DFHack's defaults.
+DFHack is distributed with a :download:`/dfhack-config/init/dfhack.init` file
+that loads DFHack's default settings. You can add any commands you like to that
+file to add to or override DFHack's defaults.
 
 These files are best used for keybindings and enabling persistent plugins
 which do not require a world to be loaded.
@@ -427,8 +427,8 @@ which do not require a world to be loaded.
 
 .. _onLoad.init:
 
-dfhack-config/init/onLoad*.init
-...............................
+dfhack-config/init/onLoad\*.init
+................................
 When a world is loaded, DFHack looks for files of the form ``onLoad*.init``,
 where ``*`` can be any string, including the empty string.
 
@@ -440,8 +440,8 @@ a `fix <scripts-fix>` script to run on `repeat`.
 
 .. _onMapLoad.init:
 
-dfhack-config/init/onMapLoad*.init
-..................................
+dfhack-config/init/onMapLoad\*.init
+...................................
 When a fortress map is loaded, DFHack looks for files of the form
 ``onMapLoad*.init``, where ``*`` can be any string, including the empty string.
 
@@ -451,8 +451,8 @@ These files are best used for commands that are only relevant to fortress games.
 .. _onMapUnload.init:
 .. _onUnload.init:
 
-dfhack-config/init/onMapUnload*.init and dfhack-config/init/onUnload*.init
-..........................................................................
+dfhack-config/init/onMapUnload\*.init and dfhack-config/init/onUnload\*.init
+............................................................................
 When a map or world is unloaded, DFHack looks for files of the form
 ``onMapUnload*.init`` or ``onUnload*.init``, respectively.
 
@@ -462,8 +462,8 @@ after a modded save is unloaded.
 
 .. _other_init_files:
 
-raw/init.d/*.lua
-................
+raw/init.d/\*.lua
+.................
 
 Any lua script named ``raw/init.d/*.lua``, in the save or main DF directory,
 will be run when any world or that save is loaded.

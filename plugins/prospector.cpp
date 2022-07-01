@@ -17,6 +17,7 @@ using namespace std;
 #include "Core.h"
 #include "Console.h"
 #include "Export.h"
+#include "LuaTools.h"
 #include "PluginManager.h"
 #include "modules/Gui.h"
 #include "modules/MapCache.h"
@@ -43,6 +44,50 @@ using df::coord2d;
 
 DFHACK_PLUGIN("prospector");
 REQUIRE_GLOBAL(world);
+
+struct prospect_options {
+    // whether to display help
+    bool help = false;
+
+    // whether to scan the whole map or just the unhidden tiles
+    bool hidden = false;
+
+    // whether to also show material values
+    bool value  = false;
+
+    // whether to show adamantine tube z-levels
+    bool tube   = false;
+
+    // which report sections to show
+    bool summary = true;
+    bool liquids = true;
+    bool layers = true;
+    bool features = true;
+    bool ores  = true;
+    bool gems = true;
+    bool veins = true;
+    bool shrubs = true;
+    bool trees = true;
+
+    static struct_identity _identity;
+};
+static const struct_field_info prospect_options_fields[] = {
+    { struct_field_info::PRIMITIVE, "help",     offsetof(prospect_options, help),     &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "hidden",   offsetof(prospect_options, hidden),   &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "value",    offsetof(prospect_options, value),    &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "tube",     offsetof(prospect_options, tube),     &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "summary",  offsetof(prospect_options, summary),  &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "liquids",  offsetof(prospect_options, liquids),  &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "layers",   offsetof(prospect_options, layers),   &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "features", offsetof(prospect_options, features), &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "ores",     offsetof(prospect_options, ores),     &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "gems",     offsetof(prospect_options, gems),     &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "veins",    offsetof(prospect_options, veins),    &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "shrubs",   offsetof(prospect_options, shrubs),   &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::PRIMITIVE, "trees",    offsetof(prospect_options, trees),    &df::identity_traits<bool>::identity, 0, 0 },
+    { struct_field_info::END }
+};
+struct_identity prospect_options::_identity(sizeof(prospect_options), &df::allocator_fn<prospect_options>, NULL, "prospect_options", NULL, prospect_options_fields);
 
 struct matdata
 {
@@ -123,9 +168,9 @@ static void printMatdata(color_ostream &con, const matdata &data, bool only_z = 
         con << std::setw(9) << int(data.count);
 
     if(data.lower_z != data.upper_z)
-        con <<" Z:" << std::setw(4) << data.lower_z << ".." <<  data.upper_z << std::endl;
+        con <<"   Z:" << std::setw(4) << data.lower_z << ".." <<  data.upper_z << std::endl;
     else
-        con <<" Z:" << std::setw(4) << data.lower_z << std::endl;
+        con <<"   Z:" << std::setw(4) << data.lower_z << std::endl;
 }
 
 static int getValue(const df::inorganic_raw &info)
@@ -139,7 +184,7 @@ static int getValue(const df::plant_raw &info)
 }
 
 template <typename T, template <typename> class P>
-void printMats(color_ostream &con, MatMap &mat, std::vector<T*> &materials, bool show_value)
+void printMats(color_ostream &con, MatMap &mat, std::vector<T*> &materials, const prospect_options &options)
 {
     unsigned int total = 0;
     MatSorter sorting_vector;
@@ -161,7 +206,7 @@ void printMats(color_ostream &con, MatMap &mat, std::vector<T*> &materials, bool
         T* mat = materials[it->first];
         // Somewhat of a hack, but it works because df::inorganic_raw and df::plant_raw both have a field named "id"
         con << std::setw(25) << mat->id << " : ";
-        if (show_value)
+        if (options.value)
             con << std::setw(3) << getValue(*mat) << " : ";
         printMatdata(con, it->second);
         total += it->second.count;
@@ -171,7 +216,7 @@ void printMats(color_ostream &con, MatMap &mat, std::vector<T*> &materials, bool
 }
 
 void printVeins(color_ostream &con, MatMap &mat_map,
-                DFHack::Materials* mats, bool show_value)
+                const prospect_options &options)
 {
     MatMap ores;
     MatMap gems;
@@ -194,14 +239,20 @@ void printVeins(color_ostream &con, MatMap &mat_map,
             rest[kv.first] = kv.second;
     }
 
-    con << "Ores:" << std::endl;
-    printMats<df::inorganic_raw, std::greater>(con, ores, world->raws.inorganics, show_value);
+    if (options.ores) {
+        con << "Ores:" << std::endl;
+        printMats<df::inorganic_raw, std::greater>(con, ores, world->raws.inorganics, options);
+    }
 
-    con << "Gems:" << std::endl;
-    printMats<df::inorganic_raw, std::greater>(con, gems, world->raws.inorganics, show_value);
+    if (options.gems) {
+        con << "Gems:" << std::endl;
+        printMats<df::inorganic_raw, std::greater>(con, gems, world->raws.inorganics, options);
+    }
 
-    con << "Other vein stone:" << std::endl;
-    printMats<df::inorganic_raw, std::greater>(con, rest, world->raws.inorganics, show_value);
+    if (options.veins) {
+        con << "Other vein stone:" << std::endl;
+        printMats<df::inorganic_raw, std::greater>(con, rest, world->raws.inorganics, options);
+    }
 }
 
 command_result prospector (color_ostream &out, vector <string> & parameters);
@@ -211,18 +262,43 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     commands.push_back(PluginCommand(
         "prospect", "Show stats of available raw resources.",
         prospector, false,
-        "  Prints a big list of all the present minerals.\n"
-        "  By default, only the visible part of the map is scanned.\n"
-        "Options:\n"
-        "  all   - Scan the whole map, as if it was revealed.\n"
-        "  value - Show material value in the output. Most useful for gems.\n"
-        "  hell  - Show the Z range of HFS tubes. Implies 'all'.\n"
-        "Pre-embark estimate:\n"
-        "  If called during the embark selection screen, displays\n"
-        "  an estimate of layer stone availability. If the 'all'\n"
-        "  option is specified, also estimates veins.\n"
-        "  The estimate is computed either for 1 embark tile of the\n"
-        "  blinking biome, or for all tiles of the embark rectangle.\n"
+    "  prospect [all|hell] [<options>]\n"
+    "\n"
+    "  Shows a summary of resources that exist on the map. By default,\n"
+    "  only the visible part of the map is scanned. Include the 'all' keyword\n"
+    "  if you want prospect to scan the whole map as if it were revealed.\n"
+    "  Use 'hell' instead of 'all' if you also want to see the Z range of HFS\n"
+    "  tubes in the 'features' report section.\n"
+    "\n"
+    "Options:\n"
+    "  -h,--help\n"
+    "    Shows this help text.\n"
+    "  -s,--show <sections>\n"
+    "    Shows only the named comma-separated list of report sections.\n"
+    "    Report section names are: summary, liquids, layers, features, ores,\n"
+    "    gems, veins, shrubs, and trees. If run during pre-embark, only the\n"
+    "    layers, ores, gems, and veins report sections are available.\n"
+    "  -v,--values\n"
+    "    Includes material value in the output. Most useful for the 'gems'\n"
+    "    report section.\n"
+    "\n"
+    "Examples:\n"
+    "  prospect all\n"
+    "    Shows the entire report for the entire map.\n"
+    "\n"
+    "  prospect hell --show layers,ores,veins\n"
+    "    Shows only the layers, ores, and other vein stone report sections,\n"
+    "    and includes information on HFS tubes when a fort is loaded.\n"
+    "\n"
+    "  prospect all -sores\n"
+    "    Show only information about ores for the pre-embark or fortress map\n"
+    "    report.\n"
+    "\n"
+    "Pre-embark estimate:\n"
+    "  If called during the embark selection screen, displays a rough\n"
+    "  estimate of layer stone availability. If the 'all' keyword is\n"
+    "  specified, also estimates ores, gems, and other vein material. The\n"
+    "  estimate covers all tiles of the embark rectangle.\n"
     ));
     return CR_OK;
 }
@@ -522,8 +598,9 @@ bool estimate_materials(color_ostream &out, EmbarkTileLayout &tile, MatMap &laye
     return true;
 }
 
-static command_result embark_prospector(color_ostream &out, df::viewscreen_choose_start_sitest *screen,
-                                        bool showHidden, bool showValue)
+static command_result embark_prospector(color_ostream &out,
+                                        df::viewscreen_choose_start_sitest *screen,
+                                        const prospect_options &options)
 {
     if (!world || !world->world_data)
     {
@@ -549,12 +626,6 @@ static command_result embark_prospector(color_ostream &out, df::viewscreen_choos
     // Compute biomes
     std::map<coord2d, int> biomes;
 
-    /*if (screen->biome_highlighted)
-    {
-        out.print("Processing one embark tile of biome F%d.\n\n", screen->biome_idx+1);
-        biomes[screen->biome_rgn[screen->biome_idx]]++;
-    }*/
-
     for (int x = screen->location.embark_pos_min.x; x <= 15 && x <= screen->location.embark_pos_max.x; x++)
     {
         for (int y = screen->location.embark_pos_min.y; y <= 15 && y <= screen->location.embark_pos_max.y; y++)
@@ -570,12 +641,14 @@ static command_result embark_prospector(color_ostream &out, df::viewscreen_choos
     }
 
     // Print the report
-    out << "Layer materials:" << std::endl;
-    printMats<df::inorganic_raw, shallower>(out, layerMats, world->raws.inorganics, showValue);
+    if (options.layers) {
+        out << "Layer materials:" << std::endl;
+        printMats<df::inorganic_raw, shallower>(out, layerMats, world->raws.inorganics, options);
+    }
 
-    if (showHidden) {
+    if (options.hidden) {
         DFHack::Materials *mats = Core::getInstance().getMaterials();
-        printVeins(out, veinMats, mats, showValue);
+        printVeins(out, veinMats, options);
         mats->Finish();
     }
 
@@ -587,40 +660,8 @@ static command_result embark_prospector(color_ostream &out, df::viewscreen_choos
     return CR_OK;
 }
 
-command_result prospector (color_ostream &con, vector <string> & parameters)
-{
-    bool showHidden = false;
-    bool showPlants = true;
-    bool showSlade = true;
-    bool showTemple = true;
-    bool showValue = false;
-    bool showTube = false;
-
-    for(size_t i = 0; i < parameters.size();i++)
-    {
-        if (parameters[i] == "all")
-        {
-            showHidden = true;
-        }
-        else if (parameters[i] == "value")
-        {
-            showValue = true;
-        }
-        else if (parameters[i] == "hell")
-        {
-            showHidden = showTube = true;
-        }
-        else
-            return CR_WRONG_USAGE;
-    }
-
-    CoreSuspender suspend;
-
-    // Embark screen active: estimate using world geology data
-    auto screen = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
-    if (screen)
-        return embark_prospector(con, screen, showHidden, showValue);
-
+static command_result map_prospector(color_ostream &con,
+                                     const prospect_options &options) {
     if (!Maps::IsValid())
     {
         con.printerr("Map is not available!\n");
@@ -636,7 +677,6 @@ command_result prospector (color_ostream &con, vector <string> & parameters)
     DFHack::t_feature blockFeatureGlobal;
     DFHack::t_feature blockFeatureLocal;
 
-    bool hasAquifer = false;
     bool hasDemonTemple = false;
     bool hasLair = false;
     MatMap baseMats;
@@ -680,7 +720,7 @@ command_result prospector (color_ostream &con, vector <string> & parameters)
                         df::tile_occupancy occ = b->OccupancyAt(coord);
 
                         // Skip hidden tiles
-                        if (!showHidden && des.bits.hidden)
+                        if (!options.hidden && des.bits.hidden)
                         {
                             continue;
                         }
@@ -688,7 +728,6 @@ command_result prospector (color_ostream &con, vector <string> & parameters)
                         // Check for aquifer
                         if (des.bits.water_table)
                         {
-                            hasAquifer = true;
                             aquiferTiles.add(global_z);
                         }
 
@@ -752,14 +791,13 @@ command_result prospector (color_ostream &con, vector <string> & parameters)
                                 {
                                     veinMats[blockFeatureLocal.sub_material].add(global_z);
                                 }
-                                else if (showTemple
-                                         && blockFeatureLocal.type == feature_type::deep_surface_portal)
+                                else if (blockFeatureLocal.type == feature_type::deep_surface_portal)
                                 {
                                     hasDemonTemple = true;
                                 }
                             }
 
-                            if (showSlade && blockFeatureGlobal.type != -1 && des.bits.feature_global
+                            if (blockFeatureGlobal.type != -1 && des.bits.feature_global
                                     && blockFeatureGlobal.type == feature_type::underworld_from_layer
                                     && blockFeatureGlobal.main_material == 0) // stone
                             {
@@ -777,7 +815,7 @@ command_result prospector (color_ostream &con, vector <string> & parameters)
 
                 // Check plants this way, as the other way wasn't getting them all
                 // and we can check visibility more easily here
-                if (showPlants)
+                if (options.shrubs)
                 {
                     auto block = Maps::getBlockColumn(b_x,b_y);
                     vector<df::plant *> *plants = block ? &block->plants : NULL;
@@ -790,7 +828,7 @@ command_result prospector (color_ostream &con, vector <string> & parameters)
                                 continue;
                             df::coord2d loc(plant.pos.x, plant.pos.y);
                             loc = loc % 16;
-                            if (showHidden || !b->DesignationAt(loc).bits.hidden)
+                            if (options.hidden || !b->DesignationAt(loc).bits.hidden)
                             {
                                 if(plant.flags.bits.is_shrub)
                                     plantMats[plant.material].add(global_z);
@@ -810,15 +848,18 @@ command_result prospector (color_ostream &con, vector <string> & parameters)
 
     MatMap::const_iterator it;
 
-    con << "Base materials:" << std::endl;
-    for (it = baseMats.begin(); it != baseMats.end(); ++it)
-    {
-        con << std::setw(25) << ENUM_KEY_STR(tiletype_material,(df::tiletype_material)it->first) << " : " << it->second.count << std::endl;
+    if (options.summary) {
+        con << "Base materials:" << std::endl;
+        for (it = baseMats.begin(); it != baseMats.end(); ++it)
+        {
+            con << std::setw(25) << ENUM_KEY_STR(tiletype_material,(df::tiletype_material)it->first) << " : " << it->second.count << std::endl;
+        }
+        con << std::endl;
     }
 
-    if (liquidWater.count || liquidMagma.count)
+    if (options.liquids && (liquidWater.count || liquidMagma.count))
     {
-        con << std::endl << "Liquids:" << std::endl;
+        con << "Liquids:" << std::endl;
         if (liquidWater.count)
         {
             con << std::setw(25) << "WATER" << " : ";
@@ -829,51 +870,108 @@ command_result prospector (color_ostream &con, vector <string> & parameters)
             con << std::setw(25) << "MAGMA" << " : ";
             printMatdata(con, liquidMagma);
         }
+        con << std::endl;
     }
 
-    con << std::endl << "Layer materials:" << std::endl;
-    printMats<df::inorganic_raw, shallower>(con, layerMats, world->raws.inorganics, showValue);
-
-    printVeins(con, veinMats, mats, showValue);
-
-    if (showPlants)
-    {
-        con << "Shrubs:" << std::endl;
-        printMats<df::plant_raw, std::greater>(con, plantMats, world->raws.plants.all, showValue);
-        con << "Wood in trees:" << std::endl;
-        printMats<df::plant_raw, std::greater>(con, treeMats, world->raws.plants.all, showValue);
+    if (options.layers) {
+        con << "Layer materials:" << std::endl;
+        printMats<df::inorganic_raw, shallower>(con, layerMats, world->raws.inorganics, options);
     }
 
-    if (hasAquifer)
-    {
-        con << "Has aquifer";
+    if (options.features) {
+        con << "Features:" << std::endl;
+
+        bool hasFeature = false;
         if (aquiferTiles.count)
         {
-            con << "               : ";
+            con << std::setw(25) << "Has aquifer" << " : ";
+            if (options.value)
+                con << "      ";
             printMatdata(con, aquiferTiles);
+            hasFeature = true;
         }
-        else
-            con << std::endl;
+
+        if (options.tube && tubeTiles.count)
+        {
+            con << std::setw(25) << "Has HFS tubes" << " :          ";
+            if (options.value)
+                con << "      ";
+            printMatdata(con, tubeTiles, true);
+            hasFeature = true;
+        }
+
+        if (hasDemonTemple)
+        {
+            con << std::setw(25) << "Has demon temple" << std::endl;
+            hasFeature = true;
+        }
+
+        if (hasLair)
+        {
+            con << std::setw(25) << "Has lair" << std::endl;
+            hasFeature = true;
+        }
+
+        if (!hasFeature)
+            con << std::setw(25) << "None" << std::endl;
+
+        con << std::endl;
     }
 
-    if (showTube && tubeTiles.count)
-    {
-        con << "Has HFS tubes             : ";
-        printMatdata(con, tubeTiles);
+    printVeins(con, veinMats, options);
+
+    if (options.shrubs) {
+        con << "Shrubs:" << std::endl;
+        printMats<df::plant_raw, std::greater>(con, plantMats, world->raws.plants.all, options);
     }
 
-    if (hasDemonTemple)
-    {
-        con << "Has demon temple" << std::endl;
-    }
-
-    if (hasLair)
-    {
-        con << "Has lair" << std::endl;
+    if (options.trees) {
+        con << "Wood in trees:" << std::endl;
+        printMats<df::plant_raw, std::greater>(con, treeMats, world->raws.plants.all, options);
     }
 
     // Cleanup
     mats->Finish();
-    con << std::endl;
+
     return CR_OK;
+}
+
+static bool get_options(color_ostream &out,
+                        prospect_options &opts,
+                        const vector<string> &parameters)
+{
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
+
+    if (!lua_checkstack(L, parameters.size() + 2) ||
+        !Lua::PushModulePublic(
+            out, L, "plugins.prospector", "parse_commandline")) {
+        out.printerr("Failed to load prospector Lua code\n");
+        return false;
+    }
+
+    Lua::Push(L, &opts);
+
+    for (const string &param : parameters)
+        Lua::Push(L, param);
+
+    if (!Lua::SafeCall(out, L, parameters.size() + 1, 0))
+        return false;
+
+    return true;
+}
+
+command_result prospector(color_ostream &con, vector <string> & parameters)
+{
+    prospect_options options;
+    if (!get_options(con, options, parameters) || options.help)
+        return CR_WRONG_USAGE;
+
+    CoreSuspender suspend;
+
+    // Embark screen active: estimate using world geology data
+    auto screen = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
+    return screen ?
+            embark_prospector(con, screen, options) :
+            map_prospector(con, options);
 }

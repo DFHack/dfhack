@@ -1,3 +1,5 @@
+#pragma once
+
 #include "uicommon.h"
 
 using df::global::enabler;

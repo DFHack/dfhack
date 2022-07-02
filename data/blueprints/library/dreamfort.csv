@@ -29,9 +29,9 @@
 "Dreamfort works best at an embark site that is flat and has at least one soil layer. New players should avoid embarks with aquifers if they are not prepared to deal with them. Bring picks for mining, an axe for woodcutting, and an anvil for a forge. Bring a few blocks to speed up initial workshop construction as well. That's all you really need, but see the example embark profile in the online spreadsheets for a more complete setup."
 ""
 "Other DFHack commands also work very well with Dreamfort, such as autofarm, autonestbox, prioritize, seedwatch, tailor, and, of course, buildingplan. An init file that gets everything configured for you is distributed with DFHack as hack/examples/init/onMapLoad_dreamfort.init."
-Put that file in your Dwarf Fortress directory -- the same directory that has dfhack.init.
+Put that file in your dfhack-config/init/ directory -- the same directory that has dfhack.init.
 ""
-"Also copy the files in hack/examples/orders/ to dfhack-config/orders/ and the files in hack/examples/professions/ to professions/. We'll be using these files later. See https://docs.dfhack.org/en/stable/docs/guides/examples-guide.html for more information, including suggestions on how many dwarves of each profession you are likely to need at each stage of fort maturity."
+"Also check out https://docs.dfhack.org/en/stable/docs/Plugins.html#professions for more information on the default labor professions that are distributed with DFHack, including suggestions on how many dwarves of each profession you are likely to need at each stage of fort maturity."
 ""
 "Once you have your starting surface workshops up and running, you might want to configure buildingplan (in its global settings, accessible from any building placement screen, e.g.: b-a-G) to only use blocks for constructions so it won't use your precious wood, boulders, and bars to build floors and walls. If you bring at least 7 blocks with you on embark, you can even set this in your onMapLoad.init file like this:"
 on-new-fortress buildingplan set boulders false; buildingplan set logs false
@@ -49,9 +49,7 @@ interactively."
 "Here is the recommended order for Dreamfort commands. You can copy/paste the command lines directly into the DFHack terminal, or, if you prefer, you can run the blueprints in the UI with gui/quickfort. See the walkthroughs (the ""help"" blueprints) for context and details. Also remember to read the messages the blueprints print out after you run them so you don't miss any important manual steps."
 ""
 -- Preparation (before you embark!) --
-Copy hack/examples/init/onMapLoad_dreamfort.init to your DF directory
-Copy the fort automation orders from hack/examples/orders/*.json to the dfhack-config/orders/ directory
-Optionally copy the premade profession definitions from hack/examples/professions/ to the professions/ directory
+Copy hack/examples/init/onMapLoad_dreamfort.init to your dfhack-config/init directory inside your DF installation
 Optionally copy the premade Dreamfort embark profile from the online spreadsheets to the data/init/embark_profiles.txt file
 ""
 -- Set settings and preload initial orders --
@@ -75,7 +73,7 @@ quickfort run library/dreamfort.csv -n /industry2,# Run when the industry level 
 prioritize ConstructBuilding,# To get those workshops up and running ASAP. You may have to run this several times as the materials for the building construction jobs become ready.
 quickfort run library/dreamfort.csv -n /surface4,"# Run after the walls and floors are built on the surface. Even if /surface3 is finished before you run /industry2, though, wait until after /industry2 to run this blueprint so that surface walls, floors, and roofing don't prevent your workshops from being built (due to lack of blocks)."
 "quickfort orders,run library/dreamfort.csv -n /services2",# Run when the services levels have been dug out. Feel free to remove the orders for the ropes if you already brought them with you.
-orders import basic,"# Run after the first migration wave, so you have dorfs to do all the basic tasks. Note that this is the ""orders"" plugin, not the ""quickfort orders"" command."
+orders import library/basic,"# Run after the first migration wave, so you have dorfs to do all the basic tasks. Note that this is the ""orders"" plugin, not the ""quickfort orders"" command."
 "quickfort orders,run library/dreamfort.csv -n /surface5","# Run when all marked trees on the surface are chopped down and walls and floors have been constructed, including the roof section over the future barracks."
 prioritize ConstructBuilding,# Run when you see the bridges ready to be built so the busy masons come and build them.
 "quickfort orders,run library/dreamfort.csv -n /surface6",# Run when at least the beehives and weapon rack are constructed and you have linked all levers to their respective bridges.
@@ -86,7 +84,7 @@ prioritize ConstructBuilding,# Run when you see the bridges ready to be built so
 "Also consider bringing magma up to your services level so you can replace the forge and furnaces on your industry level with more powerful magma versions. This is especially important if your embark has insufficient trees to convert into charcoal. Keep in mind that moving magma is a tricky process and can take a long time. Don't forget to continue making progress through the checklist! If you choose to use magma, I suggest getting it in place before importing the military and smelting automation orders since they make heavy use of furnaces and forges."
 ""
 -- Mature fort (third migration wave onward) --
-orders import furnace,# Automated production of basic furnace-related items. Don't forget to create a sand collection zone (or remove the sand- and glass-related orders if you have no sand).
+orders import library/furnace,# Automated production of basic furnace-related items. Don't forget to create a sand collection zone (or remove the sand- and glass-related orders if you have no sand).
 "quickfort orders,run library/dreamfort.csv -n /suites2",# Run when the suites level has been dug out.
 "quickfort orders,run library/dreamfort.csv -n /surface8","# Run if/when you need longer trap corridors on the surface for larger sieges, anytime after you run /surface7."
 "quickfort orders,run library/dreamfort.csv -n /apartments2",# Run when the first apartment level has been dug out.
@@ -95,11 +93,11 @@ orders import furnace,# Automated production of basic furnace-related items. Don
 "quickfort orders,run library/dreamfort.csv -n ""/guildhall3, /guildhall4""",# Optionally run after /guildhall2 to build default furnishings and declare a library and temple.
 "quickfort orders,run library/dreamfort.csv -n /apartments3",# Run when all beds have been constructed on the first apartments level.
 "quickfort orders,run library/dreamfort.csv -n /farming4",# Run once you have a cache of potash.
-orders import military,# Automated production of military equipment. Turn on automelt in the meltables piles on the industry level to automatically upgrade all metal military equipment to masterwork quality. These orders are optional if you are not using a military.
-orders import smelting,# Automated production of all types of metal bars.
+orders import library/military,# Automated production of military equipment. Turn on automelt in the meltables piles on the industry level to automatically upgrade all metal military equipment to masterwork quality. These orders are optional if you are not using a military.
+orders import library/smelting,# Automated production of all types of metal bars.
 "quickfort orders,run library/dreamfort.csv -n /services4","# Run when you need a jail, anytime after the restraints are placed from /services3."
-orders import rockstock,# Maintains a small stock of all types of rock furniture.
-orders import glassstock,# Maintains a small stock of all types of glass furniture and parts (only import if you have sand).
+orders import library/rockstock,# Maintains a small stock of all types of rock furniture.
+orders import library/glassstock,# Maintains a small stock of all types of glass furniture and parts (only import if you have sand).
 ""
 -- Repeat for each remaining apartments level as needed --
 "quickfort orders,run library/dreamfort.csv -n /apartments2",# Run when the apartment level has been dug out.
@@ -1830,7 +1828,6 @@ Workshops:
 Manual steps you have to take:
 - Assign minecarts to your quantum stockpile hauling routes
 "- Give from the ""Goods"" quantum stockpile to the jugs, pots, and bags stockpiles on the farming level"
-- Copy the fort automation manager orders (the .json files) from hack/examples/orders/ and put them in your dfhack-config/orders/ directory.
 ""
 Optional manual steps you can take:
 - Restrict the Mechanic's workshop to only allow skilled workers so unskilled trap-resetters won't be tasked to build mechanisms.
@@ -1846,11 +1843,11 @@ Industry Walkthrough:
 ""
 "3) Once the area is dug out, run /industry2. Remember to assign minecarts to to your quantum stockpile hauling routes, and if the farming level is already built, give from the ""Goods"" quantum stockpile (the one on the left) to the jugs, pots, and bags stockpiles on the farming level."
 ""
-"4) Once you have enough dwarves to do maintenance tasks (that is, after the first or second migration wave), run ""orders import basic"" to use the provided basic.json to take care of your fort's basic needs, such as food, booze, and raw material processing."
+"4) Once you have enough dwarves to do maintenance tasks (that is, after the first or second migration wave), run ""orders import library/basic"" to use the provided basic.json to take care of your fort's basic needs, such as food, booze, and raw material processing."
 ""
 "5) If you want to automatically melt goblinite and other low-quality weapons and armor, mark the south-east stockpiles for auto-melt. If you don't have a high density of trees to make into charcoal, though, be sure to route magma to the level beneath this one and replace the forge and furnaces with magma equivalents."
 ""
-"6) Once you have magma furnaces (or abundant fuel) and more dwarves, run ""orders import furnace"", ""orders import military"", and ""orders import smelting"" to import the remaining fort automation orders. The military orders are optional if you are not planning to have a military, of course."
+"6) Once you have magma furnaces (or abundant fuel) and more dwarves, run ""orders import library/furnace"", ""orders import library/military"", and ""orders import library/smelting"" to import the remaining fort automation orders. The military orders are optional if you are not planning to have a military, of course."
 ""
 "7) At any time, feel free to build extra workshops or designate custom stockpiles in the unused space in the top and bottom right. The space is there for you to use!"
 "#dig label(industry1) start(18; 18; central stairs) message(Once the area is dug out, continue with /industry2.)"
@@ -1969,7 +1966,7 @@ query/industry_query
 - assign minecarts to to your quantum stockpile hauling routes (use ""assign-minecarts all"")
 - if the farming level is already built, give from the ""Goods"" quantum stockpile to the jugs, pots, and bags stockpiles on the farming level
 - if you want to automatically melt goblinite and other low-quality weapons and armor, mark the south-east stockpiles for auto-melt
-- once you have enough dwarves, run ""orders import basic"" to automate your fort's basic needs (see /industry_help for more info on this file)
+- once you have enough dwarves, run ""orders import library/basic"" to automate your fort's basic needs (see /industry_help for more info on this file)
 - optionally, restrict the labors for your Craftsdwarf's and Mechanic's workshops as per the guidance in /industry_help)"
 
 

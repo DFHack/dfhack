@@ -47,6 +47,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``materials.ItemTraitsDialog``: added a default ``on_select``-handler which toggles the traits.
 - `orders`: added useful library of manager orders. see them with ``orders list`` and import them with, for example, ``orders import library/basic``
 - `prospect`: add new ``--show`` option to give the player control over which report sections are shown. e.g. ``prospect all --show ores`` will just show information on ores.
+- Init scripts: ``dfhack.init`` and other init scripts have moved to ``dfhack-config/init/``. If you have custom configuration **that was not just copied from the example init file**, please move it to the new ``dfhack-config/init/DFHack.init`` file.
 
 ## Documentation
 

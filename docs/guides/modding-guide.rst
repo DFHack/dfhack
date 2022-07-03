@@ -65,7 +65,30 @@ Familiarising yourself with the many structs of the game will help with ideas im
 Detecting triggers
 ------------------
 
-s
+One main method for getting new behaviour into the game is callback functions. There are two main libraries for this, ``repeat-util`` and ``eventful``. ``repeat-util`` is used to run a function once per configurable number of frames (paused or unpaused), ticks (unpaused), in-game days, months, or years. For adding behaviour you will most often want something to run once a tick. ``eventful`` is used to get code to run (with special parameters!) when something happens in the game, like a reaction or job being completed or a projectile moving.
+
+To get something to run once per tick, we would want to call ``repeat-util``'s ``scheduleEvery`` function.
+
+First, we load the module: ::
+
+    local repeatUtil = require("repeat-util")
+
+Both ``repeat-util`` and ``eventful`` require keys for registered callbacks. It's recommended to use something like a mod id. ::
+
+    local modId = "my-test-mod"
+
+Then, we pass the key, amount of time units between function calls, what the time units are, and finally the callback function itself:
+
+    repeatUtil.scheduleEvery(modId, 1, "ticks", function()
+        -- Do something like iterating over all units
+        for _, unit in ipairs(df.global.world.units.all) do
+            print(unit.id)
+        end
+    end)
+
+``eventful`` is slightly more involved:
+
+TODO
 
 Setting up an environment for a more advanced modular mod
 ---------------------------------------------------------

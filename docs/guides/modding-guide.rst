@@ -77,7 +77,7 @@ Both ``repeat-util`` and ``eventful`` require keys for registered callbacks. It'
 
     local modId = "my-test-mod"
 
-Then, we pass the key, amount of time units between function calls, what the time units are, and finally the callback function itself:
+Then, we pass the key, amount of time units between function calls, what the time units are, and finally the callback function itself: ::
 
     repeatUtil.scheduleEvery(modId, 1, "ticks", function()
         -- Do something like iterating over all units
@@ -86,9 +86,12 @@ Then, we pass the key, amount of time units between function calls, what the tim
         end
     end)
 
-``eventful`` is slightly more involved:
+``eventful`` is slightly more involved. ::
 
-TODO
+    local eventful = require("plugins.eventful")
+    -- blah
+
+Check the full list of Eventful events at https://docs.dfhack.org/en/stable/docs/Lua%20API.html#list-of-events.
 
 Setting up an environment for a more advanced modular mod
 ---------------------------------------------------------

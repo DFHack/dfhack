@@ -86,17 +86,24 @@ Then, we pass the key, amount of time units between function calls, what the tim
         end
     end)
 
-``eventful`` is slightly more involved. ::
+``eventful`` is slightly more involved. First get the module: ::
 
     local eventful = require("plugins.eventful")
-    -- blah
 
-Check the full list of Eventful events at https://docs.dfhack.org/en/stable/docs/Lua%20API.html#list-of-events.
+``eventful`` contains a table for each event which you populate with functions. Each function in the table is then called with the appropriate arguments when the event occurs. So, for example, to print the position of a moving (item) projectile: ::
+
+    eventful.onProjItemCheckMovement[modId] = function(projectile)
+        print(projectile.cur_pos.x, projectile.cur_pos.y, projectile.cur_pos.z)
+    end
+
+Check the full list of events at https://docs.dfhack.org/en/stable/docs/Lua%20API.html#list-of-events.
 
 Setting up an environment for a more advanced modular mod
 ---------------------------------------------------------
 
-s
+Now, you may have noticed that you won't be able to run multiple functions on tick/as event callbacks with that ``modId`` idea alone. To solve that we can just define all the functions we want and call them from a single function.
+
+TODO
 
 Your first whole mod
 --------------------

@@ -66,11 +66,7 @@ def dfhack_keybind_role_func(role, rawtext, text, lineno, inliner,
     """Custom role parser for DFHack default keybinds."""
     roles.set_classes(options)
     if text not in KEYBINDS:
-        msg = inliner.reporter.error(
-            'no keybinding for {} in dfhack.init-example'.format(text),
-            line=lineno)
-        prb = inliner.problematic(rawtext, rawtext, msg)
-        return [prb], [msg]
+        return [], []
     newnode = nodes.paragraph()
     for cmd, key, ctx in KEYBINDS[text]:
         n = nodes.paragraph()

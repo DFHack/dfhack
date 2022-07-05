@@ -128,14 +128,14 @@ jobs:
         python-version: 3
     - name: Install dependencies
       run: |
-        pip install 'sphinx<4.4.0'
+        pip install 'sphinx'
     - name: Clone DFHack
       uses: actions/checkout@v1
       with:
         submodules: true
     - name: Build docs
       run: |
-        sphinx-build -W --keep-going -j3 --color . docs/html
+        sphinx-build -W --keep-going -j auto --color . docs/html
     - name: Upload docs
       uses: actions/upload-artifact@v1
       with:

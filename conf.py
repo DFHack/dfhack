@@ -31,25 +31,33 @@ from docutils.parsers.rst import roles
 
 sphinx_major_version = sphinx.version_info[0]
 
-def get_keybinds():
+def get_keybinds(root, files, keybindings):
+    """Add keybindings in the specified files to the 
+    given keybindings dict.
+    """
+    for file in files:
+        with open(os.path.join(root, file)) as f:
+            lines = [l.replace('keybinding add', '').strip() for l in f.readlines()
+                     if l.startswith('keybinding add')]
+        for k in lines:
+            first, command = k.split(' ', 1)
+            bind, context = (first.split('@') + [''])[:2]
+            if ' ' not in command:
+                command = command.replace('"', '')
+            tool = command.split(' ')[0].replace('"', '')
+            keybindings[tool] = keybindings.get(tool, []) + [
+                (command, bind.split('-'), context)]
+
+def get_all_keybinds(root_dir):
     """Get the implemented keybinds, and return a dict of
     {tool: [(full_command, keybinding, context), ...]}.
     """
-    with open('data/init/dfhack.keybindings.init') as f:
-        lines = [l.replace('keybinding add', '').strip() for l in f.readlines()
-                 if l.startswith('keybinding add')]
     keybindings = dict()
-    for k in lines:
-        first, command = k.split(' ', 1)
-        bind, context = (first.split('@') + [''])[:2]
-        if ' ' not in command:
-            command = command.replace('"', '')
-        tool = command.split(' ')[0].replace('"', '')
-        keybindings[tool] = keybindings.get(tool, []) + [
-            (command, bind.split('-'), context)]
+    for root, _, files in os.walk(root_dir):
+        get_keybinds(root, files, keybindings)
     return keybindings
 
-KEYBINDS = get_keybinds()
+KEYBINDS = get_all_keybinds('data/init')
 
 
 # pylint:disable=unused-argument,dangerous-default-value,too-many-arguments

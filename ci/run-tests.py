@@ -70,6 +70,7 @@ if args.headless:
 
 init_path = 'dfhack-config/init'
 if not os.path.isdir('hack/init'):
+    # we're on an old branch that still reads init files from the root dir
     init_path = '.'
 try:
     os.mkdir(init_path)

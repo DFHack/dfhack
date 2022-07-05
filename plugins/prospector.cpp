@@ -963,11 +963,11 @@ static bool get_options(color_ostream &out,
 
 command_result prospector(color_ostream &con, vector <string> & parameters)
 {
+    CoreSuspender suspend;
+
     prospect_options options;
     if (!get_options(con, options, parameters) || options.help)
         return CR_WRONG_USAGE;
-
-    CoreSuspender suspend;
 
     // Embark screen active: estimate using world geology data
     auto screen = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);

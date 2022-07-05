@@ -32,7 +32,7 @@ from docutils.parsers.rst import roles
 sphinx_major_version = sphinx.version_info[0]
 
 def get_keybinds(root, files, keybindings):
-    """Add keybindings in the specified files to the 
+    """Add keybindings in the specified files to the
     given keybindings dict.
     """
     for file in files:

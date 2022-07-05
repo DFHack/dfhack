@@ -18,6 +18,7 @@ build/VC2010
 docs/_*
 docs/html/
 docs/pdf/
+docs/text/
 
 # in-place build
 build/Makefile

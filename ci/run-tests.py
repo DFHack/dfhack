@@ -68,11 +68,15 @@ init_contents = change_setting(init_contents, 'FPS', 'YES')
 if args.headless:
     init_contents = change_setting(init_contents, 'PRINT_MODE', 'TEXT')
 
+init_path = 'dfhack-config/init'
+if not os.path.isdir('hack/init'):
+    init_path = '.'
 try:
-    os.mkdir('dfhack-config/init')
+    os.mkdir(init_path)
 except OSError as error:
+    # ignore already exists errors
     pass
-test_init_file = 'dfhack-config/init/dfhackzzz_test.init'  # Core sorts these alphabetically
+test_init_file = os.path.join(init_path, 'dfhackzzz_test.init')  # Core sorts these alphabetically
 with open(test_init_file, 'w') as f:
     f.write('''
     devel/dump-rpc dfhack-rpc.txt

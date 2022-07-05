@@ -7,6 +7,7 @@ DFHack Tools
 These are the DFHack commands you can run.
 
 .. toctree::
-   :maxdepth: 2
+   :titlesonly:
+   :glob:
 
-   /docs/tools/cromulate
+   /docs/tools/*

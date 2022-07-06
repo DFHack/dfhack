@@ -41,13 +41,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``job.removeJob()``: ensure jobs are removed from the world list when they are canceled
 
 ## Misc Improvements
-
 - `manipulator`: add a library of useful default professions
 - `manipulator`: move professions configuration from ``professions/`` to ``dfhack-config/professions/`` to keep it together with other dfhack configuration. If you have saved professions that you would like to keep, please manually move them to the new folder.
 - ``materials.ItemTraitsDialog``: added a default ``on_select``-handler which toggles the traits.
+- Init scripts: ``dfhack.init`` and other init scripts have moved to ``dfhack-config/init/``. If you have customized your ``dfhack.init`` file and want to keep your changes, please move the part that you have customized to the new location at ``dfhack-config/init/dfhack.init``. If you do not have changes that you want to keep, do not copy anything, and the new defaults will be used automatically.
 - `orders`: added useful library of manager orders. see them with ``orders list`` and import them with, for example, ``orders import library/basic``
 - `prospect`: add new ``--show`` option to give the player control over which report sections are shown. e.g. ``prospect all --show ores`` will just show information on ores.
-- Init scripts: ``dfhack.init`` and other init scripts have moved to ``dfhack-config/init/``. If you have customized your ``dfhack.init`` file and want to keep your changes, please move the part that you have customized to the new location at ``dfhack-config/init/dfhack.init``. If you do not have changes that you want to keep, do not copy anything, and the new defaults will be used automatically.
 
 ## Documentation
 

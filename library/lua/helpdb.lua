@@ -15,6 +15,7 @@
 local _ENV = mkmodule('helpdb')
 
 local RENDERED_PATH = 'hack/docs/docs/tools/'
+local TAG_DEFINITIONS = 'hack/docs/docs/Tags.txt'
 
 local SCRIPT_DOC_BEGIN = '[====['
 local SCRIPT_DOC_END = ']====]'
@@ -28,6 +29,8 @@ local SOURCES = {
 
 -- command name -> {short_help, long_help, tags, source, source_timestamp}
 -- also includes a script_source_path element if the source is a script
+-- and a unrunnable boolean if the source is a plugin that does not provide any
+-- commands to invoke directly.
 db = db or {}
 
 -- tag name -> list of command names
@@ -61,9 +64,18 @@ end
 local function update_entry(entry, iterator, opts)
     opts = opts or {}
     local lines = {}
-    local begin_marker_found, header_found = not opts.begin_marker, opts.no_header
+    local begin_marker_found,header_found = not opts.begin_marker,opts.no_header
     local tags_found, short_help_found, in_short_help = false, false, false
     for line in iterator do
+        if not short_help_found and opts.first_line_is_short_help then
+            local _,_,text = line:trim():find('^%-%-%s*(.*)')
+            if text[#text] ~= '.' then
+                text = text .. '.'
+            end
+            entry.short_help = text
+            short_help_found = true
+            goto continue
+        end
         if not begin_marker_found then
             local _, endpos = line:find(opts.begin_marker, 1, true)
             if endpos == #line then
@@ -79,8 +91,7 @@ local function update_entry(entry, iterator, opts)
         end
         if not header_found and line:find('%w') then
             header_found = true
-        elseif not tags_found and not short_help_found and
-                line:find('^Tags: [%w, ]+$') then
+        elseif not tags_found and line:find('^Tags: [%w, ]+$') then
             -- tags must appear before the help text begins
             local _,_,tags = line:trim():find('Tags: (.*)')
             entry.tags = tags:split('[ ,]+')
@@ -124,7 +135,8 @@ end
 local function make_plugin_entry(old_entry, command)
     if old_entry and old_entry.source == SOURCES.PLUGIN then
         -- we can't tell when a plugin is reloaded, so we can either choose to
-        -- always refresh or never refresh. let's go with never for now.
+        -- always refresh or never refresh. let's go with never for now for
+        -- performance.
         return old_entry
     end
     local entry = make_default_entry(command, SOURCES.PLUGIN)
@@ -145,14 +157,15 @@ local function make_script_entry(old_entry, command, script_source_path)
     end
     local entry = make_default_entry(command, SOURCES.SCRIPT)
     update_entry(entry, io.lines(script_source_path),
-                 {begin_marker=SCRIPT_DOC_BEGIN, end_marker=SCRIPT_DOC_END})
+                 {begin_marker=SCRIPT_DOC_BEGIN, end_marker=SCRIPT_DOC_END,
+                  first_line_is_short_help=true})
     entry.source_timestamp = source_timestamp
     return entry
 end
 
-local function update_db(old_db, db, source, command, script_source_path)
+local function update_db(old_db, db, source, command, flags)
     if db[command] then
-        -- already in db (e.g. from a higher-priority script dir); skip update
+        -- already in db (e.g. from a higher-priority script dir); skip
         return
     end
     local entry, old_entry = nil, old_db[command]
@@ -161,16 +174,21 @@ local function update_db(old_db, db, source, command, script_source_path)
     elseif source == SOURCES.PLUGIN then
         entry = make_plugin_entry(old_entry, command)
     elseif source == SOURCES.SCRIPT then
-        entry = make_script_entry(old_entry, command, script_source_path)
+        entry = make_script_entry(old_entry, command, flags.script_source)
     elseif source == SOURCES.STUB then
         entry = make_default_entry(command, SOURCES.STUB)
     else
         error('unhandled help source: ' .. source)
     end
 
+    entry.unrunnable = (flags or {}).unrunnable
+
     db[command] = entry
     for _,tag in ipairs(entry.tags) do
-        table.insert(ensure_key(tag_index, tag), command)
+        -- unknown tags are ignored
+        if tag_index[tag] then
+            table.insert(tag_index[tag], command)
+        end
     end
 end
 
@@ -184,7 +202,7 @@ local function scan_plugins(old_db, db)
             update_db(old_db, db,
                       has_rendered_help(plugin) and
                             SOURCES.RENDERED or SOURCES.STUB,
-                      plugin)
+                      plugin, {unrunnable=true})
             goto continue
         end
         for _,command in ipairs(commands) do
@@ -213,10 +231,31 @@ local function scan_scripts(old_db, db)
                     dfhack.filesystem.mtime(get_rendered_path(f.path))
             update_db(old_db, db,
                       script_is_newer and SOURCES.SCRIPT or SOURCES.RENDERED,
-                      f.path:sub(1, #f.path - 4), script_source)
+                      f.path:sub(1, #f.path - 4), {script_source=script_source})
             ::continue::
         end
         ::skip_path::
+    end
+end
+
+local function initialize_tags()
+    local tag, desc, in_desc = nil, nil, false
+    for line in io.lines(TAG_DEFINITIONS) do
+        if in_desc then
+            line = line:trim()
+            if #line == 0 then
+                in_desc = false
+                goto continue
+            end
+            desc = desc .. ' ' .. line
+            tag_index[tag].description = desc
+        else
+            _,_,tag,desc = line:find('^%* (%w+): (.+)')
+            if not tag then goto continue end
+            tag_index[tag] = {description=desc}
+            in_desc = true
+        end
+        ::continue::
     end
 end
 
@@ -231,6 +270,7 @@ local function ensure_db()
     local old_db = db
     db, tag_index = {}, {}
 
+    initialize_tags()
     scan_plugins(old_db, db)
     scan_scripts(old_db, db)
 end
@@ -243,19 +283,19 @@ local function get_db_property(command, property)
     return db[command][property]
 end
 
--- returns the ~54 char summary blurb associated with the command
-function get_short_help(command)
-    return get_db_property(command, 'short_help')
+-- returns the ~54 char summary blurb associated with the entry
+function get_entry_short_help(entry)
+    return get_db_property(entry, 'short_help')
 end
 
--- returns the full help documentation associated with the command
-function get_long_help(command)
-    return get_db_property(command, 'long_help')
+-- returns the full help documentation associated with the entry
+function get_entry_long_help(entry)
+    return get_db_property(entry, 'long_help')
 end
 
--- returns the list of tags associated with the command
-function get_tags(command)
-    return get_db_property(command, 'tags')
+-- returns the list of tags associated with the entry
+function get_entry_tags(entry)
+    return get_db_property(entry, 'tags')
 end
 
 local function chunk_for_sorting(str)
@@ -286,7 +326,10 @@ local function sort_by_basename(a, b)
     return false
 end
 
-local function add_if_matched(commands, command, strs)
+local function add_if_matched(commands, command, strs, runnable)
+    if runnable and db[command].unrunnable then
+        return
+    end
     if strs then
         local matched = false
         for _,str in ipairs(strs) do
@@ -302,14 +345,16 @@ local function add_if_matched(commands, command, strs)
     table.insert(commands, command)
 end
 
--- returns a list of commands, alphabetized by their last path component (e.g.
--- gui/autobutcher will immediately follow autobutcher).
+-- returns a list of identifiers, alphabetized by their last path component
+-- (e.g. gui/autobutcher will immediately follow autobutcher).
 -- the optional filter element is a map with the following elements:
 --   str - if a string, filters by the given substring. if a table of strings,
 --         includes commands that match any of the given substrings.
 --   tag - if a string, filters by the given tag name. if a table of strings,
 --         includes commands that match any of the given tags.
-function get_commands(filter)
+--   runnable - if true, filters out plugin names that do no correspond to
+--              runnable commands.
+function list_entries(filter)
     ensure_db()
     filter = filter or {}
     local commands = {}
@@ -317,9 +362,10 @@ function get_commands(filter)
     if filter.str then
         if type(strs) == 'string' then strs = {strs} end
     end
+    local runnable = filter.runnable
     if not filter.tag then
         for command in pairs(db) do
-            add_if_matched(commands, command, strs)
+            add_if_matched(commands, command, strs, runnable)
         end
     else
         local command_set = {}
@@ -334,11 +380,31 @@ function get_commands(filter)
             end
         end
         for command in pairs(command_set) do
-            add_if_matched(commands, command, strs)
+            add_if_matched(commands, command, strs, runnable)
         end
     end
     table.sort(commands, sort_by_basename)
     return commands
+end
+
+-- returns the defined tags in alphabetical order
+function list_tags()
+    ensure_db()
+    local tags = {}
+    for tag in pairs(tag_index) do
+        table.insert(tags, tag)
+    end
+    table.sort(tags)
+    return tags
+end
+
+-- returns the description associated with the given tag
+function get_tag_description(tag)
+    ensure_db()
+    if not tag_index[tag] then
+        error('invalid tag: ' .. tag)
+    end
+    return tag_index[tag].description
 end
 
 return _ENV

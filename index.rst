@@ -32,6 +32,7 @@ User Manual
    /docs/Core
    /docs/Plugins
    /docs/Scripts
+   /docs/Tags
    /docs/Tools
    /docs/guides/index
    /docs/index-about

@@ -50,7 +50,6 @@ interactively."
 ""
 -- Preparation (before you embark!) --
 Copy hack/examples/init/onMapLoad_dreamfort.init to your dfhack-config/init directory inside your DF installation
-Optionally copy the premade Dreamfort embark profile from the online spreadsheets to the data/init/embark_profiles.txt file
 ""
 -- Set settings and preload initial orders --
 quickfort run library/dreamfort.csv -n /setup,# Run before making any manual adjustments to settings! Run the /setup_help blueprint for details on what this blueprint does.

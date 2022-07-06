@@ -20,7 +20,7 @@ repos:
       args: ['--fix=lf']
     - id: trailing-whitespace
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.16.0
+  rev: 0.16.2
   hooks:
     - id: check-github-workflows
 - repo: https://github.com/Lucas-C/pre-commit-hooks
@@ -41,4 +41,4 @@ repos:
       entry: python3 ci/authors-rst.py
       files: docs/Authors\.rst
       pass_filenames: false
-exclude: '^(depends/|data/examples/.*\.json$|.*\.diff$)'
+exclude: '^(depends/|data/.*\.json$|.*\.diff$)'

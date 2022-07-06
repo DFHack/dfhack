@@ -373,29 +373,55 @@ selected objects.
 
 prospect
 ========
-Prints a big list of all the present minerals and plants. By default, only
-the visible part of the map is scanned.
 
-Options:
+**Usage:**
 
-:all:   Scan the whole map, as if it were revealed.
-:value: Show material value in the output. Most useful for gems.
-:hell:  Show the Z range of HFS tubes. Implies 'all'.
+    ``prospect [all|hell] [<options>]``
 
-If prospect is called during the embark selection screen, it displays an estimate of
-layer stone availability.
+Shows a summary of resources that exist on the map. By default, only the visible
+part of the map is scanned. Include the ``all`` keyword if you want ``prospect``
+to scan the whole map as if it were revealed. Use ``hell`` instead of ``all`` if
+you also want to see the Z range of HFS tubes in the 'features' report section.
+
+**Options:**
+
+:``-h``, ``--help``:
+    Shows this help text.
+:``-s``, ``--show <sections>``:
+    Shows only the named comma-separated list of report sections. Report section
+    names are: summary, liquids, layers, features, ores, gems, veins, shrubs,
+    and trees. If run during pre-embark, only the layers, ores, gems, and veins
+    report sections are available.
+:``-v``, ``--values``:
+    Includes material value in the output. Most useful for the 'gems' report
+    section.
+
+**Examples:**
+
+``prospect all``
+    Shows the entire report for the entire map.
+
+``prospect hell --show layers,ores,veins``
+    Shows only the layers, ores, and other vein stone report sections, and
+    includes information on HFS tubes when a fort is loaded.
+
+``prospect all -sores``
+    Show only information about ores for the pre-embark or fortress map report.
+
+**Pre-embark estimate:**
+
+If prospect is called during the embark selection screen, it displays an
+estimate of layer stone availability. If the ``all`` keyword is specified, it
+also estimates ores, gems, and vein material. The estimate covers all tiles of
+the embark rectangle.
 
 .. note::
 
-    The results of pre-embark prospect are an *estimate*, and can at best be expected
-    to be somewhere within +/- 30% of the true amount; sometimes it does a lot worse.
-    Especially, it is not clear how to precisely compute how many soil layers there
-    will be in a given embark tile, so it can report a whole extra layer, or omit one
-    that is actually present.
-
-Options:
-
-:all:    Also estimate vein mineral amounts.
+    The results of pre-embark prospect are an *estimate*, and can at best be
+    expected to be somewhere within +/- 30% of the true amount; sometimes it
+    does a lot worse. Especially, it is not clear how to precisely compute how
+    many soil layers there will be in a given embark tile, so it can report a
+    whole extra layer, or omit one that is actually present.
 
 .. _remotefortressreader:
 
@@ -1103,6 +1129,7 @@ A plugin for manipulating manager orders.
 
 Subcommands:
 
+:list: Shows the list of previously exported orders, including the orders library.
 :export NAME: Exports the current list of manager orders to a file named ``dfhack-config/orders/NAME.json``.
 :import NAME: Imports manager orders from a file named ``dfhack-config/orders/NAME.json``.
 :clear: Deletes all manager orders in the current embark.
@@ -1114,6 +1141,103 @@ You can keep your orders automatically sorted by adding the following command to
 your ``onMapLoad.init`` file::
 
     repeat -name orders-sort -time 1 -timeUnits days -command [ orders sort ]
+
+
+The orders library
+------------------
+
+DFHack comes with a library of useful manager orders that are ready for import:
+
+:source:`basic.json <data/orders/basic.json>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This collection of orders handles basic fort necessities:
+
+- prepared meals and food products (and by-products like oil)
+- booze/mead
+- thread/cloth/dye
+- pots/jugs/buckets/mugs
+- bags of leather, cloth, silk, and yarn
+- crafts and totems from otherwise unusable by-products
+- mechanisms/cages
+- splints/crutches
+- lye/soap
+- ash/potash
+- beds/wheelbarrows/minecarts
+- scrolls
+
+You should import it as soon as you have enough dwarves to perform the tasks.
+Right after the first migration wave is usually a good time.
+
+:source:`furnace.json <data/orders/furnace.json>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This collection creates basic items that require heat. It is separated out from
+``basic.json`` to give players the opportunity to set up magma furnaces first in
+order to save resources. It handles:
+
+- charcoal (including smelting of bituminous coal and lignite)
+- pearlash
+- sand
+- green/clear/crystal glass
+- adamantine processing
+- item melting
+
+Orders are missing for plaster powder until DF :bug:`11803` is fixed.
+
+:source:`military.json <data/orders/military.json>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This collection adds high-volume smelting jobs for military-grade metal ores and
+produces weapons and armor:
+
+- leather backpacks/waterskins/cloaks/quivers/armor
+- bone/wooden bolts
+- smelting for platinum, silver, steel, bronze, bismuth bronze, and copper (and
+  their dependencies)
+- bronze/bismuth bronze/copper bolts
+- platinum/silver/steel/iron/bismuth bronze/bronze/copper weapons and armor,
+  with checks to ensure only the best available materials are being used
+
+If you set a stockpile to take weapons and armor of less than masterwork quality
+and turn on `automelt` (like what `dreamfort` provides on its industry level),
+these orders will automatically upgrade your military equipment to masterwork.
+Make sure you have a lot of fuel (or magma forges and furnaces) before you turn
+``automelt`` on, though!
+
+This file should only be imported, of course, if you need to equip a military.
+
+:source:`smelting.json <data/orders/smelting.json>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This collection adds smelting jobs for all ores. It includes handling the ores
+already managed by ``military.json``, but has lower limits. This ensures all
+ores will be covered if a player imports ``smelting`` but not ``military``, but
+the higher-volume ``military`` orders will take priority if both are imported.
+
+:source:`rockstock.json <data/orders/rockstock.json>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This collection of orders keeps a small stock of all types of rock furniture.
+This allows you to do ad-hoc furnishings of guildhalls, libraries, temples, or
+other rooms with `buildingplan` and your masons will make sure there is always
+stock on hand to fulfill the plans.
+
+:source:`glassstock.json <data/orders/glassstock.json>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Similar to ``rockstock`` above, this collection keeps a small stock of all types
+of glass furniture. If you have a functioning glass industry, this is more
+sustainable than ``rockstock`` since you can never run out of sand. If you have
+plenty of rock and just want the variety, you can import both ``rockstock`` and
+``glassstock`` to get a mixture of rock and glass furnishings in your fort.
+
+There are a few items that ``glassstock`` produces that ``rockstock`` does not,
+since there are some items that can not be made out of rock, for example:
+
+- tubes and corkscrews for building magma-safe screw pumps
+- windows
+- terrariums (as an alternative to wooden cages)
 
 .. _seedwatch:
 

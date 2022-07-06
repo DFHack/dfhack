@@ -46,4 +46,4 @@ it is useful (and customizable) for any fort. It includes the following config:
   other combinations of animals. These settings are also only set when a
   fortress is first started, so any later changes you make to autobutcher
   settings won't be overridden.
-- Enables `automelt`, `tailor`, `zone`, `nestboxes`, and `autonestox`
+- Enables `automelt`, `tailor`, `zone`, `nestboxes`, and `autonestbox`.

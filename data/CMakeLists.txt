@@ -7,6 +7,9 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/orders/
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/examples/
         DESTINATION "${DFHACK_DATA_DESTINATION}/examples")
 
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/professions/
+        DESTINATION dfhack-config/professions/library)
+
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/blueprints/
         DESTINATION blueprints
         FILES_MATCHING PATTERN "*"

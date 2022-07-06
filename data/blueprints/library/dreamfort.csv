@@ -29,9 +29,9 @@
 "Dreamfort works best at an embark site that is flat and has at least one soil layer. New players should avoid embarks with aquifers if they are not prepared to deal with them. Bring picks for mining, an axe for woodcutting, and an anvil for a forge. Bring a few blocks to speed up initial workshop construction as well. That's all you really need, but see the example embark profile in the online spreadsheets for a more complete setup."
 ""
 "Other DFHack commands also work very well with Dreamfort, such as autofarm, autonestbox, prioritize, seedwatch, tailor, and, of course, buildingplan. An init file that gets everything configured for you is distributed with DFHack as hack/examples/init/onMapLoad_dreamfort.init."
-Put that file in your Dwarf Fortress directory -- the same directory that has dfhack.init.
+Put that file in your dfhack-config/init/ directory -- the same directory that has dfhack.init.
 ""
-"Also copy the files in hack/examples/professions/ to professions/. We'll be using these files later. See https://docs.dfhack.org/en/stable/docs/guides/examples-guide.html for more information, including suggestions on how many dwarves of each profession you are likely to need at each stage of fort maturity."
+"Also check out https://docs.dfhack.org/en/stable/docs/Plugins.html#professions for more information on the default labor professions that are distributed with DFHack, including suggestions on how many dwarves of each profession you are likely to need at each stage of fort maturity."
 ""
 "Once you have your starting surface workshops up and running, you might want to configure buildingplan (in its global settings, accessible from any building placement screen, e.g.: b-a-G) to only use blocks for constructions so it won't use your precious wood, boulders, and bars to build floors and walls. If you bring at least 7 blocks with you on embark, you can even set this in your onMapLoad.init file like this:"
 on-new-fortress buildingplan set boulders false; buildingplan set logs false
@@ -49,9 +49,7 @@ interactively."
 "Here is the recommended order for Dreamfort commands. You can copy/paste the command lines directly into the DFHack terminal, or, if you prefer, you can run the blueprints in the UI with gui/quickfort. See the walkthroughs (the ""help"" blueprints) for context and details. Also remember to read the messages the blueprints print out after you run them so you don't miss any important manual steps."
 ""
 -- Preparation (before you embark!) --
-Copy hack/examples/init/onMapLoad_dreamfort.init to your DF directory
-Optionally copy the premade profession definitions from hack/examples/professions/ to the professions/ directory
-Optionally copy the premade Dreamfort embark profile from the online spreadsheets to the data/init/embark_profiles.txt file
+Copy hack/examples/init/onMapLoad_dreamfort.init to your dfhack-config/init directory inside your DF installation
 ""
 -- Set settings and preload initial orders --
 quickfort run library/dreamfort.csv -n /setup,# Run before making any manual adjustments to settings! Run the /setup_help blueprint for details on what this blueprint does.

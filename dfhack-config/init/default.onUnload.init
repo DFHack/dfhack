@@ -1,0 +1,4 @@
+# Run DFHack configuration defaults. Comment out the following line if you do
+# not want DFHack to load its default configuration.
+
+script hack/init/onUnload.default.init

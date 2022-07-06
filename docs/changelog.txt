@@ -41,9 +41,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``job.removeJob()``: ensure jobs are removed from the world list when they are canceled
 
 ## Misc Improvements
-
 - ``materials.ItemTraitsDialog``: added a default ``on_select``-handler which toggles the traits.
+
 - `orders`: added useful library of manager orders. see them with ``orders list`` and import them with, for example, ``orders import library/basic``
+- `prospect`: add new ``--show`` option to give the player control over which report sections are shown. e.g. ``prospect all --show ores`` will just show information on ores.
 
 ## Documentation
 

@@ -69,7 +69,7 @@ local function update_entry(entry, iterator, opts)
     for line in iterator do
         if not short_help_found and opts.first_line_is_short_help then
             local _,_,text = line:trim():find('^%-%-%s*(.*)')
-            if text[#text] ~= '.' then
+            if not text:endswith('.') then
                 text = text .. '.'
             end
             entry.short_help = text
@@ -92,10 +92,11 @@ local function update_entry(entry, iterator, opts)
         if not header_found and line:find('%w') then
             header_found = true
         elseif not tags_found and line:find('^Tags: [%w, ]+$') then
-            -- tags must appear before the help text begins
             local _,_,tags = line:trim():find('Tags: (.*)')
-            entry.tags = tags:split('[ ,]+')
-            table.sort(entry.tags)
+            entry.tags = {}
+            for _,tag in ipairs(tags:split('[ ,]+')) do
+                entry.tags[tag] = true
+            end
             tags_found = true
         elseif not short_help_found and not line:find('^Keybinding:') and
                 line:find('%w') then
@@ -260,11 +261,11 @@ local function initialize_tags()
 end
 
 -- ensures the db is up to date by scanning all help sources. does not do
--- anything if it has already been run within the last second.
+-- anything if it has already been run within the last 10 seconds.
 last_refresh_ms = last_refresh_ms or 0
 local function ensure_db()
     local now_ms = dfhack.getTickCount()
-    if now_ms - last_refresh_ms < 1000 then return end
+    if now_ms - last_refresh_ms < 60000 then return end
     last_refresh_ms = now_ms
 
     local old_db = db
@@ -293,9 +294,18 @@ function get_entry_long_help(entry)
     return get_db_property(entry, 'long_help')
 end
 
--- returns the list of tags associated with the entry
+local function set_to_sorted_list(set)
+    local list = {}
+    for item in pairs(set) do
+        table.insert(list, item)
+    end
+    table.sort(list)
+    return list
+end
+
+-- returns the list of tags associated with the entry, in alphabetical order
 function get_entry_tags(entry)
-    return get_db_property(entry, 'tags')
+    return set_to_sorted_list(get_db_property(entry, 'tags'))
 end
 
 local function chunk_for_sorting(str)
@@ -326,76 +336,109 @@ local function sort_by_basename(a, b)
     return false
 end
 
-local function add_if_matched(commands, command, strs, runnable)
-    if runnable and db[command].unrunnable then
-        return
+local function matches(command, filter)
+    local db_entry = db[command]
+    if filter.runnable and db_entry.unrunnable then
+        return false
     end
-    if strs then
+    if filter.tag then
         local matched = false
-        for _,str in ipairs(strs) do
+        for _,tag in ipairs(filter.tag) do
+            if db_entry.tags[tag] then
+                matched = true
+                break
+            end
+        end
+        if not matched then
+            return false
+        end
+    end
+    if filter.str then
+        local matched = false
+        for _,str in ipairs(filter.str) do
             if command:find(str, 1, true) then
                 matched = true
                 break
             end
         end
         if not matched then
-            return
+            return false
         end
     end
-    table.insert(commands, command)
+    return true
+end
+
+local function normalize_string_list(l)
+    if not l then return nil end
+    if type(l) == 'string' then
+        return {l}
+    end
+    return l
+end
+
+local function normalize_filter(f)
+    if not f then return nil end
+    local filter = {}
+    filter.str = normalize_string_list(f.str)
+    filter.tag = normalize_string_list(f.tag)
+    filter.runnable = f.runnable
+    if not filter.str and not filter.tag and not filter.runnable then
+        return nil
+    end
+    return filter
 end
 
 -- returns a list of identifiers, alphabetized by their last path component
 -- (e.g. gui/autobutcher will immediately follow autobutcher).
--- the optional filter element is a map with the following elements:
+-- the optional include and exclude filter params are maps with the following
+-- elements:
 --   str - if a string, filters by the given substring. if a table of strings,
 --         includes commands that match any of the given substrings.
 --   tag - if a string, filters by the given tag name. if a table of strings,
 --         includes commands that match any of the given tags.
---   runnable - if true, filters out plugin names that do no correspond to
---              runnable commands.
-function list_entries(filter)
+--   runnable - if true, matches only runnable commands, not plugin names.
+function get_entries(include, exclude)
     ensure_db()
-    filter = filter or {}
+    include = normalize_filter(include)
+    exclude = normalize_filter(exclude)
     local commands = {}
-    local strs = filter.str
-    if filter.str then
-        if type(strs) == 'string' then strs = {strs} end
-    end
-    local runnable = filter.runnable
-    if not filter.tag then
-        for command in pairs(db) do
-            add_if_matched(commands, command, strs, runnable)
-        end
-    else
-        local command_set = {}
-        local tags = filter.tag
-        if type(tags) == 'string' then tags = {tags} end
-        for _,tag in ipairs(tags) do
-            if not tag_index[tag] then
-                error('invalid tag: ' .. tag)
-            end
-            for _,command in ipairs(tag_index[tag]) do
-                command_set[command] = true
-            end
-        end
-        for command in pairs(command_set) do
-            add_if_matched(commands, command, strs, runnable)
+    for command in pairs(db) do
+        if (not include or matches(command, include)) and
+                (not exclude or not matches(command, exclude)) then
+            table.insert(commands, command)
         end
     end
     table.sort(commands, sort_by_basename)
     return commands
 end
 
--- returns the defined tags in alphabetical order
-function list_tags()
-    ensure_db()
-    local tags = {}
-    for tag in pairs(tag_index) do
-        table.insert(tags, tag)
+local function get_max_width(list, min_width)
+    local width = min_width or 0
+    for _,item in ipairs(list) do
+        width = math.max(width, #item)
     end
-    table.sort(tags)
-    return tags
+    return width
+end
+
+-- prints the requested entries to the console. include and exclude filters are
+-- as in get_entries above.
+function list_entries(include_tags, include, exclude)
+    local entries = get_entries(include, exclude)
+    local width = get_max_width(entries, 10)
+    for _,entry in ipairs(entries) do
+        print(('  %-'..width..'s %s'):format(
+                entry, get_entry_short_help(entry)))
+        if include_tags then
+            print(('  '..(' '):rep(width)..' tags(%s)'):format(
+                    table.concat(get_entry_tags(entry), ',')))
+        end
+    end
+end
+
+-- returns the defined tags in alphabetical order
+function get_tags()
+    ensure_db()
+    return set_to_sorted_list(tag_index)
 end
 
 -- returns the description associated with the given tag
@@ -405,6 +448,15 @@ function get_tag_description(tag)
         error('invalid tag: ' .. tag)
     end
     return tag_index[tag].description
+end
+
+-- prints the defined tags and their descriptions to the console
+function list_tags()
+    local tags = get_tags()
+    local width = get_max_width(tags, 10)
+    for _,tag in ipairs(tags) do
+        print(('  %-'..width..'s %s'):format(tag, get_tag_description(tag)))
+    end
 end
 
 return _ENV

@@ -98,14 +98,83 @@ Then, we pass the key, amount of time units between function calls, what the tim
 
 Check the full list of events at https://docs.dfhack.org/en/stable/docs/Lua%20API.html#list-of-events.
 
-Setting up an environment for a more advanced modular mod
----------------------------------------------------------
+Custom raw tokens
+-----------------
 
-Now, you may have noticed that you won't be able to run multiple functions on tick/as event callbacks with that ``modId`` idea alone. To solve that we can just define all the functions we want and call them from a single function.
+In this section, we are going to use custom raw tokens applied to a reaction to transfer the material of a reagent to a product as a handle improvement (like on artifact buckets), and then we are going to see how you could make boots that make units go faster when worn. Both of these involve custom raw tokens.
 
-TODO
+First, let's define a custom crossbow with its own custom reaction. The crossbow: ::
+
+    [ITEM_WEAPON:ITEM_WEAPON_CROSSBOW_SIEGE]
+        [NAME:crossbow:crossbows]
+        [SIZE:600]
+        [SKILL:HAMMER]
+        [RANGED:CROSSBOW:BOLT]
+        [SHOOT_FORCE:4000]
+        [SHOOT_MAXVEL:800]
+        [TWO_HANDED:0]
+        [MINIMUM_SIZE:17500]
+        [MATERIAL_SIZE:4]
+        [ATTACK:BLUNT:10000:4000:bash:bashes:NO_SUB:1250]
+            [ATTACK_PREPARE_AND_RECOVER:3:3]
+        [FIRE_TIME:100] custom token (you'll see)
+
+The reaction to make it (you would add the reaction and not the weapon to an entity raw): ::
+
+    [REACTION:MAKE_SIEGE_CROSSBOW]
+        [NAME:make siege crossbow]
+        [BUILDING:BOWYER:NONE]
+        [SKILL:BOWYER]
+        [REAGENT:mechanism 1:2:TRAPPARTS:NONE:NONE:NONE]
+        [REAGENT:bar:150:BAR:NONE:NONE:NONE]
+            [METAL_ITEM_MATERIAL]
+        [REAGENT:handle 1:1:BLOCKS:NONE:NONE:NONE] wooden handles
+            [ANY_PLANT_MATERIAL]
+        [REAGENT:handle 2:1:BLOCKS:NONE:NONE:NONE]
+            [ANY_PLANT_MATERIAL]
+        [TRANSFER_HANDLE_MATERIAL_TO_PRODUCT_IMPROVEMENT:1] another custom token
+        [PRODUCT:100:1:WEAPON:ITEM_WEAPON_CROSSBOW_SIEGE:GET_MATERIAL_FROM_REAGENT:bar:NONE]
+
+So, we are going to use the ``eventful`` module to make it so that (after the script is run) when this crossbow is crafted, it will have two handles, each with the material given by the block reagents.
+
+First, require the modules we are going to use. ::
+
+    local eventful = require("plugins.eventful")
+    local customRawTokens = require("custom-raw-tokens")
+
+Now, let's make a callback: ::
+
+    local modId = "siege-crossbow"
+    eventful.onReactionComplete[modId] = function(reaction, reactionProduct, unit, inputItems, inputReagents, outputItems)
+
+First, we check to see if it the reaction that just happened is relevant to this callback: ::
+
+    if not customRawTokens.getToken(reaction, "TRANSFER_HANDLE_MATERIAL_TO_PRODUCT_IMPROVEMENT") then return end
+
+Then, we get the product number listed. Next, for every reagent, if the reagent name starts with "handle" then we get the corresponding item, and... ::
+
+    for i, reagent in ipairs(inputReagents) do
+        if reagent.code:sub(1, #"handle") == "handle" then
+            -- Found handle reagent
+            local item = inputItems[i] -- hopefully found handle item
+
+...We then add a handle improvement to the listed product within our loop. ::
+
+    local new = df.itemimprovement_itemspecificst:new()
+    new.mat_type, new.mat_index = item.mat_type, item.mat_index
+    -- new.maker = outputItems[0].maker -- not a typical improvement
+    new.type = df.itemimprovement_specific_type.HANDLE
+    outputItems[productNumber - 1].improvements:insert("#", new)
+    -- break -- multiple handles, multiple "the handle is made from"s, so no break
+
+It's all a bit loose and hacky but it works, at least if you don't have multiple stacks filling up one reagent.
+
+TODO: fire rate
+TODO: "running shoes"
 
 Your first whole mod
 --------------------
 
-s
+Now, you may have noticed that you won't be able to run multiple functions on tick/as event callbacks with that ``modId`` idea alone. To solve that we can just define all the functions we want and call them from a single function.
+
+TODO

@@ -11,22 +11,23 @@ DFHack Core
 
 Command Implementation
 ======================
-DFHack commands can be implemented in three ways, all of which
-are used in the same way:
+DFHack commands can be implemented in any of three ways:
 
 :builtin:   commands are implemented by the core of DFHack. They manage
             other DFHack tools, interpret commands, and control basic
-            aspects of DF (force pause or quit).
+            aspects of DF (force pause or quit). They are documented
+            `here <built-in-commands>`.
 
 :plugins:   are stored in ``hack/plugins/`` and must be compiled with the
             same version of DFHack.  They are less flexible than scripts,
             but used for complex or ongoing tasks because they run faster.
+            Plugins included with DFHack are documented `here <plugins-index>`.
 
 :scripts:   are Ruby or Lua scripts stored in ``hack/scripts/``.
             Because they don't need to be compiled, scripts are
             more flexible about versions, and easier to distribute.
-            Most third-party DFHack addons are scripts.
-
+            Most third-party DFHack addons are scripts. All scripts included
+            with DFHack are documented `here <scripts-index>`.
 
 Using DFHack Commands
 =====================
@@ -112,259 +113,6 @@ second (Windows) example uses `kill-lua` to stop a Lua script.
   This could happen if you have other software listening on port 5000, or if
   you have multiple copies of DF running simultaneously. To assign a different
   port, see `remote-server-config`.
-
-
-Built-in Commands
-=================
-The following commands are provided by the 'core' components
-of DFHack, rather than plugins or scripts.
-
-.. contents::
-   :local:
-
-
-.. _alias:
-
-alias
------
-The ``alias`` command allows configuring aliases to other DFHack commands.
-Aliases are resolved immediately after built-in commands, which means that an
-alias cannot override a built-in command, but can override a command implemented
-by a plugin or script.
-
-Usage:
-
-:``alias list``: lists all configured aliases
-:``alias add <name> <command> [arguments...]``: adds an alias
-:``alias replace <name> <command> [arguments...]``: replaces an existing
-    alias with a new command, or adds the alias if it does not already exist
-:``alias delete <name>``: removes the specified alias
-
-Aliases can be given additional arguments when created and invoked, which will
-be passed to the underlying command in order. An example with `devel/print-args`::
-
-    [DFHack]# alias add pargs devel/print-args example
-    [DFHack]# pargs text
-    example
-    text
-
-
-.. _cls:
-
-cls
----
-Clear the terminal.  Does not delete command history.
-
-
-.. _die:
-
-die
----
-Instantly kills DF without saving.
-
-
-.. _disable:
-
-.. _enable:
-
-enable
-------
-Many plugins can be in a distinct enabled or disabled state. Some of
-them activate and deactivate automatically depending on the contents
-of the world raws. Others store their state in world data. However a
-number of them have to be enabled globally, and the init file is the
-right place to do it.
-
-Most such plugins or scripts support the built-in ``enable`` and ``disable``
-commands. Calling them at any time without arguments prints a list
-of enabled and disabled plugins, and shows whether that can be changed
-through the same commands. Passing plugin names to these commands will enable
-or disable the specified plugins. For example, to enable the `manipulator`
-plugin::
-
-  enable manipulator
-
-It is also possible to enable or disable multiple plugins at once::
-
-  enable manipulator search
-
-
-.. _fpause:
-
-fpause
-------
-Forces DF to pause. This is useful when your FPS drops below 1 and you lose
-control of the game.
-
-
-.. _help:
-
-help
-----
-Most commands support using the ``help <command>`` built-in command
-to retrieve further help without having to look at this document.
-``? <cmd>`` and ``man <cmd>`` are aliases.
-
-Some commands (including many scripts) instead take ``help`` or ``?``
-as an option on their command line - ie ``<cmd> help``.
-
-
-.. _hide:
-
-hide
-----
-Hides the DFHack terminal window.  Only available on Windows.
-
-
-.. _keybinding:
-
-keybinding
-----------
-To set keybindings, use the built-in ``keybinding`` command. Like any other
-command it can be used at any time from the console, but bindings are not
-remembered between runs of the game unless re-created in `dfhack.init`.
-
-Currently, any combinations of Ctrl/Alt/Shift with A-Z, 0-9, or F1-F12 are supported.
-
-Possible ways to call the command:
-
-``keybinding list <key>``
-  List bindings active for the key combination.
-``keybinding clear <key> <key>...``
-  Remove bindings for the specified keys.
-``keybinding add <key> "cmdline" "cmdline"...``
-  Add bindings for the specified key.
-``keybinding set <key> "cmdline" "cmdline"...``
-  Clear, and then add bindings for the specified key.
-
-The ``<key>`` parameter above has the following *case-sensitive* syntax::
-
-    [Ctrl-][Alt-][Shift-]KEY[@context[|context...]]
-
-where the *KEY* part can be any recognized key and [] denote optional parts.
-
-When multiple commands are bound to the same key combination, DFHack selects
-the first applicable one. Later ``add`` commands, and earlier entries within one
-``add`` command have priority. Commands that are not specifically intended for use
-as a hotkey are always considered applicable.
-
-The ``context`` part in the key specifier above can be used to explicitly restrict
-the UI state where the binding would be applicable. If called without parameters,
-the ``keybinding`` command among other things prints the current context string.
-
-Only bindings with a ``context`` tag that either matches the current context fully,
-or is a prefix ending at a ``/`` boundary would be considered for execution, i.e.
-when in context ``foo/bar/baz``, keybindings restricted to any of ``@foo/bar/baz``,
-``@foo/bar``, ``@foo`` or none will be active.
-
-Multiple contexts can be specified by separating them with a
-pipe (``|``) - for example, ``@foo|bar|baz/foo`` would match
-anything under ``@foo``, ``@bar``, or ``@baz/foo``.
-
-Interactive commands like `liquids` cannot be used as hotkeys.
-
-
-.. _kill-lua:
-
-kill-lua
---------
-Stops any currently-running Lua scripts. By default, scripts can
-only be interrupted every 256 instructions. Use ``kill-lua force``
-to interrupt the next instruction.
-
-
-.. _load:
-.. _unload:
-.. _reload:
-
-load
-----
-``load``, ``unload``, and ``reload`` control whether a plugin is loaded
-into memory - note that plugins are loaded but disabled unless you do
-something.  Usage::
-
-    load|unload|reload PLUGIN|(-a|--all)
-
-Allows dealing with plugins individually by name, or all at once.
-
-Note that plugins do not maintain their enabled state if they are reloaded, so
-you may need to use `enable` to re-enable a plugin after reloading it.
-
-
-.. _ls:
-
-ls
---
-``ls`` does not list files like the Unix command, but rather
-available commands - first built in commands, then plugins,
-and scripts at the end.  Usage:
-
-:ls -a:         Also list scripts in subdirectories of ``hack/scripts/``,
-                which are generally not intended for direct use.
-:ls <plugin>:   List subcommands for the given plugin.
-
-
-.. _plug:
-
-plug
-----
-Lists available plugins, including their state and detailed description.
-
-``plug``
-        Lists available plugins (*not* commands implemented by plugins)
-``plug [PLUGIN] [PLUGIN] ...``
-        List state and detailed description of the given plugins,
-        including commands implemented by the plugin.
-
-
-.. _sc-script:
-
-sc-script
----------
-Allows additional scripts to be run when certain events occur
-(similar to onLoad*.init scripts)
-
-
-.. _script:
-
-script
-------
-Reads a text file, and runs each line as a DFHack command
-as if it had been typed in by the user - treating the
-input like `an init file <init-files>`.
-
-Some other tools, such as `autobutcher` and `workflow`, export
-their settings as the commands to create them - which are later
-loaded with ``script``
-
-
-.. _show:
-
-show
-----
-Shows the terminal window after it has been `hidden <hide>`.
-Only available on Windows.  You'll need to use it from a
-`keybinding` set beforehand, or the in-game `command-prompt`.
-
-.. _type:
-
-type
-----
-``type command`` shows where ``command`` is implemented.
-
-Other Commands
---------------
-The following commands are *not* built-in, but offer similarly useful functions.
-
-* `command-prompt`
-* `hotkeys`
-* `lua`
-* `multicmd`
-* `nopause`
-* `quicksave`
-* `rb`
-* `repeat`
-
 
 .. _dfhack-config:
 

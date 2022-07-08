@@ -326,11 +326,13 @@ local function scan_scripts(old_db, db)
                     f.path:startswith('internal/') then
                 goto continue
             end
+            local dot_index = f.path:find('%.[^.]*$')
             local script_source = script_path .. '/' .. f.path
             update_db(old_db, db,
                       has_rendered_help(f.path) and
                             HELP_SOURCES.RENDERED or HELP_SOURCES.SCRIPT,
-                      f.path:sub(1, #f.path - 4), {script_source=script_source})
+                      f.path:sub(1, dot_index - 1),
+                      {script_source=script_source})
             ::continue::
         end
         ::skip_path::
@@ -384,7 +386,7 @@ end
 local function get_db_property(entry_name, property)
     ensure_db()
     if not db[entry_name] then
-        error(('entry not found: "%s"'):format(entry_name))
+        error(('helpdb entry not found: "%s"'):format(entry_name))
     end
     return db[entry_name][property]
 end
@@ -415,8 +417,17 @@ end
 
 -- returns whether the given string matches a tag name
 function is_tag(str)
+    if not str or #str == 0 then
+        return false
+    end
     ensure_db()
-    return not not tag_index[str]
+    if type(str) == "string" then str = {str} end
+    for _,s in ipairs(str) do
+        if not tag_index[s] then
+            return false
+        end
+    end
+    return true
 end
 
 -- returns the defined tags in alphabetical order
@@ -510,7 +521,7 @@ end
 
 -- converts strings into single-element lists containing that string
 local function normalize_string_list(l)
-    if not l then return nil end
+    if not l or #l == 0 then return nil end
     if type(l) == 'string' then
         return {l}
     end
@@ -561,8 +572,18 @@ function search_entries(include, exclude)
 end
 
 ---------------------------------------------------------------------------
--- list API (outputs to console)
+-- print API (outputs to console)
 ---------------------------------------------------------------------------
+
+-- implements the 'help' builtin command
+function help(entry)
+    ensure_db()
+    if not db[entry] then
+        dfhack.printerr(('No help entry found for "%s"'):format(entry))
+        return
+    end
+    print(get_entry_long_help(entry))
+end
 
 local function get_max_width(list, min_width)
     local width = min_width or 0
@@ -572,8 +593,8 @@ local function get_max_width(list, min_width)
     return width
 end
 
--- prints the defined tags and their descriptions to the console
-function list_tags()
+-- implements the 'tags' builtin command
+function tags()
     local tags = get_tags()
     local width = get_max_width(tags, 10)
     for _,tag in ipairs(tags) do

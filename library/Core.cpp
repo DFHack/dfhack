@@ -446,6 +446,7 @@ command_result Core::runCommand(color_ostream &out, const std::string &command)
 static const std::set<std::string> built_in_commands = {
     "ls" ,
     "help" ,
+    "tags" ,
     "type" ,
     "load" ,
     "unload" ,
@@ -674,25 +675,71 @@ string getBuiltinCommand(std::string cmd)
     return builtin;
 }
 
-void ls_helper(color_ostream &con, const string &name, const string &desc)
-{
-    const size_t help_line_length = 80 - 22 - 5;
-    const string padding = string(80 - help_line_length, ' ');
-    vector<string> lines;
-    con.print("  %-22s - ", name.c_str());
-    word_wrap(&lines, desc, help_line_length);
+void help_helper(color_ostream &con, const string &entry_name) {
+    CoreSuspender suspend;
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
 
-    // print first line, then any additional lines preceded by padding
-    for (size_t i = 0; i < lines.size(); i++)
-        con.print("%s%s\n", i ? padding.c_str() : "", lines[i].c_str());
+    if (!lua_checkstack(L, 2) ||
+        !Lua::PushModulePublic(con, L, "helpdb", "help")) {
+        con.printerr("Failed to load helpdb Lua code\n");
+        return;
+    }
+
+    Lua::Push(L, entry_name);
+
+    if (!Lua::SafeCall(con, L, 1, 0)) {
+        con.printerr("Failed Lua call to helpdb.help.\n");
+    }
 }
 
-void ls_helper(color_ostream &con, const PluginCommand &pcmd)
-{
-    if (pcmd.isHotkeyCommand())
-        con.color(COLOR_CYAN);
-    ls_helper(con, pcmd.name, pcmd.description);
-    con.reset_color();
+void tags_helper(color_ostream &con) {
+    CoreSuspender suspend;
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
+
+    if (!lua_checkstack(L, 1) ||
+        !Lua::PushModulePublic(con, L, "helpdb", "tags")) {
+        con.printerr("Failed to load helpdb Lua code\n");
+        return;
+    }
+
+    if (!Lua::SafeCall(con, L, 0, 0)) {
+        con.printerr("Failed Lua call to helpdb.tags.\n");
+    }
+}
+
+void ls_helper(color_ostream &con, const vector<string> &params) {
+    vector<string> filter;
+    bool skip_tags = false;
+    bool show_dev_commands = false;
+
+    for (auto str : params) {
+        if (str == "--notags")
+            skip_tags = true;
+        else if (str == "--dev")
+            show_dev_commands = true;
+        else
+            filter.push_back(str);
+    }
+
+    CoreSuspender suspend;
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
+
+    if (!lua_checkstack(L, 4) ||
+        !Lua::PushModulePublic(con, L, "helpdb", "ls")) {
+        con.printerr("Failed to load helpdb Lua code\n");
+        return;
+    }
+
+    Lua::PushVector(L, filter);
+    Lua::Push(L, skip_tags);
+    Lua::Push(L, show_dev_commands);
+
+    if (!Lua::SafeCall(con, L, 3, 0)) {
+        con.printerr("Failed Lua call to helpdb.ls.\n");
+    }
 }
 
 command_result Core::runCommand(color_ostream &con, const std::string &first_, vector<string> &parts)
@@ -733,69 +780,32 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                               "On Windows, you may have to resize your console window. The appropriate menu is accessible\n"
                               "by clicking on the program icon in the top bar of the window.\n\n");
                 }
-                con.print("Basic commands:\n"
-                          "  help|?|man            - This text.\n"
-                          "  help COMMAND          - Usage help for the given command.\n"
-                          "  ls|dir [-a] [PLUGIN]  - List available commands. Optionally for single plugin.\n"
-                          "  cls|clear             - Clear the console.\n"
-                          "  fpause                - Force DF to pause.\n"
-                          "  die                   - Force DF to close immediately\n"
-                          "  keybinding            - Modify bindings of commands to keys\n"
-                          "Plugin management (useful for developers):\n"
-                          "  plug [PLUGIN|v]       - List plugin state and description.\n"
-                          "  load PLUGIN|-all      - Load a plugin by name or load all possible plugins.\n"
-                          "  unload PLUGIN|-all    - Unload a plugin or all loaded plugins.\n"
-                          "  reload PLUGIN|-all    - Reload a plugin or all loaded plugins.\n"
+                con.print("Here are some basic commands to get you started:\n"
+                          "  help|?|man         - This text.\n"
+                          "  help <tool>        - Usage help for the given plugin, command, or script.\n"
+                          "  tags               - List the tags that the DFHack tools are grouped by.\n"
+                          "  ls|dir [<filter>]  - List commands, optionally filtered by a tag or substring.\n"
+                          "                       Optional parameters:\n"
+                          "                         --notags: skip printing tags for each command.\n"
+                          "                         --dev:  include commands intended for developers and modders.\n"
+                          "  cls|clear          - Clear the console.\n"
+                          "  fpause             - Force DF to pause.\n"
+                          "  die                - Force DF to close immediately, without saving.\n"
+                          "  keybinding         - Modify bindings of commands to in-game key shortcuts.\n"
+                          "\n"
+                          "See more commands by running 'ls'.\n\n"
                          );
 
-                con.print("\nDFHack version %s\n", dfhack_version_desc().c_str());
-            }
-            else if (parts.size() == 1)
-            {
-                if (getBuiltinCommand(parts[0]).size())
-                {
-                    con << parts[0] << ": built-in command; Use `ls`, `help`, or check hack/Readme.html for more information" << std::endl;
-                    return CR_NOT_IMPLEMENTED;
-                }
-                Plugin *plug = plug_mgr->getPluginByCommand(parts[0]);
-                if (plug) {
-                    for (size_t j = 0; j < plug->size();j++)
-                    {
-                        const PluginCommand & pcmd = (plug->operator[](j));
-                        if (pcmd.name != parts[0])
-                            continue;
-
-                        if (pcmd.isHotkeyCommand())
-                            con.color(COLOR_CYAN);
-                        con.print("%s: %s\n",pcmd.name.c_str(), pcmd.description.c_str());
-                        con.reset_color();
-                        if (!pcmd.usage.empty())
-                            con << "Usage:\n" << pcmd.usage << flush;
-                        return CR_OK;
-                    }
-                }
-                string file = findScript(parts[0] + ".lua");
-                if ( file != "" ) {
-                    string help = getScriptHelp(file, "--");
-                    con.print("%s: %s\n", parts[0].c_str(), help.c_str());
-                    return CR_OK;
-                }
-                if (plug_mgr->ruby && plug_mgr->ruby->is_enabled() ) {
-                    file = findScript(parts[0] + ".rb");
-                    if ( file != "" ) {
-                        string help = getScriptHelp(file, "#");
-                        con.print("%s: %s\n", parts[0].c_str(), help.c_str());
-                        return CR_OK;
-                    }
-                }
-                con.printerr("Unknown command: %s\n", parts[0].c_str());
-                return CR_FAILURE;
+                con.print("DFHack version %s\n", dfhack_version_desc().c_str());
             }
             else
             {
-                con.printerr("not implemented yet\n");
-                return CR_NOT_IMPLEMENTED;
+                help_helper(con, parts[0]);
             }
+        }
+        else if (builtin == "tags")
+        {
+            tags_helper(con);
         }
         else if (builtin == "load" || builtin == "unload" || builtin == "reload")
         {
@@ -906,83 +916,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
         }
         else if (builtin == "ls" || builtin == "dir")
         {
-            bool all = false;
-            if (parts.size() && parts[0] == "-a")
-            {
-                all = true;
-                vector_erase_at(parts, 0);
-            }
-            if(parts.size())
-            {
-                string & plugname = parts[0];
-                const Plugin * plug = (*plug_mgr)[plugname];
-                if(!plug)
-                {
-                    con.printerr("There's no plugin called %s!\n", plugname.c_str());
-                }
-                else if (plug->getState() != Plugin::PS_LOADED)
-                {
-                    con.printerr("Plugin %s is not loaded.\n", plugname.c_str());
-                }
-                else if (!plug->size())
-                {
-                    con.printerr("Plugin %s is loaded but does not implement any commands.\n", plugname.c_str());
-                }
-                else for (size_t j = 0; j < plug->size();j++)
-                {
-                    ls_helper(con, plug->operator[](j));
-                }
-            }
-            else
-            {
-                con.print(
-                "builtin:\n"
-                "  help|?|man                  - This text or help specific to a plugin.\n"
-                "  ls|dir [-a] [PLUGIN]        - List available commands. Optionally for single plugin.\n"
-                "  cls|clear                   - Clear the console.\n"
-                "  fpause                      - Force DF to pause.\n"
-                "  die                         - Force DF to close immediately\n"
-                "  kill-lua                    - Stop an active Lua script\n"
-                "  keybinding                  - Modify bindings of commands to keys\n"
-                "  script FILENAME             - Run the commands specified in a file.\n"
-                "  sc-script                   - Automatically run specified scripts on state change events\n"
-                "  plug [PLUGIN|v]             - List plugin state and detailed description.\n"
-                "  load PLUGIN|-all [...]      - Load a plugin by name or load all possible plugins.\n"
-                "  unload PLUGIN|-all [...]    - Unload a plugin or all loaded plugins.\n"
-                "  reload PLUGIN|-all [...]    - Reload a plugin or all loaded plugins.\n"
-                "  enable/disable PLUGIN [...] - Enable or disable a plugin if supported.\n"
-                "  type COMMAND                - Display information about where a command is implemented\n"
-                "\n"
-                "plugins:\n"
-                );
-                std::set <sortable> out;
-                for (auto it = plug_mgr->begin(); it != plug_mgr->end(); ++it)
-                {
-                    const Plugin * plug = it->second;
-                    if(!plug->size())
-                        continue;
-                    for (size_t j = 0; j < plug->size();j++)
-                    {
-                        const PluginCommand & pcmd = (plug->operator[](j));
-                        out.insert(sortable(pcmd.isHotkeyCommand(),pcmd.name,pcmd.description));
-                    }
-                }
-                for(auto iter = out.begin();iter != out.end();iter++)
-                {
-                    if ((*iter).recolor)
-                        con.color(COLOR_CYAN);
-                    ls_helper(con, iter->name, iter->description);
-                    con.reset_color();
-                }
-                std::map<string, string> scripts;
-                listAllScripts(scripts, all);
-                if (!scripts.empty())
-                {
-                    con.print("\nscripts:\n");
-                    for (auto iter = scripts.begin(); iter != scripts.end(); ++iter)
-                        ls_helper(con, iter->first, iter->second);
-                }
-            }
+            ls_helper(con, parts);
         }
         else if (builtin == "plug")
         {

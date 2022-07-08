@@ -30,6 +30,7 @@ User Manual
    /docs/Installing
    /docs/Support
    /docs/Core
+   /docs/Builtin
    /docs/Plugins
    /docs/Scripts
    /docs/Tags

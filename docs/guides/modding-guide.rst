@@ -117,7 +117,7 @@ First, let's define a custom crossbow with its own custom reaction. The crossbow
         [MATERIAL_SIZE:4]
         [ATTACK:BLUNT:10000:4000:bash:bashes:NO_SUB:1250]
             [ATTACK_PREPARE_AND_RECOVER:3:3]
-        [FIRE_TIME:100] custom token (you'll see)
+        [FIRE_RATE_MULTIPLIER:2] custom token (you'll see)
 
 The reaction to make it (you would add the reaction and not the weapon to an entity raw): ::
 
@@ -169,7 +169,27 @@ Then, we get the product number listed. Next, for every reagent, if the reagent 
 
 It's all a bit loose and hacky but it works, at least if you don't have multiple stacks filling up one reagent.
 
-TODO: fire rate
+Let's also make some code to modify the fire rate of the siege crossbow. ::
+
+    eventful.onProjItemCheckMovement[modId] = function(projectile)
+        if projectile.distance_flown > 0 then -- don't repeat this
+            return
+        end
+
+        local firer = projectile.firer
+        if not firer then
+            return
+        end
+
+        local weapon = df.item.find(projectile.bow_id)
+        if not weapon then
+            return
+        end
+
+        local multiplier = tonumber(customRawTokens.getToken(weapon.subtype, "FIRE_RATE_MULTIPLIER")) or 1
+        firer.counters.think_counter = math.floor(firer.counters.think_counter * multiplier)
+    end
+
 TODO: "running shoes"
 
 Your first whole mod

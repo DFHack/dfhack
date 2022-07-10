@@ -140,7 +140,7 @@ def write_tool_docs():
         os.makedirs(os.path.join('docs/tools', os.path.dirname(k[0])),
                     mode=0o755, exist_ok=True)
         with open('docs/tools/{}.rst'.format(k[0]), mode) as outfile:
-            if k[0] != 'search':
+            if k[0] != 'search' and k[0] != 'stonesense':
                 outfile.write(label)
             outfile.write(include)
 

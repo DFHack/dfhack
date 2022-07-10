@@ -445,10 +445,12 @@ a `fix <scripts-fix>` script to run on `repeat`.
 
 onMapLoad\*.init
 ................
-When a fortress map is loaded, DFHack looks for files of the form
-``onMapLoad*.init``, where ``*`` can be any string, including the empty string.
+When a map is loaded, either in adventure or fort mode, DFHack looks for files
+of the form ``onMapLoad*.init``, where ``*`` can be any string, including the
+empty string.
 
-These files are best used for commands that are only relevant to fortress games.
+These files are best used for commands that are only relevant once there is a
+game map loaded.
 
 
 .. _onMapUnload.init:

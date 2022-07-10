@@ -206,8 +206,10 @@ local function make_script_entry(old_entry, entry_name, script_source_path)
     end
     local entry = make_default_entry(entry_name, {[ENTRY_TYPES.COMMAND]=true},
                     HELP_SOURCES.SCRIPT, source_timestamp, script_source_path)
+    local ok, lines = pcall(io.lines, script_source_path)
+    if not ok then return entry end
     local is_rb = script_source_path:endswith('.rb')
-    update_entry(entry, io.lines(script_source_path),
+    update_entry(entry, lines,
             {begin_marker=(is_rb and SCRIPT_DOC_BEGIN_RUBY or SCRIPT_DOC_BEGIN),
              end_marker=(is_rb and SCRIPT_DOC_BEGIN_RUBY or SCRIPT_DOC_END),
              first_line_is_short_help=true})
@@ -343,7 +345,9 @@ end
 -- to tag_index, initizlizing each entry with an empty list.
 local function initialize_tags()
     local tag, desc, in_desc = nil, nil, false
-    for line in io.lines(TAG_DEFINITIONS) do
+    local ok, lines = pcall(io.lines, TAG_DEFINITIONS)
+    if not ok then return end
+    for line in lines do
         if in_desc then
             line = line:trim()
             if #line == 0 then

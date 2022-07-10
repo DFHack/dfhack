@@ -318,10 +318,10 @@ changelogs are combined as part of the changelog build process:
 * ``scripts/changelog.txt`` for changes made to scripts in the ``scripts`` repo
 * ``library/xml/changelog.txt`` for changes made in the ``df-structures`` repo
 
-Building the changelogs generates two files: ``docs/_auto/news.rst`` and
-``docs/_auto/news-dev.rst``. These correspond to `changelog` and `dev-changelog`
-and contain changes organized by stable and development DFHack releases,
-respectively. For example, an entry listed under "0.44.05-alpha1" in
+Building the changelogs generates two files: ``docs/changelogs/news.rst`` and
+``docs/changelogs/news-dev.rst``. These correspond to `changelog` and
+`dev-changelog` and contain changes organized by stable and development DFHack
+releases, respectively. For example, an entry listed under "0.44.05-alpha1" in
 changelog.txt will be listed under that version in the development changelog as
 well, but under "0.44.05-r1" in the stable changelog (assuming that is the
 closest stable release after 0.44.05-alpha1). An entry listed under a stable

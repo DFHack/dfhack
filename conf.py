@@ -29,8 +29,6 @@ import sys
 from docutils import nodes
 from docutils.parsers.rst import roles
 
-sphinx_major_version = sphinx.version_info[0]
-
 def get_keybinds():
     """Get the implemented keybinds, and return a dict of
     {tool: [(full_command, keybinding, context), ...]}.
@@ -77,107 +75,86 @@ def dfhack_keybind_role_func(role, rawtext, text, lineno, inliner,
 
 roles.register_canonical_role('dfhack-keybind', dfhack_keybind_role_func)
 
-# -- Autodoc for DFhack scripts -------------------------------------------
+# -- Autodoc for DFhack plugins and scripts -------------------------------
 
-def doc_dir(dirname, files):
-    """Yield (command, includepath) for each script in the directory."""
+def doc_dir(dirname, files, prefix):
+    """Yield (name, includepath) for each file in the directory."""
     sdir = os.path.relpath(dirname, '.').replace('\\', '/').replace('../', '')
+    if prefix == '.':
+        prefix = ''
+    else:
+        prefix += '/'
     for f in files:
-        if f[-3:] not in ('lua', '.rb'):
+        if f[-4:] != '.rst':
             continue
-        with open(os.path.join(dirname, f), 'r', encoding='utf8') as fstream:
-            text = [l.rstrip() for l in fstream.readlines() if l.strip()]
-        # Some legacy lua files use the ruby tokens (in 3rdparty scripts)
-        tokens = ('=begin', '=end')
-        if f[-4:] == '.lua' and any('[====[' in line for line in text):
-            tokens = ('[====[', ']====]')
-        command = None
-        for line in text:
-            if command and line == len(line) * '=':
-                yield command, sdir + '/' + f, tokens[0], tokens[1]
-                break
-            command = line
+        yield prefix + f[:-4], sdir + '/' + f
 
 
 def doc_all_dirs():
     """Collect the commands and paths to include in our docs."""
-    scripts = []
-    for root, _, files in os.walk('scripts'):
-        scripts.extend(doc_dir(root, files))
-    return tuple(scripts)
+    tools = []
+    # TODO: as we scan the docs, parse out the tags and short descriptions and
+    # build a map for use in generating the tags pages and links in the tool
+    # doc footers
+    for root, _, files in os.walk('docs/plugins'):
+        tools.extend(doc_dir(root, files, os.path.relpath(root, 'docs/plugins')))
+    for root, _, files in os.walk('scripts/docs'):
+        tools.extend(doc_dir(root, files, os.path.relpath(root, 'scripts/docs')))
+    return tuple(tools)
 
 DOC_ALL_DIRS = doc_all_dirs()
 
+def generate_tag_indices():
+    #TODO: generate docs/tags/<tag>.rst with the tag description and links to the
+    # tools that have that tag
+    os.makedirs('docs/tags', mode=0o755, exist_ok=True)
 
-def document_scripts():
-    """Autodoc for files with the magic script documentation marker strings.
 
-    Returns a dict of script-kinds to lists of .rst include directives.
+def write_tool_docs():
     """
-    # Next we split by type and create include directives sorted by command
-    kinds = {'base': [], 'devel': [], 'fix': [], 'gui': [], 'modtools': []}
-    for s in DOC_ALL_DIRS:
-        k_fname = s[0].split('/', 1)
-        if len(k_fname) == 1:
-            kinds['base'].append(s)
-        else:
-            kinds[k_fname[0]].append(s)
-
-    def template(arg):
-        tmp = '.. _{}:\n\n.. include:: /{}\n' +\
-            '   :start-after: {}\n   :end-before: {}\n'
-        if arg[0] in KEYBINDS:
-            tmp += '\n:dfhack-keybind:`{}`\n'.format(arg[0])
-        return tmp.format(*arg)
-
-    return {key: '\n\n'.join(map(template, sorted(value)))
-            for key, value in kinds.items()}
-
-
-def write_script_docs():
+    Creates a file for each tool with the ".. include::" directives to pull in
+    the original documentation. Then we generate a label and useful info in the
+    footer.
     """
-    Creates a file for eack kind of script (base/devel/fix/gui/modtools)
-    with all the ".. include::" directives to pull out docs between the
-    magic strings.
-    """
-    kinds = document_scripts()
-    head = {
-        'base': 'Basic Scripts',
-        'devel': 'Development Scripts',
-        'fix': 'Bugfixing Scripts',
-        'gui': 'GUI Scripts',
-        'modtools': 'Scripts for Modders'}
-    for k in head:
-        title = ('.. _scripts-{k}:\n\n{l}\n{t}\n{l}\n\n'
-                 '.. include:: /scripts/{a}about.txt\n\n'
-                 '.. contents:: Contents\n'
-                 '  :local:\n\n').format(
-                     k=k, t=head[k],
-                     l=len(head[k])*'#',
-                     a=('' if k == 'base' else k + '/')
-                     )
+    for k in DOC_ALL_DIRS:
+        label = ('.. _{name}:\n\n').format(name=k[0])
+        # TODO: can we autogenerate the :dfhack-keybind: line? it would go beneath
+        # the tool header, which is currently in the middle of the included file.
+        # should we remove those headers from the doc files and just generate them
+        # here? That might be easier. But then where will the tags go? It would
+        # look better if they were above the keybinds, but then we'd be in the
+        # same situation.
+        include = ('.. include:: /{path}\n\n').format(path=k[1])
+        # TODO: generate a footer with links to tools that share at least one
+        # tag with this tool. Just the tool names, strung across the bottom of
+        # the page in one long wrapped line, similar to how the wiki does it
         mode = 'w' if sys.version_info.major > 2 else 'wb'
-        with open('docs/_auto/{}.rst'.format(k), mode) as outfile:
-            outfile.write(title)
-            outfile.write(kinds[k])
+        os.makedirs(os.path.join('docs/tools', os.path.dirname(k[0])),
+                    mode=0o755, exist_ok=True)
+        with open('docs/tools/{}.rst'.format(k[0]), mode) as outfile:
+            if k[0] != 'search':
+                outfile.write(label)
+            outfile.write(include)
 
 
 def all_keybinds_documented():
     """Check that all keybindings are documented with the :dfhack-keybind:
     directive somewhere."""
-    configured_binds = set(KEYBINDS)
-    script_commands = set(i[0] for i in DOC_ALL_DIRS)
-    with open('./docs/Plugins.rst') as f:
-        plugin_binds = set(re.findall(':dfhack-keybind:`(.*?)`', f.read()))
-    undocumented_binds = configured_binds - script_commands - plugin_binds
+    undocumented_binds = set(KEYBINDS)
+    tools = set(i[0] for i in DOC_ALL_DIRS)
+    for t in tools:
+        with open(('./docs/tools/{}.rst').format(t)) as f:
+            tool_binds = set(re.findall(':dfhack-keybind:`(.*?)`', f.read()))
+            undocumented_binds -= tool_binds
     if undocumented_binds:
         raise ValueError('The following DFHack commands have undocumented '
                          'keybindings: {}'.format(sorted(undocumented_binds)))
 
 
 # Actually call the docs generator and run test
-write_script_docs()
-all_keybinds_documented()
+write_tool_docs()
+generate_tag_indices()
+#all_keybinds_documented() # comment out while we're transitioning
 
 # -- General configuration ------------------------------------------------
 
@@ -194,6 +171,8 @@ extensions = [
     'dfhack.changelog',
     'dfhack.lexer',
 ]
+
+sphinx_major_version = sphinx.version_info[0]
 
 def get_caption_str(prefix=''):
     return prefix + (sphinx_major_version >= 5 and '%s' or '')
@@ -274,11 +253,12 @@ today_fmt = html_last_updated_fmt = '%Y-%m-%d'
 # directories to ignore when looking for source files.
 exclude_patterns = [
     'README.md',
-    'docs/html*',
-    'depends/*',
     'build*',
-    'docs/_auto/news*',
-    'docs/_changelogs/',
+    'depends/*',
+    'docs/html/*',
+    'docs/text/*',
+    'docs/plugins/*',
+    'scripts/docs/*',
     ]
 
 # The reST default role (used for this markup: `text`) to use for all

@@ -30,11 +30,7 @@ User Manual
    /docs/Installing
    /docs/Support
    /docs/Core
-   /docs/Builtin
-   /docs/Plugins
-   /docs/Scripts
-   /docs/Tags
-   /docs/Tools
+   /docs/index-tools
    /docs/guides/index
    /docs/index-about
    /docs/index-dev

@@ -238,8 +238,8 @@ def generate_changelog(all=False):
     consolidate_changelog(stable_entries)
     consolidate_changelog(dev_entries)
 
-    print_changelog(versions, stable_entries, os.path.join(DOCS_ROOT, '_auto/news.rst'))
-    print_changelog(versions, dev_entries, os.path.join(DOCS_ROOT, '_auto/news-dev.rst'))
+    print_changelog(versions, stable_entries, os.path.join(DOCS_ROOT, 'changelogs/news.rst'))
+    print_changelog(versions, dev_entries, os.path.join(DOCS_ROOT, 'changelogs/news-dev.rst'))
 
     if all:
         for version in versions:
@@ -251,10 +251,10 @@ def generate_changelog(all=False):
             else:
                 version_entries = {version: dev_entries[version]}
             print_changelog([version], version_entries,
-                os.path.join(DOCS_ROOT, '_changelogs/%s-github.txt' % version),
+                os.path.join(DOCS_ROOT, 'changelogs/%s-github.txt' % version),
                 replace=False)
             print_changelog([version], version_entries,
-                os.path.join(DOCS_ROOT, '_changelogs/%s-reddit.txt' % version),
+                os.path.join(DOCS_ROOT, 'changelogs/%s-reddit.txt' % version),
                 replace=False,
                 prefix='> ')
 
@@ -264,7 +264,7 @@ def cli_entrypoint():
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('-a', '--all', action='store_true',
-        help='Print changelogs for all versions to docs/_changelogs')
+        help='Print changelogs for all versions to docs/changelogs')
     parser.add_argument('-c', '--check', action='store_true',
         help='Check that all entries are printed')
     args = parser.parse_args()
@@ -272,9 +272,9 @@ def cli_entrypoint():
     entries = generate_changelog(all=args.all)
 
     if args.check:
-        with open(os.path.join(DOCS_ROOT, '_auto/news.rst')) as f:
+        with open(os.path.join(DOCS_ROOT, 'changelogs/news.rst')) as f:
             content_stable = f.read()
-        with open(os.path.join(DOCS_ROOT, '_auto/news-dev.rst')) as f:
+        with open(os.path.join(DOCS_ROOT, 'changelogs/news-dev.rst')) as f:
             content_dev = f.read()
         for entry in entries:
             for description in entry.children:

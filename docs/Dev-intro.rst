@@ -41,7 +41,7 @@ Installed plugins live in the ``hack/plugins`` folder of a DFHack installation,
 and the `load` family of commands can be used to load a recompiled plugin
 without restarting DF.
 
-See `plugins-index` for a list of all plugins included in DFHack.
+Run `plug` at the DFHack prompt for a list of all plugins included in DFHack.
 
 Scripts
 -------
@@ -51,8 +51,9 @@ is more complete and currently better-documented, however. Referring to existing
 scripts as well as the API documentation can be helpful when developing new
 scripts.
 
-`Scripts included in DFHack <scripts-index>` live in a separate `scripts repository <https://github.com/dfhack/scripts>`_.
-This can be found in the ``scripts`` submodule if you have
+`Scripts included in DFHack <tools-index>` live in a separate
+`scripts repository <https://github.com/dfhack/scripts>`_. This can be found in
+the ``scripts`` submodule if you have
 `cloned DFHack <compile-how-to-get-the-code>`, or the ``hack/scripts`` folder
 of an installed copy of DFHack.
 

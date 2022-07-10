@@ -401,11 +401,11 @@ DFHack looks for init files in three places each time they could be run:
 #. :file:`data/save/{world}/raw/objects`
 
 For each of those directories, all matching init files will be executed in
-alphebetical order.
+alphabetical order.
 
 Before running matched init scripts in any of those locations, the
 :file:`dfhack-config/init/default.*` file that matches the event will be run to
-load DFHack defaults. Only the :file:`dfhack-config/init` direcotry is checked
+load DFHack defaults. Only the :file:`dfhack-config/init` directory is checked
 for this file, not any :file:`raw` directories. If you want DFHack to load
 without running any of its default configuration commands, edit the
 :file:`dfhack-config/init/default.*` files and comment out the commands you see

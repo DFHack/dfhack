@@ -478,13 +478,13 @@ if(BUILD_DOCS)
     set_source_files_properties(${SPHINX_OUTPUT} PROPERTIES GENERATED TRUE)
     add_custom_command(OUTPUT ${SPHINX_OUTPUT}
         COMMAND ${SPHINX_EXECUTABLE}
-            -q -b html -d "${CMAKE_BINARY_DIR}/docs/html"
+            -E -q -b html -d "${CMAKE_BINARY_DIR}/docs/html"
             "${CMAKE_CURRENT_SOURCE_DIR}"
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/html"
             -w "${CMAKE_BINARY_DIR}/docs/html/_sphinx-warnings.txt"
             -j auto
         COMMAND ${SPHINX_EXECUTABLE}
-            -q -b text -d "${CMAKE_BINARY_DIR}/docs/text"
+            -E -q -b text -d "${CMAKE_BINARY_DIR}/docs/text"
             "${CMAKE_CURRENT_SOURCE_DIR}"
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/text"
             -w "${CMAKE_BINARY_DIR}/docs/text/_sphinx-warnings.txt"

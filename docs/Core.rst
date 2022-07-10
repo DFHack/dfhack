@@ -15,19 +15,18 @@ DFHack commands can be implemented in any of three ways:
 
 :builtin:   commands are implemented by the core of DFHack. They manage
             other DFHack tools, interpret commands, and control basic
-            aspects of DF (force pause or quit). They are documented
-            `here <built-in-commands>`.
+            aspects of DF (force pause or quit).
 
 :plugins:   are stored in ``hack/plugins/`` and must be compiled with the
             same version of DFHack.  They are less flexible than scripts,
             but used for complex or ongoing tasks because they run faster.
-            Plugins included with DFHack are documented `here <plugins-index>`.
 
 :scripts:   are Ruby or Lua scripts stored in ``hack/scripts/``.
             Because they don't need to be compiled, scripts are
             more flexible about versions, and easier to distribute.
-            Most third-party DFHack addons are scripts. All scripts included
-            with DFHack are documented `here <scripts-index>`.
+            Most third-party DFHack addons are scripts.
+
+All tools distributed with DFHack are documented `here <tools-index>`.
 
 Using DFHack Commands
 =====================
@@ -186,7 +185,7 @@ where ``*`` can be any string, including the empty string.
 A world being loaded can mean a fortress, an adventurer, or legends mode.
 
 These files are best used for non-persistent commands, such as setting
-a `fix <scripts-fix>` script to run on `repeat`.
+a `fix <tools-index>` script to run on `repeat`.
 
 
 .. _onMapLoad.init:

@@ -505,7 +505,7 @@ if(BUILD_DOCS)
         DESTINATION ${DFHACK_USERDOC_DESTINATION}/docs)
     install(DIRECTORY ${dfhack_SOURCE_DIR}/docs/text/
         DESTINATION ${DFHACK_USERDOC_DESTINATION}/docs)
-    install(FILES docs/_auto/news.rst docs/_auto/news-dev.rst DESTINATION ${DFHACK_USERDOC_DESTINATION})
+    install(FILES docs/changelogs/news.rst docs/changelogs/news-dev.rst DESTINATION ${DFHACK_USERDOC_DESTINATION})
     install(FILES "README.html" DESTINATION "${DFHACK_DATA_DESTINATION}")
 endif()
 

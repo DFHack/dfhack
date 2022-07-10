@@ -11,13 +11,5 @@
 cd $(dirname "$0")
 cd ..
 
-sphinx=sphinx-build
-if [ -n "$SPHINX" ]; then
-    sphinx=$SPHINX
-fi
-
-if [ -z "$JOBS" ]; then
-    JOBS=2
-fi
-
-"$sphinx" -a -b html . ./docs/html -w ./docs/_sphinx-warnings.txt -j "$JOBS" "$@"
+"${SPHINX:-sphinx-build}" -b html -d build/docs/html . docs/html -w build/docs/html/_sphinx-warnings.txt -j "${JOBS:-auto}" "$@"
+"${SPHINX:-sphinx-build}" -b text -d build/docs/text . docs/text -w build/docs/text/_sphinx-warnings.txt -j "${JOBS:-auto}" "$@"

@@ -1350,7 +1350,7 @@ Misc improvements
 - `createitem`: in adventure mode it now defaults to the controlled unit as maker.
 - `autotrade`: adds "(Un)mark All" options to both panes of trade screen.
 - `mousequery`: several usability improvements; show live overlay (in menu area) of what's on the tile under the mouse cursor.
-- `search`: workshop profile search added.
+- `search-plugin`: workshop profile search added.
 - `dwarfmonitor`: add screen to summarise preferences of fortress dwarfs.
 - `getplants`: add autochop function to automate woodcutting.
 - `stocks`: added more filtering and display options.
@@ -1510,7 +1510,7 @@ New binary patches
 New Plugins
 -----------
 - `fix-armory`: Together with a couple of binary patches and the `gui/assign-rack` script, this plugin makes weapon racks, armor stands, chests and cabinets in properly designated barracks be used again for storage of squad equipment.
-- `search`: Adds an incremental search function to the Stocks, Trading, Stockpile and Unit List screens.
+- `search-plugin`: Adds an incremental search function to the Stocks, Trading, Stockpile and Unit List screens.
 - `automaterial`: Makes building constructions (walls, floors, fortifications, etc) a little bit easier by saving you from having to trawl through long lists of materials each time you place one.
 - Dfusion: Reworked to make use of lua modules, now all the scripts can be used from other scripts.
 - Eventful: A collection of lua events, that will allow new ways to interact with df world.

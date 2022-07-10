@@ -26,4 +26,3 @@ Action                         Cost    Delay  Notes
 ``destroyRoughConstruction``   1,000   1,000  constructions made from boulders
 ``destroySmoothConstruction``  100     100    constructions made from blocks or bars
 ============================== ======= ====== =================================
-

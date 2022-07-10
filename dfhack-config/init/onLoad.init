@@ -1,0 +1,6 @@
+# This file runs when a world is loaded. This happens when you open a save file
+# in fort, adventure, or legends mode. If a fort is being loaded, this file runs
+# before any onMapLoad.init files.
+#
+# You can extend or override DFHack's default configuration by adding commands
+# to this file.

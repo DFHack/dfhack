@@ -460,9 +460,6 @@ endif()
 # install the offset file
 install(FILES xml/symbols.xml
     DESTINATION ${DFHACK_DATA_DESTINATION})
-# install the example autoexec file
-install(FILES ../dfhack.init-example
-    DESTINATION ${DFHACK_BINARY_DESTINATION})
 
 install(TARGETS dfhack-run dfhack-client binpatch
     LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}

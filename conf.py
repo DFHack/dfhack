@@ -283,6 +283,7 @@ exclude_patterns = [
     'build*',
     'docs/_auto/news*',
     'docs/_changelogs/',
+    'scripts/docs/',
     ]
 
 # The reST default role (used for this markup: `text`) to use for all

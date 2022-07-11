@@ -101,7 +101,7 @@ Check the full list of events at https://docs.dfhack.org/en/stable/docs/Lua%20AP
 Custom raw tokens
 -----------------
 
-In this section, we are going to use custom raw tokens applied to a reaction to transfer the material of a reagent to a product as a handle improvement (like on artifact buckets), and then we are going to see how you could make boots that make units go faster when worn. Both of these involve custom raw tokens.
+In this section, we are going to use `custom raw tokens <_custom-raw-tokens>` applied to a reaction to transfer the material of a reagent to a product as a handle improvement (like on artifact buckets), and then we are going to see how you could make boots that make units go faster when worn. Both of these involve custom raw tokens.
 
 First, let's define a custom crossbow with its own custom reaction. The crossbow: ::
 
@@ -117,7 +117,7 @@ First, let's define a custom crossbow with its own custom reaction. The crossbow
         [MATERIAL_SIZE:4]
         [ATTACK:BLUNT:10000:4000:bash:bashes:NO_SUB:1250]
             [ATTACK_PREPARE_AND_RECOVER:3:3]
-        [FIRE_RATE_MULTIPLIER:2] custom token (you'll see)
+        [TUTORIAL_MOD_FIRE_RATE_MULTIPLIER:2] custom token (you'll see)
 
 The reaction to make it (you would add the reaction and not the weapon to an entity raw): ::
 
@@ -132,7 +132,7 @@ The reaction to make it (you would add the reaction and not the weapon to an ent
             [ANY_PLANT_MATERIAL]
         [REAGENT:handle 2:1:BLOCKS:NONE:NONE:NONE]
             [ANY_PLANT_MATERIAL]
-        [TRANSFER_HANDLE_MATERIAL_TO_PRODUCT_IMPROVEMENT:1] another custom token
+        [TUTORIAL_MOD_TRANSFER_HANDLE_MATERIAL_TO_PRODUCT_IMPROVEMENT:1] another custom token
         [PRODUCT:100:1:WEAPON:ITEM_WEAPON_CROSSBOW_SIEGE:GET_MATERIAL_FROM_REAGENT:bar:NONE]
 
 So, we are going to use the ``eventful`` module to make it so that (after the script is run) when this crossbow is crafted, it will have two handles, each with the material given by the block reagents.
@@ -149,7 +149,9 @@ Now, let's make a callback: ::
 
 First, we check to see if it the reaction that just happened is relevant to this callback: ::
 
-    if not customRawTokens.getToken(reaction, "TRANSFER_HANDLE_MATERIAL_TO_PRODUCT_IMPROVEMENT") then return end
+    if not customRawTokens.getToken(reaction, "TUTORIAL_MOD_TRANSFER_HANDLE_MATERIAL_TO_PRODUCT_IMPROVEMENT") then
+        return
+    end
 
 Then, we get the product number listed. Next, for every reagent, if the reagent name starts with "handle" then we get the corresponding item, and... ::
 
@@ -186,7 +188,7 @@ Let's also make some code to modify the fire rate of the siege crossbow. ::
             return
         end
 
-        local multiplier = tonumber(customRawTokens.getToken(weapon.subtype, "FIRE_RATE_MULTIPLIER")) or 1
+        local multiplier = tonumber(customRawTokens.getToken(weapon.subtype, "TUTORIAL_MOD_FIRE_RATE_MULTIPLIER")) or 1
         firer.counters.think_counter = math.floor(firer.counters.think_counter * multiplier)
     end
 

@@ -192,7 +192,40 @@ Let's also make some code to modify the fire rate of the siege crossbow. ::
         firer.counters.think_counter = math.floor(firer.counters.think_counter * multiplier)
     end
 
-TODO: "running shoes"
+Now, let's see how we could make some "pegasus boots". First, let's define the item in the raws: ::
+
+[ITEM_SHOES:ITEM_SHOES_BOOTS_PEGASUS]
+    [NAME:pegasus boot:pegasus boots]
+    [ARMORLEVEL:1]
+    [UPSTEP:1]
+    [METAL_ARMOR_LEVELS]
+    [LAYER:OVER]
+    [COVERAGE:100]
+    [LAYER_SIZE:25]
+    [LAYER_PERMIT:15]
+    [MATERIAL_SIZE:2]
+    [METAL]
+    [LEATHER]
+    [HARD]
+    [EXAMPLE_MOD_MOVEMENT_TIMER_REDUCTION_PER_TICK:5] custom raw token (you don't have to say this every time)
+
+Then, let's make a ``repeat-util`` callback for once a tick: ::
+
+    repeatUtil.scheduleEvery(modId, 1, "ticks", function()
+
+Let's iterate over every active unit, and for every unit, initialise a variable for how much we are going to take from their movement timer and iterate over all their worn items: ::
+
+    for _, unit in ipairs(df.global.world.units.active) do
+        local amount = 0
+        for _, entry in ipairs(unit.inventory) do
+
+Now, we will add up the effect of all speed-increasing gear and apply it: ::
+
+        if entry.mode == df.unit_inventory_item.T_mode.Worn then
+            amount = amount + tonumber((customRawTokens.getToken(entry.item, "EXAMPLE_MOD_MOVEMENT_TIMER_REDUCTION_PER_TICK")) or 0)
+        end
+    end
+    dfhack.units.addMoveTimer(-amount) -- Subtract amount from movement timer if currently moving
 
 Your first whole mod
 --------------------

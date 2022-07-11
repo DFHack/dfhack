@@ -92,9 +92,10 @@ end
 --   end_marker (string that marks the end of the help text; text will stop
 --               being parsed after this marker is seen)
 --   no_header (don't try to find the entity name at the top of the help text)
---   first_line_is_short_help (read the short help text from the first commented
---                             line of the script instead of using the first
---                             sentence of the long help text)
+--   first_line_is_short_help (if set, then read the short help text from the
+--                             first commented line of the script instead of
+--                             using the first sentence of the long help text.
+--                             value is the comment character.)
 local function update_entry(entry, iterator, opts)
     opts = opts or {}
     local lines = {}
@@ -104,7 +105,7 @@ local function update_entry(entry, iterator, opts)
     for line in iterator do
         if not short_help_found and first_line_is_short_help then
             line = line:trim()
-            local _,_,text = line:find('^%-%-%s*(.*)') or line:find('^#%s*(.*)')
+            local _,_,text = line:find('^'..first_line_is_short_help..'%s*(.*)')
             if not text then
                 -- if no first-line short help found, fall back to getting the
                 -- first sentence of the help text.
@@ -212,7 +213,7 @@ local function make_script_entry(old_entry, entry_name, script_source_path)
     update_entry(entry, lines,
             {begin_marker=(is_rb and SCRIPT_DOC_BEGIN_RUBY or SCRIPT_DOC_BEGIN),
              end_marker=(is_rb and SCRIPT_DOC_BEGIN_RUBY or SCRIPT_DOC_END),
-             first_line_is_short_help=true})
+             first_line_is_short_help=(is_rb and '#' or '%-%-')})
     return entry
 end
 

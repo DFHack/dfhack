@@ -469,7 +469,6 @@ Label.ATTRS{
 }
 
 function Label:init(args)
-    self.start_line_num = 1
     -- use existing saved text if no explicit text was specified. this avoids
     -- overwriting pre-formatted text that subclasses may have already set
     self:setText(args.text or self.text)
@@ -479,6 +478,7 @@ function Label:init(args)
 end
 
 function Label:setText(text)
+    self.start_line_num = 1
     self.text = text
     parse_label_text(self)
 

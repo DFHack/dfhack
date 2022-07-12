@@ -35,7 +35,6 @@ distribution.
 #include <stdio.h>
 
 #include "tinythread.h"
-#include "modules/Graphic.h"
 #include "../plugins/uicommon.h"
 
 /*

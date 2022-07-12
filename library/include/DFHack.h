@@ -54,7 +54,6 @@ distribution.
 
 // DFHack modules
 #include "modules/Buildings.h"
-#include "modules/Engravings.h"
 #include "modules/Materials.h"
 #include "modules/Constructions.h"
 #include "modules/Units.h"

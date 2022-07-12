@@ -8,6 +8,8 @@
 # Generic dwarfmode bindings #
 ##############################
 
+keybinding add ` gui/launcher
+
 # show all current key bindings
 keybinding add Ctrl-F1 hotkeys
 keybinding add Alt-F1 hotkeys

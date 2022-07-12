@@ -107,8 +107,8 @@ To set keybindings, use the built-in ``keybinding`` command. Like any other
 command it can be used at any time from the console, but bindings are not
 remembered between runs of the game unless re-created in `dfhack.init`.
 
-Currently, any combinations of Ctrl/Alt/Shift with A-Z, 0-9, or F1-F12 are
-supported.
+Currently, any combinations of Ctrl/Alt/Shift with A-Z, 0-9, F1-F12, or ``\```
+are supported.
 
 Possible ways to call the command:
 

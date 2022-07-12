@@ -363,3 +363,9 @@ latex_documents = [
 ]
 
 latex_toplevel_sectioning = 'part'
+
+# -- Options for text output ---------------------------------------------
+
+from sphinx.writers import text
+
+text.MAXWIDTH = 52

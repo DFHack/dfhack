@@ -318,6 +318,7 @@ end
 
 -- scan for scripts and add their help to the db
 local function scan_scripts(old_db, db)
+    local entry_types = {[ENTRY_TYPES.COMMAND]=true}
     for _,script_path in ipairs(dfhack.internal.getScriptPaths()) do
         local files = dfhack.filesystem.listdir_recursive(
                                             script_path, nil, false)
@@ -330,12 +331,13 @@ local function scan_scripts(old_db, db)
                 goto continue
             end
             local dot_index = f.path:find('%.[^.]*$')
+            local entry_name = f.path:sub(1, dot_index - 1)
             local script_source = script_path .. '/' .. f.path
             update_db(old_db, db,
-                      has_rendered_help(f.path) and
+                      has_rendered_help(entry_name) and
                             HELP_SOURCES.RENDERED or HELP_SOURCES.SCRIPT,
-                      f.path:sub(1, dot_index - 1),
-                      {script_source=script_source})
+                      entry_name,
+                      {entry_types=entry_types, script_source=script_source})
             ::continue::
         end
         ::skip_path::
@@ -388,6 +390,33 @@ end
 -- get API
 ---------------------------------------------------------------------------
 
+-- converts strings into single-element lists containing that string
+local function normalize_string_list(l)
+    if not l or #l == 0 then return nil end
+    if type(l) == 'string' then
+        return {l}
+    end
+    return l
+end
+
+local function has_keys(str, dict)
+    if not str or #str == 0 then
+        return false
+    end
+    ensure_db()
+    for _,s in ipairs(normalize_string_list(str)) do
+        if not dict[s] then
+            return false
+        end
+    end
+    return true
+end
+
+-- returns whether the given string (or list of strings) is an entry in the db
+function is_entry(str)
+    return has_keys(str, db)
+end
+
 local function get_db_property(entry_name, property)
     ensure_db()
     if not db[entry_name] then
@@ -420,19 +449,9 @@ function get_entry_tags(entry)
     return set_to_sorted_list(get_db_property(entry, 'tags'))
 end
 
--- returns whether the given string matches a tag name
+-- returns whether the given string (or list of strings) matches a tag name
 function is_tag(str)
-    if not str or #str == 0 then
-        return false
-    end
-    ensure_db()
-    if type(str) == "string" then str = {str} end
-    for _,s in ipairs(str) do
-        if not tag_index[s] then
-            return false
-        end
-    end
-    return true
+    return has_keys(str, tag_index)
 end
 
 -- returns the defined tags in alphabetical order
@@ -522,15 +541,6 @@ local function matches(entry_name, filter)
         end
     end
     return true
-end
-
--- converts strings into single-element lists containing that string
-local function normalize_string_list(l)
-    if not l or #l == 0 then return nil end
-    if type(l) == 'string' then
-        return {l}
-    end
-    return l
 end
 
 -- normalizes the lists in the filter and returns nil if no filter elements are

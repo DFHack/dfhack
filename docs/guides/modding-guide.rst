@@ -101,7 +101,7 @@ Check the full list of events at https://docs.dfhack.org/en/stable/docs/Lua%20AP
 Custom raw tokens
 -----------------
 
-In this section, we are going to use `custom raw tokens <_custom-raw-tokens>` applied to a reaction to transfer the material of a reagent to a product as a handle improvement (like on artifact buckets), and then we are going to see how you could make boots that make units go faster when worn. Both of these involve custom raw tokens.
+In this section, we are going to use `custom raw tokens <custom-raw-tokens>` applied to a reaction to transfer the material of a reagent to a product as a handle improvement (like on artifact buckets), and then we are going to see how you could make boots that make units go faster when worn. Both of these involve custom raw tokens.
 
 First, let's define a custom crossbow with its own custom reaction. The crossbow: ::
 
@@ -194,20 +194,20 @@ Let's also make some code to modify the fire rate of the siege crossbow. ::
 
 Now, let's see how we could make some "pegasus boots". First, let's define the item in the raws: ::
 
-[ITEM_SHOES:ITEM_SHOES_BOOTS_PEGASUS]
-    [NAME:pegasus boot:pegasus boots]
-    [ARMORLEVEL:1]
-    [UPSTEP:1]
-    [METAL_ARMOR_LEVELS]
-    [LAYER:OVER]
-    [COVERAGE:100]
-    [LAYER_SIZE:25]
-    [LAYER_PERMIT:15]
-    [MATERIAL_SIZE:2]
-    [METAL]
-    [LEATHER]
-    [HARD]
-    [EXAMPLE_MOD_MOVEMENT_TIMER_REDUCTION_PER_TICK:5] custom raw token (you don't have to say this every time)
+    [ITEM_SHOES:ITEM_SHOES_BOOTS_PEGASUS]
+        [NAME:pegasus boot:pegasus boots]
+        [ARMORLEVEL:1]
+        [UPSTEP:1]
+        [METAL_ARMOR_LEVELS]
+        [LAYER:OVER]
+        [COVERAGE:100]
+        [LAYER_SIZE:25]
+        [LAYER_PERMIT:15]
+        [MATERIAL_SIZE:2]
+        [METAL]
+        [LEATHER]
+        [HARD]
+        [EXAMPLE_MOD_MOVEMENT_TIMER_REDUCTION_PER_TICK:5] custom raw token (you don't have to say this every time)
 
 Then, let's make a ``repeat-util`` callback for once a tick: ::
 

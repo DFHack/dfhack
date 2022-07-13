@@ -244,3 +244,5 @@ Create a folder for mod projects within your Dwarf Fortress directory somewhere 
 * A ``readme.mkd`` markdown file is also recommended.
 * An ``addToEntity.txt`` file containing lines to add to entity definitions for access to mod content would be needed if applicable.
 * Unless you want to merge your ``raw`` folder with your worlds every time you make a change to your scripts, you should add ``path/to/your-mod/raw/scripts/`` to your script paths.
+
+TODO

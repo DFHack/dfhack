@@ -232,4 +232,15 @@ Your first whole mod
 
 Now, you may have noticed that you won't be able to run multiple functions on tick/as event callbacks with that ``modId`` idea alone. To solve that we can just define all the functions we want and call them from a single function.
 
-TODO
+Create a folder for mod projects within your Dwarf Fortress directory somewhere (e.g. ``hack/my-scripts/mods/``) and use your mod ID (in hyphen-case) as the name for the mod folders within it. The structure of and environment for fully-functioning modular mods are as follows:
+
+* The main content of the mod would be in the ``raw`` folder:
+
+  * A Lua file in ``raw/init.d/`` to initialise the mod by calling ``your-mod-id/main/ enable``.
+  * Raw content (potentially with custom raw tokens) in ``raw/objects/``.
+  * A subfolder for your mod in ``raw/scripts/`` containing a ``main.lua`` file (an example of which we will see) and all the modules containing the functions used in callbacks to ``repeat-util`` and ``eventful``. Potentially a file containing constant definitions used by your mod (perhaps defined by the game) too.
+
+* Using git within each mod folder is recommended, but not required.
+* A ``readme.mkd`` markdown file is also recommended.
+* An ``addToEntity.txt`` file containing lines to add to entity definitions for access to mod content would be needed if applicable.
+* Unless you want to merge your ``raw`` folder with your worlds every time you make a change to your scripts, you should add ``path/to/your-mod/raw/scripts/`` to your script paths.

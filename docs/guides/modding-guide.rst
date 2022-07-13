@@ -238,10 +238,10 @@ Create a folder for mod projects within your Dwarf Fortress directory somewhere 
 
   * A Lua file in ``raw/init.d/`` to initialise the mod by calling ``your-mod-id/main/ enable``.
   * Raw content (potentially with custom raw tokens) in ``raw/objects/``.
-  * A subfolder for your mod in ``raw/scripts/`` containing a ``main.lua`` file (an example of which we will see) and all the modules containing the functions used in callbacks to ``repeat-util`` and ``eventful``. Potentially a file containing constant definitions used by your mod (perhaps defined by the game) too.
+  * A subfolder for your mod in ``raw/scripts/`` containing a ``main.lua`` file (an example of which we will see) and all the modules containing the functions used in callbacks to ``repeat-util`` and ``eventful``. Potentially a file containing constant definitions used by your mod (perhaps defined by the game, like the acceleration of parabolic projectiles due to gravity (``4900``)) too.
 
 * Using git within each mod folder is recommended, but not required.
-* A ``readme.mkd`` markdown file is also recommended.
+* A ``readme.md`` markdown file is also recommended.
 * An ``addToEntity.txt`` file containing lines to add to entity definitions for access to mod content would be needed if applicable.
 * Unless you want to merge your ``raw`` folder with your worlds every time you make a change to your scripts, you should add ``path/to/your-mod/raw/scripts/`` to your script paths.
 

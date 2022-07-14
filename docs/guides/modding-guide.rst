@@ -22,7 +22,7 @@ Scripts can be run from a world's ``raw/scripts/`` directory, and (configurably)
 
 A script is run by writing its path and name from a script path folder without the file extension into a DFHack command prompt (in-game or the external one). E.g. ``gui/gm-editor`` for ``hack/scripts/gui/gm-editor.lua``.
 
-You can make all your scripts in ``hack/scripts/``, but this is not recommended as it makes things much harder to maintain each update. It's recommended to make a folder with a name like "own-scripts" and add it to ``dfhack-config/script-paths.txt``. You should also make a folder for external installed scripts from the internet that are not in ``hack/scripts/``. You can prepend your script paths entries with a ``+`` so that they take precedence over other folders.
+You can make all your scripts in ``hack/scripts/``, but this is not recommended as it makes things much harder to maintain each update. It's recommended to make a folder with a name like ``own-scripts`` and add it to ``dfhack-config/script-paths.txt``. You could also make a folder for external installed scripts from the internet that are not in ``hack/scripts/``. You can prepend your script paths entries with a ``+`` so that they take precedence over other folders.
 
 If your mod is installed into ``raw/scripts/`` be aware that the copies of the scripts in ``data/save/*/raw/`` are checked first and will run instead of any changes you make to an in-development copy outside of a raw folder.
 
@@ -75,13 +75,13 @@ First, we load the module: ::
 
 Both ``repeat-util`` and ``eventful`` require keys for registered callbacks. It's recommended to use something like a mod id. ::
 
-    local modId = "my-test-mod"
+    local modId = "callback-example-mod"
 
 Then, we pass the key, amount of time units between function calls, what the time units are, and finally the callback function itself: ::
 
     repeatUtil.scheduleEvery(modId, 1, "ticks", function()
-        -- Do something like iterating over all units
-        for _, unit in ipairs(df.global.world.units.all) do
+        -- Do something like iterating over all active units
+        for _, unit in ipairs(df.global.world.units.active) do
             print(unit.id)
         end
     end)
@@ -117,7 +117,7 @@ First, let's define a custom crossbow with its own custom reaction. The crossbow
         [MATERIAL_SIZE:4]
         [ATTACK:BLUNT:10000:4000:bash:bashes:NO_SUB:1250]
             [ATTACK_PREPARE_AND_RECOVER:3:3]
-        [TUTORIAL_MOD_FIRE_RATE_MULTIPLIER:2] custom token (you'll see)
+        [SIEGE_CROSSBOW_MOD_FIRE_RATE_MULTIPLIER:2] custom token (you'll see)
 
 The reaction to make it (you would add the reaction and not the weapon to an entity raw): ::
 
@@ -132,7 +132,7 @@ The reaction to make it (you would add the reaction and not the weapon to an ent
             [ANY_PLANT_MATERIAL]
         [REAGENT:handle 2:1:BLOCKS:NONE:NONE:NONE]
             [ANY_PLANT_MATERIAL]
-        [TUTORIAL_MOD_TRANSFER_HANDLE_MATERIAL_TO_PRODUCT_IMPROVEMENT:1] another custom token
+        [SIEGE_CROSSBOW_MOD_TRANSFER_HANDLE_MATERIAL_TO_PRODUCT_IMPROVEMENT:1] another custom token
         [PRODUCT:100:1:WEAPON:ITEM_WEAPON_CROSSBOW_SIEGE:GET_MATERIAL_FROM_REAGENT:bar:NONE]
 
 So, we are going to use the ``eventful`` module to make it so that (after the script is run) when this crossbow is crafted, it will have two handles, each with the material given by the block reagents.
@@ -144,12 +144,12 @@ First, require the modules we are going to use. ::
 
 Now, let's make a callback: ::
 
-    local modId = "siege-crossbow"
+    local modId = "siege-crossbow-mod"
     eventful.onReactionComplete[modId] = function(reaction, reactionProduct, unit, inputItems, inputReagents, outputItems)
 
 First, we check to see if it the reaction that just happened is relevant to this callback: ::
 
-    if not customRawTokens.getToken(reaction, "TUTORIAL_MOD_TRANSFER_HANDLE_MATERIAL_TO_PRODUCT_IMPROVEMENT") then
+    if not customRawTokens.getToken(reaction, "SIEGE_CROSSBOW_MOD_TRANSFER_HANDLE_MATERIAL_TO_PRODUCT_IMPROVEMENT") then
         return
     end
 
@@ -188,7 +188,7 @@ Let's also make some code to modify the fire rate of the siege crossbow. ::
             return
         end
 
-        local multiplier = tonumber(customRawTokens.getToken(weapon.subtype, "TUTORIAL_MOD_FIRE_RATE_MULTIPLIER")) or 1
+        local multiplier = tonumber(customRawTokens.getToken(weapon.subtype, "SIEGE_CROSSBOW_MOD_FIRE_RATE_MULTIPLIER")) or 1
         firer.counters.think_counter = math.floor(firer.counters.think_counter * multiplier)
     end
 
@@ -207,7 +207,7 @@ Now, let's see how we could make some "pegasus boots". First, let's define the i
         [METAL]
         [LEATHER]
         [HARD]
-        [EXAMPLE_MOD_MOVEMENT_TIMER_REDUCTION_PER_TICK:5] custom raw token (you don't have to say this every time)
+        [PEGASUS_BOOTS_MOD_MOVEMENT_TIMER_REDUCTION_PER_TICK:5] custom raw token (you don't have to comment this every time)
 
 Then, let's make a ``repeat-util`` callback for once a tick: ::
 
@@ -222,7 +222,7 @@ Let's iterate over every active unit, and for every unit, initialise a variable 
 Now, we will add up the effect of all speed-increasing gear and apply it: ::
 
         if entry.mode == df.unit_inventory_item.T_mode.Worn then
-            amount = amount + tonumber((customRawTokens.getToken(entry.item, "EXAMPLE_MOD_MOVEMENT_TIMER_REDUCTION_PER_TICK")) or 0)
+            amount = amount + tonumber((customRawTokens.getToken(entry.item, "PEGASUS_BOOTS_MOD_MOVEMENT_TIMER_REDUCTION_PER_TICK")) or 0)
         end
     end
     dfhack.units.addMoveTimer(-amount) -- Subtract amount from movement timer if currently moving

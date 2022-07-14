@@ -250,6 +250,7 @@ local BUILTINS = {
     alias='Configure helper aliases for other DFHack commands.',
     cls='Clear the console screen.',
     clear='Clear the console screen.',
+    ['devel/dump-rpc']='Write RPC endpoint information to a file.',
     die='Force DF to close immediately, without saving.',
     enable='Enable a plugin or persistent script.',
     disable='Disable a plugin or persistent script.',
@@ -575,15 +576,26 @@ function search_entries(include, exclude)
     ensure_db()
     include = normalize_filter(include)
     exclude = normalize_filter(exclude)
-    local commands = {}
-    for command in pairs(db) do
-        if (not include or matches(command, include)) and
-                (not exclude or not matches(command, exclude)) then
-            table.insert(commands, command)
+    local entries = {}
+    for entry in pairs(db) do
+        if (not include or matches(entry, include)) and
+                (not exclude or not matches(entry, exclude)) then
+            table.insert(entries, entry)
         end
     end
-    table.sort(commands, sort_by_basename)
-    return commands
+    table.sort(entries, sort_by_basename)
+    return entries
+end
+
+-- returns a list of all commands. used by Core's autocomplete functionality.
+function get_commands()
+    local include = {types={ENTRY_TYPES.COMMAND}}
+    return search_entries(include)
+end
+
+function is_builtin(command)
+    ensure_db()
+    return db[command] and db[command].entry_types[ENTRY_TYPES.BUILTIN]
 end
 
 ---------------------------------------------------------------------------
@@ -633,7 +645,7 @@ function list_entries(skip_tags, include, exclude)
         end
     end
     if #entries == 0 then
-        print('no entries found.')
+        print('No matches.')
     end
 end
 

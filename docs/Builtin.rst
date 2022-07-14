@@ -255,6 +255,17 @@ type
 ----
 ``type command`` shows where ``command`` is implemented.
 
+.. _devel/dump-rpc:
+
+devel/dump-rpc
+--------------
+
+Writes RPC endpoint information to the specified file.
+
+Usage::
+
+    devel/dump-rpc FILENAME
+
 Other Commands
 --------------
 The following commands are *not* built-in, but offer similarly useful functions.

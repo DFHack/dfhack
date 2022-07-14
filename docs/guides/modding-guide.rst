@@ -55,8 +55,8 @@ Now, the field ``sex`` in a unit is an integer, but each integer corresponds to 
 
 Simple. Save this as a Lua file in your own scripts directory and run it as shown before when focused on a unit one way or another.
 
-Getting used to gm-editor and DFStructs exploration
----------------------------------------------------
+Getting used to gm-editor and df-structures exploration
+-------------------------------------------------------
 
 So how could you have known about the field and type we just used? Well, there are two main tools for discovering the various fields in the game's data structures. The first is the ``df-structures`` repository (at https://github.com/DFHack/df-structures) that contains XML files denoting the contents of the game's structures. The second is the script ``gui/gm-editor`` which is an interactive data explorer. You can run the script while objects like units are selected to view the data within them. You can also pass ``scr`` as an argument to the script to view the data for the current screen. Press ? while the script is active to view help.
 

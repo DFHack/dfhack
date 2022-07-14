@@ -148,7 +148,7 @@ void Lua::Push(lua_State *state, df::coord2d pos)
     lua_setfield(state, -2, "y");
 }
 
-void GetVector(lua_State *state, std::vector<std::string> &pvec)
+void Lua::GetVector(lua_State *state, std::vector<std::string> &pvec)
 {
     lua_pushnil(state);   // first key
     while (lua_next(state, 1) != 0)

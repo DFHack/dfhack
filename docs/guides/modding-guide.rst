@@ -230,9 +230,9 @@ Now, we will add up the effect of all speed-increasing gear and apply it: ::
 Your first whole mod
 --------------------
 
-Now, you may have noticed that you won't be able to run multiple functions on tick/as event callbacks with that ``modId`` idea alone. To solve that we can just define all the functions we want and call them from a single function.
+Now, you may have noticed that you won't be able to run multiple functions on tick/as event callbacks with that ``modId`` idea alone. To solve that we can just define all the functions we want and call them from a single function. Alternatively you can create multiple callbacks with your mod ID being a prefix, though this way there is no guarantee about the order if that is important.
 
-Create a folder for mod projects within your Dwarf Fortress directory somewhere (e.g. ``hack/my-scripts/mods/``) and use your mod ID (in hyphen-case) as the name for the mod folders within it. The structure of and environment for fully-functioning modular mods are as follows:
+Create a folder for mod projects somewhere (e.g. ``hack/my-scripts/mods/``, or maybe somewhere outside your Dwarf Fortress installation) and use your mod ID (in hyphen-case) as the name for the mod folders within it. The structure of and environment for fully-functioning modular mods are as follows:
 
 * The main content of the mod would be in the ``raw`` folder:
 

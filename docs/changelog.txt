@@ -56,6 +56,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Removed ``Notes`` module (C++-only). Access ``ui.waypoints.points`` directly instead.
 - Removed ``Windows`` module (C++-only) - unused.
 - ``Constructions`` module (C++-only): removed ``t_construction``, ``isValid()``, ``getCount()``, ``getConstruction()``, and ``copyConstruction()``. Access ``world.constructions`` directly instead.
+- ``Gui::getSelectedItem()``, ``Gui::getAnyItem()``: added support for the artifacts screen
 
 ## Lua
 - ``tile-material``: fix the order of declarations. The ``GetTileMat`` function now returns the material as intended (always returned nil before). Also changed the license info, with permission of the original author.

@@ -5040,6 +5040,8 @@ General script API
 Importing scripts
 =================
 
+.. _reqscript:
+
 * ``dfhack.reqscript(name)`` or ``reqscript(name)``
 
   Loads a Lua script and returns its environment (i.e. a table of all global

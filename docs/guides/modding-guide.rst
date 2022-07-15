@@ -227,10 +227,10 @@ Now, we will add up the effect of all speed-increasing gear and apply it: ::
     end
     dfhack.units.addMoveTimer(-amount) -- Subtract amount from movement timer if currently moving
 
-Your first whole mod
---------------------
+The structure of a full mod
+---------------------------
 
-Now, you may have noticed that you won't be able to run multiple functions on tick/as event callbacks with that ``modId`` idea alone. To solve that we can just define all the functions we want and call them from a single function. Alternatively you can create multiple callbacks with your mod ID being a prefix, though this way there is no guarantee about the order if that is important.
+Now, you may have noticed that you won't be able to run multiple functions on tick/as event callbacks with that ``modId`` idea alone. To solve that we can just define all the functions we want and call them from a single function. Alternatively you can create multiple callbacks with your mod ID being a prefix, though this way there is no guarantee about the order if that is important. You will have to use your mod ID as a prefix if you register multiple ``repeat-util`` callbacks, though.
 
 Create a folder for mod projects somewhere (e.g. ``hack/my-scripts/mods/``, or maybe somewhere outside your Dwarf Fortress installation) and use your mod ID (in hyphen-case) as the name for the mod folders within it. The structure of and environment for fully-functioning modular mods are as follows:
 
@@ -245,4 +245,93 @@ Create a folder for mod projects somewhere (e.g. ``hack/my-scripts/mods/``, or m
 * An ``addToEntity.txt`` file containing lines to add to entity definitions for access to mod content would be needed if applicable.
 * Unless you want to merge your ``raw`` folder with your worlds every time you make a change to your scripts, you should add ``path/to/your-mod/raw/scripts/`` to your script paths.
 
-TODO
+Now, let's take a look at an example ``main.lua`` file. ::
+
+    local repeatUtil = require("repeat-util")
+    local eventful = require("plugins.eventful")
+
+    local modId = "example-mod"
+    local args = {...}
+
+    if args[1] == "enable" then
+        -- The modules and what they link into the environment with
+        -- Each module exports functions named the way they are to be used
+        local moduleA = dfhack.reqscript("example-mod/module-a") -- on load, every tick
+        local moduleB = dfhack.reqscript("example-mod/module-b") -- on load, on unload, onReactionComplete
+        local moduleC = dfhack.reqscript("example-mod/module-c") -- onReactionComplete
+        local moduleD = dfhack.reqscript("example-mod/module-d") -- every 100 frames, onProjItemCheckMovement, onProjUnitCheckMovement
+
+        -- Set up the modules
+        -- Order: on load, repeat-util ticks (from smallest interval to largest), days, months, years, and frames, then eventful callbacks in the same order as the first modules to use them
+
+        moduleA.onLoad()
+        moduleB.onLoad()
+
+        repeatUtil.scheduleEvery(modId .. " 1 ticks", 1, "ticks", function()
+            moduleA.every1Tick()
+        end)
+
+        repeatUtil.scheduleEvery(modID .. " 100 frames", 1, "frames", function()
+            moduleD.every100Frames()
+        end
+
+        eventful.onReactionComplete[modId] = function(...)
+            -- Pass the event's parameters to the listeners, whatever they are
+            moduleB.onReactionComplete(...)
+            moduleC.onReactionComplete(...)
+        end
+
+        eventful.onProjItemCheckMovement[modId] = function(...)
+            moduleD.onProjItemCheckMovement(...)
+        end
+
+        eventful.onProjUnitCheckMovement[modId] = function(...)
+            moduleD.onProjUnitCheckMovement(...)
+        end
+
+        print("Example mod enabled")
+    elseif args[1] == "disable" then
+        -- Order: on unload, then cancel the callbacks in the same order as above
+
+        moduleA.onUnload()
+
+        repeatUtil.cancel(modId .. " 1 ticks")
+        repeatUtil.cancel(modId .. " 100 frames")
+
+        eventful.onReactionComplete[modId] = nil
+        eventful.onProjItemCheckMovement[modId] = nil
+        eventful.onProjUnitCheckMovement[modId] = nil
+
+        print("Example mod disabled")
+    elseif not args[1] then
+        dfhack.printerr("No argument given to example-mod/main")
+    else
+        dfhack.printerr("Unknown argument \"" .. args[1] .. "\" to example-mod/main")
+    end
+
+You can see there are four cases depending on arguments. Set up the callbacks and call on-load functions if enabled, dismantle the callbacks and call on-unload functions if disabled, no arguments given, and invalid argument(s) given.
+
+Here is an example of an ``raw/init.d/`` file: ::
+
+    dfhack.run_command("example-mod/main enable") -- Very simple. Could be called "init-example-mod.lua"
+
+Here is what ``raw/scripts/module-a.lua`` would look like: ::
+
+    --@ module = true
+    -- The above line is required for dfhack.reqscript to work
+
+    function onLoad() -- global variables are exported
+        -- blah
+    end
+
+    local function usedByOnTick() -- local variables are not exported
+        -- blah
+    end
+
+    function onTick() -- exported
+        for blah in ipairs(blah) do
+            usedByOnTick()
+        end
+    end
+
+It is recommended to check `reqscript <reqscript>`'s documentation. ``reqscript`` caches scripts but will reload scripts that have changed (it checks the file's last modification date) so you can do live editing *and* have common tables et cetera between scripts that require the same module.

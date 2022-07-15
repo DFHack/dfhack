@@ -69,7 +69,8 @@ def dfhack_keybind_role_func(role, rawtext, text, lineno, inliner,
     for cmd, key, ctx in KEYBINDS[text]:
         n = nodes.paragraph()
         newnode += n
-        n += nodes.strong('Keybinding: ', 'Keybinding: ')
+        n += nodes.strong('Keybinding:', 'Keybinding:')
+        n += nodes.inline(' ', ' ')
         for k in key:
             n += nodes.inline(k, k, classes=['kbd'])
         if cmd != text:

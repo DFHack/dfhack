@@ -184,6 +184,7 @@ EditField.ATTRS{
     on_char = DEFAULT_NIL,
     on_change = DEFAULT_NIL,
     on_submit = DEFAULT_NIL,
+    on_submit2 = DEFAULT_NIL,
     key = DEFAULT_NIL,
     key_sep = DEFAULT_NIL,
     frame = {h=1},
@@ -252,6 +253,17 @@ function EditField:onInput(keys)
         end
         if self.on_submit then
             self.on_submit(self.text)
+            return true
+        end
+        return not not self.key
+    end
+
+    if keys.SEC_SELECT then
+        if self.key then
+            self:setFocus(false)
+        end
+        if self.on_submit2 then
+            self.on_submit2(self.text)
             return true
         end
         return not not self.key

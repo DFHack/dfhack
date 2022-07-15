@@ -340,7 +340,7 @@ environment for fully-functioning modular mods are as follows:
   make a change to your scripts, you should add
   ``path/to/your-mod/raw/scripts/`` to your script paths.
 
-Now, let's take a look at an example ``main.lua`` file. ::
+Now, let's take a look at an example ``raw/scripts/main.lua`` file. ::
 
     local repeatUtil = require("repeat-util")
     local eventful = require("plugins.eventful")

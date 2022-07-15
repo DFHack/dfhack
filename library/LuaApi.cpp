@@ -1359,6 +1359,38 @@ static void OpenRandom(lua_State *state)
     lua_pop(state, 1);
 }
 
+
+/*********************************
+* Commandline history repository *
+**********************************/
+
+static std::map<std::string, CommandHistory> commandHistories;
+
+static CommandHistory * ensureCommandHistory(std::string id,
+                                             std::string src_file) {
+    if (!commandHistories.count(id)) {
+        commandHistories[id].load(src_file.c_str());
+    }
+    return &commandHistories[id];
+}
+
+static int getCommandHistory(lua_State *state)
+{
+    std::string id = lua_tostring(state, 1);
+    std::string src_file = lua_tostring(state, 2);
+    std::vector<std::string> entries;
+    ensureCommandHistory(id, src_file)->getEntries(entries);
+    Lua::PushVector(state, entries);
+    return 1;
+}
+
+static void addCommandToHistory(std::string id, std::string src_file,
+                                std::string command) {
+    CommandHistory *history = ensureCommandHistory(id, src_file);
+    history->add(command);
+    history->save(src_file.c_str());
+}
+
 /************************
  * Wrappers for C++ API *
  ************************/
@@ -1450,6 +1482,12 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP_VERSION_FUNC(gitXmlMatch, git_xml_match),
     WRAP_VERSION_FUNC(isRelease, is_release),
     WRAP_VERSION_FUNC(isPrerelease, is_prerelease),
+    WRAP(addCommandToHistory),
+    { NULL, NULL }
+};
+
+static const luaL_Reg dfhack_funcs[] = {
+    { "getCommandHistory", getCommandHistory },
     { NULL, NULL }
 };
 
@@ -3113,6 +3151,7 @@ void OpenDFHackApi(lua_State *state)
     OpenRandom(state);
 
     LuaWrapper::SetFunctionWrappers(state, dfhack_module);
+    luaL_setfuncs(state, dfhack_funcs, 0);
     OpenModule(state, "gui", dfhack_gui_module, dfhack_gui_funcs);
     OpenModule(state, "job", dfhack_job_module, dfhack_job_funcs);
     OpenModule(state, "units", dfhack_units_module, dfhack_units_funcs);

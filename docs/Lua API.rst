@@ -524,6 +524,20 @@ Input & Output
   lock. Using an explicit ``dfhack.with_suspend`` will prevent
   this, forcing the function to block on input with lock held.
 
+* ``dfhack.getCommandHistory(history_id, history_filename)``
+
+  Returns the list of strings in the specified history. Intended to be used by
+  GUI scripts that don't have access to a console and so can't use
+  ``dfhack.lineedit``. The ``history_id`` parameter is some unique string that
+  the script uses to identify its command history, such as the script's name. If
+  this is the first time the history with the given ``history_id`` is being
+  accessed, it is initialized from the given file.
+
+* ``dfhack.addCommandToHistory(history_id, history_filename, command)``
+
+  Adds a command to the specified history and saves the updated history to the
+  specified file.
+
 * ``dfhack.interpreter([prompt[,history_filename[,env]]])``
 
   Starts an interactive lua interpreter, using the specified prompt
@@ -837,6 +851,7 @@ can be omitted.
 * ``dfhack.getGitXmlExpectedCommit()``
 * ``dfhack.gitXmlMatch()``
 * ``dfhack.isRelease()``
+* ``dfhack.isPrerelease()``
 
   Return information about the DFHack build in use.
 
@@ -889,7 +904,6 @@ can be omitted.
   When printing CP437-encoded text to the console (for example, names returned
   from ``dfhack.TranslateName()``), use ``print(dfhack.df2console(text))`` to
   ensure proper display on all platforms.
-
 
 * ``dfhack.utf2df(string)``
 

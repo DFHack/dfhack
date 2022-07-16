@@ -197,6 +197,8 @@ function EditField:init()
         self:setFocus(true)
     end
 
+    self.cursor = 1
+
     self:addviews{HotkeyLabel{frame={t=0,l=0},
                               key=self.key,
                               key_sep=self.key_sep,
@@ -208,8 +210,17 @@ function EditField:getPreferredFocusState()
     return not self.key
 end
 
+function EditField:setCursor(cursor)
+    if not cursor or cursor > #self.text then
+        self.cursor = #self.text + 1
+        return
+    end
+    self.cursor = math.max(1, cursor)
+end
+
 function EditField:setText(text, cursor)
     self.text = text
+    self:setCursor(cursor)
 end
 
 function EditField:postUpdateLayout()
@@ -219,14 +230,29 @@ end
 function EditField:onRenderBody(dc)
     dc:pen(self.text_pen or COLOR_LIGHTCYAN):fill(0,0,dc.width-1,0)
 
-    local cursor = '_'
+    local cursor_char = '_'
     if not self.active or not self.focus or gui.blink_visible(300) then
-        cursor = ' '
+        cursor_char = (self.cursor > #self.text) and ' ' or
+                                        self.text:sub(self.cursor, self.cursor)
     end
-    local txt = self.text .. cursor
+    local txt = self.text:sub(1, self.cursor - 1) .. cursor_char ..
+                                                self.text:sub(self.cursor + 1)
     local max_width = dc.width - self.text_offset
     if #txt > max_width then
-        txt = string.char(27)..string.sub(txt, #txt-max_width+2)
+        -- get the substring in the vicinity of the cursor
+        max_width = max_width - 2
+        local half_width = math.floor(max_width/2)
+        local start_pos = math.max(1, self.cursor-half_width)
+        local end_pos = math.min(#txt, self.cursor+half_width-1)
+        if self.cursor + half_width > #txt then
+            start_pos = #txt - max_width
+        end
+        if self.cursor - half_width <= 1 then
+            end_pos = max_width + 1
+        end
+        txt = ('%s%s%s'):format(start_pos == 1 and '' or string.char(27),
+                                txt:sub(start_pos, end_pos),
+                                end_pos == #txt and '' or string.char(26))
     end
     dc:advance(self.text_offset):string(txt)
 end
@@ -256,9 +282,7 @@ function EditField:onInput(keys)
             return true
         end
         return not not self.key
-    end
-
-    if keys.SEC_SELECT then
+    elseif keys.SEC_SELECT then
         if self.key then
             self:setFocus(false)
         end
@@ -267,17 +291,42 @@ function EditField:onInput(keys)
             return true
         end
         return not not self.key
-    end
-
-    if keys._STRING then
+    elseif keys.CURSOR_LEFT then
+        self.cursor = math.max(1, self.cursor - 1)
+        return true
+    elseif keys.A_MOVE_W_DOWN then -- Ctrl-Left (prev word start)
+        local _, prev_word_start = self.text:sub(1, self.cursor-1):
+                                                    find('.*[^%w_%-]+[%w_%-]')
+        self.cursor = prev_word_start or 1
+        return true
+    elseif keys.A_CARE_MOVE_W then -- Alt-Left (home)
+        self.cursor = 1
+        return true
+    elseif keys.CURSOR_RIGHT then
+        self.cursor = math.min(self.cursor + 1, #self.text + 1)
+        return true
+    elseif keys.A_MOVE_E_DOWN then -- Ctrl-Right (next word end)
+        local _, next_word_end = self.text:find('[%w_%-]+[^%w_%-]', self.cursor)
+        self.cursor = next_word_end or #self.text + 1
+        return true
+    elseif keys.A_CARE_MOVE_E then -- Alt-Right (end)
+        self.cursor = #self.text + 1
+        return true
+    elseif keys._STRING then
         local old = self.text
         if keys._STRING == 0 then
             -- handle backspace
-            self.text = string.sub(old, 1, #old-1)
+            local del_pos = self.cursor - 1
+            if del_pos > 0 then
+                self.text = old:sub(1, del_pos-1) .. old:sub(del_pos+1)
+                self.cursor = del_pos
+            end
         else
             local cv = string.char(keys._STRING)
             if not self.on_char or self.on_char(cv, old) then
-                self.text = old .. cv
+                self.text = old:sub(1, self.cursor-1) .. cv ..
+                                                        old:sub(self.cursor)
+                self.cursor = self.cursor + 1
             end
         end
         if self.on_change and self.text ~= old then

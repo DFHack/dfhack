@@ -3904,6 +3904,13 @@ and then call the ``on_submit`` callback. Pressing the Escape key will also
 release keyboard focus, but first it will restore the text that was displayed
 before the ``EditField`` gained focus and then call the ``on_change`` callback.
 
+The ``EditField`` cursor can be moved to where you want to insert/remove text.
+The following cursor movement keys are recognized:
+
+- Left/Right arrow: move the cursor one character to the left or right.
+- Ctrl-Left/Right arrow: move the cursor one word to the left or right.
+- Alt-Left/Right arrow: move the cursor to the beginning/end of the text.
+
 Label class
 -----------
 

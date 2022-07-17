@@ -3904,8 +3904,9 @@ and then call the ``on_submit`` callback. Pressing the Escape key will also
 release keyboard focus, but first it will restore the text that was displayed
 before the ``EditField`` gained focus and then call the ``on_change`` callback.
 
-The ``EditField`` cursor can be moved to where you want to insert/remove text.
-The following cursor movement keys are recognized:
+The ``EditField`` cursor can be moved to where you want to insert/remove text
+by clicking the mouse at that position. In addition, the following cursor
+movement keys are recognized:
 
 - Left/Right arrow: move the cursor one character to the left or right.
 - Ctrl-Left/Right arrow: move the cursor one word to the left or right.
@@ -4135,10 +4136,10 @@ It has the following attributes:
 :on_select: Selection change callback; called as ``on_select(index,choice)``.
             This is also called with *nil* arguments if ``setChoices`` is called
             with an empty list.
-:on_submit: Enter key callback; if specified, the list reacts to the key
-            and calls it as ``on_submit(index,choice)``.
-:on_submit2: Shift-Enter key callback; if specified, the list reacts to the key
-             and calls it as ``on_submit2(index,choice)``.
+:on_submit: Enter key or mouse click callback; if specified, the list calls it
+            as ``on_submit(index,choice)``.
+:on_submit2: Shift-Enter key callback; if specified, the list calls it as
+             ``on_submit2(index,choice)``.
 :row_height: Height of every row in text lines.
 :icon_width: If not *nil*, the specified number of character columns
              are reserved to the left of the list item for the icons.

@@ -265,7 +265,7 @@ function EditField:onInput(keys)
 
     if self.key and keys.LEAVESCREEN then
         local old = self.text
-        self.text = self.saved_text
+        self:setText(self.saved_text)
         if self.on_change and old ~= self.saved_text then
             self.on_change(self.text, old)
         end
@@ -291,26 +291,32 @@ function EditField:onInput(keys)
             return true
         end
         return not not self.key
+    elseif keys._MOUSE_L then
+        local mouse_x, mouse_y = self:getMousePos()
+        if mouse_x then
+            self:setCursor(mouse_x)
+            return true
+        end
     elseif keys.CURSOR_LEFT then
-        self.cursor = math.max(1, self.cursor - 1)
+        self:setCursor(self.cursor - 1)
         return true
     elseif keys.A_MOVE_W_DOWN then -- Ctrl-Left (prev word start)
         local _, prev_word_start = self.text:sub(1, self.cursor-1):
                                                     find('.*[^%w_%-]+[%w_%-]')
-        self.cursor = prev_word_start or 1
+        self:setCursor(prev_word_start or 1)
         return true
     elseif keys.A_CARE_MOVE_W then -- Alt-Left (home)
-        self.cursor = 1
+        self:setCursor(1)
         return true
     elseif keys.CURSOR_RIGHT then
-        self.cursor = math.min(self.cursor + 1, #self.text + 1)
+        self:setCursor(self.cursor + 1)
         return true
     elseif keys.A_MOVE_E_DOWN then -- Ctrl-Right (next word end)
         local _, next_word_end = self.text:find('[%w_%-]+[^%w_%-]', self.cursor)
-        self.cursor = next_word_end or #self.text + 1
+        self:setCursor(next_word_end)
         return true
     elseif keys.A_CARE_MOVE_E then -- Alt-Right (end)
-        self.cursor = #self.text + 1
+        self:setCursor()
         return true
     elseif keys._STRING then
         local old = self.text
@@ -318,15 +324,14 @@ function EditField:onInput(keys)
             -- handle backspace
             local del_pos = self.cursor - 1
             if del_pos > 0 then
-                self.text = old:sub(1, del_pos-1) .. old:sub(del_pos+1)
-                self.cursor = del_pos
+                self:setText(old:sub(1, del_pos-1) .. old:sub(del_pos+1),
+                             del_pos)
             end
         else
             local cv = string.char(keys._STRING)
             if not self.on_char or self.on_char(cv, old) then
-                self.text = old:sub(1, self.cursor-1) .. cv ..
-                                                        old:sub(self.cursor)
-                self.cursor = self.cursor + 1
+                self:setText(old:sub(1,self.cursor-1)..cv..old:sub(self.cursor),
+                             self.cursor + 1)
             end
         end
         if self.on_change and self.text ~= old then

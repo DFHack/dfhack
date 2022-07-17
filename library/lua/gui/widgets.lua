@@ -187,9 +187,13 @@ EditField.ATTRS{
     on_submit2 = DEFAULT_NIL,
     key = DEFAULT_NIL,
     key_sep = DEFAULT_NIL,
-    frame = {h=1},
     modal = false,
 }
+
+function EditField:preinit(init_table)
+    local frame = init_table.frame or {}
+    frame.h = frame.h or 1
+end
 
 function EditField:init()
     local function on_activate()
@@ -742,6 +746,16 @@ HotkeyLabel.ATTRS{
 function HotkeyLabel:init()
     self:setText{{key=self.key, key_sep=self.key_sep, text=self.label,
                   on_activate=self.on_activate}}
+end
+
+function HotkeyLabel:onInput(keys)
+    if HotkeyLabel.super.onInput(self, keys) then
+        return true
+    elseif keys._MOUSE_L and self:getMousePos() then
+        self.on_activate()
+        return true
+    end
+
 end
 
 ----------------------

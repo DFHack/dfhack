@@ -197,6 +197,7 @@ function EditField:init()
         self:setFocus(true)
     end
 
+    self.start_pos = 1
     self.cursor = 1
 
     self:addviews{HotkeyLabel{frame={t=0,l=0},
@@ -238,6 +239,7 @@ function EditField:onRenderBody(dc)
     local txt = self.text:sub(1, self.cursor - 1) .. cursor_char ..
                                                 self.text:sub(self.cursor + 1)
     local max_width = dc.width - self.text_offset
+    self.start_pos = 1
     if #txt > max_width then
         -- get the substring in the vicinity of the cursor
         max_width = max_width - 2
@@ -245,11 +247,12 @@ function EditField:onRenderBody(dc)
         local start_pos = math.max(1, self.cursor-half_width)
         local end_pos = math.min(#txt, self.cursor+half_width-1)
         if self.cursor + half_width > #txt then
-            start_pos = #txt - max_width
+            start_pos = #txt - (max_width - 1)
         end
         if self.cursor - half_width <= 1 then
             end_pos = max_width + 1
         end
+        self.start_pos = start_pos > 1 and start_pos - 1 or start_pos
         txt = ('%s%s%s'):format(start_pos == 1 and '' or string.char(27),
                                 txt:sub(start_pos, end_pos),
                                 end_pos == #txt and '' or string.char(26))
@@ -294,7 +297,7 @@ function EditField:onInput(keys)
     elseif keys._MOUSE_L then
         local mouse_x, mouse_y = self:getMousePos()
         if mouse_x then
-            self:setCursor(mouse_x)
+            self:setCursor(self.start_pos + mouse_x)
             return true
         end
     elseif keys.CURSOR_LEFT then

@@ -1019,6 +1019,15 @@ function List:onInput(keys)
     elseif self.on_submit2 and keys.SEC_SELECT then
         self:submit2()
         return true
+    elseif keys._MOUSE_L then
+        local _, mouse_y = self:getMousePos()
+        if mouse_y and #self.choices > 0 and
+                mouse_y < (#self.choices-self.page_top+1) * self.row_height then
+            local idx = self.page_top + math.floor(mouse_y/self.row_height)
+            self:setSelected(idx)
+            self:submit()
+            return true
+        end
     else
         for k,v in pairs(self.scroll_keys) do
             if keys[k] then

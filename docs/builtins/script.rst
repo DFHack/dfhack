@@ -15,5 +15,5 @@ Usage::
 Examples:
 
 - ``script startup.txt``
-  Executes the commands in ``startup.txt``, which exists in your DF game
-  directory.
+    Executes the commands in ``startup.txt``, which exists in your DF game
+    directory.

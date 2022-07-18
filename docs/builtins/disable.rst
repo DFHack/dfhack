@@ -13,8 +13,8 @@ and disabled plugins, and shows whether that can be changed through the same
 commands. Passing plugin names to these commands will enable or disable the
 specified plugins. For example, to disable the `manipulator` plugin::
 
-  disable manipulator
+    disable manipulator
 
 It is also possible to enable or disable multiple plugins at once::
 
-  disable manipulator search
+    disable manipulator search

@@ -52,12 +52,9 @@ command_result cmd_3dveins(color_ostream &out, std::vector <std::string> & param
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "3dveins", "Rewrites the veins to make them extend in 3D space.",
-        cmd_3dveins, false,
-        "  Run this after embark to change all veins on the map to a shape\n"
-        "  that consistently spans Z levels. The operation preserves the\n"
-        "  mineral counts reported by prospect.\n"
-    ));
+        "3dveins",
+        "Rewrites the veins to make them extend in 3D space.",
+        cmd_3dveins));
     return CR_OK;
 }
 

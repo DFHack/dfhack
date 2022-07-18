@@ -1,16 +1,20 @@
 autochop
 ========
-Automatically manage tree cutting designation to keep available logs withing given
-quotas.
 
-Open the dashboard by running::
+Auto-harvest trees when low on stockpiled logs. This plugin can designate trees
+for chopping when your stocks are low on logs.
+
+Usage::
 
     enable autochop
 
-The plugin must be activated (with :kbd:`d`-:kbd:`t`-:kbd:`c`-:kbd:`a`) before
-it can be used. You can then set logging quotas and restrict designations to
-specific burrows (with 'Enter') if desired. The plugin's activity cycle runs
-once every in game day.
+Then, open the settings menu with :kbd:`c` from the designations menu (the
+option appears when you have "Chop Down Trees" selected with :kbd:`d`-:kbd:`t`).
 
-If you add ``enable autochop`` to your dfhack.init there will be a hotkey to
-open the dashboard from the chop designation menu.
+Set your desired thresholds and enable autochopping with :kbd:`a`.
+
+You can also restrict autochopping to specific burrows. Highlight a burrow name
+with the Up/Down arrow keys and hit :kbd:`Enter` to mark it as the autochop
+burrrow.
+
+Autochop checks your stock of logs and designates trees once every in game day.

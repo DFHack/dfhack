@@ -105,6 +105,8 @@ def doc_all_dirs():
     # TODO: as we scan the docs, parse out the tags and short descriptions and
     # build a map for use in generating the tags pages and links in the tool
     # doc footers
+    for root, _, files in os.walk('docs/builtins'):
+        tools.extend(doc_dir(root, files, os.path.relpath(root, 'docs/builtins')))
     for root, _, files in os.walk('docs/plugins'):
         tools.extend(doc_dir(root, files, os.path.relpath(root, 'docs/plugins')))
     for root, _, files in os.walk('scripts/docs'):
@@ -266,6 +268,7 @@ exclude_patterns = [
     'depends/*',
     'docs/html/*',
     'docs/text/*',
+    'docs/builtins/*',
     'docs/plugins/*',
     'scripts/docs/*',
     ]

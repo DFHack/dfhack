@@ -30,7 +30,25 @@ User Manual
    /docs/Installing
    /docs/Support
    /docs/Core
-   /docs/index-tools
    /docs/guides/index
    /docs/index-about
    /docs/index-dev
+
+Tools
+=====
+
+DFHack commands, plugins, and scripts are grouped by tags to make it easier to
+find groups of related tools.
+
+.. note::
+    In order to avoid user confusion, as a matter of policy all GUI tools
+    display the word :guilabel:`DFHack` on the screen somewhere while active.
+
+    When that is not appropriate because they merely add keybinding hints to
+    existing DF screens, they deliberately use red instead of green for the key.
+
+.. toctree::
+   :maxdepth: 1
+
+   /docs/Tags
+   /docs/index-tools

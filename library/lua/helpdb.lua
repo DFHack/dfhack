@@ -16,7 +16,6 @@ local _ENV = mkmodule('helpdb')
 
 -- paths
 local RENDERED_PATH = 'hack/docs/docs/tools/'
-local BUILTIN_HELP = 'hack/docs/docs/Builtin.txt'
 local TAG_DEFINITIONS = 'hack/docs/docs/Tags.txt'
 
 -- used when reading help text embedded in script sources
@@ -25,6 +24,7 @@ local SCRIPT_DOC_END = ']====]'
 local SCRIPT_DOC_BEGIN_RUBY = '=begin'
 local SCRIPT_DOC_END_RUBY = '=end'
 
+-- enums
 local ENTRY_TYPES = {
     BUILTIN='builtin',
     PLUGIN='plugin',
@@ -36,6 +36,33 @@ local HELP_SOURCES = {
     RENDERED='rendered',
     PLUGIN='plugin',
     SCRIPT='script',
+}
+
+-- builtins
+local BUILTINS = {
+    'alias',
+    'clear',
+    'cls',
+    'devel/dump-rpc',
+    'die',
+    'dir',
+    'disable',
+    'enable',
+    'fpause',
+    'help',
+    'hide',
+    'keybinding',
+    'kill-lua',
+    'load',
+    'ls',
+    'plug',
+    'reload',
+    'script',
+    'sc-script',
+    'show',
+    'tags',
+    'type',
+    'unload',
 }
 
 -- entry name -> {
@@ -246,46 +273,15 @@ local function update_db(old_db, db, source, entry_name, kwargs)
     end
 end
 
-local BUILTINS = {
-    alias='Configure helper aliases for other DFHack commands.',
-    cls='Clear the console screen.',
-    clear='Clear the console screen.',
-    ['devel/dump-rpc']='Write RPC endpoint information to a file.',
-    die='Force DF to close immediately, without saving.',
-    enable='Enable a plugin or persistent script.',
-    disable='Disable a plugin or persistent script.',
-    fpause='Force DF to pause.',
-    help='Usage help for the given plugin, command, or script.',
-    hide='Hide the terminal window (Windows only).',
-    keybinding='Modify bindings of commands to in-game key shortcuts.',
-    ['kill-lua']='Stop a misbehaving Lua script.',
-    ['load']='Load and register a plugin library.',
-    unload='Unregister and unload a plugin.',
-    reload='Unload and reload a plugin library.',
-    ls='List commands, optionally filtered by a tag or substring.',
-    dir='List commands, optionally filtered by a tag or substring.',
-    plug='List plugins and whether they are enabled.',
-    ['sc-script']='Automatically run specified scripts on state change events.',
-    script='Run commands specified in a file.',
-    show='Show a hidden terminal window (Windows only).',
-    tags='List the tags that the DFHack tools are grouped by.',
-    ['type']='Discover how a command is implemented.',
-}
-
 -- add the builtin commands to the db
 local function scan_builtins(old_db, db)
-    local entry = make_default_entry('builtin',
-                {[ENTRY_TYPES.BUILTIN]=true, [ENTRY_TYPES.COMMAND]=true},
-                HELP_SOURCES.RENDERED, 0, BUILTIN_HELP)
-    -- read in builtin help
-    local f = io.open(BUILTIN_HELP)
-    if f then
-        entry.long_help = f:read('*all')
-    end
-    for b,short_help in pairs(BUILTINS) do
-        local builtin_entry = copyall(entry)
-        builtin_entry.short_help = short_help
-        db[b] = builtin_entry
+    local entry_types = {[ENTRY_TYPES.BUILTIN]=true, [ENTRY_TYPES.COMMAND]=true}
+    for _,builtin in ipairs(BUILTINS) do
+        update_db(old_db, db,
+                    has_rendered_help(builtin) and
+                        HELP_SOURCES.RENDERED or HELP_SOURCES.STUB,
+                    builtin,
+                    {entry_types=entry_types})
     end
 end
 

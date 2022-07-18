@@ -106,6 +106,7 @@ using namespace DFHack;
 #include "df/viewscreen_unitlistst.h"
 #include "df/viewscreen_unitst.h"
 #include "df/viewscreen_reportlistst.h"
+#include "df/viewscreen_treasurelistst.h"
 #include "df/viewscreen_workquota_conditionst.h"
 #include "df/viewscreen_workshop_profilest.h"
 #include "df/world.h"
@@ -1178,6 +1179,13 @@ df::item *Gui::getAnyItem(df::viewscreen *top)
             return vector_get(screen->items[screen->item_type[screen->sel_type]],
                 screen->sel_item);
 
+        return NULL;
+    }
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_treasurelistst, top))
+    {
+        if (world)
+            return vector_get(world->items.other[df::items_other_id::ANY_ARTIFACT], screen->sel_idx);
         return NULL;
     }
 

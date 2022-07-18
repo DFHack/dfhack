@@ -58,7 +58,6 @@ namespace DFHack
     class Process;
     class Module;
     class Materials;
-    class Notes;
     struct VersionInfo;
     class VersionInfoFactory;
     class PluginManager;
@@ -69,10 +68,6 @@ namespace DFHack
     namespace Lua { namespace Core {
         DFHACK_EXPORT void Reset(color_ostream &out, const char *where);
     } }
-    namespace Windows
-    {
-        class df_window;
-    }
 
     namespace Screen
     {
@@ -126,12 +121,6 @@ namespace DFHack
         friend int  ::SDL_Init(uint32_t flags);
         friend int  ::wgetch(WINDOW * w);
 #endif
-        friend int  ::egg_init(void);
-        friend int  ::egg_shutdown(void);
-        friend int  ::egg_tick(void);
-        friend int  ::egg_prerender(void);
-        friend int  ::egg_sdl_event(SDL::Event* event);
-        friend int  ::egg_curses_event(int orig_return);
     public:
         /// Get the single Core instance or make one.
         static Core& getInstance()
@@ -146,8 +135,6 @@ namespace DFHack
 
         /// get the materials module
         Materials * getMaterials();
-        /// get the notes module
-        Notes * getNotes();
         /// get the graphic module
         Graphic * getGraphic();
         /// sets the current hotkey command
@@ -193,7 +180,6 @@ namespace DFHack
 
         std::unique_ptr<DFHack::Process> p;
         std::shared_ptr<DFHack::VersionInfo> vinfo;
-        DFHack::Windows::df_window * screen_window;
 
         static void print(const char *format, ...) Wformat(printf,1,2);
         static void printerr(const char *format, ...) Wformat(printf,1,2);
@@ -213,7 +199,6 @@ namespace DFHack
 
         bool Init();
         int Update (void);
-        int TileUpdate (void);
         int Shutdown (void);
         int DFH_SDL_Event(SDL::Event* event);
         bool ncurses_wgetch(int in, int & out);
@@ -242,7 +227,6 @@ namespace DFHack
         struct
         {
             Materials * pMaterials;
-            Notes * pNotes;
             Graphic * pGraphic;
         } s_mods;
         std::vector<std::unique_ptr<Module>> allModules;

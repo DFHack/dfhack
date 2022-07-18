@@ -1,6 +1,9 @@
 add-spatter
 ===========
-This plugin makes reactions with names starting with ``SPATTER_ADD_``
-produce contaminants on the items instead of improvements.  The plugin is
-intended to give some use to all those poisons that can be bought from caravans,
-so they're immune to being washed away by water or destroyed by `clean`.
+
+Make tagged reactions produce contaminants. The plugin is intended to give some
+use to all those poisons that can be bought from caravans. It automatically
+enables itself when you load a world with reactions that include names starting
+with ``SPATTER_ADD_``. These reactions will then produce contaminants on items
+instead of improvements. The contaminants are immune to being washed away by
+water or destroyed by `clean`.

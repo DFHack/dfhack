@@ -297,9 +297,9 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(
-        PluginCommand(
-        "automelt", "Automatically melt metal items in marked stockpiles.",
-        automelt_cmd, false, ""));
+        PluginCommand("automelt",
+                      "Automatically melt metal items in marked stockpiles.",
+                      automelt_cmd));
 
     return CR_OK;
 }

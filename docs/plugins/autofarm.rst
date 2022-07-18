@@ -1,21 +1,32 @@
 autofarm
 ========
 
-Automatically handles crop selection in farm plots based on current plant
-stocks, and selects crops for planting if current stock is below a threshold.
-Selected crops are dispatched on all farmplots. (Note that this plugin replaces
-an older Ruby script of the same name.)
-
-Use the `enable` or `disable <disable>` commands to change whether this plugin is
-enabled.
+Automatically manage farm crop selection. This plugin periodically scans your
+plant stocks and assigns crops to your farm plots based on which plant stocks
+are low (as long as you have the appropriate seeds). The target threshold for
+each crop type is configurable.
 
 Usage:
 
-* ``autofarm runonce``:
-    Updates all farm plots once, without enabling the plugin
-* ``autofarm status``:
-    Prints status information, including any applied limits
-* ``autofarm default 30``:
-    Sets the default threshold
-* ``autofarm threshold 150 helmet_plump tail_pig``:
-    Sets thresholds of individual plants
+- ``enable autofarm``
+    Enable the plugin and start managing crop assignment.
+* ``autofarm runonce``
+    Updates all farm plots once, without enabling the plugin.
+* ``autofarm status``
+    Prints status information, including any defined thresholds.
+* ``autofarm default <number>``
+    Sets the default threshold.
+* ``autofarm threshold <number> <type> [<type> ...]``
+    Sets thresholds of individual plant types.
+
+You can find the identifiers for the crop types in your world by running the
+following command::
+
+    lua "for _,plant in ipairs(df.global.world.raws.plants.all) do if plant.flags.SEED then print(plant.id) end end"
+
+Examples:
+
+- ``autofarm default 30``
+    Set the default threshold to 30.
+- ``autofarm threshold 150 MUSHROOM_HELMET_PLUMP GRASS_TAIL_PIG``
+    Set the threshold for Plump Helmets and Pig Tails to 150

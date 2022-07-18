@@ -82,7 +82,6 @@ if(BUILD_SUPPORTED)
 
     dfhack_plugin(3dveins 3dveins.cpp)
     dfhack_plugin(add-spatter add-spatter.cpp)
-    # dfhack_plugin(advtools advtools.cpp)
     dfhack_plugin(autochop autochop.cpp)
     dfhack_plugin(autoclothing autoclothing.cpp)
     dfhack_plugin(autodump autodump.cpp)

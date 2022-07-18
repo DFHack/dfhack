@@ -3133,7 +3133,10 @@ static int internal_getCommandHelp(lua_State *L)
             {
                 help += ".";
             }
-            help += "\n" + pc.usage;
+            if (pc.usage.size())
+            {
+                help += "\n" + pc.usage;
+            }
             lua_pushstring(L, help.c_str());
             return 1;
         }

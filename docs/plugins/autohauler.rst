@@ -21,7 +21,8 @@ can be changed by the user.
 Usage:
 
 - ``enable autohauler``
-    Start managing hauling labors.
+    Start managing hauling labors. This is normally all you need to do.
+    Autohauler works well on default settings.
 - ``autohauler status``
     Show autohauler status and status of fort dwarves.
 - ``autohauler <labor> haulers``

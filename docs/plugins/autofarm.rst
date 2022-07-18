@@ -10,13 +10,13 @@ Usage:
 
 - ``enable autofarm``
     Enable the plugin and start managing crop assignment.
-* ``autofarm runonce``
+- ``autofarm runonce``
     Updates all farm plots once, without enabling the plugin.
-* ``autofarm status``
+- ``autofarm status``
     Prints status information, including any defined thresholds.
-* ``autofarm default <number>``
+- ``autofarm default <number>``
     Sets the default threshold.
-* ``autofarm threshold <number> <type> [<type> ...]``
+- ``autofarm threshold <number> <type> [<type> ...]``
     Sets thresholds of individual plant types.
 
 You can find the identifiers for the crop types in your world by running the

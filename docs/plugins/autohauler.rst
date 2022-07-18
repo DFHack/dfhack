@@ -41,6 +41,7 @@ Usage:
     In the next cycle, output the state of every dwarf.
 
 Examples:
+
 - ``autohauler HAUL_STONE haulers``
     Set stone hauling as a hauling labor (this is already the default).
 - ``autohauler RECOVER_WOUNDED allow``

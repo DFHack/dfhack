@@ -1,38 +1,45 @@
 burrows
 =======
-Miscellaneous burrow control. Allows manipulating burrows and automated burrow
-expansion while digging.
 
-Options:
+Quick commands for burrow control. Allows manipulating burrows and automated
+burrow expansion while digging.
 
-:enable feature ...:
-    Enable features of the plugin.
-:disable feature ...:
-    Disable features of the plugin.
-:clear-unit burrow burrow ...:
-    Remove all units from the burrows.
-:clear-tiles burrow burrow ...:
-    Remove all tiles from the burrows.
-:set-units target-burrow src-burrow ...:
-    Clear target, and adds units from source burrows.
-:add-units target-burrow src-burrow ...:
+Usage:
+
+- ``enable auto-grow``
+    When a wall inside a burrow with a name ending in '+' is dug out, the burrow
+    will be extended to newly-revealed adjacent walls. This final '+' may be
+    omitted in burrow name args of other ``burrows`` commands. Note that digging
+    1-wide corridors with the miner inside the burrow is SLOW.
+- ``disable auto-grow``
+    Disables auto-grow processing.
+- ``clear-unit <burrow> [<burrow> ...]``
+    Remove all units from the named burrows.
+- ``clear-tiles <burrow> [<burrow> ...]``
+    Remove all tiles from the named burrows.
+- ``set-units target-burrow <burrow> [<burrow> ...]``
+    Clear all units from the target burrow, then add units from the named source
+    burrows.
+- ``add-units target-burrow <burrow> [<burrow> ...]``
     Add units from the source burrows to the target.
-:remove-units target-burrow src-burrow ...:
+- ``remove-units target-burrow <burrow> [<burrow> ...]``
     Remove units in source burrows from the target.
-:set-tiles target-burrow src-burrow ...:
-    Clear target and adds tiles from the source burrows.
-:add-tiles target-burrow src-burrow ...:
+- ``set-tiles target-burrow <burrow> [<burrow> ...]``
+    Clear target burrow tiles and adds tiles from the names source burrows.
+- ``add-tiles target-burrow <burrow> [<burrow> ...]``
     Add tiles from the source burrows to the target.
-:remove-tiles target-burrow src-burrow ...:
+- ``remove-tiles target-burrow <burrow> [<burrow> ...]``
     Remove tiles in source burrows from the target.
 
-    For these three options, in place of a source burrow it is
-    possible to use one of the following keywords: ABOVE_GROUND,
-    SUBTERRANEAN, INSIDE, OUTSIDE, LIGHT, DARK, HIDDEN, REVEALED
+In place of a source burrow, you can use one of the following keywords:
 
-Features:
+- ``ABOVE_GROUND``
+- ``SUBTERRANEAN``
+- ``INSIDE``
+- ``OUTSIDE``
+- ``LIGHT``
+- ``DARK``
+- ``HIDDEN``
+- ``REVEALED``
 
-:auto-grow: When a wall inside a burrow with a name ending in '+' is dug
-            out, the burrow is extended to newly-revealed adjacent walls.
-            This final '+' may be omitted in burrow name args of commands above.
-            Digging 1-wide corridors with the miner inside the burrow is SLOW.
+to add tiles with the given properties.

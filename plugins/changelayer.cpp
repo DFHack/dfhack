@@ -31,66 +31,14 @@ DFHACK_PLUGIN("changelayer");
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(cursor);
 
-const string changelayer_help =
-    "  Allows to change the material of whole geology layers.\n"
-    "  Can have impact on all surrounding regions, not only your embark!\n"
-    "  By default changing stone to soil and vice versa is not allowed.\n"
-    "  By default changes only the layer at the cursor position.\n"
-    "  Note that one layer can stretch across lots of z levels.\n"
-    "  By default changes only the geology which is linked to the biome under the\n"
-    "  cursor. That geology might be linked to other biomes as well, though.\n"
-    "  Mineral veins and gem clusters will stay on the map.\n"
-    "  Use 'changevein' for them.\n\n"
-    "  tl;dr: You will end up with changing quite big areas in one go.\n\n"
-    "Options (first parameter MUST be the material id):\n"
-    "  all_biomes - Change layer for all biomes on your map.\n"
-    "               Result may be undesirable since the same layer\n"
-    "               can AND WILL be on different z-levels for different biomes.\n"
-    "               Use the tool 'probe' to get an idea how layers and biomes\n"
-    "               are distributed on your map.\n"
-    "  all_layers - Change all layers on your map.\n"
-    "               Candy mountain, anyone?\n"
-    "               Will make your map quite boring, but tidy.\n"
-    "  force      - Allow changing stone to soil and vice versa.\n"
-    "               !!THIS CAN HAVE WEIRD EFFECTS, USE WITH CARE!!\n"
-    "               Note that soil will not be magically replaced with stone.\n"
-    "                 You will, however, get a stone floor after digging so it\n"
-    "                 will allow the floor to be engraved.\n"
-    "               Note that stone will not be magically replaced with soil.\n"
-    "                 You will, however, get a soil floor after digging so it\n"
-    "                 could be helpful for creating farm plots on maps with no soil.\n"
-    "  verbose    - Give some more details about what is being changed.\n"
-    "  trouble    - Give some advice for known problems.\n"
-    "Example:\n"
-    "  changelayer GRANITE\n"
-    "    Convert layer at cursor position into granite.\n"
-    "  changelayer SILTY_CLAY force\n"
-    "    Convert layer at cursor position into clay even if it's stone.\n"
-    "  changelayer MARBLE allbiomes alllayers\n"
-    "    Convert all layers of all biomes into marble.\n";
-
-const string changelayer_trouble =
-    "Known problems with changelayer:\n\n"
-    "  Nothing happens, the material stays the old.\n"
-    "    Pause/unpause the game and/or move the cursor a bit. Then retry.\n"
-    "    Try changing another layer, undo the changes and try again.\n"
-    "    Try saving and loading the game.\n\n"
-    "  Weird stuff happening after using the 'force' option.\n"
-    "    Change former stone layers back to stone, soil back to soil.\n"
-    "    If in doubt, use the 'probe' tool to find tiles with soil walls\n"
-    "    and stone layer type or the other way round.\n";
-
-
 command_result changelayer (color_ostream &out, std::vector <std::string> & parameters);
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "changelayer", "Change a whole geology layer.",
-        changelayer, false, /* true means that the command can't be used from non-interactive user interface */
-        // Extended help string. Used by CR_WRONG_USAGE and the help command:
-        changelayer_help.c_str()
-    ));
+        "changelayer",
+        "Change a whole geology layer.",
+        changelayer));
     return CR_OK;
 }
 
@@ -120,13 +68,7 @@ command_result changelayer (color_ostream &out, std::vector <std::string> & para
     {
         if(parameters[i] == "help" || parameters[i] == "?")
         {
-            out.print("%s",changelayer_help.c_str());
-            return CR_OK;
-        }
-        if(parameters[i] == "trouble")
-        {
-            out.print("%s",changelayer_trouble.c_str());
-            return CR_OK;
+            return CR_WRONG_USAGE;
         }
         if(parameters[i] == "force")
             force = true;

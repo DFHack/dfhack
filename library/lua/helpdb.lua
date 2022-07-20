@@ -305,7 +305,8 @@ local function scan_plugins(old_db, db)
                             HELP_SOURCES.RENDERED or HELP_SOURCES.PLUGIN,
                       command, {entry_types=entry_types})
         end
-        if not includes_plugin then
+        if not includes_plugin and
+                dfhack.internal.isPluginEnableable(plugin) then
             update_db(old_db, db,
                       has_rendered_help(plugin) and
                             HELP_SOURCES.RENDERED or HELP_SOURCES.STUB,

@@ -1,6 +1,9 @@
 autoclothing
 ============
 
+Tags:
+:dfhack-keybind:`autoclothing`
+
 Automatically manage clothing work orders. It allows you to set how many of each
 clothing type every citizen should have.
 
@@ -15,7 +18,8 @@ anything your civilization can produce, such as "dress" or "mitten".
 When invoked without a number, it shows the current configuration for that
 material and item.
 
-Examples:
+Examples
+--------
 
 * ``autoclothing cloth "short skirt" 10``:
     Sets the desired number of cloth short skirts available per citizen to 10.

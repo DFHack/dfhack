@@ -1,6 +1,9 @@
 autodump-destroy-item
 =====================
 
+Tags:
+:dfhack-keybind:`autodump-destroy-item`
+
 Destroy the selected item. The item may be selected in the :kbd:`k` list or in
 the container item list. If called again before the game is resumed, cancels
 destruction of the item.

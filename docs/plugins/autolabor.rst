@@ -1,6 +1,9 @@
 autolabor
 =========
 
+Tags:
+:dfhack-keybind:`autolabor`
+
 Automatically manage dwarf labors. Autolabor attempts to keep as many dwarves as
 possible busy while allowing dwarves to specialize in specific skills.
 
@@ -49,7 +52,8 @@ dwarfs that meet any of these conditions:
 
 We stop assigning dwarves when we reach the maximum allowed.
 
-Advanced usage:
+Advanced usage
+--------------
 
 - ``autolabor <labor> <minimum> [<maximum>] [<talent pool>]``
     Set range of dwarves assigned to a labor, optionally specifying the size of
@@ -68,7 +72,8 @@ Advanced usage:
 
 See `autolabor-artisans` for a differently-tuned setup.
 
-Examples:
+Examples
+--------
 
 - ``autolabor MINE 5``
     Keep at least 5 dwarves with mining enabled.

@@ -1,6 +1,9 @@
 autofarm
 ========
 
+Tags:
+:dfhack-keybind:`autofarm`
+
 Automatically manage farm crop selection. This plugin periodically scans your
 plant stocks and assigns crops to your farm plots based on which plant stocks
 are low (as long as you have the appropriate seeds). The target threshold for
@@ -24,7 +27,8 @@ following command::
 
     lua "for _,plant in ipairs(df.global.world.raws.plants.all) do if plant.flags.SEED then print(plant.id) end end"
 
-Examples:
+Examples
+--------
 
 - ``autofarm default 30``
     Set the default threshold to 30.

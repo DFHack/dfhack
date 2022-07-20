@@ -1,6 +1,9 @@
 burrows
 =======
 
+Tags:
+:dfhack-keybind:`burrows`
+
 Quick commands for burrow control. Allows manipulating burrows and automated
 burrow expansion while digging.
 

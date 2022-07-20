@@ -1,6 +1,9 @@
 autohauler
 ==========
 
+Tags:
+:dfhack-keybind:`autohauler`
+
 Automatically manage hauling labors. Similar to `autolabor`, but instead of
 managing all labors, ``autohauler`` only addresses hauling labors, leaving the
 assignment of skilled labors entirely up to you. You can use the in-game
@@ -40,7 +43,8 @@ Usage:
 - ``autohauler debug``
     In the next cycle, output the state of every dwarf.
 
-Examples:
+Examples
+--------
 
 - ``autohauler HAUL_STONE haulers``
     Set stone hauling as a hauling labor (this is already the default).

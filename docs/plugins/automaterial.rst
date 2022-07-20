@@ -1,6 +1,9 @@
 automaterial
 ============
 
+Tags:
+:dfhack-keybind:`automaterial`
+
 Sorts building materials by recent usage. This makes building constructions
 (walls, floors, fortifications, etc) much easier by saving you from having to
 trawl through long lists of materials each time you place one.

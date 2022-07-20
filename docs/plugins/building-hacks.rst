@@ -1,6 +1,9 @@
 building-hacks
 ==============
 
+Tags:
+:dfhack-keybind:`building-hacks`
+
 Allows mods to create and manage powered workshops.
 
 Usage::

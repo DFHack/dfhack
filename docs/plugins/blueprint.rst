@@ -1,6 +1,9 @@
 blueprint
 =========
 
+Tags:
+:dfhack-keybind:`blueprint`
+
 Record a live game map in a quickfort blueprint. With ``blueprint``, you can
 export the structure of a portion of your fortress in a blueprint file that you
 (or anyone else) can later play back with `quickfort`.
@@ -16,7 +19,8 @@ Usage::
     blueprint <width> <height> [<depth>] [<name> [<phases>]] [<options>]
     blueprint gui [<name> [<phases>]] [<options>]
 
-Examples:
+Examples
+--------
 
 - ``blueprint gui``
     Runs `gui/blueprint`, the interactive frontend, where all configuration for
@@ -30,7 +34,8 @@ Examples:
     the start of the blueprint area is set to a specific value instead of using
     the in-game cursor position.
 
-Positional Parameters:
+Positional parameters
+---------------------
 
 - ``width``
     Width of the area (in tiles) to translate.
@@ -46,7 +51,8 @@ Positional Parameters:
     some characters other than numbers so the name won't be confused with the
     optional ``depth`` parameter.
 
-Phases:
+Phases
+------
 
 If you want to generate blueprints only for specific phases, add their names to
 the commandline, anywhere after the blueprint base name. You can list multiple
@@ -68,7 +74,8 @@ phases; just separate them with a space.
 If no phases are specified, phases are autodetected. For example, a ``#place``
 blueprint will be created only if there are stockpiles in the blueprint area.
 
-Options:
+Options
+-------
 
 - ``-c``, ``--cursor <x>,<y>,<z>``
     Use the specified map coordinates instead of the current cursor position for
@@ -98,7 +105,8 @@ Options:
     "none", which will create a standard quickfort
     `multi-blueprint <quickfort-packaging>` file.
 
-Output formats:
+Output formats
+--------------
 
 Here are the values that can be passed to the ``--format`` flag:
 
@@ -109,7 +117,8 @@ Here are the values that can be passed to the ``--format`` flag:
     Makes the blueprints in the ``.csv`` files easier to read and edit with a
     text editor by adding extra spacing and alignment markers.
 
-Splitting output into multiple files:
+Splitting output into multiple files
+------------------------------------
 
 The ``--splitby`` flag can take any of the following values:
 

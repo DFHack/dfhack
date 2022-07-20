@@ -1,6 +1,9 @@
 buildingplan
 ============
 
+Tags:
+:dfhack-keybind:`buildingplan`
+
 Plan building construction before you have materials. This plugin adds a
 planning mode for building placement. You can then place furniture,
 constructions, and other buildings before the required materials are available,

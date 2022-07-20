@@ -1,6 +1,9 @@
 3dveins
 =======
 
+Tags:
+:dfhack-keybind:`3dveins`
+
 Rewrites layer veins to expand in 3D space. Existing, flat veins are removed
 and new 3D veins that naturally span z-levels are generated in their place.
 The transformation preserves the mineral counts reported by `prospect`.
@@ -11,7 +14,8 @@ Usage::
 
 The ``verbose`` option prints out extra information to the console.
 
-Example::
+Example
+-------
 
     3dveins
 

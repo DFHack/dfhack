@@ -1,6 +1,9 @@
 autochop
 ========
 
+Tags:
+:dfhack-keybind:`autochop`
+
 Auto-harvest trees when low on stockpiled logs. This plugin can designate trees
 for chopping when your stocks are low on logs.
 

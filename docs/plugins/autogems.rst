@@ -1,6 +1,9 @@
 autogems
 ========
 
+Tags:
+:dfhack-keybind:`autogems`
+
 Automatically cut rough gems. This plugin periodically scans your stocks of
 rough gems and creates manager orders for cutting them at a Jeweler's Workshop.
 

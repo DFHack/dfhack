@@ -1,6 +1,9 @@
 autodump
 ========
 
+Tags:
+:dfhack-keybind:`autodump`
+
 Quickly designate or teleport items to be dumped. When `enabled <enable>`, this
 plugin adds an option to the :kbd:`q` menu for stockpiles. When the ``autodump``
 option is selected for the stockpile, any items placed in the stockpile will
@@ -19,7 +22,8 @@ Usage::
     enable autodump
     autodump [<options>]
 
-Options:
+Options
+-------
 
 - ``destroy``
     Destroy instead of dumping. Doesn't require a cursor. If ``autodump`` is
@@ -35,7 +39,8 @@ Options:
 - ``forbidden``
     Only process forbidden items (default: only unforbidden).
 
-Examples:
+Examples
+--------
 
 - ``autodump``
     Teleports all unforbidden items marked for dumping to the cursor position.

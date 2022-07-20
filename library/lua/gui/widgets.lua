@@ -121,12 +121,12 @@ ResizingPanel = defclass(ResizingPanel, Panel)
 -- adjust our frame dimensions according to positions and sizes of our subviews
 function ResizingPanel:postUpdateLayout(frame_body)
     local w, h = 0, 0
-    for _,subview in ipairs(self.subviews) do
-        if subview.visible then
-            w = math.max(w, (subview.frame.l or 0) +
-                            (subview.frame.w or frame_body.width))
-            h = math.max(h, (subview.frame.t or 0) +
-                            (subview.frame.h or frame_body.height))
+    for _,s in ipairs(self.subviews) do
+        if s.visible then
+            w = math.max(w, (s.frame and s.frame.l or 0) +
+                            (s.frame and s.frame.w or frame_body.width))
+            h = math.max(h, (s.frame and s.frame.t or 0) +
+                            (s.frame and s.frame.h or frame_body.height))
         end
     end
     if not self.frame then self.frame = {} end
@@ -191,8 +191,8 @@ EditField.ATTRS{
 }
 
 function EditField:preinit(init_table)
-    local frame = init_table.frame or {}
-    frame.h = frame.h or 1
+    init_table.frame = init_table.frame or {}
+    init_table.frame.h = init_table.frame.h or 1
 end
 
 function EditField:init()
@@ -202,7 +202,7 @@ function EditField:init()
     end
 
     self.start_pos = 1
-    self.cursor = 1
+    self.cursor = #self.text + 1
 
     self:addviews{HotkeyLabel{frame={t=0,l=0},
                               key=self.key,

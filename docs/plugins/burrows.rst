@@ -4,45 +4,15 @@ burrows
 Tags:
 :dfhack-keybind:`burrows`
 
-Quick commands for burrow control. Allows manipulating burrows and automated
-burrow expansion while digging.
+Auto-expand burrows as you dig. When a wall inside a burrow with a name ending
+in ``+`` is dug out, the burrow will be extended to newly-revealed adjacent
+walls. Note that digging 1-wide corridors with the miner inside the burrow is
+SLOW.
 
-Usage:
+Usage::
 
-- ``enable auto-grow``
-    When a wall inside a burrow with a name ending in '+' is dug out, the burrow
-    will be extended to newly-revealed adjacent walls. This final '+' may be
-    omitted in burrow name args of other ``burrows`` commands. Note that digging
-    1-wide corridors with the miner inside the burrow is SLOW.
-- ``disable auto-grow``
-    Disables auto-grow processing.
-- ``clear-unit <burrow> [<burrow> ...]``
-    Remove all units from the named burrows.
-- ``clear-tiles <burrow> [<burrow> ...]``
-    Remove all tiles from the named burrows.
-- ``set-units target-burrow <burrow> [<burrow> ...]``
-    Clear all units from the target burrow, then add units from the named source
-    burrows.
-- ``add-units target-burrow <burrow> [<burrow> ...]``
-    Add units from the source burrows to the target.
-- ``remove-units target-burrow <burrow> [<burrow> ...]``
-    Remove units in source burrows from the target.
-- ``set-tiles target-burrow <burrow> [<burrow> ...]``
-    Clear target burrow tiles and adds tiles from the names source burrows.
-- ``add-tiles target-burrow <burrow> [<burrow> ...]``
-    Add tiles from the source burrows to the target.
-- ``remove-tiles target-burrow <burrow> [<burrow> ...]``
-    Remove tiles in source burrows from the target.
+    enable burrows
+    burrows enable auto-grow
 
-In place of a source burrow, you can use one of the following keywords:
-
-- ``ABOVE_GROUND``
-- ``SUBTERRANEAN``
-- ``INSIDE``
-- ``OUTSIDE``
-- ``LIGHT``
-- ``DARK``
-- ``HIDDEN``
-- ``REVEALED``
-
-to add tiles with the given properties.
+Both of the above commands need to be run for the auto-grow functionality to
+work. See the `burrow` command for more burrow-related tools.

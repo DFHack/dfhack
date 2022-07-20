@@ -86,8 +86,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 {
     commands.push_back(PluginCommand("changevein",
         "Changes the material of a mineral inclusion.",
-        df_changevein, false,
-        "Syntax: changevein <inorganic material ID>\n"));
+        df_changevein));
     return CR_OK;
 }
 

@@ -186,7 +186,9 @@ local function update_entry(entry, iterator, opts)
         table.insert(lines, line)
         ::continue::
     end
-    entry.long_help = table.concat(lines, '\n')
+    if #lines > 0 then
+        entry.long_help = table.concat(lines, '\n')
+    end
 end
 
 -- create db entry based on parsing sphinx-rendered help text
@@ -457,13 +459,13 @@ function get_tags()
     return set_to_sorted_list(tag_index)
 end
 
--- returns the description associated with the given tag
-function get_tag_description(tag)
+function get_tag_data(tag)
     ensure_db()
     if not tag_index[tag] then
-        error('invalid tag: ' .. tag)
+        dfhack.printerr('invalid tag: ' .. tag)
+        return {}
     end
-    return tag_index[tag].description
+    return tag_index[tag]
 end
 
 ---------------------------------------------------------------------------
@@ -621,7 +623,8 @@ function tags()
     local tags = get_tags()
     local width = get_max_width(tags, 10)
     for _,tag in ipairs(tags) do
-        print(('  %-'..width..'s %s'):format(tag, get_tag_description(tag)))
+        print(('  %-'..width..'s %s'):format(tag,
+                                             get_tag_data(tag).description))
     end
 end
 

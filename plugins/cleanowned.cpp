@@ -31,22 +31,9 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters);
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "cleanowned", "Confiscates and dumps garbage owned by dwarfs.",
-        df_cleanowned, false,
-        "  This tool lets you confiscate and dump all the garbage\n"
-        "  dwarves ultimately accumulate.\n"
-        "  By default, only rotten and dropped food is confiscated.\n"
-        "Options:\n"
-        "  dryrun    - don't actually do anything, just print what would be done.\n"
-        "  scattered - confiscate owned items on the ground\n"
-        "  all       - confiscate everything\n"
-        "  x         - confiscate & dump 'x' and worse damaged items\n"
-        "  X         - confiscate & dump 'X' and worse damaged items\n"
-        "Example:\n"
-        "  cleanowned scattered X\n"
-        "    This will confiscate rotten and dropped food, garbage on the floors\n"
-        "    and any worn items with 'X' damage and above.\n"
-    ));
+        "cleanowned",
+        "Confiscates and dumps garbage owned by dwarves.",
+        df_cleanowned));
     return CR_OK;
 }
 

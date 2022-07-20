@@ -1,5 +1,8 @@
 ls
---
+==
+
+Tags: system
+:dfhack-keybind:`ls`
 
 List available DFHack commands. In order to group related commands, each command
 is associated with a list of tags. You can filter the listed commands by a tag
@@ -25,7 +28,8 @@ You can also pass some optional parameters to change how ``ls`` behaves:
 - ``--dev``
     Include commands intended for developers and modders.
 
-Examples:
+Examples
+--------
 
 - ``ls adventure``
     Lists all commands with the ``adventure`` tag.

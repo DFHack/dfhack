@@ -268,7 +268,7 @@ local function update_db(old_db, db, source, entry_name, kwargs)
         error('unhandled help source: ' .. source)
     end
     db[entry_name] = entry
-    for _,tag in ipairs(entry.tags) do
+    for tag in pairs(entry.tags) do
         -- ignore unknown tags
         if tag_index[tag] then
             table.insert(tag_index[tag], entry_name)

@@ -1,5 +1,8 @@
 type
-----
+====
+
+Tags: system
+:dfhack-keybind:`type`
 
 Describes how a command is implemented. DFHack commands can be provided by
 plugins, scripts, or by the core library itself. The ``type`` command can tell

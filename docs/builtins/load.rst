@@ -1,5 +1,8 @@
 load
-----
+====
+
+Tags: system
+:dfhack-keybind:`load`
 
 Load and register a plugin library. Also see `unload` and `reload` for related
 actions.

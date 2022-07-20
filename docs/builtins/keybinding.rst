@@ -1,5 +1,8 @@
 keybinding
-----------
+==========
+
+Tags: system
+:dfhack-keybind:`keybinding`
 
 Create hotkeys that will run DFHack commands. Like any other command it can be
 used at any time from the console, but bindings are not remembered between runs
@@ -46,7 +49,8 @@ example, ``@foo|bar|baz/foo`` would match anything under ``@foo``, ``@bar``, or
 
 Interactive commands like `liquids` cannot be used as hotkeys.
 
-Examples:
+Examples
+--------
 
 - ``keybinding add Alt-F1 hotkeys``
     Bind Alt-F1 to run the `hotkeys` command on any screen at any time.

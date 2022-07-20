@@ -1,5 +1,8 @@
 alias
------
+=====
+
+Tags: system
+:dfhack-keybind:`alias`
 
 Configure helper aliases for other DFHack commands. Aliases are resolved
 immediately after built-in commands, which means that an alias cannot override
@@ -21,7 +24,10 @@ Usage:
 Aliases can be given additional arguments when created and invoked, which will
 be passed to the underlying command in order.
 
-Example::
+Example
+-------
+
+::
 
     [DFHack]# alias add pargs devel/print-args example
     [DFHack]# pargs text

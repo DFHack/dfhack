@@ -1,5 +1,8 @@
 plug
-----
+====
+
+Tags: system
+:dfhack-keybind:`plug`
 
 Lists available plugins and whether they are enabled.
 

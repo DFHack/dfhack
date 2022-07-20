@@ -1,5 +1,8 @@
 unload
-------
+======
+
+Tags: system
+:dfhack-keybind:`unload`
 
 Unload a plugin from memory. Also see `load` and `reload` for related actions.
 

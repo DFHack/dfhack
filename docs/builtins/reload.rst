@@ -1,5 +1,8 @@
 reload
-------
+======
+
+Tags: system
+:dfhack-keybind:`reload`
 
 Reload a loaded plugin. Developer use this command to reload a plugin that they
 are actively modifying. Also see `load` and `unload` for related actions.

@@ -207,6 +207,10 @@ function EditField:getPreferredFocusState()
     return not self.key
 end
 
+function EditField:setText(text, cursor)
+    self.text = text
+end
+
 function EditField:postUpdateLayout()
     self.text_offset = self.subviews[1]:getTextWidth()
 end

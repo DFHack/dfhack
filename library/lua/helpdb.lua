@@ -293,24 +293,24 @@ local function scan_plugins(old_db, db)
     local plugin_names = dfhack.internal.listPlugins()
     for _,plugin in ipairs(plugin_names) do
         local commands = dfhack.internal.listCommands(plugin)
-        if #commands == 0 then
-            -- use plugin name as the command so we have something to anchor the
-            -- documentation to
-            update_db(old_db, db,
-                      has_rendered_help(plugin) and
-                            HELP_SOURCES.RENDERED or HELP_SOURCES.STUB,
-                      plugin, {entry_types={[ENTRY_TYPES.PLUGIN]=true}})
-            goto continue
-        end
+        local includes_plugin = false
         for _,command in ipairs(commands) do
             local entry_types = {[ENTRY_TYPES.COMMAND]=true}
             if command == plugin then
                 entry_types[ENTRY_TYPES.PLUGIN]=true
+                includes_plugin = true
             end
             update_db(old_db, db,
                       has_rendered_help(command) and
                             HELP_SOURCES.RENDERED or HELP_SOURCES.PLUGIN,
                       command, {entry_types=entry_types})
+        end
+        if not includes_plugin then
+            update_db(old_db, db,
+                      has_rendered_help(plugin) and
+                            HELP_SOURCES.RENDERED or HELP_SOURCES.STUB,
+                      plugin, {entry_types={[ENTRY_TYPES.PLUGIN]=true}})
+            goto continue
         end
         ::continue::
     end

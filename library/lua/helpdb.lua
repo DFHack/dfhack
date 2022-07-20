@@ -55,6 +55,7 @@ local BUILTINS = {
     'kill-lua',
     'load',
     'ls',
+    'man',
     'plug',
     'reload',
     'script',

@@ -4,10 +4,11 @@ autofarm
 Tags:
 :dfhack-keybind:`autofarm`
 
-Automatically manage farm crop selection. This plugin periodically scans your
-plant stocks and assigns crops to your farm plots based on which plant stocks
-are low (as long as you have the appropriate seeds). The target threshold for
-each crop type is configurable.
+:index:`Automatically manage farm crop selection.
+<autofarm; Automatically manage farm crop selection.>` This plugin periodically
+scans your plant stocks and assigns crops to your farm plots based on which
+plant stocks are low (as long as you have the appropriate seeds). The target
+threshold for each crop type is configurable.
 
 Usage:
 

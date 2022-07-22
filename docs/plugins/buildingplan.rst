@@ -4,12 +4,13 @@ buildingplan
 Tags:
 :dfhack-keybind:`buildingplan`
 
-Plan building construction before you have materials. This plugin adds a
-planning mode for building placement. You can then place furniture,
-constructions, and other buildings before the required materials are available,
-and they will be created in a suspended state. Buildingplan will periodically
-scan for appropriate items, and the jobs will be unsuspended when the items are
-available.
+:index:`Plan building construction before you have materials.
+<buildingplan; Plan building construction before you have materials.>` This
+plugin adds a planning mode for building placement. You can then place
+furniture, constructions, and other buildings before the required materials are
+available, and they will be created in a suspended state. Buildingplan will
+periodically scan for appropriate items, and the jobs will be unsuspended when
+the items are available.
 
 This is very useful when combined with manager work orders or `workflow` -- you
 can set a constraint to always have one or two doors/beds/tables/chairs/etc.

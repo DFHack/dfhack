@@ -4,8 +4,9 @@ autoclothing
 Tags:
 :dfhack-keybind:`autoclothing`
 
-Automatically manage clothing work orders. It allows you to set how many of each
-clothing type every citizen should have.
+:index:`Automatically manage clothing work orders.
+<autoclothing; Automatically manage clothing work orders.>` It allows you to
+set how many of each clothing type every citizen should have.
 
 Usage::
 

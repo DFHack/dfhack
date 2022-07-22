@@ -2,7 +2,6 @@ add-spatter
 ===========
 
 Tags:
-:dfhack-keybind:`add-spatter`
 
 Make tagged reactions produce contaminants. The plugin is intended to give some
 use to all those poisons that can be bought from caravans. It automatically

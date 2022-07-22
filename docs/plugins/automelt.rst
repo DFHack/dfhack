@@ -2,7 +2,6 @@ automelt
 ========
 
 Tags:
-:dfhack-keybind:`automelt`
 
 Quickly designate items to be melted. When `enabled <enable>`, this plugin adds
 an option to the :kbd:`q` menu for stockpiles. When the ``automelt`` option is

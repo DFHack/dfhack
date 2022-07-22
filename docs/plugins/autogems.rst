@@ -16,6 +16,6 @@ Usage:
     <autogems-reload; Reloads the autogems configuration file.>` You might need
     to do this if you have manually modified the contents while the game is
     running.
-    
+
 Run `gui/autogems` for a configuration UI, or access the ``Auto Cut Gems``
 option from the Current Workshop Orders screen (:kbd:`o`-:kbd:`W`).

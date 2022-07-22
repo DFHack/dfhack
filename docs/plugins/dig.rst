@@ -1,3 +1,5 @@
+.. _digv:
+
 dig
 ===
 This plugin makes many automated or complicated dig patterns easy.

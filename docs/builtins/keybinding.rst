@@ -4,12 +4,13 @@ keybinding
 Tags: system
 :dfhack-keybind:`keybinding`
 
-Create hotkeys that will run DFHack commands. Like any other command it can be
-used at any time from the console, but bindings are not remembered between runs
-of the game unless re-created in `dfhack.init`.
+:index:`Create hotkeys that will run DFHack commands.
+<keybinding; Create hotkeys that will run DFHack commands.>` Like any other
+command, it can be used at any time from the console, but bindings are not
+remembered between runs of the game unless re-created in `dfhack.init`.
 
 Hotkeys can be any combinations of Ctrl/Alt/Shift with A-Z, 0-9, F1-F12, or
-``\```.
+``\``` (the key below the ``Esc`` key.
 
 Usage:
 

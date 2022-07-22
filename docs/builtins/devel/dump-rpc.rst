@@ -4,7 +4,8 @@ devel/dump-rpc
 Tags: system
 :dfhack-keybind:`devel/dump-rpc`
 
-Writes RPC endpoint information to the specified file.
+:index:`Writes RPC endpoint information to the specified file.
+<devel/dump-rpc; Writes RPC endpoint information to the specified file.>`
 
 Usage::
 

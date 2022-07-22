@@ -4,8 +4,10 @@ sc-script
 Tags: system
 :dfhack-keybind:`sc-script`
 
-Runs commands when game state changes occur. This is similar to the static
-`init-files` but is slightly more flexible since it can be set dynamically.
+:index:`Run commands when game state changes occur.
+<sc-script; Run commands when game state changes occur.>` This is similar to
+the static `init-files` but is slightly more flexible since it can be set
+dynamically.
 
 Usage:
 

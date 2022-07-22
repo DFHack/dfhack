@@ -4,8 +4,9 @@ kill-lua
 Tags: system
 :dfhack-keybind:`kill-lua`
 
-Gracefully stops any currently-running Lua scripts. Use this command to stop
-a misbehaving script that appears to be stuck.
+:index:`Gracefully stops any currently-running Lua scripts.
+<kill-lua; Gracefully stops any currently-running Lua scripts.>` Use this
+command to stop a misbehaving script that appears to be stuck.
 
 Usage::
 

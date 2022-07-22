@@ -4,8 +4,9 @@ load
 Tags: system
 :dfhack-keybind:`load`
 
-Load and register a plugin library. Also see `unload` and `reload` for related
-actions.
+:index:`Load and register a plugin library.
+<load; Load and register a plugin library.>` Also see `unload` and `reload` for
+related actions.
 
 Usage::
 

@@ -4,7 +4,9 @@ help
 Tags: system
 :dfhack-keybind:`help`
 
-Display help about a command or plugin.
+:index:`Display help about a command or plugin.
+<help; Display help about a command or plugin.>` Can also be invoked as ``?``
+or ``man`` (short for "manual").
 
 Usage::
 

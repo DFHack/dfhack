@@ -4,10 +4,10 @@ ls
 Tags: system
 :dfhack-keybind:`ls`
 
-List available DFHack commands. In order to group related commands, each command
-is associated with a list of tags. You can filter the listed commands by a tag
-or a substring of the command name. The `dir` command is an alias of this
-command.
+:index:`List available DFHack commands. <ls; List available DFHack commands.>`
+In order to group related commands, each command is associated with a list of
+tags. You can filter the listed commands by a tag or a substring of the
+command name. Can also be invoked as ``dir``.
 
 Usage:
 

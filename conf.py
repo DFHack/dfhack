@@ -126,10 +126,38 @@ def doc_all_dirs():
 
 DOC_ALL_DIRS = doc_all_dirs()
 
+
+def get_tags():
+    tags = []
+    tag_re = re.compile(r'- :dfhack-tag:`([^`]+)`: (.*)')
+    with open('docs/Tags.rst') as f:
+        lines = f.readlines()
+        for line in lines:
+            m = re.match(tag_re, line.strip())
+            if m:
+                tags.append((m.group(1), m.group(2)))
+    return tags
+
+
+def get_open_mode():
+    return 'w' if sys.version_info.major > 2 else 'wb'
+
+
 def generate_tag_indices():
-    #TODO: generate docs/tags/<tag>.rst with the tag description and links to the
-    # tools that have that tag
     os.makedirs('docs/tags', mode=0o755, exist_ok=True)
+    with open('docs/tags/index.rst', get_open_mode()) as topidx:
+        #topidx.write(':orphan:\n\n')
+        for tag_tuple in get_tags():
+            tag = tag_tuple[0]
+            with open(('docs/tags/{name}.rst').format(name=tag),
+                      get_open_mode()) as tagidx:
+                #tagidx.write(':orphan:\n\n')
+                tagidx.write('TODO: add links to the tools that have this tag')
+            topidx.write(('.. _tag/{name}:\n\n').format(name=tag))
+            topidx.write(('{name}\n').format(name=tag))
+            topidx.write(('{underline}\n').format(underline='-'*len(tag)))
+            topidx.write(('{desc}\n\n').format(desc=tag_tuple[1]))
+            topidx.write(('.. include:: /docs/tags/{name}.rst\n\n').format(name=tag))
 
 
 def write_tool_docs():
@@ -151,10 +179,9 @@ def write_tool_docs():
         # TODO: generate a footer with links to tools that share at least one
         # tag with this tool. Just the tool names, strung across the bottom of
         # the page in one long wrapped line, similar to how the wiki does it
-        mode = 'w' if sys.version_info.major > 2 else 'wb'
         os.makedirs(os.path.join('docs/tools', os.path.dirname(k[0])),
                     mode=0o755, exist_ok=True)
-        with open('docs/tools/{}.rst'.format(k[0]), mode) as outfile:
+        with open('docs/tools/{}.rst'.format(k[0]), get_open_mode()) as outfile:
             outfile.write(header)
             if k[0] != 'search' and k[0] != 'stonesense':
                 outfile.write(label)

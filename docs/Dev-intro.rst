@@ -51,11 +51,10 @@ is more complete and currently better-documented, however. Referring to existing
 scripts as well as the API documentation can be helpful when developing new
 scripts.
 
-`Scripts included in DFHack <tools-index>` live in a separate
-`scripts repository <https://github.com/dfhack/scripts>`_. This can be found in
-the ``scripts`` submodule if you have
-`cloned DFHack <compile-how-to-get-the-code>`, or the ``hack/scripts`` folder
-of an installed copy of DFHack.
+Scripts included in DFHack live in a separate
+:source-scripts:`scripts repository <>`. This can be found in the ``scripts``
+submodule if you have `cloned DFHack <compile-how-to-get-the-code>`, or the
+``hack/scripts`` folder of an installed copy of DFHack.
 
 Core
 ----

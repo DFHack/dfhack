@@ -26,7 +26,7 @@ DFHack commands can be implemented in any of three ways:
             more flexible about versions, and easier to distribute.
             Most third-party DFHack addons are scripts.
 
-All tools distributed with DFHack are documented `here <tools-index>`.
+All tools distributed with DFHack are documented `here <genindex>`.
 
 Using DFHack Commands
 =====================
@@ -185,7 +185,7 @@ where ``*`` can be any string, including the empty string.
 A world being loaded can mean a fortress, an adventurer, or legends mode.
 
 These files are best used for non-persistent commands, such as setting
-a `fix <tools-index>` script to run on `repeat`.
+a :dfhack-tag:`fix` script to run on `repeat`.
 
 
 .. _onMapLoad.init:

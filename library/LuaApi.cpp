@@ -3109,41 +3109,58 @@ static int internal_listCommands(lua_State *L)
     }
     return 1;
 }
-static int internal_getCommandHelp(lua_State *L)
+
+static const PluginCommand * getPluginCommand(const char * command)
 {
     auto plugins = Core::getInstance().getPluginManager();
-
-    const char *name = luaL_checkstring(L, 1);
-
-    auto plugin = plugins->getPluginByCommand(name);
+    auto plugin = plugins->getPluginByCommand(command);
     if (!plugin)
     {
-        lua_pushnil(L);
-        return 1;
+        return NULL;
     }
 
     size_t num_commands = plugin->size();
     for (size_t i = 0; i < num_commands; ++i)
     {
-        if ((*plugin)[i].name == name)
-        {
-            const auto &pc = (*plugin)[i];
-            std::string help = pc.description;
-            if (help.size() && help[help.size()-1] != '.')
-            {
-                help += ".";
-            }
-            if (pc.usage.size())
-            {
-                help += "\n" + pc.usage;
-            }
-            lua_pushstring(L, help.c_str());
-            return 1;
-        }
+        if ((*plugin)[i].name == command)
+            return &(*plugin)[i];
     }
 
     // not found (somehow)
-    lua_pushnil(L);
+    return NULL;
+}
+
+static int internal_getCommandHelp(lua_State *L)
+{
+    const PluginCommand *pc = getPluginCommand(luaL_checkstring(L, 1));
+    if (!pc)
+    {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    std::string help = pc->description;
+    if (help.size() && help[help.size()-1] != '.')
+        help += ".";
+    if (pc->usage.size())
+        help += "\n" + pc->usage;
+    lua_pushstring(L, help.c_str());
+    return 1;
+}
+
+static int internal_getCommandDescription(lua_State *L)
+{
+    const PluginCommand *pc = getPluginCommand(luaL_checkstring(L, 1));
+    if (!pc)
+    {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    std::string help = pc->description;
+    if (help.size() && help[help.size()-1] != '.')
+        help += ".";
+    lua_pushstring(L, help.c_str());
     return 1;
 }
 
@@ -3218,6 +3235,7 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "getAddress", internal_getAddress },
     { "setAddress", internal_setAddress },
     { "getVTable", internal_getVTable },
+
     { "adjustOffset", internal_adjustOffset },
     { "getMemRanges", internal_getMemRanges },
     { "patchMemory", internal_patchMemory },
@@ -3236,6 +3254,7 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "listPlugins", internal_listPlugins },
     { "listCommands", internal_listCommands },
     { "getCommandHelp", internal_getCommandHelp },
+    { "getCommandDescription", internal_getCommandDescription },
     { "isPluginEnableable", internal_isPluginEnableable },
     { "threadid", internal_threadid },
     { "md5File", internal_md5file },

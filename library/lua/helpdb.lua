@@ -40,6 +40,7 @@ local HELP_SOURCES = {
 
 -- builtin command names, with aliases mapped to their canonical form
 local BUILTINS = {
+    ['?']='help',
     alias=true,
     clear='cls',
     cls=true,

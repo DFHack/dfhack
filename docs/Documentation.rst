@@ -261,30 +261,45 @@ ways to do this:
   it to add the flag. You can also run ``cmake`` on the command line, similar to
   other platforms.
 
-The generated documentation will be stored in ``docs/html`` in the root DFHack
-folder, and will be installed to ``hack/docs`` when you next install DFHack in a
-DF folder.
+By default, both HTML and text docs are built by CMake. The generated
+documentation is stored in ``docs/html`` and ``docs/text`` (respectively) in the
+root DFHack folder, and will be installed to ``hack/docs`` when you install
+DFHack.
 
 Running Sphinx manually
 -----------------------
 
 You can also build the documentation without running CMake - this is faster if
-you only want to rebuild the documentation regardless of any code changes. There
-is a ``docs/build.sh`` script provided for Linux and macOS that will run
-essentially the same command that CMake runs when building the docs - see the
-script for additional options.
+you only want to rebuild the documentation regardless of any code changes. The
+``docs/build.py`` script will build the documentation in any specified formats
+(HTML only by default) using essentially the same command that CMake runs when
+building the docs. Run the script with ``--help`` to see additional options.
 
-To build the documentation with default options, run the following command from
-the root DFHack folder::
+Examples:
+
+* ``docs/build.py``
+    Build just the HTML docs
+
+* ``docs/build.py html text``
+    Build both the HTML and text docs
+
+* ``docs/build.py --clean``
+    Build HTML and force a clean build (all source files are re-read)
+
+The resulting documentation will be stored in ``docs/html`` and/or ``docs/text``.
+
+Alternatively, you can run Sphinx manually with::
 
     sphinx-build . docs/html
 
-The resulting documentation will be stored in ``docs/html`` (you can specify
-a different path when running ``sphinx-build`` manually, but be warned that
-Sphinx may overwrite existing files in this folder).
+or, to build plain-text output::
+
+    sphinx-build -b text . docs/text
 
 Sphinx has many options to enable clean builds, parallel builds, logging, and
-more - run ``sphinx-build --help`` for details.
+more - run ``sphinx-build --help`` for details. If you specify a different
+output path, be warned that Sphinx may overwrite existing files in the output
+folder.
 
 Building a PDF version
 ----------------------
@@ -295,10 +310,11 @@ want to build a PDF version locally, you will need ``pdflatex``, which is part
 of a TeX distribution. The following command will then build a PDF, located in
 ``docs/pdf/latex/DFHack.pdf``, with default options::
 
-  sphinx-build -M latexpdf . docs/pdf
+  docs/build.py pdf
 
-There is a ``docs/build-pdf.sh`` script provided for Linux and macOS that runs
-this command for convenience - see the script for additional options.
+Alternatively, you can run Sphinx manually with::
+
+  sphinx-build -M latexpdf . docs/pdf
 
 .. _build-changelog:
 

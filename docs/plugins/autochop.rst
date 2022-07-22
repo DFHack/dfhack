@@ -3,8 +3,9 @@ autochop
 
 Tags:
 
-Auto-harvest trees when low on stockpiled logs. This plugin can designate trees
-for chopping when your stocks are low on logs.
+:index:`Auto-harvest trees when low on stockpiled logs.
+<autochop; Auto-harvest trees when low on stockpiled logs.>` This plugin can
+designate trees for chopping when your stocks are low on logs.
 
 Usage::
 

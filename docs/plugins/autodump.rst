@@ -6,10 +6,11 @@ Tags:
 :dfhack-keybind:`autodump-destroy-here`
 :dfhack-keybind:`autodump-destroy-item`
 
-Automatically set items in a stockpile to be dumped. When `enabled <enable>`,
-this plugin adds an option to the :kbd:`q` menu for stockpiles. When the
-``autodump`` option is selected for the stockpile, any items placed in the
-stockpile will automatically be designated to be dumped.
+:index:`Automatically set items in a stockpile to be dumped.
+<autodump (plugin); Automatically set items in a stockpile to be dumped.>` When
+`enabled <enable>`, this plugin adds an option to the :kbd:`q` menu for
+stockpiles. When the ``autodump`` option is selected for the stockpile, any
+items placed in the stockpile will automatically be designated to be dumped.
 
 When invoked as a command, it can instantly move all unforbidden items marked
 for dumping to the tile under the cursor. After moving the items, the dump flag

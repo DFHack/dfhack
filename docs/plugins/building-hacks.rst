@@ -3,7 +3,8 @@ building-hacks
 
 Tags:
 
-Allows mods to create and manage powered workshops.
+:index:`Allows mods to create and manage powered workshops.
+<building-hacks; Allows mods to create and manage powered workshops.>`
 
 Usage::
 

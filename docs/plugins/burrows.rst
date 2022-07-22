@@ -4,13 +4,14 @@ burrows
 Tags:
 :dfhack-keybind:`burrow`
 
-Auto-expand burrows as you dig. When a wall inside a burrow with a name ending
-in ``+`` is dug out, the burrow will be extended to newly-revealed adjacent
-walls. Note that digging 1-wide corridors with the miner inside the burrow is
-SLOW.
+:index:`Auto-expand burrows as you dig.
+<burrows (plugin); Auto-expand burrows as you dig.>` When a wall inside a burrow
+with a name ending in ``+`` is dug out, the burrow will be extended to
+newly-revealed adjacent walls. Note that digging 1-wide corridors with the miner
+inside the burrow is **SLOW**.
 
 You can also use the ``burrow`` command to
-:index:`Quickly add units/tiles to burrows.
+:index:`quickly add units/tiles to burrows.
 <burrow; Quickly add units/tiles to burrows.>`
 
 Usage:

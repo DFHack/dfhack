@@ -3,9 +3,10 @@ automaterial
 
 Tags:
 
-Sorts building materials by recent usage. This makes building constructions
-(walls, floors, fortifications, etc) much easier by saving you from having to
-trawl through long lists of materials each time you place one.
+:index:`Sorts building materials by recent usage.
+<automaterial>; Sorts building materials by recent usage.>` This makes building
+constructions (walls, floors, fortifications, etc) much easier by saving you
+from having to trawl through long lists of materials each time you place one.
 
 It moves the last used material for a given construction type to the top of the
 list, if there are any left. So if you build a wall with chalk blocks, the next

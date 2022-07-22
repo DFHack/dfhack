@@ -59,6 +59,12 @@ used by the DFHack console.
 * Finally, some commands are persistent once enabled, and will sit in the
   background managing or changing some aspect of the game if you `enable` them.
 
+.. note::
+    In order to avoid user confusion, as a matter of policy all GUI tools
+    display the word :guilabel:`DFHack` on the screen somewhere while active.
+
+    When that is not appropriate because they merely add keybinding hints to
+    existing DF screens, they deliberately use red instead of green for the key.
 
 Getting help
 ============

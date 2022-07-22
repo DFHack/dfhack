@@ -82,7 +82,18 @@ def dfhack_keybind_role_func(role, rawtext, text, lineno, inliner,
     return [newnode], []
 
 
+# pylint:disable=unused-argument,dangerous-default-value,too-many-arguments
+def dfhack_tag_role_func(role, rawtext, text, lineno, inliner,
+                             options={}, content=[]):
+    """Custom role parser for DFHack tags."""
+    roles.set_classes(options)
+    # TODO: link to generated tag index page
+    newnode = nodes.inline(text, text)
+    return [newnode], []
+
+
 roles.register_canonical_role('dfhack-keybind', dfhack_keybind_role_func)
+roles.register_canonical_role('dfhack-tag', dfhack_tag_role_func)
 
 # -- Autodoc for DFhack plugins and scripts -------------------------------
 
@@ -128,6 +139,7 @@ def write_tool_docs():
     footer.
     """
     for k in DOC_ALL_DIRS:
+        header = ':orphan:\n'
         label = ('.. _{name}:\n\n').format(name=k[0])
         # TODO: can we autogenerate the :dfhack-keybind: line? it would go beneath
         # the tool header, which is currently in the middle of the included file.
@@ -143,6 +155,7 @@ def write_tool_docs():
         os.makedirs(os.path.join('docs/tools', os.path.dirname(k[0])),
                     mode=0o755, exist_ok=True)
         with open('docs/tools/{}.rst'.format(k[0]), mode) as outfile:
+            outfile.write(header)
             if k[0] != 'search' and k[0] != 'stonesense':
                 outfile.write(label)
             outfile.write(include)

@@ -15,10 +15,9 @@ Quick Links
 
 * `Downloads <https://www.github.com/DFHack/dfhack/releases>`_
 * `Installation guide <installing>`
-* `Source code <https://www.github.com/DFHack/dfhack>`_
-  (**important:** read `compile` before attempting to build from source)
-* `Bay 12 forums thread <https://dfhack.org/bay12>`_
-* `Bug tracker <https://www.github.com/DFHack/dfhack/issues>`_
+* `Getting help <support>`
+* :source:`Source code <>`
+    (**important:** read `compile` before attempting to build from source.)
 
 User Manual
 ===========
@@ -30,25 +29,7 @@ User Manual
    /docs/Installing
    /docs/Support
    /docs/Core
-   /docs/guides/index
-   /docs/index-about
-   /docs/index-dev
-
-Tools
-=====
-
-DFHack commands, plugins, and scripts are grouped by tags to make it easier to
-find groups of related tools.
-
-.. note::
-    In order to avoid user confusion, as a matter of policy all GUI tools
-    display the word :guilabel:`DFHack` on the screen somewhere while active.
-
-    When that is not appropriate because they merely add keybinding hints to
-    existing DF screens, they deliberately use red instead of green for the key.
-
-.. toctree::
-   :maxdepth: 1
-
    /docs/Tags
-   /docs/index-tools
+   /docs/guides/index
+   /docs/index-dev
+   /docs/index-about

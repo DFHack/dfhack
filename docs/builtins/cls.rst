@@ -1,7 +1,7 @@
 cls
 ===
 
-Tags: system
+Tags: :dfhack-tag:`system`
 :dfhack-keybind:`cls`
 
 :index:`Clear the terminal screen. <cls; Clear the terminal screen.>` Can also

@@ -1,7 +1,7 @@
 tags
 ====
 
-Tags: system
+Tags: :dfhack-tag:`system`
 :dfhack-keybind:`tags`
 
 :index:`List the strings that DFHack tools can be tagged with.

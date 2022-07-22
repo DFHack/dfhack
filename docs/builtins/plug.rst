@@ -1,11 +1,11 @@
 plug
 ====
 
-Tags: system
+Tags: :dfhack-tag:`system`
 :dfhack-keybind:`plug`
 
-:index:`Lists available plugins and whether they are enabled.
-<plug; Lists available plugins and whether they are enabled.>`
+:index:`List available plugins and whether they are enabled.
+<plug; List available plugins and whether they are enabled.>`
 
 Usage:
 

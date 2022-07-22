@@ -1,11 +1,11 @@
 script
 ======
 
-Tags: system
+Tags: :dfhack-tag:`system`
 :dfhack-keybind:`script`
 
-:index:`Executes a batch file of DFHack commands.
-<script; Executes a batch file of DFHack commands.>` It reads a text file and
+:index:`Execute a batch file of DFHack commands.
+<script; Execute a batch file of DFHack commands.>` It reads a text file and
 runs each line as a DFHack command as if it had been typed in by the user --
 treating the input like `an init file <init-files>`.
 

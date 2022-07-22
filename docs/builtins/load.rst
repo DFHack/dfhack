@@ -1,7 +1,7 @@
 load
 ====
 
-Tags: system
+Tags: :dfhack-tag:`system`
 :dfhack-keybind:`load`
 
 :index:`Load and register a plugin library.

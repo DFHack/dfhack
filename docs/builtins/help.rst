@@ -1,7 +1,7 @@
 help
 ====
 
-Tags: system
+Tags: :dfhack-tag:`system`
 :dfhack-keybind:`help`
 
 :index:`Display help about a command or plugin.

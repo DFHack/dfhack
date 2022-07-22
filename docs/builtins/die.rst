@@ -1,8 +1,8 @@
 die
 ===
 
-Tags: system
+Tags: :dfhack-tag:`system`
 :dfhack-keybind:`die`
 
-:index:`Instantly exits DF without saving.
-<die; Instantly exits DF without saving.>`
+:index:`Instantly exit DF without saving.
+<die; Instantly exit DF without saving.>`

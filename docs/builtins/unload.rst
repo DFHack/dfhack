@@ -1,7 +1,7 @@
 unload
 ======
 
-Tags: system
+Tags: :dfhack-tag:`system`
 :dfhack-keybind:`unload`
 
 :index:`Unload a plugin from memory. <unload; Unload a plugin from memory.>`

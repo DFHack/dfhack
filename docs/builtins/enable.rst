@@ -1,7 +1,7 @@
 enable
 ======
 
-Tags: system
+Tags: :dfhack-tag:`system`
 :dfhack-keybind:`enable`
 
 :index:`Activate a DFHack tool that has some persistent effect.

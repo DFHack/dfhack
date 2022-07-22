@@ -1,7 +1,7 @@
 kill-lua
 ========
 
-Tags: system
+Tags: :dfhack-tag:`system`
 :dfhack-keybind:`kill-lua`
 
 :index:`Gracefully stops any currently-running Lua scripts.

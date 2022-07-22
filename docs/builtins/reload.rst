@@ -1,7 +1,7 @@
 reload
 ======
 
-Tags: system
+Tags: :dfhack-tag:`system`
 :dfhack-keybind:`reload`
 
 :index:`Reload a loaded plugin. <reload; Reload a loaded plugin.>` Developers

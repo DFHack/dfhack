@@ -1,10 +1,10 @@
 devel/dump-rpc
 ==============
 
-Tags: system
+Tags: :dfhack-tag:`system`
 :dfhack-keybind:`devel/dump-rpc`
 
-:index:`Writes RPC endpoint information to the specified file.
+:index:`Write RPC endpoint information to the specified file.
 <devel/dump-rpc; Writes RPC endpoint information to the specified file.>`
 
 Usage::

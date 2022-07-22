@@ -1,7 +1,7 @@
 alias
 =====
 
-Tags: system
+Tags: :dfhack-tag:`system`
 :dfhack-keybind:`alias`
 
 :index:`Configure helper aliases for other DFHack commands.

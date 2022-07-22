@@ -1,12 +1,14 @@
 cromulate
 =========
 
-Tags: productivity, unit, adventure
+Tags: `tag/productivity`, `tag/unit`, `tag/adventure`
 :dfhack-keybind:`cromulate`
 
-Collects all widgets into a frobozz electric cromufiler. You might want to do
-this if you discover that your widgets have become decromulated. It is safe to
-run this command periodically even if you are unsure if that's the case.
+:index:`Collects all widgets into a frobozz electric cromufiler.
+<cromulate; Collects all widgets into a frobozz electric cromufiler.>` You might
+want to do this if you discover that your widgets have become decromulated. It
+is safe to run this command periodically even if you are unsure if that's the
+case.
 
 Usage::
 
@@ -18,9 +20,9 @@ collect those under the cursor.
 
 Options:
 
-:``-d``, ``--destroy``:
+- ``-d``, ``--destroy``
     Destroy the widgets instead of collecting them into the cromufiler.
-:``-q``, ``--quiet``:
+- ``-q``, ``--quiet``
     Don't display any informational output. Errors will still be printed to the
     console.
 

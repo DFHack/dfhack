@@ -4,10 +4,11 @@ changelayer
 Tags:
 :dfhack-keybind:
 
-Change the material of an entire geology layer. Note that one layer can stretch
-across many z-levels, and changes to the geology layer will affect all
-surrounding regions, not just your embark! Mineral veins and gem clusters will
-not be affected. Use `changevein` if you want to modify those.
+:index:`Change the material of an entire geology layer.
+<changelayer; Change the material of an entire geology layer.>` Note that one
+layer can stretch across many z-levels, and changes to the geology layer will
+affect all surrounding regions, not just your embark! Mineral veins and gem
+clusters will not be affected. Use `changevein` if you want to modify those.
 
 tl;dr: You will end up with changing large areas in one go, especially if you
 use it in lower z levels. Use this command with care!

@@ -85,7 +85,7 @@ command_result df_changevein (color_ostream &out, vector <string> & parameters)
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand("changevein",
-        "Changes the material of a mineral inclusion.",
+        "Change the material of a mineral inclusion.",
         df_changevein));
     return CR_OK;
 }

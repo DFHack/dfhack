@@ -37,7 +37,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 {
     commands.push_back(PluginCommand(
         "changelayer",
-        "Change a whole geology layer.",
+        "Change the material of an entire geology layer.",
         changelayer));
     return CR_OK;
 }

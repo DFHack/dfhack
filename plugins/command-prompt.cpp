@@ -344,11 +344,10 @@ bool hotkey_allow_all(df::viewscreen *top)
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-                "command-prompt", "Shows a command prompt on window.",
-                show_prompt, hotkey_allow_all,
-                "command-prompt [entry] - shows a cmd prompt in df window."
-                " Entry is used for default prefix (e.g. ':lua')"
-        ));
+                "command-prompt",
+                "An in-game DFHack terminal.",
+                show_prompt,
+                hotkey_allow_all));
     return CR_OK;
 }
 

@@ -1,12 +1,20 @@
 confirm
 =======
-Implements several confirmation dialogs for potentially destructive actions
-(for example, seizing goods from traders or deleting hauling routes).
+
+Tags:
+:dfhack-keybind:`confirm`
+
+:index:`Adds confirmation dialogs for destructive actions.
+<confirm; Adds confirmation dialogs for destructive actions.>` Now you can get
+the chance to avoid seizing goods from traders or deleting a hauling route in
+case you hit the key accidentally.
 
 Usage:
 
-:enable confirm:    Enable all confirmations; alias ``confirm enable all``.
-                    Replace with ``disable`` to disable.
-:confirm help:      List available confirmation dialogues.
-:confirm enable option1 [option2...]:
-                    Enable (or disable) specific confirmation dialogues.
+- ``enable confirm``, ``confirm enable all``
+    Enable all confirmation options. Replace with ``disable`` to disable all.
+- ``confirm enable option1 [option2...]``
+    Enable (or ``disable``) specific confirmation dialogs.
+
+When run without parameters, ``confirm`` will report which confirmation dialogs
+are currently enabled.

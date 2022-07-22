@@ -4,8 +4,9 @@ changeitem
 Tags:
 :dfhack-keybind:
 
-Allows changing item material and base quality. By default, a change is only
-allowed if the existing and desired item materials are of the same subtype
+:index:`Change item material and base quality.
+<changeitem; Change item material and base quality.>` By default, a change is
+only allowed if the existing and desired item materials are of the same subtype
 (for example wood -> wood, stone -> stone, etc). But since some transformations
 work pretty well and may be desired you can override this with ``force``. Note
 that forced changes can possibly result in items that crafters and haulers

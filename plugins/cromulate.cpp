@@ -13,9 +13,7 @@ command_result cromulate (color_ostream &out, std::vector <std::string> & parame
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands) {
     commands.push_back(PluginCommand("cromulate",
                                      "in-cpp plugin short desc", //to use one line in the ``[DFHack]# ls`` output
-                                     cromulate,
-                                     false,
-                                     "in-cpp plugin long help"));
+                                     cromulate));
     return CR_OK;
 }
 

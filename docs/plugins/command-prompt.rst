@@ -1,16 +1,21 @@
 command-prompt
 ==============
-An in-game DFHack terminal, where you can enter other commands.
 
+Tags:
 :dfhack-keybind:`command-prompt`
 
-Usage: ``command-prompt [entry]``
+:index:`An in-game DFHack terminal, where you can enter other commands.
+<command-prompt; An in-game DFHack terminal, where you can enter other commands.>`
 
-If called with an entry, it starts with that text filled in.
-Most useful for developers, who can set a keybinding to open
-a laungage interpreter for lua or Ruby by starting with the
-`:lua <lua>` or `:rb <rb>` commands.
+Usage::
 
-Otherwise somewhat similar to `gui/quickcmd`.
+    command-prompt [entry]
+
+If called with parameters, it starts with that text in the command edit area.
+This is most useful for developers, who can set a keybinding to open a laungage
+interpreter for lua or Ruby by starting with the `:lua <lua>` or `:rb <rb>`
+portions of the command already filled in.
+
+Also see `gui/quickcmd` for a different take on running commands from the UI.
 
 .. image:: ../images/command-prompt.png

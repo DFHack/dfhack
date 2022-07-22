@@ -135,7 +135,6 @@ def get_open_mode():
 def generate_tag_indices():
     os.makedirs('docs/tags', mode=0o755, exist_ok=True)
     with open('docs/tags/index.rst', get_open_mode()) as topidx:
-        topidx.write(':orphan:\n\n')
         for tag_tuple in get_tags():
             tag = tag_tuple[0]
             with open(('docs/tags/{name}.rst').format(name=tag),

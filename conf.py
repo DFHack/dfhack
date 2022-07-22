@@ -295,6 +295,7 @@ exclude_patterns = [
     'build*',
     'depends/*',
     'docs/html/*',
+    'docs/tags/*',
     'docs/text/*',
     'docs/builtins/*',
     'docs/plugins/*',

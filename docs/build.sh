@@ -9,7 +9,4 @@
 # https://www.sphinx-doc.org/en/master/man/sphinx-build.html
 
 cd $(dirname "$0")
-cd ..
-
-"${SPHINX:-sphinx-build}" -E -b html -d build/docs/html . docs/html -w build/docs/html/_sphinx-warnings.txt -j "${JOBS:-auto}" "$@"
-"${SPHINX:-sphinx-build}" -E -b text -d build/docs/text . docs/text -w build/docs/text/_sphinx-warnings.txt -j "${JOBS:-auto}" "$@"
+python3 build.py html text "$@"

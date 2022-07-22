@@ -9,6 +9,4 @@
 # https://www.sphinx-doc.org/en/master/man/sphinx-build.html
 
 cd $(dirname "$0")
-cd ..
-
-"${SPHINX:-sphinx-build}" -M latexpdf -d build/docs/pdf . docs/pdf -w build/docs/pdf/_sphinx-warnings.txt -j "${JOBS:-auto}" "$@"
+python3 build.py pdf "$@"

@@ -1,7 +1,7 @@
 fpause
 ======
 
-Tags: :dfhack-tag:`system`
+Tags: `tag/system`
 :dfhack-keybind:`fpause`
 
 :index:`Forces DF to pause. <fpause; Forces DF to pause.>` This is useful when

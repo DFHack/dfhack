@@ -1,7 +1,7 @@
 type
 ====
 
-Tags: :dfhack-tag:`system`
+Tags: `tag/system`
 :dfhack-keybind:`type`
 
 :index:`Describe how a command is implemented.

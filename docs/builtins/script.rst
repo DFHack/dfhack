@@ -1,7 +1,7 @@
 script
 ======
 
-Tags: :dfhack-tag:`system`
+Tags: `tag/system`
 :dfhack-keybind:`script`
 
 :index:`Execute a batch file of DFHack commands.

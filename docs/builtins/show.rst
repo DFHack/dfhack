@@ -1,7 +1,7 @@
 show
 ====
 
-Tags: :dfhack-tag:`system`
+Tags: `tag/system`
 :dfhack-keybind:`show`
 
 :index:`Unhides the DFHack terminal window.

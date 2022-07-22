@@ -1,7 +1,7 @@
 plug
 ====
 
-Tags: :dfhack-tag:`system`
+Tags: `tag/system`
 :dfhack-keybind:`plug`
 
 :index:`List available plugins and whether they are enabled.

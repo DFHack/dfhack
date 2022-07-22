@@ -82,18 +82,7 @@ def dfhack_keybind_role_func(role, rawtext, text, lineno, inliner,
     return [newnode], []
 
 
-# pylint:disable=unused-argument,dangerous-default-value,too-many-arguments
-def dfhack_tag_role_func(role, rawtext, text, lineno, inliner,
-                             options={}, content=[]):
-    """Custom role parser for DFHack tags."""
-    roles.set_classes(options)
-    # TODO: link to generated tag index page
-    newnode = nodes.inline(text, text)
-    return [newnode], []
-
-
 roles.register_canonical_role('dfhack-keybind', dfhack_keybind_role_func)
-roles.register_canonical_role('dfhack-tag', dfhack_tag_role_func)
 
 # -- Autodoc for DFhack plugins and scripts -------------------------------
 
@@ -129,7 +118,7 @@ DOC_ALL_DIRS = doc_all_dirs()
 
 def get_tags():
     tags = []
-    tag_re = re.compile(r'- :dfhack-tag:`([^`]+)`: (.*)')
+    tag_re = re.compile(r'- `tag/([^`]+)`: (.*)')
     with open('docs/Tags.rst') as f:
         lines = f.readlines()
         for line in lines:

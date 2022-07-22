@@ -1,7 +1,7 @@
 ls
 ==
 
-Tags: :dfhack-tag:`system`
+Tags: `tag/system`
 :dfhack-keybind:`ls`
 
 :index:`List available DFHack commands. <ls; List available DFHack commands.>`

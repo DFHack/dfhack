@@ -1,7 +1,7 @@
 hide
 ====
 
-Tags: :dfhack-tag:`system`
+Tags: `tag/system`
 :dfhack-keybind:`hide`
 
 :index:`Hide the DFHack terminal window.

@@ -1,7 +1,7 @@
 sc-script
 =========
 
-Tags: :dfhack-tag:`system`
+Tags: `tag/system`
 :dfhack-keybind:`sc-script`
 
 :index:`Run commands when game state changes occur.

@@ -1,7 +1,7 @@
 disable
 =======
 
-Tags: :dfhack-tag:`system`
+Tags: `tag/system`
 :dfhack-keybind:`disable`
 
 :index:`Deactivate a DFHack tool that has some persistent effect.

@@ -1,3 +1,6 @@
+.. _clean:
+.. _spotclean:
+
 cleaners
 ========
 

@@ -1,7 +1,7 @@
 cromulate
 =========
 
-Tags: `tag/productivity`, `tag/unit`, `tag/adventure`
+Tags: `tag/productivity`, `tag/units`, `tag/adventure`
 :dfhack-keybind:`cromulate`
 
 :index:`Collects all widgets into a frobozz electric cromufiler.

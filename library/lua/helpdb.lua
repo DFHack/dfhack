@@ -273,11 +273,13 @@ local function update_db(old_db, entry_name, text_entry, help_source, kwargs)
         -- already in db (e.g. from a higher-priority script dir); skip
         return
     end
-    entrydb[entry_name] = {
-        entry_types=kwargs.entry_types,
-        short_help=kwargs.short_help,
-        text_entry=text_entry
-    }
+    if not kwargs.text_entry_only then
+        entrydb[entry_name] = {
+            entry_types=kwargs.entry_types,
+            short_help=kwargs.short_help,
+            text_entry=text_entry
+        }
+    end
     if entry_name ~= text_entry then
         return
     end
@@ -329,13 +331,16 @@ local function scan_plugins(old_db)
                       kwargs)
             has_commands = true
         end
-        if not includes_plugin and (has_commands or
-                dfhack.internal.isPluginEnableable(plugin)) then
+        if includes_plugin then goto continue end
+        local is_enableable = dfhack.internal.isPluginEnableable(plugin)
+        if has_commands or is_enableable then
             update_db(old_db, plugin, plugin,
                       has_rendered_help(plugin) and
                             HELP_SOURCES.RENDERED or HELP_SOURCES.STUB,
-                      {entry_types={[ENTRY_TYPES.PLUGIN]=true}})
+                      {entry_types={[ENTRY_TYPES.PLUGIN]=true},
+                       text_entry_only=not is_enableable})
         end
+        ::continue::
     end
 end
 

@@ -5,14 +5,14 @@ DFHack Documentation System
 ###########################
 
 
-DFHack documentation, like the file you are reading now, is created as ``.rst`` files,
-which are in `reStructuredText (reST) <https://www.sphinx-doc.org/rest.html>`_ format.
-This is a documentation format common in the Python community. It is very
+DFHack documentation, like the file you are reading now, is created as a set of
+``.rst`` files in `reStructuredText (reST) <https://www.sphinx-doc.org/rest.html>`_
+format. This is a documentation format common in the Python community. It is very
 similar in concept - and in syntax - to Markdown, as found on GitHub and many other
 places. However it is more advanced than Markdown, with more features available when
 compiled to HTML, such as automatic tables of contents, cross-linking, special
 external links (forum, wiki, etc) and more. The documentation is compiled by a
-Python tool, `Sphinx <https://www.sphinx-doc.org>`_.
+Python tool named `Sphinx <https://www.sphinx-doc.org>`_.
 
 The DFHack build process will compile and install the documentation so it can be
 displayed in-game by the `help` and `ls` commands (and any other command or GUI that
@@ -22,7 +22,7 @@ downloaded release binary), then you only need to build the docs if you're chang
 and want to see the changes reflected in your game.
 
 You can also build the docs if you just want a local HTML- or text-rendered copy, though
-you can always read the `online version <https://dfhack.readthedocs.org>`_.
+you can always read the `online version <https://dfhack.readthedocs.org>`_ too.
 
 (Note that even if you do want a local copy, it is certainly not necessary to
 compile the documentation in order to read it. Like Markdown, reST documents are
@@ -37,11 +37,13 @@ Concepts and general guidance
 
 The source ``.rst`` files are compiled to HTML for viewing in a browser and to text
 format for viewing in-game. For in-game help, the help text is read from its installed
-location in ``hack/docs`` under the DF directory for in-game display.
+location in ``hack/docs`` under the DF directory.
 
-Remember, everything should be documented!  If it's not clear *where* a particular thing
-should be documented, ask on Discord or in the DFHack thread on Bay12 -- as well as
-getting help, you'll be providing valuable feedback that makes it easier for future readers!
+When writing documentation, remember that everything should be documented!  If it's not
+clear *where* a particular thing should be documented, ask on Discord or in the DFHack
+thread on Bay12 -- you'll not only be getting help, you'll also be providing valuable
+feedback that makes it easier for future contributers to find documentation on how to
+write the documentation!
 
 Try to keep lines within 80-100 characters, so it's readable in plain text
 in the terminal - Sphinx (our documentation system) will make sure
@@ -105,7 +107,7 @@ Where do I add the help text?
 -----------------------------
 
 For scripts and plugins that are distributed as part of DFHack, documentation files
-should be added to the :source-scripts:`docs` and :source:`docs/plugins` directories,
+should be added to the :source-scripts:`scripts/docs <docs>` and :source:`docs/plugins` directories,
 respectively, in a file named after the script or plugin. For example, a script named
 ``gui/foobar.lua`` (which provides the ``gui/foobar`` command) should be documented
 in a file named ``docs/gui/foobar.rst`` in the scripts repo. Similarly, a plugin named
@@ -138,8 +140,9 @@ or plugin. For example, documentation for the ``build-now`` script might look li
     Tags: `tag/fort`, `tag/buildings`
     :dfhack-keybind:`build-now`
 
-    Instantly completes unsuspended building jobs. By default, all constructions
-    and buildings on the map are completed, but the area of effect is configurable.
+    Instantly completes unsuspended building jobs. By default, all
+    constructions and buildings on the map are completed, but the area
+    of effect is configurable.
 
 Usage help
 ----------
@@ -154,14 +157,15 @@ option is to show usage formats together, with an explanation following the bloc
         build-now here [<options>]
         build-now [<pos> [<pos>]] [<options>]
 
-    Where the optional ``<pos>`` pair can be used to specify the coordinate bounds
-    within which ``build-now`` will operate. If they are not specified,
-    ``build-now`` will scan the entire map. If only one ``<pos>`` is specified, only
-    the building at that coordinate is built.
+    Where the optional ``<pos>`` pair can be used to specify the
+    coordinate bounds within which ``build-now`` will operate. If they
+    are not specified, ``build-now`` will scan the entire map. If only
+    one ``<pos>`` is specified, only the building at that coordinate
+    is built.
 
-    The ``<pos>`` parameters can either be an ``<x>,<y>,<z>`` triple (e.g.
-    ``35,12,150``) or the string ``here``, which means the position of the active
-    game cursor.
+    The ``<pos>`` parameters can either be an ``<x>,<y>,<z>`` triple
+    (e.g. ``35,12,150``) or the string ``here``, which means the
+    position of the active game cursor.
 
 The second option is to arrange the usage options in a list, with the full command
 and arguments in monospaced font. Then indent the next line and describe the effect::
@@ -169,11 +173,14 @@ and arguments in monospaced font. Then indent the next line and describe the eff
     Usage:
 
     ``build-now [<options>]``
-        Scan the entire map and build all unsuspended constructions and buildings.
+        Scan the entire map and build all unsuspended constructions
+        and buildings.
     ``build-now here [<options>]``
-        Build the unsuspended construction or building under the cursor.
+        Build the unsuspended construction or building under the
+        cursor.
     ``build-now [<pos> [<pos>]] [<options>]``
-        Build all unsuspended constructions within the specified coordinate box.
+        Build all unsuspended constructions within the specified
+        coordinate box.
 
     The ``<pos>`` parameters are specified as...
 
@@ -202,8 +209,8 @@ example Examples section::
     ``build-now``
         Completes all unsuspended construction jobs on the map.
     ``build-now 37,20,154 here``
-        Builds the unsuspended, unconstructed buildings in the box bounded by the coordinate
-        x=37,y=20,z=154 and the cursor.
+        Builds the unsuspended, unconstructed buildings in the box
+        bounded by the coordinate x=37,y=20,z=154 and the cursor.
 
 Options
 -------
@@ -217,9 +224,11 @@ examples::
     ``-h``, ``--help``
         Show help text.
     ``-l``, ``--quality <level>``
-        Set the quality of the architecture for built architected builtings.
+        Set the quality of the architecture for built architected
+        builtings.
     ``-q``, ``--quiet``
-        Suppress informational output (error messages are still printed).
+        Suppress informational output (error messages are still
+        printed).
 
 Note that for parameters that have both short and long forms, any values that those options
 take only need to be specified once (e.g. ``<level>``).
@@ -260,8 +269,8 @@ entire script header::
     =================
     Tags: adventure, map
 
-    Allows you to quickly move items between containers. This includes yourself
-    and any followers you have.
+    Allows you to quickly move items between containers. This includes
+    yourself and any followers you have.
 
     Usage:
 
@@ -272,8 +281,8 @@ entire script header::
     gui/adv-inventory
         Opens the GUI with nothing preselected
     gui/adv-inventory take-all
-        Opens the GUI with all container items already selected and ready to move
-        into the adventurer's inventory.
+        Opens the GUI with all container items already selected and
+        ready to move into the adventurer's inventory.
 
     Options:
 

@@ -1,6 +1,5 @@
 autodump
 ========
-
 Tags:
 :dfhack-keybind:`autodump`
 :dfhack-keybind:`autodump-destroy-here`
@@ -37,28 +36,28 @@ before the game is resumed, cancels destruction of the item.
 Options
 -------
 
-- ``destroy``
+``destroy``
     Destroy instead of dumping. Doesn't require a cursor. If ``autodump`` is
     called again with this option before the game is resumed, it cancels
     pending destroy actions.
-- ``destroy-here``
+``destroy-here``
     :index:`Destroy items marked for dumping under the cursor.
     <autodump-destroy-here; Destroy items marked for dumping under the cursor.>`
-- ``visible``
+``visible``
     Only process items that are not hidden.
-- ``hidden``
+``hidden``
     Only process hidden items.
-- ``forbidden``
+``forbidden``
     Only process forbidden items (default: only unforbidden).
 
 Examples
 --------
 
-- ``autodump``
+``autodump``
     :index:`Teleports items marked for dumping to the cursor position.
     <autodump; Teleports items marked for dumping to the cursor position.>`
-- ``autodump destroy``
+``autodump destroy``
     Destroys all unforbidden items marked for dumping
-- ``autodump-destroy-item``
+``autodump-destroy-item``
     :index:`Destroys the selected item.
     <autodump-destroy-item; Destroys the selected item.>`

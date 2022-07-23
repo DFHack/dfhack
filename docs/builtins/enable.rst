@@ -1,6 +1,5 @@
 enable
 ======
-
 Tags: `tag/system`
 :dfhack-keybind:`enable`
 
@@ -25,7 +24,7 @@ Usage::
 Examples
 --------
 
-- ``enable manipulator``
+``enable manipulator``
     Enable the ``manipulator`` plugin.
-- ``enable manipulator search``
+``enable manipulator search``
     Enable multiple plugins at once.

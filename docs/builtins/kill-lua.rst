@@ -1,6 +1,5 @@
 kill-lua
 ========
-
 Tags: `tag/system`
 :dfhack-keybind:`kill-lua`
 

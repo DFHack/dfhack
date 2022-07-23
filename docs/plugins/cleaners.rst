@@ -3,7 +3,6 @@
 
 cleaners
 ========
-
 Tags:
 :dfhack-keybind:`clean`
 :dfhack-keybind:`spotclean`
@@ -28,22 +27,22 @@ includes hostiles, and that cleaning items removes poisons from weapons.
 if you just want to clean a specific tile but don't want the `clean` command to
 remove all the glorious blood from your entranceway.
 
+Examples
+--------
+
+``clean all``
+    Clean everything that can be cleaned (except mud and snow).
+``clean all mud item snow``
+    Removes all spatter, including mud, leaves, and snow from map tiles.
+
 Options
 -------
 
 When cleaning the map, you can specify extra options for extra cleaning:
 
-- ``mud``
+``mud``
     Also remove mud.
-- ``item``
+``item``
     Also remove item spatter, like fallen leaves and flowers.
-- ``snow``
+``snow``
     Also remove snow coverings.
-
-Examples
---------
-
-- ``clean all``
-    Clean everything that can be cleaned (except mud and snow).
-- ``clean all mud item snow``
-    Removes all spatter, including mud, leaves, and snow from map tiles.

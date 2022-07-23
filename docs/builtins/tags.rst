@@ -1,6 +1,5 @@
 tags
 ====
-
 Tags: `tag/system`
 :dfhack-keybind:`tags`
 

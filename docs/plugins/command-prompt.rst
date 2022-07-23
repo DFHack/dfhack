@@ -1,6 +1,5 @@
 command-prompt
 ==============
-
 Tags:
 :dfhack-keybind:`command-prompt`
 

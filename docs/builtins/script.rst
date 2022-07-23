@@ -1,6 +1,5 @@
 script
 ======
-
 Tags: `tag/system`
 :dfhack-keybind:`script`
 
@@ -16,9 +15,9 @@ Usage::
 
     script <filename>
 
-Examples
---------
+Example
+-------
 
-- ``script startup.txt``
+``script startup.txt``
     Executes the commands in ``startup.txt``, which exists in your DF game
     directory.

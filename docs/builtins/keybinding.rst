@@ -1,6 +1,5 @@
 keybinding
 ==========
-
 Tags: `tag/system`
 :dfhack-keybind:`keybinding`
 
@@ -14,15 +13,15 @@ Hotkeys can be any combinations of Ctrl/Alt/Shift with A-Z, 0-9, F1-F12, or
 
 Usage:
 
-- ``keybinding``
+``keybinding``
     Show some useful information, including the current game context.
-- ``keybinding list <key>``
+``keybinding list <key>``
     List bindings active for the key combination.
-- ``keybinding clear <key> [<key>...]``
+``keybinding clear <key> [<key>...]``
     Remove bindings for the specified keys.
-- ``keybinding add <key> "cmdline" ["cmdline"...]``
+``keybinding add <key> "cmdline" ["cmdline"...]``
     Add bindings for the specified key.
-- ``keybinding set <key> "cmdline" ["cmdline"...]``
+``keybinding set <key> "cmdline" ["cmdline"...]``
     Clear, and then add bindings for the specified key.
 
 The ``<key>`` parameter above has the following **case-sensitive** syntax::
@@ -53,8 +52,8 @@ Interactive commands like `liquids` cannot be used as hotkeys.
 Examples
 --------
 
-- ``keybinding add Alt-F1 hotkeys``
+``keybinding add Alt-F1 hotkeys``
     Bind Alt-F1 to run the `hotkeys` command on any screen at any time.
-- ``keybinding add Alt-F@dwarfmode gui/quickfort``
+``keybinding add Alt-F@dwarfmode gui/quickfort``
     Bind Alt-F to run `gui/quickfort`, but only when on a screen that shows the
     main map.

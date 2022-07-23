@@ -1,6 +1,5 @@
 cleanowned
 ==========
-
 Tags:
 :dfhack-keybind:`cleanowned`
 
@@ -21,11 +20,11 @@ anything.
 
 You can confiscate additional types of items by adding them to the commandline:
 
-- ``scattered``
+``scattered``
     Confiscate/dump all items scattered on the floor.
-- ``x``
+``x``
     Confiscate/dump items with wear level 'x' (lightly worn) and more.
-- ``X``
+``X``
     Confiscate/dump items with wear level 'X' (heavily worn) and more.
 
 Or you can confiscate all owned items by specifying ``all``.
@@ -33,6 +32,6 @@ Or you can confiscate all owned items by specifying ``all``.
 Example
 -------
 
-- ``cleanowned scattered X``
+``cleanowned scattered X``
     Confiscate and dump rotten and dropped food, garbage on the floors, and any
     worn items with 'X' damage and above.

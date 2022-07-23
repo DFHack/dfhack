@@ -267,7 +267,7 @@ entire script header::
     -- [====[
     gui/adv-inventory
     =================
-    Tags: adventure, map
+    Tags: adventure, items
 
     Allows you to quickly move items between containers. This
     includes yourself and any followers you have.

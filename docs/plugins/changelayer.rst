@@ -1,8 +1,7 @@
 changelayer
 ===========
-
 Tags:
-:dfhack-keybind:
+:dfhack-keybind:`changelayer`
 
 :index:`Change the material of an entire geology layer.
 <changelayer; Change the material of an entire geology layer.>` Note that one
@@ -25,27 +24,6 @@ When run without options, ``changelayer`` will:
 
 You can use the `probe` command on various tiles around your map to find valid
 material RAW ids and to get an idea how layers and biomes are distributed.
-
-Options
--------
-
-- ``all_biomes``
-   Change the corresponding geology layer for all biomes on your map. Be aware
-   that the same geology layer can AND WILL be on different z-levels for
-   different biomes.
-- ``all_layers``
-   Change all geology layers on your map (only for the selected biome unless
-   ``all_biomes`` is also specified). Candy mountain, anyone? Will make your map
-   quite boring, but tidy.
-- ``force``
-   Allow changing stone to soil and vice versa. **THIS CAN HAVE WEIRD EFFECTS,
-   USE WITH CARE AND SAVE FIRST**. Note that soil will not be magically replaced
-   with stone. You will, however, get a stone floor after digging, so it will
-   allow the floor to be engraved. Similarly, stone will not be magically
-   replaced with soil, but you will get a soil floor after digging, so it could
-   be helpful for creating farm plots on maps with no soil.
-- ``verbose``
-   Output details about what is being changed.
 
 Examples
 --------
@@ -71,3 +49,24 @@ Examples
       weird stuff (flashing tiles, tiles changed all over place etc). Try
       reverting the changes manually or even better use an older savegame. You
       did save your game, right?
+
+Options
+-------
+
+``all_biomes``
+   Change the corresponding geology layer for all biomes on your map. Be aware
+   that the same geology layer can AND WILL be on different z-levels for
+   different biomes.
+``all_layers``
+   Change all geology layers on your map (only for the selected biome unless
+   ``all_biomes`` is also specified). Candy mountain, anyone? Will make your map
+   quite boring, but tidy.
+``force``
+   Allow changing stone to soil and vice versa. **THIS CAN HAVE WEIRD EFFECTS,
+   USE WITH CARE AND SAVE FIRST**. Note that soil will not be magically replaced
+   with stone. You will, however, get a stone floor after digging, so it will
+   allow the floor to be engraved. Similarly, stone will not be magically
+   replaced with soil, but you will get a soil floor after digging, so it could
+   be helpful for creating farm plots on maps with no soil.
+``verbose``
+   Output details about what is being changed.

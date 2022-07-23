@@ -1,6 +1,5 @@
 autochop
 ========
-
 Tags:
 
 :index:`Auto-harvest trees when low on stockpiled logs.

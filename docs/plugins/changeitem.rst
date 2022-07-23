@@ -1,8 +1,7 @@
 changeitem
 ==========
-
 Tags:
-:dfhack-keybind:
+:dfhack-keybind:`changeitem`
 
 :index:`Change item material and base quality.
 <changeitem; Change item material and base quality.>` By default, a change is
@@ -14,26 +13,13 @@ refuse to touch.
 
 Usage:
 
-- ``changeitem info``
+``changeitem info``
    Show details about the selected item. Does not change the item. You can use
    this command to discover RAW ids for existing items.
-- ``changeitem [<options>]``
+``changeitem [<options>]``
    Change the item selected in the ``k`` list or inside a container/inventory.
-- ``changeitem here [<options>]``
+``changeitem here [<options>]``
    Change all items at the cursor position. Requires in-game cursor.
-
-Options
--------
-
-- ``m``, ``material <RAW id>``
-   Change material. Must be followed by valid material RAW id.
-- ``s``, ``subtype <RAW id>``
-   Change subtype. Must be followed by a valid subtype RAW id."
-- ``q``, ``quality <quality>``
-   Change base quality. Must be followed by number (0-5) with 0 being no quality
-   and 5 being masterpiece quality.
-- ``force``
-   Ignore subtypes and force the change to the new material.
 
 Examples
 --------
@@ -42,3 +28,16 @@ Examples
    Change material of all stone items under the cursor to granite.
 ``changeitem q 5``
    Change currently selected item to masterpiece quality.
+
+Options
+-------
+
+``m``, ``material <RAW id>``
+   Change material. Must be followed by valid material RAW id.
+``s``, ``subtype <RAW id>``
+   Change subtype. Must be followed by a valid subtype RAW id."
+``q``, ``quality <quality>``
+   Change base quality. Must be followed by number (0-5) with 0 being no quality
+   and 5 being masterpiece quality.
+``force``
+   Ignore subtypes and force the change to the new material.

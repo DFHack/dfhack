@@ -1,6 +1,5 @@
 autolabor
 =========
-
 Tags:
 :dfhack-keybind:`autolabor`
 
@@ -54,36 +53,36 @@ dwarfs that meet any of these conditions:
 
 We stop assigning dwarves when we reach the maximum allowed.
 
-Advanced usage
---------------
-
-- ``autolabor <labor> <minimum> [<maximum>] [<talent pool>]``
-    Set range of dwarves assigned to a labor, optionally specifying the size of
-    the pool of most skilled dwarves that will ever be considered for this
-    labor.
-- ``autolabor <labor> haulers``
-    Set a labor to be handled by hauler dwarves.
-- ``autolabor <labor> disable``
-    Turn off autolabor for a specific labor.
-- ``autolabor reset-all|<labor> reset``
-    Return a labor (or all labors) to the default handling.
-- ``autolabor list``
-    List current status of all labors.
-- ``autolabor status``
-    Show basic status information.
-
-See `autolabor-artisans` for a differently-tuned setup.
-
 Examples
 --------
 
-- ``autolabor MINE 5``
+``autolabor MINE 5``
     Keep at least 5 dwarves with mining enabled.
-- ``autolabor CUT_GEM 1 1``
+``autolabor CUT_GEM 1 1``
     Keep exactly 1 dwarf with gemcutting enabled.
-- ``autolabor COOK 1 1 3``
+``autolabor COOK 1 1 3``
     Keep 1 dwarf with cooking enabled, selected only from the top 3.
-- ``autolabor FEED_WATER_CIVILIANS haulers``
+``autolabor FEED_WATER_CIVILIANS haulers``
     Have haulers feed and water wounded dwarves.
-- ``autolabor CUTWOOD disable``
+``autolabor CUTWOOD disable``
     Turn off autolabor for wood cutting.
+
+Advanced usage
+--------------
+
+``autolabor <labor> <minimum> [<maximum>] [<talent pool>]``
+    Set range of dwarves assigned to a labor, optionally specifying the size of
+    the pool of most skilled dwarves that will ever be considered for this
+    labor.
+``autolabor <labor> haulers``
+    Set a labor to be handled by hauler dwarves.
+``autolabor <labor> disable``
+    Turn off autolabor for a specific labor.
+``autolabor reset-all|<labor> reset``
+    Return a labor (or all labors) to the default handling.
+``autolabor list``
+    List current status of all labors.
+``autolabor status``
+    Show basic status information.
+
+See `autolabor-artisans` for a differently-tuned setup.

@@ -1,6 +1,5 @@
 type
 ====
-
 Tags: `tag/system`
 :dfhack-keybind:`type`
 

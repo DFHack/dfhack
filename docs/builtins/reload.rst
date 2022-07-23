@@ -1,6 +1,5 @@
 reload
 ======
-
 Tags: `tag/system`
 :dfhack-keybind:`reload`
 

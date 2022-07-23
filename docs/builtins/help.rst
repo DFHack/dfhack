@@ -1,6 +1,5 @@
 help
 ====
-
 Tags: `tag/system`
 :dfhack-keybind:`help`
 

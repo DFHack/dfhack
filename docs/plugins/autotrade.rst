@@ -1,6 +1,5 @@
 autotrade
 =========
-
 Tags:
 
 :index:`Quickly designate items to be traded.

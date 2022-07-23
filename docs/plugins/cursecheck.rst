@@ -1,6 +1,5 @@
 cursecheck
 ==========
-
 Tags:
 :dfhack-keybind:`cursecheck`
 
@@ -22,23 +21,8 @@ Usage::
 
    cursecheck [<options>]
 
-Options:
-
-- ``detail``
-   Print full name, date of birth, date of curse, and some status info (some
-   vampires might use fake identities in-game, though).
-- ``nick``
-   Set the type of curse as nickname (does not always show up in-game; some
-   vamps don't like nicknames).
-- ``ids``
-   Print the creature and race IDs.
-- ``all``
-   Include dead and passive cursed creatures (this can result in quite a long
-   list after having !!FUN!! with necromancers).
-- ``verbose``
-   Print all curse tags (if you really want to know it all).
-
-Examples:
+Examples
+--------
 
 - ``cursecheck``
    Display a count of cursed creatures on the map (or under the cursor).
@@ -54,3 +38,20 @@ Examples:
 
     If you see any living/active creatures with a cursetype of "unknown", then
     it is most likely a new type of curse introduced by a mod.
+
+Options
+-------
+
+``detail``
+   Print full name, date of birth, date of curse, and some status info (some
+   vampires might use fake identities in-game, though).
+``nick``
+   Set the type of curse as nickname (does not always show up in-game; some
+   vamps don't like nicknames).
+``ids``
+   Print the creature and race IDs.
+``all``
+   Include dead and passive cursed creatures (this can result in quite a long
+   list after having !!FUN!! with necromancers).
+``verbose``
+   Print all curse tags (if you really want to know it all).

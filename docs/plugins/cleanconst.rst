@@ -1,6 +1,5 @@
 cleanconst
 ==========
-
 Tags:
 :dfhack-keybind:`cleanconst`
 

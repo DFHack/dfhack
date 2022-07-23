@@ -1,6 +1,5 @@
 automelt
 ========
-
 Tags:
 
 :index:`Quickly designate items to be melted.

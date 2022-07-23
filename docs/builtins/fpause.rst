@@ -1,6 +1,5 @@
 fpause
 ======
-
 Tags: `tag/system`
 :dfhack-keybind:`fpause`
 

@@ -1,6 +1,5 @@
 autohauler
 ==========
-
 Tags:
 :dfhack-keybind:`autohauler`
 
@@ -24,33 +23,33 @@ can be changed by the user.
 
 Usage:
 
-- ``enable autohauler``
+``enable autohauler``
     Start managing hauling labors. This is normally all you need to do.
     Autohauler works well on default settings.
-- ``autohauler status``
+``autohauler status``
     Show autohauler status and status of fort dwarves.
-- ``autohauler <labor> haulers``
+``autohauler <labor> haulers``
     Set whether a particular labor should be assigned to haulers.
-- ``autohauler <labor> allow|forbid``
+``autohauler <labor> allow|forbid``
     Set whether a particular labor should mark a dwarf as exempt from hauling.
     By default, only the ``ALCHEMIST`` labor is set to ``forbid``.
-- ``autohauler reset-all|<labor> reset``
+``autohauler reset-all|<labor> reset``
     Reset a particular labor (or all labors) to their default
     haulers/allow/forbid state.
-- ``autohauler list``
+``autohauler list``
     Show the active configuration for all labors.
-- ``autohauler frameskip <number>``
+``autohauler frameskip <number>``
     Set the number of frames between runs of autohauler.
-- ``autohauler debug``
+``autohauler debug``
     In the next cycle, output the state of every dwarf.
 
 Examples
 --------
 
-- ``autohauler HAUL_STONE haulers``
+``autohauler HAUL_STONE haulers``
     Set stone hauling as a hauling labor (this is already the default).
-- ``autohauler RECOVER_WOUNDED allow``
+``autohauler RECOVER_WOUNDED allow``
     Allow the "Recover wounded" labor to be manually assigned by the player. By
     default it is automatically given to haulers.
-- ``autohauler MINE forbid``
+``autohauler MINE forbid``
     Don't assign hauling labors to dwarves with the Mining labor enabled.

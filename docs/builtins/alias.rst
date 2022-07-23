@@ -1,6 +1,5 @@
 alias
 =====
-
 Tags: `tag/system`
 :dfhack-keybind:`alias`
 
@@ -12,14 +11,14 @@ or script.
 
 Usage:
 
-- ``alias list``
+``alias list``
     Lists all configured aliases
-- ``alias add <name> <command> [arguments...]``
+``alias add <name> <command> [arguments...]``
     Adds an alias
-- ``alias replace <name> <command> [arguments...]``
+``alias replace <name> <command> [arguments...]``
     Replaces an existing alias with a new command, or adds the alias if it does
     not already exist
-- ``alias delete <name>``
+``alias delete <name>``
     Removes the specified alias
 
 Aliases can be given additional arguments when created and invoked, which will

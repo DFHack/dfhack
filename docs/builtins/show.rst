@@ -1,6 +1,5 @@
 show
 ====
-
 Tags: `tag/system`
 :dfhack-keybind:`show`
 

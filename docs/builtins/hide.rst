@@ -1,6 +1,5 @@
 hide
 ====
-
 Tags: `tag/system`
 :dfhack-keybind:`hide`
 

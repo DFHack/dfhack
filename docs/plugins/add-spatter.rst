@@ -1,6 +1,5 @@
 add-spatter
 ===========
-
 Tags:
 
 :index:`Make tagged reactions produce contaminants.

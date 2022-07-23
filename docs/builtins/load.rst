@@ -1,6 +1,5 @@
 load
 ====
-
 Tags: `tag/system`
 :dfhack-keybind:`load`
 

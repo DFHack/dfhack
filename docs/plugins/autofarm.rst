@@ -1,6 +1,5 @@
 autofarm
 ========
-
 Tags:
 :dfhack-keybind:`autofarm`
 
@@ -12,15 +11,15 @@ threshold for each crop type is configurable.
 
 Usage:
 
-- ``enable autofarm``
+``enable autofarm``
     Enable the plugin and start managing crop assignment.
-- ``autofarm runonce``
+``autofarm runonce``
     Updates all farm plots once, without enabling the plugin.
-- ``autofarm status``
+``autofarm status``
     Prints status information, including any defined thresholds.
-- ``autofarm default <number>``
+``autofarm default <number>``
     Sets the default threshold.
-- ``autofarm threshold <number> <type> [<type> ...]``
+``autofarm threshold <number> <type> [<type> ...]``
     Sets thresholds of individual plant types.
 
 You can find the identifiers for the crop types in your world by running the
@@ -31,7 +30,7 @@ following command::
 Examples
 --------
 
-- ``autofarm default 30``
+``autofarm default 30``
     Set the default threshold to 30.
-- ``autofarm threshold 150 MUSHROOM_HELMET_PLUMP GRASS_TAIL_PIG``
+``autofarm threshold 150 MUSHROOM_HELMET_PLUMP GRASS_TAIL_PIG``
     Set the threshold for Plump Helmets and Pig Tails to 150

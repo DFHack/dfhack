@@ -1,6 +1,5 @@
 die
 ===
-
 Tags: `tag/system`
 :dfhack-keybind:`die`
 

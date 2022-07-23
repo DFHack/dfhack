@@ -1,6 +1,5 @@
 automaterial
 ============
-
 Tags:
 
 :index:`Sorts building materials by recent usage.

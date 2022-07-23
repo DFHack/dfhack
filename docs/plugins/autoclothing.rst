@@ -1,6 +1,5 @@
 autoclothing
 ============
-
 Tags:
 :dfhack-keybind:`autoclothing`
 
@@ -22,7 +21,7 @@ material and item.
 Examples
 --------
 
-* ``autoclothing cloth "short skirt" 10``:
+``autoclothing cloth "short skirt" 10``
     Sets the desired number of cloth short skirts available per citizen to 10.
-* ``autoclothing cloth dress``:
+``autoclothing cloth dress``
     Displays the currently set number of cloth dresses chosen per citizen.

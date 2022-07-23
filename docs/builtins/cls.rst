@@ -1,6 +1,5 @@
 cls
 ===
-
 Tags: `tag/system`
 :dfhack-keybind:`cls`
 

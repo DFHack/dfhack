@@ -1,6 +1,5 @@
 autogems
 ========
-
 Tags:
 :dfhack-keybind:`autogems-reload`
 
@@ -10,9 +9,9 @@ orders for cutting them at a Jeweler's Workshop.
 
 Usage:
 
-- ``enable autogems``
+``enable autogems``
     Enables the plugin
-- ``autogems-reload``
+``autogems-reload``
     :index:`Reloads the autogems configuration file.
     <autogems-reload; Reloads the autogems configuration file.>` You might need
     to do this if you have manually modified the contents while the game is

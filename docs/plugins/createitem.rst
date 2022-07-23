@@ -1,6 +1,5 @@
 createitem
 ==========
-
 Tags:
 :dfhack-keybind:`createitem`
 
@@ -23,14 +22,14 @@ Corpses, body parts, and prepared meals cannot be created using this tool.
 
 Usage:
 
-- ``createitem <item> <material> [<count>]``
+``createitem <item> <material> [<count>]``
     Create <count> copies (default is 1) of the specified item made out of the
     specified material.
-- ``createitem inspect``
+``createitem inspect``
     Obtain the item and material tokens of an existing item. Its output can be
     used directly as arguments to ``createitem`` to create new matching items
     (as long as the item type is supported).
-- ``createitem floor|item|building``
+``createitem floor|item|building``
     Subsequently created items will be placed on the floor beneath the selected
     unit's, inside the selected item, or as part of the selected building.
 
@@ -39,14 +38,15 @@ Usage:
     ``createitem building`` is good for loading traps, but if you use it with
     workshops, you will have to deconstruct the workshop to access the item.
 
-Examples:
+Examples
+--------
 
-- ``createitem GLOVES:ITEM_GLOVES_GAUNTLETS INORGANIC:STEEL 2``
+``createitem GLOVES:ITEM_GLOVES_GAUNTLETS INORGANIC:STEEL 2``
     Create 2 pairs of steel gauntlets (that is, 2 left gauntlets and 2 right
     gauntlets).
-- ``createitem WOOD PLANT_MAT:TOWER_CAP:WOOD 100``
+``createitem WOOD PLANT_MAT:TOWER_CAP:WOOD 100``
     Create 100 tower-cap logs.
-- ``createitem PLANT_GROWTH BILBERRY:FRUIT``
+``createitem PLANT_GROWTH BILBERRY:FRUIT``
     Create a single bilberry.
 
 For more examples, :wiki:`the wiki <Utility:DFHack/createitem>`.

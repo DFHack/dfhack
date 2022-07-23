@@ -1,6 +1,5 @@
 buildingplan
 ============
-
 Tags:
 :dfhack-keybind:`buildingplan`
 
@@ -36,12 +35,12 @@ The buildingplan plugin has global settings that can be set from the UI
 :kbd:`b`:kbd:`a`:kbd:`G`). These settings can also be set via the
 ``buildingplan set`` command. The available settings are:
 
-- ``all_enabled`` (default: false)
+``all_enabled`` (default: false)
     Enable planning mode for all building types.
-- ``blocks``, ``boulders``, ``logs``, ``bars`` (defaults: true, true, true, false)
+``blocks``, ``boulders``, ``logs``, ``bars`` (defaults: true, true, true, false)
     Allow blocks, boulders, logs, or bars to be matched for generic "building
     material" items.
-- ``quickfort_mode`` (default: false)
+``quickfort_mode`` (default: false)
     Enable compatibility mode for the legacy Python Quickfort (this setting is
     not required for DFHack `quickfort`)
 
@@ -51,7 +50,7 @@ save.
 
 If you normally embark with some blocks on hand for early workshops, you might
 want to add this line to your ``dfhack-config/init/onMapLoad.init`` file to
-always configure buildingplan to just use blocks for buildlings and
+always configure buildingplan to just use blocks for buildings and
 constructions::
 
     on-new-fortress buildingplan set boulders false; buildingplan set logs false

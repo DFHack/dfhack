@@ -1,8 +1,7 @@
 changevein
 ==========
-
 Tags:
-:dfhack-keybind:
+:dfhack-keybind:`changevein`
 
 :index:`Change the material of a mineral inclusion.
 <changevein; Change the material of a mineral inclusion.>` You can change it to
@@ -20,5 +19,5 @@ Usage::
 Example
 -------
 
-- ``changevein NATIVE_PLATINUM``
+``changevein NATIVE_PLATINUM``
     Convert vein at cursor position into platinum ore.

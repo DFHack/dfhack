@@ -141,8 +141,8 @@ or plugin. For example, documentation for the ``build-now`` script might look li
     :dfhack-keybind:`build-now`
 
     Instantly completes unsuspended building jobs. By default, all
-    constructions and buildings on the map are completed, but the area
-    of effect is configurable.
+    constructions and buildings on the map are completed, but the
+    area of effect is configurable.
 
 Usage help
 ----------
@@ -158,10 +158,10 @@ option is to show usage formats together, with an explanation following the bloc
         build-now [<pos> [<pos>]] [<options>]
 
     Where the optional ``<pos>`` pair can be used to specify the
-    coordinate bounds within which ``build-now`` will operate. If they
-    are not specified, ``build-now`` will scan the entire map. If only
-    one ``<pos>`` is specified, only the building at that coordinate
-    is built.
+    coordinate bounds within which ``build-now`` will operate. If
+    they are not specified, ``build-now`` will scan the entire map.
+    If only one ``<pos>`` is specified, only the building at that
+    coordinate is built.
 
     The ``<pos>`` parameters can either be an ``<x>,<y>,<z>`` triple
     (e.g. ``35,12,150``) or the string ``here``, which means the
@@ -269,8 +269,8 @@ entire script header::
     =================
     Tags: adventure, map
 
-    Allows you to quickly move items between containers. This includes
-    yourself and any followers you have.
+    Allows you to quickly move items between containers. This
+    includes yourself and any followers you have.
 
     Usage:
 

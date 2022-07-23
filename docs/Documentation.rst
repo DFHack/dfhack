@@ -94,6 +94,8 @@ For alternative link behaviors, see:
 Documentation standards
 =======================
 
+.. highlight:: rst
+
 Whether you're adding new code or just fixing old documentation (and there's plenty),
 there are a few important standards for completeness and consistent style.  Treat
 this section as a guide rather than iron law, match the surrounding text, and you'll
@@ -129,9 +131,7 @@ each command provided by the script or plugin. For scripts, this will just be th
 Plugins that do not provide commands (i.e. they can just be enabled for some persistent effect or
 they just export functionality via a Lua API) don't need any ``:dfhack-keybind:`` lines at all.
 The first line of the text should then be the short description that will be used for the script
-or plugin. For example, documentation for the ``build-now`` script might look like:
-
-.. code-block:: rst
+or plugin. For example, documentation for the ``build-now`` script might look like::
 
     build-now
     =========
@@ -236,11 +236,15 @@ Note that since help text for external scripts and plugins is not rendered by Sp
 it should be written in plain text. Any reStructuredText markup will not be processed.
 
 For external scripts, the short description comes from a comment on the first line
-(the comment marker and extra whitespace is stripped). For Lua, this would look like::
+(the comment marker and extra whitespace is stripped). For Lua, this would look like:
+
+.. code-block:: lua
 
     -- A short description of my cool script.
 
-and for Ruby scripts it would look like::
+and for Ruby scripts it would look like:
+
+.. code-block:: ruby
 
     # A short description of my cool script.
 

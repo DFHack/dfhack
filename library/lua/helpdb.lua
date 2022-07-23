@@ -636,7 +636,7 @@ end
 function is_builtin(command)
     ensure_db()
     return entrydb[command] and
-            get_db_property(entry_name, 'entry_types')[ENTRY_TYPES.BUILTIN]
+            get_db_property(command, 'entry_types')[ENTRY_TYPES.BUILTIN]
 end
 
 ---------------------------------------------------------------------------

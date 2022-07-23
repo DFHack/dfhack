@@ -1197,7 +1197,11 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
     else
     {
         res = plug_mgr->InvokeCommand(con, first, parts);
-        if(res == CR_NOT_IMPLEMENTED)
+        if (res == CR_WRONG_USAGE)
+        {
+            help_helper(con, first);
+        }
+        else if (res == CR_NOT_IMPLEMENTED)
         {
             string completed;
             string filename = findScript(first + ".lua");

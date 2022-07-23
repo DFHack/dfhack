@@ -503,8 +503,6 @@ command_result Plugin::invoke(color_ostream &out, const std::string & command, s
                 {
                     cr = cmd.function(out, parameters);
                 }
-                if (cr == CR_WRONG_USAGE && !cmd.usage.empty())
-                    out << "Usage:\n" << cmd.usage << flush;
                 break;
             }
         }

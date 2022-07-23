@@ -17,6 +17,7 @@ Example:
 
 ``filltraffic H``
   When used in a room with doors, it will set traffic to HIGH in just that room.
+
 alltraffic
 ==========
 Set traffic designations for every single tile of the map - useful for resetting

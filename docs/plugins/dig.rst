@@ -21,6 +21,7 @@ Basic commands:
     specifying the designation priority with ``-p#``, ``-p #``, or ``p=#``,
     where ``#`` is a number from 1 to 7. If a priority is not specified, the
     priority selected in-game is used as the default.
+
 digcircle
 =========
 A command for easy designation of filled and hollow circles.
@@ -56,6 +57,7 @@ Examples:
         Dig a filled circle with diameter = 3.
 ``digcircle``
         Do it again.
+
 digtype
 =======
 For every tile on the map of the same vein type as the selected tile,
@@ -75,6 +77,7 @@ Options:
 :up:     up stairs
 :down:   down stairs
 :clear:  clear designation
+
 digexp
 ======
 This command is for :wiki:`exploratory mining <Exploratory_mining>`.

@@ -131,6 +131,7 @@ Examples
 ``zone tocages count 50 own tame male not grazer``
    Stuff up to 50 owned tame male animals who are not grazers into cages built
    on the current default zone.
+
 autobutcher
 ===========
 Assigns lifestock for slaughter once it reaches a specific count. Requires that
@@ -222,6 +223,7 @@ add some new races with 'watch'. If you simply want to stop it completely use
 'autobutcher stop' instead. ::
 
     autobutcher unwatch ALPACA CAT
+
 autonestbox
 ===========
 Assigns unpastured female egg-layers to nestbox zones. Requires that you create

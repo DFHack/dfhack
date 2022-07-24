@@ -27,101 +27,130 @@ Usage:
     Also cross z-levels, digging stairs as needed. Alias for ``digl x``.
 ``digcircle [<diameter>] [<solidity>] [<action>] [<designation>] [-p<number>]``
     Designate circles. The diameter is the number of tiles across the center of
-    the circle that you want to dig. See the `digcircle`_ section below for an
-    explanation of the options.
-``digtype [<designation>]
-For every tile on the map of the same vein type as the selected tile,
-this command designates it to have the same designation as the
-selected tile. If the selected tile has no designation, they will be
-dig designated.
-    
-``digexp [<pattern>] [<filter>]
+    the circle that you want to dig. See the `digcircle`_ section below for
+    options.
+``digtype [<designation>] [-p<number>]``
+    Designate all vein tiles of the selected type. See the `digtype`_ section
+    below for options.
+``digexp [<pattern>] [<filter>] [-p<number>]``
+    Designate dig patterns for exploratory mining. See the `digexp`_ section
+    below for options
 
-.. note::
+All commands support specifying the priority of the dig designations with
+``-p<number>``, where the number is from 1 to 7. If a priority is not specified,
+the priority selected in-game is used as the default.
 
-    All commands implemented by the `dig` plugin (listed by ``ls dig``) support
-    specifying the designation priority with ``-p#``, ``-p #``, or ``p=#``,
-    where ``#`` is a number from 1 to 7. If a priority is not specified, the
-    priority selected in-game is used as the default.
-
-digcircle
-=========
-
-    Designate filled or hollow circles. If neither ``hollow`` nor ``filled``
-    is specified, the default is ``hollow``. The diameter is the number of tiles
-Action:
-
-:set:      Set designation (default)
-:unset:    Unset current designation
-:invert:   Invert designations already present
-
-Designation types:
-
-:dig:      Normal digging designation (default)
-:ramp:     Ramp digging
-:ustair:   Staircase up
-:dstair:   Staircase down
-:xstair:   Staircase up/down
-:chan:     Dig channel
-
-After you have set the options, the command called with no options
-repeats with the last selected parameters.
-
-Examples:
+Examples
+--------
 
 ``digcircle filled 3``
-        Dig a filled circle with diameter = 3.
+    Dig a filled circle with a diameter of 3 tiles.
 ``digcircle``
-        Do it again.
+    Do it again (previous parameters are reused).
+``expdig diag5 hidden``
+    Designate the diagonal 5 pattern over all hidden tiles on the current
+    z-level.
+``expdig ladder designated``
+    Take existing designations on the current z-level and replace them with the
+    ladder pattern.
+``expdig``
+    Do it again (previous parameters are reused).
+
+digcircle
+---------
+
+The ``digcircle`` command can accept up to one option of each type below.
+
+Solidity options:
+
+``hollow``
+    Designates hollow circles (default).
+``filled``
+    Designates filled circles.
+
+Action options:
+
+``set``
+    Set designation (default).
+``unset``
+    Unset current designation.
+``invert``
+    Invert designations already present.
+
+Designation options:
+
+``dig``
+    Normal digging designation (default).
+``ramp``
+    Dig ramps.
+``ustair``
+    Dig up staircases.
+``dstair``
+    Dig down staircases.
+``xstair``
+    Dig up/down staircases.
+``chan``
+    Dig channels.
+
+After you have set the options, the command called with no options repeats with
+the last selected parameters.
 
 digtype
-=======
-For every tile on the map of the same vein type as the selected tile,
-this command designates it to have the same designation as the
-selected tile. If the selected tile has no designation, they will be
-dig designated.
-If an argument is given, the designation of the selected tile is
-ignored, and all appropriate tiles are set to the specified
-designation.
+-------
 
-Options:
+For every tile on the map of the same vein type as the selected tile, this
+command designates it to have the same designation as the selected tile. If the
+selected tile has no designation, they will be dig designated.
 
-:dig:
-:channel:
-:ramp:
-:updown: up/down stairs
-:up:     up stairs
-:down:   down stairs
-:clear:  clear designation
+If an argument is given, the designation of the selected tile is ignored, and
+all appropriate tiles are set to the specified designation.
+
+Designation options:
+
+``dig``
+    Normal digging designation.
+``channel``
+    Dig channels.
+``ramp``
+    Dig ramps.
+``updown``
+    Dig up/down staircases.
+``up``
+    Dig up staircases.
+``down``
+    Dig down staircases.
+``clear``
+    Clear any designations.
 
 digexp
-======
+------
+
 This command is for :wiki:`exploratory mining <Exploratory_mining>`.
 
 There are two variables that can be set: pattern and filter.
 
 Patterns:
 
-:diag5:            diagonals separated by 5 tiles
-:diag5r:           diag5 rotated 90 degrees
-:ladder:           A 'ladder' pattern
-:ladderr:          ladder rotated 90 degrees
-:clear:            Just remove all dig designations
-:cross:            A cross, exactly in the middle of the map.
+``diag5``
+    Diagonals separated by 5 tiles.
+``diag5r``
+    The diag5 pattern rotated 90 degrees.
+``ladder``
+    A 'ladder' pattern.
+``ladderr``
+    The ladder pattern rotated 90 degrees.
+``cross``
+    A cross, exactly in the middle of the map.
+``clear``
+    Just remove all dig designations.
 
 Filters:
 
-:all:              designate whole z-level
-:hidden:           designate only hidden tiles of z-level (default)
-:designated:       Take current designation and apply pattern to it.
+``hidden``
+    Designate only hidden tiles of z-level (default)
+``all``
+    Designate the whole z-level.
+``designated``
+    Take current designation and apply the selected pattern to it.
 
 After you have a pattern set, you can use ``expdig`` to apply it again.
-
-Examples:
-
-``expdig diag5 hidden``
-  Designate the diagonal 5 patter over all hidden tiles
-``expdig``
-  Apply last used pattern and filter
-``expdig ladder designated``
-  Take current designations and replace them with the ladder pattern

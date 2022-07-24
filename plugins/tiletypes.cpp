@@ -74,7 +74,7 @@ static const struct_field_info tiletypes_options_fields[] = {
 };
 struct_identity tiletypes_options::_identity(sizeof(tiletypes_options), &df::allocator_fn<tiletypes_options>, NULL, "tiletypes_options", NULL, tiletypes_options_fields);
 
-
+static const char * HISTORY_FILE = "dfhack-config/tiletypes.history";
 CommandHistory tiletypes_hist;
 
 command_result df_tiletypes (color_ostream &out, vector <string> & parameters);
@@ -84,7 +84,7 @@ command_result df_tiletypes_here_point (color_ostream &out, vector <string> & pa
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    tiletypes_hist.load("tiletypes.history");
+    tiletypes_hist.load(HISTORY_FILE);
     commands.push_back(PluginCommand("tiletypes", "Paint map tiles freely, similar to liquids.", df_tiletypes, true));
     commands.push_back(PluginCommand("tiletypes-command", "Run tiletypes commands (seperated by ' ; ')", df_tiletypes_command));
     commands.push_back(PluginCommand("tiletypes-here", "Repeat tiletypes command at cursor (with brush)", df_tiletypes_here));
@@ -94,7 +94,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
-    tiletypes_hist.save("tiletypes.history");
+    tiletypes_hist.save(HISTORY_FILE);
     return CR_OK;
 }
 

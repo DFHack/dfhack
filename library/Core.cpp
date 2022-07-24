@@ -1312,7 +1312,7 @@ void fInitthread(void * iodata)
 void fIOthread(void * iodata)
 {
     static const char * HISTORY_FILE = "dfhack-config/dfhack.history";
-    
+
     IODATA * iod = ((IODATA*) iodata);
     Core * core = iod->core;
     PluginManager * plug_mgr = ((IODATA*) iodata)->plug_mgr;

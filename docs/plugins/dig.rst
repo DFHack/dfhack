@@ -17,24 +17,33 @@ Make complicated dig patterns easy.
 Usage:
 
 ``digv [x] [-p<number>]``
-    Designate all of the selected vein for digging.
+    :index:`Designate all of the selected vein for digging.
+    <digv; Designate all of the selected vein for digging.>`
 ``digvx [-p<number>]``
-    Also cross z-levels, digging stairs as needed.  Alias for ``digv x``.
+    :index:`Dig a vein across z-levels, digging stairs as needed.
+    <digvx; Dig a vein across z-levels, digging stairs as needed.>`
+    This is an alias for ``digv x``.
 ``digl [x] [undo] [-p<number>]``
-    Like ``digv``, for layer stone. If ``undo`` is specified, removes the
-    layer designation instead (for if you accidentally set 50 levels at once).
+    :index:`Dig all of the selected layer stone.
+    <digl; Dig all of the selected layer stone.>` If ``undo`` is specified,
+    removes the designation instead (for if you accidentally set 50 levels at
+    once).
 ``diglx [-p<number>]``
-    Also cross z-levels, digging stairs as needed. Alias for ``digl x``.
+    :index:`Dig layer stone across z-levels, digging stairs as needed.
+    <diglx; Dig layer stone across z-levels, digging stairs as needed.>` This
+    is an alias for ``digl x``.
 ``digcircle [<diameter>] [<solidity>] [<action>] [<designation>] [-p<number>]``
-    Designate circles. The diameter is the number of tiles across the center of
-    the circle that you want to dig. See the `digcircle`_ section below for
-    options.
+    :index:`Designate circles. <digcircles; Designate circles.>` The diameter
+    is the number of tiles across the center of the circle that you want to dig.
+    See the `digcircle`_ section below for options.
 ``digtype [<designation>] [-p<number>]``
-    Designate all vein tiles of the selected type. See the `digtype`_ section
-    below for options.
+    :index:`Designate all vein tiles of the selected type.
+    <digtype; Designate all vein tiles of the selected type.>` See the `digtype`_
+    section below for options.
 ``digexp [<pattern>] [<filter>] [-p<number>]``
-    Designate dig patterns for exploratory mining. See the `digexp`_ section
-    below for options
+    :index:`Designate dig patterns for exploratory mining.
+    <digexp; Designate dig patterns for exploratory mining.>` See the `digexp`_
+    section below for options
 
 All commands support specifying the priority of the dig designations with
 ``-p<number>``, where the number is from 1 to 7. If a priority is not specified,
@@ -43,8 +52,8 @@ the priority selected in-game is used as the default.
 Examples
 --------
 
-``digcircle filled 3``
-    Dig a filled circle with a diameter of 3 tiles.
+``digcircle filled 3 -p2``
+    Dig a filled circle with a diameter of 3 tiles at dig priority 2.
 ``digcircle``
     Do it again (previous parameters are reused).
 ``expdig diag5 hidden``

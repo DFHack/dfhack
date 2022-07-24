@@ -28,7 +28,6 @@ command_result digv (color_ostream &out, vector <string> & parameters);
 command_result digvx (color_ostream &out, vector <string> & parameters);
 command_result digl (color_ostream &out, vector <string> & parameters);
 command_result diglx (color_ostream &out, vector <string> & parameters);
-command_result digauto (color_ostream &out, vector <string> & parameters);
 command_result digexp (color_ostream &out, vector <string> & parameters);
 command_result digcircle (color_ostream &out, vector <string> & parameters);
 command_result digtype (color_ostream &out, vector <string> & parameters);
@@ -40,44 +39,37 @@ REQUIRE_GLOBAL(world);
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "digv","Dig a whole vein.",digv,Gui::cursor_hotkey,
-        "  Designates a whole vein under the cursor for digging.\n"
-        "Options:\n"
-        "  x - follow veins through z-levels with stairs.\n"
-        ));
+        "digv",
+        "Dig a whole vein.",
+        digv,
+        Gui::cursor_hotkey));
     commands.push_back(PluginCommand(
-        "digvx","Dig a whole vein, following through z-levels.",digvx,Gui::cursor_hotkey,
-        "  Designates a whole vein under the cursor for digging.\n"
-        "  Also follows the vein between z-levels with stairs, like 'digv x' would.\n"
-        ));
+        "digvx",
+        "Dig a whole vein, following through z-levels.",
+        digvx,
+        Gui::cursor_hotkey));
    commands.push_back(PluginCommand(
-        "digl","Dig layerstone.",digl,Gui::cursor_hotkey,
-        "  Designates layerstone under the cursor for digging.\n"
-        "  Veins will not be touched.\n"
-        "Options:\n"
-        "  x    - follow layer through z-levels with stairs.\n"
-        "  undo - clear designation (can be used together with 'x').\n"
-        ));
+        "digl",
+        "Dig layerstone.",
+        digl,
+        Gui::cursor_hotkey));
     commands.push_back(PluginCommand(
-        "diglx","Dig layerstone, following through z-levels.",diglx,Gui::cursor_hotkey,
-        "  Designates layerstone under the cursor for digging.\n"
-        "  Also follows the stone between z-levels with stairs, like 'digl x' would.\n"
-        ));
-    commands.push_back(PluginCommand("digexp","Select or designate an exploratory pattern.",digexp));
-    commands.push_back(PluginCommand("digcircle","Dig designate a circle (filled or hollow)",digcircle));
-    //commands.push_back(PluginCommand("digauto","Mark a tile for continuous digging.",autodig));
-    commands.push_back(PluginCommand("digtype", "Dig all veins of a given type.", digtype,Gui::cursor_hotkey,
-        "For every tile on the map of the same vein type as the selected tile, this command designates it to have the same designation as the selected tile. If the selected tile has no designation, they will be dig designated.\n"
-        "If an argument is given, the designation of the selected tile is ignored, and all appropriate tiles are set to the specified designation.\n"
-        "Options:\n"
-        "  dig\n"
-        "  channel\n"
-        "  ramp\n"
-        "  updown - up/down stairs\n"
-        "  up     - up stairs\n"
-        "  down   - down stairs\n"
-        "  clear  - clear designation\n"
-        ));
+        "diglx",
+        "Dig layerstone, following through z-levels.",
+        diglx,
+        Gui::cursor_hotkey));
+    commands.push_back(PluginCommand(
+        "digexp",
+        "Select or designate an exploratory pattern.",
+        digexp));
+    commands.push_back(PluginCommand(
+        "digcircle",
+        "Dig designate a circle (filled or hollow)",
+        digcircle));
+    commands.push_back(PluginCommand(
+        "digtype",
+        "Dig all veins of a given type.",
+        digtype,Gui::cursor_hotkey));
     return CR_OK;
 }
 
@@ -1418,12 +1410,6 @@ command_result digl (color_ostream &out, vector <string> & parameters)
     MCache->WriteAll();
     delete MCache;
     return CR_OK;
-}
-
-
-command_result digauto (color_ostream &out, vector <string> & parameters)
-{
-    return CR_NOT_IMPLEMENTED;
 }
 
 command_result digtype (color_ostream &out, vector <string> & parameters)

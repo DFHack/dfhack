@@ -1,6 +1,5 @@
 dig-now
 =======
-
 Tags:
 :dfhack-keybind:`dig-now`
 
@@ -33,31 +32,33 @@ Any ``<pos>`` parameters can either be an ``<x>,<y>,<z>`` triple (e.g.
 game cursor should be used. You can use the `position` command to get the
 current cursor position if you need it.
 
-Examples:
+Examples
+--------
 
-- ``dig-now``
+``dig-now``
     Dig designated tiles according to standard game rules.
-- ``dig-now --clean``
+``dig-now --clean``
     Dig all designated tiles, but don't generate any boulders, ores, or gems.
-- ``dig-now --dump here``
+``dig-now --dump here``
     Dig tiles and teleport all generated boulders, ores, and gems to the tile
     under the game cursor.
 
-Options:
+Options
+-------
 
-- ``-c``, ``--clean``
+``-c``, ``--clean``
     Don't generate any boulders, ores, or gems. Equivalent to
     ``--percentages 0,0,0,0``.
-- ``-d``, ``--dump <pos>``
+``-d``, ``--dump <pos>``
     Dump any generated items at the specified coordinates. If the tile at those
     coordinates is open space or is a wall, items will be generated on the
     closest walkable tile below.
-- ``-e``, ``--everywhere``
+``-e``, ``--everywhere``
     Generate a boulder, ore, or gem for every tile that can produce one.
     Equivalent to ``--percentages 100,100,100,100``.
-- ``-p``, ``--percentages <layer>,<vein>,<small cluster>,<deep>``
+``-p``, ``--percentages <layer>,<vein>,<small cluster>,<deep>``
     Set item generation percentages for each of the tile categories. The
     ``vein`` category includes both the large oval clusters and the long stringy
     mineral veins. Default is ``25,33,100,100``.
-- ``-z``, ``--cur-zlevel``
+``-z``, ``--cur-zlevel``
     Restricts the bounds to the currently visible z-level.

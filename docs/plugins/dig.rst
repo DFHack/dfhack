@@ -3,17 +3,39 @@
 
 dig
 ===
-This plugin makes many automated or complicated dig patterns easy.
-
-Basic commands:
-
-:digv:      Designate all of the selected vein for digging.
-:digvx:     Also cross z-levels, digging stairs as needed.  Alias for ``digv x``.
-:digl:      Like ``digv``, for layer stone.  Also supports an ``undo`` option
-            to remove designations, for if you accidentally set 50 levels at once.
-:diglx:     Also cross z-levels, digging stairs as needed.  Alias for ``digl x``.
-
+Tags:
 :dfhack-keybind:`digv`
+:dfhack-keybind:`digvx`
+:dfhack-keybind:`digl`
+:dfhack-keybind:`diglx`
+:dfhack-keybind:`digcircle`
+:dfhack-keybind:`digtype`
+:dfhack-keybind:`digexp`
+
+Make complicated dig patterns easy.
+
+Usage:
+
+``digv [x] [-p<number>]``
+    Designate all of the selected vein for digging.
+``digvx [-p<number>]``
+    Also cross z-levels, digging stairs as needed.  Alias for ``digv x``.
+``digl [x] [undo] [-p<number>]``
+    Like ``digv``, for layer stone. If ``undo`` is specified, removes the
+    layer designation instead (for if you accidentally set 50 levels at once).
+``diglx [-p<number>]``
+    Also cross z-levels, digging stairs as needed. Alias for ``digl x``.
+``digcircle [<diameter>] [<solidity>] [<action>] [<designation>] [-p<number>]``
+    Designate circles. The diameter is the number of tiles across the center of
+    the circle that you want to dig. See the `digcircle`_ section below for an
+    explanation of the options.
+``digtype [<designation>]
+For every tile on the map of the same vein type as the selected tile,
+this command designates it to have the same designation as the
+selected tile. If the selected tile has no designation, they will be
+dig designated.
+    
+``digexp [<pattern>] [<filter>]
 
 .. note::
 
@@ -24,15 +46,9 @@ Basic commands:
 
 digcircle
 =========
-A command for easy designation of filled and hollow circles.
-It has several types of options.
 
-Shape:
-
-:hollow:   Set the circle to hollow (default)
-:filled:   Set the circle to filled
-:#:        Diameter in tiles (default = 0, does nothing)
-
+    Designate filled or hollow circles. If neither ``hollow`` nor ``filled``
+    is specified, the default is ``hollow``. The diameter is the number of tiles
 Action:
 
 :set:      Set designation (default)

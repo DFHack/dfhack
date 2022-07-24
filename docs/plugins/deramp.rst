@@ -1,6 +1,5 @@
 deramp
 ======
-
 Tags:
 :dfhack-keybind:`deramp`
 

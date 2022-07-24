@@ -1,6 +1,5 @@
 debug
 =====
-
 Tags:
 :dfhack-keybind:`debugfilter`
 
@@ -37,36 +36,37 @@ printing level selection.
 
 Usage:
 
-- ``debugfilter category [<plugin regex>] [<category regex>]``
+``debugfilter category [<plugin regex>] [<category regex>]``
     List available debug plugin and category names. If filters aren't givenm
     then all plugins/categories are matched. This command is a good way to test
     regex parameters before you pass them to ``set``.
-- ``debugfilter filter [<id>]``
+``debugfilter filter [<id>]``
     List active and passive debug print level changes. The optional ``id``
     parameter is the id listed as first column in the filter list. If ``id`` is
     given, then the command shows extended information for the given filter
     only.
-- ``debugfilter set [<level>] [<plugin regex>] [<category regex>]``
+``debugfilter set [<level>] [<plugin regex>] [<category regex>]``
     Create a new debug filter to set category verbosity levels. This filter
     will not be saved when the DF process exists or the plugin is unloaded.
-- ``debugfilter set persistent [<level>] [<plugin regex>] [<category regex>]``
+``debugfilter set persistent [<level>] [<plugin regex>] [<category regex>]``
     Store the filter in the configuration file to until ``unset`` is used to
     remove it.
-- ``debugfilter unset <id> [<id> ...]``
+``debugfilter unset <id> [<id> ...]``
     Delete a space separated list of filters.
-- ``debugfilter disable <id> [<id> ...]``
+``debugfilter disable <id> [<id> ...]``
     Disable a space separated list of filters but keep it in the filter list.
-- ``debugfilter enable <id> [<id> ...]``
+``debugfilter enable <id> [<id> ...]``
     Enable a space sperate list of filters.
-- ``debugfilter header [enable] | [disable] [<element> ...]``
+``debugfilter header [enable] | [disable] [<element> ...]``
     Control which header metadata is shown along with each log message. Run it
     without parameters to see the list of configurable elements. Include an
     ``enable`` or ``disable``  keyword to change whether specific elements are
     shown.
 
-Examples:
+Example
+-------
 
-- ``debugfilter set Warning core script``
+``debugfilter set Warning core script``
     Hide script execution log messages (e.g. "Loading script:
     dfhack-config/dfhack.init"), which are normally output at Info verbosity
     in the "core" plugin with the "script" category.

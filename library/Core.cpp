@@ -1311,12 +1311,14 @@ void fInitthread(void * iodata)
 // A thread function... for the interactive console.
 void fIOthread(void * iodata)
 {
+    static const char * HISTORY_FILE = "dfhack-config/dfhack.history";
+    
     IODATA * iod = ((IODATA*) iodata);
     Core * core = iod->core;
     PluginManager * plug_mgr = ((IODATA*) iodata)->plug_mgr;
 
     CommandHistory main_history;
-    main_history.load("dfhack.history");
+    main_history.load(HISTORY_FILE);
 
     Console & con = core->getConsole();
     if (plug_mgr == 0)
@@ -1357,7 +1359,7 @@ void fIOthread(void * iodata)
         {
             // a proper, non-empty command was entered
             main_history.add(command);
-            main_history.save("dfhack.history");
+            main_history.save(HISTORY_FILE);
         }
 
         auto rv = core->runCommand(con, command);

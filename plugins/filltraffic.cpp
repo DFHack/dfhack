@@ -44,41 +44,21 @@ DFHACK_PLUGIN("filltraffic");
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "filltraffic","Flood-fill selected traffic designation from cursor",
-        filltraffic, Gui::cursor_hotkey,
-        "  Flood-fill selected traffic type from the cursor.\n"
-        "Traffic Type Codes:\n"
-        "  H: High Traffic\n"
-        "  N: Normal Traffic\n"
-        "  L: Low Traffic\n"
-        "  R: Restricted Traffic\n"
-        "Other Options:\n"
-        "  X: Fill across z-levels.\n"
-        "  B: Include buildings and stockpiles.\n"
-        "  P: Include empty space.\n"
-        "Example:\n"
-        "  filltraffic H\n"
-        "    When used in a room with doors,\n"
-        "    it will set traffic to HIGH in just that room.\n"
-    ));
+        "filltraffic",
+        "Flood-fill selected traffic designation from cursor.",
+        filltraffic, Gui::cursor_hotkey));
     commands.push_back(PluginCommand(
-        "alltraffic","Set traffic for the entire map",
-        alltraffic, false,
-        "  Set traffic types for all tiles on the map.\n"
-        "Traffic Type Codes:\n"
-        "  H: High Traffic\n"
-        "  N: Normal Traffic\n"
-        "  L: Low Traffic\n"
-        "  R: Restricted Traffic\n"
-    ));
+        "alltraffic",
+        "Set traffic designation for the entire map.",
+        alltraffic));
     commands.push_back(PluginCommand(
-        "restrictliquids","Restrict on every visible square with liquid",
-        restrictLiquid, false, ""
-    ));
+        "restrictliquids",
+        "Restrict traffic on every visible square with liquid.",
+        restrictLiquid));
     commands.push_back(PluginCommand(
-        "restrictice","Restrict traffic on squares above visible ice",
-        restrictIce, false, ""
-    ));
+        "restrictice",
+        "Restrict traffic on squares above visible ice.",
+        restrictIce));
     return CR_OK;
 }
 

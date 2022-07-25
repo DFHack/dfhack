@@ -27,17 +27,12 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
     commands.push_back(PluginCommand(
         "list-generated",
         "Prints a list of generated creature tokens.",
-        list_creatures,
-        false, //allow non-interactive use
-        "Use \"list-generated detailed\" to show descriptions."
-    ));
+        list_creatures));
     commands.push_back(PluginCommand(
         "save-generated-raws",
-        "Saves a graphics raw file to use with the renamed generated creatures.",
-        save_generated_raw,
-        false, //allow non-interactive use
-        "Creates graphics_procedural_creatures.txt, with a full set of creature graphics definitions for all possible generated beasts. Modify the resulting file to suit your needs."
-    ));    return CR_OK;
+        "Exports a graphics raw file for the renamed generated creatures.",
+        save_generated_raw));
+    return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown(color_ostream &out)

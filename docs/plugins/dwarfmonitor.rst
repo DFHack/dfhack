@@ -42,7 +42,7 @@ The file :file:`dfhack-config/dwarfmonitor.json` can be edited to control the
 positions and settings of all widgets. This file should contain a JSON object
 with the key ``widgets`` containing an array of objects:
 
-.. code-block:: json
+.. code-block:: lua
 
     {
         "widgets": [

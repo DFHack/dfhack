@@ -1,14 +1,36 @@
 fastdwarf
 =========
-Controls speedydwarf and teledwarf. Speedydwarf makes dwarves move quickly
-and perform tasks quickly. Teledwarf makes dwarves move instantaneously,
-but do jobs at the same speed.
+Tags:
+:dfhack-keybind:`fastdwarf`
 
-:fastdwarf 0:   disables both (also ``0 0``)
-:fastdwarf 1:   enables speedydwarf and disables teledwarf (also ``1 0``)
-:fastdwarf 2:   sets a native debug flag in the game memory that implements an
-                even more aggressive version of speedydwarf.
-:fastdwarf 0 1: disables speedydwarf and enables teledwarf
-:fastdwarf 1 1: enables both
+Dwarves teleport and/or finish jobs instantly.
 
-See `superdwarf` for a per-creature version.
+Usage:
+
+``enable fastdwarf``
+    Enable the plugin.
+``fastdwarf <speed mode> [<tele mode>]``
+
+Examples
+--------
+
+``fastdwarf 1``
+    Make all your dwarves move and work at maximum speed.
+``fastdwarf 1 1``
+    In addition to working at maximum speed, dwarves also teleport to their
+    destinations.
+
+Options
+-------
+
+Speed modes:
+
+:0: Dwarves move and work at normal rates.
+:1: Dwarves move and work at maximum speed.
+:2: ALL units move (and work) at maximum speed, including creatures and
+    hostiles.
+
+Tele modes:
+
+:0: No teleportation.
+:1: Dwarves teleport to their destinations.

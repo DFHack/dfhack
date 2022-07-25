@@ -1,19 +1,23 @@
 dwarfvet
 ========
-Enables Animal Caretaker functionality
+Tags:
+:dfhack-keybind:`dwarfvet`
 
-Always annoyed your dragons become useless after a minor injury? Well, with
-dwarfvet, your animals become first rate members of your fort. It can also
-be used to train medical skills.
+:index:`Allows animals to be treated at animal hospitals.
+<dwarfvet; Allows animals to be treated at animal hospitals.>`
 
-Animals need to be treated in an animal hospital, which is simply a hospital
-that is also an animal training zone. The console will print out a list on game
-load, and whenever one is added or removed. Dwarfs must have the Animal Caretaker
-labor to treat animals. Normal medical skills are used (and no experience is given
-to the Animal Caretaker skill).
+Annoyed your dragons become useless after a minor injury? Well, with dwarfvet,
+injured animals will be treated at an animal hospital, which is simply a hospital
+that is also an animal training zone. Dwarfs with the Animal Caretaker labor
+enabled will come to the hospital to treat animals. Normal medical skills are
+used (and trained), but no experience is given to the Animal Caretaker skill
+itself.
 
-Options:
+Usage:
 
-:enable:        Enables Animal Caretakers to treat and manage animals
-:disable:       Turns off the plguin
-:report:        Reports all zones that the game considers animal hospitals
+``enable dwarfvet``
+    Enables the plugin.
+``dwarfvet report``
+    Reports all zones that the game considers animal hospitals.
+``dwarfvet report-usage``
+    Reports on animals currently being treated.

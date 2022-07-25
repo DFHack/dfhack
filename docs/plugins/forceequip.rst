@@ -42,8 +42,8 @@ Items equipped by this plugin DO NOT become owned by the recipient. Adult
 dwarves are free to adjust their own wardrobe, and may promptly decide to doff
 your gear in favour of their owned items. Animals, as described above, will tend
 to discard ALL clothing immediately unless it is manually forbidden. Armor items
-seem to be an exception: an animal will tend to retain an equipped suit of mail"
- even if you neglect to forbid it.
+seem to be an exception: an animal will tend to retain an equipped suit of mail
+even if you neglect to forbid it.
 
 Please note that armored animals are quite vulnerable to ranged attacks. Unlike
 dwarves, animals cannot block, dodge, or deflect arrows, and they are slowed by

@@ -280,8 +280,7 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
 
         if (p == "help" || p == "?" || p == "h" || p == "/?" || p == "info" || p == "man")
         {
-            out << forceequip_help << endl;
-            return CR_OK;
+            return CR_WRONG_USAGE;
         }
         else if (p == "here" || p == "h")
         {

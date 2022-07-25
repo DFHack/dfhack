@@ -37,6 +37,7 @@ but in general, the race is what you'd expect, just capitalized (e.g. ``GOBLIN``
 or ``ELF``).
 
 Actions:
+
 ``walk``
     Default cost: 1, default delay: 0. This is the base cost for the pathing
     algorithm.

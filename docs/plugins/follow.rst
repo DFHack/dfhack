@@ -1,5 +1,12 @@
 follow
 ======
-Makes the game view follow the currently highlighted unit after you exit from the
-current menu or cursor mode. Handy for watching dwarves running around. Deactivated
-by moving the view manually.
+Tags:
+:dfhack-keybind:`follow`
+
+Make the screen follow the selected unit. Once you exit from the current menu or
+cursor mode, the screen will stay centered on the unit. Handy for watching
+dwarves running around. Deactivated by moving the cursor manually.
+
+Usage::
+
+    follow

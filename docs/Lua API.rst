@@ -4287,10 +4287,10 @@ blueprint files:
 The names of the functions are also available as the keys of the
 ``valid_phases`` table.
 
-.. _building-hacks-api:
+.. _building-hacks:
 
-building-hacks API
-==================
+building-hacks
+==============
 
 This plugin overwrites some methods in workshop df class so that mechanical workshops are possible. Although
 plugin export a function it's recommended to use lua decorated function.

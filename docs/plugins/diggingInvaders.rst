@@ -1,28 +1,59 @@
 diggingInvaders
 ===============
-Makes invaders dig or destroy constructions to get to your dwarves.
+Tags:
+:dfhack-keybind:`diggingInvaders`
 
-To enable/disable the pluging, use: ``diggingInvaders (1|enable)|(0|disable)``
+:index:`Invaders dig and destroy to get to your dwarves.
+<diggingInvaders; Invaders dig and destroy to get to your dwarves.>`
 
-Basic usage:
+Usage:
 
-:add GOBLIN:        registers the race GOBLIN as a digging invader. Case-sensitive.
-:remove GOBLIN:     unregisters the race GOBLIN as a digging invader. Case-sensitive.
-:now:               makes invaders try to dig now, if plugin is enabled
-:clear:             clears all digging invader races
-:edgesPerTick n:    makes the pathfinding algorithm work on at most n edges per tick.
-                    Set to 0 or lower to make it unlimited.
+``enable diggingInvaders``
+    Enable the plugin.
+``diggingInvaders add <race>``
+    Register the specified race as a digging invader.
+``diggingInvaders remove <race>``
+    Unregisters the specified race as a digging invader.
+``diggingInvaders now``
+    Makes invaders try to dig now (if the plugin is enabled).
+``diggingInvaders clear``
+    Clears the registry of digging invader races.
+``diggingInvaders edgesPerTick <n>``
+    Makes the pathfinding algorithm work on at most n edges per tick. Set to 0
+    or lower to make it unlimited.
+``diggingInvaders setCost <race> <action> <n>``
+    Set the pathing cost per tile for a particular action. This determines what
+    invaders consider to be the shortest path to their target.
+``diggingInvaders setDelay <race> <action> <n>``
+    Set the time cost (in ticks) for performing a particular action. This
+    determines how long it takes for invaders to get to their target.
 
-You can also use ``diggingInvaders setCost (race) (action) n`` to set the
-pathing cost of particular action, or ``setDelay`` to set how long it takes.
-Costs and delays are per-tile, and the table shows default values.
+Note that the race is case-sensitive. You can get a list of races for your world
+with this command::
 
-============================== ======= ====== =================================
-Action                         Cost    Delay  Notes
-============================== ======= ====== =================================
-``walk``                       1       0      base cost in the path algorithm
-``destroyBuilding``            2       1,000  delay adds to the job_completion_timer of destroy building jobs that are assigned to invaders
-``dig``                        10,000  1,000  digging soil or natural stone
-``destroyRoughConstruction``   1,000   1,000  constructions made from boulders
-``destroySmoothConstruction``  100     100    constructions made from blocks or bars
-============================== ======= ====== =================================
+    devel/query --table df.global.world.raws.creatures.all --search creature_id --maxdepth 1 --maxlength 5000
+
+but in general, the race is what you'd expect, just capitalized (e.g. ``GOBLIN``
+or ``ELF``).
+
+Actions:
+``walk``
+    Default cost: 1, default delay: 0. This is the base cost for the pathing
+    algorithm.
+``destroyBuilding``
+    Default cost: 2, default delay: 1,000,
+``dig``
+    Default cost: 10,000, default delay: 1,000. This is for digging soil or
+    natural stone.
+``destroyRoughConstruction``
+    Default cost: 1,000, default delay: 1,000. This is for destroying
+    constructions made from boulders.
+``destroySmoothConstruction``
+    Default cost: 100, default delay: 100. This is for destroying constructions
+    made from blocks or bars.
+
+Example
+-------
+
+``diggingInvaders add GOBLIN``
+    Registers members of the GOBLIN race as a digging invader.

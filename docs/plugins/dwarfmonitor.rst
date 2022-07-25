@@ -1,35 +1,48 @@
 dwarfmonitor
 ============
-Records dwarf activity to measure fort efficiency.
-
-Options:
-
-:enable <mode>:     Start monitoring ``mode``. ``mode`` can be "work", "misery",
-                    "weather", or "all".  This will enable all corresponding widgets,
-                    if applicable.
-:disable <mode>:    Stop monitoring ``mode``, and disable corresponding widgets, if applicable.
-:stats:             Show statistics summary
-:prefs:             Show dwarf preferences summary
-:reload:            Reload configuration file (``dfhack-config/dwarfmonitor.json``)
-
+Tags:
 :dfhack-keybind:`dwarfmonitor`
 
-Widget configuration:
+:index:`Measure fort happiness and efficiency.
+<dwarfmonitor; Measure fort happiness and efficiency.>` Also show heads-up
+display widgets with live fort statistics.
 
-The following types of widgets (defined in :file:`hack/lua/plugins/dwarfmonitor.lua`)
-can be displayed on the main fortress mode screen:
+Usage:
 
-:date:      Show the in-game date
-:misery:    Show overall happiness levels of all dwarves
-:weather:   Show current weather (rain/snow)
-:cursor:    Show the current mouse cursor position
+``dwarfmonitor enable <mode>``
+    Start tracking a specific facet of fortress life. The ``mode`` can be
+    "work", "misery", "date", "weather", or "all".  This will show the
+    corresponding on-screen widgets, if applicable.
+``dwarfmonitor disable <mode>``
+    Stop monitoring ``mode`` and disable corresponding widgets.
+``dwarfmonitor stats``
+    Show statistics summary.
+``dwarfmonitor prefs``
+    Show summary of dwarf preferences.
+``dwarfmonitor reload``
+    Reload the widget configuration file (``dfhack-config/dwarfmonitor.json``).
+
+Widget configuration
+--------------------
+
+The following types of widgets (defined in
+:file:`hack/lua/plugins/dwarfmonitor.lua`) can be displayed on the main fortress
+mode screen:
+
+``misery``
+    Show overall happiness levels of all dwarves.
+``date``
+    Show the in-game date.
+``weather``
+    Show current weather (e.g. rain/snow).
+``cursor``
+    Show the current mouse cursor position.
 
 The file :file:`dfhack-config/dwarfmonitor.json` can be edited to control the
-positions and settings of all widgets displayed. This file should contain a
-JSON object with the key ``widgets`` containing an array of objects - see the
-included file in the ``dfhack-config`` folder for an example:
+positions and settings of all widgets. This file should contain a JSON object
+with the key ``widgets`` containing an array of objects:
 
-.. code-block:: lua
+.. code-block:: json
 
     {
         "widgets": [
@@ -45,7 +58,7 @@ included file in the ``dfhack-config`` folder for an example:
 X and Y coordinates begin at zero (in the upper left corner of the screen).
 Negative coordinates will be treated as distances from the lower right corner,
 beginning at 1 - e.g. an x coordinate of 0 is the leftmost column, while an x
-coordinate of 1 is the rightmost column.
+coordinate of -1 is the rightmost column.
 
 By default, the x and y coordinates given correspond to the leftmost tile of
 the widget. Including an ``anchor`` option set to ``right`` will cause the

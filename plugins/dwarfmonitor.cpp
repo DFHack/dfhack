@@ -2075,20 +2075,9 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 
     commands.push_back(
         PluginCommand(
-        "dwarfmonitor", "Records dwarf activity to measure fort efficiency",
-        dwarfmonitor_cmd, false,
-        "dwarfmonitor enable <mode>\n"
-        "  Start monitoring <mode>\n"
-        "    <mode> can be \"work\", \"misery\", \"weather\", or \"all\"\n"
-        "dwarfmonitor disable <mode>\n"
-        "    <mode> as above\n\n"
-        "dwarfmonitor stats\n"
-        "  Show statistics summary\n"
-        "dwarfmonitor prefs\n"
-        "  Show dwarf preferences summary\n\n"
-        "dwarfmonitor reload\n"
-        "  Reload configuration file (dfhack-config/dwarfmonitor.json)\n"
-        ));
+            "dwarfmonitor",
+            "Records dwarf activity to measure fort efficiency",
+            dwarfmonitor_cmd));
 
     dm_lua::state=Lua::Core::State;
     if (dm_lua::state == NULL)

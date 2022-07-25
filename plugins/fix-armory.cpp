@@ -70,12 +70,9 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "fix-armory", "Enables or disables the fix-armory plugin.", fix_armory, false,
-        "  fix-armory enable\n"
-        "    Enables the tweaks.\n"
-        "  fix-armory disable\n"
-        "    Disables the tweaks. All equipment will be hauled off to stockpiles.\n"
-    ));
+        "fix-armory",
+        "Enables or disables the fix-armory plugin.",
+        fix_armory));
 
     if (Core::getInstance().isMapLoaded())
         plugin_onstatechange(out, SC_MAP_LOADED);

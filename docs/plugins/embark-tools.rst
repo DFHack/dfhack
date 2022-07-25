@@ -1,12 +1,32 @@
 embark-tools
 ============
-A collection of embark-related tools. Usage and available tools::
+Tags:
+:dfhack-keybind:`embark-tools`
 
-    embark-tools enable/disable tool [tool]...
+:index:`Extend the embark screen functionality.
+<embark-tools; Extend the embark screen functionality.>`
 
-:anywhere:      Allows embarking anywhere (including sites, mountain-only biomes,
-                and oceans). Use with caution.
-:mouse:         Implements mouse controls (currently in the local embark region only)
-:sand:          Displays an indicator when sand is present in the currently-selected
-                area, similar to the default clay/stone indicators.
-:sticky:        Maintains the selected local area while navigating the world map
+Usage::
+
+    enable embark-tools
+    embark-tools enable|disable all
+    embark-tools enable|disable <tool> [<tool> ...]
+
+Avaliable tools are:
+
+``anywhere``
+    Allows embarking anywhere (including sites, mountain-only biomes, and
+    oceans). Use with caution.
+``mouse``
+    Implements mouse controls (currently in the local embark region only).
+``sand``
+    Displays an indicator when sand is present in the currently-selected area,
+    similar to the default clay/stone indicators.
+``sticky``
+    Maintains the selected local area while navigating the world map.
+
+Example
+-------
+
+``embark-tools enable all``
+    Enable all embark screen extensions.

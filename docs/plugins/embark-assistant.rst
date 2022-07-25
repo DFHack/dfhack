@@ -11,7 +11,7 @@ the current embark region. You will also have access to a site selection tool
 with far more options than DF's vanilla search tool.
 
 If you enable the plugin, you'll also be able to invoke ``embark-assistant``
-with the :kdb:`A` key on the pre-embark screen.
+with the :kbd:`A` key on the pre-embark screen.
 
 Usage::
 

@@ -5,11 +5,10 @@ Tags:
 
 Dwarves teleport and/or finish jobs instantly.
 
-Usage:
+Usage::
 
-``enable fastdwarf``
-    Enable the plugin.
-``fastdwarf <speed mode> [<tele mode>]``
+    enable fastdwarf
+    fastdwarf <speed mode> [<tele mode>]
 
 Examples
 --------

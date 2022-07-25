@@ -49,6 +49,14 @@ existing .csv files. Just move them to the ``blueprints`` folder in your DF
 installation, and instead of ``digfort file.csv``, run
 ``quickfort run file.csv``.
 
+.. _fix-armory:
+
+fix-armory
+==========
+Allowed the military to store equipment in barracks containers. Removed because
+it required a binary patch to DF in order to function, and no such patch has
+existed since DF 0.34.11.
+
 .. _fortplan:
 
 fortplan

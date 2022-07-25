@@ -1,12 +1,36 @@
 fix-unit-occupancy
 ==================
-This plugin fixes issues with unit occupancy, notably phantom
-"unit blocking tile" messages (:bug:`3499`). It can be run manually, or
-periodically when enabled with the built-in enable/disable commands:
+Tags:
+:dfhack-keybind:``
 
-:(no argument):         Run the plugin once immediately, for the whole map.
-:-h, here, cursor:      Run immediately, only operate on the tile at the cursor
-:-n, dry, dry-run:      Run immediately, do not write changes to map
-:interval <X>:          Run the plugin every ``X`` ticks (when enabled).
-                        The default is 1200 ticks, or 1 day.
-                        Ticks are only counted when the game is unpaused.
+Fix phantom unit occupancy issues. For example, if you see "unit blocking tile"
+messages that you can't account for (:bug:`3499`), this tool can help.
+
+Usage::
+
+    enable fix-unit-occupancy
+    fix-unit-occupancy [here] [-n]
+    fix-unit-occupancy interval <num_ticks>
+
+When run without arguments (or with just the ``here`` or ``-n`` parameters),
+the fix just runs once. You can also have it run periodically by enbling the
+plugin.
+
+Examples
+--------
+
+``fix-unit-occupancy``
+    Run once and fix all occupancy issues on the map.
+``fix-unit-occupancy -n``
+    Report on, but do not fix, all occupancy issues on the map.
+
+Options
+-------
+
+``here``
+    Only operate on the tile at the cursor.
+``-n``
+    Report issues, but do not any write changes to the map.
+``interval <num_ticks>``
+    Set how often the plugin will check for and fix issues when it is enabled.
+    The default is 1200 ticks, or 1 game day.

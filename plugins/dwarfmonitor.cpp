@@ -2076,7 +2076,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
     commands.push_back(
         PluginCommand(
             "dwarfmonitor",
-            "Records dwarf activity to measure fort efficiency",
+            "Measure fort happiness and efficiency.",
             dwarfmonitor_cmd));
 
     dm_lua::state=Lua::Core::State;

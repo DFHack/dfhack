@@ -1,9 +1,22 @@
 embark-assistant
 ================
+Tags:
+:dfhack-keybind:`embark-assistant`
 
-This plugin provides embark site selection help. It has to be run with the
-``embark-assistant`` command while the pre-embark screen is displayed and shows
-extended (and correct(?)) resource information for the embark rectangle as well
-as normally undisplayed sites in the current embark region. It also has a site
-selection tool with more options than DF's vanilla search tool. For detailed
-help invoke the in game info screen.
+:index:`Embark site selection support.
+<embark-assistant; Embark site selection support.>` Run this command while the
+pre-embark screen is displayed to show extended (and correct(?)) resource
+information for the embark rectangle as well as normally undisplayed sites in
+the current embark region. You will also have access to a site selection tool
+with far more options than DF's vanilla search tool.
+
+If you enable the plugin, you'll also be able to invoke ``embark-assistant``
+with the :kdb:`A` key on the pre-embark screen.
+
+Usage::
+
+    enable embark-assistant
+    embark-assistant
+
+Note the site selection tool requires a display height of at least 46 lines to
+display properly.

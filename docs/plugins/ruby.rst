@@ -1,3 +1,5 @@
+.. _rb:
+
 ruby
 ====
 Ruby language plugin, which evaluates the following arguments as a ruby string.

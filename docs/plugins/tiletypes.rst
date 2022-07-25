@@ -1,3 +1,6 @@
+.. _tiletypes-here:
+.. _tiletypes-here-point:
+
 tiletypes
 =========
 Can be used for painting map tiles and is an interactive command, much like
@@ -80,3 +83,36 @@ The range starts at the position of the cursor and goes to the east, south and
 up.
 
 For more details, use ``tiletypes help``.
+
+tiletypes-command
+-----------------
+Runs tiletypes commands, separated by ``;``. This makes it possible to change
+tiletypes modes from a hotkey or via dfhack-run.
+
+Example::
+
+    tiletypes-command p any ; p s wall ; p sp normal
+
+This resets the paint filter to unsmoothed walls.
+
+tiletypes-here-point
+--------------------
+Apply the current tiletypes options at the in-game cursor position to a single
+tile. Can be used from a hotkey.
+
+This command supports the same options as `tiletypes-here` above.
+
+tiletypes-here
+--------------
+Apply the current tiletypes options at the in-game cursor position, including
+the brush. Can be used from a hotkey.
+
+Options:
+
+:``-c``, ``--cursor <x>,<y>,<z>``:
+    Use the specified map coordinates instead of the current cursor position. If
+    this option is specified, then an active game map cursor is not necessary.
+:``-h``, ``--help``:
+    Show command help text.
+:``-q``, ``--quiet``:
+    Suppress non-error status output.

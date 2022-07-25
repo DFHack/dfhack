@@ -1,3 +1,5 @@
+.. _revflood:
+
 reveal
 ======
 This reveals the map. By default, HFS will remain hidden so that the demons
@@ -21,3 +23,8 @@ Usage and related commands:
 :revforget:     Discard info about what was visible before revealing the map.
                 Only useful where (e.g.) you abandoned with the fort revealed
                 and no longer want the data.
+
+nopause
+=======
+Disables pausing (both manual and automatic) with the exception of pause forced
+by `reveal` ``hell``. This is nice for digging under rivers.

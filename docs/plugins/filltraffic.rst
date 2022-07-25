@@ -1,4 +1,6 @@
 .. _alltraffic:
+.. _restrictice:
+.. _restrictliquids:
 
 filltraffic
 ===========
@@ -29,3 +31,13 @@ Options:
 :N:     Normal Traffic
 :L:     Low Traffic
 :R:     Restricted Traffic
+
+restrictice
+===========
+Restrict traffic on all tiles on top of visible ice.
+See also `alltraffic`, `filltraffic`, and `restrictliquids`.
+
+restrictliquids
+===============
+Restrict traffic on all visible tiles with liquid.
+See also `alltraffic`, `filltraffic`, and `restrictice`.

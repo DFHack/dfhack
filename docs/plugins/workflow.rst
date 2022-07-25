@@ -111,3 +111,9 @@ Make sure there are always 80-100 units of dimple dye::
 Maintain 10-100 locally-made crafts of exceptional quality::
 
     workflow count CRAFTS///LOCAL,EXCEPTIONAL 100 90
+
+fix-job-postings
+----------------
+This command fixes crashes caused by previous versions of workflow, mostly in
+DFHack 0.40.24-r4, and should be run automatically when loading a world (but can
+also be run manually if desired).

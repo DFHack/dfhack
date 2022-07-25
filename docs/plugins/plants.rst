@@ -1,3 +1,5 @@
+.. _plant:
+
 plant
 =====
 A tool for creating shrubs, growing, or getting rid of them.

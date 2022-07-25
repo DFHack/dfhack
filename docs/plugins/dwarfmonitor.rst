@@ -9,6 +9,8 @@ display widgets with live fort statistics.
 
 Usage:
 
+``enable dwarfmonitor``
+    Enable the plugin.
 ``dwarfmonitor enable <mode>``
     Start tracking a specific facet of fortress life. The ``mode`` can be
     "work", "misery", "date", "weather", or "all".  This will show the

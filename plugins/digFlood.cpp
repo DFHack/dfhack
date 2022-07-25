@@ -51,26 +51,9 @@ DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "digFlood", "Automatically dig out veins as you discover them.",
-        digFlood, false,
-        "Example:\n"
-        "  digFlood 0\n"
-        "    disable plugin\n"
-        "  digFlood 1\n"
-        "    enable plugin\n"
-        "  digFlood 0 MICROCLINE COAL_BITUMINOUS 1\n"
-        "    disable plugin and remove microcline and bituminous coal from being monitored, then re-enable plugin\n"
-        "  digFlood 1 MICROCLINE 0 COAL_BITUMINOUS 1\n"
-        "    do monitor microcline, don't monitor COAL_BITUMINOUS, then enable plugin\n"
-        "  digFlood CLEAR\n"
-        "    remove all inorganics from monitoring\n"
-        "  digFlood digAll1\n"
-        "    enable digAll mode: dig any vein, regardless of the monitor list\n"
-        "  digFlood digAll0\n"
-        "    disable digAll mode\n"
-        "\n"
-        "Note that while order matters, multiple commands can be sequenced in one line. It is recommended to alter your save-specific regionX/raw/onLoad.init or global onLoadWorld.init file so that you won't have to type in every mineral type you want to dig every time you start the game. Material names are case sensitive.\n"
-    ));
+        "digFlood",
+        "Automatically dig out veins as you discover them.",
+        digFlood));
     return CR_OK;
 }
 

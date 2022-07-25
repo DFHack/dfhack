@@ -1,18 +1,38 @@
 digFlood
 ========
-Automatically digs out specified veins as they are discovered. It runs once
-every time a dwarf finishes a dig job. It will only dig out appropriate tiles
-that are adjacent to the finished dig job. To add a vein type, use ``digFlood 1 [type]``.
-This will also enable the plugin. To remove a vein type, use ``digFlood 0 [type] 1``
-to disable, then remove, then re-enable.
+Tags:
+:dfhack-keybind:`digFlood`
+
+:index:`Digs out veins as they are discovered.
+<digFlood; Digs out veins as they are discovered.>` It will only dig out
+appropriate tiles that are adjacent to a just-finished dig job, so if you want
+to autodig a vein that has already been discovered, you may need to manually
+designate one tile of the tile for digging to get started.
 
 Usage:
 
-:help digflood:     detailed help message
-:digFlood 0:        disable the plugin
-:digFlood 1:        enable the plugin
-:digFlood 0 MICROCLINE COAL_BITUMINOUS 1:
-                    disable plugin, remove microcline and bituminous coal from monitoring, then re-enable the plugin
-:digFlood CLEAR:    remove all inorganics from monitoring
-:digFlood digAll1:  ignore the monitor list and dig any vein
-:digFlood digAll0:  disable digAll mode
+``enable digflood``
+    Enable the plugin.
+``digflood 1 <vein type> [<vein type> ...]``
+    Start monitoring for the specified vein types.
+``digFlood 0 <vein type> [<vein type> ...] 1``
+    Stop monitoring for the specified vein types. Note the required ``1`` at the
+    end.
+``digFlood CLEAR``
+    Remove all inorganics from monitoring.
+``digFlood digAll1``
+    Ignore the monitor list and dig any vein.
+``digFlood digAll0``
+    Disable digAll mode.
+
+You can get the list of valid vein types with this command::
+
+    lua "for i,mat in ipairs(df.global.world.raws.inorganics) do if mat.material.flags.IS_STONE and not mat.material.flags.NO_STONE_STOCKPILE then print(i, mat.id) end end"
+
+Examples
+--------
+
+``digFlood 1 MICROCLINE COAL_BITUMINOUS``
+    Automatically dig microcline and bituminous coal veins.
+``digFlood 0 MICROCLINE 1``
+    Stop automatically digging microcline.

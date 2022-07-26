@@ -1,14 +1,20 @@
 infiniteSky
 ===========
-Automatically allocates new z-levels of sky at the top of the map as you build up,
-or on request allocates many levels all at once.
+Tags:
+:dfhack-keybind:``
+
+Automatically allocates new z-levels of sky at the top of the map as you build
+up, or on request allocates many levels all at once.
 
 Usage:
 
-``infiniteSky n``
-  Raise the sky by n z-levels.
-``infiniteSky enable/disable``
-  Enables/disables monitoring of constructions. If you build anything in the second to highest z-level, it will allocate one more sky level. This is so you can continue to build stairs upward.
+``enable infiniteSky``
+    Enables monitoring of constructions. If you build anything in the second
+    highest z-level, it will allocate one more sky level. You can build stairs
+    up as high as you like!
+``infiniteSky [<n>]``
+    Raise the sky by n z-levels. If run without parameters, raises the sky by
+    one z-level.
 
 .. warning::
 

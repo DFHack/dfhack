@@ -33,19 +33,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     commands.push_back(PluginCommand(
         "infiniteSky",
         "Creates new sky levels on request, or as needed.",
-        infiniteSky, false,
-        "Usage:\n"
-        "  infiniteSky\n"
-        "    creates one more z-level\n"
-        "  infiniteSky [n]\n"
-        "    creates n more z-level(s)\n"
-        "  infiniteSky enable\n"
-        "    enables monitoring of constructions\n"
-        "  infiniteSky disable\n"
-        "    disable monitoring of constructions\n"
-        "\n"
-        "If construction monitoring is enabled, then the plugin will automatically create new sky z-levels as you construct upward.\n"
-    ));
+        infiniteSky));
     return CR_OK;
 }
 

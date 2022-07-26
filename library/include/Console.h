@@ -44,7 +44,7 @@ namespace  DFHack
     class CommandHistory
     {
     public:
-        CommandHistory(std::size_t capacity = 100)
+        CommandHistory(std::size_t capacity = 5000)
         {
             this->capacity = capacity;
         }

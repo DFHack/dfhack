@@ -1,7 +1,7 @@
 infiniteSky
 ===========
 Tags:
-:dfhack-keybind:``
+:dfhack-keybind:`infiniteSky`
 
 Automatically allocates new z-levels of sky at the top of the map as you build
 up, or on request allocates many levels all at once.

@@ -2611,6 +2611,9 @@ static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string 
     if (keyspec.size() == 1 && keyspec[0] >= 'A' && keyspec[0] <= 'Z') {
         *psym = SDL::K_a + (keyspec[0]-'A');
         return true;
+    } else if (keyspec.size() == 1 && keyspec[0] == '`') {
+        *psym = SDL::K_BACKQUOTE;
+        return true;
     } else if (keyspec.size() == 1 && keyspec[0] >= '0' && keyspec[0] <= '9') {
         *psym = SDL::K_0 + (keyspec[0]-'0');
         return true;

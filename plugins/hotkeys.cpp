@@ -356,8 +356,9 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 
     commands.push_back(
         PluginCommand(
-        "hotkeys", "Show all dfhack keybindings in current context.",
-        hotkeys_cmd, false, ""));
+        "hotkeys",
+        "Show all dfhack keybindings in current context.",
+        hotkeys_cmd));
 
     return CR_OK;
 }

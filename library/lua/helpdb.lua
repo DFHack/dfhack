@@ -653,21 +653,31 @@ function help(entry)
     print(get_entry_long_help(entry))
 end
 
-local function get_max_width(list, min_width)
-    local width = min_width or 0
-    for _,item in ipairs(list) do
-        width = math.max(width, #item)
+-- prints col1 (width 20), a 2 space gap, and col2 (width 58)
+-- if col1text is longer than 20 characters, col2text is printed on the next
+-- line. if col2text is longer than 58 characters, it is wrapped.
+local COL1WIDTH, COL2WIDTH = 20, 58
+local function print_columns(col1text, col2text)
+    col2text = col2text:wrap(COL2WIDTH)
+    local wrapped_col2 = {}
+    for line in col2text:gmatch('[^'..NEWLINE..']*') do
+        table.insert(wrapped_col2, line)
     end
-    return width
+    if #col1text > COL1WIDTH then
+        print(col1text)
+    else
+        print(('%-'..COL1WIDTH..'s  %s'):format(col1text, wrapped_col2[1]))
+    end
+    for i=2,#wrapped_col2 do
+        print(('%'..COL1WIDTH..'s  %s'):format(' ', wrapped_col2[i]))
+    end
 end
 
 -- implements the 'tags' builtin command
 function tags()
     local tags = get_tags()
-    local width = get_max_width(tags, 10)
     for _,tag in ipairs(tags) do
-        print(('  %-'..width..'s %s'):format(tag,
-                                             get_tag_data(tag).description))
+        print_columns(tag, get_tag_data(tag).description)
     end
 end
 
@@ -675,10 +685,8 @@ end
 -- defined as in search_entries() above.
 function list_entries(skip_tags, include, exclude)
     local entries = search_entries(include, exclude)
-    local width = get_max_width(entries, 10)
     for _,entry in ipairs(entries) do
-        print(('  %-'..width..'s  %s'):format(
-                entry, get_entry_short_help(entry)))
+        print_columns(entry, get_entry_short_help(entry))
         if not skip_tags then
             local tags = get_entry_tags(entry)
             if #tags > 0 then

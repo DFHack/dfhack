@@ -1,24 +1,48 @@
 getplants
 =========
-This tool allows plant gathering and tree cutting by RAW ID. Specify the types
-of trees to cut down and/or shrubs to gather by their plant names, separated
-by spaces.
+Tags:
+:dfhack-keybind:`getplants`
 
-Options:
+Designate trees for chopping and shrubs for gathering. Specify the types of
+trees to cut down and/or shrubs to gather by their plant names.
 
-:``-t``: Tree: Select trees only (exclude shrubs)
-:``-s``: Shrub: Select shrubs only (exclude trees)
-:``-f``: Farming: Designate only shrubs that yield seeds for farming. Implies -s
-:``-c``: Clear: Clear designations instead of setting them
-:``-x``: eXcept: Apply selected action to all plants except those specified (invert
-     selection)
-:``-a``: All: Select every type of plant (obeys ``-t``/``-s``/``-f``)
-:``-v``: Verbose: Lists the number of (un)designations per plant
-:``-n *``: Number: Designate up to * (an integer number) plants of each species
+Usage:
 
-Specifying both ``-t`` and ``-s`` or ``-f`` will have no effect. If no plant IDs are
-specified, all valid plant IDs will be listed, with ``-t``, ``-s``, and ``-f``
-restricting the list to trees, shrubs, and farmable shrubs, respectively.
+``getplants [-t|-s|-f]``
+    List valid tree/shrub ids, optionally restricted to the specified type.
+``getplants <id> [<id> ...] [<options>]``
+    Designate trees/shrubs of the specified types for chopping/gathering.
+
+Examples
+--------
+
+``getplants``
+    List all valid IDs.
+``getplants -f -a``
+    Gather all plants on the map that yield seeds for farming.
+``getplants NETHER_CAP -n 10``
+    Designate 10 nether cap trees for chopping.
+
+Options
+-------
+
+``-t``
+    Tree: Select trees only (exclude shrubs).
+``-s``
+    Shrub: Select shrubs only (exclude trees).
+``-f``
+    Farming: Designate only shrubs that yield seeds for farming.
+``-a``
+    All: Select every type of plant (obeys ``-t``/``-s``/``-f``).
+``-c``
+    Clear: Clear designations instead of setting them.
+``-x``
+    eXcept: Apply selected action to all plants except those specified (invert
+    selection).
+``-v``
+    Verbose: Lists the number of (un)designations per plant.
+``-n <num>``
+    Number: Designate up to the specified number of plants of each species.
 
 .. note::
 
@@ -28,10 +52,3 @@ restricting the list to trees, shrubs, and farmable shrubs, respectively.
     This leads to some shrubs being designated when they shouldn't be, causing a
     plant gatherer to walk there and do nothing (except clearing the
     designation). See :issue:`1479` for details.
-
-    The implementation another known deficiency: it's incapable of detecting that
-    raw definitions that specify a seed extraction reaction for the structural part
-    but has no other use for it cannot actually yield any seeds, as the part is
-    never used (parts of :bug:`6940`, e.g. Red Spinach), even though DF
-    collects it, unless there's a workshop reaction to do it (which there isn't
-    in vanilla).

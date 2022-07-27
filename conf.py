@@ -14,7 +14,9 @@ serve to show the default.
 
 # pylint:disable=redefined-builtin
 
+import contextlib
 import datetime
+import io
 from io import open
 import os
 import re
@@ -132,13 +134,26 @@ def get_open_mode():
     return 'w' if sys.version_info.major > 2 else 'wb'
 
 
+@contextlib.contextmanager
+def write_file_if_changed(path):
+    with io.StringIO() as buffer:
+        yield buffer
+        new_contents = buffer.getvalue()
+
+    with open(path, 'r') as infile:
+        old_contents = infile.read()
+
+    if old_contents != new_contents:
+        with open(path, get_open_mode()) as outfile:
+            outfile.write(new_contents)
+
+
 def generate_tag_indices():
     os.makedirs('docs/tags', mode=0o755, exist_ok=True)
-    with open('docs/tags/index.rst', get_open_mode()) as topidx:
+    with write_file_if_changed('docs/tags/index.rst') as topidx:
         for tag_tuple in get_tags():
             tag = tag_tuple[0]
-            with open(('docs/tags/{name}.rst').format(name=tag),
-                      get_open_mode()) as tagidx:
+            with write_file_if_changed(('docs/tags/{name}.rst').format(name=tag)) as tagidx:
                 tagidx.write('TODO: add links to the tools that have this tag')
             topidx.write(('.. _tag/{name}:\n\n').format(name=tag))
             topidx.write(('{name}\n').format(name=tag))
@@ -168,7 +183,7 @@ def write_tool_docs():
         # the page in one long wrapped line, similar to how the wiki does it
         os.makedirs(os.path.join('docs/tools', os.path.dirname(k[0])),
                     mode=0o755, exist_ok=True)
-        with open('docs/tools/{}.rst'.format(k[0]), get_open_mode()) as outfile:
+        with write_file_if_changed('docs/tools/{}.rst'.format(k[0])) as outfile:
             outfile.write(header)
             if k[0] != 'search' and k[0] != 'stonesense':
                 outfile.write(label)

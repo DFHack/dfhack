@@ -237,6 +237,7 @@ extensions = [
     'sphinx.ext.extlinks',
     'dfhack.changelog',
     'dfhack.lexer',
+    'dfhack.tool_docs',
 ]
 
 sphinx_major_version = sphinx.version_info[0]

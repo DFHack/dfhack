@@ -1235,7 +1235,8 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
             }
         }
         else if (res == CR_NEEDS_CONSOLE)
-            con.printerr("%s needs interactive console to work.\n", first.c_str());
+            con.printerr("%s needs an interactive console to work.\n"
+                          "Please run this command from the DFHack terminal.\n", first.c_str());
         return res;
     }
 

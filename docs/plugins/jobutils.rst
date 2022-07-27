@@ -1,40 +1,45 @@
 .. _job:
 
-job
-===
-Command for general job query and manipulation.
-
-Options:
-
-*no extra options*
-    Print details of the current job. The job can be selected
-    in a workshop, or the unit/jobs screen.
-**list**
-    Print details of all jobs in the selected workshop.
-**item-material <item-idx> <material[:subtoken]>**
-    Replace the exact material id in the job item.
-**item-type <item-idx> <type[:subtype]>**
-    Replace the exact item type id in the job item.
-
-job-duplicate
-=============
-In :kbd:`q` mode, when a job is highlighted within a workshop or furnace
-building, calling ``job-duplicate`` instantly duplicates the job.
-
+jobutils
+========
+Tags:
+:dfhack-keybind:`job`
 :dfhack-keybind:`job-duplicate`
-
-job-material
-============
-Alter the material of the selected job.  Similar to ``job item-material ...``
-
-Invoked as::
-
-    job-material <inorganic-token>
-
 :dfhack-keybind:`job-material`
 
-* In :kbd:`q` mode, when a job is highlighted within a workshop or furnace,
-  changes the material of the job. Only inorganic materials can be used
-  in this mode.
-* In :kbd:`b` mode, during selection of building components positions the cursor
-  over the first available choice with the matching material.
+Usage:
+
+``job``
+    Print details of the current job. The job can be selected in a workshop or
+    the unit/jobs screen.
+``job list``
+    Print details of all jobs in the selected workshop.
+``job item-material <item-idx> <material[:subtoken]>``
+    Replace the exact material id in the job item.
+``job item-type <item-idx> <type[:subtype]>``
+    Replace the exact item type id in the job item.
+``job-duplicate``
+    Duplicates the highlighted job. Must be in :kbd:`q` mode and have a workshop
+    or furnace building selected.
+``job-material <inorganic-token>``
+    Alters the material of the selected job (in :kbd:`q` mode) or jumps to the
+    selected material when choosing the building component of a planned building
+    (in :kbd:`b` mode). Note that this form of the command can only handle
+    inorganic materials.
+
+Use the ``job`` and ``job list`` commands to discover the type and material ids
+for existing jobs, or use the following commands to see the full lists::
+
+    lua @df.item_type
+    lua "for i,mat in ipairs(df.global.world.raws.inorganics) do if mat.material.flags.IS_STONE and not mat.material.flags.NO_STONE_STOCKPILE then print(i, mat.id) end end"
+
+Examples
+--------
+
+``job-material GNEISS``
+    Change the selected "Construct rock Coffin" job at a Mason's workshop to
+    "Construct gneiss coffin".
+``job item-material 2 MARBLE``
+    Change the selected "Construct Traction Bench" job (which has three source
+    items: a table, a mechanism, and a chain) to specifically use a marble
+    mechanism.

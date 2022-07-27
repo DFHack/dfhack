@@ -3164,21 +3164,6 @@ static int internal_getCommandDescription(lua_State *L)
     return 1;
 }
 
-static int internal_isPluginEnableable(lua_State *L)
-{
-    auto plugins = Core::getInstance().getPluginManager();
-
-    const char *name = luaL_checkstring(L, 1);
-
-    auto plugin = plugins->getPluginByName(name);
-    if (plugin)
-        lua_pushboolean(L, plugin->can_be_enabled());
-    else
-        lua_pushnil(L);
-
-    return 1;
-}
-
 static int internal_threadid(lua_State *L)
 {
     std::stringstream ss;
@@ -3255,7 +3240,6 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "listCommands", internal_listCommands },
     { "getCommandHelp", internal_getCommandHelp },
     { "getCommandDescription", internal_getCommandDescription },
-    { "isPluginEnableable", internal_isPluginEnableable },
     { "threadid", internal_threadid },
     { "md5File", internal_md5file },
     { NULL, NULL }

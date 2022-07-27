@@ -1,10 +1,10 @@
 3dveins
 =======
-**Tags:** `tag/fort`, `tag/mod`, `tag/map`
-:dfhack-keybind:`3dveins`
 
 .. dfhack-tool:: 3dveins
-    :tags: foo, bar
+    :tags: fort, mod, map
+
+:dfhack-keybind:`3dveins`
 
 :index:`Rewrite layer veins to expand in 3D space.
 <3dveins; Rewrite layer veins to expand in 3D space.>` Existing, flat veins

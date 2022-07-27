@@ -43,3 +43,7 @@ Examples
     Change the selected "Construct Traction Bench" job (which has three source
     items: a table, a mechanism, and a chain) to specifically use a marble
     mechanism.
+``job item-type 2 TABLE``
+    Change the selected "Encrust furniture with blue jade" job (which has two
+    source items: a cut gem and a piece of improvable furniture) to specifically
+    use a table instead of just any furniture.

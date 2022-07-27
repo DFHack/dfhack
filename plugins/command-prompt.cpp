@@ -345,7 +345,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 {
     commands.push_back(PluginCommand(
                 "command-prompt",
-                "An in-game DFHack terminal.",
+                "Allows you to run a DFHack command from in-game.",
                 show_prompt,
                 hotkey_allow_all));
     return CR_OK;

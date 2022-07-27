@@ -135,8 +135,11 @@ def write_file_if_changed(path):
         yield buffer
         new_contents = buffer.getvalue()
 
-    with open(path, 'r') as infile:
-        old_contents = infile.read()
+    try:
+        with open(path, 'r') as infile:
+            old_contents = infile.read()
+    except IOError:
+        old_contents = None
 
     if old_contents != new_contents:
         with open(path, 'w') as outfile:

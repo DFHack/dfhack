@@ -17,7 +17,6 @@ serve to show the default.
 import contextlib
 import datetime
 import io
-from io import open
 import os
 import re
 import shlex  # pylint:disable=unused-import
@@ -130,10 +129,6 @@ def get_tags():
     return tags
 
 
-def get_open_mode():
-    return 'w' if sys.version_info.major > 2 else 'wb'
-
-
 @contextlib.contextmanager
 def write_file_if_changed(path):
     with io.StringIO() as buffer:
@@ -144,7 +139,7 @@ def write_file_if_changed(path):
         old_contents = infile.read()
 
     if old_contents != new_contents:
-        with open(path, get_open_mode()) as outfile:
+        with open(path, 'w') as outfile:
             outfile.write(new_contents)
 
 

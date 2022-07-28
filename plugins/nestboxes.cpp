@@ -69,13 +69,10 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 {
     if (world && ui) {
         commands.push_back(
-            PluginCommand("nestboxes", "Automatically scan for and forbid fertile eggs incubating in a nestbox.",
-                nestboxes, false,
-                "To enable: nestboxes enable\n"
-                "To disable: nestboxes disable\n"
-                "There is no other configuration.\n"
-            )
-        );
+            PluginCommand(
+                "nestboxes",
+                "Protect fertile eggs incubating in a nestbox.",
+                nestboxes));
     }
     return CR_OK;
 }

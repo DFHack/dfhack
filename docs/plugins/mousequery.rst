@@ -31,6 +31,6 @@ Examples
 ``mousequery rbutton enable``
     Enable using the right mouse button to cancel out of menus and scroll the
     map.
-``mousequery edge enable``
 ``mousequery delay 300``
-    Enable edge scrolling and set the delay to 300ms.
+    When run after ``mousequery edge enable``, sets the edge scrolling delay to
+    300ms.

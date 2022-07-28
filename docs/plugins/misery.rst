@@ -1,14 +1,18 @@
 misery
 ======
-When enabled, fake bad thoughts will be added to all dwarves.
+Tags:
+:dfhack-keybind:`misery`
+
+Increase the intensity of negative dwarven thoughts.
+
+When enabled, negative thoughts that your dwarves have will multiply by the
+specified factor.
 
 Usage:
 
-:misery enable n:  enable misery with optional magnitude n. If specified, n must
-    be positive.
-:misery n:         same as "misery enable n"
-:misery enable:    same as "misery enable 1"
-:misery disable:   stop adding new negative thoughts. This will not remove
-                   existing negative thoughts. Equivalent to "misery 0".
-:misery clear:     remove fake thoughts, even after saving and reloading. Does
-    not change factor.
+``enable misery``
+    Start multiplying negative thoughts.
+``misery <factor>``
+    Change the multiplicative factor of bad thoughts. The default is ``2``.
+``misery clear``
+    Clear away negative thoughts added by ``misery``.

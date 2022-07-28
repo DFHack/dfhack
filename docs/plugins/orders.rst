@@ -1,31 +1,51 @@
 orders
 ======
+Tags:
+:dfhack-keybind:`orders`
 
-A plugin for manipulating manager orders.
+Manage manager orders.
 
-Subcommands:
+Usage:
 
-:list: Shows the list of previously exported orders, including the orders library.
-:export NAME: Exports the current list of manager orders to a file named ``dfhack-config/orders/NAME.json``.
-:import NAME: Imports manager orders from a file named ``dfhack-config/orders/NAME.json``.
-:clear: Deletes all manager orders in the current embark.
-:sort: Sorts current manager orders by repeat frequency so daily orders don't
-    prevent other orders from ever being completed: one-time orders first, then
-    yearly, seasonally, monthly, then finally daily.
+``orders orders list``
+    Shows the list of previously exported orders, including the orders library.
+``orders export <name>``
+    Saves all the current manager orders in a file.
+``orders import <name>``
+    Imports the specified manager orders. Note this adds to your current set of
+    manager orders. It will not clear the orders that already exist.
+``orders clear``
+    Deletes all manager orders in the current embark.
+``orders sort``
+    Sorts current manager orders by repeat frequency so repeating orders don't
+    prevent one-time orders from ever being completed. The sorting order is:
+    one-time orders first, then yearly, seasonally, monthly, and finally, daily.
 
 You can keep your orders automatically sorted by adding the following command to
 your ``onMapLoad.init`` file::
 
     repeat -name orders-sort -time 1 -timeUnits days -command [ orders sort ]
 
+Exported orders are saved in the ``dfhack-config/orders`` directory, where you
+can view, edit, and delete them, if desired.
+
+Examples
+--------
+
+``orders export myorders``
+    Export the current manager orders to a file named
+    ``dfhack-config/orders/myorders.json``.
+``orders import library/basic``
+    Import manager orders from the library that keep your fort stocked with
+    basic essentials.
 
 The orders library
 ------------------
 
 DFHack comes with a library of useful manager orders that are ready for import:
 
-:source:`basic.json <data/orders/basic.json>`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:source:`library/basic <data/orders/basic.json>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This collection of orders handles basic fort necessities:
 
@@ -45,12 +65,12 @@ This collection of orders handles basic fort necessities:
 You should import it as soon as you have enough dwarves to perform the tasks.
 Right after the first migration wave is usually a good time.
 
-:source:`furnace.json <data/orders/furnace.json>`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:source:`library/furnace <data/orders/furnace.json>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This collection creates basic items that require heat. It is separated out from
-``basic.json`` to give players the opportunity to set up magma furnaces first in
-order to save resources. It handles:
+``library/basic`` to give players the opportunity to set up magma furnaces first
+in order to save resources. It handles:
 
 - charcoal (including smelting of bituminous coal and lignite)
 - pearlash
@@ -61,8 +81,8 @@ order to save resources. It handles:
 
 Orders are missing for plaster powder until DF :bug:`11803` is fixed.
 
-:source:`military.json <data/orders/military.json>`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:source:`library/military <data/orders/military.json>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This collection adds high-volume smelting jobs for military-grade metal ores and
 produces weapons and armor:
@@ -83,33 +103,36 @@ Make sure you have a lot of fuel (or magma forges and furnaces) before you turn
 
 This file should only be imported, of course, if you need to equip a military.
 
-:source:`smelting.json <data/orders/smelting.json>`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:source:`library/smelting <data/orders/smelting.json>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This collection adds smelting jobs for all ores. It includes handling the ores
-already managed by ``military.json``, but has lower limits. This ensures all
-ores will be covered if a player imports ``smelting`` but not ``military``, but
-the higher-volume ``military`` orders will take priority if both are imported.
+already managed by ``library/military``, but has lower limits. This ensures all
+ores will be covered if a player imports ``library/smelting`` but not
+``library/military``, but the higher-volume ``library/military`` orders will
+take priority if both are imported.
 
-:source:`rockstock.json <data/orders/rockstock.json>`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:source:`library/rockstock <data/orders/rockstock.json>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This collection of orders keeps a small stock of all types of rock furniture.
 This allows you to do ad-hoc furnishings of guildhalls, libraries, temples, or
 other rooms with `buildingplan` and your masons will make sure there is always
 stock on hand to fulfill the plans.
 
-:source:`glassstock.json <data/orders/glassstock.json>`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:source:`library/glassstock <data/orders/glassstock.json>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Similar to ``rockstock`` above, this collection keeps a small stock of all types
-of glass furniture. If you have a functioning glass industry, this is more
-sustainable than ``rockstock`` since you can never run out of sand. If you have
-plenty of rock and just want the variety, you can import both ``rockstock`` and
-``glassstock`` to get a mixture of rock and glass furnishings in your fort.
+Similar to ``library/rockstock`` above, this collection keeps a small stock of
+all types of glass furniture. If you have a functioning glass industry, this is
+more sustainable than ``library/rockstock`` since you can never run out of sand.
+If you have plenty of rock and just want the variety, you can import both
+``library/rockstock`` and ``library/glassstock`` to get a mixture of rock and
+glass furnishings in your fort.
 
-There are a few items that ``glassstock`` produces that ``rockstock`` does not,
-since there are some items that can not be made out of rock, for example:
+There are a few items that ``library/glassstock`` produces that
+``library/rockstock`` does not, since there are some items that can not be made
+out of rock, for example:
 
 - tubes and corkscrews for building magma-safe screw pumps
 - windows

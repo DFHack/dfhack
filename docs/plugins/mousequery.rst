@@ -1,16 +1,36 @@
 mousequery
 ==========
-Adds mouse controls to the DF interface, e.g. click-and-drag designations.
+Tags: `tag/fort`, `tag/interface`
+:dfhack-keybind:`mousequery`
 
-Options:
-
-:plugin:    enable/disable the entire plugin
-:rbutton:   enable/disable right mouse button
-:track:     enable/disable moving cursor in build and designation mode
-:edge:      enable/disable active edge scrolling (when on, will also enable tracking)
-:live:      enable/disable query view when unpaused
-:delay:     Set delay when edge scrolling in tracking mode. Omit amount to display current setting.
+Adds mouse controls to the DF interface. For example, with ``mousequery`` you
+can click on buildings to configure them, hold the mouse button to draw dig
+designations, or click and drag to move the map around.
 
 Usage::
 
-    mousequery [plugin] [rbutton] [track] [edge] [live] [enable|disable]
+    enable mousequery
+    mousequery [rbutton|track|edge|live] [enable|disable]
+    mousequery drag [left|right|disable]
+    mousequery delay [<ms>]
+
+:rbutton:   When the right mouse button is clicked, cancel out of menus or
+            scroll the main map if you r-click near an edge.
+:track:     Move the cursor with the mouse instead of the cursor keys when you
+            are in build or designation modes.
+:edge:      Scroll the map when you move the cursor to a map edge. See ``delay``
+            below. If enabled also enables ``track``.
+:delay:     Set delay in milliseconds for map edge scrolling. Omit the amount to
+            display the current setting.
+:live:      Display information in the lower right corner of the screen about
+            the items/building/tile under the cursor, even while unpaused.
+
+Examples
+--------
+
+``mousequery rbutton enable``
+    Enable using the right mouse button to cancel out of menus and scroll the
+    map.
+``mousequery edge enable``
+``mousequery delay 300``
+    Enable edge scrolling and set the delay to 300ms.

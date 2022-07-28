@@ -1,5 +1,8 @@
 mode
 ====
+Tags:
+:dfhack-keybind:`mode`
+
 This command lets you see and change the game mode directly.
 
 .. warning::
@@ -9,13 +12,27 @@ This command lets you see and change the game mode directly.
     Not all combinations are good for every situation and most of them will
     produce undesirable results. There are a few good ones though.
 
-Examples:
+Usage:
 
-  * You are in fort game mode, managing your fortress and paused.
-  * You switch to the arena game mode, *assume control of a creature* and then
-  * switch to adventure game mode(1).
-    You just lost a fortress and gained an adventurer.  Alternatively:
+``mode``
+    Print the current game mode.
+``mode set``
+    Enter an interactive commandline menu where you can set the game mode.
 
-  * You are in fort game mode, managing your fortress and paused at the esc menu.
-  * You switch to the adventure game mode, assume control of a creature, then save or retire.
-  * You just created a returnable mountain home and gained an adventurer.
+Examples
+--------
+
+Scenario 1:
+
+* You are in fort game mode, managing your fortress and paused.
+* You switch to the arena game mode, *assume control of a creature* and then
+* switch to adventure game mode.
+
+You just lost a fortress and gained an adventurer.
+
+Scenario 2:
+
+* You are in fort game mode, managing your fortress and paused at the Esc menu.
+* You switch to the adventure game mode, assume control of a creature, then save or retire.
+
+You just created a returnable mountain home and gained an adventurer.

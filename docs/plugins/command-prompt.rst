@@ -3,8 +3,8 @@ command-prompt
 Tags:
 :dfhack-keybind:`command-prompt`
 
-:index:`An in-game DFHack terminal, where you can enter other commands.
-<command-prompt; An in-game DFHack terminal, where you can enter other commands.>`
+:index:`An in-game DFHack terminal where you can enter other commands.
+<command-prompt; An in-game DFHack terminal where you can enter other commands.>`
 
 Usage::
 

@@ -102,17 +102,17 @@ approximations. Your playstyle may demand more or fewer of each profession.
 - ``Craftsdwarf`` (needed: 0, 4-6)
     All labors used at Craftsdwarf's workshops, Glassmaker's workshops, and
     kilns.
-``Doctor`` (needed: 0, 2-4)
+- ``Doctor`` (needed: 0, 2-4)
     The full suite of medical labors, plus Animal Caretaking for those using
     the `dwarfvet` plugin.
-``Farmer`` (needed 1, 4)
+- ``Farmer`` (needed 1, 4)
     Food- and animal product-related labors.
-``Fisherdwarf`` (needed 0, 0-1)
+- ``Fisherdwarf`` (needed 0, 0-1)
     Fishing and fish cleaning. If you assign this profession to any dwarf, be
     prepared to be inundated with fish. Fisherdwarves *never stop fishing*. Be
     sure to also run ``prioritize -a PrepareRawFish ExtractFromRawFish`` or else
     caught fish will just be left to rot.
-``Hauler`` (needed 0, >20)
+- ``Hauler`` (needed 0, >20)
     All hauling labors plus Siege Operating, Mechanic (so haulers can assist in
     reloading traps) and Architecture (so haulers can help build massive
     windmill farms and pump stacks). As you accumulate enough Haulers, you can
@@ -120,43 +120,43 @@ approximations. Your playstyle may demand more or fewer of each profession.
     tasks. You may also want to restrict your Mechanic's workshops to only
     skilled mechanics so your unskilled haulers don't make low-quality
     mechanisms.
-``Laborer`` (needed 0, 10-12)
+- ``Laborer`` (needed 0, 10-12)
     All labors that don't improve quality with skill, such as Soapmaking and
     furnace labors.
-``Marksdwarf`` (needed 0, 10-30)
+- ``Marksdwarf`` (needed 0, 10-30)
     Similar to ``Hauler``. See the description for ``Meleedwarf`` below for more
     details.
-``Mason`` (needed 2, 2-4)
+- ``Mason`` (needed 2, 2-4)
     Masonry and Gem Cutting/Encrusting.
-``Meleedwarf`` (needed 0, 20-50)
+- ``Meleedwarf`` (needed 0, 20-50)
     Similar to ``Hauler``, but without most civilian labors. This profession is
     separate from ``Hauler`` so you can find your military dwarves easily.
     ``Meleedwarves`` and ``Marksdwarves`` have Mechanics and hauling labors
     enabled so you can temporarily deactivate your military after sieges and
     allow your military dwarves to help clean up and reset traps.
-``Migrant`` (needed 0, 0)
+- ``Migrant`` (needed 0, 0)
     You can assign this profession to new migrants temporarily while you sort
     them into professions.  Like ``Marksdwarf`` and ``Meleedwarf``, the purpose
     of this profession is so you can find your new dwarves more easily.
-``Miner`` (needed 2, 2-10)
+- ``Miner`` (needed 2, 2-10)
     Mining and Engraving. This profession also has the ``Alchemist`` labor
     enabled, which disables hauling for those using the `autohauler` plugin.
     Once the need for Miners tapers off in the late game, dwarves with this
     profession make good military dwarves, wielding their picks as weapons.
-``Outdoorsdwarf`` (needed 1, 2-4)
+- ``Outdoorsdwarf`` (needed 1, 2-4)
     Carpentry, Bowyery, Woodcutting, Animal Training, Trapping, Plant Gathering,
     Beekeeping, and Siege Engineering.
-``Smith`` (needed 0, 2-4)
+- ``Smith`` (needed 0, 2-4)
     Smithing labors. You may want to specialize your Smiths to focus on a single
     smithing skill to maximize equipment quality.
-``StartManager`` (needed 1, 0)
+- ``StartManager`` (needed 1, 0)
     All skills not covered by the other starting professions (``Miner``,
     ``Mason``, ``Outdoorsdwarf``, and ``Farmer``), plus a few overlapping skills
     to assist in critical tasks at the beginning of the game. Individual labors
     should be turned off as migrants are assigned more specialized professions
     that cover them, and the StartManager dwarf can eventually convert to some
     other profession.
-``Tailor`` (needed 0, 2)
+- ``Tailor`` (needed 0, 2)
     Textile industry labors: Dying, Leatherworking, Weaving, and Clothesmaking.
 
 A note on autohauler

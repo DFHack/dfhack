@@ -21,7 +21,7 @@ class DFHackToolDirective(sphinx.directives.ObjectDescription):
         tool_name = self.get_signatures()[0]
 
         tag_nodes = [nodes.strong(text='Tags: ')]
-        for tag in self.options['tags']:
+        for tag in self.options.get('tags', []):
             tag_nodes += [
                 nodes.literal(tag, tag),
                 nodes.inline(text=' | '),
@@ -29,7 +29,7 @@ class DFHackToolDirective(sphinx.directives.ObjectDescription):
         tag_nodes.pop()
 
         return [
-            nodes.section('', nodes.title(text=tool_name)),
+            nodes.section('', nodes.title(text=tool_name), ids=[tool_name]),
             nodes.paragraph('', '', *tag_nodes),
         ]
 

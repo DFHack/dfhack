@@ -70,6 +70,11 @@ Examples
 Advanced usage
 --------------
 
+``autolabor list``
+    List current status of all labors. Use this command to see the IDs for all
+    labors.
+``autolabor status``
+    Show basic status information.
 ``autolabor <labor> <minimum> [<maximum>] [<talent pool>]``
     Set range of dwarves assigned to a labor, optionally specifying the size of
     the pool of most skilled dwarves that will ever be considered for this
@@ -80,9 +85,5 @@ Advanced usage
     Turn off autolabor for a specific labor.
 ``autolabor reset-all|<labor> reset``
     Return a labor (or all labors) to the default handling.
-``autolabor list``
-    List current status of all labors.
-``autolabor status``
-    Show basic status information.
 
 See `autolabor-artisans` for a differently-tuned setup.

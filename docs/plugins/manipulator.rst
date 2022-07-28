@@ -1,13 +1,20 @@
 manipulator
 ===========
-An in-game equivalent to the popular program Dwarf Therapist.
+Tags:
+
+An in-game labor management interface. It is equivalent to the popular Dwarf
+Therapist utility.
 
 To activate, open the unit screen and press :kbd:`l`.
 
+Usage::
+
+    enable manipulator
+
 .. image:: ../images/manipulator.png
 
-The far left column displays the unit's Happiness (color-coded based on its
-value), Name, Profession/Squad, and the right half of the screen displays each
+The far left column displays the unit's name, happiness (color-coded based on
+its value), profession, or squad, and the right half of the screen displays each
 dwarf's labor settings and skill levels (0-9 for Dabbling through Professional,
 A-E for Great through Grand Master, and U-Z for Legendary through Legendary+5).
 
@@ -58,12 +65,14 @@ The manipulator plugin supports saving professions: a named set of labors that c
 quickly applied to one or multiple dwarves.
 
 To save a profession, highlight a dwarf and press :kbd:`P`. The profession will be saved using
-the custom profession name of the dwarf, or the default for that dwarf if no custom profession
-name has been set.
+the custom profession name of the dwarf, or the default profession name for that dwarf if no
+custom profession name has been set.
 
 To apply a profession, either highlight a single dwarf or select multiple with
 :kbd:`x`, and press :kbd:`p` to select the profession to apply. All labors for
-the selected dwarves will be reset to the labors of the chosen profession.
+the selected dwarves will be reset to the labors of the chosen profession and
+the custom profession names for those dwarves will be set to the applied
+profession.
 
 Professions are saved as human-readable text files in the
 ``dfhack-config/professions`` folder within the DF folder, and can be edited or
@@ -96,13 +105,8 @@ Chef           0         3     Buchery, Tanning, and Cooking. It is important to
 Craftsdwarf    0         4-6   All labors used at Craftsdwarf's workshops,
                                Glassmaker's workshops, and kilns.
 Doctor         0         2-4   The full suite of medical labors, plus Animal
-                               Caretaking for those using the dwarfvet plugin.
-Farmer         1         4     Food- and animal product-related labors. This
-                               profession also has the ``Alchemist`` labor
-                               enabled since they need to focus on food-related
-                               jobs, though you might want to disable
-                               ``Alchemist`` for your first farmer until there
-                               are actual farming duties to perform.
+                               Caretaking for those using the `dwarfvet` plugin.
+Farmer         1         4     Food- and animal product-related labors.
 Fisherdwarf    0         0-1   Fishing and fish cleaning. If you assign this
                                profession to any dwarf, be prepared to be
                                inundated with fish. Fisherdwarves *never stop
@@ -117,24 +121,21 @@ Hauler         0         >20   All hauling labors plus Siege Operating, Mechanic
                                hauling labors for other dwarves so they can
                                focus on their skilled tasks. You may also want
                                to restrict your Mechanic's workshops to only
-                               skilled mechanics so your haulers don't make
-                               low-quality mechanisms.
+                               skilled mechanics so your unskilled haulers don't
+                               make low-quality mechanisms.
 Laborer        0         10-12 All labors that don't improve quality with skill,
                                such as Soapmaking and furnace labors.
 Marksdwarf     0         10-30 Similar to Hauler. See the description for
                                Meleedwarf below for more details.
-Mason          2         2-4   Masonry and Gem Cutting/Encrusting. In the early
-                               game, you may need to run "`prioritize`
-                               ConstructBuilding" to get your masons to build
-                               wells and bridges if they are too busy crafting
-                               stone furniture.
+Mason          2         2-4   Masonry and Gem Cutting/Encrusting.
 Meleedwarf     0         20-50 Similar to Hauler, but without most civilian
                                labors. This profession is separate from Hauler
                                so you can find your military dwarves easily.
                                Meleedwarves and Marksdwarves have Mechanics and
                                hauling labors enabled so you can temporarily
                                deactivate your military after sieges and allow
-                               your military dwarves to help clean up.
+                               your military dwarves to help clean up and reset
+                               traps.
 Migrant        0         0     You can assign this profession to new migrants
                                temporarily while you sort them into professions.
                                Like Marksdwarf and Meleedwarf, the purpose of

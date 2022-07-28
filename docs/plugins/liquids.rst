@@ -2,30 +2,42 @@
 
 liquids
 =======
-Allows adding magma, water and obsidian to the game. It replaces the normal
-dfhack command line and can't be used from a hotkey. Settings will be remembered
-as long as dfhack runs. Intended for use in combination with the command
-``liquids-here`` (which can be bound to a hotkey).  See also :issue:`80`.
+Tags:
+:dfhack-keybind:`liquids`
+:dfhack-keybind:`liquids-here`
+
+Place magma, water or obsidian.  See `gui/liquids` for an in-game interface for
+this functionality.
+
+Also, if you only want to add or remove water or magma from a single tile, the
+`source` script may be easier to use.
+
+Usage:
+
+``liquids``
+    Start the interactive terminal settings interpreter. This command must be
+    called from the DFHack terminal and not from any in-game interface.
+``liquids-here``
+    Run the liquid spawner with the current/last settings made in ``liquids``
+    (if no settings in ``liquids`` were made, then it paints a point of 7/7
+    magma by default). This command is intended to be used as keybinding, and it
+    requires an active in-game cursor.
 
 .. warning::
 
-    Spawning and deleting liquids can mess up pathing data and
-    temperatures (creating heat traps). You've been warned.
+    Spawning and deleting liquids can mess up pathing data and temperatures
+    (creating heat traps). You've been warned.
 
-.. note::
+Interactive interpreter
+-----------------------
 
-    `gui/liquids` is an in-game UI for this script.
+The interpreter replaces the normal dfhack command line and can't be used from a
+hotkey. Settings will be remembered as long as dfhack runs. It is intended for
+use in combination with the command ``liquids-here`` (which *can* be bound to a
+hotkey).
 
-Settings will be remembered until you quit DF. You can call `liquids-here` to execute
-the last configured action, which is useful in combination with keybindings.
+You can enter the following commands at the prompt.
 
-Usage: point the DF cursor at a tile you want to modify and use the commands.
-
-If you only want to add or remove water or magma from one tile,
-`source` may be easier to use.
-
-Commands
---------
 Misc commands:
 
 :q:                 quit
@@ -65,10 +77,3 @@ Brush size and shape:
 :block:         DF map block with cursor in it (regular spaced 16x16x1 blocks)
 :column:        Column from cursor, up through free space
 :flood:         Flood-fill water tiles from cursor (only makes sense with wclean)
-
-liquids-here
-------------
-Run the liquid spawner with the current/last settings made in liquids (if no
-settings in liquids were made it paints a point of 7/7 magma by default).
-
-Intended to be used as keybinding. Requires an active in-game cursor.

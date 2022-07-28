@@ -45,6 +45,7 @@ static void find_active_keybindings(df::viewscreen *screen)
     sorted_keys.clear();
 
     vector<string> valid_keys;
+
     for (char c = 'A'; c <= 'Z'; c++)
     {
         valid_keys.push_back(string(&c, 1));

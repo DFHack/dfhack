@@ -310,7 +310,10 @@ exclude_patterns = [
     'docs/tags/*',
     'docs/text/*',
     'docs/builtins/*',
+    'docs/pdf/*',
     'docs/plugins/*',
+    'docs/pseudoxml/*',
+    'docs/xml/*',
     'scripts/docs/*',
     ]
 

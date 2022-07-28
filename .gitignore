@@ -18,8 +18,10 @@ build/VC2010
 docs/changelogs/
 docs/html/
 docs/pdf/
+docs/pseudoxml/
 docs/text/
 docs/tools/
+docs/xml/
 
 # in-place build
 build/Makefile

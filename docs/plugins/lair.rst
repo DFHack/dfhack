@@ -1,12 +1,17 @@
 lair
 ====
-This command allows you to mark the map as a monster lair, preventing item
-scatter on abandon. When invoked as ``lair reset``, it does the opposite.
+Tags:
+:dfhack-keybind:`lair`
 
-Unlike `reveal`, this command doesn't save the information about tiles - you
-won't be able to restore state of real monster lairs using ``lair reset``.
+Mark the map as a monster lair. This avoids item scatter when the fortress is
+abandoned.
 
-Options:
+Usage:
 
-:lair:          Mark the map as monster lair
-:lair reset:    Mark the map as ordinary (not lair)
+``lair``
+    Mark the map as monster lair.
+``lair reset``
+    Mark the map as ordinary (not lair).
+
+This command doesn't save the information about tiles - you won't be able to
+restore the state of a real monster lairs using ``lair reset``.

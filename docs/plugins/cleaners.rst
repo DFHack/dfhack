@@ -7,11 +7,11 @@ Tags:
 :dfhack-keybind:`clean`
 :dfhack-keybind:`spotclean`
 
-:index:`Removes contaminants from tiles, items, and units.
-<clean; Removes contaminants from tiles, items, and units.>` More specifically,
-it cleans all the splatter that get scattered all over the map and that clings
-to your items and units. In an old fortress, this can significantly reduce FPS
-lag. It can also spoil your !!FUN!!, so think before you use it.
+:index:`Removes contaminants.  <clean; Removes contaminants.>` More
+specifically, it cleans all the splatter that get scattered all over the map and
+that clings to your items and units. In an old fortress, cleaning with this tool
+can significantly reduce FPS lag. It can also spoil your !!FUN!!, so think
+before you use it.
 
 Usage::
 

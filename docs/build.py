@@ -28,6 +28,8 @@ OUTPUT_FORMATS = {
     'html': SphinxOutputFormat('html', pre_args=['-b', 'html']),
     'text': SphinxOutputFormat('text', pre_args=['-b', 'text']),
     'pdf': SphinxOutputFormat('pdf', pre_args=['-M', 'latexpdf']),
+    'xml': SphinxOutputFormat('xml', pre_args=['-b', 'xml']),
+    'pseudoxml': SphinxOutputFormat('pseudoxml', pre_args=['-b', 'pseudoxml']),
 }
 
 def _parse_known_args(parser, source_args):

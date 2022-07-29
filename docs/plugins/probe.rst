@@ -1,13 +1,21 @@
 probe
 =====
+Tags:
+:dfhack-keybind:`probe`
+:dfhack-keybind:`bprobe`
+:dfhack-keybind:`cprobe`
 
-This plugin provides multiple commands that print low-level properties of the
-selected objects.
+Display low-level properties of selected objects.
 
-* ``probe``: prints some properties of the tile selected with :kbd:`k`. Some of
-  these properties can be passed into `tiletypes`.
-* ``cprobe``: prints some properties of the unit selected with :kbd:`v`, as well
-  as the IDs of any worn items. `gui/gm-unit` and `gui/gm-editor` are more
-  complete in-game alternatives.
-* ``bprobe``: prints some properties of the building selected with :kbd:`q` or
-  :kbd:`t`. `gui/gm-editor` is a more complete in-game alternative.
+Usage:
+
+``probe``
+    Displays properties of the tile selected with :kbd:`k`. Some of these
+    properties can be passed into `tiletypes`.
+``bprobe``
+    Displays properties of the building selected with :kbd:`q` or :kbd:`t`.
+    For deeper inspection of the building, see `gui/gm-editor`.
+``cprobe``
+    Displays properties of the unit selected with :kbd:`v`. It also displays the
+    IDs of any worn items. For deeper inspection of the unit and inventory items,
+    see `gui/gm-unit` and `gui/gm-editor`.

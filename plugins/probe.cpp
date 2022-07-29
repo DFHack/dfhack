@@ -49,20 +49,14 @@ command_result df_bprobe (color_ostream &out, vector <string> & parameters);
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand("probe",
-                                     "A tile probe",
-                                     df_probe,
-                                     false,
-                                     "Hover the cursor over a tile to view its properties.\n"));
+                                     "Display information about the selected tile.",
+                                     df_probe));
     commands.push_back(PluginCommand("cprobe",
-                                     "A creature probe",
-                                     df_cprobe,
-                                     false,
-                                     "Select a creature to view its properties.\n"));
+                                     "Display information about the selected creature.",
+                                     df_cprobe));
     commands.push_back(PluginCommand("bprobe",
-                                     "A simple building probe",
-                                     df_bprobe,
-                                     false,
-                                     "Select a building to view its properties.\n"));
+                                     "Display information about the selected building.",
+                                     df_bprobe));
     return CR_OK;
 }
 

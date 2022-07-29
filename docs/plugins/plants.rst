@@ -1,18 +1,28 @@
 .. _plant:
 
-plant
-=====
-A tool for creating shrubs, growing, or getting rid of them.
+plants
+======
+Tags:
+:dfhack-keybind:`plant`
 
-Subcommands:
+Grow shrubs or trees.
 
-:create:      Creates a new sapling under the cursor. Takes a raw ID as argument
-              (e.g. TOWER_CAP). The cursor must be located on a dirt or grass floor tile.
-:grow:        Turns saplings into trees; under the cursor if a sapling is selected,
-              or every sapling on the map if the cursor is hidden.
+Usage:
 
-For mass effects, use one of the additional options:
+``plant create <ID>``
+    Creates a new plant of the specified type at the active cursor position.
+    The cursor must be on a dirt or grass floor tile.
+``plant grow``
+    Grows saplings into trees. If the cursor is active, it only affects the
+    sapling under the cursor. If no cursor is active, it affect all saplings
+    on the map.
 
-:shrubs:    affect all shrubs on the map
-:trees:     affect all trees on the map
-:all:       affect every plant!
+To see the full list of plant ids, run the following command::
+
+    devel/query --table df.global.world.raws.plants.all --search ^id --maxdepth 1
+
+Example
+-------
+
+``plant create TOWER_CAP``
+    Create a Tower Cap sapling at the cursor position.

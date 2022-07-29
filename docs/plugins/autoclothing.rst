@@ -9,14 +9,15 @@ set how many of each clothing type every citizen should have.
 
 Usage::
 
-    enable autoclothing
-    autoclothing <material> <item> [number]
+    autoclothing
+    autoclothing <material> <item> [quantity]
 
 ``material`` can be "cloth", "silk", "yarn", or "leather". The ``item`` can be
 anything your civilization can produce, such as "dress" or "mitten".
 
-When invoked without a number, it shows the current configuration for that
-material and item.
+When invoked without parameters, it shows a summary of all managed clothing
+orders. When invoked with a material and item, but without a quantity, it shows
+the current configuration for that material and item.
 
 Examples
 --------

@@ -10,7 +10,8 @@ orders for cutting them at a Jeweler's Workshop.
 Usage:
 
 ``enable autogems``
-    Enables the plugin
+    Enables the plugin and starts autocutting gems according to its
+    configuration.
 ``autogems-reload``
     :index:`Reloads the autogems configuration file.
     <autogems-reload; Reloads the autogems configuration file.>` You might need

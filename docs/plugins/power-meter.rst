@@ -2,13 +2,6 @@ power-meter
 ===========
 Tags:
 
-Provides the backend for `gui/power-meter`.
-
-Usage::
-
-    enable power-meter
-
-The power-meter plugin implements a modified pressure plate that detects power being
-supplied to gear boxes built in the four adjacent N/S/W/E tiles.
-
-The configuration front-end is implemented by `gui/power-meter`.
+Allows presure plates to measure power. If you run `gui/power-meter` while
+building a pressure plate, the pressure plate can be modified to detects power
+being supplied to gear boxes built in the four adjacent N/S/W/E tiles.

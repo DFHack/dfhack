@@ -15,15 +15,11 @@ You can also use the ``burrow`` command to
 
 Usage:
 
-``enable burrows``
-    Enable the plugin for the auto-grow feature (see
-    ``burrow enable auto-grow`` below)
 ``burrow enable auto-grow``
     When a wall inside a burrow with a name ending in '+' is dug out, the burrow
     will be extended to newly-revealed adjacent walls. This final '+' may be
     omitted in burrow name args of other ``burrows`` commands. Note that digging
-    1-wide corridors with the miner inside the burrow is SLOW. Be sure to also
-    run ``enable burrows`` for this feature to work.
+    1-wide corridors with the miner inside the burrow is SLOW.
 ``burrow disable auto-grow``
     Disables auto-grow processing.
 ``burrow clear-unit <burrow> [<burrow> ...]``

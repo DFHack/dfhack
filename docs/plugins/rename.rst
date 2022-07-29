@@ -1,19 +1,30 @@
 rename
 ======
-Allows renaming various things.  Use `gui/rename` for an in-game interface.
+Tags:
+:dfhack-keybind:`rename`
 
-Options:
+Easily rename things.  Use `gui/rename` for an in-game interface.
 
-``rename squad <index> "name"``
-  Rename squad by index to 'name'.
-``rename hotkey <index> \"name\"``
-  Rename hotkey by index. This allows assigning
-  longer commands to the DF hotkeys.
-``rename unit "nickname"``
-  Rename a unit/creature highlighted in the DF user interface.
-``rename unit-profession "custom profession"``
-  Change proffession name of the highlighted unit/creature.
-``rename building "name"``
-  Set a custom name for the selected building.
-  The building must be one of stockpile, workshop, furnace, trap,
-  siege engine or an activity zone.
+Usage:
+
+``rename squad <ordinal> "<name>"``
+    Rename the indicated squad. The ordinal is the number that corresponds to
+    the list of squads in the squads menu (:kbd:`s`). The first squad is ordinal
+    ``1``.
+``rename hotkey <ordinal> "<name>"``
+    Rename the indicated hotkey. The ordinal the the number that corresponds to
+    the list of hotkeys in the hotkeys menu (:kbd:`H`). The first hotkey is
+    ordinal ``1``.
+``rename unit "<name>"``
+    Give the selected unit the given nickname.
+``rename unit-profession "<name>"``
+    Give the selected unit the given profession name.
+``rename building "<name>"``
+    Set a custom name to the selected building. The building must be a
+    stockpile, workshop, furnace, trap, siege engine, or activity zone.
+
+Example
+-------
+
+``rename squad 1 "The Whiz Bonkers"``
+    Rename the first squad to The Whiz Bonkers.

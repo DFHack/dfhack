@@ -179,14 +179,15 @@ local function update_entry(entry, iterator, opts)
         end
         if not header_found and line:find('%w') then
             header_found = true
-        elseif not tags_found and line:find('^Tags: [%w, ]+$') then
-            local _,_,tags = line:trim():find('Tags: (.*)')
+        elseif not tags_found and line:find('^[*]*Tags:[*]* [%w, ]+$') then
+            local _,_,tags = line:trim():find('[*]*Tags:[*]* *(.*)')
             entry.tags = {}
             for _,tag in ipairs(tags:split('[ ,]+')) do
                 entry.tags[tag] = true
             end
             tags_found = true
-        elseif not short_help_found and not line:find('^Keybinding:') and
+        elseif not short_help_found and
+                not line:find('^[*]*Keybinding:') and
                 line:find('%w') then
             if in_short_help then
                 entry.short_help = entry.short_help .. ' ' .. line
@@ -646,9 +647,11 @@ function help(entry)
     print(get_entry_long_help(entry))
 end
 
--- prints col1 (width 20), a 2 space gap, and col2 (width 58)
--- if col1text is longer than 20 characters, col2text is printed on the next
--- line. if col2text is longer than 58 characters, it is wrapped.
+-- prints col1text (width 21), a one space gap, and col2 (width 58)
+-- if col1text is longer than 21 characters, col2text is printed starting on the
+-- next line. if col2text is longer than 58 characters, it is wrapped. col2text
+-- lines on lines below the col1text output are indented by one space further
+-- than the col2text on the first line.
 local COL1WIDTH, COL2WIDTH = 20, 58
 local function print_columns(col1text, col2text)
     col2text = col2text:wrap(COL2WIDTH)
@@ -656,12 +659,14 @@ local function print_columns(col1text, col2text)
     for line in col2text:gmatch('[^'..NEWLINE..']*') do
         table.insert(wrapped_col2, line)
     end
+    local col2_start_line = 1
     if #col1text > COL1WIDTH then
         print(col1text)
     else
-        print(('%-'..COL1WIDTH..'s  %s'):format(col1text, wrapped_col2[1]))
+        print(('%-'..COL1WIDTH..'s %s'):format(col1text, wrapped_col2[1]))
+        col2_start_line = 2
     end
-    for i=2,#wrapped_col2 do
+    for i=col2_start_line,#wrapped_col2 do
         print(('%'..COL1WIDTH..'s  %s'):format(' ', wrapped_col2[i]))
     end
 end

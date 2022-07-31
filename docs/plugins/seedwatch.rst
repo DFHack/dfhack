@@ -1,27 +1,45 @@
 seedwatch
 =========
-Watches the numbers of seeds available and enables/disables seed and plant cooking.
+Tags:
+:dfhack-keybind:`seedwatch`
 
-Each plant type can be assigned a limit. If their number falls below that limit,
-the plants and seeds of that type will be excluded from cookery.
-If the number rises above the limit + 20, then cooking will be allowed.
+Manages seed and plant cooking based on seed stock levels.
 
-The plugin needs a fortress to be loaded and will deactivate automatically otherwise.
-You have to reactivate with 'seedwatch start' after you load the game.
+Each seed type can be assigned a target. If the number of seeds of that type
+falls below that target, then the plants and seeds of that type will be excluded
+from cookery. If the number rises above the target + 20, then cooking will be
+allowed.
 
-Options:
+The plugin needs a fortress to be loaded and will deactivate automatically
+otherwise. You have to reactivate with ``enable seedwatch`` after you load a
+fort.
 
-:all:       Adds all plants from the abbreviation list to the watch list.
-:start:     Start watching.
-:stop:      Stop watching.
-:info:      Display whether seedwatch is watching, and the watch list.
-:clear:     Clears the watch list.
+Usage:
 
-Examples:
+``enable seedwatch``
+    Start managing seed and plant cooking. By default, no types are watched.
+    You have to add them with further ``seedwatch`` commands.
+``seedwatch <type> <target>``
+    Adds the specifiied type to the watchlist (if it's not already there) and
+    sets the target number of seeds to the specified number. You can pass the
+    keyword ``all`` instead of a specific type to set the target for all types.
+``seedwatch <type>``
+    Removes the specified type from the watch list.
+``seedwatch clear``
+    Clears all types from the watch list.
+``seedwatch info``
+    Display whether seedwatch is enabled and prints out the watch list.
 
-``seedwatch MUSHROOM_HELMET_PLUMP 30``
-    add ``MUSHROOM_HELMET_PLUMP`` to the watch list, limit = 30
-``seedwatch MUSHROOM_HELMET_PLUMP``
-    removes ``MUSHROOM_HELMET_PLUMP`` from the watch list.
+To print out a list of all plant types, you can run this command::
+
+    devel/query --table df.global.world.raws.plants.all --search ^id --maxdepth 1
+
+Examples
+--------
+
 ``seedwatch all 30``
-    adds all plants from the abbreviation list to the watch list, the limit being 30.
+    Adds all seeds to the watch list and sets the targets to 30.
+``seedwatch MUSHROOM_HELMET_PLUMP 50``
+    Add Plump Helmets to the watch list and sets the target to 50.
+``seedwatch MUSHROOM_HELMET_PLUMP``
+    removes Plump Helmets from the watch list.

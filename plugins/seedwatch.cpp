@@ -49,47 +49,6 @@ bool ignoreSeeds(df::item_flags& f) // seeds with the following flags should not
         f.bits.in_job;
 };
 
-void printHelp(color_ostream &out) // prints help
-{
-    out.print(
-        "Watches the numbers of seeds available and enables/disables seed and plant cooking.\n"
-        "Each plant type can be assigned a limit. If their number falls below,\n"
-        "the plants and seeds of that type will be excluded from cookery.\n"
-        "If the number rises above the limit + %i, then cooking will be allowed.\n", buffer
-        );
-    out.printerr(
-        "The plugin needs a fortress to be loaded and will deactivate automatically otherwise.\n"
-        "You have to reactivate with 'seedwatch start' after you load the game.\n"
-        );
-    out.print(
-        "Options:\n"
-        "seedwatch all   - Adds all plants from the abbreviation list to the watch list.\n"
-        "seedwatch start - Start watching.\n"
-        "seedwatch stop  - Stop watching.\n"
-        "seedwatch info  - Display whether seedwatch is watching, and the watch list.\n"
-        "seedwatch clear - Clears the watch list.\n\n"
-        );
-    if(!abbreviations.empty())
-    {
-        out.print("You can use these abbreviations for the plant tokens:\n");
-        for(map<string, string>::const_iterator i = abbreviations.begin(); i != abbreviations.end(); ++i)
-        {
-            out.print("%s -> %s\n", i->first.c_str(), i->second.c_str());
-        }
-    }
-    out.print(
-        "Examples:\n"
-        "seedwatch MUSHROOM_HELMET_PLUMP 30\n"
-        "  add MUSHROOM_HELMET_PLUMP to the watch list, limit = 30\n"
-        "seedwatch MUSHROOM_HELMET_PLUMP\n"
-        "  removes MUSHROOM_HELMET_PLUMP from the watch list.\n"
-        "seedwatch ph 30\n"
-        "  is the same as 'seedwatch MUSHROOM_HELMET_PLUMP 30'\n"
-        "seedwatch all 30\n"
-        "  adds all plants from the abbreviation list to the watch list, the limit being 30.\n"
-        );
-};
-
 // searches abbreviations, returns expansion if so, returns original if not
 string searchAbbreviations(string in)
 {
@@ -142,8 +101,7 @@ command_result df_seedwatch(color_ostream &out, vector<string>& parameters)
     if(gm.g_mode != game_mode::DWARF || !World::isFortressMode(gm.g_type))
     {
         // just print the help
-        printHelp(out);
-        return CR_OK;
+        return CR_WRONG_USAGE;
     }
 
     string par;
@@ -151,14 +109,12 @@ command_result df_seedwatch(color_ostream &out, vector<string>& parameters)
     switch(parameters.size())
     {
     case 0:
-        printHelp(out);
         return CR_WRONG_USAGE;
 
     case 1:
         par = parameters[0];
         if ((par == "help") || (par == "?"))
         {
-            printHelp(out);
             return CR_WRONG_USAGE;
         }
         else if(par == "start")
@@ -180,11 +136,11 @@ command_result df_seedwatch(color_ostream &out, vector<string>& parameters)
             out.print("seedwatch Info:\n");
             if(running)
             {
-                out.print("seedwatch is supervising.  Use 'seedwatch stop' to stop supervision.\n");
+                out.print("seedwatch is supervising.  Use 'disable seedwatch' to stop supervision.\n");
             }
             else
             {
-                out.print("seedwatch is not supervising.  Use 'seedwatch start' to start supervision.\n");
+                out.print("seedwatch is not supervising.  Use 'enable seedwatch' to start supervision.\n");
             }
             map<int32_t, int16_t> watchMap;
             Kitchen::fillWatchMap(watchMap);
@@ -246,7 +202,6 @@ command_result df_seedwatch(color_ostream &out, vector<string>& parameters)
         }
         break;
     default:
-        printHelp(out);
         return CR_WRONG_USAGE;
         break;
     }
@@ -256,7 +211,10 @@ command_result df_seedwatch(color_ostream &out, vector<string>& parameters)
 
 DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginCommand>& commands)
 {
-    commands.push_back(PluginCommand("seedwatch", "Toggles seed cooking based on quantity available", df_seedwatch));
+    commands.push_back(PluginCommand(
+        "seedwatch",
+        "Toggles seed cooking based on quantity available.",
+        df_seedwatch));
     // fill in the abbreviations map, with abbreviations for the standard plants
     abbreviations["bs"] = "SLIVER_BARB";
     abbreviations["bt"] = "TUBER_BLOATED";

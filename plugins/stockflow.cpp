@@ -29,30 +29,6 @@ REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(ui);
 
 bool fast = false;
-const char *tagline = "Allow the bookkeeper to queue manager jobs.";
-const char *usage = (
-    "  stockflow enable\n"
-    "    Enable the plugin.\n"
-    "  stockflow disable\n"
-    "    Disable the plugin.\n"
-    "  stockflow fast\n"
-    "    Enable the plugin in fast mode.\n"
-    "  stockflow list\n"
-    "    List any work order settings for your stockpiles.\n"
-    "  stockflow status\n"
-    "    Display whether the plugin is enabled.\n"
-    "\n"
-    "While enabled, the 'q' menu of each stockpile will have two new options:\n"
-    "  j: Select a job to order, from an interface like the manager's screen.\n"
-    "  J: Cycle between several options for how many such jobs to order.\n"
-    "\n"
-    "Whenever the bookkeeper updates stockpile records, new work orders will\n"
-    "be placed on the manager's queue for each such selection, reduced by the\n"
-    "number of identical orders already in the queue.\n"
-    "\n"
-    "In fast mode, new work orders will be enqueued once per day, instead of\n"
-    "waiting for the bookkeeper.\n"
-);
 
 /*
  * Lua interface.
@@ -342,8 +318,7 @@ static command_result stockflow_cmd(color_ostream &out, vector <string> & parame
             desired = true;
             fast = true;
         } else if (parameters[0] == "usage" || parameters[0] == "help" || parameters[0] == "?") {
-            out.print("%s: %s\nUsage:\n%s", plugin_name, tagline, usage);
-            return CR_OK;
+            return CR_WRONG_USAGE;
         } else if (parameters[0] == "list") {
             if (!enabled) {
                 out.printerr("Stockflow is not currently enabled.\n");
@@ -416,7 +391,10 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         enabled = true;
     }
 
-    commands.push_back(PluginCommand(plugin_name, tagline, stockflow_cmd, false, usage));
+    commands.push_back(PluginCommand(
+        plugin_name,
+        "Queue manager jobs based on free space in stockpiles.",
+        stockflow_cmd));
     return CR_OK;
 }
 

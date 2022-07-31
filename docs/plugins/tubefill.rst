@@ -1,11 +1,14 @@
 tubefill
 ========
-Fills all the adamantine veins again. Veins that were hollow will be left
-alone.
+Tags:
+:dfhack-keybind:`tubefill`
 
-Options:
+Replentishes mined-out adamantine. Veins that were hollow will be left alone.
 
-:hollow:            fill in naturally hollow veins too
+Usage::
 
-Beware that filling in hollow veins will trigger a demon invasion on top of
-your miner when you dig into the region that used to be hollow.
+    tubefill [hollow]
+
+Specify ``hollow`` to fill in naturally hollow veins too, but be aware that this
+will trigger a demon invasion on top of your miner when you dig into the region
+that used to be hollow. You have been warned!

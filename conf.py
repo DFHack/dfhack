@@ -183,7 +183,7 @@ def write_tool_docs():
                     mode=0o755, exist_ok=True)
         with write_file_if_changed('docs/tools/{}.rst'.format(k[0])) as outfile:
             outfile.write(header)
-            if k[0] != 'search' and k[0] != 'stonesense':
+            if k[0] != 'search':
                 outfile.write(label)
             outfile.write(include)
 
@@ -315,6 +315,7 @@ exclude_patterns = [
     'docs/pseudoxml/*',
     'docs/xml/*',
     'scripts/docs/*',
+    'plugins/*',
     ]
 
 # The reST default role (used for this markup: `text`) to use for all

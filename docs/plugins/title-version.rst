@@ -1,3 +1,9 @@
 title-version
 =============
-Displays the DFHack version on DF's title screen when enabled.
+Tags:
+
+Displays the DFHack version on DF's title screen.
+
+Usage::
+
+    enable title-version

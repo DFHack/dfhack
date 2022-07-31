@@ -3,116 +3,149 @@
 
 tiletypes
 =========
-Can be used for painting map tiles and is an interactive command, much like
-`liquids`. Some properties of existing tiles can be looked up with `probe`. If
-something goes wrong, `fixveins` may help.
+Tags:
+:dfhack-keybind:`tiletypes`
+:dfhack-keybind:`tiletypes-command`
+:dfhack-keybind:`tiletypes-here`
+:dfhack-keybind:`tiletypes-here-point`
 
-The tool works with two set of options and a brush. The brush determines which
-tiles will be processed. First set of options is the filter, which can exclude
-some of the tiles from the brush by looking at the tile properties. The second
-set of options is the paint - this determines how the selected tiles are
-changed.
+Paints tiles of specified types onto the map. You can use the `probe` command
+to discover properties of existing tiles that you'd like to copy. If you
+accidentally paint over a vein that you want back, `fixveins` may help.
 
-Both paint and filter can have many different properties including things like
-general shape (WALL, FLOOR, etc.), general material (SOIL, STONE, MINERAL,
-etc.), state of 'designated', 'hidden' and 'light' flags.
+The tool works with a brush, a filter, and a paint specification. The brush
+determines the shape of the area to affect, the filter selects which tiles to
+affect, and the paint specification determines how to affect those tiles.
 
-The properties of filter and paint can be partially defined. This means that
-you can for example turn all stone fortifications into floors, preserving the
-material::
+Both paint and filter can have many different properties, like general shape
+(WALL, FLOOR, etc.), general material (SOIL, STONE, MINERAL, etc.), specific
+materials (MICROCLINE, MARBLE, etc.), state of 'designated', 'hidden', and
+'light' flags, and many others.
 
-        filter material STONE
-        filter shape FORTIFICATION
-        paint shape FLOOR
+Usage:
 
-Or turn mineral vein floors back into walls::
+``tiletypes``
+    Start the interactive terminal prompt where you can iteratively modify
+    the brush, filter, and paint specification and get help on syntax
+    elements. When in the interactive prompt, type ``quit`` to get out.
+``tiletypes-command <command> [; <command> ...]``
+    Run ``tiletypes`` commands from outside the interactive prompt. You can
+    use this form from hotkeys or `dfhack-run` to set specific tiletypes
+    properties. You can run multiple commands on one line by separating them
+    with :literal:`\  ; \ ` -- that's a semicolon with a space on either side.
+    See the Commands_ section below for an overview of commands you can run.
+``tiletypes-here [<options>]``
+    Apply the current options set in ``tiletypes`` and/or ``tiletypes-command``
+    at the in-game cursor position, including the brush.  Can be used from a
+    hotkey.
+``tiletypes-here-point [<options>]``
+    Apply the current options set in ``tiletypes`` and/or ``tiletypes-command``
+    at the in-game cursor position to a single tile (ignoring brush settings).
+    Can be used from a hotkey.
 
-        filter shape FLOOR
-        filter material MINERAL
-        paint shape WALL
+Examples
+--------
 
-The tool also allows tweaking some tile flags::
+``tiletypes-command filter material STONE ; f shape WALL ; paint shape FLOOR``
+    Turn all stone walls into floors, preserving the material.
+``tiletypes-command p any ; p s wall ; p sp normal``
+    Clear the paint specificaiton and set it to unsmoothed walls.
+``tiletypes-command f any ; p stone marble ; p sh wall ; p sp normal ; r 10 10``
+    Prepare to paint a 10x10 area of marble walls, ready for harvesting for
+    flux.
+``tiletypes-command f any ; f designated 1 ; p any ; p hidden 0 ; block ; run``
+    Set the filter to match designated tiles, the paint specification to unhide
+    them, and the brush to cover all tiles in the current block. Then run itThis is useful
+    for unhiding tiles you wish to dig out of an aquifer so the game doesn't
+    pause and undesignate adjacent tiles every time a new damp tile is
+    "discovered".
 
-        paint hidden 1
-        paint hidden 0
+Options
+-------
 
-This will hide previously revealed tiles (or show hidden with the 0 option).
-
-More recently, the tool supports changing the base material of the tile to
-an arbitrary stone from the raws, by creating new veins as required. Note
-that this mode paints under ice and constructions, instead of overwriting
-them. To enable, use::
-
-        paint stone MICROCLINE
-
-This mode is incompatible with the regular ``material`` setting, so changing
-it cancels the specific stone selection::
-
-        paint material ANY
-
-Since different vein types have different drop rates, it is possible to choose
-which one to use in painting::
-
-        paint veintype CLUSTER_SMALL
-
-When the chosen type is ``CLUSTER`` (the default), the tool may automatically
-choose to use layer stone or lava stone instead of veins if its material matches
-the desired one.
-
-Any paint or filter option (or the entire paint or filter) can be disabled entirely by using the ANY keyword::
-
-        paint hidden ANY
-        paint shape ANY
-        filter material any
-        filter shape any
-        filter any
-
-You can use several different brushes for painting tiles:
-
-:point:     a single tile
-:range:     a rectangular range
-:column:    a column ranging from current cursor to the first solid tile above
-:block:     a DF map block - 16x16 tiles, in a regular grid
-
-Example::
-
-    range 10 10 1
-
-This will change the brush to a rectangle spanning 10x10 tiles on one z-level.
-The range starts at the position of the cursor and goes to the east, south and
-up.
-
-For more details, use ``tiletypes help``.
-
-tiletypes-command
------------------
-Runs tiletypes commands, separated by ``;``. This makes it possible to change
-tiletypes modes from a hotkey or via dfhack-run.
-
-Example::
-
-    tiletypes-command p any ; p s wall ; p sp normal
-
-This resets the paint filter to unsmoothed walls.
-
-tiletypes-here-point
---------------------
-Apply the current tiletypes options at the in-game cursor position to a single
-tile. Can be used from a hotkey.
-
-This command supports the same options as `tiletypes-here` above.
-
-tiletypes-here
---------------
-Apply the current tiletypes options at the in-game cursor position, including
-the brush. Can be used from a hotkey.
-
-Options:
-
-:``-c``, ``--cursor <x>,<y>,<z>``:
+``-c``, ``--cursor <x>,<y>,<z>``
     Use the specified map coordinates instead of the current cursor position. If
     this option is specified, then an active game map cursor is not necessary.
-:``-h``, ``--help``:
-    Show command help text.
-:``-q``, ``--quiet``:
+``-q``, ``--quiet``
     Suppress non-error status output.
+
+Commands
+--------
+
+Commands can set the brush or modify the filter or paint options. When at the
+interactive ``tiletypes>`` prompt, the command ``run`` (or hitting enter on an
+empty line) will apply the current filter and paint specification with the
+current brush at the current cursor position. The command ``quit`` will exit.
+
+Brush commands
+``````````````
+
+``p``, ``point``
+    Use the point brush.
+``r``, ``range <width> <height> [<depth>]``
+    Use the range brush with the specified width, height, and depth. If not
+    specified, depth is 1, meaning just the current z-level. The range starts at
+    the position of the cursor and goes to the east, south and up (towards the
+    sky).
+``block``
+    Use the block brush, which includes all tiles in the 16x16 block that
+    includes the cursor.
+``column``
+    Use the column brush, which ranges from the current cursor position to the
+    first solid tile above it. This is useful for filling the empty space in a
+    cavern.
+
+Filter and paint commands
+`````````````````````````
+
+The general forms for modifying the filter or paint specification are:
+
+``f``, ``filter <options>``
+    Modify the filter.
+``p``, ``paint <options>``
+    Modify the paint specification.
+
+The options identify the property of the tile and the value of that property:
+
+``any``
+    Reset to default (no filter/paint).
+``s``, ``sh``, ``shape <shape>``
+    Tile shape information. Run ``:lua @df.tiletype_shape`` to see valid shapes,
+    or use a shape of ``any`` to clear the current setting.
+``m``, ``mat``, ``material <material>``
+    Tile material information. Run ``:lua @df.tiletype_material`` to see valid
+    materials, or use a material of ``any`` to clear the current setting.
+``sp``, ``special <special>``
+    Tile special information. Run ``:lua @df.tiletype_special`` to see valid
+    special values, or use a special value of ``any`` to clear the current
+    setting.
+``v``, ``var``, ``variant <variant>``
+    Tile variant information. Run ``:lua @df.tiletype_variant`` to see valid
+    variant values, or use a variant value of ``any`` to clear the current
+    setting.
+``a``, ``all [<shape>] [<material>] [<special>] [<variant>]``
+    Set values for any or all of shape, material, special, and/or variant, in
+    any order.
+``d``, ``designated 0|1``
+    Only useful for the filter, since you can't "paint" designations.
+``h``, ``hidden 0|1``
+    Whether a tile is hidden. A value of ``0`` means "revealed".
+``l``, ``light 0|1``
+    Whether a tile is marked as "Light". A value of ``0`` means "dark".
+``st``, ``subterranean 0|1``
+    Whether a tile is marked as "Subterranean".
+``sv``, ``skyview 0|1``
+    Whether a tile is marked as "Outside". A value of ``0`` means "inside".
+``aqua``, ``aquifer 0|1``
+    Whether a tile is marked as an aquifer.
+``stone <stone type>``
+    Set a particular type of stone, creating veins as required. To see a list of
+    valid stone types, run: ``:lua for _,mat in ipairs(df.global.world.raws.inorganics) do if mat.material.flags.IS_STONE and not mat.material.flags.NO_STONE_STOCKPILE then print(mat.id) end end``
+    Note that this command paints under ice and constructions, instead of
+    overwriting them. Also note that specifying a specific ``stone`` will cancel
+    out anything you have specified for ``material``, and vice-versa.
+``veintype <vein type>``
+    Set a particular vein type for the ``stone`` option to take advantage of the
+    different boulder drop rates. To see valid vein types, run
+    ``:lua @df.inclusion_type``, or use vein type ``CLUSTER`` to reset to the
+    default.

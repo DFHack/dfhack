@@ -1,11 +1,37 @@
 tailor
 ======
+Tags:
+:dfhack-keybind:`tailor`
 
-Whenever the bookkeeper updates stockpile records, this plugin will scan every unit in the fort,
-count up the number that are worn, and then order enough more made to replace all worn items.
-If there are enough replacement items in inventory to replace all worn items, the units wearing them
-will have the worn items confiscated (in the same manner as the `cleanowned` plugin) so that they'll
-reeequip with replacement items.
+Automatically keep your dwarves in fresh clothing. Whenever the bookkeeper
+updates stockpile records, this plugin will scan the fort. If there are
+fresh cloths available, dwarves who are wearing tattered clothing will have
+their rags confiscated (in the same manner as the `cleanowned` tool) so that
+they'll reequip with replacement clothes.
 
-Use the `enable` and `disable <disable>` commands to toggle this plugin's status, or run
-``tailor status`` to check its current status.
+If there are not enough clothes available, manager orders will be generated
+to manufacture some more. ``tailor`` will intelligently create orders using
+raw materials that you have on hand in the fort. For example, if you have
+lots of silk, but no cloth, then ``tailor`` will order only silk clothing to
+be made.
+
+Usage::
+
+    enable tailor
+    tailor status
+    tailor materials <material> [<material> ...]
+
+By default, ``tailor`` will prefer using materials in this order::
+
+    silk cloth yarn leather
+
+but you can use the ``tailor materials`` command to restrict which materials
+are used, and in what order.
+
+Example
+-------
+
+``tailor materials silk cloth yarn``
+    Restrict the materials used for automatically manufacturing clothing to
+    silk, cloth, and yarn, preferred in that order. This saves leather for
+    other uses, like making armor.

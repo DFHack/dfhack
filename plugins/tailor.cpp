@@ -41,26 +41,6 @@ DFHACK_PLUGIN_IS_ENABLED(enabled);
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(ui);
 
-const char* tagline = "Allow the bookkeeper to queue jobs to keep dwarfs in adequate clothing.";
-const char* usage = (
-    "  tailor enable\n"
-    "    Enable the plugin.\n"
-    "  tailor disable\n"
-    "    Disable the plugin.\n"
-    "  tailor status\n"
-    "    Display plugin status\n"
-    "  tailor materials ...\n"
-    "      for example: tailor materials silk cloth yarn leather\n"
-    "    Set allowed material list to the specified list.\n"
-    "    The example sets the list to silk, cloth, yarn, leather, in that order, which is the default.\n"
-    "\n"
-    "Whenever the bookkeeper updates stockpile records, this plugin will scan every unit in the fort,\n"
-    "count up the number that are worn, and then order enough more made to replace all worn items.\n"
-    "If there are enough replacement items in inventory to replace all worn items, the units wearing them\n"
-    "will have the worn items confiscated (in the same manner as the _cleanowned_ plugin) so that they'll\n"
-    "reeequip with replacement items.\n"
-    );
-
 class Tailor {
     // ARMOR, SHOES, HELM, GLOVES, PANTS
 
@@ -581,8 +561,7 @@ static command_result tailor_cmd(color_ostream& out, vector <string>& parameters
     }
     else if (parameters.size() == 1 && (parameters[0] == "usage" || parameters[0] == "help" || parameters[0] == "?"))
     {
-        out.print("%s: %s\nUsage:\n%s", plugin_name, tagline, usage);
-        return CR_OK;
+        return CR_WRONG_USAGE;
     }
     else if (parameters.size() == 1 && parameters[0] == "test")
     {
@@ -649,7 +628,10 @@ DFhackCExport command_result plugin_init(color_ostream& out, std::vector <Plugin
         enabled = true;
     }
 
-    commands.push_back(PluginCommand(plugin_name, tagline, tailor_cmd, false, usage));
+    commands.push_back(PluginCommand(
+        plugin_name,
+        "Automatically keep your dwarves in fresh clothing.",
+        tailor_cmd));
     return CR_OK;
 }
 

@@ -42,12 +42,7 @@ command_result spectate (color_ostream &out, std::vector <std::string> & paramet
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands) {
     commands.push_back(PluginCommand("spectate",
                                      "Automated spectator mode.",
-                                     spectate,
-                                     false,
-                                     ""
-                                     " spectate\n"
-                                     "    toggles spectator mode\n"
-                                     "\n"));
+                                     spectate));
     return CR_OK;
 }
 

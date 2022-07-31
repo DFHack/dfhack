@@ -1,3 +1,10 @@
 showmood
 ========
-Shows all items needed for the currently active strange mood.
+Tags:
+:dfhack-keybind:`showmood`
+
+Shows all items needed for the active strange mood.
+
+Usage::
+
+    showmood

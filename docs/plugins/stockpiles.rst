@@ -2,27 +2,41 @@
 
 stockpiles
 ==========
-Offers the following commands to save and load stockpile settings.
-See `gui/stockpiles` for an in-game interface.
+Tags:
+:dfhack-keybind:`copystock`
+:dfhack-keybind:`savestock`
+:dfhack-keybind:`loadstock`
 
-:copystock:     Copies the parameters of the currently highlighted stockpile to the custom
-                stockpile settings and switches to custom stockpile placement mode, effectively
-                allowing you to copy/paste stockpiles easily.
-                :dfhack-keybind:`copystock`
+Import and export stockpile settings. When the plugin is enabled, the :kbd:`q`
+menu of each stockpile will have an option for saving or loading the stockpile
+settings. See `gui/stockpiles` for an in-game interface.
 
-:savestock:     Saves the currently highlighted stockpile's settings to a file in your Dwarf
-                Fortress folder. This file can be used to copy settings between game saves or
-                players.  e.g.:  ``savestock food_settings.dfstock``
+Usage:
 
-:loadstock:     Loads a saved stockpile settings file and applies it to the currently selected
-                stockpile.  e.g.:  ``loadstock food_settings.dfstock``
+``enable stockpiles``
+    Add a hotkey that you can hit to easily save and load settings from
+    stockpiles selected in :kbd:`q` mode.
+``copystock``
+    Copies the parameters of the currently highlighted stockpile to the custom
+    stockpile settings and switches to custom stockpile placement mode,
+    effectively allowing you to copy/paste stockpiles easily.
+``savestock <filename>``
+    Saves the currently highlighted stockpile's settings to a file in your
+    Dwarf Fortress folder. This file can be used to copy settings between game
+    saves or players.
+``loadstock <filename>``
+    Loads a saved stockpile settings file and applies it to the currently
+    selected stockpile.
 
-To use savestock and loadstock, use the :kbd:`q` command to highlight a stockpile.
-Then run savestock giving it a descriptive filename. Then, in a different (or
-the same!) gameworld, you can highlight any stockpile with :kbd:`q` then execute the
-``loadstock`` command passing it the name of that file. The settings will be
-applied to that stockpile.
+Filenames with spaces are not supported. Generated materials, divine metals,
+etc. are not saved as they are different in every world.
 
-Note that files are relative to the DF folder, so put your files there or in a
-subfolder for easy access. Filenames should not have spaces.  Generated materials,
-divine metals, etc are not saved as they are different in every world.
+Examples
+--------
+
+``savestock food_settings.dfstock``
+    Export the stockpile settings for the stockpile currently selected in
+    :kbd:`q` mode to a file named ``food_settings.dfstock``.
+``loadstock food_settings.dfstock``
+    Set the selected stockpile settings to those saved in the
+    ``food_settings.dfstock`` file.

@@ -2,5 +2,22 @@
 
 ruby
 ====
-Ruby language plugin, which evaluates the following arguments as a ruby string.
-Best used as ``:rb [string]``, for the special parsing mode.  Alias ``rb_eval``.
+Tags:
+:dfhack-keybind:`rb`
+:dfhack-keybind:`rb_eval`
+
+Allow Ruby scripts to be executed. When invoked as a command, you can Eval() a
+ruby string.
+
+Usage::
+
+    enable ruby
+    rb "ruby expression"
+    rb_eval "ruby expression"
+    :rb ruby expression
+
+Example
+-------
+
+``:rb puts df.unit_find(:selected).name``
+    Print the name of the selected unit.

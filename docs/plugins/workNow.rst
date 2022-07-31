@@ -1,12 +1,19 @@
 workNow
 =======
-Don't allow dwarves to idle if any jobs are available.
+Tags:
+:dfhack-keybind:`workNow`
 
-When workNow is active, every time the game pauses, DF will make dwarves
-perform any appropriate available jobs.  This includes when you one step
-through the game using the pause menu.  Usage:
+Reduce the time that dwarves idle after completing a job. After finishing a job,
+dwarves will wander away for a while before picking up a new job. This plugin
+will automatically poke the game to assign dwarves to new tasks.
 
-:workNow:       print workNow status
-:workNow 0:     deactivate workNow
-:workNow 1:     activate workNow (look for jobs on pause, and only then)
-:workNow 2:     make dwarves look for jobs whenever a job completes
+Usage:
+
+``workNow``
+    Print current plugin status.
+``workNow 0``
+    Stop monitoring and poking.
+``workNow 1``
+    Poke the game to assign dwarves to tasks whenever the game is paused.
+``workNow 2``
+    Poke the game to assign dwarves to tasks whenever a dwarf finishes a job.

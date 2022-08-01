@@ -112,7 +112,6 @@ REQUIRE_GLOBAL(ui_menu_width);
 using namespace DFHack::Gui;
 
 command_result df_zone (color_ostream &out, vector <string> & parameters);
-command_result df_autonestbox (color_ostream &out, vector <string> & parameters);
 command_result df_autobutcher(color_ostream &out, vector <string> & parameters);
 
 DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable);
@@ -201,19 +200,6 @@ const string zone_help_examples =
     "  well, unless you have a mod with egg-laying male elves who give milk...\n";
 
 
-const string autonestbox_help =
-    "Assigns unpastured female egg-layers to nestbox zones.\n"
-    "Requires that you create pen/pasture zones above nestboxes.\n"
-    "If the pen is bigger than 1x1 the nestbox must be in the top left corner.\n"
-    "Only 1 unit will be assigned per pen, regardless of the size.\n"
-    "The age of the units is currently not checked, most birds grow up quite fast.\n"
-    "When called without options autonestbox will instantly run once.\n"
-    "Options:\n"
-    "  start        - run every X frames (df simulation ticks)\n"
-    "                 default: X=6000  (~60 seconds at 100fps)\n"
-    "  stop         - stop running automatically\n"
-    "  sleep X      - change timer to sleep X frames between runs.\n";
-
 const string autobutcher_help =
     "Assigns your lifestock for slaughter once it reaches a specific count. Requires\n"
     "that you add the target race(s) to a watch list. Only tame units will be\n"
@@ -277,27 +263,19 @@ command_result init_autobutcher(color_ostream &out);
 command_result cleanup_autobutcher(color_ostream &out);
 command_result start_autobutcher(color_ostream &out);
 
-command_result init_autonestbox(color_ostream &out);
-command_result cleanup_autonestbox(color_ostream &out);
-command_result start_autonestbox(color_ostream &out);
-
 
 ///////////////
-// stuff for autonestbox and autobutcher
+// stuff for autobutcher
 // should be moved to own plugin once the tool methods it shares with the zone plugin are moved to Unit.h / Building.h
 
 command_result autoNestbox( color_ostream &out, bool verbose );
 command_result autoButcher( color_ostream &out, bool verbose );
 
-static bool enable_autonestbox = false;
 static bool enable_autobutcher = false;
 static bool enable_autobutcher_autowatch = false;
-static size_t sleep_autonestbox = 6000;
 static size_t sleep_autobutcher = 6000;
-static bool autonestbox_did_complain = false; // avoids message spam
 
 static PersistentDataItem config_autobutcher;
-static PersistentDataItem config_autonestbox;
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
@@ -306,14 +284,11 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     case DFHack::SC_MAP_LOADED:
         // initialize from the world just loaded
         init_autobutcher(out);
-        init_autonestbox(out);
         break;
     case DFHack::SC_MAP_UNLOADED:
-        enable_autonestbox = false;
         enable_autobutcher = false;
         // cleanup
         cleanup_autobutcher(out);
-        cleanup_autonestbox(out);
         break;
     default:
         break;
@@ -323,17 +298,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
-    static size_t ticks_autonestbox = 0;
     static size_t ticks_autobutcher = 0;
-
-    if(enable_autonestbox)
-    {
-        if(++ticks_autonestbox >= sleep_autonestbox)
-        {
-            ticks_autonestbox = 0;
-            autoNestbox(out, false);
-        }
-    }
 
     if(enable_autobutcher)
     {
@@ -2243,138 +2208,6 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
 }
 
 ////////////////////
-// autonestbox stuff
-
-command_result df_autonestbox(color_ostream &out, vector <string> & parameters)
-{
-    CoreSuspender suspend;
-
-    bool verbose = false;
-
-    for (size_t i = 0; i < parameters.size(); i++)
-    {
-        string & p = parameters[i];
-
-        if (p == "help" || p == "?")
-        {
-            out << autonestbox_help << endl;
-            return CR_OK;
-        }
-        if (p == "start")
-        {
-            autonestbox_did_complain = false;
-            start_autonestbox(out);
-            return autoNestbox(out, verbose);
-        }
-        if (p == "stop")
-        {
-            enable_autonestbox = false;
-            if(config_autonestbox.isValid())
-                config_autonestbox.ival(0) = 0;
-            out << "Autonestbox stopped." << endl;
-            return CR_OK;
-        }
-        else if(p == "verbose")
-        {
-            verbose = true;
-        }
-        else if(p == "sleep")
-        {
-            if(i == parameters.size()-1)
-            {
-                out.printerr("No duration specified!\n");
-                return CR_WRONG_USAGE;
-            }
-            else
-            {
-                size_t ticks = 0;
-                stringstream ss(parameters[i+1]);
-                i++;
-                ss >> ticks;
-                if(ticks <= 0)
-                {
-                    out.printerr("Invalid duration specified (must be > 0)!\n");
-                    return CR_WRONG_USAGE;
-                }
-                sleep_autonestbox = ticks;
-                if(config_autonestbox.isValid())
-                    config_autonestbox.ival(1) = sleep_autonestbox;
-                out << "New sleep timer for autonestbox: " << ticks << " ticks." << endl;
-                return CR_OK;
-            }
-        }
-        else
-        {
-            out << "Unknown command: " << p << endl;
-            return CR_WRONG_USAGE;
-        }
-    }
-    return autoNestbox(out, verbose);
-}
-
-command_result autoNestbox( color_ostream &out, bool verbose = false )
-{
-    bool stop = false;
-    size_t processed = 0;
-
-    if (!Maps::IsValid())
-    {
-        out.printerr("Map is not available!\n");
-        enable_autonestbox = false;
-        return CR_FAILURE;
-    }
-
-    do
-    {
-        df::building * free_building = findFreeNestboxZone();
-        df::unit * free_unit = findFreeEgglayer();
-        if(free_building && free_unit)
-        {
-            command_result result = assignUnitToBuilding(out, free_unit, free_building, verbose);
-            if(result != CR_OK)
-                return result;
-            processed ++;
-        }
-        else
-        {
-            stop = true;
-            if(free_unit && !free_building)
-            {
-                static size_t old_count = 0;
-                size_t freeEgglayers = countFreeEgglayers();
-                // avoid spamming the same message
-                if(old_count != freeEgglayers)
-                    autonestbox_did_complain = false;
-                old_count = freeEgglayers;
-                if(!autonestbox_did_complain)
-                {
-                    stringstream ss;
-                    ss << freeEgglayers;
-                    string announce = "Not enough free nestbox zones found! You need " + ss.str() + " more.";
-                    Gui::showAnnouncement(announce, 6, true);
-                    out << announce << endl;
-                    autonestbox_did_complain = true;
-                }
-            }
-        }
-    } while (!stop);
-    if(processed > 0)
-    {
-        stringstream ss;
-        ss << processed;
-        string announce;
-        announce = ss.str() + " nestboxes were assigned.";
-        Gui::showAnnouncement(announce, 2, false);
-        out << announce << endl;
-        // can complain again
-        // (might lead to spamming the same message twice, but catches the case
-        // where for example 2 new egglayers hatched right after 2 zones were created and assigned)
-        autonestbox_did_complain = false;
-    }
-    return CR_OK;
-}
-
-////////////////////
 // autobutcher stuff
 
 // getUnitAge() returns 0 if born in current year, therefore the look at birth_time in that case
@@ -3129,7 +2962,7 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
 }
 
 ////////////////////////////////////////////////////
-// autobutcher and autonestbox start/init/cleanup
+// autobutcher start/init/cleanup
 
 command_result start_autobutcher(color_ostream &out)
 {
@@ -3224,62 +3057,6 @@ command_result cleanup_autobutcher(color_ostream &out)
         delete watched_races[i];
     }
     watched_races.clear();
-    return CR_OK;
-}
-
-command_result start_autonestbox(color_ostream &out)
-{
-    plugin_enable(out, true);
-    enable_autonestbox = true;
-
-    if (!config_autonestbox.isValid())
-    {
-        config_autonestbox = World::AddPersistentData("autonestbox/config");
-
-        if (!config_autonestbox.isValid())
-        {
-            out << "Cannot enable autonestbox without a world!" << endl;
-            return CR_OK;
-        }
-
-        config_autonestbox.ival(1) = sleep_autonestbox;
-    }
-
-    config_autonestbox.ival(0) = enable_autonestbox;
-
-    out << "Starting autonestbox." << endl;
-    init_autonestbox(out);
-    return CR_OK;
-}
-
-command_result init_autonestbox(color_ostream &out)
-{
-    cleanup_autonestbox(out);
-
-    config_autonestbox = World::GetPersistentData("autonestbox/config");
-    if(config_autonestbox.isValid())
-    {
-        if (config_autonestbox.ival(0) == -1)
-        {
-            config_autonestbox.ival(0) = enable_autonestbox;
-            config_autonestbox.ival(1) = sleep_autonestbox;
-            out << "Autonestbox's persistent config object was invalid!" << endl;
-        }
-        else
-        {
-            enable_autonestbox = config_autonestbox.ival(0);
-            sleep_autonestbox = config_autonestbox.ival(1);
-        }
-    }
-    if (enable_autonestbox)
-        plugin_enable(out, true);
-    return CR_OK;
-}
-
-command_result cleanup_autonestbox(color_ostream &out)
-{
-    // nothing to cleanup currently
-    // (future version of autonestbox could store info about cages for useless male kids)
     return CR_OK;
 }
 
@@ -4122,23 +3899,16 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         zone_help.c_str()
         ));
     commands.push_back(PluginCommand(
-        "autonestbox", "auto-assign nestbox zones.",
-        df_autonestbox, false,
-        autonestbox_help.c_str()
-        ));
-    commands.push_back(PluginCommand(
         "autobutcher", "auto-assign lifestock for butchering.",
         df_autobutcher, false,
         autobutcher_help.c_str()
         ));
     init_autobutcher(out);
-    init_autonestbox(out);
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     cleanup_autobutcher(out);
-    cleanup_autonestbox(out);
     return CR_OK;
 }

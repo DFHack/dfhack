@@ -65,11 +65,15 @@ static int get_config_val(int index) {
         return -1;
     return config.ival(index);
 }
-static bool set_config_val(int index, int value) {
-    if (!config.isValid())
-        return false;
-    config.ival(index) = value;
-    return true;
+static bool get_config_bool(int index) {
+    return get_config_val(index) == 1;
+}
+static void set_config_val(int index, int value) {
+    if (config.isValid())
+        config.ival(index) = value;
+}
+static void set_config_bool(int index, bool value) {
+    set_config_val(index, value ? 1 : 0);
 }
 
 static bool did_complain = false; // avoids message spam
@@ -101,23 +105,24 @@ static void autonestbox_cycle(color_ostream &out);
 static void init_autonestbox(color_ostream &out) {
     config = World::GetPersistentData(CONFIG_KEY);
 
-    if (!config.isValid())
+    if (!config.isValid()) {
+        DEBUG(status,out).print("no config found in this save; initializing\n");
         config = World::AddPersistentData(CONFIG_KEY);
-
-    if (get_config_val(CONFIG_IS_ENABLED) == -1) {
-        set_config_val(CONFIG_IS_ENABLED, 0);
+        set_config_bool(CONFIG_IS_ENABLED, false);
         set_config_val(CONFIG_CYCLE_TICKS, 6000);
     }
 
-    if (is_enabled)
-        set_config_val(CONFIG_IS_ENABLED, 1);
-    else
-        is_enabled = (get_config_val(CONFIG_IS_ENABLED) == 1);
+    is_enabled = get_config_bool(CONFIG_IS_ENABLED);
+    DEBUG(status,out).print("loading persisted enabled state: %s\n",
+                            is_enabled ? "true" : "false");
     did_complain = false;
 }
 
 static void cleanup_autonestbox(color_ostream &out) {
-    is_enabled = false;
+    if (is_enabled) {
+        DEBUG(status,out).print("disabling (not persisting)\n");
+        is_enabled = false;
+    }
 }
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
@@ -140,10 +145,10 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 
     if (enable != is_enabled) {
         is_enabled = enable;
-        if (is_enabled)
-            init_autonestbox(out);
-        else
-            cleanup_autonestbox(out);
+        DEBUG(status,out).print("%s from the API, persisting\n",
+                                is_enabled ? "enabled" : "disabled");
+        set_config_bool(CONFIG_IS_ENABLED, is_enabled);
+        init_autonestbox(out);
     }
     return CR_OK;
 }
@@ -217,7 +222,7 @@ static command_result df_autonestbox(color_ostream &out, vector<string> &paramet
         autonestbox_cycle(out);
     }
     else {
-        out << "autonestbox is " << (is_enabled ? "" : "not ") << "running\n";
+        out << "autonestbox is " << (is_enabled ? "" : "not ") << "running" << endl;
     }
     return CR_OK;
 }

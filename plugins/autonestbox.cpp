@@ -37,7 +37,6 @@ static const string autonestbox_help =
     "If the pen is bigger than 1x1 the nestbox must be in the top left corner.\n"
     "Only 1 unit will be assigned per pen, regardless of the size.\n"
     "The age of the units is currently not checked, most birds grow up quite fast.\n"
-    "When called without options autonestbox will instantly run once.\n"
     "Usage:\n"
     "\n"
     "enable autonestbox\n"

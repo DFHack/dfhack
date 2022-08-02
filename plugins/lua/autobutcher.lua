@@ -1,14 +1,5 @@
 local _ENV = mkmodule('plugins.autobutcher')
 
---[[
-
- Native functions:
-
- * autobutcher_isEnabled()
- * autowatch_isEnabled()
-
---]]
-
 local argparse = require('argparse')
 
 local function is_int(val)

@@ -14,107 +14,59 @@
 // - mass-assign creatures using filters
 // - unassign single creature under cursor from current zone
 // - pitting own dwarves :)
-// - full automation of handling mini-pastures over nestboxes:
-//   go through all pens, check if they are empty and placed over a nestbox
-//   find female tame egg-layer who is not assigned to another pen and assign it to nestbox pasture
-//   maybe check for minimum age? it's not that useful to fill nestboxes with freshly hatched birds
-//   state and sleep setting is saved the first time autonestbox is started (to avoid writing stuff if the plugin is never used)
-// - full automation of marking live-stock for slaughtering
-//   races can be added to a watchlist and it can be set how many male/female kids/adults are left alive
-//   adding to the watchlist can be automated as well.
-//   config for autobutcher (state and sleep setting) is saved the first time autobutcher is started
-//   config for watchlist entries is saved when they are created or modified
 
-#include <iostream>
-#include <iomanip>
-#include <climits>
-#include <vector>
-#include <algorithm>
+#include <functional>
+#include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
-#include <functional>
-#include <string>
-#include <sstream>
-#include <stdexcept>
-#include <ctime>
-#include <cstdio>
-#include <cstdint>
 
-#include "Core.h"
-#include "Console.h"
-#include "Export.h"
-#include "PluginManager.h"
-#include "MiscUtils.h"
-#include "uicommon.h"
-
-#include "LuaTools.h"
-#include "DataFuncs.h"
-
-#include "modules/Units.h"
-#include "modules/Maps.h"
-#include "modules/Gui.h"
-#include "modules/Materials.h"
-#include "modules/MapCache.h"
-#include "modules/Buildings.h"
-#include "modules/World.h"
-#include "modules/Screen.h"
-#include "MiscUtils.h"
-#include <VTableInterpose.h>
-
-#include "df/ui.h"
-#include "df/world.h"
-#include "df/world_raws.h"
-#include "df/building_def.h"
-#include "df/building_civzonest.h"
 #include "df/building_cagest.h"
 #include "df/building_chainst.h"
-#include "df/building_nest_boxst.h"
+#include "df/building_civzonest.h"
 #include "df/general_ref_building_civzone_assignedst.h"
-#include <df/creature_raw.h>
-#include <df/caste_raw.h>
+#include "df/ui.h"
+#include "df/unit.h"
 #include "df/unit_relationship_type.h"
-#include "df/unit_soul.h"
-#include "df/unit_wound.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/world.h"
+
+#include "PluginManager.h"
+#include "uicommon.h"
+#include "VTableInterpose.h"
+
+#include "modules/Buildings.h"
+#include "modules/Gui.h"
+#include "modules/Units.h"
 #include "modules/Translation.h"
 
+using std::function;
 using std::make_pair;
+using std::ostringstream;
+using std::pair;
+using std::runtime_error;
 using std::string;
 using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
 using namespace DFHack;
-using namespace DFHack::Units;
-using namespace DFHack::Buildings;
-using namespace df::enums;
 
 DFHACK_PLUGIN("zone");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
-REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(cursor);
-REQUIRE_GLOBAL(ui);
-REQUIRE_GLOBAL(ui_build_selector);
 REQUIRE_GLOBAL(gps);
-REQUIRE_GLOBAL(cur_year);
-REQUIRE_GLOBAL(cur_year_tick);
-
+REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(ui_building_item_cursor);
 REQUIRE_GLOBAL(ui_building_assign_type);
 REQUIRE_GLOBAL(ui_building_assign_is_marked);
 REQUIRE_GLOBAL(ui_building_assign_units);
 REQUIRE_GLOBAL(ui_building_assign_items);
 REQUIRE_GLOBAL(ui_building_in_assign);
-
 REQUIRE_GLOBAL(ui_menu_width);
+REQUIRE_GLOBAL(world);
 
-using namespace DFHack::Gui;
-
-command_result df_zone (color_ostream &out, vector <string> & parameters);
-command_result df_autobutcher(color_ostream &out, vector <string> & parameters);
-
-DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable);
+static command_result df_zone (color_ostream &out, vector <string> & parameters);
 
 const string zone_help =
     "Allows easier management of pens/pastures, pits and cages.\n"
@@ -200,134 +152,20 @@ const string zone_help_examples =
     "  well, unless you have a mod with egg-laying male elves who give milk...\n";
 
 
-const string autobutcher_help =
-    "Assigns your lifestock for slaughter once it reaches a specific count. Requires\n"
-    "that you add the target race(s) to a watch list. Only tame units will be\n"
-    "processed. Named units will be completely ignored (you can give animals\n"
-    "nicknames with the tool 'rename unit' to protect them from getting slaughtered\n"
-    "automatically. Trained war or hunting pets will be ignored.\n"
-    "Once you have too much adults, the oldest will be butchered first.\n"
-    "Once you have too much kids, the youngest will be butchered first.\n"
-    "If you don't set a target count the following default will be used:\n"
-    "1 male kid, 5 female kids, 1 male adult, 5 female adults.\n"
-    "Options:\n"
-    "  start        - run every X frames (df simulation ticks)\n"
-    "                 default: X=6000  (~60 seconds at 100fps)\n"
-    "  stop         - stop running automatically\n"
-    "  sleep X      - change timer to sleep X frames between runs.\n"
-    "  watch R      - start watching race(s)\n"
-    "                 R = valid race RAW id (ALPACA, BIRD_TURKEY, etc)\n"
-    "                 or a list of RAW ids seperated by spaces\n"
-    "                 or the keyword 'all' which affects your whole current watchlist.\n"
-    "  unwatch R    - stop watching race(s)\n"
-    "                 the current target settings will be remembered\n"
-    "  forget R     - unwatch race(s) and forget target settings for it/them\n"
-    "  autowatch    - automatically adds all new races (animals you buy\n"
-    "                 from merchants, tame yourself or get from migrants)\n"
-    "                 to the watch list using default target count\n"
-    "  noautowatch  - stop auto-adding new races to the watch list\n"
-    "  list         - print status and watchlist\n"
-    "  list_export  - print status and watchlist in batchfile format\n"
-    "                 can be used to copy settings into another savegame\n"
-    "                 usage: 'dfhack-run autobutcher list_export > xyz.bat' \n"
-    "  target fk mk fa ma R\n"
-    "               - set target count for specified race:\n"
-    "                 fk = number of female kids\n"
-    "                 mk = number of male kids\n"
-    "                 fa = number of female adults\n"
-    "                 ma = number of female adults\n"
-    "                 R = 'all' sets count for all races on the current watchlist\n"
-    "                 including the races which are currenly set to 'unwatched'\n"
-    "                 and sets the new default for future watch commands\n"
-    "                 R = 'new' sets the new default for future watch commands\n"
-    "                 without changing your current watchlist\n"
-    "  example      - print some usage examples\n";
-
-const string autobutcher_help_example =
-    "Examples:\n"
-    "  autobutcher target 4 3 2 1 ALPACA BIRD_TURKEY\n"
-    "  autobutcher watch ALPACA BIRD_TURKEY\n"
-    "  autobutcher start\n"
-    "    This means you want to have max 7 kids (4 female, 3 male) and max 3 adults\n"
-    "    (2 female, 1 male) of the races alpaca and turkey. Once the kids grow up the\n"
-    "    oldest adults will get slaughtered. Excess kids will get slaughtered starting\n"
-    "    the the youngest to allow that the older ones grow into adults.\n"
-    "  autobutcher target 0 0 0 0 new\n"
-    "  autobutcher autowatch\n"
-    "  autobutcher start\n"
-    "    This tells autobutcher to automatically put all new races onto the watchlist\n"
-    "    and mark unnamed tame units for slaughter as soon as they arrive in your\n"
-    "    fortress. Settings already made for some races will be left untouched.\n";
-
-command_result init_autobutcher(color_ostream &out);
-command_result cleanup_autobutcher(color_ostream &out);
-command_result start_autobutcher(color_ostream &out);
-
-
-///////////////
-// stuff for autobutcher
-// should be moved to own plugin once the tool methods it shares with the zone plugin are moved to Unit.h / Building.h
-
-command_result autoNestbox( color_ostream &out, bool verbose );
-command_result autoButcher( color_ostream &out, bool verbose );
-
-static bool enable_autobutcher = false;
-static bool enable_autobutcher_autowatch = false;
-static size_t sleep_autobutcher = 6000;
-
-static PersistentDataItem config_autobutcher;
-
-DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
-{
-    switch (event)
-    {
-    case DFHack::SC_MAP_LOADED:
-        // initialize from the world just loaded
-        init_autobutcher(out);
-        break;
-    case DFHack::SC_MAP_UNLOADED:
-        enable_autobutcher = false;
-        // cleanup
-        cleanup_autobutcher(out);
-        break;
-    default:
-        break;
-    }
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_onupdate ( color_ostream &out )
-{
-    static size_t ticks_autobutcher = 0;
-
-    if(enable_autobutcher)
-    {
-        if(++ticks_autobutcher >= sleep_autobutcher)
-        {
-            ticks_autobutcher= 0;
-            autoButcher(out, false);
-        }
-    }
-
-    return CR_OK;
-}
-
-
 ///////////////
 // Various small tool functions
 // probably many of these should be moved to Unit.h and Building.h sometime later...
 
-df::general_ref_building_civzone_assignedst * createCivzoneRef();
-bool unassignUnitFromBuilding(df::unit* unit);
-command_result assignUnitToZone(color_ostream& out, df::unit* unit, df::building* building, bool verbose);
-void unitInfo(color_ostream & out, df::unit* creature, bool verbose);
-void zoneInfo(color_ostream & out, df::building* building, bool verbose);
-void cageInfo(color_ostream & out, df::building* building, bool verbose);
-void chainInfo(color_ostream & out, df::building* building, bool verbose);
-bool isBuiltCageAtPos(df::coord pos);
-bool isInBuiltCageRoom(df::unit*);
+// static df::general_ref_building_civzone_assignedst * createCivzoneRef();
+// static bool unassignUnitFromBuilding(df::unit* unit);
+// static command_result assignUnitToZone(color_ostream& out, df::unit* unit, df::building* building, bool verbose);
+// static void unitInfo(color_ostream & out, df::unit* creature, bool verbose);
+// static void zoneInfo(color_ostream & out, df::building* building, bool verbose);
+// static void cageInfo(color_ostream & out, df::building* building, bool verbose);
+// static void chainInfo(color_ostream & out, df::building* building, bool verbose);
+static bool isInBuiltCageRoom(df::unit*);
 
-void doMarkForSlaughter(df::unit* unit)
+static void doMarkForSlaughter(df::unit* unit)
 {
     unit->flags2.bits.slaughter = 1;
 }
@@ -335,7 +173,7 @@ void doMarkForSlaughter(df::unit* unit)
 // found a unit with weird position values on one of my maps (negative and in the thousands)
 // it didn't appear in the animal stocks screen, but looked completely fine otherwise (alive, tame, own, etc)
 // maybe a rare bug, but better avoid assigning such units to zones or slaughter etc.
-bool hasValidMapPos(df::unit* unit)
+static bool hasValidMapPos(df::unit* unit)
 {
     if(    unit->pos.x >=0 && unit->pos.y >= 0 && unit->pos.z >= 0
         && unit->pos.x < world->map.x_count
@@ -347,7 +185,7 @@ bool hasValidMapPos(df::unit* unit)
 }
 
 // dump some unit info
-void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
+static void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
 {
     out.print("Unit %d ", unit->id); //race %d, civ %d,", creature->race, creature->civ_id
     if(unit->name.has_name)
@@ -364,11 +202,11 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
         out << ", ";
     }
 
-    if(isAdult(unit))
+    if(Units::isAdult(unit))
         out << "adult";
-    else if(isBaby(unit))
+    else if(Units::isBaby(unit))
         out << "baby";
-    else if(isChild(unit))
+    else if(Units::isChild(unit))
         out << "child";
     out << " ";
     // sometimes empty even in vanilla RAWS, sometimes contains full race name (e.g. baby alpaca)
@@ -376,7 +214,7 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
     //out << getRaceBabyName(unit);
     //out << getRaceChildName(unit);
 
-    out << getRaceName(unit) << " (";
+    out << Units::getRaceName(unit) << " (";
     switch(unit->sex)
     {
     case 0:
@@ -391,26 +229,26 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
         break;
     }
     out << ")";
-    out << ", age: " << getAge(unit, true);
+    out << ", age: " << Units::getAge(unit, true);
 
 
-    if(isTame(unit))
+    if(Units::isTame(unit))
         out << ", tame";
-    if(isOwnCiv(unit))
+    if(Units::isOwnCiv(unit))
         out << ", owned";
-    if(isWar(unit))
+    if(Units::isWar(unit))
         out << ", war";
-    if(isHunter(unit))
+    if(Units::isHunter(unit))
         out << ", hunter";
-    if(isMerchant(unit))
+    if(Units::isMerchant(unit))
         out << ", merchant";
-    if(isForest(unit))
+    if(Units::isForest(unit))
         out << ", forest";
-    if(isEggLayer(unit))
+    if(Units::isEggLayer(unit))
         out << ", egglayer";
-    if(isGrazer(unit))
+    if(Units::isGrazer(unit))
         out << ", grazer";
-    if(isMilkable(unit))
+    if(Units::isMilkable(unit))
         out << ", milkable";
     if(unit->flags2.bits.slaughter)
         out << ", slaughter";
@@ -418,7 +256,7 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
     if(verbose)
     {
         out << ". Pos: ("<<unit->pos.x << "/"<< unit->pos.y << "/" << unit->pos.z << ") " << endl;
-        out << "index in units vector: " << findIndexById(unit->id) << endl;
+        out << "index in units vector: " << Units::findIndexById(unit->id) << endl;
     }
     out << endl;
 
@@ -461,17 +299,17 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
     }
 }
 
-bool isCage(df::building * building)
+static bool isCage(df::building * building)
 {
-    return building && (building->getType() == building_type::Cage);
+    return building && (building->getType() == df::building_type::Cage);
 }
 
-bool isChain(df::building * building)
+static bool isChain(df::building * building)
 {
-    return building && (building->getType() == building_type::Chain);
+    return building && (building->getType() == df::building_type::Chain);
 }
 
-df::general_ref_building_civzone_assignedst * createCivzoneRef()
+static df::general_ref_building_civzone_assignedst * createCivzoneRef()
 {
     static bool vt_initialized = false;
     df::general_ref_building_civzone_assignedst* newref = NULL;
@@ -510,14 +348,14 @@ df::general_ref_building_civzone_assignedst * createCivzoneRef()
     return newref;
 }
 
-bool isInBuiltCage(df::unit* unit);
+static bool isInBuiltCage(df::unit* unit);
 
 // check if assigned to pen, pit, (built) cage or chain
 // note: BUILDING_CAGED is not set for animals (maybe it's used for dwarves who get caged as sentence)
 // animals in cages (no matter if built or on stockpile) get the ref CONTAINED_IN_ITEM instead
 // removing them from cages on stockpiles is no problem even without clearing the ref
 // and usually it will be desired behavior to do so.
-bool isAssigned(df::unit* unit)
+static bool isAssigned(df::unit* unit)
 {
     bool assigned = false;
     for (size_t r=0; r < unit->general_refs.size(); r++)
@@ -537,7 +375,7 @@ bool isAssigned(df::unit* unit)
     return assigned;
 }
 
-bool isAssignedToZone(df::unit* unit)
+static bool isAssignedToZone(df::unit* unit)
 {
     bool assigned = false;
     for (size_t r=0; r < unit->general_refs.size(); r++)
@@ -553,26 +391,8 @@ bool isAssignedToZone(df::unit* unit)
     return assigned;
 }
 
-// check if assigned to a chain or built cage
-// (need to check if the ref needs to be removed, until then touching them is forbidden)
-bool isChained(df::unit* unit)
-{
-    bool contained = false;
-    for (size_t r=0; r < unit->general_refs.size(); r++)
-    {
-        df::general_ref * ref = unit->general_refs[r];
-        auto rtype = ref->getType();
-        if(rtype == df::general_ref_type::BUILDING_CHAIN)
-        {
-            contained = true;
-            break;
-        }
-    }
-    return contained;
-}
-
 // check if contained in item (e.g. animals in cages)
-bool isContainedInItem(df::unit* unit)
+static bool isContainedInItem(df::unit* unit)
 {
     bool contained = false;
     for (size_t r=0; r < unit->general_refs.size(); r++)
@@ -588,13 +408,13 @@ bool isContainedInItem(df::unit* unit)
     return contained;
 }
 
-bool isInBuiltCage(df::unit* unit)
+static bool isInBuiltCage(df::unit* unit)
 {
     bool caged = false;
     for (size_t b=0; b < world->buildings.all.size(); b++)
     {
         df::building* building = world->buildings.all[b];
-        if( building->getType() == building_type::Cage)
+        if( building->getType() == df::building_type::Cage)
         {
             df::building_cagest* cage = (df::building_cagest*) building;
             for(size_t c=0; c<cage->assigned_units.size(); c++)
@@ -613,7 +433,7 @@ bool isInBuiltCage(df::unit* unit)
 }
 
 // built cage defined as room (supposed to detect zoo cages)
-bool isInBuiltCageRoom(df::unit* unit)
+static bool isInBuiltCageRoom(df::unit* unit)
 {
     bool caged_room = false;
     for (size_t b=0; b < world->buildings.all.size(); b++)
@@ -626,7 +446,7 @@ bool isInBuiltCageRoom(df::unit* unit)
         if(!building->is_room)
             continue;
 
-        if(building->getType() == building_type::Cage)
+        if(building->getType() == df::building_type::Cage)
         {
             df::building_cagest* cage = (df::building_cagest*) building;
             for(size_t c=0; c<cage->assigned_units.size(); c++)
@@ -644,35 +464,13 @@ bool isInBuiltCageRoom(df::unit* unit)
     return caged_room;
 }
 
-// check a map position for a built cage
-// animals in cages are CONTAINED_IN_ITEM, no matter if they are on a stockpile or inside a built cage
-// if they are on animal stockpiles they should count as unassigned to allow pasturing them
-// if they are inside built cages they should be ignored in case the cage is a zoo or linked to a lever or whatever
-bool isBuiltCageAtPos(df::coord pos)
-{
-    bool cage = false;
-    for (size_t b=0; b < world->buildings.all.size(); b++)
-    {
-        df::building* building = world->buildings.all[b];
-        if( building->getType() == building_type::Cage
-            && building->x1 == pos.x
-            && building->y1 == pos.y
-            && building->z  == pos.z )
-        {
-            cage = true;
-            break;
-        }
-    }
-    return cage;
-}
-
-df::building * getBuiltCageAtPos(df::coord pos)
+static df::building * getBuiltCageAtPos(df::coord pos)
 {
     df::building* cage = NULL;
     for (size_t b=0; b < world->buildings.all.size(); b++)
     {
         df::building* building = world->buildings.all[b];
-        if( building->getType() == building_type::Cage
+        if( building->getType() == df::building_type::Cage
             && building->x1 == pos.x
             && building->y1 == pos.y
             && building->z  == pos.z )
@@ -688,120 +486,12 @@ df::building * getBuiltCageAtPos(df::coord pos)
     return cage;
 }
 
-bool isNestboxAtPos(int32_t x, int32_t y, int32_t z)
-{
-    bool found = false;
-    for (size_t b=0; b < world->buildings.all.size(); b++)
-    {
-        df::building* building = world->buildings.all[b];
-        if( building->getType() == building_type::NestBox
-            && building->x1 == x
-            && building->y1 == y
-            && building->z  == z )
-        {
-            found = true;
-            break;
-        }
-    }
-    return found;
-}
-
-bool isFreeNestboxAtPos(int32_t x, int32_t y, int32_t z)
-{
-    bool found = false;
-    for (size_t b=0; b < world->buildings.all.size(); b++)
-    {
-        df::building* building = world->buildings.all[b];
-        if( building->getType() == building_type::NestBox
-            && building->x1 == x
-            && building->y1 == y
-            && building->z  == z )
-        {
-            df::building_nest_boxst* nestbox = (df::building_nest_boxst*) building;
-            if(nestbox->claimed_by == -1 && nestbox->contained_items.size() == 1)
-            {
-                found = true;
-                break;
-            }
-        }
-    }
-    return found;
-}
-
-bool isEmptyPasture(df::building* building)
-{
-    if(!isPenPasture(building))
-        return false;
-    df::building_civzonest * civ = (df::building_civzonest *) building;
-    if(civ->assigned_units.size() == 0)
-        return true;
-    else
-        return false;
-}
-
-df::building* findFreeNestboxZone()
-{
-    df::building * free_building = NULL;
-    for (size_t b=0; b < world->buildings.all.size(); b++)
-    {
-        df::building* building = world->buildings.all[b];
-        if( isEmptyPasture(building) &&
-            isActive(building) &&
-            isFreeNestboxAtPos(building->x1, building->y1, building->z))
-        {
-            free_building = building;
-            break;
-        }
-    }
-    return free_building;
-}
-
-bool isFreeEgglayer(df::unit * unit)
-{
-    return isActive(unit) && !isUndead(unit)
-        && isFemale(unit)
-        && isTame(unit)
-        && isOwnCiv(unit)
-        && isEggLayer(unit)
-        && !isAssigned(unit)
-        && !isGrazer(unit) // exclude grazing birds because they're messy
-        && !isMerchant(unit) // don't steal merchant mounts
-        && !isForest(unit);  // don't steal birds from traders, they hate that
-}
-
-df::unit * findFreeEgglayer()
-{
-    df::unit* free_unit = NULL;
-    for (size_t i=0; i < world->units.all.size(); i++)
-    {
-        df::unit* unit = world->units.all[i];
-        if(isFreeEgglayer(unit))
-        {
-            free_unit = unit;
-            break;
-        }
-    }
-    return free_unit;
-}
-
-size_t countFreeEgglayers()
-{
-    size_t count = 0;
-    for (size_t i=0; i < world->units.all.size(); i++)
-    {
-        df::unit* unit = world->units.all[i];
-        if(isFreeEgglayer(unit))
-            count ++;
-    }
-    return count;
-}
-
 // check if unit is already assigned to a zone, remove that ref from unit and old zone
 // check if unit is already assigned to a cage, remove that ref from the cage
 // returns false if no cage or pasture information was found
 // helps as workaround for http://www.bay12games.com/dwarves/mantisbt/view.php?id=4475 by the way
 // (pastured animals assigned to chains will get hauled back and forth because the pasture ref is not deleted)
-bool unassignUnitFromBuilding(df::unit* unit)
+static bool unassignUnitFromBuilding(df::unit* unit)
 {
     bool success = false;
     for (std::size_t idx = 0; idx < unit->general_refs.size(); idx++)
@@ -885,10 +575,10 @@ bool unassignUnitFromBuilding(df::unit* unit)
 }
 
 // assign to pen or pit
-command_result assignUnitToZone(color_ostream& out, df::unit* unit, df::building* building, bool verbose = false)
+static command_result assignUnitToZone(color_ostream& out, df::unit* unit, df::building* building, bool verbose = false)
 {
     // building must be a pen/pasture or pit
-    if(!isPenPasture(building) && !isPitPond(building))
+    if(!Buildings::isPenPasture(building) && !Buildings::isPitPond(building))
     {
         out << "Invalid building type. This is not a pen/pasture or pit/pond." << endl;
         return CR_WRONG_USAGE;
@@ -926,18 +616,18 @@ command_result assignUnitToZone(color_ostream& out, df::unit* unit, df::building
     civz->assigned_units.push_back(unit->id);
 
     out << "Unit " << unit->id
-        << "(" << getRaceName(unit) << ")"
+        << "(" << Units::getRaceName(unit) << ")"
         << " assigned to zone " << building->id;
-    if(isPitPond(building))
+    if(Buildings::isPitPond(building))
         out << " (pit/pond).";
-    if(isPenPasture(building))
+    if(Buildings::isPenPasture(building))
         out << " (pen/pasture).";
     out << endl;
 
     return CR_OK;
 }
 
-command_result assignUnitToCage(color_ostream& out, df::unit* unit, df::building* building, bool verbose)
+static command_result assignUnitToCage(color_ostream& out, df::unit* unit, df::building* building, bool verbose)
 {
     // building must be a pen/pasture or pit
     if(!isCage(building))
@@ -967,24 +657,24 @@ command_result assignUnitToCage(color_ostream& out, df::unit* unit, df::building
     civz->assigned_units.push_back(unit->id);
 
     out << "Unit " << unit->id
-        << "(" << getRaceName(unit) << ")"
+        << "(" << Units::getRaceName(unit) << ")"
         << " assigned to cage " << building->id;
     out << endl;
 
     return CR_OK;
 }
 
-command_result assignUnitToChain(color_ostream& out, df::unit* unit, df::building* building, bool verbose)
+static command_result assignUnitToChain(color_ostream& out, df::unit* unit, df::building* building, bool verbose)
 {
     out << "sorry. assigning to chains is not possible yet." << endl;
     return CR_WRONG_USAGE;
 }
 
-command_result assignUnitToBuilding(color_ostream& out, df::unit* unit, df::building* building, bool verbose)
+static command_result assignUnitToBuilding(color_ostream& out, df::unit* unit, df::building* building, bool verbose)
 {
     command_result result = CR_WRONG_USAGE;
 
-    if(isActivityZone(building))
+    if(Buildings::isActivityZone(building))
         result = assignUnitToZone(out, unit, building, verbose);
     else if(isCage(building))
         result = assignUnitToCage(out, unit, building, verbose);
@@ -996,9 +686,9 @@ command_result assignUnitToBuilding(color_ostream& out, df::unit* unit, df::buil
     return result;
 }
 
-command_result assignUnitsToCagezone(color_ostream& out, vector<df::unit*> units, df::building* building, bool verbose)
+static command_result assignUnitsToCagezone(color_ostream& out, vector<df::unit*> units, df::building* building, bool verbose)
 {
-    if(!isPenPasture(building))
+    if(!Buildings::isPenPasture(building))
     {
         out << "A cage zone needs to be a pen/pasture containing at least one cage!" << endl;
         return CR_WRONG_USAGE;
@@ -1055,10 +745,10 @@ command_result assignUnitsToCagezone(color_ostream& out, vector<df::unit*> units
     return CR_OK;
 }
 
-command_result nickUnitsInZone(color_ostream& out, df::building* building, string nick)
+static command_result nickUnitsInZone(color_ostream& out, df::building* building, string nick)
 {
     // building must be a pen/pasture or pit
-    if(!isPenPasture(building) && !isPitPond(building))
+    if(!Buildings::isPenPasture(building) && !Buildings::isPitPond(building))
     {
         out << "Invalid building type. This is not a pen/pasture or pit/pond." << endl;
         return CR_WRONG_USAGE;
@@ -1075,7 +765,7 @@ command_result nickUnitsInZone(color_ostream& out, df::building* building, strin
     return CR_OK;
 }
 
-command_result nickUnitsInCage(color_ostream& out, df::building* building, string nick)
+static command_result nickUnitsInCage(color_ostream& out, df::building* building, string nick)
 {
     // building must be a pen/pasture or pit
     if(!isCage(building))
@@ -1095,7 +785,7 @@ command_result nickUnitsInCage(color_ostream& out, df::building* building, strin
     return CR_OK;
 }
 
-command_result nickUnitsInChain(color_ostream& out, df::building* building, string nick)
+static command_result nickUnitsInChain(color_ostream& out, df::building* building, string nick)
 {
     out << "sorry. nicknaming chained units is not possible yet." << endl;
     return CR_WRONG_USAGE;
@@ -1103,11 +793,11 @@ command_result nickUnitsInChain(color_ostream& out, df::building* building, stri
 
 // give all units inside a pasture or cage the same nickname
 // (usage example: protect them from being autobutchered)
-command_result nickUnitsInBuilding(color_ostream& out, df::building* building, string nick)
+static command_result nickUnitsInBuilding(color_ostream& out, df::building* building, string nick)
 {
     command_result result = CR_WRONG_USAGE;
 
-    if(isActivityZone(building))
+    if(Buildings::isActivityZone(building))
         result = nickUnitsInZone(out, building, nick);
     else if(isCage(building))
         result = nickUnitsInCage(out, building, nick);
@@ -1120,9 +810,9 @@ command_result nickUnitsInBuilding(color_ostream& out, df::building* building, s
 }
 
 // dump some zone info
-void zoneInfo(color_ostream & out, df::building* building, bool verbose)
+static void zoneInfo(color_ostream & out, df::building* building, bool verbose)
 {
-    if(!isActivityZone(building))
+    if(!Buildings::isActivityZone(building))
         return;
 
     string name;
@@ -1138,7 +828,7 @@ void zoneInfo(color_ostream & out, df::building* building, bool verbose)
     out.print("\n");
 
     df::building_civzonest * civ = (df::building_civzonest *) building;
-    if(isActive(civ))
+    if(Buildings::isActive(civ))
         out << "active";
     else
         out << "not active";
@@ -1180,7 +870,7 @@ void zoneInfo(color_ostream & out, df::building* building, bool verbose)
 }
 
 // dump some cage info
-void cageInfo(color_ostream & out, df::building* building, bool verbose)
+static void cageInfo(color_ostream & out, df::building* building, bool verbose)
 {
     if(!isCage(building))
         return;
@@ -1220,7 +910,7 @@ void cageInfo(color_ostream & out, df::building* building, bool verbose)
 }
 
 // dump some chain/restraint info
-void chainInfo(color_ostream & out, df::building* building, bool list_refs = false)
+static void chainInfo(color_ostream & out, df::building* building, bool list_refs = false)
 {
     if(!isChain(building))
         return;
@@ -1247,7 +937,7 @@ void chainInfo(color_ostream & out, df::building* building, bool list_refs = fal
     }
 }
 
-df::building* getAssignableBuildingAtCursor(color_ostream& out)
+static df::building* getAssignableBuildingAtCursor(color_ostream& out)
 {
     // set building at cursor position to be new target building
     if (cursor->x == -30000)
@@ -1267,7 +957,7 @@ df::building* getAssignableBuildingAtCursor(color_ostream& out)
     }
     else
     {
-        auto zone_at_tile = findPenPitAt(Gui::getCursorPos());
+        auto zone_at_tile = Buildings::findPenPitAt(Gui::getCursorPos());
         if(!zone_at_tile)
         {
             out << "No pen/pasture, pit, or cage under cursor!" << endl;
@@ -1284,38 +974,38 @@ df::building* getAssignableBuildingAtCursor(color_ostream& out)
 // ZONE FILTERS (as in, filters used by 'zone')
 
 // Maps parameter names to filters.
-unordered_map<string, function<bool(df::unit*)>> zone_filters;
+static unordered_map<string, function<bool(df::unit*)>> zone_filters;
 static struct zone_filters_init { zone_filters_init() {
     zone_filters["caged"] = isContainedInItem;
-    zone_filters["egglayer"] = isEggLayer;
-    zone_filters["female"] = isFemale;
-    zone_filters["grazer"] = isGrazer;
-    zone_filters["hunting"] = isHunter;
-    zone_filters["male"] = isMale;
-    zone_filters["milkable"] = isMilkable;
-    zone_filters["naked"] = isNaked;
-    zone_filters["own"] = isOwnCiv;
-    zone_filters["tamable"] = isTamable;
-    zone_filters["tame"] = isTame;
+    zone_filters["egglayer"] = Units::isEggLayer;
+    zone_filters["female"] = Units::isFemale;
+    zone_filters["grazer"] = Units::isGrazer;
+    zone_filters["hunting"] = Units::isHunter;
+    zone_filters["male"] = Units::isMale;
+    zone_filters["milkable"] = Units::isMilkable;
+    zone_filters["naked"] = Units::isNaked;
+    zone_filters["own"] = Units::isOwnCiv;
+    zone_filters["tamable"] = Units::isTamable;
+    zone_filters["tame"] = Units::isTame;
     zone_filters["trainablewar"] = [](df::unit *unit) -> bool
     {
-        return !isWar(unit) && !isHunter(unit) && isTrainableWar(unit);
+        return !Units::isWar(unit) && !Units::isHunter(unit) && Units::isTrainableWar(unit);
     };
     zone_filters["trainablehunt"] = [](df::unit *unit) -> bool
     {
-        return !isWar(unit) && !isHunter(unit) && isTrainableHunting(unit);
+        return !Units::isWar(unit) && !Units::isHunter(unit) && Units::isTrainableHunting(unit);
     };
-    zone_filters["trained"] = isTrained;
+    zone_filters["trained"] = Units::isTrained;
     // backwards compatibility
     zone_filters["unassigned"] = [](df::unit *unit) -> bool
     {
         return !isAssigned(unit);
     };
-    zone_filters["war"] = isWar;
+    zone_filters["war"] = Units::isWar;
 }} zone_filters_init_;
 
 // Extra annotations / descriptions for parameter names.
-unordered_map<string, string> zone_filter_notes;
+static unordered_map<string, string> zone_filter_notes;
 static struct zone_filter_notes_init { zone_filter_notes_init() {
     zone_filter_notes["caged"] = "caged (ignores built cages)";
     zone_filter_notes["hunting"] = "trained hunting creature";
@@ -1326,7 +1016,7 @@ static struct zone_filter_notes_init { zone_filter_notes_init() {
     zone_filter_notes["war"] = "trained war creature";
 }} zone_filter_notes_init_;
 
-pair<string, function<bool(df::unit*)>> createRaceFilter(vector<string> &filter_args)
+static pair<string, function<bool(df::unit*)>> createRaceFilter(vector<string> &filter_args)
 {
     // guaranteed to exist.
     string race = filter_args[0];
@@ -1334,12 +1024,12 @@ pair<string, function<bool(df::unit*)>> createRaceFilter(vector<string> &filter_
     return make_pair(
         "race of " + race,
         [race](df::unit *unit) -> bool {
-            return getRaceName(unit) == race;
+            return Units::getRaceName(unit) == race;
         }
     );
 }
 
-pair<string, function<bool(df::unit*)>> createAgeFilter(vector<string> &filter_args)
+static pair<string, function<bool(df::unit*)>> createAgeFilter(vector<string> &filter_args)
 {
     int target_age;
     stringstream ss(filter_args[0]);
@@ -1360,12 +1050,12 @@ pair<string, function<bool(df::unit*)>> createAgeFilter(vector<string> &filter_a
     return make_pair(
         "age of exactly " + int_to_string(target_age),
         [target_age](df::unit *unit) -> bool {
-            return getAge(unit, true) == target_age;
+            return Units::getAge(unit, true) == target_age;
         }
     );
 }
 
-pair<string, function<bool(df::unit*)>> createMinAgeFilter(vector<string> &filter_args)
+static pair<string, function<bool(df::unit*)>> createMinAgeFilter(vector<string> &filter_args)
 {
     double min_age;
     stringstream ss(filter_args[0]);
@@ -1386,12 +1076,12 @@ pair<string, function<bool(df::unit*)>> createMinAgeFilter(vector<string> &filte
     return make_pair(
         "minimum age of " + int_to_string(min_age),
         [min_age](df::unit *unit) -> bool {
-            return getAge(unit, true) >= min_age;
+            return Units::getAge(unit, true) >= min_age;
         }
     );
 }
 
-pair<string, function<bool(df::unit*)>> createMaxAgeFilter(vector<string> &filter_args)
+static pair<string, function<bool(df::unit*)>> createMaxAgeFilter(vector<string> &filter_args)
 {
     double max_age;
     stringstream ss(filter_args[0]);
@@ -1412,7 +1102,7 @@ pair<string, function<bool(df::unit*)>> createMaxAgeFilter(vector<string> &filte
     return make_pair(
         "maximum age of " + int_to_string(max_age),
         [max_age](df::unit *unit) -> bool {
-            return getAge(unit, true) <= max_age;
+            return Units::getAge(unit, true) <= max_age;
         }
     );
 }
@@ -1428,7 +1118,7 @@ pair<string, function<bool(df::unit*)>> createMaxAgeFilter(vector<string> &filte
 // Constructor functions are permitted to throw strings, which will be caught and printed.
 // Result filter functions are not permitted to throw std::exceptions.
 // Result filter functions should not store references
-unordered_map<string, pair<int,
+static unordered_map<string, pair<int,
            function<pair<string, function<bool(df::unit*)>>(vector<string>&)>>> zone_param_filters;
 static struct zone_param_filters_init { zone_param_filters_init() {
     zone_param_filters["race"] = make_pair(1, createRaceFilter);
@@ -1437,7 +1127,7 @@ static struct zone_param_filters_init { zone_param_filters_init() {
     zone_param_filters["maxage"] = make_pair(1, createMaxAgeFilter);
 }} zone_param_filters_init_;
 
-command_result df_zone (color_ostream &out, vector <string> & parameters)
+static command_result df_zone (color_ostream &out, vector <string> & parameters)
 {
     CoreSuspender suspend;
 
@@ -1526,7 +1216,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         else if(p0 == "unassign")
         {
             // if there's a unit selected...
-            df::unit *unit = getSelectedUnit(out, true);
+            df::unit *unit = Gui::getSelectedUnit(out, true);
             if (unit) {
                 // remove assignment reference from unit and old zone
                 if(unassignUnitFromBuilding(unit))
@@ -1865,7 +1555,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
 
                 active_filters.push_back([](df::unit *unit)
                     {
-                        return !isMerchant(unit) && !isForest(unit);
+                        return !Units::isMerchant(unit) && !Units::isForest(unit);
                     }
                 );
             } else {
@@ -1875,7 +1565,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
 
                 active_filters.push_back([](df::unit *unit)
                     {
-                        return isMerchant(unit) || isForest(unit);
+                        return Units::isMerchant(unit) || Units::isForest(unit);
                     }
                 );
             }
@@ -1926,7 +1616,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     {
         // filter for units in the building
         unordered_set<int32_t> assigned_unit_ids;
-        if(isActivityZone(target_building))
+        if(Buildings::isActivityZone(target_building))
         {
             df::building_civzonest *civz = (df::building_civzonest *) target_building;
             auto &assigned_units_vec = civz->assigned_units;
@@ -1984,7 +1674,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
 
     if(!race_filter_set && (building_assign || cagezone_assign || unit_slaughter))
     {
-        string own_race_name = getRaceNameById(ui->race_id);
+        string own_race_name = Units::getRaceNameById(ui->race_id);
         out.color(COLOR_BROWN);
         out << "Default filter for " << parameters[0]
             << ": 'not (race " << own_race_name << " or own civilization)'; use 'race "
@@ -1994,7 +1684,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
 
         active_filters.push_back([](df::unit *unit)
             {
-                return !isOwnRace(unit) || !isOwnCiv(unit);
+                return !Units::isOwnRace(unit) || !Units::isOwnCiv(unit);
             }
         );
     }
@@ -2022,7 +1712,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
 
         active_filters.push_back([](df::unit *unit)
             {
-                return !isMerchant(unit) && !isForest(unit);
+                return !Units::isMerchant(unit) && !Units::isForest(unit);
             }
         );
     }
@@ -2058,7 +1748,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             df::unit *unit = *unit_it;
 
             // ignore inactive and undead units
-            if (!isActive(unit) || isUndead(unit)) {
+            if (!Units::isActive(unit) || Units::isUndead(unit)) {
                 continue;
             }
 
@@ -2130,10 +1820,10 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 if (removed)
                 {
                     out << "Unit " << unit->id
-                        << "(" << getRaceName(unit) << ")"
+                        << "(" << Units::getRaceName(unit) << ")"
                         << " unassigned from";
 
-                    if (isActivityZone(target_building))
+                    if (Buildings::isActivityZone(target_building))
                     {
                         out << " zone ";
                     }
@@ -2179,7 +1869,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     else
     {
         // must have unit selected
-        df::unit *unit = getSelectedUnit(out, true);
+        df::unit *unit = Gui::getSelectedUnit(out, true);
         if (!unit) {
             out.color(COLOR_RED);
             out << "Error: no unit selected!" << endl;
@@ -2206,1295 +1896,6 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
 
     return CR_OK;
 }
-
-////////////////////
-// autobutcher stuff
-
-// getUnitAge() returns 0 if born in current year, therefore the look at birth_time in that case
-// (assuming that the value from there indicates in which tick of the current year the unit was born)
-bool compareUnitAgesYounger(df::unit* i, df::unit* j)
-{
-    int32_t age_i = (int32_t) getAge(i, true);
-    int32_t age_j = (int32_t) getAge(j, true);
-    if(age_i == 0 && age_j == 0)
-    {
-        age_i = i->birth_time;
-        age_j = j->birth_time;
-    }
-    return (age_i < age_j);
-}
-bool compareUnitAgesOlder(df::unit* i, df::unit* j)
-{
-    int32_t age_i = (int32_t) getAge(i, true);
-    int32_t age_j = (int32_t) getAge(j, true);
-    if(age_i == 0 && age_j == 0)
-    {
-        age_i = i->birth_time;
-        age_j = j->birth_time;
-    }
-    return (age_i > age_j);
-}
-
-
-
-//enum WatchedRaceSubtypes
-//{
-//    femaleKid=0,
-//    maleKid,
-//    femaleAdult,
-//    maleAdult
-//};
-
-enum unit_ptr_index
-{
- fk_index = 0,
- mk_index = 1,
- fa_index = 2,
- ma_index = 3
-};
-
-struct WatchedRace
-{
-public:
-    PersistentDataItem rconfig;
-
-    bool isWatched; // if true, autobutcher will process this race
-    int raceId;
-
-    // target amounts
-    unsigned fk; // max female kids
-    unsigned mk; // max male kids
-    unsigned fa; // max female adults
-    unsigned ma; // max male adults
-
-    // amounts of protected (not butcherable) units
-    unsigned fk_prot;
-    unsigned fa_prot;
-    unsigned mk_prot;
-    unsigned ma_prot;
-
-    // butcherable units
-    vector <df::unit*> unit_ptr[4];
-
-    // priority butcherable units
-    vector <df::unit*> prot_ptr[4];
-
-    WatchedRace(bool watch, int id, unsigned _fk, unsigned _mk, unsigned _fa, unsigned _ma)
-    {
-        isWatched = watch;
-        raceId = id;
-        fk = _fk;
-        mk = _mk;
-        fa = _fa;
-        ma = _ma;
-        fk_prot = fa_prot = mk_prot = ma_prot = 0;
-    }
-
-    ~WatchedRace()
-    {
-        ClearUnits();
-    }
-
-    void UpdateConfig(color_ostream & out)
-    {
-        if(!rconfig.isValid())
-        {
-            string keyname = "autobutcher/watchlist/" + getRaceNameById(raceId);
-            rconfig = World::GetPersistentData(keyname, NULL);
-        }
-        if(rconfig.isValid())
-        {
-            rconfig.ival(0) = raceId;
-            rconfig.ival(1) = isWatched;
-            rconfig.ival(2) = fk;
-            rconfig.ival(3) = mk;
-            rconfig.ival(4) = fa;
-            rconfig.ival(5) = ma;
-        }
-        else
-        {
-            // this should never happen
-            string keyname = "autobutcher/watchlist/" + getRaceNameById(raceId);
-            out << "Something failed, could not find/create config key " << keyname << "!" << endl;
-        }
-    }
-
-    void RemoveConfig(color_ostream & out)
-    {
-        if(!rconfig.isValid())
-            return;
-        World::DeletePersistentData(rconfig);
-    }
-
-    void SortUnitsByAge()
-    {
-        sort(unit_ptr[fk_index].begin(), unit_ptr[fk_index].end(), compareUnitAgesOlder);
-        sort(unit_ptr[mk_index].begin(), unit_ptr[mk_index].end(), compareUnitAgesOlder);
-        sort(unit_ptr[fa_index].begin(), unit_ptr[fa_index].end(), compareUnitAgesYounger);
-        sort(unit_ptr[ma_index].begin(), unit_ptr[ma_index].end(), compareUnitAgesYounger);
-        sort(prot_ptr[fk_index].begin(), prot_ptr[fk_index].end(), compareUnitAgesOlder);
-        sort(prot_ptr[mk_index].begin(), prot_ptr[mk_index].end(), compareUnitAgesOlder);
-        sort(prot_ptr[fa_index].begin(), prot_ptr[fa_index].end(), compareUnitAgesYounger);
-        sort(prot_ptr[ma_index].begin(), prot_ptr[ma_index].end(), compareUnitAgesYounger);
-    }
-
-    void PushUnit(df::unit * unit)
-    {
-        if(isFemale(unit))
-        {
-            if(isBaby(unit) || isChild(unit))
-                unit_ptr[fk_index].push_back(unit);
-            else
-                unit_ptr[fa_index].push_back(unit);
-        }
-        else //treat sex n/a like it was male
-        {
-            if(isBaby(unit) || isChild(unit))
-                unit_ptr[mk_index].push_back(unit);
-            else
-                unit_ptr[ma_index].push_back(unit);
-        }
-    }
-
-    void PushPriorityUnit(df::unit * unit)
-    {
-        if(isFemale(unit))
-        {
-            if(isBaby(unit) || isChild(unit))
-                prot_ptr[fk_index].push_back(unit);
-            else
-                prot_ptr[fa_index].push_back(unit);
-        }
-        else
-        {
-            if(isBaby(unit) || isChild(unit))
-                prot_ptr[mk_index].push_back(unit);
-            else
-                prot_ptr[ma_index].push_back(unit);
-        }
-    }
-
-    void PushProtectedUnit(df::unit * unit)
-    {
-        if(isFemale(unit))
-        {
-            if(isBaby(unit) || isChild(unit))
-                fk_prot++;
-            else
-                fa_prot++;
-        }
-        else //treat sex n/a like it was male
-        {
-            if(isBaby(unit) || isChild(unit))
-                mk_prot++;
-            else
-                ma_prot++;
-        }
-    }
-
-    void ClearUnits()
-    {
-        fk_prot = fa_prot = mk_prot = ma_prot = 0;
-        for (size_t i = 0; i < 4; i++)
-        {
-            unit_ptr[i].clear();
-            prot_ptr[i].clear();
-        }
-    }
-
-    int ProcessUnits(vector<df::unit*>& unit_ptr, vector<df::unit*>& unit_pri_ptr, unsigned prot, unsigned goal)
-    {
-        int subcount = 0;
-        while(unit_pri_ptr.size() && (unit_ptr.size() + unit_pri_ptr.size() + prot > goal) )
-        {
-            df::unit* unit = unit_pri_ptr.back();
-            doMarkForSlaughter(unit);
-            unit_pri_ptr.pop_back();
-            subcount++;
-        }
-        while(unit_ptr.size() && (unit_ptr.size() + prot > goal) )
-        {
-            df::unit* unit = unit_ptr.back();
-            doMarkForSlaughter(unit);
-            unit_ptr.pop_back();
-            subcount++;
-        }
-        return subcount;
-    }
-
-    int ProcessUnits()
-    {
-        SortUnitsByAge();
-        int slaughter_count = 0;
-        slaughter_count += ProcessUnits(unit_ptr[fk_index], prot_ptr[fk_index], fk_prot, fk);
-        slaughter_count += ProcessUnits(unit_ptr[mk_index], prot_ptr[mk_index], mk_prot, mk);
-        slaughter_count += ProcessUnits(unit_ptr[fa_index], prot_ptr[fa_index], fa_prot, fa);
-        slaughter_count += ProcessUnits(unit_ptr[ma_index], prot_ptr[ma_index], ma_prot, ma);
-        ClearUnits();
-        return slaughter_count;
-    }
-};
-// vector of races handled by autobutcher
-// the name is a bit misleading since entries can be set to 'unwatched'
-// to ignore them for a while but still keep the target count settings
-std::vector<WatchedRace*> watched_races;
-
-// helper for sorting the watchlist alphabetically
-bool compareRaceNames(WatchedRace* i, WatchedRace* j)
-{
-    string name_i = getRaceNamePluralById(i->raceId);
-    string name_j = getRaceNamePluralById(j->raceId);
-
-    return (name_i < name_j);
-}
-
-static void autobutcher_sortWatchList(color_ostream &out);
-
-// default target values for autobutcher
-static unsigned default_fk = 5;
-static unsigned default_mk = 1;
-static unsigned default_fa = 5;
-static unsigned default_ma = 1;
-
-command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
-{
-    CoreSuspender suspend;
-
-    bool verbose = false;
-    bool watch_race = false;
-    bool unwatch_race = false;
-    bool forget_race = false;
-    bool list_watched = false;
-    bool list_export = false;
-    bool change_target = false;
-    vector <string> target_racenames;
-    vector <int> target_raceids;
-
-    unsigned target_fk = default_fk;
-    unsigned target_mk = default_mk;
-    unsigned target_fa = default_fa;
-    unsigned target_ma = default_ma;
-
-    if(!parameters.size())
-    {
-        out << "You must specify a command!" << endl;
-        out << autobutcher_help << endl;
-        return CR_OK;
-    }
-
-    // parse main command
-    string & p = parameters[0];
-    if (p == "help" || p == "?")
-    {
-        out << autobutcher_help << endl;
-        return CR_OK;
-    }
-    if (p == "example")
-    {
-        out << autobutcher_help_example << endl;
-        return CR_OK;
-    }
-    else if (p == "start")
-    {
-        plugin_enable(out, true);
-        enable_autobutcher = true;
-        start_autobutcher(out);
-        return autoButcher(out, verbose);
-    }
-    else if (p == "stop")
-    {
-        enable_autobutcher = false;
-        if(config_autobutcher.isValid())
-            config_autobutcher.ival(0) = enable_autobutcher;
-        out << "Autobutcher stopped." << endl;
-        return CR_OK;
-    }
-    else if(p == "sleep")
-    {
-        parameters.erase(parameters.begin());
-        if(!parameters.size())
-        {
-            out.printerr("No duration specified!\n");
-            return CR_WRONG_USAGE;
-        }
-        else
-        {
-            size_t ticks = 0;
-            stringstream ss(parameters.back());
-            ss >> ticks;
-            if(ticks <= 0)
-            {
-                out.printerr("Invalid duration specified (must be > 0)!\n");
-                return CR_WRONG_USAGE;
-            }
-            sleep_autobutcher = ticks;
-            if(config_autobutcher.isValid())
-                config_autobutcher.ival(1) = sleep_autobutcher;
-            out << "New sleep timer for autobutcher: " << ticks << " ticks." << endl;
-            return CR_OK;
-        }
-    }
-    else if(p == "watch")
-    {
-        parameters.erase(parameters.begin());
-        watch_race = true;
-        out << "Start watching race(s): "; // << endl;
-    }
-    else if(p == "unwatch")
-    {
-        parameters.erase(parameters.begin());
-        unwatch_race = true;
-        out << "Stop watching race(s): "; // << endl;
-    }
-    else if(p == "forget")
-    {
-        parameters.erase(parameters.begin());
-        forget_race = true;
-        out << "Removing race(s) from watchlist: "; // << endl;
-    }
-    else if(p == "target")
-    {
-        // needs at least 5 more parameters:
-        // fk mk fa ma R (can have more than 1 R)
-        if(parameters.size() < 6)
-        {
-            out.printerr("Not enough parameters!\n");
-            return CR_WRONG_USAGE;
-        }
-        else
-        {
-            stringstream fk(parameters[1]);
-            stringstream mk(parameters[2]);
-            stringstream fa(parameters[3]);
-            stringstream ma(parameters[4]);
-            fk >> target_fk;
-            mk >> target_mk;
-            fa >> target_fa;
-            ma >> target_ma;
-            parameters.erase(parameters.begin(), parameters.begin()+5);
-            change_target = true;
-            out << "Setting new target count for race(s): "; // << endl;
-        }
-    }
-    else if(p == "autowatch")
-    {
-        out << "Auto-adding to watchlist started." << endl;
-        enable_autobutcher_autowatch = true;
-        if(config_autobutcher.isValid())
-            config_autobutcher.ival(2) = enable_autobutcher_autowatch;
-        return CR_OK;
-    }
-    else if(p == "noautowatch")
-    {
-        out << "Auto-adding to watchlist stopped." << endl;
-        enable_autobutcher_autowatch = false;
-        if(config_autobutcher.isValid())
-            config_autobutcher.ival(2) = enable_autobutcher_autowatch;
-        return CR_OK;
-    }
-    else if(p == "list")
-    {
-        list_watched = true;
-    }
-    else if(p == "list_export")
-    {
-        list_export = true;
-    }
-    else
-    {
-        out << "Unknown command: " << p << endl;
-        return CR_WRONG_USAGE;
-    }
-
-    if(list_watched)
-    {
-        out << "Autobutcher status: ";
-
-        if(enable_autobutcher)
-            out << "enabled,";
-        else
-            out << "not enabled,";
-
-        if (enable_autobutcher_autowatch)
-            out << " autowatch,";
-        else
-            out << " noautowatch,";
-
-        out << " sleep: " << sleep_autobutcher << endl;
-
-        out << "Default setting for new races:"
-            << " fk=" << default_fk
-            << " mk=" << default_mk
-            << " fa=" << default_fa
-            << " ma=" << default_ma
-            << endl;
-
-        if(!watched_races.size())
-        {
-            out << "The autobutcher race list is empty." << endl;
-            return CR_OK;
-        }
-
-        out << "Races on autobutcher list: " << endl;
-        for(size_t i=0; i<watched_races.size(); i++)
-        {
-            WatchedRace * w = watched_races[i];
-            df::creature_raw * raw = world->raws.creatures.all[w->raceId];
-            string name = raw->creature_id;
-            if(w->isWatched)
-                out << "watched: ";
-            else
-                out << "not watched: ";
-            out << name
-                << " fk=" << w->fk
-                << " mk=" << w->mk
-                << " fa=" << w->fa
-                << " ma=" << w->ma
-                << endl;
-        }
-        return CR_OK;
-    }
-
-    if(list_export)
-    {
-        // force creation of config
-        out << "autobutcher start" << endl;
-
-        if(!enable_autobutcher)
-            out << "autobutcher stop" << endl;
-
-        if (enable_autobutcher_autowatch)
-            out << "autobutcher autowatch" << endl;
-
-        out << "autobutcher sleep " << sleep_autobutcher << endl;
-        out << "autobutcher target"
-            << " " << default_fk
-            << " " << default_mk
-            << " " << default_fa
-            << " " << default_ma
-            << " new" << endl;
-
-        for(size_t i=0; i<watched_races.size(); i++)
-        {
-            WatchedRace * w = watched_races[i];
-            df::creature_raw * raw = world->raws.creatures.all[w->raceId];
-            string name = raw->creature_id;
-
-            out << "autobutcher target"
-                << " " << w->fk
-                << " " << w->mk
-                << " " << w->fa
-                << " " << w->ma
-                << " " << name << endl;
-
-            if(w->isWatched)
-                out << "autobutcher watch " << name << endl;
-        }
-        return CR_OK;
-    }
-
-    // parse rest of parameters for commands followed by a list of races
-    if(    watch_race
-        || unwatch_race
-        || forget_race
-        || change_target )
-    {
-        if(!parameters.size())
-        {
-            out.printerr("No race(s) specified!\n");
-            return CR_WRONG_USAGE;
-        }
-        while(parameters.size())
-        {
-            string tr = parameters.back();
-            target_racenames.push_back(tr);
-            parameters.pop_back();
-            out << tr << " ";
-        }
-        out << endl;
-    }
-
-    if(change_target && target_racenames.size() && target_racenames[0] == "all")
-    {
-        out << "Setting target count for all races on watchlist." << endl;
-        for(size_t i=0; i<watched_races.size(); i++)
-        {
-            WatchedRace * w = watched_races[i];
-            w->fk = target_fk;
-            w->mk = target_mk;
-            w->fa = target_fa;
-            w->ma = target_ma;
-            w->UpdateConfig(out);
-        }
-    }
-
-    if(target_racenames.size() && (target_racenames[0] == "all" || target_racenames[0] == "new"))
-    {
-        if(change_target)
-        {
-            out << "Setting target count for the future." << endl;
-            default_fk = target_fk;
-            default_mk = target_mk;
-            default_fa = target_fa;
-            default_ma = target_ma;
-            if(config_autobutcher.isValid())
-            {
-                config_autobutcher.ival(3) = default_fk;
-                config_autobutcher.ival(4) = default_mk;
-                config_autobutcher.ival(5) = default_fa;
-                config_autobutcher.ival(6) = default_ma;
-            }
-            return CR_OK;
-        }
-        else if(target_racenames[0] == "new")
-        {
-            out << "The only valid usage of 'new' is in combination when setting a target count!" << endl;
-
-            // hm, maybe instead of complaining start/stop autowatch instead? and get rid of the autowatch option?
-            if(unwatch_race)
-                out << "'unwatch new' makes no sense! Use 'noautowatch' instead." << endl;
-            else if(forget_race)
-                out << "'forget new' makes no sense, 'forget' is only for existing watchlist entries! Use 'noautowatch' instead." << endl;
-            else if(watch_race)
-                out << "'watch new' makes no sense! Use 'autowatch' instead." << endl;
-            return CR_WRONG_USAGE;
-        }
-    }
-
-    if(target_racenames.size() && target_racenames[0] == "all")
-    {
-        // fill with race ids from watchlist
-        for(size_t i=0; i<watched_races.size(); i++)
-        {
-            WatchedRace * w = watched_races[i];
-            target_raceids.push_back(w->raceId);
-        }
-    }
-    else
-    {
-        // map race names from parameter list to ids
-        size_t num_races = world->raws.creatures.all.size();
-        while(target_racenames.size())
-        {
-            bool found_race = false;
-            for(size_t i=0; i<num_races; i++)
-            {
-                if(getRaceNameById(i) == target_racenames.back())
-                {
-                    target_raceids.push_back(i);
-                    target_racenames.pop_back();
-                    found_race = true;
-                    break;
-                }
-            }
-            if(!found_race)
-            {
-                out << "Race not found: " << target_racenames.back() << endl;
-                return CR_OK;
-            }
-        }
-    }
-
-    while(target_raceids.size())
-    {
-        bool entry_found = false;
-        for(size_t i=0; i<watched_races.size(); i++)
-        {
-            WatchedRace * w = watched_races[i];
-            if(w->raceId == target_raceids.back())
-            {
-                if(unwatch_race)
-                {
-                    w->isWatched=false;
-                    w->UpdateConfig(out);
-                }
-                else if(forget_race)
-                {
-                    w->RemoveConfig(out);
-                    watched_races.erase(watched_races.begin()+i);
-                }
-                else if(watch_race)
-                {
-                    w->isWatched = true;
-                    w->UpdateConfig(out);
-                }
-                else if(change_target)
-                {
-                    w->fk = target_fk;
-                    w->mk = target_mk;
-                    w->fa = target_fa;
-                    w->ma = target_ma;
-                    w->UpdateConfig(out);
-                }
-                entry_found = true;
-                break;
-            }
-        }
-        if(!entry_found && (watch_race||change_target))
-        {
-            WatchedRace * w = new WatchedRace(watch_race, target_raceids.back(), target_fk, target_mk, target_fa, target_ma);
-            w->UpdateConfig(out);
-            watched_races.push_back(w);
-            autobutcher_sortWatchList(out);
-        }
-        target_raceids.pop_back();
-    }
-
-    return CR_OK;
-}
-
-// check watched_races vector for a race id, return -1 if nothing found
-// calling method needs to check itself if the race is currently being watched or ignored
-int getWatchedIndex(int id)
-{
-    for(size_t i=0; i<watched_races.size(); i++)
-    {
-        WatchedRace * w = watched_races[i];
-        if(w->raceId == id) // && w->isWatched)
-            return i;
-    }
-    return -1;
-}
-
-command_result autoButcher( color_ostream &out, bool verbose = false )
-{
-    // don't run if not supposed to
-    if(!Maps::IsValid())
-        return CR_OK;
-
-    // check if there is anything to watch before walking through units vector
-    if(!enable_autobutcher_autowatch)
-    {
-        bool watching = false;
-        for(size_t i=0; i<watched_races.size(); i++)
-        {
-            WatchedRace * w = watched_races[i];
-            if(w->isWatched)
-            {
-                watching = true;
-                break;
-            }
-        }
-        if(!watching)
-            return CR_OK;
-    }
-
-    for(size_t i=0; i<world->units.all.size(); i++)
-    {
-        df::unit * unit = world->units.all[i];
-
-        // this check is now divided into two steps, squeezed autowatch into the middle
-        // first one ignores completely inappropriate units (dead, undead, not belonging to the fort, ...)
-        // then let autowatch add units to the watchlist which will probably start breeding (owned pets, war animals, ...)
-        // then process units counting those which can't be butchered (war animals, named pets, ...)
-        // so that they are treated as "own stock" as well and count towards the target quota
-        if(    !isActive(unit)
-            || isUndead(unit)
-            || isMarkedForSlaughter(unit)
-            || isMerchant(unit) // ignore merchants' draught animals
-            || isForest(unit) // ignore merchants' caged animals
-            || !isOwnCiv(unit)
-            || !isTame(unit)
-            )
-            continue;
-
-        // found a bugged unit which had invalid coordinates but was not in a cage.
-        // marking it for slaughter didn't seem to have negative effects, but you never know...
-        if(!isContainedInItem(unit) && !hasValidMapPos(unit))
-            continue;
-
-        WatchedRace * w = NULL;
-        int watched_index = getWatchedIndex(unit->race);
-        if(watched_index != -1)
-        {
-            w = watched_races[watched_index];
-        }
-        else if(enable_autobutcher_autowatch)
-        {
-            w = new WatchedRace(true, unit->race, default_fk, default_mk, default_fa, default_ma);
-            w->UpdateConfig(out);
-            watched_races.push_back(w);
-
-            string announce;
-            announce = "New race added to autobutcher watchlist: " + getRaceNamePluralById(w->raceId);
-            Gui::showAnnouncement(announce, 2, false);
-            autobutcher_sortWatchList(out);
-        }
-
-        if(w && w->isWatched)
-        {
-            // don't butcher protected units, but count them as stock as well
-            // this way they count towards target quota, so if you order that you want 1 female adult cat
-            // and have 2 cats, one of them being a pet, the other gets butchered
-            if(    isWar(unit)    // ignore war dogs etc
-                || isHunter(unit) // ignore hunting dogs etc
-                // ignore creatures in built cages which are defined as rooms to leave zoos alone
-                // (TODO: better solution would be to allow some kind of slaughter cages which you can place near the butcher)
-                || (isContainedInItem(unit) && isInBuiltCageRoom(unit))  // !!! see comments in isBuiltCageRoom()
-                || isAvailableForAdoption(unit)
-                || unit->name.has_name )
-                w->PushProtectedUnit(unit);
-            else if (   isGay(unit)
-                     || isGelded(unit))
-                w->PushPriorityUnit(unit);
-            else
-                w->PushUnit(unit);
-        }
-    }
-
-    int slaughter_count = 0;
-    for(size_t i=0; i<watched_races.size(); i++)
-    {
-        WatchedRace * w = watched_races[i];
-        int slaughter_subcount = w->ProcessUnits();
-        slaughter_count += slaughter_subcount;
-        if(slaughter_subcount)
-        {
-            stringstream ss;
-            ss << slaughter_subcount;
-            string announce;
-            announce = getRaceNamePluralById(w->raceId) + " marked for slaughter: " + ss.str();
-            Gui::showAnnouncement(announce, 2, false);
-        }
-    }
-
-    return CR_OK;
-}
-
-////////////////////////////////////////////////////
-// autobutcher start/init/cleanup
-
-command_result start_autobutcher(color_ostream &out)
-{
-    plugin_enable(out, true);
-    enable_autobutcher = true;
-
-    if (!config_autobutcher.isValid())
-    {
-        config_autobutcher = World::AddPersistentData("autobutcher/config");
-
-        if (!config_autobutcher.isValid())
-        {
-            out << "Cannot enable autobutcher without a world!" << endl;
-            return CR_OK;
-        }
-
-        config_autobutcher.ival(1) = sleep_autobutcher;
-        config_autobutcher.ival(2) = enable_autobutcher_autowatch;
-        config_autobutcher.ival(3) = default_fk;
-        config_autobutcher.ival(4) = default_mk;
-        config_autobutcher.ival(5) = default_fa;
-        config_autobutcher.ival(6) = default_ma;
-    }
-
-    config_autobutcher.ival(0) = enable_autobutcher;
-
-    out << "Starting autobutcher." << endl;
-    init_autobutcher(out);
-    return CR_OK;
-}
-
-command_result init_autobutcher(color_ostream &out)
-{
-    cleanup_autobutcher(out);
-
-    config_autobutcher = World::GetPersistentData("autobutcher/config");
-    if(config_autobutcher.isValid())
-    {
-        if (config_autobutcher.ival(0) == -1)
-        {
-            config_autobutcher.ival(0) = enable_autobutcher;
-            config_autobutcher.ival(1) = sleep_autobutcher;
-            config_autobutcher.ival(2) = enable_autobutcher_autowatch;
-            config_autobutcher.ival(3) = default_fk;
-            config_autobutcher.ival(4) = default_mk;
-            config_autobutcher.ival(5) = default_fa;
-            config_autobutcher.ival(6) = default_ma;
-            out << "Autobutcher's persistent config object was invalid!" << endl;
-        }
-        else
-        {
-            enable_autobutcher = config_autobutcher.ival(0);
-            sleep_autobutcher = config_autobutcher.ival(1);
-            enable_autobutcher_autowatch = config_autobutcher.ival(2);
-            default_fk = config_autobutcher.ival(3);
-            default_mk = config_autobutcher.ival(4);
-            default_fa = config_autobutcher.ival(5);
-            default_ma = config_autobutcher.ival(6);
-        }
-    }
-
-    if(!enable_autobutcher)
-        return CR_OK;
-
-    plugin_enable(out, true);
-    // read watchlist from save
-
-    std::vector<PersistentDataItem> items;
-    World::GetPersistentData(&items, "autobutcher/watchlist/", true);
-    for (auto p = items.begin(); p != items.end(); p++)
-    {
-        string key = p->key();
-        out << "Reading from save: " << key << endl;
-        //out << "  raceid: "   << p->ival(0) << endl;
-        //out << "  watched: "  << p->ival(1) << endl;
-        //out << "  fk: "       << p->ival(2) << endl;
-        //out << "  mk: "       << p->ival(3) << endl;
-        //out << "  fa: "       << p->ival(4) << endl;
-        //out << "  ma: "       << p->ival(5) << endl;
-        WatchedRace * w = new WatchedRace(p->ival(1), p->ival(0), p->ival(2), p->ival(3),p->ival(4),p->ival(5));
-        w->rconfig = *p;
-        watched_races.push_back(w);
-    }
-    autobutcher_sortWatchList(out);
-    return CR_OK;
-}
-
-command_result cleanup_autobutcher(color_ostream &out)
-{
-    for(size_t i=0; i<watched_races.size(); i++)
-    {
-        delete watched_races[i];
-    }
-    watched_races.clear();
-    return CR_OK;
-}
-
-// abuse WatchedRace struct for counting stocks (since it sorts by gender and age)
-// calling method must delete pointer!
-WatchedRace * checkRaceStocksTotal(int race)
-{
-    WatchedRace * w = new WatchedRace(true, race, default_fk, default_mk, default_fa, default_ma);
-
-    for(size_t i=0; i<world->units.all.size(); i++)
-    {
-        df::unit * unit = world->units.all[i];
-
-        if(unit->race != race)
-            continue;
-
-        if(    !isActive(unit)
-            || isUndead(unit)
-            || isMerchant(unit) // ignore merchants' draught animals
-            || isForest(unit) // ignore merchants' caged animals
-            || !isOwnCiv(unit)
-            )
-            continue;
-
-        // found a bugged unit which had invalid coordinates but was not in a cage.
-        // marking it for slaughter didn't seem to have negative effects, but you never know...
-        if(!isContainedInItem(unit) && !hasValidMapPos(unit))
-            continue;
-
-        w->PushUnit(unit);
-    }
-    return w;
-}
-
-WatchedRace * checkRaceStocksProtected(int race)
-{
-    WatchedRace * w = new WatchedRace(true, race, default_fk, default_mk, default_fa, default_ma);
-
-    for(size_t i=0; i<world->units.all.size(); i++)
-    {
-        df::unit * unit = world->units.all[i];
-
-        if(unit->race != race)
-            continue;
-
-        if(    !isActive(unit)
-            || isUndead(unit)
-            || isMerchant(unit) // ignore merchants' draught animals
-            || isForest(unit) // ignore merchants' caged animals
-            || !isOwnCiv(unit)
-            )
-            continue;
-
-        // found a bugged unit which had invalid coordinates but was not in a cage.
-        // marking it for slaughter didn't seem to have negative effects, but you never know...
-        if(!isContainedInItem(unit) && !hasValidMapPos(unit))
-            continue;
-
-        if(   !isTame(unit)
-           || isWar(unit) // ignore war dogs etc
-           || isHunter(unit) // ignore hunting dogs etc
-            // ignore creatures in built cages which are defined as rooms to leave zoos alone
-            // (TODO: better solution would be to allow some kind of slaughter cages which you can place near the butcher)
-            || (isContainedInItem(unit) && isInBuiltCageRoom(unit))  // !!! see comments in isBuiltCageRoom()
-            || isAvailableForAdoption(unit)
-            || unit->name.has_name )
-            w->PushUnit(unit);
-    }
-    return w;
-}
-
-WatchedRace * checkRaceStocksButcherable(int race)
-{
-    WatchedRace * w = new WatchedRace(true, race, default_fk, default_mk, default_fa, default_ma);
-
-    for(size_t i=0; i<world->units.all.size(); i++)
-    {
-        df::unit * unit = world->units.all[i];
-
-        if(unit->race != race)
-            continue;
-
-        if(    !isActive(unit)
-            || isUndead(unit)
-            || isMerchant(unit) // ignore merchants' draught animals
-            || isForest(unit) // ignore merchants' caged animals
-            || !isOwnCiv(unit)
-            || !isTame(unit)
-            || isWar(unit) // ignore war dogs etc
-            || isHunter(unit) // ignore hunting dogs etc
-            // ignore creatures in built cages which are defined as rooms to leave zoos alone
-            // (TODO: better solution would be to allow some kind of slaughter cages which you can place near the butcher)
-            || (isContainedInItem(unit) && isInBuiltCageRoom(unit))  // !!! see comments in isBuiltCageRoom()
-            || isAvailableForAdoption(unit)
-            || unit->name.has_name
-            )
-            continue;
-
-        // found a bugged unit which had invalid coordinates but was not in a cage.
-        // marking it for slaughter didn't seem to have negative effects, but you never know...
-        if(!isContainedInItem(unit) && !hasValidMapPos(unit))
-            continue;
-
-        w->PushUnit(unit);
-    }
-    return w;
-}
-
-WatchedRace * checkRaceStocksButcherFlag(int race)
-{
-    WatchedRace * w = new WatchedRace(true, race, default_fk, default_mk, default_fa, default_ma);
-
-    for(size_t i=0; i<world->units.all.size(); i++)
-    {
-        df::unit * unit = world->units.all[i];
-
-        if(unit->race != race)
-            continue;
-
-        if(    !isActive(unit)
-            || isUndead(unit)
-            || isMerchant(unit) // ignore merchants' draught animals
-            || isForest(unit) // ignore merchants' caged animals
-            || !isOwnCiv(unit)
-            )
-            continue;
-
-        // found a bugged unit which had invalid coordinates but was not in a cage.
-        // marking it for slaughter didn't seem to have negative effects, but you never know...
-        if(!isContainedInItem(unit) && !hasValidMapPos(unit))
-            continue;
-
-        if(isMarkedForSlaughter(unit))
-            w->PushUnit(unit);
-    }
-    return w;
-}
-
-void butcherRace(int race)
-{
-    for(size_t i=0; i<world->units.all.size(); i++)
-    {
-        df::unit * unit = world->units.all[i];
-
-        if(unit->race != race)
-            continue;
-
-        if(    !isActive(unit)
-            || isUndead(unit)
-            || isMerchant(unit) // ignore merchants' draught animals
-            || isForest(unit) // ignore merchants' caged animals
-            || !isOwnCiv(unit)
-            || !isTame(unit)
-            || isWar(unit) // ignore war dogs etc
-            || isHunter(unit) // ignore hunting dogs etc
-            // ignore creatures in built cages which are defined as rooms to leave zoos alone
-            // (TODO: better solution would be to allow some kind of slaughter cages which you can place near the butcher)
-            || (isContainedInItem(unit) && isInBuiltCageRoom(unit))  // !!! see comments in isBuiltCageRoom()
-            || isAvailableForAdoption(unit)
-            || unit->name.has_name
-            )
-            continue;
-
-        // found a bugged unit which had invalid coordinates but was not in a cage.
-        // marking it for slaughter didn't seem to have negative effects, but you never know...
-        if(!isContainedInItem(unit) && !hasValidMapPos(unit))
-            continue;
-
-        doMarkForSlaughter(unit);
-    }
-}
-
-// remove butcher flag for all units of a given race
-void unbutcherRace(int race)
-{
-    for(size_t i=0; i<world->units.all.size(); i++)
-    {
-        df::unit * unit = world->units.all[i];
-
-        if(unit->race != race)
-            continue;
-
-        if(    !isActive(unit)
-            || isUndead(unit)
-            || !isMarkedForSlaughter(unit)
-            )
-            continue;
-
-        if(!isContainedInItem(unit) && !hasValidMapPos(unit))
-            continue;
-
-        unit->flags2.bits.slaughter = 0;
-    }
-}
-
-
-/////////////////////////////////////
-// API functions to control autobutcher with a lua script
-
-static bool autobutcher_isEnabled() { return enable_autobutcher; }
-static bool autowatch_isEnabled() { return enable_autobutcher_autowatch; }
-
-static unsigned autobutcher_getSleep(color_ostream &out)
-{
-    return sleep_autobutcher;
-}
-
-static void autobutcher_setSleep(color_ostream &out, unsigned ticks)
-{
-    sleep_autobutcher = ticks;
-    if(config_autobutcher.isValid())
-        config_autobutcher.ival(1) = sleep_autobutcher;
-}
-
-static void autobutcher_setEnabled(color_ostream &out, bool enable)
-{
-    if(enable)
-    {
-        enable_autobutcher = true;
-        start_autobutcher(out);
-        autoButcher(out, false);
-    }
-    else
-    {
-        enable_autobutcher = false;
-        if(config_autobutcher.isValid())
-            config_autobutcher.ival(0) = enable_autobutcher;
-        out << "Autobutcher stopped." << endl;
-    }
-
-    if (enable)
-        plugin_enable(out, true);
-}
-
-static void autowatch_setEnabled(color_ostream &out, bool enable)
-{
-    if(enable)
-    {
-        out << "Auto-adding to watchlist started." << endl;
-        enable_autobutcher_autowatch = true;
-        if(config_autobutcher.isValid())
-            config_autobutcher.ival(2) = enable_autobutcher_autowatch;
-    }
-    else
-    {
-        out << "Auto-adding to watchlist stopped." << endl;
-        enable_autobutcher_autowatch = false;
-        if(config_autobutcher.isValid())
-            config_autobutcher.ival(2) = enable_autobutcher_autowatch;
-    }
-}
-
-// set all data for a watchlist race in one go
-// if race is not already on watchlist it will be added
-// params: (id, fk, mk, fa, ma, watched)
-static void autobutcher_setWatchListRace(color_ostream &out, unsigned id, unsigned fk, unsigned mk, unsigned fa, unsigned ma, bool watched)
-{
-    int watched_index = getWatchedIndex(id);
-    if(watched_index != -1)
-    {
-        out << "updating watchlist entry" << endl;
-        WatchedRace * w = watched_races[watched_index];
-        w->fk = fk;
-        w->mk = mk;
-        w->fa = fa;
-        w->ma = ma;
-        w->isWatched = watched;
-        w->UpdateConfig(out);
-    }
-    else
-    {
-        out << "creating new watchlist entry" << endl;
-        WatchedRace * w = new WatchedRace(watched, id, fk, mk, fa, ma); //default_fk, default_mk, default_fa, default_ma);
-        w->UpdateConfig(out);
-        watched_races.push_back(w);
-
-        string announce;
-        announce = "New race added to autobutcher watchlist: " + getRaceNamePluralById(w->raceId);
-        Gui::showAnnouncement(announce, 2, false);
-        autobutcher_sortWatchList(out);
-    }
-}
-
-// remove entry from watchlist
-static void autobutcher_removeFromWatchList(color_ostream &out, unsigned id)
-{
-    int watched_index = getWatchedIndex(id);
-    if(watched_index != -1)
-    {
-        out << "updating watchlist entry" << endl;
-        WatchedRace * w = watched_races[watched_index];
-        w->RemoveConfig(out);
-        watched_races.erase(watched_races.begin() + watched_index);
-    }
-}
-
-// sort watchlist alphabetically
-static void autobutcher_sortWatchList(color_ostream &out)
-{
-    sort(watched_races.begin(), watched_races.end(), compareRaceNames);
-}
-
-// set default target values for new races
-static void autobutcher_setDefaultTargetNew(color_ostream &out, unsigned fk, unsigned mk, unsigned fa, unsigned ma)
-{
-    default_fk = fk;
-    default_mk = mk;
-    default_fa = fa;
-    default_ma = ma;
-    if(config_autobutcher.isValid())
-    {
-        config_autobutcher.ival(3) = default_fk;
-        config_autobutcher.ival(4) = default_mk;
-        config_autobutcher.ival(5) = default_fa;
-        config_autobutcher.ival(6) = default_ma;
-    }
-}
-
-// set default target values for ALL races (update watchlist and set new default)
-static void autobutcher_setDefaultTargetAll(color_ostream &out, unsigned fk, unsigned mk, unsigned fa, unsigned ma)
-{
-    for(unsigned i=0; i<watched_races.size(); i++)
-    {
-        WatchedRace * w = watched_races[i];
-        w->fk = fk;
-        w->mk = mk;
-        w->fa = fa;
-        w->ma = ma;
-        w->UpdateConfig(out);
-    }
-    autobutcher_setDefaultTargetNew(out, fk, mk, fa, ma);
-}
-
-static void autobutcher_butcherRace(color_ostream &out, unsigned id)
-{
-    butcherRace(id);
-}
-
-static void autobutcher_unbutcherRace(color_ostream &out, unsigned id)
-{
-    unbutcherRace(id);
-}
-
-// push autobutcher settings on lua stack
-static int autobutcher_getSettings(lua_State *L)
-{
-    lua_newtable(L);
-    int ctable = lua_gettop(L);
-    Lua::SetField(L, enable_autobutcher, ctable, "enable_autobutcher");
-    Lua::SetField(L, enable_autobutcher_autowatch, ctable, "enable_autowatch");
-    Lua::SetField(L, default_fk, ctable, "fk");
-    Lua::SetField(L, default_mk, ctable, "mk");
-    Lua::SetField(L, default_fa, ctable, "fa");
-    Lua::SetField(L, default_ma, ctable, "ma");
-    Lua::SetField(L, sleep_autobutcher, ctable, "sleep");
-    return 1;
-}
-
-// push the watchlist vector as nested table on the lua stack
-static int autobutcher_getWatchList(lua_State *L)
-{
-    lua_newtable(L);
-
-    for(size_t i=0; i<watched_races.size(); i++)
-    {
-        lua_newtable(L);
-        int ctable = lua_gettop(L);
-        WatchedRace * w = watched_races[i];
-        Lua::SetField(L, w->raceId, ctable, "id");
-        Lua::SetField(L, w->isWatched, ctable, "watched");
-        Lua::SetField(L, getRaceNamePluralById(w->raceId), ctable, "name");
-        Lua::SetField(L, w->fk, ctable, "fk");
-        Lua::SetField(L, w->mk, ctable, "mk");
-        Lua::SetField(L, w->fa, ctable, "fa");
-        Lua::SetField(L, w->ma, ctable, "ma");
-
-        int id = w->raceId;
-
-        w = checkRaceStocksTotal(id);
-        Lua::SetField(L, w->unit_ptr[fk_index].size(), ctable, "fk_total");
-        Lua::SetField(L, w->unit_ptr[mk_index].size(), ctable, "mk_total");
-        Lua::SetField(L, w->unit_ptr[fa_index].size(), ctable, "fa_total");
-        Lua::SetField(L, w->unit_ptr[ma_index].size(), ctable, "ma_total");
-        delete w;
-
-        w = checkRaceStocksProtected(id);
-        Lua::SetField(L, w->unit_ptr[fk_index].size(), ctable, "fk_protected");
-        Lua::SetField(L, w->unit_ptr[mk_index].size(), ctable, "mk_protected");
-        Lua::SetField(L, w->unit_ptr[fa_index].size(), ctable, "fa_protected");
-        Lua::SetField(L, w->unit_ptr[ma_index].size(), ctable, "ma_protected");
-        delete w;
-
-        w = checkRaceStocksButcherable(id);
-        Lua::SetField(L, w->unit_ptr[fk_index].size(), ctable, "fk_butcherable");
-        Lua::SetField(L, w->unit_ptr[mk_index].size(), ctable, "mk_butcherable");
-        Lua::SetField(L, w->unit_ptr[fa_index].size(), ctable, "fa_butcherable");
-        Lua::SetField(L, w->unit_ptr[ma_index].size(), ctable, "ma_butcherable");
-        delete w;
-
-        w = checkRaceStocksButcherFlag(id);
-        Lua::SetField(L, w->unit_ptr[fk_index].size(), ctable, "fk_butcherflag");
-        Lua::SetField(L, w->unit_ptr[mk_index].size(), ctable, "mk_butcherflag");
-        Lua::SetField(L, w->unit_ptr[fa_index].size(), ctable, "fa_butcherflag");
-        Lua::SetField(L, w->unit_ptr[ma_index].size(), ctable, "ma_butcherflag");
-        delete w;
-
-        lua_rawseti(L, -2, i+1);
-    }
-
-    return 1;
-}
-
-DFHACK_PLUGIN_LUA_FUNCTIONS {
-    DFHACK_LUA_FUNCTION(autobutcher_isEnabled),
-    DFHACK_LUA_FUNCTION(autowatch_isEnabled),
-    DFHACK_LUA_FUNCTION(autobutcher_setEnabled),
-    DFHACK_LUA_FUNCTION(autowatch_setEnabled),
-    DFHACK_LUA_FUNCTION(autobutcher_getSleep),
-    DFHACK_LUA_FUNCTION(autobutcher_setSleep),
-    DFHACK_LUA_FUNCTION(autobutcher_setWatchListRace),
-    DFHACK_LUA_FUNCTION(autobutcher_setDefaultTargetNew),
-    DFHACK_LUA_FUNCTION(autobutcher_setDefaultTargetAll),
-    DFHACK_LUA_FUNCTION(autobutcher_butcherRace),
-    DFHACK_LUA_FUNCTION(autobutcher_unbutcherRace),
-    DFHACK_LUA_FUNCTION(autobutcher_removeFromWatchList),
-    DFHACK_LUA_FUNCTION(autobutcher_sortWatchList),
-    DFHACK_LUA_END
-};
-
-DFHACK_PLUGIN_LUA_COMMANDS {
-    DFHACK_LUA_COMMAND(autobutcher_getSettings),
-    DFHACK_LUA_COMMAND(autobutcher_getWatchList),
-    DFHACK_LUA_END
-};
-
-// end lua API
-
-
 
 //START zone filters
 
@@ -3578,7 +1979,7 @@ public:
             if (!curr_unit)
                 continue;
 
-            if (!show_non_grazers && !isGrazer(curr_unit))
+            if (!show_non_grazers && !Units::isGrazer(curr_unit))
                 continue;
 
             if (!show_pastured && isAssignedToZone(curr_unit))
@@ -3594,10 +1995,10 @@ public:
                     continue;
             }
 
-            if (!show_male && isMale(curr_unit))
+            if (!show_male && Units::isMale(curr_unit))
                 continue;
 
-            if (!show_female && isFemale(curr_unit))
+            if (!show_female && Units::isFemale(curr_unit))
                 continue;
 
             if (!search_string_l.empty())
@@ -3894,21 +2295,15 @@ DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable)
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "zone", "manage activity zones.",
-        df_zone, false,
-        zone_help.c_str()
-        ));
-    commands.push_back(PluginCommand(
-        "autobutcher", "auto-assign lifestock for butchering.",
-        df_autobutcher, false,
-        autobutcher_help.c_str()
-        ));
-    init_autobutcher(out);
+        "zone",
+        "manage activity zones.",
+        df_zone,
+        false,
+        zone_help.c_str()));
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
-    cleanup_autobutcher(out);
     return CR_OK;
 }

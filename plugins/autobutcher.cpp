@@ -150,7 +150,7 @@ static void set_config_bool(int index, bool value) {
 }
 
 static unordered_map<string, int> race_to_id;
-static size_t cycle_counter = 0;  // how many ticks since the last cycle
+static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
 
 static size_t DEFAULT_CYCLE_TICKS = 6000;
 
@@ -252,7 +252,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (is_enabled && ++cycle_counter >= (size_t)get_config_val(CONFIG_CYCLE_TICKS))
+    if (is_enabled && world->frame_counter - cycle_timestamp >= get_config_val(CONFIG_CYCLE_TICKS))
         autobutcher_cycle(out);
     return CR_OK;
 }
@@ -663,7 +663,8 @@ static void autobutcher_status(color_ostream &out) {
 
 static void autobutcher_target(color_ostream &out, const autobutcher_options &opts) {
     if (opts.races_new) {
-        DEBUG(status,out).print("setting targets for new races\n");
+        DEBUG(status,out).print("setting targets for new races to fk=%u, mk=%u, fa=%u, ma=%u\n",
+                                opts.fk, opts.mk, opts.fa, opts.ma);
         set_config_val(CONFIG_DEFAULT_FK, opts.fk);
         set_config_val(CONFIG_DEFAULT_MK, opts.mk);
         set_config_val(CONFIG_DEFAULT_FA, opts.fa);
@@ -671,7 +672,8 @@ static void autobutcher_target(color_ostream &out, const autobutcher_options &op
     }
 
     if (opts.races_all) {
-        DEBUG(status,out).print("setting targets for all races on watchlist\n");
+        DEBUG(status,out).print("setting targets for all races on watchlist to fk=%u, mk=%u, fa=%u, ma=%u\n",
+                                opts.fk, opts.mk, opts.fa, opts.ma);
         for (auto w : watched_races) {
             w.second->fk = opts.fk;
             w.second->mk = opts.mk;
@@ -689,7 +691,6 @@ static void autobutcher_target(color_ostream &out, const autobutcher_options &op
         int id = race_to_id[*race];
         WatchedRace *w;
         if (!watched_races.count(id)) {
-            DEBUG(status,out).print("adding new targets for %s\n", race->c_str());
             w = new WatchedRace(out, id, true, opts.fk, opts.mk, opts.fa, opts.ma);
             watched_races.emplace(id, w);
         } else {
@@ -707,8 +708,6 @@ static void autobutcher_modify_watchlist(color_ostream &out, const autobutcher_o
     unordered_set<int> ids;
 
     if (opts.races_all) {
-        DEBUG(status,out).print("modifying all races on watchlist: %s\n",
-                                opts.command.c_str());
         for (auto w : watched_races)
             ids.emplace(w.first);
     }
@@ -722,13 +721,41 @@ static void autobutcher_modify_watchlist(color_ostream &out, const autobutcher_o
     }
 
     for (int id : ids) {
-        if (opts.command == "watch")
-            watched_races[id]->isWatched = true;
-        else if (opts.command == "unwatch")
-            watched_races[id]->isWatched = false;
+        if (opts.command == "watch") {
+            if (!watched_races.count(id)) {
+                watched_races.emplace(id,
+                    new WatchedRace(out, id, true,
+                                    get_config_val(CONFIG_DEFAULT_FK),
+                                    get_config_val(CONFIG_DEFAULT_MK),
+                                    get_config_val(CONFIG_DEFAULT_FA),
+                                    get_config_val(CONFIG_DEFAULT_MA)));
+            }
+            else if (!watched_races[id]->isWatched) {
+                DEBUG(status,out).print("watching: %s\n", opts.command.c_str());
+                watched_races[id]->isWatched = true;
+            }
+        }
+        else if (opts.command == "unwatch") {
+            if (!watched_races.count(id)) {
+                watched_races.emplace(id,
+                    new WatchedRace(out, id, false,
+                                    get_config_val(CONFIG_DEFAULT_FK),
+                                    get_config_val(CONFIG_DEFAULT_MK),
+                                    get_config_val(CONFIG_DEFAULT_FA),
+                                    get_config_val(CONFIG_DEFAULT_MA)));
+            }
+            else if (watched_races[id]->isWatched) {
+                DEBUG(status,out).print("unwatching: %s\n", opts.command.c_str());
+                watched_races[id]->isWatched = false;
+            }
+        }
         else if (opts.command == "forget") {
-            watched_races[id]->RemoveConfig(out);
-            watched_races.erase(id);
+            if (watched_races.count(id)) {
+                DEBUG(status,out).print("forgetting: %s\n", opts.command.c_str());
+                watched_races[id]->RemoveConfig(out);
+                delete watched_races[id];
+                watched_races.erase(id);
+            }
             continue;
         }
         watched_races[id]->UpdateConfig(out);
@@ -776,7 +803,10 @@ static bool isInBuiltCageRoom(df::unit *unit) {
 }
 
 static void autobutcher_cycle(color_ostream &out) {
-    DEBUG(cycle,out).print("running autobutcher_cycle\n");
+    // mark that we have recently run
+    cycle_timestamp = world->frame_counter;
+
+    DEBUG(cycle,out).print("running autobutcher cycle\n");
 
     // check if there is anything to watch before walking through units vector
     if (!get_config_bool(CONFIG_AUTOWATCH)) {
@@ -850,14 +880,13 @@ static void autobutcher_cycle(color_ostream &out) {
         }
     }
 
-    int slaughter_count = 0;
     for (auto w : watched_races) {
-        int slaughter_subcount = w.second->ProcessUnits();
-        slaughter_count += slaughter_subcount;
-        if (slaughter_subcount) {
+        int slaughter_count = w.second->ProcessUnits();
+        if (slaughter_count) {
             stringstream ss;
-            ss << slaughter_subcount;
+            ss << slaughter_count;
             string announce = Units::getRaceNamePluralById(w.first) + " marked for slaughter: " + ss.str();
+            DEBUG(cycle,out).print("%s\n", announce.c_str());
             Gui::showAnnouncement(announce, 2, false);
         }
     }

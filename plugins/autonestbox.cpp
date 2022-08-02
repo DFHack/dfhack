@@ -73,7 +73,7 @@ static bool set_config_val(int index, int value) {
 }
 
 static bool did_complain = false; // avoids message spam
-static size_t cycle_counter = 0;  // how many ticks since the last cycle
+static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
 
 struct autonestbox_options {
     // whether to display help
@@ -168,8 +168,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (is_enabled && ++cycle_counter >=
-            (size_t)get_config_val(CONFIG_CYCLE_TICKS))
+    if (is_enabled && world->frame_counter - cycle_timestamp >= get_config_val(CONFIG_CYCLE_TICKS))
         autonestbox_cycle(out);
     return CR_OK;
 }
@@ -342,7 +341,7 @@ static bool assignUnitToZone(color_ostream &out, df::unit *unit, df::building *b
     df::general_ref_building_civzone_assignedst *ref = createCivzoneRef();
     if (!ref) {
         ERR(cycle,out).print("Could not find a clonable activity zone reference!"
-            " You need to pen/pasture/pit at least one creature"
+            " You need to manually pen/pasture/pit at least one creature"
             " before autonestbox can function.\n");
         return false;
     }
@@ -381,6 +380,8 @@ static size_t assign_nestboxes(color_ostream &out) {
                 DEBUG(cycle,out).print("Failed to assign unit to building.\n");
                 return processed;
             }
+            DEBUG(cycle,out).print("assigned unit %d to zone %d\n",
+                                   free_unit->id, free_building->id);
             ++processed;
         }
     } while (free_unit && free_building);
@@ -406,13 +407,16 @@ static size_t assign_nestboxes(color_ostream &out) {
 
 static void autonestbox_cycle(color_ostream &out) {
     // mark that we have recently run
-    cycle_counter = 0;
+    cycle_timestamp = world->frame_counter;
+
+    DEBUG(cycle,out).print("running autonestbox cycle\n");
 
     size_t processed = assign_nestboxes(out);
     if (processed > 0) {
         stringstream ss;
         ss << processed << " nestboxes were assigned.";
         string announce = ss.str();
+        DEBUG(cycle,out).print("%s\n", announce.c_str());
         Gui::showAnnouncement(announce, 2, false);
         out << announce << endl;
         // can complain again

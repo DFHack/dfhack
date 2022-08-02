@@ -34,6 +34,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
+- `autonestbox`: split off from `zone` into its own plugin. Note that to enable, the command has changed from ``autonestbox start`` to `enable autonestbox`.
+- `autobutcher`: split off from `zone` into its own plugin. Note that to enable, the command has changed from ``autobutcher start`` to `enable autobutcher`.
 
 ## New Tweaks
 

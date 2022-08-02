@@ -22,7 +22,7 @@ Plugins
 
 DFHack plugins are written in C++ and located in the ``plugins`` folder.
 Currently, documentation on how to write plugins is somewhat sparse. There are
-templates that you can use to get started in the ``plugins/skeleton``
+templates that you can use to get started in the ``plugins/examples``
 folder, and the source code of existing plugins can also be helpful.
 
 If you want to compile a plugin that you have just added, you will need to add a
@@ -35,7 +35,7 @@ other commands).
 
 Plugins can also register handlers to run on every tick, and can interface with
 the built-in `enable` and `disable` commands. For the full plugin API, see the
-skeleton plugins or ``PluginManager.cpp``.
+example plugins or ``PluginManager.cpp``.
 
 Installed plugins live in the ``hack/plugins`` folder of a DFHack installation,
 and the `load` family of commands can be used to load a recompiled plugin

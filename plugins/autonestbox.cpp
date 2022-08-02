@@ -41,12 +41,14 @@ static const string autonestbox_help =
     "Usage:\n"
     "\n"
     "enable autonestbox\n"
-    "   Start checking for unpastured egg-layers and assigning them to nestbox zones.\n"
+    "    Start checking for unpastured egg-layers and assigning them to nestbox zones.\n"
+    "autonestbox\n"
+    "    Print current status."
     "autonestbox now\n"
-    "   Run a scan and assignment cycle right now. Does not require that the plugin is enabled.\n"
+    "    Run a scan and assignment cycle right now. Does not require that the plugin is enabled.\n"
     "autonestbox ticks <ticks>\n"
-    "   Change the number of ticks between scan and assignment cycles when the plugin is enabled.\n"
-    "   The default is 6000 (about 8 days)\n";
+    "    Change the number of ticks between scan and assignment cycles when the plugin is enabled.\n"
+    "    The default is 6000 (about 8 days)\n";
 
 namespace DFHack {
     DBG_DECLARE(autonestbox, status);
@@ -56,8 +58,8 @@ namespace DFHack {
 static const string CONFIG_KEY = "autonestbox/config";
 static PersistentDataItem config;
 enum ConfigValues {
-    IS_ENABLED = 0,
-    CYCLE_TICKS = 1,
+    CONFIG_IS_ENABLED = 0,
+    CONFIG_CYCLE_TICKS = 1,
 };
 static int get_config_val(int index) {
     if (!config.isValid())
@@ -103,15 +105,15 @@ static void init_autonestbox(color_ostream &out) {
     if (!config.isValid())
         config = World::AddPersistentData(CONFIG_KEY);
 
-    if (get_config_val(IS_ENABLED) == -1) {
-        set_config_val(IS_ENABLED, 0);
-        set_config_val(CYCLE_TICKS, 6000);
+    if (get_config_val(CONFIG_IS_ENABLED) == -1) {
+        set_config_val(CONFIG_IS_ENABLED, 0);
+        set_config_val(CONFIG_CYCLE_TICKS, 6000);
     }
 
     if (is_enabled)
-        set_config_val(IS_ENABLED, 1);
+        set_config_val(CONFIG_IS_ENABLED, 1);
     else
-        is_enabled = (get_config_val(IS_ENABLED) == 1);
+        is_enabled = (get_config_val(CONFIG_IS_ENABLED) == 1);
     did_complain = false;
 }
 
@@ -167,7 +169,8 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (is_enabled && ++cycle_counter >= (size_t)get_config_val(CYCLE_TICKS))
+    if (is_enabled && ++cycle_counter >=
+            (size_t)get_config_val(CONFIG_CYCLE_TICKS))
         autonestbox_cycle(out);
     return CR_OK;
 }
@@ -209,11 +212,14 @@ static command_result df_autonestbox(color_ostream &out, vector<string> &paramet
         return CR_WRONG_USAGE;
 
     if (opts.ticks > -1) {
-        set_config_val(CYCLE_TICKS, opts.ticks);
+        set_config_val(CONFIG_CYCLE_TICKS, opts.ticks);
         INFO(status,out).print("New cycle timer: %d ticks.\n", opts.ticks);
     }
     else if (opts.now) {
         autonestbox_cycle(out);
+    }
+    else {
+        out << "autonestbox is " << (is_enabled ? "" : "not ") << "running\n";
     }
     return CR_OK;
 }

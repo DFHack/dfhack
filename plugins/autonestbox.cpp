@@ -100,7 +100,7 @@ static void autonestbox_cycle(color_ostream &out);
 
 static void init_autonestbox(color_ostream &out) {
     config = World::GetPersistentData(CONFIG_KEY);
-    
+
     if (!config.isValid())
         config = World::AddPersistentData(CONFIG_KEY);
 

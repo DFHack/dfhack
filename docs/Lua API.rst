@@ -3029,6 +3029,18 @@ parameters.
   function also verifies that the coordinates are valid for the current map and
   throws if they are not (unless ``skip_validation`` is set to true).
 
+* ``argparse.positiveInt(arg, arg_name)``
+
+  Throws if ``tonumber(arg)`` is not a positive integer; otherwise returns
+  ``tonumber(arg)``. If ``arg_name`` is specified, it is used to make error
+  messages more useful.
+
+* ``argparse.nonnegativeInt(arg, arg_name)``
+
+  Throws if ``tonumber(arg)`` is not a non-negative integer; otherwise returns
+  ``tonumber(arg)``. If ``arg_name`` is specified, it is used to make error
+  messages more useful.
+
 dumper
 ======
 

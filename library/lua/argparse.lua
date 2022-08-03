@@ -154,11 +154,20 @@ function numberList(arg, arg_name, list_length)
     return strings
 end
 
--- throws if val is not a nonnegative integer; otherwise returns val
-local function check_nonnegative_int(val, arg_name)
+function positiveInt(arg, arg_name)
+    local val = tonumber(arg)
+    if not val or val <= 0 or val ~= math.floor(val) then
+        arg_error(arg_name,
+                  'expected positive integer; got "%s"', tostring(arg))
+    end
+    return val
+end
+
+function nonnegativeInt(arg, arg_name)
+    local val = tonumber(arg)
     if not val or val < 0 or val ~= math.floor(val) then
         arg_error(arg_name,
-                  'expected non-negative integer; got "%s"', tostring(val))
+                  'expected non-negative integer; got "%s"', tostring(arg))
     end
     return val
 end

@@ -185,6 +185,12 @@ if(BUILD_SUPPORTED)
     # see instructions for adding "external" plugins at the end of this file.
 endif()
 
+# this is the skeleton plugin. If you want to make your own, make a copy and then change it
+option(BUILD_SKELETON "Build the skeleton plugin." OFF)
+if(BUILD_SKELETON)
+    dfhack_plugin(skeleton examples/skeleton.cpp LINK_LIBRARIES lua)
+endif()
+
 macro(subdirlist result subdir)
     file(GLOB children ABSOLUTE ${subdir}/ ${subdir}/*/)
     set(dirlist "")

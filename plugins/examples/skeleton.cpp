@@ -1,6 +1,8 @@
-// This is an example plugin that just documents and implements all the plugin
-// callbacks and features. You can compile it, load it, run it, and see the
-// debug messages get printed to the console.
+// This is an example plugin that documents and implements all the plugin
+// callbacks and features. You can include it in the regular build by setting
+// the BUILD_SKELETON option in CMake to ON. Play with loading and unloading
+// the plugin in various game states (e.g. with and without a world loaded),
+// and see the debug messages get printed to the console.
 //
 // See the other example plugins in this directory for plugins that are
 // configured for specific use cases (but don't come with as many comments as
@@ -44,17 +46,23 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 REQUIRE_GLOBAL(world);
 
 // logging levels can be dynamically controlled with the `debugfilter` command.
+// Actual plugins will likely want to set the default level to LINFO or LWARNING
+// instead of the LDEBUG used here.
 namespace DFHack {
     // for configuration-related logging
-    DBG_DECLARE(skeleton, status, DebugCategory::LINFO);
-    // for logging during the periodic scan
-    DBG_DECLARE(skeleton, cycle, DebugCategory::LINFO);
+    DBG_DECLARE(skeleton, status, DebugCategory::LDEBUG);
+    // run `debugfilter set debug skeleton onupdate` to see logging in plugin_onupdate
+    DBG_DECLARE(skeleton, onupdate, DebugCategory::LINFO);
+    // for command-related logging
+    DBG_DECLARE(skeleton, command, DebugCategory::LDEBUG);
 }
 
-command_result command_callback1(color_ostream &out, vector<string> &parameters);
+static command_result command_callback1(color_ostream &out, vector<string> &parameters);
 
 // run when the plugin is loaded
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginCommand> &commands) {
+    DEBUG(status,out).print("initializing %s\n", plugin_name);
+
     // For in-tree plugins, don't use the "usage" parameter of PluginCommand.
     // Instead, add an .rst file with the same name as the plugin to the
     // docs/plugins/ directory.
@@ -67,6 +75,8 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginC
 
 // run when the plugin is unloaded
 DFhackCExport command_result plugin_shutdown(color_ostream &out) {
+    DEBUG(status,out).print("shutting down %s\n", plugin_name);
+
     // You *MUST* kill all threads you created before this returns.
     // If everything fails, just return CR_FAILURE. Your plugin will be
     // in a zombie state, but things won't crash.
@@ -77,6 +87,8 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out) {
 // run when the `enable` or `disable` command is run with this plugin name as
 // an argument
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
+    DEBUG(status,out).print("%s from the API\n", enable ? "enabled" : "disabled");
+
     // you have to maintain the state of the is_enabled variable yourself. it
     // doesn't happen automatically.
     is_enabled = enable;
@@ -87,6 +99,8 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 // Invoked with DF suspended, and always before the matching plugin_onupdate.
 // More event codes may be added in the future.
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
+    DEBUG(status,out).print("game state changed: %d\n", event);
+
     if (is_enabled) {
         switch (event) {
             case SC_UNKNOWN:
@@ -111,12 +125,16 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
                 break;
         }
     }
+
     return CR_OK;
 }
 
 // Whatever you put here will be done in each game frame refresh. Don't abuse it.
+// Note that if the plugin implements the enabled API, this function is only called
+// if the plugin is enabled.
 DFhackCExport command_result plugin_onupdate (color_ostream &out) {
-    // whetever. You don't need to suspend DF execution here.
+    DEBUG(onupdate,out).print("onupdate called\n");
+
     return CR_OK;
 }
 
@@ -126,11 +144,15 @@ DFhackCExport command_result plugin_onupdate (color_ostream &out) {
 // is loaded or unloaded while a world is active, plugin_save_data or
 // plugin_load_data will be called immediately.
 DFhackCExport command_result plugin_save_data (color_ostream &out) {
+    DEBUG(status,out).print("save or unload is imminent; time to persist state\n");
+
     // Call functions in the Persistence module here.
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_load_data (color_ostream &out) {
+    DEBUG(status,out).print("world is loading; time to load persisted state\n");
+
     // Call functions in the Persistence module here.
     return CR_OK;
 }
@@ -201,6 +223,9 @@ static bool get_options(color_ostream &out,
 // from a different thread and need to explicity suspend the core if they
 // interact with Lua or DF game state (most commands do at least one of these).
 static command_result command_callback1(color_ostream &out, vector<string> &parameters) {
+    DEBUG(command,out).print("%s command called with %zu parameters\n",
+        plugin_name, parameters.size());
+
     // I'll say it again: always suspend the core in command callbacks unless
     // all your data is local.
     CoreSuspender suspend;

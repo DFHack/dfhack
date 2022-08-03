@@ -10,7 +10,6 @@
 #include "df/viewscreen_titlest.h"
 
 #include "Debug.h"
-#include "LuaTools.h"
 #include "PluginManager.h"
 #include "VTableInterpose.h"
 

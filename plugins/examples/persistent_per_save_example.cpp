@@ -12,7 +12,6 @@
 
 #include "Core.h"
 #include "Debug.h"
-#include "LuaTools.h"
 #include "PluginManager.h"
 
 #include "modules/Persistence.h"
@@ -59,35 +58,6 @@ static void set_config_bool(int index, bool value) {
 }
 
 static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
-
-// define the structure that will represent the possible commandline options
-struct command_options {
-    // whether to display help
-    bool help = false;
-
-    // whether to run a cycle right now
-    bool now = false;
-
-    // how many ticks to wait between cycles when enabled, -1 means unset
-    int32_t ticks = -1;
-
-    // example params of different types
-    df::coord start;
-    string format;
-    vector<string*> list; // note this must be a vector of pointers, not objects
-
-    static struct_identity _identity;
-};
-static const struct_field_info command_options_fields[] = {
-    { struct_field_info::PRIMITIVE,      "help",   offsetof(command_options, help),  &df::identity_traits<bool>::identity,    0, 0 },
-    { struct_field_info::PRIMITIVE,      "now",    offsetof(command_options, now),   &df::identity_traits<bool>::identity,    0, 0 },
-    { struct_field_info::PRIMITIVE,      "ticks",  offsetof(command_options, ticks), &df::identity_traits<int32_t>::identity, 0, 0 },
-    { struct_field_info::SUBSTRUCT,      "start",  offsetof(command_options, start), &df::coord::_identity,                   0, 0 },
-    { struct_field_info::PRIMITIVE,      "format", offsetof(command_options, format), df::identity_traits<string>::get(),     0, 0 },
-    { struct_field_info::STL_VECTOR_PTR, "list",   offsetof(command_options, list),   df::identity_traits<string>::get(),     0, 0 },
-    { struct_field_info::END }
-};
-struct_identity command_options::_identity(sizeof(command_options), &df::allocator_fn<command_options>, NULL, "command_options", NULL, command_options_fields);
 
 static command_result do_command(color_ostream &out, vector<string> &parameters);
 static void do_cycle(color_ostream &out);
@@ -165,33 +135,6 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     return CR_OK;
 }
 
-// load the lua module associated with the plugin and parse the commandline
-// in lua (which has better facilities than C++ for string parsing).
-static bool get_options(color_ostream &out,
-                        command_options &opts,
-                        const vector<string> &parameters)
-{
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!lua_checkstack(L, parameters.size() + 2) ||
-        !Lua::PushModulePublic(
-            out, L, ("plugins." + string(plugin_name)).c_str(),
-            "parse_commandline")) {
-        out.printerr("Failed to load %s Lua code\n", plugin_name);
-        return false;
-    }
-
-    Lua::Push(L, &opts);
-    for (const string &param : parameters)
-        Lua::Push(L, param);
-
-    if (!Lua::SafeCall(out, L, parameters.size() + 1, 0))
-        return false;
-
-    return true;
-}
-
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
     // be sure to suspend the core if any DF state is read or modified
     CoreSuspender suspend;
@@ -201,20 +144,11 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
         return CR_FAILURE;
     }
 
-    command_options opts;
-    if (!get_options(out, opts, parameters) || opts.help)
-        return CR_WRONG_USAGE;
+    // TODO: configuration logic
+    // simple commandline parsing can be done in C++, but there are lua libraries
+    // that can easily handle more complex commandlines. see the blueprint plugin
+    // for an example.
 
-    if (opts.ticks > -1) {
-        set_config_val(CONFIG_CYCLE_TICKS, opts.ticks);
-        INFO(status,out).print("New cycle timer: %d ticks.\n", opts.ticks);
-    }
-    else if (opts.now) {
-        do_cycle(out);
-    }
-    else {
-        out.print("%s is %srunning\n", plugin_name, (is_enabled ? "" : "not "));
-    }
     return CR_OK;
 }
 

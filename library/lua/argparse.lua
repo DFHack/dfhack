@@ -186,9 +186,9 @@ function coords(arg, arg_name, skip_validation)
         return cursor
     end
     local numbers = numberList(arg, arg_name, 3)
-    local pos = xyz2pos(check_nonnegative_int(numbers[1]),
-                        check_nonnegative_int(numbers[2]),
-                        check_nonnegative_int(numbers[3]))
+    local pos = xyz2pos(nonnegativeInt(numbers[1]),
+                        nonnegativeInt(numbers[2]),
+                        nonnegativeInt(numbers[3]))
     if not skip_validation and not dfhack.maps.isValidTilePos(pos) then
         arg_error(arg_name,
                   'specified coordinates not on current map: "%s"', arg)

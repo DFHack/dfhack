@@ -35,7 +35,7 @@ other commands).
 
 Plugins can also register handlers to run on every tick, and can interface with
 the built-in `enable` and `disable` commands. For the full plugin API, see the
-example plugins or ``PluginManager.cpp``.
+example ``skeleton`` plugin or ``PluginManager.cpp``.
 
 Installed plugins live in the ``hack/plugins`` folder of a DFHack installation,
 and the `load` family of commands can be used to load a recompiled plugin

@@ -98,31 +98,37 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 // Invoked with DF suspended, and always before the matching plugin_onupdate.
 // More event codes may be added in the future.
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
-    DEBUG(status,out).print("game state changed: %d\n", event);
-
-    if (is_enabled) {
-        switch (event) {
-            case SC_UNKNOWN:
-                break;
-            case SC_WORLD_LOADED:
-                break;
-            case SC_WORLD_UNLOADED:
-                break;
-            case SC_MAP_LOADED:
-                break;
-            case SC_MAP_UNLOADED:
-                break;
-            case SC_VIEWSCREEN_CHANGED:
-                break;
-            case SC_CORE_INITIALIZED:
-                break;
-            case SC_BEGIN_UNLOAD:
-                break;
-            case SC_PAUSED:
-                break;
-            case SC_UNPAUSED:
-                break;
-        }
+    switch (event) {
+        case SC_UNKNOWN:
+            DEBUG(status,out).print("game state changed: SC_UNKNOWN\n");
+            break;
+        case SC_WORLD_LOADED:
+            DEBUG(status,out).print("game state changed: SC_WORLD_LOADED\n");
+            break;
+        case SC_WORLD_UNLOADED:
+            DEBUG(status,out).print("game state changed: SC_WORLD_UNLOADED\n");
+            break;
+        case SC_MAP_LOADED:
+            DEBUG(status,out).print("game state changed: SC_MAP_LOADED\n");
+            break;
+        case SC_MAP_UNLOADED:
+            DEBUG(status,out).print("game state changed: SC_MAP_UNLOADED\n");
+            break;
+        case SC_VIEWSCREEN_CHANGED:
+            DEBUG(status,out).print("game state changed: SC_VIEWSCREEN_CHANGED\n");
+            break;
+        case SC_CORE_INITIALIZED:
+            DEBUG(status,out).print("game state changed: SC_CORE_INITIALIZED\n");
+            break;
+        case SC_BEGIN_UNLOAD:
+            DEBUG(status,out).print("game state changed: SC_BEGIN_UNLOAD\n");
+            break;
+        case SC_PAUSED:
+            DEBUG(status,out).print("game state changed: SC_PAUSED\n");
+            break;
+        case SC_UNPAUSED:
+            DEBUG(status,out).print("game state changed: SC_UNPAUSED\n");
+            break;
     }
 
     return CR_OK;
@@ -145,14 +151,17 @@ DFhackCExport command_result plugin_onupdate (color_ostream &out) {
 DFhackCExport command_result plugin_save_data (color_ostream &out) {
     DEBUG(status,out).print("save or unload is imminent; time to persist state\n");
 
-    // Call functions in the Persistence module here.
+    // Call functions in the Persistence module here. If your PersistantDataItem
+    // objects are already up to date, then they will get persisted with the
+    // save automatically and there is nothing extra you need to do here.
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_load_data (color_ostream &out) {
     DEBUG(status,out).print("world is loading; time to load persisted state\n");
 
-    // Call functions in the Persistence module here.
+    // Call functions in the Persistence module here. See
+    // persistent_per_save_example.cpp for an example.
     return CR_OK;
 }
 

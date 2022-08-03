@@ -119,7 +119,7 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
 }
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
-    if (event == DFHack::SC_MAP_UNLOADED) {
+    if (event == DFHack::SC_WORLD_UNLOADED) {
         if (is_enabled) {
             DEBUG(status,out).print("world unloaded; disabling %s\n",
                                     plugin_name);

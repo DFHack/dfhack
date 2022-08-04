@@ -73,84 +73,13 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     if (ui_workshop_job_cursor && job_next_id) {
         commands.push_back(
             PluginCommand(
-                "workflow", "Manage control of repeat jobs.",
-                workflow_cmd, false,
-                "  workflow enable [option...]\n"
-                "  workflow disable [option...]\n"
-                "    If no options are specified, enables or disables the plugin.\n"
-                "    Otherwise, enables or disables any of the following options:\n"
-                "     - drybuckets: Automatically empty abandoned water buckets.\n"
-                "     - auto-melt: Resume melt jobs when there are objects to melt.\n"
-                "  workflow jobs\n"
-                "    List workflow-controlled jobs (if in a workshop, filtered by it).\n"
-                "  workflow list\n"
-                "    List active constraints, and their job counts.\n"
-                "  workflow list-commands\n"
-                "    List workflow commands that re-create existing constraints.\n"
-                "  workflow count <constraint-spec> <cnt-limit> [cnt-gap]\n"
-                "  workflow amount <constraint-spec> <cnt-limit> [cnt-gap]\n"
-                "    Set a constraint. The first form counts each stack as only 1 item.\n"
-                "  workflow unlimit <constraint-spec>\n"
-                "    Delete a constraint.\n"
-                "  workflow unlimit-all\n"
-                "    Delete all constraints.\n"
-                "Function:\n"
-                "  - When the plugin is enabled, it protects all repeat jobs from removal.\n"
-                "    If they do disappear due to any cause, they are immediately re-added\n"
-                "    to their workshop and suspended.\n"
-                "  - In addition, when any constraints on item amounts are set, repeat jobs\n"
-                "    that produce that kind of item are automatically suspended and resumed\n"
-                "    as the item amount goes above or below the limit. The gap specifies how\n"
-                "    much below the limit the amount has to drop before jobs are resumed;\n"
-                "    this is intended to reduce the frequency of jobs being toggled.\n"
-                "Constraint format:\n"
-                "  The contstraint spec consists of 4 parts, separated with '/' characters:\n"
-                "    ITEM[:SUBTYPE]/[GENERIC_MAT,...]/[SPECIFIC_MAT:...]/[LOCAL,<quality>]\n"
-                "  The first part is mandatory and specifies the item type and subtype,\n"
-                "  using the raw tokens for items, in the same syntax you would e.g. use\n"
-                "  for a custom reaction input. The subsequent parts are optional:\n"
-                "  - A generic material spec constrains the item material to one of\n"
-                "    the hard-coded generic classes, like WOOD, METAL, YARN or MILK.\n"
-                "  - A specific material spec chooses the material exactly, using the\n"
-                "    raw syntax for reaction input materials, e.g. INORGANIC:IRON,\n"
-                "    although for convenience it also allows just IRON, or ACACIA:WOOD.\n"
-                "  - A comma-separated list of miscellaneous flags, which currently can\n"
-                "    be used to ignore imported items or items below a certain quality.\n"
-                "Constraint examples:\n"
-                "  workflow amount AMMO:ITEM_AMMO_BOLTS/METAL 1000 100\n"
-                "  workflow amount AMMO:ITEM_AMMO_BOLTS/WOOD,BONE 200 50\n"
-                "    Keep metal bolts within 900-1000, and wood/bone within 150-200.\n"
-                "  workflow count FOOD 120 30\n"
-                "  workflow count DRINK 120 30\n"
-                "    Keep the number of prepared food & drink stacks between 90 and 120\n"
-                "  workflow count BIN 30\n"
-                "  workflow count BARREL 30\n"
-                "  workflow count BOX/CLOTH,SILK,YARN 30\n"
-                "    Make sure there are always 25-30 empty bins/barrels/bags.\n"
-                "  workflow count BAR//COAL 20\n"
-                "  workflow count BAR//COPPER 30\n"
-                "    Make sure there are always 15-20 coal and 25-30 copper bars.\n"
-                "  workflow count CRAFTS//GOLD 20\n"
-                "    Produce 15-20 gold crafts.\n"
-                "  workflow count POWDER_MISC/SAND 20\n"
-                "  workflow count BOULDER/CLAY 20\n"
-                "    Collect 15-20 sand bags and clay boulders.\n"
-                "  workflow amount POWDER_MISC//MUSHROOM_CUP_DIMPLE:MILL 100 20\n"
-                "    Make sure there are always 80-100 units of dimple dye.\n"
-                "    In order for this to work, you have to set the material of\n"
-                "    the PLANT input on the Mill Plants job to MUSHROOM_CUP_DIMPLE\n"
-                "    using the 'job item-material' command.\n"
-                "  workflow count CRAFTS///LOCAL,EXCEPTIONAL 100 90\n"
-                "    Maintain 10-100 locally-made crafts of exceptional quality.\n"
-            )
-        );
+                "workflow",
+                "Manage repeat jobs according to stock levels.",
+                workflow_cmd));
         commands.push_back(PluginCommand(
             "fix-job-postings",
-            "Fix broken job postings caused by certain versions of workflow",
-            fix_job_postings_cmd, false,
-            "fix-job-postings: Fix job postings\n"
-            "fix-job-postings dry|[any argument]: Dry run only (avoid making changes)\n"
-        ));
+            "Fix broken job postings caused by very old versions of workflow.",
+            fix_job_postings_cmd));
     }
 
     init_state(out);

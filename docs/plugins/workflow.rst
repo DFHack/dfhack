@@ -1,73 +1,69 @@
 workflow
 ========
-Manage control of repeat jobs.  `gui/workflow` provides a simple
+Tags:
+:dfhack-keybind:`workflow`
+:dfhack-keybind:`fix-job-postings`
+
+Manage repeat jobs according to stock levels. `gui/workflow` provides a simple
 front-end integrated in the game UI.
+
+When the plugin is enabled, it protects all repeat jobs from removal. If they do
+disappear due to any cause (raw materials not available, manual removal by the
+player, etc.), they are immediately re-added to their workshop and suspended.
+
+If any constraints on item amounts are set, repeat jobs that produce that kind
+of item are automatically suspended and resumed as the item amount goes above or
+below the limit.
+
+There is a good amount of overlap between this plugin and the vanilla manager
+workorders, and both systems have their advantages. Vanilla manager workorders
+can be more expressive about when to enqueue jobs. For example, you can gate the
+activation of a vanilla workorder based on availability of raw materials, which
+you cannot do in ``workflow``. However, ``workflow`` is often more convenient
+for quickly keeping a small stock of various items on hand without having to
+configure all the vanilla manager options. Also see the `orders` plugin for
+a library of manager orders that may make managing your stocks even more
+convenient than ``workflow`` can.
 
 Usage:
 
-``workflow enable [option...], workflow disable [option...]``
-   If no options are specified, enables or disables the plugin.
-   Otherwise, enables or disables any of the following options:
-
-   - drybuckets: Automatically empty abandoned water buckets.
-   - auto-melt: Resume melt jobs when there are objects to melt.
-``workflow jobs``
-   List workflow-controlled jobs (if in a workshop, filtered by it).
-``workflow list``
-   List active constraints, and their job counts.
-``workflow list-commands``
-   List active constraints as workflow commands that re-create them;
-   this list can be copied to a file, and then reloaded using the
-   ``script`` built-in command.
-``workflow count <constraint-spec> <cnt-limit> [cnt-gap]``
-   Set a constraint, counting every stack as 1 item.
-``workflow amount <constraint-spec> <cnt-limit> [cnt-gap]``
-   Set a constraint, counting all items within stacks.
+``enable workflow``
+    Start monitoring for and managing workshop jobs that are set to repeat.
+``workflow enable|disable drybuckets``
+    Enables/disables automatic emptying of abandoned water buckets.
+``workflow enable|disable auto-melt``
+    Enables/disables automatic resumption of repeat melt jobs when there are
+    objects to melt.
+``workflow count <constraint-spec> <target> [gap]``
+    Set a constraint, counting every stack as 1 item. If a gap is specified,
+    stocks are allowed to dip that many items below the target before relevant
+    jobs are resumed.
+``workflow amount <constraint-spec> <target> [gap]``
+    Set a constraint, counting all items within stacks. If a gap is specified,
+    stocks are allowed to dip that many items below the target before relevant
+    jobs are resumed.
 ``workflow unlimit <constraint-spec>``
-   Delete a constraint.
+    Delete a constraint.
 ``workflow unlimit-all``
-   Delete all constraints.
+    Delete all constraints.
+``workflow jobs``
+    List workflow-controlled jobs (if in a workshop, filtered by it).
+``workflow list``
+    List active constraints, and their job counts.
+``workflow list-commands``
+    List active constraints as workflow commands that re-create them; this list
+    can be copied to a file, and then reloaded using the `script` built-in
+    command.
+``fix-job-postings [dry-run]``
+    Fixes crashes caused the version of workflow released with DFHack
+    0.40.24-r4. It will be run automatically if needed. If your save has never
+    been run with this version, you will never need this command. Specify the
+    ``dry-run`` keyword to see what this command would do without making any
+    changes to game state.
 
-Function
+Examples
 --------
-When the plugin is enabled, it protects all repeat jobs from removal.
-If they do disappear due to any cause, they are immediately re-added to their
-workshop and suspended.
 
-In addition, when any constraints on item amounts are set, repeat jobs that
-produce that kind of item are automatically suspended and resumed as the item
-amount goes above or below the limit. The gap specifies how much below the limit
-the amount has to drop before jobs are resumed; this is intended to reduce
-the frequency of jobs being toggled.
-
-Constraint format
------------------
-The constraint spec consists of 4 parts, separated with ``/`` characters::
-
-    ITEM[:SUBTYPE]/[GENERIC_MAT,...]/[SPECIFIC_MAT:...]/[LOCAL,<quality>]
-
-The first part is mandatory and specifies the item type and subtype,
-using the raw tokens for items (the same syntax used custom reaction inputs).
-For more information, see :wiki:`this wiki page <Material_token>`.
-
-The subsequent parts are optional:
-
-- A generic material spec constrains the item material to one of
-  the hard-coded generic classes, which currently include::
-
-    PLANT WOOD CLOTH SILK LEATHER BONE SHELL SOAP TOOTH HORN PEARL YARN
-    METAL STONE SAND GLASS CLAY MILK
-
-- A specific material spec chooses the material exactly, using the
-  raw syntax for reaction input materials, e.g. ``INORGANIC:IRON``,
-  although for convenience it also allows just ``IRON``, or ``ACACIA:WOOD`` etc.
-  See the link above for more details on the unabbreviated raw syntax.
-
-- A comma-separated list of miscellaneous flags, which currently can
-  be used to ignore imported items or items below a certain quality.
-
-Constraint examples
--------------------
 Keep metal bolts within 900-1000, and wood/bone within 150-200::
 
     workflow amount AMMO:ITEM_AMMO_BOLTS/METAL 1000 100
@@ -104,16 +100,39 @@ Make sure there are always 80-100 units of dimple dye::
 
 .. note::
 
-  In order for this to work, you have to set the material of the PLANT input
-  on the Mill Plants job to MUSHROOM_CUP_DIMPLE using the `job item-material <job>`
-  command. Otherwise the plugin won't be able to deduce the output material.
+    In order for this to work, you have to set the material of the PLANT input
+    on the Mill Plants job to MUSHROOM_CUP_DIMPLE using the
+    `job item-material <job>` command. Otherwise the plugin won't be able to
+    deduce the output material.
 
 Maintain 10-100 locally-made crafts of exceptional quality::
 
     workflow count CRAFTS///LOCAL,EXCEPTIONAL 100 90
 
-fix-job-postings
-----------------
-This command fixes crashes caused by previous versions of workflow, mostly in
-DFHack 0.40.24-r4, and should be run automatically when loading a world (but can
-also be run manually if desired).
+Constraint format
+-----------------
+
+The constraint spec consists of 4 parts, separated with ``/`` characters::
+
+    ITEM[:SUBTYPE]/[GENERIC_MAT,...]/[SPECIFIC_MAT:...]/[LOCAL,<quality>]
+
+The first part is mandatory and specifies the item type and subtype, using the
+raw tokens for items (the same syntax used custom reaction inputs). For more
+information, see :wiki:`this wiki page <Material_token>`.
+
+The subsequent parts are optional:
+
+- A generic material spec constrains the item material to one of the hard-coded
+  generic classes, which currently include::
+
+    PLANT WOOD CLOTH SILK LEATHER BONE SHELL SOAP TOOTH HORN PEARL YARN
+    METAL STONE SAND GLASS CLAY MILK
+
+- A specific material spec chooses the material exactly, using the raw syntax
+  for reaction input materials, e.g. ``INORGANIC:IRON``, although for
+  convenience it also allows just ``IRON``, or ``ACACIA:WOOD`` etc.  See the
+  link above for more details on the unabbreviated raw syntax.
+
+- A comma-separated list of miscellaneous flags, which currently can be used to
+  ignore imported items (``LOCAL``) or items below a certain quality (1-5, with
+  5 being masterwork).

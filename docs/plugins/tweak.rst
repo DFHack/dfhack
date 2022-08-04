@@ -62,7 +62,7 @@ Commands that persist until disabled or DF quits:
     Adds an option to butcher units when viewing cages with :kbd:`q`.
 ``civ-view-agreement``
     Fixes overlapping text on the "view agreement" screen.
-``condition-material`` 
+``condition-material``
     Fixes a crash in the work order contition material list (:bug:`9905`).
 ``craft-age-wear``
     Fixes crafted items not wearing out over time (:bug:`6003`). With this

@@ -6,7 +6,7 @@ import sys
 
 from sphinx.errors import ExtensionError, SphinxError, SphinxWarning
 
-from dfhack.util import DFHACK_ROOT, DOCS_ROOT
+from dfhack.util import DFHACK_ROOT, DOCS_ROOT, write_file_if_changed
 
 CHANGELOG_PATHS = (
     'docs/changelog.txt',
@@ -172,7 +172,7 @@ def consolidate_changelog(all_entries):
 
 def print_changelog(versions, all_entries, path, replace=True, prefix=''):
     # all_entries: version -> section -> entry
-    with open(path, 'w') as f:
+    with write_file_if_changed(path) as f:
         def write(line):
             if replace:
                 line = replace_text(line, REPLACEMENTS)

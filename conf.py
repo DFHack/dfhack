@@ -14,9 +14,7 @@ serve to show the default.
 
 # pylint:disable=redefined-builtin
 
-import contextlib
 import datetime
-import io
 import os
 import re
 import shlex  # pylint:disable=unused-import
@@ -45,6 +43,10 @@ if os.environ.get('DFHACK_DOCS_BUILD_OFFLINE'):
 
 from docutils import nodes
 from docutils.parsers.rst import roles
+
+sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'docs', 'sphinx_extensions'))
+from dfhack.util import write_file_if_changed
+
 
 def get_keybinds(root, files, keybindings):
     """Add keybindings in the specified files to the
@@ -145,23 +147,6 @@ def get_tags():
     return tags
 
 
-@contextlib.contextmanager
-def write_file_if_changed(path):
-    with io.StringIO() as buffer:
-        yield buffer
-        new_contents = buffer.getvalue()
-
-    try:
-        with open(path, 'r') as infile:
-            old_contents = infile.read()
-    except IOError:
-        old_contents = None
-
-    if old_contents != new_contents:
-        with open(path, 'w') as outfile:
-            outfile.write(new_contents)
-
-
 def generate_tag_indices():
     os.makedirs('docs/tags', mode=0o755, exist_ok=True)
     with write_file_if_changed('docs/tags/index.rst') as topidx:
@@ -224,8 +209,6 @@ generate_tag_indices()
 #all_keybinds_documented() # comment out while we're transitioning
 
 # -- General configuration ------------------------------------------------
-
-sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'docs', 'sphinx_extensions'))
 
 # If your documentation needs a minimal Sphinx version, state it here.
 needs_sphinx = '1.8'

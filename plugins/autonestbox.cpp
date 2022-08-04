@@ -4,6 +4,9 @@
 //   maybe check for minimum age? it's not that useful to fill nestboxes with freshly hatched birds
 //   state and sleep setting is saved the first time autonestbox is started (to avoid writing stuff if the plugin is never used)
 
+#include <string>
+#include <vector>
+
 #include "df/building_cagest.h"
 #include "df/building_civzonest.h"
 #include "df/building_nest_boxst.h"
@@ -16,7 +19,6 @@
 
 #include "modules/Buildings.h"
 #include "modules/Gui.h"
-#include "modules/Maps.h"
 #include "modules/Persistence.h"
 #include "modules/Units.h"
 #include "modules/World.h"
@@ -50,11 +52,13 @@ static const string autonestbox_help =
     "    The default is 6000 (about 8 days)\n";
 
 namespace DFHack {
-    DBG_DECLARE(autonestbox, status);
-    DBG_DECLARE(autonestbox, cycle);
+    // for configuration-related logging
+    DBG_DECLARE(autonestbox, status, DebugCategory::LINFO);
+    // for logging during the periodic scan
+    DBG_DECLARE(autonestbox, cycle, DebugCategory::LINFO);
 }
 
-static const string CONFIG_KEY = "autonestbox/config";
+static const string CONFIG_KEY = string(plugin_name) + "/config";
 static PersistentDataItem config;
 enum ConfigValues {
     CONFIG_IS_ENABLED = 0,
@@ -79,6 +83,79 @@ static void set_config_bool(int index, bool value) {
 static bool did_complain = false; // avoids message spam
 static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
 
+static command_result df_autonestbox(color_ostream &out, vector<string> &parameters);
+static void autonestbox_cycle(color_ostream &out);
+
+DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
+    commands.push_back(PluginCommand(
+        plugin_name,
+        "Auto-assign egg-laying female pets to nestbox zones.",
+        df_autonestbox,
+        false,
+        autonestbox_help.c_str()));
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
+    if (!Core::getInstance().isWorldLoaded()) {
+        out.printerr("Cannot enable %s without a loaded world.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
+    if (enable != is_enabled) {
+        is_enabled = enable;
+        DEBUG(status,out).print("%s from the API; persisting\n",
+                                is_enabled ? "enabled" : "disabled");
+        set_config_bool(CONFIG_IS_ENABLED, is_enabled);
+    } else {
+        DEBUG(status,out).print("%s from the API, but already %s; no action\n",
+                                is_enabled ? "enabled" : "disabled",
+                                is_enabled ? "enabled" : "disabled");
+    }
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_load_data (color_ostream &out) {
+    config = World::GetPersistentData(CONFIG_KEY);
+
+    if (!config.isValid()) {
+        DEBUG(status,out).print("no config found in this save; initializing\n");
+        config = World::AddPersistentData(CONFIG_KEY);
+        set_config_bool(CONFIG_IS_ENABLED, is_enabled);
+        set_config_val(CONFIG_CYCLE_TICKS, 6000);
+    }
+
+    // we have to copy our enabled flag into the global plugin variable, but
+    // all the other state we can directly read/modify from the persistent
+    // data structure.
+    is_enabled = get_config_bool(CONFIG_IS_ENABLED);
+    DEBUG(status,out).print("loading persisted enabled state: %s\n",
+                            is_enabled ? "true" : "false");
+    did_complain = false;
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
+    if (event == DFHack::SC_WORLD_UNLOADED) {
+        if (is_enabled) {
+            DEBUG(status,out).print("world unloaded; disabling %s\n",
+                                    plugin_name);
+            is_enabled = false;
+        }
+    }
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onupdate(color_ostream &out) {
+    if (is_enabled && world->frame_counter - cycle_timestamp >= get_config_val(CONFIG_CYCLE_TICKS))
+        autonestbox_cycle(out);
+    return CR_OK;
+}
+
+/////////////////////////////////////////////////////
+// configuration interface
+//
+
 struct autonestbox_options {
     // whether to display help
     bool help = false;
@@ -98,85 +175,6 @@ static const struct_field_info autonestbox_options_fields[] = {
     { struct_field_info::END }
 };
 struct_identity autonestbox_options::_identity(sizeof(autonestbox_options), &df::allocator_fn<autonestbox_options>, NULL, "autonestbox_options", NULL, autonestbox_options_fields);
-
-static command_result df_autonestbox(color_ostream &out, vector<string> &parameters);
-static void autonestbox_cycle(color_ostream &out);
-
-static void init_autonestbox(color_ostream &out) {
-    config = World::GetPersistentData(CONFIG_KEY);
-
-    if (!config.isValid()) {
-        DEBUG(status,out).print("no config found in this save; initializing\n");
-        config = World::AddPersistentData(CONFIG_KEY);
-        set_config_bool(CONFIG_IS_ENABLED, false);
-        set_config_val(CONFIG_CYCLE_TICKS, 6000);
-    }
-
-    is_enabled = get_config_bool(CONFIG_IS_ENABLED);
-    DEBUG(status,out).print("loading persisted enabled state: %s\n",
-                            is_enabled ? "true" : "false");
-    did_complain = false;
-}
-
-static void cleanup_autonestbox(color_ostream &out) {
-    if (is_enabled) {
-        DEBUG(status,out).print("disabling (not persisting)\n");
-        is_enabled = false;
-    }
-}
-
-DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    commands.push_back(PluginCommand(
-        "autonestbox",
-        "Auto-assign egg-laying female pets to nestbox zones.",
-        df_autonestbox,
-        false,
-        autonestbox_help.c_str()));
-
-    init_autonestbox(out);
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
-    if (!Maps::IsValid()) {
-        out.printerr("Cannot run autonestbox without a loaded map.\n");
-        return CR_FAILURE;
-    }
-
-    if (enable != is_enabled) {
-        is_enabled = enable;
-        DEBUG(status,out).print("%s from the API, persisting\n",
-                                is_enabled ? "enabled" : "disabled");
-        set_config_bool(CONFIG_IS_ENABLED, is_enabled);
-        init_autonestbox(out);
-    }
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_shutdown (color_ostream &out) {
-    cleanup_autonestbox(out);
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
-    switch (event) {
-    case DFHack::SC_MAP_LOADED:
-        init_autonestbox(out);
-        break;
-    case DFHack::SC_MAP_UNLOADED:
-        cleanup_autonestbox(out);
-        break;
-    default:
-        break;
-    }
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (is_enabled && world->frame_counter - cycle_timestamp >= get_config_val(CONFIG_CYCLE_TICKS))
-        autonestbox_cycle(out);
-    return CR_OK;
-}
 
 static bool get_options(color_ostream &out,
                         autonestbox_options &opts,
@@ -205,8 +203,8 @@ static bool get_options(color_ostream &out,
 static command_result df_autonestbox(color_ostream &out, vector<string> &parameters) {
     CoreSuspender suspend;
 
-    if (!Maps::IsValid()) {
-        out.printerr("Cannot run autonestbox without a loaded map.\n");
+    if (!Core::getInstance().isWorldLoaded()) {
+        out.printerr("Cannot run %s without a loaded world.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -228,7 +226,7 @@ static command_result df_autonestbox(color_ostream &out, vector<string> &paramet
 }
 
 /////////////////////////////////////////////////////
-// autonestbox cycle logic
+// cycle logic
 //
 
 static bool isEmptyPasture(df::building *building) {

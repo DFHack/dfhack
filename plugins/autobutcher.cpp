@@ -1,16 +1,19 @@
-// - full automation of marking live-stock for slaughtering
-//   races can be added to a watchlist and it can be set how many male/female kids/adults are left alive
-//   adding to the watchlist can be automated as well.
-//   config for autobutcher (state and sleep setting) is saved the first time autobutcher is started
-//   config for watchlist entries is saved when they are created or modified
+// full automation of marking live-stock for slaughtering
+// races can be added to a watchlist and it can be set how many male/female kids/adults are left alive
+// adding to the watchlist can be automated as well.
+// config for autobutcher (state and sleep setting) is saved the first time autobutcher is started
+// config for watchlist entries is saved when they are created or modified
 
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 #include "df/building_cagest.h"
 #include "df/creature_raw.h"
 #include "df/world.h"
 
+#include "Core.h"
 #include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
@@ -32,6 +35,56 @@ DFHACK_PLUGIN("autobutcher");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 REQUIRE_GLOBAL(world);
+
+// logging levels can be dynamically controlled with the `debugfilter` command.
+namespace DFHack {
+    // for configuration-related logging
+    DBG_DECLARE(autobutcher, status, DebugCategory::LINFO);
+    // for logging during the periodic scan
+    DBG_DECLARE(autobutcher, cycle, DebugCategory::LINFO);
+}
+
+static const string CONFIG_KEY = string(plugin_name) + "/config";
+static const string WATCHLIST_CONFIG_KEY_PREFIX = string(plugin_name) + "/watchlist/";
+static PersistentDataItem config;
+
+enum ConfigValues {
+    CONFIG_IS_ENABLED  = 0,
+    CONFIG_CYCLE_TICKS = 1,
+    CONFIG_AUTOWATCH   = 2,
+    CONFIG_DEFAULT_FK  = 3,
+    CONFIG_DEFAULT_MK  = 4,
+    CONFIG_DEFAULT_FA  = 5,
+    CONFIG_DEFAULT_MA  = 6,
+};
+static int get_config_val(int index) {
+    if (!config.isValid())
+        return -1;
+    return config.ival(index);
+}
+static bool get_config_bool(int index) {
+    return get_config_val(index) == 1;
+}
+static void set_config_val(int index, int value) {
+    if (config.isValid())
+        config.ival(index) = value;
+}
+static void set_config_bool(int index, bool value) {
+    set_config_val(index, value ? 1 : 0);
+}
+
+struct WatchedRace;
+// vector of races handled by autobutcher
+// the name is a bit misleading since entries can be set to 'unwatched'
+// to ignore them for a while but still keep the target count settings
+static unordered_map<int, WatchedRace*> watched_races;
+static unordered_map<string, int> race_to_id;
+static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
+
+static void init_autobutcher(color_ostream &out);
+static void cleanup_autobutcher(color_ostream &out);
+static command_result df_autobutcher(color_ostream &out, vector<string> &parameters);
+static void autobutcher_cycle(color_ostream &out);
 
 const string autobutcher_help =
     "Automatically butcher excess livestock. This plugin monitors how many pets\n"
@@ -115,44 +168,90 @@ const string autobutcher_help =
     "    and llamas (for wool), and pigs (for milk and meat). All other unnamed tame units will be marked\n"
     "    for slaughter as soon as they arrive in your fortress.\n";
 
-namespace DFHack {
-    DBG_DECLARE(autobutcher, status);
-    DBG_DECLARE(autobutcher, cycle);
+DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
+    commands.push_back(PluginCommand(
+        plugin_name,
+        "Automatically butcher excess livestock.",
+        df_autobutcher,
+        false,
+        autobutcher_help.c_str()));
+    return CR_OK;
 }
 
-static const string CONFIG_KEY = "autobutcher/config";
-static const string WATCHLIST_CONFIG_KEY_PREFIX = "autobutcher/watchlist/";
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
+    if (!Core::getInstance().isWorldLoaded()) {
+        out.printerr("Cannot enable %s without a loaded world.\n", plugin_name);
+        return CR_FAILURE;
+    }
 
-static PersistentDataItem config;
-enum ConfigValues {
-    CONFIG_IS_ENABLED  = 0,
-    CONFIG_CYCLE_TICKS = 1,
-    CONFIG_AUTOWATCH   = 2,
-    CONFIG_DEFAULT_FK  = 3,
-    CONFIG_DEFAULT_MK  = 4,
-    CONFIG_DEFAULT_FA  = 5,
-    CONFIG_DEFAULT_MA  = 6,
-};
-static int get_config_val(int index) {
-    if (!config.isValid())
-        return -1;
-    return config.ival(index);
-}
-static bool get_config_bool(int index) {
-    return get_config_val(index) == 1;
-}
-static void set_config_val(int index, int value) {
-    if (config.isValid())
-        config.ival(index) = value;
-}
-static void set_config_bool(int index, bool value) {
-    set_config_val(index, value ? 1 : 0);
+    if (enable != is_enabled) {
+        is_enabled = enable;
+        DEBUG(status,out).print("%s from the API; persisting\n",
+                                is_enabled ? "enabled" : "disabled");
+        set_config_bool(CONFIG_IS_ENABLED, is_enabled);
+    } else {
+        DEBUG(status,out).print("%s from the API, but already %s; no action\n",
+                                is_enabled ? "enabled" : "disabled",
+                                is_enabled ? "enabled" : "disabled");
+    }
+    return CR_OK;
 }
 
-static unordered_map<string, int> race_to_id;
-static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
+DFhackCExport command_result plugin_shutdown (color_ostream &out) {
+    DEBUG(status,out).print("shutting down %s\n", plugin_name);
+    cleanup_autobutcher(out);
+    return CR_OK;
+}
 
-static size_t DEFAULT_CYCLE_TICKS = 6000;
+DFhackCExport command_result plugin_load_data (color_ostream &out) {
+    config = World::GetPersistentData(CONFIG_KEY);
+
+    if (!config.isValid()) {
+        DEBUG(status,out).print("no config found in this save; initializing\n");
+        config = World::AddPersistentData(CONFIG_KEY);
+        set_config_bool(CONFIG_IS_ENABLED, is_enabled);
+        set_config_val(CONFIG_CYCLE_TICKS, 6000);
+        set_config_bool(CONFIG_AUTOWATCH, false);
+        set_config_val(CONFIG_DEFAULT_FK, 5);
+        set_config_val(CONFIG_DEFAULT_MK, 1);
+        set_config_val(CONFIG_DEFAULT_FA, 5);
+        set_config_val(CONFIG_DEFAULT_MA, 1);
+    }
+
+    // we have to copy our enabled flag into the global plugin variable, but
+    // all the other state we can directly read/modify from the persistent
+    // data structure.
+    is_enabled = get_config_bool(CONFIG_IS_ENABLED);
+    DEBUG(status,out).print("loading persisted enabled state: %s\n",
+                            is_enabled ? "true" : "false");
+
+    // load the persisted watchlist
+    init_autobutcher(out);
+
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
+    if (event == DFHack::SC_WORLD_UNLOADED) {
+        if (is_enabled) {
+            DEBUG(status,out).print("world unloaded; disabling %s\n",
+                                    plugin_name);
+            is_enabled = false;
+        }
+        cleanup_autobutcher(out);
+    }
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onupdate(color_ostream &out) {
+    if (is_enabled && world->frame_counter - cycle_timestamp >= get_config_val(CONFIG_CYCLE_TICKS))
+        autobutcher_cycle(out);
+    return CR_OK;
+}
+
+/////////////////////////////////////////////////////
+// autobutcher config logic
+//
 
 struct autobutcher_options {
     // whether to display help
@@ -199,67 +298,29 @@ static const struct_field_info autobutcher_options_fields[] = {
 };
 struct_identity autobutcher_options::_identity(sizeof(autobutcher_options), &df::allocator_fn<autobutcher_options>, NULL, "autobutcher_options", NULL, autobutcher_options_fields);
 
-static void init_autobutcher(color_ostream &out);
-static void cleanup_autobutcher(color_ostream &out);
-static command_result df_autobutcher(color_ostream &out, vector<string> &parameters);
-static void autobutcher_cycle(color_ostream &out);
+static bool get_options(color_ostream &out,
+                        autobutcher_options &opts,
+                        const vector<string> &parameters)
+{
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
 
-DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    commands.push_back(PluginCommand(
-        "autobutcher",
-        "Automatically butcher excess livestock.",
-        df_autobutcher,
-        false,
-        autobutcher_help.c_str()));
-
-    init_autobutcher(out);
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
-    if (!Maps::IsValid()) {
-        out.printerr("Cannot run autobutcher without a loaded map.\n");
-        return CR_FAILURE;
+    if (!lua_checkstack(L, parameters.size() + 2) ||
+        !Lua::PushModulePublic(
+            out, L, "plugins.autobutcher", "parse_commandline")) {
+        out.printerr("Failed to load autobutcher Lua code\n");
+        return false;
     }
 
-    if (enable != is_enabled) {
-        is_enabled = enable;
-        if (is_enabled)
-            init_autobutcher(out);
-        else
-            cleanup_autobutcher(out);
-    }
-    return CR_OK;
-}
+    Lua::Push(L, &opts);
+    for (const string &param : parameters)
+        Lua::Push(L, param);
 
-DFhackCExport command_result plugin_shutdown (color_ostream &out) {
-    cleanup_autobutcher(out);
-    return CR_OK;
-}
+    if (!Lua::SafeCall(out, L, parameters.size() + 1, 0))
+        return false;
 
-DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
-    switch (event) {
-    case DFHack::SC_MAP_LOADED:
-        init_autobutcher(out);
-        break;
-    case DFHack::SC_MAP_UNLOADED:
-        cleanup_autobutcher(out);
-        break;
-    default:
-        break;
-    }
-    return CR_OK;
+    return true;
 }
-
-DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (is_enabled && world->frame_counter - cycle_timestamp >= get_config_val(CONFIG_CYCLE_TICKS))
-        autobutcher_cycle(out);
-    return CR_OK;
-}
-
-/////////////////////////////////////////////////////
-// autobutcher config logic
-//
 
 static void doMarkForSlaughter(df::unit *unit) {
     unit->flags2.bits.slaughter = 1;
@@ -460,35 +521,7 @@ public:
     }
 };
 
-// vector of races handled by autobutcher
-// the name is a bit misleading since entries can be set to 'unwatched'
-// to ignore them for a while but still keep the target count settings
-static unordered_map<int, WatchedRace*> watched_races;
-
 static void init_autobutcher(color_ostream &out) {
-    config = World::GetPersistentData(CONFIG_KEY);
-
-    if (!config.isValid())
-        config = World::AddPersistentData(CONFIG_KEY);
-
-    if (get_config_val(CONFIG_IS_ENABLED) == -1) {
-        set_config_bool(CONFIG_IS_ENABLED, false);
-        set_config_val(CONFIG_CYCLE_TICKS, DEFAULT_CYCLE_TICKS);
-        set_config_bool(CONFIG_AUTOWATCH, false);
-        set_config_val(CONFIG_DEFAULT_FK, 5);
-        set_config_val(CONFIG_DEFAULT_MK, 1);
-        set_config_val(CONFIG_DEFAULT_FA, 5);
-        set_config_val(CONFIG_DEFAULT_MA, 1);
-    }
-
-    if (is_enabled)
-        set_config_bool(CONFIG_IS_ENABLED, true);
-    else
-        is_enabled = (get_config_val(CONFIG_IS_ENABLED) == 1);
-
-    if (!config.isValid())
-        return;
-
     if (!race_to_id.size()) {
         const size_t num_races = world->raws.creatures.all.size();
         for(size_t i = 0; i < num_races; ++i)
@@ -505,35 +538,11 @@ static void init_autobutcher(color_ostream &out) {
 }
 
 static void cleanup_autobutcher(color_ostream &out) {
-    is_enabled = false;
+    DEBUG(status,out).print("cleaning %s state\n", plugin_name);
     race_to_id.clear();
     for (auto w : watched_races)
         delete w.second;
     watched_races.clear();
-}
-
-static bool get_options(color_ostream &out,
-                        autobutcher_options &opts,
-                        const vector<string> &parameters)
-{
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!lua_checkstack(L, parameters.size() + 2) ||
-        !Lua::PushModulePublic(
-            out, L, "plugins.autobutcher", "parse_commandline")) {
-        out.printerr("Failed to load autobutcher Lua code\n");
-        return false;
-    }
-
-    Lua::Push(L, &opts);
-    for (const string &param : parameters)
-        Lua::Push(L, param);
-
-    if (!Lua::SafeCall(out, L, parameters.size() + 1, 0))
-        return false;
-
-    return true;
 }
 
 static void autobutcher_export(color_ostream &out);
@@ -544,8 +553,8 @@ static void autobutcher_modify_watchlist(color_ostream &out, const autobutcher_o
 static command_result df_autobutcher(color_ostream &out, vector<string> &parameters) {
     CoreSuspender suspend;
 
-    if (!Maps::IsValid()) {
-        out.printerr("Cannot run autobutcher without a loaded map.\n");
+    if (!Core::getInstance().isWorldLoaded()) {
+        out.printerr("Cannot run %s without a loaded world.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -763,7 +772,7 @@ static void autobutcher_modify_watchlist(color_ostream &out, const autobutcher_o
 }
 
 /////////////////////////////////////////////////////
-// autobutcher cycle logic
+// cycle logic
 //
 
 // check if contained in item (e.g. animals in cages)
@@ -806,7 +815,7 @@ static void autobutcher_cycle(color_ostream &out) {
     // mark that we have recently run
     cycle_timestamp = world->frame_counter;
 
-    DEBUG(cycle,out).print("running autobutcher cycle\n");
+    DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
 
     // check if there is anything to watch before walking through units vector
     if (!get_config_bool(CONFIG_AUTOWATCH)) {

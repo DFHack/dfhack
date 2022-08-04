@@ -37,10 +37,10 @@ Usage:
     Stop auto-adding new races to the watch list.
 ``autobutcher target <fk> <mk> <fa> <ma> all|new|<race> [<race> ...]``
     Set target counts for the specified races:
-        fk = number of female kids
-        mk = number of male kids
-        fa = number of female adults
-        ma = number of female adults
+    - fk = number of female kids
+    - mk = number of male kids
+    - fa = number of female adults
+    - ma = number of female adults
     If you specify ``all``, then this command will set the counts for all races
     on your current watchlist (including the races which are currenly set to
     'unwatched') and sets the new default for future watch commands. If you
@@ -171,5 +171,3 @@ add some new races with 'watch'. If you simply want to stop it completely use
 'autobutcher stop' instead. ::
 
     autobutcher unwatch ALPACA CAT
-
-const string autobutcher_help =

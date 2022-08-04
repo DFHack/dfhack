@@ -29,4 +29,3 @@ Usage:
 ``petcapRemover pregtime <ticks>``
     Sets the pregnancy duration to the specified number of ticks. The default
     value is 200,000 ticks, which is the natural pet pregnancy duration.
-

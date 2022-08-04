@@ -50,8 +50,8 @@ REQUIRE_GLOBAL(world);
 namespace DFHack {
     // for configuration-related logging
     DBG_DECLARE(skeleton, status, DebugCategory::LDEBUG);
-    // run `debugfilter set debug skeleton onupdate` to see logging in plugin_onupdate
-    DBG_DECLARE(skeleton, onupdate, DebugCategory::LINFO);
+    // for plugin_onupdate logging
+    DBG_DECLARE(skeleton, onupdate, DebugCategory::LDEBUG);
     // for command-related logging
     DBG_DECLARE(skeleton, command, DebugCategory::LDEBUG);
 }
@@ -138,7 +138,9 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 // Note that if the plugin implements the enabled API, this function is only called
 // if the plugin is enabled.
 DFhackCExport command_result plugin_onupdate (color_ostream &out) {
-    DEBUG(onupdate,out).print("onupdate called\n");
+    DEBUG(onupdate,out).print(
+        "onupdate called (run 'debugfilter set info skeleton onupdate' to stop"
+        " seeing these messages)\n");
 
     return CR_OK;
 }

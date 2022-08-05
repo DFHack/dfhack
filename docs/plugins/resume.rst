@@ -1,7 +1,7 @@
 resume
 ======
 Tags:
-:dfhack-keybind:``
+:dfhack-keybind:`resume`
 
 Color planned buildings based on their suspend status. When enabled, this plugin
 will display a colored 'X' over suspended buildings. When run as a command, it

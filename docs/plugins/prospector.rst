@@ -5,8 +5,8 @@ prospector
 Tags:
 :dfhack-keybind:`prospect`
 
-Shows a summary of resources that exist on the map or an estimate of resources
-available in the selected embark area.
+Shows a summary of resources that exist on the map. It can also calculate an
+estimate of resources available in the selected embark area.
 
 Usage::
 

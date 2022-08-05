@@ -4,9 +4,10 @@ search
 ======
 Tags:
 
-The search plugin adds search capabilities to the Stocks, Animals, Trading,
-Stockpile, Noble (assignment candidates), Military (position candidates),
-Burrows (unit list), Rooms, Announcements, Job List, and Unit List screens.
+Adds search capabilities to the UI. The Stocks, Animals, Trading, Stockpile,
+Noble (assignment candidates), Military (position candidates), Burrows (unit
+list), Rooms, Announcements, Job List, and Unit List screens all get hotkeys
+that allow you to dynamically filter the displayed lists.
 
 Usage::
 

@@ -142,11 +142,11 @@ end
 --                             value is the comment character.)
 local function update_entry(entry, iterator, opts)
     opts = opts or {}
-    local lines = {}
+    local lines, tags = {}, ''
     local first_line_is_short_help = opts.first_line_is_short_help
     local begin_marker_found,header_found = not opts.begin_marker,opts.no_header
     local tags_found, short_help_found = false, opts.skip_short_help
-    local in_short_help = false
+    local in_tags, in_keybinding, in_short_help = false, false, false
     for line in iterator do
         if not short_help_found and first_line_is_short_help then
             line = line:trim()
@@ -179,16 +179,21 @@ local function update_entry(entry, iterator, opts)
         end
         if not header_found and line:find('%w') then
             header_found = true
-        elseif not tags_found and line:find('^[*]*Tags:[*]* [%w, ]+$') then
-            local _,_,tags = line:trim():find('[*]*Tags:[*]* *(.*)')
-            entry.tags = {}
-            for _,tag in ipairs(tags:split('[ ,]+')) do
-                entry.tags[tag] = true
+        elseif in_tags then
+            if #line == 0 then
+                in_tags = false
+            else
+                tags = tags .. line
             end
-            tags_found = true
+        elseif not tags_found and line:find('^[*]*Tags:[*]*') then
+            _,_,tags = line:trim():find('[*]*Tags:[*]* *(.*)')
+            in_tags, tags_found = true, true
+        elseif in_keybinding then
+            if #line == 0 then in_keybinding = false end
+        elseif line:find('^[*]*Keybinding:') then
+            in_keybinding = true
         elseif not short_help_found and
-                not line:find('^[*]*Keybinding:') and
-                line:find('%w') then
+                line:find('^%w') then
             if in_short_help then
                 entry.short_help = entry.short_help .. ' ' .. line
             else
@@ -204,6 +209,10 @@ local function update_entry(entry, iterator, opts)
         end
         table.insert(lines, line)
         ::continue::
+    end
+    entry.tags = {}
+    for _,tag in ipairs(tags:split('[ ,]+')) do
+        entry.tags[tag] = true
     end
     if #lines > 0 then
         entry.long_help = table.concat(lines, '\n')

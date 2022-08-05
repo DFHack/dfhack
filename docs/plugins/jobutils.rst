@@ -7,6 +7,8 @@ Tags:
 :dfhack-keybind:`job-duplicate`
 :dfhack-keybind:`job-material`
 
+Inspect or modify details of workshop jobs.
+
 Usage:
 
 ``job``

@@ -66,105 +66,6 @@ REQUIRE_GLOBAL(ui_building_in_assign);
 REQUIRE_GLOBAL(ui_menu_width);
 REQUIRE_GLOBAL(world);
 
-static command_result df_zone (color_ostream &out, vector <string> & parameters);
-
-const string zone_help =
-    "Allows easier management of pens/pastures, pits and cages.\n"
-    "Commands:\n"
-    "  help         - print this help message\n"
-    "  filters      - print list of supported filters\n"
-    "  examples     - print some usage examples\n"
-    "  set          - set zone under cursor as default for future assigns\n"
-    "  assign       - assign creature(s) to a pen or pit\n"
-    "                 if no filters are used, a single unit must be selected.\n"
-    "                 can be followed by valid building id which will then be set.\n"
-    "                 building must be a pen/pasture, pit or cage.\n"
-    "  slaughter    - mark creature(s) for slaughter\n"
-    "                 if no filters are used, a single unit must be selected.\n"
-    "                 with filters named units are ignored unless specified.\n"
-    "  unassign     - unassign selected creature(s) from zone or cage\n"
-    "  nick         - give unit(s) nicknames (e.g. all units in a cage)\n"
-    "  enumnick     - give unit(s) enumerated nicknames (e.g Hen 1, Hen 2)\n"
-    "  remnick      - remove nicknames\n"
-    "  tocages      - assign to (multiple) built cages inside a pen/pasture\n"
-    "                 spreads creatures evenly among cages for faster hauling.\n"
-    "  uinfo        - print info about selected units\n"
-    "  zinfo        - print info about zone(s) under cursor\n"
-    "Options:\n"
-    "  verbose      - print some more info, mostly useless debug stuff\n"
-    ;
-
-const string zone_help_filters =
-    "Filters (to be used in combination with 'all' or 'count'):\n"
-    "Required (one of):\n"
-    "  all          - process all units\n"
-    "                 should be used in combination with further filters\n"
-    "  count        - must be followed by number. process X units\n"
-    "                 should be used in combination with further filters\n"
-    "Others (may be used with 'not' prefix):\n"
-    "  age          - exact age. must be followed by number\n"
-    "  caged        - in a built cage\n"
-    "  egglayer     - race lays eggs (use together with 'female')\n"
-    "  female       - obvious\n"
-    "  grazer       - is a grazer\n"
-    "  male         - obvious\n"
-    "  maxage       - maximum age. must be followed by number\n"
-    "  merchant     - is a merchant / belongs to a merchant\n"
-    "                 can be used to pit merchants and slaughter their animals\n"
-    "                 (could have weird effects during trading, be careful)\n"
-    "                 ('not merchant' is set by default)\n"
-    "  milkable     - race is milkable (use together with 'female')\n"
-    "  minage       - minimum age. must be followed by number\n"
-    "  named        - has name or nickname\n"
-    "                 ('not named' is set by default when using the 'slaughter' command)\n"
-    "  own          - from own civilization\n"
-    "  race         - must be followed by a race raw id (e.g. BIRD_TURKEY)\n"
-    "  tame         - tamed\n"
-    "  trainablehunt- can be trained for hunting (and is not already trained)\n"
-    "  trainablewar - can be trained for war (and is not already trained)\n"
-    "  trained      - obvious\n"
-    "  unassigned   - not assigned to zone, chain or built cage\n"
-    "  war          - trained war creature\n"
-    ;
-
-const string zone_help_examples =
-    "Example for assigning single units:\n"
-    "  (ingame) move cursor to a pen/pasture or pit zone\n"
-    "  (dfhack) 'zone set' to use this zone for future assignments\n"
-    "  (dfhack) map 'zone assign' to a hotkey of your choice\n"
-    "  (ingame) select unit with 'v', 'k' or from unit list or inside a cage\n"
-    "  (ingame) press hotkey to assign unit to it's new home (or pit)\n"
-    "Examples for assigning with filters:\n"
-    "  (this assumes you have already set up a target zone)\n"
-    "  zone assign all own grazer maxage 10\n"
-    "  zone assign all own milkable not grazer\n"
-    "  zone assign count 5 own female milkable\n"
-    "  zone assign all own race DWARF maxage 2\n"
-    "    throw all useless kids into a pit :)\n"
-    "Notes:\n"
-    "  Unassigning per filters ignores built cages and chains currently. Usually you\n"
-    "  should always use the filter 'own' (which implies tame) unless you want to\n"
-    "  use the zone tool for pitting hostiles. 'own' ignores own dwarves unless you\n"
-    "  specify 'race DWARF' and it ignores merchants and their animals unless you\n"
-    "  specify 'merchant' (so it's safe to use 'assign all own' to one big pasture\n"
-    "  if you want to have all your animals at the same place).\n"
-    "  'egglayer' and 'milkable' should be used together with 'female'\n"
-    "  well, unless you have a mod with egg-laying male elves who give milk...\n";
-
-
-///////////////
-// Various small tool functions
-// probably many of these should be moved to Unit.h and Building.h sometime later...
-
-// static df::general_ref_building_civzone_assignedst * createCivzoneRef();
-// static bool unassignUnitFromBuilding(df::unit* unit);
-// static command_result assignUnitToZone(color_ostream& out, df::unit* unit, df::building* building, bool verbose);
-// static void unitInfo(color_ostream & out, df::unit* creature, bool verbose);
-// static void zoneInfo(color_ostream & out, df::building* building, bool verbose);
-// static void cageInfo(color_ostream & out, df::building* building, bool verbose);
-// static void chainInfo(color_ostream & out, df::building* building, bool verbose);
-static bool isInBuiltCageRoom(df::unit*);
-
 static void doMarkForSlaughter(df::unit* unit)
 {
     unit->flags2.bits.slaughter = 1;
@@ -183,6 +84,8 @@ static bool hasValidMapPos(df::unit* unit)
     else
         return false;
 }
+
+static bool isInBuiltCageRoom(df::unit*);
 
 // dump some unit info
 static void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
@@ -1127,8 +1030,7 @@ static struct zone_param_filters_init { zone_param_filters_init() {
     zone_param_filters["maxage"] = make_pair(1, createMaxAgeFilter);
 }} zone_param_filters_init_;
 
-static command_result df_zone (color_ostream &out, vector <string> & parameters)
-{
+static command_result df_zone(color_ostream &out, vector <string> & parameters) {
     CoreSuspender suspend;
 
     if (!Maps::IsValid())
@@ -1160,18 +1062,7 @@ static command_result df_zone (color_ostream &out, vector <string> & parameters)
 
         if (p0 == "help" || p0 == "?")
         {
-            out << zone_help << endl;
-            return CR_OK;
-        }
-        if (p0 == "filters")
-        {
-            out << zone_help_filters << endl;
-            return CR_OK;
-        }
-        if (p0 == "examples")
-        {
-            out << zone_help_examples << endl;
-            return CR_OK;
+            return CR_WRONG_USAGE;
         }
         else if(p0 == "zinfo")
         {
@@ -2275,13 +2166,8 @@ IMPLEMENT_VMETHOD_INTERPOSE(zone_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(zone_hook, render);
 //END zone filters
 
-DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable)
-{
-    if (!gps)
-        return CR_FAILURE;
-
-    if (enable != is_enabled)
-    {
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
+    if (enable != is_enabled) {
         if (!INTERPOSE_HOOK(zone_hook, feed).apply(enable) ||
             !INTERPOSE_HOOK(zone_hook, render).apply(enable))
             return CR_FAILURE;
@@ -2292,18 +2178,10 @@ DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable)
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
-{
+DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
     commands.push_back(PluginCommand(
         "zone",
-        "manage activity zones.",
-        df_zone,
-        false,
-        zone_help.c_str()));
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_shutdown ( color_ostream &out )
-{
+        "Manage activity zones.",
+        df_zone));
     return CR_OK;
 }

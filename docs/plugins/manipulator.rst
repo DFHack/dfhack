@@ -1,6 +1,6 @@
 manipulator
 ===========
-Tags:
+**Tags:** `tag/fort`, `tag/productivity`, `tag/interface`, `tag/labors`
 
 An in-game labor management interface. It is equivalent to the popular Dwarf
 Therapist utility.

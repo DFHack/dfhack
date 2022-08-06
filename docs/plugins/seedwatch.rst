@@ -1,6 +1,6 @@
 seedwatch
 =========
-Tags:
+**Tags:** `tag/fort`, `tag/auto`
 :dfhack-keybind:`seedwatch`
 
 Manages seed and plant cooking based on seed stock levels.

@@ -1,6 +1,6 @@
 changelayer
 ===========
-Tags:
+**Tags:** `tag/fort`, `tag/armok`, `tag/map`
 :dfhack-keybind:`changelayer`
 
 :index:`Change the material of an entire geology layer.

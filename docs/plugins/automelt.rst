@@ -1,6 +1,6 @@
 automelt
 ========
-Tags:
+**Tags:** `tag/fort`, `tag/auto`, `tag/items`, `tag/stockpiles`
 
 :index:`Quickly designate items to be melted.
 <automelt; Quickly designate items to be melted.>` When `enabled <enable>`, this

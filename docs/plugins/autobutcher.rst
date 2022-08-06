@@ -1,6 +1,6 @@
 autobutcher
 ===========
-Tags:
+**Tags:** `tag/fort`, `tag/auto`, `tag/fps`, `tag/animals`
 :dfhack-keybind:`autobutcher`
 
 Automatically butcher excess livestock. This plugin monitors how many pets you

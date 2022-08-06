@@ -1,6 +1,6 @@
 autohauler
 ==========
-Tags:
+**Tags:** `tag/fort`, `tag/auto`, `tag/labors`
 :dfhack-keybind:`autohauler`
 
 :index:`Automatically manage hauling labors.

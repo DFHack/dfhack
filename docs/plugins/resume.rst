@@ -1,6 +1,6 @@
 resume
 ======
-Tags:
+**Tags:** `tag/fort`, `tag/productivity`
 :dfhack-keybind:`resume`
 
 Color planned buildings based on their suspend status. When enabled, this plugin

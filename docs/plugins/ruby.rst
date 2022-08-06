@@ -2,7 +2,7 @@
 
 ruby
 ====
-Tags:
+**Tags:** `tag/dev`
 :dfhack-keybind:`rb`
 :dfhack-keybind:`rb_eval`
 

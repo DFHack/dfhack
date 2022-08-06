@@ -3,7 +3,7 @@
 
 tiletypes
 =========
-Tags:
+**Tags:** `tag/adventure`, `tag/fort`, `tag/armok`, `tag/map`
 :dfhack-keybind:`tiletypes`
 :dfhack-keybind:`tiletypes-command`
 :dfhack-keybind:`tiletypes-here`

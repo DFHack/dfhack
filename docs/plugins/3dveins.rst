@@ -1,6 +1,6 @@
 3dveins
 =======
-Tags:
+**Tags:** `tag/fort`, `tag/mod`, `tag/map`
 :dfhack-keybind:`3dveins`
 
 :index:`Rewrite layer veins to expand in 3D space.

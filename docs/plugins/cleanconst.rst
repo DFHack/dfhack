@@ -1,6 +1,6 @@
 cleanconst
 ==========
-Tags:
+**Tags:** `tag/fort`, `tag/fps`, `tag/map`
 :dfhack-keybind:`cleanconst`
 
 :index:`Cleans up construction materials.

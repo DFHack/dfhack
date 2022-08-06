@@ -1,6 +1,6 @@
 dwarfvet
 ========
-Tags:
+**Tags:** `tag/fort`, `tag/mod`, `tag/animals`
 :dfhack-keybind:`dwarfvet`
 
 :index:`Allows animals to be treated at animal hospitals.

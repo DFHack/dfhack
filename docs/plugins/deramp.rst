@@ -1,6 +1,6 @@
 deramp
 ======
-Tags:
+**Tags:** `tag/fort`, `tag/armok`, `tag/map`
 :dfhack-keybind:`deramp`
 
 :index:`Removes all ramps designated for removal from the map.

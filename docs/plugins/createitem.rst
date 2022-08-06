@@ -1,6 +1,6 @@
 createitem
 ==========
-Tags:
+**Tags:** `tag/adventure`, `tag/fort`, `tag/armok`, `tag/items`
 :dfhack-keybind:`createitem`
 
 :index:`Create arbitrary items. <createitem; Create arbitrary items.>` You can

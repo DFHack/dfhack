@@ -1,6 +1,6 @@
 title-folder
 =============
-Tags:
+**Tags:** `tag/system`, `tag/interface`
 
 Displays the DF folder name in the window title bar.
 

@@ -1,6 +1,6 @@
 hotkeys
 =======
-Tags:
+**Tags:** `tag/system`, `tag/productivity`, `tag/interface`
 :dfhack-keybind:`hotkeys`
 
 Show all dfhack keybindings in current context. The command opens an in-game

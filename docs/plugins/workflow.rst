@@ -1,6 +1,6 @@
 workflow
 ========
-Tags:
+**Tags:** `tag/fort`, `tag/auto`, `tag/jobs`
 :dfhack-keybind:`workflow`
 :dfhack-keybind:`fix-job-postings`
 

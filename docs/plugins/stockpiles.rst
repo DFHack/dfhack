@@ -2,7 +2,7 @@
 
 stockpiles
 ==========
-Tags:
+**Tags:** `tag/fort`, `tag/productivity`, `tag/design`, `tag/stockpiles`
 :dfhack-keybind:`copystock`
 :dfhack-keybind:`savestock`
 :dfhack-keybind:`loadstock`

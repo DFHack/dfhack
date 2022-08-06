@@ -1,6 +1,6 @@
 autotrade
 =========
-Tags:
+**Tags:** `tag/fort`, `tag/auto`, `tag/items`, `tag/stockpiles`
 
 :index:`Quickly designate items to be traded.
 <autotrade; Quickly designate items to be traded.>` When `enabled <enable>`,

@@ -1,6 +1,6 @@
 infiniteSky
 ===========
-Tags:
+**Tags:** `tag/fort`, `tag/map`
 :dfhack-keybind:`infiniteSky`
 
 Automatically allocates new z-levels of sky at the top of the map as you build

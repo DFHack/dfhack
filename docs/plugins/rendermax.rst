@@ -1,6 +1,6 @@
 rendermax
 =========
-Tags:
+**Tags:** `tag/adventure`, `tag/fort`, `tag/mod`
 :dfhack-keybind:`rendermax`
 
 Modify the map lighting. This plugin provides a collection of OpenGL lighting

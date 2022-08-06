@@ -1,6 +1,6 @@
 autogems
 ========
-Tags:
+**Tags:** `tag/fort`, `tag/auto`, `tag/jobs`
 :dfhack-keybind:`autogems-reload`
 
 :index:`Automatically cut rough gems. <autogems; Automatically cut rough gems.>`

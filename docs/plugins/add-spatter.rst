@@ -1,6 +1,6 @@
 add-spatter
 ===========
-Tags:
+**Tags:** `tag/adventure`, `tag/fort`, `tag/mod`, `tag/items`
 
 :index:`Make tagged reactions produce contaminants.
 <add-spatter; Make tagged reactions produce contaminants.>` Give some use to all

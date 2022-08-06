@@ -2,7 +2,7 @@
 
 reveal
 ======
-Tags:
+**Tags:** `tag/adventure`, `tag/fort`, `tag/inspection`, `tag/armok`, `tag/map`
 :dfhack-keybind:`reveal`
 :dfhack-keybind:`unreveal`
 :dfhack-keybind:`revforget`

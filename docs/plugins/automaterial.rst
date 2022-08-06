@@ -1,6 +1,6 @@
 automaterial
 ============
-Tags:
+**Tags:** `tag/fort`, `tag/productivity`, `tag/design`, `tag/buildings`, `tag/map`
 
 :index:`Sorts building materials by recent usage.
 <automaterial; Sorts building materials by recent usage.>` This makes building

@@ -1,6 +1,6 @@
 fixveins
 ========
-Tags:
+**Tags:** `tag/fort`, `tag/fix`, `tag/map`
 :dfhack-keybind:`fixveins`
 
 Restore missing mineral inclusions. This tool can also remove invalid references

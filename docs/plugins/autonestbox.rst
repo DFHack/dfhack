@@ -1,6 +1,6 @@
 autonestbox
 ===========
-Tags:
+**Tags:** `tag/fort`, `tag/auto`, `tag/animals`
 :dfhack-keybind:`autonestbox`
 
 Auto-assign egg-laying female pets to nestbox zones. Requires that you create

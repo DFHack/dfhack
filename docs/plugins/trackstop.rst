@@ -1,6 +1,6 @@
 trackstop
 =========
-Tags:
+**Tags:** `tag/fort`, `tag/interface`, `tag/mod`, `tag/buildings`
 
 Adds dynamic configuration options for track stops. When enabled, this plugin
 adds a :kbd:`q` menu for track stops, which is completely blank in vanilla DF.

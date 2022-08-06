@@ -1,6 +1,6 @@
 title-version
 =============
-Tags:
+**Tags:** `tag/system`, `tag/interface`
 
 Displays the DFHack version on DF's title screen.
 

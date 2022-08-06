@@ -1,6 +1,6 @@
 RemoteFortressReader
 ====================
-Tags:
+**Tags:** `tag/dev`
 :dfhack-keybind:`RemoteFortressReader_version`
 :dfhack-keybind:`load-art-image-chunk`
 

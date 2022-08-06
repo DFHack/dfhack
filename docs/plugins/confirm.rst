@@ -1,6 +1,6 @@
 confirm
 =======
-Tags:
+**Tags:** `tag/fort`, `tag/interface`
 :dfhack-keybind:`confirm`
 
 :index:`Adds confirmation dialogs for destructive actions.

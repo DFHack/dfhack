@@ -1,6 +1,6 @@
 stocks
 ======
-Tags:
+**Tags:** `tag/fort`, `tag/productivity`, `tag/interface`
 :dfhack-keybind:`stocks`
 
 Enhanced fortress stock management interface. When the plugin is enabled, two

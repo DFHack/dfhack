@@ -1,5 +1,6 @@
 cxxrandom
 =========
+**Tags:** `tag/dev`
 
 Provides a Lua API for random distributions.
 

@@ -1,6 +1,6 @@
 tailor
 ======
-Tags:
+**Tags:** `tag/fort`, `tag/auto`, `tag/jobs`
 :dfhack-keybind:`tailor`
 
 Automatically keep your dwarves in fresh clothing. Whenever the bookkeeper

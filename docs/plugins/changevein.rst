@@ -1,6 +1,6 @@
 changevein
 ==========
-Tags:
+**Tags:** `tag/fort`, `tag/armok`, `tag/map`
 :dfhack-keybind:`changevein`
 
 :index:`Change the material of a mineral inclusion.

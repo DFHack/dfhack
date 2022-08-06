@@ -1,6 +1,6 @@
 follow
 ======
-Tags:
+**Tags:** `tag/fort`, `tag/interface`, `tag/units`
 :dfhack-keybind:`follow`
 
 Make the screen follow the selected unit. Once you exit from the current menu or

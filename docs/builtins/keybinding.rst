@@ -1,6 +1,6 @@
 keybinding
 ==========
-Tags: `tag/system`
+**Tags:** `tag/system`
 :dfhack-keybind:`keybinding`
 
 :index:`Create hotkeys that will run DFHack commands.

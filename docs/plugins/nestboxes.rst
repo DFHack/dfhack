@@ -1,6 +1,6 @@
 nestboxes
 =========
-Tags:
+**Tags:** `tag/fort`, `tag/auto`, `tag/animals`
 
 Protect fertile eggs incubating in a nestbox. This plugin will automatically
 scan for and forbid fertile eggs incubating in a nestbox so that dwarves won't

@@ -1,6 +1,6 @@
 blueprint
 =========
-Tags:
+**Tags:** `tag/fort`, `tag/design`, `tag/quickfort`, `tag/map`
 :dfhack-keybind:`blueprint`
 
 :index:`Record a live game map in a quickfort blueprint.

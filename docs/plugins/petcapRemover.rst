@@ -1,6 +1,6 @@
 petcapRemover
 =============
-Tags:
+**Tags:** `tag/fort`, `tag/armok`, `tag/animals`
 :dfhack-keybind:`petcapRemover`
 
 Modify the pet population cap. In vanilla DF, pets will not reproduce unless the

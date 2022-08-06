@@ -1,6 +1,6 @@
 labormanager
 ============
-Tags:
+**Tags:** `tag/fort`, `tag/auto`, `tag/labors`
 :dfhack-keybind:`labormanager`
 
 Automatically manage dwarf labors. Labormanager is derived from `autolabor`

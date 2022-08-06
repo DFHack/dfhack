@@ -1,6 +1,6 @@
 forceequip
 ==========
-Tags:
+**Tags:** `tag/adventure`, `tag/fort`, `tag/items`, `tag/units`
 :dfhack-keybind:`forceequip`
 
 Move items into a unit's inventory. This tool is typically used to equip

@@ -1,6 +1,6 @@
 debug
 =====
-Tags:
+**Tags:** `tag/dev`
 :dfhack-keybind:`debugfilter`
 
 :index:`Configure verbosity of DFHack debug output.

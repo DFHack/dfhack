@@ -1,6 +1,6 @@
 steam-engine
 ============
-Tags:
+**Tags:** `tag/fort`, `tag/mod`, `tag/buildings`
 
 Allow modded steam engine buildings to function. The steam-engine plugin detects
 custom workshops with STEAM_ENGINE in their token, and turns them into real

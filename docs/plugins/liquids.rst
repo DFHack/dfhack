@@ -2,7 +2,7 @@
 
 liquids
 =======
-Tags:
+**Tags:** `tag/adventure`, `tag/fort`, `tag/armok`, `tag/map`
 :dfhack-keybind:`liquids`
 :dfhack-keybind:`liquids-here`
 

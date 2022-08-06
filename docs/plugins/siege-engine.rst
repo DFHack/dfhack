@@ -1,6 +1,6 @@
 siege-engine
 ============
-Tags:
+**Tags:** `tag/fort`, `tag/mod`, `tag/buildings`
 
 Extend the functionality and usability of siege engines. Siege engines in DF
 haven't been updated since the game was 2D, and can only aim in four

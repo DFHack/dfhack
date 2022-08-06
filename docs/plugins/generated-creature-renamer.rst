@@ -1,6 +1,6 @@
 generated-creature-renamer
 ==========================
-Tags:
+**Tags:** `tag/adventure`, `tag/fort`, `tag/legends`, `tag/units`
 :dfhack-keybind:`list-generated`
 :dfhack-keybind:`save-generated-raws`
 

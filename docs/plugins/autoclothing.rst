@@ -1,6 +1,6 @@
 autoclothing
 ============
-Tags:
+**Tags:** `tag/fort`, `tag/auto`, `tag/jobs`
 :dfhack-keybind:`autoclothing`
 
 :index:`Automatically manage clothing work orders.

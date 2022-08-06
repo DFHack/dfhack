@@ -1,6 +1,6 @@
 autochop
 ========
-Tags:
+**Tags:** `tag/fort`, `tag/auto`
 
 :index:`Auto-harvest trees when low on stockpiled logs.
 <autochop; Auto-harvest trees when low on stockpiled logs.>` This plugin can

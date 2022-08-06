@@ -1,6 +1,6 @@
 tweak
 =====
-Tags:
+**Tags:** `tag/adventure`, `tag/fort`, `tag/interface`, `tag/fps`, `tag/fix`, `tag/armok`
 :dfhack-keybind:`tweak`
 
 Contains various tweaks for minor bugs.

@@ -3,7 +3,7 @@
 
 filltraffic
 ===========
-Tags:
+**Tags:** `tag/fort`, `tag/productivity`, `tag/design`, `tag/map`
 :dfhack-keybind:``
 
 Usage:

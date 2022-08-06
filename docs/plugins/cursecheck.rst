@@ -1,6 +1,6 @@
 cursecheck
 ==========
-Tags:
+**Tags:** `tag/system`, `tag/interface`
 :dfhack-keybind:`cursecheck`
 
 :index:`Check for cursed creatures. <cursecheck; Check for cursed creatures.>`

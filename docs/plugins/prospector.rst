@@ -2,7 +2,7 @@
 
 prospector
 ==========
-Tags:
+**Tags:** `tag/fort`, `tag/embark`, `tag/inspection`, `tag/map`
 :dfhack-keybind:`prospect`
 
 Shows a summary of resources that exist on the map. It can also calculate an

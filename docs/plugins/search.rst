@@ -2,7 +2,7 @@
 
 search
 ======
-Tags:
+**Tags:** `tag/fort`, `tag/productivity`, `tag/interface`
 
 Adds search capabilities to the UI. The Stocks, Animals, Trading, Stockpile,
 Noble (assignment candidates), Military (position candidates), Burrows (unit

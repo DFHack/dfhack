@@ -2,7 +2,7 @@
 
 jobutils
 ========
-Tags:
+**Tags:** `tag/fort`, `tag/inspection`, `tag/jobs`
 :dfhack-keybind:`job`
 :dfhack-keybind:`job-duplicate`
 :dfhack-keybind:`job-material`

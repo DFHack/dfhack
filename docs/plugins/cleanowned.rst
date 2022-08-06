@@ -1,6 +1,6 @@
 cleanowned
 ==========
-Tags:
+**Tags:** `tag/fort`, `tag/productivity`, `tag/items`
 :dfhack-keybind:`cleanowned`
 
 :index:`Confiscates and dumps garbage owned by dwarves.

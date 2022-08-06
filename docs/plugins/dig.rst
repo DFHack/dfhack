@@ -3,7 +3,7 @@
 
 dig
 ===
-Tags:
+**Tags:** `tag/fort`, `tag/productivity`, `tag/design`, `tag/map`
 :dfhack-keybind:`digv`
 :dfhack-keybind:`digvx`
 :dfhack-keybind:`digl`

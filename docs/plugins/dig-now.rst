@@ -1,6 +1,6 @@
 dig-now
 =======
-Tags:
+**Tags:** `tag/fort`, `tag/armok`, `tag/map`
 :dfhack-keybind:`dig-now`
 
 :index:`Instantly complete dig designations.

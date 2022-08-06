@@ -1,6 +1,6 @@
 spectate
 ========
-Tags:
+**Tags:** `tag/fort`, `tag/units`
 
 Automatically follow exciting dwarves.
 

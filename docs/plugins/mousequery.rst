@@ -1,6 +1,6 @@
 mousequery
 ==========
-Tags: `tag/fort`, `tag/interface`
+**Tags:** `tag/fort`, `tag/productivity`, `tag/interface`
 :dfhack-keybind:`mousequery`
 
 Adds mouse controls to the DF interface. For example, with ``mousequery`` you

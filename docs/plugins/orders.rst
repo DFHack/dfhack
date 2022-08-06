@@ -1,6 +1,6 @@
 orders
 ======
-Tags:
+**Tags:** `tag/fort`, `tag/productivity`, `tag/jobs`
 :dfhack-keybind:`orders`
 
 Manage manager orders.

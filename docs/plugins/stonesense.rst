@@ -1,6 +1,6 @@
 stonesense
 ==========
-Tags:
+**Tags:** `tag/adventure`, `tag/fort`, `tag/interface`, `tag/map`
 :dfhack-keybind:`stonesense`
 :dfhack-keybind:`ssense`
 

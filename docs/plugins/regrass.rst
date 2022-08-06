@@ -1,6 +1,6 @@
 regrass
 =======
-Tags:
+**Tags:** `tag/adventure`, `tag/fort`, `tag/armok`, `tag/animals`
 :dfhack-keybind:`regrass`
 
 Regrows all the grass. Use this command if your grazers have eaten everything

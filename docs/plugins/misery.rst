@@ -1,6 +1,6 @@
 misery
 ======
-Tags:
+**Tags:** `tag/fort`, `tag/armok`, `tag/units`
 :dfhack-keybind:`misery`
 
 Increase the intensity of negative dwarven thoughts.

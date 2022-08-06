@@ -3,7 +3,7 @@
 
 cleaners
 ========
-Tags:
+**Tags:** `tag/adventure`, `tag/fort`, `tag/fps`, `tag/items`, `tag/map`, `tag/units`
 :dfhack-keybind:`clean`
 :dfhack-keybind:`spotclean`
 

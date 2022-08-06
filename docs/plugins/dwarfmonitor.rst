@@ -1,6 +1,6 @@
 dwarfmonitor
 ============
-Tags:
+**Tags:** `tag/fort`, `tag/inspection`, `tag/units`
 :dfhack-keybind:`dwarfmonitor`
 
 :index:`Measure fort happiness and efficiency.

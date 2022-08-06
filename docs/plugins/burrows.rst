@@ -1,6 +1,6 @@
 burrows
 =======
-Tags:
+**Tags:** `tag/fort`, `tag/auto`, `tag/productivity`, `tag/units`
 :dfhack-keybind:`burrow`
 
 :index:`Auto-expand burrows as you dig.

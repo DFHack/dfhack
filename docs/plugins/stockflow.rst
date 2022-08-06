@@ -1,6 +1,6 @@
 stockflow
 =========
-Tags:
+**Tags:** `tag/fort`, `tag/auto`, `tag/jobs`, `tag/stockpiles`
 :dfhack-keybind:`stockflow`
 
 Queue manager jobs based on free space in stockpiles. With this plugin, the

@@ -1,6 +1,6 @@
 buildingplan
 ============
-Tags:
+**Tags:** `tag/fort`, `tag/design`, `tag/quickfort`, `tag/buildings`, `tag/map`
 :dfhack-keybind:`buildingplan`
 
 :index:`Plan building construction before you have materials.

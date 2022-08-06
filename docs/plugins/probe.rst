@@ -1,6 +1,6 @@
 probe
 =====
-Tags:
+**Tags:** `tag/adventure`, `tag/fort`, `tag/inspection`, `tag/map`
 :dfhack-keybind:`probe`
 :dfhack-keybind:`bprobe`
 :dfhack-keybind:`cprobe`

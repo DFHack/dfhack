@@ -2,7 +2,7 @@
 
 plants
 ======
-Tags:
+**Tags:** `tag/adventure`, `tag/fort`, `tag/armok`, `tag/map`
 :dfhack-keybind:`plant`
 
 Grow shrubs or trees.

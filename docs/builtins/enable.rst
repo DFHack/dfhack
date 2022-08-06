@@ -1,6 +1,6 @@
 enable
 ======
-Tags: `tag/system`
+**Tags:** `tag/system`
 :dfhack-keybind:`enable`
 
 :index:`Activate a DFHack tool that has some persistent effect.

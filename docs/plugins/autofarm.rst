@@ -1,6 +1,6 @@
 autofarm
 ========
-Tags:
+**Tags:** `tag/fort`, `tag/auto`, `tag/buildings`
 :dfhack-keybind:`autofarm`
 
 :index:`Automatically manage farm crop selection.

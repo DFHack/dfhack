@@ -1,6 +1,6 @@
 autodump
 ========
-Tags:
+**Tags:** `tag/fort`, `tag/auto`, `tag/fps`, `tag/items`, `tag/stockpiles`
 :dfhack-keybind:`autodump`
 :dfhack-keybind:`autodump-destroy-here`
 :dfhack-keybind:`autodump-destroy-item`

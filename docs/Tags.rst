@@ -1,20 +1,27 @@
 :orphan:
 
-- `tag/adventure`: Tools that are useful while in adventure mode.
+- `tag/adventure`: Tools that are useful while in adventure mode. Note that some tools only tagged with "fort" might also work in adventure mode, but not always in expected ways. Feel free to experiment, though!
 - `tag/fort`: Tools that are useful while in fort mode.
 - `tag/legends`: Tools that are useful while in legends mode.
-- `tag/items`: Tools that create or modify in-game items.
-- `tag/units`: Tools that create or modify units.
-- `tag/jobs`: Tools that create or modify jobs.
-- `tag/labors`: Tools that deal with labor assignment.
-- `tag/auto`: Tools that automatically manage some aspect of your fortress.
-- `tag/map`: Map modification.
+- `tag/embark`: Tools that are useful while on the embark screen.
 - `tag/system`: Tools related to working with DFHack commands or the core DFHack library.
-- `tag/productivity`: Tools that help you do things that you could do manually, but using the tool is better and faster.
-- `tag/animals`: Tools that help you manage animals.
-- `tag/fix`: Tools that fix specific bugs.
-- `tag/inspection`: Tools that let you inspect game data.
-- `tag/buildings`: Tools that help you work wtih placing or configuring buildings and furniture.
-- `tag/quickfort`: Tools that are involved in creating and playing back blueprints.
 - `tag/dev`: Tools useful for develpers and modders.
+- `tag/auto`: Tools that you turn on and then they automatically manage some aspect of your fortress.
+- `tag/productivity`: Tools that help you do things that you could do manually, but using the tool is better and faster.
+- `tag/inspection`: Tools that let you inspect game data.
+- `tag/design`: Tools that help you design your fort.
+- `tag/quickfort`: Tools that are involved in creating and playing back blueprints.
 - `tag/interface`: Tools that modify or extend the user interface.
+- `tag/fps`: Tools that help you manage FPS drop.
+- `tag/fix`: Tools that fix specific bugs.
+- `tag/mod`: Tools that introduce new gameplay elements.
+- `tag/armok`: Tools that give you complete control over various aspects of the game.
+- `tag/animals`: Tools that help you manage animals.
+- `tag/buildings`: Tools that help you work with placing or configuring buildings and furniture.
+- `tag/items`: Tools that create or modify in-game items.
+- `tag/jobs`: Tools that create or modify jobs.
+- `tag/map`: Map modification.
+- `tag/labors`: Tools that deal with labor assignment.
+- `tag/units`: Tools that create or modify units.
+- `tag/stockpiles`: Tools that interact wtih stockpiles.
+- `tag/trees`: Tools that interact with trees and shrubs.

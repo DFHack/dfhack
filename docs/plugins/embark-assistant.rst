@@ -1,6 +1,6 @@
 embark-assistant
 ================
-Tags:
+**Tags:** `tag/fort`, `tag/embark`, `tag/interface`
 :dfhack-keybind:`embark-assistant`
 
 :index:`Embark site selection support.

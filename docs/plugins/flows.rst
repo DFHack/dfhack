@@ -1,6 +1,6 @@
 flows
 =====
-Tags:
+**Tags:** `tag/fort`, `tag/inspection`, `tag/map`
 :dfhack-keybind:`flows`
 
 Counts map blocks with flowing liquids.. If you suspect that your magma sea

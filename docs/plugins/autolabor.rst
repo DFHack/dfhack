@@ -1,6 +1,6 @@
 autolabor
 =========
-Tags:
+**Tags:** `tag/fort`, `tag/auto`, `tag/labors`
 :dfhack-keybind:`autolabor`
 
 :index:`Automatically manage dwarf labors.

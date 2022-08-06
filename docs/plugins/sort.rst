@@ -1,6 +1,6 @@
 sort
 ====
-Tags:
+**Tags:** `tag/fort`, `tag/productivity`, `tag/interface`
 :dfhack-keybind:`sort-items`
 :dfhack-keybind:`sort-units`
 

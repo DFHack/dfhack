@@ -1,6 +1,6 @@
 changeitem
 ==========
-Tags:
+**Tags:** `tag/adventure`, `tag/fort`, `tag/armok`, `tag/items`
 :dfhack-keybind:`changeitem`
 
 :index:`Change item material and base quality.

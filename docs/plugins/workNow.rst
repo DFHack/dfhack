@@ -1,6 +1,6 @@
 workNow
 =======
-Tags:
+**Tags:** `tag/fort`, `tag/auto`, `tag/jobs`
 :dfhack-keybind:`workNow`
 
 Reduce the time that dwarves idle after completing a job. After finishing a job,

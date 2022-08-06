@@ -1,6 +1,6 @@
 digFlood
 ========
-Tags:
+**Tags:** `tag/fort`, `tag/auto`, `tag/map`
 :dfhack-keybind:`digFlood`
 
 :index:`Digs out veins as they are discovered.

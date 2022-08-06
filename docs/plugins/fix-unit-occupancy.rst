@@ -1,6 +1,6 @@
 fix-unit-occupancy
 ==================
-Tags:
+**Tags:** `tag/fort`, `tag/fix`, `tag/map`
 :dfhack-keybind:``
 
 Fix phantom unit occupancy issues. For example, if you see "unit blocking tile"

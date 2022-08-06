@@ -23,6 +23,8 @@ struct scdata {
 };
 
 struct renderer_msg : public Renderer::renderer_wrap {
+    bool message_dirty = true;  // force redraw when renderer is installed
+
     virtual void update_tile(int32_t x, int32_t y) override {
         draw_message();
         renderer_wrap::update_tile(x, y);
@@ -33,11 +35,20 @@ struct renderer_msg : public Renderer::renderer_wrap {
         renderer_wrap::update_all();
     }
 
+    virtual void render() override {
+        message_dirty = true;
+        renderer_wrap::render();
+    }
+
     void draw_message() {
-        static std::string str = std::string("DFHack: ") + plugin_name + " active";
-        Screen::paintString(Screen::Pen(' ', COLOR_LIGHTCYAN, COLOR_GREEN), 0, gps->dimy - 1, str);
-        for (int32_t i = 0; i < gps->dimx; ++i)
-            ((scdata*)screen)[i * gps->dimy + gps->dimy - 1].bg = 2;
+        if (message_dirty) {
+            static std::string str = std::string("DFHack: ") + plugin_name + " active";
+            Screen::paintString(Screen::Pen(' ', COLOR_LIGHTCYAN, COLOR_GREEN), 0, gps->dimy - 1, str);
+            for (int32_t i = 0; i < gps->dimx; ++i)
+                ((scdata*)screen)[i * gps->dimy + gps->dimy - 1].bg = 2;
+
+            message_dirty = false;
+        }
     }
 };
 

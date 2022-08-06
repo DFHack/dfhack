@@ -468,6 +468,10 @@ local function get_db_property(entry_name, property)
             textdb[entrydb[entry_name].text_entry][property]
 end
 
+function ge_entry_types(entry)
+    return get_db_property(entry, 'entry_types')
+end
+
 -- returns the ~54 char summary blurb associated with the entry
 function get_entry_short_help(entry)
     return get_db_property(entry, 'short_help')
@@ -637,9 +641,7 @@ function get_commands()
 end
 
 function is_builtin(command)
-    ensure_db()
-    return entrydb[command] and
-            get_db_property(command, 'entry_types')[ENTRY_TYPES.BUILTIN]
+    return is_entry(command) and get_entry_types(command)[ENTRY_TYPES.BUILTIN]
 end
 
 ---------------------------------------------------------------------------

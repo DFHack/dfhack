@@ -468,7 +468,7 @@ local function get_db_property(entry_name, property)
             textdb[entrydb[entry_name].text_entry][property]
 end
 
-function ge_entry_types(entry)
+function get_entry_types(entry)
     return get_db_property(entry, 'entry_types')
 end
 

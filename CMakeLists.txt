@@ -459,12 +459,19 @@ if(BUILD_DOCS)
         "${CMAKE_CURRENT_SOURCE_DIR}/changelog.txt"
     )
     list(FILTER SPHINX_GLOB_RECURSE_DEPS
-        EXCLUDE REGEX "docs/_"
+        EXCLUDE REGEX "docs/changelogs"
     )
-    file(GLOB_RECURSE SPHINX_SCRIPT_DEPS
-        "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.lua"
-        "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.rb"
-        "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.txt"
+    list(FILTER SPHINX_GLOB_RECURSE_DEPS
+        EXCLUDE REGEX "docs/html"
+    )
+    list(FILTER SPHINX_GLOB_RECURSE_DEPS
+        EXCLUDE REGEX "docs/tags"
+    )
+    list(FILTER SPHINX_GLOB_RECURSE_DEPS
+        EXCLUDE REGEX "docs/text"
+    )
+    list(FILTER SPHINX_GLOB_RECURSE_DEPS
+        EXCLUDE REGEX "docs/tools"
     )
     set(SPHINX_DEPS ${SPHINX_GLOB_DEPS} ${SPHINX_GLOB_RECURSE_DEPS} ${SPHINX_SCRIPT_DEPS}
         "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"

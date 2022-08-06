@@ -32,8 +32,13 @@ class DFHackToolDirective(sphinx.directives.ObjectDescription):
         tag_nodes.pop()
 
         return [
-            nodes.section('', nodes.title(text=tool_name), ids=[tool_name]),
-            nodes.paragraph('', '', *tag_nodes),
+            nodes.admonition('', *[
+                nodes.paragraph('', '', *[
+                    nodes.strong('', 'Tool: '),
+                    nodes.inline('', tool_name),
+                ]),
+                nodes.paragraph('', '', *tag_nodes),
+            ], classes=['dfhack-tool-summary']),
         ]
 
 

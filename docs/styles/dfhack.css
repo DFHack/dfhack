@@ -60,3 +60,8 @@ div.body {
 span.pre {
     overflow-wrap: break-word;
 }
+
+.dfhack-tool-summary p {
+    margin-top: 0;
+    margin-bottom: 0.5em;
+}

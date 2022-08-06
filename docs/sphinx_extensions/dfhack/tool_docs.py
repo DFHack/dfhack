@@ -6,6 +6,7 @@
 import docutils.nodes as nodes
 # import docutils.parsers.rst.directives as rst_directives
 import sphinx
+import sphinx.addnodes as addnodes
 import sphinx.directives
 
 import dfhack.util
@@ -26,7 +27,13 @@ class DFHackToolDirective(sphinx.directives.ObjectDescription):
         tag_nodes = [nodes.strong(text='Tags: ')]
         for tag in self.options.get('tags', []):
             tag_nodes += [
-                nodes.literal(tag, tag),
+                addnodes.pending_xref(tag, nodes.inline(text=tag), **{
+                    'reftype': 'ref',
+                    'refdomain': 'std',
+                    'reftarget': 'tag/' + tag,
+                    'refexplicit': False,
+                    'refwarn': True,
+                }),
                 nodes.inline(text=' | '),
             ]
         tag_nodes.pop()

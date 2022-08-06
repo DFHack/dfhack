@@ -12,13 +12,16 @@ import dfhack.util
 
 class DFHackToolDirective(sphinx.directives.ObjectDescription):
     has_content = False
-    required_arguments = 1
+    required_arguments = 0
     option_spec = {
         'tags': dfhack.util.directive_arg_str_list,
     }
 
     def run(self):
-        tool_name = self.get_signatures()[0]
+        if self.arguments:
+            tool_name = self.arguments[0]
+        else:
+            tool_name = self.env.docname.split('/')[-1]
 
         tag_nodes = [nodes.strong(text='Tags: ')]
         for tag in self.options.get('tags', []):
@@ -32,11 +35,6 @@ class DFHackToolDirective(sphinx.directives.ObjectDescription):
             nodes.section('', nodes.title(text=tool_name), ids=[tool_name]),
             nodes.paragraph('', '', *tag_nodes),
         ]
-
-    # simpler but always renders as "inline code" (and less customizable)
-    # def handle_signature(self, sig, signode):
-    #     signode += addnodes.desc_name(text=sig)
-    #     return sig
 
 
 def register(app):

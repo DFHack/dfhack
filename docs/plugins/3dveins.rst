@@ -1,7 +1,7 @@
 3dveins
 =======
 
-.. dfhack-tool:: 3dveins
+.. dfhack-tool::
     :tags: fort, mod, map
 
 :dfhack-keybind:`3dveins`

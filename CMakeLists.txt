@@ -489,7 +489,7 @@ if(BUILD_DOCS)
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/tools"
         "${CMAKE_BINARY_DIR}/docs/html"
         "${CMAKE_BINARY_DIR}/docs/text"
-    ) 
+    )
     add_custom_command(OUTPUT ${SPHINX_OUTPUT}
         COMMAND ${SPHINX_EXECUTABLE}
             -q -b html -d "${CMAKE_BINARY_DIR}/docs/html"

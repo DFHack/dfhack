@@ -4,7 +4,10 @@
 filltraffic
 ===========
 **Tags:** `tag/fort`, `tag/productivity`, `tag/design`, `tag/map`
-:dfhack-keybind:``
+:dfhack-keybind:`filltraffic`
+:dfhack-keybind:`alltraffic`
+:dfhack-keybind:`restrictice`
+:dfhack-keybind:`restrictliquids`
 
 Usage:
 

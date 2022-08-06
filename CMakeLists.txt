@@ -473,7 +473,16 @@ if(BUILD_DOCS)
     )
 
     set(SPHINX_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/docs/html/.buildinfo")
-    set_source_files_properties(${SPHINX_OUTPUT} PROPERTIES GENERATED TRUE)
+    set_property(
+        DIRECTORY PROPERTY ADDITIONAL_CLEAN_FILES TRUE
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/changelogs"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/html"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/tags"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/text"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/tools"
+        "${CMAKE_BINARY_DIR}/docs/html"
+        "${CMAKE_BINARY_DIR}/docs/text"
+    ) 
     add_custom_command(OUTPUT ${SPHINX_OUTPUT}
         COMMAND ${SPHINX_EXECUTABLE}
             -E -q -b html -d "${CMAKE_BINARY_DIR}/docs/html"

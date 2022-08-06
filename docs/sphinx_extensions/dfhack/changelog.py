@@ -238,6 +238,8 @@ def generate_changelog(all=False):
     consolidate_changelog(stable_entries)
     consolidate_changelog(dev_entries)
 
+    os.makedirs(os.path.join(DOCS_ROOT, 'changelogs'), mode=0o755, exist_ok=True)
+
     print_changelog(versions, stable_entries, os.path.join(DOCS_ROOT, 'changelogs/news.rst'))
     print_changelog(versions, dev_entries, os.path.join(DOCS_ROOT, 'changelogs/news-dev.rst'))
 

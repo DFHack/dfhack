@@ -4,6 +4,8 @@
 .. dfhack-tool::
     :tags: fort, mod, map
 
+.. dfhack-command::
+
 :dfhack-keybind:`3dveins`
 
 :index:`Rewrite layer veins to expand in 3D space.

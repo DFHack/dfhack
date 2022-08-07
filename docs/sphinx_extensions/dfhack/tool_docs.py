@@ -11,19 +11,37 @@ import sphinx.directives
 
 import dfhack.util
 
-class DFHackToolDirective(sphinx.directives.ObjectDescription):
+class DFHackToolDirectiveBase(sphinx.directives.ObjectDescription):
     has_content = False
     required_arguments = 0
+
+    def get_name_or_docname(self):
+        if self.arguments:
+            return self.arguments[0]
+        else:
+            return self.env.docname.split('/')[-1]
+
+    def make_labeled_paragraph(self, label, content):
+        return nodes.paragraph('', '', *[
+            nodes.strong('', '{}: '.format(label)),
+            nodes.inline('', content),
+        ])
+
+    def make_nodes(self):
+        raise NotImplementedError
+
+    def run(self):
+        return [
+            nodes.admonition('', *self.make_nodes(), classes=['dfhack-tool-summary']),
+        ]
+
+
+class DFHackToolDirective(DFHackToolDirectiveBase):
     option_spec = {
         'tags': dfhack.util.directive_arg_str_list,
     }
 
-    def run(self):
-        if self.arguments:
-            tool_name = self.arguments[0]
-        else:
-            tool_name = self.env.docname.split('/')[-1]
-
+    def make_nodes(self):
         tag_nodes = [nodes.strong(text='Tags: ')]
         for tag in self.options.get('tags', []):
             tag_nodes += [
@@ -39,18 +57,21 @@ class DFHackToolDirective(sphinx.directives.ObjectDescription):
         tag_nodes.pop()
 
         return [
-            nodes.admonition('', *[
-                nodes.paragraph('', '', *[
-                    nodes.strong('', 'Tool: '),
-                    nodes.inline('', tool_name),
-                ]),
-                nodes.paragraph('', '', *tag_nodes),
-            ], classes=['dfhack-tool-summary']),
+            self.make_labeled_paragraph('Tool', self.get_name_or_docname()),
+            nodes.paragraph('', '', *tag_nodes),
+        ]
+
+
+class DFHackCommandDirective(DFHackToolDirectiveBase):
+    def make_nodes(self):
+        return [
+            self.make_labeled_paragraph('Command', self.get_name_or_docname()),
         ]
 
 
 def register(app):
     app.add_directive('dfhack-tool', DFHackToolDirective)
+    app.add_directive('dfhack-command', DFHackCommandDirective)
 
 def setup(app):
     app.connect('builder-inited', register)

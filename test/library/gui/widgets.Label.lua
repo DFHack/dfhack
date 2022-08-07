@@ -95,7 +95,7 @@ function test.scroll()
     local o = fs{frame_height=3}
     local txt = o.subviews.text
     expect.eq(1, txt.start_line_num)
-    
+
     txt:scroll(1)
     expect.eq(2, txt.start_line_num)
     txt:scroll('+page')

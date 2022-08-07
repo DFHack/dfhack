@@ -21,6 +21,8 @@ import shlex  # pylint:disable=unused-import
 import sphinx
 import sys
 
+sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'docs', 'sphinx_extensions'))
+from dfhack.util import write_file_if_changed
 
 if os.environ.get('DFHACK_DOCS_BUILD_OFFLINE'):
     # block attempted image downloads, particularly for the PDF builder
@@ -37,71 +39,6 @@ if os.environ.get('DFHACK_DOCS_BUILD_OFFLINE'):
     requests.request = request_disabled
     requests.get = request_disabled
 
-
-# -- Support :dfhack-keybind:`command` ------------------------------------
-# this is a custom directive that pulls info from default keybindings
-
-from docutils import nodes
-from docutils.parsers.rst import roles
-
-sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'docs', 'sphinx_extensions'))
-from dfhack.util import write_file_if_changed
-
-
-def get_keybinds(root, files, keybindings):
-    """Add keybindings in the specified files to the
-    given keybindings dict.
-    """
-    for file in files:
-        with open(os.path.join(root, file)) as f:
-            lines = [l.replace('keybinding add', '').strip() for l in f.readlines()
-                     if l.startswith('keybinding add')]
-        for k in lines:
-            first, command = k.split(' ', 1)
-            bind, context = (first.split('@') + [''])[:2]
-            if ' ' not in command:
-                command = command.replace('"', '')
-            tool = command.split(' ')[0].replace('"', '')
-            keybindings[tool] = keybindings.get(tool, []) + [
-                (command, bind.split('-'), context)]
-
-def get_all_keybinds(root_dir):
-    """Get the implemented keybinds, and return a dict of
-    {tool: [(full_command, keybinding, context), ...]}.
-    """
-    keybindings = dict()
-    for root, _, files in os.walk(root_dir):
-        get_keybinds(root, files, keybindings)
-    return keybindings
-
-KEYBINDS = get_all_keybinds('data/init')
-
-
-# pylint:disable=unused-argument,dangerous-default-value,too-many-arguments
-def dfhack_keybind_role_func(role, rawtext, text, lineno, inliner,
-                             options={}, content=[]):
-    """Custom role parser for DFHack default keybinds."""
-    roles.set_classes(options)
-    if text not in KEYBINDS:
-        return [], []
-    newnode = nodes.paragraph()
-    for cmd, key, ctx in KEYBINDS[text]:
-        n = nodes.paragraph()
-        newnode += n
-        n += nodes.strong('Keybinding:', 'Keybinding:')
-        n += nodes.inline(' ', ' ')
-        for k in key:
-            n += nodes.inline(k, k, classes=['kbd'])
-        if cmd != text:
-            n += nodes.inline(' -> ', ' -> ')
-            n += nodes.literal(cmd, cmd, classes=['guilabel'])
-        if ctx:
-            n += nodes.inline(' in ', ' in ')
-            n += nodes.literal(ctx, ctx)
-    return [newnode], []
-
-
-roles.register_canonical_role('dfhack-keybind', dfhack_keybind_role_func)
 
 # -- Autodoc for DFhack plugins and scripts -------------------------------
 

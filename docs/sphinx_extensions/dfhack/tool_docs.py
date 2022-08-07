@@ -3,6 +3,7 @@
 #   https://www.sphinx-doc.org/en/master/development/tutorials/recipe.html
 #   https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html#rst-directives
 
+import os
 from typing import List
 
 import docutils.nodes as nodes
@@ -12,6 +13,63 @@ import sphinx.addnodes as addnodes
 import sphinx.directives
 
 import dfhack.util
+
+
+_KEYBINDS = {}
+
+def scan_keybinds(root, files, keybindings):
+    """Add keybindings in the specified files to the
+    given keybindings dict.
+    """
+    for file in files:
+        with open(os.path.join(root, file)) as f:
+            lines = [l.replace('keybinding add', '').strip() for l in f.readlines()
+                     if l.startswith('keybinding add')]
+        for k in lines:
+            first, command = k.split(' ', 1)
+            bind, context = (first.split('@') + [''])[:2]
+            if ' ' not in command:
+                command = command.replace('"', '')
+            tool = command.split(' ')[0].replace('"', '')
+            keybindings[tool] = keybindings.get(tool, []) + [
+                (command, bind.split('-'), context)]
+
+def scan_all_keybinds(root_dir):
+    """Get the implemented keybinds, and return a dict of
+    {tool: [(full_command, keybinding, context), ...]}.
+    """
+    keybindings = dict()
+    for root, _, files in os.walk(root_dir):
+        scan_keybinds(root, files, keybindings)
+    return keybindings
+
+
+def render_dfhack_keybind(command) -> List[nodes.paragraph]:
+    if command not in _KEYBINDS:
+        return []
+    newnode = nodes.paragraph()
+    for keycmd, key, ctx in _KEYBINDS[command]:
+        n = nodes.paragraph()
+        newnode += n
+        n += nodes.strong('Keybinding:', 'Keybinding:')
+        n += nodes.inline(' ', ' ')
+        for k in key:
+            n += nodes.inline(k, k, classes=['kbd'])
+        if keycmd != command:
+            n += nodes.inline(' -> ', ' -> ')
+            n += nodes.literal(keycmd, keycmd, classes=['guilabel'])
+        if ctx:
+            n += nodes.inline(' in ', ' in ')
+            n += nodes.literal(ctx, ctx)
+    return [newnode]
+
+
+# pylint:disable=unused-argument,dangerous-default-value,too-many-arguments
+def dfhack_keybind_role(role, rawtext, text, lineno, inliner,
+                        options={}, content=[]):
+    """Custom role parser for DFHack default keybinds."""
+    return render_dfhack_keybind(text), []
+
 
 class DFHackToolDirectiveBase(sphinx.directives.ObjectDescription):
     has_content = False
@@ -77,14 +135,20 @@ class DFHackToolDirective(DFHackToolDirectiveBase):
 
 class DFHackCommandDirective(DFHackToolDirectiveBase):
     def render_content(self) -> List[nodes.Node]:
+        command = self.get_name_or_docname()
         return [
-            self.make_labeled_paragraph('Command', self.get_name_or_docname(), content_class=nodes.literal),
+            self.make_labeled_paragraph('Command', command, content_class=nodes.literal),
+            *render_dfhack_keybind(command),
         ]
 
 
 def register(app):
     app.add_directive('dfhack-tool', DFHackToolDirective)
     app.add_directive('dfhack-command', DFHackCommandDirective)
+    app.add_role('dfhack-keybind', dfhack_keybind_role)
+
+    _KEYBINDS.update(scan_all_keybinds(os.path.join(dfhack.util.DFHACK_ROOT, 'data', 'init')))
+
 
 def setup(app):
     app.connect('builder-inited', register)

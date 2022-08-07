@@ -14,6 +14,7 @@ import dfhack.util
 class DFHackToolDirectiveBase(sphinx.directives.ObjectDescription):
     has_content = False
     required_arguments = 0
+    optional_arguments = 1
 
     def get_name_or_docname(self):
         if self.arguments:

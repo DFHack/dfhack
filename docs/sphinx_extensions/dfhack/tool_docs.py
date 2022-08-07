@@ -22,10 +22,10 @@ class DFHackToolDirectiveBase(sphinx.directives.ObjectDescription):
         else:
             return self.env.docname.split('/')[-1]
 
-    def make_labeled_paragraph(self, label, content):
+    def make_labeled_paragraph(self, label, content, label_class=nodes.strong, content_class=nodes.inline):
         return nodes.paragraph('', '', *[
-            nodes.strong('', '{}: '.format(label)),
-            nodes.inline('', content),
+            label_class('', '{}: '.format(label)),
+            content_class('', content),
         ])
 
     def make_nodes(self):
@@ -66,7 +66,7 @@ class DFHackToolDirective(DFHackToolDirectiveBase):
 class DFHackCommandDirective(DFHackToolDirectiveBase):
     def make_nodes(self):
         return [
-            self.make_labeled_paragraph('Command', self.get_name_or_docname()),
+            self.make_labeled_paragraph('Command', self.get_name_or_docname(), content_class=nodes.literal),
         ]
 
 

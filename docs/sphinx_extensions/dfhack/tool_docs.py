@@ -45,12 +45,11 @@ def scan_all_keybinds(root_dir):
 
 
 def render_dfhack_keybind(command) -> List[nodes.paragraph]:
+    out = []
     if command not in _KEYBINDS:
-        return []
-    newnode = nodes.paragraph()
+        return out
     for keycmd, key, ctx in _KEYBINDS[command]:
         n = nodes.paragraph()
-        newnode += n
         n += nodes.strong('Keybinding:', 'Keybinding:')
         n += nodes.inline(' ', ' ')
         for k in key:
@@ -61,7 +60,8 @@ def render_dfhack_keybind(command) -> List[nodes.paragraph]:
         if ctx:
             n += nodes.inline(' in ', ' in ')
             n += nodes.literal(ctx, ctx)
-    return [newnode]
+        out.append(n)
+    return out
 
 
 # pylint:disable=unused-argument,dangerous-default-value,too-many-arguments

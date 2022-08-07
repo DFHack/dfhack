@@ -3,8 +3,10 @@
 #   https://www.sphinx-doc.org/en/master/development/tutorials/recipe.html
 #   https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html#rst-directives
 
+from typing import List
+
 import docutils.nodes as nodes
-# import docutils.parsers.rst.directives as rst_directives
+import docutils.parsers.rst.directives as rst_directives
 import sphinx
 import sphinx.addnodes as addnodes
 import sphinx.directives
@@ -22,27 +24,31 @@ class DFHackToolDirectiveBase(sphinx.directives.ObjectDescription):
         else:
             return self.env.docname.split('/')[-1]
 
-    def make_labeled_paragraph(self, label, content, label_class=nodes.strong, content_class=nodes.inline):
+    @staticmethod
+    def make_labeled_paragraph(label, content, label_class=nodes.strong, content_class=nodes.inline) -> nodes.paragraph:
         return nodes.paragraph('', '', *[
             label_class('', '{}: '.format(label)),
             content_class('', content),
         ])
 
-    def make_nodes(self):
+    @staticmethod
+    def wrap_box(*children: List[nodes.Node]) -> nodes.Admonition:
+        return nodes.admonition('', *children, classes=['dfhack-tool-summary'])
+
+    def render_content(self) -> List[nodes.Node]:
         raise NotImplementedError
 
     def run(self):
-        return [
-            nodes.admonition('', *self.make_nodes(), classes=['dfhack-tool-summary']),
-        ]
+        return [self.wrap_box(*self.render_content())]
 
 
 class DFHackToolDirective(DFHackToolDirectiveBase):
     option_spec = {
         'tags': dfhack.util.directive_arg_str_list,
+        'no-command': rst_directives.flag,
     }
 
-    def make_nodes(self):
+    def render_content(self) -> List[nodes.Node]:
         tag_nodes = [nodes.strong(text='Tags: ')]
         for tag in self.options.get('tags', []):
             tag_nodes += [
@@ -62,9 +68,15 @@ class DFHackToolDirective(DFHackToolDirectiveBase):
             nodes.paragraph('', '', *tag_nodes),
         ]
 
+    def run(self):
+        out = DFHackToolDirectiveBase.run(self)
+        if 'no-command' not in self.options:
+            out += [self.wrap_box(*DFHackCommandDirective.render_content(self))]
+        return out
+
 
 class DFHackCommandDirective(DFHackToolDirectiveBase):
-    def make_nodes(self):
+    def render_content(self) -> List[nodes.Node]:
         return [
             self.make_labeled_paragraph('Command', self.get_name_or_docname(), content_class=nodes.literal),
         ]

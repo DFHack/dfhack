@@ -652,6 +652,19 @@ function Label:onRenderFrame(dc, rect)
 end
 
 function Label:scroll(nlines)
+    if type(nlines) == 'string' then
+        if nlines == '+page' then
+            nlines = self.frame_body.height
+        elseif nlines == '-page' then
+            nlines = -self.frame_body.height
+        elseif nlines == '+halfpage' then
+            nlines = math.ceil(self.frame_body.height/2)
+        elseif nlines == '-halfpage' then
+            nlines = -math.ceil(self.frame_body.height/2)
+        else
+            error(('unhandled scroll keyword: "%s"'):format(nlines))
+        end
+    end
     local n = self.start_line_num + nlines
     n = math.min(n, self:getTextHeight() - self.frame_body.height + 1)
     n = math.max(n, 1)
@@ -668,11 +681,6 @@ function Label:onInput(keys)
     end
     for k,v in pairs(self.scroll_keys) do
         if keys[k] then
-            if v == '+page' then
-                v = self.frame_body.height
-            elseif v == '-page' then
-                v = -self.frame_body.height
-            end
             self:scroll(v)
         end
     end

@@ -3,6 +3,7 @@
 #   https://www.sphinx-doc.org/en/master/development/tutorials/recipe.html
 #   https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html#rst-directives
 
+import logging
 import os
 from typing import List
 
@@ -15,7 +16,10 @@ import sphinx.directives
 import dfhack.util
 
 
+logger = sphinx.util.logging.getLogger(__name__)
+
 _KEYBINDS = {}
+_KEYBINDS_RENDERED = set()  # commands whose keybindings have been rendered
 
 def scan_keybinds(root, files, keybindings):
     """Add keybindings in the specified files to the
@@ -45,6 +49,7 @@ def scan_all_keybinds(root_dir):
 
 
 def render_dfhack_keybind(command) -> List[nodes.paragraph]:
+    _KEYBINDS_RENDERED.add(command)
     out = []
     if command not in _KEYBINDS:
         return out
@@ -62,6 +67,13 @@ def render_dfhack_keybind(command) -> List[nodes.paragraph]:
             n += nodes.literal(ctx, ctx)
         out.append(n)
     return out
+
+
+def check_missing_keybinds():
+    # FIXME: _KEYBINDS_RENDERED is empty in the parent process under parallel builds
+    # consider moving to a sphinx Domain to solve this properly
+    for missing_command in sorted(set(_KEYBINDS.keys()) - _KEYBINDS_RENDERED):
+        logger.warning('Undocumented keybindings for command: %s', missing_command)
 
 
 # pylint:disable=unused-argument,dangerous-default-value,too-many-arguments
@@ -152,6 +164,9 @@ def register(app):
 
 def setup(app):
     app.connect('builder-inited', register)
+
+    # TODO: re-enable once detection is corrected
+    # app.connect('build-finished', lambda *_: check_missing_keybinds())
 
     return {
         'version': '0.1',

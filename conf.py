@@ -126,24 +126,9 @@ def write_tool_docs():
             outfile.write(include)
 
 
-def all_keybinds_documented():
-    """Check that all keybindings are documented with the :dfhack-keybind:
-    directive somewhere."""
-    undocumented_binds = set(KEYBINDS)
-    tools = set(i[0] for i in DOC_ALL_DIRS)
-    for t in tools:
-        with open(('./docs/tools/{}.rst').format(t)) as f:
-            tool_binds = set(re.findall(':dfhack-keybind:`(.*?)`', f.read()))
-            undocumented_binds -= tool_binds
-    if undocumented_binds:
-        raise ValueError('The following DFHack commands have undocumented '
-                         'keybindings: {}'.format(sorted(undocumented_binds)))
-
-
 # Actually call the docs generator and run test
 write_tool_docs()
 generate_tag_indices()
-#all_keybinds_documented() # comment out while we're transitioning
 
 # -- General configuration ------------------------------------------------
 

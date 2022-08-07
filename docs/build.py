@@ -63,6 +63,8 @@ def parse_args(source_args):
         help='Number of Sphinx threads to run [environment variable: JOBS; default: "auto"]')
     parser.add_argument('--debug', action='store_true',
         help='Log commands that are run, etc.')
+    parser.add_argument('--offline', action='store_true',
+        help='Disable network connections')
     args, forward_args = _parse_known_args(parser, source_args)
 
     # work around weirdness with list args
@@ -79,6 +81,11 @@ if __name__ == '__main__':
         exit(1)
 
     args, forward_args = parse_args(sys.argv[1:])
+
+    sphinx_env = os.environ.copy()
+    if args.offline:
+        sphinx_env['DFHACK_DOCS_BUILD_OFFLINE'] = '1'
+
     for format_name in args.format:
         command = [args.sphinx] + OUTPUT_FORMATS[format_name].args + ['-j', args.jobs]
         if args.clean:
@@ -88,5 +95,6 @@ if __name__ == '__main__':
         if args.debug:
             print('Building:', format_name)
             print('Running:', command)
-        subprocess.call(command)
+        subprocess.run(command, check=True, env=sphinx_env)
+
         print('')

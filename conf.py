@@ -24,6 +24,22 @@ import sphinx
 import sys
 
 
+if os.environ.get('DFHACK_DOCS_BUILD_OFFLINE'):
+    # block attempted image downloads, particularly for the PDF builder
+    def request_disabled(*args, **kwargs):
+        raise RuntimeError('Offline build - network request blocked')
+
+    import urllib3.util
+    urllib3.util.create_connection = request_disabled
+
+    import urllib3.connection
+    urllib3.connection.HTTPConnection.connect = request_disabled
+
+    import requests
+    requests.request = request_disabled
+    requests.get = request_disabled
+
+
 # -- Support :dfhack-keybind:`command` ------------------------------------
 # this is a custom directive that pulls info from default keybindings
 

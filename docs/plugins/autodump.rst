@@ -1,9 +1,12 @@
 autodump
 ========
-**Tags:** `tag/fort`, `tag/auto`, `tag/fps`, `tag/items`, `tag/stockpiles`
-:dfhack-keybind:`autodump`
-:dfhack-keybind:`autodump-destroy-here`
-:dfhack-keybind:`autodump-destroy-item`
+
+.. dfhack-tool::
+    :tags: fort, auto, fps, items, stockpiles
+
+.. dfhack-command:: autodump-destroy-here
+
+.. dfhack-command:: autodump-destroy-item
 
 :index:`Automatically set items in a stockpile to be dumped.
 <autodump (plugin); Automatically set items in a stockpile to be dumped.>` When

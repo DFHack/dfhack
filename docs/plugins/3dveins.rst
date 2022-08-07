@@ -4,8 +4,6 @@
 .. dfhack-tool::
     :tags: fort, mod, map
 
-:dfhack-keybind:`3dveins`
-
 :index:`Rewrite layer veins to expand in 3D space.
 <3dveins; Rewrite layer veins to expand in 3D space.>` Existing, flat veins
 are removed and new 3D veins that naturally span z-levels are generated in

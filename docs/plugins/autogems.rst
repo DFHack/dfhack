@@ -1,7 +1,11 @@
 autogems
 ========
-**Tags:** `tag/fort`, `tag/auto`, `tag/jobs`
-:dfhack-keybind:`autogems-reload`
+
+.. dfhack-tool:: autogems
+    :tags: fort, auto, jobs
+    :no-command:
+
+.. dfhack-command:: autogems-reload
 
 :index:`Automatically cut rough gems. <autogems; Automatically cut rough gems.>`
 This plugin periodically scans your stocks of rough gems and creates manager

@@ -3903,7 +3903,8 @@ release keyboard focus, but first it will restore the text that was displayed
 before the ``EditField`` gained focus and then call the ``on_change`` callback.
 
 The ``EditField`` cursor can be moved to where you want to insert/remove text.
-The following cursor movement keys are recognized:
+You can click where you want the cursor to move or you can use any of the
+following keyboard hotkeys:
 
 - Left/Right arrow: move the cursor one character to the left or right.
 - Ctrl-Left/Right arrow: move the cursor one word to the left or right.
@@ -4072,7 +4073,7 @@ HotkeyLabel class
 -----------------
 
 This Label subclass is a convenience class for formatting text that responds to
-a hotkey.
+a hotkey or mouse click.
 
 It has the following attributes:
 
@@ -4082,13 +4083,13 @@ It has the following attributes:
 :label: The string (or a function that returns a string) to display after the
     hotkey.
 :on_activate: If specified, it is the callback that will be called whenever
-    the hotkey is pressed.
+    the hotkey is pressed or the label is clicked.
 
 CycleHotkeyLabel class
 ----------------------
 
 This Label subclass represents a group of related options that the user can
-cycle through by pressing a specified hotkey.
+cycle through by pressing a specified hotkey or clicking on the text.
 
 It has the following attributes:
 
@@ -4131,7 +4132,8 @@ This is a specialized subclass of CycleHotkeyLabel that has two options:
 List class
 ----------
 
-The List widget implements a simple list with paging.
+The List widget implements a simple list with paging. You can click on a list
+item to call the ``on_submit`` callback for that item.
 
 It has the following attributes:
 
@@ -4142,8 +4144,8 @@ It has the following attributes:
 :on_select: Selection change callback; called as ``on_select(index,choice)``.
             This is also called with *nil* arguments if ``setChoices`` is called
             with an empty list.
-:on_submit: Enter key callback; if specified, the list reacts to the key
-            and calls it as ``on_submit(index,choice)``.
+:on_submit: Enter key or mouse click callback; if specified, the list reacts to the
+            key/click and calls the callback as ``on_submit(index,choice)``.
 :on_submit2: Shift-Enter key callback; if specified, the list reacts to the key
              and calls it as ``on_submit2(index,choice)``.
 :row_height: Height of every row in text lines.

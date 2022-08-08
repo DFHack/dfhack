@@ -104,7 +104,7 @@ class DFHackToolDirectiveBase(sphinx.directives.ObjectDescription):
 
     @staticmethod
     def wrap_box(*children: List[nodes.Node]) -> nodes.Admonition:
-        return nodes.admonition('', *children, classes=['dfhack-tool-summary'])
+        return nodes.topic('', *children, classes=['dfhack-tool-summary'])
 
     def render_content(self) -> List[nodes.Node]:
         raise NotImplementedError

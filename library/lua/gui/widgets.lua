@@ -763,7 +763,6 @@ function HotkeyLabel:onInput(keys)
         self.on_activate()
         return true
     end
-
 end
 
 ----------------------
@@ -836,6 +835,15 @@ function CycleHotkeyLabel:getOptionValue(option_idx)
         return option.value
     end
     return option
+end
+
+function CycleHotkeyLabel:onInput(keys)
+    if CycleHotkeyLabel.super.onInput(self, keys) then
+        return true
+    elseif keys._MOUSE_L and self:getMousePos() then
+        self:cycle()
+        return true
+    end
 end
 
 -----------------------

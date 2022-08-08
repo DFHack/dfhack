@@ -250,19 +250,6 @@ IMPLEMENT_VMETHOD_INTERPOSE(melt_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(melt_hook, render);
 
 
-static command_result automelt_cmd(color_ostream &out, vector <string> & parameters)
-{
-    if (!parameters.empty())
-    {
-        if (parameters.size() == 1 && toLower(parameters[0])[0] == 'v')
-        {
-            out << "Automelt" << endl << "Version: " << PLUGIN_VERSION << endl;
-        }
-    }
-
-    return CR_OK;
-}
-
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event)
@@ -296,15 +283,12 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.push_back(
-        PluginCommand("automelt",
-                      "Automatically melt metal items in marked stockpiles.",
-                      automelt_cmd));
-
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
+    // ensure we disengage our hooks
+    plugin_enable(out, false);
     return CR_OK;
 }

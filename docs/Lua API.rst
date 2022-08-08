@@ -3068,6 +3068,87 @@ function:
   argument specifies the indentation step size in spaces. For
   the other arguments see the original documentation link above.
 
+helpdb
+======
+
+Unified interface for DFHack tool help text. Help text is read from the rendered
+text in ``hack/docs/docs/``. If no rendered text exists, help is read from the
+script sources (for scripts) or the string passed to the ``PluginCommand``
+initializer (for plugins). See `documentation` for details on how DFHack's help
+system works.
+
+The database is lazy-loaded when an API method is called. It rechecks its help
+sources for updates if an API method has not been called in the last 60 seconds.
+
+Each entry has several properties associated with it:
+
+- The entry name, which is the name of a plugin, script, or command provided by
+  a plugin.
+- The entry types, which can be ``builtin``, ``plugin``, and/or ``command``.
+  Entries for built-in commands (like ``ls`` or ``quicksave``) are both type
+  ``builtin`` and ``command``. Entries named after plugins are type ``plugin``,
+  and if that plugin also provides a command with the same name as the plugin,
+  then the entry is also type ``command``. Entry types are returned as a map
+  of one or more of the type strings to ``true``.
+- Short help, a the ~54 character description string.
+- Long help, the entire contents of the associated help file.
+- A list of tags that define the groups that the entry belongs to.
+
+* ``helpdb.is_entry(str)``, ``helpdb.is_entry(list)``
+
+  Returns whether the given string (or list of strings) is an entry (are all
+  entries) in the db.
+
+* ``helpdb.get_entry_types(entry)``
+
+  Returns the set (that is, a map of string to ``true``) of entry types for the
+  given entry.
+
+* ``helpdb.get_entry_short_help(entry)``
+
+  Returns the short (~54 character) description for the given entry.
+
+* ``helpdb.get_entry_long_help(entry)``
+
+  Returns the full help text for the given entry.
+
+* ``helpdb.get_entry_tags(entry)``
+
+  Returns the set of tag names for the given entry.
+
+* ``helpdb.is_tag(str)``, ``helpdb.is_tag(list)``
+
+  Returns whether the given string (or list of strings) is a (are all) valid tag
+  name(s).
+
+* ``helpdb.get_tags()``
+
+  Returns the full alphabetized list of valid tag names.
+
+* ``helpdb.get_tag_data(tag)``
+
+  Returns a list of entries that have the given tag. The returned table also
+  has a ``description`` key that contains the string description of the tag.
+
+* ``helpdb.search_entries([include[, exclude]])``
+
+  Returns a list of names for entries that match the given filters. The list is
+  alphabetized by their last path component, with populated path components
+  coming before null path components (e.g. ``autobutcher`` will immediately
+  follow ``gui/autobutcher``).
+  The optional ``include`` and ``exclude`` filter params are maps with the
+  following elements:
+
+  :str:   if a string, filters by the given substring. if a table of strings,
+          includes entry names that match any of the given substrings.
+  :tag:   if a string, filters by the given tag name. if a table of strings,
+          includes entries that match any of the given tags.
+  :entry_type: if a string, matches entries of the given type. if a table of
+          strings, includes entries that match any of the given types.
+
+  If ``include`` is ``nil`` or empty, then all entries are included. If
+  ``exclude`` is ``nil`` or empty, then no entries are filtered out.
+
 profiler
 ========
 

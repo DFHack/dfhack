@@ -339,6 +339,8 @@ namespace DFHack {namespace Lua {
         }
     }
 
+    DFHACK_EXPORT void GetVector(lua_State *state, std::vector<std::string> &pvec);
+
     DFHACK_EXPORT int PushPosXYZ(lua_State *state, df::coord pos);
     DFHACK_EXPORT int PushPosXY(lua_State *state, df::coord2d pos);
 

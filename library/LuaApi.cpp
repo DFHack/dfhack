@@ -148,6 +148,16 @@ void Lua::Push(lua_State *state, df::coord2d pos)
     lua_setfield(state, -2, "y");
 }
 
+void Lua::GetVector(lua_State *state, std::vector<std::string> &pvec)
+{
+    lua_pushnil(state);   // first key
+    while (lua_next(state, 1) != 0)
+    {
+        pvec.push_back(lua_tostring(state, -1));
+        lua_pop(state, 1);  // remove value, leave key
+    }
+}
+
 int Lua::PushPosXYZ(lua_State *state, df::coord pos)
 {
     if (!pos.isValid())
@@ -3061,6 +3071,99 @@ static int internal_findScript(lua_State *L)
     return 1;
 }
 
+static int internal_listPlugins(lua_State *L)
+{
+    auto plugins = Core::getInstance().getPluginManager();
+
+    int i = 1;
+    lua_newtable(L);
+    for (auto it = plugins->begin(); it != plugins->end(); ++it)
+    {
+        lua_pushinteger(L, i++);
+        lua_pushstring(L, it->first.c_str());
+        lua_settable(L, -3);
+    }
+    return 1;
+}
+
+static int internal_listCommands(lua_State *L)
+{
+    auto plugins = Core::getInstance().getPluginManager();
+
+    const char *name = luaL_checkstring(L, 1);
+
+    auto plugin = plugins->getPluginByName(name);
+    if (!plugin)
+    {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    size_t num_commands = plugin->size();
+    lua_newtable(L);
+    for (size_t i = 0; i < num_commands; ++i)
+    {
+        lua_pushinteger(L, i + 1);
+        lua_pushstring(L, (*plugin)[i].name.c_str());
+        lua_settable(L, -3);
+    }
+    return 1;
+}
+
+static const PluginCommand * getPluginCommand(const char * command)
+{
+    auto plugins = Core::getInstance().getPluginManager();
+    auto plugin = plugins->getPluginByCommand(command);
+    if (!plugin)
+    {
+        return NULL;
+    }
+
+    size_t num_commands = plugin->size();
+    for (size_t i = 0; i < num_commands; ++i)
+    {
+        if ((*plugin)[i].name == command)
+            return &(*plugin)[i];
+    }
+
+    // not found (somehow)
+    return NULL;
+}
+
+static int internal_getCommandHelp(lua_State *L)
+{
+    const PluginCommand *pc = getPluginCommand(luaL_checkstring(L, 1));
+    if (!pc)
+    {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    std::string help = pc->description;
+    if (help.size() && help[help.size()-1] != '.')
+        help += ".";
+    if (pc->usage.size())
+        help += "\n" + pc->usage;
+    lua_pushstring(L, help.c_str());
+    return 1;
+}
+
+static int internal_getCommandDescription(lua_State *L)
+{
+    const PluginCommand *pc = getPluginCommand(luaL_checkstring(L, 1));
+    if (!pc)
+    {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    std::string help = pc->description;
+    if (help.size() && help[help.size()-1] != '.')
+        help += ".";
+    lua_pushstring(L, help.c_str());
+    return 1;
+}
+
 static int internal_threadid(lua_State *L)
 {
     std::stringstream ss;
@@ -3132,6 +3235,10 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "removeScriptPath", internal_removeScriptPath },
     { "getScriptPaths", internal_getScriptPaths },
     { "findScript", internal_findScript },
+    { "listPlugins", internal_listPlugins },
+    { "listCommands", internal_listCommands },
+    { "getCommandHelp", internal_getCommandHelp },
+    { "getCommandDescription", internal_getCommandDescription },
     { "threadid", internal_threadid },
     { "md5File", internal_md5file },
     { NULL, NULL }

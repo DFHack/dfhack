@@ -2,7 +2,7 @@ autogems
 ========
 
 .. dfhack-tool:: autogems
-    :tags: fort, auto, jobs
+    :tags: fort auto jobs
     :no-command:
 
 .. dfhack-command:: autogems-reload

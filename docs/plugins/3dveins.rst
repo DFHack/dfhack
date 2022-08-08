@@ -2,7 +2,7 @@
 =======
 
 .. dfhack-tool::
-    :tags: fort, mod, map
+    :tags: fort mod map
 
 :index:`Rewrite layer veins to expand in 3D space.
 <3dveins; Rewrite layer veins to expand in 3D space.>` Existing, flat veins

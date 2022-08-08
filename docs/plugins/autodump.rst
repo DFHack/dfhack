@@ -2,7 +2,7 @@ autodump
 ========
 
 .. dfhack-tool::
-    :tags: fort, auto, fps, items, stockpiles
+    :tags: fort auto fps items stockpiles
 
 .. dfhack-command:: autodump-destroy-here
 

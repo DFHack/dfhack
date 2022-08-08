@@ -2,7 +2,7 @@ automelt
 ========
 
 .. dfhack-tool::
-    :tags: fort, auto, items, stockpiles
+    :tags: fort auto items stockpiles
     :no-command:
 
 :index:`Quickly designate items to be melted.

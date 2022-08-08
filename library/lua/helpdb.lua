@@ -211,7 +211,7 @@ local function update_entry(entry, iterator, opts)
         ::continue::
     end
     entry.tags = {}
-    for _,tag in ipairs(tags:split('[ ,]+')) do
+    for _,tag in ipairs(tags:split('[ ,|]+')) do
         entry.tags[tag] = true
     end
     if #lines > 0 then

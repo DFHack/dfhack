@@ -97,7 +97,8 @@ class DFHackToolDirectiveBase(sphinx.directives.ObjectDescription):
     @staticmethod
     def make_labeled_paragraph(label, content, label_class=nodes.strong, content_class=nodes.inline) -> nodes.paragraph:
         return nodes.paragraph('', '', *[
-            label_class('', '{}: '.format(label)),
+            label_class('', '{}:'.format(label)),
+            nodes.inline(text=' '),
             content_class('', content),
         ])
 
@@ -119,7 +120,7 @@ class DFHackToolDirective(DFHackToolDirectiveBase):
     }
 
     def render_content(self) -> List[nodes.Node]:
-        tag_nodes = [nodes.strong(text='Tags: ')]
+        tag_nodes = [nodes.strong(text='Tags:'), nodes.inline(text=' ')]
         for tag in self.options.get('tags', []):
             tag_nodes += [
                 addnodes.pending_xref(tag, nodes.inline(text=tag), **{

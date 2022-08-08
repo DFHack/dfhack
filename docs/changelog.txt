@@ -66,6 +66,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``Gui::getSelectedItem()``, ``Gui::getAnyItem()``: added support for the artifacts screen
 
 ## Lua
+- History: added ``dfhack.getCommandHistory(history_id, history_filename)`` and ``dfhack.addCommandToHistory(history_id, history_filename, command)`` so gui scripts can access a commandline history without requiring a terminal.
 - ``tile-material``: fix the order of declarations. The ``GetTileMat`` function now returns the material as intended (always returned nil before). Also changed the license info, with permission of the original author.
 - ``widgets.EditField``: new ``onsubmit2`` callback attribute is called when the user hits Shift-Enter.
 - ``widgets.EditField``: new function: ``setCursor(position)`` sets the input cursor.

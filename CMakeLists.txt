@@ -457,6 +457,7 @@ if(BUILD_DOCS)
     file(GLOB_RECURSE SPHINX_GLOB_RECURSE_DEPS
         "${CMAKE_CURRENT_SOURCE_DIR}/*.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/changelog.txt"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/*py"
     )
     list(FILTER SPHINX_GLOB_RECURSE_DEPS
         EXCLUDE REGEX "docs/changelogs"
@@ -476,7 +477,6 @@ if(BUILD_DOCS)
     set(SPHINX_DEPS ${SPHINX_GLOB_DEPS} ${SPHINX_GLOB_RECURSE_DEPS} ${SPHINX_SCRIPT_DEPS}
         "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
         "${CMAKE_CURRENT_SOURCE_DIR}/conf.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/gen_changelog.py"
     )
 
     set(SPHINX_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/docs/html/.buildinfo")
@@ -491,18 +491,8 @@ if(BUILD_DOCS)
         "${CMAKE_BINARY_DIR}/docs/text"
     )
     add_custom_command(OUTPUT ${SPHINX_OUTPUT}
-        COMMAND ${SPHINX_EXECUTABLE}
-            -q -b html -d "${CMAKE_BINARY_DIR}/docs/html"
-            "${CMAKE_CURRENT_SOURCE_DIR}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/docs/html"
-            -w "${CMAKE_BINARY_DIR}/docs/html/_sphinx-warnings.txt"
-            -j auto
-        COMMAND ${SPHINX_EXECUTABLE}
-            -q -b text -d "${CMAKE_BINARY_DIR}/docs/text"
-            "${CMAKE_CURRENT_SOURCE_DIR}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/docs/text"
-            -w "${CMAKE_BINARY_DIR}/docs/text/_sphinx-warnings.txt"
-            -j auto
+        COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/docs/build.py"
+            html text --sphinx="${SPHINX_EXECUTABLE}" -- -q 
         DEPENDS ${SPHINX_DEPS}
         COMMENT "Building documentation with Sphinx"
     )

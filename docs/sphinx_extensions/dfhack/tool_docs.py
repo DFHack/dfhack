@@ -135,7 +135,6 @@ class DFHackToolDirective(DFHackToolDirectiveBase):
         tag_nodes.pop()
 
         return [
-            self.make_labeled_paragraph('Tool', self.get_name_or_docname()),
             nodes.paragraph('', '', *tag_nodes),
         ]
 

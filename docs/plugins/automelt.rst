@@ -1,6 +1,9 @@
 automelt
 ========
-**Tags:** `tag/fort`, `tag/auto`, `tag/items`, `tag/stockpiles`
+
+.. dfhack-tool::
+    :tags: fort auto items stockpiles
+    :no-command:
 
 :index:`Quickly designate items to be melted.
 <automelt; Quickly designate items to be melted.>` When `enabled <enable>`, this

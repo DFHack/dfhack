@@ -2,15 +2,20 @@ autodump
 ========
 
 .. dfhack-tool::
+    :summary: Automatically set items in a stockpile to be dumped.
     :tags: fort auto fps items stockpiles
+    :no-command:
+
+.. dfhack-command:: autodump
+    :summary: Teleports items marked for dumping to the cursor position.
 
 .. dfhack-command:: autodump-destroy-here
+    :summary: Destroy items marked for dumping under the cursor.
 
 .. dfhack-command:: autodump-destroy-item
+    :summary: Destroys the selected item.
 
-:index:`Automatically set items in a stockpile to be dumped.
-<autodump (plugin); Automatically set items in a stockpile to be dumped.>` When
-`enabled <enable>`, this plugin adds an option to the :kbd:`q` menu for
+When `enabled <enable>`, this plugin adds an option to the :kbd:`q` menu for
 stockpiles. When the ``autodump`` option is selected for the stockpile, any
 items placed in the stockpile will automatically be designated to be dumped.
 
@@ -44,8 +49,7 @@ Options
     called again with this option before the game is resumed, it cancels
     pending destroy actions.
 ``destroy-here``
-    :index:`Destroy items marked for dumping under the cursor.
-    <autodump-destroy-here; Destroy items marked for dumping under the cursor.>`
+    Destroy items marked for dumping under the cursor.
 ``visible``
     Only process items that are not hidden.
 ``hidden``
@@ -57,10 +61,8 @@ Examples
 --------
 
 ``autodump``
-    :index:`Teleports items marked for dumping to the cursor position.
-    <autodump; Teleports items marked for dumping to the cursor position.>`
+    Teleports items marked for dumping to the cursor position.
 ``autodump destroy``
     Destroys all unforbidden items marked for dumping
 ``autodump-destroy-item``
-    :index:`Destroys the selected item.
-    <autodump-destroy-item; Destroys the selected item.>`
+    Destroys the selected item.

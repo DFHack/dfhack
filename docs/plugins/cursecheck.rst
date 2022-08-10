@@ -1,9 +1,10 @@
 cursecheck
 ==========
-**Tags:** `tag/system`, `tag/interface`
-:dfhack-keybind:`cursecheck`
 
-:index:`Check for cursed creatures. <cursecheck; Check for cursed creatures.>`
+.. dfhack-tool::
+    :summary: Check for cursed creatures.
+    :tags: system interface
+
 This command checks a single map tile (or the whole map/world) for cursed
 creatures (ghosts, vampires, necromancers, werebeasts, zombies, etc.).
 

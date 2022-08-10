@@ -1,12 +1,12 @@
 hide
 ====
-**Tags:** `tag/system`
-:dfhack-keybind:`hide`
 
-:index:`Hide the DFHack terminal window.
-<hide; Hide the DFHack terminal window.>` You can show it again with the `show`
-command, though you'll need to use it from a `keybinding` set beforehand or the
-in-game `command-prompt`.
+.. dfhack-tool::
+    :summary: Hide the DFHack terminal window.
+    :tags: system
+
+You can show it again with the `show` command, though you'll need to use it from
+a `keybinding` set beforehand or the in-game `command-prompt`.
 
 Only available on Windows.
 

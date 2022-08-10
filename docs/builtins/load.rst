@@ -1,11 +1,11 @@
 load
 ====
-**Tags:** `tag/system`
-:dfhack-keybind:`load`
 
-:index:`Load and register a plugin library.
-<load; Load and register a plugin library.>` Also see `unload` and `reload` for
-related actions.
+.. dfhack-tool::
+    :summary: Load and register a plugin library.
+    :tags: system
+
+Also see `unload` and `reload` for related actions.
 
 Usage::
 

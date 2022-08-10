@@ -1,9 +1,9 @@
 zone
 ====
-**Tags:** `tag/fort`, `tag/productivity`, `tag/animals`, `tag/buildings`
-:dfhack-keybind:`zone`
 
-Manage activity zones, cages, and the animals therein.
+.. dfhack-tool::
+    :summary: Manage activity zones, cages, and the animals therein.
+    :tags: fort productivity animals buildings
 
 Usage:
 

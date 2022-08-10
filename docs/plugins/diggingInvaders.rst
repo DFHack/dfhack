@@ -1,10 +1,9 @@
 diggingInvaders
 ===============
-**Tags:** `tag/fort`, `tag/mod`, `tag/map`
-:dfhack-keybind:`diggingInvaders`
 
-:index:`Invaders dig and destroy to get to your dwarves.
-<diggingInvaders; Invaders dig and destroy to get to your dwarves.>`
+.. dfhack-tool::
+    :summary: Invaders dig and destroy to get to your dwarves.
+    :tags: fort mod map
 
 Usage:
 

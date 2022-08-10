@@ -1,9 +1,9 @@
 misery
 ======
-**Tags:** `tag/fort`, `tag/armok`, `tag/units`
-:dfhack-keybind:`misery`
 
-Increase the intensity of negative dwarven thoughts.
+.. dfhack-tool::
+    :summary: Increase the intensity of negative dwarven thoughts.
+    :tags: fort armok units
 
 When enabled, negative thoughts that your dwarves have will multiply by the
 specified factor.

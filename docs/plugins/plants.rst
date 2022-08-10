@@ -2,10 +2,14 @@
 
 plants
 ======
-**Tags:** `tag/adventure`, `tag/fort`, `tag/armok`, `tag/map`
-:dfhack-keybind:`plant`
 
-Grow shrubs or trees.
+.. dfhack-tool::
+    :summary: Provides commands that interact with plants.
+    :tags: adventure fort armok map
+    :no-command:
+
+.. dfhack-command:: plant
+   :summary: Create a plant or make an existing plant grow up.
 
 Usage:
 

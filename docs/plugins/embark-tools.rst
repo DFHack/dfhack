@@ -1,10 +1,9 @@
 embark-tools
 ============
-**Tags:** `tag/fort`, `tag/embark`, `tag/interface`
-:dfhack-keybind:`embark-tools`
 
-:index:`Extend the embark screen functionality.
-<embark-tools; Extend the embark screen functionality.>`
+.. dfhack-tool::
+    :summary: Extend the embark screen functionality.
+    :tags: fort embark interface
 
 Usage::
 

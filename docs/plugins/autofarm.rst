@@ -1,13 +1,13 @@
 autofarm
 ========
-**Tags:** `tag/fort`, `tag/auto`, `tag/buildings`
-:dfhack-keybind:`autofarm`
 
-:index:`Automatically manage farm crop selection.
-<autofarm; Automatically manage farm crop selection.>` This plugin periodically
-scans your plant stocks and assigns crops to your farm plots based on which
-plant stocks are low (as long as you have the appropriate seeds). The target
-threshold for each crop type is configurable.
+.. dfhack-tool::
+    :summary: Automatically manage farm crop selection.
+    :tags: fort auto buildings
+
+Periodically scan your plant stocks and assign crops to your farm plots based on
+which plant stocks are low (as long as you have the appropriate seeds). The
+target threshold for each crop type is configurable.
 
 Usage:
 

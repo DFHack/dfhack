@@ -1,10 +1,13 @@
 steam-engine
 ============
-**Tags:** `tag/fort`, `tag/mod`, `tag/buildings`
 
-Allow modded steam engine buildings to function. The steam-engine plugin detects
-custom workshops with STEAM_ENGINE in their token, and turns them into real
-steam engines!
+.. dfhack-tool::
+    :summary: Allow modded steam engine buildings to function.
+    :tags: fort mod buildings
+    :no-command:
+
+The steam-engine plugin detects custom workshops with the string
+``STEAM_ENGINE`` in their token, and turns them into real steam engines!
 
 The plugin auto-enables itself when it detects the relevant tags in the world
 raws. It does not need to be enabled with the `enable` command.

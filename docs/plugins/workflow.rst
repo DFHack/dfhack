@@ -1,8 +1,12 @@
 workflow
 ========
-**Tags:** `tag/fort`, `tag/auto`, `tag/jobs`
-:dfhack-keybind:`workflow`
-:dfhack-keybind:`fix-job-postings`
+
+.. dfhack-tool::
+    :summary: Manage repeat jobs according to stock levels.
+    :tags: fort auto jobs
+
+.. dfhack-command:: fix-job-postings
+   :summary: Fixes crashes caused by old versions of workflow.
 
 Manage repeat jobs according to stock levels. `gui/workflow` provides a simple
 front-end integrated in the game UI.
@@ -55,7 +59,7 @@ Usage:
     can be copied to a file, and then reloaded using the `script` built-in
     command.
 ``fix-job-postings [dry-run]``
-    Fixes crashes caused the version of workflow released with DFHack
+    Fixes crashes caused by the version of workflow released with DFHack
     0.40.24-r4. It will be run automatically if needed. If your save has never
     been run with this version, you will never need this command. Specify the
     ``dry-run`` keyword to see what this command would do without making any

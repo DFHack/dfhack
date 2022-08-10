@@ -117,6 +117,7 @@ class DFHackToolDirective(DFHackToolDirectiveBase):
     option_spec = {
         'tags': dfhack.util.directive_arg_str_list,
         'no-command': rst_directives.flag,
+        'summary': rst_directives.unchanged,
     }
 
     def render_content(self) -> List[nodes.Node]:
@@ -134,9 +135,12 @@ class DFHackToolDirective(DFHackToolDirectiveBase):
             ]
         tag_nodes.pop()
 
-        return [
+        ret_nodes = [
             nodes.paragraph('', '', *tag_nodes),
         ]
+        if 'no-command' in self.options:
+            ret_nodes += [nodes.inline(text=self.options.get('summary', ''))]
+        return ret_nodes
 
     def run(self):
         out = DFHackToolDirectiveBase.run(self)
@@ -146,10 +150,15 @@ class DFHackToolDirective(DFHackToolDirectiveBase):
 
 
 class DFHackCommandDirective(DFHackToolDirectiveBase):
+    option_spec = {
+        'summary': rst_directives.unchanged_required,
+    }
+
     def render_content(self) -> List[nodes.Node]:
         command = self.get_name_or_docname()
         return [
             self.make_labeled_paragraph('Command', command, content_class=nodes.literal),
+            nodes.inline(text=self.options.get('summary', '')),
             *render_dfhack_keybind(command),
         ]
 

@@ -1,10 +1,12 @@
 stonesense
 ==========
-**Tags:** `tag/adventure`, `tag/fort`, `tag/interface`, `tag/map`
-:dfhack-keybind:`stonesense`
-:dfhack-keybind:`ssense`
 
-A 3D isometric visualizer that runs in a second window.
+.. dfhack-tool::
+    :summary: A 3D isometric visualizer.
+    :tags: adventure fort interface map
+
+.. dfhack-command:: ssense
+   :summary: An alias for stonesense.
 
 Usage:
 

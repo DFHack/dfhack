@@ -1,13 +1,16 @@
 digFlood
 ========
-**Tags:** `tag/fort`, `tag/auto`, `tag/map`
-:dfhack-keybind:`digFlood`
 
-:index:`Digs out veins as they are discovered.
-<digFlood; Digs out veins as they are discovered.>` It will only dig out
-appropriate tiles that are adjacent to a just-finished dig job, so if you want
-to autodig a vein that has already been discovered, you may need to manually
-designate one tile of the tile for digging to get started.
+.. dfhack-tool::
+    :summary: Digs out veins as they are discovered.
+    :tags: fort auto map
+
+Once you register specific vein types, this tool will automatically designate
+tiles of those types of veins for digging as your miners complete adjacent
+mining jobs. Note that it will *only* dig out tiles that are adjacent to a
+just-finished dig job, so if you want to autodig a vein that has already been
+discovered, you may need to manually designate one tile of the tile for digging
+to get started.
 
 Usage:
 

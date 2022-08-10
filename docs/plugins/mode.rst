@@ -1,9 +1,9 @@
 mode
 ====
-**Tags:** `tag/dev`
-:dfhack-keybind:`mode`
 
-This command lets you see and change the game mode directly.
+.. dfhack-tool::
+    :summary: See and change the game mode.
+    :tags: dev
 
 .. warning::
 

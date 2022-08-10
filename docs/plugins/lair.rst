@@ -1,10 +1,11 @@
 lair
 ====
-**Tags:** `tag/fort`, `tag/armok`, `tag/map`
-:dfhack-keybind:`lair`
 
-Mark the map as a monster lair. This avoids item scatter when the fortress is
-abandoned.
+.. dfhack-tool::
+    :summary: Mark the map as a monster lair.
+    :tags: fort armok map
+
+This avoids item scatter when the fortress is abandoned.
 
 Usage:
 

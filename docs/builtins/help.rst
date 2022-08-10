@@ -1,11 +1,11 @@
 help
 ====
-**Tags:** `tag/system`
-:dfhack-keybind:`help`
 
-:index:`Display help about a command or plugin.
-<help; Display help about a command or plugin.>` Can also be invoked as ``?``
-or ``man`` (short for "manual").
+.. dfhack-tool::
+    :summary: Display help about a command or plugin.
+    :tags: system
+
+Can also be invoked as ``?`` or ``man`` (short for "manual").
 
 Usage::
 

@@ -1,24 +1,23 @@
 burrows
 =======
-**Tags:** `tag/fort`, `tag/auto`, `tag/productivity`, `tag/units`
-:dfhack-keybind:`burrow`
 
-:index:`Auto-expand burrows as you dig.
-<burrows (plugin); Auto-expand burrows as you dig.>` When a wall inside a burrow
-with a name ending in ``+`` is dug out, the burrow will be extended to
-newly-revealed adjacent walls. Note that digging 1-wide corridors with the miner
-inside the burrow is **SLOW**.
+.. dfhack-tool::
+    :summary: Auto-expand burrows as you dig.
+    :tags: fort auto productivity units
+    :no-command:
 
-You can also use the ``burrow`` command to
-:index:`quickly add units/tiles to burrows.
-<burrow; Quickly add units/tiles to burrows.>`
+.. dfhack-command:: burrow
+    :summary: Quickly add units/tiles to burrows.
+
+When a wall inside a burrow with a name ending in ``+`` is dug out, the burrow
+will be extended to newly-revealed adjacent walls.
 
 Usage:
 
 ``burrow enable auto-grow``
     When a wall inside a burrow with a name ending in '+' is dug out, the burrow
     will be extended to newly-revealed adjacent walls. This final '+' may be
-    omitted in burrow name args of other ``burrows`` commands. Note that digging
+    omitted in burrow name args of other ``burrow`` commands. Note that digging
     1-wide corridors with the miner inside the burrow is SLOW.
 ``burrow disable auto-grow``
     Disables auto-grow processing.

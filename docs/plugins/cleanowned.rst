@@ -1,13 +1,14 @@
 cleanowned
 ==========
-**Tags:** `tag/fort`, `tag/productivity`, `tag/items`
-:dfhack-keybind:`cleanowned`
 
-:index:`Confiscates and dumps garbage owned by dwarves.
-<cleanowned; Confiscates and dumps garbage owned by dwarves.>` This tool gets
-dwarves to give up ownership of scattered items and items with heavy wear and
-then marks those items for dumping. Now you can finally get your dwarves to give
-up their rotten food and tattered loincloths and go get new ones!
+.. dfhack-tool::
+    :summary: Confiscates and dumps garbage owned by dwarves.
+    :tags: fort productivity items
+
+This tool gets dwarves to give up ownership of scattered items and items with
+heavy wear and then marks those items for dumping. Now you can finally get your
+dwarves to give up their rotten food and tattered loincloths and go get new
+ones!
 
 Usage::
 

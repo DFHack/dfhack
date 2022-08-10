@@ -2,17 +2,29 @@
 
 reveal
 ======
-**Tags:** `tag/adventure`, `tag/fort`, `tag/inspection`, `tag/armok`, `tag/map`
-:dfhack-keybind:`reveal`
-:dfhack-keybind:`unreveal`
-:dfhack-keybind:`revforget`
-:dfhack-keybind:`revtoggle`
-:dfhack-keybind:`revflood`
-:dfhack-keybind:`nopause`
 
-Reveals the map. This reveals all z-layers in fort mode. It also works in
-adventure mode, but any of its effects are negated once you move. When you use
-it this way, you don't need to run ``unreveal`` to hide the map again.
+.. dfhack-tool::
+    :summary: Reveals the map.
+    :tags: adventure fort inspection armok map
+
+.. dfhack-tool:: unreveal
+   :summary: Hides previously hidden tiles again.
+
+.. dfhack-tool:: revforget
+   :summary: Discard records about what was visible before revealing the map.
+
+.. dfhack-tool:: revtoggle
+   :summary: Switch between reveal and unreveal.
+
+.. dfhack-tool:: revflood
+   :summary: Hide everything, then reveal tiles with a path to the cursor.
+
+.. dfhack-tool:: nopause
+   :summary: Disable pausing.
+
+This reveals all z-layers in fort mode. It also works in adventure mode, but any
+of its effects are negated once you move. When you use it this way, you don't
+need to run ``unreveal`` to hide the map again.
 
 Usage:
 

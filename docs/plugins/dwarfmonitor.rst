@@ -1,11 +1,11 @@
 dwarfmonitor
 ============
-**Tags:** `tag/fort`, `tag/inspection`, `tag/units`
-:dfhack-keybind:`dwarfmonitor`
 
-:index:`Measure fort happiness and efficiency.
-<dwarfmonitor; Measure fort happiness and efficiency.>` Also show heads-up
-display widgets with live fort statistics.
+.. dfhack-tool::
+    :summary: Measure fort happiness and efficiency.
+    :tags: fort inspection units
+
+It can also show heads-up display widgets with live fort statistics.
 
 Usage:
 

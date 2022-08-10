@@ -2,14 +2,24 @@
 
 stockpiles
 ==========
-**Tags:** `tag/fort`, `tag/productivity`, `tag/design`, `tag/stockpiles`
-:dfhack-keybind:`copystock`
-:dfhack-keybind:`savestock`
-:dfhack-keybind:`loadstock`
 
-Import and export stockpile settings. When the plugin is enabled, the :kbd:`q`
-menu of each stockpile will have an option for saving or loading the stockpile
-settings. See `gui/stockpiles` for an in-game interface.
+.. dfhack-tool::
+    :summary: Import and export stockpile settings.
+    :tags: fort productivity design stockpiles
+    :no-command:
+
+.. dfhack-command:: copystock
+   :summary: Copies the configuration of the selected stockpile.
+
+.. dfhack-command:: savestock
+   :summary: Exports the configuration of the selected stockpile.
+
+.. dfhack-command:: loadstock
+   :summary: Imports the configuration of the selected stockpile.
+
+When the plugin is enabled, the :kbd:`q` menu of each stockpile will have an
+option for saving or loading the stockpile settings. See `gui/stockpiles` for
+an in-game interface.
 
 Usage:
 

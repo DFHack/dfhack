@@ -1,11 +1,11 @@
 kill-lua
 ========
-**Tags:** `tag/system`
-:dfhack-keybind:`kill-lua`
 
-:index:`Gracefully stops any currently-running Lua scripts.
-<kill-lua; Gracefully stops any currently-running Lua scripts.>` Use this
-command to stop a misbehaving script that appears to be stuck.
+.. dfhack-tool::
+    :summary: Gracefully stop any currently-running Lua scripts.
+    :tags: system
+
+Use this command to stop a misbehaving script that appears to be stuck.
 
 Usage::
 

@@ -1,13 +1,14 @@
 tailor
 ======
-**Tags:** `tag/fort`, `tag/auto`, `tag/jobs`
-:dfhack-keybind:`tailor`
 
-Automatically keep your dwarves in fresh clothing. Whenever the bookkeeper
-updates stockpile records, this plugin will scan the fort. If there are
-fresh cloths available, dwarves who are wearing tattered clothing will have
-their rags confiscated (in the same manner as the `cleanowned` tool) so that
-they'll reequip with replacement clothes.
+.. dfhack-tool::
+    :summary: Automatically keep your dwarves in fresh clothing.
+    :tags: fort auto jobs
+
+Whenever the bookkeeper updates stockpile records, this plugin will scan the
+fort. If there are fresh cloths available, dwarves who are wearing tattered
+clothing will have their rags confiscated (in the same manner as the
+`cleanowned` tool) so that they'll reequip with replacement clothes.
 
 If there are not enough clothes available, manager orders will be generated
 to manufacture some more. ``tailor`` will intelligently create orders using

@@ -1,11 +1,12 @@
 autoclothing
 ============
-**Tags:** `tag/fort`, `tag/auto`, `tag/jobs`
-:dfhack-keybind:`autoclothing`
 
-:index:`Automatically manage clothing work orders.
-<autoclothing; Automatically manage clothing work orders.>` It allows you to
-set how many of each clothing type every citizen should have.
+.. dfhack-tool::
+    :summary: Automatically manage clothing work orders.
+    :tags: fort auto jobs
+
+This command allows you to set how many of each clothing type every citizen
+should have.
 
 Usage::
 

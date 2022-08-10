@@ -1,14 +1,14 @@
 dig-now
 =======
-**Tags:** `tag/fort`, `tag/armok`, `tag/map`
-:dfhack-keybind:`dig-now`
 
-:index:`Instantly complete dig designations.
-<dig-now; Instantly complete dig designations.>` This tool will magically
-complete non-marker dig designations, modifying tile shapes and creating
-boulders, ores, and gems as if a miner were doing the mining or engraving. By
-default, the entire map is processed and boulder generation follows standard
-game rules, but the behavior is configurable.
+.. dfhack-tool::
+    :summary: Instantly complete dig designations.
+    :tags: fort armok map
+
+This tool will magically complete non-marker dig designations, modifying tile
+shapes and creating boulders, ores, and gems as if a miner were doing the mining
+or engraving. By default, the entire map is processed and boulder generation
+follows standard game rules, but the behavior is configurable.
 
 Note that no units will get mining or engraving experience for the dug/engraved
 tiles.

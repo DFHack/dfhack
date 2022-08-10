@@ -1,9 +1,9 @@
 seedwatch
 =========
-**Tags:** `tag/fort`, `tag/auto`
-:dfhack-keybind:`seedwatch`
 
-Manages seed and plant cooking based on seed stock levels.
+.. dfhack-tool::
+    :summary: Manages seed and plant cooking based on seed stock levels.
+    :tags: fort auto
 
 Each seed type can be assigned a target. If the number of seeds of that type
 falls below that target, then the plants and seeds of that type will be excluded

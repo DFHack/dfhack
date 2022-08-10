@@ -3,15 +3,23 @@
 
 tiletypes
 =========
-**Tags:** `tag/adventure`, `tag/fort`, `tag/armok`, `tag/map`
-:dfhack-keybind:`tiletypes`
-:dfhack-keybind:`tiletypes-command`
-:dfhack-keybind:`tiletypes-here`
-:dfhack-keybind:`tiletypes-here-point`
 
-Paints tiles of specified types onto the map. You can use the `probe` command
-to discover properties of existing tiles that you'd like to copy. If you
-accidentally paint over a vein that you want back, `fixveins` may help.
+.. dfhack-tool::
+    :summary: Paints tiles of specified types onto the map.
+    :tags: adventure fort armok map
+
+.. dfhack-command:: tiletypes-command
+   :summary: Run tiletypes commands.
+
+.. dfhack-command:: tiletypes-here
+   :summary: Paint map tiles starting from the cursor.
+
+.. dfhack-command:: tiletypes-here-point
+   :summary: Paint the map tile under the cursor.
+
+You can use the `probe` command to discover properties of existing tiles that
+you'd like to copy. If you accidentally paint over a vein that you want back,
+`fixveins` may help.
 
 The tool works with a brush, a filter, and a paint specification. The brush
 determines the shape of the area to affect, the filter selects which tiles to

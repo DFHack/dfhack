@@ -1,12 +1,20 @@
 generated-creature-renamer
 ==========================
-**Tags:** `tag/adventure`, `tag/fort`, `tag/legends`, `tag/units`
-:dfhack-keybind:`list-generated`
-:dfhack-keybind:`save-generated-raws`
 
-Automatically renames generated creatures. Now, forgotten beasts, titans,
-necromancer experiments, etc. will have raw token names that match the
-description given in-game instead of unreadable generated strings.
+.. dfhack-tool::
+    :summary: Automatically renames generated creatures.
+    :tags: adventure fort legends units
+    :no-command:
+
+.. dfhack-command:: list-generated
+    :summary: List the token names of all generated creatures.
+
+.. dfhack-command:: save-generated-raws
+    :summary: Export a creature graphics file for modding.
+
+Now, forgotten beasts, titans, necromancer experiments, etc. will have raw token
+names that match the description given in-game instead of unreadable generated
+strings.
 
 Usage:
 

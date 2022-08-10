@@ -1,12 +1,13 @@
 createitem
 ==========
-**Tags:** `tag/adventure`, `tag/fort`, `tag/armok`, `tag/items`
-:dfhack-keybind:`createitem`
 
-:index:`Create arbitrary items. <createitem; Create arbitrary items.>` You can
-create new items of any type and made of any material. A unit must be selected
-in-game to use this command. By default, items created are spawned at the feet
-of the selected unit.
+.. dfhack-tool::
+    :summary: Create arbitrary items.
+    :tags: adventure fort armok items
+
+You can create new items of any type and made of any material. A unit must be
+selected in-game to use this command. By default, items created are spawned at
+the feet of the selected unit.
 
 Specify the item and material information as you would indicate them in custom
 reaction raws, with the following differences:

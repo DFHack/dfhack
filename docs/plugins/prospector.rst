@@ -2,11 +2,17 @@
 
 prospector
 ==========
-**Tags:** `tag/fort`, `tag/embark`, `tag/inspection`, `tag/map`
-:dfhack-keybind:`prospect`
 
-Shows a summary of resources that exist on the map. It can also calculate an
-estimate of resources available in the selected embark area.
+.. dfhack-tool::
+    :summary: Provides commands that help you analyze natural resources.
+    :tags: fort embark inspection map
+    :no-command:
+
+.. dfhack-command:: prospect
+   :summary: Shows a summary of resources that exist on the map.
+
+It can also calculate an estimate of resources available in the selected embark
+area.
 
 Usage::
 

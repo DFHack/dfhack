@@ -1,8 +1,10 @@
 title-version
 =============
-**Tags:** `tag/system`, `tag/interface`
 
-Displays the DFHack version on DF's title screen.
+.. dfhack-tool::
+    :summary: Displays the DFHack version on DF's title screen.
+    :tags: system interface
+    :no-command:
 
 Usage::
 

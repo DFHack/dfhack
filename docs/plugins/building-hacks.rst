@@ -1,7 +1,9 @@
 building-hacks
 ==============
-**Tags:** `tag/fort`, `tag/mod`, `tag/buildings`
 
-Provides a Lua API for creating powered workshops.
+.. dfhack-tool::
+    :summary: Provides a Lua API for creating powered workshops.
+    :tags: fort mod buildings
+    :no-command:
 
 See `building-hacks-api` for more details.

@@ -1,11 +1,13 @@
 stockflow
 =========
-**Tags:** `tag/fort`, `tag/auto`, `tag/jobs`, `tag/stockpiles`
-:dfhack-keybind:`stockflow`
 
-Queue manager jobs based on free space in stockpiles. With this plugin, the
-fortress bookkeeper can tally up free space in specific stockpiles and queue
-jobs through the manager to produce items to fill the free space.
+.. dfhack-tool::
+    :summary: Queue manager jobs based on free space in stockpiles.
+    :tags: fort auto jobs stockpiles
+
+With this plugin, the fortress bookkeeper can tally up free space in specific
+stockpiles and queue jobs through the manager to produce items to fill the free
+space.
 
 When the plugin is enabled, the :kbd:`q` menu of each stockpile will have two
 new options:

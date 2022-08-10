@@ -1,9 +1,10 @@
 unload
 ======
-**Tags:** `tag/system`
-:dfhack-keybind:`unload`
 
-:index:`Unload a plugin from memory. <unload; Unload a plugin from memory.>`
+.. dfhack-tool::
+    :summary: Unload a plugin from memory.
+    :tags: system
+
 Also see `load` and `reload` for related actions.
 
 Usage::

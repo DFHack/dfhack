@@ -2,9 +2,13 @@
 
 liquids
 =======
-**Tags:** `tag/adventure`, `tag/fort`, `tag/armok`, `tag/map`
-:dfhack-keybind:`liquids`
-:dfhack-keybind:`liquids-here`
+
+.. dfhack-tool::
+    :summary: Place magma, water or obsidian.
+    :tags: adventure fort armok map
+
+.. dfhack-command:: liquids-here
+    :summary: Spawn liquids on the selected tile.
 
 Place magma, water or obsidian.  See `gui/liquids` for an in-game interface for
 this functionality.

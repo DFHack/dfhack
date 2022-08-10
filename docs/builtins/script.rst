@@ -1,12 +1,12 @@
 script
 ======
-**Tags:** `tag/system`
-:dfhack-keybind:`script`
 
-:index:`Execute a batch file of DFHack commands.
-<script; Execute a batch file of DFHack commands.>` It reads a text file and
-runs each line as a DFHack command as if it had been typed in by the user --
-treating the input like `an init file <init-files>`.
+.. dfhack-tool::
+    :summary: Execute a batch file of DFHack commands.
+    :tags: system
+
+It reads a text file and runs each line as a DFHack command as if it had been
+typed in by the user -- treating the input like `an init file <init-files>`.
 
 Some other tools, such as `autobutcher` and `workflow`, export their settings as
 the commands to create them - which can later be reloaded with ``script``.

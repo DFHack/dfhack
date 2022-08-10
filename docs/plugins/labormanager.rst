@@ -1,12 +1,14 @@
 labormanager
 ============
-**Tags:** `tag/fort`, `tag/auto`, `tag/labors`
-:dfhack-keybind:`labormanager`
 
-Automatically manage dwarf labors. Labormanager is derived from `autolabor`
-but uses a completely different approach to assigning jobs to dwarves. While
-autolabor tries to keep as many dwarves busy as possible, labormanager instead
-strives to get jobs done as quickly as possible.
+.. dfhack-tool::
+    :summary: Automatically manage dwarf labors.
+    :tags: fort auto labors
+
+Labormanager is derived from `autolabor` but uses a completely different
+approach to assigning jobs to dwarves. While autolabor tries to keep as many
+dwarves busy as possible, labormanager instead strives to get jobs done as
+quickly as possible.
 
 Labormanager frequently scans the current job list, current list of dwarves, and
 the map to determine how many dwarves need to be assigned to what labors in

@@ -1,10 +1,9 @@
 command-prompt
 ==============
-**Tags:** `tag/system`
-:dfhack-keybind:`command-prompt`
 
-:index:`An in-game DFHack terminal where you can enter other commands.
-<command-prompt; An in-game DFHack terminal where you can enter other commands.>`
+.. dfhack-tool::
+    :summary: An in-game DFHack terminal where you can run other commands.
+    :tags: system
 
 Usage::
 

@@ -1,11 +1,15 @@
 debug
 =====
-**Tags:** `tag/dev`
-:dfhack-keybind:`debugfilter`
 
-:index:`Configure verbosity of DFHack debug output.
-<debugfilter; Configure verbosity of DFHack debug output.>` Debug output is
-grouped by plugin name, category name, and verbosity level.
+.. dfhack-tool::
+    :summary: Provides commands for controlling debug log verbosity.
+    :tags: dev
+    :no-command:
+
+.. dfhack-command:: debugfilter
+    :summary: Configure verbosity of DFHack debug output.
+
+Debug output is grouped by plugin name, category name, and verbosity level.
 
 The verbosity levels are:
 

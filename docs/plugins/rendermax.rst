@@ -1,10 +1,12 @@
 rendermax
 =========
-**Tags:** `tag/adventure`, `tag/fort`, `tag/mod`
-:dfhack-keybind:`rendermax`
 
-Modify the map lighting. This plugin provides a collection of OpenGL lighting
-filters that affect how the map is drawn to the screen.
+.. dfhack-tool::
+    :summary: Modify the map lighting.
+    :tags: adventure fort mod
+
+This plugin provides a collection of OpenGL lighting filters that affect how the
+map is drawn to the screen.
 
 Usage:
 

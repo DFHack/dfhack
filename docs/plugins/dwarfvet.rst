@@ -1,10 +1,9 @@
 dwarfvet
 ========
-**Tags:** `tag/fort`, `tag/mod`, `tag/animals`
-:dfhack-keybind:`dwarfvet`
 
-:index:`Allows animals to be treated at animal hospitals.
-<dwarfvet; Allows animals to be treated at animal hospitals.>`
+.. dfhack-tool::
+    :summary: Allows animals to be treated at animal hospitals.
+    :tags: fort mod animals
 
 Annoyed your dragons become useless after a minor injury? Well, with dwarfvet,
 injured animals will be treated at an animal hospital, which is simply a hospital

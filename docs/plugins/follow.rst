@@ -1,11 +1,13 @@
 follow
 ======
-**Tags:** `tag/fort`, `tag/interface`, `tag/units`
-:dfhack-keybind:`follow`
 
-Make the screen follow the selected unit. Once you exit from the current menu or
-cursor mode, the screen will stay centered on the unit. Handy for watching
-dwarves running around. Deactivated by moving the cursor manually.
+.. dfhack-tool::
+    :summary: Make the screen follow the selected unit.
+    :tags: fort interface units
+
+Once you exit from the current menu or cursor mode, the screen will stay
+centered on the unit. Handy for watching dwarves running around. Deactivated by
+moving the cursor manually.
 
 Usage::
 

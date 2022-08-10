@@ -1,8 +1,10 @@
 spectate
 ========
-**Tags:** `tag/fort`, `tag/units`
 
-Automatically follow exciting dwarves.
+.. dfhack-tool::
+    :summary: Automatically follow exciting dwarves.
+    :tags: fort units
+    :no-command:
 
 Usage::
 

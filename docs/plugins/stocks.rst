@@ -1,10 +1,11 @@
 stocks
 ======
-**Tags:** `tag/fort`, `tag/productivity`, `tag/interface`
-:dfhack-keybind:`stocks`
 
-Enhanced fortress stock management interface. When the plugin is enabled, two
-new hotkeys become available:
+.. dfhack-tool::
+    :summary: Enhanced fortress stock management interface.
+    :tags: fort productivity interface
+
+When the plugin is enabled, two new hotkeys become available:
 
 * :kbd:`e` on the vanilla DF stocks screen (:kbd:`z` and then select Stocks)
   will launch the fortress-wide stock management screen.

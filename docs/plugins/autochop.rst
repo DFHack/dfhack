@@ -1,10 +1,12 @@
 autochop
 ========
-**Tags:** `tag/fort`, `tag/auto`
 
-:index:`Auto-harvest trees when low on stockpiled logs.
-<autochop; Auto-harvest trees when low on stockpiled logs.>` This plugin can
-designate trees for chopping when your stocks are low on logs.
+.. dfhack-tool::
+    :summary: Auto-harvest trees when low on stockpiled logs.
+    :tags: fort auto
+    :no-command:
+
+This plugin can designate trees for chopping when your stocks are low on logs.
 
 Usage::
 

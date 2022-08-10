@@ -1,12 +1,19 @@
 RemoteFortressReader
 ====================
-**Tags:** `tag/dev`
-:dfhack-keybind:`RemoteFortressReader_version`
-:dfhack-keybind:`load-art-image-chunk`
 
-:index:`Backend for Armok Vision.
-<RemoteFortressReader; Backend for Armok Vision.>` Provides an API for realtime
-remote fortress visualization. See :forums:`Armok Vision <146473>`.
+.. dfhack-tool::
+    :summary: Backend for Armok Vision.
+    :tags: dev
+    :no-command:
+
+.. dfhack-command:: RemoteFortressReader_version
+    :summary: Print the loaded RemoteFortressReader version.
+
+.. dfhack-command:: load-art-image-chunk
+    :summary: Gets an art image chunk by index.
+
+This plugin provides an API for realtime remote fortress visualization. See
+:forums:`Armok Vision <146473>`.
 
 Usage:
 

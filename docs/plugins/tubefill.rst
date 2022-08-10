@@ -1,9 +1,11 @@
 tubefill
 ========
-**Tags:** `tag/fort`, `tag/armok`, `tag/map`
-:dfhack-keybind:`tubefill`
 
-Replentishes mined-out adamantine. Veins that were hollow will be left alone.
+.. dfhack-tool::
+    :summary: Replentishes mined-out adamantine.
+    :tags: fort armok map
+
+Veins that were originally hollow will be left alone.
 
 Usage::
 

@@ -1,9 +1,9 @@
 orders
 ======
-**Tags:** `tag/fort`, `tag/productivity`, `tag/jobs`
-:dfhack-keybind:`orders`
 
-Manage manager orders.
+.. dfhack-tool::
+    :summary: Manage manager orders.
+    :tags: fort productivity jobs
 
 Usage:
 

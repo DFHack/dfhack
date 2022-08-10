@@ -1,11 +1,12 @@
 reload
 ======
-**Tags:** `tag/system`
-:dfhack-keybind:`reload`
 
-:index:`Reload a loaded plugin. <reload; Reload a loaded plugin.>` Developers
-use this command to reload a plugin that they are actively modifying. Also see
-`load` and `unload` for related actions.
+.. dfhack-tool::
+    :summary: Reload a loaded plugin.
+    :tags: system
+
+Developers use this command to reload a plugin that they are actively modifying.
+Also see `load` and `unload` for related actions.
 
 Usage::
 

@@ -1,10 +1,13 @@
 siege-engine
 ============
-**Tags:** `tag/fort`, `tag/mod`, `tag/buildings`
 
-Extend the functionality and usability of siege engines. Siege engines in DF
-haven't been updated since the game was 2D, and can only aim in four
-directions. To make them useful above-ground, this plugin allows you to:
+.. dfhack-tool::
+    :summary: Extend the functionality and usability of siege engines.
+    :tags: fort mod buildings
+    :no-command:
+
+Siege engines in DF haven't been updated since the game was 2D, and can only aim
+in four directions. To make them useful above-ground, this plugin allows you to:
 
 * link siege engines to stockpiles
 * restrict operator skill levels (like workshops)

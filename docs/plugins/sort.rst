@@ -1,10 +1,16 @@
 sort
 ====
-**Tags:** `tag/fort`, `tag/productivity`, `tag/interface`
-:dfhack-keybind:`sort-items`
-:dfhack-keybind:`sort-units`
 
-Sort the visible item or unit list.
+.. dfhack-tool::
+    :summary: Sort lists shown in the DF interface.
+    :tags: fort productivity interface
+    :no-command:
+
+.. dfhack-command:: sort-items
+   :summary: Sort the visible item list.
+
+.. dfhack-command:: sort-units
+   :summary: Sort the visible unit list.
 
 Usage::
 

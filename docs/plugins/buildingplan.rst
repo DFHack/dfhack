@@ -1,11 +1,11 @@
 buildingplan
 ============
-**Tags:** `tag/fort`, `tag/design`, `tag/quickfort`, `tag/buildings`, `tag/map`
-:dfhack-keybind:`buildingplan`
 
-:index:`Plan building construction before you have materials.
-<buildingplan; Plan building construction before you have materials.>` This
-plugin adds a planning mode for building placement. You can then place
+.. dfhack-tool::
+    :summary: Plan building construction before you have materials.
+    :tags: fort design quickfort buildings map
+
+This plugin adds a planning mode for building placement. You can then place
 furniture, constructions, and other buildings before the required materials are
 available, and they will be created in a suspended state. Buildingplan will
 periodically scan for appropriate items, and the jobs will be unsuspended when

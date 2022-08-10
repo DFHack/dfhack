@@ -2,12 +2,16 @@
 
 search
 ======
-**Tags:** `tag/fort`, `tag/productivity`, `tag/interface`
 
-Adds search capabilities to the UI. The Stocks, Animals, Trading, Stockpile,
-Noble (assignment candidates), Military (position candidates), Burrows (unit
-list), Rooms, Announcements, Job List, and Unit List screens all get hotkeys
-that allow you to dynamically filter the displayed lists.
+.. dfhack-tool::
+    :summary: Adds search capabilities to the UI.
+    :tags: fort productivity interface
+    :no-command:
+
+Search options are added to the Stocks, Animals, Trading, Stockpile, Noble
+aassignment candidates), Military (position candidates), Burrows (unit list),
+Rooms, Announcements, Job List, and Unit List screens all get hotkeys that allow
+you to dynamically filter the displayed lists.
 
 Usage::
 

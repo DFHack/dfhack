@@ -3,47 +3,58 @@
 
 dig
 ===
-**Tags:** `tag/fort`, `tag/productivity`, `tag/design`, `tag/map`
-:dfhack-keybind:`digv`
-:dfhack-keybind:`digvx`
-:dfhack-keybind:`digl`
-:dfhack-keybind:`diglx`
-:dfhack-keybind:`digcircle`
-:dfhack-keybind:`digtype`
-:dfhack-keybind:`digexp`
 
-Make complicated dig patterns easy.
+.. dfhack-tool::
+    :summary: Provides commands for designating tiles for digging.
+    :tags: fort productivity design map
+    :no-command:
+
+.. dfhack-command:: digv
+    :summary: Designate all of the selected vein for digging.
+
+.. dfhack-command:: digvx
+    :summary: Dig a vein across z-levels, digging stairs as needed.
+
+.. dfhack-command:: digl
+    :summary: Dig all of the selected layer stone.
+
+.. dfhack-command:: diglx
+    :summary: Dig layer stone across z-levels, digging stairs as needed.
+
+.. dfhack-command:: digcircle
+    :summary: Designate circles.
+
+.. dfhack-command:: digtype
+    :summary: Designate all vein tiles of the selected type.
+
+.. dfhack-command:: digexp
+    :summary: Designate dig patterns for exploratory mining.
+
+This plugin provides commands to make complicated dig patterns easy.
 
 Usage:
 
 ``digv [x] [-p<number>]``
-    :index:`Designate all of the selected vein for digging.
-    <digv; Designate all of the selected vein for digging.>`
+    Designate all of the selected vein for digging.
 ``digvx [-p<number>]``
-    :index:`Dig a vein across z-levels, digging stairs as needed.
-    <digvx; Dig a vein across z-levels, digging stairs as needed.>`
-    This is an alias for ``digv x``.
+    Dig a vein across z-levels, digging stairs as needed. This is an alias for
+    ``digv x``.
 ``digl [x] [undo] [-p<number>]``
-    :index:`Dig all of the selected layer stone.
-    <digl; Dig all of the selected layer stone.>` If ``undo`` is specified,
-    removes the designation instead (for if you accidentally set 50 levels at
-    once).
+    Dig all of the selected layer stone. If ``undo`` is specified, removes the
+    designation instead (for if you accidentally set 50 levels at once).
 ``diglx [-p<number>]``
-    :index:`Dig layer stone across z-levels, digging stairs as needed.
-    <diglx; Dig layer stone across z-levels, digging stairs as needed.>` This
-    is an alias for ``digl x``.
+    Dig layer stone across z-levels, digging stairs as needed. This is an alias
+    for ``digl x``.
 ``digcircle [<diameter>] [<solidity>] [<action>] [<designation>] [-p<number>]``
-    :index:`Designate circles. <digcircles; Designate circles.>` The diameter
-    is the number of tiles across the center of the circle that you want to dig.
-    See the `digcircle`_ section below for options.
+    Designate circles. The diameter is the number of tiles across the center of
+    the circle that you want to dig. See the `digcircle`_ section below for
+    options.
 ``digtype [<designation>] [-p<number>]``
-    :index:`Designate all vein tiles of the selected type.
-    <digtype; Designate all vein tiles of the selected type.>` See the `digtype`_
-    section below for options.
+    Designate all vein tiles of the selected type. See the `digtype`_ section
+    below for options.
 ``digexp [<pattern>] [<filter>] [-p<number>]``
-    :index:`Designate dig patterns for exploratory mining.
-    <digexp; Designate dig patterns for exploratory mining.>` See the `digexp`_
-    section below for options
+    Designate dig patterns for exploratory mining. See the `digexp`_ section
+    below for options.
 
 All commands support specifying the priority of the dig designations with
 ``-p<number>``, where the number is from 1 to 7. If a priority is not specified,

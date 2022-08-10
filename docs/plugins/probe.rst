@@ -1,11 +1,15 @@
 probe
 =====
-**Tags:** `tag/adventure`, `tag/fort`, `tag/inspection`, `tag/map`
-:dfhack-keybind:`probe`
-:dfhack-keybind:`bprobe`
-:dfhack-keybind:`cprobe`
 
-Display low-level properties of selected objects.
+.. dfhack-tool::
+    :summary: Display low-level properties of the selected tile.
+    :tags: adventure fort inspection map
+
+.. dfhack-command:: bprobe
+    :summary: Display low-level properties of the selected building.
+
+.. dfhack-command:: cprobe
+    :summary: Display low-level properties of the selected unit.
 
 Usage:
 

@@ -3,24 +3,28 @@
 
 filltraffic
 ===========
-**Tags:** `tag/fort`, `tag/productivity`, `tag/design`, `tag/map`
-:dfhack-keybind:`filltraffic`
-:dfhack-keybind:`alltraffic`
-:dfhack-keybind:`restrictice`
-:dfhack-keybind:`restrictliquids`
 
-Usage:
+.. dfhack-tool::
+    :summary: Set traffic designations using flood-fill starting at the cursor.
+    :tags: fort productivity design map
 
-``filltraffic <designation> [<options>]``
-    Set traffic designations using flood-fill starting at the cursor. Flood
-    filling stops at walls and doors.
-``alltraffic <designation>``
-    Set traffic designations for every single tile of the map - useful for
-    resetting traffic designations.
-``restrictice``
-    Restrict traffic on all tiles on top of visible ice.
-``restrictliquids``
-    Restrict traffic on all visible tiles with liquid.
+.. dfhack-command:: alltraffic
+    :summary: Set traffic designations for every single tile of the map.
+
+.. dfhack-command:: restrictice
+    :summary: Restrict traffic on all tiles on top of visible ice.
+
+.. dfhack-command:: restrictliquids
+    :summary: Restrict traffic on all visible tiles with liquid.
+
+Usage::
+
+    filltraffic <designation> [<options>]
+    alltraffic <designation>
+    restrictice
+    restrictliquids
+
+For ``filltraffic``, flood filling stops at walls and doors.
 
 Examples
 --------

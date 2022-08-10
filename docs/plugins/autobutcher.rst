@@ -1,12 +1,13 @@
 autobutcher
 ===========
-**Tags:** `tag/fort`, `tag/auto`, `tag/fps`, `tag/animals`
-:dfhack-keybind:`autobutcher`
 
-Automatically butcher excess livestock. This plugin monitors how many pets you
-have of each gender and age and assigns excess lifestock for slaughter. Requires
-that you add the target race(s) to a watch list. Units will be ignored if they
-are:
+.. dfhack-tool::
+    :summary: Automatically butcher excess livestock.
+    :tags: fort auto fps animals
+
+This plugin monitors how many pets you have of each gender and age and assigns
+excess lifestock for slaughter. It requires that you add the target race(s) to a
+watch list. Units will be ignored if they are:
 
 * Untamed
 * Nicknamed (for custom protection; you can use the `rename` ``unit`` tool

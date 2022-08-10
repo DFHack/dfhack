@@ -1,9 +1,11 @@
 rename
 ======
-**Tags:** `tag/adventure`, `tag/fort`, `tag/productivity`
-:dfhack-keybind:`rename`
 
-Easily rename things.  Use `gui/rename` for an in-game interface.
+.. dfhack-tool::
+    :summary: Easily rename things.
+    :tags: adventure fort productivity
+
+Use `gui/rename` for an in-game interface.
 
 Usage:
 

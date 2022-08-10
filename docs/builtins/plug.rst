@@ -1,14 +1,13 @@
 plug
 ====
-**Tags:** `tag/system`
-:dfhack-keybind:`plug`
 
-:index:`List available plugins and whether they are enabled.
-<plug; List available plugins and whether they are enabled.>`
+.. dfhack-tool::
+    :summary: List available plugins and whether they are enabled.
+    :tags: system
 
-Usage:
+Usage::
 
-``plug``
-    Lists available plugins and whether they are enabled.
-``plug <plugin> [<plugin> ...]``
-    Lists only the named plugins.
+    plug [<plugin> [<plugin> ...]]
+
+If run with parameters, it lists only the named plugins. Otherwise it will list
+all available plugins.

@@ -1,8 +1,10 @@
 pathable
 ========
-**Tags:** `tag/dev`, `tag/inspection`, `tag/interface`, `tag/map`
 
-Marks tiles that are reachable from the cursor. This plugin provides a Lua API,
-but no direct commands.
+.. dfhack-tool::
+    :summary: Marks tiles that are reachable from the cursor.
+    :tags: dev inspection interface map
+    :no-command:
 
-See `pathable-api` for details.
+This plugin provides a Lua API, but no direct commands. See `pathable-api` for
+details.

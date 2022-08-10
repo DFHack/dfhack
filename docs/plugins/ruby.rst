@@ -2,12 +2,17 @@
 
 ruby
 ====
-**Tags:** `tag/dev`
-:dfhack-keybind:`rb`
-:dfhack-keybind:`rb_eval`
 
-Allow Ruby scripts to be executed. When invoked as a command, you can Eval() a
-ruby string.
+.. dfhack-tool::
+    :summary: Allow Ruby scripts to be executed as DFHack commands.
+    :tags: dev
+    :no-command:
+
+.. dfhack-command:: rb
+   :summary: Eval() a ruby string.
+
+.. dfhack-command:: rb_eval
+   :summary: Eval() a ruby string.
 
 Usage::
 

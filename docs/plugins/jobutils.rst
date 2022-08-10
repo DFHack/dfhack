@@ -2,12 +2,20 @@
 
 jobutils
 ========
-**Tags:** `tag/fort`, `tag/inspection`, `tag/jobs`
-:dfhack-keybind:`job`
-:dfhack-keybind:`job-duplicate`
-:dfhack-keybind:`job-material`
 
-Inspect or modify details of workshop jobs.
+.. dfhack-tool::
+    :summary: Provides commands for interacting with jobs.
+    :tags: fort inspection jobs
+    :no-command:
+
+.. dfhack-command:: job
+    :summary: Inspect or modify details of workshop jobs.
+
+.. dfhack-command:: job-duplicate
+    :summary: Duplicates the highlighted job.
+
+.. dfhack-command:: job-material
+    :summary: Alters the material of the selected job.
 
 Usage:
 

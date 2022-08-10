@@ -1,11 +1,13 @@
 workNow
 =======
-**Tags:** `tag/fort`, `tag/auto`, `tag/jobs`
-:dfhack-keybind:`workNow`
 
-Reduce the time that dwarves idle after completing a job. After finishing a job,
-dwarves will wander away for a while before picking up a new job. This plugin
-will automatically poke the game to assign dwarves to new tasks.
+.. dfhack-tool::
+    :summary: Reduce the time that dwarves idle after completing a job.
+    :tags: fort auto jobs
+
+After finishing a job, dwarves will wander away for a while before picking up a
+new job. This plugin will automatically poke the game to assign dwarves to new
+tasks.
 
 Usage:
 

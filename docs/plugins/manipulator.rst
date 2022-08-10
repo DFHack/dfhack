@@ -1,9 +1,12 @@
 manipulator
 ===========
-**Tags:** `tag/fort`, `tag/productivity`, `tag/interface`, `tag/labors`
 
-An in-game labor management interface. It is equivalent to the popular Dwarf
-Therapist utility.
+.. dfhack-tool::
+    :summary: An in-game labor management interface.
+    :tags: fort productivity interface labors
+    :no-command:
+
+It is equivalent to the popular Dwarf Therapist utility.
 
 To activate, open the unit screen and press :kbd:`l`.
 

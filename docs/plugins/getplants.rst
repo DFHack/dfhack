@@ -1,10 +1,12 @@
 getplants
 =========
-**Tags:** `tag/fort`, `tag/productivity`
-:dfhack-keybind:`getplants`
 
-Designate trees for chopping and shrubs for gathering. Specify the types of
-trees to cut down and/or shrubs to gather by their plant names.
+.. dfhack-tool::
+    :summary: Designate trees for chopping and shrubs for gathering.
+    :tags: fort productivity
+
+Specify the types of trees to cut down and/or shrubs to gather by their plant
+names.
 
 Usage:
 

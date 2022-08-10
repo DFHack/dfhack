@@ -1,9 +1,9 @@
 strangemood
 ===========
-**Tags:** `tag/fort`, `tag/armok`, `tag/units`
-:dfhack-keybind:`strangemood`
 
-Triggers a strange mood.
+.. dfhack-tool::
+    :summary: Trigger a strange mood.
+    :tags: fort armok units
 
 Usage::
 

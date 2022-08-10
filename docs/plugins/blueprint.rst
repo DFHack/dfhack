@@ -1,12 +1,13 @@
 blueprint
 =========
-**Tags:** `tag/fort`, `tag/design`, `tag/quickfort`, `tag/map`
-:dfhack-keybind:`blueprint`
 
-:index:`Record a live game map in a quickfort blueprint.
-<blueprint; Record a live game map in a quickfort blueprint.>` With
-``blueprint``, you can export the structure of a portion of your fortress in a
-blueprint file that you (or anyone else) can later play back with `quickfort`.
+.. dfhack-tool::
+    :summary: Record a live game map in a quickfort blueprint.
+    :tags: fort design quickfort map
+
+With ``blueprint``, you can export the structure of a portion of your fortress
+in a blueprint file that you (or anyone else) can later play back with
+`quickfort`.
 
 Blueprints are ``.csv`` or ``.xlsx`` files created in the ``blueprints``
 subdirectory of your DF folder. The map area to turn into a blueprint is either

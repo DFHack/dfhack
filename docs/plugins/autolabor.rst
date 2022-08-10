@@ -1,12 +1,12 @@
 autolabor
 =========
-**Tags:** `tag/fort`, `tag/auto`, `tag/labors`
-:dfhack-keybind:`autolabor`
 
-:index:`Automatically manage dwarf labors.
-<autolabor; Automatically manage dwarf labors.>` Autolabor attempts to keep as
-many dwarves as possible busy while allowing dwarves to specialize in specific
-skills.
+.. dfhack-tool::
+    :summary: Automatically manage dwarf labors.
+    :tags: fort auto labors
+
+Autolabor attempts to keep as many dwarves as possible busy while allowing
+dwarves to specialize in specific skills.
 
 Autolabor frequently checks how many jobs of each type are available and sets
 labors proportionally in order to get them all done quickly. Labors with

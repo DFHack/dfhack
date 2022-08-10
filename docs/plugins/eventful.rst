@@ -1,7 +1,9 @@
 eventful
 ========
-**Tags:** `tag/dev`, `tag/mod`
 
-Provides a Lua API for reacting to in-game events.
+.. dfhack-tool::
+    :summary: Provides a Lua API for reacting to in-game events.
+    :tags: dev mod
+    :no-command:
 
 See `eventful-api` for details.

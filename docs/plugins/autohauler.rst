@@ -1,13 +1,14 @@
 autohauler
 ==========
-**Tags:** `tag/fort`, `tag/auto`, `tag/labors`
-:dfhack-keybind:`autohauler`
 
-:index:`Automatically manage hauling labors.
-<autohauler; Automatically manage hauling labors.>` Similar to `autolabor`, but
-instead of managing all labors, ``autohauler`` only addresses hauling labors,
-leaving the assignment of skilled labors entirely up to you. You can use the
-in-game `manipulator` UI or an external tool like Dwarf Therapist to do so.
+.. dfhack-tool::
+    :summary: Automatically manage hauling labors.
+    :tags: fort auto labors
+
+Similar to `autolabor`, but instead of managing all labors, ``autohauler`` only
+addresses hauling labors, leaving the assignment of skilled labors entirely up
+to you. You can use the in-game `manipulator` UI or an external tool like Dwarf
+Therapist to do so.
 
 Idle dwarves who are not on active military duty will be assigned the hauling
 labors; everyone else (including those currently hauling) will have the hauling

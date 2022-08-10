@@ -1,11 +1,12 @@
 hotkeys
 =======
-**Tags:** `tag/system`, `tag/productivity`, `tag/interface`
-:dfhack-keybind:`hotkeys`
 
-Show all dfhack keybindings in current context. The command opens an in-game
-screen showing which DFHack keybindings are active in the current context.
-See also `hotkey-notes`.
+.. dfhack-tool::
+    :summary: Show all dfhack keybindings for the current context.
+    :tags: system productivity interface
+
+The command opens an in-game screen showing which DFHack keybindings are active
+in the current context. See also `hotkey-notes`.
 
 Usage::
 

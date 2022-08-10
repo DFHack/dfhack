@@ -1,14 +1,15 @@
 forceequip
 ==========
-**Tags:** `tag/adventure`, `tag/fort`, `tag/items`, `tag/units`
-:dfhack-keybind:`forceequip`
 
-Move items into a unit's inventory. This tool is typically used to equip
-specific clothing/armor items onto a dwarf, but can also be used to put armor
-onto a war animal or to add unusual items (such as crowns) to any unit. Make
-sure the unit you want to equip is standing on the target items, which must be
-on the ground and be unforbidden. If multiple units are standing on the same
-tile, the first one will be equipped.
+.. dfhack-tool::
+    :summary: Move items into a unit's inventory.
+    :tags: adventure fort items units
+
+This tool is typically used to equip specific clothing/armor items onto a dwarf,
+but can also be used to put armor onto a war animal or to add unusual items
+(such as crowns) to any unit. Make sure the unit you want to equip is standing
+on the target items, which must be on the ground and be unforbidden. If multiple
+units are standing on the same tile, the first one will be equipped.
 
 The most reliable way to set up the environment for this command is to pile
 target items on a tile of floor with a garbage dump activity zone or the

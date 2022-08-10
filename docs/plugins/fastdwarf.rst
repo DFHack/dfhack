@@ -1,9 +1,9 @@
 fastdwarf
 =========
-**Tags:** `tag/fort`, `tag/armok`, `tag/units`
-:dfhack-keybind:`fastdwarf`
 
-Dwarves teleport and/or finish jobs instantly.
+.. dfhack-tool::
+    :summary: Dwarves teleport and/or finish jobs instantly.
+    :tags: fort armok units
 
 Usage::
 

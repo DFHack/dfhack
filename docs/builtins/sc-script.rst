@@ -1,12 +1,12 @@
 sc-script
 =========
-**Tags:** `tag/system`
-:dfhack-keybind:`sc-script`
 
-:index:`Run commands when game state changes occur.
-<sc-script; Run commands when game state changes occur.>` This is similar to
-the static `init-files` but is slightly more flexible since it can be set
-dynamically.
+.. dfhack-tool::
+    :summary: Run commands when game state changes occur.
+    :tags: system
+
+This is similar to the static `init-files` but is slightly more flexible since
+it can be set dynamically.
 
 Usage:
 

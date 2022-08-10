@@ -1,5 +1,9 @@
 isoworldremote
 ==============
-**Tags:** `tag/dev`, `tag/mod`
 
-Provides a `remote API <remote>` used by Isoworld.
+.. dfhack-tool::
+    :summary: Provides a remote API used by Isoworld.
+    :tags: dev mod
+    :no-command:
+
+See `remote` for related remote APIs.

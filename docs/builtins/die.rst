@@ -3,7 +3,7 @@ die
 
 .. dfhack-tool::
     :summary: Instantly exit DF without saving.
-    :tags: system
+    :tags: dfhack
 
 Use to exit DF quickly and safely.
 

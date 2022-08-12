@@ -3,7 +3,7 @@ keybinding
 
 .. dfhack-tool::
     :summary: Create hotkeys that will run DFHack commands.
-    :tags: system
+    :tags: dfhack
 
 Like any other command, it can be used at any time from the console, but
 bindings are not remembered between runs of the game unless re-created in

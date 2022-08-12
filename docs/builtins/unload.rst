@@ -3,7 +3,7 @@ unload
 
 .. dfhack-tool::
     :summary: Unload a plugin from memory.
-    :tags: system
+    :tags: dfhack
 
 Also see `load` and `reload` for related actions.
 

@@ -3,7 +3,7 @@ probe
 
 .. dfhack-tool::
     :summary: Display low-level properties of the selected tile.
-    :tags: adventure fort inspection map
+    :tags: adventure fort inspection buildings map units
 
 .. dfhack-command:: bprobe
     :summary: Display low-level properties of the selected building.

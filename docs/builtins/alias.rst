@@ -3,7 +3,7 @@ alias
 
 .. dfhack-tool::
     :summary: Configure helper aliases for other DFHack commands.
-    :tags: system
+    :tags: dfhack
 
 Aliases are resolved immediately after built-in commands, which means that an
 alias cannot override a built-in command, but can override a command implemented

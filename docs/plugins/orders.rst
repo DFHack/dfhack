@@ -3,7 +3,7 @@ orders
 
 .. dfhack-tool::
     :summary: Manage manager orders.
-    :tags: fort productivity jobs
+    :tags: fort productivity workorders
 
 Usage:
 

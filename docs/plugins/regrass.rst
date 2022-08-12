@@ -3,7 +3,7 @@ regrass
 
 .. dfhack-tool::
     :summary: Regrows all the grass.
-    :tags: adventure fort armok animals
+    :tags: adventure fort armok animals map
 
 Use this command if your grazers have eaten everything down to the dirt.
 

@@ -3,7 +3,7 @@ dwarfmonitor
 
 .. dfhack-tool::
     :summary: Measure fort happiness and efficiency.
-    :tags: fort inspection units
+    :tags: fort inspection jobs units
 
 It can also show heads-up display widgets with live fort statistics.
 

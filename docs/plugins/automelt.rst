@@ -3,7 +3,7 @@ automelt
 
 .. dfhack-tool::
     :summary: Quickly designate items to be melted.
-    :tags: fort auto items stockpiles
+    :tags: fort productivity stockpiles items
     :no-command:
 
 When `enabled <enable>`, this plugin adds an option to the :kbd:`q` menu for

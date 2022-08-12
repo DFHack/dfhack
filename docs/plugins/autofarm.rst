@@ -3,7 +3,7 @@ autofarm
 
 .. dfhack-tool::
     :summary: Automatically manage farm crop selection.
-    :tags: fort auto buildings
+    :tags: fort auto plants
 
 Periodically scan your plant stocks and assign crops to your farm plots based on
 which plant stocks are low (as long as you have the appropriate seeds). The

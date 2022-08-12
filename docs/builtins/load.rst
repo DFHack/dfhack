@@ -3,7 +3,7 @@ load
 
 .. dfhack-tool::
     :summary: Load and register a plugin library.
-    :tags: system
+    :tags: dfhack
 
 Also see `unload` and `reload` for related actions.
 

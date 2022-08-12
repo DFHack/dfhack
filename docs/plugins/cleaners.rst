@@ -6,7 +6,7 @@ cleaners
 
 .. dfhack-tool::
     :summary: Provides commands for cleaning spatter from the map.
-    :tags: adventure fort fps items map units
+    :tags: adventure fort fps armok items map units
     :no-command:
 
 .. dfhack-command:: clean

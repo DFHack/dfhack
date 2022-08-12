@@ -3,7 +3,7 @@ tweak
 
 .. dfhack-tool::
     :summary: A collection of tweaks and bugfixes.
-    :tags: adventure fort interface fps fix armok
+    :tags: adventure fort fps bugfix armok interface
 
 Usage::
 

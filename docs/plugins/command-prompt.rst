@@ -3,7 +3,7 @@ command-prompt
 
 .. dfhack-tool::
     :summary: An in-game DFHack terminal where you can run other commands.
-    :tags: system
+    :tags: dfhack
 
 Usage::
 

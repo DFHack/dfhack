@@ -3,7 +3,7 @@ spectate
 
 .. dfhack-tool::
     :summary: Automatically follow exciting dwarves.
-    :tags: fort units
+    :tags: fort interface
     :no-command:
 
 Usage::

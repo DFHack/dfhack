@@ -3,7 +3,7 @@ ls
 
 .. dfhack-tool::
     :summary: List available DFHack commands.
-    :tags: system
+    :tags: dfhack
 
 In order to group related commands, each command is associated with a list of
 tags. You can filter the listed commands by a tag or a substring of the

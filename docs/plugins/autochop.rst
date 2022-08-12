@@ -3,7 +3,7 @@ autochop
 
 .. dfhack-tool::
     :summary: Auto-harvest trees when low on stockpiled logs.
-    :tags: fort auto
+    :tags: fort auto plants
     :no-command:
 
 This plugin can designate trees for chopping when your stocks are low on logs.

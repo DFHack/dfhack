@@ -3,7 +3,7 @@ reload
 
 .. dfhack-tool::
     :summary: Reload a loaded plugin.
-    :tags: system
+    :tags: dfhack
 
 Developers use this command to reload a plugin that they are actively modifying.
 Also see `load` and `unload` for related actions.

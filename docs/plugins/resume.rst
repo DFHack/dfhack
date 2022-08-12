@@ -3,7 +3,7 @@ resume
 
 .. dfhack-tool::
     :summary: Color planned buildings based on their suspend status.
-    :tags: fort productivity
+    :tags: fort productivity interface jobs
     :no-command:
 
 .. dfhack-command:: resume

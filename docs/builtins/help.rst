@@ -3,7 +3,7 @@ help
 
 .. dfhack-tool::
     :summary: Display help about a command or plugin.
-    :tags: system
+    :tags: dfhack
 
 Can also be invoked as ``?`` or ``man`` (short for "manual").
 

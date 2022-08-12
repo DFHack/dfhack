@@ -5,7 +5,7 @@ prospector
 
 .. dfhack-tool::
     :summary: Provides commands that help you analyze natural resources.
-    :tags: fort embark inspection map
+    :tags: fort embark inspection armok map
     :no-command:
 
 .. dfhack-command:: prospect

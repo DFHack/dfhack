@@ -3,7 +3,7 @@ sc-script
 
 .. dfhack-tool::
     :summary: Run commands when game state changes occur.
-    :tags: system
+    :tags: dfhack
 
 This is similar to the static `init-files` but is slightly more flexible since
 it can be set dynamically.

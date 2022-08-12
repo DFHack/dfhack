@@ -3,7 +3,7 @@ enable
 
 .. dfhack-tool::
     :summary: Activate a DFHack tool that has some persistent effect.
-    :tags: system
+    :tags: dfhack
 
 Many plugins and scripts can be in a distinct enabled or disabled state. Some
 of them activate and deactivate automatically depending on the contents of the

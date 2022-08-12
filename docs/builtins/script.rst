@@ -3,7 +3,7 @@ script
 
 .. dfhack-tool::
     :summary: Execute a batch file of DFHack commands.
-    :tags: system
+    :tags: dfhack
 
 It reads a text file and runs each line as a DFHack command as if it had been
 typed in by the user -- treating the input like `an init file <init-files>`.

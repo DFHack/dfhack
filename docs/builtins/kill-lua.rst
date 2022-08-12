@@ -3,7 +3,7 @@ kill-lua
 
 .. dfhack-tool::
     :summary: Gracefully stop any currently-running Lua scripts.
-    :tags: system
+    :tags: dfhack
 
 Use this command to stop a misbehaving script that appears to be stuck.
 

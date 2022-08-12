@@ -3,7 +3,7 @@ blueprint
 
 .. dfhack-tool::
     :summary: Record a live game map in a quickfort blueprint.
-    :tags: fort design quickfort map
+    :tags: fort design buildings stockpiles map
 
 With ``blueprint``, you can export the structure of a portion of your fortress
 in a blueprint file that you (or anyone else) can later play back with

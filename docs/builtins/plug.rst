@@ -3,7 +3,7 @@ plug
 
 .. dfhack-tool::
     :summary: List available plugins and whether they are enabled.
-    :tags: system
+    :tags: dfhack
 
 Usage::
 

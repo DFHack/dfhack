@@ -71,3 +71,7 @@ div.dfhack-tool-summary p {
     margin-bottom: 0.5em;
     line-height: 1em;
 }
+
+div.dfhack-tool-summary p:last-child {
+   margin-bottom: 0;
+}

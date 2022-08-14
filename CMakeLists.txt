@@ -506,7 +506,9 @@ if(BUILD_DOCS)
         COMMAND ${CMAKE_COMMAND} -E touch ${SPHINX_OUTPUT})
 
     install(DIRECTORY ${dfhack_SOURCE_DIR}/docs/html/
-        DESTINATION ${DFHACK_USERDOC_DESTINATION}/docs)
+        DESTINATION ${DFHACK_USERDOC_DESTINATION}/docs
+        FILES_MATCHING PATTERN "*"
+                       PATTERN html/_sources EXCLUDE)
     install(DIRECTORY ${dfhack_SOURCE_DIR}/docs/text/
         DESTINATION ${DFHACK_USERDOC_DESTINATION}/docs)
     install(FILES docs/changelogs/news.rst docs/changelogs/news-dev.rst DESTINATION ${DFHACK_USERDOC_DESTINATION})

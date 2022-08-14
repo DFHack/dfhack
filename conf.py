@@ -316,6 +316,9 @@ html_domain_indices = False
 # If false, no genindex.html is generated.
 html_use_index = True
 
+# don't link to rst sources in the generated pages
+html_show_sourcelink = False
+
 html_css_files = [
     'dfhack.css',
 ]

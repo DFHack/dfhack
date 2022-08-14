@@ -185,7 +185,7 @@ where ``*`` can be any string, including the empty string.
 A world being loaded can mean a fortress, an adventurer, or legends mode.
 
 These files are best used for non-persistent commands, such as setting
-a `tag/fix` script to run on `repeat`.
+a `tag/bugfix` script to run on `repeat`.
 
 
 .. _onMapLoad.init:

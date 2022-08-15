@@ -265,3 +265,33 @@ function test.coords()
                 end)
         end)
 end
+
+function test.positiveInt()
+    expect.eq(5, argparse.positiveInt(5))
+    expect.eq(5, argparse.positiveInt('5'))
+    expect.eq(5, argparse.positiveInt('5.0'))
+    expect.eq(1, argparse.positiveInt('1'))
+
+    expect.error_match('expected positive integer',
+                       function() argparse.positiveInt('0') end)
+    expect.error_match('expected positive integer',
+                       function() argparse.positiveInt('5.01') end)
+    expect.error_match('expected positive integer',
+                       function() argparse.positiveInt(-1) end)
+end
+
+function test.nonnegativeInt()
+    expect.eq(5, argparse.nonnegativeInt(5))
+    expect.eq(5, argparse.nonnegativeInt('5'))
+    expect.eq(5, argparse.nonnegativeInt('5.0'))
+    expect.eq(1, argparse.nonnegativeInt('1'))
+    expect.eq(0, argparse.nonnegativeInt('0'))
+    expect.eq(0, argparse.nonnegativeInt('-0'))
+
+    expect.error_match('expected non%-negative integer',
+                       function() argparse.nonnegativeInt('-0.01') end)
+    expect.error_match('expected non%-negative integer',
+                       function() argparse.nonnegativeInt(-5) end)
+    expect.error_match('expected non%-negative integer',
+                       function() argparse.nonnegativeInt(-1) end)
+end

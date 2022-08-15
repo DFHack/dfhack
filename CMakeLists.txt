@@ -442,8 +442,10 @@ endif()
 add_subdirectory(data)
 add_subdirectory(scripts)
 
-find_package(Sphinx QUIET)
 if(BUILD_DOCS)
+    find_package(Python3)
+    find_package(Sphinx)
+
     if(NOT SPHINX_FOUND)
         message(SEND_ERROR "Sphinx not found but BUILD_DOCS enabled")
     endif()

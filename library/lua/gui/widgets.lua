@@ -1162,7 +1162,7 @@ end
 
 function FilteredList:setChoices(choices, pos)
     choices = choices or {}
-    self.edit.text = ''
+    self.edit:setText('')
     self.list:setChoices(choices, pos)
     self.choices = self.list.choices
     self.not_found.visible = (#choices == 0)
@@ -1204,7 +1204,7 @@ function FilteredList:setFilter(filter, pos)
     local cidx = nil
 
     filter = filter or ''
-    self.edit.text = filter
+    self.edit:setText(filter)
 
     if filter ~= '' then
         local tokens = filter:split()

@@ -8,6 +8,10 @@
 # Generic dwarfmode bindings #
 ##############################
 
+# the GUI command launcher (two bindings since some keyboards don't have `)
+keybinding add ` gui/launcher
+keybinding add Ctrl-Shift-D gui/launcher
+
 # show all current key bindings
 keybinding add Ctrl-F1 hotkeys
 keybinding add Alt-F1 hotkeys
@@ -40,7 +44,7 @@ keybinding add Ctrl-K autodump-destroy-item
 # quicksave, only in main dwarfmode screen and menu page
 keybinding add Ctrl-Alt-S@dwarfmode/Default quicksave
 
-# gui/quickfort script - apply pre-made blueprints to the map
+# apply blueprints to the map (Alt-F for compatibility with LNP Quickfort)
 keybinding add Ctrl-Shift-Q@dwarfmode gui/quickfort
 keybinding add Alt-F@dwarfmode gui/quickfort
 

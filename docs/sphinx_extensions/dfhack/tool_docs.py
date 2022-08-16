@@ -142,7 +142,7 @@ class DFHackToolDirective(DFHackToolDirectiveBase):
             nodes.paragraph('', '', *tag_nodes),
         ]
         if 'no-command' in self.options:
-            ret_nodes += [nodes.inline(text=self.options.get('summary', ''))]
+            ret_nodes += [nodes.paragraph('', '', nodes.inline(text=self.options.get('summary', '')))]
         return ret_nodes
 
     def run(self):
@@ -161,7 +161,7 @@ class DFHackCommandDirective(DFHackToolDirectiveBase):
         command = self.get_name_or_docname()
         return [
             self.make_labeled_paragraph('Command', command, content_class=nodes.literal),
-            nodes.inline(text=self.options.get('summary', '')),
+            nodes.paragraph('', '', nodes.inline(text=self.options.get('summary', ''))),
             *render_dfhack_keybind(command),
         ]
 

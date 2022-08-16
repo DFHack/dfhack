@@ -14,6 +14,7 @@ for the tag assignment spreadsheet.
 "when" tags
 -----------
 - `tag/adventure`: Tools that are useful while in adventure mode. Note that some tools only tagged with "fort" might also work in adventure mode, but not always in expected ways. Feel free to experiment, though!
+- `tag/dfhack`: Tools that you use to run DFHack commands or interact with the DFHack library. This tag also includes tools that help you manage the DF game itself (e.g. settings, saving, etc.)
 - `tag/embark`: Tools that are useful while on the fort embark screen or while creating an adventurer.
 - `tag/fort`: Tools that are useful while in fort mode.
 - `tag/legends`: Tools that are useful while in legends mode.
@@ -25,7 +26,6 @@ for the tag assignment spreadsheet.
 - `tag/bugfix`: Tools that fix specific bugs, either permanently or on-demand.
 - `tag/design`: Tools that help you design your fort.
 - `tag/dev`: Tools that are useful when developing scripts or mods.
-- `tag/dfhack`: Tools that you use to run DFHack commands or interact with the DFHack library. This tag also includes tools that help you manage the DF game itself (e.g. settings, saving, etc.)
 - `tag/fps`: Tools that help you manage FPS drop.
 - `tag/gameplay`: Tools that introduce new gameplay elements.
 - `tag/inspection`: Tools that let you view information that is otherwise difficult to find.

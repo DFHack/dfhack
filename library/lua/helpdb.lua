@@ -4,15 +4,17 @@
 -- text exists, it is read from the script sources (for scripts) or the string
 -- passed to the PluginCommand initializer (for plugins).
 --
--- For plugins that don't register a command with the same name as the plugin,
--- the plugin name is registered as a separate entry so documentation on what
--- happens when you enable the plugin can be found.
+-- There should be one help file for each plugin that contains a summary for the
+-- plugin itself and help for all the commands that plugin provides (if any).
+-- Each script should also have one documentation file.
 --
 -- The database is lazy-loaded when an API method is called. It rechecks its
 -- help sources for updates if an API method has not been called in the last
 -- 60 seconds.
 
 local _ENV = mkmodule('helpdb')
+
+local MAX_STALE_MS = 60000
 
 -- paths
 local RENDERED_PATH = 'hack/docs/docs/tools/'
@@ -80,7 +82,7 @@ local BUILTINS = {
 --   source_timestamp (mtime, 0 for non-files),
 --   source_path (string, nil for non-files)
 -- }
-textdb = textdb or {}
+local textdb = {}
 
 -- entry database, points to text in textdb
 -- entry name -> {
@@ -90,13 +92,13 @@ textdb = textdb or {}
 -- }
 --
 -- entry_types is a set because plugin commands can also be the plugin names.
-entrydb = entrydb or {}
+local entrydb = {}
 
 
 -- tag name -> list of entry names
 -- Tags defined in the TAG_DEFINITIONS file that have no associated db entries
 -- will have an empty list.
-tag_index = tag_index or {}
+local tag_index = {}
 
 ---------------------------------------------------------------------------
 -- data ingestion
@@ -146,7 +148,7 @@ local function update_entry(entry, iterator, opts)
     local first_line_is_short_help = opts.first_line_is_short_help
     local begin_marker_found,header_found = not opts.begin_marker,opts.no_header
     local tags_found, short_help_found = false, opts.skip_short_help
-    local in_tags, in_keybinding, in_short_help = false, false, false
+    local in_tags, in_short_help = false, false
     for line in iterator do
         if not short_help_found and first_line_is_short_help then
             line = line:trim()
@@ -188,10 +190,6 @@ local function update_entry(entry, iterator, opts)
         elseif not tags_found and line:find('^[*]*Tags:[*]*') then
             _,_,tags = line:trim():find('[*]*Tags:[*]* *(.*)')
             in_tags, tags_found = true, true
-        elseif in_keybinding then
-            if #line == 0 then in_keybinding = false end
-        elseif line:find('^[*]*Keybinding:') then
-            in_keybinding = true
         elseif not short_help_found and
                 line:find('^%w') then
             if in_short_help then
@@ -212,7 +210,9 @@ local function update_entry(entry, iterator, opts)
     end
     entry.tags = {}
     for _,tag in ipairs(tags:split('[ ,|]+')) do
-        entry.tags[tag] = true
+        if #tag > 0 and tag_index[tag] then
+            entry.tags[tag] = true
+        end
     end
     if #lines > 0 then
         entry.long_help = table.concat(lines, '\n')
@@ -230,7 +230,11 @@ local function make_rendered_entry(old_entry, entry_name, kwargs)
     end
     kwargs.source_path, kwargs.source_timestamp = source_path, source_timestamp
     local entry = make_default_entry(entry_name, HELP_SOURCES.RENDERED, kwargs)
-    update_entry(entry, io.lines(source_path))
+    local ok, lines = pcall(io.lines, source_path)
+    if not ok then
+        return entry
+    end
+    update_entry(entry, lines)
     return entry
 end
 
@@ -411,11 +415,11 @@ local function index_tags()
 end
 
 -- ensures the db is up to date by scanning all help sources. does not do
--- anything if it has already been run within the last 60 seconds.
-last_refresh_ms = last_refresh_ms or 0
+-- anything if it has already been run within the last MAX_STALE_MS milliseconds
+local last_refresh_ms = 0
 local function ensure_db()
     local now_ms = dfhack.getTickCount()
-    if now_ms - last_refresh_ms < 60000 then return end
+    if now_ms - last_refresh_ms <= MAX_STALE_MS then return end
     last_refresh_ms = now_ms
 
     local old_db = textdb
@@ -445,7 +449,6 @@ local function has_keys(str, dict)
     if not str or #str == 0 then
         return false
     end
-    ensure_db()
     for _,s in ipairs(normalize_string_list(str)) do
         if not dict[s] then
             return false
@@ -454,8 +457,10 @@ local function has_keys(str, dict)
     return true
 end
 
--- returns whether the given string (or list of strings) is an entry in the db
+-- returns whether the given string (or list of strings) is an entry (are all
+-- entries) in the db
 function is_entry(str)
+    ensure_db()
     return has_keys(str, entrydb)
 end
 
@@ -482,6 +487,17 @@ function get_entry_long_help(entry)
     return get_db_property(entry, 'long_help')
 end
 
+-- returns the set of tags associated with the entry
+function get_entry_tags(entry)
+    return get_db_property(entry, 'tags')
+end
+
+-- returns whether the given string (or list of strings) matches a tag name
+function is_tag(str)
+    ensure_db()
+    return has_keys(str, tag_index)
+end
+
 local function set_to_sorted_list(set)
     local list = {}
     for item in pairs(set) do
@@ -489,16 +505,6 @@ local function set_to_sorted_list(set)
     end
     table.sort(list)
     return list
-end
-
--- returns the list of tags associated with the entry, in alphabetical order
-function get_entry_tags(entry)
-    return set_to_sorted_list(get_db_property(entry, 'tags'))
-end
-
--- returns whether the given string (or list of strings) matches a tag name
-function is_tag(str)
-    return has_keys(str, tag_index)
 end
 
 -- returns the defined tags in alphabetical order
@@ -510,8 +516,7 @@ end
 function get_tag_data(tag)
     ensure_db()
     if not tag_index[tag] then
-        dfhack.printerr('invalid tag: ' .. tag)
-        return {}
+        error(('helpdb tag not found: "%s"'):format(tag))
     end
     return tag_index[tag]
 end
@@ -533,7 +538,7 @@ end
 -- sorts by last path component, then by parent path components.
 -- something comes before nothing.
 -- e.g. gui/autofarm comes immediately before autofarm
-local function sort_by_basename(a, b)
+function sort_by_basename(a, b)
     local a = chunk_for_sorting(a)
     local b = chunk_for_sorting(b)
     local i = 1
@@ -563,10 +568,10 @@ local function matches(entry_name, filter)
             return false
         end
     end
-    if filter.types then
+    if filter.entry_type then
         local matched = false
         local etypes = get_db_property(entry_name, 'entry_types')
-        for _,etype in ipairs(filter.types) do
+        for _,etype in ipairs(filter.entry_type) do
             if etypes[etype] then
                 matched = true
                 break
@@ -598,8 +603,8 @@ local function normalize_filter(f)
     local filter = {}
     filter.str = normalize_string_list(f.str)
     filter.tag = normalize_string_list(f.tag)
-    filter.types = normalize_string_list(f.types)
-    if not filter.str and not filter.tag and not filter.types then
+    filter.entry_type = normalize_string_list(f.entry_type)
+    if not filter.str and not filter.tag and not filter.entry_type then
         return nil
     end
     return filter
@@ -614,11 +619,11 @@ end
 --         includes entry names that match any of the given substrings.
 --   tag - if a string, filters by the given tag name. if a table of strings,
 --         includes entries that match any of the given tags.
---   types - if a string, matches entries of the given type. if a table of
---           strings, includes entries that match any of the given types. valid
---           types are: "builtin", "plugin", "command". note that many plugin
---           commands have the same name as the plugin, so those entries will
---           match both "plugin" and "command" types.
+--   entry_type - if a string, matches entries of the given type. if a table of
+--         strings, includes entries that match any of the given types. valid
+--         types are: "builtin", "plugin", "command". note that many plugin
+--         commands have the same name as the plugin, so those entries will
+--         match both "plugin" and "command" types.
 function search_entries(include, exclude)
     ensure_db()
     include = normalize_filter(include)
@@ -636,7 +641,7 @@ end
 
 -- returns a list of all commands. used by Core's autocomplete functionality.
 function get_commands()
-    local include = {types={ENTRY_TYPES.COMMAND}}
+    local include = {entry_type=ENTRY_TYPES.COMMAND}
     return search_entries(include)
 end
 
@@ -692,12 +697,12 @@ end
 
 -- prints the requested entries to the console. include and exclude filters are
 -- defined as in search_entries() above.
-function list_entries(skip_tags, include, exclude)
+local function list_entries(skip_tags, include, exclude)
     local entries = search_entries(include, exclude)
     for _,entry in ipairs(entries) do
         print_columns(entry, get_entry_short_help(entry))
         if not skip_tags then
-            local tags = get_entry_tags(entry)
+            local tags = set_to_sorted_list(get_entry_tags(entry))
             if #tags > 0 then
                 print(('    tags: %s'):format(table.concat(tags, ', ')))
             end
@@ -717,14 +722,14 @@ end
 --                       devel/ directories. otherwise those scripts will be
 --                       excluded
 function ls(filter_str, skip_tags, show_dev_commands)
-    local include = {types={ENTRY_TYPES.COMMAND}}
+    local include = {entry_type={ENTRY_TYPES.COMMAND}}
     if is_tag(filter_str) then
         include.tag = filter_str
     else
         include.str = filter_str
     end
     list_entries(skip_tags, include,
-                 show_dev_commands and {} or {str={'modtools/', 'devel/'}})
+                 show_dev_commands and {} or {tag='dev'})
 end
 
 return _ENV

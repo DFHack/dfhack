@@ -307,10 +307,10 @@ function EditField:onInput(keys)
     elseif keys.CURSOR_LEFT then
         self:setCursor(self.cursor - 1)
         return true
-    elseif keys.A_MOVE_W_DOWN then -- Ctrl-Left (prev word start)
-        local _, prev_word_start = self.text:sub(1, self.cursor-1):
-                                                    find('.*[^%w_%-]+[%w_%-]')
-        self:setCursor(prev_word_start or 1)
+    elseif keys.A_MOVE_W_DOWN then -- Ctrl-Left (end of prev word)
+        local _, prev_word_end = self.text:sub(1, self.cursor-1):
+                                                    find('.*[%w_%-][^%w_%-]')
+        self:setCursor(prev_word_end or 1)
         return true
     elseif keys.A_CARE_MOVE_W then -- Alt-Left (home)
         self:setCursor(1)
@@ -318,9 +318,9 @@ function EditField:onInput(keys)
     elseif keys.CURSOR_RIGHT then
         self:setCursor(self.cursor + 1)
         return true
-    elseif keys.A_MOVE_E_DOWN then -- Ctrl-Right (next word end)
-        local _, next_word_end = self.text:find('[%w_%-]+[^%w_%-]', self.cursor)
-        self:setCursor(next_word_end)
+    elseif keys.A_MOVE_E_DOWN then -- Ctrl-Right (beginning of next word)
+        local _,next_word_start = self.text:find('[^%w_%-][%w_%-]', self.cursor)
+        self:setCursor(next_word_start)
         return true
     elseif keys.A_CARE_MOVE_E then -- Alt-Right (end)
         self:setCursor()
@@ -763,7 +763,6 @@ function HotkeyLabel:onInput(keys)
         self.on_activate()
         return true
     end
-
 end
 
 ----------------------
@@ -836,6 +835,15 @@ function CycleHotkeyLabel:getOptionValue(option_idx)
         return option.value
     end
     return option
+end
+
+function CycleHotkeyLabel:onInput(keys)
+    if CycleHotkeyLabel.super.onInput(self, keys) then
+        return true
+    elseif keys._MOUSE_L and self:getMousePos() then
+        self:cycle()
+        return true
+    end
 end
 
 -----------------------
@@ -1154,7 +1162,7 @@ end
 
 function FilteredList:setChoices(choices, pos)
     choices = choices or {}
-    self.edit.text = ''
+    self.edit:setText('')
     self.list:setChoices(choices, pos)
     self.choices = self.list.choices
     self.not_found.visible = (#choices == 0)
@@ -1196,7 +1204,7 @@ function FilteredList:setFilter(filter, pos)
     local cidx = nil
 
     filter = filter or ''
-    self.edit.text = filter
+    self.edit:setText(filter)
 
     if filter ~= '' then
         local tokens = filter:split()

@@ -51,6 +51,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``materials.ItemTraitsDialog``: added a default ``on_select``-handler which toggles the traits.
 - `orders`: added useful library of manager orders. see them with ``orders list`` and import them with, for example, ``orders import library/basic``
 - `prospect`: add new ``--show`` option to give the player control over which report sections are shown. e.g. ``prospect all --show ores`` will just show information on ores.
+- `seedwatch`: ``seedwatch all`` now adds all plants with seeds to the watchlist, not just the "basic" crops.
+- UX: You can now move the cursor around in DFHack text fields in ``gui/`` scripts (e.g. `gui/blueprint`, `gui/quickfort`, or `gui/gm-editor`). You can move the cursor by clicking where you want it to go with the mouse or using the Left/Right arrow keys.  Ctrl+Left/Right will move one word at a time, and Alt+Left/Right will move to the beginning/end of the text.
+- UX: You can now click on the hotkey hint text in many ``gui/`` script windows to activate the hotkey, like a button. Not all scripts have been updated to use the clickable widget yet, but you can try it in `gui/blueprint` or `gui/quickfort`.
 
 ## Documentation
 
@@ -63,7 +66,14 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``Gui::getSelectedItem()``, ``Gui::getAnyItem()``: added support for the artifacts screen
 
 ## Lua
+- History: added ``dfhack.getCommandHistory(history_id, history_filename)`` and ``dfhack.addCommandToHistory(history_id, history_filename, command)`` so gui scripts can access a commandline history without requiring a terminal.
+- ``helpdb``: database and query interface for DFHack tool help text
 - ``tile-material``: fix the order of declarations. The ``GetTileMat`` function now returns the material as intended (always returned nil before). Also changed the license info, with permission of the original author.
+- ``widgets.EditField``: new ``onsubmit2`` callback attribute is called when the user hits Shift-Enter.
+- ``widgets.EditField``: new function: ``setCursor(position)`` sets the input cursor.
+- ``widgets.Label``: ``scroll`` function now interprets the keywords ``+page``, ``-page``, ``+halfpage``, and ``-halfpage`` in addition to simple positive and negative numbers.
+- ``widgets.HotkeyLabel``: clicking on the widget will now call ``on_activate()``.
+- ``widgets.CycleHotkeyLabel``: clicking on the widget will now cycle the options and trigger ``on_change()``. This also applies to the ``ToggleHotkeyLabel`` subclass.
 
 # 0.47.05-r6
 

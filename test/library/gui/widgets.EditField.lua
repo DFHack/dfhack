@@ -1,0 +1,56 @@
+local widgets = require('gui.widgets')
+
+function test.editfield_cursor()
+    local e = widgets.EditField{}
+    e:setFocus(true)
+    expect.eq(1, e.cursor, 'cursor should be after the empty string')
+
+    e:onInput{_STRING=string.byte('a')}
+    expect.eq('a', e.text)
+    expect.eq(2, e.cursor)
+
+    e:setText('one two three')
+    expect.eq(14, e.cursor, 'cursor should be after the last char')
+    e:onInput{_STRING=string.byte('s')}
+    expect.eq('one two threes', e.text)
+    expect.eq(15, e.cursor)
+
+    e:setCursor(4)
+    e:onInput{_STRING=string.byte('s')}
+    expect.eq('ones two threes', e.text)
+    expect.eq(5, e.cursor)
+
+    e:onInput{CURSOR_LEFT=true}
+    expect.eq(4, e.cursor)
+    e:onInput{CURSOR_RIGHT=true}
+    expect.eq(5, e.cursor)
+    e:onInput{A_CARE_MOVE_W=true}
+    expect.eq(1, e.cursor, 'interpret alt-left as home')
+    e:onInput{A_MOVE_E_DOWN=true}
+    expect.eq(6, e.cursor, 'interpret ctrl-right as goto beginning of next word')
+    e:onInput{A_CARE_MOVE_E=true}
+    expect.eq(16, e.cursor, 'interpret alt-right as end')
+    e:onInput{A_MOVE_W_DOWN=true}
+    expect.eq(9, e.cursor, 'interpret ctrl-left as goto end of previous word')
+end
+
+function test.editfield_click()
+    local e = widgets.EditField{text='word'}
+    e:setFocus(true)
+    expect.eq(5, e.cursor)
+
+    mock.patch(e, 'getMousePos', mock.func(0), function()
+            e:onInput{_MOUSE_L=true}
+            expect.eq(1, e.cursor)
+        end)
+
+    mock.patch(e, 'getMousePos', mock.func(20), function()
+            e:onInput{_MOUSE_L=true}
+            expect.eq(5, e.cursor, 'should only seek to end of text')
+        end)
+
+    mock.patch(e, 'getMousePos', mock.func(2), function()
+            e:onInput{_MOUSE_L=true}
+            expect.eq(3, e.cursor)
+        end)
+end

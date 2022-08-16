@@ -91,7 +91,9 @@ command_result df_seedwatch(color_ostream &out, vector<string>& parameters)
     map<string, int32_t> plantIDs;
     for(size_t i = 0; i < world->raws.plants.all.size(); ++i)
     {
-        plantIDs[world->raws.plants.all[i]->id] = i;
+        auto & plant = world->raws.plants.all[i];
+        if (plant->material_defs.type[plant_material_def::seed] != -1)
+            plantIDs[plant->id] = i;
     }
 
     t_gamemodes gm;
@@ -182,10 +184,8 @@ command_result df_seedwatch(color_ostream &out, vector<string>& parameters)
         if(limit < 0) limit = 0;
         if(parameters[0] == "all")
         {
-            for(auto i = abbreviations.begin(); i != abbreviations.end(); ++i)
-            {
-                if(plantIDs.count(i->second) > 0) Kitchen::setLimit(plantIDs[i->second], limit);
-            }
+            for(auto & entry : plantIDs)
+                Kitchen::setLimit(entry.second, limit);
         }
         else
         {

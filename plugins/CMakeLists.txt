@@ -186,7 +186,7 @@ endif()
 # this is the skeleton plugin. If you want to make your own, make a copy and then change it
 option(BUILD_SKELETON "Build the skeleton plugin." OFF)
 if(BUILD_SKELETON)
-    add_subdirectory(skeleton)
+    dfhack_plugin(skeleton examples/skeleton.cpp)
 endif()
 
 macro(subdirlist result subdir)

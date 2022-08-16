@@ -28,7 +28,7 @@ User Manual
    /docs/Introduction
    /docs/Installing
    /docs/Core
-   /docs/Categories
+   /docs/Tools
    /docs/guides/index
    /docs/index-dev
    /docs/index-about

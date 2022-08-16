@@ -64,8 +64,8 @@ Tags
 
 To make it easier for players to find related commands, all plugins and commands are marked
 with relevant tags. These are used to compile indices and generate cross-links between the
-commands, both in the HTML documents and in-game. See the list of available tags
-`here <categories>` and think about which categories your new tools belongs in.
+commands, both in the HTML documents and in-game. See the list of available `tag-list` and
+think about which categories your new tool belongs in.
 
 Links
 -----

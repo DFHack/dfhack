@@ -73,29 +73,40 @@ DOC_ALL_DIRS = doc_all_dirs()
 
 
 def get_tags():
-    tags = []
+    groups = {}
+    group_re = re.compile(r'"([^"]+)"')
     tag_re = re.compile(r'- `tag/([^`]+)`: (.*)')
     with open('docs/Tags.rst') as f:
         lines = f.readlines()
         for line in lines:
-            m = re.match(tag_re, line.strip())
+            line = line.strip()
+            m = re.match(group_re, line)
             if m:
-                tags.append((m.group(1), m.group(2)))
-    return tags
+                group = m.group(1)
+                groups[group] = []
+                continue
+            m = re.match(tag_re, line)
+            if m:
+                tag = m.group(1)
+                desc = m.group(2)
+                groups[group].append((tag, desc))
+    return groups
 
 
 def generate_tag_indices():
     os.makedirs('docs/tags', mode=0o755, exist_ok=True)
-    with write_file_if_changed('docs/tags/index.rst') as topidx:
-        for tag_tuple in get_tags():
-            tag = tag_tuple[0]
-            with write_file_if_changed(('docs/tags/{name}.rst').format(name=tag)) as tagidx:
-                tagidx.write('TODO: add links to the tools that have this tag')
-            topidx.write(('.. _tag/{name}:\n\n').format(name=tag))
-            topidx.write(('{name}\n').format(name=tag))
-            topidx.write(('{underline}\n').format(underline='-'*len(tag)))
-            topidx.write(('{desc}\n\n').format(desc=tag_tuple[1]))
-            topidx.write(('.. include:: /docs/tags/{name}.rst\n\n').format(name=tag))
+    tag_groups = get_tags()
+    for tag_group in tag_groups:
+        with write_file_if_changed(('docs/tags/by{group}.rst').format(group=tag_group)) as topidx:
+            for tag_tuple in tag_groups[tag_group]:
+                tag = tag_tuple[0]
+                with write_file_if_changed(('docs/tags/{name}.rst').format(name=tag)) as tagidx:
+                    tagidx.write('TODO: add links to the tools that have this tag')
+                topidx.write(('.. _tag/{name}:\n\n').format(name=tag))
+                topidx.write(('{name}\n').format(name=tag))
+                topidx.write(('{underline}\n').format(underline='*'*len(tag)))
+                topidx.write(('{desc}\n\n').format(desc=tag_tuple[1]))
+                topidx.write(('.. include:: /docs/tags/{name}.rst\n\n').format(name=tag))
 
 
 def write_tool_docs():

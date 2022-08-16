@@ -3,7 +3,7 @@ stonesense
 
 .. dfhack-tool::
     :summary: A 3D isometric visualizer.
-    :tags: adventure fort map graphics
+    :tags: adventure fort graphics map
 
 .. dfhack-command:: ssense
    :summary: An alias for stonesense.

@@ -5,7 +5,7 @@ reveal
 
 .. dfhack-tool::
     :summary: Reveals the map.
-    :tags: adventure fort inspection armok map
+    :tags: adventure fort armok inspection map
 
 .. dfhack-tool:: unreveal
    :summary: Hides previously hidden tiles again.

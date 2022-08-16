@@ -3,7 +3,7 @@ cursecheck
 
 .. dfhack-tool::
     :summary: Check for cursed creatures.
-    :tags: dev fps stockpiles
+    :tags: fort armok inspection units
 
 This command checks a single map tile (or the whole map/world) for cursed
 creatures (ghosts, vampires, necromancers, werebeasts, zombies, etc.).

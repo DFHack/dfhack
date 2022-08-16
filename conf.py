@@ -354,3 +354,5 @@ latex_toplevel_sectioning = 'part'
 from sphinx.writers import text
 
 text.MAXWIDTH = 52
+
+text_sectionchars = '=-~`+"*'

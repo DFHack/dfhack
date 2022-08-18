@@ -5,7 +5,7 @@
 
 import logging
 import os
-from typing import List
+from typing import List, Optional
 
 import docutils.nodes as nodes
 import docutils.parsers.rst.directives as rst_directives
@@ -17,6 +17,21 @@ import dfhack.util
 
 
 logger = sphinx.util.logging.getLogger(__name__)
+
+
+def make_labeled_paragraph(label: Optional[str]=None, content: Optional[str]=None,
+            label_class=nodes.strong, content_class=nodes.inline) -> nodes.paragraph:
+    p = nodes.paragraph('', '')
+    if label is not None:
+        p += [
+            # TODO: use inline instead of strong when rendering to text
+            label_class('', '{}:'.format(label)),
+            nodes.inline('', ' '),
+        ]
+    if content is not None:
+        p += content_class('', content)
+    return p
+
 
 _KEYBINDS = {}
 _KEYBINDS_RENDERED = set()  # commands whose keybindings have been rendered
@@ -54,10 +69,7 @@ def render_dfhack_keybind(command) -> List[nodes.paragraph]:
     if command not in _KEYBINDS:
         return out
     for keycmd, key, ctx in _KEYBINDS[command]:
-        n = nodes.paragraph()
-        # TODO: use inline instead of strong when rendering to text
-        n += nodes.strong('Keybinding:', 'Keybinding:')
-        n += nodes.inline(' ', ' ')
+        n = make_labeled_paragraph('Keybinding')
         for k in key:
             n += nodes.inline(k, k, classes=['kbd'])
         if keycmd != command:
@@ -96,15 +108,6 @@ class DFHackToolDirectiveBase(sphinx.directives.ObjectDescription):
             return self.env.docname.split('/')[-1]
 
     @staticmethod
-    def make_labeled_paragraph(label, content, label_class=nodes.strong, content_class=nodes.inline) -> nodes.paragraph:
-        return nodes.paragraph('', '', *[
-            # TODO: use inline instead of strong when rendering to text
-            label_class('', '{}:'.format(label)),
-            nodes.inline(text=' '),
-            content_class('', content),
-        ])
-
-    @staticmethod
     def wrap_box(*children: List[nodes.Node]) -> nodes.Admonition:
         return nodes.topic('', *children, classes=['dfhack-tool-summary'])
 
@@ -123,10 +126,9 @@ class DFHackToolDirective(DFHackToolDirectiveBase):
     }
 
     def render_content(self) -> List[nodes.Node]:
-        # TODO: use inline instead of strong when rendering to text
-        tag_nodes = [nodes.strong(text='Tags:'), nodes.inline(text=' ')]
+        tag_paragraph = make_labeled_paragraph('Tags')
         for tag in self.options.get('tags', []):
-            tag_nodes += [
+            tag_paragraph += [
                 addnodes.pending_xref(tag, nodes.inline(text=tag), **{
                     'reftype': 'ref',
                     'refdomain': 'std',
@@ -136,11 +138,9 @@ class DFHackToolDirective(DFHackToolDirectiveBase):
                 }),
                 nodes.inline(text=' | '),
             ]
-        tag_nodes.pop()
+        tag_paragraph.pop()
 
-        ret_nodes = [
-            nodes.paragraph('', '', *tag_nodes),
-        ]
+        ret_nodes = [tag_paragraph]
         if 'no-command' in self.options:
             ret_nodes += [nodes.paragraph('', '', nodes.inline(text=self.options.get('summary', '')))]
         return ret_nodes
@@ -160,7 +160,7 @@ class DFHackCommandDirective(DFHackToolDirectiveBase):
     def render_content(self) -> List[nodes.Node]:
         command = self.get_name_or_docname()
         return [
-            self.make_labeled_paragraph('Command', command, content_class=nodes.literal),
+            make_labeled_paragraph('Command', command, content_class=nodes.literal),
             nodes.paragraph('', '', nodes.inline(text=self.options.get('summary', ''))),
             *render_dfhack_keybind(command),
         ]

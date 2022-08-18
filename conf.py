@@ -118,12 +118,6 @@ def write_tool_docs():
     for k in DOC_ALL_DIRS:
         header = ':orphan:\n'
         label = ('.. _{name}:\n\n').format(name=k[0])
-        # TODO: can we autogenerate the :dfhack-keybind: line? it would go beneath
-        # the tool header, which is currently in the middle of the included file.
-        # should we remove those headers from the doc files and just generate them
-        # here? That might be easier. But then where will the tags go? It would
-        # look better if they were above the keybinds, but then we'd be in the
-        # same situation.
         include = ('.. include:: /{path}\n\n').format(path=k[1])
         # TODO: generate a footer with links to tools that share at least one
         # tag with this tool. Just the tool names, strung across the bottom of

@@ -89,13 +89,6 @@ def check_missing_keybinds():
         logger.warning('Undocumented keybindings for command: %s', missing_command)
 
 
-# pylint:disable=unused-argument,dangerous-default-value,too-many-arguments
-def dfhack_keybind_role(role, rawtext, text, lineno, inliner,
-                        options={}, content=[]):
-    """Custom role parser for DFHack default keybinds."""
-    return render_dfhack_keybind(text), []
-
-
 class DFHackToolDirectiveBase(sphinx.directives.ObjectDescription):
     has_content = False
     required_arguments = 0
@@ -169,7 +162,6 @@ class DFHackCommandDirective(DFHackToolDirectiveBase):
 def register(app):
     app.add_directive('dfhack-tool', DFHackToolDirective)
     app.add_directive('dfhack-command', DFHackCommandDirective)
-    app.add_role('dfhack-keybind', dfhack_keybind_role)
 
     _KEYBINDS.update(scan_all_keybinds(os.path.join(dfhack.util.DFHACK_ROOT, 'data', 'init')))
 

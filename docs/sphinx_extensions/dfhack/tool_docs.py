@@ -76,6 +76,8 @@ def render_dfhack_keybind(command, builder: sphinx.builders.Builder) -> List[nod
     for keycmd, key, ctx in _KEYBINDS[command]:
         n = make_labeled_paragraph('Keybinding', label_class=get_label_class(builder))
         for k in key:
+            if builder.format == 'text':
+                k = '[{}]'.format(k)
             n += nodes.inline(k, k, classes=['kbd'])
         if keycmd != command:
             n += nodes.inline(' -> ', ' -> ')

@@ -127,22 +127,58 @@ Header format
 -------------
 
 The docs **must** begin with a heading which exactly matches the script or plugin name, underlined
-with ``=====`` to the same length. This should be followed by a ``Tags:`` line with
-comma-separated links to the tag indices, and then a ``:dfhack-keybind:`commandname``` line for
-each command provided by the script or plugin. For scripts, this will just be the script name.
-Plugins that do not provide commands (i.e. they can just be enabled for some persistent effect or
-they just export functionality via a Lua API) don't need any ``:dfhack-keybind:`` lines at all.
-The first line of the text should then be the short description that will be used for the script
-or plugin. For example, documentation for the ``build-now`` script might look like::
+with ``=====`` to the same length. This should be followed by a ``.. dfhack-tool:`` directive with
+at least the following parameters:
+
+* ``:summary:`` - a short, single-sentence description of the tool
+* ``:tags:`` - a space-separated list of tags that apply to the tool
+
+By default, ``dfhack-tool`` generates both a description of a tool and a command
+with the same name. For tools (specifically plugins) that do not provide exactly
+1 command with the same name as the tool, pass the ``:no-command:`` parameter (with
+no content after it) to prevent the command block from being generated.
+
+For tools that provide multiple commands, or a command by the same name but with
+significantly different functionality (e.g. a plugin that can be both enabled
+and invoked as a command for different results), use the ``.. dfhack-command:``
+directive for each command. This takes only a ``:summary:`` argument, with the
+same meaning as above.
+
+For example, documentation for the ``build-now`` script might look like::
 
     build-now
     =========
-    Tags: `tag/fort`, `tag/buildings`
-    :dfhack-keybind:`build-now`
 
-    Instantly completes unsuspended building jobs. By default, all
-    constructions and buildings on the map are completed, but the
-    area of effect is configurable.
+    .. dfhack-tool::
+        :summary: Instantly completes unsuspended building construction jobs.
+        :tags: fort armok buildings
+
+    By default, all buildings on the map are completed, but the area of effect is configurable.
+
+And documentation for the ``autodump`` plugin might look like::
+
+    autodump
+    ========
+
+    .. dfhack-tool::
+        :summary: Automatically set items in a stockpile to be dumped.
+        :tags: fort armok fps productivity items stockpiles
+        :no-command:
+
+    .. dfhack-command:: autodump
+        :summary: Teleports items marked for dumping to the cursor position.
+
+    .. dfhack-command:: autodump-destroy-here
+        :summary: Destroy items marked for dumping under the cursor.
+
+    .. dfhack-command:: autodump-destroy-item
+        :summary: Destroys the selected item.
+
+    When `enabled <enable>`, this plugin adds an option to the :kbd:`q` menu for
+    stockpiles.
+
+    When invoked as a command, it can instantly move all unforbidden items marked
+    for dumping to the tile under the cursor.
 
 Usage help
 ----------

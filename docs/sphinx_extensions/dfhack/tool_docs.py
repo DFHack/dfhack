@@ -5,7 +5,7 @@
 
 import logging
 import os
-from typing import List, Optional
+from typing import List, Optional, Type
 
 import docutils.nodes as nodes
 import docutils.parsers.rst.directives as rst_directives
@@ -19,12 +19,17 @@ import dfhack.util
 logger = sphinx.util.logging.getLogger(__name__)
 
 
+def get_label_class(builder: sphinx.builders.Builder) -> Type[nodes.Inline]:
+    if builder.format == 'text':
+        return nodes.inline
+    else:
+        return nodes.strong
+
 def make_labeled_paragraph(label: Optional[str]=None, content: Optional[str]=None,
             label_class=nodes.strong, content_class=nodes.inline) -> nodes.paragraph:
     p = nodes.paragraph('', '')
     if label is not None:
         p += [
-            # TODO: use inline instead of strong when rendering to text
             label_class('', '{}:'.format(label)),
             nodes.inline('', ' '),
         ]
@@ -63,13 +68,13 @@ def scan_all_keybinds(root_dir):
     return keybindings
 
 
-def render_dfhack_keybind(command) -> List[nodes.paragraph]:
+def render_dfhack_keybind(command, builder: sphinx.builders.Builder) -> List[nodes.paragraph]:
     _KEYBINDS_RENDERED.add(command)
     out = []
     if command not in _KEYBINDS:
         return out
     for keycmd, key, ctx in _KEYBINDS[command]:
-        n = make_labeled_paragraph('Keybinding')
+        n = make_labeled_paragraph('Keybinding', label_class=get_label_class(builder))
         for k in key:
             n += nodes.inline(k, k, classes=['kbd'])
         if keycmd != command:
@@ -104,6 +109,11 @@ class DFHackToolDirectiveBase(sphinx.directives.ObjectDescription):
     def wrap_box(*children: List[nodes.Node]) -> nodes.Admonition:
         return nodes.topic('', *children, classes=['dfhack-tool-summary'])
 
+    def make_labeled_paragraph(self, *args, **kwargs):
+        # convenience wrapper to set label_class to the desired builder-specific node type
+        kwargs.setdefault('label_class', get_label_class(self.env.app.builder))
+        return make_labeled_paragraph(*args, **kwargs)
+
     def render_content(self) -> List[nodes.Node]:
         raise NotImplementedError
 
@@ -119,7 +129,7 @@ class DFHackToolDirective(DFHackToolDirectiveBase):
     }
 
     def render_content(self) -> List[nodes.Node]:
-        tag_paragraph = make_labeled_paragraph('Tags')
+        tag_paragraph = self.make_labeled_paragraph('Tags')
         for tag in self.options.get('tags', []):
             tag_paragraph += [
                 addnodes.pending_xref(tag, nodes.inline(text=tag), **{
@@ -153,9 +163,9 @@ class DFHackCommandDirective(DFHackToolDirectiveBase):
     def render_content(self) -> List[nodes.Node]:
         command = self.get_name_or_docname()
         return [
-            make_labeled_paragraph('Command', command, content_class=nodes.literal),
+            self.make_labeled_paragraph('Command', command, content_class=nodes.literal),
             nodes.paragraph('', '', nodes.inline(text=self.options.get('summary', ''))),
-            *render_dfhack_keybind(command),
+            *render_dfhack_keybind(command, builder=self.env.app.builder),
         ]
 
 

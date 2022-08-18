@@ -16,7 +16,8 @@ this functionality.
 Also, if you only want to add or remove water or magma from a single tile, the
 `source` script may be easier to use.
 
-Usage:
+Usage
+-----
 
 ``liquids``
     Start the interactive terminal settings interpreter. This command must be

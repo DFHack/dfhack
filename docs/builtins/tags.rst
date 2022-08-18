@@ -8,6 +8,9 @@ tags
 You can find groups of related tools by passing the tag name to the `ls`
 command.
 
-Usage::
+Usage
+-----
+
+::
 
     tags

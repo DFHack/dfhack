@@ -8,7 +8,8 @@ rendermax
 This plugin provides a collection of OpenGL lighting filters that affect how the
 map is drawn to the screen.
 
-Usage:
+Usage
+-----
 
 ``rendermax light``
     Light the map tiles realisitically. Outside tiles are light during the day

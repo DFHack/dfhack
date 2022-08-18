@@ -14,7 +14,10 @@ prospector
 It can also calculate an estimate of resources available in the selected embark
 area.
 
-Usage::
+Usage
+-----
+
+::
 
     prospect [all|hell] [<options>]
 

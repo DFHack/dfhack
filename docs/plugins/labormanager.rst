@@ -24,7 +24,10 @@ untouched.
     labors while it is enabled, including through other tools such as Dwarf
     Therapist. Do not run both autolabor and labormanager at the same time!
 
-Usage::
+Usage
+-----
+
+::
 
     enable labormanager
 

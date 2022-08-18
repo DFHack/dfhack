@@ -8,7 +8,8 @@ sc-script
 This is similar to the static `init-files` but is slightly more flexible since
 it can be set dynamically.
 
-Usage:
+Usage
+-----
 
 ``sc-script [help]``
     Show the list of valid event names.

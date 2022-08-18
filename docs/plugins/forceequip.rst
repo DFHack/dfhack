@@ -20,7 +20,10 @@ the items. Be sure to unforbid the items that you want to work with!
 
     Weapons are not currently supported.
 
-Usage::
+Usage
+-----
+
+::
 
     forceequip [<options>]
 

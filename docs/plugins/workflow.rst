@@ -29,7 +29,8 @@ configure all the vanilla manager options. Also see the `orders` plugin for
 a library of manager orders that may make managing your stocks even more
 convenient than ``workflow`` can.
 
-Usage:
+Usage
+-----
 
 ``enable workflow``
     Start monitoring for and managing workshop jobs that are set to repeat.

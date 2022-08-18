@@ -18,7 +18,10 @@ Requests for engravings are also skipped since they would depend on the skill
 and creative choices of individual engravers. Other types of engraving (i.e.
 smoothing and track carving) are handled.
 
-Usage::
+Usage
+-----
+
+::
 
     dig-now [<pos> [<pos>]] [<options>]
 

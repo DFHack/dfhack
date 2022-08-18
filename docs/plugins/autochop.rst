@@ -8,7 +8,10 @@ autochop
 
 This plugin can designate trees for chopping when your stocks are low on logs.
 
-Usage::
+Usage
+-----
+
+::
 
     enable autochop
 

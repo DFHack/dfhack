@@ -5,7 +5,10 @@ command-prompt
     :summary: An in-game DFHack terminal where you can run other commands.
     :tags: dfhack
 
-Usage::
+Usage
+-----
+
+::
 
     command-prompt [entry]
 

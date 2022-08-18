@@ -17,7 +17,8 @@ Note that the age of the units is not checked, so you might get some egg-laying
 kids assigned to the nestbox zones. Most birds grow up quite fast, though, so
 they should be adults and laying eggs soon enough.
 
-Usage:
+Usage
+-----
 
 ``enable autonestbox``
     Start checking for unpastured egg-layers and assigning them to nestbox

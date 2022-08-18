@@ -11,7 +11,8 @@ since some transformations work pretty well and may be desired you can override
 this with ``force``. Note that forced changes can possibly result in items that
 crafters and haulers refuse to touch.
 
-Usage:
+Usage
+-----
 
 ``changeitem info``
    Show details about the selected item. Does not change the item. You can use

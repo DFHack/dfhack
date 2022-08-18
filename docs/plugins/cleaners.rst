@@ -20,7 +20,10 @@ over the map and that clings to your items and units. In an old fortress,
 cleaning with this tool can significantly reduce FPS lag! It can also spoil your
 !!FUN!!, so think before you use it.
 
-Usage::
+Usage
+-----
+
+::
 
     clean all|map|items|units|plants [<options>]
     spotclean

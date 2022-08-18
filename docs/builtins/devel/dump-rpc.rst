@@ -7,6 +7,9 @@ devel/dump-rpc
 
 Write RPC endpoint information to the specified file.
 
-Usage::
+Usage
+-----
+
+::
 
     devel/dump-rpc <filename>

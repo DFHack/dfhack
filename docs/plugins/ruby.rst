@@ -14,7 +14,10 @@ ruby
 .. dfhack-command:: rb_eval
    :summary: Eval() a ruby string.
 
-Usage::
+Usage
+-----
+
+::
 
     enable ruby
     rb "ruby expression"

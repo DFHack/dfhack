@@ -5,7 +5,10 @@ tweak
     :summary: A collection of tweaks and bugfixes.
     :tags: adventure fort armok bugfix fps interface
 
-Usage::
+Usage
+-----
+
+::
 
     tweak <command> [disable]
 

@@ -13,7 +13,10 @@ aassignment candidates), Military (position candidates), Burrows (unit list),
 Rooms, Announcements, Job List, and Unit List screens all get hotkeys that allow
 you to dynamically filter the displayed lists.
 
-Usage::
+Usage
+-----
+
+::
 
     enable search
 

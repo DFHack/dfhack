@@ -7,7 +7,10 @@ tubefill
 
 Veins that were originally hollow will be left alone.
 
-Usage::
+Usage
+-----
+
+::
 
     tubefill [hollow]
 

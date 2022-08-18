@@ -9,7 +9,8 @@ Aliases are resolved immediately after built-in commands, which means that an
 alias cannot override a built-in command, but can override a command implemented
 by a plugin or script.
 
-Usage:
+Usage
+-----
 
 ``alias list``
     Lists all configured aliases

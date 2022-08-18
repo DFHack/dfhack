@@ -11,6 +11,9 @@ completely blank in vanilla DF. This allows you to view and/or change the track
 stop's friction and dump direction settings, using the keybindings from the
 track stop building interface.
 
-Usage::
+Usage
+-----
+
+::
 
     enable trackstop

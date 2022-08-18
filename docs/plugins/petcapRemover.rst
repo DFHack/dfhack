@@ -13,7 +13,8 @@ population more stable and avoid sudden population booms as you go below the
 raised population cap, this plugin counts pregnancies toward the new population
 cap. It can still go over, but only in the case of multiple births.
 
-Usage:
+Usage
+-----
 
 ``enable petcapRemover``
     Enables the plugin and starts running with default settings.

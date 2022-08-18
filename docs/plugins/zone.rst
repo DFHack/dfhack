@@ -5,7 +5,8 @@ zone
     :summary: Manage activity zones, cages, and the animals therein.
     :tags: fort productivity animals buildings
 
-Usage:
+Usage
+-----
 
 ``enable zone``
    Add helpful filters to the pen/pasture sidebar menu (e.g. show only caged

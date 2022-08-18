@@ -14,7 +14,10 @@ tool.
 If you enable the plugin, you'll also be able to invoke ``embark-assistant``
 with the :kbd:`A` key on the pre-embark screen.
 
-Usage::
+Usage
+-----
+
+::
 
     enable embark-assistant
     embark-assistant

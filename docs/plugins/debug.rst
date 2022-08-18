@@ -38,7 +38,8 @@ Persistent filters are stored in ``dfhack-config/runtime-debug.json``. Oldest
 filters are applied first. That means a newer filter can override the older
 printing level selection.
 
-Usage:
+Usage
+-----
 
 ``debugfilter category [<plugin regex>] [<category regex>]``
     List available debug plugin and category names. If filters aren't givenm

@@ -7,7 +7,10 @@ help
 
 Can also be invoked as ``?`` or ``man`` (short for "manual").
 
-Usage::
+Usage
+-----
+
+::
 
     help|?|man
     help|?|man <command or plugin>

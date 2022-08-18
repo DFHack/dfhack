@@ -6,6 +6,9 @@ title-version
     :tags: interface
     :no-command:
 
-Usage::
+Usage
+-----
+
+::
 
     enable title-version

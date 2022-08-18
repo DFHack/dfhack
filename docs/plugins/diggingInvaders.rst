@@ -5,7 +5,8 @@ diggingInvaders
     :summary: Invaders dig and destroy to get to your dwarves.
     :tags: fort gameplay military units
 
-Usage:
+Usage
+-----
 
 ``enable diggingInvaders``
     Enable the plugin.

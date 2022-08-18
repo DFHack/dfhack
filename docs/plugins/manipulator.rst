@@ -10,7 +10,10 @@ It is equivalent to the popular Dwarf Therapist utility.
 
 To activate, open the unit screen and press :kbd:`l`.
 
-Usage::
+Usage
+-----
+
+::
 
     enable manipulator
 

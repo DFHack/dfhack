@@ -12,7 +12,8 @@ bindings are not remembered between runs of the game unless re-created in
 Hotkeys can be any combinations of Ctrl/Alt/Shift with A-Z, 0-9, F1-F12, or
 ``\``` (the key below the ``Esc`` key.
 
-Usage:
+Usage
+-----
 
 ``keybinding``
     Show some useful information, including the current game context.

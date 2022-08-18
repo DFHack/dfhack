@@ -9,7 +9,8 @@ In order to group related commands, each command is associated with a list of
 tags. You can filter the listed commands by a tag or a substring of the
 command name. Can also be invoked as ``dir``.
 
-Usage:
+Usage
+-----
 
 ``ls [<options>]``
     Lists all available commands and the tags associated with them.

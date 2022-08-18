@@ -11,7 +11,8 @@ probe
 .. dfhack-command:: cprobe
     :summary: Display low-level properties of the selected unit.
 
-Usage:
+Usage
+-----
 
 ``probe``
     Displays properties of the tile selected with :kbd:`k`. Some of these

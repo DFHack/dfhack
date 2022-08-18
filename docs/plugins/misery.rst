@@ -8,7 +8,8 @@ misery
 When enabled, negative thoughts that your dwarves have will multiply by the
 specified factor.
 
-Usage:
+Usage
+-----
 
 ``enable misery``
     Start multiplying negative thoughts.

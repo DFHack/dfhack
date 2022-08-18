@@ -8,7 +8,8 @@ stonesense
 .. dfhack-command:: ssense
    :summary: An alias for stonesense.
 
-Usage:
+Usage
+-----
 
 ``stonesense`` or ``ssense``
     Open the visualiser in a new window.

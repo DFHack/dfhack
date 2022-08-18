@@ -5,7 +5,8 @@ orders
     :summary: Manage manager orders.
     :tags: fort productivity workorders
 
-Usage:
+Usage
+-----
 
 ``orders orders list``
     Shows the list of previously exported orders, including the orders library.

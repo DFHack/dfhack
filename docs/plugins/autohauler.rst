@@ -22,7 +22,8 @@ Autohauler allows a skill to be used as a flag to exempt a dwarf from
 ``autohauler``'s effects. By default, this is the unused ALCHEMIST labor, but it
 can be changed by the user.
 
-Usage:
+Usage
+-----
 
 ``enable autohauler``
     Start managing hauling labors. This is normally all you need to do.

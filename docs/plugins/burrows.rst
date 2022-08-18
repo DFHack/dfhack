@@ -12,7 +12,8 @@ burrows
 When a wall inside a burrow with a name ending in ``+`` is dug out, the burrow
 will be extended to newly-revealed adjacent walls.
 
-Usage:
+Usage
+-----
 
 ``burrow enable auto-grow``
     When a wall inside a burrow with a name ending in '+' is dug out, the burrow

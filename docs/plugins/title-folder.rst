@@ -6,6 +6,9 @@ title-folder
     :tags: interface
     :no-command:
 
-Usage::
+Usage
+-----
+
+::
 
     enable title-folder

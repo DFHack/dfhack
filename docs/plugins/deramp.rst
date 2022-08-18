@@ -7,6 +7,9 @@ deramp
 
 It also removes any "floating" down ramps that can remain after a cave-in.
 
-Usage::
+Usage
+-----
+
+::
 
     deramp

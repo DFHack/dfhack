@@ -12,7 +12,8 @@ mode
     Not all combinations are good for every situation and most of them will
     produce undesirable results. There are a few good ones though.
 
-Usage:
+Usage
+-----
 
 ``mode``
     Print the current game mode.

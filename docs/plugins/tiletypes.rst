@@ -30,7 +30,8 @@ Both paint and filter can have many different properties, like general shape
 materials (MICROCLINE, MARBLE, etc.), state of 'designated', 'hidden', and
 'light' flags, and many others.
 
-Usage:
+Usage
+-----
 
 ``tiletypes``
     Start the interactive terminal prompt where you can iteratively modify

@@ -5,7 +5,10 @@ embark-tools
     :summary: Extend the embark screen functionality.
     :tags: embark fort interface
 
-Usage::
+Usage
+-----
+
+::
 
     enable embark-tools
     embark-tools enable|disable all

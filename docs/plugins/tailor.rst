@@ -16,7 +16,10 @@ raw materials that you have on hand in the fort. For example, if you have
 lots of silk, but no cloth, then ``tailor`` will order only silk clothing to
 be made.
 
-Usage::
+Usage
+-----
+
+::
 
     enable tailor
     tailor status

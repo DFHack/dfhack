@@ -23,7 +23,8 @@ is above the target (defaults are: 1 male kid, 5 female kids, 1 male adult,
 reliable breeding population due to asexuality etc. See `fix-ster` if this is a
 problem.
 
-Usage:
+Usage
+-----
 
 ``enable autobutcher``
     Start processing livestock according to the configuration. Note that

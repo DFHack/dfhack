@@ -13,7 +13,10 @@ those.
 tl;dr: You will end up with changing large areas in one go, especially if you
 use it in lower z levels. Use this command with care!
 
-Usage::
+Usage
+-----
+
+::
 
    changelayer <material RAW id> [<options>]
 

@@ -9,7 +9,8 @@ If enabled, this plugin will automatically allocate new z-levels of sky at the
 top of the map as you build up. Or it can allocate one or many additional levels
 at your command.
 
-Usage:
+Usage
+-----
 
 ``enable infiniteSky``
     Enables monitoring of constructions. If you build anything in the second

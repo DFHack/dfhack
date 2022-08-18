@@ -7,7 +7,10 @@ unload
 
 Also see `load` and `reload` for related actions.
 
-Usage::
+Usage
+-----
+
+::
 
     unload <plugin> [<plugin> ...]
     unload -a|--all

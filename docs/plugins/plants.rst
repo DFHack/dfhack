@@ -11,7 +11,8 @@ plants
 .. dfhack-command:: plant
    :summary: Create a plant or make an existing plant grow up.
 
-Usage:
+Usage
+-----
 
 ``plant create <ID>``
     Creates a new plant of the specified type at the active cursor position.

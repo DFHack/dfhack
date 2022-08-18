@@ -7,6 +7,9 @@ disable
 
 See the `enable` command for more info.
 
-Usage::
+Usage
+-----
+
+::
 
     disable <plugin> [<plugin> ...]

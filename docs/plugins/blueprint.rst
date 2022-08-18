@@ -15,7 +15,10 @@ selected interactively with the ``blueprint gui`` command or, if the GUI is not
 used, starts at the active cursor location and extends right and down for the
 requested width and height.
 
-Usage::
+Usage
+-----
+
+::
 
     blueprint <width> <height> [<depth>] [<name> [<phases>]] [<options>]
     blueprint gui [<name> [<phases>]] [<options>]

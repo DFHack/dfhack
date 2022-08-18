@@ -8,6 +8,9 @@ flows
 If you suspect that your magma sea leaks into HFS, you can use this tool to be
 sure without revealing the map.
 
-Usage::
+Usage
+-----
+
+::
 
     flows

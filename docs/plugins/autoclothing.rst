@@ -8,7 +8,10 @@ autoclothing
 This command allows you to set how many of each clothing type every citizen
 should have.
 
-Usage::
+Usage
+-----
+
+::
 
     autoclothing
     autoclothing <material> <item> [quantity]

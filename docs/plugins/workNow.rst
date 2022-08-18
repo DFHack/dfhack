@@ -9,7 +9,8 @@ After finishing a job, dwarves will wander away for a while before picking up a
 new job. This plugin will automatically poke the game to assign dwarves to new
 tasks.
 
-Usage:
+Usage
+-----
 
 ``workNow``
     Print current plugin status.

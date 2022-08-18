@@ -21,7 +21,8 @@ reaction raws, with the following differences:
 
 Corpses, body parts, and prepared meals cannot be created using this tool.
 
-Usage:
+Usage
+-----
 
 ``createitem <item> <material> [<count>]``
     Create <count> copies (default is 1) of the specified item made out of the

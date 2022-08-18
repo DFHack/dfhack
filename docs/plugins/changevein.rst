@@ -12,7 +12,10 @@ clusters, you will need to use this command multiple times.
 You can use the `probe` command to discover the material RAW ids for existing
 veins that you want to duplicate.
 
-Usage::
+Usage
+-----
+
+::
 
     changevein <material RAW id>
 

@@ -9,7 +9,8 @@ Periodically scan your plant stocks and assign crops to your farm plots based on
 which plant stocks are low (as long as you have the appropriate seeds). The
 target threshold for each crop type is configurable.
 
-Usage:
+Usage
+-----
 
 ``enable autofarm``
     Enable the plugin and start managing crop assignment.

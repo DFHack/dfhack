@@ -10,7 +10,10 @@ heavy wear and then marks those items for dumping. Now you can finally get your
 dwarves to give up their rotten food and tattered loincloths and go get new
 ones!
 
-Usage::
+Usage
+-----
+
+::
 
     cleanowned [<types>] [dryrun]
 

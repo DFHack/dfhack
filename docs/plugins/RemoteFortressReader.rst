@@ -15,7 +15,8 @@ RemoteFortressReader
 This plugin provides an API for realtime remote fortress visualization. See
 :forums:`Armok Vision <146473>`.
 
-Usage:
+Usage
+-----
 
 ``RemoteFortressReader_version``
     Print the loaded RemoteFortressReader version.

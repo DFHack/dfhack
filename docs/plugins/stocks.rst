@@ -12,7 +12,10 @@ When the plugin is enabled, two new hotkeys become available:
 * :kbd:`i` when a stockpile is selected in :kbd:`q` mode will launch the
   stockpile inventory management screen.
 
-Usage::
+Usage
+-----
+
+::
 
     enable stocks
     stocks show

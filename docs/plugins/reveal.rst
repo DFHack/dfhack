@@ -26,7 +26,8 @@ This reveals all z-layers in fort mode. It also works in adventure mode, but any
 of its effects are negated once you move. When you use it this way, you don't
 need to run ``unreveal`` to hide the map again.
 
-Usage:
+Usage
+-----
 
 ``reveal [hell|demon]``
     Reveal the whole map. If ``hell`` is specified, also reveal HFS areas, but

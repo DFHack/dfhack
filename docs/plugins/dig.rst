@@ -32,7 +32,8 @@ dig
 
 This plugin provides commands to make complicated dig patterns easy.
 
-Usage:
+Usage
+-----
 
 ``digv [x] [-p<number>]``
     Designate all of the selected vein for digging.

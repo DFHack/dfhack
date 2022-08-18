@@ -18,7 +18,10 @@ ignored. Undead skeletons, corpses, bodyparts and the like are all thrown into
 the curse category "zombie". Anonymous zombies and resurrected body parts will
 show as "unnamed creature".
 
-Usage::
+Usage
+-----
+
+::
 
    cursecheck [<options>]
 

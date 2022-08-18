@@ -7,7 +7,10 @@ regrass
 
 Use this command if your grazers have eaten everything down to the dirt.
 
-Usage::
+Usage
+-----
+
+::
 
     regrass [max]
 

@@ -8,7 +8,8 @@ confirm
 Now you can get the chance to avoid seizing goods from traders or deleting a
 hauling route in case you hit the key accidentally.
 
-Usage:
+Usage
+-----
 
 ``enable confirm``, ``confirm enable all``
     Enable all confirmation options. Replace with ``disable`` to disable all.

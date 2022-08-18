@@ -5,7 +5,10 @@ fastdwarf
     :summary: Dwarves teleport and/or finish jobs instantly.
     :tags: fort armok units
 
-Usage::
+Usage
+-----
+
+::
 
     enable fastdwarf
     fastdwarf <speed mode> [<tele mode>]

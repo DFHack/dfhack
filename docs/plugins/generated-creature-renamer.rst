@@ -16,7 +16,8 @@ Now, forgotten beasts, titans, necromancer experiments, etc. will have raw token
 names that match the description given in-game instead of unreadable generated
 strings.
 
-Usage:
+Usage
+-----
 
 ``enable generated-creature-renamer``
     Rename generated creatures when a world is loaded.

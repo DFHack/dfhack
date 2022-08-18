@@ -12,7 +12,10 @@ sort
 .. dfhack-command:: sort-units
    :summary: Sort the visible unit list.
 
-Usage::
+Usage
+-----
+
+::
 
     sort-items <property> [<property> ...]
     sort-units <property> [<property> ...]

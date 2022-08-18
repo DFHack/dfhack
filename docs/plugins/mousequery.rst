@@ -9,7 +9,10 @@ Adds mouse controls to the DF interface. For example, with ``mousequery`` you
 can click on buildings to configure them, hold the mouse button to draw dig
 designations, or click and drag to move the map around.
 
-Usage::
+Usage
+-----
+
+::
 
     enable mousequery
     mousequery [rbutton|track|edge|live] [enable|disable]

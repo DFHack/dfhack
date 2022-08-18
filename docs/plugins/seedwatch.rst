@@ -14,7 +14,8 @@ The plugin needs a fortress to be loaded and will deactivate automatically
 otherwise. You have to reactivate with ``enable seedwatch`` after you load a
 fort.
 
-Usage:
+Usage
+-----
 
 ``enable seedwatch``
     Start managing seed and plant cooking. By default, no types are watched.

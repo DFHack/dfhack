@@ -12,7 +12,8 @@ just-finished dig job, so if you want to autodig a vein that has already been
 discovered, you may need to manually designate one tile of the tile for digging
 to get started.
 
-Usage:
+Usage
+-----
 
 ``enable digflood``
     Enable the plugin.

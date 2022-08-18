@@ -17,7 +17,10 @@ filltraffic
 .. dfhack-command:: restrictliquids
     :summary: Restrict traffic on all visible tiles with liquid.
 
-Usage::
+Usage
+-----
+
+::
 
     filltraffic <designation> [<options>]
     alltraffic <designation>

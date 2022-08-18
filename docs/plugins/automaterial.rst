@@ -17,7 +17,10 @@ regardless of distance (it only does this in "grouped" mode, as individual item
 lists could be huge). This means you can place most constructions without having
 to search for your preferred material type.
 
-Usage::
+Usage
+-----
+
+::
 
     enable automaterial
 

@@ -9,7 +9,10 @@ Existing, flat veins are removed and new 3D veins that naturally span z-levels
 are generated in their place. The transformation preserves the mineral counts
 reported by `prospect`.
 
-Usage::
+Usage
+-----
+
+::
 
     3dveins [verbose]
 

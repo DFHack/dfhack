@@ -21,7 +21,8 @@ When the plugin is enabled, the :kbd:`q` menu of each stockpile will have an
 option for saving or loading the stockpile settings. See `gui/stockpiles` for
 an in-game interface.
 
-Usage:
+Usage
+-----
 
 ``enable stockpiles``
     Add a hotkey that you can hit to easily save and load settings from

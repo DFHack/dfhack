@@ -7,7 +7,8 @@ lair
 
 This avoids item scatter when the fortress is abandoned.
 
-Usage:
+Usage
+-----
 
 ``lair``
     Mark the map as monster lair.

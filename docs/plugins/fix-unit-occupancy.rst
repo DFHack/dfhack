@@ -8,7 +8,10 @@ fix-unit-occupancy
 If you see "unit blocking tile" messages that you can't account for
 (:bug:`3499`), this tool can help.
 
-Usage::
+Usage
+-----
+
+::
 
     enable fix-unit-occupancy
     fix-unit-occupancy [here] [-n]

@@ -17,7 +17,10 @@ available, and place as many as you like. Materials are used to build the
 planned buildings as they are produced, with minimal space dedicated to
 stockpiles.
 
-Usage::
+Usage
+-----
+
+::
 
     enable buildingplan
     buildingplan set

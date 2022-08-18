@@ -7,7 +7,8 @@ rename
 
 Use `gui/rename` for an in-game interface.
 
-Usage:
+Usage
+-----
 
 ``rename squad <ordinal> "<name>"``
     Rename the indicated squad. The ordinal is the number that corresponds to

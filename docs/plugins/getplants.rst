@@ -8,7 +8,8 @@ getplants
 Specify the types of trees to cut down and/or shrubs to gather by their plant
 names.
 
-Usage:
+Usage
+-----
 
 ``getplants [-t|-s|-f]``
     List valid tree/shrub ids, optionally restricted to the specified type.

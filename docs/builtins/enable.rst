@@ -16,7 +16,10 @@ and disabled plugins, and shows whether that can be changed through the same
 commands. Passing plugin names to these commands will enable or disable the
 specified plugins.
 
-Usage::
+Usage
+-----
+
+::
 
     enable
     enable <plugin> [<plugin> ...]

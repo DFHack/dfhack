@@ -5,7 +5,10 @@ strangemood
     :summary: Trigger a strange mood.
     :tags: fort armok units
 
-Usage::
+Usage
+-----
+
+::
 
     stangemood [<options>]
 

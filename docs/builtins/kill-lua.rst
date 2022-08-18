@@ -7,7 +7,10 @@ kill-lua
 
 Use this command to stop a misbehaving script that appears to be stuck.
 
-Usage::
+Usage
+-----
+
+::
 
     kill-lua
     kill-lua force

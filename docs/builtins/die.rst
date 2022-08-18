@@ -7,6 +7,9 @@ die
 
 Use to exit DF quickly and safely.
 
-Usage::
+Usage
+-----
+
+::
 
     die

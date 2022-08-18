@@ -27,7 +27,10 @@ come and move the item to your dump zone.
 
 The cursor must be placed on a floor tile so the items can be dumped there.
 
-Usage::
+Usage
+-----
+
+::
 
     enable autodump
     autodump [<options>]

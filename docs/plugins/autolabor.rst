@@ -21,7 +21,10 @@ untouched by autolabor.
     autolabor will override any manual changes you make to labors while it is
     enabled, including through other tools such as Dwarf Therapist.
 
-Usage::
+Usage
+-----
+
+::
 
     enable autolabor
 

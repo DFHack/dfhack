@@ -22,7 +22,8 @@ number of identical orders already in the queue.
 This plugin is similar to `workflow`, but uses stockpiles to manage job triggers
 instead of abstract stock quantities.
 
-Usage:
+Usage
+-----
 
 ``enable stockflow``
     Enable the plugin.

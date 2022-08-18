@@ -6,7 +6,10 @@ spectate
     :tags: fort interface
     :no-command:
 
-Usage::
+Usage
+-----
+
+::
 
     enable spectate
 

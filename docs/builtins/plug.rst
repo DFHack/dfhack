@@ -5,7 +5,10 @@ plug
     :summary: List available plugins and whether they are enabled.
     :tags: dfhack
 
-Usage::
+Usage
+-----
+
+::
 
     plug [<plugin> [<plugin> ...]]
 

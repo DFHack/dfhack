@@ -14,7 +14,10 @@ in four directions. To make them useful above-ground, this plugin allows you to:
 * load any object into a catapult, not just stones
 * aim at a rectangular area in any direction, and across Z-levels
 
-Usage::
+Usage
+-----
+
+::
 
     enable siege-engine
 

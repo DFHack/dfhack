@@ -10,6 +10,9 @@ a `keybinding` set beforehand or the in-game `command-prompt`.
 
 Only available on Windows.
 
-Usage::
+Usage
+-----
+
+::
 
     hide

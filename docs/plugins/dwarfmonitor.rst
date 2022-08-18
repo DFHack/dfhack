@@ -7,7 +7,8 @@ dwarfmonitor
 
 It can also show heads-up display widgets with live fort statistics.
 
-Usage:
+Usage
+-----
 
 ``enable dwarfmonitor``
     Enable the plugin.

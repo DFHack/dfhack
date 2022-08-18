@@ -11,7 +11,10 @@ typed in by the user -- treating the input like `an init file <init-files>`.
 Some other tools, such as `autobutcher` and `workflow`, export their settings as
 the commands to create them - which can later be reloaded with ``script``.
 
-Usage::
+Usage
+-----
+
+::
 
     script <filename>
 

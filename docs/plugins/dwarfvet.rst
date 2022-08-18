@@ -12,7 +12,8 @@ enabled will come to the hospital to treat animals. Normal medical skills are
 used (and trained), but no experience is given to the Animal Caretaker skill
 itself.
 
-Usage:
+Usage
+-----
 
 ``enable dwarfvet``
     Enables the plugin.

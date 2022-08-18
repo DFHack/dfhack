@@ -17,7 +17,8 @@ jobutils
 .. dfhack-command:: job-material
     :summary: Alters the material of the selected job.
 
-Usage:
+Usage
+-----
 
 ``job``
     Print details of the current job. The job can be selected in a workshop or

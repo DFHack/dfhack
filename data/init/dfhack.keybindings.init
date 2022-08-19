@@ -81,7 +81,7 @@ keybinding add Alt-I@dwarfmode/ViewUnits|unitlist gui/unit-info-viewer
 # set workorder item details (on workorder details screen press D again)
 keybinding add D@workquota_details gui/workorder-details
 
-# boost priority of jobs related tot he selected entity
+# boost priority of jobs related to the selected entity
 keybinding add Alt-N do-job-now
 
 ##############################

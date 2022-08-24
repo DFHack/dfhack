@@ -53,7 +53,16 @@ command_result spectate (color_ostream &out, std::vector <std::string> & paramet
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands) {
     commands.push_back(PluginCommand("spectate",
                                      "Automated spectator mode.",
-                                     spectate));
+                                     spectate,
+                                     false,
+                                     ""
+                                     " spectate\n"
+                                     "    displays plugin status\n"
+                                     " spectate enable\n"
+                                     " spectate disable\n"
+                                     " spectate auto-unpause\n"
+                                     "    toggle auto-dismissal of game pause events. e.g. a siege event pause\n"
+                                     "\n"));
     return CR_OK;
 }
 
@@ -70,12 +79,11 @@ void refresh_camera(color_ostream &out) {
 void unpause(color_ostream &out) {
     if (!world) return;
     while (!world->status.popups.empty()) {
-        // dismiss?
+        // dismiss announcement(s)
         Gui::getCurViewscreen(true)->feed_key(interface_key::CLOSE_MEGA_ANNOUNCEMENT);
     }
     if (*pause_state) {
-        // unpause?
-        out.print("unpause? %d", df::global::world->frame_counter);
+        // unpause the game
         Gui::getCurViewscreen(true)->feed_key(interface_key::D_PAUSE);
     }
     refresh_camera(out);
@@ -85,14 +93,12 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     if (enabled) {
         switch (event) {
             case SC_PAUSED:
-                out.print("  ===  This is a pause event: %d", world->frame_counter);
-                if(dismiss_pause_events){
+                if(dismiss_pause_events && !world->status.popups.empty()){
                     unpause(out);
-                    out.print("spectate: May the deities bless your dwarves.");
+                    out.print("spectate: May the deities bless your dwarves.\n");
                 }
                 break;
             case SC_UNPAUSED:
-                out.print("  ===  This is an pause event: %d", world->frame_counter);
                 break;
             case SC_MAP_UNLOADED:
             case SC_BEGIN_UNLOAD:
@@ -132,30 +138,33 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         freq.clear();
     }
     enabled = enable;
-    return CR_OK;
+    return DFHack::CR_OK;
 }
 
 command_result spectate (color_ostream &out, std::vector <std::string> & parameters) {
     // todo: parse parameters
     if(!parameters.empty()) {
-        if (parameters[0] == "spectate") {
-            return plugin_enable(out, !enabled);
-        } else if (parameters[0] == "disable") {
+        if (parameters[0] == "disable") {
             return plugin_enable(out, false);
         } else if (parameters[0] == "enable") {
             return plugin_enable(out, true);
         } else if (parameters[0] == "godmode") {
-            out.print("todo?"); // todo: adventure as deity?
+            out.print("todo?\n"); // todo: adventure as deity?
         } else if (parameters[0] == "auto-unpause") {
             dismiss_pause_events = !dismiss_pause_events;
-            out.print(dismiss_pause_events ? "auto-dismiss: on" : "auto-dismiss: off");
+            out.print(dismiss_pause_events ? "auto-unpause: on\n" : "auto-unpause: off\n");
             if (parameters.size() == 2) {
-                out.print("If you want additional options open an issue on github, or mention it on discord.");
+                out.print("If you want additional options open an issue on github, or mention it on discord.\n");
                 return DFHack::CR_WRONG_USAGE;
             }
         }
+    } else {
+        out.print(enabled ? "Spectate is enabled.\n" : "Spectate is disabled.\n");
+        if(enabled) {
+            out.print(dismiss_pause_events ? "auto-unpause: on.\n" : "auto-unpause: off.\n");
+        }
     }
-    return DFHack::CR_WRONG_USAGE;
+    return DFHack::CR_OK;
 }
 
 // every tick check whether to decide to follow a dwarf

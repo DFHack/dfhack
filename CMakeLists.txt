@@ -486,11 +486,17 @@ if(BUILD_DOCS)
         DIRECTORY PROPERTY ADDITIONAL_CLEAN_FILES TRUE
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/changelogs"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/html"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/pdf"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/pseudoxml"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/tags"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/text"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/tools"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/xml"
         "${CMAKE_BINARY_DIR}/docs/html"
+        "${CMAKE_BINARY_DIR}/docs/pdf"
+        "${CMAKE_BINARY_DIR}/docs/pseudoxml"
         "${CMAKE_BINARY_DIR}/docs/text"
+        "${CMAKE_BINARY_DIR}/docs/xml"
     )
     add_custom_command(OUTPUT ${SPHINX_OUTPUT}
         COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/docs/build.py"

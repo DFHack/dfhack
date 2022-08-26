@@ -37,6 +37,15 @@ def make_labeled_paragraph(label: Optional[str]=None, content: Optional[str]=Non
         p += content_class('', content)
     return p
 
+def make_summary(builder: sphinx.builders.Builder, summary: str) -> nodes.paragraph:
+    para = nodes.paragraph('', '')
+    if builder.format == 'text':
+        # It might be clearer to block indent instead of just indenting the
+        # first line, but this is clearer than nothing.
+        para += nodes.inline(text='  ')
+    para += nodes.inline(text=summary)
+    return para
+
 
 _KEYBINDS = {}
 _KEYBINDS_RENDERED = set()  # commands whose keybindings have been rendered
@@ -147,7 +156,7 @@ class DFHackToolDirective(DFHackToolDirectiveBase):
 
         ret_nodes = [tag_paragraph]
         if 'no-command' in self.options:
-            ret_nodes += [nodes.paragraph('', '', nodes.inline(text=self.options.get('summary', '')))]
+            ret_nodes += [make_summary(self.env.app.builder, self.options.get('summary', ''))]
         return ret_nodes
 
     def run(self):
@@ -166,7 +175,7 @@ class DFHackCommandDirective(DFHackToolDirectiveBase):
         command = self.get_name_or_docname()
         return [
             self.make_labeled_paragraph('Command', command, content_class=nodes.literal),
-            nodes.paragraph('', '', nodes.inline(text=self.options.get('summary', ''))),
+            make_summary(self.env.app.builder, self.options.get('summary', '')),
             *render_dfhack_keybind(command, builder=self.env.app.builder),
         ]
 

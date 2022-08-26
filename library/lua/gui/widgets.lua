@@ -304,6 +304,26 @@ function EditField:onInput(keys)
             self:setCursor(self.start_pos + mouse_x)
             return true
         end
+    elseif keys._STRING then
+        local old = self.text
+        if keys._STRING == 0 then
+            -- handle backspace
+            local del_pos = self.cursor - 1
+            if del_pos > 0 then
+                self:setText(old:sub(1, del_pos-1) .. old:sub(del_pos+1),
+                             del_pos)
+            end
+        else
+            local cv = string.char(keys._STRING)
+            if not self.on_char or self.on_char(cv, old) then
+                self:setText(old:sub(1,self.cursor-1)..cv..old:sub(self.cursor),
+                             self.cursor + 1)
+            end
+        end
+        if self.on_change and self.text ~= old then
+            self.on_change(self.text, old)
+        end
+        return true
     elseif keys.CURSOR_LEFT then
         self:setCursor(self.cursor - 1)
         return true
@@ -324,26 +344,6 @@ function EditField:onInput(keys)
         return true
     elseif keys.A_CARE_MOVE_E then -- Alt-Right (end)
         self:setCursor()
-        return true
-    elseif keys._STRING then
-        local old = self.text
-        if keys._STRING == 0 then
-            -- handle backspace
-            local del_pos = self.cursor - 1
-            if del_pos > 0 then
-                self:setText(old:sub(1, del_pos-1) .. old:sub(del_pos+1),
-                             del_pos)
-            end
-        else
-            local cv = string.char(keys._STRING)
-            if not self.on_char or self.on_char(cv, old) then
-                self:setText(old:sub(1,self.cursor-1)..cv..old:sub(self.cursor),
-                             self.cursor + 1)
-            end
-        end
-        if self.on_change and self.text ~= old then
-            self.on_change(self.text, old)
-        end
         return true
     end
 

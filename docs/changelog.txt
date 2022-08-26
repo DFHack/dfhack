@@ -1053,7 +1053,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `caravan`: documented (new in 0.44.10-alpha1)
 - `deathcause`: added "slaughtered" to descriptions
 - `fix/retrieve-units`: now re-adds units to active list to counteract `fix/dead-units`
-- `item-descriptions`: fixed several grammatical errors
+- ``item-descriptions``: fixed several grammatical errors
 - `modtools/create-unit`:
     - added quantity argument
     - now selects a caste at random if none is specified

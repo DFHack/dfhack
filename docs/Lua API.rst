@@ -3348,24 +3348,27 @@ A module for reading custom tokens added to the raws by mods.
   The same as ``getToken(plantGrowthItem, token)`` but with a specified plant and growth, using growth name
   (e.g. "LEAVES") instead of number.
 
+It is recommended to prefix custom raw tokens with the name of your mod to avoid duplicate behaviour where
+two mods make callbacks that work on the same tag.
+
 Examples:
 
 * Using an eventful onReactionComplete hook, something for disturbing dwarven science::
 
-    if customRawTokens.getToken(reaction, "DFHACK_CAUSES_INSANITY") then
+    if customRawTokens.getToken(reaction, "EXAMPLE_MOD_CAUSES_INSANITY") then
         -- make unit who performed reaction go insane
 
 * Using an eventful onProjItemCheckMovement hook, a fast or slow-firing crossbow::
 
     -- check projectile distance flown is zero, get firer, etc...
-    local multiplier = tonumber(customRawTokens.getToken(bow, "DFHACK_FIRE_RATE_MULTIPLIER")) or 1
+    local multiplier = tonumber(customRawTokens.getToken(bow, "EXAMPLE_MOD_FIRE_RATE_MULTIPLIER")) or 1
     firer.counters.think_counter = firer.counters.think_counter * multiplier
 
 * Something for a script that prints help text about different types of units::
 
     local unit = dfhack.gui.getSelectedUnit()
     if not unit then return end
-    local helpText = customRawTokens.getToken(unit, "DFHACK_HELP_TEXT")
+    local helpText = customRawTokens.getToken(unit, "EXAMPLE_MOD_HELP_TEXT")
     if helpText then print(helpText) end
 
 * Healing armour::
@@ -3374,7 +3377,7 @@ Examples:
     local healAmount = 0
     for _, entry in ipairs(unit.inventory) do
         if entry.mode == 2 then -- Worn
-            healAmount = healAmount + tonumber((customRawTokens.getToken(entry.item, "DFHACK_HEAL_AMOUNT")) or 0)
+            healAmount = healAmount + tonumber((customRawTokens.getToken(entry.item, "EXAMPLE_MOD_HEAL_AMOUNT")) or 0)
         end
     end
     unit.body.blood_count = math.min(unit.body.blood_max, unit.body.blood_count + healAmount)

@@ -53,8 +53,6 @@ using namespace std;
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
 #include "modules/World.h"
-#include "modules/Graphic.h"
-#include "modules/Windows.h"
 #include "modules/Persistence.h"
 #include "RemoteServer.h"
 #include "RemoteTools.h"
@@ -1450,13 +1448,12 @@ static void run_dfhack_init(color_ostream &out, Core *core)
         return;
     }
 
+    // load baseline defaults
+    core->loadScriptFile(out, "dfhack-config/init/default.dfhack.init", false);
+
+    // load user overrides
     std::vector<std::string> prefixes(1, "dfhack");
-    size_t count = loadScriptFiles(core, out, prefixes, ".");
-    if (!count || !Filesystem::isfile("dfhack.init"))
-    {
-        core->runCommand(out, "gui/no-dfhack-init");
-        core->loadScriptFile(out, "dfhack.init-example", false);
-    }
+    loadScriptFiles(core, out, prefixes, "dfhack-config/init");
 }
 
 // Load dfhack.init in a dedicated thread (non-interactive console mode)
@@ -1472,12 +1469,14 @@ void fInitthread(void * iodata)
 // A thread function... for the interactive console.
 void fIOthread(void * iodata)
 {
+    static const char * HISTORY_FILE = "dfhack-config/dfhack.history";
+
     IODATA * iod = ((IODATA*) iodata);
     Core * core = iod->core;
     PluginManager * plug_mgr = ((IODATA*) iodata)->plug_mgr;
 
     CommandHistory main_history;
-    main_history.load("dfhack.history");
+    main_history.load(HISTORY_FILE);
 
     Console & con = core->getConsole();
     if (plug_mgr == 0)
@@ -1518,7 +1517,7 @@ void fIOthread(void * iodata)
         {
             // a proper, non-empty command was entered
             main_history.add(command);
-            main_history.save("dfhack.history");
+            main_history.save(HISTORY_FILE);
         }
 
         auto rv = core->runCommand(con, command);
@@ -1564,7 +1563,6 @@ Core::Core() :
     last_local_map_ptr = NULL;
     last_pause_state = false;
     top_viewscreen = NULL;
-    screen_window = NULL;
 
     color_ostream::log_errors_to_stderr = true;
 
@@ -1835,8 +1833,6 @@ bool Core::Init()
     cerr << "Starting DF input capture thread.\n";
     // set up hotkey capture
     d->hotkeythread = std::thread(fHKthread, (void *) temp);
-    screen_window = new Windows::top_level_window();
-    screen_window->addChild(new Windows::dfhack_dummy(5,10));
     started = true;
     modstate = 0;
 
@@ -1978,14 +1974,6 @@ void *Core::GetData( std::string key )
 bool Core::isSuspended(void)
 {
     return ownerThread.load() == std::this_thread::get_id();
-}
-
-int Core::TileUpdate()
-{
-    if(!started)
-        return false;
-    screen_window->paint();
-    return true;
 }
 
 void Core::doUpdate(color_ostream &out, bool first_update)
@@ -2226,7 +2214,11 @@ void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event eve
     auto i = table.find(event);
     if ( i != table.end() ) {
         const std::vector<std::string>& set = i->second;
-        loadScriptFiles(this, out, set, "."      );
+
+        // load baseline defaults
+        this->loadScriptFile(out, "dfhack-config/init/default." + set[0] + ".init", false);
+
+        loadScriptFiles(this, out, set, "dfhack-config/init");
         loadScriptFiles(this, out, set, rawFolder);
         loadScriptFiles(this, out, set, rawFolder + "objects/");
     }
@@ -2621,6 +2613,9 @@ static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string 
     if (keyspec.size() == 1 && keyspec[0] >= 'A' && keyspec[0] <= 'Z') {
         *psym = SDL::K_a + (keyspec[0]-'A');
         return true;
+    } else if (keyspec.size() == 1 && keyspec[0] == '`') {
+        *psym = SDL::K_BACKQUOTE;
+        return true;
     } else if (keyspec.size() == 1 && keyspec[0] >= '0' && keyspec[0] <= '9') {
         *psym = SDL::K_0 + (keyspec[0]-'0');
         return true;
@@ -2922,5 +2917,4 @@ TYPE * Core::get##TYPE() \
 }
 
 MODULE_GETTER(Materials);
-MODULE_GETTER(Notes);
 MODULE_GETTER(Graphic);

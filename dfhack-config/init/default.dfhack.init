@@ -1,0 +1,7 @@
+# Load DFHack defaults.
+#
+# If you delete this file, it will reappear when you restart DFHack.
+# Instead, please comment out the following line if you do not want DFHack to
+# load its default configuration.
+
+script hack/init/dfhack.default.init

@@ -1145,7 +1145,7 @@ bool DFHack::Lua::InterpreterLoop(color_ostream &out, lua_State *state,
         return false;
 
     if (!hfile)
-        hfile = "lua.history";
+        hfile = "dfhack-config/lua.history";
     if (!prompt)
         prompt = "lua";
 

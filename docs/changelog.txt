@@ -34,19 +34,48 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
+- `autonestbox`: split off from `zone` into its own plugin. Note that to enable, the command has changed from ``autonestbox start`` to ``enable autonestbox``.
+- `autobutcher`: split off from `zone` into its own plugin. Note that to enable, the command has changed from ``autobutcher start`` to ``enable autobutcher``.
 
 ## New Tweaks
 
 ## Fixes
+- ``job.removeJob()``: ensure jobs are removed from the world list when they are canceled
 
 ## Misc Improvements
+- Init scripts: ``dfhack.init`` and other init scripts have moved to ``dfhack-config/init/``. If you have customized your ``dfhack.init`` file and want to keep your changes, please move the part that you have customized to the new location at ``dfhack-config/init/dfhack.init``. If you do not have changes that you want to keep, do not copy anything, and the new defaults will be used automatically.
+- History files: ``dfhack.history``, ``tiletypes.history``, ``lua.history``, and ``liquids.history`` have moved to the ``dfhack-config`` directory. If you'd like to keep the contents of your current history files, please move them to ``dfhack-config``.
+- `do-job-now`: new global keybinding for boosting the priority of the jobs associated with the selected building/work order/unit/item etc.: Alt-N
+- `keybinding`: support backquote (\`) as a hotkey (and assign the hotkey to the new `gui/launcher` interface)
+- `manipulator`: add a library of useful default professions
+- `manipulator`: move professions configuration from ``professions/`` to ``dfhack-config/professions/`` to keep it together with other dfhack configuration. If you have saved professions that you would like to keep, please manually move them to the new folder.
+- ``materials.ItemTraitsDialog``: added a default ``on_select``-handler which toggles the traits.
+- `orders`: added useful library of manager orders. see them with ``orders list`` and import them with, for example, ``orders import library/basic``
+- `prospect`: add new ``--show`` option to give the player control over which report sections are shown. e.g. ``prospect all --show ores`` will just show information on ores.
+- `seedwatch`: ``seedwatch all`` now adds all plants with seeds to the watchlist, not just the "basic" crops.
+- UX: You can now move the cursor around in DFHack text fields in ``gui/`` scripts (e.g. `gui/blueprint`, `gui/quickfort`, or `gui/gm-editor`). You can move the cursor by clicking where you want it to go with the mouse or using the Left/Right arrow keys.  Ctrl+Left/Right will move one word at a time, and Alt+Left/Right will move to the beginning/end of the text.
+- UX: You can now click on the hotkey hint text in many ``gui/`` script windows to activate the hotkey, like a button. Not all scripts have been updated to use the clickable widget yet, but you can try it in `gui/blueprint` or `gui/quickfort`.
 
 ## Documentation
 - Added `modding-guide`
 
 ## API
+- Removed "egg" ("eggy") hook support (Linux only). The only remaining method of hooking into DF is by interposing SDL calls, which has been the method used by all binary releases of DFHack.
+- Removed ``Engravings`` module (C++-only). Access ``world.engravings`` directly instead.
+- Removed ``Notes`` module (C++-only). Access ``ui.waypoints.points`` directly instead.
+- Removed ``Windows`` module (C++-only) - unused.
+- ``Constructions`` module (C++-only): removed ``t_construction``, ``isValid()``, ``getCount()``, ``getConstruction()``, and ``copyConstruction()``. Access ``world.constructions`` directly instead.
+- ``Gui::getSelectedItem()``, ``Gui::getAnyItem()``: added support for the artifacts screen
 
 ## Lua
+- History: added ``dfhack.getCommandHistory(history_id, history_filename)`` and ``dfhack.addCommandToHistory(history_id, history_filename, command)`` so gui scripts can access a commandline history without requiring a terminal.
+- ``helpdb``: database and query interface for DFHack tool help text
+- ``tile-material``: fix the order of declarations. The ``GetTileMat`` function now returns the material as intended (always returned nil before). Also changed the license info, with permission of the original author.
+- ``widgets.EditField``: new ``onsubmit2`` callback attribute is called when the user hits Shift-Enter.
+- ``widgets.EditField``: new function: ``setCursor(position)`` sets the input cursor.
+- ``widgets.Label``: ``scroll`` function now interprets the keywords ``+page``, ``-page``, ``+halfpage``, and ``-halfpage`` in addition to simple positive and negative numbers.
+- ``widgets.HotkeyLabel``: clicking on the widget will now call ``on_activate()``.
+- ``widgets.CycleHotkeyLabel``: clicking on the widget will now cycle the options and trigger ``on_change()``. This also applies to the ``ToggleHotkeyLabel`` subclass.
 
 # 0.47.05-r6
 

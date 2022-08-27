@@ -345,7 +345,8 @@ end
 
 function ItemTraitsDialog(args)
     local job_item_flags_map = {}
-    for i = 1, 3 do
+    for i = 1, 5 do
+        if not df['job_item_flags'..i] then break end
         for _, f in ipairs(df['job_item_flags'..i]) do
             if f then
                 job_item_flags_map[f] = 'flags'..i
@@ -599,6 +600,99 @@ function ItemTraitsDialog(args)
         local cb = args.on_select
         args.on_select = function(idx, obj)
             return cb(obj)
+        end
+    else
+        local function toggleFlag(obj, ffield, flag)
+            local job_item = obj.job_item
+            job_item[ffield][flag] = not job_item[ffield][flag]
+        end
+
+        local function toggleToolUse(obj, tool_use)
+            local job_item = obj.job_item
+            tool_use = df.tool_uses[tool_use]
+            if job_item.has_tool_use == tool_use then
+                job_item.has_tool_use = df.tool_uses.NONE
+            else
+                job_item.has_tool_use = tool_use
+            end
+        end
+
+        local function toggleMetalOre(obj, ore_ix)
+            local job_item = obj.job_item
+            if job_item.metal_ore == ore_ix then
+                job_item.metal_ore = -1
+            else
+                job_item.metal_ore = ore_ix
+            end
+        end
+
+        function toggleReactionClass(obj, reaction_class)
+            local job_item = obj.job_item
+            if job_item.reaction_class == reaction_class then
+                job_item.reaction_class = ''
+            else
+                job_item.reaction_class = reaction_class
+            end
+        end
+
+        local function toggleProductMaterial(obj, product_materials)
+            local job_item = obj.job_item
+            if job_item.has_material_reaction_product == product_materials then
+                job_item.has_material_reaction_product = ''
+            else
+                job_item.has_material_reaction_product = product_materials
+            end
+        end
+
+        local function unsetFlags(obj)
+            local job_item = obj.job_item
+            for flag, ffield in pairs(job_item_flags_map) do
+                if job_item[ffield][flag] then
+                    toggleFlag(obj, ffield, flag)
+                end
+            end
+        end
+
+        local function setTrait(obj, sel)
+            if sel.ffield then
+                --print('toggle flag', sel.ffield, sel.flag)
+                toggleFlag(obj, sel.ffield, sel.flag)
+            elseif sel.reset_flags then
+                --print('reset every flag')
+                unsetFlags(obj)
+            elseif sel.tool_use then
+                --print('toggle tool_use', sel.tool_use)
+                toggleToolUse(obj, sel.tool_use)
+            elseif sel.ore_ix then
+                --print('toggle ore', sel.ore_ix)
+                toggleMetalOre(obj, sel.ore_ix)
+            elseif sel.reaction_class then
+                --print('toggle reaction class', sel.reaction_class)
+                toggleReactionClass(obj, sel.reaction_class)
+            elseif sel.product_materials then
+                --print('toggle product materials', sel.product_materials)
+                toggleProductMaterial(obj, sel.product_materials)
+            elseif sel.reset_all_traits then
+                --print('reset every trait')
+                -- flags
+                unsetFlags(obj)
+                -- tool use
+                toggleToolUse(obj, 'NONE')
+                -- metal ore
+                toggleMetalOre(obj, -1)
+                -- reaction class
+                toggleReactionClass(obj, '')
+                -- producing
+                toggleProductMaterial(obj, '')
+            else
+                print('unknown sel')
+                printall(sel)
+                error('Selected entry in ItemTraitsDialog was of unknown type')
+            end
+        end
+
+        args.on_select = function(idx, choice)
+            setTrait(args, choice)
         end
     end
 

@@ -525,6 +525,20 @@ Input & Output
   lock. Using an explicit ``dfhack.with_suspend`` will prevent
   this, forcing the function to block on input with lock held.
 
+* ``dfhack.getCommandHistory(history_id, history_filename)``
+
+  Returns the list of strings in the specified history. Intended to be used by
+  GUI scripts that don't have access to a console and so can't use
+  ``dfhack.lineedit``. The ``history_id`` parameter is some unique string that
+  the script uses to identify its command history, such as the script's name. If
+  this is the first time the history with the given ``history_id`` is being
+  accessed, it is initialized from the given file.
+
+* ``dfhack.addCommandToHistory(history_id, history_filename, command)``
+
+  Adds a command to the specified history and saves the updated history to the
+  specified file.
+
 * ``dfhack.interpreter([prompt[,history_filename[,env]]])``
 
   Starts an interactive lua interpreter, using the specified prompt
@@ -838,6 +852,7 @@ can be omitted.
 * ``dfhack.getGitXmlExpectedCommit()``
 * ``dfhack.gitXmlMatch()``
 * ``dfhack.isRelease()``
+* ``dfhack.isPrerelease()``
 
   Return information about the DFHack build in use.
 
@@ -890,7 +905,6 @@ can be omitted.
   When printing CP437-encoded text to the console (for example, names returned
   from ``dfhack.TranslateName()``), use ``print(dfhack.df2console(text))`` to
   ensure proper display on all platforms.
-
 
 * ``dfhack.utf2df(string)``
 
@@ -3030,6 +3044,18 @@ parameters.
   function also verifies that the coordinates are valid for the current map and
   throws if they are not (unless ``skip_validation`` is set to true).
 
+* ``argparse.positiveInt(arg, arg_name)``
+
+  Throws if ``tonumber(arg)`` is not a positive integer; otherwise returns
+  ``tonumber(arg)``. If ``arg_name`` is specified, it is used to make error
+  messages more useful.
+
+* ``argparse.nonnegativeInt(arg, arg_name)``
+
+  Throws if ``tonumber(arg)`` is not a non-negative integer; otherwise returns
+  ``tonumber(arg)``. If ``arg_name`` is specified, it is used to make error
+  messages more useful.
+
 dumper
 ======
 
@@ -3042,6 +3068,87 @@ function:
   Returns ``value`` converted to a string. The ``indent_step``
   argument specifies the indentation step size in spaces. For
   the other arguments see the original documentation link above.
+
+helpdb
+======
+
+Unified interface for DFHack tool help text. Help text is read from the rendered
+text in ``hack/docs/docs/``. If no rendered text exists, help is read from the
+script sources (for scripts) or the string passed to the ``PluginCommand``
+initializer (for plugins). See `documentation` for details on how DFHack's help
+system works.
+
+The database is lazy-loaded when an API method is called. It rechecks its help
+sources for updates if an API method has not been called in the last 60 seconds.
+
+Each entry has several properties associated with it:
+
+- The entry name, which is the name of a plugin, script, or command provided by
+  a plugin.
+- The entry types, which can be ``builtin``, ``plugin``, and/or ``command``.
+  Entries for built-in commands (like ``ls`` or ``quicksave``) are both type
+  ``builtin`` and ``command``. Entries named after plugins are type ``plugin``,
+  and if that plugin also provides a command with the same name as the plugin,
+  then the entry is also type ``command``. Entry types are returned as a map
+  of one or more of the type strings to ``true``.
+- Short help, a the ~54 character description string.
+- Long help, the entire contents of the associated help file.
+- A list of tags that define the groups that the entry belongs to.
+
+* ``helpdb.is_entry(str)``, ``helpdb.is_entry(list)``
+
+  Returns whether the given string (or list of strings) is an entry (are all
+  entries) in the db.
+
+* ``helpdb.get_entry_types(entry)``
+
+  Returns the set (that is, a map of string to ``true``) of entry types for the
+  given entry.
+
+* ``helpdb.get_entry_short_help(entry)``
+
+  Returns the short (~54 character) description for the given entry.
+
+* ``helpdb.get_entry_long_help(entry)``
+
+  Returns the full help text for the given entry.
+
+* ``helpdb.get_entry_tags(entry)``
+
+  Returns the set of tag names for the given entry.
+
+* ``helpdb.is_tag(str)``, ``helpdb.is_tag(list)``
+
+  Returns whether the given string (or list of strings) is a (are all) valid tag
+  name(s).
+
+* ``helpdb.get_tags()``
+
+  Returns the full alphabetized list of valid tag names.
+
+* ``helpdb.get_tag_data(tag)``
+
+  Returns a list of entries that have the given tag. The returned table also
+  has a ``description`` key that contains the string description of the tag.
+
+* ``helpdb.search_entries([include[, exclude]])``
+
+  Returns a list of names for entries that match the given filters. The list is
+  alphabetized by their last path component, with populated path components
+  coming before null path components (e.g. ``autobutcher`` will immediately
+  follow ``gui/autobutcher``).
+  The optional ``include`` and ``exclude`` filter params are maps with the
+  following elements:
+
+  :str:   if a string, filters by the given substring. if a table of strings,
+          includes entry names that match any of the given substrings.
+  :tag:   if a string, filters by the given tag name. if a table of strings,
+          includes entries that match any of the given tags.
+  :entry_type: if a string, matches entries of the given type. if a table of
+          strings, includes entries that match any of the given types.
+
+  If ``include`` is ``nil`` or empty, then all entries are included. If
+  ``exclude`` is ``nil`` or empty, then no entries are filtered out.
 
 profiler
 ========
@@ -3242,24 +3349,27 @@ A module for reading custom tokens added to the raws by mods.
   The same as ``getToken(plantGrowthItem, token)`` but with a specified plant and growth, using growth name
   (e.g. "LEAVES") instead of number.
 
+It is recommended to prefix custom raw tokens with the name of your mod to avoid duplicate behaviour where
+two mods make callbacks that work on the same tag.
+
 Examples:
 
 * Using an eventful onReactionComplete hook, something for disturbing dwarven science::
 
-    if customRawTokens.getToken(reaction, "DFHACK_CAUSES_INSANITY") then
+    if customRawTokens.getToken(reaction, "EXAMPLE_MOD_CAUSES_INSANITY") then
         -- make unit who performed reaction go insane
 
 * Using an eventful onProjItemCheckMovement hook, a fast or slow-firing crossbow::
 
     -- check projectile distance flown is zero, get firer, etc...
-    local multiplier = tonumber(customRawTokens.getToken(bow, "DFHACK_FIRE_RATE_MULTIPLIER")) or 1
+    local multiplier = tonumber(customRawTokens.getToken(bow, "EXAMPLE_MOD_FIRE_RATE_MULTIPLIER")) or 1
     firer.counters.think_counter = firer.counters.think_counter * multiplier
 
 * Something for a script that prints help text about different types of units::
 
     local unit = dfhack.gui.getSelectedUnit()
     if not unit then return end
-    local helpText = customRawTokens.getToken(unit, "DFHACK_HELP_TEXT")
+    local helpText = customRawTokens.getToken(unit, "EXAMPLE_MOD_HELP_TEXT")
     if helpText then print(helpText) end
 
 * Healing armour::
@@ -3268,7 +3378,7 @@ Examples:
     local healAmount = 0
     for _, entry in ipairs(unit.inventory) do
         if entry.mode == 2 then -- Worn
-            healAmount = healAmount + tonumber((customRawTokens.getToken(entry.item, "DFHACK_HEAL_AMOUNT")) or 0)
+            healAmount = healAmount + tonumber((customRawTokens.getToken(entry.item, "EXAMPLE_MOD_HEAL_AMOUNT")) or 0)
         end
     end
     unit.body.blood_count = math.min(unit.body.blood_max, unit.body.blood_count + healAmount)
@@ -3869,6 +3979,7 @@ Attributes:
           If it returns false, the character is ignored.
 :on_change: Change notification callback; used as ``on_change(new_text,old_text)``.
 :on_submit: Enter key callback; if set the field will handle the key and call ``on_submit(text)``.
+:on_submit2: Shift-Enter key callback; if set the field will handle the key and call ``on_submit2(text)``.
 :key: If specified, the field is disabled until this key is pressed. Must be given as a string.
 :key_sep: If specified, will be used to customize how the activation key is
           displayed. See ``token.key_sep`` in the ``Label`` documentation below.
@@ -3890,6 +4001,14 @@ and then call the ``on_submit`` callback. Pressing the Escape key will also
 release keyboard focus, but first it will restore the text that was displayed
 before the ``EditField`` gained focus and then call the ``on_change`` callback.
 
+The ``EditField`` cursor can be moved to where you want to insert/remove text.
+You can click where you want the cursor to move or you can use any of the
+following keyboard hotkeys:
+
+- Left/Right arrow: move the cursor one character to the left or right.
+- Ctrl-Left/Right arrow: move the cursor one word to the left or right.
+- Alt-Left/Right arrow: move the cursor to the beginning/end of the text.
+
 Label class
 -----------
 
@@ -3906,11 +4025,14 @@ It has the following attributes:
 :auto_width: Sets self.frame.w from the text width.
 :on_click: A callback called when the label is clicked (optional)
 :on_rclick: A callback called when the label is right-clicked (optional)
-:scroll_keys: Specifies which keys the label should react to as a table. Default is ``STANDARDSCROLL`` (up or down arrows, page up or down).
+:scroll_keys: Specifies which keys the label should react to as a table. The table should map
+    keys to the number of lines to scroll as positive or negative integers or one of the keywords
+    supported by the ``scroll`` method. The default is up/down arrows scrolling by one line and page
+    up/down scrolling by one page.
 :show_scroll_icons: Controls scroll icons' behaviour: ``false`` for no icons, ``'right'`` or ``'left'`` for
-     icons next to the text in an additional column (``frame_inset`` is adjusted to have ``.r`` or ``.l`` greater than ``0``),
-     ``nil`` same as ``'right'`` but changes ``frame_inset`` only if a scroll icon is actually necessary
-     (if ``getTextHeight()`` is greater than ``frame_body.height``). Default is ``nil``.
+    icons next to the text in an additional column (``frame_inset`` is adjusted to have ``.r`` or ``.l`` greater than ``0``),
+    ``nil`` same as ``'right'`` but changes ``frame_inset`` only if a scroll icon is actually necessary
+    (if ``getTextHeight()`` is greater than ``frame_body.height``). Default is ``nil``.
 :up_arrow_icon: The symbol for scroll up arrow. Default is ``string.char(24)`` (``↑``).
 :down_arrow_icon: The symbol for scroll down arrow. Default is ``string.char(25)`` (``↓``).
 :scroll_icon_pen: Specifies the pen for scroll icons. Default is ``COLOR_LIGHTCYAN``.
@@ -4002,6 +4124,12 @@ The Label widget implements the following methods:
 
   Computes the width of the text.
 
+* ``label:scroll(nlines)``
+
+  This method takes the number of lines to scroll as positive or negative
+  integers or one of the following keywords: ``+page``, ``-page``,
+  ``+halfpage``, or ``-halfpage``.
+
 WrappedLabel class
 ------------------
 
@@ -4044,7 +4172,7 @@ HotkeyLabel class
 -----------------
 
 This Label subclass is a convenience class for formatting text that responds to
-a hotkey.
+a hotkey or mouse click.
 
 It has the following attributes:
 
@@ -4054,13 +4182,13 @@ It has the following attributes:
 :label: The string (or a function that returns a string) to display after the
     hotkey.
 :on_activate: If specified, it is the callback that will be called whenever
-    the hotkey is pressed.
+    the hotkey is pressed or the label is clicked.
 
 CycleHotkeyLabel class
 ----------------------
 
 This Label subclass represents a group of related options that the user can
-cycle through by pressing a specified hotkey.
+cycle through by pressing a specified hotkey or clicking on the text.
 
 It has the following attributes:
 
@@ -4103,7 +4231,8 @@ This is a specialized subclass of CycleHotkeyLabel that has two options:
 List class
 ----------
 
-The List widget implements a simple list with paging.
+The List widget implements a simple list with paging. You can click on a list
+item to call the ``on_submit`` callback for that item.
 
 It has the following attributes:
 
@@ -4114,8 +4243,8 @@ It has the following attributes:
 :on_select: Selection change callback; called as ``on_select(index,choice)``.
             This is also called with *nil* arguments if ``setChoices`` is called
             with an empty list.
-:on_submit: Enter key callback; if specified, the list reacts to the key
-            and calls it as ``on_submit(index,choice)``.
+:on_submit: Enter key or mouse click callback; if specified, the list reacts to the
+            key/click and calls the callback as ``on_submit(index,choice)``.
 :on_submit2: Shift-Enter key callback; if specified, the list reacts to the key
              and calls it as ``on_submit2(index,choice)``.
 :row_height: Height of every row in text lines.

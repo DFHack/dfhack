@@ -51,22 +51,6 @@ using namespace DFHack;
 using namespace df::enums;
 using df::global::world;
 
-bool Constructions::isValid()
-{
-    return (world != NULL);
-}
-
-uint32_t Constructions::getCount()
-{
-    return world->constructions.size();
-}
-
-df::construction * Constructions::getConstruction(const int32_t index)
-{
-    if (uint32_t(index) >= getCount())
-        return NULL;
-    return world->constructions[index];
-}
 
 df::construction * Constructions::findAtTile(df::coord pos)
 {
@@ -75,23 +59,6 @@ df::construction * Constructions::findAtTile(df::coord pos)
             return *it;
     }
     return NULL;
-}
-
-bool Constructions::copyConstruction(const int32_t index, t_construction &out)
-{
-    if (uint32_t(index) >= getCount())
-        return false;
-
-    out.origin = world->constructions[index];
-
-    out.pos = out.origin->pos;
-    out.item_type = out.origin->item_type;
-    out.item_subtype = out.origin->item_subtype;
-    out.mat_type = out.origin->mat_type;
-    out.mat_index = out.origin->mat_index;
-    out.flags = out.origin->flags;
-    out.original_tile = out.origin->original_tile;
-    return true;
 }
 
 bool Constructions::designateNew(df::coord pos, df::construction_type type,

@@ -86,6 +86,7 @@ jobs:
           -DBUILD_TESTS:BOOL=ON \
           -DBUILD_DEV_PLUGINS:BOOL=${{ matrix.plugins == 'all' }} \
           -DBUILD_SIZECHECK:BOOL=${{ matrix.plugins == 'all' }} \
+          -DBUILD_SKELETON:BOOL=${{ matrix.plugins == 'all' }} \
           -DBUILD_STONESENSE:BOOL=${{ matrix.plugins == 'all' }} \
           -DBUILD_SUPPORTED:BOOL=1 \
           -DCMAKE_C_COMPILER_LAUNCHER=ccache \
@@ -100,7 +101,6 @@ jobs:
       run: |
         export TERM=dumb
         status=0
-        mv "$DF_FOLDER"/dfhack.init-example "$DF_FOLDER"/dfhack.init
         script -qe -c "python ci/run-tests.py --headless --keep-status \"$DF_FOLDER\"" || status=$((status + 1))
         python ci/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt" || status=$((status + 2))
         mkdir -p artifacts

@@ -224,7 +224,8 @@ To set keybindings, use the built-in ``keybinding`` command. Like any other
 command it can be used at any time from the console, but bindings are not
 remembered between runs of the game unless re-created in `dfhack.init`.
 
-Currently, any combinations of Ctrl/Alt/Shift with A-Z, 0-9, or F1-F12 are supported.
+Currently, any combinations of Ctrl/Alt/Shift with A-Z, 0-9, F1-F12 or \`
+are supported.
 
 Possible ways to call the command:
 
@@ -366,16 +367,27 @@ The following commands are *not* built-in, but offer similarly useful functions.
 * `repeat`
 
 
+.. _dfhack-config:
+
+Configuration Files
+===================
+
+Most DFHack settings can be changed by modifying files in the ``dfhack-config``
+folder (which is in the DF folder). The default versions of these files, if they
+exist, are in ``dfhack-config/default`` and are installed when DFHack starts if
+necessary.
+
 .. _init-files:
 
 Init Files
-==========
+----------
 
 .. contents::
    :local:
 
 DFHack allows users to automatically run commonly-used DFHack commands
-when DF is first loaded, when a game is loaded, and when a game is unloaded.
+when DF is first loaded, when a world is loaded, when a map is loaded, when a
+map is unloaded, and when a world is unloaded.
 
 Init scripts function the same way they would if the user manually typed
 in their contents, but are much more convenient.  In order to facilitate
@@ -385,32 +397,33 @@ save-specific init files in the save folders.
 
 DFHack looks for init files in three places each time they could be run:
 
-#. The main DF directory
+#. The :file:`dfhack-config/init` subdirectory in the main DF directory
 #. :file:`data/save/{world}/raw`, where ``world`` is the current save, and
 #. :file:`data/save/{world}/raw/objects`
 
-When reading commands from dfhack.init or with the `script` command, if the final
-character on a line is a backslash then the next uncommented line is considered a
-continuation of that line, with the backslash deleted.  Commented lines are skipped,
-so it is possible to comment out parts of a command with the ``#`` character.
+For each of those directories, all matching init files will be executed in
+alphabetical order.
 
+Before running matched init scripts in any of those locations, the
+:file:`dfhack-config/init/default.*` file that matches the event will be run to
+load DFHack defaults. Only the :file:`dfhack-config/init` directory is checked
+for this file, not any :file:`raw` directories. If you want DFHack to load
+without running any of its default configuration commands, edit the
+:file:`dfhack-config/init/default.*` files and comment out the commands you see
+there.
+
+When reading commands from the init files or with the `script` command, if the
+final character on a line is a backslash then the next uncommented line is
+considered a continuation of that line, with the backslash deleted.  Commented
+lines are skipped, so it is possible to comment out parts of a command with the
+``#`` character.
 
 .. _dfhack.init:
 
-dfhack*.init
-------------
-If your DF folder contains at least one file named ``dfhack*.init``
-(where ``*`` is a placeholder for any string), then all such files
-are executed in alphabetical order when DF is first started.
-
-DFHack is distributed with :download:`/dfhack.init-example` as an example
-with an up-to-date collection of basic commands; mostly setting standard
-keybindings and `enabling <enable>` plugins.  You are encouraged to look
-through this file to learn which features it makes available under which
-key combinations.  You may also customise it and rename it to ``dfhack.init``.
-
-If your DF folder does not contain any ``dfhack*.init`` files, the example
-will be run as a fallback.
+dfhack\*.init
+.............
+On startup, DFHack looks for files of the form ``dfhack*.init`` (where ``*`` is
+a placeholder for any string, including the empty string).
 
 These files are best used for keybindings and enabling persistent plugins
 which do not require a world to be loaded.
@@ -418,51 +431,49 @@ which do not require a world to be loaded.
 
 .. _onLoad.init:
 
-onLoad*.init
-------------
+onLoad\*.init
+.............
 When a world is loaded, DFHack looks for files of the form ``onLoad*.init``,
 where ``*`` can be any string, including the empty string.
 
-All matching init files will be executed in alphabetical order.
 A world being loaded can mean a fortress, an adventurer, or legends mode.
 
 These files are best used for non-persistent commands, such as setting
 a `fix <scripts-fix>` script to run on `repeat`.
 
 
+.. _onMapLoad.init:
+
+onMapLoad\*.init
+................
+When a map is loaded, either in adventure or fort mode, DFHack looks for files
+of the form ``onMapLoad*.init``, where ``*`` can be any string, including the
+empty string.
+
+These files are best used for commands that are only relevant once there is a
+game map loaded.
+
+
+.. _onMapUnload.init:
 .. _onUnload.init:
 
-onUnload*.init
---------------
-When a world is unloaded, DFHack looks for files of the form ``onUnload*.init``.
-Again, these files may be in any of the above three places.
-All matching init files will be executed in alphebetical order.
+onMapUnload\*.init and onUnload\*.init
+......................................
+When a map or world is unloaded, DFHack looks for files of the form
+``onMapUnload*.init`` or ``onUnload*.init``, respectively.
 
-Modders often use such scripts to disable tools which should not affect
-an unmodded save.
+Modders often use unload init scripts to disable tools which should not run
+after a modded save is unloaded.
+
 
 .. _other_init_files:
 
-Other init files
-----------------
+raw/init.d/\*.lua
+.................
 
-* ``onMapLoad*.init`` and ``onMapUnload*.init`` are run when a map,
-  distinct from a world, is loaded.  This is good for map-affecting
-  commands (e.g. `clean`), or avoiding issues in Legends mode.
+Any lua script named ``raw/init.d/*.lua``, in the save or main DF directory,
+will be run when any world or that save is loaded.
 
-* Any lua script named ``raw/init.d/*.lua``, in the save or main DF
-  directory, will be run when any world or that save is loaded.
-
-
-.. _dfhack-config:
-
-Configuration Files
-===================
-
-Some DFHack settings can be changed by modifying files in the ``dfhack-config``
-folder (which is in the DF folder). The default versions of these files, if they
-exist, are in ``dfhack-config/default`` and are installed when DFHack starts if
-necessary.
 
 .. _script-paths:
 

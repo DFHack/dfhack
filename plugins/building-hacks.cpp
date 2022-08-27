@@ -88,8 +88,8 @@ struct work_hook : df::building_workshopst{
             df::general_ref_creaturest* ref = static_cast<df::general_ref_creaturest*>(DFHack::Buildings::getGeneralRef(this, general_ref_type::CREATURE));
             if (ref)
             {
-                info->produced = ref->anon_1;
-                info->consumed = ref->anon_2;
+                info->produced = ref->unk_1;
+                info->consumed = ref->unk_2;
                 return true;
             }
             else
@@ -118,14 +118,14 @@ struct work_hook : df::building_workshopst{
         df::general_ref_creaturest* ref = static_cast<df::general_ref_creaturest*>(DFHack::Buildings::getGeneralRef(this, general_ref_type::CREATURE));
         if (ref)
         {
-            ref->anon_1 = produced;
-            ref->anon_2 = consumed;
+            ref->unk_1 = produced;
+            ref->unk_2 = consumed;
         }
         else
         {
             ref = df::allocate<df::general_ref_creaturest>();
-            ref->anon_1 = produced;
-            ref->anon_2 = consumed;
+            ref->unk_1 = produced;
+            ref->unk_2 = consumed;
             general_refs.push_back(ref);
         }
     }

@@ -121,12 +121,12 @@ ResizingPanel = defclass(ResizingPanel, Panel)
 -- adjust our frame dimensions according to positions and sizes of our subviews
 function ResizingPanel:postUpdateLayout(frame_body)
     local w, h = 0, 0
-    for _,subview in ipairs(self.subviews) do
-        if subview.visible then
-            w = math.max(w, (subview.frame.l or 0) +
-                            (subview.frame.w or frame_body.width))
-            h = math.max(h, (subview.frame.t or 0) +
-                            (subview.frame.h or frame_body.height))
+    for _,s in ipairs(self.subviews) do
+        if s.visible then
+            w = math.max(w, (s.frame and s.frame.l or 0) +
+                            (s.frame and s.frame.w or frame_body.width))
+            h = math.max(h, (s.frame and s.frame.t or 0) +
+                            (s.frame and s.frame.h or frame_body.height))
         end
     end
     if not self.frame then self.frame = {} end
@@ -184,17 +184,25 @@ EditField.ATTRS{
     on_char = DEFAULT_NIL,
     on_change = DEFAULT_NIL,
     on_submit = DEFAULT_NIL,
+    on_submit2 = DEFAULT_NIL,
     key = DEFAULT_NIL,
     key_sep = DEFAULT_NIL,
-    frame = {h=1},
     modal = false,
 }
+
+function EditField:preinit(init_table)
+    init_table.frame = init_table.frame or {}
+    init_table.frame.h = init_table.frame.h or 1
+end
 
 function EditField:init()
     local function on_activate()
         self.saved_text = self.text
         self:setFocus(true)
     end
+
+    self.start_pos = 1
+    self.cursor = #self.text + 1
 
     self:addviews{HotkeyLabel{frame={t=0,l=0},
                               key=self.key,
@@ -207,6 +215,19 @@ function EditField:getPreferredFocusState()
     return not self.key
 end
 
+function EditField:setCursor(cursor)
+    if not cursor or cursor > #self.text then
+        self.cursor = #self.text + 1
+        return
+    end
+    self.cursor = math.max(1, cursor)
+end
+
+function EditField:setText(text, cursor)
+    self.text = text
+    self:setCursor(cursor)
+end
+
 function EditField:postUpdateLayout()
     self.text_offset = self.subviews[1]:getTextWidth()
 end
@@ -214,14 +235,31 @@ end
 function EditField:onRenderBody(dc)
     dc:pen(self.text_pen or COLOR_LIGHTCYAN):fill(0,0,dc.width-1,0)
 
-    local cursor = '_'
+    local cursor_char = '_'
     if not self.active or not self.focus or gui.blink_visible(300) then
-        cursor = ' '
+        cursor_char = (self.cursor > #self.text) and ' ' or
+                                        self.text:sub(self.cursor, self.cursor)
     end
-    local txt = self.text .. cursor
+    local txt = self.text:sub(1, self.cursor - 1) .. cursor_char ..
+                                                self.text:sub(self.cursor + 1)
     local max_width = dc.width - self.text_offset
+    self.start_pos = 1
     if #txt > max_width then
-        txt = string.char(27)..string.sub(txt, #txt-max_width+2)
+        -- get the substring in the vicinity of the cursor
+        max_width = max_width - 2
+        local half_width = math.floor(max_width/2)
+        local start_pos = math.max(1, self.cursor-half_width)
+        local end_pos = math.min(#txt, self.cursor+half_width-1)
+        if self.cursor + half_width > #txt then
+            start_pos = #txt - (max_width - 1)
+        end
+        if self.cursor - half_width <= 1 then
+            end_pos = max_width + 1
+        end
+        self.start_pos = start_pos > 1 and start_pos - 1 or start_pos
+        txt = ('%s%s%s'):format(start_pos == 1 and '' or string.char(27),
+                                txt:sub(start_pos, end_pos),
+                                end_pos == #txt and '' or string.char(26))
     end
     dc:advance(self.text_offset):string(txt)
 end
@@ -234,7 +272,7 @@ function EditField:onInput(keys)
 
     if self.key and keys.LEAVESCREEN then
         local old = self.text
-        self.text = self.saved_text
+        self:setText(self.saved_text)
         if self.on_change and old ~= self.saved_text then
             self.on_change(self.text, old)
         end
@@ -251,22 +289,61 @@ function EditField:onInput(keys)
             return true
         end
         return not not self.key
-    end
-
-    if keys._STRING then
+    elseif keys.SEC_SELECT then
+        if self.key then
+            self:setFocus(false)
+        end
+        if self.on_submit2 then
+            self.on_submit2(self.text)
+            return true
+        end
+        return not not self.key
+    elseif keys._MOUSE_L then
+        local mouse_x, mouse_y = self:getMousePos()
+        if mouse_x then
+            self:setCursor(self.start_pos + mouse_x)
+            return true
+        end
+    elseif keys._STRING then
         local old = self.text
         if keys._STRING == 0 then
             -- handle backspace
-            self.text = string.sub(old, 1, #old-1)
+            local del_pos = self.cursor - 1
+            if del_pos > 0 then
+                self:setText(old:sub(1, del_pos-1) .. old:sub(del_pos+1),
+                             del_pos)
+            end
         else
             local cv = string.char(keys._STRING)
             if not self.on_char or self.on_char(cv, old) then
-                self.text = old .. cv
+                self:setText(old:sub(1,self.cursor-1)..cv..old:sub(self.cursor),
+                             self.cursor + 1)
             end
         end
         if self.on_change and self.text ~= old then
             self.on_change(self.text, old)
         end
+        return true
+    elseif keys.CURSOR_LEFT then
+        self:setCursor(self.cursor - 1)
+        return true
+    elseif keys.A_MOVE_W_DOWN then -- Ctrl-Left (end of prev word)
+        local _, prev_word_end = self.text:sub(1, self.cursor-1):
+                                                    find('.*[%w_%-][^%w_%-]')
+        self:setCursor(prev_word_end or 1)
+        return true
+    elseif keys.A_CARE_MOVE_W then -- Alt-Left (home)
+        self:setCursor(1)
+        return true
+    elseif keys.CURSOR_RIGHT then
+        self:setCursor(self.cursor + 1)
+        return true
+    elseif keys.A_MOVE_E_DOWN then -- Ctrl-Right (beginning of next word)
+        local _,next_word_start = self.text:find('[^%w_%-][%w_%-]', self.cursor)
+        self:setCursor(next_word_start)
+        return true
+    elseif keys.A_CARE_MOVE_E then -- Alt-Right (end)
+        self:setCursor()
         return true
     end
 
@@ -469,7 +546,6 @@ Label.ATTRS{
 }
 
 function Label:init(args)
-    self.start_line_num = 1
     -- use existing saved text if no explicit text was specified. this avoids
     -- overwriting pre-formatted text that subclasses may have already set
     self:setText(args.text or self.text)
@@ -479,6 +555,7 @@ function Label:init(args)
 end
 
 function Label:setText(text)
+    self.start_line_num = 1
     self.text = text
     parse_label_text(self)
 
@@ -575,6 +652,19 @@ function Label:onRenderFrame(dc, rect)
 end
 
 function Label:scroll(nlines)
+    if type(nlines) == 'string' then
+        if nlines == '+page' then
+            nlines = self.frame_body.height
+        elseif nlines == '-page' then
+            nlines = -self.frame_body.height
+        elseif nlines == '+halfpage' then
+            nlines = math.ceil(self.frame_body.height/2)
+        elseif nlines == '-halfpage' then
+            nlines = -math.ceil(self.frame_body.height/2)
+        else
+            error(('unhandled scroll keyword: "%s"'):format(nlines))
+        end
+    end
     local n = self.start_line_num + nlines
     n = math.min(n, self:getTextHeight() - self.frame_body.height + 1)
     n = math.max(n, 1)
@@ -591,11 +681,6 @@ function Label:onInput(keys)
     end
     for k,v in pairs(self.scroll_keys) do
         if keys[k] then
-            if v == '+page' then
-                v = self.frame_body.height
-            elseif v == '-page' then
-                v = -self.frame_body.height
-            end
             self:scroll(v)
         end
     end
@@ -671,6 +756,15 @@ function HotkeyLabel:init()
                   on_activate=self.on_activate}}
 end
 
+function HotkeyLabel:onInput(keys)
+    if HotkeyLabel.super.onInput(self, keys) then
+        return true
+    elseif keys._MOUSE_L and self:getMousePos() then
+        self.on_activate()
+        return true
+    end
+end
+
 ----------------------
 -- CycleHotkeyLabel --
 ----------------------
@@ -741,6 +835,15 @@ function CycleHotkeyLabel:getOptionValue(option_idx)
         return option.value
     end
     return option
+end
+
+function CycleHotkeyLabel:onInput(keys)
+    if CycleHotkeyLabel.super.onInput(self, keys) then
+        return true
+    elseif keys._MOUSE_L and self:getMousePos() then
+        self:cycle()
+        return true
+    end
 end
 
 -----------------------
@@ -949,6 +1052,15 @@ function List:onInput(keys)
     elseif self.on_submit2 and keys.SEC_SELECT then
         self:submit2()
         return true
+    elseif keys._MOUSE_L then
+        local _, mouse_y = self:getMousePos()
+        if mouse_y and #self.choices > 0 and
+                mouse_y < (#self.choices-self.page_top+1) * self.row_height then
+            local idx = self.page_top + math.floor(mouse_y/self.row_height)
+            self:setSelected(idx)
+            self:submit()
+            return true
+        end
     else
         for k,v in pairs(self.scroll_keys) do
             if keys[k] then
@@ -1050,7 +1162,7 @@ end
 
 function FilteredList:setChoices(choices, pos)
     choices = choices or {}
-    self.edit.text = ''
+    self.edit:setText('')
     self.list:setChoices(choices, pos)
     self.choices = self.list.choices
     self.not_found.visible = (#choices == 0)
@@ -1092,7 +1204,7 @@ function FilteredList:setFilter(filter, pos)
     local cidx = nil
 
     filter = filter or ''
-    self.edit.text = filter
+    self.edit:setText(filter)
 
     if filter ~= '' then
         local tokens = filter:split()

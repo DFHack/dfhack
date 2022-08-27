@@ -73,6 +73,19 @@ namespace DFHack
         ///true if paused, false if not
         DFHACK_EXPORT void SetPauseState(bool paused);
 
+        DFHACK_EXPORT bool ReadAnnouncementPauseLock();
+        DFHACK_EXPORT bool DisableAnnouncementPausing();
+        DFHACK_EXPORT bool SaveAnnouncementPausingConfig();
+        DFHACK_EXPORT bool RestoreAnnouncementPausingConfig();
+        DFHACK_EXPORT void LockAnnouncementPausing();
+        DFHACK_EXPORT void UnlockAnnouncementPausing();
+
+        DFHACK_EXPORT bool ReadPlayerPauseLock();
+        DFHACK_EXPORT bool DisablePlayerPausing();
+        DFHACK_EXPORT void LockPlayerPausing();
+        DFHACK_EXPORT void UnlockPlayerPausing();
+        void Update();
+
         DFHACK_EXPORT uint32_t ReadCurrentTick();
         DFHACK_EXPORT uint32_t ReadCurrentYear();
         DFHACK_EXPORT uint32_t ReadCurrentMonth();

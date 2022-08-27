@@ -51,6 +51,7 @@ using namespace std;
 #include "df/map_block.h"
 #include "df/block_square_event_world_constructionst.h"
 #include "df/viewscreen_legendsst.h"
+#include "df/d_init.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -67,6 +68,101 @@ void World::SetPauseState(bool paused)
     bool dummy;
     DF_GLOBAL_VALUE(pause_state, dummy) = paused;
 }
+
+namespace pausing {
+    uint64_t ALockCount = 0; // announcement pause lock
+    uint64_t PLockCount = 0; // player pause lock
+
+    const size_t array_size = sizeof(decltype(df::announcements::flags)) / sizeof(df::announcement_flags);
+    bool state_saved = false;
+    bool saved_states[array_size];
+    bool locked_states[array_size];
+}
+using namespace pausing;
+
+bool World::ReadAnnouncementPauseLock() {
+    return ALockCount;
+}
+
+bool World::DisableAnnouncementPausing() {
+    if (!ALockCount) {
+        for (auto& flag : df::global::d_init->announcements.flags) {
+            flag.bits.PAUSE = false;
+        }
+        return true;
+    }
+    return false;
+}
+
+bool World::SaveAnnouncementPausingConfig() {
+    if (!ALockCount) {
+        for (size_t i = 0; i < array_size; ++i) {
+            saved_states[i] = df::global::d_init->announcements.flags[i].bits.PAUSE;
+        }
+        return true;
+    }
+    return false;
+}
+
+bool World::RestoreAnnouncementPausingConfig() {
+    if (!ALockCount && state_saved) {
+        for (size_t i = 0; i < array_size; ++i) {
+            df::global::d_init->announcements.flags[i].bits.PAUSE = saved_states[i];
+        }
+        return true;
+    }
+    return false;
+}
+
+void World::LockAnnouncementPausing() {
+    if (!ALockCount) {
+        for (size_t i = 0; i < array_size; ++i) {
+            locked_states[i] = df::global::d_init->announcements.flags[i].bits.PAUSE;
+        }
+    }
+    ALockCount++;
+}
+
+void World::UnlockAnnouncementPausing() {
+    if (!ALockCount) {
+        return;
+    }
+    ALockCount--;
+}
+
+
+void World::LockPlayerPausing() {
+    PLockCount++;
+}
+
+void World::UnlockPlayerPausing() {
+    if (!ALockCount) {
+        return;
+    }
+    ALockCount--;
+}
+
+bool World::DisablePlayerPausing() {
+    if (!PLockCount) {
+        for (;;) {
+
+        }
+    }
+    return false;
+}
+
+bool World::ReadPlayerPauseLock() {
+    return PLockCount;
+}
+
+void World::Update() {
+    if (ALockCount) {
+        for (size_t i = 0; i < array_size; ++i) {
+            df::global::d_init->announcements.flags[i].bits.PAUSE = locked_states[i];
+        }
+    }
+}
+
 
 uint32_t World::ReadCurrentYear()
 {

@@ -2068,6 +2068,9 @@ void Core::doUpdate(color_ostream &out, bool first_update)
     // Execute per-frame handlers
     onUpdate(out);
 
+    // Execute per-frame World module maintenance, after plugins and lua timers
+    World::Update();
+
     d->last_autosave_request = df::global::ui->main.autosave_request;
     d->was_load_save = is_load_save;
 

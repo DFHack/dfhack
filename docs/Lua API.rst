@@ -3355,7 +3355,7 @@ Examples:
 
 * Using an eventful onReactionComplete hook, something for disturbing dwarven science::
 
-    if customRawTokens.getToken(reaction, "EXAMPLE_MOD_CAUSES_INSTANITY") then
+    if customRawTokens.getToken(reaction, "EXAMPLE_MOD_CAUSES_INSANITY") then
         -- make unit who performed reaction go insane
 
 * Using an eventful onProjItemCheckMovement hook, a fast or slow-firing crossbow::

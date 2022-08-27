@@ -57,7 +57,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - UX: You can now click on the hotkey hint text in many ``gui/`` script windows to activate the hotkey, like a button. Not all scripts have been updated to use the clickable widget yet, but you can try it in `gui/blueprint` or `gui/quickfort`.
 
 ## Documentation
-- Made ``DFHACK_`` prefix in ``custom-raw-tokens``' documentation ``EXAMPLE_MOD_`` and explained why.
 
 ## API
 - Removed "egg" ("eggy") hook support (Linux only). The only remaining method of hooking into DF is by interposing SDL calls, which has been the method used by all binary releases of DFHack.

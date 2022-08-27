@@ -85,7 +85,7 @@ local function get_blueprint_sets()
     local mock_print = mock.func()
     mock.patch(quickfort_list, 'print', mock_print,
         function()
-            dfhack.run_script('quickfort', 'list', '-l', input_dir)
+            dfhack.run_script('quickfort', 'list', input_dir)
         end)
 
     -- group blueprint sets

@@ -73,6 +73,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``tile-material``: fix the order of declarations. The ``GetTileMat`` function now returns the material as intended (always returned nil before). Also changed the license info, with permission of the original author.
 - ``widgets.EditField``: new ``onsubmit2`` callback attribute is called when the user hits Shift-Enter.
 - ``widgets.EditField``: new function: ``setCursor(position)`` sets the input cursor.
+- ``widgets.EditField``: new attribute: ``ignore_keys`` lets you ignore specified characters if you want to use them as hotkeys
+- ``widgets.FilteredList``: new attribute: ``edit_ignore_keys`` gets passed to the filter EditField as ``ignore_keys``
 - ``widgets.Label``: ``scroll`` function now interprets the keywords ``+page``, ``-page``, ``+halfpage``, and ``-halfpage`` in addition to simple positive and negative numbers.
 - ``widgets.HotkeyLabel``: clicking on the widget will now call ``on_activate()``.
 - ``widgets.CycleHotkeyLabel``: clicking on the widget will now cycle the options and trigger ``on_change()``. This also applies to the ``ToggleHotkeyLabel`` subclass.

@@ -7,6 +7,7 @@
 #include <Console.h>
 #include <Export.h>
 #include <PluginManager.h>
+#include <modules/World.h>
 #include <modules/EventManager.h>
 #include <modules/Job.h>
 #include <modules/Units.h>
@@ -16,8 +17,6 @@
 #include <df/global_objects.h>
 #include <df/world.h>
 #include <df/viewscreen.h>
-#include <df/ui.h>
-#include <df/interface_key.h>
 
 #include <map>
 #include <set>
@@ -47,6 +46,8 @@ REQUIRE_GLOBAL(d_init);
 // todo: implement as user configurable variables
 #define tick_span 50
 #define base 0.99
+Pausing::AnnouncementLock* pause_lock = nullptr;
+bool lock_collision = false;
 
 command_result spectate (color_ostream &out, std::vector <std::string> & parameters);
 
@@ -63,39 +64,28 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
                                      " spectate auto-unpause\n"
                                      "    toggle auto-dismissal of game pause events. e.g. a siege event pause\n"
                                      "\n"));
+    pause_lock = World::AcquireAnnouncementPauseLock("spectate");
     return CR_OK;
 }
 
-void refresh_camera(color_ostream &out) {
-    if (our_dorf) {
-        df::global::ui->follow_unit = our_dorf->id;
-        const int16_t &x = our_dorf->pos.x;
-        const int16_t &y = our_dorf->pos.y;
-        const int16_t &z = our_dorf->pos.z;
-        Gui::setViewCoords(x, y, z);
-    }
-}
-
-void unpause(color_ostream &out) {
-    if (!world) return;
-    while (!world->status.popups.empty()) {
-        // dismiss announcement(s)
-        Gui::getCurViewscreen(true)->feed_key(interface_key::CLOSE_MEGA_ANNOUNCEMENT);
-    }
-    if (*pause_state) {
-        // unpause the game
-        Gui::getCurViewscreen(true)->feed_key(interface_key::D_PAUSE);
-    }
-    refresh_camera(out);
-}
-
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
-    if (enabled) {
+    if (enabled && world) {
         switch (event) {
+            case SC_WORLD_LOADED:
+            case SC_MAP_LOADED:
+                if (dismiss_pause_events && World::ReadPauseState()) {
+                    *df::global::debug_nopause = false;
+                }
+                break;
             case SC_PAUSED:
-                if(dismiss_pause_events && !world->status.popups.empty()){
-                    unpause(out);
-                    out.print("spectate: May the deities bless your dwarves.\n");
+                if(dismiss_pause_events){
+                    if (our_dorf) {
+                        df::global::ui->follow_unit = our_dorf->id;
+                        const int16_t &x = our_dorf->pos.x;
+                        const int16_t &y = our_dorf->pos.y;
+                        const int16_t &z = our_dorf->pos.z;
+                        Gui::setViewCoords(x, y, z);
+                    }
                 }
                 break;
             case SC_UNPAUSED:
@@ -112,7 +102,31 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 }
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
+    World::ReleasePauseLock(pause_lock);
     return CR_OK;
+}
+
+DFhackCExport command_result plugin_onupdate(color_ostream &out) {
+    if (lock_collision) {
+        if (dismiss_pause_events) {
+            // player asked for auto-unpause enabled
+            World::SaveAnnouncementSettings();
+            if (World::DisableAnnouncementPausing()){
+                // now that we've got what we want, we can lock it down
+                lock_collision = false;
+                pause_lock->lock();
+            }
+        } else {
+            if (World::RestoreAnnouncementSettings()) {
+                lock_collision = false;
+            }
+        }
+    }
+    while (dismiss_pause_events && !world->status.popups.empty()) {
+        // dismiss announcement popup(s)
+        Gui::getCurViewscreen(true)->feed_key(interface_key::CLOSE_MEGA_ANNOUNCEMENT);
+    }
+    return DFHack::CR_OK;
 }
 
 void onTick(color_ostream& out, void* tick);
@@ -152,7 +166,31 @@ command_result spectate (color_ostream &out, std::vector <std::string> & paramet
             out.print("todo?\n"); // todo: adventure as deity?
         } else if (parameters[0] == "auto-unpause") {
             dismiss_pause_events = !dismiss_pause_events;
-            out.print(dismiss_pause_events ? "auto-unpause: on\n" : "auto-unpause: off\n");
+
+            // update the announcement settings if we can
+            if (dismiss_pause_events) {
+                if (World::SaveAnnouncementSettings()) {
+                    World::DisableAnnouncementPausing();
+                    pause_lock->lock();
+                } else {
+                    lock_collision = true;
+                }
+            } else {
+                pause_lock->unlock();
+                if (!World::RestoreAnnouncementSettings()) {
+                    // this in theory shouldn't happen, if others use the lock like we do in spectate
+                    lock_collision = true;
+                }
+            }
+
+            // report to the user how things went
+            if (!lock_collision){
+                out.print(dismiss_pause_events ? "auto-unpause: on\n" : "auto-unpause: off\n");
+            } else {
+                out.print("auto-unpause: must wait for another Pausing::AnnouncementLock to be lifted.\n");
+            }
+
+            // probably a typo
             if (parameters.size() == 2) {
                 out.print("If you want additional options open an issue on github, or mention it on discord.\n");
                 return DFHack::CR_WRONG_USAGE;

@@ -28,6 +28,7 @@ distribution.
 #include <string>
 #include <vector>
 #include <map>
+#include <unordered_set>
 #include <cstring>
 using namespace std;
 
@@ -51,8 +52,14 @@ using namespace std;
 #include "df/map_block.h"
 #include "df/block_square_event_world_constructionst.h"
 #include "df/viewscreen_legendsst.h"
+#include "df/d_init.h"
+#include "df/viewscreen_dwarfmodest.h"
+#include "df/ui.h"
+#include "VTableInterpose.h"
+#include "PluginManager.h"
 
 using namespace DFHack;
+using namespace Pausing;
 using namespace df::enums;
 
 using df::global::world;
@@ -67,6 +74,133 @@ void World::SetPauseState(bool paused)
     bool dummy;
     DF_GLOBAL_VALUE(pause_state, dummy) = paused;
 }
+
+std::unordered_set<Lock*> PlayerLock::locks;
+std::unordered_set<Lock*> AnnouncementLock::locks;
+
+bool AnnouncementLock::isAnyLocked() const {
+    return std::any_of(locks.begin(), locks.end(), [](Lock* lock) { return lock->isLocked(); });
+}
+
+bool AnnouncementLock::isOnlyLocked() const {
+    return std::all_of(locks.begin(), locks.end(), [&](Lock* lock) {
+        if (lock == this) {
+            return lock->isLocked();
+        }
+        return !lock->isLocked();
+    });
+}
+
+bool PlayerLock::isAnyLocked() const {
+    return std::any_of(locks.begin(), locks.end(), [](Lock* lock) { return lock->isLocked(); });
+}
+
+bool PlayerLock::isOnlyLocked() const {
+    return std::all_of(locks.begin(), locks.end(), [&](Lock* lock) {
+        if (lock == this) {
+            return lock->isLocked();
+        }
+        return !lock->isLocked();
+    });
+}
+
+namespace pausing {
+    AnnouncementLock announcementLock("monitor");
+    PlayerLock playerLock("monitor");
+
+    const size_t array_size = sizeof(decltype(df::announcements::flags)) / sizeof(df::announcement_flags);
+    bool state_saved = false; // indicates whether a restore state is ok
+    bool announcements_disabled = false; // indicates whether disable or restore was last enacted, could use a better name
+    bool saved_states[array_size]; // state to restore
+    bool locked_states[array_size]; // locked state (re-applied each frame)
+    bool allow_player_pause = true; // toggles player pause ability
+
+    using df::global::ui;
+    using namespace df::enums;
+    struct player_pause_hook : df::viewscreen_dwarfmodest {
+        typedef df::viewscreen_dwarfmodest interpose_base;
+        DEFINE_VMETHOD_INTERPOSE(void, feed, (std::set<df::interface_key>* input)) {
+            if ((ui->main.mode == ui_sidebar_mode::Default) && !allow_player_pause) {
+                input->erase(interface_key::D_PAUSE);
+            }
+            INTERPOSE_NEXT(feed)(input);
+        }
+    };
+
+    IMPLEMENT_VMETHOD_INTERPOSE(player_pause_hook, feed);
+}
+using namespace pausing;
+
+AnnouncementLock* World::AcquireAnnouncementPauseLock(const char* name) {
+    return new AnnouncementLock(name);
+}
+
+PlayerLock* World::AcquirePlayerPauseLock(const char* name) {
+    return new PlayerLock(name);
+}
+
+void World::ReleasePauseLock(Lock* lock){
+    delete lock;
+}
+
+bool World::DisableAnnouncementPausing() {
+    if (!announcementLock.isAnyLocked()) {
+        for (auto& flag : df::global::d_init->announcements.flags) {
+            flag.bits.PAUSE = false;
+        }
+        announcements_disabled = true;
+    }
+    return announcements_disabled;
+}
+
+bool World::SaveAnnouncementSettings() {
+    if (!announcementLock.isAnyLocked()) {
+        for (size_t i = 0; i < array_size; ++i) {
+            saved_states[i] = df::global::d_init->announcements.flags[i].bits.PAUSE;
+        }
+        return true;
+    }
+    return false;
+}
+
+bool World::RestoreAnnouncementSettings() {
+    if (!announcementLock.isAnyLocked() && state_saved) {
+        for (size_t i = 0; i < array_size; ++i) {
+            df::global::d_init->announcements.flags[i].bits.PAUSE = saved_states[i];
+        }
+        announcements_disabled = false;
+        return true;
+    }
+    return false;
+}
+
+bool World::EnablePlayerPausing() {
+    if (!playerLock.isAnyLocked()) {
+        allow_player_pause = true;
+    }
+    return allow_player_pause;
+}
+
+bool World::DisablePlayerPausing() {
+    if (!playerLock.isAnyLocked()) {
+        allow_player_pause = false;
+    }
+    return !allow_player_pause;
+}
+
+void World::Update() {
+    static bool did_once = false;
+    if (!did_once) {
+        did_once = true;
+        INTERPOSE_HOOK(player_pause_hook, feed).apply();
+    }
+    if (announcementLock.isAnyLocked()) {
+        for (size_t i = 0; i < array_size; ++i) {
+            df::global::d_init->announcements.flags[i].bits.PAUSE = locked_states[i];
+        }
+    }
+}
+
 
 uint32_t World::ReadCurrentYear()
 {

@@ -1204,7 +1204,9 @@ function FilteredList:setFilter(filter, pos)
     local cidx = nil
 
     filter = filter or ''
-    self.edit:setText(filter)
+    if filter ~= self.edit.text then
+        self.edit:setText(filter)
+    end
 
     if filter ~= '' then
         local tokens = filter:split()

@@ -62,6 +62,7 @@ struct hideblock
 uint32_t x_max, y_max, z_max;
 vector <hideblock> hidesaved;
 bool nopause_state = false;
+Pausing::PlayerLock* pause_lock = nullptr;
 
 enum revealstate
 {
@@ -106,6 +107,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
         "nopause",
         "Disable manual and automatic pausing.",
         nopause));
+    pause_lock = World::AcquirePlayerPauseLock("reveal::nopause");
     return CR_OK;
 }
 
@@ -130,6 +132,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
+    World::ReleasePauseLock(pause_lock);
     return CR_OK;
 }
 
@@ -137,10 +140,23 @@ command_result nopause (color_ostream &out, vector <string> & parameters)
 {
     if (parameters.size() == 1 && (parameters[0] == "0" || parameters[0] == "1"))
     {
-        if (parameters[0] == "0")
+        if (parameters[0] == "0") {
+            if (nopause_state) {
+                pause_lock->unlock();
+                if (!World::EnablePlayerPausing()) {
+                    out.printerr("reveal/nopause: Player pausing is currently locked by another plugin / script. Unable to re-enable.\n");
+                }
+            }
             nopause_state = 0;
-        else
+        } else {
+            if (!nopause_state) {
+                pause_lock->unlock();
+                if (!World::DisablePlayerPausing()) {
+                    out.printerr("reveal/nopause: Player pausing is currently locked by another plugin / script. Unable to disable.\n");
+                }
+            }
             nopause_state = 1;
+        }
         is_active = nopause_state || (revealed == REVEALED);
         out.print("nopause %sactivated.\n", (nopause_state ? "" : "de"));
     }
@@ -474,7 +490,7 @@ command_result revflood(color_ostream &out, vector<string> & params)
             return CR_WRONG_USAGE;
     }
     CoreSuspender suspend;
-    uint32_t x_max,y_max,z_max;
+    uint32_t xmax,ymax,zmax;
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");
@@ -493,7 +509,7 @@ command_result revflood(color_ostream &out, vector<string> & params)
         return CR_FAILURE;
     }
     int32_t cx, cy, cz;
-    Maps::getSize(x_max,y_max,z_max);
+    Maps::getSize(xmax, ymax, zmax);
 
     Gui::getCursorCoords(cx,cy,cz);
     if(cx == -30000)
@@ -511,7 +527,7 @@ command_result revflood(color_ostream &out, vector<string> & params)
         return CR_FAILURE;
     }
     // hide all tiles, flush cache
-    Maps::getSize(x_max,y_max,z_max);
+    Maps::getSize(xmax, ymax, zmax);
 
     for(size_t i = 0; i < world->map.map_blocks.size(); i++)
     {

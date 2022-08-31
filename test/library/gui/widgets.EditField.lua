@@ -54,3 +54,18 @@ function test.editfield_click()
             expect.eq(3, e.cursor)
         end)
 end
+
+function test.editfield_ignore_keys()
+    local e = widgets.EditField{ignore_keys={'CUSTOM_B', 'CUSTOM_C'}}
+    e:setFocus(true)
+
+    e:onInput{_STRING=string.byte('a'), CUSTOM_A=true}
+    expect.eq('a', e.text, '"a" should be accepted')
+    e:onInput{_STRING=string.byte('b'), CUSTOM_B=true}
+    expect.eq('a', e.text, '"b" should be rejected')
+    e:onInput{_STRING=string.byte('c'), CUSTOM_C=true}
+    expect.eq('a', e.text, '"c" should be rejected')
+    e:onInput{_STRING=string.byte('d'), CUSTOM_D=true}
+    expect.eq('ad', e.text, '"d" should be accepted')
+
+end

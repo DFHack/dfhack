@@ -3986,6 +3986,9 @@ Attributes:
         widgets while it has focus. You can set this to ``true``, for example,
         if you don't want a ``List`` widget to react to arrow keys while the
         user is editing.
+:ignore_keys: If specified, must be a list of key names that the edit field
+              should ignore. This is useful if you have plain string characters
+              that you want to use as hotkeys (like ``+``).
 
 An ``EditField`` will only read and process text input if it has keyboard focus.
 It will automatically acquire keyboard focus when it is added as a subview to
@@ -4311,6 +4314,7 @@ supports:
 :edit_pen: If specified, used instead of ``cursor_pen`` for the edit field.
 :edit_below: If true, the edit field is placed below the list instead of above.
 :edit_key: If specified, the edit field is disabled until this key is pressed.
+:edit_ignore_keys: If specified, must be a list of key names that the filter edit field should ignore.
 :not_found_label: Specifies the text of the label shown when no items match the filter.
 
 The list choices may include the following attributes:

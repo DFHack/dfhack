@@ -188,6 +188,7 @@ EditField.ATTRS{
     key = DEFAULT_NIL,
     key_sep = DEFAULT_NIL,
     modal = false,
+    ignore_keys = DEFAULT_NIL,
 }
 
 function EditField:preinit(init_table)
@@ -268,6 +269,12 @@ function EditField:onInput(keys)
     if not self.focus then
         -- only react to our hotkey
         return self:inputToSubviews(keys)
+    end
+
+    if self.ignore_keys then
+        for _,ignore_key in ipairs(self.ignore_keys) do
+            if keys[ignore_key] then return false end
+        end
     end
 
     if self.key and keys.LEAVESCREEN then
@@ -1099,6 +1106,7 @@ FilteredList = defclass(FilteredList, Widget)
 FilteredList.ATTRS {
     edit_below = false,
     edit_key = DEFAULT_NIL,
+    edit_ignore_keys = DEFAULT_NIL,
 }
 
 function FilteredList:init(info)
@@ -1108,6 +1116,7 @@ function FilteredList:init(info)
         on_change = self:callback('onFilterChange'),
         on_char = self:callback('onFilterChar'),
         key = self.edit_key,
+        ignore_keys = self.edit_ignore_keys,
     }
     self.list = List{
         frame = { t = 2 },

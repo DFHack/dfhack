@@ -10,14 +10,6 @@ work (e.g. links from the `changelog`).
   :local:
   :depth: 1
 
-.. _devel/unforbidall:
-
-devel/unforbidall
-=================
-
-Replaced by the `unforbid` script. Run ``unforbid all --quiet`` to match the
-behavior of the original ``devel/unforbidall`` script.
-
 .. _deteriorateclothes:
 
 deteriorateclothes
@@ -39,6 +31,13 @@ deterioratefood
 Replaced by the new combined `deteriorate` script. Run
 ``deteriorate --types=food``.
 
+.. _devel/unforbidall:
+
+devel/unforbidall
+=================
+Replaced by the `unforbid` script. Run ``unforbid all --quiet`` to match the
+behavior of the original ``devel/unforbidall`` script.
+
 .. _digfort:
 
 digfort
@@ -48,6 +47,12 @@ Please use DFHack's more powerful `quickfort` script instead. You can use your
 existing .csv files. Just move them to the ``blueprints`` folder in your DF
 installation, and instead of ``digfort file.csv``, run
 ``quickfort run file.csv``.
+
+.. _fix/build-location:
+
+fix/build-location
+==================
+The corresponding DF :bug:`5991` was fixed in DF 0.40.05.
 
 .. _fortplan:
 
@@ -59,8 +64,22 @@ script instead. You can use your existing .csv files. Just move them to the
 ``blueprints`` folder in your DF installation, and instead of
 ``fortplan file.csv`` run ``quickfort run file.csv``.
 
+.. _gui/hack-wish:
+
+gui/hack-wish
+=============
+Replaced by `gui/create-item`.
+
+.. _gui/no-dfhack-init:
+
+gui/no-dfhack-init
+==================
+No longer useful since the user doesn't have to create their own ``dfhack.init``
+file now that init files have moved to ``dfhack-config/init``. It used to show
+a warning at startup if :file:`dfhack.init` file was not found.
+
 .. _warn-stuck-trees:
 
 warn-stuck-trees
 ================
-The corresponding DF bug, :bug:`9252` was fixed in DF 0.44.01.
+The corresponding DF :bug:`9252` was fixed in DF 0.44.01.

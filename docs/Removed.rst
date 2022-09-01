@@ -10,14 +10,6 @@ work (e.g. links from the `changelog`).
   :local:
   :depth: 1
 
-.. _devel/unforbidall:
-
-devel/unforbidall
-=================
-
-Replaced by the `unforbid` script. Run ``unforbid all --quiet`` to match the
-behavior of the original ``devel/unforbidall`` script.
-
 .. _deteriorateclothes:
 
 deteriorateclothes
@@ -39,6 +31,13 @@ deterioratefood
 Replaced by the new combined `deteriorate` script. Run
 ``deteriorate --types=food``.
 
+.. _devel/unforbidall:
+
+devel/unforbidall
+=================
+Replaced by the `unforbid` script. Run ``unforbid all --quiet`` to match the
+behavior of the original ``devel/unforbidall`` script.
+
 .. _digfort:
 
 digfort
@@ -57,6 +56,12 @@ Allowed the military to store equipment in barracks containers. Removed because
 it required a binary patch to DF in order to function, and no such patch has
 existed since DF 0.34.11.
 
+.. _fix/build-location:
+
+fix/build-location
+==================
+The corresponding DF :bug:`5991` was fixed in DF 0.40.05.
+
 .. _fortplan:
 
 fortplan
@@ -66,6 +71,12 @@ quickfort-style syntax. Please use DFHack's more powerful `quickfort`
 script instead. You can use your existing .csv files. Just move them to the
 ``blueprints`` folder in your DF installation, and instead of
 ``fortplan file.csv`` run ``quickfort run file.csv``.
+
+.. _gui/hack-wish:
+
+gui/hack-wish
+=============
+Replaced by `gui/create-item`.
 
 .. _gui/no-dfhack-init:
 
@@ -79,4 +90,4 @@ longer necessary.
 
 warn-stuck-trees
 ================
-The corresponding DF bug, :bug:`9252` was fixed in DF 0.44.01.
+The corresponding DF :bug:`9252` was fixed in DF 0.44.01.

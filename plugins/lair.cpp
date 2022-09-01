@@ -61,7 +61,9 @@ command_result lair(color_ostream &out, std::vector<std::string> & params)
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("lair","Mark the map as a monster lair (avoids item scatter)",lair, false,
-        "Usage: 'lair' to mark entire map as monster lair, 'lair reset' to undo the operation.\n"));
+    commands.push_back(PluginCommand(
+        "lair",
+        "Mark the map as a monster lair to avoid item scatter.",
+        lair));
     return CR_OK;
 }

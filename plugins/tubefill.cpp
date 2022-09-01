@@ -40,9 +40,10 @@ command_result tubefill(color_ostream &out, std::vector<std::string> & params);
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("tubefill","Fill in all the adamantine tubes again.",tubefill, false,
-        "Replenishes mined out adamantine but does not fill hollow adamantine tubes.\n"
-        "Specify 'hollow' to fill hollow tubes, but beware glitchy HFS spawns.\n"));
+    commands.push_back(PluginCommand(
+        "tubefill",
+        "Replentishes mined-out adamantine.",
+        tubefill));
     return CR_OK;
 }
 

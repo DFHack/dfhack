@@ -17,7 +17,7 @@ See `dev-changelog` for a list of changes grouped by development releases.
   :local:
   :depth: 1
 
-.. include:: /docs/_auto/news.rst
+.. include:: /docs/changelogs/news.rst
 
 
 Older Changelogs

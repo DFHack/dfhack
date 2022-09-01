@@ -5,20 +5,24 @@ DFHack Documentation System
 ###########################
 
 
-DFHack documentation, like the file you are reading now, is created as ``.rst`` files,
-which are in `reStructuredText (reST) <https://www.sphinx-doc.org/rest.html>`_ format.
-This is a documentation format common in the Python community. It is very
+DFHack documentation, like the file you are reading now, is created as a set of
+``.rst`` files in `reStructuredText (reST) <https://www.sphinx-doc.org/rest.html>`_
+format. This is a documentation format common in the Python community. It is very
 similar in concept - and in syntax - to Markdown, as found on GitHub and many other
 places. However it is more advanced than Markdown, with more features available when
 compiled to HTML, such as automatic tables of contents, cross-linking, special
 external links (forum, wiki, etc) and more. The documentation is compiled by a
-Python tool, `Sphinx <https://www.sphinx-doc.org>`_.
+Python tool named `Sphinx <https://www.sphinx-doc.org>`_.
 
-The DFHack build process will compile the documentation, but this is disabled
-by default due to the additional Python and Sphinx requirements. You typically
-only need to build the docs if you're changing them, or perhaps
-if you want a local HTML copy; otherwise, you can read an
-`online version hosted by ReadTheDocs <https://dfhack.readthedocs.org>`_.
+The DFHack build process will compile and install the documentation so it can be
+displayed in-game by the `help` and `ls` commands (and any other command or GUI that
+displays help text), but this is disabled by default due to the additional Python and
+Sphinx requirements. If you already have a version of the docs installed (say from a
+downloaded release binary), then you only need to build the docs if you're changing them
+and want to see the changes reflected in your game.
+
+You can also build the docs if you just want a local HTML- or text-rendered copy, though
+you can always read the `online version <https://dfhack.readthedocs.org>`_ too.
 
 (Note that even if you do want a local copy, it is certainly not necessary to
 compile the documentation in order to read it. Like Markdown, reST documents are
@@ -28,86 +32,40 @@ The main thing you lose in plain text format is hyperlinking.)
 .. contents:: Contents
   :local:
 
-.. _docs-standards:
+Concepts and general guidance
+=============================
 
-Documentation standards
-=======================
+The source ``.rst`` files are compiled to HTML for viewing in a browser and to text
+format for viewing in-game. For in-game help, the help text is read from its installed
+location in ``hack/docs`` under the DF directory.
 
-Whether you're adding new code or just fixing old documentation (and there's plenty),
-there are a few important standards for completeness and consistent style.  Treat
-this section as a guide rather than iron law, match the surrounding text, and you'll
-be fine.
-
-Command documentation
----------------------
-
-Each command should have a short (~54 character) help string, which is shown
-by the `ls` command.  For scripts, this is a comment on the first line
-(the comment marker and whitespace is stripped).  For plugins it's the second
-argument to ``PluginCommand``.  Please make this brief but descriptive!
-
-Everything should be documented!  If it's not clear *where* a particular
-thing should be documented, ask on IRC or in the DFHack thread on Bay12 -
-as well as getting help, you'll be providing valuable feedback that
-makes it easier for future readers!
-
-Scripts can use a custom autodoc function, based on the Sphinx ``include``
-directive - anything between the tokens is copied into the appropriate scripts
-documentation page.  For Ruby, we follow the built-in docstring convention
-(``=begin`` and ``=end``).  For Lua, the tokens are ``[====[`` and ``]====]``
-- ordinary multi-line strings.  It is highly encouraged to reuse this string
-as the in-console documentation by (e.g.) printing it when a ``-help`` argument
-is given.
-
-The docs **must** have a heading which exactly matches the command, underlined
-with ``=====`` to the same length.  For example, a lua file would have:
-
-.. code-block:: lua
-
-    local helpstr = [====[
-
-    add-thought
-    ===========
-    Adds a thought or emotion to the selected unit.  Can be used by other scripts,
-    or the gui invoked by running ``add-thought gui`` with a unit selected.
-
-    ]====]
-
-
-.. highlight:: rst
-
-Where the heading for a section is also the name of a command, the spelling
-and case should exactly match the command to enter in the DFHack command line.
+When writing documentation, remember that everything should be documented!  If it's not
+clear *where* a particular thing should be documented, ask on Discord or in the DFHack
+thread on Bay12 -- you'll not only be getting help, you'll also be providing valuable
+feedback that makes it easier for future contributers to find documentation on how to
+write the documentation!
 
 Try to keep lines within 80-100 characters, so it's readable in plain text
 in the terminal - Sphinx (our documentation system) will make sure
 paragraphs flow.
 
-Command usage
--------------
+Short descriptions
+------------------
 
-If there aren't many options or examples to show, they can go in a paragraph of
-text.  Use double-backticks to put commands in monospaced font, like this::
+Each command that a user can run, as well as every plugin that can be enabled for some
+lasting effect, needs to have a short (~54 character) descriptive string associated with
+it. This description text is:
 
-    You can use ``cleanowned scattered x`` to dump tattered or abandoned items.
+- used in-game by the `ls` command and DFHack UI screens that list commands
+- used in the generated index entries in the HTML docs
 
-If the command takes more than three arguments, format the list as a table
-called Usage.  The table *only* lists arguments, not full commands.
-Input values are specified in angle brackets.  Example::
+Tags
+----
 
-    Usage:
-
-    :arg1:          A simple argument.
-    :arg2 <input>:  Does something based on the input value.
-    :Very long argument:
-                    Is very specific.
-
-To demonstrate usage - useful mainly when the syntax is complicated, list the
-full command with arguments in monospaced font, then indent the next line and
-describe the effect::
-
-    ``resume all``
-            Resumes all suspended constructions.
+To make it easier for players to find related commands, all plugins and commands are marked
+with relevant tags. These are used to compile indices and generate cross-links between the
+commands, both in the HTML documents and in-game. See the list of available `tag-list` and
+think about which categories your new tool belongs in.
 
 Links
 -----
@@ -115,17 +73,12 @@ Links
 If it would be helpful to mention another DFHack command, don't just type the
 name - add a hyperlink!  Specify the link target in backticks, and it will be
 replaced with the corresponding title and linked:  e.g. ```autolabor```
-=> `autolabor`.  Link targets should be equivalent to the command
-described (without file extension), and placed above the heading of that
-section like this::
+=> `autolabor`. Scripts and plugins have link targets that match their names
+created for you automatically.
 
-    .. _autolabor:
+If you want to link to a heading in your own page, you can specifiy it like this::
 
-    autolabor
-    =========
-
-Add link targets if you need them, but otherwise plain headings are preferred.
-Scripts have link targets created automatically.
+    `Heading text exactly as written`_
 
 Note that the DFHack documentation is configured so that single backticks (with
 no prefix or suffix) produce links to internal link targets, such as the
@@ -136,8 +89,250 @@ For alternative link behaviors, see:
 - `The reStructuredText documentation on roles <https://docutils.sourceforge.io/docs/ref/rst/roles.html>`__
 - `The reStructuredText documentation on external links <https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#hyperlink-targets>`__
 - `The Sphinx documentation on roles <https://www.sphinx-doc.org/en/master/usage/restructuredtext/roles.html>`__
+    - ``:doc:`` is useful for linking to another document outside of DFHack.
 
-    - ``:doc:`` is useful for linking to another document
+.. _docs-standards:
+
+Documentation standards
+=======================
+
+.. highlight:: rst
+
+Whether you're adding new code or just fixing old documentation (and there's plenty),
+there are a few important standards for completeness and consistent style.  Treat
+this section as a guide rather than iron law, match the surrounding text, and you'll
+be fine.
+
+Where do I add the help text?
+-----------------------------
+
+For scripts and plugins that are distributed as part of DFHack, documentation files
+should be added to the :source-scripts:`scripts/docs <docs>` and :source:`docs/plugins` directories,
+respectively, in a file named after the script or plugin. For example, a script named
+``gui/foobar.lua`` (which provides the ``gui/foobar`` command) should be documented
+in a file named ``docs/gui/foobar.rst`` in the scripts repo. Similarly, a plugin named
+``foobaz`` should be documented in a file named ``docs/plugins/foobaz.rst`` in the dfhack repo.
+For plugins, all commands provided by that plugin should be documented in that same file.
+
+Short descriptions (the ~54 character short help) are taken from the first "sentence" of
+the help text for scripts and plugins that can be enabled. This means that the help should
+begin with a sentence fragment that begins with a capital letter and ends in a full stop
+(``.``). Please make this brief but descriptive!
+
+Short descriptions for commands provided by plugins are taken from the ``description``
+parameter passed to the ``PluginCommand`` constructor used when the command is registered
+in the plugin source file.
+
+Header format
+-------------
+
+The docs **must** begin with a heading which exactly matches the script or plugin name, underlined
+with ``=====`` to the same length. This should be followed by a ``.. dfhack-tool:`` directive with
+at least the following parameters:
+
+* ``:summary:`` - a short, single-sentence description of the tool
+* ``:tags:`` - a space-separated list of tags that apply to the tool
+
+By default, ``dfhack-tool`` generates both a description of a tool and a command
+with the same name. For tools (specifically plugins) that do not provide exactly
+1 command with the same name as the tool, pass the ``:no-command:`` parameter (with
+no content after it) to prevent the command block from being generated.
+
+For tools that provide multiple commands, or a command by the same name but with
+significantly different functionality (e.g. a plugin that can be both enabled
+and invoked as a command for different results), use the ``.. dfhack-command:``
+directive for each command. This takes only a ``:summary:`` argument, with the
+same meaning as above.
+
+For example, documentation for the ``build-now`` script might look like::
+
+    build-now
+    =========
+
+    .. dfhack-tool::
+        :summary: Instantly completes unsuspended building construction jobs.
+        :tags: fort armok buildings
+
+    By default, all buildings on the map are completed, but the area of effect is configurable.
+
+And documentation for the ``autodump`` plugin might look like::
+
+    autodump
+    ========
+
+    .. dfhack-tool::
+        :summary: Automatically set items in a stockpile to be dumped.
+        :tags: fort armok fps productivity items stockpiles
+        :no-command:
+
+    .. dfhack-command:: autodump
+        :summary: Teleports items marked for dumping to the cursor position.
+
+    .. dfhack-command:: autodump-destroy-here
+        :summary: Destroy items marked for dumping under the cursor.
+
+    .. dfhack-command:: autodump-destroy-item
+        :summary: Destroys the selected item.
+
+    When `enabled <enable>`, this plugin adds an option to the :kbd:`q` menu for
+    stockpiles.
+
+    When invoked as a command, it can instantly move all unforbidden items marked
+    for dumping to the tile under the cursor.
+
+Usage help
+----------
+
+The first section after the header and introductory text should be the usage block. You can
+choose between two formats, based on whatever is cleaner or clearer for your syntax. The first
+option is to show usage formats together, with an explanation following the block::
+
+    Usage::
+
+        build-now [<options>]
+        build-now here [<options>]
+        build-now [<pos> [<pos>]] [<options>]
+
+    Where the optional ``<pos>`` pair can be used to specify the
+    coordinate bounds within which ``build-now`` will operate. If
+    they are not specified, ``build-now`` will scan the entire map.
+    If only one ``<pos>`` is specified, only the building at that
+    coordinate is built.
+
+    The ``<pos>`` parameters can either be an ``<x>,<y>,<z>`` triple
+    (e.g. ``35,12,150``) or the string ``here``, which means the
+    position of the active game cursor.
+
+The second option is to arrange the usage options in a list, with the full command
+and arguments in monospaced font. Then indent the next line and describe the effect::
+
+    Usage:
+
+    ``build-now [<options>]``
+        Scan the entire map and build all unsuspended constructions
+        and buildings.
+    ``build-now here [<options>]``
+        Build the unsuspended construction or building under the
+        cursor.
+    ``build-now [<pos> [<pos>]] [<options>]``
+        Build all unsuspended constructions within the specified
+        coordinate box.
+
+    The ``<pos>`` parameters are specified as...
+
+Note that in both options, the entire commandline syntax is written, including the command itself.
+Literal text is written as-is (e.g. the word ``here`` in the above example), and text that
+describes the kind of parameter that is being passed (e.g. ``pos`` or ``options``) is enclosed in
+angle brackets (``<`` and ``>``). Optional elements are enclosed in square brackets (``[`` and ``]``).
+
+Examples
+--------
+
+If the only way to run the command is to type the command itself, then this section is not necessary.
+Otherwise, please consider adding a section that shows some real, practical usage examples. For
+many users, this will be the **only** section they will read. It is so important that it is a good
+idea to include the ``Examples`` section **before** you describe any extended options your command
+might take. Write examples for what you expect the popular use cases will be. Also be sure to write
+examples showing specific, practical values being used for any parameter that takes a value.
+
+Examples should go in their own subheading with a single dash underline (``--------``). The examples
+themselves should be organized in a list, the same as in option 2 for Usage above. Here is an
+example Examples section::
+
+    Examples
+    --------
+
+    ``build-now``
+        Completes all unsuspended construction jobs on the map.
+    ``build-now 37,20,154 here``
+        Builds the unsuspended, unconstructed buildings in the box
+        bounded by the coordinate x=37,y=20,z=154 and the cursor.
+
+Options
+-------
+
+The options header should follow the examples, with each option in the same list format as the
+examples::
+
+    Options
+    -------
+
+    ``-h``, ``--help``
+        Show help text.
+    ``-l``, ``--quality <level>``
+        Set the quality of the architecture for built architected
+        builtings.
+    ``-q``, ``--quiet``
+        Suppress informational output (error messages are still
+        printed).
+
+Note that for parameters that have both short and long forms, any values that those options
+take only need to be specified once (e.g. ``<level>``).
+
+External scripts and plugins
+============================
+
+Scripts and plugins distributed separately from DFHack's release packages don't have the
+opportunity to add their documentation to the rendered HTML or text output. However, these
+scripts and plugins can use a different mechanism to at least make their help text available
+in-game.
+
+Note that since help text for external scripts and plugins is not rendered by Sphinx,
+it should be written in plain text. Any reStructuredText markup will not be processed.
+
+For external scripts, the short description comes from a comment on the first line
+(the comment marker and extra whitespace is stripped). For Lua, this would look like:
+
+.. code-block:: lua
+
+    -- A short description of my cool script.
+
+and for Ruby scripts it would look like:
+
+.. code-block:: ruby
+
+    # A short description of my cool script.
+
+The main help text for an external script needs to appear between two markers. For
+Lua, these markers are ``[====[`` and ``]====]``, and for Ruby they are ``=begin`` and
+``=end``. The documentation standards above still apply to external tools, but there is
+no need to include backticks for links or monospaced fonts. Here is a Lua example for an
+entire script header::
+
+    -- Inventory management for adventurers.
+    -- [====[
+    gui/adv-inventory
+    =================
+    Tags: adventure, items
+
+    Allows you to quickly move items between containers. This
+    includes yourself and any followers you have.
+
+    Usage:
+
+        gui/adv-inventory [<options>]
+
+    Examples:
+
+    gui/adv-inventory
+        Opens the GUI with nothing preselected
+    gui/adv-inventory take-all
+        Opens the GUI with all container items already selected and
+        ready to move into the adventurer's inventory.
+
+    Options:
+
+    take-all
+        Starts the GUI with container items pre-selected
+    give-all
+        Starts the GUI with your own items pre-selected
+    ]====]
+
+For external plugins, help text for provided commands can be passed as the ``usage``
+parameter when registering the commands with the ``PluginCommand`` constructor. There
+is currently no way for associating help text with the plugin itself, so any
+information about what the plugin does when enabled should be combined into the command
+help.
 
 Required dependencies
 =====================
@@ -258,33 +453,48 @@ ways to do this:
 * On Windows, if you prefer to use the batch scripts, you can run
   ``generate-msvc-gui.bat`` and set ``BUILD_DOCS`` through the GUI. If you are
   running another file, such as ``generate-msvc-all.bat``, you will need to edit
-  it to add the flag. You can also run ``cmake`` on the command line, similar to
-  other platforms.
+  the batch script to add the flag. You can also run ``cmake`` on the command line,
+  similar to other platforms.
 
-The generated documentation will be stored in ``docs/html`` in the root DFHack
-folder, and will be installed to ``hack/docs`` when you next install DFHack in a
-DF folder.
+By default, both HTML and text docs are built by CMake. The generated
+documentation is stored in ``docs/html`` and ``docs/text`` (respectively) in the
+root DFHack folder, and will be installed to ``hack/docs`` when you install
+DFHack.
 
 Running Sphinx manually
 -----------------------
 
 You can also build the documentation without running CMake - this is faster if
-you only want to rebuild the documentation regardless of any code changes. There
-is a ``docs/build.sh`` script provided for Linux and macOS that will run
-essentially the same command that CMake runs when building the docs - see the
-script for additional options.
+you only want to rebuild the documentation regardless of any code changes. The
+``docs/build.py`` script will build the documentation in any specified formats
+(HTML only by default) using essentially the same command that CMake runs when
+building the docs. Run the script with ``--help`` to see additional options.
 
-To build the documentation with default options, run the following command from
-the root DFHack folder::
+Examples:
+
+* ``docs/build.py``
+    Build just the HTML docs
+
+* ``docs/build.py html text``
+    Build both the HTML and text docs
+
+* ``docs/build.py --clean``
+    Build HTML and force a clean build (all source files are re-read)
+
+The resulting documentation will be stored in ``docs/html`` and/or ``docs/text``.
+
+Alternatively, you can run Sphinx manually with::
 
     sphinx-build . docs/html
 
-The resulting documentation will be stored in ``docs/html`` (you can specify
-a different path when running ``sphinx-build`` manually, but be warned that
-Sphinx may overwrite existing files in this folder).
+or, to build plain-text output::
+
+    sphinx-build -b text . docs/text
 
 Sphinx has many options to enable clean builds, parallel builds, logging, and
-more - run ``sphinx-build --help`` for details.
+more - run ``sphinx-build --help`` for details. If you specify a different
+output path, be warned that Sphinx may overwrite existing files in the output
+folder.
 
 Building a PDF version
 ----------------------
@@ -295,10 +505,11 @@ want to build a PDF version locally, you will need ``pdflatex``, which is part
 of a TeX distribution. The following command will then build a PDF, located in
 ``docs/pdf/latex/DFHack.pdf``, with default options::
 
-  sphinx-build -M latexpdf . docs/pdf
+  docs/build.py pdf
 
-There is a ``docs/build-pdf.sh`` script provided for Linux and macOS that runs
-this command for convenience - see the script for additional options.
+Alternatively, you can run Sphinx manually with::
+
+  sphinx-build -M latexpdf . docs/pdf
 
 .. _build-changelog:
 
@@ -318,10 +529,10 @@ changelogs are combined as part of the changelog build process:
 * ``scripts/changelog.txt`` for changes made to scripts in the ``scripts`` repo
 * ``library/xml/changelog.txt`` for changes made in the ``df-structures`` repo
 
-Building the changelogs generates two files: ``docs/_auto/news.rst`` and
-``docs/_auto/news-dev.rst``. These correspond to `changelog` and `dev-changelog`
-and contain changes organized by stable and development DFHack releases,
-respectively. For example, an entry listed under "0.44.05-alpha1" in
+Building the changelogs generates two files: ``docs/changelogs/news.rst`` and
+``docs/changelogs/news-dev.rst``. These correspond to `changelog` and
+`dev-changelog` and contain changes organized by stable and development DFHack
+releases, respectively. For example, an entry listed under "0.44.05-alpha1" in
 changelog.txt will be listed under that version in the development changelog as
 well, but under "0.44.05-r1" in the stable changelog (assuming that is the
 closest stable release after 0.44.05-alpha1). An entry listed under a stable

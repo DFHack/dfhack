@@ -59,7 +59,8 @@ command_result df_flows (color_ostream &out, vector <string> & parameters)
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("flows",
+    commands.push_back(PluginCommand(
+        "flows",
         "Counts map blocks with flowing liquids.",
         df_flows));
     return CR_OK;

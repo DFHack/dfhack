@@ -547,13 +547,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, vector <PluginComm
         return CR_FAILURE;
     commands.push_back(PluginCommand(
         "confirm",
-        "Confirmation dialogs",
-        df_confirm,
-        false, //allow non-interactive use
-
-        "  confirm enable|disable option|all ...\n"
-        "  confirm help|status\n"
-    ));
+        "Add confirmation dialogs for destructive actions.",
+        df_confirm));
     return CR_OK;
 }
 

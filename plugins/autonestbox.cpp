@@ -33,24 +33,6 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 REQUIRE_GLOBAL(world);
 
-static const string autonestbox_help =
-    "Assigns unpastured female egg-layers to nestbox zones.\n"
-    "Requires that you create pen/pasture zones above nestboxes.\n"
-    "If the pen is bigger than 1x1 the nestbox must be in the top left corner.\n"
-    "Only 1 unit will be assigned per pen, regardless of the size.\n"
-    "The age of the units is currently not checked, most birds grow up quite fast.\n"
-    "Usage:\n"
-    "\n"
-    "enable autonestbox\n"
-    "    Start checking for unpastured egg-layers and assigning them to nestbox zones.\n"
-    "autonestbox\n"
-    "    Print current status."
-    "autonestbox now\n"
-    "    Run a scan and assignment cycle right now. Does not require that the plugin is enabled.\n"
-    "autonestbox ticks <ticks>\n"
-    "    Change the number of ticks between scan and assignment cycles when the plugin is enabled.\n"
-    "    The default is 6000 (about 8 days)\n";
-
 namespace DFHack {
     // for configuration-related logging
     DBG_DECLARE(autonestbox, status, DebugCategory::LINFO);
@@ -90,9 +72,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
     commands.push_back(PluginCommand(
         plugin_name,
         "Auto-assign egg-laying female pets to nestbox zones.",
-        df_autonestbox,
-        false,
-        autonestbox_help.c_str()));
+        df_autonestbox));
     return CR_OK;
 }
 

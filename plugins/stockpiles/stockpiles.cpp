@@ -61,39 +61,21 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 {
     if ( world && ui )
     {
-        commands.push_back (
-            PluginCommand (
-                "copystock", "Copy stockpile under cursor.",
-                copystock, copystock_guard,
-                "  - In 'q' or 't' mode: select a stockpile and invoke in order\n"
-                "    to switch to the 'p' stockpile creation mode, and initialize\n"
-                "    the custom settings from the selected stockpile.\n"
-                "  - In 'p': invoke in order to switch back to 'q'.\n"
-            )
-        );
-        commands.push_back (
-            PluginCommand (
-                "savestock", "Save the active stockpile's settings to a file.",
-                savestock, savestock_guard,
-                "Must be in 'q' mode and have a stockpile selected.\n"
-                "example: 'savestock food.dfstock' will save the settings to 'food.dfstock'\n"
-                "in your stockpile folder.\n"
-                "Omitting the filename will result in text output directly to the console\n\n"
-                " -d, --debug: enable debug output\n"
-                " <filename>     : filename to save stockpile settings to (will be overwritten!)\n"
-            )
-        );
-        commands.push_back (
-            PluginCommand (
-                "loadstock", "Load and apply stockpile settings from a file.",
-                loadstock, loadstock_guard,
-                "Must be in 'q' mode and have a stockpile selected.\n"
-                "example: 'loadstock food.dfstock' will load the settings from 'food.dfstock'\n"
-                "in your stockpile folder and apply them to the selected stockpile.\n"
-                " -d, --debug: enable debug output\n"
-                " <filename>     : filename to load stockpile settings from\n"
-            )
-        );
+        commands.push_back(PluginCommand(
+            "copystock",
+            "Copy stockpile under cursor.",
+            copystock,
+            copystock_guard));
+        commands.push_back(PluginCommand(
+            "savestock",
+            "Save the active stockpile's settings to a file.",
+            savestock,
+            savestock_guard));
+        commands.push_back(PluginCommand(
+            "loadstock",
+            "Load and apply stockpile settings from a file.",
+            loadstock,
+            loadstock_guard));
     }
 
     return CR_OK;

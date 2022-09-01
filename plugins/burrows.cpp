@@ -53,35 +53,10 @@ static void deinit_map(color_ostream &out);
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand(
-        "burrow", "Miscellaneous burrow control.", burrow, false,
-        "  burrow enable options...\n"
-        "  burrow disable options...\n"
-        "    Enable or disable features of the plugin.\n"
-        "    See below for a list and explanation.\n"
-        "  burrow clear-units burrow burrow...\n"
-        "  burrow clear-tiles burrow burrow...\n"
-        "    Removes all units or tiles from the burrows.\n"
-        "  burrow set-units target-burrow src-burrow...\n"
-        "  burrow add-units target-burrow src-burrow...\n"
-        "  burrow remove-units target-burrow src-burrow...\n"
-        "    Adds or removes units in source burrows to/from the target\n"
-        "    burrow. Set is equivalent to clear and add.\n"
-        "  burrow set-tiles target-burrow src-burrow...\n"
-        "  burrow add-tiles target-burrow src-burrow...\n"
-        "  burrow remove-tiles target-burrow src-burrow...\n"
-        "    Adds or removes tiles in source burrows to/from the target\n"
-        "    burrow. In place of a source burrow it is possible to use\n"
-        "    one of the following keywords:\n"
-        "      ABOVE_GROUND, SUBTERRANEAN, INSIDE, OUTSIDE,\n"
-        "      LIGHT, DARK, HIDDEN, REVEALED\n"
-        "Implemented features:\n"
-        "  auto-grow\n"
-        "    When a wall inside a burrow with a name ending in '+' is dug\n"
-        "    out, the burrow is extended to newly-revealed adjacent walls.\n"
-        "    This final '+' may be omitted in burrow name args of commands above.\n"
-        "   Note: Digging 1-wide corridors with the miner inside the burrow is SLOW.\n"
-    ));
+    commands.push_back(
+        PluginCommand("burrow",
+                      "Quick commands for burrow control.",
+                      burrow));
 
     if (Core::getInstance().isMapLoaded())
         init_map(out);

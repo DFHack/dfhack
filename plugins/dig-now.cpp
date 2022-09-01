@@ -838,17 +838,6 @@ static bool get_options(color_ostream &out,
     return true;
 }
 
-static void print_help(color_ostream &out) {
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!lua_checkstack(L, 1) ||
-        !Lua::PushModulePublic(out, L, "plugins.dig-now", "print_help") ||
-        !Lua::SafeCall(out, L, 0, 0)) {
-        out.printerr("Failed to load dig-now Lua code\n");
-    }
-}
-
 bool dig_now_impl(color_ostream &out, const dig_now_options &options) {
     if (!Maps::IsValid()) {
         out.printerr("Map is not available!\n");
@@ -880,18 +869,18 @@ command_result dig_now(color_ostream &out, std::vector<std::string> &params) {
 
     dig_now_options options;
     if (!get_options(out, options, params) || options.help)
-    {
-        print_help(out);
-        return options.help ? CR_OK : CR_FAILURE;
-    }
+        return CR_WRONG_USAGE;
 
     return dig_now_impl(out, options) ? CR_OK : CR_FAILURE;
 }
 
 DFhackCExport command_result plugin_init(color_ostream &,
                                          std::vector<PluginCommand> &commands) {
-    commands.push_back(PluginCommand(
-        "dig-now", "Instantly complete dig designations", dig_now, false));
+    commands.push_back(
+        PluginCommand(
+            "dig-now",
+            "Instantly complete dig designations.",
+            dig_now));
     return CR_OK;
 }
 

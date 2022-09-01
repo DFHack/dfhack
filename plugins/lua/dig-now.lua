@@ -4,37 +4,6 @@ local argparse = require('argparse')
 local guidm = require('gui.dwarfmode')
 local utils = require('utils')
 
-local short_help_text = [=[
-
-dig-now
-=======
-
-Instantly completes dig designations, modifying map tiles and creating boulders,
-ores, and gems as if a miner were doing the mining or engraving. By default, all
-dig designations on the map are completed and boulder generation follows
-standard game rules, but the behavior is configurable.
-
-Usage:
-
-    dig-now [<pos> [<pos>]] [<options>]
-
-Examples:
-
-dig-now
-    Dig all designated tiles according to standard game rules.
-
-dig-now --clean
-    Dig designated tiles, but don't generate any boulders, ores, or gems.
-
-dig-now --dump here
-    Dig tiles and dump all generated boulders, ores, and gems at the tile under
-    the game cursor.
-
-See the online DFHack documentation for details on all options.
-]=]
-
-function print_help() print(short_help_text) end
-
 local function parse_coords(opts, configname, arg)
     local cursor = argparse.coords(arg, configname)
     utils.assign(opts[configname], cursor)

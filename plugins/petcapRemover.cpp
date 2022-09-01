@@ -36,18 +36,8 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 {
     commands.push_back(PluginCommand(
         "petcapRemover",
-        "Remove the pet population cap by causing pregnancies.",
-        petcapRemover,
-        false, //allow non-interactive use
-        "petcapRemover\n"
-        " does pregnancies now and schedules the next check\n"
-        "petcapRemover every n\n"
-        " set how often in ticks the plugin checks for possible pregnancies\n"
-        "petcapRemover cap n\n"
-        " sets the new cap to n. if n = 0, no cap. Caps between 1 and 50 effectively don't do anything because normal DF pregnancies will continue to happen below that cap.\n"
-        "petcapRemover pregtime n\n"
-        " sets the pregnancy duration to n ticks. Natural pregnancies are 300000 ticks for the current race and 200000 ticks for everyone else.\n"
-    ));
+        "Modify the pet population cap.",
+        petcapRemover));
     return CR_OK;
 }
 
@@ -204,6 +194,10 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
         is_enabled = enable;
         if ( !is_enabled ) {
             EventManager::unregisterAll(plugin_self);
+        } else {
+            // start the cycle
+            vector<string> params;
+            return petcapRemover(out, params);
         }
     }
 

@@ -71,12 +71,9 @@ command_result df_cleanconst(color_ostream &out, vector <string> & parameters)
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "cleanconst", "Cleans up construction materials.",
-        df_cleanconst, false,
-        "  This utility alters all constructions on the map so that they spawn their\n"
-        "  building component when they are disassembled, allowing their actual\n"
-        "  build items to be safely deleted.\n"
-    ));
+        "cleanconst",
+        "Cleans up construction materials.",
+        df_cleanconst));
     return CR_OK;
 }
 

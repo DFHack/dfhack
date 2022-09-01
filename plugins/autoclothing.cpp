@@ -1,5 +1,3 @@
-
-// some headers required for a plugin. Nothing special, just the basics.
 #include "Core.h"
 #include <Console.h>
 #include <Export.h>
@@ -184,16 +182,9 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 {
     // Fill the command list with your commands.
     commands.push_back(PluginCommand(
-        "autoclothing", "Automatically manage clothing work orders",
-        autoclothing, false, /* true means that the command can't be used from non-interactive user interface */
-        // Extended help string. Used by CR_WRONG_USAGE and the help command:
-        "  autoclothing <material> <item> [number]\n"
-        "Example:\n"
-        "  autoclothing cloth \"short skirt\" 10\n"
-        "    Sets the desired number of cloth short skirts available per citizen to 10.\n"
-        "  autoclothing cloth dress\n"
-        "    Displays the currently set number of cloth dresses chosen per citizen.\n"
-    ));
+        "autoclothing",
+        "Automatically manage clothing work orders",
+        autoclothing));
     return CR_OK;
 }
 

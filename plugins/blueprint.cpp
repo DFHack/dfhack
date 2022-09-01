@@ -118,7 +118,10 @@ struct_identity blueprint_options::_identity(sizeof(blueprint_options), &df::all
 command_result blueprint(color_ostream &, vector<string> &);
 
 DFhackCExport command_result plugin_init(color_ostream &, vector<PluginCommand> &commands) {
-    commands.push_back(PluginCommand("blueprint", "Record the structure of a live game map in a quickfort blueprint file", blueprint, false));
+    commands.push_back(
+        PluginCommand("blueprint",
+                      "Record a live game map in a quickfort blueprint.",
+                      blueprint));
     return CR_OK;
 }
 

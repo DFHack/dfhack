@@ -275,31 +275,19 @@ command_result df_autodump_destroy_item(color_ostream &out, vector <string> & pa
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "autodump", "Teleport items marked for dumping to the cursor.",
-        df_autodump, false,
-        "  This utility lets you quickly move all items designated to be dumped.\n"
-        "  Items are instantly moved to the cursor position, the dump flag is unset,\n"
-        "  and the forbid flag is set, as if it had been dumped normally.\n"
-        "  Be aware that any active dump item tasks still point at the item.\n"
-        "Options:\n"
-        "  destroy       - instead of dumping, destroy the items instantly.\n"
-        "  destroy-here  - only affect the tile under cursor.\n"
-        "  visible       - only process items that are not hidden.\n"
-        "  hidden        - only process hidden items.\n"
-        "  forbidden     - only process forbidden items (default: only unforbidden).\n"
-    ));
+        "autodump",
+        "Teleport items marked for dumping to the cursor.",
+        df_autodump));
     commands.push_back(PluginCommand(
-        "autodump-destroy-here", "Destroy items marked for dumping under cursor.",
-        df_autodump_destroy_here, Gui::cursor_hotkey,
-        "  Identical to autodump destroy-here, but intended for use as keybinding.\n"
-    ));
+        "autodump-destroy-here",
+        "Destroy items marked for dumping under cursor.",
+        df_autodump_destroy_here,
+        Gui::cursor_hotkey));
     commands.push_back(PluginCommand(
-        "autodump-destroy-item", "Destroy the selected item.",
-        df_autodump_destroy_item, Gui::any_item_hotkey,
-        "  Destroy the selected item. The item may be selected\n"
-        "  in the 'k' list, or inside a container. If called\n"
-        "  again before the game is resumed, cancels destroy.\n"
-    ));
+        "autodump-destroy-item",
+        "Destroy the selected item.",
+        df_autodump_destroy_item,
+        Gui::any_item_hotkey));
     return CR_OK;
 }
 

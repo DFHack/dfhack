@@ -49,16 +49,9 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "rendermax", "switch rendering engine.", rendermax, false,
-        "  rendermax trippy\n"
-        "  rendermax truecolor red|green|blue|white\n"
-        "  rendermax lua\n"
-        "  rendermax light - lighting engine\n"
-        "  rendermax light reload - reload the settings file\n"
-        "  rendermax light sun <x>|cycle - set time to x (in hours) or cycle (same effect if x<0)\n"
-        "  rendermax light occlusionON|occlusionOFF - debug the occlusion map\n"
-        "  rendermax disable\n"
-        ));
+        "rendermax",
+        "Modify the map lighting.",
+        rendermax));
     return CR_OK;
 }
 
@@ -331,7 +324,7 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
         return CR_WRONG_USAGE;
     if(!enabler->renderer->uses_opengl())
     {
-        out.printerr("Sorry, this plugin needs open gl enabled printmode. Try STANDARD or other non-2D\n");
+        out.printerr("Sorry, this plugin needs open GL-enabled printmode. Try STANDARD or other non-2D.\n");
         return CR_FAILURE;
     }
     string cmd=parameters[0];

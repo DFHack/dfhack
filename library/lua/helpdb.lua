@@ -191,11 +191,11 @@ local function update_entry(entry, iterator, opts)
             _,_,tags = line:trim():find('[*]*Tags:[*]* *(.*)')
             in_tags, tags_found = true, true
         elseif not short_help_found and
-                line:find('^%w') then
+                line:find('^%s*%w') and not line:find('^%w+:') then
             if in_short_help then
                 entry.short_help = entry.short_help .. ' ' .. line
             else
-                entry.short_help = line
+                entry.short_help = line:trim()
             end
             local sentence_end = entry.short_help:find('.', 1, true)
             if sentence_end then

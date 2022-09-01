@@ -181,18 +181,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 {
     commands.push_back(PluginCommand(
         "fix-unit-occupancy",
-        "Fix unit occupancy issues such as phantom 'creature blocking site' messages (bug 3499)",
-        cmd_fix_unit_occupancy,
-        false, //allow non-interactive use
-        "  enable fix-unit-occupancy: Enable the plugin\n"
-        "  disable fix-unit-occupancy fix-unit-occupancy: Disable the plugin\n"
-        "  fix-unit-occupancy: Run the plugin immediately. Available options:\n"
-        "    -h|here|cursor: Only operate on the tile at the cursor\n"
-        "    -n|dry|dry-run: Do not write changes to map\n"
-        "  fix-unit-occupancy interval X: Run the plugin every X ticks (when enabled).\n"
-        "    Default is 1200, or 1 day. Ticks are only counted when the game is unpaused.\n"
-
-    ));
+        "Fix phantom unit occupancy issues.",
+        cmd_fix_unit_occupancy));
     return CR_OK;
 }
 

@@ -29,7 +29,7 @@ For those just looking to apply existing blueprints, check out the `quickfort
 command's documentation <quickfort>` for syntax. There are also many
 ready-to-use blueprints available in the ``blueprints/library`` subfolder in
 your DFHack installation. Browse them on your computer or
-:source:`online <data/blueprints/library>`, or run ``quickfort list -l`` at the
+:source:`online <data/blueprints/library>`, or run ``quickfort list`` at the
 ``[DFHack]#`` prompt to list them, and then ``quickfort run`` to apply them to
 your fort!
 

@@ -28,8 +28,8 @@ it is useful (and customizable) for any fort. It includes the following config:
 - Calls `ban-cooking` for items that have important alternate uses and should
   not be cooked. This configuration is only set when a fortress is first
   started, so later manual changes will not be overridden.
-- Automates calling of various fort maintenance and `scripts-fix`, like
-  `cleanowned` and `fix/stuckdoors`.
+- Automates calling of various fort maintenance scripts, like `cleanowned` and
+  `fix/stuckdoors`.
 - Keeps your manager orders intelligently ordered with `orders` ``sort`` so no
   orders block other orders from ever getting completed.
 - Periodically enqueues orders to shear and milk shearable and milkable pets.

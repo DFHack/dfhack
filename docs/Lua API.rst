@@ -4397,7 +4397,7 @@ blueprint files:
 The names of the functions are also available as the keys of the
 ``valid_phases`` table.
 
-.. _building-hacks:
+.. _building-hacks-api:
 
 building-hacks
 ==============
@@ -4536,7 +4536,7 @@ Native functions:
 
 The lua module file also re-exports functions from ``dfhack.burrows``.
 
-.. _cxxrandom:
+.. _cxxrandom-api:
 
 cxxrandom
 =========
@@ -4706,7 +4706,7 @@ The dig-now plugin exposes the following functions to Lua:
     command ``dig-now <pos> <pos>``. See the `dig-now` documentation for details
     on default settings.
 
-.. _eventful:
+.. _eventful-api:
 
 eventful
 ========
@@ -4874,7 +4874,7 @@ Integrated tannery::
   b=require "plugins.eventful"
   b.addReactionToShop("TAN_A_HIDE","LEATHERWORKS")
 
-.. _luasocket:
+.. _luasocket-api:
 
 luasocket
 =========
@@ -4945,7 +4945,7 @@ A class with all the tcp functionality.
   Tries connecting to that address and port. Returns ``client`` object.
 
 
-.. _map-render:
+.. _map-render-api:
 
 map-render
 ==========
@@ -4961,7 +4961,7 @@ Functions
 
   returns a table with w*h*4 entries of rendered tiles. The format is same as ``df.global.gps.screen`` (tile,foreground,bright,background).
 
-.. _pathable:
+.. _pathable-api:
 
 pathable
 ========
@@ -4995,7 +4995,7 @@ sort
 The `sort <sort>` plugin does not export any native functions as of now.
 Instead, it calls Lua code to perform the actual ordering of list items.
 
-.. _xlsxreader:
+.. _xlsxreader-api:
 
 xlsxreader
 ==========

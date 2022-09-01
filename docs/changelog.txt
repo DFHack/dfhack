@@ -39,6 +39,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## New Tweaks
 
+## New Internal Commands
+- `tags`: new built-in command to list the tool category tags and their definitions. tags associated with each tool are visible in the tool help and in the output of `ls`.
+
 ## Fixes
 - ``job.removeJob()``: ensure jobs are removed from the world list when they are canceled
 
@@ -47,6 +50,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - History files: ``dfhack.history``, ``tiletypes.history``, ``lua.history``, and ``liquids.history`` have moved to the ``dfhack-config`` directory. If you'd like to keep the contents of your current history files, please move them to ``dfhack-config``.
 - `do-job-now`: new global keybinding for boosting the priority of the jobs associated with the selected building/work order/unit/item etc.: Alt-N
 - `keybinding`: support backquote (\`) as a hotkey (and assign the hotkey to the new `gui/launcher` interface)
+- `ls`: can now filter tools by substring or tag. note that dev scripts are hidden by default. pass the ``--dev`` option to show them.
 - `manipulator`: add a library of useful default professions
 - `manipulator`: move professions configuration from ``professions/`` to ``dfhack-config/professions/`` to keep it together with other dfhack configuration. If you have saved professions that you would like to keep, please manually move them to the new folder.
 - ``materials.ItemTraitsDialog``: added a default ``on_select``-handler which toggles the traits.
@@ -58,6 +62,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set improvements: set traffic designations to encourage dwarves to eat in the grand hall instead of the manager's office and to eat cooked food instead of raw ingredients
 
 ## Documentation
+- Update all DFHack tool documentation with standard syntax formatting, usage examples, and overall clarified text.
+- Group DFHack tools by `tag <tools>` so similar tools are grouped and easy to find
 
 ## API
 - Removed "egg" ("eggy") hook support (Linux only). The only remaining method of hooking into DF is by interposing SDL calls, which has been the method used by all binary releases of DFHack.

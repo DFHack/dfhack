@@ -44,6 +44,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - ``job.removeJob()``: ensure jobs are removed from the world list when they are canceled
+- `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set: declare the hospital zone before building the coffer; otherwise DF fails to stock the hospital with materials
 
 ## Misc Improvements
 - Init scripts: ``dfhack.init`` and other init scripts have moved to ``dfhack-config/init/``. If you have customized your ``dfhack.init`` file and want to keep your changes, please move the part that you have customized to the new location at ``dfhack-config/init/dfhack.init``. If you do not have changes that you want to keep, do not copy anything, and the new defaults will be used automatically.
@@ -59,10 +60,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `seedwatch`: ``seedwatch all`` now adds all plants with seeds to the watchlist, not just the "basic" crops.
 - UX: You can now move the cursor around in DFHack text fields in ``gui/`` scripts (e.g. `gui/blueprint`, `gui/quickfort`, or `gui/gm-editor`). You can move the cursor by clicking where you want it to go with the mouse or using the Left/Right arrow keys.  Ctrl+Left/Right will move one word at a time, and Alt+Left/Right will move to the beginning/end of the text.
 - UX: You can now click on the hotkey hint text in many ``gui/`` script windows to activate the hotkey, like a button. Not all scripts have been updated to use the clickable widget yet, but you can try it in `gui/blueprint` or `gui/quickfort`.
-- `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set improvements: set traffic designations to encourage dwarves to eat in the grand hall instead of the manager's office and to eat cooked food instead of raw ingredients
+- `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set improvements: set traffic designations to encourage dwarves to eat cooked food instead of raw ingredients
 
 ## Documentation
-- Update all DFHack tool documentation with standard syntax formatting, usage examples, and overall clarified text.
+- Update all DFHack tool documentation (300+ pages) with standard syntax formatting, usage examples, and overall clarified text.
 - Group DFHack tools by `tag <tools>` so similar tools are grouped and easy to find
 
 ## API

@@ -55,15 +55,7 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     commands.push_back(PluginCommand("spectate",
                                      "Automated spectator mode.",
                                      spectate,
-                                     false,
-                                     ""
-                                     " spectate\n"
-                                     "    displays plugin status\n"
-                                     " spectate enable\n"
-                                     " spectate disable\n"
-                                     " spectate auto-unpause\n"
-                                     "    toggle auto-dismissal of game pause events. e.g. a siege event pause\n"
-                                     "\n"));
+                                     false));
     pause_lock = World::AcquireAnnouncementPauseLock("spectate");
     return CR_OK;
 }

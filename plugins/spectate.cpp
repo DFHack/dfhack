@@ -139,7 +139,6 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 }
 
 command_result spectate (color_ostream &out, std::vector <std::string> & parameters) {
-    // todo: parse parameters
     if(!parameters.empty()) {
         if (parameters[0] == "auto-unpause") {
             dismiss_pause_events = !dismiss_pause_events;
@@ -172,6 +171,8 @@ command_result spectate (color_ostream &out, std::vector <std::string> & paramet
                 out.print("If you want additional options open an issue on github, or mention it on discord.\n\n");
                 return DFHack::CR_WRONG_USAGE;
             }
+        } else if (parameters[0] == "disengage") {
+            //todo: cannibalize follow
         } else {
             return DFHack::CR_WRONG_USAGE;
         }

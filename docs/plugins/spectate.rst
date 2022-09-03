@@ -2,39 +2,47 @@ spectate
 ========
 
 .. dfhack-tool::
-    :summary: Automatically follow exciting dwarves.
+    :summary: Automatically follow productive dwarves.
     :tags: fort interface
-    :no-command:
 
 Usage
 -----
 
 ::
 
-    spectate
-    spectate <option>
+    enable spectate
+    disable spectate
+    spectate <option> <value>
 
 
-The plugin will automatically switch which dwarf is being followed periodically,
-preferring dwarves on z-levels with the highest job activity.
+When enabled, the plugin will automatically switch which dwarf is being
+followed periodically, preferring dwarves on z-levels with the highest
+job activity.
+
+To set features that toggle between two states, use {0,1} to specify
+which state the feature should be in. Anything else will take any positive
+value.
 
 Examples
 --------
 
 ``spectate``
-    See the status of spectate, what is enabled or disabled.
+    The plugin reports its feature status.
 
-``spectate enable``
-    Enable spectate plugin to pseudo-randomly follow dwarves around.
 
-``spectate auto-unpause``
+``spectate auto-unpause 1``
     Enable the spectate plugin to automatically dismiss pause events caused
     by the game. Siege events are one example of such a game event.
+
+``spectate tick-interval 50``
+    Set the tick interval the followed dwarf can be changed at back to its
+    default value.
 
 Options
 -------
 
-:no option:     Show plugin status.
-:enable:        Enable plugin.
-:disable:       Disable plugin.
-:auto-unpause:  Toggle auto-dismissal of game pause events.
+:no option:      Show plugin status.
+:focus-jobs:     Toggle whether the plugin should always be following a job.
+:auto-unpause:   Toggle auto-dismissal of game pause events.
+:auto-disengage: Toggle auto-disengagement of plugin through player intervention.
+:tick-interval:  Set the plugin's tick interval for changing the followed dwarf.

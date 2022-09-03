@@ -71,29 +71,12 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (enabled && world) {
         switch (event) {
-            case SC_WORLD_LOADED:
-            case SC_MAP_LOADED:
-                if (dismiss_pause_events && World::ReadPauseState()) {
-                    *df::global::debug_nopause = false;
-                }
-                break;
-            case SC_PAUSED:
-                if(dismiss_pause_events){
-                    if (our_dorf) {
-                        df::global::ui->follow_unit = our_dorf->id;
-                        const int16_t &x = our_dorf->pos.x;
-                        const int16_t &y = our_dorf->pos.y;
-                        const int16_t &z = our_dorf->pos.z;
-                        Gui::setViewCoords(x, y, z);
-                    }
-                }
-                break;
-            case SC_UNPAUSED:
-                break;
             case SC_MAP_UNLOADED:
             case SC_BEGIN_UNLOAD:
             case SC_WORLD_UNLOADED:
                 our_dorf = nullptr;
+                job_watched = nullptr;
+                following_dwarf = false;
             default:
                 break;
         }
@@ -158,13 +141,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 command_result spectate (color_ostream &out, std::vector <std::string> & parameters) {
     // todo: parse parameters
     if(!parameters.empty()) {
-        if (parameters[0] == "disable") {
-            return plugin_enable(out, false);
-        } else if (parameters[0] == "enable") {
-            return plugin_enable(out, true);
-        } else if (parameters[0] == "godmode") {
-            out.print("todo?\n"); // todo: adventure as deity?
-        } else if (parameters[0] == "auto-unpause") {
+        if (parameters[0] == "auto-unpause") {
             dismiss_pause_events = !dismiss_pause_events;
 
             // update the announcement settings if we can
@@ -187,14 +164,16 @@ command_result spectate (color_ostream &out, std::vector <std::string> & paramet
             if (!lock_collision){
                 out.print(dismiss_pause_events ? "auto-unpause: on\n" : "auto-unpause: off\n");
             } else {
-                out.print("auto-unpause: must wait for another Pausing::AnnouncementLock to be lifted.\n");
+                out.print("auto-unpause: must wait for another Pausing::AnnouncementLock to be lifted. This setting will complete when the lock lifts.\n");
             }
 
             // probably a typo
             if (parameters.size() == 2) {
-                out.print("If you want additional options open an issue on github, or mention it on discord.\n");
+                out.print("If you want additional options open an issue on github, or mention it on discord.\n\n");
                 return DFHack::CR_WRONG_USAGE;
             }
+        } else {
+            return DFHack::CR_WRONG_USAGE;
         }
     } else {
         out.print(enabled ? "Spectate is enabled.\n" : "Spectate is disabled.\n");
@@ -207,7 +186,6 @@ command_result spectate (color_ostream &out, std::vector <std::string> & paramet
 
 // every tick check whether to decide to follow a dwarf
 void onTick(color_ostream& out, void* ptr) {
-    if (!df::global::ui) return;
     int32_t tick = df::global::world->frame_counter;
     if(our_dorf){
         if(!Units::isAlive(our_dorf)){

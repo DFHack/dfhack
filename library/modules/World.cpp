@@ -78,30 +78,35 @@ void World::SetPauseState(bool paused)
 std::unordered_set<Lock*> PlayerLock::locks;
 std::unordered_set<Lock*> AnnouncementLock::locks;
 
-bool AnnouncementLock::isAnyLocked() const {
+template<typename Locks>
+inline bool any_lock(Locks locks) {
     return std::any_of(locks.begin(), locks.end(), [](Lock* lock) { return lock->isLocked(); });
+}
+
+template<typename Locks, typename LockT>
+inline bool only_lock(Locks locks, LockT* this_lock) {
+    return std::all_of(locks.begin(), locks.end(), [&](Lock* lock) {
+        if (lock == this_lock) {
+            return lock->isLocked();
+        }
+        return !lock->isLocked();
+    });
+}
+
+bool AnnouncementLock::isAnyLocked() const {
+    return any_lock(locks);
 }
 
 bool AnnouncementLock::isOnlyLocked() const {
-    return std::all_of(locks.begin(), locks.end(), [&](Lock* lock) {
-        if (lock == this) {
-            return lock->isLocked();
-        }
-        return !lock->isLocked();
-    });
+    return only_lock(locks, this);
 }
 
 bool PlayerLock::isAnyLocked() const {
-    return std::any_of(locks.begin(), locks.end(), [](Lock* lock) { return lock->isLocked(); });
+    return any_lock(locks);
 }
 
 bool PlayerLock::isOnlyLocked() const {
-    return std::all_of(locks.begin(), locks.end(), [&](Lock* lock) {
-        if (lock == this) {
-            return lock->isLocked();
-        }
-        return !lock->isLocked();
-    });
+    return only_lock(locks, this);
 }
 
 namespace pausing {

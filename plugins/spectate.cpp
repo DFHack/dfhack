@@ -180,7 +180,7 @@ command_result spectate (color_ostream &out, std::vector <std::string> & paramet
         if (parameters.size() % 2 != 0) {
             return DFHack::CR_WRONG_USAGE;
         }
-        for (int i = 0; i+1 < parameters.size(); i += 2) {
+        for (size_t i = 0; i+1 < parameters.size(); i += 2) {
             if (parameters[i] == "auto-unpause") {
                 if (parameters[i+1] == "0") {
                     enable_auto_unpause(out, false);
@@ -233,7 +233,7 @@ void onTick(color_ostream& out, void* ptr) {
             df::global::ui->follow_unit = -1;
         }
     }
-    if (!following_dwarf || (focus_jobs_enabled && !job_watched) || (tick - timestamp) > tick_span) {
+    if (!following_dwarf || (focus_jobs_enabled && !job_watched) || (tick - timestamp) > (int32_t)tick_span) {
         std::vector<df::unit*> dwarves;
         for (auto unit: df::global::world->units.active) {
             if (!Units::isCitizen(unit)) {
@@ -264,7 +264,7 @@ void onJobStart(color_ostream& out, void* job_ptr) {
     int zcount = ++freq[job->pos.z];
     job_tracker.emplace(job->id);
     // if we're not doing anything~ then let's pick something
-    if ((focus_jobs_enabled && !job_watched) || (tick - timestamp) > tick_span) {
+    if ((focus_jobs_enabled && !job_watched) || (tick - timestamp) > (int32_t)tick_span) {
         following_dwarf = true;
         // todo: allow the user to configure b, and also revise the math
         const double b = base;

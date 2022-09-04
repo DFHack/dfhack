@@ -344,7 +344,7 @@ void onJobCompletion(color_ostream &out, void* job_ptr) {
     // the job doesn't exist, so we definitely need to get rid of that
     job_tracker.erase(job->id);
     // the event manager clones jobs and returns those clones for completed jobs. So the pointers won't match without a refactor of EM passing clones to both events
-    if (job_watched->id == job->id) {
+    if (job_watched && job_watched->id == job->id) {
         job_watched = nullptr;
     }
 }

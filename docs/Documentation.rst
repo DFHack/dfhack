@@ -16,10 +16,10 @@ Python tool named `Sphinx <https://www.sphinx-doc.org>`_.
 
 The DFHack build process will compile and install the documentation so it can be
 displayed in-game by the `help` and `ls` commands (and any other command or GUI that
-displays help text), but this is disabled by default due to the additional Python and
-Sphinx requirements. If you already have a version of the docs installed (say from a
-downloaded release binary), then you only need to build the docs if you're changing them
-and want to see the changes reflected in your game.
+displays help text), but documentation compilation is disabled by default due to the
+additional Python and Sphinx requirements. If you already have a version of the docs
+installed (say from a downloaded release binary), then you only need to build the docs
+if you're changing them and want to see the changes reflected in your game.
 
 You can also build the docs if you just want a local HTML- or text-rendered copy, though
 you can always read the `online version <https://dfhack.readthedocs.org>`_ too.
@@ -39,7 +39,7 @@ The source ``.rst`` files are compiled to HTML for viewing in a browser and to t
 format for viewing in-game. For in-game help, the help text is read from its installed
 location in ``hack/docs`` under the DF directory.
 
-When writing documentation, remember that everything should be documented!  If it's not
+When writing documentation, remember that everything should be documented! If it's not
 clear *where* a particular thing should be documented, ask on Discord or in the DFHack
 thread on Bay12 -- you'll not only be getting help, you'll also be providing valuable
 feedback that makes it easier for future contributers to find documentation on how to
@@ -183,11 +183,14 @@ And documentation for the ``autodump`` plugin might look like::
 Usage help
 ----------
 
-The first section after the header and introductory text should be the usage block. You can
+The first section after the header and introductory text should be the usage section. You can
 choose between two formats, based on whatever is cleaner or clearer for your syntax. The first
 option is to show usage formats together, with an explanation following the block::
 
-    Usage::
+    Usage
+    -----
+    
+    ::
 
         build-now [<options>]
         build-now here [<options>]
@@ -206,7 +209,8 @@ option is to show usage formats together, with an explanation following the bloc
 The second option is to arrange the usage options in a list, with the full command
 and arguments in monospaced font. Then indent the next line and describe the effect::
 
-    Usage:
+    Usage
+    -----
 
     ``build-now [<options>]``
         Scan the entire map and build all unsuspended constructions
@@ -224,6 +228,9 @@ Note that in both options, the entire commandline syntax is written, including t
 Literal text is written as-is (e.g. the word ``here`` in the above example), and text that
 describes the kind of parameter that is being passed (e.g. ``pos`` or ``options``) is enclosed in
 angle brackets (``<`` and ``>``). Optional elements are enclosed in square brackets (``[`` and ``]``).
+If the command takes an arbitrary number of elements, use ``...``, for example::
+
+    prioritize [<options>] <job type> [<job type> ...]
 
 Examples
 --------

@@ -189,7 +189,7 @@ option is to show usage formats together, with an explanation following the bloc
 
     Usage
     -----
-    
+
     ::
 
         build-now [<options>]

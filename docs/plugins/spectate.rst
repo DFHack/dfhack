@@ -42,8 +42,8 @@ Options
 -------
 
 :no option:      Show plugin status.
+:tick-threshold: Set the plugin's tick interval for changing the followed dwarf.
+                 Acts as a maximum wait time when used with focus-jobs.
 :focus-jobs:     Toggle whether the plugin should always be following a job.
 :auto-unpause:   Toggle auto-dismissal of game pause events.
 :auto-disengage: Toggle auto-disengagement of plugin through player intervention.
-:tick-interval:  Set the plugin's tick interval for changing the followed dwarf.
-                 Acts as a maximum wait time when used with focus-jobs.

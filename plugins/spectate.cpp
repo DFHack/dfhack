@@ -22,32 +22,55 @@
 #include <set>
 #include <random>
 
-std::map<uint16_t,uint16_t> freq;
-std::set<int32_t> job_tracker;
-std::default_random_engine RNG;
-
-//#include "df/world.h"
-
-using namespace DFHack;
-using namespace df::enums;
-
 DFHACK_PLUGIN("spectate");
 DFHACK_PLUGIN_IS_ENABLED(enabled);
-Pausing::AnnouncementLock* pause_lock = nullptr;
-bool lock_collision = false;
-bool unpause_enabled = false;
-bool disengage_enabled = false;
-bool focus_jobs_enabled = false;
-bool following_dwarf = false;
-df::unit* our_dorf = nullptr;
-df::job* job_watched = nullptr;
-int32_t timestamp = -1;
-uint64_t tick_span = 50;
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(pause_state);
 REQUIRE_GLOBAL(d_init);
+
+using namespace DFHack;
+using namespace df::enums;
+
+void onTick(color_ostream& out, void* tick);
+void onJobStart(color_ostream &out, void* job);
+void onJobCompletion(color_ostream &out, void* job);
+
+uint64_t tick_threshold = 50;
+bool focus_jobs_enabled = false;
+bool disengage_enabled = false;
+bool unpause_enabled = false;
+Pausing::AnnouncementLock* pause_lock = nullptr;
+bool lock_collision = false;
+
+bool following_dwarf = false;
+df::unit* our_dorf = nullptr;
+df::job* job_watched = nullptr;
+int32_t timestamp = -1;
+
+std::set<int32_t> job_tracker;
+std::map<uint16_t,uint16_t> freq;
+std::default_random_engine RNG;
+
 #define base 0.99
+
+static const std::string CONFIG_KEY = std::string(plugin_name) + "/config";
+enum ConfigData {
+    UNPAUSE,
+    DISENGAGE,
+    JOB_FOCUS,
+    TICK_THRESHOLD
+};
+
+static PersistentDataItem config;
+inline void saveConfig() {
+    if (config.isValid()) {
+        config.ival(UNPAUSE) = unpause_enabled;
+        config.ival(DISENGAGE) = disengage_enabled;
+        config.ival(JOB_FOCUS) = focus_jobs_enabled;
+        config.ival(TICK_THRESHOLD) = tick_threshold;
+    }
+}
 
 command_result spectate (color_ostream &out, std::vector <std::string> & parameters);
 
@@ -60,69 +83,24 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
-    if (enabled && world) {
-        switch (event) {
-            case SC_MAP_UNLOADED:
-            case SC_BEGIN_UNLOAD:
-            case SC_WORLD_UNLOADED:
-                our_dorf = nullptr;
-                job_watched = nullptr;
-                following_dwarf = false;
-            default:
-                break;
-        }
-    }
-    return CR_OK;
-}
-
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
     World::ReleasePauseLock(pause_lock);
     return CR_OK;
 }
 
-void onTick(color_ostream& out, void* tick);
-void onJobStart(color_ostream &out, void* job);
-void onJobCompletion(color_ostream &out, void* job);
+DFhackCExport command_result plugin_load_data (color_ostream &out) {
+    config = World::GetPersistentData(CONFIG_KEY);
 
-void enable_auto_unpause(color_ostream &out, bool state){
-    if(unpause_enabled != state && lock_collision) {
-        // when enabled, lock collision means announcements haven't been disabled
-        // when disabled, lock collision means announcement are still disabled
-        // the only state left to consider here is what the lock should be set to
-        lock_collision = false;
-        unpause_enabled = state;
-        if (unpause_enabled) {
-            pause_lock->lock();
-        } else {
-            // this one should be redundant, the lock should already be unlocked right now
-            pause_lock->unlock();
-        }
-        out.print(unpause_enabled ? "auto-unpause: on\n" : "auto-unpause: off\n");
-        return;
-    }
-    unpause_enabled = state;
-    // update the announcement settings if we can
-    if (unpause_enabled) {
-        if (World::SaveAnnouncementSettings()) {
-            World::DisableAnnouncementPausing();
-            pause_lock->lock();
-        } else {
-            lock_collision = true;
-        }
+    if (!config.isValid()) {
+        config = World::AddPersistentData(CONFIG_KEY);
+        saveConfig();
     } else {
-        pause_lock->unlock();
-        if (!World::RestoreAnnouncementSettings()) {
-            // this in theory shouldn't happen, if others use the lock like we do in spectate
-            lock_collision = true;
-        }
+        unpause_enabled = config.ival(UNPAUSE);
+        disengage_enabled = config.ival(DISENGAGE);
+        focus_jobs_enabled = config.ival(JOB_FOCUS);
+        tick_threshold = config.ival(TICK_THRESHOLD);
     }
-    // report to the user how things went
-    if (!lock_collision){
-        out.print(unpause_enabled ? "auto-unpause: on\n" : "auto-unpause: off\n");
-    } else {
-        out.print("auto-unpause: must wait for another Pausing::AnnouncementLock to be lifted. This setting will complete when the lock lifts.\n");
-    }
+    return DFHack::CR_OK;
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
@@ -147,6 +125,22 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     return DFHack::CR_OK;
 }
 
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
+    if (enabled && world) {
+        switch (event) {
+            case SC_MAP_UNLOADED:
+            case SC_BEGIN_UNLOAD:
+            case SC_WORLD_UNLOADED:
+                our_dorf = nullptr;
+                job_watched = nullptr;
+                following_dwarf = false;
+            default:
+                break;
+        }
+    }
+    return CR_OK;
+}
+
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     if (lock_collision) {
         if (unpause_enabled) {
@@ -168,11 +162,51 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
         Gui::getCurViewscreen(true)->feed_key(interface_key::CLOSE_MEGA_ANNOUNCEMENT);
     }
     if (disengage_enabled) {
+        fprintf(stderr,"A: pre-segfault-potential\n");
+        fflush(stderr);
         if (our_dorf && our_dorf->id != df::global::ui->follow_unit){
             plugin_enable(out, false);
         }
+        fprintf(stderr,"A: post-segfault-potential\n");
+        fflush(stderr);
     }
     return DFHack::CR_OK;
+}
+
+void enable_auto_unpause(color_ostream &out, bool state){
+    if(unpause_enabled != state && lock_collision) {
+        // when enabled, lock collision means announcements haven't been disabled
+        // when disabled, lock collision means announcement are still disabled
+        // the only state left to consider here is what the lock should be set to
+        lock_collision = false;
+        unpause_enabled = state;
+        if (unpause_enabled) {
+            pause_lock->lock();
+        } else {
+            // this one should be redundant, the lock should already be unlocked right now
+            pause_lock->unlock();
+        }
+        return;
+    }
+    unpause_enabled = state;
+    // update the announcement settings if we can
+    if (unpause_enabled) {
+        if (World::SaveAnnouncementSettings()) {
+            World::DisableAnnouncementPausing();
+            pause_lock->lock();
+        } else {
+            lock_collision = true;
+        }
+    } else {
+        pause_lock->unlock();
+        if (!World::RestoreAnnouncementSettings()) {
+            // this in theory shouldn't happen, if others use the lock like we do in spectate
+            lock_collision = true;
+        }
+    }
+    if (lock_collision){
+        out.printerr("auto-unpause: must wait for another Pausing::AnnouncementLock to be lifted. This setting will complete when the lock lifts.\n");
+    }
 }
 
 command_result spectate (color_ostream &out, std::vector <std::string> & parameters) {
@@ -205,9 +239,9 @@ command_result spectate (color_ostream &out, std::vector <std::string> & paramet
                 } else {
                     return DFHack::CR_WRONG_USAGE;
                 }
-            } else if (parameters[i] == "tick-interval") {
+            } else if (parameters[i] == "tick-threshold") {
                 try {
-                    tick_span = std::stol(parameters[i + 1]);
+                    tick_threshold = std::stol(parameters[i + 1]);
                 } catch (const std::exception &e) {
                     out.printerr("%s\n", e.what());
                 }
@@ -216,16 +250,19 @@ command_result spectate (color_ostream &out, std::vector <std::string> & paramet
             }
         }
     } else {
-        out.print(enabled ? "Spectate is enabled.\n" : "Spectate is disabled.\n");
-        if(enabled) {
-            out.print(unpause_enabled ? "auto-unpause: on.\n" : "auto-unpause: off.\n");
-        }
+        out.print("Spectate is %s\n", enabled ? "ENABLED." : "DISABLED.");
+        out.print("tick-threshold: %zu\n", tick_threshold);
+        out.print("focus-jobs: %s\n", focus_jobs_enabled ? "on." : "off.");
+        out.print("auto-unpause: %s\n", unpause_enabled ? "on." : "off.");
+        out.print("auto-disengage: %s\n", disengage_enabled ? "on." : "off.");
     }
+    saveConfig();
     return DFHack::CR_OK;
 }
 
 // every tick check whether to decide to follow a dwarf
 void onTick(color_ostream& out, void* ptr) {
+    if (!df::global::ui) return;
     int32_t tick = df::global::world->frame_counter;
     if(our_dorf){
         if(!Units::isAlive(our_dorf)){
@@ -233,7 +270,9 @@ void onTick(color_ostream& out, void* ptr) {
             df::global::ui->follow_unit = -1;
         }
     }
-    if (!following_dwarf || (focus_jobs_enabled && !job_watched) || (tick - timestamp) > (int32_t)tick_span) {
+    fprintf(stderr,"B: pre-segfault-potential\n");
+    fflush(stderr);
+    if (!following_dwarf || (focus_jobs_enabled && !job_watched) || (tick - timestamp) > (int32_t)tick_threshold) {
         std::vector<df::unit*> dwarves;
         for (auto unit: df::global::world->units.active) {
             if (!Units::isCitizen(unit)) {
@@ -253,6 +292,8 @@ void onTick(color_ostream& out, void* ptr) {
             }
         }
     }
+    fprintf(stderr,"B: post-segfault-potential\n");
+    fflush(stderr);
 }
 
 // every new worked job needs to be considered
@@ -264,7 +305,7 @@ void onJobStart(color_ostream& out, void* job_ptr) {
     int zcount = ++freq[job->pos.z];
     job_tracker.emplace(job->id);
     // if we're not doing anything~ then let's pick something
-    if ((focus_jobs_enabled && !job_watched) || (tick - timestamp) > (int32_t)tick_span) {
+    if ((focus_jobs_enabled && !job_watched) || (tick - timestamp) > (int32_t)tick_threshold) {
         following_dwarf = true;
         // todo: allow the user to configure b, and also revise the math
         const double b = base;

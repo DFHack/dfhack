@@ -162,13 +162,9 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
         Gui::getCurViewscreen(true)->feed_key(interface_key::CLOSE_MEGA_ANNOUNCEMENT);
     }
     if (disengage_enabled) {
-        fprintf(stderr,"A: pre-segfault-potential\n");
-        fflush(stderr);
         if (our_dorf && our_dorf->id != df::global::ui->follow_unit){
             plugin_enable(out, false);
         }
-        fprintf(stderr,"A: post-segfault-potential\n");
-        fflush(stderr);
     }
     return DFHack::CR_OK;
 }
@@ -270,8 +266,6 @@ void onTick(color_ostream& out, void* ptr) {
             df::global::ui->follow_unit = -1;
         }
     }
-    fprintf(stderr,"B: pre-segfault-potential\n");
-    fflush(stderr);
     if (!following_dwarf || (focus_jobs_enabled && !job_watched) || (tick - timestamp) > (int32_t)tick_threshold) {
         std::vector<df::unit*> dwarves;
         for (auto unit: df::global::world->units.active) {
@@ -292,8 +286,6 @@ void onTick(color_ostream& out, void* ptr) {
             }
         }
     }
-    fprintf(stderr,"B: post-segfault-potential\n");
-    fflush(stderr);
 }
 
 // every new worked job needs to be considered

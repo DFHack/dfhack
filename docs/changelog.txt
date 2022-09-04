@@ -73,6 +73,14 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Removed ``Windows`` module (C++-only) - unused.
 - ``Constructions`` module (C++-only): removed ``t_construction``, ``isValid()``, ``getCount()``, ``getConstruction()``, and ``copyConstruction()``. Access ``world.constructions`` directly instead.
 - ``Gui::getSelectedItem()``, ``Gui::getAnyItem()``: added support for the artifacts screen
+- Added functions for manipulating pause abilities, to the World module.
+  - Added ``World::AcquireAnnouncementPauseLock()`` acquires a lock object to lock Announcement pause API calls
+  - Added ``World::AcquirePlayerPauseLock()`` acquires a lock object to lock Player pause API calls
+  - Added ``World::ReleasePauseLock()`` to release acquired locks on plugin shutdown
+  - Added ``World::DisableAnnouncementPausing()`` sets all announcement pause settings to off
+  - Added ``World::SaveAnnouncementSettings()`` and ``World::RestoreAnnouncementSettings()`` saves/restores the announcement pause settings
+  - Added ``World::DisablePlayerPausing()`` and ``World::EnablePlayerPausing()`` disables/enables the player's ability to pause the game
+
 
 ## Lua
 - History: added ``dfhack.getCommandHistory(history_id, history_filename)`` and ``dfhack.addCommandToHistory(history_id, history_filename, command)`` so gui scripts can access a commandline history without requiring a terminal.

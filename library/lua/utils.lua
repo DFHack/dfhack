@@ -608,7 +608,7 @@ df_env = df_shortcut_env()
 function df_expr_to_ref(expr)
     expr = expr:gsub('%["(.-)"%]', function(field) return '.' .. field end)
         :gsub('%[\'(.-)\'%]', function(field) return '.' .. field end)
-        :gsub('%[(%d+)]', function(field) return '.' .. field end)
+        :gsub('%[(%-?%d+)%]', function(field) return '.' .. field end)
     local parts = expr:split('.', true)
     local obj = df_env[parts[1]]
     for i = 2, #parts do

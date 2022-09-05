@@ -74,6 +74,12 @@ fix/fat-dwarves
 ===============
 The corresponding DF :bug:`5971` was fixed in DF 0.40.05.
 
+.. _fix/feeding-timers:
+
+fix/feeding-timers
+==================
+The corresponding DF :bug:`2606` was fixed in DF 0.40.12.
+
 .. _fortplan:
 
 fortplan

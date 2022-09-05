@@ -21,6 +21,7 @@
 #include <map>
 #include <set>
 #include <random>
+#include <cinttypes>
 
 DFHACK_PLUGIN("spectate");
 DFHACK_PLUGIN_IS_ENABLED(enabled);
@@ -247,7 +248,7 @@ command_result spectate (color_ostream &out, std::vector <std::string> & paramet
         }
     } else {
         out.print("Spectate is %s\n", enabled ? "ENABLED." : "DISABLED.");
-        out.print("tick-threshold: %lu\n", tick_threshold);
+        out.print("tick-threshold: %" PRIu64 "\n", tick_threshold);
         out.print("focus-jobs: %s\n", focus_jobs_enabled ? "on." : "off.");
         out.print("auto-unpause: %s\n", unpause_enabled ? "on." : "off.");
         out.print("auto-disengage: %s\n", disengage_enabled ? "on." : "off.");

@@ -78,6 +78,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - History: added ``dfhack.getCommandHistory(history_id, history_filename)`` and ``dfhack.addCommandToHistory(history_id, history_filename, command)`` so gui scripts can access a commandline history without requiring a terminal.
 - ``helpdb``: database and query interface for DFHack tool help text
 - ``tile-material``: fix the order of declarations. The ``GetTileMat`` function now returns the material as intended (always returned nil before). Also changed the license info, with permission of the original author.
+- ``utils.df_expr_to_ref()``: fixed some errors that could occur when navigating tables
 - ``widgets.EditField``: new ``onsubmit2`` callback attribute is called when the user hits Shift-Enter.
 - ``widgets.EditField``: new function: ``setCursor(position)`` sets the input cursor.
 - ``widgets.EditField``: new attribute: ``ignore_keys`` lets you ignore specified characters if you want to use them as hotkeys

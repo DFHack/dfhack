@@ -613,13 +613,15 @@ function df_expr_to_ref(expr)
     local obj = df_env[parts[1]]
     for i = 2, #parts do
         local key = tonumber(parts[i]) or parts[i]
-        local cur = obj[key]
-        if i == #parts and ((type(cur) ~= 'userdata') or
-                type(cur) == 'userdata' and getmetatable(cur) == nil) then
-            obj = obj:_field(key)
-        else
-            obj = obj[key]
+        if i == #parts then
+            local ok, ret = pcall(function()
+                return obj:_field(key)
+            end)
+            if ok then
+                return ret
+            end
         end
+        obj = obj[key]
     end
     return obj
 end

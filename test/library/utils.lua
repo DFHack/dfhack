@@ -54,3 +54,40 @@ function test.invert_overwrite()
     expect.eq(i.b, 2)
     expect.eq(i.a, 3)
 end
+
+function test.df_expr_to_ref()
+    -- userdata field
+    expect.eq(utils.df_expr_to_ref('df.global.world.engravings'), df.global.world.engravings)
+    expect.eq(utils.df_expr_to_ref('df.global.world.engravings'), df.global.world:_field('engravings'))
+    -- primitive field
+    expect.eq(utils.df_expr_to_ref('df.global.world.original_save_version'), df.global.world:_field('original_save_version'))
+    -- table field
+    expect.eq(utils.df_expr_to_ref('df.global.world'), df.global.world)
+    expect.eq(utils.df_expr_to_ref('df.global'), df.global)
+    -- table
+    expect.eq(utils.df_expr_to_ref('df'), df)
+
+    -- userdata object
+    expect.eq(utils.df_expr_to_ref('scr'), dfhack.gui.getCurViewscreen())
+
+    local fake_unit
+    mock.patch(dfhack.gui, 'getSelectedUnit', function() return fake_unit end, function()
+        -- lightuserdata field
+        fake_unit = {
+           null_field=df.NULL,
+        }
+        expect.eq(utils.df_expr_to_ref('unit'), fake_unit)
+        expect.eq(utils.df_expr_to_ref('unit.null_field'), fake_unit.null_field)
+
+        dfhack.with_temp_object(df.unit:new(), function(u)
+            fake_unit = u
+
+            -- userdata field
+            expect.eq(utils.df_expr_to_ref('unit.name'), fake_unit.name)
+            expect.eq(utils.df_expr_to_ref('unit.name'), fake_unit:_field('name'))
+
+            -- primitive field
+            expect.eq(utils.df_expr_to_ref('unit.profession'), fake_unit:_field('profession'))
+        end)
+    end)
+end

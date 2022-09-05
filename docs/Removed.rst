@@ -80,6 +80,12 @@ fix/feeding-timers
 ==================
 The corresponding DF :bug:`2606` was fixed in DF 0.40.12.
 
+.. _fix/merchants:
+
+fix/merchants
+=============
+Humans can now make trade agreements. This fix is no longer necessary.
+
 .. _fortplan:
 
 fortplan

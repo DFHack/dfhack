@@ -62,6 +62,12 @@ fix/build-location
 ==================
 The corresponding DF :bug:`5991` was fixed in DF 0.40.05.
 
+.. _fix/diplomats:
+
+fix/diplomats
+=============
+The corresponding DF :bug:`3295` was fixed in DF 0.40.05.
+
 .. _fix/fat-dwarves:
 
 fix/fat-dwarves

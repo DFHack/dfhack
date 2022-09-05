@@ -96,6 +96,14 @@ script instead. You can use your existing .csv files. Just move them to the
 ``blueprints`` folder in your DF installation, and instead of
 ``fortplan file.csv`` run ``quickfort run file.csv``.
 
+.. _gui/assign-rack:
+
+gui/assign-rack
+===============
+This script is no longer useful in current DF versions. The script required a
+binpatch <binpatches/needs-patch>`, which has not been available since DF
+0.34.11.
+
 .. _gui/hack-wish:
 
 gui/hack-wish

@@ -1,8 +1,8 @@
 .. _blueprint-library-guide:
 .. _quickfort-library-guide:
 
-Blueprint Library Index
-=======================
+Quickfort Blueprint Library
+===========================
 
 This guide contains a high-level overview of the blueprints available in the
 :source:`quickfort blueprint library <data/blueprints/library>`.

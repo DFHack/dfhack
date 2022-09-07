@@ -424,26 +424,30 @@ static bool is_smooth_wall(MapExtras::MapCache &map, const DFCoord &pos) {
                 && tileShape(tt) == df::tiletype_shape::WALL;
 }
 
-static bool is_smooth_wall_or_door(MapExtras::MapCache &map,
-                                   const DFCoord &pos) {
-    if (is_smooth_wall(map, pos))
-        return true;
-
+static bool is_connector(MapExtras::MapCache &map, const DFCoord &pos) {
     df::building *bld = Buildings::findAtTile(pos);
-    return bld && bld->getType() == df::building_type::Door;
+
+    return bld &&
+        (bld->getType() == df::building_type::Door ||
+         bld->getType() == df::building_type::Floodgate);
+}
+
+static bool is_smooth_wall_or_connector(MapExtras::MapCache &map,
+                                        const DFCoord &pos) {
+    return is_smooth_wall(map, pos) || is_connector(map, pos);
 }
 
 // adds adjacent smooth walls and doors to the given tdir
 static TileDirection get_adjacent_smooth_walls(MapExtras::MapCache &map,
                                                const DFCoord &pos,
                                                TileDirection tdir) {
-    if (is_smooth_wall_or_door(map, DFCoord(pos.x, pos.y-1, pos.z)))
+    if (is_smooth_wall_or_connector(map, DFCoord(pos.x, pos.y-1, pos.z)))
         tdir.north = 1;
-    if (is_smooth_wall_or_door(map, DFCoord(pos.x, pos.y+1, pos.z)))
+    if (is_smooth_wall_or_connector(map, DFCoord(pos.x, pos.y+1, pos.z)))
         tdir.south = 1;
-    if (is_smooth_wall_or_door(map, DFCoord(pos.x-1, pos.y, pos.z)))
+    if (is_smooth_wall_or_connector(map, DFCoord(pos.x-1, pos.y, pos.z)))
         tdir.west = 1;
-    if (is_smooth_wall_or_door(map, DFCoord(pos.x+1, pos.y, pos.z)))
+    if (is_smooth_wall_or_connector(map, DFCoord(pos.x+1, pos.y, pos.z)))
         tdir.east = 1;
     return tdir;
 }
@@ -469,7 +473,7 @@ static bool adjust_smooth_wall_dir(MapExtras::MapCache &map,
                                    const DFCoord &pos,
                                    TileDirection tdir = BLANK_TILE_DIRECTION) {
     if (!is_smooth_wall(map, pos))
-        return false;
+        return is_connector(map, pos);
 
     tdir = ensure_valid_tdir(get_adjacent_smooth_walls(map, pos, tdir));
 

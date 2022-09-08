@@ -72,6 +72,9 @@ keybinding add Alt-Q@jobmanagement/Main gui/manager-quantity
 # re-check manager orders
 keybinding add Alt-R@jobmanagement/Main workorder-recheck
 
+# workorder detail configuration
+keybinding add D@workquota_details gui/workorder-details
+
 # view combat reports for the selected unit/corpse/spatter
 keybinding add Ctrl-Shift-R view-unit-reports
 

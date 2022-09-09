@@ -2,7 +2,7 @@ workflow
 ========
 
 .. dfhack-tool::
-    :summary: Manage repeat jobs according to stock levels.
+    :summary: Manage automated item production rules.
     :tags: fort auto jobs
 
 .. dfhack-command:: fix-job-postings

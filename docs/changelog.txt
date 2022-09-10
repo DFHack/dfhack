@@ -44,6 +44,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - `autochop`: designate largest trees for chopping first, instead of the smallest
+- ``dfhack.run_script``: ensure the arguments passed to scripts are always strings. This allows other scripts to call ``run_script`` with numeric args and it won't break parameter parsing.
 - `dig-now`: Fix direction of smoothed walls when adjacent to a door or floodgate
 - ``job.removeJob()``: ensure jobs are removed from the world list when they are canceled
 - `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set: declare the hospital zone before building the coffer; otherwise DF fails to stock the hospital with materials

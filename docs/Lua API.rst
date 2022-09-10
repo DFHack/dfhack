@@ -1992,6 +1992,12 @@ Functions:
   Returns: *tile, tile_grayscale*, or *nil* if not found.
   The values can then be used for the *tile* field of *pen* structures.
 
+* ``dfhack.screen.hideGuard(screen,callback[,args...])``
+
+  Removes screen from the viewscreen stack, calls the callback (with optional
+  supplied arguments), and then restores the screen on the top of the viewscreen
+  stack.
+
 * ``dfhack.screen.clear()``
 
   Fills the screen with blank background.

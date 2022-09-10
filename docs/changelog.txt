@@ -80,6 +80,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Lua
 - History: added ``dfhack.getCommandHistory(history_id, history_filename)`` and ``dfhack.addCommandToHistory(history_id, history_filename, command)`` so gui scripts can access a commandline history without requiring a terminal.
+- Added ``dfhack.screen.hideGuard()``: exposes the C++ ``Screen::Hide`` to Lua
 - ``helpdb``: database and query interface for DFHack tool help text
 - ``tile-material``: fix the order of declarations. The ``GetTileMat`` function now returns the material as intended (always returned nil before). Also changed the license info, with permission of the original author.
 - ``utils.df_expr_to_ref()``: fixed some errors that could occur when navigating tables

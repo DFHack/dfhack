@@ -347,6 +347,10 @@ latex_toplevel_sectioning = 'part'
 
 from sphinx.writers import text
 
-text.MAXWIDTH = 52
+# this value is arbitrary. it just needs to be bigger than the number of
+# characters in the longest paragraph in the DFHack docs
+text.MAXWIDTH = 1000000000
 
+# this is the order that section headers will use the characters for underlines
+# they are in the order of (subjective) text-mode readability
 text_sectionchars = '=-~`+"*'

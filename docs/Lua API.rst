@@ -3114,9 +3114,11 @@ Each entry has several properties associated with it:
 
   Returns the short (~54 character) description for the given entry.
 
-* ``helpdb.get_entry_long_help(entry)``
+* ``helpdb.get_entry_long_help(entry[, width])``
 
-  Returns the full help text for the given entry.
+  Returns the full help text for the given entry. If ``width`` is specified, the
+  text will be wrapped at that width, preserving block indents. The wrap width
+  defaults to 80.
 
 * ``helpdb.get_entry_tags(entry)``
 

@@ -432,6 +432,37 @@ local function ensure_db()
     index_tags()
 end
 
+local function parse_blocks(text)
+    local blocks = {}
+    for line in text:gmatch('[^\n]*') do
+        local _,indent = line:find('^ *')
+        table.insert(blocks, {line=line:trim(), indent=indent})
+    end
+    return blocks
+end
+
+local function format_block(line, indent, width)
+    local wrapped = line:wrap(width - indent)
+    if indent == 0 then return wrapped end
+    local padding = (' '):rep(indent)
+    local indented_lines = {}
+    for line in wrapped:gmatch('[^\n]*') do
+        table.insert(indented_lines, padding .. line)
+    end
+    return table.concat(indented_lines, '\n')
+end
+
+-- wraps the unwrapped source help at the specified width, preserving block
+-- indents
+local function rewrap(text, width)
+    local formatted_blocks = {}
+    for _,block in ipairs(parse_blocks(text)) do
+        table.insert(formatted_blocks,
+                     format_block(block.line, block.indent, width))
+    end
+    return table.concat(formatted_blocks, '\n')
+end
+
 ---------------------------------------------------------------------------
 -- get API
 ---------------------------------------------------------------------------
@@ -482,9 +513,10 @@ function get_entry_short_help(entry)
     return get_db_property(entry, 'short_help')
 end
 
--- returns the full help documentation associated with the entry
-function get_entry_long_help(entry)
-    return get_db_property(entry, 'long_help')
+-- returns the full help documentation associated with the entry, optionally
+-- wrapped to the specified width (80 if not specified).
+function get_entry_long_help(entry, width)
+    return rewrap(get_db_property(entry, 'long_help'), width or 80)
 end
 
 -- returns the set of tags associated with the entry

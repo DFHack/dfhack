@@ -928,9 +928,9 @@ can be omitted.
 
   The following examples are equivalent::
 
-    dfhack.run_command({'ls', '-a'})
-    dfhack.run_command('ls', '-a')
-    dfhack.run_command('ls -a')  -- not recommended
+    dfhack.run_command({'ls', 'quick'})
+    dfhack.run_command('ls', 'quick')
+    dfhack.run_command('ls quick')  -- not recommended
 
 * ``dfhack.run_command_silent(command[, ...])``
 

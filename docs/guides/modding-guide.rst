@@ -66,7 +66,7 @@ The structure of the game
 found in ``df.global``, containing things like the list of all items, whether to
 reindex pathfinding, et cetera. Also relevant to us in ``df`` are the various
 types found in the game, e.g. ``df.pronoun_type`` which we will be using in this
-guide. We'll explore more of the game structures `below <Exploring DF structures>`_.
+guide. We'll explore more of the game structures below.
 
 Your first script
 -----------------

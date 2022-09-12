@@ -5096,9 +5096,8 @@ the extension omitted. For example:
 * :file:`hack/scripts/gui/teleport.lua` is invoked as ``gui/teleport``
 
 .. note::
-    Scripts placed in subdirectories can be run as described above, but are not
-    listed by the `ls` command unless ``-a`` is specified. In general, scripts
-    should be placed in subfolders in the following situations:
+    In general, scripts should be placed in subfolders in the following
+    situations:
 
     * ``devel``: scripts that are intended exclusively for DFHack development,
       including examples, or scripts that are experimental and unstable
@@ -5116,16 +5115,12 @@ folders can be added (for example, a copy of the
 :source-scripts:`scripts repository <>` for local development). See
 `script-paths` for more information on how to configure this behavior.
 
-If the first line of the script is a one-line comment (starting with ``--``),
-the content of the comment is used by the built-in ``ls`` and ``help`` commands.
-Such a comment is required for every script in the official DFHack repository.
-
 Scripts are read from disk when run for the first time, or if they have changed
 since the last time they were run.
 
 Each script has an isolated environment where global variables set by the script
 are stored. Values of globals persist across script runs in the same DF session.
-See `devel/lua-example` for an example of this behavior. Note that local
+See `devel/lua-example` for an example of this behavior. Note that ``local``
 variables do *not* persist.
 
 Arguments are passed in to the scripts via the ``...`` built-in quasi-variable;
@@ -5147,9 +5142,9 @@ General script API
 
 * ``dfhack.run_script(name[,args...])``
 
-  Run a Lua script in hack/scripts/, as if it were started from the DFHack
-  command-line. The ``name`` argument should be the name of the script without
-  its extension, as it would be used on the command line.
+  Run a Lua script in :file:`hack/scripts/`, as if it were started from the
+  DFHack command-line. The ``name`` argument should be the name of the script
+  without its extension, as it would be used on the command line.
 
   Example:
 
@@ -5169,17 +5164,16 @@ General script API
 
 * ``dfhack.script_help([name, [extension]])``
 
-  Returns the contents of the embedded documentation of the specified script.
-  ``extension`` defaults to "lua", and ``name`` defaults to the name of the
-  script where this function was called. For example, the following can be used
-  to print the current script's help text::
+  Returns the contents of the rendered (or embedded) `documentation` for the
+  specified script. ``extension`` defaults to "lua", and ``name`` defaults to
+  the name of the script where this function was called. For example, the
+  following can be used to print the current script's help text::
 
     local args = {...}
     if args[1] == 'help' then
         print(script_help())
         return
     end
-
 
 Importing scripts
 =================
@@ -5234,12 +5228,12 @@ Importing scripts
   .. warning::
 
     Avoid caching the table returned by ``reqscript()`` beyond storing it in
-    a local or global variable as in the example above. ``reqscript()`` is fast
-    for scripts that have previously been loaded and haven't changed. If you
-    retain a reference to a table returned by an old ``reqscript()`` call, this
-    may lead to unintended behavior if the location of the script changes
-    (e.g. if a save is loaded or unloaded, or if a `script path <script-paths>`
-    is added in some other way).
+    a local variable as in the example above. ``reqscript()`` is fast for
+    scripts that have previously been loaded and haven't changed. If you retain
+    a reference to a table returned by an old ``reqscript()`` call, this may
+    lead to unintended behavior if the location of the script changes (e.g. if a
+    save is loaded or unloaded, or if a `script path <script-paths>` is added in
+    some other way).
 
   .. admonition:: Tip
 

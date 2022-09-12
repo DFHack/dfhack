@@ -8,7 +8,7 @@ DFHack Documentation System
 DFHack documentation, like the file you are reading now, is created as a set of
 ``.rst`` files in `reStructuredText (reST) <https://www.sphinx-doc.org/rest.html>`_
 format. This is a documentation format common in the Python community. It is very
-similar in concept - and in syntax - to Markdown, as found on GitHub and many other
+similar in concept -- and in syntax -- to Markdown, as found on GitHub and many other
 places. However it is more advanced than Markdown, with more features available when
 compiled to HTML, such as automatic tables of contents, cross-linking, special
 external links (forum, wiki, etc) and more. The documentation is compiled by a
@@ -23,11 +23,13 @@ if you're changing them and want to see the changes reflected in your game.
 
 You can also build the docs if you just want a local HTML- or text-rendered copy, though
 you can always read the `online version <https://dfhack.readthedocs.org>`_ too.
+The active development version of the documentation is tagged with ``latest`` and
+is available `here <https://docs.dfhack.org/en/latest/index.html>`_
 
-(Note that even if you do want a local copy, it is certainly not necessary to
+Note that even if you do want a local copy, it is certainly not necessary to
 compile the documentation in order to read it. Like Markdown, reST documents are
 designed to be just as readable in a plain-text editor as they are in HTML format.
-The main thing you lose in plain text format is hyperlinking.)
+The main thing you lose in plain text format is hyperlinking.
 
 .. contents:: Contents
   :local:
@@ -42,19 +44,17 @@ location in ``hack/docs`` under the DF directory.
 When writing documentation, remember that everything should be documented! If it's not
 clear *where* a particular thing should be documented, ask on Discord or in the DFHack
 thread on Bay12 -- you'll not only be getting help, you'll also be providing valuable
-feedback that makes it easier for future contributers to find documentation on how to
+feedback that makes it easier for future contributors to find documentation on how to
 write the documentation!
 
-Try to keep lines within 80-100 characters, so it's readable in plain text
-in the terminal - Sphinx (our documentation system) will make sure
-paragraphs flow.
+Try to keep lines within 80-100 characters so it's readable in plain text in the
+terminal - Sphinx (our documentation system) will make sure paragraphs flow.
 
 Short descriptions
 ------------------
 
-Each command that a user can run, as well as every plugin that can be enabled for some
-lasting effect, needs to have a short (~54 character) descriptive string associated with
-it. This description text is:
+Each command that a user can run -- as well as every plugin -- needs to have a
+short (~54 character) descriptive string associated with it. This description text is:
 
 - used in-game by the `ls` command and DFHack UI screens that list commands
 - used in the generated index entries in the HTML docs
@@ -114,10 +114,9 @@ in a file named ``docs/gui/foobar.rst`` in the scripts repo. Similarly, a plugin
 ``foobaz`` should be documented in a file named ``docs/plugins/foobaz.rst`` in the dfhack repo.
 For plugins, all commands provided by that plugin should be documented in that same file.
 
-Short descriptions (the ~54 character short help) are taken from the first "sentence" of
-the help text for scripts and plugins that can be enabled. This means that the help should
-begin with a sentence fragment that begins with a capital letter and ends in a full stop
-(``.``). Please make this brief but descriptive!
+Short descriptions (the ~54 character short help) for scripts and plugins are taken from
+the ``summary`` attribute of the ``dfhack-tool`` directive that each tool help document must
+have (see the `Header format`_ section below). Please make this brief but descriptive!
 
 Short descriptions for commands provided by plugins are taken from the ``description``
 parameter passed to the ``PluginCommand`` constructor used when the command is registered
@@ -127,11 +126,11 @@ Header format
 -------------
 
 The docs **must** begin with a heading which exactly matches the script or plugin name, underlined
-with ``=====`` to the same length. This should be followed by a ``.. dfhack-tool:`` directive with
+with ``=====`` to the same length. This must be followed by a ``.. dfhack-tool:`` directive with
 at least the following parameters:
 
 * ``:summary:`` - a short, single-sentence description of the tool
-* ``:tags:`` - a space-separated list of tags that apply to the tool
+* ``:tags:`` - a space-separated list of `tags <tag-list>` that apply to the tool
 
 By default, ``dfhack-tool`` generates both a description of a tool and a command
 with the same name. For tools (specifically plugins) that do not provide exactly
@@ -231,6 +230,7 @@ angle brackets (``<`` and ``>``). Optional elements are enclosed in square brack
 If the command takes an arbitrary number of elements, use ``...``, for example::
 
     prioritize [<options>] <job type> [<job type> ...]
+    quickfort <command>[,<command>...] <list_id>[,<list_id>...] [<options>]
 
 Examples
 --------
@@ -240,11 +240,11 @@ Otherwise, please consider adding a section that shows some real, practical usag
 many users, this will be the **only** section they will read. It is so important that it is a good
 idea to include the ``Examples`` section **before** you describe any extended options your command
 might take. Write examples for what you expect the popular use cases will be. Also be sure to write
-examples showing specific, practical values being used for any parameter that takes a value.
+examples showing specific, practical values being used for any parameter that takes a value or has
+tricky formatting.
 
-Examples should go in their own subheading with a single dash underline (``--------``). The examples
-themselves should be organized in a list, the same as in option 2 for Usage above. Here is an
-example Examples section::
+Examples should go in their own subheading. The examples themselves should be organized as in
+option 2 for Usage above. Here is an example ``Examples`` section::
 
     Examples
     --------
@@ -258,7 +258,7 @@ example Examples section::
 Options
 -------
 
-The options header should follow the examples, with each option in the same list format as the
+The options header should follow the examples, with each option in the same format as the
 examples::
 
     Options
@@ -285,7 +285,8 @@ scripts and plugins can use a different mechanism to at least make their help te
 in-game.
 
 Note that since help text for external scripts and plugins is not rendered by Sphinx,
-it should be written in plain text. Any reStructuredText markup will not be processed.
+it should be written in plain text. Any reStructuredText markup will not be processed and,
+if present, will be shown verbatim to the player (which is probably not what you want).
 
 For external scripts, the short description comes from a comment on the first line
 (the comment marker and extra whitespace is stripped). For Lua, this would look like:
@@ -310,27 +311,33 @@ entire script header::
     -- [====[
     gui/adv-inventory
     =================
-    Tags: adventure, items
+
+    Tags: adventure | items
 
     Allows you to quickly move items between containers. This
     includes yourself and any followers you have.
 
-    Usage:
+    Usage
+    -----
 
         gui/adv-inventory [<options>]
 
-    Examples:
+    Examples
+    --------
 
     gui/adv-inventory
         Opens the GUI with nothing preselected
+
     gui/adv-inventory take-all
         Opens the GUI with all container items already selected and
         ready to move into the adventurer's inventory.
 
-    Options:
+    Options
+    -------
 
     take-all
         Starts the GUI with container items pre-selected
+
     give-all
         Starts the GUI with your own items pre-selected
     ]====]
@@ -347,10 +354,10 @@ Required dependencies
 .. highlight:: shell
 
 In order to build the documentation, you must have Python with Sphinx
-version |sphinx_min_version| or later. Python 3 is recommended.
+version |sphinx_min_version| or later and Python 3.
 
 When installing Sphinx from OS package managers, be aware that there is
-another program called Sphinx, completely unrelated to documentation management.
+another program called "Sphinx", completely unrelated to documentation management.
 Be sure you are installing the right Sphinx; it may be called ``python-sphinx``,
 for example. To avoid doubt, ``pip`` can be used instead as detailed below.
 
@@ -364,13 +371,12 @@ For more detailed platform-specific instructions, see the sections below:
   :local:
   :backlinks: none
 
-
 Linux
 -----
 Most Linux distributions will include Python by default. If not, start by
-installing Python (preferably Python 3). On Debian-based distros::
+installing Python 3. On Debian-based distros::
 
-  sudo apt install python3
+    sudo apt install python3
 
 Check your package manager to see if Sphinx |sphinx_min_version| or later is
 available. On Debian-based distros, this package is named ``python3-sphinx``.
@@ -379,11 +385,11 @@ want to use a newer Sphinx version (which may result in faster builds), you
 can install Sphinx through the ``pip`` package manager instead. On Debian-based
 distros, you can install pip with::
 
-  sudo apt install python3-pip
+    sudo apt install python3-pip
 
 Once pip is available, you can then install Sphinx with::
 
-  pip3 install sphinx
+    pip3 install sphinx
 
 If you run this as an unprivileged user, it may install a local copy of Sphinx
 for your user only. The ``sphinx-build`` executable will typically end up in
@@ -398,34 +404,23 @@ macOS has Python 2.7 installed by default, but it does not have the pip package 
 You can install Homebrew's Python 3, which includes pip, and then install the
 latest Sphinx using pip::
 
-  brew install python3
-  pip3 install sphinx
-
-Alternatively, you can simply install Sphinx directly from Homebrew::
-
-  brew install sphinx-doc
-
-This will install Sphinx for macOS's system Python 2.7, without needing pip.
-
-Either method works; if you plan to use Python for other purposes, it might best
-to install Homebrew's Python 3 so that you have the latest Python as well as pip.
-If not, just installing sphinx-doc for macOS's system Python 2.7 is fine.
-
+    brew install python3
+    pip3 install sphinx
 
 Windows
 -------
 Python for Windows can be downloaded `from python.org <https://www.python.org/downloads/>`_.
-The latest version of Python 3 is recommended, as it includes pip already.
+The latest version of Python 3 includes pip already.
 
 You can also install Python and pip through the Chocolatey package manager.
 After installing Chocolatey as outlined in the `Windows compilation instructions <compile-windows>`,
 run the following command from an elevated (admin) command prompt (e.g. ``cmd.exe``)::
 
-  choco install python pip -y
+    choco install python pip -y
 
 Once you have pip available, you can install Sphinx with the following command::
 
-  pip install sphinx
+    pip install sphinx
 
 Note that this may require opening a new (admin) command prompt if you just
 installed pip from the same command prompt.
@@ -465,8 +460,9 @@ ways to do this:
 
 By default, both HTML and text docs are built by CMake. The generated
 documentation is stored in ``docs/html`` and ``docs/text`` (respectively) in the
-root DFHack folder, and will be installed to ``hack/docs`` when you install
-DFHack.
+root DFHack folder, and they will both be installed to ``hack/docs`` when you
+install DFHack. The html and txt files will intermingle, but will not interfere
+with one another.
 
 Running Sphinx manually
 -----------------------
@@ -474,8 +470,8 @@ Running Sphinx manually
 You can also build the documentation without running CMake - this is faster if
 you only want to rebuild the documentation regardless of any code changes. The
 ``docs/build.py`` script will build the documentation in any specified formats
-(HTML only by default) using essentially the same command that CMake runs when
-building the docs. Run the script with ``--help`` to see additional options.
+(HTML only by default) using the same command that CMake runs when building the
+docs. Run the script with ``--help`` to see additional options.
 
 Examples:
 
@@ -501,7 +497,9 @@ or, to build plain-text output::
 Sphinx has many options to enable clean builds, parallel builds, logging, and
 more - run ``sphinx-build --help`` for details. If you specify a different
 output path, be warned that Sphinx may overwrite existing files in the output
-folder.
+folder. Also be aware that when running ``sphinx-build`` directly, the
+``docs/html`` folder may be polluted with intermediate build files that normally
+get written in the cmake ``build`` directory.
 
 Building a PDF version
 ----------------------
@@ -545,7 +543,6 @@ well, but under "0.44.05-r1" in the stable changelog (assuming that is the
 closest stable release after 0.44.05-alpha1). An entry listed under a stable
 release like "0.44.05-r1" in changelog.txt will be listed under that release in
 both the stable changelog and the development changelog.
-
 
 Changelog syntax
 ----------------

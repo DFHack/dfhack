@@ -1058,9 +1058,9 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(
-        PluginCommand(
-        "buildingplan", "Plan building construction before you have materials",
-        buildingplan_cmd, false, "Run 'buildingplan debug [on|off]' to toggle debugging, or 'buildingplan version' to query the plugin version."));
+        PluginCommand("buildingplan",
+                      "Plan building construction before you have materials.",
+                      buildingplan_cmd));
 
     return CR_OK;
 }

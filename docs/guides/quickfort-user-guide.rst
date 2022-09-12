@@ -29,9 +29,8 @@ For those just looking to apply existing blueprints, check out the `quickfort
 command's documentation <quickfort>` for syntax. There are also many
 ready-to-use blueprints available in the ``blueprints/library`` subfolder in
 your DFHack installation. Browse them on your computer or
-:source:`online <data/blueprints/library>`, or run ``quickfort list -l`` at the
-``[DFHack]#`` prompt to list them, and then ``quickfort run`` to apply them to
-your fort!
+:source:`online <data/blueprints/library>`, or run `gui/quickfort` to browse
+and apply them to your fort!
 
 Before you become an expert at writing blueprints, though, you should know that
 the easiest way to make a quickfort blueprint is to build your plan "for real"

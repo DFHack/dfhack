@@ -61,16 +61,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 {
     if (world && ui) {
         commands.push_back(PluginCommand(
-            "rename", "Rename various things.", rename, false,
-            "  rename squad <index> \"name\"\n"
-            "  rename hotkey <index> \"name\"\n"
-            "    (identified by ordinal index)\n"
-            "  rename unit \"nickname\"\n"
-            "  rename unit-profession \"custom profession\"\n"
-            "    (a unit must be highlighted in the ui)\n"
-            "  rename building \"nickname\"\n"
-            "    (a building must be highlighted via 'q')\n"
-        ));
+            "rename",
+            "Easily rename things.",
+            rename));
 
         if (Core::getInstance().isWorldLoaded())
             plugin_onstatechange(out, SC_WORLD_LOADED);

@@ -1,10 +1,11 @@
 .. _quickfort-alias-guide:
 
-Quickfort Keystroke Alias Guide
-===============================
+Quickfort Keystroke Alias Reference
+===================================
 
 Aliases allow you to use simple words to represent complicated key sequences
-when configuring buildings and stockpiles in quickfort ``#query`` blueprints.
+when configuring buildings and stockpiles in quickfort ``#query`` and
+``#config`` blueprints.
 
 For example, say you have the following ``#build`` and ``#place`` blueprints::
 

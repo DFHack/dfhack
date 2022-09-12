@@ -188,6 +188,7 @@ EditField.ATTRS{
     key = DEFAULT_NIL,
     key_sep = DEFAULT_NIL,
     modal = false,
+    ignore_keys = DEFAULT_NIL,
 }
 
 function EditField:preinit(init_table)
@@ -268,6 +269,12 @@ function EditField:onInput(keys)
     if not self.focus then
         -- only react to our hotkey
         return self:inputToSubviews(keys)
+    end
+
+    if self.ignore_keys then
+        for _,ignore_key in ipairs(self.ignore_keys) do
+            if keys[ignore_key] then return false end
+        end
     end
 
     if self.key and keys.LEAVESCREEN then
@@ -537,12 +544,10 @@ Label.ATTRS{
     auto_width = false,
     on_click = DEFAULT_NIL,
     on_rclick = DEFAULT_NIL,
-    --
     scroll_keys = STANDARDSCROLL,
-    show_scroll_icons = DEFAULT_NIL, -- DEFAULT_NIL, 'right', 'left', false
-    up_arrow_icon = string.char(24),
-    down_arrow_icon = string.char(25),
-    scroll_icon_pen = COLOR_LIGHTCYAN,
+    show_scrollbar = DEFAULT_NIL, -- DEFAULT_NIL, 'right', 'left', false
+    scrollbar_fg = COLOR_LIGHTGREEN,
+    scrollbar_bg = COLOR_CYAN
 }
 
 function Label:init(args)
@@ -566,16 +571,16 @@ function Label:setText(text)
 end
 
 function Label:update_scroll_inset()
-    if self.show_scroll_icons == nil then
-        self._show_scroll_icons = self:getTextHeight() > self.frame_body.height and 'right' or false
+    if self.show_scrollbar == nil then
+        self._show_scrollbar = self:getTextHeight() > self.frame_body.height and 'right' or false
     else
-        self._show_scroll_icons = self.show_scroll_icons
+        self._show_scrollbar = self.show_scrollbar
     end
-    if self._show_scroll_icons then
-        -- here self._show_scroll_icons can only be either
+    if self._show_scrollbar then
+        -- here self._show_scrollbar can only be either
         -- 'left' or any true value which we interpret as right
         local l,t,r,b = gui.parse_inset(self.frame_inset)
-        if self._show_scroll_icons == 'left' and l <= 0 then
+        if self._show_scrollbar == 'left' and l <= 0 then
             l = 1
         elseif r <= 0 then
             r = 1
@@ -584,14 +589,54 @@ function Label:update_scroll_inset()
     end
 end
 
-function Label:render_scroll_icons(dc, x, y1, y2)
-    if self.start_line_num ~= 1 then
-        dc:seek(x, y1):char(self.up_arrow_icon, self.scroll_icon_pen)
+-- the position is the number of tiles of empty space above the top of the
+-- scrollbar, and the height is the number of tiles the scrollbar should occupy
+-- to represent the percentage of text that is on the screen.
+local function get_scrollbar_pos_and_height(label)
+    local first_visible_line = label.start_line_num
+    local text_height = label:getTextHeight()
+    local last_visible_line = first_visible_line + label.frame_body.height - 1
+    local scrollbar_body_height = label.frame_body.height - 2
+    local displayed_lines = last_visible_line - first_visible_line
+
+    local height = math.floor(((displayed_lines-1) * scrollbar_body_height) /
+                              text_height)
+
+    local max_pos = scrollbar_body_height - height
+    local pos = math.ceil(((first_visible_line-1) * max_pos) /
+                          (text_height - label.frame_body.height))
+
+    return pos, height
+end
+
+local UP_ARROW_CHAR = string.char(24)
+local DOWN_ARROW_CHAR = string.char(25)
+local NO_ARROW_CHAR = string.char(32)
+local BAR_CHAR = string.char(7)
+local BAR_BG_CHAR = string.char(179)
+
+function Label:render_scrollbar(dc, x, y1, y2)
+    -- render up arrow if we're not at the top
+    dc:seek(x, y1):char(
+        self.start_line_num == 1 and NO_ARROW_CHAR or UP_ARROW_CHAR,
+        self.scrollbar_fg, self.scrollbar_bg)
+    -- render scrollbar body
+    local pos, height = get_scrollbar_pos_and_height(self)
+    local starty = y1 + pos + 1
+    local endy = y1 + pos + height
+    for y=y1+1,y2-1 do
+        if y >= starty and y <= endy then
+            dc:seek(x, y):char(BAR_CHAR, self.scrollbar_fg)
+        else
+            dc:seek(x, y):char(BAR_BG_CHAR, self.scrollbar_bg)
+        end
     end
+    -- render down arrow if we're not at the bottom
     local last_visible_line = self.start_line_num + self.frame_body.height - 1
-    if last_visible_line < self:getTextHeight() then
-        dc:seek(x, y2):char(self.down_arrow_icon, self.scroll_icon_pen)
-    end
+    dc:seek(x, y2):char(
+        last_visible_line >= self:getTextHeight() and
+            NO_ARROW_CHAR or DOWN_ARROW_CHAR,
+        self.scrollbar_fg, self.scrollbar_bg)
 end
 
 function Label:computeFrame(parent_rect)
@@ -637,13 +682,11 @@ function Label:onRenderBody(dc)
 end
 
 function Label:onRenderFrame(dc, rect)
-    if self._show_scroll_icons
-    and self:getTextHeight() > self.frame_body.height
-    then
-        local x = self._show_scroll_icons == 'left'
+    if self._show_scrollbar then
+        local x = self._show_scrollbar == 'left'
                 and self.frame_body.x1-dc.x1-1
                 or  self.frame_body.x2-dc.x1+1
-        self:render_scroll_icons(dc,
+        self:render_scrollbar(dc,
             x,
             self.frame_body.y1-dc.y1,
             self.frame_body.y2-dc.y1
@@ -651,7 +694,35 @@ function Label:onRenderFrame(dc, rect)
     end
 end
 
+function Label:click_scrollbar()
+    if not self._show_scrollbar then return end
+    local rect = self.frame_body
+    local x, y = dscreen.getMousePos()
+
+    if self._show_scrollbar == 'left' and x ~= rect.x1-1 or x ~= rect.x2+1 then
+        return
+    end
+    if y < rect.y1 or y > rect.y2 then
+        return
+    end
+
+    if y == rect.y1 then
+        return -1
+    elseif y == rect.y2 then
+        return 1
+    else
+        local pos, height = get_scrollbar_pos_and_height(self)
+        if y < rect.y1 + pos then
+            return '-halfpage'
+        elseif y > rect.y1 + pos + height then
+            return '+halfpage'
+        end
+    end
+    return nil
+end
+
 function Label:scroll(nlines)
+    if not nlines then return end
     if type(nlines) == 'string' then
         if nlines == '+page' then
             nlines = self.frame_body.height
@@ -669,12 +740,16 @@ function Label:scroll(nlines)
     n = math.min(n, self:getTextHeight() - self.frame_body.height + 1)
     n = math.max(n, 1)
     self.start_line_num = n
+    return nlines
 end
 
 function Label:onInput(keys)
     if is_disabled(self) then return false end
-    if keys._MOUSE_L_DOWN and self:getMousePos() and self.on_click then
-        self:on_click()
+    if keys._MOUSE_L_DOWN then
+        if not self:scroll(self:click_scrollbar()) and
+                self:getMousePos() and self.on_click then
+            self:on_click()
+        end
     end
     if keys._MOUSE_R_DOWN and self:getMousePos() and self.on_rclick then
         self:on_rclick()
@@ -1099,6 +1174,7 @@ FilteredList = defclass(FilteredList, Widget)
 FilteredList.ATTRS {
     edit_below = false,
     edit_key = DEFAULT_NIL,
+    edit_ignore_keys = DEFAULT_NIL,
 }
 
 function FilteredList:init(info)
@@ -1108,6 +1184,7 @@ function FilteredList:init(info)
         on_change = self:callback('onFilterChange'),
         on_char = self:callback('onFilterChar'),
         key = self.edit_key,
+        ignore_keys = self.edit_ignore_keys,
     }
     self.list = List{
         frame = { t = 2 },
@@ -1204,7 +1281,9 @@ function FilteredList:setFilter(filter, pos)
     local cidx = nil
 
     filter = filter or ''
-    self.edit:setText(filter)
+    if filter ~= self.edit.text then
+        self.edit:setText(filter)
+    end
 
     if filter ~= '' then
         local tokens = filter:split()

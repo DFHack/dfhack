@@ -15,9 +15,14 @@ build/VC2010
 !build/
 
 # Sphinx generated documentation
-docs/_*
+docs/changelogs/
 docs/html/
 docs/pdf/
+docs/pseudoxml/
+docs/tags/
+docs/text/
+docs/tools/
+docs/xml/
 
 # in-place build
 build/Makefile

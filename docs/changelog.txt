@@ -39,14 +39,23 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## New Tweaks
 
+## New Internal Commands
+- `tags`: new built-in command to list the tool category tags and their definitions. tags associated with each tool are visible in the tool help and in the output of `ls`.
+
 ## Fixes
+- `autochop`: designate largest trees for chopping first, instead of the smallest
+- ``dfhack.run_script``: ensure the arguments passed to scripts are always strings. This allows other scripts to call ``run_script`` with numeric args and it won't break parameter parsing.
+- `dig-now`: Fix direction of smoothed walls when adjacent to a door or floodgate
 - ``job.removeJob()``: ensure jobs are removed from the world list when they are canceled
+- `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set: declare the hospital zone before building the coffer; otherwise DF fails to stock the hospital with materials
 
 ## Misc Improvements
 - Init scripts: ``dfhack.init`` and other init scripts have moved to ``dfhack-config/init/``. If you have customized your ``dfhack.init`` file and want to keep your changes, please move the part that you have customized to the new location at ``dfhack-config/init/dfhack.init``. If you do not have changes that you want to keep, do not copy anything, and the new defaults will be used automatically.
 - History files: ``dfhack.history``, ``tiletypes.history``, ``lua.history``, and ``liquids.history`` have moved to the ``dfhack-config`` directory. If you'd like to keep the contents of your current history files, please move them to ``dfhack-config``.
 - `do-job-now`: new global keybinding for boosting the priority of the jobs associated with the selected building/work order/unit/item etc.: Alt-N
+- `gui/workorder-details`: new keybinding on the workorder details screen: ``D``
 - `keybinding`: support backquote (\`) as a hotkey (and assign the hotkey to the new `gui/launcher` interface)
+- `ls`: can now filter tools by substring or tag. note that dev scripts are hidden by default. pass the ``--dev`` option to show them.
 - `manipulator`: add a library of useful default professions
 - `manipulator`: move professions configuration from ``professions/`` to ``dfhack-config/professions/`` to keep it together with other dfhack configuration. If you have saved professions that you would like to keep, please manually move them to the new folder.
 - ``materials.ItemTraitsDialog``: added a default ``on_select``-handler which toggles the traits.
@@ -55,9 +64,13 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `seedwatch`: ``seedwatch all`` now adds all plants with seeds to the watchlist, not just the "basic" crops.
 - UX: You can now move the cursor around in DFHack text fields in ``gui/`` scripts (e.g. `gui/blueprint`, `gui/quickfort`, or `gui/gm-editor`). You can move the cursor by clicking where you want it to go with the mouse or using the Left/Right arrow keys.  Ctrl+Left/Right will move one word at a time, and Alt+Left/Right will move to the beginning/end of the text.
 - UX: You can now click on the hotkey hint text in many ``gui/`` script windows to activate the hotkey, like a button. Not all scripts have been updated to use the clickable widget yet, but you can try it in `gui/blueprint` or `gui/quickfort`.
+- UX: Label widget scroll icons are replaced with scrollbars that represent the percentage of text on the screen and move with the position of the visible text, just like web browser scrollbars.
+- `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set improvements: set traffic designations to encourage dwarves to eat cooked food instead of raw ingredients
 
 ## Documentation
 - Added `modding-guide`
+- Update all DFHack tool documentation (300+ pages) with standard syntax formatting, usage examples, and overall clarified text.
+- Group DFHack tools by `tag <tools>` so similar tools are grouped and easy to find
 
 ## API
 - Removed "egg" ("eggy") hook support (Linux only). The only remaining method of hooking into DF is by interposing SDL calls, which has been the method used by all binary releases of DFHack.
@@ -69,10 +82,14 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Lua
 - History: added ``dfhack.getCommandHistory(history_id, history_filename)`` and ``dfhack.addCommandToHistory(history_id, history_filename, command)`` so gui scripts can access a commandline history without requiring a terminal.
+- Added ``dfhack.screen.hideGuard()``: exposes the C++ ``Screen::Hide`` to Lua
 - ``helpdb``: database and query interface for DFHack tool help text
 - ``tile-material``: fix the order of declarations. The ``GetTileMat`` function now returns the material as intended (always returned nil before). Also changed the license info, with permission of the original author.
+- ``utils.df_expr_to_ref()``: fixed some errors that could occur when navigating tables
 - ``widgets.EditField``: new ``onsubmit2`` callback attribute is called when the user hits Shift-Enter.
 - ``widgets.EditField``: new function: ``setCursor(position)`` sets the input cursor.
+- ``widgets.EditField``: new attribute: ``ignore_keys`` lets you ignore specified characters if you want to use them as hotkeys
+- ``widgets.FilteredList``: new attribute: ``edit_ignore_keys`` gets passed to the filter EditField as ``ignore_keys``
 - ``widgets.Label``: ``scroll`` function now interprets the keywords ``+page``, ``-page``, ``+halfpage``, and ``-halfpage`` in addition to simple positive and negative numbers.
 - ``widgets.HotkeyLabel``: clicking on the widget will now call ``on_activate()``.
 - ``widgets.CycleHotkeyLabel``: clicking on the widget will now cycle the options and trigger ``on_change()``. This also applies to the ``ToggleHotkeyLabel`` subclass.
@@ -1054,7 +1071,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `caravan`: documented (new in 0.44.10-alpha1)
 - `deathcause`: added "slaughtered" to descriptions
 - `fix/retrieve-units`: now re-adds units to active list to counteract `fix/dead-units`
-- `item-descriptions`: fixed several grammatical errors
+- ``item-descriptions``: fixed several grammatical errors
 - `modtools/create-unit`:
     - added quantity argument
     - now selects a caste at random if none is specified

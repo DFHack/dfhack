@@ -96,13 +96,14 @@ When you `download DFHack <downloading>`, you will end up with a release archive
 operating system should have built-in utilities capable of extracting files from
 these archives.
 
-The release archives contain several files and folders, including a ``hack``
-folder, a ``dfhack-config`` folder, and a ``dfhack.init-example`` file. To
-install DFHack, copy all of the files from the DFHack archive into the root DF
-folder, which should already include a ``data`` folder and a ``raw`` folder,
-among other things. Some packs and other redistributions of Dwarf Fortress may
-place DF in another folder, so ensure that the ``hack`` folder ends up next to
-the ``data`` folder.
+The release archives contain several folders, including a ``hack`` folder where
+DFHack binary and system data is stored, a ``dfhack-config`` folder where user
+data and configuration is stored, and a ``blueprints`` folder where `quickfort`
+blueprints are stored. To install DFHack, copy all of the files from the DFHack
+archive into the root DF folder, which should already include a ``data`` folder
+and a ``raw`` folder, among other things. Some packs and other redistributions
+of Dwarf Fortress may place DF in another folder, so ensure that the ``hack``
+folder ends up next to the ``data`` folder.
 
 .. note::
 

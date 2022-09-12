@@ -1,13 +1,11 @@
 .. _blueprint-library-guide:
 .. _quickfort-library-guide:
 
-Blueprint Library Index
-=======================
+Quickfort Blueprint Library
+===========================
 
 This guide contains a high-level overview of the blueprints available in the
-:source:`quickfort blueprint library <data/blueprints/library>`. You can list
-library blueprints by running ``quickfort list --library`` or by hitting
-:kbd:`Alt`:kbd:`l` in the ``gui/quickfort`` file load dialog.
+:source:`quickfort blueprint library <data/blueprints/library>`.
 
 Each file is hyperlinked to its online version so you can see exactly what the
 blueprints do before you run them. Also, if you use `gui/quickfort`, you will

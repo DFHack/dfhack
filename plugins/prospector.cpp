@@ -260,46 +260,9 @@ command_result prospector (color_ostream &out, vector <string> & parameters);
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "prospect", "Show stats of available raw resources.",
-        prospector, false,
-    "  prospect [all|hell] [<options>]\n"
-    "\n"
-    "  Shows a summary of resources that exist on the map. By default,\n"
-    "  only the visible part of the map is scanned. Include the 'all' keyword\n"
-    "  if you want prospect to scan the whole map as if it were revealed.\n"
-    "  Use 'hell' instead of 'all' if you also want to see the Z range of HFS\n"
-    "  tubes in the 'features' report section.\n"
-    "\n"
-    "Options:\n"
-    "  -h,--help\n"
-    "    Shows this help text.\n"
-    "  -s,--show <sections>\n"
-    "    Shows only the named comma-separated list of report sections.\n"
-    "    Report section names are: summary, liquids, layers, features, ores,\n"
-    "    gems, veins, shrubs, and trees. If run during pre-embark, only the\n"
-    "    layers, ores, gems, and veins report sections are available.\n"
-    "  -v,--values\n"
-    "    Includes material value in the output. Most useful for the 'gems'\n"
-    "    report section.\n"
-    "\n"
-    "Examples:\n"
-    "  prospect all\n"
-    "    Shows the entire report for the entire map.\n"
-    "\n"
-    "  prospect hell --show layers,ores,veins\n"
-    "    Shows only the layers, ores, and other vein stone report sections,\n"
-    "    and includes information on HFS tubes when a fort is loaded.\n"
-    "\n"
-    "  prospect all -sores\n"
-    "    Show only information about ores for the pre-embark or fortress map\n"
-    "    report.\n"
-    "\n"
-    "Pre-embark estimate:\n"
-    "  If called during the embark selection screen, displays a rough\n"
-    "  estimate of layer stone availability. If the 'all' keyword is\n"
-    "  specified, also estimates ores, gems, and other vein material. The\n"
-    "  estimate covers all tiles of the embark rectangle.\n"
-    ));
+        "prospect",
+        "Show raw resources available on the map.",
+        prospector));
     return CR_OK;
 }
 

@@ -221,12 +221,14 @@ DFHACK_PLUGIN_IS_ENABLED(enableUpdates);
 // Mandatory init function. If you have some global state, create it here.
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("RemoteFortressReader_version", "List the loaded RemoteFortressReader version", RemoteFortressReader_version, false, "This is used for plugin version checking."));
+    commands.push_back(PluginCommand(
+        "RemoteFortressReader_version",
+        "List the loaded RemoteFortressReader version",
+        RemoteFortressReader_version));
     commands.push_back(PluginCommand(
         "load-art-image-chunk",
         "Gets an art image chunk by index, loading from disk if necessary",
-        loadArtImageChunk, false,
-        "Usage: load_art_image_chunk N, where N is the id of the chunk to get."));
+        loadArtImageChunk));
     enableUpdates = true;
     return CR_OK;
 }

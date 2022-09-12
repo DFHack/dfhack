@@ -224,20 +224,10 @@ DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable )
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("fastdwarf",
-        "let dwarves teleport and/or finish jobs instantly",
-        fastdwarf, false,
-        "fastdwarf: make dwarves faster.\n"
-        "Usage:\n"
-        "  fastdwarf <speed> (tele)\n"
-        "Valid values for speed:\n"
-        " * 0 - Make dwarves move and work at standard speed.\n"
-        " * 1 - Make dwarves move and work at maximum speed.\n"
-        " * 2 - Make ALL creatures move and work at maximum speed.\n"
-        "Valid values for (tele):\n"
-        " * 0 - Disable dwarf teleportation (default)\n"
-        " * 1 - Make dwarves teleport to their destinations instantly.\n"
-        ));
+    commands.push_back(PluginCommand(
+        "fastdwarf",
+        "Dwarves teleport and/or finish jobs instantly.",
+        fastdwarf));
 
     return CR_OK;
 }

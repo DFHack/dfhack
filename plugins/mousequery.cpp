@@ -916,19 +916,9 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 {
     commands.push_back(
         PluginCommand(
-        "mousequery", "Add mouse functionality to Dwarf Fortress",
-        mousequery_cmd, false,
-        "mousequery [plugin|rbutton|track|edge|live] [enable|disable]\n"
-        "  plugin: enable/disable the entire plugin\n"
-        "  rbutton: enable/disable right mouse button\n"
-        "  track: enable/disable moving cursor in build and designation mode\n"
-        "  edge: enable/disable active edge scrolling (when on, will also enable tracking)\n"
-        "  live: enable/disable query view when unpaused\n\n"
-        "mousequery drag [left|right|disable]\n"
-        "  Enable/disable map dragging with the specified mouse button\n\n"
-        "mousequery delay <amount>\n"
-        "  Set delay when edge scrolling in tracking mode. Omit amount to display current setting.\n"
-        ));
+        "mousequery",
+        "Add mouse functionality to Dwarf Fortress.",
+        mousequery_cmd));
 
     return CR_OK;
 }

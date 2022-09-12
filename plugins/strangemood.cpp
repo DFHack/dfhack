@@ -1234,16 +1234,10 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector<PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("strangemood", "Force a strange mood to happen.", df_strangemood, false,
-        "Options:\n"
-         "  -force         - Ignore standard mood preconditions.\n"
-         "  -unit          - Use the selected unit instead of picking one randomly.\n"
-         "  -type <type>   - Force the mood to be of a specific type.\n"
-         "                   Valid types: fey, secretive, possessed, fell, macabre\n"
-         "  -skill <skill> - Force the mood to use a specific skill.\n"
-         "                   Skill name must be lowercase and without spaces.\n"
-         "                   Example: miner, gemcutter, metalcrafter, bonecarver, mason\n"
-    ));
+    commands.push_back(PluginCommand(
+        "strangemood",
+        "Trigger a strange mood.",
+        df_strangemood));
     rng.init();
 
     return CR_OK;

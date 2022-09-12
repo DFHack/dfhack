@@ -845,38 +845,9 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 
     // Fill the command list with your commands.
     commands.push_back(PluginCommand(
-        "labormanager", "Automatically manage dwarf labors.",
-        labormanager, false, /* true means that the command can't be used from non-interactive user interface */
-        // Extended help string. Used by CR_WRONG_USAGE and the help command:
-        "  labormanager enable\n"
-        "  labormanager disable\n"
-        "    Enables or disables the plugin.\n"
-        "  labormanager max <labor> <maximum>\n"
-        "    Set max number of dwarves assigned to a labor.\n"
-        "  labormanager max <labor> unmanaged\n"
-        "  labormanager max <labor> disable\n"
-        "    Don't attempt to manage this labor.\n"
-        "    Any dwarves with unmanaged labors assigned will be less\n"
-        "    likely to have managed labors assigned to them.\n"
-        "  labormanager max <labor> none\n"
-        "    Unrestrict the number of dwarves assigned to a labor.\n"
-        "  labormanager priority <labor> <priority>\n"
-        "    Change the assignment priority of a labor (default is 100)\n"
-        "  labormanager reset <labor>\n"
-        "    Return a labor to the default handling.\n"
-        "  labormanager reset-all\n"
-        "    Return all labors to the default handling.\n"
-        "  labormanager list\n"
-        "    List current status of all labors.\n"
-        "  labormanager status\n"
-        "    Show basic status information.\n"
-        "Function:\n"
-        "  When enabled, labormanager periodically checks your dwarves and enables or\n"
-        "  disables labors.  Generally, each dwarf will be assigned exactly one labor.\n"
-        "  Warning: labormanager will override any manual changes you make to labors\n"
-        "  while it is enabled, except where the labor is marked as unmanaged.\n"
-        "  Do not try to run both autolabor and labormanager at the same time.\n"
-    ));
+        "labormanager",
+        "Automatically manage dwarf labors.",
+        labormanager));
 
     generate_labor_to_skill_map();
 

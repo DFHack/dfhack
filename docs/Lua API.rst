@@ -929,9 +929,9 @@ can be omitted.
 
   The following examples are equivalent::
 
-    dfhack.run_command({'ls', '-a'})
-    dfhack.run_command('ls', '-a')
-    dfhack.run_command('ls -a')  -- not recommended
+    dfhack.run_command({'ls', 'quick'})
+    dfhack.run_command('ls', 'quick')
+    dfhack.run_command('ls quick')  -- not recommended
 
 * ``dfhack.run_command_silent(command[, ...])``
 
@@ -1992,6 +1992,12 @@ Functions:
 
   Returns: *tile, tile_grayscale*, or *nil* if not found.
   The values can then be used for the *tile* field of *pen* structures.
+
+* ``dfhack.screen.hideGuard(screen,callback[,args...])``
+
+  Removes screen from the viewscreen stack, calls the callback (with optional
+  supplied arguments), and then restores the screen on the top of the viewscreen
+  stack.
 
 * ``dfhack.screen.clear()``
 
@@ -3109,9 +3115,11 @@ Each entry has several properties associated with it:
 
   Returns the short (~54 character) description for the given entry.
 
-* ``helpdb.get_entry_long_help(entry)``
+* ``helpdb.get_entry_long_help(entry[, width])``
 
-  Returns the full help text for the given entry.
+  Returns the full help text for the given entry. If ``width`` is specified, the
+  text will be wrapped at that width, preserving block indents. The wrap width
+  defaults to 80.
 
 * ``helpdb.get_entry_tags(entry)``
 
@@ -3987,6 +3995,9 @@ Attributes:
         widgets while it has focus. You can set this to ``true``, for example,
         if you don't want a ``List`` widget to react to arrow keys while the
         user is editing.
+:ignore_keys: If specified, must be a list of key names that the edit field
+              should ignore. This is useful if you have plain string characters
+              that you want to use as hotkeys (like ``+``).
 
 An ``EditField`` will only read and process text input if it has keyboard focus.
 It will automatically acquire keyboard focus when it is added as a subview to
@@ -4029,13 +4040,17 @@ It has the following attributes:
     keys to the number of lines to scroll as positive or negative integers or one of the keywords
     supported by the ``scroll`` method. The default is up/down arrows scrolling by one line and page
     up/down scrolling by one page.
-:show_scroll_icons: Controls scroll icons' behaviour: ``false`` for no icons, ``'right'`` or ``'left'`` for
+:show_scrollbar: Controls scrollbar display: ``false`` for no scrollbar, ``'right'`` or ``'left'`` for
     icons next to the text in an additional column (``frame_inset`` is adjusted to have ``.r`` or ``.l`` greater than ``0``),
     ``nil`` same as ``'right'`` but changes ``frame_inset`` only if a scroll icon is actually necessary
     (if ``getTextHeight()`` is greater than ``frame_body.height``). Default is ``nil``.
-:up_arrow_icon: The symbol for scroll up arrow. Default is ``string.char(24)`` (``↑``).
-:down_arrow_icon: The symbol for scroll down arrow. Default is ``string.char(25)`` (``↓``).
-:scroll_icon_pen: Specifies the pen for scroll icons. Default is ``COLOR_LIGHTCYAN``.
+:scrollbar_fg: Specifies the pen for the scroll icons and the active part of the bar. Default is ``COLOR_LIGHTGREEN`` (the same as the native DF help screens).
+:scrollbar_bg: Specifies the pen for the background part of the scrollbar. Default is ``COLOR_CYAN`` (the same as the native DF help screens).
+
+If the scrollbar is shown, it will react to mouse clicks on the scrollbar itself.
+Clicking on the arrows at the top or the bottom will scroll by one line, and
+clicking on the unfilled portion of the scrollbar will scroll by a half page in
+that direction.
 
 The text itself is represented as a complex structure, and passed
 to the object via the ``text`` argument of the constructor, or via
@@ -4312,6 +4327,7 @@ supports:
 :edit_pen: If specified, used instead of ``cursor_pen`` for the edit field.
 :edit_below: If true, the edit field is placed below the list instead of above.
 :edit_key: If specified, the edit field is disabled until this key is pressed.
+:edit_ignore_keys: If specified, must be a list of key names that the filter edit field should ignore.
 :not_found_label: Specifies the text of the label shown when no items match the filter.
 
 The list choices may include the following attributes:
@@ -4394,7 +4410,7 @@ blueprint files:
 The names of the functions are also available as the keys of the
 ``valid_phases`` table.
 
-.. _building-hacks:
+.. _building-hacks-api:
 
 building-hacks
 ==============
@@ -4533,7 +4549,7 @@ Native functions:
 
 The lua module file also re-exports functions from ``dfhack.burrows``.
 
-.. _cxxrandom:
+.. _cxxrandom-api:
 
 cxxrandom
 =========
@@ -4703,7 +4719,7 @@ The dig-now plugin exposes the following functions to Lua:
     command ``dig-now <pos> <pos>``. See the `dig-now` documentation for details
     on default settings.
 
-.. _eventful:
+.. _eventful-api:
 
 eventful
 ========
@@ -4871,7 +4887,7 @@ Integrated tannery::
   b=require "plugins.eventful"
   b.addReactionToShop("TAN_A_HIDE","LEATHERWORKS")
 
-.. _luasocket:
+.. _luasocket-api:
 
 luasocket
 =========
@@ -4942,7 +4958,7 @@ A class with all the tcp functionality.
   Tries connecting to that address and port. Returns ``client`` object.
 
 
-.. _map-render:
+.. _map-render-api:
 
 map-render
 ==========
@@ -4958,7 +4974,7 @@ Functions
 
   returns a table with w*h*4 entries of rendered tiles. The format is same as ``df.global.gps.screen`` (tile,foreground,bright,background).
 
-.. _pathable:
+.. _pathable-api:
 
 pathable
 ========
@@ -4992,7 +5008,7 @@ sort
 The `sort <sort>` plugin does not export any native functions as of now.
 Instead, it calls Lua code to perform the actual ordering of list items.
 
-.. _xlsxreader:
+.. _xlsxreader-api:
 
 xlsxreader
 ==========

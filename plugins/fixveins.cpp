@@ -103,8 +103,9 @@ command_result df_fixveins (color_ostream &out, vector <string> & parameters)
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("fixveins",
-        "Remove invalid references to mineral inclusions and restore missing ones.",
+    commands.push_back(PluginCommand(
+        "fixveins",
+        "Restore missing mineral inclusions.",
         df_fixveins));
     return CR_OK;
 }

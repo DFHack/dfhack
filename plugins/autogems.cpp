@@ -41,19 +41,6 @@ typedef int32_t mat_index;
 typedef std::map<mat_index, int> gem_map;
 
 bool running = false;
-const char *tagline = "Creates a new Workshop Order setting, automatically cutting rough gems.";
-const char *usage = (
-    "  enable autogems\n"
-    "    Enable the plugin.\n"
-    "  disable autogems\n"
-    "    Disable the plugin.\n"
-    "\n"
-    "While enabled, the Current Workshop Orders screen (o-W) have a new option:\n"
-    "  g: Auto Cut Gems\n"
-    "\n"
-    "While this option is enabled, jobs will be created in Jeweler's Workshops\n"
-    "to cut any accessible rough gems.\n"
-);
 std::set<mat_index> blacklist;
 
 void add_task(mat_index gem_type, df::building_workshopst *workshop) {
@@ -385,11 +372,8 @@ DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
     commands.push_back(PluginCommand(
         "autogems-reload",
-        "Reload autogems config file",
-        cmd_reload_config,
-        false,
-        "Reload autogems config file"
-    ));
+        "Reload autogems config file.",
+        cmd_reload_config));
     return CR_OK;
 }
 

@@ -33,7 +33,7 @@ Put that file in your dfhack-config/init/ directory -- the same directory that h
 ""
 "Also check out https://docs.dfhack.org/en/stable/docs/Plugins.html#professions for more information on the default labor professions that are distributed with DFHack, including suggestions on how many dwarves of each profession you are likely to need at each stage of fort maturity."
 ""
-"Once you have your starting surface workshops up and running, you might want to configure buildingplan (in its global settings, accessible from any building placement screen, e.g.: b-a-G) to only use blocks for constructions so it won't use your precious wood, boulders, and bars to build floors and walls. If you bring at least 7 blocks with you on embark, you can even set this in your onMapLoad.init file like this:"
+"Once you have your starting surface workshops up and running, you might want to configure buildingplan (in its global settings, accessible from any building placement screen, e.g.: b-a-G) to only use blocks for constructions so it won't use your precious wood, boulders, and bars to build floors and walls. If you bring at least 7 blocks with you on embark, you can even set this in your dfhack-config/init/onMapLoad.init file like this:"
 on-new-fortress buildingplan set boulders false; buildingplan set logs false
 ""
 "Directly after embark, run ""quickfort run library/dreamfort.csv -n /setup"" with your cursor on your wagon to set settings, and get started building your fort with ""quickfort run library/dreamfort.csv -n /surface1"" on the surface (see /surface_help for how to select a good spot). Read the walkthroughs for each level to understand what's going on and follow the checklist to keep track of where you are in the building process. Good luck, and have fun building an awesome Dreamfort-based fort!"
@@ -50,6 +50,7 @@ interactively."
 ""
 -- Preparation (before you embark!) --
 Copy hack/examples/init/onMapLoad_dreamfort.init to your dfhack-config/init directory inside your DF installation
+Optionally copy the premade Dreamfort embark profile from the online spreadsheets to the data/init/embark_profiles.txt file
 ""
 -- Set settings and preload initial orders --
 quickfort run library/dreamfort.csv -n /setup,# Run before making any manual adjustments to settings! Run the /setup_help blueprint for details on what this blueprint does.
@@ -360,6 +361,7 @@ Once the marked trees are cleared and at least the beehives and weapon rack have
 place/surface_place
 build/surface_build
 query/surface_query
+traffic/surface_traffic
 clear_large/surface_clear_large
 ""
 "#meta label(surface6) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
@@ -863,8 +865,8 @@ Feel free to assign an unimportant animal to the pasture in the main entranceway
 ,,,`,,`,Cf,Cf,Cf,Cf,Cf,Cf,Cf,Cf,`,~,,,,,,~,`,,,,,,,Cf,Cf,`,,`
 ,,,`,,`,Cf,Cf,Cf,Cf,Cf,Cf,Cf,Cf,~,~,Cf,Cf,Cf,Cf,Cf,~,~,,,,,,,,Cf,`,,`
 ,,,`,,`,Cf,Cf,Cf,Cf,Cf,Cf,Cf,Cf,~,~,,~,~,~,,~,~,,,,,Cf,Cf,,Cf,`,,`
-,,,`,,`,,Cf,,Cf,Cf,Cf,Cf,Cf,,Cf,,~,~,~,,Cf,,,,,,,,,Cf,`,,`
-,,,`,,`,,Cf,,Cf,Cf,Cf,Cf,Cf,`,,,~,~,~,,,`,,,,,,,Cf,Cf,`,,`
+,,,`,,`,,Cf,,Cf,Cf,Cf,Cf,Cf,,Cf,,~,~,~,,Cf,,,Cf,,,,,,Cf,`,,`
+,,,`,,`,,Cf,,Cf,Cf,Cf,Cf,Cf,`,,,~,~,~,,,`,,Cf,,,,,Cf,Cf,`,,`
 ,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
 ,,,`,Cf,,,,,,,,,Cf,,,,,~,,,,,Cf,,,,,,,,,Cf,`
 ,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
@@ -978,6 +980,40 @@ You might also want to set the ""trade goods quantum"" stockpile to Auto Trade i
 ,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,"{givename name=""outer main gate""}",,,,`,`,`,`,`,`,`,`,`,`,`,`
 
 
+
+#dig label(surface_traffic) start(19; 19) hidden() set traffic designations
+
+
+
+,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,,,,,,,,,,,,,,,,,`,,`
+,,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,`,`,`,`,`,`,`,,`
+,,,`,,`,,`,,,,,,,,`,,,,,,`,,,,,,,,,,`,,`
+,,,`,,`,,`,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,,`,,`,`,`,,`,,,,,,,,,,`,,`
+,,,`,,`,,`,,,,,,,,,,`,`,`,,,,,,,,,,,,`,,`
+,,,`,,`,,`,,,,,,,,`,,,,,,`,,,,,,,,,,`,,`
+,,,`,,`,`,`,`,`,`,`,,`,`,`,`,,`,,`,`,`,`,or,`,`,`,`,`,`,`,,`
+,,,`,,`,,,,,,,,,`,,ol,ol,ol,ol,ol,,`,or,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,ol,ol,ol,ol,ol,ol,ol,ol,ol,or,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,ol,ol,,,,,,ol,ol,or,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,ol,ol,,,,,,ol,ol,or,,,,,,,,`,,`
+,,,`,,`,,,,,,,,,`,,,,,,,,`,or,,,,,,,,`,,`
+,,,`,,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,,`
+,,,`,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,`
+,,,`,`,`,`,`,`,`,`,`,`,`,`,ol,ol,ol,ol,ol,ol,ol,`,`,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,,ol,ol,ol,ol,ol,ol,ol
+,,,,,,,,,,,,,,,ol,ol,ol,ol,ol,ol,ol
 
 #dig label(surface_clear_large) start(19; 19) hidden() clear wider area of trees
 t1(37x33)
@@ -1107,8 +1143,8 @@ t1(37x33)
 ,,,`,,`,~,~,~,~,~,~,~,~,`,~,~,~,~,~,~,~,`,Cf,Cf,Cf,Cf,Cf,Cf,~,~,`,,`
 ,,,`,,`,~,~,~,~,~,~,~,~,~,~,~,~,~,~,~,~,~,Cf,Cf,Cf,Cf,Cf,Cf,Cf,~,`,,`
 ,,,`,,`,~,~,~,~,~,~,~,~,~,~,Cf,~,~,~,Cf,~,~,Cf,Cf,Cf,Cf,~,~,Cf,~,`,,`
-,,,`,,`,Cf,~,Cf,~,~,~,~,~,~,~,Cf,~,~,~,Cf,~,~,Cf,Cf,Cf,Cf,Cf,Cf,Cf,~,`,,`
-,,,`,,`,Cf,~,Cf,~,~,~,~,~,`,Cf,Cf,~,~,~,Cf,Cf,`,Cf,Cf,Cf,Cf,Cf,Cf,~,~,`,,`
+,,,`,,`,Cf,~,Cf,~,~,~,~,~,~,~,Cf,~,~,~,Cf,~,~,Cf,~,Cf,Cf,Cf,Cf,Cf,~,`,,`
+,,,`,,`,Cf,~,Cf,~,~,~,~,~,`,Cf,Cf,~,~,~,Cf,Cf,`,Cf,~,Cf,Cf,Cf,Cf,~,~,`,,`
 ,,,`,,`,`,`,`,`,`,`,`,`,`,Cf,Cf,Cf,Cf,Cf,Cf,Cf,`,`,`,`,`,`,`,`,`,`,,`
 ,,,`,~,,,,,,,,,,,Cf,Cf,Cf,~,Cf,Cf,Cf,,,,,,,,,,,~,`
 ,,,`,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,`,`,`,`,`,`,`,`,`,`,`,`
@@ -1529,6 +1565,7 @@ Farming Walkthrough:
 Once furniture has been placed, continue with /farming3.) workshops, stockpiles, and important furniture"
 build/farming_build
 place/farming_place
+traffic/farming_traffic
 query_stockpiles/farming_query_stockpiles
 link_stockpiles/farming_link
 ""
@@ -1601,6 +1638,37 @@ build3/farming_build3
 ,,,,,,,,,,,,,,,ry
 
 
+#dig label(farming_traffic) start(16; 18) hidden() keep hungry dwarves away from the crops and food stores so they prefer the prepared meals
+
+
+,,,,,,,,,ol,ol,ol,,or,or,or,or,or,,ol,ol,ol,ol
+,,,,,,,,,ol,ol,ol,,or,or,or,or,or,,ol,ol,ol,ol
+,,,,,,,,,ol,ol,ol,,or,or,or,or,or,,ol,ol,ol,ol
+,,,,,,,,,,,ol,,or,or,or,or,or,,ol,ol,ol,ol
+,,,,,,,ol,ol,ol,,ol,,or,or,or,or,or,,ol,ol,ol,ol
+,,,,,,,ol,ol,ol,ol,ol,,or,or,or,or,or,,ol,ol,ol,ol
+,,,,,,,ol,ol,ol,,ol,,or,or,or,or,or,,ol
+,,,,,,,,,,,ol,,or,or,or,or,or,,ol,,ol,ol,ol
+,,,,,,ol,ol,ol,ol,,ol,,or,or,or,or,or,,ol,ol,ol,ol,ol
+,,,,,,ol,ol,ol,ol,,ol,,or,or,or,or,or,,ol,,ol,ol,ol
+,,,ol,ol,,ol,ol,ol,ol,,ol,,or,or,or,or,or,,ol
+,,ol,ol,ol,,ol,ol,ol,ol,,ol,,or,or,or,or,or,,ol,,ol,ol,ol,,ol,ol,ol
+,,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,,or,,or,,,ol,ol,ol,ol,ol,ol,ol,ol,ol
+,,,ol,ol,,ol,ol,ol,ol,,ol,ol,ol,ol,ol,ol,ol,ol,ol,,ol,ol,ol,,ol,ol,ol
+,,,,or,,,or,,,,,,ol,`,`,`,ol,,,,,or,,,,or
+,,or,or,or,or,or,or,or,or,or,or,,ol,`,~,`,ol,,or,or,or,or,or,or,or,or,or,or
+,,or,or,or,or,or,or,or,or,or,or,or,ol,`,`,`,ol,or,or,or,or,or,or,or,or,or,or,or
+,,or,or,or,or,or,or,or,or,or,or,,ol,ol,ol,ol,ol,,or,or,or,or,or,or,or,or,or,or
+,,or,or,or,or,or,or,or,or,or,,,,ol,,ol,,,,or,or,or,or,or,or,or,or,or
+,,or,or,or,or,or,or,or,or,,,ol,ol,ol,ol,ol,ol,ol,,,or,or,or,or,or,or,or,or
+,,or,or,or,or,or,or,or,or,,ol,ol,,,ol,,,ol,ol,,or,or,or,or,or,or,or,or
+,,or,or,or,or,or,or,or,,,ol,ol,,ol,ol,ol,,ol,ol,,,or,or,or,or,or,or,or
+,,or,or,or,or,or,or,or,,ol,ol,ol,,ol,ol,ol,,ol,ol,ol,,or,or,or,or,or,or,or
+,,or,or,or,or,or,or,or,,ol,ol,ol,,ol,ol,ol,,ol,ol,ol,,or,or,or,or,or,or,or
+,,or,or,or,or,or,or,or,,ol,ol,ol,,,ol,,,ol,ol,ol,,or,or,or,or,or,or,or
+,,,,,,,,,,,,,,,ol
+
+
 "#query label(farming_query_stockpiles) start(16; 18) hidden() message(remember to:
 - assign a minecart to the refuse quantum stockpile (run ""assign-minecarts all"")
 - if the industry level is already built, configure the jugs, pots, and bags stockpiles to take from the ""Goods"" quantum stockpile on the industry level) config stockpiles"
@@ -1669,7 +1737,7 @@ build3/farming_build3
 
 
 ,,,,,,,,,`,`,`,,`,`,`,`,`,,`,`,`,`
-,,,,,,,,,r&,`,`,,`,`,`,`,`,,`,`,`,`
+,,,,,,,,,r&a+&,,,,`,`,`,`,`,,`,`,`,`
 ,,,,,,,,,`,`,`,,`,`,`,`,`,,`,`,r+&h
 ,,,,,,,,,,,`,,`,`,`,`,`,,`,`,`,`
 ,,,,,,,`,`,`,,`,,`,`,`,`,`,,`,`,`,`
@@ -2138,9 +2206,9 @@ Services Walkthrough:
 
 "#meta label(services2) start(central stairs) message(Remember to enqueue manager orders for this blueprint.
 Once furniture has been placed, continue with /services3.) dining hall anchors, stockpiles, hospital, garbage dump"
+zones/services_zones
 build/services_build
 place/services_place
-zones/services_zones
 name_zones/services_name_zones
 query_stockpiles/services_query_stockpiles
 ""
@@ -2153,6 +2221,64 @@ build2/services_build2
 build3/services_build3
 place_jail/services_place_jail
 query_jail/services_query_jail
+"#zone label(services_zones) start(18; 18) hidden() message(If you'd like to fill your wells via bucket brigade, activate the inactive pond zones one level down from where the wells will be built.) garbage dump, hospital, and pond zones"
+
+,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,,`,`,`
+,`,`,`,,`,`,`,,`,`,`,,`,`,`,`,`,`,`,`,`
+,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,,`,`,`
+,,`,,,,`,,,,`,,,,,,,`
+,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`,,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`,,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,,,,,,`,,,,,,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,,,`
+,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,ht,ht,ht,ht,ht,ht,ht,ht,ht
+,`,`,`,`,`,`,`,`,`,`,`,,,,,`,,`,,,,ht,ht,ht,ht,ht,ht,ht,ht,ht,ht
+,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,ht,ht,ht,ht,ht,ht,ht,ht,ht,ht
+,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,ht,ht,ht,ht,ht,ht,ht,ht,ht,ht
+,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,ht,ht,ht,ht,ht,ht,ht,ht,ht,ht
+,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,ht,ht,ht,ht,ht,ht,ht,ht,ht,ht
+,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,ht,ht,ht,ht,ht,ht,ht,ht,ht,ht
+,`,`,`,`,`,`,`,`,`,`,`,,,,,,d,,,,,ht,ht,ht,ht,ht,ht,ht,ht,ht,ht
+,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,ht,ht,ht,ht,ht,ht,ht,ht,ht
+,`,`,`,`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`
+,,,,`,`,,`,`
+,`,`,`,`,`,,`,`,`,`,`
+,`,`,`,`,`,,`,`,`,`,`
+,`,`,`,`,`,,`,`,`,`,`
+,`,`,`,`,`,,`,`,`,`,`
+,`,`,`,`,`,,`,`,`,`,`
+
+#>
+
+,,,,,,,,,,,,,`,apPf,`,,`,,`,apPf,`
+,,,,,,,,,,,,,`,`,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,,,,`
+,,,,,,,,,,,,,,,,,`
+,,,,,,,,,,,,,`,apPf,`,,`,,`,apPf,`
+,,,,,,,,,,,,,`,`,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,,,,`
+,,,,,,,,,,,,,,,,,`
+,,,,,,,,,,,,,,,,,`
+,,,,,,,,,,,,,,,,,`
+,,,,,,,,,,,,,,,,,`
+,,,,,,,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`
+,,,,,,,,,,,,,,,,,`,,,,,,,,,`
+,,,,,,,,,,,,,,,,,`,,,,,,,,,`
+,,,,,,,,,,,,,,,`,`,`,`,`,,,,,,,`
+,,,,,,,,,,,,,,,`,`,`,`,`,,,,,,`,`,`
+,,,,,,,,,,,,,,,`,`,`,`,`,,,,,,`,apPf,`
+,,,,,,,,,,,,,,,`,`,`,`,`
+,,,,,,,,,,,,,,,`,`,`,`,`
+
 #build label(services_build) start(18; 18) hidden() build basic hospital and dining room anchor
 
 ,b,b,b,,b,b,b,,b,b,b,,`,`,`,,`,,`,`,`
@@ -2224,64 +2350,6 @@ query_jail/services_query_jail
 ,`,`,`,`,`,,`,`,`,`,`
 ,`,`,`,`,`,,`,`,`,`,`
 ,`,`,`,`,`,,`,`,`,`,`
-
-"#zone label(services_zones) start(18; 18) hidden() message(If you'd like to fill your wells via bucket brigade, activate the inactive pond zones one level down from where the wells will be built.) hospital, garbage dump, and pond zones"
-
-,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,,`,`,`
-,`,`,`,,`,`,`,,`,`,`,,`,`,`,`,`,`,`,`,`
-,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,,`,`,`
-,,`,,,,`,,,,`,,,,,,,`
-,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`,,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,,`,,`,`,`,,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,,,,,`,,,,,,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,,,`
-,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,ht,,ht,,ht,,ht
-,`,`,`,`,`,`,`,`,`,`,`,,,,,`,,`,,,,,ht,,ht,,ht,,ht
-,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,ht,ht,ht,ht,ht,ht,ht,ht,ht
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,ht,ht,ht,ht,ht,ht,ht
-,`,`,`,`,`,`,`,`,`,`,`,,`,,`,`,`,`,`,,`,,ht,ht,ht,ht,ht,ht,ht,ht,ht
-,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,ht,ht,ht,ht,ht,ht,ht
-,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,ht,ht,ht,ht,ht,ht,ht,ht,ht
-,`,`,`,`,`,`,`,`,`,`,`,,,,,,d,,,,,,ht,,ht,,ht,,ht
-,`,`,`,`,`,`,`,`,`,`,`,,,,,,,,,,,,ht,,ht,,ht,,ht
-,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`
-,,,,`,`,,`,`
-,`,`,`,`,`,,`,`,`,`,`
-,`,`,`,`,`,,`,`,`,`,`
-,`,`,`,`,`,,`,`,`,`,`
-,`,`,`,`,`,,`,`,`,`,`
-,`,`,`,`,`,,`,`,`,`,`
-
-#>
-
-,,,,,,,,,,,,,`,apPf,`,,`,,`,apPf,`
-,,,,,,,,,,,,,`,`,`,`,`,`,`,`,`
-,,,,,,,,,,,,,,,,,`
-,,,,,,,,,,,,,,,,,`
-,,,,,,,,,,,,,`,apPf,`,,`,,`,apPf,`
-,,,,,,,,,,,,,`,`,`,`,`,`,`,`,`
-,,,,,,,,,,,,,,,,,`
-,,,,,,,,,,,,,,,,,`
-,,,,,,,,,,,,,,,,,`
-,,,,,,,,,,,,,,,,,`
-,,,,,,,,,,,,,,,,,`
-,,,,,,,,,,,,,,,,,`,`,`,`,`,`,`,`,`,`
-,,,,,,,,,,,,,,,,,`,,,,,,,,,`
-,,,,,,,,,,,,,,,,,`,,,,,,,,,`
-,,,,,,,,,,,,,,,`,`,`,`,`,,,,,,,`
-,,,,,,,,,,,,,,,`,`,`,`,`,,,,,,`,`,`
-,,,,,,,,,,,,,,,`,`,`,`,`,,,,,,`,apPf,`
-,,,,,,,,,,,,,,,`,`,`,`,`
-,,,,,,,,,,,,,,,`,`,`,`,`
 
 #query label(services_name_zones) start(18; 18) hidden()
 
@@ -2506,6 +2574,42 @@ query_jail/services_query_jail
 ,,,,,,,,,,,,,,,`,`,`,`,`,,,,,,`,`,`
 ,,,,,,,,,,,,,,,`,`,`,`,`
 ,,,,,,,,,,,,,,,`,`,`,`,`
+
+#dig label(services_traffic) start(18; 18) hidden() promote the tavern as the place to eat
+
+,ol,ol,ol,,ol,ol,ol,,ol,ol,ol,,or,or,or,,or,,or,or,or
+,ol,ol,ol,,ol,ol,ol,,ol,ol,ol,,or,or,or,or,or,or,or,or,or
+,ol,ol,ol,,ol,ol,ol,,ol,ol,ol,,or,or,or,,or,,or,or,or
+,,ol,,,,ol,,,,ol,,,,,,,or
+,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,or,or,or,,or,,or,or,or,,or,or,or,or,or
+,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,or,or,or,or,or,or,or,or,or,,or,or,or,or,or
+,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,or,or,or,,or,,or,or,or,,or,or,or,or,or
+,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,,,,,or,,,,,,or,or,or,or,or
+,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,or,or,or,or,or,or,or,or,or,,or,or,or,or,or
+,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,or,or,or,or,or,or,or,or,or,,,,or
+,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,or,or,or,or,or,or,or,or,or,or,or,or,or
+,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,or,or,or,or,or,or,or,or,or
+,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,or,or,or,or,or,or,or,or,or,,or,,or,,or,,or
+,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,ol,,,,,or,,or,,,,,or,,or,,or,,or
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,,,,oh,oh,oh,oh,oh,,,,or,or,or,or,or,or,or,or,or
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,`,`,`,oh,oh,oh,oh,oh,oh,oh,oh,oh,or,or
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,,`,,oh,`,`,`,oh,,`,,oh,oh,oh,`,oh,or,or,or,or
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,`,`,`,oh,oh,oh,oh,oh,oh,oh,oh,oh,or,or
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,,,,oh,oh,oh,oh,oh,,,,or,or,or,or,or,or,or,or,or
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,,,,,,`,,,,,,or,,or,,or,,or
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,,,,,,,,,,,,or,,or,,or,,or
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh
+,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh,oh
+,,,,oh,oh,,oh,oh
+,oh,oh,oh,oh,oh,,oh,oh,oh,oh,oh
+,oh,oh,oh,oh,oh,,oh,oh,oh,oh,oh
+,oh,oh,oh,oh,oh,,oh,oh,oh,oh,oh
+,oh,oh,oh,oh,oh,,oh,oh,oh,oh,oh
+,oh,oh,oh,oh,oh,,oh,oh,oh,oh,oh
 
 "#build label(services_build3) start(18; 18) hidden() jail, statues"
 

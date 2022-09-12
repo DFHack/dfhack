@@ -370,14 +370,8 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 {
     commands.push_back(PluginCommand(
         "dwarfvet",
-        "Allows animals to be cared for in animal hospitals (activity zones that are animal training + hospital combined).",
-        dwarfvet,
-        false, //allow non-interactive use
-        "dwarfvet enable\n"
-        " enables animals to use animal hospitals (requires dwarf with Animal Caretaker labor enabled)\n"
-        "dwarfvet report\n"
-        " displays all zones dwarfvet considers animal hospitals and their current location on the map\n"
-    ));
+        "Allows animals to be treated at animal hospitals",
+        dwarfvet));
     return CR_OK;
 }
 

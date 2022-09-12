@@ -2370,6 +2370,21 @@ static int screen_findGraphicsTile(lua_State *L)
     }
 }
 
+static int screen_hideGuard(lua_State *L) {
+    df::viewscreen *screen = dfhack_lua_viewscreen::get_pointer(L, 1, false);
+    luaL_checktype(L, 2, LUA_TFUNCTION);
+
+    // remove screen from the stack so it doesn't get returned as an output
+    lua_remove(L, 1);
+
+    Screen::Hide hideGuard(screen, Screen::Hide::RESTORE_AT_TOP);
+
+    int nargs = lua_gettop(L) - 1;
+    lua_call(L, nargs, LUA_MULTRET);
+
+    return lua_gettop(L);
+}
+
 namespace {
 
 int screen_show(lua_State *L)
@@ -2472,6 +2487,7 @@ static const luaL_Reg dfhack_screen_funcs[] = {
     { "paintString", screen_paintString },
     { "fillRect", screen_fillRect },
     { "findGraphicsTile", screen_findGraphicsTile },
+    CWRAP(hideGuard, screen_hideGuard),
     CWRAP(show, screen_show),
     CWRAP(dismiss, screen_dismiss),
     CWRAP(isDismissed, screen_isDismissed),
@@ -3220,6 +3236,7 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "getAddress", internal_getAddress },
     { "setAddress", internal_setAddress },
     { "getVTable", internal_getVTable },
+
     { "adjustOffset", internal_adjustOffset },
     { "getMemRanges", internal_getMemRanges },
     { "patchMemory", internal_patchMemory },

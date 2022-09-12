@@ -584,24 +584,9 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "getplants", "Cut down trees or gather shrubs by ID",
-        df_getplants, false,
-        "  Specify the types of trees to cut down and/or shrubs to gather by their\n"
-        "  plant IDs, separated by spaces.\n"
-        "Options:\n"
-        "  -t - Tree: Select trees only (exclude shrubs)\n"
-        "  -s - Shrub: Select shrubs only (exclude trees)\n"
-        "  -f - Farming: Designate only shrubs that yield seeds for farming. Implies -s\n"
-        "  -c - Clear: Clear designations instead of setting them\n"
-        "  -x - eXcept: Apply selected action to all plants except those specified\n"
-        "  -a - All: Select every type of plant (obeys -t/-s/-f)\n"
-        "  -v - Verbose: List the number of (un)designations per plant\n"
-        "  -n * - Number: Designate up to * (an integer number) plants of each species\n"
-        "Specifying both -t and -s or -f will have no effect.\n"
-        "If no plant IDs are specified, and the -a switch isn't given, all valid plant\n"
-        "IDs will be listed with -t, -s, and -f restricting the list to trees, shrubs,\n"
-        "and farmable shrubs, respectively.\n"
-    ));
+        "getplants",
+        "Designate trees for chopping and shrubs for gathering.",
+        df_getplants));
     return CR_OK;
 }
 

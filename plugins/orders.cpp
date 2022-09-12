@@ -49,21 +49,8 @@ DFhackCExport command_result plugin_init(color_ostream & out, std::vector<Plugin
 {
     commands.push_back(PluginCommand(
         "orders",
-        "Manipulate manager orders.",
-        orders_command,
-        false,
-        "orders - Manipulate manager orders\n"
-        "  orders list\n"
-        "    Shows the list of previously exported orders.\n"
-        "  orders export [name]\n"
-        "    Exports the current list of manager orders to a file named dfhack-config/orders/[name].json.\n"
-        "  orders import [name]\n"
-        "    Imports manager orders from a file named dfhack-config/orders/[name].json.\n"
-        "  orders clear\n"
-        "    Deletes all manager orders in the current embark.\n"
-        "  orders sort\n"
-        "    Sorts current manager orders by repeat frequency so they don't conflict.\n"
-    ));
+        "Manage manager orders.",
+        orders_command));
     return CR_OK;
 }
 

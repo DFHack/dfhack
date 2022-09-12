@@ -599,8 +599,8 @@ local function get_scrollbar_pos_and_height(label)
     local scrollbar_body_height = label.frame_body.height - 2
     local displayed_lines = last_visible_line - first_visible_line
 
-    local height = math.min(scrollbar_body_height - 1,
-        math.ceil((displayed_lines-1) * scrollbar_body_height / text_height))
+    local height = math.floor(((displayed_lines-1) * scrollbar_body_height) /
+                              text_height)
 
     local max_pos = scrollbar_body_height - height
     local pos = math.ceil(((first_visible_line-1) * max_pos) /
@@ -683,7 +683,6 @@ end
 
 function Label:onRenderFrame(dc, rect)
     if self._show_scrollbar
-    and self:getTextHeight() > self.frame_body.height
     then
         local x = self._show_scrollbar == 'left'
                 and self.frame_body.x1-dc.x1-1

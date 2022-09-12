@@ -3,51 +3,61 @@
 DFHack modding guide
 ====================
 
-What is a mod/script?
----------------------
+What is the difference between a script and a mod?
+--------------------------------------------------
 
 A script is a single file that can be run as a command in DFHack, like something
 that modifies or displays game data on request. A mod is something you install
-to get persistent behavioural changes in the game and/or add new content. DFHack
-mods contain and use scripts as well as often having a raw mod component.
+to get persistent behavioural changes in the game and/or add new content. Mods
+can contain and use scripts in addition to (or instead of) modifications to the
+DF game raws.
 
 DFHack scripts are written in Lua. If you don't already know Lua, there's a
-great primer at https://www.lua.org/pil/1.html.
+great primer at `lua.org <https://www.lua.org/pil/contents.html>`__.
 
-Why not just use raw modding?
------------------------------
+Why not just mod the raws?
+--------------------------
 
-For many things it's either completely and only (sensibly) doable in raws or
-completely and only doable with DFHack. For mods where DFHack is an alternative
-and not the only option, it's much less hacky, easier to maintain, and easier to
-extend, and is not prone to side-effects. A great example is adding a syndrome
-when a reaction is performed requiring an exploding boulder in raws but having
-dedicated tools for it if you use DFHack. Many things will require a mix of raw
-modding and DFHack.
+It depends on what you want to do. Some mods *are* better to do in just the raws.
+You don't need DFHack to add a new race or modify attributes, for example. However,
+DFHack scripts can do many things that you just can't do in the raws, like make a
+creature that trails smoke. Some things *could* be done in the raws, but writing a
+script is less hacky, easier to maintain, easier to extend, and is not prone to
+side-effects. A great example is adding a syndrome when a reaction is performed.
+If done in the raws, you have to create an exploding boulder to effect the syndrome.
+DFHack scripts can add the syndrome directly and with much more flexibility. In the
+end, complex mods will likely require a mix of raw modding and DFHack scripting.
 
 A mod-maker's development environment
 -------------------------------------
 
-Scripts can be run from a world's ``raw/scripts/`` directory, and (configurably)
-are run by default from ``hack/scripts/``. Scripts in ``raw/init.d/`` are
-automatically run on world load. Scripts within the raws are a component for
-more advanced mods.
+While you're writing your mod, you need a place to store your in-development scripts
+that will:
 
-A script is run by writing its path and name from a script path folder without
-the file extension into a DFHack command prompt (in-game or the external one).
-E.g. ``gui/gm-editor`` for ``hack/scripts/gui/gm-editor.lua``.
+- be directly runnable by DFHack
+- not get lost when you upgrade DFHack
 
-You can make all your scripts in ``hack/scripts/``, but this is not recommended
-as it makes things much harder to maintain each update. It's recommended to make
-a folder with a name like ``own-scripts`` and add it to
-``dfhack-config/script-paths.txt``. You could also make a folder for external
-installed scripts from the internet that are not in ``hack/scripts/``. You can
-prepend your script paths entries with a ``+`` so that they take precedence over
-other folders.
+The recommended approach is to create a directory somewhere outside of your DF
+installation (let's call it "/path/to/own-scripts") and do all your script
+development in there.
 
-If your mod is installed into ``raw/scripts/`` be aware that the copies of the
-scripts in ``data/save/*/raw/`` are checked first and will run instead of any
-changes you make to an in-development copy outside of a raw folder.
+Inside your DF installation folder, there is a file named
+:file:`dfhack-config/script-paths.txt`. If you add a line like this to that file::
+
+    +/path/to/own-scripts
+
+Then that directory will be searched when you run DFHack commands from inside the
+game. The ``+`` at the front of the path means to search that directory first,
+before any other script directory (like :file:`hack/scripts` or
+:file:`raw/scripts`). That way, your latest changes will always be used instead of
+older copies that you may have installed in a DF directory.
+
+For scripts with the same name, the `order of precedence <script-paths>` will be:
+
+1. ``own-scripts/``
+2. ``data/save/*/raw/scripts/``
+3. ``raw/scripts/``
+4. ``hack/scripts/``
 
 The structure of the game
 -------------------------
@@ -55,7 +65,8 @@ The structure of the game
 "The game" is in the global variable `df <lua-df>`. The game's memory can be
 found in ``df.global``, containing things like the list of all items, whether to
 reindex pathfinding, et cetera. Also relevant to us in ``df`` are the various
-types found in the game, e.g. ``df.pronoun_type`` which we will be using.
+types found in the game, e.g. ``df.pronoun_type`` which we will be using in this
+guide. We'll explore more of the game structures `below <Exploring DF structures>`_.
 
 Your first script
 -----------------
@@ -88,8 +99,8 @@ with one of the strings, will yield its corresponding number. So: ::
 Simple. Save this as a Lua file in your own scripts directory and run it as
 shown before when focused on a unit one way or another.
 
-Getting used to gm-editor and df-structures exploration
--------------------------------------------------------
+Exploring DF structures
+-----------------------
 
 So how could you have known about the field and type we just used? Well, there
 are two main tools for discovering the various fields in the game's data

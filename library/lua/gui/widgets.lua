@@ -544,12 +544,10 @@ Label.ATTRS{
     auto_width = false,
     on_click = DEFAULT_NIL,
     on_rclick = DEFAULT_NIL,
-    --
     scroll_keys = STANDARDSCROLL,
-    show_scroll_icons = DEFAULT_NIL, -- DEFAULT_NIL, 'right', 'left', false
-    up_arrow_icon = string.char(24),
-    down_arrow_icon = string.char(25),
-    scroll_icon_pen = COLOR_LIGHTCYAN,
+    show_scrollbar = DEFAULT_NIL, -- DEFAULT_NIL, 'right', 'left', false
+    scrollbar_fg = COLOR_LIGHTGREEN,
+    scrollbar_bg = COLOR_CYAN
 }
 
 function Label:init(args)
@@ -573,16 +571,16 @@ function Label:setText(text)
 end
 
 function Label:update_scroll_inset()
-    if self.show_scroll_icons == nil then
-        self._show_scroll_icons = self:getTextHeight() > self.frame_body.height and 'right' or false
+    if self.show_scrollbar == nil then
+        self._show_scrollbar = self:getTextHeight() > self.frame_body.height and 'right' or false
     else
-        self._show_scroll_icons = self.show_scroll_icons
+        self._show_scrollbar = self.show_scrollbar
     end
-    if self._show_scroll_icons then
-        -- here self._show_scroll_icons can only be either
+    if self._show_scrollbar then
+        -- here self._show_scrollbar can only be either
         -- 'left' or any true value which we interpret as right
         local l,t,r,b = gui.parse_inset(self.frame_inset)
-        if self._show_scroll_icons == 'left' and l <= 0 then
+        if self._show_scrollbar == 'left' and l <= 0 then
             l = 1
         elseif r <= 0 then
             r = 1
@@ -591,14 +589,54 @@ function Label:update_scroll_inset()
     end
 end
 
-function Label:render_scroll_icons(dc, x, y1, y2)
-    if self.start_line_num ~= 1 then
-        dc:seek(x, y1):char(self.up_arrow_icon, self.scroll_icon_pen)
+-- the position is the number of tiles of empty space above the top of the
+-- scrollbar, and the height is the number of tiles the scrollbar should occupy
+-- to represent the percentage of text that is on the screen.
+local function get_scrollbar_pos_and_height(label)
+    local first_visible_line = label.start_line_num
+    local text_height = label:getTextHeight()
+    local last_visible_line = first_visible_line + label.frame_body.height - 1
+    local scrollbar_body_height = label.frame_body.height - 2
+    local displayed_lines = last_visible_line - first_visible_line
+
+    local height = math.min(scrollbar_body_height - 1,
+        math.ceil((displayed_lines-1) * scrollbar_body_height / text_height))
+
+    local max_pos = scrollbar_body_height - height
+    local pos = math.ceil(((first_visible_line-1) * max_pos) /
+                          (text_height - label.frame_body.height))
+
+    return pos, height
+end
+
+local UP_ARROW_CHAR = string.char(24)
+local DOWN_ARROW_CHAR = string.char(25)
+local NO_ARROW_CHAR = string.char(32)
+local BAR_CHAR = string.char(7)
+local BAR_BG_CHAR = string.char(179)
+
+function Label:render_scrollbar(dc, x, y1, y2)
+    -- render up arrow if we're not at the top
+    dc:seek(x, y1):char(
+        self.start_line_num == 1 and NO_ARROW_CHAR or UP_ARROW_CHAR,
+        self.scrollbar_fg, self.scrollbar_bg)
+    -- render scrollbar body
+    local pos, height = get_scrollbar_pos_and_height(self)
+    local starty = y1 + pos + 1
+    local endy = y1 + pos + height
+    for y=y1+1,y2-1 do
+        if y >= starty and y <= endy then
+            dc:seek(x, y):char(BAR_CHAR, self.scrollbar_fg)
+        else
+            dc:seek(x, y):char(BAR_BG_CHAR, self.scrollbar_bg)
+        end
     end
+    -- render down arrow if we're not at the bottom
     local last_visible_line = self.start_line_num + self.frame_body.height - 1
-    if last_visible_line < self:getTextHeight() then
-        dc:seek(x, y2):char(self.down_arrow_icon, self.scroll_icon_pen)
-    end
+    dc:seek(x, y2):char(
+        last_visible_line >= self:getTextHeight() and
+            NO_ARROW_CHAR or DOWN_ARROW_CHAR,
+        self.scrollbar_fg, self.scrollbar_bg)
 end
 
 function Label:computeFrame(parent_rect)
@@ -644,13 +682,13 @@ function Label:onRenderBody(dc)
 end
 
 function Label:onRenderFrame(dc, rect)
-    if self._show_scroll_icons
+    if self._show_scrollbar
     and self:getTextHeight() > self.frame_body.height
     then
-        local x = self._show_scroll_icons == 'left'
+        local x = self._show_scrollbar == 'left'
                 and self.frame_body.x1-dc.x1-1
                 or  self.frame_body.x2-dc.x1+1
-        self:render_scroll_icons(dc,
+        self:render_scrollbar(dc,
             x,
             self.frame_body.y1-dc.y1,
             self.frame_body.y2-dc.y1

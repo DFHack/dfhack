@@ -4039,13 +4039,12 @@ It has the following attributes:
     keys to the number of lines to scroll as positive or negative integers or one of the keywords
     supported by the ``scroll`` method. The default is up/down arrows scrolling by one line and page
     up/down scrolling by one page.
-:show_scroll_icons: Controls scroll icons' behaviour: ``false`` for no icons, ``'right'`` or ``'left'`` for
+:show_scrollbar: Controls scrollbar display: ``false`` for no scrollbar, ``'right'`` or ``'left'`` for
     icons next to the text in an additional column (``frame_inset`` is adjusted to have ``.r`` or ``.l`` greater than ``0``),
     ``nil`` same as ``'right'`` but changes ``frame_inset`` only if a scroll icon is actually necessary
     (if ``getTextHeight()`` is greater than ``frame_body.height``). Default is ``nil``.
-:up_arrow_icon: The symbol for scroll up arrow. Default is ``string.char(24)`` (``↑``).
-:down_arrow_icon: The symbol for scroll down arrow. Default is ``string.char(25)`` (``↓``).
-:scroll_icon_pen: Specifies the pen for scroll icons. Default is ``COLOR_LIGHTCYAN``.
+:scrollbar_fg: Specifies the pen for the scroll icons and the active part of the bar. Default is ``COLOR_LIGHTGREEN`` (the same as the native DF help screens).
+:scrollbar_bg: Specifies the pen for the background part of the scrollbar. Default is ``COLOR_CYAN`` (the same as the native DF help screens).
 
 The text itself is represented as a complex structure, and passed
 to the object via the ``text`` argument of the constructor, or via

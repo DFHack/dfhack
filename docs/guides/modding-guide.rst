@@ -71,100 +71,103 @@ guide. We'll explore more of the game structures `below <Exploring DF structures
 Your first script
 -----------------
 
-So! It's time to write your first script. We are going to make a script that
-will get the pronoun type of the currently selected unit (there are many
-contexts where the function that gets the currently selected unit works).
+So! It's time to write your first script. This section will walk you through how
+to make a script that will get the pronoun type of the currently selected unit.
 
-First line, we get the unit. ::
+First line, we get the unit::
 
     local unit = dfhack.gui.getSelectedUnit()
 
 If no unit is selected, an error message will be printed (which can be silenced
 by passing ``true`` to ``getSelectedUnit``) and ``unit`` will be ``nil``.
 
-If ``unit`` is ``nil``, we don't want the script to run anymore. ::
+If ``unit`` is ``nil``, we don't want the script to run anymore::
 
     if not unit then
         return
     end
 
 Now, the field ``sex`` in a unit is an integer, but each integer corresponds to
-a string value (it, she, or he). We get this value by indexing the bidirectional
-map ``df.pronoun_type`` with an integer from the unit. Indexing the other way,
-with one of the strings, will yield its corresponding number. So: ::
+a string value ("it", "she", or "he"). We get this value by indexing the bidirectional
+map ``df.pronoun_type``. Indexing the other way, incidentally, with one of the strings,
+will yield its corresponding number. So::
 
     local pronounTypeString = df.pronoun_type[unit.sex]
     print(pronounTypeString)
 
 Simple. Save this as a Lua file in your own scripts directory and run it as
-shown before when focused on a unit one way or another.
+shown before when a unit is selected in the Dwarf Fortress UI.
 
 Exploring DF structures
 -----------------------
 
 So how could you have known about the field and type we just used? Well, there
 are two main tools for discovering the various fields in the game's data
-structures. The first is the ``df-structures`` repository
-(at https://github.com/DFHack/df-structures) that contains XML files denoting
-the contents of the game's structures. The second is the script
-``gui/gm-editor`` which is an interactive data explorer. You can run the script
-while objects like units are selected to view the data within them. You can also
-pass ``scr`` as an argument to the script to view the data for the current
-screen. Press ? while the script is active to view help.
+structures. The first is the ``df-structures``
+`repository <https://github.com/DFHack/df-structures>`__ that contains XML files
+describing the contents of the game's structures. These are complete, but difficult
+to read (for a human). The second option is the `gui/gm-editor` script, an
+interactive data explorer. You can run the script while entities like units are
+selected to view the data within them. You can also run ``gui/gm-editor scr`` to
+view the data for the current screen. Press :kbd:`?` while the script is active to
+view help.
 
 Familiarising yourself with the many structs of the game will help with ideas
-immensely, and you can always ask for help in the right places (e.g. DFHack's
-Discord).
+immensely, and you can always ask for help in the `right places <support>`.
 
 Detecting triggers
 ------------------
 
-One main method for getting new behaviour into the game is callback functions.
-There are two main libraries for this, ``repeat-util`` and ``eventful``.
-``repeat-util`` is used to run a function once per configurable number of frames
-(paused or unpaused), ticks (unpaused), in-game days, months, or years. For
-adding behaviour you will most often want something to run once a tick.
-``eventful`` is used to get code to run (with special parameters!) when
-something happens in the game, like a reaction or job being completed or a
-projectile moving.
+The common method for injecting new behaviour into the game is to define a
+callback function and get it called when something interesting happens. DFHack
+provides two libraries for this, ``repeat-util`` and `eventful <eventful-api>`.
+``repeat-util`` is used to run a function once per a configurable number of frames
+(paused or unpaused), ticks (unpaused), in-game days, months, or years. If you
+need to be aware the instant something happens, you'll need to run a check once a
+tick. Be careful not to do this gratuitiously, though, since running that often can
+slow down the game!
 
-To get something to run once per tick, we would want to call ``repeat-util``'s
-``scheduleEvery`` function.
+``eventful``, on the other hand, is much more performance-friendly since it will
+only call your callback when a relevant event happens, like a reaction or job being
+completed or a projectile moving.
 
-First, we load the module: ::
+To get something to run once per tick, we can call ``repeat-util.scheduleEvery()``.
+First, we load the module::
 
-    local repeatUtil = require("repeat-util")
+    local repeatUtil = require('repeat-util')
 
 Both ``repeat-util`` and ``eventful`` require keys for registered callbacks.
-It's recommended to use something like a mod id. ::
+You should use something unique, like your mod name, perhaps with a suffix if you
+are registering multiple keys::
 
     local modId = "callback-example-mod"
 
 Then, we pass the key, amount of time units between function calls, what the
-time units are, and finally the callback function itself: ::
+time units are, and finally the callback function itself::
 
     repeatUtil.scheduleEvery(modId, 1, "ticks", function()
-        -- Do something like iterating over all active units
+        -- Do something like iterating over all active units and check
+        -- for something interesting
         for _, unit in ipairs(df.global.world.units.active) do
-            print(unit.id)
+            ...
         end
     end)
 
-``eventful`` is slightly more involved. First get the module: ::
+``eventful`` is slightly more involved. First get the module::
 
-    local eventful = require("plugins.eventful")
+    local eventful = require('plugins.eventful')
 
 ``eventful`` contains a table for each event which you populate with functions.
 Each function in the table is then called with the appropriate arguments when
 the event occurs. So, for example, to print the position of a moving (item)
-projectile: ::
+projectile::
 
     eventful.onProjItemCheckMovement[modId] = function(projectile)
         print(projectile.cur_pos.x, projectile.cur_pos.y, projectile.cur_pos.z)
     end
 
-Check the full list of events at
-https://docs.dfhack.org/en/stable/docs/Lua%20API.html#list-of-events.
+Check out the `full list of supported events <eventful-api>` to see what else
+you can react to with ``eventful``.
 
 Custom raw tokens
 -----------------
@@ -172,11 +175,10 @@ Custom raw tokens
 In this section, we are going to use `custom raw tokens <custom-raw-tokens>`
 applied to a reaction to transfer the material of a reagent to a product as a
 handle improvement (like on artifact buckets), and then we are going to see how
-you could make boots that make units go faster when worn. Both of these involve
-custom raw tokens.
+you could make boots that make units go faster when worn.
 
 First, let's define a custom crossbow with its own custom reaction. The
-crossbow: ::
+crossbow::
 
     [ITEM_WEAPON:ITEM_WEAPON_CROSSBOW_SIEGE]
         [NAME:crossbow:crossbows]
@@ -193,7 +195,7 @@ crossbow: ::
         [SIEGE_CROSSBOW_MOD_FIRE_RATE_MULTIPLIER:2] custom token (you'll see)
 
 The reaction to make it (you would add the reaction and not the weapon to an
-entity raw): ::
+entity raw)::
 
     [REACTION:MAKE_SIEGE_CROSSBOW]
         [NAME:make siege crossbow]
@@ -214,19 +216,19 @@ So, we are going to use the ``eventful`` module to make it so that (after the
 script is run) when this crossbow is crafted, it will have two handles, each
 with the material given by the block reagents.
 
-First, require the modules we are going to use. ::
+First, require the modules we are going to use::
 
     local eventful = require("plugins.eventful")
     local customRawTokens = require("custom-raw-tokens")
 
-Now, let's make a callback: ::
+Now, let's make a callback (we'll be defining the body of this function soon)::
 
     local modId = "siege-crossbow-mod"
     eventful.onReactionComplete[modId] = function(reaction, reactionProduct,
     unit, inputItems, inputReagents, outputItems)
 
 First, we check to see if it the reaction that just happened is relevant to this
-callback: ::
+callback::
 
     if not customRawTokens.getToken(reaction,
         "SIEGE_CROSSBOW_MOD_TRANSFER_HANDLE_MATERIAL_TO_PRODUCT_IMPROVEMENT")
@@ -235,28 +237,30 @@ callback: ::
     end
 
 Then, we get the product number listed. Next, for every reagent, if the reagent
-name starts with "handle" then we get the corresponding item, and... ::
+name starts with "handle" then we get the corresponding item, and...
+
+::
 
     for i, reagent in ipairs(inputReagents) do
-        if reagent.code:sub(1, #"handle") == "handle" then
+        if reagent.code:startswith('handle') then
             -- Found handle reagent
-            local item = inputItems[i] -- hopefully found handle item
+            local item = inputItems[i]
 
-...We then add a handle improvement to the listed product within our loop. ::
+...We then add a handle improvement to the listed product within our loop::
 
     local new = df.itemimprovement_itemspecificst:new()
     new.mat_type, new.mat_index = item.mat_type, item.mat_index
-    -- new.maker = outputItems[0].maker -- not a typical improvement
     new.type = df.itemimprovement_specific_type.HANDLE
-    outputItems[productNumber - 1].improvements:insert("#", new)
+    outputItems[productNumber - 1].improvements:insert('#', new)
 
-It's all a bit loose and hacky but it works, at least if you don't have multiple
-stacks filling up one reagent.
+This works well as long as you don't have multiple stacks filling up one
+reagent.
 
-Let's also make some code to modify the fire rate of the siege crossbow. ::
+Let's also make some code to modify the fire rate of our siege crossbow::
 
     eventful.onProjItemCheckMovement[modId] = function(projectile)
-        if projectile.distance_flown > 0 then -- don't repeat this
+        if projectile.distance_flown > 0 then
+            -- don't make this adjustment more than once
             return
         end
 
@@ -276,7 +280,7 @@ Let's also make some code to modify the fire rate of the siege crossbow. ::
     end
 
 Now, let's see how we could make some "pegasus boots". First, let's define the
-item in the raws: ::
+item in the raws::
 
     [ITEM_SHOES:ITEM_SHOES_BOOTS_PEGASUS]
         [NAME:pegasus boot:pegasus boots]
@@ -292,9 +296,9 @@ item in the raws: ::
         [LEATHER]
         [HARD]
         [PEGASUS_BOOTS_MOD_MOVEMENT_TIMER_REDUCTION_PER_TICK:5] custom raw token
-            (you don't have to comment this every time)
+            (you don't have to comment the custom token every time, but it does clarify what it is)
 
-Then, let's make a ``repeat-util`` callback for once a tick: ::
+Then, let's make a ``repeat-util`` callback for once a tick::
 
     repeatUtil.scheduleEvery(modId, 1, "ticks", function()
 
@@ -306,24 +310,24 @@ their worn items: ::
         local amount = 0
         for _, entry in ipairs(unit.inventory) do
 
-Now, we will add up the effect of all speed-increasing gear and apply it: ::
+Now, we will add up the effect of all speed-increasing gear and apply it::
 
         if entry.mode == df.unit_inventory_item.T_mode.Worn then
             amount = amount + tonumber((customRawTokens.getToken(entry.item, "PEGASUS_BOOTS_MOD_MOVEMENT_TIMER_REDUCTION_PER_TICK")) or 0)
         end
     end
-    dfhack.units.addMoveTimer(-amount) -- Subtract amount from movement timer if
-    currently moving
+    -- Subtract amount from movement timer if currently moving
+    dfhack.units.addMoveTimer(-amount)
 
 The structure of a full mod
 ---------------------------
 
 Now, you may have noticed that you won't be able to run multiple functions on
-tick/as event callbacks with that ``modId`` idea alone. To solve that we can
+tick/as event callbacks with that ``modId`` key alone. To solve that we can
 just define all the functions we want and call them from a single function.
 Alternatively you can create multiple callbacks with your mod ID being a prefix,
-though this way there is no guarantee about the order if that is important. You
-will have to use your mod ID as a prefix if you register multiple
+though this way there is no guarantee about the call order (if that is important
+to you). You will have to use your mod ID as a prefix if you register multiple
 ``repeat-util`` callbacks, though.
 
 Create a folder for mod projects somewhere (e.g. ``hack/my-scripts/mods/``, or

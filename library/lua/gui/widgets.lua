@@ -682,8 +682,7 @@ function Label:onRenderBody(dc)
 end
 
 function Label:onRenderFrame(dc, rect)
-    if self._show_scrollbar
-    then
+    if self._show_scrollbar then
         local x = self._show_scrollbar == 'left'
                 and self.frame_body.x1-dc.x1-1
                 or  self.frame_body.x2-dc.x1+1
@@ -695,7 +694,35 @@ function Label:onRenderFrame(dc, rect)
     end
 end
 
+function Label:click_scrollbar()
+    if not self._show_scrollbar then return end
+    local rect = self.frame_body
+    local x, y = dscreen.getMousePos()
+
+    if self._show_scrollbar == 'left' and x ~= rect.x1-1 or x ~= rect.x2+1 then
+        return
+    end
+    if y < rect.y1 or y > rect.y2 then
+        return
+    end
+
+    if y == rect.y1 then
+        return -1
+    elseif y == rect.y2 then
+        return 1
+    else
+        local pos, height = get_scrollbar_pos_and_height(self)
+        if y < rect.y1 + pos then
+            return '-halfpage'
+        elseif y > rect.y1 + pos + height then
+            return '+halfpage'
+        end
+    end
+    return nil
+end
+
 function Label:scroll(nlines)
+    if not nlines then return end
     if type(nlines) == 'string' then
         if nlines == '+page' then
             nlines = self.frame_body.height
@@ -713,12 +740,16 @@ function Label:scroll(nlines)
     n = math.min(n, self:getTextHeight() - self.frame_body.height + 1)
     n = math.max(n, 1)
     self.start_line_num = n
+    return nlines
 end
 
 function Label:onInput(keys)
     if is_disabled(self) then return false end
-    if keys._MOUSE_L_DOWN and self:getMousePos() and self.on_click then
-        self:on_click()
+    if keys._MOUSE_L_DOWN then
+        if not self:scroll(self:click_scrollbar()) and
+                self:getMousePos() and self.on_click then
+            self:on_click()
+        end
     end
     if keys._MOUSE_R_DOWN and self:getMousePos() and self.on_rclick then
         self:on_rclick()

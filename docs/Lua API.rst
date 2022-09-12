@@ -4046,6 +4046,11 @@ It has the following attributes:
 :scrollbar_fg: Specifies the pen for the scroll icons and the active part of the bar. Default is ``COLOR_LIGHTGREEN`` (the same as the native DF help screens).
 :scrollbar_bg: Specifies the pen for the background part of the scrollbar. Default is ``COLOR_CYAN`` (the same as the native DF help screens).
 
+If the scrollbar is shown, it will react to mouse clicks on the scrollbar itself.
+Clicking on the arrows at the top or the bottom will scroll by one line, and
+clicking on the unfilled portion of the scrollbar will scroll by a half page in
+that direction.
+
 The text itself is represented as a complex structure, and passed
 to the object via the ``text`` argument of the constructor, or via
 the ``setText`` method, as one of:

@@ -107,7 +107,7 @@ structures. The first is the ``df-structures``
 `repository <https://github.com/DFHack/df-structures>`__ that contains XML files
 describing the contents of the game's structures. These are complete, but difficult
 to read (for a human). The second option is the `gui/gm-editor` script, an
-interactive data explorer. You can run the script while entities like units are
+interactive data explorer. You can run the script while obects like units are
 selected to view the data within them. You can also run ``gui/gm-editor scr`` to
 view the data for the current screen. Press :kbd:`?` while the script is active to
 view help.
@@ -338,7 +338,7 @@ environment for fully-functioning modular mods are as follows:
 * The main content of the mod would be in the ``raw`` folder:
 
   * A Lua file in ``raw/init.d/`` to initialise the mod by calling
-    ``your-mod-id/main/ enable``.
+    ``your-mod-id/main enable``.
   * Raw content (potentially with custom raw tokens) in ``raw/objects/``.
   * A subfolder for your mod in ``raw/scripts/`` containing a ``main.lua`` file
     (an example of which we will see) and all the modules containing the functions

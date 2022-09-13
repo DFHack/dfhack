@@ -107,7 +107,7 @@ structures. The first is the ``df-structures``
 `repository <https://github.com/DFHack/df-structures>`__ that contains XML files
 describing the contents of the game's structures. These are complete, but difficult
 to read (for a human). The second option is the `gui/gm-editor` script, an
-interactive data explorer. You can run the script while obects like units are
+interactive data explorer. You can run the script while objects like units are
 selected to view the data within them. You can also run ``gui/gm-editor scr`` to
 view the data for the current screen. Press :kbd:`?` while the script is active to
 view help.

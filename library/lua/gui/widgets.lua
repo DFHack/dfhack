@@ -712,7 +712,7 @@ function Label:click_scrollbar()
         return 1
     else
         local pos, height = get_scrollbar_pos_and_height(self)
-        if y < rect.y1 + pos then
+        if y <= rect.y1 + pos then
             return '-halfpage'
         elseif y > rect.y1 + pos + height then
             return '+halfpage'

@@ -381,11 +381,11 @@ Ok, you're all set up! Now, let's take a look at an example
     -- API so you can start it by running "enable example-mod" and stop
     -- it by running "disable example-mod"
     --@ enable = true
-    
+
     local usage = [[
     Usage
     -----
-    
+
         enable example-mod
         disable example-mod
     ]]
@@ -398,7 +398,7 @@ Ok, you're all set up! Now, let's take a look at an example
     local moduleB = reqscript('example-mod/module-b')
     local moduleC = reqscript('example-mod/module-c')
     local moduleD = reqscript('example-mod/module-d')
-    
+
     enabled = enabled or false
     local modId = 'example-mod'
 

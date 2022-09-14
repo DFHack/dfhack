@@ -3,6 +3,8 @@
 DFHack modding guide
 ====================
 
+.. highlight:: lua
+
 What is the difference between a script and a mod?
 --------------------------------------------------
 
@@ -182,6 +184,8 @@ call order.
 Custom raw tokens
 -----------------
 
+.. highlight:: none
+
 In this section, we are going to use `custom raw tokens <custom-raw-tokens>`
 applied to a reaction to transfer the material of a reagent to a product as a
 handle improvement (like on artifact buckets), and then we are going to see how
@@ -225,6 +229,8 @@ entity raw)::
 So, we are going to use the ``eventful`` module to make it so that (after the
 script is run) when this crossbow is crafted, it will have two handles, each
 with the material given by the block reagents.
+
+.. highlight:: lua
 
 First, require the modules we are going to use::
 
@@ -292,6 +298,8 @@ Let's also make some code to modify the fire rate of our siege crossbow::
                 firer.counters.think_counter * multiplier)
     end
 
+.. highlight:: none
+
 Now, let's see how we could make some "pegasus boots". First, let's define the
 item in the raws::
 
@@ -311,6 +319,8 @@ item in the raws::
         [PEGASUS_BOOTS_MOD_MOVEMENT_TIMER_REDUCTION_PER_TICK:5] custom raw token
             (you don't have to comment the custom token every time,
             but it does clarify what it is)
+
+.. highlight:: lua
 
 Then, let's make a ``repeat-util`` callback for once a tick::
 

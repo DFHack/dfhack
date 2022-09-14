@@ -1,5 +1,5 @@
 ========================
-DFHack Development Guide
+DFHack development guide
 ========================
 
 These are pages relevant to people developing for DFHack.

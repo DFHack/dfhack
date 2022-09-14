@@ -40,8 +40,8 @@ This will check out the code on the default branch of the GitHub repo, currently
 ``develop``, which may be unstable. If you want code for the latest stable
 release, you can check out the ``master`` branch instead::
 
-  git checkout master
-  git submodule update
+    git checkout master
+    git submodule update
 
 In general, a single DFHack clone is suitable for development - most Git
 operations such as switching branches can be done on an existing clone. If you

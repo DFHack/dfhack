@@ -1,7 +1,7 @@
 .. _documentation:
 
 ###########################
-DFHack Documentation System
+DFHack documentation system
 ###########################
 
 

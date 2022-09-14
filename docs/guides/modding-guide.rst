@@ -421,6 +421,7 @@ Ok, you're all set up! Now, let's take a look at an example
         repeatUtil.scheduleEvery(modId .. ' 100 frames', 1, 'frames',
                                  moduleD.every100Frames)
 
+        -- multiple functions in the same callback
         eventful.onReactionComplete[modId] = function(reaction,
                 reaction_product, unit, input_items, input_reagents,
                 output_items)
@@ -431,6 +432,8 @@ Ok, you're all set up! Now, let's take a look at an example
                     unit, input_items, input_reagents, output_items)
         end
 
+        -- one function per callback (you can put them in the
+        -- above format if you prefer)
         eventful.onProjItemCheckMovement[modId] = moduleD.onProjItemCheckMovement
         eventful.onProjUnitCheckMovement[modId] = moduleD.onProjUnitCheckMovement
 

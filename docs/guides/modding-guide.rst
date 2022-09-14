@@ -137,8 +137,7 @@ First, we load the module::
     local repeatUtil = require('repeat-util')
 
 Both ``repeat-util`` and ``eventful`` require keys for registered callbacks.
-You should use something unique, like your mod name, perhaps with a suffix if you
-are registering multiple keys::
+You should use something unique, like your mod name::
 
     local modId = "callback-example-mod"
 
@@ -168,6 +167,12 @@ projectile::
 
 Check out the `full list of supported events <eventful-api>` to see what else
 you can react to with ``eventful``.
+
+Now, you may have noticed that you won't be able to register multiple callbacks
+with a single key named after your mod. You can, of course, call all the functions
+you want from a single registed callback. Alternately, you can create multiple
+callbacks using different keys, using your mod ID as a key name prefix. If you do
+register multiple callbacks, though, there are no guarantees about the call order.
 
 Custom raw tokens
 -----------------
@@ -322,45 +327,46 @@ Now, we will add up the effect of all speed-increasing gear and apply it::
 The structure of a full mod
 ---------------------------
 
-Now, you may have noticed that you won't be able to run multiple functions on
-tick/as event callbacks with that ``modId`` key alone. To solve that we can
-just define all the functions we want and call them from a single function.
-Alternatively you can create multiple callbacks with your mod ID being a prefix,
-though this way there is no guarantee about the call order (if that is important
-to you). You will have to use your mod ID as a prefix if you register multiple
-``repeat-util`` callbacks, though.
+Create a folder for mod projects somewhere outside your Dwarf Fortress
+installation directory (e.g. ``/path/to/mymods``) and use your mod IDs as the names
+for the mod folders within it. In the example below, we'll use a mod ID of
+``example-mod``. I'm sure your mods will have more creative names! The ``example-mod``
+mod will be developed in the ``/path/to/mymods/example-mod`` directory and has a basic
+structure that looks like this::
 
-Create a folder for mod projects somewhere (e.g. ``hack/my-scripts/mods/``, or
-maybe somewhere outside your Dwarf Fortress installation) and use your mod ID
-(in hyphen-case) as the name for the mod folders within it. The structure of and
-environment for fully-functioning modular mods are as follows:
+    raw/init.d/example-mod.lua
+    raw/objects/...
+    raw/scripts/example-mod/main.lua
+    raw/scripts/example-mod/...
+    README.md
 
-* The main content of the mod would be in the ``raw`` folder:
+Let's go through that line by line.
 
-  * A Lua file in ``raw/init.d/`` to initialise the mod by calling
-    ``your-mod-id/main enable``.
-  * Raw content (potentially with custom raw tokens) in ``raw/objects/``.
-  * A subfolder for your mod in ``raw/scripts/`` containing a ``main.lua`` file
-    (an example of which we will see) and all the modules containing the functions
-    used in callbacks to ``repeat-util`` and ``eventful``. Potentially a file
-    containing constant definitions used by your mod (perhaps defined by the
-    game, like the acceleration of parabolic projectiles due to gravity
-    (``4900``)) too.
+* You'll need a short script in ``raw/init.d/`` to initialise your mod when a save is
+  loaded.
+* Modifications to the game raws (potentially with custom raw tokens) go in
+  ``raw/objects/``.
+* A subfolder for your mod under ``raw/scripts/`` will contain all the scripts used by
+  your mod, including the main initialization code in ``main.lua`` which registers all
+  your timer and event callbacks.
 
-* Using git within each mod folder is recommended, but not required.
-* A ``readme.md`` markdown file is also recommended.
-* An ``addToEntity.txt`` file containing lines to add to entity definitions for
-  access to mod content would be needed if applicable.
-* Unless you want to merge your ``raw`` folder with your worlds every time you
-  make a change to your scripts, you should add
-  ``path/to/your-mod/raw/scripts/`` to your script paths.
+It is a good idea to use a version control system to organize changes to your mod code.
+You can create a separate Git repository for each of your mods. The ``README.md`` file
+will be your mod help text when people browse to your online repository.
 
-Now, let's take a look at an example ``raw/scripts/main.lua`` file. ::
+Unless you want to install your ``raw`` folder into your DF game folder every time you
+make a change to your scripts, you should add your development scripts directory to your
+script paths in ``dfhack-config/script-paths.txt``::
 
-    local repeatUtil = require("repeat-util")
-    local eventful = require("plugins.eventful")
+    +/path/to/mymods/example-mod/raw/scripts
 
-    local modId = "example-mod"
+Ok, you're all set up! Now, let's take a look at an example
+``raw/scripts/example-mod/main.lua`` file::
+
+    local repeatUtil = require('repeat-util')
+    local eventful = require('plugins.eventful')
+
+    local modId = 'example-mod'
     local args = {...}
 
     if args[1] == "enable" then

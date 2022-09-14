@@ -719,14 +719,6 @@ local function print_columns(col1text, col2text)
     end
 end
 
--- implements the 'tags' builtin command
-function tags()
-    local tags = get_tags()
-    for _,tag in ipairs(tags) do
-        print_columns(tag, get_tag_data(tag).description)
-    end
-end
-
 -- prints the requested entries to the console. include and exclude filters are
 -- defined as in search_entries() above.
 local function list_entries(skip_tags, include, exclude)
@@ -762,6 +754,29 @@ function ls(filter_str, skip_tags, show_dev_commands)
     end
     list_entries(skip_tags, include,
                  show_dev_commands and {} or {tag='dev'})
+end
+
+local function list_tags()
+    local tags = get_tags()
+    for _,tag in ipairs(tags) do
+        print_columns(tag, get_tag_data(tag).description)
+    end
+end
+
+-- implements the 'tags' builtin command
+function tags(tag)
+    if tag and #tag > 0 and not is_tag(tag) then
+        dfhack.printerr(('unrecognized tag: "%s"'):format(tag))
+    end
+
+    if not is_tag(tag) then
+        list_tags()
+        return
+    end
+
+    local skip_tags = true
+    local include = {entry_type={ENTRY_TYPES.COMMAND}, tag=tag}
+    list_entries(skip_tags, include)
 end
 
 return _ENV

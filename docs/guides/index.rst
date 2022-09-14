@@ -1,5 +1,5 @@
 ===========
-User Guides
+User guides
 ===========
 
 These pages are detailed guides covering DFHack tools.

@@ -5,7 +5,7 @@
 .. _dev-changelog:
 
 #####################
-Development Changelog
+Development changelog
 #####################
 
 This file contains changes grouped by the release (stable or development) in

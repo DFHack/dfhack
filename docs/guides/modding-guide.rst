@@ -336,7 +336,7 @@ structure that looks like this::
 
     raw/init.d/example-mod.lua
     raw/objects/...
-    raw/scripts/example-mod/main.lua
+    raw/scripts/example-mod.lua
     raw/scripts/example-mod/...
     README.md
 
@@ -346,9 +346,9 @@ Let's go through that line by line.
   loaded.
 * Modifications to the game raws (potentially with custom raw tokens) go in
   ``raw/objects/``.
-* A subfolder for your mod under ``raw/scripts/`` will contain all the scripts used by
-  your mod, including the main initialization code in ``main.lua`` which registers all
-  your timer and event callbacks.
+* A control script in ``raw/scripts/`` that handles enabling and disabling your mod.
+* A subfolder for your mod under ``raw/scripts/`` will contain all the internal scripts
+  used by your mod.
 
 It is a good idea to use a version control system to organize changes to your mod code.
 You can create a separate Git repository for each of your mods. The ``README.md`` file
@@ -361,107 +361,99 @@ script paths in ``dfhack-config/script-paths.txt``::
     +/path/to/mymods/example-mod/raw/scripts
 
 Ok, you're all set up! Now, let's take a look at an example
-``raw/scripts/example-mod/main.lua`` file::
+``raw/scripts/example-mod.lua`` file::
 
+    -- main setup and teardown for example-mod
+    -- this next line indicates that the script supports the "enable" API so you can start
+    -- it by running "enable example-mod" and stop it by running "disable example-mod"
+    --@ enable = true
+    
+    local usage = [[
+    Usage
+    -----
+    
+        enable example-mod
+        disable example-mod
+    ]]
     local repeatUtil = require('repeat-util')
     local eventful = require('plugins.eventful')
 
+    -- you can reference global values or functions declared in any of your internal scripts
+    local moduleA = reqscript('example-mod/module-a')
+    local moduleB = reqscript('example-mod/module-b')
+    local moduleC = reqscript('example-mod/module-c')
+    local moduleD = reqscript('example-mod/module-d')
+    
+    enabled = enabled or false
     local modId = 'example-mod'
-    local args = {...}
 
-    if args[1] == "enable" then
-        -- The modules and what they link into the environment with
-        -- Each module exports functions named the way they are to be used
-        local moduleA = dfhack.reqscript("example-mod/module-a") -- on load,
-            -- every tick
-        local moduleB = dfhack.reqscript("example-mod/module-b") -- on load,
-            -- on unload, onReactionComplete
-        local moduleC = dfhack.reqscript("example-mod/module-c")
-            -- onReactionComplete
-        local moduleD = dfhack.reqscript("example-mod/module-d") -- every 100
-            -- frames, onProjItemCheckMovement, onProjUnitCheckMovement
+    if not dfhack_flags.enable then
+        print(usage)
+        print()
+        print(('Example mod is currently '):format(enabled and 'enabled' or 'disabled'))
+        return
+    end
 
-        -- Set up the modules
-        -- Order: on load, repeat-util ticks (from smallest interval to
-        -- largest), days, months, years, and frames, then eventful callbacks in
-        -- the same order as the first modules to use them
-
+    if dfhack_flags.enable_state then
+        -- do any initialization your internal scripts might require
         moduleA.onLoad()
         moduleB.onLoad()
 
-        repeatUtil.scheduleEvery(modId .. " 1 ticks", 1, "ticks", function()
-            moduleA.every1Tick()
-        end)
+        -- register your callbacks
+        repeatUtil.scheduleEvery(modId .. ' every tick', 1, 'ticks', moduleA.every1Tick)
+        repeatUtil.scheduleEvery(modId .. ' 100 frames', 1, 'frames', moduleD.every100Frames)
 
-        repeatUtil.scheduleEvery(modID .. " 100 frames", 1, "frames", function()
-            moduleD.every100Frames()
+        eventful.onReactionComplete[modId] = function(reaction, reaction_product, unit, input_items, input_reagents, output_items)
+            -- pass the event's parameters to the listeners
+            moduleB.onReactionComplete(reaction, reaction_product, unit, input_items, input_reagents, output_items)
+            moduleC.onReactionComplete(reaction, reaction_product, unit, input_items, input_reagents, output_items)
         end
 
-        eventful.onReactionComplete[modId] = function(...)
-            -- Pass the event's parameters to the listeners, whatever they are
-            moduleB.onReactionComplete(...)
-            moduleC.onReactionComplete(...)
-        end
+        eventful.onProjItemCheckMovement[modId] = moduleD.onProjItemCheckMovement
+        eventful.onProjUnitCheckMovement[modId] = moduleD.onProjUnitCheckMovement
 
-        eventful.onProjItemCheckMovement[modId] = function(...)
-            moduleD.onProjItemCheckMovement(...)
-        end
-
-        eventful.onProjUnitCheckMovement[modId] = function(...)
-            moduleD.onProjUnitCheckMovement(...)
-        end
-
-        print("Example mod enabled")
-    elseif args[1] == "disable" then
-        -- Order: on unload, then cancel the callbacks in the same order as
-        -- above
-
+        print('Example mod enabled')
+        enabled = true
+    else
+        -- call any shutdown functions your internal scripts might require
         moduleA.onUnload()
 
-        repeatUtil.cancel(modId .. " 1 ticks")
-        repeatUtil.cancel(modId .. " 100 frames")
+        repeatUtil.cancel(modId .. ' every ticks')
+        repeatUtil.cancel(modId .. ' 100 frames')
 
         eventful.onReactionComplete[modId] = nil
         eventful.onProjItemCheckMovement[modId] = nil
         eventful.onProjUnitCheckMovement[modId] = nil
 
-        print("Example mod disabled")
-    elseif not args[1] then
-        dfhack.printerr("No argument given to example-mod/main")
-    else
-        dfhack.printerr("Unknown argument \"" .. args[1] ..
-            "\" to example-mod/main")
+        print('Example mod disabled')
+        enabled = false
     end
 
-You can see there are four cases depending on arguments. Set up the callbacks
-and call on load functions if enabled, dismantle the callbacks and call on
-unload functions if disabled, no arguments given, and invalid argument(s) given.
+You can call ``enable example-mod`` and ``disable example-mod`` yourself while
+developing, but for end users you can start your mod automatically from
+``raw/init.d/example-mod.lua``::
 
-Here is an example of an ``raw/init.d/`` file: ::
+    dfhack.run_command('enable example-mod')
 
-    dfhack.run_command("example-mod/main enable") -- Very simple. Could be
-        -- called "init-example-mod.lua"
-
-Here is what ``raw/scripts/module-a.lua`` would look like: ::
+Inside ``raw/scripts/example-mod/module-a.lua`` you could have code like this::
 
     --@ module = true
-    -- The above line is required for dfhack.reqscript to work
+    -- The above line is required for reqscript to work
 
     function onLoad() -- global variables are exported
-        -- blah
+        -- do initialization here
     end
 
-    local function usedByOnTick() -- local variables are not exported
-        -- blah
+    local function usedByOnTick(unit) -- local variables are not exported
+        -- this is an internal function: local functions/variables are not exported
     end
 
     function onTick() -- exported
-        for blah in ipairs(blah) do
-            usedByOnTick()
+        for _,unit in ipairs(df.global.world.units.all) do
+            usedByOnTick(unit)
         end
     end
 
-It is recommended to check `reqscript <reqscript>`'s documentation.
-``reqscript`` caches scripts but will reload scripts that have changed (it
-checks the file's last modification date) so you can do live editing *and* have
-common tables et cetera between scripts that require the same module.
+The `reqscript` function reloads scripts that have changed, so you can modify your
+scripts while DF is running and just disable/enable your mod to load the changes into
+your ongoing game!

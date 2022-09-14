@@ -18,21 +18,22 @@ great primer at `lua.org <https://www.lua.org/pil/contents.html>`__.
 Why not just mod the raws?
 --------------------------
 
-It depends on what you want to do. Some mods *are* better to do in just the raws.
-You don't need DFHack to add a new race or modify attributes, for example. However,
-DFHack scripts can do many things that you just can't do in the raws, like make a
-creature that trails smoke. Some things *could* be done in the raws, but writing a
-script is less hacky, easier to maintain, easier to extend, and is not prone to
-side-effects. A great example is adding a syndrome when a reaction is performed.
-If done in the raws, you have to create an exploding boulder to effect the syndrome.
-DFHack scripts can add the syndrome directly and with much more flexibility. In the
-end, complex mods will likely require a mix of raw modding and DFHack scripting.
+It depends on what you want to do. Some mods *are* better to do in just the
+raws. You don't need DFHack to add a new race or modify attributes, for example.
+However, DFHack scripts can do many things that you just can't do in the raws,
+like make a creature that trails smoke. Some things *could* be done in the raws,
+but writing a script is less hacky, easier to maintain, easier to extend, and is
+not prone to side-effects. A great example is adding a syndrome when a reaction
+is performed. If done in the raws, you have to create an exploding boulder to
+apply the syndrome. DFHack scripts can add the syndrome directly and with much
+more flexibility. In the end, complex mods will likely require a mix of raw
+modding and DFHack scripting.
 
 A mod-maker's development environment
 -------------------------------------
 
-While you're writing your mod, you need a place to store your in-development scripts
-that will:
+While you're writing your mod, you need a place to store your in-development
+scripts that will:
 
 - be directly runnable by DFHack
 - not get lost when you upgrade DFHack
@@ -42,17 +43,19 @@ installation (let's call it "/path/to/own-scripts") and do all your script
 development in there.
 
 Inside your DF installation folder, there is a file named
-:file:`dfhack-config/script-paths.txt`. If you add a line like this to that file::
+:file:`dfhack-config/script-paths.txt`. If you add a line like this to that
+file::
 
     +/path/to/own-scripts
 
-Then that directory will be searched when you run DFHack commands from inside the
-game. The ``+`` at the front of the path means to search that directory first,
-before any other script directory (like :file:`hack/scripts` or
-:file:`raw/scripts`). That way, your latest changes will always be used instead of
-older copies that you may have installed in a DF directory.
+Then that directory will be searched when you run DFHack commands from inside
+the game. The ``+`` at the front of the path means to search that directory
+first, before any other script directory (like :file:`hack/scripts` or
+:file:`raw/scripts`). That way, your latest changes will always be used instead
+of older copies that you may have installed in a DF directory.
 
-For scripts with the same name, the `order of precedence <script-paths>` will be:
+For scripts with the same name, the `order of precedence <script-paths>` will
+be:
 
 1. ``own-scripts/``
 2. ``data/save/*/raw/scripts/``
@@ -88,9 +91,9 @@ If ``unit`` is ``nil``, we don't want the script to run anymore::
     end
 
 Now, the field ``sex`` in a unit is an integer, but each integer corresponds to
-a string value ("it", "she", or "he"). We get this value by indexing the bidirectional
-map ``df.pronoun_type``. Indexing the other way, incidentally, with one of the strings,
-will yield its corresponding number. So::
+a string value ("it", "she", or "he"). We get this value by indexing the
+bidirectional map ``df.pronoun_type``. Indexing the other way, incidentally,
+with one of the strings, will yield its corresponding number. So::
 
     local pronounTypeString = df.pronoun_type[unit.sex]
     print(pronounTypeString)
@@ -105,12 +108,12 @@ So how could you have known about the field and type we just used? Well, there
 are two main tools for discovering the various fields in the game's data
 structures. The first is the ``df-structures``
 `repository <https://github.com/DFHack/df-structures>`__ that contains XML files
-describing the contents of the game's structures. These are complete, but difficult
-to read (for a human). The second option is the `gui/gm-editor` script, an
-interactive data explorer. You can run the script while objects like units are
-selected to view the data within them. You can also run ``gui/gm-editor scr`` to
-view the data for the current screen. Press :kbd:`?` while the script is active to
-view help.
+describing the contents of the game's structures. These are complete, but
+difficult to read (for a human). The second option is the `gui/gm-editor`
+script, an interactive data explorer. You can run the script while objects like
+units are selected to view the data within them. You can also run
+``gui/gm-editor scr`` to view the data for the current screen. Press :kbd:`?`
+while the script is active to view help.
 
 Familiarising yourself with the many structs of the game will help with ideas
 immensely, and you can always ask for help in the `right places <support>`.
@@ -121,23 +124,23 @@ Detecting triggers
 The common method for injecting new behaviour into the game is to define a
 callback function and get it called when something interesting happens. DFHack
 provides two libraries for this, ``repeat-util`` and `eventful <eventful-api>`.
-``repeat-util`` is used to run a function once per a configurable number of frames
-(paused or unpaused), ticks (unpaused), in-game days, months, or years. If you
-need to be aware the instant something happens, you'll need to run a check once a
-tick. Be careful not to do this gratuitiously, though, since running that often can
-slow down the game!
+``repeat-util`` is used to run a function once per a configurable number of
+frames (paused or unpaused), ticks (unpaused), in-game days, months, or years.
+If you need to be aware the instant something happens, you'll need to run a
+check once a tick. Be careful not to do this gratuitiously, though, since
+running that often can slow down the game!
 
 ``eventful``, on the other hand, is much more performance-friendly since it will
-only call your callback when a relevant event happens, like a reaction or job being
-completed or a projectile moving.
+only call your callback when a relevant event happens, like a reaction or job
+being completed or a projectile moving.
 
-To get something to run once per tick, we can call ``repeat-util.scheduleEvery()``.
-First, we load the module::
+To get something to run once per tick, we can call
+``repeat-util.scheduleEvery()``. First, we load the module::
 
     local repeatUtil = require('repeat-util')
 
-Both ``repeat-util`` and ``eventful`` require keys for registered callbacks.
-You should use something unique, like your mod name::
+Both ``repeat-util`` and ``eventful`` require keys for registered callbacks. You
+should use something unique, like your mod name::
 
     local modId = "callback-example-mod"
 
@@ -145,8 +148,8 @@ Then, we pass the key, amount of time units between function calls, what the
 time units are, and finally the callback function itself::
 
     repeatUtil.scheduleEvery(modId, 1, "ticks", function()
-        -- Do something like iterating over all active units and check
-        -- for something interesting
+        -- Do something like iterating over all active units and
+        -- check for something interesting
         for _, unit in ipairs(df.global.world.units.active) do
             ...
         end
@@ -162,17 +165,19 @@ the event occurs. So, for example, to print the position of a moving (item)
 projectile::
 
     eventful.onProjItemCheckMovement[modId] = function(projectile)
-        print(projectile.cur_pos.x, projectile.cur_pos.y, projectile.cur_pos.z)
+        print(projectile.cur_pos.x, projectile.cur_pos.y,
+              projectile.cur_pos.z)
     end
 
 Check out the `full list of supported events <eventful-api>` to see what else
 you can react to with ``eventful``.
 
 Now, you may have noticed that you won't be able to register multiple callbacks
-with a single key named after your mod. You can, of course, call all the functions
-you want from a single registed callback. Alternately, you can create multiple
-callbacks using different keys, using your mod ID as a key name prefix. If you do
-register multiple callbacks, though, there are no guarantees about the call order.
+with a single key named after your mod. You can, of course, call all the
+functions you want from a single registed callback. Alternately, you can create
+multiple callbacks using different keys, using your mod ID as a key name prefix.
+If you do register multiple callbacks, though, there are no guarantees about the
+call order.
 
 Custom raw tokens
 -----------------
@@ -229,8 +234,9 @@ First, require the modules we are going to use::
 Now, let's make a callback (we'll be defining the body of this function soon)::
 
     local modId = "siege-crossbow-mod"
-    eventful.onReactionComplete[modId] = function(reaction, reactionProduct,
-    unit, inputItems, inputReagents, outputItems)
+    eventful.onReactionComplete[modId] = function(reaction,
+            reactionProduct, unit, inputItems, inputReagents,
+            outputItems)
 
 First, we check to see if it the reaction that just happened is relevant to this
 callback::
@@ -279,9 +285,11 @@ Let's also make some code to modify the fire rate of our siege crossbow::
             return
         end
 
-        local multiplier = tonumber(customRawTokens.getToken(weapon.subtype, "SIEGE_CROSSBOW_MOD_FIRE_RATE_MULTIPLIER")) or 1
-        firer.counters.think_counter = math.floor(firer.counters.think_counter *
-            multiplier)
+        local multiplier = tonumber(customRawTokens.getToken(
+                weapon.subtype,
+                "SIEGE_CROSSBOW_MOD_FIRE_RATE_MULTIPLIER")) or 1
+        firer.counters.think_counter = math.floor(
+                firer.counters.think_counter * multiplier)
     end
 
 Now, let's see how we could make some "pegasus boots". First, let's define the
@@ -301,26 +309,29 @@ item in the raws::
         [LEATHER]
         [HARD]
         [PEGASUS_BOOTS_MOD_MOVEMENT_TIMER_REDUCTION_PER_TICK:5] custom raw token
-            (you don't have to comment the custom token every time, but it does clarify what it is)
+            (you don't have to comment the custom token every time,
+            but it does clarify what it is)
 
 Then, let's make a ``repeat-util`` callback for once a tick::
 
     repeatUtil.scheduleEvery(modId, 1, "ticks", function()
 
-Let's iterate over every active unit, and for every unit, initialise a variable
-for how much we are going to take from their movement timer and iterate over all
-their worn items: ::
+Let's iterate over every active unit, and for every unit, iterate over their
+worn items to calculate how much we are going to take from their movement
+timer::
 
     for _, unit in ipairs(df.global.world.units.active) do
         local amount = 0
         for _, entry in ipairs(unit.inventory) do
-
-Now, we will add up the effect of all speed-increasing gear and apply it::
-
-        if entry.mode == df.unit_inventory_item.T_mode.Worn then
-            amount = amount + tonumber((customRawTokens.getToken(entry.item, "PEGASUS_BOOTS_MOD_MOVEMENT_TIMER_REDUCTION_PER_TICK")) or 0)
+            if entry.mode == df.unit_inventory_item.T_mode.Worn then
+                local reduction = customRawTokens.getToken(
+                        entry.item,
+                        'PEGASUS_BOOTS_MOD_MOVEMENT_TIMER_REDUCTION_PER_TICK')
+                amount = amount + (tonumber(reduction) or 0)
+            end
         end
     end
+
     -- Subtract amount from movement timer if currently moving
     dfhack.units.addMoveTimer(-amount)
 
@@ -328,11 +339,11 @@ The structure of a full mod
 ---------------------------
 
 Create a folder for mod projects somewhere outside your Dwarf Fortress
-installation directory (e.g. ``/path/to/mymods``) and use your mod IDs as the names
-for the mod folders within it. In the example below, we'll use a mod ID of
-``example-mod``. I'm sure your mods will have more creative names! The ``example-mod``
-mod will be developed in the ``/path/to/mymods/example-mod`` directory and has a basic
-structure that looks like this::
+installation directory (e.g. ``/path/to/mymods``) and use your mod IDs as the
+names for the mod folders within it. In the example below, we'll use a mod ID of
+``example-mod``. I'm sure your mods will have more creative names! The
+``example-mod`` mod will be developed in the ``/path/to/mymods/example-mod``
+directory and has a basic structure that looks like this::
 
     raw/init.d/example-mod.lua
     raw/objects/...
@@ -342,21 +353,23 @@ structure that looks like this::
 
 Let's go through that line by line.
 
-* You'll need a short script in ``raw/init.d/`` to initialise your mod when a save is
-  loaded.
+* You'll need a short (one-line) script in ``raw/init.d/`` to initialise your
+  mod when a save is loaded.
 * Modifications to the game raws (potentially with custom raw tokens) go in
   ``raw/objects/``.
-* A control script in ``raw/scripts/`` that handles enabling and disabling your mod.
-* A subfolder for your mod under ``raw/scripts/`` will contain all the internal scripts
-  used by your mod.
+* A control script in ``raw/scripts/`` that handles enabling and disabling your
+  mod.
+* A subfolder for your mod under ``raw/scripts/`` will contain all the internal
+  scripts and/or modules used by your mod.
 
-It is a good idea to use a version control system to organize changes to your mod code.
-You can create a separate Git repository for each of your mods. The ``README.md`` file
-will be your mod help text when people browse to your online repository.
+It is a good idea to use a version control system to organize changes to your
+mod code. You can create a separate Git repository for each of your mods. The
+``README.md`` file will be your mod help text when people browse to your online
+repository.
 
-Unless you want to install your ``raw`` folder into your DF game folder every time you
-make a change to your scripts, you should add your development scripts directory to your
-script paths in ``dfhack-config/script-paths.txt``::
+Unless you want to install your ``raw`` folder into your DF game folder every
+time you make a change to your scripts, you should add your development scripts
+directory to your script paths in ``dfhack-config/script-paths.txt``::
 
     +/path/to/mymods/example-mod/raw/scripts
 
@@ -364,8 +377,9 @@ Ok, you're all set up! Now, let's take a look at an example
 ``raw/scripts/example-mod.lua`` file::
 
     -- main setup and teardown for example-mod
-    -- this next line indicates that the script supports the "enable" API so you can start
-    -- it by running "enable example-mod" and stop it by running "disable example-mod"
+    -- this next line indicates that the script supports the "enable"
+    -- API so you can start it by running "enable example-mod" and stop
+    -- it by running "disable example-mod"
     --@ enable = true
     
     local usage = [[
@@ -378,7 +392,8 @@ Ok, you're all set up! Now, let's take a look at an example
     local repeatUtil = require('repeat-util')
     local eventful = require('plugins.eventful')
 
-    -- you can reference global values or functions declared in any of your internal scripts
+    -- you can reference global values or functions declared in any of
+    -- your internal scripts
     local moduleA = reqscript('example-mod/module-a')
     local moduleB = reqscript('example-mod/module-b')
     local moduleC = reqscript('example-mod/module-c')
@@ -390,7 +405,8 @@ Ok, you're all set up! Now, let's take a look at an example
     if not dfhack_flags.enable then
         print(usage)
         print()
-        print(('Example mod is currently '):format(enabled and 'enabled' or 'disabled'))
+        print(('Example mod is currently '):format(
+                enabled and 'enabled' or 'disabled'))
         return
     end
 
@@ -400,13 +416,19 @@ Ok, you're all set up! Now, let's take a look at an example
         moduleB.onLoad()
 
         -- register your callbacks
-        repeatUtil.scheduleEvery(modId .. ' every tick', 1, 'ticks', moduleA.every1Tick)
-        repeatUtil.scheduleEvery(modId .. ' 100 frames', 1, 'frames', moduleD.every100Frames)
+        repeatUtil.scheduleEvery(modId .. ' every tick', 1, 'ticks',
+                                 moduleA.every1Tick)
+        repeatUtil.scheduleEvery(modId .. ' 100 frames', 1, 'frames',
+                                 moduleD.every100Frames)
 
-        eventful.onReactionComplete[modId] = function(reaction, reaction_product, unit, input_items, input_reagents, output_items)
+        eventful.onReactionComplete[modId] = function(reaction,
+                reaction_product, unit, input_items, input_reagents,
+                output_items)
             -- pass the event's parameters to the listeners
-            moduleB.onReactionComplete(reaction, reaction_product, unit, input_items, input_reagents, output_items)
-            moduleC.onReactionComplete(reaction, reaction_product, unit, input_items, input_reagents, output_items)
+            moduleB.onReactionComplete(reaction, reaction_product,
+                    unit, input_items, input_reagents, output_items)
+            moduleC.onReactionComplete(reaction, reaction_product,
+                    unit, input_items, input_reagents, output_items)
         end
 
         eventful.onProjItemCheckMovement[modId] = moduleD.onProjItemCheckMovement
@@ -444,8 +466,10 @@ Inside ``raw/scripts/example-mod/module-a.lua`` you could have code like this::
         -- do initialization here
     end
 
-    local function usedByOnTick(unit) -- local variables are not exported
-        -- this is an internal function: local functions/variables are not exported
+    -- this is an internal function: local functions/variables
+    -- are not exported
+    local function usedByOnTick(unit)
+        -- ...
     end
 
     function onTick() -- exported
@@ -454,6 +478,6 @@ Inside ``raw/scripts/example-mod/module-a.lua`` you could have code like this::
         end
     end
 
-The `reqscript` function reloads scripts that have changed, so you can modify your
-scripts while DF is running and just disable/enable your mod to load the changes into
-your ongoing game!
+The `reqscript` function reloads scripts that have changed, so you can modify
+your scripts while DF is running and just disable/enable your mod to load the
+changes into your ongoing game!

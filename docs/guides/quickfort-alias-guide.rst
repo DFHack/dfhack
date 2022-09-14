@@ -1,6 +1,6 @@
 .. _quickfort-alias-guide:
 
-Quickfort Keystroke Alias Reference
+Quickfort keystroke alias reference
 ===================================
 
 Aliases allow you to use simple words to represent complicated key sequences

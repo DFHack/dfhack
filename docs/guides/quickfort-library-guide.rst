@@ -1,7 +1,7 @@
 .. _blueprint-library-guide:
 .. _quickfort-library-guide:
 
-Quickfort Blueprint Library
+Quickfort blueprint library
 ===========================
 
 This guide contains a high-level overview of the blueprints available in the
@@ -194,7 +194,7 @@ Extra blueprints that are useful in specific situations.
 - :source:`library/embark.csv <data/blueprints/library/embark.csv>`
 - :source:`library/pump_stack.csv <data/blueprints/library/pump_stack.csv>`
 
-Light Aquifer Tap
+Light aquifer tap
 ~~~~~~~~~~~~~~~~~
 
 The aquifer tap helps you create a safe, everlasting source of fresh water from
@@ -216,7 +216,7 @@ blueprint that builds important starting workshops (mason, carpenter, mechanic,
 and craftsdwarf) and a ``#place`` blueprint that lays down a pattern of useful
 starting stockpiles.
 
-Pump Stack
+Pump stack
 ~~~~~~~~~~
 
 The pump stack blueprints help you move water and magma up to more convenient

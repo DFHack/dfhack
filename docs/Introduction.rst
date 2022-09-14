@@ -1,7 +1,7 @@
 .. _introduction:
 
 #########################
-Introduction and Overview
+Introduction and overview
 #########################
 
 DFHack is a Dwarf Fortress memory access library, distributed with

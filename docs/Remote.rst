@@ -1,7 +1,7 @@
 .. _remote:
 
 =======================
-DFHack Remote Interface
+DFHack remote interface
 =======================
 
 DFHack provides a remote access interface that external tools can connect to and
@@ -102,8 +102,6 @@ ID   Method       Input                           Output
  0   BindMethod   dfproto.CoreBindRequest         dfproto.CoreBindReply
  1   RunCommand   dfproto.CoreRunCommandRequest   dfproto.EmptyMessage
 ===  ============ =============================== =======================
-
-
 
 Conversation flow
 -----------------

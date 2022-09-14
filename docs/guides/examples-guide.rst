@@ -1,7 +1,7 @@
 .. _config-examples-guide:
 .. _dfhack-examples-guide:
 
-DFHack Config File Examples
+DFHack config file examples
 ===========================
 
 The :source:`hack/examples <data/examples>` folder contains ready-to-use

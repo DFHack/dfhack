@@ -5181,11 +5181,10 @@ General script API
         return
     end
 
+.. _reqscript:
 
 Importing scripts
 =================
-
-.. _reqscript:
 
 * ``dfhack.reqscript(name)`` or ``reqscript(name)``
 

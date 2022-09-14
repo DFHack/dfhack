@@ -478,6 +478,6 @@ Inside ``raw/scripts/example-mod/module-a.lua`` you could have code like this::
         end
     end
 
-The `reqscript` function reloads scripts that have changed, so you can modify
+The `reqscript <reqscript>` function reloads scripts that have changed, so you can modify
 your scripts while DF is running and just disable/enable your mod to load the
 changes into your ongoing game!

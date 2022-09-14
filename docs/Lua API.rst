@@ -30,6 +30,7 @@ implemented by Lua files located in :file:`hack/lua/*`
   :local:
   :depth: 2
 
+.. _lua-df:
 
 =========================
 DF data structure wrapper
@@ -5174,6 +5175,8 @@ General script API
         print(script_help())
         return
     end
+
+.. _reqscript:
 
 Importing scripts
 =================

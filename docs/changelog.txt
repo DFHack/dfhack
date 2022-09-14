@@ -68,6 +68,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set improvements: set traffic designations to encourage dwarves to eat cooked food instead of raw ingredients
 
 ## Documentation
+- Added `modding-guide`
 - Update all DFHack tool documentation (300+ pages) with standard syntax formatting, usage examples, and overall clarified text.
 - Group DFHack tools by `tag <tools>` so similar tools are grouped and easy to find
 

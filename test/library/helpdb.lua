@@ -622,6 +622,20 @@ function test.tags()
     end)
 end
 
+function test.tags_tag()
+    local mock_print = mock.func()
+    mock.patch(h, 'print', mock_print, function()
+        h.tags('armok')
+        expect.eq(3, mock_print.call_count)
+        expect.eq('bindboxers           Bind your boxers.',
+            mock_print.call_args[1][1])
+        expect.eq('boxbinders           Box your binders.',
+            mock_print.call_args[2][1])
+        expect.eq('samename             Samename.',
+            mock_print.call_args[3][1])
+    end)
+end
+
 function test.ls()
     local mock_print = mock.func()
     mock.patch(h, 'print', mock_print, function()

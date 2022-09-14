@@ -339,10 +339,10 @@ The structure of a full mod
 ---------------------------
 
 Create a folder for mod projects somewhere outside your Dwarf Fortress
-installation directory (e.g. ``/path/to/mymods``) and use your mod IDs as the
+installation directory (e.g. ``/path/to/mymods/``) and use your mod IDs as the
 names for the mod folders within it. In the example below, we'll use a mod ID of
 ``example-mod``. I'm sure your mods will have more creative names! The
-``example-mod`` mod will be developed in the ``/path/to/mymods/example-mod``
+``example-mod`` mod will be developed in the ``/path/to/mymods/example-mod/``
 directory and has a basic structure that looks like this::
 
     raw/init.d/example-mod.lua
@@ -353,7 +353,7 @@ directory and has a basic structure that looks like this::
 
 Let's go through that line by line.
 
-* You'll need a short (one-line) script in ``raw/init.d/`` to initialise your
+* A short (one-line) script in ``raw/init.d/`` to initialise your
   mod when a save is loaded.
 * Modifications to the game raws (potentially with custom raw tokens) go in
   ``raw/objects/``.
@@ -367,11 +367,11 @@ mod code. You can create a separate Git repository for each of your mods. The
 ``README.md`` file will be your mod help text when people browse to your online
 repository.
 
-Unless you want to install your ``raw`` folder into your DF game folder every
+Unless you want to install your ``raw/`` folder into your DF game folder every
 time you make a change to your scripts, you should add your development scripts
 directory to your script paths in ``dfhack-config/script-paths.txt``::
 
-    +/path/to/mymods/example-mod/raw/scripts
+    +/path/to/mymods/example-mod/raw/scripts/
 
 Ok, you're all set up! Now, let's take a look at an example
 ``raw/scripts/example-mod.lua`` file::

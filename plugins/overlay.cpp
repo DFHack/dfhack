@@ -1,3 +1,5 @@
+#include "df/renderer.h"
+
 #include "df/viewscreen_adopt_regionst.h"
 #include "df/viewscreen_adventure_logst.h"
 #include "df/viewscreen_announcelistst.h"
@@ -83,8 +85,7 @@
 #include "df/viewscreen_workquota_detailsst.h"
 #include "df/viewscreen_workshop_profilest.h"
 
-#include "modules/Gui.h"
-
+#include "Debug.h"
 #include "PluginManager.h"
 #include "VTableInterpose.h"
 #include "uicommon.h"
@@ -96,14 +97,23 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 REQUIRE_GLOBAL(enabler);
 REQUIRE_GLOBAL(gps);
 
+namespace DFHack {
+    DBG_DECLARE(overlay, log, DebugCategory::LINFO);
+}
+
 static const std::string button_text = "[ DFHack Launcher ]";
 static bool clicked = false;
 
 static bool handle_click() {
-    int32_t x, y;
-    if (!enabler->tracking_on || !enabler->mouse_lbut_down || clicked ||
-            !Gui::getMousePos(x, y))
+    int32_t x = 0, y = 0;
+    if (!enabler->mouse_lbut_down || clicked ||
+            !enabler->renderer->get_mouse_coords(&x, &y)) {
+        DEBUG(log).print(
+            "lbut_down=%s; clicked=%s; mouse_x=%d; mouse_y=%d\n",
+            enabler->mouse_lbut_down ? "true" : "false",
+            clicked ? "true" : "false", x, y);
         return false;
+    }
     if (y == gps->dimy - 1 && x >= 1 && (size_t)x <= button_text.size()) {
         clicked = true;
         Core::getInstance().setHotkeyCmd("gui/launcher");

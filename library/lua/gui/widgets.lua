@@ -263,6 +263,7 @@ function EditField:onRenderBody(dc)
                                 end_pos == #txt and '' or string.char(26))
     end
     dc:advance(self.text_offset):string(txt)
+    dc:string((' '):rep(dc.clip_x2 - dc.x))
 end
 
 function EditField:onInput(keys)

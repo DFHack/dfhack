@@ -114,7 +114,11 @@ class DFHackToolDirectiveBase(sphinx.directives.ObjectDescription):
         if self.arguments:
             return self.arguments[0]
         else:
-            return self.env.docname.split('/')[-1]
+            parts = self.env.docname.split('/')
+            if 'tools' in parts:
+                return '/'.join(parts[parts.index('tools') + 1:])
+            else:
+                return parts[-1]
 
     @staticmethod
     def wrap_box(*children: List[nodes.Node]) -> nodes.Admonition:

@@ -2,7 +2,7 @@ infiniteSky
 ===========
 
 .. dfhack-tool::
-    :summary: Automatically allocates new z-levels of sky
+    :summary: Automatically allocate new z-levels of sky
     :tags: fort design map
 
 If enabled, this plugin will automatically allocate new z-levels of sky at the

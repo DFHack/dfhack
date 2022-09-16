@@ -101,7 +101,7 @@ static bool clicked = false;
 
 static bool handle_click() {
     int32_t x, y;
-    if (!enabler->tracking_on || !enabler->mouse_lbut || clicked ||
+    if (!enabler->tracking_on || !enabler->mouse_lbut_down || clicked ||
             !Gui::getMousePos(x, y))
         return false;
     if (y == gps->dimy - 1 && x >= 1 && (size_t)x <= button_text.size()) {

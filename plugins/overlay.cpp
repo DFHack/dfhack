@@ -51,7 +51,6 @@
 #include "df/viewscreen_locationsst.h"
 #include "df/viewscreen_meetingst.h"
 #include "df/viewscreen_movieplayerst.h"
-#include "df/viewscreen_new_regionst.h"
 #include "df/viewscreen_noblest.h"
 #include "df/viewscreen_optionst.h"
 #include "df/viewscreen_overallstatusst.h"
@@ -197,7 +196,6 @@ IMPLEMENT_HOOKS(loadgame)
 IMPLEMENT_HOOKS(locations)
 IMPLEMENT_HOOKS(meeting)
 IMPLEMENT_HOOKS(movieplayer)
-IMPLEMENT_HOOKS(new_region)
 IMPLEMENT_HOOKS(noble)
 IMPLEMENT_HOOKS(option)
 IMPLEMENT_HOOKS(overallstatus)
@@ -297,7 +295,6 @@ DFhackCExport command_result plugin_enable(color_ostream &, bool enable) {
                 INTERPOSE_HOOKS_FAILED(locations) ||
                 INTERPOSE_HOOKS_FAILED(meeting) ||
                 INTERPOSE_HOOKS_FAILED(movieplayer) ||
-                INTERPOSE_HOOKS_FAILED(new_region) ||
                 INTERPOSE_HOOKS_FAILED(noble) ||
                 INTERPOSE_HOOKS_FAILED(option) ||
                 INTERPOSE_HOOKS_FAILED(overallstatus) ||

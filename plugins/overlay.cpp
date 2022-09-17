@@ -1,5 +1,3 @@
-#include "df/renderer.h"
-
 #include "df/viewscreen_adopt_regionst.h"
 #include "df/viewscreen_adventure_logst.h"
 #include "df/viewscreen_announcelistst.h"
@@ -90,6 +88,8 @@
 #include "VTableInterpose.h"
 #include "uicommon.h"
 
+#include "modules/Renderer.h"
+
 using namespace DFHack;
 
 DFHACK_PLUGIN("overlay");
@@ -105,7 +105,7 @@ static const std::string button_text = "[ DFHack Launcher ]";
 static bool clicked = false;
 
 static bool handle_click() {
-    int32_t x = 0, y = 0;
+    int32_t x = Renderer::GET_MOUSE_COORDS_SENTINEL, y = (int32_t)true;
     if (!enabler->mouse_lbut_down || clicked ||
             !enabler->renderer->get_mouse_coords(&x, &y)) {
         DEBUG(log).print(

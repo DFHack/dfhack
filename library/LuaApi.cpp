@@ -1523,6 +1523,12 @@ static int gui_getDwarfmodeViewDims(lua_State *state)
     return 1;
 }
 
+static int gui_getMousePos(lua_State *L)
+{
+    Lua::PushPosXYZ(L, Gui::getMousePos());
+    return 3;
+}
+
 static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, getCurViewscreen),
     WRAPM(Gui, getFocusString),
@@ -1555,6 +1561,7 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
 
 static const luaL_Reg dfhack_gui_funcs[] = {
     { "getDwarfmodeViewDims", gui_getDwarfmodeViewDims },
+    { "getMousePos", gui_getMousePos },
     { NULL, NULL }
 };
 
@@ -2282,9 +2289,7 @@ static const LuaWrapper::FunctionReg dfhack_screen_module[] = {
 
 static int screen_getMousePos(lua_State *L)
 {
-    auto pos = Screen::getMousePos();
-    lua_pushinteger(L, pos.x);
-    lua_pushinteger(L, pos.y);
+    Lua::PushPosXY(L, Screen::getMousePos());
     return 2;
 }
 

@@ -104,7 +104,7 @@ function getCursorPos()
 end
 
 function setCursorPos(cursor)
-    df.global.cursor = cursor
+    df.global.cursor = copyall(cursor)
 end
 
 function clearCursorPos()

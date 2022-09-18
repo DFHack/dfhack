@@ -53,23 +53,11 @@ static enum { None, Left, Right } drag_mode;
 
 static df::coord get_mouse_pos(int32_t &mx, int32_t &my)
 {
-    df::coord pos;
-    pos.x = -30000;
+    df::coord pos = Gui::getMousePos();
+    pos.z -= Gui::getDepthAt(pos.x, pos.y);
 
-    if (!enabler->tracking_on)
-        return pos;
-
-    if (!Gui::getMousePos(mx, my))
-        return pos;
-
-    int32_t vx, vy, vz;
-    if (!Gui::getViewCoords(vx, vy, vz))
-        return pos;
-
-    pos.x = vx + mx - 1;
-    pos.y = vy + my - 1;
-    pos.z = vz - Gui::getDepthAt(mx, my);
-
+    mx = pos.x;
+    my = pos.y;
     return pos;
 }
 

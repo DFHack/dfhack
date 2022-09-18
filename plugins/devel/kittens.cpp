@@ -135,13 +135,12 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             last_designation[2] = desig_z;
             out.print("Designation: %d %d %d\n",desig_x, desig_y, desig_z);
         }
-        int mouse_x, mouse_y;
-        Gui::getMousePos(mouse_x,mouse_y);
-        if(mouse_x != last_mouse[0] || mouse_y != last_mouse[1])
+        df:coord mousePos = Gui::getMousePos();
+        if(mousePos.x != last_mouse[0] || mousePos.y != last_mouse[1])
         {
-            last_mouse[0] = mouse_x;
-            last_mouse[1] = mouse_y;
-            out.print("Mouse: %d %d\n",mouse_x, mouse_y);
+            last_mouse[0] = mousePos.x;
+            last_mouse[1] = mousePos.y;
+            out.print("Mouse: %d %d\n",mousePos.x, mousePos.y);
         }
     }
     return CR_OK;

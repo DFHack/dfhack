@@ -1088,6 +1088,11 @@ Announcements
   Uses the type to look up options from announcements.txt, and calls the above
   operations accordingly. The units are used to call ``addCombatReportAuto``.
 
+* ``dfhack.gui.getMousePos()``
+
+  Returns the map coordinates of the map tile the mouse is over as a table of
+  ``{x, y, z}``. If the cursor is not over the map, returns ``nil``.
+
 Other
 ~~~~~
 

@@ -87,7 +87,7 @@
 #include "VTableInterpose.h"
 #include "uicommon.h"
 
-#include "modules/Renderer.h"
+#include "modules/Screen.h"
 
 using namespace DFHack;
 
@@ -104,16 +104,12 @@ static const std::string button_text = "[ DFHack Launcher ]";
 static bool clicked = false;
 
 static bool handle_click() {
-    int32_t x = Renderer::GET_MOUSE_COORDS_SENTINEL, y = (int32_t)true;
-    if (!enabler->mouse_lbut_down || clicked ||
-            !enabler->renderer->get_mouse_coords(&x, &y)) {
-        DEBUG(log).print(
-            "lbut_down=%s; clicked=%s; mouse_x=%d; mouse_y=%d\n",
-            enabler->mouse_lbut_down ? "true" : "false",
-            clicked ? "true" : "false", x, y);
+    if (!enabler->mouse_lbut_down || clicked) {
         return false;
     }
-    if (y == gps->dimy - 1 && x >= 1 && (size_t)x <= button_text.size()) {
+    df::coord2d pos = Screen::getMousePos();
+    DEBUG(log).print("clicked at screen coordinates (%d, %d)\n", pos.x, pos.y);
+    if (pos.y == gps->dimy - 1 && pos.x >= 1 && (size_t)pos.x <= button_text.size()) {
         clicked = true;
         Core::getInstance().setHotkeyCmd("gui/launcher");
         return true;

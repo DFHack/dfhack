@@ -1831,17 +1831,22 @@ bool Gui::setDesignationCoords (const int32_t x, const int32_t y, const int32_t 
     return true;
 }
 
-bool Gui::getMousePos (int32_t & x, int32_t & y)
+// returns the map coordinates that the mouse cursor is over
+df::coord Gui::getMousePos()
 {
-    if (gps) {
-        x = gps->mouse_x;
-        y = gps->mouse_y;
+    df::coord pos;
+    if (gps && gps->mouse_x > -1) {
+        // return invalid coords if the cursor is not over the map
+        DwarfmodeDims dims = getDwarfmodeViewDims();
+        if (gps->mouse_x < dims.map_x1 || gps->mouse_x > dims.map_x2 ||
+                gps->mouse_y < dims.map_y1 || gps->mouse_y > dims.map_y2) {
+            return pos;
+        }
+        pos = getViewportPos();
+        pos.x += gps->mouse_x - 1;
+        pos.y += gps->mouse_y - 1;
     }
-    else {
-        x = -1;
-        y = -1;
-    }
-    return (x == -1) ? false : true;
+    return pos;
 }
 
 int getDepthAt_default (int32_t x, int32_t y)

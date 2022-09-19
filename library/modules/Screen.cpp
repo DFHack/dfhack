@@ -31,6 +31,7 @@ distribution.
 #include <set>
 using namespace std;
 
+#include "modules/Renderer.h"
 #include "modules/Screen.h"
 #include "modules/GuiHooks.h"
 #include "MemAccess.h"
@@ -75,12 +76,14 @@ using std::string;
  * Screen painting API.
  */
 
+// returns text grid coordinates, even if the game map is scaled differently
 df::coord2d Screen::getMousePos()
 {
-    if (!gps || (enabler && !enabler->tracking_on))
+    int32_t x = Renderer::GET_MOUSE_COORDS_SENTINEL, y = (int32_t)true;
+    if (!enabler || !enabler->renderer->get_mouse_coords(&x, &y)) {
         return df::coord2d(-1, -1);
-
-    return df::coord2d(gps->mouse_x, gps->mouse_y);
+    }
+    return df::coord2d(x, y);
 }
 
 df::coord2d Screen::getWindowSize()
@@ -769,7 +772,7 @@ int dfhack_lua_viewscreen::do_input(lua_State *L)
         }
     }
 
-    if (enabler && enabler->tracking_on)
+    if (enabler)
     {
         if (enabler->mouse_lbut_down) {
             lua_pushboolean(L, true);

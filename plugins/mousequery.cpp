@@ -20,6 +20,7 @@
 #include "uicommon.h"
 #include "TileTypes.h"
 #include "DataFuncs.h"
+#include "Debug.h"
 
 DFHACK_PLUGIN("mousequery");
 REQUIRE_GLOBAL(enabler);
@@ -31,6 +32,10 @@ REQUIRE_GLOBAL(ui_build_selector);
 using namespace df::enums::ui_sidebar_mode;
 
 #define PLUGIN_VERSION 0.18
+
+namespace DFHack {
+    DBG_DECLARE(mousequery,log,DebugCategory::LINFO);
+}
 
 static int32_t last_clicked_x, last_clicked_y, last_clicked_z;
 static int32_t last_pos_x, last_pos_y, last_pos_z;
@@ -56,8 +61,10 @@ static df::coord get_mouse_pos(int32_t &mx, int32_t &my)
     df::coord pos = Gui::getMousePos();
     pos.z -= Gui::getDepthAt(pos.x, pos.y);
 
-    mx = pos.x;
-    my = pos.y;
+    df::coord vpos = Gui::getViewportPos();
+    mx = pos.x - vpos.x + 1;
+    my = pos.y - vpos.y + 1;
+
     return pos;
 }
 
@@ -524,6 +531,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         if (mpos.x == x && mpos.y == y && mpos.z == z)
             return;
 
+        DEBUG(log).print("moving cursor to %d, %d, %d\n", x, y, z);
         Gui::setCursorCoords(mpos.x, mpos.y, mpos.z);
         Gui::refreshSidebar();
     }
@@ -563,8 +571,6 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         int32_t mx, my;
         auto mpos = get_mouse_pos(mx, my);
         bool mpos_valid = mpos.x != -30000 && mpos.y != -30000 && mpos.z != -30000;
-        if (mx < 1 || mx > dims.map_x2 || my < 1 || my > dims.map_y2)
-            mpos_valid = false;
 
         // Check if in lever binding mode
         if (Gui::getFocusString(Core::getTopViewscreen()) ==
@@ -711,7 +717,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
                 }
             }
 
-            OutputString(color, mx, my, "X", false, 0, 0, true);
+            Screen::paintTile(Screen::Pen('X', color), mx, my, true);
             return;
         }
 

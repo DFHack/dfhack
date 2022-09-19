@@ -29,7 +29,6 @@ Examples
 ``spectate``
     The plugin reports its feature status.
 
-
 ``spectate auto-unpause 1``
     Enable the spectate plugin to automatically dismiss pause events caused
     by the game. Siege events are one example of such a game event.

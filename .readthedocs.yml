@@ -10,8 +10,11 @@ build:
     python: "3"
 
 sphinx:
-   configuration: conf.py
+  configuration: conf.py
+
+formats:
+  - pdf
 
 python:
-   install:
-   - requirements: .readthedocs.requirements.txt
+  install:
+  - requirements: .readthedocs.requirements.txt

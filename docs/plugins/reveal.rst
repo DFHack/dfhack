@@ -7,19 +7,19 @@ reveal
     :summary: Reveals the map.
     :tags: adventure fort armok inspection map
 
-.. dfhack-tool:: unreveal
+.. dfhack-command:: unreveal
    :summary: Hides previously hidden tiles again.
 
-.. dfhack-tool:: revforget
+.. dfhack-command:: revforget
    :summary: Discard records about what was visible before revealing the map.
 
-.. dfhack-tool:: revtoggle
+.. dfhack-command:: revtoggle
    :summary: Switch between reveal and unreveal.
 
-.. dfhack-tool:: revflood
+.. dfhack-command:: revflood
    :summary: Hide everything, then reveal tiles with a path to the cursor.
 
-.. dfhack-tool:: nopause
+.. dfhack-command:: nopause
    :summary: Disable pausing.
 
 This reveals all z-layers in fort mode. It also works in adventure mode, but any

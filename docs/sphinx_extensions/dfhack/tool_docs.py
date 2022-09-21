@@ -8,12 +8,16 @@ import os
 from typing import List, Optional, Type
 
 import docutils.nodes as nodes
+from docutils.nodes import Node
 import docutils.parsers.rst.directives as rst_directives
 import sphinx
 import sphinx.addnodes as addnodes
 import sphinx.directives
+from sphinx.util.docutils import SphinxDirective
+from sphinx.util.nodes import process_index_entry
 
 import dfhack.util
+
 
 
 logger = sphinx.util.logging.getLogger(__name__)
@@ -46,6 +50,17 @@ def make_summary(builder: sphinx.builders.Builder, summary: str) -> nodes.paragr
     para += nodes.inline(text=summary)
     return para
 
+def make_index(directive: SphinxDirective, name: str, summary: str) -> List[Node]:
+    targetid = 'index-%s' % directive.env.new_serialno('index')
+    targetnode = nodes.target('', '', ids=[targetid])
+    directive.state.document.note_explicit_target(targetnode)
+    indexnode = addnodes.index()
+    indexnode['entries'] = []
+    indexnode['inline'] = False
+    directive.set_source_info(indexnode)
+    entry_text = 'single: {}; {}'.format(name, summary)
+    indexnode['entries'].extend(process_index_entry(entry_text, targetnode['ids'][0]))
+    return [indexnode, targetnode]
 
 _KEYBINDS = {}
 _KEYBINDS_RENDERED = set()  # commands whose keybindings have been rendered
@@ -160,6 +175,7 @@ class DFHackToolDirective(DFHackToolDirectiveBase):
 
         ret_nodes = [tag_paragraph]
         if 'no-command' in self.options:
+            ret_nodes += make_index(self, self.get_name_or_docname() + ' (plugin)', self.options.get('summary', ''))
             ret_nodes += [make_summary(self.env.app.builder, self.options.get('summary', ''))]
         return ret_nodes
 
@@ -177,11 +193,13 @@ class DFHackCommandDirective(DFHackToolDirectiveBase):
 
     def render_content(self) -> List[nodes.Node]:
         command = self.get_name_or_docname()
-        return [
-            self.make_labeled_paragraph('Command', command, content_class=nodes.literal),
+        ret_nodes = [self.make_labeled_paragraph('Command', command, content_class=nodes.literal)]
+        ret_nodes += make_index(self, command, self.options.get('summary', ''))
+        ret_nodes += [
             make_summary(self.env.app.builder, self.options.get('summary', '')),
             *render_dfhack_keybind(command, builder=self.env.app.builder),
         ]
+        return ret_nodes
 
 
 def register(app):

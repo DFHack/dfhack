@@ -13,7 +13,9 @@ sphinx:
   configuration: conf.py
 
 formats:
-  - all
+  - htmlzip
+  - pdf
+  - epub
 
 python:
   install:

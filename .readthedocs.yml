@@ -13,7 +13,7 @@ sphinx:
   configuration: conf.py
 
 formats:
-  - pdf
+  - all
 
 python:
   install:

@@ -30,9 +30,11 @@ guildhalls and temples that you have agreed to.
 Finding the tool you need
 -------------------------
 
-DFHack tools are tagged with categories to make them easier to find. Note that a
-tool can belong to more than one category. If you'd like to see the full list of
-tools in one flat list, please refer to the `index <genindex>`.
+DFHack tools are tagged with categories to make them easier to find. These
+categories are listed in the next few sections. Note that a tool can belong to
+more than one category. If you already know what you're looking for, try the
+`search` or Ctrl-F on this page. If you'd like to see the full list of tools in
+one flat list, please refer to the `alphabetized index <genindex>`.
 
 DFHack tools by game mode
 -------------------------

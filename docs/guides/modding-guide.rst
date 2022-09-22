@@ -433,7 +433,7 @@ Ok, you're all set up! Now, let's take a look at an example
             moduleA.every1Tick()
             moduleB.every1Tick()
         end)
-        
+
         -- one function per repeat callback (you can put them in the
         -- above format if you prefer)
         repeatUtil.scheduleEvery(modId .. ' 100 frames', 1, 'frames',

@@ -396,7 +396,7 @@ local function initialize_tags()
             desc = desc .. ' ' .. line
             tag_index[tag].description = desc
         else
-            _,_,tag,desc = line:find('^%* (%w+): (.+)')
+            _,_,tag,desc = line:find('^%* (%w+)[^:]*: (.+)')
             if not tag then goto continue end
             tag_index[tag] = {description=desc}
             in_desc = true

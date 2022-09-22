@@ -5,7 +5,8 @@
 
 import logging
 import os
-from typing import List, Optional, Type
+import re
+from typing import Iterable, List, Optional, Tuple, Type
 
 import docutils.nodes as nodes
 from docutils.nodes import Node
@@ -13,11 +14,11 @@ import docutils.parsers.rst.directives as rst_directives
 import sphinx
 import sphinx.addnodes as addnodes
 import sphinx.directives
+from sphinx.domains import Domain, Index, IndexEntry
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.nodes import process_index_entry
 
 import dfhack.util
-
 
 
 logger = sphinx.util.logging.getLogger(__name__)
@@ -165,7 +166,7 @@ class DFHackToolDirective(DFHackToolDirectiveBase):
                 addnodes.pending_xref(tag, nodes.inline(text=tag), **{
                     'reftype': 'ref',
                     'refdomain': 'std',
-                    'reftarget': 'tag/' + tag,
+                    'reftarget': tag + '-tag-index',
                     'refexplicit': False,
                     'refwarn': True,
                 }),
@@ -202,6 +203,56 @@ class DFHackCommandDirective(DFHackToolDirectiveBase):
         return ret_nodes
 
 
+def get_tags():
+    groups = {}
+    group_re = re.compile(r'"([^"]+)"')
+    tag_re = re.compile(r'- `([^`]+)-tag-index`: (.*)')
+    with open('docs/Tags.rst') as f:
+        lines = f.readlines()
+        for line in lines:
+            line = line.strip()
+            m = re.match(group_re, line)
+            if m:
+                group = m.group(1)
+                groups[group] = []
+                continue
+            m = re.match(tag_re, line)
+            if m:
+                tag = m.group(1)
+                desc = m.group(2)
+                groups[group].append((tag, desc))
+    return groups
+
+
+def generate_tag_index(self, docnames: Optional[Iterable[str]] = None) -> Tuple[List[Tuple[str, List[IndexEntry]]], bool]:
+    return [('A', [['name', 0, '', '', '', '', '']])], False
+
+
+def init_tag_indices(app):
+    os.makedirs('docs/tags', mode=0o755, exist_ok=True)
+    tag_groups = get_tags()
+    for tag_group in tag_groups:
+        with dfhack.util.write_file_if_changed(('docs/tags/by{group}.rst').format(group=tag_group)) as topidx:
+            for tag_tuple in tag_groups[tag_group]:
+                tag, desc = tag_tuple[0], tag_tuple[1]
+                topidx.write(('- `{name} <{name}-tag-index>`\n').format(name=tag))
+                topidx.write(('    {desc}\n').format(desc=desc))
+
+                domain_class = type(tag+'Domain', (Domain, ), {
+                        'name': tag,
+                        'label': 'Container domain for tag: ' + tag,
+                    })
+                index_class = type(tag+'Index', (Index, ), {
+                        'name': 'tag-index',
+                        'localname': tag + ' tag index',
+                        'shortname': tag,
+                        'desc': desc,
+                        'generate': generate_tag_index,
+                    })
+                app.add_domain(domain_class)
+                app.add_index_to_domain(tag, index_class)
+
+
 def register(app):
     app.add_directive('dfhack-tool', DFHackToolDirective)
     app.add_directive('dfhack-command', DFHackCommandDirective)
@@ -212,11 +263,14 @@ def register(app):
 def setup(app):
     app.connect('builder-inited', register)
 
+    init_tag_indices(app)
+
     # TODO: re-enable once detection is corrected
     # app.connect('build-finished', lambda *_: check_missing_keybinds())
 
+    # TODO: implement parallel builds so we can set these back to True
     return {
         'version': '0.1',
-        'parallel_read_safe': True,
-        'parallel_write_safe': True,
+        'parallel_read_safe': False,
+        'parallel_write_safe': False,
     }

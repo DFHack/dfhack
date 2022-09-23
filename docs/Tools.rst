@@ -50,3 +50,14 @@ DFHack tools by what they affect
 --------------------------------
 
 .. include:: tags/bywhat.rst
+
+All DFHack tools alphabetically
+-------------------------------
+
+.. toctree::
+  :glob:
+  :maxdepth: 1
+  :titlesonly:
+
+  tools/*
+  tools/*/*

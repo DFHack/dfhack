@@ -125,9 +125,13 @@ class DFHackToolDirectiveBase(sphinx.directives.ObjectDescription):
             else:
                 return parts[-1]
 
-    def add_index_entry(self, name, tag) -> None:
-        indexdata = (name, self.options.get('summary', ''), '', self.env.docname, '', 0)
-        self.env.domaindata[tag]['objects'].append(indexdata)
+    def add_index_entries(self, name) -> None:
+        docname = self.env.docname
+        tags = self.env.domaindata['tag-repo']['doctags'][docname]
+        indexdata = (name, self.options.get('summary', ''), '', docname, '', 0)
+        self.env.domaindata['all']['objects'].append(indexdata)
+        for tag in tags:
+            self.env.domaindata[tag]['objects'].append(indexdata)
 
     @staticmethod
     def wrap_box(*children: List[nodes.Node]) -> nodes.Admonition:
@@ -154,7 +158,9 @@ class DFHackToolDirective(DFHackToolDirectiveBase):
 
     def render_content(self) -> List[nodes.Node]:
         tag_paragraph = self.make_labeled_paragraph('Tags')
-        for tag in self.options.get('tags', []):
+        tags = self.options.get('tags', [])
+        self.env.domaindata['tag-repo']['doctags'][self.env.docname] = tags
+        for tag in tags:
             tag_paragraph += [
                 addnodes.pending_xref(tag, nodes.inline(text=tag), **{
                     'reftype': 'ref',
@@ -165,12 +171,11 @@ class DFHackToolDirective(DFHackToolDirectiveBase):
                 }),
                 nodes.inline(text=' | '),
             ]
-            self.add_index_entry(self.get_name_or_docname(), tag)
         tag_paragraph.pop()
 
         ret_nodes = [tag_paragraph]
         if 'no-command' in self.options:
-            self.add_index_entry(self.get_name_or_docname() + ' (plugin)', 'all')
+            self.add_index_entries(self.get_name_or_docname() + ' (plugin)')
             ret_nodes += [make_summary(self.env.app.builder, self.options.get('summary', ''))]
         return ret_nodes
 
@@ -188,12 +193,21 @@ class DFHackCommandDirective(DFHackToolDirectiveBase):
 
     def render_content(self) -> List[nodes.Node]:
         command = self.get_name_or_docname()
-        self.add_index_entry(command, 'all')
+        self.add_index_entries(command)
         return [
             self.make_labeled_paragraph('Command', command, content_class=nodes.literal),
             make_summary(self.env.app.builder, self.options.get('summary', '')),
             *render_dfhack_keybind(command, builder=self.env.app.builder),
         ]
+
+
+class TagRepoDomain(Domain):
+    name = 'tag-repo'
+    label = 'Holds tag associations per document'
+    initial_data = {'doctags': {}}
+
+    def merge_domaindata(self, docnames: List[str], otherdata: Dict) -> None:
+        self.data['doctags'].update(otherdata['doctags'])
 
 
 def get_tags():
@@ -277,6 +291,7 @@ def register(app):
 def setup(app):
     app.connect('builder-inited', register)
 
+    app.add_domain(TagRepoDomain)
     register_index(app, 'all', 'Index of DFHack tools')
     init_tag_indices(app)
 

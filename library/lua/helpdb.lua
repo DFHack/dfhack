@@ -120,7 +120,7 @@ No help available.
 ]]
 local function make_default_entry(entry_name, help_source, kwargs)
     local default_long_help = DEFAULT_HELP_TEMPLATE:format(
-                                            entry_name, ('*'):rep(#entry_name))
+                                            entry_name, ('='):rep(#entry_name))
     return {
         help_source=help_source,
         short_help='No help available.',

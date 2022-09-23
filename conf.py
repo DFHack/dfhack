@@ -268,8 +268,8 @@ html_sidebars = {
     ]
 }
 
-# generate indices
-html_use_index = True
+# generate domain indices but not the (unused) genindex
+html_use_index = False
 html_domain_indices = True
 
 # don't link to rst sources in the generated pages

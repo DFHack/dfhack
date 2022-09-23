@@ -52,18 +52,6 @@ def make_summary(builder: sphinx.builders.Builder, summary: str) -> nodes.paragr
     para += nodes.inline(text=summary)
     return para
 
-def make_index(directive: SphinxDirective, name: str, summary: str) -> List[Node]:
-    targetid = 'index-%s' % directive.env.new_serialno('index')
-    targetnode = nodes.target('', '', ids=[targetid])
-    directive.state.document.note_explicit_target(targetnode)
-    indexnode = addnodes.index()
-    indexnode['entries'] = []
-    indexnode['inline'] = False
-    directive.set_source_info(indexnode)
-    entry_text = 'single: {}; {}'.format(name, summary)
-    indexnode['entries'].extend(process_index_entry(entry_text, targetnode['ids'][0]))
-    return [indexnode, targetnode]
-
 _KEYBINDS = {}
 _KEYBINDS_RENDERED = set()  # commands whose keybindings have been rendered
 
@@ -137,6 +125,10 @@ class DFHackToolDirectiveBase(sphinx.directives.ObjectDescription):
             else:
                 return parts[-1]
 
+    def add_index_entry(self, name, tag) -> None:
+        indexdata = (name, self.options.get('summary', ''), '', self.env.docname, '', 0)
+        self.env.domaindata[tag]['objects'].append(indexdata)
+
     @staticmethod
     def wrap_box(*children: List[nodes.Node]) -> nodes.Admonition:
         return nodes.topic('', *children, classes=['dfhack-tool-summary'])
@@ -173,14 +165,12 @@ class DFHackToolDirective(DFHackToolDirectiveBase):
                 }),
                 nodes.inline(text=' | '),
             ]
-            name = self.get_name_or_docname()
-            indexdata = (name, self.options.get('summary', ''), '', self.env.docname, '', 0)
-            self.env.domaindata[tag]['objects'].append(indexdata)
+            self.add_index_entry(self.get_name_or_docname(), tag)
         tag_paragraph.pop()
 
         ret_nodes = [tag_paragraph]
         if 'no-command' in self.options:
-            ret_nodes += make_index(self, self.get_name_or_docname() + ' (plugin)', self.options.get('summary', ''))
+            self.add_index_entry(self.get_name_or_docname() + ' (plugin)', 'all')
             ret_nodes += [make_summary(self.env.app.builder, self.options.get('summary', ''))]
         return ret_nodes
 
@@ -198,13 +188,12 @@ class DFHackCommandDirective(DFHackToolDirectiveBase):
 
     def render_content(self) -> List[nodes.Node]:
         command = self.get_name_or_docname()
-        ret_nodes = [self.make_labeled_paragraph('Command', command, content_class=nodes.literal)]
-        ret_nodes += make_index(self, command, self.options.get('summary', ''))
-        ret_nodes += [
+        self.add_index_entry(command, 'all')
+        return [
+            self.make_labeled_paragraph('Command', command, content_class=nodes.literal),
             make_summary(self.env.app.builder, self.options.get('summary', '')),
             *render_dfhack_keybind(command, builder=self.env.app.builder),
         ]
-        return ret_nodes
 
 
 def get_tags():
@@ -250,6 +239,22 @@ def tag_index_generate(self, docnames: Optional[Iterable[str]] = None) -> Tuple[
             IndexEntry(name, 0, docname, '', '', '', desc))
     return (sorted(content.items()), False)
 
+def register_index(app, tag, title):
+    domain_class = type(tag+'Domain', (Domain, ), {
+            'name': tag,
+            'label': 'Container domain for tag: ' + tag,
+            'initial_data': {'objects': []},
+            'merge_domaindata': tag_domain_merge_domaindata,
+            'get_objects': tag_domain_get_objects,
+        })
+    index_class = type(tag+'Index', (Index, ), {
+            'name': 'tag-index',
+            'localname': title,
+            'shortname': tag,
+            'generate': tag_index_generate,
+        })
+    app.add_domain(domain_class)
+    app.add_index_to_domain(tag, index_class)
 
 def init_tag_indices(app):
     os.makedirs('docs/tags', mode=0o755, exist_ok=True)
@@ -260,35 +265,19 @@ def init_tag_indices(app):
                 tag, desc = tag_tuple[0], tag_tuple[1]
                 topidx.write(('- `{name} <{name}-tag-index>`\n').format(name=tag))
                 topidx.write(('    {desc}\n').format(desc=desc))
-
-                domain_class = type(tag+'Domain', (Domain, ), {
-                        'name': tag,
-                        'label': 'Container domain for tag: ' + tag,
-                        'initial_data': {'objects': []},
-                        'merge_domaindata': tag_domain_merge_domaindata,
-                        'get_objects': tag_domain_get_objects,
-                    })
-                index_class = type(tag+'Index', (Index, ), {
-                        'name': 'tag-index',
-                        'localname': '"' + tag + '" tag index',
-                        'shortname': tag,
-                        'desc': desc,
-                        'generate': tag_index_generate,
-                    })
-                app.add_domain(domain_class)
-                app.add_index_to_domain(tag, index_class)
+                register_index(app, tag, '"%s" tag index' % tag)
 
 
 def register(app):
     app.add_directive('dfhack-tool', DFHackToolDirective)
     app.add_directive('dfhack-command', DFHackCommandDirective)
-
     _KEYBINDS.update(scan_all_keybinds(os.path.join(dfhack.util.DFHACK_ROOT, 'data', 'init')))
 
 
 def setup(app):
     app.connect('builder-inited', register)
 
+    register_index(app, 'all', 'Index of DFHack tools')
     init_tag_indices(app)
 
     # TODO: re-enable once detection is corrected

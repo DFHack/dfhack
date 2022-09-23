@@ -36,7 +36,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 - `autonestbox`: split off from `zone` into its own plugin. Note that to enable, the command has changed from ``autonestbox start`` to ``enable autonestbox``.
 - `autobutcher`: split off from `zone` into its own plugin. Note that to enable, the command has changed from ``autobutcher start`` to ``enable autobutcher``.
-- `overlay`: display a "DFHack" button in the lower left corner that you can click to start the new GUI command launcher.
+- `overlay`: display a "DFHack" button in the lower left corner that you can click to start the new GUI command launcher. The `dwarfmonitor` weather display had to be moved to make room for the button. If you are seeing the weather indicator rendered over the overlay button, please remove the ``dfhack-config/dwarfmonitor.json`` file to fix the weather indicator display offset.
 
 ## New Tweaks
 

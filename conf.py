@@ -73,13 +73,11 @@ def write_tool_docs():
     the original documentation.
     """
     for k in doc_all_dirs():
-        header = ':orphan:\n'
         label = ('.. _{name}:\n\n').format(name=k[0])
         include = ('.. include:: /{path}\n\n').format(path=k[1])
         os.makedirs(os.path.join('docs/tools', os.path.dirname(k[0])),
                     mode=0o755, exist_ok=True)
         with write_file_if_changed('docs/tools/{}.rst'.format(k[0])) as outfile:
-            outfile.write(header)
             if k[0] != 'search':
                 outfile.write(label)
             outfile.write(include)

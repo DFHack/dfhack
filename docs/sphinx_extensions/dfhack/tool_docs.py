@@ -216,7 +216,7 @@ class TagRepoDomain(Domain):
 def get_tags():
     groups = {}
     group_re = re.compile(r'"([^"]+)"')
-    tag_re = re.compile(r'- `([^`]+)-tag-index`: (.*)')
+    tag_re = re.compile(r'- `([^ ]+) <[^>]+>`: (.*)')
     with open('docs/Tags.rst') as f:
         lines = f.readlines()
         for line in lines:
@@ -282,14 +282,24 @@ def init_tag_indices(app):
                 tag, desc = tag_tuple[0], tag_tuple[1]
                 topidx.write(('- `{name} <{name}-tag-index>`\n').format(name=tag))
                 topidx.write(('    {desc}\n').format(desc=desc))
-                register_index(app, tag, '%s<h4>%s</h4>' % (tag, desc))
+                register_index(app, tag, desc)
 
+
+def update_index_titles(app):
+    for domain in app.env.domains.values():
+        for index in domain.indices:
+            if index.shortname == 'all':
+                continue
+            if app.builder.format == 'html':
+                index.localname = '"%s" tag index<h4>%s</h4>' % (index.shortname, index.localname)
+            else:
+                index.localname = '%s tag index - %s' % (index.shortname, index.localname)
 
 def register(app):
     app.add_directive('dfhack-tool', DFHackToolDirective)
     app.add_directive('dfhack-command', DFHackCommandDirective)
+    update_index_titles(app)
     _KEYBINDS.update(scan_all_keybinds(os.path.join(dfhack.util.DFHACK_ROOT, 'data', 'init')))
-
 
 def setup(app):
     app.connect('builder-inited', register)

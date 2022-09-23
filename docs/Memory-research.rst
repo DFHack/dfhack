@@ -63,7 +63,7 @@ are not built by default, but can be built by setting the ``BUILD_DEVEL``
 Scripts
 ~~~~~~~
 
-Several `development tools <tag/dev>` can be useful for memory research.
+Several `development tools <dev-tag-index>` can be useful for memory research.
 These include (but are not limited to):
 
 - `devel/dump-offsets`

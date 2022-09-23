@@ -58,9 +58,6 @@ def doc_dir(dirname, files, prefix):
 def doc_all_dirs():
     """Collect the commands and paths to include in our docs."""
     tools = []
-    # TODO: as we scan the docs, parse out the tags and short descriptions and
-    # build a map for use in generating the tags pages and links in the tool
-    # doc footers
     for root, _, files in os.walk('docs/builtins'):
         tools.extend(doc_dir(root, files, os.path.relpath(root, 'docs/builtins')))
     for root, _, files in os.walk('docs/plugins'):
@@ -69,59 +66,16 @@ def doc_all_dirs():
         tools.extend(doc_dir(root, files, os.path.relpath(root, 'scripts/docs')))
     return tuple(tools)
 
-DOC_ALL_DIRS = doc_all_dirs()
-
-
-def get_tags():
-    groups = {}
-    group_re = re.compile(r'"([^"]+)"')
-    tag_re = re.compile(r'- `tag/([^`]+)`: (.*)')
-    with open('docs/Tags.rst') as f:
-        lines = f.readlines()
-        for line in lines:
-            line = line.strip()
-            m = re.match(group_re, line)
-            if m:
-                group = m.group(1)
-                groups[group] = []
-                continue
-            m = re.match(tag_re, line)
-            if m:
-                tag = m.group(1)
-                desc = m.group(2)
-                groups[group].append((tag, desc))
-    return groups
-
-
-def generate_tag_indices():
-    os.makedirs('docs/tags', mode=0o755, exist_ok=True)
-    tag_groups = get_tags()
-    for tag_group in tag_groups:
-        with write_file_if_changed(('docs/tags/by{group}.rst').format(group=tag_group)) as topidx:
-            for tag_tuple in tag_groups[tag_group]:
-                tag = tag_tuple[0]
-                with write_file_if_changed(('docs/tags/{name}.rst').format(name=tag)) as tagidx:
-                    tagidx.write('TODO: add links to the tools that have this tag')
-                topidx.write(('.. _tag/{name}:\n\n').format(name=tag))
-                topidx.write(('{name}\n').format(name=tag))
-                topidx.write(('{underline}\n').format(underline='*'*len(tag)))
-                topidx.write(('{desc}\n\n').format(desc=tag_tuple[1]))
-                topidx.write(('.. include:: /docs/tags/{name}.rst\n\n').format(name=tag))
-
 
 def write_tool_docs():
     """
     Creates a file for each tool with the ".. include::" directives to pull in
-    the original documentation. Then we generate a label and useful info in the
-    footer.
+    the original documentation.
     """
-    for k in DOC_ALL_DIRS:
+    for k in doc_all_dirs():
         header = ':orphan:\n'
         label = ('.. _{name}:\n\n').format(name=k[0])
         include = ('.. include:: /{path}\n\n').format(path=k[1])
-        # TODO: generate a footer with links to tools that share at least one
-        # tag with this tool. Just the tool names, strung across the bottom of
-        # the page in one long wrapped line, similar to how the wiki does it
         os.makedirs(os.path.join('docs/tools', os.path.dirname(k[0])),
                     mode=0o755, exist_ok=True)
         with write_file_if_changed('docs/tools/{}.rst'.format(k[0])) as outfile:
@@ -131,9 +85,8 @@ def write_tool_docs():
             outfile.write(include)
 
 
-# Actually call the docs generator and run test
 write_tool_docs()
-generate_tag_indices()
+
 
 # -- General configuration ------------------------------------------------
 
@@ -315,11 +268,9 @@ html_sidebars = {
     ]
 }
 
-# If false, no module index is generated.
-html_domain_indices = False
-
-# If false, no genindex.html is generated.
-html_use_index = True
+# generate domain indices but not the (unused) genindex
+html_use_index = False
+html_domain_indices = True
 
 # don't link to rst sources in the generated pages
 html_show_sourcelink = False

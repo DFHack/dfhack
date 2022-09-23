@@ -34,7 +34,7 @@ DFHack tools are tagged with categories to make them easier to find. These
 categories are listed in the next few sections. Note that a tool can belong to
 more than one category. If you already know what you're looking for, try the
 `search` or Ctrl-F on this page. If you'd like to see the full list of tools in
-one flat list, please refer to the `alphabetized index <genindex>`.
+one flat list, please refer to the `annotated index <all-tag-index>`.
 
 DFHack tools by game mode
 -------------------------
@@ -50,3 +50,14 @@ DFHack tools by what they affect
 --------------------------------
 
 .. include:: tags/bywhat.rst
+
+All DFHack tools alphabetically
+-------------------------------
+
+.. toctree::
+  :glob:
+  :maxdepth: 1
+  :titlesonly:
+
+  tools/*
+  tools/*/*

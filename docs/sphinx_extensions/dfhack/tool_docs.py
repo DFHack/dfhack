@@ -3,6 +3,7 @@
 #   https://www.sphinx-doc.org/en/master/development/tutorials/recipe.html
 #   https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html#rst-directives
 
+from collections import defaultdict
 import logging
 import os
 import re
@@ -171,9 +172,10 @@ class DFHackToolDirective(DFHackToolDirectiveBase):
                     'refwarn': True,
                 }),
                 nodes.inline(text=' | '),
-                indexdata = (self.env.docname)
-                self.env.domaindata[tag]['objects'].append(indexdata)
             ]
+            name = self.get_name_or_docname()
+            indexdata = (name, self.options.get('summary', ''), '', self.env.docname, '', 0)
+            self.env.domaindata[tag]['objects'].append(indexdata)
         tag_paragraph.pop()
 
         ret_nodes = [tag_paragraph]
@@ -231,10 +233,22 @@ def tag_domain_get_objects(self):
         yield(obj)
 
 def tag_domain_merge_domaindata(self, docnames: List[str], otherdata: Dict) -> None:
-    self.data['objects'].extend(otherdata['objects'])
+    seen = set()
+    objs = self.data['objects']
+    for obj in objs:
+        seen.add(obj[0])
+    for obj in otherdata['objects']:
+        if obj[0] not in seen:
+            objs.append(obj)
+    objs.sort()
 
 def tag_index_generate(self, docnames: Optional[Iterable[str]] = None) -> Tuple[List[Tuple[str, List[IndexEntry]]], bool]:
-    return [('G', [['gui/blueprint', 0, 'docs/tools/gui/blueprint', 'gui-blueprint', '', '', '']])], False
+    content = defaultdict(list)
+    for name, desc, _, docname, _, _ in self.domain.data['objects']:
+        first_letter = name[0].lower()
+        content[first_letter].append(
+            IndexEntry(name, 0, docname, '', '', '', desc))
+    return (sorted(content.items()), False)
 
 
 def init_tag_indices(app):
@@ -256,7 +270,7 @@ def init_tag_indices(app):
                     })
                 index_class = type(tag+'Index', (Index, ), {
                         'name': 'tag-index',
-                        'localname': tag + ' tag index',
+                        'localname': '"' + tag + '" tag index',
                         'shortname': tag,
                         'desc': desc,
                         'generate': tag_index_generate,

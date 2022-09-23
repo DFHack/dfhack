@@ -6,7 +6,7 @@
 import logging
 import os
 import re
-from typing import Iterable, List, Optional, Tuple, Type
+from typing import Dict, Iterable, List, Optional, Tuple, Type
 
 import docutils.nodes as nodes
 from docutils.nodes import Node
@@ -167,10 +167,12 @@ class DFHackToolDirective(DFHackToolDirectiveBase):
                     'reftype': 'ref',
                     'refdomain': 'std',
                     'reftarget': tag + '-tag-index',
-                    'refexplicit': False,
+                    'refexplicit': True,
                     'refwarn': True,
                 }),
                 nodes.inline(text=' | '),
+                indexdata = (self.env.docname)
+                self.env.domaindata[tag]['objects'].append(indexdata)
             ]
         tag_paragraph.pop()
 
@@ -224,8 +226,15 @@ def get_tags():
     return groups
 
 
-def generate_tag_index(self, docnames: Optional[Iterable[str]] = None) -> Tuple[List[Tuple[str, List[IndexEntry]]], bool]:
-    return [('A', [['name', 0, '', '', '', '', '']])], False
+def tag_domain_get_objects(self):
+    for obj in self.data['objects']:
+        yield(obj)
+
+def tag_domain_merge_domaindata(self, docnames: List[str], otherdata: Dict) -> None:
+    self.data['objects'].extend(otherdata['objects'])
+
+def tag_index_generate(self, docnames: Optional[Iterable[str]] = None) -> Tuple[List[Tuple[str, List[IndexEntry]]], bool]:
+    return [('G', [['gui/blueprint', 0, 'docs/tools/gui/blueprint', 'gui-blueprint', '', '', '']])], False
 
 
 def init_tag_indices(app):
@@ -241,13 +250,16 @@ def init_tag_indices(app):
                 domain_class = type(tag+'Domain', (Domain, ), {
                         'name': tag,
                         'label': 'Container domain for tag: ' + tag,
+                        'initial_data': {'objects': []},
+                        'merge_domaindata': tag_domain_merge_domaindata,
+                        'get_objects': tag_domain_get_objects,
                     })
                 index_class = type(tag+'Index', (Index, ), {
                         'name': 'tag-index',
                         'localname': tag + ' tag index',
                         'shortname': tag,
                         'desc': desc,
-                        'generate': generate_tag_index,
+                        'generate': tag_index_generate,
                     })
                 app.add_domain(domain_class)
                 app.add_index_to_domain(tag, index_class)
@@ -268,9 +280,8 @@ def setup(app):
     # TODO: re-enable once detection is corrected
     # app.connect('build-finished', lambda *_: check_missing_keybinds())
 
-    # TODO: implement parallel builds so we can set these back to True
     return {
         'version': '0.1',
-        'parallel_read_safe': False,
-        'parallel_write_safe': False,
+        'parallel_read_safe': True,
+        'parallel_write_safe': True,
     }

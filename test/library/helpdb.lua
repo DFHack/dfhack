@@ -42,10 +42,7 @@ local files = {
     ['hack/docs/docs/Tags.txt']=[[
 * fort: Tools that are useful while in fort mode.
 
-* armok: Tools that give you complete control over
-  an aspect of the game or provide access to
-  information that the game intentionally keeps
-  hidden.
+* armok: Tools that give you complete control over an aspect of the game or provide access to information that the game intentionally keeps hidden.
 
 * map: Tools that interact with the game map.
 
@@ -55,68 +52,65 @@ local files = {
     ]],
     ['hack/docs/docs/tools/hascommands.txt']=[[
 hascommands
-***********
+===========
 
-**Tags:** fort | armok | units
+Tags: fort | armok | units
 
-Documented a plugin that
-has commands.
+  Documented a plugin that has commands.
 
-**Command:** "boxbinders"
+Command: "boxbinders"
 
-Documented boxbinders.
+  Documented boxbinders.
 
-**Command:** "bindboxers"
+Command: "bindboxers"
 
-Documented bindboxers.
+  Documented bindboxers.
 
 Documented full help.
     ]],
     ['hack/docs/docs/tools/samename.txt']=[[
 samename
-********
+========
 
-**Tags:** fort | armok
-| units
+Tags: fort | armok | units
 
-**Command:** "samename"
+Command: "samename"
 
-Documented samename.
+  Documented samename.
 
 Documented full help.
     ]],
     ['hack/docs/docs/tools/nocommand.txt']=[[
 nocommand
-*********
+=========
 
-**Tags:** fort | armok |
-units
+Tags: fort | armok | units
 
-Documented nocommand.
+  Documented nocommand.
 
 Documented full help.
     ]],
     ['hack/docs/docs/tools/basic.txt']=[[
 basic
-*****
+=====
 
-**Tags:** map
+Tags: map
 
-**Command:** "basic"
+Command: "basic"
 
-Documented basic.
+  Documented basic.
 
 Documented full help.
     ]],
     ['hack/docs/docs/tools/subdir/scriptname.txt']=[[
 subdir/scriptname
-*****************
+=================
 
-**Tags:** map
+Tags: map
 
-**Command:** "subdir/scriptname"
+Command: "subdir/scriptname"
 
-Documented subdir/scriptname.
+  Documented subdir/scriptname.
 
 Documented full help.
     ]],
@@ -126,11 +120,11 @@ Documented full help.
 basic
 =====
 
-**Tags:** map
+Tags: map
 
-**Command:** "basic"
+Command: "basic"
 
-in-file basic.
+  in-file basic.
 
 Documented full help.
 ]====]
@@ -142,11 +136,11 @@ script contents
 subdir/scriptname
 =================
 
-**Tags:** map
+Tags: map
 
-**Command:** "subdir/scriptname"
+Command: "subdir/scriptname"
 
-in-file scriptname.
+  in-file scriptname.
 
 Documented full help.
 ]====]
@@ -158,11 +152,11 @@ script contents
 inscript_docs
 =============
 
-**Tags:** map | badtag
+Tags: map | badtag
 
-**Command:** "inscript_docs"
+Command: "inscript_docs"
 
-in-file inscript_docs.
+  in-file inscript_docs.
 
 Documented full help.
 ]====]
@@ -182,11 +176,11 @@ script contents
 basic
 =====
 
-**Tags:** map
+Tags: map
 
-**Command:** "basic"
+Command: "basic"
 
-in-file basic (other).
+  in-file basic (other).
 
 Documented full help.
 ]====]
@@ -198,11 +192,11 @@ script contents
 subdir/scriptname
 =================
 
-**Tags:** map
+Tags: map
 
-**Command:** "subdir/scriptname"
+Command: "subdir/scriptname"
 
-in-file scriptname (other).
+  in-file scriptname (other).
 
 Documented full help.
 ]====]
@@ -214,11 +208,11 @@ script contents
 inscript_docs
 =============
 
-**Tags:** map
+Tags: map
 
-**Command:** "inscript_docs"
+Command: "inscript_docs"
 
-in-file inscript_docs (other).
+  in-file inscript_docs (other).
 
 Documented full help.
 ]====]
@@ -400,15 +394,15 @@ end
 function test.get_entry_long_help()
     local expected = [[
 basic
-*****
+=====
 
-**Tags:** map
+Tags: map
 
-**Command:**
+Command:
 "basic"
 
-Documented
-basic.
+  Documented
+  basic.
 
 Documented
 full help.
@@ -432,34 +426,34 @@ full help.
 
     -- plugins/commands that have no doc files get the default template
     expect.eq([[ls
-**
+==
 
 No help available.
 ]], h.get_entry_long_help('ls'))
     expect.eq([[nodocs_hascommands
-******************
+==================
 
 No help available.
 ]], h.get_entry_long_help('nodocs_hascommands'))
     expect.eq([[nodocs_hascommands
-******************
+==================
 
 No help available.
 ]], h.get_entry_long_help('nodoc_command'))
     expect.eq([[Nodocs samename.
         This command has the same name as its host plugin but no rst docs.]], h.get_entry_long_help('nodocs_samename'))
     expect.eq([[nodocs_nocommand
-****************
+================
 
 No help available.
 ]], h.get_entry_long_help('nodocs_nocommand'))
     expect.eq([[nodocs_script
-*************
+=============
 
 No help available.
 ]], h.get_entry_long_help('nodocs_script'))
     expect.eq([[inscript_short_only
-*******************
+===================
 
 No help available.
 ]], h.get_entry_long_help('inscript_short_only'))
@@ -468,11 +462,11 @@ No help available.
     expect.eq([[inscript_docs
 =============
 
-**Tags:** map | badtag
+Tags: map | badtag
 
-**Command:** "inscript_docs"
+Command: "inscript_docs"
 
-in-file inscript_docs.
+  in-file inscript_docs.
 
 Documented full help.]], h.get_entry_long_help('inscript_docs'))
 end

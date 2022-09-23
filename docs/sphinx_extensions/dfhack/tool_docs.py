@@ -260,8 +260,11 @@ def tag_index_generate(self, docnames: Optional[Iterable[str]] = None) -> Tuple[
     content = defaultdict(list)
     for name, desc, _, docname, anchor, _ in self.domain.data['objects']:
         first_letter = name[0].lower()
+        extra, descr = desc, ''
+        if self.domain.env.app.builder.format == 'html':
+            extra, descr = '', desc
         content[first_letter].append(
-            IndexEntry(name, 0, docname, anchor, '', '', desc))
+            IndexEntry(name, 0, docname, anchor, extra, '', descr))
     return (sorted(content.items()), False)
 
 def register_index(app, tag, title):

@@ -115,20 +115,23 @@ class DFHackToolDirectiveBase(sphinx.directives.ObjectDescription):
     required_arguments = 0
     optional_arguments = 1
 
+    def get_tool_name_from_docname(self):
+        parts = self.env.docname.split('/')
+        if 'tools' in parts:
+            return '/'.join(parts[parts.index('tools') + 1:])
+        else:
+            return parts[-1]
+
     def get_name_or_docname(self):
         if self.arguments:
             return self.arguments[0]
-        else:
-            parts = self.env.docname.split('/')
-            if 'tools' in parts:
-                return '/'.join(parts[parts.index('tools') + 1:])
-            else:
-                return parts[-1]
+        return self.get_tool_name_from_docname()
 
     def add_index_entries(self, name) -> None:
         docname = self.env.docname
+        anchor = self.get_tool_name_from_docname().replace('/', '-')
         tags = self.env.domaindata['tag-repo']['doctags'][docname]
-        indexdata = (name, self.options.get('summary', ''), '', docname, '', 0)
+        indexdata = (name, self.options.get('summary', ''), '', docname, anchor, 0)
         self.env.domaindata['all']['objects'].append(indexdata)
         for tag in tags:
             self.env.domaindata[tag]['objects'].append(indexdata)
@@ -247,10 +250,10 @@ def tag_domain_merge_domaindata(self, docnames: List[str], otherdata: Dict) -> N
 
 def tag_index_generate(self, docnames: Optional[Iterable[str]] = None) -> Tuple[List[Tuple[str, List[IndexEntry]]], bool]:
     content = defaultdict(list)
-    for name, desc, _, docname, _, _ in self.domain.data['objects']:
+    for name, desc, _, docname, anchor, _ in self.domain.data['objects']:
         first_letter = name[0].lower()
         content[first_letter].append(
-            IndexEntry(name, 0, docname, '', '', '', desc))
+            IndexEntry(name, 0, docname, anchor, '', '', desc))
     return (sorted(content.items()), False)
 
 def register_index(app, tag, title):

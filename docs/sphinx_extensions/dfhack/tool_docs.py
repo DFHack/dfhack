@@ -110,6 +110,14 @@ def check_missing_keybinds():
         logger.warning('Undocumented keybindings for command: %s', missing_command)
 
 
+_anchor_pattern = re.compile(r'^\d+')
+
+def to_anchor(name: str) -> str:
+    name = name.lower()
+    name = name.replace('/', '-')
+    name = re.sub(_anchor_pattern, '', name)
+    return name
+
 class DFHackToolDirectiveBase(sphinx.directives.ObjectDescription):
     has_content = False
     required_arguments = 0
@@ -129,7 +137,7 @@ class DFHackToolDirectiveBase(sphinx.directives.ObjectDescription):
 
     def add_index_entries(self, name) -> None:
         docname = self.env.docname
-        anchor = self.get_tool_name_from_docname().replace('/', '-')
+        anchor = to_anchor(self.get_tool_name_from_docname())
         tags = self.env.domaindata['tag-repo']['doctags'][docname]
         indexdata = (name, self.options.get('summary', ''), '', docname, anchor, 0)
         self.env.domaindata['all']['objects'].append(indexdata)
@@ -293,7 +301,7 @@ def update_index_titles(app):
             if app.builder.format == 'html':
                 index.localname = '"%s" tag index<h4>%s</h4>' % (index.shortname, index.localname)
             else:
-                index.localname = '%s tag index - %s' % (index.shortname, index.localname)
+                index.localname = '"%s" tag index - %s' % (index.shortname, index.localname)
 
 def register(app):
     app.add_directive('dfhack-tool', DFHackToolDirective)

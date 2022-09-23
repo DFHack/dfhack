@@ -265,7 +265,7 @@ def init_tag_indices(app):
                 tag, desc = tag_tuple[0], tag_tuple[1]
                 topidx.write(('- `{name} <{name}-tag-index>`\n').format(name=tag))
                 topidx.write(('    {desc}\n').format(desc=desc))
-                register_index(app, tag, '"%s" tag index' % tag)
+                register_index(app, tag, '%s<h4>%s</h4>' % (tag, desc))
 
 
 def register(app):

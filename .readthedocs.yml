@@ -9,13 +9,13 @@ build:
   tools:
     python: "3"
 
+submodules:
+  include: all
+
 sphinx:
   configuration: conf.py
 
-formats:
-  - htmlzip
-  - pdf
-  - epub
+formats: all
 
 python:
   install:

@@ -275,7 +275,7 @@ local function make_script_entry(old_entry, entry_name, kwargs)
     local is_rb = source_path:endswith('.rb')
     update_entry(entry, lines,
             {begin_marker=(is_rb and SCRIPT_DOC_BEGIN_RUBY or SCRIPT_DOC_BEGIN),
-             end_marker=(is_rb and SCRIPT_DOC_BEGIN_RUBY or SCRIPT_DOC_END),
+             end_marker=(is_rb and SCRIPT_DOC_END_RUBY or SCRIPT_DOC_END),
              first_line_is_short_help=(is_rb and '#' or '%-%-')})
     return entry
 end

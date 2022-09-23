@@ -321,6 +321,8 @@ local function scan_builtins(old_db)
                 HELP_SOURCES.RENDERED or HELP_SOURCES.STUB,
             {entry_types=entry_types})
     end
+    -- easter egg: replace underline for 'die' help with tombstones
+    textdb.die.long_help = textdb.die.long_help:gsub('=', string.char(239))
 end
 
 -- scan for enableable plugins and plugin-provided commands and add their help

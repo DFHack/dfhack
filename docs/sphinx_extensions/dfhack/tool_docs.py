@@ -225,7 +225,7 @@ def get_tags():
     groups = {}
     group_re = re.compile(r'"([^"]+)"')
     tag_re = re.compile(r'- `([^ ]+) <[^>]+>`: (.*)')
-    with open('docs/Tags.rst') as f:
+    with open(os.path.join(dfhack.util.DOCS_ROOT, 'Tags.rst')) as f:
         lines = f.readlines()
         for line in lines:
             line = line.strip()
@@ -285,10 +285,11 @@ def register_index(app, tag, title):
     app.add_index_to_domain(tag, index_class)
 
 def init_tag_indices(app):
-    os.makedirs('docs/tags', mode=0o755, exist_ok=True)
+    os.makedirs(os.path.join(dfhack.util.DOCS_ROOT, 'tags'), mode=0o755, exist_ok=True)
     tag_groups = get_tags()
     for tag_group in tag_groups:
-        with dfhack.util.write_file_if_changed(('docs/tags/by{group}.rst').format(group=tag_group)) as topidx:
+        group_file_path = os.path.join(dfhack.util.DOCS_ROOT, 'tags', 'by{group}.rst'.format(group=tag_group))
+        with dfhack.util.write_file_if_changed(group_file_path) as topidx:
             for tag_tuple in tag_groups[tag_group]:
                 tag, desc = tag_tuple[0], tag_tuple[1]
                 topidx.write(('- `{name} <{name}-tag-index>`\n').format(name=tag))

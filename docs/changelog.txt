@@ -80,7 +80,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Removed ``Windows`` module (C++-only) - unused.
 - ``Constructions`` module (C++-only): removed ``t_construction``, ``isValid()``, ``getCount()``, ``getConstruction()``, and ``copyConstruction()``. Access ``world.constructions`` directly instead.
 - ``Gui::getSelectedItem()``, ``Gui::getAnyItem()``: added support for the artifacts screen
-- ``Units::teleport()``: now sets ``unit.idle_area``
+- ``Units::teleport()``: now sets ``unit.idle_area`` to discourage units from walking back to their original location (or teleporting back, if using `fastdwarf`)
 
 ## Lua
 - History: added ``dfhack.getCommandHistory(history_id, history_filename)`` and ``dfhack.addCommandToHistory(history_id, history_filename, command)`` so gui scripts can access a commandline history without requiring a terminal.

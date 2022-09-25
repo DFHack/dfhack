@@ -49,6 +49,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `dig-now`: Fix direction of smoothed walls when adjacent to a door or floodgate
 - ``job.removeJob()``: ensure jobs are removed from the world list when they are canceled
 - `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set: declare the hospital zone before building the coffer; otherwise DF fails to stock the hospital with materials
+- ``dfhack.buildings.findCivzonesAt``: no longer return duplicate civzones after loading a save with existing civzones
 
 ## Misc Improvements
 - Init scripts: ``dfhack.init`` and other init scripts have moved to ``dfhack-config/init/``. If you have customized your ``dfhack.init`` file and want to keep your changes, please move the part that you have customized to the new location at ``dfhack-config/init/dfhack.init``. If you do not have changes that you want to keep, do not copy anything, and the new defaults will be used automatically.

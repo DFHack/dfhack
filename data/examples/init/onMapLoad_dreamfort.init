@@ -1,6 +1,7 @@
 # This dfhack config file automates common tasks for your forts.
 # It was written for the Dreamfort set of quickfort blueprints, but the
-# configuration here is useful for any fort! Feed free to edit or override
+# configuration here is useful for any fort! Copy this file to your
+# dfhack-config/init directory to use. Feed free to edit or override
 # to your liking.
 
 # Uncomment this next line if you want buildingplan (and quickfort) to use only
@@ -48,13 +49,24 @@ seedwatch all 30
 
 # ensures important tasks get assigned to workers.
 # otherwise these job types can get ignored in busy forts.
-prioritize -a StoreItemInVehicle StoreItemInBag StoreItemInBarrel PullLever
-prioritize -a StoreItemInLocation StoreItemInHospital
-prioritize -a DestroyBuilding RemoveConstruction RecoverWounded DumpItem
-prioritize -a CleanSelf SlaughterAnimal PrepareRawFish ExtractFromRawFish
-prioritize -a TradeAtDepot BringItemToDepot CleanTrap ManageWorkOrders
+#
+# take care of rottables before they rot
 prioritize -a --haul-labor=Food,Body StoreItemInStockpile
 prioritize -a --reaction-name=TAN_A_HIDE CustomReaction
+prioritize -a PrepareRawFish
+#
+# organize items efficiently so new items can be brought to the stockpiles
+prioritize -a StoreItemInVehicle StoreItemInBag StoreItemInBarrel
+prioritize -a StoreItemInLocation StoreItemInHospital StoreItemInBin
+#
+# when these things come up, get them done ASAP
+prioritize -a ManageWorkOrders TradeAtDepot BringItemToDepot CleanTrap
+prioritize -a DestroyBuilding RemoveConstruction RecoverWounded DumpItem
+prioritize -a PullLever CleanSelf SlaughterAnimal CollectSand
+prioritize -a PenLargeAnimal PenSmallAnimal PitLargeAnimal PitSmallAnimal
+prioritize -a TameAnimal TrainAnimal TrainHuntingAnimal TrainWarAnimal
+prioritize -a FellTree FireBallista FireCatapult OperatePump
+prioritize -a MakeArmor MakeWeapon
 
 # autobutcher settings are saved in the savegame, so we only need to set them once.
 # this way, any custom settings you set during gameplay are not overwritten
@@ -78,7 +90,7 @@ on-new-fortress autobutcher target 50 50 14 2 BIRD_GOOSE
 on-new-fortress autobutcher target 2 2 4 2 ALPACA SHEEP LLAMA
 # pigs give milk and meat and are zero-maintenance.
 on-new-fortress autobutcher target 5 5 6 2 PIG
-# butcher all unprofitable animals
+# immediately butcher all unprofitable animals
 on-new-fortress autobutcher target 0 0 0 0 HORSE YAK DONKEY WATER_BUFFALO GOAT CAVY BIRD_DUCK BIRD_GUINEAFOWL
 # watch for new animals
 on-new-fortress autobutcher autowatch

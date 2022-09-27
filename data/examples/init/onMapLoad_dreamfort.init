@@ -55,18 +55,25 @@ prioritize -a --haul-labor=Food,Body StoreItemInStockpile
 prioritize -a --reaction-name=TAN_A_HIDE CustomReaction
 prioritize -a PrepareRawFish
 #
+# ensure medical, hygiene, and hospice tasks get done
+prioritize -a CleanSelf RecoverWounded ApplyCast BringCrutch CleanPatient
+prioritize -a DiagnosePatient DressWound GiveFood GiveWater ImmobilizeBreak
+prioritize -a PlaceInTraction SetBone Surgery Suture
+#
 # organize items efficiently so new items can be brought to the stockpiles
 prioritize -a StoreItemInVehicle StoreItemInBag StoreItemInBarrel
 prioritize -a StoreItemInLocation StoreItemInHospital StoreItemInBin
 #
-# when these things come up, get them done ASAP
-prioritize -a ManageWorkOrders TradeAtDepot BringItemToDepot CleanTrap
-prioritize -a DestroyBuilding RemoveConstruction RecoverWounded DumpItem
-prioritize -a PullLever CleanSelf SlaughterAnimal CollectSand
-prioritize -a PenLargeAnimal PenSmallAnimal PitLargeAnimal PitSmallAnimal
+# ensure prisoners and animals are tended to quickly
+prioritize -a --haul-labor=Animals StoreItemInStockpile
 prioritize -a TameAnimal TrainAnimal TrainHuntingAnimal TrainWarAnimal
+prioritize -a PenLargeAnimal PitLargeAnimal SlaughterAnimal
+#
+# when these things come up, get them done ASAP
+prioritize -a ManageWorkOrders TradeAtDepot BringItemToDepot
+prioritize -a DestroyBuilding RemoveConstruction DumpItem PullLever
 prioritize -a FellTree FireBallista FireCatapult OperatePump
-prioritize -a MakeArmor MakeWeapon
+prioritize -a CollectSand MakeArmor MakeWeapon
 
 # autobutcher settings are saved in the savegame, so we only need to set them once.
 # this way, any custom settings you set during gameplay are not overwritten

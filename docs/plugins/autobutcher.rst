@@ -6,7 +6,7 @@ autobutcher
     :tags: fort auto fps animals
 
 This plugin monitors how many pets you have of each gender and age and assigns
-excess lifestock for slaughter. It requires that you add the target race(s) to a
+excess livestock for slaughter. It requires that you add the target race(s) to a
 watch list. Units will be ignored if they are:
 
 * Untamed
@@ -44,7 +44,7 @@ Usage
     - fa = number of female adults
     - ma = number of female adults
     If you specify ``all``, then this command will set the counts for all races
-    on your current watchlist (including the races which are currenly set to
+    on your current watchlist (including the races which are currently set to
     'unwatched') and sets the new default for future watch commands. If you
     specify ``new``, then this command just sets the new default counts for
     future watch commands without changing your current watchlist. Otherwise,

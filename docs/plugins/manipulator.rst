@@ -102,7 +102,7 @@ and how many you are likely to need in a mature fort. These are just
 approximations. Your playstyle may demand more or fewer of each profession.
 
 - ``Chef`` (needed: 0, 3)
-    Buchery, Tanning, and Cooking. It is important to focus just a few dwarves
+    Butchery, Tanning, and Cooking. It is important to focus just a few dwarves
     on cooking since well-crafted meals make dwarves very happy. They are also
     an excellent trade good.
 - ``Craftsdwarf`` (needed: 0, 4-6)

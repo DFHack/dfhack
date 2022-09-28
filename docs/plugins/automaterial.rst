@@ -48,6 +48,6 @@ construction menu after selecting materials, it returns you back to this screen.
 If you use this along with several autoselect enabled materials, you should be
 able to place complex constructions more conveniently.
 
-The ``automaterial`` plugin also enables extra contruction placement modes, such
-as designating areas larger than 10x10 and allowing you to designate hollow
+The ``automaterial`` plugin also enables extra construction placement modes,
+such as designating areas larger than 10x10 and allowing you to designate hollow
 rectangles instead of the default filled ones.

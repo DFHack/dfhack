@@ -11,7 +11,7 @@ dwarves to specialize in specific skills.
 Autolabor frequently checks how many jobs of each type are available and sets
 labors proportionally in order to get them all done quickly. Labors with
 equipment -- mining, hunting, and woodcutting -- which are abandoned if labors
-change mid-job, are handled slightly differently to minimise churn.
+change mid-job, are handled slightly differently to minimize churn.
 
 Dwarves on active military duty or dwarves assigned to burrows are left
 untouched by autolabor.
@@ -39,7 +39,7 @@ and filling ponds. Other jobs are automatically assigned as described above.
 Each of these settings can be adjusted.
 
 Jobs are rarely assigned to nobles with responsibilities for meeting diplomats
-or merchants, never to the chief medical dwarf, and less often to the bookeeper
+or merchants, never to the chief medical dwarf, and less often to the bookkeeper
 and manager.
 
 Hunting is never assigned without a butchery, and fishing is never assigned
@@ -63,7 +63,7 @@ Examples
 ``autolabor MINE 5``
     Keep at least 5 dwarves with mining enabled.
 ``autolabor CUT_GEM 1 1``
-    Keep exactly 1 dwarf with gemcutting enabled.
+    Keep exactly 1 dwarf with gem cutting enabled.
 ``autolabor COOK 1 1 3``
     Keep 1 dwarf with cooking enabled, selected only from the top 3.
 ``autolabor FEED_WATER_CIVILIANS haulers``

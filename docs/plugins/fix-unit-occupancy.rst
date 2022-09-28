@@ -18,7 +18,7 @@ Usage
     fix-unit-occupancy interval <num_ticks>
 
 When run without arguments (or with just the ``here`` or ``-n`` parameters),
-the fix just runs once. You can also have it run periodically by enbling the
+the fix just runs once. You can also have it run periodically by enabling the
 plugin.
 
 Examples
@@ -35,7 +35,7 @@ Options
 ``here``
     Only operate on the tile at the cursor.
 ``-n``
-    Report issues, but do not any write changes to the map.
+    Report issues, but do not write any changes to the map.
 ``interval <num_ticks>``
     Set how often the plugin will check for and fix issues when it is enabled.
     The default is 1200 ticks, or 1 game day.

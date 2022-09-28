@@ -22,6 +22,6 @@ See `dev-changelog` for a list of changes grouped by development releases.
 
 Older Changelogs
 ================
-Are kept in a seperate file:  `History`
+Are kept in a separate file:  `History`
 
 .. that's ``docs/History.rst``, if you're reading the raw text.

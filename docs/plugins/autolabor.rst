@@ -45,10 +45,11 @@ and manager.
 Hunting is never assigned without a butchery, and fishing is never assigned
 without a fishery.
 
-For each labor, a preference order is calculated based on skill, biased against
-masters of other trades and excluding those who can't do the job. The labor is
-then added to the best <minimum> dwarves for that labor, then to additional
-dwarfs that meet any of these conditions:
+For each labor, a preference order is calculated based on skill, excluding those
+who can't do the job. Dwarves who are masters of particular skills are
+deprioritized in the preference list for other skills. The labor is then added
+to the best <minimum> dwarves for that labor, then to additional dwarfs that
+meet any of these conditions:
 
 * The dwarf is idle and there are no idle dwarves assigned to this labor
 * The dwarf has non-zero skill associated with the labor

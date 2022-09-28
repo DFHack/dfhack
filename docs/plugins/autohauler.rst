@@ -5,7 +5,7 @@ autohauler
     :summary: Automatically manage hauling labors.
     :tags: fort auto labors
 
-Similar to `autolabor`, but instead of managing all labors, ``autohauler`` only
+Similar to `autolabor`, but instead of managing all labors, autohauler only
 addresses hauling labors, leaving the assignment of skilled labors entirely up
 to you. You can use the in-game `manipulator` UI or an external tool like Dwarf
 Therapist to do so.
@@ -19,7 +19,7 @@ assignment, with most skilled labors only being assigned to just a few dwarves
 and almost every non-military dwarf having at least one skilled labor assigned.
 
 Autohauler allows a skill to be used as a flag to exempt a dwarf from
-``autohauler``'s effects. By default, this is the unused ALCHEMIST labor, but it
+autohauler's effects. By default, this is the unused ALCHEMIST labor, but it
 can be changed by the user.
 
 Usage

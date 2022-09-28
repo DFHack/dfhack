@@ -25,10 +25,10 @@ Example
 
     3dveins
 
-New veins are generated using 3D Perlin noise in order to produce a layout that
-flows smoothly between z-levels. The vein distribution is based on the world
-seed, so running the command for the second time should produce no change. It is
-best to run it just once immediately after embark.
+New veins are generated using natural-looking 3D Perlin noise in order to
+produce a layout that flows smoothly between z-levels. The vein distribution is
+based on the world seed, so running the command for the second time should
+produce no change. It is best to run it just once immediately after embark.
 
 This command is intended as only a cosmetic change, so it takes care to exactly
 preserve the mineral counts reported by ``prospect all``. The amounts of layer

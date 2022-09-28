@@ -9,7 +9,7 @@ search
     :no-command:
 
 Search options are added to the Stocks, Animals, Trading, Stockpile, Noble
-aassignment candidates), Military (position candidates), Burrows (unit list),
+assignment candidates), Military (position candidates), Burrows (unit list),
 Rooms, Announcements, Job List, and Unit List screens all get hotkeys that allow
 you to dynamically filter the displayed lists.
 

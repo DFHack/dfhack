@@ -74,8 +74,8 @@ Filters
 :all:            Process all units.
 :count <n>:      Process only up to n units.
 :unassigned:     Not assigned to zone, chain or built cage.
-:minage <years>: Minimum age. Must be followed by number.
-:maxage <years>: Maximum age. Must be followed by number.
+:minage <years>: Minimum age. Must be followed by a number.
+:maxage <years>: Maximum age. Must be followed by a number.
 :not:            Negates the next filter keyword. All of the keywords documented
                  below are negatable.
 :race:           Must be followed by a race RAW ID (e.g. BIRD_TURKEY, ALPACA,

@@ -43,6 +43,6 @@ for the tag assignment spreadsheet.
 - `map <map-tag-index>`: Tools  that interact with the game map.
 - `military <military-tag-index>`: Tools that interact with the military.
 - `plants <plants-tag-index>`: Tools that interact with trees, shrubs, and crops.
-- `stockpiles <stockpiles-tag-index>`: Tools that interact wtih stockpiles.
+- `stockpiles <stockpiles-tag-index>`: Tools that interact with stockpiles.
 - `units <units-tag-index>`: Tools that interact with units.
 - `workorders <workorders-tag-index>`: Tools that interact with workorders.

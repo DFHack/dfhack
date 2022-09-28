@@ -87,7 +87,7 @@ Some widgets support additional options:
 * ``cursor`` widget:
 
   * ``format``: Specifies the format. ``X``, ``x``, ``Y``, and ``y`` are
-    replaced with the corresponding cursor cordinates, while all other
+    replaced with the corresponding cursor coordinates, while all other
     characters are unmodified.
   * ``show_invalid``: If set to ``true``, the mouse coordinates will both be
     displayed as ``-1`` when the cursor is outside of the DF window; otherwise,

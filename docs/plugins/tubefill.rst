@@ -2,7 +2,7 @@ tubefill
 ========
 
 .. dfhack-tool::
-    :summary: Replentishes mined-out adamantine.
+    :summary: Replenishes mined-out adamantine.
     :tags: fort armok map
 
 Veins that were originally hollow will be left alone.

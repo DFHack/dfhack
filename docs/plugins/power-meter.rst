@@ -2,7 +2,7 @@ power-meter
 ===========
 
 .. dfhack-tool::
-    :summary: Allow presure plates to measure power.
+    :summary: Allow pressure plates to measure power.
     :tags: fort gameplay buildings
     :no-command:
 

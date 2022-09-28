@@ -198,7 +198,7 @@ Light aquifer tap
 ~~~~~~~~~~~~~~~~~
 
 The aquifer tap helps you create a safe, everlasting source of fresh water from
-a light aquifer. See the step-by-step guide, including informaton on how to
+a light aquifer. See the step-by-step guide, including information on how to
 create a drainage system so your dwarves don't drown when digging the tap, by
 running ``quickfort run library/aquifer_tap.csv -n /help``.
 

@@ -64,7 +64,7 @@ Examples
 ``forceequip v bp QQQ``
     List the bodyparts of the selected unit.
 ``forceequip bp LH``
-    Equips an appopriate item onto the unit's left hand.
+    Equips an appropriate item onto the unit's left hand.
 ``forceequip m bp LH``
     Equips ALL appropriate items onto the unit's left hand. The unit may end up
     wearing a dozen left-handed mittens. Use with caution, and remember that

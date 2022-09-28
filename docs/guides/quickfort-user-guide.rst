@@ -245,7 +245,7 @@ If there weren't an alias named ``booze`` then the literal characters
 spell those aliases correctly!
 
 You can save a lot of time and effort by using aliases instead of adding all
-key seqences directly to your blueprints. For more details, check out the
+key sequences directly to your blueprints. For more details, check out the
 `quickfort-alias-guide`. You can also see examples of aliases being used in the
 query blueprints in the
 :source:`DFHack blueprint library <data/blueprints/library>`. You can create
@@ -683,7 +683,7 @@ three vertical tiles like this::
    ` end here   ` #
    # #          # #
 
-Then to carve the cross, you'd do a horizonal segment::
+Then to carve the cross, you'd do a horizontal segment::
 
    `          ` `        #
    start here ` end here #
@@ -740,7 +740,7 @@ Or you could use the aliases to specify tile by tile::
    #       #       #       #
 
 The aliases can also be used to designate a solid block of track. This is
-epecially useful for obliterating low-quality engravings so you can re-smooth
+especially useful for obliterating low-quality engravings so you can re-smooth
 and re-engrave with higher quality. For example, you could use the following
 sequence of blueprints to ensure a 10x10 floor area contains only masterwork
 engravings::
@@ -1157,7 +1157,7 @@ blueprint::
    "#meta label(help) message(This is the help text for the blueprint set
    contained in this file.
 
-   First, make sure that you embark in...) blueprint set walkthough"
+   First, make sure that you embark in...) blueprint set walkthrough"
 
 could more naturally be written as a ``#notes`` blueprint::
 
@@ -1739,7 +1739,7 @@ priorities <quickfort-dig-priorities>`.
     Use dig priorities to control ramp creation.
 
 We can `ensure <https://docs.google.com/spreadsheets/d/1IBy6_pGEe6WSBCLukDz_5I-4vi_mpHuJJyOp2j6SJlY/edit#gid=962076234>`__
-the bottom level is carved out before the layer above is channelled by assigning
+the bottom level is carved out before the layer above is channeled by assigning
 the channel designations lower priorities (the ``h5``\s in the third layer --
 scroll down).
 

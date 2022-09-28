@@ -58,7 +58,7 @@ Examples
 ``tiletypes-command filter material STONE ; f shape WALL ; paint shape FLOOR``
     Turn all stone walls into floors, preserving the material.
 ``tiletypes-command p any ; p s wall ; p sp normal``
-    Clear the paint specificaiton and set it to unsmoothed walls.
+    Clear the paint specification and set it to unsmoothed walls.
 ``tiletypes-command f any ; p stone marble ; p sh wall ; p sp normal ; r 10 10``
     Prepare to paint a 10x10 area of marble walls, ready for harvesting for
     flux.

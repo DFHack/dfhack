@@ -5,7 +5,7 @@ changevein
     :summary: Change the material of a mineral inclusion.
     :tags: fort armok map
 
-You can change a vein to any incorganic material RAW id. Note that this command
+You can change a vein to any inorganic material RAW id. Note that this command
 only affects tiles within the current 16x16 block - for large veins and
 clusters, you will need to use this command multiple times.
 

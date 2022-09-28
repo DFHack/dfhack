@@ -76,7 +76,7 @@ replaced with the corresponding title and linked:  e.g. ```autolabor```
 => `autolabor`. Scripts and plugins have link targets that match their names
 created for you automatically.
 
-If you want to link to a heading in your own page, you can specifiy it like this::
+If you want to link to a heading in your own page, you can specify it like this::
 
     `Heading text exactly as written`_
 

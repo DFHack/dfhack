@@ -122,7 +122,7 @@ The constraint spec consists of 4 parts, separated with ``/`` characters::
     ITEM[:SUBTYPE]/[GENERIC_MAT,...]/[SPECIFIC_MAT:...]/[LOCAL,<quality>]
 
 The first part is mandatory and specifies the item type and subtype, using the
-raw tokens for items (the same syntax used custom reaction inputs). For more
+raw tokens for items (the same syntax used for custom reaction inputs). For more
 information, see :wiki:`this wiki page <Material_token>`.
 
 The subsequent parts are optional:

@@ -12,7 +12,7 @@ Usage
 -----
 
 ``rendermax light``
-    Light the map tiles realisitically. Outside tiles are light during the day
+    Light the map tiles realistically. Outside tiles are light during the day
     and dark at night. Inside tiles are always dark unless a nearby unit is
     lighting it up, as if they were carrying torches.
 ``rendermax light sun <hour>|cycle``

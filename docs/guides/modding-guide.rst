@@ -129,7 +129,7 @@ provides two libraries for this, ``repeat-util`` and `eventful <eventful-api>`.
 ``repeat-util`` is used to run a function once per a configurable number of
 frames (paused or unpaused), ticks (unpaused), in-game days, months, or years.
 If you need to be aware the instant something happens, you'll need to run a
-check once a tick. Be careful not to do this gratuitiously, though, since
+check once a tick. Be careful not to do this gratuitously, though, since
 running that often can slow down the game!
 
 ``eventful``, on the other hand, is much more performance-friendly since it will
@@ -176,10 +176,10 @@ you can react to with ``eventful``.
 
 Now, you may have noticed that you won't be able to register multiple callbacks
 with a single key named after your mod. You can, of course, call all the
-functions you want from a single registed callback. Alternately, you can create
-multiple callbacks using different keys, using your mod ID as a key name prefix.
-If you do register multiple callbacks, though, there are no guarantees about the
-call order.
+functions you want from a single registered callback. Alternately, you can
+create multiple callbacks using different keys, using your mod ID as a key name
+prefix. If you do register multiple callbacks, though, there are no guarantees
+about the call order.
 
 Custom raw tokens
 -----------------

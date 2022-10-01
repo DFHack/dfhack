@@ -190,8 +190,8 @@ dug-out area::
    Cw Cw    Cw #
    #  #  #  #  #
 
-Note my generosity -- in addition to the bed (:kbd:`b`) I've built a chest
-(:kbd:`c`) here for the dwarf as well. You must use the full series of keys
+Note my generosity -- in addition to the bed (:kbd:`b`) I've built a container
+(:kbd:`h`) here for the dwarf as well. You must use the full series of keys
 needed to build something in each cell, e.g. :kbd:`C`:kbd:`w` indicates we
 should enter DF's constructions submenu (:kbd:`C`) and select walls (:kbd:`w`).
 

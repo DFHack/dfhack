@@ -622,12 +622,18 @@ void ls_helper(color_ostream &con, const vector<string> &params) {
     vector<string> filter;
     bool skip_tags = false;
     bool show_dev_commands = false;
+    string exclude_strs = "";
 
+    bool in_exclude = false;
     for (auto str : params) {
-        if (str == "--notags")
+        if (in_exclude)
+            exclude_strs = str;
+        else if (str == "--notags")
             skip_tags = true;
         else if (str == "--dev")
             show_dev_commands = true;
+        else if (str == "--exclude")
+            in_exclude = true;
         else
             filter.push_back(str);
     }
@@ -636,7 +642,7 @@ void ls_helper(color_ostream &con, const vector<string> &params) {
     auto L = Lua::Core::State;
     Lua::StackUnwinder top(L);
 
-    if (!lua_checkstack(L, 4) ||
+    if (!lua_checkstack(L, 5) ||
         !Lua::PushModulePublic(con, L, "helpdb", "ls")) {
         con.printerr("Failed to load helpdb Lua code\n");
         return;
@@ -645,8 +651,9 @@ void ls_helper(color_ostream &con, const vector<string> &params) {
     Lua::PushVector(L, filter);
     Lua::Push(L, skip_tags);
     Lua::Push(L, show_dev_commands);
+    Lua::Push(L, exclude_strs);
 
-    if (!Lua::SafeCall(con, L, 3, 0)) {
+    if (!Lua::SafeCall(con, L, 4, 0)) {
         con.printerr("Failed Lua call to helpdb.ls.\n");
     }
 }

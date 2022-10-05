@@ -40,3 +40,5 @@ Options
     Don't print out the tags associated with each command.
 ``--dev``
     Include commands intended for developers and modders.
+``--exclude <string>[,<string>...]``
+    Exclude commands that match any of the given strings.

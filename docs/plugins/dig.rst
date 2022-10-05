@@ -25,7 +25,7 @@ dig
     :summary: Designate circles.
 
 .. dfhack-command:: digtype
-    :summary: Designate all vein tiles of the selected type.
+    :summary: Designate all vein tiles of the same type as the selected tile.
 
 .. dfhack-command:: digexp
     :summary: Designate dig patterns for exploratory mining.
@@ -50,9 +50,9 @@ Usage
     Designate circles. The diameter is the number of tiles across the center of
     the circle that you want to dig. See the `digcircle`_ section below for
     options.
-``digtype [<designation>] [-p<number>]``
-    Designate all vein tiles of the selected type. See the `digtype`_ section
-    below for options.
+``digtype [<designation>] [-p<number>] [-z]``
+    Designate all vein tiles of the same type as the selected tile. See the
+    `digtype`_ section below for options.
 ``digexp [<pattern>] [<filter>] [-p<number>]``
     Designate dig patterns for exploratory mining. See the `digexp`_ section
     below for options.
@@ -142,6 +142,10 @@ Designation options:
     Dig down staircases.
 ``clear``
     Clear any designations.
+
+You can also pass a ``-z`` option, which restricts designations to the current
+z-level and down. This is useful when you don't want to designate tiles on the
+same z-levels as your carefully dug fort above.
 
 digexp
 ------

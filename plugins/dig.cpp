@@ -35,6 +35,7 @@ command_result digtype (color_ostream &out, vector <string> & parameters);
 DFHACK_PLUGIN("dig");
 REQUIRE_GLOBAL(ui_sidebar_menus);
 REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(window_z);
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
@@ -1417,16 +1418,18 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
     //mostly copy-pasted from digv
     int32_t priority = parse_priority(out, parameters);
     CoreSuspender suspend;
-    if ( parameters.size() > 1 )
+
+    if (!Maps::IsValid())
     {
-        out.printerr("Too many parameters.\n");
+        out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
 
-    int32_t targetDigType;
-    if ( parameters.size() == 1 )
-    {
-        string parameter = parameters[0];
+    uint32_t xMax,yMax,zMax;
+    Maps::getSize(xMax,yMax,zMax);
+
+    int32_t targetDigType = -1;
+    for (string parameter : parameters) {
         if ( parameter == "clear" )
             targetDigType = tile_dig_designation::No;
         else if ( parameter == "dig" )
@@ -1441,26 +1444,16 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
             targetDigType = tile_dig_designation::DownStair;
         else if ( parameter == "up" )
             targetDigType = tile_dig_designation::UpStair;
+        else if ( parameter == "-z" )
+            zMax = *window_z + 1;
         else
         {
-            out.printerr("Invalid parameter.\n");
+            out.printerr("Invalid parameter: '%s'.\n", parameter.c_str());
             return CR_FAILURE;
         }
     }
-    else
-    {
-        targetDigType = -1;
-    }
-
-    if (!Maps::IsValid())
-    {
-        out.printerr("Map is not available!\n");
-        return CR_FAILURE;
-    }
 
     int32_t cx, cy, cz;
-    uint32_t xMax,yMax,zMax;
-    Maps::getSize(xMax,yMax,zMax);
     uint32_t tileXMax = xMax * 16;
     uint32_t tileYMax = yMax * 16;
     Gui::getCursorCoords(cx,cy,cz);

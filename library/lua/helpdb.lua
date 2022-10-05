@@ -726,13 +726,15 @@ end
 local function list_entries(skip_tags, include, exclude)
     local entries = search_entries(include, exclude)
     for _,entry in ipairs(entries) do
-        print_columns(entry, get_entry_short_help(entry))
+        local short_help = get_entry_short_help(entry)
         if not skip_tags then
             local tags = set_to_sorted_list(get_entry_tags(entry))
             if #tags > 0 then
-                print(('    tags: %s'):format(table.concat(tags, ', ')))
+                local taglist = table.concat(tags, ', ')
+                short_help = short_help .. NEWLINE .. 'tags: ' .. taglist
             end
         end
+        print_columns(entry, short_help)
     end
     if #entries == 0 then
         print('No matches.')

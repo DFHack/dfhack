@@ -38,6 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 
 ## Misc Improvements
+- `ls`: indent tag listings and wrap them in the right column for better readability
 
 ## Documentation
 

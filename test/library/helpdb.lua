@@ -36,6 +36,7 @@ local mock_script_db = {
     inscript_docs=true,
     inscript_short_only=true,
     nodocs_script=true,
+    dev_script=true,
 }
 
 local files = {
@@ -47,6 +48,8 @@ local files = {
 * map: Tools that interact with the game map.
 
 * units: Tools that interact with units.
+
+* dev: Dev tools.
 
 * nomembers: Nothing is tagged with this.
     ]],
@@ -113,6 +116,20 @@ Command: "subdir/scriptname"
   Documented subdir/scriptname.
 
 Documented full help.
+    ]],
+    ['hack/docs/docs/tools/dev_script.txt']=[[
+dev_script
+==========
+
+Tags: dev
+
+Command: "dev_script"
+
+  Short desc.
+
+Full help.
+]====]
+script contents
     ]],
     ['scripts/scriptpath/basic.lua']=[[
 -- in-file short description for basic
@@ -216,6 +233,9 @@ Command: "inscript_docs"
 
 Documented full help.
 ]====]
+script contents
+    ]],
+    ['other/scriptpath/dev_script.lua']=[[
 script contents
     ]],
 }
@@ -495,7 +515,7 @@ function test.is_tag()
 end
 
 function test.get_tags()
-    expect.table_eq({'armok', 'fort', 'map', 'nomembers', 'units'},
+    expect.table_eq({'armok', 'dev', 'fort', 'map', 'nomembers', 'units'},
         h.get_tags())
 end
 
@@ -534,8 +554,8 @@ end
 function test.search_entries()
     -- all entries, in alphabetical order by last path component
     local expected = {'?', 'alias', 'basic', 'bindboxers', 'boxbinders',
-        'clear', 'cls', 'die', 'dir', 'disable', 'devel/dump-rpc', 'enable',
-        'fpause', 'hascommands', 'help', 'hide', 'inscript_docs',
+        'clear', 'cls', 'dev_script', 'die', 'dir', 'disable', 'devel/dump-rpc',
+        'enable', 'fpause', 'hascommands', 'help', 'hide', 'inscript_docs',
         'inscript_short_only', 'keybinding', 'kill-lua', 'load', 'ls', 'man',
         'nocommand', 'nodoc_command', 'nodocs_hascommands', 'nodocs_nocommand',
         'nodocs_samename', 'nodocs_script', 'plug', 'reload', 'samename',
@@ -555,19 +575,26 @@ function test.search_entries()
     expect.table_eq(expected, h.search_entries({str='script',
                                                 entry_type='builtin'}))
 
-    expected = {'inscript_docs', 'inscript_short_only','nodocs_script',
-                'subdir/scriptname'}
+    expected = {'dev_script', 'inscript_docs', 'inscript_short_only',
+                'nodocs_script', 'subdir/scriptname'}
     expect.table_eq(expected, h.search_entries({str='script'},
                                                {entry_type='builtin'}))
 
     expected = {'bindboxers', 'boxbinders'}
     expect.table_eq(expected, h.search_entries({str='box'}))
+
+    expected = {'bindboxers', 'boxbinders', 'inscript_docs',
+                'inscript_short_only', 'nodocs_script', 'subdir/scriptname'}
+    expect.table_eq(expected, h.search_entries({{str='script'}, {str='box'}},
+                                               {{entry_type='builtin'},
+                                                {tag='dev'}}),
+                    'multiple filters for include and exclude')
 end
 
 function test.get_commands()
     local expected = {'?', 'alias', 'basic', 'bindboxers', 'boxbinders',
-        'clear', 'cls', 'die', 'dir', 'disable', 'devel/dump-rpc', 'enable',
-        'fpause', 'help', 'hide', 'inscript_docs', 'inscript_short_only',
+        'clear', 'cls', 'dev_script', 'die', 'dir', 'disable', 'devel/dump-rpc',
+        'enable', 'fpause', 'help', 'hide', 'inscript_docs', 'inscript_short_only',
         'keybinding', 'kill-lua', 'load', 'ls', 'man', 'nodoc_command',
         'nodocs_samename', 'nodocs_script', 'plug', 'reload', 'samename',
         'script', 'subdir/scriptname', 'sc-script', 'show', 'tags', 'type',
@@ -598,21 +625,23 @@ function test.tags()
     local mock_print = mock.func()
     mock.patch(h, 'print', mock_print, function()
         h.tags()
-        expect.eq(7, mock_print.call_count)
+        expect.eq(8, mock_print.call_count)
         expect.eq('armok                Tools that give you complete control over an aspect of the',
             mock_print.call_args[1][1])
         expect.eq('                      game or provide access to information that the game',
             mock_print.call_args[2][1])
         expect.eq('                      intentionally keeps hidden.',
             mock_print.call_args[3][1])
-        expect.eq('fort                 Tools that are useful while in fort mode.',
+        expect.eq('dev                  Dev tools.',
             mock_print.call_args[4][1])
-        expect.eq('map                  Tools that interact with the game map.',
+        expect.eq('fort                 Tools that are useful while in fort mode.',
             mock_print.call_args[5][1])
-        expect.eq('nomembers            Nothing is tagged with this.',
+        expect.eq('map                  Tools that interact with the game map.',
             mock_print.call_args[6][1])
-        expect.eq('units                Tools that interact with units.',
+        expect.eq('nomembers            Nothing is tagged with this.',
             mock_print.call_args[7][1])
+        expect.eq('units                Tools that interact with units.',
+            mock_print.call_args[8][1])
     end)
 end
 
@@ -669,5 +698,30 @@ function test.ls()
         h.ls('not a match')
         expect.eq(1, mock_print.call_count)
         expect.eq('No matches.', mock_print.call_args[1][1])
+    end)
+
+    -- test skipping tags and excluding strings
+    mock_print = mock.func()
+    mock.patch(h, 'print', mock_print, function()
+        h.ls('armok', true, false, 'boxer,binder')
+        expect.eq(1, mock_print.call_count)
+        expect.eq('samename             Samename.', mock_print.call_args[1][1])
+    end)
+
+    -- test excluding dev scripts
+    mock_print = mock.func()
+    mock.patch(h, 'print', mock_print, function()
+        h.ls('_script', true, false, 'inscript,nodocs')
+        expect.eq(1, mock_print.call_count)
+        expect.eq('No matches.', mock_print.call_args[1][1])
+    end)
+
+    -- test including dev scripts
+    mock_print = mock.func()
+    mock.patch(h, 'print', mock_print, function()
+        h.ls('_script', true, true, 'inscript,nodocs')
+        expect.eq(1, mock_print.call_count)
+        expect.eq('dev_script           Short desc.',
+            mock_print.call_args[1][1])
     end)
 end

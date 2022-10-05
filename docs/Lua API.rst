@@ -3150,8 +3150,8 @@ Each entry has several properties associated with it:
   alphabetized by their last path component, with populated path components
   coming before null path components (e.g. ``autobutcher`` will immediately
   follow ``gui/autobutcher``).
-  The optional ``include`` and ``exclude`` filter params are maps with the
-  following elements:
+  The optional ``include`` and ``exclude`` filter params are maps (or lists of
+  maps) with the following elements:
 
   :str:   if a string, filters by the given substring. if a table of strings,
           includes entry names that match any of the given substrings.
@@ -3159,6 +3159,13 @@ Each entry has several properties associated with it:
           includes entries that match any of the given tags.
   :entry_type: if a string, matches entries of the given type. if a table of
           strings, includes entries that match any of the given types.
+
+  Elements in a map are ANDed together (e.g. if both ``str`` and ``tag`` are
+  specified, the match is on any of the ``str`` elements AND any of the ``tag``
+  elements).
+
+  If lists of filters are passed instead of a single map, the maps are ORed
+  (that is, the match succeeds if any of the filters match).
 
   If ``include`` is ``nil`` or empty, then all entries are included. If
   ``exclude`` is ``nil`` or empty, then no entries are filtered out.

@@ -637,7 +637,7 @@ function test.ls()
         expect.eq(5, mock_print.call_count)
         expect.eq('inscript_docs        in-file short description for inscript_docs.',
             mock_print.call_args[1][1])
-        expect.eq('    tags: map', mock_print.call_args[2][1])
+        expect.eq('                      tags: map', mock_print.call_args[2][1])
         expect.eq('nodoc_command        cpp description.',
             mock_print.call_args[3][1])
         expect.eq('nodocs_samename      Nodocs samename.',
@@ -652,15 +652,15 @@ function test.ls()
         expect.eq(6, mock_print.call_count)
         expect.eq('bindboxers           Bind your boxers.',
             mock_print.call_args[1][1])
-        expect.eq('    tags: armok, fort, units',
+        expect.eq('                      tags: armok, fort, units',
             mock_print.call_args[2][1])
         expect.eq('boxbinders           Box your binders.',
             mock_print.call_args[3][1])
-        expect.eq('    tags: armok, fort, units',
+        expect.eq('                      tags: armok, fort, units',
             mock_print.call_args[4][1])
         expect.eq('samename             Samename.',
             mock_print.call_args[5][1])
-        expect.eq('    tags: armok, fort, units',
+        expect.eq('                      tags: armok, fort, units',
             mock_print.call_args[6][1])
     end)
 

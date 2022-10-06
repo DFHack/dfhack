@@ -359,6 +359,96 @@ function EditField:onInput(keys)
     return self.modal
 end
 
+---------------
+-- Scrollbar --
+---------------
+
+Scrollbar = defclass(Scrollbar, Widget)
+
+Scrollbar.ATTRS{
+    fg = COLOR_LIGHTGREEN,
+    bg = COLOR_CYAN,
+    on_scroll = DEFAULT_NIL,
+}
+
+function Scrollbar:preinit(init_table)
+    init_table.frame = init_table.frame or {}
+    init_table.frame.w = init_table.frame.w or 1
+end
+
+function Scrollbar:init()
+    self:update(1, 1, 1)
+end
+
+-- calculate and cache the number of tiles of empty space above the top of the
+-- scrollbar and the number of tiles the scrollbar should occupy to represent
+-- the percentage of text that is on the screen.
+-- if elems_per_page or num_elems are not specified, the last values passed to
+-- Scrollbar:update() are used.
+function Scrollbar:update(top_elem, elems_per_page, num_elems)
+    if not top_elem then error('must specify index of new top element') end
+    elems_per_page = elems_per_page or self.elems_per_page
+    num_elems = num_elems or self.num_elems
+
+    local frame_height = self.frame_body and self.frame_body.height or 3
+    local scrollbar_body_height = frame_height - 2
+    local height = math.max(1, math.floor(
+        (math.min(elems_per_page, num_elems) * scrollbar_body_height) /
+        num_elems))
+
+    local max_pos = scrollbar_body_height - height
+    local pos = math.ceil(((top_elem-1) * max_pos) /
+                          (num_elems - elems_per_page))
+
+    self.top_elem = top_elem
+    self.elems_per_page, self.num_elems = elems_per_page, num_elems
+    self.bar_offset, self.bar_height = pos, height
+end
+
+local UP_ARROW_CHAR = string.char(24)
+local DOWN_ARROW_CHAR = string.char(25)
+local NO_ARROW_CHAR = string.char(32)
+local BAR_CHAR = string.char(7)
+local BAR_BG_CHAR = string.char(179)
+
+function Scrollbar:onRenderBody(dc)
+    -- don't draw if all elements are visible
+    if self.elems_per_page >= self.num_elems then return end
+    -- render up arrow if we're not at the top
+    dc:seek(0, 0):char(
+        self.top_elem == 1 and NO_ARROW_CHAR or UP_ARROW_CHAR, self.fg, self.bg)
+    -- render scrollbar body
+    local starty = self.bar_offset + 1
+    local endy = self.bar_offset + self.bar_height
+    for y=1,dc.height-2 do
+        dc:seek(0, y)
+        if y >= starty and y <= endy then
+            dc:char(BAR_CHAR, self.fg)
+        else
+            dc:char(BAR_BG_CHAR, self.bg)
+        end
+    end
+    -- render down arrow if we're not at the bottom
+    local last_visible_el = self.top_elem + self.elems_per_page - 1
+    dc:seek(0, dc.height-1):char(
+        last_visible_el >= self.num_elems and NO_ARROW_CHAR or DOWN_ARROW_CHAR,
+        self.fg, self.bg)
+end
+
+function Scrollbar:onInput(keys)
+    if not keys._MOUSE_L_DOWN or not self.on_scroll then return false end
+    local _,y = self:getMousePos()
+    if not y then return false end
+    local scroll = nil
+    if y == 0 then scroll = 'up_small'
+    elseif y == self.frame_body.height - 1 then scroll = 'down_small'
+    elseif y <= self.bar_offset then scroll = 'up_large'
+    elseif y > self.bar_offset + self.bar_height then scroll = 'down_large'
+    end
+    if scroll then self.on_scroll(scroll) end
+    return true
+end
+
 -----------
 -- Label --
 -----------
@@ -609,12 +699,6 @@ local function get_scrollbar_pos_and_height(label)
 
     return pos, height
 end
-
-local UP_ARROW_CHAR = string.char(24)
-local DOWN_ARROW_CHAR = string.char(25)
-local NO_ARROW_CHAR = string.char(32)
-local BAR_CHAR = string.char(7)
-local BAR_BG_CHAR = string.char(179)
 
 function Label:render_scrollbar(dc, x, y1, y2)
     -- render up arrow if we're not at the top
@@ -953,6 +1037,11 @@ List.ATTRS{
 function List:init(info)
     self.page_top = 1
     self.page_size = 1
+    self.scrollbar = Scrollbar{
+        frame={r=0},
+        on_scroll=self:callback('on_scrollbar')}
+
+    self:addviews{self.scrollbar}
 
     if info.choices then
         self:setChoices(info.choices, info.selected)
@@ -1017,13 +1106,17 @@ function List:postComputeFrame(body)
     self:moveCursor(0)
 end
 
+local function update_list_scrollbar(list)
+    self.scrollbar:update(list.page_top, list.page_size, #list.choices)
+end
+
 function List:moveCursor(delta, force_cb)
-    local page = math.max(1, self.page_size)
     local cnt = #self.choices
 
     if cnt < 1 then
         self.page_top = 1
         self.selected = 1
+        update_list_scrollbar(self)
         if force_cb and self.on_select then
             self.on_select(nil,nil)
         end
@@ -1046,12 +1139,38 @@ function List:moveCursor(delta, force_cb)
         end
     end
 
+    local buffer = 1 + math.min(4, math.floor(self.page_size/10))
+
     self.selected = 1 + off % cnt
-    self.page_top = 1 + page * math.floor((self.selected-1) / page)
+    if (self.selected - buffer) < self.page_top then
+        self.page_top = math.max(1, self.selected - buffer)
+    elseif (self.selected + buffer + 1) > (self.page_top + self.page_size) then
+        local max_page_top = cnt - self.page_size + 1
+        self.page_top = math.max(1,
+            math.min(max_page_top, self.selected - self.page_size + buffer + 1))
+    end
+    update_list_scrollbar(self)
 
     if (force_cb or delta ~= 0) and self.on_select then
         self.on_select(self:getSelected())
     end
+end
+
+function List:on_scrollbar(scroll_spec)
+    local v = 0
+    if scroll_spec == 'down_large' then
+        v = math.floor(self.page_size / 2)
+    elseif scroll_spec == 'up_large' then
+        v = -math.floor(self.page_size / 2)
+    elseif scroll_spec == 'down_small' then
+        v = 1
+    elseif scroll_spec == 'up_small' then
+        v = -1
+    end
+
+    local max_page_top = math.max(1, #self.choices - self.page_size + 1)
+    self.page_top = math.max(1, math.min(max_page_top, self.page_top + v))
+    update_list_scrollbar(self)
 end
 
 function List:onRenderBody(dc)
@@ -1122,6 +1241,9 @@ function List:submit2()
 end
 
 function List:onInput(keys)
+    if self:inputToSubviews(keys) then
+        return true
+    end
     if self.on_submit and keys.SELECT then
         self:submit()
         return true

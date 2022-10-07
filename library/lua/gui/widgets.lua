@@ -636,18 +636,27 @@ Label.ATTRS{
     on_click = DEFAULT_NIL,
     on_rclick = DEFAULT_NIL,
     scroll_keys = STANDARDSCROLL,
-    show_scrollbar = DEFAULT_NIL, -- DEFAULT_NIL, 'right', 'left', false
-    scrollbar_fg = COLOR_LIGHTGREEN,
-    scrollbar_bg = COLOR_CYAN
 }
 
 function Label:init(args)
+    self.scrollbar = Scrollbar{
+        frame={r=0},
+        on_scroll=self:callback('on_scrollbar')}
+
+    self:addviews{self.scrollbar}
+
     -- use existing saved text if no explicit text was specified. this avoids
     -- overwriting pre-formatted text that subclasses may have already set
     self:setText(args.text or self.text)
     if not self.text_hpen then
         self.text_hpen = ((tonumber(self.text_pen) or tonumber(self.text_pen.fg) or 0) + 8) % 16
     end
+end
+
+local function update_label_scrollbar(label)
+    local body_height = label.frame_body and label.frame_body.height or 1
+    label.scrollbar:update(label.start_line_num, body_height,
+                           label:getTextHeight())
 end
 
 function Label:setText(text)
@@ -659,81 +668,8 @@ function Label:setText(text)
         self.frame = self.frame or {}
         self.frame.h = self:getTextHeight()
     end
-end
 
-function Label:update_scroll_inset()
-    if self.show_scrollbar == nil then
-        self._show_scrollbar = self:getTextHeight() > self.frame_body.height and 'right' or false
-    else
-        self._show_scrollbar = self.show_scrollbar
-    end
-    if self._show_scrollbar then
-        -- here self._show_scrollbar can only be either
-        -- 'left' or any true value which we interpret as right
-        local l,t,r,b = gui.parse_inset(self.frame_inset)
-        if self._show_scrollbar == 'left' and l <= 0 then
-            l = 1
-        elseif r <= 0 then
-            r = 1
-        end
-        self.frame_inset = {l=l,t=t,r=r,b=b}
-    end
-end
-
--- the position is the number of tiles of empty space above the top of the
--- scrollbar, and the height is the number of tiles the scrollbar should occupy
--- to represent the percentage of text that is on the screen.
-local function get_scrollbar_pos_and_height(label)
-    local first_visible_line = label.start_line_num
-    local text_height = label:getTextHeight()
-    local last_visible_line = first_visible_line + label.frame_body.height - 1
-    local scrollbar_body_height = label.frame_body.height - 2
-    local displayed_lines = last_visible_line - first_visible_line
-
-    local height = math.floor(((displayed_lines-1) * scrollbar_body_height) /
-                              text_height)
-
-    local max_pos = scrollbar_body_height - height
-    local pos = math.ceil(((first_visible_line-1) * max_pos) /
-                          (text_height - label.frame_body.height))
-
-    return pos, height
-end
-
-function Label:render_scrollbar(dc, x, y1, y2)
-    -- render up arrow if we're not at the top
-    dc:seek(x, y1):char(
-        self.start_line_num == 1 and NO_ARROW_CHAR or UP_ARROW_CHAR,
-        self.scrollbar_fg, self.scrollbar_bg)
-    -- render scrollbar body
-    local pos, height = get_scrollbar_pos_and_height(self)
-    local starty = y1 + pos + 1
-    local endy = y1 + pos + height
-    for y=y1+1,y2-1 do
-        if y >= starty and y <= endy then
-            dc:seek(x, y):char(BAR_CHAR, self.scrollbar_fg)
-        else
-            dc:seek(x, y):char(BAR_BG_CHAR, self.scrollbar_bg)
-        end
-    end
-    -- render down arrow if we're not at the bottom
-    local last_visible_line = self.start_line_num + self.frame_body.height - 1
-    dc:seek(x, y2):char(
-        last_visible_line >= self:getTextHeight() and
-            NO_ARROW_CHAR or DOWN_ARROW_CHAR,
-        self.scrollbar_fg, self.scrollbar_bg)
-end
-
-function Label:computeFrame(parent_rect)
-    local frame_rect,body_rect = Label.super.computeFrame(self, parent_rect)
-
-    self.frame_rect = frame_rect
-    self.frame_body = parent_rect:viewport(body_rect or frame_rect)
-
-    self:update_scroll_inset() -- frame_body is now set
-
-    -- recalc with updated frame_inset
-    return Label.super.computeFrame(self, parent_rect)
+    update_label_scrollbar(self)
 end
 
 function Label:preUpdateLayout()
@@ -741,6 +677,10 @@ function Label:preUpdateLayout()
         self.frame = self.frame or {}
         self.frame.w = self:getTextWidth()
     end
+end
+
+function Label:postUpdateLayout()
+    update_label_scrollbar(self)
 end
 
 function Label:itemById(id)
@@ -766,44 +706,19 @@ function Label:onRenderBody(dc)
     render_text(self,dc,0,0,text_pen,self.text_dpen,is_disabled(self))
 end
 
-function Label:onRenderFrame(dc, rect)
-    if self._show_scrollbar then
-        local x = self._show_scrollbar == 'left'
-                and self.frame_body.x1-dc.x1-1
-                or  self.frame_body.x2-dc.x1+1
-        self:render_scrollbar(dc,
-            x,
-            self.frame_body.y1-dc.y1,
-            self.frame_body.y2-dc.y1
-        )
-    end
-end
-
-function Label:click_scrollbar()
-    if not self._show_scrollbar then return end
-    local rect = self.frame_body
-    local x, y = dscreen.getMousePos()
-
-    if self._show_scrollbar == 'left' and x ~= rect.x1-1 or x ~= rect.x2+1 then
-        return
-    end
-    if y < rect.y1 or y > rect.y2 then
-        return
+function Label:on_scrollbar(scroll_spec)
+    local v = 0
+    if scroll_spec == 'down_large' then
+        v = '+halfpage'
+    elseif scroll_spec == 'up_large' then
+        v = '-halfpage'
+    elseif scroll_spec == 'down_small' then
+        v = 1
+    elseif scroll_spec == 'up_small' then
+        v = -1
     end
 
-    if y == rect.y1 then
-        return -1
-    elseif y == rect.y2 then
-        return 1
-    else
-        local pos, height = get_scrollbar_pos_and_height(self)
-        if y <= rect.y1 + pos then
-            return '-halfpage'
-        elseif y > rect.y1 + pos + height then
-            return '+halfpage'
-        end
-    end
-    return nil
+    self:scroll(v)
 end
 
 function Label:scroll(nlines)
@@ -824,24 +739,28 @@ function Label:scroll(nlines)
     local n = self.start_line_num + nlines
     n = math.min(n, self:getTextHeight() - self.frame_body.height + 1)
     n = math.max(n, 1)
+    nlines = n - self.start_line_num
     self.start_line_num = n
+    update_label_scrollbar(self)
     return nlines
 end
 
 function Label:onInput(keys)
     if is_disabled(self) then return false end
-    if keys._MOUSE_L_DOWN then
-        if not self:scroll(self:click_scrollbar()) and
-                self:getMousePos() and self.on_click then
-            self:on_click()
-        end
+    if self:inputToSubviews(keys) then
+        return true
+    end
+    if keys._MOUSE_L_DOWN and self:getMousePos() and self.on_click then
+        self:on_click()
+        return true
     end
     if keys._MOUSE_R_DOWN and self:getMousePos() and self.on_rclick then
         self:on_rclick()
+        return true
     end
     for k,v in pairs(self.scroll_keys) do
-        if keys[k] then
-            self:scroll(v)
+        if keys[k] and 0 ~= self:scroll(v) then
+            return true
         end
     end
     return check_text_keys(self, keys)
@@ -871,7 +790,7 @@ end
 -- we can't set the text in init() since we may not yet have a frame that we
 -- can get wrapping bounds from.
 function WrappedLabel:postComputeFrame()
-    local wrapped_text = self:getWrappedText(self.frame_body.width)
+    local wrapped_text = self:getWrappedText(self.frame_body.width-1)
     if not wrapped_text then return end
     local text = {}
     for _,line in ipairs(wrapped_text:split(NEWLINE)) do
@@ -1107,7 +1026,11 @@ function List:postComputeFrame(body)
 end
 
 local function update_list_scrollbar(list)
-    self.scrollbar:update(list.page_top, list.page_size, #list.choices)
+    list.scrollbar:update(list.page_top, list.page_size, #list.choices)
+end
+
+function List:postUpdateLayout()
+    update_list_scrollbar(self)
 end
 
 function List:moveCursor(delta, force_cb)
@@ -1159,9 +1082,9 @@ end
 function List:on_scrollbar(scroll_spec)
     local v = 0
     if scroll_spec == 'down_large' then
-        v = math.floor(self.page_size / 2)
+        v = math.ceil(self.page_size / 2)
     elseif scroll_spec == 'up_large' then
-        v = -math.floor(self.page_size / 2)
+        v = -math.ceil(self.page_size / 2)
     elseif scroll_spec == 'down_small' then
         v = 1
     elseif scroll_spec == 'up_small' then

@@ -4084,11 +4084,6 @@ It has the following attributes:
     keys to the number of lines to scroll as positive or negative integers or one of the keywords
     supported by the ``scroll`` method. The default is up/down arrows scrolling by one line and page
     up/down scrolling by one page.
-:show_scrollbar: Controls scrollbar display: ``false`` for no scrollbar, ``'right'`` or ``'left'`` for
-    icons next to the text in an additional column (``frame_inset`` is adjusted to have ``.r`` or ``.l`` greater than ``0``),
-    ``nil`` same as ``'right'`` but changes ``frame_inset`` only if a scroll icon is actually necessary
-    (if ``getTextHeight()`` is greater than ``frame_body.height``). Default is ``nil``.
-:scrollbar: The table of attributes to pass to the `Scrollbar class`_.
 
 The text itself is represented as a complex structure, and passed
 to the object via the ``text`` argument of the constructor, or via
@@ -4181,7 +4176,8 @@ The Label widget implements the following methods:
 
   This method takes the number of lines to scroll as positive or negative
   integers or one of the following keywords: ``+page``, ``-page``,
-  ``+halfpage``, or ``-halfpage``.
+  ``+halfpage``, or ``-halfpage``. It returns the number of lines that were
+  actually scrolled (negative for scrolling up).
 
 WrappedLabel class
 ------------------

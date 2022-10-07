@@ -4032,6 +4032,38 @@ following keyboard hotkeys:
 - Ctrl-Left/Right arrow: move the cursor one word to the left or right.
 - Alt-Left/Right arrow: move the cursor to the beginning/end of the text.
 
+Scrollbar class
+---------------
+
+This Widget subclass implements mouse-interactive scrollbars whose bar sizes
+represent the amount of content currently visible in an associated display
+widget (like a `Label class`_ or a `List class`_). By default they are styled
+like scrollbars used in the vanilla DF help screens, but they are configurable.
+
+Scrollbars have the following attributes:
+
+:fg: Specifies the pen for the scroll icons and the active part of the bar. Default is ``COLOR_LIGHTGREEN``.
+:bg: Specifies the pen for the background part of the scrollbar. Default is ``COLOR_CYAN``.
+:on_scroll: A callback called when the scrollbar is scrolled. It will be called with a single string parameter with a value of "up_large", "down_large", "up_small", or "down_small".
+
+The Scrollbar widget implements the following methods:
+
+* ``scrollbar:update(top_elem, elems_per_page, num_elems)``
+
+  Updates the info about the widget that the scrollbar is paired with.
+  The ``top_elem`` param is the (one-based) index of the first visible element.
+  The ``elems_per_page`` param is the maximum number of elements that can be
+  shown at one time. The ``num_elems`` param is the total number of elements
+  that the paried widget can scroll through. The scrollbar will adjust its
+  scrollbar size and position accordingly.
+
+Clicking on the arrows at the top or the bottom of a scrollbar will scroll an
+associated widget by a small amount. Clicking on the unfilled portion of the
+scrollbar above or below the filled area will scroll by a larger amount in that
+direction. The amount of scrolling done in each case in determined by the
+associated widget, and after scrolling is complete, the associated widget must
+call ``scrollbar:update()`` with updated new display info.
+
 Label class
 -----------
 
@@ -4052,17 +4084,6 @@ It has the following attributes:
     keys to the number of lines to scroll as positive or negative integers or one of the keywords
     supported by the ``scroll`` method. The default is up/down arrows scrolling by one line and page
     up/down scrolling by one page.
-:show_scrollbar: Controls scrollbar display: ``false`` for no scrollbar, ``'right'`` or ``'left'`` for
-    icons next to the text in an additional column (``frame_inset`` is adjusted to have ``.r`` or ``.l`` greater than ``0``),
-    ``nil`` same as ``'right'`` but changes ``frame_inset`` only if a scroll icon is actually necessary
-    (if ``getTextHeight()`` is greater than ``frame_body.height``). Default is ``nil``.
-:scrollbar_fg: Specifies the pen for the scroll icons and the active part of the bar. Default is ``COLOR_LIGHTGREEN`` (the same as the native DF help screens).
-:scrollbar_bg: Specifies the pen for the background part of the scrollbar. Default is ``COLOR_CYAN`` (the same as the native DF help screens).
-
-If the scrollbar is shown, it will react to mouse clicks on the scrollbar itself.
-Clicking on the arrows at the top or the bottom will scroll by one line, and
-clicking on the unfilled portion of the scrollbar will scroll by a half page in
-that direction.
 
 The text itself is represented as a complex structure, and passed
 to the object via the ``text`` argument of the constructor, or via
@@ -4155,7 +4176,8 @@ The Label widget implements the following methods:
 
   This method takes the number of lines to scroll as positive or negative
   integers or one of the following keywords: ``+page``, ``-page``,
-  ``+halfpage``, or ``-halfpage``.
+  ``+halfpage``, or ``-halfpage``. It returns the number of lines that were
+  actually scrolled (negative for scrolling up).
 
 WrappedLabel class
 ------------------
@@ -4283,7 +4305,6 @@ Every list item may be specified either as a string, or as a lua table
 with the following fields:
 
 :text: Specifies the label text in the same format as the Label text.
-:caption, [1]: Deprecated legacy aliases for **text**.
 :text_*: Reserved for internal use.
 :key: Specifies a keybinding that acts as a shortcut for the specified item.
 :icon: Specifies an icon string, or a pen to paint a single character. May be a callback.

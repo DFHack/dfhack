@@ -4064,9 +4064,11 @@ direction. The amount of scrolling done in each case in determined by the
 associated widget, and after scrolling is complete, the associated widget must
 call ``scrollbar:update()`` with updated new display info.
 
-You can hold down the mouse button to scroll multiple times, just like in a
-normal browser scrollbar. The speed of scroll events when the mouse button is
-held down is controlled by two global variables:
+You can click and drag the scrollbar to scroll to a specific spot, or you can
+click and hold on the end arrows or in the unfilled portion of the scrollbar to
+scroll multiple times, just like in a normal browser scrollbar. The speed of
+scroll events when the mouse button is held down is controlled by two global
+variables:
 
 :``SCROLL_INITIAL_DELAY_MS``: The delay before the second scroll event.
 :``SCROLL_DELAY_MS``: The delay between further scroll events.

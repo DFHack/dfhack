@@ -385,6 +385,7 @@ function Scrollbar:init()
     self.last_scroll_ms = 0
     self.is_first_click = false
     self.scroll_spec = nil
+    self.is_dragging = false -- index of the scrollbar tile that we're dragging
     self:update(1, 1, 1)
 end
 
@@ -412,6 +413,22 @@ function Scrollbar:update(top_elem, elems_per_page, num_elems)
     self.top_elem = top_elem
     self.elems_per_page, self.num_elems = elems_per_page, num_elems
     self.bar_offset, self.bar_height = pos, height
+end
+
+local function scrollbar_do_drag(scrollbar)
+    local x,y = dfhack.screen.getMousePos()
+    x,y = scrollbar.frame_body:localXY(x,y)
+    local bar_idx = y - scrollbar.bar_offset
+    local delta = bar_idx - scrollbar.is_dragging
+    if delta < -2 then
+        scrollbar.on_scroll('up_large')
+    elseif delta < 0 then
+        scrollbar.on_scroll('up_small')
+    elseif delta > 2 then
+        scrollbar.on_scroll('down_large')
+    elseif delta > 0 then
+        scrollbar.on_scroll('down_small')
+    end
 end
 
 local UP_ARROW_CHAR = string.char(24)
@@ -442,13 +459,18 @@ function Scrollbar:onRenderBody(dc)
     dc:seek(0, dc.height-1):char(
         last_visible_el >= self.num_elems and NO_ARROW_CHAR or DOWN_ARROW_CHAR,
         self.fg, self.bg)
-    -- manage state for continuous scrolling
-    if self.last_scroll_ms == 0 or not self.on_scroll then return end
+    if not self.on_scroll then return end
+    -- manage state for dragging and continuous scrolling
+    if self.is_dragging then
+        scrollbar_do_drag(self)
+    end
     if df.global.enabler.mouse_lbut_down == 0 then
         self.last_scroll_ms = 0
+        self.is_dragging = false
         self.scroll_spec = nil
         return
     end
+    if self.last_scroll_ms == 0 then return end
     local now = dfhack.getTickCount()
     local delay = self.is_first_click and
             SCROLL_INITIAL_DELAY_MS or SCROLL_DELAY_MS
@@ -468,9 +490,12 @@ function Scrollbar:onInput(keys)
     elseif y == self.frame_body.height - 1 then scroll_spec = 'down_small'
     elseif y <= self.bar_offset then scroll_spec = 'up_large'
     elseif y > self.bar_offset + self.bar_height then scroll_spec = 'down_large'
+    else
+        self.is_dragging = y - self.bar_offset
+        return true
     end
     self.scroll_spec = scroll_spec
-    if scroll_spec then self.on_scroll(scroll_spec) end
+    self.on_scroll(scroll_spec)
     -- reset continuous scroll state
     self.is_first_click = true
     self.last_scroll_ms = dfhack.getTickCount()

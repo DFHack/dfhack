@@ -43,6 +43,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `digtype`: new ``-z`` option for digtype to restrict designations to the current z-level and down
 - UX: List widgets now have mouse-interactive scrollbars
 - UX: You can now hold down the mouse button on a scrollbar to make it scroll multiple times.
+- UX: You can now drag the scrollbar to scroll to a specific spot
 
 ## Documentation
 

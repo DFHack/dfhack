@@ -363,6 +363,11 @@ end
 -- Scrollbar --
 ---------------
 
+-- these can be overridden by the user, e.g.:
+--   require('gui.widgets').SCROLL_DELAY_MS = 100
+SCROLL_INITIAL_DELAY_MS = 300
+SCROLL_DELAY_MS = 20
+
 Scrollbar = defclass(Scrollbar, Widget)
 
 Scrollbar.ATTRS{
@@ -377,6 +382,9 @@ function Scrollbar:preinit(init_table)
 end
 
 function Scrollbar:init()
+    self.last_scroll_ms = 0
+    self.is_first_click = false
+    self.scroll_spec = nil
     self:update(1, 1, 1)
 end
 
@@ -434,19 +442,38 @@ function Scrollbar:onRenderBody(dc)
     dc:seek(0, dc.height-1):char(
         last_visible_el >= self.num_elems and NO_ARROW_CHAR or DOWN_ARROW_CHAR,
         self.fg, self.bg)
+    -- manage state for continuous scrolling
+    if self.last_scroll_ms == 0 or not self.on_scroll then return end
+    if df.global.enabler.mouse_lbut_down == 0 then
+        self.last_scroll_ms = 0
+        self.scroll_spec = nil
+        return
+    end
+    local now = dfhack.getTickCount()
+    local delay = self.is_first_click and
+            SCROLL_INITIAL_DELAY_MS or SCROLL_DELAY_MS
+    if now - self.last_scroll_ms >= delay then
+        self.is_first_click = false
+        self.on_scroll(self.scroll_spec)
+        self.last_scroll_ms = now
+    end
 end
 
 function Scrollbar:onInput(keys)
     if not keys._MOUSE_L_DOWN or not self.on_scroll then return false end
     local _,y = self:getMousePos()
     if not y then return false end
-    local scroll = nil
-    if y == 0 then scroll = 'up_small'
-    elseif y == self.frame_body.height - 1 then scroll = 'down_small'
-    elseif y <= self.bar_offset then scroll = 'up_large'
-    elseif y > self.bar_offset + self.bar_height then scroll = 'down_large'
+    local scroll_spec = nil
+    if y == 0 then scroll_spec = 'up_small'
+    elseif y == self.frame_body.height - 1 then scroll_spec = 'down_small'
+    elseif y <= self.bar_offset then scroll_spec = 'up_large'
+    elseif y > self.bar_offset + self.bar_height then scroll_spec = 'down_large'
     end
-    if scroll then self.on_scroll(scroll) end
+    self.scroll_spec = scroll_spec
+    if scroll_spec then self.on_scroll(scroll_spec) end
+    -- reset continuous scroll state
+    self.is_first_click = true
+    self.last_scroll_ms = dfhack.getTickCount()
     return true
 end
 

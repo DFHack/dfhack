@@ -4064,6 +4064,18 @@ direction. The amount of scrolling done in each case in determined by the
 associated widget, and after scrolling is complete, the associated widget must
 call ``scrollbar:update()`` with updated new display info.
 
+You can hold down the mouse button to scroll multiple times, just like in a
+normal browser scrollbar. The speed of scroll events when the mouse button is
+held down is controlled by two global variables:
+
+:``SCROLL_INITIAL_DELAY_MS``: The delay before the second scroll event.
+:``SCROLL_DELAY_MS``: The delay between further scroll events.
+
+The defaults are 300 and 20, respectively, but they can be overridden by the
+user in their :file:`dfhack-config/init/dfhack.init` file, for example::
+
+  :lua require('gui.widgets').SCROLL_DELAY_MS = 100
+
 Label class
 -----------
 

@@ -397,8 +397,9 @@ function Scrollbar:update(top_elem, elems_per_page, num_elems)
         num_elems))
 
     local max_pos = scrollbar_body_height - height
-    local pos = math.ceil(((top_elem-1) * max_pos) /
-                          (num_elems - elems_per_page))
+    local pos = (num_elems == elems_per_page) and 0 or
+            math.ceil(((top_elem-1) * max_pos) /
+                      (num_elems - elems_per_page))
 
     self.top_elem = top_elem
     self.elems_per_page, self.num_elems = elems_per_page, num_elems

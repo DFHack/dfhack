@@ -420,11 +420,11 @@ local function scrollbar_do_drag(scrollbar)
     x,y = scrollbar.frame_body:localXY(x,y)
     local bar_idx = y - scrollbar.bar_offset
     local delta = bar_idx - scrollbar.is_dragging
-    if delta < -2 then
+    if delta < -scrollbar.bar_height then
         scrollbar.on_scroll('up_large')
     elseif delta < 0 then
         scrollbar.on_scroll('up_small')
-    elseif delta > 2 then
+    elseif delta > scrollbar.bar_height then
         scrollbar.on_scroll('down_large')
     elseif delta > 0 then
         scrollbar.on_scroll('down_small')

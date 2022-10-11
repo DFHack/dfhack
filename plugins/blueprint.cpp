@@ -1187,23 +1187,11 @@ static bool get_options(color_ostream &out,
     return true;
 }
 
-static void print_help(color_ostream &out) {
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!lua_checkstack(L, 1) ||
-        !Lua::PushModulePublic(out, L, "plugins.blueprint", "print_help") ||
-        !Lua::SafeCall(out, L, 0, 0))
-    {
-        out.printerr("Failed to load blueprint Lua code\n");
-    }
-}
-
 // returns whether blueprint generation was successful. populates files with the
 // names of the files that were generated
-static bool do_blueprint(color_ostream &out,
-                         const vector<string> &parameters,
-                         vector<string> &files) {
+static command_result do_blueprint(color_ostream &out,
+                                   const vector<string> &parameters,
+                                   vector<string> &files) {
     CoreSuspender suspend;
 
     if (parameters.size() >= 1 && parameters[0] == "gui") {
@@ -1221,13 +1209,12 @@ static bool do_blueprint(color_ostream &out,
 
     blueprint_options options;
     if (!get_options(out, options, parameters) || options.help) {
-        print_help(out);
-        return options.help;
+        return CR_WRONG_USAGE;
     }
 
     if (!Maps::IsValid()) {
         out.printerr("Map is not available!\n");
-        return false;
+        return CR_FAILURE;
     }
 
     // start coordinates can come from either the commandline or the map cursor
@@ -1236,13 +1223,13 @@ static bool do_blueprint(color_ostream &out,
         if (!Gui::getCursorCoords(start)) {
             out.printerr("Can't get cursor coords! Make sure you specify the"
                     " --cursor parameter or have an active cursor in DF.\n");
-            return false;
+            return CR_FAILURE;
         }
     }
     if (!Maps::isValidTilePos(start)) {
         out.printerr("Invalid start position: %d,%d,%d\n",
                      start.x, start.y, start.z);
-        return false;
+        return CR_FAILURE;
     }
 
     // end coords are one beyond the last processed coordinate. note that
@@ -1265,7 +1252,7 @@ static bool do_blueprint(color_ostream &out,
 
     bool ok = do_transform(out, start, end, options, files);
     cache(NULL);
-    return ok;
+    return ok ? CR_OK : CR_FAILURE;
 }
 
 // entrypoint when called from Lua. returns the names of the generated files
@@ -1284,7 +1271,7 @@ static int run(lua_State *L) {
     color_ostream *out = Lua::GetOutput(L);
     if (!out)
         out = &Core::getInstance().getConsole();
-    if (do_blueprint(*out, argv, files)) {
+    if (CR_OK == do_blueprint(*out, argv, files)) {
         Lua::PushVector(L, files);
         return 1;
     }
@@ -1294,13 +1281,13 @@ static int run(lua_State *L) {
 
 command_result blueprint(color_ostream &out, vector<string> &parameters) {
     vector<string> files;
-    if (do_blueprint(out, parameters, files)) {
+    command_result cr = do_blueprint(out, parameters, files);
+    if (cr == CR_OK) {
         out.print("Generated blueprint file(s):\n");
         for (string &fname : files)
             out.print("  %s\n", fname.c_str());
-        return CR_OK;
     }
-    return CR_FAILURE;
+    return cr;
 }
 
 DFHACK_PLUGIN_LUA_COMMANDS {

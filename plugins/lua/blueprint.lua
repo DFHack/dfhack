@@ -3,37 +3,6 @@ local _ENV = mkmodule('plugins.blueprint')
 local argparse = require('argparse')
 local utils = require('utils')
 
--- the info here is very basic and minimal, so hopefully we won't need to change
--- it when features are added and the full blueprint docs in Plugins.rst are
--- updated.
-local help_text = [=[
-
-blueprint
-=========
-
-Records the structure of a portion of your fortress in quickfort blueprints.
-
-Usage:
-
-    blueprint <width> <height> [<depth>] [<name> [<phases>]] [<options>]
-    blueprint gui [<name> [<phases>]] [<options>]
-
-Examples:
-
-blueprint gui
-    Runs gui/blueprint, the interactive blueprint frontend, where all
-    configuration can be set visually and interactively.
-
-blueprint 30 40 bedrooms
-    Generates blueprints for an area 30 tiles wide by 40 tiles tall, starting
-    from the active cursor on the current z-level. Output files are written to
-    the "blueprints" directory.
-
-See the online DFHack documentation for more examples and details.
-]=]
-
-function print_help() print(help_text) end
-
 local valid_phase_list = {
     'dig',
     'carve',

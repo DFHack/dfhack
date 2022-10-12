@@ -76,6 +76,8 @@ struct blueprint_options {
     // base name to use for generated files
     string name;
 
+    // whether to capture all smoothed tiles
+    bool smooth = false;
     // whether to capture engravings and smooth the tiles that will be engraved
     bool engrave = false;
 
@@ -103,6 +105,7 @@ static const struct_field_info blueprint_options_fields[] = {
     { struct_field_info::PRIMITIVE, "height",                 offsetof(blueprint_options, height),                &df::identity_traits<int32_t>::identity, 0, 0 },
     { struct_field_info::PRIMITIVE, "depth",                  offsetof(blueprint_options, depth),                 &df::identity_traits<int32_t>::identity, 0, 0 },
     { struct_field_info::PRIMITIVE, "name",                   offsetof(blueprint_options, name),                   df::identity_traits<string>::get(),     0, 0 },
+    { struct_field_info::PRIMITIVE, "smooth",                 offsetof(blueprint_options, smooth),                &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "engrave",                offsetof(blueprint_options, engrave),               &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "auto_phase",             offsetof(blueprint_options, auto_phase),            &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "dig",                    offsetof(blueprint_options, dig),                   &df::identity_traits<bool>::identity,    0, 0 },
@@ -219,8 +222,8 @@ static const char * get_tile_smooth_minimal(const df::coord &pos,
     return NULL;
 }
 
-static const char * get_tile_smooth(const df::coord &pos,
-                                    const tile_context &tc) {
+static const char * get_tile_smooth_with_engravings(const df::coord &pos,
+                                                    const tile_context &tc) {
     const char * smooth_minimal = get_tile_smooth_minimal(pos, tc);
     if (smooth_minimal)
         return smooth_minimal;
@@ -235,6 +238,30 @@ static const char * get_tile_smooth(const df::coord &pos,
     case tiletype_shape::WALL:
         if (tileSpecial(*tt) == tiletype_special::SMOOTH &&
                 engravings_cache.count(pos))
+            return "s";
+        break;
+    default:
+        break;
+    }
+
+    return NULL;
+}
+
+static const char * get_tile_smooth_all(const df::coord &pos,
+                                        const tile_context &tc) {
+    const char * smooth_minimal = get_tile_smooth_minimal(pos, tc);
+    if (smooth_minimal)
+        return smooth_minimal;
+
+    df::tiletype *tt = Maps::getTileType(pos);
+    if (!tt)
+        return NULL;
+
+    switch (tileShape(*tt))
+    {
+    case tiletype_shape::FLOOR:
+    case tiletype_shape::WALL:
+        if (tileSpecial(*tt) == tiletype_special::SMOOTH)
             return "s";
         break;
     default:
@@ -1096,9 +1123,13 @@ static bool do_transform(color_ostream &out,
 
     vector<blueprint_processor> processors;
 
+    get_tile_fn* smooth_get_tile_fn = get_tile_smooth_minimal;
+    if (opts.engrave) smooth_get_tile_fn = get_tile_smooth_with_engravings;
+    if (opts.smooth) smooth_get_tile_fn = get_tile_smooth_all;
+
     add_processor(processors, opts, "dig", "dig", opts.dig, get_tile_dig);
     add_processor(processors, opts, "dig", "smooth", opts.carve,
-                  opts.engrave ? get_tile_smooth : get_tile_smooth_minimal);
+                  smooth_get_tile_fn);
     add_processor(processors, opts, "dig", "carve", opts.carve,
                   opts.engrave ? get_tile_carve : get_tile_carve_minimal);
     add_processor(processors, opts, "build", "build", opts.build,

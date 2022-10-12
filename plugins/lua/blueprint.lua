@@ -123,6 +123,7 @@ local function process_args(opts, args)
             {'h', 'help', handler=function() opts.help = true end},
             {'s', 'playback-start', hasArg=true,
              handler=function(optarg) parse_start(opts, optarg) end},
+            {nil, 'smooth', handler=function() opts.smooth = true end},
             {'t', 'splitby', hasArg=true,
              handler=function(optarg) parse_split_strategy(opts, optarg) end},
         })

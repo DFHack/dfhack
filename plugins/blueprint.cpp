@@ -1043,7 +1043,29 @@ static const char * get_tile_query(const df::coord &pos,
 static const char * get_tile_rooms(const df::coord &, const tile_context &ctx) {
     if (!ctx.b || !ctx.b->is_room)
         return NULL;
-    return "r+";
+
+    // get the maximum distance from the center of the building
+    df::building_extents &room = ctx.b->room;
+    int32_t x1 = room.x;
+    int32_t x2 = room.x + room.width - 1;
+    int32_t y1 = room.y;
+    int32_t y2 = room.y + room.height - 1;
+
+    int32_t dimx = std::max(ctx.b->centerx - x1, x2 - ctx.b->centerx);
+    int32_t dimy = std::max(ctx.b->centery - y1, y2 - ctx.b->centery);
+    int32_t max_dim = std::max(dimx, dimy);
+
+    switch (max_dim) {
+        case 0: return "r---&";
+        case 1: return "r--&";
+        case 2: return "r-&";
+        case 3: return "r&";
+        case 4: return "r+&";
+    }
+
+    std::ostringstream str;
+    str << "r{+ " << (max_dim - 3) << "}&";
+    return cache(str);
 }
 
 static bool create_output_dir(color_ostream &out,

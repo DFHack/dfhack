@@ -33,7 +33,7 @@ Examples
 - ``cursecheck detail all``
    Give detailed info about all cursed creatures including deceased ones.
 - ``cursecheck nick``
-   Give a nickname all living/active cursed creatures.
+   Give a nickname to all living/active cursed creatures.
 
 .. note::
 

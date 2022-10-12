@@ -740,7 +740,7 @@ Functions:
 
 * ``dfhack.matinfo.decode(type,index)``
 
-  Looks up material info for the given number pair; if not found, returs *nil*.
+  Looks up material info for the given number pair; if not found, returns *nil*.
 
 * ``....decode(matinfo)``, ``....decode(item)``, ``....decode(obj)``
 
@@ -1099,7 +1099,7 @@ Other
 * ``dfhack.gui.getDepthAt(x, y)``
 
   Returns the distance from the z-level of the tile at map coordinates (x, y) to
-  the closest ground z-level below. Defaults to 0, unless overriden by plugins.
+  the closest ground z-level below. Defaults to 0, unless overridden by plugins.
 
 Job module
 ----------
@@ -1869,7 +1869,7 @@ Among them are:
   - ``full_rectangle = true``
 
     For buildings like stockpiles or farm plots that can normally
-    accomodate individual tile exclusion, forces an error if any
+    accommodate individual tile exclusion, forces an error if any
     tiles within the specified width*height are obstructed.
 
   - ``items = { item, item ... }``, or ``filters = { {...}, {...}... }``
@@ -2169,7 +2169,7 @@ Supported callbacks and fields are:
 
   Called when keyboard or mouse events are available.
   If any keys are pressed, the keys argument is a table mapping them to *true*.
-  Note that this refers to logical keybingings computed from real keys via
+  Note that this refers to logical keybindings computed from real keys via
   options; if multiple interpretations exist, the table will contain multiple keys.
 
   The table also may contain special keys:
@@ -2494,7 +2494,7 @@ Core context specific functions:
   unit of time used, and may be one of ``'frames'`` (raw FPS),
   ``'ticks'`` (unpaused FPS), ``'days'``, ``'months'``,
   ``'years'`` (in-game time). All timers other than
-  ``'frames'`` are cancelled when the world is unloaded,
+  ``'frames'`` are canceled when the world is unloaded,
   and cannot be queued until it is loaded again.
   Returns the timer id, or *nil* if unsuccessful due to
   world being unloaded.
@@ -2677,7 +2677,7 @@ environment by the mandatory init file dfhack.lua:
 
 .. _lua-string:
 
-String class extentions
+String class extensions
 -----------------------
 
 DFHack extends Lua's basic string class to include a number of convenience
@@ -2698,7 +2698,7 @@ functions. These are invoked just like standard string functions, e.g.::
 * ``string:split([delimiter[, plain]])``
 
   Split a string by the given delimiter. If no delimiter is specified, space
-  (``' '``) is used. The delimter is treated as a pattern unless a ``plain`` is
+  (``' '``) is used. The delimiter is treated as a pattern unless a ``plain`` is
   specified and set to ``true``. To treat multiple successive delimiter
   characters as a single delimiter, e.g. to avoid getting empty string elements,
   pass a pattern like ``' +'``. Be aware that passing patterns that match empty
@@ -2975,10 +2975,10 @@ parameters.
   (e.g. combining the previous two examples into ``-abcdparam``)
 
   Long options focus on clarity. They are usually entire words, or several words
-  combined with hypens (``-``) or underscores (``_``). If they take an argument,
-  the argument can be separated from the option name by a space or an equals
-  sign (``=``). For example, the following two commandlines are equivalent:
-  ``yourscript --style pretty`` and ``yourscript --style=pretty``.
+  combined with hyphens (``-``) or underscores (``_``). If they take an
+  argument, the argument can be separated from the option name by a space or an
+  equals sign (``=``). For example, the following two commandlines are
+  equivalent: ``yourscript --style pretty`` and ``yourscript --style=pretty``.
 
   Another reason to use long options is if they represent an esoteric parameter
   that you don't expect to be commonly used and that you don't want to "waste" a
@@ -3150,8 +3150,8 @@ Each entry has several properties associated with it:
   alphabetized by their last path component, with populated path components
   coming before null path components (e.g. ``autobutcher`` will immediately
   follow ``gui/autobutcher``).
-  The optional ``include`` and ``exclude`` filter params are maps with the
-  following elements:
+  The optional ``include`` and ``exclude`` filter params are maps (or lists of
+  maps) with the following elements:
 
   :str:   if a string, filters by the given substring. if a table of strings,
           includes entry names that match any of the given substrings.
@@ -3159,6 +3159,13 @@ Each entry has several properties associated with it:
           includes entries that match any of the given tags.
   :entry_type: if a string, matches entries of the given type. if a table of
           strings, includes entries that match any of the given types.
+
+  Elements in a map are ANDed together (e.g. if both ``str`` and ``tag`` are
+  specified, the match is on any of the ``str`` elements AND any of the ``tag``
+  elements).
+
+  If lists of filters are passed instead of a single map, the maps are ORed
+  (that is, the match succeeds if any of the filters match).
 
   If ``include`` is ``nil`` or empty, then all entries are included. If
   ``exclude`` is ``nil`` or empty, then no entries are filtered out.
@@ -3172,7 +3179,7 @@ create profiler objects which can be used to profile and generate report.
 
 * ``profiler.newProfiler([variant[, sampling_frequency]])``
 
-  Returns an profile object with ``variant`` either ``'time'`` or ``'call'``.
+  Returns a profile object with ``variant`` either ``'time'`` or ``'call'``.
   ``'time'`` variant takes optional ``sampling_frequency`` parameter to select
   lua instruction counts between samples. Default is ``'time'`` variant with
   ``10*1000`` frequency.
@@ -3257,7 +3264,7 @@ Implements a trivial single-inheritance class system.
 
   The main difference is that attributes are processed as a separate
   initialization step, before any ``init`` methods are called. They
-  also make the directy relation between instance fields and constructor
+  also make the direct relation between instance fields and constructor
   arguments more explicit.
 
 * ``new_obj = Class{ foo = arg, bar = arg, ... }``
@@ -3267,8 +3274,8 @@ Implements a trivial single-inheritance class system.
 
   1. An empty instance table is created, and its metatable set.
   2. The ``preinit`` methods are called via ``invoke_before`` (see below)
-     with the table used as argument to the class. These methods are intended
-     for validating and tweaking that argument table.
+     with the table used as the argument to the class. These methods are
+     intended for validating and tweaking that argument table.
   3. Declared ATTRS are initialized from the argument table or their default values.
   4. The ``init`` methods are called via ``invoke_after`` with the argument table.
      This is the main constructor method.
@@ -3339,7 +3346,7 @@ A module for reading custom tokens added to the raws by mods.
 
   Where ``typeInstance`` is a unit, entity, item, job, projectile, building, plant, or interaction
   instance. Gets ``typeDefinition`` and then returns the same as ``getToken(typeDefinition, token)``.
-  For units, it gets the token from the race or caste instead if appplicable. For plants growth items,
+  For units, it gets the token from the race or caste instead if applicable. For plants growth items,
   it gets the token from the plant or plant growth instead if applicable. For plants it does the same
   but with growth number -1.
 
@@ -3661,7 +3668,7 @@ It also always has the following fields:
 
 These fields are computed by the layout process:
 
-:frame_parent_rect: The ViewRect represeting the client area of the parent view.
+:frame_parent_rect: The ViewRect representing the client area of the parent view.
 :frame_rect: The ``mkdims`` rect of the outer frame in parent-local coordinates.
 :frame_body: The ViewRect representing the body part of the View's own frame.
 
@@ -3897,13 +3904,13 @@ Base of all the widgets. Inherits from View and has the following attributes:
   :r: gap between the right edges of the frame and the parent.
   :b: gap between the bottom edges of the frame and the parent.
   :w: maximum width of the frame.
-  :h: maximum heigth of the frame.
+  :h: maximum height of the frame.
   :xalign: X alignment of the frame.
   :yalign: Y alignment of the frame.
 
   First the ``l,t,r,b`` fields restrict the available area for
   placing the frame. If ``w`` and ``h`` are not specified or
-  larger then the computed area, it becomes the frame. Otherwise
+  larger than the computed area, it becomes the frame. Otherwise
   the smaller frame is placed within the are based on the
   ``xalign/yalign`` fields. If the align hints are omitted, they
   are assumed to be 0, 1, or 0.5 based on which of the ``l/r/t/b``
@@ -4025,6 +4032,52 @@ following keyboard hotkeys:
 - Ctrl-Left/Right arrow: move the cursor one word to the left or right.
 - Alt-Left/Right arrow: move the cursor to the beginning/end of the text.
 
+Scrollbar class
+---------------
+
+This Widget subclass implements mouse-interactive scrollbars whose bar sizes
+represent the amount of content currently visible in an associated display
+widget (like a `Label class`_ or a `List class`_). By default they are styled
+like scrollbars used in the vanilla DF help screens, but they are configurable.
+
+Scrollbars have the following attributes:
+
+:fg: Specifies the pen for the scroll icons and the active part of the bar. Default is ``COLOR_LIGHTGREEN``.
+:bg: Specifies the pen for the background part of the scrollbar. Default is ``COLOR_CYAN``.
+:on_scroll: A callback called when the scrollbar is scrolled. It will be called with a single string parameter with a value of "up_large", "down_large", "up_small", or "down_small".
+
+The Scrollbar widget implements the following methods:
+
+* ``scrollbar:update(top_elem, elems_per_page, num_elems)``
+
+  Updates the info about the widget that the scrollbar is paired with.
+  The ``top_elem`` param is the (one-based) index of the first visible element.
+  The ``elems_per_page`` param is the maximum number of elements that can be
+  shown at one time. The ``num_elems`` param is the total number of elements
+  that the paried widget can scroll through. The scrollbar will adjust its
+  scrollbar size and position accordingly.
+
+Clicking on the arrows at the top or the bottom of a scrollbar will scroll an
+associated widget by a small amount. Clicking on the unfilled portion of the
+scrollbar above or below the filled area will scroll by a larger amount in that
+direction. The amount of scrolling done in each case in determined by the
+associated widget, and after scrolling is complete, the associated widget must
+call ``scrollbar:update()`` with updated new display info.
+
+You can click and drag the scrollbar to scroll to a specific spot, or you can
+click and hold on the end arrows or in the unfilled portion of the scrollbar to
+scroll multiple times, just like in a normal browser scrollbar. The speed of
+scroll events when the mouse button is held down is controlled by two global
+variables:
+
+:``SCROLL_INITIAL_DELAY_MS``: The delay before the second scroll event.
+:``SCROLL_DELAY_MS``: The delay between further scroll events.
+
+The defaults are 300 and 20, respectively, but they can be overridden by the
+user in their :file:`dfhack-config/init/dfhack.init` file, for example::
+
+  :lua require('gui.widgets').SCROLL_DELAY_MS = 100
+
 Label class
 -----------
 
@@ -4045,17 +4098,6 @@ It has the following attributes:
     keys to the number of lines to scroll as positive or negative integers or one of the keywords
     supported by the ``scroll`` method. The default is up/down arrows scrolling by one line and page
     up/down scrolling by one page.
-:show_scrollbar: Controls scrollbar display: ``false`` for no scrollbar, ``'right'`` or ``'left'`` for
-    icons next to the text in an additional column (``frame_inset`` is adjusted to have ``.r`` or ``.l`` greater than ``0``),
-    ``nil`` same as ``'right'`` but changes ``frame_inset`` only if a scroll icon is actually necessary
-    (if ``getTextHeight()`` is greater than ``frame_body.height``). Default is ``nil``.
-:scrollbar_fg: Specifies the pen for the scroll icons and the active part of the bar. Default is ``COLOR_LIGHTGREEN`` (the same as the native DF help screens).
-:scrollbar_bg: Specifies the pen for the background part of the scrollbar. Default is ``COLOR_CYAN`` (the same as the native DF help screens).
-
-If the scrollbar is shown, it will react to mouse clicks on the scrollbar itself.
-Clicking on the arrows at the top or the bottom will scroll by one line, and
-clicking on the unfilled portion of the scrollbar will scroll by a half page in
-that direction.
 
 The text itself is represented as a complex structure, and passed
 to the object via the ``text`` argument of the constructor, or via
@@ -4148,7 +4190,8 @@ The Label widget implements the following methods:
 
   This method takes the number of lines to scroll as positive or negative
   integers or one of the following keywords: ``+page``, ``-page``,
-  ``+halfpage``, or ``-halfpage``.
+  ``+halfpage``, or ``-halfpage``. It returns the number of lines that were
+  actually scrolled (negative for scrolling up).
 
 WrappedLabel class
 ------------------
@@ -4276,7 +4319,6 @@ Every list item may be specified either as a string, or as a lua table
 with the following fields:
 
 :text: Specifies the label text in the same format as the Label text.
-:caption, [1]: Deprecated legacy aliases for **text**.
 :text_*: Reserved for internal use.
 :key: Specifies a keybinding that acts as a shortcut for the specified item.
 :icon: Specifies an icon string, or a pen to paint a single character. May be a callback.
@@ -4437,7 +4479,7 @@ Functions
         .. note:: this is the only mandatory field.
 
     :fix_impassible:
-        if true make impassible tiles impassible to liquids too
+        if true make impassable tiles impassable to liquids too
     :consume:
         how much machine power is needed to work.
         Disables reactions if not supplied enough and ``needs_power==1``
@@ -4461,7 +4503,7 @@ Functions
     :canBeRoomSubset:
         a flag if this building can be counted in room. 1 means it can, 0 means it can't and -1 default building behaviour
     :auto_gears:
-        a flag that automatically fills up gears and animate. It looks over building definition for gear icons and maps them.
+        a flag that automatically fills up gears and animations. It looks over the building definition for gear icons and maps them.
 
     Animate table also might contain:
 
@@ -4472,7 +4514,7 @@ Functions
 
 ``getPower(building)`` returns two number - produced and consumed power if building can be modified and returns nothing otherwise
 
-``setPower(building,produced,consumed)`` sets current productiona and consumption for a building.
+``setPower(building,produced,consumed)`` sets current power production and consumption for a building.
 
 Examples
 --------
@@ -4506,7 +4548,7 @@ Native functions provided by the `buildingplan` plugin:
 * ``bool isPlanModeEnabled(df::building_type type, int16_t subtype, int32_t custom)`` returns whether the buildingplan UI is enabled for the specified building type.
 * ``bool isPlannedBuilding(df::building *bld)`` returns whether the given building is managed by buildingplan.
 * ``void addPlannedBuilding(df::building *bld)`` suspends the building jobs and adds the building to the monitor list.
-* ``void doCycle()`` runs a check for whether buildlings in the monitor list can be assigned items and unsuspended. This method runs automatically twice a game day, so you only need to call it directly if you want buildingplan to do a check right now.
+* ``void doCycle()`` runs a check for whether buildings in the monitor list can be assigned items and unsuspended. This method runs automatically twice a game day, so you only need to call it directly if you want buildingplan to do a check right now.
 * ``void scheduleCycle()`` schedules a cycle to be run during the next non-paused game frame. Can be called multiple times while the game is paused and only one cycle will be scheduled.
 
 burrows
@@ -4740,7 +4782,7 @@ List of events
 
 1. ``onReactionCompleting(reaction,reaction_product,unit,input_items,input_reagents,output_items,call_native)``
 
-   Is called once per reaction product, before reaction had a chance to call native code for item creation.
+   Is called once per reaction product, before the reaction has a chance to call native code for item creation.
    Setting ``call_native.value=false`` cancels further processing: no items are created and ``onReactionComplete`` is not called.
 
 2. ``onReactionComplete(reaction,reaction_product,unit,input_items,input_reagents,output_items)``
@@ -4796,7 +4838,7 @@ These events are straight from EventManager module. Each of them first needs to 
 
 4. ``onJobCompleted(job)``
 
-   Gets called when job is finished. The job that is passed to this function is a copy. Requires a frequency of 0 in order to distinguish between workshop jobs that were cancelled by the user and workshop jobs that completed successfully.
+   Gets called when job is finished. The job that is passed to this function is a copy. Requires a frequency of 0 in order to distinguish between workshop jobs that were canceled by the user and workshop jobs that completed successfully.
 
 5. ``onUnitDeath(unit_id)``
 
@@ -4855,7 +4897,7 @@ Functions
 
 5. ``registerSidebar(shop_name,callback)``
 
-   Enable callback when sidebar for ``shop_name`` is drawn. Usefull for custom workshop views e.g. using gui.dwarfmode lib. Also accepts a ``class`` instead of function
+   Enable callback when sidebar for ``shop_name`` is drawn. Useful for custom workshop views e.g. using gui.dwarfmode lib. Also accepts a ``class`` instead of function
    as callback. Best used with ``gui.dwarfmode`` class ``WorkshopOverlay``.
 
 Examples
@@ -4898,7 +4940,7 @@ luasocket
 =========
 
 A way to access csocket from lua. The usage is made similar to luasocket in vanilla lua distributions. Currently
-only subset of functions exist and only tcp mode is implemented.
+only a subset of the functions exist and only tcp mode is implemented.
 
 .. contents::
   :local:
@@ -4977,7 +5019,7 @@ Functions
 
 - ``render_map_rect(x,y,z,w,h)``
 
-  returns a table with w*h*4 entries of rendered tiles. The format is same as ``df.global.gps.screen`` (tile,foreground,bright,background).
+  returns a table with w*h*4 entries of rendered tiles. The format is the same as ``df.global.gps.screen`` (tile,foreground,bright,background).
 
 .. _pathable-api:
 
@@ -5094,7 +5136,7 @@ Scripts
    :local:
 
 Any files with the ``.lua`` extension placed into the :file:`hack/scripts` folder
-are automatically made avaiable as DFHack commands. The command corresponding to
+are automatically made available as DFHack commands. The command corresponding to
 a script is simply the script's filename, relative to the scripts folder, with
 the extension omitted. For example:
 

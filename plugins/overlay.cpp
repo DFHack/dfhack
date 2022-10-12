@@ -70,7 +70,6 @@
 #include "df/viewscreen_topicmeetingst.h"
 #include "df/viewscreen_topicmeeting_takerequestsst.h"
 #include "df/viewscreen_tradeagreementst.h"
-#include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_tradelistst.h"
 #include "df/viewscreen_treasurelistst.h"
 #include "df/viewscreen_unitlist_page.h"
@@ -211,7 +210,6 @@ IMPLEMENT_HOOKS(topicmeeting_fill_land_holder_positions)
 IMPLEMENT_HOOKS(topicmeeting)
 IMPLEMENT_HOOKS(topicmeeting_takerequests)
 IMPLEMENT_HOOKS(tradeagreement)
-IMPLEMENT_HOOKS(tradegoods)
 IMPLEMENT_HOOKS(tradelist)
 IMPLEMENT_HOOKS(treasurelist)
 IMPLEMENT_HOOKS(unitlist)
@@ -310,7 +308,6 @@ DFhackCExport command_result plugin_enable(color_ostream &, bool enable) {
                 INTERPOSE_HOOKS_FAILED(topicmeeting) ||
                 INTERPOSE_HOOKS_FAILED(topicmeeting_takerequests) ||
                 INTERPOSE_HOOKS_FAILED(tradeagreement) ||
-                INTERPOSE_HOOKS_FAILED(tradegoods) ||
                 INTERPOSE_HOOKS_FAILED(tradelist) ||
                 INTERPOSE_HOOKS_FAILED(treasurelist) ||
                 INTERPOSE_HOOKS_FAILED(unitlist) ||

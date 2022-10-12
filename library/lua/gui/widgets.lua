@@ -359,6 +359,149 @@ function EditField:onInput(keys)
     return self.modal
 end
 
+---------------
+-- Scrollbar --
+---------------
+
+-- these can be overridden by the user, e.g.:
+--   require('gui.widgets').SCROLL_DELAY_MS = 100
+SCROLL_INITIAL_DELAY_MS = 300
+SCROLL_DELAY_MS = 20
+
+Scrollbar = defclass(Scrollbar, Widget)
+
+Scrollbar.ATTRS{
+    fg = COLOR_LIGHTGREEN,
+    bg = COLOR_CYAN,
+    on_scroll = DEFAULT_NIL,
+}
+
+function Scrollbar:preinit(init_table)
+    init_table.frame = init_table.frame or {}
+    init_table.frame.w = init_table.frame.w or 1
+end
+
+function Scrollbar:init()
+    self.last_scroll_ms = 0
+    self.is_first_click = false
+    self.scroll_spec = nil
+    self.is_dragging = false -- index of the scrollbar tile that we're dragging
+    self:update(1, 1, 1)
+end
+
+-- calculate and cache the number of tiles of empty space above the top of the
+-- scrollbar and the number of tiles the scrollbar should occupy to represent
+-- the percentage of text that is on the screen.
+-- if elems_per_page or num_elems are not specified, the last values passed to
+-- Scrollbar:update() are used.
+function Scrollbar:update(top_elem, elems_per_page, num_elems)
+    if not top_elem then error('must specify index of new top element') end
+    elems_per_page = elems_per_page or self.elems_per_page
+    num_elems = num_elems or self.num_elems
+
+    local frame_height = self.frame_body and self.frame_body.height or 3
+    local scrollbar_body_height = frame_height - 2
+    local height = math.max(1, math.floor(
+        (math.min(elems_per_page, num_elems) * scrollbar_body_height) /
+        num_elems))
+
+    local max_pos = scrollbar_body_height - height
+    local pos = (num_elems == elems_per_page) and 0 or
+            math.ceil(((top_elem-1) * max_pos) /
+                      (num_elems - elems_per_page))
+
+    self.top_elem = top_elem
+    self.elems_per_page, self.num_elems = elems_per_page, num_elems
+    self.bar_offset, self.bar_height = pos, height
+end
+
+local function scrollbar_do_drag(scrollbar)
+    local x,y = dfhack.screen.getMousePos()
+    x,y = scrollbar.frame_body:localXY(x,y)
+    local bar_idx = y - scrollbar.bar_offset
+    local delta = bar_idx - scrollbar.is_dragging
+    if delta < -scrollbar.bar_height then
+        scrollbar.on_scroll('up_large')
+    elseif delta < 0 then
+        scrollbar.on_scroll('up_small')
+    elseif delta > scrollbar.bar_height then
+        scrollbar.on_scroll('down_large')
+    elseif delta > 0 then
+        scrollbar.on_scroll('down_small')
+    end
+end
+
+local UP_ARROW_CHAR = string.char(24)
+local DOWN_ARROW_CHAR = string.char(25)
+local NO_ARROW_CHAR = string.char(32)
+local BAR_CHAR = string.char(7)
+local BAR_BG_CHAR = string.char(179)
+
+function Scrollbar:onRenderBody(dc)
+    -- don't draw if all elements are visible
+    if self.elems_per_page >= self.num_elems then return end
+    -- render up arrow if we're not at the top
+    dc:seek(0, 0):char(
+        self.top_elem == 1 and NO_ARROW_CHAR or UP_ARROW_CHAR, self.fg, self.bg)
+    -- render scrollbar body
+    local starty = self.bar_offset + 1
+    local endy = self.bar_offset + self.bar_height
+    for y=1,dc.height-2 do
+        dc:seek(0, y)
+        if y >= starty and y <= endy then
+            dc:char(BAR_CHAR, self.fg)
+        else
+            dc:char(BAR_BG_CHAR, self.bg)
+        end
+    end
+    -- render down arrow if we're not at the bottom
+    local last_visible_el = self.top_elem + self.elems_per_page - 1
+    dc:seek(0, dc.height-1):char(
+        last_visible_el >= self.num_elems and NO_ARROW_CHAR or DOWN_ARROW_CHAR,
+        self.fg, self.bg)
+    if not self.on_scroll then return end
+    -- manage state for dragging and continuous scrolling
+    if self.is_dragging then
+        scrollbar_do_drag(self)
+    end
+    if df.global.enabler.mouse_lbut_down == 0 then
+        self.last_scroll_ms = 0
+        self.is_dragging = false
+        self.scroll_spec = nil
+        return
+    end
+    if self.last_scroll_ms == 0 then return end
+    local now = dfhack.getTickCount()
+    local delay = self.is_first_click and
+            SCROLL_INITIAL_DELAY_MS or SCROLL_DELAY_MS
+    if now - self.last_scroll_ms >= delay then
+        self.is_first_click = false
+        self.on_scroll(self.scroll_spec)
+        self.last_scroll_ms = now
+    end
+end
+
+function Scrollbar:onInput(keys)
+    if not keys._MOUSE_L_DOWN or not self.on_scroll then return false end
+    local _,y = self:getMousePos()
+    if not y then return false end
+    local scroll_spec = nil
+    if y == 0 then scroll_spec = 'up_small'
+    elseif y == self.frame_body.height - 1 then scroll_spec = 'down_small'
+    elseif y <= self.bar_offset then scroll_spec = 'up_large'
+    elseif y > self.bar_offset + self.bar_height then scroll_spec = 'down_large'
+    else
+        self.is_dragging = y - self.bar_offset
+        return true
+    end
+    self.scroll_spec = scroll_spec
+    self.on_scroll(scroll_spec)
+    -- reset continuous scroll state
+    self.is_first_click = true
+    self.last_scroll_ms = dfhack.getTickCount()
+    return true
+end
+
 -----------
 -- Label --
 -----------
@@ -546,18 +689,27 @@ Label.ATTRS{
     on_click = DEFAULT_NIL,
     on_rclick = DEFAULT_NIL,
     scroll_keys = STANDARDSCROLL,
-    show_scrollbar = DEFAULT_NIL, -- DEFAULT_NIL, 'right', 'left', false
-    scrollbar_fg = COLOR_LIGHTGREEN,
-    scrollbar_bg = COLOR_CYAN
 }
 
 function Label:init(args)
+    self.scrollbar = Scrollbar{
+        frame={r=0},
+        on_scroll=self:callback('on_scrollbar')}
+
+    self:addviews{self.scrollbar}
+
     -- use existing saved text if no explicit text was specified. this avoids
     -- overwriting pre-formatted text that subclasses may have already set
     self:setText(args.text or self.text)
     if not self.text_hpen then
         self.text_hpen = ((tonumber(self.text_pen) or tonumber(self.text_pen.fg) or 0) + 8) % 16
     end
+end
+
+local function update_label_scrollbar(label)
+    local body_height = label.frame_body and label.frame_body.height or 1
+    label.scrollbar:update(label.start_line_num, body_height,
+                           label:getTextHeight())
 end
 
 function Label:setText(text)
@@ -569,87 +721,8 @@ function Label:setText(text)
         self.frame = self.frame or {}
         self.frame.h = self:getTextHeight()
     end
-end
 
-function Label:update_scroll_inset()
-    if self.show_scrollbar == nil then
-        self._show_scrollbar = self:getTextHeight() > self.frame_body.height and 'right' or false
-    else
-        self._show_scrollbar = self.show_scrollbar
-    end
-    if self._show_scrollbar then
-        -- here self._show_scrollbar can only be either
-        -- 'left' or any true value which we interpret as right
-        local l,t,r,b = gui.parse_inset(self.frame_inset)
-        if self._show_scrollbar == 'left' and l <= 0 then
-            l = 1
-        elseif r <= 0 then
-            r = 1
-        end
-        self.frame_inset = {l=l,t=t,r=r,b=b}
-    end
-end
-
--- the position is the number of tiles of empty space above the top of the
--- scrollbar, and the height is the number of tiles the scrollbar should occupy
--- to represent the percentage of text that is on the screen.
-local function get_scrollbar_pos_and_height(label)
-    local first_visible_line = label.start_line_num
-    local text_height = label:getTextHeight()
-    local last_visible_line = first_visible_line + label.frame_body.height - 1
-    local scrollbar_body_height = label.frame_body.height - 2
-    local displayed_lines = last_visible_line - first_visible_line
-
-    local height = math.floor(((displayed_lines-1) * scrollbar_body_height) /
-                              text_height)
-
-    local max_pos = scrollbar_body_height - height
-    local pos = math.ceil(((first_visible_line-1) * max_pos) /
-                          (text_height - label.frame_body.height))
-
-    return pos, height
-end
-
-local UP_ARROW_CHAR = string.char(24)
-local DOWN_ARROW_CHAR = string.char(25)
-local NO_ARROW_CHAR = string.char(32)
-local BAR_CHAR = string.char(7)
-local BAR_BG_CHAR = string.char(179)
-
-function Label:render_scrollbar(dc, x, y1, y2)
-    -- render up arrow if we're not at the top
-    dc:seek(x, y1):char(
-        self.start_line_num == 1 and NO_ARROW_CHAR or UP_ARROW_CHAR,
-        self.scrollbar_fg, self.scrollbar_bg)
-    -- render scrollbar body
-    local pos, height = get_scrollbar_pos_and_height(self)
-    local starty = y1 + pos + 1
-    local endy = y1 + pos + height
-    for y=y1+1,y2-1 do
-        if y >= starty and y <= endy then
-            dc:seek(x, y):char(BAR_CHAR, self.scrollbar_fg)
-        else
-            dc:seek(x, y):char(BAR_BG_CHAR, self.scrollbar_bg)
-        end
-    end
-    -- render down arrow if we're not at the bottom
-    local last_visible_line = self.start_line_num + self.frame_body.height - 1
-    dc:seek(x, y2):char(
-        last_visible_line >= self:getTextHeight() and
-            NO_ARROW_CHAR or DOWN_ARROW_CHAR,
-        self.scrollbar_fg, self.scrollbar_bg)
-end
-
-function Label:computeFrame(parent_rect)
-    local frame_rect,body_rect = Label.super.computeFrame(self, parent_rect)
-
-    self.frame_rect = frame_rect
-    self.frame_body = parent_rect:viewport(body_rect or frame_rect)
-
-    self:update_scroll_inset() -- frame_body is now set
-
-    -- recalc with updated frame_inset
-    return Label.super.computeFrame(self, parent_rect)
+    update_label_scrollbar(self)
 end
 
 function Label:preUpdateLayout()
@@ -657,6 +730,10 @@ function Label:preUpdateLayout()
         self.frame = self.frame or {}
         self.frame.w = self:getTextWidth()
     end
+end
+
+function Label:postUpdateLayout()
+    update_label_scrollbar(self)
 end
 
 function Label:itemById(id)
@@ -682,44 +759,19 @@ function Label:onRenderBody(dc)
     render_text(self,dc,0,0,text_pen,self.text_dpen,is_disabled(self))
 end
 
-function Label:onRenderFrame(dc, rect)
-    if self._show_scrollbar then
-        local x = self._show_scrollbar == 'left'
-                and self.frame_body.x1-dc.x1-1
-                or  self.frame_body.x2-dc.x1+1
-        self:render_scrollbar(dc,
-            x,
-            self.frame_body.y1-dc.y1,
-            self.frame_body.y2-dc.y1
-        )
-    end
-end
-
-function Label:click_scrollbar()
-    if not self._show_scrollbar then return end
-    local rect = self.frame_body
-    local x, y = dscreen.getMousePos()
-
-    if self._show_scrollbar == 'left' and x ~= rect.x1-1 or x ~= rect.x2+1 then
-        return
-    end
-    if y < rect.y1 or y > rect.y2 then
-        return
+function Label:on_scrollbar(scroll_spec)
+    local v = 0
+    if scroll_spec == 'down_large' then
+        v = '+halfpage'
+    elseif scroll_spec == 'up_large' then
+        v = '-halfpage'
+    elseif scroll_spec == 'down_small' then
+        v = 1
+    elseif scroll_spec == 'up_small' then
+        v = -1
     end
 
-    if y == rect.y1 then
-        return -1
-    elseif y == rect.y2 then
-        return 1
-    else
-        local pos, height = get_scrollbar_pos_and_height(self)
-        if y <= rect.y1 + pos then
-            return '-halfpage'
-        elseif y > rect.y1 + pos + height then
-            return '+halfpage'
-        end
-    end
-    return nil
+    self:scroll(v)
 end
 
 function Label:scroll(nlines)
@@ -740,24 +792,28 @@ function Label:scroll(nlines)
     local n = self.start_line_num + nlines
     n = math.min(n, self:getTextHeight() - self.frame_body.height + 1)
     n = math.max(n, 1)
+    nlines = n - self.start_line_num
     self.start_line_num = n
+    update_label_scrollbar(self)
     return nlines
 end
 
 function Label:onInput(keys)
     if is_disabled(self) then return false end
-    if keys._MOUSE_L_DOWN then
-        if not self:scroll(self:click_scrollbar()) and
-                self:getMousePos() and self.on_click then
-            self:on_click()
-        end
+    if self:inputToSubviews(keys) then
+        return true
+    end
+    if keys._MOUSE_L_DOWN and self:getMousePos() and self.on_click then
+        self:on_click()
+        return true
     end
     if keys._MOUSE_R_DOWN and self:getMousePos() and self.on_rclick then
         self:on_rclick()
+        return true
     end
     for k,v in pairs(self.scroll_keys) do
-        if keys[k] then
-            self:scroll(v)
+        if keys[k] and 0 ~= self:scroll(v) then
+            return true
         end
     end
     return check_text_keys(self, keys)
@@ -787,7 +843,7 @@ end
 -- we can't set the text in init() since we may not yet have a frame that we
 -- can get wrapping bounds from.
 function WrappedLabel:postComputeFrame()
-    local wrapped_text = self:getWrappedText(self.frame_body.width)
+    local wrapped_text = self:getWrappedText(self.frame_body.width-1)
     if not wrapped_text then return end
     local text = {}
     for _,line in ipairs(wrapped_text:split(NEWLINE)) do
@@ -953,6 +1009,11 @@ List.ATTRS{
 function List:init(info)
     self.page_top = 1
     self.page_size = 1
+    self.scrollbar = Scrollbar{
+        frame={r=0},
+        on_scroll=self:callback('on_scrollbar')}
+
+    self:addviews{self.scrollbar}
 
     if info.choices then
         self:setChoices(info.choices, info.selected)
@@ -1017,13 +1078,21 @@ function List:postComputeFrame(body)
     self:moveCursor(0)
 end
 
+local function update_list_scrollbar(list)
+    list.scrollbar:update(list.page_top, list.page_size, #list.choices)
+end
+
+function List:postUpdateLayout()
+    update_list_scrollbar(self)
+end
+
 function List:moveCursor(delta, force_cb)
-    local page = math.max(1, self.page_size)
     local cnt = #self.choices
 
     if cnt < 1 then
         self.page_top = 1
         self.selected = 1
+        update_list_scrollbar(self)
         if force_cb and self.on_select then
             self.on_select(nil,nil)
         end
@@ -1046,12 +1115,38 @@ function List:moveCursor(delta, force_cb)
         end
     end
 
+    local buffer = 1 + math.min(4, math.floor(self.page_size/10))
+
     self.selected = 1 + off % cnt
-    self.page_top = 1 + page * math.floor((self.selected-1) / page)
+    if (self.selected - buffer) < self.page_top then
+        self.page_top = math.max(1, self.selected - buffer)
+    elseif (self.selected + buffer + 1) > (self.page_top + self.page_size) then
+        local max_page_top = cnt - self.page_size + 1
+        self.page_top = math.max(1,
+            math.min(max_page_top, self.selected - self.page_size + buffer + 1))
+    end
+    update_list_scrollbar(self)
 
     if (force_cb or delta ~= 0) and self.on_select then
         self.on_select(self:getSelected())
     end
+end
+
+function List:on_scrollbar(scroll_spec)
+    local v = 0
+    if scroll_spec == 'down_large' then
+        v = math.ceil(self.page_size / 2)
+    elseif scroll_spec == 'up_large' then
+        v = -math.ceil(self.page_size / 2)
+    elseif scroll_spec == 'down_small' then
+        v = 1
+    elseif scroll_spec == 'up_small' then
+        v = -1
+    end
+
+    local max_page_top = math.max(1, #self.choices - self.page_size + 1)
+    self.page_top = math.max(1, math.min(max_page_top, self.page_top + v))
+    update_list_scrollbar(self)
 end
 
 function List:onRenderBody(dc)
@@ -1122,6 +1217,9 @@ function List:submit2()
 end
 
 function List:onInput(keys)
+    if self:inputToSubviews(keys) then
+        return true
+    end
     if self.on_submit and keys.SELECT then
         self:submit()
         return true

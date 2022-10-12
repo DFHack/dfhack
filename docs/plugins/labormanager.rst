@@ -37,7 +37,7 @@ explicitly disable it, even if you save and reload your game.
 
 The default priorities for each labor vary (some labors are higher priority by
 default than others). The way the plugin works is that, once it determines how
-many jobs of each labor is needed, it then sorts them by adjusted priority.
+many jobs of each labor are needed, it then sorts them by adjusted priority.
 (Labors other than hauling have a bias added to them based on how long it's been
 since they were last used to prevent job starvation.) The labor with the highest
 priority is selected, the "best fit" dwarf for that labor is assigned to that
@@ -112,7 +112,7 @@ Advanced usage
 ``labormanager priority <labor> <value>``
     Set the priority value for labor <labor> to <value>.
 ``labormanager max <labor> <value>``
-    Set maximum number of dwarves that can be assigned to a labor.
+    Set the maximum number of dwarves that can be assigned to a labor.
 ``labormanager max <labor> none``
     Unrestrict the number of dwarves that can be assigned to a labor.
 ``labormanager max <labor> disable``

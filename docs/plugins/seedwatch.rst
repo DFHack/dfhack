@@ -21,7 +21,7 @@ Usage
     Start managing seed and plant cooking. By default, no types are watched.
     You have to add them with further ``seedwatch`` commands.
 ``seedwatch <type> <target>``
-    Adds the specifiied type to the watchlist (if it's not already there) and
+    Adds the specified type to the watchlist (if it's not already there) and
     sets the target number of seeds to the specified number. You can pass the
     keyword ``all`` instead of a specific type to set the target for all types.
 ``seedwatch <type>``

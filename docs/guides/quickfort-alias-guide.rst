@@ -80,7 +80,7 @@ sequence, potentially with other aliases. If the alias is the only text in the
 cell, the alias name is matched and its expansion is used. If the alias has
 other keys before or after it, the alias name must be surrounded in curly
 brackets (:kbd:`{` and :kbd:`}`). An alias can be surrounded in curly brackets
-even if it is the only text in the cell, it just isn't necesary. For example,
+even if it is the only text in the cell, it just isn't necessary. For example,
 the following blueprint uses the ``aliasname`` alias by itself in the first
 two rows and uses it as part of a longer sequence in the third row::
 
@@ -454,7 +454,7 @@ be used for either the ``quantum_enable`` or ``route_enable`` sub-aliases.
 Experienced Dwarf Fortress players may be wondering how the same aliases can
 work in both contexts since the keys for entering the configuration screen
 differ. Fear not! There is some sub-alias magic at work here. If you define
-your own stockpile configuraiton aliases, you can use the magic yourself by
+your own stockpile configuration aliases, you can use the magic yourself by
 building your aliases on the ``*prefix`` aliases described later in this
 guide.
 
@@ -652,7 +652,7 @@ sheetprefix           enablesheet           disablesheet
 Then, for each item category, there are aliases that manipulate interesting
 subsets of that category:
 
-* Exclusive aliases forbid everthing within a category and then enable only
+* Exclusive aliases forbid everything within a category and then enable only
   the named item type (or named class of items)
 * ``forbid*`` aliases forbid the named type and leave the rest of the
   stockpile untouched.

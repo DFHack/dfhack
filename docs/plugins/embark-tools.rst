@@ -14,7 +14,7 @@ Usage
     embark-tools enable|disable all
     embark-tools enable|disable <tool> [<tool> ...]
 
-Avaliable tools are:
+Available tools are:
 
 ``anywhere``
     Allows embarking anywhere (including sites, mountain-only biomes, and

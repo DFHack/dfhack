@@ -34,7 +34,7 @@ Usage
 ``burrow remove-units target-burrow <burrow> [<burrow> ...]``
     Remove units in source burrows from the target.
 ``burrow set-tiles target-burrow <burrow> [<burrow> ...]``
-    Clear target burrow tiles and adds tiles from the names source burrows.
+    Clear target burrow tiles and add tiles from the names source burrows.
 ``burrow add-tiles target-burrow <burrow> [<burrow> ...]``
     Add tiles from the source burrows to the target.
 ``burrow remove-tiles target-burrow <burrow> [<burrow> ...]``

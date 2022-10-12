@@ -28,7 +28,7 @@ or for coexistence in a single DF install, even with incompatible components.
 
 For developers, DFHack unites the various ways tools access DF memory and
 allows easier development of new tools.  As an open-source project under
-`various open-source licences <license>`, contributions are welcome.
+`various open-source licenses <license>`, contributions are welcome.
 
 
 .. contents:: Contents
@@ -54,7 +54,7 @@ used by the DFHack console.
   to be used this way.
 
 * Commands can also run at startup via `init files <init-files>`,
-  on in batches at other times with the `script` command.
+  or in batches at other times with the `script` command.
 
 * Finally, some commands are persistent once enabled, and will sit in the
   background managing or changing some aspect of the game if you `enable` them.

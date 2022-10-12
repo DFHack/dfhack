@@ -14,6 +14,8 @@
 
 local _ENV = mkmodule('helpdb')
 
+local argparse = require('argparse')
+
 local MAX_STALE_MS = 60000
 
 -- paths
@@ -120,7 +122,7 @@ No help available.
 ]]
 local function make_default_entry(entry_name, help_source, kwargs)
     local default_long_help = DEFAULT_HELP_TEMPLATE:format(
-                                            entry_name, ('*'):rep(#entry_name))
+                                            entry_name, ('='):rep(#entry_name))
     return {
         help_source=help_source,
         short_help='No help available.',
@@ -275,7 +277,7 @@ local function make_script_entry(old_entry, entry_name, kwargs)
     local is_rb = source_path:endswith('.rb')
     update_entry(entry, lines,
             {begin_marker=(is_rb and SCRIPT_DOC_BEGIN_RUBY or SCRIPT_DOC_BEGIN),
-             end_marker=(is_rb and SCRIPT_DOC_BEGIN_RUBY or SCRIPT_DOC_END),
+             end_marker=(is_rb and SCRIPT_DOC_END_RUBY or SCRIPT_DOC_END),
              first_line_is_short_help=(is_rb and '#' or '%-%-')})
     return entry
 end
@@ -321,6 +323,8 @@ local function scan_builtins(old_db)
                 HELP_SOURCES.RENDERED or HELP_SOURCES.STUB,
             {entry_types=entry_types})
     end
+    -- easter egg: replace underline for 'die' help with tombstones
+    textdb.die.long_help = textdb.die.long_help:gsub('=', string.char(239))
 end
 
 -- scan for enableable plugins and plugin-provided commands and add their help
@@ -394,7 +398,7 @@ local function initialize_tags()
             desc = desc .. ' ' .. line
             tag_index[tag].description = desc
         else
-            _,_,tag,desc = line:find('^%* (%w+): (.+)')
+            _,_,tag,desc = line:find('^%* (%w+)[^:]*: (.+)')
             if not tag then goto continue end
             tag_index[tag] = {description=desc}
             in_desc = true
@@ -586,6 +590,8 @@ function sort_by_basename(a, b)
     return false
 end
 
+-- returns true if all filter elements are matched (i.e. any of the tags AND
+-- any of the strings AND any of the entry_types)
 local function matches(entry_name, filter)
     if filter.tag then
         local matched = false
@@ -628,9 +634,18 @@ local function matches(entry_name, filter)
     return true
 end
 
+local function matches_any(entry_name, filters)
+    for _,filter in ipairs(filters) do
+        if matches(entry_name, filter) then
+            return true
+        end
+    end
+    return false
+end
+
 -- normalizes the lists in the filter and returns nil if no filter elements are
 -- populated
-local function normalize_filter(f)
+local function normalize_filter_map(f)
     if not f then return nil end
     local filter = {}
     filter.str = normalize_string_list(f.str)
@@ -642,11 +657,21 @@ local function normalize_filter(f)
     return filter
 end
 
+local function normalize_filter_list(fs)
+    if not fs then return nil end
+    local filter_list = {}
+    for _,f in ipairs(#fs > 0 and fs or {fs}) do
+        table.insert(filter_list, normalize_filter_map(f))
+    end
+    if #filter_list == 0 then return nil end
+    return filter_list
+end
+
 -- returns a list of entry names, alphabetized by their last path component,
 -- with populated path components coming before null path components (e.g.
 -- autobutcher will immediately follow gui/autobutcher).
--- the optional include and exclude filter params are maps with the following
--- elements:
+-- the optional include and exclude filter params are maps (or lists of maps)
+-- with the following elements:
 --   str - if a string, filters by the given substring. if a table of strings,
 --         includes entry names that match any of the given substrings.
 --   tag - if a string, filters by the given tag name. if a table of strings,
@@ -656,14 +681,18 @@ end
 --         types are: "builtin", "plugin", "command". note that many plugin
 --         commands have the same name as the plugin, so those entries will
 --         match both "plugin" and "command" types.
+-- filter elements in a map are ANDed together (e.g. if both str and tag are
+-- specified, the match is on any of the str elements AND any of the tag
+-- elements). If lists of maps are passed, the maps are ORed (that is, the match
+-- succeeds if any of the filters match).
 function search_entries(include, exclude)
     ensure_db()
-    include = normalize_filter(include)
-    exclude = normalize_filter(exclude)
+    include = normalize_filter_list(include)
+    exclude = normalize_filter_list(exclude)
     local entries = {}
     for entry in pairs(entrydb) do
-        if (not include or matches(entry, include)) and
-                (not exclude or not matches(entry, exclude)) then
+        if (not include or matches_any(entry, include)) and
+                (not exclude or not matches_any(entry, exclude)) then
             table.insert(entries, entry)
         end
     end
@@ -724,13 +753,15 @@ end
 local function list_entries(skip_tags, include, exclude)
     local entries = search_entries(include, exclude)
     for _,entry in ipairs(entries) do
-        print_columns(entry, get_entry_short_help(entry))
+        local short_help = get_entry_short_help(entry)
         if not skip_tags then
             local tags = set_to_sorted_list(get_entry_tags(entry))
             if #tags > 0 then
-                print(('    tags: %s'):format(table.concat(tags, ', ')))
+                local taglist = table.concat(tags, ', ')
+                short_help = short_help .. NEWLINE .. 'tags: ' .. taglist
             end
         end
+        print_columns(entry, short_help)
     end
     if #entries == 0 then
         print('No matches.')
@@ -739,21 +770,30 @@ end
 
 -- wraps the list_entries() API to provide a more convenient interface for Core
 -- to implement the 'ls' builtin command.
---   filter_str - if a tag name, will filter by that tag. otherwise, will filter
---                as a substring
+--   filter_str - if a tag name (or a list of tag names), will filter by that
+--                tag/those tags. otherwise, will filter as a substring/list of
+--                substrings
 --   skip_tags - whether to skip printing tag info
 --   show_dev_commands - if true, will include scripts in the modtools/ and
 --                       devel/ directories. otherwise those scripts will be
 --                       excluded
-function ls(filter_str, skip_tags, show_dev_commands)
+--   exclude_strs - comma-separated list of strings. entries are excluded if
+--                  they match any of the strings.
+function ls(filter_str, skip_tags, show_dev_commands, exclude_strs)
     local include = {entry_type={ENTRY_TYPES.COMMAND}}
     if is_tag(filter_str) then
         include.tag = filter_str
     else
         include.str = filter_str
     end
-    list_entries(skip_tags, include,
-                 show_dev_commands and {} or {tag='dev'})
+    local excludes = {}
+    if exclude_strs and #exclude_strs > 0 then
+        table.insert(excludes, {str=argparse.stringList(exclude_strs)})
+    end
+    if not show_dev_commands then
+        table.insert(excludes, {tag='dev'})
+    end
+    list_entries(skip_tags, include, excludes)
 end
 
 local function list_tags()

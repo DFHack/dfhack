@@ -129,7 +129,7 @@ provides two libraries for this, ``repeat-util`` and `eventful <eventful-api>`.
 ``repeat-util`` is used to run a function once per a configurable number of
 frames (paused or unpaused), ticks (unpaused), in-game days, months, or years.
 If you need to be aware the instant something happens, you'll need to run a
-check once a tick. Be careful not to do this gratuitiously, though, since
+check once a tick. Be careful not to do this gratuitously, though, since
 running that often can slow down the game!
 
 ``eventful``, on the other hand, is much more performance-friendly since it will
@@ -176,10 +176,10 @@ you can react to with ``eventful``.
 
 Now, you may have noticed that you won't be able to register multiple callbacks
 with a single key named after your mod. You can, of course, call all the
-functions you want from a single registed callback. Alternately, you can create
-multiple callbacks using different keys, using your mod ID as a key name prefix.
-If you do register multiple callbacks, though, there are no guarantees about the
-call order.
+functions you want from a single registered callback. Alternately, you can
+create multiple callbacks using different keys, using your mod ID as a key name
+prefix. If you do register multiple callbacks, though, there are no guarantees
+about the call order.
 
 Custom raw tokens
 -----------------
@@ -348,6 +348,9 @@ timer::
 The structure of a full mod
 ---------------------------
 
+For reference, `Tachy Guns <https://www.github.com/wolfboyft/tachy-guns>`__ is a
+full mod that conforms to this guide.
+
 Create a folder for mod projects somewhere outside your Dwarf Fortress
 installation directory (e.g. ``/path/to/mymods/``) and use your mod IDs as the
 names for the mod folders within it. In the example below, we'll use a mod ID of
@@ -425,13 +428,18 @@ Ok, you're all set up! Now, let's take a look at an example
         moduleA.onLoad()
         moduleB.onLoad()
 
-        -- register your callbacks
-        repeatUtil.scheduleEvery(modId .. ' every tick', 1, 'ticks',
-                                 moduleA.every1Tick)
+        -- multiple functions in the same repeat callback
+        repeatUtil.scheduleEvery(modId .. ' every tick', 1, 'ticks', function()
+            moduleA.every1Tick()
+            moduleB.every1Tick()
+        end)
+
+        -- one function per repeat callback (you can put them in the
+        -- above format if you prefer)
         repeatUtil.scheduleEvery(modId .. ' 100 frames', 1, 'frames',
                                  moduleD.every100Frames)
 
-        -- multiple functions in the same callback
+        -- multiple functions in the same eventful callback
         eventful.onReactionComplete[modId] = function(reaction,
                 reaction_product, unit, input_items, input_reagents,
                 output_items)
@@ -442,7 +450,7 @@ Ok, you're all set up! Now, let's take a look at an example
                     unit, input_items, input_reagents, output_items)
         end
 
-        -- one function per callback (you can put them in the
+        -- one function per eventful callback (you can put them in the
         -- above format if you prefer)
         eventful.onProjItemCheckMovement[modId] = moduleD.onProjItemCheckMovement
         eventful.onProjUnitCheckMovement[modId] = moduleD.onProjUnitCheckMovement

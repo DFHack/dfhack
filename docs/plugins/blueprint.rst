@@ -103,6 +103,10 @@ Options
     to surround the parameter string in double quotes:
     ``"-s10,10,central stairs"`` or ``--playback-start "10,10,central stairs"``
     or ``"--playback-start=10,10,central stairs"``.
+``--smooth``
+    Record all smooth tiles in the ``smooth`` phase. If this parameter is not
+    specified, only tiles that will later be carved into fortifications or
+    engraved will be smoothed.
 ``-t``, ``--splitby <strategy>``
     Split blueprints into multiple files. See the `Splitting output into
     multiple files`_ section below for details. If not specified, defaults to

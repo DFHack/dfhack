@@ -42,13 +42,13 @@ Usage
 -----
 
 ``debugfilter category [<plugin regex>] [<category regex>]``
-    List available debug plugin and category names. If filters aren't givenm
+    List available debug plugin and category names. If filters aren't given
     then all plugins/categories are matched. This command is a good way to test
     regex parameters before you pass them to ``set``.
 ``debugfilter filter [<id>]``
     List active and passive debug print level changes. The optional ``id``
-    parameter is the id listed as first column in the filter list. If ``id`` is
-    given, then the command shows extended information for the given filter
+    parameter is the id listed as the first column in the filter list. If ``id``
+    is given, then the command shows extended information for the given filter
     only.
 ``debugfilter set [<level>] [<plugin regex>] [<category regex>]``
     Create a new debug filter to set category verbosity levels. This filter
@@ -61,7 +61,7 @@ Usage
 ``debugfilter disable <id> [<id> ...]``
     Disable a space separated list of filters but keep it in the filter list.
 ``debugfilter enable <id> [<id> ...]``
-    Enable a space sperate list of filters.
+    Enable a space separated list of filters.
 ``debugfilter header [enable] | [disable] [<element> ...]``
     Control which header metadata is shown along with each log message. Run it
     without parameters to see the list of configurable elements. Include an

@@ -35,7 +35,7 @@ Examples
 ``changelayer GRANITE``
    Convert the layer at the cursor position into granite.
 ``changelayer SILTY_CLAY force``
-   Convert teh layer at the cursor position into clay, even if it's stone.
+   Convert the layer at the cursor position into clay, even if it's stone.
 ``changelayer MARBLE all_biomes all_layers``
    Convert all layers of all biomes which are not soil into marble.
 

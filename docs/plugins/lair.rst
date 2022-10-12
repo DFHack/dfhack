@@ -11,7 +11,7 @@ Usage
 -----
 
 ``lair``
-    Mark the map as monster lair.
+    Mark the map as a monster lair.
 ``lair reset``
     Mark the map as ordinary (not lair).
 

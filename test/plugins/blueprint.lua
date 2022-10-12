@@ -36,6 +36,12 @@ function test.parse_gui_commandline()
                     opts)
 
     opts = {}
+    b.parse_gui_commandline(opts, {'--smooth'})
+    expect.table_eq({auto_phase=true, format='minimal', split_strategy='none',
+                     name='blueprint', smooth=true,},
+                    opts)
+
+    opts = {}
     b.parse_gui_commandline(opts, {'--engrave'})
     expect.table_eq({auto_phase=true, format='minimal', split_strategy='none',
                      name='blueprint', engrave=true,},

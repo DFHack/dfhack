@@ -21,4 +21,4 @@ Usage
     stocks show
 
 Running ``stocks show`` will bring you to the fortress-wide stock management
-screen from whereever you are.
+screen from wherever you are.

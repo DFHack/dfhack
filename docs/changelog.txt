@@ -34,11 +34,30 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
+
+## Fixes
+
+## Misc Improvements
+- `ls`: indent tag listings and wrap them in the right column for better readability
+- `ls`: new ``--exclude`` option for hiding matched scripts from the output.  this can be especially useful for modders who don't want their mod scripts to be included in ``ls`` output.
+- `digtype`: new ``-z`` option for digtype to restrict designations to the current z-level and down
+- UX: List widgets now have mouse-interactive scrollbars
+- UX: You can now hold down the mouse button on a scrollbar to make it scroll multiple times.
+- UX: You can now drag the scrollbar to scroll to a specific spot
+
+## Documentation
+
+## API
+
+## Lua
+- ``widgets.Scrollbar``: new scrollbar widget that can be paired with an associated scrollable widget. Integrated with ``widgets.Label`` and ``widgets.List``.
+
+# 0.47.05-r7
+
+## New Plugins
 - `autonestbox`: split off from `zone` into its own plugin. Note that to enable, the command has changed from ``autonestbox start`` to ``enable autonestbox``.
 - `autobutcher`: split off from `zone` into its own plugin. Note that to enable, the command has changed from ``autobutcher start`` to ``enable autobutcher``.
-- `overlay`: display a "DFHack" button in the lower left corner that you can click to start the new GUI command launcher.
-
-## New Tweaks
+- `overlay`: display a "DFHack" button in the lower left corner that you can click to start the new GUI command launcher. The `dwarfmonitor` weather display had to be moved to make room for the button. If you are seeing the weather indicator rendered over the overlay button, please remove the ``dfhack-config/dwarfmonitor.json`` file to fix the weather indicator display offset.
 
 ## New Internal Commands
 - `tags`: new built-in command to list the tool category tags and their definitions. tags associated with each tool are visible in the tool help and in the output of `ls`.
@@ -49,6 +68,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `dig-now`: Fix direction of smoothed walls when adjacent to a door or floodgate
 - ``job.removeJob()``: ensure jobs are removed from the world list when they are canceled
 - `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set: declare the hospital zone before building the coffer; otherwise DF fails to stock the hospital with materials
+- ``dfhack.buildings.findCivzonesAt``: no longer return duplicate civzones after loading a save with existing civzones
 
 ## Misc Improvements
 - Init scripts: ``dfhack.init`` and other init scripts have moved to ``dfhack-config/init/``. If you have customized your ``dfhack.init`` file and want to keep your changes, please move the part that you have customized to the new location at ``dfhack-config/init/dfhack.init``. If you do not have changes that you want to keep, do not copy anything, and the new defaults will be used automatically.
@@ -86,6 +106,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Removed ``Windows`` module (C++-only) - unused.
 - ``Constructions`` module (C++-only): removed ``t_construction``, ``isValid()``, ``getCount()``, ``getConstruction()``, and ``copyConstruction()``. Access ``world.constructions`` directly instead.
 - ``Gui::getSelectedItem()``, ``Gui::getAnyItem()``: added support for the artifacts screen
+- ``Units::teleport()``: now sets ``unit.idle_area`` to discourage units from walking back to their original location (or teleporting back, if using `fastdwarf`)
 
 ## Lua
 - History: added ``dfhack.getCommandHistory(history_id, history_filename)`` and ``dfhack.addCommandToHistory(history_id, history_filename, command)`` so gui scripts can access a commandline history without requiring a terminal.

@@ -62,47 +62,6 @@ namespace DFHack
     };
     class DFContextShared;
 
-    ////////////
-    // Locking mechanisms for control over pausing
-    namespace Pausing
-    {
-        class Lock
-        {
-            bool locked = false;
-            std::string name;
-        public:
-            explicit Lock(const char* name) { this->name = name;};
-            virtual ~Lock()= default;
-            virtual bool isAnyLocked() const = 0;
-            virtual bool isOnlyLocked() const = 0;
-            bool isLocked() const   { return locked; }
-            void lock()             { locked = true; };
-            void unlock()           { locked = false; };
-        };
-
-        // non-blocking lock resource used in conjunction with the announcement functions in World
-        class AnnouncementLock : public Lock
-        {
-            static std::unordered_set<Lock*> locks;
-        public:
-            explicit AnnouncementLock(const char* name): Lock(name) { locks.emplace(this); }
-            ~AnnouncementLock() override { locks.erase(this); }
-            bool isAnyLocked() const override; // returns true if any instance of AnnouncementLock is locked
-            bool isOnlyLocked() const override; // returns true if locked and no other instance is locked
-        };
-
-        // non-blocking lock resource used in conjunction with the Player pause functions in World
-        class PlayerLock : public Lock
-        {
-            static std::unordered_set<Lock*> locks;
-        public:
-            explicit PlayerLock(const char* name): Lock(name) { locks.emplace(this); }
-            ~PlayerLock() override { locks.erase(this); }
-            bool isAnyLocked() const override; // returns true if any instance of PlayerLock is locked
-            bool isOnlyLocked() const override; // returns true if locked and no other instance is locked
-        };
-    }
-
     /**
      * The World module
      * \ingroup grp_modules
@@ -114,21 +73,6 @@ namespace DFHack
         DFHACK_EXPORT bool ReadPauseState();
         ///true if paused, false if not
         DFHACK_EXPORT void SetPauseState(bool paused);
-
-        // todo: prevent anything else from allocating/deleting?
-        // Acquire & Release pause locks controlling player pausing and announcement pause settings
-        DFHACK_EXPORT Pausing::AnnouncementLock* AcquireAnnouncementPauseLock(const char*);
-        DFHACK_EXPORT Pausing::PlayerLock* AcquirePlayerPauseLock(const char*);
-        DFHACK_EXPORT void ReleasePauseLock(Pausing::Lock*);
-
-        DFHACK_EXPORT bool DisableAnnouncementPausing(); // disable announcement pausing if all locks are open
-        DFHACK_EXPORT bool SaveAnnouncementSettings(); // save current announcement pause settings if all locks are open
-        DFHACK_EXPORT bool RestoreAnnouncementSettings(); // restore saved announcement pause settings if all locks are open
-
-        DFHACK_EXPORT bool EnablePlayerPausing(); // enable player pausing if all locks are open
-        DFHACK_EXPORT bool DisablePlayerPausing(); // disable player pausing if all locks are open
-
-        void Update();
 
         DFHACK_EXPORT uint32_t ReadCurrentTick();
         DFHACK_EXPORT uint32_t ReadCurrentYear();

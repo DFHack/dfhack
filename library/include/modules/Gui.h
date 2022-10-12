@@ -126,10 +126,11 @@ namespace DFHack
         DFHACK_EXPORT void showAutoAnnouncement(df::announcement_type type, df::coord pos, std::string message, int color = 7, bool bright = true, df::unit *unit1 = NULL, df::unit *unit2 = NULL);
 
         /*
-         * Cursor and window coords
+         * Cursor and window map coords
          */
         DFHACK_EXPORT df::coord getViewportPos();
         DFHACK_EXPORT df::coord getCursorPos();
+        DFHACK_EXPORT df::coord getMousePos();
 
         static const int AREA_MAP_WIDTH = 23;
         static const int MENU_WIDTH = 30;
@@ -161,8 +162,6 @@ namespace DFHack
 
         DFHACK_EXPORT bool getDesignationCoords (int32_t &x, int32_t &y, int32_t &z);
         DFHACK_EXPORT bool setDesignationCoords (const int32_t x, const int32_t y, const int32_t z);
-
-        DFHACK_EXPORT bool getMousePos (int32_t & x, int32_t & y);
 
         // The distance from the z-level of the tile at map coordinates (x, y) to the closest ground z-level below
         // Defaults to 0, unless overriden by plugins

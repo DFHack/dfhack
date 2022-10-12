@@ -398,8 +398,25 @@ function test.get_entry_short_help()
 end
 
 function test.get_entry_long_help()
+    local expected = [[
+basic
+*****
+
+**Tags:** map
+
+**Command:**
+"basic"
+
+Documented
+basic.
+
+Documented
+full help.
+    ]]
+    expect.eq(expected, h.get_entry_long_help('basic', 13))
+
     -- long help for plugins/commands that have doc files should match the
-    -- contents of those files exactly
+    -- contents of those files exactly (test data is already wrapped)
     expect.eq(files['hack/docs/docs/tools/hascommands.txt'],
         h.get_entry_long_help('hascommands'))
     expect.eq(files['hack/docs/docs/tools/hascommands.txt'],
@@ -602,6 +619,20 @@ function test.tags()
             mock_print.call_args[6][1])
         expect.eq('units                Tools that interact with units.',
             mock_print.call_args[7][1])
+    end)
+end
+
+function test.tags_tag()
+    local mock_print = mock.func()
+    mock.patch(h, 'print', mock_print, function()
+        h.tags('armok')
+        expect.eq(3, mock_print.call_count)
+        expect.eq('bindboxers           Bind your boxers.',
+            mock_print.call_args[1][1])
+        expect.eq('boxbinders           Box your binders.',
+            mock_print.call_args[2][1])
+        expect.eq('samename             Samename.',
+            mock_print.call_args[3][1])
     end)
 end
 

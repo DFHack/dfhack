@@ -1,4 +1,4 @@
-List of Authors
+List of authors
 ===============
 The following is a list of people who have contributed to DFHack, in
 alphabetical order.

@@ -25,11 +25,13 @@ Usage
 Examples
 --------
 
-- ``ls adventure``
-    Lists all commands with the ``adventure`` tag.
-- ``ls --dev trigger``
-    Lists all commands, including developer and modding commands, that match the
-    substring "trigger"
+``ls quick``
+    List all commands that match the substring "quick".
+``ls adventure``
+    List all commands with the ``adventure`` tag.
+``ls --dev trigger``
+    List all commands, including developer and modding commands, that match the
+    substring "trigger".
 
 Options
 -------

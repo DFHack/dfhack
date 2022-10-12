@@ -16,6 +16,7 @@ class SphinxOutputFormat:
     def args(self):
         output_dir = os.path.join('docs', self.name)
         artifacts_dir = os.path.join('build', 'docs', self.name)  # for artifacts not part of the final documentation
+        os.makedirs(artifacts_dir, mode=0o755, exist_ok=True)
         return [
             *self.pre_args,
             '.',  # source dir

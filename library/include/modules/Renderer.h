@@ -5,6 +5,13 @@
 #pragma once
 
 namespace DFHack { namespace Renderer {
+    // If the the 'x' parameter points to this value, then the 'y' parameter will
+    // be interpreted as a boolean flag for whether to return map coordinates (false)
+    // or text tile coordinates (true). Only TWBT implements this logic, and this
+    // sentinel value can be removed once DF provides an API for retrieving the
+    // two sets of coordinates.
+    DFHACK_EXPORT extern const int32_t GET_MOUSE_COORDS_SENTINEL;
+
     struct DFHACK_EXPORT renderer_wrap : public df::renderer {
         void set_to_null();
         void copy_from_parent();

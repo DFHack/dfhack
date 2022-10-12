@@ -1,5 +1,5 @@
 ====================
-DFHack API Reference
+DFHack API reference
 ====================
 
 .. toctree::

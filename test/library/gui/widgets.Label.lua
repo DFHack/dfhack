@@ -29,7 +29,7 @@ function test.correct_frame_body_with_scroll_icons()
     end
 
     local o = fs{}
-    expect.eq(o.subviews.text.frame_body.width, 9, "Label's frame_body.x2 and .width should be one smaller because of show_scroll_icons.")
+    expect.eq(o.subviews.text.frame_body.width, 9, "Label's frame_body.x2 and .width should be one smaller because of show_scrollbar.")
 end
 
 function test.correct_frame_body_with_few_text_lines()
@@ -50,10 +50,10 @@ function test.correct_frame_body_with_few_text_lines()
     end
 
     local o = fs{}
-    expect.eq(o.subviews.text.frame_body.width, 10, "Label's frame_body.x2 and .width should not change with show_scroll_icons = false.")
+    expect.eq(o.subviews.text.frame_body.width, 10, "Label's frame_body.x2 and .width should not change with show_scrollbar = false.")
 end
 
-function test.correct_frame_body_without_show_scroll_icons()
+function test.correct_frame_body_without_show_scrollbar()
     local t = {}
     for i = 1, 12 do
         t[#t+1] = tostring(i)
@@ -66,13 +66,13 @@ function test.correct_frame_body_without_show_scroll_icons()
                 view_id = 'text',
                 frame_inset = 0,
                 text = t,
-                show_scroll_icons = false,
+                show_scrollbar = false,
             },
         }
     end
 
     local o = fs{}
-    expect.eq(o.subviews.text.frame_body.width, 10, "Label's frame_body.x2 and .width should not change with show_scroll_icons = false.")
+    expect.eq(o.subviews.text.frame_body.width, 10, "Label's frame_body.x2 and .width should not change with show_scrollbar = false.")
 end
 
 function test.scroll()

@@ -62,6 +62,30 @@ fix/build-location
 ==================
 The corresponding DF :bug:`5991` was fixed in DF 0.40.05.
 
+.. _fix/diplomats:
+
+fix/diplomats
+=============
+The corresponding DF :bug:`3295` was fixed in DF 0.40.05.
+
+.. _fix/fat-dwarves:
+
+fix/fat-dwarves
+===============
+The corresponding DF :bug:`5971` was fixed in DF 0.40.05.
+
+.. _fix/feeding-timers:
+
+fix/feeding-timers
+==================
+The corresponding DF :bug:`2606` was fixed in DF 0.40.12.
+
+.. _fix/merchants:
+
+fix/merchants
+=============
+Humans can now make trade agreements. This fix is no longer necessary.
+
 .. _fortplan:
 
 fortplan
@@ -71,6 +95,14 @@ quickfort-style syntax. Please use DFHack's more powerful `quickfort`
 script instead. You can use your existing .csv files. Just move them to the
 ``blueprints`` folder in your DF installation, and instead of
 ``fortplan file.csv`` run ``quickfort run file.csv``.
+
+.. _gui/assign-rack:
+
+gui/assign-rack
+===============
+This script is no longer useful in current DF versions. The script required a
+binpatch <binpatches/needs-patch>`, which has not been available since DF
+0.34.11.
 
 .. _gui/hack-wish:
 

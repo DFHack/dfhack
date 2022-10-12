@@ -9,7 +9,7 @@ DFHack Core
   :depth: 2
 
 
-Command Implementation
+Command implementation
 ======================
 DFHack commands can be implemented in any of three ways:
 
@@ -28,7 +28,7 @@ DFHack commands can be implemented in any of three ways:
 
 All tools distributed with DFHack are documented `here <genindex>`.
 
-Using DFHack Commands
+Using DFHack commands
 =====================
 DFHack commands can be executed in a number of ways:
 
@@ -38,7 +38,7 @@ DFHack commands can be executed in a number of ways:
 #. From one of several `init-files`, automatically
 #. Using `script` to run a batch of commands from a file
 
-The DFHack Console
+The DFHack console
 ------------------
 The command line has some nice line editing capabilities, including history
 that's preserved between different runs of DF - use :kbd:`↑` and :kbd:`↓`
@@ -115,7 +115,7 @@ second (Windows) example uses `kill-lua` to stop a Lua script.
 
 .. _dfhack-config:
 
-Configuration Files
+Configuration files
 ===================
 
 Most DFHack settings can be changed by modifying files in the ``dfhack-config``
@@ -125,7 +125,7 @@ necessary.
 
 .. _init-files:
 
-Init Files
+Init files
 ----------
 
 .. contents::
@@ -260,7 +260,7 @@ modified programmatically at any time through the `Lua API <lua-api-internal>`.
 
 .. _env-vars:
 
-Environment Variables
+Environment variables
 =====================
 
 DFHack's behavior can be adjusted with some environment variables. For example,
@@ -306,7 +306,7 @@ Other (non-DFHack-specific) variables that affect DFHack:
   sensitive), ``DF2CONSOLE()`` will produce UTF-8-encoded text. Note that this
   should be the case in most UTF-8-capable \*nix terminal emulators already.
 
-Miscellaneous Notes
+Miscellaneous notes
 ===================
 This section is for odd but important notes that don't fit anywhere else.
 

@@ -789,7 +789,11 @@ function dfhack.run_script_with_env(envVars, name, flags, ...)
     end
     scripts[file].env = env
     scripts[file].run = script_code
-    return script_code(...), env
+    local args = {...}
+    for i,v in ipairs(args) do
+        args[i] = tostring(v) -- ensure passed parameters are strings
+    end
+    return script_code(table.unpack(args)), env
 end
 
 function dfhack.current_script_name()

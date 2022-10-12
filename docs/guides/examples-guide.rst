@@ -1,8 +1,8 @@
 .. _config-examples-guide:
 .. _dfhack-examples-guide:
 
-DFHack Example Configuration File Index
-=======================================
+DFHack config file examples
+===========================
 
 The :source:`hack/examples <data/examples>` folder contains ready-to-use
 examples of various DFHack configuration files. You can use them by copying them
@@ -14,8 +14,8 @@ The ``init/`` subfolder
 -----------------------
 
 The :source:`init/ <data/examples/init>` subfolder contains useful DFHack
-`init-files` that you can copy into your main Dwarf Fortress folder -- the same
-directory as ``dfhack.init``.
+`init-files` that you can copy into your :file:`dfhack-config/init` folder --
+the same directory as ``dfhack.init``.
 
 .. _onMapLoad-dreamfort-init:
 
@@ -35,7 +35,7 @@ it is useful (and customizable) for any fort. It includes the following config:
 - Periodically enqueues orders to shear and milk shearable and milkable pets.
 - Sets up `autofarm` to grow 30 units of every crop, except for pig tails, which
   is set to 150 units to support the textile industry.
-- Sets up `seedwatch` to keep 30 of every type of seed.
+- Sets up `seedwatch` to protect 30 of every type of seed.
 - Configures `prioritize` to automatically boost the priority of important and
   time-sensitive tasks that could otherwise get ignored in busy forts, like
   hauling food, tanning hides, storing items in vehicles, pulling levers, and

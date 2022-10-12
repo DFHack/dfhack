@@ -313,7 +313,7 @@ static int do_chop_designation(bool chop, bool count_only, int *skipped = nullpt
 {
     int count = 0;
     int estimated_yield = get_log_count();
-    multimap<int, df::plant *> trees_by_size;
+    multimap<int, df::plant *, std::greater<int>> trees_by_size;
 
     if (skipped)
     {

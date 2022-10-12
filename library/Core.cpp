@@ -600,7 +600,7 @@ void help_helper(color_ostream &con, const string &entry_name) {
     }
 }
 
-void tags_helper(color_ostream &con) {
+void tags_helper(color_ostream &con, const string &tag) {
     CoreSuspender suspend;
     auto L = Lua::Core::State;
     Lua::StackUnwinder top(L);
@@ -611,7 +611,9 @@ void tags_helper(color_ostream &con) {
         return;
     }
 
-    if (!Lua::SafeCall(con, L, 0, 0)) {
+    Lua::Push(L, tag);
+
+    if (!Lua::SafeCall(con, L, 1, 0)) {
         con.printerr("Failed Lua call to helpdb.tags.\n");
     }
 }
@@ -712,7 +714,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
     }
     else if (first == "tags")
     {
-        tags_helper(con);
+        tags_helper(con, parts.size() ? parts[0] : "");
     }
     else if (first == "load" || first == "unload" || first == "reload")
     {

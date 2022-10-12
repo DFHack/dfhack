@@ -1523,6 +1523,16 @@ static int gui_getDwarfmodeViewDims(lua_State *state)
     return 1;
 }
 
+static int gui_getMousePos(lua_State *L)
+{
+    auto pos = Gui::getMousePos();
+    if (pos.isValid())
+        Lua::Push(L, pos);
+    else
+        lua_pushnil(L);
+    return 1;
+}
+
 static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, getCurViewscreen),
     WRAPM(Gui, getFocusString),
@@ -1555,6 +1565,7 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
 
 static const luaL_Reg dfhack_gui_funcs[] = {
     { "getDwarfmodeViewDims", gui_getDwarfmodeViewDims },
+    { "getMousePos", gui_getMousePos },
     { NULL, NULL }
 };
 
@@ -2282,18 +2293,12 @@ static const LuaWrapper::FunctionReg dfhack_screen_module[] = {
 
 static int screen_getMousePos(lua_State *L)
 {
-    auto pos = Screen::getMousePos();
-    lua_pushinteger(L, pos.x);
-    lua_pushinteger(L, pos.y);
-    return 2;
+    return Lua::PushPosXY(L, Screen::getMousePos());
 }
 
 static int screen_getWindowSize(lua_State *L)
 {
-    auto pos = Screen::getWindowSize();
-    lua_pushinteger(L, pos.x);
-    lua_pushinteger(L, pos.y);
-    return 2;
+    return Lua::PushPosXY(L, Screen::getWindowSize());
 }
 
 static int screen_paintTile(lua_State *L)
@@ -2368,6 +2373,21 @@ static int screen_findGraphicsTile(lua_State *L)
         lua_pushnil(L);
         return 1;
     }
+}
+
+static int screen_hideGuard(lua_State *L) {
+    df::viewscreen *screen = dfhack_lua_viewscreen::get_pointer(L, 1, false);
+    luaL_checktype(L, 2, LUA_TFUNCTION);
+
+    // remove screen from the stack so it doesn't get returned as an output
+    lua_remove(L, 1);
+
+    Screen::Hide hideGuard(screen, Screen::Hide::RESTORE_AT_TOP);
+
+    int nargs = lua_gettop(L) - 1;
+    lua_call(L, nargs, LUA_MULTRET);
+
+    return lua_gettop(L);
 }
 
 namespace {
@@ -2472,6 +2492,7 @@ static const luaL_Reg dfhack_screen_funcs[] = {
     { "paintString", screen_paintString },
     { "fillRect", screen_fillRect },
     { "findGraphicsTile", screen_findGraphicsTile },
+    CWRAP(hideGuard, screen_hideGuard),
     CWRAP(show, screen_show),
     CWRAP(dismiss, screen_dismiss),
     CWRAP(isDismissed, screen_isDismissed),

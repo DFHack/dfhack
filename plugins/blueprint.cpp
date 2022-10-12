@@ -76,6 +76,8 @@ struct blueprint_options {
     // base name to use for generated files
     string name;
 
+    // whether to capture all smoothed tiles
+    bool smooth = false;
     // whether to capture engravings and smooth the tiles that will be engraved
     bool engrave = false;
 
@@ -103,6 +105,7 @@ static const struct_field_info blueprint_options_fields[] = {
     { struct_field_info::PRIMITIVE, "height",                 offsetof(blueprint_options, height),                &df::identity_traits<int32_t>::identity, 0, 0 },
     { struct_field_info::PRIMITIVE, "depth",                  offsetof(blueprint_options, depth),                 &df::identity_traits<int32_t>::identity, 0, 0 },
     { struct_field_info::PRIMITIVE, "name",                   offsetof(blueprint_options, name),                   df::identity_traits<string>::get(),     0, 0 },
+    { struct_field_info::PRIMITIVE, "smooth",                 offsetof(blueprint_options, smooth),                &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "engrave",                offsetof(blueprint_options, engrave),               &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "auto_phase",             offsetof(blueprint_options, auto_phase),            &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "dig",                    offsetof(blueprint_options, dig),                   &df::identity_traits<bool>::identity,    0, 0 },
@@ -219,8 +222,8 @@ static const char * get_tile_smooth_minimal(const df::coord &pos,
     return NULL;
 }
 
-static const char * get_tile_smooth(const df::coord &pos,
-                                    const tile_context &tc) {
+static const char * get_tile_smooth_with_engravings(const df::coord &pos,
+                                                    const tile_context &tc) {
     const char * smooth_minimal = get_tile_smooth_minimal(pos, tc);
     if (smooth_minimal)
         return smooth_minimal;
@@ -235,6 +238,30 @@ static const char * get_tile_smooth(const df::coord &pos,
     case tiletype_shape::WALL:
         if (tileSpecial(*tt) == tiletype_special::SMOOTH &&
                 engravings_cache.count(pos))
+            return "s";
+        break;
+    default:
+        break;
+    }
+
+    return NULL;
+}
+
+static const char * get_tile_smooth_all(const df::coord &pos,
+                                        const tile_context &tc) {
+    const char * smooth_minimal = get_tile_smooth_minimal(pos, tc);
+    if (smooth_minimal)
+        return smooth_minimal;
+
+    df::tiletype *tt = Maps::getTileType(pos);
+    if (!tt)
+        return NULL;
+
+    switch (tileShape(*tt))
+    {
+    case tiletype_shape::FLOOR:
+    case tiletype_shape::WALL:
+        if (tileSpecial(*tt) == tiletype_special::SMOOTH)
             return "s";
         break;
     default:
@@ -1096,9 +1123,13 @@ static bool do_transform(color_ostream &out,
 
     vector<blueprint_processor> processors;
 
+    get_tile_fn* smooth_get_tile_fn = get_tile_smooth_minimal;
+    if (opts.engrave) smooth_get_tile_fn = get_tile_smooth_with_engravings;
+    if (opts.smooth) smooth_get_tile_fn = get_tile_smooth_all;
+
     add_processor(processors, opts, "dig", "dig", opts.dig, get_tile_dig);
     add_processor(processors, opts, "dig", "smooth", opts.carve,
-                  opts.engrave ? get_tile_smooth : get_tile_smooth_minimal);
+                  smooth_get_tile_fn);
     add_processor(processors, opts, "dig", "carve", opts.carve,
                   opts.engrave ? get_tile_carve : get_tile_carve_minimal);
     add_processor(processors, opts, "build", "build", opts.build,
@@ -1187,23 +1218,11 @@ static bool get_options(color_ostream &out,
     return true;
 }
 
-static void print_help(color_ostream &out) {
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
-
-    if (!lua_checkstack(L, 1) ||
-        !Lua::PushModulePublic(out, L, "plugins.blueprint", "print_help") ||
-        !Lua::SafeCall(out, L, 0, 0))
-    {
-        out.printerr("Failed to load blueprint Lua code\n");
-    }
-}
-
 // returns whether blueprint generation was successful. populates files with the
 // names of the files that were generated
-static bool do_blueprint(color_ostream &out,
-                         const vector<string> &parameters,
-                         vector<string> &files) {
+static command_result do_blueprint(color_ostream &out,
+                                   const vector<string> &parameters,
+                                   vector<string> &files) {
     CoreSuspender suspend;
 
     if (parameters.size() >= 1 && parameters[0] == "gui") {
@@ -1221,13 +1240,12 @@ static bool do_blueprint(color_ostream &out,
 
     blueprint_options options;
     if (!get_options(out, options, parameters) || options.help) {
-        print_help(out);
-        return options.help;
+        return CR_WRONG_USAGE;
     }
 
     if (!Maps::IsValid()) {
         out.printerr("Map is not available!\n");
-        return false;
+        return CR_FAILURE;
     }
 
     // start coordinates can come from either the commandline or the map cursor
@@ -1236,13 +1254,13 @@ static bool do_blueprint(color_ostream &out,
         if (!Gui::getCursorCoords(start)) {
             out.printerr("Can't get cursor coords! Make sure you specify the"
                     " --cursor parameter or have an active cursor in DF.\n");
-            return false;
+            return CR_FAILURE;
         }
     }
     if (!Maps::isValidTilePos(start)) {
         out.printerr("Invalid start position: %d,%d,%d\n",
                      start.x, start.y, start.z);
-        return false;
+        return CR_FAILURE;
     }
 
     // end coords are one beyond the last processed coordinate. note that
@@ -1265,7 +1283,7 @@ static bool do_blueprint(color_ostream &out,
 
     bool ok = do_transform(out, start, end, options, files);
     cache(NULL);
-    return ok;
+    return ok ? CR_OK : CR_FAILURE;
 }
 
 // entrypoint when called from Lua. returns the names of the generated files
@@ -1284,7 +1302,7 @@ static int run(lua_State *L) {
     color_ostream *out = Lua::GetOutput(L);
     if (!out)
         out = &Core::getInstance().getConsole();
-    if (do_blueprint(*out, argv, files)) {
+    if (CR_OK == do_blueprint(*out, argv, files)) {
         Lua::PushVector(L, files);
         return 1;
     }
@@ -1294,13 +1312,13 @@ static int run(lua_State *L) {
 
 command_result blueprint(color_ostream &out, vector<string> &parameters) {
     vector<string> files;
-    if (do_blueprint(out, parameters, files)) {
+    command_result cr = do_blueprint(out, parameters, files);
+    if (cr == CR_OK) {
         out.print("Generated blueprint file(s):\n");
         for (string &fname : files)
             out.print("  %s\n", fname.c_str());
-        return CR_OK;
     }
-    return CR_FAILURE;
+    return cr;
 }
 
 DFHACK_PLUGIN_LUA_COMMANDS {

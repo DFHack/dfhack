@@ -1912,7 +1912,8 @@ Constructions module
 
 * ``dfhack.constructions.insert(construction)``
 
-  Properly inserts the given construction into the game.
+  Properly inserts the given construction into the game. Returns false and fails to
+  insert if there was already a construction at the position.
 
 Kitchen module
 --------------

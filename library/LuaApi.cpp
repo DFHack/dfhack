@@ -2264,6 +2264,7 @@ static const luaL_Reg dfhack_buildings_funcs[] = {
 
 static const LuaWrapper::FunctionReg dfhack_constructions_module[] = {
     WRAPM(Constructions, designateNew),
+    WRAPM(Constructions, insert),
     { NULL, NULL }
 };
 
@@ -2286,7 +2287,6 @@ static int constructions_findAtTile(lua_State *L)
 static const luaL_Reg dfhack_constructions_funcs[] = {
     { "designateRemove", constructions_designateRemove },
     { "findAtTile", constructions_findAtTile },
-    WRAPM(Constructions, insert),
     { NULL, NULL }
 };
 

@@ -28,7 +28,6 @@ distribution.
 #include <string>
 #include <vector>
 #include <map>
-#include <unordered_set>
 #include <cstring>
 using namespace std;
 
@@ -52,11 +51,6 @@ using namespace std;
 #include "df/map_block.h"
 #include "df/block_square_event_world_constructionst.h"
 #include "df/viewscreen_legendsst.h"
-#include "df/d_init.h"
-#include "df/viewscreen_dwarfmodest.h"
-#include "df/ui.h"
-#include "VTableInterpose.h"
-#include "PluginManager.h"
 
 using namespace DFHack;
 using namespace df::enums;

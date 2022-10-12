@@ -35,7 +35,6 @@ distribution.
 #include "Module.h"
 #include "modules/Persistence.h"
 #include <ostream>
-#include <unordered_set>
 
 #include "DataDefs.h"
 

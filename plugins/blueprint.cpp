@@ -85,11 +85,12 @@ struct blueprint_options {
     bool auto_phase = false;
 
     // if not autodetecting, which phases to output
-    bool dig   = false;
+    bool dig = false;
     bool carve = false;
+    bool construct = false;
     bool build = false;
     bool place = false;
-    bool zone  = false;
+    bool zone = false;
     bool query = false;
 
     static struct_identity _identity;
@@ -110,6 +111,7 @@ static const struct_field_info blueprint_options_fields[] = {
     { struct_field_info::PRIMITIVE, "auto_phase",             offsetof(blueprint_options, auto_phase),            &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "dig",                    offsetof(blueprint_options, dig),                   &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "carve",                  offsetof(blueprint_options, carve),                 &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::PRIMITIVE, "construct",              offsetof(blueprint_options, construct),             &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "build",                  offsetof(blueprint_options, build),                 &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "place",                  offsetof(blueprint_options, place),                 &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "zone",                   offsetof(blueprint_options, zone),                  &df::identity_traits<bool>::identity,    0, 0 },
@@ -332,6 +334,108 @@ static const char * get_tile_carve(const df::coord &pos, const tile_context &tc)
     return NULL;
 }
 
+static const char * get_construction_str(df::building *b) {
+    df::building_constructionst *cons =
+            virtual_cast<df::building_constructionst>(b);
+    if (!cons)
+        return "~";
+
+    switch (cons->type) {
+    case construction_type::Fortification: return "CF";
+    case construction_type::Wall:          return "Cw";
+    case construction_type::Floor:         return "Cf";
+    case construction_type::UpStair:       return "Cu";
+    case construction_type::DownStair:     return "Cd";
+    case construction_type::UpDownStair:   return "Cx";
+    case construction_type::Ramp:          return "Cr";
+    case construction_type::TrackN:        return "trackN";
+    case construction_type::TrackS:        return "trackS";
+    case construction_type::TrackE:        return "trackE";
+    case construction_type::TrackW:        return "trackW";
+    case construction_type::TrackNS:       return "trackNS";
+    case construction_type::TrackNE:       return "trackNE";
+    case construction_type::TrackNW:       return "trackNW";
+    case construction_type::TrackSE:       return "trackSE";
+    case construction_type::TrackSW:       return "trackSW";
+    case construction_type::TrackEW:       return "trackEW";
+    case construction_type::TrackNSE:      return "trackNSE";
+    case construction_type::TrackNSW:      return "trackNSW";
+    case construction_type::TrackNEW:      return "trackNEW";
+    case construction_type::TrackSEW:      return "trackSEW";
+    case construction_type::TrackNSEW:     return "trackNSEW";
+    case construction_type::TrackRampN:    return "trackrampN";
+    case construction_type::TrackRampS:    return "trackrampS";
+    case construction_type::TrackRampE:    return "trackrampE";
+    case construction_type::TrackRampW:    return "trackrampW";
+    case construction_type::TrackRampNS:   return "trackrampNS";
+    case construction_type::TrackRampNE:   return "trackrampNE";
+    case construction_type::TrackRampNW:   return "trackrampNW";
+    case construction_type::TrackRampSE:   return "trackrampSE";
+    case construction_type::TrackRampSW:   return "trackrampSW";
+    case construction_type::TrackRampEW:   return "trackrampEW";
+    case construction_type::TrackRampNSE:  return "trackrampNSE";
+    case construction_type::TrackRampNSW:  return "trackrampNSW";
+    case construction_type::TrackRampNEW:  return "trackrampNEW";
+    case construction_type::TrackRampSEW:  return "trackrampSEW";
+    case construction_type::TrackRampNSEW: return "trackrampNSEW";
+    case construction_type::NONE:
+    default:
+        return "~";
+    }
+}
+
+static const char * get_constructed_track_str(df::tiletype *tt,
+                                              const char * base) {
+    TileDirection dir = tileDirection(*tt);
+    if (!dir.whole)
+        return "~";
+
+    std::ostringstream str;
+    str << base;
+    if (dir.north) str << "N";
+    if (dir.south) str << "S";
+    if (dir.east) str << "E";
+    if (dir.west) str << "W";
+
+    return cache(str);
+}
+
+static const char * get_constructed_floor_str(df::tiletype *tt) {
+    if (tileSpecial(*tt) != df::tiletype_special::TRACK)
+        return "Cf";
+    return get_constructed_track_str(tt, "track");
+}
+
+static const char * get_constructed_ramp_str(df::tiletype *tt) {
+    if (tileSpecial(*tt) != df::tiletype_special::TRACK)
+        return "Cr";
+    return get_constructed_track_str(tt, "trackramp");
+}
+
+static const char * get_tile_construct(const df::coord &pos,
+                                   const tile_context &ctx) {
+    if (ctx.b && ctx.b->getType() == building_type::Construction)
+        return get_construction_str(ctx.b);
+
+    df::tiletype *tt = Maps::getTileType(pos);
+    if (!tt || tileMaterial(*tt) != df::tiletype_material::CONSTRUCTION)
+        return NULL;
+
+    switch (tileShape(*tt)) {
+    case tiletype_shape::WALL:          return "Cw";
+    case tiletype_shape::FLOOR:         return get_constructed_floor_str(tt);
+    case tiletype_shape::RAMP:          return get_constructed_ramp_str(tt);
+    case tiletype_shape::FORTIFICATION: return "CF";
+    case tiletype_shape::STAIR_UP:      return "Cu";
+    case tiletype_shape::STAIR_DOWN:    return "Cd";
+    case tiletype_shape::STAIR_UPDOWN:  return "Cx";
+    default:
+        return "~";
+    }
+
+    return NULL;
+}
+
 static pair<uint32_t, uint32_t> get_building_size(const df::building *b) {
     return pair<uint32_t, uint32_t>(b->x2 - b->x1 + 1, b->y2 - b->y1 + 1);
 }
@@ -461,56 +565,6 @@ static const char * get_furnace_str(df::building *b) {
     }
 }
 
-static const char * get_construction_str(df::building *b) {
-    df::building_constructionst *cons =
-            virtual_cast<df::building_constructionst>(b);
-    if (!cons)
-        return "~";
-
-    switch (cons->type) {
-    case construction_type::Fortification: return "CF";
-    case construction_type::Wall:          return "Cw";
-    case construction_type::Floor:         return "Cf";
-    case construction_type::UpStair:       return "Cu";
-    case construction_type::DownStair:     return "Cd";
-    case construction_type::UpDownStair:   return "Cx";
-    case construction_type::Ramp:          return "Cr";
-    case construction_type::TrackN:        return "trackN";
-    case construction_type::TrackS:        return "trackS";
-    case construction_type::TrackE:        return "trackE";
-    case construction_type::TrackW:        return "trackW";
-    case construction_type::TrackNS:       return "trackNS";
-    case construction_type::TrackNE:       return "trackNE";
-    case construction_type::TrackNW:       return "trackNW";
-    case construction_type::TrackSE:       return "trackSE";
-    case construction_type::TrackSW:       return "trackSW";
-    case construction_type::TrackEW:       return "trackEW";
-    case construction_type::TrackNSE:      return "trackNSE";
-    case construction_type::TrackNSW:      return "trackNSW";
-    case construction_type::TrackNEW:      return "trackNEW";
-    case construction_type::TrackSEW:      return "trackSEW";
-    case construction_type::TrackNSEW:     return "trackNSEW";
-    case construction_type::TrackRampN:    return "trackrampN";
-    case construction_type::TrackRampS:    return "trackrampS";
-    case construction_type::TrackRampE:    return "trackrampE";
-    case construction_type::TrackRampW:    return "trackrampW";
-    case construction_type::TrackRampNS:   return "trackrampNS";
-    case construction_type::TrackRampNE:   return "trackrampNE";
-    case construction_type::TrackRampNW:   return "trackrampNW";
-    case construction_type::TrackRampSE:   return "trackrampSE";
-    case construction_type::TrackRampSW:   return "trackrampSW";
-    case construction_type::TrackRampEW:   return "trackrampEW";
-    case construction_type::TrackRampNSE:  return "trackrampNSE";
-    case construction_type::TrackRampNSW:  return "trackrampNSW";
-    case construction_type::TrackRampNEW:  return "trackrampNEW";
-    case construction_type::TrackRampSEW:  return "trackrampSEW";
-    case construction_type::TrackRampNSEW: return "trackrampNSEW";
-    case construction_type::NONE:
-    default:
-        return "~";
-    }
-}
-
 static const char * get_trap_str(df::building *b) {
     df::building_trapst *trap = virtual_cast<df::building_trapst>(b);
     if (!trap)
@@ -622,6 +676,7 @@ static const char * get_build_keys(const df::coord &pos,
     bool at_center = static_cast<int32_t>(pos.x) == ctx.b->centerx
                             && static_cast<int32_t>(pos.y) == ctx.b->centery;
 
+    // building_type::Construction is handled by the construction phase
     switch(ctx.b->getType()) {
     case building_type::Armorstand:
         return "a";
@@ -666,8 +721,6 @@ static const char * get_build_keys(const df::coord &pos,
         return "y";
     case building_type::WindowGem:
         return "Y";
-    case building_type::Construction:
-        return get_construction_str(ctx.b);
     case building_type::Shop:
         return do_block_building(ctx, "z", at_center);
     case building_type::AnimalTrap:
@@ -1132,6 +1185,8 @@ static bool do_transform(color_ostream &out,
                   smooth_get_tile_fn);
     add_processor(processors, opts, "dig", "carve", opts.carve,
                   opts.engrave ? get_tile_carve : get_tile_carve_minimal);
+    add_processor(processors, opts, "build", "construct", opts.construct,
+                  get_tile_construct, ensure_building);
     add_processor(processors, opts, "build", "build", opts.build,
                   get_tile_build, ensure_building);
     add_processor(processors, opts, "place", "place", opts.place,

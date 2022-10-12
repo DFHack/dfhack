@@ -6,6 +6,7 @@ local utils = require('utils')
 local valid_phase_list = {
     'dig',
     'carve',
+    'construct',
     'build',
     'place',
     'zone',

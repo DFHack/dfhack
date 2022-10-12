@@ -7,21 +7,8 @@ Mw,,,Msh,CSddddaaaa
 Mhs(1x2),,,Msm
 ,,Mws,,Msu
 Mh(2x1),,,Mws
-#build label(outer) hidden()
-trackN,trackS,trackE,,trackW,trackNS
-trackNE,trackNW,trackSE,,trackSW
-trackEW,trackNSE,trackNSW
-
-trackNEW,trackSEW
-trackNSEW
-#build label(inner) hidden()
-trackrampN,trackrampNS,trackrampNE
-trackrampNSE,trackrampNSW
-trackrampNSEW
 #meta label(chunk) hidden()
 /big shift(1 -13)
-/outer shift(7 -13)
-/inner shift(1 -4)
 #meta label(build)
 /chunk
 /chunk transform(cw)

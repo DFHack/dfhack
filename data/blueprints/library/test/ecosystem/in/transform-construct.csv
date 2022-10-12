@@ -1,0 +1,23 @@
+#build label(outer) hidden()
+trackN,trackS,trackE,,trackW,trackNS
+trackNE,trackNW,trackSE,,trackSW
+trackEW,trackNSE,trackNSW
+
+trackNEW,trackSEW
+trackNSEW
+#build label(inner) hidden()
+trackrampN,trackrampNS,trackrampNE
+trackrampNSE,trackrampNSW
+trackrampNSEW
+#meta label(chunk) hidden()
+/outer shift(7 -13)
+/inner shift(1 -4)
+#meta label(construct)
+/chunk
+/chunk transform(cw)
+/chunk transform(cw cw)
+/chunk transform(ccw)
+/chunk transform(fliph)
+/chunk transform(flipv)
+/chunk transform(cw flipv)
+/chunk transform(ccw flipv)

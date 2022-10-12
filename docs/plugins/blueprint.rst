@@ -77,7 +77,10 @@ phases; just separate them with a space.
 ``zone``
     Generate quickfort ``#zone`` blueprints for designating zones.
 ``query``
-    Generate quickfort ``#query`` blueprints for configuring rooms.
+    Generate quickfort ``#query`` blueprints for configuring stockpiles and
+    naming buildings.
+``rooms``
+    Generate quickfort ``#query`` blueprints for defining rooms.
 
 If no phases are specified, phases are autodetected. For example, a ``#place``
 blueprint will be created only if there are stockpiles in the blueprint area.

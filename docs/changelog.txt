@@ -40,6 +40,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 - `blueprint`: new ``--smooth`` option for recording all smoothed floors and walls instead of just the ones that require smoothing for later carving
 - `blueprint`: record built constructions in blueprints
+- `blueprint`: record stockpile/building/zone names in blueprints
+- `blueprint`: record room sizes in blueprints
 - `ls`: indent tag listings and wrap them in the right column for better readability
 - `ls`: new ``--exclude`` option for hiding matched scripts from the output.  this can be especially useful for modders who don't want their mod scripts to be included in ``ls`` output.
 - `digtype`: new ``-z`` option for digtype to restrict designations to the current z-level and down

@@ -11,6 +11,7 @@ local valid_phase_list = {
     'place',
     'zone',
     'query',
+    'rooms',
 }
 valid_phases = utils.invert(valid_phase_list)
 

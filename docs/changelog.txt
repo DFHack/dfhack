@@ -64,12 +64,17 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `prospect`: add new ``--show`` option to give the player control over which report sections are shown. e.g. ``prospect all --show ores`` will just show information on ores.
 - `seedwatch`: ``seedwatch all`` now adds all plants with seeds to the watchlist, not just the "basic" crops.
 - `spectate`: ``spectate auto-unpause`` is a new feature that will auto-dismiss pause events when enabled. This does not affect the player's ability to pause at a whim.
+- `spectate`: ``spectate auto-disengage`` is a new feature that will auto-disengage the plugin when the player interacts with the game while unpaused
+- `spectate`: ``spectate focus-jobs`` is a new feature that allows the plugin to not always follow a job, so it can trail a dwarf after they finish a job
+- `spectate`: ``spectate tick-threshold`` is a new feature that allows the player to change how long to follow a dwarf
+- `spectate`: added persistent configuration of the plugin settings
 - UX: You can now move the cursor around in DFHack text fields in ``gui/`` scripts (e.g. `gui/blueprint`, `gui/quickfort`, or `gui/gm-editor`). You can move the cursor by clicking where you want it to go with the mouse or using the Left/Right arrow keys.  Ctrl+Left/Right will move one word at a time, and Alt+Left/Right will move to the beginning/end of the text.
 - UX: You can now click on the hotkey hint text in many ``gui/`` script windows to activate the hotkey, like a button. Not all scripts have been updated to use the clickable widget yet, but you can try it in `gui/blueprint` or `gui/quickfort`.
 - UX: Label widget scroll icons are replaced with scrollbars that represent the percentage of text on the screen and move with the position of the visible text, just like web browser scrollbars.
 - `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set improvements: set traffic designations to encourage dwarves to eat cooked food instead of raw ingredients
 
 ## Documentation
+- `spectate`: improved documentation of features and functionality
 - Added `modding-guide`
 - Update all DFHack tool documentation (300+ pages) with standard syntax formatting, usage examples, and overall clarified text.
 - Group DFHack tools by `tag <tools>` so similar tools are grouped and easy to find
@@ -81,14 +86,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Removed ``Windows`` module (C++-only) - unused.
 - ``Constructions`` module (C++-only): removed ``t_construction``, ``isValid()``, ``getCount()``, ``getConstruction()``, and ``copyConstruction()``. Access ``world.constructions`` directly instead.
 - ``Gui::getSelectedItem()``, ``Gui::getAnyItem()``: added support for the artifacts screen
-- Added functions for manipulating pause abilities, to the World module.
-  - Added ``World::AcquireAnnouncementPauseLock()`` acquires a lock object to lock Announcement pause API calls
-  - Added ``World::AcquirePlayerPauseLock()`` acquires a lock object to lock Player pause API calls
-  - Added ``World::ReleasePauseLock()`` to release acquired locks on plugin shutdown
-  - Added ``World::DisableAnnouncementPausing()`` sets all announcement pause settings to off
-  - Added ``World::SaveAnnouncementSettings()`` and ``World::RestoreAnnouncementSettings()`` saves/restores the announcement pause settings
-  - Added ``World::DisablePlayerPausing()`` and ``World::EnablePlayerPausing()`` disables/enables the player's ability to pause the game
-
 
 ## Lua
 - History: added ``dfhack.getCommandHistory(history_id, history_filename)`` and ``dfhack.addCommandToHistory(history_id, history_filename, command)`` so gui scripts can access a commandline history without requiring a terminal.

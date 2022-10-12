@@ -23,6 +23,9 @@ To set features that toggle between two states, use {0,1} to specify
 which state the feature should be in. Anything else will take any positive
 value.
 
+Changes to plugin settings will be saved per world. Whether the plugin itself
+is enabled or not is not saved.
+
 Examples
 --------
 
@@ -42,7 +45,7 @@ Options
 
 :no option:      Show plugin status.
 :tick-threshold: Set the plugin's tick interval for changing the followed dwarf.
-                 Acts as a maximum wait time when used with focus-jobs.
-:focus-jobs:     Toggle whether the plugin should always be following a job.
-:auto-unpause:   Toggle auto-dismissal of game pause events.
-:auto-disengage: Toggle auto-disengagement of plugin through player intervention.
+                 Acts as a maximum follow time when used with focus-jobs enabled. (default: 50)
+:focus-jobs:     Toggle whether the plugin should always be following a job. (default: 0)
+:auto-unpause:   Toggle auto-dismissal of game pause events. (default: 0)
+:auto-disengage: Toggle auto-disengagement of plugin through player intervention while unpaused. (default: 0)

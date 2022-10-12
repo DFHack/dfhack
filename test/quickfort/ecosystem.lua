@@ -327,6 +327,7 @@ function test.end_to_end()
         do_dig_phase(phases.dig, area, spec)
         if phases.smooth then do_dig_phase(phases.smooth, area, spec) end
         if phases.carve then do_dig_phase(phases.carve, area, spec) end
+        if phases.construct then do_phase(phases.construct, area, spec) end
         if phases.build then do_phase(phases.build, area, spec) end
         if phases.place then do_phase(phases.place, area, spec) end
         if phases.zone then do_phase(phases.zone, area, spec) end

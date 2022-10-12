@@ -147,7 +147,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
         if (unpause_enabled) {
             // player asked for auto-unpause enabled
             World::SaveAnnouncementSettings();
-            if (World::DisableAnnouncementPausing()){
+            if (World::DisableAnnouncementPausing()) {
                 // now that we've got what we want, we can lock it down
                 lock_collision = false;
                 pause_lock->lock();
@@ -163,25 +163,25 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
         Gui::getCurViewscreen(true)->feed_key(interface_key::CLOSE_MEGA_ANNOUNCEMENT);
     }
     if (disengage_enabled) {
-        if (our_dorf && our_dorf->id != df::global::ui->follow_unit){
+        if (our_dorf && our_dorf->id != df::global::ui->follow_unit) {
             plugin_enable(out, false);
         }
     }
     return DFHack::CR_OK;
 }
 
-void enable_auto_unpause(color_ostream &out, bool state){
-    if(unpause_enabled != state && lock_collision) {
-        // when enabled, lock collision means announcements haven't been disabled
-        // when disabled, lock collision means announcement are still disabled
-        // the only state left to consider here is what the lock should be set to
+void enable_auto_unpause(color_ostream &out, bool state) {
+    // lock_collision == true means: enable_auto_unpause() was already invoked and didn't complete
+    // The onupdate function above ensure the procedure properly completes, thus we only care about
+    // state reversal here ergo `enabled != state`
+    if (lock_collision && unpause_enabled != state) {
+        // if unpaused_enabled is true, then a lock collision means: we couldn't save/disable the pause settings,
+        // therefore nothing to revert and the lock won't even be engaged (nothing to unlock)
         lock_collision = false;
         unpause_enabled = state;
         if (unpause_enabled) {
+            // a collision means we couldn't restore the pause settings, therefore we only need re-engage the lock
             pause_lock->lock();
-        } else {
-            // this one should be redundant, the lock should already be unlocked right now
-            pause_lock->unlock();
         }
         return;
     }
@@ -201,37 +201,39 @@ void enable_auto_unpause(color_ostream &out, bool state){
             lock_collision = true;
         }
     }
-    if (lock_collision){
-        out.printerr("auto-unpause: must wait for another Pausing::AnnouncementLock to be lifted. This setting will complete when the lock lifts.\n");
+    if (lock_collision) {
+        out.printerr(
+                "auto-unpause: must wait for another Pausing::AnnouncementLock to be lifted."
+                " This setting will complete when the lock lifts.\n");
     }
 }
 
 command_result spectate (color_ostream &out, std::vector <std::string> & parameters) {
-    if(!parameters.empty()) {
+    if (!parameters.empty()) {
         if (parameters.size() % 2 != 0) {
             return DFHack::CR_WRONG_USAGE;
         }
-        for (size_t i = 0; i+1 < parameters.size(); i += 2) {
+        for (size_t i = 0; i + 1 < parameters.size(); i += 2) {
             if (parameters[i] == "auto-unpause") {
-                if (parameters[i+1] == "0") {
+                if (parameters[i + 1] == "0") {
                     enable_auto_unpause(out, false);
-                } else if (parameters[i+1] == "1") {
+                } else if (parameters[i + 1] == "1") {
                     enable_auto_unpause(out, true);
                 } else {
                     return DFHack::CR_WRONG_USAGE;
                 }
             } else if (parameters[i] == "auto-disengage") {
-                if (parameters[i+1] == "0") {
+                if (parameters[i + 1] == "0") {
                     disengage_enabled = false;
-                } else if (parameters[i+1] == "1") {
+                } else if (parameters[i + 1] == "1") {
                     disengage_enabled = true;
                 } else {
                     return DFHack::CR_WRONG_USAGE;
                 }
             } else if (parameters[i] == "focus-jobs") {
-                if (parameters[i+1] == "0") {
+                if (parameters[i + 1] == "0") {
                     focus_jobs_enabled = false;
-                } else if (parameters[i+1] == "1") {
+                } else if (parameters[i + 1] == "1") {
                     focus_jobs_enabled = true;
                 } else {
                     return DFHack::CR_WRONG_USAGE;
@@ -261,13 +263,13 @@ command_result spectate (color_ostream &out, std::vector <std::string> & paramet
 void onTick(color_ostream& out, void* ptr) {
     if (!df::global::ui) return;
     int32_t tick = df::global::world->frame_counter;
-    if(our_dorf){
-        if(!Units::isAlive(our_dorf)){
+    if (our_dorf) {
+        if (!Units::isAlive(our_dorf)) {
             following_dwarf = false;
             df::global::ui->follow_unit = -1;
         }
     }
-    if (!following_dwarf || (focus_jobs_enabled && !job_watched) || (tick - timestamp) > (int32_t)tick_threshold) {
+    if (!following_dwarf || (focus_jobs_enabled && !job_watched) || (tick - timestamp) > (int32_t) tick_threshold) {
         std::vector<df::unit*> dwarves;
         for (auto unit: df::global::world->units.active) {
             if (!Units::isCitizen(unit)) {
@@ -298,7 +300,7 @@ void onJobStart(color_ostream& out, void* job_ptr) {
     int zcount = ++freq[job->pos.z];
     job_tracker.emplace(job->id);
     // if we're not doing anything~ then let's pick something
-    if ((focus_jobs_enabled && !job_watched) || (tick - timestamp) > (int32_t)tick_threshold) {
+    if ((focus_jobs_enabled && !job_watched) || (tick - timestamp) > (int32_t) tick_threshold) {
         following_dwarf = true;
         // todo: allow the user to configure b, and also revise the math
         const double b = base;
@@ -330,7 +332,7 @@ void onJobStart(color_ostream& out, void* job_ptr) {
 
 // every job completed can be forgotten about
 void onJobCompletion(color_ostream &out, void* job_ptr) {
-    auto job = (df::job*)job_ptr;
+    auto job = (df::job*) job_ptr;
     // forget about it
     freq[job->pos.z]--;
     freq[job->pos.z] = freq[job->pos.z] < 0 ? 0 : freq[job->pos.z];

@@ -2,6 +2,8 @@
 // Created by josh on 7/28/21.
 //
 
+#include "pause.h"
+
 #include "Core.h"
 #include <modules/Gui.h>
 #include <Console.h>
@@ -31,6 +33,7 @@ REQUIRE_GLOBAL(pause_state);
 REQUIRE_GLOBAL(d_init);
 
 using namespace DFHack;
+using namespace Pausing;
 using namespace df::enums;
 
 void onTick(color_ostream& out, void* tick);
@@ -52,6 +55,9 @@ int32_t timestamp = -1;
 std::set<int32_t> job_tracker;
 std::map<uint16_t,uint16_t> freq;
 std::default_random_engine RNG;
+
+
+
 
 #define base 0.99
 
@@ -80,12 +86,12 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
                                      "Automated spectator mode.",
                                      spectate,
                                      false));
-    pause_lock = World::AcquireAnnouncementPauseLock("spectate");
+    pause_lock = new AnnouncementLock("spectate");
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
-    World::ReleasePauseLock(pause_lock);
+    delete pause_lock;
     return CR_OK;
 }
 

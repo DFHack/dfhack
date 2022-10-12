@@ -168,7 +168,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
         // dismiss announcement popup(s)
         Gui::getCurViewscreen(true)->feed_key(interface_key::CLOSE_MEGA_ANNOUNCEMENT);
     }
-    if (disengage_enabled) {
+    if (disengage_enabled && !World::ReadPauseState()) {
         if (our_dorf && our_dorf->id != df::global::ui->follow_unit) {
             plugin_enable(out, false);
         }

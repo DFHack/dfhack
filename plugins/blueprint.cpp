@@ -6,6 +6,7 @@
  */
 
 #include <algorithm>
+#include <regex>
 #include <sstream>
 #include <unordered_map>
 
@@ -92,6 +93,7 @@ struct blueprint_options {
     bool place = false;
     bool zone = false;
     bool query = false;
+    bool rooms = false;
 
     static struct_identity _identity;
 };
@@ -116,6 +118,7 @@ static const struct_field_info blueprint_options_fields[] = {
     { struct_field_info::PRIMITIVE, "place",                  offsetof(blueprint_options, place),                 &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "zone",                   offsetof(blueprint_options, zone),                  &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "query",                  offsetof(blueprint_options, query),                 &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::PRIMITIVE, "rooms",                  offsetof(blueprint_options, rooms),                 &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::END }
 };
 struct_identity blueprint_options::_identity(sizeof(blueprint_options), &df::allocator_fn<blueprint_options>, NULL, "blueprint_options", NULL, blueprint_options_fields);
@@ -134,9 +137,34 @@ DFhackCExport command_result plugin_shutdown(color_ostream &) {
     return CR_OK;
 }
 
+struct blueprint_processor;
 struct tile_context {
+    blueprint_processor *processor;
     bool pretty = false;
     df::building* b = NULL;
+};
+
+typedef vector<const char *> bp_row;     // index is x coordinate
+typedef map<int16_t, bp_row> bp_area;    // key is y coordinate
+typedef map<int16_t, bp_area> bp_volume; // key is z coordinate
+
+typedef const char * (get_tile_fn)(const df::coord &pos,
+                                   const tile_context &ctx);
+typedef void (init_ctx_fn)(const df::coord &pos, tile_context &ctx);
+
+struct blueprint_processor {
+    bp_volume mapdata;
+    const string mode;
+    const string phase;
+    const bool force_create;
+    get_tile_fn * const get_tile;
+    init_ctx_fn * const init_ctx;
+    std::set<df::building *> seen;
+    blueprint_processor(const string &mode, const string &phase,
+                        bool force_create, get_tile_fn *get_tile,
+                        init_ctx_fn *init_ctx)
+        : mode(mode), phase(phase), force_create(force_create),
+          get_tile(get_tile), init_ctx(init_ctx) { }
 };
 
 // global engravings cache, cleared when the string cache is cleared
@@ -974,7 +1002,45 @@ static const char * get_tile_zone(const df::coord &pos,
     return add_expansion_syntax(zone, get_zone_keys(zone));
 }
 
-static const char * get_tile_query(const df::coord &, const tile_context &ctx) {
+static string csv_sanitize(const string &str) {
+    static const std::regex pattern("\"");
+    static const string replacement("\"\"");
+
+    return std::regex_replace(str, pattern, replacement);
+}
+
+static const char * get_tile_query(const df::coord &pos,
+                                   const tile_context &ctx) {
+    string bld_name, zone_name;
+    auto & seen = ctx.processor->seen;
+
+    if (ctx.b && !seen.count(ctx.b)) {
+        bld_name = ctx.b->name;
+        seen.emplace(ctx.b);
+    }
+
+    vector<df::building_civzonest*> civzones;
+    if (Buildings::findCivzonesAt(&civzones, pos)) {
+        auto civzone = civzones.back();
+        if (!seen.count(civzone)) {
+            zone_name = civzone->name;
+            seen.emplace(civzone);
+        }
+    }
+
+    if (!bld_name.size() && !zone_name.size())
+        return NULL;
+
+    std::ostringstream str;
+    if (bld_name.size())
+        str << "{givename name=\"" << csv_sanitize(bld_name) << "\"}";
+    if (zone_name.size())
+        str << "{namezone name=\"" << csv_sanitize(zone_name) << "\"}";
+
+    return cache(str);
+}
+
+static const char * get_tile_rooms(const df::coord &, const tile_context &ctx) {
     if (!ctx.b || !ctx.b->is_room)
         return NULL;
     return "r+";
@@ -1026,28 +1092,6 @@ static bool get_filename(string &fname,
     fname = s;
     return true;
 }
-
-typedef vector<const char *> bp_row;     // index is x coordinate
-typedef map<int16_t, bp_row> bp_area;    // key is y coordinate
-typedef map<int16_t, bp_area> bp_volume; // key is z coordinate
-
-typedef const char * (get_tile_fn)(const df::coord &pos,
-                                   const tile_context &ctx);
-typedef void (init_ctx_fn)(const df::coord &pos, tile_context &ctx);
-
-struct blueprint_processor {
-    bp_volume mapdata;
-    const string mode;
-    const string phase;
-    const bool force_create;
-    get_tile_fn * const get_tile;
-    init_ctx_fn * const init_ctx;
-    blueprint_processor(const string &mode, const string &phase,
-                        bool force_create, get_tile_fn *get_tile,
-                        init_ctx_fn *init_ctx)
-        : mode(mode), phase(phase), force_create(force_create),
-          get_tile(get_tile), init_ctx(init_ctx) { }
-};
 
 static void write_minimal(ofstream &ofile, const blueprint_options &opts,
                           const bp_volume &mapdata) {
@@ -1194,6 +1238,8 @@ static bool do_transform(color_ostream &out,
     add_processor(processors, opts, "zone", "zone", opts.zone, get_tile_zone);
     add_processor(processors, opts, "query", "query", opts.query,
                   get_tile_query, ensure_building);
+    add_processor(processors, opts, "query", "rooms", opts.rooms,
+                  get_tile_rooms, ensure_building);
 
     if (processors.empty()) {
         out.printerr("no phases requested! nothing to do!\n");
@@ -1212,6 +1258,7 @@ static bool do_transform(color_ostream &out,
                 tile_context ctx;
                 ctx.pretty = pretty;
                 for (blueprint_processor &processor : processors) {
+                    ctx.processor = &processor;
                     if (processor.init_ctx)
                         processor.init_ctx(pos, ctx);
                     const char *tile_str = processor.get_tile(pos, ctx);

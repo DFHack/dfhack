@@ -332,6 +332,7 @@ function test.end_to_end()
         if phases.place then do_phase(phases.place, area, spec) end
         if phases.zone then do_phase(phases.zone, area, spec) end
         if phases.query then do_phase(phases.query, area, spec) end
+        if phases.rooms then do_phase(phases.rooms, area, spec) end
 
         -- run any extra commands, if defined by the blueprint spec
         if spec.extra_fn then

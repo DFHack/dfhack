@@ -1285,7 +1285,7 @@ static void add_processor(vector<blueprint_processor> &processors,
 
 static bool do_transform(color_ostream &out,
                          const df::coord &start, const df::coord &end,
-                         const blueprint_options &opts,
+                         blueprint_options &opts,
                          vector<string> &filenames) {
     // empty map instances to pass to emplace() below
     static const bp_area EMPTY_AREA;
@@ -1358,17 +1358,24 @@ static bool do_transform(color_ostream &out,
         }
     }
 
-    std::map<string, ofstream*> output_files;
     std::vector<string> meta_phases;
     for (blueprint_processor &processor : processors) {
         if (processor.mapdata.empty() && !processor.force_create)
             continue;
         if (is_meta_phase(out, opts, processor.phase))
             meta_phases.push_back(processor.phase);
+    }
+    if (meta_phases.size() <= 1)
+        opts.nometa = true;
+
+    std::map<string, ofstream*> output_files;
+    for (blueprint_processor &processor : processors) {
+        if (processor.mapdata.empty() && !processor.force_create)
+            continue;
         if (!write_blueprint(out, output_files, opts, processor, pretty))
             break;
     }
-    if (meta_phases.size()) {
+    if (!opts.nometa) {
         write_meta_blueprint(out, output_files, opts, meta_phases);
     }
 

@@ -14,6 +14,7 @@
 #include "DataDefs.h"
 #include "DataFuncs.h"
 #include "DataIdentity.h"
+#include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
 #include "TileTypes.h"
@@ -47,6 +48,10 @@ using namespace DFHack;
 DFHACK_PLUGIN("blueprint");
 REQUIRE_GLOBAL(world);
 
+namespace DFHack {
+    DBG_DECLARE(blueprint,log);
+}
+
 struct blueprint_options {
     // whether to display help
     bool help = false;
@@ -58,6 +63,9 @@ struct blueprint_options {
     // output file format. this could be an enum if we set up the boilerplate
     // for it.
     string format;
+
+    // whether to skip generating meta blueprints
+    bool nometa = false;
 
     // offset and comment to write in the quickfort start() modeline marker
     // if not set, coordinates are set to 0 and the comment will be empty
@@ -101,6 +109,7 @@ static const struct_field_info blueprint_options_fields[] = {
     { struct_field_info::PRIMITIVE, "help",                   offsetof(blueprint_options, help),                  &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::SUBSTRUCT, "start",                  offsetof(blueprint_options, start),                 &df::coord::_identity,                   0, 0 },
     { struct_field_info::PRIMITIVE, "format",                 offsetof(blueprint_options, format),                 df::identity_traits<string>::get(),     0, 0 },
+    { struct_field_info::PRIMITIVE, "nometa",                 offsetof(blueprint_options, nometa),                &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::SUBSTRUCT, "playback_start",         offsetof(blueprint_options, playback_start),        &df::coord2d::_identity,                 0, 0 },
     { struct_field_info::PRIMITIVE, "playback_start_comment", offsetof(blueprint_options, playback_start_comment), df::identity_traits<string>::get(),     0, 0 },
     { struct_field_info::PRIMITIVE, "split_strategy",         offsetof(blueprint_options, split_strategy),         df::identity_traits<string>::get(),     0, 0 },
@@ -1115,6 +1124,32 @@ static bool get_filename(string &fname,
     return true;
 }
 
+// returns true if we could interface with lua and could verify that the given
+// phase is a meta phase
+static bool is_meta_phase(color_ostream &out,
+                          blueprint_options opts, // copy because we can't const
+                          const string &phase) {
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
+
+    if (!lua_checkstack(L, 3) ||
+        !Lua::PushModulePublic(
+            out, L, "plugins.blueprint", "is_meta_phase")) {
+        out.printerr("Failed to load blueprint Lua code\n");
+        return false;
+    }
+
+    Lua::Push(L, &opts);
+    Lua::Push(L, phase);
+
+    if (!Lua::SafeCall(out, L, 2, 1)) {
+        out.printerr("Failed Lua call to is_meta_phase\n");
+        return false;
+    }
+
+    return lua_toboolean(L, -1);
+}
+
 static void write_minimal(ofstream &ofile, const blueprint_options &opts,
                           const bp_volume &mapdata) {
     if (mapdata.begin() == mapdata.end())
@@ -1171,8 +1206,8 @@ static void write_pretty(ofstream &ofile, const blueprint_options &opts,
     }
 }
 
-static string get_modeline(const blueprint_options &opts, const string &mode,
-                           const string &phase) {
+static string get_modeline(color_ostream &out, const blueprint_options &opts,
+                           const string &mode, const string &phase) {
     std::ostringstream modeline;
     modeline << "#" << mode << " label(" << phase << ")";
     if (opts.playback_start.x > 0) {
@@ -1183,6 +1218,8 @@ static string get_modeline(const blueprint_options &opts, const string &mode,
         }
         modeline << ")";
     }
+    if (is_meta_phase(out, opts, phase))
+        modeline << " hidden()";
 
     return modeline.str();
 }
@@ -1199,7 +1236,7 @@ static bool write_blueprint(color_ostream &out,
         output_files[fname] = new ofstream(fname, ofstream::trunc);
 
     ofstream &ofile = *output_files[fname];
-    ofile << get_modeline(opts, processor.mode, processor.phase) << endl;
+    ofile << get_modeline(out, opts, processor.mode, processor.phase) << endl;
 
     if (pretty)
         write_pretty(ofile, opts, processor.mapdata);
@@ -1207,6 +1244,27 @@ static bool write_blueprint(color_ostream &out,
         write_minimal(ofile, opts, processor.mapdata);
 
     return true;
+}
+
+static void write_meta_blueprint(color_ostream &out,
+                                 std::map<string, ofstream*> &output_files,
+                                 const blueprint_options &opts,
+                                 const std::vector<string> & meta_phases) {
+    string fname;
+    get_filename(fname, out, opts, meta_phases.front());
+    ofstream &ofile = *output_files[fname];
+
+    ofile << "#meta label(";
+    for (string phase : meta_phases) {
+        ofile << phase;
+        if (phase != meta_phases.back())
+            ofile << "_";
+    }
+    ofile << ")" << endl;
+
+    for (string phase : meta_phases) {
+        ofile << "/" << phase << endl;
+    }
 }
 
 static void ensure_building(const df::coord &pos, tile_context &ctx) {
@@ -1227,7 +1285,7 @@ static void add_processor(vector<blueprint_processor> &processors,
 
 static bool do_transform(color_ostream &out,
                          const df::coord &start, const df::coord &end,
-                         const blueprint_options &opts,
+                         blueprint_options &opts,
                          vector<string> &filenames) {
     // empty map instances to pass to emplace() below
     static const bp_area EMPTY_AREA;
@@ -1300,12 +1358,25 @@ static bool do_transform(color_ostream &out,
         }
     }
 
+    std::vector<string> meta_phases;
+    for (blueprint_processor &processor : processors) {
+        if (processor.mapdata.empty() && !processor.force_create)
+            continue;
+        if (is_meta_phase(out, opts, processor.phase))
+            meta_phases.push_back(processor.phase);
+    }
+    if (meta_phases.size() <= 1)
+        opts.nometa = true;
+
     std::map<string, ofstream*> output_files;
     for (blueprint_processor &processor : processors) {
         if (processor.mapdata.empty() && !processor.force_create)
             continue;
         if (!write_blueprint(out, output_files, opts, processor, pretty))
             break;
+    }
+    if (!opts.nometa) {
+        write_meta_blueprint(out, output_files, opts, meta_phases);
     }
 
     for (auto &it : output_files) {

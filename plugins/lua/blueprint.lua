@@ -15,6 +15,14 @@ local valid_phase_list = {
 }
 valid_phases = utils.invert(valid_phase_list)
 
+local meta_phase_list = {
+    'build',
+    'place',
+    'zone',
+    'query',
+}
+meta_phases = utils.invert(meta_phase_list)
+
 local valid_formats_list = {
     'minimal',
     'pretty',
@@ -123,6 +131,7 @@ local function process_args(opts, args)
             {'f', 'format', hasArg=true,
              handler=function(optarg) parse_format(opts, optarg) end},
             {'h', 'help', handler=function() opts.help = true end},
+            {nil, 'nometa', handler=function() opts.nometa = true end},
             {'s', 'playback-start', hasArg=true,
              handler=function(optarg) parse_start(opts, optarg) end},
             {nil, 'smooth', handler=function() opts.smooth = true end},
@@ -185,6 +194,11 @@ function parse_commandline(opts, ...)
     parse_positionals(opts, positionals, depth and 4 or 3)
 end
 
+function is_meta_phase(opts, phase)
+    -- this is called directly by cpp so ensure we return a boolean, not nil
+    return not opts.nometa and meta_phases[phase] or false
+end
+
 -- returns the name of the output file for the given context
 function get_filename(opts, phase)
     local fullname = 'blueprints/' .. opts.name
@@ -197,6 +211,9 @@ function get_filename(opts, phase)
         fullname = fullname .. basename
     end
     if opts.split_strategy == 'phase' then
+        if is_meta_phase(opts, phase) then
+            phase = 'meta'
+        end
         return ('%s-%s.csv'):format(fullname, phase)
     end
     -- no splitting

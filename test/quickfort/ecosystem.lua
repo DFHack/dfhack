@@ -244,7 +244,7 @@ end
 local function run_blueprint(basename, spec, pos)
     local args = {tostring(spec.width), tostring(spec.height),
                   tostring(-spec.depth), output_dir..basename,
-                  get_cursor_arg(pos), '-tphase'}
+                  get_cursor_arg(pos), '-tphase', '--nometa'}
     local playback_start_arg = get_playback_start_arg(spec.start)
     if playback_start_arg then
         table.insert(args, playback_start_arg)

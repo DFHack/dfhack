@@ -21,6 +21,12 @@ function test.parse_gui_commandline()
     expect.table_eq({help=true, format='minimal', split_strategy='none'}, opts)
 
     opts = {}
+    b.parse_gui_commandline(opts, {'--nometa'})
+    expect.table_eq({auto_phase=true, format='minimal', split_strategy='none',
+                     name='blueprint', nometa=true},
+                    opts)
+
+    opts = {}
     mock.patch(dfhack.maps, 'isValidTilePos', mock.func(true),
                function()
                    b.parse_gui_commandline(opts, {'--cursor=1,2,3'})

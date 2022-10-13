@@ -99,8 +99,14 @@ Options
     Select the output format of the generated files. See the `Output formats`_
     section below for options. If not specified, the output format defaults to
     "minimal", which will produce a small, fast ``.csv`` file.
-``-h``, ``--help``
-    Show command help text.
+``--nometa``
+    `Meta blueprints <quickfort-meta>` let you apply all blueprints that can be
+    replayed at the same time (without unpausing the game) with a single
+    command. This usually reduces the number of `quickfort` commands you need to
+    run to rebuild your fort from about 6 to 2 or 3. If you would rather just
+    have the low-level blueprints, this flag will prevent meta blueprints from
+    being generated and any low-level blueprints from being
+    `hidden <quickfort-hidden>` from the ``quickfort list`` command.
 ``-s``, ``--playback-start <x>,<y>,<comment>``
     Specify the column and row offsets (relative to the upper-left corner of the
     blueprint, which is ``1,1``) where the player should put the cursor when the

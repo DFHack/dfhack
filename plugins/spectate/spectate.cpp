@@ -149,6 +149,8 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
+    // keeps announcement pause settings locked
+    World::Update(); // from pause.h
     if (lock_collision) {
         if (unpause_enabled) {
             // player asked for auto-unpause enabled

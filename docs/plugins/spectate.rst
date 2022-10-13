@@ -11,7 +11,6 @@ Usage
 ::
 
     enable spectate
-    disable spectate
     spectate <option> <value>
 
 

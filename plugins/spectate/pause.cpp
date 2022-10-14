@@ -12,6 +12,9 @@ using namespace DFHack;
 using namespace Pausing;
 using namespace df::enums;
 
+std::unordered_set<Lock*> PlayerLock::locks;
+std::unordered_set<Lock*> AnnouncementLock::locks;
+
 namespace pausing {
     AnnouncementLock announcementLock("monitor");
     PlayerLock playerLock("monitor");
@@ -38,9 +41,6 @@ namespace pausing {
     IMPLEMENT_VMETHOD_INTERPOSE(player_pause_hook, feed);
 }
 using namespace pausing;
-
-std::unordered_set<Lock*> PlayerLock::locks;
-std::unordered_set<Lock*> AnnouncementLock::locks;
 
 template<typename Locks>
 inline bool any_lock(Locks locks) {

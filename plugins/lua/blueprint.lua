@@ -31,6 +31,7 @@ valid_formats = utils.invert(valid_formats_list)
 
 local valid_split_strategies_list = {
     'none',
+    'group',
     'phase',
 }
 valid_split_strategies = utils.invert(valid_split_strategies_list)
@@ -143,6 +144,10 @@ local function process_args(opts, args)
         return
     end
 
+    if opts.split_strategy == 'phase' then
+        opts.nometa = true
+    end
+
     return positionals
 end
 
@@ -200,7 +205,7 @@ function is_meta_phase(opts, phase)
 end
 
 -- returns the name of the output file for the given context
-function get_filename(opts, phase)
+function get_filename(opts, phase, ordinal)
     local fullname = 'blueprints/' .. opts.name
     local _,_,basename = fullname:find('/([^/]+)/?$')
     if not basename then
@@ -210,14 +215,13 @@ function get_filename(opts, phase)
     if fullname:endswith('/') then
         fullname = fullname .. basename
     end
-    if opts.split_strategy == 'phase' then
-        if is_meta_phase(opts, phase) then
-            phase = 'meta'
-        end
-        return ('%s-%s.csv'):format(fullname, phase)
+    if opts.split_strategy == 'none' then
+        return ('%s.csv'):format(fullname)
     end
-    -- no splitting
-    return ('%s.csv'):format(fullname)
+    if is_meta_phase(opts, phase) then
+        phase = 'meta'
+    end
+    return ('%s-%d-%s.csv'):format(fullname, ordinal, phase)
 end
 
 -- compatibility with old exported API.

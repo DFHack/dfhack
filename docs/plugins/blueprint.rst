@@ -146,5 +146,10 @@ The ``--splitby`` flag can take any of the following values:
 ``none``
     Writes all blueprints into a single file. This is the standard format for
     quickfort fortress blueprint bundles and is the default.
+``group``
+    Creates one file per group of blueprints that can be played back at the same
+    time (without have to unpause the game and let dwarves fulfill jobs between
+    blueprint runs).
 ``phase``
-    Creates a separate file for each phase.
+    Creates a separate file for each phase. Implies ``--nometa`` since meta
+    blueprints can't combine blueprints that are in separate files.

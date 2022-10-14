@@ -5,8 +5,6 @@
  * Written by cdombroski.
  */
 
-#include <algorithm>
-#include <regex>
 #include <sstream>
 #include <unordered_map>
 
@@ -1011,11 +1009,23 @@ static const char * get_tile_zone(const df::coord &pos,
     return add_expansion_syntax(zone, get_zone_keys(zone));
 }
 
-static string csv_sanitize(const string &str) {
-    static const std::regex pattern("\"");
-    static const string replacement("\"\"");
+// surrounds the given string in quotes and replaces internal double quotes (")
+// with double double quotes ("") (as per the csv spec)
+static string csv_quote(const string &str) {
+    std::ostringstream outstr;
+    outstr << "\"";
 
-    return std::regex_replace(str, pattern, replacement);
+    size_t start = 0;
+    auto end = str.find('"');
+    while (end != std::string::npos) {
+        outstr << str.substr(start, end - start);
+        outstr << "\"\"";
+        start = end + 1;
+        end = str.find('"', start);
+    }
+    outstr << str.substr(start, end) << "\"";
+
+    return outstr.str();
 }
 
 static const char * get_tile_query(const df::coord &pos,
@@ -1042,11 +1052,11 @@ static const char * get_tile_query(const df::coord &pos,
 
     std::ostringstream str;
     if (bld_name.size())
-        str << "{givename name=\"" << csv_sanitize(bld_name) << "\"}";
+        str << "{givename name=" + csv_quote(bld_name) + "}";
     if (zone_name.size())
-        str << "{namezone name=\"" << csv_sanitize(zone_name) << "\"}";
+        str << "{namezone name=" + csv_quote(zone_name) + "}";
 
-    return cache(str);
+    return cache(csv_quote(str.str()));
 }
 
 static const char * get_tile_rooms(const df::coord &, const tile_context &ctx) {
@@ -1095,11 +1105,12 @@ static bool create_output_dir(color_ostream &out,
 static bool get_filename(string &fname,
                          color_ostream &out,
                          blueprint_options opts, // copy because we can't const
-                         const string &phase) {
+                         const string &phase,
+                         int32_t ordinal) {
     auto L = Lua::Core::State;
     Lua::StackUnwinder top(L);
 
-    if (!lua_checkstack(L, 3) ||
+    if (!lua_checkstack(L, 4) ||
         !Lua::PushModulePublic(
             out, L, "plugins.blueprint", "get_filename")) {
         out.printerr("Failed to load blueprint Lua code\n");
@@ -1108,8 +1119,9 @@ static bool get_filename(string &fname,
 
     Lua::Push(L, &opts);
     Lua::Push(L, phase);
+    Lua::Push(L, ordinal);
 
-    if (!Lua::SafeCall(out, L, 2, 1)) {
+    if (!Lua::SafeCall(out, L, 3, 1)) {
         out.printerr("Failed Lua call to get_filename\n");
         return false;
     }
@@ -1228,9 +1240,9 @@ static bool write_blueprint(color_ostream &out,
                             std::map<string, ofstream*> &output_files,
                             const blueprint_options &opts,
                             const blueprint_processor &processor,
-                            bool pretty) {
+                            bool pretty, int32_t ordinal) {
     string fname;
-    if (!get_filename(fname, out, opts, processor.phase))
+    if (!get_filename(fname, out, opts, processor.phase, ordinal))
         return false;
     if (!output_files.count(fname))
         output_files[fname] = new ofstream(fname, ofstream::trunc);
@@ -1249,9 +1261,10 @@ static bool write_blueprint(color_ostream &out,
 static void write_meta_blueprint(color_ostream &out,
                                  std::map<string, ofstream*> &output_files,
                                  const blueprint_options &opts,
-                                 const std::vector<string> & meta_phases) {
+                                 const std::vector<string> & meta_phases,
+                                 int32_t ordinal) {
     string fname;
-    get_filename(fname, out, opts, meta_phases.front());
+    get_filename(fname, out, opts, meta_phases.front(), ordinal);
     ofstream &ofile = *output_files[fname];
 
     ofile << "#meta label(";
@@ -1285,7 +1298,7 @@ static void add_processor(vector<blueprint_processor> &processors,
 
 static bool do_transform(color_ostream &out,
                          const df::coord &start, const df::coord &end,
-                         blueprint_options &opts,
+                         blueprint_options opts, // copy so we can munge it
                          vector<string> &filenames) {
     // empty map instances to pass to emplace() below
     static const bp_area EMPTY_AREA;
@@ -1368,16 +1381,26 @@ static bool do_transform(color_ostream &out,
     if (meta_phases.size() <= 1)
         opts.nometa = true;
 
+    bool in_meta = false;
+    int32_t ordinal = 0;
     std::map<string, ofstream*> output_files;
     for (blueprint_processor &processor : processors) {
         if (processor.mapdata.empty() && !processor.force_create)
             continue;
-        if (!write_blueprint(out, output_files, opts, processor, pretty))
+        bool meta_phase = is_meta_phase(out, opts, processor.phase);
+        if (!in_meta)
+            ++ordinal;
+        if (in_meta && !meta_phase) {
+            write_meta_blueprint(out, output_files, opts, meta_phases, ordinal);
+            ++ordinal;
+        }
+        in_meta = meta_phase;
+        if (!write_blueprint(out, output_files, opts, processor, pretty,
+                             ordinal))
             break;
     }
-    if (!opts.nometa) {
-        write_meta_blueprint(out, output_files, opts, meta_phases);
-    }
+    if (in_meta)
+        write_meta_blueprint(out, output_files, opts, meta_phases, ordinal);
 
     for (auto &it : output_files) {
         filenames.push_back(it.first);

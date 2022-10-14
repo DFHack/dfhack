@@ -99,7 +99,7 @@ namespace DFHack {
     DBG_DECLARE(overlay, log, DebugCategory::LINFO);
 }
 
-static const std::string button_text = "[ DFHack Launcher ]";
+static const std::string button_text = "[ DFHack ]";
 static bool clicked = false;
 
 static bool handle_click() {

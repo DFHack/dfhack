@@ -166,6 +166,10 @@ bool World::DisablePlayerPausing() {
     return !allow_player_pause;
 }
 
+bool World::IsPlayerPausingEnabled() {
+    return allow_player_pause;
+}
+
 void World::Update() {
     static bool did_once = false;
     if (!did_once) {

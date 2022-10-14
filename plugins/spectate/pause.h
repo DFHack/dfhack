@@ -57,6 +57,7 @@ namespace DFHack {
 
         bool EnablePlayerPausing(); // enable player pausing if all locks are open
         bool DisablePlayerPausing(); // disable player pausing if all locks are open
+        bool IsPlayerPausingEnabled(); // returns whether the player can pause or not
 
         void Update();
     }

@@ -444,7 +444,7 @@ function extra_fns.gui_quantum(pos)
             view:onInput({_STRING=string.byte('f')})
             view:onInput({_STRING=string.byte('o')})
             view:onInput({_STRING=string.byte('o')})
-            view:onInput({SELECT=true})
+            send_keys('SELECT')
             -- rotate the dump direction to the south
             send_keys('CUSTOM_D')
             view:onRender()

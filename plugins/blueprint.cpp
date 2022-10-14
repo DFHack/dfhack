@@ -5,8 +5,6 @@
  * Written by cdombroski.
  */
 
-#include <algorithm>
-#include <regex>
 #include <sstream>
 #include <unordered_map>
 
@@ -1011,11 +1009,23 @@ static const char * get_tile_zone(const df::coord &pos,
     return add_expansion_syntax(zone, get_zone_keys(zone));
 }
 
-static string csv_sanitize(const string &str) {
-    static const std::regex pattern("\"");
-    static const string replacement("\"\"");
+// surrounds the given string in quotes and replaces internal double quotes (")
+// with double double quotes ("") (as per the csv spec)
+static string csv_quote(const string &str) {
+    std::ostringstream outstr;
+    outstr << "\"";
 
-    return std::regex_replace(str, pattern, replacement);
+    size_t start = 0;
+    auto end = str.find('"');
+    while (end != std::string::npos) {
+        outstr << str.substr(start, end - start);
+        outstr << "\"\"";
+        start = end + 1;
+        end = str.find('"', start);
+    }
+    outstr << str.substr(start, end) << "\"";
+
+    return outstr.str();
 }
 
 static const char * get_tile_query(const df::coord &pos,
@@ -1042,11 +1052,11 @@ static const char * get_tile_query(const df::coord &pos,
 
     std::ostringstream str;
     if (bld_name.size())
-        str << "{givename name=\"" << csv_sanitize(bld_name) << "\"}";
+        str << "{givename name=" + csv_quote(bld_name) + "}";
     if (zone_name.size())
-        str << "{namezone name=\"" << csv_sanitize(zone_name) << "\"}";
+        str << "{namezone name=" + csv_quote(zone_name) + "}";
 
-    return cache(str);
+    return cache(csv_quote(str.str()));
 }
 
 static const char * get_tile_rooms(const df::coord &, const tile_context &ctx) {

@@ -2,5 +2,5 @@
 
 
 
-,,{givename name="foo dumper"}
-,,{givename name="foo"}
+,,"{givename name=""foo dumper""}"
+,,"{givename name=""foo""}"

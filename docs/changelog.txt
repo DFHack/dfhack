@@ -51,6 +51,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - UX: List widgets now have mouse-interactive scrollbars
 - UX: You can now hold down the mouse button on a scrollbar to make it scroll multiple times.
 - UX: You can now drag the scrollbar to scroll to a specific spot
+- `overlay`: reduce the size of the "DFHack Launcher" button
 - Constructions module: ``findAtTile`` now uses a binary search intead of a linear search.
 
 ## Documentation

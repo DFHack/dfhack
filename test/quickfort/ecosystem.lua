@@ -244,7 +244,7 @@ end
 local function run_blueprint(basename, spec, pos)
     local args = {tostring(spec.width), tostring(spec.height),
                   tostring(-spec.depth), output_dir..basename,
-                  get_cursor_arg(pos), '-tphase', '--nometa'}
+                  get_cursor_arg(pos), '-tphase'}
     local playback_start_arg = get_playback_start_arg(spec.start)
     if playback_start_arg then
         table.insert(args, playback_start_arg)
@@ -444,7 +444,7 @@ function extra_fns.gui_quantum(pos)
             view:onInput({_STRING=string.byte('f')})
             view:onInput({_STRING=string.byte('o')})
             view:onInput({_STRING=string.byte('o')})
-            send_keys('SELECT')
+            view:onInput({SELECT=true})
             -- rotate the dump direction to the south
             send_keys('CUSTOM_D')
             view:onRender()

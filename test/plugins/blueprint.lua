@@ -101,7 +101,7 @@ function test.parse_gui_commandline()
     opts = {}
     b.parse_gui_commandline(opts, {'--splitby', 'phase'})
     expect.table_eq({auto_phase=true, format='minimal', split_strategy='phase',
-                     name='blueprint'},
+                     name='blueprint', nometa=true},
                     opts)
 
     expect.error_match('unknown split_strategy',
@@ -241,16 +241,16 @@ end
 
 function test.get_filename()
     local opts = {name='a', split_strategy='none'}
-    expect.eq('blueprints/a.csv', b.get_filename(opts, 'dig'))
+    expect.eq('blueprints/a.csv', b.get_filename(opts, 'dig', 1))
 
     opts = {name='a/', split_strategy='none'}
-    expect.eq('blueprints/a/a.csv', b.get_filename(opts, 'dig'))
+    expect.eq('blueprints/a/a.csv', b.get_filename(opts, 'dig', 1))
 
     opts = {name='a', split_strategy='phase'}
-    expect.eq('blueprints/a-dig.csv', b.get_filename(opts, 'dig'))
+    expect.eq('blueprints/a-1-dig.csv', b.get_filename(opts, 'dig', 1))
 
     opts = {name='a/', split_strategy='phase'}
-    expect.eq('blueprints/a/a-dig.csv', b.get_filename(opts, 'dig'))
+    expect.eq('blueprints/a/a-5-dig.csv', b.get_filename(opts, 'dig', 5))
 
     expect.error_match('could not parse basename', function()
             b.get_filename({name='', split_strategy='none'})

@@ -49,13 +49,17 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - UX: List widgets now have mouse-interactive scrollbars
 - UX: You can now hold down the mouse button on a scrollbar to make it scroll multiple times.
 - UX: You can now drag the scrollbar to scroll to a specific spot
+- Constructions module: ``findAtTile`` now uses a binary search intead of a linear search.
 
 ## Documentation
 
 ## API
+- Constructions module: added ``insert()`` to insert constructions into the game's sorted list.
 
 ## Lua
 - ``widgets.Scrollbar``: new scrollbar widget that can be paired with an associated scrollable widget. Integrated with ``widgets.Label`` and ``widgets.List``.
+- ``dfhack.constructions.findAtTile()``: exposed preexisting function to Lua.
+- ``dfhack.constructions.insert()``: exposed new function to Lua.
 
 # 0.47.05-r7
 

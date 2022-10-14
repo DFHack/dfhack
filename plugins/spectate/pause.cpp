@@ -21,7 +21,6 @@ namespace pausing {
 
     const size_t announcement_flag_arr_size = sizeof(decltype(df::announcements::flags)) / sizeof(df::announcement_flags);
     bool state_saved = false; // indicates whether a restore state is ok
-    bool announcements_disabled = false; // indicates whether disable or restore was last enacted, could use a better name
     bool saved_states[announcement_flag_arr_size]; // state to restore
     bool locked_states[announcement_flag_arr_size]; // locked state (re-applied each frame)
     bool allow_player_pause = true; // toggles player pause ability
@@ -70,6 +69,16 @@ inline bool only_or_none_locked(Locks locks, LockT* this_lock) {
     return true;
 }
 
+template<typename Locks>
+inline bool reportLockedLocks(color_ostream &out, Locks locks) {
+    for (auto &L: locks) {
+        if (L->isLocked()) {
+            out.print("Lock '%s' is locked\n", L->name.c_str());
+        }
+    }
+    return true;
+}
+
 bool AnnouncementLock::captureState() {
     if (only_or_none_locked(locks, this)) {
         for (size_t i = 0; i < announcement_flag_arr_size; ++i) {
@@ -93,6 +102,10 @@ bool AnnouncementLock::isOnlyLocked() const {
     return only_lock(locks, this);
 }
 
+void AnnouncementLock::reportLocks(color_ostream &out) {
+    reportLockedLocks(out, locks);
+}
+
 bool PlayerLock::isAnyLocked() const {
     return any_lock(locks);
 }
@@ -101,14 +114,19 @@ bool PlayerLock::isOnlyLocked() const {
     return only_lock(locks, this);
 }
 
-bool World::DisableAnnouncementPausing() {
+void PlayerLock::reportLocks(color_ostream &out) {
+    reportLockedLocks(out, locks);
+}
+
+bool World::DisableAnnouncementPausing(color_ostream &out) {
     if (!announcementLock.isAnyLocked()) {
         for (auto& flag : df::global::d_init->announcements.flags) {
             flag.bits.PAUSE = false;
+            //out.print("pause: %d\n", flag.bits.PAUSE);
         }
-        announcements_disabled = true;
+        return true;
     }
-    return announcements_disabled;
+    return false;
 }
 
 bool World::SaveAnnouncementSettings() {
@@ -116,6 +134,7 @@ bool World::SaveAnnouncementSettings() {
         for (size_t i = 0; i < announcement_flag_arr_size; ++i) {
             saved_states[i] = df::global::d_init->announcements.flags[i].bits.PAUSE;
         }
+        state_saved = true;
         return true;
     }
     return false;
@@ -126,7 +145,6 @@ bool World::RestoreAnnouncementSettings() {
         for (size_t i = 0; i < announcement_flag_arr_size; ++i) {
             df::global::d_init->announcements.flags[i].bits.PAUSE = saved_states[i];
         }
-        announcements_disabled = false;
         return true;
     }
     return false;

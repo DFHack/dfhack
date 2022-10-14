@@ -51,9 +51,9 @@ namespace DFHack {
         };
     }
     namespace World {
-        bool DisableAnnouncementPausing(color_ostream &out); // disable announcement pausing if all locks are open
+        bool DisableAnnouncementPausing(); // disable announcement pausing if all locks are open
         bool SaveAnnouncementSettings(); // save current announcement pause settings if all locks are open
-        bool RestoreAnnouncementSettings(); // restore saved announcement pause settings if all locks are open
+        bool RestoreAnnouncementSettings(); // restore saved announcement pause settings if all locks are open and there is state information to restore (returns true if a restore took place)
 
         bool EnablePlayerPausing(); // enable player pausing if all locks are open
         bool DisablePlayerPausing(); // disable player pausing if all locks are open

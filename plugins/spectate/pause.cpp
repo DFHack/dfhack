@@ -71,11 +71,13 @@ inline bool only_or_none_locked(Locks locks, LockT* this_lock) {
 
 template<typename Locks>
 inline bool reportLockedLocks(color_ostream &out, Locks locks) {
+    out.color(DFHack::COLOR_YELLOW);
     for (auto &L: locks) {
         if (L->isLocked()) {
-            out.print("Lock '%s' is locked\n", L->name.c_str());
+            out.print("Lock: '%s'\n", L->name.c_str());
         }
     }
+    out.reset_color();
     return true;
 }
 
@@ -118,7 +120,7 @@ void PlayerLock::reportLocks(color_ostream &out) {
     reportLockedLocks(out, locks);
 }
 
-bool World::DisableAnnouncementPausing(color_ostream &out) {
+bool World::DisableAnnouncementPausing() {
     if (!announcementLock.isAnyLocked()) {
         for (auto& flag : df::global::d_init->announcements.flags) {
             flag.bits.PAUSE = false;

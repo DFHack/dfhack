@@ -46,6 +46,7 @@ bool disengage_enabled = false;
 bool unpause_enabled = false;
 Pausing::AnnouncementLock* pause_lock = nullptr;
 bool lock_collision = false;
+bool announcements_disabled = false;
 
 bool following_dwarf = false;
 df::unit* our_dorf = nullptr;
@@ -79,6 +80,18 @@ inline void saveConfig() {
     }
 }
 
+//struct player_pause_hook : df::viewscreen_dwarfmodest {
+//    typedef df::viewscreen_dwarfmodest interpose_base;
+//    DEFINE_VMETHOD_INTERPOSE(void, feed, (std::set<df::interface_key>* input)) {
+//        if ((ui->main.mode == ui_sidebar_mode::Default) && !allow_player_pause) {
+//            input->erase(interface_key::D_PAUSE);
+//        }
+//        INTERPOSE_NEXT(feed)(input);
+//    }
+//};
+//
+//IMPLEMENT_VMETHOD_INTERPOSE(player_pause_hook, feed);
+
 command_result spectate (color_ostream &out, std::vector <std::string> & parameters);
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands) {
@@ -106,6 +119,8 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
         disengage_enabled = config.ival(DISENGAGE);
         focus_jobs_enabled = config.ival(JOB_FOCUS);
         tick_threshold = config.ival(TICK_THRESHOLD);
+        pause_lock->unlock();
+        enable_auto_unpause(out, unpause_enabled);
     }
     return DFHack::CR_OK;
 }
@@ -121,11 +136,17 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         EM::registerListener(EventType::TICK, ticking, plugin_self);
         EM::registerListener(EventType::JOB_STARTED, start, plugin_self);
         EM::registerListener(EventType::JOB_COMPLETED, complete, plugin_self);
+        out.print("running: spectate auto-unpause %d\n", unpause_enabled);
+        enabled = true; // enable_auto_unpause won't do anything without this set now
         enable_auto_unpause(out, unpause_enabled);
     } else if (!enable && enabled) {
         // warp 8, engage!
         out.print("Spectate mode disabled!\n");
         EM::unregisterAll(plugin_self);
+        // we need to retain whether auto-unpause is enabled, but we also need to disable its effect
+        bool temp = unpause_enabled;
+        enable_auto_unpause(out, false);
+        unpause_enabled = temp;
         job_tracker.clear();
         freq.clear();
     }
@@ -134,7 +155,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 }
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
-    if (enabled && world) {
+    if (enabled) {
         switch (event) {
             case SC_MAP_UNLOADED:
             case SC_BEGIN_UNLOAD:
@@ -142,12 +163,6 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
                 our_dorf = nullptr;
                 job_watched = nullptr;
                 following_dwarf = false;
-                //pause_lock->unlock();
-                break;
-            case SC_MAP_LOADED:
-                // todo: RE UNDEAD_ATTACK event still pausing regardless of announcement settings
-                //enable_auto_unpause(out, unpause_enabled);
-                break;
             default:
                 break;
         }
@@ -157,24 +172,27 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     // keeps announcement pause settings locked
-//    World::Update(); // from pause.h
-//    if (lock_collision) {
-//        if (unpause_enabled) {
-//            // player asked for auto-unpause enabled
-//            World::SaveAnnouncementSettings();
-//            if (World::DisableAnnouncementPausing(out)) {
-//                // now that we've got what we want, we can lock it down
-//                lock_collision = false;
-//            }
-//        } else {
-//            if (World::RestoreAnnouncementSettings()) {
-//                lock_collision = false;
-//            }
-//        }
-//    }
+    World::Update(); // from pause.h
+    if (lock_collision) {
+        if (unpause_enabled) {
+            // player asked for auto-unpause enabled
+            World::SaveAnnouncementSettings();
+            if (World::DisableAnnouncementPausing()) {
+                // now that we've got what we want, we can lock it down
+                lock_collision = false;
+            }
+        } else {
+            if (World::RestoreAnnouncementSettings()) {
+                lock_collision = false;
+            }
+        }
+    }
     while (unpause_enabled && !world->status.popups.empty()) {
         // dismiss announcement popup(s)
         Gui::getCurViewscreen(true)->feed_key(interface_key::CLOSE_MEGA_ANNOUNCEMENT);
+        if (World::ReadPauseState()) {
+            World::SetPauseState(false);
+        }
     }
     if (disengage_enabled && !World::ReadPauseState()) {
         if (our_dorf && our_dorf->id != df::global::ui->follow_unit) {
@@ -187,47 +205,54 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
 void enable_auto_unpause(color_ostream &out, bool state) {
     // we don't need to do any of this yet if the plugin isn't enabled
     if (enabled) {
-// Announcement manipulation doesn't prevent siege pauses
-//        if(pause_lock) {
-//            // lock_collision == true means: enable_auto_unpause() was already invoked and didn't complete
-//            // The onupdate function above ensure the procedure properly completes, thus we only care about
-//            // state reversal here ergo `enabled != state`
-//            if (lock_collision && unpause_enabled != state) {
-//                out.print("handling collision\n");
-//                // if unpaused_enabled is true, then a lock collision means: we couldn't save/disable the pause settings,
-//                // therefore nothing to revert and the lock won't even be engaged (nothing to unlock)
-//                lock_collision = false;
-//                unpause_enabled = state;
-//                if (unpause_enabled) {
-//                    // a collision means we couldn't restore the pause settings, therefore we only need re-engage the lock
-//                    pause_lock->lock();
-//                }
-//                return;
-//            }
-//            // update the announcement settings if we can
-//            if (state) {
-//                if (World::SaveAnnouncementSettings()) {
-//                    World::DisableAnnouncementPausing(out);
-//                    pause_lock->lock();
-//                } else {
-//                    lock_collision = true;
-//                }
-//            } else {
-//                pause_lock->unlock();
-//                if (!World::RestoreAnnouncementSettings()) {
-//                    // this in theory shouldn't happen, if others use the lock like we do in spectate
-//                    lock_collision = true;
-//                }
-//            }
-//            if (lock_collision) {
-//                out.printerr(
-//                        "auto-unpause: must wait for another Pausing::AnnouncementLock to be lifted."
-//                        " This setting will complete when the lock lifts.\n");
-//                pause_lock->reportLocks(out);
-//            }
-//        }
-        unpause_enabled = state;
+        // todo: R.E. UNDEAD_ATTACK event [still pausing regardless of announcement settings]
+        if(pause_lock) {
+            // lock_collision == true means: enable_auto_unpause() was already invoked and didn't complete
+            // The onupdate function above ensure the procedure properly completes, thus we only care about
+            // state reversal here ergo `enabled != state`
+            if (lock_collision && unpause_enabled != state) {
+                out.print("handling collision\n");
+                // if unpaused_enabled is true, then a lock collision means: we couldn't save/disable the pause settings,
+                // therefore nothing to revert and the lock won't even be engaged (nothing to unlock)
+                lock_collision = false;
+                unpause_enabled = state;
+                if (unpause_enabled) {
+                    // a collision means we couldn't restore the pause settings, therefore we only need re-engage the lock
+                    pause_lock->lock();
+                }
+                return;
+            }
+            // update the announcement settings if we can
+            if (state) {
+                if (World::SaveAnnouncementSettings()) {
+                    World::DisableAnnouncementPausing();
+                    announcements_disabled = true;
+                    pause_lock->lock();
+                } else {
+                    out.printerr("lock collision enabling auto-unpause\n");
+                    lock_collision = true;
+                }
+            } else {
+                pause_lock->unlock();
+                if (announcements_disabled) {
+                    if (!World::RestoreAnnouncementSettings()) {
+                        // this in theory shouldn't happen, if others use the lock like we do in spectate
+                        out.printerr("lock collision disabling auto-unpause\n");
+                        lock_collision = true;
+                    } else {
+                        announcements_disabled = false;
+                    }
+                }
+            }
+            if (lock_collision) {
+                out.printerr(
+                        "auto-unpause: must wait for another Pausing::AnnouncementLock to be lifted.\n"
+                        "The action you were attempting will complete when the following lock or locks lift.\n");
+                pause_lock->reportLocks(out);
+            }
+        }
     }
+    unpause_enabled = state;
 }
 
 command_result spectate (color_ostream &out, std::vector <std::string> & parameters) {

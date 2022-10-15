@@ -49,6 +49,19 @@ namespace DFHack {
             bool isOnlyLocked() const override; // returns true if locked and no other instance is locked
             void reportLocks(color_ostream &out) override;
         };
+
+        // non-blocking lock resource used in conjunction with the pause set state function in World
+// todo: integrate with World::SetPauseState
+//        class PauseStateLock : public Lock
+//        {
+//            static std::unordered_set<Lock*> locks;
+//        public:
+//            explicit PauseStateLock(const char* name): Lock(name) { locks.emplace(this); }
+//            ~PauseStateLock() override { locks.erase(this); }
+//            bool isAnyLocked() const override; // returns true if any instance of PlayerLock is locked
+//            bool isOnlyLocked() const override; // returns true if locked and no other instance is locked
+//            void reportLocks(color_ostream &out) override;
+//        };
     }
     namespace World {
         bool DisableAnnouncementPausing(); // disable announcement pausing if all locks are open

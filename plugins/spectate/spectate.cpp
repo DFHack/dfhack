@@ -136,7 +136,6 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         EM::registerListener(EventType::TICK, ticking, plugin_self);
         EM::registerListener(EventType::JOB_STARTED, start, plugin_self);
         EM::registerListener(EventType::JOB_COMPLETED, complete, plugin_self);
-        out.print("running: spectate auto-unpause %d\n", unpause_enabled);
         enabled = true; // enable_auto_unpause won't do anything without this set now
         enable_auto_unpause(out, unpause_enabled);
     } else if (!enable && enabled) {
@@ -191,6 +190,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
         // dismiss announcement popup(s)
         Gui::getCurViewscreen(true)->feed_key(interface_key::CLOSE_MEGA_ANNOUNCEMENT);
         if (World::ReadPauseState()) {
+            // WARNING: This has a possibility of conflicting with `reveal hell` - if Hermes himself runs `reveal hell` on precisely the right moment that is
             World::SetPauseState(false);
         }
     }
@@ -257,37 +257,28 @@ void enable_auto_unpause(color_ostream &out, bool state) {
 
 command_result spectate (color_ostream &out, std::vector <std::string> & parameters) {
     if (!parameters.empty()) {
-        if (parameters.size() % 2 != 0) {
-            return DFHack::CR_WRONG_USAGE;
-        }
-        for (size_t i = 0; i + 1 < parameters.size(); i += 2) {
-            if (parameters[i] == "auto-unpause") {
-                if (parameters[i + 1] == "0") {
-                    enable_auto_unpause(out, false);
-                } else if (parameters[i + 1] == "1") {
-                    enable_auto_unpause(out, true);
-                } else {
-                    return DFHack::CR_WRONG_USAGE;
-                }
-            } else if (parameters[i] == "auto-disengage") {
-                if (parameters[i + 1] == "0") {
-                    disengage_enabled = false;
-                } else if (parameters[i + 1] == "1") {
-                    disengage_enabled = true;
-                } else {
-                    return DFHack::CR_WRONG_USAGE;
-                }
-            } else if (parameters[i] == "focus-jobs") {
-                if (parameters[i + 1] == "0") {
-                    focus_jobs_enabled = false;
-                } else if (parameters[i + 1] == "1") {
-                    focus_jobs_enabled = true;
-                } else {
-                    return DFHack::CR_WRONG_USAGE;
-                }
-            } else if (parameters[i] == "tick-threshold") {
+        if (parameters.size() >= 2 && parameters.size() <= 3) {
+            bool state;
+            bool set = false;
+            if (parameters[0] == "enable") {
+                state = true;
+            } else if (parameters[0] == "disable") {
+                state = false;
+            } else if (parameters[0] == "set") {
+                set = true;
+            } else {
+                return DFHack::CR_WRONG_USAGE;
+            }
+            auto &arg = parameters[1];
+            if(arg == "auto-unpause"){
+                enable_auto_unpause(out, state);
+            } else if (arg == "auto-disengage") {
+                disengage_enabled = state;
+            } else if (arg == "focus-jobs") {
+                focus_jobs_enabled = state;
+            } else if (arg == "tick-threshold" && set && parameters.size() == 3) {
                 try {
-                    tick_threshold = std::stol(parameters[i + 1]);
+                    tick_threshold = std::stol(parameters[2]);
                 } catch (const std::exception &e) {
                     out.printerr("%s\n", e.what());
                 }

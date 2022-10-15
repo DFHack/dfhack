@@ -11,7 +11,8 @@ Usage
 ::
 
     enable spectate
-    spectate <option> <value>
+    spectate set tick-threshold <value>
+    spectate enable|disable <feature>
 
 
 When enabled, the plugin will automatically switch which dwarf is being

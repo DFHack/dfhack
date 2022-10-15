@@ -5,7 +5,6 @@
  * Written by cdombroski.
  */
 
-#include <algorithm>
 #include <sstream>
 #include <unordered_map>
 
@@ -13,6 +12,7 @@
 #include "DataDefs.h"
 #include "DataFuncs.h"
 #include "DataIdentity.h"
+#include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
 #include "TileTypes.h"
@@ -46,6 +46,10 @@ using namespace DFHack;
 DFHACK_PLUGIN("blueprint");
 REQUIRE_GLOBAL(world);
 
+namespace DFHack {
+    DBG_DECLARE(blueprint,log);
+}
+
 struct blueprint_options {
     // whether to display help
     bool help = false;
@@ -57,6 +61,9 @@ struct blueprint_options {
     // output file format. this could be an enum if we set up the boilerplate
     // for it.
     string format;
+
+    // whether to skip generating meta blueprints
+    bool nometa = false;
 
     // offset and comment to write in the quickfort start() modeline marker
     // if not set, coordinates are set to 0 and the comment will be empty
@@ -85,12 +92,14 @@ struct blueprint_options {
     bool auto_phase = false;
 
     // if not autodetecting, which phases to output
-    bool dig   = false;
+    bool dig = false;
     bool carve = false;
+    bool construct = false;
     bool build = false;
     bool place = false;
-    bool zone  = false;
+    bool zone = false;
     bool query = false;
+    bool rooms = false;
 
     static struct_identity _identity;
 };
@@ -98,6 +107,7 @@ static const struct_field_info blueprint_options_fields[] = {
     { struct_field_info::PRIMITIVE, "help",                   offsetof(blueprint_options, help),                  &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::SUBSTRUCT, "start",                  offsetof(blueprint_options, start),                 &df::coord::_identity,                   0, 0 },
     { struct_field_info::PRIMITIVE, "format",                 offsetof(blueprint_options, format),                 df::identity_traits<string>::get(),     0, 0 },
+    { struct_field_info::PRIMITIVE, "nometa",                 offsetof(blueprint_options, nometa),                &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::SUBSTRUCT, "playback_start",         offsetof(blueprint_options, playback_start),        &df::coord2d::_identity,                 0, 0 },
     { struct_field_info::PRIMITIVE, "playback_start_comment", offsetof(blueprint_options, playback_start_comment), df::identity_traits<string>::get(),     0, 0 },
     { struct_field_info::PRIMITIVE, "split_strategy",         offsetof(blueprint_options, split_strategy),         df::identity_traits<string>::get(),     0, 0 },
@@ -110,10 +120,12 @@ static const struct_field_info blueprint_options_fields[] = {
     { struct_field_info::PRIMITIVE, "auto_phase",             offsetof(blueprint_options, auto_phase),            &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "dig",                    offsetof(blueprint_options, dig),                   &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "carve",                  offsetof(blueprint_options, carve),                 &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::PRIMITIVE, "construct",              offsetof(blueprint_options, construct),             &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "build",                  offsetof(blueprint_options, build),                 &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "place",                  offsetof(blueprint_options, place),                 &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "zone",                   offsetof(blueprint_options, zone),                  &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "query",                  offsetof(blueprint_options, query),                 &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::PRIMITIVE, "rooms",                  offsetof(blueprint_options, rooms),                 &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::END }
 };
 struct_identity blueprint_options::_identity(sizeof(blueprint_options), &df::allocator_fn<blueprint_options>, NULL, "blueprint_options", NULL, blueprint_options_fields);
@@ -132,9 +144,34 @@ DFhackCExport command_result plugin_shutdown(color_ostream &) {
     return CR_OK;
 }
 
+struct blueprint_processor;
 struct tile_context {
+    blueprint_processor *processor;
     bool pretty = false;
     df::building* b = NULL;
+};
+
+typedef vector<const char *> bp_row;     // index is x coordinate
+typedef map<int16_t, bp_row> bp_area;    // key is y coordinate
+typedef map<int16_t, bp_area> bp_volume; // key is z coordinate
+
+typedef const char * (get_tile_fn)(const df::coord &pos,
+                                   const tile_context &ctx);
+typedef void (init_ctx_fn)(const df::coord &pos, tile_context &ctx);
+
+struct blueprint_processor {
+    bp_volume mapdata;
+    const string mode;
+    const string phase;
+    const bool force_create;
+    get_tile_fn * const get_tile;
+    init_ctx_fn * const init_ctx;
+    std::set<df::building *> seen;
+    blueprint_processor(const string &mode, const string &phase,
+                        bool force_create, get_tile_fn *get_tile,
+                        init_ctx_fn *init_ctx)
+        : mode(mode), phase(phase), force_create(force_create),
+          get_tile(get_tile), init_ctx(init_ctx) { }
 };
 
 // global engravings cache, cleared when the string cache is cleared
@@ -332,6 +369,108 @@ static const char * get_tile_carve(const df::coord &pos, const tile_context &tc)
     return NULL;
 }
 
+static const char * get_construction_str(df::building *b) {
+    df::building_constructionst *cons =
+            virtual_cast<df::building_constructionst>(b);
+    if (!cons)
+        return "~";
+
+    switch (cons->type) {
+    case construction_type::Fortification: return "CF";
+    case construction_type::Wall:          return "Cw";
+    case construction_type::Floor:         return "Cf";
+    case construction_type::UpStair:       return "Cu";
+    case construction_type::DownStair:     return "Cd";
+    case construction_type::UpDownStair:   return "Cx";
+    case construction_type::Ramp:          return "Cr";
+    case construction_type::TrackN:        return "trackN";
+    case construction_type::TrackS:        return "trackS";
+    case construction_type::TrackE:        return "trackE";
+    case construction_type::TrackW:        return "trackW";
+    case construction_type::TrackNS:       return "trackNS";
+    case construction_type::TrackNE:       return "trackNE";
+    case construction_type::TrackNW:       return "trackNW";
+    case construction_type::TrackSE:       return "trackSE";
+    case construction_type::TrackSW:       return "trackSW";
+    case construction_type::TrackEW:       return "trackEW";
+    case construction_type::TrackNSE:      return "trackNSE";
+    case construction_type::TrackNSW:      return "trackNSW";
+    case construction_type::TrackNEW:      return "trackNEW";
+    case construction_type::TrackSEW:      return "trackSEW";
+    case construction_type::TrackNSEW:     return "trackNSEW";
+    case construction_type::TrackRampN:    return "trackrampN";
+    case construction_type::TrackRampS:    return "trackrampS";
+    case construction_type::TrackRampE:    return "trackrampE";
+    case construction_type::TrackRampW:    return "trackrampW";
+    case construction_type::TrackRampNS:   return "trackrampNS";
+    case construction_type::TrackRampNE:   return "trackrampNE";
+    case construction_type::TrackRampNW:   return "trackrampNW";
+    case construction_type::TrackRampSE:   return "trackrampSE";
+    case construction_type::TrackRampSW:   return "trackrampSW";
+    case construction_type::TrackRampEW:   return "trackrampEW";
+    case construction_type::TrackRampNSE:  return "trackrampNSE";
+    case construction_type::TrackRampNSW:  return "trackrampNSW";
+    case construction_type::TrackRampNEW:  return "trackrampNEW";
+    case construction_type::TrackRampSEW:  return "trackrampSEW";
+    case construction_type::TrackRampNSEW: return "trackrampNSEW";
+    case construction_type::NONE:
+    default:
+        return "~";
+    }
+}
+
+static const char * get_constructed_track_str(df::tiletype *tt,
+                                              const char * base) {
+    TileDirection dir = tileDirection(*tt);
+    if (!dir.whole)
+        return "~";
+
+    std::ostringstream str;
+    str << base;
+    if (dir.north) str << "N";
+    if (dir.south) str << "S";
+    if (dir.east) str << "E";
+    if (dir.west) str << "W";
+
+    return cache(str);
+}
+
+static const char * get_constructed_floor_str(df::tiletype *tt) {
+    if (tileSpecial(*tt) != df::tiletype_special::TRACK)
+        return "Cf";
+    return get_constructed_track_str(tt, "track");
+}
+
+static const char * get_constructed_ramp_str(df::tiletype *tt) {
+    if (tileSpecial(*tt) != df::tiletype_special::TRACK)
+        return "Cr";
+    return get_constructed_track_str(tt, "trackramp");
+}
+
+static const char * get_tile_construct(const df::coord &pos,
+                                   const tile_context &ctx) {
+    if (ctx.b && ctx.b->getType() == building_type::Construction)
+        return get_construction_str(ctx.b);
+
+    df::tiletype *tt = Maps::getTileType(pos);
+    if (!tt || tileMaterial(*tt) != df::tiletype_material::CONSTRUCTION)
+        return NULL;
+
+    switch (tileShape(*tt)) {
+    case tiletype_shape::WALL:          return "Cw";
+    case tiletype_shape::FLOOR:         return get_constructed_floor_str(tt);
+    case tiletype_shape::RAMP:          return get_constructed_ramp_str(tt);
+    case tiletype_shape::FORTIFICATION: return "CF";
+    case tiletype_shape::STAIR_UP:      return "Cu";
+    case tiletype_shape::STAIR_DOWN:    return "Cd";
+    case tiletype_shape::STAIR_UPDOWN:  return "Cx";
+    default:
+        return "~";
+    }
+
+    return NULL;
+}
+
 static pair<uint32_t, uint32_t> get_building_size(const df::building *b) {
     return pair<uint32_t, uint32_t>(b->x2 - b->x1 + 1, b->y2 - b->y1 + 1);
 }
@@ -461,56 +600,6 @@ static const char * get_furnace_str(df::building *b) {
     }
 }
 
-static const char * get_construction_str(df::building *b) {
-    df::building_constructionst *cons =
-            virtual_cast<df::building_constructionst>(b);
-    if (!cons)
-        return "~";
-
-    switch (cons->type) {
-    case construction_type::Fortification: return "CF";
-    case construction_type::Wall:          return "Cw";
-    case construction_type::Floor:         return "Cf";
-    case construction_type::UpStair:       return "Cu";
-    case construction_type::DownStair:     return "Cd";
-    case construction_type::UpDownStair:   return "Cx";
-    case construction_type::Ramp:          return "Cr";
-    case construction_type::TrackN:        return "trackN";
-    case construction_type::TrackS:        return "trackS";
-    case construction_type::TrackE:        return "trackE";
-    case construction_type::TrackW:        return "trackW";
-    case construction_type::TrackNS:       return "trackNS";
-    case construction_type::TrackNE:       return "trackNE";
-    case construction_type::TrackNW:       return "trackNW";
-    case construction_type::TrackSE:       return "trackSE";
-    case construction_type::TrackSW:       return "trackSW";
-    case construction_type::TrackEW:       return "trackEW";
-    case construction_type::TrackNSE:      return "trackNSE";
-    case construction_type::TrackNSW:      return "trackNSW";
-    case construction_type::TrackNEW:      return "trackNEW";
-    case construction_type::TrackSEW:      return "trackSEW";
-    case construction_type::TrackNSEW:     return "trackNSEW";
-    case construction_type::TrackRampN:    return "trackrampN";
-    case construction_type::TrackRampS:    return "trackrampS";
-    case construction_type::TrackRampE:    return "trackrampE";
-    case construction_type::TrackRampW:    return "trackrampW";
-    case construction_type::TrackRampNS:   return "trackrampNS";
-    case construction_type::TrackRampNE:   return "trackrampNE";
-    case construction_type::TrackRampNW:   return "trackrampNW";
-    case construction_type::TrackRampSE:   return "trackrampSE";
-    case construction_type::TrackRampSW:   return "trackrampSW";
-    case construction_type::TrackRampEW:   return "trackrampEW";
-    case construction_type::TrackRampNSE:  return "trackrampNSE";
-    case construction_type::TrackRampNSW:  return "trackrampNSW";
-    case construction_type::TrackRampNEW:  return "trackrampNEW";
-    case construction_type::TrackRampSEW:  return "trackrampSEW";
-    case construction_type::TrackRampNSEW: return "trackrampNSEW";
-    case construction_type::NONE:
-    default:
-        return "~";
-    }
-}
-
 static const char * get_trap_str(df::building *b) {
     df::building_trapst *trap = virtual_cast<df::building_trapst>(b);
     if (!trap)
@@ -622,6 +711,7 @@ static const char * get_build_keys(const df::coord &pos,
     bool at_center = static_cast<int32_t>(pos.x) == ctx.b->centerx
                             && static_cast<int32_t>(pos.y) == ctx.b->centery;
 
+    // building_type::Construction is handled by the construction phase
     switch(ctx.b->getType()) {
     case building_type::Armorstand:
         return "a";
@@ -666,8 +756,6 @@ static const char * get_build_keys(const df::coord &pos,
         return "y";
     case building_type::WindowGem:
         return "Y";
-    case building_type::Construction:
-        return get_construction_str(ctx.b);
     case building_type::Shop:
         return do_block_building(ctx, "z", at_center);
     case building_type::AnimalTrap:
@@ -921,10 +1009,82 @@ static const char * get_tile_zone(const df::coord &pos,
     return add_expansion_syntax(zone, get_zone_keys(zone));
 }
 
-static const char * get_tile_query(const df::coord &, const tile_context &ctx) {
+// surrounds the given string in quotes and replaces internal double quotes (")
+// with double double quotes ("") (as per the csv spec)
+static string csv_quote(const string &str) {
+    std::ostringstream outstr;
+    outstr << "\"";
+
+    size_t start = 0;
+    auto end = str.find('"');
+    while (end != std::string::npos) {
+        outstr << str.substr(start, end - start);
+        outstr << "\"\"";
+        start = end + 1;
+        end = str.find('"', start);
+    }
+    outstr << str.substr(start, end) << "\"";
+
+    return outstr.str();
+}
+
+static const char * get_tile_query(const df::coord &pos,
+                                   const tile_context &ctx) {
+    string bld_name, zone_name;
+    auto & seen = ctx.processor->seen;
+
+    if (ctx.b && !seen.count(ctx.b)) {
+        bld_name = ctx.b->name;
+        seen.emplace(ctx.b);
+    }
+
+    vector<df::building_civzonest*> civzones;
+    if (Buildings::findCivzonesAt(&civzones, pos)) {
+        auto civzone = civzones.back();
+        if (!seen.count(civzone)) {
+            zone_name = civzone->name;
+            seen.emplace(civzone);
+        }
+    }
+
+    if (!bld_name.size() && !zone_name.size())
+        return NULL;
+
+    std::ostringstream str;
+    if (bld_name.size())
+        str << "{givename name=" + csv_quote(bld_name) + "}";
+    if (zone_name.size())
+        str << "{namezone name=" + csv_quote(zone_name) + "}";
+
+    return cache(csv_quote(str.str()));
+}
+
+static const char * get_tile_rooms(const df::coord &, const tile_context &ctx) {
     if (!ctx.b || !ctx.b->is_room)
         return NULL;
-    return "r+";
+
+    // get the maximum distance from the center of the building
+    df::building_extents &room = ctx.b->room;
+    int32_t x1 = room.x;
+    int32_t x2 = room.x + room.width - 1;
+    int32_t y1 = room.y;
+    int32_t y2 = room.y + room.height - 1;
+
+    int32_t dimx = std::max(ctx.b->centerx - x1, x2 - ctx.b->centerx);
+    int32_t dimy = std::max(ctx.b->centery - y1, y2 - ctx.b->centery);
+    int32_t max_dim = std::max(dimx, dimy);
+
+    switch (max_dim) {
+        case 0: return "r---&";
+        case 1: return "r--&";
+        case 2: return "r-&";
+        case 3: return "r&";
+        case 4: return "r+&";
+    }
+
+    std::ostringstream str;
+    str << "r{+ " << (max_dim - 3) << "}&";
+    return cache(str);
 }
 
 static bool create_output_dir(color_ostream &out,
@@ -945,11 +1105,12 @@ static bool create_output_dir(color_ostream &out,
 static bool get_filename(string &fname,
                          color_ostream &out,
                          blueprint_options opts, // copy because we can't const
-                         const string &phase) {
+                         const string &phase,
+                         int32_t ordinal) {
     auto L = Lua::Core::State;
     Lua::StackUnwinder top(L);
 
-    if (!lua_checkstack(L, 3) ||
+    if (!lua_checkstack(L, 4) ||
         !Lua::PushModulePublic(
             out, L, "plugins.blueprint", "get_filename")) {
         out.printerr("Failed to load blueprint Lua code\n");
@@ -958,8 +1119,9 @@ static bool get_filename(string &fname,
 
     Lua::Push(L, &opts);
     Lua::Push(L, phase);
+    Lua::Push(L, ordinal);
 
-    if (!Lua::SafeCall(out, L, 2, 1)) {
+    if (!Lua::SafeCall(out, L, 3, 1)) {
         out.printerr("Failed Lua call to get_filename\n");
         return false;
     }
@@ -974,27 +1136,31 @@ static bool get_filename(string &fname,
     return true;
 }
 
-typedef vector<const char *> bp_row;     // index is x coordinate
-typedef map<int16_t, bp_row> bp_area;    // key is y coordinate
-typedef map<int16_t, bp_area> bp_volume; // key is z coordinate
+// returns true if we could interface with lua and could verify that the given
+// phase is a meta phase
+static bool is_meta_phase(color_ostream &out,
+                          blueprint_options opts, // copy because we can't const
+                          const string &phase) {
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
 
-typedef const char * (get_tile_fn)(const df::coord &pos,
-                                   const tile_context &ctx);
-typedef void (init_ctx_fn)(const df::coord &pos, tile_context &ctx);
+    if (!lua_checkstack(L, 3) ||
+        !Lua::PushModulePublic(
+            out, L, "plugins.blueprint", "is_meta_phase")) {
+        out.printerr("Failed to load blueprint Lua code\n");
+        return false;
+    }
 
-struct blueprint_processor {
-    bp_volume mapdata;
-    const string mode;
-    const string phase;
-    const bool force_create;
-    get_tile_fn * const get_tile;
-    init_ctx_fn * const init_ctx;
-    blueprint_processor(const string &mode, const string &phase,
-                        bool force_create, get_tile_fn *get_tile,
-                        init_ctx_fn *init_ctx)
-        : mode(mode), phase(phase), force_create(force_create),
-          get_tile(get_tile), init_ctx(init_ctx) { }
-};
+    Lua::Push(L, &opts);
+    Lua::Push(L, phase);
+
+    if (!Lua::SafeCall(out, L, 2, 1)) {
+        out.printerr("Failed Lua call to is_meta_phase\n");
+        return false;
+    }
+
+    return lua_toboolean(L, -1);
+}
 
 static void write_minimal(ofstream &ofile, const blueprint_options &opts,
                           const bp_volume &mapdata) {
@@ -1052,8 +1218,8 @@ static void write_pretty(ofstream &ofile, const blueprint_options &opts,
     }
 }
 
-static string get_modeline(const blueprint_options &opts, const string &mode,
-                           const string &phase) {
+static string get_modeline(color_ostream &out, const blueprint_options &opts,
+                           const string &mode, const string &phase) {
     std::ostringstream modeline;
     modeline << "#" << mode << " label(" << phase << ")";
     if (opts.playback_start.x > 0) {
@@ -1064,6 +1230,8 @@ static string get_modeline(const blueprint_options &opts, const string &mode,
         }
         modeline << ")";
     }
+    if (is_meta_phase(out, opts, phase))
+        modeline << " hidden()";
 
     return modeline.str();
 }
@@ -1072,15 +1240,15 @@ static bool write_blueprint(color_ostream &out,
                             std::map<string, ofstream*> &output_files,
                             const blueprint_options &opts,
                             const blueprint_processor &processor,
-                            bool pretty) {
+                            bool pretty, int32_t ordinal) {
     string fname;
-    if (!get_filename(fname, out, opts, processor.phase))
+    if (!get_filename(fname, out, opts, processor.phase, ordinal))
         return false;
     if (!output_files.count(fname))
         output_files[fname] = new ofstream(fname, ofstream::trunc);
 
     ofstream &ofile = *output_files[fname];
-    ofile << get_modeline(opts, processor.mode, processor.phase) << endl;
+    ofile << get_modeline(out, opts, processor.mode, processor.phase) << endl;
 
     if (pretty)
         write_pretty(ofile, opts, processor.mapdata);
@@ -1088,6 +1256,28 @@ static bool write_blueprint(color_ostream &out,
         write_minimal(ofile, opts, processor.mapdata);
 
     return true;
+}
+
+static void write_meta_blueprint(color_ostream &out,
+                                 std::map<string, ofstream*> &output_files,
+                                 const blueprint_options &opts,
+                                 const std::vector<string> & meta_phases,
+                                 int32_t ordinal) {
+    string fname;
+    get_filename(fname, out, opts, meta_phases.front(), ordinal);
+    ofstream &ofile = *output_files[fname];
+
+    ofile << "#meta label(";
+    for (string phase : meta_phases) {
+        ofile << phase;
+        if (phase != meta_phases.back())
+            ofile << "_";
+    }
+    ofile << ")" << endl;
+
+    for (string phase : meta_phases) {
+        ofile << "/" << phase << endl;
+    }
 }
 
 static void ensure_building(const df::coord &pos, tile_context &ctx) {
@@ -1108,7 +1298,7 @@ static void add_processor(vector<blueprint_processor> &processors,
 
 static bool do_transform(color_ostream &out,
                          const df::coord &start, const df::coord &end,
-                         const blueprint_options &opts,
+                         blueprint_options opts, // copy so we can munge it
                          vector<string> &filenames) {
     // empty map instances to pass to emplace() below
     static const bp_area EMPTY_AREA;
@@ -1132,6 +1322,8 @@ static bool do_transform(color_ostream &out,
                   smooth_get_tile_fn);
     add_processor(processors, opts, "dig", "carve", opts.carve,
                   opts.engrave ? get_tile_carve : get_tile_carve_minimal);
+    add_processor(processors, opts, "build", "construct", opts.construct,
+                  get_tile_construct, ensure_building);
     add_processor(processors, opts, "build", "build", opts.build,
                   get_tile_build, ensure_building);
     add_processor(processors, opts, "place", "place", opts.place,
@@ -1139,6 +1331,8 @@ static bool do_transform(color_ostream &out,
     add_processor(processors, opts, "zone", "zone", opts.zone, get_tile_zone);
     add_processor(processors, opts, "query", "query", opts.query,
                   get_tile_query, ensure_building);
+    add_processor(processors, opts, "query", "rooms", opts.rooms,
+                  get_tile_rooms, ensure_building);
 
     if (processors.empty()) {
         out.printerr("no phases requested! nothing to do!\n");
@@ -1157,6 +1351,7 @@ static bool do_transform(color_ostream &out,
                 tile_context ctx;
                 ctx.pretty = pretty;
                 for (blueprint_processor &processor : processors) {
+                    ctx.processor = &processor;
                     if (processor.init_ctx)
                         processor.init_ctx(pos, ctx);
                     const char *tile_str = processor.get_tile(pos, ctx);
@@ -1176,13 +1371,36 @@ static bool do_transform(color_ostream &out,
         }
     }
 
+    std::vector<string> meta_phases;
+    for (blueprint_processor &processor : processors) {
+        if (processor.mapdata.empty() && !processor.force_create)
+            continue;
+        if (is_meta_phase(out, opts, processor.phase))
+            meta_phases.push_back(processor.phase);
+    }
+    if (meta_phases.size() <= 1)
+        opts.nometa = true;
+
+    bool in_meta = false;
+    int32_t ordinal = 0;
     std::map<string, ofstream*> output_files;
     for (blueprint_processor &processor : processors) {
         if (processor.mapdata.empty() && !processor.force_create)
             continue;
-        if (!write_blueprint(out, output_files, opts, processor, pretty))
+        bool meta_phase = is_meta_phase(out, opts, processor.phase);
+        if (!in_meta)
+            ++ordinal;
+        if (in_meta && !meta_phase) {
+            write_meta_blueprint(out, output_files, opts, meta_phases, ordinal);
+            ++ordinal;
+        }
+        in_meta = meta_phase;
+        if (!write_blueprint(out, output_files, opts, processor, pretty,
+                             ordinal))
             break;
     }
+    if (in_meta)
+        write_meta_blueprint(out, output_files, opts, meta_phases, ordinal);
 
     for (auto &it : output_files) {
         filenames.push_back(it.first);

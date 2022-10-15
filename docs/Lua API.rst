@@ -1906,6 +1906,14 @@ Constructions module
   coordinates, designates it for removal, or instantly cancels the planned one.
   Returns *true, was_only_planned* if removed; or *false* if none found.
 
+* ``dfhack.constructions.findAtTile(pos)``, or ``findAtTile(x,y,z)``
+
+  Returns the construction at the given position, or ``nil`` if there isn't one.
+
+* ``dfhack.constructions.insert(construction)``
+
+  Properly inserts the given construction into the game. Returns false and fails to
+  insert if there was already a construction at the position.
 
 Kitchen module
 --------------

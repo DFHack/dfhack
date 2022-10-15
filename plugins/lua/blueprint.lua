@@ -6,12 +6,22 @@ local utils = require('utils')
 local valid_phase_list = {
     'dig',
     'carve',
+    'construct',
+    'build',
+    'place',
+    'zone',
+    'query',
+    'rooms',
+}
+valid_phases = utils.invert(valid_phase_list)
+
+local meta_phase_list = {
     'build',
     'place',
     'zone',
     'query',
 }
-valid_phases = utils.invert(valid_phase_list)
+meta_phases = utils.invert(meta_phase_list)
 
 local valid_formats_list = {
     'minimal',
@@ -21,6 +31,7 @@ valid_formats = utils.invert(valid_formats_list)
 
 local valid_split_strategies_list = {
     'none',
+    'group',
     'phase',
 }
 valid_split_strategies = utils.invert(valid_split_strategies_list)
@@ -121,6 +132,7 @@ local function process_args(opts, args)
             {'f', 'format', hasArg=true,
              handler=function(optarg) parse_format(opts, optarg) end},
             {'h', 'help', handler=function() opts.help = true end},
+            {nil, 'nometa', handler=function() opts.nometa = true end},
             {'s', 'playback-start', hasArg=true,
              handler=function(optarg) parse_start(opts, optarg) end},
             {nil, 'smooth', handler=function() opts.smooth = true end},
@@ -130,6 +142,10 @@ local function process_args(opts, args)
 
     if opts.help then
         return
+    end
+
+    if opts.split_strategy == 'phase' then
+        opts.nometa = true
     end
 
     return positionals
@@ -183,8 +199,13 @@ function parse_commandline(opts, ...)
     parse_positionals(opts, positionals, depth and 4 or 3)
 end
 
+function is_meta_phase(opts, phase)
+    -- this is called directly by cpp so ensure we return a boolean, not nil
+    return not opts.nometa and meta_phases[phase] or false
+end
+
 -- returns the name of the output file for the given context
-function get_filename(opts, phase)
+function get_filename(opts, phase, ordinal)
     local fullname = 'blueprints/' .. opts.name
     local _,_,basename = fullname:find('/([^/]+)/?$')
     if not basename then
@@ -194,11 +215,13 @@ function get_filename(opts, phase)
     if fullname:endswith('/') then
         fullname = fullname .. basename
     end
-    if opts.split_strategy == 'phase' then
-        return ('%s-%s.csv'):format(fullname, phase)
+    if opts.split_strategy == 'none' then
+        return ('%s.csv'):format(fullname)
     end
-    -- no splitting
-    return ('%s.csv'):format(fullname)
+    if is_meta_phase(opts, phase) then
+        phase = 'meta'
+    end
+    return ('%s-%d-%s.csv'):format(fullname, ordinal, phase)
 end
 
 -- compatibility with old exported API.

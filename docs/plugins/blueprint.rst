@@ -7,11 +7,11 @@ blueprint
 
 With ``blueprint``, you can export the structure of a portion of your fortress
 in a blueprint file that you (or anyone else) can later play back with
-`quickfort`.
+`gui/quickfort`.
 
 Blueprints are ``.csv`` or ``.xlsx`` files created in the ``blueprints``
 subdirectory of your DF folder. The map area to turn into a blueprint is either
-selected interactively with the ``blueprint gui`` command or, if the GUI is not
+selected interactively with the ``gui/blueprint`` command or, if the GUI is not
 used, starts at the active cursor location and extends right and down for the
 requested width and height.
 
@@ -27,16 +27,16 @@ Examples
 --------
 
 ``blueprint gui``
-    Runs `gui/blueprint`, the interactive frontend, where all configuration for
-    a ``blueprint`` command can be set visually and interactively.
+    Runs `gui/blueprint`, the GUI frontend, where all configuration for a
+    ``blueprint`` command can be set visually and interactively.
 ``blueprint 30 40 bedrooms``
     Generates blueprints for an area 30 tiles wide by 40 tiles tall, starting
     from the active cursor on the current z-level. Blueprints are written to
     ``bedrooms.csv`` in the ``blueprints`` directory.
 ``blueprint 30 40 bedrooms dig --cursor 108,100,150``
     Generates only the ``#dig`` blueprint in the ``bedrooms.csv`` file, and
-    the start of the blueprint area is set to a specific value instead of using
-    the in-game cursor position.
+    the start of the blueprint area is set to a specific coordinate instead of
+    using the in-game cursor position.
 
 Positional parameters
 ---------------------
@@ -66,14 +66,21 @@ phases; just separate them with a space.
     Generate quickfort ``#dig`` blueprints for digging natural stone.
 ``carve``
     Generate quickfort ``#dig`` blueprints for smoothing and carving.
+``construct``
+    Generate quickfort ``#build`` blueprints for constructions (e.g. flooring
+    and walls).
 ``build``
-    Generate quickfort ``#build`` blueprints for constructions and buildings.
+    Generate quickfort ``#build`` blueprints for buildings (including
+    furniture).
 ``place``
     Generate quickfort ``#place`` blueprints for placing stockpiles.
 ``zone``
     Generate quickfort ``#zone`` blueprints for designating zones.
 ``query``
-    Generate quickfort ``#query`` blueprints for configuring rooms.
+    Generate quickfort ``#query`` blueprints for configuring stockpiles and
+    naming buildings.
+``rooms``
+    Generate quickfort ``#query`` blueprints for defining rooms.
 
 If no phases are specified, phases are autodetected. For example, a ``#place``
 blueprint will be created only if there are stockpiles in the blueprint area.
@@ -92,8 +99,14 @@ Options
     Select the output format of the generated files. See the `Output formats`_
     section below for options. If not specified, the output format defaults to
     "minimal", which will produce a small, fast ``.csv`` file.
-``-h``, ``--help``
-    Show command help text.
+``--nometa``
+    `Meta blueprints <quickfort-meta>` let you apply all blueprints that can be
+    replayed at the same time (without unpausing the game) with a single
+    command. This usually reduces the number of `quickfort` commands you need to
+    run to rebuild your fort from about 6 to 2 or 3. If you would rather just
+    have the low-level blueprints, this flag will prevent meta blueprints from
+    being generated and any low-level blueprints from being
+    `hidden <quickfort-hidden>` from the ``quickfort list`` command.
 ``-s``, ``--playback-start <x>,<y>,<comment>``
     Specify the column and row offsets (relative to the upper-left corner of the
     blueprint, which is ``1,1``) where the player should put the cursor when the
@@ -133,5 +146,10 @@ The ``--splitby`` flag can take any of the following values:
 ``none``
     Writes all blueprints into a single file. This is the standard format for
     quickfort fortress blueprint bundles and is the default.
+``group``
+    Creates one file per group of blueprints that can be played back at the same
+    time (without have to unpause the game and let dwarves fulfill jobs between
+    blueprint runs).
 ``phase``
-    Creates a separate file for each phase.
+    Creates a separate file for each phase. Implies ``--nometa`` since meta
+    blueprints can't combine blueprints that are in separate files.

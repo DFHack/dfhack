@@ -54,11 +54,18 @@ using df::global::world;
 
 df::construction * Constructions::findAtTile(df::coord pos)
 {
-    for (auto it = world->constructions.begin(); it != world->constructions.end(); ++it) {
-        if ((*it)->pos == pos)
-            return *it;
+    int index = binsearch_index(world->constructions, pos);
+    if (index == -1) {
+        return NULL;
     }
-    return NULL;
+    return world->constructions[index];
+}
+
+bool Constructions::insert(df::construction * constr)
+{
+    bool toInsert;
+    insert_into_vector(world->constructions, &df::construction::pos, constr, &toInsert);
+    return toInsert;
 }
 
 bool Constructions::designateNew(df::coord pos, df::construction_type type,

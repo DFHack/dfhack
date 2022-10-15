@@ -1,0 +1,6 @@
+#query label(query)
+
+
+
+,,"{givename name=""foo dumper""}"
+,,"{givename name=""foo""}"

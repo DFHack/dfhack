@@ -45,6 +45,8 @@ namespace Constructions
 
 DFHACK_EXPORT df::construction * findAtTile(df::coord pos);
 
+DFHACK_EXPORT bool insert(df::construction * constr);
+
 DFHACK_EXPORT bool designateNew(df::coord pos, df::construction_type type,
                                 df::item_type item = df::item_type::NONE, int mat_index = -1);
 

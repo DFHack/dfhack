@@ -258,7 +258,7 @@ void enable_auto_unpause(color_ostream &out, bool state) {
 command_result spectate (color_ostream &out, std::vector <std::string> & parameters) {
     if (!parameters.empty()) {
         if (parameters.size() >= 2 && parameters.size() <= 3) {
-            bool state;
+            bool state =false;
             bool set = false;
             if (parameters[0] == "enable") {
                 state = true;
@@ -269,14 +269,13 @@ command_result spectate (color_ostream &out, std::vector <std::string> & paramet
             } else {
                 return DFHack::CR_WRONG_USAGE;
             }
-            auto &arg = parameters[1];
-            if(arg == "auto-unpause"){
+            if(parameters[1] == "auto-unpause"){
                 enable_auto_unpause(out, state);
-            } else if (arg == "auto-disengage") {
+            } else if (parameters[1] == "auto-disengage") {
                 disengage_enabled = state;
-            } else if (arg == "focus-jobs") {
+            } else if (parameters[1] == "focus-jobs") {
                 focus_jobs_enabled = state;
-            } else if (arg == "tick-threshold" && set && parameters.size() == 3) {
+            } else if (parameters[1] == "tick-threshold" && set && parameters.size() == 3) {
                 try {
                     tick_threshold = std::stol(parameters[2]);
                 } catch (const std::exception &e) {

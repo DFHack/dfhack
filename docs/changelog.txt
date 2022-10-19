@@ -53,6 +53,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - UX: You can now drag the scrollbar to scroll to a specific spot
 - `overlay`: reduce the size of the "DFHack Launcher" button
 - Constructions module: ``findAtTile`` now uses a binary search intead of a linear search.
+- `gui/cp437-table`: new global keybinding for the clickable on-screen keyboard for players with keyboard layouts that prevent them from using certain keys: Ctrl-Shift-K
 
 ## Documentation
 

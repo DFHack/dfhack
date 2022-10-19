@@ -3354,7 +3354,7 @@ A module for reading custom tokens added to the raws by mods.
 
   Where ``typeInstance`` is a unit, entity, item, job, projectile, building, plant, or interaction
   instance. Gets ``typeDefinition`` and then returns the same as ``getToken(typeDefinition, token)``.
-  For units, it gets the token from the race or caste instead if applicable. For plants growth items,
+  For units, it gets the token from the race or caste instead if applicable. For plant growth items,
   it gets the token from the plant or plant growth instead if applicable. For plants it does the same
   but with growth number -1.
 

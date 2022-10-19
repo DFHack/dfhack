@@ -36,6 +36,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
+- `tiletypes`: no longer resets dig priority to the default when updating other properties of a tile
 
 ## Misc Improvements
 - `blueprint`: new ``--smooth`` option for recording all smoothed floors and walls instead of just the ones that require smoothing for later carving

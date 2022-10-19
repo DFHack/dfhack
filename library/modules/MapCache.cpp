@@ -303,7 +303,7 @@ int32_t MapExtras::Block::priorityAt(df::coord2d pos)
 
 bool MapExtras::Block::setPriorityAt(df::coord2d pos, int32_t priority)
 {
-    if (!block || priority < 0)
+    if (!block || priority <= 0)
         return false;
 
     auto event = getPriorityEvent(block, true);

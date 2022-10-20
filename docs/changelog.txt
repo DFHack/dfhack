@@ -36,6 +36,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
+- `gui/create-item`: prevent materials list filter from intercepting sublist hotkeys
 - `tiletypes`: no longer resets dig priority to the default when updating other properties of a tile
 
 ## Misc Improvements

@@ -56,6 +56,8 @@ function MaterialDialog:init(info)
             frame = { l = 0, r = 0, t = 4, b = 2 },
             icon_width = 2,
             on_submit = self:callback('onSubmitItem'),
+            edit_ignore_keys={'CUSTOM_SHIFT_I', 'CUSTOM_SHIFT_C',
+                              'CUSTOM_SHIFT_P'},
         },
         widgets.Label{
             text = { {

@@ -1192,7 +1192,7 @@ function List:onRenderBody(dc)
 
         if obj.key then
             local keystr = gui.getKeyDisplay(obj.key)
-            ip = ip-2-#keystr
+            ip = ip-3-#keystr
             dc:seek(ip,y):pen(self.text_pen)
             dc:string('('):string(keystr,COLOR_LIGHTGREEN):string(')')
         end

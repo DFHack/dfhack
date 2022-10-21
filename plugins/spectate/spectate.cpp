@@ -80,18 +80,6 @@ inline void saveConfig() {
     }
 }
 
-//struct player_pause_hook : df::viewscreen_dwarfmodest {
-//    typedef df::viewscreen_dwarfmodest interpose_base;
-//    DEFINE_VMETHOD_INTERPOSE(void, feed, (std::set<df::interface_key>* input)) {
-//        if ((ui->main.mode == ui_sidebar_mode::Default) && !allow_player_pause) {
-//            input->erase(interface_key::D_PAUSE);
-//        }
-//        INTERPOSE_NEXT(feed)(input);
-//    }
-//};
-//
-//IMPLEMENT_VMETHOD_INTERPOSE(player_pause_hook, feed);
-
 command_result spectate (color_ostream &out, std::vector <std::string> & parameters);
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands) {
@@ -206,50 +194,48 @@ void enable_auto_unpause(color_ostream &out, bool state) {
     // we don't need to do any of this yet if the plugin isn't enabled
     if (enabled) {
         // todo: R.E. UNDEAD_ATTACK event [still pausing regardless of announcement settings]
-        if(pause_lock) {
-            // lock_collision == true means: enable_auto_unpause() was already invoked and didn't complete
-            // The onupdate function above ensure the procedure properly completes, thus we only care about
-            // state reversal here ergo `enabled != state`
-            if (lock_collision && unpause_enabled != state) {
-                out.print("handling collision\n");
-                // if unpaused_enabled is true, then a lock collision means: we couldn't save/disable the pause settings,
-                // therefore nothing to revert and the lock won't even be engaged (nothing to unlock)
-                lock_collision = false;
-                unpause_enabled = state;
-                if (unpause_enabled) {
-                    // a collision means we couldn't restore the pause settings, therefore we only need re-engage the lock
-                    pause_lock->lock();
-                }
-                return;
+        // lock_collision == true means: enable_auto_unpause() was already invoked and didn't complete
+        // The onupdate function above ensure the procedure properly completes, thus we only care about
+        // state reversal here ergo `enabled != state`
+        if (lock_collision && unpause_enabled != state) {
+            out.print("handling collision\n");
+            // if unpaused_enabled is true, then a lock collision means: we couldn't save/disable the pause settings,
+            // therefore nothing to revert and the lock won't even be engaged (nothing to unlock)
+            lock_collision = false;
+            unpause_enabled = state;
+            if (unpause_enabled) {
+                // a collision means we couldn't restore the pause settings, therefore we only need re-engage the lock
+                pause_lock->lock();
             }
-            // update the announcement settings if we can
-            if (state) {
-                if (World::SaveAnnouncementSettings()) {
-                    World::DisableAnnouncementPausing();
-                    announcements_disabled = true;
-                    pause_lock->lock();
-                } else {
-                    out.printerr("lock collision enabling auto-unpause\n");
-                    lock_collision = true;
-                }
+            return;
+        }
+        // update the announcement settings if we can
+        if (state) {
+            if (World::SaveAnnouncementSettings()) {
+                World::DisableAnnouncementPausing();
+                announcements_disabled = true;
+                pause_lock->lock();
             } else {
-                pause_lock->unlock();
-                if (announcements_disabled) {
-                    if (!World::RestoreAnnouncementSettings()) {
-                        // this in theory shouldn't happen, if others use the lock like we do in spectate
-                        out.printerr("lock collision disabling auto-unpause\n");
-                        lock_collision = true;
-                    } else {
-                        announcements_disabled = false;
-                    }
+                out.printerr("lock collision enabling auto-unpause\n");
+                lock_collision = true;
+            }
+        } else {
+            pause_lock->unlock();
+            if (announcements_disabled) {
+                if (!World::RestoreAnnouncementSettings()) {
+                    // this in theory shouldn't happen, if others use the lock like we do in spectate
+                    out.printerr("lock collision disabling auto-unpause\n");
+                    lock_collision = true;
+                } else {
+                    announcements_disabled = false;
                 }
             }
-            if (lock_collision) {
-                out.printerr(
-                        "auto-unpause: must wait for another Pausing::AnnouncementLock to be lifted.\n"
-                        "The action you were attempting will complete when the following lock or locks lift.\n");
-                pause_lock->reportLocks(out);
-            }
+        }
+        if (lock_collision) {
+            out.printerr(
+                    "auto-unpause: must wait for another Pausing::AnnouncementLock to be lifted.\n"
+                    "The action you were attempting will complete when the following lock or locks lift.\n");
+            pause_lock->reportLocks(out);
         }
     }
     unpause_enabled = state;
@@ -277,7 +263,7 @@ command_result spectate (color_ostream &out, std::vector <std::string> & paramet
                 focus_jobs_enabled = state;
             } else if (parameters[1] == "tick-threshold" && set && parameters.size() == 3) {
                 try {
-                    tick_threshold = std::stol(parameters[2]);
+                    tick_threshold = std::abs(std::stol(parameters[2]));
                 } catch (const std::exception &e) {
                     out.printerr("%s\n", e.what());
                 }
@@ -298,7 +284,6 @@ command_result spectate (color_ostream &out, std::vector <std::string> & paramet
 
 // every tick check whether to decide to follow a dwarf
 void onTick(color_ostream& out, void* ptr) {
-    if (!df::global::ui) return;
     int32_t tick = df::global::world->frame_counter;
     if (our_dorf) {
         if (!Units::isAlive(our_dorf)) {
@@ -315,7 +300,6 @@ void onTick(color_ostream& out, void* ptr) {
             dwarves.push_back(unit);
         }
         std::uniform_int_distribution<uint64_t> follow_any(0, dwarves.size() - 1);
-        if (df::global::ui) {
             // if you're looking at a warning about a local address escaping, it means the unit* from dwarves (which aren't local)
             our_dorf = dwarves[follow_any(RNG)];
             df::global::ui->follow_unit = our_dorf->id;
@@ -324,7 +308,7 @@ void onTick(color_ostream& out, void* ptr) {
             if (!job_watched) {
                 timestamp = tick;
             }
-        }
+
     }
 }
 
@@ -345,8 +329,7 @@ void onJobStart(color_ostream& out, void* job_ptr) {
         std::bernoulli_distribution follow_job(p);
         if (!job->flags.bits.special && follow_job(RNG)) {
             job_watched = job;
-            df::unit* unit = Job::getWorker(job);
-            if (df::global::ui && unit) {
+            if (df::unit* unit = Job::getWorker(job)) {
                 our_dorf = unit;
                 df::global::ui->follow_unit = unit->id;
             }
@@ -360,9 +343,7 @@ void onJobStart(color_ostream& out, void* job_ptr) {
                 nonworkers.push_back(unit);
             }
             std::uniform_int_distribution<> follow_drunk(0, nonworkers.size() - 1);
-            if (df::global::ui) {
-                df::global::ui->follow_unit = nonworkers[follow_drunk(RNG)]->id;
-            }
+            df::global::ui->follow_unit = nonworkers[follow_drunk(RNG)]->id;
         }
     }
 }

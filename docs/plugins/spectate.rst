@@ -19,10 +19,6 @@ When enabled, the plugin will automatically switch which dwarf is being
 followed periodically, preferring dwarves on z-levels with the highest
 job activity.
 
-To set features that toggle between two states, use {0,1} to specify
-which state the feature should be in. Anything else will take any positive
-value.
-
 Changes to plugin settings will be saved per world. Whether the plugin itself
 is enabled or not is not saved.
 
@@ -32,11 +28,11 @@ Examples
 ``spectate``
     The plugin reports its feature status.
 
-``spectate auto-unpause 1``
+``spectate enable auto-unpause``
     Enable the spectate plugin to automatically dismiss pause events caused
     by the game. Siege events are one example of such a game event.
 
-``spectate tick-interval 50``
+``spectate set tick-interval 50``
     Set the tick interval the followed dwarf can be changed at back to its
     default value.
 

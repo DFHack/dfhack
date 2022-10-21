@@ -1,7 +1,6 @@
 #pragma once
 #include <unordered_set>
 #include <string>
-#include <atomic>
 #include <ColorText.h>
 
 namespace DFHack {
@@ -11,10 +10,10 @@ namespace DFHack {
     {
         class Lock
         {
-            std::atomic_bool locked{};
+            bool locked = false;
         public:
             const std::string name;
-            explicit Lock(const char* name) : name(name){ locked = false; }
+            explicit Lock(const char* name) : name(name){}
             virtual ~Lock()= default;
             virtual bool isAnyLocked() const = 0;
             virtual bool isOnlyLocked() const = 0;

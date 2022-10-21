@@ -4052,7 +4052,11 @@ Scrollbars have the following attributes:
 
 :fg: Specifies the pen for the scroll icons and the active part of the bar. Default is ``COLOR_LIGHTGREEN``.
 :bg: Specifies the pen for the background part of the scrollbar. Default is ``COLOR_CYAN``.
-:on_scroll: A callback called when the scrollbar is scrolled. It will be called with a single string parameter with a value of "up_large", "down_large", "up_small", or "down_small".
+:on_scroll: A callback called when the scrollbar is scrolled. If the scrollbar is clicked,
+  the callback will be called with one of the following string parameters: "up_large",
+  "down_large", "up_small", or "down_small". If the scrollbar is dragged, the callback will
+  be called with the value that ``top_elem`` should be set to on the next call to
+  ``update()`` (see below).
 
 The Scrollbar widget implements the following methods:
 
@@ -4062,8 +4066,10 @@ The Scrollbar widget implements the following methods:
   The ``top_elem`` param is the (one-based) index of the first visible element.
   The ``elems_per_page`` param is the maximum number of elements that can be
   shown at one time. The ``num_elems`` param is the total number of elements
-  that the paried widget can scroll through. The scrollbar will adjust its
-  scrollbar size and position accordingly.
+  that the paried widget can scroll through. If ``elems_per_page`` or
+  ``num_elems`` is not specified, the most recently specified value for these
+  parameters is used. The scrollbar will adjust its scrollbar size and position
+  according to the values passed to this function.
 
 Clicking on the arrows at the top or the bottom of a scrollbar will scroll an
 associated widget by a small amount. Clicking on the unfilled portion of the

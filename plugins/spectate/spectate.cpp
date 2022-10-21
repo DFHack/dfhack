@@ -54,7 +54,7 @@ df::job* job_watched = nullptr;
 int32_t timestamp = -1;
 
 std::set<int32_t> job_tracker;
-std::map<uint16_t,uint16_t> freq;
+std::map<uint16_t,int16_t> freq;
 std::default_random_engine RNG;
 
 void enable_auto_unpause(color_ostream &out, bool state);

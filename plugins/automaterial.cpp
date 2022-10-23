@@ -14,6 +14,7 @@
 
 // DF data structure definition headers
 #include "DataDefs.h"
+#include "Debug.h"
 #include "MiscUtils.h"
 #include "TileTypes.h"
 #include "df/build_req_choice_genst.h"
@@ -51,6 +52,10 @@ DFHACK_PLUGIN("automaterial");
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(ui_build_selector);
+
+namespace DFHack {
+    DBG_DECLARE(automaterial,log,DebugCategory::LINFO);
+}
 
 struct MaterialDescriptor
 {
@@ -719,7 +724,6 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
         if (box_select_mode == SELECT_FIRST || (!show_box_selection && box_select_mode == SELECT_SECOND))
         {
             int32_t x, y, z;
-
             if (!Gui::getCursorCoords(x, y, z))
                 return;
 
@@ -732,12 +736,13 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
             if (!Gui::getCursorCoords(box_second.x, box_second.y, box_second.z))
                 return;
 
-            int32_t xD = (box_second.x > box_first.x) ? 1 : -1;
-            int32_t yD = (box_second.y > box_first.y) ? 1 : -1;
-            for (int32_t xB = box_first.x; (xD > 0) ? (xB <= box_second.x) : (xB >= box_second.x); xB += xD)
-            {
-                for (int32_t yB = box_first.y; (yD > 0) ? (yB <= box_second.y) : (yB >= box_second.y); yB += yD)
-                {
+            Gui::DwarfmodeDims dims = Gui::getDwarfmodeViewDims();
+            int32_t startx = std::max((int32_t)vport.x, std::min(box_first.x, box_second.x));
+            int32_t endx = std::min(vport.x + dims.map_x2 - dims.map_x1, std::max(box_first.x, box_second.x));
+            int32_t starty = std::max((int32_t)vport.y, std::min(box_first.y, box_second.y));
+            int32_t endy = std::min(vport.y + dims.map_y2 - dims.map_y1, std::max(box_first.y, box_second.y));
+            for (int32_t yB = starty; yB <= endy; ++yB) {
+                for (int32_t xB = startx; xB <= endx; ++xB) {
                     if (hollow_selection && !(xB == box_first.x || xB == box_second.x || yB == box_first.y || yB == box_second.y))
                         continue;
 
@@ -963,6 +968,11 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
 
     void move_cursor(df::coord &pos)
     {
+        int32_t x, y, z;
+        Gui::getCursorCoords(x, y, z);
+        DEBUG(log).print("moving cursor from %d, %d, %d to %d, %d, %d\n",
+                         x, y, z, pos.x, pos.y, pos.z);
+
         Gui::setCursorCoords(pos.x, pos.y, pos.z);
         Gui::refreshSidebar();
     }
@@ -1269,9 +1279,13 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
                     label << "Selection: " << dX << "x" << dY;
                     OutputString(COLOR_WHITE, x, ++y, label.str(), true, left_margin);
 
-                    int cx = box_first.x;
-                    int cy = box_first.y;
-                    OutputString(COLOR_BROWN, cx, cy, "X", false, 0, 0, true /* map */);
+                    df::coord vport = Gui::getViewportPos();
+                    int cx = box_first.x - vport.x + 1;
+                    int cy = box_first.y - vport.y + 1;
+
+                    Gui::DwarfmodeDims dims = Gui::getDwarfmodeViewDims();
+                    if (cx >= 1 && cx <= dims.map_x2 && cy >= 1 && cy <= dims.map_y2)
+                        OutputString(COLOR_BROWN, cx, cy, "X", false, 0, 0, true /* map */);
                     break;
                 }
 

@@ -1458,6 +1458,8 @@ std::string Core::getHackPath()
 #endif
 }
 
+extern char **environ;
+
 bool Core::Init()
 {
     if(started)
@@ -1479,6 +1481,10 @@ bool Core::Init()
         freopen("stdout.log", "w", stdout);
         freopen("stderr.log", "w", stderr);
     #endif
+
+    for (int i = 0; environ[i]; i++) {
+        cerr << "env:" << environ[i] << endl;
+    }
 
     Filesystem::init();
 

@@ -36,6 +36,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
+- `gui/create-item`: prevent materials list filter from intercepting sublist hotkeys
+- `tiletypes`: no longer resets dig priority to the default when updating other properties of a tile
 
 ## Misc Improvements
 - `blueprint`: new ``--smooth`` option for recording all smoothed floors and walls instead of just the ones that require smoothing for later carving
@@ -58,6 +60,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `spectate`: new ``focus-jobs`` option for following a dwarf after their job has finished (when disabled).
 - `spectate`: new ``tick-threshold``, option for specifying the change interval (maximum follow time when focus-jobs is enabled)
 - `spectate`: added persistent configuration of the plugin settings
+- `gui/cp437-table`: new global keybinding for the clickable on-screen keyboard for players with keyboard layouts that prevent them from using certain keys: Ctrl-Shift-K
 
 ## Documentation
 - `spectate`: improved documentation of features and functionality
@@ -69,6 +72,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``widgets.Scrollbar``: new scrollbar widget that can be paired with an associated scrollable widget. Integrated with ``widgets.Label`` and ``widgets.List``.
 - ``dfhack.constructions.findAtTile()``: exposed preexisting function to Lua.
 - ``dfhack.constructions.insert()``: exposed new function to Lua.
+- ``widgets.EditField`` now allows other widgets to process characters that the ``on_char`` callback rejects.
 
 # 0.47.05-r7
 

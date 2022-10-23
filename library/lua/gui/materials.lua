@@ -56,6 +56,7 @@ function MaterialDialog:init(info)
             frame = { l = 0, r = 0, t = 4, b = 2 },
             icon_width = 2,
             on_submit = self:callback('onSubmitItem'),
+            edit_on_char=function(c) return c:match('%l') end,
         },
         widgets.Label{
             text = { {

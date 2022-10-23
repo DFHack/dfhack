@@ -326,6 +326,8 @@ function EditField:onInput(keys)
             if not self.on_char or self.on_char(cv, old) then
                 self:setText(old:sub(1,self.cursor-1)..cv..old:sub(self.cursor),
                              self.cursor + 1)
+            elseif self.on_char then
+                return self.modal
             end
         end
         if self.on_change and self.text ~= old then
@@ -363,8 +365,6 @@ end
 -- Scrollbar --
 ---------------
 
--- these can be overridden by the user, e.g.:
---   require('gui.widgets').SCROLL_DELAY_MS = 100
 SCROLL_INITIAL_DELAY_MS = 300
 SCROLL_DELAY_MS = 20
 
@@ -389,6 +389,17 @@ function Scrollbar:init()
     self:update(1, 1, 1)
 end
 
+local function scrollbar_get_max_pos_and_height(scrollbar)
+    local frame_body = scrollbar.frame_body
+    local scrollbar_body_height = (frame_body and frame_body.height or 3) - 2
+
+    local height = math.max(1, math.floor(
+        (math.min(scrollbar.elems_per_page, scrollbar.num_elems) * scrollbar_body_height) /
+        scrollbar.num_elems))
+
+    return scrollbar_body_height - height, height
+end
+
 -- calculate and cache the number of tiles of empty space above the top of the
 -- scrollbar and the number of tiles the scrollbar should occupy to represent
 -- the percentage of text that is on the screen.
@@ -398,37 +409,31 @@ function Scrollbar:update(top_elem, elems_per_page, num_elems)
     if not top_elem then error('must specify index of new top element') end
     elems_per_page = elems_per_page or self.elems_per_page
     num_elems = num_elems or self.num_elems
+    self.top_elem = top_elem
+    self.elems_per_page, self.num_elems = elems_per_page, num_elems
 
-    local frame_height = self.frame_body and self.frame_body.height or 3
-    local scrollbar_body_height = frame_height - 2
-    local height = math.max(1, math.floor(
-        (math.min(elems_per_page, num_elems) * scrollbar_body_height) /
-        num_elems))
-
-    local max_pos = scrollbar_body_height - height
+    local max_pos, height = scrollbar_get_max_pos_and_height(self)
     local pos = (num_elems == elems_per_page) and 0 or
             math.ceil(((top_elem-1) * max_pos) /
                       (num_elems - elems_per_page))
 
-    self.top_elem = top_elem
-    self.elems_per_page, self.num_elems = elems_per_page, num_elems
     self.bar_offset, self.bar_height = pos, height
 end
 
 local function scrollbar_do_drag(scrollbar)
-    local x,y = dfhack.screen.getMousePos()
-    x,y = scrollbar.frame_body:localXY(x,y)
-    local bar_idx = y - scrollbar.bar_offset
-    local delta = bar_idx - scrollbar.is_dragging
-    if delta < -scrollbar.bar_height then
-        scrollbar.on_scroll('up_large')
-    elseif delta < 0 then
-        scrollbar.on_scroll('up_small')
-    elseif delta > scrollbar.bar_height then
-        scrollbar.on_scroll('down_large')
-    elseif delta > 0 then
-        scrollbar.on_scroll('down_small')
+    local _,y = scrollbar.frame_body:localXY(dfhack.screen.getMousePos())
+    local cur_pos = y - scrollbar.is_dragging
+    local max_top = scrollbar.num_elems - scrollbar.elems_per_page + 1
+    local max_pos = scrollbar_get_max_pos_and_height(scrollbar)
+    local new_top_elem = math.floor(cur_pos * max_top / max_pos) + 1
+    new_top_elem = math.max(1, math.min(new_top_elem, max_top))
+    if new_top_elem ~= scrollbar.top_elem then
+        scrollbar.on_scroll(new_top_elem)
     end
+end
+
+local function scrollbar_is_visible(scrollbar)
+    return scrollbar.elems_per_page < scrollbar.num_elems
 end
 
 local UP_ARROW_CHAR = string.char(24)
@@ -439,7 +444,7 @@ local BAR_BG_CHAR = string.char(179)
 
 function Scrollbar:onRenderBody(dc)
     -- don't draw if all elements are visible
-    if self.elems_per_page >= self.num_elems then return end
+    if not scrollbar_is_visible(self) then return end
     -- render up arrow if we're not at the top
     dc:seek(0, 0):char(
         self.top_elem == 1 and NO_ARROW_CHAR or UP_ARROW_CHAR, self.fg, self.bg)
@@ -482,7 +487,10 @@ function Scrollbar:onRenderBody(dc)
 end
 
 function Scrollbar:onInput(keys)
-    if not keys._MOUSE_L_DOWN or not self.on_scroll then return false end
+    if not keys._MOUSE_L_DOWN or not self.on_scroll
+            or not scrollbar_is_visible(self) then
+        return false
+    end
     local _,y = self:getMousePos()
     if not y then return false end
     local scroll_spec = nil
@@ -761,7 +769,9 @@ end
 
 function Label:on_scrollbar(scroll_spec)
     local v = 0
-    if scroll_spec == 'down_large' then
+    if tonumber(scroll_spec) then
+        v = scroll_spec - self.start_line_num
+    elseif scroll_spec == 'down_large' then
         v = '+halfpage'
     elseif scroll_spec == 'up_large' then
         v = '-halfpage'
@@ -1134,7 +1144,9 @@ end
 
 function List:on_scrollbar(scroll_spec)
     local v = 0
-    if scroll_spec == 'down_large' then
+    if tonumber(scroll_spec) then
+        v = scroll_spec - self.page_top
+    elseif scroll_spec == 'down_large' then
         v = math.ceil(self.page_size / 2)
     elseif scroll_spec == 'up_large' then
         v = -math.ceil(self.page_size / 2)
@@ -1192,7 +1204,7 @@ function List:onRenderBody(dc)
 
         if obj.key then
             local keystr = gui.getKeyDisplay(obj.key)
-            ip = ip-2-#keystr
+            ip = ip-3-#keystr
             dc:seek(ip,y):pen(self.text_pen)
             dc:string('('):string(keystr,COLOR_LIGHTGREEN):string(')')
         end
@@ -1274,14 +1286,22 @@ FilteredList.ATTRS {
     edit_below = false,
     edit_key = DEFAULT_NIL,
     edit_ignore_keys = DEFAULT_NIL,
+    edit_on_char = DEFAULT_NIL,
 }
 
 function FilteredList:init(info)
+    local on_char = self:callback('onFilterChar')
+    if self.edit_on_char then
+        on_char = function(c, text)
+            return self.edit_on_char(c, text) and self:onFilterChar(c, text)
+        end
+    end
+
     self.edit = EditField{
         text_pen = info.edit_pen or info.cursor_pen,
         frame = { l = info.icon_width, t = 0, h = 1 },
         on_change = self:callback('onFilterChange'),
-        on_char = self:callback('onFilterChar'),
+        on_char = on_char,
         key = self.edit_key,
         ignore_keys = self.edit_ignore_keys,
     }

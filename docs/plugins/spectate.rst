@@ -43,6 +43,6 @@ Features
 :auto-disengage: Toggle auto-disengagement of plugin through player intervention while unpaused. (default: disabled)
 
 Settings
--------
+--------
 :tick-threshold: Set the plugin's tick interval for changing the followed dwarf.
                  Acts as a maximum follow time when used with focus-jobs enabled. (default: 50)

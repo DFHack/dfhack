@@ -326,6 +326,8 @@ function EditField:onInput(keys)
             if not self.on_char or self.on_char(cv, old) then
                 self:setText(old:sub(1,self.cursor-1)..cv..old:sub(self.cursor),
                              self.cursor + 1)
+            elseif self.on_char then
+                return self.modal
             end
         end
         if self.on_change and self.text ~= old then
@@ -1274,14 +1276,22 @@ FilteredList.ATTRS {
     edit_below = false,
     edit_key = DEFAULT_NIL,
     edit_ignore_keys = DEFAULT_NIL,
+    edit_on_char = DEFAULT_NIL,
 }
 
 function FilteredList:init(info)
+    local on_char = self:callback('onFilterChar')
+    if self.edit_on_char then
+        on_char = function(c, text)
+            return self.edit_on_char(c, text) and self:onFilterChar(c, text)
+        end
+    end
+
     self.edit = EditField{
         text_pen = info.edit_pen or info.cursor_pen,
         frame = { l = info.icon_width, t = 0, h = 1 },
         on_change = self:callback('onFilterChange'),
-        on_char = self:callback('onFilterChar'),
+        on_char = on_char,
         key = self.edit_key,
         ignore_keys = self.edit_ignore_keys,
     }

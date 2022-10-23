@@ -11,7 +11,7 @@ Usage
 ::
 
     enable spectate
-    spectate set tick-threshold <value>
+    spectate set <setting> <value>
     spectate enable|disable <feature>
 
 
@@ -26,7 +26,7 @@ Examples
 --------
 
 ``spectate``
-    The plugin reports its feature status.
+    The plugin reports its configured status.
 
 ``spectate enable auto-unpause``
     Enable the spectate plugin to automatically dismiss pause events caused
@@ -36,12 +36,13 @@ Examples
     Set the tick interval the followed dwarf can be changed at back to its
     default value.
 
-Options
--------
+Features
+--------
+:focus-jobs:     Toggle whether the plugin should always be following a job. (default: disabled)
+:auto-unpause:   Toggle auto-dismissal of game pause events. (default: disabled)
+:auto-disengage: Toggle auto-disengagement of plugin through player intervention while unpaused. (default: disabled)
 
-:no option:      Show plugin status.
+Settings
+-------
 :tick-threshold: Set the plugin's tick interval for changing the followed dwarf.
                  Acts as a maximum follow time when used with focus-jobs enabled. (default: 50)
-:focus-jobs:     Toggle whether the plugin should always be following a job. (default: 0)
-:auto-unpause:   Toggle auto-dismissal of game pause events. (default: 0)
-:auto-disengage: Toggle auto-disengagement of plugin through player intervention while unpaused. (default: 0)

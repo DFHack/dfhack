@@ -184,7 +184,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
         }
     }
     if (failsafe >= 10) {
-        out.printerr("spectate encountered a problem dismissing a popup!");
+        out.printerr("spectate encountered a problem dismissing a popup!\n");
     }
     if (disengage_enabled && !World::ReadPauseState()) {
         if (our_dorf && our_dorf->id != df::global::ui->follow_unit) {
@@ -304,15 +304,14 @@ void onTick(color_ostream& out, void* ptr) {
             dwarves.push_back(unit);
         }
         std::uniform_int_distribution<uint64_t> follow_any(0, dwarves.size() - 1);
-            // if you're looking at a warning about a local address escaping, it means the unit* from dwarves (which aren't local)
-            our_dorf = dwarves[follow_any(RNG)];
-            df::global::ui->follow_unit = our_dorf->id;
-            job_watched = our_dorf->job.current_job;
-            following_dwarf = true;
-            if (!job_watched) {
-                timestamp = tick;
-            }
-
+        // if you're looking at a warning about a local address escaping, it means the unit* from dwarves (which aren't local)
+        our_dorf = dwarves[follow_any(RNG)];
+        df::global::ui->follow_unit = our_dorf->id;
+        job_watched = our_dorf->job.current_job;
+        following_dwarf = true;
+        if (!job_watched) {
+            timestamp = tick;
+        }
     }
 }
 

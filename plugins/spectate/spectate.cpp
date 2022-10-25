@@ -40,7 +40,7 @@ void onTick(color_ostream& out, void* tick);
 void onJobStart(color_ostream &out, void* job);
 void onJobCompletion(color_ostream &out, void* job);
 
-uint64_t tick_threshold = 50;
+uint64_t tick_threshold = 1000;
 bool focus_jobs_enabled = false;
 bool disengage_enabled = false;
 bool unpause_enabled = false;
@@ -174,13 +174,17 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
             }
         }
     }
-    while (unpause_enabled && !world->status.popups.empty()) {
+    int failsafe = 0;
+    while (unpause_enabled && !world->status.popups.empty() && ++failsafe <= 10) {
         // dismiss announcement popup(s)
         Gui::getCurViewscreen(true)->feed_key(interface_key::CLOSE_MEGA_ANNOUNCEMENT);
         if (World::ReadPauseState()) {
             // WARNING: This has a possibility of conflicting with `reveal hell` - if Hermes himself runs `reveal hell` on precisely the right moment that is
             World::SetPauseState(false);
         }
+    }
+    if (failsafe) {
+        out.printerr("spectate encountered a problem dismissing a popup!");
     }
     if (disengage_enabled && !World::ReadPauseState()) {
         if (our_dorf && our_dorf->id != df::global::ui->follow_unit) {

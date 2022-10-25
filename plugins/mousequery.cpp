@@ -295,10 +295,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
 
     bool handleLeft(df::coord &mpos, int32_t mx, int32_t my, int32_t depth)
     {
-        if (Core::getInstance().getModstate() & DFH_MOD_SHIFT) {
-            DEBUG(log).print("shift is down; not adjusting tile depth\n");
-        }
-        else
+        if (!(Core::getInstance().getModstate() & DFH_MOD_SHIFT))
             mpos.z += depth;
 
         bool cursor_still_here = (last_clicked_x == mpos.x && last_clicked_y == mpos.y && last_clicked_z == mpos.z);

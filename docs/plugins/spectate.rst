@@ -32,7 +32,7 @@ Examples
     Enable the spectate plugin to automatically dismiss pause events caused
     by the game. Siege events are one example of such a game event.
 
-``spectate set tick-interval 50``
+``spectate set tick-threshold 50``
     Set the tick interval the followed dwarf can be changed at back to its
     default value.
 

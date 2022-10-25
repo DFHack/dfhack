@@ -183,7 +183,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
             World::SetPauseState(false);
         }
     }
-    if (failsafe) {
+    if (failsafe >= 10) {
         out.printerr("spectate encountered a problem dismissing a popup!");
     }
     if (disengage_enabled && !World::ReadPauseState()) {

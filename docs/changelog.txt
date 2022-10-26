@@ -58,9 +58,15 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - UX: You can now drag the scrollbar to scroll to a specific spot
 - `overlay`: reduce the size of the "DFHack Launcher" button
 - Constructions module: ``findAtTile`` now uses a binary search intead of a linear search.
+- `spectate`: new ``auto-unpause`` option for auto-dismissal of announcement pause events (e.g. sieges).
+- `spectate`: new ``auto-disengage`` option for auto-disengagement of plugin through player interaction whilst unpaused.
+- `spectate`: new ``focus-jobs`` option for following a dwarf after their job has finished (when disabled).
+- `spectate`: new ``tick-threshold``, option for specifying the change interval (maximum follow time when focus-jobs is enabled)
+- `spectate`: added persistent configuration of the plugin settings
 - `gui/cp437-table`: new global keybinding for the clickable on-screen keyboard for players with keyboard layouts that prevent them from using certain keys: Ctrl-Shift-K
 
 ## Documentation
+- `spectate`: improved documentation of features and functionality
 
 ## API
 - Constructions module: added ``insert()`` to insert constructions into the game's sorted list.

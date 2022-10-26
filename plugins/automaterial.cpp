@@ -94,7 +94,7 @@ static bool show_box_selection = true;
 static bool hollow_selection = false;
 static deque<df::item*> box_select_materials;
 
-#define SELECTION_IGNORE_TICKS 10
+#define SELECTION_IGNORE_TICKS 1
 static int ignore_selection = SELECTION_IGNORE_TICKS;
 
 static map<int16_t, MaterialDescriptor> last_used_material;

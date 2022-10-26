@@ -56,10 +56,12 @@ static uint32_t scroll_delay = 100;
 static bool awaiting_lbut_up, awaiting_rbut_up;
 static enum { None, Left, Right } drag_mode;
 
-static df::coord get_mouse_pos(int32_t &mx, int32_t &my)
+static df::coord get_mouse_pos(int32_t &mx, int32_t &my, int32_t &depth)
 {
     df::coord pos = Gui::getMousePos();
-    pos.z -= Gui::getDepthAt(pos.x, pos.y);
+
+    depth = Gui::getDepthAt(pos.x, pos.y);
+    pos.z -= depth;
 
     df::coord vpos = Gui::getViewportPos();
     mx = pos.x - vpos.x + 1;
@@ -291,10 +293,10 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         return false;
     }
 
-    bool handleLeft(df::coord &mpos, int32_t mx, int32_t my)
+    bool handleLeft(df::coord &mpos, int32_t mx, int32_t my, int32_t depth)
     {
         if (!(Core::getInstance().getModstate() & DFH_MOD_SHIFT))
-            mpos.z += Gui::getDepthAt(mx, my);
+            mpos.z += depth;
 
         bool cursor_still_here = (last_clicked_x == mpos.x && last_clicked_y == mpos.y && last_clicked_z == mpos.z);
         last_clicked_x = mpos.x;
@@ -444,8 +446,8 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
 
     bool handleMouse(const set<df::interface_key> *input)
     {
-        int32_t mx, my;
-        auto mpos = get_mouse_pos(mx, my);
+        int32_t mx, my, depth;
+        auto mpos = get_mouse_pos(mx, my, depth);
         if (mpos.x == -30000)
             return false;
 
@@ -458,7 +460,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
                 last_move_pos = mpos;
             }
             else
-                return handleLeft(mpos, mx, my);
+                return handleLeft(mpos, mx, my, depth);
         }
         else if (enabler->mouse_rbut)
         {
@@ -531,7 +533,8 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         if (mpos.x == x && mpos.y == y && mpos.z == z)
             return;
 
-        DEBUG(log).print("moving cursor to %d, %d, %d\n", x, y, z);
+        DEBUG(log).print("moving cursor to %d, %d, %d\n",
+                         mpos.x, mpos.y, mpos.z);
         Gui::setCursorCoords(mpos.x, mpos.y, mpos.z);
         Gui::refreshSidebar();
     }
@@ -568,8 +571,8 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
 
         auto dims = Gui::getDwarfmodeViewDims();
 
-        int32_t mx, my;
-        auto mpos = get_mouse_pos(mx, my);
+        int32_t mx, my, depth;
+        auto mpos = get_mouse_pos(mx, my, depth);
         bool mpos_valid = mpos.x != -30000 && mpos.y != -30000 && mpos.z != -30000;
 
         // Check if in lever binding mode
@@ -582,7 +585,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         if (awaiting_lbut_up && !enabler->mouse_lbut_down)
         {
             awaiting_lbut_up = false;
-            handleLeft(mpos, mx, my);
+            handleLeft(mpos, mx, my, depth);
         }
 
         if (awaiting_rbut_up && !enabler->mouse_rbut_down)

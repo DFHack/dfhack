@@ -38,6 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 - `automaterial`: fix the cursor jumping up a z level when clicking quickly after box select
 - `gui/create-item`: prevent materials list filter from intercepting sublist hotkeys
+- `mousequery`: fix the cursor jumping up z levels sometimes when using TWBT
 - `tiletypes`: no longer resets dig priority to the default when updating other properties of a tile
 
 ## Misc Improvements

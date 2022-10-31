@@ -158,6 +158,50 @@ void Lua::GetVector(lua_State *state, std::vector<std::string> &pvec)
     }
 }
 
+void Lua::PushInterfaceKeys(lua_State *L,
+                            const std::set<df::interface_key> &keys) {
+    lua_createtable(L, 0, keys.size() + 5);
+
+    for (auto &key : keys)
+    {
+        if (auto name = enum_item_raw_key(key))
+            lua_pushstring(L, name);
+        else
+            lua_pushinteger(L, key);
+
+        lua_pushboolean(L, true);
+        lua_rawset(L, -3);
+
+        int charval = Screen::keyToChar(key);
+        if (charval >= 0)
+        {
+            lua_pushinteger(L, charval);
+            lua_setfield(L, -2, "_STRING");
+        }
+    }
+
+    if (df::global::enabler) {
+        if (df::global::enabler->mouse_lbut_down) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "_MOUSE_L");
+        }
+        if (df::global::enabler->mouse_rbut_down) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "_MOUSE_R");
+        }
+        if (df::global::enabler->mouse_lbut) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "_MOUSE_L_DOWN");
+            df::global::enabler->mouse_lbut = 0;
+        }
+        if (df::global::enabler->mouse_rbut) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "_MOUSE_R_DOWN");
+            df::global::enabler->mouse_rbut = 0;
+        }
+    }
+}
+
 int Lua::PushPosXYZ(lua_State *state, df::coord pos)
 {
     if (!pos.isValid())

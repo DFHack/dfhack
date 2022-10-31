@@ -30,6 +30,8 @@ distribution.
 #include <map>
 #include <type_traits>
 
+#include "df/interfacest.h"
+
 #include "ColorText.h"
 #include "DataDefs.h"
 
@@ -320,6 +322,8 @@ namespace DFHack {namespace Lua {
         if (idx < 0) idx = lua_absindex(L, idx);
         Push(L, val); lua_setfield(L, idx, name);
     }
+
+    DFHACK_EXPORT void PushInterfaceKeys(lua_State *L, const std::set<df::interface_key> &keys);
 
     template<class T>
     void PushVector(lua_State *state, const T &pvec, bool addn = false)

@@ -820,6 +820,29 @@ bool DFHack::Lua::SafeCall(color_ostream &out, lua_State *L, int nargs, int nres
     return ok;
 }
 
+bool DFHack::Lua::CallLuaModuleFunction(color_ostream &out, lua_State *L,
+        const char *module_name, const char *fn_name,
+        int nargs, int nres, LuaLambda && args_lambda, LuaLambda && res_lambda,
+        bool perr){
+    if (!lua_checkstack(L, 1 + nargs) ||
+        !Lua::PushModulePublic(out, L, module_name, fn_name)) {
+        if (perr)
+            out.printerr("Failed to load %s Lua code\n", module_name);
+        return false;
+    }
+
+    std::forward<LuaLambda&&>(args_lambda)(L);
+
+    if (!Lua::SafeCall(out, L, nargs, nres, perr)) {
+        if (perr)
+            out.printerr("Failed Lua call to '%s.%s'\n", module_name, fn_name);
+        return false;
+    }
+
+    std::forward<LuaLambda&&>(res_lambda)(L);
+    return true;
+}
+
 // Copied from lcorolib.c, with error handling modifications
 static int resume_helper(lua_State *L, lua_State *co, int narg, int nres)
 {

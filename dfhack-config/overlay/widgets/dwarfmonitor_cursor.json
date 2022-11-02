@@ -1,0 +1,12 @@
+{
+    "pos": {
+        "x": 2,
+        "y": 2
+    },
+    "provider": "dwarfmonitor",
+    "class": "Widget_cursor",
+    "viewscreens": [
+        "dungeonmode",
+        "dwarfmode"
+    ]
+}

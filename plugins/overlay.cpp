@@ -102,9 +102,10 @@ namespace DFHack {
 
 static df::coord2d screenSize;
 
-template<typename FA, typename FR>
-static void call_overlay_lua(color_ostream *out, const char *fn_name, int nargs,
-                             int nres, FA && args_lambda, FR && res_lambda) {
+static void call_overlay_lua(color_ostream *out, const char *fn_name,
+        int nargs = 0, int nres = 0,
+        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
+        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
     DEBUG(event).print("calling overlay lua function: '%s'\n", fn_name);
 
     CoreSuspender guard;
@@ -115,30 +116,9 @@ static void call_overlay_lua(color_ostream *out, const char *fn_name, int nargs,
     if (!out)
         out = &Core::getInstance().getConsole();
 
-    if (!lua_checkstack(L, 1 + nargs) ||
-        !Lua::PushModulePublic(
-            *out, L, "plugins.overlay", fn_name)) {
-        out->printerr("Failed to load overlay Lua code\n");
-        return;
-    }
-
-    std::forward<FA&&>(args_lambda)(L);
-
-    if (!Lua::SafeCall(*out, L, nargs, nres))
-        out->printerr("Failed Lua call to '%s'\n", fn_name);
-
-    std::forward<FR&&>(res_lambda)(L);
-}
-
-static auto DEFAULT_LAMBDA = [](lua_State *){};
-template<typename FA>
-static void call_overlay_lua(color_ostream *out, const char *fn_name, int nargs,
-                             int nres, FA && args_lambda) {
-    call_overlay_lua(out, fn_name, nargs, nres, args_lambda, DEFAULT_LAMBDA);
-}
-
-static void call_overlay_lua(color_ostream *out, const char *fn_name) {
-    call_overlay_lua(out, fn_name, 0, 0, DEFAULT_LAMBDA, DEFAULT_LAMBDA);
+    Lua::CallLuaModuleFunction(*out, L, "plugins.overlay", fn_name, nargs, nres,
+                               std::forward<Lua::LuaLambda&&>(args_lambda),
+                               std::forward<Lua::LuaLambda&&>(res_lambda));
 }
 
 template<class T>

@@ -1,0 +1,11 @@
+{
+    "pos": {
+        "x": 15,
+        "y": -1
+    },
+    "provider": "dwarfmonitor",
+    "class": "Widget_weather",
+    "viewscreens": [
+        "dwarfmode"
+    ]
+}

@@ -6,18 +6,22 @@ local overlay = require('plugins.overlay')
 
 local DWARFMONITOR_CONFIG_FILE = 'dfhack-config/dwarfmonitor.json'
 
--- --------------
--- Widget_weather
--- --------------
+-- ------------- --
+-- WeatherWidget --
+-- ------------- --
 
-Widget_weather = defclass(Widget_weather, overlay.OverlayWidget)
+WeatherWidget = defclass(WeatherWidget, overlay.OverlayWidget)
+WeatherWidget.ATTRS{
+    default_pos={x=15,y=-1},
+    viewscreens={'dungeonmode', 'dwarfmode'},
+}
 
-function Widget_weather:init()
+function WeatherWidget:init()
     self.rain = false
     self.snow = false
 end
 
-function Widget_weather:overlay_onupdate()
+function WeatherWidget:overlay_onupdate()
     local rain, snow = false, false
     local cw = df.global.current_weather
     for i=0,4 do
@@ -32,14 +36,14 @@ function Widget_weather:overlay_onupdate()
     self.rain, self.snow = rain, snow
 end
 
-function Widget_weather:onRenderBody(dc)
+function WeatherWidget:onRenderBody(dc)
     if self.rain then dc:string('Rain', COLOR_LIGHTBLUE):advance(1) end
     if self.snow then dc:string('Snow', COLOR_WHITE) end
 end
 
--- -----------
--- Widget_date
--- -----------
+-- ---------- --
+-- DateWidget --
+-- ---------- --
 
 local function get_date_format()
     local ok, config = pcall(json.decode_file, DWARFMONITOR_CONFIG_FILE)
@@ -49,14 +53,18 @@ local function get_date_format()
     return config.date_format
 end
 
-Widget_date = defclass(Widget_date, overlay.OverlayWidget)
+DateWidget = defclass(DateWidget, overlay.OverlayWidget)
+DateWidget.ATTRS{
+    default_pos={x=-16,y=1},
+    viewscreens={'dungeonmode', 'dwarfmode'},
+}
 
-function Widget_date:init()
+function DateWidget:init()
     self.datestr = ''
     self.fmt = get_date_format()
 end
 
-function Widget_date:overlay_onupdate()
+function DateWidget:overlay_onupdate()
     local year = dfhack.world.ReadCurrentYear()
     local month = dfhack.world.ReadCurrentMonth() + 1
     local day = dfhack.world.ReadCurrentDay()
@@ -86,22 +94,26 @@ function Widget_date:overlay_onupdate()
     self.datestr = datestr
 end
 
-function Widget_date:onRenderBody(dc)
+function DateWidget:onRenderBody(dc)
     dc:string(self.datestr, COLOR_GREY)
 end
 
--- -------------
--- Widget_misery
--- -------------
+-- ------------ --
+-- MiseryWidget --
+-- ------------ --
 
-Widget_misery = defclass(Widget_misery, overlay.OverlayWidget)
+MiseryWidget = defclass(MiseryWidget, overlay.OverlayWidget)
+MiseryWidget.ATTRS{
+    default_pos={x=-2,y=-1},
+    viewscreens={'dwarfmode'},
+}
 
-function Widget_misery:init()
+function MiseryWidget:init()
     self.colors = getStressCategoryColors()
     self.stress_category_counts = {}
 end
 
-function Widget_misery:overlay_onupdate()
+function MiseryWidget:overlay_onupdate()
     local counts, num_colors = {}, #self.colors
     for _,unit in ipairs(df.global.world.units.active) do
         local stress_category = math.min(num_colors,
@@ -118,7 +130,7 @@ function Widget_misery:overlay_onupdate()
     self.frame.w = width
 end
 
-function Widget_misery:onRenderBody(dc)
+function MiseryWidget:onRenderBody(dc)
     dc:string('H:', COLOR_WHITE)
     local counts = self.stress_category_counts
     for i,color in ipairs(self.colors) do
@@ -127,13 +139,17 @@ function Widget_misery:onRenderBody(dc)
     end
 end
 
--- -------------
--- Widget_cursor
--- -------------
+-- ------------ --
+-- CursorWidget --
+-- ------------ --
 
-Widget_cursor = defclass(Widget_cursor, overlay.OverlayWidget)
+CursorWidget = defclass(CursorWidget, overlay.OverlayWidget)
+CursorWidget.ATTRS{
+    default_pos={x=2,y=-4},
+    viewscreens={'dungeonmode', 'dwarfmode'},
+}
 
-function Widget_cursor:onRenderBody(dc)
+function CursorWidget:onRenderBody(dc)
     local screenx, screeny = dfhack.screen.getMousePos()
     local mouse_map = dfhack.gui.getMousePos()
     local keyboard_map = guidm.getCursorPos()
@@ -156,5 +172,13 @@ function Widget_cursor:onRenderBody(dc)
     self.frame.w = width
     self.frame.h = #text
 end
+
+-- register our widgets with the overlay
+OVERLAY_WIDGETS = {
+    cursor=CursorWidget,
+    date=DateWidget,
+    misery=MiseryWidget,
+    weather=WeatherWidget,
+}
 
 return _ENV

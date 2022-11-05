@@ -349,6 +349,18 @@ static command_result hotkeys_cmd(color_ostream &out, vector <string> & paramete
     return CR_OK;
 }
 
+static int getHotkeys(lua_State *L) {
+    find_active_keybindings(Gui::getCurViewscreen(true));
+    Lua::PushVector(L, sorted_keys);
+    Lua::Push(L, current_bindings);
+    return 2;
+}
+
+DFHACK_PLUGIN_LUA_COMMANDS {
+    DFHACK_LUA_COMMAND(getHotkeys),
+    DFHACK_LUA_END
+};
+
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {

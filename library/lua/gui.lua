@@ -641,6 +641,7 @@ function Screen:show(parent)
     if not dscreen.show(self, parent.child) then
         error('Could not show screen')
     end
+    return self
 end
 
 function Screen:onAboutToShow(parent)

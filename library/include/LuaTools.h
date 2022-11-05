@@ -356,6 +356,13 @@ namespace DFHack {namespace Lua {
         lua_settable(state, -3);
     }
 
+    template<typename T_Key, typename T_Value>
+    void Push(lua_State *L, const std::map<T_Key, T_Value> &pmap) {
+        lua_createtable(L, 0, pmap.size());
+        for (auto &entry : pmap)
+            TableInsert(L, entry.first, entry.second);
+    }
+
     DFHACK_EXPORT void CheckPen(lua_State *L, Screen::Pen *pen, int index, bool allow_nil = false, bool allow_color = true);
 
     DFHACK_EXPORT bool IsCoreContext(lua_State *state);

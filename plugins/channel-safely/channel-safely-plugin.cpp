@@ -209,33 +209,30 @@ namespace CSP {
     }
 
     void JobCompletedEvent(color_ostream &out, void* job_ptr) {
-        if (config.monitor_active) {
+        if (enabled && World::isFortressMode() && Maps::IsValid()) {
             INFO(monitor).print("JobCompletedEvent()\n");
-            if (enabled && World::isFortressMode() && Maps::IsValid()) {
-                auto job = (df::job*) job_ptr;
-                // we only care if the job is a channeling one
-                if (is_dig_job(job)) {
-                    // untrack job/worker
-                    active_workers.erase(job->id);
-                    // check job outcome
-                    df::coord local(job->pos);
-                    auto block = Maps::getTileBlock(local);
-                    local.x = local.x % 16;
-                    local.y = local.y % 16;
-                    // verify completion
-                    if (isOpenTerrain(block->tiletype[local.x][local.y])
-                        || block->designation[local.x][local.y].bits.dig != df::enums::tile_dig_designation::Channel) {
-                        // the job can be considered done
-                        df::coord below(job->pos);
-                        below.z--;
-                        WARN(monitor).print(" -> Marking tile done and managing the group below.\n");
-                        // mark done and manage below
-                        Maps::getTileDesignation(job->pos)->bits.traffic = df::tile_traffic::Normal;
-                        ChannelManager::Get().mark_done(job->pos);
-                        ChannelManager::Get().manage_group(below);
-                        ChannelManager::Get().debug();
-                        Job::removeJob(job);
-                    }
+            auto job = (df::job*) job_ptr;
+            // we only care if the job is a channeling one
+            if (is_dig_job(job)) {
+                // untrack job/worker
+                active_workers.erase(job->id);
+                // check job outcome
+                df::coord local(job->pos);
+                auto block = Maps::getTileBlock(local);
+                local.x = local.x % 16;
+                local.y = local.y % 16;
+                // verify completion
+                if (isOpenTerrain(block->tiletype[local.x][local.y])
+                    || block->designation[local.x][local.y].bits.dig != df::enums::tile_dig_designation::Channel) {
+                    // the job can be considered done
+                    df::coord below(job->pos);
+                    below.z--;
+                    WARN(monitor).print(" -> Marking tile done and managing the group below.\n");
+                    // mark done and manage below
+                    Maps::getTileDesignation(job->pos)->bits.traffic = df::tile_traffic::Normal;
+                    ChannelManager::Get().mark_done(job->pos);
+                    ChannelManager::Get().manage_group(below);
+                    ChannelManager::Get().debug();
                 }
             }
             INFO(monitor).print("JobCompletedEvent() exits\n");

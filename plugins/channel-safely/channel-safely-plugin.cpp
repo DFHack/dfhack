@@ -146,65 +146,63 @@ namespace CSP {
     }
 
     void JobStartedEvent(color_ostream &out, void* p) {
-        if (config.monitor_active) {
-            if (enabled && World::isFortressMode() && Maps::IsValid()) {
-                INFO(monitor).print("JobStartedEvent()\n");
-                auto job = (df::job*) p;
-                // validate job type
-                if (is_dig_job(job)) {
-                    DEBUG(monitor).print(" valid channel job:\n");
-                    df::unit* worker = Job::getWorker(job);
-                    // there is a valid worker (living citizen) on the job? right..
-                    if (worker && Units::isAlive(worker) && Units::isCitizen(worker)) {
-                        DEBUG(monitor).print("  valid worker:\n");
-                        df::coord local(job->pos);
-                        local.x = local.x % 16;
-                        local.y = local.y % 16;
-                        // check pathing exists to job
-                        if (Maps::canWalkBetween(worker->pos, job->pos)) {
-                            DEBUG(monitor).print("   can path from (" COORD ") to (" COORD ")\n",
-                                                 COORDARGS(worker->pos), COORDARGS(job->pos));
-                            // track workers on jobs
-                            active_workers.emplace(job->id, Units::findIndexById(Job::getWorker(job)->id));
-                            // set tile to restricted
-                            TRACE(monitor).print("   setting job tile to restricted\n");
-                            Maps::getTileDesignation(job->pos)->bits.traffic = df::tile_traffic::Restricted;
-                        } else {
-                            DEBUG(monitor).print("   no path exists to job:\n");
-                            // if we can't get there, then we should remove the worker and cancel the job (restore tile designation)
-                            Job::removeWorker(job);
-                            cancel_job(job);
-                            if (!config.insta_dig) {
-                                TRACE(monitor).print("    setting marker mode for (" COORD ")\n", COORDARGS(job->pos));
-                                // set to marker mode
-                                auto occupancy = Maps::getTileOccupancy(job->pos);
-                                if (!occupancy) {
-                                    WARN(monitor).print(" <X> Could not acquire tile occupancy*\n");
-                                    return;
-                                }
-                                occupancy->bits.dig_marked = true;
-                                // prevent algorithm from re-enabling designation
-                                df::map_block* block = Maps::getTileBlock(job->pos);
-                                if (!block) {
-                                    WARN(monitor).print(" <X> Could not acquire block*\n");
-                                    return;
-                                }
-                                for (auto &be: block->block_events) { ;
-                                    if (auto bsedp = virtual_cast<df::block_square_event_designation_priorityst>(be)) {
-                                        TRACE(monitor).print("     re-setting priority\n");
-                                        bsedp->priority[Coord(local)] = config.ignore_threshold * 1000 + 1;
-                                    }
-                                }
-                            } else {
-                                TRACE(monitor).print("    deleting job, and queuing insta-dig)\n");
-                                // queue digging the job instantly
-                                dignow_queue.emplace(job->pos);
+        if (enabled && World::isFortressMode() && Maps::IsValid()) {
+            INFO(monitor).print("JobStartedEvent()\n");
+            auto job = (df::job*) p;
+            // validate job type
+            if (is_dig_job(job)) {
+                DEBUG(monitor).print(" valid channel job:\n");
+                df::unit* worker = Job::getWorker(job);
+                // there is a valid worker (living citizen) on the job? right..
+                if (worker && Units::isAlive(worker) && Units::isCitizen(worker)) {
+                    DEBUG(monitor).print("  valid worker:\n");
+                    df::coord local(job->pos);
+                    local.x = local.x % 16;
+                    local.y = local.y % 16;
+                    // check pathing exists to job
+                    if (Maps::canWalkBetween(worker->pos, job->pos)) {
+                        DEBUG(monitor).print("   can path from (" COORD ") to (" COORD ")\n",
+                                             COORDARGS(worker->pos), COORDARGS(job->pos));
+                        // track workers on jobs
+                        active_workers.emplace(job->id, Units::findIndexById(Job::getWorker(job)->id));
+                        // set tile to restricted
+                        TRACE(monitor).print("   setting job tile to restricted\n");
+                        Maps::getTileDesignation(job->pos)->bits.traffic = df::tile_traffic::Restricted;
+                    } else {
+                        DEBUG(monitor).print("   no path exists to job:\n");
+                        // if we can't get there, then we should remove the worker and cancel the job (restore tile designation)
+                        Job::removeWorker(job);
+                        cancel_job(job);
+                        if (!config.insta_dig) {
+                            TRACE(monitor).print("    setting marker mode for (" COORD ")\n", COORDARGS(job->pos));
+                            // set to marker mode
+                            auto occupancy = Maps::getTileOccupancy(job->pos);
+                            if (!occupancy) {
+                                WARN(monitor).print(" <X> Could not acquire tile occupancy*\n");
+                                return;
                             }
+                            occupancy->bits.dig_marked = true;
+                            // prevent algorithm from re-enabling designation
+                            df::map_block* block = Maps::getTileBlock(job->pos);
+                            if (!block) {
+                                WARN(monitor).print(" <X> Could not acquire block*\n");
+                                return;
+                            }
+                            for (auto &be: block->block_events) { ;
+                                if (auto bsedp = virtual_cast<df::block_square_event_designation_priorityst>(be)) {
+                                    TRACE(monitor).print("     re-setting priority\n");
+                                    bsedp->priority[Coord(local)] = config.ignore_threshold * 1000 + 1;
+                                }
+                            }
+                        } else {
+                            TRACE(monitor).print("    deleting job, and queuing insta-dig)\n");
+                            // queue digging the job instantly
+                            dignow_queue.emplace(job->pos);
                         }
                     }
                 }
-                INFO(monitor).print(" <- JobStartedEvent() exits normally\n");
             }
+            INFO(monitor).print(" <- JobStartedEvent() exits normally\n");
         }
     }
 

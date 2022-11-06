@@ -5,67 +5,6 @@
 
 #include <random>
 
-// scans the map for channel designations
-void ChannelGroups::scan_map() {
-    static std::default_random_engine RNG(0);
-    static std::bernoulli_distribution optimizing(0.3333);
-    DEBUG(groups).print("  scan_map()\n");
-    // foreach block
-    for (int32_t z = mapz - 1; z >= 0; --z) {
-        for (int32_t by = 0; by < mapy; ++by) {
-            for (int32_t bx = 0; bx < mapx; ++bx) {
-                // the block
-                if (df::map_block* block = Maps::getBlock(bx, by, z)) {
-                    // skip this block?
-                    if (!block->flags.bits.designated && optimizing(RNG)) {
-                        // todo: add remainder of block width onto bx
-                        TRACE(groups).print("   skipping this block, it has no designations\n");
-                        continue;
-                    }
-                    // foreach tile
-                    for (int16_t lx = 0; lx < 16; ++lx) {
-                        for (int16_t ly = 0; ly < 16; ++ly) {
-                            // the tile, check if it has a channel designation
-                            if (is_dig_designation(block->designation[lx][ly])) {
-                                for (df::block_square_event* event: block->block_events) {
-                                    if (auto evT = virtual_cast<df::block_square_event_designation_priorityst>(event)) {
-                                        // we want to let the user keep some designations free of being managed
-                                        TRACE(groups).print("   tile designation priority: %d\n", evT->priority[lx][ly]);
-                                        if (evT->priority[lx][ly] < 1000 * config.ignore_threshold) {
-                                            df::coord map_pos((bx * 16) + lx, (by * 16) + ly, z);
-                                            TRACE(groups).print("   adding (" COORD ")\n", COORDARGS(map_pos));
-                                            add(map_pos);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    INFO(groups).print("scan_map() exits\n");
-}
-
-// scans a single tile for channel designations
-void ChannelGroups::scan_one(const df::coord &map_pos) {
-    df::map_block* block = Maps::getTileBlock(map_pos);
-    int16_t lx = map_pos.x % 16;
-    int16_t ly = map_pos.y % 16;
-    if (is_dig_designation(block->designation[lx][ly])) {
-        for (df::block_square_event* event: block->block_events) {
-            if (auto evT = virtual_cast<df::block_square_event_designation_priorityst>(event)) {
-                // we want to let the user keep some designations free of being managed
-                if (evT->priority[lx][ly] < 1000 * config.ignore_threshold) {
-                    TRACE(groups).print("   adding (" COORD ")\n", COORDARGS(map_pos));
-                    add(map_pos);
-                }
-            }
-        }
-    }
-}
-
 // adds map_pos to a group if an adjacent one exists, or creates one if none exist... if multiple exist they're merged into the first found
 void ChannelGroups::add(const df::coord &map_pos) {
     // if we've already added this, we don't need to do it again
@@ -150,16 +89,79 @@ void ChannelGroups::add(const df::coord &map_pos) {
 //    DEBUG(groups).flush();
 }
 
+// scans a single tile for channel designations
+void ChannelGroups::scan_one(const df::coord &map_pos) {
+    df::map_block* block = Maps::getTileBlock(map_pos);
+    int16_t lx = map_pos.x % 16;
+    int16_t ly = map_pos.y % 16;
+    if (is_dig_designation(block->designation[lx][ly])) {
+        for (df::block_square_event* event: block->block_events) {
+            if (auto evT = virtual_cast<df::block_square_event_designation_priorityst>(event)) {
+                // we want to let the user keep some designations free of being managed
+                if (evT->priority[lx][ly] < 1000 * config.ignore_threshold) {
+                    TRACE(groups).print("   adding (" COORD ")\n", COORDARGS(map_pos));
+                    add(map_pos);
+                }
+            }
+        }
+    } else if (isOpenTerrain(block->tiletype[lx][ly])) {
+        remove(map_pos);
+    }
+}
+
 // builds groupings of adjacent channel designations
-void ChannelGroups::build() {
-    clear();
+void ChannelGroups::scan() {
     // iterate over each job, finding channel jobs
     jobs.load_channel_jobs();
     // transpose channel jobs to
     for (auto &pos : jobs) {
         add(pos);
     }
-    scan_map();
+    DEBUG(groups).print("  scan()\n");
+    // foreach block
+    for (int32_t z = mapz - 1; z >= 0; --z) {
+        for (int32_t by = 0; by < mapy; ++by) {
+            for (int32_t bx = 0; bx < mapx; ++bx) {
+                // the block
+                if (df::map_block* block = Maps::getBlock(bx, by, z)) {
+                    // skip this block?
+                    if (!block->flags.bits.designated && !group_blocks.count(block)) {
+                        continue;
+                    }
+                    // foreach tile
+                    bool empty_group = true;
+                    for (int16_t lx = 0; lx < 16; ++lx) {
+                        for (int16_t ly = 0; ly < 16; ++ly) {
+                            // the tile, check if it has a channel designation
+                            df::coord map_pos((bx * 16) + lx, (by * 16) + ly, z);
+                            if (is_dig_designation(block->designation[lx][ly])) {
+                                for (df::block_square_event* event: block->block_events) {
+                                    if (auto evT = virtual_cast<df::block_square_event_designation_priorityst>(event)) {
+                                        // we want to let the user keep some designations free of being managed
+                                        TRACE(groups).print("   tile designation priority: %d\n", evT->priority[lx][ly]);
+                                        if (evT->priority[lx][ly] < 1000 * config.ignore_threshold) {
+                                            if (empty_group) {
+                                                group_blocks.emplace(block);
+                                            }
+                                            TRACE(groups).print("   adding (" COORD ")\n", COORDARGS(map_pos));
+                                            add(map_pos);
+                                            empty_group = false;
+                                        }
+                                    }
+                                }
+                            } else if (isOpenTerrain(block->tiletype[lx][ly])) {
+                                remove(map_pos);
+                            }
+                        }
+                    }
+                    if (empty_group) {
+                        group_blocks.erase(block);
+                    }
+                }
+            }
+        }
+    }
+    INFO(groups).print("scan() exits\n");
 }
 
 // clears out the containers for unloading maps or disabling the plugin
@@ -231,23 +233,23 @@ size_t ChannelGroups::count(const df::coord &map_pos) const {
 
 // prints debug info about the groups stored, and their members
 void ChannelGroups::debug_groups() {
-//    int idx = 0;
-//    TRACE(groups).print(" debugging group data\n");
-//    for (auto &group : groups) {
-//        TRACE(groups).print("  group %d (size: %zu)\n", idx, group.size());
-//        for (auto &pos : group) {
-//            TRACE(groups).print("   (%d,%d,%d)\n", pos.x, pos.y, pos.z);
-//        }
-//        idx++;
-//    }
+    int idx = 0;
+    TRACE(groups).print(" debugging group data\n");
+    for (auto &group : groups) {
+        TRACE(groups).print("  group %d (size: %zu)\n", idx, group.size());
+        for (auto &pos : group) {
+            TRACE(groups).print("   (%d,%d,%d)\n", pos.x, pos.y, pos.z);
+        }
+        idx++;
+    }
 }
 
 // prints debug info group mappings
 void ChannelGroups::debug_map() {
-//    INFO(groups).print("Group Mappings: %zu\n", groups_map.size());
-//    for (auto &pair : groups_map) {
-//        DEBUG(groups).print(" map[" COORD "] = %d\n",COORDARGS(pair.first), pair.second);
-//    }
+    INFO(groups).print("Group Mappings: %zu\n", groups_map.size());
+    for (auto &pair : groups_map) {
+        DEBUG(groups).print(" map[" COORD "] = %d\n",COORDARGS(pair.first), pair.second);
+    }
 }
 
 

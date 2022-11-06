@@ -10,8 +10,8 @@ blocks[48][96][135].designation[10][0].hidden:  false
  * */
 
 // sets mark flags as necessary, for all designations
-void ChannelManager::manage_all() {
-    INFO(manager).print("manage_all()\n");
+void ChannelManager::manage_groups() {
+    INFO(manager).print("manage_groups()\n");
     // make sure we've got a fort map to analyze
     if (World::isFortressMode() && Maps::IsValid()) {
         // iterate the groups we built/updated
@@ -95,5 +95,5 @@ bool ChannelManager::manage_one(const Group &group, const df::coord &map_pos, bo
 
 void ChannelManager::mark_done(const df::coord &map_pos) {
     groups.remove(map_pos);
-    jobs.erase(map_pos);
+    jobs.erase(map_pos); //redundant (repopulated on each build)
 }

@@ -140,11 +140,9 @@ namespace CSP {
     void UnpauseEvent(){
         INFO(monitor).print("UnpauseEvent()\n");
         ChannelManager::Get().build_groups();
-        INFO(monitor).print("after building groups\n");
+        ChannelManager::Get().manage_groups();
         ChannelManager::Get().debug();
-        ChannelManager::Get().manage_all();
         INFO(monitor).print("UnpauseEvent() exits\n");
-        ChannelManager::Get().debug();
     }
 
     void JobStartedEvent(color_ostream &out, void* p) {
@@ -387,10 +385,22 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
                 // manage all designations on unpause
                 CSP::UnpauseEvent();
             default:
-                break;
+                return DFHack::CR_OK;
         }
     }
-    return CR_OK;
+    switch (event) {
+        case SC_WORLD_LOADED:
+        case SC_WORLD_UNLOADED:
+        case SC_MAP_UNLOADED:
+            // destroy any old group data
+            out.print("channel-safely: unloading data!\n");
+            ChannelManager::Get().destroy_groups();
+        case SC_MAP_LOADED:
+            // cache the map size
+            Maps::getSize(mapx, mapy, mapz);
+        default:
+            return DFHack::CR_OK;
+    }
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out, state_change_event event) {

@@ -23,17 +23,18 @@ public:
         return instance;
     }
 
-    void build_groups() { groups.build(); debug(); }
-    void manage_all();
+    void build_groups() { groups.scan(); debug(); }
+    void destroy_groups() { groups.clear(); debug(); }
+    void manage_groups();
     void manage_group(const df::coord &map_pos, bool set_marker_mode = false, bool marker_mode = false);
     void manage_group(const Group &group, bool set_marker_mode = false, bool marker_mode = false);
     bool manage_one(const Group &group, const df::coord &map_pos, bool set_marker_mode = false, bool marker_mode = false);
     void mark_done(const df::coord &map_pos);
     void debug() {
+        DEBUG(groups).print(" DEBUGGING GROUPS:\n");
         if (config.debug) {
             groups.debug_groups();
             groups.debug_map();
-            //std::terminate();
         }
     }
 };

@@ -26,18 +26,19 @@ using Groups = std::vector<Group>;
  */
 class ChannelGroups {
 private:
+    using GroupBlocks = std::set<df::map_block*>;
     using GroupsMap = std::map<df::coord, int>;
+    GroupBlocks group_blocks;
     GroupsMap groups_map;
     Groups groups;
     ChannelJobs &jobs;
     std::set<int> free_spots;
 protected:
-    void scan_map();
     void add(const df::coord &map_pos);
 public:
     explicit ChannelGroups(ChannelJobs &jobs) : jobs(jobs) { groups.reserve(200); }
     void scan_one(const df::coord &map_pos);
-    void build();
+    void scan();
     void clear();
     void remove(const df::coord &map_pos);
     Groups::const_iterator find(const df::coord &map_pos) const;

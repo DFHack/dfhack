@@ -1,7 +1,7 @@
 /* Prevent channeling down into known open space.
 Author:  Josh Cooper
 Created: Aug. 4 2020
-Updated: Nov. 1 2022
+Updated: Nov. 6 2022
 
  Enable plugin:
  -> build groups
@@ -13,9 +13,9 @@ Updated: Nov. 1 2022
 
  Manage Designation(s):
  -> for each group in groups:
-    -> for each designation in this group:
-        ->
-
+    -> does any tile in group have a group above
+        -> Yes: set entire group to marker mode
+        -> No: activate entire group (still checks is_safe_to_dig_down before activating each designation)
 
  Job started event:
  -> validate job type (channel)
@@ -150,7 +150,7 @@ namespace CSP {
             INFO(monitor).print("JobStartedEvent()\n");
             auto job = (df::job*) p;
             // validate job type
-            if (is_dig_job(job)) {
+            if (is_channel_job(job)) {
                 DEBUG(monitor).print(" valid channel job:\n");
                 df::unit* worker = Job::getWorker(job);
                 // there is a valid worker (living citizen) on the job? right..
@@ -160,7 +160,7 @@ namespace CSP {
                     local.x = local.x % 16;
                     local.y = local.y % 16;
                     // check pathing exists to job
-                    if (Maps::canWalkBetween(worker->pos, job->pos)) {
+                    if (can_reach_designation(worker->pos, job->pos)) {
                         DEBUG(monitor).print("   can path from (" COORD ") to (" COORD ")\n",
                                              COORDARGS(worker->pos), COORDARGS(job->pos));
                         // track workers on jobs
@@ -246,6 +246,17 @@ namespace CSP {
                 last_refresh_tick = tick;
                 TRACE(monitor).print("OnUpdate()\n");
                 UnpauseEvent();
+
+                TRACE(monitor).print(" -> evaluate dignow queue\n");
+                for (const df::coord &pos: dignow_queue) {
+                    if (!has_unit(Maps::getTileOccupancy(pos))) {
+                        dig_now(out, pos);
+                    } else {
+                        // todo: teleport?
+                        //Units::teleport()
+                    }
+                }
+                TRACE(monitor).print("OnUpdate() exits\n");
             }
             if (config.monitor_active && tick - last_monitor_tick >= config.monitor_freq) {
                 last_monitor_tick = tick;
@@ -299,16 +310,6 @@ namespace CSP {
                         }
                     }
                 }
-                TRACE(monitor).print(" -> evaluate dignow queue\n");
-                for (const df::coord &pos: dignow_queue) {
-                    if (!has_unit(Maps::getTileOccupancy(pos))) {
-                        dig_now(out, pos);
-                    } else {
-                        // todo: teleport?
-                        //Units::teleport()
-                    }
-                }
-                TRACE(monitor).print("OnUpdate() exits\n");
             }
         }
     }

@@ -14,8 +14,8 @@ struct Configuration {
     bool require_vision = true;
     bool insta_dig = false;
     int32_t refresh_freq = 600;
-    int32_t monitor_freq = 10;
-    uint8_t ignore_threshold = 7;
+    int32_t monitor_freq = 1;
+    uint8_t ignore_threshold = 5;
     uint8_t fall_threshold = 1;
 };
 

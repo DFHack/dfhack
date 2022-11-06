@@ -5,6 +5,22 @@
 
 #include <random>
 
+template<class Ctr1, class Ctr2, class Ctr3>
+void set_difference(const Ctr1 &c1, const Ctr2 &c2, Ctr3 &c3) {
+    for (const auto &a : c1) {
+        bool matched = false;
+        for (const auto &b : c2) {
+            if (a == b) {
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) {
+            c3.emplace(a);
+        }
+    }
+}
+
 // adds map_pos to a group if an adjacent one exists, or creates one if none exist... if multiple exist they're merged into the first found
 void ChannelGroups::add(const df::coord &map_pos) {
     // if we've already added this, we don't need to do it again
@@ -111,12 +127,24 @@ void ChannelGroups::scan_one(const df::coord &map_pos) {
 
 // builds groupings of adjacent channel designations
 void ChannelGroups::scan() {
-    // iterate over each job, finding channel jobs
+    // save current jobs, then clear and load the current jobs
+    std::set<df::coord> last_jobs;
+    for (auto &pos : jobs) {
+        last_jobs.emplace(pos);
+    }
     jobs.load_channel_jobs();
     // transpose channel jobs to
-    for (auto &pos : jobs) {
+    std::set<df::coord> new_jobs;
+    std::set<df::coord> gone_jobs;
+    set_difference(last_jobs, jobs, gone_jobs);
+    set_difference(jobs, last_jobs, new_jobs);
+    for (auto &pos : new_jobs) {
         add(pos);
     }
+    for (auto &pos : gone_jobs){
+        remove(pos);
+    }
+
     DEBUG(groups).print("  scan()\n");
     // foreach block
     for (int32_t z = mapz - 1; z >= 0; --z) {

@@ -62,9 +62,18 @@ bool ChannelManager::manage_one(const Group &group, const df::coord &map_pos, bo
             // do we already know whether to set marker mode?
             if (set_marker_mode) {
                 DEBUG(manager).print("  -> marker_mode\n");
-                tile_occupancy.bits.dig_marked = marker_mode;
-                jobs.erase(map_pos);
-                return true;
+                // if enabling marker mode, just do it
+                if (marker_mode) {
+                    tile_occupancy.bits.dig_marked = marker_mode;
+                    return true;
+                }
+                // if activating designation, check if it is safe to dig or not a channel designation
+                if (!is_channel_designation(block->designation[Coord(local)]) || is_safe_to_dig_down(map_pos)) {
+                    tile_occupancy.bits.dig_marked = marker_mode;
+                    return marker_mode;
+                }
+                return false;
+
             } else {
                 // next search for the designation priority
                 for (df::block_square_event* event: block->block_events) {
@@ -73,7 +82,7 @@ bool ChannelManager::manage_one(const Group &group, const df::coord &map_pos, bo
                         if (evT->priority[Coord(local)] < 1000 * config.ignore_threshold) {
                             DEBUG(manager).print(" if(has_groups_above())\n");
                             // check that the group has no incomplete groups directly above it
-                            if (has_group_above(groups, map_pos)) {
+                            if (has_group_above(groups, map_pos) || !is_safe_to_dig_down(map_pos)) {
                                 DEBUG(manager).print("  has_groups_above: setting marker mode\n");
                                 tile_occupancy.bits.dig_marked = true;
                                 jobs.erase(map_pos);
@@ -95,5 +104,4 @@ bool ChannelManager::manage_one(const Group &group, const df::coord &map_pos, bo
 
 void ChannelManager::mark_done(const df::coord &map_pos) {
     groups.remove(map_pos);
-    jobs.erase(map_pos); //redundant (repopulated on each build)
 }

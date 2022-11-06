@@ -55,8 +55,7 @@ Settings
 --------
 :refresh-freq:      The rate at which full refreshes are performed.
                     This can be expensive if you're undertaking many mega projects. (default:600, twice a day)
-:monitor-freq:      The rate at which active jobs are monitored.
-                    todo: this can have a massive impact? (default:10)
+:monitor-freq:      The rate at which active jobs are monitored. (default:1)
 :ignore-threshold:  Sets the priority threshold below which designations are processed. You can set to 1 or 0 to
-                    effectively disable the scanning. (default: 7)
+                    effectively disable the scanning. (default: 5)
 :fall-threshold:    Sets the fall threshold beyond which is considered unsafe. (default: 1)

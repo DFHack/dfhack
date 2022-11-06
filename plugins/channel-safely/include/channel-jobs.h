@@ -22,6 +22,7 @@ private:
 public:
     void load_channel_jobs();
     void clear();
+    int count(const df::coord &map_pos) const { return jobs.count(map_pos); }
     Jobs::iterator erase(const df::coord &map_pos);
     Jobs::const_iterator find(const df::coord &map_pos) const;
     Jobs::const_iterator begin() const;

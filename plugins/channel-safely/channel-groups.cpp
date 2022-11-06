@@ -1,4 +1,5 @@
 #include <channel-groups.h>
+#include <tile-cache.h>
 #include <inlines.h>
 #include <modules/Maps.h>
 #include <df/block_square_event_designation_priorityst.h>
@@ -91,18 +92,12 @@ void ChannelGroups::add(const df::coord &map_pos) {
     // puts the "add" in "ChannelGroups::add"
     group->emplace(map_pos);
     DEBUG(groups).print(" = group[%d] of (" COORD ") is size: %zu\n", group_index, COORDARGS(map_pos), group->size());
-//    ERR(groups).print("\n\n\nDEBUG MAPPINGS:\n");
-//    debug_map();
-//    DEBUG(groups).flush();
 
     // we may have performed a merge, so we update all the `coord -> group index` mappings
     for (auto &wpos: *group) {
         groups_map[wpos] = group_index;
     }
     DEBUG(groups).print(" <- add() exits, there are %zu mappings\n", groups_map.size());
-//    ERR(groups).print("\n\n\nDEBUG MAPPINGS:\n");
-//    debug_map();
-//    DEBUG(groups).flush();
 }
 
 // scans a single tile for channel designations
@@ -120,7 +115,8 @@ void ChannelGroups::scan_one(const df::coord &map_pos) {
                 }
             }
         }
-    } else if (isOpenTerrain(block->tiletype[lx][ly])) {
+    } else if (TileCache::Get().hasChanged(map_pos, block->tiletype[lx][ly])) {
+        TileCache::Get().uncache(map_pos);
         remove(map_pos);
     }
 }
@@ -145,6 +141,9 @@ void ChannelGroups::scan() {
         remove(pos);
     }
 
+    static std::default_random_engine RNG(0);
+    static std::bernoulli_distribution optimizing(0.75); // fixing OpenSpace as designated
+
     DEBUG(groups).print("  scan()\n");
     // foreach block
     for (int32_t z = mapz - 1; z >= 0; --z) {
@@ -153,7 +152,7 @@ void ChannelGroups::scan() {
                 // the block
                 if (df::map_block* block = Maps::getBlock(bx, by, z)) {
                     // skip this block?
-                    if (!block->flags.bits.designated && !group_blocks.count(block)) {
+                    if (!block->flags.bits.designated && !group_blocks.count(block) && optimizing(RNG)) {
                         continue;
                     }
                     // foreach tile
@@ -162,7 +161,13 @@ void ChannelGroups::scan() {
                         for (int16_t ly = 0; ly < 16; ++ly) {
                             // the tile, check if it has a channel designation
                             df::coord map_pos((bx * 16) + lx, (by * 16) + ly, z);
-                            if (is_dig_designation(block->designation[lx][ly])) {
+                            if (TileCache::Get().hasChanged(map_pos, block->tiletype[lx][ly])) {
+                                remove(map_pos);
+                                if (jobs.count(map_pos)) {
+                                    jobs.erase(map_pos);
+                                }
+                                block->designation[lx][ly].bits.dig = df::tile_dig_designation::No;
+                            } else if (is_dig_designation(block->designation[lx][ly])) {
                                 for (df::block_square_event* event: block->block_events) {
                                     if (auto evT = virtual_cast<df::block_square_event_designation_priorityst>(event)) {
                                         // we want to let the user keep some designations free of being managed
@@ -170,18 +175,17 @@ void ChannelGroups::scan() {
                                         if (evT->priority[lx][ly] < 1000 * config.ignore_threshold) {
                                             if (empty_group) {
                                                 group_blocks.emplace(block);
+                                                empty_group = false;
                                             }
                                             TRACE(groups).print("   adding (" COORD ")\n", COORDARGS(map_pos));
                                             add(map_pos);
-                                            empty_group = false;
                                         }
                                     }
                                 }
-                            } else if (isOpenTerrain(block->tiletype[lx][ly])) {
-                                remove(map_pos);
                             }
                         }
                     }
+                    // erase the block if we didn't find anything iterating through it
                     if (empty_group) {
                         group_blocks.erase(block);
                     }
@@ -196,6 +200,7 @@ void ChannelGroups::scan() {
 void ChannelGroups::clear() {
     debug_map();
     WARN(groups).print(" <- clearing groups\n");
+    group_blocks.clear();
     free_spots.clear();
     groups_map.clear();
     for(size_t i = 0; i < groups.size(); ++i) {

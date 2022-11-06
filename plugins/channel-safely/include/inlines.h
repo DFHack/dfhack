@@ -44,6 +44,10 @@ inline bool is_channel_job(const df::job* job) {
     return job->job_type == df::job_type::DigChannel;
 }
 
+inline bool is_group_job(const ChannelGroups &groups, const df::job* job) {
+    return groups.count(job->pos);
+}
+
 inline bool is_dig_designation(const df::tile_designation &designation) {
     return designation.bits.dig != df::tile_dig_designation::No;
 }

@@ -53,6 +53,7 @@ Updated: Nov. 6 2022
 #include <plugin.h>
 #include <inlines.h>
 #include <channel-manager.h>
+#include <tile-cache.h>
 
 #include <Debug.h>
 #include <LuaTools.h>
@@ -211,23 +212,23 @@ namespace CSP {
             INFO(monitor).print("JobCompletedEvent()\n");
             auto job = (df::job*) job_ptr;
             // we only care if the job is a channeling one
-            if (is_dig_job(job)) {
+            if (ChannelManager::Get().groups.count(job->pos)) {
                 // untrack job/worker
                 active_workers.erase(job->id);
                 // check job outcome
+                auto block = Maps::getTileBlock(job->pos);
                 df::coord local(job->pos);
-                auto block = Maps::getTileBlock(local);
                 local.x = local.x % 16;
                 local.y = local.y % 16;
+                const auto &type = block->tiletype[Coord(local)];
                 // verify completion
-                if (isOpenTerrain(block->tiletype[local.x][local.y])
-                    || block->designation[local.x][local.y].bits.dig != df::enums::tile_dig_designation::Channel) {
+                if (TileCache::Get().hasChanged(job->pos, type)) {
                     // the job can be considered done
                     df::coord below(job->pos);
                     below.z--;
                     WARN(monitor).print(" -> Marking tile done and managing the group below.\n");
                     // mark done and manage below
-                    Maps::getTileDesignation(job->pos)->bits.traffic = df::tile_traffic::Normal;
+                    block->designation[Coord(local)].bits.traffic = df::tile_traffic::Normal;
                     ChannelManager::Get().mark_done(job->pos);
                     ChannelManager::Get().manage_group(below);
                     ChannelManager::Get().debug();
@@ -247,16 +248,18 @@ namespace CSP {
                 TRACE(monitor).print("OnUpdate()\n");
                 UnpauseEvent();
 
-                TRACE(monitor).print(" -> evaluate dignow queue\n");
-                for (const df::coord &pos: dignow_queue) {
-                    if (!has_unit(Maps::getTileOccupancy(pos))) {
-                        dig_now(out, pos);
-                    } else {
-                        // todo: teleport?
-                        //Units::teleport()
+                if (config.insta_dig) {
+                    TRACE(monitor).print(" -> evaluate dignow queue\n");
+                    for (const df::coord &pos: dignow_queue) {
+                        if (!has_unit(Maps::getTileOccupancy(pos))) {
+                            out.print("channel-safely: insta-dig: Digging now!\n");
+                            dig_now(out, pos);
+                        } else {
+                            // todo: teleport?
+                            //Units::teleport()
+                        }
                     }
                 }
-                TRACE(monitor).print("OnUpdate() exits\n");
             }
             if (config.monitor_active && tick - last_monitor_tick >= config.monitor_freq) {
                 last_monitor_tick = tick;
@@ -311,6 +314,7 @@ namespace CSP {
                     }
                 }
             }
+            TRACE(monitor).print("OnUpdate() exits\n");
         }
     }
 }

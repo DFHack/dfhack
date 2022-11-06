@@ -1,4 +1,5 @@
 #include <channel-manager.h>
+#include <tile-cache.h>
 #include <inlines.h>
 
 #include <df/block_square_event_designation_priorityst.h>
@@ -69,8 +70,11 @@ bool ChannelManager::manage_one(const Group &group, const df::coord &map_pos, bo
                 }
                 // if activating designation, check if it is safe to dig or not a channel designation
                 if (!is_channel_designation(block->designation[Coord(local)]) || is_safe_to_dig_down(map_pos)) {
-                    tile_occupancy.bits.dig_marked = marker_mode;
-                    return marker_mode;
+                    if (!block->flags.bits.designated) {
+                        block->flags.bits.designated = true;
+                    }
+                    tile_occupancy.bits.dig_marked = false;
+                    TileCache::Get().cache(map_pos, block->tiletype[Coord(local)]);
                 }
                 return false;
 
@@ -85,7 +89,9 @@ bool ChannelManager::manage_one(const Group &group, const df::coord &map_pos, bo
                             if (has_group_above(groups, map_pos) || !is_safe_to_dig_down(map_pos)) {
                                 DEBUG(manager).print("  has_groups_above: setting marker mode\n");
                                 tile_occupancy.bits.dig_marked = true;
-                                jobs.erase(map_pos);
+                                if (jobs.count(map_pos)) {
+                                    jobs.erase(map_pos);
+                                }
                                 WARN(manager).print(" <- manage_one() exits normally\n");
                                 return true;
                             }
@@ -104,4 +110,6 @@ bool ChannelManager::manage_one(const Group &group, const df::coord &map_pos, bo
 
 void ChannelManager::mark_done(const df::coord &map_pos) {
     groups.remove(map_pos);
+    jobs.erase(map_pos);
+    TileCache::Get().uncache(map_pos);
 }

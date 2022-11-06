@@ -515,5 +515,3 @@ command_result channel_safely(color_ostream &out, std::vector<std::string> &para
     saveConfig();
     return DFHack::CR_OK;
 }
-
-

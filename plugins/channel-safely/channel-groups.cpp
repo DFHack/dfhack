@@ -251,5 +251,3 @@ void ChannelGroups::debug_map() {
         DEBUG(groups).print(" map[" COORD "] = %d\n",COORDARGS(pair.first), pair.second);
     }
 }
-
-

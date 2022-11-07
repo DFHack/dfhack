@@ -127,8 +127,8 @@ end
 
 function MenuScreen:onSubmit(_, choice)
     if not choice then return end
+    dfhack.screen.hideGuard(self, dfhack.run_command, choice.command)
     self:dismiss()
-    dfhack.run_command(choice.command)
 end
 
 function MenuScreen:onSubmit2(_, choice)

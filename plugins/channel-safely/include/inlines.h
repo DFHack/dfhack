@@ -97,7 +97,7 @@ inline bool can_reach_designation(const df::coord &start, const df::coord &end) 
         df::coord neighbours[8];
         get_neighbours(end, neighbours);
         for (auto &pos : neighbours) {
-            if (Maps::canWalkBetween(start, pos)) {
+            if (Maps::isValidTilePos(pos) && Maps::canWalkBetween(start, pos)) {
                 return true;
             }
         }

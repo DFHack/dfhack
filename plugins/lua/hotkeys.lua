@@ -11,7 +11,7 @@ local widgets = require('gui.widgets')
 
 HotspotMenuWidget = defclass(HotspotMenuWidget, overlay.OverlayWidget)
 HotspotMenuWidget.ATTRS{
-    default_pos={x=1,y=2},
+    default_pos={x=1,y=3},
     hotspot=true,
     viewscreens={'dwarfmode'},
     overlay_onupdate_max_freq_seconds=0,
@@ -48,8 +48,8 @@ OVERLAY_WIDGETS = {menu=HotspotMenuWidget}
 -- ---------- --
 
 local ARROW = string.char(26)
-local MENU_WIDTH = 42
-local MENU_HEIGHT = 12
+local MAX_LIST_WIDTH = 45
+local MAX_LIST_HEIGHT = 15
 
 MenuScreen = defclass(MenuScreen, gui.Screen)
 MenuScreen.ATTRS{
@@ -59,32 +59,90 @@ MenuScreen.ATTRS{
     bindings=DEFAULT_NIL,
 }
 
+-- get a map from the binding string to a list of hotkey strings that all
+-- point to that binding
+local function get_bindings_to_hotkeys(hotkeys, bindings)
+    local bindings_to_hotkeys = {}
+    for _,hotkey in ipairs(hotkeys) do
+        local binding = bindings[hotkey]
+        table.insert(ensure_key(bindings_to_hotkeys, binding), hotkey)
+    end
+    return bindings_to_hotkeys
+end
+
+-- number of non-text tiles: icon, space, space between cmd and hk, scrollbar
+local LIST_BUFFER = 2 + 1 + 1
+
+local function get_choices(hotkeys, bindings, is_inverted)
+    local choices, max_width, seen = {}, 0, {}
+    local bindings_to_hotkeys = get_bindings_to_hotkeys(hotkeys, bindings)
+
+    -- build list choices
+    for _,hotkey in ipairs(hotkeys) do
+        local command = bindings[hotkey]
+        if seen[command] then goto continue end
+        seen[command] = true
+        local hk_width, tokens = 0, {}
+        for _,hk in ipairs(bindings_to_hotkeys[command]) do
+            if hk_width ~= 0 then
+                table.insert(tokens, ', ')
+                hk_width = hk_width + 2
+            end
+            table.insert(tokens, {text=hk, pen=COLOR_LIGHTGREEN})
+            hk_width = hk_width + #hk
+        end
+        local command_str = command
+        if hk_width + #command + LIST_BUFFER > MAX_LIST_WIDTH then
+            local max_command_len = MAX_LIST_WIDTH - hk_width - LIST_BUFFER
+            command_str = command:sub(1, max_command_len - 3) .. '...'
+        end
+        table.insert(tokens, 1, {text=command_str})
+        local choice = {icon=ARROW, command=command, text=tokens,
+                        hk_width=hk_width}
+        max_width = math.max(max_width, hk_width + #command_str + LIST_BUFFER)
+        table.insert(choices, is_inverted and 1 or #choices + 1, choice)
+        ::continue::
+    end
+
+    -- adjust width of command fields so the hotkey tokens are right justified
+    for _,choice in ipairs(choices) do
+        local command_token = choice.text[1]
+        command_token.width = max_width - choice.hk_width - 3
+    end
+
+    return choices, max_width
+end
+
 function MenuScreen:init()
     self.mouseover = false
 
-    local list_frame = copyall(self.hotspot_frame)
-    list_frame.w = MENU_WIDTH
-    list_frame.h = MENU_HEIGHT
+    local choices,list_width = get_choices(self.hotkeys, self.bindings,
+                                           self.hotspot_frame.b)
 
-    local help_frame = {w=MENU_WIDTH, l=list_frame.l, r=list_frame.r}
+    local list_frame = copyall(self.hotspot_frame)
+    list_frame.w = list_width + 2
+    list_frame.h = math.min(#choices, MAX_LIST_HEIGHT) + 2
     if list_frame.t then
-        help_frame.t = list_frame.t + MENU_HEIGHT + 1
+        list_frame.t = math.max(0, list_frame.t - 1)
     else
-        help_frame.b = list_frame.b + MENU_HEIGHT + 1
+        list_frame.b = math.max(0, list_frame.b - 1)
+    end
+    if list_frame.l then
+        list_frame.l = math.max(0, list_frame.l - 1)
+    else
+        list_frame.r = math.max(0, list_frame.r - 1)
     end
 
-    local bindings = self.bindings
-    local choices = {}
-    for _,hotkey in ipairs(self.hotkeys) do
-        local command = bindings[hotkey]
-        local choice_text = command .. (' (%s)'):format(hotkey)
-        local choice = {
-            icon=ARROW, text=choice_text, command=command}
-        table.insert(choices, list_frame.b and 1 or #choices + 1, choice)
+    local help_frame = {w=list_frame.w, l=list_frame.l, r=list_frame.r}
+    if list_frame.t then
+        help_frame.t = list_frame.t + list_frame.h + 1
+    else
+        help_frame.b = list_frame.b + list_frame.h + 1
     end
 
     self:addviews{
         widgets.ResizingPanel{
+            view_id='list_panel',
             autoarrange_subviews=true,
             frame=list_frame,
             frame_style=gui.GREY_LINE_FRAME,
@@ -164,6 +222,7 @@ function MenuScreen:onRenderFrame(dc, rect)
 end
 
 function MenuScreen:onRenderBody(dc)
+    local panel = self.subviews.list_panel
     local list = self.subviews.list
     local idx = list:getIdxUnderMouse()
     if idx and idx ~= self.last_mouse_idx then
@@ -173,8 +232,9 @@ function MenuScreen:onRenderBody(dc)
         list:setSelected(idx)
         self.mouseover = true
         self.last_mouse_idx = idx
-    elseif not idx and self.mouseover then
-        -- once the mouse has entered the list area, leaving it again should
+    elseif not panel:getMousePos(gui.ViewRect{rect=panel.frame_rect})
+            and self.mouseover then
+        -- once the mouse has entered the list area, leaving the frame should
         -- close the menu screen
         self:dismiss()
     end

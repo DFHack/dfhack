@@ -5,10 +5,15 @@
 #include "modules/Gui.h"
 #include "modules/Screen.h"
 
+#include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
 
 DFHACK_PLUGIN("hotkeys");
+
+namespace DFHack {
+    DBG_DECLARE(hotkeys, log, DebugCategory::LINFO);
+}
 
 using std::map;
 using std::string;
@@ -39,7 +44,9 @@ static void add_binding_if_valid(const string &sym, const string &cmdline, df::v
     current_bindings[sym] = cmdline;
     sorted_keys.push_back(sym);
     string keyspec = sym + "@" + MENU_SCREEN_FOCUS_STRING;
-    Core::getInstance().AddKeyBinding(keyspec, "hotkeys invoke " + int_to_string(sorted_keys.size() - 1));
+    string binding = "hotkeys invoke " + int_to_string(sorted_keys.size() - 1);
+    DEBUG(log).print("adding keybinding: %s -> %s\n", keyspec.c_str(), binding.c_str());
+    Core::getInstance().AddKeyBinding(keyspec, binding);
 }
 
 static void find_active_keybindings(df::viewscreen *screen)
@@ -101,31 +108,28 @@ static void find_active_keybindings(df::viewscreen *screen)
     }
 }
 
-static bool close_hotkeys_screen()
+static bool invoke_command(color_ostream &out, const size_t index)
 {
     auto screen = Core::getTopViewscreen();
-    if (Gui::getFocusString(screen) != MENU_SCREEN_FOCUS_STRING)
+    if (sorted_keys.size() <= index ||
+            Gui::getFocusString(screen) != MENU_SCREEN_FOCUS_STRING)
         return false;
 
-    Screen::dismiss(Core::getTopViewscreen());
+    auto cmd = current_bindings[sorted_keys[index]];
+    DEBUG(log).print("invoking command: '%s'\n", cmd.c_str());
+
+    {
+        Screen::Hide hideGuard(screen, Screen::Hide::RESTORE_AT_TOP);
+        Core::getInstance().runCommand(out, cmd);
+    }
+
+    Screen::dismiss(screen);
     std::for_each(sorted_keys.begin(), sorted_keys.end(), [](const string &sym){
         Core::getInstance().ClearKeyBindings(sym + "@" + MENU_SCREEN_FOCUS_STRING);
     });
     sorted_keys.clear();
+
     return true;
-}
-
-static bool invoke_command(const size_t index)
-{
-    if (sorted_keys.size() <= index)
-        return false;
-
-    auto cmd = current_bindings[sorted_keys[index]];
-    if (close_hotkeys_screen()) {
-        Core::getInstance().setHotkeyCmd(cmd);
-        return true;
-    }
-    return false;
 }
 
 static command_result hotkeys_cmd(color_ostream &out, vector <string> & parameters)
@@ -133,10 +137,12 @@ static command_result hotkeys_cmd(color_ostream &out, vector <string> & paramete
     if (parameters.size() != 2 || parameters[0] != "invoke")
         return CR_WRONG_USAGE;
 
+    CoreSuspender guard;
+
     int index;
     std::stringstream index_raw(parameters[1]);
     index_raw >> index;
-    return invoke_command(index) ? CR_OK : CR_WRONG_USAGE;
+    return invoke_command(out, index) ? CR_OK : CR_WRONG_USAGE;
 }
 
 static int getHotkeys(lua_State *L) {

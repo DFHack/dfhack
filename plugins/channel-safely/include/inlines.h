@@ -93,15 +93,17 @@ inline bool is_safe_to_dig_down(const df::coord &map_pos) {
 }
 
 inline bool can_reach_designation(const df::coord &start, const df::coord &end) {
-    if (!Maps::canWalkBetween(start,end)) {
-        df::coord neighbours[8];
-        get_neighbours(end, neighbours);
-        for (auto &pos : neighbours) {
-            if (Maps::isValidTilePos(pos) && Maps::canWalkBetween(start, pos)) {
-                return true;
+    if (start != end) {
+        if (!Maps::canWalkBetween(start, end)) {
+            df::coord neighbours[8];
+            get_neighbours(end, neighbours);
+            for (auto &pos: neighbours) {
+                if (Maps::isValidTilePos(pos) && Maps::canWalkBetween(start, pos)) {
+                    return true;
+                }
             }
+            return false;
         }
-        return false;
     }
     return true;
 }

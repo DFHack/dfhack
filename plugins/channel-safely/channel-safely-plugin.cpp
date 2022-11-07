@@ -71,10 +71,10 @@ Updated: Nov. 6 2022
 
 // Debugging
 namespace DFHack {
-    DBG_DECLARE(channelsafely, monitor, DebugCategory::LINFO);
-    DBG_DECLARE(channelsafely, manager, DebugCategory::LINFO);
-    DBG_DECLARE(channelsafely, groups, DebugCategory::LINFO);
-    DBG_DECLARE(channelsafely, jobs, DebugCategory::LINFO);
+    DBG_DECLARE(channelsafely, monitor, DebugCategory::LERROR);
+    DBG_DECLARE(channelsafely, manager, DebugCategory::LERROR);
+    DBG_DECLARE(channelsafely, groups, DebugCategory::LERROR);
+    DBG_DECLARE(channelsafely, jobs, DebugCategory::LERROR);
 }
 
 DFHACK_PLUGIN("channel-safely");
@@ -146,73 +146,34 @@ namespace CSP {
         INFO(monitor).print("UnpauseEvent() exits\n");
     }
 
-    void JobStartedEvent(color_ostream &out, void* p) {
+    void JobStartedEvent(color_ostream &out, void* j) {
         if (enabled && World::isFortressMode() && Maps::IsValid()) {
-            if (config.monitor_active) {
-                INFO(monitor).print("JobStartedEvent()\n");
-                auto job = (df::job*) p;
-                // validate job type
-                if (is_channel_job(job)) {
-                    DEBUG(monitor).print(" valid channel job:\n");
-                    df::unit* worker = Job::getWorker(job);
-                    // there is a valid worker (living citizen) on the job? right..
-                    if (worker && Units::isAlive(worker) && Units::isCitizen(worker)) {
-                        DEBUG(monitor).print("  valid worker:\n");
-                        df::coord local(job->pos);
-                        local.x = local.x % 16;
-                        local.y = local.y % 16;
-                        // check pathing exists to job
-                        if (can_reach_designation(worker->pos, job->pos)) {
-                            DEBUG(monitor).print("   can path from (" COORD ") to (" COORD ")\n",
-                                                 COORDARGS(worker->pos), COORDARGS(job->pos));
-                            // track workers on jobs
-                            active_workers.emplace(job->id, Units::findIndexById(Job::getWorker(job)->id));
-                            // set tile to restricted
-                            TRACE(monitor).print("   setting job tile to restricted\n");
-                            Maps::getTileDesignation(job->pos)->bits.traffic = df::tile_traffic::Restricted;
-                        } else {
-                            DEBUG(monitor).print("   no path exists to job:\n");
-                            // if we can't get there, then we should remove the worker and cancel the job (restore tile designation)
-                            Job::removeWorker(job);
-                            cancel_job(job);
-                            if (!config.insta_dig) {
-                                TRACE(monitor).print("    setting marker mode for (" COORD ")\n", COORDARGS(job->pos));
-                                // set to marker mode
-                                auto occupancy = Maps::getTileOccupancy(job->pos);
-                                if (!occupancy) {
-                                    WARN(monitor).print(" <X> Could not acquire tile occupancy*\n");
-                                    return;
-                                }
-                                occupancy->bits.dig_marked = true;
-                                // prevent algorithm from re-enabling designation
-                                df::map_block* block = Maps::getTileBlock(job->pos);
-                                if (!block) {
-                                    WARN(monitor).print(" <X> Could not acquire block*\n");
-                                    return;
-                                }
-                                for (auto &be: block->block_events) { ;
-                                    if (auto bsedp = virtual_cast<df::block_square_event_designation_priorityst>(be)) {
-                                        TRACE(monitor).print("     re-setting priority\n");
-                                        bsedp->priority[Coord(local)] = config.ignore_threshold * 1000 + 1;
-                                    }
-                                }
-                            } else {
-                                TRACE(monitor).print("    deleting job, and queuing insta-dig)\n");
-                                // queue digging the job instantly
-                                dignow_queue.emplace(job->pos);
-                            }
-                        }
+            INFO(jobs).print("JobStartedEvent()\n");
+            auto job = (df::job*) j;
+            // validate job type
+            if (is_channel_job(job)) {
+                DEBUG(jobs).print(" valid channel job:\n");
+                df::unit* worker = Job::getWorker(job);
+                // there is a valid worker (living citizen) on the job? right..
+                if (worker && Units::isAlive(worker) && Units::isCitizen(worker)) {
+                    DEBUG(jobs).print("  valid worker:\n");
+                    // track workers on jobs
+                    if (config.monitor_active) {
+                        active_workers.emplace(job->id, Units::findIndexById(worker->id));
                     }
+                    // set tile to restricted
+                    TRACE(jobs).print("   setting job tile to restricted\n");
+                    Maps::getTileDesignation(job->pos)->bits.traffic = df::tile_traffic::Restricted;
                 }
-                INFO(monitor).print(" <- JobStartedEvent() exits normally\n");
             }
+            INFO(jobs).print(" <- JobStartedEvent() exits normally\n");
         }
     }
 
-    void JobCompletedEvent(color_ostream &out, void* job_ptr) {
+    void JobCompletedEvent(color_ostream &out, void* j) {
         if (enabled && World::isFortressMode() && Maps::IsValid()) {
             INFO(jobs).print("JobCompletedEvent()\n");
-            auto job = (df::job*) job_ptr;
+            auto job = (df::job*) j;
             // we only care if the job is a channeling one
             if (ChannelManager::Get().groups.count(job->pos)) {
                 // untrack job/worker
@@ -222,9 +183,8 @@ namespace CSP {
                 df::coord local(job->pos);
                 local.x = local.x % 16;
                 local.y = local.y % 16;
-                const auto &type = block->tiletype[Coord(local)];
                 // verify completion
-                if (TileCache::Get().hasChanged(job->pos, type)) {
+                if (TileCache::Get().hasChanged(job->pos, block->tiletype[Coord(local)])) {
                     // the job can be considered done
                     df::coord below(job->pos);
                     below.z--;
@@ -236,8 +196,13 @@ namespace CSP {
                     ChannelManager::Get().debug();
                 }
             }
-            INFO(monitor).print("JobCompletedEvent() exits\n");
+            INFO(jobs).print("JobCompletedEvent() exits\n");
         }
+    }
+
+    void NewReportEvent(color_ostream &out, void* r) {
+        int32_t report_id = (int32_t)(intptr_t(r));
+        out.print("%d\n", report_id);
     }
 
     void OnUpdate(color_ostream &out) {
@@ -247,7 +212,7 @@ namespace CSP {
             int32_t tick = df::global::world->frame_counter;
             if (tick - last_refresh_tick >= config.refresh_freq) {
                 last_refresh_tick = tick;
-                TRACE(monitor).print("OnUpdate()\n");
+                TRACE(monitor).print("OnUpdate() refreshing now\n");
                 UnpauseEvent();
 
                 if (config.insta_dig) {
@@ -261,11 +226,12 @@ namespace CSP {
                             //Units::teleport()
                         }
                     }
+                    TRACE(monitor).print("OnUpdate() refresh done\n");
                 }
             }
             if (config.monitor_active && tick - last_monitor_tick >= config.monitor_freq) {
                 last_monitor_tick = tick;
-                TRACE(monitor).print("OnUpdate()\n");
+                TRACE(monitor).print("OnUpdate() monitoring now\n");
                 for (df::job_list_link* link = &df::global::world->jobs.list; link != nullptr; link = link->next) {
                     df::job* job = link->item;
                     if (job) {
@@ -315,8 +281,8 @@ namespace CSP {
                         }
                     }
                 }
+                TRACE(monitor).print("OnUpdate() monitoring done\n");
             }
-            TRACE(monitor).print("OnUpdate() exits\n");
         }
     }
 }
@@ -328,10 +294,6 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginC
                                      "Automatically manage channel designations.",
                                      channel_safely,
                                      false));
-    DBG_NAME(monitor).allowed(DFHack::DebugCategory::LERROR);
-    DBG_NAME(manager).allowed(DFHack::DebugCategory::LERROR);
-    DBG_NAME(groups).allowed(DFHack::DebugCategory::LERROR);
-    DBG_NAME(jobs).allowed(DFHack::DebugCategory::LERROR);
     return CR_OK;
 }
 
@@ -363,8 +325,10 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         // register events to check jobs / update tracking
         EM::EventHandler jobStartHandler(CSP::JobStartedEvent, 0);
         EM::EventHandler jobCompletionHandler(CSP::JobCompletedEvent, 0);
+        EM::EventHandler reportHandler(CSP::NewReportEvent, 0);
         EM::registerListener(EventType::JOB_STARTED, jobStartHandler, plugin_self);
         EM::registerListener(EventType::JOB_COMPLETED, jobCompletionHandler, plugin_self);
+        EM::registerListener(EventType::REPORT, reportHandler, plugin_self);
         // manage designations to start off (first time building groups [very important])
         out.print("channel-safely: enabled!\n");
         CSP::UnpauseEvent();

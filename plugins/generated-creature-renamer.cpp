@@ -13,6 +13,7 @@
 //#include "df/world.h"
 
 using namespace DFHack;
+using std::endl;
 
 DFHACK_PLUGIN("generated-creature-renamer");
 REQUIRE_GLOBAL(world);

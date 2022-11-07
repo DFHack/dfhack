@@ -52,6 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <cstdlib>
 #include <sstream>
 
+using namespace std;
 using namespace DFHack;
 
 #include "tinythread.h"

@@ -23,6 +23,8 @@
 #include "df/creature_raw.h"
 #include "df/world.h"
 
+using std::endl;
+
 using namespace DFHack;
 using namespace DFHack::Items;
 using namespace DFHack::Units;
@@ -80,7 +82,7 @@ struct ClothingRequirement
 
     std::string Serialize()
     {
-        stringstream stream;
+        std::stringstream stream;
         stream << ENUM_KEY_STR(job_type, jobType) << " ";
         stream << ENUM_KEY_STR(item_type,itemType) << " ";
         stream << item_subtype << " ";
@@ -91,7 +93,7 @@ struct ClothingRequirement
 
     void Deserialize(std::string s)
     {
-        stringstream stream(s);
+        std::stringstream stream(s);
         std::string loadedJob;
         stream >> loadedJob;
         FOR_ENUM_ITEMS(job_type, job)
@@ -138,7 +140,7 @@ struct ClothingRequirement
 
     std::string ToReadableLabel()
     {
-        stringstream stream;
+        std::stringstream stream;
         stream << bitfield_to_string(material_category) << " ";
         std::string adjective = "";
         std::string name = "";

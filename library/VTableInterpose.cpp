@@ -36,6 +36,7 @@ distribution.
 
 #include "MiscUtils.h"
 
+using namespace std;
 using namespace DFHack;
 
 /*

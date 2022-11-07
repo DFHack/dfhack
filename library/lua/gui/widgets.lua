@@ -73,6 +73,8 @@ end
 Panel = defclass(Panel, Widget)
 
 Panel.ATTRS {
+    frame_style = DEFAULT_NIL, -- as in gui.FramedScreen
+    frame_title = DEFAULT_NIL, -- as in gui.FramedScreen
     on_render = DEFAULT_NIL,
     on_layout = DEFAULT_NIL,
     autoarrange_subviews = false, -- whether to automatically lay out subviews
@@ -85,6 +87,12 @@ end
 
 function Panel:onRenderBody(dc)
     if self.on_render then self.on_render(dc) end
+end
+
+function Panel:computeFrame(parent_rect)
+    local sw, sh = parent_rect.width, parent_rect.height
+    return gui.compute_frame_body(sw, sh, self.frame, self.frame_inset,
+                                  self.frame_style and 1 or 0)
 end
 
 function Panel:postComputeFrame(body)
@@ -112,6 +120,13 @@ function Panel:postUpdateLayout()
     self:updateSubviewLayout()
 end
 
+function Panel:onRenderFrame(dc, rect)
+    Panel.super.onRenderFrame(self, dc, rect)
+    if not self.frame_style then return end
+    local x1,y1,x2,y2 = rect.x1, rect.y1, rect.x2, rect.y2
+    gui.paint_frame(x1, y1, x2, y2, self.frame_style, self.frame_title)
+end
+
 -------------------
 -- ResizingPanel --
 -------------------
@@ -129,8 +144,18 @@ function ResizingPanel:postUpdateLayout(frame_body)
                             (s.frame and s.frame.h or frame_body.height))
         end
     end
+    if self.frame_style then
+        w = w + 2
+        h = h + 2
+    end
     if not self.frame then self.frame = {} end
+    local oldw, oldh = self.frame.w, self.frame.h
     self.frame.w, self.frame.h = w, h
+    if not self._updateLayoutGuard and (oldw ~= w or oldh ~= h) then
+        self._updateLayoutGuard = true -- protect against infinite loops
+        self:updateLayout() -- our frame has changed, we need to fully refresh
+    end
+    self._updateLayoutGuard = nil
 end
 
 -----------

@@ -60,17 +60,19 @@ Updated: Nov. 6 2022
 #include <LuaWrapper.h>
 #include <PluginManager.h>
 #include <modules/EventManager.h>
+#include <modules/Units.h>
+#include <df/world.h>
+#include <df/report.h>
+#include <df/tile_traffic.h>
+#include <df/block_square_event_designation_priorityst.h>
 
 #include <cinttypes>
 #include <unordered_map>
 #include <unordered_set>
-#include <modules/Units.h>
-#include <df/report.h>
-#include <df/tile_traffic.h>
-#include <df/world.h>
 
 // Debugging
 namespace DFHack {
+    DBG_DECLARE(channelsafely, plugin, DebugCategory::LINFO);
     DBG_DECLARE(channelsafely, monitor, DebugCategory::LERROR);
     DBG_DECLARE(channelsafely, manager, DebugCategory::LERROR);
     DBG_DECLARE(channelsafely, groups, DebugCategory::LERROR);
@@ -87,33 +89,25 @@ using namespace EM::EventType;
 
 int32_t mapx, mapy, mapz;
 Configuration config;
-PersistentDataItem pconfig;
-const std::string CONFIG_KEY = std::string(plugin_name) + "/config";
+PersistentDataItem psetting;
+PersistentDataItem pfeature;
+const std::string FCONFIG_KEY = std::string(plugin_name) + "/feature";
+const std::string SCONFIG_KEY = std::string(plugin_name) + "/setting";
 //std::unordered_set<int32_t> active_jobs;
 
-#include <df/block_square_event_designation_priorityst.h>
-
-enum ConfigurationData {
-    MONITOR,
+enum FeatureConfigData {
     VISION,
-    INSTADIG,
-    IGNORE_THRESH,
-    FALL_THRESH,
-    REFRESH_RATE,
-    MONITOR_RATE
+    MONITOR,
+    RESURRECT,
+    INSTADIG
 };
 
-inline void saveConfig() {
-    if (pconfig.isValid()) {
-        pconfig.ival(MONITOR) = config.monitor_active;
-        pconfig.ival(VISION) = config.require_vision;
-        pconfig.ival(INSTADIG) = config.insta_dig;
-        pconfig.ival(REFRESH_RATE) = config.refresh_freq;
-        pconfig.ival(MONITOR_RATE) = config.monitor_freq;
-        pconfig.ival(IGNORE_THRESH) = config.ignore_threshold;
-        pconfig.ival(FALL_THRESH) = config.fall_threshold;
-    }
-}
+enum SettingConfigData {
+    REFRESH_RATE,
+    MONITOR_RATE,
+    IGNORE_THRESH,
+    FALL_THRESH
+};
 
 // executes dig designations for the specified tile coordinates
 inline bool dig_now(color_ostream &out, const df::coord &map_pos) {
@@ -133,10 +127,64 @@ inline bool dig_now(color_ostream &out, const df::coord &map_pos) {
 
 }
 
+// fully heals the unit specified, resurrecting if need be
+inline void resurrect(color_ostream &out, const int32_t &unit) {
+    std::vector<std::string> params{"-r", "--unit", std::to_string(unit)};
+    Core::getInstance().runCommand(out,"full-heal", params);
+}
+
 namespace CSP {
-    std::unordered_map<int32_t, int32_t> active_workers;
+    std::unordered_set<df::unit*> endangered_workers;
+    std::unordered_map<df::job*, int32_t> job_ids;
+    std::unordered_map<int32_t, df::job*> active_jobs;
+    std::unordered_map<int32_t, df::unit*> active_workers;
+
     std::unordered_map<int32_t, df::coord> last_safe;
     std::unordered_set<df::coord> dignow_queue;
+
+    void SaveSettings() {
+        if (pfeature.isValid() && psetting.isValid()) {
+            try {
+                pfeature.ival(MONITOR) = config.monitor_active;
+                pfeature.ival(VISION) = config.require_vision;
+                pfeature.ival(INSTADIG) = config.insta_dig;
+                pfeature.ival(RESURRECT) = config.resurrect;
+
+                psetting.ival(REFRESH_RATE) = config.refresh_freq;
+                psetting.ival(MONITOR_RATE) = config.monitor_freq;
+                psetting.ival(IGNORE_THRESH) = config.ignore_threshold;
+                psetting.ival(FALL_THRESH) = config.fall_threshold;
+            } catch (std::exception &e) {
+                ERR(plugin).print("%s\n", e.what());
+            }
+        }
+    }
+
+    void LoadSettings() {
+        pfeature = World::GetPersistentData(FCONFIG_KEY);
+        psetting = World::GetPersistentData(SCONFIG_KEY);
+
+        if (!pfeature.isValid() || !psetting.isValid()) {
+            pfeature = World::AddPersistentData(FCONFIG_KEY);
+            psetting = World::AddPersistentData(SCONFIG_KEY);
+            SaveSettings();
+        } else {
+            try {
+                config.monitor_active = pfeature.ival(MONITOR);
+                config.require_vision = pfeature.ival(VISION);
+                config.insta_dig = pfeature.ival(INSTADIG);
+                config.resurrect = pfeature.ival(RESURRECT);
+
+                config.ignore_threshold = psetting.ival(IGNORE_THRESH);
+                config.fall_threshold = psetting.ival(FALL_THRESH);
+                config.refresh_freq = psetting.ival(REFRESH_RATE);
+                config.monitor_freq = psetting.ival(MONITOR_RATE);
+            } catch (std::exception &e) {
+                ERR(plugin).print("%s\n", e.what());
+            }
+        }
+        active_workers.clear();
+    }
 
     void UnpauseEvent(){
         INFO(monitor).print("UnpauseEvent()\n");
@@ -158,8 +206,10 @@ namespace CSP {
                 if (worker && Units::isAlive(worker) && Units::isCitizen(worker)) {
                     DEBUG(jobs).print("  valid worker:\n");
                     // track workers on jobs
-                    if (config.monitor_active) {
-                        active_workers.emplace(job->id, Units::findIndexById(worker->id));
+                    if (config.monitor_active || config.resurrect) {
+                        job_ids.emplace(job, job->id);
+                        active_jobs.emplace(job->id, job);
+                        active_workers[job->id] = worker;
                     }
                     // set tile to restricted
                     TRACE(jobs).print("   setting job tile to restricted\n");
@@ -176,8 +226,6 @@ namespace CSP {
             auto job = (df::job*) j;
             // we only care if the job is a channeling one
             if (ChannelManager::Get().groups.count(job->pos)) {
-                // untrack job/worker
-                active_workers.erase(job->id);
                 // check job outcome
                 auto block = Maps::getTileBlock(job->pos);
                 df::coord local(job->pos);
@@ -188,12 +236,22 @@ namespace CSP {
                     // the job can be considered done
                     df::coord below(job->pos);
                     below.z--;
-                    WARN(jobs).print(" -> Marking tile done and managing the group below.\n");
+                    WARN(jobs).print(" -> (" COORD ") is marked done, managing group below.\n", COORDARGS(job->pos));
                     // mark done and manage below
                     block->designation[Coord(local)].bits.traffic = df::tile_traffic::Normal;
                     ChannelManager::Get().mark_done(job->pos);
                     ChannelManager::Get().manage_group(below);
                     ChannelManager::Get().debug();
+                } else {
+                    ERR(jobs).print(" -> (" COORD ") is not done but the job \"completed\".\n", COORDARGS(job->pos));
+                    endangered_workers.emplace(active_workers[job->id]);
+                }
+                // clean up
+                if (!config.resurrect) {
+                    auto jp = active_jobs[job->id];
+                    job_ids.erase(jp);
+                    active_workers.erase(job->id);
+                    active_jobs.erase(job->id);
                 }
             }
             INFO(jobs).print("JobCompletedEvent() exits\n");
@@ -201,22 +259,34 @@ namespace CSP {
     }
 
     void NewReportEvent(color_ostream &out, void* r) {
-        int32_t report_id = (int32_t)(intptr_t(r));
+        auto report_id = (int32_t)(intptr_t(r));
         if (df::global::world) {
-            auto &reports = df::global::world->status.reports;
-            size_t idx = df::report::binsearch_index(reports, report_id);
-            if (idx >= 0 && idx < reports.size()){
-                auto report = reports[report_id];
-                out.print("%d\n%s\n", report_id, report->text.c_str());
+            std::vector<df::report*> &reports = df::global::world->status.reports;
+            size_t idx = -1;
+            idx = df::report::binsearch_index(reports, report_id);
+            df::report* report = reports.at(idx);
+            switch (report->type) {
+                case announcement_type::CAVE_COLLAPSE:
+                    for (auto p : active_workers) {
+                        endangered_workers.emplace(p.second);
+                    }
+                case announcement_type::CANCEL_JOB:
+                    out.print("%d, pos: " COORD "\n%s\n", report_id, COORDARGS(report->pos), report->text.c_str());
+                default:
+                    break;
             }
         }
     }
 
     void OnUpdate(color_ostream &out) {
         if (enabled && World::isFortressMode() && Maps::IsValid() && !World::ReadPauseState()) {
+            static int32_t last_tick = df::global::world->frame_counter;
             static int32_t last_monitor_tick = df::global::world->frame_counter;
             static int32_t last_refresh_tick = df::global::world->frame_counter;
+            static int32_t last_resurrect_tick = df::global::world->frame_counter;
             int32_t tick = df::global::world->frame_counter;
+
+            // Refreshing the group data with full scanning
             if (tick - last_refresh_tick >= config.refresh_freq) {
                 last_refresh_tick = tick;
                 TRACE(monitor).print("OnUpdate() refreshing now\n");
@@ -236,59 +306,111 @@ namespace CSP {
                     TRACE(monitor).print("OnUpdate() refresh done\n");
                 }
             }
+
+            // Clean up stale df::job*
+            if ((config.monitor_active || config.resurrect) && tick - last_tick >= 1) {
+                last_tick = tick;
+                // make note of valid jobs
+                std::unordered_map<int32_t, df::job*> valid_jobs;
+                for (df::job_list_link* link = &df::global::world->jobs.list; link != nullptr; link = link->next) {
+                    df::job* job = link->item;
+                    if (job && active_jobs.count(job->id)) {
+                        valid_jobs.emplace(job->id, job);
+                    }
+                }
+
+                // erase the active jobs that aren't valid
+                std::unordered_set<df::job*> erase;
+                map_value_difference(active_jobs, valid_jobs, erase);
+                for (auto j : erase) {
+                    auto id = job_ids[j];
+                    job_ids.erase(j);
+                    active_jobs.erase(id);
+                    active_workers.erase(id);
+                }
+            }
+
+            // Monitoring Active and Resurrecting Dead
             if (config.monitor_active && tick - last_monitor_tick >= config.monitor_freq) {
                 last_monitor_tick = tick;
                 TRACE(monitor).print("OnUpdate() monitoring now\n");
-                for (df::job_list_link* link = &df::global::world->jobs.list; link != nullptr; link = link->next) {
-                    df::job* job = link->item;
-                    if (job) {
-                        auto iter = active_workers.find(job->id);
-                        TRACE(monitor).print(" -> check for job in tracking\n");
-                        if (iter != active_workers.end()) {
-                            df::unit* unit = df::global::world->units.active[iter->second];
-                            TRACE(monitor).print(" -> compare positions of worker and job\n");
-                            // check if fall is possible
-                            if (unit->pos == job->pos) {
-                                // can fall, is safe?
-                                TRACE(monitor).print("  equal -> check if safe fall\n");
-                                if (!is_safe_fall(job->pos)) {
-                                    // unsafe
-                                    Job::removeWorker(job);
-                                    if (config.insta_dig) {
-                                        TRACE(monitor).print(" -> insta-dig\n");
-                                        // delete the job
-                                        Job::removeJob(job);
-                                        // queue digging the job instantly
-                                        dignow_queue.emplace(job->pos);
-                                        // worker is currently in the air
-                                        Units::teleport(unit, last_safe[unit->id]);
-                                        last_safe.erase(unit->id);
-                                    } else {
-                                        TRACE(monitor).print(" -> set marker mode\n");
-                                        // set to marker mode
-                                        Maps::getTileOccupancy(job->pos)->bits.dig_marked = true;
-                                        // prevent algorithm from re-enabling designation
-                                        for (auto &be: Maps::getBlock(job->pos)->block_events) { ;
-                                            if (auto bsedp = virtual_cast<df::block_square_event_designation_priorityst>(
-                                                    be)) {
-                                                df::coord local(job->pos);
-                                                local.x = local.x % 16;
-                                                local.y = local.y % 16;
-                                                bsedp->priority[Coord(local)] = config.ignore_threshold * 1000 + 1;
-                                                break;
-                                            }
-                                        }
+
+                // iterate active jobs
+                for (auto pair: active_jobs) {
+                    df::job* job = pair.second;
+                    df::unit* unit = active_workers[job->id];
+                    if (!unit) continue;
+                    TRACE(monitor).print(" -> check for job in tracking\n");
+                    if (Units::isAlive(unit)) {
+                        if (!config.monitor_active) continue;
+                        TRACE(monitor).print(" -> compare positions of worker and job\n");
+
+                        // save position
+                        if (unit->pos != job->pos && isFloorTerrain(*Maps::getTileType(unit->pos))) {
+                            // worker is perfectly safe right now
+                            last_safe[unit->id] = unit->pos;
+                            TRACE(monitor).print(" -> save safe position\n");
+                            continue;
+                        }
+
+                        // check for fall safety
+                        if (unit->pos == job->pos && !is_safe_fall(job->pos)) {
+                            // unsafe
+                            WARN(monitor).print(" -> unsafe job\n");
+                            Job::removeWorker(job);
+
+                            // decide to insta-dig or marker mode
+                            if (config.insta_dig) {
+                                // delete the job
+                                Job::removeJob(job);
+                                // queue digging the job instantly
+                                dignow_queue.emplace(job->pos);
+                                DEBUG(monitor).print(" -> insta-dig\n");
+                            } else if (Maps::isValidTilePos(job->pos)) {
+                                // set marker mode
+                                Maps::getTileOccupancy(job->pos)->bits.dig_marked = true;
+
+                                // prevent algorithm from re-enabling designation
+                                for (auto &be: Maps::getBlock(job->pos)->block_events) { ;
+                                    if (auto bsedp = virtual_cast<df::block_square_event_designation_priorityst>(
+                                            be)) {
+                                        df::coord local(job->pos);
+                                        local.x = local.x % 16;
+                                        local.y = local.y % 16;
+                                        bsedp->priority[Coord(local)] = config.ignore_threshold * 1000 + 1;
+                                        break;
                                     }
                                 }
-                            } else {
-                                TRACE(monitor).print(" -> save safe position\n");
-                                // worker is perfectly safe right now
-                                last_safe[unit->id] = unit->pos;
+                                DEBUG(monitor).print(" -> set marker mode\n");
                             }
                         }
                     }
                 }
                 TRACE(monitor).print("OnUpdate() monitoring done\n");
+            }
+
+            if (config.resurrect && tick - last_resurrect_tick >= 1) {
+                last_resurrect_tick = tick;
+                static std::unordered_map<df::unit*, int32_t> age;
+
+                // clean up any "endangered" workers that have been tracked 100 ticks or more
+                for (auto iter = age.begin(); iter != age.end();) {
+                    if (tick - iter->second >= 1200) { //keep watch 1 day
+                        iter = age.erase(iter);
+                        continue;
+                    }
+                    ++iter;
+                }
+
+                // resurrect any dead units
+                for (auto unit : endangered_workers) {
+                    age.emplace(unit, tick);
+                    if (!Units::isAlive(unit)) {
+                        resurrect(out, unit->id);
+                        Units::teleport(unit, last_safe[unit->id]);
+                        WARN(plugin).print(">RESURRECTING<\n");
+                    }
+                }
             }
         }
     }
@@ -310,19 +432,10 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out) {
 }
 
 DFhackCExport command_result plugin_load_data (color_ostream &out) {
-    pconfig = World::GetPersistentData(CONFIG_KEY);
-
-    if (!pconfig.isValid()) {
-        pconfig = World::AddPersistentData(CONFIG_KEY);
-        saveConfig();
-    } else {
-        config.monitor_active = pconfig.ival(MONITOR);
-        config.require_vision = pconfig.ival(VISION);
-        config.insta_dig = pconfig.ival(INSTADIG);
-        config.refresh_freq = pconfig.ival(REFRESH_RATE);
-        config.monitor_freq = pconfig.ival(MONITOR_RATE);
-        config.ignore_threshold = pconfig.ival(IGNORE_THRESH);
-        config.fall_threshold = pconfig.ival(FALL_THRESH);
+    CSP::LoadSettings();
+    if (enabled) {
+        std::vector<std::string> params;
+        channel_safely(out, params);
     }
     return DFHack::CR_OK;
 }
@@ -352,6 +465,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     if (enabled && World::isFortressMode() && Maps::IsValid()) {
         switch (event) {
             case SC_MAP_LOADED:
+                CSP::active_workers.clear();
                 // cache the map size
                 Maps::getSize(mapx, mapy, mapz);
             case SC_UNPAUSED:
@@ -447,12 +561,28 @@ command_result channel_safely(color_ostream &out, std::vector<std::string> &para
                             DBG_NAME(groups).allowed(DFHack::DebugCategory::LERROR);
                             DBG_NAME(jobs).allowed(DFHack::DebugCategory::LERROR);
                     }
-                } else if(parameters[1] == "monitor-active"){
-                    config.monitor_active = state;
+                } else if(parameters[1] == "monitor"){
+                    if (state != config.monitor_active) {
+                        config.monitor_active = state;
+                        // if this is a fresh start
+                        if (state && !config.resurrect) {
+                            // we need a fresh start
+                            CSP::active_workers.clear();
+                        }
+                    }
                 } else if (parameters[1] == "require-vision") {
                     config.require_vision = state;
                 } else if (parameters[1] == "insta-dig") {
                     config.insta_dig = state;
+                } else if (parameters[1] == "resurrect") {
+                    if (state != config.resurrect) {
+                        config.resurrect = state;
+                        // if this is a fresh start
+                        if (state && !config.monitor_active) {
+                            // we need a fresh start
+                            CSP::active_workers.clear();
+                        }
+                    }
                 } else if (parameters[1] == "refresh-freq" && set && parameters.size() == 3) {
                     config.refresh_freq = std::abs(std::stol(parameters[2]));
                 } else if (parameters[1] == "monitor-freq" && set && parameters.size() == 3) {
@@ -477,14 +607,17 @@ command_result channel_safely(color_ostream &out, std::vector<std::string> &para
         }
     } else {
         out.print("Channel-Safely is %s\n", enabled ? "ENABLED." : "DISABLED.");
-        out.print("monitor-active: %s\n", config.monitor_active ? "on." : "off.");
-        out.print("require-vision: %s\n", config.require_vision ? "on." : "off.");
-        out.print("insta-dig: %s\n", config.insta_dig ? "on." : "off.");
-        out.print("refresh-freq: %" PRIi32 "\n", config.refresh_freq);
-        out.print("monitor-freq: %" PRIi32 "\n", config.monitor_freq);
-        out.print("ignore-threshold: %" PRIu8 "\n", config.ignore_threshold);
-        out.print("fall-threshold: %" PRIu8 "\n", config.fall_threshold);
+        out.print(" FEATURES:\n");
+        out.print("  %-20s\t%s\n", "monitor-active: ", config.monitor_active ? "on." : "off.");
+        out.print("  %-20s\t%s\n", "require-vision: ", config.require_vision ? "on." : "off.");
+        out.print("  %-20s\t%s\n", "insta-dig: ", config.insta_dig ? "on." : "off.");
+        out.print("  %-20s\t%s\n", "resurrect: ", config.resurrect ? "on." : "off.");
+        out.print(" SETTINGS:\n");
+        out.print("  %-20s\t%" PRIi32 "\n", "refresh-freq: ", config.refresh_freq);
+        out.print("  %-20s\t%" PRIi32 "\n", "monitor-freq: ", config.monitor_freq);
+        out.print("  %-20s\t%" PRIu8 "\n", "ignore-threshold: ", config.ignore_threshold);
+        out.print("  %-20s\t%" PRIu8 "\n", "fall-threshold: ", config.fall_threshold);
     }
-    saveConfig();
+    CSP::SaveSettings();
     return DFHack::CR_OK;
 }

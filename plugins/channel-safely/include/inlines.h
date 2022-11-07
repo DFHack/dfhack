@@ -168,3 +168,35 @@ inline void cancel_job(df::job* job) {
         Job::removeJob(job);
     }
 }
+
+template<class Ctr1, class Ctr2, class Ctr3>
+void set_difference(const Ctr1 &c1, const Ctr2 &c2, Ctr3 &c3) {
+    for (const auto &a : c1) {
+        bool matched = false;
+        for (const auto &b : c2) {
+            if (a == b) {
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) {
+            c3.emplace(a);
+        }
+    }
+}
+
+template<class Ctr1, class Ctr2, class Ctr3>
+void map_value_difference(const Ctr1 &c1, const Ctr2 &c2, Ctr3 &c3) {
+    for (const auto &a : c1) {
+        bool matched = false;
+        for (const auto &b : c2) {
+            if (a.second == b.second) {
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) {
+            c3.emplace(a.second);
+        }
+    }
+}

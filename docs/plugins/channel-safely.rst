@@ -47,9 +47,11 @@ Examples
 
 Features
 --------
-:monitor-active:    Toggle whether to monitor the conditions of active digs. (default: disabled)
 :require-vision:    Toggle whether the dwarves need vision of a tile before channeling to it can be deemed unsafe. (default: enabled)
-:insta-dig:         Toggle whether to use insta-digging on unreachable designations. (default: disabled)
+:monitor:           Toggle whether to monitor the conditions of active digs. (default: disabled)
+:resurrect:         Toggle whether to resurrect dwarves killed on the job. (default: disabled)
+:insta-dig:         Toggle whether to use insta-digging on unreachable designations.
+                    Runs on the refresh cycles. (default: disabled)
 
 Settings
 --------

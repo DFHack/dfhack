@@ -13,6 +13,7 @@ struct Configuration {
     bool monitor_active = false;
     bool require_vision = true;
     bool insta_dig = false;
+    bool resurrect = false;
     int32_t refresh_freq = 600;
     int32_t monitor_freq = 1;
     uint8_t ignore_threshold = 5;

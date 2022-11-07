@@ -6,21 +6,7 @@
 
 #include <random>
 
-template<class Ctr1, class Ctr2, class Ctr3>
-void set_difference(const Ctr1 &c1, const Ctr2 &c2, Ctr3 &c3) {
-    for (const auto &a : c1) {
-        bool matched = false;
-        for (const auto &b : c2) {
-            if (a == b) {
-                matched = true;
-                break;
-            }
-        }
-        if (!matched) {
-            c3.emplace(a);
-        }
-    }
-}
+
 
 // adds map_pos to a group if an adjacent one exists, or creates one if none exist... if multiple exist they're merged into the first found
 void ChannelGroups::add(const df::coord &map_pos) {

@@ -202,7 +202,14 @@ namespace CSP {
 
     void NewReportEvent(color_ostream &out, void* r) {
         int32_t report_id = (int32_t)(intptr_t(r));
-        out.print("%d\n", report_id);
+        if (df::global::world) {
+            auto &reports = df::global::world->status.reports;
+            size_t idx = df::report::binsearch_index(reports, report_id);
+            if (idx >= 0 && idx < reports.size()){
+                auto report = reports[report_id];
+                out.print("%d\n%s\n", report_id, report->text.c_str());
+            }
+        }
     }
 
     void OnUpdate(color_ostream &out) {
@@ -326,9 +333,9 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         EM::EventHandler jobStartHandler(CSP::JobStartedEvent, 0);
         EM::EventHandler jobCompletionHandler(CSP::JobCompletedEvent, 0);
         EM::EventHandler reportHandler(CSP::NewReportEvent, 0);
+        EM::registerListener(EventType::REPORT, reportHandler, plugin_self);
         EM::registerListener(EventType::JOB_STARTED, jobStartHandler, plugin_self);
         EM::registerListener(EventType::JOB_COMPLETED, jobCompletionHandler, plugin_self);
-        EM::registerListener(EventType::REPORT, reportHandler, plugin_self);
         // manage designations to start off (first time building groups [very important])
         out.print("channel-safely: enabled!\n");
         CSP::UnpauseEvent();

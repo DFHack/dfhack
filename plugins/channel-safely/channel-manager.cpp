@@ -80,23 +80,16 @@ bool ChannelManager::manage_one(const Group &group, const df::coord &map_pos, bo
 
             } else {
                 // next search for the designation priority
-                for (df::block_square_event* event: block->block_events) {
-                    if (auto evT = virtual_cast<df::block_square_event_designation_priorityst>(event)) {
-                        // we want to let the user keep some designations free of being managed
-                        if (evT->priority[Coord(local)] < 1000 * config.ignore_threshold) {
-                            DEBUG(manager).print(" if(has_groups_above())\n");
-                            // check that the group has no incomplete groups directly above it
-                            if (has_group_above(groups, map_pos) || !is_safe_to_dig_down(map_pos)) {
-                                DEBUG(manager).print("  has_groups_above: setting marker mode\n");
-                                tile_occupancy.bits.dig_marked = true;
-                                if (jobs.count(map_pos)) {
-                                    jobs.erase(map_pos);
-                                }
-                                WARN(manager).print(" <- manage_one() exits normally\n");
-                                return true;
-                            }
-                        }
+                DEBUG(manager).print(" if(has_groups_above())\n");
+                // check that the group has no incomplete groups directly above it
+                if (has_group_above(groups, map_pos) || !is_safe_to_dig_down(map_pos)) {
+                    DEBUG(manager).print("  has_groups_above: setting marker mode\n");
+                    tile_occupancy.bits.dig_marked = true;
+                    if (jobs.count(map_pos)) {
+                        jobs.erase(map_pos);
                     }
+                    WARN(manager).print(" <- manage_one() exits normally\n");
+                    return true;
                 }
             }
         } else {

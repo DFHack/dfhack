@@ -126,11 +126,13 @@ function MenuScreen:onSelect(_, choice)
 end
 
 function MenuScreen:onSubmit(_, choice)
+    if not choice then return end
     self:dismiss()
     dfhack.run_command(choice.command)
 end
 
 function MenuScreen:onSubmit2(_, choice)
+    if not choice then return end
     self:dismiss()
     dfhack.run_script('gui/launcher', choice.command)
 end
@@ -138,6 +140,9 @@ end
 function MenuScreen:onInput(keys)
     if keys.LEAVESCREEN then
         self:dismiss()
+        return true
+    elseif keys.STANDARDSCROLL_RIGHT then
+        self:onSubmit2(self.subviews.list:getSelected())
         return true
     end
     return self:inputToSubviews(keys)

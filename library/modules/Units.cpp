@@ -80,6 +80,7 @@ using namespace std;
 #include "df/unit_soul.h"
 #include "df/unit_wound.h"
 #include "df/world.h"
+#include "df/unit_action.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -1948,4 +1949,193 @@ int Units::getStressCategoryRaw(int32_t stress_level)
         }
     }
     return level;
+}
+
+struct AffectedActionTypesGroupContainer
+{
+    std::vector<std::vector<bool>> groups;
+
+    AffectedActionTypesGroupContainer()
+    {
+        // "All" category
+        std::vector<bool> & allVector = groups[Units::ActionTypeGroup::All];
+        // reinitialise allVector to the length of the df::unit_action_type enum
+        allVector[df::unit_action_type::Move] = true;
+        allVector[df::unit_action_type::Attack] = true;
+        allVector[df::unit_action_type::HoldTerrain] = true;
+        allVector[df::unit_action_type::Climb] = true;
+        allVector[df::unit_action_type::Job] = true;
+        allVector[df::unit_action_type::Talk] = true;
+        allVector[df::unit_action_type::Unsteady] = true;
+        allVector[df::unit_action_type::Dodge] = true;
+        allVector[df::unit_action_type::Recover] = true;
+        allVector[df::unit_action_type::StandUp] = true;
+        allVector[df::unit_action_type::LieDown] = true;
+        allVector[df::unit_action_type::Job2] = true;
+        allVector[df::unit_action_type::PushObject] = true;
+        allVector[df::unit_action_type::SuckBlood] = true;
+
+        // "Movement" category
+        std::vector<bool> & movementVector = groups[Units::ActionTypeGroup::Movement];
+        // reinitialise movementVector to falses with the length of the df::unit_action_type enum
+        movementVector[df::unit_action_type::Move] = true;
+        movementVector[df::unit_action_type::HoldTerrain] = true;
+        movementVector[df::unit_action_type::Climb] = true;
+        // Include Unsteady?
+        movementVector[df::unit_action_type::Dodge] = true;
+        movementVector[df::unit_action_type::Recover] = true;
+        movementVector[df::unit_action_type::StandUp] = true;
+        movementVector[df::unit_action_type::LieDown] = true;
+        movementVector[df::unit_action_type::PushObject] = true;
+
+        // "MovementFeet" category
+        std::vector<bool> & movementFeetVector = groups[Units::ActionTypeGroup::MovementFeet];
+        // reinitialise movementFeetVector to falses with the length of the df::unit_action_type enum
+        movementFeetVector[df::unit_action_type::Move] = true;
+        // Include Unsteady?
+        movementFeetVector[df::unit_action_type::Dodge] = true;
+        movementFeetVector[df::unit_action_type::Recover] = true;
+        movementFeetVector[df::unit_action_type::PushObject] = true;
+
+        // "Offensive" category
+        std::vector<bool> & offensiveVector = groups[Units::ActionTypeGroup::Offensive];
+        // reinitialise offensiveVector to falses with the length of the df::unit_action_type enum
+        offensiveVector[df::unit_action_type::Attack] = true;
+        offensiveVector[df::unit_action_type::SuckBlood] = true;
+
+        // "Work" category
+        std::vector<bool> & workVector = groups[Units::ActionTypeGroup::Work];
+        // reinitialise workVector to falses with the length of the df::unit_action_type enum
+        workVector[df::unit_action_type::Job] = true;
+        workVector[df::unit_action_type::Job2] = true;
+        workVector[df::unit_action_type::PushObject] = true;
+    }
+};
+
+int *getActionTimerPointer(df::unit_action *action) {
+    switch (action->type)
+    {
+    case unit_action_type::None:
+        break;
+    case unit_action_type::Move:
+        return &action->data.move.timer;
+    case unit_action_type::Attack:
+        if (action->data.attack.timer1 != 0) {
+            // Wind-up timer is still active, work on it
+            return &action->data.attack.timer1;
+        } else {
+            // Wind-up timer is finished, work on recovery timer
+            return &action->data.attack.timer2;
+        }
+    case unit_action_type::HoldTerrain:
+        return &action->data.holdterrain.timer;
+    case unit_action_type::Climb:
+        return &action->data.climb.timer;
+    case unit_action_type::Job:
+        return &action->data.job.timer;
+        // could also patch the unit->job.current_job->completion_timer
+    case unit_action_type::Talk:
+        return &action->data.talk.timer;
+    case unit_action_type::Unsteady:
+        return &action->data.unsteady.timer;
+    case unit_action_type::Dodge:
+        return &action->data.dodge.timer;
+    case unit_action_type::Recover:
+        return &action->data.recover.timer;
+    case unit_action_type::StandUp:
+        return &action->data.standup.timer;
+    case unit_action_type::LieDown:
+        return &action->data.liedown.timer;
+    case unit_action_type::Job2:
+        return &action->data.job2.timer;
+        // could also patch the unit->job.current_job->completion_timer
+    case unit_action_type::PushObject:
+        return &action->data.pushobject.timer;
+    case unit_action_type::SuckBlood:
+        return &action->data.suckblood.timer;
+    case unit_action_type::Jump:
+    case unit_action_type::ReleaseTerrain:
+    case unit_action_type::Parry:
+    case unit_action_type::Block:
+    case unit_action_type::HoldItem:
+    case unit_action_type::ReleaseItem:
+    default:
+        break;
+    }
+    return nullptr;
+}
+
+void Units::subtractActionTimer(df::unit *unit, int amount, int affectedActionType)
+{
+    CHECK_NULL_POINTER(unit);
+    for (auto action : unit->actions) {
+        if (affectedActionType != action->type) continue;
+        int *timer = getActionTimerPointer(action);
+        if (timer != nullptr && *timer != 0) {
+            *timer = max(*timer - amount, 1);
+        }
+    }
+}
+
+void Units::subtractActionTimerCategory(df::unit *unit, int amount, int affectedActionTypes)
+{
+    CHECK_NULL_POINTER(unit);
+    static AffectedActionTypesGroupContainer groupContainer;
+    for (auto action : unit->actions) {
+        if (!groupContainer.groups[affectedActionTypes][action->type]) continue;
+        int *timer = getActionTimerPointer(action);
+        if (timer != nullptr && *timer != 0) {
+            *timer = max(*timer - amount, 1);
+        }
+    }
+}
+
+void Units::multiplyActionTimer(df::unit *unit, float amount, int affectedActionType)
+{
+    CHECK_NULL_POINTER(unit);
+    for (auto action : unit->actions) {
+        if (affectedActionType != action->type) continue;
+        int *timer = getActionTimerPointer(action);
+        if (timer != nullptr && *timer != 0) {
+            *timer = max(int(*timer * amount), 1);
+        }
+    }
+}
+
+void Units::multiplyActionTimerCategory(df::unit *unit, float amount, int affectedActionTypes)
+{
+    CHECK_NULL_POINTER(unit);
+    static AffectedActionTypesGroupContainer groupContainer;
+    for (auto action : unit->actions) {
+        if (!groupContainer.groups[affectedActionTypes][action->type]) continue;
+        int *timer = getActionTimerPointer(action);
+        if (timer != nullptr && *timer != 0) {
+            *timer = max(int(*timer * amount), 1);
+        }
+    }
+}
+
+void Units::setActionTimer(df::unit *unit, int amount, int affectedActionType)
+{
+    CHECK_NULL_POINTER(unit);
+    for (auto action : unit->actions) {
+        if (affectedActionType != action->type) continue;
+        int *timer = getActionTimerPointer(action);
+        if (timer != nullptr && *timer != 0) {
+            *timer = amount;
+        }
+    }
+}
+
+void Units::setActionTimerCategory(df::unit *unit, int amount, int affectedActionTypes)
+{
+    CHECK_NULL_POINTER(unit);
+    static AffectedActionTypesGroupContainer groupContainer;
+    for (auto action : unit->actions) {
+        if (!groupContainer.groups[affectedActionTypes][action->type]) continue;
+        int *timer = getActionTimerPointer(action);
+        if (timer != nullptr && *timer != 0) {
+            *timer = amount;
+        }
+    }
 }

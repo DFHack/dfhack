@@ -224,5 +224,13 @@ DFHACK_EXPORT extern const std::vector<int32_t> stress_cutoffs;
 DFHACK_EXPORT int getStressCategory(df::unit *unit);
 DFHACK_EXPORT int getStressCategoryRaw(int32_t stress_level);
 
+enum ActionTypeGroup {All, Movement, MovementFeet, Offensive, Work};
+DFHACK_EXPORT void subtractActionTimer(df::unit *unit, int amount, int affectedActionType);
+DFHACK_EXPORT void subtractActionTimerCategory(df::unit *unit, int amount, int affectedActionTypes);
+DFHACK_EXPORT void multiplyActionTimer(df::unit *unit, float amount, int affectedActionType);
+DFHACK_EXPORT void multiplyActionTimerCategory(df::unit *unit, float amount, int affectedActionTypes);
+DFHACK_EXPORT void setActionTimer(df::unit *unit, int amount, int affectedActionType);
+DFHACK_EXPORT void setActionTimerCategory(df::unit *unit, int amount, int affectedActionTypes);
+
 }
 }

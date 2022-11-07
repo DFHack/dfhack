@@ -3707,10 +3707,11 @@ The class has the following methods:
 
   Returns the dimensions of the ``frame_body`` rectangle.
 
-* ``view:getMousePos()``
+* ``view:getMousePos([view_rect])``
 
-  Returns the mouse *x,y* in coordinates local to the ``frame_body``
-  rectangle if it is within its clip area, or nothing otherwise.
+  Returns the mouse *x,y* in coordinates local to the given ViewRect (or
+  ``frame_body`` if no ViewRect is passed) if it is within its clip area,
+  or nothing otherwise.
 
 * ``view:updateLayout([parent_rect])``
 
@@ -3829,7 +3830,9 @@ It adds the following methods:
   ``dfhack.screen.show``, calls ``self:onAboutToShow(parent)``. Note that
   ``onAboutToShow()`` can dismiss active screens, and therefore change the
   potential parent. If parent is not specified, this function will re-detect the
-  current topmost window after ``self:onAboutToShow(parent)`` returns.
+  current topmost window after ``self:onAboutToShow(parent)`` returns. This
+  function returns ``self`` as a convenience so you can write such code as
+  ``local view = MyScreen{params=val}:show()``.
 
 * ``screen:onAboutToShow(parent)`` *(for overriding)*
 

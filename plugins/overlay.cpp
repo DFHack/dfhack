@@ -249,9 +249,14 @@ IMPLEMENT_HOOKS(workshop_profile)
     !INTERPOSE_HOOK(screen##_overlay, feed).apply(enable) || \
     !INTERPOSE_HOOK(screen##_overlay, render).apply(enable)
 
-DFhackCExport command_result plugin_enable(color_ostream &, bool enable) {
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (is_enabled == enable)
         return CR_OK;
+
+    if (enable) {
+        screenSize = Screen::getWindowSize();
+        call_overlay_lua(&out, "reload");
+    }
 
     DEBUG(control).print("%sing interpose hooks\n", enable ? "enabl" : "disabl");
 
@@ -361,10 +366,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
             "Manage onscreen widgets.",
             overlay_cmd));
 
-    screenSize = Screen::getWindowSize();
-    call_overlay_lua(&out, "reload");
-
-    return plugin_enable(out, true);
+    return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown(color_ostream &out) {

@@ -12,9 +12,8 @@
 keybinding add ` gui/launcher
 keybinding add Ctrl-Shift-D gui/launcher
 
-# show all current key bindings
-keybinding add Ctrl-F1 hotkeys
-keybinding add Alt-F1 hotkeys
+# show hotkey popup menu
+keybinding add Ctrl-Shift-C "overlay trigger hotkeys.menu"
 
 # on-screen keyboard
 keybinding add Ctrl-Shift-K gui/cp437-table

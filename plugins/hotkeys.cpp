@@ -71,16 +71,16 @@ static void find_active_keybindings(df::viewscreen *screen)
     auto current_focus = Gui::getFocusString(screen);
     for (int shifted = 0; shifted < 2; shifted++)
     {
-        for (int ctrl = 0; ctrl < 2; ctrl++)
+        for (int alt = 0; alt < 2; alt++)
         {
-            for (int alt = 0; alt < 2; alt++)
+            for (int ctrl = 0; ctrl < 2; ctrl++)
             {
                 for (auto it = valid_keys.begin(); it != valid_keys.end(); it++)
                 {
                     string sym;
-                    if (shifted) sym += "Shift-";
                     if (ctrl) sym += "Ctrl-";
                     if (alt) sym += "Alt-";
+                    if (shifted) sym += "Shift-";
                     sym += *it;
 
                     auto list = Core::getInstance().ListKeyBindings(sym);

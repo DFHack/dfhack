@@ -101,6 +101,7 @@ size_t loadScriptFiles(Core* core, color_ostream& out, const vector<std::string>
 
 namespace DFHack {
 
+DBG_DECLARE(core,keybinding,DebugCategory::LINFO);
 DBG_DECLARE(core,script,DebugCategory::LINFO);
 
 class MainThread {
@@ -2388,20 +2389,36 @@ bool Core::SelectHotkey(int sym, int modifiers)
 
     std::string cmd;
 
+    DEBUG(keybinding).print("checking hotkeys for sym=%d, modifiers=%x\n", sym, modifiers);
+
     {
         std::lock_guard<std::mutex> lock(HotkeyMutex);
 
         // Check the internal keybindings
         std::vector<KeyBinding> &bindings = key_bindings[sym];
         for (int i = bindings.size()-1; i >= 0; --i) {
-            if (bindings[i].modifiers != modifiers)
+            auto &binding = bindings[i];
+            DEBUG(keybinding).print("examining hotkey with commandline: '%s'\n", binding.cmdline.c_str());
+
+            if (binding.modifiers != modifiers) {
+                DEBUG(keybinding).print("skipping keybinding due to modifiers mismatch: 0x%x != 0x%x\n",
+                                        binding.modifiers, modifiers);
                 continue;
-            if (!bindings[i].focus.empty() &&
-                !prefix_matches(bindings[i].focus, Gui::getFocusString(screen)))
+            }
+            string focusString = Gui::getFocusString(screen);
+            if (!binding.focus.empty() && !prefix_matches(binding.focus, focusString)) {
+                DEBUG(keybinding).print("skipping keybinding due to focus string mismatch: '%s' !~ '%s'\n",
+                                        focusString.c_str(), binding.focus.c_str());
                 continue;
-            if (!plug_mgr->CanInvokeHotkey(bindings[i].command[0], screen))
+            }
+            if (!plug_mgr->CanInvokeHotkey(binding.command[0], screen)) {
+                DEBUG(keybinding).print("skipping keybinding due to hotkey guard rejection (command: '%s')\n",
+                                        binding.command[0].c_str());
                 continue;
-            cmd = bindings[i].cmdline;
+            }
+
+            cmd = binding.cmdline;
+            DEBUG(keybinding).print("matched hotkey\n");
             break;
         }
 

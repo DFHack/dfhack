@@ -117,6 +117,10 @@ function MenuScreen:init()
     }
 end
 
+function MenuScreen:onDismiss()
+    cleanupHotkeys()
+end
+
 function MenuScreen:onSelect(_, choice)
     if not choice or #self.subviews == 0 then return end
     local first_word = choice.command:trim():split(' +')[1]

@@ -124,11 +124,6 @@ static bool invoke_command(color_ostream &out, const size_t index)
     }
 
     Screen::dismiss(screen);
-    std::for_each(sorted_keys.begin(), sorted_keys.end(), [](const string &sym){
-        Core::getInstance().ClearKeyBindings(sym + "@" + MENU_SCREEN_FOCUS_STRING);
-    });
-    sorted_keys.clear();
-
     return true;
 }
 
@@ -152,11 +147,27 @@ static int getHotkeys(lua_State *L) {
     return 2;
 }
 
+static int cleanupHotkeys(lua_State *) {
+    std::for_each(sorted_keys.begin(), sorted_keys.end(), [](const string &sym) {
+        string keyspec = sym + "@" + MENU_SCREEN_FOCUS_STRING;
+        DEBUG(log).print("clearing keybinding: %s\n", keyspec.c_str());
+        Core::getInstance().ClearKeyBindings(keyspec);
+    });
+    sorted_keys.clear();
+    current_bindings.clear();
+    return 0;
+}
+
 DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_COMMAND(getHotkeys),
+    DFHACK_LUA_COMMAND(cleanupHotkeys),
     DFHACK_LUA_END
 };
 
+// allow "hotkeys" to be invoked as a hotkey from any screen
+static bool hotkeys_anywhere(df::viewscreen *) {
+    return true;
+}
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
@@ -164,7 +175,8 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         PluginCommand(
         "hotkeys",
         "Invoke hotkeys from the interactive menu.",
-        hotkeys_cmd));
+        hotkeys_cmd,
+        hotkeys_anywhere));
 
     return CR_OK;
 }

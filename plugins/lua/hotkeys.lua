@@ -144,6 +144,13 @@ function MenuScreen:onInput(keys)
     elseif keys.STANDARDSCROLL_RIGHT then
         self:onSubmit2(self.subviews.list:getSelected())
         return true
+    elseif keys._MOUSE_L then
+        local list = self.subviews.list
+        local x = list:getMousePos()
+        if x == 0 then -- clicked on icon
+            self:onSubmit2(list:getSelected())
+            return true
+        end
     end
     return self:inputToSubviews(keys)
 end

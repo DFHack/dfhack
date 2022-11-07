@@ -48,8 +48,8 @@ OVERLAY_WIDGETS = {menu=HotspotMenuWidget}
 -- ---------- --
 
 local ARROW = string.char(26)
-local MENU_WIDTH = 40
-local MENU_HEIGHT = 10
+local MENU_WIDTH = 42
+local MENU_HEIGHT = 12
 
 MenuScreen = defclass(MenuScreen, gui.Screen)
 MenuScreen.ATTRS{
@@ -84,31 +84,45 @@ function MenuScreen:init()
     end
 
     self:addviews{
-        widgets.List{
-            view_id='list',
+        widgets.ResizingPanel{
+            autoarrange_subviews=true,
             frame=list_frame,
-            choices=choices,
-            icon_width=2,
-            on_select=self:callback('onSelect'),
-            on_submit=self:callback('onSubmit'),
-            on_submit2=self:callback('onSubmit2'),
+            frame_style=gui.GREY_LINE_FRAME,
+            frame_background=gui.CLEAR_PEN,
+            subviews={
+                widgets.List{
+                    view_id='list',
+                    choices=choices,
+                    icon_width=2,
+                    on_select=self:callback('onSelect'),
+                    on_submit=self:callback('onSubmit'),
+                    on_submit2=self:callback('onSubmit2'),
+                },
+            },
         },
-        widgets.WrappedLabel{
-            view_id='help',
+        widgets.ResizingPanel{
+            view_id='help_panel',
+            autoarrange_subviews=true,
             frame=help_frame,
-            text_to_wrap='',
-            scroll_keys={},
+            frame_style=gui.GREY_LINE_FRAME,
+            frame_background=gui.CLEAR_PEN,
+            subviews={
+                widgets.WrappedLabel{
+                    view_id='help',
+                    text_to_wrap='',
+                    scroll_keys={},
+                },
+            },
         },
     }
 end
 
 function MenuScreen:onSelect(_, choice)
-    if not choice then return end
-    local help = self.subviews.help
+    if not choice or #self.subviews == 0 then return end
     local first_word = choice.command:trim():split(' +')[1]
-    if not help or #first_word == 0 then return end
-    help.text_to_wrap = helpdb.get_entry_short_help(first_word)
-    help:updateLayout()
+    self.subviews.help.text_to_wrap = helpdb.is_entry(first_word) and
+            helpdb.get_entry_short_help(first_word) or 'Command not found'
+    self.subviews.help_panel:updateLayout()
 end
 
 function MenuScreen:onSubmit(_, choice)
@@ -129,8 +143,11 @@ function MenuScreen:onInput(keys)
     return self:inputToSubviews(keys)
 end
 
-function MenuScreen:onRenderBody(dc)
+function MenuScreen:onRenderFrame(dc, rect)
     self:renderParent()
+end
+
+function MenuScreen:onRenderBody(dc)
     local list = self.subviews.list
     local idx = list:getIdxUnderMouse()
     if idx and idx ~= self.last_mouse_idx then

@@ -243,8 +243,13 @@ namespace CSP {
                     ChannelManager::Get().manage_group(below);
                     ChannelManager::Get().debug();
                 } else {
-                    ERR(jobs).print(" -> (" COORD ") is not done but the job \"completed\".\n", COORDARGS(job->pos));
+                    // the tile is unchanged
+                    ERR(jobs).print(" -> (" COORD ") stopped working but (" COORD ") doesn't appear done.\n",COORDARGS(worker->pos), COORDARGS(job->pos));
+                    df::unit* worker = active_workers[job->id];
                     endangered_workers.emplace(active_workers[job->id]);
+                    if (config.insta_dig) {
+                        dignow_queue.emplace(job->pos);
+                    }
                 }
                 // clean up
                 if (!config.resurrect) {
@@ -266,12 +271,18 @@ namespace CSP {
             idx = df::report::binsearch_index(reports, report_id);
             df::report* report = reports.at(idx);
             switch (report->type) {
+                case announcement_type::CANCEL_JOB:
+                    out.print("%d, pos: " COORD ", pos2: " COORD "\n%s\n", report_id, COORDARGS(report->pos), COORDARGS(report->pos2), report->text.c_str());
+                    if (report->text.find("Dangerous") != std::string::npos) {
+                        dignow_queue.emplace(report->pos);
+                        break;
+                    } else if (!report->flags.bits.unconscious) {
+                        break;
+                    }
                 case announcement_type::CAVE_COLLAPSE:
                     for (auto p : active_workers) {
                         endangered_workers.emplace(p.second);
                     }
-                case announcement_type::CANCEL_JOB:
-                    out.print("%d, pos: " COORD "\n%s\n", report_id, COORDARGS(report->pos), report->text.c_str());
                 default:
                     break;
             }
@@ -294,14 +305,17 @@ namespace CSP {
 
                 if (config.insta_dig) {
                     TRACE(monitor).print(" -> evaluate dignow queue\n");
-                    for (const df::coord &pos: dignow_queue) {
-                        if (!has_unit(Maps::getTileOccupancy(pos))) {
-                            out.print("channel-safely: insta-dig: Digging now!\n");
-                            dig_now(out, pos);
+                    for (auto iter = dignow_queue.begin(); iter != dignow_queue.end();) {
+                        if (!has_unit(Maps::getTileOccupancy(*iter))) {
+                            dig_now(out, *iter);
+                            iter = dignow_queue.erase(iter);
+                            WARN(plugin).print(">INSTA-DIGGING<\n");
+                            continue;
                         } else {
                             // todo: teleport?
                             //Units::teleport()
                         }
+                        ++iter;
                     }
                     TRACE(monitor).print("OnUpdate() refresh done\n");
                 }
@@ -389,6 +403,7 @@ namespace CSP {
                 TRACE(monitor).print("OnUpdate() monitoring done\n");
             }
 
+            // Resurrect Dead Workers
             if (config.resurrect && tick - last_resurrect_tick >= 1) {
                 last_resurrect_tick = tick;
                 static std::unordered_map<df::unit*, int32_t> age;

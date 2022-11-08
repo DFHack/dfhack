@@ -4322,8 +4322,8 @@ It has the following attributes:
             with an empty list.
 :on_submit: Enter key or mouse click callback; if specified, the list reacts to the
             key/click and calls the callback as ``on_submit(index,choice)``.
-:on_submit2: Shift-Enter key callback; if specified, the list reacts to the key
-             and calls it as ``on_submit2(index,choice)``.
+:on_submit2: Shift-Enter key or shift-mouse click callback; if specified, the list
+             reacts to the key/click and calls it as ``on_submit2(index,choice)``.
 :row_height: Height of every row in text lines.
 :icon_width: If not *nil*, the specified number of character columns
              are reserved to the left of the list item for the icons.
@@ -4359,6 +4359,11 @@ The list supports the following methods:
 * ``list:getSelected()``
 
   Returns the selected *index, choice*, or nothing if the list is empty.
+
+* ``list:getIdxUnderMouse()``
+
+  Returns the index of the list item under the mouse cursor, or nothing if the
+  list is empty or the mouse is not over a list item.
 
 * ``list:getContentWidth()``
 

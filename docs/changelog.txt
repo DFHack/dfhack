@@ -75,6 +75,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``widgets.Scrollbar``: new scrollbar widget that can be paired with an associated scrollable widget. Integrated with ``widgets.Label`` and ``widgets.List``.
 - ``dfhack.constructions.findAtTile()``: exposed preexisting function to Lua.
 - ``dfhack.constructions.insert()``: exposed new function to Lua.
+- ``widgets.Panel``: new ``frame_style`` and ``frame_title`` attributes for drawing frames around groups of widgets
 - ``widgets.EditField`` now allows other widgets to process characters that the ``on_char`` callback rejects.
 
 # 0.47.05-r7

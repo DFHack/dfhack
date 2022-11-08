@@ -68,6 +68,7 @@ distribution.
 
 #include "df/activity_entry.h"
 #include "df/activity_event.h"
+#include "df/enabler.h"
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/building.h"
@@ -78,9 +79,6 @@ distribution.
 #include "df/identity.h"
 #include "df/nemesis_record.h"
 #include "df/historical_figure.h"
-#include "df/historical_entity.h"
-#include "df/entity_position.h"
-#include "df/entity_position_assignment.h"
 #include "df/histfig_entity_link_positionst.h"
 #include "df/plant_raw.h"
 #include "df/creature_raw.h"
@@ -95,7 +93,6 @@ distribution.
 #include "df/unit_misc_trait.h"
 #include "df/proj_itemst.h"
 #include "df/itemdef.h"
-#include "df/enabler.h"
 #include "df/feature_init.h"
 #include "df/plant.h"
 #include "df/specific_ref.h"
@@ -116,78 +113,6 @@ using Random::PerlinNoise2D;
 using Random::PerlinNoise3D;
 
 void dfhack_printerr(lua_State *S, const std::string &str);
-
-void Lua::Push(lua_State *state, const Units::NoblePosition &pos)
-{
-    lua_createtable(state, 0, 3);
-    Lua::PushDFObject(state, pos.entity);
-    lua_setfield(state, -2, "entity");
-    Lua::PushDFObject(state, pos.assignment);
-    lua_setfield(state, -2, "assignment");
-    Lua::PushDFObject(state, pos.position);
-    lua_setfield(state, -2, "position");
-}
-
-void Lua::Push(lua_State *state, df::coord pos)
-{
-    lua_createtable(state, 0, 3);
-    lua_pushinteger(state, pos.x);
-    lua_setfield(state, -2, "x");
-    lua_pushinteger(state, pos.y);
-    lua_setfield(state, -2, "y");
-    lua_pushinteger(state, pos.z);
-    lua_setfield(state, -2, "z");
-}
-
-void Lua::Push(lua_State *state, df::coord2d pos)
-{
-    lua_createtable(state, 0, 2);
-    lua_pushinteger(state, pos.x);
-    lua_setfield(state, -2, "x");
-    lua_pushinteger(state, pos.y);
-    lua_setfield(state, -2, "y");
-}
-
-void Lua::GetVector(lua_State *state, std::vector<std::string> &pvec)
-{
-    lua_pushnil(state);   // first key
-    while (lua_next(state, 1) != 0)
-    {
-        pvec.push_back(lua_tostring(state, -1));
-        lua_pop(state, 1);  // remove value, leave key
-    }
-}
-
-int Lua::PushPosXYZ(lua_State *state, df::coord pos)
-{
-    if (!pos.isValid())
-    {
-        lua_pushnil(state);
-        return 1;
-    }
-    else
-    {
-        lua_pushinteger(state, pos.x);
-        lua_pushinteger(state, pos.y);
-        lua_pushinteger(state, pos.z);
-        return 3;
-    }
-}
-
-int Lua::PushPosXY(lua_State *state, df::coord2d pos)
-{
-    if (!pos.isValid())
-    {
-        lua_pushnil(state);
-        return 1;
-    }
-    else
-    {
-        lua_pushinteger(state, pos.x);
-        lua_pushinteger(state, pos.y);
-        return 2;
-    }
-}
 
 static df::coord2d CheckCoordXY(lua_State *state, int base, bool vararg = false)
 {

@@ -749,50 +749,7 @@ int dfhack_lua_viewscreen::do_input(lua_State *L)
     }
 
     lua_pushvalue(L, -2);
-
-    lua_createtable(L, 0, keys->size()+3);
-
-    for (auto it = keys->begin(); it != keys->end(); ++it)
-    {
-        auto key = *it;
-
-        if (auto name = enum_item_raw_key(key))
-            lua_pushstring(L, name);
-        else
-            lua_pushinteger(L, key);
-
-        lua_pushboolean(L, true);
-        lua_rawset(L, -3);
-
-        int charval = Screen::keyToChar(key);
-        if (charval >= 0)
-        {
-            lua_pushinteger(L, charval);
-            lua_setfield(L, -2, "_STRING");
-        }
-    }
-
-    if (enabler)
-    {
-        if (enabler->mouse_lbut_down) {
-            lua_pushboolean(L, true);
-            lua_setfield(L, -2, "_MOUSE_L");
-        }
-        if (enabler->mouse_rbut_down) {
-            lua_pushboolean(L, true);
-            lua_setfield(L, -2, "_MOUSE_R");
-        }
-        if (enabler->mouse_lbut) {
-            lua_pushboolean(L, true);
-            lua_setfield(L, -2, "_MOUSE_L_DOWN");
-            enabler->mouse_lbut = 0;
-        }
-        if (enabler->mouse_rbut) {
-            lua_pushboolean(L, true);
-            lua_setfield(L, -2, "_MOUSE_R_DOWN");
-            enabler->mouse_rbut = 0;
-        }
-    }
+    Lua::PushInterfaceKeys(L, *keys);
 
     lua_call(L, 2, 0);
     self->update_focus(L, -1);

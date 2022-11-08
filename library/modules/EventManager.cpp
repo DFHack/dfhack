@@ -904,7 +904,10 @@ static void manageReportEvent(color_ostream& out) {
     std::vector<df::report*>& reports = df::global::world->status.reports;
     size_t idx = df::report::binsearch_index(reports, lastReport, false);
     // returns the index to the key equal to or greater than the key provided
-    idx = reports[idx]->id == lastReport ? idx + 1 : idx; // we need the index after (where the new stuff is)
+    while (idx < reports.size() && reports[idx]->id <= lastReport) {
+        idx++;
+    }
+    // returns the index to the key equal to or greater than the key provided
 
     for ( ; idx < reports.size(); idx++ ) {
         df::report* report = reports[idx];

@@ -27,6 +27,7 @@ distribution.
 #include <algorithm>
 #include <iostream>
 #include <iomanip>
+#include <cctype>
 #include <climits>
 #include <stdint.h>
 #include <vector>

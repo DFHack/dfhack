@@ -244,9 +244,9 @@ namespace CSP {
                     ChannelManager::Get().debug();
                 } else {
                     // the tile is unchanged
-                    ERR(jobs).print(" -> (" COORD ") stopped working but (" COORD ") doesn't appear done.\n",COORDARGS(worker->pos), COORDARGS(job->pos));
                     df::unit* worker = active_workers[job->id];
                     endangered_workers.emplace(active_workers[job->id]);
+                    ERR(jobs).print(" -> (" COORD ") stopped working but (" COORD ") doesn't appear done.\n",COORDARGS(worker->pos), COORDARGS(job->pos));
                     if (config.insta_dig) {
                         dignow_queue.emplace(job->pos);
                     }

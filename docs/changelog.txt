@@ -71,6 +71,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## API
 - ``Lua::PushInterfaceKeys()``: transforms viewscreen ``feed()`` keys into something that can be interpreted by lua-based widgets
+- ``Lua::Push()``: now handles maps with otherwise supported keys and values
 - Constructions module: added ``insert()`` to insert constructions into the game's sorted list.
 
 ## Lua

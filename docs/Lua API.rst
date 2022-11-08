@@ -3946,7 +3946,7 @@ Base of all the widgets. Inherits from View and has the following attributes:
 Panel class
 -----------
 
-Inherits from Widget, and intended for grouping a number of subviews.
+Inherits from Widget, and intended for framing and/or grouping subviews.
 
 Has attributes:
 
@@ -3967,6 +3967,13 @@ Has attributes:
   between subviews. This allows you to have widgets dynamically change
   height or become visible/hidden and you don't have to worry about
   recalculating subview positions.
+
+* ``frame_style``, ``frame_title`` (default: nil)
+  If defined, a frame will be drawn around the panel and subviews will be inset
+  by 1. The attributes are identical to what is defined in the
+  `FramedScreen class`_. When using the predefined frame styles in the ``gui``
+  module, remember to ``require`` the gui module and prefix the identifier with
+  ``gui.``, e.g. ``gui.GREY_LINE_FRAME``.
 
 ResizingPanel class
 -------------------

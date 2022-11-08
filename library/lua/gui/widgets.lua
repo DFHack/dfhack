@@ -1252,7 +1252,11 @@ function List:onInput(keys)
         local idx = self:getIdxUnderMouse()
         if idx then
             self:setSelected(idx)
-            self:submit()
+            if dfhack.internal.getModifiers().shift then
+                self:submit2()
+            else
+                self:submit()
+            end
             return true
         end
     else

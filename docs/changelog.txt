@@ -76,6 +76,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``dfhack.constructions.findAtTile()``: exposed preexisting function to Lua.
 - ``dfhack.constructions.insert()``: exposed new function to Lua.
 - ``widgets.EditField`` now allows other widgets to process characters that the ``on_char`` callback rejects.
+- ``gui.Screen.show()`` now returns ``self`` as a convenience
+- ``gui.View.getMousePos()`` now takes an optional ``ViewRect`` parameter in case the caller wants to get the mouse pos relative to a rect that is not the frame_body (such as the frame_rect)
 
 # 0.47.05-r7
 

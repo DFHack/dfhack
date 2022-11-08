@@ -123,8 +123,6 @@ template<class T>
 struct viewscreen_overlay : T {
     typedef T interpose_base;
 
-    viewscreen_overlay() : vs_name(T::_identity.getName()) { }
-
     DEFINE_VMETHOD_INTERPOSE(void, logic, ()) {
         INTERPOSE_NEXT(logic)();
     }
@@ -134,9 +132,6 @@ struct viewscreen_overlay : T {
     DEFINE_VMETHOD_INTERPOSE(void, render, ()) {
         INTERPOSE_NEXT(render)();
     }
-
-    T *viewscreen;
-    const char *vs_name;
 };
 
 #define IMPLEMENT_HOOKS(screen) \

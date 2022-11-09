@@ -81,6 +81,7 @@ using namespace std;
 #include "df/unit_wound.h"
 #include "df/world.h"
 #include "df/unit_action.h"
+#include "df/action_type_group.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -1957,9 +1958,16 @@ struct AffectedActionTypesGroupContainer
 
     AffectedActionTypesGroupContainer()
     {
+        const int NUM_ACTION_TYPES = ENUM_LAST_ITEM(unit_action_type) - ENUM_FIRST_ITEM(unit_action_type) + 1;
+            // Length of df::unit_action_type, including unknowns
+        const int NUM_ACTION_TYPE_GROUPS = ENUM_LAST_ITEM(action_type_group) - ENUM_FIRST_ITEM(action_type_group) + 1;
+            // Length of df::action_type_group
+        groups = std::vector<std::vector<bool>>(NUM_ACTION_TYPE_GROUPS, std::vector<bool>(NUM_ACTION_TYPES, false));
+
+        // "None" category can be left alone
+
         // "All" category
-        std::vector<bool> & allVector = groups[Units::ActionTypeGroup::All];
-        // reinitialise allVector to the length of the df::unit_action_type enum
+        std::vector<bool> & allVector = groups[df::action_type_group::All];
         allVector[df::unit_action_type::Move] = true;
         allVector[df::unit_action_type::Attack] = true;
         allVector[df::unit_action_type::HoldTerrain] = true;
@@ -1976,8 +1984,7 @@ struct AffectedActionTypesGroupContainer
         allVector[df::unit_action_type::SuckBlood] = true;
 
         // "Movement" category
-        std::vector<bool> & movementVector = groups[Units::ActionTypeGroup::Movement];
-        // reinitialise movementVector to falses with the length of the df::unit_action_type enum
+        std::vector<bool> & movementVector = groups[df::action_type_group::Movement];
         movementVector[df::unit_action_type::Move] = true;
         movementVector[df::unit_action_type::HoldTerrain] = true;
         movementVector[df::unit_action_type::Climb] = true;
@@ -1989,8 +1996,7 @@ struct AffectedActionTypesGroupContainer
         movementVector[df::unit_action_type::PushObject] = true;
 
         // "MovementFeet" category
-        std::vector<bool> & movementFeetVector = groups[Units::ActionTypeGroup::MovementFeet];
-        // reinitialise movementFeetVector to falses with the length of the df::unit_action_type enum
+        std::vector<bool> & movementFeetVector = groups[df::action_type_group::MovementFeet];
         movementFeetVector[df::unit_action_type::Move] = true;
         // Include Unsteady?
         movementFeetVector[df::unit_action_type::Dodge] = true;
@@ -1998,14 +2004,12 @@ struct AffectedActionTypesGroupContainer
         movementFeetVector[df::unit_action_type::PushObject] = true;
 
         // "Offensive" category
-        std::vector<bool> & offensiveVector = groups[Units::ActionTypeGroup::Offensive];
-        // reinitialise offensiveVector to falses with the length of the df::unit_action_type enum
+        std::vector<bool> & offensiveVector = groups[df::action_type_group::Offensive];
         offensiveVector[df::unit_action_type::Attack] = true;
         offensiveVector[df::unit_action_type::SuckBlood] = true;
 
         // "Work" category
-        std::vector<bool> & workVector = groups[Units::ActionTypeGroup::Work];
-        // reinitialise workVector to falses with the length of the df::unit_action_type enum
+        std::vector<bool> & workVector = groups[df::action_type_group::Work];
         workVector[df::unit_action_type::Job] = true;
         workVector[df::unit_action_type::Job2] = true;
         workVector[df::unit_action_type::PushObject] = true;
@@ -2065,7 +2069,7 @@ int *getActionTimerPointer(df::unit_action *action) {
     return nullptr;
 }
 
-void Units::subtractActionTimer(df::unit *unit, int amount, int affectedActionType)
+void Units::subtractActionTimer(df::unit *unit, int amount, df::unit_action_type affectedActionType)
 {
     CHECK_NULL_POINTER(unit);
     for (auto action : unit->actions) {
@@ -2077,7 +2081,7 @@ void Units::subtractActionTimer(df::unit *unit, int amount, int affectedActionTy
     }
 }
 
-void Units::subtractActionTimerCategory(df::unit *unit, int amount, int affectedActionTypes)
+void Units::subtractActionTimerCategory(df::unit *unit, int amount, df::action_type_group affectedActionTypes)
 {
     CHECK_NULL_POINTER(unit);
     static AffectedActionTypesGroupContainer groupContainer;
@@ -2090,7 +2094,7 @@ void Units::subtractActionTimerCategory(df::unit *unit, int amount, int affected
     }
 }
 
-void Units::multiplyActionTimer(df::unit *unit, float amount, int affectedActionType)
+void Units::multiplyActionTimer(df::unit *unit, float amount, df::unit_action_type affectedActionType)
 {
     CHECK_NULL_POINTER(unit);
     for (auto action : unit->actions) {
@@ -2102,7 +2106,7 @@ void Units::multiplyActionTimer(df::unit *unit, float amount, int affectedAction
     }
 }
 
-void Units::multiplyActionTimerCategory(df::unit *unit, float amount, int affectedActionTypes)
+void Units::multiplyActionTimerCategory(df::unit *unit, float amount, df::action_type_group affectedActionTypes)
 {
     CHECK_NULL_POINTER(unit);
     static AffectedActionTypesGroupContainer groupContainer;
@@ -2115,7 +2119,7 @@ void Units::multiplyActionTimerCategory(df::unit *unit, float amount, int affect
     }
 }
 
-void Units::setActionTimer(df::unit *unit, int amount, int affectedActionType)
+void Units::setActionTimer(df::unit *unit, int amount, df::unit_action_type affectedActionType)
 {
     CHECK_NULL_POINTER(unit);
     for (auto action : unit->actions) {
@@ -2127,7 +2131,7 @@ void Units::setActionTimer(df::unit *unit, int amount, int affectedActionType)
     }
 }
 
-void Units::setActionTimerCategory(df::unit *unit, int amount, int affectedActionTypes)
+void Units::setActionTimerCategory(df::unit *unit, int amount, df::action_type_group affectedActionTypes)
 {
     CHECK_NULL_POINTER(unit);
     static AffectedActionTypesGroupContainer groupContainer;

@@ -12,6 +12,7 @@
 #include "df/unit_relationship_type.h"
 #include "df/units_other_id.h"
 #include "df/world.h"
+#include "df/action_type_group.h"
 
 using std::string;
 using std::vector;
@@ -82,7 +83,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
         if (enable_fastdwarf)
         {
-            Units::setActionTimerCategory(unit, 1, Units::ActionTypeGroup::All);
+            Units::setActionTimerCategory(unit, 1, df::action_type_group::All);
         }
     }
     return CR_OK;

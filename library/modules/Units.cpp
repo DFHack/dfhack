@@ -1952,70 +1952,6 @@ int Units::getStressCategoryRaw(int32_t stress_level)
     return level;
 }
 
-struct AffectedActionTypesGroupContainer
-{
-    std::vector<std::vector<bool>> groups;
-
-    AffectedActionTypesGroupContainer()
-    {
-        const int NUM_ACTION_TYPES = ENUM_LAST_ITEM(unit_action_type) - ENUM_FIRST_ITEM(unit_action_type) + 1;
-            // Length of df::unit_action_type, including unknowns
-        const int NUM_ACTION_TYPE_GROUPS = ENUM_LAST_ITEM(action_type_group) - ENUM_FIRST_ITEM(action_type_group) + 1;
-            // Length of df::action_type_group
-        groups = std::vector<std::vector<bool>>(NUM_ACTION_TYPE_GROUPS, std::vector<bool>(NUM_ACTION_TYPES, false));
-
-        // "None" category can be left alone
-
-        // "All" category
-        std::vector<bool> & allVector = groups[df::action_type_group::All];
-        allVector[df::unit_action_type::Move] = true;
-        allVector[df::unit_action_type::Attack] = true;
-        allVector[df::unit_action_type::HoldTerrain] = true;
-        allVector[df::unit_action_type::Climb] = true;
-        allVector[df::unit_action_type::Job] = true;
-        allVector[df::unit_action_type::Talk] = true;
-        allVector[df::unit_action_type::Unsteady] = true;
-        allVector[df::unit_action_type::Dodge] = true;
-        allVector[df::unit_action_type::Recover] = true;
-        allVector[df::unit_action_type::StandUp] = true;
-        allVector[df::unit_action_type::LieDown] = true;
-        allVector[df::unit_action_type::Job2] = true;
-        allVector[df::unit_action_type::PushObject] = true;
-        allVector[df::unit_action_type::SuckBlood] = true;
-
-        // "Movement" category
-        std::vector<bool> & movementVector = groups[df::action_type_group::Movement];
-        movementVector[df::unit_action_type::Move] = true;
-        movementVector[df::unit_action_type::HoldTerrain] = true;
-        movementVector[df::unit_action_type::Climb] = true;
-        // Include Unsteady?
-        movementVector[df::unit_action_type::Dodge] = true;
-        movementVector[df::unit_action_type::Recover] = true;
-        movementVector[df::unit_action_type::StandUp] = true;
-        movementVector[df::unit_action_type::LieDown] = true;
-        movementVector[df::unit_action_type::PushObject] = true;
-
-        // "MovementFeet" category
-        std::vector<bool> & movementFeetVector = groups[df::action_type_group::MovementFeet];
-        movementFeetVector[df::unit_action_type::Move] = true;
-        // Include Unsteady?
-        movementFeetVector[df::unit_action_type::Dodge] = true;
-        movementFeetVector[df::unit_action_type::Recover] = true;
-        movementFeetVector[df::unit_action_type::PushObject] = true;
-
-        // "Offensive" category
-        std::vector<bool> & offensiveVector = groups[df::action_type_group::Offensive];
-        offensiveVector[df::unit_action_type::Attack] = true;
-        offensiveVector[df::unit_action_type::SuckBlood] = true;
-
-        // "Work" category
-        std::vector<bool> & workVector = groups[df::action_type_group::Work];
-        workVector[df::unit_action_type::Job] = true;
-        workVector[df::unit_action_type::Job2] = true;
-        workVector[df::unit_action_type::PushObject] = true;
-    }
-};
-
 int *getActionTimerPointer(df::unit_action *action) {
     switch (action->type)
     {
@@ -2084,12 +2020,16 @@ void Units::subtractActionTimer(df::unit *unit, int amount, df::unit_action_type
 void Units::subtractActionTimerCategory(df::unit *unit, int amount, df::action_type_group affectedActionTypes)
 {
     CHECK_NULL_POINTER(unit);
-    static AffectedActionTypesGroupContainer groupContainer;
     for (auto action : unit->actions) {
-        if (!groupContainer.groups[affectedActionTypes][action->type]) continue;
-        int *timer = getActionTimerPointer(action);
-        if (timer != nullptr && *timer != 0) {
-            *timer = max(*timer - amount, 1);
+        auto list = ENUM_ATTR(unit_action_type, group, action->type);
+        for (size_t i = 0; i < list.size; i++) {
+            if (list.items[i] == affectedActionTypes) {
+                int *timer = getActionTimerPointer(action);
+                if (timer != nullptr && *timer != 0) {
+                    *timer = max(*timer - amount, 1);
+                }
+                break;
+            }
         }
     }
 }
@@ -2109,12 +2049,16 @@ void Units::multiplyActionTimer(df::unit *unit, float amount, df::unit_action_ty
 void Units::multiplyActionTimerCategory(df::unit *unit, float amount, df::action_type_group affectedActionTypes)
 {
     CHECK_NULL_POINTER(unit);
-    static AffectedActionTypesGroupContainer groupContainer;
     for (auto action : unit->actions) {
-        if (!groupContainer.groups[affectedActionTypes][action->type]) continue;
-        int *timer = getActionTimerPointer(action);
-        if (timer != nullptr && *timer != 0) {
-            *timer = max(int(*timer * amount), 1);
+        auto list = ENUM_ATTR(unit_action_type, group, action->type);
+        for (size_t i = 0; i < list.size; i++) {
+            if (list.items[i] == affectedActionTypes) {
+                int *timer = getActionTimerPointer(action);
+                if (timer != nullptr && *timer != 0) {
+                    *timer = max(int(*timer * amount), 1);
+                }
+                break;
+            }
         }
     }
 }
@@ -2134,12 +2078,16 @@ void Units::setActionTimer(df::unit *unit, int amount, df::unit_action_type affe
 void Units::setActionTimerCategory(df::unit *unit, int amount, df::action_type_group affectedActionTypes)
 {
     CHECK_NULL_POINTER(unit);
-    static AffectedActionTypesGroupContainer groupContainer;
     for (auto action : unit->actions) {
-        if (!groupContainer.groups[affectedActionTypes][action->type]) continue;
-        int *timer = getActionTimerPointer(action);
-        if (timer != nullptr && *timer != 0) {
-            *timer = amount;
+        auto list = ENUM_ATTR(unit_action_type, group, action->type);
+        for (size_t i = 0; i < list.size; i++) {
+            if (list.items[i] == affectedActionTypes) {
+                int *timer = getActionTimerPointer(action);
+                if (timer != nullptr && *timer != 0) {
+                    *timer = amount;
+                }
+                break;
+            }
         }
     }
 }

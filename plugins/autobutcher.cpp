@@ -24,6 +24,7 @@
 #include "modules/Units.h"
 #include "modules/World.h"
 
+using std::endl;
 using std::string;
 using std::unordered_map;
 using std::unordered_set;
@@ -808,7 +809,7 @@ static void autobutcher_cycle(color_ostream &out) {
     for (auto w : watched_races) {
         int slaughter_count = w.second->ProcessUnits();
         if (slaughter_count) {
-            stringstream ss;
+            std::stringstream ss;
             ss << slaughter_count;
             string announce = Units::getRaceNamePluralById(w.first) + " marked for slaughter: " + ss.str();
             DEBUG(cycle,out).print("%s\n", announce.c_str());

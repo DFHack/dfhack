@@ -256,7 +256,7 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
 
     if (parameters.size() == 3)
     {
-        stringstream ss(parameters[2]);
+        std::stringstream ss(parameters[2]);
         ss >> count;
         if (count < 1)
         {

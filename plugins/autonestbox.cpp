@@ -200,7 +200,7 @@ static command_result df_autonestbox(color_ostream &out, vector<string> &paramet
         autonestbox_cycle(out);
     }
     else {
-        out << "autonestbox is " << (is_enabled ? "" : "not ") << "running" << endl;
+        out << "autonestbox is " << (is_enabled ? "" : "not ") << "running" << std::endl;
     }
     return CR_OK;
 }
@@ -377,11 +377,11 @@ static size_t assign_nestboxes(color_ostream &out) {
             did_complain = false;
         old_count = freeEgglayers;
         if (!did_complain) {
-            stringstream ss;
+            std::stringstream ss;
             ss << freeEgglayers;
             string announce = "Not enough free nestbox zones found! You need " + ss.str() + " more.";
             Gui::showAnnouncement(announce, 6, true);
-            out << announce << endl;
+            out << announce << std::endl;
             did_complain = true;
         }
     }
@@ -396,12 +396,12 @@ static void autonestbox_cycle(color_ostream &out) {
 
     size_t processed = assign_nestboxes(out);
     if (processed > 0) {
-        stringstream ss;
+        std::stringstream ss;
         ss << processed << " nestboxes were assigned.";
         string announce = ss.str();
         DEBUG(cycle,out).print("%s\n", announce.c_str());
         Gui::showAnnouncement(announce, 2, false);
-        out << announce << endl;
+        out << announce << std::endl;
         // can complain again
         // (might lead to spamming the same message twice, but catches the case
         // where for example 2 new egglayers hatched right after 2 zones were created and assigned)

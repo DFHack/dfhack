@@ -14,6 +14,7 @@
 #include "df/unit.h"
 #include "df/world.h"
 
+using std::endl;
 using namespace DFHack;
 
 DFHACK_PLUGIN("fix-unit-occupancy");

@@ -21,6 +21,7 @@ using std::vector;
 
 using namespace DFHack;
 
+static const string INVOKE_MENU_COMMAND = "overlay trigger hotkeys.menu";
 static const std::string MENU_SCREEN_FOCUS_STRING = "dfhack/lua/hotkeys/menu";
 
 static bool valid = false; // whether the following two vars contain valid data
@@ -54,6 +55,11 @@ static int cleanupHotkeys(lua_State *) {
 static void add_binding_if_valid(const string &sym, const string &cmdline, df::viewscreen *screen) {
     if (!can_invoke(cmdline, screen))
         return;
+
+    if (cmdline == INVOKE_MENU_COMMAND) {
+        DEBUG(log).print("filtering out hotkey menu keybinding\n");
+        return;
+    }
 
     current_bindings[sym] = cmdline;
     sorted_keys.push_back(sym);
@@ -163,9 +169,8 @@ static bool invoke_command(color_ostream &out, const size_t index) {
 
 static command_result hotkeys_cmd(color_ostream &out, vector <string> & parameters) {
     if (!parameters.size()) {
-        static const string invokeOverlayCmd = "overlay trigger hotkeys.menu";
-        DEBUG(log).print("invoking command: '%s'\n", invokeOverlayCmd.c_str());
-        return Core::getInstance().runCommand(out, invokeOverlayCmd);
+        DEBUG(log).print("invoking command: '%s'\n", INVOKE_MENU_COMMAND.c_str());
+        return Core::getInstance().runCommand(out, INVOKE_MENU_COMMAND );
     }
 
     if (parameters[0] == "list") {
@@ -184,18 +189,13 @@ static command_result hotkeys_cmd(color_ostream &out, vector <string> & paramete
     return invoke_command(out, index) ? CR_OK : CR_WRONG_USAGE;
 }
 
-// allow "hotkeys" to be invoked as a hotkey from any screen
-static bool hotkeys_anywhere(df::viewscreen *) {
-    return true;
-}
-
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands) {
     commands.push_back(
         PluginCommand(
         "hotkeys",
         "Invoke hotkeys from the interactive menu.",
         hotkeys_cmd,
-        hotkeys_anywhere));
+        Gui::anywhere_hotkey));
 
     return CR_OK;
 }

@@ -455,9 +455,15 @@ OverlayWidget.ATTRS{
     overlay_onupdate_max_freq_seconds=5, -- throttle calls to overlay_onupdate
 }
 
--- set defaults for frame. the widget is expected to keep these up to date as
--- display contents change.
 function OverlayWidget:init()
+    if self.overlay_onupdate_max_freq_seconds < 0 then
+        error(('overlay_onupdate_max_freq_seconds must be >= 0: %s')
+              :format(tostring(self.overlay_onupdate_max_freq_seconds)))
+    end
+
+    -- set defaults for frame. the widget is expected to keep these up to date
+    -- if display contents change so the widget position can shift if the frame
+    -- is relative to the right or bottom edges.
     self.frame = self.frame or {}
     self.frame.w = self.frame.w or 5
     self.frame.h = self.frame.h or 1

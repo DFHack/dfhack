@@ -70,6 +70,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `spectate`: improved documentation of features and functionality
 
 ## API
+- ``Gui::anywhere_hotkey``: for plugin commands bound to keybindings that can be invoked on any screen
 - ``Lua::PushInterfaceKeys()``: transforms viewscreen ``feed()`` keys into something that can be interpreted by lua-based widgets
 - ``Lua::Push()``: now handles maps with otherwise supported keys and values
 - Constructions module: added ``insert()`` to insert constructions into the game's sorted list.

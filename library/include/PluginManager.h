@@ -301,6 +301,7 @@ namespace DFHack
     {
         // Predefined hotkey guards
         DFHACK_EXPORT bool default_hotkey(df::viewscreen *);
+        DFHACK_EXPORT bool anywhere_hotkey(df::viewscreen *);
         DFHACK_EXPORT bool dwarfmode_hotkey(df::viewscreen *);
         DFHACK_EXPORT bool cursor_hotkey(df::viewscreen *);
     }

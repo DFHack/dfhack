@@ -199,13 +199,15 @@ namespace CSP {
             INFO(jobs).print("JobStartedEvent()\n");
             auto job = (df::job*) j;
             // validate job type
-            if (is_channel_job(job)) {
-                DEBUG(jobs).print(" valid channel job:\n");
+            if (ChannelManager::Get().exists(job->pos)) {
+                WARN(jobs).print(" valid channel job:\n");
                 df::unit* worker = Job::getWorker(job);
                 // there is a valid worker (living citizen) on the job? right..
                 if (worker && Units::isAlive(worker) && Units::isCitizen(worker)) {
                     DEBUG(jobs).print("  valid worker:\n");
                     // track workers on jobs
+                    df::coord &pos = job->pos;
+                    WARN(jobs).print(" -> Starting job at (" COORD ")\n", COORDARGS(pos));
                     if (config.monitor_active || config.resurrect) {
                         job_ids.emplace(job, job->id);
                         active_jobs.emplace(job->id, job);
@@ -225,7 +227,7 @@ namespace CSP {
             INFO(jobs).print("JobCompletedEvent()\n");
             auto job = (df::job*) j;
             // we only care if the job is a channeling one
-            if (ChannelManager::Get().groups.count(job->pos)) {
+            if (ChannelManager::Get().exists(job->pos)) {
                 // check job outcome
                 auto block = Maps::getTileBlock(job->pos);
                 df::coord local(job->pos);
@@ -246,7 +248,7 @@ namespace CSP {
                     // the tile is unchanged
                     df::unit* worker = active_workers[job->id];
                     endangered_workers.emplace(active_workers[job->id]);
-                    ERR(jobs).print(" -> (" COORD ") stopped working but (" COORD ") doesn't appear done.\n",COORDARGS(worker->pos), COORDARGS(job->pos));
+                    ERR(jobs).print("() -> job at (" COORD ")  is done, but (" COORD ") doesn't appear done.\n",COORDARGS(worker->pos), COORDARGS(job->pos));
                     if (config.insta_dig) {
                         dignow_queue.emplace(job->pos);
                     }

@@ -30,6 +30,7 @@ public:
     void manage_group(const Group &group, bool set_marker_mode = false, bool marker_mode = false);
     bool manage_one(const Group &group, const df::coord &map_pos, bool set_marker_mode = false, bool marker_mode = false);
     void mark_done(const df::coord &map_pos);
+    bool exists(const df::coord &map_pos) const { return groups.count(map_pos); }
     void debug() {
         DEBUG(groups).print(" DEBUGGING GROUPS:\n");
         if (config.debug) {

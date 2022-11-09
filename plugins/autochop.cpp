@@ -185,18 +185,6 @@ private:
 
 static WatchedBurrows watchedBurrows;
 
-static int string_to_int(string s, int default_ = 0)
-{
-    try
-    {
-        return std::stoi(s);
-    }
-    catch (std::exception&)
-    {
-        return default_;
-    }
-}
-
 static void save_config()
 {
     config_autochop.val() = watchedBurrows.getSerialisedIds();

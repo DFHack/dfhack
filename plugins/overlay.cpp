@@ -51,6 +51,7 @@
 #include "df/viewscreen_locationsst.h"
 #include "df/viewscreen_meetingst.h"
 #include "df/viewscreen_movieplayerst.h"
+#include "df/viewscreen_new_regionst.h"
 #include "df/viewscreen_noblest.h"
 #include "df/viewscreen_optionst.h"
 #include "df/viewscreen_overallstatusst.h"
@@ -71,6 +72,7 @@
 #include "df/viewscreen_topicmeeting_takerequestsst.h"
 #include "df/viewscreen_tradeagreementst.h"
 #include "df/viewscreen_tradelistst.h"
+#include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_treasurelistst.h"
 #include "df/viewscreen_unitlist_page.h"
 #include "df/viewscreen_unitlistst.h"
@@ -82,64 +84,40 @@
 #include "df/viewscreen_workshop_profilest.h"
 
 #include "Debug.h"
+#include "LuaTools.h"
 #include "PluginManager.h"
 #include "VTableInterpose.h"
-#include "uicommon.h"
-
-#include "modules/Screen.h"
 
 using namespace DFHack;
 
 DFHACK_PLUGIN("overlay");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
-REQUIRE_GLOBAL(enabler);
-REQUIRE_GLOBAL(gps);
 
 namespace DFHack {
-    DBG_DECLARE(overlay, log, DebugCategory::LINFO);
-}
-
-static const std::string button_text = "[ DFHack ]";
-static bool clicked = false;
-
-static bool handle_click() {
-    if (!enabler->mouse_lbut_down || clicked) {
-        return false;
-    }
-    df::coord2d pos = Screen::getMousePos();
-    DEBUG(log).print("clicked at screen coordinates (%d, %d)\n", pos.x, pos.y);
-    if (pos.y == gps->dimy - 1 && pos.x >= 1 && (size_t)pos.x <= button_text.size()) {
-        clicked = true;
-        Core::getInstance().setHotkeyCmd("gui/launcher");
-        return true;
-    }
-    return false;
-}
-
-static void draw_widgets() {
-    int x = 1;
-    int y = gps->dimy - 1;
-    OutputString(COLOR_GREEN, x, y, button_text);
+    DBG_DECLARE(overlay, control, DebugCategory::LINFO);
+    DBG_DECLARE(overlay, event, DebugCategory::LINFO);
 }
 
 template<class T>
 struct viewscreen_overlay : T {
     typedef T interpose_base;
 
-    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input)) {
-        if (!handle_click())
-            INTERPOSE_NEXT(feed)(input);
+    DEFINE_VMETHOD_INTERPOSE(void, logic, ()) {
+        INTERPOSE_NEXT(logic)();
+    }
+    DEFINE_VMETHOD_INTERPOSE(void, feed, (std::set<df::interface_key> *input)) {
+        INTERPOSE_NEXT(feed)(input);
     }
     DEFINE_VMETHOD_INTERPOSE(void, render, ()) {
         INTERPOSE_NEXT(render)();
-        draw_widgets();
     }
 };
 
 #define IMPLEMENT_HOOKS(screen) \
     typedef viewscreen_overlay<df::viewscreen_##screen##st> screen##_overlay; \
-    template<> IMPLEMENT_VMETHOD_INTERPOSE(screen##_overlay, feed); \
-    template<> IMPLEMENT_VMETHOD_INTERPOSE(screen##_overlay, render);
+    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(screen##_overlay, logic, 100); \
+    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(screen##_overlay, feed, 100); \
+    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(screen##_overlay, render, 100);
 
 IMPLEMENT_HOOKS(adopt_region)
 IMPLEMENT_HOOKS(adventure_log)
@@ -191,6 +169,7 @@ IMPLEMENT_HOOKS(loadgame)
 IMPLEMENT_HOOKS(locations)
 IMPLEMENT_HOOKS(meeting)
 IMPLEMENT_HOOKS(movieplayer)
+IMPLEMENT_HOOKS(new_region)
 IMPLEMENT_HOOKS(noble)
 IMPLEMENT_HOOKS(option)
 IMPLEMENT_HOOKS(overallstatus)
@@ -210,6 +189,7 @@ IMPLEMENT_HOOKS(topicmeeting_fill_land_holder_positions)
 IMPLEMENT_HOOKS(topicmeeting)
 IMPLEMENT_HOOKS(topicmeeting_takerequests)
 IMPLEMENT_HOOKS(tradeagreement)
+IMPLEMENT_HOOKS(tradegoods)
 IMPLEMENT_HOOKS(tradelist)
 IMPLEMENT_HOOKS(treasurelist)
 IMPLEMENT_HOOKS(unitlist)
@@ -222,15 +202,8 @@ IMPLEMENT_HOOKS(workshop_profile)
 
 #undef IMPLEMENT_HOOKS
 
-DFhackCExport command_result plugin_onstatechange(color_ostream &,
-                                                  state_change_event evt) {
-    if (evt == SC_VIEWSCREEN_CHANGED) {
-        clicked = false;
-    }
-    return CR_OK;
-}
-
 #define INTERPOSE_HOOKS_FAILED(screen) \
+    !INTERPOSE_HOOK(screen##_overlay, logic).apply(enable) || \
     !INTERPOSE_HOOK(screen##_overlay, feed).apply(enable) || \
     !INTERPOSE_HOOK(screen##_overlay, render).apply(enable)
 
@@ -238,98 +211,122 @@ DFhackCExport command_result plugin_enable(color_ostream &, bool enable) {
     if (is_enabled == enable)
         return CR_OK;
 
-    if (enable != is_enabled) {
-        if (INTERPOSE_HOOKS_FAILED(adopt_region) ||
-                INTERPOSE_HOOKS_FAILED(adventure_log) ||
-                INTERPOSE_HOOKS_FAILED(announcelist) ||
-                INTERPOSE_HOOKS_FAILED(assign_display_item) ||
-                INTERPOSE_HOOKS_FAILED(barter) ||
-                INTERPOSE_HOOKS_FAILED(buildinglist) ||
-                INTERPOSE_HOOKS_FAILED(building) ||
-                INTERPOSE_HOOKS_FAILED(choose_start_site) ||
-                INTERPOSE_HOOKS_FAILED(civlist) ||
-                INTERPOSE_HOOKS_FAILED(counterintelligence) ||
-                INTERPOSE_HOOKS_FAILED(createquota) ||
-                INTERPOSE_HOOKS_FAILED(customize_unit) ||
-                INTERPOSE_HOOKS_FAILED(dungeonmode) ||
-                INTERPOSE_HOOKS_FAILED(dungeon_monsterstatus) ||
-                INTERPOSE_HOOKS_FAILED(dungeon_wrestle) ||
-                INTERPOSE_HOOKS_FAILED(dwarfmode) ||
-                INTERPOSE_HOOKS_FAILED(entity) ||
-                INTERPOSE_HOOKS_FAILED(export_graphical_map) ||
-                INTERPOSE_HOOKS_FAILED(export_region) ||
-                INTERPOSE_HOOKS_FAILED(game_cleaner) ||
-                INTERPOSE_HOOKS_FAILED(image_creator) ||
-                INTERPOSE_HOOKS_FAILED(item) ||
-                INTERPOSE_HOOKS_FAILED(joblist) ||
-                INTERPOSE_HOOKS_FAILED(jobmanagement) ||
-                INTERPOSE_HOOKS_FAILED(job) ||
-                INTERPOSE_HOOKS_FAILED(justice) ||
-                INTERPOSE_HOOKS_FAILED(kitchenpref) ||
-                INTERPOSE_HOOKS_FAILED(layer_arena_creature) ||
-                INTERPOSE_HOOKS_FAILED(layer_assigntrade) ||
-                INTERPOSE_HOOKS_FAILED(layer_choose_language_name) ||
-                INTERPOSE_HOOKS_FAILED(layer_currency) ||
-                INTERPOSE_HOOKS_FAILED(layer_export_play_map) ||
-                INTERPOSE_HOOKS_FAILED(layer_military) ||
-                INTERPOSE_HOOKS_FAILED(layer_musicsound) ||
-                INTERPOSE_HOOKS_FAILED(layer_noblelist) ||
-                INTERPOSE_HOOKS_FAILED(layer_overall_health) ||
-                INTERPOSE_HOOKS_FAILED(layer_reaction) ||
-                INTERPOSE_HOOKS_FAILED(layer_squad_schedule) ||
-                INTERPOSE_HOOKS_FAILED(layer_stockpile) ||
-                INTERPOSE_HOOKS_FAILED(layer_stone_restriction) ||
-                INTERPOSE_HOOKS_FAILED(layer_unit_action) ||
-                INTERPOSE_HOOKS_FAILED(layer_unit_health) ||
-                INTERPOSE_HOOKS_FAILED(layer_unit_relationship) ||
-                INTERPOSE_HOOKS_FAILED(layer_world_gen_param_preset) ||
-                INTERPOSE_HOOKS_FAILED(layer_world_gen_param) ||
-                INTERPOSE_HOOKS_FAILED(legends) ||
-                INTERPOSE_HOOKS_FAILED(loadgame) ||
-                INTERPOSE_HOOKS_FAILED(locations) ||
-                INTERPOSE_HOOKS_FAILED(meeting) ||
-                INTERPOSE_HOOKS_FAILED(movieplayer) ||
-                INTERPOSE_HOOKS_FAILED(noble) ||
-                INTERPOSE_HOOKS_FAILED(option) ||
-                INTERPOSE_HOOKS_FAILED(overallstatus) ||
-                INTERPOSE_HOOKS_FAILED(petitions) ||
-                INTERPOSE_HOOKS_FAILED(pet) ||
-                INTERPOSE_HOOKS_FAILED(price) ||
-                INTERPOSE_HOOKS_FAILED(reportlist) ||
-                INTERPOSE_HOOKS_FAILED(requestagreement) ||
-                INTERPOSE_HOOKS_FAILED(savegame) ||
-                INTERPOSE_HOOKS_FAILED(selectitem) ||
-                INTERPOSE_HOOKS_FAILED(setupadventure) ||
-                INTERPOSE_HOOKS_FAILED(setupdwarfgame) ||
-                INTERPOSE_HOOKS_FAILED(stores) ||
-                INTERPOSE_HOOKS_FAILED(textviewer) ||
-                INTERPOSE_HOOKS_FAILED(title) ||
-                INTERPOSE_HOOKS_FAILED(topicmeeting_fill_land_holder_positions) ||
-                INTERPOSE_HOOKS_FAILED(topicmeeting) ||
-                INTERPOSE_HOOKS_FAILED(topicmeeting_takerequests) ||
-                INTERPOSE_HOOKS_FAILED(tradeagreement) ||
-                INTERPOSE_HOOKS_FAILED(tradelist) ||
-                INTERPOSE_HOOKS_FAILED(treasurelist) ||
-                INTERPOSE_HOOKS_FAILED(unitlist) ||
-                INTERPOSE_HOOKS_FAILED(unit) ||
-                INTERPOSE_HOOKS_FAILED(update_region) ||
-                INTERPOSE_HOOKS_FAILED(wages) ||
-                INTERPOSE_HOOKS_FAILED(workquota_condition) ||
-                INTERPOSE_HOOKS_FAILED(workquota_details) ||
-                INTERPOSE_HOOKS_FAILED(workshop_profile))
-            return CR_FAILURE;
+    DEBUG(control).print("%sing interpose hooks\n", enable ? "enabl" : "disabl");
 
-        is_enabled = enable;
-    }
+    if (INTERPOSE_HOOKS_FAILED(adopt_region) ||
+            INTERPOSE_HOOKS_FAILED(adventure_log) ||
+            INTERPOSE_HOOKS_FAILED(announcelist) ||
+            INTERPOSE_HOOKS_FAILED(assign_display_item) ||
+            INTERPOSE_HOOKS_FAILED(barter) ||
+            INTERPOSE_HOOKS_FAILED(buildinglist) ||
+            INTERPOSE_HOOKS_FAILED(building) ||
+            INTERPOSE_HOOKS_FAILED(choose_start_site) ||
+            INTERPOSE_HOOKS_FAILED(civlist) ||
+            INTERPOSE_HOOKS_FAILED(counterintelligence) ||
+            INTERPOSE_HOOKS_FAILED(createquota) ||
+            INTERPOSE_HOOKS_FAILED(customize_unit) ||
+            INTERPOSE_HOOKS_FAILED(dungeonmode) ||
+            INTERPOSE_HOOKS_FAILED(dungeon_monsterstatus) ||
+            INTERPOSE_HOOKS_FAILED(dungeon_wrestle) ||
+            INTERPOSE_HOOKS_FAILED(dwarfmode) ||
+            INTERPOSE_HOOKS_FAILED(entity) ||
+            INTERPOSE_HOOKS_FAILED(export_graphical_map) ||
+            INTERPOSE_HOOKS_FAILED(export_region) ||
+            INTERPOSE_HOOKS_FAILED(game_cleaner) ||
+            INTERPOSE_HOOKS_FAILED(image_creator) ||
+            INTERPOSE_HOOKS_FAILED(item) ||
+            INTERPOSE_HOOKS_FAILED(joblist) ||
+            INTERPOSE_HOOKS_FAILED(jobmanagement) ||
+            INTERPOSE_HOOKS_FAILED(job) ||
+            INTERPOSE_HOOKS_FAILED(justice) ||
+            INTERPOSE_HOOKS_FAILED(kitchenpref) ||
+            INTERPOSE_HOOKS_FAILED(layer_arena_creature) ||
+            INTERPOSE_HOOKS_FAILED(layer_assigntrade) ||
+            INTERPOSE_HOOKS_FAILED(layer_choose_language_name) ||
+            INTERPOSE_HOOKS_FAILED(layer_currency) ||
+            INTERPOSE_HOOKS_FAILED(layer_export_play_map) ||
+            INTERPOSE_HOOKS_FAILED(layer_military) ||
+            INTERPOSE_HOOKS_FAILED(layer_musicsound) ||
+            INTERPOSE_HOOKS_FAILED(layer_noblelist) ||
+            INTERPOSE_HOOKS_FAILED(layer_overall_health) ||
+            INTERPOSE_HOOKS_FAILED(layer_reaction) ||
+            INTERPOSE_HOOKS_FAILED(layer_squad_schedule) ||
+            INTERPOSE_HOOKS_FAILED(layer_stockpile) ||
+            INTERPOSE_HOOKS_FAILED(layer_stone_restriction) ||
+            INTERPOSE_HOOKS_FAILED(layer_unit_action) ||
+            INTERPOSE_HOOKS_FAILED(layer_unit_health) ||
+            INTERPOSE_HOOKS_FAILED(layer_unit_relationship) ||
+            INTERPOSE_HOOKS_FAILED(layer_world_gen_param_preset) ||
+            INTERPOSE_HOOKS_FAILED(layer_world_gen_param) ||
+            INTERPOSE_HOOKS_FAILED(legends) ||
+            INTERPOSE_HOOKS_FAILED(loadgame) ||
+            INTERPOSE_HOOKS_FAILED(locations) ||
+            INTERPOSE_HOOKS_FAILED(meeting) ||
+            INTERPOSE_HOOKS_FAILED(movieplayer) ||
+            INTERPOSE_HOOKS_FAILED(new_region) ||
+            INTERPOSE_HOOKS_FAILED(noble) ||
+            INTERPOSE_HOOKS_FAILED(option) ||
+            INTERPOSE_HOOKS_FAILED(overallstatus) ||
+            INTERPOSE_HOOKS_FAILED(petitions) ||
+            INTERPOSE_HOOKS_FAILED(pet) ||
+            INTERPOSE_HOOKS_FAILED(price) ||
+            INTERPOSE_HOOKS_FAILED(reportlist) ||
+            INTERPOSE_HOOKS_FAILED(requestagreement) ||
+            INTERPOSE_HOOKS_FAILED(savegame) ||
+            INTERPOSE_HOOKS_FAILED(selectitem) ||
+            INTERPOSE_HOOKS_FAILED(setupadventure) ||
+            INTERPOSE_HOOKS_FAILED(setupdwarfgame) ||
+            INTERPOSE_HOOKS_FAILED(stores) ||
+            INTERPOSE_HOOKS_FAILED(textviewer) ||
+            INTERPOSE_HOOKS_FAILED(title) ||
+            INTERPOSE_HOOKS_FAILED(topicmeeting_fill_land_holder_positions) ||
+            INTERPOSE_HOOKS_FAILED(topicmeeting) ||
+            INTERPOSE_HOOKS_FAILED(topicmeeting_takerequests) ||
+            INTERPOSE_HOOKS_FAILED(tradeagreement) ||
+            INTERPOSE_HOOKS_FAILED(tradegoods) ||
+            INTERPOSE_HOOKS_FAILED(tradelist) ||
+            INTERPOSE_HOOKS_FAILED(treasurelist) ||
+            INTERPOSE_HOOKS_FAILED(unitlist) ||
+            INTERPOSE_HOOKS_FAILED(unit) ||
+            INTERPOSE_HOOKS_FAILED(update_region) ||
+            INTERPOSE_HOOKS_FAILED(wages) ||
+            INTERPOSE_HOOKS_FAILED(workquota_condition) ||
+            INTERPOSE_HOOKS_FAILED(workquota_details) ||
+            INTERPOSE_HOOKS_FAILED(workshop_profile))
+        return CR_FAILURE;
+
+    is_enabled = enable;
     return CR_OK;
 }
 
 #undef INTERPOSE_HOOKS_FAILED
 
-DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &) {
+static command_result overlay_cmd(color_ostream &out, std::vector <std::string> & parameters) {
+    if (DBG_NAME(control).isEnabled(DebugCategory::LDEBUG)) {
+        DEBUG(control).print("interpreting command with %zu parameters:\n",
+                             parameters.size());
+        for (auto &param : parameters) {
+            DEBUG(control).print("  %s\n", param.c_str());
+        }
+    }
+
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
+    commands.push_back(
+        PluginCommand(
+            "overlay",
+            "Manage onscreen widgets.",
+            overlay_cmd));
+
     return plugin_enable(out, true);
 }
 
 DFhackCExport command_result plugin_shutdown(color_ostream &out) {
     return plugin_enable(out, false);
+}
+
+DFhackCExport command_result plugin_onupdate (color_ostream &out) {
+    return CR_OK;
 }

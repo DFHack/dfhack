@@ -81,7 +81,7 @@ using namespace std;
 #include "df/unit_wound.h"
 #include "df/world.h"
 #include "df/unit_action.h"
-#include "df/action_type_group.h"
+#include "df/unit_action_timer_type_group.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -2017,7 +2017,7 @@ void Units::subtractActionTimer(df::unit *unit, int amount, df::unit_action_type
     }
 }
 
-void Units::subtractActionTimerCategory(df::unit *unit, int amount, df::action_type_group affectedActionTypes)
+void Units::subtractActionTimerCategory(df::unit *unit, int amount, df::unit_action_timer_type_group affectedActionTypes)
 {
     CHECK_NULL_POINTER(unit);
     for (auto action : unit->actions) {
@@ -2046,7 +2046,7 @@ void Units::multiplyActionTimer(df::unit *unit, float amount, df::unit_action_ty
     }
 }
 
-void Units::multiplyActionTimerCategory(df::unit *unit, float amount, df::action_type_group affectedActionTypes)
+void Units::multiplyActionTimerCategory(df::unit *unit, float amount, df::unit_action_timer_type_group affectedActionTypes)
 {
     CHECK_NULL_POINTER(unit);
     for (auto action : unit->actions) {
@@ -2075,7 +2075,7 @@ void Units::setActionTimer(df::unit *unit, int amount, df::unit_action_type affe
     }
 }
 
-void Units::setActionTimerCategory(df::unit *unit, int amount, df::action_type_group affectedActionTypes)
+void Units::setActionTimerCategory(df::unit *unit, int amount, df::unit_action_timer_type_group affectedActionTypes)
 {
     CHECK_NULL_POINTER(unit);
     for (auto action : unit->actions) {

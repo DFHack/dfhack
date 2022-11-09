@@ -499,7 +499,7 @@ bool Units::isSane(df::unit *unit)
     return true;
 }
 
-bool Units::isCitizen(df::unit *unit)
+bool Units::isCitizen(df::unit *unit, bool ignore_sanity)
 {
     CHECK_NULL_POINTER(unit);
 
@@ -519,7 +519,7 @@ bool Units::isCitizen(df::unit *unit)
         unit->flags2.bits.resident)
         return false;
 
-    if (!isSane(unit))
+    if (!ignore_sanity && !isSane(unit))
         return false;
 
     return isOwnGroup(unit);
@@ -750,6 +750,15 @@ string Units::getRaceChildName(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
     return getRaceChildNameById(unit->race);
+}
+
+bool Units::isInvader(df::unit* unit) {
+    CHECK_NULL_POINTER(unit);
+
+    return !isOwnGroup(unit) &&
+           (unit->flags1.bits.marauder ||
+            unit->flags1.bits.invader_origin ||
+            unit->flags1.bits.active_invader);
 }
 
 bool Units::isBaby(df::unit* unit)
@@ -1666,6 +1675,15 @@ df::activity_event *Units::getMainSocialEvent(df::unit *unit)
     return entry->events[entry->events.size() - 1];
 }
 
+bool Units::isVisiting(df::unit* unit) {
+    CHECK_NULL_POINTER(unit);
+
+    return unit->flags1.bits.merchant ||
+           unit->flags1.bits.diplomat ||
+           unit->flags2.bits.visitor ||
+           unit->flags2.bits.visitor_uninvited;
+}
+
 bool Units::isMerchant(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
@@ -1678,6 +1696,12 @@ bool Units::isDiplomat(df::unit* unit)
     CHECK_NULL_POINTER(unit);
 
     return unit->flags1.bits.diplomat == 1;
+}
+
+bool Units::isVisitor(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->flags2.bits.visitor || unit->flags2.bits.visitor_uninvited;
 }
 
 bool Units::isForest(df::unit* unit)
@@ -1763,13 +1787,13 @@ bool Units::isNaked(df::unit* unit)
     return (unit->inventory.empty());
 }
 
-bool Units::isUndead(df::unit* unit)
+bool Units::isUndead(df::unit* unit, bool ignore_vamps)
 {
     CHECK_NULL_POINTER(unit);
-    // ignore vampires, they should be treated like normal dwarves
-    return (unit->flags3.bits.ghostly ||
-            ( (unit->curse.add_tags1.bits.OPPOSED_TO_LIFE || unit->curse.add_tags1.bits.NOT_LIVING)
-             && !unit->curse.add_tags1.bits.BLOODSUCKER ));
+
+    const auto &cb = unit->curse.add_tags1.bits;
+    return unit->flags3.bits.ghostly ||
+           ((cb.OPPOSED_TO_LIFE || cb.NOT_LIVING) && (!ignore_vamps || !cb.BLOODSUCKER));
 }
 
 bool Units::isGhost(df::unit *unit)
@@ -1850,6 +1874,12 @@ bool Units::isMegabeast(df::unit* unit)
     return unit->enemy.caste_flags.is_set(df::enums::caste_raw_flags::MEGABEAST);
 }
 
+bool Units::isGreatDanger(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return isDemon(unit) || isTitan(unit) || isMegabeast(unit);
+}
+
 bool Units::isSemiMegabeast(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
@@ -1862,6 +1892,14 @@ bool Units::isNightCreature(df::unit* unit)
     return unit->enemy.caste_flags.is_set(df::enums::caste_raw_flags::NIGHT_CREATURE);
 }
 
+bool Units::isDanger(df::unit* unit) {
+    CHECK_NULL_POINTER(unit);
+    return isInvader(unit) ||
+           isUndead(unit, false) ||
+           isSemiMegabeast(unit) ||
+           isNightCreature(unit) ||
+           isGreatDanger(unit);
+}
 
 // 50000 and up is level 0, 25000 and up is level 1, etc.
 const vector<int32_t> Units::stress_cutoffs {50000, 25000, 10000, -10000, -25000, -50000, -100000};

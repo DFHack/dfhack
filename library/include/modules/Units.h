@@ -115,7 +115,7 @@ DFHACK_EXPORT df::unit_misc_trait *getMiscTrait(df::unit *unit, df::misc_trait_t
 DFHACK_EXPORT bool isDead(df::unit *unit);
 DFHACK_EXPORT bool isAlive(df::unit *unit);
 DFHACK_EXPORT bool isSane(df::unit *unit);
-DFHACK_EXPORT bool isCitizen(df::unit *unit);
+DFHACK_EXPORT bool isCitizen(df::unit *unit, bool ignore_sanity = false);
 DFHACK_EXPORT bool isFortControlled(df::unit *unit);
 DFHACK_EXPORT bool isDwarf(df::unit *unit);
 DFHACK_EXPORT bool isWar(df::unit* unit);
@@ -138,6 +138,7 @@ DFHACK_EXPORT std::string getRaceBabyName(df::unit* unit);
 DFHACK_EXPORT std::string getRaceChildNameById(int32_t race_id);
 DFHACK_EXPORT std::string getRaceChildName(df::unit* unit);
 
+DFHACK_EXPORT bool isInvader(df::unit* unit);
 DFHACK_EXPORT bool isBaby(df::unit* unit);
 DFHACK_EXPORT bool isChild(df::unit* unit);
 DFHACK_EXPORT bool isAdult(df::unit* unit);
@@ -150,15 +151,17 @@ DFHACK_EXPORT bool isTrainableHunting(df::unit* unit);
 DFHACK_EXPORT bool isTamable(df::unit* unit);
 DFHACK_EXPORT bool isMale(df::unit* unit);
 DFHACK_EXPORT bool isFemale(df::unit* unit);
+DFHACK_EXPORT bool isVisiting(df::unit* unit);
 DFHACK_EXPORT bool isMerchant(df::unit* unit);
 DFHACK_EXPORT bool isDiplomat(df::unit* unit);
+DFHACK_EXPORT bool isVisitor(df::unit* unit);
 DFHACK_EXPORT bool isForest(df::unit* unit);
 DFHACK_EXPORT bool isMarkedForSlaughter(df::unit* unit);
 DFHACK_EXPORT bool isTame(df::unit* unit);
 DFHACK_EXPORT bool isTrained(df::unit* unit);
 DFHACK_EXPORT bool isGay(df::unit* unit);
 DFHACK_EXPORT bool isNaked(df::unit* unit);
-DFHACK_EXPORT bool isUndead(df::unit* unit);
+DFHACK_EXPORT bool isUndead(df::unit* unit, bool ignore_vamps = true);
 DFHACK_EXPORT bool isGhost(df::unit *unit);
 DFHACK_EXPORT bool isActive(df::unit *unit);
 DFHACK_EXPORT bool isKilled(df::unit *unit);
@@ -167,8 +170,11 @@ DFHACK_EXPORT bool isDomesticated(df::unit* unit);
 DFHACK_EXPORT bool isDemon(df::unit* unit);
 DFHACK_EXPORT bool isTitan(df::unit* unit);
 DFHACK_EXPORT bool isMegabeast(df::unit* unit);
+DFHACK_EXPORT bool isGreatDanger(df::unit* unit);
 DFHACK_EXPORT bool isSemiMegabeast(df::unit* unit);
 DFHACK_EXPORT bool isNightCreature(df::unit* unit);
+DFHACK_EXPORT bool isDanger(df::unit* unit);
+
 
 DFHACK_EXPORT double getAge(df::unit *unit, bool true_age = false);
 DFHACK_EXPORT int getKillCount(df::unit *unit);

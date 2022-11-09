@@ -770,6 +770,12 @@ bool Units::isAdult(df::unit* unit)
     return !isBaby(unit) && !isChild(unit);
 }
 
+bool Units::isAnimal(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit)
+    return unit->enemy.caste_flags.is_set(df::enums::caste_raw_flags::NATURAL_ANIMAL);
+}
+
 bool Units::isEggLayer(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
@@ -1823,6 +1829,37 @@ bool Units::isDomesticated(df::unit* unit)
     }
     return tame;
 }
+
+bool Units::isDemon(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->enemy.caste_flags.is_set(df::enums::caste_raw_flags::DEMON);
+}
+
+bool Units::isTitan(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->enemy.caste_flags.is_set(df::enums::caste_raw_flags::TITAN);
+}
+
+bool Units::isMegabeast(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->enemy.caste_flags.is_set(df::enums::caste_raw_flags::MEGABEAST);
+}
+
+bool Units::isSemiMegabeast(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->enemy.caste_flags.is_set(df::enums::caste_raw_flags::SEMIMEGABEAST);
+}
+
+bool Units::isNightCreature(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->enemy.caste_flags.is_set(df::enums::caste_raw_flags::NIGHT_CREATURE);
+}
+
 
 // 50000 and up is level 0, 25000 and up is level 1, etc.
 const vector<int32_t> Units::stress_cutoffs {50000, 25000, 10000, -10000, -25000, -50000, -100000};

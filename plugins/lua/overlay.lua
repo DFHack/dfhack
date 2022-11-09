@@ -14,6 +14,7 @@ local DEFAULT_X_POS, DEFAULT_Y_POS = -2, -2
 -- state and config --
 -- ---------------- --
 
+local active_triggered_widget = nil
 local active_triggered_screen = nil -- if non-nil, hotspots will not get updates
 local widget_db = {} -- map of widget name to ephermeral state
 local widget_index = {} -- ordered list of widget names
@@ -25,6 +26,7 @@ local function reset()
     if active_triggered_screen then
         active_triggered_screen:dismiss()
     end
+    active_triggered_widget = nil
     active_triggered_screen = nil
 
     widget_db = {}
@@ -47,6 +49,7 @@ end
 local function triggered_screen_has_lock()
     if not active_triggered_screen then return false end
     if active_triggered_screen:isActive() then return true end
+    active_triggered_widget = nil
     active_triggered_screen = nil
     return false
 end
@@ -108,7 +111,12 @@ local function get_name(name_or_number)
 end
 
 local function do_by_names_or_numbers(args, fn)
-    for _,name_or_number in ipairs(normalize_list(args)) do
+    local arglist = normalize_list(args)
+    if #arglist == 0 then
+        dfhack.printerr('please specify a widget name or list number')
+        return
+    end
+    for _,name_or_number in ipairs(arglist) do
         local name = get_name(name_or_number)
         local db_entry = widget_db[name]
         if not db_entry then
@@ -120,7 +128,7 @@ local function do_by_names_or_numbers(args, fn)
 end
 
 local function do_enable(args, quiet, skip_save)
-    do_by_names_or_numbers(args, function(name, db_entry)
+    local enable_fn = function(name, db_entry)
         overlay_config[name].enabled = true
         if db_entry.widget.hotspot then
             active_hotspot_widgets[name] = db_entry
@@ -132,14 +140,23 @@ local function do_enable(args, quiet, skip_save)
         if not quiet then
             print(('enabled widget %s'):format(name))
         end
-    end)
+    end
+    if args[1] == 'all' then
+        for name,db_entry in pairs(widget_db) do
+            if not overlay_config[name].enabled then
+                enable_fn(name, db_entry)
+            end
+        end
+    else
+        do_by_names_or_numbers(args, enable_fn)
+    end
     if not skip_save then
         save_config()
     end
 end
 
 local function do_disable(args)
-    do_by_names_or_numbers(args, function(name, db_entry)
+    local disable_fn = function(name, db_entry)
         overlay_config[name].enabled = false
         if db_entry.widget.hotspot then
             active_hotspot_widgets[name] = nil
@@ -152,7 +169,16 @@ local function do_disable(args)
             end
         end
         print(('disabled widget %s'):format(name))
-    end)
+    end
+    if args[1] == 'all' then
+        for name,db_entry in pairs(widget_db) do
+            if overlay_config[name].enabled then
+                disable_fn(name, db_entry)
+            end
+        end
+    else
+        do_by_names_or_numbers(args, disable_fn)
+    end
     save_config()
 end
 
@@ -175,11 +201,10 @@ local function do_list(args)
         end
         local db_entry = widget_db[name]
         local enabled = overlay_config[name].enabled
-        dfhack.color(enabled and COLOR_YELLOW or COLOR_LIGHTGREEN)
+        dfhack.color(enabled and COLOR_LIGHTGREEN or COLOR_YELLOW)
         dfhack.print(enabled and '[enabled] ' or '[disabled]')
         dfhack.color()
-        print((' %d) %s%s'):format(i, name,
-            db_entry.widget.overlay_trigger and ' (can trigger)' or ''))
+        print((' %d) %s'):format(i, name))
         ::continue::
     end
     if num_filtered > 0 then
@@ -225,7 +250,7 @@ local function load_widgets(env_prefix, provider, env_fn)
     end
 end
 
--- also called directly from cpp on init
+-- called directly from cpp on init
 function reload()
     reset()
 
@@ -256,18 +281,44 @@ function reload()
     reposition_widgets()
 end
 
-local function do_reload()
-    reload()
-    print('reloaded overlay configuration')
+local function dump_widget_config(name, widget)
+    local pos = overlay_config[name].pos
+    print(('widget %s is positioned at x=%d, y=%d'):format(name, pos.x, pos.y))
+    if #widget.viewscreens > 0 then
+        print('  it will be attached to the following viewscreens:')
+        for _,vs in ipairs(widget.viewscreens) do
+            print(('    %s'):format(vs))
+        end
+    end
+    if widget.hotspot then
+        print('  on all screens it will act as a hotspot')
+    end
 end
 
-local function do_reposition(args)
+local function do_position(args)
     local name_or_number, x, y = table.unpack(args)
     local name = get_name(name_or_number)
-    -- TODO: check existence of widget, validate numbers, warn if offscreen
-    local pos = sanitize_pos{x=tonumber(x), y=tonumber(y)}
-    overlay_config[name].pos = pos
+    if not widget_db[name] then
+        if not name_or_number then
+            dfhack.printerr('please specify a widget name or list number')
+        else
+            dfhack.printerr(('widget not found: "%s"'):format(name))
+        end
+        return
+    end
     local widget = widget_db[name].widget
+    local pos
+    if x == 'default' then
+        pos = sanitize_pos(widget.default_pos)
+    else
+        x, y = tonumber(x), tonumber(y)
+        if not x or not y then
+            dump_widget_config(name, widget)
+            return
+        end
+        pos = sanitize_pos{x=x, y=y}
+    end
+    overlay_config[name].pos = pos
     widget.frame = make_frame(pos, widget.frame)
     widget:updateLayout(get_screen_rect())
     save_config()
@@ -277,8 +328,8 @@ end
 -- note that the widget does not have to be enabled to be triggered
 local function do_trigger(args)
     if triggered_screen_has_lock() then
-        dfhack.printerr(
-                'cannot trigger widget; another widget is already active')
+        dfhack.printerr(('cannot trigger widget; widget "%s" is already active')
+                        :format(active_triggered_widget))
         return
     end
     local target = args[1]
@@ -286,6 +337,9 @@ local function do_trigger(args)
         local widget = db_entry.widget
         if widget.overlay_trigger then
             active_triggered_screen = widget:overlay_trigger()
+            if active_triggered_screen then
+                active_triggered_widget = name
+            end
             print(('triggered widget %s'):format(name))
         end
     end)
@@ -295,8 +349,7 @@ local command_fns = {
     enable=do_enable,
     disable=do_disable,
     list=do_list,
-    reload=do_reload,
-    reposition=do_reposition,
+    position=do_position,
     trigger=do_trigger,
 }
 
@@ -325,7 +378,7 @@ end
 
 -- reduces the next call by a small random amount to introduce jitter into the
 -- widget processing timings
-local function do_update(db_entry, now_ms, vs)
+local function do_update(name, db_entry, now_ms, vs)
     if db_entry.next_update_ms > now_ms then return end
     local w = db_entry.widget
     local freq_ms = w.overlay_onupdate_max_freq_seconds * 1000
@@ -334,15 +387,18 @@ local function do_update(db_entry, now_ms, vs)
     if detect_frame_change(w,
             function() return w:overlay_onupdate(vs) end) then
         active_triggered_screen = w:overlay_trigger()
-        if active_triggered_screen then return true end
+        if active_triggered_screen then
+            active_triggered_widget = name
+            return true
+        end
     end
 end
 
 function update_hotspot_widgets()
     if triggered_screen_has_lock() then return end
     local now_ms = dfhack.getTickCount()
-    for _,db_entry in pairs(active_hotspot_widgets) do
-        if do_update(db_entry, now_ms) then return end
+    for name,db_entry in pairs(active_hotspot_widgets) do
+        if do_update(name, db_entry, now_ms) then return end
     end
 end
 
@@ -350,8 +406,8 @@ function update_viewscreen_widgets(vs_name, vs)
     local vs_widgets = active_viewscreen_widgets[vs_name]
     if not vs_widgets then return end
     local now_ms = dfhack.getTickCount()
-    for _,db_entry in pairs(vs_widgets) do
-        if do_update(db_entry, now_ms, vs) then return end
+    for name,db_entry in pairs(vs_widgets) do
+        if do_update(name, db_entry, now_ms, vs) then return end
     end
 end
 

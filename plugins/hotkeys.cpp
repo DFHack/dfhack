@@ -23,11 +23,12 @@ using namespace DFHack;
 
 static const std::string MENU_SCREEN_FOCUS_STRING = "dfhack/lua/hotkeys/menu";
 
+static bool valid = false; // whether the following two vars contain valid data
+static string current_focus;
 static map<string, string> current_bindings;
 static vector<string> sorted_keys;
 
-static bool can_invoke(const string &cmdline, df::viewscreen *screen)
-{
+static bool can_invoke(const string &cmdline, df::viewscreen *screen) {
     vector<string> cmd_parts;
     split_string(&cmd_parts, cmdline, " ");
     if (toLower(cmd_parts[0]) == "hotkeys")
@@ -36,8 +37,21 @@ static bool can_invoke(const string &cmdline, df::viewscreen *screen)
     return Core::getInstance().getPluginManager()->CanInvokeHotkey(cmd_parts[0], screen);
 }
 
-static void add_binding_if_valid(const string &sym, const string &cmdline, df::viewscreen *screen)
-{
+static int cleanupHotkeys(lua_State *) {
+    DEBUG(log).print("cleaning up old stub keybindings for %s\n", current_focus.c_str());
+    std::for_each(sorted_keys.begin(), sorted_keys.end(), [](const string &sym) {
+        string keyspec = sym + "@" + MENU_SCREEN_FOCUS_STRING;
+        DEBUG(log).print("clearing keybinding: %s\n", keyspec.c_str());
+        Core::getInstance().ClearKeyBindings(keyspec);
+    });
+    valid = false;
+    current_focus = "";
+    sorted_keys.clear();
+    current_bindings.clear();
+    return 0;
+}
+
+static void add_binding_if_valid(const string &sym, const string &cmdline, df::viewscreen *screen) {
     if (!can_invoke(cmdline, screen))
         return;
 
@@ -49,34 +63,28 @@ static void add_binding_if_valid(const string &sym, const string &cmdline, df::v
     Core::getInstance().AddKeyBinding(keyspec, binding);
 }
 
-static void find_active_keybindings(df::viewscreen *screen)
-{
-    current_bindings.clear();
-    sorted_keys.clear();
+static void find_active_keybindings(df::viewscreen *screen) {
+    DEBUG(log).print("scanning for active keybindings\n");
+    if (valid)
+        cleanupHotkeys(NULL);
 
     vector<string> valid_keys;
 
-    for (char c = 'A'; c <= 'Z'; c++)
-    {
+    for (char c = 'A'; c <= 'Z'; c++) {
         valid_keys.push_back(string(&c, 1));
     }
 
-    for (int i = 1; i < 10; i++)
-    {
+    for (int i = 1; i < 10; i++) {
         valid_keys.push_back("F" + int_to_string(i));
     }
 
     valid_keys.push_back("`");
 
-    auto current_focus = Gui::getFocusString(screen);
-    for (int shifted = 0; shifted < 2; shifted++)
-    {
-        for (int alt = 0; alt < 2; alt++)
-        {
-            for (int ctrl = 0; ctrl < 2; ctrl++)
-            {
-                for (auto it = valid_keys.begin(); it != valid_keys.end(); it++)
-                {
+    current_focus = Gui::getFocusString(screen);
+    for (int shifted = 0; shifted < 2; shifted++) {
+        for (int alt = 0; alt < 2; alt++) {
+            for (int ctrl = 0; ctrl < 2; ctrl++) {
+                for (auto it = valid_keys.begin(); it != valid_keys.end(); it++) {
                     string sym;
                     if (ctrl) sym += "Ctrl-";
                     if (alt) sym += "Alt-";
@@ -84,19 +92,15 @@ static void find_active_keybindings(df::viewscreen *screen)
                     sym += *it;
 
                     auto list = Core::getInstance().ListKeyBindings(sym);
-                    for (auto invoke_cmd = list.begin(); invoke_cmd != list.end(); invoke_cmd++)
-                    {
-                        if (invoke_cmd->find(":") == string::npos)
-                        {
+                    for (auto invoke_cmd = list.begin(); invoke_cmd != list.end(); invoke_cmd++) {
+                        if (invoke_cmd->find(":") == string::npos) {
                             add_binding_if_valid(sym, *invoke_cmd, screen);
                         }
-                        else
-                        {
+                        else {
                             vector<string> tokens;
                             split_string(&tokens, *invoke_cmd, ":");
                             string focus = tokens[0].substr(1);
-                            if (prefix_matches(focus, current_focus))
-                            {
+                            if (prefix_matches(focus, current_focus)) {
                                 auto cmdline = trim(tokens[1]);
                                 add_binding_if_valid(sym, cmdline, screen);
                             }
@@ -106,10 +110,40 @@ static void find_active_keybindings(df::viewscreen *screen)
             }
         }
     }
+
+    valid = true;
 }
 
-static bool invoke_command(color_ostream &out, const size_t index)
-{
+static int getHotkeys(lua_State *L) {
+    find_active_keybindings(Gui::getCurViewscreen(true));
+    Lua::PushVector(L, sorted_keys);
+    Lua::Push(L, current_bindings);
+    return 2;
+}
+
+DFHACK_PLUGIN_LUA_COMMANDS {
+    DFHACK_LUA_COMMAND(getHotkeys),
+    DFHACK_LUA_COMMAND(cleanupHotkeys),
+    DFHACK_LUA_END
+};
+
+static void list(color_ostream &out) {
+    DEBUG(log).print("listing active hotkeys\n");
+    bool was_valid = valid;
+    if (!valid)
+        find_active_keybindings(Gui::getCurViewscreen(true));
+
+    out.print("Valid keybindings for the current screen (%s)\n",
+              current_focus.c_str());
+    std::for_each(sorted_keys.begin(), sorted_keys.end(), [&](const string &sym) {
+        out.print("%s: %s\n", sym.c_str(), current_bindings[sym].c_str());
+    });
+
+    if (!was_valid)
+        cleanupHotkeys(NULL);
+}
+
+static bool invoke_command(color_ostream &out, const size_t index) {
     auto screen = Core::getTopViewscreen();
     if (sorted_keys.size() <= index ||
             Gui::getFocusString(screen) != MENU_SCREEN_FOCUS_STRING)
@@ -127,50 +161,35 @@ static bool invoke_command(color_ostream &out, const size_t index)
     return true;
 }
 
-static command_result hotkeys_cmd(color_ostream &out, vector <string> & parameters)
-{
+static command_result hotkeys_cmd(color_ostream &out, vector <string> & parameters) {
+    if (!parameters.size()) {
+        static const string invokeOverlayCmd = "overlay trigger hotkeys.menu";
+        DEBUG(log).print("invoking command: '%s'\n", invokeOverlayCmd.c_str());
+        return Core::getInstance().runCommand(out, invokeOverlayCmd);
+    }
+
+    if (parameters[0] == "list") {
+        list(out);
+        return CR_OK;
+    }
+
     if (parameters.size() != 2 || parameters[0] != "invoke")
         return CR_WRONG_USAGE;
 
     CoreSuspender guard;
 
-    int index;
-    std::stringstream index_raw(parameters[1]);
-    index_raw >> index;
+    int index = string_to_int(parameters[1], -1);
+    if (index < 0)
+        return CR_WRONG_USAGE;
     return invoke_command(out, index) ? CR_OK : CR_WRONG_USAGE;
 }
-
-static int getHotkeys(lua_State *L) {
-    find_active_keybindings(Gui::getCurViewscreen(true));
-    Lua::PushVector(L, sorted_keys);
-    Lua::Push(L, current_bindings);
-    return 2;
-}
-
-static int cleanupHotkeys(lua_State *) {
-    std::for_each(sorted_keys.begin(), sorted_keys.end(), [](const string &sym) {
-        string keyspec = sym + "@" + MENU_SCREEN_FOCUS_STRING;
-        DEBUG(log).print("clearing keybinding: %s\n", keyspec.c_str());
-        Core::getInstance().ClearKeyBindings(keyspec);
-    });
-    sorted_keys.clear();
-    current_bindings.clear();
-    return 0;
-}
-
-DFHACK_PLUGIN_LUA_COMMANDS {
-    DFHACK_LUA_COMMAND(getHotkeys),
-    DFHACK_LUA_COMMAND(cleanupHotkeys),
-    DFHACK_LUA_END
-};
 
 // allow "hotkeys" to be invoked as a hotkey from any screen
 static bool hotkeys_anywhere(df::viewscreen *) {
     return true;
 }
 
-DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
-{
+DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands) {
     commands.push_back(
         PluginCommand(
         "hotkeys",

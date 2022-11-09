@@ -68,8 +68,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `orders`: replace shell craft orders with orders for shell leggings. they have a slightly higher trade price, and "shleggings" is hilarious.
 - `spectate`: new ``auto-unpause`` option for auto-dismissal of announcement pause events (e.g. sieges).
 - `spectate`: new ``auto-disengage`` option for auto-disengagement of plugin through player interaction whilst unpaused.
-- `spectate`: new ``focus-jobs`` option for following a dwarf after their job has finished (when disabled).
 - `spectate`: new ``tick-threshold``, option for specifying the change interval (maximum follow time when focus-jobs is enabled)
+- `spectate`: new ``animals``, option for sometimes following animals
+- `spectate`: new ``hostiles``, option for sometimes following hostiles
+- `spectate`: new ``visiting``, option for sometimes following visiting merchants, diplomats or plain visitors
 - `spectate`: added persistent configuration of the plugin settings
 - `gui/cp437-table`: new global keybinding for the clickable on-screen keyboard for players with keyboard layouts that prevent them from using certain keys: Ctrl-Shift-K
 - `quickfort-library-guide`: dreamfort blueprint improvements: added a quantum stockpile for training bolts

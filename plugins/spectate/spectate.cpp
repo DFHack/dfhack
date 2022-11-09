@@ -10,9 +10,10 @@
 #include <Export.h>
 #include <PluginManager.h>
 
-#include <modules/Gui.h>
-#include <modules/World.h>
 #include <modules/EventManager.h>
+#include <modules/World.h>
+#include <modules/Maps.h>
+#include <modules/Gui.h>
 #include <modules/Job.h>
 #include <modules/Units.h>
 #include <df/job.h>
@@ -21,11 +22,13 @@
 #include <df/global_objects.h>
 #include <df/world.h>
 #include <df/viewscreen.h>
+#include <df/creature_raw.h>
 
 #include <map>
 #include <set>
 #include <random>
 #include <cinttypes>
+#include <functional>
 
 // Debugging
 namespace DFHack {
@@ -45,9 +48,12 @@ using namespace df::enums;
 
 struct Configuration {
     bool debug = false;
-    bool jobs_focus = false;
+
     bool unpause = false;
     bool disengage = false;
+    bool animals = false;
+    bool hostiles = true;
+    bool visitors = false;
     int32_t tick_threshold = 1000;
 } config;
 
@@ -55,40 +61,43 @@ Pausing::AnnouncementLock* pause_lock = nullptr;
 bool lock_collision = false;
 bool announcements_disabled = false;
 
-bool following_dwarf = false;
-df::unit* our_dorf = nullptr;
-df::job* job_watched = nullptr;
-int32_t timestamp = -1;
-
-std::set<int32_t> job_tracker;
-std::map<uint16_t,int16_t> freq;
-std::default_random_engine RNG;
-
 #define base 0.99
 
 static const std::string CONFIG_KEY = std::string(plugin_name) + "/config";
 enum ConfigData {
     UNPAUSE,
     DISENGAGE,
-    JOB_FOCUS,
-    TICK_THRESHOLD
+    TICK_THRESHOLD,
+    ANIMALS,
+    HOSTILES,
+    VISITORS
+
 };
 
 static PersistentDataItem pconfig;
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable);
 command_result spectate (color_ostream &out, std::vector <std::string> & parameters);
+#define COORDARGS(id) id.x, (id).y, id.z
 
 namespace SP {
+    bool following_dwarf = false;
+    df::unit* our_dorf = nullptr;
+    int32_t timestamp = -1;
+    std::default_random_engine RNG;
 
     void PrintStatus(color_ostream &out) {
         out.print("Spectate is %s\n", enabled ? "ENABLED." : "DISABLED.");
         out.print(" FEATURES:\n");
-        out.print("  %-20s\t%s\n", "focus-jobs: ", config.jobs_focus ? "on." : "off.");
         out.print("  %-20s\t%s\n", "auto-unpause: ", config.unpause ? "on." : "off.");
         out.print("  %-20s\t%s\n", "auto-disengage: ", config.disengage ? "on." : "off.");
+        out.print("  %-20s\t%s\n", "animals: ", config.animals ? "on." : "off.");
+        out.print("  %-20s\t%s\n", "hostiles: ", config.hostiles ? "on." : "off.");
+        out.print("  %-20s\t%s\n", "visiting: ", config.visitors ? "on." : "off.");
         out.print(" SETTINGS:\n");
         out.print("  %-20s\t%" PRIi32 "\n", "tick-threshold: ", config.tick_threshold);
+        if (following_dwarf)
+            out.print(" %-21s\t%s[id: %d]\n","FOLLOWING:", our_dorf ? our_dorf->name.first_name.c_str() : "nullptr", df::global::ui->follow_unit);
     }
 
     void SetUnpauseState(bool state) {
@@ -135,8 +144,8 @@ namespace SP {
             if (lock_collision) {
                 ERR(plugin).print("Spectate auto-unpause: Could not fully enable. There was a lock collision, when the other lock holder releases, auto-unpause will engage on its own.\n");
                 WARN(plugin).print(
-                        " auto-unpause: must wait for another Pausing::AnnouncementLock to be lifted.\n"
-                        " The action you were attempting will complete when the following lock or locks lift.\n");
+                            " auto-unpause: must wait for another Pausing::AnnouncementLock to be lifted.\n"
+                            " The action you were attempting will complete when the following lock or locks lift.\n");
                 pause_lock->reportLocks(Core::getInstance().getConsole());
             }
         }
@@ -147,8 +156,10 @@ namespace SP {
         if (pconfig.isValid()) {
             pconfig.ival(UNPAUSE) = config.unpause;
             pconfig.ival(DISENGAGE) = config.disengage;
-            pconfig.ival(JOB_FOCUS) = config.jobs_focus;
             pconfig.ival(TICK_THRESHOLD) = config.tick_threshold;
+            pconfig.ival(ANIMALS) = config.animals;
+            pconfig.ival(HOSTILES) = config.hostiles;
+            pconfig.ival(VISITORS) = config.visitors;
         }
     }
 
@@ -161,20 +172,128 @@ namespace SP {
         } else {
             config.unpause = pconfig.ival(UNPAUSE);
             config.disengage = pconfig.ival(DISENGAGE);
-            config.jobs_focus = pconfig.ival(JOB_FOCUS);
             config.tick_threshold = pconfig.ival(TICK_THRESHOLD);
+            config.animals = pconfig.ival(ANIMALS);
+            config.hostiles = pconfig.ival(HOSTILES);
+            config.visitors = pconfig.ival(VISITORS);
             pause_lock->unlock();
             SetUnpauseState(config.unpause);
         }
     }
 
-    void Enable(color_ostream &out, bool enable) {
+    bool FollowADwarf() {
+        if (enabled && !World::ReadPauseState()) {
+            df::coord viewMin = Gui::getViewportPos();
+            df::coord viewMax{viewMin};
+            const auto &dims = Gui::getDwarfmodeViewDims().map().second;
+            viewMax.x += dims.x - 1;
+            viewMax.y += dims.y - 1;
+            viewMax.z = viewMin.z;
+            std::vector<df::unit*> units;
+            static auto add_if = [&](std::function<bool(df::unit*)> check) {
+                for (auto unit : world->units.active) {
+                    if (check(unit)) {
+                        units.push_back(unit);
+                    }
+                }
+            };
+            static auto valid = [](df::unit* unit) {
+                if (Units::isAnimal(unit)) {
+                    return config.animals;
+                }
+                if (Units::isVisiting(unit)) {
+                    return config.visitors;
+                }
+                if (Units::isDanger(unit)) {
+                    return config.hostiles;
+                }
+                return true;
+            };
+            /// RANGE 1 (in view)
+            // grab all valid units
+            add_if(valid);
+            // keep only those in the box
+            Units::getUnitsInBox(units, COORDARGS(viewMin), COORDARGS(viewMax));
+            int32_t inview_idx2 = units.size()-1;
+            bool range1_exists = inview_idx2 >= 0;
+            int32_t inview_idx1 = range1_exists ? 0 : -1;
 
+            /// RANGE 2 (citizens)
+            add_if([](df::unit* unit) {
+                return valid(unit) && Units::isCitizen(unit, true);
+            });
+            int32_t cit_idx2 = units.size()-1;
+            bool range2_exists = cit_idx2 > inview_idx2;
+            int32_t cit_idx1 = range2_exists ? inview_idx2+1 : cit_idx2;
+
+            /// RANGE 3 (any valid)
+            add_if(valid);
+            int32_t all_idx2 = units.size()-1;
+            bool range3_exists = all_idx2 > cit_idx2;
+            int32_t all_idx1 = range3_exists ? cit_idx2+1 : all_idx2;
+
+
+            if (!units.empty()) {
+                std::vector<double> i;
+                std::vector<double> w;
+                if (!range1_exists && !range2_exists && !range3_exists) {
+                    return false;
+                }
+                if (range1_exists) {
+                    if (inview_idx1 == inview_idx2) {
+                        i.push_back(0);
+                        w.push_back(17);
+                    } else {
+                        i.push_back(inview_idx1);
+                        i.push_back(inview_idx2);
+                        w.push_back(inview_idx2 + 1);
+                        w.push_back(inview_idx2 + 1);
+                    }
+                }
+                if (range2_exists) {
+                    if (cit_idx1 == cit_idx2) {
+                        i.push_back(cit_idx1);
+                        w.push_back(7);
+                    } else {
+                        i.push_back(cit_idx1);
+                        i.push_back(cit_idx2);
+                        w.push_back(7);
+                        w.push_back(7);
+                    }
+                }
+                if (range3_exists) {
+                    if (all_idx1 == all_idx2) {
+                        i.push_back(all_idx1);
+                        w.push_back(1);
+                    } else {
+                        i.push_back(all_idx1);
+                        i.push_back(all_idx2);
+                        w.push_back(1);
+                        w.push_back(1);
+                    }
+                }
+                std::piecewise_linear_distribution<> follow_any(i.begin(), i.end(), w.begin());
+                // if you're looking at a warning about a local address escaping, it means the unit* from units (which aren't local)
+                size_t idx = follow_any(RNG);
+                our_dorf = units[idx];
+                df::global::ui->follow_unit = our_dorf->id;
+                timestamp = df::global::world->frame_counter;
+                return true;
+            } else {
+                WARN(plugin).print("units vector is empty!\n");
+            }
+        }
+        return false;
     }
 
     void onUpdate(color_ostream &out) {
+        if (!World::isFortressMode() || !Maps::IsValid())
+            return;
+
         // keeps announcement pause settings locked
         World::Update(); // from pause.h
+
+        // Plugin Management
         if (lock_collision) {
             if (config.unpause) {
                 // player asked for auto-unpause enabled
@@ -201,94 +320,23 @@ namespace SP {
         if (failsafe >= 10) {
             out.printerr("spectate encountered a problem dismissing a popup!\n");
         }
-        if (config.disengage && !World::ReadPauseState()) {
-            if (our_dorf && our_dorf->id != df::global::ui->follow_unit) {
-                plugin_enable(out, false);
-            }
-        }
-    }
 
-    // every tick check whether to decide to follow a dwarf
-    void TickHandler(color_ostream& out, void* ptr) {
-        int32_t tick = df::global::world->frame_counter;
-        if (our_dorf) {
-            if (!Units::isAlive(our_dorf)) {
+        // plugin logic
+        static int32_t last_tick = -1;
+        int32_t tick = world->frame_counter;
+        if (!World::ReadPauseState() && tick - last_tick >= 1) {
+            last_tick = tick;
+            // validate follow state
+            if (!following_dwarf || !our_dorf || df::global::ui->follow_unit < 0) {
+                // we're not following anyone
                 following_dwarf = false;
-                df::global::ui->follow_unit = -1;
-            }
-        }
-        if (!following_dwarf || (config.jobs_focus && !job_watched) || timestamp == -1 || (tick - timestamp) > config.tick_threshold) {
-            std::vector<df::unit*> dwarves;
-            for (auto unit: df::global::world->units.active) {
-                if (!Units::isCitizen(unit)) {
-                    continue;
+                if (!config.disengage) {
+                    // try to
+                    following_dwarf = FollowADwarf();
+                } else if (!World::ReadPauseState()) {
+                    plugin_enable(out, false);
                 }
-                dwarves.push_back(unit);
             }
-            std::uniform_int_distribution<uint64_t> follow_any(0, dwarves.size() - 1);
-            // if you're looking at a warning about a local address escaping, it means the unit* from dwarves (which aren't local)
-            our_dorf = dwarves[follow_any(RNG)];
-            df::global::ui->follow_unit = our_dorf->id;
-            job_watched = our_dorf->job.current_job;
-            following_dwarf = true;
-            if (config.jobs_focus && !job_watched) {
-                timestamp = tick;
-            }
-        }
-        // todo: refactor event manager to respect tick listeners
-        namespace EM = EventManager;
-        EM::EventHandler ticking(TickHandler, config.tick_threshold);
-        EM::registerTick(ticking, config.tick_threshold, plugin_self);
-    }
-
-    // every new worked job needs to be considered
-    void JobStartEvent(color_ostream& out, void* job_ptr) {
-        // todo: detect mood jobs
-        int32_t tick = df::global::world->frame_counter;
-        auto job = (df::job*) job_ptr;
-        // don't forget about it
-        int zcount = ++freq[job->pos.z];
-        job_tracker.emplace(job->id);
-        // if we're not doing anything~ then let's pick something
-        if ((config.jobs_focus && !job_watched) || timestamp == -1 || (tick - timestamp) > config.tick_threshold) {
-            timestamp = tick;
-            following_dwarf = true;
-            // todo: allow the user to configure b, and also revise the math
-            const double b = base;
-            double p = b * ((double) zcount / job_tracker.size());
-            std::bernoulli_distribution follow_job(p);
-            if (!job->flags.bits.special && follow_job(RNG)) {
-                job_watched = job;
-                if (df::unit* unit = Job::getWorker(job)) {
-                    our_dorf = unit;
-                    df::global::ui->follow_unit = unit->id;
-                }
-            } else {
-                timestamp = tick;
-                std::vector<df::unit*> nonworkers;
-                for (auto unit: df::global::world->units.active) {
-                    if (!Units::isCitizen(unit) || unit->job.current_job) {
-                        continue;
-                    }
-                    nonworkers.push_back(unit);
-                }
-                std::uniform_int_distribution<> follow_drunk(0, nonworkers.size() - 1);
-                df::global::ui->follow_unit = nonworkers[follow_drunk(RNG)]->id;
-            }
-        }
-    }
-
-    // every job completed can be forgotten about
-    void JobCompletedEvent(color_ostream &out, void* job_ptr) {
-        auto job = (df::job*) job_ptr;
-        // forget about it
-        freq[job->pos.z]--;
-        freq[job->pos.z] = freq[job->pos.z] < 0 ? 0 : freq[job->pos.z];
-        // the job doesn't exist, so we definitely need to get rid of that
-        job_tracker.erase(job->id);
-        // the event manager clones jobs and returns those clones for completed jobs. So the pointers won't match without a refactor of EM passing clones to both events
-        if (job_watched && job_watched->id == job->id) {
-            job_watched = nullptr;
         }
     }
 };
@@ -309,34 +357,23 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out) {
 
 DFhackCExport command_result plugin_load_data (color_ostream &out) {
     SP::LoadSettings();
+    SP::following_dwarf = SP::FollowADwarf();
     SP::PrintStatus(out);
     return DFHack::CR_OK;
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
-    namespace EM = EventManager;
     if (enable && !enabled) {
         out.print("Spectate mode enabled!\n");
-        using namespace EM::EventType;
-        EM::EventHandler ticking(SP::TickHandler, config.tick_threshold);
-        EM::EventHandler start(SP::JobStartEvent, 0);
-        EM::EventHandler complete(SP::JobCompletedEvent, 0);
-        //EM::registerListener(EventType::TICK, ticking, plugin_self);
-        EM::registerTick(ticking, config.tick_threshold, plugin_self);
-        EM::registerListener(EventType::JOB_STARTED, start, plugin_self);
-        EM::registerListener(EventType::JOB_COMPLETED, complete, plugin_self);
         enabled = true; // enable_auto_unpause won't do anything without this set now
         SP::SetUnpauseState(config.unpause);
     } else if (!enable && enabled) {
         // warp 8, engage!
         out.print("Spectate mode disabled!\n");
-        EM::unregisterAll(plugin_self);
         // we need to retain whether auto-unpause is enabled, but we also need to disable its effect
         bool temp = config.unpause;
         SP::SetUnpauseState(false);
         config.unpause = temp;
-        job_tracker.clear();
-        freq.clear();
     }
     enabled = enable;
     return DFHack::CR_OK;
@@ -348,9 +385,8 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
             case SC_MAP_UNLOADED:
             case SC_BEGIN_UNLOAD:
             case SC_WORLD_UNLOADED:
-                our_dorf = nullptr;
-                job_watched = nullptr;
-                following_dwarf = false;
+                SP::our_dorf = nullptr;
+                SP::following_dwarf = false;
             default:
                 break;
         }
@@ -381,8 +417,12 @@ command_result spectate (color_ostream &out, std::vector <std::string> & paramet
                 SP::SetUnpauseState(state);
             } else if (parameters[1] == "auto-disengage") {
                 config.disengage = state;
-            } else if (parameters[1] == "focus-jobs") {
-                config.jobs_focus = state;
+            } else if (parameters[1] == "animals") {
+                config.animals = state;
+            } else if (parameters[1] == "hostiles") {
+                config.hostiles = state;
+            } else if (parameters[1] == "visiting") {
+                config.visitors = state;
             } else if (parameters[1] == "tick-threshold" && set && parameters.size() == 3) {
                 try {
                     config.tick_threshold = std::abs(std::stol(parameters[2]));

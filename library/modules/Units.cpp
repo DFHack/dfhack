@@ -1833,7 +1833,9 @@ bool Units::isDomesticated(df::unit* unit)
 bool Units::isDemon(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
-    return unit->enemy.caste_flags.is_set(df::enums::caste_raw_flags::DEMON);
+    using namespace df::enums::caste_raw_flags;
+    const auto &cf = unit->enemy.caste_flags;
+    return cf.is_set(DEMON) || cf.is_set(UNIQUE_DEMON);
 }
 
 bool Units::isTitan(df::unit* unit)

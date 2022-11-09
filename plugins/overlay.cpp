@@ -88,6 +88,7 @@
 #include "PluginManager.h"
 #include "VTableInterpose.h"
 
+#include "modules/Gui.h"
 #include "modules/Screen.h"
 
 using namespace DFHack;
@@ -364,7 +365,8 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         PluginCommand(
             "overlay",
             "Manage onscreen widgets.",
-            overlay_cmd));
+            overlay_cmd,
+            Gui::anywhere_hotkey));
 
     return CR_OK;
 }

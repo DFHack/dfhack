@@ -387,11 +387,19 @@ DFHACK_EXPORT std::string toUpper(const std::string &str);
 DFHACK_EXPORT std::string toLower(const std::string &str);
 DFHACK_EXPORT std::string to_search_normalized(const std::string &str);
 
-static inline std::string int_to_string(const int n)
-{
+static inline std::string int_to_string(const int n) {
     std::ostringstream ss;
     ss << n;
     return ss.str();
+}
+
+static inline int string_to_int(const std::string s, int default_ = 0) {
+    try {
+        return std::stoi(s);
+    }
+    catch (std::exception&) {
+        return default_;
+    }
 }
 
 // trim from start

@@ -630,6 +630,10 @@ bool Gui::default_hotkey(df::viewscreen *top)
     return false;
 }
 
+bool Gui::anywhere_hotkey(df::viewscreen *) {
+    return true;
+}
+
 bool Gui::dwarfmode_hotkey(df::viewscreen *top)
 {
     // Require the main dwarf mode screen

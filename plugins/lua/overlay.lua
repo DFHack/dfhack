@@ -285,7 +285,7 @@ local function do_trigger(args)
     do_by_names_or_numbers(target, function(name, db_entry)
         local widget = db_entry.widget
         if widget.overlay_trigger then
-            widget:overlay_trigger()
+            active_triggered_screen = widget:overlay_trigger()
             print(('triggered widget %s'):format(name))
         end
     end)

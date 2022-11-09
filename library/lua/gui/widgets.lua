@@ -444,7 +444,9 @@ local BAR_BG_CHAR = string.char(179)
 
 function Scrollbar:onRenderBody(dc)
     -- don't draw if all elements are visible
-    if not scrollbar_is_visible(self) then return end
+    if not scrollbar_is_visible(self) then
+        return
+    end
     -- render up arrow if we're not at the top
     dc:seek(0, 0):char(
         self.top_elem == 1 and NO_ARROW_CHAR or UP_ARROW_CHAR, self.fg, self.bg)
@@ -1216,6 +1218,14 @@ function List:onRenderBody(dc)
     end
 end
 
+function List:getIdxUnderMouse()
+    local _,mouse_y = self:getMousePos()
+    if mouse_y and #self.choices > 0 and
+            mouse_y < (#self.choices-self.page_top+1) * self.row_height then
+        return self.page_top + math.floor(mouse_y/self.row_height)
+    end
+end
+
 function List:submit()
     if self.on_submit and #self.choices > 0 then
         self.on_submit(self:getSelected())
@@ -1239,12 +1249,14 @@ function List:onInput(keys)
         self:submit2()
         return true
     elseif keys._MOUSE_L then
-        local _, mouse_y = self:getMousePos()
-        if mouse_y and #self.choices > 0 and
-                mouse_y < (#self.choices-self.page_top+1) * self.row_height then
-            local idx = self.page_top + math.floor(mouse_y/self.row_height)
+        local idx = self:getIdxUnderMouse()
+        if idx then
             self:setSelected(idx)
-            self:submit()
+            if dfhack.internal.getModifiers().shift then
+                self:submit2()
+            else
+                self:submit()
+            end
             return true
         end
     else

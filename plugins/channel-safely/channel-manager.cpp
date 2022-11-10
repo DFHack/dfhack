@@ -2,6 +2,7 @@
 #include <tile-cache.h>
 #include <inlines.h>
 
+#include <modules/EventManager.h> //hash function for df::coord
 #include <df/block_square_event_designation_priorityst.h>
 
 /**
@@ -104,5 +105,6 @@ bool ChannelManager::manage_one(const Group &group, const df::coord &map_pos, bo
 void ChannelManager::mark_done(const df::coord &map_pos) {
     groups.remove(map_pos);
     jobs.erase(map_pos);
+    CSP::dignow_queue.erase(map_pos);
     TileCache::Get().uncache(map_pos);
 }

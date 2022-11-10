@@ -49,7 +49,8 @@ Features
 --------
 :require-vision:    Toggle whether the dwarves need vision of a tile before channeling to it can be deemed unsafe. (default: enabled)
 :monitor:           Toggle whether to monitor the conditions of active digs. (default: disabled)
-:resurrect:         Toggle whether to resurrect dwarves killed on the job. (default: disabled)
+:resurrect:         Toggle whether to resurrect units involved in cave-ins, and if monitor is enabled
+                    units who die while digging. (default: disabled)
 :insta-dig:         Toggle whether to use insta-digging on unreachable designations.
                     Runs on the refresh cycles. (default: disabled)
 

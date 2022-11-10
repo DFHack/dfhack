@@ -109,6 +109,33 @@ enum SettingConfigData {
     FALL_THRESH
 };
 
+// dig-now.cpp
+df::coord simulate_fall(const df::coord &pos) {
+    df::coord resting_pos(pos);
+
+    while (Maps::ensureTileBlock(resting_pos)) {
+        df::tiletype tt = *Maps::getTileType(resting_pos);
+        df::tiletype_shape_basic basic_shape = tileShapeBasic(tileShape(tt));
+        if (isWalkable(tt) && basic_shape != df::tiletype_shape_basic::Open)
+            break;
+        --resting_pos.z;
+    }
+
+    return resting_pos;
+}
+
+df::coord simulate_area_fall(const df::coord &pos) {
+    df::coord neighbours[8]{};
+    get_neighbours(pos, neighbours);
+    df::coord lowest = simulate_fall(pos);
+    for (auto p : neighbours) {
+        if (p.z < lowest.z) {
+            lowest = p;
+        }
+    }
+    return lowest;
+}
+
 // executes dig designations for the specified tile coordinates
 inline bool dig_now(color_ostream &out, const df::coord &map_pos) {
     auto L = Lua::Core::State;
@@ -134,13 +161,23 @@ inline void resurrect(color_ostream &out, const int32_t &unit) {
 }
 
 namespace CSP {
-    std::unordered_set<df::unit*> endangered_workers;
-    std::unordered_map<df::job*, int32_t> job_ids;
+    std::unordered_map<df::unit*, int32_t> endangered_units;
+    std::unordered_map<df::job*, int32_t> job_id_map;
     std::unordered_map<int32_t, df::job*> active_jobs;
     std::unordered_map<int32_t, df::unit*> active_workers;
 
     std::unordered_map<int32_t, df::coord> last_safe;
     std::unordered_set<df::coord> dignow_queue;
+
+    void ClearData() {
+        ChannelManager::Get().destroy_groups();
+        dignow_queue.clear();
+        last_safe.clear();
+        endangered_units.clear();
+        active_workers.clear();
+        active_jobs.clear();
+        job_id_map.clear();
+    }
 
     void SaveSettings() {
         if (pfeature.isValid() && psetting.isValid()) {
@@ -209,9 +246,14 @@ namespace CSP {
                     df::coord &pos = job->pos;
                     WARN(jobs).print(" -> Starting job at (" COORD ")\n", COORDARGS(pos));
                     if (config.monitor_active || config.resurrect) {
-                        job_ids.emplace(job, job->id);
+                        job_id_map.emplace(job, job->id);
                         active_jobs.emplace(job->id, job);
                         active_workers[job->id] = worker;
+                        if (config.resurrect) {
+                            // this is the only place we can be 100% sure of "safety"
+                            // (excluding deadly enemies that will have arrived)
+                            last_safe[worker->id] = worker->pos;
+                        }
                     }
                     // set tile to restricted
                     TRACE(jobs).print("   setting job tile to restricted\n");
@@ -244,28 +286,27 @@ namespace CSP {
                     ChannelManager::Get().mark_done(job->pos);
                     ChannelManager::Get().manage_group(below);
                     ChannelManager::Get().debug();
-                } else {
-                    // the tile is unchanged
-                    df::unit* worker = active_workers[job->id];
-                    endangered_workers.emplace(active_workers[job->id]);
-                    ERR(jobs).print("() -> job at (" COORD ")  is done, but (" COORD ") doesn't appear done.\n",COORDARGS(worker->pos), COORDARGS(job->pos));
-                    if (config.insta_dig) {
-                        dignow_queue.emplace(job->pos);
+                    if (config.resurrect) {
+                        // this is the only place we can be 100% sure of "safety"
+                        // (excluding deadly enemies that will have arrived)
+                        if (active_workers.count(job->id)) {
+                            df::unit* worker = active_workers[job->id];
+                            last_safe[worker->id] = worker->pos;
+                        }
                     }
                 }
                 // clean up
-                if (!config.resurrect) {
-                    auto jp = active_jobs[job->id];
-                    job_ids.erase(jp);
-                    active_workers.erase(job->id);
-                    active_jobs.erase(job->id);
-                }
+                auto jp = active_jobs[job->id];
+                job_id_map.erase(jp);
+                active_workers.erase(job->id);
+                active_jobs.erase(job->id);
             }
             INFO(jobs).print("JobCompletedEvent() exits\n");
         }
     }
 
     void NewReportEvent(color_ostream &out, void* r) {
+        int32_t tick = df::global::world->frame_counter;
         auto report_id = (int32_t)(intptr_t(r));
         if (df::global::world) {
             std::vector<df::report*> &reports = df::global::world->status.reports;
@@ -274,17 +315,46 @@ namespace CSP {
             df::report* report = reports.at(idx);
             switch (report->type) {
                 case announcement_type::CANCEL_JOB:
-                    out.print("%d, pos: " COORD ", pos2: " COORD "\n%s\n", report_id, COORDARGS(report->pos), COORDARGS(report->pos2), report->text.c_str());
-                    if (report->text.find("Dangerous") != std::string::npos) {
-                        dignow_queue.emplace(report->pos);
-                        break;
-                    } else if (!report->flags.bits.unconscious) {
-                        break;
+                    if (config.insta_dig) {
+                        if (report->text.find("cancels Dig") != std::string::npos) {
+                            dignow_queue.emplace(report->pos);
+                        } else if (report->text.find("path") != std::string::npos) {
+                            dignow_queue.emplace(report->pos);
+                        }
+                        DEBUG(plugin).print("%d, pos: " COORD ", pos2: " COORD "\n%s\n", report_id, COORDARGS(report->pos),
+                                            COORDARGS(report->pos2), report->text.c_str());
                     }
+                    break;
                 case announcement_type::CAVE_COLLAPSE:
-                    for (auto p : active_workers) {
-                        endangered_workers.emplace(p.second);
+                    if (config.resurrect) {
+                        DEBUG(plugin).print("CAVE IN\n%d, pos: " COORD ", pos2: " COORD "\n%s\n", report_id, COORDARGS(report->pos),
+                                            COORDARGS(report->pos2), report->text.c_str());
+
+                        df::coord below = report->pos;
+                        below.z -= 1;
+                        below = simulate_area_fall(below);
+                        df::coord areaMin{report->pos};
+                        df::coord areaMax{areaMin};
+                        areaMin.x -= 15;
+                        areaMin.y -= 15;
+                        areaMax.x += 15;
+                        areaMax.y += 15;
+                        areaMin.z = below.z;
+                        areaMax.z += 1;
+                        std::vector<df::unit*> units;
+                        Units::getUnitsInBox(units, COORDARGS(areaMin), COORDARGS(areaMax));
+                        for (auto unit: units) {
+                            endangered_units[unit] = tick;
+                            DEBUG(plugin).print(" [id %d] was near a cave in.\n", unit->id);
+                        }
+                        for (auto unit : world->units.all) {
+                            if (last_safe.count(unit->id)) {
+                                endangered_units[unit] = tick;
+                                DEBUG(plugin).print(" [id %d] is/was a worker, we'll track them too.\n", unit->id);
+                            }
+                        }
                     }
+                    break;
                 default:
                     break;
             }
@@ -292,6 +362,9 @@ namespace CSP {
     }
 
     void OnUpdate(color_ostream &out) {
+        static auto print_res_msg = [](df::unit* unit) {
+            WARN(plugin).print("Channel-Safely: Resurrecting..\n   [id: %d]\n", unit->id);
+        };
         if (enabled && World::isFortressMode() && Maps::IsValid() && !World::ReadPauseState()) {
             static int32_t last_tick = df::global::world->frame_counter;
             static int32_t last_monitor_tick = df::global::world->frame_counter;
@@ -303,24 +376,16 @@ namespace CSP {
             if (tick - last_refresh_tick >= config.refresh_freq) {
                 last_refresh_tick = tick;
                 TRACE(monitor).print("OnUpdate() refreshing now\n");
-                UnpauseEvent();
-
                 if (config.insta_dig) {
                     TRACE(monitor).print(" -> evaluate dignow queue\n");
                     for (auto iter = dignow_queue.begin(); iter != dignow_queue.end();) {
-                        if (!has_unit(Maps::getTileOccupancy(*iter))) {
-                            dig_now(out, *iter);
-                            iter = dignow_queue.erase(iter);
-                            WARN(plugin).print(">INSTA-DIGGING<\n");
-                            continue;
-                        } else {
-                            // todo: teleport?
-                            //Units::teleport()
-                        }
-                        ++iter;
+                        dig_now(out, *iter); // teleports units to the bottom of a simulated fall
+                        iter = dignow_queue.erase(iter);
+                        DEBUG(plugin).print(">INSTA-DIGGING<\n");
                     }
-                    TRACE(monitor).print("OnUpdate() refresh done\n");
                 }
+                UnpauseEvent();
+                TRACE(monitor).print("OnUpdate() refresh done\n");
             }
 
             // Clean up stale df::job*
@@ -339,8 +404,8 @@ namespace CSP {
                 std::unordered_set<df::job*> erase;
                 map_value_difference(active_jobs, valid_jobs, erase);
                 for (auto j : erase) {
-                    auto id = job_ids[j];
-                    job_ids.erase(j);
+                    auto id = job_id_map[j];
+                    job_id_map.erase(j);
                     active_jobs.erase(id);
                     active_workers.erase(id);
                 }
@@ -356,6 +421,7 @@ namespace CSP {
                     df::job* job = pair.second;
                     df::unit* unit = active_workers[job->id];
                     if (!unit) continue;
+                    if (!Maps::isValidTilePos(job->pos)) continue;
                     TRACE(monitor).print(" -> check for job in tracking\n");
                     if (Units::isAlive(unit)) {
                         if (!config.monitor_active) continue;
@@ -363,9 +429,7 @@ namespace CSP {
 
                         // save position
                         if (unit->pos != job->pos && isFloorTerrain(*Maps::getTileType(unit->pos))) {
-                            // worker is perfectly safe right now
-                            last_safe[unit->id] = unit->pos;
-                            TRACE(monitor).print(" -> save safe position\n");
+                            // worker is probably safe right now
                             continue;
                         }
 
@@ -382,7 +446,9 @@ namespace CSP {
                                 // queue digging the job instantly
                                 dignow_queue.emplace(job->pos);
                                 DEBUG(monitor).print(" -> insta-dig\n");
-                            } else if (Maps::isValidTilePos(job->pos)) {
+                            } else if (config.resurrect) {
+                                endangered_units.emplace(unit, tick);
+                            } else {
                                 // set marker mode
                                 Maps::getTileOccupancy(job->pos)->bits.dig_marked = true;
 
@@ -400,6 +466,13 @@ namespace CSP {
                                 DEBUG(monitor).print(" -> set marker mode\n");
                             }
                         }
+                    } else if (config.resurrect) {
+                        resurrect(out, unit->id);
+                        if (last_safe.count(unit->id)) {
+                            df::coord lowest = simulate_fall(last_safe[unit->id]);
+                            Units::teleport(unit, lowest);
+                        }
+                        print_res_msg(unit);
                     }
                 }
                 TRACE(monitor).print("OnUpdate() monitoring done\n");
@@ -408,25 +481,27 @@ namespace CSP {
             // Resurrect Dead Workers
             if (config.resurrect && tick - last_resurrect_tick >= 1) {
                 last_resurrect_tick = tick;
-                static std::unordered_map<df::unit*, int32_t> age;
 
                 // clean up any "endangered" workers that have been tracked 100 ticks or more
-                for (auto iter = age.begin(); iter != age.end();) {
+                for (auto iter = endangered_units.begin(); iter != endangered_units.end();) {
                     if (tick - iter->second >= 1200) { //keep watch 1 day
-                        endangered_workers.erase(iter->first);
-                        iter = age.erase(iter);
+                        DEBUG(plugin).print("It has been one day since [id %d]'s last incident.\n", iter->first->id);
+                        iter = endangered_units.erase(iter);
                         continue;
                     }
                     ++iter;
                 }
 
                 // resurrect any dead units
-                for (auto unit : endangered_workers) {
-                    age.emplace(unit, tick);
+                for (auto pair : endangered_units) {
+                    auto unit = pair.first;
                     if (!Units::isAlive(unit)) {
                         resurrect(out, unit->id);
-                        Units::teleport(unit, last_safe[unit->id]);
-                        WARN(plugin).print(">RESURRECTING<\n");
+                        if (last_safe.count(unit->id)) {
+                            df::coord lowest = simulate_fall(last_safe[unit->id]);
+                            Units::teleport(unit, lowest);
+                        }
+                        print_res_msg(unit);
                     }
                 }
             }
@@ -480,32 +555,25 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 }
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
-    if (enabled && World::isFortressMode() && Maps::IsValid()) {
-        switch (event) {
-            case SC_MAP_LOADED:
-                CSP::active_workers.clear();
-                // cache the map size
-                Maps::getSize(mapx, mapy, mapz);
-            case SC_UNPAUSED:
+    switch (event) {
+        case SC_UNPAUSED:
+            if (enabled && World::isFortressMode() && Maps::IsValid()) {
                 // manage all designations on unpause
                 CSP::UnpauseEvent();
-            default:
-                return DFHack::CR_OK;
-        }
-    }
-    switch (event) {
-        case SC_WORLD_LOADED:
-        case SC_WORLD_UNLOADED:
-        case SC_MAP_UNLOADED:
-            // destroy any old group data
-            out.print("channel-safely: unloading data!\n");
-            ChannelManager::Get().destroy_groups();
+            }
+            break;
         case SC_MAP_LOADED:
             // cache the map size
             Maps::getSize(mapx, mapy, mapz);
+        case SC_WORLD_LOADED:
+        case SC_WORLD_UNLOADED:
+        case SC_MAP_UNLOADED:
+            CSP::ClearData();
+            break;
         default:
             return DFHack::CR_OK;
     }
+    return DFHack::CR_OK;
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out, state_change_event event) {

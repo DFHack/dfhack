@@ -52,11 +52,11 @@ static int cleanupHotkeys(lua_State *) {
     return 0;
 }
 
-static void add_binding_if_valid(const string &sym, const string &cmdline, df::viewscreen *screen) {
+static void add_binding_if_valid(const string &sym, const string &cmdline, df::viewscreen *screen, bool filtermenu) {
     if (!can_invoke(cmdline, screen))
         return;
 
-    if (cmdline == INVOKE_MENU_COMMAND) {
+    if (filtermenu && cmdline == INVOKE_MENU_COMMAND) {
         DEBUG(log).print("filtering out hotkey menu keybinding\n");
         return;
     }
@@ -69,7 +69,7 @@ static void add_binding_if_valid(const string &sym, const string &cmdline, df::v
     Core::getInstance().AddKeyBinding(keyspec, binding);
 }
 
-static void find_active_keybindings(df::viewscreen *screen) {
+static void find_active_keybindings(df::viewscreen *screen, bool filtermenu) {
     DEBUG(log).print("scanning for active keybindings\n");
     if (valid)
         cleanupHotkeys(NULL);
@@ -100,7 +100,7 @@ static void find_active_keybindings(df::viewscreen *screen) {
                     auto list = Core::getInstance().ListKeyBindings(sym);
                     for (auto invoke_cmd = list.begin(); invoke_cmd != list.end(); invoke_cmd++) {
                         if (invoke_cmd->find(":") == string::npos) {
-                            add_binding_if_valid(sym, *invoke_cmd, screen);
+                            add_binding_if_valid(sym, *invoke_cmd, screen, filtermenu);
                         }
                         else {
                             vector<string> tokens;
@@ -108,7 +108,7 @@ static void find_active_keybindings(df::viewscreen *screen) {
                             string focus = tokens[0].substr(1);
                             if (prefix_matches(focus, current_focus)) {
                                 auto cmdline = trim(tokens[1]);
-                                add_binding_if_valid(sym, cmdline, screen);
+                                add_binding_if_valid(sym, cmdline, screen, filtermenu);
                             }
                         }
                     }
@@ -121,7 +121,7 @@ static void find_active_keybindings(df::viewscreen *screen) {
 }
 
 static int getHotkeys(lua_State *L) {
-    find_active_keybindings(Gui::getCurViewscreen(true));
+    find_active_keybindings(Gui::getCurViewscreen(true), true);
     Lua::PushVector(L, sorted_keys);
     Lua::Push(L, current_bindings);
     return 2;
@@ -137,7 +137,7 @@ static void list(color_ostream &out) {
     DEBUG(log).print("listing active hotkeys\n");
     bool was_valid = valid;
     if (!valid)
-        find_active_keybindings(Gui::getCurViewscreen(true));
+        find_active_keybindings(Gui::getCurViewscreen(true), false);
 
     out.print("Valid keybindings for the current screen (%s)\n",
               current_focus.c_str());

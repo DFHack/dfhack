@@ -446,13 +446,11 @@ static void manageJobStartedEvent(color_ostream& out) {
     multimap<Plugin*, EventHandler> copy(handlers[EventType::JOB_STARTED].begin(), handlers[EventType::JOB_STARTED].end());
     for (df::job_list_link* link = df::global::world->jobs.list.next; link != nullptr; link = link->next) {
         df::job* job = link->item;
-        bool send = false;
-        for (auto &key_value : copy) {
-            auto &handler = key_value.second;
-            // the jobs must have a worker to start
-            if (send || (job && Job::getWorker(job) && !startedJobs.count(job->id))) {
-                send = true;
-                startedJobs.emplace(job->id);
+        if (job && Job::getWorker(job) && !startedJobs.count(job->id)) {
+            startedJobs.emplace(job->id);
+            for (auto &key_value : copy) {
+                auto &handler = key_value.second;
+                // the jobs must have a worker to start
                 handler.eventHandler(out, job);
             }
         }

@@ -46,5 +46,4 @@ Features
 
 Settings
 --------
-:tick-threshold: Set the plugin's tick interval for changing the followed dwarf.
-                 Acts as a maximum follow time when used with focus-jobs enabled. (default: 1000)
+:tick-threshold: Set the plugin's tick interval for changing the followed dwarf. (default: 1000)

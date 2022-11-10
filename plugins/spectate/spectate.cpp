@@ -26,6 +26,7 @@
 
 #include <map>
 #include <set>
+#include <array>
 #include <random>
 #include <cinttypes>
 #include <functional>
@@ -78,7 +79,7 @@ static PersistentDataItem pconfig;
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable);
 command_result spectate (color_ostream &out, std::vector <std::string> & parameters);
-#define COORDARGS(id) id.x, (id).y, id.z
+#define COORDARGS(id) id.x, id.y, id.z
 
 namespace SP {
     bool following_dwarf = false;
@@ -209,68 +210,91 @@ namespace SP {
                 }
                 return true;
             };
-            /// RANGE 1 (in view)
-            // grab all valid units
-            add_if(valid);
+            static auto calc_extra_weight = [](size_t idx, double r1, double r2) {
+                switch(idx) {
+                    case 0:
+                        return r2;
+                    case 1:
+                        return (r2-r1)/1.3;
+                    case 2:
+                        return (r2-r1)/2;
+                    default:
+                        return 0.0;
+                }
+            };
+            /// Collecting our choice pool
+            ///////////////////////////////
+            std::array<int32_t, 10> ranges{};
+            std::array<bool, 5> range_exists{};
+            static auto build_range = [&](size_t idx){
+                size_t first = idx * 2;
+                size_t second = idx * 2 + 1;
+                size_t previous = first - 1;
+                // first we get the end of the range
+                ranges[second] = units.size() - 1;
+                // then we calculate whether this indicates there is a range or not
+                if (first != 0) {
+                    range_exists[idx] = ranges[second] > ranges[previous];
+                } else {
+                    range_exists[idx] = ranges[second] >= 0;
+                }
+                // lastly we set the start of the range
+                ranges[first] = ranges[previous] + (range_exists[idx] ? 1 : 0);
+            };
+
+            /// RANGE 0 (in view + working)
+            // grab valid working units
+            add_if([](df::unit* unit) {
+                return valid(unit) && Units::isCitizen(unit, true) && unit->job.current_job;
+            });
             // keep only those in the box
             Units::getUnitsInBox(units, COORDARGS(viewMin), COORDARGS(viewMax));
-            int32_t inview_idx2 = units.size()-1;
-            bool range1_exists = inview_idx2 >= 0;
-            int32_t inview_idx1 = range1_exists ? 0 : -1;
+            build_range(0);
 
-            /// RANGE 2 (citizens)
+            /// RANGE 1 (in view)
+            add_if(valid);
+            Units::getUnitsInBox(units, COORDARGS(viewMin), COORDARGS(viewMax));
+            build_range(1);
+
+            /// RANGE 2 (working citizens)
+            add_if([](df::unit* unit) {
+                return valid(unit) && Units::isCitizen(unit, true) && unit->job.current_job;
+            });
+            build_range(2);
+
+            /// RANGE 3 (citizens)
             add_if([](df::unit* unit) {
                 return valid(unit) && Units::isCitizen(unit, true);
             });
-            int32_t cit_idx2 = units.size()-1;
-            bool range2_exists = cit_idx2 > inview_idx2;
-            int32_t cit_idx1 = range2_exists ? inview_idx2+1 : cit_idx2;
+            build_range(3);
 
-            /// RANGE 3 (any valid)
+            /// RANGE 4 (any valid)
             add_if(valid);
-            int32_t all_idx2 = units.size()-1;
-            bool range3_exists = all_idx2 > cit_idx2;
-            int32_t all_idx1 = range3_exists ? cit_idx2+1 : all_idx2;
+            build_range(4);
 
-
+            // selecting from our choice pool
             if (!units.empty()) {
+                std::array<double, 5> bw{23,17,13,7,1}; // probability weights for each range
                 std::vector<double> i;
                 std::vector<double> w;
-                if (!range1_exists && !range2_exists && !range3_exists) {
+                bool at_least_one = false;
+                // in one word, elegance
+                for(size_t idx = 0; idx < range_exists.size(); ++idx) {
+                    if (range_exists[idx]) {
+                        at_least_one = true;
+                        const auto &r1 = ranges[idx*2];
+                        const auto &r2 = ranges[idx*2+1];
+                        double extra = calc_extra_weight(idx, r1, r2);
+                        i.push_back(r1);
+                        w.push_back(bw[idx] + extra);
+                        if (r1 != r2) {
+                            i.push_back(r2);
+                            w.push_back(bw[idx] + extra);
+                        }
+                    }
+                }
+                if (!at_least_one) {
                     return false;
-                }
-                if (range1_exists) {
-                    if (inview_idx1 == inview_idx2) {
-                        i.push_back(0);
-                        w.push_back(17);
-                    } else {
-                        i.push_back(inview_idx1);
-                        i.push_back(inview_idx2);
-                        w.push_back(inview_idx2 + 1);
-                        w.push_back(inview_idx2 + 1);
-                    }
-                }
-                if (range2_exists) {
-                    if (cit_idx1 == cit_idx2) {
-                        i.push_back(cit_idx1);
-                        w.push_back(7);
-                    } else {
-                        i.push_back(cit_idx1);
-                        i.push_back(cit_idx2);
-                        w.push_back(7);
-                        w.push_back(7);
-                    }
-                }
-                if (range3_exists) {
-                    if (all_idx1 == all_idx2) {
-                        i.push_back(all_idx1);
-                        w.push_back(1);
-                    } else {
-                        i.push_back(all_idx1);
-                        i.push_back(all_idx2);
-                        w.push_back(1);
-                        w.push_back(1);
-                    }
                 }
                 std::piecewise_linear_distribution<> follow_any(i.begin(), i.end(), w.begin());
                 // if you're looking at a warning about a local address escaping, it means the unit* from units (which aren't local)
@@ -327,7 +351,7 @@ namespace SP {
         if (!World::ReadPauseState() && tick - last_tick >= 1) {
             last_tick = tick;
             // validate follow state
-            if (!following_dwarf || !our_dorf || df::global::ui->follow_unit < 0) {
+            if (!following_dwarf || !our_dorf || df::global::ui->follow_unit < 0 || tick - timestamp >= config.tick_threshold) {
                 // we're not following anyone
                 following_dwarf = false;
                 if (!config.disengage) {

@@ -413,6 +413,7 @@ namespace CSP {
                 // clean up any "endangered" workers that have been tracked 100 ticks or more
                 for (auto iter = age.begin(); iter != age.end();) {
                     if (tick - iter->second >= 1200) { //keep watch 1 day
+                        endangered_workers.erase(iter->first);
                         iter = age.erase(iter);
                         continue;
                     }

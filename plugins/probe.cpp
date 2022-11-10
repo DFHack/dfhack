@@ -185,7 +185,7 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
     }
 
     auto &block = *b->getRaw();
-    out.print("block addr: 0x%p\n\n", &block);
+    out.print("block addr: %p\n\n", &block);
 /*
     if (showBlock)
     {

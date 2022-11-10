@@ -1787,13 +1787,13 @@ bool Units::isNaked(df::unit* unit)
     return (unit->inventory.empty());
 }
 
-bool Units::isUndead(df::unit* unit, bool ignore_vamps)
+bool Units::isUndead(df::unit* unit, bool include_vamps)
 {
     CHECK_NULL_POINTER(unit);
 
     const auto &cb = unit->curse.add_tags1.bits;
     return unit->flags3.bits.ghostly ||
-           ((cb.OPPOSED_TO_LIFE || cb.NOT_LIVING) && (!ignore_vamps || !cb.BLOODSUCKER));
+           ((cb.OPPOSED_TO_LIFE || cb.NOT_LIVING) && (include_vamps || !cb.BLOODSUCKER));
 }
 
 bool Units::isGhost(df::unit *unit)
@@ -1895,7 +1895,7 @@ bool Units::isNightCreature(df::unit* unit)
 bool Units::isDanger(df::unit* unit) {
     CHECK_NULL_POINTER(unit);
     return isInvader(unit) ||
-           isUndead(unit, false) ||
+           isUndead(unit, true) ||
            isSemiMegabeast(unit) ||
            isNightCreature(unit) ||
            isGreatDanger(unit);

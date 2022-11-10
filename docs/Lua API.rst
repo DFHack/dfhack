@@ -1287,10 +1287,35 @@ Units module
 
   The unit is of the correct race of the fortress.
 
-* ``dfhack.units.isCitizen(unit)``
+* ``dfhack.units.isCitizen(unit[,ignore_sanity])``
 
   The unit is an alive sane citizen of the fortress; wraps the
-  same checks the game uses to decide game-over by extinction.
+  same checks the game uses to decide game-over by extinction
+  (except for the sanity check).
+
+* ``dfhack.units.isInvader(unit)``
+
+  The unit is an active invader or marauder.
+
+* ``dfhack.units.isVisiting(unit)``
+
+  The unit is either a merchant, diplomat, or plain visitor.
+
+* ``dfhack.units.isVisitor(unit)``
+
+  The unit is strictly a visitor. Merchants and diplomats do not count here.
+
+* ``dfhack.units.isUndead(unit[,include_vamps])``
+
+  The unit is undead, but not a vampire.
+
+* ``dfhack.units.isGreatDanger(unit)``
+
+  The unit is of Great Danger. This include demons, titans, and megabeasts.
+
+* ``dfhack.units.isDanger(unit)``
+
+  The unit is dangerous, and probably hostile. This includes Great Dangers, semi-megabeasts, night creatures, undead, and invaders.
 
 * ``dfhack.units.isFortControlled(unit)``
 

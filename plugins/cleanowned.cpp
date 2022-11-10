@@ -147,7 +147,7 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
             std::string description;
             item->getItemDescription(&description, 0);
             out.print(
-                "0x%p %s (wear %d)",
+                "%p %s (wear %d)",
                 item,
                 description.c_str(),
                 item->getWear()

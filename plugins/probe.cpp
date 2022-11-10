@@ -334,7 +334,7 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
         out.print("%-16s", "");
         out.print("  %4d", block.local_feature);
         out.print(" (%2d)", local.type);
-        out.print(" addr 0x%p ", local.origin);
+        out.print(" addr %p ", local.origin);
         out.print(" %s\n", sa_feature(local.type));
     }
     PRINT_FLAG( des, feature_global );

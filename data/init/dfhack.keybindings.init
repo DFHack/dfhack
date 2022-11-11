@@ -22,8 +22,7 @@ keybinding add Ctrl-Shift-P command-prompt
 keybinding add Ctrl-Shift-K gui/cp437-table
 
 # an in-game init file editor
-keybinding add Alt-S@title gui/settings-manager
-keybinding add Alt-S@dwarfmode/Default gui/settings-manager
+keybinding add Alt-S@title|dwarfmode/Default|dungeonmode gui/settings-manager
 
 
 ######################
@@ -34,20 +33,20 @@ keybinding add Alt-S@dwarfmode/Default gui/settings-manager
 keybinding add Ctrl-Alt-S@dwarfmode/Default quicksave
 
 # toggle the display of water level as 1-7 tiles
-keybinding add Ctrl-W twaterlvl
+keybinding add Ctrl-W@dwarfmode|dungeonmode twaterlvl
 
 # designate the whole vein for digging
-keybinding add Ctrl-V digv
-keybinding add Ctrl-Shift-V "digv x"
+keybinding add Ctrl-V@dwarfmode digv
+keybinding add Ctrl-Shift-V@dwarfmode "digv x"
 
 # clean the selected tile of blood etc
 keybinding add Ctrl-C spotclean
 
 # destroy the selected item
-keybinding add Ctrl-K autodump-destroy-item
+keybinding add Ctrl-K@dwarfmode autodump-destroy-item
 
 # destroy items designated for dump in the selected tile
-keybinding add Ctrl-Shift-K autodump-destroy-here
+keybinding add Ctrl-Shift-K@dwarfmode autodump-destroy-here
 
 # apply blueprints to the map (Alt-F for compatibility with LNP Quickfort)
 keybinding add Ctrl-Shift-Q@dwarfmode gui/quickfort
@@ -64,8 +63,7 @@ keybinding add Alt-Shift-I@dwarfmode/Zones "zone set"
 keybinding add Ctrl-Shift-Z@dwarfmode/Default "stocks show"
 
 # open an overview window summarising some stocks (dfstatus)
-keybinding add Ctrl-Shift-I@dwarfmode/Default gui/dfstatus
-keybinding add Ctrl-Shift-I@dfhack/lua/dfstatus gui/dfstatus
+keybinding add Ctrl-Shift-I@dwarfmode/Default|dfhack/lua/dfstatus gui/dfstatus
 
 # change quantity of manager orders
 keybinding add Alt-Q@jobmanagement/Main gui/manager-quantity
@@ -77,19 +75,19 @@ keybinding add Alt-R@jobmanagement/Main workorder-recheck
 keybinding add D@workquota_details gui/workorder-details
 
 # view combat reports for the selected unit/corpse/spatter
-keybinding add Ctrl-Shift-R view-unit-reports
+keybinding add Ctrl-Shift-R@dwarfmode|unit|unitlist|joblist|dungeon_monsterstatus|layer_unit_relationship|item|workshop_profile|layer_noblelist|locations|pets|layer_overall_health|textviewer|reportlist|announcelist|layer_military|layer_unit_health|customize_unit|buildinglist|workshop_profile view-unit-reports
 
 # view extra unit information
 keybinding add Alt-I@dwarfmode/ViewUnits|unitlist gui/unit-info-viewer
 
 # boost priority of jobs related to the selected entity
-keybinding add Alt-N do-job-now
+keybinding add Alt-N@dwarfmode|job|joblist|unit|unitlist|joblist|dungeon_monsterstatus|layer_unit_relationship|item|layer_noblelist|locations|pets|layer_overall_health|textviewer|reportlist|announcelist|layer_military|layer_unit_health|customize_unit|buildinglist|textviewer|item|layer_assigntrade|tradegoods|store|assign_display_item|treasurelist do-job-now
 
 # export a Dwarf's preferences screen in BBCode to post to a forum
-keybinding add Ctrl-Shift-F@dwarfmode forum-dwarves
+keybinding add Ctrl-Shift-F@textviewer forum-dwarves
 
 # q->stockpile - copy & paste stockpiles
-keybinding add Alt-P copystock
+keybinding add Alt-P@dwarfmode/QueryBuilding/Some/Stockpile copystock
 
 # q->stockpile - load and save stockpile settings out of game
 keybinding add Alt-L@dwarfmode/QueryBuilding/Some/Stockpile "gui/stockpiles -load"
@@ -155,8 +153,8 @@ keybinding add Shift-B@pet/List/Unit gui/autobutcher
 keybinding add Alt-Shift-P@dwarfmode/LookAround gui/pathable
 
 # gui/rename script - rename units and buildings
-keybinding add Ctrl-Shift-N gui/rename
-keybinding add Ctrl-Shift-T "gui/rename unit-profession"
+keybinding add Ctrl-Shift-N@dwarfmode|unit|unitlist|joblist|dungeon_monsterstatus|layer_unit_relationship|item|workshop_profile|layer_noblelist|locations|pets|layer_overall_health|textviewer|reportlist|announcelist|layer_military|layer_unit_health|customize_unit|buildinglist gui/rename
+keybinding add Ctrl-Shift-T@dwarfmode|unit|unitlist|joblist|dungeon_monsterstatus|layer_unit_relationship|item|workshop_profile|layer_noblelist|locations|pets|layer_overall_health|textviewer|reportlist|announcelist|layer_military|layer_unit_health|customize_unit "gui/rename unit-profession"
 
 
 #####################

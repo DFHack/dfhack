@@ -7,7 +7,7 @@ overlay
 
 The overlay framework manages the on-screen widgets that other tools (including
 3rd party plugins and scripts) can register for display. If you are a developer
-who wants to write an overlay widget, please see the `overlay-widget-guide`.
+who wants to write an overlay widget, please see the `overlay-dev-guide`.
 
 Usage
 -----
@@ -17,9 +17,9 @@ Usage
 ``overlay enable|disable all|<name or list number> [<name or list number> ...]``
     Enable/disable all or specified widgets. Widgets can be specified by either
     their name or their number, as returned by ``overlay list``.
-``overlay list``
+``overlay list [<filter>]``
     Show a list of all the widgets that are registered with the overlay
-    framework.
+    framework, optionally filtered by the given filter string.
 ``overlay position <name or list number> [default|<x> <y>]``
     Display configuration information for the given widget or change the
     position where it is rendered. See the `Widget position`_ section below for

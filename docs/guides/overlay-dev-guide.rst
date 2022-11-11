@@ -1,0 +1,302 @@
+.. _overlay-dev-guide:
+
+DFHack overlay dev guide
+=========================
+
+.. highlight:: lua
+
+This guide walks you through how to build overlay widgets and register them with
+the `overlay` framework for injection into Dwarf Fortress viewscreens.
+
+Why would I want to create an overlay widget?
+---------------------------------------------
+
+There are both C++ and Lua APIs for creating viewscreens and drawing to the
+screen. If you need very specific low-level control, those APIs might be the
+right choice for you. However, here are some reasons you might want to implement
+an overlay widget instead:
+
+1. You can draw directly to an existing viewscreen instead of creating an
+    entirely new screen on the viewscreen stack. This allows the original
+    viewscreen to continue processing uninterrupted and keybindings bound to
+    that viewscreen will continue to function. This was previously only
+    achievable by C++ plugins.
+
+1. You'll get a free UI for enabling/disabling your widget and repositioning it
+    on the screen. Widget state is saved for you and is automatically restored
+    when the game is restarted.
+
+1. You don't have to manage the C++ interposing logic yourself and can focus on
+    the business logic, writing purely in Lua if desired.
+
+In general, if you are writing a plugin or script and have anything you'd like
+to add to an existing screen (including live updates of map tiles while the game
+is unpaused), an overlay widget is probably your easiest path to get it done. If
+your plugin or script doesn't otherwise need to be enabled to function, using
+the overlay allows you to avoid writing any of the enable management code that
+would normally be required for you to show info in the UI.
+
+Overlay widget API
+------------------
+
+Overlay widgets are Lua classes that inherit from ``overlay.OverlayWidget``
+(which itself inherits from `widgets.Widget <widget>`). The regular
+``onInput(keys)``, ``onRenderFrame(dc, frame_rect)``, and ``onRenderBody(dc)``
+functions work as normal, and they are called when the viewscreen that the
+widget is associated with does its usual input and render processing. The widget
+gets first dibs on input processing. If a widget returns ``true`` from its
+``onInput()`` function, the viewscreen will not receive the input.
+
+Overlay widgets can contain other Widgets and be as simple or complex as you
+need them to be, just like you're building a regular UI element.
+
+There are a few extra capabilities that overlay widgets have that take them
+beyond your everyday ``Widget``:
+
+- If an ``overlay_onupdate(viewscreen)`` function is defined, it will be called
+    just after the associated viewscreen's ``logic()`` function is called (i.e.
+    a "tick" or a (non-graphical) "frame"). For hotspot widgets, this function
+    will also get called after the top viewscreen's ``logic()`` function is
+    called, regardless of whether the widget is associated with that viewscreen.
+    If this function returns ``true``, then the widget's ``overlay_trigger()``
+    function is immediately called. Note that the ``viewscreen`` parameter will
+    be ``nil`` for hotspot widgets that are not also associated with the current
+    viewscreen.
+- If an ``overlay_trigger()`` function is defined, will be called when the
+    widget's ``overlay_onupdate`` callback returns true or when the player uses
+    the CLI (or a keybinding calling the CLI) to trigger the widget. The
+    function must return either ``nil`` or the ``gui.Screen`` object that the
+    widget code has allocated, shown, and now owns. Hotspot widgets will receive
+    no callbacks from unassociated viewscreens until the returned screen is
+    dismissed. Unbound hotspot widgets **must** allocate a Screen with this
+    function if they want to react to the ``onInput()`` feed or be rendered. The
+    widgets owned by the overlay framework must not be attached to that new
+    screen, but the returned screen can instantiate and configure any new views
+    that it wants to.
+
+If the widget can take up a variable amount of space on the screen, and you want
+the widget to adjust its position according to the size of its contents, you can
+modify ``self.frame.w`` and ``self.frame.h`` at any time -- in ``init()`` or in
+any of the callbacks -- to indicate a new size. The overlay framework will
+detect the size change and adjust the widget position and layout.
+
+If you don't need to dynamically resize, just set ``self.frame.w`` and
+``self.frame.h`` once in ``init()``.
+
+Widget attributes
+*****************
+
+The ``overlay.OverlayWidget`` superclass defines the following class attributes:
+
+- ``name``
+    This will be filled in with the display name of your widget, in case you
+    have multiple widgets with the same implementation but different
+    configurations.
+- ``default_pos`` (default: ``{x=-2, y=-2}``)
+    Override this attribute with your desired default widget position. See
+    the `overlay` docs for information on what positive and negative numbers
+    mean for the position. Players can change the widget position at any time
+    via the `overlay position <overlay>` command, so don't assume that your
+    widget will always be at the default position.
+- ``viewscreens`` (default: ``{}``)
+    The list of viewscreens that this widget should be associated with. When
+    one of these viewscreens is on top of the viewscreen stack, your widget's
+    callback functions for update, input, and render will be interposed into the
+    viewscreen's call path. The name of the viewscreen is the name of the DFHack
+    class that represents the viewscreen, minus the ``viewscreen_`` prefix and
+    ``st`` suffix. For example, the fort mode main map viewscreen would be
+    ``dwarfmode`` and the adventure mode map viewscreen would be
+    ``dungeonmode``. If there is only one viewscreen that this widget is
+    associated with, it can be specified as a string instead of a list of
+    strings with a single element.
+- ``hotspot`` (default: ``false``)
+    If set to ``true``, your widget's ``overlay_onupdate`` function will be
+    called whenever the `overlay` plugin's ``plugin_onupdate()`` function is
+    called (which corresponds to one call per call to the current top
+    viewscreen's ``logic()`` function). This call to ``overlay_onupdate`` is in
+    addition to any calls initiated from associated interposed viewscreens and
+    will come after calls from associated viewscreens.
+- ``overlay_onupdate_max_freq_seconds`` (default: ``5``)
+    This throttles how often a widget's ``overlay_onupdate`` function can be
+    called (from any source). Set this to the largest amount of time (in
+    seconds) that your widget can take to react to changes in information and
+    not annoy the player. Set to 0 to be called at the maximum rate. Be aware
+    that running more often than you really need to will impact game FPS,
+    especially if your widget can run while the game is unpaused.
+
+Registering a widget with the overlay framework
+***********************************************
+
+Anywhere in your code after the widget classes are declared, define a table
+named ``OVERLAY_WIDGETS``. The keys are the display names for your widgets and
+the values are the widget classes. For example, the `dwarfmonitor` widgets are
+declared like this::
+
+    OVERLAY_WIDGETS = {
+        cursor=CursorWidget,
+        date=DateWidget,
+        misery=MiseryWidget,
+        weather=WeatherWidget,
+    }
+
+When the `overlay` plugin is enabled, it scans all plugins and scripts for
+this table and registers the widgets on your behalf. The widget is enabled if it
+was enabled the last time the `overlay` plugin was loaded and the widget's
+position is restored according to the state saved in the
+:file:`dfhack-config/overlay.json` file.
+
+The overlay framework will instantiate widgets from the named classes and own
+the resulting objects. The instantiated widgets must not be added as subviews to
+any other View, including the Screen views that can be returned from the
+``overlay_trigger()`` function.
+
+Widget example 1: adding text to a DF screen
+--------------------------------------------
+
+This is a simple widget that displays a message at its position. The message
+text is retrieved from the host script or plugin every ~20 seconds or when
+the :kbd:`Alt`:kbd:`Z` hotkey is hit::
+
+    local overlay = require('plugins.overlay')
+    local widgets = require('gui.widgets')
+
+    MessageWidget = defclass(MessageWidget, overlay.OverlayWidget)
+    MessageWidget.ATTRS{
+        default_pos={x=5,y=-2},
+        viewscreens={'dwarfmode', 'dungeonmode'},
+        overlay_onupdate_max_freq_seconds=20,
+    }
+
+    function MessageWidget:init()
+        self.label = widgets.Label{text=''}
+        self:addviews{self.label}
+    end
+
+    function MessageWidget:overlay_onupdate()
+        local text = getImportantMessage() -- defined in the host script/plugin
+        self.label:setText(text)
+        self.frame.w = #text
+    end
+
+    function MessageWidget:onInput(keys)
+        if keys.CUSTOM_ALT_Z then
+            self:overlay_onupdate()
+            return true
+        end
+    end
+
+    OVERLAY_WIDGETS = {message=MessageWidget}
+
+Widget example 2: highlighting artifacts on the live game map
+-------------------------------------------------------------
+
+This widget is not rendered at its "position" at all, but instead monitors the
+map and overlays information about where artifacts are located. Scanning for
+which artifacts are visible on the map can slow, so that is only done every 10
+seconds to avoid slowing down the entire game on every frame.
+
+::
+
+    local overlay = require('plugins.overlay')
+    local widgets = require('gui.widgets')
+
+    ArtifactRadarWidget = defclass(ArtifactRadarWidget, overlay.OverlayWidget)
+    ArtifactRadarWidget.ATTRS{
+        viewscreens={'dwarfmode', 'dungeonmode'},
+        overlay_onupdate_max_freq_seconds=10,
+    }
+
+    function ArtifactRadarWidget:overlay_onupdate()
+        self.visible_artifacts_coords = getVisibleArtifactCoords()
+    end
+
+    function ArtifactRadarWidget:onRenderFrame()
+        for _,pos in ipairs(self.visible_artifacts_coords) do
+            -- highlight tile at given coordinates
+        end
+    end
+
+    OVERLAY_WIDGETS = {radar=ArtifactRadarWidget}
+
+Widget example 3: corner hotspot
+--------------------------------
+
+This hotspot reacts to mouseover events and launches a screen that can react to
+input events. The hotspot area is a 2x2 block near the lower right corner of the
+screen (by default, but the player can move it wherever).
+
+::
+
+    local overlay = require('plugins.overlay')
+    local widgets = require('gui.widgets')
+
+    HotspotMenuWidget = defclass(HotspotMenuWidget, overlay.OverlayWidget)
+    HotspotMenuWidget.ATTRS{
+        default_pos={x=-3,y=-3},
+        frame={w=2, h=2},
+        hotspot=true,
+        viewscreens='dwarfmode',
+        overlay_onupdate_max_freq_seconds=0, -- check for mouseover every tick
+    }
+
+    function HotspotMenuWidget:init()
+        -- note this label only gets rendered on the associated viewscreen
+        -- (dwarfmode), but the hotspot is active on all screens
+        self:addviews{widgets.Label{text={'!!', NEWLINE, '!!'}}}
+        self.mouseover = false
+    end
+
+    function HotspotMenuWidget:overlay_onupdate()
+        local hasMouse = self:getMousePos()
+        if hasMouse and not self.mouseover then -- only trigger on mouse entry
+            self.mouseover = true
+            return true
+        end
+        self.mouseover = hasMouse
+    end
+
+    function HotspotMenuWidget:overlay_trigger()
+        return MenuScreen{hotspot_frame=self.frame}:show()
+    end
+
+    OVERLAY_WIDGETS = {menu=HotspotMenuWidget}
+
+    MenuScreen = defclass(MenuScreen, gui.Screen)
+    MenuScreen.ATTRS{
+        focus_path='hotspot/menu',
+        hotspot_frame=DEFAULT_NIL,
+    }
+
+    function MenuScreen:init()
+        self.mouseover = false
+
+        -- derrive the menu frame from the hotspot frame so it
+        -- can appear in a nearby location
+        local frame = copyall(self.hotspot_frame)
+        -- ...
+
+        self:addviews{
+            widgets.ResizingPanel{
+                autoarrange_subviews=true,
+                frame=frame,
+                frame_style=gui.GREY_LINE_FRAME,
+                frame_background=gui.CLEAR_PEN,
+                subviews={
+                    -- ...
+                    },
+                },
+            },
+        }
+    end
+
+    function MenuScreen:onInput(keys)
+        if keys.LEAVESCREEN then
+            self:dismiss()
+            return true
+        end
+        return self:inputToSubviews(keys)
+    end
+
+    function MenuScreen:onRenderFrame(dc, rect)
+        self:renderParent()
+    end

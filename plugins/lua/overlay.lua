@@ -63,10 +63,17 @@ local function normalize_list(element_or_list)
     return {element_or_list}
 end
 
--- allow "short form" to be specified, but use "long form"
+-- normalize "short form" viewscreen names to "long form"
 local function normalize_viewscreen_name(vs_name)
     if vs_name:match('viewscreen_.*st') then return vs_name end
     return 'viewscreen_' .. vs_name .. 'st'
+end
+
+-- reduce "long form" viewscreen names to "short form"
+local function simplify_viewscreen_name(vs_name)
+    _,_,short_name = vs_name:find('^viewscreen_(.*)st$')
+    if short_name then return short_name end
+    return vs_name
 end
 
 local function is_empty(tbl)
@@ -79,7 +86,7 @@ end
 local function sanitize_pos(pos)
     local x = math.floor(tonumber(pos.x) or DEFAULT_X_POS)
     local y = math.floor(tonumber(pos.y) or DEFAULT_Y_POS)
-    -- if someone accidentally uses 1-based instead of 0-based indexing, fix it
+    -- if someone accidentally uses 0-based instead of 1-based indexing, fix it
     if x == 0 then x = 1 end
     if y == 0 then y = 1 end
     return {x=x, y=y}
@@ -220,9 +227,7 @@ local function load_widget(name, widget_class)
     }
     if not overlay_config[name] then overlay_config[name] = {} end
     local config = overlay_config[name]
-    if not config.pos then
-        config.pos = sanitize_pos(widget.default_pos)
-    end
+    config.pos = sanitize_pos(config.pos or widget.default_pos)
     widget.frame = make_frame(config.pos, widget.frame)
     if config.enabled then
         do_enable(name, true, true)
@@ -250,7 +255,7 @@ local function load_widgets(env_prefix, provider, env_fn)
     end
 end
 
--- called directly from cpp on init
+-- called directly from cpp on plugin enable
 function reload()
     reset()
 
@@ -284,14 +289,15 @@ end
 local function dump_widget_config(name, widget)
     local pos = overlay_config[name].pos
     print(('widget %s is positioned at x=%d, y=%d'):format(name, pos.x, pos.y))
-    if #widget.viewscreens > 0 then
+    local viewscreens = normalize_list(widget.viewscreens)
+    if #viewscreens > 0 then
         print('  it will be attached to the following viewscreens:')
-        for _,vs in ipairs(widget.viewscreens) do
-            print(('    %s'):format(vs))
+        for _,vs in ipairs(viewscreens) do
+            print(('    %s'):format(simplify_viewscreen_name(vs)))
         end
     end
     if widget.hotspot then
-        print('  on all screens it will act as a hotspot')
+        print('  it will act as a hotspot on all screens')
     end
 end
 
@@ -332,8 +338,7 @@ local function do_trigger(args)
                         :format(active_triggered_widget))
         return
     end
-    local target = args[1]
-    do_by_names_or_numbers(target, function(name, db_entry)
+    do_by_names_or_numbers(args[1], function(name, db_entry)
         local widget = db_entry.widget
         if widget.overlay_trigger then
             active_triggered_screen = widget:overlay_trigger()
@@ -376,16 +381,23 @@ local function detect_frame_change(widget, fn)
     return ret
 end
 
+local function get_next_onupdate_timestamp(now_ms, widget)
+    local freq_s = widget.overlay_onupdate_max_freq_seconds
+    if freq_s == 0 then
+        return now_ms
+    end
+    local freq_ms = math.floor(freq_s * 1000)
+    local jitter = math.random(0, freq_ms // 8) -- up to ~12% jitter
+    return now_ms + freq_ms - jitter
+end
+
 -- reduces the next call by a small random amount to introduce jitter into the
 -- widget processing timings
 local function do_update(name, db_entry, now_ms, vs)
     if db_entry.next_update_ms > now_ms then return end
     local w = db_entry.widget
-    local freq_ms = w.overlay_onupdate_max_freq_seconds * 1000
-    local jitter = math.random(0, freq_ms // 8) -- up to ~12% jitter
-    db_entry.next_update_ms = now_ms + freq_ms - jitter
-    if detect_frame_change(w,
-            function() return w:overlay_onupdate(vs) end) then
+    db_entry.next_update_ms = get_next_onupdate_timestamp(now_ms, w)
+    if detect_frame_change(w, function() return w:overlay_onupdate(vs) end) then
         active_triggered_screen = w:overlay_trigger()
         if active_triggered_screen then
             active_triggered_widget = name
@@ -402,6 +414,8 @@ function update_hotspot_widgets()
     end
 end
 
+-- not subject to trigger lock since these widgets are already filtered by
+-- viewscreen
 function update_viewscreen_widgets(vs_name, vs)
     local vs_widgets = active_viewscreen_widgets[vs_name]
     if not vs_widgets then return end
@@ -415,9 +429,8 @@ function feed_viewscreen_widgets(vs_name, keys)
     local vs_widgets = active_viewscreen_widgets[vs_name]
     if not vs_widgets then return false end
     for _,db_entry in pairs(vs_widgets) do
-        local widget = db_entry.widget
-        if detect_frame_change(widget,
-                function() return widget:onInput(keys) end) then
+        local w = db_entry.widget
+        if detect_frame_change(w, function() return w:onInput(keys) end) then
             return true
         end
     end
@@ -429,8 +442,8 @@ function render_viewscreen_widgets(vs_name)
     if not vs_widgets then return false end
     local dc = gui.Painter.new()
     for _,db_entry in pairs(vs_widgets) do
-        local widget = db_entry.widget
-        detect_frame_change(widget, function() widget:render(dc) end)
+        local w = db_entry.widget
+        detect_frame_change(w, function() w:render(dc) end)
     end
 end
 
@@ -449,9 +462,9 @@ end
 OverlayWidget = defclass(OverlayWidget, widgets.Widget)
 OverlayWidget.ATTRS{
     name=DEFAULT_NIL, -- this is set by the framework to the widget name
-    default_pos={x=DEFAULT_X_POS, y=DEFAULT_Y_POS}, -- initial widget screen pos, 1-based
-    hotspot=false, -- whether to call overlay_onupdate for all screens
-    viewscreens={}, -- override with list of viewscrens to interpose
+    default_pos={x=DEFAULT_X_POS, y=DEFAULT_Y_POS}, -- 1-based widget screen pos
+    hotspot=false, -- whether to call overlay_onupdate on all screens
+    viewscreens={}, -- override with associated viewscreen or list of viewscrens
     overlay_onupdate_max_freq_seconds=5, -- throttle calls to overlay_onupdate
 }
 
@@ -462,8 +475,8 @@ function OverlayWidget:init()
     end
 
     -- set defaults for frame. the widget is expected to keep these up to date
-    -- if display contents change so the widget position can shift if the frame
-    -- is relative to the right or bottom edges.
+    -- when display contents change so the widget position can shift if the
+    -- frame is relative to the right or bottom edges.
     self.frame = self.frame or {}
     self.frame.w = self.frame.w or 5
     self.frame.h = self.frame.h or 1

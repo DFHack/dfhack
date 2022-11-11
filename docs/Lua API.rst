@@ -3898,6 +3898,8 @@ gui.widgets
 
 This module implements some basic widgets based on the View infrastructure.
 
+.. _widget:
+
 Widget class
 ------------
 

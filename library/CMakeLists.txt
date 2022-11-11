@@ -82,11 +82,17 @@ set(MAIN_SOURCES
     RemoteTools.cpp
 )
 
+macro(dfhack_test name files)
+    message("dfhack_test files: ${files}")
+    add_executable(${name} test.cpp ${files})
+    target_link_libraries(${name} dfhack gtest)
+    add_test(NAME ${name} COMMAND ${name})
+endmacro()
+
 if(BUILD_TESTING)
-    # TODO Make a function or macro for this
-    add_executable(MiscUtils.test MiscUtils.test.cpp)
-    target_link_libraries(MiscUtils.test dfhack)
-    add_test(NAME MiscUtils.test COMMAND MiscUtils.test)
+    file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false *.test.cpp)
+    dfhack_test(test-all ${TEST_SOURCES})
+    dfhack_test(test-MiscUtils MiscUtils.test.cpp)
 
     # How to get `test` to ensure everything is up to date before running
     # tests? This add_dependencies() fails with:

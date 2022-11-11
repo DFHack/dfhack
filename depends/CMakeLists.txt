@@ -3,6 +3,9 @@ add_subdirectory(lodepng)
 add_subdirectory(lua)
 add_subdirectory(md5)
 add_subdirectory(protobuf)
+if(BUILD_TESTING)
+    add_subdirectory(googletest)
+endif()
 
 # Don't build tinyxml if it's being externally linked against.
 if(NOT TinyXML_FOUND)

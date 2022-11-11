@@ -1244,6 +1244,7 @@ function List:onRenderBody(dc)
 end
 
 function List:getIdxUnderMouse()
+    if self.scrollbar:getMousePos() then return end
     local _,mouse_y = self:getMousePos()
     if mouse_y and #self.choices > 0 and
             mouse_y < (#self.choices-self.page_top+1) * self.row_height then

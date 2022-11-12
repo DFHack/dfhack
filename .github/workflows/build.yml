@@ -100,12 +100,15 @@ jobs:
       id: run_tests
       run: |
         export TERM=dumb
-        status=0
-        script -qe -c "python ci/run-tests.py --headless --keep-status \"$DF_FOLDER\"" || status=$((status + 1))
-        python ci/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt" || status=$((status + 2))
-        mkdir -p artifacts
-        cp "$DF_FOLDER"/test*.json "$DF_FOLDER"/*.log artifacts || status=$((status + 4))
-        exit $status
+        if build-ci/library/test-all; then
+          status=0
+          script -qe -c "python ci/run-tests.py --headless --keep-status \"$DF_FOLDER\"" || status=$((status + 1))
+          python ci/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt" || status=$((status + 2))
+          mkdir -p artifacts
+          cp "$DF_FOLDER"/test*.json "$DF_FOLDER"/*.log artifacts || status=$((status + 4))
+          exit $status
+        fi
+        exit 1
     - name: Upload test artifacts
       uses: actions/upload-artifact@v1
       if: (success() || failure()) && steps.run_tests.outcome != 'skipped'

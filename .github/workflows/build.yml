@@ -96,19 +96,20 @@ jobs:
       run: |
         ninja -C build-ci install
         ccache --show-stats
-    - name: Run tests
-      id: run_tests
+    - name: Run unit tests
+      id: run_tests1
+      run: |
+        exit build-ci/library/tests/test-library
+    - name: Run lua tests
+      id: run_tests2
       run: |
         export TERM=dumb
-        if build-ci/library/tests/test-library; then
-          status=0
-          script -qe -c "python ci/run-tests.py --headless --keep-status \"$DF_FOLDER\"" || status=$((status + 1))
-          python ci/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt" || status=$((status + 2))
-          mkdir -p artifacts
-          cp "$DF_FOLDER"/test*.json "$DF_FOLDER"/*.log artifacts || status=$((status + 4))
-          exit $status
-        fi
-        exit 1
+        status=0
+        script -qe -c "python ci/run-tests.py --headless --keep-status \"$DF_FOLDER\"" || status=$((status + 1))
+        python ci/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt" || status=$((status + 2))
+        mkdir -p artifacts
+        cp "$DF_FOLDER"/test*.json "$DF_FOLDER"/*.log artifacts || status=$((status + 4))
+        exit $status
     - name: Upload test artifacts
       uses: actions/upload-artifact@v1
       if: (success() || failure()) && steps.run_tests.outcome != 'skipped'

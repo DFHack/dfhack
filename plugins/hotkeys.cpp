@@ -99,7 +99,9 @@ static void find_active_keybindings(df::viewscreen *screen, bool filtermenu) {
 
                     auto list = Core::getInstance().ListKeyBindings(sym);
                     for (auto invoke_cmd = list.begin(); invoke_cmd != list.end(); invoke_cmd++) {
-                        if (invoke_cmd->find(":") == string::npos) {
+                        string::size_type colon_pos = invoke_cmd->find(":");
+                        // colons at location 0 are for commands like ":lua"
+                        if (colon_pos == string::npos || colon_pos == 0) {
                             add_binding_if_valid(sym, *invoke_cmd, screen, filtermenu);
                         }
                         else {

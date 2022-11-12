@@ -414,6 +414,15 @@ else()
     set(DFHACK_TINYXML "dfhack-tinyxml")
 endif()
 
+if(BUILD_TESTING)
+    message("BUILD TESTS: Core, Scripts")
+    set(BUILD_SCRIPT_TESTS ON FORCE)
+    set(BUILD_CORE_TESTS ON FORCE)
+endif()
+
+if(BUILD_CORE_TESTS)
+    include_directories(depends/googletest/googletest/include)
+endif()
 include_directories(depends/lodepng)
 include_directories(depends/tthread)
 include_directories(${ZLIB_INCLUDE_DIRS})
@@ -421,42 +430,39 @@ include_directories(depends/clsocket/src)
 include_directories(depends/xlsxio/include)
 add_subdirectory(depends)
 
-find_package(Git REQUIRED)
-if(NOT GIT_FOUND)
-    message(SEND_ERROR "could not find git")
-endif()
 
 # Testing with CTest
-include(CTest)
+if(BUILD_TESTING OR BUILD_CORE_TESTS)
+    message("Including CTest")
+    include(CTest)
+endif()
 
 include(CMakeDependentOption)
 cmake_dependent_option(
-        BUILD_TEST_SCRIPTS "Install integration tests in hack/scripts/test" OFF
+        BUILD_SCRIPT_TESTS "Install integration tests in hack/scripts/test" OFF
         "BUILD_TESTING" OFF)
 mark_as_advanced(FORCE BUILD_TESTS)
-
 # Handle deprecated BUILD_TESTS option
-option(BUILD_TESTS "Deprecated option; please use BUILD_TEST_SCRIPTS=ON" OFF)
-if(BUILD_TESTING AND BUILD_TESTS)
-    set(BUILD_TEST_SCRIPTS ON FORCE)
-endif()
+option(BUILD_TESTS "Deprecated option; please use BUILD_SCRIPT_TESTS=ON" OFF)
 
-if(BUILD_TESTING)
-    include_directories(depends/googletest/googletest/include)
-    if(BUILD_TEST_SCRIPTS)
-        if(EXISTS "${dfhack_SOURCE_DIR}/test/scripts")
-            message(SEND_ERROR "test/scripts must not exist in the dfhack repo since it would conflict with the tests installed from the scripts repo.")
-        endif()
-        install(DIRECTORY ${dfhack_SOURCE_DIR}/test
-                DESTINATION ${DFHACK_DATA_DESTINATION}/scripts)
-        install(FILES ci/test.lua DESTINATION ${DFHACK_DATA_DESTINATION}/scripts)
+if(BUILD_TESTING OR BUILD_SCRIPT_TESTS)
+    if(EXISTS "${dfhack_SOURCE_DIR}/test/scripts")
+        message(SEND_ERROR "test/scripts must not exist in the dfhack repo since it would conflict with the tests installed from the scripts repo.")
     endif()
+    install(DIRECTORY ${dfhack_SOURCE_DIR}/test
+            DESTINATION ${DFHACK_DATA_DESTINATION}/scripts)
+    install(FILES ci/test.lua DESTINATION ${DFHACK_DATA_DESTINATION}/scripts)
 else()
     add_custom_target(test
-            COMMENT "Nothing to do: CMake option BUILD_TESTS is OFF"
+            COMMENT "Nothing to do: CMake option BUILD_TESTING is OFF"
             # Portable NOOP; need to put something here or the comment isn't displayed
             COMMAND cd
             )
+endif()
+
+find_package(Git REQUIRED)
+if(NOT GIT_FOUND)
+    message(SEND_ERROR "could not find git")
 endif()
 
 # build the lib itself

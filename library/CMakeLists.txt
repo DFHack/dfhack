@@ -90,7 +90,7 @@ macro(dfhack_test name files)
     set_target_properties(${name} PROPERTIES COMPILE_FLAGS "-Wno-sign-compare")
 endmacro()
 
-if(BUILD_TESTING)
+if(BUILD_CORE_TESTS)
     file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false *.test.cpp)
     dfhack_test(test-all ${TEST_SOURCES})
     dfhack_test(test-MiscUtils MiscUtils.test.cpp)

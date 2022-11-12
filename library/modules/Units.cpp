@@ -98,6 +98,23 @@ df::unit *Units::getUnit (const int32_t index)
     return vector_get(world->units.all, index);
 }
 
+bool Units::isUnitInBox(df::unit* u,
+             int16_t x1, int16_t y1, int16_t z1,
+             int16_t x2, int16_t y2, int16_t z2) {
+
+    if (x1 > x2) swap(x1, x2);
+    if (y1 > y2) swap(y1, y2);
+    if (z1 > z2) swap(z1, z2);
+    if (u->pos.x >= x1 && u->pos.x <= x2) {
+        if (u->pos.y >= y1 && u->pos.y <= y2) {
+            if (u->pos.z >= z1 && u->pos.z <= z2) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 // returns index of creature actually read or -1 if no creature can be found
 bool Units::getUnitsInBox (std::vector<df::unit*> &units,
     int16_t x1, int16_t y1, int16_t z1,
@@ -106,22 +123,12 @@ bool Units::getUnitsInBox (std::vector<df::unit*> &units,
     if (!world)
         return false;
 
-    if (x1 > x2) swap(x1, x2);
-    if (y1 > y2) swap(y1, y2);
-    if (z1 > z2) swap(z1, z2);
-
     units.clear();
     for (df::unit *u : world->units.all)
     {
-        if (u->pos.x >= x1 && u->pos.x <= x2)
+        if (isUnitInBox(u, x1, y1, z1, x2, y2, z2))
         {
-            if (u->pos.y >= y1 && u->pos.y <= y2)
-            {
-                if (u->pos.z >= z1 && u->pos.z <= z2)
-                {
-                    units.push_back(u);
-                }
-            }
+            units.push_back(u);
         }
     }
     return true;

@@ -1559,6 +1559,7 @@ static const luaL_Reg dfhack_job_funcs[] = {
 /***** Units module *****/
 
 static const LuaWrapper::FunctionReg dfhack_units_module[] = {
+    WRAPM(Units, isUnitInBox),
     WRAPM(Units, teleport),
     WRAPM(Units, getGeneralRef),
     WRAPM(Units, getSpecificRef),
@@ -1716,6 +1717,8 @@ static int units_getUnitsInBox(lua_State *state)
     {
         luaL_checktype(state, 7, LUA_TFUNCTION);
         units.erase(std::remove_if(units.begin(), units.end(), [&state](df::unit *unit) -> bool {
+            // todo: merging this filter into the base function would be welcomed by plugins
+            //  (it would also be faster, and less obfuscated than this [ie. erase(remove_if)])
             lua_dup(state); // copy function
             Lua::PushDFObject(state, unit);
             lua_call(state, 1, 1);

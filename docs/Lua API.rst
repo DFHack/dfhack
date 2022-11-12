@@ -1192,6 +1192,10 @@ Units module
 
   Returns true *x,y,z* of the unit, or *nil* if invalid; may be not equal to unit.pos if caged.
 
+* ``dfhack.units.isUnitInBox(unit,x1,y1,z1,x2,y2,z2)``
+
+  Returns true if the unit is within the specified coordinates.
+
 * ``dfhack.units.getUnitsInBox(x1,y1,z1,x2,y2,z2[,filter])``
 
   Returns a table of all units within the specified coordinates. If the ``filter``

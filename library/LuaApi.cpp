@@ -68,6 +68,7 @@ distribution.
 
 #include "df/activity_entry.h"
 #include "df/activity_event.h"
+#include "df/enabler.h"
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/building.h"
@@ -78,9 +79,6 @@ distribution.
 #include "df/identity.h"
 #include "df/nemesis_record.h"
 #include "df/historical_figure.h"
-#include "df/historical_entity.h"
-#include "df/entity_position.h"
-#include "df/entity_position_assignment.h"
 #include "df/histfig_entity_link_positionst.h"
 #include "df/plant_raw.h"
 #include "df/creature_raw.h"
@@ -95,7 +93,6 @@ distribution.
 #include "df/unit_misc_trait.h"
 #include "df/proj_itemst.h"
 #include "df/itemdef.h"
-#include "df/enabler.h"
 #include "df/feature_init.h"
 #include "df/plant.h"
 #include "df/specific_ref.h"
@@ -116,68 +113,6 @@ using Random::PerlinNoise2D;
 using Random::PerlinNoise3D;
 
 void dfhack_printerr(lua_State *S, const std::string &str);
-
-void Lua::Push(lua_State *state, const Units::NoblePosition &pos)
-{
-    lua_createtable(state, 0, 3);
-    Lua::PushDFObject(state, pos.entity);
-    lua_setfield(state, -2, "entity");
-    Lua::PushDFObject(state, pos.assignment);
-    lua_setfield(state, -2, "assignment");
-    Lua::PushDFObject(state, pos.position);
-    lua_setfield(state, -2, "position");
-}
-
-void Lua::Push(lua_State *state, df::coord pos)
-{
-    lua_createtable(state, 0, 3);
-    lua_pushinteger(state, pos.x);
-    lua_setfield(state, -2, "x");
-    lua_pushinteger(state, pos.y);
-    lua_setfield(state, -2, "y");
-    lua_pushinteger(state, pos.z);
-    lua_setfield(state, -2, "z");
-}
-
-void Lua::Push(lua_State *state, df::coord2d pos)
-{
-    lua_createtable(state, 0, 2);
-    lua_pushinteger(state, pos.x);
-    lua_setfield(state, -2, "x");
-    lua_pushinteger(state, pos.y);
-    lua_setfield(state, -2, "y");
-}
-
-int Lua::PushPosXYZ(lua_State *state, df::coord pos)
-{
-    if (!pos.isValid())
-    {
-        lua_pushnil(state);
-        return 1;
-    }
-    else
-    {
-        lua_pushinteger(state, pos.x);
-        lua_pushinteger(state, pos.y);
-        lua_pushinteger(state, pos.z);
-        return 3;
-    }
-}
-
-int Lua::PushPosXY(lua_State *state, df::coord2d pos)
-{
-    if (!pos.isValid())
-    {
-        lua_pushnil(state);
-        return 1;
-    }
-    else
-    {
-        lua_pushinteger(state, pos.x);
-        lua_pushinteger(state, pos.y);
-        return 2;
-    }
-}
 
 static df::coord2d CheckCoordXY(lua_State *state, int base, bool vararg = false)
 {
@@ -1359,6 +1294,38 @@ static void OpenRandom(lua_State *state)
     lua_pop(state, 1);
 }
 
+
+/*********************************
+* Commandline history repository *
+**********************************/
+
+static std::map<std::string, CommandHistory> commandHistories;
+
+static CommandHistory * ensureCommandHistory(std::string id,
+                                             std::string src_file) {
+    if (!commandHistories.count(id)) {
+        commandHistories[id].load(src_file.c_str());
+    }
+    return &commandHistories[id];
+}
+
+static int getCommandHistory(lua_State *state)
+{
+    std::string id = lua_tostring(state, 1);
+    std::string src_file = lua_tostring(state, 2);
+    std::vector<std::string> entries;
+    ensureCommandHistory(id, src_file)->getEntries(entries);
+    Lua::PushVector(state, entries);
+    return 1;
+}
+
+static void addCommandToHistory(std::string id, std::string src_file,
+                                std::string command) {
+    CommandHistory *history = ensureCommandHistory(id, src_file);
+    history->add(command);
+    history->save(src_file.c_str());
+}
+
 /************************
  * Wrappers for C++ API *
  ************************/
@@ -1450,6 +1417,12 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP_VERSION_FUNC(gitXmlMatch, git_xml_match),
     WRAP_VERSION_FUNC(isRelease, is_release),
     WRAP_VERSION_FUNC(isPrerelease, is_prerelease),
+    WRAP(addCommandToHistory),
+    { NULL, NULL }
+};
+
+static const luaL_Reg dfhack_funcs[] = {
+    { "getCommandHistory", getCommandHistory },
     { NULL, NULL }
 };
 
@@ -1472,6 +1445,16 @@ static int gui_getDwarfmodeViewDims(lua_State *state)
     Lua::TableInsert(state, "menu_on", dims.menu_on);
     Lua::TableInsert(state, "area_on", dims.area_on);
     Lua::TableInsert(state, "menu_forced", dims.menu_forced);
+    return 1;
+}
+
+static int gui_getMousePos(lua_State *L)
+{
+    auto pos = Gui::getMousePos();
+    if (pos.isValid())
+        Lua::Push(L, pos);
+    else
+        lua_pushnil(L);
     return 1;
 }
 
@@ -1507,6 +1490,7 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
 
 static const luaL_Reg dfhack_gui_funcs[] = {
     { "getDwarfmodeViewDims", gui_getDwarfmodeViewDims },
+    { "getMousePos", gui_getMousePos },
     { NULL, NULL }
 };
 
@@ -2205,6 +2189,7 @@ static const luaL_Reg dfhack_buildings_funcs[] = {
 
 static const LuaWrapper::FunctionReg dfhack_constructions_module[] = {
     WRAPM(Constructions, designateNew),
+    WRAPM(Constructions, insert),
     { NULL, NULL }
 };
 
@@ -2217,8 +2202,16 @@ static int constructions_designateRemove(lua_State *L)
     return 2;
 }
 
+static int constructions_findAtTile(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    Lua::PushDFObject(L, Constructions::findAtTile(pos));
+    return 1;
+}
+
 static const luaL_Reg dfhack_constructions_funcs[] = {
     { "designateRemove", constructions_designateRemove },
+    { "findAtTile", constructions_findAtTile },
     { NULL, NULL }
 };
 
@@ -2234,18 +2227,12 @@ static const LuaWrapper::FunctionReg dfhack_screen_module[] = {
 
 static int screen_getMousePos(lua_State *L)
 {
-    auto pos = Screen::getMousePos();
-    lua_pushinteger(L, pos.x);
-    lua_pushinteger(L, pos.y);
-    return 2;
+    return Lua::PushPosXY(L, Screen::getMousePos());
 }
 
 static int screen_getWindowSize(lua_State *L)
 {
-    auto pos = Screen::getWindowSize();
-    lua_pushinteger(L, pos.x);
-    lua_pushinteger(L, pos.y);
-    return 2;
+    return Lua::PushPosXY(L, Screen::getWindowSize());
 }
 
 static int screen_paintTile(lua_State *L)
@@ -2320,6 +2307,21 @@ static int screen_findGraphicsTile(lua_State *L)
         lua_pushnil(L);
         return 1;
     }
+}
+
+static int screen_hideGuard(lua_State *L) {
+    df::viewscreen *screen = dfhack_lua_viewscreen::get_pointer(L, 1, false);
+    luaL_checktype(L, 2, LUA_TFUNCTION);
+
+    // remove screen from the stack so it doesn't get returned as an output
+    lua_remove(L, 1);
+
+    Screen::Hide hideGuard(screen, Screen::Hide::RESTORE_AT_TOP);
+
+    int nargs = lua_gettop(L) - 1;
+    lua_call(L, nargs, LUA_MULTRET);
+
+    return lua_gettop(L);
 }
 
 namespace {
@@ -2424,6 +2426,7 @@ static const luaL_Reg dfhack_screen_funcs[] = {
     { "paintString", screen_paintString },
     { "fillRect", screen_fillRect },
     { "findGraphicsTile", screen_findGraphicsTile },
+    CWRAP(hideGuard, screen_hideGuard),
     CWRAP(show, screen_show),
     CWRAP(dismiss, screen_dismiss),
     CWRAP(isDismissed, screen_isDismissed),
@@ -3023,6 +3026,99 @@ static int internal_findScript(lua_State *L)
     return 1;
 }
 
+static int internal_listPlugins(lua_State *L)
+{
+    auto plugins = Core::getInstance().getPluginManager();
+
+    int i = 1;
+    lua_newtable(L);
+    for (auto it = plugins->begin(); it != plugins->end(); ++it)
+    {
+        lua_pushinteger(L, i++);
+        lua_pushstring(L, it->first.c_str());
+        lua_settable(L, -3);
+    }
+    return 1;
+}
+
+static int internal_listCommands(lua_State *L)
+{
+    auto plugins = Core::getInstance().getPluginManager();
+
+    const char *name = luaL_checkstring(L, 1);
+
+    auto plugin = plugins->getPluginByName(name);
+    if (!plugin)
+    {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    size_t num_commands = plugin->size();
+    lua_newtable(L);
+    for (size_t i = 0; i < num_commands; ++i)
+    {
+        lua_pushinteger(L, i + 1);
+        lua_pushstring(L, (*plugin)[i].name.c_str());
+        lua_settable(L, -3);
+    }
+    return 1;
+}
+
+static const PluginCommand * getPluginCommand(const char * command)
+{
+    auto plugins = Core::getInstance().getPluginManager();
+    auto plugin = plugins->getPluginByCommand(command);
+    if (!plugin)
+    {
+        return NULL;
+    }
+
+    size_t num_commands = plugin->size();
+    for (size_t i = 0; i < num_commands; ++i)
+    {
+        if ((*plugin)[i].name == command)
+            return &(*plugin)[i];
+    }
+
+    // not found (somehow)
+    return NULL;
+}
+
+static int internal_getCommandHelp(lua_State *L)
+{
+    const PluginCommand *pc = getPluginCommand(luaL_checkstring(L, 1));
+    if (!pc)
+    {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    std::string help = pc->description;
+    if (help.size() && help[help.size()-1] != '.')
+        help += ".";
+    if (pc->usage.size())
+        help += "\n" + pc->usage;
+    lua_pushstring(L, help.c_str());
+    return 1;
+}
+
+static int internal_getCommandDescription(lua_State *L)
+{
+    const PluginCommand *pc = getPluginCommand(luaL_checkstring(L, 1));
+    if (!pc)
+    {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    std::string help = pc->description;
+    if (help.size() && help[help.size()-1] != '.')
+        help += ".";
+    lua_pushstring(L, help.c_str());
+    return 1;
+}
+
 static int internal_threadid(lua_State *L)
 {
     std::stringstream ss;
@@ -3079,6 +3175,7 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "getAddress", internal_getAddress },
     { "setAddress", internal_setAddress },
     { "getVTable", internal_getVTable },
+
     { "adjustOffset", internal_adjustOffset },
     { "getMemRanges", internal_getMemRanges },
     { "patchMemory", internal_patchMemory },
@@ -3094,6 +3191,10 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "removeScriptPath", internal_removeScriptPath },
     { "getScriptPaths", internal_getScriptPaths },
     { "findScript", internal_findScript },
+    { "listPlugins", internal_listPlugins },
+    { "listCommands", internal_listCommands },
+    { "getCommandHelp", internal_getCommandHelp },
+    { "getCommandDescription", internal_getCommandDescription },
     { "threadid", internal_threadid },
     { "md5File", internal_md5file },
     { NULL, NULL }
@@ -3113,6 +3214,7 @@ void OpenDFHackApi(lua_State *state)
     OpenRandom(state);
 
     LuaWrapper::SetFunctionWrappers(state, dfhack_module);
+    luaL_setfuncs(state, dfhack_funcs, 0);
     OpenModule(state, "gui", dfhack_gui_module, dfhack_gui_funcs);
     OpenModule(state, "job", dfhack_job_module, dfhack_job_funcs);
     OpenModule(state, "units", dfhack_units_module, dfhack_units_funcs);

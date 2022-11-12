@@ -104,7 +104,7 @@ function getCursorPos()
 end
 
 function setCursorPos(cursor)
-    df.global.cursor = cursor
+    df.global.cursor = copyall(cursor)
 end
 
 function clearCursorPos()
@@ -443,11 +443,7 @@ MenuOverlay.ATTRS {
     sidebar_mode = DEFAULT_NIL,
 }
 
-function MenuOverlay:computeFrame(parent_rect)
-    return self.df_layout.menu, gui.inset_frame(self.df_layout.menu, self.frame_inset)
-end
-
-function MenuOverlay:onAboutToShow(parent)
+function MenuOverlay:init()
     if not dfhack.isMapLoaded() then
         -- sidebar menus are only valid when a fort map is loaded
         error('A fortress map must be loaded.')
@@ -471,7 +467,13 @@ function MenuOverlay:onAboutToShow(parent)
 
         enterSidebarMode(self.sidebar_mode)
     end
+end
 
+function MenuOverlay:computeFrame(parent_rect)
+    return self.df_layout.menu, gui.inset_frame(self.df_layout.menu, self.frame_inset)
+end
+
+function MenuOverlay:onAboutToShow(parent)
     self:updateLayout()
     if not self.df_layout.menu then
         error("The menu panel of dwarfmode is not visible")
@@ -502,6 +504,55 @@ function MenuOverlay:render(dc)
         MenuOverlay.super.render(self, dc)
     end
 end
+
+-- Framework for managing rendering over the map area. This function is intended
+-- to be called from a subclass's onRenderBody() function.
+--
+-- get_overlay_char_fn takes a coordinate position and an is_cursor boolean and
+-- returns the char to render at that position and, optionally, the foreground
+-- and background colors to use to draw the char. If nothing should be rendered
+-- at that position, the function should return nil. If no foreground color is
+-- specified, it defaults to COLOR_GREEN. If no background color is specified,
+-- it defaults to COLOR_BLACK.
+--
+-- bounds_rect has elements {x1, x2, y1, y2} in global map coordinates (not
+-- screen coordinates). The rect is intersected with the visible map viewport to
+-- get the range over which get_overlay_char_fn is called. If bounds_rect is not
+-- specified, the entire viewport is scanned.
+--
+-- example call from a subclass:
+-- function MyMenuOverlaySubclass:onRenderBody()
+--     local function get_overlay_char(pos)
+--         return safe_index(self.overlay_chars, pos.z, pos.y, pos.x), COLOR_RED
+--     end
+--     self:renderMapOverlay(get_overlay_char, self.overlay_bounds)
+-- end
+function MenuOverlay:renderMapOverlay(get_overlay_char_fn, bounds_rect)
+    local vp = self:getViewport()
+    local rect = gui.ViewRect{rect=vp,
+                              clip_view=bounds_rect and gui.ViewRect{rect=bounds_rect} or nil}
+
+    -- nothing to do if the viewport is completely separate from the bounds_rect
+    if rect:isDefunct() then return end
+
+    local dc = gui.Painter.new(self.df_layout.map)
+    local z = df.global.window_z
+    local cursor = getCursorPos()
+    for y=rect.clip_y1,rect.clip_y2 do
+        for x=rect.clip_x1,rect.clip_x2 do
+            local pos = xyz2pos(x, y, z)
+            local overlay_char, fg_color, bg_color = get_overlay_char_fn(
+                    pos, same_xy(cursor, pos))
+            if not overlay_char then goto continue end
+            local stile = vp:tileToScreen(pos)
+            dc:map(true):seek(stile.x, stile.y):
+                    pen(fg_color or COLOR_GREEN, bg_color or COLOR_BLACK):
+                    char(overlay_char):map(false)
+            ::continue::
+        end
+    end
+end
+
 --fakes a "real" workshop sidebar menu, but on exactly selected workshop
 WorkshopOverlay = defclass(WorkshopOverlay, MenuOverlay)
 WorkshopOverlay.focus_path="WorkshopOverlay"

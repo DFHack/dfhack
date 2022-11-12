@@ -53,46 +53,26 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 
     commands.push_back(
         PluginCommand(
-            "job", "General job query and manipulation.",
-            job_cmd, false,
-            "  job [query]\n"
-            "    Print details of the current job. The job can be\n"
-            "    selected in a workshop, or the unit/jobs screen.\n"
-            "  job list\n"
-            "    Print details of all jobs in the selected workshop.\n"
-            "  job item-material <item-idx> <material[:subtoken]>\n"
-            "    Replace the exact material id in the job item.\n"
-            "  job item-type <item-idx> <type[:subtype]>\n"
-            "    Replace the exact item type id in the job item.\n"
-        )
-    );
+            "job",
+            "Inspect and modify job item properties.",
+            job_cmd));
 
     if (ui_workshop_job_cursor || ui_build_selector) {
         commands.push_back(
             PluginCommand(
-                "job-material", "Alter the material of the selected job.",
-                job_material, job_material_hotkey,
-                "  job-material <inorganic-token>\n"
-                "Intended to be used as a keybinding:\n"
-                "  - In 'q' mode, when a job is highlighted within a workshop\n"
-                "    or furnace, changes the material of the job. Only inorganic\n"
-                "    materials can be used in this mode.\n"
-                "  - In 'b' mode, during selection of building components\n"
-                "    positions the cursor over the first available choice\n"
-                "    with the matching material.\n"
-            )
-        );
+                "job-material",
+                "Alter the material of the selected job or building.",
+                job_material,
+                job_material_hotkey));
     }
 
     if (ui_workshop_job_cursor && job_next_id) {
         commands.push_back(
             PluginCommand(
-                "job-duplicate", "Duplicate the selected job in a workshop.",
-                job_duplicate, Gui::workshop_job_hotkey,
-                "  - In 'q' mode, when a job is highlighted within a workshop\n"
-                "    or furnace building, instantly duplicates the job.\n"
-            )
-        );
+                "job-duplicate",
+                "Duplicate the selected job in a workshop.",
+                job_duplicate,
+                Gui::workshop_job_hotkey));
     }
 
     return CR_OK;

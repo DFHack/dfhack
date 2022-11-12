@@ -1,7 +1,7 @@
 # main project file. use it from a build sub-folder, see COMPILE for details
 
 ## some generic CMake magic
-cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
 cmake_policy(SET CMP0048 NEW)
 project(dfhack)
 
@@ -192,7 +192,7 @@ endif()
 
 # set up versioning.
 set(DF_VERSION "0.47.05")
-set(DFHACK_RELEASE "r4")
+set(DFHACK_RELEASE "r7")
 set(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
@@ -206,11 +206,9 @@ set(DFHACK_BUILD_ID "" CACHE STRING "Build ID (should be specified on command li
 if(UNIX)
     # put the lib into DF/hack
     set(DFHACK_LIBRARY_DESTINATION hack)
-    set(DFHACK_EGGY_DESTINATION libs)
 else()
     # windows is crap, therefore we can't do nice things with it. leave the libs on a nasty pile...
     set(DFHACK_LIBRARY_DESTINATION .)
-    set(DFHACK_EGGY_DESTINATION .)
 endif()
 
 # external tools will be installed here:
@@ -444,43 +442,67 @@ endif()
 add_subdirectory(data)
 add_subdirectory(scripts)
 
-find_package(Sphinx QUIET)
 if(BUILD_DOCS)
+    find_package(Python3)
+    find_package(Sphinx)
+
     if(NOT SPHINX_FOUND)
         message(SEND_ERROR "Sphinx not found but BUILD_DOCS enabled")
     endif()
 
-    file(GLOB SPHINX_DEPS
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/*.rst"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/guides/*.rst"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/changelog.txt"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/gen_changelog.py"
+    file(GLOB SPHINX_GLOB_DEPS
+        LIST_DIRECTORIES false
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/images/*.png"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/styles/*"
-        "${CMAKE_CURRENT_SOURCE_DIR}/conf.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/scripts/about.txt"
-        "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/about.txt"
+        "${CMAKE_CURRENT_SOURCE_DIR}/data/init/*init"
     )
-    file(GLOB_RECURSE SPHINX_SCRIPT_DEPS
-        "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.lua"
-        "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.rb"
+    file(GLOB_RECURSE SPHINX_GLOB_RECURSE_DEPS
+        "${CMAKE_CURRENT_SOURCE_DIR}/*.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/changelog.txt"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/*py"
     )
-    set(SPHINX_DEPS ${SPHINX_DEPS} ${SPHINX_SCRIPT_DEPS}
-        "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.rst"
+    list(FILTER SPHINX_GLOB_RECURSE_DEPS
+        EXCLUDE REGEX "docs/changelogs"
+    )
+    list(FILTER SPHINX_GLOB_RECURSE_DEPS
+        EXCLUDE REGEX "docs/html"
+    )
+    list(FILTER SPHINX_GLOB_RECURSE_DEPS
+        EXCLUDE REGEX "docs/tags"
+    )
+    list(FILTER SPHINX_GLOB_RECURSE_DEPS
+        EXCLUDE REGEX "docs/text"
+    )
+    list(FILTER SPHINX_GLOB_RECURSE_DEPS
+        EXCLUDE REGEX "docs/tools"
+    )
+    set(SPHINX_DEPS ${SPHINX_GLOB_DEPS} ${SPHINX_GLOB_RECURSE_DEPS} ${SPHINX_SCRIPT_DEPS}
         "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
+        "${CMAKE_CURRENT_SOURCE_DIR}/conf.py"
     )
 
     set(SPHINX_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/docs/html/.buildinfo")
-    set_source_files_properties(${SPHINX_OUTPUT} PROPERTIES GENERATED TRUE)
+    set_property(
+        DIRECTORY PROPERTY ADDITIONAL_CLEAN_FILES TRUE
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/changelogs"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/html"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/pdf"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/pseudoxml"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/tags"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/text"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/tools"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/xml"
+        "${CMAKE_BINARY_DIR}/docs/html"
+        "${CMAKE_BINARY_DIR}/docs/pdf"
+        "${CMAKE_BINARY_DIR}/docs/pseudoxml"
+        "${CMAKE_BINARY_DIR}/docs/text"
+        "${CMAKE_BINARY_DIR}/docs/xml"
+    )
     add_custom_command(OUTPUT ${SPHINX_OUTPUT}
-        COMMAND ${SPHINX_EXECUTABLE}
-            -a -E -q -b html
-            "${CMAKE_CURRENT_SOURCE_DIR}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/docs/html"
-            -w "${CMAKE_CURRENT_SOURCE_DIR}/docs/_sphinx-warnings.txt"
-            -j 2
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/docs/build.py"
+            html text --sphinx="${SPHINX_EXECUTABLE}" -- -q
         DEPENDS ${SPHINX_DEPS}
-        COMMENT "Building HTML documentation with Sphinx"
+        COMMENT "Building documentation with Sphinx"
     )
 
     add_custom_target(dfhack_docs ALL
@@ -492,8 +514,12 @@ if(BUILD_DOCS)
         COMMAND ${CMAKE_COMMAND} -E touch ${SPHINX_OUTPUT})
 
     install(DIRECTORY ${dfhack_SOURCE_DIR}/docs/html/
+        DESTINATION ${DFHACK_USERDOC_DESTINATION}/docs
+        FILES_MATCHING PATTERN "*"
+                       PATTERN html/_sources EXCLUDE)
+    install(DIRECTORY ${dfhack_SOURCE_DIR}/docs/text/
         DESTINATION ${DFHACK_USERDOC_DESTINATION}/docs)
-    install(FILES docs/_auto/news.rst docs/_auto/news-dev.rst DESTINATION ${DFHACK_USERDOC_DESTINATION})
+    install(FILES docs/changelogs/news.rst docs/changelogs/news-dev.rst DESTINATION ${DFHACK_USERDOC_DESTINATION})
     install(FILES "README.html" DESTINATION "${DFHACK_DATA_DESTINATION}")
 endif()
 

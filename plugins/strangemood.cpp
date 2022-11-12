@@ -153,145 +153,40 @@ void selectWord (const df::language_word_table &table, int32_t &word, df::part_o
     }
 }
 
-void generateName(df::language_name &output, int language, df::language_name_type mode, const df::language_word_table &table1, const df::language_word_table &table2)
+void generateName(df::language_name &output, int language, const df::language_word_table &table1, const df::language_word_table &table2)
 {
     for (int i = 0; i < 100; i++)
     {
-        if (mode != 8 && mode != 9)
-        {
-            output = df::language_name();
-            if (language == -1)
-                language = rng.df_trandom(world->raws.language.translations.size());
-            output.type = mode;
-            output.language = language;
-        }
+        output = df::language_name();
+        if (language == -1)
+            language = rng.df_trandom(world->raws.language.translations.size());
+        output.type = language_name_type::Artifact;
+        output.language = language;
         output.has_name = 1;
         if (output.language == -1)
             output.language = rng.df_trandom(world->raws.language.translations.size());
         int r, r2, r3;
-        switch (mode)
+        r = rng.df_trandom(3);
+        if (r == 0 || r == 1)
         {
-        case language_name_type::Figure:
-        case language_name_type::FigureNoFirst:
-        case language_name_type::FigureFirstOnly:
-            if (mode != 9)
+            if (rng.df_trandom(2))
             {
-                int32_t word; df::part_of_speech part;
-                output.first_name.clear();
-                selectWord(table1, word, part, 2);
-                if (word >= 0 && size_t(word) < world->raws.language.words.size())
-                    output.first_name = *world->raws.language.translations[language]->words[word];
+                selectWord(table2, output.words[0], output.parts_of_speech[0], 0);
+                selectWord(table1, output.words[1], output.parts_of_speech[1], 1);
             }
-            if (mode != 10)
+            else
             {
-        case language_name_type::Site:
-        case language_name_type::Monument:
-                if (rng.df_trandom(2))
-                {
-                    selectWord(table2, output.words[0], output.parts_of_speech[0], 0);
-                    selectWord(table1, output.words[1], output.parts_of_speech[1], 1);
-                }
-                else
-                {
-                    selectWord(table1, output.words[0], output.parts_of_speech[0], 0);
-                    selectWord(table2, output.words[1], output.parts_of_speech[1], 1);
-                }
+                selectWord(table1, output.words[0], output.parts_of_speech[0], 0);
+                selectWord(table2, output.words[1], output.parts_of_speech[1], 1);
             }
-            break;
-
-        case language_name_type::Artifact:
-        case language_name_type::Unk13:
-        case language_name_type::River:
-            r = rng.df_trandom(3);
-            if (r == 0 || r == 1)
-            {
-                if (rng.df_trandom(2))
-                {
-                    selectWord(table2, output.words[0], output.parts_of_speech[0], 0);
-                    selectWord(table1, output.words[1], output.parts_of_speech[1], 1);
-                }
-                else
-                {
-                    selectWord(table1, output.words[0], output.parts_of_speech[0], 0);
-                    selectWord(table2, output.words[1], output.parts_of_speech[1], 1);
-                }
-            }
-            if (r == 1 || r == 2)
-            {
-        case language_name_type::Squad:
-        case language_name_type::LegendaryFigure:
-        case language_name_type::ArtImage: // this is not a typo either
-                r2 = rng.df_trandom(2);
-                if (r2)
-                    selectWord(table1, output.words[5], output.parts_of_speech[5], 2);
-                else
-                    selectWord(table2, output.words[5], output.parts_of_speech[5], 2);
-                r3 = rng.df_trandom(3);
-                if (rng.df_trandom(50))
-                    r3 = rng.df_trandom(2);
-                switch (r3)
-                {
-                case 0:
-                case 2:
-                    if (r3 == 2)
-                        r2 = rng.df_trandom(2);
-                    if (r2)
-                        selectWord(table2, output.words[6], output.parts_of_speech[6], 5);
-                    else
-                        selectWord(table1, output.words[6], output.parts_of_speech[6], 5);
-                    if (r3 == 0)
-                        break;
-                    r2 = -r2;
-                case 1:
-                    if (r2)
-                        selectWord(table1, output.words[2], output.parts_of_speech[2], 3);
-                    else
-                        selectWord(table2, output.words[2], output.parts_of_speech[2], 3);
-                    if (!(rng.df_trandom(100)))
-                        selectWord(table1, output.words[3], output.parts_of_speech[3], 3);
-                    break;
-                }
-            }
-            if (rng.df_trandom(100))
-            {
-                if (rng.df_trandom(2))
-                    selectWord(table1, output.words[4], output.parts_of_speech[4], 4);
-                else
-                    selectWord(table2, output.words[4], output.parts_of_speech[4], 4);
-            }
-            if ((mode == 3) && (output.parts_of_speech[5] == part_of_speech::Noun) && (output.words[5] != -1) && (world->raws.language.words[output.words[5]]->forms[1].length()))
-                output.parts_of_speech[5] = part_of_speech::NounPlural;
-            break;
-
-        case language_name_type::Civilization:
-        case language_name_type::World:
-        case language_name_type::Region:
-        case language_name_type::AdventuringGroup:
-        case language_name_type::SiteGovernment:
-        case language_name_type::NomadicGroup:
-        case language_name_type::Vessel:
-        case language_name_type::MilitaryUnit:
-        case language_name_type::Religion:
-        case language_name_type::MountainPeak:
-        case language_name_type::Temple:
-        case language_name_type::Keep:
-        case language_name_type::MeadHall:
-        case language_name_type::Unk24:
-        case language_name_type::Unk25:
-        case language_name_type::Unk26:
-        case language_name_type::Market:
-        case language_name_type::Tavern:
-        case language_name_type::War:
-        case language_name_type::Battle:
-        case language_name_type::Siege:
-        case language_name_type::Road:
-        case language_name_type::Wall:
-        case language_name_type::Bridge:
-        case language_name_type::Tunnel:
-        case language_name_type::PretentiousEntityPosition:
-        case language_name_type::Tomb:
-        case language_name_type::OutcastGroup:
-            selectWord(table1, output.words[5], output.parts_of_speech[5], 2);
+        }
+        if (r == 1 || r == 2)
+        {
+            r2 = rng.df_trandom(2);
+            if (r2)
+                selectWord(table1, output.words[5], output.parts_of_speech[5], 2);
+            else
+                selectWord(table2, output.words[5], output.parts_of_speech[5], 2);
             r3 = rng.df_trandom(3);
             if (rng.df_trandom(50))
                 r3 = rng.df_trandom(2);
@@ -299,56 +194,31 @@ void generateName(df::language_name &output, int language, df::language_name_typ
             {
             case 0:
             case 2:
-                selectWord(table2, output.words[6], output.parts_of_speech[6], 5);
+                if (r3 == 2)
+                    r2 = rng.df_trandom(2);
+                if (r2)
+                    selectWord(table2, output.words[6], output.parts_of_speech[6], 5);
+                else
+                    selectWord(table1, output.words[6], output.parts_of_speech[6], 5);
                 if (r3 == 0)
                     break;
+                r2 = -r2;
             case 1:
-                selectWord(table2, output.words[2], output.parts_of_speech[2], 3);
+                if (r2)
+                    selectWord(table1, output.words[2], output.parts_of_speech[2], 3);
+                else
+                    selectWord(table2, output.words[2], output.parts_of_speech[2], 3);
                 if (!(rng.df_trandom(100)))
-                    selectWord(table2, output.words[3], output.parts_of_speech[3], 3);
+                    selectWord(table1, output.words[3], output.parts_of_speech[3], 3);
                 break;
             }
-            if (rng.df_trandom(100))
+        }
+        if (rng.df_trandom(100))
+        {
+            if (rng.df_trandom(2))
+                selectWord(table1, output.words[4], output.parts_of_speech[4], 4);
+            else
                 selectWord(table2, output.words[4], output.parts_of_speech[4], 4);
-            break;
-
-        case language_name_type::Dungeon:
-            r = rng.df_trandom(3);
-            if (r == 0 || r == 1)
-            {
-                selectWord(table2, output.words[0], output.parts_of_speech[0], 0);
-                selectWord(table1, output.words[1], output.parts_of_speech[1], 1);
-            }
-            if (r == 1 || r == 2)
-            {
-                r2 = rng.df_trandom(2);
-                if (r == 2 || r2 == 1)
-                    selectWord(table1, output.words[5], output.parts_of_speech[5], 2);
-                else
-                    selectWord(table2, output.words[5], output.parts_of_speech[5], 2);
-                r3 = rng.df_trandom(3);
-                if (rng.df_trandom(50))
-                    r3 = rng.df_trandom(2);
-                switch (r3)
-                {
-                case 0:
-                case 2:
-                    selectWord(table1, output.words[6], output.parts_of_speech[6], 5);
-                    if (r3 == 0)
-                        break;
-                case 1:
-                    selectWord(table2, output.words[2], output.parts_of_speech[2], 3);
-                    if (!(rng.df_trandom(100)))
-                        selectWord(table2, output.words[3], output.parts_of_speech[3], 3);
-                    break;
-                }
-            }
-            if (rng.df_trandom(100))
-                selectWord(table2, output.words[4], output.parts_of_speech[4], 4);
-            break;
-        default:
-            // not handled yet
-            break;
         }
         if (output.words[2] != -1 && output.words[3] != -1 &&
             world->raws.language.words[output.words[3]]->adj_dist < world->raws.language.words[output.words[2]]->adj_dist)
@@ -1351,10 +1221,10 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
 
     // Generate the artifact's name
     if (type == mood_type::Fell || type == mood_type::Macabre)
-        generateName(unit->status.artifact_name, unit->name.language, language_name_type::Artifact, world->raws.language.word_table[0][2], world->raws.language.word_table[1][2]);
+        generateName(unit->status.artifact_name, unit->name.language, world->raws.language.word_table[0][2], world->raws.language.word_table[1][2]);
     else
     {
-        generateName(unit->status.artifact_name, unit->name.language, language_name_type::Artifact, world->raws.language.word_table[0][1], world->raws.language.word_table[1][1]);
+        generateName(unit->status.artifact_name, unit->name.language, world->raws.language.word_table[0][1], world->raws.language.word_table[1][1]);
         if (!rng.df_trandom(100))
             unit->status.artifact_name = unit->name;
     }
@@ -1364,16 +1234,10 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector<PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("strangemood", "Force a strange mood to happen.", df_strangemood, false,
-        "Options:\n"
-         "  -force         - Ignore standard mood preconditions.\n"
-         "  -unit          - Use the selected unit instead of picking one randomly.\n"
-         "  -type <type>   - Force the mood to be of a specific type.\n"
-         "                   Valid types: fey, secretive, possessed, fell, macabre\n"
-         "  -skill <skill> - Force the mood to use a specific skill.\n"
-         "                   Skill name must be lowercase and without spaces.\n"
-         "                   Example: miner, gemcutter, metalcrafter, bonecarver, mason\n"
-    ));
+    commands.push_back(PluginCommand(
+        "strangemood",
+        "Trigger a strange mood.",
+        df_strangemood));
     rng.init();
 
     return CR_OK;

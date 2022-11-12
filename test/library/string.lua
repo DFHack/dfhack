@@ -67,6 +67,8 @@ function test.wrap()
     expect.eq('hel\nlo\nwor\nld', ('hello world'):wrap(3))
     expect.eq('hel\nloo\nwor\nldo', ('helloo  worldo'):wrap(3))
     expect.eq('', (''):wrap())
+
+    expect.error_match('expected width > 0', function() ('somestr'):wrap(0) end)
 end
 
 function test.escape_pattern()

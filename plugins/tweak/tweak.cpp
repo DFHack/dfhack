@@ -23,7 +23,6 @@
 #include "../uicommon.h"
 #include "df/ui.h"
 #include "df/world.h"
-#include "df/squad.h"
 #include "df/unit.h"
 #include "df/unit_soul.h"
 #include "df/historical_entity.h"
@@ -37,7 +36,6 @@
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_kitchenprefst.h"
 #include "df/viewscreen_layer_unit_actionst.h"
-#include "df/squad_order_trainst.h"
 #include "df/ui_build_selector.h"
 #include "df/ui_sidebar_menus.h"
 #include "df/building_trapst.h"
@@ -49,11 +47,14 @@
 #include "df/item_glovesst.h"
 #include "df/item_shoesst.h"
 #include "df/item_pantsst.h"
+#include "df/item_drinkst.h"
+#include "df/item_globst.h"
 #include "df/item_liquid_miscst.h"
 #include "df/item_powder_miscst.h"
 #include "df/item_barst.h"
 #include "df/item_threadst.h"
 #include "df/item_clothst.h"
+#include "df/item_sheetst.h"
 #include "df/spatter.h"
 #include "df/layer_object.h"
 #include "df/reaction.h"
@@ -64,16 +65,10 @@
 #include "df/viewscreen_layer_assigntradest.h"
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_layer_militaryst.h"
-#include "df/squad_position.h"
 #include "df/job.h"
 #include "df/general_ref_building_holderst.h"
 #include "df/unit_health_info.h"
-#include "df/activity_entry.h"
-#include "df/activity_event_combat_trainingst.h"
-#include "df/activity_event_individual_skill_drillst.h"
-#include "df/activity_event_skill_demonstrationst.h"
-#include "df/activity_event_sparringst.h"
-//#include "df/building_hivest.h"
+#include "df/caste_body_info.h"
 
 #include <stdlib.h>
 #include <unordered_map>
@@ -101,14 +96,15 @@
 #include "tweaks/kitchen-prefs-empty.h"
 #include "tweaks/max-wheelbarrow.h"
 #include "tweaks/military-assign.h"
-#include "tweaks/pausing-fps-counter.h"
 #include "tweaks/nestbox-color.h"
+#include "tweaks/partial-items.h"
+#include "tweaks/pausing-fps-counter.h"
+#include "tweaks/reaction-gloves.h"
 #include "tweaks/shift-8-scroll.h"
 #include "tweaks/stable-cursor.h"
 #include "tweaks/stone-status-all.h"
 #include "tweaks/title-start-rename.h"
 #include "tweaks/tradereq-pet-gender.h"
-#include "tweaks/reaction-gloves.h"
 
 using std::set;
 using std::vector;
@@ -157,111 +153,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 {
     is_enabled = true; // Allow plugin_onupdate to work (subcommands are enabled individually)
     commands.push_back(PluginCommand(
-        "tweak", "Various tweaks for minor bugs.", tweak, false,
-        "  tweak clear-missing\n"
-        "    Remove the missing status from the selected unit.\n"
-        "  tweak clear-ghostly\n"
-        "    Remove the ghostly status from the selected unit.\n"
-        "    Intended to fix the case where you can't engrave memorials for ghosts.\n"
-        "    Note that this is very dirty and possibly dangerous!\n"
-        "    Most probably does not have the positive effect of a proper burial.\n"
-        "  tweak fixmigrant\n"
-        "    Remove the resident/merchant flag from the selected unit.\n"
-        "    Intended to fix bugged migrants/traders who stay at the\n"
-        "    map edge and don't enter your fort. Only works for\n"
-        "    dwarves (or generally the player's race in modded games).\n"
-        "  tweak makeown\n"
-        "    Force selected unit to become a member of your fort.\n"
-        "    Can be abused to grab caravan merchants and escorts, even if\n"
-        "    they don't belong to the player's race. Foreign sentients\n"
-        "    (humans, elves) can be put to work, but you can't assign rooms\n"
-        "    to them and they don't show up in DwarfTherapist because the\n"
-        "    game treats them like pets.\n"
-        "  tweak stable-cursor [disable]\n"
-        "    Keeps exact position of dwarfmode cursor during exits to main menu.\n"
-        "    E.g. allows switching between t/q/k/d without losing position.\n"
-        /*"  tweak fix-dimensions [disable]\n"
-        "    Fixes subtracting small amount of thread/cloth/liquid from a stack\n"
-        "    by splitting the stack and subtracting from the remaining single item.\n"*/
-        // sort these alphabetically
-        "  tweak adamantine-cloth-wear [disable]\n"
-        "    Stops adamantine clothing from wearing out while being worn (bug 6481).\n"
-        "  tweak advmode-contained [disable]\n"
-        "    Fixes custom reactions with container inputs in advmode. The issue is\n"
-        "    that the screen tries to force you to select the contents separately\n"
-        "    from the container. This forcefully skips child reagents.\n"
-        "  tweak burrow-name-cancel [disable]\n"
-        "    Implements the \"back\" option when renaming a burrow.\n"
-        "  tweak block-labors [disable]\n"
-        "    Prevents labors that can't be used from being toggled.\n"
-        "  tweak cage-butcher [disable]\n"
-        "    Adds an option to butcher units when viewing cages.\n"
-        "  tweak civ-view-agreement\n"
-        "    Fixes overlapping text on the \"view agreement\" screen\n"
-        "  tweak condition-material\n"
-        "    Fixes a crash in the work order contition material list (bug 9905).\n"
-        "  tweak craft-age-wear [disable]\n"
-        "    Makes cloth and leather items wear out at the correct rate (bug 6003).\n"
-        "  tweak do-job-now [disable]\n"
-        "    Adds a job priority toggle to the jobs list.\n"
-        "  tweak embark-profile-name [disable]\n"
-        "    Allows the use of lowercase letters when saving embark profiles\n"
-        "  tweak eggs-fertile [disable]\n"
-        "    Displays a fertile/infertile indicator on nestboxes\n"
-        "  tweak farm-plot-select [disable]\n"
-        "    Adds \"Select all\" and \"Deselect all\" options to farm plot menus\n"
-        "  tweak fast-heat <max-ticks>\n"
-        "    Further improves temperature updates by ensuring that 1 degree of\n"
-        "    item temperature is crossed in no more than specified number of frames\n"
-        "    when updating from the environment temperature. Use 0 to disable.\n"
-        "  tweak fast-trade [disable]\n"
-        "    Makes Shift-Enter in the Move Goods to Depot and Trade screens select\n"
-        "    the current item (fully, in case of a stack), and scroll down one line.\n"
-        "  tweak fps-min [disable]\n"
-        "    Fixes the in-game minimum FPS setting (bug 6277)\n"
-        "  tweak hide-priority [disable]\n"
-        "    Adds an option to hide designation priority indicators\n"
-        "  tweak hotkey-clear [disable] \n"
-        "    Adds an option to clear currently-bound hotkeys\n"
-        "  tweak import-priority-category [disable]\n"
-        "    When meeting with a liaison, makes Shift+Left/Right arrow adjust\n"
-        "    the priority of an entire category of imports.\n"
-        "  tweak kitchen-prefs-all [disable]\n"
-        "    Adds an option to toggle cook/brew for all visible items in\n"
-        "    kitchen preferences\n"
-        "  tweak kitchen-prefs-color [disable]\n"
-        "    Changes color of enabled items to green in kitchen preferences\n"
-        "  tweak kitchen-prefs-empty [disable]\n"
-        "    Fixes a layout issue with empty kitchen tabs (bug 9000)\n"
-        "  tweak max-wheelbarrow [disable]\n"
-        "    Allows assigning more than 3 wheelbarrows to a stockpile\n"
-        "  tweak nestbox-color [disable]\n"
-        "    Makes built nestboxes use the color of their material\n"
-        "  tweak military-color-assigned [disable]\n"
-        "    Color squad candidates already assigned to other squads in brown/green\n"
-        "    to make them stand out more in the list.\n"
-        "  tweak military-stable-assign [disable]\n"
-        "    Preserve list order and cursor position when assigning to squad,\n"
-        "    i.e. stop the rightmost list of the Positions page of the military\n"
-        "    screen from constantly jumping to the top.\n"
-        "  tweak pausing-fps-counter [disable]\n"
-        "    Replace fortress mode FPS counter with one that stops counting \n"
-        "    when paused.\n"
-        "  tweak reaction-gloves [disable]\n"
-        "    Changes custom reactions to produce gloves in sets with correct handedness\n"
-        "  tweak shift-8-scroll [disable]\n"
-        "    Gives Shift+8 (or *) priority when scrolling menus, instead of \n"
-        "    scrolling the map\n"
-        "  tweak stone-status-all [disable]\n"
-        "    Adds an option to toggle the economic status of all stones\n"
-        "  tweak title-start-rename [disable]\n"
-        "    Adds a safe rename option to the title screen \"Start Playing\" menu\n"
-        "  tweak tradereq-pet-gender [disable]\n"
-        "    Displays the gender of pets in the trade request list\n"
-        // sort these alphabetically
-//        "  tweak military-training [disable]\n"
-//        "    Speed up melee squad training, removing inverse dependency on unit count.\n"
-    ));
+        "tweak",
+        "Various tweaks for minor bugs.",
+        tweak));
 
     TWEAK_HOOK("adamantine-cloth-wear", adamantine_cloth_wear_armor_hook, incWearTimer);
     TWEAK_HOOK("adamantine-cloth-wear", adamantine_cloth_wear_helm_hook, incWearTimer);
@@ -329,8 +223,19 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 
     TWEAK_HOOK("nestbox-color", nestbox_color_hook, drawBuilding);
 
+    TWEAK_HOOK("partial-items", partial_items_hook_bar, getItemDescription);
+    TWEAK_HOOK("partial-items", partial_items_hook_drink, getItemDescription);
+    TWEAK_HOOK("partial-items", partial_items_hook_glob, getItemDescription);
+    TWEAK_HOOK("partial-items", partial_items_hook_liquid_misc, getItemDescription);
+    TWEAK_HOOK("partial-items", partial_items_hook_powder_misc, getItemDescription);
+    TWEAK_HOOK("partial-items", partial_items_hook_cloth, getItemDescription);
+    TWEAK_HOOK("partial-items", partial_items_hook_sheet, getItemDescription);
+    TWEAK_HOOK("partial-items", partial_items_hook_thread, getItemDescription);
+
     TWEAK_HOOK("pausing-fps-counter", dwarfmode_pausing_fps_counter_hook, render);
     TWEAK_HOOK("pausing-fps-counter", title_pausing_fps_counter_hook, render);
+
+    TWEAK_HOOK("reaction-gloves", reaction_gloves_hook, produce);
 
     TWEAK_HOOK("shift-8-scroll", shift_8_scroll_hook, feed);
 
@@ -343,8 +248,6 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     TWEAK_HOOK("title-start-rename", title_start_rename_hook, render);
 
     TWEAK_HOOK("tradereq-pet-gender", pet_gender_hook, render);
-
-    TWEAK_HOOK("reaction-gloves", reaction_gloves_hook, produce);
 
     return CR_OK;
 }
@@ -421,339 +324,6 @@ command_result fix_clothing_ownership(color_ostream &out, df::unit* unit)
     out << "ownership for " << fixcount << " clothes fixed" << endl;
     return CR_OK;
 }
-
-static void correct_dimension(df::item_actual *self, int32_t &delta, int32_t dim)
-{
-    // Zero dimension or remainder?
-    if (dim <= 0 || self->stack_size <= 1) return;
-    int rem = delta % dim;
-    if (rem == 0) return;
-    // If destroys, pass through
-    int intv = delta / dim;
-    if (intv >= self->stack_size) return;
-    // Subtract int part
-    delta = rem;
-    self->stack_size -= intv;
-    if (self->stack_size <= 1) return;
-
-    // If kills the item or cannot split, round up.
-    if (!self->flags.bits.in_inventory || !Items::getContainer(self))
-    {
-        delta = dim;
-        return;
-    }
-
-    // Otherwise split the stack
-    color_ostream_proxy out(Core::getInstance().getConsole());
-    out.print("fix-dimensions: splitting stack #%d for delta %d.\n", self->id, delta);
-
-    auto copy = self->splitStack(self->stack_size-1, true);
-    if (copy) copy->categorize(true);
-}
-
-struct dimension_liquid_hook : df::item_liquid_miscst {
-    typedef df::item_liquid_miscst interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(bool, subtractDimension, (int32_t delta))
-    {
-        correct_dimension(this, delta, dimension);
-        return INTERPOSE_NEXT(subtractDimension)(delta);
-    }
-};
-
-IMPLEMENT_VMETHOD_INTERPOSE(dimension_liquid_hook, subtractDimension);
-
-struct dimension_powder_hook : df::item_powder_miscst {
-    typedef df::item_powder_miscst interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(bool, subtractDimension, (int32_t delta))
-    {
-        correct_dimension(this, delta, dimension);
-        return INTERPOSE_NEXT(subtractDimension)(delta);
-    }
-};
-
-IMPLEMENT_VMETHOD_INTERPOSE(dimension_powder_hook, subtractDimension);
-
-struct dimension_bar_hook : df::item_barst {
-    typedef df::item_barst interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(bool, subtractDimension, (int32_t delta))
-    {
-        correct_dimension(this, delta, dimension);
-        return INTERPOSE_NEXT(subtractDimension)(delta);
-    }
-};
-
-IMPLEMENT_VMETHOD_INTERPOSE(dimension_bar_hook, subtractDimension);
-
-struct dimension_thread_hook : df::item_threadst {
-    typedef df::item_threadst interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(bool, subtractDimension, (int32_t delta))
-    {
-        correct_dimension(this, delta, dimension);
-        return INTERPOSE_NEXT(subtractDimension)(delta);
-    }
-};
-
-IMPLEMENT_VMETHOD_INTERPOSE(dimension_thread_hook, subtractDimension);
-
-struct dimension_cloth_hook : df::item_clothst {
-    typedef df::item_clothst interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(bool, subtractDimension, (int32_t delta))
-    {
-        correct_dimension(this, delta, dimension);
-        return INTERPOSE_NEXT(subtractDimension)(delta);
-    }
-};
-
-IMPLEMENT_VMETHOD_INTERPOSE(dimension_cloth_hook, subtractDimension);
-
-/*
-// Unit updates are executed based on an action divisor variable,
-// which is computed from the alive unit count and has range 10-100.
-static int adjust_unit_divisor(int value) {
-    return value*10/DF_GLOBAL_FIELD(ui, unit_action_divisor, 10);
-}
-
-static bool can_spar(df::unit *unit) {
-    return unit->counters2.exhaustion <= 2000 && // actually 4000, but leave a gap
-           (unit->status2.limbs_grasp_count > 0 || unit->status2.limbs_grasp_max == 0) &&
-           (!unit->health || (unit->health->flags.whole&0x7FF) == 0) &&
-           (!unit->job.current_job || unit->job.current_job->job_type != job_type::Rest);
-}
-
-static bool has_spar_inventory(df::unit *unit, df::job_skill skill)
-{
-    using namespace df::enums::job_skill;
-
-    auto type = ENUM_ATTR(job_skill, type, skill);
-
-    if (type == job_skill_class::MilitaryWeapon)
-    {
-        for (size_t i = 0; i < unit->inventory.size(); i++)
-        {
-            auto item = unit->inventory[i];
-            if (item->mode == df::unit_inventory_item::Weapon &&
-                item->item->getMeleeSkill() == skill)
-                return true;
-        }
-
-        return false;
-    }
-
-    switch (skill) {
-        case THROW:
-        case RANGED_COMBAT:
-            return false;
-
-        case SHIELD:
-            for (size_t i = 0; i < unit->inventory.size(); i++)
-            {
-                auto item = unit->inventory[i];
-                if (item->mode == df::unit_inventory_item::Weapon &&
-                    item->item->getType() == item_type::SHIELD)
-                    return true;
-            }
-            return false;
-
-        case ARMOR:
-            for (size_t i = 0; i < unit->inventory.size(); i++)
-            {
-                auto item = unit->inventory[i];
-                if (item->mode == df::unit_inventory_item::Worn &&
-                    item->item->isArmorNotClothing())
-                    return true;
-            }
-            return false;
-
-        default:
-            return true;
-    }
-}
-
-struct military_training_ct_hook : df::activity_event_combat_trainingst {
-    typedef df::activity_event_combat_trainingst interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(void, process, (df::unit *unit))
-    {
-        auto act = df::activity_entry::find(activity_id);
-        int cur_neid = act ? act->next_event_id : 0;
-        int cur_oc = organize_counter;
-
-        INTERPOSE_NEXT(process)(unit);
-
-        // Shorten the time it takes to organize stuff, so that in
-        // reality it remains the same instead of growing proportionally
-        // to the unit count.
-        if (organize_counter > cur_oc && organize_counter > 0)
-            organize_counter = adjust_unit_divisor(organize_counter);
-
-        if (act && act->next_event_id > cur_neid)
-        {
-            // New events were added. Check them.
-            for (size_t i = 0; i < act->events.size(); i++)
-            {
-                auto event = act->events[i];
-                if (event->flags.bits.dismissed || event->event_id < cur_neid)
-                    continue;
-
-                if (auto sp = strict_virtual_cast<df::activity_event_sparringst>(event))
-                {
-                    // Sparring has a problem in that all of its participants decrement
-                    // the countdown variable. Fix this by multiplying it by the member count.
-                    sp->countdown = sp->countdown * sp->participants.units.size();
-                }
-                else if (auto sd = strict_virtual_cast<df::activity_event_skill_demonstrationst>(event))
-                {
-                    // Adjust initial counter values
-                    sd->train_countdown = adjust_unit_divisor(sd->train_countdown);
-                    sd->wait_countdown = adjust_unit_divisor(sd->wait_countdown);
-
-                    // Check if the game selected the most skilled unit as the teacher
-                    auto &units = sd->participants.units;
-                    int maxv = -1, cur_xp = -1, minv = 0;
-                    int best = -1;
-                    size_t spar = 0;
-
-                    for (size_t j = 0; j < units.size(); j++)
-                    {
-                        auto unit = df::unit::find(units[j]);
-                        if (!unit) continue;
-                        int xp = Units::getExperience(unit, sd->skill, true);
-                        if (units[j] == sd->unit_id)
-                            cur_xp = xp;
-                        if (j == 0 || xp < minv)
-                            minv = xp;
-                        if (xp > maxv) {
-                            maxv = xp;
-                            best = j;
-                        }
-                        if (can_spar(unit) && has_spar_inventory(unit, sd->skill))
-                            spar++;
-                    }
-
-#if 0
-                    color_ostream_proxy out(Core::getInstance().getConsole());
-#endif
-
-                    // If the xp gap is low, sometimes replace with sparring
-                    if ((maxv - minv) < 64*15 && spar == units.size() &&
-                        random_int(45) >= 30 + (maxv-minv)/64)
-                    {
-#if 0
-                        out.print("Replacing %s demonstration (xp %d-%d, gap %d) with sparring.\n",
-                                  ENUM_KEY_STR(job_skill, sd->skill).c_str(), minv, maxv, maxv-minv);
-#endif
-
-                        if (auto spar = df::allocate<df::activity_event_sparringst>())
-                        {
-                            spar->event_id = sd->event_id;
-                            spar->activity_id = sd->activity_id;
-                            spar->parent_event_id = sd->parent_event_id;
-                            spar->flags = sd->flags;
-                            spar->participants = sd->participants;
-                            spar->building_id = sd->building_id;
-                            spar->countdown = 300*units.size();
-
-                            delete sd;
-                            act->events[i] = spar;
-
-                            continue;
-                        }
-                    }
-
-                    // If the teacher has less xp than somebody else, switch
-                    if (best >= 0 && maxv > cur_xp)
-                    {
-#if 0
-                        out.print("Replacing %s teacher %d (%d xp) with %d (%d xp); xp gap %d.\n",
-                                  ENUM_KEY_STR(job_skill, sd->skill).c_str(),
-                                  sd->unit_id, cur_xp, units[best], maxv, maxv-minv);
-#endif
-
-                        sd->hist_figure_id = sd->participants.histfigs[best];
-                        sd->unit_id = units[best];
-                    }
-                    else
-                    {
-#if 0
-                        out.print("Not changing %s demonstration (xp %d-%d, gap %d).\n",
-                                  ENUM_KEY_STR(job_skill, sd->skill).c_str(),
-                                  minv, maxv, maxv-minv);
-#endif
-                    }
-                }
-            }
-        }
-    }
-};
-*/
-
-/*
-IMPLEMENT_VMETHOD_INTERPOSE(military_training_ct_hook, process);
-
-struct military_training_sd_hook : df::activity_event_skill_demonstrationst {
-    typedef df::activity_event_skill_demonstrationst interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(void, process, (df::unit *unit))
-    {
-        int cur_oc = organize_counter;
-        int cur_tc = train_countdown;
-
-        INTERPOSE_NEXT(process)(unit);
-
-        // Shorten the counters if they changed
-        if (organize_counter > cur_oc && organize_counter > 0)
-            organize_counter = adjust_unit_divisor(organize_counter);
-        if (train_countdown > cur_tc)
-            train_countdown = adjust_unit_divisor(train_countdown);
-    }
-};
-
-IMPLEMENT_VMETHOD_INTERPOSE(military_training_sd_hook, process);
-
-template<class T>
-bool is_done(T *event, df::unit *unit)
-{
-    return event->flags.bits.dismissed ||
-           binsearch_index(event->participants.units, unit->id) < 0;
-}
-
-struct military_training_sp_hook : df::activity_event_sparringst {
-    typedef df::activity_event_sparringst interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(void, process, (df::unit *unit))
-    {
-        INTERPOSE_NEXT(process)(unit);
-
-        // Since there are no counters to fix, repeat the call
-        int cnt = (DF_GLOBAL_FIELD(ui, unit_action_divisor, 10)+5) / 10;
-        for (int i = 1; i < cnt && !is_done(this, unit); i++)
-            INTERPOSE_NEXT(process)(unit);
-    }
-};
-
-IMPLEMENT_VMETHOD_INTERPOSE(military_training_sp_hook, process);
-
-struct military_training_id_hook : df::activity_event_individual_skill_drillst {
-    typedef df::activity_event_individual_skill_drillst interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(void, process, (df::unit *unit))
-    {
-        INTERPOSE_NEXT(process)(unit);
-
-        // Since there are no counters to fix, repeat the call
-        int cnt = (DF_GLOBAL_FIELD(ui, unit_action_divisor, 10)+5) / 10;
-        for (int i = 1; i < cnt && !is_done(this, unit); i++)
-            INTERPOSE_NEXT(process)(unit);
-    }
-};
-
-IMPLEMENT_VMETHOD_INTERPOSE(military_training_id_hook, process);
-*/
 
 static void enable_hook(color_ostream &out, VMethodInterposeLinkBase &hook, vector <string> &parameters)
 {
@@ -915,22 +485,6 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         enable_tweak(cmd, out, parameters);
         return CR_OK;
     }
-    /*else if (cmd == "fix-dimensions")
-    {
-        enable_hook(out, INTERPOSE_HOOK(dimension_liquid_hook, subtractDimension), parameters);
-        enable_hook(out, INTERPOSE_HOOK(dimension_powder_hook, subtractDimension), parameters);
-        enable_hook(out, INTERPOSE_HOOK(dimension_bar_hook, subtractDimension), parameters);
-        enable_hook(out, INTERPOSE_HOOK(dimension_thread_hook, subtractDimension), parameters);
-        enable_hook(out, INTERPOSE_HOOK(dimension_cloth_hook, subtractDimension), parameters);
-    }*/
-/*
-    else if (cmd == "military-training")
-    {
-        enable_hook(out, INTERPOSE_HOOK(military_training_ct_hook, process), parameters);
-        enable_hook(out, INTERPOSE_HOOK(military_training_sd_hook, process), parameters);
-        enable_hook(out, INTERPOSE_HOOK(military_training_sp_hook, process), parameters);
-        enable_hook(out, INTERPOSE_HOOK(military_training_id_hook, process), parameters);
-    }*/
     else
     {
         return enable_tweak(cmd, out, parameters);

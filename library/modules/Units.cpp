@@ -174,6 +174,7 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
 
     // move unit to destination
     unit->pos = target_pos;
+    unit->idle_area = target_pos;
 
     // move unit's riders (including babies) to destination
     if (unit->flags1.bits.ridden)

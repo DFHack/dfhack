@@ -686,48 +686,9 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 
     // Fill the command list with your commands.
     commands.push_back(PluginCommand(
-        "autolabor", "Automatically manage dwarf labors.",
-        autolabor, false, /* true means that the command can't be used from non-interactive user interface */
-        // Extended help string. Used by CR_WRONG_USAGE and the help command:
-        "  autolabor enable\n"
-        "  autolabor disable\n"
-        "    Enables or disables the plugin.\n"
-        "  autolabor <labor> <minimum> [<maximum>] [<talent pool>]\n"
-        "    Set number of dwarves assigned to a labor.\n"
-        "  autolabor <labor> haulers\n"
-        "    Set a labor to be handled by hauler dwarves.\n"
-        "  autolabor <labor> disable\n"
-        "    Turn off autolabor for a specific labor.\n"
-        "  autolabor <labor> reset\n"
-        "    Return a labor to the default handling.\n"
-        "  autolabor reset-all\n"
-        "    Return all labors to the default handling.\n"
-        "  autolabor list\n"
-        "    List current status of all labors.\n"
-        "  autolabor status\n"
-        "    Show basic status information.\n"
-        "Function:\n"
-        "  When enabled, autolabor periodically checks your dwarves and enables or\n"
-        "  disables labors. It tries to keep as many dwarves as possible busy but\n"
-        "  also tries to have dwarves specialize in specific skills.\n"
-        "  Warning: autolabor will override any manual changes you make to labors\n"
-        "  while it is enabled.\n"
-        "  To prevent particular dwarves from being managed by autolabor, put them\n"
-        "  in any burrow.\n"
-        "  To restrict the assignment of a labor to only the top <n> most skilled\n"
-        "  dwarves, add a talent pool number <n>.\n"
-        "Examples:\n"
-        "  autolabor MINE 2\n"
-        "    Keep at least 2 dwarves with mining enabled.\n"
-        "  autolabor CUT_GEM 1 1\n"
-        "    Keep exactly 1 dwarf with gemcutting enabled.\n"
-        "  autolabor COOK 1 1 3\n"
-        "    Keep 1 dwarf with cooking enabled, selected only from the top 3.\n"
-        "  autolabor FEED_WATER_CIVILIANS haulers\n"
-        "    Have haulers feed and water wounded dwarves.\n"
-        "  autolabor CUTWOOD disable\n"
-        "    Turn off autolabor for wood cutting.\n"
-    ));
+        "autolabor",
+        "Automatically manage dwarf labors.",
+        autolabor));
 
     init_state();
 
@@ -873,7 +834,7 @@ static void assign_labor(unit_labor::unit_labor labor,
         }
 
         int pool = labor_infos[labor].talent_pool();
-        if (pool < 200 && candidates.size() > 1 && abs(pool) < candidates.size())
+        if (pool < 200 && candidates.size() > 1 && size_t(abs(pool)) < candidates.size())
         {
             // Sort in descending order
             std::sort(candidates.begin(), candidates.end(), [&](const int lhs, const int rhs) -> bool {

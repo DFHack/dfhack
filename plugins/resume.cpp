@@ -302,18 +302,9 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 {
     commands.push_back(
         PluginCommand(
-        "resume", "Display and easily resume suspended constructions",
-        resume_cmd, false,
-        "resume show\n"
-        "  Show overlay when paused:\n"
-        "    Yellow: Suspended construction\n"
-        "    Red: Suspended after resume attempt, possibly stuck\n"
-        "    Green: Planned building waiting for materials\n"
-        "resume hide\n"
-        "  Hide overlay\n"
-        "resume all\n"
-        "  Resume all suspended building constructions\n"
-        ));
+        "resume",
+        "Mark suspended constructions on the map and easily resume them.",
+        resume_cmd));
 
     return CR_OK;
 }

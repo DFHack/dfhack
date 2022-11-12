@@ -41,6 +41,7 @@ DFHACK_PLUGIN("orders");
 REQUIRE_GLOBAL(world);
 
 static const std::string ORDERS_DIR = "dfhack-config/orders";
+static const std::string ORDERS_LIBRARY_DIR = "dfhack-config/orders/library";
 
 static command_result orders_command(color_ostream & out, std::vector<std::string> & parameters);
 
@@ -48,21 +49,8 @@ DFhackCExport command_result plugin_init(color_ostream & out, std::vector<Plugin
 {
     commands.push_back(PluginCommand(
         "orders",
-        "Manipulate manager orders.",
-        orders_command,
-        false,
-        "orders - Manipulate manager orders\n"
-        "  orders list\n"
-        "    Shows the list of previously exported orders."
-        "  orders export [name]\n"
-        "    Exports the current list of manager orders to a file named dfhack-config/orders/[name].json.\n"
-        "  orders import [name]\n"
-        "    Imports manager orders from a file named dfhack-config/orders/[name].json.\n"
-        "  orders clear\n"
-        "    Deletes all manager orders in the current embark.\n"
-        "  orders sort\n"
-        "    Sorts current manager orders by repeat frequency so they don't conflict.\n"
-    ));
+        "Manage manager orders.",
+        orders_command));
     return CR_OK;
 }
 
@@ -121,6 +109,30 @@ static command_result orders_command(color_ostream & out, std::vector<std::strin
     return CR_WRONG_USAGE;
 }
 
+static void list_library(color_ostream &out) {
+    std::map<std::string, bool> files;
+    if (0 < Filesystem::listdir_recursive(ORDERS_LIBRARY_DIR, files, 0, false)) {
+        // if the library directory doesn't exist, just skip it
+        return;
+    }
+
+    if (files.empty()) {
+        // if no files in the library directory, just skip it
+        return;
+    }
+
+    for (auto it : files)
+    {
+        if (it.second)
+            continue; // skip directories
+        std::string name = it.first;
+        if (name.length() <= 5 || name.rfind(".json") != name.length() - 5)
+            continue; // skip non-.json files
+        name.resize(name.length() - 5);
+        out << "library/" << name << std::endl;
+    }
+}
+
 static command_result orders_list_command(color_ostream & out)
 {
     // use listdir_recursive instead of listdir even though orders doesn't
@@ -149,6 +161,8 @@ static command_result orders_list_command(color_ostream & out)
         name.resize(name.length() - 5);
         out << name << std::endl;
     }
+
+    list_library(out);
 
     return CR_OK;
 }
@@ -467,7 +481,7 @@ static command_result orders_export_command(color_ostream & out, const std::stri
                     condition["order"] = it2->order_id;
                     condition["condition"] = enum_item_key(it2->condition);
 
-                    // TODO: anon_1
+                    // TODO: unk_1
 
                     conditions.append(condition);
                 }
@@ -475,7 +489,7 @@ static command_result orders_export_command(color_ostream & out, const std::stri
                 order["order_conditions"] = conditions;
             }
 
-            // TODO: anon_1
+            // TODO: items
 
             orders.append(order);
         }
@@ -540,9 +554,9 @@ static command_result orders_import(color_ostream &out, Json::Value &orders)
             }
             else
             {
-                delete order;
-
                 out << COLOR_LIGHTRED << "Invalid item subtype for imported manager order: " << enum_item_key(order->item_type) << ":" << it["item_subtype"].asString() << std::endl;
+
+                delete order;
 
                 return CR_FAILURE;
             }
@@ -716,9 +730,9 @@ static command_result orders_import(color_ostream &out, Json::Value &orders)
                     }
                     else
                     {
-                        delete condition;
-
                         out << COLOR_YELLOW << "Invalid item condition item subtype for imported manager order: " << enum_item_key(condition->item_type) << ":" << it2["item_subtype"].asString() << std::endl;
+
+                        delete condition;
 
                         continue;
                     }
@@ -873,13 +887,13 @@ static command_result orders_import(color_ostream &out, Json::Value &orders)
                     continue;
                 }
 
-                // TODO: anon_1
+                // TODO: unk_1
 
                 order->order_conditions.push_back(condition);
             }
         }
 
-        // TODO: anon_1
+        // TODO: items
 
         world->manager_orders.push_back(order);
     }
@@ -889,12 +903,20 @@ static command_result orders_import(color_ostream &out, Json::Value &orders)
 
 static command_result orders_import_command(color_ostream & out, const std::string & name)
 {
-    if (!is_safe_filename(out, name))
+    std::string fname = name;
+    bool is_library = false;
+    if (0 == name.find("library/")) {
+        is_library = true;
+        fname = name.substr(8);
+    }
+
+    if (!is_safe_filename(out, fname))
     {
         return CR_WRONG_USAGE;
     }
 
-    const std::string filename(ORDERS_DIR + "/" + name + ".json");
+    const std::string filename((is_library ? ORDERS_LIBRARY_DIR : ORDERS_DIR) +
+                                    "/" + fname + ".json");
     Json::Value orders;
 
     {

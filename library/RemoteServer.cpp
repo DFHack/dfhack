@@ -61,6 +61,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "json/json.h"
 
+using namespace std;
 using namespace DFHack;
 
 using dfproto::CoreTextNotification;

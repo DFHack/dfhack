@@ -1,4 +1,4 @@
-List of Authors
+List of authors
 ===============
 The following is a list of people who have contributed to DFHack, in
 alphabetical order.
@@ -32,8 +32,10 @@ billw2012               billw2012
 BrickViking             brickviking
 brndd                   brndd                   burneddi
 Caldfir                 caldfir
+Cameron Ewell           Ozzatron
 Carter Bray             Qartar
 Chris Dombroski         cdombroski
+Chris Parsons           chrismdp
 Clayton Hughes
 Clément Vuchener        cvuchener
 daedsidog               daedsidog
@@ -47,6 +49,7 @@ Deon
 DoctorVanGogh           DoctorVanGogh
 Donald Ruegsegger       hashaash
 doomchild               doomchild
+DwarvenM                DwarvenM
 ElMendukol              ElMendukol
 enjia2000
 Eric Wald               eswald
@@ -59,6 +62,7 @@ Gabe Rau                gaberau
 gchristopher            gchristopher
 George Murray           GitOnUp
 grubsteak               grubsteak
+Guilherme Abraham       GuilhermeAbraham
 Harlan Playford         playfordh
 Hayati Ayguen           hayguen
 Herwig Hochleitner      bendlas
@@ -112,6 +116,7 @@ napagokc                napagokc
 Neil Little             nmlittle
 Nick Rart               nickrart                comestible
 Nicolas Ayala           nicolasayala
+Nik Nyby                nikolas
 Nikolay Amiantov        abbradar
 nocico                  nocico
 Omniclasm
@@ -123,11 +128,13 @@ Paul Fenwick            pjf
 PeridexisErrant         PeridexisErrant
 Petr Mrázek             peterix
 Pfhreak                 Pfhreak
+Pierre Lulé             plule
 Pierre-David Bélanger   pierredavidbelanger
 potato
 Priit Laes              plaes
 Putnam                  Putnam3145
 Quietust                quietust                _Q
+Rafał Karczmarczyk      CarabusX
 Raidau                  Raidau
 Ralph Bisschops         ralpha
 Ramblurr                Ramblurr
@@ -173,6 +180,7 @@ Theo Kalfas             teolandon
 therahedwig             therahedwig
 ThiagoLira              ThiagoLira
 thurin                  thurin
+Tim Siegel              softmoth
 Tim Walberg             twalberg
 Timothy Collett         danaris
 Timur Kelman            TymurGubayev

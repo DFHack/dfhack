@@ -1,4 +1,4 @@
--- Common startup file for all dfhack plugins with lua support
+-- Common startup file for all dfhack scripts and plugins with lua support
 -- The global dfhack table is already created by C++ init code.
 
 -- Setup the global environment.
@@ -385,6 +385,13 @@ function safe_index(obj,idx,...)
     end
 end
 
+function ensure_key(t, key, default_value)
+    if t[key] == nil then
+        t[key] = (default_value ~= nil) and default_value or {}
+    end
+    return t[key]
+end
+
 -- String class extentions
 
 -- prefix is a literal string, not a pattern
@@ -432,6 +439,7 @@ end
 -- multiple lines. If width is not specified, 72 is used.
 function string:wrap(width)
     width = width or 72
+    if width <= 0 then error('expected width > 0; got: '..tostring(width)) end
     local wrapped_text = {}
     for line in self:gmatch('[^\n]*') do
         local line_start_pos = 1
@@ -644,8 +652,9 @@ function Script:needs_update()
     return (not self.env) or self.mtime ~= dfhack.filesystem.mtime(self.path)
 end
 function Script:get_flags()
-    if self.flags_mtime ~= dfhack.filesystem.mtime(self.path) then
-        self.flags_mtime = dfhack.filesystem.mtime(self.path)
+    local mtime = dfhack.filesystem.mtime(self.path)
+    if self.flags_mtime ~= mtime then
+        self.flags_mtime = mtime
         self._flags = {}
         local f = io.open(self.path)
         local contents = f:read('*all')
@@ -780,7 +789,11 @@ function dfhack.run_script_with_env(envVars, name, flags, ...)
     end
     scripts[file].env = env
     scripts[file].run = script_code
-    return script_code(...), env
+    local args = {...}
+    for i,v in ipairs(args) do
+        args[i] = tostring(v) -- ensure passed parameters are strings
+    end
+    return script_code(table.unpack(args)), env
 end
 
 function dfhack.current_script_name()
@@ -806,36 +819,7 @@ end
 
 function dfhack.script_help(script_name, extension)
     script_name = script_name or dfhack.current_script_name()
-    extension = extension or 'lua'
-    local full_name = script_name .. '.' .. extension
-    local path = dfhack.internal.findScript(script_name .. '.' .. extension)
-        or error("Could not find script: " .. full_name)
-    local begin_seq, end_seq
-    if extension == 'rb' then
-        begin_seq = '=begin'
-        end_seq = '=end'
-    else
-        begin_seq = '[====['
-        end_seq = ']====]'
-    end
-    local f = io.open(path) or error("Could not open " .. path)
-    local in_help = false
-    local help = ''
-    for line in f:lines() do
-        if line:endswith(begin_seq) then
-            in_help = true
-        elseif in_help then
-            if line:endswith(end_seq) then
-                break
-            end
-            if line ~= script_name and line ~= ('='):rep(#script_name) then
-                help = help .. line .. '\n'
-            end
-        end
-    end
-    f:close()
-    help = help:gsub('^\n+', ''):gsub('\n+$', '')
-    return help
+    return require('helpdb').get_entry_long_help(script_name)
 end
 
 local function _run_command(args, use_console)

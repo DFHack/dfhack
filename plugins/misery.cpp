@@ -128,21 +128,10 @@ DFhackCExport command_result plugin_onupdate(color_ostream& out) {
 }
 
 DFhackCExport command_result plugin_init(color_ostream& out, vector<PluginCommand> &commands) {
-    commands.push_back(PluginCommand("misery", "increase the intensity of negative dwarven thoughts",
-        &misery, false,
-        "misery: When enabled, every new negative dwarven thought will be multiplied by a factor (2 by default).\n"
-        "Usage:\n"
-        "  misery enable n\n"
-        "    enable misery with optional magnitude n. If specified, n must be positive.\n"
-        "  misery n\n"
-        "    same as \"misery enable n\"\n"
-        "  misery enable\n"
-        "    same as \"misery enable 2\"\n"
-        "  misery disable\n"
-        "    stop adding new negative thoughts. This will not remove existing duplicated thoughts. Equivalent to \"misery 1\"\n"
-        "  misery clear\n"
-        "    remove fake thoughts added in this session of DF. Saving makes them permanent! Does not change factor.\n\n"
-        ));
+    commands.push_back(PluginCommand(
+        "misery",
+        "Increase the intensity of negative dwarven thoughts.",
+        misery));
     return CR_OK;
 }
 

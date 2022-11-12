@@ -1,10 +1,11 @@
 .. _quickfort-alias-guide:
 
-Quickfort Keystroke Alias Guide
-===============================
+Quickfort keystroke alias reference
+===================================
 
 Aliases allow you to use simple words to represent complicated key sequences
-when configuring buildings and stockpiles in quickfort ``#query`` blueprints.
+when configuring buildings and stockpiles in quickfort ``#query`` and
+``#config`` blueprints.
 
 For example, say you have the following ``#build`` and ``#place`` blueprints::
 
@@ -79,7 +80,7 @@ sequence, potentially with other aliases. If the alias is the only text in the
 cell, the alias name is matched and its expansion is used. If the alias has
 other keys before or after it, the alias name must be surrounded in curly
 brackets (:kbd:`{` and :kbd:`}`). An alias can be surrounded in curly brackets
-even if it is the only text in the cell, it just isn't necesary. For example,
+even if it is the only text in the cell, it just isn't necessary. For example,
 the following blueprint uses the ``aliasname`` alias by itself in the first
 two rows and uses it as part of a longer sequence in the third row::
 
@@ -453,7 +454,7 @@ be used for either the ``quantum_enable`` or ``route_enable`` sub-aliases.
 Experienced Dwarf Fortress players may be wondering how the same aliases can
 work in both contexts since the keys for entering the configuration screen
 differ. Fear not! There is some sub-alias magic at work here. If you define
-your own stockpile configuraiton aliases, you can use the magic yourself by
+your own stockpile configuration aliases, you can use the magic yourself by
 building your aliases on the ``*prefix`` aliases described later in this
 guide.
 
@@ -521,6 +522,9 @@ give10right
 give              move
 togglesequence
 togglesequence2
+forbidsearch      search
+permitsearch      search
+togglesearch      search
 masterworkonly    prefix
 artifactonly      prefix
 togglemasterwork  prefix
@@ -588,6 +592,12 @@ four adjacent items::
 
     dye: {foodprefix}b{Right}{Down 11}{Right}{Down 28}{togglesequence 4}^
 
+``forbidsearch``, ``permitsearch``, and ``togglesearch`` use the DFHack
+`search-plugin` plugin to forbid or permit a filtered list, or toggle the first
+(or only) item in the list. Specify the search string in the ``search``
+sub-alias. Be sure to move the cursor over to the right column before invoking
+these aliases. The search filter will be cleared before this alias completes.
+
 Finally, the ``masterwork`` and ``artifact`` group of aliases configure the
 corresponding allowable core quality for the stockpile categories that have
 them. This alias is used to implement category-specific aliases below, like
@@ -642,7 +652,7 @@ sheetprefix           enablesheet           disablesheet
 Then, for each item category, there are aliases that manipulate interesting
 subsets of that category:
 
-* Exclusive aliases forbid everthing within a category and then enable only
+* Exclusive aliases forbid everything within a category and then enable only
   the named item type (or named class of items)
 * ``forbid*`` aliases forbid the named type and leave the rest of the
   stockpile untouched.
@@ -724,13 +734,16 @@ shells       forbidshells        permitshells
 teeth        forbidteeth         permitteeth
 horns        forbidhorns         permithorns
 hair         forbidhair          permithair
+usablehair   forbidusablehair    permitusablehair
 craftrefuse  forbidcraftrefuse   permitcraftrefuse
 ===========  ==================  ==================
 
 Notes:
 
-* ``craftrefuse`` includes everything a craftsdwarf can use: skulls, bones,
-  shells, teeth, horns, and hair.
+* ``usablehair`` Only hair and wool that can make usable clothing is included,
+  i.e. from sheep, llamas, alpacas, and trolls.
+* ``craftrefuse`` includes everything a craftsdwarf or tailor can use: skulls,
+  bones, shells, teeth, horns, and "usable" hair/wool (defined above).
 
 Stone stockpile adjustments
 ```````````````````````````
@@ -802,7 +815,8 @@ Finished goods stockpile adjustments
 =======================  =============================  =============================
 Exclusive                Forbid                         Permit
 =======================  =============================  =============================
-jugs
+stonetools
+woodentools
 crafts                   forbidcrafts                   permitcrafts
 goblets                  forbidgoblets                  permitgoblets
 masterworkfinishedgoods  forbidmasterworkfinishedgoods  permitmasterworkfinishedgoods
@@ -812,17 +826,18 @@ artifactfinishedgoods    forbidartifactfinishedgoods    permitartifactfinishedgo
 Cloth stockpile adjustments
 ```````````````````````````
 
-+------------------+
-| Exclusive        |
-+==================+
-| thread           |
-+------------------+
-| adamantinethread |
-+------------------+
-| cloth            |
-+------------------+
-| adamantinecloth  |
-+------------------+
+================  ======================  ======================
+Exclusive         Forbid                  Permit
+================  ======================  ======================
+thread            forbidthread            permitthread
+adamantinethread  forbidadamantinethread  permitadamantinethread
+cloth             forbidcloth             permitcloth
+adamantinecloth   forbidadamantinecloth   permitadamantinecloth
+================  ======================  ======================
+
+Notes:
+
+* ``thread`` and ``cloth`` refers to all materials that are not adamantine.
 
 Weapon stockpile adjustments
 ````````````````````````````

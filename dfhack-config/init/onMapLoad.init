@@ -1,0 +1,5 @@
+# This file runs when a map is loaded in adventure or fort mode, after any
+# onLoad.init files (which run earlier, when the world is loaded).
+#
+# You can extend or override DFHack's default configuration by adding commands
+# to this file.

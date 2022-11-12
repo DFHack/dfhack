@@ -233,7 +233,8 @@ extern DFHACK_EXPORT bool ReadGeology(std::vector<std::vector<int16_t> > *layer_
 /**
  * Get pointers to features of a block
  */
-extern DFHACK_EXPORT bool ReadFeatures(uint32_t x, uint32_t y, uint32_t z, t_feature * local, t_feature * global);
+extern DFHACK_EXPORT bool ReadFeatures(int32_t x, int32_t y, int32_t z, t_feature * local, t_feature * global);
+extern DFHACK_EXPORT bool ReadFeatures(uint32_t x, uint32_t y, uint32_t z, t_feature * local, t_feature * global); // todo: deprecate me
 /**
  * Get pointers to features of an already read block
  */
@@ -242,7 +243,7 @@ extern DFHACK_EXPORT bool ReadFeatures(df::map_block * block,t_feature * local, 
 
 /**
  * Get a pointer to a specific global feature directly.
- */
+*/
 DFHACK_EXPORT df::feature_init *getGlobalInitFeature(int32_t index);
 /**
  * Get a pointer to a specific local feature directly. rgn_coord is in the world region grid.
@@ -261,9 +262,11 @@ extern DFHACK_EXPORT bool GetGlobalFeature(t_feature &feature, int32_t index);
  */
 
 /// get size of the map in blocks
-extern DFHACK_EXPORT void getSize(uint32_t& x, uint32_t& y, uint32_t& z);
+extern DFHACK_EXPORT void getSize(int32_t& x, int32_t& y, int32_t& z);
+extern DFHACK_EXPORT void getSize(uint32_t& x, uint32_t& y, uint32_t& z); // todo: deprecate me
 /// get size of the map in tiles
-extern DFHACK_EXPORT void getTileSize(uint32_t& x, uint32_t& y, uint32_t& z);
+extern DFHACK_EXPORT void getTileSize(int32_t& x, int32_t& y, int32_t& z);
+extern DFHACK_EXPORT void getTileSize(uint32_t& x, uint32_t& y, uint32_t& z); // todo: deprecate me
 /// get the position of the map on world map
 extern DFHACK_EXPORT void getPosition(int32_t& x, int32_t& y, int32_t& z);
 
@@ -333,7 +336,8 @@ extern DFHACK_EXPORT bool SortBlockEvents(df::map_block *block,
 );
 
 /// remove a block event from the block by address
-extern DFHACK_EXPORT bool RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, df::block_square_event * which );
+extern DFHACK_EXPORT bool RemoveBlockEvent(int32_t x, int32_t y, int32_t z, df::block_square_event * which );
+extern DFHACK_EXPORT bool RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, df::block_square_event * which ); // todo: deprecate me
 
 DFHACK_EXPORT bool canWalkBetween(df::coord pos1, df::coord pos2);
 DFHACK_EXPORT bool canStepBetween(df::coord pos1, df::coord pos2);

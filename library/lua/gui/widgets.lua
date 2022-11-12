@@ -73,6 +73,8 @@ end
 Panel = defclass(Panel, Widget)
 
 Panel.ATTRS {
+    frame_style = DEFAULT_NIL, -- as in gui.FramedScreen
+    frame_title = DEFAULT_NIL, -- as in gui.FramedScreen
     on_render = DEFAULT_NIL,
     on_layout = DEFAULT_NIL,
     autoarrange_subviews = false, -- whether to automatically lay out subviews
@@ -85,6 +87,12 @@ end
 
 function Panel:onRenderBody(dc)
     if self.on_render then self.on_render(dc) end
+end
+
+function Panel:computeFrame(parent_rect)
+    local sw, sh = parent_rect.width, parent_rect.height
+    return gui.compute_frame_body(sw, sh, self.frame, self.frame_inset,
+                                  self.frame_style and 1 or 0)
 end
 
 function Panel:postComputeFrame(body)
@@ -112,6 +120,13 @@ function Panel:postUpdateLayout()
     self:updateSubviewLayout()
 end
 
+function Panel:onRenderFrame(dc, rect)
+    Panel.super.onRenderFrame(self, dc, rect)
+    if not self.frame_style then return end
+    local x1,y1,x2,y2 = rect.x1, rect.y1, rect.x2, rect.y2
+    gui.paint_frame(x1, y1, x2, y2, self.frame_style, self.frame_title)
+end
+
 -------------------
 -- ResizingPanel --
 -------------------
@@ -121,16 +136,26 @@ ResizingPanel = defclass(ResizingPanel, Panel)
 -- adjust our frame dimensions according to positions and sizes of our subviews
 function ResizingPanel:postUpdateLayout(frame_body)
     local w, h = 0, 0
-    for _,subview in ipairs(self.subviews) do
-        if subview.visible then
-            w = math.max(w, (subview.frame.l or 0) +
-                            (subview.frame.w or frame_body.width))
-            h = math.max(h, (subview.frame.t or 0) +
-                            (subview.frame.h or frame_body.height))
+    for _,s in ipairs(self.subviews) do
+        if s.visible then
+            w = math.max(w, (s.frame and s.frame.l or 0) +
+                            (s.frame and s.frame.w or frame_body.width))
+            h = math.max(h, (s.frame and s.frame.t or 0) +
+                            (s.frame and s.frame.h or frame_body.height))
         end
     end
+    if self.frame_style then
+        w = w + 2
+        h = h + 2
+    end
     if not self.frame then self.frame = {} end
+    local oldw, oldh = self.frame.w, self.frame.h
     self.frame.w, self.frame.h = w, h
+    if not self._updateLayoutGuard and (oldw ~= w or oldh ~= h) then
+        self._updateLayoutGuard = true -- protect against infinite loops
+        self:updateLayout() -- our frame has changed, we need to fully refresh
+    end
+    self._updateLayoutGuard = nil
 end
 
 -----------
@@ -178,53 +203,338 @@ end
 EditField = defclass(EditField, Widget)
 
 EditField.ATTRS{
+    label_text = DEFAULT_NIL,
     text = '',
     text_pen = DEFAULT_NIL,
     on_char = DEFAULT_NIL,
     on_change = DEFAULT_NIL,
     on_submit = DEFAULT_NIL,
+    on_submit2 = DEFAULT_NIL,
     key = DEFAULT_NIL,
+    key_sep = DEFAULT_NIL,
+    modal = false,
+    ignore_keys = DEFAULT_NIL,
 }
+
+function EditField:preinit(init_table)
+    init_table.frame = init_table.frame or {}
+    init_table.frame.h = init_table.frame.h or 1
+end
+
+function EditField:init()
+    local function on_activate()
+        self.saved_text = self.text
+        self:setFocus(true)
+    end
+
+    self.start_pos = 1
+    self.cursor = #self.text + 1
+
+    self:addviews{HotkeyLabel{frame={t=0,l=0},
+                              key=self.key,
+                              key_sep=self.key_sep,
+                              label=self.label_text,
+                              on_activate=self.key and on_activate or nil}}
+end
+
+function EditField:getPreferredFocusState()
+    return not self.key
+end
+
+function EditField:setCursor(cursor)
+    if not cursor or cursor > #self.text then
+        self.cursor = #self.text + 1
+        return
+    end
+    self.cursor = math.max(1, cursor)
+end
+
+function EditField:setText(text, cursor)
+    self.text = text
+    self:setCursor(cursor)
+end
+
+function EditField:postUpdateLayout()
+    self.text_offset = self.subviews[1]:getTextWidth()
+end
 
 function EditField:onRenderBody(dc)
     dc:pen(self.text_pen or COLOR_LIGHTCYAN):fill(0,0,dc.width-1,0)
 
-    local cursor = '_'
-    if not self.active or gui.blink_visible(300) then
-        cursor = ' '
+    local cursor_char = '_'
+    if not self.active or not self.focus or gui.blink_visible(300) then
+        cursor_char = (self.cursor > #self.text) and ' ' or
+                                        self.text:sub(self.cursor, self.cursor)
     end
-    local txt = self.text .. cursor
-    local dx = dc.x
-    if self.key then
-        dc:key_string(self.key, '')
-    end
-    dx = dc.x - dx
-    local max_width = dc.width - dx
+    local txt = self.text:sub(1, self.cursor - 1) .. cursor_char ..
+                                                self.text:sub(self.cursor + 1)
+    local max_width = dc.width - self.text_offset
+    self.start_pos = 1
     if #txt > max_width then
-        txt = string.char(27)..string.sub(txt, #txt-max_width+2)
+        -- get the substring in the vicinity of the cursor
+        max_width = max_width - 2
+        local half_width = math.floor(max_width/2)
+        local start_pos = math.max(1, self.cursor-half_width)
+        local end_pos = math.min(#txt, self.cursor+half_width-1)
+        if self.cursor + half_width > #txt then
+            start_pos = #txt - (max_width - 1)
+        end
+        if self.cursor - half_width <= 1 then
+            end_pos = max_width + 1
+        end
+        self.start_pos = start_pos > 1 and start_pos - 1 or start_pos
+        txt = ('%s%s%s'):format(start_pos == 1 and '' or string.char(27),
+                                txt:sub(start_pos, end_pos),
+                                end_pos == #txt and '' or string.char(26))
     end
-    dc:string(txt)
+    dc:advance(self.text_offset):string(txt)
+    dc:string((' '):rep(dc.clip_x2 - dc.x))
 end
 
 function EditField:onInput(keys)
-    if self.on_submit and keys.SELECT then
-        self.on_submit(self.text)
+    if not self.focus then
+        -- only react to our hotkey
+        return self:inputToSubviews(keys)
+    end
+
+    if self.ignore_keys then
+        for _,ignore_key in ipairs(self.ignore_keys) do
+            if keys[ignore_key] then return false end
+        end
+    end
+
+    if self.key and keys.LEAVESCREEN then
+        local old = self.text
+        self:setText(self.saved_text)
+        if self.on_change and old ~= self.saved_text then
+            self.on_change(self.text, old)
+        end
+        self:setFocus(false)
         return true
+    end
+
+    if keys.SELECT then
+        if self.key then
+            self:setFocus(false)
+        end
+        if self.on_submit then
+            self.on_submit(self.text)
+            return true
+        end
+        return not not self.key
+    elseif keys.SEC_SELECT then
+        if self.key then
+            self:setFocus(false)
+        end
+        if self.on_submit2 then
+            self.on_submit2(self.text)
+            return true
+        end
+        return not not self.key
+    elseif keys._MOUSE_L then
+        local mouse_x, mouse_y = self:getMousePos()
+        if mouse_x then
+            self:setCursor(self.start_pos + mouse_x)
+            return true
+        end
     elseif keys._STRING then
         local old = self.text
         if keys._STRING == 0 then
-            self.text = string.sub(old, 1, #old-1)
+            -- handle backspace
+            local del_pos = self.cursor - 1
+            if del_pos > 0 then
+                self:setText(old:sub(1, del_pos-1) .. old:sub(del_pos+1),
+                             del_pos)
+            end
         else
             local cv = string.char(keys._STRING)
             if not self.on_char or self.on_char(cv, old) then
-                self.text = old .. cv
+                self:setText(old:sub(1,self.cursor-1)..cv..old:sub(self.cursor),
+                             self.cursor + 1)
+            elseif self.on_char then
+                return self.modal
             end
         end
         if self.on_change and self.text ~= old then
             self.on_change(self.text, old)
         end
         return true
+    elseif keys.CURSOR_LEFT then
+        self:setCursor(self.cursor - 1)
+        return true
+    elseif keys.A_MOVE_W_DOWN then -- Ctrl-Left (end of prev word)
+        local _, prev_word_end = self.text:sub(1, self.cursor-1):
+                                                    find('.*[%w_%-][^%w_%-]')
+        self:setCursor(prev_word_end or 1)
+        return true
+    elseif keys.A_CARE_MOVE_W then -- Alt-Left (home)
+        self:setCursor(1)
+        return true
+    elseif keys.CURSOR_RIGHT then
+        self:setCursor(self.cursor + 1)
+        return true
+    elseif keys.A_MOVE_E_DOWN then -- Ctrl-Right (beginning of next word)
+        local _,next_word_start = self.text:find('[^%w_%-][%w_%-]', self.cursor)
+        self:setCursor(next_word_start)
+        return true
+    elseif keys.A_CARE_MOVE_E then -- Alt-Right (end)
+        self:setCursor()
+        return true
     end
+
+    -- if we're modal, then unconditionally eat all the input
+    return self.modal
+end
+
+---------------
+-- Scrollbar --
+---------------
+
+SCROLL_INITIAL_DELAY_MS = 300
+SCROLL_DELAY_MS = 20
+
+Scrollbar = defclass(Scrollbar, Widget)
+
+Scrollbar.ATTRS{
+    fg = COLOR_LIGHTGREEN,
+    bg = COLOR_CYAN,
+    on_scroll = DEFAULT_NIL,
+}
+
+function Scrollbar:preinit(init_table)
+    init_table.frame = init_table.frame or {}
+    init_table.frame.w = init_table.frame.w or 1
+end
+
+function Scrollbar:init()
+    self.last_scroll_ms = 0
+    self.is_first_click = false
+    self.scroll_spec = nil
+    self.is_dragging = false -- index of the scrollbar tile that we're dragging
+    self:update(1, 1, 1)
+end
+
+local function scrollbar_get_max_pos_and_height(scrollbar)
+    local frame_body = scrollbar.frame_body
+    local scrollbar_body_height = (frame_body and frame_body.height or 3) - 2
+
+    local height = math.max(1, math.floor(
+        (math.min(scrollbar.elems_per_page, scrollbar.num_elems) * scrollbar_body_height) /
+        scrollbar.num_elems))
+
+    return scrollbar_body_height - height, height
+end
+
+-- calculate and cache the number of tiles of empty space above the top of the
+-- scrollbar and the number of tiles the scrollbar should occupy to represent
+-- the percentage of text that is on the screen.
+-- if elems_per_page or num_elems are not specified, the last values passed to
+-- Scrollbar:update() are used.
+function Scrollbar:update(top_elem, elems_per_page, num_elems)
+    if not top_elem then error('must specify index of new top element') end
+    elems_per_page = elems_per_page or self.elems_per_page
+    num_elems = num_elems or self.num_elems
+    self.top_elem = top_elem
+    self.elems_per_page, self.num_elems = elems_per_page, num_elems
+
+    local max_pos, height = scrollbar_get_max_pos_and_height(self)
+    local pos = (num_elems == elems_per_page) and 0 or
+            math.ceil(((top_elem-1) * max_pos) /
+                      (num_elems - elems_per_page))
+
+    self.bar_offset, self.bar_height = pos, height
+end
+
+local function scrollbar_do_drag(scrollbar)
+    local _,y = scrollbar.frame_body:localXY(dfhack.screen.getMousePos())
+    local cur_pos = y - scrollbar.is_dragging
+    local max_top = scrollbar.num_elems - scrollbar.elems_per_page + 1
+    local max_pos = scrollbar_get_max_pos_and_height(scrollbar)
+    local new_top_elem = math.floor(cur_pos * max_top / max_pos) + 1
+    new_top_elem = math.max(1, math.min(new_top_elem, max_top))
+    if new_top_elem ~= scrollbar.top_elem then
+        scrollbar.on_scroll(new_top_elem)
+    end
+end
+
+local function scrollbar_is_visible(scrollbar)
+    return scrollbar.elems_per_page < scrollbar.num_elems
+end
+
+local UP_ARROW_CHAR = string.char(24)
+local DOWN_ARROW_CHAR = string.char(25)
+local NO_ARROW_CHAR = string.char(32)
+local BAR_CHAR = string.char(7)
+local BAR_BG_CHAR = string.char(179)
+
+function Scrollbar:onRenderBody(dc)
+    -- don't draw if all elements are visible
+    if not scrollbar_is_visible(self) then
+        return
+    end
+    -- render up arrow if we're not at the top
+    dc:seek(0, 0):char(
+        self.top_elem == 1 and NO_ARROW_CHAR or UP_ARROW_CHAR, self.fg, self.bg)
+    -- render scrollbar body
+    local starty = self.bar_offset + 1
+    local endy = self.bar_offset + self.bar_height
+    for y=1,dc.height-2 do
+        dc:seek(0, y)
+        if y >= starty and y <= endy then
+            dc:char(BAR_CHAR, self.fg)
+        else
+            dc:char(BAR_BG_CHAR, self.bg)
+        end
+    end
+    -- render down arrow if we're not at the bottom
+    local last_visible_el = self.top_elem + self.elems_per_page - 1
+    dc:seek(0, dc.height-1):char(
+        last_visible_el >= self.num_elems and NO_ARROW_CHAR or DOWN_ARROW_CHAR,
+        self.fg, self.bg)
+    if not self.on_scroll then return end
+    -- manage state for dragging and continuous scrolling
+    if self.is_dragging then
+        scrollbar_do_drag(self)
+    end
+    if df.global.enabler.mouse_lbut_down == 0 then
+        self.last_scroll_ms = 0
+        self.is_dragging = false
+        self.scroll_spec = nil
+        return
+    end
+    if self.last_scroll_ms == 0 then return end
+    local now = dfhack.getTickCount()
+    local delay = self.is_first_click and
+            SCROLL_INITIAL_DELAY_MS or SCROLL_DELAY_MS
+    if now - self.last_scroll_ms >= delay then
+        self.is_first_click = false
+        self.on_scroll(self.scroll_spec)
+        self.last_scroll_ms = now
+    end
+end
+
+function Scrollbar:onInput(keys)
+    if not keys._MOUSE_L_DOWN or not self.on_scroll
+            or not scrollbar_is_visible(self) then
+        return false
+    end
+    local _,y = self:getMousePos()
+    if not y then return false end
+    local scroll_spec = nil
+    if y == 0 then scroll_spec = 'up_small'
+    elseif y == self.frame_body.height - 1 then scroll_spec = 'down_small'
+    elseif y <= self.bar_offset then scroll_spec = 'up_large'
+    elseif y > self.bar_offset + self.bar_height then scroll_spec = 'down_large'
+    else
+        self.is_dragging = y - self.bar_offset
+        return true
+    end
+    self.scroll_spec = scroll_spec
+    self.on_scroll(scroll_spec)
+    -- reset continuous scroll state
+    self.is_first_click = true
+    self.last_scroll_ms = dfhack.getTickCount()
+    return true
 end
 
 -----------
@@ -359,12 +669,13 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
 
                     x = x + #keystr
 
-                    if sep == '()' then
+                    if sep:startswith('()') then
                         if dc then
                             dc:string(text)
-                            dc:string(' ('):string(keystr,keypen):string(')')
+                            dc:string(' ('):string(keystr,keypen)
+                            dc:string(sep:sub(2))
                         end
-                        x = x + 3
+                        x = x + 1 + #sep
                     else
                         if dc then
                             dc:string(keystr,keypen):string(sep):string(text)
@@ -416,7 +727,12 @@ Label.ATTRS{
 }
 
 function Label:init(args)
-    self.start_line_num = 1
+    self.scrollbar = Scrollbar{
+        frame={r=0},
+        on_scroll=self:callback('on_scrollbar')}
+
+    self:addviews{self.scrollbar}
+
     -- use existing saved text if no explicit text was specified. this avoids
     -- overwriting pre-formatted text that subclasses may have already set
     self:setText(args.text or self.text)
@@ -425,7 +741,14 @@ function Label:init(args)
     end
 end
 
+local function update_label_scrollbar(label)
+    local body_height = label.frame_body and label.frame_body.height or 1
+    label.scrollbar:update(label.start_line_num, body_height,
+                           label:getTextHeight())
+end
+
 function Label:setText(text)
+    self.start_line_num = 1
     self.text = text
     parse_label_text(self)
 
@@ -433,6 +756,8 @@ function Label:setText(text)
         self.frame = self.frame or {}
         self.frame.h = self:getTextHeight()
     end
+
+    update_label_scrollbar(self)
 end
 
 function Label:preUpdateLayout()
@@ -440,6 +765,10 @@ function Label:preUpdateLayout()
         self.frame = self.frame or {}
         self.frame.w = self:getTextWidth()
     end
+end
+
+function Label:postUpdateLayout()
+    update_label_scrollbar(self)
 end
 
 function Label:itemById(id)
@@ -465,68 +794,117 @@ function Label:onRenderBody(dc)
     render_text(self,dc,0,0,text_pen,self.text_dpen,is_disabled(self))
 end
 
+function Label:on_scrollbar(scroll_spec)
+    local v = 0
+    if tonumber(scroll_spec) then
+        v = scroll_spec - self.start_line_num
+    elseif scroll_spec == 'down_large' then
+        v = '+halfpage'
+    elseif scroll_spec == 'up_large' then
+        v = '-halfpage'
+    elseif scroll_spec == 'down_small' then
+        v = 1
+    elseif scroll_spec == 'up_small' then
+        v = -1
+    end
+
+    self:scroll(v)
+end
+
 function Label:scroll(nlines)
+    if not nlines then return end
+    if type(nlines) == 'string' then
+        if nlines == '+page' then
+            nlines = self.frame_body.height
+        elseif nlines == '-page' then
+            nlines = -self.frame_body.height
+        elseif nlines == '+halfpage' then
+            nlines = math.ceil(self.frame_body.height/2)
+        elseif nlines == '-halfpage' then
+            nlines = -math.ceil(self.frame_body.height/2)
+        else
+            error(('unhandled scroll keyword: "%s"'):format(nlines))
+        end
+    end
     local n = self.start_line_num + nlines
     n = math.min(n, self:getTextHeight() - self.frame_body.height + 1)
     n = math.max(n, 1)
+    nlines = n - self.start_line_num
     self.start_line_num = n
+    update_label_scrollbar(self)
+    return nlines
 end
 
 function Label:onInput(keys)
     if is_disabled(self) then return false end
+    if self:inputToSubviews(keys) then
+        return true
+    end
     if keys._MOUSE_L_DOWN and self:getMousePos() and self.on_click then
         self:on_click()
+        return true
     end
     if keys._MOUSE_R_DOWN and self:getMousePos() and self.on_rclick then
         self:on_rclick()
+        return true
     end
     for k,v in pairs(self.scroll_keys) do
-        if keys[k] then
-            if v == '+page' then
-                v = self.frame_body.height
-            elseif v == '-page' then
-                v = -self.frame_body.height
-            end
-            self:scroll(v)
+        if keys[k] and 0 ~= self:scroll(v) then
+            return true
         end
     end
     return check_text_keys(self, keys)
 end
 
 ------------------
--- TooltipLabel --
+-- WrappedLabel --
 ------------------
 
-TooltipLabel = defclass(TooltipLabel, Label)
+WrappedLabel = defclass(WrappedLabel, Label)
 
-TooltipLabel.ATTRS{
-    tooltip=DEFAULT_NIL,
-    show_tooltip=true,
-    indent=2,
-    text_pen=COLOR_GREY,
+WrappedLabel.ATTRS{
+    text_to_wrap=DEFAULT_NIL,
+    indent=0,
 }
 
-function TooltipLabel:getWrappedTooltip()
-    local tooltip = getval(self.tooltip)
-    if type(tooltip) == 'table' then
-        tooltip = table.concat(tooltip, NEWLINE)
+function WrappedLabel:getWrappedText(width)
+    -- 0 width can happen if the parent has 0 width
+    if not self.text_to_wrap or width <= 0 then return nil end
+    local text_to_wrap = getval(self.text_to_wrap)
+    if type(text_to_wrap) == 'table' then
+        text_to_wrap = table.concat(text_to_wrap, NEWLINE)
     end
-    return tooltip:wrap(self.frame_body.width - self.indent)
-end
-
-function TooltipLabel:preUpdateLayout()
-    self.visible = getval(self.show_tooltip)
+    return text_to_wrap:wrap(width - self.indent)
 end
 
 -- we can't set the text in init() since we may not yet have a frame that we
 -- can get wrapping bounds from.
-function TooltipLabel:postComputeFrame()
+function WrappedLabel:postComputeFrame()
+    local wrapped_text = self:getWrappedText(self.frame_body.width-1)
+    if not wrapped_text then return end
     local text = {}
-    for _,line in ipairs(self:getWrappedTooltip():split(NEWLINE)) do
+    for _,line in ipairs(wrapped_text:split(NEWLINE)) do
         table.insert(text, {gap=self.indent, text=line})
+        -- a trailing newline will get ignored so we don't have to manually trim
         table.insert(text, NEWLINE)
     end
     self:setText(text)
+end
+
+------------------
+-- TooltipLabel --
+------------------
+
+TooltipLabel = defclass(TooltipLabel, WrappedLabel)
+
+TooltipLabel.ATTRS{
+    show_tooltip=DEFAULT_NIL,
+    indent=2,
+    text_pen=COLOR_GREY,
+}
+
+function TooltipLabel:preUpdateLayout()
+    self.visible = getval(self.show_tooltip)
 end
 
 -----------------
@@ -537,13 +915,23 @@ HotkeyLabel = defclass(HotkeyLabel, Label)
 
 HotkeyLabel.ATTRS{
     key=DEFAULT_NIL,
+    key_sep=': ',
     label=DEFAULT_NIL,
     on_activate=DEFAULT_NIL,
 }
 
 function HotkeyLabel:init()
-    self:setText{{key=self.key, key_sep=': ', text=self.label,
-                   on_activate=self.on_activate}}
+    self:setText{{key=self.key, key_sep=self.key_sep, text=self.label,
+                  on_activate=self.on_activate}}
+end
+
+function HotkeyLabel:onInput(keys)
+    if HotkeyLabel.super.onInput(self, keys) then
+        return true
+    elseif keys._MOUSE_L and self:getMousePos() then
+        self.on_activate()
+        return true
+    end
 end
 
 ----------------------
@@ -567,6 +955,11 @@ function CycleHotkeyLabel:init()
         if self.initial_option == self:getOptionValue(i) then
             self.option_idx = i
             break
+        end
+    end
+    if not self.option_idx then
+        if self.options[self.initial_option] then
+            self.option_idx = self.initial_option
         end
     end
     if not self.option_idx then
@@ -613,6 +1006,15 @@ function CycleHotkeyLabel:getOptionValue(option_idx)
     return option
 end
 
+function CycleHotkeyLabel:onInput(keys)
+    if CycleHotkeyLabel.super.onInput(self, keys) then
+        return true
+    elseif keys._MOUSE_L and self:getMousePos() then
+        self:cycle()
+        return true
+    end
+end
+
 -----------------------
 -- ToggleHotkeyLabel --
 -----------------------
@@ -644,6 +1046,11 @@ List.ATTRS{
 function List:init(info)
     self.page_top = 1
     self.page_size = 1
+    self.scrollbar = Scrollbar{
+        frame={r=0},
+        on_scroll=self:callback('on_scrollbar')}
+
+    self:addviews{self.scrollbar}
 
     if info.choices then
         self:setChoices(info.choices, info.selected)
@@ -708,13 +1115,21 @@ function List:postComputeFrame(body)
     self:moveCursor(0)
 end
 
+local function update_list_scrollbar(list)
+    list.scrollbar:update(list.page_top, list.page_size, #list.choices)
+end
+
+function List:postUpdateLayout()
+    update_list_scrollbar(self)
+end
+
 function List:moveCursor(delta, force_cb)
-    local page = math.max(1, self.page_size)
     local cnt = #self.choices
 
     if cnt < 1 then
         self.page_top = 1
         self.selected = 1
+        update_list_scrollbar(self)
         if force_cb and self.on_select then
             self.on_select(nil,nil)
         end
@@ -737,12 +1152,40 @@ function List:moveCursor(delta, force_cb)
         end
     end
 
+    local buffer = 1 + math.min(4, math.floor(self.page_size/10))
+
     self.selected = 1 + off % cnt
-    self.page_top = 1 + page * math.floor((self.selected-1) / page)
+    if (self.selected - buffer) < self.page_top then
+        self.page_top = math.max(1, self.selected - buffer)
+    elseif (self.selected + buffer + 1) > (self.page_top + self.page_size) then
+        local max_page_top = cnt - self.page_size + 1
+        self.page_top = math.max(1,
+            math.min(max_page_top, self.selected - self.page_size + buffer + 1))
+    end
+    update_list_scrollbar(self)
 
     if (force_cb or delta ~= 0) and self.on_select then
         self.on_select(self:getSelected())
     end
+end
+
+function List:on_scrollbar(scroll_spec)
+    local v = 0
+    if tonumber(scroll_spec) then
+        v = scroll_spec - self.page_top
+    elseif scroll_spec == 'down_large' then
+        v = math.ceil(self.page_size / 2)
+    elseif scroll_spec == 'up_large' then
+        v = -math.ceil(self.page_size / 2)
+    elseif scroll_spec == 'down_small' then
+        v = 1
+    elseif scroll_spec == 'up_small' then
+        v = -1
+    end
+
+    local max_page_top = math.max(1, #self.choices - self.page_size + 1)
+    self.page_top = math.max(1, math.min(max_page_top, self.page_top + v))
+    update_list_scrollbar(self)
 end
 
 function List:onRenderBody(dc)
@@ -788,7 +1231,7 @@ function List:onRenderBody(dc)
 
         if obj.key then
             local keystr = gui.getKeyDisplay(obj.key)
-            ip = ip-2-#keystr
+            ip = ip-3-#keystr
             dc:seek(ip,y):pen(self.text_pen)
             dc:string('('):string(keystr,COLOR_LIGHTGREEN):string(')')
         end
@@ -797,6 +1240,15 @@ function List:onRenderBody(dc)
             dc:seek(ip-1,y):pen(active_pen)
             paint_icon(icon, obj)
         end
+    end
+end
+
+function List:getIdxUnderMouse()
+    if self.scrollbar:getMousePos() then return end
+    local _,mouse_y = self:getMousePos()
+    if mouse_y and #self.choices > 0 and
+            mouse_y < (#self.choices-self.page_top+1) * self.row_height then
+        return self.page_top + math.floor(mouse_y/self.row_height)
     end
 end
 
@@ -813,12 +1265,26 @@ function List:submit2()
 end
 
 function List:onInput(keys)
+    if self:inputToSubviews(keys) then
+        return true
+    end
     if self.on_submit and keys.SELECT then
         self:submit()
         return true
     elseif self.on_submit2 and keys.SEC_SELECT then
         self:submit2()
         return true
+    elseif keys._MOUSE_L then
+        local idx = self:getIdxUnderMouse()
+        if idx then
+            self:setSelected(idx)
+            if dfhack.internal.getModifiers().shift then
+                self:submit2()
+            else
+                self:submit()
+            end
+            return true
+        end
     else
         for k,v in pairs(self.scroll_keys) do
             if keys[k] then
@@ -857,16 +1323,25 @@ FilteredList = defclass(FilteredList, Widget)
 FilteredList.ATTRS {
     edit_below = false,
     edit_key = DEFAULT_NIL,
+    edit_ignore_keys = DEFAULT_NIL,
+    edit_on_char = DEFAULT_NIL,
 }
 
 function FilteredList:init(info)
+    local on_char = self:callback('onFilterChar')
+    if self.edit_on_char then
+        on_char = function(c, text)
+            return self.edit_on_char(c, text) and self:onFilterChar(c, text)
+        end
+    end
+
     self.edit = EditField{
         text_pen = info.edit_pen or info.cursor_pen,
         frame = { l = info.icon_width, t = 0, h = 1 },
         on_change = self:callback('onFilterChange'),
-        on_char = self:callback('onFilterChar'),
+        on_char = on_char,
         key = self.edit_key,
-        active = (self.edit_key == nil),
+        ignore_keys = self.edit_ignore_keys,
     }
     self.list = List{
         frame = { t = 2 },
@@ -911,19 +1386,6 @@ function FilteredList:init(info)
     end
 end
 
-function FilteredList:onInput(keys)
-    if self.edit_key and keys[self.edit_key] and not self.edit.active then
-        self.edit.active = true
-        return true
-    elseif keys.LEAVESCREEN and self.edit.active then
-        self.edit.active = false
-        return true
-    else
-        return self:inputToSubviews(keys)
-    end
-end
-
-
 function FilteredList:getChoices()
     return self.choices
 end
@@ -934,7 +1396,7 @@ end
 
 function FilteredList:setChoices(choices, pos)
     choices = choices or {}
-    self.edit.text = ''
+    self.edit:setText('')
     self.list:setChoices(choices, pos)
     self.choices = self.list.choices
     self.not_found.visible = (#choices == 0)
@@ -976,7 +1438,9 @@ function FilteredList:setFilter(filter, pos)
     local cidx = nil
 
     filter = filter or ''
-    self.edit.text = filter
+    if filter ~= self.edit.text then
+        self.edit:setText(filter)
+    end
 
     if filter ~= '' then
         local tokens = filter:split()

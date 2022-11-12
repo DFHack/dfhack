@@ -37,37 +37,12 @@ REQUIRE_GLOBAL(world);
 
 command_result df_changeitem(color_ostream &out, vector <string> & parameters);
 
-const string changeitem_help =
-    "Changeitem allows to change some item attributes.\n"
-    "By default the item currently selected in the UI will be changed\n"
-    "(you can select items in the 'k' list or inside containers/inventory).\n"
-    "By default change is only allowed if materials is of the same subtype\n"
-    "(for example wood<->wood, stone<->stone etc). But since some transformations\n"
-    "work pretty well and may be desired you can override this with 'force'.\n"
-    "Note that some attributes will not be touched, possibly resulting in weirdness.\n"
-    "To get an idea how the RAW id should look like, check some items with 'info'.\n"
-    "Using 'force' might create items which are not touched by crafters/haulers.\n"
-    "Options:\n"
-    "  info         - don't change anything, print some item info instead\n"
-    "  here         - change all items at cursor position\n"
-    "  material, m  - change material. must be followed by material RAW id\n"
-    "  subtype, s   - change subtype. must be followed by correct RAW id\n"
-    "  quality, q   - change base quality. must be followed by number (0-5)\n"
-    "  force        - ignore subtypes, force change to new material.\n"
-    "Example:\n"
-    "  changeitem m INORGANIC:GRANITE here\n"
-    "    change material of all items under the cursor to granite\n"
-    "  changeitem q 5\n"
-    "    change currently selected item to masterpiece quality\n";
-
-
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "changeitem", "Change item attributes (material, quality).",
-        df_changeitem, false,
-        changeitem_help.c_str()
-    ));
+        "changeitem",
+        "Change item attributes (material, quality).",
+        df_changeitem));
 
     return CR_OK;
 }
@@ -130,8 +105,7 @@ command_result df_changeitem(color_ostream &out, vector <string> & parameters)
 
         if (p == "help" || p == "?")
         {
-            out << changeitem_help << endl;
-            return CR_OK;
+            return CR_WRONG_USAGE;
         }
         else if (p == "here")
         {

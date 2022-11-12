@@ -104,85 +104,13 @@ JsonArchive& operator>>(JsonArchive& ar, const serialization::nvp<T>& target)
 static constexpr auto defaultRegex =
     std::regex::optimize | std::regex::nosubs | std::regex::collate;
 
-static const char* const commandHelp =
-    "  Manage runtime debug print filters.\n"
-    "\n"
-    "  debugfilter category [<plugin regex> [<category regex>]]\n"
-    "    List categories matching regular expressions.\n"
-    "  debugfilter filter [<filter id>]\n"
-    "    List active filters or show detailed information for a filter.\n"
-    "  debugfilter set [persistent] <level> [<plugin regex> [<category regex>]]\n"
-    "    Set a filter level to categories matching regular expressions.\n"
-    "  debugfilter unset <filter id> [<filter id> ...]\n"
-    "    Unset filters matching space separated list of ids from 'filter'.\n"
-    "  debugfilter disable <filter id> [<filter id> ...]\n"
-    "    Disable filters matching space separated list of ids from 'filter'.\n"
-    "  debugfilter enable <filter id> [<filter id> ...]\n"
-    "    Enable filters matching space separated list of ids from 'filter'.\n"
-    "  debugfilter header [enable] | [disable] [<element> ...]\n"
-    "    Control which header metadata is shown along with each log message.\n"
-    "  debugfilter help [<subcommand>]\n"
-    "    Show detailed help for a command or this help.\n";
-static const char* const commandCategory =
-    "  category [<plugin regex> [<category regex>]]\n"
-    "    List categories with optional filters. Parameters are passed to\n"
-    "    std::regex to limit which once are shown. The first regular\n"
-    "    expression is used to match the category and the second is used\n"
-    "    to match the plugin name.\n";
-static const char* const commandSet =
-    "  set [persistent] <level> [<plugin regex> [<category regex>]]\n"
-    "    Set filtering level for matching categories. 'level' must be one of\n"
-    "    trace, debug, info, warning and error. The 'level' parameter sets\n"
-    "    the lowest message level that will be shown. The command doesn't\n"
-    "    allow filters to disable any error messages.\n"
-    "    Default filter life time is until Dwarf Fortress process exists or\n"
-    "    plugin is unloaded. Passing 'persistent' as second parameter tells\n"
-    "    the plugin to store the filter to dfhack-config. Stored filters\n"
-    "    will be active until always when the plugin is loaded. 'unset'\n"
-    "    command can be used to remove persistent filters.\n"
-    "    Filters are applied FIFO order. The latest filter will override any\n"
-    "    older filter that also matches.\n";
-static const char* const commandFilters =
-    "  filter [<filter id>]\n"
-    "    Show the list of active filters. The first column is 'id' which can\n"
-    "    be used to deactivate filters using 'unset' command.\n"
-    "    Filters are printed in same order as applied - the oldest first.\n";
-static const char* const commandUnset =
-    "  unset <filter id> [<filter id> ...]\n"
-    "    'unset' takes space separated list of filter ids from 'filter'.\n"
-    "    It will reset any matching category back to the default 'warning'\n"
-    "    level or any other still active matching filter level.\n";
-static const char* const commandDisable =
-    "  disable <filter id> [<filter id> ...]\n"
-    "    'disable' takes space separated list of filter ids from 'filter'.\n"
-    "    It will reset any matching category back to the default 'warning'\n"
-    "    level or any other still active matching filter level.\n"
-    "    'disable' will print red filters that were already disabled.\n";
-static const char* const commandEnable =
-    "  enable <filter id> [<filter id> ...]\n"
-    "    'enable' takes space separated list of filter ids from 'filter'.\n"
-    "    It will reset any matching category back to the default 'warning'\n"
-    "    level or any other still active matching filter level.\n"
-    "    'enable' will print red filters that were already enabled.\n";
-static const char* const commandHeader =
-    "  header [enable] | [disable] [<element> ...]\n"
-    "    'header' allows you to customize what metadata is displayed with\n"
-    "    each log message. Run it without parameters to see the list of\n"
-    "    configurable elements. Include an 'enable' or 'disable' keyword to\n"
-    "    change specific elements.\n";
-static const char* const commandHelpDetails =
-    "  help [<subcommand>]\n"
-    "    Show help for any of subcommands. Without any parameters it shows\n"
-    "    short help for all subcommands.\n";
-
 //! Helper type to hold static dispatch table for subcommands
 struct CommandDispatch {
     //! Store handler function pointer and help message for commands
     struct Command {
         using handler_t = command_result(*)(color_ostream&,std::vector<std::string>&);
-        Command(handler_t handler, const char* help) :
-            handler_(handler),
-            help_(help)
+        Command(handler_t handler) :
+            handler_(handler)
         {}
 
         command_result operator()(color_ostream& out,
@@ -193,12 +121,8 @@ struct CommandDispatch {
 
         handler_t handler() const noexcept
         { return handler_; }
-
-        const char* help() const noexcept
-        { return help_; }
     private:
         handler_t handler_;
-        const char* help_;
     };
     using dispatch_t = const std::map<std::string, Command>;
     //! Name to handler function and help message mapping
@@ -510,6 +434,8 @@ private:
     Json::UInt64 nextId_;
     DebugManager::categorySignal_t::Connection connection_;
 };
+
+constexpr const char* FilterManager::configPath;
 
 FilterManager::~FilterManager()
 {
@@ -1123,28 +1049,14 @@ static command_result configureHeader(color_ostream& out,
 
 using DFHack::debugPlugin::CommandDispatch;
 
-static command_result printHelp(color_ostream& out,
-        std::vector<std::string>& parameters)
-{
-    const char* help = commandHelp;
-    auto iter = CommandDispatch::dispatch.end();
-    if (1u < parameters.size())
-        iter = CommandDispatch::dispatch.find(parameters[1]);
-    if (iter != CommandDispatch::dispatch.end())
-        help = iter->second.help();
-    out << help << std::flush;
-    return CR_OK;
-}
-
 CommandDispatch::dispatch_t CommandDispatch::dispatch {
-    {"category", {listCategories,commandCategory}},
-    {"filter", {listFilters,commandFilters}},
-    {"set", {setFilter,commandSet}},
-    {"unset", {unsetFilter,commandUnset}},
-    {"enable", {enableFilter,commandEnable}},
-    {"disable", {disableFilter,commandDisable}},
-    {"header", {configureHeader,commandHeader}},
-    {"help", {printHelp,commandHelpDetails}},
+    {"category", {listCategories}},
+    {"filter", {listFilters}},
+    {"set", {setFilter}},
+    {"unset", {unsetFilter}},
+    {"enable", {enableFilter}},
+    {"disable", {disableFilter}},
+    {"header", {configureHeader}},
 };
 
 //! Dispatch command handling to the subcommand or help
@@ -1154,13 +1066,14 @@ static command_result commandDebugFilter(color_ostream& out,
     DEBUG(command,out).print("debugfilter %s, parameter count %zu\n",
             parameters.size() > 0 ? parameters[0].c_str() : "",
             parameters.size());
-    auto handler = printHelp;
     auto iter = CommandDispatch::dispatch.end();
     if (0u < parameters.size())
         iter = CommandDispatch::dispatch.find(parameters[0]);
-    if (iter != CommandDispatch::dispatch.end())
-        handler = iter->second.handler();
-    return (handler)(out, parameters);
+    if (iter != CommandDispatch::dispatch.end()) {
+        iter->second.handler()(out, parameters);
+        return CR_OK;
+    }
+    return CR_WRONG_USAGE;
 }
 
 } } /* namespace debug */
@@ -1171,9 +1084,7 @@ DFhackCExport DFHack::command_result plugin_init(DFHack::color_ostream& out,
     commands.emplace_back(
             "debugfilter",
             "Manage runtime debug print filters",
-            DFHack::debugPlugin::commandDebugFilter,
-            false,
-            DFHack::debugPlugin::commandHelp);
+            DFHack::debugPlugin::commandDebugFilter);
     auto& filMan = DFHack::debugPlugin::FilterManager::getInstance();
     DFHack::command_result rv = DFHack::CR_OK;
     if ((rv = filMan.loadConfig(out)) != DFHack::CR_OK)

@@ -24,18 +24,16 @@ distribution.
 
 #pragma once
 #include "Export.h"
+#include <algorithm>
 #include <iostream>
 #include <iomanip>
+#include <cctype>
 #include <climits>
 #include <stdint.h>
 #include <vector>
 #include <sstream>
 #include <cstdio>
 #include <memory>
-
-using std::ostream;
-using std::stringstream;
-using std::endl;
 
 #if defined(_MSC_VER)
     #define DFHACK_FUNCTION_SIG __FUNCSIG__
@@ -83,9 +81,9 @@ using std::make_unique;
 }
 
 template <typename T>
-void print_bits ( T val, ostream& out )
+void print_bits ( T val, std::ostream& out )
 {
-    stringstream strs;
+    std::stringstream strs;
     T n_bits = sizeof ( val ) * CHAR_BIT;
     int cnt;
     for ( unsigned i = 0; i < n_bits; ++i )
@@ -93,24 +91,24 @@ void print_bits ( T val, ostream& out )
         cnt = i/10;
         strs << cnt << " ";
     }
-    strs << endl;
+    strs << std::endl;
     for ( unsigned i = 0; i < n_bits; ++i )
     {
         cnt = i%10;
         strs << cnt << " ";
     }
-    strs << endl;
+    strs << std::endl;
     for ( unsigned i = 0; i < n_bits; ++i )
     {
         strs << "--";
     }
-    strs << endl;
+    strs << std::endl;
     for ( unsigned i = 0; i < n_bits; ++i )
     {
         strs<< !!( val & 1 ) << " ";
         val >>= 1;
     }
-    strs << endl;
+    strs << std::endl;
     out << strs.str();
 }
 
@@ -389,9 +387,48 @@ DFHACK_EXPORT std::string toUpper(const std::string &str);
 DFHACK_EXPORT std::string toLower(const std::string &str);
 DFHACK_EXPORT std::string to_search_normalized(const std::string &str);
 
+static inline std::string int_to_string(const int n) {
+    std::ostringstream ss;
+    ss << n;
+    return ss.str();
+}
+
+static inline int string_to_int(const std::string s, int default_ = 0) {
+    try {
+        return std::stoi(s);
+    }
+    catch (std::exception&) {
+        return default_;
+    }
+}
+
+// trim from start
+static inline std::string &ltrim(std::string &s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](char x){ return !std::isspace(x); }));
+    return s;
+}
+
+// trim from end
+static inline std::string &rtrim(std::string &s) {
+    s.erase(std::find_if(s.rbegin(), s.rend(), [](char x){ return !std::isspace(x); }).base(), s.end());
+    return s;
+}
+
+// trim from both ends
+static inline std::string &trim(std::string &s) {
+    return ltrim(rtrim(s));
+}
+
+enum word_wrap_whitespace_mode {
+    WSMODE_KEEP_ALL,
+    WSMODE_COLLAPSE_ALL,
+    WSMODE_TRIM_LEADING
+};
+
 DFHACK_EXPORT bool word_wrap(std::vector<std::string> *out,
                              const std::string &str,
-                             size_t line_length = 80);
+                             size_t line_length = 80,
+                             word_wrap_whitespace_mode mode = WSMODE_KEEP_ALL);
 
 inline bool bits_match(unsigned required, unsigned ok, unsigned mask)
 {

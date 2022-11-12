@@ -9,10 +9,9 @@ DFHack Core
   :depth: 2
 
 
-Command Implementation
+Command implementation
 ======================
-DFHack commands can be implemented in three ways, all of which
-are used in the same way:
+DFHack commands can be implemented in any of three ways:
 
 :builtin:   commands are implemented by the core of DFHack. They manage
             other DFHack tools, interpret commands, and control basic
@@ -27,8 +26,9 @@ are used in the same way:
             more flexible about versions, and easier to distribute.
             Most third-party DFHack addons are scripts.
 
+All tools distributed with DFHack are documented `here <genindex>`.
 
-Using DFHack Commands
+Using DFHack commands
 =====================
 DFHack commands can be executed in a number of ways:
 
@@ -38,7 +38,7 @@ DFHack commands can be executed in a number of ways:
 #. From one of several `init-files`, automatically
 #. Using `script` to run a batch of commands from a file
 
-The DFHack Console
+The DFHack console
 ------------------
 The command line has some nice line editing capabilities, including history
 that's preserved between different runs of DF - use :kbd:`↑` and :kbd:`↓`
@@ -113,269 +113,27 @@ second (Windows) example uses `kill-lua` to stop a Lua script.
   you have multiple copies of DF running simultaneously. To assign a different
   port, see `remote-server-config`.
 
-
-Built-in Commands
-=================
-The following commands are provided by the 'core' components
-of DFHack, rather than plugins or scripts.
-
-.. contents::
-   :local:
-
-
-.. _alias:
-
-alias
------
-The ``alias`` command allows configuring aliases to other DFHack commands.
-Aliases are resolved immediately after built-in commands, which means that an
-alias cannot override a built-in command, but can override a command implemented
-by a plugin or script.
-
-Usage:
-
-:``alias list``: lists all configured aliases
-:``alias add <name> <command> [arguments...]``: adds an alias
-:``alias replace <name> <command> [arguments...]``: replaces an existing
-    alias with a new command, or adds the alias if it does not already exist
-:``alias delete <name>``: removes the specified alias
-
-Aliases can be given additional arguments when created and invoked, which will
-be passed to the underlying command in order. An example with `devel/print-args`::
-
-    [DFHack]# alias add pargs devel/print-args example
-    [DFHack]# pargs text
-    example
-    text
-
-
-.. _cls:
-
-cls
----
-Clear the terminal.  Does not delete command history.
-
-
-.. _die:
-
-die
----
-Instantly kills DF without saving.
-
-
-.. _disable:
-
-.. _enable:
-
-enable
-------
-Many plugins can be in a distinct enabled or disabled state. Some of
-them activate and deactivate automatically depending on the contents
-of the world raws. Others store their state in world data. However a
-number of them have to be enabled globally, and the init file is the
-right place to do it.
-
-Most such plugins or scripts support the built-in ``enable`` and ``disable``
-commands. Calling them at any time without arguments prints a list
-of enabled and disabled plugins, and shows whether that can be changed
-through the same commands. Passing plugin names to these commands will enable
-or disable the specified plugins. For example, to enable the `manipulator`
-plugin::
-
-  enable manipulator
-
-It is also possible to enable or disable multiple plugins at once::
-
-  enable manipulator search
-
-
-.. _fpause:
-
-fpause
-------
-Forces DF to pause. This is useful when your FPS drops below 1 and you lose
-control of the game.
-
-
-.. _help:
-
-help
-----
-Most commands support using the ``help <command>`` built-in command
-to retrieve further help without having to look at this document.
-``? <cmd>`` and ``man <cmd>`` are aliases.
-
-Some commands (including many scripts) instead take ``help`` or ``?``
-as an option on their command line - ie ``<cmd> help``.
-
-
-.. _hide:
-
-hide
-----
-Hides the DFHack terminal window.  Only available on Windows.
-
-
-.. _keybinding:
-
-keybinding
-----------
-To set keybindings, use the built-in ``keybinding`` command. Like any other
-command it can be used at any time from the console, but bindings are not
-remembered between runs of the game unless re-created in `dfhack.init`.
-
-Currently, any combinations of Ctrl/Alt/Shift with A-Z, 0-9, or F1-F12 are supported.
-
-Possible ways to call the command:
-
-``keybinding list <key>``
-  List bindings active for the key combination.
-``keybinding clear <key> <key>...``
-  Remove bindings for the specified keys.
-``keybinding add <key> "cmdline" "cmdline"...``
-  Add bindings for the specified key.
-``keybinding set <key> "cmdline" "cmdline"...``
-  Clear, and then add bindings for the specified key.
-
-The ``<key>`` parameter above has the following *case-sensitive* syntax::
-
-    [Ctrl-][Alt-][Shift-]KEY[@context[|context...]]
-
-where the *KEY* part can be any recognized key and [] denote optional parts.
-
-When multiple commands are bound to the same key combination, DFHack selects
-the first applicable one. Later ``add`` commands, and earlier entries within one
-``add`` command have priority. Commands that are not specifically intended for use
-as a hotkey are always considered applicable.
-
-The ``context`` part in the key specifier above can be used to explicitly restrict
-the UI state where the binding would be applicable. If called without parameters,
-the ``keybinding`` command among other things prints the current context string.
-
-Only bindings with a ``context`` tag that either matches the current context fully,
-or is a prefix ending at a ``/`` boundary would be considered for execution, i.e.
-when in context ``foo/bar/baz``, keybindings restricted to any of ``@foo/bar/baz``,
-``@foo/bar``, ``@foo`` or none will be active.
-
-Multiple contexts can be specified by separating them with a
-pipe (``|``) - for example, ``@foo|bar|baz/foo`` would match
-anything under ``@foo``, ``@bar``, or ``@baz/foo``.
-
-Interactive commands like `liquids` cannot be used as hotkeys.
-
-
-.. _kill-lua:
-
-kill-lua
---------
-Stops any currently-running Lua scripts. By default, scripts can
-only be interrupted every 256 instructions. Use ``kill-lua force``
-to interrupt the next instruction.
-
-
-.. _load:
-.. _unload:
-.. _reload:
-
-load
-----
-``load``, ``unload``, and ``reload`` control whether a plugin is loaded
-into memory - note that plugins are loaded but disabled unless you do
-something.  Usage::
-
-    load|unload|reload PLUGIN|(-a|--all)
-
-Allows dealing with plugins individually by name, or all at once.
-
-Note that plugins do not maintain their enabled state if they are reloaded, so
-you may need to use `enable` to re-enable a plugin after reloading it.
-
-
-.. _ls:
-
-ls
---
-``ls`` does not list files like the Unix command, but rather
-available commands - first built in commands, then plugins,
-and scripts at the end.  Usage:
-
-:ls -a:         Also list scripts in subdirectories of ``hack/scripts/``,
-                which are generally not intended for direct use.
-:ls <plugin>:   List subcommands for the given plugin.
-
-
-.. _plug:
-
-plug
-----
-Lists available plugins, including their state and detailed description.
-
-``plug``
-        Lists available plugins (*not* commands implemented by plugins)
-``plug [PLUGIN] [PLUGIN] ...``
-        List state and detailed description of the given plugins,
-        including commands implemented by the plugin.
-
-
-.. _sc-script:
-
-sc-script
----------
-Allows additional scripts to be run when certain events occur
-(similar to onLoad*.init scripts)
-
-
-.. _script:
-
-script
-------
-Reads a text file, and runs each line as a DFHack command
-as if it had been typed in by the user - treating the
-input like `an init file <init-files>`.
-
-Some other tools, such as `autobutcher` and `workflow`, export
-their settings as the commands to create them - which are later
-loaded with ``script``
-
-
-.. _show:
-
-show
-----
-Shows the terminal window after it has been `hidden <hide>`.
-Only available on Windows.  You'll need to use it from a
-`keybinding` set beforehand, or the in-game `command-prompt`.
-
-.. _type:
-
-type
-----
-``type command`` shows where ``command`` is implemented.
-
-Other Commands
---------------
-The following commands are *not* built-in, but offer similarly useful functions.
-
-* `command-prompt`
-* `hotkeys`
-* `lua`
-* `multicmd`
-* `nopause`
-* `quicksave`
-* `rb`
-* `repeat`
-
+.. _dfhack-config:
+
+Configuration files
+===================
+
+Most DFHack settings can be changed by modifying files in the ``dfhack-config``
+folder (which is in the DF folder). The default versions of these files, if they
+exist, are in ``dfhack-config/default`` and are installed when DFHack starts if
+necessary.
 
 .. _init-files:
 
-Init Files
-==========
+Init files
+----------
 
 .. contents::
    :local:
 
 DFHack allows users to automatically run commonly-used DFHack commands
-when DF is first loaded, when a game is loaded, and when a game is unloaded.
+when DF is first loaded, when a world is loaded, when a map is loaded, when a
+map is unloaded, and when a world is unloaded.
 
 Init scripts function the same way they would if the user manually typed
 in their contents, but are much more convenient.  In order to facilitate
@@ -385,32 +143,33 @@ save-specific init files in the save folders.
 
 DFHack looks for init files in three places each time they could be run:
 
-#. The main DF directory
+#. The :file:`dfhack-config/init` subdirectory in the main DF directory
 #. :file:`data/save/{world}/raw`, where ``world`` is the current save, and
 #. :file:`data/save/{world}/raw/objects`
 
-When reading commands from dfhack.init or with the `script` command, if the final
-character on a line is a backslash then the next uncommented line is considered a
-continuation of that line, with the backslash deleted.  Commented lines are skipped,
-so it is possible to comment out parts of a command with the ``#`` character.
+For each of those directories, all matching init files will be executed in
+alphabetical order.
 
+Before running matched init scripts in any of those locations, the
+:file:`dfhack-config/init/default.*` file that matches the event will be run to
+load DFHack defaults. Only the :file:`dfhack-config/init` directory is checked
+for this file, not any :file:`raw` directories. If you want DFHack to load
+without running any of its default configuration commands, edit the
+:file:`dfhack-config/init/default.*` files and comment out the commands you see
+there.
+
+When reading commands from the init files or with the `script` command, if the
+final character on a line is a backslash then the next uncommented line is
+considered a continuation of that line, with the backslash deleted.  Commented
+lines are skipped, so it is possible to comment out parts of a command with the
+``#`` character.
 
 .. _dfhack.init:
 
-dfhack*.init
-------------
-If your DF folder contains at least one file named ``dfhack*.init``
-(where ``*`` is a placeholder for any string), then all such files
-are executed in alphabetical order when DF is first started.
-
-DFHack is distributed with :download:`/dfhack.init-example` as an example
-with an up-to-date collection of basic commands; mostly setting standard
-keybindings and `enabling <enable>` plugins.  You are encouraged to look
-through this file to learn which features it makes available under which
-key combinations.  You may also customise it and rename it to ``dfhack.init``.
-
-If your DF folder does not contain any ``dfhack*.init`` files, the example
-will be run as a fallback.
+dfhack\*.init
+.............
+On startup, DFHack looks for files of the form ``dfhack*.init`` (where ``*`` is
+a placeholder for any string, including the empty string).
 
 These files are best used for keybindings and enabling persistent plugins
 which do not require a world to be loaded.
@@ -418,51 +177,49 @@ which do not require a world to be loaded.
 
 .. _onLoad.init:
 
-onLoad*.init
-------------
+onLoad\*.init
+.............
 When a world is loaded, DFHack looks for files of the form ``onLoad*.init``,
 where ``*`` can be any string, including the empty string.
 
-All matching init files will be executed in alphabetical order.
 A world being loaded can mean a fortress, an adventurer, or legends mode.
 
 These files are best used for non-persistent commands, such as setting
-a `fix <scripts-fix>` script to run on `repeat`.
+a `bugfix-tag-index` script to run on `repeat`.
 
 
+.. _onMapLoad.init:
+
+onMapLoad\*.init
+................
+When a map is loaded, either in adventure or fort mode, DFHack looks for files
+of the form ``onMapLoad*.init``, where ``*`` can be any string, including the
+empty string.
+
+These files are best used for commands that are only relevant once there is a
+game map loaded.
+
+
+.. _onMapUnload.init:
 .. _onUnload.init:
 
-onUnload*.init
---------------
-When a world is unloaded, DFHack looks for files of the form ``onUnload*.init``.
-Again, these files may be in any of the above three places.
-All matching init files will be executed in alphebetical order.
+onMapUnload\*.init and onUnload\*.init
+......................................
+When a map or world is unloaded, DFHack looks for files of the form
+``onMapUnload*.init`` or ``onUnload*.init``, respectively.
 
-Modders often use such scripts to disable tools which should not affect
-an unmodded save.
+Modders often use unload init scripts to disable tools which should not run
+after a modded save is unloaded.
+
 
 .. _other_init_files:
 
-Other init files
-----------------
+raw/init.d/\*.lua
+.................
 
-* ``onMapLoad*.init`` and ``onMapUnload*.init`` are run when a map,
-  distinct from a world, is loaded.  This is good for map-affecting
-  commands (e.g. `clean`), or avoiding issues in Legends mode.
+Any lua script named ``raw/init.d/*.lua``, in the save or main DF directory,
+will be run when any world or that save is loaded.
 
-* Any lua script named ``raw/init.d/*.lua``, in the save or main DF
-  directory, will be run when any world or that save is loaded.
-
-
-.. _dfhack-config:
-
-Configuration Files
-===================
-
-Some DFHack settings can be changed by modifying files in the ``dfhack-config``
-folder (which is in the DF folder). The default versions of these files, if they
-exist, are in ``dfhack-config/default`` and are installed when DFHack starts if
-necessary.
 
 .. _script-paths:
 
@@ -503,7 +260,7 @@ modified programmatically at any time through the `Lua API <lua-api-internal>`.
 
 .. _env-vars:
 
-Environment Variables
+Environment variables
 =====================
 
 DFHack's behavior can be adjusted with some environment variables. For example,
@@ -549,7 +306,7 @@ Other (non-DFHack-specific) variables that affect DFHack:
   sensitive), ``DF2CONSOLE()`` will produce UTF-8-encoded text. Note that this
   should be the case in most UTF-8-capable \*nix terminal emulators already.
 
-Miscellaneous Notes
+Miscellaneous notes
 ===================
 This section is for odd but important notes that don't fit anywhere else.
 

@@ -30,6 +30,7 @@ implemented by Lua files located in :file:`hack/lua/*`
   :local:
   :depth: 2
 
+.. _lua-df:
 
 =========================
 DF data structure wrapper
@@ -524,6 +525,20 @@ Input & Output
   lock. Using an explicit ``dfhack.with_suspend`` will prevent
   this, forcing the function to block on input with lock held.
 
+* ``dfhack.getCommandHistory(history_id, history_filename)``
+
+  Returns the list of strings in the specified history. Intended to be used by
+  GUI scripts that don't have access to a console and so can't use
+  ``dfhack.lineedit``. The ``history_id`` parameter is some unique string that
+  the script uses to identify its command history, such as the script's name. If
+  this is the first time the history with the given ``history_id`` is being
+  accessed, it is initialized from the given file.
+
+* ``dfhack.addCommandToHistory(history_id, history_filename, command)``
+
+  Adds a command to the specified history and saves the updated history to the
+  specified file.
+
 * ``dfhack.interpreter([prompt[,history_filename[,env]]])``
 
   Starts an interactive lua interpreter, using the specified prompt
@@ -725,7 +740,7 @@ Functions:
 
 * ``dfhack.matinfo.decode(type,index)``
 
-  Looks up material info for the given number pair; if not found, returs *nil*.
+  Looks up material info for the given number pair; if not found, returns *nil*.
 
 * ``....decode(matinfo)``, ``....decode(item)``, ``....decode(obj)``
 
@@ -837,6 +852,7 @@ can be omitted.
 * ``dfhack.getGitXmlExpectedCommit()``
 * ``dfhack.gitXmlMatch()``
 * ``dfhack.isRelease()``
+* ``dfhack.isPrerelease()``
 
   Return information about the DFHack build in use.
 
@@ -890,7 +906,6 @@ can be omitted.
   from ``dfhack.TranslateName()``), use ``print(dfhack.df2console(text))`` to
   ensure proper display on all platforms.
 
-
 * ``dfhack.utf2df(string)``
 
   Convert a string from UTF-8 to DF's CP437 encoding.
@@ -914,9 +929,9 @@ can be omitted.
 
   The following examples are equivalent::
 
-    dfhack.run_command({'ls', '-a'})
-    dfhack.run_command('ls', '-a')
-    dfhack.run_command('ls -a')  -- not recommended
+    dfhack.run_command({'ls', 'quick'})
+    dfhack.run_command('ls', 'quick')
+    dfhack.run_command('ls quick')  -- not recommended
 
 * ``dfhack.run_command_silent(command[, ...])``
 
@@ -1073,13 +1088,18 @@ Announcements
   Uses the type to look up options from announcements.txt, and calls the above
   operations accordingly. The units are used to call ``addCombatReportAuto``.
 
+* ``dfhack.gui.getMousePos()``
+
+  Returns the map coordinates of the map tile the mouse is over as a table of
+  ``{x, y, z}``. If the cursor is not over the map, returns ``nil``.
+
 Other
 ~~~~~
 
 * ``dfhack.gui.getDepthAt(x, y)``
 
   Returns the distance from the z-level of the tile at map coordinates (x, y) to
-  the closest ground z-level below. Defaults to 0, unless overriden by plugins.
+  the closest ground z-level below. Defaults to 0, unless overridden by plugins.
 
 Job module
 ----------
@@ -1849,7 +1869,7 @@ Among them are:
   - ``full_rectangle = true``
 
     For buildings like stockpiles or farm plots that can normally
-    accomodate individual tile exclusion, forces an error if any
+    accommodate individual tile exclusion, forces an error if any
     tiles within the specified width*height are obstructed.
 
   - ``items = { item, item ... }``, or ``filters = { {...}, {...}... }``
@@ -1886,6 +1906,14 @@ Constructions module
   coordinates, designates it for removal, or instantly cancels the planned one.
   Returns *true, was_only_planned* if removed; or *false* if none found.
 
+* ``dfhack.constructions.findAtTile(pos)``, or ``findAtTile(x,y,z)``
+
+  Returns the construction at the given position, or ``nil`` if there isn't one.
+
+* ``dfhack.constructions.insert(construction)``
+
+  Properly inserts the given construction into the game. Returns false and fails to
+  insert if there was already a construction at the position.
 
 Kitchen module
 --------------
@@ -1977,6 +2005,12 @@ Functions:
 
   Returns: *tile, tile_grayscale*, or *nil* if not found.
   The values can then be used for the *tile* field of *pen* structures.
+
+* ``dfhack.screen.hideGuard(screen,callback[,args...])``
+
+  Removes screen from the viewscreen stack, calls the callback (with optional
+  supplied arguments), and then restores the screen on the top of the viewscreen
+  stack.
 
 * ``dfhack.screen.clear()``
 
@@ -2143,7 +2177,7 @@ Supported callbacks and fields are:
 
   Called when keyboard or mouse events are available.
   If any keys are pressed, the keys argument is a table mapping them to *true*.
-  Note that this refers to logical keybingings computed from real keys via
+  Note that this refers to logical keybindings computed from real keys via
   options; if multiple interpretations exist, the table will contain multiple keys.
 
   The table also may contain special keys:
@@ -2468,7 +2502,7 @@ Core context specific functions:
   unit of time used, and may be one of ``'frames'`` (raw FPS),
   ``'ticks'`` (unpaused FPS), ``'days'``, ``'months'``,
   ``'years'`` (in-game time). All timers other than
-  ``'frames'`` are cancelled when the world is unloaded,
+  ``'frames'`` are canceled when the world is unloaded,
   and cannot be queued until it is loaded again.
   Returns the timer id, or *nil* if unsuccessful due to
   world being unloaded.
@@ -2643,9 +2677,15 @@ environment by the mandatory init file dfhack.lua:
   Walks a sequence of dereferences, which may be represented by numbers or strings.
   Returns *nil* if any of obj or indices is *nil*, or a numeric index is out of array bounds.
 
+* ``ensure_key(t, key[, default_value])``
+
+  If the Lua table ``t`` doesn't include the specified ``key``, ``t[key]`` is
+  set to the value of ``default_value``, which defaults to ``{}`` if not set.
+  The new or existing value of ``t[key]`` is then returned.
+
 .. _lua-string:
 
-String class extentions
+String class extensions
 -----------------------
 
 DFHack extends Lua's basic string class to include a number of convenience
@@ -2666,7 +2706,7 @@ functions. These are invoked just like standard string functions, e.g.::
 * ``string:split([delimiter[, plain]])``
 
   Split a string by the given delimiter. If no delimiter is specified, space
-  (``' '``) is used. The delimter is treated as a pattern unless a ``plain`` is
+  (``' '``) is used. The delimiter is treated as a pattern unless a ``plain`` is
   specified and set to ``true``. To treat multiple successive delimiter
   characters as a single delimiter, e.g. to avoid getting empty string elements,
   pass a pattern like ``' +'``. Be aware that passing patterns that match empty
@@ -2943,10 +2983,10 @@ parameters.
   (e.g. combining the previous two examples into ``-abcdparam``)
 
   Long options focus on clarity. They are usually entire words, or several words
-  combined with hypens (``-``) or underscores (``_``). If they take an argument,
-  the argument can be separated from the option name by a space or an equals
-  sign (``=``). For example, the following two commandlines are equivalent:
-  ``yourscript --style pretty`` and ``yourscript --style=pretty``.
+  combined with hyphens (``-``) or underscores (``_``). If they take an
+  argument, the argument can be separated from the option name by a space or an
+  equals sign (``=``). For example, the following two commandlines are
+  equivalent: ``yourscript --style pretty`` and ``yourscript --style=pretty``.
 
   Another reason to use long options is if they represent an esoteric parameter
   that you don't expect to be commonly used and that you don't want to "waste" a
@@ -3023,6 +3063,18 @@ parameters.
   function also verifies that the coordinates are valid for the current map and
   throws if they are not (unless ``skip_validation`` is set to true).
 
+* ``argparse.positiveInt(arg, arg_name)``
+
+  Throws if ``tonumber(arg)`` is not a positive integer; otherwise returns
+  ``tonumber(arg)``. If ``arg_name`` is specified, it is used to make error
+  messages more useful.
+
+* ``argparse.nonnegativeInt(arg, arg_name)``
+
+  Throws if ``tonumber(arg)`` is not a non-negative integer; otherwise returns
+  ``tonumber(arg)``. If ``arg_name`` is specified, it is used to make error
+  messages more useful.
+
 dumper
 ======
 
@@ -3036,6 +3088,96 @@ function:
   argument specifies the indentation step size in spaces. For
   the other arguments see the original documentation link above.
 
+helpdb
+======
+
+Unified interface for DFHack tool help text. Help text is read from the rendered
+text in ``hack/docs/docs/``. If no rendered text exists, help is read from the
+script sources (for scripts) or the string passed to the ``PluginCommand``
+initializer (for plugins). See `documentation` for details on how DFHack's help
+system works.
+
+The database is lazy-loaded when an API method is called. It rechecks its help
+sources for updates if an API method has not been called in the last 60 seconds.
+
+Each entry has several properties associated with it:
+
+- The entry name, which is the name of a plugin, script, or command provided by
+  a plugin.
+- The entry types, which can be ``builtin``, ``plugin``, and/or ``command``.
+  Entries for built-in commands (like ``ls`` or ``quicksave``) are both type
+  ``builtin`` and ``command``. Entries named after plugins are type ``plugin``,
+  and if that plugin also provides a command with the same name as the plugin,
+  then the entry is also type ``command``. Entry types are returned as a map
+  of one or more of the type strings to ``true``.
+- Short help, a the ~54 character description string.
+- Long help, the entire contents of the associated help file.
+- A list of tags that define the groups that the entry belongs to.
+
+* ``helpdb.is_entry(str)``, ``helpdb.is_entry(list)``
+
+  Returns whether the given string (or list of strings) is an entry (are all
+  entries) in the db.
+
+* ``helpdb.get_entry_types(entry)``
+
+  Returns the set (that is, a map of string to ``true``) of entry types for the
+  given entry.
+
+* ``helpdb.get_entry_short_help(entry)``
+
+  Returns the short (~54 character) description for the given entry.
+
+* ``helpdb.get_entry_long_help(entry[, width])``
+
+  Returns the full help text for the given entry. If ``width`` is specified, the
+  text will be wrapped at that width, preserving block indents. The wrap width
+  defaults to 80.
+
+* ``helpdb.get_entry_tags(entry)``
+
+  Returns the set of tag names for the given entry.
+
+* ``helpdb.is_tag(str)``, ``helpdb.is_tag(list)``
+
+  Returns whether the given string (or list of strings) is a (are all) valid tag
+  name(s).
+
+* ``helpdb.get_tags()``
+
+  Returns the full alphabetized list of valid tag names.
+
+* ``helpdb.get_tag_data(tag)``
+
+  Returns a list of entries that have the given tag. The returned table also
+  has a ``description`` key that contains the string description of the tag.
+
+* ``helpdb.search_entries([include[, exclude]])``
+
+  Returns a list of names for entries that match the given filters. The list is
+  alphabetized by their last path component, with populated path components
+  coming before null path components (e.g. ``autobutcher`` will immediately
+  follow ``gui/autobutcher``).
+  The optional ``include`` and ``exclude`` filter params are maps (or lists of
+  maps) with the following elements:
+
+  :str:   if a string, filters by the given substring. if a table of strings,
+          includes entry names that match any of the given substrings.
+  :tag:   if a string, filters by the given tag name. if a table of strings,
+          includes entries that match any of the given tags.
+  :entry_type: if a string, matches entries of the given type. if a table of
+          strings, includes entries that match any of the given types.
+
+  Elements in a map are ANDed together (e.g. if both ``str`` and ``tag`` are
+  specified, the match is on any of the ``str`` elements AND any of the ``tag``
+  elements).
+
+  If lists of filters are passed instead of a single map, the maps are ORed
+  (that is, the match succeeds if any of the filters match).
+
+  If ``include`` is ``nil`` or empty, then all entries are included. If
+  ``exclude`` is ``nil`` or empty, then no entries are filtered out.
+
 profiler
 ========
 
@@ -3045,7 +3187,7 @@ create profiler objects which can be used to profile and generate report.
 
 * ``profiler.newProfiler([variant[, sampling_frequency]])``
 
-  Returns an profile object with ``variant`` either ``'time'`` or ``'call'``.
+  Returns a profile object with ``variant`` either ``'time'`` or ``'call'``.
   ``'time'`` variant takes optional ``sampling_frequency`` parameter to select
   lua instruction counts between samples. Default is ``'time'`` variant with
   ``10*1000`` frequency.
@@ -3130,7 +3272,7 @@ Implements a trivial single-inheritance class system.
 
   The main difference is that attributes are processed as a separate
   initialization step, before any ``init`` methods are called. They
-  also make the directy relation between instance fields and constructor
+  also make the direct relation between instance fields and constructor
   arguments more explicit.
 
 * ``new_obj = Class{ foo = arg, bar = arg, ... }``
@@ -3140,8 +3282,8 @@ Implements a trivial single-inheritance class system.
 
   1. An empty instance table is created, and its metatable set.
   2. The ``preinit`` methods are called via ``invoke_before`` (see below)
-     with the table used as argument to the class. These methods are intended
-     for validating and tweaking that argument table.
+     with the table used as the argument to the class. These methods are
+     intended for validating and tweaking that argument table.
   3. Declared ATTRS are initialized from the argument table or their default values.
   4. The ``init`` methods are called via ``invoke_after`` with the argument table.
      This is the main constructor method.
@@ -3191,6 +3333,83 @@ Predefined instance methods:
   library itself uses them for constructors.
 
 To avoid confusion, these methods cannot be redefined.
+
+.. _custom-raw-tokens:
+
+custom-raw-tokens
+=================
+
+A module for reading custom tokens added to the raws by mods.
+
+* ``customRawTokens.getToken(typeDefinition, token)``
+
+  Where ``typeDefinition`` is a type definition struct as seen in ``df.global.world.raws``
+  (e.g.: ``dfhack.gui.getSelectedItem().subtype``) and ``token`` is the name of the custom token
+  you want read. The arguments from the token will then be returned as strings using single or
+  multiple return values. If the token is not present, the result is false; if it is present
+  but has no arguments, the result is true. For ``creature_raw``, it checks against no caste.
+  For ``plant_raw``, it checks against no growth.
+
+* ``customRawTokens.getToken(typeInstance, token)``
+
+  Where ``typeInstance`` is a unit, entity, item, job, projectile, building, plant, or interaction
+  instance. Gets ``typeDefinition`` and then returns the same as ``getToken(typeDefinition, token)``.
+  For units, it gets the token from the race or caste instead if applicable. For plant growth items,
+  it gets the token from the plant or plant growth instead if applicable. For plants it does the same
+  but with growth number -1.
+
+* ``customRawTokens.getToken(raceDefinition, casteNumber, token)``
+
+  The same as ``getToken(unit, token)`` but with a specified race and caste. Caste number -1 is no caste.
+
+* ``customRawTokens.getToken(raceDefinition, casteName, token)``
+
+  The same as ``getToken(unit, token)`` but with a specified race and caste, using caste name (e.g. "FEMALE")
+  instead of number.
+
+* ``customRawTokens.getToken(plantDefinition, growthNumber, token)``
+
+  The same as ``getToken(plantGrowthItem, token)`` but with a specified plant and growth. Growth number -1
+  is no growth.
+
+* ``customRawTokens.getToken(plantDefinition, growthName, token)``
+
+  The same as ``getToken(plantGrowthItem, token)`` but with a specified plant and growth, using growth name
+  (e.g. "LEAVES") instead of number.
+
+It is recommended to prefix custom raw tokens with the name of your mod to avoid duplicate behaviour where
+two mods make callbacks that work on the same tag.
+
+Examples:
+
+* Using an eventful onReactionComplete hook, something for disturbing dwarven science::
+
+    if customRawTokens.getToken(reaction, "EXAMPLE_MOD_CAUSES_INSANITY") then
+        -- make unit who performed reaction go insane
+
+* Using an eventful onProjItemCheckMovement hook, a fast or slow-firing crossbow::
+
+    -- check projectile distance flown is zero, get firer, etc...
+    local multiplier = tonumber(customRawTokens.getToken(bow, "EXAMPLE_MOD_FIRE_RATE_MULTIPLIER")) or 1
+    firer.counters.think_counter = firer.counters.think_counter * multiplier
+
+* Something for a script that prints help text about different types of units::
+
+    local unit = dfhack.gui.getSelectedUnit()
+    if not unit then return end
+    local helpText = customRawTokens.getToken(unit, "EXAMPLE_MOD_HELP_TEXT")
+    if helpText then print(helpText) end
+
+* Healing armour::
+
+    -- (per unit every tick)
+    local healAmount = 0
+    for _, entry in ipairs(unit.inventory) do
+        if entry.mode == 2 then -- Worn
+            healAmount = healAmount + tonumber((customRawTokens.getToken(entry.item, "EXAMPLE_MOD_HEAL_AMOUNT")) or 0)
+        end
+    end
+    unit.body.blood_count = math.min(unit.body.blood_max, unit.body.blood_count + healAmount)
 
 ==================
 In-game UI Library
@@ -3436,18 +3655,28 @@ The class defines the following attributes:
 :visible: Specifies that the view should be painted.
 :active: Specifies that the view should receive events, if also visible.
 :view_id: Specifies an identifier to easily identify the view among subviews.
-          This is reserved for implementation of top-level views, and should
-          not be used by widgets for their internal subviews.
+          This is reserved for use by script writers and should not be set by
+          library widgets for their internal subviews.
+:on_focus: Called when the view gains keyboard focus; see ``setFocus()`` below.
+:on_unfocus: Called when the view loses keyboard focus.
 
 It also always has the following fields:
 
 :subviews: Contains a table of all subviews. The sequence part of the
            table is used for iteration. In addition, subviews are also
-           indexed under their *view_id*, if any; see ``addviews()`` below.
+           indexed under their ``view_id``, if any; see ``addviews()`` below.
+:parent_view: A reference to the parent view. This field is ``nil`` until the
+              view is added as a subview to another view with ``addviews()``.
+:focus_group: The list of widgets in a hierarchy. This table is unique and empty
+              when a view is initialized, but is replaced by a shared table when
+              the view is added to a parent via ``addviews()``. If a view in the
+              focus group has keyboard focus, that widget can be accessed via
+              ``focus_group.cur``.
+:focus: A boolean indicating whether the view currently has keyboard focus.
 
 These fields are computed by the layout process:
 
-:frame_parent_rect: The ViewRect represeting the client area of the parent view.
+:frame_parent_rect: The ViewRect representing the client area of the parent view.
 :frame_rect: The ``mkdims`` rect of the outer frame in parent-local coordinates.
 :frame_body: The ViewRect representing the body part of the View's own frame.
 
@@ -3478,10 +3707,11 @@ The class has the following methods:
 
   Returns the dimensions of the ``frame_body`` rectangle.
 
-* ``view:getMousePos()``
+* ``view:getMousePos([view_rect])``
 
-  Returns the mouse *x,y* in coordinates local to the ``frame_body``
-  rectangle if it is within its clip area, or nothing otherwise.
+  Returns the mouse *x,y* in coordinates local to the given ViewRect (or
+  ``frame_body`` if no ViewRect is passed) if it is within its clip area,
+  or nothing otherwise.
 
 * ``view:updateLayout([parent_rect])``
 
@@ -3537,8 +3767,27 @@ The class has the following methods:
 
   Calls ``onInput`` on all visible active subviews, iterating the ``subviews``
   sequence in *reverse order*, so that topmost subviews get events first.
-  Returns *true* if any of the subviews handled the event.
+  Returns ``true`` if any of the subviews handled the event. If a subview within
+  the view's ``focus_group`` has focus and it and all of its ancestors are
+  active and visible, that subview is offered the chance to handle the input
+  before any other subviews.
 
+* ``view:getPreferredFocusState()``
+
+  Returns ``false`` by default, but should be overridden by subclasses that may
+  want to take keyboard focus (if it is unclaimed) when they are added to a
+  parent view with ``addviews()``.
+
+* ``view:setFocus(focus)``
+
+  Sets the keyboard focus to the view if ``focus`` is ``true``, or relinquishes
+  keyboard focus if ``focus`` is ``false``. Views that newly acquire keyboard
+  focus will trigger the ``on_focus`` callback, and views that lose keyboard
+  focus will trigger the ``on_unfocus`` callback. While a view has focus, all
+  keyboard input is sent to that view before any of its siblings or parents.
+  Keyboard input is propagated as normal (see ``inputToSubviews()`` above) if
+  there is no view with focus or if the view with focus returns ``false`` from
+  its ``onInput()`` function.
 
 .. _lua-gui-screen:
 
@@ -3581,7 +3830,9 @@ It adds the following methods:
   ``dfhack.screen.show``, calls ``self:onAboutToShow(parent)``. Note that
   ``onAboutToShow()`` can dismiss active screens, and therefore change the
   potential parent. If parent is not specified, this function will re-detect the
-  current topmost window after ``self:onAboutToShow(parent)`` returns.
+  current topmost window after ``self:onAboutToShow(parent)`` returns. This
+  function returns ``self`` as a convenience so you can write such code as
+  ``local view = MyScreen{params=val}:show()``.
 
 * ``screen:onAboutToShow(parent)`` *(for overriding)*
 
@@ -3664,13 +3915,13 @@ Base of all the widgets. Inherits from View and has the following attributes:
   :r: gap between the right edges of the frame and the parent.
   :b: gap between the bottom edges of the frame and the parent.
   :w: maximum width of the frame.
-  :h: maximum heigth of the frame.
+  :h: maximum height of the frame.
   :xalign: X alignment of the frame.
   :yalign: Y alignment of the frame.
 
   First the ``l,t,r,b`` fields restrict the available area for
   placing the frame. If ``w`` and ``h`` are not specified or
-  larger then the computed area, it becomes the frame. Otherwise
+  larger than the computed area, it becomes the frame. Otherwise
   the smaller frame is placed within the are based on the
   ``xalign/yalign`` fields. If the align hints are omitted, they
   are assumed to be 0, 1, or 0.5 based on which of the ``l/r/t/b``
@@ -3698,7 +3949,7 @@ Base of all the widgets. Inherits from View and has the following attributes:
 Panel class
 -----------
 
-Inherits from Widget, and intended for grouping a number of subviews.
+Inherits from Widget, and intended for framing and/or grouping subviews.
 
 Has attributes:
 
@@ -3719,6 +3970,13 @@ Has attributes:
   between subviews. This allows you to have widgets dynamically change
   height or become visible/hidden and you don't have to worry about
   recalculating subview positions.
+
+* ``frame_style``, ``frame_title`` (default: nil)
+  If defined, a frame will be drawn around the panel and subviews will be inset
+  by 1. The attributes are identical to what is defined in the
+  `FramedScreen class`_. When using the predefined frame styles in the ``gui``
+  module, remember to ``require`` the gui module and prefix the identifier with
+  ``gui.``, e.g. ``gui.GREY_LINE_FRAME``.
 
 ResizingPanel class
 -------------------
@@ -3752,13 +4010,97 @@ Subclass of Widget; implements a simple edit field.
 
 Attributes:
 
+:label_text: The optional text label displayed before the editable text.
 :text: The current contents of the field.
 :text_pen: The pen to draw the text with.
 :on_char: Input validation callback; used as ``on_char(new_char,text)``.
           If it returns false, the character is ignored.
 :on_change: Change notification callback; used as ``on_change(new_text,old_text)``.
 :on_submit: Enter key callback; if set the field will handle the key and call ``on_submit(text)``.
+:on_submit2: Shift-Enter key callback; if set the field will handle the key and call ``on_submit2(text)``.
 :key: If specified, the field is disabled until this key is pressed. Must be given as a string.
+:key_sep: If specified, will be used to customize how the activation key is
+          displayed. See ``token.key_sep`` in the ``Label`` documentation below.
+:modal: Whether the ``EditField`` should prevent input from propagating to other
+        widgets while it has focus. You can set this to ``true``, for example,
+        if you don't want a ``List`` widget to react to arrow keys while the
+        user is editing.
+:ignore_keys: If specified, must be a list of key names that the edit field
+              should ignore. This is useful if you have plain string characters
+              that you want to use as hotkeys (like ``+``).
+
+An ``EditField`` will only read and process text input if it has keyboard focus.
+It will automatically acquire keyboard focus when it is added as a subview to
+a parent that has not already granted keyboard focus to another widget. If you
+have more than one ``EditField`` on a screen, you can select which has focus by
+calling ``setFocus(true)`` on the field object.
+
+If an activation ``key`` is specified, the ``EditField`` will manage its own
+focus. It will start in the unfocused state, and pressing the activation key
+will acquire keyboard focus. Pressing the Enter key will release keyboard focus
+and then call the ``on_submit`` callback. Pressing the Escape key will also
+release keyboard focus, but first it will restore the text that was displayed
+before the ``EditField`` gained focus and then call the ``on_change`` callback.
+
+The ``EditField`` cursor can be moved to where you want to insert/remove text.
+You can click where you want the cursor to move or you can use any of the
+following keyboard hotkeys:
+
+- Left/Right arrow: move the cursor one character to the left or right.
+- Ctrl-Left/Right arrow: move the cursor one word to the left or right.
+- Alt-Left/Right arrow: move the cursor to the beginning/end of the text.
+
+Scrollbar class
+---------------
+
+This Widget subclass implements mouse-interactive scrollbars whose bar sizes
+represent the amount of content currently visible in an associated display
+widget (like a `Label class`_ or a `List class`_). By default they are styled
+like scrollbars used in the vanilla DF help screens, but they are configurable.
+
+Scrollbars have the following attributes:
+
+:fg: Specifies the pen for the scroll icons and the active part of the bar. Default is ``COLOR_LIGHTGREEN``.
+:bg: Specifies the pen for the background part of the scrollbar. Default is ``COLOR_CYAN``.
+:on_scroll: A callback called when the scrollbar is scrolled. If the scrollbar is clicked,
+  the callback will be called with one of the following string parameters: "up_large",
+  "down_large", "up_small", or "down_small". If the scrollbar is dragged, the callback will
+  be called with the value that ``top_elem`` should be set to on the next call to
+  ``update()`` (see below).
+
+The Scrollbar widget implements the following methods:
+
+* ``scrollbar:update(top_elem, elems_per_page, num_elems)``
+
+  Updates the info about the widget that the scrollbar is paired with.
+  The ``top_elem`` param is the (one-based) index of the first visible element.
+  The ``elems_per_page`` param is the maximum number of elements that can be
+  shown at one time. The ``num_elems`` param is the total number of elements
+  that the paried widget can scroll through. If ``elems_per_page`` or
+  ``num_elems`` is not specified, the most recently specified value for these
+  parameters is used. The scrollbar will adjust its scrollbar size and position
+  according to the values passed to this function.
+
+Clicking on the arrows at the top or the bottom of a scrollbar will scroll an
+associated widget by a small amount. Clicking on the unfilled portion of the
+scrollbar above or below the filled area will scroll by a larger amount in that
+direction. The amount of scrolling done in each case in determined by the
+associated widget, and after scrolling is complete, the associated widget must
+call ``scrollbar:update()`` with updated new display info.
+
+You can click and drag the scrollbar to scroll to a specific spot, or you can
+click and hold on the end arrows or in the unfilled portion of the scrollbar to
+scroll multiple times, just like in a normal browser scrollbar. The speed of
+scroll events when the mouse button is held down is controlled by two global
+variables:
+
+:``SCROLL_INITIAL_DELAY_MS``: The delay before the second scroll event.
+:``SCROLL_DELAY_MS``: The delay between further scroll events.
+
+The defaults are 300 and 20, respectively, but they can be overridden by the
+user in their :file:`dfhack-config/init/dfhack.init` file, for example::
+
+  :lua require('gui.widgets').SCROLL_DELAY_MS = 100
 
 Label class
 -----------
@@ -3776,6 +4118,10 @@ It has the following attributes:
 :auto_width: Sets self.frame.w from the text width.
 :on_click: A callback called when the label is clicked (optional)
 :on_rclick: A callback called when the label is right-clicked (optional)
+:scroll_keys: Specifies which keys the label should react to as a table. The table should map
+    keys to the number of lines to scroll as positive or negative integers or one of the keywords
+    supported by the ``scroll`` method. The default is up/down arrows scrolling by one line and page
+    up/down scrolling by one page.
 
 The text itself is represented as a complex structure, and passed
 to the object via the ``text`` argument of the constructor, or via
@@ -3819,8 +4165,8 @@ containing newlines, or a table with the following possible fields:
 * ``token.key_sep = '...'``
 
   Specifies the separator to place between the keybinding label produced
-  by ``token.key``, and the main text of the token. If the separator is
-  '()', the token is formatted as ``text..' ('..binding..')'``. Otherwise
+  by ``token.key``, and the main text of the token. If the separator starts with
+  '()', the token is formatted as ``text..' ('..binding..sep:sub(2)``. Otherwise
   it is simply ``binding..sep..text``.
 
 * ``token.enabled``, ``token.disabled``
@@ -3864,48 +4210,72 @@ The Label widget implements the following methods:
 
   Computes the width of the text.
 
-TooltipLabel class
+* ``label:scroll(nlines)``
+
+  This method takes the number of lines to scroll as positive or negative
+  integers or one of the following keywords: ``+page``, ``-page``,
+  ``+halfpage``, or ``-halfpage``. It returns the number of lines that were
+  actually scrolled (negative for scrolling up).
+
+WrappedLabel class
 ------------------
 
 This Label subclass represents text that you want to be able to dynamically
-hide, like help text in a tooltip.
+wrap. This frees you from having to pre-split long strings into multiple lines
+in the Label ``text`` list.
 
 It has the following attributes:
 
-:tooltip: The string (or a table of strings or a function that returns a string
-    or a table of strings) to display. The text will be autowrapped to the
-    width of the widget, though any existing newlines will be kept.
-:show_tooltip: Boolean or a callback; if true, the widget is visible. Defaults
-    to ``true``.
-:indent: The number of spaces to indent the tooltip from the left margin. The
-    default is ``2``.
+:text_to_wrap: The string (or a table of strings or a function that returns a
+    string or a table of strings) to display. The text will be autowrapped to
+    the width of the widget, though any existing newlines will be kept.
+:indent: The number of spaces to indent the text from the left margin. The
+    default is ``0``.
+
+The displayed text is refreshed and rewrapped whenever the widget bounds change.
+To force a refresh (to pick up changes in the string that ``text_to_wrap``
+returns, for example), all ``updateLayout()`` on this widget or on a widget that
+contains this widget.
+
+TooltipLabel class
+------------------
+
+This WrappedLabel subclass represents text that you want to be able to
+dynamically hide, like help text in a tooltip.
+
+It has the following attributes:
+
+:show_tooltip: Boolean or a callback; if true, the widget is visible.
 
 The ``text_pen`` attribute of the ``Label`` class is overridden with a default
-of COLOR_GREY.
+of ``COLOR_GREY`` and the ``indent`` attribute of the ``WrappedLabel`` class is
+overridden with a default of ``2``.
 
-Note that the text of the tooltip is only refreshed when the widget layout is
-updated (i.e. ``updateLayout()`` is called on this widget or a widget that
-contains this widget) and the tooltip needs to be rewrapped.
+The text of the tooltip can be passed in the inherited ``text_to_wrap``
+attribute so it can be autowrapped, or in the basic ``text`` attribute if no
+wrapping is required.
 
 HotkeyLabel class
 -----------------
 
 This Label subclass is a convenience class for formatting text that responds to
-a hotkey.
+a hotkey or mouse click.
 
 It has the following attributes:
 
 :key: The hotkey keycode to display, e.g. ``'CUSTOM_A'``.
+:key_sep: If specified, will be used to customize how the activation key is
+          displayed. See ``token.key_sep`` in the ``Label`` documentation.
 :label: The string (or a function that returns a string) to display after the
     hotkey.
 :on_activate: If specified, it is the callback that will be called whenever
-    the hotkey is pressed.
+    the hotkey is pressed or the label is clicked.
 
 CycleHotkeyLabel class
 ----------------------
 
 This Label subclass represents a group of related options that the user can
-cycle through by pressing a specified hotkey.
+cycle through by pressing a specified hotkey or clicking on the text.
 
 It has the following attributes:
 
@@ -3948,7 +4318,8 @@ This is a specialized subclass of CycleHotkeyLabel that has two options:
 List class
 ----------
 
-The List widget implements a simple list with paging.
+The List widget implements a simple list with paging. You can click on a list
+item to call the ``on_submit`` callback for that item.
 
 It has the following attributes:
 
@@ -3959,10 +4330,10 @@ It has the following attributes:
 :on_select: Selection change callback; called as ``on_select(index,choice)``.
             This is also called with *nil* arguments if ``setChoices`` is called
             with an empty list.
-:on_submit: Enter key callback; if specified, the list reacts to the key
-            and calls it as ``on_submit(index,choice)``.
-:on_submit2: Shift-Enter key callback; if specified, the list reacts to the key
-             and calls it as ``on_submit2(index,choice)``.
+:on_submit: Enter key or mouse click callback; if specified, the list reacts to the
+            key/click and calls the callback as ``on_submit(index,choice)``.
+:on_submit2: Shift-Enter key or shift-mouse click callback; if specified, the list
+             reacts to the key/click and calls it as ``on_submit2(index,choice)``.
 :row_height: Height of every row in text lines.
 :icon_width: If not *nil*, the specified number of character columns
              are reserved to the left of the list item for the icons.
@@ -3972,7 +4343,6 @@ Every list item may be specified either as a string, or as a lua table
 with the following fields:
 
 :text: Specifies the label text in the same format as the Label text.
-:caption, [1]: Deprecated legacy aliases for **text**.
 :text_*: Reserved for internal use.
 :key: Specifies a keybinding that acts as a shortcut for the specified item.
 :icon: Specifies an icon string, or a pen to paint a single character. May be a callback.
@@ -3999,6 +4369,11 @@ The list supports the following methods:
 * ``list:getSelected()``
 
   Returns the selected *index, choice*, or nothing if the list is empty.
+
+* ``list:getIdxUnderMouse()``
+
+  Returns the index of the list item under the mouse cursor, or nothing if the
+  list is empty or the mouse is not over a list item.
 
 * ``list:getContentWidth()``
 
@@ -4028,6 +4403,8 @@ supports:
 :edit_pen: If specified, used instead of ``cursor_pen`` for the edit field.
 :edit_below: If true, the edit field is placed below the list instead of above.
 :edit_key: If specified, the edit field is disabled until this key is pressed.
+:edit_ignore_keys: If specified, will be passed to the filter edit field as its ``ignore_keys`` attribute.
+:edit_on_char: If specified, will be passed to the filter edit field as its ``on_char`` attribute.
 :not_found_label: Specifies the text of the label shown when no items match the filter.
 
 The list choices may include the following attributes:
@@ -4110,7 +4487,7 @@ blueprint files:
 The names of the functions are also available as the keys of the
 ``valid_phases`` table.
 
-.. _building-hacks:
+.. _building-hacks-api:
 
 building-hacks
 ==============
@@ -4132,7 +4509,7 @@ Functions
         .. note:: this is the only mandatory field.
 
     :fix_impassible:
-        if true make impassible tiles impassible to liquids too
+        if true make impassable tiles impassable to liquids too
     :consume:
         how much machine power is needed to work.
         Disables reactions if not supplied enough and ``needs_power==1``
@@ -4156,7 +4533,7 @@ Functions
     :canBeRoomSubset:
         a flag if this building can be counted in room. 1 means it can, 0 means it can't and -1 default building behaviour
     :auto_gears:
-        a flag that automatically fills up gears and animate. It looks over building definition for gear icons and maps them.
+        a flag that automatically fills up gears and animations. It looks over the building definition for gear icons and maps them.
 
     Animate table also might contain:
 
@@ -4167,7 +4544,7 @@ Functions
 
 ``getPower(building)`` returns two number - produced and consumed power if building can be modified and returns nothing otherwise
 
-``setPower(building,produced,consumed)`` sets current productiona and consumption for a building.
+``setPower(building,produced,consumed)`` sets current power production and consumption for a building.
 
 Examples
 --------
@@ -4201,7 +4578,7 @@ Native functions provided by the `buildingplan` plugin:
 * ``bool isPlanModeEnabled(df::building_type type, int16_t subtype, int32_t custom)`` returns whether the buildingplan UI is enabled for the specified building type.
 * ``bool isPlannedBuilding(df::building *bld)`` returns whether the given building is managed by buildingplan.
 * ``void addPlannedBuilding(df::building *bld)`` suspends the building jobs and adds the building to the monitor list.
-* ``void doCycle()`` runs a check for whether buildlings in the monitor list can be assigned items and unsuspended. This method runs automatically twice a game day, so you only need to call it directly if you want buildingplan to do a check right now.
+* ``void doCycle()`` runs a check for whether buildings in the monitor list can be assigned items and unsuspended. This method runs automatically twice a game day, so you only need to call it directly if you want buildingplan to do a check right now.
 * ``void scheduleCycle()`` schedules a cycle to be run during the next non-paused game frame. Can be called multiple times while the game is paused and only one cycle will be scheduled.
 
 burrows
@@ -4249,7 +4626,7 @@ Native functions:
 
 The lua module file also re-exports functions from ``dfhack.burrows``.
 
-.. _cxxrandom:
+.. _cxxrandom-api:
 
 cxxrandom
 =========
@@ -4298,7 +4675,7 @@ Native functions (exported to Lua)
 
   adds a number to the sequence
 
-- ``ShuffleSequence(rngID, seqID)``
+- ``ShuffleSequence(seqID, rngID)``
 
   shuffles the number sequence
 
@@ -4361,7 +4738,7 @@ Lua plugin classes
 ``bool_distribution``
 ~~~~~~~~~~~~~~~~~~~~~
 
-- ``init(min, max)``: constructor
+- ``init(chance)``: constructor
 - ``next(id)``: returns next boolean in the distribution
 
   - ``id``: engine ID to pass to native function
@@ -4374,6 +4751,41 @@ Lua plugin classes
 - ``shuffle()``: shuffles the sequence of numbers
 - ``next()``: returns next number in the sequence
 
+Usage
+-----
+
+The basic idea is you create a number distribution which you generate random numbers along. The C++ relies
+on engines keeping state information to determine the next number along the distribution.
+You're welcome to try and (ab)use this knowledge for your RNG purposes.
+
+Example::
+
+    local rng = require('plugins.cxxrandom')
+    local norm_dist = rng.normal_distribution(6820,116) // avg, stddev
+    local engID = rng.MakeNewEngine(0)
+    -- somewhat reminiscent of the C++ syntax
+    print(norm_dist:next(engID))
+
+    -- a bit more streamlined
+    local cleanup = true --delete engine on cleanup
+    local number_generator = rng.crng:new(engID, cleanup, norm_dist)
+    print(number_generator:next())
+
+    -- simplified
+    print(rng.rollNormal(engID,6820,116))
+
+The number sequences are much simpler. They're intended for where you need to randomly generate an index, perhaps in a loop for an array. You technically don't need an engine to use it, if you don't mind never shuffling.
+
+Example::
+
+    local rng = require('plugins.cxxrandom')
+    local g = rng.crng:new(rng.MakeNewEngine(0), true, rng.num_sequence:new(0,table_size))
+    g:shuffle()
+    for _ = 1, table_size do
+        func(array[g:next()])
+    end
+
+
 dig-now
 =======
 
@@ -4384,7 +4796,7 @@ The dig-now plugin exposes the following functions to Lua:
     command ``dig-now <pos> <pos>``. See the `dig-now` documentation for details
     on default settings.
 
-.. _eventful:
+.. _eventful-api:
 
 eventful
 ========
@@ -4398,35 +4810,40 @@ on DF world events.
 List of events
 --------------
 
-1. ``onReactionComplete(reaction,reaction_product,unit,input_items,input_reagents,output_items,call_native)``
+1. ``onReactionCompleting(reaction,reaction_product,unit,input_items,input_reagents,output_items,call_native)``
 
-   Auto activates if detects reactions starting with ``LUA_HOOK_``. Is called when reaction finishes.
+   Is called once per reaction product, before the reaction has a chance to call native code for item creation.
+   Setting ``call_native.value=false`` cancels further processing: no items are created and ``onReactionComplete`` is not called.
 
-2. ``onItemContaminateWound(item,unit,wound,number1,number2)``
+2. ``onReactionComplete(reaction,reaction_product,unit,input_items,input_reagents,output_items)``
+
+   Is called once per reaction product, when reaction finishes and has at least one product.
+
+3. ``onItemContaminateWound(item,unit,wound,number1,number2)``
 
    Is called when item tries to contaminate wound (e.g. stuck in).
 
-3. ``onProjItemCheckMovement(projectile)``
+4. ``onProjItemCheckMovement(projectile)``
 
    Is called when projectile moves.
 
-4. ``onProjItemCheckImpact(projectile,somebool)``
+5. ``onProjItemCheckImpact(projectile,somebool)``
 
    Is called when projectile hits something.
 
-5. ``onProjUnitCheckMovement(projectile)``
+6. ``onProjUnitCheckMovement(projectile)``
 
    Is called when projectile moves.
 
-6. ``onProjUnitCheckImpact(projectile,somebool)``
+7. ``onProjUnitCheckImpact(projectile,somebool)``
 
    Is called when projectile hits something.
 
-7. ``onWorkshopFillSidebarMenu(workshop,callnative)``
+8. ``onWorkshopFillSidebarMenu(workshop,callnative)``
 
    Is called when viewing a workshop in 'q' mode, to populate reactions, useful for custom viewscreens for shops.
 
-8. ``postWorkshopFillSidebarMenu(workshop)``
+9. ``postWorkshopFillSidebarMenu(workshop)``
 
    Is called after calling (or not) native fillSidebarMenu(). Useful for job button
    tweaking (e.g. adding custom reactions)
@@ -4451,7 +4868,7 @@ These events are straight from EventManager module. Each of them first needs to 
 
 4. ``onJobCompleted(job)``
 
-   Gets called when job is finished. The job that is passed to this function is a copy. Requires a frequency of 0 in order to distinguish between workshop jobs that were cancelled by the user and workshop jobs that completed successfully.
+   Gets called when job is finished. The job that is passed to this function is a copy. Requires a frequency of 0 in order to distinguish between workshop jobs that were canceled by the user and workshop jobs that completed successfully.
 
 5. ``onUnitDeath(unit_id)``
 
@@ -4494,7 +4911,7 @@ Functions
 
 1. ``registerReaction(reaction_name,callback)``
 
-   Simplified way of using onReactionComplete; the callback is function (same params as event).
+   Simplified way of using onReactionCompleting; the callback is function (same params as event).
 
 2. ``removeNative(shop_name)``
 
@@ -4510,7 +4927,7 @@ Functions
 
 5. ``registerSidebar(shop_name,callback)``
 
-   Enable callback when sidebar for ``shop_name`` is drawn. Usefull for custom workshop views e.g. using gui.dwarfmode lib. Also accepts a ``class`` instead of function
+   Enable callback when sidebar for ``shop_name`` is drawn. Useful for custom workshop views e.g. using gui.dwarfmode lib. Also accepts a ``class`` instead of function
    as callback. Best used with ``gui.dwarfmode`` class ``WorkshopOverlay``.
 
 Examples
@@ -4526,7 +4943,7 @@ Reaction complete example::
 
   b=require "plugins.eventful"
 
-  b.registerReaction("LUA_HOOK_LAY_BOMB",function(reaction,unit,in_items,in_reag,out_items,call_native)
+  b.registerReaction("LAY_BOMB",function(reaction,unit,in_items,in_reag,out_items,call_native)
     local pos=copyall(unit.pos)
     -- spawn dragonbreath after 100 ticks
     dfhack.timeout(100,"ticks",function() dfhack.maps.spawnFlow(pos,6,0,0,50000) end)
@@ -4547,13 +4964,13 @@ Integrated tannery::
   b=require "plugins.eventful"
   b.addReactionToShop("TAN_A_HIDE","LEATHERWORKS")
 
-.. _luasocket:
+.. _luasocket-api:
 
 luasocket
 =========
 
 A way to access csocket from lua. The usage is made similar to luasocket in vanilla lua distributions. Currently
-only subset of functions exist and only tcp mode is implemented.
+only a subset of the functions exist and only tcp mode is implemented.
 
 .. contents::
   :local:
@@ -4618,7 +5035,7 @@ A class with all the tcp functionality.
   Tries connecting to that address and port. Returns ``client`` object.
 
 
-.. _map-render:
+.. _map-render-api:
 
 map-render
 ==========
@@ -4632,9 +5049,9 @@ Functions
 
 - ``render_map_rect(x,y,z,w,h)``
 
-  returns a table with w*h*4 entries of rendered tiles. The format is same as ``df.global.gps.screen`` (tile,foreground,bright,background).
+  returns a table with w*h*4 entries of rendered tiles. The format is the same as ``df.global.gps.screen`` (tile,foreground,bright,background).
 
-.. _pathable:
+.. _pathable-api:
 
 pathable
 ========
@@ -4668,7 +5085,7 @@ sort
 The `sort <sort>` plugin does not export any native functions as of now.
 Instead, it calls Lua code to perform the actual ordering of list items.
 
-.. _xlsxreader:
+.. _xlsxreader-api:
 
 xlsxreader
 ==========
@@ -4749,7 +5166,7 @@ Scripts
    :local:
 
 Any files with the ``.lua`` extension placed into the :file:`hack/scripts` folder
-are automatically made avaiable as DFHack commands. The command corresponding to
+are automatically made available as DFHack commands. The command corresponding to
 a script is simply the script's filename, relative to the scripts folder, with
 the extension omitted. For example:
 
@@ -4757,9 +5174,8 @@ the extension omitted. For example:
 * :file:`hack/scripts/gui/teleport.lua` is invoked as ``gui/teleport``
 
 .. note::
-    Scripts placed in subdirectories can be run as described above, but are not
-    listed by the `ls` command unless ``-a`` is specified. In general, scripts
-    should be placed in subfolders in the following situations:
+    In general, scripts should be placed in subfolders in the following
+    situations:
 
     * ``devel``: scripts that are intended exclusively for DFHack development,
       including examples, or scripts that are experimental and unstable
@@ -4777,16 +5193,12 @@ folders can be added (for example, a copy of the
 :source-scripts:`scripts repository <>` for local development). See
 `script-paths` for more information on how to configure this behavior.
 
-If the first line of the script is a one-line comment (starting with ``--``),
-the content of the comment is used by the built-in ``ls`` and ``help`` commands.
-Such a comment is required for every script in the official DFHack repository.
-
 Scripts are read from disk when run for the first time, or if they have changed
 since the last time they were run.
 
 Each script has an isolated environment where global variables set by the script
 are stored. Values of globals persist across script runs in the same DF session.
-See `devel/lua-example` for an example of this behavior. Note that local
+See `devel/lua-example` for an example of this behavior. Note that ``local``
 variables do *not* persist.
 
 Arguments are passed in to the scripts via the ``...`` built-in quasi-variable;
@@ -4808,9 +5220,9 @@ General script API
 
 * ``dfhack.run_script(name[,args...])``
 
-  Run a Lua script in hack/scripts/, as if it were started from the DFHack
-  command-line. The ``name`` argument should be the name of the script without
-  its extension, as it would be used on the command line.
+  Run a Lua script in :file:`hack/scripts/`, as if it were started from the
+  DFHack command-line. The ``name`` argument should be the name of the script
+  without its extension, as it would be used on the command line.
 
   Example:
 
@@ -4830,10 +5242,10 @@ General script API
 
 * ``dfhack.script_help([name, [extension]])``
 
-  Returns the contents of the embedded documentation of the specified script.
-  ``extension`` defaults to "lua", and ``name`` defaults to the name of the
-  script where this function was called. For example, the following can be used
-  to print the current script's help text::
+  Returns the contents of the rendered (or embedded) `documentation` for the
+  specified script. ``extension`` defaults to "lua", and ``name`` defaults to
+  the name of the script where this function was called. For example, the
+  following can be used to print the current script's help text::
 
     local args = {...}
     if args[1] == 'help' then
@@ -4841,6 +5253,7 @@ General script API
         return
     end
 
+.. _reqscript:
 
 Importing scripts
 =================
@@ -4895,12 +5308,12 @@ Importing scripts
   .. warning::
 
     Avoid caching the table returned by ``reqscript()`` beyond storing it in
-    a local or global variable as in the example above. ``reqscript()`` is fast
-    for scripts that have previously been loaded and haven't changed. If you
-    retain a reference to a table returned by an old ``reqscript()`` call, this
-    may lead to unintended behavior if the location of the script changes
-    (e.g. if a save is loaded or unloaded, or if a `script path <script-paths>`
-    is added in some other way).
+    a local variable as in the example above. ``reqscript()`` is fast for
+    scripts that have previously been loaded and haven't changed. If you retain
+    a reference to a table returned by an old ``reqscript()`` call, this may
+    lead to unintended behavior if the location of the script changes (e.g. if a
+    save is loaded or unloaded, or if a `script path <script-paths>` is added in
+    some other way).
 
   .. admonition:: Tip
 

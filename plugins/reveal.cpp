@@ -82,24 +82,30 @@ command_result nopause(color_ostream &out, vector<string> & params);
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("reveal","Reveal the map.",reveal,false,
-        "Reveals the map, by default ignoring hell.\n"
-        "Options:\n"
-        "hell     - also reveal hell, while forcing the game to pause.\n"
-        "demon    - reveal hell, do not pause.\n"));
-    commands.push_back(PluginCommand("unreveal","Revert the map to its previous state.",unreveal,false,
-        "Reverts the previous reveal operation, hiding the map again.\n"));
-    commands.push_back(PluginCommand("revtoggle","Reveal/unreveal depending on state.",revtoggle,false,
-        "Toggles between reveal and unreveal.\n"));
-    commands.push_back(PluginCommand("revflood","Hide all, and reveal tiles reachable from the cursor.",revflood,false,
-        "This command hides the whole map. Then, starting from the cursor,\n"
-        "reveals all accessible tiles. Allows repairing perma-revealed maps.\n"
-        "Note that constructed walls are considered passable to work around DF bug 1871.\n"));
-    commands.push_back(PluginCommand("revforget", "Forget the current reveal data.",revforget,false,
-        "Forget the current reveal data, allowing to use reveal again.\n"));
-    commands.push_back(PluginCommand("nopause","Disable manual and automatic pausing.",nopause,false,
-        "Disable pausing (doesn't affect pause forced by reveal).\n"
-        "Activate with 'nopause 1', deactivate with 'nopause 0'.\n"));
+    commands.push_back(PluginCommand(
+        "reveal",
+        "Reveal the map.",
+        reveal));
+    commands.push_back(PluginCommand(
+        "unreveal",
+        "Revert a revealed map to its unrevealed state.",
+        unreveal));
+    commands.push_back(PluginCommand(
+        "revtoggle",
+        "Switch betwen reveal and unreveal.",
+        revtoggle));
+    commands.push_back(PluginCommand(
+        "revflood",
+        "Hide all, then reveal tiles reachable from the cursor.",
+        revflood));
+    commands.push_back(PluginCommand(
+        "revforget",
+        "Forget the current reveal data.",
+        revforget));
+    commands.push_back(PluginCommand(
+        "nopause",
+        "Disable manual and automatic pausing.",
+        nopause));
     return CR_OK;
 }
 

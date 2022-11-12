@@ -20,6 +20,7 @@
 #include "uicommon.h"
 #include "TileTypes.h"
 #include "DataFuncs.h"
+#include "Debug.h"
 
 DFHACK_PLUGIN("mousequery");
 REQUIRE_GLOBAL(enabler);
@@ -31,6 +32,10 @@ REQUIRE_GLOBAL(ui_build_selector);
 using namespace df::enums::ui_sidebar_mode;
 
 #define PLUGIN_VERSION 0.18
+
+namespace DFHack {
+    DBG_DECLARE(mousequery,log,DebugCategory::LINFO);
+}
 
 static int32_t last_clicked_x, last_clicked_y, last_clicked_z;
 static int32_t last_pos_x, last_pos_y, last_pos_z;
@@ -51,24 +56,16 @@ static uint32_t scroll_delay = 100;
 static bool awaiting_lbut_up, awaiting_rbut_up;
 static enum { None, Left, Right } drag_mode;
 
-static df::coord get_mouse_pos(int32_t &mx, int32_t &my)
+static df::coord get_mouse_pos(int32_t &mx, int32_t &my, int32_t &depth)
 {
-    df::coord pos;
-    pos.x = -30000;
+    df::coord pos = Gui::getMousePos();
 
-    if (!enabler->tracking_on)
-        return pos;
+    depth = Gui::getDepthAt(pos.x, pos.y);
+    pos.z -= depth;
 
-    if (!Gui::getMousePos(mx, my))
-        return pos;
-
-    int32_t vx, vy, vz;
-    if (!Gui::getViewCoords(vx, vy, vz))
-        return pos;
-
-    pos.x = vx + mx - 1;
-    pos.y = vy + my - 1;
-    pos.z = vz - Gui::getDepthAt(mx, my);
+    df::coord vpos = Gui::getViewportPos();
+    mx = pos.x - vpos.x + 1;
+    my = pos.y - vpos.y + 1;
 
     return pos;
 }
@@ -296,10 +293,10 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         return false;
     }
 
-    bool handleLeft(df::coord &mpos, int32_t mx, int32_t my)
+    bool handleLeft(df::coord &mpos, int32_t mx, int32_t my, int32_t depth)
     {
         if (!(Core::getInstance().getModstate() & DFH_MOD_SHIFT))
-            mpos.z += Gui::getDepthAt(mx, my);
+            mpos.z += depth;
 
         bool cursor_still_here = (last_clicked_x == mpos.x && last_clicked_y == mpos.y && last_clicked_z == mpos.z);
         last_clicked_x = mpos.x;
@@ -449,8 +446,8 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
 
     bool handleMouse(const set<df::interface_key> *input)
     {
-        int32_t mx, my;
-        auto mpos = get_mouse_pos(mx, my);
+        int32_t mx, my, depth;
+        auto mpos = get_mouse_pos(mx, my, depth);
         if (mpos.x == -30000)
             return false;
 
@@ -463,7 +460,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
                 last_move_pos = mpos;
             }
             else
-                return handleLeft(mpos, mx, my);
+                return handleLeft(mpos, mx, my, depth);
         }
         else if (enabler->mouse_rbut)
         {
@@ -536,6 +533,8 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         if (mpos.x == x && mpos.y == y && mpos.z == z)
             return;
 
+        DEBUG(log).print("moving cursor to %d, %d, %d\n",
+                         mpos.x, mpos.y, mpos.z);
         Gui::setCursorCoords(mpos.x, mpos.y, mpos.z);
         Gui::refreshSidebar();
     }
@@ -572,11 +571,9 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
 
         auto dims = Gui::getDwarfmodeViewDims();
 
-        int32_t mx, my;
-        auto mpos = get_mouse_pos(mx, my);
+        int32_t mx, my, depth;
+        auto mpos = get_mouse_pos(mx, my, depth);
         bool mpos_valid = mpos.x != -30000 && mpos.y != -30000 && mpos.z != -30000;
-        if (mx < 1 || mx > dims.map_x2 || my < 1 || my > dims.map_y2)
-            mpos_valid = false;
 
         // Check if in lever binding mode
         if (Gui::getFocusString(Core::getTopViewscreen()) ==
@@ -588,7 +585,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         if (awaiting_lbut_up && !enabler->mouse_lbut_down)
         {
             awaiting_lbut_up = false;
-            handleLeft(mpos, mx, my);
+            handleLeft(mpos, mx, my, depth);
         }
 
         if (awaiting_rbut_up && !enabler->mouse_rbut_down)
@@ -723,7 +720,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
                 }
             }
 
-            OutputString(color, mx, my, "X", false, 0, 0, true);
+            Screen::paintTile(Screen::Pen('X', color), mx, my, true);
             return;
         }
 
@@ -916,19 +913,9 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 {
     commands.push_back(
         PluginCommand(
-        "mousequery", "Add mouse functionality to Dwarf Fortress",
-        mousequery_cmd, false,
-        "mousequery [plugin|rbutton|track|edge|live] [enable|disable]\n"
-        "  plugin: enable/disable the entire plugin\n"
-        "  rbutton: enable/disable right mouse button\n"
-        "  track: enable/disable moving cursor in build and designation mode\n"
-        "  edge: enable/disable active edge scrolling (when on, will also enable tracking)\n"
-        "  live: enable/disable query view when unpaused\n\n"
-        "mousequery drag [left|right|disable]\n"
-        "  Enable/disable map dragging with the specified mouse button\n\n"
-        "mousequery delay <amount>\n"
-        "  Set delay when edge scrolling in tracking mode. Omit amount to display current setting.\n"
-        ));
+        "mousequery",
+        "Add mouse functionality to Dwarf Fortress.",
+        mousequery_cmd));
 
     return CR_OK;
 }

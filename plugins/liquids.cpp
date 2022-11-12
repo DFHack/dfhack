@@ -55,6 +55,7 @@ using namespace df::enums;
 DFHACK_PLUGIN("liquids");
 REQUIRE_GLOBAL(world);
 
+static const char * HISTORY_FILE = "dfhack-config/liquids.history";
 CommandHistory liquids_hist;
 
 command_result df_liquids (color_ostream &out, vector <string> & parameters);
@@ -62,25 +63,23 @@ command_result df_liquids_here (color_ostream &out, vector <string> & parameters
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    liquids_hist.load("liquids.history");
+    liquids_hist.load(HISTORY_FILE);
     commands.push_back(PluginCommand(
-        "liquids", "Place magma, water or obsidian.",
-        df_liquids, true,
-        "This tool allows placing magma, water and other similar things.\n"
-        "It is interactive and further help is available when you run it.\n"
-        "The settings will be remembered until dfhack is closed and you can call\n"
-        "'liquids-here' (mapped to a hotkey) to paint liquids at the cursor position\n"
-        "without the need to go back to the dfhack console.\n")); // interactive, needs console for prompt
+        "liquids",
+        "Place magma, water or obsidian.",
+        df_liquids,
+        true)); // interactive, needs console for prompt
     commands.push_back(PluginCommand(
-        "liquids-here", "Use settings from liquids at cursor position.",
-        df_liquids_here, Gui::cursor_hotkey, // non-interactive, needs ingame cursor
-        "  This command is intended to be mapped to a hotkey and is identical to pressing Enter in liquids with the current parameters.\n"));
+        "liquids-here",
+        "Use settings from liquids at cursor position.",
+        df_liquids_here,
+        Gui::cursor_hotkey)); // non-interactive, needs ingame cursor
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
-    liquids_hist.save("liquids.history");
+    liquids_hist.save(HISTORY_FILE);
     return CR_OK;
 }
 

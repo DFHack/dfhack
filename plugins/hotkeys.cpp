@@ -8,6 +8,7 @@
 #include "modules/World.h"
 #include "modules/Gui.h"
 
+#include "LuaTools.h"
 #include "PluginManager.h"
 
 DFHACK_PLUGIN("hotkeys");
@@ -44,6 +45,7 @@ static void find_active_keybindings(df::viewscreen *screen)
     sorted_keys.clear();
 
     vector<string> valid_keys;
+
     for (char c = 'A'; c <= 'Z'; c++)
     {
         valid_keys.push_back(string(&c, 1));
@@ -53,6 +55,8 @@ static void find_active_keybindings(df::viewscreen *screen)
     {
         valid_keys.push_back("F" + int_to_string(i));
     }
+
+    valid_keys.push_back("`");
 
     auto current_focus = Gui::getFocusString(screen);
     for (int shifted = 0; shifted < 2; shifted++)
@@ -118,6 +122,29 @@ static void invoke_command(const size_t index)
     {
         Core::getInstance().setHotkeyCmd(cmd);
     }
+}
+
+static std::string get_help(const std::string &command, bool full_help)
+{
+    auto L = Lua::Core::State;
+    color_ostream_proxy out(Core::getInstance().getConsole());
+    Lua::StackUnwinder top(L);
+
+    if (!lua_checkstack(L, 2) ||
+        !Lua::PushModulePublic(out, L, "helpdb",
+                    full_help ? "get_entry_long_help" : "get_entry_short_help"))
+        return "Help text unavailable.";
+
+    Lua::Push(L, command);
+
+    if (!Lua::SafeCall(out, L, 1, 1))
+        return "Help text unavailable.";
+
+    const char *s = lua_tostring(L, -1);
+    if (!s)
+        return "Help text unavailable.";
+
+    return s;
 }
 
 class ViewscreenHotkeys : public dfhack_viewscreen
@@ -219,31 +246,16 @@ public:
         if (first[0] == '#')
             return;
 
-        Plugin *plugin = Core::getInstance().getPluginManager()->getPluginByCommand(first);
-        if (plugin)
+        OutputString(COLOR_BROWN, x, y, "Help", true, help_start);
+        string help_text = get_help(first, show_usage);
+        vector <string> lines;
+        split_string(&lines, help_text, "\n");
+        for (auto it = lines.begin(); it != lines.end() && y < gps->dimy - 4; it++)
         {
-            for (size_t i = 0; i < plugin->size(); i++)
+            auto wrapped_lines = wrapString(*it, width);
+            for (auto wit = wrapped_lines.begin(); wit != wrapped_lines.end() && y < gps->dimy - 4; wit++)
             {
-                auto pc = plugin->operator[](i);
-                if (pc.name == first)
-                {
-                    OutputString(COLOR_BROWN, x, y, "Help", true, help_start);
-                    vector <string> lines;
-                    string help_text = pc.description;
-                    if (show_usage)
-                        help_text += "\n\n" + pc.usage;
-
-                    split_string(&lines, help_text, "\n");
-                    for (auto it = lines.begin(); it != lines.end() && y < gps->dimy - 4; it++)
-                    {
-                        auto wrapped_lines = wrapString(*it, width);
-                        for (auto wit = wrapped_lines.begin(); wit != wrapped_lines.end() && y < gps->dimy - 4; wit++)
-                        {
-                            OutputString(COLOR_WHITE, x, y, *wit, true, help_start);
-                        }
-                    }
-                    break;
-                }
+                OutputString(COLOR_WHITE, x, y, *wit, true, help_start);
             }
         }
     }
@@ -345,8 +357,9 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 
     commands.push_back(
         PluginCommand(
-        "hotkeys", "Show all dfhack keybindings in current context.",
-        hotkeys_cmd, false, ""));
+        "hotkeys",
+        "Show all dfhack keybindings in current context.",
+        hotkeys_cmd));
 
     return CR_OK;
 }

@@ -1,5 +1,3 @@
-
-// some headers required for a plugin. Nothing special, just the basics.
 #include "Core.h"
 #include <Console.h>
 #include <Export.h>
@@ -24,6 +22,8 @@
 #include "df/manager_order.h"
 #include "df/creature_raw.h"
 #include "df/world.h"
+
+using std::endl;
 
 using namespace DFHack;
 using namespace DFHack::Items;
@@ -82,7 +82,7 @@ struct ClothingRequirement
 
     std::string Serialize()
     {
-        stringstream stream;
+        std::stringstream stream;
         stream << ENUM_KEY_STR(job_type, jobType) << " ";
         stream << ENUM_KEY_STR(item_type,itemType) << " ";
         stream << item_subtype << " ";
@@ -93,7 +93,7 @@ struct ClothingRequirement
 
     void Deserialize(std::string s)
     {
-        stringstream stream(s);
+        std::stringstream stream(s);
         std::string loadedJob;
         stream >> loadedJob;
         FOR_ENUM_ITEMS(job_type, job)
@@ -140,7 +140,7 @@ struct ClothingRequirement
 
     std::string ToReadableLabel()
     {
-        stringstream stream;
+        std::stringstream stream;
         stream << bitfield_to_string(material_category) << " ";
         std::string adjective = "";
         std::string name = "";
@@ -184,16 +184,9 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 {
     // Fill the command list with your commands.
     commands.push_back(PluginCommand(
-        "autoclothing", "Automatically manage clothing work orders",
-        autoclothing, false, /* true means that the command can't be used from non-interactive user interface */
-        // Extended help string. Used by CR_WRONG_USAGE and the help command:
-        "  autoclothing <material> <item> [number]\n"
-        "Example:\n"
-        "  autoclothing cloth \"short skirt\" 10\n"
-        "    Sets the desired number of cloth short skirts available per citizen to 10.\n"
-        "  autoclothing cloth dress\n"
-        "    Displays the currently set number of cloth dresses chosen per citizen.\n"
-    ));
+        "autoclothing",
+        "Automatically manage clothing work orders",
+        autoclothing));
     return CR_OK;
 }
 

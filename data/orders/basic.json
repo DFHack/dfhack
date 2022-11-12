@@ -1,0 +1,1421 @@
+[
+	{
+		"amount_left" : 150,
+		"amount_total" : 150,
+		"frequency" : "Monthly",
+		"id" : 0,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "LessThan",
+				"flags" : 
+				[
+					"unrotten"
+				],
+				"item_type" : "FOOD",
+				"value" : 400
+			}
+		],
+		"job" : "PrepareMeal",
+		"meal_ingredients" : 2
+	},
+	{
+		"amount_left" : 10,
+		"amount_total" : 10,
+		"frequency" : "Daily",
+		"id" : 1,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"unrotten",
+					"cookable",
+					"solid"
+				],
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"unrotten",
+					"cookable"
+				],
+				"value" : 500
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"unrotten"
+				],
+				"item_type" : "FOOD",
+				"value" : 3500
+			},
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"unrotten"
+				],
+				"item_type" : "FOOD",
+				"value" : 400
+			}
+		],
+		"job" : "PrepareMeal",
+		"meal_ingredients" : 4
+	},
+	{
+		"amount_left" : 2,
+		"amount_total" : 2,
+		"frequency" : "Daily",
+		"id" : 2,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"unrotten"
+				],
+				"item_type" : "PLANT",
+				"reaction_product" : "DRINK_MAT",
+				"value" : 15
+			},
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"empty",
+					"food_storage"
+				],
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "DRINK",
+				"value" : 800
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "BREW_DRINK_FROM_PLANT"
+	},
+	{
+		"amount_left" : 2,
+		"amount_total" : 2,
+		"frequency" : "Daily",
+		"id" : 3,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"unrotten"
+				],
+				"item_type" : "PLANT_GROWTH",
+				"reaction_product" : "DRINK_MAT",
+				"value" : 15
+			},
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"empty",
+					"food_storage"
+				],
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "DRINK",
+				"value" : 800
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "BREW_DRINK_FROM_PLANT_GROWTH"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 4,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"unrotten",
+					"milk"
+				],
+				"value" : 2
+			}
+		],
+		"job" : "MakeCheese"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 5,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"non_pressed"
+				],
+				"item_subtype" : "ITEM_TOOL_HONEYCOMB",
+				"item_type" : "TOOL",
+				"reaction_product" : "HONEYCOMB_PRESS_MAT",
+				"value" : 2
+			},
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"empty",
+					"non_absorbent"
+				],
+				"item_type" : "TOOL",
+				"tool" : "LIQUID_CONTAINER",
+				"value" : 2
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "PRESS_HONEYCOMB"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 6,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"contains" : 
+				[
+					"honey"
+				],
+				"reaction_id" : "MAKE_MEAD",
+				"value" : 2
+			},
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"empty",
+					"food_storage"
+				],
+				"reaction_id" : "MAKE_MEAD",
+				"value" : 5
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "MAKE_MEAD"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 7,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"millable",
+					"unrotten"
+				],
+				"item_type" : "PLANT",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"empty",
+					"bag"
+				],
+				"item_type" : "BOX",
+				"value" : 5
+			}
+		],
+		"job" : "MillPlants"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 8,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"unrotten",
+					"processable"
+				],
+				"item_type" : "PLANT",
+				"value" : 20
+			}
+		],
+		"job" : "ProcessPlants"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 9,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"unrotten"
+				],
+				"item_type" : "PLANT",
+				"reaction_product" : "BAG_ITEM",
+				"value" : 15
+			},
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"empty",
+					"bag"
+				],
+				"item_type" : "BOX",
+				"value" : 5
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "PROCESS_PLANT_TO_BAG"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 10,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"unrotten",
+					"processable_to_barrel"
+				],
+				"item_type" : "PLANT",
+				"value" : 150
+			},
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"empty"
+				],
+				"item_type" : "BARREL",
+				"value" : 5
+			}
+		],
+		"job" : "ProcessPlantsBarrel"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 11,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"unrotten"
+				],
+				"item_type" : "SEEDS",
+				"reaction_product" : "PRESS_LIQUID_MAT",
+				"value" : 30
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"non_pressed"
+				],
+				"item_type" : "GLOB",
+				"reaction_product" : "PRESS_LIQUID_MAT",
+				"value" : 10
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "MILL_SEEDS_NUTS_TO_PASTE"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 12,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"non_pressed"
+				],
+				"item_type" : "GLOB",
+				"reaction_product" : "PRESS_LIQUID_MAT",
+				"value" : 2
+			},
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"empty",
+					"non_absorbent"
+				],
+				"item_type" : "TOOL",
+				"tool" : "LIQUID_CONTAINER",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "LIQUID_MISC",
+				"reaction_product" : "SOAP_MAT",
+				"value" : 10
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "PRESS_OIL"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 13,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"unrotten",
+					"body_part",
+					"hair_wool"
+				],
+				"value" : 5
+			}
+		],
+		"job" : "SpinThread",
+		"material_category" : 
+		[
+			"strand"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 14,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"collected",
+					"silk"
+				],
+				"item_type" : "THREAD",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"silk"
+				],
+				"item_type" : "CLOTH",
+				"value" : 100
+			}
+		],
+		"job" : "WeaveCloth",
+		"material_category" : 
+		[
+			"silk"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 15,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"collected",
+					"plant"
+				],
+				"item_type" : "THREAD",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"plant"
+				],
+				"item_type" : "CLOTH",
+				"value" : 100
+			}
+		],
+		"job" : "WeaveCloth",
+		"material_category" : 
+		[
+			"plant"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 16,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"collected",
+					"yarn"
+				],
+				"item_type" : "THREAD",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"yarn"
+				],
+				"item_type" : "CLOTH",
+				"value" : 100
+			}
+		],
+		"job" : "WeaveCloth",
+		"material_category" : 
+		[
+			"yarn"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 17,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"dyeable"
+				],
+				"item_type" : "CLOTH",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"unrotten",
+					"dye"
+				],
+				"value" : 3
+			}
+		],
+		"job" : "DyeCloth"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 18,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"non_economic",
+					"hard"
+				],
+				"item_type" : "BOULDER",
+				"material" : "INORGANIC",
+				"value" : 20
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"empty"
+				],
+				"item_subtype" : "ITEM_TOOL_LARGE_POT",
+				"item_type" : "TOOL",
+				"value" : 25
+			}
+		],
+		"item_subtype" : "ITEM_TOOL_LARGE_POT",
+		"job" : "MakeTool",
+		"material" : "INORGANIC"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 19,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "WOOD",
+				"value" : 20
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"empty"
+				],
+				"item_subtype" : "ITEM_TOOL_JUG",
+				"item_type" : "TOOL",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_TOOL_JUG",
+		"job" : "MakeTool",
+		"material_category" : 
+		[
+			"wood"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 20,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"non_economic",
+					"hard"
+				],
+				"item_type" : "BOULDER",
+				"material" : "INORGANIC",
+				"value" : 20
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "GOBLET",
+				"value" : 10
+			}
+		],
+		"job" : "MakeGoblet",
+		"material" : "INORGANIC"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 21,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "WOOD",
+				"value" : 150
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_TOOL_WHEELBARROW",
+				"item_type" : "TOOL",
+				"value" : 2
+			}
+		],
+		"item_subtype" : "ITEM_TOOL_WHEELBARROW",
+		"job" : "MakeTool",
+		"material_category" : 
+		[
+			"wood"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 22,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "WOOD",
+				"value" : 150
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_TOOL_MINECART",
+				"item_type" : "TOOL",
+				"value" : 2
+			}
+		],
+		"item_subtype" : "ITEM_TOOL_MINECART",
+		"job" : "MakeTool",
+		"material_category" : 
+		[
+			"wood"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 23,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "WOOD",
+				"value" : 50
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"empty"
+				],
+				"item_type" : "BUCKET",
+				"value" : 10
+			}
+		],
+		"job" : "MakeBucket",
+		"material_category" : 
+		[
+			"wood"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 24,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "WOOD",
+				"value" : 150
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"empty"
+				],
+				"item_type" : "CAGE",
+				"value" : 30
+			}
+		],
+		"job" : "MakeCage",
+		"material_category" : 
+		[
+			"wood"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 25,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"non_economic",
+					"hard"
+				],
+				"item_type" : "BOULDER",
+				"material" : "INORGANIC",
+				"value" : 50
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "TRAPPARTS",
+				"value" : 20
+			}
+		],
+		"job" : "ConstructMechanisms",
+		"material" : "INORGANIC"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 26,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "SKIN_TANNED",
+				"value" : 10
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"empty",
+					"sewn_imageless"
+				],
+				"item_type" : "BOX",
+				"value" : 30
+			}
+		],
+		"job" : "ConstructChest",
+		"material_category" : 
+		[
+			"leather"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 27,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"silk"
+				],
+				"item_type" : "CLOTH",
+				"min_dimension" : 10000,
+				"value" : 10
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"empty",
+					"sewn_imageless"
+				],
+				"item_type" : "BOX",
+				"value" : 30
+			}
+		],
+		"job" : "ConstructChest",
+		"material_category" : 
+		[
+			"silk"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 28,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"plant"
+				],
+				"item_type" : "CLOTH",
+				"min_dimension" : 10000,
+				"value" : 10
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"empty",
+					"sewn_imageless"
+				],
+				"item_type" : "BOX",
+				"value" : 30
+			}
+		],
+		"job" : "ConstructChest",
+		"material_category" : 
+		[
+			"cloth"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 29,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"yarn"
+				],
+				"item_type" : "CLOTH",
+				"min_dimension" : 10000,
+				"value" : 10
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"empty",
+					"sewn_imageless"
+				],
+				"item_type" : "BOX",
+				"value" : 30
+			}
+		],
+		"job" : "ConstructChest",
+		"material_category" : 
+		[
+			"yarn"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 30,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "GLOB",
+				"reaction_class" : "WAX",
+				"value" : 2
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "MAKE_WAX_CRAFTS"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 31,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"unrotten",
+					"shell",
+					"body_part"
+				],
+				"value" : 2
+			}
+		],
+		"job" : "MakeCrafts",
+		"material_category" : 
+		[
+			"shell"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 32,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"unrotten",
+					"totemable",
+					"body_part"
+				],
+				"value" : 5
+			}
+		],
+		"job" : "MakeTotem"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 33,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "WOOD",
+				"value" : 50
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "SPLINT",
+				"value" : 1
+			}
+		],
+		"job" : "ConstructSplint",
+		"material_category" : 
+		[
+			"wood"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 34,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "WOOD",
+				"value" : 50
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "CRUTCH",
+				"value" : 1
+			}
+		],
+		"job" : "ConstructCrutch",
+		"material_category" : 
+		[
+			"wood"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 35,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "WOOD",
+				"value" : 150
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BED",
+				"value" : 2
+			}
+		],
+		"job" : "ConstructBed",
+		"material_category" : 
+		[
+			"wood"
+		]
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 36,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "ASH",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"empty"
+				],
+				"item_type" : "BUCKET",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "LIQUID_MISC",
+				"material" : "LYE",
+				"value" : 5
+			}
+		],
+		"job" : "MakeLye"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 37,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"unrotten"
+				],
+				"item_type" : "GLOB",
+				"reaction_class" : "TALLOW",
+				"reaction_product" : "SOAP_MAT",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "LIQUID_MISC",
+				"material" : "LYE",
+				"value" : 3
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"soap"
+				],
+				"item_type" : "BAR",
+				"value" : 5
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "MAKE_SOAP_FROM_TALLOW"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 38,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "LIQUID_MISC",
+				"reaction_product" : "SOAP_MAT",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "LIQUID_MISC",
+				"material" : "LYE",
+				"value" : 3
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"soap"
+				],
+				"item_type" : "BAR",
+				"value" : 5
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "MAKE_SOAP_FROM_OIL"
+	},
+	{
+		"amount_left" : 4,
+		"amount_total" : 4,
+		"frequency" : "Daily",
+		"id" : 39,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "WOOD",
+				"value" : 50
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BAR",
+				"material" : "ASH",
+				"value" : 10
+			}
+		],
+		"job" : "MakeAsh"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 40,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "ASH",
+				"value" : 5
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "BAR",
+				"material" : "POTASH",
+				"value" : 20
+			}
+		],
+		"job" : "MakePotashFromAsh"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 41,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"unrotten"
+				],
+				"item_type" : "PLANT",
+				"reaction_id" : "MAKE_SLURRY_FROM_PLANT",
+				"reaction_product" : "PRESS_PAPER_MAT",
+				"value" : 50
+			},
+			{
+				"condition" : "AtMost",
+				"flags" : 
+				[
+					"non_pressed"
+				],
+				"item_type" : "GLOB",
+				"reaction_class" : "PAPER_SLURRY",
+				"value" : 2
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "MAKE_SLURRY_FROM_PLANT"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 42,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"non_pressed"
+				],
+				"item_type" : "GLOB",
+				"reaction_class" : "PAPER_SLURRY",
+				"reaction_id" : "PRESS_PLANT_PAPER",
+				"value" : 2
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "SHEET",
+				"value" : 10
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "PRESS_PLANT_PAPER"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 43,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"unrotten"
+				],
+				"item_type" : "PLANT",
+				"reaction_class" : "PAPER_PLANT",
+				"reaction_id" : "MAKE_SHEET_FROM_PLANT",
+				"value" : 15
+			},
+			{
+				"condition" : "AtMost",
+				"item_type" : "SHEET",
+				"value" : 10
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "MAKE_SHEET_FROM_PLANT"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 44,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"flags" : 
+				[
+					"non_economic",
+					"hard"
+				],
+				"item_type" : "BOULDER",
+				"material" : "INORGANIC",
+				"value" : 50
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_TOOL_SCROLL_ROLLERS",
+				"item_type" : "TOOL",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_TOOL_SCROLL_ROLLERS",
+		"job" : "MakeTool",
+		"material" : "INORGANIC"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 45,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "SHEET",
+				"reaction_id" : "MAKE_SCROLL",
+				"value" : 2
+			},
+			{
+				"condition" : "AtLeast",
+				"item_subtype" : "ITEM_TOOL_SCROLL_ROLLERS",
+				"item_type" : "TOOL",
+				"reaction_id" : "MAKE_SCROLL",
+				"value" : 2
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_TOOL_SCROLL",
+				"item_type" : "TOOL",
+				"value" : 10
+			}
+		],
+		"job" : "CustomReaction",
+		"reaction" : "MAKE_SCROLL"
+	}
+]

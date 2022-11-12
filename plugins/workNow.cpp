@@ -29,16 +29,10 @@ DFhackCExport command_result plugin_init(color_ostream& out, std::vector<PluginC
     if (!process_jobs || !process_dig)
         return CR_FAILURE;
 
-    commands.push_back(PluginCommand("workNow", "Don't allow dwarves to idle if any jobs are available", workNow, false, "When workNow is active, every time the game pauses, DF will make dwarves perform any appropriate available jobs. This includes when you one step through the game using the pause menu. When workNow is in mode 2, it will make dwarves look for jobs every time a job completes.\n"
-                "workNow\n"
-                "  print workNow status\n"
-                "workNow 0\n"
-                "  deactivate workNow\n"
-                "workNow 1\n"
-                "  activate workNow (look for jobs on pause, and only then)\n"
-                "workNow 2\n"
-                "  make dwarves look for jobs whenever a job completes\n"
-    ));
+    commands.push_back(PluginCommand(
+        "workNow",
+        "Reduce the time that dwarves idle after completing a job.",
+        workNow));
 
     return CR_OK;
 }

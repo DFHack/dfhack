@@ -15,10 +15,9 @@ Quick Links
 
 * `Downloads <https://www.github.com/DFHack/dfhack/releases>`_
 * `Installation guide <installing>`
-* `Source code <https://www.github.com/DFHack/dfhack>`_
-  (**important:** read `compile` before attempting to build from source)
-* `Bay 12 forums thread <https://dfhack.org/bay12>`_
-* `Bug tracker <https://www.github.com/DFHack/dfhack/issues>`_
+* `Getting help <support>`
+* :source:`Source code <>`
+    (**important:** read `compile` before attempting to build from source.)
 
 User Manual
 ===========
@@ -28,10 +27,8 @@ User Manual
 
    /docs/Introduction
    /docs/Installing
-   /docs/Support
    /docs/Core
-   /docs/Plugins
-   /docs/Scripts
+   /docs/Tools
    /docs/guides/index
-   /docs/index-about
    /docs/index-dev
+   /docs/index-about

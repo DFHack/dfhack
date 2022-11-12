@@ -178,17 +178,9 @@ IMPLEMENT_VMETHOD_INTERPOSE(start_site_hook, feed);
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "embark-assistant", "Embark site selection support.",
-        embark_assistant, false, /* false means that the command can be used from non-interactive user interface */
-        // Extended help string. Used by CR_WRONG_USAGE and the help command:
-        "  This command starts the embark-assist plugin that provides embark site\n"
-        "  selection help. It has to be called while the pre-embark screen is\n"
-        "  displayed and shows extended (and correct(?)) resource information for\n"
-        "  the embark rectangle as well as normally undisplayed sites in the\n"
-        "  current embark region. It also has a site selection tool with more\n"
-        "  options than DF's vanilla search tool. For detailed help invoke the\n"
-        "  in game info screen. Prefers 46 lines to display properly.\n"
-    ));
+        "embark-assistant",
+        "Embark site selection support.",
+        embark_assistant));
     return CR_OK;
 }
 

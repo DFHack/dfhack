@@ -116,7 +116,7 @@ namespace DFHack
         //This is a static string, overwritten with every call!
         //Support values > 2 even though they should never happen.
         //Copy string if it will be used.
-        inline char * getStr() const
+        inline const char * getStr() const
         {
             static char str[16];
 

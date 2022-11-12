@@ -1,31 +1,34 @@
 # This dfhack config file automates common tasks for your forts.
 # It was written for the Dreamfort set of quickfort blueprints, but the
-# configuration here is useful for any fort! Feed free to edit or override
+# configuration here is useful for any fort! Copy this file to your
+# dfhack-config/init directory to use. Feed free to edit or override
 # to your liking.
 
-# Disallow cooking of otherwise useful item types
-on-new-fortress ban-cooking tallow; ban-cooking honey; ban-cooking oil; ban-cooking seeds; ban-cooking brew; ban-cooking fruit; ban-cooking mill; ban-cooking thread; ban-cooking milk; ban-cooking booze
-
 # Uncomment this next line if you want buildingplan (and quickfort) to use only
-# blocks for construction. If you do uncomment, be sure to bring some blocks
-# with you for starting workshops!
+# blocks (not bars or logs) for constructions and workshops. If you do
+# uncomment, be sure to bring some blocks with you for starting workshops!
 #on-new-fortress buildingplan set boulders false; buildingplan set logs false
 
+# Disable cooking of useful item types when you start a new fortress.
+on-new-fortress ban-cooking tallow; ban-cooking honey; ban-cooking oil; ban-cooking seeds; ban-cooking brew; ban-cooking fruit; ban-cooking mill; ban-cooking thread; ban-cooking milk; ban-cooking booze
+
+# Show a warning dialog when units are starving
 repeat -name warn-starving -time 10 -timeUnits days -command [ warn-starving ]
-repeat -name burial -time 7 -timeUnits days -command [ burial -pets ]
+
+# Force dwarves to drop tattered clothing instead of clinging to the scraps
 repeat -name cleanowned -time 1 -timeUnits months -command [ cleanowned X ]
-repeat -name clean -time 1 -timeUnits months -command [ clean all ]
-repeat -name feeding-timers -time 1 -timeUnits months -command [ fix/feeding-timers ]
-repeat -name stuckdoors -time 1 -timeUnits months -command [ fix/stuckdoors ]
+
+# Automatically enqueue orders to shear and milk animals
 repeat -name autoShearCreature -time 14 -timeUnits days -command [ workorder ShearCreature ]
 repeat -name autoMilkCreature -time 14 -timeUnits days -command [ workorder "{\"job\":\"MilkCreature\",\"item_conditions\":[{\"condition\":\"AtLeast\",\"value\":2,\"flags\":[\"empty\"],\"item_type\":\"BUCKET\"}]}" ]
+
+# Fulfill high-volume orders before slower once-daily orders
 repeat -name orders-sort -time 1 -timeUnits days -command [ orders sort ]
 
-tweak fast-heat 100
-tweak do-job-now
-fix/blood-del enable
+# Don't let caravans bring barrels of blood and other useless liquids
+fix/blood-del
 
-# manages crop assignment for farm plots
+# Manages crop assignment for farm plots
 enable autofarm
 autofarm default 30
 autofarm threshold 150 GRASS_TAIL_PIG
@@ -35,26 +38,18 @@ enable automelt
 
 # creates manager orders to produce replacements for worn clothing
 enable tailor
-tailor enable
 
-# auto-assigns nesting birds to nestbox zones
-enable zone nestboxes
-autonestbox start
+# auto-assigns nesting birds to nestbox zones and protects fertile eggs from
+# being cooked/eaten
+enable zone autonestbox nestboxes
 
 # manages seed stocks
 enable seedwatch
 seedwatch all 30
-seedwatch start
 
 # ensures important tasks get assigned to workers.
 # otherwise these job types can get ignored in busy forts.
-prioritize -a StoreItemInVehicle StoreItemInBag StoreItemInBarrel PullLever
-prioritize -a StoreItemInLocation StoreItemInHospital
-prioritize -a DestroyBuilding RemoveConstruction RecoverWounded DumpItem
-prioritize -a CleanSelf SlaughterAnimal PrepareRawFish ExtractFromRawFish
-prioritize -a TradeAtDepot BringItemToDepot CleanTrap ManageWorkOrders
-prioritize -a --haul-labor=Food,Body StoreItemInStockpile
-prioritize -a --reaction-name=TAN_A_HIDE CustomReaction
+prioritize -aq defaults
 
 # autobutcher settings are saved in the savegame, so we only need to set them once.
 # this way, any custom settings you set during gameplay are not overwritten
@@ -62,6 +57,7 @@ prioritize -a --reaction-name=TAN_A_HIDE CustomReaction
 # feel free to change this to "target 0 0 0 0" if you don't expect to want to raise
 # any animals not listed here -- you can always change it anytime during the game
 # later if you change your mind.
+on-new-fortress enable autobutcher
 on-new-fortress autobutcher target 2 2 2 2 new
 # dogs and cats. You should raise the limits for dogs if you will be training them
 # for hunting or war.
@@ -77,7 +73,7 @@ on-new-fortress autobutcher target 50 50 14 2 BIRD_GOOSE
 on-new-fortress autobutcher target 2 2 4 2 ALPACA SHEEP LLAMA
 # pigs give milk and meat and are zero-maintenance.
 on-new-fortress autobutcher target 5 5 6 2 PIG
-# generally unprofitable animals
+# immediately butcher all unprofitable animals
 on-new-fortress autobutcher target 0 0 0 0 HORSE YAK DONKEY WATER_BUFFALO GOAT CAVY BIRD_DUCK BIRD_GUINEAFOWL
-# start it up!
-on-new-fortress autobutcher start; autobutcher watch all; autobutcher autowatch
+# watch for new animals
+on-new-fortress autobutcher autowatch

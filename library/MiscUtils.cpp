@@ -168,32 +168,62 @@ std::string to_search_normalized(const std::string &str)
     return result;
 }
 
-bool word_wrap(std::vector<std::string> *out, const std::string &str, size_t line_length)
+bool word_wrap(std::vector<std::string> *out, const std::string &str, size_t line_length,
+               word_wrap_whitespace_mode mode)
 {
-    out->clear();
-    std::istringstream input(str);
-    std::string out_line;
-    std::string word;
-    if (input >> word)
+    if (line_length == 0)
+        line_length = SIZE_MAX;
+
+    std::string line;
+    size_t break_pos = 0;
+    bool ignore_whitespace = false;
+
+    for (auto &c : str)
     {
-        out_line += word;
-        // size_t remaining = line_length - std::min(line_length, word.length());
-        while (input >> word)
+        if (c == '\n')
         {
-            if (out_line.length() + word.length() + 1 <= line_length)
+            out->push_back(line);
+            line.clear();
+            break_pos = 0;
+            ignore_whitespace = (mode == WSMODE_TRIM_LEADING);
+            continue;
+        }
+
+        if (isspace(c))
+        {
+            if (ignore_whitespace || (mode == WSMODE_COLLAPSE_ALL && break_pos == line.length()))
+                continue;
+
+            line.push_back((mode == WSMODE_COLLAPSE_ALL) ? ' ' : c);
+            break_pos = line.length();
+        }
+        else
+        {
+            line.push_back(c);
+            ignore_whitespace = false;
+        }
+
+        if (line.length() > line_length)
+        {
+            if (break_pos > 0)
             {
-                out_line += ' ';
-                out_line += word;
+                // Break before last space, and skip that space
+                out->push_back(line.substr(0, break_pos - 1));
             }
             else
             {
-                out->push_back(out_line);
-                out_line = word;
+                // Single word is too long, just break it
+                out->push_back(line.substr(0, line_length));
+                break_pos = line_length;
             }
+            line = line.substr(break_pos);
+            break_pos = 0;
+            ignore_whitespace = (mode == WSMODE_TRIM_LEADING);
         }
-        if (out_line.length())
-            out->push_back(out_line);
     }
+    if (line.length())
+        out->push_back(line);
+
     return true;
 }
 

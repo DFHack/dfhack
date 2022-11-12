@@ -1,9 +1,10 @@
 ci:
   autofix_prs: false
+  autoupdate_schedule: monthly
 repos:
 # shared across repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.2.0
+  rev: v4.3.0
   hooks:
     - id: check-added-large-files
     - id: check-case-conflict
@@ -19,11 +20,11 @@ repos:
       args: ['--fix=lf']
     - id: trailing-whitespace
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.14.3
+  rev: 0.18.4
   hooks:
     - id: check-github-workflows
 - repo: https://github.com/Lucas-C/pre-commit-hooks
-  rev: v1.1.13
+  rev: v1.3.1
   hooks:
     - id: forbid-tabs
       exclude_types:
@@ -32,4 +33,12 @@ repos:
       exclude_types:
         - json
 # specific to dfhack:
-exclude: '^(depends/|data/examples/.*\.json$|.*\.diff$)'
+- repo: local
+  hooks:
+    - id: authors-rst
+      name: Check Authors.rst
+      language: python
+      entry: python3 ci/authors-rst.py
+      files: docs/Authors\.rst
+      pass_filenames: false
+exclude: '^(depends/|data/.*\.json$|.*\.diff$)'

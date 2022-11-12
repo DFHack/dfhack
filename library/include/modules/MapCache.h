@@ -267,7 +267,7 @@ public:
     {
         return index_tile(designation,p);
     }
-    bool setDesignationAt(df::coord2d p, df::tile_designation des, int32_t priority = 4000)
+    bool setDesignationAt(df::coord2d p, df::tile_designation des, int32_t priority = 0)
     {
         if(!valid) return false;
         dirty_designations = true;
@@ -276,6 +276,12 @@ public:
         index_tile(designation,p) = des;
         if((des.bits.dig || des.bits.smooth) && block) {
             block->flags.bits.designated = true;
+            // if priority is not specified, keep the existing priority if it
+            // is set. otherwise default to 4000.
+            if (priority <= 0)
+                priority = priorityAt(p);
+            if (priority <= 0)
+                priority = 4000;
             setPriorityAt(p, priority);
         }
         return true;
@@ -554,8 +560,8 @@ class DFHACK_EXPORT MapCache
         Block * b= BlockAtTile(tilecoord);
         return b ? b->DesignationAt(tilecoord) : df::tile_designation();
     }
-    // priority is optional, only set if >= 0
-    bool setDesignationAt (DFCoord tilecoord, df::tile_designation des, int32_t priority = 4000)
+    // if priority is 0, it is kept unchanged if previously set, otherwise 4000
+    bool setDesignationAt (DFCoord tilecoord, df::tile_designation des, int32_t priority = 0)
     {
         if (Block *b = BlockAtTile(tilecoord))
         {

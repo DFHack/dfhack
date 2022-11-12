@@ -22,7 +22,7 @@ Plugins
 
 DFHack plugins are written in C++ and located in the ``plugins`` folder.
 Currently, documentation on how to write plugins is somewhat sparse. There are
-templates that you can use to get started in the ``plugins/skeleton``
+templates that you can use to get started in the ``plugins/examples``
 folder, and the source code of existing plugins can also be helpful.
 
 If you want to compile a plugin that you have just added, you will need to add a
@@ -35,13 +35,13 @@ other commands).
 
 Plugins can also register handlers to run on every tick, and can interface with
 the built-in `enable` and `disable` commands. For the full plugin API, see the
-skeleton plugins or ``PluginManager.cpp``.
+example ``skeleton`` plugin or ``PluginManager.cpp``.
 
 Installed plugins live in the ``hack/plugins`` folder of a DFHack installation,
 and the `load` family of commands can be used to load a recompiled plugin
 without restarting DF.
 
-See `plugins-index` for a list of all plugins included in DFHack.
+Run `plug` at the DFHack prompt for a list of all plugins included in DFHack.
 
 Scripts
 -------
@@ -51,10 +51,10 @@ is more complete and currently better-documented, however. Referring to existing
 scripts as well as the API documentation can be helpful when developing new
 scripts.
 
-`Scripts included in DFHack <scripts-index>` live in a separate `scripts repository <https://github.com/dfhack/scripts>`_.
-This can be found in the ``scripts`` submodule if you have
-`cloned DFHack <compile-how-to-get-the-code>`, or the ``hack/scripts`` folder
-of an installed copy of DFHack.
+Scripts included in DFHack live in a separate
+:source-scripts:`scripts repository <>`. This can be found in the ``scripts``
+submodule if you have `cloned DFHack <compile-how-to-get-the-code>`, or the
+``hack/scripts`` folder of an installed copy of DFHack.
 
 Core
 ----

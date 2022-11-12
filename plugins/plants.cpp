@@ -32,10 +32,7 @@ command_result df_grow (color_ostream &out, vector <string> & parameters)
     {
         if(parameters[i] == "help" || parameters[i] == "?")
         {
-            out.print("Usage:\n"
-                "This command turns all living saplings on the map into full-grown trees.\n"
-                "With active cursor, work on the targetted one only.\n");
-            return CR_OK;
+            return CR_WRONG_USAGE;
         }
     }
 
@@ -91,11 +88,7 @@ command_result df_createplant (color_ostream &out, vector <string> & parameters)
 {
     if ((parameters.size() != 1) || (parameters[0] == "help" || parameters[0] == "?"))
     {
-        out.print("Usage:\n"
-            "Create a new plant at the cursor.\n"
-            "Specify the type of plant to create by its raw ID (e.g. TOWER_CAP or MUSHROOM_HELMET_PLUMP).\n"
-            "Only shrubs and saplings can be placed, and they must be located on a dirt or grass floor.\n");
-        return CR_OK;
+        return CR_WRONG_USAGE;
     }
 
     CoreSuspender suspend;
@@ -201,10 +194,10 @@ command_result df_plant (color_ostream &out, vector <string> & parameters)
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("plant", "Plant creation and removal.", df_plant, false,
-        "Command to create, grow or remove plants on the map. For more details, check the subcommand help :\n"
-        "plant grow help   - Grows saplings into trees.\n"
-        "plant create help - Create a new plant.\n"));
+    commands.push_back(PluginCommand(
+        "plant",
+        "Grow shrubs or trees.",
+        df_plant));
 
     return CR_OK;
 }

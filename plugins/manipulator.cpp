@@ -53,8 +53,6 @@ REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(enabler);
 
-#define CONFIG_PATH "manipulator"
-
 struct SkillLevel
 {
     const char *name;
@@ -654,10 +652,12 @@ namespace unit_ops {
 struct ProfessionTemplate
 {
     std::string name;
+    std::string displayName;
+    bool library;
     bool mask;
     std::vector<df::unit_labor> labors;
 
-    bool load(string directory, string file)
+    bool load(string directory, string file, bool isLibrary)
     {
         cerr << "Attempt to load " << file << endl;
         std::ifstream infile(directory + "/" + file);
@@ -665,14 +665,25 @@ struct ProfessionTemplate
             return false;
         }
 
+        library = isLibrary;
+
         std::string line;
         name = file; // If no name is given we default to the filename
+        displayName = name;
         mask = false;
         while (std::getline(infile, line)) {
             if (strcmp(line.substr(0,5).c_str(),"NAME ")==0)
             {
                 auto nextInd = line.find(' ');
-                name = line.substr(nextInd + 1);
+                displayName = line.substr(nextInd + 1);
+                name = displayName;
+                size_t slashpos = name.find_first_of("\\/");
+                while (name.npos != slashpos) {
+                    name = name.substr(slashpos + 1);
+                    slashpos = name.find_first_of("\\/");
+                }
+                if (name == "")
+                    name = file;
                 continue;
             }
             if (line == "MASK")
@@ -747,7 +758,8 @@ struct ProfessionTemplate
     }
 };
 
-static std::string professions_folder = Filesystem::getcwd() + "/professions";
+static std::string professions_folder = "dfhack-config/professions";
+static std::string professions_library_folder = "dfhack-config/professions/library";
 class ProfessionTemplateManager
 {
 public:
@@ -762,27 +774,21 @@ public:
     }
     void load()
     {
-        vector <string> files;
-
         cerr << "Attempting to load professions: " << professions_folder.c_str() << endl;
         if (!Filesystem::isdir(professions_folder) && !Filesystem::mkdir(professions_folder))
         {
             cerr << professions_folder << ": Does not exist and cannot be created" << endl;
             return;
         }
-        Filesystem::listdir(professions_folder, files);
-        std::sort(files.begin(), files.end());
-        for(size_t i = 0; i < files.size(); i++)
-        {
-            if (files[i] == "." || files[i] == "..")
-                continue;
+        _load(professions_folder, false);
+        _load(professions_library_folder, true);
 
-            ProfessionTemplate t;
-            if (t.load(professions_folder, files[i]))
-            {
-                templates.push_back(t);
-            }
-        }
+        // sort alphabetically by display name, with user data above library data
+        std::sort(templates.begin(), templates.end(),
+                  [](const ProfessionTemplate &a, const ProfessionTemplate &b) {
+                        return (a.library == b.library && a.displayName < b.displayName)
+                                || (b.library && !a.library);
+                  });
     }
     void save_from_unit(UnitInfo *unit)
     {
@@ -793,6 +799,21 @@ public:
         t.fromUnit(unit);
         t.save(professions_folder);
         reload();
+    }
+
+private:
+    void _load(const std::string &path, bool library) {
+        vector<string> files;
+        Filesystem::listdir(path, files);
+        for (auto &fname : files) {
+            if (Filesystem::isdir(path + "/" + fname))
+                continue;
+
+            ProfessionTemplate t;
+            if (t.load(path, fname, library)) {
+                templates.push_back(t);
+            }
+        }
     }
 };
 static ProfessionTemplateManager manager;
@@ -994,7 +1015,7 @@ public:
 
         manager.reload();
         for (size_t i = 0; i < manager.templates.size(); i++) {
-            std::string name = manager.templates[i].name;
+            std::string name = manager.templates[i].displayName;
             if (manager.templates[i].mask)
                 name += " (mask)";
             ListEntry<size_t> elem(name, i);
@@ -2307,11 +2328,6 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
-    if (!Filesystem::isdir(CONFIG_PATH) && !Filesystem::mkdir(CONFIG_PATH))
-    {
-        out.printerr("manipulator: Could not create configuration folder: \"%s\"\n", CONFIG_PATH);
-        return CR_FAILURE;
-    }
     return CR_OK;
 }
 

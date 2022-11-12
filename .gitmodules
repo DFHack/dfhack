@@ -30,4 +30,4 @@
 	url = ../../DFHack/luacov.git
 [submodule "depends/googletest"]
 	path = depends/googletest
-	url = https://github.com/google/googletest.git
+	url = ../../google/googletest.git

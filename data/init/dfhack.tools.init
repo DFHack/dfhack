@@ -89,6 +89,7 @@ enable automaterial
 
 # Other interface improvement tools
 enable \
+ overlay \
  confirm \
  dwarfmonitor \
  mousequery \

@@ -24,6 +24,7 @@ distribution.
 
 #pragma once
 
+#include <functional>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -217,6 +218,20 @@ namespace DFHack {namespace Lua {
      * If an error is signalled, and perr is true, it is printed and popped from the stack.
      */
     DFHACK_EXPORT bool SafeCall(color_ostream &out, lua_State *state, int nargs, int nres, bool perr = true);
+
+    /**
+     * Load named module and function and invoke it via SafeCall. Returns true
+     * on success. If an error is signalled, and perr is true, it is printed and
+     * popped from the stack.
+     */
+    typedef std::function<void(lua_State *)> LuaLambda;
+    static auto DEFAULT_LUA_LAMBDA = [](lua_State *){};
+    DFHACK_EXPORT bool CallLuaModuleFunction(color_ostream &out,
+            lua_State *state, const char *module_name, const char *fn_name,
+            int nargs = 0, int nres = 0,
+            LuaLambda && args_lambda = DEFAULT_LUA_LAMBDA,
+            LuaLambda && res_lambda = DEFAULT_LUA_LAMBDA,
+            bool perr = true);
 
     /**
      * Pops a function from the top of the stack, and pushes a new coroutine.

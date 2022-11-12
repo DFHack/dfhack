@@ -87,6 +87,7 @@ macro(dfhack_test name files)
     add_executable(${name} test.cpp ${files})
     target_link_libraries(${name} dfhack gtest)
     add_test(NAME ${name} COMMAND ${name})
+    set_target_properties(${name} PROPERTIES COMPILE_FLAGS "-Wno-sign-compare")
 endmacro()
 
 if(BUILD_TESTING)

@@ -100,7 +100,7 @@ jobs:
       id: run_tests
       run: |
         export TERM=dumb
-        if build-ci/library/test-all; then
+        if build-ci/library/tests/test-library; then
           status=0
           script -qe -c "python ci/run-tests.py --headless --keep-status \"$DF_FOLDER\"" || status=$((status + 1))
           python ci/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt" || status=$((status + 2))

@@ -82,23 +82,8 @@ set(MAIN_SOURCES
     RemoteTools.cpp
 )
 
-macro(dfhack_test name files)
-    message("dfhack_test files: ${files}")
-    add_executable(${name} test.cpp ${files})
-    target_link_libraries(${name} dfhack gtest)
-    add_test(NAME ${name} COMMAND ${name})
-    set_target_properties(${name} PROPERTIES COMPILE_FLAGS "-Wno-sign-compare")
-endmacro()
-
 if(BUILD_CORE_TESTS)
-    file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false *.test.cpp)
-    dfhack_test(test-all ${TEST_SOURCES})
-    dfhack_test(test-MiscUtils MiscUtils.test.cpp)
-
-    # How to get `test` to ensure everything is up to date before running
-    # tests? This add_dependencies() fails with:
-    #   Cannot add target-level dependencies to non-existent target "test".
-    #add_dependencies(test MiscUtils.test)
+    add_subdirectory(tests)
 endif()
 
 if(WIN32)

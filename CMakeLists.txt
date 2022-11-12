@@ -394,11 +394,6 @@ else()
     endif()
 endif()
 
-find_package(ZLIB REQUIRED)
-include_directories(depends/protobuf)
-include_directories(depends/lua/include)
-include_directories(depends/md5)
-
 # Support linking against external tinyxml
 # If we find an external tinyxml, set the DFHACK_TINYXML variable to "tinyxml"
 # Otherwise, set it to "dfhack-tinyxml"
@@ -420,9 +415,15 @@ if(BUILD_TESTING)
     set(BUILD_CORE_TESTS ON FORCE)
 endif()
 
+find_package(ZLIB REQUIRED)
+
 if(BUILD_CORE_TESTS)
     include_directories(depends/googletest/googletest/include)
 endif()
+
+include_directories(depends/protobuf)
+include_directories(depends/lua/include)
+include_directories(depends/md5)
 include_directories(depends/lodepng)
 include_directories(depends/tthread)
 include_directories(${ZLIB_INCLUDE_DIRS})
@@ -433,7 +434,13 @@ add_subdirectory(depends)
 
 # Testing with CTest
 if(BUILD_TESTING OR BUILD_CORE_TESTS)
-    message("Including CTest")
+    macro(dfhack_test name files)
+        message("dfhack_test(${name}, ${files})")
+        add_executable(${name} ${files})
+        target_link_libraries(${name} dfhack gtest)
+        add_test(NAME ${name} COMMAND ${name})
+        set_target_properties(${name} PROPERTIES COMPILE_FLAGS "-Wno-sign-compare")
+    endmacro()
     include(CTest)
 endif()
 

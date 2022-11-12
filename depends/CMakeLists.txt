@@ -5,7 +5,7 @@ add_subdirectory(md5)
 add_subdirectory(protobuf)
 if(BUILD_TESTING)
     add_subdirectory(googletest EXCLUDE_FROM_ALL)
-    set_target_properties(gtest PROPERTIES COMPILE_FLAGS "-Wno-maybe-uninitialized")
+    set_target_properties(gtest PROPERTIES COMPILE_FLAGS "-Wno-maybe-uninitialized -Wno-sign-compare")
 endif()
 
 # Don't build tinyxml if it's being externally linked against.

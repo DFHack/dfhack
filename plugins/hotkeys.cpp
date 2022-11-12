@@ -22,6 +22,7 @@ using std::vector;
 using namespace DFHack;
 
 static const string INVOKE_MENU_COMMAND = "overlay trigger hotkeys.menu";
+static const string INVOKE_HOTKEYS_COMMAND = "hotkeys";
 static const std::string MENU_SCREEN_FOCUS_STRING = "dfhack/lua/hotkeys/menu";
 
 static bool valid = false; // whether the following two vars contain valid data
@@ -32,8 +33,6 @@ static vector<string> sorted_keys;
 static bool can_invoke(const string &cmdline, df::viewscreen *screen) {
     vector<string> cmd_parts;
     split_string(&cmd_parts, cmdline, " ");
-    if (toLower(cmd_parts[0]) == "hotkeys")
-        return false;
 
     return Core::getInstance().getPluginManager()->CanInvokeHotkey(cmd_parts[0], screen);
 }
@@ -56,7 +55,8 @@ static void add_binding_if_valid(const string &sym, const string &cmdline, df::v
     if (!can_invoke(cmdline, screen))
         return;
 
-    if (filtermenu && cmdline == INVOKE_MENU_COMMAND) {
+    if (filtermenu && (cmdline == INVOKE_MENU_COMMAND ||
+                       cmdline == INVOKE_HOTKEYS_COMMAND)) {
         DEBUG(log).print("filtering out hotkey menu keybinding\n");
         return;
     }
@@ -178,6 +178,7 @@ static command_result hotkeys_cmd(color_ostream &out, vector <string> & paramete
         return CR_OK;
     }
 
+    // internal command -- intentionally undocumented
     if (parameters.size() != 2 || parameters[0] != "invoke")
         return CR_WRONG_USAGE;
 

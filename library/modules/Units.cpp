@@ -88,19 +88,9 @@ using df::global::ui;
 using df::global::gamemode;
 using df::global::gametype;
 
-int32_t Units::getNumUnits()
-{
-    return world->units.all.size();
-}
-
-df::unit *Units::getUnit (const int32_t index)
-{
-    return vector_get(world->units.all, index);
-}
-
 bool Units::isUnitInBox(df::unit* u,
-             int16_t x1, int16_t y1, int16_t z1,
-             int16_t x2, int16_t y2, int16_t z2) {
+                        int16_t x1, int16_t y1, int16_t z1,
+                        int16_t x2, int16_t y2, int16_t z2) {
 
     if (x1 > x2) swap(x1, x2);
     if (y1 > y2) swap(y1, y2);
@@ -113,6 +103,628 @@ bool Units::isUnitInBox(df::unit* u,
         }
     }
     return false;
+}
+
+bool Units::isActive(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return !unit->flags1.bits.inactive;
+}
+
+bool Units::isVisible(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return Maps::isTileVisible(unit->pos);
+}
+
+bool Units::isCitizen(df::unit *unit, bool ignore_sanity)
+{
+    CHECK_NULL_POINTER(unit);
+
+    // Copied from the conditions used to decide game over,
+    // except that the game appears to let melancholy/raving
+    // dwarves count as citizens.
+
+    if (unit->flags1.bits.marauder ||
+        unit->flags1.bits.invader_origin ||
+        unit->flags1.bits.active_invader ||
+        unit->flags1.bits.forest ||
+        unit->flags1.bits.merchant ||
+        unit->flags1.bits.diplomat ||
+        unit->flags2.bits.visitor ||
+        unit->flags2.bits.visitor_uninvited ||
+        unit->flags2.bits.underworld ||
+        unit->flags2.bits.resident)
+        return false;
+
+    if (!ignore_sanity && !isSane(unit))
+        return false;
+
+    return isOwnGroup(unit);
+}
+
+bool Units::isFortControlled(df::unit *unit)
+{   // Reverse-engineered from ambushing unit code
+    CHECK_NULL_POINTER(unit);
+
+    if (*gamemode != game_mode::DWARF)
+        return false;
+
+    if (unit->mood == mood_type::Berserk ||
+        Units::isCrazed(unit) ||
+        Units::isOpposedToLife(unit) ||
+        unit->enemy.undead ||
+        unit->flags3.bits.ghostly)
+        return false;
+
+    if (unit->flags1.bits.marauder ||
+        unit->flags1.bits.invader_origin ||
+        unit->flags1.bits.active_invader ||
+        unit->flags1.bits.forest ||
+        unit->flags1.bits.merchant ||
+        unit->flags1.bits.diplomat)
+        return false;
+
+    if (unit->flags1.bits.tame)
+        return true;
+
+    if (unit->flags2.bits.visitor ||
+        unit->flags2.bits.visitor_uninvited ||
+        unit->flags2.bits.underworld ||
+        unit->flags2.bits.resident)
+        return false;
+
+    return unit->civ_id != -1 && unit->civ_id == ui->civ_id;
+}
+
+// check if creature belongs to the player's civilization
+// (don't try to pasture/slaughter random untame animals)
+bool Units::isOwnCiv(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->civ_id == ui->civ_id;
+}
+
+// check if creature belongs to the player's group
+bool Units::isOwnGroup(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    auto histfig = df::historical_figure::find(unit->hist_figure_id);
+    if (!histfig)
+        return false;
+    for (size_t i = 0; i < histfig->entity_links.size(); i++)
+    {
+        auto link = histfig->entity_links[i];
+        if (link->entity_id == ui->group_id && link->getType() == df::histfig_entity_link_type::MEMBER)
+            return true;
+    }
+    return false;
+}
+
+// check if creature belongs to the player's race
+// (in combination with check for civ helps to filter out own dwarves)
+bool Units::isOwnRace(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->race == ui->race_id;
+}
+
+
+bool Units::isAlive(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return !unit->flags2.bits.killed &&
+           !unit->flags3.bits.ghostly &&
+           !unit->curse.add_tags1.bits.NOT_LIVING;
+}
+
+bool Units::isDead(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return unit->flags2.bits.killed ||
+           unit->flags3.bits.ghostly;
+}
+
+bool Units::isKilled(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return unit->flags2.bits.killed;
+}
+
+bool Units::isSane(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    if (isDead(unit) ||
+        isOpposedToLife(unit) ||
+        unit->enemy.undead)
+        return false;
+
+    if (unit->enemy.normal_race == unit->enemy.were_race && isCrazed(unit))
+        return false;
+
+    switch (unit->mood)
+    {
+        case mood_type::Melancholy:
+        case mood_type::Raving:
+        case mood_type::Berserk:
+            return false;
+        default:
+            break;
+    }
+
+    return true;
+}
+
+bool Units::isCrazed(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+    if (unit->flags3.bits.scuttle)
+        return false;
+    if (unit->curse.rem_tags1.bits.CRAZED)
+        return false;
+    if (unit->curse.add_tags1.bits.CRAZED)
+        return true;
+    return casteFlagSet(unit->race, unit->caste, caste_raw_flags::CRAZED);
+}
+
+bool Units::isGhost(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return unit->flags3.bits.ghostly;
+}
+
+bool Units::isHidden(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+    // Reverse-engineered from ambushing unit code
+
+    if (*df::global::debug_showambush)
+        return false;
+
+    if (*gamemode == game_mode::ADVENTURE)
+    {
+        if (unit == world->units.active[0])
+            return false;
+        else if (unit->flags1.bits.hidden_in_ambush)
+            return true;
+    }
+    else
+    {
+        if (*gametype == game_type::DWARF_ARENA)
+            return false;
+        else if (unit->flags1.bits.hidden_in_ambush && !isFortControlled(unit))
+            return true;
+    }
+
+    if (unit->flags1.bits.caged)
+    {
+        auto spec_ref = getOuterContainerRef(unit);
+        if (spec_ref.type == specific_ref_type::UNIT)
+            return isHidden(spec_ref.data.unit);
+    }
+
+    if (*gamemode == game_mode::ADVENTURE || isFortControlled(unit))
+        return false;
+    else
+        return !Maps::isTileVisible(Units::getPosition(unit));
+}
+
+bool Units::isHidingCurse(df::unit *unit)
+{
+    if (!unit->job.hunt_target)
+    {
+        auto identity = Units::getIdentity(unit);
+        if (identity && identity->type == df::identity_type::HidingCurse)
+            return true;
+    }
+
+    return false;
+}
+
+
+bool Units::isMale(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->sex == 1;
+}
+
+bool Units::isFemale(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->sex == 0;
+}
+
+bool Units::isBaby(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->profession == df::profession::BABY;
+}
+
+bool Units::isChild(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->profession == df::profession::CHILD;
+}
+
+bool Units::isAdult(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return !isBaby(unit) && !isChild(unit);
+}
+
+bool Units::isGay(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    if (!unit->status.current_soul)
+        return false;
+    df::orientation_flags orientation = unit->status.current_soul->orientation_flags;
+    return (!Units::isFemale(unit) || !(orientation.whole & (orientation.mask_marry_male | orientation.mask_romance_male)))
+           && (!Units::isMale(unit) || !(orientation.whole & (orientation.mask_marry_female | orientation.mask_romance_female)));
+}
+
+bool Units::isNaked(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    // TODO(kazimuth): is this correct?
+    return (unit->inventory.empty());
+}
+
+bool Units::isVisiting(df::unit* unit) {
+    CHECK_NULL_POINTER(unit);
+
+    return unit->flags1.bits.merchant ||
+           unit->flags1.bits.diplomat ||
+           unit->flags2.bits.visitor ||
+           unit->flags2.bits.visitor_uninvited;
+}
+
+
+bool Units::isTrainableHunting(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    df::creature_raw *raw = world->raws.creatures.all[unit->race];
+    df::caste_raw *caste = raw->caste.at(unit->caste);
+    return caste->flags.is_set(caste_raw_flags::TRAINABLE_HUNTING);
+}
+
+bool Units::isTrainableWar(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    df::creature_raw *raw = world->raws.creatures.all[unit->race];
+    df::caste_raw *caste = raw->caste.at(unit->caste);
+    return caste->flags.is_set(caste_raw_flags::TRAINABLE_WAR);
+}
+
+bool Units::isTrained(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    // case a: trained for war/hunting (those don't have a training level, strangely)
+    if(Units::isWar(unit) || Units::isHunter(unit))
+        return true;
+
+    // case b: tamed and trained wild creature, gets a training level
+    bool trained = false;
+    switch (unit->training_level)
+    {
+        case df::animal_training_level::Trained:
+        case df::animal_training_level::WellTrained:
+        case df::animal_training_level::SkilfullyTrained:
+        case df::animal_training_level::ExpertlyTrained:
+        case df::animal_training_level::ExceptionallyTrained:
+        case df::animal_training_level::MasterfullyTrained:
+            //case df::animal_training_level::Domesticated:
+            trained = true;
+            break;
+        default:
+            break;
+    }
+    return trained;
+}
+
+// check for profession "hunting creature"
+bool Units::isHunter(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit)
+    return unit->profession  == df::profession::TRAINED_HUNTER
+           || unit->profession2 == df::profession::TRAINED_HUNTER;
+}
+
+// check for profession "war creature"
+bool Units::isWar(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->profession  == df::profession::TRAINED_WAR
+           || unit->profession2 == df::profession::TRAINED_WAR;
+}
+
+bool Units::isTame(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    bool tame = false;
+    if(unit->flags1.bits.tame)
+    {
+        switch (unit->training_level)
+        {
+            case df::animal_training_level::SemiWild: //??
+            case df::animal_training_level::Trained:
+            case df::animal_training_level::WellTrained:
+            case df::animal_training_level::SkilfullyTrained:
+            case df::animal_training_level::ExpertlyTrained:
+            case df::animal_training_level::ExceptionallyTrained:
+            case df::animal_training_level::MasterfullyTrained:
+            case df::animal_training_level::Domesticated:
+                tame=true;
+                break;
+            case df::animal_training_level::Unk8:     //??
+            case df::animal_training_level::WildUntamed:
+            default:
+                tame=false;
+                break;
+        }
+    }
+    return tame;
+}
+
+bool Units::isTamable(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    df::creature_raw *raw = world->raws.creatures.all[unit->race];
+    df::caste_raw *caste = raw->caste.at(unit->caste);
+    return caste->flags.is_set(caste_raw_flags::PET)
+           || caste->flags.is_set(caste_raw_flags::PET_EXOTIC);
+}
+
+// check if creature is domesticated
+// seems to be the only way to really tell if it's completely safe to autonestbox it (training can revert)
+bool Units::isDomesticated(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    bool tame = false;
+    if(unit->flags1.bits.tame)
+    {
+        switch (unit->training_level)
+        {
+            case df::animal_training_level::Domesticated:
+                tame=true;
+                break;
+            default:
+                tame=false;
+                break;
+        }
+    }
+    return tame;
+}
+
+bool Units::isMarkedForSlaughter(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->flags2.bits.slaughter == 1;
+}
+
+bool Units::isGelded(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    auto wounds = unit->body.wounds;
+    for(auto wound = wounds.begin(); wound != wounds.end(); ++wound)
+    {
+        auto parts = (*wound)->parts;
+        for (auto part = parts.begin(); part != parts.end(); ++part)
+        {
+            if ((*part)->flags2.bits.gelded)
+                return true;
+        }
+    }
+    return false;
+}
+
+bool Units::isEggLayer(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    df::creature_raw *raw = world->raws.creatures.all[unit->race];
+    df::caste_raw *caste = raw->caste.at(unit->caste);
+    return caste->flags.is_set(caste_raw_flags::LAYS_EGGS)
+           || caste->flags.is_set(caste_raw_flags::LAYS_UNUSUAL_EGGS);
+}
+
+bool Units::isGrazer(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    df::creature_raw *raw = world->raws.creatures.all[unit->race];
+    df::caste_raw *caste = raw->caste.at(unit->caste);
+    return caste->flags.is_set(caste_raw_flags::GRAZER);
+}
+
+bool Units::isMilkable(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    df::creature_raw *raw = world->raws.creatures.all[unit->race];
+    df::caste_raw *caste = raw->caste.at(unit->caste);
+    return caste->flags.is_set(caste_raw_flags::MILKABLE);
+}
+
+bool Units::isForest(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->flags1.bits.forest == 1;
+}
+
+bool Units::isMischievous(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+    if (unit->curse.rem_tags1.bits.MISCHIEVOUS)
+        return false;
+    if (unit->curse.add_tags1.bits.MISCHIEVOUS)
+        return true;
+    return casteFlagSet(unit->race, unit->caste, caste_raw_flags::MISCHIEVOUS);
+}
+
+// check if unit is marked as available for adoption
+bool Units::isAvailableForAdoption(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    auto refs = unit->specific_refs;
+    for(size_t i=0; i<refs.size(); i++)
+    {
+        auto ref = refs[i];
+        auto reftype = ref->type;
+        if( reftype == df::specific_ref_type::PETINFO_PET )
+        {
+            //df::pet_info* pet = ref->pet;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+bool Units::hasExtravision(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+    if (unit->curse.rem_tags1.bits.EXTRAVISION)
+        return false;
+    if (unit->curse.add_tags1.bits.EXTRAVISION)
+        return true;
+    return casteFlagSet(unit->race, unit->caste, caste_raw_flags::EXTRAVISION);
+}
+
+bool Units::isOpposedToLife(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+    if (unit->curse.rem_tags1.bits.OPPOSED_TO_LIFE)
+        return false;
+    if (unit->curse.add_tags1.bits.OPPOSED_TO_LIFE)
+        return true;
+    return casteFlagSet(unit->race, unit->caste, caste_raw_flags::OPPOSED_TO_LIFE);
+}
+
+bool Units::isBloodsucker(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+    if (unit->curse.rem_tags1.bits.BLOODSUCKER)
+        return false;
+    if (unit->curse.add_tags1.bits.BLOODSUCKER)
+        return true;
+    return casteFlagSet(unit->race, unit->caste, caste_raw_flags::BLOODSUCKER);
+}
+
+
+bool Units::isDwarf(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return unit->race == ui->race_id ||
+           unit->enemy.normal_race == ui->race_id;
+}
+
+bool Units::isAnimal(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit)
+    return unit->enemy.caste_flags.is_set(df::enums::caste_raw_flags::NATURAL_ANIMAL);
+}
+
+bool Units::isMerchant(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return unit->flags1.bits.merchant == 1;
+}
+
+bool Units::isDiplomat(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return unit->flags1.bits.diplomat == 1;
+}
+
+bool Units::isVisitor(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->flags2.bits.visitor || unit->flags2.bits.visitor_uninvited;
+}
+
+bool Units::isInvader(df::unit* unit) {
+    CHECK_NULL_POINTER(unit);
+
+    return !isOwnGroup(unit) &&
+           (unit->flags1.bits.marauder ||
+            unit->flags1.bits.invader_origin ||
+            unit->flags1.bits.active_invader);
+}
+
+bool Units::isUndead(df::unit* unit, bool include_vamps)
+{
+    CHECK_NULL_POINTER(unit);
+
+    const auto &cb = unit->curse.add_tags1.bits;
+    return unit->flags3.bits.ghostly ||
+           ((cb.OPPOSED_TO_LIFE || cb.NOT_LIVING) && (include_vamps || !cb.BLOODSUCKER));
+}
+
+bool Units::isNightCreature(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->enemy.caste_flags.is_set(df::enums::caste_raw_flags::NIGHT_CREATURE);
+}
+
+bool Units::isSemiMegabeast(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->enemy.caste_flags.is_set(df::enums::caste_raw_flags::SEMIMEGABEAST);
+}
+
+bool Units::isMegabeast(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->enemy.caste_flags.is_set(df::enums::caste_raw_flags::MEGABEAST);
+}
+
+bool Units::isTitan(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return unit->enemy.caste_flags.is_set(df::enums::caste_raw_flags::TITAN);
+}
+
+bool Units::isDemon(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    using namespace df::enums::caste_raw_flags;
+    const auto &cf = unit->enemy.caste_flags;
+    return cf.is_set(DEMON) || cf.is_set(UNIQUE_DEMON);
+}
+
+bool Units::isDanger(df::unit* unit) {
+    CHECK_NULL_POINTER(unit);
+    return isCrazed(unit) ||
+           isInvader(unit) ||
+           isUndead(unit, true) ||
+           isSemiMegabeast(unit) ||
+           isNightCreature(unit) ||
+           isGreatDanger(unit);
+}
+
+bool Units::isGreatDanger(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return isDemon(unit) || isTitan(unit) || isMegabeast(unit);
+}
+
+
+
+int32_t Units::getNumUnits()
+{
+    return world->units.all.size();
+}
+
+df::unit *Units::getUnit (const int32_t index)
+{
+    return vector_get(world->units.all, index);
 }
 
 // returns index of creature actually read or -1 if no creature can be found
@@ -328,18 +940,6 @@ df::nemesis_record *Units::getNemesis(df::unit *unit)
 }
 
 
-bool Units::isHidingCurse(df::unit *unit)
-{
-    if (!unit->job.hunt_target)
-    {
-        auto identity = Units::getIdentity(unit);
-        if (identity && identity->type == df::identity_type::HidingCurse)
-            return true;
-    }
-
-    return false;
-}
-
 int Units::getPhysicalAttrValue(df::unit *unit, df::physical_attribute_type attr)
 {
     auto &aobj = unit->body.physical_attrs[attr];
@@ -392,58 +992,6 @@ bool Units::casteFlagSet(int race, int caste, df::caste_raw_flags flag)
     return craw->flags.is_set(flag);
 }
 
-bool Units::isCrazed(df::unit *unit)
-{
-    CHECK_NULL_POINTER(unit);
-    if (unit->flags3.bits.scuttle)
-        return false;
-    if (unit->curse.rem_tags1.bits.CRAZED)
-        return false;
-    if (unit->curse.add_tags1.bits.CRAZED)
-        return true;
-    return casteFlagSet(unit->race, unit->caste, caste_raw_flags::CRAZED);
-}
-
-bool Units::isOpposedToLife(df::unit *unit)
-{
-    CHECK_NULL_POINTER(unit);
-    if (unit->curse.rem_tags1.bits.OPPOSED_TO_LIFE)
-        return false;
-    if (unit->curse.add_tags1.bits.OPPOSED_TO_LIFE)
-        return true;
-    return casteFlagSet(unit->race, unit->caste, caste_raw_flags::OPPOSED_TO_LIFE);
-}
-
-bool Units::hasExtravision(df::unit *unit)
-{
-    CHECK_NULL_POINTER(unit);
-    if (unit->curse.rem_tags1.bits.EXTRAVISION)
-        return false;
-    if (unit->curse.add_tags1.bits.EXTRAVISION)
-        return true;
-    return casteFlagSet(unit->race, unit->caste, caste_raw_flags::EXTRAVISION);
-}
-
-bool Units::isBloodsucker(df::unit *unit)
-{
-    CHECK_NULL_POINTER(unit);
-    if (unit->curse.rem_tags1.bits.BLOODSUCKER)
-        return false;
-    if (unit->curse.add_tags1.bits.BLOODSUCKER)
-        return true;
-    return casteFlagSet(unit->race, unit->caste, caste_raw_flags::BLOODSUCKER);
-}
-
-bool Units::isMischievous(df::unit *unit)
-{
-    CHECK_NULL_POINTER(unit);
-    if (unit->curse.rem_tags1.bits.MISCHIEVOUS)
-        return false;
-    if (unit->curse.add_tags1.bits.MISCHIEVOUS)
-        return true;
-    return casteFlagSet(unit->race, unit->caste, caste_raw_flags::MISCHIEVOUS);
-}
-
 df::unit_misc_trait *Units::getMiscTrait(df::unit *unit, df::misc_trait_type type, bool create)
 {
     CHECK_NULL_POINTER(unit);
@@ -462,225 +1010,6 @@ df::unit_misc_trait *Units::getMiscTrait(df::unit *unit, df::misc_trait_type typ
     }
 
     return NULL;
-}
-
-bool Units::isDead(df::unit *unit)
-{
-    CHECK_NULL_POINTER(unit);
-
-    return unit->flags2.bits.killed ||
-           unit->flags3.bits.ghostly;
-}
-
-bool Units::isAlive(df::unit *unit)
-{
-    CHECK_NULL_POINTER(unit);
-
-    return !unit->flags2.bits.killed &&
-           !unit->flags3.bits.ghostly &&
-           !unit->curse.add_tags1.bits.NOT_LIVING;
-}
-
-bool Units::isSane(df::unit *unit)
-{
-    CHECK_NULL_POINTER(unit);
-
-    if (isDead(unit) ||
-        isOpposedToLife(unit) ||
-        unit->enemy.undead)
-        return false;
-
-    if (unit->enemy.normal_race == unit->enemy.were_race && isCrazed(unit))
-        return false;
-
-    switch (unit->mood)
-    {
-    case mood_type::Melancholy:
-    case mood_type::Raving:
-    case mood_type::Berserk:
-        return false;
-    default:
-        break;
-    }
-
-    return true;
-}
-
-bool Units::isCitizen(df::unit *unit, bool ignore_sanity)
-{
-    CHECK_NULL_POINTER(unit);
-
-    // Copied from the conditions used to decide game over,
-    // except that the game appears to let melancholy/raving
-    // dwarves count as citizens.
-
-    if (unit->flags1.bits.marauder ||
-        unit->flags1.bits.invader_origin ||
-        unit->flags1.bits.active_invader ||
-        unit->flags1.bits.forest ||
-        unit->flags1.bits.merchant ||
-        unit->flags1.bits.diplomat ||
-        unit->flags2.bits.visitor ||
-        unit->flags2.bits.visitor_uninvited ||
-        unit->flags2.bits.underworld ||
-        unit->flags2.bits.resident)
-        return false;
-
-    if (!ignore_sanity && !isSane(unit))
-        return false;
-
-    return isOwnGroup(unit);
-}
-
-bool Units::isFortControlled(df::unit *unit)
-{   // Reverse-engineered from ambushing unit code
-    CHECK_NULL_POINTER(unit);
-
-    if (*gamemode != game_mode::DWARF)
-        return false;
-
-    if (unit->mood == mood_type::Berserk ||
-        Units::isCrazed(unit) ||
-        Units::isOpposedToLife(unit) ||
-        unit->enemy.undead ||
-        unit->flags3.bits.ghostly)
-        return false;
-
-    if (unit->flags1.bits.marauder ||
-        unit->flags1.bits.invader_origin ||
-        unit->flags1.bits.active_invader ||
-        unit->flags1.bits.forest ||
-        unit->flags1.bits.merchant ||
-        unit->flags1.bits.diplomat)
-        return false;
-
-    if (unit->flags1.bits.tame)
-        return true;
-
-    if (unit->flags2.bits.visitor ||
-        unit->flags2.bits.visitor_uninvited ||
-        unit->flags2.bits.underworld ||
-        unit->flags2.bits.resident)
-        return false;
-
-    return unit->civ_id != -1 && unit->civ_id == ui->civ_id;
-}
-
-bool Units::isDwarf(df::unit *unit)
-{
-    CHECK_NULL_POINTER(unit);
-
-    return unit->race == ui->race_id ||
-           unit->enemy.normal_race == ui->race_id;
-}
-
-// check for profession "war creature"
-bool Units::isWar(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    return unit->profession  == df::profession::TRAINED_WAR
-            || unit->profession2 == df::profession::TRAINED_WAR;
-}
-
-// check for profession "hunting creature"
-bool Units::isHunter(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit)
-    return unit->profession  == df::profession::TRAINED_HUNTER
-            || unit->profession2 == df::profession::TRAINED_HUNTER;
-}
-
-// check if unit is marked as available for adoption
-bool Units::isAvailableForAdoption(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    auto refs = unit->specific_refs;
-    for(size_t i=0; i<refs.size(); i++)
-    {
-        auto ref = refs[i];
-        auto reftype = ref->type;
-        if( reftype == df::specific_ref_type::PETINFO_PET )
-        {
-            //df::pet_info* pet = ref->pet;
-            return true;
-        }
-    }
-
-    return false;
-}
-
-// check if creature belongs to the player's civilization
-// (don't try to pasture/slaughter random untame animals)
-bool Units::isOwnCiv(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    return unit->civ_id == ui->civ_id;
-}
-
-// check if creature belongs to the player's group
-bool Units::isOwnGroup(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    auto histfig = df::historical_figure::find(unit->hist_figure_id);
-    if (!histfig)
-        return false;
-    for (size_t i = 0; i < histfig->entity_links.size(); i++)
-    {
-        auto link = histfig->entity_links[i];
-        if (link->entity_id == ui->group_id && link->getType() == df::histfig_entity_link_type::MEMBER)
-            return true;
-    }
-    return false;
-}
-
-// check if creature belongs to the player's race
-// (in combination with check for civ helps to filter out own dwarves)
-bool Units::isOwnRace(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    return unit->race == ui->race_id;
-}
-
-bool Units::isVisible(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    return Maps::isTileVisible(unit->pos);
-}
-
-bool Units::isHidden(df::unit *unit)
-{
-    CHECK_NULL_POINTER(unit);
-    // Reverse-engineered from ambushing unit code
-
-    if (*df::global::debug_showambush)
-        return false;
-
-    if (*gamemode == game_mode::ADVENTURE)
-    {
-        if (unit == world->units.active[0])
-            return false;
-        else if (unit->flags1.bits.hidden_in_ambush)
-            return true;
-    }
-    else
-    {
-        if (*gametype == game_type::DWARF_ARENA)
-            return false;
-        else if (unit->flags1.bits.hidden_in_ambush && !isFortControlled(unit))
-            return true;
-    }
-
-    if (unit->flags1.bits.caged)
-    {
-        auto spec_ref = getOuterContainerRef(unit);
-        if (spec_ref.type == specific_ref_type::UNIT)
-            return isHidden(spec_ref.data.unit);
-    }
-
-    if (*gamemode == game_mode::ADVENTURE || isFortControlled(unit))
-        return false;
-    else
-        return !Maps::isTileVisible(Units::getPosition(unit));
 }
 
 // get race name by id or unit pointer
@@ -757,101 +1086,6 @@ string Units::getRaceChildName(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
     return getRaceChildNameById(unit->race);
-}
-
-bool Units::isInvader(df::unit* unit) {
-    CHECK_NULL_POINTER(unit);
-
-    return !isOwnGroup(unit) &&
-           (unit->flags1.bits.marauder ||
-            unit->flags1.bits.invader_origin ||
-            unit->flags1.bits.active_invader);
-}
-
-bool Units::isBaby(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    return unit->profession == df::profession::BABY;
-}
-
-bool Units::isChild(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    return unit->profession == df::profession::CHILD;
-}
-
-bool Units::isAdult(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    return !isBaby(unit) && !isChild(unit);
-}
-
-bool Units::isAnimal(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit)
-    return unit->enemy.caste_flags.is_set(df::enums::caste_raw_flags::NATURAL_ANIMAL);
-}
-
-bool Units::isEggLayer(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    df::caste_raw *caste = raw->caste.at(unit->caste);
-    return caste->flags.is_set(caste_raw_flags::LAYS_EGGS)
-        || caste->flags.is_set(caste_raw_flags::LAYS_UNUSUAL_EGGS);
-}
-
-bool Units::isGrazer(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    df::caste_raw *caste = raw->caste.at(unit->caste);
-    return caste->flags.is_set(caste_raw_flags::GRAZER);
-}
-
-bool Units::isMilkable(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    df::caste_raw *caste = raw->caste.at(unit->caste);
-    return caste->flags.is_set(caste_raw_flags::MILKABLE);
-}
-
-bool Units::isTrainableWar(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    df::caste_raw *caste = raw->caste.at(unit->caste);
-    return caste->flags.is_set(caste_raw_flags::TRAINABLE_WAR);
-}
-
-bool Units::isTrainableHunting(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    df::caste_raw *caste = raw->caste.at(unit->caste);
-    return caste->flags.is_set(caste_raw_flags::TRAINABLE_HUNTING);
-}
-
-bool Units::isTamable(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    df::caste_raw *caste = raw->caste.at(unit->caste);
-    return caste->flags.is_set(caste_raw_flags::PET)
-        || caste->flags.is_set(caste_raw_flags::PET_EXOTIC);
-}
-
-bool Units::isMale(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    return unit->sex == 1;
-}
-
-bool Units::isFemale(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    return unit->sex == 0;
 }
 
 
@@ -1680,232 +1914,6 @@ df::activity_event *Units::getMainSocialEvent(df::unit *unit)
     if (!entry || entry->events.empty())
         return nullptr;
     return entry->events[entry->events.size() - 1];
-}
-
-bool Units::isVisiting(df::unit* unit) {
-    CHECK_NULL_POINTER(unit);
-
-    return unit->flags1.bits.merchant ||
-           unit->flags1.bits.diplomat ||
-           unit->flags2.bits.visitor ||
-           unit->flags2.bits.visitor_uninvited;
-}
-
-bool Units::isMerchant(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-
-    return unit->flags1.bits.merchant == 1;
-}
-
-bool Units::isDiplomat(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-
-    return unit->flags1.bits.diplomat == 1;
-}
-
-bool Units::isVisitor(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    return unit->flags2.bits.visitor || unit->flags2.bits.visitor_uninvited;
-}
-
-bool Units::isForest(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    return unit->flags1.bits.forest == 1;
-}
-
-bool Units::isMarkedForSlaughter(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    return unit->flags2.bits.slaughter == 1;
-}
-
-bool Units::isTame(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    bool tame = false;
-    if(unit->flags1.bits.tame)
-    {
-        switch (unit->training_level)
-        {
-        case df::animal_training_level::SemiWild: //??
-        case df::animal_training_level::Trained:
-        case df::animal_training_level::WellTrained:
-        case df::animal_training_level::SkilfullyTrained:
-        case df::animal_training_level::ExpertlyTrained:
-        case df::animal_training_level::ExceptionallyTrained:
-        case df::animal_training_level::MasterfullyTrained:
-        case df::animal_training_level::Domesticated:
-            tame=true;
-            break;
-        case df::animal_training_level::Unk8:     //??
-        case df::animal_training_level::WildUntamed:
-        default:
-            tame=false;
-            break;
-        }
-    }
-    return tame;
-}
-
-bool Units::isTrained(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    // case a: trained for war/hunting (those don't have a training level, strangely)
-    if(Units::isWar(unit) || Units::isHunter(unit))
-        return true;
-
-    // case b: tamed and trained wild creature, gets a training level
-    bool trained = false;
-    switch (unit->training_level)
-    {
-    case df::animal_training_level::Trained:
-    case df::animal_training_level::WellTrained:
-    case df::animal_training_level::SkilfullyTrained:
-    case df::animal_training_level::ExpertlyTrained:
-    case df::animal_training_level::ExceptionallyTrained:
-    case df::animal_training_level::MasterfullyTrained:
-    //case df::animal_training_level::Domesticated:
-        trained = true;
-        break;
-    default:
-        break;
-    }
-    return trained;
-}
-
-bool Units::isGay(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    if (!unit->status.current_soul)
-        return false;
-    df::orientation_flags orientation = unit->status.current_soul->orientation_flags;
-    return (!Units::isFemale(unit) || !(orientation.whole & (orientation.mask_marry_male | orientation.mask_romance_male)))
-        && (!Units::isMale(unit) || !(orientation.whole & (orientation.mask_marry_female | orientation.mask_romance_female)));
-}
-
-bool Units::isNaked(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    // TODO(kazimuth): is this correct?
-    return (unit->inventory.empty());
-}
-
-bool Units::isUndead(df::unit* unit, bool include_vamps)
-{
-    CHECK_NULL_POINTER(unit);
-
-    const auto &cb = unit->curse.add_tags1.bits;
-    return unit->flags3.bits.ghostly ||
-           ((cb.OPPOSED_TO_LIFE || cb.NOT_LIVING) && (include_vamps || !cb.BLOODSUCKER));
-}
-
-bool Units::isGhost(df::unit *unit)
-{
-    CHECK_NULL_POINTER(unit);
-
-    return unit->flags3.bits.ghostly;
-}
-
-bool Units::isActive(df::unit *unit)
-{
-    CHECK_NULL_POINTER(unit);
-
-    return !unit->flags1.bits.inactive;
-}
-
-bool Units::isKilled(df::unit *unit)
-{
-    CHECK_NULL_POINTER(unit);
-
-    return unit->flags2.bits.killed;
-}
-
-bool Units::isGelded(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    auto wounds = unit->body.wounds;
-    for(auto wound = wounds.begin(); wound != wounds.end(); ++wound)
-    {
-        auto parts = (*wound)->parts;
-        for (auto part = parts.begin(); part != parts.end(); ++part)
-        {
-            if ((*part)->flags2.bits.gelded)
-                return true;
-        }
-    }
-    return false;
-}
-
-// check if creature is domesticated
-// seems to be the only way to really tell if it's completely safe to autonestbox it (training can revert)
-bool Units::isDomesticated(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    bool tame = false;
-    if(unit->flags1.bits.tame)
-    {
-        switch (unit->training_level)
-        {
-        case df::animal_training_level::Domesticated:
-            tame=true;
-            break;
-        default:
-            tame=false;
-            break;
-        }
-    }
-    return tame;
-}
-
-bool Units::isDemon(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    using namespace df::enums::caste_raw_flags;
-    const auto &cf = unit->enemy.caste_flags;
-    return cf.is_set(DEMON) || cf.is_set(UNIQUE_DEMON);
-}
-
-bool Units::isTitan(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    return unit->enemy.caste_flags.is_set(df::enums::caste_raw_flags::TITAN);
-}
-
-bool Units::isMegabeast(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    return unit->enemy.caste_flags.is_set(df::enums::caste_raw_flags::MEGABEAST);
-}
-
-bool Units::isGreatDanger(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    return isDemon(unit) || isTitan(unit) || isMegabeast(unit);
-}
-
-bool Units::isSemiMegabeast(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    return unit->enemy.caste_flags.is_set(df::enums::caste_raw_flags::SEMIMEGABEAST);
-}
-
-bool Units::isNightCreature(df::unit* unit)
-{
-    CHECK_NULL_POINTER(unit);
-    return unit->enemy.caste_flags.is_set(df::enums::caste_raw_flags::NIGHT_CREATURE);
-}
-
-bool Units::isDanger(df::unit* unit) {
-    CHECK_NULL_POINTER(unit);
-    return isInvader(unit) ||
-           isUndead(unit, true) ||
-           isSemiMegabeast(unit) ||
-           isNightCreature(unit) ||
-           isGreatDanger(unit);
 }
 
 // 50000 and up is level 0, 25000 and up is level 1, etc.

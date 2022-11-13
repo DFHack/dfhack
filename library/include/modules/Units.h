@@ -68,14 +68,78 @@ static const int MAX_COLORS = 15;
  * The Units module - allows reading all non-vermin units and their properties
  */
 
+DFHACK_EXPORT bool isUnitInBox(df::unit* u,
+int16_t x1, int16_t y1, int16_t z1,
+int16_t x2, int16_t y2, int16_t z2);
+
+DFHACK_EXPORT bool isActive(df::unit *unit);
+DFHACK_EXPORT bool isVisible(df::unit* unit);
+DFHACK_EXPORT bool isCitizen(df::unit *unit, bool ignore_sanity = false);
+DFHACK_EXPORT bool isFortControlled(df::unit *unit);
+DFHACK_EXPORT bool isOwnCiv(df::unit* unit);
+DFHACK_EXPORT bool isOwnGroup(df::unit* unit);
+DFHACK_EXPORT bool isOwnRace(df::unit* unit);
+
+DFHACK_EXPORT bool isAlive(df::unit *unit);
+DFHACK_EXPORT bool isDead(df::unit *unit);
+DFHACK_EXPORT bool isKilled(df::unit *unit);
+DFHACK_EXPORT bool isSane(df::unit *unit);
+DFHACK_EXPORT bool isCrazed(df::unit *unit);
+DFHACK_EXPORT bool isGhost(df::unit *unit);
+/// is unit hidden to the player? accounts for ambushing
+DFHACK_EXPORT bool isHidden(df::unit *unit);
+DFHACK_EXPORT bool isHidingCurse(df::unit *unit);
+
+DFHACK_EXPORT bool isMale(df::unit* unit);
+DFHACK_EXPORT bool isFemale(df::unit* unit);
+DFHACK_EXPORT bool isBaby(df::unit* unit);
+DFHACK_EXPORT bool isChild(df::unit* unit);
+DFHACK_EXPORT bool isAdult(df::unit* unit);
+DFHACK_EXPORT bool isGay(df::unit* unit);
+DFHACK_EXPORT bool isNaked(df::unit* unit);
+DFHACK_EXPORT bool isVisiting(df::unit* unit);
+
+DFHACK_EXPORT bool isTrainableHunting(df::unit* unit);
+DFHACK_EXPORT bool isTrainableWar(df::unit* unit);
+DFHACK_EXPORT bool isTrained(df::unit* unit);
+DFHACK_EXPORT bool isHunter(df::unit* unit);
+DFHACK_EXPORT bool isWar(df::unit* unit);
+DFHACK_EXPORT bool isTame(df::unit* unit);
+DFHACK_EXPORT bool isTamable(df::unit* unit);
+DFHACK_EXPORT bool isDomesticated(df::unit* unit);
+DFHACK_EXPORT bool isMarkedForSlaughter(df::unit* unit);
+DFHACK_EXPORT bool isGelded(df::unit* unit);
+DFHACK_EXPORT bool isEggLayer(df::unit* unit);
+DFHACK_EXPORT bool isGrazer(df::unit* unit);
+DFHACK_EXPORT bool isMilkable(df::unit* unit);
+DFHACK_EXPORT bool isForest(df::unit* unit);
+DFHACK_EXPORT bool isMischievous(df::unit *unit);
+DFHACK_EXPORT bool isAvailableForAdoption(df::unit* unit);
+
+DFHACK_EXPORT bool hasExtravision(df::unit *unit);
+DFHACK_EXPORT bool isOpposedToLife(df::unit *unit);
+DFHACK_EXPORT bool isBloodsucker(df::unit *unit);
+
+DFHACK_EXPORT bool isDwarf(df::unit *unit);
+DFHACK_EXPORT bool isAnimal(df::unit* unit);
+DFHACK_EXPORT bool isMerchant(df::unit* unit);
+DFHACK_EXPORT bool isDiplomat(df::unit* unit);
+DFHACK_EXPORT bool isVisitor(df::unit* unit);
+DFHACK_EXPORT bool isInvader(df::unit* unit);
+DFHACK_EXPORT bool isUndead(df::unit* unit, bool include_vamps = false);
+DFHACK_EXPORT bool isNightCreature(df::unit* unit);
+DFHACK_EXPORT bool isSemiMegabeast(df::unit* unit);
+DFHACK_EXPORT bool isMegabeast(df::unit* unit);
+DFHACK_EXPORT bool isTitan(df::unit* unit);
+DFHACK_EXPORT bool isDemon(df::unit* unit);
+DFHACK_EXPORT bool isDanger(df::unit* unit);
+DFHACK_EXPORT bool isGreatDanger(df::unit* unit);
+
 /* Read Functions */
 // Read units in a box, starting with index. Returns -1 if no more units
 // found. Call repeatedly do get all units in a specified box (uses tile coords)
 DFHACK_EXPORT int32_t getNumUnits();
 DFHACK_EXPORT df::unit *getUnit(const int32_t index);
-DFHACK_EXPORT bool isUnitInBox(df::unit* u,
-    int16_t x1, int16_t y1, int16_t z1,
-    int16_t x2, int16_t y2, int16_t z2);
 DFHACK_EXPORT bool getUnitsInBox(std::vector<df::unit*> &units,
     int16_t x1, int16_t y1, int16_t z1,
     int16_t x2, int16_t y2, int16_t z2);
@@ -102,34 +166,11 @@ DFHACK_EXPORT df::language_name *getVisibleName(df::unit *unit);
 DFHACK_EXPORT df::identity *getIdentity(df::unit *unit);
 DFHACK_EXPORT df::nemesis_record *getNemesis(df::unit *unit);
 
-DFHACK_EXPORT bool isHidingCurse(df::unit *unit);
 DFHACK_EXPORT int getPhysicalAttrValue(df::unit *unit, df::physical_attribute_type attr);
 DFHACK_EXPORT int getMentalAttrValue(df::unit *unit, df::mental_attribute_type attr);
 DFHACK_EXPORT bool casteFlagSet(int race, int caste, df::caste_raw_flags flag);
 
-DFHACK_EXPORT bool isCrazed(df::unit *unit);
-DFHACK_EXPORT bool isOpposedToLife(df::unit *unit);
-DFHACK_EXPORT bool hasExtravision(df::unit *unit);
-DFHACK_EXPORT bool isBloodsucker(df::unit *unit);
-DFHACK_EXPORT bool isMischievous(df::unit *unit);
-
-DFHACK_EXPORT df::unit_misc_trait *getMiscTrait(df::unit *unit, df::misc_trait_type type, bool create = false);
-
-DFHACK_EXPORT bool isDead(df::unit *unit);
-DFHACK_EXPORT bool isAlive(df::unit *unit);
-DFHACK_EXPORT bool isSane(df::unit *unit);
-DFHACK_EXPORT bool isCitizen(df::unit *unit, bool ignore_sanity = false);
-DFHACK_EXPORT bool isFortControlled(df::unit *unit);
-DFHACK_EXPORT bool isDwarf(df::unit *unit);
-DFHACK_EXPORT bool isWar(df::unit* unit);
-DFHACK_EXPORT bool isHunter(df::unit* unit);
-DFHACK_EXPORT bool isAvailableForAdoption(df::unit* unit);
-DFHACK_EXPORT bool isOwnCiv(df::unit* unit);
-DFHACK_EXPORT bool isOwnGroup(df::unit* unit);
-DFHACK_EXPORT bool isOwnRace(df::unit* unit);
-DFHACK_EXPORT bool isVisible(df::unit* unit);
-/// is unit hidden to the player? accounts for ambushing
-DFHACK_EXPORT bool isHidden(df::unit *unit);
+        DFHACK_EXPORT df::unit_misc_trait *getMiscTrait(df::unit *unit, df::misc_trait_type type, bool create = false);
 
 DFHACK_EXPORT std::string getRaceNameById(int32_t race_id);
 DFHACK_EXPORT std::string getRaceName(df::unit* unit);
@@ -140,43 +181,6 @@ DFHACK_EXPORT std::string getRaceBabyNameById(int32_t race_id);
 DFHACK_EXPORT std::string getRaceBabyName(df::unit* unit);
 DFHACK_EXPORT std::string getRaceChildNameById(int32_t race_id);
 DFHACK_EXPORT std::string getRaceChildName(df::unit* unit);
-
-DFHACK_EXPORT bool isInvader(df::unit* unit);
-DFHACK_EXPORT bool isBaby(df::unit* unit);
-DFHACK_EXPORT bool isChild(df::unit* unit);
-DFHACK_EXPORT bool isAdult(df::unit* unit);
-DFHACK_EXPORT bool isAnimal(df::unit* unit);
-DFHACK_EXPORT bool isEggLayer(df::unit* unit);
-DFHACK_EXPORT bool isGrazer(df::unit* unit);
-DFHACK_EXPORT bool isMilkable(df::unit* unit);
-DFHACK_EXPORT bool isTrainableWar(df::unit* unit);
-DFHACK_EXPORT bool isTrainableHunting(df::unit* unit);
-DFHACK_EXPORT bool isTamable(df::unit* unit);
-DFHACK_EXPORT bool isMale(df::unit* unit);
-DFHACK_EXPORT bool isFemale(df::unit* unit);
-DFHACK_EXPORT bool isVisiting(df::unit* unit);
-DFHACK_EXPORT bool isMerchant(df::unit* unit);
-DFHACK_EXPORT bool isDiplomat(df::unit* unit);
-DFHACK_EXPORT bool isVisitor(df::unit* unit);
-DFHACK_EXPORT bool isForest(df::unit* unit);
-DFHACK_EXPORT bool isMarkedForSlaughter(df::unit* unit);
-DFHACK_EXPORT bool isTame(df::unit* unit);
-DFHACK_EXPORT bool isTrained(df::unit* unit);
-DFHACK_EXPORT bool isGay(df::unit* unit);
-DFHACK_EXPORT bool isNaked(df::unit* unit);
-DFHACK_EXPORT bool isUndead(df::unit* unit, bool include_vamps = false);
-DFHACK_EXPORT bool isGhost(df::unit *unit);
-DFHACK_EXPORT bool isActive(df::unit *unit);
-DFHACK_EXPORT bool isKilled(df::unit *unit);
-DFHACK_EXPORT bool isGelded(df::unit* unit);
-DFHACK_EXPORT bool isDomesticated(df::unit* unit);
-DFHACK_EXPORT bool isDemon(df::unit* unit);
-DFHACK_EXPORT bool isTitan(df::unit* unit);
-DFHACK_EXPORT bool isMegabeast(df::unit* unit);
-DFHACK_EXPORT bool isGreatDanger(df::unit* unit);
-DFHACK_EXPORT bool isSemiMegabeast(df::unit* unit);
-DFHACK_EXPORT bool isNightCreature(df::unit* unit);
-DFHACK_EXPORT bool isDanger(df::unit* unit);
 
 
 DFHACK_EXPORT double getAge(df::unit *unit, bool true_age = false);

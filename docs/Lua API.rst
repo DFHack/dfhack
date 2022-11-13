@@ -1392,7 +1392,8 @@ Units module
 
 * ``dfhack.units.isUndead(unit[,include_vamps])``
 
-  The unit is undead, but not a vampire.
+  The unit is undead. Pass ``true`` as the optional second parameter to
+  count vampires as undead.
 
 * ``dfhack.units.isNightCreature(unit)``
 

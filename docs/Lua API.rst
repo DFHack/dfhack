@@ -1262,32 +1262,14 @@ Units module
 
 
 * ``dfhack.units.isMale(unit)``
-
-  The unit is male.
-
 * ``dfhack.units.isFemale(unit)``
-
-  The unit is female.
-
 * ``dfhack.units.isBaby(unit)``
-
-  The unit is a baby.
-
 * ``dfhack.units.isChild(unit)``
-
-  The unit is a child.
-
 * ``dfhack.units.isAdult(unit)``
-
-  The unit is an adult.
-
 * ``dfhack.units.isGay(unit)``
-
-  The unit is gay.
-
 * ``dfhack.units.isNaked(unit)``
 
-  The unit is naked.
+  Simple unit property checks
 
 * ``dfhack.units.isVisiting(unit)``
 
@@ -1315,36 +1297,15 @@ Units module
   The unit is trained for war.
 
 * ``dfhack.units.isTame(unit)``
-
-  The unit is tame.
-
 * ``dfhack.units.isTamable(unit)``
-
-  The unit is tamable.
-
 * ``dfhack.units.isDomesticated(unit)``
-
-  The unit is domesticated.
-
 * ``dfhack.units.isMarkedForSlaughter(unit)``
-
-  The unit is marked for slaughter.
-
 * ``dfhack.units.isGelded(unit)``
-
-  The unit is gelded.
-
 * ``dfhack.units.isEggLayer(unit)``
-
-  The unit is an egg layer.
-
 * ``dfhack.units.isGrazer(unit)``
-
-  The unit is a grazer.
-
 * ``dfhack.units.isMilkable(unit)``
 
-  The unit is milkable.
+  Simple unit property checks.
 
 * ``dfhack.units.isForest(unit)``
 
@@ -1371,16 +1332,10 @@ Units module
   The unit is of the correct race for the fortress.
 
 * ``dfhack.units.isAnimal(unit)``
-
-  The unit is an animal.
-
 * ``dfhack.units.isMerchant(unit)``
-
-  The unit is a merchant.
-
 * ``dfhack.units.isDiplomat(unit)``
 
-  The unit is a diplomat.
+  Simple unit type checks.
 
 * ``dfhack.units.isVisitor(unit)``
 
@@ -1396,24 +1351,12 @@ Units module
   count vampires as undead.
 
 * ``dfhack.units.isNightCreature(unit)``
-
-  The unit is a Night Creature.
-
 * ``dfhack.units.isSemiMegabeast(unit)``
-
-  The unit is a semi-megabeast.
-
 * ``dfhack.units.isMegabeast(unit)``
-
-  The unit is a megabeast.
-
 * ``dfhack.units.isTitan(unit)``
-
-  The unit is a titan.
-
 * ``dfhack.units.isDemon(unit)``
 
-  The unit is a demon.
+  Simple enemy type checks.
 
 * ``dfhack.units.isDanger(unit)``
 

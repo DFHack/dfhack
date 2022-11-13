@@ -170,7 +170,7 @@ DFHACK_EXPORT int getPhysicalAttrValue(df::unit *unit, df::physical_attribute_ty
 DFHACK_EXPORT int getMentalAttrValue(df::unit *unit, df::mental_attribute_type attr);
 DFHACK_EXPORT bool casteFlagSet(int race, int caste, df::caste_raw_flags flag);
 
-        DFHACK_EXPORT df::unit_misc_trait *getMiscTrait(df::unit *unit, df::misc_trait_type type, bool create = false);
+DFHACK_EXPORT df::unit_misc_trait *getMiscTrait(df::unit *unit, df::misc_trait_type type, bool create = false);
 
 DFHACK_EXPORT std::string getRaceNameById(int32_t race_id);
 DFHACK_EXPORT std::string getRaceName(df::unit* unit);

@@ -1285,7 +1285,7 @@ Units module
 
   The unit is gay.
 
-* ``dfhack.units.isNake(unit)``
+* ``dfhack.units.isNaked(unit)``
 
   The unit is naked.
 

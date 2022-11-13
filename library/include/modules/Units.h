@@ -69,8 +69,8 @@ static const int MAX_COLORS = 15;
  */
 
 DFHACK_EXPORT bool isUnitInBox(df::unit* u,
-int16_t x1, int16_t y1, int16_t z1,
-int16_t x2, int16_t y2, int16_t z2);
+    int16_t x1, int16_t y1, int16_t z1,
+    int16_t x2, int16_t y2, int16_t z2);
 
 DFHACK_EXPORT bool isActive(df::unit *unit);
 DFHACK_EXPORT bool isVisible(df::unit* unit);

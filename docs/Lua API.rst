@@ -1397,11 +1397,11 @@ Units module
 
 * ``dfhack.units.isNightCreature(unit)``
 
-  The unit is undead, but not a vampire.
+  The unit is a Night Creature.
 
 * ``dfhack.units.isSemiMegabeast(unit)``
 
-  The unit is undead, but not a vampire.
+  The unit is a semi-megabeast.
 
 * ``dfhack.units.isMegabeast(unit)``
 

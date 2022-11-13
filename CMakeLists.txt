@@ -394,6 +394,12 @@ else()
     endif()
 endif()
 
+if(BUILD_TESTING)
+    message("BUILD TESTS: Core, Scripts")
+    set(BUILD_SCRIPT_TESTS ON FORCE)
+    set(BUILD_CORE_TESTS ON FORCE)
+endif()
+
 # Support linking against external tinyxml
 # If we find an external tinyxml, set the DFHACK_TINYXML variable to "tinyxml"
 # Otherwise, set it to "dfhack-tinyxml"
@@ -407,12 +413,6 @@ if(EXTERNAL_TINYXML)
 else()
     include_directories(depends/tinyxml)
     set(DFHACK_TINYXML "dfhack-tinyxml")
-endif()
-
-if(BUILD_TESTING)
-    message("BUILD TESTS: Core, Scripts")
-    set(BUILD_SCRIPT_TESTS ON FORCE)
-    set(BUILD_CORE_TESTS ON FORCE)
 endif()
 
 find_package(ZLIB REQUIRED)

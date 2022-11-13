@@ -99,7 +99,10 @@ jobs:
     - name: Run unit tests
       id: run_tests1
       run: |
-        exit build-ci/library/tests/test-library
+        if build-ci/library/tests/test-library; then
+          exit 0
+        fi
+        exit 1
     - name: Run lua tests
       id: run_tests2
       run: |

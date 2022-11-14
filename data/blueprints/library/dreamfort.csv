@@ -314,7 +314,7 @@ Here are some tips and procedures for handling seiges -- including how to clean 
 ""
 "After a siege, you can use the caged prisoners to safely train your military. Here's how:"
 ""
-"- Once the prisoners are hauled to the ""prisoner quantum"" stockpile, run ""stripcaged all"" in the DFHack console."
+"- Once the prisoners are hauled to the ""prisoner quantum"" stockpile, run ""unforbid all"" and ""stripcaged all"" in the DFHack console (or GUI launcher)."
 ""
 "- After all the prisoners' items have been confiscated, bring your military dwarves to the barracks (if they aren't already there)."
 ""
@@ -2292,7 +2292,7 @@ query_jail/services_query_jail
 ,`,`,`,`,`,`,`,`,`,`,`,,`,A,A,A,`,A,A,A,`,,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,r,`,`,`,`,,,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,d,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,trackstopN,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,,`,,`,,b
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,d,,d,,,,,`,,`,,`,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,t,`,`,`,`,R
@@ -2327,9 +2327,9 @@ query_jail/services_query_jail
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,,`,,,,,,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,,,`
-,`,`,`,`,`,`,`,`,`,`,`,,`,z(7x3),,,`,`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,c,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,,`,,`,,`
+,`,`,`,`,`,`,`,`,`,`,`,,`,z(7x1),,,`,`,`,`,`,,`,,`,,`,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,`,,`,,,,,`,,`,,`,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`
@@ -2409,7 +2409,7 @@ query_jail/services_query_jail
 ,,,,,,,,,,,,,,,`,`,`,`,`
 ,,,,,,,,,,,,,,,`,`,`,`,`
 
-#query label(services_query_stockpiles) start(18; 18) hidden() message(Configure the training ammo stockpile to take from the metalworker quantum on the industry level.) configure stockpiles
+"#query label(services_query_stockpiles) start(18; 18) hidden() message(Configure the training ammo stockpile to take from the metalworker quantum on the industry level. Assign a minecart to the training ammo quantum dump with ""assign-minecarts all"") configure stockpiles"
 
 ,`,`,`,,`,`,`,,`,`,`,,`,`,`,,`,,`,`,`
 ,`,`,`,,`,`,`,,`,`,`,,`,`,`,`,`,`,`,`,`
@@ -2421,9 +2421,9 @@ query_jail/services_query_jail
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,,`,,,,,,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,,,`
-,`,`,`,`,`,`,`,`,`,`,`,,`,nocontainers,{bolts}{forbidmetalbolts}{forbidartifactammo},"{givename name=""training bolts""}",`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`
-,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,`,`,`,`,`,,`,,`,,`,,`
+,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,"{quantum name=""training quantum""}",`,`,`,`,`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,,`,`,`,`,"{quantumstopfromsouth name=""Training quantum""}{givename name=""training dumper""}",`,`,`,`
+,`,`,`,`,`,`,`,`,`,`,`,,`,nocontainers,{bolts}{forbidmetalbolts}{forbidartifactammo},"{givename name=""training bolts""}",`,`,`,`,`,,`,,`,,`,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,,`,,`,,,,,`,,`,,`,,`
 ,`,`,`,`,`,`,`,`,`,`,`,,,,`,`,`,`,`,,,,`,`,`,`,`,`,`,`,`
 ,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`

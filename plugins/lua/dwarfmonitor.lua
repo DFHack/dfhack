@@ -27,8 +27,8 @@ function WeatherWidget:overlay_onupdate()
     for i=0,4 do
         for j=0,4 do
             weather = cw[i][j]
-            if weather == df.weather_type.Rain then self.rain = true end
-            if weather == df.weather_type.Snow then self.snow = true end
+            if weather == df.weather_type.Rain then rain = true end
+            if weather == df.weather_type.Snow then snow = true end
         end
     end
     self.frame.w = (rain and 4 or 0) + (snow and 4 or 0) +

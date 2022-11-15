@@ -42,6 +42,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `mousequery`: fix the cursor jumping up z levels sometimes when using TWBT
 - `tiletypes`: no longer resets dig priority to the default when updating other properties of a tile
 - `automaterial`: fix rendering errors with box boundary markers
+- `autolabor` & `autohauler`: properly handle jobs 241, 242, and 243
 - Core: fix the segmentation fault with the REPORT event in EventManager
 - Core: fix the new JOB_STARTED event only sending each event once, to the first handler listed
 

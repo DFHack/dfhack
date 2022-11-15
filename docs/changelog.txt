@@ -53,6 +53,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `blueprint`: generate meta blueprints to reduce the number of blueprints you have to apply
 - `blueprint`: support splitting the output file into phases grouped by when they can be applied
 - `blueprint`: when splitting output files, number them so they sort into the order you should apply them in
+- `dwarfmonitor`: widgets have been ported to the overlay framework and can be enabled and configured via the overlay command
 - `ls`: indent tag listings and wrap them in the right column for better readability
 - `ls`: new ``--exclude`` option for hiding matched scripts from the output.  this can be especially useful for modders who don't want their mod scripts to be included in ``ls`` output.
 - `digtype`: new ``-z`` option for digtype to restrict designations to the current z-level and down

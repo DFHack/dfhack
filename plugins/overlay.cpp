@@ -88,6 +88,9 @@
 #include "PluginManager.h"
 #include "VTableInterpose.h"
 
+#include "modules/Gui.h"
+#include "modules/Screen.h"
+
 using namespace DFHack;
 
 DFHACK_PLUGIN("overlay");
@@ -98,18 +101,58 @@ namespace DFHack {
     DBG_DECLARE(overlay, event, DebugCategory::LINFO);
 }
 
+static df::coord2d screenSize;
+
+static void call_overlay_lua(color_ostream *out, const char *fn_name,
+        int nargs = 0, int nres = 0,
+        Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
+        Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
+    DEBUG(event).print("calling overlay lua function: '%s'\n", fn_name);
+
+    CoreSuspender guard;
+
+    auto L = Lua::Core::State;
+    Lua::StackUnwinder top(L);
+
+    if (!out)
+        out = &Core::getInstance().getConsole();
+
+    Lua::CallLuaModuleFunction(*out, L, "plugins.overlay", fn_name, nargs, nres,
+                               std::forward<Lua::LuaLambda&&>(args_lambda),
+                               std::forward<Lua::LuaLambda&&>(res_lambda));
+}
+
 template<class T>
 struct viewscreen_overlay : T {
     typedef T interpose_base;
 
     DEFINE_VMETHOD_INTERPOSE(void, logic, ()) {
         INTERPOSE_NEXT(logic)();
+        call_overlay_lua(NULL, "update_viewscreen_widgets", 2, 0,
+                [&](lua_State *L) {
+                    Lua::Push(L, T::_identity.getName());
+                    Lua::Push(L, this);
+                });
     }
     DEFINE_VMETHOD_INTERPOSE(void, feed, (std::set<df::interface_key> *input)) {
-        INTERPOSE_NEXT(feed)(input);
+        bool input_is_handled = false;
+        call_overlay_lua(NULL, "feed_viewscreen_widgets", 2, 1,
+                [&](lua_State *L) {
+                    Lua::Push(L, T::_identity.getName());
+                    Lua::PushInterfaceKeys(L, *input);
+                }, [&](lua_State *L) {
+                    input_is_handled = lua_toboolean(L, -1);
+                });
+        if (!input_is_handled)
+            INTERPOSE_NEXT(feed)(input);
     }
     DEFINE_VMETHOD_INTERPOSE(void, render, ()) {
         INTERPOSE_NEXT(render)();
+        call_overlay_lua(NULL, "render_viewscreen_widgets", 2, 0,
+                [&](lua_State *L) {
+                    Lua::Push(L, T::_identity.getName());
+                    Lua::Push(L, this);
+                });
     }
 };
 
@@ -207,9 +250,14 @@ IMPLEMENT_HOOKS(workshop_profile)
     !INTERPOSE_HOOK(screen##_overlay, feed).apply(enable) || \
     !INTERPOSE_HOOK(screen##_overlay, render).apply(enable)
 
-DFhackCExport command_result plugin_enable(color_ostream &, bool enable) {
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (is_enabled == enable)
         return CR_OK;
+
+    if (enable) {
+        screenSize = Screen::getWindowSize();
+        call_overlay_lua(&out, "reload");
+    }
 
     DEBUG(control).print("%sing interpose hooks\n", enable ? "enabl" : "disabl");
 
@@ -302,15 +350,14 @@ DFhackCExport command_result plugin_enable(color_ostream &, bool enable) {
 #undef INTERPOSE_HOOKS_FAILED
 
 static command_result overlay_cmd(color_ostream &out, std::vector <std::string> & parameters) {
-    if (DBG_NAME(control).isEnabled(DebugCategory::LDEBUG)) {
-        DEBUG(control).print("interpreting command with %zu parameters:\n",
-                             parameters.size());
-        for (auto &param : parameters) {
-            DEBUG(control).print("  %s\n", param.c_str());
-        }
-    }
+    bool show_help = false;
+    call_overlay_lua(&out, "overlay_command", 1, 1, [&](lua_State *L) {
+            Lua::PushVector(L, parameters);
+        }, [&](lua_State *L) {
+            show_help = !lua_toboolean(L, -1);
+        });
 
-    return CR_OK;
+    return show_help ? CR_WRONG_USAGE : CR_OK;
 }
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
@@ -318,9 +365,10 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         PluginCommand(
             "overlay",
             "Manage onscreen widgets.",
-            overlay_cmd));
+            overlay_cmd,
+            Gui::anywhere_hotkey));
 
-    return plugin_enable(out, true);
+    return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown(color_ostream &out) {
@@ -328,5 +376,11 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out) {
 }
 
 DFhackCExport command_result plugin_onupdate (color_ostream &out) {
+    df::coord2d newScreenSize = Screen::getWindowSize();
+    if (newScreenSize != screenSize) {
+        call_overlay_lua(&out, "reposition_widgets");
+        screenSize = newScreenSize;
+    }
+    call_overlay_lua(&out, "update_hotspot_widgets");
     return CR_OK;
 }

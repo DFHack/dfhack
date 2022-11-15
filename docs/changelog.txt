@@ -68,6 +68,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `spectate`: new ``tick-threshold``, option for specifying the change interval (maximum follow time when focus-jobs is enabled)
 - `spectate`: added persistent configuration of the plugin settings
 - `gui/cp437-table`: new global keybinding for the clickable on-screen keyboard for players with keyboard layouts that prevent them from using certain keys: Ctrl-Shift-K
+- `quickfort-library-guide`: dreamfort blueprint improvements: added a quantum stockpile for training bolts
 
 ## Documentation
 - `spectate`: improved documentation of features and functionality

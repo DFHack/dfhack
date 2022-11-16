@@ -317,6 +317,8 @@ public:
         {
             set_farms(out, plants[ff.first], ff.second);
         }
+
+        out << std::flush;
     }
 
     void status(color_ostream& out)
@@ -336,6 +338,8 @@ public:
             out << plant->id << " limit " << getThreshold(th.first) << " current 0" << '\n';
         }
         out << "Default: " << defaultThreshold << '\n';
+
+        out << std::flush;
     }
 };
 
@@ -409,7 +413,7 @@ static command_result setThresholds(color_ostream& out, std::vector<std::string>
         }
         if (!ok)
         {
-            out << "Cannot find plant with id " << id << '\n';
+            out << "Cannot find plant with id " << id << '\n' << std::flush;
             return CR_WRONG_USAGE;
         }
     }

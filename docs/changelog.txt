@@ -43,6 +43,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `tiletypes`: no longer resets dig priority to the default when updating other properties of a tile
 - `automaterial`: fix rendering errors with box boundary markers
 - `autolabor` & `autohauler`: properly handle jobs 241, 242, and 243
+- `autofarm`: add missing output flushes
 - Core: fix the segmentation fault with the REPORT event in EventManager
 - Core: fix the new JOB_STARTED event only sending each event once, to the first handler listed
 

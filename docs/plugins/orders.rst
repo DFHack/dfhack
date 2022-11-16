@@ -55,7 +55,7 @@ This collection of orders handles basic fort necessities:
 - thread/cloth/dye
 - pots/jugs/buckets/mugs
 - bags of leather, cloth, silk, and yarn
-- crafts and totems from otherwise unusable by-products
+- crafts, totems, and shleggings from otherwise unusable by-products
 - mechanisms/cages
 - splints/crutches
 - lye/soap
@@ -65,6 +65,8 @@ This collection of orders handles basic fort necessities:
 
 You should import it as soon as you have enough dwarves to perform the tasks.
 Right after the first migration wave is usually a good time.
+
+Armok's note: shleggings? Yes, `shleggings <https://youtu.be/bLN8cOcTjdo>`__.
 
 :source:`library/furnace <data/orders/furnace.json>`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

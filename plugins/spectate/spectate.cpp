@@ -1,12 +1,12 @@
 //
 // Created by josh on 7/28/21.
+// Last updated: 11//10/22
 //
 
 #include "pause.h"
 
 #include <Debug.h>
 #include <Core.h>
-#include <Console.h>
 #include <Export.h>
 #include <PluginManager.h>
 
@@ -24,8 +24,6 @@
 #include <df/viewscreen.h>
 #include <df/creature_raw.h>
 
-#include <map>
-#include <set>
 #include <array>
 #include <random>
 #include <cinttypes>
@@ -86,6 +84,16 @@ namespace SP {
     df::unit* our_dorf = nullptr;
     int32_t timestamp = -1;
     std::default_random_engine RNG;
+
+    void DebugUnitVector(std::vector<df::unit*> units) {
+        for (auto unit : units) {
+            INFO(plugin).print("[id: %d]\n animal: %d\n hostile: %d\n visiting: %d\n",
+                               unit->id,
+                               Units::isAnimal(unit),
+                               Units::isDanger(unit),
+                               Units::isVisiting(unit));
+        }
+    }
 
     void PrintStatus(color_ostream &out) {
         out.print("Spectate is %s\n", enabled ? "ENABLED." : "DISABLED.");
@@ -232,28 +240,30 @@ namespace SP {
                 size_t previous = first - 1;
                 // first we get the end of the range
                 ranges[second] = units.size() - 1;
-                // then we calculate whether this indicates there is a range or not
-                if (first != 0) {
-                    range_exists[idx] = ranges[second] > ranges[previous];
-                } else {
+                // then we calculate whether the range exists, and set the first index appropriately
+                if (idx == 0) {
                     range_exists[idx] = ranges[second] >= 0;
+                    ranges[first] = 0;
+                } else {
+                    range_exists[idx] = ranges[second] > ranges[previous];
+                    ranges[first] = ranges[previous] +  (range_exists[idx] ? 1 : 0);
                 }
-                // lastly we set the start of the range
-                ranges[first] = ranges[previous] + (range_exists[idx] ? 1 : 0);
             };
 
             /// RANGE 0 (in view + working)
             // grab valid working units
-            add_if([](df::unit* unit) {
-                return valid(unit) && Units::isCitizen(unit, true) && unit->job.current_job;
+            add_if([&](df::unit* unit) {
+                return valid(unit) &&
+                       Units::isUnitInBox(unit, COORDARGS(viewMin), COORDARGS(viewMax)) &&
+                       Units::isCitizen(unit, true) &&
+                       unit->job.current_job;
             });
-            // keep only those in the box
-            Units::getUnitsInBox(units, COORDARGS(viewMin), COORDARGS(viewMax));
             build_range(0);
 
             /// RANGE 1 (in view)
-            add_if(valid);
-            Units::getUnitsInBox(units, COORDARGS(viewMin), COORDARGS(viewMax));
+            add_if([&](df::unit* unit) {
+                return valid(unit) && Units::isUnitInBox(unit, COORDARGS(viewMin), COORDARGS(viewMax));
+            });
             build_range(1);
 
             /// RANGE 2 (working citizens)
@@ -296,6 +306,7 @@ namespace SP {
                 if (!at_least_one) {
                     return false;
                 }
+                //DebugUnitVector(units);
                 std::piecewise_linear_distribution<> follow_any(i.begin(), i.end(), w.begin());
                 // if you're looking at a warning about a local address escaping, it means the unit* from units (which aren't local)
                 size_t idx = follow_any(RNG);

@@ -74,7 +74,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(MSVC)
-    # increase warning level
+    # increase warning level and treat warnings as errors
     add_definitions("/WX")
     add_definitions("/W3")
 

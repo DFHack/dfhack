@@ -584,7 +584,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out, state_change_ev
 command_result channel_safely(color_ostream &out, std::vector<std::string> &parameters) {
     if (!parameters.empty()) {
         if (parameters.size() >= 2 && parameters.size() <= 3) {
-            if (parameters[0] == "run" && parameters[1] == "once") {
+            if (parameters[0] == "runonce") {
                 CSP::UnpauseEvent();
                 return DFHack::CR_OK;
             }

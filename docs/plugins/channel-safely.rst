@@ -18,7 +18,7 @@ Usage
     enable channel-safely
     channel-safely set <setting> <value>
     channel-safely enable|disable <feature>
-    channel-safely run once
+    channel-safely runonce
 
 When enabled the map will be scanned for channel designations which will be grouped
 together based on adjacency and z-level. These groups will then be analyzed for safety
@@ -32,7 +32,7 @@ Examples
 ``channel-safely``
     The plugin reports its configured status.
 
-``channel-safely run once``
+``channel-safely runonce``
     Runs the safety procedures once. You can use this if you prefer initiating scans manually.
 
 ``channel-safely disable require-vision``
@@ -47,6 +47,7 @@ Examples
 
 Features
 --------
+
 :require-vision:    Toggle whether the dwarves need vision of a tile before channeling to it can be deemed unsafe. (default: enabled)
 :monitor:           Toggle whether to monitor the conditions of active digs. (default: disabled)
 :resurrect:         Toggle whether to resurrect units involved in cave-ins, and if monitor is enabled
@@ -56,6 +57,7 @@ Features
 
 Settings
 --------
+
 :refresh-freq:      The rate at which full refreshes are performed.
                     This can be expensive if you're undertaking many mega projects. (default:600, twice a day)
 :monitor-freq:      The rate at which active jobs are monitored. (default:1)

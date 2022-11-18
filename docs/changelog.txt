@@ -111,6 +111,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``gui.Screen.show()`` now returns ``self`` as a convenience
 - ``gui.View.getMousePos()`` now takes an optional ``ViewRect`` parameter in case the caller wants to get the mouse pos relative to a rect that is not the frame_body (such as the frame_rect)
 
+## Internals
+- MSVC warning level upped to /W3, and /WX added to make warnings cause compilations to fail.
+
 # 0.47.05-r7
 
 ## New Plugins

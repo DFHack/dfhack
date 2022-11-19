@@ -93,7 +93,7 @@ end
 function registerReaction(reaction_name,callback)
     _registeredStuff.reactionCallbacks=_registeredStuff.reactionCallbacks or {}
     _registeredStuff.reactionCallbacks[reaction_name]=callback
-    onReactionComplete._library=onReact
+    onReactionCompleting._library=onReact
     dfhack.onStateChange.eventful=unregall
 end
 
@@ -154,7 +154,7 @@ eventType=invertTable{
     "JOB_INITIATED",
     "JOB_STARTED",
     "JOB_COMPLETED",
-    "NEW_UNIT_ACTIVE",
+    "UNIT_NEW_ACTIVE",
     "UNIT_DEATH",
     "ITEM_CREATED",
     "BUILDING",

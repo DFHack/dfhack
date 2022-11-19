@@ -1,13 +1,11 @@
 .. _blueprint-library-guide:
 .. _quickfort-library-guide:
 
-Blueprint Library Index
-=======================
+Quickfort blueprint library
+===========================
 
 This guide contains a high-level overview of the blueprints available in the
-:source:`quickfort blueprint library <data/blueprints/library>`. You can list
-library blueprints by running ``quickfort list --library`` or by hitting
-:kbd:`Alt`:kbd:`l` in the ``gui/quickfort`` file load dialog.
+:source:`quickfort blueprint library <data/blueprints/library>`.
 
 Each file is hyperlinked to its online version so you can see exactly what the
 blueprints do before you run them. Also, if you use `gui/quickfort`, you will
@@ -49,9 +47,8 @@ and a convenient `checklist
 <https://docs.google.com/spreadsheets/d/13PVZ2h3Mm3x_G1OXQvwKd7oIR2lK4A1Ahf6Om1kFigw/edit#gid=1459509569>`__
 from which you can copy the ``quickfort`` commands.
 
-If you like, you can download a fully built Dreamfort-based fort from `dffd
-<https://dffd.bay12games.com/file.php?id=15434>`__, load it, and explore it
-interactively.
+If you like, you can download a fully built Dreamfort-based fort from
+:dffd:`dffd <15434>`, load it, and explore it interactively.
 
 Visual overview
 ```````````````
@@ -197,11 +194,11 @@ Extra blueprints that are useful in specific situations.
 - :source:`library/embark.csv <data/blueprints/library/embark.csv>`
 - :source:`library/pump_stack.csv <data/blueprints/library/pump_stack.csv>`
 
-Light Aquifer Tap
+Light aquifer tap
 ~~~~~~~~~~~~~~~~~
 
 The aquifer tap helps you create a safe, everlasting source of fresh water from
-a light aquifer. See the step-by-step guide, including informaton on how to
+a light aquifer. See the step-by-step guide, including information on how to
 create a drainage system so your dwarves don't drown when digging the tap, by
 running ``quickfort run library/aquifer_tap.csv -n /help``.
 
@@ -219,7 +216,7 @@ blueprint that builds important starting workshops (mason, carpenter, mechanic,
 and craftsdwarf) and a ``#place`` blueprint that lays down a pattern of useful
 starting stockpiles.
 
-Pump Stack
+Pump stack
 ~~~~~~~~~~
 
 The pump stack blueprints help you move water and magma up to more convenient

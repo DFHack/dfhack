@@ -21,6 +21,12 @@ function test.parse_gui_commandline()
     expect.table_eq({help=true, format='minimal', split_strategy='none'}, opts)
 
     opts = {}
+    b.parse_gui_commandline(opts, {'--nometa'})
+    expect.table_eq({auto_phase=true, format='minimal', split_strategy='none',
+                     name='blueprint', nometa=true},
+                    opts)
+
+    opts = {}
     mock.patch(dfhack.maps, 'isValidTilePos', mock.func(true),
                function()
                    b.parse_gui_commandline(opts, {'--cursor=1,2,3'})
@@ -33,6 +39,12 @@ function test.parse_gui_commandline()
     b.parse_gui_commandline(opts, {'-e'})
     expect.table_eq({auto_phase=true, format='minimal', split_strategy='none',
                      name='blueprint', engrave=true,},
+                    opts)
+
+    opts = {}
+    b.parse_gui_commandline(opts, {'--smooth'})
+    expect.table_eq({auto_phase=true, format='minimal', split_strategy='none',
+                     name='blueprint', smooth=true,},
                     opts)
 
     opts = {}
@@ -89,7 +101,7 @@ function test.parse_gui_commandline()
     opts = {}
     b.parse_gui_commandline(opts, {'--splitby', 'phase'})
     expect.table_eq({auto_phase=true, format='minimal', split_strategy='phase',
-                     name='blueprint'},
+                     name='blueprint', nometa=true},
                     opts)
 
     expect.error_match('unknown split_strategy',
@@ -229,16 +241,16 @@ end
 
 function test.get_filename()
     local opts = {name='a', split_strategy='none'}
-    expect.eq('blueprints/a.csv', b.get_filename(opts, 'dig'))
+    expect.eq('blueprints/a.csv', b.get_filename(opts, 'dig', 1))
 
     opts = {name='a/', split_strategy='none'}
-    expect.eq('blueprints/a/a.csv', b.get_filename(opts, 'dig'))
+    expect.eq('blueprints/a/a.csv', b.get_filename(opts, 'dig', 1))
 
     opts = {name='a', split_strategy='phase'}
-    expect.eq('blueprints/a-dig.csv', b.get_filename(opts, 'dig'))
+    expect.eq('blueprints/a-1-dig.csv', b.get_filename(opts, 'dig', 1))
 
     opts = {name='a/', split_strategy='phase'}
-    expect.eq('blueprints/a/a-dig.csv', b.get_filename(opts, 'dig'))
+    expect.eq('blueprints/a/a-5-dig.csv', b.get_filename(opts, 'dig', 5))
 
     expect.error_match('could not parse basename', function()
             b.get_filename({name='', split_strategy='none'})

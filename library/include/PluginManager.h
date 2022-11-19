@@ -97,6 +97,10 @@ namespace DFHack
         /// create a command with a name, description, function pointer to its code
         /// and saying if it needs an interactive terminal
         /// Most commands shouldn't require an interactive terminal!
+        /// Note that the description and usage fields are only used for
+        /// out-of-tree plugins that do not have rendered help installed in
+        /// the hack/docs directory. Help for all internal plugins comes from
+        /// the rendered .rst files.
         PluginCommand(const char * _name,
                       const char * _description,
                       command_function function_,
@@ -297,6 +301,7 @@ namespace DFHack
     {
         // Predefined hotkey guards
         DFHACK_EXPORT bool default_hotkey(df::viewscreen *);
+        DFHACK_EXPORT bool anywhere_hotkey(df::viewscreen *);
         DFHACK_EXPORT bool dwarfmode_hotkey(df::viewscreen *);
         DFHACK_EXPORT bool cursor_hotkey(df::viewscreen *);
     }

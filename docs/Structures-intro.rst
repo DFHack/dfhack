@@ -18,7 +18,7 @@ layout changes, and will need to be recompiled for every new DF version.
 
 Addresses of DF global objects and vtables are stored in a separate file,
 :file:`symbols.xml`. Since these are only absolute addresses, they do not need
-to be compiled in to DFHack code, and are instead loaded at runtime. This makes
+to be compiled into DFHack code, and are instead loaded at runtime. This makes
 fixes and additions to global addresses possible without recompiling DFHack.
 In an installed copy of DFHack, this file can be found at the root of the
 ``hack`` folder.

@@ -308,9 +308,8 @@ df::building *Buildings::findAtTile(df::coord pos)
 
 static unordered_map<int32_t, df::coord> corner1;
 static unordered_map<int32_t, df::coord> corner2;
-static void cacheBuilding(df::building *building) {
+static void cacheBuilding(df::building *building, bool is_civzone) {
     int32_t id = building->id;
-    bool is_civzone = !building->isSettingOccupancy();
     df::coord p1(min(building->x1, building->x2), min(building->y1,building->y2), building->z);
     df::coord p2(max(building->x1, building->x2), max(building->y1,building->y2), building->z);
 
@@ -344,7 +343,7 @@ static void cacheNewCivzones() {
         auto &vec = world->buildings.other[buildings_other_id::ANY_ZONE];
         int32_t idx = df::building::binsearch_index(vec, id);
         if (idx > -1)
-            cacheBuilding(vec[idx]);
+            cacheBuilding(vec[idx], true);
     }
     nextCivzone = nextBuildingId;
 }
@@ -1311,8 +1310,9 @@ void Buildings::updateBuildings(color_ostream&, void* ptr)
 
     if (building)
     {
-        if (!corner1.count(id))
-            cacheBuilding(building);
+        bool is_civzone = !building->isSettingOccupancy();
+        if (!corner1.count(id) && !is_civzone)
+            cacheBuilding(building, false);
     }
     else if (corner1.count(id))
     {

@@ -48,27 +48,10 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters);
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector<PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("createitem", "Create arbitrary items.", df_createitem, false,
-        "Syntax: createitem <item> <material> [count]\n"
-        "    <item> - Item token for what you wish to create, as specified in custom\n"
-        "             reactions. If the item has no subtype, omit the :NONE.\n"
-        "    <material> - The material you want the item to be made of, as specified\n"
-        "                 in custom reactions. For REMAINS, FISH, FISH_RAW, VERMIN,\n"
-        "                 PET, and EGG, replace this with a creature ID and caste.\n"
-        "                 For PLANT_GROWTH, replace this with a plant ID and growth ID.\n"
-        "    [count] - How many of the item you wish to create.\n"
-        "\n"
-        "To obtain the item and material of an existing item, run \n"
-        "'createitem inspect' with that item selected in-game.\n"
-        "\n"
-        "To use this command, you must select which unit will create the items.\n"
-        "By default, items created will be placed at that unit's feet.\n"
-        "To change this, run 'createitem <destination>'.\n"
-        "Valid destinations:\n"
-        "* floor - Place items on floor beneath maker's feet.\n"
-        "* item - Place items inside selected container.\n"
-        "* building - Place items inside selected building.\n"
-    ));
+    commands.push_back(
+        PluginCommand("createitem",
+                      "Create arbitrary items.",
+                      df_createitem));
     return CR_OK;
 }
 
@@ -273,7 +256,7 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
 
     if (parameters.size() == 3)
     {
-        stringstream ss(parameters[2]);
+        std::stringstream ss(parameters[2]);
         ss >> count;
         if (count < 1)
         {

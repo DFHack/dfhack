@@ -38,15 +38,6 @@ DFHACK_PLUGIN("autofarm");
 
 DFHACK_PLUGIN_IS_ENABLED(enabled);
 
-const char* tagline = "Automatically handle crop selection in farm plots based on current plant stocks.";
-const char* usage = (
-    "``enable autofarm``: Enables the plugin\n"
-    "``autofarm runonce``: Updates farm plots (one-time only)\n"
-    "``autofarm status``: Prints status information\n"
-    "``autofarm default 30``: Sets the default threshold\n"
-    "``autofarm threshold 150 helmet_plump tail_pig``: Sets thresholds\n"
-    );
-
 class AutoFarm {
 private:
     std::map<int, int> thresholds;
@@ -326,11 +317,13 @@ public:
         {
             set_farms(out, plants[ff.first], ff.second);
         }
+
+        out << std::flush;
     }
 
     void status(color_ostream& out)
     {
-        out << (enabled ? "Running." : "Stopped.") << '\n';
+        out << "Autofarm is " << (enabled ? "Active." : "Stopped.") << '\n';
         for (auto& lc : lastCounts)
         {
             auto plant = world->raws.plants.all[lc.first];
@@ -345,6 +338,8 @@ public:
             out << plant->id << " limit " << getThreshold(th.first) << " current 0" << '\n';
         }
         out << "Default: " << defaultThreshold << '\n';
+
+        out << std::flush;
     }
 };
 
@@ -355,10 +350,9 @@ DFhackCExport command_result plugin_init(color_ostream& out, std::vector <Plugin
 {
     if (world && ui) {
         commands.push_back(
-            PluginCommand("autofarm", tagline,
-                autofarm, false, usage
-            )
-        );
+            PluginCommand("autofarm",
+                          "Automatically manage farm crop selection.",
+                          autofarm));
     }
     autofarmInstance = std::move(dts::make_unique<AutoFarm>());
     return CR_OK;
@@ -419,7 +413,7 @@ static command_result setThresholds(color_ostream& out, std::vector<std::string>
         }
         if (!ok)
         {
-            out << "Cannot find plant with id " << id << '\n';
+            out << "Cannot find plant with id " << id << '\n' << std::flush;
             return CR_WRONG_USAGE;
         }
     }

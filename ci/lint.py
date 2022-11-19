@@ -97,7 +97,7 @@ class TrailingWhitespaceLinter(Linter):
     msg = 'Contains trailing whitespace'
     def check_line(self, line):
         line = line.replace('\r', '').replace('\n', '')
-        return not line.strip() or line == line.rstrip('\t ')
+        return line == line.rstrip('\t ')
     def fix_line(self, line):
         return line.rstrip('\t ')
 

@@ -41,6 +41,7 @@ distribution.
 #include "modules/World.h"
 #include "modules/Gui.h"
 #include "modules/Job.h"
+#include "modules/Screen.h"
 #include "modules/Translation.h"
 #include "modules/Units.h"
 
@@ -51,11 +52,15 @@ distribution.
 #include "DFHackVersion.h"
 #include "PluginManager.h"
 
+#include "df/building.h"
+#include "df/enabler.h"
+#include "df/entity_position.h"
+#include "df/entity_position_assignment.h"
+#include "df/historical_entity.h"
+#include "df/item.h"
 #include "df/job.h"
 #include "df/job_item.h"
-#include "df/building.h"
 #include "df/unit.h"
-#include "df/item.h"
 #include "df/world.h"
 
 #include <lua.h>
@@ -79,6 +84,126 @@ inline bool is_null_userdata(lua_State *L, int idx)
 inline void AssertCoreSuspend(lua_State *state)
 {
     assert(!Lua::IsCoreContext(state) || DFHack::Core::getInstance().isSuspended());
+}
+
+/*
+ * Lua Push methods
+ */
+
+void DFHack::Lua::Push(lua_State *state, const Units::NoblePosition &pos)
+{
+    lua_createtable(state, 0, 3);
+    Lua::PushDFObject(state, pos.entity);
+    lua_setfield(state, -2, "entity");
+    Lua::PushDFObject(state, pos.assignment);
+    lua_setfield(state, -2, "assignment");
+    Lua::PushDFObject(state, pos.position);
+    lua_setfield(state, -2, "position");
+}
+
+void DFHack::Lua::Push(lua_State *state, df::coord pos)
+{
+    lua_createtable(state, 0, 3);
+    lua_pushinteger(state, pos.x);
+    lua_setfield(state, -2, "x");
+    lua_pushinteger(state, pos.y);
+    lua_setfield(state, -2, "y");
+    lua_pushinteger(state, pos.z);
+    lua_setfield(state, -2, "z");
+}
+
+void DFHack::Lua::Push(lua_State *state, df::coord2d pos)
+{
+    lua_createtable(state, 0, 2);
+    lua_pushinteger(state, pos.x);
+    lua_setfield(state, -2, "x");
+    lua_pushinteger(state, pos.y);
+    lua_setfield(state, -2, "y");
+}
+
+void DFHack::Lua::GetVector(lua_State *state, std::vector<std::string> &pvec)
+{
+    lua_pushnil(state);   // first key
+    while (lua_next(state, 1) != 0)
+    {
+        pvec.push_back(lua_tostring(state, -1));
+        lua_pop(state, 1);  // remove value, leave key
+    }
+}
+
+void DFHack::Lua::PushInterfaceKeys(lua_State *L,
+                            const std::set<df::interface_key> &keys) {
+    lua_createtable(L, 0, keys.size() + 5);
+
+    for (auto &key : keys)
+    {
+        if (auto name = enum_item_raw_key(key))
+            lua_pushstring(L, name);
+        else
+            lua_pushinteger(L, key);
+
+        lua_pushboolean(L, true);
+        lua_rawset(L, -3);
+
+        int charval = Screen::keyToChar(key);
+        if (charval >= 0)
+        {
+            lua_pushinteger(L, charval);
+            lua_setfield(L, -2, "_STRING");
+        }
+    }
+
+    if (df::global::enabler) {
+        if (df::global::enabler->mouse_lbut_down) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "_MOUSE_L");
+        }
+        if (df::global::enabler->mouse_rbut_down) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "_MOUSE_R");
+        }
+        if (df::global::enabler->mouse_lbut) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "_MOUSE_L_DOWN");
+            df::global::enabler->mouse_lbut = 0;
+        }
+        if (df::global::enabler->mouse_rbut) {
+            lua_pushboolean(L, true);
+            lua_setfield(L, -2, "_MOUSE_R_DOWN");
+            df::global::enabler->mouse_rbut = 0;
+        }
+    }
+}
+
+int DFHack::Lua::PushPosXYZ(lua_State *state, df::coord pos)
+{
+    if (!pos.isValid())
+    {
+        lua_pushnil(state);
+        return 1;
+    }
+    else
+    {
+        lua_pushinteger(state, pos.x);
+        lua_pushinteger(state, pos.y);
+        lua_pushinteger(state, pos.z);
+        return 3;
+    }
+}
+
+int DFHack::Lua::PushPosXY(lua_State *state, df::coord2d pos)
+{
+    if (!pos.isValid())
+    {
+        lua_pushnil(state);
+        return 1;
+    }
+    else
+    {
+        lua_pushinteger(state, pos.x);
+        lua_pushinteger(state, pos.y);
+        return 2;
+    }
 }
 
 /*
@@ -695,6 +820,29 @@ bool DFHack::Lua::SafeCall(color_ostream &out, lua_State *L, int nargs, int nres
     return ok;
 }
 
+bool DFHack::Lua::CallLuaModuleFunction(color_ostream &out, lua_State *L,
+        const char *module_name, const char *fn_name,
+        int nargs, int nres, LuaLambda && args_lambda, LuaLambda && res_lambda,
+        bool perr){
+    if (!lua_checkstack(L, 1 + nargs) ||
+        !Lua::PushModulePublic(out, L, module_name, fn_name)) {
+        if (perr)
+            out.printerr("Failed to load %s Lua code\n", module_name);
+        return false;
+    }
+
+    std::forward<LuaLambda&&>(args_lambda)(L);
+
+    if (!Lua::SafeCall(out, L, nargs, nres, perr)) {
+        if (perr)
+            out.printerr("Failed Lua call to '%s.%s'\n", module_name, fn_name);
+        return false;
+    }
+
+    std::forward<LuaLambda&&>(res_lambda)(L);
+    return true;
+}
+
 // Copied from lcorolib.c, with error handling modifications
 static int resume_helper(lua_State *L, lua_State *co, int narg, int nres)
 {
@@ -1145,7 +1293,7 @@ bool DFHack::Lua::InterpreterLoop(color_ostream &out, lua_State *state,
         return false;
 
     if (!hfile)
-        hfile = "lua.history";
+        hfile = "dfhack-config/lua.history";
     if (!prompt)
         prompt = "lua";
 

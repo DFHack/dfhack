@@ -752,20 +752,10 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     add_tool(new MouseControl);
     add_tool(new SandIndicator);
     add_tool(new StablePosition);
-    std::string help = "";
-    help += "embark-tools (enable/disable) tool [tool...]\n"
-            "Tools:\n";
-    FOR_ITER_TOOLS(iter)
-    {
-        help += ("  " + iter->second->getId() + ": " + iter->second->getDesc() + "\n");
-    }
     commands.push_back(PluginCommand(
         "embark-tools",
-        "A collection of embark tools",
-        embark_tools_cmd,
-        false,
-        help.c_str()
-    ));
+        "Extend the embark screen functionality.",
+        embark_tools_cmd));
     return CR_OK;
 }
 

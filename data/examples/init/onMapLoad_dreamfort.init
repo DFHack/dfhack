@@ -1,6 +1,7 @@
 # This dfhack config file automates common tasks for your forts.
 # It was written for the Dreamfort set of quickfort blueprints, but the
-# configuration here is useful for any fort! Feed free to edit or override
+# configuration here is useful for any fort! Copy this file to your
+# dfhack-config/init directory to use. Feed free to edit or override
 # to your liking.
 
 # Uncomment this next line if you want buildingplan (and quickfort) to use only
@@ -37,27 +38,18 @@ enable automelt
 
 # creates manager orders to produce replacements for worn clothing
 enable tailor
-tailor enable
 
 # auto-assigns nesting birds to nestbox zones and protects fertile eggs from
 # being cooked/eaten
-enable zone nestboxes
-autonestbox start
+enable zone autonestbox nestboxes
 
 # manages seed stocks
 enable seedwatch
 seedwatch all 30
-seedwatch start
 
 # ensures important tasks get assigned to workers.
 # otherwise these job types can get ignored in busy forts.
-prioritize -a StoreItemInVehicle StoreItemInBag StoreItemInBarrel PullLever
-prioritize -a StoreItemInLocation StoreItemInHospital
-prioritize -a DestroyBuilding RemoveConstruction RecoverWounded DumpItem
-prioritize -a CleanSelf SlaughterAnimal PrepareRawFish ExtractFromRawFish
-prioritize -a TradeAtDepot BringItemToDepot CleanTrap ManageWorkOrders
-prioritize -a --haul-labor=Food,Body StoreItemInStockpile
-prioritize -a --reaction-name=TAN_A_HIDE CustomReaction
+prioritize -aq defaults
 
 # autobutcher settings are saved in the savegame, so we only need to set them once.
 # this way, any custom settings you set during gameplay are not overwritten
@@ -65,6 +57,7 @@ prioritize -a --reaction-name=TAN_A_HIDE CustomReaction
 # feel free to change this to "target 0 0 0 0" if you don't expect to want to raise
 # any animals not listed here -- you can always change it anytime during the game
 # later if you change your mind.
+on-new-fortress enable autobutcher
 on-new-fortress autobutcher target 2 2 2 2 new
 # dogs and cats. You should raise the limits for dogs if you will be training them
 # for hunting or war.
@@ -80,7 +73,7 @@ on-new-fortress autobutcher target 50 50 14 2 BIRD_GOOSE
 on-new-fortress autobutcher target 2 2 4 2 ALPACA SHEEP LLAMA
 # pigs give milk and meat and are zero-maintenance.
 on-new-fortress autobutcher target 5 5 6 2 PIG
-# butcher all unprofitable animals
+# immediately butcher all unprofitable animals
 on-new-fortress autobutcher target 0 0 0 0 HORSE YAK DONKEY WATER_BUFFALO GOAT CAVY BIRD_DUCK BIRD_GUINEAFOWL
-# start it up!
-on-new-fortress autobutcher start; autobutcher watch all; autobutcher autowatch
+# watch for new animals
+on-new-fortress autobutcher autowatch

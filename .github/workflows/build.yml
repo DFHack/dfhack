@@ -17,8 +17,8 @@ jobs:
         plugins:
         - default
         include:
-        - os: ubuntu-20.04
-          gcc: 11
+        - os: ubuntu-22.04
+          gcc: 12
           plugins: all
     steps:
     - name: Set up Python 3
@@ -56,11 +56,12 @@ jobs:
         echo "::set-output name=df_version::${DF_VERSION}"
         echo "DF_VERSION=${DF_VERSION}" >> $GITHUB_ENV
         echo "DF_FOLDER=${HOME}/DF/${DF_VERSION}/df_linux" >> $GITHUB_ENV
+        echo "CCACHE_DIR=${HOME}/.ccache" >> $GITHUB_ENV
     - name: Fetch DF cache
       uses: actions/cache@v2
       with:
         path: ~/DF
-        key: ${{ steps.env_setup.outputs.df_version }}-${{ hashFiles('ci/download-df.sh') }}
+        key: dfcache-${{ steps.env_setup.outputs.df_version }}-${{ hashFiles('ci/download-df.sh') }}
     - name: Fetch ccache
       uses: actions/cache@v2
       with:
@@ -85,18 +86,21 @@ jobs:
           -DBUILD_TESTS:BOOL=ON \
           -DBUILD_DEV_PLUGINS:BOOL=${{ matrix.plugins == 'all' }} \
           -DBUILD_SIZECHECK:BOOL=${{ matrix.plugins == 'all' }} \
+          -DBUILD_SKELETON:BOOL=${{ matrix.plugins == 'all' }} \
           -DBUILD_STONESENSE:BOOL=${{ matrix.plugins == 'all' }} \
           -DBUILD_SUPPORTED:BOOL=1 \
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
           -DCMAKE_INSTALL_PREFIX="$DF_FOLDER"
     - name: Build DFHack
       run: |
         ninja -C build-ci install
+        ccache --show-stats
     - name: Run tests
       id: run_tests
       run: |
         export TERM=dumb
         status=0
-        mv "$DF_FOLDER"/dfhack.init-example "$DF_FOLDER"/dfhack.init
         script -qe -c "python ci/run-tests.py --headless --keep-status \"$DF_FOLDER\"" || status=$((status + 1))
         python ci/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt" || status=$((status + 2))
         mkdir -p artifacts
@@ -125,14 +129,14 @@ jobs:
         python-version: 3
     - name: Install dependencies
       run: |
-        pip install 'sphinx<4.4.0'
+        pip install 'sphinx'
     - name: Clone DFHack
       uses: actions/checkout@v1
       with:
         submodules: true
     - name: Build docs
       run: |
-        sphinx-build -W --keep-going -j3 --color . docs/html
+        sphinx-build -W --keep-going -j auto --color . docs/html
     - name: Upload docs
       uses: actions/upload-artifact@v1
       with:

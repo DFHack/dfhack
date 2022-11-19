@@ -1,0 +1,5 @@
+# This file runs when a fortress map is unloaded, before any onUnload.init files
+# (which run later, when the world is unloaded).
+#
+# You can extend or override DFHack's default configuration by adding commands
+# to this file.

@@ -40,8 +40,8 @@ This will check out the code on the default branch of the GitHub repo, currently
 ``develop``, which may be unstable. If you want code for the latest stable
 release, you can check out the ``master`` branch instead::
 
-  git checkout master
-  git submodule update
+    git checkout master
+    git submodule update
 
 In general, a single DFHack clone is suitable for development - most Git
 operations such as switching branches can be done on an existing clone. If you
@@ -289,7 +289,7 @@ DF, which causes DF to use your system libstdc++ instead::
     rm libs/libstdc++.so.6
 
 Note that distributing binaries compiled with newer GCC versions may result in
-the opposite compatibily issue: users with *older* GCC versions may encounter
+the opposite compatibility issue: users with *older* GCC versions may encounter
 similar errors. This is why DFHack distributes both GCC 4.8 and GCC 7 builds. If
 you are planning on distributing binaries to other users, we recommend using an
 older GCC (but still at least 4.8) version if possible.
@@ -314,7 +314,7 @@ Notes for GCC 8+ or OS X 10.10+ users
 
 If none of these situations apply to you, skip to `osx-setup`.
 
-If you have issues building on OS X 10.10 (Yosemite) or above, try definining
+If you have issues building on OS X 10.10 (Yosemite) or above, try defining
 the following environment variable::
 
     export MACOSX_DEPLOYMENT_TARGET=10.9
@@ -503,7 +503,7 @@ in their name. If this redirect doesn't occur, just copy, paste, and enter the
 download link again and you should see the options. You need to get:
 Visual C++ Build Tools for Visual Studio 2015 with Update 3.
 Click the download button next to it and a dropdown of download formats will appear.
-Select the DVD format to download an ISO file. When the donwload is complete,
+Select the DVD format to download an ISO file. When the download is complete,
 click on the ISO file and a folder will popup with the following contents:
 
 * packages (folder)
@@ -561,7 +561,7 @@ Additional dependencies: installing with the Chocolatey Package Manager
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The remainder of dependencies - Git, CMake, StrawberryPerl, and Python - can be
-most easily installed using the Chocolatey Package Manger. Chocolatey is a
+most easily installed using the Chocolatey Package Manager. Chocolatey is a
 \*nix-style package manager for Windows. It's fast, small (8-20MB on disk)
 and very capable. Think "``apt-get`` for Windows."
 

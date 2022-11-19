@@ -34,10 +34,158 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
-
-## New Tweaks
+- `overlay`: plugin is transformed from a single line of text that runs `gui/launcher` on click to a fully-featured overlay injection framework. See `overlay-dev-guide` for details.
 
 ## Fixes
+- `automaterial`: fix the cursor jumping up a z level when clicking quickly after box select
+- `gui/create-item`: prevent materials list filter from intercepting sublist hotkeys
+- `mousequery`: fix the cursor jumping up z levels sometimes when using TWBT
+- `tiletypes`: no longer resets dig priority to the default when updating other properties of a tile
+- `automaterial`: fix rendering errors with box boundary markers
+- `autolabor` & `autohauler`: properly handle jobs 241, 242, and 243
+- `autofarm`: add missing output flushes
+- Core: fix the segmentation fault with the REPORT event in EventManager
+- Core: fix the new JOB_STARTED event only sending each event once, to the first handler listed
+
+## Misc Improvements
+- `blueprint`: new ``--smooth`` option for recording all smoothed floors and walls instead of just the ones that require smoothing for later carving
+- `blueprint`: record built constructions in blueprints
+- `blueprint`: record stockpile/building/zone names in blueprints
+- `blueprint`: record room sizes in blueprints
+- `blueprint`: generate meta blueprints to reduce the number of blueprints you have to apply
+- `blueprint`: support splitting the output file into phases grouped by when they can be applied
+- `blueprint`: when splitting output files, number them so they sort into the order you should apply them in
+- `dwarfmonitor`: widgets have been ported to the overlay framework and can be enabled and configured via the overlay command
+- `ls`: indent tag listings and wrap them in the right column for better readability
+- `ls`: new ``--exclude`` option for hiding matched scripts from the output.  this can be especially useful for modders who don't want their mod scripts to be included in ``ls`` output.
+- `hotkeys`: hotkey screen has been transformed into an interactive `overlay` widget that you can bring up by moving the mouse cursor over the hotspot (in the upper left corner of the screen by default)
+- `digtype`: new ``-z`` option for digtype to restrict designations to the current z-level and down
+- UX: List widgets now have mouse-interactive scrollbars
+- UX: You can now hold down the mouse button on a scrollbar to make it scroll multiple times.
+- UX: You can now drag the scrollbar to scroll to a specific spot
+- Constructions module: ``findAtTile`` now uses a binary search intead of a linear search.
+- `orders`: replace shell craft orders with orders for shell leggings. they have a slightly higher trade price, and "shleggings" is hilarious.
+- `spectate`: new ``auto-unpause`` option for auto-dismissal of announcement pause events (e.g. sieges).
+- `spectate`: new ``auto-disengage`` option for auto-disengagement of plugin through player interaction whilst unpaused.
+- `spectate`: new ``focus-jobs`` option for following a dwarf after their job has finished (when disabled).
+- `spectate`: new ``tick-threshold``, option for specifying the change interval (maximum follow time when focus-jobs is enabled)
+- `spectate`: added persistent configuration of the plugin settings
+- `gui/cp437-table`: new global keybinding for the clickable on-screen keyboard for players with keyboard layouts that prevent them from using certain keys: Ctrl-Shift-K
+- `quickfort-library-guide`: dreamfort blueprint improvements: added a quantum stockpile for training bolts
+
+## Documentation
+- `spectate`: improved documentation of features and functionality
+- `overlay-dev-guide`: documentation and guide for injecting functionality into DF viewscreens from Lua scripts and creating overlay widgets
+- ``dfhack.gui.revealInDwarfmodeMap``: document ``center`` bool for lua API
+
+## API
+- ``Gui::anywhere_hotkey``: for plugin commands bound to keybindings that can be invoked on any screen
+- ``Lua::PushInterfaceKeys()``: transforms viewscreen ``feed()`` keys into something that can be interpreted by lua-based widgets
+- ``Lua::Push()``: now handles maps with otherwise supported keys and values
+- Units module: added new checks
+  - ``isUnitInBox()``
+  - ``isAnimal()``
+  - ``isVisiting()`` any visiting unit (diplomat, merchant, visitor)
+  - ``isVisitor()`` ie. not merchants or diplomats
+  - ``isInvader()``
+  - ``isDemon()`` returns true for unique/regular demons
+  - ``isTitan()``
+  - ``isMegabeast()``
+  - ``isGreatDanger()`` returns true if unit is a demon, titan, or megabeast
+  - ``isSemiMegabeast()``
+  - ``isNightCreature()``
+  - ``isDanger()`` returns true if is a 'GreatDanger', semi-megabeast, night creature, undead, or invader
+- Units module: modifies existing checks
+  - ``isUndead(df::unit* unit)`` => ``isUndead(df::unit* unit, bool ignore_vamps = true)`` isUndead used to always ignore vamps, now it does it by default and includes them when false is passed
+  - ``isCitizen(df::unit* unit)`` => ``isCitizen(df::unit* unit, bool ignore_sanity = false)`` isCitizen used to always check sanity, now it does it by default and ignores sanity when true is passed
+- Constructions module: added ``insert()`` to insert constructions into the game's sorted list.
+- MiscUtils: moved the following string transformation functions from ``uicommon.h``: ``int_to_string``, ``ltrim``, ``rtrim``, and ``trim``; added ``string_to_int``
+
+## Lua
+- ``widgets.Scrollbar``: new scrollbar widget that can be paired with an associated scrollable widget. Integrated with ``widgets.Label`` and ``widgets.List``.
+- ``widgets.List``: new ``getIdxUnderMouse()`` function for detecting the list index under the active mouse cursor
+- ``widgets.List``: shift-clicking now triggers the ``submit2`` attribute function if it is defined
+- ``dfhack.constructions.findAtTile()``: exposed preexisting function to Lua.
+- ``dfhack.constructions.insert()``: exposed new function to Lua.
+- ``widgets.Panel``: new ``frame_style`` and ``frame_title`` attributes for drawing frames around groups of widgets
+- ``widgets.EditField`` now allows other widgets to process characters that the ``on_char`` callback rejects.
+- ``gui.Screen.show()`` now returns ``self`` as a convenience
+- ``gui.View.getMousePos()`` now takes an optional ``ViewRect`` parameter in case the caller wants to get the mouse pos relative to a rect that is not the frame_body (such as the frame_rect)
+
+## Internals
+- MSVC warning level upped to /W3, and /WX added to make warnings cause compilations to fail.
+
+# 0.47.05-r7
+
+## New Plugins
+- `autonestbox`: split off from `zone` into its own plugin. Note that to enable, the command has changed from ``autonestbox start`` to ``enable autonestbox``.
+- `autobutcher`: split off from `zone` into its own plugin. Note that to enable, the command has changed from ``autobutcher start`` to ``enable autobutcher``.
+- `overlay`: display a "DFHack" button in the lower left corner that you can click to start the new GUI command launcher. The `dwarfmonitor` weather display had to be moved to make room for the button. If you are seeing the weather indicator rendered over the overlay button, please remove the ``dfhack-config/dwarfmonitor.json`` file to fix the weather indicator display offset.
+
+## New Internal Commands
+- `tags`: new built-in command to list the tool category tags and their definitions. tags associated with each tool are visible in the tool help and in the output of `ls`.
+
+## Fixes
+- `autochop`: designate largest trees for chopping first, instead of the smallest
+- ``dfhack.run_script``: ensure the arguments passed to scripts are always strings. This allows other scripts to call ``run_script`` with numeric args and it won't break parameter parsing.
+- `dig-now`: Fix direction of smoothed walls when adjacent to a door or floodgate
+- ``job.removeJob()``: ensure jobs are removed from the world list when they are canceled
+- `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set: declare the hospital zone before building the coffer; otherwise DF fails to stock the hospital with materials
+- ``dfhack.buildings.findCivzonesAt``: no longer return duplicate civzones after loading a save with existing civzones
+
+## Misc Improvements
+- Init scripts: ``dfhack.init`` and other init scripts have moved to ``dfhack-config/init/``. If you have customized your ``dfhack.init`` file and want to keep your changes, please move the part that you have customized to the new location at ``dfhack-config/init/dfhack.init``. If you do not have changes that you want to keep, do not copy anything, and the new defaults will be used automatically.
+- History files: ``dfhack.history``, ``tiletypes.history``, ``lua.history``, and ``liquids.history`` have moved to the ``dfhack-config`` directory. If you'd like to keep the contents of your current history files, please move them to ``dfhack-config``.
+- `do-job-now`: new global keybinding for boosting the priority of the jobs associated with the selected building/work order/unit/item etc.: Alt-N
+- `gui/workorder-details`: new keybinding on the workorder details screen: ``D``
+- `keybinding`: support backquote (\`) as a hotkey (and assign the hotkey to the new `gui/launcher` interface)
+- `ls`: can now filter tools by substring or tag. note that dev scripts are hidden by default. pass the ``--dev`` option to show them.
+- `manipulator`: add a library of useful default professions
+- `manipulator`: move professions configuration from ``professions/`` to ``dfhack-config/professions/`` to keep it together with other dfhack configuration. If you have saved professions that you would like to keep, please manually move them to the new folder.
+- ``materials.ItemTraitsDialog``: added a default ``on_select``-handler which toggles the traits.
+- `orders`: added useful library of manager orders. see them with ``orders list`` and import them with, for example, ``orders import library/basic``
+- `prospect`: add new ``--show`` option to give the player control over which report sections are shown. e.g. ``prospect all --show ores`` will just show information on ores.
+- `seedwatch`: ``seedwatch all`` now adds all plants with seeds to the watchlist, not just the "basic" crops.
+- UX: You can now move the cursor around in DFHack text fields in ``gui/`` scripts (e.g. `gui/blueprint`, `gui/quickfort`, or `gui/gm-editor`). You can move the cursor by clicking where you want it to go with the mouse or using the Left/Right arrow keys.  Ctrl+Left/Right will move one word at a time, and Alt+Left/Right will move to the beginning/end of the text.
+- UX: You can now click on the hotkey hint text in many ``gui/`` script windows to activate the hotkey, like a button. Not all scripts have been updated to use the clickable widget yet, but you can try it in `gui/blueprint` or `gui/quickfort`.
+- UX: Label widget scroll icons are replaced with scrollbars that represent the percentage of text on the screen and move with the position of the visible text, just like web browser scrollbars.
+- `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set improvements: set traffic designations to encourage dwarves to eat cooked food instead of raw ingredients
+
+## Documentation
+- Added `modding-guide`
+- Update all DFHack tool documentation (300+ pages) with standard syntax formatting, usage examples, and overall clarified text.
+- Group DFHack tools by `tag <tools>` so similar tools are grouped and easy to find
+
+## API
+- Removed "egg" ("eggy") hook support (Linux only). The only remaining method of hooking into DF is by interposing SDL calls, which has been the method used by all binary releases of DFHack.
+- Removed ``Engravings`` module (C++-only). Access ``world.engravings`` directly instead.
+- Removed ``Notes`` module (C++-only). Access ``ui.waypoints.points`` directly instead.
+- Removed ``Windows`` module (C++-only) - unused.
+- ``Constructions`` module (C++-only): removed ``t_construction``, ``isValid()``, ``getCount()``, ``getConstruction()``, and ``copyConstruction()``. Access ``world.constructions`` directly instead.
+- ``Gui::getSelectedItem()``, ``Gui::getAnyItem()``: added support for the artifacts screen
+- ``Units::teleport()``: now sets ``unit.idle_area`` to discourage units from walking back to their original location (or teleporting back, if using `fastdwarf`)
+
+## Lua
+- History: added ``dfhack.getCommandHistory(history_id, history_filename)`` and ``dfhack.addCommandToHistory(history_id, history_filename, command)`` so gui scripts can access a commandline history without requiring a terminal.
+- Added ``dfhack.screen.hideGuard()``: exposes the C++ ``Screen::Hide`` to Lua
+- ``helpdb``: database and query interface for DFHack tool help text
+- ``tile-material``: fix the order of declarations. The ``GetTileMat`` function now returns the material as intended (always returned nil before). Also changed the license info, with permission of the original author.
+- ``utils.df_expr_to_ref()``: fixed some errors that could occur when navigating tables
+- ``widgets.EditField``: new ``onsubmit2`` callback attribute is called when the user hits Shift-Enter.
+- ``widgets.EditField``: new function: ``setCursor(position)`` sets the input cursor.
+- ``widgets.EditField``: new attribute: ``ignore_keys`` lets you ignore specified characters if you want to use them as hotkeys
+- ``widgets.FilteredList``: new attribute: ``edit_ignore_keys`` gets passed to the filter EditField as ``ignore_keys``
+- ``widgets.Label``: ``scroll`` function now interprets the keywords ``+page``, ``-page``, ``+halfpage``, and ``-halfpage`` in addition to simple positive and negative numbers.
+- ``widgets.HotkeyLabel``: clicking on the widget will now call ``on_activate()``.
+- ``widgets.CycleHotkeyLabel``: clicking on the widget will now cycle the options and trigger ``on_change()``. This also applies to the ``ToggleHotkeyLabel`` subclass.
+
+# 0.47.05-r6
+
+## Fixes
+- `eventful`: fix ``eventful.registerReaction`` to correctly pass ``call_native`` argument thus allowing canceling vanilla item creation. Updated related documentation.
+- `eventful`: renamed NEW_UNIT_ACTIVE event to UNIT_NEW_ACTIVE to match the ``EventManager`` event name
+- `eventful`: fixed UNIT_NEW_ACTIVE event firing too often
+- ``job.removeJob()``: fixes regression in DFHack 0.47.05-r5 where items/buildings associated with the job were not getting disassociated when the job is removed. Now `build-now` can build buildings and `gui/mass-remove` can cancel building deconstruction again
 - ``widgets.CycleHotkeyLabel``: allow initial option values to be specified as an index instead of an option value
 
 ## Misc Improvements
@@ -52,10 +200,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `quickfort-alias-guide`: new aliases: ``usablehair``, ``permitusablehair``, and ``forbidusablehair`` alter settings for the types of hair/wool that can be made into cloth: sheep, llama, alpaca, and troll. The ``craftrefuse`` aliases have been altered to use this alias as well.
 - `quickfort-alias-guide`: new aliases: ``forbidthread``, ``permitthread``, ``forbidadamantinethread``, ``permitadamantinethread``, ``forbidcloth``, ``permitcloth``, ``forbidadamantinecloth``, and ``permitadamantinecloth`` give you more control how adamantine-derived items are stored
 - `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set improvements: automatically create tavern, library, and temple locations (restricted to residents only by default), automatically associate the rented rooms with the tavern
-- `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set improvements: new design for the services level, including a werebeast-proof hospital recovery rooms and an appropriately-themed interrogation room next to the jail! Also fits better in a 1x1 embark for minimalist players.
-
-## Documentation
-- ``dfhack.gui.revealInDwarfmodeMap``: document ``center`` bool for lua API
+- `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set improvements: new design for the services level, including were-bitten hospital recovery rooms and an appropriately-themed interrogation room next to the jail! Also fits better in a 1x1 embark for minimalist players.
 
 ## API
 - add functions reverse-engineered from announcement code: ``Gui::autoDFAnnouncement``, ``Gui::pauseRecenter``
@@ -64,10 +209,11 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Lua
 - ``gui.View``: all ``View`` subclasses (including all ``Widgets``) can now acquire keyboard focus with the new ``View:setFocus()`` function. See docs for details.
-- ``widgets.HotkeyLabel``: the ``key_sep`` string is now configurable
+- ``materials.ItemTraitsDialog``: new dialog to edit item traits (where "item" is part of a job or work order or similar). The list of traits is the same as in vanilla work order conditions "``t`` change traits".
 - ``widgets.EditField``: the ``key_sep`` string is now configurable
 - ``widgets.EditField``: can now display an optional string label in addition to the activation key
 - ``widgets.EditField``: views that have an ``EditField`` subview no longer need to manually manage the ``EditField`` activation state and input routing.  This is now handled automatically by the new ``gui.View`` keyboard focus subsystem.
+- ``widgets.HotkeyLabel``: the ``key_sep`` string is now configurable
 
 # 0.47.05-r5
 
@@ -1012,7 +1158,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `caravan`: documented (new in 0.44.10-alpha1)
 - `deathcause`: added "slaughtered" to descriptions
 - `fix/retrieve-units`: now re-adds units to active list to counteract `fix/dead-units`
-- `item-descriptions`: fixed several grammatical errors
+- ``item-descriptions``: fixed several grammatical errors
 - `modtools/create-unit`:
     - added quantity argument
     - now selects a caste at random if none is specified

@@ -337,18 +337,14 @@ command_result show_prompt(color_ostream &out, std::vector <std::string> & param
     Screen::show(dts::make_unique<viewscreen_commandpromptst>(params), plugin_self);
     return CR_OK;
 }
-bool hotkey_allow_all(df::viewscreen *top)
-{
-    return true;
-}
+
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-                "command-prompt", "Shows a command prompt on window.",
-                show_prompt, hotkey_allow_all,
-                "command-prompt [entry] - shows a cmd prompt in df window."
-                " Entry is used for default prefix (e.g. ':lua')"
-        ));
+                "command-prompt",
+                "Allows you to run a DFHack command from in-game.",
+                show_prompt,
+                Gui::anywhere_hotkey));
     return CR_OK;
 }
 

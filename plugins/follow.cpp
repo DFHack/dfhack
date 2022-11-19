@@ -31,11 +31,10 @@ uint8_t prevMenuWidth;
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "follow", "Make the screen follow the selected unit",
-        follow, Gui::view_unit_hotkey,
-        "  Select a unit and run this plugin to make the camera follow it.\n"
-        "  Moving the camera yourself deactivates the plugin.\n"
-    ));
+        "follow",
+        "Make the screen follow the selected unit.",
+        follow,
+        Gui::view_unit_hotkey));
     followedUnit = 0;
     prevX=prevY=prevZ = -1;
     prevMenuWidth = 0;

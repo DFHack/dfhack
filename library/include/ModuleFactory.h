@@ -33,7 +33,6 @@ namespace DFHack
 {
     class Module;
     std::unique_ptr<Module> createMaterials();
-    std::unique_ptr<Module> createNotes();
     std::unique_ptr<Module> createGraphic();
 }
 #endif

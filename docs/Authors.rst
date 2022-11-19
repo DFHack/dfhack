@@ -1,4 +1,4 @@
-List of Authors
+List of authors
 ===============
 The following is a list of people who have contributed to DFHack, in
 alphabetical order.
@@ -134,6 +134,7 @@ potato
 Priit Laes              plaes
 Putnam                  Putnam3145
 Quietust                quietust                _Q
+Rafał Karczmarczyk      CarabusX
 Raidau                  Raidau
 Ralph Bisschops         ralpha
 Ramblurr                Ramblurr

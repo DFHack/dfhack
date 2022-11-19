@@ -52,7 +52,6 @@ using std::deque;
 
 DFHACK_PLUGIN("dwarfmonitor");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
-REQUIRE_GLOBAL(current_weather);
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(ui);
 
@@ -74,19 +73,7 @@ struct less_second {
     }
 };
 
-struct dwarfmonitor_configst {
-    std::string date_format;
-};
-static dwarfmonitor_configst dwarfmonitor_config;
-
-static bool monitor_jobs = false;
-static bool monitor_misery = true;
-static bool monitor_date = true;
-static bool monitor_weather = true;
 static map<df::unit *, deque<activity_type>> work_history;
-
-static int misery[] = { 0, 0, 0, 0, 0, 0, 0 };
-static bool misery_upto_date = false;
 
 static color_value monitor_colors[] =
 {
@@ -151,102 +138,18 @@ static void move_cursor(df::coord &pos)
 
 static void open_stats_screen();
 
-namespace dm_lua {
-    static color_ostream_proxy *out;
-    static lua_State *state;
-    typedef int(*initializer)(lua_State*);
-    int no_args (lua_State *L) { return 0; }
-    void cleanup()
-    {
-        if (out)
-        {
-            delete out;
-            out = NULL;
-        }
+static int getStressCategoryColors(lua_State *L) {
+    const size_t n = sizeof(monitor_colors)/sizeof(color_value);
+    lua_createtable(L, n, 0);
+    for (size_t i = 0; i < n; ++i) {
+        Lua::Push(L, monitor_colors[i]);
+        lua_rawseti(L, -2, i+1);
     }
-    bool init_call (const char *func)
-    {
-        if (!out)
-            out = new color_ostream_proxy(Core::getInstance().getConsole());
-        return Lua::PushModulePublic(*out, state, "plugins.dwarfmonitor", func);
-    }
-    bool safe_call (int nargs)
-    {
-        return Lua::SafeCall(*out, state, nargs, 0);
-    }
-
-    bool call (const char *func, initializer init = no_args)
-    {
-        Lua::StackUnwinder top(state);
-        if (!init_call(func))
-            return false;
-        int nargs = init(state);
-        return safe_call(nargs);
-    }
-
-    namespace api {
-        int monitor_state (lua_State *L)
-        {
-            std::string type = luaL_checkstring(L, 1);
-            if (type == "weather")
-                lua_pushboolean(L, monitor_weather);
-            else if (type == "misery")
-                lua_pushboolean(L, monitor_misery);
-            else if (type == "date")
-                lua_pushboolean(L, monitor_date);
-            else
-                lua_pushnil(L);
-            return 1;
-        }
-        int get_weather_counts (lua_State *L)
-        {
-            #define WEATHER_TYPES WTYPE(clear, None); WTYPE(rain, Rain); WTYPE(snow, Snow);
-            #define WTYPE(type, name) int type = 0;
-            WEATHER_TYPES
-            #undef WTYPE
-            int i, j;
-            for (i = 0; i < 5; ++i)
-            {
-                for (j = 0; j < 5; ++j)
-                {
-                    switch ((*current_weather)[i][j])
-                    {
-                        #define WTYPE(type, name) case weather_type::name: type++; break;
-                        WEATHER_TYPES
-                        #undef WTYPE
-                    }
-                }
-            }
-            lua_newtable(L);
-            #define WTYPE(type, name) Lua::TableInsert(L, #type, type);
-            WEATHER_TYPES
-            #undef WTYPE
-            #undef WEATHER_TYPES
-            return 1;
-        }
-        int get_misery_data (lua_State *L)
-        {
-            lua_newtable(L);
-            for (int i = 0; i < 7; i++)
-            {
-                Lua::Push(L, i);
-                lua_newtable(L);
-                Lua::TableInsert(L, "value", misery[i]);
-                Lua::TableInsert(L, "color", monitor_colors[i]);
-                Lua::TableInsert(L, "last", (i == 6));
-                lua_settable(L, -3);
-            }
-            return 1;
-        }
-    }
+    return 1;
 }
 
-#define DM_LUA_FUNC(name) { #name, df::wrap_function(dm_lua::api::name, true) }
-#define DM_LUA_CMD(name) { #name, dm_lua::api::name }
 DFHACK_PLUGIN_LUA_COMMANDS {
-    DM_LUA_CMD(monitor_state),
-    DM_LUA_CMD(get_weather_counts),
-    DM_LUA_CMD(get_misery_data),
+    DFHACK_LUA_COMMAND(getStressCategoryColors),
     DFHACK_LUA_END
 };
 
@@ -1648,8 +1551,7 @@ public:
         return (selected_column == 1) ? dwarf_column.getFirstSelectedElem() : nullptr;
     }
 
-    void feed(set<df::interface_key> *input)
-    {
+    void feed(set<df::interface_key> *input) override {
         bool key_processed = false;
         switch (selected_column)
         {
@@ -1723,8 +1625,7 @@ public:
         }
     }
 
-    void render()
-    {
+    void render() override {
         using namespace df::enums::interface_key;
 
         if (Screen::isDismissed(this))
@@ -1751,7 +1652,7 @@ public:
             getSelectedUnit() ? COLOR_WHITE : COLOR_DARKGREY);
     }
 
-    std::string getFocusString() { return "dwarfmonitor_preferences"; }
+    std::string getFocusString() override { return "dwarfmonitor_preferences"; }
 
 private:
     ListColumn<size_t> preferences_column;
@@ -1762,13 +1663,11 @@ private:
 
     vector<preference_map> preferences_store;
 
-    void validateColumn()
-    {
+    void validateColumn() {
         set_to_limit(selected_column, 1);
     }
 
-    void resize(int32_t x, int32_t y)
-    {
+    void resize(int32_t x, int32_t y) override {
         dfhack_viewscreen::resize(x, y);
         preferences_column.resize();
         dwarf_column.resize();
@@ -1776,15 +1675,12 @@ private:
 };
 
 
-static void open_stats_screen()
-{
+static void open_stats_screen() {
     Screen::show(dts::make_unique<ViewscreenFortStats>(), plugin_self);
 }
 
-static void add_work_history(df::unit *unit, activity_type type)
-{
-    if (work_history.find(unit) == work_history.end())
-    {
+static void add_work_history(df::unit *unit, activity_type type) {
+    if (work_history.find(unit) == work_history.end()) {
         auto max_history = get_max_history();
         for (int i = 0; i < max_history; i++)
             work_history[unit].push_back(JOB_UNKNOWN);
@@ -1794,8 +1690,7 @@ static void add_work_history(df::unit *unit, activity_type type)
     work_history[unit].pop_front();
 }
 
-static bool is_at_leisure(df::unit *unit)
-{
+static bool is_at_leisure(df::unit *unit) {
     if (Units::getMiscTrait(unit, misc_trait_type::Migrant))
         return true;
 
@@ -1805,32 +1700,17 @@ static bool is_at_leisure(df::unit *unit)
     return false;
 }
 
-static void reset()
-{
+static void reset() {
     work_history.clear();
-
-    for (int i = 0; i < 7; i++)
-        misery[i] = 0;
-
-    misery_upto_date = false;
 }
 
 static void update_dwarf_stats(bool is_paused)
 {
-    if (monitor_misery)
-    {
-        for (int i = 0; i < 7; i++)
-            misery[i] = 0;
-    }
-
-    for (auto iter = world->units.active.begin(); iter != world->units.active.end(); iter++)
-    {
-        df::unit* unit = *iter;
+    for (auto unit : world->units.active) {
         if (!Units::isCitizen(unit))
             continue;
 
-        if (!DFHack::Units::isActive(unit))
-        {
+        if (!DFHack::Units::isActive(unit)) {
             auto it = work_history.find(unit);
             if (it != work_history.end())
                 work_history.erase(it);
@@ -1838,35 +1718,25 @@ static void update_dwarf_stats(bool is_paused)
             continue;
         }
 
-        if (monitor_misery)
-        {
-            misery[get_happiness_cat(unit)]++;
-        }
-
-        if (!monitor_jobs || is_paused)
+        if (is_paused)
             continue;
 
         if (Units::isBaby(unit) ||
-            Units::isChild(unit) ||
-            unit->profession == profession::DRUNK)
-        {
+                Units::isChild(unit) ||
+                unit->profession == profession::DRUNK)
             continue;
-        }
 
-        if (ENUM_ATTR(profession, military, unit->profession))
-        {
+        if (ENUM_ATTR(profession, military, unit->profession)) {
             add_work_history(unit, JOB_MILITARY);
             continue;
         }
 
-        if (!unit->job.current_job)
-        {
+        if (!unit->job.current_job) {
             add_work_history(unit, JOB_IDLE);
             continue;
         }
 
-        if (is_at_leisure(unit))
-        {
+        if (is_at_leisure(unit)) {
             add_work_history(unit, JOB_LEISURE);
             continue;
         }
@@ -1876,107 +1746,21 @@ static void update_dwarf_stats(bool is_paused)
 }
 
 
-DFhackCExport command_result plugin_onupdate (color_ostream &out)
-{
-    if (!monitor_jobs && !monitor_misery)
-        return CR_OK;
-
-    if(!Maps::IsValid())
+DFhackCExport command_result plugin_onupdate (color_ostream &out) {
+    if (!is_enabled | !Maps::IsValid())
         return CR_OK;
 
     bool is_paused = DFHack::World::ReadPauseState();
-    if (is_paused)
-    {
-        if (monitor_misery && !misery_upto_date)
-            misery_upto_date = true;
-        else
-            return CR_OK;
-    }
-    else
-    {
-        if (world->frame_counter % DELTA_TICKS != 0)
-            return CR_OK;
-    }
+    if (!is_paused && world->frame_counter % DELTA_TICKS != 0)
+        return CR_OK;
 
     update_dwarf_stats(is_paused);
 
     return CR_OK;
 }
 
-struct dwarf_monitor_hook : public df::viewscreen_dwarfmodest
-{
-    typedef df::viewscreen_dwarfmodest interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(void, render, ())
-    {
-        INTERPOSE_NEXT(render)();
-
-        CoreSuspendClaimer suspend;
-        if (Maps::IsValid())
-        {
-            dm_lua::call("render_all");
-        }
-    }
-};
-
-IMPLEMENT_VMETHOD_INTERPOSE(dwarf_monitor_hook, render);
-
-static bool set_monitoring_mode(const string &mode, const bool &state)
-{
-    bool mode_recognized = false;
-
-    if (!is_enabled)
-        return false;
-    /*
-        NOTE: although we are not touching DF directly but there might be
-        code running that uses these values. So this could use another mutex
-        or just suspend the core while we edit our values.
-    */
-    CoreSuspender guard;
-
-    if (mode == "work" || mode == "all")
-    {
-        mode_recognized = true;
-        monitor_jobs = state;
-        if (!monitor_jobs)
-            reset();
-    }
-    if (mode == "misery" || mode == "all")
-    {
-        mode_recognized = true;
-        monitor_misery = state;
-    }
-    if (mode == "date" || mode == "all")
-    {
-        mode_recognized = true;
-        monitor_date = state;
-    }
-    if (mode == "weather" || mode == "all")
-    {
-        mode_recognized = true;
-        monitor_weather = state;
-    }
-
-    return mode_recognized;
-}
-
-static bool load_config()
-{
-    return dm_lua::call("load_config");
-}
-
-DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
-{
-    if (enable)
-    {
-        CoreSuspender guard;
-        load_config();
-    }
-    if (is_enabled != enable)
-    {
-        if (!INTERPOSE_HOOK(dwarf_monitor_hook, render).apply(enable))
-            return CR_FAILURE;
-
+DFhackCExport command_result plugin_enable(color_ostream &, bool enable) {
+    if (is_enabled != enable) {
         reset();
         is_enabled = enable;
     }
@@ -1984,76 +1768,28 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
     return CR_OK;
 }
 
-static command_result dwarfmonitor_cmd(color_ostream &out, vector <string> & parameters)
-{
-    bool show_help = false;
+static command_result dwarfmonitor_cmd(color_ostream &, vector <string> & parameters) {
     if (parameters.empty())
-    {
-        show_help = true;
+        return CR_WRONG_USAGE;
+
+    auto cmd = parameters[0][0];
+    if (cmd == 's' || cmd == 'S') {
+        CoreSuspender guard;
+        if(Maps::IsValid())
+            Screen::show(dts::make_unique<ViewscreenFortStats>(), plugin_self);
+    }
+    else if (cmd == 'p' || cmd == 'P') {
+        CoreSuspender guard;
+        if(Maps::IsValid())
+            Screen::show(dts::make_unique<ViewscreenPreferences>(), plugin_self);
     }
     else
-    {
-        auto cmd = parameters[0][0];
-        string mode;
-
-        if (parameters.size() > 1)
-            mode = toLower(parameters[1]);
-
-        if (cmd == 'v' || cmd == 'V')
-        {
-            out << "DwarfMonitor" << endl << "Version: " << PLUGIN_VERSION << endl;
-        }
-        else if ((cmd == 'e' || cmd == 'E') && !mode.empty())
-        {
-            if (!is_enabled)
-                plugin_enable(out, true);
-
-            if (set_monitoring_mode(mode, true))
-            {
-                out << "Monitoring enabled: " << mode << endl;
-            }
-            else
-            {
-                show_help = true;
-            }
-        }
-        else if ((cmd == 'd' || cmd == 'D') && !mode.empty())
-        {
-            if (set_monitoring_mode(mode, false))
-                out << "Monitoring disabled: " << mode << endl;
-            else
-                show_help = true;
-        }
-        else if (cmd == 's' || cmd == 'S')
-        {
-            CoreSuspender guard;
-            if(Maps::IsValid())
-                Screen::show(dts::make_unique<ViewscreenFortStats>(), plugin_self);
-        }
-        else if (cmd == 'p' || cmd == 'P')
-        {
-            CoreSuspender guard;
-            if(Maps::IsValid())
-                Screen::show(dts::make_unique<ViewscreenPreferences>(), plugin_self);
-        }
-        else if (cmd == 'r' || cmd == 'R')
-        {
-            CoreSuspender guard;
-            load_config();
-        }
-        else
-        {
-            show_help = true;
-        }
-    }
-
-    if (show_help)
         return CR_WRONG_USAGE;
 
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init(color_ostream &, std::vector <PluginCommand> &commands)
 {
     activity_labels[JOB_IDLE]               = "Idle";
     activity_labels[JOB_MILITARY]           = "Military Duty";
@@ -2075,42 +1811,17 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 
     commands.push_back(
         PluginCommand(
-        "dwarfmonitor", "Records dwarf activity to measure fort efficiency",
-        dwarfmonitor_cmd, false,
-        "dwarfmonitor enable <mode>\n"
-        "  Start monitoring <mode>\n"
-        "    <mode> can be \"work\", \"misery\", \"weather\", or \"all\"\n"
-        "dwarfmonitor disable <mode>\n"
-        "    <mode> as above\n\n"
-        "dwarfmonitor stats\n"
-        "  Show statistics summary\n"
-        "dwarfmonitor prefs\n"
-        "  Show dwarf preferences summary\n\n"
-        "dwarfmonitor reload\n"
-        "  Reload configuration file (dfhack-config/dwarfmonitor.json)\n"
-        ));
-
-    dm_lua::state=Lua::Core::State;
-    if (dm_lua::state == NULL)
-        return CR_FAILURE;
+            "dwarfmonitor",
+            "Measure fort happiness and efficiency.",
+            dwarfmonitor_cmd));
 
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown(color_ostream &out)
+DFhackCExport command_result plugin_onstatechange(color_ostream &, state_change_event event)
 {
-    dm_lua::cleanup();
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
-{
-    switch (event) {
-    case SC_MAP_LOADED:
+    if (event == SC_MAP_LOADED)
         reset();
-        break;
-    default:
-        break;
-    }
+
     return CR_OK;
 }

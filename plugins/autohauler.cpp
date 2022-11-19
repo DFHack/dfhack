@@ -407,6 +407,9 @@ static const dwarf_state dwarf_states[] = {
     BUSY  /* MakeBracelet */,
     BUSY  /* MakeGem */,
     BUSY  /* PutItemOnDisplay */,
+    OTHER /* unk_fake_no_job */,
+    OTHER /* InterrogateSubject */,
+    OTHER /* unk_fake_no_activity */,
 };
 
 // Mode assigned to labors. Either it's a hauling job, or it's not.
@@ -712,45 +715,9 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 
     // Essentially an introduction dumped to the console
     commands.push_back(PluginCommand(
-        "autohauler", "Automatically manage hauling labors.",
-        autohauler, false, /* true means that the command can't be used from non-interactive user interface */
-        // Extended help string. Used by CR_WRONG_USAGE and the help command:
-        "  autohauler enable\n"
-        "  autohauler disable\n"
-        "    Enables or disables the plugin.\n"
-        "  autohauler <labor> haulers\n"
-        "    Set a labor to be handled by hauler dwarves.\n"
-        "  autohauler <labor> allow\n"
-        "    Allow hauling if a specific labor is enabled.\n"
-        "  autohauler <labor> forbid\n"
-        "    Forbid hauling if a specific labor is enabled.\n"
-        "  autohauler <labor> reset\n"
-        "    Return a labor to the default handling.\n"
-        "  autohauler reset-all\n"
-        "    Return all labors to the default handling.\n"
-        "  autohauler frameskip <int>\n"
-        "    Set the number of frames between runs of autohauler.\n"
-        "  autohauler list\n"
-        "    List current status of all labors.\n"
-        "  autohauler status\n"
-        "    Show basic status information.\n"
-        "  autohauler debug\n"
-        "    In the next cycle, will output the state of every dwarf.\n"
-        "Function:\n"
-        "  When enabled, autohauler periodically checks your dwarves and assigns\n"
-        "  hauling jobs to idle dwarves while removing them from busy dwarves.\n"
-        "  This plugin, in contrast to autolabor, is explicitly designed to be\n"
-        "  used alongside Dwarf Therapist.\n"
-        "  Warning: autohauler will override any manual changes you make to\n"
-        "  hauling labors while it is enabled...but why would you make them?\n"
-        "Examples:\n"
-        "  autohauler HAUL_STONE haulers\n"
-        "    Set stone hauling as a hauling labor.\n"
-        "  autohauler BOWYER allow\n"
-        "    Allow hauling when the bowyer labor is enabled.\n"
-        "  autohauler MINE forbid\n"
-        "    Forbid hauling while the mining labor is disabled."
-    ));
+        "autohauler",
+        "Automatically manage hauling labors.",
+        autohauler));
 
     // Initialize plugin labor lists
     init_state(out);

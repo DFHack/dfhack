@@ -32,6 +32,7 @@ distribution.
 #include <assert.h>
 #include <iostream>
 #include <string>
+#include <vector>
 namespace tthread
 {
     class mutex;
@@ -44,7 +45,7 @@ namespace  DFHack
     class CommandHistory
     {
     public:
-        CommandHistory(std::size_t capacity = 100)
+        CommandHistory(std::size_t capacity = 5000)
         {
             this->capacity = capacity;
         }
@@ -113,6 +114,12 @@ namespace  DFHack
         void remove( void )
         {
             history.pop_front();
+        }
+        /// adds the current list of entries to the given vector
+        void getEntries(std::vector<std::string> &entries)
+        {
+            for (auto &entry : history)
+                entries.push_back(entry);
         }
     private:
         std::size_t capacity;

@@ -199,6 +199,9 @@ static int32_t lastJobId = -1;
 //job completed
 static unordered_map<int32_t, df::job*> prevJobs;
 
+//active units
+static unordered_set<int32_t> activeUnits;
+
 //unit death
 static unordered_set<int32_t> livingUnits;
 
@@ -256,6 +259,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         buildings.clear();
         constructions.clear();
         equipmentLog.clear();
+        activeUnits.clear();
 
         Buildings::clearBuildings(out);
         lastReport = -1;
@@ -314,6 +318,9 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         }
         lastSyndromeTime = -1;
         for (auto unit : df::global::world->units.all) {
+            if (Units::isActive(unit)) {
+                activeUnits.emplace(unit->id);
+            }
             for (auto syndrome : unit->syndromes.active) {
                 int32_t startTime = syndrome->year*ticksPerYear + syndrome->year_time;
                 if ( startTime > lastSyndromeTime )
@@ -437,13 +444,13 @@ static void manageJobStartedEvent(color_ostream& out) {
 
     // iterate event handler callbacks
     multimap<Plugin*, EventHandler> copy(handlers[EventType::JOB_STARTED].begin(), handlers[EventType::JOB_STARTED].end());
-    for (auto &key_value : copy) {
-        auto &handler = key_value.second;
-        for (df::job_list_link* link = df::global::world->jobs.list.next; link != nullptr; link = link->next) {
-            df::job* job = link->item;
-            // the jobs must have a worker to start
-            if (job && Job::getWorker(job) && !startedJobs.count(job->id)) {
-                startedJobs.emplace(job->id);
+    for (df::job_list_link* link = df::global::world->jobs.list.next; link != nullptr; link = link->next) {
+        df::job* job = link->item;
+        if (job && Job::getWorker(job) && !startedJobs.count(job->id)) {
+            startedJobs.emplace(job->id);
+            for (auto &key_value : copy) {
+                auto &handler = key_value.second;
+                // the jobs must have a worker to start
                 handler.eventHandler(out, job);
             }
         }
@@ -592,7 +599,6 @@ static void manageNewUnitActiveEvent(color_ostream& out) {
     if (!df::global::world)
         return;
 
-    static unordered_set<int32_t> activeUnits;
     multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_NEW_ACTIVE].begin(), handlers[EventType::UNIT_NEW_ACTIVE].end());
     // iterate event handler callbacks
     for (auto &key_value : copy) {
@@ -600,6 +606,7 @@ static void manageNewUnitActiveEvent(color_ostream& out) {
         for (df::unit* unit : df::global::world->units.active) {
             int32_t id = unit->id;
             if (!activeUnits.count(id)) {
+                activeUnits.emplace(id);
                 handler.eventHandler(out, (void*) intptr_t(id)); // intptr_t() avoids cast from smaller type warning
             }
         }
@@ -897,7 +904,10 @@ static void manageReportEvent(color_ostream& out) {
     std::vector<df::report*>& reports = df::global::world->status.reports;
     size_t idx = df::report::binsearch_index(reports, lastReport, false);
     // returns the index to the key equal to or greater than the key provided
-    idx = reports[idx]->id == lastReport ? idx + 1 : idx; // we need the index after (where the new stuff is)
+    while (idx < reports.size() && reports[idx]->id <= lastReport) {
+        idx++;
+    }
+    // returns the index to the key equal to or greater than the key provided
 
     for ( ; idx < reports.size(); idx++ ) {
         df::report* report = reports[idx];

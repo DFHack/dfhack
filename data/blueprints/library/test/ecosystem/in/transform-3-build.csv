@@ -1,0 +1,20 @@
+#build label(big) hidden()
+gw(1x2),gx(1x2),gd(2x1),,gs(1x2)
+,,ga(2x1)
+,,Msk,Mrsqq(2x1)
+Mw,,,Msh,CSddddaaaa
+,Mw,Mrss(1x2),,CSa
+Mhs(1x2),,,Msm
+,,Mws,,Msu
+Mh(2x1),,,Mws
+#meta label(chunk) hidden()
+/big shift(1 -13)
+#meta label(build)
+/chunk
+/chunk transform(cw)
+/chunk transform(cw cw)
+/chunk transform(ccw)
+/chunk transform(fliph)
+/chunk transform(flipv)
+/chunk transform(cw flipv)
+/chunk transform(ccw flipv)

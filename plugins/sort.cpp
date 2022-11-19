@@ -56,25 +56,9 @@ static command_result sort_items(color_ostream &out, vector <string> & parameter
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "sort-units", "Sort the visible unit list.", sort_units, unit_list_hotkey,
-        "  sort-units order [order...]\n"
-        "    Sort the unit list using the given sequence of comparisons.\n"
-        "    The '<' prefix for an order makes undefined values sort first.\n"
-        "    The '>' prefix reverses the sort order for defined values.\n"
-        "  Unit order examples:\n"
-        "    name, age, arrival, squad, squad_position, profession\n"
-        "The orderings are defined in hack/lua/plugins/sort/*.lua\n"
-    ));
+        "sort-units", "Sort the visible unit list.", sort_units, unit_list_hotkey));
     commands.push_back(PluginCommand(
-        "sort-items", "Sort the visible item list.", sort_items, item_list_hotkey,
-        "  sort-items order [order...]\n"
-        "    Sort the item list using the given sequence of comparisons.\n"
-        "    The '<' prefix for an order makes undefined values sort first.\n"
-        "    The '>' prefix reverses the sort order for defined values.\n"
-        "  Item order examples:\n"
-        "    description, material, wear, type, quality\n"
-        "The orderings are defined in hack/lua/plugins/sort/*.lua\n"
-    ));
+        "sort-items", "Sort the visible item list.", sort_items, item_list_hotkey));
     return CR_OK;
 }
 

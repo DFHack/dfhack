@@ -24,11 +24,14 @@ distribution.
 
 #pragma once
 
+#include <functional>
 #include <string>
 #include <sstream>
 #include <vector>
 #include <map>
 #include <type_traits>
+
+#include "df/interfacest.h"
 
 #include "ColorText.h"
 #include "DataDefs.h"
@@ -217,6 +220,20 @@ namespace DFHack {namespace Lua {
     DFHACK_EXPORT bool SafeCall(color_ostream &out, lua_State *state, int nargs, int nres, bool perr = true);
 
     /**
+     * Load named module and function and invoke it via SafeCall. Returns true
+     * on success. If an error is signalled, and perr is true, it is printed and
+     * popped from the stack.
+     */
+    typedef std::function<void(lua_State *)> LuaLambda;
+    static auto DEFAULT_LUA_LAMBDA = [](lua_State *){};
+    DFHACK_EXPORT bool CallLuaModuleFunction(color_ostream &out,
+            lua_State *state, const char *module_name, const char *fn_name,
+            int nargs = 0, int nres = 0,
+            LuaLambda && args_lambda = DEFAULT_LUA_LAMBDA,
+            LuaLambda && res_lambda = DEFAULT_LUA_LAMBDA,
+            bool perr = true);
+
+    /**
      * Pops a function from the top of the stack, and pushes a new coroutine.
      */
     DFHACK_EXPORT lua_State *NewCoroutine(lua_State *state);
@@ -321,6 +338,8 @@ namespace DFHack {namespace Lua {
         Push(L, val); lua_setfield(L, idx, name);
     }
 
+    DFHACK_EXPORT void PushInterfaceKeys(lua_State *L, const std::set<df::interface_key> &keys);
+
     template<class T>
     void PushVector(lua_State *state, const T &pvec, bool addn = false)
     {
@@ -339,6 +358,8 @@ namespace DFHack {namespace Lua {
         }
     }
 
+    DFHACK_EXPORT void GetVector(lua_State *state, std::vector<std::string> &pvec);
+
     DFHACK_EXPORT int PushPosXYZ(lua_State *state, df::coord pos);
     DFHACK_EXPORT int PushPosXY(lua_State *state, df::coord2d pos);
 
@@ -348,6 +369,13 @@ namespace DFHack {namespace Lua {
         Lua::Push(state, key);
         Lua::Push(state, value);
         lua_settable(state, -3);
+    }
+
+    template<typename T_Key, typename T_Value>
+    void Push(lua_State *L, const std::map<T_Key, T_Value> &pmap) {
+        lua_createtable(L, 0, pmap.size());
+        for (auto &entry : pmap)
+            TableInsert(L, entry.first, entry.second);
     }
 
     DFHACK_EXPORT void CheckPen(lua_State *L, Screen::Pen *pen, int index, bool allow_nil = false, bool allow_color = true);

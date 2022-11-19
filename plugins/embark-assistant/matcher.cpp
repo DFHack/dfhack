@@ -475,7 +475,9 @@ namespace embark_assist {
                 return;  //  We're at the world edge, so no incursions from the outside.
             }
 
-            if (!&survey_results->at(fetch_x).at(fetch_y).surveyed) {
+            if (!survey_results->at(fetch_x).at(fetch_y).surveyed) {
+                // If the data has been collected, incursion processing should be performed to evaluate whether a match actually is present.
+                // but if it hasn't we need to return with a failed_match
                 *failed_match = true;
                 return;
             }

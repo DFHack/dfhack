@@ -9,6 +9,8 @@ using DFHack::Renderer::renderer_wrap;
 
 static renderer_wrap *original_renderer = NULL;
 
+const int32_t Renderer::GET_MOUSE_COORDS_SENTINEL = 0xcd1aa471;
+
 bool init()
 {
     if (!original_renderer)

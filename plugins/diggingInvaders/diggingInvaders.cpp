@@ -120,28 +120,9 @@ static int32_t jobDelayDefault[] = {
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "diggingInvaders", "Makes invaders dig to your dwarves.",
-        diggingInvadersCommand, false, /* true means that the command can't be used from non-interactive user interface */
-        "  diggingInvaders 0\n    disables the plugin\n"
-        "  diggingInvaders 1\n    enables the plugin\n"
-        "  diggingInvaders enable\n    enables the plugin\n"
-        "  diggingInvaders disable\n    disables the plugin\n"
-        "  diggingInvaders add GOBLIN\n    registers the race GOBLIN as a digging invader. Case-sensitive.\n"
-        "  diggingInvaders remove GOBLIN\n    unregisters the race GOBLIN as a digging invader. Case-sensitive.\n"
-        "  diggingInvaders setCost GOBLIN walk n\n    sets the walk cost in the path algorithm for the race GOBLIN\n"
-        "  diggingInvaders setCost GOBLIN destroyBuilding n\n"
-        "  diggingInvaders setCost GOBLIN dig n\n"
-        "  diggingInvaders setCost GOBLIN destroyRoughConstruction n\n  rough constructions are made from boulders\n"
-        "  diggingInvaders setCost GOBLIN destroySmoothConstruction n\n  smooth constructions are made from blocks or bars instead of boulders\n"
-        "  diggingInvaders setDelay GOBLIN destroyBuilding n\n    adds to the job_completion_timer of destroy building jobs that are assigned to invaders\n"
-        "  diggingInvaders setDelay GOBLIN dig n\n"
-        "  diggingInvaders setDelay GOBLIN destroyRoughConstruction n\n"
-        "  diggingInvaders setDelay GOBLIN destroySmoothConstruction n\n"
-        "  diggingInvaders now\n    makes invaders try to dig now, if plugin is enabled\n"
-        "  diggingInvaders clear\n    clears all digging invader races\n"
-        "  diggingInvaders edgesPerTick n\n    makes the pathfinding algorithm work on at most n edges per tick. Set to 0 or lower to make it unlimited."
-//        "  diggingInvaders\n    Makes invaders try to dig now.\n"
-    ));
+        "diggingInvaders",
+        "Makes invaders dig to your dwarves.",
+        diggingInvadersCommand));
 
     //*df::global::debug_showambush = true;
     return CR_OK;

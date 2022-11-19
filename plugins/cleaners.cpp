@@ -241,27 +241,13 @@ command_result clean (color_ostream &out, vector <string> & parameters)
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "clean","Remove contaminants from tiles, items and creatures.",
-        clean, false,
-        "  Removes contaminants from map tiles, items and creatures.\n"
-        "Options:\n"
-        "  map        - clean the map tiles\n"
-        "  items      - clean all items\n"
-        "  units      - clean all creatures\n"
-        "  plants     - clean all plants\n"
-        "  all        - clean everything.\n"
-        "More options for 'map':\n"
-        "  snow       - also remove snow\n"
-        "  mud        - also remove mud\n"
-        "  item       - also remove item spatters (e.g. leaves and flowers)\n"
-        "Example:\n"
-        "  clean all mud snow item\n"
-        "    Removes all spatter, including mud and snow from map tiles.\n"
-    ));
+        "clean",
+        "Remove contaminants from tiles, items, and creatures.",
+        clean));
     commands.push_back(PluginCommand(
-        "spotclean","Cleans map tile under cursor.",
-        spotclean,Gui::cursor_hotkey
-    ));
+        "spotclean",
+        "Clean the map tile under the cursor.",
+        spotclean,Gui::cursor_hotkey));
     return CR_OK;
 }
 

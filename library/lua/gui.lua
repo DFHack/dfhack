@@ -473,8 +473,8 @@ function View:getWindowSize()
     return rect.width, rect.height
 end
 
-function View:getMousePos()
-    local rect = self.frame_body
+function View:getMousePos(view_rect)
+    local rect = view_rect or self.frame_body
     local x,y = dscreen.getMousePos()
     if rect and rect:inClipGlobalXY(x,y) then
         return rect:localXY(x,y)
@@ -641,6 +641,7 @@ function Screen:show(parent)
     if not dscreen.show(self, parent.child) then
         error('Could not show screen')
     end
+    return self
 end
 
 function Screen:onAboutToShow(parent)

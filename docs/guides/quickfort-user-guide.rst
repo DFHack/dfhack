@@ -1,8 +1,8 @@
 .. _quickfort-blueprint-guide:
 .. _quickfort-user-guide:
 
-Quickfort Blueprint Editing Guide
-=================================
+Quickfort blueprint creation guide
+==================================
 
 `Quickfort <quickfort>` is a DFHack script that helps you build fortresses from
 "blueprint" .csv and .xlsx files. Many applications exist to edit these files,
@@ -29,9 +29,8 @@ For those just looking to apply existing blueprints, check out the `quickfort
 command's documentation <quickfort>` for syntax. There are also many
 ready-to-use blueprints available in the ``blueprints/library`` subfolder in
 your DFHack installation. Browse them on your computer or
-:source:`online <data/blueprints/library>`, or run ``quickfort list -l`` at the
-``[DFHack]#`` prompt to list them, and then ``quickfort run`` to apply them to
-your fort!
+:source:`online <data/blueprints/library>`, or run `gui/quickfort` to browse
+and apply them to your fort!
 
 Before you become an expert at writing blueprints, though, you should know that
 the easiest way to make a quickfort blueprint is to build your plan "for real"
@@ -191,8 +190,8 @@ dug-out area::
    Cw Cw    Cw #
    #  #  #  #  #
 
-Note my generosity -- in addition to the bed (:kbd:`b`) I've built a chest
-(:kbd:`c`) here for the dwarf as well. You must use the full series of keys
+Note my generosity -- in addition to the bed (:kbd:`b`) I've built a container
+(:kbd:`h`) here for the dwarf as well. You must use the full series of keys
 needed to build something in each cell, e.g. :kbd:`C`:kbd:`w` indicates we
 should enter DF's constructions submenu (:kbd:`C`) and select walls (:kbd:`w`).
 
@@ -246,7 +245,7 @@ If there weren't an alias named ``booze`` then the literal characters
 spell those aliases correctly!
 
 You can save a lot of time and effort by using aliases instead of adding all
-key seqences directly to your blueprints. For more details, check out the
+key sequences directly to your blueprints. For more details, check out the
 `quickfort-alias-guide`. You can also see examples of aliases being used in the
 query blueprints in the
 :source:`DFHack blueprint library <data/blueprints/library>`. You can create
@@ -684,7 +683,7 @@ three vertical tiles like this::
    ` end here   ` #
    # #          # #
 
-Then to carve the cross, you'd do a horizonal segment::
+Then to carve the cross, you'd do a horizontal segment::
 
    `          ` `        #
    start here ` end here #
@@ -741,7 +740,7 @@ Or you could use the aliases to specify tile by tile::
    #       #       #       #
 
 The aliases can also be used to designate a solid block of track. This is
-epecially useful for obliterating low-quality engravings so you can re-smooth
+especially useful for obliterating low-quality engravings so you can re-smooth
 and re-engrave with higher quality. For example, you could use the following
 sequence of blueprints to ensure a 10x10 floor area contains only masterwork
 engravings::
@@ -1158,7 +1157,7 @@ blueprint::
    "#meta label(help) message(This is the help text for the blueprint set
    contained in this file.
 
-   First, make sure that you embark in...) blueprint set walkthough"
+   First, make sure that you embark in...) blueprint set walkthrough"
 
 could more naturally be written as a ``#notes`` blueprint::
 
@@ -1462,8 +1461,7 @@ parts that might not be obvious just from looking at them.
 If you haven't built Dreamfort before, maybe try an embark in a flat area and
 take it for a spin! It will help put the following sections in context. There is
 also a pre-built Dreamfort available for download on
-`dffd <https://dffd.bay12games.com/file.php?id=15434>`__ if you just want an
-interactive reference.
+:dffd:`dffd <15434>` if you just want an interactive reference.
 
 Dreamfort organization and packaging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1741,7 +1739,7 @@ priorities <quickfort-dig-priorities>`.
     Use dig priorities to control ramp creation.
 
 We can `ensure <https://docs.google.com/spreadsheets/d/1IBy6_pGEe6WSBCLukDz_5I-4vi_mpHuJJyOp2j6SJlY/edit#gid=962076234>`__
-the bottom level is carved out before the layer above is channelled by assigning
+the bottom level is carved out before the layer above is channeled by assigning
 the channel designations lower priorities (the ``h5``\s in the third layer --
 scroll down).
 

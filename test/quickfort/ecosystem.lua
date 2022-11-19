@@ -85,7 +85,7 @@ local function get_blueprint_sets()
     local mock_print = mock.func()
     mock.patch(quickfort_list, 'print', mock_print,
         function()
-            dfhack.run_script('quickfort', 'list', '-l', input_dir)
+            dfhack.run_script('quickfort', 'list', input_dir)
         end)
 
     -- group blueprint sets
@@ -327,10 +327,12 @@ function test.end_to_end()
         do_dig_phase(phases.dig, area, spec)
         if phases.smooth then do_dig_phase(phases.smooth, area, spec) end
         if phases.carve then do_dig_phase(phases.carve, area, spec) end
+        if phases.construct then do_phase(phases.construct, area, spec) end
         if phases.build then do_phase(phases.build, area, spec) end
         if phases.place then do_phase(phases.place, area, spec) end
         if phases.zone then do_phase(phases.zone, area, spec) end
         if phases.query then do_phase(phases.query, area, spec) end
+        if phases.rooms then do_phase(phases.rooms, area, spec) end
 
         -- run any extra commands, if defined by the blueprint spec
         if spec.extra_fn then

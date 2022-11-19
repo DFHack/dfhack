@@ -114,19 +114,11 @@ set(MAIN_SOURCES_DARWIN
     Process-darwin.cpp
 )
 
-set(MAIN_SOURCES_LINUX_EGGY
-    ${CONSOLE_SOURCES}
-    Hooks-egg.cpp
-    PlugLoad-linux.cpp
-    Process-linux.cpp
-)
-
 set(MODULE_HEADERS
     include/modules/Buildings.h
     include/modules/Burrows.h
     include/modules/Constructions.h
     include/modules/Designations.h
-    include/modules/Engravings.h
     include/modules/EventManager.h
     include/modules/Filesystem.h
     include/modules/Graphic.h
@@ -138,7 +130,6 @@ set(MODULE_HEADERS
     include/modules/MapCache.h
     include/modules/Maps.h
     include/modules/Materials.h
-    include/modules/Notes.h
     include/modules/Once.h
     include/modules/Persistence.h
     include/modules/Random.h
@@ -154,7 +145,6 @@ set(MODULE_SOURCES
     modules/Burrows.cpp
     modules/Constructions.cpp
     modules/Designations.cpp
-    modules/Engravings.cpp
     modules/EventManager.cpp
     modules/Filesystem.cpp
     modules/Graphic.cpp
@@ -165,7 +155,6 @@ set(MODULE_SOURCES
     modules/MapCache.cpp
     modules/Maps.cpp
     modules/Materials.cpp
-    modules/Notes.cpp
     modules/Once.cpp
     modules/Persistence.cpp
     modules/Random.cpp
@@ -173,7 +162,6 @@ set(MODULE_SOURCES
     modules/Screen.cpp
     modules/Translation.cpp
     modules/Units.cpp
-    modules/Windows.cpp
     modules/World.cpp
 )
 
@@ -211,10 +199,7 @@ list(APPEND PROJECT_SOURCES ${MAIN_SOURCES})
 list(APPEND PROJECT_SOURCES ${MODULE_SOURCES})
 
 if(UNIX)
-    option(BUILD_EGGY "Make DFHack strangely egg-shaped." OFF)
-    if(BUILD_EGGY)
-        list(APPEND PROJECT_SOURCES ${MAIN_SOURCES_LINUX_EGGY})
-    elseif(APPLE)
+    if(APPLE)
         list(APPEND PROJECT_SOURCES ${MAIN_SOURCES_DARWIN})
     else()
         list(APPEND PROJECT_SOURCES ${MAIN_SOURCES_LINUX})
@@ -376,15 +361,9 @@ add_executable(dfhack-run dfhack-run.cpp)
 add_executable(binpatch binpatch.cpp)
 target_link_libraries(binpatch dfhack-md5)
 
-if(BUILD_EGGY)
-    set_target_properties(dfhack PROPERTIES OUTPUT_NAME "egg" )
-else()
-    if(WIN32)
-        set_target_properties(dfhack PROPERTIES OUTPUT_NAME "SDL" )
-    endif()
-endif()
-
 if(WIN32)
+    # name the resulting library SDL.dll on Windows
+    set_target_properties(dfhack PROPERTIES OUTPUT_NAME "SDL" )
     set_target_properties(dfhack PROPERTIES COMPILE_FLAGS "/FI\"Export.h\"" )
     set_target_properties(dfhack-client PROPERTIES COMPILE_FLAGS "/FI\"Export.h\"" )
 else()
@@ -439,30 +418,19 @@ if(UNIX)
             DESTINATION .)
     endif()
 else()
-    if(NOT BUILD_EGGY)
-        # On windows, copy the renamed SDL so DF can still run.
-        install(PROGRAMS ${dfhack_SOURCE_DIR}/package/windows/win${DFHACK_BUILD_ARCH}/SDLreal.dll
-            DESTINATION ${DFHACK_LIBRARY_DESTINATION})
-    endif()
+    # On windows, copy the renamed SDL so DF can still run.
+    install(PROGRAMS ${dfhack_SOURCE_DIR}/package/windows/win${DFHACK_BUILD_ARCH}/SDLreal.dll
+        DESTINATION ${DFHACK_LIBRARY_DESTINATION})
 endif()
 
 # install the main lib
-if(NOT BUILD_EGGY)
-    install(TARGETS dfhack
-        LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
-        RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})
-else()
-    install(TARGETS dfhack
-        LIBRARY DESTINATION ${DFHACK_EGGY_DESTINATION}
-        RUNTIME DESTINATION ${DFHACK_EGGY_DESTINATION})
-endif()
+install(TARGETS dfhack
+    LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
+    RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})
 
 # install the offset file
 install(FILES xml/symbols.xml
     DESTINATION ${DFHACK_DATA_DESTINATION})
-# install the example autoexec file
-install(FILES ../dfhack.init-example
-    DESTINATION ${DFHACK_BINARY_DESTINATION})
 
 install(TARGETS dfhack-run dfhack-client binpatch
     LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}

@@ -1,27 +1,18 @@
 #!/usr/bin/env python3
 import os
-from os.path import basename, dirname, join, splitext
+from os.path import basename, dirname, exists, join, splitext
 import sys
 
 SCRIPT_PATH = sys.argv[1] if len(sys.argv) > 1 else 'scripts'
+DOCS_PATH = join(SCRIPT_PATH, 'docs')
 IS_GITHUB_ACTIONS = bool(os.environ.get('GITHUB_ACTIONS'))
 
-def expected_cmd(path):
+def get_cmd(path):
     """Get the command from the name of a script."""
     dname, fname = basename(dirname(path)), splitext(basename(path))[0]
     if dname in ('devel', 'fix', 'gui', 'modtools'):
         return dname + '/' + fname
     return fname
-
-
-def check_ls(fname, line):
-    """Check length & existence of leading comment for "ls" builtin command."""
-    line = line.strip()
-    comment = '--' if fname.endswith('.lua') else '#'
-    if '[====[' in line or not line.startswith(comment):
-        print_error('missing leading comment (requred for `ls`)', fname)
-        return 1
-    return 0
 
 
 def print_error(message, filename, line=None):
@@ -32,48 +23,42 @@ def print_error(message, filename, line=None):
         print('::error file=%s,line=%i::%s' % (filename, line, message))
 
 
+def check_ls(docfile, lines):
+    """Check length & existence of first sentence for "ls" builtin command."""
+    # TODO
+    return 0
+
+
 def check_file(fname):
-    errors, doclines = 0, []
-    tok1, tok2 = ('=begin', '=end') if fname.endswith('.rb') else \
-        ('[====[', ']====]')
-    doc_start_line = None
-    with open(fname, errors='ignore') as f:
+    errors, doc_start_line = 0, None
+    docfile = join(DOCS_PATH, get_cmd(fname)+'.rst')
+    if not exists(docfile):
+        print_error('missing documentation file: {!r}'.format(docfile), fname)
+        return 1
+    with open(docfile, errors='ignore') as f:
         lines = f.readlines()
         if not lines:
-            print_error('empty file', fname)
+            print_error('empty documentation file', docfile)
             return 1
-        errors += check_ls(fname, lines[0])
         for i, l in enumerate(lines):
-            if doclines or l.strip().endswith(tok1):
-                if not doclines:
-                    doc_start_line = i + 1
-                doclines.append(l.rstrip())
-            if l.startswith(tok2):
-                break
-        else:
-            if doclines:
-                print_error('docs start but do not end', fname, doc_start_line)
-            else:
-                print_error('no documentation found', fname)
-            return 1
+            l = l.strip()
+            if l and not doc_start_line and doc_start_line != 0:
+                doc_start_line = i
+            doc_end_line = i
+            lines[i] = l
 
-    if not doclines:
-        print_error('missing or malformed documentation', fname)
-        return 1
-
-    title, underline = [d for d in doclines
-                        if d and '=begin' not in d and '[====[' not in d][:2]
-    title_line = doc_start_line + doclines.index(title)
+    errors += check_ls(docfile, lines)
+    title, underline = lines[doc_start_line:doc_start_line+2]
     expected_underline = '=' * len(title)
     if underline != expected_underline:
         print_error('title/underline mismatch: expected {!r}, got {!r}'.format(
                 expected_underline, underline),
-            fname, title_line + 1)
+            docfile, doc_start_line+1)
         errors += 1
-    if title != expected_cmd(fname):
+    if title != get_cmd(fname):
         print_error('expected script title {!r}, got {!r}'.format(
-                expected_cmd(fname), title),
-            fname, title_line)
+                get_cmd(fname), title),
+            docfile, doc_start_line)
         errors += 1
     return errors
 

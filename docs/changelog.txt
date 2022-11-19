@@ -80,6 +80,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## API
 - ``Gui::anywhere_hotkey``: for plugin commands bound to keybindings that can be invoked on any screen
+- add functions reverse-engineered from announcement code: ``Gui::autoDFAnnouncement``, ``Gui::pauseRecenter``
+- ``Gui::revealInDwarfmodeMap``: Now enforce valid view bounds when pos invalid, add variant accepting x, y, z
 - ``Lua::PushInterfaceKeys()``: transforms viewscreen ``feed()`` keys into something that can be interpreted by lua-based widgets
 - ``Lua::Push()``: now handles maps with otherwise supported keys and values
 - Units module: added new checks
@@ -203,8 +205,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `quickfort`: `Dreamfort <quickfort-blueprint-guide>` blueprint set improvements: new design for the services level, including were-bitten hospital recovery rooms and an appropriately-themed interrogation room next to the jail! Also fits better in a 1x1 embark for minimalist players.
 
 ## API
-- add functions reverse-engineered from announcement code: ``Gui::autoDFAnnouncement``, ``Gui::pauseRecenter``
-- ``Gui::revealInDwarfmodeMap``: Now enforce valid view bounds when pos invalid, add variant accepting x, y, z
 - ``word_wrap``: argument ``bool collapse_whitespace`` converted to enum ``word_wrap_whitespace_mode mode``, with valid modes ``WSMODE_KEEP_ALL``, ``WSMODE_COLLAPSE_ALL``, and ``WSMODE_TRIM_LEADING``.
 
 ## Lua

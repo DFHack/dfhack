@@ -98,6 +98,8 @@ distribution.
 #include "df/specific_ref.h"
 #include "df/specific_ref_type.h"
 #include "df/vermin.h"
+#include "df/report_init.h"
+#include "df/report_zoom_type.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -1481,15 +1483,136 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, showPopupAnnouncement),
     WRAPM(Gui, showAutoAnnouncement),
     WRAPM(Gui, resetDwarfmodeView),
-    WRAPM(Gui, revealInDwarfmodeMap),
     WRAPM(Gui, refreshSidebar),
     WRAPM(Gui, inRenameBuilding),
     WRAPM(Gui, getDepthAt),
     { NULL, NULL }
 };
 
+static int gui_autoDFAnnouncement(lua_State *state)
+{
+    bool rv;
+    df::report_init *r = Lua::GetDFObject<df::report_init>(state, 1);
+
+    if (r)
+    {
+        std::string message = luaL_checkstring(state, 2);
+        rv = Gui::autoDFAnnouncement(*r, message);
+    }
+    else
+    {
+        df::coord pos;
+        int color = 0; // initialize these to prevent warning
+        bool bright = false, is_sparring = false;
+        df::unit *unit1 = NULL, *unit2 = NULL;
+
+        auto type = (df::announcement_type)lua_tointeger(state, 1);
+        Lua::CheckDFAssign(state, &pos, 2);
+        std::string message = luaL_checkstring(state, 3);
+
+        switch (lua_gettop(state))
+        {
+            default:
+            case 8:
+                is_sparring = lua_toboolean(state, 8);
+            case 7:
+                unit2 = Lua::CheckDFObject<df::unit>(state, 7);
+            case 6:
+                unit1 = Lua::CheckDFObject<df::unit>(state, 6);
+            case 5:
+                bright = lua_toboolean(state, 5);
+            case 4:
+                color = lua_tointeger(state, 4);
+            case 3:
+                break;
+        }
+
+        switch (lua_gettop(state))
+        {   // Use the defaults in Gui.h
+            default:
+            case 8:
+                rv = Gui::autoDFAnnouncement(type, pos, message, color, bright, unit1, unit2, is_sparring);
+                break;
+            case 7:
+                rv = Gui::autoDFAnnouncement(type, pos, message, color, bright, unit1, unit2);
+                break;
+            case 6:
+                rv = Gui::autoDFAnnouncement(type, pos, message, color, bright, unit1);
+                break;
+            case 5:
+                rv = Gui::autoDFAnnouncement(type, pos, message, color, bright);
+                break;
+            case 4:
+                rv = Gui::autoDFAnnouncement(type, pos, message, color);
+                break;
+            case 3:
+                rv = Gui::autoDFAnnouncement(type, pos, message);
+        }
+    }
+
+    lua_pushboolean(state, rv);
+    return 1;
+}
+
+static int gui_pauseRecenter(lua_State *state)
+{
+    bool rv;
+    df::coord p;
+
+    switch (lua_gettop(state))
+    {
+        default:
+        case 4:
+            rv = Gui::pauseRecenter(CheckCoordXYZ(state, 1, false), lua_toboolean(state, 4));
+            break;
+        case 3:
+            rv = Gui::pauseRecenter(CheckCoordXYZ(state, 1, false));
+            break;
+        case 2:
+            Lua::CheckDFAssign(state, &p, 1);
+            rv = Gui::pauseRecenter(p, lua_toboolean(state, 2));
+            break;
+        case 1:
+            Lua::CheckDFAssign(state, &p, 1);
+            rv = Gui::pauseRecenter(p);
+    }
+
+    lua_pushboolean(state, rv);
+    return 1;
+}
+
+static int gui_revealInDwarfmodeMap(lua_State *state)
+{
+    bool rv;
+    df::coord p;
+
+    switch (lua_gettop(state))
+    {
+        default:
+        case 4:
+            rv = Gui::revealInDwarfmodeMap(CheckCoordXYZ(state, 1, false), lua_toboolean(state, 4));
+            break;
+        case 3:
+            rv = Gui::revealInDwarfmodeMap(CheckCoordXYZ(state, 1, false));
+            break;
+        case 2:
+            Lua::CheckDFAssign(state, &p, 1);
+            rv = Gui::revealInDwarfmodeMap(p, lua_toboolean(state, 2));
+            break;
+        case 1:
+            Lua::CheckDFAssign(state, &p, 1);
+            rv = Gui::revealInDwarfmodeMap(p);
+    }
+
+    lua_pushboolean(state, rv);
+    return 1;
+}
+
 static const luaL_Reg dfhack_gui_funcs[] = {
+    { "autoDFAnnouncement", gui_autoDFAnnouncement },
     { "getDwarfmodeViewDims", gui_getDwarfmodeViewDims },
+    { "pauseRecenter", gui_pauseRecenter },
+    { "revealInDwarfmodeMap", gui_revealInDwarfmodeMap },
     { "getMousePos", gui_getMousePos },
     { NULL, NULL }
 };

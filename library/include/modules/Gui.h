@@ -36,6 +36,8 @@ distribution.
 #include "df/ui.h"
 #include "df/announcement_type.h"
 #include "df/announcement_flags.h"
+#include "df/report_init.h"
+#include "df/report_zoom_type.h"
 #include "df/unit_report_type.h"
 
 #include "modules/GuiHooks.h"
@@ -125,6 +127,11 @@ namespace DFHack
         // Show an announcement with effects determined by announcements.txt
         DFHACK_EXPORT void showAutoAnnouncement(df::announcement_type type, df::coord pos, std::string message, int color = 7, bool bright = true, df::unit *unit1 = NULL, df::unit *unit2 = NULL);
 
+        // Process an announcement exactly like DF would, which might result in no announcement
+        DFHACK_EXPORT bool autoDFAnnouncement(df::report_init r, std::string message);
+        DFHACK_EXPORT bool autoDFAnnouncement(df::announcement_type type, df::coord pos, std::string message, int color = 7, bool bright = true,
+                                              df::unit *unit1 = NULL, df::unit *unit2 = NULL, bool is_sparring = false);
+
         /*
          * Cursor and window map coords
          */
@@ -148,7 +155,10 @@ namespace DFHack
         DFHACK_EXPORT DwarfmodeDims getDwarfmodeViewDims();
 
         DFHACK_EXPORT void resetDwarfmodeView(bool pause = false);
-        DFHACK_EXPORT bool revealInDwarfmodeMap(df::coord pos, bool center = false);
+        DFHACK_EXPORT bool revealInDwarfmodeMap(int32_t x, int32_t y, int32_t z, bool center = false);
+        DFHACK_EXPORT inline bool revealInDwarfmodeMap(df::coord pos, bool center = false) { return revealInDwarfmodeMap(pos.x, pos.y, pos.z, center); };
+        DFHACK_EXPORT bool pauseRecenter(int32_t x, int32_t y, int32_t z, bool pause = true);
+        DFHACK_EXPORT inline bool pauseRecenter(df::coord pos, bool pause = true) { return pauseRecenter(pos.x, pos.y, pos.z, pause); };
         DFHACK_EXPORT bool refreshSidebar();
 
         DFHACK_EXPORT bool inRenameBuilding();

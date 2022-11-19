@@ -76,9 +76,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Documentation
 - `spectate`: improved documentation of features and functionality
 - `overlay-dev-guide`: documentation and guide for injecting functionality into DF viewscreens from Lua scripts and creating overlay widgets
+- ``dfhack.gui.revealInDwarfmodeMap``: document ``center`` bool for lua API
 
 ## API
 - ``Gui::anywhere_hotkey``: for plugin commands bound to keybindings that can be invoked on any screen
+- add functions reverse-engineered from announcement code: ``Gui::autoDFAnnouncement``, ``Gui::pauseRecenter``
+- ``Gui::revealInDwarfmodeMap``: Now enforce valid view bounds when pos invalid, add variant accepting x, y, z
 - ``Lua::PushInterfaceKeys()``: transforms viewscreen ``feed()`` keys into something that can be interpreted by lua-based widgets
 - ``Lua::Push()``: now handles maps with otherwise supported keys and values
 - Units module: added new checks

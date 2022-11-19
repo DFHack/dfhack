@@ -1019,17 +1019,26 @@ Fortress mode
   Resets the fortress mode sidebar menus and cursors to their default state. If
   ``pause`` is true, also pauses the game.
 
-* ``dfhack.gui.revealInDwarfmodeMap(pos)``
+* ``dfhack.gui.pauseRecenter(pos[,pause])``
+  ``dfhack.gui.pauseRecenter(x,y,z[,pause])``
 
-  Centers the view on the given position, which can be a ``df.coord`` instance
-  or a table assignable to a ``df.coord`` (see `lua-api-table-assignment`),
+  Same as ``resetDwarfmodeView``, but also recenter if position is valid. If ``pause`` is false, skip pausing. Respects
+  ``RECENTER_INTERFACE_SHUTDOWN_MS`` in DF's ``init.txt`` (the delay before input is recognized when a recenter occurs.)
+
+* ``dfhack.gui.revealInDwarfmodeMap(pos[,center])``
+  ``dfhack.gui.revealInDwarfmodeMap(x,y,z[,center])``
+
+  Centers the view on the given coordinates. If ``center`` is true, make sure the
+  position is in the exact center of the view, else just bring it on screen.
+
+  ``pos`` can be a ``df.coord`` instance or a table assignable to a ``df.coord`` (see `lua-api-table-assignment`),
   e.g.::
 
     {x = 5, y = 7, z = 11}
     getSelectedUnit().pos
     copyall(df.global.cursor)
 
-  Returns false if unsuccessful.
+  If the position is invalid, the function will simply ensure the current window position is clamped between valid values.
 
 * ``dfhack.gui.refreshSidebar()``
 
@@ -1087,6 +1096,19 @@ Announcements
 
   Uses the type to look up options from announcements.txt, and calls the above
   operations accordingly. The units are used to call ``addCombatReportAuto``.
+
+* ``dfhack.gui.autoDFAnnouncement(report,text)``
+  ``dfhack.gui.autoDFAnnouncement(type,pos,text,color[,is_bright,unit1,unit2,is_sparring])``
+
+  Takes a ``df.report_init`` (see: `structure definition <https://github.com/DFHack/df-structures/blob/master/df.announcements.xml>`_)
+  and a string and processes them just like DF does. Can also be built from parameters instead of a ``report_init``.
+  Setting ``is_sparring`` to *true* means the report will be added to sparring logs (if applicable) rather than hunting or combat.
+
+  The announcement will not display if units are involved and the player can't see them (or hear, for adventure mode sound announcement types.)
+  Text is parsed using ``&`` as an escape character, with ``&r`` adding a blank line (equivalent to ``\n \n``,)
+  ``&&`` being just ``&``, and any other combination causing neither character to display.
+
+  If you want a guaranteed announcement without parsing, use ``dfhack.gui.showAutoAnnouncement`` instead.
 
 * ``dfhack.gui.getMousePos()``
 

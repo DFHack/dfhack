@@ -371,12 +371,12 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
     static int step_count = 0;
-    if(!world || !world->map.block_index || !enable_autohauler) 
-    { 
-        return CR_OK; 
+    if(!world || !world->map.block_index || !enable_autohauler)
+    {
+        return CR_OK;
     }
 
-    if (++step_count < frame_skip) 
+    if (++step_count < frame_skip)
         return CR_OK;
     step_count = 0;
 

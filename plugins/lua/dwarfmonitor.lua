@@ -116,9 +116,11 @@ end
 function MiseryWidget:overlay_onupdate()
     local counts, num_colors = {}, #self.colors
     for _,unit in ipairs(df.global.world.units.active) do
+        if not dfhack.units.isCitizen(unit, true) then goto continue end
         local stress_category = math.min(num_colors,
                                          dfhack.units.getStressCategory(unit))
         counts[stress_category] = (counts[stress_category] or 0) + 1
+        ::continue::
     end
 
     local width = 2 + num_colors - 1 -- 'H:' plus the slashes

@@ -9,7 +9,7 @@
 using namespace DFHack;
 using namespace df::enums;
 
-    const enum dwarf_state : const int {
+    enum dwarf_state : int {
     // Ready for a new task
     IDLE=0,
 

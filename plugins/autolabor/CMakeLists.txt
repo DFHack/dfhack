@@ -3,7 +3,7 @@ project(autolahor)
 set(COMMON_SRCS
 )
 # A list of headers
-set(COMMON_HDRS
+set(COMMON_HDRS laborstatemap.h
 )
 set_source_files_properties(${COMMON_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE)
 

@@ -118,6 +118,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Internals
 - MSVC warning level upped to /W3, and /WX added to make warnings cause compilations to fail.
 
+## Removed
+- `resume`: functionality (including suspended building overlay) has moved to `unsuspend`
+
 # 0.47.05-r7
 
 ## New Plugins

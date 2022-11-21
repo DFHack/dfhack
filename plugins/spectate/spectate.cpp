@@ -46,8 +46,6 @@ using namespace Pausing;
 using namespace df::enums;
 
 struct Configuration {
-    bool debug = false;
-
     bool unpause = false;
     bool disengage = false;
     bool animals = false;
@@ -86,12 +84,14 @@ namespace SP {
     std::default_random_engine RNG;
 
     void DebugUnitVector(std::vector<df::unit*> units) {
-        for (auto unit : units) {
-            INFO(plugin).print("[id: %d]\n animal: %d\n hostile: %d\n visiting: %d\n",
-                               unit->id,
-                               Units::isAnimal(unit),
-                               Units::isDanger(unit),
-                               Units::isVisiting(unit));
+        if (debug_plugin.isEnabled(DFHack::DebugCategory::LDEBUG)) {
+            for (auto unit: units) {
+                DEBUG(plugin).print("[id: %d]\n animal: %d\n hostile: %d\n visiting: %d\n",
+                                    unit->id,
+                                    Units::isAnimal(unit),
+                                    Units::isDanger(unit),
+                                    Units::isVisiting(unit));
+            }
         }
     }
 
@@ -306,7 +306,7 @@ namespace SP {
                 if (!at_least_one) {
                     return false;
                 }
-                //DebugUnitVector(units);
+                DebugUnitVector(units);
                 std::piecewise_linear_distribution<> follow_any(i.begin(), i.end(), w.begin());
                 // if you're looking at a warning about a local address escaping, it means the unit* from units (which aren't local)
                 size_t idx = follow_any(RNG);

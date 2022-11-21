@@ -2000,15 +2000,21 @@ void getFilesWithPrefixAndSuffix(const std::string& folder, const std::string& p
 }
 
 size_t loadScriptFiles(Core* core, color_ostream& out, const vector<std::string>& prefix, const std::string& folder) {
-    vector<std::string> scriptFiles;
+    static const string suffix = ".init";
+    vector<string> scriptFiles;
     for ( size_t a = 0; a < prefix.size(); a++ ) {
         getFilesWithPrefixAndSuffix(folder, prefix[a], ".init", scriptFiles);
     }
-    std::sort(scriptFiles.begin(), scriptFiles.end());
+    std::sort(scriptFiles.begin(), scriptFiles.end(),
+              [&](const string &a, const string &b) {
+        string a_base = a.substr(0, a.size() - suffix.size());
+        string b_base = b.substr(0, b.size() - suffix.size());
+        return a_base < b_base;
+    });
     size_t result = 0;
     for ( size_t a = 0; a < scriptFiles.size(); a++ ) {
         result++;
-        std::string path = "";
+        string path = "";
         if (folder != ".")
             path = folder + "/";
         core->loadScriptFile(out, path + scriptFiles[a], false);

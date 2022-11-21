@@ -46,6 +46,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `autofarm`: add missing output flushes
 - Core: fix the segmentation fault with the REPORT event in EventManager
 - Core: fix the new JOB_STARTED event only sending each event once, to the first handler listed
+- Core: ensure ``foo.init`` always runs before ``foo.*.init`` (e.g.  ``dfhack.init`` should always run before ``dfhack.something.init``)
 
 ## Misc Improvements
 - `blueprint`: new ``--smooth`` option for recording all smoothed floors and walls instead of just the ones that require smoothing for later carving

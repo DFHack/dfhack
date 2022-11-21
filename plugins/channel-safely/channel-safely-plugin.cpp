@@ -93,7 +93,6 @@ PersistentDataItem psetting;
 PersistentDataItem pfeature;
 const std::string FCONFIG_KEY = std::string(plugin_name) + "/feature";
 const std::string SCONFIG_KEY = std::string(plugin_name) + "/setting";
-//std::unordered_set<int32_t> active_jobs;
 
 enum FeatureConfigData {
     VISION,
@@ -138,20 +137,22 @@ df::coord simulate_area_fall(const df::coord &pos) {
 
 // executes dig designations for the specified tile coordinates
 inline bool dig_now(color_ostream &out, const df::coord &map_pos) {
-    auto L = Lua::Core::State;
-    Lua::StackUnwinder top(L);
+    bool ret = false;
 
-    if (!lua_checkstack(L, 2) ||
-        !Lua::PushModulePublic(out, L, "plugins.dig-now", "dig_now_tile"))
-        return false;
+    lua_State* state = Lua::Core::State;
+    static const char* module_name = "plugins.dig-now";
+    static const char* fn_name = "dig_now_tile";
+    // the stack layout isn't likely to change, ever
+    static auto args_lambda = [&map_pos](lua_State* L) {
+        Lua::Push(L, map_pos);
+    };
+    static auto res_lambda = [&ret](lua_State* L) {
+        ret = lua_toboolean(L, -1);
+    };
 
-    Lua::Push(L, map_pos);
-
-    if (!Lua::SafeCall(out, L, 1, 1))
-        return false;
-
-    return lua_toboolean(L, -1);
-
+    Lua::StackUnwinder top(state);
+    Lua::CallLuaModuleFunction(out, state, module_name, fn_name, 1, 1, args_lambda, res_lambda);
+    return ret;
 }
 
 // fully heals the unit specified, resurrecting if need be
@@ -583,11 +584,14 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out, state_change_ev
 
 command_result channel_safely(color_ostream &out, std::vector<std::string> &parameters) {
     if (!parameters.empty()) {
+        if (parameters[0] == "runonce") {
+            CSP::UnpauseEvent();
+            return DFHack::CR_OK;
+        } else if (parameters[0] == "rebuild") {
+            ChannelManager::Get().destroy_groups();
+            ChannelManager::Get().build_groups();
+        }
         if (parameters.size() >= 2 && parameters.size() <= 3) {
-            if (parameters[0] == "runonce") {
-                CSP::UnpauseEvent();
-                return DFHack::CR_OK;
-            }
             bool state = false;
             bool set = false;
             if (parameters[0] == "enable") {
@@ -600,54 +604,7 @@ command_result channel_safely(color_ostream &out, std::vector<std::string> &para
                 return DFHack::CR_WRONG_USAGE;
             }
             try {
-                if (parameters[1] == "debug") {
-                    auto level = std::abs(std::stol(parameters[2]));
-                    config.debug = true;
-                    switch (level) {
-                        case 1:
-                            DBG_NAME(manager).allowed(DFHack::DebugCategory::LDEBUG);
-                            DBG_NAME(monitor).allowed(DFHack::DebugCategory::LINFO);
-                            DBG_NAME(groups).allowed(DFHack::DebugCategory::LINFO);
-                            DBG_NAME(jobs).allowed(DFHack::DebugCategory::LINFO);
-                            break;
-                        case 2:
-                            DBG_NAME(manager).allowed(DFHack::DebugCategory::LTRACE);
-                            DBG_NAME(monitor).allowed(DFHack::DebugCategory::LINFO);
-                            DBG_NAME(groups).allowed(DFHack::DebugCategory::LDEBUG);
-                            DBG_NAME(jobs).allowed(DFHack::DebugCategory::LDEBUG);
-                            break;
-                        case 3:
-                            DBG_NAME(manager).allowed(DFHack::DebugCategory::LTRACE);
-                            DBG_NAME(monitor).allowed(DFHack::DebugCategory::LINFO);
-                            DBG_NAME(groups).allowed(DFHack::DebugCategory::LDEBUG);
-                            DBG_NAME(jobs).allowed(DFHack::DebugCategory::LTRACE);
-                            break;
-                        case 4:
-                            DBG_NAME(manager).allowed(DFHack::DebugCategory::LTRACE);
-                            DBG_NAME(monitor).allowed(DFHack::DebugCategory::LINFO);
-                            DBG_NAME(groups).allowed(DFHack::DebugCategory::LTRACE);
-                            DBG_NAME(jobs).allowed(DFHack::DebugCategory::LTRACE);
-                            break;
-                        case 5:
-                            DBG_NAME(manager).allowed(DFHack::DebugCategory::LTRACE);
-                            DBG_NAME(monitor).allowed(DFHack::DebugCategory::LDEBUG);
-                            DBG_NAME(groups).allowed(DFHack::DebugCategory::LTRACE);
-                            DBG_NAME(jobs).allowed(DFHack::DebugCategory::LTRACE);
-                            break;
-                        case 6:
-                            DBG_NAME(manager).allowed(DFHack::DebugCategory::LTRACE);
-                            DBG_NAME(monitor).allowed(DFHack::DebugCategory::LTRACE);
-                            DBG_NAME(groups).allowed(DFHack::DebugCategory::LTRACE);
-                            DBG_NAME(jobs).allowed(DFHack::DebugCategory::LTRACE);
-                            break;
-                        case 0:
-                        default:
-                            DBG_NAME(monitor).allowed(DFHack::DebugCategory::LERROR);
-                            DBG_NAME(manager).allowed(DFHack::DebugCategory::LERROR);
-                            DBG_NAME(groups).allowed(DFHack::DebugCategory::LERROR);
-                            DBG_NAME(jobs).allowed(DFHack::DebugCategory::LERROR);
-                    }
-                } else if(parameters[1] == "monitor"){
+                if(parameters[1] == "monitor"){
                     if (state != config.monitor_active) {
                         config.monitor_active = state;
                         // if this is a fresh start

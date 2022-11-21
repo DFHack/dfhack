@@ -3,13 +3,14 @@
 #include <modules/Maps.h>
 #include <df/coord.h>
 #include <df/tiletype.h>
+#include <modules/EventManager.h> //hash functions (they should probably get moved at this point, the ones that aren't specifically for EM anyway)
 
-#include <map>
+#include <unordered_map>
 
 class TileCache {
 private:
     TileCache() = default;
-    std::map<df::coord, df::tiletype> locations;
+    std::unordered_map<df::coord, df::tiletype> locations;
 public:
     static TileCache& Get() {
         static TileCache instance;
@@ -25,11 +26,6 @@ public:
     }
 
     bool hasChanged(const df::coord &pos, const df::tiletype &type) {
-        if (locations.count(pos)) {
-            if (type != locations.find(pos)->second){
-                return true;
-            }
-        }
-        return false;
+        return locations.count(pos) && type != locations[pos];
     }
 };

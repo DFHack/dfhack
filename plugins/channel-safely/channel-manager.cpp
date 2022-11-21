@@ -5,11 +5,6 @@
 #include <modules/EventManager.h> //hash function for df::coord
 #include <df/block_square_event_designation_priorityst.h>
 
-/**
-blocks[48][96][135]: <map_block: 0x7fff8e587200>
-blocks[48][96][135].default_liquid.hidden:  false
-blocks[48][96][135].designation[10][0].hidden:  false
- * */
 
 // sets mark flags as necessary, for all designations
 void ChannelManager::manage_groups() {

@@ -9,7 +9,6 @@ namespace DFHack {
 }
 
 struct Configuration {
-    bool debug = false;
     bool monitor_active = false;
     bool require_vision = true;
     bool insta_dig = false;

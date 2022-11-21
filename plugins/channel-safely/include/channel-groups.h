@@ -4,14 +4,15 @@
 
 #include <df/map_block.h>
 #include <df/coord.h>
+#include <modules/EventManager.h> //hash functions (they should probably get moved at this point, the ones that aren't specifically for EM anyway)
 
 #include <vector>
-#include <map>
-#include <set>
+#include <unordered_map>
+#include <unordered_set>
 
 using namespace DFHack;
 
-using Group = std::set<df::coord>;
+using Group = std::unordered_set<df::coord>;
 using Groups = std::vector<Group>;
 
 /* Used to build groups of adjacent channel designations/jobs
@@ -26,8 +27,8 @@ using Groups = std::vector<Group>;
  */
 class ChannelGroups {
 private:
-    using GroupBlocks = std::set<df::map_block*>;
-    using GroupsMap = std::map<df::coord, int>;
+    using GroupBlocks = std::unordered_set<df::map_block*>;
+    using GroupsMap = std::unordered_map<df::coord, int>;
     GroupBlocks group_blocks;
     GroupsMap groups_map;
     Groups groups;

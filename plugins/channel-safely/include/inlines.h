@@ -64,7 +64,7 @@ inline bool is_safe_fall(const df::coord &map_pos) {
             return true; //we require vision, and we can't see below.. so we gotta assume it's safe
         }
         df::tiletype type = *Maps::getTileType(below);
-        if (!isOpenTerrain(type)) {
+        if (!DFHack::isOpenTerrain(type)) {
             return true;
         }
     }
@@ -80,10 +80,10 @@ inline bool is_safe_to_dig_down(const df::coord &map_pos) {
             return true;
         }
         df::tiletype type = *Maps::getTileType(pos);
-        if (zi == 0 && isOpenTerrain(type)) {
+        if (zi == 0 && DFHack::isOpenTerrain(type)) {
             // the starting tile is open space, that's obviously not safe
             return false;
-        } else if (!isOpenTerrain(type)) {
+        } else if (!DFHack::isOpenTerrain(type)) {
             // a tile after the first one is not open space
             return true;
         }
@@ -142,7 +142,9 @@ inline void cancel_job(df::job* job) {
         x = pos.x % 16;
         y = pos.y % 16;
         df::tile_designation &designation = job_block->designation[x][y];
-        switch (job->job_type) {
+        auto type = job->job_type;
+        Job::removeJob(job);
+        switch (type) {
             case job_type::Dig:
                 designation.bits.dig = df::tile_dig_designation::Default;
                 break;
@@ -165,21 +167,13 @@ inline void cancel_job(df::job* job) {
                 designation.bits.dig = df::tile_dig_designation::No;
                 break;
         }
-        Job::removeJob(job);
     }
 }
 
 template<class Ctr1, class Ctr2, class Ctr3>
 void set_difference(const Ctr1 &c1, const Ctr2 &c2, Ctr3 &c3) {
     for (const auto &a : c1) {
-        bool matched = false;
-        for (const auto &b : c2) {
-            if (a == b) {
-                matched = true;
-                break;
-            }
-        }
-        if (!matched) {
+        if (!c2.count(a)) {
             c3.emplace(a);
         }
     }

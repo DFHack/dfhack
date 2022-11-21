@@ -33,9 +33,7 @@ public:
     bool exists(const df::coord &map_pos) const { return groups.count(map_pos); }
     void debug() {
         DEBUG(groups).print(" DEBUGGING GROUPS:\n");
-        if (config.debug) {
-            groups.debug_groups();
-            groups.debug_map();
-        }
+        groups.debug_groups();
+        groups.debug_map();
     }
 };

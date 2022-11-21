@@ -6,7 +6,18 @@
 
 #include <random>
 
-
+// iterates the DF job list and adds channel jobs to the `jobs` container
+void ChannelJobs::load_channel_jobs() {
+    locations.clear();
+    df::job_list_link* node = df::global::world->jobs.list.next;
+    while (node) {
+        df::job* job = node->item;
+        node = node->next;
+        if (is_dig_job(job)) {
+            locations.emplace(job->pos);
+        }
+    }
+}
 
 // adds map_pos to a group if an adjacent one exists, or creates one if none exist... if multiple exist they're merged into the first found
 void ChannelGroups::add(const df::coord &map_pos) {
@@ -148,6 +159,7 @@ void ChannelGroups::scan() {
                             // the tile, check if it has a channel designation
                             df::coord map_pos((bx * 16) + lx, (by * 16) + ly, z);
                             if (TileCache::Get().hasChanged(map_pos, block->tiletype[lx][ly])) {
+                                TileCache::Get().uncache(map_pos);
                                 remove(map_pos);
                                 if (jobs.count(map_pos)) {
                                     jobs.erase(map_pos);
@@ -165,6 +177,8 @@ void ChannelGroups::scan() {
                                             }
                                             TRACE(groups).print("   adding (" COORD ")\n", COORDARGS(map_pos));
                                             add(map_pos);
+                                        } else if (groups_map.count(map_pos)) {
+                                            remove(map_pos);
                                         }
                                     }
                                 }
@@ -252,21 +266,25 @@ size_t ChannelGroups::count(const df::coord &map_pos) const {
 
 // prints debug info about the groups stored, and their members
 void ChannelGroups::debug_groups() {
-    int idx = 0;
-    TRACE(groups).print(" debugging group data\n");
-    for (auto &group : groups) {
-        TRACE(groups).print("  group %d (size: %zu)\n", idx, group.size());
-        for (auto &pos : group) {
-            TRACE(groups).print("   (%d,%d,%d)\n", pos.x, pos.y, pos.z);
+    if (DFHack::debug_groups.isEnabled(DebugCategory::LTRACE)) {
+        int idx = 0;
+        TRACE(groups).print(" debugging group data\n");
+        for (auto &group: groups) {
+            TRACE(groups).print("  group %d (size: %zu)\n", idx, group.size());
+            for (auto &pos: group) {
+                TRACE(groups).print("   (%d,%d,%d)\n", pos.x, pos.y, pos.z);
+            }
+            idx++;
         }
-        idx++;
     }
 }
 
 // prints debug info group mappings
 void ChannelGroups::debug_map() {
-    INFO(groups).print("Group Mappings: %zu\n", groups_map.size());
-    for (auto &pair : groups_map) {
-        DEBUG(groups).print(" map[" COORD "] = %d\n",COORDARGS(pair.first), pair.second);
+    if (DFHack::debug_groups.isEnabled(DebugCategory::LDEBUG)) {
+        INFO(groups).print("Group Mappings: %zu\n", groups_map.size());
+        for (auto &pair: groups_map) {
+            DEBUG(groups).print(" map[" COORD "] = %d\n", COORDARGS(pair.first), pair.second);
+        }
     }
 }

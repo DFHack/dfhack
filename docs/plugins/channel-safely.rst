@@ -2,12 +2,12 @@ channel-safely
 ==============
 
 .. dfhack-tool::
-    :summary: Auto-manage channel designations to keep dwarves safe
+    :summary: Auto-manage channel designations to keep dwarves safe.
     :tags: fort auto
 
 Multi-level channel projects can be dangerous, and managing the safety of your
 dwarves throughout the completion of such projects can be difficult and time
-consuming. This plugin keeps your dwarves safe (while channeling) so you don't
+consuming. This plugin keeps your dwarves safe (at least while channeling) so you don't
 have to. Now you can focus on designing your dwarven cities with the deep chasms
 they were meant to have.
 
@@ -18,7 +18,7 @@ Usage
     enable channel-safely
     channel-safely set <setting> <value>
     channel-safely enable|disable <feature>
-    channel-safely runonce
+    channel-safely <command>
 
 When enabled the map will be scanned for channel designations which will be grouped
 together based on adjacency and z-level. These groups will then be analyzed for safety
@@ -38,12 +38,19 @@ Examples
 ``channel-safely disable require-vision``
     Allows the plugin to read all tiles, including the ones your dwarves know nothing about.
 
-``channel-safely enable monitor-active``
+``channel-safely enable monitor``
     Enables monitoring active channel digging jobs. Meaning that if another unit it present
     or the tile below becomes open space the job will be paused or canceled (respectively).
 
 ``channel-safely set ignore-threshold 3``
     Configures the plugin to ignore designations equal to or above priority 3 designations.
+
+Commands
+--------
+
+:runonce:           Run the safety procedures once to set the marker mode of designations.
+:rebuild:           Rebuild the designation group data. Intended for to be used in the event
+                    the marker mode isn't being set correctly (mostly for debugging).
 
 Features
 --------

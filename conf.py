@@ -256,6 +256,10 @@ html_favicon = 'docs/styles/dfhack-icon.ico'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['docs/styles']
 
+# A list of paths that contain extra files not directly related to the
+# documentation.
+html_extra_path = ['robots.txt']
+
 # Custom sidebar templates, maps document names to template names.
 html_sidebars = {
     '**': [

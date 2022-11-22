@@ -128,8 +128,9 @@ df::coord simulate_area_fall(const df::coord &pos) {
     get_neighbours(pos, neighbours);
     df::coord lowest = simulate_fall(pos);
     for (auto p : neighbours) {
-        if (p.z < lowest.z) {
-            lowest = p;
+        auto nlow = simulate_fall(p);
+        if (nlow.z < lowest.z) {
+            lowest = nlow;
         }
     }
     return lowest;
@@ -225,6 +226,7 @@ namespace CSP {
     }
 
     void UnpauseEvent(){
+        CoreSuspender suspend; // we need exclusive access to df memory and this call stack doesn't already have a lock
         INFO(monitor).print("UnpauseEvent()\n");
         ChannelManager::Get().build_groups();
         ChannelManager::Get().manage_groups();

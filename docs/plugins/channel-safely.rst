@@ -15,6 +15,7 @@ Usage
 -----
 
 ::
+
     enable channel-safely
     channel-safely set <setting> <value>
     channel-safely enable|disable <feature>

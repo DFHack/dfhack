@@ -40,17 +40,17 @@ function test.editfield_click()
     expect.eq(5, e.cursor)
 
     mock.patch(e, 'getMousePos', mock.func(0), function()
-            e:onInput{_MOUSE_L_DOWN=true}
+            e:onInput{_MOUSE_L=true}
             expect.eq(1, e.cursor)
         end)
 
     mock.patch(e, 'getMousePos', mock.func(20), function()
-            e:onInput{_MOUSE_L_DOWN=true}
+            e:onInput{_MOUSE_L=true}
             expect.eq(5, e.cursor, 'should only seek to end of text')
         end)
 
     mock.patch(e, 'getMousePos', mock.func(2), function()
-            e:onInput{_MOUSE_L_DOWN=true}
+            e:onInput{_MOUSE_L=true}
             expect.eq(3, e.cursor)
         end)
 end

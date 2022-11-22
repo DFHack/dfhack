@@ -334,7 +334,7 @@ function EditField:onInput(keys)
     elseif keys._MOUSE_L then
         local mouse_x, mouse_y = self:getMousePos()
         if mouse_x then
-            self:setCursor(self.start_pos + mouse_x - self.text_offset)
+            self:setCursor(self.start_pos + mouse_x - (self.text_offset or 0))
             return true
         end
     elseif keys._STRING then

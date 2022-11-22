@@ -5,7 +5,7 @@ function test.hotkeylabel_click()
     local l = widgets.HotkeyLabel{key='SELECT', on_activate=func}
 
     mock.patch(l, 'getMousePos', mock.func(0), function()
-            l:onInput{_MOUSE_L=true}
+            l:onInput{_MOUSE_L_DOWN=true}
             expect.eq(1, func.call_count)
         end)
 end
@@ -31,7 +31,7 @@ function test.togglehotkeylabel_click()
     local l = widgets.ToggleHotkeyLabel{}
     expect.true_(l:getOptionValue())
     mock.patch(l, 'getMousePos', mock.func(0), function()
-            l:onInput{_MOUSE_L=true}
+            l:onInput{_MOUSE_L_DOWN=true}
             expect.false_(l:getOptionValue())
         end)
 end

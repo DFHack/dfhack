@@ -2012,7 +2012,12 @@ void subtractActionTimerCore(df::unit_action *action, int32_t amount)
 {
     int32_t *timer = getActionTimerPointer(action);
     if (timer != nullptr && *timer > 0) {
-        *timer = max(*timer - amount, 1);
+        double value = *timer;
+        value = max(value - amount, 1.0);
+        if (value > INT32_MAX) {
+            value = INT32_MAX;
+        }
+        *timer = value;
     }
 }
 

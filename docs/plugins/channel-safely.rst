@@ -27,6 +27,8 @@ and designations deemed unsafe will be put into :wiki:`Marker Mode <Designations
 Each time a channel designation is completed its group status is checked, and if the group
 is complete pending groups below are made active again.
 
+Settings will persist according to the save game being used.
+
 Examples
 --------
 

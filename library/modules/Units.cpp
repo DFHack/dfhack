@@ -2008,7 +2008,7 @@ int32_t *getActionTimerPointer(df::unit_action *action) {
     return nullptr;
 }
 
-void Units::subtractActionTimer(df::unit *unit, int amount, df::unit_action_type affectedActionType)
+void Units::subtractActionTimer(df::unit *unit, int32_t amount, df::unit_action_type affectedActionType)
 {
     CHECK_NULL_POINTER(unit);
     for (auto action : unit->actions) {
@@ -2020,7 +2020,7 @@ void Units::subtractActionTimer(df::unit *unit, int amount, df::unit_action_type
     }
 }
 
-void Units::subtractCategoryActionTimers(df::unit *unit, int amount, df::unit_action_type_group affectedActionTypes)
+void Units::subtractCategoryActionTimers(df::unit *unit, int32_t amount, df::unit_action_type_group affectedActionTypes)
 {
     CHECK_NULL_POINTER(unit);
     for (auto action : unit->actions) {
@@ -2076,7 +2076,7 @@ void Units::multiplyCategoryActionTimers(df::unit *unit, float amount, df::unit_
     }
 }
 
-void Units::setActionTimer(df::unit *unit, int amount, df::unit_action_type affectedActionType)
+void Units::setActionTimer(df::unit *unit, int32_t amount, df::unit_action_type affectedActionType)
 {
     CHECK_NULL_POINTER(unit);
     for (auto action : unit->actions) {
@@ -2088,7 +2088,7 @@ void Units::setActionTimer(df::unit *unit, int amount, df::unit_action_type affe
     }
 }
 
-void Units::setCategoryActionTimers(df::unit *unit, int amount, df::unit_action_type_group affectedActionTypes)
+void Units::setCategoryActionTimers(df::unit *unit, int32_t amount, df::unit_action_type_group affectedActionTypes)
 {
     CHECK_NULL_POINTER(unit);
     for (auto action : unit->actions) {

@@ -2016,6 +2016,26 @@ void subtractActionTimerCore(df::unit_action *action, int32_t amount)
     }
 }
 
+void multiplyActionTimerCore(df::unit_action *action, float amount)
+{
+    int32_t *timer = getActionTimerPointer(action);
+    if (timer != nullptr && *timer != 0) {
+        double value = *timer;
+        value = max(value * amount, 1.0);
+        if (value > INT32_MAX) {
+            value = INT32_MAX;
+        }
+        *timer = value;
+    }
+}
+
+void setActionTimerCore(df::unit_action *action, int32_t amount) {
+    int32_t *timer = getActionTimerPointer(action);
+    if (timer != nullptr && *timer != 0) {
+        *timer = amount;
+    }
+}
+
 void Units::subtractActionTimer(df::unit *unit, int32_t amount, df::unit_action_type affectedActionType)
 {
     CHECK_NULL_POINTER(unit);
@@ -2039,19 +2059,6 @@ void Units::subtractCategoryActionTimers(df::unit *unit, int32_t amount, df::uni
     }
 }
 
-void multiplyActionTimerCore(df::unit_action *action, float amount)
-{
-    int32_t *timer = getActionTimerPointer(action);
-    if (timer != nullptr && *timer != 0) {
-        double value = *timer;
-        value = max(value * amount, 1.0);
-        if (value > INT32_MAX) {
-            value = INT32_MAX;
-        }
-        *timer = value;
-    }
-}
-
 void Units::multiplyActionTimer(df::unit *unit, float amount, df::unit_action_type affectedActionType)
 {
     CHECK_NULL_POINTER(unit);
@@ -2072,13 +2079,6 @@ void Units::multiplyCategoryActionTimers(df::unit *unit, float amount, df::unit_
                 break;
             }
         }
-    }
-}
-
-void setActionTimerCore(df::unit_action *action, int32_t amount) {
-    int32_t *timer = getActionTimerPointer(action);
-    if (timer != nullptr && *timer != 0) {
-        *timer = amount;
     }
 }
 

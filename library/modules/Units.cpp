@@ -2008,15 +2008,20 @@ int32_t *getActionTimerPointer(df::unit_action *action) {
     return nullptr;
 }
 
+void subtractActionTimerCore(df::unit_action *action, int32_t amount)
+{
+    int32_t *timer = getActionTimerPointer(action);
+    if (timer != nullptr && *timer != 0) {
+        *timer = max(*timer - amount, 1);
+    }
+}
+
 void Units::subtractActionTimer(df::unit *unit, int32_t amount, df::unit_action_type affectedActionType)
 {
     CHECK_NULL_POINTER(unit);
     for (auto action : unit->actions) {
         if (affectedActionType != action->type) continue;
-        int32_t *timer = getActionTimerPointer(action);
-        if (timer != nullptr && *timer != 0) {
-            *timer = max(*timer - amount, 1);
-        }
+        subtractActionTimerCore(action, amount);
     }
 }
 
@@ -2027,10 +2032,7 @@ void Units::subtractCategoryActionTimers(df::unit *unit, int32_t amount, df::uni
         auto list = ENUM_ATTR(unit_action_type, group, action->type);
         for (size_t i = 0; i < list.size; i++) {
             if (list.items[i] == affectedActionTypes) {
-                int32_t *timer = getActionTimerPointer(action);
-                if (timer != nullptr && *timer != 0) {
-                    *timer = max(*timer - amount, 1);
-                }
+                subtractActionTimerCore(action, amount);
                 break;
             }
         }
@@ -2073,15 +2075,19 @@ void Units::multiplyCategoryActionTimers(df::unit *unit, float amount, df::unit_
     }
 }
 
+void setActionTimerCore(df::unit_action *action, int32_t amount) {
+    int32_t *timer = getActionTimerPointer(action);
+    if (timer != nullptr && *timer != 0) {
+        *timer = amount;
+    }
+}
+
 void Units::setActionTimer(df::unit *unit, int32_t amount, df::unit_action_type affectedActionType)
 {
     CHECK_NULL_POINTER(unit);
     for (auto action : unit->actions) {
         if (affectedActionType != action->type) continue;
-        int32_t *timer = getActionTimerPointer(action);
-        if (timer != nullptr && *timer != 0) {
-            *timer = amount;
-        }
+        setActionTimerCore(action, amount);
     }
 }
 
@@ -2092,10 +2098,7 @@ void Units::setCategoryActionTimers(df::unit *unit, int32_t amount, df::unit_act
         auto list = ENUM_ATTR(unit_action_type, group, action->type);
         for (size_t i = 0; i < list.size; i++) {
             if (list.items[i] == affectedActionTypes) {
-                int32_t *timer = getActionTimerPointer(action);
-                if (timer != nullptr && *timer != 0) {
-                    *timer = amount;
-                }
+                setActionTimerCore(action, amount);
                 break;
             }
         }

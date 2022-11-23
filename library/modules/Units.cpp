@@ -2037,20 +2037,25 @@ void Units::subtractCategoryActionTimers(df::unit *unit, int32_t amount, df::uni
     }
 }
 
+void multiplyActionTimerCore(df::unit_action *action, float amount)
+{
+    int32_t *timer = getActionTimerPointer(action);
+    if (timer != nullptr && *timer != 0) {
+        double value = *timer;
+        value = max(value * amount, 1.0);
+        if (value > INT32_MAX) {
+            value = INT32_MAX;
+        }
+        *timer = value;
+    }
+}
+
 void Units::multiplyActionTimer(df::unit *unit, float amount, df::unit_action_type affectedActionType)
 {
     CHECK_NULL_POINTER(unit);
     for (auto action : unit->actions) {
         if (affectedActionType != action->type) continue;
-        int32_t *timer = getActionTimerPointer(action);
-        if (timer != nullptr && *timer != 0) {
-            double value = *timer;
-            value = max(value * amount, 1.0);
-            if (value > INT32_MAX) {
-                value = INT32_MAX;
-            }
-            *timer = value;
-        }
+        multiplyActionTimerCore(action, amount);
     }
 }
 
@@ -2061,15 +2066,7 @@ void Units::multiplyCategoryActionTimers(df::unit *unit, float amount, df::unit_
         auto list = ENUM_ATTR(unit_action_type, group, action->type);
         for (size_t i = 0; i < list.size; i++) {
             if (list.items[i] == affectedActionTypes) {
-                int32_t *timer = getActionTimerPointer(action);
-                if (timer != nullptr && *timer != 0) {
-                    double value = *timer;
-                    value = max(value * amount, 1.0);
-                    if (value > INT32_MAX) {
-                        value = INT32_MAX;
-                    }
-                    *timer = value;
-                }
+                multiplyActionTimerCore(action, amount);
                 break;
             }
         }

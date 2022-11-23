@@ -2011,7 +2011,7 @@ int32_t *getActionTimerPointer(df::unit_action *action) {
 void subtractActionTimerCore(df::unit_action *action, int32_t amount)
 {
     int32_t *timer = getActionTimerPointer(action);
-    if (timer != nullptr && *timer != 0) {
+    if (timer != nullptr && *timer > 0) {
         *timer = max(*timer - amount, 1);
     }
 }
@@ -2019,7 +2019,7 @@ void subtractActionTimerCore(df::unit_action *action, int32_t amount)
 void multiplyActionTimerCore(df::unit_action *action, float amount)
 {
     int32_t *timer = getActionTimerPointer(action);
-    if (timer != nullptr && *timer != 0) {
+    if (timer != nullptr && *timer > 0) {
         double value = *timer;
         value = max(value * amount, 1.0);
         if (value > INT32_MAX) {
@@ -2031,7 +2031,7 @@ void multiplyActionTimerCore(df::unit_action *action, float amount)
 
 void setActionTimerCore(df::unit_action *action, int32_t amount) {
     int32_t *timer = getActionTimerPointer(action);
-    if (timer != nullptr && *timer != 0) {
+    if (timer != nullptr && *timer > 0) {
         *timer = amount;
     }
 }

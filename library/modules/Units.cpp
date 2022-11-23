@@ -1999,7 +1999,10 @@ int32_t *getActionTimerPointer(df::unit_action *action) {
     case unit_action_type::Block:
     case unit_action_type::HoldItem:
     case unit_action_type::ReleaseItem:
-    default:
+    case unit_action_type::Unk20:
+    case unit_action_type::Unk21:
+    case unit_action_type::Unk22:
+    case unit_action_type::Unk23:
         break;
     }
     return nullptr;

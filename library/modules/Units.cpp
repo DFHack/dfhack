@@ -2041,7 +2041,7 @@ void setActionTimerCore(df::unit_action *action, int32_t amount) {
     }
 }
 
-void Units::subtractActionTimer(df::unit *unit, int32_t amount, df::unit_action_type affectedActionType)
+void Units::subtractActionTimer(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type affectedActionType)
 {
     CHECK_NULL_POINTER(unit);
     for (auto action : unit->actions) {
@@ -2050,7 +2050,7 @@ void Units::subtractActionTimer(df::unit *unit, int32_t amount, df::unit_action_
     }
 }
 
-void Units::subtractCategoryActionTimers(df::unit *unit, int32_t amount, df::unit_action_type_group affectedActionTypes)
+void Units::subtractCategoryActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type_group affectedActionTypes)
 {
     CHECK_NULL_POINTER(unit);
     for (auto action : unit->actions) {
@@ -2064,18 +2064,30 @@ void Units::subtractCategoryActionTimers(df::unit *unit, int32_t amount, df::uni
     }
 }
 
-void Units::multiplyActionTimer(df::unit *unit, float amount, df::unit_action_type affectedActionType)
+bool validateMultiplyActionTimerAmount(color_ostream &out, float amount) {
+    if (amount < 0) {
+        out.printerr("Can't multiply action timer(s) by negative amount.\n");
+        return false;
+    }
+    return true;
+}
+
+void Units::multiplyActionTimer(color_ostream &out, df::unit *unit, float amount, df::unit_action_type affectedActionType)
 {
     CHECK_NULL_POINTER(unit);
+    if (!validateMultiplyActionTimerAmount(out, amount))
+        return;
     for (auto action : unit->actions) {
         if (affectedActionType != action->type) continue;
         multiplyActionTimerCore(action, amount);
     }
 }
 
-void Units::multiplyCategoryActionTimers(df::unit *unit, float amount, df::unit_action_type_group affectedActionTypes)
+void Units::multiplyCategoryActionTimers(color_ostream &out, df::unit *unit, float amount, df::unit_action_type_group affectedActionTypes)
 {
     CHECK_NULL_POINTER(unit);
+    if (!validateMultiplyActionTimerAmount(out, amount))
+        return;
     for (auto action : unit->actions) {
         auto list = ENUM_ATTR(unit_action_type, group, action->type);
         for (size_t i = 0; i < list.size; i++) {
@@ -2087,18 +2099,30 @@ void Units::multiplyCategoryActionTimers(df::unit *unit, float amount, df::unit_
     }
 }
 
-void Units::setActionTimer(df::unit *unit, int32_t amount, df::unit_action_type affectedActionType)
+bool validateSetActionTimerAmount(color_ostream &out, int32_t amount) {
+    if (amount <= 0) {
+        out.printerr("Can't set action timer(s) to non-positive amount.\n");
+        return false;
+    }
+    return true;
+}
+
+void Units::setActionTimer(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type affectedActionType)
 {
     CHECK_NULL_POINTER(unit);
+    if (!validateSetActionTimerAmount(out, amount))
+        return;
     for (auto action : unit->actions) {
         if (affectedActionType != action->type) continue;
         setActionTimerCore(action, amount);
     }
 }
 
-void Units::setCategoryActionTimers(df::unit *unit, int32_t amount, df::unit_action_type_group affectedActionTypes)
+void Units::setCategoryActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type_group affectedActionTypes)
 {
     CHECK_NULL_POINTER(unit);
+    if (!validateSetActionTimerAmount(out, amount))
+        return;
     for (auto action : unit->actions) {
         auto list = ENUM_ATTR(unit_action_type, group, action->type);
         for (size_t i = 0; i < list.size; i++) {

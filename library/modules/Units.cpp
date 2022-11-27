@@ -32,6 +32,7 @@ distribution.
 #include <cstring>
 #include <algorithm>
 #include <numeric>
+#include <functional>
 using namespace std;
 
 #include "VersionInfo.h"
@@ -2008,36 +2009,17 @@ int32_t *getActionTimerPointer(df::unit_action *action) {
     return nullptr;
 }
 
-void subtractActionTimersCore(df::unit_action *action, int32_t amount)
-{
+void mutateActionTimerCore(df::unit_action *action, std::function<double(double)> mutator) {
     int32_t *timer = getActionTimerPointer(action);
     if (timer != nullptr && *timer > 0) {
         double value = *timer;
-        value = max(value - amount, 1.0);
+        value = mutator(value);
         if (value > INT32_MAX) {
             value = INT32_MAX;
+        } else if (value < INT32_MIN) {
+            value = INT32_MIN;
         }
         *timer = value;
-    }
-}
-
-void multiplyActionTimersCore(df::unit_action *action, float amount)
-{
-    int32_t *timer = getActionTimerPointer(action);
-    if (timer != nullptr && *timer > 0) {
-        double value = *timer;
-        value = max(value * amount, 1.0);
-        if (value > INT32_MAX) {
-            value = INT32_MAX;
-        }
-        *timer = value;
-    }
-}
-
-void setActionTimersCore(df::unit_action *action, int32_t amount) {
-    int32_t *timer = getActionTimerPointer(action);
-    if (timer != nullptr && *timer > 0) {
-        *timer = amount;
     }
 }
 
@@ -2046,7 +2028,7 @@ void Units::subtractActionTimers(color_ostream &out, df::unit *unit, int32_t amo
     CHECK_NULL_POINTER(unit);
     for (auto action : unit->actions) {
         if (affectedActionType != action->type) continue;
-        subtractActionTimersCore(action, amount);
+        mutateActionTimerCore(action, [=](double timerValue){return max(timerValue - amount, 1.0);});
     }
 }
 
@@ -2057,7 +2039,7 @@ void Units::subtractCategoryActionTimers(color_ostream &out, df::unit *unit, int
         auto list = ENUM_ATTR(unit_action_type, group, action->type);
         for (size_t i = 0; i < list.size; i++) {
             if (list.items[i] == affectedActionTypes) {
-                subtractActionTimersCore(action, amount);
+                mutateActionTimerCore(action, [=](double timerValue){return max(timerValue - amount, 1.0);});
                 break;
             }
         }
@@ -2079,7 +2061,7 @@ void Units::multiplyActionTimers(color_ostream &out, df::unit *unit, float amoun
         return;
     for (auto action : unit->actions) {
         if (affectedActionType != action->type) continue;
-        multiplyActionTimersCore(action, amount);
+        mutateActionTimerCore(action, [=](double timerValue){return max(timerValue * amount, 1.0);});
     }
 }
 
@@ -2092,7 +2074,7 @@ void Units::multiplyCategoryActionTimers(color_ostream &out, df::unit *unit, flo
         auto list = ENUM_ATTR(unit_action_type, group, action->type);
         for (size_t i = 0; i < list.size; i++) {
             if (list.items[i] == affectedActionTypes) {
-                multiplyActionTimersCore(action, amount);
+                mutateActionTimerCore(action, [=](double timerValue){return max(timerValue * amount, 1.0);});
                 break;
             }
         }
@@ -2114,7 +2096,7 @@ void Units::setActionTimers(color_ostream &out, df::unit *unit, int32_t amount, 
         return;
     for (auto action : unit->actions) {
         if (affectedActionType != action->type) continue;
-        setActionTimersCore(action, amount);
+        mutateActionTimerCore(action, [=](double timerValue){return amount;});
     }
 }
 
@@ -2127,7 +2109,7 @@ void Units::setCategoryActionTimers(color_ostream &out, df::unit *unit, int32_t 
         auto list = ENUM_ATTR(unit_action_type, group, action->type);
         for (size_t i = 0; i < list.size; i++) {
             if (list.items[i] == affectedActionTypes) {
-                setActionTimersCore(action, amount);
+                mutateActionTimerCore(action, [=](double timerValue){return amount;});
                 break;
             }
         }

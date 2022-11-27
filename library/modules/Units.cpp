@@ -2008,7 +2008,7 @@ int32_t *getActionTimerPointer(df::unit_action *action) {
     return nullptr;
 }
 
-void subtractActionTimerCore(df::unit_action *action, int32_t amount)
+void subtractActionTimersCore(df::unit_action *action, int32_t amount)
 {
     int32_t *timer = getActionTimerPointer(action);
     if (timer != nullptr && *timer > 0) {
@@ -2021,7 +2021,7 @@ void subtractActionTimerCore(df::unit_action *action, int32_t amount)
     }
 }
 
-void multiplyActionTimerCore(df::unit_action *action, float amount)
+void multiplyActionTimersCore(df::unit_action *action, float amount)
 {
     int32_t *timer = getActionTimerPointer(action);
     if (timer != nullptr && *timer > 0) {
@@ -2034,19 +2034,19 @@ void multiplyActionTimerCore(df::unit_action *action, float amount)
     }
 }
 
-void setActionTimerCore(df::unit_action *action, int32_t amount) {
+void setActionTimersCore(df::unit_action *action, int32_t amount) {
     int32_t *timer = getActionTimerPointer(action);
     if (timer != nullptr && *timer > 0) {
         *timer = amount;
     }
 }
 
-void Units::subtractActionTimer(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type affectedActionType)
+void Units::subtractActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type affectedActionType)
 {
     CHECK_NULL_POINTER(unit);
     for (auto action : unit->actions) {
         if (affectedActionType != action->type) continue;
-        subtractActionTimerCore(action, amount);
+        subtractActionTimersCore(action, amount);
     }
 }
 
@@ -2057,7 +2057,7 @@ void Units::subtractCategoryActionTimers(color_ostream &out, df::unit *unit, int
         auto list = ENUM_ATTR(unit_action_type, group, action->type);
         for (size_t i = 0; i < list.size; i++) {
             if (list.items[i] == affectedActionTypes) {
-                subtractActionTimerCore(action, amount);
+                subtractActionTimersCore(action, amount);
                 break;
             }
         }
@@ -2072,14 +2072,14 @@ bool validateMultiplyActionTimerAmount(color_ostream &out, float amount) {
     return true;
 }
 
-void Units::multiplyActionTimer(color_ostream &out, df::unit *unit, float amount, df::unit_action_type affectedActionType)
+void Units::multiplyActionTimers(color_ostream &out, df::unit *unit, float amount, df::unit_action_type affectedActionType)
 {
     CHECK_NULL_POINTER(unit);
     if (!validateMultiplyActionTimerAmount(out, amount))
         return;
     for (auto action : unit->actions) {
         if (affectedActionType != action->type) continue;
-        multiplyActionTimerCore(action, amount);
+        multiplyActionTimersCore(action, amount);
     }
 }
 
@@ -2092,7 +2092,7 @@ void Units::multiplyCategoryActionTimers(color_ostream &out, df::unit *unit, flo
         auto list = ENUM_ATTR(unit_action_type, group, action->type);
         for (size_t i = 0; i < list.size; i++) {
             if (list.items[i] == affectedActionTypes) {
-                multiplyActionTimerCore(action, amount);
+                multiplyActionTimersCore(action, amount);
                 break;
             }
         }
@@ -2107,14 +2107,14 @@ bool validateSetActionTimerAmount(color_ostream &out, int32_t amount) {
     return true;
 }
 
-void Units::setActionTimer(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type affectedActionType)
+void Units::setActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type affectedActionType)
 {
     CHECK_NULL_POINTER(unit);
     if (!validateSetActionTimerAmount(out, amount))
         return;
     for (auto action : unit->actions) {
         if (affectedActionType != action->type) continue;
-        setActionTimerCore(action, amount);
+        setActionTimersCore(action, amount);
     }
 }
 
@@ -2127,7 +2127,7 @@ void Units::setCategoryActionTimers(color_ostream &out, df::unit *unit, int32_t 
         auto list = ENUM_ATTR(unit_action_type, group, action->type);
         for (size_t i = 0; i < list.size; i++) {
             if (list.items[i] == affectedActionTypes) {
-                setActionTimerCore(action, amount);
+                setActionTimersCore(action, amount);
                 break;
             }
         }

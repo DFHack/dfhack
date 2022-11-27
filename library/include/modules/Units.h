@@ -226,11 +226,11 @@ DFHACK_EXPORT extern const std::vector<int32_t> stress_cutoffs;
 DFHACK_EXPORT int getStressCategory(df::unit *unit);
 DFHACK_EXPORT int getStressCategoryRaw(int32_t stress_level);
 
-DFHACK_EXPORT void subtractActionTimer(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type affectedActionType);
+DFHACK_EXPORT void subtractActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type affectedActionType);
 DFHACK_EXPORT void subtractCategoryActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type_group affectedActionTypes);
-DFHACK_EXPORT void multiplyActionTimer(color_ostream &out, df::unit *unit, float amount, df::unit_action_type affectedActionType);
+DFHACK_EXPORT void multiplyActionTimers(color_ostream &out, df::unit *unit, float amount, df::unit_action_type affectedActionType);
 DFHACK_EXPORT void multiplyCategoryActionTimers(color_ostream &out, df::unit *unit, float amount, df::unit_action_type_group affectedActionTypes);
-DFHACK_EXPORT void setActionTimer(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type affectedActionType);
+DFHACK_EXPORT void setActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type affectedActionType);
 DFHACK_EXPORT void setCategoryActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type_group affectedActionTypes);
 
 }

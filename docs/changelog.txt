@@ -34,7 +34,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
-- `overlay`: plugin is transformed from a single line of text that runs `gui/launcher` on click to a fully-featured overlay injection framework. See `overlay-dev-guide` for details.
+- `overlay`: plugin is transformed from a single line of text that runs `gui/launcher` on click to a fully-featured overlay injection framework. It now houses a popup menu for active keybindings, all the widgets provided by `dwarfmonitor` (e.g. the current date and number of happy/unhappy dwarves), the overlay that highlights suspended buildings when you pause, and others. See `overlay-dev-guide` for details.
 
 ## Fixes
 - `automaterial`: fix the cursor jumping up a z level when clicking quickly after box select
@@ -113,6 +113,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``dfhack.constructions.findAtTile()``: exposed preexisting function to Lua.
 - ``dfhack.constructions.insert()``: exposed new function to Lua.
 - ``widgets.Panel``: new ``frame_style`` and ``frame_title`` attributes for drawing frames around groups of widgets
+- ``widgets.ResizingPanel``: now accounts for frame inset when calculating frame size
+- ``widgets.HotkeyLabel``: now ignores mouse clicks when ``on_activate`` is not defined
 - ``widgets.EditField`` now allows other widgets to process characters that the ``on_char`` callback rejects.
 - ``gui.Screen.show()`` now returns ``self`` as a convenience
 - ``gui.View.getMousePos()`` now takes an optional ``ViewRect`` parameter in case the caller wants to get the mouse pos relative to a rect that is not the frame_body (such as the frame_rect)

@@ -84,7 +84,7 @@ static void find_active_keybindings(df::viewscreen *screen, bool filtermenu) {
         valid_keys.push_back(string(&c, 1));
     }
 
-    for (int i = 1; i < 13; i++) {
+    for (int i = 1; i <= 12; i++) {
         valid_keys.push_back("F" + int_to_string(i));
     }
 

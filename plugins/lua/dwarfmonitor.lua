@@ -111,6 +111,7 @@ MiseryWidget.ATTRS{
 function MiseryWidget:init()
     self.colors = getStressCategoryColors()
     self.stress_category_counts = {}
+    self.frame.w = 2*#self.colors + 1
 end
 
 function MiseryWidget:overlay_onupdate()

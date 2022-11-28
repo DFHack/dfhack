@@ -14,20 +14,40 @@ local DEFAULT_X_POS, DEFAULT_Y_POS = -2, -2
 -- state and config --
 -- ---------------- --
 
-local active_triggered_widget = nil
-local active_triggered_screen = nil -- if non-nil, hotspots will not get updates
+local trigger_lock_holder_description = nil
+local trigger_lock_holder_screen = nil -- if non-nil, no triggering allowed
 local widget_db = {} -- map of widget name to ephermeral state
 local widget_index = {} -- ordered list of widget names
 local overlay_config = {} -- map of widget name to persisted state
 local active_hotspot_widgets = {} -- map of widget names to the db entry
 local active_viewscreen_widgets = {} -- map of vs_name to map of w.names -> db
 
-local function reset()
-    if active_triggered_screen then
-        active_triggered_screen:dismiss()
+function get_state()
+    return {index=widget_index, config=overlay_config, db=widget_db}
+end
+
+function register_trigger_lock_screen(scr, desc)
+    if trigger_lock_holder_screen then
+        if not trigger_lock_holder_screen:isActive() then
+            trigger_lock_holder_screen:dismiss()
+        end
+        trigger_lock_holder_description = nil
     end
-    active_triggered_widget = nil
-    active_triggered_screen = nil
+    trigger_lock_holder_screen = scr
+    if trigger_lock_holder_screen then
+        trigger_lock_holder_description = desc
+        return true
+    end
+end
+
+local function triggered_screen_has_lock()
+    if not trigger_lock_holder_screen then return false end
+    if trigger_lock_holder_screen:isActive() then return true end
+    return register_trigger_lock_screen(nil, nil)
+end
+
+local function reset()
+    register_trigger_lock_screen(nil, nil)
 
     widget_db = {}
     widget_index = {}
@@ -46,19 +66,11 @@ local function save_config()
     end
 end
 
-local function triggered_screen_has_lock()
-    if not active_triggered_screen then return false end
-    if active_triggered_screen:isActive() then return true end
-    active_triggered_widget = nil
-    active_triggered_screen = nil
-    return false
-end
-
 -- ----------- --
 -- utility fns --
 -- ----------- --
 
-local function normalize_list(element_or_list)
+function normalize_list(element_or_list)
     if type(element_or_list) == 'table' then return element_or_list end
     return {element_or_list}
 end
@@ -70,7 +82,7 @@ local function normalize_viewscreen_name(vs_name)
 end
 
 -- reduce "long form" viewscreen names to "short form"
-local function simplify_viewscreen_name(vs_name)
+function simplify_viewscreen_name(vs_name)
     _,_,short_name = vs_name:find('^viewscreen_(.*)st$')
     if short_name then return short_name end
     return vs_name
@@ -162,7 +174,7 @@ local function do_enable(args, quiet, skip_save)
     end
 end
 
-local function do_disable(args)
+local function do_disable(args, quiet)
     local disable_fn = function(name, db_entry)
         overlay_config[name].enabled = false
         if db_entry.widget.hotspot then
@@ -175,7 +187,9 @@ local function do_disable(args)
                 active_viewscreen_widgets[vs_name] = nil
             end
         end
-        print(('disabled widget %s'):format(name))
+        if not quiet then
+            print(('disabled widget %s'):format(name))
+        end
     end
     if args[1] == 'all' then
         for name,db_entry in pairs(widget_db) do
@@ -301,7 +315,7 @@ local function dump_widget_config(name, widget)
     end
 end
 
-local function do_position(args)
+local function do_position(args, quiet)
     local name_or_number, x, y = table.unpack(args)
     local name = get_name(name_or_number)
     if not widget_db[name] then
@@ -328,11 +342,13 @@ local function do_position(args)
     widget.frame = make_frame(pos, widget.frame)
     widget:updateLayout(get_screen_rect())
     save_config()
-    print(('repositioned widget %s to x=%d, y=%d'):format(name, pos.x, pos.y))
+    if not quiet then
+        print(('repositioned widget %s to x=%d, y=%d'):format(name, pos.x, pos.y))
+    end
 end
 
 -- note that the widget does not have to be enabled to be triggered
-local function do_trigger(args)
+local function do_trigger(args, quiet)
     if triggered_screen_has_lock() then
         dfhack.printerr(('cannot trigger widget; widget "%s" is already active')
                         :format(active_triggered_widget))
@@ -341,11 +357,10 @@ local function do_trigger(args)
     do_by_names_or_numbers(args[1], function(name, db_entry)
         local widget = db_entry.widget
         if widget.overlay_trigger then
-            active_triggered_screen = widget:overlay_trigger()
-            if active_triggered_screen then
-                active_triggered_widget = name
+            register_trigger_lock_screen(widget:overlay_trigger(), name)
+            if not quiet then
+                print(('triggered widget %s'):format(name))
             end
-            print(('triggered widget %s'):format(name))
         end
     end)
 end
@@ -360,10 +375,10 @@ local command_fns = {
 
 local HELP_ARGS = utils.invert{'help', '--help', '-h'}
 
-function overlay_command(args)
+function overlay_command(args, quiet)
     local command = table.remove(args, 1) or 'help'
     if HELP_ARGS[command] or not command_fns[command] then return false end
-    command_fns[command](args)
+    command_fns[command](args, quiet)
     return true
 end
 
@@ -398,9 +413,7 @@ local function do_update(name, db_entry, now_ms, vs)
     local w = db_entry.widget
     db_entry.next_update_ms = get_next_onupdate_timestamp(now_ms, w)
     if detect_frame_change(w, function() return w:overlay_onupdate(vs) end) then
-        active_triggered_screen = w:overlay_trigger()
-        if active_triggered_screen then
-            active_triggered_widget = name
+        if register_trigger_lock_screen(w:overlay_trigger(), name) then
             return true
         end
     end
@@ -463,6 +476,7 @@ OverlayWidget = defclass(OverlayWidget, widgets.Widget)
 OverlayWidget.ATTRS{
     name=DEFAULT_NIL, -- this is set by the framework to the widget name
     default_pos={x=DEFAULT_X_POS, y=DEFAULT_Y_POS}, -- 1-based widget screen pos
+    overlay_only=false, -- true if there is no widget to reposition
     hotspot=false, -- whether to call overlay_onupdate on all screens
     viewscreens={}, -- override with associated viewscreen or list of viewscrens
     overlay_onupdate_max_freq_seconds=5, -- throttle calls to overlay_onupdate

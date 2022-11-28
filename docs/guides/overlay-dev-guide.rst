@@ -116,6 +116,10 @@ The ``overlay.OverlayWidget`` superclass defines the following class attributes:
     viewscreen's ``logic()`` function). This call to ``overlay_onupdate`` is in
     addition to any calls initiated from associated interposed viewscreens and
     will come after calls from associated viewscreens.
+- ``overlay_only`` (default: ``false``)
+    If set to ``true``, no widget frame will be drawn in `gui/overlay` for drag
+    and drop repositioning. Overlay widgets that don't have a "widget" to
+    reposition should set this to ``true``.
 - ``overlay_onupdate_max_freq_seconds`` (default: ``5``)
     This throttles how often a widget's ``overlay_onupdate`` function can be
     called (from any source). Set this to the largest amount of time (in

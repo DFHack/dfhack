@@ -1,5 +1,6 @@
 #include "Core.h"
 #include <Console.h>
+#include <Debug.h>
 #include <Export.h>
 #include <PluginManager.h>
 
@@ -79,7 +80,9 @@ REQUIRE_GLOBAL(world);
 
 DFHACK_PLUGIN_IS_ENABLED(enable_autohauler);
 
-static bool print_debug = false;
+namespace DFHack {
+    DBG_DECLARE(autohauler, cycle, DebugCategory::LINFO);
+}
 
 static std::vector<int> state_count(NUM_STATE);
 
@@ -461,23 +464,16 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
                 dwarf_info[dwarf].state = dwarf_states[job];
             else
             {
-                out.print("Dwarf %i \"%s\" has unknown job %i\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), job);
-                dwarf_info[dwarf].state = BUSY;
+                WARN(cycle, out).print("Dwarf %i \"%s\" has unknown job %i\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), job);
+                dwarf_info[dwarf].state = OTHER;
             }
         }
 
-        // Debug: Output dwarf job and state data
-        if(print_debug)
-            out.print("Dwarf %i %s State: %i\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(),
-                      dwarf_info[dwarf].state);
-
-        // Increment corresponding labor in default_labor_infos struct
         state_count[dwarf_info[dwarf].state]++;
 
+        INFO(cycle, out).print("Dwarf %i \"%s\": state %s\n", 
+            dwarf, dwarfs[dwarf]->name.first_name.c_str(), state_names[dwarf_info[dwarf].state]);
     }
-
-    // At this point the debug if present has been completed
-    print_debug = false;
 
     // This is a vector of all the labors
     std::vector<df::unit_labor> labors;
@@ -717,18 +713,6 @@ command_result autohauler (color_ostream &out, std::vector <std::string> & param
                 print_labor(labor, out);
             }
         }
-
-        return CR_OK;
-    }
-    else if (parameters.size() == 1 && parameters[0] == "debug")
-    {
-        if (!enable_autohauler)
-        {
-            out << "Error: The plugin is not enabled." << std::endl;
-            return CR_FAILURE;
-        }
-
-        print_debug = true;
 
         return CR_OK;
     }

@@ -82,9 +82,7 @@ set(MAIN_SOURCES
     RemoteTools.cpp
 )
 
-if(BUILD_CORE_TESTS)
-    add_subdirectory(tests)
-endif()
+add_subdirectory(tests)
 
 if(WIN32)
     set(CONSOLE_SOURCES Console-windows.cpp)

@@ -10,7 +10,7 @@ TEST(MiscUtils, wordwrap) {
     ASSERT_EQ(result.size(), 1);
 
     result.clear();
-    word_wrap(&result, "12345", 3);
+    word_wrap(&result, "123456", 3);
     ASSERT_EQ(result.size(), 2);
 
     result.clear();

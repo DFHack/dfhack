@@ -96,8 +96,13 @@ jobs:
       run: |
         ninja -C build-ci install
         ccache --show-stats
-    - name: Run tests
-      id: run_tests
+    - name: Run cpp unit tests
+      id: run_tests_cpp
+      run: |
+        ninja -C build-ci test
+        exit $?
+    - name: Run lua tests
+      id: run_tests_lua
       run: |
         export TERM=dumb
         status=0

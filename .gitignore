@@ -29,6 +29,8 @@ build/Makefile
 build/CMakeCache.txt
 build/cmake_install.cmake
 build/CMakeFiles
+build/CTestTestfile.cmake
+build/DartConfiguration.tcl
 build/data
 build/docs
 build/lua

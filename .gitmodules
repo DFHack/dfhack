@@ -28,3 +28,6 @@
 [submodule "depends/luacov"]
 	path = depends/luacov
 	url = ../../DFHack/luacov.git
+[submodule "depends/googletest"]
+	path = depends/googletest
+	url = ../../google/googletest.git

@@ -421,6 +421,16 @@ include_directories(depends/clsocket/src)
 include_directories(depends/xlsxio/include)
 add_subdirectory(depends)
 
+# Testing with CTest
+macro(dfhack_test name files)
+    message("dfhack_test(${name}, ${files})")
+    add_executable(${name} ${files})
+    target_include_directories(${name} PUBLIC depends/googletest/googletest/include)
+    target_link_libraries(${name} dfhack gtest SDL)
+    add_test(NAME ${name} COMMAND ${name})
+endmacro()
+include(CTest)
+
 find_package(Git REQUIRED)
 if(NOT GIT_FOUND)
     message(SEND_ERROR "could not find git")

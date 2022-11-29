@@ -82,6 +82,11 @@ set(MAIN_SOURCES
     RemoteTools.cpp
 )
 
+file(GLOB_RECURSE TEST_SOURCES
+    LIST_DIRECTORIES false
+    *test.cpp)
+dfhack_test(dfhack-test "${TEST_SOURCES}")
+
 if(WIN32)
     set(CONSOLE_SOURCES Console-windows.cpp)
 else()

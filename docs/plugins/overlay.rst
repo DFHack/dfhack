@@ -6,8 +6,9 @@ overlay
     :tags: dfhack interface
 
 The overlay framework manages the on-screen widgets that other tools (including
-3rd party plugins and scripts) can register for display. If you are a developer
-who wants to write an overlay widget, please see the `overlay-dev-guide`.
+3rd party plugins and scripts) can register for display. For a graphical
+configuration interface, please see `gui/config`. If you are a developer who
+wants to write an overlay widget, please see the `overlay-dev-guide`.
 
 Usage
 -----

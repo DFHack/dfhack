@@ -34,7 +34,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
-- `overlay`: plugin is transformed from a single line of text that runs `gui/launcher` on click to a fully-featured overlay injection framework. See `overlay-dev-guide` for details.
+- `overlay`: plugin is transformed from a single line of text that runs `gui/launcher` on click to a fully-featured overlay injection framework. It now houses a popup menu for active keybindings, all the widgets provided by `dwarfmonitor` (e.g. the current date and number of happy/unhappy dwarves), the overlay that highlights suspended buildings when you pause, and others. See `overlay-dev-guide` for details.
 
 ## Fixes
 - `automaterial`: fix the cursor jumping up a z level when clicking quickly after box select
@@ -117,6 +117,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``widgets.Panel``: new ``frame_style`` and ``frame_title`` attributes for drawing frames around groups of widgets
 - ``widgets.EditField``: now allows other widgets to process characters that the ``on_char`` callback rejects.
 - ``widgets.FilteredList``: now provides a useful default search key for list items made up of text tokens instead of plain text
+- ``widgets.ResizingPanel``: now accounts for frame inset when calculating frame size
+- ``widgets.HotkeyLabel``: now ignores mouse clicks when ``on_activate`` is not defined
 - ``gui.Screen.show()`` now returns ``self`` as a convenience
 - ``gui.View.getMousePos()`` now takes an optional ``ViewRect`` parameter in case the caller wants to get the mouse pos relative to a rect that is not the frame_body (such as the frame_rect)
 - Lua mouse events now conform to documented behavior in `lua-api` -- ``_MOUSE_L_DOWN`` will be sent exactly once per mouse click and ``_MOUSE_L`` will be sent repeatedly as long as the button is held down. Similarly for right mouse button events.

@@ -397,8 +397,6 @@ if(APPLE)
     target_link_libraries(dfhack ncurses)
     set_target_properties(dfhack PROPERTIES VERSION 1.0.0)
     set_target_properties(dfhack PROPERTIES SOVERSION 1.0.0)
-elseif(UNIX)
-    target_link_libraries(dfhack SDL)
 endif()
 
 target_link_libraries(dfhack protobuf-lite clsocket lua jsoncpp_static dfhack-version ${PROJECT_LIBS})

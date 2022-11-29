@@ -678,9 +678,9 @@ static void assign_labor(unit_labor::unit_labor labor,
                 dwarfs[dwarf]->military.pickup_flags.bits.update = 1;
             }
 
-            TRACE(cycle, out).print("Dwarf % i \"%s\" assigned %s: value %i %s %s\n", 
-                dwarf, dwarfs[dwarf]->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str(), values[dwarf], 
-                dwarf_info[dwarf].trader ? "(trader)" : "", 
+            TRACE(cycle, out).print("Dwarf % i \"%s\" assigned %s: value %i %s %s\n",
+                dwarf, dwarfs[dwarf]->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str(), values[dwarf],
+                dwarf_info[dwarf].trader ? "(trader)" : "",
                 dwarf_info[dwarf].diplomacy ? "(diplomacy)" : "");
 
             if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY || dwarf_info[dwarf].state == EXCLUSIVE)
@@ -742,7 +742,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         {
             df::building_tradedepotst* depot = (df::building_tradedepotst*) build;
             trader_requested = trader_requested || depot->trade_flags.bits.trader_requested;
-            INFO(cycle,out).print(trader_requested 
+            INFO(cycle,out).print(trader_requested
                 ? "Trade depot found and trader requested, trader will be excluded from all labors.\n"
                 : "Trade depot found but trader is not requested.\n"
                 );
@@ -822,7 +822,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             if (p1 || p2)
             {
                 dwarf_info[dwarf].diplomacy = true;
-                INFO(cycle, out).print("Dwarf %i \"%s\" has a meeting, will be cleared of all labors\n", 
+                INFO(cycle, out).print("Dwarf %i \"%s\" has a meeting, will be cleared of all labors\n",
                     dwarf, dwarfs[dwarf]->name.first_name.c_str());
                 break;
             }
@@ -902,7 +902,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
         state_count[dwarf_info[dwarf].state]++;
 
-        INFO(cycle, out).print("Dwarf %i \"%s\": penalty %i, state %s\n", 
+        INFO(cycle, out).print("Dwarf %i \"%s\": penalty %i, state %s\n",
             dwarf, dwarfs[dwarf]->name.first_name.c_str(), dwarf_info[dwarf].mastery_penalty, state_names[dwarf_info[dwarf].state]);
     }
 
@@ -1010,7 +1010,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY || dwarf_info[dwarf].state == EXCLUSIVE)
                 labor_infos[labor].active_dwarfs++;
 
-            TRACE(cycle, out).print("Dwarf %i \"%s\" assigned %s: hauler\n", 
+            TRACE(cycle, out).print("Dwarf %i \"%s\" assigned %s: hauler\n",
                 dwarf, dwarfs[dwarf]->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str());
         }
 

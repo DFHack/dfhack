@@ -623,10 +623,17 @@ bool Units::isDwarf(df::unit *unit)
            unit->enemy.normal_race == ui->race_id;
 }
 
-bool Units::isAnimal(df::unit* unit)
-{
+bool Units::isAnimal(df::unit* unit) {
     CHECK_NULL_POINTER(unit)
-    return unit->enemy.caste_flags.is_set(df::enums::caste_raw_flags::NATURAL_ANIMAL);
+    using namespace df::enums::caste_raw_flags;
+    const auto &cf = unit->enemy.caste_flags;
+    // we're (somewhat) matching Dwarf Therapist's animal check. We care about wild animals too however.
+    return !cf.is_set(CAN_LEARN) && !cf.is_set(CAN_SPEAK) &&
+           (unit->flags2.bits.roaming_wilderness_population_source ||
+            cf.is_set(PET) ||
+            cf.is_set(PET_EXOTIC) ||
+            cf.is_set(TRAINABLE_WAR) || //These last two may be redundant
+            cf.is_set(TRAINABLE_HUNTING));
 }
 
 bool Units::isMerchant(df::unit* unit)

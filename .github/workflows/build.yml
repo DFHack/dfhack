@@ -99,7 +99,7 @@ jobs:
     - name: Run cpp unit tests
       id: run_tests_cpp
       run: |
-        ninja -C build-ci && ninja -C build-ci test
+        ninja -C build-ci test
         exit $?
     - name: Run lua tests
       id: run_tests_lua

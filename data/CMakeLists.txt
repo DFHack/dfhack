@@ -21,7 +21,7 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/blueprints/
         FILES_MATCHING PATTERN "*"
                        PATTERN blueprints/library/test EXCLUDE)
 
-if(BUILD_TESTS)
+if(BUILD_SCRIPT_TESTS)
     install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/blueprints/library/test/
             DESTINATION blueprints/library/test
     )

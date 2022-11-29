@@ -89,6 +89,7 @@ enable automaterial
 
 # Other interface improvement tools
 enable \
+ overlay \
  confirm \
  dwarfmonitor \
  mousequery \
@@ -97,7 +98,6 @@ enable \
  automelt \
  autotrade \
  buildingplan \
- resume \
  trackstop \
  zone \
  stocks \

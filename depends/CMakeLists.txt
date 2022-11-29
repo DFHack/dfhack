@@ -3,6 +3,10 @@ add_subdirectory(lodepng)
 add_subdirectory(lua)
 add_subdirectory(md5)
 add_subdirectory(protobuf)
+if(BUILD_CORE_TESTS)
+    add_subdirectory(googletest EXCLUDE_FROM_ALL)
+    set_target_properties(gtest PROPERTIES COMPILE_FLAGS "-Wno-maybe-uninitialized -Wno-sign-compare")
+endif()
 
 # Don't build tinyxml if it's being externally linked against.
 if(NOT TinyXML_FOUND)

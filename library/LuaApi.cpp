@@ -98,6 +98,8 @@ distribution.
 #include "df/specific_ref.h"
 #include "df/specific_ref_type.h"
 #include "df/vermin.h"
+#include "df/report_init.h"
+#include "df/report_zoom_type.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -1481,15 +1483,136 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, showPopupAnnouncement),
     WRAPM(Gui, showAutoAnnouncement),
     WRAPM(Gui, resetDwarfmodeView),
-    WRAPM(Gui, revealInDwarfmodeMap),
     WRAPM(Gui, refreshSidebar),
     WRAPM(Gui, inRenameBuilding),
     WRAPM(Gui, getDepthAt),
     { NULL, NULL }
 };
 
+static int gui_autoDFAnnouncement(lua_State *state)
+{
+    bool rv;
+    df::report_init *r = Lua::GetDFObject<df::report_init>(state, 1);
+
+    if (r)
+    {
+        std::string message = luaL_checkstring(state, 2);
+        rv = Gui::autoDFAnnouncement(*r, message);
+    }
+    else
+    {
+        df::coord pos;
+        int color = 0; // initialize these to prevent warning
+        bool bright = false, is_sparring = false;
+        df::unit *unit1 = NULL, *unit2 = NULL;
+
+        auto type = (df::announcement_type)lua_tointeger(state, 1);
+        Lua::CheckDFAssign(state, &pos, 2);
+        std::string message = luaL_checkstring(state, 3);
+
+        switch (lua_gettop(state))
+        {
+            default:
+            case 8:
+                is_sparring = lua_toboolean(state, 8);
+            case 7:
+                unit2 = Lua::CheckDFObject<df::unit>(state, 7);
+            case 6:
+                unit1 = Lua::CheckDFObject<df::unit>(state, 6);
+            case 5:
+                bright = lua_toboolean(state, 5);
+            case 4:
+                color = lua_tointeger(state, 4);
+            case 3:
+                break;
+        }
+
+        switch (lua_gettop(state))
+        {   // Use the defaults in Gui.h
+            default:
+            case 8:
+                rv = Gui::autoDFAnnouncement(type, pos, message, color, bright, unit1, unit2, is_sparring);
+                break;
+            case 7:
+                rv = Gui::autoDFAnnouncement(type, pos, message, color, bright, unit1, unit2);
+                break;
+            case 6:
+                rv = Gui::autoDFAnnouncement(type, pos, message, color, bright, unit1);
+                break;
+            case 5:
+                rv = Gui::autoDFAnnouncement(type, pos, message, color, bright);
+                break;
+            case 4:
+                rv = Gui::autoDFAnnouncement(type, pos, message, color);
+                break;
+            case 3:
+                rv = Gui::autoDFAnnouncement(type, pos, message);
+        }
+    }
+
+    lua_pushboolean(state, rv);
+    return 1;
+}
+
+static int gui_pauseRecenter(lua_State *state)
+{
+    bool rv;
+    df::coord p;
+
+    switch (lua_gettop(state))
+    {
+        default:
+        case 4:
+            rv = Gui::pauseRecenter(CheckCoordXYZ(state, 1, false), lua_toboolean(state, 4));
+            break;
+        case 3:
+            rv = Gui::pauseRecenter(CheckCoordXYZ(state, 1, false));
+            break;
+        case 2:
+            Lua::CheckDFAssign(state, &p, 1);
+            rv = Gui::pauseRecenter(p, lua_toboolean(state, 2));
+            break;
+        case 1:
+            Lua::CheckDFAssign(state, &p, 1);
+            rv = Gui::pauseRecenter(p);
+    }
+
+    lua_pushboolean(state, rv);
+    return 1;
+}
+
+static int gui_revealInDwarfmodeMap(lua_State *state)
+{
+    bool rv;
+    df::coord p;
+
+    switch (lua_gettop(state))
+    {
+        default:
+        case 4:
+            rv = Gui::revealInDwarfmodeMap(CheckCoordXYZ(state, 1, false), lua_toboolean(state, 4));
+            break;
+        case 3:
+            rv = Gui::revealInDwarfmodeMap(CheckCoordXYZ(state, 1, false));
+            break;
+        case 2:
+            Lua::CheckDFAssign(state, &p, 1);
+            rv = Gui::revealInDwarfmodeMap(p, lua_toboolean(state, 2));
+            break;
+        case 1:
+            Lua::CheckDFAssign(state, &p, 1);
+            rv = Gui::revealInDwarfmodeMap(p);
+    }
+
+    lua_pushboolean(state, rv);
+    return 1;
+}
+
 static const luaL_Reg dfhack_gui_funcs[] = {
+    { "autoDFAnnouncement", gui_autoDFAnnouncement },
     { "getDwarfmodeViewDims", gui_getDwarfmodeViewDims },
+    { "pauseRecenter", gui_pauseRecenter },
+    { "revealInDwarfmodeMap", gui_revealInDwarfmodeMap },
     { "getMousePos", gui_getMousePos },
     { NULL, NULL }
 };
@@ -1559,6 +1682,63 @@ static const luaL_Reg dfhack_job_funcs[] = {
 /***** Units module *****/
 
 static const LuaWrapper::FunctionReg dfhack_units_module[] = {
+    WRAPM(Units, isUnitInBox),
+    WRAPM(Units, isActive),
+    WRAPM(Units, isVisible),
+    WRAPM(Units, isCitizen),
+    WRAPM(Units, isFortControlled),
+    WRAPM(Units, isOwnCiv),
+    WRAPM(Units, isOwnGroup),
+    WRAPM(Units, isOwnRace),
+    WRAPM(Units, isAlive),
+    WRAPM(Units, isDead),
+    WRAPM(Units, isKilled),
+    WRAPM(Units, isSane),
+    WRAPM(Units, isCrazed),
+    WRAPM(Units, isGhost),
+    WRAPM(Units, isHidden),
+    WRAPM(Units, isHidingCurse),
+    WRAPM(Units, isMale),
+    WRAPM(Units, isFemale),
+    WRAPM(Units, isBaby),
+    WRAPM(Units, isChild),
+    WRAPM(Units, isAdult),
+    WRAPM(Units, isGay),
+    WRAPM(Units, isNaked),
+    WRAPM(Units, isVisiting),
+    WRAPM(Units, isTrainableHunting),
+    WRAPM(Units, isTrainableWar),
+    WRAPM(Units, isTrained),
+    WRAPM(Units, isHunter),
+    WRAPM(Units, isWar),
+    WRAPM(Units, isTame),
+    WRAPM(Units, isTamable),
+    WRAPM(Units, isDomesticated),
+    WRAPM(Units, isMarkedForSlaughter),
+    WRAPM(Units, isGelded),
+    WRAPM(Units, isEggLayer),
+    WRAPM(Units, isGrazer),
+    WRAPM(Units, isMilkable),
+    WRAPM(Units, isForest),
+    WRAPM(Units, isMischievous),
+    WRAPM(Units, isAvailableForAdoption),
+    WRAPM(Units, hasExtravision),
+    WRAPM(Units, isOpposedToLife),
+    WRAPM(Units, isBloodsucker),
+    WRAPM(Units, isDwarf),
+    WRAPM(Units, isAnimal),
+    WRAPM(Units, isMerchant),
+    WRAPM(Units, isDiplomat),
+    WRAPM(Units, isVisitor),
+    WRAPM(Units, isInvader),
+    WRAPM(Units, isUndead),
+    WRAPM(Units, isNightCreature),
+    WRAPM(Units, isSemiMegabeast),
+    WRAPM(Units, isMegabeast),
+    WRAPM(Units, isTitan),
+    WRAPM(Units, isDemon),
+    WRAPM(Units, isDanger),
+    WRAPM(Units, isGreatDanger),
     WRAPM(Units, teleport),
     WRAPM(Units, getGeneralRef),
     WRAPM(Units, getSpecificRef),
@@ -1567,23 +1747,9 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getVisibleName),
     WRAPM(Units, getIdentity),
     WRAPM(Units, getNemesis),
-    WRAPM(Units, isHidingCurse),
     WRAPM(Units, getPhysicalAttrValue),
     WRAPM(Units, getMentalAttrValue),
-    WRAPM(Units, isCrazed),
-    WRAPM(Units, isOpposedToLife),
-    WRAPM(Units, hasExtravision),
-    WRAPM(Units, isBloodsucker),
-    WRAPM(Units, isMischievous),
     WRAPM(Units, getMiscTrait),
-    WRAPM(Units, isDead),
-    WRAPM(Units, isAlive),
-    WRAPM(Units, isSane),
-    WRAPM(Units, isDwarf),
-    WRAPM(Units, isCitizen),
-    WRAPM(Units, isFortControlled),
-    WRAPM(Units, isVisible),
-    WRAPM(Units, isHidden),
     WRAPM(Units, getAge),
     WRAPM(Units, getKillCount),
     WRAPM(Units, getNominalSkill),
@@ -1601,12 +1767,6 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getGoalName),
     WRAPM(Units, isGoalAchieved),
     WRAPM(Units, getSquadName),
-    WRAPM(Units, isWar),
-    WRAPM(Units, isHunter),
-    WRAPM(Units, isAvailableForAdoption),
-    WRAPM(Units, isOwnCiv),
-    WRAPM(Units, isOwnGroup),
-    WRAPM(Units, isOwnRace),
     WRAPM(Units, getPhysicalDescription),
     WRAPM(Units, getRaceName),
     WRAPM(Units, getRaceNamePlural),
@@ -1615,31 +1775,6 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getRaceBabyNameById),
     WRAPM(Units, getRaceChildName),
     WRAPM(Units, getRaceChildNameById),
-    WRAPM(Units, isBaby),
-    WRAPM(Units, isChild),
-    WRAPM(Units, isAdult),
-    WRAPM(Units, isEggLayer),
-    WRAPM(Units, isGrazer),
-    WRAPM(Units, isMilkable),
-    WRAPM(Units, isTrainableWar),
-    WRAPM(Units, isTrainableHunting),
-    WRAPM(Units, isTamable),
-    WRAPM(Units, isMale),
-    WRAPM(Units, isFemale),
-    WRAPM(Units, isMerchant),
-    WRAPM(Units, isDiplomat),
-    WRAPM(Units, isForest),
-    WRAPM(Units, isMarkedForSlaughter),
-    WRAPM(Units, isTame),
-    WRAPM(Units, isTrained),
-    WRAPM(Units, isGay),
-    WRAPM(Units, isNaked),
-    WRAPM(Units, isUndead),
-    WRAPM(Units, isGhost),
-    WRAPM(Units, isActive),
-    WRAPM(Units, isKilled),
-    WRAPM(Units, isGelded),
-    WRAPM(Units, isDomesticated),
     WRAPM(Units, getMainSocialActivity),
     WRAPM(Units, getMainSocialEvent),
     WRAPM(Units, getStressCategory),
@@ -1705,6 +1840,8 @@ static int units_getUnitsInBox(lua_State *state)
     {
         luaL_checktype(state, 7, LUA_TFUNCTION);
         units.erase(std::remove_if(units.begin(), units.end(), [&state](df::unit *unit) -> bool {
+            // todo: merging this filter into the base function would be welcomed by plugins
+            //  (it would also be faster, and less obfuscated than this [ie. erase(remove_if)])
             lua_dup(state); // copy function
             Lua::PushDFObject(state, unit);
             lua_call(state, 1, 1);

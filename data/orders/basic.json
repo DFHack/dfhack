@@ -1004,7 +1004,8 @@
 				"value" : 2
 			}
 		],
-		"job" : "MakeCrafts",
+		"item_subtype" : "ITEM_PANTS_LEGGINGS",
+		"job" : "MakePants",
 		"material_category" : 
 		[
 			"shell"

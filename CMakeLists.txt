@@ -74,6 +74,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(MSVC)
+    # increase warning level and treat warnings as errors
+    add_definitions("/WX")
+    add_definitions("/W3")
+
     # disable C4819 code-page warning
     add_definitions("/wd4819")
 
@@ -390,10 +394,11 @@ else()
     endif()
 endif()
 
-find_package(ZLIB REQUIRED)
-include_directories(depends/protobuf)
-include_directories(depends/lua/include)
-include_directories(depends/md5)
+if(BUILD_TESTING)
+    message("BUILD TESTS: Core, Scripts")
+    set(BUILD_SCRIPT_TESTS ON FORCE)
+    set(BUILD_CORE_TESTS ON FORCE)
+endif()
 
 # Support linking against external tinyxml
 # If we find an external tinyxml, set the DFHACK_TINYXML variable to "tinyxml"
@@ -410,12 +415,54 @@ else()
     set(DFHACK_TINYXML "dfhack-tinyxml")
 endif()
 
+find_package(ZLIB REQUIRED)
+
+include_directories(depends/protobuf)
+include_directories(depends/lua/include)
+include_directories(depends/md5)
 include_directories(depends/lodepng)
 include_directories(depends/tthread)
 include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(depends/clsocket/src)
 include_directories(depends/xlsxio/include)
 add_subdirectory(depends)
+
+
+# Testing with CTest
+if(BUILD_TESTING OR BUILD_CORE_TESTS)
+    macro(dfhack_test name files)
+        message("dfhack_test(${name}, ${files})")
+        add_executable(${name} ${files})
+        target_include_directories(${name} PUBLIC depends/googletest/googletest/include)
+        target_link_libraries(${name} dfhack gtest)
+        set_target_properties(${name} PROPERTIES COMPILE_FLAGS "-Wno-sign-compare")
+        add_test(NAME ${name} COMMAND ${name})
+    endmacro()
+    include(CTest)
+endif()
+
+include(CMakeDependentOption)
+cmake_dependent_option(
+        BUILD_SCRIPT_TESTS "Install integration tests in hack/scripts/test" OFF
+        "BUILD_TESTING" OFF)
+mark_as_advanced(FORCE BUILD_TESTS)
+# Handle deprecated BUILD_TESTS option
+option(BUILD_TESTS "Deprecated option; please use BUILD_SCRIPT_TESTS=ON" OFF)
+
+if(BUILD_TESTING OR BUILD_SCRIPT_TESTS)
+    if(EXISTS "${dfhack_SOURCE_DIR}/test/scripts")
+        message(SEND_ERROR "test/scripts must not exist in the dfhack repo since it would conflict with the tests installed from the scripts repo.")
+    endif()
+    install(DIRECTORY ${dfhack_SOURCE_DIR}/test
+            DESTINATION ${DFHACK_DATA_DESTINATION}/scripts)
+    install(FILES ci/test.lua DESTINATION ${DFHACK_DATA_DESTINATION}/scripts)
+else()
+    add_custom_target(test
+            COMMENT "Nothing to do: CMake option BUILD_TESTING is OFF"
+            # Portable NOOP; need to put something here or the comment isn't displayed
+            COMMAND cd
+            )
+endif()
 
 find_package(Git REQUIRED)
 if(NOT GIT_FOUND)

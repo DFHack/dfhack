@@ -83,7 +83,7 @@ jobs:
           -B build-ci \
           -G Ninja \
           -DDFHACK_BUILD_ARCH=64 \
-          -DBUILD_TESTS:BOOL=ON \
+          -DBUILD_TESTING:BOOL=ON \
           -DBUILD_DEV_PLUGINS:BOOL=${{ matrix.plugins == 'all' }} \
           -DBUILD_SIZECHECK:BOOL=${{ matrix.plugins == 'all' }} \
           -DBUILD_SKELETON:BOOL=${{ matrix.plugins == 'all' }} \
@@ -96,8 +96,15 @@ jobs:
       run: |
         ninja -C build-ci install
         ccache --show-stats
-    - name: Run tests
-      id: run_tests
+    - name: Run unit tests
+      id: run_tests1
+      run: |
+        if build-ci/library/tests/test-library; then
+          exit 0
+        fi
+        exit 1
+    - name: Run lua tests
+      id: run_tests2
       run: |
         export TERM=dumb
         status=0

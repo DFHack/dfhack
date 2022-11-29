@@ -156,21 +156,21 @@ void DFHack::Lua::PushInterfaceKeys(lua_State *L,
     if (df::global::enabler) {
         if (df::global::enabler->mouse_lbut_down) {
             lua_pushboolean(L, true);
-            lua_setfield(L, -2, "_MOUSE_L");
+            lua_setfield(L, -2, "_MOUSE_L_DOWN");
         }
         if (df::global::enabler->mouse_rbut_down) {
             lua_pushboolean(L, true);
-            lua_setfield(L, -2, "_MOUSE_R");
+            lua_setfield(L, -2, "_MOUSE_R_DOWN");
         }
         if (df::global::enabler->mouse_lbut) {
             lua_pushboolean(L, true);
-            lua_setfield(L, -2, "_MOUSE_L_DOWN");
-            df::global::enabler->mouse_lbut = 0;
+            lua_setfield(L, -2, "_MOUSE_L");
+            df::global::enabler->mouse_lbut_down = 0;
         }
         if (df::global::enabler->mouse_rbut) {
             lua_pushboolean(L, true);
-            lua_setfield(L, -2, "_MOUSE_R_DOWN");
-            df::global::enabler->mouse_rbut = 0;
+            lua_setfield(L, -2, "_MOUSE_R");
+            df::global::enabler->mouse_rbut_down = 0;
         }
     }
 }
@@ -818,6 +818,29 @@ bool DFHack::Lua::SafeCall(color_ostream &out, lua_State *L, int nargs, int nres
     set_dfhack_output(L, cur_out);
 
     return ok;
+}
+
+bool DFHack::Lua::CallLuaModuleFunction(color_ostream &out, lua_State *L,
+        const char *module_name, const char *fn_name,
+        int nargs, int nres, LuaLambda && args_lambda, LuaLambda && res_lambda,
+        bool perr){
+    if (!lua_checkstack(L, 1 + nargs) ||
+        !Lua::PushModulePublic(out, L, module_name, fn_name)) {
+        if (perr)
+            out.printerr("Failed to load %s Lua code\n", module_name);
+        return false;
+    }
+
+    std::forward<LuaLambda&&>(args_lambda)(L);
+
+    if (!Lua::SafeCall(out, L, nargs, nres, perr)) {
+        if (perr)
+            out.printerr("Failed Lua call to '%s.%s'\n", module_name, fn_name);
+        return false;
+    }
+
+    std::forward<LuaLambda&&>(res_lambda)(L);
+    return true;
 }
 
 // Copied from lcorolib.c, with error handling modifications

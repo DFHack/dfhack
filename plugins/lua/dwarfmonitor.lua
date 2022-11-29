@@ -1,175 +1,186 @@
 local _ENV = mkmodule('plugins.dwarfmonitor')
 
-local gps = df.global.gps
-local gui = require 'gui'
+local json = require('json')
+local guidm = require('gui.dwarfmode')
+local overlay = require('plugins.overlay')
 
-config = {}
-widgets = {}
+local DWARFMONITOR_CONFIG_FILE = 'dfhack-config/dwarfmonitor.json'
 
-function dmerror(desc)
-    qerror('dwarfmonitor: ' .. tostring(desc))
-end
+-- ------------- --
+-- WeatherWidget --
+-- ------------- --
 
-Widget = defclass(Widget)
-function Widget:init(opts)
-    self.opts = opts
-end
-function Widget:get_pos()
-    local x = self.opts.x >= 0 and self.opts.x or gps.dimx + self.opts.x
-    local y = self.opts.y >= 0 and self.opts.y or gps.dimy + self.opts.y
-    if self.opts.anchor == 'right' then
-        x = x - (self:get_width() or 0) + 1
-    end
-    return x, y
-end
-function Widget:render()
-    if monitor_state(self.opts.type) == false then
-        return
-    end
-    self:update()
-    local x, y = self:get_pos()
-    local p = gui.Painter.new_xy(x, y, gps.dimx - 1, y)
-    self:render_body(p)
-end
-function Widget:update() end
-function Widget:get_width() end
-function Widget:render_body() end
-
-Widget_weather = defclass(Widget_weather, Widget)
-
-function Widget_weather:update()
-    self.counts = get_weather_counts()
-end
-
-function Widget_weather:get_width()
-    if self.counts.rain > 0 then
-        if self.counts.snow > 0 then
-            return 9
-        end
-        return 4
-    elseif self.counts.snow > 0 then
-        return 4
-    end
-    return 0
-end
-
-function Widget_weather:render_body(p)
-    if self.counts.rain > 0 then
-        p:string('Rain', COLOR_LIGHTBLUE):advance(1)
-    end
-    if self.counts.snow > 0 then
-        p:string('Snow', COLOR_WHITE)
-    end
-end
-
-Widget_date = defclass(Widget_date, Widget)
-Widget_date.ATTRS = {
-    output = ''
+WeatherWidget = defclass(WeatherWidget, overlay.OverlayWidget)
+WeatherWidget.ATTRS{
+    default_pos={x=15,y=-1},
+    viewscreens={'dungeonmode', 'dwarfmode'},
 }
 
-function Widget_date:update()
-    if not self.opts.format then
-        self.opts.format = 'Y-M-D'
+function WeatherWidget:init()
+    self.rain = false
+    self.snow = false
+end
+
+function WeatherWidget:overlay_onupdate()
+    local rain, snow = false, false
+    local cw = df.global.current_weather
+    for i=0,4 do
+        for j=0,4 do
+            weather = cw[i][j]
+            if weather == df.weather_type.Rain then rain = true end
+            if weather == df.weather_type.Snow then snow = true end
+        end
     end
+    self.frame.w = (rain and 4 or 0) + (snow and 4 or 0) +
+            ((snow and rain) and 1 or 0)
+    self.rain, self.snow = rain, snow
+end
+
+function WeatherWidget:onRenderBody(dc)
+    if self.rain then dc:string('Rain', COLOR_LIGHTBLUE):advance(1) end
+    if self.snow then dc:string('Snow', COLOR_WHITE) end
+end
+
+-- ---------- --
+-- DateWidget --
+-- ---------- --
+
+local function get_date_format()
+    local ok, config = pcall(json.decode_file, DWARFMONITOR_CONFIG_FILE)
+    if not ok or not config.date_format then
+        return 'Y-M-D'
+    end
+    return config.date_format
+end
+
+DateWidget = defclass(DateWidget, overlay.OverlayWidget)
+DateWidget.ATTRS{
+    default_pos={x=-16,y=1},
+    viewscreens={'dungeonmode', 'dwarfmode'},
+}
+
+function DateWidget:init()
+    self.datestr = ''
+    self.fmt = get_date_format()
+end
+
+function DateWidget:overlay_onupdate()
     local year = dfhack.world.ReadCurrentYear()
     local month = dfhack.world.ReadCurrentMonth() + 1
     local day = dfhack.world.ReadCurrentDay()
-    self.output = 'Date:'
-    for i = 1, #self.opts.format do
-        local c = self.opts.format:sub(i, i)
+
+    local fmt = self.fmt
+    local datestr = 'Date:'
+    for i=1,#fmt do
+        local c = fmt:sub(i, i)
         if c == 'y' or c == 'Y' then
-            self.output = self.output .. year
+            datestr = datestr .. year
         elseif c == 'm' or c == 'M' then
             if c == 'M' and month < 10 then
-                self.output = self.output .. '0'
+                datestr = datestr .. '0'
             end
-            self.output = self.output .. month
+            datestr = datestr .. month
         elseif c == 'd' or c == 'D' then
             if c == 'D' and day < 10 then
-                self.output = self.output .. '0'
+                datestr = datestr .. '0'
             end
-            self.output = self.output .. day
+            datestr = datestr .. day
         else
-            self.output = self.output .. c
+            datestr = datestr .. c
         end
     end
+
+    self.frame.w = #datestr
+    self.datestr = datestr
 end
 
-function Widget_date:get_width()
-    return #self.output
+function DateWidget:onRenderBody(dc)
+    dc:string(self.datestr, COLOR_GREY)
 end
 
-function Widget_date:render_body(p)
-    p:string(self.output, COLOR_GREY)
+-- ------------ --
+-- MiseryWidget --
+-- ------------ --
+
+MiseryWidget = defclass(MiseryWidget, overlay.OverlayWidget)
+MiseryWidget.ATTRS{
+    default_pos={x=-2,y=-1},
+    viewscreens={'dwarfmode'},
+}
+
+function MiseryWidget:init()
+    self.colors = getStressCategoryColors()
+    self.stress_category_counts = {}
 end
 
-Widget_misery = defclass(Widget_misery, Widget)
-
-function Widget_misery:update()
-    self.data = get_misery_data()
-end
-
-function Widget_misery:get_width()
-    local w = 2 + 6
-    for k, v in pairs(self.data) do
-        w = w + #tostring(v.value)
+function MiseryWidget:overlay_onupdate()
+    local counts, num_colors = {}, #self.colors
+    for _,unit in ipairs(df.global.world.units.active) do
+        if not dfhack.units.isCitizen(unit, true) then goto continue end
+        local stress_category = math.min(num_colors,
+                                         dfhack.units.getStressCategory(unit))
+        counts[stress_category] = (counts[stress_category] or 0) + 1
+        ::continue::
     end
-    return w
-end
 
-function Widget_misery:render_body(p)
-    p:string("H:", COLOR_WHITE)
-    for i = 0, 6 do
-        local v = self.data[i]
-        p:string(tostring(v.value), v.color)
-        if not v.last then
-            p:string("/", COLOR_WHITE)
-        end
+    local width = 2 + num_colors - 1 -- 'H:' plus the slashes
+    for i=1,num_colors do
+        width = width + #tostring(counts[i] or 0)
     end
+
+    self.stress_category_counts = counts
+    self.frame.w = width
 end
 
-Widget_cursor = defclass(Widget_cursor, Widget)
-
-function Widget_cursor:update()
-    if gps.mouse_x == -1 and not self.opts.show_invalid then
-        self.output = ''
-        return
-    end
-    self.output = (self.opts.format or '(x,y)'):gsub('[xX]', gps.mouse_x):gsub('[yY]', gps.mouse_y)
-end
-
-function Widget_cursor:get_width()
-    return #self.output
-end
-
-function Widget_cursor:render_body(p)
-    p:string(self.output)
-end
-
-function render_all()
-    for _, w in pairs(widgets) do
-        w:render()
+function MiseryWidget:onRenderBody(dc)
+    dc:string('H:', COLOR_WHITE)
+    local counts = self.stress_category_counts
+    for i,color in ipairs(self.colors) do
+        dc:string(tostring(counts[i] or 0), color)
+        if i < #self.colors then dc:string('/', COLOR_WHITE) end
     end
 end
 
-function load_config()
-    config = require('json').decode_file('dfhack-config/dwarfmonitor.json')
-    if not config.widgets then
-        dmerror('No widgets enabled')
+-- ------------ --
+-- CursorWidget --
+-- ------------ --
+
+CursorWidget = defclass(CursorWidget, overlay.OverlayWidget)
+CursorWidget.ATTRS{
+    default_pos={x=2,y=-4},
+    viewscreens={'dungeonmode', 'dwarfmode'},
+}
+
+function CursorWidget:onRenderBody(dc)
+    local screenx, screeny = dfhack.screen.getMousePos()
+    local mouse_map = dfhack.gui.getMousePos()
+    local keyboard_map = guidm.getCursorPos()
+
+    local text = {}
+    table.insert(text, ('mouse UI grid (%d,%d)'):format(screenx, screeny))
+    if mouse_map then
+        table.insert(text, ('mouse map coord (%d,%d,%d)')
+                :format(mouse_map.x, mouse_map.y, mouse_map.z))
     end
-    if type(config.widgets) ~= 'table' then
-        dmerror('"widgets" is not a table')
+    if keyboard_map then
+        table.insert(text, ('kbd cursor coord (%d,%d,%d)')
+                :format(keyboard_map.x, keyboard_map.y, keyboard_map.z))
     end
-    widgets = {}
-    for _, opts in pairs(config.widgets) do
-        if type(opts) ~= 'table' then dmerror('"widgets" is not an array') end
-        if not opts.type then dmerror('Widget missing type field') end
-        local cls = _ENV['Widget_' .. opts.type]
-        if not cls then
-            dmerror('Invalid widget type: ' .. opts.type)
-        end
-        table.insert(widgets, cls(opts))
+    local width = 0
+    for i,line in ipairs(text) do
+        dc:seek(0, i-1):string(line)
+        width = math.max(width, #line)
     end
+    self.frame.w = width
+    self.frame.h = #text
 end
+
+-- register our widgets with the overlay
+OVERLAY_WIDGETS = {
+    cursor=CursorWidget,
+    date=DateWidget,
+    misery=MiseryWidget,
+    weather=WeatherWidget,
+}
 
 return _ENV

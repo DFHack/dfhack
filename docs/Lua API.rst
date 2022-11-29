@@ -1019,17 +1019,26 @@ Fortress mode
   Resets the fortress mode sidebar menus and cursors to their default state. If
   ``pause`` is true, also pauses the game.
 
-* ``dfhack.gui.revealInDwarfmodeMap(pos)``
+* ``dfhack.gui.pauseRecenter(pos[,pause])``
+  ``dfhack.gui.pauseRecenter(x,y,z[,pause])``
 
-  Centers the view on the given position, which can be a ``df.coord`` instance
-  or a table assignable to a ``df.coord`` (see `lua-api-table-assignment`),
+  Same as ``resetDwarfmodeView``, but also recenter if position is valid. If ``pause`` is false, skip pausing. Respects
+  ``RECENTER_INTERFACE_SHUTDOWN_MS`` in DF's ``init.txt`` (the delay before input is recognized when a recenter occurs.)
+
+* ``dfhack.gui.revealInDwarfmodeMap(pos[,center])``
+  ``dfhack.gui.revealInDwarfmodeMap(x,y,z[,center])``
+
+  Centers the view on the given coordinates. If ``center`` is true, make sure the
+  position is in the exact center of the view, else just bring it on screen.
+
+  ``pos`` can be a ``df.coord`` instance or a table assignable to a ``df.coord`` (see `lua-api-table-assignment`),
   e.g.::
 
     {x = 5, y = 7, z = 11}
     getSelectedUnit().pos
     copyall(df.global.cursor)
 
-  Returns false if unsuccessful.
+  If the position is invalid, the function will simply ensure the current window position is clamped between valid values.
 
 * ``dfhack.gui.refreshSidebar()``
 
@@ -1087,6 +1096,19 @@ Announcements
 
   Uses the type to look up options from announcements.txt, and calls the above
   operations accordingly. The units are used to call ``addCombatReportAuto``.
+
+* ``dfhack.gui.autoDFAnnouncement(report,text)``
+  ``dfhack.gui.autoDFAnnouncement(type,pos,text,color[,is_bright,unit1,unit2,is_sparring])``
+
+  Takes a ``df.report_init`` (see: `structure definition <https://github.com/DFHack/df-structures/blob/master/df.announcements.xml>`_)
+  and a string and processes them just like DF does. Can also be built from parameters instead of a ``report_init``.
+  Setting ``is_sparring`` to *true* means the report will be added to sparring logs (if applicable) rather than hunting or combat.
+
+  The announcement will not display if units are involved and the player can't see them (or hear, for adventure mode sound announcement types.)
+  Text is parsed using ``&`` as an escape character, with ``&r`` adding a blank line (equivalent to ``\n \n``,)
+  ``&&`` being just ``&``, and any other combination causing neither character to display.
+
+  If you want a guaranteed announcement without parsing, use ``dfhack.gui.showAutoAnnouncement`` instead.
 
 * ``dfhack.gui.getMousePos()``
 
@@ -1188,6 +1210,187 @@ Job module
 Units module
 ------------
 
+* ``dfhack.units.isUnitInBox(unit,x1,y1,z1,x2,y2,z2)``
+
+  The unit is within the specified coordinates.
+
+* ``dfhack.units.isActive(unit)``
+
+  The unit is active (alive and on the map).
+
+* ``dfhack.units.isVisible(unit)``
+
+  The unit is visible on the map.
+
+* ``dfhack.units.isCitizen(unit[,ignore_sanity])``
+
+  The unit is an alive sane citizen of the fortress; wraps the
+  same checks the game uses to decide game-over by extinction,
+  with an additional sanity check. You can identify citizens,
+  regardless of their sanity, by passing ``true`` as the optional
+  second parameter.
+
+* ``dfhack.units.isFortControlled(unit)``
+
+  Similar to ``dfhack.units.isCitizen(unit)``, but is based on checks
+  for units hidden in ambush, and includes tame animals. Returns *false*
+  if not in fort mode.
+
+* ``dfhack.units.isOwnCiv(unit)``
+
+  The unit belongs to the player's civilization.
+
+* ``dfhack.units.isOwnGroup(unit)``
+
+  The unit belongs to the player's group.
+
+* ``dfhack.units.isOwnRace(unit)``
+
+  The unit belongs to the player's race.
+
+* ``dfhack.units.isAlive(unit)``
+
+  The unit isn't dead or undead.
+
+* ``dfhack.units.isDead(unit)``
+
+  The unit is completely dead and passive, or a ghost. Equivalent to
+  ``dfhack.units.isKilled(unit) or dfhack.units.isGhost(unit)``.
+
+* ``dfhack.units.isKilled(unit)``
+
+  The unit has been killed.
+
+* ``dfhack.units.isSane(unit)``
+
+  The unit is capable of rational action, i.e. not dead, insane, zombie, or active werewolf.
+
+* ``dfhack.units.isCrazed``
+
+  The unit is berserk and will attack all other creatures except members of its own species
+  that are also crazed. (can be modified by curses)
+
+* ``dfhack.units.isGhost(unit)``
+
+  The unit is a ghost.
+
+* ``dfhack.units.isHidden(unit)``
+
+  The unit is hidden to the player, accounting for sneaking. Works for any game mode.
+
+* ``dfhack.units.isHidingCurse(unit)``
+
+  The unit is hiding a curse.
+
+
+* ``dfhack.units.isMale(unit)``
+* ``dfhack.units.isFemale(unit)``
+* ``dfhack.units.isBaby(unit)``
+* ``dfhack.units.isChild(unit)``
+* ``dfhack.units.isAdult(unit)``
+* ``dfhack.units.isGay(unit)``
+* ``dfhack.units.isNaked(unit)``
+
+  Simple unit property checks
+
+* ``dfhack.units.isVisiting(unit)``
+
+  The unit is visiting. eg. Merchants, Diplomatics, travelers.
+
+
+* ``dfhack.units.isTrainableHunting(unit)``
+
+  The unit is trainable for hunting.
+
+* ``dfhack.units.isTrainableWar(unit)``
+
+  The unit is trainable for war.
+
+* ``dfhack.units.isTrained(unit)``
+
+  The unit is trained.
+
+* ``dfhack.units.isHunter(unit)``
+
+  The unit is a trained hunter.
+
+* ``dfhack.units.isWar(unit)``
+
+  The unit is trained for war.
+
+* ``dfhack.units.isTame(unit)``
+* ``dfhack.units.isTamable(unit)``
+* ``dfhack.units.isDomesticated(unit)``
+* ``dfhack.units.isMarkedForSlaughter(unit)``
+* ``dfhack.units.isGelded(unit)``
+* ``dfhack.units.isEggLayer(unit)``
+* ``dfhack.units.isGrazer(unit)``
+* ``dfhack.units.isMilkable(unit)``
+
+  Simple unit property checks.
+
+* ``dfhack.units.isForest(unit)``
+
+  The unit is of the forest.
+
+* ``dfhack.units.isMischievous(unit)``
+
+  The unit is mischievous.
+
+* ``dfhack.units.isAvailableForAdoption(unit)``
+
+  The unit is available for adoption.
+
+
+* ``dfhack.units.isOpposedToLife(unit)``
+* ``dfhack.units.hasExtravision(unit)``
+* ``dfhack.units.isBloodsucker(unit)``
+
+  Simple checks of caste attributes that can be modified by curses.
+
+
+* ``dfhack.units.isDwarf(unit)``
+
+  The unit is of the correct race for the fortress.
+
+* ``dfhack.units.isAnimal(unit)``
+* ``dfhack.units.isMerchant(unit)``
+* ``dfhack.units.isDiplomat(unit)``
+
+  Simple unit type checks.
+
+* ``dfhack.units.isVisitor(unit)``
+
+  The unit is a regular visitor with no special purpose (eg. merchant).
+
+* ``dfhack.units.isInvader(unit)``
+
+  The unit is an active invader or marauder.
+
+* ``dfhack.units.isUndead(unit[,include_vamps])``
+
+  The unit is undead. Pass ``true`` as the optional second parameter to
+  count vampires as undead.
+
+* ``dfhack.units.isNightCreature(unit)``
+* ``dfhack.units.isSemiMegabeast(unit)``
+* ``dfhack.units.isMegabeast(unit)``
+* ``dfhack.units.isTitan(unit)``
+* ``dfhack.units.isDemon(unit)``
+
+  Simple enemy type checks.
+
+* ``dfhack.units.isDanger(unit)``
+
+  The unit is dangerous, and probably hostile. This includes
+  Great Dangers (see below), semi-megabeasts, night creatures,
+  undead, invaders, and crazed units.
+
+* ``dfhack.units.isGreatDanger(unit)``
+
+  The unit is of Great Danger. This include demons, titans, and megabeasts.
+
+
 * ``dfhack.units.getPosition(unit)``
 
   Returns true *x,y,z* of the unit, or *nil* if invalid; may be not equal to unit.pos if caged.
@@ -1238,71 +1441,14 @@ Units module
 
   Returns the nemesis record of the unit if it has one, or *nil*.
 
-* ``dfhack.units.isHidingCurse(unit)``
-
-  Checks if the unit hides improved attributes from its curse.
-
 * ``dfhack.units.getPhysicalAttrValue(unit, attr_type)``
 * ``dfhack.units.getMentalAttrValue(unit, attr_type)``
 
   Computes the effective attribute value, including curse effect.
 
-* ``dfhack.units.isCrazed(unit)``
-* ``dfhack.units.isOpposedToLife(unit)``
-* ``dfhack.units.hasExtravision(unit)``
-* ``dfhack.units.isBloodsucker(unit)``
-
-  Simple checks of caste attributes that can be modified by curses.
-
 * ``dfhack.units.getMiscTrait(unit, type[, create])``
 
   Finds (or creates if requested) a misc trait object with the given id.
-
-* ``dfhack.units.isActive(unit)``
-
-  The unit is active (alive and on the map).
-
-* ``dfhack.units.isAlive(unit)``
-
-  The unit isn't dead or undead.
-
-* ``dfhack.units.isDead(unit)``
-
-  The unit is completely dead and passive, or a ghost. Equivalent to
-  ``dfhack.units.isKilled(unit) or dfhack.units.isGhost(unit)``.
-
-* ``dfhack.units.isKilled(unit)``
-
-  The unit has been killed.
-
-* ``dfhack.units.isGhost(unit)``
-
-  The unit is a ghost.
-
-* ``dfhack.units.isSane(unit)``
-
-  The unit is capable of rational action, i.e. not dead, insane, zombie, or active werewolf.
-
-* ``dfhack.units.isDwarf(unit)``
-
-  The unit is of the correct race of the fortress.
-
-* ``dfhack.units.isCitizen(unit)``
-
-  The unit is an alive sane citizen of the fortress; wraps the
-  same checks the game uses to decide game-over by extinction.
-
-* ``dfhack.units.isFortControlled(unit)``
-
-  Similar to ``dfhack.units.isCitizen(unit)``, but is based on checks for units hidden in ambush, and includes tame animals. Returns *false* if not in fort mode.
-
-* ``dfhack.units.isVisible(unit)``
-
-  The unit is visible on the map.
-
-* ``dfhack.units.isHidden(unit)``
-
-  The unit is hidden to the player, accounting for sneaking. Works for any game mode.
 
 * ``dfhack.units.getAge(unit[,true_age])``
 
@@ -3897,6 +4043,8 @@ gui.widgets
 ===========
 
 This module implements some basic widgets based on the View infrastructure.
+
+.. _widget:
 
 Widget class
 ------------

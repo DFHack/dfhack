@@ -334,7 +334,7 @@ function EditField:onInput(keys)
     elseif keys._MOUSE_L then
         local mouse_x, mouse_y = self:getMousePos()
         if mouse_x then
-            self:setCursor(self.start_pos + mouse_x)
+            self:setCursor(self.start_pos + mouse_x - (self.text_offset or 0))
             return true
         end
     elseif keys._STRING then
@@ -496,7 +496,7 @@ function Scrollbar:onRenderBody(dc)
     if self.is_dragging then
         scrollbar_do_drag(self)
     end
-    if df.global.enabler.mouse_lbut_down == 0 then
+    if df.global.enabler.mouse_lbut == 0 then
         self.last_scroll_ms = 0
         self.is_dragging = false
         self.scroll_spec = nil
@@ -928,7 +928,7 @@ end
 function HotkeyLabel:onInput(keys)
     if HotkeyLabel.super.onInput(self, keys) then
         return true
-    elseif keys._MOUSE_L and self:getMousePos() then
+    elseif keys._MOUSE_L_DOWN and self:getMousePos() then
         self.on_activate()
         return true
     end
@@ -1009,7 +1009,7 @@ end
 function CycleHotkeyLabel:onInput(keys)
     if CycleHotkeyLabel.super.onInput(self, keys) then
         return true
-    elseif keys._MOUSE_L and self:getMousePos() then
+    elseif keys._MOUSE_L_DOWN and self:getMousePos() then
         self:cycle()
         return true
     end
@@ -1274,7 +1274,7 @@ function List:onInput(keys)
     elseif self.on_submit2 and keys.SEC_SELECT then
         self:submit2()
         return true
-    elseif keys._MOUSE_L then
+    elseif keys._MOUSE_L_DOWN then
         local idx = self:getIdxUnderMouse()
         if idx then
             self:setSelected(idx)

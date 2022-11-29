@@ -38,11 +38,12 @@ Examples
 
 Features
 --------
-:focus-jobs:     Toggle whether the plugin should always be following a job. (default: disabled)
 :auto-unpause:   Toggle auto-dismissal of game pause events. (default: disabled)
 :auto-disengage: Toggle auto-disengagement of plugin through player intervention while unpaused. (default: disabled)
+:animals:        Toggle whether to sometimes follow animals. (default: disabled)
+:hostiles:       Toggle whether to sometimes follow hostiles (eg. undead, titan, invader, etc.) (default: disabled)
+:visiting:       Toggle whether to sometimes follow visiting units (eg. diplomat)
 
 Settings
 --------
-:tick-threshold: Set the plugin's tick interval for changing the followed dwarf.
-                 Acts as a maximum follow time when used with focus-jobs enabled. (default: 50)
+:tick-threshold: Set the plugin's tick interval for changing the followed dwarf. (default: 1000)

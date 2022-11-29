@@ -82,16 +82,8 @@ set(MAIN_SOURCES
     RemoteTools.cpp
 )
 
-if(BUILD_TESTING)
-    # TODO Make a function or macro for this
-    add_executable(MiscUtils.test MiscUtils.test.cpp)
-    target_link_libraries(MiscUtils.test dfhack)
-    add_test(NAME MiscUtils.test COMMAND MiscUtils.test)
-
-    # How to get `test` to ensure everything is up to date before running
-    # tests? This add_dependencies() fails with:
-    #   Cannot add target-level dependencies to non-existent target "test".
-    #add_dependencies(test MiscUtils.test)
+if(BUILD_CORE_TESTS)
+    add_subdirectory(tests)
 endif()
 
 if(WIN32)

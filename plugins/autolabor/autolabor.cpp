@@ -1,5 +1,6 @@
 #include "Core.h"
 #include <Console.h>
+#include <Debug.h>
 #include <Export.h>
 #include <PluginManager.h>
 
@@ -78,7 +79,9 @@ REQUIRE_GLOBAL(world);
 
 DFHACK_PLUGIN_IS_ENABLED(enable_autolabor);
 
-static bool print_debug = false;
+namespace DFHack {
+    DBG_DECLARE(autolabor, cycle, DebugCategory::LINFO);
+}
 
 static std::vector<int> state_count(NUM_STATE);
 
@@ -675,8 +678,10 @@ static void assign_labor(unit_labor::unit_labor labor,
                 dwarfs[dwarf]->military.pickup_flags.bits.update = 1;
             }
 
-            if (print_debug)
-                out.print("Dwarf %i \"%s\" assigned %s: value %i %s %s\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str(), values[dwarf], dwarf_info[dwarf].trader ? "(trader)" : "", dwarf_info[dwarf].diplomacy ? "(diplomacy)" : "");
+            TRACE(cycle, out).print("Dwarf % i \"%s\" assigned %s: value %i %s %s\n", 
+                dwarf, dwarfs[dwarf]->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str(), values[dwarf], 
+                dwarf_info[dwarf].trader ? "(trader)" : "", 
+                dwarf_info[dwarf].diplomacy ? "(diplomacy)" : "");
 
             if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY || dwarf_info[dwarf].state == EXCLUSIVE)
                 labor_infos[labor].active_dwarfs++;
@@ -737,13 +742,10 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         {
             df::building_tradedepotst* depot = (df::building_tradedepotst*) build;
             trader_requested = trader_requested || depot->trade_flags.bits.trader_requested;
-            if (print_debug)
-            {
-                if (trader_requested)
-                    out.print("Trade depot found and trader requested, trader will be excluded from all labors.\n");
-                else
-                    out.print("Trade depot found but trader is not requested.\n");
-            }
+            INFO(cycle,out).print(trader_requested 
+                ? "Trade depot found and trader requested, trader will be excluded from all labors.\n"
+                : "Trade depot found but trader is not requested.\n"
+                );
         }
     }
 
@@ -820,8 +822,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             if (p1 || p2)
             {
                 dwarf_info[dwarf].diplomacy = true;
-                if (print_debug)
-                    out.print("Dwarf %i \"%s\" has a meeting, will be cleared of all labors\n", dwarf, dwarfs[dwarf]->name.first_name.c_str());
+                INFO(cycle, out).print("Dwarf %i \"%s\" has a meeting, will be cleared of all labors\n", 
+                    dwarf, dwarfs[dwarf]->name.first_name.c_str());
                 break;
             }
         }
@@ -893,15 +895,15 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
                 dwarf_info[dwarf].state = dwarf_states[job];
             else
             {
-                out.print("Dwarf %i \"%s\" has unknown job %i\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), job);
+                WARN(cycle, out).print("Dwarf %i \"%s\" has unknown job %i\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), job);
                 dwarf_info[dwarf].state = OTHER;
             }
         }
 
         state_count[dwarf_info[dwarf].state]++;
 
-        if (print_debug)
-            out.print("Dwarf %i \"%s\": penalty %i, state %s\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), dwarf_info[dwarf].mastery_penalty, state_names[dwarf_info[dwarf].state]);
+        INFO(cycle, out).print("Dwarf %i \"%s\": penalty %i, state %s\n", 
+            dwarf, dwarfs[dwarf]->name.first_name.c_str(), dwarf_info[dwarf].mastery_penalty, state_names[dwarf_info[dwarf].state]);
     }
 
     std::vector<df::unit_labor> labors;
@@ -1008,8 +1010,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY || dwarf_info[dwarf].state == EXCLUSIVE)
                 labor_infos[labor].active_dwarfs++;
 
-            if (print_debug)
-                out.print("Dwarf %i \"%s\" assigned %s: hauler\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str());
+            TRACE(cycle, out).print("Dwarf %i \"%s\" assigned %s: hauler\n", 
+                dwarf, dwarfs[dwarf]->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str());
         }
 
         for (size_t i = num_haulers; i < hauler_ids.size(); i++)
@@ -1024,8 +1026,6 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             dwarfs[dwarf]->status.labors[labor] = false;
         }
     }
-
-    print_debug = false;
 
     return CR_OK;
 }
@@ -1209,18 +1209,6 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
                 print_labor(labor, out);
             }
         }
-
-        return CR_OK;
-    }
-    else if (parameters.size() == 1 && parameters[0] == "debug")
-    {
-        if (!enable_autolabor)
-        {
-            out << "Error: The plugin is not enabled." << std::endl;
-            return CR_FAILURE;
-        }
-
-        print_debug = 1;
 
         return CR_OK;
     }

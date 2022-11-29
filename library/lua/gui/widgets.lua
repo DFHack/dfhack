@@ -144,6 +144,9 @@ function ResizingPanel:postUpdateLayout(frame_body)
                             (s.frame and s.frame.h or frame_body.height))
         end
     end
+    local l,t,r,b = gui.parse_inset(self.frame_inset)
+    w = w + l + r
+    h = h + t + b
     if self.frame_style then
         w = w + 2
         h = h + 2
@@ -827,7 +830,8 @@ function Label:scroll(nlines)
         end
     end
     local n = self.start_line_num + nlines
-    n = math.min(n, self:getTextHeight() - self.frame_body.height + 1)
+    local text_height = math.max(1, self:getTextHeight())
+    n = math.min(n, text_height - self.frame_body.height + 1)
     n = math.max(n, 1)
     nlines = n - self.start_line_num
     self.start_line_num = n
@@ -928,7 +932,7 @@ end
 function HotkeyLabel:onInput(keys)
     if HotkeyLabel.super.onInput(self, keys) then
         return true
-    elseif keys._MOUSE_L_DOWN and self:getMousePos() then
+    elseif keys._MOUSE_L_DOWN and self:getMousePos() and self.on_activate then
         self.on_activate()
         return true
     end

@@ -1456,7 +1456,20 @@ function FilteredList:setFilter(filter, pos)
 
         for i,v in ipairs(self.choices) do
             local ok = true
-            local search_key = v.search_key or v.text
+            local search_key = v.search_key
+            if not search_key then
+                if type(v.text) ~= 'table' then
+                    search_key = v.text
+                else
+                    local texts = {}
+                    for _,token in ipairs(v.text) do
+                        table.insert(texts,
+                            type(token) == 'string' and token
+                                or getval(token.text) or '')
+                    end
+                    search_key = table.concat(texts, ' ')
+                end
+            end
             for _,key in ipairs(tokens) do
                 key = key:escape_pattern()
                 -- start matches at non-space or non-punctuation. this allows

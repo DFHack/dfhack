@@ -1,7 +1,7 @@
 /* Prevent channeling down into known open space.
 Author:  Josh Cooper
 Created: Aug. 4 2020
-Updated: Nov. 6 2022
+Updated: Nov. 28 2022
 
  Enable plugin:
  -> build groups
@@ -225,10 +225,10 @@ namespace CSP {
         active_workers.clear();
     }
 
-    void UnpauseEvent(){
+    void UnpauseEvent(bool full_scan = false){
         CoreSuspender suspend; // we need exclusive access to df memory and this call stack doesn't already have a lock
         INFO(monitor).print("UnpauseEvent()\n");
-        ChannelManager::Get().build_groups();
+        ChannelManager::Get().build_groups(full_scan);
         ChannelManager::Get().manage_groups();
         ChannelManager::Get().debug();
         INFO(monitor).print("UnpauseEvent() exits\n");
@@ -566,9 +566,12 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
             }
             break;
         case SC_MAP_LOADED:
+        case SC_WORLD_LOADED:
             // cache the map size
             Maps::getSize(mapx, mapy, mapz);
-        case SC_WORLD_LOADED:
+            CSP::ClearData();
+            ChannelManager::Get().build_groups(true);
+            break;
         case SC_WORLD_UNLOADED:
         case SC_MAP_UNLOADED:
             CSP::ClearData();
@@ -587,11 +590,11 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out, state_change_ev
 command_result channel_safely(color_ostream &out, std::vector<std::string> &parameters) {
     if (!parameters.empty()) {
         if (parameters[0] == "runonce") {
-            CSP::UnpauseEvent();
+            CSP::UnpauseEvent(true);
             return DFHack::CR_OK;
         } else if (parameters[0] == "rebuild") {
             ChannelManager::Get().destroy_groups();
-            ChannelManager::Get().build_groups();
+            ChannelManager::Get().build_groups(true);
         }
         if (parameters.size() >= 2 && parameters.size() <= 3) {
             bool state = false;

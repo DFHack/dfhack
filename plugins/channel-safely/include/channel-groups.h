@@ -39,7 +39,7 @@ protected:
 public:
     explicit ChannelGroups(ChannelJobs &jobs) : jobs(jobs) { groups.reserve(200); }
     void scan_one(const df::coord &map_pos);
-    void scan();
+    void scan(bool full_scan = false);
     void clear();
     void remove(const df::coord &map_pos);
     Groups::const_iterator find(const df::coord &map_pos) const;

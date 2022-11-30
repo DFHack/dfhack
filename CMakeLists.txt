@@ -423,7 +423,6 @@ add_subdirectory(depends)
 
 # Testing with CTest
 macro(dfhack_test name files)
-    message("dfhack_test(${name}, ${files})")
     add_executable(${name} ${files})
     target_include_directories(${name} PUBLIC depends/googletest/googletest/include)
     target_link_libraries(${name} dfhack gtest SDL)

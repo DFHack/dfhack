@@ -23,7 +23,7 @@ public:
         return instance;
     }
 
-    void build_groups() { groups.scan(); debug(); }
+    void build_groups(bool full_scan = false) { groups.scan(full_scan); debug(); }
     void destroy_groups() { groups.clear(); debug(); }
     void manage_groups();
     void manage_group(const df::coord &map_pos, bool set_marker_mode = false, bool marker_mode = false);

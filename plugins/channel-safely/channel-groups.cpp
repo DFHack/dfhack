@@ -119,7 +119,13 @@ void ChannelGroups::scan_one(const df::coord &map_pos) {
 }
 
 // builds groupings of adjacent channel designations
-void ChannelGroups::scan() {
+void ChannelGroups::scan(bool full_scan) {
+    static std::default_random_engine RNG(0);
+    static std::bernoulli_distribution sometimes_scanFULLY(0.15);
+    if (!full_scan) {
+        full_scan = sometimes_scanFULLY(RNG);
+    }
+
     // save current jobs, then clear and load the current jobs
     std::set<df::coord> last_jobs;
     for (auto &pos : jobs) {
@@ -138,9 +144,6 @@ void ChannelGroups::scan() {
         remove(pos);
     }
 
-    static std::default_random_engine RNG(0);
-    static std::bernoulli_distribution optimizing(0.75); // fixing OpenSpace as designated
-
     DEBUG(groups).print("  scan()\n");
     // foreach block
     for (int32_t z = mapz - 1; z >= 0; --z) {
@@ -149,7 +152,7 @@ void ChannelGroups::scan() {
                 // the block
                 if (df::map_block* block = Maps::getBlock(bx, by, z)) {
                     // skip this block?
-                    if (!block->flags.bits.designated && !group_blocks.count(block) && optimizing(RNG)) {
+                    if (!full_scan && !block->flags.bits.designated) {
                         continue;
                     }
                     // foreach tile
@@ -165,7 +168,7 @@ void ChannelGroups::scan() {
                                     jobs.erase(map_pos);
                                 }
                                 block->designation[lx][ly].bits.dig = df::tile_dig_designation::No;
-                            } else if (is_dig_designation(block->designation[lx][ly])) {
+                            } else if (is_dig_designation(block->designation[lx][ly]) || block->occupancy[lx][ly].bits.dig_marked) {
                                 for (df::block_square_event* event: block->block_events) {
                                     if (auto evT = virtual_cast<df::block_square_event_designation_priorityst>(event)) {
                                         // we want to let the user keep some designations free of being managed

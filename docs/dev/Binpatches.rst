@@ -155,7 +155,7 @@ gui/assign-rack
 Bind to a key (the example config uses :kbd:`P`), and activate when viewing a weapon
 rack in the :kbd:`q` mode.
 
-.. image:: images/assign-rack.png
+.. image:: /docs/images/assign-rack.png
 
 This script is part of a group of related fixes to make the armory storage
 work again. The existing issues are:

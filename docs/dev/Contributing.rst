@@ -92,7 +92,7 @@ General contribution guidelines
   compiles. Our CI should catch anything that fails to build, but checking in
   advance can sometimes let you know of any issues sooner.
 * Update documentation when applicable - see `docs-standards` for details.
-* Update ``changelog.txt`` and ``docs/Authors.rst`` when applicable. See
+* Update ``docs/changelog.txt`` and ``docs/about/Authors.rst`` when applicable. See
   `build-changelog` for more information on the changelog format.
 * Submit ideas and bug reports as :issue:`issues on GitHub <>`.
   Posts in the forum thread can easily get missed or forgotten.

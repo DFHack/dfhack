@@ -30,5 +30,5 @@ User Manual
    /docs/Core
    /docs/Tools
    /docs/guides/index
-   /docs/index-dev
-   /docs/index-about
+   /docs/dev/index
+   /docs/about/index

@@ -2,9 +2,9 @@
 
 .. _lua-api:
 
-##############
-DFHack Lua API
-##############
+########################
+DFHack Lua API Reference
+########################
 
 DFHack has extensive support for
 the Lua_ scripting language, providing access to:

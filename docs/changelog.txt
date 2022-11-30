@@ -1,7 +1,7 @@
 === Scroll down for changes
 
 ===[[[
-The text below is included in docs/Documentation.rst - see that file for more details on the changelog setup.
+The text below is included in docs/dev/Documentation.rst - see that file for more details on the changelog setup.
 This is kept in this file as a quick syntax reference.
 
 ===help

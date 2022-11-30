@@ -7,7 +7,7 @@ These pages contain information about the general DFHack project.
 .. toctree::
    :maxdepth: 1
 
-   /docs/NEWS
-   /docs/Authors
+   /docs/about/Authors
    /LICENSE
-   /docs/Removed
+   /docs/about/Removed
+   /docs/NEWS

@@ -24,4 +24,4 @@ Older Changelogs
 ================
 Are kept in a separate file:  `History`
 
-.. that's ``docs/History.rst``, if you're reading the raw text.
+.. that's ``docs/about/History.rst``, if you're reading the raw text.

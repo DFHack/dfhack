@@ -1,6 +1,6 @@
-====================
-DFHack API reference
-====================
+===================
+DFHack API concepts
+===================
 
 .. toctree::
     :maxdepth: 1

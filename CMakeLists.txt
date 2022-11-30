@@ -423,7 +423,7 @@ add_subdirectory(depends)
 
 # Testing with CTest
 macro(dfhack_test name files)
-if(UNIX) # remove this once our MSVC build env has been updated
+if(UNIX AND NOT APPLE) # remove this once our MSVC build env has been updated
     add_executable(${name} ${files})
     target_include_directories(${name} PUBLIC depends/googletest/googletest/include)
     target_link_libraries(${name} dfhack gtest SDL)

@@ -4,7 +4,7 @@ add_subdirectory(lua)
 add_subdirectory(md5)
 add_subdirectory(protobuf)
 
-if(UNIX) # remove this once our MSVC build env has been updated
+if(UNIX AND NOT APPLE) # remove this once our MSVC build env has been updated
 option(INSTALL_GTEST "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" OFF)
 add_subdirectory(googletest)
 if(UNIX)

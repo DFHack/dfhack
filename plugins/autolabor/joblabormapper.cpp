@@ -174,7 +174,7 @@ static df::unit_labor workshop_build_labor[] =
     /* Fishery */            df::unit_labor::CLEAN_FISH,
     /* Still */                df::unit_labor::BREWER,
     /* Loom */                df::unit_labor::WEAVER,
-    /* Quern */                df::unit_labor::MILLER,
+    /* Quern */                df::unit_labor::HAUL_FURNITURE,
     /* Kennels */            df::unit_labor::ANIMALTRAIN,
     /* Kitchen */            df::unit_labor::COOK,
     /* Ashery */            df::unit_labor::LYE_MAKING,

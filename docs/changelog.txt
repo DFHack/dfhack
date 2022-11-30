@@ -45,6 +45,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `autolabor` & `autohauler`: properly handle jobs 241, 242, and 243
 - `autofarm`: add missing output flushes
 - `hotkeys`: correctly detect hotkeys bound to number keys, F11, or F12
+- `labormanager`: fix quern construction labor
 - Core: fix the segmentation fault with the REPORT event in EventManager
 - Core: fix the new JOB_STARTED event only sending each event once, to the first handler listed
 - Core: ensure ``foo.init`` always runs before ``foo.*.init`` (e.g.  ``dfhack.init`` should always run before ``dfhack.something.init``)

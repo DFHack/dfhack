@@ -734,6 +734,8 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
 
     DEFINE_VMETHOD_INTERPOSE(void, render, ())
     {
+        initStatics();
+
         bool plannable = isInPlannedBuildingPlacementMode();
         if (plannable && is_planmode_enabled(key))
         {
@@ -758,8 +760,6 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
 
         if (!plannable)
             return;
-
-        initStatics();
 
         auto dims = Gui::getDwarfmodeViewDims();
         int left_margin = dims.menu_x1 + 1;

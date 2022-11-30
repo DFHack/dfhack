@@ -10,9 +10,14 @@ plugins/stonesense/*.txt
 # Generated files
 *.pb.h
 build*/*
-docs/_*
+docs/changelogs/*
 docs/html/*
 docs/pdf/*
+docs/pseudoxml/*
+docs/tags/*
+docs/text/*
+docs/tools/*
+docs/xml/*
 library/include/df/*
 
 # Dependencies that we don't control

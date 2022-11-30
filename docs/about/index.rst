@@ -10,4 +10,4 @@ These pages contain information about the general DFHack project.
    /docs/about/Authors
    /LICENSE
    /docs/about/Removed
-   /docs/about/NEWS
+   /docs/NEWS

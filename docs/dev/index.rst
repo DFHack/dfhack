@@ -18,4 +18,4 @@ These are pages relevant to people developing for DFHack.
    /docs/dev/Memory-research
    /docs/dev/Binpatches
    /docs/dev/Remote
-   /docs/dev/NEWS-dev
+   /docs/NEWS-dev

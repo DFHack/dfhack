@@ -3,6 +3,8 @@ add_subdirectory(lodepng)
 add_subdirectory(lua)
 add_subdirectory(md5)
 add_subdirectory(protobuf)
+
+option(INSTALL_GTEST "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" OFF)
 add_subdirectory(googletest)
 if(UNIX)
     set_target_properties(gtest PROPERTIES COMPILE_FLAGS "-Wno-maybe-uninitialized -Wno-sign-compare")

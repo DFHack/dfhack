@@ -31,4 +31,4 @@ User Manual
    /docs/Tools
    /docs/guides/index
    /docs/index-dev
-   /docs/index-about
+   /docs/about/index

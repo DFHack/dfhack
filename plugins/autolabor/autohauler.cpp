@@ -471,7 +471,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
         state_count[dwarf_info[dwarf].state]++;
 
-        INFO(cycle, out).print("Dwarf %i \"%s\": state %s\n",
+        TRACE(cycle, out).print("Dwarf %i \"%s\": state %s\n",
             dwarf, dwarfs[dwarf]->name.first_name.c_str(), state_names[dwarf_info[dwarf].state]);
     }
 

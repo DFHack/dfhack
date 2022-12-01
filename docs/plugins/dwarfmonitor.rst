@@ -35,15 +35,40 @@ screen with the `overlay` framework:
 
 They can be enabled or disable via the `overlay` command.
 
-The :file:`dfhack-config/dwarfmonitor.json` file can be edited to specify the
-format for the ``dwarfmonitor.date`` widget:
+The :file:`dfhack-config/dwarfmonitor.json` file can be edited to change widget
+configuration with any of the following fields:
 
-* ``Y`` or ``y``: The current year
-* ``M``: The current month, zero-padded if necessary
-* ``m``: The current month, *not* zero-padded
-* ``D``: The current day, zero-padded if necessary
-* ``d``: The current day, *not* zero-padded
+* ``date_format`` (string): format for the ``dwarfmonitor.date`` widget:
 
-The default date format is ``Y-M-D``, per the ISO8601_ standard.
+    * ``Y`` or ``y``: The current year
+    * ``M``: The current month, zero-padded if necessary
+    * ``m``: The current month, *not* zero-padded
+    * ``D``: The current day, zero-padded if necessary
+    * ``d``: The current day, *not* zero-padded
+
+    The default date format is ``Y-M-D``, per the ISO8601_ standard.
+
+* ``coords_type`` (string): the coordinate type to show in the ``dwarfmonitor.cursor`` widget:
+
+    * ``all`` (the default): show all of the coordinate types listed here
+    * ``mouse_ui``: the X/Y UI coordinates of the tile the mouse is positioned over
+    * ``mouse_map``: the X/Y/Z map coordinates of the tile the mouse is
+      positioned over (only if over the map)
+    * ``keyboard_map``: the X/Y/Z map coordinates of the tile selected by the
+      keyboard-controlled ``X`` cursor in DF (if active)
+
+* ``coords_short`` (boolean, default: ``false``): if ``true``, hides explanatory
+  text from the ``dwarfmonitor.cursor`` widget, and only shows coordinates as
+  ``(X,Y,Z)``
+
+Example configuration file:
+
+.. code-block:: json
+
+    {
+        "date_format": "m/d/y",
+        "coords_type": "mouse_map",
+        "coords_short": false
+    }
 
 .. _ISO8601: https://en.wikipedia.org/wiki/ISO_8601

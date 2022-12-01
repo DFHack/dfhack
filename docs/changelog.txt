@@ -34,25 +34,25 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
-- `overlay`: plugin is transformed from a single line of text that runs `gui/launcher` on click to a fully-featured overlay injection framework. It now houses a popup menu for active keybindings, all the widgets provided by `dwarfmonitor` (e.g. the current date and number of happy/unhappy dwarves), the overlay that highlights suspended buildings when you pause, and others. See `overlay-dev-guide` for details.
+- `overlay`: plugin is transformed from a single line of text that runs `gui/launcher` on click to a fully-featured overlay injection framework. It now houses a popup menu for keybindings relevant to the current DF screen, all the widgets previously provided by `dwarfmonitor` (e.g. the current date and number of happy/unhappy dwarves), the overlay that highlights suspended buildings when you pause, and others. See `overlay-dev-guide` for details.
 
 ## Fixes
 - `automaterial`: fix the cursor jumping up a z level when clicking quickly after box select
-- `buildingplan`: fix crash when canceling out of placement of a building with plan mode enabled and subsequently attempting to place a building that does not have plan mode enabled and that has no pertinent materials available
+- `buildingplan`: fix crash when canceling out of placement mode for a building with planning mode enabled and subsequently attempting to place a building that does not have planning mode enabled and that has no pertinent materials available
 - `gui/create-item`: prevent materials list filter from intercepting sublist hotkeys
 - `mousequery`: fix the cursor jumping up z levels sometimes when using TWBT
 - `tiletypes`: no longer resets dig priority to the default when updating other properties of a tile
 - `automaterial`: fix rendering errors with box boundary markers
-- `autolabor` & `autohauler`: properly handle jobs 241, 242, and 243
-- `autolabor` & `autohauler`: refactored to use DFHack's messaging system for info/debug/trace messages
-- `autofarm`: add missing output flushes
-- `hotkeys`: correctly detect hotkeys bound to number keys, F11, or F12
-- `labormanager`: fix quern construction labor
-- Core: fix the segmentation fault with the REPORT event in EventManager
-- Core: fix the new JOB_STARTED event only sending each event once, to the first handler listed
-- Core: ensure ``foo.init`` always runs before ``foo.*.init`` (e.g.  ``dfhack.init`` should always run before ``dfhack.something.init``)
+- `autolabor`, `autohauler`: properly handle jobs 241, 242, and 243
+- `autofarm`: flush output so status text is visible immediately after running the command
+- `hotkeys`: correctly detect hotkeys bound to number keys, F11, and F12
+- `labormanager`: associate quern construction with the correct labor
+- ``EventManager``: fix a segmentation fault with the ``REPORT`` event
+- ``EventManager``: fix the ``JOB_STARTED`` event only sending events to the first handler listed instead of all registered handlers
+- Core: ensure ``foo.init`` always runs before ``foo.*.init`` (e.g. ``dfhack.init`` should always run before ``dfhack.something.init``)
 
 ## Misc Improvements
+- `autolabor`, `autohauler`: refactored to use DFHack's messaging system for info/debug/trace messages
 - `blueprint`: new ``--smooth`` option for recording all smoothed floors and walls instead of just the ones that require smoothing for later carving
 - `blueprint`: record built constructions in blueprints
 - `blueprint`: record stockpile/building/zone names in blueprints
@@ -60,39 +60,37 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `blueprint`: generate meta blueprints to reduce the number of blueprints you have to apply
 - `blueprint`: support splitting the output file into phases grouped by when they can be applied
 - `blueprint`: when splitting output files, number them so they sort into the order you should apply them in
-- `dwarfmonitor`: widgets have been ported to the overlay framework and can be enabled and configured via the overlay command
-- `ls`: indent tag listings and wrap them in the right column for better readability
-- `ls`: new ``--exclude`` option for hiding matched scripts from the output.  this can be especially useful for modders who don't want their mod scripts to be included in ``ls`` output.
-- `hotkeys`: hotkey screen has been transformed into an interactive `overlay` widget that you can bring up by moving the mouse cursor over the hotspot (in the upper left corner of the screen by default)
+- `dwarfmonitor`: widgets have been ported to the overlay framework and can be enabled and configured via the `gui/overlay` UI
+- `ls`: indent tag listings and wrap them in the rightmost column for better readability
+- `ls`: new ``--exclude`` option for hiding matched scripts from the output. this can be especially useful for modders who don't want their mod scripts to be included in ``ls`` output.
+- `hotkeys`: hotkey screen has been transformed into an interactive `overlay` widget that you can bring up by moving the mouse cursor over the hotspot (in the upper left corner of the screen by default). Enable/disable/reposition the hotspot in the `gui/overlay` UI. Even if the hotspot is disabled, the menu can be brought up at any time with the Ctrl-Shift-C hotkey.
 - `hotkeys`: now supports printing active hotkeys to the console with ``hotkeys list``
 - `digtype`: new ``-z`` option for digtype to restrict designations to the current z-level and down
 - UX: List widgets now have mouse-interactive scrollbars
 - UX: You can now hold down the mouse button on a scrollbar to make it scroll multiple times.
-- UX: You can now drag the scrollbar to scroll to a specific spot
-- Constructions module: ``findAtTile`` now uses a binary search intead of a linear search.
-- `orders`: replace shell craft orders with orders for shell leggings. they have a slightly higher trade price, and "shleggings" is hilarious.
+- UX: You can now drag the scrollbar up and down to scroll to a specific spot
+- `orders`: replace shell craft orders in the standard orders list you get with ``orders import library/basic``  with orders for shell leggings. They have a slightly higher trade price. Also, "shleggings" is just hilarious.
 - `spectate`: new ``auto-unpause`` option for auto-dismissal of announcement pause events (e.g. sieges).
 - `spectate`: new ``auto-disengage`` option for auto-disengagement of plugin through player interaction whilst unpaused.
-- `spectate`: new ``tick-threshold``, option for specifying the change interval (maximum follow time when focus-jobs is enabled)
-- `spectate`: new ``animals``, option for sometimes following animals
-- `spectate`: new ``hostiles``, option for sometimes following hostiles
-- `spectate`: new ``visiting``, option for sometimes following visiting merchants, diplomats or plain visitors
+- `spectate`: new ``tick-threshold`` option for specifying the maximum time to follow the same dwarf
+- `spectate`: new ``animals`` option for sometimes following animals
+- `spectate`: new ``hostiles`` option for sometimes following hostiles
+- `spectate`: new ``visiting`` option for sometimes following visiting merchants, diplomats or plain visitors
 - `spectate`: added persistent configuration of the plugin settings
 - `gui/cp437-table`: new global keybinding for the clickable on-screen keyboard for players with keyboard layouts that prevent them from using certain keys: Ctrl-Shift-K
-- `quickfort-library-guide`: dreamfort blueprint improvements: added a quantum stockpile for training bolts
+- `quickfort-library-guide`: improved layout of marksdwarf barracks in the example Dreamfort blueprints
 
 ## Documentation
-- `spectate`: improved documentation of features and functionality
-- `overlay-dev-guide`: documentation and guide for injecting functionality into DF viewscreens from Lua scripts and creating overlay widgets
-- ``dfhack.gui.revealInDwarfmodeMap``: document ``center`` bool for lua API
+- `overlay-dev-guide`: documentation and guide for injecting functionality into DF viewscreens from Lua scripts and creating interactive overlay widgets
+- ``dfhack.gui.revealInDwarfmodeMap``: document ``center`` bool for Lua API
 
 ## API
 - ``Gui::anywhere_hotkey``: for plugin commands bound to keybindings that can be invoked on any screen
-- add functions reverse-engineered from announcement code: ``Gui::autoDFAnnouncement``, ``Gui::pauseRecenter``
+- ``Gui::autoDFAnnouncement``, ``Gui::pauseRecenter``: added functionality reverse-engineered from announcement code
 - ``Gui::revealInDwarfmodeMap``: Now enforce valid view bounds when pos invalid, add variant accepting x, y, z
 - ``Lua::PushInterfaceKeys()``: transforms viewscreen ``feed()`` keys into something that can be interpreted by lua-based widgets
 - ``Lua::Push()``: now handles maps with otherwise supported keys and values
-- Units module: added new checks
+- Units module: added new predicates for:
   - ``isUnitInBox()``
   - ``isAnimal()``
   - ``isVisiting()`` any visiting unit (diplomat, merchant, visitor)
@@ -105,15 +103,15 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
   - ``isSemiMegabeast()``
   - ``isNightCreature()``
   - ``isDanger()`` returns true if is a 'GreatDanger', semi-megabeast, night creature, undead, or invader
-- Units module: modifies existing checks
-  - ``isUndead(df::unit* unit)`` => ``isUndead(df::unit* unit, bool ignore_vamps = true)`` isUndead used to always ignore vamps, now it does it by default and includes them when false is passed
-  - ``isCitizen(df::unit* unit)`` => ``isCitizen(df::unit* unit, bool ignore_sanity = false)`` isCitizen used to always check sanity, now it does it by default and ignores sanity when true is passed
+- Units module: modified predicates:
+  - ``isUndead()`` now optionally ignores vampires instead of always ignoring vampires
+  - ``isCitizen()`` now optionally ignores insane citizens instead of always ignoring insane citizens
 - Constructions module: added ``insert()`` to insert constructions into the game's sorted list.
-- MiscUtils: moved the following string transformation functions from ``uicommon.h``: ``int_to_string``, ``ltrim``, ``rtrim``, and ``trim``; added ``string_to_int``
+- MiscUtils: added the following string transformation functions (refactored from ``uicommon.h``): ``int_to_string``, ``ltrim``, ``rtrim``, and ``trim``; added ``string_to_int``
 
 ## Lua
 - ``widgets.Scrollbar``: new scrollbar widget that can be paired with an associated scrollable widget. Integrated with ``widgets.Label`` and ``widgets.List``.
-- ``widgets.List``: new ``getIdxUnderMouse()`` function for detecting the list index under the active mouse cursor
+- ``widgets.List``: new ``getIdxUnderMouse()`` function for detecting the list index under the active mouse cursor. this allows for "selection follows mouse" behavior
 - ``widgets.List``: shift-clicking now triggers the ``submit2`` attribute function if it is defined
 - ``dfhack.constructions.findAtTile()``: exposed preexisting function to Lua.
 - ``dfhack.constructions.insert()``: exposed new function to Lua.
@@ -122,11 +120,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``widgets.FilteredList``: now provides a useful default search key for list items made up of text tokens instead of plain text
 - ``widgets.ResizingPanel``: now accounts for frame inset when calculating frame size
 - ``widgets.HotkeyLabel``: now ignores mouse clicks when ``on_activate`` is not defined
-- ``gui.Screen.show()`` now returns ``self`` as a convenience
-- ``gui.View.getMousePos()`` now takes an optional ``ViewRect`` parameter in case the caller wants to get the mouse pos relative to a rect that is not the frame_body (such as the frame_rect)
+- ``gui.Screen.show()``: now returns ``self`` as a convenience
+- ``gui.View.getMousePos()`` now takes an optional ``ViewRect`` parameter in case the caller wants to get the mouse pos relative to a rect that is not the frame_body (such as the frame_rect that includes the frame itself)
 - Lua mouse events now conform to documented behavior in `lua-api` -- ``_MOUSE_L_DOWN`` will be sent exactly once per mouse click and ``_MOUSE_L`` will be sent repeatedly as long as the button is held down. Similarly for right mouse button events.
 
 ## Internals
+- Constructions module: ``findAtTile`` now uses a binary search intead of a linear search
 - MSVC warning level upped to /W3, and /WX added to make warnings cause compilations to fail.
 
 ## Removed

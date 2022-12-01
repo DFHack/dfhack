@@ -37,7 +37,8 @@ function HotspotMenuWidget:overlay_trigger()
     return MenuScreen{
         hotspot_frame=self.frame,
         hotkeys=hotkeys,
-        bindings=bindings}:show()
+        bindings=bindings,
+        mouseover=self.mouseover}:show()
 end
 
 -- register the menu hotspot with the overlay
@@ -57,6 +58,7 @@ MenuScreen.ATTRS{
     hotspot_frame=DEFAULT_NIL,
     hotkeys=DEFAULT_NIL,
     bindings=DEFAULT_NIL,
+    mouseover=false,
 }
 
 -- get a map from the binding string to a list of hotkey strings that all
@@ -114,10 +116,9 @@ local function get_choices(hotkeys, bindings, is_inverted)
 end
 
 function MenuScreen:init()
-    self.mouseover = false
-
+    local is_inverted = not not self.hotspot_frame.b
     local choices,list_width = get_choices(self.hotkeys, self.bindings,
-                                           self.hotspot_frame.b)
+                                           is_inverted)
 
     local list_frame = copyall(self.hotspot_frame)
     list_frame.w = list_width + 2
@@ -173,6 +174,11 @@ function MenuScreen:init()
             },
         },
     }
+
+    self.initialize = function()
+        print('initilize')
+        self.subviews.list:setSelected(is_inverted and #choices or 1)
+    end
 end
 
 function MenuScreen:onDismiss()
@@ -219,6 +225,10 @@ function MenuScreen:onInput(keys)
 end
 
 function MenuScreen:onRenderFrame(dc, rect)
+    if self.initialize then
+        self.initialize()
+        self.initialize = nil
+    end
     self:renderParent()
 end
 

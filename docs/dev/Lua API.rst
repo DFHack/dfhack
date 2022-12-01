@@ -1548,6 +1548,49 @@ Units module
 
   Returns a table of the cutoffs used by the above stress level functions.
 
+Action Timer API
+~~~~~~~~~~~~~~~~
+
+This is an API to allow manipulation of unit action timers, to speed them up or slow them down.
+All functions in this API have overflow/underflow protection when modifying action timers (the value will cap out).
+``affectedActionType`` parameters are integers from the DF enum ``unit_action_type``. E.g. ``df.unit_action_type.Move``.
+``affectedActionTypeGroup`` parameters are integers from the (custom) DF enum ``unit_action_type_group``. They are as follows:
+
+  * ``All`` (does not include unknown unit action types)
+  * ``Movement``
+  * ``MovementFeet`` (check if the unit is not on ground before using this one?)
+  * ``Combat`` (includes bloodsucking)
+  * ``Work``
+
+API functions:
+
+* ``subtractActionTimers(unit, amount, affectedActionType)``
+
+  Subtract ``amount`` (32-bit integer) from the timers of any actions the unit is performing of ``affectedActionType``
+  (usually one or zero actions in normal gameplay).
+
+* ``subtractGroupActionTimers(unit, amount, affectedActionTypeGroup)``
+
+  Subtract ``amount`` (32-bit integer) from the timers of any actions the unit is performing that match the ``affectedActionTypeGroup`` category.
+
+* ``multiplyActionTimers(unit, amount, affectedActionType)``
+
+  Multiply the timers of any actions of ``affectedActionType`` the unit is performing by ``amount`` (float)
+  (usually one or zero actions in normal gameplay).
+
+* ``multiplyGroupActionTimers(unit, amount, affectedActionTypeGroup)``
+
+  Multiply the timers of any actions that match the ``affectedActionTypeGroup`` category the unit is performing by ``amount`` (float).
+
+* ``setActionTimers(unit, amount, affectedActionType)``
+
+  Set the timers of any action the unit is performing of ``affectedActionType`` to ``amount`` (32-bit integer)
+  (usually one or zero actions in normal gameplay).
+
+* ``setGroupActionTimers(unit, amount, affectedActionTypeGroup)``
+
+  Set the timers of any action the unit is performing that match the ``affectedActionTypeGroup`` category to ``amount`` (32-bit integer).
+
 Items module
 ------------
 

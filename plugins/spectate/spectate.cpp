@@ -392,8 +392,10 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out) {
 
 DFhackCExport command_result plugin_load_data (color_ostream &out) {
     SP::LoadSettings();
-    SP::following_dwarf = SP::FollowADwarf();
-    SP::PrintStatus(out);
+    if (enabled) {
+        SP::following_dwarf = SP::FollowADwarf();
+        SP::PrintStatus(out);
+    }
     return DFHack::CR_OK;
 }
 

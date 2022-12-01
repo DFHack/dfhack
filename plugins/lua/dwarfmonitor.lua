@@ -3,6 +3,7 @@ local _ENV = mkmodule('plugins.dwarfmonitor')
 local json = require('json')
 local guidm = require('gui.dwarfmode')
 local overlay = require('plugins.overlay')
+local utils = require('utils')
 
 local DWARFMONITOR_CONFIG_FILE = 'dfhack-config/dwarfmonitor.json'
 
@@ -150,23 +151,50 @@ CursorWidget = defclass(CursorWidget, overlay.OverlayWidget)
 CursorWidget.ATTRS{
     default_pos={x=2,y=-4},
     viewscreens={'dungeonmode', 'dwarfmode'},
+    type='all',
+    short=false,
 }
 
-function CursorWidget:onRenderBody(dc)
-    local screenx, screeny = dfhack.screen.getMousePos()
-    local mouse_map = dfhack.gui.getMousePos()
-    local keyboard_map = guidm.getCursorPos()
+CursorWidget.COORD_TYPES = utils.OrderedTable()
+CursorWidget.COORD_TYPES.mouse_ui = {
+    description = 'mouse UI grid',
+    get_coords = function()
+        return xyz2pos(dfhack.screen.getMousePos())
+    end,
+}
+CursorWidget.COORD_TYPES.mouse_map = {
+    description = 'mouse map coord',
+    get_coords = dfhack.gui.getMousePos,
+}
+CursorWidget.COORD_TYPES.keyboard_map = {
+    description = 'kbd cursor coord',
+    get_coords = guidm.getCursorPos,
+}
 
+function CursorWidget:init()
+    local ok, config = pcall(json.decode_file, DWARFMONITOR_CONFIG_FILE)
+    if ok then
+        self.type = tostring(config.coords_type or self.type)
+        self.short = config.coords_short
+    else
+        dfhack.printerr(('Failed to load %s: %s'):format(DWARFMONITOR_CONFIG_FILE, config))
+    end
+end
+
+function CursorWidget:onRenderBody(dc)
     local text = {}
-    table.insert(text, ('mouse UI grid (%d,%d)'):format(screenx, screeny))
-    if mouse_map then
-        table.insert(text, ('mouse map coord (%d,%d,%d)')
-                :format(mouse_map.x, mouse_map.y, mouse_map.z))
+    for k, v in pairs(CursorWidget.COORD_TYPES) do
+        -- fall back to 'all' behavior if type isn't recognized
+        if k == self.type or not CursorWidget.COORD_TYPES[self.type] then
+            local coords = v.get_coords()
+            if coords then
+                local prefix = self.short and '' or (v.description .. ' ')
+                local coord_str = table.concat({coords.x, coords.y, coords.z}, ',')
+                table.insert(text, ('%s(%s)'):format(prefix, coord_str))
+            end
+        end
     end
-    if keyboard_map then
-        table.insert(text, ('kbd cursor coord (%d,%d,%d)')
-                :format(keyboard_map.x, keyboard_map.y, keyboard_map.z))
-    end
+
     local width = 0
     for i,line in ipairs(text) do
         dc:seek(0, i-1):string(line)

@@ -316,7 +316,7 @@ item in the raws::
         [METAL]
         [LEATHER]
         [HARD]
-        [PEGASUS_BOOTS_MOD_MOVEMENT_TIMER_REDUCTION_PER_TICK:5] custom raw token
+        [PEGASUS_BOOTS_MOD_FOOT_MOVEMENT_TIMER_REDUCTION_PER_TICK:2] custom raw token
             (you don't have to comment the custom token every time,
             but it does clarify what it is)
 
@@ -327,8 +327,7 @@ Then, let's make a ``repeat-util`` callback for once a tick::
     repeatUtil.scheduleEvery(modId, 1, "ticks", function()
 
 Let's iterate over every active unit, and for every unit, iterate over their
-worn items to calculate how much we are going to take from their movement
-timer::
+worn items to calculate how much we are going to take from their on-foot movement timers::
 
     for _, unit in ipairs(df.global.world.units.active) do
         local amount = 0
@@ -336,14 +335,15 @@ timer::
             if entry.mode == df.unit_inventory_item.T_mode.Worn then
                 local reduction = customRawTokens.getToken(
                         entry.item,
-                        'PEGASUS_BOOTS_MOD_MOVEMENT_TIMER_REDUCTION_PER_TICK')
+                        'PEGASUS_BOOTS_MOD_FOOT_MOVEMENT_TIMER_REDUCTION_PER_TICK')
                 amount = amount + (tonumber(reduction) or 0)
             end
         end
+        -- Subtract amount from on-foot movement timers if not on ground
+        if not unit.flags1.on_ground then
+            dfhack.units.subtractActionTimers(unit, amount, df.unit_action_type_group.MovementFeet)
+        end
     end
-
-    -- Subtract amount from movement timer if currently moving
-    dfhack.units.addMoveTimer(-amount)
 
 The structure of a full mod
 ---------------------------

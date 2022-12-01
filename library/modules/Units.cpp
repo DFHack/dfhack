@@ -2032,7 +2032,7 @@ void Units::subtractActionTimers(color_ostream &out, df::unit *unit, int32_t amo
     }
 }
 
-void Units::subtractCategoryActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type_group affectedActionTypeGroup)
+void Units::subtractGroupActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type_group affectedActionTypeGroup)
 {
     CHECK_NULL_POINTER(unit);
     for (auto action : unit->actions) {
@@ -2065,7 +2065,7 @@ void Units::multiplyActionTimers(color_ostream &out, df::unit *unit, float amoun
     }
 }
 
-void Units::multiplyCategoryActionTimers(color_ostream &out, df::unit *unit, float amount, df::unit_action_type_group affectedActionTypeGroup)
+void Units::multiplyGroupActionTimers(color_ostream &out, df::unit *unit, float amount, df::unit_action_type_group affectedActionTypeGroup)
 {
     CHECK_NULL_POINTER(unit);
     if (!validateMultiplyActionTimerAmount(out, amount))
@@ -2100,7 +2100,7 @@ void Units::setActionTimers(color_ostream &out, df::unit *unit, int32_t amount, 
     }
 }
 
-void Units::setCategoryActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type_group affectedActionTypeGroup)
+void Units::setGroupActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type_group affectedActionTypeGroup)
 {
     CHECK_NULL_POINTER(unit);
     if (!validateSetActionTimerAmount(out, amount))

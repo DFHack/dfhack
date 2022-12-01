@@ -1780,11 +1780,11 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getStressCategory),
     WRAPM(Units, getStressCategoryRaw),
     WRAPM(Units, subtractActionTimers),
-    WRAPM(Units, subtractCategoryActionTimers),
+    WRAPM(Units, subtractGroupActionTimers),
     WRAPM(Units, multiplyActionTimers),
-    WRAPM(Units, multiplyCategoryActionTimers),
+    WRAPM(Units, multiplyGroupActionTimers),
     WRAPM(Units, setActionTimers),
-    WRAPM(Units, setCategoryActionTimers),
+    WRAPM(Units, setGroupActionTimers),
     { NULL, NULL }
 };
 

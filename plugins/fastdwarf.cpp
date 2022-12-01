@@ -83,7 +83,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
         if (enable_fastdwarf)
         {
-            Units::setCategoryActionTimers(out, unit, 1, df::unit_action_type_group::All);
+            Units::setGroupActionTimers(out, unit, 1, df::unit_action_type_group::All);
         }
     }
     return CR_OK;

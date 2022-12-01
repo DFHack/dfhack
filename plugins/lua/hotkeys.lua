@@ -19,7 +19,7 @@ HotspotMenuWidget.ATTRS{
 }
 
 function HotspotMenuWidget:init()
-    self:addviews{widgets.Label{text='!!'}}
+    self:addviews{widgets.Label{text='!'}}
     self.mouseover = false
 end
 
@@ -176,7 +176,6 @@ function MenuScreen:init()
     }
 
     self.initialize = function()
-        print('initilize')
         self.subviews.list:setSelected(is_inverted and #choices or 1)
     end
 end

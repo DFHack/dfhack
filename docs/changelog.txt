@@ -44,6 +44,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `tiletypes`: no longer resets dig priority to the default when updating other properties of a tile
 - `automaterial`: fix rendering errors with box boundary markers
 - `autolabor` & `autohauler`: properly handle jobs 241, 242, and 243
+- `autolabor` & `autohauler`: refactored to use DFHack's messaging system for info/debug/trace messages
 - `autofarm`: add missing output flushes
 - `hotkeys`: correctly detect hotkeys bound to number keys, F11, or F12
 - `labormanager`: fix quern construction labor

@@ -1,8 +1,6 @@
-/**
- * All includes copied from autolabor for now
- */
 #include "Core.h"
 #include <Console.h>
+#include <Debug.h>
 #include <Export.h>
 #include <PluginManager.h>
 
@@ -45,20 +43,14 @@
 
 #include "laborstatemap.h"
 
-// Not sure what this does, but may have to figure it out later
-#define ARRAY_COUNT(array) (sizeof(array)/sizeof((array)[0]))
-
-// I can see a reason for having all of these
-using std::string;
-using std::endl;
-using std::vector;
 using namespace DFHack;
 using namespace df::enums;
 
-// idk what this does
 DFHACK_PLUGIN("autohauler");
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(world);
+
+#define ARRAY_COUNT(array) (sizeof(array)/sizeof((array)[0]))
 
 /*
  * Autohauler module for dfhack
@@ -86,37 +78,31 @@ REQUIRE_GLOBAL(world);
  * autolabor.plug.dll as this plugin is mutually exclusive with it.
  */
 
-// Yep...don't know what it does
 DFHACK_PLUGIN_IS_ENABLED(enable_autohauler);
 
-// This is the configuration saved into the world save file
-static PersistentDataItem config;
+namespace DFHack {
+    DBG_DECLARE(autohauler, cycle, DebugCategory::LINFO);
+}
 
-// There is a possibility I will add extensive, line-by-line debug capability
-// later
-static bool print_debug = false;
+static std::vector<int> state_count(NUM_STATE);
 
-// Default number of frames between autohauler updates
 const static int DEFAULT_FRAME_SKIP = 30;
 
-// Number of frames between autohauler updates
-static int frame_skip;
+static PersistentDataItem config;
 
-// Don't know what this does
 command_result autohauler (color_ostream &out, std::vector <std::string> & parameters);
 
-// Don't know what this does either
+static int frame_skip;
+
 static bool isOptionEnabled(unsigned flag)
 {
     return config.isValid() && (config.ival(0) & flag) != 0;
 }
 
-// Not sure about the purpose of this
 enum ConfigFlags {
     CF_ENABLED = 1,
 };
 
-// Don't know what this does
 static void setOptionEnabled(ConfigFlags flag, bool on)
 {
     if (!config.isValid())
@@ -128,49 +114,34 @@ static void setOptionEnabled(ConfigFlags flag, bool on)
         config.ival(0) &= ~flag;
 }
 
-// This is a vector of states and number of dwarves in that state
-static std::vector<int> state_count(NUM_STATE);
-
-// Mode assigned to labors. Either it's a hauling job, or it's not.
 enum labor_mode {
     ALLOW,
     HAULERS,
     FORBID
 };
 
-// This is the default treatment of a particular labor.
+struct labor_info
+{
+    PersistentDataItem config;
+
+    int active_dwarfs;
+
+    labor_mode mode() { return (labor_mode) config.ival(0); }
+
+    void set_mode(labor_mode mode) { config.ival(0) = mode; }
+
+    void set_config(PersistentDataItem a) { config = a; }
+
+    };
+
 struct labor_default
 {
     labor_mode mode;
     int active_dwarfs;
 };
 
-// This is the current treatment of a particular labor.
-// This would have been more cleanly presented as a class
-struct labor_info
-{
-    // It seems as if this is the means of accessing the world data
-    PersistentDataItem config;
-
-    // Number of dwarves assigned this labor
-    int active_dwarfs;
-
-    // Set the persistent data item associated with this labor treatment
-    // We Java folk hate pointers, but that's what the parameter will be
-    void set_config(PersistentDataItem a) { config = a; }
-
-    // Return the labor_mode associated with this labor
-    labor_mode mode() { return (labor_mode) config.ival(0); }
-
-    // Set the labor_mode associated with this labor
-    void set_mode(labor_mode mode) { config.ival(0) = mode; }
-};
-
-// This is a vector of all the current labor treatments
 static std::vector<struct labor_info> labor_infos;
 
-// This is just an array of all the labors, whether it should be untouched
-// (DISABLE) or treated as a last-resort job (HAULERS).
 static const struct labor_default default_labor_infos[] = {
     /* MINE */                  {ALLOW,   0},
     /* HAUL_STONE */            {HAULERS, 0},
@@ -257,34 +228,22 @@ static const struct labor_default default_labor_infos[] = {
     /* BOOKBINDING */           {ALLOW,   0}
 };
 
-/**
- * Reset labor to default treatment
- */
-static void reset_labor(df::unit_labor labor)
-{
-    labor_infos[labor].set_mode(default_labor_infos[labor].mode);
-}
-
-/**
- * This is individualized dwarf info populated in plugin_onupdate
- */
 struct dwarf_info_t
 {
-    // Current simplified employment status of dwarf
     dwarf_state state;
 
-    // Set to true if for whatever reason we are exempting this dwarf
-    // from hauling
     bool haul_exempt;
 };
 
-/**
- * Disable autohauler labor lists
- */
 static void cleanup_state()
 {
     enable_autohauler = false;
     labor_infos.clear();
+}
+
+static void reset_labor(df::unit_labor labor)
+{
+    labor_infos[labor].set_mode(default_labor_infos[labor].mode);
 }
 
 static void enable_alchemist(color_ostream &out)
@@ -297,29 +256,18 @@ static void enable_alchemist(color_ostream &out)
     }
 }
 
-/**
- * Initialize the plugin labor lists
- */
 static void init_state(color_ostream &out)
 {
-    // This obtains the persistent data from the world save file
     config = World::GetPersistentData("autohauler/config");
 
-    // Check to ensure that the persistent data item actually exists and that
-    // the first item in the array of ints isn't -1 (implies disabled)
     if (config.isValid() && config.ival(0) == -1)
         config.ival(0) = 0;
 
-    // Check to see if the plugin is enabled in the persistent data, if so then
-    // enable the local flag for autohauler being enabled
     enable_autohauler = isOptionEnabled(CF_ENABLED);
 
-    // If autohauler is not enabled then it's pretty pointless to do the rest
     if (!enable_autohauler)
         return;
 
-    // First get the frame skip from persistent data, or create the item
-    // if not present
     auto cfg_frameskip = World::GetPersistentData("autohauler/frameskip");
     if (cfg_frameskip.isValid())
     {
@@ -327,126 +275,78 @@ static void init_state(color_ostream &out)
     }
     else
     {
-        // Add to persistent data then get it to assert it's actually there
         cfg_frameskip = World::AddPersistentData("autohauler/frameskip");
         cfg_frameskip.ival(0) = DEFAULT_FRAME_SKIP;
         frame_skip = cfg_frameskip.ival(0);
     }
-
-    /* Here we are going to populate the labor list by loading persistent data
-     * from the world save */
-
-    // This is a vector of all the persistent data items from config
-    std::vector<PersistentDataItem> items;
-
-    // This populates the aforementioned vector
-    World::GetPersistentData(&items, "autohauler/labors/", true);
-
-    // Resize the list of current labor treatments to size of list of default
-    // labor treatments
     labor_infos.resize(ARRAY_COUNT(default_labor_infos));
 
-    // For every persistent data item...
-    for (auto p = items.begin(); p != items.end(); p++)
+    std::vector<PersistentDataItem> items;
+    World::GetPersistentData(&items, "autohauler/labors/", true);
+
+
+    for (auto& p : items)
     {
-        // Load as a string the key associated with the persistent data item
-        string key = p->key();
-
-        // Translate the string into a labor defined by global dfhack constants
+        std::string key = p.key();
         df::unit_labor labor = (df::unit_labor) atoi(key.substr(strlen("autohauler/labors/")).c_str());
-
-        // Ensure that the labor is defined in the existing list
         if (labor >= 0 && size_t(labor) < labor_infos.size())
         {
-            // Link the labor treatment with the associated persistent data item
-            labor_infos[labor].set_config(*p);
-
-            // Set the number of dwarves associated with labor to zero
+            labor_infos[labor].set_config(p);
             labor_infos[labor].active_dwarfs = 0;
         }
     }
 
     // Add default labors for those not in save
     for (size_t i = 0; i < ARRAY_COUNT(default_labor_infos); i++) {
-
-        // Determine if the labor is already present. If so, exit the for loop
         if (labor_infos[i].config.isValid())
             continue;
 
-        // Not sure of the mechanics, but it seems to give an output stream
-        // giving a string for the new persistent data item
         std::stringstream name;
         name << "autohauler/labors/" << i;
 
-        // Add a new persistent data item as it is not currently in the save
         labor_infos[i].set_config(World::AddPersistentData(name.str()));
 
-        // Set the active counter to zero
         labor_infos[i].active_dwarfs = 0;
-
-        // Reset labor to default treatment
         reset_labor((df::unit_labor) i);
     }
 
-    // Allow Alchemist to be set in the labor-related UI screens so the player
-    // can actually use it as a flag without having to run Dwarf Therapist
     enable_alchemist(out);
 }
 
-/**
- * Call this method to enable the plugin.
- */
 static void enable_plugin(color_ostream &out)
 {
-    // If there is no config persistent item, make one
     if (!config.isValid())
     {
         config = World::AddPersistentData("autohauler/config");
         config.ival(0) = 0;
     }
 
-    // I think this is already done in init_state(), but it can't hurt
     setOptionEnabled(CF_ENABLED, true);
     enable_autohauler = true;
+    out << "Enabling the plugin." << std::endl;
 
-    // Output to console that the plugin is enabled
-    out << "Enabling the plugin." << endl;
-
-    // Disable autohauler and clear the labor list
     cleanup_state();
-
-    // Initialize the plugin
     init_state(out);
 }
 
-/**
- * Initialize the plugin
- */
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    // This seems to verify that the default labor list and the current labor
-    // list are the same size
     if(ARRAY_COUNT(default_labor_infos) != ENUM_LAST_ITEM(unit_labor) + 1)
     {
         out.printerr("autohauler: labor size mismatch\n");
         return CR_FAILURE;
     }
 
-    // Essentially an introduction dumped to the console
     commands.push_back(PluginCommand(
         "autohauler",
         "Automatically manage hauling labors.",
         autohauler));
 
-    // Initialize plugin labor lists
     init_state(out);
 
     return CR_OK;
 }
 
-/**
- * Shut down the plugin
- */
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     cleanup_state();
@@ -454,9 +354,6 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-/**
- * This method responds to the map being loaded, or unloaded.
- */
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event) {
@@ -474,59 +371,38 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     return CR_OK;
 }
 
-/**
- * This method is called every frame in Dwarf Fortress from my understanding.
- */
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
-    // This makes it so that the plugin is only run every 60 steps, in order to
-    // save FPS. Since it is static, this is declared before this method is called
     static int step_count = 0;
+    if(!world || !world->map.block_index || !enable_autohauler)
+    {
+        return CR_OK;
+    }
 
-    // Cancel run if the world doesn't exist or plugin isn't enabled
-    if(!world || !world->map.block_index || !enable_autohauler) { return CR_OK; }
-
-    // Increment step count
-    step_count++;
-
-    // Run aforementioned step count and return unless threshold is reached.
-    if (step_count < frame_skip) return CR_OK;
-
-    // Reset step count since at this point it has reached 60
+    if (++step_count < frame_skip)
+        return CR_OK;
     step_count = 0;
 
-    // Create a vector of units. This will be populated in the following for loop.
     std::vector<df::unit *> dwarfs;
 
-    // Scan the world and look for any citizens in the player's civilization.
-    // Add these to the list of dwarves.
-    // xxx Does it need to be ++i?
-    for (size_t i = 0; i < world->units.active.size(); ++i)
+    for (auto& cre : world->units.active)
     {
-        df::unit* cre = world->units.active[i];
         if (Units::isCitizen(cre))
         {
             dwarfs.push_back(cre);
         }
     }
 
-    // This just keeps track of the number of civilians from the previous for loop.
     int n_dwarfs = dwarfs.size();
 
-    // This will return if there are no civilians. Otherwise could call
-    // nonexistent elements of array.
     if (n_dwarfs == 0)
         return CR_OK;
 
-    // This is a matching of assigned jobs with a dwarf's state
-    // xxx but wouldn't it be better if this and "dwarfs" were in the same object?
     std::vector<dwarf_info_t> dwarf_info(n_dwarfs);
 
-    // Reset the counter for number of dwarves in states to zero
     state_count.clear();
     state_count.resize(NUM_STATE);
 
-    // Find the activity state for each dwarf
     for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
     {
         /* Before determining how to handle employment status, handle
@@ -551,11 +427,9 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         // Scan a dwarf's miscellaneous traits for on break or migrant status.
         // If either of these are present, disable hauling because we want them
         // to try to find real jobs first
-        for (auto p = dwarfs[dwarf]->status.misc_traits.begin(); p < dwarfs[dwarf]->status.misc_traits.end(); p++)
-        {
-            if ((*p)->id == misc_trait_type::Migrant)
-                is_migrant = true;
-        }
+        auto v = dwarfs[dwarf]->status.misc_traits;
+        auto test_migrant = [](df::unit_misc_trait* t) { return t->id == misc_trait_type::Migrant; };
+        is_migrant = std::find_if(v.begin(), v.end(), test_migrant ) != v.end();
 
         /* Now determine a dwarf's employment status and decide whether
          * to assign hauling */
@@ -583,7 +457,6 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         {
             dwarf_info[dwarf].state = IDLE;
         }
-        // If it gets to this point we look at the task and assign either BUSY or OTHER
         else
         {
             int job = dwarfs[dwarf]->job.current_job->job_type;
@@ -591,24 +464,16 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
                 dwarf_info[dwarf].state = dwarf_states[job];
             else
             {
-                // Warn the console that the dwarf has an unregistered labor, default to BUSY
-                out.print("Dwarf %i \"%s\" has unknown job %i\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), job);
-                dwarf_info[dwarf].state = BUSY;
+                WARN(cycle, out).print("Dwarf %i \"%s\" has unknown job %i\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), job);
+                dwarf_info[dwarf].state = OTHER;
             }
         }
 
-        // Debug: Output dwarf job and state data
-        if(print_debug)
-            out.print("Dwarf %i %s State: %i\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(),
-                      dwarf_info[dwarf].state);
-
-        // Increment corresponding labor in default_labor_infos struct
         state_count[dwarf_info[dwarf].state]++;
 
+        TRACE(cycle, out).print("Dwarf %i \"%s\": state %s\n",
+            dwarf, dwarfs[dwarf]->name.first_name.c_str(), state_names[dwarf_info[dwarf].state]);
     }
-
-    // At this point the debug if present has been completed
-    print_debug = false;
 
     // This is a vector of all the labors
     std::vector<df::unit_labor> labors;
@@ -639,19 +504,13 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     // There was no reason to put potential haulers in an array. All of them are
     // covered in the following for loop.
 
-    // Equivalent of Java for(unit_labor : labor)
-    // For every labor...
     FOR_ENUM_ITEMS(unit_labor, labor)
     {
-        // If this is a non-labor continue to next item
         if (labor == unit_labor::NONE)
             continue;
-
-        // If this is not a hauling labor continue to next item
         if (labor_infos[labor].mode() != HAULERS)
             continue;
 
-        // For every dwarf...
         for(size_t dwarf = 0; dwarf < dwarfs.size(); dwarf++)
         {
             if (!Units::isValidLabor(dwarfs[dwarf], labor))
@@ -676,21 +535,30 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             {
                 labor_infos[labor].active_dwarfs++;
             }
-
             // CHILD ignored
         }
-
-    // Let's play a game of "find the missing bracket!" I hope this is correct.
     }
-
-    // This would be the last statement of the method
     return CR_OK;
 }
 
-/**
- * xxx Isn't this a repeat of enable_plugin? If it is separately called, then
- * passing a constructor should suffice.
- */
+void print_labor (df::unit_labor labor, color_ostream &out)
+{
+    std::string labor_name = ENUM_KEY_STR(unit_labor, labor);
+    out << labor_name << ": ";
+    for (int i = 0; i < 20 - (int)labor_name.length(); i++)
+        out << ' ';
+    if (labor_infos[labor].mode() == ALLOW) out << "allow" << std::endl;
+    else if(labor_infos[labor].mode() == FORBID) out << "forbid" << std::endl;
+    else if(labor_infos[labor].mode() == HAULERS)
+    {
+        out << "haulers, currently " << labor_infos[labor].active_dwarfs << " dwarfs" << std::endl;
+    }
+    else
+    {
+        out << "Warning: Invalid labor mode!" << std::endl;
+    }
+}
+
 DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable )
 {
     if (!Core::getInstance().isWorldLoaded()) {
@@ -707,36 +575,12 @@ DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable )
         enable_autohauler = false;
         setOptionEnabled(CF_ENABLED, false);
 
-        out << "Autohauler is disabled." << endl;
+        out << "Autohauler is disabled." << std::endl;
     }
 
     return CR_OK;
 }
 
-/**
- * Print the aggregate labor status to the console.
- */
-void print_labor (df::unit_labor labor, color_ostream &out)
-{
-    string labor_name = ENUM_KEY_STR(unit_labor, labor);
-    out << labor_name << ": ";
-    for (int i = 0; i < 20 - (int)labor_name.length(); i++)
-        out << ' ';
-    if (labor_infos[labor].mode() == ALLOW) out << "allow" << endl;
-    else if(labor_infos[labor].mode() == FORBID) out << "forbid" << endl;
-    else if(labor_infos[labor].mode() == HAULERS)
-    {
-        out << "haulers, currently " << labor_infos[labor].active_dwarfs << " dwarfs" << endl;
-    }
-    else
-    {
-        out << "Warning: Invalid labor mode!" << endl;
-    }
-}
-
-/**
- * This responds to input from the command prompt.
- */
 command_result autohauler (color_ostream &out, std::vector <std::string> & parameters)
 {
     CoreSuspender suspend;
@@ -761,13 +605,13 @@ command_result autohauler (color_ostream &out, std::vector <std::string> & param
         {
             int newValue = atoi(parameters[1].c_str());
             cfg_frameskip.ival(0) = newValue;
-            out << "Setting frame skip to " << newValue << endl;
+            out << "Setting frame skip to " << newValue << std::endl;
             frame_skip = cfg_frameskip.ival(0);
             return CR_OK;
         }
         else
         {
-            out << "Warning! No persistent data for frame skip!" << endl;
+            out << "Warning! No persistent data for frame skip!" << std::endl;
             return CR_OK;
         }
     }
@@ -775,7 +619,7 @@ command_result autohauler (color_ostream &out, std::vector <std::string> & param
     {
         if (!enable_autohauler)
         {
-            out << "Error: The plugin is not enabled." << endl;
+            out << "Error: The plugin is not enabled." << std::endl;
             return CR_FAILURE;
         }
 
@@ -826,7 +670,7 @@ command_result autohauler (color_ostream &out, std::vector <std::string> & param
     {
         if (!enable_autohauler)
         {
-            out << "Error: The plugin is not enabled." << endl;
+            out << "Error: The plugin is not enabled." << std::endl;
             return CR_FAILURE;
         }
 
@@ -834,14 +678,14 @@ command_result autohauler (color_ostream &out, std::vector <std::string> & param
         {
             reset_labor((df::unit_labor) i);
         }
-        out << "All labors reset." << endl;
+        out << "All labors reset." << std::endl;
         return CR_OK;
     }
     else if (parameters.size() == 1 && (parameters[0] == "list" || parameters[0] == "status"))
     {
         if (!enable_autohauler)
         {
-            out << "Error: The plugin is not enabled." << endl;
+            out << "Error: The plugin is not enabled." << std::endl;
             return CR_FAILURE;
         }
 
@@ -855,9 +699,9 @@ command_result autohauler (color_ostream &out, std::vector <std::string> & param
             out << state_count[i] << ' ' << state_names[i];
             need_comma = true;
         }
-        out << endl;
+        out << std::endl;
 
-        out << "Autohauler is running every " << frame_skip << " frames." << endl;
+        out << "Autohauler is running every " << frame_skip << " frames." << std::endl;
 
         if (parameters[0] == "list")
         {
@@ -869,18 +713,6 @@ command_result autohauler (color_ostream &out, std::vector <std::string> & param
                 print_labor(labor, out);
             }
         }
-
-        return CR_OK;
-    }
-    else if (parameters.size() == 1 && parameters[0] == "debug")
-    {
-        if (!enable_autohauler)
-        {
-            out << "Error: The plugin is not enabled." << endl;
-            return CR_FAILURE;
-        }
-
-        print_debug = true;
 
         return CR_OK;
     }

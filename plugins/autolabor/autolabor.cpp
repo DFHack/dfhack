@@ -1,5 +1,6 @@
 #include "Core.h"
 #include <Console.h>
+#include <Debug.h>
 #include <Export.h>
 #include <PluginManager.h>
 
@@ -42,9 +43,6 @@
 
 #include "laborstatemap.h"
 
-using std::string;
-using std::endl;
-using std::vector;
 using namespace DFHack;
 using namespace df::enums;
 
@@ -81,20 +79,36 @@ REQUIRE_GLOBAL(world);
 
 DFHACK_PLUGIN_IS_ENABLED(enable_autolabor);
 
-static bool print_debug = 0;
+namespace DFHack {
+    DBG_DECLARE(autolabor, cycle, DebugCategory::LINFO);
+}
 
-static std::vector<int> state_count(5);
+static std::vector<int> state_count(NUM_STATE);
 
 static PersistentDataItem config;
+
+command_result autolabor (color_ostream &out, std::vector <std::string> & parameters);
+
+static bool isOptionEnabled(unsigned flag)
+{
+    return config.isValid() && (config.ival(0) & flag) != 0;
+}
 
 enum ConfigFlags {
     CF_ENABLED = 1,
 };
 
+static void setOptionEnabled(ConfigFlags flag, bool on)
+{
+    if (!config.isValid())
+        return;
 
-// Here go all the command declarations...
-// mostly to allow having the mandatory stuff on top of the file and commands on the bottom
-command_result autolabor (color_ostream &out, std::vector <std::string> & parameters);
+    if (on)
+        config.ival(0) |= flag;
+    else
+        config.ival(0) &= ~flag;
+}
+
 
 static void generate_labor_to_skill_map();
 
@@ -104,7 +118,6 @@ enum labor_mode {
     AUTOMATIC,
 };
 
-
 struct labor_info
 {
     PersistentDataItem config;
@@ -113,6 +126,7 @@ struct labor_info
     int active_dwarfs;
 
     labor_mode mode() { return (labor_mode) config.ival(0); }
+
     void set_mode(labor_mode mode) { config.ival(0) = mode; }
 
     int minimum_dwarfs() { return config.ival(1); }
@@ -273,22 +287,6 @@ struct dwarf_info_t
     bool diplomacy; // this dwarf meets with diplomats
 };
 
-static bool isOptionEnabled(unsigned flag)
-{
-    return config.isValid() && (config.ival(0) & flag) != 0;
-}
-
-static void setOptionEnabled(ConfigFlags flag, bool on)
-{
-    if (!config.isValid())
-        return;
-
-    if (on)
-        config.ival(0) |= flag;
-    else
-        config.ival(0) &= ~flag;
-}
-
 static void cleanup_state()
 {
     enable_autolabor = false;
@@ -330,13 +328,13 @@ static void init_state()
     std::vector<PersistentDataItem> items;
     World::GetPersistentData(&items, "autolabor/labors/", true);
 
-    for (auto p = items.begin(); p != items.end(); p++)
+    for (auto& p : items)
     {
-        string key = p->key();
+        std::string key = p.key();
         df::unit_labor labor = (df::unit_labor) atoi(key.substr(strlen("autolabor/labors/")).c_str());
         if (labor >= 0 && size_t(labor) < labor_infos.size())
         {
-            labor_infos[labor].config = *p;
+            labor_infos[labor].config = p;
             labor_infos[labor].is_exclusive = default_labor_infos[labor].is_exclusive;
             labor_infos[labor].active_dwarfs = 0;
         }
@@ -397,7 +395,7 @@ static void enable_plugin(color_ostream &out)
 
     setOptionEnabled(CF_ENABLED, true);
     enable_autolabor = true;
-    out << "Enabling autolabor." << endl;
+    out << "Enabling autolabor." << std::endl;
 
     cleanup_state();
     init_state();
@@ -412,7 +410,6 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         return CR_FAILURE;
     }
 
-    // Fill the command list with your commands.
     commands.push_back(PluginCommand(
         "autolabor",
         "Automatically manage dwarf labors.",
@@ -513,12 +510,12 @@ static void assign_labor(unit_labor::unit_labor labor,
                 int skill_level = 0;
                 int skill_experience = 0;
 
-                for (auto s = dwarfs[dwarf]->status.souls[0]->skills.begin(); s < dwarfs[dwarf]->status.souls[0]->skills.end(); s++)
+                for (auto s : dwarfs[dwarf]->status.souls[0]->skills)
                 {
-                    if ((*s)->id == skill)
+                    if (s->id == skill)
                     {
-                        skill_level = (*s)->rating;
-                        skill_experience = (*s)->experience;
+                        skill_level = s->rating;
+                        skill_experience = s->experience;
                         break;
                     }
                 }
@@ -681,8 +678,10 @@ static void assign_labor(unit_labor::unit_labor labor,
                 dwarfs[dwarf]->military.pickup_flags.bits.update = 1;
             }
 
-            if (print_debug)
-                out.print("Dwarf %i \"%s\" assigned %s: value %i %s %s\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str(), values[dwarf], dwarf_info[dwarf].trader ? "(trader)" : "", dwarf_info[dwarf].diplomacy ? "(diplomacy)" : "");
+            TRACE(cycle, out).print("Dwarf % i \"%s\" assigned %s: value %i %s %s\n",
+                dwarf, dwarfs[dwarf]->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str(), values[dwarf],
+                dwarf_info[dwarf].trader ? "(trader)" : "",
+                dwarf_info[dwarf].diplomacy ? "(diplomacy)" : "");
 
             if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY || dwarf_info[dwarf].state == EXCLUSIVE)
                 labor_infos[labor].active_dwarfs++;
@@ -713,10 +712,8 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
     static int step_count = 0;
-    // check run conditions
     if(!world || !world->map.block_index || !enable_autolabor)
     {
-        // give up if we shouldn't be running'
         return CR_OK;
     }
 
@@ -730,9 +727,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     bool has_fishery = false;
     bool trader_requested = false;
 
-    for (size_t i = 0; i < world->buildings.all.size(); ++i)
+    for (auto& build : world->buildings.all)
     {
-        df::building *build = world->buildings.all[i];
         auto type = build->getType();
         if (building_type::Workshop == type)
         {
@@ -746,19 +742,15 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         {
             df::building_tradedepotst* depot = (df::building_tradedepotst*) build;
             trader_requested = trader_requested || depot->trade_flags.bits.trader_requested;
-            if (print_debug)
-            {
-                if (trader_requested)
-                    out.print("Trade depot found and trader requested, trader will be excluded from all labors.\n");
-                else
-                    out.print("Trade depot found but trader is not requested.\n");
-            }
+            INFO(cycle,out).print(trader_requested
+                ? "Trade depot found and trader requested, trader will be excluded from all labors.\n"
+                : "Trade depot found but trader is not requested.\n"
+                );
         }
     }
 
-    for (size_t i = 0; i < world->units.active.size(); ++i)
+    for (auto& cre : world->units.active)
     {
-        df::unit* cre = world->units.active[i];
         if (Units::isCitizen(cre))
         {
             if (cre->burrows.size() > 0)
@@ -787,9 +779,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
         df::historical_figure* hf = df::historical_figure::find(dwarfs[dwarf]->hist_figure_id);
         if(hf!=NULL) //can be NULL. E.g. script created citizens
-        for (size_t i = 0; i < hf->entity_links.size(); i++)
+        for (auto& hfelink : hf->entity_links)
         {
-            df::histfig_entity_link* hfelink = hf->entity_links.at(i);
             if (hfelink->getType() == df::histfig_entity_link_type::POSITION)
             {
                 df::histfig_entity_link_positionst *epos =
@@ -822,9 +813,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
         // identify dwarfs who are needed for meetings and mark them for exclusion
 
-        for (size_t i = 0; i < ui->activities.size(); ++i)
+        for (auto& act : ui->activities)
         {
-            df::activity_info *act = ui->activities[i];
             if (!act) continue;
             bool p1 = act->unit_actor == dwarfs[dwarf];
             bool p2 = act->unit_noble == dwarfs[dwarf];
@@ -832,19 +822,17 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             if (p1 || p2)
             {
                 dwarf_info[dwarf].diplomacy = true;
-                if (print_debug)
-                    out.print("Dwarf %i \"%s\" has a meeting, will be cleared of all labors\n", dwarf, dwarfs[dwarf]->name.first_name.c_str());
+                INFO(cycle, out).print("Dwarf %i \"%s\" has a meeting, will be cleared of all labors\n",
+                    dwarf, dwarfs[dwarf]->name.first_name.c_str());
                 break;
             }
         }
 
-        for (auto s = dwarfs[dwarf]->status.souls[0]->skills.begin(); s != dwarfs[dwarf]->status.souls[0]->skills.end(); s++)
+        for (auto& skill : dwarfs[dwarf]->status.souls[0]->skills)
         {
-            df::job_skill skill = (*s)->id;
+            df::job_skill_class skill_class = ENUM_ATTR(job_skill, type, skill->id);
 
-            df::job_skill_class skill_class = ENUM_ATTR(job_skill, type, skill);
-
-            int skill_level = (*s)->rating;
+            int skill_level = skill->rating;
 
             // Track total & highest skill among normal/medical skills. (We don't care about personal or social skills.)
 
@@ -907,15 +895,15 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
                 dwarf_info[dwarf].state = dwarf_states[job];
             else
             {
-                out.print("Dwarf %i \"%s\" has unknown job %i\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), job);
+                WARN(cycle, out).print("Dwarf %i \"%s\" has unknown job %i\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), job);
                 dwarf_info[dwarf].state = OTHER;
             }
         }
 
         state_count[dwarf_info[dwarf].state]++;
 
-        if (print_debug)
-            out.print("Dwarf %i \"%s\": penalty %i, state %s\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), dwarf_info[dwarf].mastery_penalty, state_names[dwarf_info[dwarf].state]);
+        INFO(cycle, out).print("Dwarf %i \"%s\": penalty %i, state %s\n",
+            dwarf, dwarfs[dwarf]->name.first_name.c_str(), dwarf_info[dwarf].mastery_penalty, state_names[dwarf_info[dwarf].state]);
     }
 
     std::vector<df::unit_labor> labors;
@@ -935,10 +923,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     // Handle DISABLED skills (just bookkeeping).
     // Note that autolabor should *NEVER* enable or disable a skill that has been marked as DISABLED, for any reason.
     // The user has told us that they want manage this skill manually, and we must respect that.
-    for (auto lp = labors.begin(); lp != labors.end(); ++lp)
+    for (auto& labor: labors)
     {
-        auto labor = *lp;
-
         if (labor_infos[labor].mode() != DISABLE)
             continue;
 
@@ -956,10 +942,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
     // Handle all skills except those marked HAULERS
 
-    for (auto lp = labors.begin(); lp != labors.end(); ++lp)
+    for (auto& labor : labors)
     {
-        auto labor = *lp;
-
         assign_labor(labor, n_dwarfs, dwarf_info, trader_requested, dwarfs, has_butchers, has_fishery, out);
     }
 
@@ -1026,8 +1010,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY || dwarf_info[dwarf].state == EXCLUSIVE)
                 labor_infos[labor].active_dwarfs++;
 
-            if (print_debug)
-                out.print("Dwarf %i \"%s\" assigned %s: hauler\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str());
+            TRACE(cycle, out).print("Dwarf %i \"%s\" assigned %s: hauler\n",
+                dwarf, dwarfs[dwarf]->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str());
         }
 
         for (size_t i = num_haulers; i < hauler_ids.size(); i++)
@@ -1043,19 +1027,17 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         }
     }
 
-    print_debug = 0;
-
     return CR_OK;
 }
 
 void print_labor (df::unit_labor labor, color_ostream &out)
 {
-    string labor_name = ENUM_KEY_STR(unit_labor, labor);
+    std::string labor_name = ENUM_KEY_STR(unit_labor, labor);
     out << labor_name << ": ";
     for (int i = 0; i < 20 - (int)labor_name.length(); i++)
         out << ' ';
     if (labor_infos[labor].mode() == DISABLE)
-        out << "disabled" << endl;
+        out << "disabled" << std::endl;
     else
     {
         if (labor_infos[labor].mode() == HAULERS)
@@ -1063,7 +1045,7 @@ void print_labor (df::unit_labor labor, color_ostream &out)
         else
             out << "minimum " << labor_infos[labor].minimum_dwarfs() << ", maximum " << labor_infos[labor].maximum_dwarfs()
                 << ", pool " << labor_infos[labor].talent_pool();
-        out << ", currently " << labor_infos[labor].active_dwarfs << " dwarfs" << endl;
+        out << ", currently " << labor_infos[labor].active_dwarfs << " dwarfs" << std::endl;
     }
 }
 
@@ -1083,7 +1065,7 @@ DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable )
         enable_autolabor = false;
         setOptionEnabled(CF_ENABLED, false);
 
-        out << "Autolabor is disabled." << endl;
+        out << "Autolabor is disabled." << std::endl;
     }
 
     return CR_OK;
@@ -1110,7 +1092,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
     {
         if (!enable_autolabor)
         {
-            out << "Error: The plugin is not enabled." << endl;
+            out << "Error: The plugin is not enabled." << std::endl;
             return CR_FAILURE;
         }
 
@@ -1122,7 +1104,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
     {
         if (!enable_autolabor)
         {
-            out << "Error: The plugin is not enabled." << endl;
+            out << "Error: The plugin is not enabled." << std::endl;
             return CR_FAILURE;
         }
 
@@ -1186,7 +1168,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
     {
         if (!enable_autolabor)
         {
-            out << "Error: The plugin is not enabled." << endl;
+            out << "Error: The plugin is not enabled." << std::endl;
             return CR_FAILURE;
         }
 
@@ -1194,14 +1176,14 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
         {
             reset_labor((df::unit_labor) i);
         }
-        out << "All labors reset." << endl;
+        out << "All labors reset." << std::endl;
         return CR_OK;
     }
     else if (parameters.size() == 1 && (parameters[0] == "list" || parameters[0] == "status"))
     {
         if (!enable_autolabor)
         {
-            out << "Error: The plugin is not enabled." << endl;
+            out << "Error: The plugin is not enabled." << std::endl;
             return CR_FAILURE;
         }
 
@@ -1215,7 +1197,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
             out << state_count[i] << ' ' << state_names[i];
             need_comma = 1;
         }
-        out << endl;
+        out << std::endl;
 
         if (parameters[0] == "list")
         {
@@ -1227,18 +1209,6 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
                 print_labor(labor, out);
             }
         }
-
-        return CR_OK;
-    }
-    else if (parameters.size() == 1 && parameters[0] == "debug")
-    {
-        if (!enable_autolabor)
-        {
-            out << "Error: The plugin is not enabled." << endl;
-            return CR_FAILURE;
-        }
-
-        print_debug = 1;
 
         return CR_OK;
     }

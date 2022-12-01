@@ -22,6 +22,9 @@ Autohauler allows a skill to be used as a flag to exempt a dwarf from
 autohauler's effects. By default, this is the unused ALCHEMIST labor, but it
 can be changed by the user.
 
+Autohauler uses DFHack's `debug` functionality to display information about the changes it makes. The amount of
+information displayed can be controlled through appropriate use of the ``debugfilter`` command.
+
 Usage
 -----
 
@@ -42,8 +45,6 @@ Usage
     Show the active configuration for all labors.
 ``autohauler frameskip <number>``
     Set the number of frames between runs of autohauler.
-``autohauler debug``
-    In the next cycle, output the state of every dwarf.
 
 Examples
 --------

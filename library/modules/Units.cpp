@@ -2032,13 +2032,13 @@ void Units::subtractActionTimers(color_ostream &out, df::unit *unit, int32_t amo
     }
 }
 
-void Units::subtractCategoryActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type_group affectedActionCategory)
+void Units::subtractCategoryActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type_group affectedActionTypeCategory)
 {
     CHECK_NULL_POINTER(unit);
     for (auto action : unit->actions) {
         auto list = ENUM_ATTR(unit_action_type, group, action->type);
         for (size_t i = 0; i < list.size; i++) {
-            if (list.items[i] == affectedActionCategory) {
+            if (list.items[i] == affectedActionTypeCategory) {
                 mutateActionTimerCore(action, [=](double timerValue){return max(timerValue - amount, 1.0);});
                 break;
             }
@@ -2065,7 +2065,7 @@ void Units::multiplyActionTimers(color_ostream &out, df::unit *unit, float amoun
     }
 }
 
-void Units::multiplyCategoryActionTimers(color_ostream &out, df::unit *unit, float amount, df::unit_action_type_group affectedActionCategory)
+void Units::multiplyCategoryActionTimers(color_ostream &out, df::unit *unit, float amount, df::unit_action_type_group affectedActionTypeCategory)
 {
     CHECK_NULL_POINTER(unit);
     if (!validateMultiplyActionTimerAmount(out, amount))
@@ -2073,7 +2073,7 @@ void Units::multiplyCategoryActionTimers(color_ostream &out, df::unit *unit, flo
     for (auto action : unit->actions) {
         auto list = ENUM_ATTR(unit_action_type, group, action->type);
         for (size_t i = 0; i < list.size; i++) {
-            if (list.items[i] == affectedActionCategory) {
+            if (list.items[i] == affectedActionTypeCategory) {
                 mutateActionTimerCore(action, [=](double timerValue){return max(timerValue * amount, 1.0);});
                 break;
             }
@@ -2100,7 +2100,7 @@ void Units::setActionTimers(color_ostream &out, df::unit *unit, int32_t amount, 
     }
 }
 
-void Units::setCategoryActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type_group affectedActionCategory)
+void Units::setCategoryActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type_group affectedActionTypeCategory)
 {
     CHECK_NULL_POINTER(unit);
     if (!validateSetActionTimerAmount(out, amount))
@@ -2108,7 +2108,7 @@ void Units::setCategoryActionTimers(color_ostream &out, df::unit *unit, int32_t 
     for (auto action : unit->actions) {
         auto list = ENUM_ATTR(unit_action_type, group, action->type);
         for (size_t i = 0; i < list.size; i++) {
-            if (list.items[i] == affectedActionCategory) {
+            if (list.items[i] == affectedActionTypeCategory) {
                 mutateActionTimerCore(action, [=](double timerValue){return amount;});
                 break;
             }

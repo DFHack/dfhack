@@ -56,6 +56,9 @@ labor, then to additional dwarfs that meet any of these conditions:
 
 We stop assigning dwarves when we reach the maximum allowed.
 
+Autolabor uses DFHack's `debug` functionality to display information about the changes it makes. The amount of
+information displayed can be controlled through appropriate use of the ``debugfilter`` command.
+
 Examples
 --------
 

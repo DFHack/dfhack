@@ -38,6 +38,8 @@ distribution.
 #include "df/misc_trait_type.h"
 #include "df/physical_attribute_type.h"
 #include "df/unit.h"
+#include "df/unit_action.h"
+#include "df/unit_action_type_group.h"
 
 namespace df
 {
@@ -223,6 +225,13 @@ DFHACK_EXPORT df::activity_event *getMainSocialEvent(df::unit *unit);
 DFHACK_EXPORT extern const std::vector<int32_t> stress_cutoffs;
 DFHACK_EXPORT int getStressCategory(df::unit *unit);
 DFHACK_EXPORT int getStressCategoryRaw(int32_t stress_level);
+
+DFHACK_EXPORT void subtractActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type affectedActionType);
+DFHACK_EXPORT void subtractGroupActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type_group affectedActionTypeGroup);
+DFHACK_EXPORT void multiplyActionTimers(color_ostream &out, df::unit *unit, float amount, df::unit_action_type affectedActionType);
+DFHACK_EXPORT void multiplyGroupActionTimers(color_ostream &out, df::unit *unit, float amount, df::unit_action_type_group affectedActionTypeGroup);
+DFHACK_EXPORT void setActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type affectedActionType);
+DFHACK_EXPORT void setGroupActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type_group affectedActionTypeGroup);
 
 }
 }

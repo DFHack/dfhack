@@ -12,6 +12,7 @@
 #include "df/unit_relationship_type.h"
 #include "df/units_other_id.h"
 #include "df/world.h"
+#include "df/unit_action_type_group.h"
 
 using std::string;
 using std::vector;
@@ -82,74 +83,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
         if (enable_fastdwarf)
         {
-            for (size_t i = 0; i < unit->actions.size(); i++)
-            {
-                df::unit_action *action = unit->actions[i];
-                switch (action->type)
-                {
-                case unit_action_type::None:
-                    break;
-                case unit_action_type::Move:
-                    action->data.move.timer = 1;
-                    break;
-                case unit_action_type::Attack:
-                    // Attacks are executed when timer1 reaches zero, which will be
-                    // on the following tick.
-                    if (action->data.attack.timer1 > 1)
-                        action->data.attack.timer1 = 1;
-                    // Attack actions are completed, and new ones generated, when
-                    // timer2 reaches zero.
-                    if (action->data.attack.timer2 > 1)
-                        action->data.attack.timer2 = 1;
-                    break;
-                case unit_action_type::HoldTerrain:
-                    action->data.holdterrain.timer = 1;
-                    break;
-                case unit_action_type::Climb:
-                    action->data.climb.timer = 1;
-                    break;
-                case unit_action_type::Job:
-                    action->data.job.timer = 1;
-                    // could also patch the unit->job.current_job->completion_timer
-                    break;
-                case unit_action_type::Talk:
-                    action->data.talk.timer = 1;
-                    break;
-                case unit_action_type::Unsteady:
-                    action->data.unsteady.timer = 1;
-                    break;
-                case unit_action_type::Dodge:
-                    action->data.dodge.timer = 1;
-                    break;
-                case unit_action_type::Recover:
-                    action->data.recover.timer = 1;
-                    break;
-                case unit_action_type::StandUp:
-                    action->data.standup.timer = 1;
-                    break;
-                case unit_action_type::LieDown:
-                    action->data.liedown.timer = 1;
-                    break;
-                case unit_action_type::Job2:
-                    action->data.job2.timer = 1;
-                    // could also patch the unit->job.current_job->completion_timer
-                    break;
-                case unit_action_type::PushObject:
-                    action->data.pushobject.timer = 1;
-                    break;
-                case unit_action_type::SuckBlood:
-                    action->data.suckblood.timer = 1;
-                    break;
-                case unit_action_type::Jump:
-                case unit_action_type::ReleaseTerrain:
-                case unit_action_type::Parry:
-                case unit_action_type::Block:
-                case unit_action_type::HoldItem:
-                case unit_action_type::ReleaseItem:
-                default:
-                    break;
-                }
-            }
+            Units::setGroupActionTimers(out, unit, 1, df::unit_action_type_group::All);
         }
     }
     return CR_OK;

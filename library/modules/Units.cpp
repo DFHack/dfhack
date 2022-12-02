@@ -32,6 +32,7 @@ distribution.
 #include <cstring>
 #include <algorithm>
 #include <numeric>
+#include <functional>
 using namespace std;
 
 #include "VersionInfo.h"
@@ -80,6 +81,8 @@ using namespace std;
 #include "df/unit_soul.h"
 #include "df/unit_wound.h"
 #include "df/world.h"
+#include "df/unit_action.h"
+#include "df/unit_action_type_group.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -1948,4 +1951,167 @@ int Units::getStressCategoryRaw(int32_t stress_level)
         }
     }
     return level;
+}
+
+int32_t *getActionTimerPointer(df::unit_action *action) {
+    switch (action->type)
+    {
+    case unit_action_type::None:
+        break;
+    case unit_action_type::Move:
+        return &action->data.move.timer;
+    case unit_action_type::Attack:
+        if (action->data.attack.timer1 != 0) {
+            // Wind-up timer is still active, work on it
+            return &action->data.attack.timer1;
+        } else {
+            // Wind-up timer is finished, work on recovery timer
+            return &action->data.attack.timer2;
+        }
+    case unit_action_type::HoldTerrain:
+        return &action->data.holdterrain.timer;
+    case unit_action_type::Climb:
+        return &action->data.climb.timer;
+    case unit_action_type::Job:
+        return &action->data.job.timer;
+        // could also patch the unit->job.current_job->completion_timer
+    case unit_action_type::Talk:
+        return &action->data.talk.timer;
+    case unit_action_type::Unsteady:
+        return &action->data.unsteady.timer;
+    case unit_action_type::Dodge:
+        return &action->data.dodge.timer;
+    case unit_action_type::Recover:
+        return &action->data.recover.timer;
+    case unit_action_type::StandUp:
+        return &action->data.standup.timer;
+    case unit_action_type::LieDown:
+        return &action->data.liedown.timer;
+    case unit_action_type::Job2:
+        return &action->data.job2.timer;
+        // could also patch the unit->job.current_job->completion_timer
+    case unit_action_type::PushObject:
+        return &action->data.pushobject.timer;
+    case unit_action_type::SuckBlood:
+        return &action->data.suckblood.timer;
+    case unit_action_type::Jump:
+    case unit_action_type::ReleaseTerrain:
+    case unit_action_type::Parry:
+    case unit_action_type::Block:
+    case unit_action_type::HoldItem:
+    case unit_action_type::ReleaseItem:
+    case unit_action_type::Unk20:
+    case unit_action_type::Unk21:
+    case unit_action_type::Unk22:
+    case unit_action_type::Unk23:
+        break;
+    }
+    return nullptr;
+}
+
+void mutateActionTimerCore(df::unit_action *action, std::function<double(double)> mutator) {
+    int32_t *timer = getActionTimerPointer(action);
+    if (timer != nullptr && *timer > 0) {
+        double value = *timer;
+        value = mutator(value);
+        if (value > INT32_MAX) {
+            value = INT32_MAX;
+        } else if (value < INT32_MIN) {
+            value = INT32_MIN;
+        }
+        *timer = value;
+    }
+}
+
+void Units::subtractActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type affectedActionType)
+{
+    CHECK_NULL_POINTER(unit);
+    for (auto action : unit->actions) {
+        if (affectedActionType != action->type) continue;
+        mutateActionTimerCore(action, [=](double timerValue){return max(timerValue - amount, 1.0);});
+    }
+}
+
+void Units::subtractGroupActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type_group affectedActionTypeGroup)
+{
+    CHECK_NULL_POINTER(unit);
+    for (auto action : unit->actions) {
+        auto list = ENUM_ATTR(unit_action_type, group, action->type);
+        for (size_t i = 0; i < list.size; i++) {
+            if (list.items[i] == affectedActionTypeGroup) {
+                mutateActionTimerCore(action, [=](double timerValue){return max(timerValue - amount, 1.0);});
+                break;
+            }
+        }
+    }
+}
+
+bool validateMultiplyActionTimerAmount(color_ostream &out, float amount) {
+    if (amount < 0) {
+        out.printerr("Can't multiply action timer(s) by negative amount.\n");
+        return false;
+    }
+    return true;
+}
+
+void Units::multiplyActionTimers(color_ostream &out, df::unit *unit, float amount, df::unit_action_type affectedActionType)
+{
+    CHECK_NULL_POINTER(unit);
+    if (!validateMultiplyActionTimerAmount(out, amount))
+        return;
+    for (auto action : unit->actions) {
+        if (affectedActionType != action->type) continue;
+        mutateActionTimerCore(action, [=](double timerValue){return max(timerValue * amount, 1.0);});
+    }
+}
+
+void Units::multiplyGroupActionTimers(color_ostream &out, df::unit *unit, float amount, df::unit_action_type_group affectedActionTypeGroup)
+{
+    CHECK_NULL_POINTER(unit);
+    if (!validateMultiplyActionTimerAmount(out, amount))
+        return;
+    for (auto action : unit->actions) {
+        auto list = ENUM_ATTR(unit_action_type, group, action->type);
+        for (size_t i = 0; i < list.size; i++) {
+            if (list.items[i] == affectedActionTypeGroup) {
+                mutateActionTimerCore(action, [=](double timerValue){return max(timerValue * amount, 1.0);});
+                break;
+            }
+        }
+    }
+}
+
+bool validateSetActionTimerAmount(color_ostream &out, int32_t amount) {
+    if (amount <= 0) {
+        out.printerr("Can't set action timer(s) to non-positive amount.\n");
+        return false;
+    }
+    return true;
+}
+
+void Units::setActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type affectedActionType)
+{
+    CHECK_NULL_POINTER(unit);
+    if (!validateSetActionTimerAmount(out, amount))
+        return;
+    for (auto action : unit->actions) {
+        if (affectedActionType != action->type) continue;
+        mutateActionTimerCore(action, [=](double timerValue){return amount;});
+    }
+}
+
+void Units::setGroupActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type_group affectedActionTypeGroup)
+{
+    CHECK_NULL_POINTER(unit);
+    if (!validateSetActionTimerAmount(out, amount))
+        return;
+    for (auto action : unit->actions) {
+        auto list = ENUM_ATTR(unit_action_type, group, action->type);
+        for (size_t i = 0; i < list.size; i++) {
+            if (list.items[i] == affectedActionTypeGroup) {
+                mutateActionTimerCore(action, [=](double timerValue){return amount;});
+                break;
+            }
+        }
+    }
 }

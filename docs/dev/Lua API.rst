@@ -1553,12 +1553,14 @@ Action Timer API
 
 This is an API to allow manipulation of unit action timers, to speed them up or slow them down.
 All functions in this API have overflow/underflow protection when modifying action timers (the value will cap out).
+Actions with a timer of 0 (or less) will not be modified as they are completed (or invalid in the case of negatives).
+Timers will be capped to go no lower than 1.
 ``affectedActionType`` parameters are integers from the DF enum ``unit_action_type``. E.g. ``df.unit_action_type.Move``.
 ``affectedActionTypeGroup`` parameters are integers from the (custom) DF enum ``unit_action_type_group``. They are as follows:
 
   * ``All`` (does not include unknown unit action types)
   * ``Movement``
-  * ``MovementFeet`` (check if the unit is not on ground before using this one?)
+  * ``MovementFeet`` (intended to only be used when the unit is standing, such as with pegasus boots from the modding guide)
   * ``Combat`` (includes bloodsucking)
   * ``Work``
 

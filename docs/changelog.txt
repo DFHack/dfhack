@@ -44,6 +44,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## API
 
 ## Lua
+- ``gui.View``: ``visible`` and ``active`` can now be functions that return a boolean
 
 ## Internals
 

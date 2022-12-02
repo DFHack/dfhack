@@ -902,7 +902,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
         state_count[dwarf_info[dwarf].state]++;
 
-        INFO(cycle, out).print("Dwarf %i \"%s\": penalty %i, state %s\n",
+        TRACE(cycle, out).print("Dwarf %i \"%s\": penalty %i, state %s\n",
             dwarf, dwarfs[dwarf]->name.first_name.c_str(), dwarf_info[dwarf].mastery_penalty, state_names[dwarf_info[dwarf].state]);
     }
 

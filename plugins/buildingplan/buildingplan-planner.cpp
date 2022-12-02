@@ -13,7 +13,7 @@
 #include "modules/Job.h"
 
 #include "LuaTools.h"
-#include "uicommon.h"
+#include "../uicommon.h"
 
 #include "buildingplan.h"
 

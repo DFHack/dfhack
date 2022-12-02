@@ -12,8 +12,8 @@
 #include "LuaTools.h"
 #include "PluginManager.h"
 
-#include "uicommon.h"
-#include "listcolumn.h"
+#include "../uicommon.h"
+#include "../listcolumn.h"
 #include "buildingplan.h"
 
 DFHACK_PLUGIN("buildingplan");

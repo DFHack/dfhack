@@ -125,6 +125,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Units module: modified predicates:
   - ``isUndead()`` now optionally ignores vampires instead of always ignoring vampires
   - ``isCitizen()`` now optionally ignores insane citizens instead of always ignoring insane citizens
+- Units module: new action timer API for speeding up of slowing down units
 - Constructions module: added ``insert()`` to insert constructions into the game's sorted list.
 - MiscUtils: added the following string transformation functions (refactored from ``uicommon.h``): ``int_to_string``, ``ltrim``, ``rtrim``, and ``trim``; added ``string_to_int``
 

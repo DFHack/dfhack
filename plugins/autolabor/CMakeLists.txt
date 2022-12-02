@@ -1,4 +1,4 @@
-project(autolahor)
+project(autolabor)
 # A list of source files
 set(COMMON_SRCS
 )

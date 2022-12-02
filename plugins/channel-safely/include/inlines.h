@@ -53,7 +53,7 @@ inline bool is_dig_designation(const df::tile_designation &designation) {
 }
 
 inline bool is_channel_designation(const df::tile_designation &designation) {
-    return designation.bits.dig != df::tile_dig_designation::Channel;
+    return designation.bits.dig == df::tile_dig_designation::Channel;
 }
 
 inline bool is_safe_fall(const df::coord &map_pos) {

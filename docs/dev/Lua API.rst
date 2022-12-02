@@ -1560,6 +1560,7 @@ Timers will be capped to go no lower than 1.
 
   * ``All`` (does not include unknown unit action types)
   * ``Movement``
+  * ``MovementFeet`` (affects only walking and crawling speed. if you need to differentiate between walking and crawling, check the unit's ``flags1.on_ground`` flag, like the Pegasus boots do in the `modding-guide`)
   * ``MovementFeet`` (for walking speed, such as with pegasus boots from the `modding-guide`)
   * ``Combat`` (includes bloodsucking)
   * ``Work``

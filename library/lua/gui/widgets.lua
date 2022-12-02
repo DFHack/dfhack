@@ -6,18 +6,11 @@ local gui = require('gui')
 local utils = require('utils')
 
 local dscreen = dfhack.screen
+local getval = utils.getval
 
 local function show_view(view,vis)
     if view then
         view.visible = vis
-    end
-end
-
-local function getval(obj)
-    if type(obj) == 'function' then
-        return obj()
-    else
-        return obj
     end
 end
 
@@ -109,7 +102,7 @@ function Panel:postUpdateLayout()
     for _,subview in ipairs(self.subviews) do
         if not subview.frame then goto continue end
         subview.frame.t = y
-        if subview.visible then
+        if getval(subview.visible) then
             y = y + (subview.frame.h or 0) + gap
         end
         ::continue::
@@ -137,7 +130,7 @@ ResizingPanel = defclass(ResizingPanel, Panel)
 function ResizingPanel:postUpdateLayout(frame_body)
     local w, h = 0, 0
     for _,s in ipairs(self.subviews) do
-        if s.visible then
+        if getval(s.visible) then
             w = math.max(w, (s.frame and s.frame.l or 0) +
                             (s.frame and s.frame.w or frame_body.width))
             h = math.max(h, (s.frame and s.frame.t or 0) +
@@ -265,7 +258,7 @@ function EditField:onRenderBody(dc)
     dc:pen(self.text_pen or COLOR_LIGHTCYAN):fill(0,0,dc.width-1,0)
 
     local cursor_char = '_'
-    if not self.active or not self.focus or gui.blink_visible(300) then
+    if not getval(self.active) or not self.focus or gui.blink_visible(300) then
         cursor_char = (self.cursor > #self.text) and ' ' or
                                         self.text:sub(self.cursor, self.cursor)
     end
@@ -907,8 +900,8 @@ TooltipLabel.ATTRS{
     text_pen=COLOR_GREY,
 }
 
-function TooltipLabel:preUpdateLayout()
-    self.visible = getval(self.show_tooltip)
+function TooltipLabel:init()
+    self.visible = self.show_tooltip
 end
 
 -----------------
@@ -1217,7 +1210,7 @@ function List:onRenderBody(dc)
         local cur_dpen = self.text_pen
         local active_pen = current and cur_pen or cur_dpen
 
-        if not self.active then
+        if not getval(self.active) then
             cur_pen = self.inactive_pen or self.cursor_pen
         end
 

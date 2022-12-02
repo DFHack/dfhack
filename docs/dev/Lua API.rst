@@ -1560,7 +1560,7 @@ Timers will be capped to go no lower than 1.
 
   * ``All`` (does not include unknown unit action types)
   * ``Movement``
-  * ``MovementFeet`` (intended to only be used when the unit is standing, such as with pegasus boots from the modding guide)
+  * ``MovementFeet`` (for walking speed, such as with pegasus boots from the `modding-guide`)
   * ``Combat`` (includes bloodsucking)
   * ``Work``
 

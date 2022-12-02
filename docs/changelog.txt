@@ -53,6 +53,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## New Plugins
 - `overlay`: plugin is transformed from a single line of text that runs `gui/launcher` on click to a fully-featured overlay injection framework. It now houses a popup menu for keybindings relevant to the current DF screen, all the widgets previously provided by `dwarfmonitor` (e.g. the current date and number of happy/unhappy dwarves), the overlay that highlights suspended buildings when you pause, and others. See `overlay-dev-guide` for details.
+- `channel-safely`: auto-manage channel designations to keep dwarves safe
 
 ## Fixes
 - `automaterial`: fix the cursor jumping up a z level when clicking quickly after box select

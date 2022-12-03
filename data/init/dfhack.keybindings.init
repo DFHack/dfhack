@@ -11,12 +11,10 @@
 # the GUI command launcher (two bindings since some keyboards don't have `)
 keybinding add ` gui/launcher
 keybinding add Ctrl-Shift-D gui/launcher
+keybinding add Ctrl-Shift-P "gui/launcher --minimal"
 
 # show hotkey popup menu
 keybinding add Ctrl-Shift-C hotkeys
-
-# a dfhack prompt in df. Sublime text like.
-keybinding add Ctrl-Shift-P command-prompt
 
 # on-screen keyboard
 keybinding add Ctrl-Shift-K gui/cp437-table

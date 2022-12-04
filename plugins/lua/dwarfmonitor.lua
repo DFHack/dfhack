@@ -120,7 +120,7 @@ function MiseryWidget:overlay_onupdate()
     for _,unit in ipairs(df.global.world.units.active) do
         if not dfhack.units.isCitizen(unit, true) then goto continue end
         local stress_category = math.min(num_colors,
-                                         dfhack.units.getStressCategory(unit))
+                                         dfhack.units.getStressCategory(unit)+1)
         counts[stress_category] = (counts[stress_category] or 0) + 1
         ::continue::
     end

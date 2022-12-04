@@ -2,7 +2,10 @@
 
 local _ENV = mkmodule('gui')
 
+local utils = require('utils')
+
 local dscreen = dfhack.screen
+local getval = utils.getval
 
 USE_GRAPHICS = dscreen.inGraphicsMode()
 
@@ -514,7 +517,7 @@ end
 
 function View:renderSubviews(dc)
     for _,child in ipairs(self.subviews) do
-        if child.visible then
+        if getval(child.visible) then
             child:render(dc)
         end
     end
@@ -556,7 +559,7 @@ local function should_send_input_to_focus_owner(view, focus_owner)
     end
     iter = focus_owner
     while iter do
-        if not iter.visible or not iter.active then
+        if not getval(iter.visible) or not getval(iter.active) then
             return false
         end
         iter = iter.parent_view
@@ -576,8 +579,8 @@ function View:inputToSubviews(keys)
 
     for i=#children,1,-1 do
         local child = children[i]
-        if child.visible and child.active and child ~= focus_owner and
-                child:onInput(keys) then
+        if getval(child.visible) and getval(child.active)
+                and child ~= focus_owner and child:onInput(keys) then
             return true
         end
     end

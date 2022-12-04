@@ -2,6 +2,14 @@ local _ENV = mkmodule('utils')
 
 local df = df
 
+function getval(obj)
+    if type(obj) == 'function' then
+        return obj()
+    else
+        return obj
+    end
+end
+
 -- Comparator function
 function compare(a,b)
     if a < b then

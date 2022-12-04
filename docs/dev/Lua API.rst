@@ -3844,8 +3844,10 @@ rendering and event handling framework.
 
 The class defines the following attributes:
 
-:visible: Specifies that the view should be painted.
-:active: Specifies that the view should receive events, if also visible.
+:visible: Specifies that the view should be painted. This can be a boolean or
+          a function that returns a boolean.
+:active: Specifies that the view should receive events, if also visible. This
+         can be a boolean or a function that returns a boolean.
 :view_id: Specifies an identifier to easily identify the view among subviews.
           This is reserved for use by script writers and should not be set by
           library widgets for their internal subviews.

@@ -10,6 +10,12 @@ work (e.g. links from the `changelog`).
   :local:
   :depth: 1
 
+.. _command-prompt:
+
+command-prompt
+==============
+Replaced by `gui/launcher --minimal <gui/launcher>`.
+
 .. _deteriorateclothes:
 
 deteriorateclothes

@@ -4,7 +4,7 @@ ci:
 repos:
 # shared across repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.3.0
+  rev: v4.4.0
   hooks:
     - id: check-added-large-files
     - id: check-case-conflict
@@ -20,7 +20,7 @@ repos:
       args: ['--fix=lf']
     - id: trailing-whitespace
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.18.4
+  rev: 0.19.2
   hooks:
     - id: check-github-workflows
 - repo: https://github.com/Lucas-C/pre-commit-hooks

@@ -17,17 +17,15 @@ right choice for you. However, here are some reasons you might want to implement
 an overlay widget instead:
 
 #. You can draw directly to an existing viewscreen instead of creating an
-    entirely new screen on the viewscreen stack. This allows the original
-    viewscreen to continue processing uninterrupted and keybindings bound to
-    that viewscreen will continue to function. This was previously only
-    achievable by C++ plugins.
-
+   entirely new screen on the viewscreen stack. This allows the original
+   viewscreen to continue processing uninterrupted and keybindings bound to
+   that viewscreen will continue to function. This was previously only
+   achievable by C++ plugins.
 #. You'll get a free UI for enabling/disabling your widget and repositioning it
-    on the screen. Widget state is saved for you and is automatically restored
-    when the game is restarted.
-
+   on the screen. Widget state is saved for you and is automatically restored
+   when the game is restarted.
 #. You don't have to manage the C++ interposing logic yourself and can focus on
-    the business logic, writing purely in Lua if desired.
+   the business logic, writing purely in Lua if desired.
 
 In general, if you are writing a plugin or script and have anything you'd like
 to add to an existing screen (including live updates of map tiles while the game

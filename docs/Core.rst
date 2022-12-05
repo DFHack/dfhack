@@ -26,7 +26,7 @@ DFHack commands can be implemented in any of three ways:
             more flexible about versions, and easier to distribute.
             Most third-party DFHack addons are scripts.
 
-All tools distributed with DFHack are documented `here <genindex>`.
+All tools distributed with DFHack are documented `here <tools>`.
 
 Using DFHack commands
 =====================

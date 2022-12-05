@@ -17,17 +17,15 @@ right choice for you. However, here are some reasons you might want to implement
 an overlay widget instead:
 
 #. You can draw directly to an existing viewscreen instead of creating an
-    entirely new screen on the viewscreen stack. This allows the original
-    viewscreen to continue processing uninterrupted and keybindings bound to
-    that viewscreen will continue to function. This was previously only
-    achievable by C++ plugins.
-
+   entirely new screen on the viewscreen stack. This allows the original
+   viewscreen to continue processing uninterrupted and keybindings bound to
+   that viewscreen will continue to function. This was previously only
+   achievable by C++ plugins.
 #. You'll get a free UI for enabling/disabling your widget and repositioning it
-    on the screen. Widget state is saved for you and is automatically restored
-    when the game is restarted.
-
+   on the screen. Widget state is saved for you and is automatically restored
+   when the game is restarted.
 #. You don't have to manage the C++ interposing logic yourself and can focus on
-    the business logic, writing purely in Lua if desired.
+   the business logic, writing purely in Lua if desired.
 
 In general, if you are writing a plugin or script and have anything you'd like
 to add to an existing screen (including live updates of map tiles while the game
@@ -144,15 +142,75 @@ declared like this::
     }
 
 When the `overlay` plugin is enabled, it scans all plugins and scripts for
-this table and registers the widgets on your behalf. The widget is enabled if it
-was enabled the last time the `overlay` plugin was loaded and the widget's
-position is restored according to the state saved in the
-:file:`dfhack-config/overlay.json` file.
+this table and registers the widgets on your behalf. Plugin lua code is loaded
+with ``require()`` and script lua code is loaded with `reqscript`. If your
+widget is in a script, ensure your script can be
+`loaded as a module <reqscript>`, or else the widget will not be discoverable.
+The widget is enabled on load if it was enabled the last time the `overlay`
+plugin was loaded, and the widget's position is restored according to the state
+saved in the :file:`dfhack-config/overlay.json` file.
 
 The overlay framework will instantiate widgets from the named classes and own
 the resulting objects. The instantiated widgets must not be added as subviews to
 any other View, including the Screen views that can be returned from the
 ``overlay_trigger()`` function.
+
+Development workflows
+---------------------
+
+When you are developing an overlay widget, you will likely need to reload your
+widget many times as you make changes. The process for this differs slightly
+depending on whether your widget is attached to a plugin or is implemented in a
+script.
+
+Note that reloading a script does not clear its global environment. This is fine
+if you are changing existing functions or adding new ones. If you remove a
+global function or other variable from the source, though, it will stick around
+in your script's global environment until you restart DF.
+
+Scripts
+*******
+
+#. Edit the widget source
+#. If the script is not in your `script-paths`, install your script (see the
+   `modding-guide` for help setting up a dev environment so that you don't need
+   to reinstall your scripts after every edit).
+#. Call ``:lua require('plugins.overlay').reload()`` to reload your overlay
+   widget
+
+Plugins
+*******
+
+#. Edit the widget source
+#. Install the plugin so that the updated code is available in
+   :file:`hack/lua/plugins/`
+#. If you have changed the compiled plugin, `reload` it
+#. If you have changed the lua code, run ``:lua reload('plugins.mypluginname')``
+#. Call ``:lua require('plugins.overlay').reload()`` to reload your overlay
+   widget
+
+Troubleshooting
+---------------
+
+**If your widget is not getting discovered by the overlay framework, double
+check that:**
+
+#. ``OVERLAY_WIDGETS`` is declared, is global (not ``local``), and contains your
+   widget class
+#. (if a script> your script is `declared as a module <reqscript>`
+   (``--@ module = true``) and it does not have side effects when loaded as a
+   module (i.e. you check ``dfhack_flags.module`` and return before executing
+   any statements if the value is ``true``
+#. your code does not have syntax errors -- run
+   ``:lua ~reqscript('myscriptname')`` (if a script) or
+   ``:lua ~require('plugins.mypluginname')`` (if a plugin) and make sure there
+   are no errors and the global environment contains what you expect.
+
+**If your widget is not running when you expect it to be running,** run
+`gui/overlay` when on the target screen and check to see if your widget is
+listed when showing overlays for the current screen. If it's not there, verify
+that this screen is included in the ``viewscreens`` list in the widget class
+attributes.
 
 Widget example 1: adding text to a DF screen
 --------------------------------------------

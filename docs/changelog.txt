@@ -40,6 +40,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 
 ## Documentation
+- `overlay-dev-guide`: added troubleshooting tips and common development workflows
 
 ## API
 

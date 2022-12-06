@@ -26,7 +26,8 @@ end
 
 local enabled_map = {}
 
-local function process_global(env_name, env, global_name, target)
+local function process_script(env_name, env)
+    local global_name = 'isEnabled'
     local fn = env[global_name]
     if not fn then return end
     if type(fn) ~= 'function' then
@@ -35,12 +36,7 @@ local function process_global(env_name, env, global_name, target)
                 ' value is not a function'):format(global_name, env_name))
         return
     end
-    target[env_name] = fn
-end
-
-local function process_script(env_name, env)
-    process_global(env_name, env, 'onStateChange', dfhack.onStateChange)
-    process_global(env_name, env, 'isEnabled', enabled_map)
+    enabled_map[env_name] = fn
 end
 
 function init()

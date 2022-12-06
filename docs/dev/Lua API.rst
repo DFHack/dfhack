@@ -5678,9 +5678,9 @@ General script API
 
   Note that the ``dfhack.run_script()`` function allows Lua errors to propagate to the caller.
 
-  To run other types of commands (such as built-in commands, plugin commands, or
-  Ruby scripts), see ``dfhack.run_command()``. Note that this is slightly slower
-  than ``dfhack.run_script()`` for Lua scripts.
+  To run other types of commands (i.e. built-in commands or commands provided by plugins),
+  see ``dfhack.run_command()``. Note that this is slightly slower than ``dfhack.run_script()``
+  when running Lua scripts.
 
 * ``dfhack.script_help([name, [extension]])``
 

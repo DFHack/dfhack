@@ -24,11 +24,6 @@ if(BUILD_DEV_PLUGINS)
     #add_subdirectory(devel)
 endif()
 
-option(BUILD_RUBY "Build ruby binding." ON)
-if(BUILD_RUBY)
-    #add_subdirectory(ruby)
-endif()
-
 install(DIRECTORY lua/
     DESTINATION ${DFHACK_LUA_DESTINATION}/plugins
     FILES_MATCHING PATTERN "*.lua")

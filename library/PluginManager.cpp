@@ -199,7 +199,6 @@ Plugin::Plugin(Core * core, const std::string & path,
     plugin_is_enabled = 0;
     plugin_save_data = 0;
     plugin_load_data = 0;
-    plugin_eval_ruby = 0;
     state = PS_UNLOADED;
     access = new RefLock();
 }
@@ -357,7 +356,6 @@ bool Plugin::load(color_ostream &con)
     plugin_is_enabled = (bool*) LookupPlugin(plug, "plugin_is_enabled");
     plugin_save_data = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_save_data");
     plugin_load_data = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_load_data");
-    plugin_eval_ruby = (command_result (*)(color_ostream &, const char*)) LookupPlugin(plug, "plugin_eval_ruby");
     index_lua(plug);
     plugin_lib = plug;
     commands.clear();
@@ -826,7 +824,6 @@ PluginManager::PluginManager(Core * core) : core(core)
 {
     plugin_mutex = new tthread::recursive_mutex();
     cmdlist_mutex = new tthread::mutex();
-    ruby = NULL;
 }
 
 PluginManager::~PluginManager()
@@ -1035,8 +1032,6 @@ void PluginManager::registerCommands( Plugin * p )
         }
         command_map[name] = p;
     }
-    if (p->plugin_eval_ruby)
-        ruby = p;
     cmdlist_mutex->unlock();
 }
 
@@ -1048,8 +1043,6 @@ void PluginManager::unregisterCommands( Plugin * p )
     {
         command_map.erase(cmds[i].name);
     }
-    if (p->plugin_eval_ruby)
-        ruby = NULL;
     cmdlist_mutex->unlock();
 }
 

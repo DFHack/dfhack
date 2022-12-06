@@ -201,12 +201,6 @@ namespace DFHack
 
         void open_lua(lua_State *state, int table);
 
-        command_result eval_ruby(color_ostream &out, const char* cmd) {
-            if (!plugin_eval_ruby || !is_enabled())
-                return CR_FAILURE;
-            return plugin_eval_ruby(out, cmd);
-        }
-
     private:
         RefLock * access;
         std::vector <PluginCommand> commands;
@@ -244,7 +238,6 @@ namespace DFHack
         command_result (*plugin_onstatechange)(color_ostream &, state_change_event);
         command_result (*plugin_enable)(color_ostream &, bool);
         RPCService* (*plugin_rpcconnect)(color_ostream &);
-        command_result (*plugin_eval_ruby)(color_ostream &, const char*);
         command_result (*plugin_save_data)(color_ostream &);
         command_result (*plugin_load_data)(color_ostream &);
     };
@@ -282,7 +275,6 @@ namespace DFHack
         bool CanInvokeHotkey(const std::string &command, df::viewscreen *top);
         Plugin* operator[] (const std::string name);
         std::size_t size();
-        Plugin *ruby;
 
         std::map<std::string, Plugin*>::iterator begin();
         std::map<std::string, Plugin*>::iterator end();

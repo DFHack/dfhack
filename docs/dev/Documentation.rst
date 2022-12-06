@@ -289,22 +289,15 @@ it should be written in plain text. Any reStructuredText markup will not be proc
 if present, will be shown verbatim to the player (which is probably not what you want).
 
 For external scripts, the short description comes from a comment on the first line
-(the comment marker and extra whitespace is stripped). For Lua, this would look like:
+(the comment marker and extra whitespace is stripped):
 
 .. code-block:: lua
 
     -- A short description of my cool script.
 
-and for Ruby scripts it would look like:
-
-.. code-block:: ruby
-
-    # A short description of my cool script.
-
-The main help text for an external script needs to appear between two markers. For
-Lua, these markers are ``[====[`` and ``]====]``, and for Ruby they are ``=begin`` and
-``=end``. The documentation standards above still apply to external tools, but there is
-no need to include backticks for links or monospaced fonts. Here is a Lua example for an
+The main help text for an external script needs to appear between two markers -- ``[====[``
+and ``]====]``. The documentation standards above still apply to external tools, but there is
+no need to include backticks for links or monospaced fonts. Here is an example for an
 entire script header::
 
     -- Inventory management for adventurers.

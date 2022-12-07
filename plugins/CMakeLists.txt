@@ -60,7 +60,7 @@ endforeach()
 
 add_custom_command(
     OUTPUT ${PROJECT_PROTO_TMP_FILES}
-    COMMAND protoc-bin -I=${dfhack_SOURCE_DIR}/library/proto/
+    COMMAND protoc -I=${dfhack_SOURCE_DIR}/library/proto/
                        -I=${CMAKE_CURRENT_SOURCE_DIR}/proto/
             --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/proto/tmp/
             ${PROJECT_PROTOS}
@@ -68,7 +68,7 @@ add_custom_command(
             ${PROJECT_PROTO_TMP_FILES}
             ${CMAKE_CURRENT_SOURCE_DIR}/proto/
     COMMENT "Generating plugin protobufs"
-    DEPENDS protoc-bin ${PROJECT_PROTOS}
+    DEPENDS protoc ${PROJECT_PROTOS}
 )
 add_custom_target(generate_proto DEPENDS ${PROJECT_PROTO_TMP_FILES})
 

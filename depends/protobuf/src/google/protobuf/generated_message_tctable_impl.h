@@ -248,11 +248,9 @@ enum FieldType : uint16_t {
 
 #ifndef NDEBUG
 template <size_t align>
-#ifndef _MSC_VER
-[[noreturn]]
-#endif
 void AlignFail(uintptr_t address) {
   GOOGLE_LOG(FATAL) << "Unaligned (" << align << ") access at " << address;
+  abort();
 }
 
 extern template void AlignFail<4>(uintptr_t);

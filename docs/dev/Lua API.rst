@@ -5593,9 +5593,9 @@ reloaded. For example::
     end
 
 The attachment to ``dfhack.onStateChange`` should appear in your script code
-outside of any function. The `script-manager` will load your script as a module
-when DFHack is initialized, giving this code an opportunity to run and attach
-hooks before a game is loaded.
+outside of any function. DFHack will load your script as a module just before
+the ``SC_DFHACK_INITIALIZED`` state change event is sent, giving your code an
+opportunity to run and attach hooks before the game is loaded.
 
 Save init script
 ================

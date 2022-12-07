@@ -2,10 +2,9 @@ local _ENV = mkmodule('plugins.overlay')
 
 local gui = require('gui')
 local json = require('json')
+local scriptmanager = require('script-manager')
 local utils = require('utils')
 local widgets = require('gui.widgets')
-
-local scriptmanager = require('plugins.script-manager')
 
 local OVERLAY_CONFIG_FILE = 'dfhack-config/overlay.json'
 local OVERLAY_WIDGETS_VAR = 'OVERLAY_WIDGETS'

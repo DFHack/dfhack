@@ -1,4 +1,4 @@
-local _ENV = mkmodule('plugins.script-manager')
+local _ENV = mkmodule('script-manager')
 
 local utils = require('utils')
 

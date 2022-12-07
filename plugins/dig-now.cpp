@@ -708,8 +708,8 @@ static void create_boulders(color_ostream &out,
 
         size_t remaining_items = coords.size();
         while (remaining_items > 0) {
-            int16_t batch_size = min(remaining_items,
-                                     static_cast<size_t>(INT16_MAX));
+            int16_t batch_size = std::min(remaining_items,
+                                          static_cast<size_t>(INT16_MAX));
             prod->count = batch_size;
             remaining_items -= batch_size;
             prod->produce(unit, &out_products, &out_items, &in_reag, &in_items,
@@ -725,7 +725,7 @@ static void create_boulders(color_ostream &out,
                          material.toString().c_str(),
                          ENUM_KEY_STR(item_type, prod->item_type).c_str(),
                          coords.size(), num_items);
-            num_items = min(num_items, entry.second.size());
+            num_items = std::min(num_items, entry.second.size());
         }
 
         for (size_t i = 0; i < num_items; ++i) {

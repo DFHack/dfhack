@@ -1,6 +1,0 @@
-#include <@header@>
-int main()
-{
-    const @namespace@::@HASH_MAP_CLASS@<int,int> t;
-    return t.find(5) == t.end();
-}

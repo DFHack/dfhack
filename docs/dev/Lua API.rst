@@ -5532,6 +5532,8 @@ Importing scripts
   not declare support as described above, although it is preferred to update
   such scripts so that ``reqscript()`` can be used instead.
 
+.. _script-enable-api:
+
 Enabling and disabling scripts
 ==============================
 
@@ -5546,17 +5548,54 @@ table passed to the script will have the following fields set:
 * ``enable``: Always ``true`` if the script is being enabled *or* disabled
 * ``enable_state``: ``true`` if the script is being enabled, ``false`` otherwise
 
+If you declare a global function named ``isEnabled`` that returns a boolean
+indicating whether your script is enabled, then your script will be listed among
+the other enableable scripts and plugins when the player runs the `enable`
+command.
+
 Example usage::
 
     --@ enable = true
+
+    enabled = enabled or false
+    function isEnabled()
+        return enabled
+    end
+
     -- (function definitions...)
+
     if dfhack_flags.enable then
         if dfhack_flags.enable_state then
             start()
+            enabled = true
         else
             stop()
+            enabled = false
         end
     end
+
+If the state of your script is tied to the active savegame, then your script
+should hook the appropriate events to load persisted state when the savegame is
+reloaded. For example::
+
+    local json = require('json')
+    local persist = require('persist-table')
+
+    local GLOBAL_KEY = 'my-script-name'
+    g_state = g_state or {}
+
+    dfhack.onStateChange[GLOBAL_KEY] = function(sc)
+        if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
+            return
+        end
+        local state = json.decode(persist.GlobalTable[GLOBAL_KEY] or '')
+        g_state = state or {}
+    end
+
+The attachment to ``dfhack.onStateChange`` should appear in your script code
+outside of any function. The `script-manager` will load your script as a module
+when DFHack is initialized, giving this code an opportunity to run and attach
+hooks before a game is loaded.
 
 Save init script
 ================

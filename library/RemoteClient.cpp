@@ -347,8 +347,8 @@ bool RemoteFunctionBase::bind(color_ostream &out, RemoteClient *client,
 
 bool sendRemoteMessage(CSimpleSocket *socket, int16_t id, const MessageLite *msg, bool size_ready)
 {
-    int size = size_ready ? msg->GetCachedSize() : msg->ByteSize();
-    int fullsz = size + sizeof(RPCMessageHeader);
+    size_t size = size_ready ? msg->GetCachedSize() : msg->ByteSizeLong();
+    size_t fullsz = size + sizeof(RPCMessageHeader);
 
     uint8_t *data = new uint8_t[fullsz];
     RPCMessageHeader *hdr = (RPCMessageHeader*)data;
@@ -360,7 +360,7 @@ bool sendRemoteMessage(CSimpleSocket *socket, int16_t id, const MessageLite *msg
     uint8_t *pend = msg->SerializeWithCachedSizesToArray(pstart);
     assert((pend - pstart) == size); (void)pend;
 
-    int got = socket->Send(data, fullsz);
+    size_t got = socket->Send(data, fullsz);
     delete[] data;
     return (got == fullsz);
 }
@@ -382,11 +382,11 @@ command_result RemoteFunctionBase::execute(color_ostream &out,
         return CR_LINK_FAILURE;
     }
 
-    int send_size = input->ByteSize();
+    size_t send_size = input->ByteSizeLong();
 
     if (send_size > RPCMessageHeader::MAX_MESSAGE_SIZE)
     {
-        out.printerr("In call to %s::%s: message too large: %d.\n",
+        out.printerr("In call to %s::%s: message too large: %zd.\n",
                      this->plugin.c_str(), this->name.c_str(), send_size);
         return CR_LINK_FAILURE;
     }

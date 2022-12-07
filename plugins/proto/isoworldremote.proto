@@ -1,3 +1,5 @@
+syntax = "proto2";
+
 //Describes a very basic material structure for the map embark
 package isoworldremote;
 

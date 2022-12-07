@@ -2,10 +2,18 @@
 add_subdirectory(lodepng)
 add_subdirectory(lua)
 add_subdirectory(md5)
-add_subdirectory(protobuf)
+
+option(INSTALL_GTEST "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" OFF)
+option(protobuf_INSTALL "Install protobuf binaries and files" OFF)
+option(protobuf_BUILD_TESTS "Build tests" OFF)
+add_subdirectory(protobuf EXCLUDE_FROM_ALL)
+if(UNIX)
+    set_target_properties(libprotoc PROPERTIES COMPILE_FLAGS "-Wno-sign-compare -Wno-stringop-overflow")
+    set_target_properties(libprotobuf PROPERTIES COMPILE_FLAGS "-Wno-sign-compare -Wno-stringop-overflow")
+    set_target_properties(libprotobuf-lite PROPERTIES COMPILE_FLAGS "-Wno-sign-compare -Wno-stringop-overflow")
+endif()
 
 if(UNIX AND NOT APPLE) # remove this once our MSVC build env has been updated
-option(INSTALL_GTEST "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" OFF)
 add_subdirectory(googletest)
 if(UNIX)
     set_target_properties(gtest PROPERTIES COMPILE_FLAGS "-Wno-maybe-uninitialized -Wno-sign-compare")

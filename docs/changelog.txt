@@ -50,6 +50,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Internals
 
 ## Removed
+- ``fix-job-postings`` from the `workflow` plugin is now obsolete since affected savegames can no longer be loaded
 
 # 0.47.05-r8
 

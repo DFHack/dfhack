@@ -358,11 +358,11 @@ void ServerConnection::threadFn()
         //out.print("Answer %d:%d\n", res, reply);
 
         // Send reply
-        int out_size = (reply ? reply->ByteSize() : 0);
+        size_t out_size = (reply ? reply->ByteSizeLong() : 0);
 
         if (out_size > RPCMessageHeader::MAX_MESSAGE_SIZE)
         {
-            stream.printerr("In call to %s: reply too large: %d.\n",
+            stream.printerr("In call to %s: reply too large: %zd.\n",
                                 (fn ? fn->name : "UNKNOWN"), out_size);
             res = CR_LINK_FAILURE;
         }

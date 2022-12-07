@@ -11,6 +11,10 @@ if(UNIX)
     set_target_properties(libprotoc PROPERTIES COMPILE_FLAGS "-Wno-sign-compare -Wno-stringop-overflow")
     set_target_properties(libprotobuf PROPERTIES COMPILE_FLAGS "-Wno-sign-compare -Wno-stringop-overflow")
     set_target_properties(libprotobuf-lite PROPERTIES COMPILE_FLAGS "-Wno-sign-compare -Wno-stringop-overflow")
+elseif(MSVC)
+    set_target_properties(libprotoc PROPERTIES COMPILE_FLAGS "/wd4273")
+    set_target_properties(libprotobuf PROPERTIES COMPILE_FLAGS "/wd4273")
+    set_target_properties(libprotobuf-lite PROPERTIES COMPILE_FLAGS "/wd4273")
 endif()
 
 if(UNIX AND NOT APPLE) # remove this once our MSVC build env has been updated

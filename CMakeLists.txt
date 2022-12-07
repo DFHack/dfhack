@@ -395,7 +395,7 @@ else()
 endif()
 
 find_package(ZLIB REQUIRED)
-include_directories(depends/protobuf)
+include_directories(depends/protobuf/src)
 include_directories(depends/lua/include)
 include_directories(depends/md5)
 

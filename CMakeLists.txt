@@ -102,10 +102,10 @@ endif()
 
 # Automatically detect architecture based on Visual Studio generator
 if(MSVC AND NOT DEFINED DFHACK_BUILD_ARCH)
-    if(${CMAKE_GENERATOR} MATCHES "Win64")
-        set(DFHACK_BUILD_ARCH "64")
-    else()
+    if ( (${CMAKE_GENERATOR} MATCHES "Win32") OR (${CMAKE_GENERATOR} MATCHES "x86"))
         set(DFHACK_BUILD_ARCH "32")
+    else()
+        set(DFHACK_BUILD_ARCH "64")
     endif()
 else()
     set(DFHACK_BUILD_ARCH "64" CACHE STRING "Architecture to build ('32' or '64')")

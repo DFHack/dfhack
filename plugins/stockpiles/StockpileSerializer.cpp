@@ -33,9 +33,6 @@
 #include <fstream>
 
 using std::endl;
-using std::string;
-using std::vector;
-
 using namespace DFHack;
 using namespace df::enums;
 using namespace google::protobuf;

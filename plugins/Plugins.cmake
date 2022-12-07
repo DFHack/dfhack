@@ -91,14 +91,14 @@ macro(dfhack_plugin)
 
         add_custom_command(
             OUTPUT ${PLUGIN_PROTO_TMP_FILES}
-            COMMAND protoc -I=${CMAKE_CURRENT_SOURCE_DIR}/proto/
+            COMMAND protoc-bin -I=${CMAKE_CURRENT_SOURCE_DIR}/proto/
                 --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/proto/tmp/
                 ${PLUGIN_PROTOS}
             COMMAND ${PERL_EXECUTABLE} ${dfhack_SOURCE_DIR}/depends/copy-if-different.pl
                 ${PLUGIN_PROTO_TMP_FILES}
                 ${CMAKE_CURRENT_SOURCE_DIR}/proto/
             COMMENT "Generating plugin ${PLUGIN_NAME} protobufs"
-            DEPENDS protoc ${PLUGIN_PROTOS}
+            DEPENDS protoc-bin ${PLUGIN_PROTOS}
         )
 
         if(UNIX)
@@ -125,7 +125,7 @@ macro(dfhack_plugin)
 
     if(NUM_PROTO)
         add_dependencies(${PLUGIN_NAME} generate_proto_${PLUGIN_NAME})
-        target_link_libraries(${PLUGIN_NAME} dfhack libprotobuf-lite dfhack-version ${PLUGIN_LINK_LIBRARIES})
+        target_link_libraries(${PLUGIN_NAME} dfhack protobuf-lite dfhack-version ${PLUGIN_LINK_LIBRARIES})
     else()
         target_link_libraries(${PLUGIN_NAME} dfhack dfhack-version ${PLUGIN_LINK_LIBRARIES})
     endif()

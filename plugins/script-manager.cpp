@@ -25,7 +25,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
     auto L = Lua::Core::State;
     Lua::StackUnwinder top(L);
-    Lua::CallLuaModuleFunction(out, L, "plugins.script-manager", "init");
+    Lua::CallLuaModuleFunction(out, L, "plugins.script-manager", "reload");
 
     return CR_OK;
 }

@@ -39,7 +39,7 @@ local function process_script(env_name, env)
     enabled_map[env_name] = fn
 end
 
-function init()
+function reload()
     enabled_map = utils.OrderedTable()
     foreach_module_script(process_script)
 end

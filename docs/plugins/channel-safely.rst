@@ -58,6 +58,8 @@ Features
 --------
 
 :require-vision:    Toggle whether the dwarves need vision of a tile before channeling to it can be deemed unsafe. (default: enabled)
+:risk-averse:       Toggles whether to use cave-in prevention. Designations are activated in stages
+                    and their priorities along edges are modified. (default: enabled)
 :monitoring:        Toggle whether to monitor the conditions of active digs. (default: disabled)
 :resurrect:         Toggle whether to resurrect units involved in cave-ins, and if monitor is enabled
                     units who die while digging. (default: disabled)

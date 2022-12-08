@@ -46,14 +46,14 @@ bool ChannelJobs::has_cavein_conditions(const df::coord &map_pos) {
 }
 
 bool ChannelJobs::possible_cavein(const df::coord &job_pos) {
-    for (auto iter = active.begin(); iter != active.end(); ++iter) {
-        if (*iter == job_pos) continue;
-        if (calc_distance(job_pos, *iter) <= 2) {
+    for (auto iter : active) {
+        if (iter == job_pos) continue;
+        if (calc_distance(job_pos, iter) <= 2) {
             // find neighbours
             df::coord n1[8];
             df::coord n2[8];
             get_neighbours(job_pos, n1);
-            get_neighbours(*iter, n2);
+            get_neighbours(iter, n2);
             // find shared neighbours
             for (int i = 0; i < 7; ++i) {
                 for (int j = i + 1; j < 8; ++j) {
@@ -133,7 +133,7 @@ void ChannelGroups::add(const df::coord &map_pos) {
             TRACE(groups).print(" -> brand new group\n");
             // we create a brand-new group to use
             group_index = groups.size();
-            groups.push_back(Group());
+            groups.emplace_back();
             group = &groups[group_index];
         }
     }
@@ -220,7 +220,7 @@ void ChannelGroups::scan(bool full_scan) {
                                     jobs.erase(map_pos);
                                 }
                                 block->designation[lx][ly].bits.dig = df::tile_dig_designation::No;
-                            } else if (is_dig_designation(block->designation[lx][ly]) || block->occupancy[lx][ly].bits.dig_marked ) {
+                            } else if (is_dig_designation(block->designation[lx][ly]) || block->occupancy[lx][ly].bits.dig_marked) {
                                 if (!is_channel_designation(block->designation[lx][ly])) {
                                     if (df::map_block* block_above = Maps::getBlock(bx, by, z+1)) {
                                         if (!is_channel_designation(block_above->designation[lx][ly])) {

@@ -1,7 +1,10 @@
 /* Prevent channeling down into known open space.
 Author:  Josh Cooper
 Created: Aug. 4 2020
-Updated: Dec. 5 2022
+Updated: Dec. 8 2022
+*/
+/*
+This skeletal logic has not been kept up-to-date since ~v0.5
 
  Enable plugin:
  -> build groups
@@ -160,7 +163,7 @@ namespace CSP {
             try {
                 pfeature.ival(MONITOR) = config.monitoring;
                 pfeature.ival(VISION) = config.require_vision;
-                pfeature.ival(INSTADIG) = config.insta_dig;
+                pfeature.ival(INSTADIG) = false; //config.insta_dig;
                 pfeature.ival(RESURRECT) = config.resurrect;
                 pfeature.ival(RISKAVERSE) = config.riskaverse;
 
@@ -186,7 +189,7 @@ namespace CSP {
             try {
                 config.monitoring = pfeature.ival(MONITOR);
                 config.require_vision = pfeature.ival(VISION);
-                config.insta_dig = pfeature.ival(INSTADIG);
+                config.insta_dig = false; //pfeature.ival(INSTADIG);
                 config.resurrect = pfeature.ival(RESURRECT);
                 config.riskaverse = pfeature.ival(RISKAVERSE);
 
@@ -303,9 +306,9 @@ namespace CSP {
             switch (report->type) {
                 case announcement_type::CANCEL_JOB:
                     if (config.insta_dig) {
-                        if (report->text.find("cancels Dig") != std::string::npos) {
-                            dignow_queue.emplace(report->pos);
-                        } else if (report->text.find("path") != std::string::npos) {
+                        if (report->text.find("cancels Dig") != std::string::npos ||
+                            report->text.find("path") != std::string::npos) {
+
                             dignow_queue.emplace(report->pos);
                         }
                         DEBUG(plugin).print("%d, pos: " COORD ", pos2: " COORD "\n%s\n", report_id, COORDARGS(report->pos),
@@ -439,7 +442,7 @@ namespace CSP {
                                 Maps::getTileOccupancy(job->pos)->bits.dig_marked = true;
 
                                 // prevent algorithm from re-enabling designation
-                                for (auto &be: Maps::getBlock(job->pos)->block_events) { ;
+                                for (auto &be: Maps::getBlock(job->pos)->block_events) {
                                     if (auto bsedp = virtual_cast<df::block_square_event_designation_priorityst>(
                                             be)) {
                                         df::coord local(job->pos);
@@ -603,7 +606,8 @@ command_result channel_safely(color_ostream &out, std::vector<std::string> &para
                 } else if (parameters[1] == "require-vision") {
                     config.require_vision = state;
                 } else if (parameters[1] == "insta-dig") {
-                    config.insta_dig = state;
+                    //config.insta_dig = state;
+                    config.insta_dig = false;
                 } else if (parameters[1] == "resurrect") {
                     if (state != config.resurrect) {
                         config.resurrect = state;
@@ -641,7 +645,7 @@ command_result channel_safely(color_ostream &out, std::vector<std::string> &para
         out.print("  %-20s\t%s\n", "risk-averse: ", config.riskaverse ? "on." : "off.");
         out.print("  %-20s\t%s\n", "monitoring: ", config.monitoring ? "on." : "off.");
         out.print("  %-20s\t%s\n", "require-vision: ", config.require_vision ? "on." : "off.");
-        out.print("  %-20s\t%s\n", "insta-dig: ", config.insta_dig ? "on." : "off.");
+        //out.print("  %-20s\t%s\n", "insta-dig: ", config.insta_dig ? "on." : "off.");
         out.print("  %-20s\t%s\n", "resurrect: ", config.resurrect ? "on." : "off.");
         out.print(" SETTINGS:\n");
         out.print("  %-20s\t%" PRIi32 "\n", "refresh-freq: ", config.refresh_freq);

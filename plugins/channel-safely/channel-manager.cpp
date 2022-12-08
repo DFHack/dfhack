@@ -52,7 +52,7 @@ void ChannelManager::manage_group(const df::coord &map_pos, bool set_marker_mode
     INFO(manager).print("manage_group() is done\n");
 }
 
-void ChannelManager::manage_group(const Group &group, bool set_marker_mode, bool marker_mode) {
+void ChannelManager::manage_group(const Group &group, bool set_marker_mode, bool marker_mode) const {
     INFO(manager).print("manage_group()\n");
     if (!set_marker_mode) {
         marker_mode = has_any_groups_above(groups, group);
@@ -88,7 +88,6 @@ void ChannelManager::manage_group(const Group &group, bool set_marker_mode, bool
                     if (config.insta_dig) {
                         manage_one(pos, true, false);
                         dig_now(DFHack::Core::getInstance().getConsole(), pos);
-                        mark_done(pos);
                     } else {
                         // todo: engage dig management, swap channel designations for dig
                     }
@@ -101,12 +100,11 @@ void ChannelManager::manage_group(const Group &group, bool set_marker_mode, bool
             } else if (config.insta_dig && isEntombed(miner_pos, pos)) {
                 manage_one(pos, true, false);
                 dig_now(DFHack::Core::getInstance().getConsole(), pos);
-                mark_done(pos);
             }
         }
         DEBUG(manager).print("cavein possible(%d)\n"
-                           "%zu candidates\n"
-                           "least access %d\n", cavein_possible, cavein_candidates.size(), least_access);
+                             "%zu candidates\n"
+                             "least access %d\n", cavein_possible, cavein_candidates.size(), least_access);
     }
     // managing designations
     if (!group.empty()) {
@@ -120,16 +118,18 @@ void ChannelManager::manage_group(const Group &group, bool set_marker_mode, bool
             continue;
         }
         // cavein is only possible if marker_mode is false
+        // we want to dig the cavein candidates first, the least accessible ones specifically
         const static uint8_t MAX = 84; //arbitrary number that indicates the value has changed
+        const static uint8_t OFFSET = 2; //value has been tweaked to avoid cave-ins whilst activating as many designations as possible
         if (CSP::dignow_queue.count(pos) || (cavein_candidates.count(pos) &&
-            least_access < MAX && cavein_candidates[pos] <= least_access+2)) {
+                                             least_access < MAX && cavein_candidates[pos] <= least_access+OFFSET)) {
 
-            TRACE(manager).print("cave-in evaluated true and either of dignow or (%d <= %d)\n", cavein_candidates[pos], least_access+2);
-            // we want to dig the cavein candidates first
+            TRACE(manager).print("cave-in evaluated true and either of dignow or (%d <= %d)\n", cavein_candidates[pos], least_access+OFFSET);
             df::coord local(pos);
             local.x %= 16;
             local.y %= 16;
             auto block = Maps::ensureTileBlock(pos);
+            // if we don't find the priority in block_events, it probably means bad things
             for (df::block_square_event* event: block->block_events) {
                 if (auto evT = virtual_cast<df::block_square_event_designation_priorityst>(event)) {
                     // we want to let the user keep some designations free of being managed
@@ -142,8 +142,9 @@ void ChannelManager::manage_group(const Group &group, bool set_marker_mode, bool
             assert(manage_one(pos, true, false));
             continue;
         }
+        // cavein possible, but we failed to meet the criteria for activation
         if (cavein_candidates.count(pos)) {
-            DEBUG(manager).print("cave-in evaluated true and no dignow and (%d > %d)\n", cavein_candidates[pos], least_access + 2);
+            DEBUG(manager).print("cave-in evaluated true and no dignow and (%d > %d)\n", cavein_candidates[pos], least_access+OFFSET);
         } else {
             DEBUG(manager).print("cave-in evaluated true and no dignow and pos is not a candidate\n");
         }
@@ -152,7 +153,7 @@ void ChannelManager::manage_group(const Group &group, bool set_marker_mode, bool
     INFO(manager).print("manage_group() is done\n");
 }
 
-bool ChannelManager::manage_one(const df::coord &map_pos, bool set_marker_mode, bool marker_mode) {
+bool ChannelManager::manage_one(const df::coord &map_pos, bool set_marker_mode, bool marker_mode) const {
     if (Maps::isValidTilePos(map_pos)) {
         TRACE(manager).print("manage_one((" COORD "), %d, %d)\n", COORDARGS(map_pos), set_marker_mode, marker_mode);
         df::map_block* block = Maps::getTileBlock(map_pos);
@@ -164,41 +165,22 @@ bool ChannelManager::manage_one(const df::coord &map_pos, bool set_marker_mode, 
         // ensure that we aren't on the top-most layers
         if (map_pos.z < mapz - 3) {
             // do we already know whether to set marker mode?
-            if (set_marker_mode) {
-                TRACE(manager).print("  -> setting marker mode\n");
-                // if enabling marker mode, just do it
-                if (marker_mode) {
-                    goto markerMode;
-                }
-                // otherwise we check for some safety
-                if (!is_channel_designation(block->designation[Coord(local)]) || is_safe_to_dig_down(map_pos)) {
-                    // not a channel designation, or it is safe to dig down if it is
-                    if (!block->flags.bits.designated) {
-                        block->flags.bits.designated = true;
-                    }
-                    // we need to cache the tile now that we're activating the designation
-                    TileCache::Get().cache(map_pos, block->tiletype[Coord(local)]);
-                    TRACE(manager).print("marker mode DISABLED\n");
-                    tile_occupancy.bits.dig_marked = false;
-                } else {
-                    // we want to activate the designation, that's not what we get
-                    goto markerMode;
-                }
-            } else {
-                // not set_marker_mode
-                TRACE(manager).print(" if(has_groups_above())\n");
-                // check that the group has no incomplete groups directly above it
-                if (has_group_above(groups, map_pos) || !is_safe_to_dig_down(map_pos)) {
-
-                    markerMode:
-
-                    TRACE(manager).print("marker mode ENABLED\n");
-                    tile_occupancy.bits.dig_marked = true;
-                    if (jobs.count(map_pos)) {
-                        cancel_job(map_pos);
-                    }
-                }
+            if (!marker_mode) {
+                // marker_mode is set to true if it is unsafe to dig
+                marker_mode = (!set_marker_mode &&
+                               (has_group_above(groups, map_pos) || !is_safe_to_dig_down(map_pos))) ||
+                              (set_marker_mode &&
+                               is_channel_designation(block->designation[Coord(local)]) && !is_safe_to_dig_down(map_pos));
             }
+            if (marker_mode) {
+                if (jobs.count(map_pos)) {
+                    cancel_job(map_pos);
+                }
+            } else if (!block->flags.bits.designated) {
+                block->flags.bits.designated = true;
+            }
+            tile_occupancy.bits.dig_marked = marker_mode;
+            TRACE(manager).print("marker mode %s\n", marker_mode ? "ENABLED" : "DISABLED");
         } else {
             // if we are though, it should be totally safe to dig
             tile_occupancy.bits.dig_marked = false;

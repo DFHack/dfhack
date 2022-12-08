@@ -37,9 +37,9 @@ private:
 protected:
     void add(const df::coord &map_pos);
 public:
-    int debugGIndex(const df::coord &map_pos) {
+    int debugGIndex(const df::coord &map_pos) const {
         if (groups_map.count(map_pos)) {
-            return groups_map[map_pos];
+            return groups_map.find(map_pos)->second;
         }
         return -1;
     }

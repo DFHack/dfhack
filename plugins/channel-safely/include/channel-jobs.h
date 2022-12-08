@@ -21,8 +21,6 @@ using namespace DFHack;
  */
 class ChannelJobs {
 private:
-    friend class ChannelGroup;
-
     using Jobs = std::unordered_set<df::coord>; // job* will exist until it is complete, and likely beyond
     std::unordered_map<df::coord, df::job*> jobs;
     Jobs locations;

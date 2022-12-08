@@ -10,10 +10,11 @@
 
 #include <cinttypes>
 #include <unordered_set>
+#include <random>
 
-#define Coord(id) id.x][id.y
+#define Coord(id) (id).x][(id).y
 #define COORD "%" PRIi16 ",%" PRIi16 ",%" PRIi16
-#define COORDARGS(id) id.x, id.y, id.z
+#define COORDARGS(id) (id).x, (id).y, (id).z
 
 namespace CSP {
     extern std::unordered_set<df::coord> dignow_queue;
@@ -81,12 +82,9 @@ inline bool isEntombed(const df::coord &unit_pos, const df::coord &map_pos) {
     }
     df::coord neighbours[8];
     get_neighbours(map_pos, neighbours);
-    for (auto n: neighbours) {
-        if (Maps::canWalkBetween(unit_pos, n)) {
-            return false;
-        }
-    }
-    return true;
+    return std::all_of(neighbours+0, neighbours+8, [&unit_pos](df::coord n) {
+        return !Maps::canWalkBetween(unit_pos, n);
+    });
 }
 
 inline bool is_dig_job(const df::job* job) {
@@ -143,22 +141,6 @@ inline bool is_safe_to_dig_down(const df::coord &map_pos) {
         pos.z--;
     }
     return false;
-}
-
-inline bool can_reach_designation(const df::coord &start, const df::coord &end) {
-    if (start != end) {
-        if (!Maps::canWalkBetween(start, end)) {
-            df::coord neighbours[8];
-            get_neighbours(end, neighbours);
-            for (auto &pos: neighbours) {
-                if (Maps::isValidTilePos(pos) && Maps::canWalkBetween(start, pos)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-    }
-    return true;
 }
 
 inline bool has_unit(const df::tile_occupancy* occupancy) {
@@ -235,8 +217,62 @@ inline void cancel_job(const df::coord &map_pos) {
 
 // executes dig designations for the specified tile coordinates
 inline bool dig_now(color_ostream &out, const df::coord &map_pos) {
+    static std::default_random_engine rng;
+    std::uniform_int_distribution<> dist(0,5);
     out.color(color_value::COLOR_YELLOW);
     out.print("channel-safely: insta-dig: digging (" COORD ")<\n", COORDARGS(map_pos));
+
+    df::coord below(map_pos);
+    below.z--;
+    auto ttype_below = *Maps::getTileType(below);
+    if (isOpenTerrain(ttype_below) || isFloorTerrain(ttype_below)) {
+        *Maps::getTileType(map_pos) = tiletype::OpenSpace;
+    } else {
+        auto ttype_p = Maps::getTileType(map_pos);
+        if (isSoilMaterial(*ttype_p)) {
+            switch(dist(rng)) {
+                case 0:
+                    *ttype_p = tiletype::SoilFloor1;
+                    break;
+                case 1:
+                    *ttype_p = tiletype::SoilFloor2;
+                    break;
+                case 2:
+                    *ttype_p = tiletype::SoilFloor3;
+                    break;
+                case 3:
+                    *ttype_p = tiletype::SoilFloor4;
+                    break;
+                default:
+                    *ttype_p = tiletype::SoilFloor1;
+                    break;
+            }
+        } else if (isStoneMaterial(*ttype_p)) {
+            switch(dist(rng)) {
+                case 0:
+                    *ttype_p = tiletype::FeatureFloor1;
+                    break;
+                case 1:
+                    *ttype_p = tiletype::FeatureFloor2;
+                    break;
+                case 2:
+                    *ttype_p = tiletype::FeatureFloor3;
+                    break;
+                case 3:
+                    *ttype_p = tiletype::FeatureFloor4;
+                    break;
+                default:
+                    *ttype_p = tiletype::MineralFloor1;
+                    break;
+            }
+        } else {
+            out.print("Unknown type\n");
+            return false;
+        }
+    }
+
+    return true;
+    /*
     bool ret = false;
 
     lua_State* state = Lua::Core::State;
@@ -253,6 +289,7 @@ inline bool dig_now(color_ostream &out, const df::coord &map_pos) {
     Lua::StackUnwinder top(state);
     Lua::CallLuaModuleFunction(out, state, module_name, fn_name, 1, 1, args_lambda, res_lambda);
     return ret;
+     */
 }
 
 // fully heals the unit specified, resurrecting if need be

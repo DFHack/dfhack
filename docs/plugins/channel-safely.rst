@@ -63,8 +63,6 @@ Features
 :monitoring:        Toggle whether to monitor the conditions of active digs. (default: disabled)
 :resurrect:         Toggle whether to resurrect units involved in cave-ins, and if monitor is enabled
                     units who die while digging. (default: disabled)
-:insta-dig:         Toggle whether to use insta-digging on unreachable designations.
-                    Runs on the refresh cycles. Use with caution. (default: disabled)
 
 Settings
 --------
@@ -80,10 +78,8 @@ Troubleshooting
 ---------------
 
 If designations aren't switching correctly, try putting the designations into marker mode.
-Then press . (next) or resume. If you're debugging code you'll want these:
+Then press . (next) or resume. If you're debugging code you'll want these::
 
-[todo: make this a block of code]
-
-:filter1: ``debugfilter set Info channel manager``
-:filter2: ``debugfilter set Debug channel plugin``
-:filter3: ``debugfilter set Trace channel group``
+    debugfilter set Info channel manager
+    debugfilter set Debug channel plugin
+    debugfilter set Trace channel group

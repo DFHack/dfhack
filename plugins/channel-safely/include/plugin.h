@@ -9,7 +9,8 @@ namespace DFHack {
 }
 
 struct Configuration {
-    bool monitor_active = false;
+    bool riskaverse = true;
+    bool monitoring = false;
     bool require_vision = true;
     bool insta_dig = false;
     bool resurrect = false;

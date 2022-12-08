@@ -5,6 +5,28 @@
 #include <modules/EventManager.h> //hash function for df::coord
 #include <df/block_square_event_designation_priorityst.h>
 
+#include <algorithm>
+#include <random>
+
+df::unit* find_dwarf(const df::coord &map_pos) {
+    df::unit* nearest = nullptr;
+    uint32_t distance;
+    for (auto unit : df::global::world->units.active) {
+        if (!nearest) {
+            nearest = unit;
+            distance = calc_distance(unit->pos, map_pos);
+        } else if (unit->status.labors[df::unit_labor::MINE]) {
+            uint32_t d = calc_distance(unit->pos, map_pos);
+            if (d < distance) {
+                nearest = unit;
+                distance = d;
+            } else if (Maps::canWalkBetween(unit->pos, map_pos)) {
+                return unit;
+            }
+        }
+    }
+    return nearest;
+}
 
 // sets mark flags as necessary, for all designations
 void ChannelManager::manage_groups() {
@@ -33,21 +55,17 @@ void ChannelManager::manage_group(const df::coord &map_pos, bool set_marker_mode
 void ChannelManager::manage_group(const Group &group, bool set_marker_mode, bool marker_mode) {
     INFO(manager).print("manage_group()\n");
     if (!set_marker_mode) {
-        if (has_any_groups_above(groups, group)) {
-            marker_mode = true;
-        } else {
-            marker_mode = false;
-        }
+        marker_mode = has_any_groups_above(groups, group);
     }
     for (auto &designation: group) {
-        manage_one(group, designation, true, marker_mode);
+        manage_one(designation, true, marker_mode);
     }
     INFO(manager).print("manage_group() is done\n");
 }
 
-bool ChannelManager::manage_one(const Group &group, const df::coord &map_pos, bool set_marker_mode, bool marker_mode) {
+bool ChannelManager::manage_one(const df::coord &map_pos, bool set_marker_mode, bool marker_mode) {
     if (Maps::isValidTilePos(map_pos)) {
-        INFO(manager).print("manage_one(" COORD ")\n", COORDARGS(map_pos));
+        TRACE(manager).print("manage_one((" COORD "), %d, %d)\n", COORDARGS(map_pos), set_marker_mode, marker_mode);
         df::map_block* block = Maps::getTileBlock(map_pos);
         // we calculate the position inside the block*
         df::coord local(map_pos);
@@ -58,41 +76,46 @@ bool ChannelManager::manage_one(const Group &group, const df::coord &map_pos, bo
         if (map_pos.z < mapz - 3) {
             // do we already know whether to set marker mode?
             if (set_marker_mode) {
-                DEBUG(manager).print("  -> marker_mode\n");
+                TRACE(manager).print("  -> setting marker mode\n");
                 // if enabling marker mode, just do it
                 if (marker_mode) {
-                    tile_occupancy.bits.dig_marked = marker_mode;
-                    return true;
+                    goto markerMode;
                 }
-                // if activating designation, check if it is safe to dig or not a channel designation
+                // otherwise we check for some safety
                 if (!is_channel_designation(block->designation[Coord(local)]) || is_safe_to_dig_down(map_pos)) {
+                    // not a channel designation, or it is safe to dig down if it is
                     if (!block->flags.bits.designated) {
                         block->flags.bits.designated = true;
                     }
-                    tile_occupancy.bits.dig_marked = false;
+                    // we need to cache the tile now that we're activating the designation
                     TileCache::Get().cache(map_pos, block->tiletype[Coord(local)]);
+                    TRACE(manager).print("marker mode DISABLED\n");
+                    tile_occupancy.bits.dig_marked = false;
+                } else {
+                    // we want to activate the designation, that's not what we get
+                    goto markerMode;
                 }
-                return false;
-
             } else {
-                // next search for the designation priority
-                DEBUG(manager).print(" if(has_groups_above())\n");
+                // not set_marker_mode
+                TRACE(manager).print(" if(has_groups_above())\n");
                 // check that the group has no incomplete groups directly above it
                 if (has_group_above(groups, map_pos) || !is_safe_to_dig_down(map_pos)) {
-                    DEBUG(manager).print("  has_groups_above: setting marker mode\n");
+
+                    markerMode:
+
+                    TRACE(manager).print("marker mode ENABLED\n");
                     tile_occupancy.bits.dig_marked = true;
                     if (jobs.count(map_pos)) {
-                        jobs.erase(map_pos);
+                        cancel_job(map_pos);
                     }
-                    WARN(manager).print(" <- manage_one() exits normally\n");
-                    return true;
                 }
             }
         } else {
             // if we are though, it should be totally safe to dig
             tile_occupancy.bits.dig_marked = false;
         }
-        WARN(manager).print(" <- manage_one() exits normally\n");
+        TRACE(manager).print(" <- manage_one() exits normally\n");
+        return true;
     }
     return false;
 }

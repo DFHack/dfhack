@@ -740,6 +740,109 @@ or ``RelWithDebInfo``.
 
 Then build the ``INSTALL`` target listed under ``CMakePredefinedTargets``.
 
+Windows cross compiling from Linux
+==================================
+
+.. highlight:: bash
+
+If you are on Linux but need to produce a Windows build (for example, because the
+DF version you're working on isn't out for Linux yet), here is how you can build
+and run a Windows binary on Linux.
+
+Step 1: prepare a docker image
+------------------------------
+
+On your Linux host, install and run the docker daemon and then run these commands::
+
+    xhost set +local:root
+    git clone git@github.com:mstorsjo/msvc-wine.git
+    cd msvc-wine
+    docker build .
+    docker image ls
+    IMAGE_ID=<your image id>
+    docker run -it --env="DISPLAY" --env="QT_X11_NO_MITSHM=1" --volume=/tmp/.X11-unix:/tmp/.X11-unix --name dfhack-win $IMAGE_ID
+
+The ``xhost`` command and ``--env`` parameters are there so you can eventually
+run Dwarf Fortress from the container and have it display on your host.
+
+Step 2: prepare to build in the container
+-----------------------------------------
+
+The ``docker run`` command above will give you a shell prompt (as root) in the
+container. Inside the container, run the following commands::
+
+    apt-get update; apt-get upgrade -y
+    apt-get install -y gcc g++ ninja-build git zlib1g-dev libsdl1.2-dev libxml-libxml-perl libxml-libxslt-perl make wget unzip vim ccache libncurses-dev curl libssl-dev bash-completion
+    echo 'export BIN=/opt/msvc/bin/x64' >>~/.bashrc
+    echo 'PATH=/opt/msvc:$BIN:$HOME/bin/cmake/bin:$PATH' >>~/.bashrc
+    . ~/.bashrc
+    mkdir ~/src; cd ~/src
+    git clone https://gitlab.kitware.com/mstorsjo/cmake.git
+    cd cmake; git checkout 844ccd2280d11ada286d0e2547c0fa5ff22bd4db
+    mkdir build; cd build
+    ../configure --prefix=~/bin/cmake --parallel=$(nproc) -- -DBUILD_CursesDialog=ON
+    make -j$(nproc)
+    make install
+    cd ~/src
+    git clone https://github.com/ab9rf/dfhack.git
+    cd dfhack; git submodule init; git submodule update
+    cd build; cmake .. -GNinja
+
+Step 3: copy Dwarf Fortress to the container
+--------------------------------------------
+
+First, create a directory in the container to house the Dwarf Fortress binary and
+assets::
+
+    mkdir ~/df
+
+If you can just downlaod Dwarf Fortress directly into the container, then that's fine.
+Otherwise, you can do something like this in your host Linux environment to copy an
+installed version to the container::
+
+    cd ~/.steam/steam/steamapps/common/Dwarf\ Fortress/
+    docker cp . dfhack-win:/root/df/
+
+Step 4: build and install the cross-compiled DFHack binary
+----------------------------------------------------------
+
+Back in the container, run the following commands::
+
+    mkdir ~/src/dfhack/build_win; cd ~/src/dfhack/build_win
+    . msvcenv-native.sh
+    wineserver -p
+    wine64 wineboot
+    CC=cl CXX=cl cmake .. -GNinja -DCMAKE_INSTALL_PREFIX=~/df -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_CROSSCOMPILING=ON -DDFHACK_NATIVE_BUILD_DIR=~/src/dfhack/build
+    ninja install
+
+Those wine commands are very important. Each invocation of a windows tool will
+cause wine to run in the container. Preloading the wineserver and telling it not
+to exit will speed configuration and compilation up considerably (approx. 10x).
+You can shut the wineserver down again with ``wineserver -k``.
+
+Step 5: run Dwarf Fortress with DFHack
+--------------------------------------
+
+Now that DFHack is built and installed, you can run DF in the container. The commands
+we ran earlier will allow container apps to connect to the host Xserver and the Dwarf
+Fortress game window will apear on your screen::
+
+    cd ~/df
+    wine64 Dwarf\ Fortress.exe
+
+Other notes
+-----------
+
+Closing your shell will kick you out of the container. Run this command on your Linux
+host when you want to reattach::
+
+    docker start -ai dfhack-win
+
+Make sure you run ``wineserver -p`` before you start building or running DF in the
+container.
+
+If you edit code and need to rebuild, just ``ninja install`` should suffice. You
+shouldn't need to source ``msvcenv-native.sh`` or reconfigure cmake from scratch.
 
 Building the documentation
 ==========================

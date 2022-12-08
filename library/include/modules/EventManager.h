@@ -46,9 +46,11 @@ namespace DFHack {
             typedef void (*callback_t)(color_ostream&, void*); //called when the event happens
             callback_t eventHandler;
             int32_t freq; //how often event is allowed to fire (in ticks) use 0 to always fire when possible
+            int32_t when = -1; //when to fire event (global tick count)
 
-            EventHandler(callback_t eventHandlerIn, int32_t freqIn): eventHandler(eventHandlerIn), freq(freqIn) {
-            }
+            EventHandler(callback_t eventHandlerIn, int32_t freqIn) :
+                    eventHandler(eventHandlerIn),
+                    freq(freqIn) {}
 
             bool operator==(const EventHandler& handle) const {
                 return eventHandler == handle.eventHandler && freq == handle.freq;
@@ -144,6 +146,7 @@ namespace std {
             size_t r = 17;
             const size_t m = 65537;
             r = m*(r+(intptr_t)h.eventHandler);
+            r = m*(r+h.when);
             r = m*(r+h.freq);
             return r;
         }

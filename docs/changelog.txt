@@ -53,6 +53,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Documentation
 
 ## API
+- ``EventManager``: revises tick events to work as listeners. Tick events registered with ``registerListener`` will now automatically requeue at their designated frequency.
 
 ## Lua
 

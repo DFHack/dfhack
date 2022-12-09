@@ -18,6 +18,7 @@ elseif(MSVC)
 endif()
 if(NOT CMAKE_CROSSCOMPILING)
     add_executable(protoc-bin ALIAS protoc)
+    export(TARGETS protoc FILE ${CMAKE_BINARY_DIR}/ImportExecutables.cmake)
 endif()
 
 if(UNIX AND NOT APPLE) # remove this once our MSVC build env has been updated

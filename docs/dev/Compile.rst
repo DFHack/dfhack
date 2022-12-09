@@ -838,8 +838,8 @@ host when you want to reattach::
 
     docker start -ai dfhack-win
 
-Make sure you run ``wineserver -p`` before you start building or running DF in the
-container.
+Make sure you run ``wineserver -p`` and ``wine64 wineboot`` before you start building
+or running DF in the container or risk terrible slowness.
 
 If you edit code and need to rebuild, just ``ninja install`` should suffice. You
 shouldn't need to source ``msvcenv-native.sh`` or reconfigure cmake from scratch.

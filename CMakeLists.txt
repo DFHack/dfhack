@@ -95,6 +95,9 @@ if(MSVC)
     # for things like vector sizes, which are never that big anyway.
     add_definitions("/wd4267")
 
+    # suppress C4275 so we can include protobuf headers without warnings
+    add_definitions("/wd4275")
+
     # MSVC panics if an object file contains more than 65,279 sections. this
     # happens quite frequently with code that uses templates, such as vectors.
     add_definitions("/bigobj")
@@ -266,8 +269,7 @@ elseif(MSVC)
     string(REPLACE "/DNDEBUG" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
 endif()
 
-# use shared libraries for protobuf
-add_definitions(-DPROTOBUF_USE_DLLS)
+# use shared libs for lua
 add_definitions(-DLUA_BUILD_AS_DLL)
 
 if(APPLE)

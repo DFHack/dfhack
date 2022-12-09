@@ -807,6 +807,7 @@ Step 4: install DFHack and run DF
 Back in the container, run the following commands::
 
     cd dfhack/build
+    cmake .. -DCMAKE_INSTALL_PREFIX=/home/buildmaster/df
     ninja install
     cd ~/df
     wine64 "Dwarf Fortress.exe"

@@ -754,9 +754,9 @@ Step 1: prepare a docker image
 
 On your Linux host, install and run the docker daemon and then run these commands::
 
-    xhost set +local:root
+    xhost +local:root
     git clone https://github.com/BenLubar/build-env.git
-    cd build-env
+    cd build-env/msvc
     docker build .
     docker image ls
     IMAGE_ID=<your image id>

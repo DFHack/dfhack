@@ -787,6 +787,7 @@ container. Inside the container, run the following commands::
     git clone https://github.com/ab9rf/dfhack.git
     cd dfhack; git submodule init; git submodule update
     cd build; cmake .. -GNinja
+    ninja protoc
 
 Step 3: copy Dwarf Fortress to the container
 --------------------------------------------

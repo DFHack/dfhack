@@ -91,7 +91,7 @@ macro(dfhack_plugin)
 
         add_custom_command(
             OUTPUT ${PLUGIN_PROTO_TMP_FILES}
-            COMMAND protoc -I=${CMAKE_CURRENT_SOURCE_DIR}/proto/
+            COMMAND protoc-bin -I=${CMAKE_CURRENT_SOURCE_DIR}/proto/
                 --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/proto/tmp/
                 ${PLUGIN_PROTOS}
             COMMAND ${PERL_EXECUTABLE} ${dfhack_SOURCE_DIR}/depends/copy-if-different.pl

@@ -946,19 +946,19 @@ PROTOBUF_NODISCARD const char* WireFormatParser(T& field_parser,
 // corresponding field
 
 // These are packed varints
-PROTOBUF_NODISCARD /*PROTOBUF_EXPORT*/ const char* PackedInt32Parser(
+PROTOBUF_NODISCARD PROTOBUF_EXPORT const char* PackedInt32Parser(
     void* object, const char* ptr, ParseContext* ctx);
-PROTOBUF_NODISCARD /*PROTOBUF_EXPORT*/ const char* PackedUInt32Parser(
+PROTOBUF_NODISCARD PROTOBUF_EXPORT const char* PackedUInt32Parser(
     void* object, const char* ptr, ParseContext* ctx);
-PROTOBUF_NODISCARD /*PROTOBUF_EXPORT*/ const char* PackedInt64Parser(
+PROTOBUF_NODISCARD PROTOBUF_EXPORT const char* PackedInt64Parser(
     void* object, const char* ptr, ParseContext* ctx);
-PROTOBUF_NODISCARD /*PROTOBUF_EXPORT*/ const char* PackedUInt64Parser(
+PROTOBUF_NODISCARD PROTOBUF_EXPORT const char* PackedUInt64Parser(
     void* object, const char* ptr, ParseContext* ctx);
-PROTOBUF_NODISCARD /*PROTOBUF_EXPORT*/ const char* PackedSInt32Parser(
+PROTOBUF_NODISCARD PROTOBUF_EXPORT const char* PackedSInt32Parser(
     void* object, const char* ptr, ParseContext* ctx);
-PROTOBUF_NODISCARD /*PROTOBUF_EXPORT*/ const char* PackedSInt64Parser(
+PROTOBUF_NODISCARD PROTOBUF_EXPORT const char* PackedSInt64Parser(
     void* object, const char* ptr, ParseContext* ctx);
-PROTOBUF_NODISCARD /*PROTOBUF_EXPORT*/ const char* PackedEnumParser(
+PROTOBUF_NODISCARD PROTOBUF_EXPORT const char* PackedEnumParser(
     void* object, const char* ptr, ParseContext* ctx);
 
 template <typename T>

@@ -60,7 +60,7 @@ endforeach()
 
 add_custom_command(
     OUTPUT ${PROJECT_PROTO_TMP_FILES}
-    COMMAND protoc -I=${dfhack_SOURCE_DIR}/library/proto/
+    COMMAND protoc-bin -I=${dfhack_SOURCE_DIR}/library/proto/
                        -I=${CMAKE_CURRENT_SOURCE_DIR}/proto/
             --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/proto/tmp/
             ${PROJECT_PROTOS}

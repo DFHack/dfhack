@@ -811,7 +811,7 @@ bool Materials::ReadCreatureTypesEx (void)
             }
 
             // body parts
-            caste.bodypart.empty();
+            caste.bodypart.clear();
             size_t sizebp = ca->body_info.body_parts.size();
             for (size_t k = 0; k < sizebp; k++)
             {

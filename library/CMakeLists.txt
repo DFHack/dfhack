@@ -238,7 +238,7 @@ list(APPEND PROJECT_SOURCES ${PROJECT_PROTO_SRCS})
 
 add_custom_command(
     OUTPUT ${PROJECT_PROTO_TMP_FILES}
-    COMMAND protoc-bin -I=${CMAKE_CURRENT_SOURCE_DIR}/proto/
+    COMMAND protoc -I=${CMAKE_CURRENT_SOURCE_DIR}/proto/
         --cpp_out=dllexport_decl=DFHACK_EXPORT:${CMAKE_CURRENT_SOURCE_DIR}/proto/tmp/
         ${PROJECT_PROTOS}
     COMMAND ${PERL_EXECUTABLE} ${dfhack_SOURCE_DIR}/depends/copy-if-different.pl

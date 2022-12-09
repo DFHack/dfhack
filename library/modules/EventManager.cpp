@@ -427,8 +427,10 @@ static void manageTickEvent(color_ostream& out) {
     if ( toRequeue.empty() )
         return;
     for (auto pair : handlers[EventType::TICK]) {
-        EventHandler &handler = pair.second;
-        enqueueTickEvent(handler);
+        if (toRequeue.count(pair.second)) {
+            EventHandler &handler = pair.second;
+            enqueueTickEvent(handler);
+        }
     }
 }
 

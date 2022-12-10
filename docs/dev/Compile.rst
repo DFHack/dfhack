@@ -771,8 +771,6 @@ Step 2: build DFHack
 The ``docker run`` command above will give you a shell prompt (as root) in the
 container. Inside the container, run the following commands::
 
-    ccache -C
-    export CCACHE_BASEDIR=/home/buildmaster/.ccache
     git clone https://github.com/DFHack/dfhack.git
     cd dfhack
     git submodule update --init

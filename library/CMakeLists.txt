@@ -223,6 +223,11 @@ string(REPLACE "/proto/" "/proto/tmp/" PROJECT_PROTO_TMP_FILES "${PROJECT_PROTO_
 set_source_files_properties(${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_HDRS}
     PROPERTIES GENERATED TRUE)
 
+if(MSVC)
+    set_source_files_properties(${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_HDRS}
+        COMPILE_FLAGS "/wd4244")
+endif()
+
 # Force a re-gen if any *.pb.* files are missing
 # (only runs when cmake is run, but better than nothing)
 foreach(file IN LISTS PROJECT_PROTO_SRCS PROJECT_PROTO_HDRS)

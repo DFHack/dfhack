@@ -31,7 +31,13 @@ endforeach()
 
 string(REPLACE ".proto" ".pb.cc" PLUGIN_PROTO_SRCS "${PLUGIN_PROTOS}")
 string(REPLACE ".proto" ".pb.h" PLUGIN_PROTO_HDRS "${PLUGIN_PROTOS}")
-set_source_files_properties(${PLUGIN_PROTO_SRCS} ${PLUGIN_PROTO_HDRS} PROPERTIES GENERATED TRUE)
+set_source_files_properties(${PLUGIN_PROTO_SRCS} ${PLUGIN_PROTO_HDRS}
+    PROPERTIES GENERATED TRUE)
+
+if(MSVC)
+    set_source_files_properties(${PLUGIN_PROTO_SRCS} ${PLUGIN_PROTO_HDRS}
+        COMPILE_FLAGS "/wd4244")
+endif()
 
 set_source_files_properties( ${PROJECT_HDRS} ${PLUGIN_PROTO_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE)
 

@@ -61,7 +61,7 @@ if(UNIX)
 endif()
 
 if(WIN32)
-    if((NOT MSVC) OR (MSVC_VERSION LESS 1900) OR (MSVC_VERSION GREATER 1919))
+    if((NOT MSVC) OR (MSVC_VERSION LESS 1930) OR (MSVC_VERSION GREATER 1934))
         message(SEND_ERROR "MSVC 2015 or 2017 is required")
     endif()
 endif()

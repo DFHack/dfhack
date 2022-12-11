@@ -62,7 +62,7 @@ endif()
 
 if(WIN32)
     if((NOT MSVC) OR (MSVC_VERSION LESS 1930) OR (MSVC_VERSION GREATER 1934))
-        message(SEND_ERROR "MSVC 2015 or 2017 is required")
+        message(SEND_ERROR "MSVC 2022 is required")
     endif()
 endif()
 

@@ -53,7 +53,7 @@ jobs:
       id: env_setup
       run: |
         DF_VERSION="$(sh ci/get-df-version.sh)"
-        echo "::set-output name=df_version::${DF_VERSION}"
+        echo "df_version=${DF_VERSION}" >> $GITHUB_OUTPUT
         echo "DF_VERSION=${DF_VERSION}" >> $GITHUB_ENV
         echo "DF_FOLDER=${HOME}/DF/${DF_VERSION}/df_linux" >> $GITHUB_ENV
         echo "CCACHE_DIR=${HOME}/.ccache" >> $GITHUB_ENV

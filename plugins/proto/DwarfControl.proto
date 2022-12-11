@@ -1,5 +1,6 @@
-//Attempts to provide a complete framework for reading everything from a fortress needed for vizualization
 syntax = "proto2";
+
+//Attempts to provide a complete framework for reading everything from a fortress needed for vizualization
 package DwarfControl;
 
 option optimize_for = LITE_RUNTIME;

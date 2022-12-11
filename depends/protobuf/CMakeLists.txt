@@ -149,7 +149,7 @@ if(CMAKE_COMPILER_IS_GNUCC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-result -Wno-unused-local-typedefs -Wno-misleading-indentation -Wno-class-memaccess -Wno-sign-compare")
 elseif(MSVC)
     # Disable warnings for integer conversion to smaller type
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4267")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4267 /wd4273")
 endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
@@ -159,15 +159,11 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # Protobuf shared libraries
 
-add_library(protobuf SHARED ${LIBPROTOBUF_FULL_SRCS} ${LIBPROTOBUF_FULL_HDRS})
-ide_folder(protobuf "Depends")
 add_library(protobuf-lite SHARED ${LIBPROTOBUF_LITE_SRCS} ${LIBPROTOBUF_LITE_HDRS})
 ide_folder(protobuf-lite "Depends")
 
-set_target_properties(protobuf PROPERTIES COMPILE_DEFINITIONS LIBPROTOBUF_EXPORTS)
 set_target_properties(protobuf-lite PROPERTIES COMPILE_DEFINITIONS LIBPROTOBUF_EXPORTS)
 
-target_link_libraries(protobuf ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES})
 target_link_libraries(protobuf-lite ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES})
 
 install(TARGETS protobuf-lite
@@ -175,6 +171,11 @@ install(TARGETS protobuf-lite
     RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})
 
 if(NOT CMAKE_CROSSCOMPILING)
+    add_library(protobuf SHARED ${LIBPROTOBUF_FULL_SRCS} ${LIBPROTOBUF_FULL_HDRS})
+    ide_folder(protobuf "Depends")
+    set_target_properties(protobuf PROPERTIES COMPILE_DEFINITIONS LIBPROTOBUF_EXPORTS)
+    target_link_libraries(protobuf ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES})
+
     # Protobuf compiler shared library
 
     add_library(protoc SHARED ${LIBPROTOC_SRCS} ${LIBPROTOC_HDRS})

@@ -5574,9 +5574,9 @@ Example usage::
         end
     end
 
-If the state of your script is tied to the active savegame, then your script
-should hook the appropriate events to load persisted state when the savegame is
-reloaded. For example::
+If the state of your script can be tied to an active savegame, then your script
+should hook the appropriate events to load persisted state when a savegame is
+loaded. For example::
 
     local json = require('json')
     local persist = require('persist-table')
@@ -5596,6 +5596,15 @@ The attachment to ``dfhack.onStateChange`` should appear in your script code
 outside of any function. DFHack will load your script as a module just before
 the ``SC_DFHACK_INITIALIZED`` state change event is sent, giving your code an
 opportunity to run and attach hooks before the game is loaded.
+
+If an enableable script is added to a DFHack `script path <script-paths>` while
+DF is running, then it will miss the initial sweep that loads all the module
+scripts and any ``onStateChange`` handlers the script may want to register will
+not be registered until the script is loaded via some means, either by running
+it or loading it as a module. If you just added new scripts that you want to
+load so they can attach their ``onStateChange`` handlers, run ``enable`` without
+parameters or call ``:lua require('script-manager').reload()`` to scan and load
+all script modules.
 
 Save init script
 ================

@@ -740,6 +740,86 @@ or ``RelWithDebInfo``.
 
 Then build the ``INSTALL`` target listed under ``CMakePredefinedTargets``.
 
+Windows cross compiling from Linux
+==================================
+
+.. highlight:: bash
+
+If you are on Linux but need to produce a Windows build (for example, because the
+DF version you're working on isn't out for Linux yet), here is how you can build
+and run a Windows binary on Linux.
+
+Step 1: prepare a docker image
+------------------------------
+
+On your Linux host, install and run the docker daemon and then run these commands::
+
+    xhost +local:root
+    git clone https://github.com/BenLubar/build-env.git
+    cd build-env/msvc
+    docker build .
+    docker image ls
+    IMAGE_ID=<your image id>
+    docker run -it --env="DISPLAY" --env="QT_X11_NO_MITSHM=1" --volume=/tmp/.X11-unix:/tmp/.X11-unix --user buildmaster --name dfhack-win $IMAGE_ID
+
+The ``xhost`` command and ``--env`` parameters are there so you can eventually
+run Dwarf Fortress from the container and have it display on your host.
+
+Step 2: build DFHack
+--------------------
+
+The ``docker run`` command above will give you a shell prompt (as root) in the
+container. Inside the container, run the following commands::
+
+    git clone https://github.com/DFHack/dfhack.git
+    cd dfhack
+    git submodule update --init
+    cd build
+    dfhack-configure windows 64 Release
+    dfhack-make
+
+Inside the ``dfhack-*`` scripts there are several commands that set up the wine
+server. Each invocation of a windows tool will cause wine to run in the container.
+Preloading the wineserver and telling it not to exit will speed configuration and
+compilation up considerably (approx. 10x). You can configure and build DFHack
+with regular ``cmake`` and ``ninja`` commands, but your build will go much slower.
+
+Step 3: copy Dwarf Fortress to the container
+--------------------------------------------
+
+First, create a directory in the container to house the Dwarf Fortress binary and
+assets::
+
+    mkdir ~/df
+
+If you can just downlaod Dwarf Fortress directly into the container, then that's fine.
+Otherwise, you can do something like this in your host Linux environment to copy an
+installed version to the container::
+
+    cd ~/.steam/steam/steamapps/common/Dwarf\ Fortress/
+    docker cp . dfhack-win:df/
+
+Step 4: install DFHack and run DF
+---------------------------------
+
+Back in the container, run the following commands::
+
+    cd dfhack/build
+    cmake .. -DCMAKE_INSTALL_PREFIX=/home/buildmaster/df
+    ninja install
+    cd ~/df
+    wine64 "Dwarf Fortress.exe"
+
+Other notes
+-----------
+
+Closing your shell will kick you out of the container. Run this command on your Linux
+host when you want to reattach::
+
+    docker start -ai dfhack-win
+
+If you edit code and need to rebuild, run ``dfhack-make`` and then ``ninja install``.
+That will handle all the wineserver management for you.
 
 Building the documentation
 ==========================

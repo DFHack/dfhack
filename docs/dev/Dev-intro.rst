@@ -16,6 +16,22 @@ Other pages that may be relevant include:
 .. contents:: Contents
     :local:
 
+Architecture diagrams
+---------------------
+
+These two diagrams give a very high level overview of where DFHack injects
+itself in the DF call structure and how the pieces of DFHack itself fit
+together:
+
+.. image:: https://drive.google.com/uc?export=download&id=1-2yeNMC7WHgMfZ9iQsDQ0dEbLukd_xyU
+  :alt: DFHack logic injection diagram
+  :target: https://drive.google.com/file/d/1-2yeNMC7WHgMfZ9iQsDQ0dEbLukd_xyU
+  :align: center
+
+.. image:: https://drive.google.com/uc?export=download&id=1--JoEQbzKpVUOkRKDD9HxvuCqtom780F
+  :alt: DFHack tool call graph
+  :target: https://drive.google.com/file/d/1--JoEQbzKpVUOkRKDD9HxvuCqtom780F
+  :align: center
 
 Plugins
 -------

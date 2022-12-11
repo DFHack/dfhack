@@ -3583,7 +3583,7 @@ Examples:
 
     -- check projectile distance flown is zero, get firer, etc...
     local multiplier = tonumber(customRawTokens.getToken(bow, "EXAMPLE_MOD_FIRE_RATE_MULTIPLIER")) or 1
-    firer.counters.think_counter = firer.counters.think_counter * multiplier
+    firer.counters.think_counter = math.floor(firer.counters.think_counter * multiplier)
 
 * Something for a script that prints help text about different types of units::
 

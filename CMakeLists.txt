@@ -75,11 +75,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(MSVC)
     # increase warning level and treat warnings as errors
-    add_definitions("/WX")
-    add_definitions("/W3")
+    add_compile_options("/WX")
+    add_compile_options("/W3")
 
     # disable C4819 code-page warning
-    add_definitions("/wd4819")
+    add_compile_options("/wd4819")
 
     # disable use of POSIX name warnings
     add_definitions("/D_CRT_NONSTDC_NO_WARNINGS /D_CRT_SECURE_NO_WARNINGS")
@@ -88,16 +88,16 @@ if(MSVC)
     # weird and mysterious linking errors, you can disable this, but you'll have to
     # deal with a LOT of compiler noise over it
     # see https://msdn.microsoft.com/en-us/library/074af4b6.aspx
-    add_definitions("/wd4503")
+    add_compile_options("/wd4503")
 
     # suppress C4267 - VC++ complains whenever we implicitly convert an integer to
     # a smaller type, and most of the time this is just conversion from 64 to 32 bits
     # for things like vector sizes, which are never that big anyway.
-    add_definitions("/wd4267")
+    add_compile_options("/wd4267")
 
     # MSVC panics if an object file contains more than 65,279 sections. this
     # happens quite frequently with code that uses templates, such as vectors.
-    add_definitions("/bigobj")
+    add_compile_options("/bigobj")
 endif()
 
 # Automatically detect architecture based on Visual Studio generator

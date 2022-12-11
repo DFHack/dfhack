@@ -826,9 +826,13 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                     "%20s\t%-3s%s\n",
                     (plug->getName()+":").c_str(),
                     plug->is_enabled() ? "on" : "off",
-                    plug->can_set_enabled() ? "" : " (controlled elsewhere)"
+                    plug->can_set_enabled() ? "" : " (controlled internally)"
                 );
             }
+
+            auto L = Lua::Core::State;
+            Lua::StackUnwinder top(L);
+            Lua::CallLuaModuleFunction(con, L, "script-manager", "list");
         }
     }
     else if (first == "ls" || first == "dir")
@@ -1833,8 +1837,12 @@ void Core::doUpdate(color_ostream &out, bool first_update)
 {
     Lua::Core::Reset(out, "DF code execution");
 
-    if (first_update)
+    if (first_update) {
+        auto L = Lua::Core::State;
+        Lua::StackUnwinder top(L);
+        Lua::CallLuaModuleFunction(out, L, "script-manager", "reload");
         onStateChange(out, SC_CORE_INITIALIZED);
+    }
 
     // find the current viewscreen
     df::viewscreen *screen = NULL;

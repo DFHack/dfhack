@@ -48,8 +48,8 @@ enable seedwatch
 seedwatch all 30
 
 # ensures important tasks get assigned to workers.
-# otherwise these job types can get ignored in busy forts.
-prioritize -aq defaults
+# otherwise many job types can get ignored in busy forts.
+on-new-fortress prioritize -aq defaults
 
 # autobutcher settings are saved in the savegame, so we only need to set them once.
 # this way, any custom settings you set during gameplay are not overwritten

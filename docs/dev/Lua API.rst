@@ -5532,6 +5532,8 @@ Importing scripts
   not declare support as described above, although it is preferred to update
   such scripts so that ``reqscript()`` can be used instead.
 
+.. _script-enable-api:
+
 Enabling and disabling scripts
 ==============================
 
@@ -5546,17 +5548,63 @@ table passed to the script will have the following fields set:
 * ``enable``: Always ``true`` if the script is being enabled *or* disabled
 * ``enable_state``: ``true`` if the script is being enabled, ``false`` otherwise
 
+If you declare a global function named ``isEnabled`` that returns a boolean
+indicating whether your script is enabled, then your script will be listed among
+the other enableable scripts and plugins when the player runs the `enable`
+command.
+
 Example usage::
 
     --@ enable = true
+
+    enabled = enabled or false
+    function isEnabled()
+        return enabled
+    end
+
     -- (function definitions...)
+
     if dfhack_flags.enable then
         if dfhack_flags.enable_state then
             start()
+            enabled = true
         else
             stop()
+            enabled = false
         end
     end
+
+If the state of your script can be tied to an active savegame, then your script
+should hook the appropriate events to load persisted state when a savegame is
+loaded. For example::
+
+    local json = require('json')
+    local persist = require('persist-table')
+
+    local GLOBAL_KEY = 'my-script-name'
+    g_state = g_state or {}
+
+    dfhack.onStateChange[GLOBAL_KEY] = function(sc)
+        if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
+            return
+        end
+        local state = json.decode(persist.GlobalTable[GLOBAL_KEY] or '')
+        g_state = state or {}
+    end
+
+The attachment to ``dfhack.onStateChange`` should appear in your script code
+outside of any function. DFHack will load your script as a module just before
+the ``SC_DFHACK_INITIALIZED`` state change event is sent, giving your code an
+opportunity to run and attach hooks before the game is loaded.
+
+If an enableable script is added to a DFHack `script path <script-paths>` while
+DF is running, then it will miss the initial sweep that loads all the module
+scripts and any ``onStateChange`` handlers the script may want to register will
+not be registered until the script is loaded via some means, either by running
+it or loading it as a module. If you just added new scripts that you want to
+load so they can attach their ``onStateChange`` handlers, run ``enable`` without
+parameters or call ``:lua require('script-manager').reload()`` to scan and load
+all script modules.
 
 Save init script
 ================

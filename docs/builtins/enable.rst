@@ -16,6 +16,9 @@ and disabled plugins, and shows whether that can be changed through the same
 commands. Passing plugin names to these commands will enable or disable the
 specified plugins.
 
+If you are a script developer, see `script-enable-api` for how to expose whether
+your script is currently enabled or disabled.
+
 Usage
 -----
 

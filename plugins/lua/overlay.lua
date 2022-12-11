@@ -2,6 +2,7 @@ local _ENV = mkmodule('plugins.overlay')
 
 local gui = require('gui')
 local json = require('json')
+local scriptmanager = require('script-manager')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 
@@ -250,11 +251,9 @@ local function load_widget(name, widget_class)
     end
 end
 
-local function load_widgets(env_prefix, provider, env_fn)
-    local env_name = env_prefix .. provider
-    local ok, provider_env = pcall(env_fn, env_name)
-    if not ok or not provider_env[OVERLAY_WIDGETS_VAR] then return end
-    local overlay_widgets = provider_env[OVERLAY_WIDGETS_VAR]
+local function load_widgets(env_name, env)
+    local overlay_widgets = env[OVERLAY_WIDGETS_VAR]
+    if not overlay_widgets then return end
     if type(overlay_widgets) ~= 'table' then
         dfhack.printerr(
                 ('error loading overlay widgets from "%s": %s map is malformed')
@@ -262,7 +261,7 @@ local function load_widgets(env_prefix, provider, env_fn)
         return
     end
     for widget_name,widget_class in pairs(overlay_widgets) do
-        local name = provider .. '.' .. widget_name
+        local name = env_name .. '.' .. widget_name
         if not safecall(load_widget, name, widget_class) then
             dfhack.printerr(('error loading overlay widget "%s"'):format(name))
         end
@@ -274,23 +273,13 @@ function reload()
     reset()
 
     for _,plugin in ipairs(dfhack.internal.listPlugins()) do
-        load_widgets('plugins.', plugin, require)
-    end
-    for _,script_path in ipairs(dfhack.internal.getScriptPaths()) do
-        local files = dfhack.filesystem.listdir_recursive(
-                                            script_path, nil, false)
-        if not files then goto skip_path end
-        for _,f in ipairs(files) do
-            if not f.isdir and
-                    f.path:endswith('.lua') and
-                    not f.path:startswith('test/') and
-                    not f.path:startswith('internal/') then
-                local script_name = f.path:sub(1, #f.path - 4) -- remove '.lua'
-                load_widgets('', script_name, reqscript)
-            end
+        local env_name = 'plugins.' .. plugin
+        local ok, plugin_env = pcall(require, env_name)
+        if ok then
+            load_widgets(plugin, plugin_env)
         end
-        ::skip_path::
     end
+    scriptmanager.foreach_module_script(load_widgets)
 
     for name in pairs(widget_db) do
         table.insert(widget_index, name)

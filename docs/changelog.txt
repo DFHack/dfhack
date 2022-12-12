@@ -41,6 +41,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Documentation
 - `overlay-dev-guide`: added troubleshooting tips and common development workflows
+- added DFHack architecture diagrams to the dev intro
 
 ## API
 

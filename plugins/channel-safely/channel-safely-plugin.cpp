@@ -416,12 +416,6 @@ namespace CSP {
                         if (!config.monitoring) continue;
                         TRACE(monitor).print(" -> compare positions of worker and job\n");
 
-                        // save position
-                        if (unit->pos != job->pos && isFloorTerrain(*Maps::getTileType(unit->pos))) {
-                            // worker is probably safe right now
-                            continue;
-                        }
-
                         // check for fall safety
                         if (unit->pos == job->pos && !is_safe_fall(job->pos)) {
                             // unsafe

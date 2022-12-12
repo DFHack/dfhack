@@ -5,9 +5,6 @@
 #include <modules/EventManager.h> //hash function for df::coord
 #include <df/block_square_event_designation_priorityst.h>
 
-#include <algorithm>
-#include <random>
-
 df::unit* find_dwarf(const df::coord &map_pos) {
     df::unit* nearest = nullptr;
     uint32_t distance;

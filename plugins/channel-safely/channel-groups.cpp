@@ -207,6 +207,7 @@ void ChannelGroups::scan(bool full_scan) {
                     if (!full_scan && !block->flags.bits.designated) {
                         continue;
                     }
+                    df::map_block* block_above = Maps::getBlock(bx, by, z+1);
                     // foreach tile
                     bool empty_group = true;
                     for (int16_t lx = 0; lx < 16; ++lx) {
@@ -220,14 +221,13 @@ void ChannelGroups::scan(bool full_scan) {
                                     jobs.erase(map_pos);
                                 }
                                 block->designation[lx][ly].bits.dig = df::tile_dig_designation::No;
-                            } else if (is_dig_designation(block->designation[lx][ly]) || block->occupancy[lx][ly].bits.dig_marked) {
-                                if (!is_channel_designation(block->designation[lx][ly])) {
-                                    if (df::map_block* block_above = Maps::getBlock(bx, by, z+1)) {
-                                        if (!is_channel_designation(block_above->designation[lx][ly])) {
-                                            // dig designation without a channel above it, we can skip this.
-                                            continue;
-                                        }
-                                    }
+                            } else if (is_dig_designation(block->designation[lx][ly]) || block->occupancy[lx][ly].bits.dig_marked ) {
+                                // We have a dig designated, or marked. Some of these will not need intervention.
+                                if (block_above &&
+                                    !is_channel_designation(block->designation[lx][ly]) &&
+                                    !is_channel_designation(block_above->designation[lx][ly])) {
+                                    // if this tile isn't a channel designation, and doesn't have a channel designation above it.. we can skip it
+                                    continue;
                                 }
                                 for (df::block_square_event* event: block->block_events) {
                                     if (auto evT = virtual_cast<df::block_square_event_designation_priorityst>(event)) {

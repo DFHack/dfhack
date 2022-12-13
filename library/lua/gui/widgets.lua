@@ -115,23 +115,25 @@ local function Panel_drag_frame(self, mouse_pos)
     local max_height = parent_rect.height - (bound_rect.y2-frame_rect.y1+1)
     if frame.t or not frame.b then
         local min_pos = frame_rect.y1 - bound_rect.y1
-        frame.t = math.max(min_pos,
-                math.min(max_height, mouse_pos.y - parent_rect.y1 - offset.y))
+        local requested_pos = mouse_pos.y - parent_rect.y1 - offset.y
+        frame.t = math.max(min_pos, math.min(max_height, requested_pos))
     end
     if frame.b or not frame.t then
         local min_pos = bound_rect.y2 - frame_rect.y2
-        frame.b = math.max(min_pos,
-                math.min(max_height, parent_rect.y2 - mouse_pos.y - offset.y))
+        local requested_pos = parent_rect.y2 - mouse_pos.y + offset.y -
+                (frame_rect.y2 - frame_rect.y1)
+        frame.b = math.max(min_pos, math.min(max_height, requested_pos))
     end
     if frame.l or not frame.r then
         local min_pos = frame_rect.x1 - bound_rect.x1
-        frame.l = math.max(min_pos,
-                math.min(max_width, mouse_pos.x - parent_rect.x1 - offset.x))
+        local requested_pos = mouse_pos.x - parent_rect.x1 - offset.x
+        frame.l = math.max(min_pos, math.min(max_width, requested_pos))
     end
     if frame.r or not frame.l then
         local min_pos = bound_rect.x2 - frame_rect.x2
-        frame.r = math.max(min_pos,
-                math.min(max_width, parent_rect.x2 - mouse_pos.x - offset.x))
+        local requested_pos = parent_rect.x2 - mouse_pos.x + offset.x -
+                (frame_rect.x2 - frame_rect.x1)
+        frame.r = math.max(min_pos, math.min(max_width, requested_pos))
     end
     return frame
 end
@@ -164,7 +166,8 @@ end
 function Panel:onInput(keys)
     if self.keyboard_drag then
         if keys.SELECT or keys.LEAVESCREEN then
-            Panel_end_drag(self, nil, keys.SELECT)
+            Panel_end_drag(self, keys.LEAVESCREEN and self.saved_frame or nil,
+                           not not keys.SELECT)
             return true
         end
         for code in pairs(keys) do

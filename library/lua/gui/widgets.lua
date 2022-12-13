@@ -211,7 +211,7 @@ function Panel:onInput(keys)
     end
 end
 
-function Panel:setCursorMoveEnabled(enabled)
+function Panel:setKeyboardDragEnabled(enabled)
     if (enabled and self.keyboard_drag)
             or (not enabled and not self.keyboard_drag) then
         return

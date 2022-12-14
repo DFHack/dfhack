@@ -72,12 +72,12 @@ Panel.ATTRS {
     on_render = DEFAULT_NIL,
     on_layout = DEFAULT_NIL,
     draggable = false,
-    drag_anchors = copyall({title=true, frame=false, body=false}),
+    drag_anchors = DEFAULT_NIL,
     drag_bound = 'frame', -- or 'body'
     on_drag_begin = DEFAULT_NIL,
     on_drag_end = DEFAULT_NIL,
     resizable = false,
-    resize_anchors = {t=false, l=true, r=true, b=true},
+    resize_anchors = DEFAULT_NIL,
     resize_min = DEFAULT_NIL,
     on_resize_begin = DEFAULT_NIL,
     on_resize_end = DEFAULT_NIL,
@@ -86,6 +86,12 @@ Panel.ATTRS {
 }
 
 function Panel:init(args)
+    if not self.drag_anchors then
+        self.drag_anchors = {title=true, frame=false, body=false}
+    end
+    if not self.resize_anchors then
+        self.resize_anchors = {t=false, l=true, r=true, b=true}
+    end
     self.resize_min = self.resize_min or {}
     self.resize_min.w = self.resize_min.w or (self.frame or {}).w or 5
     self.resize_min.h = self.resize_min.h or (self.frame or {}).h or 5
@@ -325,18 +331,52 @@ function Panel:setKeyboardDragEnabled(enabled)
     end
 end
 
+local function Panel_get_resize_data(self)
+    local resize_anchors = self.resize_anchors
+    if resize_anchors.r and resize_anchors.b then
+        return 'rb', function()
+            return {x=self.frame_rect.x2, y=self.frame_rect.y2} end
+    elseif resize_anchors.l and resize_anchors.b then
+        return 'lb', function()
+            return {x=self.frame_rect.x1, y=self.frame_rect.y2} end
+    elseif resize_anchors.r and resize_anchors.t then
+        return 'rt', function()
+            return {x=self.frame_rect.x2, y=self.frame_rect.y1} end
+    elseif resize_anchors.l and resize_anchors.t then
+        return 'lt', function()
+            return {x=self.frame_rect.x1, y=self.frame_rect.y1} end
+    elseif resize_anchors.b then
+        return 'b', function()
+            return {x=(self.frame_rect.x1+self.frame_rect.x2)/2,
+                    y=self.frame_rect.y2} end
+    elseif resize_anchors.r then
+        return 'r', function()
+            return {x=self.frame_rect.x2,
+                    y=(self.frame_rect.y1+self.frame_rect.y2)/2} end
+    elseif resize_anchors.l then
+        return 'l', function()
+            return {x=self.frame_rect.x1,
+                    y=(self.frame_rect.y1+self.frame_rect.y2)/2} end
+    elseif resize_anchors.t then
+        return 't', function()
+            return {x=(self.frame_rect.x1+self.frame_rect.x2)/2,
+                    y=self.frame_rect.y1} end
+    end
+end
+
 function Panel:setKeyboardResizeEnabled(enabled)
     if (enabled and self.kbd_get_pos)
             or (not enabled and not self.kbd_get_pos) then
         return
     end
     if enabled then
-        local resize_edge = 'rb'
-        local kbd_get_pos = function()
-            return {x=self.frame_rect.x2, y=self.frame_rect.y2}
+        local resize_edge, kbd_get_pos = Panel_get_resize_data(self)
+        if not resize_edge then
+            dfhack.printerr('cannot resize window: no anchors are enabled')
+        else
+            Panel_begin_drag(self, kbd_get_pos(), resize_edge)
+            self.kbd_get_pos = kbd_get_pos
         end
-        Panel_begin_drag(self, kbd_get_pos(), resize_edge)
-        self.kbd_get_pos = kbd_get_pos
     else
         Panel_end_drag(self)
     end
@@ -382,6 +422,11 @@ function Panel:onRenderFrame(dc, rect)
     if not self.frame_style then return end
     local x1,y1,x2,y2 = rect.x1, rect.y1, rect.x2, rect.y2
     gui.paint_frame(x1, y1, x2, y2, self.frame_style, self.frame_title)
+    if self.kbd_get_pos then
+        local pos = self.kbd_get_pos()
+        local pen = dfhack.pen.parse{fg=COLOR_GREEN, bg=COLOR_BLACK}
+        dc:seek(pos.x, pos.y):pen(pen):char(string.char(0xDB))
+    end
     if self.drag_offset and not self.kbd_get_pos
             and df.global.enabler.mouse_lbut == 0 then
         Panel_end_drag(self, nil, true)

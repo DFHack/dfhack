@@ -420,8 +420,7 @@ end
 function Panel:onRenderFrame(dc, rect)
     Panel.super.onRenderFrame(self, dc, rect)
     if not self.frame_style then return end
-    local x1,y1,x2,y2 = rect.x1, rect.y1, rect.x2, rect.y2
-    gui.paint_frame(x1, y1, x2, y2, self.frame_style, self.frame_title)
+    gui.paint_frame(dc, rect, self.frame_style, self.frame_title)
     if self.kbd_get_pos then
         local pos = self.kbd_get_pos()
         local pen = dfhack.pen.parse{fg=COLOR_GREEN, bg=COLOR_BLACK}
@@ -432,6 +431,19 @@ function Panel:onRenderFrame(dc, rect)
         Panel_end_drag(self, nil, true)
     end
 end
+
+------------
+-- Window --
+------------
+
+Window = defclass(Window, Panel)
+
+Window.ATTRS {
+    frame_style = gui.GREY_LINE_FRAME,
+    frame_background = gui.CLEAR_PEN,
+    frame_inset = 1,
+    draggable = true,
+}
 
 -------------------
 -- ResizingPanel --

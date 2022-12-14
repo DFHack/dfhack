@@ -4247,6 +4247,12 @@ Has functions:
   commit the new window size or :kbd:`Esc` to cancel. If resizing is canceled,
   then the window size from before the resize operation is restored.
 
+Window class
+------------
+
+Subclass of Panel; sets Panel attributes to useful defaults for a top-level
+framed, draggable window.
+
 ResizingPanel class
 -------------------
 

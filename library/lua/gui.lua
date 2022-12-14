@@ -704,8 +704,9 @@ GREY_LINE_FRAME = {
     signature_pen = to_pen{ fg = COLOR_DARKGREY, bg = COLOR_BLACK },
 }
 
-function paint_frame(x1,y1,x2,y2,style,title)
+function paint_frame(dc,rect,style,title)
     local pen = style.frame_pen
+    local x1,y1,x2,y2 = dc.x1+rect.x1, dc.y1+rect.y1, dc.x1+rect.x2, dc.y1+rect.y2
     dscreen.paintTile(style.lt_frame_pen or pen, x1, y1)
     dscreen.paintTile(style.rt_frame_pen or pen, x2, y1)
     dscreen.paintTile(style.lb_frame_pen or pen, x1, y2)
@@ -750,16 +751,13 @@ function FramedScreen:computeFrame(parent_rect)
 end
 
 function FramedScreen:onRenderFrame(dc, rect)
-    local x1,y1,x2,y2 = rect.x1, rect.y1, rect.x2, rect.y2
-
     if rect.wgap <= 0 and rect.hgap <= 0 then
         dc:clear()
     else
         self:renderParent()
         dc:fill(rect, self.frame_background)
     end
-
-    paint_frame(x1,y1,x2,y2,self.frame_style,self.frame_title)
+    paint_frame(dc,rect,self.frame_style,self.frame_title)
 end
 
 return _ENV

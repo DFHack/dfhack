@@ -76,24 +76,35 @@ Panel.ATTRS {
     drag_bound = 'frame', -- or 'body'
     on_drag_begin = DEFAULT_NIL,
     on_drag_end = DEFAULT_NIL,
+    resizable = false,
+    resize_anchors = {t=false, l=true, r=true, b=true},
+    resize_min = DEFAULT_NIL,
+    on_resize_begin = DEFAULT_NIL,
+    on_resize_end = DEFAULT_NIL,
     autoarrange_subviews = false, -- whether to automatically lay out subviews
     autoarrange_gap = 0, -- how many blank lines to insert between widgets
 }
 
 function Panel:init(args)
-    self.keyboard_drag = nil -- true when we are in keyboard dragging mode
+    self.resize_min = self.resize_min or {}
+    self.resize_min.w = self.resize_min.w or (self.frame or {}).w or 5
+    self.resize_min.h = self.resize_min.h or (self.frame or {}).h or 5
+
+    self.kbd_get_pos = nil -- fn when we are in keyboard dragging mode
     self.saved_frame = nil -- copy of frame when dragging started
     self.saved_frame_rect = nil -- copy of frame_rect when dragging started
     self.drag_offset = nil -- relative pos of held panel tile
+    self.resize_edge = nil -- which dimension is being resized?
     self:addviews(args.subviews)
 end
 
 local function Panel_update_frame(self, frame, clear_state)
     if clear_state then
-        self.keyboard_drag = nil
+        self.kbd_get_pos = nil
         self.saved_frame = nil
         self.saved_frame_rect = nil
         self.drag_offset = nil
+        self.resize_edge = nil
     end
     if not frame then return end
     if self.frame.l == frame.l and self.frame.r == frame.r
@@ -103,6 +114,57 @@ local function Panel_update_frame(self, frame, clear_state)
     end
     self.frame = frame
     self:updateLayout()
+end
+
+-- dim: the name of the dimension var (i.e. 'h' or 'w')
+-- anchor: the name of the anchor var (i.e. 't', 'b', 'l', or 'r')
+-- opposite_anchor: the name of the anchor var for the opposite edge
+-- max_dim: how big this panel can get from its current pos and fit in parent
+-- wanted_dim: how big the player is trying to make the panel
+-- max_anchor: max value of the frame anchor for the edge that is being resized
+-- wanted_anchor: how small the player is trying to make the anchor value
+local function Panel_resize_edge_base(frame, resize_min, dim, anchor,
+                                      opposite_anchor, max_dim, wanted_dim,
+                                      max_anchor, wanted_anchor)
+    frame[dim] = math.max(resize_min[dim], math.min(max_dim, wanted_dim))
+    if frame[anchor] or not frame[opposite_anchor] then
+        frame[anchor] = math.max(0, math.min(max_anchor, wanted_anchor))
+    end
+end
+
+local function Panel_resize_edge(frame, resize_min, dim, anchor,
+                                 opposite_anchor, dim_base, dim_ref, anchor_ref,
+                                 dim_far, mouse_ref)
+    local dim_sign = (anchor == 't' or anchor == 'l') and 1 or -1
+    local max_dim = dim_base - dim_ref + 1
+    local wanted_dim = dim_sign * (dim_far - mouse_ref) + 1
+    local max_anchor = dim_base - resize_min[dim] - dim_ref + 1
+    local wanted_anchor = dim_sign * (mouse_ref - anchor_ref)
+    Panel_resize_edge_base(frame, resize_min, dim, anchor, opposite_anchor,
+                           max_dim, wanted_dim, max_anchor, wanted_anchor)
+end
+
+local function Panel_resize_frame(self, mouse_pos)
+    local frame, resize_min = copyall(self.frame), self.resize_min
+    local parent_rect = self.frame_parent_rect
+    local ref_rect = self.saved_frame_rect
+    if self.resize_edge:find('t') then
+        Panel_resize_edge(frame, resize_min, 'h', 't', 'b', ref_rect.y2,
+                    parent_rect.y1, parent_rect.y1, ref_rect.y2, mouse_pos.y)
+    end
+    if self.resize_edge:find('b') then
+        Panel_resize_edge(frame, resize_min, 'h', 'b', 't', parent_rect.y2,
+                          ref_rect.y1, parent_rect.y2, ref_rect.y1, mouse_pos.y)
+    end
+    if self.resize_edge:find('l') then
+        Panel_resize_edge(frame, resize_min, 'w', 'l', 'r', ref_rect.x2,
+                    parent_rect.x1, parent_rect.x1, ref_rect.x2, mouse_pos.x)
+    end
+    if self.resize_edge:find('r') then
+        Panel_resize_edge(frame, resize_min, 'w', 'r', 'l', parent_rect.x2,
+                          ref_rect.x1, parent_rect.x2, ref_rect.x1, mouse_pos.x)
+    end
+    return frame
 end
 
 local function Panel_drag_frame(self, mouse_pos)
@@ -140,31 +202,42 @@ end
 
 local function Panel_make_frame(self, mouse_pos)
     mouse_pos = mouse_pos or xy2pos(dfhack.screen.getMousePos())
-    return Panel_drag_frame(self, mouse_pos)
+    return self.resize_edge and Panel_resize_frame(self, mouse_pos)
+            or Panel_drag_frame(self, mouse_pos)
 end
 
-local function Panel_begin_drag(self, drag_offset)
+local function Panel_begin_drag(self, drag_offset, resize_edge)
     Panel_update_frame(self, nil, true)
     self.drag_offset = drag_offset or {x=0, y=0}
+    self.resize_edge = resize_edge
     self.saved_frame = copyall(self.frame)
     self.saved_frame_rect = copyall(self.frame_rect)
     self.prev_focus_owner = self.focus_group.cur
     self:setFocus(true)
-    if self.on_drag_begin then self.on_drag_begin() end
+    if self.resize_edge then
+        if self.on_resize_begin then self.on_resize_begin(success) end
+    else
+        if self.on_drag_begin then self.on_drag_begin(success) end
+    end
 end
 
 local function Panel_end_drag(self, frame, success)
+    success = not not success
     if self.prev_focus_owner then
         self.prev_focus_owner:setFocus(true)
     else
         self:setFocus(false)
     end
     Panel_update_frame(self, frame, true)
-    if self.on_drag_end then self.on_drag_end(success) end
+    if self.resize_edge then
+        if self.on_resize_end then self.on_resize_end(success) end
+    else
+        if self.on_drag_end then self.on_drag_end(success) end
+    end
 end
 
 function Panel:onInput(keys)
-    if self.keyboard_drag then
+    if self.kbd_get_pos then
         if keys.SELECT or keys.LEAVESCREEN then
             Panel_end_drag(self, keys.LEAVESCREEN and self.saved_frame or nil,
                            not not keys.SELECT)
@@ -173,8 +246,10 @@ function Panel:onInput(keys)
         for code in pairs(keys) do
             local dx, dy = guidm.get_movement_delta(code, 1, 10)
             if dx then
-                local kbd_pos = {x=self.frame_rect.x1+dx,
-                                 y=self.frame_rect.y1+dy}
+                local frame_rect = self.frame_rect
+                local kbd_pos = self.kbd_get_pos()
+                kbd_pos.x = kbd_pos.x + dx
+                kbd_pos.y = kbd_pos.y + dy
                 Panel_update_frame(self, Panel_make_frame(self, kbd_pos))
                 return true
             end
@@ -197,31 +272,74 @@ function Panel:onInput(keys)
     local x,y = self:getMousePos(gui.ViewRect{rect=rect})
     if not x then return end
 
+    if self.resizable then
+        local rect = self.frame_rect
+        if self.resize_anchors.r and self.resize_anchors.b
+                and x == rect.x2 - rect.x1 and y == rect.y2 - rect.y1 then
+            self.resize_edge = 'rb'
+        elseif self.resize_anchors.l and self.resize_anchors.b
+                and x == 0 and y == rect.y2 - rect.y1 then
+            self.resize_edge = 'lb'
+        elseif self.resize_anchors.r and self.resize_anchors.t
+                and x == rect.x2 - rect.x1 and y == 0 then
+            self.resize_edge = 'rt'
+        elseif self.resize_anchors.r and self.resize_anchors.t
+                and x == 0 and y == 0 then
+            self.resize_edge = 'lt'
+        elseif self.resize_anchors.r and x == rect.x2 - rect.x1 then
+            self.resize_edge = 'r'
+        elseif self.resize_anchors.l and x == 0 then
+            self.resize_edge = 'l'
+        elseif self.resize_anchors.b and y == rect.y2 - rect.y1 then
+            self.resize_edge = 'b'
+        elseif self.resize_anchors.t and y == 0 then
+            self.resize_edge = 't'
+        end
+    end
+
     local is_dragging = false
-    if self.draggable then
+    if not self.resize_edge and self.draggable then
         local on_body = self:getMousePos()
         is_dragging = (self.drag_anchors.title and self.frame_style and y == 0)
                 or (self.drag_anchors.frame and not on_body) -- includes inset
                 or (self.drag_anchors.body and on_body)
     end
 
-    if is_dragging then
-        Panel_begin_drag(self, {x=x, y=y})
+    if self.resize_edge or is_dragging then
+        Panel_begin_drag(self, {x=x, y=y}, self.resize_edge)
         return true
     end
 end
 
 function Panel:setKeyboardDragEnabled(enabled)
-    if (enabled and self.keyboard_drag)
-            or (not enabled and not self.keyboard_drag) then
+    if (enabled and self.kbd_get_pos)
+            or (not enabled and not self.kbd_get_pos) then
         return
     end
     if enabled then
-        Panel_begin_drag(self)
+        local kbd_get_pos = function() return {x=0, y=0} end
+        Panel_begin_drag(self, kbd_get_pos())
+        self.kbd_get_pos = kbd_get_pos
     else
         Panel_end_drag(self)
     end
-    self.keyboard_drag = enabled
+end
+
+function Panel:setKeyboardResizeEnabled(enabled)
+    if (enabled and self.kbd_get_pos)
+            or (not enabled and not self.kbd_get_pos) then
+        return
+    end
+    if enabled then
+        local resize_edge = 'rb'
+        local kbd_get_pos = function()
+            return {x=self.frame_rect.x2, y=self.frame_rect.y2}
+        end
+        Panel_begin_drag(self, kbd_get_pos(), resize_edge)
+        self.kbd_get_pos = kbd_get_pos
+    else
+        Panel_end_drag(self)
+    end
 end
 
 function Panel:onRenderBody(dc)
@@ -264,7 +382,7 @@ function Panel:onRenderFrame(dc, rect)
     if not self.frame_style then return end
     local x1,y1,x2,y2 = rect.x1, rect.y1, rect.x2, rect.y2
     gui.paint_frame(x1, y1, x2, y2, self.frame_style, self.frame_title)
-    if self.drag_offset and not self.keyboard_drag
+    if self.drag_offset and not self.kbd_get_pos
             and df.global.enabler.mouse_lbut == 0 then
         Panel_end_drag(self, nil, true)
     end

@@ -4147,7 +4147,9 @@ Base of all the widgets. Inherits from View and has the following attributes:
 Panel class
 -----------
 
-Inherits from Widget, and intended for framing and/or grouping subviews.
+Inherits from Widget, and intended for framing and/or grouping subviews. It is
+a good class to choose for your "main screen" since it supports window dragging
+and frames.
 
 Has attributes:
 
@@ -4159,8 +4161,32 @@ Has attributes:
 
   Called from ``onRenderBody``.
 
-* ``autoarrange_subviews = bool`` (default: false)
-* ``autoarrange_gap = int`` (default: 0)
+* ``on_layout = function(frame_body)``
+
+  Called from ``postComputeFrame``.
+
+* ``draggable = bool`` (default: ``false``)
+* ``drag_anchors = {}`` (default: ``{title=true, frame=false, body=false}``)
+* ``drag_bound = 'frame' or 'body'`` (default: ``'frame'``)
+* ``on_drag_begin = function()`` (default: ``nil``)
+* ``on_drag_end = function(bool)`` (default: ``nil``)
+
+  If ``draggable`` is set to ``true``, then the above attributes come into play
+  when the panel is dragged around the screen, either with the mouse or the
+  keyboard. ``drag_anchors`` sets which parts of the panel can be clicked on
+  with the left mouse button to start dragging. ``drag_bound`` configures
+  whether the frame of the panel (if any) can be dragged outside the containing
+  parent's boundary. The body will never be draggable outside of the parent,
+  but you can allow the frame to cross the boundary by setting ``drag_bound`` to
+  ``'body'``. The boolean passed to the ``on_drag_end`` callback will be
+  ``true`` if the drag was "successful" (i.e. not canceled) and ``false``
+  otherwise. Dragging can be canceled by right clicking while dragging with the
+  mouse, hitting :kbd:`Esc` (while dragging with the mouse or keyboard), or by
+  calling ``Panel:setCursorMoveEnabled(false)`` (while dragging with the
+  keyboard).
+
+* ``autoarrange_subviews = bool`` (default: ``false``)
+* ``autoarrange_gap = int`` (default: ``0``)
 
   If ``autoarrange_subviews`` is set to ``true``, the Panel will
   automatically handle subview layout. Subviews are laid out vertically
@@ -4169,12 +4195,26 @@ Has attributes:
   height or become visible/hidden and you don't have to worry about
   recalculating subview positions.
 
-* ``frame_style``, ``frame_title`` (default: nil)
+* ``frame_style``, ``frame_title`` (default: ``nil``)
+
   If defined, a frame will be drawn around the panel and subviews will be inset
   by 1. The attributes are identical to what is defined in the
   `FramedScreen class`_. When using the predefined frame styles in the ``gui``
   module, remember to ``require`` the gui module and prefix the identifier with
   ``gui.``, e.g. ``gui.GREY_LINE_FRAME``.
+
+Has functions:
+
+* ``panel:setKeyboardDragEnabled(bool)``
+
+  If called with something truthy and the panel is not already in keyboard drag
+  mode, then any current drag operations are halted where they are (not
+  canceled), the panel siezes input focus (see `View class`_ above for
+  information on the DFHack focus subsystem), and further keyboard cursor keys
+  move the window as if it were being dragged. Shift-cursor keys move by larger
+  amounts. Hit :kbd:`Enter` to commit the new window position or :kbd:`Esc` to
+  cancel. If dragging is canceled, then the window is moved back to its original
+  position.
 
 ResizingPanel class
 -------------------

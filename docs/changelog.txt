@@ -47,6 +47,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Lua
 - ``gui.View``: ``visible`` and ``active`` can now be functions that return a boolean
+- ``widgets.Panel``: new attributes to control window dragging with mouse or keyboard
 
 ## Internals
 

@@ -3,6 +3,7 @@
 local _ENV = mkmodule('gui.widgets')
 
 local gui = require('gui')
+local guidm = require('gui.dwarfmode')
 local utils = require('utils')
 
 local dscreen = dfhack.screen
@@ -70,12 +71,157 @@ Panel.ATTRS {
     frame_title = DEFAULT_NIL, -- as in gui.FramedScreen
     on_render = DEFAULT_NIL,
     on_layout = DEFAULT_NIL,
+    draggable = false,
+    drag_anchors = copyall({title=true, frame=false, body=false}),
+    drag_bound = 'frame', -- or 'body'
+    on_drag_begin = DEFAULT_NIL,
+    on_drag_end = DEFAULT_NIL,
     autoarrange_subviews = false, -- whether to automatically lay out subviews
     autoarrange_gap = 0, -- how many blank lines to insert between widgets
 }
 
 function Panel:init(args)
+    self.keyboard_drag = nil -- true when we are in keyboard dragging mode
+    self.saved_frame = nil -- copy of frame when dragging started
+    self.saved_frame_rect = nil -- copy of frame_rect when dragging started
+    self.drag_offset = nil -- relative pos of held panel tile
     self:addviews(args.subviews)
+end
+
+local function Panel_update_frame(self, frame, clear_state)
+    if clear_state then
+        self.keyboard_drag = nil
+        self.saved_frame = nil
+        self.saved_frame_rect = nil
+        self.drag_offset = nil
+    end
+    if not frame then return end
+    if self.frame.l == frame.l and self.frame.r == frame.r
+            and self.frame.t == frame.t and self.frame.b == frame.b
+            and self.frame.w == frame.w and self.frame.h == frame.h then
+        return
+    end
+    self.frame = frame
+    self:updateLayout()
+end
+
+local function Panel_drag_frame(self, mouse_pos)
+    local frame = copyall(self.frame)
+    local parent_rect, frame_rect = self.frame_parent_rect, self.frame_rect
+    local bound_rect = self.drag_bound == 'body' and self.frame_body
+            or frame_rect
+    local offset = self.drag_offset
+    local max_width = parent_rect.width - (bound_rect.x2-frame_rect.x1+1)
+    local max_height = parent_rect.height - (bound_rect.y2-frame_rect.y1+1)
+    if frame.t or not frame.b then
+        local min_pos = frame_rect.y1 - bound_rect.y1
+        local requested_pos = mouse_pos.y - parent_rect.y1 - offset.y
+        frame.t = math.max(min_pos, math.min(max_height, requested_pos))
+    end
+    if frame.b or not frame.t then
+        local min_pos = bound_rect.y2 - frame_rect.y2
+        local requested_pos = parent_rect.y2 - mouse_pos.y + offset.y -
+                (frame_rect.y2 - frame_rect.y1)
+        frame.b = math.max(min_pos, math.min(max_height, requested_pos))
+    end
+    if frame.l or not frame.r then
+        local min_pos = frame_rect.x1 - bound_rect.x1
+        local requested_pos = mouse_pos.x - parent_rect.x1 - offset.x
+        frame.l = math.max(min_pos, math.min(max_width, requested_pos))
+    end
+    if frame.r or not frame.l then
+        local min_pos = bound_rect.x2 - frame_rect.x2
+        local requested_pos = parent_rect.x2 - mouse_pos.x + offset.x -
+                (frame_rect.x2 - frame_rect.x1)
+        frame.r = math.max(min_pos, math.min(max_width, requested_pos))
+    end
+    return frame
+end
+
+local function Panel_make_frame(self, mouse_pos)
+    mouse_pos = mouse_pos or xy2pos(dfhack.screen.getMousePos())
+    return Panel_drag_frame(self, mouse_pos)
+end
+
+local function Panel_begin_drag(self, drag_offset)
+    Panel_update_frame(self, nil, true)
+    self.drag_offset = drag_offset or {x=0, y=0}
+    self.saved_frame = copyall(self.frame)
+    self.saved_frame_rect = copyall(self.frame_rect)
+    self.prev_focus_owner = self.focus_group.cur
+    self:setFocus(true)
+    if self.on_drag_begin then self.on_drag_begin() end
+end
+
+local function Panel_end_drag(self, frame, success)
+    if self.prev_focus_owner then
+        self.prev_focus_owner:setFocus(true)
+    else
+        self:setFocus(false)
+    end
+    Panel_update_frame(self, frame, true)
+    if self.on_drag_end then self.on_drag_end(success) end
+end
+
+function Panel:onInput(keys)
+    if self.keyboard_drag then
+        if keys.SELECT or keys.LEAVESCREEN then
+            Panel_end_drag(self, keys.LEAVESCREEN and self.saved_frame or nil,
+                           not not keys.SELECT)
+            return true
+        end
+        for code in pairs(keys) do
+            local dx, dy = guidm.get_movement_delta(code, 1, 10)
+            if dx then
+                local kbd_pos = {x=self.frame_rect.x1+dx,
+                                 y=self.frame_rect.y1+dy}
+                Panel_update_frame(self, Panel_make_frame(self, kbd_pos))
+                return true
+            end
+        end
+        return
+    end
+    if self.drag_offset then
+        if keys._MOUSE_R_DOWN then
+            Panel_end_drag(self, self.saved_frame)
+        elseif keys._MOUSE_L then
+            Panel_update_frame(self, Panel_make_frame(self))
+        end
+        return true
+    end
+    if self:inputToSubviews(keys) then
+        return true
+    end
+    if not keys._MOUSE_L_DOWN then return end
+    local rect = self.frame_rect
+    local x,y = self:getMousePos(gui.ViewRect{rect=rect})
+    if not x then return end
+
+    local is_dragging = false
+    if self.draggable then
+        local on_body = self:getMousePos()
+        is_dragging = (self.drag_anchors.title and self.frame_style and y == 0)
+                or (self.drag_anchors.frame and not on_body) -- includes inset
+                or (self.drag_anchors.body and on_body)
+    end
+
+    if is_dragging then
+        Panel_begin_drag(self, {x=x, y=y})
+        return true
+    end
+end
+
+function Panel:setKeyboardDragEnabled(enabled)
+    if (enabled and self.keyboard_drag)
+            or (not enabled and not self.keyboard_drag) then
+        return
+    end
+    if enabled then
+        Panel_begin_drag(self)
+    else
+        Panel_end_drag(self)
+    end
+    self.keyboard_drag = enabled
 end
 
 function Panel:onRenderBody(dc)
@@ -118,6 +264,10 @@ function Panel:onRenderFrame(dc, rect)
     if not self.frame_style then return end
     local x1,y1,x2,y2 = rect.x1, rect.y1, rect.x2, rect.y2
     gui.paint_frame(x1, y1, x2, y2, self.frame_style, self.frame_title)
+    if self.drag_offset and not self.keyboard_drag
+            and df.global.enabler.mouse_lbut == 0 then
+        Panel_end_drag(self, nil, true)
+    end
 end
 
 -------------------

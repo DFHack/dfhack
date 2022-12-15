@@ -4182,8 +4182,27 @@ Has attributes:
   ``true`` if the drag was "successful" (i.e. not canceled) and ``false``
   otherwise. Dragging can be canceled by right clicking while dragging with the
   mouse, hitting :kbd:`Esc` (while dragging with the mouse or keyboard), or by
-  calling ``Panel:setCursorMoveEnabled(false)`` (while dragging with the
+  calling ``Panel:setKeyboaredDragEnabled(false)`` (while dragging with the
   keyboard).
+
+* ``resizable = bool`` (default: ``false``)
+* ``resize_anchors = {}`` (default: ``{t=false, l=true, r=true, b=true}``
+* ``resize_min = {}`` (default: w and h from the ``frame``, or ``{w=5, h=5}``)
+* ``on_resize_begin = function()`` (default: ``nil``)
+* ``on_resize_end = function(bool)`` (default: ``nil``)
+
+  If ``resizable`` is set to ``true``, then the player can click the mouse on
+  any edge specified in ``resize_anchors`` and drag the border to resize the
+  window. If two adjacent edges are enabled as anchors, then the tile where they
+  meet can be used to resize both edges at the same time. The minimum dimensions
+  specified in ``resize_min`` (or inherited from ``frame`` are respected when
+  resizing. The panel is also prevented from resizing beyond the boundaries of
+  its parent. When the player clicks on a valid anchor, ``on_resize_begin()`` is
+  called. The boolean passed to the ``on_resize_end`` callback will be ``true``
+  if the drag was "successful" (i.e. not canceled) and ``false`` otherwise.
+  Dragging can be canceled by right clicking while resizing with the mouse,
+  hitting :kbd:`Esc` (while resizing with the mouse or keyboard), or by calling
+  ``Panel:setKeyboardResizeEnabled(false)`` (while resizing with the keyboard).
 
 * ``autoarrange_subviews = bool`` (default: ``false``)
 * ``autoarrange_gap = int`` (default: ``0``)
@@ -4207,8 +4226,8 @@ Has functions:
 
 * ``panel:setKeyboardDragEnabled(bool)``
 
-  If called with something truthy and the panel is not already in keyboard drag
-  mode, then any current drag operations are halted where they are (not
+  If called with ``true`` and the panel is not already in keyboard drag mode,
+  then any current drag or resize operations are halted where they are (not
   canceled), the panel siezes input focus (see `View class`_ above for
   information on the DFHack focus subsystem), and further keyboard cursor keys
   move the window as if it were being dragged. Shift-cursor keys move by larger
@@ -4216,12 +4235,44 @@ Has functions:
   cancel. If dragging is canceled, then the window is moved back to its original
   position.
 
+* ``panel:setKeyboardResizeEnabled(bool)``
+
+  If called with ``true`` and the panel is not already in keyboard resize mode,
+  then any current drag or resize operations are halted where they are (not
+  canceled), the panel siezes input focus (see `View class`_ above for
+  information on the DFHack focus subsystem), and further keyboard cursor keys
+  resize the window as if it were being dragged from the lower right corner. If
+  neither the bottom or right edge is a valid anchor, an appropriate corner will
+  be chosen. Shift-cursor keys move by larger amounts. Hit :kbd:`Enter` to
+  commit the new window size or :kbd:`Esc` to cancel. If resizing is canceled,
+  then the window size from before the resize operation is restored.
+
+Double clicking:
+
+If the panel is resizable and the user double-clicks on the top edge (the frame
+title, if the panel has a frame), then the panel will jump to its maximum size.
+If the panel has already been maximized in this fashion, then it will jump to
+its minimum size. Both jumps respect the resizable edges defined by the
+``resize_anchors`` attribute.
+
+The time duration that a double click can span is defined by the global variable
+``DOUBLE_CLICK_MS``. The default value is ``500`` and can be changed by the end
+user with a command like::
+
+  :lua require('gui.widgets').DOUBLE_CLICK_MS=1000
+
+Window class
+------------
+
+Subclass of Panel; sets Panel attributes to useful defaults for a top-level
+framed, draggable window.
+
 ResizingPanel class
 -------------------
 
-Subclass of Panel; automatically adjusts its own frame height according to
-the size, position, and visibility of its subviews. Pairs nicely with a
-parent Panel that has ``autoarrange_subviews`` enabled.
+Subclass of Panel; automatically adjusts its own frame height and width to the
+minimum required to show its subviews. Pairs nicely with a parent Panel that has
+``autoarrange_subviews`` enabled.
 
 Pages class
 -----------

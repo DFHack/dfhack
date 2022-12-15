@@ -325,7 +325,7 @@ function Pages:setSelected(idx)
         end
         idx = utils.linear_index(self.subviews, key)
         if not idx then
-            error('Unknown page: '..key)
+            error('Unknown page: '..tostring(key))
         end
     end
 

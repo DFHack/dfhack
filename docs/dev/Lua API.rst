@@ -4247,6 +4247,20 @@ Has functions:
   commit the new window size or :kbd:`Esc` to cancel. If resizing is canceled,
   then the window size from before the resize operation is restored.
 
+Double clicking:
+
+If the panel is resizable and the user double-clicks on the top edge (the frame
+title, if the panel has a frame), then the panel will jump to its maximum size.
+If the panel has already been maximized in this fashion, then it will jump to
+its minimum size. Both jumps respect the resizable edges defined by the
+``resize_anchors`` attribute.
+
+The time duration that a double click can span is defined by the global variable
+``DOUBLE_CLICK_MS``. The default value is ``500`` and can be changed by the end
+user with a command like::
+
+  :lua require('gui.widgets').DOUBLE_CLICK_MS=1000
+
 Window class
 ------------
 

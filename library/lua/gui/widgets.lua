@@ -64,6 +64,8 @@ end
 -- Panel --
 -----------
 
+DOUBLE_CLICK_MS = 500
+
 Panel = defclass(Panel, Widget)
 
 Panel.ATTRS {
@@ -101,6 +103,8 @@ function Panel:init(args)
     self.saved_frame_rect = nil -- copy of frame_rect when dragging started
     self.drag_offset = nil -- relative pos of held panel tile
     self.resize_edge = nil -- which dimension is being resized?
+
+    self.last_title_click_ms = 0 -- used to track double-clicking on the title
     self:addviews(args.subviews)
 end
 
@@ -242,6 +246,33 @@ local function Panel_end_drag(self, frame, success)
     end
 end
 
+local function Panel_on_double_click(self)
+    local a = self.resize_anchors
+    local can_vert, can_horiz = a.t or a.b, a.l or a.r
+    if not can_vert and not can_horiz then return false end
+    local f, rmin = self.frame, self.resize_min
+    local maximized = f.t == 0 and f.b == 0 and f.l == 0 and f.r == 0
+    local frame
+    if maximized then
+        frame =  {
+            t=not can_vert and f.t or nil,
+            l=not can_horiz and f.l or nil,
+            b=not can_vert and f.b or nil,
+            r=not can_horiz and f.r or nil,
+            w=can_vert and rmin.w or f.w,
+            h=can_horiz and rmin.h or f.h,
+        }
+    else
+        frame = {
+            t=can_vert and 0 or f.t,
+            l=can_horiz and 0 or f.l,
+            b=can_vert and 0 or f.b,
+            r=can_horiz and 0 or f.r
+        }
+    end
+    Panel_update_frame(self, frame, true)
+end
+
 function Panel:onInput(keys)
     if self.kbd_get_pos then
         if keys.SELECT or keys.LEAVESCREEN then
@@ -278,41 +309,52 @@ function Panel:onInput(keys)
     local x,y = self:getMousePos(gui.ViewRect{rect=rect})
     if not x then return end
 
+    if self.resizable and y == 0 then
+        local now_ms = dfhack.getTickCount()
+        if now_ms - self.last_title_click_ms <= DOUBLE_CLICK_MS then
+            self.last_title_click_ms = 0
+            if Panel_on_double_click(self) then return true end
+        else
+            self.last_title_click_ms = now_ms
+        end
+    end
+
+    local resize_edge = nil
     if self.resizable then
         local rect = self.frame_rect
         if self.resize_anchors.r and self.resize_anchors.b
                 and x == rect.x2 - rect.x1 and y == rect.y2 - rect.y1 then
-            self.resize_edge = 'rb'
+            resize_edge = 'rb'
         elseif self.resize_anchors.l and self.resize_anchors.b
                 and x == 0 and y == rect.y2 - rect.y1 then
-            self.resize_edge = 'lb'
+            resize_edge = 'lb'
         elseif self.resize_anchors.r and self.resize_anchors.t
                 and x == rect.x2 - rect.x1 and y == 0 then
-            self.resize_edge = 'rt'
+            resize_edge = 'rt'
         elseif self.resize_anchors.r and self.resize_anchors.t
                 and x == 0 and y == 0 then
-            self.resize_edge = 'lt'
+            resize_edge = 'lt'
         elseif self.resize_anchors.r and x == rect.x2 - rect.x1 then
-            self.resize_edge = 'r'
+            resize_edge = 'r'
         elseif self.resize_anchors.l and x == 0 then
-            self.resize_edge = 'l'
+            resize_edge = 'l'
         elseif self.resize_anchors.b and y == rect.y2 - rect.y1 then
-            self.resize_edge = 'b'
+            resize_edge = 'b'
         elseif self.resize_anchors.t and y == 0 then
-            self.resize_edge = 't'
+            resize_edge = 't'
         end
     end
 
     local is_dragging = false
-    if not self.resize_edge and self.draggable then
+    if not resize_edge and self.draggable then
         local on_body = self:getMousePos()
         is_dragging = (self.drag_anchors.title and self.frame_style and y == 0)
                 or (self.drag_anchors.frame and not on_body) -- includes inset
                 or (self.drag_anchors.body and on_body)
     end
 
-    if self.resize_edge or is_dragging then
-        Panel_begin_drag(self, {x=x, y=y}, self.resize_edge)
+    if resize_edge or is_dragging then
+        Panel_begin_drag(self, {x=x, y=y}, resize_edge)
         return true
     end
 end

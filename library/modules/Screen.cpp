@@ -79,12 +79,23 @@ using std::string;
 // returns text grid coordinates, even if the game map is scaled differently
 df::coord2d Screen::getMousePos()
 {
-    int32_t a, b, r, f;
-    if (!enabler || !enabler->renderer->get_mouse_coords(&a, &b, &r, &f)) {
+    int32_t pixelx = 0, pixely = 0, tilex = 0, tiley = 0;
+    if (!enabler || !enabler->renderer->get_mouse_coords(
+            &pixelx, &pixely, &tilex, &tiley)) {
         return df::coord2d(-1, -1);
     }
-    std::cerr << "a,b,r,f = " << a << ", " << b << ", " << r << ", " << f << std::endl;
-    return df::coord2d(-1, -1);
+    return df::coord2d(tilex, tiley);
+}
+
+// returns the screen pixel coordinates
+df::coord2d Screen::getMousePixels()
+{
+    int32_t pixelx = 0, pixely = 0, tilex = 0, tiley = 0;
+    if (!enabler || !enabler->renderer->get_mouse_coords(
+            &pixelx, &pixely, &tilex, &tiley)) {
+        return df::coord2d(-1, -1);
+    }
+    return df::coord2d(pixelx, pixely);
 }
 
 df::coord2d Screen::getWindowSize()

@@ -178,6 +178,7 @@ namespace DFHack
         };
 
         DFHACK_EXPORT df::coord2d getMousePos();
+        DFHACK_EXPORT df::coord2d getMousePixels();
         DFHACK_EXPORT df::coord2d getWindowSize();
 
         inline rect2d getScreenRect() {

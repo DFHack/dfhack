@@ -203,7 +203,27 @@ void ImTuiInterop::start()
 
 void ImTuiInterop::new_frame()
 {
+    ImGuiIO& io = ImGui::GetIO();
 
+    auto& keysDown = io.KeysDown;
+    std::fill(keysDown, keysDown + 512, 0);
+
+    df::coord2d dim = Screen::getWindowSize();
+    ImGui::GetIO().DisplaySize = ImVec2(dim.x, dim.y);
+
+    //todo: fill keysdown, special keys
+
+    df::coord2d mouse_pos = Screen::getMousePos();
+
+    io.MousePos.x = mouse_pos.x;
+    io.MousePos.y = mouse_pos.y;
+
+    //todo: frametime
+    io.DeltaTime = 33.f / 1000.f;
+
+    //todo: mouse clicks
+    io.MouseDown[0] = 0;
+    io.MouseDown[1] = 0;
 }
 
 void ImTuiInterop::draw_frame()

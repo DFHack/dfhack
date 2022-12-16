@@ -75,7 +75,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(MSVC)
     # increase warning level and treat warnings as errors
-    add_compile_options("/WX")
+    #add_compile_options("/WX")
     add_compile_options("/W3")
 
     # disable C4819 code-page warning

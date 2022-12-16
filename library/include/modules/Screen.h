@@ -336,6 +336,7 @@ namespace DFHack
 
         virtual void logic();
         virtual void render();
+        virtual void resize(int w, int h) { return; }
 
         virtual int8_t movies_okay() { return 1; }
         virtual bool key_conflict(df::interface_key key);

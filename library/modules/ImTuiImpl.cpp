@@ -111,7 +111,94 @@ void drawTriangle(ImVec2 p0, ImVec2 p1, ImVec2 p2, ImU32 col) {
 
 void ImTuiInterop::start()
 {
+    ImGui::GetStyle().Alpha = 1.0f;
+    ImGui::GetStyle().WindowPadding = ImVec2(0.5f, 0.0f);
+    ImGui::GetStyle().WindowRounding = 0.0f;
+    ImGui::GetStyle().WindowBorderSize = 0.0f;
+    ImGui::GetStyle().WindowMinSize = ImVec2(4.0f, 2.0f);
+    ImGui::GetStyle().WindowTitleAlign = ImVec2(0.0f, 0.0f);
+    ImGui::GetStyle().WindowMenuButtonPosition = ImGuiDir_Left;
+    ImGui::GetStyle().ChildRounding = 0.0f;
+    ImGui::GetStyle().ChildBorderSize = 0.0f;
+    ImGui::GetStyle().PopupRounding = 0.0f;
+    ImGui::GetStyle().PopupBorderSize = 0.0f;
+    ImGui::GetStyle().FramePadding = ImVec2(1.0f, 0.0f);
+    ImGui::GetStyle().FrameRounding = 0.0f;
+    ImGui::GetStyle().FrameBorderSize = 0.0f;
+    ImGui::GetStyle().ItemSpacing = ImVec2(1.0f, 0.0f);
+    ImGui::GetStyle().ItemInnerSpacing = ImVec2(1.0f, 0.0f);
+    ImGui::GetStyle().TouchExtraPadding = ImVec2(0.5f, 0.0f);
+    ImGui::GetStyle().IndentSpacing = 1.0f;
+    ImGui::GetStyle().ColumnsMinSpacing = 1.0f;
+    ImGui::GetStyle().ScrollbarSize = 0.5f;
+    ImGui::GetStyle().ScrollbarRounding = 0.0f;
+    ImGui::GetStyle().GrabMinSize = 0.1f;
+    ImGui::GetStyle().GrabRounding = 0.0f;
+    ImGui::GetStyle().TabRounding = 0.0f;
+    ImGui::GetStyle().TabBorderSize = 0.0f;
+    ImGui::GetStyle().ColorButtonPosition = ImGuiDir_Right;
+    ImGui::GetStyle().ButtonTextAlign = ImVec2(0.5f, 0.0f);
+    ImGui::GetStyle().SelectableTextAlign = ImVec2(0.0f, 0.0f);
+    ImGui::GetStyle().DisplayWindowPadding = ImVec2(0.0f, 0.0f);
+    ImGui::GetStyle().DisplaySafeAreaPadding = ImVec2(0.0f, 0.0f);
+    ImGui::GetStyle().CellPadding = ImVec2(1.0f, 0.0f);
+    ImGui::GetStyle().MouseCursorScale = 1.0f;
+    ImGui::GetStyle().AntiAliasedLines = false;
+    ImGui::GetStyle().AntiAliasedFill = false;
+    ImGui::GetStyle().CurveTessellationTol = 1.25f;
 
+    ImGui::GetStyle().Colors[ImGuiCol_WindowBg] = ImVec4(0.15, 0.15, 0.15, 1.0f);
+    ImGui::GetStyle().Colors[ImGuiCol_TitleBg] = ImVec4(0.35, 0.35, 0.35, 1.0f);
+    ImGui::GetStyle().Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.15, 0.15, 0.15, 1.0f);
+    ImGui::GetStyle().Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.75, 0.75, 0.75, 0.5f);
+    ImGui::GetStyle().Colors[ImGuiCol_NavHighlight] = ImVec4(0.00, 0.00, 0.00, 0.0f);
+
+    ImFontConfig fontConfig;
+    fontConfig.GlyphMinAdvanceX = 1.0f;
+    fontConfig.SizePixels = 1.00;
+    ImGui::GetIO().Fonts->AddFontDefault(&fontConfig);
+
+    // Build atlas
+    unsigned char* tex_pixels = NULL;
+    int tex_w, tex_h;
+    ImGui::GetIO().Fonts->GetTexDataAsRGBA32(&tex_pixels, &tex_w, &tex_h);
+
+    /*
+    ImGui::GetIO().KeyMap[ImGuiKey_Tab]         = 9;
+    ImGui::GetIO().KeyMap[ImGuiKey_LeftArrow]   = 260;
+    ImGui::GetIO().KeyMap[ImGuiKey_RightArrow]  = 261;
+    ImGui::GetIO().KeyMap[ImGuiKey_UpArrow]     = 259;
+    ImGui::GetIO().KeyMap[ImGuiKey_DownArrow]   = 258;
+    ImGui::GetIO().KeyMap[ImGuiKey_PageUp]      = 339;
+    ImGui::GetIO().KeyMap[ImGuiKey_PageDown]    = 338;
+    ImGui::GetIO().KeyMap[ImGuiKey_Home]        = 262;
+    ImGui::GetIO().KeyMap[ImGuiKey_End]         = 360;
+    ImGui::GetIO().KeyMap[ImGuiKey_Insert]      = 331;
+    ImGui::GetIO().KeyMap[ImGuiKey_Delete]      = 330;
+    ImGui::GetIO().KeyMap[ImGuiKey_Backspace]   = 263;
+    ImGui::GetIO().KeyMap[ImGuiKey_Space]       = 32;
+    ImGui::GetIO().KeyMap[ImGuiKey_Enter]       = 10;
+    ImGui::GetIO().KeyMap[ImGuiKey_Escape]      = 27;
+    ImGui::GetIO().KeyMap[ImGuiKey_KeyPadEnter] = 343;
+    ImGui::GetIO().KeyMap[ImGuiKey_A]           = 1;
+    ImGui::GetIO().KeyMap[ImGuiKey_C]           = 3;
+    ImGui::GetIO().KeyMap[ImGuiKey_V]           = 22;
+    ImGui::GetIO().KeyMap[ImGuiKey_X]           = 24;
+    ImGui::GetIO().KeyMap[ImGuiKey_Y]           = 25;
+    ImGui::GetIO().KeyMap[ImGuiKey_Z]           = 26;
+
+    ImGui::GetIO().KeyRepeatDelay = 0.050;
+    ImGui::GetIO().KeyRepeatRate = 0.050;
+
+	int screenSizeX = 0;
+	int screenSizeY = 0;
+
+	getmaxyx(stdscr, screenSizeY, screenSizeX);
+	ImGui::GetIO().DisplaySize = ImVec2(screenSizeX, screenSizeY);
+*/
+
+    df::coord2d dim = Screen::getWindowSize();
+    ImGui::GetIO().DisplaySize = ImVec2(dim.x, dim.y);
 }
 
 void ImTuiInterop::new_frame()

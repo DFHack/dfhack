@@ -419,6 +419,8 @@ include_directories(depends/tthread)
 include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(depends/clsocket/src)
 include_directories(depends/xlsxio/include)
+include_directories(depends/imtui/include)
+include_directories(depends/imtui/third-party/imgui)
 add_subdirectory(depends)
 
 # Testing with CTest

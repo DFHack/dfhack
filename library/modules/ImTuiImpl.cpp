@@ -1,6 +1,7 @@
 #include "modules/ImTuiImpl.h"
 #include "modules/Screen.h"
 #include "ColorText.h"
+#include "df/enabler.h"
 
 using namespace DFHack;
 
@@ -221,9 +222,19 @@ void ImTuiInterop::impl::new_frame()
     //todo: frametime
     io.DeltaTime = 33.f / 1000.f;
 
-    //todo: mouse clicks
     io.MouseDown[0] = 0;
     io.MouseDown[1] = 0;
+
+    if (df::global::enabler) {
+        if (df::global::enabler->mouse_lbut) {
+            io.MouseDown[0] = 1;
+            df::global::enabler->mouse_lbut_down = 0;
+        }
+        if (df::global::enabler->mouse_rbut) {
+            io.MouseDown[1] = 1;
+            df::global::enabler->mouse_rbut_down = 0;
+        }
+    }
 
     ImGui::NewFrame();
 }

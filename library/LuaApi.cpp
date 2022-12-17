@@ -432,18 +432,6 @@ static int dfhack_persistent_deleteTilemask(lua_State *state)
     return 1;
 }
 
-static int debug_ImGui(lua_State* state)
-{
-    ImGui::Begin("Hello");
-
-    ImGui::Text("Hello there!");
-
-    ImGui::End();
-
-    lua_pushboolean(state, true);
-    return 1;
-}
-
 static const luaL_Reg dfhack_persistent_funcs[] = {
     { "get", dfhack_persistent_get },
     { "delete", dfhack_persistent_delete },
@@ -1628,6 +1616,45 @@ static const luaL_Reg dfhack_gui_funcs[] = {
     { "getMousePos", gui_getMousePos },
     { NULL, NULL }
 };
+
+static void imgui_debug()
+{
+    ImGui::Begin("Hello");
+
+    ImGui::Text("Hello there!");
+
+    ImGui::End();
+}
+
+static bool imgui_begin(std::string title)
+{
+    return ImGui::Begin(title.c_str(), nullptr, 0);
+}
+
+static void imgui_end()
+{
+    ImGui::End();
+}
+
+static void imgui_text(std::string str)
+{
+    ImGui::Text("%s", str.c_str());
+}
+
+static bool imgui_button(std::string name)
+{
+    return ImGui::Button(name.c_str());
+}
+
+static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
+    WRAPN(Debug, imgui_debug),
+    WRAPN(Begin, imgui_begin),
+    WRAPN(End, imgui_end),
+    WRAPN(Text, imgui_text),
+    WRAPN(Button, imgui_button),
+    { NULL, NULL }
+};
+
 
 /***** Job module *****/
 
@@ -3352,7 +3379,6 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "getCommandDescription", internal_getCommandDescription },
     { "threadid", internal_threadid },
     { "md5File", internal_md5file },
-    { "debugImGui", debug_ImGui },
     { NULL, NULL }
 };
 
@@ -3386,4 +3412,5 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "kitchen", dfhack_kitchen_module);
     OpenModule(state, "console", dfhack_console_module);
     OpenModule(state, "internal", dfhack_internal_module, dfhack_internal_funcs);
+    OpenModule(state, "imgui", dfhack_imgui_module);
 }

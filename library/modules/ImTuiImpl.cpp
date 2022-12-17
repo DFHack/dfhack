@@ -345,6 +345,12 @@ void ImTuiInterop::impl::shutdown()
 
 }
 
+ImTuiInterop::ui_state::ui_state()
+{
+    last_context = nullptr;
+    ctx = nullptr;
+}
+
 void ImTuiInterop::ui_state::activate()
 {
     last_context = ImGui::GetCurrentContext();

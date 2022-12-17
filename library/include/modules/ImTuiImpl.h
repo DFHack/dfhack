@@ -1,7 +1,6 @@
 #pragma once
 
 #include "imtui/imtui.h"
-#include "Screen.h"
 
 struct ImGuiContext;
 
@@ -20,8 +19,10 @@ namespace ImTuiInterop
 
 	struct ui_state
 	{
-		ImGuiContext* last_context = nullptr;
-		ImGuiContext* ctx = nullptr;
+		ImGuiContext* last_context;
+		ImGuiContext* ctx;
+
+		ui_state();
 
 		void activate();
 

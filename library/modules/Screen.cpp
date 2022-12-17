@@ -758,6 +758,8 @@ int dfhack_lua_viewscreen::do_input(lua_State *L)
 
 dfhack_lua_viewscreen::dfhack_lua_viewscreen(lua_State *L, int table_idx)
 {
+    st = ImTuiInterop::make_ui_system();
+
     assert(Lua::IsCoreContext(L));
 
     Lua::PushDFObject(L, (df::viewscreen*)this);

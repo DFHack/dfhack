@@ -39,6 +39,7 @@ distribution.
 #include "df/zoom_commands.h"
 
 #include "modules/GuiHooks.h"
+#include "modules/ImTuiImpl.h"
 
 namespace df
 {
@@ -355,6 +356,7 @@ namespace DFHack
     };
 
     class DFHACK_EXPORT dfhack_lua_viewscreen : public dfhack_viewscreen {
+        ImTuiInterop::ui_state st;
         std::string focus;
 
         void update_focus(lua_State *L, int idx);

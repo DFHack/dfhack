@@ -451,7 +451,6 @@ static const luaL_Reg dfhack_persistent_funcs[] = {
     { "save", dfhack_persistent_save },
     { "getTilemask", dfhack_persistent_getTilemask },
     { "deleteTilemask", dfhack_persistent_deleteTilemask },
-    { "debugImGui", debug_ImGui },
     { NULL, NULL }
 };
 
@@ -3353,6 +3352,7 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "getCommandDescription", internal_getCommandDescription },
     { "threadid", internal_threadid },
     { "md5File", internal_md5file },
+    { "debugImGui", debug_ImGui },
     { NULL, NULL }
 };
 

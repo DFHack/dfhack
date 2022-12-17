@@ -52,7 +52,6 @@ using namespace std;
 #include "modules/EventManager.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
-#include "modules/ImTuiImpl.h"
 #include "modules/World.h"
 #include "modules/Persistence.h"
 #include "RemoteServer.h"
@@ -1757,12 +1756,6 @@ bool Core::Init()
             }
         }
     }
-
-    cerr << "Initialising Imtui.\n";
-
-    ImTuiInterop::start();
-
-    cerr << "ImTui Initialised.\n";
 
     cerr << "DFHack is running.\n";
     return true;

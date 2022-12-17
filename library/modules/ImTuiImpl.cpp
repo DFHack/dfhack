@@ -10,8 +10,6 @@ using namespace DFHack;
 
 #define ABS(x) ((x >= 0) ? x : -x)
 
-static std::vector<int> g_xrange;
-
 void ScanLine(int x1, int y1, int x2, int y2, int ymax, std::vector<int>& xrange) {
     int sx, sy, dx1, dy1, dx2, dy2, x, y, m, n, k, cnt;
 
@@ -64,6 +62,8 @@ void ScanLine(int x1, int y1, int x2, int y2, int ymax, std::vector<int>& xrange
 
 void drawTriangle(ImVec2 p0, ImVec2 p1, ImVec2 p2, ImU32 col) {
     df::coord2d dim = Screen::getWindowSize();
+
+    std::vector<int> g_xrange;
     
     int screen_size = dim.x * dim.y;
 
@@ -109,7 +109,7 @@ void drawTriangle(ImVec2 p0, ImVec2 p1, ImVec2 p2, ImU32 col) {
 }
 
 
-void ImTuiInterop::start()
+void ImTuiInterop::impl::init_current_context()
 {
     ImGui::GetStyle().Alpha = 1.0f;
     ImGui::GetStyle().WindowPadding = ImVec2(0.5f, 0.0f);
@@ -201,7 +201,7 @@ void ImTuiInterop::start()
     ImGui::GetIO().DisplaySize = ImVec2(dim.x, dim.y);
 }
 
-void ImTuiInterop::new_frame()
+void ImTuiInterop::impl::new_frame()
 {
     ImGuiIO& io = ImGui::GetIO();
 
@@ -228,7 +228,7 @@ void ImTuiInterop::new_frame()
     ImGui::NewFrame();
 }
 
-void ImTuiInterop::draw_frame()
+void ImTuiInterop::impl::draw_frame()
 {
     ImGui::Render();
 
@@ -340,7 +340,45 @@ void ImTuiInterop::draw_frame()
     }
 }
 
-void ImTuiInterop::shutdown()
+void ImTuiInterop::impl::shutdown()
 {
 
+}
+
+void ImTuiInterop::ui_state::activate()
+{
+    last_context = ImGui::GetCurrentContext();
+
+    ImGui::SetCurrentContext(ctx);
+}
+
+void ImTuiInterop::ui_state::new_frame()
+{
+    ImTuiInterop::impl::new_frame();
+}
+
+void ImTuiInterop::ui_state::draw_frame()
+{
+    ImTuiInterop::impl::draw_frame();
+}
+
+void ImTuiInterop::ui_state::deactivate()
+{
+    ImGui::SetCurrentContext(last_context);
+}
+
+ImTuiInterop::ui_state ImTuiInterop::make_ui_system()
+{
+    ImGuiContext* ctx = ImGui::CreateContext();
+    
+    ui_state st;
+    st.ctx = ctx;
+
+    st.activate();
+
+    impl::init_current_context();
+
+    st.deactivate();
+
+    return st;
 }

@@ -1660,8 +1660,32 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(Text, imgui_text),
     WRAPN(TextColored, imgui_text_colored),
     WRAPN(Button, imgui_button),
+    WRAPM(ImGui, NewLine),
     { NULL, NULL }
 };
+
+static int imgui_sameline(lua_State* state)
+{
+    int args = lua_gettop(state);
+
+    float offset_from_start_x = 0;
+    float spacing = -1.f;
+
+    if (args == 1)
+    {
+        offset_from_start_x = lua_tonumber(state, -1);
+    }
+
+    if (args == 2)
+    {
+        offset_from_start_x = lua_tonumber(state, -2);
+        spacing = lua_tonumber(state, -1);
+    }
+
+    ImGui::SameLine(offset_from_start_x, spacing);
+
+    return 0;
+}
 
 static int imgui_name_to_colour(lua_State* state)
 {
@@ -1682,6 +1706,7 @@ static int imgui_name_to_colour(lua_State* state)
 
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"Name2Col", imgui_name_to_colour},
+    {"SameLine", imgui_sameline},
     { NULL, NULL }
 };
 

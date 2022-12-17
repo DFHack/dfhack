@@ -1653,18 +1653,6 @@ static bool imgui_button(std::string name)
     return ImGui::Button(name.c_str());
 }
 
-static std::vector<int> imgui_name_to_colour(std::string fg, std::string bg, bool bold)
-{
-    std::vector<int> pseudo_rgb;
-    pseudo_rgb.resize(3);
-
-    pseudo_rgb.push_back(ImTuiInterop::name_to_colour_index(fg));
-    pseudo_rgb.push_back(ImTuiInterop::name_to_colour_index(bg));
-    pseudo_rgb.push_back(bold);
-
-    return pseudo_rgb;
-}
-
 static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(Debug, imgui_debug),
     WRAPN(Begin, imgui_begin),
@@ -1672,7 +1660,28 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(Text, imgui_text),
     WRAPN(TextColored, imgui_text_colored),
     WRAPN(Button, imgui_button),
-    WRAPN(Name2Col, imgui_name_to_colour),
+    { NULL, NULL }
+};
+
+static int imgui_name_to_colour(lua_State* state)
+{
+    std::string fg = lua_tostring(state, -3);
+    std::string bg = lua_tostring(state, -2);
+    bool bold = lua_toboolean(state, -1);
+
+    std::vector<int> pseudo_rgb;
+
+    pseudo_rgb.push_back(ImTuiInterop::name_to_colour_index(fg));
+    pseudo_rgb.push_back(ImTuiInterop::name_to_colour_index(bg));
+    pseudo_rgb.push_back(bold);
+
+    Lua::PushVector(state, pseudo_rgb);
+
+    return 1;
+}
+
+static const luaL_Reg dfhack_imgui_funcs[] = {
+    {"Name2Col", imgui_name_to_colour},
     { NULL, NULL }
 };
 
@@ -3432,5 +3441,5 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "kitchen", dfhack_kitchen_module);
     OpenModule(state, "console", dfhack_console_module);
     OpenModule(state, "internal", dfhack_internal_module, dfhack_internal_funcs);
-    OpenModule(state, "imgui", dfhack_imgui_module);
+    OpenModule(state, "imgui", dfhack_imgui_module, dfhack_imgui_funcs);
 }

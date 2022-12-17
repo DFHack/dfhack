@@ -1704,9 +1704,120 @@ static int imgui_name_to_colour(lua_State* state)
     return 1;
 }
 
+//The reason for imgui_ref and imgui_get are because you cannot pass in values by reference in 
+//scripting languages, so the convention of passing a table with the real value set in the 0th element
+//of the table is used
+//this is clunky, and one of the main api-wise disadvantages of doing imgui in scripting
+static int imgui_ref(lua_State* state)
+{
+    //0: value, argument
+    //1: table
+    lua_newtable(state);
+
+    //2: key
+    //3: value
+
+    lua_pushnumber(state, 0);
+    lua_pushvalue(state, -3); //0 == function argument
+
+    lua_settable(state, -3); //1 == table
+
+    //0: value, argument
+    //1: table
+
+    //return the newly created table
+    return 1;
+}
+
+static int imgui_get(lua_State* state)
+{
+    //0: table, argument
+    //1: key
+
+    lua_pushnumber(state, 0);
+    lua_gettable(state, -2);
+
+    //returns the value inside of the table at position 0
+    return 1;
+}
+
+static void imgui_decode_ref_impl(lua_State* state, double& out)
+{
+    out = lua_tonumber(state, -1);
+}
+
+static void imgui_decode_ref_impl(lua_State* state, std::string& out)
+{
+    size_t len = 0;
+    const char* str = lua_tolstring(state, -1, &len);
+
+    out = std::string(str, len);
+}
+
+static void imgui_decode_ref_impl(lua_State* state, bool& out)
+{
+    out = lua_toboolean(state, -1);
+}
+
+//decodes ref at -1
+template<typename T>
+static T imgui_decode_ref(lua_State* state)
+{
+    lua_pushnumber(state, 0);
+    lua_gettable(state, -2);
+
+    T out = {};
+    imgui_decode_ref_impl(state, out);
+
+    lua_pop(state, 1);
+
+    return out;
+}
+
+static void imgui_push_generic(lua_State* state, double val)
+{
+    lua_pushnumber(state, val);
+}
+
+static void imgui_push_generic(lua_State* state, const std::string& val)
+{
+    lua_pushlstring(state, val.c_str(), val.size());
+}
+
+static void imgui_push_generic(lua_State* state, bool val)
+{
+    lua_pushboolean(state, val);
+}
+
+//table is at -1
+template<typename T>
+static void imgui_encode_into_ref(lua_State* state, const T& val)
+{
+    lua_pushnumber(state, 0);
+    imgui_push_generic(state, val);
+    lua_settable(state, -3);
+}
+
+//string, ref
+static int imgui_checkbox(lua_State* state)
+{
+    const char* label = lua_tostring(state, -2);
+    bool val = imgui_decode_ref<bool>(state);
+
+    bool result = ImGui::Checkbox(label, &val);
+
+    imgui_encode_into_ref(state, val);
+
+    lua_pushboolean(state, result);
+    return 1;
+}
+
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"Name2Col", imgui_name_to_colour},
     {"SameLine", imgui_sameline},
+    {"Checkbox", imgui_checkbox},
+    {"Ref", imgui_ref},
+    {"Get", imgui_get},
     { NULL, NULL }
 };
 

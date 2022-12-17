@@ -706,6 +706,7 @@ int dfhack_lua_viewscreen::do_render(lua_State *L)
 
     lua_pushvalue(L, -2);
     lua_call(L, 1, 0);
+
     return 0;
 }
 
@@ -787,9 +788,16 @@ void dfhack_lua_viewscreen::render()
         return;
     }
 
+    st.activate();
+    st.new_frame();
+
     dfhack_viewscreen::render();
 
     safe_call_lua(do_render, 0, 0);
+
+    st.draw_frame();
+    st.deactivate();
+
 }
 
 void dfhack_lua_viewscreen::logic()

@@ -432,6 +432,18 @@ static int dfhack_persistent_deleteTilemask(lua_State *state)
     return 1;
 }
 
+static int debug_ImGui(lua_State* state)
+{
+    ImGui::Begin("Hello");
+
+    ImGui::Text("Hello there!");
+
+    ImGui::End();
+
+    lua_pushboolean(state, true);
+    return 1;
+}
+
 static const luaL_Reg dfhack_persistent_funcs[] = {
     { "get", dfhack_persistent_get },
     { "delete", dfhack_persistent_delete },
@@ -439,6 +451,7 @@ static const luaL_Reg dfhack_persistent_funcs[] = {
     { "save", dfhack_persistent_save },
     { "getTilemask", dfhack_persistent_getTilemask },
     { "deleteTilemask", dfhack_persistent_deleteTilemask },
+    { "debugImGui", debug_ImGui },
     { NULL, NULL }
 };
 

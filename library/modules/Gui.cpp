@@ -2083,8 +2083,10 @@ bool Gui::inRenameBuilding()
 {
     if (!ui_sidebar_menus)
         return false;
-
+    /* TODO: understand how this changes for v50
     return ui_sidebar_menus->barracks.in_rename;
+    */
+    return false;
 }
 
 bool Gui::getViewCoords (int32_t &x, int32_t &y, int32_t &z)

@@ -219,7 +219,7 @@ df::specific_ref *Buildings::getSpecificRef(df::building *building, df::specific
 bool Buildings::setOwner(df::building *bld, df::unit *unit)
 {
     CHECK_NULL_POINTER(bld);
-
+/* TODO: understand how this changes for v50
     if (!bld->is_room)
         return false;
     if (bld->owner == unit)
@@ -255,6 +255,7 @@ bool Buildings::setOwner(df::building *bld, df::unit *unit)
     {
         bld->owner_id = -1;
     }
+*/
 
     return true;
 }
@@ -457,12 +458,14 @@ df::building *Buildings::allocInstance(df::coord pos, df::building_type type, in
         }
         break;
     }
+/* TODO: understand how this changes for v50
     case building_type::Coffin:
     {
         if (VIRTUAL_CAST_VAR(obj, df::building_coffinst, bld))
             obj->initBurialFlags(); // DF has this copy&pasted
         break;
     }
+*/
     case building_type::Trap:
     {
         if (VIRTUAL_CAST_VAR(obj, df::building_trapst, bld))
@@ -786,8 +789,10 @@ bool Buildings::containsTile(df::building *bld, df::coord2d tile, bool room)
 
     if (room)
     {
+/* TODO: understand how this changes for v50
         if (!bld->is_room || !bld->room.extents)
             return false;
+*/
     }
     else
     {
@@ -961,6 +966,7 @@ static void markBuildingTiles(df::building *bld, bool remove)
 
 static void linkRooms(df::building *bld)
 {
+/* TODO: understand how this changes for v50
     auto &vec = world->buildings.other[buildings_other_id::IN_PLAY];
 
     bool changed = false;
@@ -984,10 +990,12 @@ static void linkRooms(df::building *bld)
 
     if (changed)
         df::global::ui->equipment.update.bits.buildings = true;
+*/
 }
 
 static void unlinkRooms(df::building *bld)
 {
+/* TODO: understand how this changes for v50
     for (size_t i = 0; i < bld->parents.size(); i++)
     {
         auto parent = bld->parents[i];
@@ -996,6 +1004,7 @@ static void unlinkRooms(df::building *bld)
     }
 
     bld->parents.clear();
+*/
 }
 
 static void linkBuilding(df::building *bld)
@@ -1044,6 +1053,7 @@ static int getMaxStockpileId()
     return max_id;
 }
 
+/* TODO: understand how this changes for v50
 static int getMaxCivzoneId()
 {
     auto &vec = world->buildings.other[buildings_other_id::ANY_ZONE];
@@ -1058,6 +1068,7 @@ static int getMaxCivzoneId()
 
     return max_id;
 }
+*/
 
 bool Buildings::constructAbstract(df::building *bld)
 {
@@ -1071,14 +1082,17 @@ bool Buildings::constructAbstract(df::building *bld)
     switch (bld->getType())
     {
         case building_type::Stockpile:
+
             if (auto stock = strict_virtual_cast<df::building_stockpilest>(bld))
                 stock->stockpile_number = getMaxStockpileId() + 1;
             break;
 
+/* TODO: understand how this changes for v50
         case building_type::Civzone:
             if (auto zone = strict_virtual_cast<df::building_civzonest>(bld))
                 zone->zone_num = getMaxCivzoneId() + 1;
             break;
+*/
 
         default:
             break;
@@ -1381,6 +1395,7 @@ std::string Buildings::getRoomDescription(df::building *building, df::unit *unit
     CHECK_NULL_POINTER(building);
     // unit can be null
 
+/* TODO: understand how this changes for v50
     if (!building->is_room)
         return "";
 
@@ -1399,6 +1414,7 @@ std::string Buildings::getRoomDescription(df::building *building, df::unit *unit
     }
 
     return vector_get(room_quality_names[btype], size_t(level), string(""));
+*/ return "";
 }
 
 void Buildings::getStockpileContents(df::building_stockpilest *stockpile, std::vector<df::item*> *items)
@@ -1418,7 +1434,9 @@ bool Buildings::isActivityZone(df::building * building)
 {
     CHECK_NULL_POINTER(building);
     return building->getType() == building_type::Civzone
+/* TODO: understand how this changes for v50
             && building->getSubtype() == (short)civzone_type::ActivityZone;
+*/ ;
 }
 
 bool Buildings::isPenPasture(df::building * building)
@@ -1426,35 +1444,45 @@ bool Buildings::isPenPasture(df::building * building)
     if (!isActivityZone(building))
         return false;
 
+/* TODO: understand how this changes for v50
     return ((df::building_civzonest*) building)->zone_flags.bits.pen_pasture != 0;
+*/ return false;
 }
 
 bool Buildings::isPitPond(df::building * building)
 {
     if (!isActivityZone(building))
         return false;
+/* TODO: understand how this changes for v50
     return ((df::building_civzonest*) building)->zone_flags.bits.pit_pond != 0;
+*/ return false;
 }
 
 bool Buildings::isActive(df::building * building)
 {
     if (!isActivityZone(building))
         return false;
+/* TODO: understand how this changes for v50
     return ((df::building_civzonest*) building)->zone_flags.bits.active != 0;
+*/ return false;
 }
 
 bool Buildings::isHospital(df::building * building)
  {
      if (!isActivityZone(building))
          return false;
+/* TODO: understand how this changes for v50
      return ((df::building_civzonest*) building)->zone_flags.bits.hospital != 0;
+*/ return false;
  }
 
  bool Buildings::isAnimalTraining(df::building * building)
  {
      if (!isActivityZone(building))
          return false;
+/* TODO: understand how this changes for v50
      return ((df::building_civzonest*) building)->zone_flags.bits.animal_training != 0;
+*/ return false;
  }
 
 // returns building of pen/pit at cursor position (NULL if nothing found)

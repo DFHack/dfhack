@@ -9,6 +9,54 @@ using namespace DFHack;
 #include <vector>
 #include <algorithm>
 
+int ImTuiInterop::name_to_colour_index(const std::string& name)
+{
+    std::map<std::string, int> names =
+    {
+        {"RESET",       -1},
+        {"BLACK",        0},
+        {"BLUE",         1},
+        {"GREEN",        2},
+        {"CYAN",         3},
+        {"RED",          4},
+        {"MAGENTA",      5},
+        {"BROWN",        6},
+        {"GREY",         7},
+        {"DARKGREY",     8},
+        {"LIGHTBLUE",    9},
+        {"LIGHTGREEN",   10},
+        {"LIGHTCYAN",    11},
+        {"LIGHTRED",     12},
+        {"LIGHTMAGENTA", 13},
+        {"YELLOW",       14},
+        {"WHITE",        15},
+        {"MAX",          16},
+    };
+
+    return names.at(name);
+}
+
+//This isn't the only way that colour interop could be done
+ImVec4 ImTuiInterop::colour_interop(std::vector<int> col3)
+{
+    col3.resize(3);
+
+    //ImTui stuffs the character value in col.a
+    return { static_cast<float>(col3[0]), static_cast<float>(col3[1]), static_cast<float>(col3[2]), 1.f };
+}
+
+ImVec4 ImTuiInterop::named_colours(const std::string& fg, const std::string& bg, bool bold)
+{
+    std::vector<int> vals;
+    vals.resize(3);
+
+    vals[0] = name_to_colour_index(fg);
+    vals[1] = name_to_colour_index(bg);
+    vals[2] = bold;
+
+    return colour_interop(vals);
+}
+
 #define ABS(x) ((x >= 0) ? x : -x)
 
 void ScanLine(int x1, int y1, int x2, int y2, int ymax, std::vector<int>& xrange) {
@@ -98,8 +146,10 @@ void drawTriangle(ImVec2 p0, ImVec2 p1, ImVec2 p2, ImU32 col) {
                     cell |= ' ';
                     cell |= ((ImTui::TCell)(col) << 24);*/
 
+                    ImVec4 col4 = ImGui::ColorConvertU32ToFloat4(col);
+
                     //todo: colours
-                    const Screen::Pen pen(0, COLOR_BLUE, 0);
+                    const Screen::Pen pen(0, col4.x, col4.y);
 
                     Screen::paintString(pen, x, y + ymin, " ");
                 }
@@ -148,11 +198,42 @@ void ImTuiInterop::impl::init_current_context()
     ImGui::GetStyle().AntiAliasedFill = false;
     ImGui::GetStyle().CurveTessellationTol = 1.25f;
 
-    ImGui::GetStyle().Colors[ImGuiCol_WindowBg] = ImVec4(0.15, 0.15, 0.15, 1.0f);
+    /*ImGui::GetStyle().Colors[ImGuiCol_WindowBg] = ImVec4(0.15, 0.15, 0.15, 1.0f);
     ImGui::GetStyle().Colors[ImGuiCol_TitleBg] = ImVec4(0.35, 0.35, 0.35, 1.0f);
     ImGui::GetStyle().Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.15, 0.15, 0.15, 1.0f);
     ImGui::GetStyle().Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.75, 0.75, 0.75, 0.5f);
-    ImGui::GetStyle().Colors[ImGuiCol_NavHighlight] = ImVec4(0.00, 0.00, 0.00, 0.0f);
+    ImGui::GetStyle().Colors[ImGuiCol_NavHighlight] = ImVec4(0.00, 0.00, 0.00, 0.0f);*/
+
+    ImGuiStyle& style = ImGui::GetStyle();
+
+    for (int i = 0; i < ImGuiCol_COUNT; i++)
+    {
+        style.Colors[i] = named_colours("BLACK", "BLACK", false);
+    }
+
+    style.Colors[ImGuiCol_Text] = named_colours("WHITE", "BLACK", false);
+    style.Colors[ImGuiCol_TextDisabled] = named_colours("GREY", "BLACK", false);
+    style.Colors[ImGuiCol_TitleBg] = named_colours("BLUE", "BLACK", false);
+    style.Colors[ImGuiCol_TitleBgActive] = named_colours("LIGHTBLUE", "BLACK", false);
+    style.Colors[ImGuiCol_TitleBgCollapsed] = named_colours("BLUE", "BLACK", false);
+    style.Colors[ImGuiCol_MenuBarBg] = named_colours("BLUE", "BLACK", false);
+
+    //unsure about much of this
+    style.Colors[ImGuiCol_CheckMark] = named_colours("WHITE", "BLACK", false); //?
+    style.Colors[ImGuiCol_SliderGrab] = named_colours("WHITE", "BLACK", false); //?
+    style.Colors[ImGuiCol_SliderGrabActive] = named_colours("WHITE", "BLACK", false); //?
+    style.Colors[ImGuiCol_Button] = named_colours("WHITE", "BLACK", false); //?
+    style.Colors[ImGuiCol_ButtonHovered] = named_colours("BLACK", "RED", false); //?
+    style.Colors[ImGuiCol_ButtonActive] = named_colours("BLACK", "GREEN", false); //?
+    style.Colors[ImGuiCol_Header] = named_colours("BLACK", "BLUE", false); //?
+    style.Colors[ImGuiCol_HeaderHovered] = named_colours("BLACK", "BLUE", false); //?
+    style.Colors[ImGuiCol_HeaderActive] = named_colours("BLACK", "BLUE", false); //?
+    style.Colors[ImGuiCol_Separator] = named_colours("WHITE", "WHITE", false); //?
+    style.Colors[ImGuiCol_SeparatorHovered] = named_colours("WHITE", "WHITE", false); //?
+    style.Colors[ImGuiCol_SeparatorActive] = named_colours("WHITE", "WHITE", false); //?
+    style.Colors[ImGuiCol_ResizeGrip] = named_colours("WHITE", "BLACK", false); //?
+    style.Colors[ImGuiCol_ResizeGripHovered] = named_colours("WHITE", "BLACK", false); //?
+    style.Colors[ImGuiCol_ResizeGripActive] = named_colours("WHITE", "BLACK", false); //?
 
     ImFontConfig fontConfig;
     fontConfig.GlyphMinAdvanceX = 1.0f;
@@ -334,8 +415,10 @@ void ImTuiInterop::impl::draw_frame()
                                 
                                 //It looks like imtui stuffs the actual character in the a component
                                 char c = (col0 & 0xff000000) >> 24;
+                                
+                                ImVec4 col4 = ImGui::ColorConvertU32ToFloat4(col0);
 
-                                const Screen::Pen pen(0, COLOR_WHITE, 0);
+                                const Screen::Pen pen(0, col4.x, col4.y);
 
                                 Screen::paintString(pen, xx, yy, std::string(1, c));
                             }

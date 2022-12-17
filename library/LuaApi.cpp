@@ -1641,9 +1641,28 @@ static void imgui_text(std::string str)
     ImGui::Text("%s", str.c_str());
 }
 
+static void imgui_text_colored(std::vector<int> col3, std::string str)
+{
+    ImVec4 col = ImTuiInterop::colour_interop(col3);
+
+    ImGui::TextColored(col, "%s", str.c_str());
+}
+
 static bool imgui_button(std::string name)
 {
     return ImGui::Button(name.c_str());
+}
+
+static std::vector<int> imgui_name_to_colour(std::string fg, std::string bg, bool bold)
+{
+    std::vector<int> pseudo_rgb;
+    pseudo_rgb.resize(3);
+
+    pseudo_rgb.push_back(ImTuiInterop::name_to_colour_index(fg));
+    pseudo_rgb.push_back(ImTuiInterop::name_to_colour_index(bg));
+    pseudo_rgb.push_back(bold);
+
+    return pseudo_rgb;
 }
 
 static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
@@ -1651,10 +1670,11 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(Begin, imgui_begin),
     WRAPN(End, imgui_end),
     WRAPN(Text, imgui_text),
+    WRAPN(TextColored, imgui_text_colored),
     WRAPN(Button, imgui_button),
+    WRAPN(Name2Col, imgui_name_to_colour),
     { NULL, NULL }
 };
-
 
 /***** Job module *****/
 

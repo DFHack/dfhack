@@ -375,6 +375,8 @@ void ImTuiInterop::ui_state::deactivate()
 
 ImTuiInterop::ui_state ImTuiInterop::make_ui_system()
 {
+    std::cout << "Made ImTui System\n";
+
     ImGuiContext* ctx = ImGui::CreateContext();
     
     ui_state st;

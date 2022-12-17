@@ -211,12 +211,13 @@ void ImTuiInterop::impl::init_current_context()
         style.Colors[i] = named_colours("BLACK", "BLACK", false);
     }
 
+    //I really need a transparency colour
     style.Colors[ImGuiCol_Text] = named_colours("WHITE", "BLACK", false);
     style.Colors[ImGuiCol_TextDisabled] = named_colours("GREY", "BLACK", false);
     style.Colors[ImGuiCol_TitleBg] = named_colours("BLUE", "BLACK", false);
-    style.Colors[ImGuiCol_TitleBgActive] = named_colours("LIGHTBLUE", "BLACK", false);
-    style.Colors[ImGuiCol_TitleBgCollapsed] = named_colours("BLUE", "BLACK", false);
-    style.Colors[ImGuiCol_MenuBarBg] = named_colours("BLUE", "BLACK", false);
+    style.Colors[ImGuiCol_TitleBgActive] = named_colours("BLACK", "LIGHTBLUE", false);
+    style.Colors[ImGuiCol_TitleBgCollapsed] = named_colours("BLACK", "BLUE", false);
+    style.Colors[ImGuiCol_MenuBarBg] = named_colours("BLACK", "BLUE", false);
 
     //unsure about much of this
     style.Colors[ImGuiCol_CheckMark] = named_colours("WHITE", "BLACK", false); //?
@@ -418,7 +419,10 @@ void ImTuiInterop::impl::draw_frame()
                                 
                                 ImVec4 col4 = ImGui::ColorConvertU32ToFloat4(col0);
 
-                                const Screen::Pen pen(0, col4.x, col4.y);
+                                const Screen::Pen current_bg = Screen::readTile(xx, yy);
+
+                                //I am text, and have no background
+                                const Screen::Pen pen(0, col4.x, current_bg.bg);
 
                                 Screen::paintString(pen, xx, yy, std::string(1, c));
                             }

@@ -50,7 +50,6 @@ using namespace DFHack;
 #include "DataDefs.h"
 
 #include "df/announcement_flags.h"
-#include "df/assign_trade_status.h"
 #include "df/building_cagest.h"
 #include "df/building_civzonest.h"
 #include "df/building_furnacest.h"
@@ -82,36 +81,7 @@ using namespace DFHack;
 #include "df/ui_unit_view_mode.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
-#include "df/viewscreen_announcelistst.h"
-#include "df/viewscreen_assign_display_itemst.h"
-#include "df/viewscreen_buildinglistst.h"
-#include "df/viewscreen_customize_unitst.h"
-#include "df/viewscreen_dungeon_monsterstatusst.h"
-#include "df/viewscreen_dungeonmodest.h"
 #include "df/viewscreen_dwarfmodest.h"
-#include "df/viewscreen_itemst.h"
-#include "df/viewscreen_joblistst.h"
-#include "df/viewscreen_jobmanagementst.h"
-#include "df/viewscreen_jobst.h"
-#include "df/viewscreen_layer.h"
-#include "df/viewscreen_layer_assigntradest.h"
-#include "df/viewscreen_layer_militaryst.h"
-#include "df/viewscreen_layer_noblelistst.h"
-#include "df/viewscreen_layer_overall_healthst.h"
-#include "df/viewscreen_layer_stockpilest.h"
-#include "df/viewscreen_layer_unit_healthst.h"
-#include "df/viewscreen_layer_unit_relationshipst.h"
-#include "df/viewscreen_locationsst.h"
-#include "df/viewscreen_petst.h"
-#include "df/viewscreen_storesst.h"
-#include "df/viewscreen_textviewerst.h"
-#include "df/viewscreen_tradegoodsst.h"
-#include "df/viewscreen_unitlistst.h"
-#include "df/viewscreen_unitst.h"
-#include "df/viewscreen_reportlistst.h"
-#include "df/viewscreen_treasurelistst.h"
-#include "df/viewscreen_workquota_conditionst.h"
-#include "df/viewscreen_workshop_profilest.h"
 #include "df/world.h"
 
 const size_t MAX_REPORTS_SIZE = 3000; // DF clears old reports to maintain this vector size
@@ -136,10 +106,12 @@ using df::global::ui_menu_width;
 using df::global::ui_sidebar_menus;
 using df::global::world;
 
+/* TODO: understand how this changes for v50
 static df::layer_object_listst *getLayerList(df::viewscreen_layer *layer, int idx)
 {
     return virtual_cast<df::layer_object_listst>(vector_get(layer->layer_objects,idx));
 }
+*/
 
 static std::string getNameChunk(virtual_identity *id, int start, int end)
 {
@@ -343,6 +315,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             focus += "/List";
         break;
 
+/* TODO: understand how this changes for v50
     case Hauling:
         if (ui->hauling.in_assign_vehicle)
         {
@@ -381,12 +354,14 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
                 focus += "/Select/" + tag;
         }
         break;
+*/
 
     default:
         break;
     }
 }
 
+/* TODO: understand how this changes for v50
 DEFINE_GET_FOCUS_STRING_HANDLER(dungeonmode)
 {
     using df::global::ui_advmode;
@@ -599,6 +574,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(workquota_condition)
     if (screen->item_count_edit)
         focus += "/EditCount";
 }
+*/
 
 std::string Gui::getFocusString(df::viewscreen *top)
 {
@@ -637,8 +613,10 @@ bool Gui::default_hotkey(df::viewscreen *top)
     {
         if (strict_virtual_cast<df::viewscreen_dwarfmodest>(top))
             return true;
+/* TODO: understand how this changes for v50
         if (strict_virtual_cast<df::viewscreen_dungeonmodest>(top))
             return true;
+*/
     }
     return false;
 }
@@ -655,15 +633,19 @@ bool Gui::dwarfmode_hotkey(df::viewscreen *top)
 
 bool Gui::unitjobs_hotkey(df::viewscreen *top)
 {
+/* TODO: understand how this changes for v50
     // Require the unit or jobs list
     return !!strict_virtual_cast<df::viewscreen_joblistst>(top) ||
            !!strict_virtual_cast<df::viewscreen_unitlistst>(top);
+*/ return false;
 }
 
 bool Gui::item_details_hotkey(df::viewscreen *top)
 {
+/* TODO: understand how this changes for v50
     // Require the main dwarf mode screen
     return !!strict_virtual_cast<df::viewscreen_itemst>(top);
+*/ return false;
 }
 
 static bool has_cursor()
@@ -796,6 +778,7 @@ df::job *Gui::getSelectedWorkshopJob(color_ostream &out, bool quiet)
 
 bool Gui::any_job_hotkey(df::viewscreen *top)
 {
+/* TODO: understand how this changes for v50
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_joblistst, top))
         return vector_get(screen->jobs, screen->cursor_pos) != NULL;
 
@@ -803,10 +786,12 @@ bool Gui::any_job_hotkey(df::viewscreen *top)
         return vector_get(screen->jobs[screen->page], screen->cursor_pos[screen->page]) != NULL;
 
     return workshop_job_hotkey(top);
+*/ return false;
 }
 
 df::job *Gui::getSelectedJob(color_ostream &out, bool quiet)
 {
+/* TODO: understand how this changes for v50
     df::viewscreen *top = Core::getTopViewscreen();
 
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_jobst, top))
@@ -836,6 +821,7 @@ df::job *Gui::getSelectedJob(color_ostream &out, bool quiet)
         return dfscreen->getSelectedJob();
     else
         return getSelectedWorkshopJob(out, quiet);
+*/ return getSelectedWorkshopJob(out, quiet);
 }
 
 df::unit *Gui::getAnyUnit(df::viewscreen *top)
@@ -848,6 +834,7 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
     using df::global::ui_building_assign_units;
     using df::global::ui_building_item_cursor;
 
+/* TODO: understand how this changes for v50
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_unitst, top))
     {
         return screen->unit;
@@ -1101,6 +1088,7 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
     default:
         return NULL;
     }
+*/ return NULL;
 }
 
 bool Gui::any_unit_hotkey(df::viewscreen *top)
@@ -1126,6 +1114,7 @@ df::item *Gui::getAnyItem(df::viewscreen *top)
     using df::global::ui_unit_view_mode;
     using df::global::ui_building_item_cursor;
 
+/* TODO: understand how this changes for v50
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_textviewerst, top))
     {
         // return the main item if the parent screen is a viewscreen_itemst
@@ -1239,6 +1228,7 @@ df::item *Gui::getAnyItem(df::viewscreen *top)
     default:
         return NULL;
     }
+*/ return NULL;
 }
 
 bool Gui::any_item_hotkey(df::viewscreen *top)
@@ -1262,6 +1252,7 @@ df::building *Gui::getAnyBuilding(df::viewscreen *top)
     using df::global::ui_look_list;
     using df::global::ui_look_cursor;
 
+/* TODO: understand how this changes for v50
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_buildinglistst, top))
         return vector_get(screen->buildings, screen->cursor);
 
@@ -1303,6 +1294,7 @@ df::building *Gui::getAnyBuilding(df::viewscreen *top)
     default:
         return NULL;
     }
+*/ return NULL;
 }
 
 bool Gui::any_building_hotkey(df::viewscreen *top)
@@ -2091,8 +2083,10 @@ bool Gui::inRenameBuilding()
 {
     if (!ui_sidebar_menus)
         return false;
-
+    /* TODO: understand how this changes for v50
     return ui_sidebar_menus->barracks.in_rename;
+    */
+    return false;
 }
 
 bool Gui::getViewCoords (int32_t &x, int32_t &y, int32_t &z)
@@ -2156,6 +2150,7 @@ bool Gui::setDesignationCoords (const int32_t x, const int32_t y, const int32_t 
 df::coord Gui::getMousePos()
 {
     df::coord pos;
+/* TODO: understand how this changes for v50
     if (gps && gps->mouse_x > -1) {
         // return invalid coords if the cursor is not over the map
         DwarfmodeDims dims = getDwarfmodeViewDims();
@@ -2167,6 +2162,7 @@ df::coord Gui::getMousePos()
         pos.x += gps->mouse_x - 1;
         pos.y += gps->mouse_y - 1;
     }
+*/
     return pos;
 }
 

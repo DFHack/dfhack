@@ -79,11 +79,23 @@ using std::string;
 // returns text grid coordinates, even if the game map is scaled differently
 df::coord2d Screen::getMousePos()
 {
-    int32_t x = Renderer::GET_MOUSE_COORDS_SENTINEL, y = (int32_t)true;
-    if (!enabler || !enabler->renderer->get_mouse_coords(&x, &y)) {
+    int32_t pixelx = 0, pixely = 0, tilex = 0, tiley = 0;
+    if (!enabler || !enabler->renderer->get_mouse_coords(
+            &pixelx, &pixely, &tilex, &tiley)) {
         return df::coord2d(-1, -1);
     }
-    return df::coord2d(x, y);
+    return df::coord2d(tilex, tiley);
+}
+
+// returns the screen pixel coordinates
+df::coord2d Screen::getMousePixels()
+{
+    int32_t pixelx = 0, pixely = 0, tilex = 0, tiley = 0;
+    if (!enabler || !enabler->renderer->get_mouse_coords(
+            &pixelx, &pixely, &tilex, &tiley)) {
+        return df::coord2d(-1, -1);
+    }
+    return df::coord2d(pixelx, pixely);
 }
 
 df::coord2d Screen::getWindowSize()
@@ -108,6 +120,7 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
     if (x < 0 || x >= dim.x || y < 0 || y >= dim.y)
         return false;
 
+/* TODO: understand how this changes for v50
     int index = ((x * gps->dimy) + y);
     auto screen = gps->screen + index*4;
     screen[0] = uint8_t(pen.ch);
@@ -119,7 +132,7 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
     gps->screentexpos_grayscale[index] = (pen.tile_mode == Screen::Pen::TileColor);
     gps->screentexpos_cf[index] = pen.tile_fg;
     gps->screentexpos_cbr[index] = pen.tile_bg;
-
+*/
     return true;
 }
 
@@ -143,6 +156,7 @@ static Pen doGetTile_default(int x, int y, bool map)
     if (x < 0 || x >= dim.x || y < 0 || y >= dim.y)
         return Pen(0,0,0,-1);
 
+/* TODO: understand how this changes for v50
     int index = x*dim.y + y;
     auto screen = gps->screen + index*4;
     if (screen[3] & 0x80)
@@ -168,6 +182,7 @@ static Pen doGetTile_default(int x, int y, bool map)
     }
 
     return pen;
+*/ return Pen(0,0,0,-1);
 }
 
 GUI_HOOK_DEFINE(Screen::Hooks::get_tile, doGetTile_default);

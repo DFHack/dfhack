@@ -246,6 +246,12 @@ void ImTuiInterop::impl::init_current_context()
     int tex_w, tex_h;
     ImGui::GetIO().Fonts->GetTexDataAsRGBA32(&tex_pixels, &tex_w, &tex_h);
 
+    ImGui::GetIO().KeyMap[ImGuiKey_Tab] = 9;
+    ImGui::GetIO().KeyMap[ImGuiKey_Backspace] = 8;
+    ImGui::GetIO().KeyMap[ImGuiKey_Escape] = 27;
+    ImGui::GetIO().KeyMap[ImGuiKey_Enter] = 10;
+    ImGui::GetIO().KeyMap[ImGuiKey_Space] = 32;
+
     /*
     ImGui::GetIO().KeyMap[ImGuiKey_Tab]         = 9;
     ImGui::GetIO().KeyMap[ImGuiKey_LeftArrow]   = 260;
@@ -284,12 +290,21 @@ void ImTuiInterop::impl::init_current_context()
     ImGui::GetIO().DisplaySize = ImVec2(dim.x, dim.y);
 }
 
-void ImTuiInterop::impl::new_frame()
+void ImTuiInterop::impl::new_frame(std::set<df::interface_key> keys)
 {
     ImGuiIO& io = ImGui::GetIO();
 
     auto& keysDown = io.KeysDown;
     std::fill(keysDown, keysDown + 512, 0);
+
+    for (const df::interface_key& key : keys)
+    {
+        int charval = Screen::keyToChar(key);
+
+        keysDown[charval] = true;
+
+        io.AddInputCharacter(charval);
+    }
 
     df::coord2d dim = Screen::getWindowSize();
     ImGui::GetIO().DisplaySize = ImVec2(dim.x, dim.y);
@@ -449,6 +464,14 @@ ImTuiInterop::ui_state::ui_state()
     ctx = nullptr;
 }
 
+void ImTuiInterop::ui_state::feed(std::set<df::interface_key>* keys)
+{
+    if (keys == nullptr)
+        return;
+
+    unprocessed_keys.insert(keys->begin(), keys->end());
+}
+
 void ImTuiInterop::ui_state::activate()
 {
     last_context = ImGui::GetCurrentContext();
@@ -458,7 +481,8 @@ void ImTuiInterop::ui_state::activate()
 
 void ImTuiInterop::ui_state::new_frame()
 {
-    ImTuiInterop::impl::new_frame();
+    ImTuiInterop::impl::new_frame(std::move(unprocessed_keys));
+    unprocessed_keys.clear();
 }
 
 void ImTuiInterop::ui_state::draw_frame()

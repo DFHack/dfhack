@@ -3,6 +3,8 @@
 #include "imtui/imtui.h"
 #include <string>
 #include <vector>
+#include <set>
+#include "df/interface_key.h"
 
 struct ImGuiContext;
 
@@ -17,7 +19,7 @@ namespace ImTuiInterop
 	{
 		void init_current_context();
 
-		void new_frame();
+		void new_frame(std::set<df::interface_key> keys);
 
 		void draw_frame();
 
@@ -26,10 +28,14 @@ namespace ImTuiInterop
 
 	struct ui_state
 	{
+		std::set<df::interface_key> unprocessed_keys;
+
 		ImGuiContext* last_context;
 		ImGuiContext* ctx;
 
 		ui_state();
+
+		void feed(std::set<df::interface_key>* keys);
 
 		void activate();
 

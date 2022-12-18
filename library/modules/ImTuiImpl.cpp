@@ -304,6 +304,8 @@ void ImTuiInterop::impl::new_frame(std::set<df::interface_key> keys)
     auto& keysDown = io.KeysDown;
     std::fill(keysDown, keysDown + 512, false);
 
+    std::fill(io.MouseDown, io.MouseDown + 5, false);
+
     for (const df::interface_key& key : keys)
     {
         int charval = Screen::keyToChar(key);
@@ -355,10 +357,10 @@ void ImTuiInterop::impl::new_frame(std::set<df::interface_key> keys)
     io.MouseDown[1] = 0;
 
     if (df::global::enabler) {
-        if (df::global::enabler->mouse_lbut) {
+        if (df::global::enabler->mouse_lbut || df::global::enabler->mouse_lbut_down) {
             io.MouseDown[0] = 1;
         }
-        if (df::global::enabler->mouse_rbut) {
+        if (df::global::enabler->mouse_rbut || df::global::enabler->mouse_rbut_down) {
             io.MouseDown[1] = 1;
         }
     }

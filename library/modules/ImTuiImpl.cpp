@@ -302,9 +302,6 @@ void ImTuiInterop::impl::new_frame(std::set<df::interface_key> keys)
     {
         int charval = Screen::keyToChar(key);
 
-        if (charval < 0)
-            continue;
-
         //escape
         if (key == df::enums::interface_key::LEAVESCREEN)
         {
@@ -316,6 +313,9 @@ void ImTuiInterop::impl::new_frame(std::set<df::interface_key> keys)
         {
             charval = 10;
         }
+
+        if (charval < 0)
+            continue;
 
         keysDown[charval] = true;
 

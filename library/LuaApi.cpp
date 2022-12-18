@@ -1775,6 +1775,21 @@ static void imgui_setkeyboardfocushere(int offset)
     ImGui::SetKeyboardFocusHere(offset);
 }
 
+static void imgui_addrectfilled(std::vector<double> p_min, std::vector<double> p_max, std::vector<int> col3)
+{
+    p_min.resize(2);
+    p_max.resize(2);
+    col3.resize(3);
+
+    ImVec4 col = ImTuiInterop::colour_interop(col3);
+
+    ImU32 icol = ImGui::ColorConvertFloat4ToU32(col);
+
+    ImGui::GetWindowDrawList()->AddRectFilled(
+        { static_cast<float>(p_min[0]), static_cast<float>(p_min[1]) }, 
+        { static_cast<float>(p_max[0]), static_cast<float>(p_max[1]) }, icol);
+}
+
 static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(Debug, imgui_debug),
     WRAPN(Begin, imgui_begin),
@@ -1802,6 +1817,7 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPM(ImGui, IsAnyItemHovered),
     WRAPM(ImGui, IsAnyItemActive),
     WRAPM(ImGui, IsAnyItemFocused),
+    WRAPN(AddRectFilled, imgui_addrectfilled),
     { NULL, NULL }
 };
 
@@ -1967,6 +1983,17 @@ static int imgui_inputtext(lua_State* state)
     return 1;
 }
 
+static int imgui_getmousepos(lua_State* state)
+{
+    ImVec2 pos = ImGui::GetMousePos();
+
+    std::vector<double> result = { pos.x, pos.y };
+
+    Lua::PushVector(state, result);
+
+    return 1;
+}
+
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"Name2Col", imgui_name_to_colour},
     {"SameLine", imgui_sameline},
@@ -1974,6 +2001,7 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"Ref", imgui_ref},
     {"Get", imgui_get},
     {"InputText", imgui_inputtext},
+    {"GetMousePos", imgui_getmousepos},
     { NULL, NULL }
 };
 

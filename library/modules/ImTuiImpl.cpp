@@ -253,6 +253,12 @@ void ImTuiInterop::impl::init_current_context()
     ImGui::GetIO().KeyMap[ImGuiKey_Enter] = 10;
     ImGui::GetIO().KeyMap[ImGuiKey_Space] = 32;
 
+    //super arbitrary, need to undo all the ascii mapping
+    ImGui::GetIO().KeyMap[ImGuiKey_LeftArrow] = df::enums::interface_key::CURSOR_LEFT + 256;
+    ImGui::GetIO().KeyMap[ImGuiKey_RightArrow] = df::enums::interface_key::CURSOR_RIGHT + 256;
+    ImGui::GetIO().KeyMap[ImGuiKey_UpArrow] = df::enums::interface_key::CURSOR_UP + 256;
+    ImGui::GetIO().KeyMap[ImGuiKey_DownArrow] = df::enums::interface_key::CURSOR_DOWN + 256;
+
     /*
     ImGui::GetIO().KeyMap[ImGuiKey_Tab]         = 9;
     ImGui::GetIO().KeyMap[ImGuiKey_LeftArrow]   = 260;
@@ -304,22 +310,31 @@ void ImTuiInterop::impl::new_frame(std::set<df::interface_key> keys)
 
         //escape
         if (key == df::enums::interface_key::LEAVESCREEN)
-        {
             charval = 27;
-        }
 
         //enter
         if (key == df::enums::interface_key::SELECT)
-        {
             charval = 10;
-        }
+
+        //need to undo all the hackyness
+        if (key == df::enums::interface_key::CURSOR_LEFT)
+            charval = df::enums::interface_key::CURSOR_LEFT + 256;
+
+        if (key == df::enums::interface_key::CURSOR_RIGHT)
+            charval = df::enums::interface_key::CURSOR_RIGHT + 256;
+
+        if (key == df::enums::interface_key::CURSOR_UP)
+            charval = df::enums::interface_key::CURSOR_UP + 256;
+
+        if (key == df::enums::interface_key::CURSOR_DOWN)
+            charval = df::enums::interface_key::CURSOR_DOWN + 256;
 
         if (charval < 0)
             continue;
 
         keysDown[charval] = true;
 
-        if(std::isprint(charval))
+        if(charval < 256 && std::isprint(charval))
           io.AddInputCharacter(charval);
     }
 

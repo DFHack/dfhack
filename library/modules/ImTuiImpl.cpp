@@ -357,11 +357,9 @@ void ImTuiInterop::impl::new_frame(std::set<df::interface_key> keys)
     if (df::global::enabler) {
         if (df::global::enabler->mouse_lbut) {
             io.MouseDown[0] = 1;
-            df::global::enabler->mouse_lbut_down = 0;
         }
         if (df::global::enabler->mouse_rbut) {
             io.MouseDown[1] = 1;
-            df::global::enabler->mouse_rbut_down = 0;
         }
     }
 

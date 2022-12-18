@@ -1858,6 +1858,7 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(AddBackgroundRectFilled, imgui_addbackgroundrectfilled),
     WRAPN(AddBackgroundRect, imgui_addbackgroundrect),
     WRAPN(IsMouseDragging, imgui_ismousedragging),
+    WRAPM(ImGui, ResetMouseDragDelta),
     { NULL, NULL }
 };
 

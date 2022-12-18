@@ -1790,6 +1790,22 @@ static void imgui_addrectfilled(std::vector<double> p_min, std::vector<double> p
         { static_cast<float>(p_max[0]), static_cast<float>(p_max[1]) }, icol);
 }
 
+//todo: I need proper draw lists instead of duplicating this
+static void imgui_addbackgroundrectfilled(std::vector<double> p_min, std::vector<double> p_max, std::vector<int> col3)
+{
+    p_min.resize(2);
+    p_max.resize(2);
+    col3.resize(3);
+
+    ImVec4 col = ImTuiInterop::colour_interop(col3);
+
+    ImU32 icol = ImGui::ColorConvertFloat4ToU32(col);
+
+    ImGui::GetBackgroundDrawList()->AddRectFilled(
+        { static_cast<float>(p_min[0]), static_cast<float>(p_min[1]) }, 
+        { static_cast<float>(p_max[0]), static_cast<float>(p_max[1]) }, icol);
+}
+
 static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(Debug, imgui_debug),
     WRAPN(Begin, imgui_begin),
@@ -1818,6 +1834,7 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPM(ImGui, IsAnyItemActive),
     WRAPM(ImGui, IsAnyItemFocused),
     WRAPN(AddRectFilled, imgui_addrectfilled),
+    WRAPN(AddBackgroundRectFilled, imgui_addbackgroundrectfilled),
     { NULL, NULL }
 };
 

@@ -476,6 +476,7 @@ void ImTuiInterop::impl::draw_frame()
                             i += 3;
                         }
                         else {
+                            //todo: pass in clip rect
                             drawTriangle(pos0, pos1, pos2, col0);
                         }
                     }

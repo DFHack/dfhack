@@ -267,6 +267,8 @@ void ImTuiInterop::impl::init_current_context()
     ImGui::GetIO().KeyMap[ImGuiKey_UpArrow] = df::enums::interface_key::CURSOR_UP + 256;
     ImGui::GetIO().KeyMap[ImGuiKey_DownArrow] = df::enums::interface_key::CURSOR_DOWN + 256;
 
+    ImGui::GetIO().MouseDragThreshold = 0.f;
+
     /*
     ImGui::GetIO().KeyMap[ImGuiKey_Tab]         = 9;
     ImGui::GetIO().KeyMap[ImGuiKey_LeftArrow]   = 260;

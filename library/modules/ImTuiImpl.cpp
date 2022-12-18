@@ -117,8 +117,11 @@ void drawTriangle(ImVec2 p0, ImVec2 p1, ImVec2 p2, ImU32 col) {
     
     int screen_size = dim.x * dim.y;
 
-    int ymin = std::min(std::min(std::min((float)screen_size, p0.y), p1.y), p2.y);
-    int ymax = std::max(std::max(std::max(0.0f, p0.y), p1.y), p2.y);
+    //int ymin = std::floor(std::min(std::min(std::min((float)screen_size, p0.y), p1.y), p2.y));
+    //int ymax = std::floor(std::max(std::max(std::max(0.0f, p0.y), p1.y), p2.y));
+
+    int ymin = std::floor(std::min(std::min(p0.y, p1.y), p2.y));
+    int ymax = std::floor(std::max(std::max(p0.y, p1.y), p2.y));
 
     int ydelta = ymax - ymin + 1;
 
@@ -130,6 +133,14 @@ void drawTriangle(ImVec2 p0, ImVec2 p1, ImVec2 p2, ImU32 col) {
         g_xrange[2*y+0] = 999999;
         g_xrange[2*y+1] = -999999;
     }
+
+    p0.x = std::floor(p0.x);
+    p1.x = std::floor(p1.x);
+    p2.x = std::floor(p2.x);
+    
+    p0.y = std::floor(p0.y);
+    p1.y = std::floor(p1.y);
+    p2.y = std::floor(p2.y);
 
     ScanLine(p0.x, p0.y - ymin, p1.x, p1.y - ymin, ydelta, g_xrange);
     ScanLine(p1.x, p1.y - ymin, p2.x, p2.y - ymin, ydelta, g_xrange);

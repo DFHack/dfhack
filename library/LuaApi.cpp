@@ -1822,6 +1822,11 @@ static void imgui_addbackgroundrect(std::vector<double> p_min, std::vector<doubl
         { static_cast<float>(p_max[0]), static_cast<float>(p_max[1]) }, icol, 0.f, ImDrawCornerFlags_All, 0.5f);
 }
 
+static bool imgui_ismousedragging(int button)
+{
+    return ImGui::IsMouseDragging(button);
+}
+
 static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(Debug, imgui_debug),
     WRAPN(Begin, imgui_begin),
@@ -1852,6 +1857,7 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(AddRectFilled, imgui_addrectfilled),
     WRAPN(AddBackgroundRectFilled, imgui_addbackgroundrectfilled),
     WRAPN(AddBackgroundRect, imgui_addbackgroundrect),
+    WRAPN(IsMouseDragging, imgui_ismousedragging),
     { NULL, NULL }
 };
 
@@ -2028,6 +2034,19 @@ static int imgui_getmousepos(lua_State* state)
     return 1;
 }
 
+static int imgui_getmousedragdelta(lua_State* state)
+{
+    int button = lua_tointeger(state, -1);
+
+    ImVec2 diff = ImGui::GetMouseDragDelta(button);
+
+    std::vector<double> result = { diff.x, diff.y };
+
+    Lua::PushVector(state, result);
+
+    return 1;
+}
+
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"Name2Col", imgui_name_to_colour},
     {"SameLine", imgui_sameline},
@@ -2036,6 +2055,7 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"Get", imgui_get},
     {"InputText", imgui_inputtext},
     {"GetMousePos", imgui_getmousepos},
+    {"GetMouseDragDelta", imgui_getmousedragdelta},
     { NULL, NULL }
 };
 

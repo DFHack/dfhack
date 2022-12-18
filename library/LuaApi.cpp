@@ -1665,6 +1665,40 @@ static void imgui_popstylecolor(int n)
     ImGui::PopStyleColor(n);
 }
 
+static bool imgui_iskeydown(int n)
+{
+    return ImGui::IsKeyDown(n);
+}
+
+static bool imgui_iskeypressed(int n)
+{
+    return ImGui::IsKeyPressed(n);
+}
+
+static bool imgui_iskeyreleased(int n)
+{
+    return ImGui::IsKeyReleased(n);
+}
+
+static bool imgui_ismousedown(int button)
+{
+    return ImGui::IsMouseDown(button);
+}
+
+static bool imgui_ismouseclicked(int button)
+{
+    return ImGui::IsMouseClicked(button);
+}
+
+static bool imgui_ismousereleased(int button)
+{
+    return ImGui::IsMouseReleased(button);
+}
+static bool imgui_ismousedoubleclicked(int button)
+{
+    return ImGui::IsMouseDoubleClicked(button);
+}
+
 //This should probably go somewhere else long term, probably imtuiimpl.cpp
 //Could also stick these directly on the global
 static int imgui_style_index(std::string name)
@@ -1745,6 +1779,13 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(PushStyleColor, imgui_pushstylecolor),
     WRAPN(PopStyleColor, imgui_popstylecolor),
     WRAPN(StyleIndex, imgui_style_index),
+    WRAPN(IsKeyDown, imgui_iskeydown),
+    WRAPN(IsKeyPressed, imgui_iskeypressed),
+    WRAPN(IsKeyReleased, imgui_iskeyreleased),
+    WRAPN(IsMouseDown, imgui_ismousedown),
+    WRAPN(IsMouseClicked, imgui_ismouseclicked),
+    WRAPN(IsMouseReleased, imgui_ismousereleased),
+    WRAPN(IsMouseDoubleClicked, imgui_ismousedoubleclicked),
     { NULL, NULL }
 };
 

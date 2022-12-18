@@ -1819,7 +1819,7 @@ static void imgui_addbackgroundrect(std::vector<double> p_min, std::vector<doubl
 
     ImGui::GetBackgroundDrawList()->AddRect(
         { static_cast<float>(p_min[0]), static_cast<float>(p_min[1]) }, 
-        { static_cast<float>(p_max[0]), static_cast<float>(p_max[1]) }, icol);
+        { static_cast<float>(p_max[0]), static_cast<float>(p_max[1]) }, icol, 0.f, ImDrawCornerFlags_All, 0.5f);
 }
 
 static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {

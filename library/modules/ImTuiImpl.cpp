@@ -295,11 +295,23 @@ void ImTuiInterop::impl::new_frame(std::set<df::interface_key> keys)
     ImGuiIO& io = ImGui::GetIO();
 
     auto& keysDown = io.KeysDown;
-    std::fill(keysDown, keysDown + 512, 0);
+    std::fill(keysDown, keysDown + 512, false);
 
     for (const df::interface_key& key : keys)
     {
         int charval = Screen::keyToChar(key);
+
+        //escape
+        if (key == df::enums::interface_key::LEAVESCREEN)
+        {
+            charval = 27;
+        }
+
+        //enter
+        if (key == df::enums::interface_key::SELECT)
+        {
+            charval = 10;
+        }
 
         keysDown[charval] = true;
 

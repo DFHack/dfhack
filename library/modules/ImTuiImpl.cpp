@@ -117,9 +117,6 @@ void drawTriangle(ImVec2 p0, ImVec2 p1, ImVec2 p2, ImU32 col) {
     
     int screen_size = dim.x * dim.y;
 
-    //int ymin = std::floor(std::min(std::min(std::min((float)screen_size, p0.y), p1.y), p2.y));
-    //int ymax = std::floor(std::max(std::max(std::max(0.0f, p0.y), p1.y), p2.y));
-
     int ymin = std::floor(std::min(std::min(p0.y, p1.y), p2.y));
     int ymax = std::floor(std::max(std::max(p0.y, p1.y), p2.y));
 

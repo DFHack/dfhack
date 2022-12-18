@@ -415,12 +415,12 @@ void ImTuiInterop::impl::draw_frame()
                         auto pos1 = cmd_list->VtxBuffer[vidx1].pos;
                         auto pos2 = cmd_list->VtxBuffer[vidx2].pos;
 
-                        pos0.x = std::max(std::min(float(clip_rect.z - 1), pos0.x), clip_rect.x);
+                        /*pos0.x = std::max(std::min(float(clip_rect.z - 1), pos0.x), clip_rect.x);
                         pos1.x = std::max(std::min(float(clip_rect.z - 1), pos1.x), clip_rect.x);
                         pos2.x = std::max(std::min(float(clip_rect.z - 1), pos2.x), clip_rect.x);
                         pos0.y = std::max(std::min(float(clip_rect.w - 1), pos0.y), clip_rect.y);
                         pos1.y = std::max(std::min(float(clip_rect.w - 1), pos1.y), clip_rect.y);
-                        pos2.y = std::max(std::min(float(clip_rect.w - 1), pos2.y), clip_rect.y);
+                        pos2.y = std::max(std::min(float(clip_rect.w - 1), pos2.y), clip_rect.y);*/
 
                         auto uv0 = cmd_list->VtxBuffer[vidx0].uv;
                         auto uv1 = cmd_list->VtxBuffer[vidx1].uv;

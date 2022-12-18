@@ -1666,6 +1666,7 @@ static void imgui_popstylecolor(int n)
 }
 
 //This should probably go somewhere else long term, probably imtuiimpl.cpp
+//Could also stick these directly on the global
 static int imgui_style_index(std::string name)
 {
  #define IMNAME(x) {#x, x}

@@ -105,6 +105,8 @@ distribution.
 #include <lauxlib.h>
 #include <lualib.h>
 
+#include "imgui/misc/cpp/imgui_stdlib.h"
+
 using namespace DFHack;
 using namespace DFHack::LuaWrapper;
 
@@ -1937,12 +1939,27 @@ static int imgui_checkbox(lua_State* state)
     return 1;
 }
 
+//label, str*
+static int imgui_inputtext(lua_State* state)
+{
+    const char* label = lua_tostring(state, -2);
+    std::string val = imgui_decode_ref<std::string>(state);
+
+    bool result = ImGui::InputText(label, &val);
+
+    imgui_encode_into_ref(state, val);
+
+    lua_pushboolean(state, result);
+    return 1;
+}
+
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"Name2Col", imgui_name_to_colour},
     {"SameLine", imgui_sameline},
     {"Checkbox", imgui_checkbox},
     {"Ref", imgui_ref},
     {"Get", imgui_get},
+    {"InputText", imgui_inputtext},
     { NULL, NULL }
 };
 

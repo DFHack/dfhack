@@ -8,6 +8,7 @@ using namespace DFHack;
 #include <cmath>
 #include <vector>
 #include <algorithm>
+#include <cctype>
 
 int ImTuiInterop::name_to_colour_index(const std::string& name)
 {
@@ -247,7 +248,7 @@ void ImTuiInterop::impl::init_current_context()
     ImGui::GetIO().Fonts->GetTexDataAsRGBA32(&tex_pixels, &tex_w, &tex_h);
 
     ImGui::GetIO().KeyMap[ImGuiKey_Tab] = 9;
-    ImGui::GetIO().KeyMap[ImGuiKey_Backspace] = 8;
+    ImGui::GetIO().KeyMap[ImGuiKey_Backspace] = 0; //why
     ImGui::GetIO().KeyMap[ImGuiKey_Escape] = 27;
     ImGui::GetIO().KeyMap[ImGuiKey_Enter] = 10;
     ImGui::GetIO().KeyMap[ImGuiKey_Space] = 32;
@@ -301,6 +302,9 @@ void ImTuiInterop::impl::new_frame(std::set<df::interface_key> keys)
     {
         int charval = Screen::keyToChar(key);
 
+        if (charval < 0)
+            continue;
+
         //escape
         if (key == df::enums::interface_key::LEAVESCREEN)
         {
@@ -315,7 +319,8 @@ void ImTuiInterop::impl::new_frame(std::set<df::interface_key> keys)
 
         keysDown[charval] = true;
 
-        io.AddInputCharacter(charval);
+        if(std::isprint(charval))
+          io.AddInputCharacter(charval);
     }
 
     df::coord2d dim = Screen::getWindowSize();

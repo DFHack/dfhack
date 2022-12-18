@@ -1770,6 +1770,11 @@ static int imgui_style_index(std::string name)
     return names.at(name);
 }
 
+static void imgui_setkeyboardfocushere(int offset)
+{
+    ImGui::SetKeyboardFocusHere(offset);
+}
+
 static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(Debug, imgui_debug),
     WRAPN(Begin, imgui_begin),
@@ -1788,6 +1793,12 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(IsMouseClicked, imgui_ismouseclicked),
     WRAPN(IsMouseReleased, imgui_ismousereleased),
     WRAPN(IsMouseDoubleClicked, imgui_ismousedoubleclicked),
+    WRAPM(ImGui, SetItemDefaultFocus),
+    WRAPN(SetKeyboardFocusHere, imgui_setkeyboardfocushere),
+    WRAPM(ImGui, IsWindowAppearing),
+    WRAPM(ImGui, IsWindowCollapsed),
+    WRAPM(ImGui, IsWindowFocused),
+    WRAPM(ImGui, IsWindowHovered),
     { NULL, NULL }
 };
 

@@ -213,8 +213,8 @@ void ImTuiInterop::impl::init_current_context()
     }
 
     //I really need a transparency colour
-    style.Colors[ImGuiCol_Text] = named_colours("WHITE", "BLACK", false);
-    style.Colors[ImGuiCol_TextDisabled] = named_colours("GREY", "BLACK", false);
+    style.Colors[ImGuiCol_Text] = named_colours("WHITE", "WHITE", false);
+    style.Colors[ImGuiCol_TextDisabled] = named_colours("GREY", "GREY", false);
     style.Colors[ImGuiCol_TitleBg] = named_colours("BLACK", "BLUE", false);
     style.Colors[ImGuiCol_TitleBgActive] = named_colours("BLACK", "LIGHTBLUE", false);
     style.Colors[ImGuiCol_TitleBgCollapsed] = named_colours("BLACK", "BLUE", false);

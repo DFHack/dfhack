@@ -249,6 +249,10 @@ void ImTuiInterop::impl::init_current_context()
     //style.Colors[ImGuiCol_NavWindowingHighlight] = named_colours("WHITE", "YELLOW", false);
     //style.Colors[ImGuiCol_NavWindowingDimBg] = named_colours("WHITE", "YELLOW", false);
 
+    style.Colors[ImGuiCol_NavHighlight] = ImVec4(0,0,0,0);
+    style.Colors[ImGuiCol_NavWindowingHighlight] = ImVec4(0, 0, 0, 0);
+    style.Colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0, 0, 0, 0);
+
     ImFontConfig fontConfig;
     fontConfig.GlyphMinAdvanceX = 1.0f;
     fontConfig.SizePixels = 1.00;

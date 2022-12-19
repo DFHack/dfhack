@@ -1827,6 +1827,11 @@ static bool imgui_ismousedragging(int button)
     return ImGui::IsMouseDragging(button);
 }
 
+static bool imgui_isitemhovered()
+{
+    return ImGui::IsItemHovered();
+}
+
 static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(Debug, imgui_debug),
     WRAPN(Begin, imgui_begin),
@@ -1851,14 +1856,24 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPM(ImGui, IsWindowCollapsed),
     WRAPM(ImGui, IsWindowFocused),
     WRAPM(ImGui, IsWindowHovered),
-    WRAPM(ImGui, IsAnyItemHovered),
-    WRAPM(ImGui, IsAnyItemActive),
-    WRAPM(ImGui, IsAnyItemFocused),
     WRAPN(AddRectFilled, imgui_addrectfilled),
     WRAPN(AddBackgroundRectFilled, imgui_addbackgroundrectfilled),
     WRAPN(AddBackgroundRect, imgui_addbackgroundrect),
     WRAPN(IsMouseDragging, imgui_ismousedragging),
     WRAPM(ImGui, ResetMouseDragDelta),
+    WRAPN(IsItemHovered, imgui_isitemhovered),
+    WRAPM(ImGui, IsItemActive),
+    WRAPM(ImGui, IsItemFocused),
+    WRAPM(ImGui, IsItemClicked),
+    WRAPM(ImGui, IsItemVisible),
+    WRAPM(ImGui, IsItemEdited),
+    WRAPM(ImGui, IsItemActivated),
+    WRAPM(ImGui, IsItemDeactivated),
+    WRAPM(ImGui, IsItemDeactivatedAfterEdit),
+    WRAPM(ImGui, IsItemToggledOpen),
+    WRAPM(ImGui, IsAnyItemHovered),
+    WRAPM(ImGui, IsAnyItemActive),
+    WRAPM(ImGui, IsAnyItemFocused),
     { NULL, NULL }
 };
 

@@ -1874,6 +1874,8 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPM(ImGui, IsAnyItemHovered),
     WRAPM(ImGui, IsAnyItemActive),
     WRAPM(ImGui, IsAnyItemFocused),
+    WRAPM(ImGui, BeginGroup),
+    WRAPM(ImGui, EndGroup),
     { NULL, NULL }
 };
 

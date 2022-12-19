@@ -2065,6 +2065,15 @@ static int imgui_getmousedragdelta(lua_State* state)
     return 1;
 }
 
+static int imgui_getdisplaysize(lua_State* state)
+{
+    std::vector<double> result = { ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y };
+
+    Lua::PushVector(state, result);
+
+    return 1;
+}
+
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"Name2Col", imgui_name_to_colour},
     {"SameLine", imgui_sameline},
@@ -2074,6 +2083,7 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"InputText", imgui_inputtext},
     {"GetMousePos", imgui_getmousepos},
     {"GetMouseDragDelta", imgui_getmousedragdelta},
+    {"GetDisplaySize", imgui_getdisplaysize},
     { NULL, NULL }
 };
 

@@ -1832,6 +1832,11 @@ static bool imgui_isitemhovered()
     return ImGui::IsItemHovered();
 }
 
+static void imgui_settooltip(std::string text)
+{
+    ImGui::SetTooltip("%s", text.c_str());
+}
+
 static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(Debug, imgui_debug),
     WRAPN(Begin, imgui_begin),
@@ -1876,6 +1881,7 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPM(ImGui, IsAnyItemFocused),
     WRAPM(ImGui, BeginGroup),
     WRAPM(ImGui, EndGroup),
+    WRAPN(SetTooltip, imgui_settooltip),
     { NULL, NULL }
 };
 

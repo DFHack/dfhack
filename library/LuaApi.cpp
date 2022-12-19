@@ -1857,6 +1857,11 @@ static bool imgui_wantcaptureinput()
     return imgui_wantcapturemouse() || imgui_wantcapturekeyboard() || imgui_wanttextinput();
 }
 
+static void imgui_add_nav_gate()
+{
+
+}
+
 static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(Debug, imgui_debug),
     WRAPN(Begin, imgui_begin),
@@ -1906,6 +1911,7 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(WantCaptureKeyboard, imgui_wantcapturekeyboard),
     WRAPN(WantTextInput, imgui_wanttextinput),
     WRAPN(WantCaptureInput, imgui_wantcaptureinput),
+    WRAPN(AddNavGate, imgui_addnavgate),
     { NULL, NULL }
 };
 

@@ -245,6 +245,10 @@ void ImTuiInterop::impl::init_current_context()
     style.Colors[ImGuiCol_ResizeGripHovered] = named_colours("WHITE", "BLACK", false); //?
     style.Colors[ImGuiCol_ResizeGripActive] = named_colours("WHITE", "BLACK", false); //?
 
+    //style.Colors[ImGuiCol_NavHighlight] = named_colours("WHITE", "YELLOW", false);
+    //style.Colors[ImGuiCol_NavWindowingHighlight] = named_colours("WHITE", "YELLOW", false);
+    //style.Colors[ImGuiCol_NavWindowingDimBg] = named_colours("WHITE", "YELLOW", false);
+
     ImFontConfig fontConfig;
     fontConfig.GlyphMinAdvanceX = 1.0f;
     fontConfig.SizePixels = 1.00;
@@ -305,6 +309,8 @@ void ImTuiInterop::impl::init_current_context()
 
     df::coord2d dim = Screen::getWindowSize();
     ImGui::GetIO().DisplaySize = ImVec2(dim.x, dim.y);
+
+    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 }
 
 void ImTuiInterop::impl::new_frame(std::set<df::interface_key> keys)

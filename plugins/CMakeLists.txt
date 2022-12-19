@@ -2,12 +2,12 @@ include(Plugins.cmake)
 
 option(BUILD_STONESENSE "Build stonesense (needs a checkout first)." OFF)
 if(BUILD_STONESENSE)
-    add_subdirectory(stonesense)
+    #add_subdirectory(stonesense)
 endif()
 
 option(BUILD_ISOWORLD "Build isoworld (needs a checkout first)." OFF)
 if(BUILD_ISOWORLD)
-    add_subdirectory(isoworld)
+    #add_subdirectory(isoworld)
     if(UNIX)
         if(APPLE)
             # TODO: add an OSX runner script
@@ -21,12 +21,12 @@ endif()
 
 option(BUILD_DEV_PLUGINS "Build developer plugins." OFF)
 if(BUILD_DEV_PLUGINS)
-    add_subdirectory(devel)
+    #add_subdirectory(devel)
 endif()
 
 option(BUILD_RUBY "Build ruby binding." ON)
 if(BUILD_RUBY)
-    add_subdirectory(ruby)
+    #add_subdirectory(ruby)
 endif()
 
 install(DIRECTORY lua/

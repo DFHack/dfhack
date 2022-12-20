@@ -2,6 +2,7 @@
 #include "modules/Screen.h"
 #include "ColorText.h"
 #include "df/enabler.h"
+#include "df/interface_key.h"
 
 using namespace DFHack;
 
@@ -321,8 +322,13 @@ void ImTuiInterop::impl::new_frame(std::set<df::interface_key> keys)
 {
     ImGuiIO& io = ImGui::GetIO();
 
+    int arraysize_of_keysdown = IM_ARRAYSIZE(io.KeysDown);
+    int max_df_keys = df::enum_traits<df::interface_key>::last_item_value + 1;
+
+    assert(arraysize_of_keysdown >= max_df_keys);
+
     auto& keysDown = io.KeysDown;
-    std::fill(keysDown, keysDown + 512, false);
+    std::fill(keysDown, keysDown + arraysize_of_keysdown, false);
 
     std::fill(io.MouseDown, io.MouseDown + 5, false);
 

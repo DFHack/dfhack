@@ -197,7 +197,7 @@ void ImTuiInterop::impl::init_current_context()
     ImGui::GetStyle().FrameBorderSize = 0.0f;
     ImGui::GetStyle().ItemSpacing = ImVec2(1.0f, 0.0f);
     ImGui::GetStyle().ItemInnerSpacing = ImVec2(1.0f, 0.0f);
-    ImGui::GetStyle().TouchExtraPadding = ImVec2(0.5f, 0.0f);
+    ImGui::GetStyle().TouchExtraPadding = ImVec2(0.0f, 0.0f);
     ImGui::GetStyle().IndentSpacing = 1.0f;
     ImGui::GetStyle().ColumnsMinSpacing = 1.0f;
     ImGui::GetStyle().ScrollbarSize = 0.5f;

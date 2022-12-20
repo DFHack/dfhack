@@ -2246,6 +2246,37 @@ static int imgui_isitemhovered(lua_State* state)
     return 1;
 }
 
+static int imgui_ismousehoveringrect(lua_State* state)
+{
+    ImVec2 tl;
+    ImVec2 br;
+    bool clip = true;
+
+    int count = lua_gettop(state);
+    
+    if (count == 2)
+    {
+        tl = imgui_decode<ImVec2>(state, -2);
+        br = imgui_decode<ImVec2>(state, -1);
+    }
+
+    if (count == 3)
+    {
+        tl = imgui_decode<ImVec2>(state, -3);
+        br = imgui_decode<ImVec2>(state, -2);
+        clip = imgui_decode<bool>(state, -1);
+    }
+
+    //imgui uses the convention [min <= val < max] 
+    //Which is great if our coordinates aren't integer, but they are
+    br.x += 1;
+    br.y += 1;
+
+    imgui_push_generic(state, ImGui::IsMouseHoveringRect(tl, br, clip));
+
+    return 1;
+}
+
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"SameLine", imgui_sameline},
     {"Checkbox", imgui_checkbox},
@@ -2264,6 +2295,7 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"TextBackgroundColored", imgui_textbackgroundcolored},
     {"PushStyleColor", imgui_pushstylecolor},
     {"IsItemHovered", imgui_isitemhovered},
+    {"IsMouseHoveringRect", imgui_ismousehoveringrect},
     { NULL, NULL }
 };
 

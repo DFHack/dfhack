@@ -1638,6 +1638,11 @@ static void imgui_end()
     ImGui::End();
 }
 
+static void imgui_textunformatted(std::string str)
+{
+    ImGui::TextUnformatted(str.c_str(), str.c_str() + str.size());
+}
+
 static void imgui_text(std::string str)
 {
     ImGui::Text("%s", str.c_str());
@@ -1648,6 +1653,26 @@ static void imgui_text_colored(std::vector<int> col3, std::string str)
     ImVec4 col = ImTuiInterop::colour_interop(col3);
 
     ImGui::TextColored(col, "%s", str.c_str());
+}
+
+static void imgui_textdisabled(std::string str)
+{
+    ImGui::TextDisabled("%s", str.c_str());
+}
+
+static void imgui_textwrapped(std::string str)
+{
+    ImGui::TextWrapped("%s", str.c_str());
+}
+
+static void imgui_labeltext(std::string label, std::string text)
+{
+    ImGui::LabelText(label.c_str(), "%s", text.c_str());
+}
+
+static void imgui_bullettext(std::string text)
+{
+    ImGui::BulletText("%s", text.c_str());
 }
 
 static void imgui_textbackgroundcolored(std::vector<int> col3, std::string str)
@@ -1834,9 +1859,14 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(Debug, imgui_debug),
     WRAPN(Begin, imgui_begin),
     WRAPN(End, imgui_end),
+    WRAPN(TextUnformatted, imgui_textunformatted),
     WRAPN(Text, imgui_text),
     WRAPN(TextColored, imgui_text_colored),
     WRAPN(TextBackgroundColored, imgui_textbackgroundcolored),
+    WRAPN(TextDisabled, imgui_textdisabled),
+    WRAPN(TextWrapped, imgui_textwrapped),
+    WRAPN(LabelText, imgui_labeltext),
+    WRAPN(BulletTExt, imgui_bullettext),
     WRAPN(Button, imgui_button),
     WRAPM(ImGui, NewLine),
     WRAPN(PushStyleColor, imgui_pushstylecolor),

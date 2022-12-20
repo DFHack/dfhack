@@ -1853,11 +1853,6 @@ static bool imgui_begin(std::string title)
     return ImGui::Begin(title.c_str(), nullptr, 0);
 }
 
-static void imgui_end()
-{
-    ImGui::End();
-}
-
 static void imgui_textunformatted(std::string str)
 {
     ImGui::TextUnformatted(str.c_str(), str.c_str() + str.size());
@@ -1898,38 +1893,14 @@ static void imgui_popstylecolor(int n)
     ImGui::PopStyleColor(n);
 }
 
-static bool imgui_iskeydown(int n)
-{
-    return ImGui::IsKeyDown(n);
-}
-
 static bool imgui_iskeypressed(int n)
 {
     return ImGui::IsKeyPressed(n);
 }
 
-static bool imgui_iskeyreleased(int n)
-{
-    return ImGui::IsKeyReleased(n);
-}
-
-static bool imgui_ismousedown(int button)
-{
-    return ImGui::IsMouseDown(button);
-}
-
 static bool imgui_ismouseclicked(int button)
 {
     return ImGui::IsMouseClicked(button);
-}
-
-static bool imgui_ismousereleased(int button)
-{
-    return ImGui::IsMouseReleased(button);
-}
-static bool imgui_ismousedoubleclicked(int button)
-{
-    return ImGui::IsMouseDoubleClicked(button);
 }
 
 //This should probably go somewhere else long term, probably imtuiimpl.cpp
@@ -1990,7 +1961,7 @@ static void imgui_addnavgate()
 
 static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(Begin, imgui_begin),
-    WRAPN(End, imgui_end),
+    WRAPM(ImGui, End),
     WRAPN(TextUnformatted, imgui_textunformatted),
     WRAPN(Text, imgui_text),
     WRAPN(TextDisabled, imgui_textdisabled),
@@ -2001,13 +1972,13 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPM(ImGui, NewLine),
     WRAPN(PopStyleColor, imgui_popstylecolor),
     WRAPN(StyleIndex, imgui_style_index),
-    WRAPN(IsKeyDown, imgui_iskeydown),
+    WRAPM(ImGui, IsKeyDown),
     WRAPN(IsKeyPressed, imgui_iskeypressed),
-    WRAPN(IsKeyReleased, imgui_iskeyreleased),
-    WRAPN(IsMouseDown, imgui_ismousedown),
+    WRAPM(ImGui, IsKeyReleased),
+    WRAPM(ImGui, IsMouseDown),
     WRAPN(IsMouseClicked, imgui_ismouseclicked),
-    WRAPN(IsMouseReleased, imgui_ismousereleased),
-    WRAPN(IsMouseDoubleClicked, imgui_ismousedoubleclicked),
+    WRAPM(ImGui, IsMouseReleased),
+    WRAPM(ImGui, IsMouseDoubleClicked),
     WRAPM(ImGui, SetItemDefaultFocus),
     WRAPN(SetKeyboardFocusHere, imgui_setkeyboardfocushere),
     WRAPM(ImGui, IsWindowAppearing),

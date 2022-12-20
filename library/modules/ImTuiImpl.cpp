@@ -47,6 +47,15 @@ ImVec4 ImTuiInterop::colour_interop(std::vector<int> col3)
     return { static_cast<float>(col3[0]), static_cast<float>(col3[1]), static_cast<float>(col3[2]), 1.f };
 }
 
+//This isn't the only way that colour interop could be done
+ImVec4 ImTuiInterop::colour_interop(std::vector<double> col3)
+{
+    col3.resize(3);
+
+    //ImTui stuffs the character value in col.a
+    return { static_cast<float>(col3[0]), static_cast<float>(col3[1]), static_cast<float>(col3[2]), 1.f };
+}
+
 ImVec4 ImTuiInterop::named_colours(const std::string& fg, const std::string& bg, bool bold)
 {
     std::vector<int> vals;

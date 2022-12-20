@@ -1768,53 +1768,6 @@ static void imgui_setkeyboardfocushere(int offset)
     ImGui::SetKeyboardFocusHere(offset);
 }
 
-static void imgui_addrectfilled(std::vector<double> p_min, std::vector<double> p_max, std::vector<int> col3)
-{
-    p_min.resize(2);
-    p_max.resize(2);
-    col3.resize(3);
-
-    ImVec4 col = ImTuiInterop::colour_interop(col3);
-
-    ImU32 icol = ImGui::ColorConvertFloat4ToU32(col);
-
-    ImGui::GetWindowDrawList()->AddRectFilled(
-        { static_cast<float>(p_min[0]), static_cast<float>(p_min[1]) }, 
-        { static_cast<float>(p_max[0]), static_cast<float>(p_max[1]) }, icol);
-}
-
-//todo: I need proper draw lists instead of duplicating this
-static void imgui_addbackgroundrectfilled(std::vector<double> p_min, std::vector<double> p_max, std::vector<int> col3)
-{
-    p_min.resize(2);
-    p_max.resize(2);
-    col3.resize(3);
-
-    ImVec4 col = ImTuiInterop::colour_interop(col3);
-
-    ImU32 icol = ImGui::ColorConvertFloat4ToU32(col);
-
-    ImGui::GetBackgroundDrawList()->AddRectFilled(
-        { static_cast<float>(p_min[0]), static_cast<float>(p_min[1]) }, 
-        { static_cast<float>(p_max[0]), static_cast<float>(p_max[1]) }, icol);
-}
-
-//todo: I need proper draw lists instead of duplicating this
-static void imgui_addbackgroundrect(std::vector<double> p_min, std::vector<double> p_max, std::vector<int> col3)
-{
-    p_min.resize(2);
-    p_max.resize(2);
-    col3.resize(3);
-
-    ImVec4 col = ImTuiInterop::colour_interop(col3);
-
-    ImU32 icol = ImGui::ColorConvertFloat4ToU32(col);
-
-    ImGui::GetBackgroundDrawList()->AddRect(
-        { static_cast<float>(p_min[0]), static_cast<float>(p_min[1]) }, 
-        { static_cast<float>(p_max[0]), static_cast<float>(p_max[1]) }, icol, 0.f, ImDrawCornerFlags_All, 0.5f);
-}
-
 static bool imgui_ismousedragging(int button)
 {
     return ImGui::IsMouseDragging(button);
@@ -1885,9 +1838,6 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPM(ImGui, IsWindowCollapsed),
     WRAPM(ImGui, IsWindowFocused),
     WRAPM(ImGui, IsWindowHovered),
-    WRAPN(AddRectFilled, imgui_addrectfilled),
-    WRAPN(AddBackgroundRectFilled, imgui_addbackgroundrectfilled),
-    WRAPN(AddBackgroundRect, imgui_addbackgroundrect),
     WRAPN(IsMouseDragging, imgui_ismousedragging),
     WRAPM(ImGui, ResetMouseDragDelta),
     WRAPN(IsItemHovered, imgui_isitemhovered),
@@ -1994,6 +1944,9 @@ static int imgui_get(lua_State* state)
 template<typename T, typename U>
 static void imgui_decode_impl(lua_State* state, std::map<T, U>& out, int index);
 
+template<typename T>
+static void imgui_decode_impl(lua_State* state, std::vector<T>& out, int index);
+
 static void imgui_decode_impl(lua_State* state, double& out, int index)
 {
     lua_pushvalue(state, index);
@@ -2026,12 +1979,12 @@ static void imgui_decode_impl(lua_State* state, ImVec2& out, int index)
 }
 
 template<typename T>
-static void imgui_decode_impl(lua_State* state, T* ptr, int index)
+static void imgui_decode_impl(lua_State* state, T*& ptr, int index)
 {
     static_assert(!std::is_same<T, char>::value, "a char* ptr in here is probably not what you want");
 
     lua_pushvalue(state, index);
-    ptr = lua_topointer(state, -1);
+    ptr = (T*)lua_topointer(state, -1);
     lua_pop(state, 1);
 }
 
@@ -2059,6 +2012,36 @@ static void imgui_decode_impl(lua_State* state, std::map<T, U>& out, int index)
     }
 
     lua_pop(state, 1);
+}
+
+template<typename T>
+static void imgui_decode_impl(lua_State* state, std::vector<T>& out, int index)
+{
+    out.clear();
+
+    size_t len = lua_rawlen(state, index);
+
+    out.reserve(len);
+
+    for (size_t i = 0; i < len; i++)
+    {
+        lua_rawgeti(state, index, i);
+
+        T val;
+        imgui_decode_impl(state, val, -1);
+
+        out.push_back(std::move(val));
+
+        lua_pop(state, 1);
+    }
+}
+
+template<typename T>
+static T imgui_decode(lua_State* state, int index)
+{
+    T val;
+    imgui_decode_impl(state, val, index);
+    return val;
 }
 
 //decodes ref at -1
@@ -2107,6 +2090,11 @@ static void imgui_push_generic(lua_State* state, T* ptr)
     static_assert(!std::is_same<T, char>::value, "a char* ptr in here is probably not what you want");
 
     lua_pushlightuserdata(state, ptr);
+}
+
+static void imgui_push_generic(lua_State* state, lua_CFunction f)
+{
+    lua_pushcfunction(state, f);
 }
 
 template<typename T, typename U>
@@ -2187,6 +2175,63 @@ static int imgui_getdisplaysize(lua_State* state)
     return 1;
 }
 
+//-4,        -3, -2, -1
+//draw_list, tl, br, col
+static int imgui_addrect(lua_State* state)
+{
+    ImDrawList* lst = imgui_decode<ImDrawList*>(state, -4);
+    ImVec2 tl = imgui_decode<ImVec2>(state, -3);
+    ImVec2 br = imgui_decode<ImVec2>(state, -2);
+    std::vector<double> col3 = imgui_decode<std::vector<double>>(state, -1);
+
+    col3.resize(3);
+
+    ImVec4 col = ImTuiInterop::colour_interop(col3);
+    ImU32 icol = ImGui::ColorConvertFloat4ToU32(col);
+
+    lst->AddRect(tl, br, icol, 0.f, ImDrawCornerFlags_All, 0.5f);
+
+    return 0;
+}
+
+static int imgui_addrectfilled(lua_State* state)
+{
+    ImDrawList* lst = imgui_decode<ImDrawList*>(state, -4);
+    ImVec2 tl = imgui_decode<ImVec2>(state, -3);
+    ImVec2 br = imgui_decode<ImVec2>(state, -2);
+    std::vector<double> col3 = imgui_decode<std::vector<double>>(state, -1);
+
+    col3.resize(3);
+
+    ImVec4 col = ImTuiInterop::colour_interop(col3);
+    ImU32 icol = ImGui::ColorConvertFloat4ToU32(col);
+
+    lst->AddRectFilled(tl, br, icol);
+
+    return 0;
+}
+
+static int imgui_getbackgrounddrawlist(lua_State* state)
+{
+    imgui_push_generic(state, ImGui::GetBackgroundDrawList());
+    
+    return 1;
+}
+
+static int imgui_getforegrounddrawlist(lua_State* state)
+{
+    imgui_push_generic(state, ImGui::GetForegroundDrawList());
+
+    return 1;
+}
+
+static int imgui_getcurrentdrawlist(lua_State* state)
+{
+    imgui_push_generic(state, ImGui::GetWindowDrawList());
+
+    return 1;
+}
+
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"Name2Col", imgui_name_to_colour},
     {"SameLine", imgui_sameline},
@@ -2197,6 +2242,11 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"GetMousePos", imgui_getmousepos},
     {"GetMouseDragDelta", imgui_getmousedragdelta},
     {"GetDisplaySize", imgui_getdisplaysize},
+    {"AddRect", imgui_addrect},
+    {"AddRectFilled", imgui_addrectfilled},
+    {"GetBackgroundDrawList", imgui_getbackgrounddrawlist},
+    {"GetForegroundDrawList", imgui_getforegrounddrawlist},
+    {"GetCurrentDrawList", imgui_getcurrentdrawlist},
     { NULL, NULL }
 };
 

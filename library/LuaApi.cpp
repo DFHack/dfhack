@@ -1991,6 +1991,9 @@ static int imgui_get(lua_State* state)
     return 1;
 }
 
+template<typename T, typename U>
+static void imgui_decode_impl(lua_State* state, std::map<T, U>& out, int index);
+
 static void imgui_decode_impl(lua_State* state, double& out, int index)
 {
     lua_pushvalue(state, index);
@@ -2013,6 +2016,13 @@ static void imgui_decode_impl(lua_State* state, bool& out, int index)
     lua_pushvalue(state, index);
     out = lua_toboolean(state, -1);
     lua_pop(state, 1);
+}
+
+static void imgui_decode_impl(lua_State* state, ImVec2& out, int index)
+{
+    std::map<std::string, double> from_map;
+    imgui_decode_impl(state, from_map, index);
+    out = { static_cast<float>(from_map["x"]), static_cast<float>(from_map["y"]) };
 }
 
 template<typename T, typename U>
@@ -2056,6 +2066,9 @@ static T imgui_decode_ref(lua_State* state)
     return out;
 }
 
+template<typename T, typename U>
+static void imgui_push_generic(lua_State* state, const std::map<T, U>& val);
+
 static void imgui_push_generic(lua_State* state, double val)
 {
     lua_pushnumber(state, val);
@@ -2069,6 +2082,13 @@ static void imgui_push_generic(lua_State* state, const std::string& val)
 static void imgui_push_generic(lua_State* state, bool val)
 {
     lua_pushboolean(state, val);
+}
+
+static void imgui_push_generic(lua_State* state, ImVec2 val)
+{
+    std::map<std::string, double> as_map = { {"x", val.x}, {"y", val.y} };
+
+    imgui_push_generic(state, as_map);
 }
 
 template<typename T, typename U>
@@ -2126,9 +2146,7 @@ static int imgui_getmousepos(lua_State* state)
 {
     ImVec2 pos = ImGui::GetMousePos();
 
-    std::map<std::string, double> result = { {"x", pos.x}, {"y", pos.y} };
-
-    imgui_push_generic(state, result);
+    imgui_push_generic(state, pos);
 
     return 1;
 }
@@ -2139,18 +2157,14 @@ static int imgui_getmousedragdelta(lua_State* state)
 
     ImVec2 diff = ImGui::GetMouseDragDelta(button);
 
-    std::vector<double> result = { diff.x, diff.y };
-
-    Lua::PushVector(state, result);
+    imgui_push_generic(state, diff);
 
     return 1;
 }
 
 static int imgui_getdisplaysize(lua_State* state)
 {
-    std::vector<double> result = { ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y };
-
-    Lua::PushVector(state, result);
+    imgui_push_generic(state, ImGui::GetIO().DisplaySize);
 
     return 1;
 }

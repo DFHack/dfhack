@@ -76,26 +76,20 @@ using std::string;
  * Screen painting API.
  */
 
-// returns text grid coordinates, even if the game map is scaled differently
+// returns ui grid coordinates, even if the game map is scaled differently
 df::coord2d Screen::getMousePos()
 {
-    int32_t pixelx = 0, pixely = 0, tilex = 0, tiley = 0;
-    if (!enabler || !enabler->renderer->get_mouse_coords(
-            &pixelx, &pixely, &tilex, &tiley)) {
+    if (!gps)
         return df::coord2d(-1, -1);
-    }
-    return df::coord2d(tilex, tiley);
+    return df::coord2d(gps->mouse_x_tile, gps->mouse_y_tile);
 }
 
 // returns the screen pixel coordinates
 df::coord2d Screen::getMousePixels()
 {
-    int32_t pixelx = 0, pixely = 0, tilex = 0, tiley = 0;
-    if (!enabler || !enabler->renderer->get_mouse_coords(
-            &pixelx, &pixely, &tilex, &tiley)) {
+    if (!gps)
         return df::coord2d(-1, -1);
-    }
-    return df::coord2d(pixelx, pixely);
+    return df::coord2d(gps->mouse_x_pixel, gps->mouse_y_pixel);
 }
 
 df::coord2d Screen::getWindowSize()
@@ -120,18 +114,22 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
     if (x < 0 || x >= dim.x || y < 0 || y >= dim.y)
         return false;
 
-/* TODO: understand how this changes for v50
+// TODO: understand how this changes for v50
     int index = ((x * gps->dimy) + y);
-    auto screen = gps->screen + index*4;
-    screen[0] = uint8_t(pen.ch);
-    screen[1] = uint8_t(pen.fg) & 15;
-    screen[2] = uint8_t(pen.bg) & 15;
-    screen[3] = uint8_t(pen.bold) & 1;
-    gps->screentexpos[index] = pen.tile;
-    gps->screentexpos_addcolor[index] = (pen.tile_mode == Screen::Pen::CharColor);
-    gps->screentexpos_grayscale[index] = (pen.tile_mode == Screen::Pen::TileColor);
-    gps->screentexpos_cf[index] = pen.tile_fg;
-    gps->screentexpos_cbr[index] = pen.tile_bg;
+    gps->screen1_opt_tile[index] = uint8_t(pen.ch);
+    // we need a new way to represent color
+    //auto argb = &gps->screen1_asciirgb[index * 8];
+/* old code
+//     auto screen = gps->screen + index*4;
+//     screen[0] = uint8_t(pen.ch);
+//     screen[1] = uint8_t(pen.fg) & 15;
+//     screen[2] = uint8_t(pen.bg) & 15;
+//     screen[3] = uint8_t(pen.bold) & 1;
+//     gps->screentexpos[index] = pen.tile;
+//     gps->screentexpos_addcolor[index] = (pen.tile_mode == Screen::Pen::CharColor);
+//     gps->screentexpos_grayscale[index] = (pen.tile_mode == Screen::Pen::TileColor);
+//     gps->screentexpos_cf[index] = pen.tile_fg;
+//     gps->screentexpos_cbr[index] = pen.tile_bg;
 */
     return true;
 }

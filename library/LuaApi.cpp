@@ -1650,6 +1650,23 @@ static void imgui_text_colored(std::vector<int> col3, std::string str)
     ImGui::TextColored(col, "%s", str.c_str());
 }
 
+static void imgui_textbackgroundcolored(std::vector<int> col3, std::string str)
+{
+    col3.resize(3);
+
+    ImDrawList* draw = ImGui::GetWindowDrawList();
+
+    ImVec2 tl = ImGui::GetCursorScreenPos();
+    ImVec2 text_size = ImGui::CalcTextSize(str.c_str());
+
+    ImVec2 br = { tl.x + text_size.x, tl.y + text_size.y };
+
+    ImVec4 col = ImTuiInterop::colour_interop(col3);
+    ImU32 icol = ImGui::ColorConvertFloat4ToU32(col);
+
+    ImGui::GetBackgroundDrawList()->AddRectFilled(tl, br, icol);
+}
+
 static bool imgui_button(std::string name)
 {
     return ImGui::Button(name.c_str());
@@ -1868,6 +1885,7 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(End, imgui_end),
     WRAPN(Text, imgui_text),
     WRAPN(TextColored, imgui_text_colored),
+    WRAPN(TextBackgroundColored, imgui_textbackgroundcolored),
     WRAPN(Button, imgui_button),
     WRAPM(ImGui, NewLine),
     WRAPN(PushStyleColor, imgui_pushstylecolor),

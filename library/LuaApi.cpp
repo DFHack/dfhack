@@ -1798,7 +1798,7 @@ static void imgui_encode_into_ref(lua_State* state, const T& val)
     lua_settable(state, -3);
 }
 
-ImVec4 imgui_get_colour_arg(lua_State* state, int index, bool defaults_to_fg)
+static ImVec4 imgui_get_colour_arg(lua_State* state, int index, bool defaults_to_fg)
 {
     if (lua_isnumber(state, index))
     {

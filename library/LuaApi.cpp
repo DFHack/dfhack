@@ -1991,22 +1991,28 @@ static int imgui_get(lua_State* state)
     return 1;
 }
 
-static void imgui_decode_ref_impl(lua_State* state, double& out)
+static void imgui_decode_impl(lua_State* state, double& out, int index)
 {
+    lua_pushvalue(state, index);
     out = lua_tonumber(state, -1);
+    lua_pop(state, 1);
 }
 
-static void imgui_decode_ref_impl(lua_State* state, std::string& out)
+static void imgui_decode_impl(lua_State* state, std::string& out, int index)
 {
+    lua_pushvalue(state, index);
     size_t len = 0;
     const char* str = lua_tolstring(state, -1, &len);
 
     out = std::string(str, len);
+    lua_pop(state, 1);
 }
 
-static void imgui_decode_ref_impl(lua_State* state, bool& out)
+static void imgui_decode_impl(lua_State* state, bool& out, int index)
 {
+    lua_pushvalue(state, index);
     out = lua_toboolean(state, -1);
+    lua_pop(state, 1);
 }
 
 //decodes ref at -1
@@ -2017,7 +2023,7 @@ static T imgui_decode_ref(lua_State* state)
     lua_gettable(state, -2);
 
     T out = {};
-    imgui_decode_ref_impl(state, out);
+    imgui_decode_impl(state, out, -1);
 
     lua_pop(state, 1);
 

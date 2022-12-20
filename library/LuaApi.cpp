@@ -1996,7 +1996,7 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(TextDisabled, imgui_textdisabled),
     WRAPN(TextWrapped, imgui_textwrapped),
     WRAPN(LabelText, imgui_labeltext),
-    WRAPN(BulletTExt, imgui_bullettext),
+    WRAPN(BulletText, imgui_bullettext),
     WRAPN(Button, imgui_button),
     WRAPM(ImGui, NewLine),
     WRAPN(PopStyleColor, imgui_popstylecolor),

@@ -284,13 +284,13 @@ install XML::LibXML and XML::LibXSLT for it using CPAN.
 
 Python
 ^^^^^^
-See ``python-install``.
+See `python-install`.
 
 .. _python-install: https://www.python.org/downloads/
 
 Sphinx
 ^^^^^^
-See ``sphinx-install`` at https://www.sphinx-doc.org/
+See `sphinx-install` at https://www.sphinx-doc.org/
 
 .. _sphinx-install: https://www.sphinx-doc.org/en/master/usage/installation.html
 

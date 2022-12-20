@@ -1722,69 +1722,16 @@ static bool imgui_ismousedoubleclicked(int button)
 //Could also stick these directly on the global
 static int imgui_style_index(std::string name)
 {
- #define IMNAME(x) {#x, x}
-
-    std::map<std::string, int> names
+    for (int i = 0; i < ImGuiCol_COUNT; i++)
     {
-        IMNAME(ImGuiCol_Text),
-        IMNAME(ImGuiCol_TextDisabled),
-        IMNAME(ImGuiCol_WindowBg),              // Background of normal windows
-        IMNAME(ImGuiCol_ChildBg),               // Background of child windows
-        IMNAME(ImGuiCol_PopupBg),               // Background of popups, menus, tooltips windows
-        IMNAME(ImGuiCol_Border),
-        IMNAME(ImGuiCol_BorderShadow),
-        IMNAME(ImGuiCol_FrameBg),               // Background of checkbox, radio button, plot, slider, text input
-        IMNAME(ImGuiCol_FrameBgHovered),
-        IMNAME(ImGuiCol_FrameBgActive),
-        IMNAME(ImGuiCol_TitleBg),
-        IMNAME(ImGuiCol_TitleBgActive),
-        IMNAME(ImGuiCol_TitleBgCollapsed),
-        IMNAME(ImGuiCol_MenuBarBg),
-        IMNAME(ImGuiCol_ScrollbarBg),
-        IMNAME(ImGuiCol_ScrollbarGrab),
-        IMNAME(ImGuiCol_ScrollbarGrabHovered),
-        IMNAME(ImGuiCol_ScrollbarGrabActive),
-        IMNAME(ImGuiCol_CheckMark),
-        IMNAME(ImGuiCol_SliderGrab),
-        IMNAME(ImGuiCol_SliderGrabActive),
-        IMNAME(ImGuiCol_Button),
-        IMNAME(ImGuiCol_ButtonHovered),
-        IMNAME(ImGuiCol_ButtonActive),
-        IMNAME(ImGuiCol_Header),                // Header* colors are used for CollapsingHeader, TreeNode, Selectable, MenuItem
-        IMNAME(ImGuiCol_HeaderHovered),
-        IMNAME(ImGuiCol_HeaderActive),
-        IMNAME(ImGuiCol_Separator),
-        IMNAME(ImGuiCol_SeparatorHovered),
-        IMNAME(ImGuiCol_SeparatorActive),
-        IMNAME(ImGuiCol_ResizeGrip),
-        IMNAME(ImGuiCol_ResizeGripHovered),
-        IMNAME(ImGuiCol_ResizeGripActive),
-        IMNAME(ImGuiCol_Tab),
-        IMNAME(ImGuiCol_TabHovered),
-        IMNAME(ImGuiCol_TabActive),
-        IMNAME(ImGuiCol_TabUnfocused),
-        IMNAME(ImGuiCol_TabUnfocusedActive),
-        IMNAME(ImGuiCol_PlotLines),
-        IMNAME(ImGuiCol_PlotLinesHovered),
-        IMNAME(ImGuiCol_PlotHistogram),
-        IMNAME(ImGuiCol_PlotHistogramHovered),
-        IMNAME(ImGuiCol_TableHeaderBg),         // Table header background
-        IMNAME(ImGuiCol_TableBorderStrong),     // Table outer and header borders (prefer using Alpha=1.0 here)
-        IMNAME(ImGuiCol_TableBorderLight),      // Table inner borders (prefer using Alpha=1.0 here)
-        IMNAME(ImGuiCol_TableRowBg),            // Table row background (even rows)
-        IMNAME(ImGuiCol_TableRowBgAlt),         // Table row background (odd rows)
-        IMNAME(ImGuiCol_TextSelectedBg),
-        IMNAME(ImGuiCol_DragDropTarget),
-        IMNAME(ImGuiCol_NavHighlight),          // Gamepad/keyboard: current highlighted item
-        IMNAME(ImGuiCol_NavWindowingHighlight), // Highlight window when using CTRL+TAB
-        IMNAME(ImGuiCol_NavWindowingDimBg),     // Darken/colorize entire screen behind the CTRL+TAB window list, when active
-        IMNAME(ImGuiCol_ModalWindowDimBg),      // Darken/colorize entire screen behind a modal window, when one is active
-        IMNAME(ImGuiCol_COUNT)
-    };
+        std::string found_name = ImGui::GetStyleColorName(i);
 
-#undef IMNAME
+        if (found_name == name)
+            return i;
+    }
 
-    return names.at(name);
+    assert(false);
+    return -1;
 }
 
 static void imgui_setkeyboardfocushere(int offset)

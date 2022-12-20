@@ -1659,12 +1659,16 @@ static void imgui_textbackgroundcolored(std::vector<int> col3, std::string str)
     ImVec2 tl = ImGui::GetCursorScreenPos();
     ImVec2 text_size = ImGui::CalcTextSize(str.c_str());
 
-    ImVec2 br = { tl.x + text_size.x, tl.y + text_size.y };
+    ImVec2 br = { tl.x + text_size.x, std::max(tl.y + text_size.y - 1, 0.f) };
+
+    tl.x = tl.x + 1;
 
     ImVec4 col = ImTuiInterop::colour_interop(col3);
     ImU32 icol = ImGui::ColorConvertFloat4ToU32(col);
 
-    ImGui::GetBackgroundDrawList()->AddRectFilled(tl, br, icol);
+    draw->AddRectFilled(tl, br, icol);
+
+    ImGui::TextColored(col, "%s", str.c_str());
 }
 
 static bool imgui_button(std::string name)

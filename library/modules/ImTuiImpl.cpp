@@ -317,6 +317,9 @@ void ImTuiInterop::impl::init_current_context()
     ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 }
 
+//so, the way that the existing widgets work is that if you hit eg 4, the printable
+//character (ie '4') is processed first, and CURSOR_LEFT is implicitly ignored
+//this takes the approach of explicitly killing the inputs from the input stream
 std::set<df::interface_key> cleanup_keys(std::set<df::interface_key> keys)
 {
     std::map<df::interface_key, std::vector<df::interface_key>> to_kill_if_seen;

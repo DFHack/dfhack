@@ -255,6 +255,9 @@ void ImTuiInterop::impl::init_current_context()
     style.Colors[ImGuiCol_ResizeGripHovered] = named_colours("WHITE", "BLACK", false); //?
     style.Colors[ImGuiCol_ResizeGripActive] = named_colours("WHITE", "BLACK", false); //?
 
+    style.Colors[ImGuiCol_TableBorderStrong] = named_colours("WHITE", "WHITE", false);
+    style.Colors[ImGuiCol_TableBorderLight] = named_colours("WHITE", "WHITE", false);
+
     //style.Colors[ImGuiCol_NavHighlight] = named_colours("WHITE", "YELLOW", false);
     //style.Colors[ImGuiCol_NavWindowingHighlight] = named_colours("WHITE", "YELLOW", false);
     //style.Colors[ImGuiCol_NavWindowingDimBg] = named_colours("WHITE", "YELLOW", false);

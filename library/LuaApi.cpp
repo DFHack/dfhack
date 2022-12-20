@@ -1975,6 +1975,16 @@ static void imgui_navcapture(bool capture)
     }
 }
 
+static bool imgui_begintable(std::string name, int column, int flags)
+{
+    return ImGui::BeginTable(name.c_str(), column, flags);
+}
+
+static void imgui_tablenextrow()
+{
+    ImGui::TableNextRow();
+}
+
 static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(Begin, imgui_begin),
     WRAPM(ImGui, End),
@@ -2024,6 +2034,12 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(WantCaptureInput, imgui_wantcaptureinput),
     WRAPN(AddNavGate, imgui_addnavgate),
     WRAPN(NavCapture, imgui_navcapture),
+    WRAPN(BeginTable, imgui_begintable),
+    WRAPM(ImGui, EndTable),
+    WRAPN(TableNextRow, imgui_tablenextrow),
+    WRAPM(ImGui, TableNextColumn),
+    WRAPM(ImGui, TableSetColumnIndex),
+    WRAPM(ImGui, TableHeadersRow),
     { NULL, NULL }
 };
 

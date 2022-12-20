@@ -317,8 +317,35 @@ void ImTuiInterop::impl::init_current_context()
     ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 }
 
+std::set<df::interface_key> cleanup_keys(std::set<df::interface_key> keys)
+{
+    std::map<df::interface_key, std::vector<df::interface_key>> to_kill_if_seen;
+
+    to_kill_if_seen[Screen::charToKey('4')] = { { df::enums::interface_key::CURSOR_LEFT } };
+    to_kill_if_seen[Screen::charToKey('6')] = { { df::enums::interface_key::CURSOR_RIGHT } };
+    to_kill_if_seen[Screen::charToKey('8')] = { { df::enums::interface_key::CURSOR_UP } };
+    to_kill_if_seen[Screen::charToKey('2')] = { { df::enums::interface_key::CURSOR_DOWN } };
+
+    for (auto it : to_kill_if_seen)
+    {
+        auto found_trigger = keys.find(it.first);
+
+        if (found_trigger == keys.end())
+            continue;
+
+        for (df::interface_key c : it.second)
+        {
+            keys.erase(c);
+        }
+    }
+
+    return keys;
+}
+
 void ImTuiInterop::impl::new_frame(std::set<df::interface_key> keys)
 {
+    keys = cleanup_keys(keys);
+
     ImGuiIO& io = ImGui::GetIO();
 
     int arraysize_of_keysdown = IM_ARRAYSIZE(io.KeysDown);

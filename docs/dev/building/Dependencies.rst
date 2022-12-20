@@ -13,6 +13,7 @@ Many of DFHack's build dependencies are included in the repository as git submod
 however there are some system dependencies as well. They are as follows:
 
 System packages:
+
 * SDL (libsdl 1.2, not sdl2).
 * zlib
 * OpenGL headers (optional: to build `stonesense`)
@@ -21,6 +22,7 @@ System packages:
 The **zlib** dependency is a compression library which is part of a chain of dependencies ultimately used by `quickfort` and `xlsxioreader`.
 
 Perl packages:
+
 * XML::LibXML
 * XML::LibXSLT
 

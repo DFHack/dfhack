@@ -370,6 +370,7 @@ std::set<df::interface_key> cleanup_keys(std::set<df::interface_key> keys, std::
     //but I don't like the input latency in a game built around mashing arrow keys. This solution creates a long delay
     //when hitting eg 4 and then left, 8 + up, 6 + right, or 2 + down, but its such a rare case *anyway*
     //it doesn't seem like the end of the world
+    //10 is totally arbitrary based on testing on my pc, should likely be time based
     int max_suppress_frames = 10;
 
     for (auto it : danger_key_time)

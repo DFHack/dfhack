@@ -2120,6 +2120,56 @@ static void imgui_encode_into_ref(lua_State* state, const T& val)
     lua_settable(state, -3);
 }
 
+ImVec4 imgui_get_colour_arg(lua_State* state, int index, bool defaults_to_fg)
+{
+    if (lua_isnumber(state, index))
+    {
+        double val = imgui_decode<double>(state, index);
+                
+        if (defaults_to_fg)
+            return ImTuiInterop::colour_interop(std::vector<double>{ val, 0., 0. });
+        else
+            return ImTuiInterop::colour_interop(std::vector<double>{ 0., val, 0. });
+    }
+
+    int fg = 0;
+    int bg = 0;
+    int bold = 0;
+
+    if (lua_istable(state, index))
+    {
+        lua_pushvalue(state, index);
+        lua_pushnil(state);
+
+        while (lua_next(state, -2))
+        {
+            lua_pushvalue(state, -2);
+
+            std::string key = imgui_decode<std::string>(state, -1);
+
+            int idx = 0;
+
+            if (lua_isnumber(state, -2))
+                idx = (int)imgui_decode<double>(state, -2);
+
+            if (key == "fg")
+                fg = idx;
+
+            if (key == "bg")
+                bg = idx;
+
+            if (key == "bold" || key == "b")
+                bold = idx;
+
+            lua_pop(state, 2);
+        }
+
+        lua_pop(state, 1);
+    }
+
+    return ImTuiInterop::colour_interop(std::vector<int>{fg, bg, bold});
+}
+
 //string, ref
 static int imgui_checkbox(lua_State* state)
 {

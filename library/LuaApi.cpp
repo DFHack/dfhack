@@ -1958,11 +1958,6 @@ static bool imgui_ismousedragging(int button)
     return ImGui::IsMouseDragging(button);
 }
 
-static bool imgui_isitemhovered()
-{
-    return ImGui::IsItemHovered();
-}
-
 static void imgui_settooltip(std::string text)
 {
     ImGui::SetTooltip("%s", text.c_str());
@@ -2021,7 +2016,6 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPM(ImGui, IsWindowHovered),
     WRAPN(IsMouseDragging, imgui_ismousedragging),
     WRAPM(ImGui, ResetMouseDragDelta),
-    WRAPN(IsItemHovered, imgui_isitemhovered),
     WRAPM(ImGui, IsItemActive),
     WRAPM(ImGui, IsItemFocused),
     WRAPM(ImGui, IsItemClicked),
@@ -2253,6 +2247,22 @@ static int imgui_pushstylecolor(lua_State* state)
     return 0;
 }
 
+static int imgui_isitemhovered(lua_State* state)
+{
+    int flags = 0;
+
+    if (lua_gettop(state) == 1)
+    {
+        flags = (int)imgui_decode<double>(state, -1);
+    }
+
+    bool result = ImGui::IsItemHovered(flags);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"SameLine", imgui_sameline},
     {"Checkbox", imgui_checkbox},
@@ -2270,6 +2280,7 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"TextColored", imgui_textcolored},
     {"TextBackgroundColored", imgui_textbackgroundcolored},
     {"PushStyleColor", imgui_pushstylecolor},
+    {"IsItemHovered", imgui_isitemhovered},
     { NULL, NULL }
 };
 

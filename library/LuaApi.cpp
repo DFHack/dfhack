@@ -2015,6 +2015,32 @@ static void imgui_decode_impl(lua_State* state, bool& out, int index)
     lua_pop(state, 1);
 }
 
+template<typename T, typename U>
+static void imgui_decode_impl(lua_State* state, std::map<T, U>& out, int index)
+{
+    out.clear();
+
+    lua_pushvalue(state, index);
+    lua_pushnil(state);
+
+    while (lua_next(state, -2))
+    {
+        lua_pushvalue(state, -2);
+
+        T key;
+        imgui_decode_impl(state, key, -1);
+
+        U value;
+        imgui_decode_impl(state, value, -2);
+
+        out[key] = std::move(value);
+
+        lua_pop(state, 2);
+    }
+
+    lua_pop(state, 1);
+}
+
 //decodes ref at -1
 template<typename T>
 static T imgui_decode_ref(lua_State* state)
@@ -2043,6 +2069,20 @@ static void imgui_push_generic(lua_State* state, const std::string& val)
 static void imgui_push_generic(lua_State* state, bool val)
 {
     lua_pushboolean(state, val);
+}
+
+template<typename T, typename U>
+static void imgui_push_generic(lua_State* state, const std::map<T, U>& val)
+{
+    lua_newtable(state);
+
+    for (auto it : val)
+    {
+        imgui_push_generic(state, it.first);
+        imgui_push_generic(state, it.second);
+
+        lua_settable(state, -3);
+    }
 }
 
 //table is at -1

@@ -16,11 +16,13 @@ namespace ImTuiInterop
 	ImVec4 colour_interop(std::vector<double> col3);
 	ImVec4 named_colours(const std::string& fg, const std::string& bg, bool bold);
 
+	struct ui_state;
+
 	namespace impl
 	{
 		void init_current_context();
 
-		void new_frame(std::set<df::interface_key> keys);
+		void new_frame(std::set<df::interface_key> keys, ui_state& st);
 
 		void draw_frame();
 
@@ -30,6 +32,7 @@ namespace ImTuiInterop
 	struct ui_state
 	{
 		std::set<df::interface_key> unprocessed_keys;
+		std::map<df::interface_key, int> danger_key_frames;
 
 		ImGuiContext* last_context;
 		ImGuiContext* ctx;

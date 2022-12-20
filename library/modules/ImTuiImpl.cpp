@@ -335,7 +335,7 @@ void ImTuiInterop::impl::init_current_context()
 //so, the way that the existing widgets work is that if you hit eg 4, the printable
 //character (ie '4') is processed first, and CURSOR_LEFT is implicitly ignored
 //this takes the approach of explicitly killing the inputs from the input stream
-std::set<df::interface_key> cleanup_keys(std::set<df::interface_key> keys)
+std::set<df::interface_key> cleanup_keys(std::set<df::interface_key> keys, std::map<df::interface_key, int>& danger_key_time)
 {
     std::map<df::interface_key, std::vector<df::interface_key>> to_kill_if_seen;
 
@@ -351,18 +351,51 @@ std::set<df::interface_key> cleanup_keys(std::set<df::interface_key> keys)
         if (found_trigger == keys.end())
             continue;
 
+        danger_key_time[it.first] = 0;
+
         for (df::interface_key c : it.second)
         {
             keys.erase(c);
         }
     }
 
+    //I hate this
+    //If you hold down 4 the game also sends a cursor left
+    //when input is repeated, the game will send a second cursor left
+    //but the second cursor left might arrive on the frame *before* the frame
+    //where we get a 4 sent
+    //which means that the cursor jumps left
+    //current overlay.lua testing shows that current dfhack input does suffer from this issue
+    //alternate solution would be to buffer arrow keys for a few frames
+    //but I don't like the input latency in a game built around mashing arrow keys. This solution creates a long delay
+    //when hitting eg 4 and then left, 8 + up, 6 + right, or 2 + down, but its such a rare case *anyway*
+    //it doesn't seem like the end of the world
+    int max_suppress_frames = 10;
+
+    for (auto it : danger_key_time)
+    {
+        if (it.second <= max_suppress_frames)
+        {
+            std::vector<df::interface_key> to_kill = to_kill_if_seen[it.first];
+
+            for (df::interface_key c : to_kill)
+            {
+                keys.erase(c);
+            }
+        }
+    }
+
     return keys;
 }
 
-void ImTuiInterop::impl::new_frame(std::set<df::interface_key> keys)
+void ImTuiInterop::impl::new_frame(std::set<df::interface_key> keys, ui_state& st)
 {
-    keys = cleanup_keys(keys);
+    keys = cleanup_keys(keys, st.danger_key_frames);
+
+    for (auto& it : st.danger_key_frames)
+    {
+        it.second++;
+    }
 
     ImGuiIO& io = ImGui::GetIO();
 
@@ -559,7 +592,7 @@ void ImTuiInterop::ui_state::activate()
 
 void ImTuiInterop::ui_state::new_frame()
 {
-    ImTuiInterop::impl::new_frame(std::move(unprocessed_keys));
+    ImTuiInterop::impl::new_frame(std::move(unprocessed_keys), *this);
     unprocessed_keys.clear();
 }
 

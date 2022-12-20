@@ -68,6 +68,7 @@ static int32_t eventLastTick[EventType::EVENT_MAX];
 static const int32_t ticksPerYear = 403200;
 
 void DFHack::EventManager::registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin) {
+    DEBUG(log).print("registering handler %p from plugin %s for event %d\n", handler.eventHandler, plugin->getName().c_str(), e);
     handlers[e].insert(pair<Plugin*, EventHandler>(plugin, handler));
 }
 
@@ -83,6 +84,7 @@ int32_t DFHack::EventManager::registerTick(EventHandler handler, int32_t when, P
     }
     handler.freq = when;
     tickQueue.insert(pair<int32_t, EventHandler>(handler.freq, handler));
+    DEBUG(log).print("registering handler %p from plugin %s for event TICK\n", handler.eventHandler, plugin->getName().c_str());
     handlers[EventType::TICK].insert(pair<Plugin*,EventHandler>(plugin,handler));
     return when;
 }
@@ -108,6 +110,7 @@ void DFHack::EventManager::unregister(EventType::EventType e, EventHandler handl
             i++;
             continue;
         }
+        DEBUG(log).print("unregistering handler %p from plugin %s for event %d\n", handler.eventHandler, plugin->getName().c_str(), e);
         i = handlers[e].erase(i);
         if ( e == EventType::TICK )
             removeFromTickQueue(handler);
@@ -115,6 +118,7 @@ void DFHack::EventManager::unregister(EventType::EventType e, EventHandler handl
 }
 
 void DFHack::EventManager::unregisterAll(Plugin* plugin) {
+    DEBUG(log).print("unregistering all handlers for plugin %s\n", plugin->getName().c_str());
     for ( auto i = handlers[EventType::TICK].find(plugin); i != handlers[EventType::TICK].end(); i++ ) {
         if ( (*i).first != plugin )
             break;

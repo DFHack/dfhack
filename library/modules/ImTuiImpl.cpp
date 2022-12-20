@@ -276,8 +276,14 @@ void ImTuiInterop::impl::init_current_context()
     //ImGui::GetIO().KeyMap[ImGuiKey_Tab] = 9;
     ImGui::GetIO().KeyMap[ImGuiKey_Backspace] = df::enums::interface_key::STRING_A000; //why
     ImGui::GetIO().KeyMap[ImGuiKey_Escape] = df::enums::interface_key::LEAVESCREEN;
-    ImGui::GetIO().KeyMap[ImGuiKey_Enter] = df::enums::interface_key::SELECT;
-    ImGui::GetIO().KeyMap[ImGuiKey_Space] = df::enums::interface_key::STRING_A032;
+    //ImGui::GetIO().KeyMap[ImGuiKey_Enter] = df::enums::interface_key::SELECT;
+    //ImGui::GetIO().KeyMap[ImGuiKey_Space] = df::enums::interface_key::STRING_A032;
+    //So. ImGui uses space to focus/toggle buttons and widgets
+    //But it uses Enter to activate eg an inputtext box
+    //Widgets that use enter to activate explicitly (eg inputtext)
+    //Have been modified to auto activate, and so I can bind 'space' aka activate
+    //To the enter key to match dwarf fortress expectations
+    ImGui::GetIO().KeyMap[ImGuiKey_Space] = df::enums::interface_key::SELECT;
 
     ImGui::GetIO().KeyMap[ImGuiKey_LeftArrow] = df::enums::interface_key::CURSOR_LEFT;
     ImGui::GetIO().KeyMap[ImGuiKey_RightArrow] = df::enums::interface_key::CURSOR_RIGHT;

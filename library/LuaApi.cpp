@@ -106,6 +106,8 @@ distribution.
 #include <lualib.h>
 
 #include "imgui/misc/cpp/imgui_stdlib.h"
+//GetCurrentContext
+#include "imgui/imgui_internal.h"
 
 using namespace DFHack;
 using namespace DFHack::LuaWrapper;
@@ -2091,6 +2093,16 @@ static int imgui_inputtext(lua_State* state)
     std::string val = imgui_decode_ref<std::string>(state);
 
     bool result = ImGui::InputText(label, &val);
+
+    //This makes keyboard navigation default activate the item
+    //when arrow-keying past it, while also still allowing navigation away from it
+    if (ImGui::IsItemFocused() && 
+        !ImGui::IsItemActivated() && 
+        !ImGui::GetCurrentContext()->NavMoveRequest &&
+        ImGui::GetIO().NavVisible)
+    {
+        ImGui::SetKeyboardFocusHere(-1);
+    }
 
     imgui_encode_into_ref(state, val);
 

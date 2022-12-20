@@ -264,17 +264,16 @@ void ImTuiInterop::impl::init_current_context()
     int tex_w, tex_h;
     ImGui::GetIO().Fonts->GetTexDataAsRGBA32(&tex_pixels, &tex_w, &tex_h);
 
-    ImGui::GetIO().KeyMap[ImGuiKey_Tab] = 9;
-    ImGui::GetIO().KeyMap[ImGuiKey_Backspace] = 0; //why
-    ImGui::GetIO().KeyMap[ImGuiKey_Escape] = 27;
-    ImGui::GetIO().KeyMap[ImGuiKey_Enter] = 10;
-    ImGui::GetIO().KeyMap[ImGuiKey_Space] = 32;
+    //ImGui::GetIO().KeyMap[ImGuiKey_Tab] = 9;
+    ImGui::GetIO().KeyMap[ImGuiKey_Backspace] = df::enums::interface_key::STRING_A000; //why
+    ImGui::GetIO().KeyMap[ImGuiKey_Escape] = df::enums::interface_key::LEAVESCREEN;
+    ImGui::GetIO().KeyMap[ImGuiKey_Enter] = df::enums::interface_key::SELECT;
+    ImGui::GetIO().KeyMap[ImGuiKey_Space] = df::enums::interface_key::STRING_A032;
 
-    //super arbitrary, need to undo all the ascii mapping
-    ImGui::GetIO().KeyMap[ImGuiKey_LeftArrow] = df::enums::interface_key::CURSOR_LEFT + 256;
-    ImGui::GetIO().KeyMap[ImGuiKey_RightArrow] = df::enums::interface_key::CURSOR_RIGHT + 256;
-    ImGui::GetIO().KeyMap[ImGuiKey_UpArrow] = df::enums::interface_key::CURSOR_UP + 256;
-    ImGui::GetIO().KeyMap[ImGuiKey_DownArrow] = df::enums::interface_key::CURSOR_DOWN + 256;
+    ImGui::GetIO().KeyMap[ImGuiKey_LeftArrow] = df::enums::interface_key::CURSOR_LEFT;
+    ImGui::GetIO().KeyMap[ImGuiKey_RightArrow] = df::enums::interface_key::CURSOR_RIGHT;
+    ImGui::GetIO().KeyMap[ImGuiKey_UpArrow] = df::enums::interface_key::CURSOR_UP;
+    ImGui::GetIO().KeyMap[ImGuiKey_DownArrow] = df::enums::interface_key::CURSOR_DOWN;
 
     ImGui::GetIO().MouseDragThreshold = 0.f;
 
@@ -334,35 +333,11 @@ void ImTuiInterop::impl::new_frame(std::set<df::interface_key> keys)
 
     for (const df::interface_key& key : keys)
     {
+        keysDown[key] = true;
+
         int charval = Screen::keyToChar(key);
 
-        //escape
-        if (key == df::enums::interface_key::LEAVESCREEN)
-            charval = 27;
-
-        //enter
-        if (key == df::enums::interface_key::SELECT)
-            charval = 10;
-
-        //need to undo all the hackyness
-        if (key == df::enums::interface_key::CURSOR_LEFT)
-            charval = df::enums::interface_key::CURSOR_LEFT + 256;
-
-        if (key == df::enums::interface_key::CURSOR_RIGHT)
-            charval = df::enums::interface_key::CURSOR_RIGHT + 256;
-
-        if (key == df::enums::interface_key::CURSOR_UP)
-            charval = df::enums::interface_key::CURSOR_UP + 256;
-
-        if (key == df::enums::interface_key::CURSOR_DOWN)
-            charval = df::enums::interface_key::CURSOR_DOWN + 256;
-
-        if (charval < 0)
-            continue;
-
-        keysDown[charval] = true;
-
-        if(charval < 256 && std::isprint(charval))
+        if(charval >= 0 && charval < 256 && std::isprint(charval))
           io.AddInputCharacter(charval);
     }
 
@@ -406,7 +381,6 @@ void ImTuiInterop::impl::draw_frame()
     if (fb_width <= 0 || fb_height <= 0) {
         return;
     }
-
 
     // Will project scissor/clipping rectangles into framebuffer space
     ImVec2 clip_off = drawData->DisplayPos;         // (0,0) unless using multi-viewports

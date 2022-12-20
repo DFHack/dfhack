@@ -2126,9 +2126,9 @@ static int imgui_getmousepos(lua_State* state)
 {
     ImVec2 pos = ImGui::GetMousePos();
 
-    std::vector<double> result = { pos.x, pos.y };
+    std::map<std::string, double> result = { {"x", pos.x}, {"y", pos.y} };
 
-    Lua::PushVector(state, result);
+    imgui_push_generic(state, result);
 
     return 1;
 }

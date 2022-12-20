@@ -2025,6 +2025,16 @@ static void imgui_decode_impl(lua_State* state, ImVec2& out, int index)
     out = { static_cast<float>(from_map["x"]), static_cast<float>(from_map["y"]) };
 }
 
+template<typename T>
+static void imgui_decode_impl(lua_State* state, T* ptr, int index)
+{
+    static_assert(!std::is_same<T, char>::value, "a char* ptr in here is probably not what you want");
+
+    lua_pushvalue(state, index);
+    ptr = lua_topointer(state, -1);
+    lua_pop(state, 1);
+}
+
 template<typename T, typename U>
 static void imgui_decode_impl(lua_State* state, std::map<T, U>& out, int index)
 {
@@ -2089,6 +2099,14 @@ static void imgui_push_generic(lua_State* state, ImVec2 val)
     std::map<std::string, double> as_map = { {"x", val.x}, {"y", val.y} };
 
     imgui_push_generic(state, as_map);
+}
+
+template<typename T>
+static void imgui_push_generic(lua_State* state, T* ptr)
+{
+    static_assert(!std::is_same<T, char>::value, "a char* ptr in here is probably not what you want");
+
+    lua_pushlightuserdata(state, ptr);
 }
 
 template<typename T, typename U>

@@ -34,6 +34,7 @@ using namespace std;
 #include "modules/Renderer.h"
 #include "modules/Screen.h"
 #include "modules/GuiHooks.h"
+#include "Debug.h"
 #include "MemAccess.h"
 #include "VersionInfo.h"
 #include "Types.h"
@@ -72,6 +73,11 @@ using Screen::PenArray;
 
 using std::string;
 
+namespace DFHack {
+    DBG_DECLARE(core, screen, DebugCategory::LINFO);
+}
+
+
 /*
  * Screen painting API.
  */
@@ -108,6 +114,21 @@ bool Screen::inGraphicsMode()
     return init && init->display.flag.is_set(init_display_flags::USE_GRAPHICS);
 }
 
+static int32_t flood_clear(int32_t target, size_t index, size_t max_idx) {
+    if (index >= max_idx || !gps->screen1_offset_tile[index]
+            || gps->screen1_offset_tile[index] != target)
+        return 0;
+    gps->screen1_offset_tile[index] = 0;
+    gps->screen1_offset_x[index] = 0;
+    gps->screen1_offset_y[index] = 0;
+    int32_t cleared = 1;
+    cleared += flood_clear(target, index - 1, max_idx);
+    cleared += flood_clear(target, index + 1, max_idx);
+    cleared += flood_clear(target, index - gps->dimy, max_idx);
+    cleared += flood_clear(target, index + gps->dimy, max_idx);
+    return cleared;
+}
+
 static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
 {
     auto dim = Screen::getWindowSize();
@@ -115,12 +136,20 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
         return false;
 
 // TODO: understand how this changes for v50
-    int index = ((x * gps->dimy) + y);
+    size_t index = ((x * gps->dimy) + y);
     if (!map) {
-        // don't let anything draw over us
+        // don't let DF overlay interface elements draw over us
         gps->screen1_forced_tile[index] = 0;
+        gps->screen1_flags[index] = 0;
+        // the DF renderer can't handle partial offset tiles. make sure we clear
+        // the whole thing if we hit any part of it
+        int32_t cleared = flood_clear(gps->screen1_offset_tile[index], index,
+                                      (gps->dimx*gps->dimy)-1);
+        if (cleared) {
+            DEBUG(screen).print("offset tiles cleared: %d\n", cleared);
+        }
     }
-    gps->screen1_opt_tile[index] = uint8_t(pen.tile);
+    //gps->screen1_opt_tile[index] = uint8_t(pen.tile);
     auto fg = &gps->palette[pen.fg][0];
     auto bg = &gps->palette[pen.bg][0];
     auto argb = &gps->screen1_asciirgb[index * 8];
@@ -602,11 +631,13 @@ bool dfhack_viewscreen::key_conflict(df::interface_key key)
     if (key == interface_key::OPTIONS)
         return true;
 
+/* TODO: understand how this changes for v50
     if (text_input_mode)
     {
         if (key == interface_key::HELP || key == interface_key::MOVIES)
             return true;
     }
+*/
 
     return false;
 }

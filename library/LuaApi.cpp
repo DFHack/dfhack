@@ -2229,6 +2229,20 @@ static int imgui_textcolored(lua_State* state)
     return 0;
 }
 
+static int imgui_buttoncolored(lua_State* state)
+{
+    ImVec4 col = imgui_get_colour_arg(state, -2, true);
+    std::string str = imgui_decode<std::string>(state, -1);
+
+    ImGui::PushStyleColor(ImGuiCol_Text, col);
+
+    ImGui::Button(str.c_str());
+
+    ImGui::PopStyleColor(1);
+
+    return 0;
+}
+
 static int imgui_textbackgroundcolored(lua_State* state)
 {
     ImVec4 col = imgui_get_colour_arg(state, -2, true);
@@ -2355,6 +2369,7 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"GetForegroundDrawList", imgui_getforegrounddrawlist},
     {"GetCurrentDrawList", imgui_getcurrentdrawlist},
     {"TextColored", imgui_textcolored},
+    {"ButtonColored", imgui_buttoncolored},
     {"TextBackgroundColored", imgui_textbackgroundcolored},
     {"PushStyleColor", imgui_pushstylecolor},
     {"IsItemHovered", imgui_isitemhovered},

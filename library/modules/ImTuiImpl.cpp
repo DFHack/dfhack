@@ -207,7 +207,8 @@ void ImTuiInterop::impl::init_current_context()
     ImGui::GetStyle().TabRounding = 0.0f;
     ImGui::GetStyle().TabBorderSize = 0.0f;
     ImGui::GetStyle().ColorButtonPosition = ImGuiDir_Right;
-    ImGui::GetStyle().ButtonTextAlign = ImVec2(0.5f, 0.0f);
+    //ImGui::GetStyle().ButtonTextAlign = ImVec2(0.5f, 0.0f);
+    ImGui::GetStyle().ButtonTextAlign = ImVec2(0.0f, 0.0f);
     ImGui::GetStyle().SelectableTextAlign = ImVec2(0.0f, 0.0f);
     ImGui::GetStyle().DisplayWindowPadding = ImVec2(0.0f, 0.0f);
     ImGui::GetStyle().DisplaySafeAreaPadding = ImVec2(0.0f, 0.0f);
@@ -533,7 +534,7 @@ void ImTuiInterop::impl::draw_frame()
                             lastCharX = x;
                             lastCharY = y;
 
-                            int xx = (x)+1;
+                            int xx = (x)+0;
                             int yy = (y)+0;
                             if (xx < clip_rect.x || xx >= clip_rect.z || yy < clip_rect.y || yy >= clip_rect.w) {
                             }

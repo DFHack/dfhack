@@ -72,9 +72,7 @@ add_custom_command(
 )
 add_custom_target(ruby-autogen-rb DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${RUBYAUTOGEN})
 
-include_directories("${dfhack_SOURCE_DIR}/depends/tthread")
-
-dfhack_plugin(ruby ruby.cpp LINK_LIBRARIES dfhack-tinythread)
+dfhack_plugin(ruby ruby.cpp LINK_LIBRARIES)
 add_dependencies(ruby ruby-autogen-rb)
 
 if(EXISTS ${RUBYLIB})

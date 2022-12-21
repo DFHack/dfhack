@@ -55,9 +55,6 @@ POSSIBILITY OF SUCH DAMAGE.
 using namespace std;
 using namespace DFHack;
 
-#include "tinythread.h"
-using namespace tthread;
-
 bool color_ostream::log_errors_to_stderr = false;
 
 void color_ostream::flush_buffer(bool flush)

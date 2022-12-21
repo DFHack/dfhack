@@ -1985,6 +1985,17 @@ static void imgui_tablenextrow()
     ImGui::TableNextRow();
 }
 
+static void imgui_eatkeyboardinputs()
+{
+    //hacky, but has no functional effect on imgui
+    ImGui::GetIO().WantCaptureKeyboard = true;
+}
+
+static void imgui_eatmouseinputs()
+{
+    ImGui::GetIO().WantCaptureMouse = true;
+}
+
 static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(Begin, imgui_begin),
     WRAPM(ImGui, End),
@@ -2042,6 +2053,8 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPM(ImGui, TableNextColumn),
     WRAPM(ImGui, TableSetColumnIndex),
     WRAPM(ImGui, TableHeadersRow),
+    WRAPN(EatKeyboardInputs, imgui_eatkeyboardinputs),
+    WRAPN(EatMouseInputs, imgui_eatmouseinputs),
     { NULL, NULL }
 };
 

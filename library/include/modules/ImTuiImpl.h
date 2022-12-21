@@ -39,7 +39,8 @@ namespace ImTuiInterop
 
 		ui_state();
 
-		void feed(std::set<df::interface_key>* keys);
+		void feed(std::set<df::interface_key> keys);
+		void filter_keys(std::set<df::interface_key>& keys);
 
 		void activate();
 

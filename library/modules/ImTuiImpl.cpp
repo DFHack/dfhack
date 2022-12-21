@@ -582,12 +582,32 @@ ImTuiInterop::ui_state::ui_state()
     ctx = nullptr;
 }
 
-void ImTuiInterop::ui_state::feed(std::set<df::interface_key>* keys)
+void ImTuiInterop::ui_state::feed(std::set<df::interface_key> keys)
 {
-    if (keys == nullptr)
-        return;
+    unprocessed_keys.insert(keys.begin(), keys.end());
+}
 
-    unprocessed_keys.insert(keys->begin(), keys->end());
+void ImTuiInterop::ui_state::filter_keys(std::set<df::interface_key>& keys)
+{
+    bool filter_keyboard_keys = ImGui::GetIO().WantCaptureKeyboard || ImGui::GetIO().WantTextInput;
+    bool filter_mouse_buttons = ImGui::GetIO().WantCaptureMouse;
+
+    if (filter_mouse_buttons)
+    {
+        if (df::global::enabler) {
+            df::global::enabler->mouse_lbut_down = 0;
+            df::global::enabler->mouse_rbut_down = 0;
+            
+            //Is this fine? Or do I need to mess with the lua side in PushInterfaceKeys instead of this?
+            df::global::enabler->mouse_lbut = 0;
+            df::global::enabler->mouse_rbut = 0;
+        }
+    }
+
+    if (filter_mouse_buttons || filter_keyboard_keys)
+    {
+        keys.clear();
+    }
 }
 
 void ImTuiInterop::ui_state::activate()

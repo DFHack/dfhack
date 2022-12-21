@@ -43,6 +43,7 @@ distribution.
 
 using namespace DFHack;
 
+#include <condition_variable>
 #include <string>
 #include <vector>
 #include <map>

@@ -29,6 +29,7 @@ distribution.
 #include "ColorText.h"
 #include "MiscUtils.h"
 #include <map>
+#include <mutex>
 #include <string>
 #include <vector>
 

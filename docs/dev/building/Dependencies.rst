@@ -1,8 +1,18 @@
-.. _dependencies:
+.. _build-dependencies:
 
-###################
-DFHack Dependencies
-###################
+############
+Dependencies
+############
+
+The most immediate consideration is of course that DFHack is meant to be installed into an **existing DF folder**.
+So it is prudent that one is ready.
+
+.. contents:: Contents
+  :local:
+  :depth: 2
+
+Build Dependencies
+------------------
 
 ..
     DFHack is quite large, so I've attempted to
@@ -15,11 +25,16 @@ however there are some system dependencies as well. They are as follows:
 System packages:
 
 * SDL (libsdl 1.2, not sdl2).
-* zlib
-* OpenGL headers (optional: to build `stonesense`)
+* cmake
+* ccache (**optional**, but recommended to improve build times)
+* OpenGL headers (**optional**: to build `stonesense`)
+* zlib (compression library used for `xlsxioreader`)
+* build system
+
+..
+    maybe the below should be talked about next to the bullets
 
 **SDL** is used as an injection point which you can see more about in DFHack's `architecture` documentation & diagrams.
-The **zlib** dependency is a compression library which is part of a chain of dependencies ultimately used by `quickfort` and `xlsxioreader`.
 
 Perl packages:
 
@@ -30,10 +45,6 @@ These perl packages are used in code generation. DFHack has many structures that
 files to define and update these structures. Then during the configuration process [running cmake] these xml files are
 used to generate C++ source code to define these structures for use in plugins and scripts.
 
-.. contents:: Contents
-  :local:
-  :depth: 2
-
 .. _linux-dependency-instructions:
 
 Linux
@@ -43,7 +54,7 @@ Here are some package install commands for various distributions:
 
 * On Arch linux::
 
-    pacman -Sy gcc cmake ninja git dwarffortress zlib perl-xml-libxml perl-xml-libxslt
+    pacman -Sy gcc cmake ccmake ninja git dwarffortress zlib perl-xml-libxml perl-xml-libxslt
 
   * The ``dwarffortress`` package provides the necessary SDL packages.
   * For the required Perl modules: ``perl-xml-libxml`` and ``perl-xml-libxslt`` (or through ``cpan``)
@@ -57,6 +68,25 @@ Here are some package install commands for various distributions:
 * On Fedora::
 
     yum install gcc-c++ cmake ninja-build git zlib-devel SDL-devel perl-core perl-XML-LibXML perl-XML-LibXSLT ruby
+
+To build DFHack, you need GCC 4.8 or newer. GCC 4.8 has the benefit of avoiding
+`libstdc++ compatibility issues <linux-incompatible-libstdcxx>`, but can be hard
+to obtain on modern distributions, and working around these issues is done
+automatically by the ``dfhack`` launcher script. As long as your system-provided
+GCC is new enough, it should work. Note that extremely new GCC versions may not
+have been used to build DFHack yet, so if you run into issues with these, please
+let us know (e.g. by opening a GitHub issue).
+
+Before you can build anything, you'll also need ``cmake``. It is advisable to
+also get ``ccmake`` on distributions that split the cmake package into multiple
+parts. As mentioned above, ``ninja`` is recommended (many distributions call
+this package ``ninja-build``).
+
+You will need pthread; most systems should have this already. Note that older
+CMake versions may have trouble detecting pthread, so if you run into
+pthread-related errors and pthread is installed, you may need to upgrade CMake,
+either by downloading it from `cmake.org <https://cmake.org/download/>`_ or
+through your package manager, if possible.
 
 Building 32-bit Binaries
 ========================
@@ -198,26 +228,30 @@ What you'll need is as follows:
   * i.e. Microsoft Visual C++ 2015 Build Tools
 * Git (optional)
 * CMake
-* StrawberryPerl (optional, see nested)
+* StrawberryPerl, OR CPAN (optional, see nested)
 
   * Perl (required)
   * XML:LibXML (required)
   * XML:LibXLST (required)
-* Python (required for documentation, optional otherwise)
+* `Python <python-install>` (required for documentation, optional otherwise)
+
+  * `Sphinx <sphinx-install>`
 
 Releases of Dwarf Fortress since roughly 2016 have been compiled for Windows using
 Microsoft's Visual Studio 2015 C++ compiler. In order to guarantee ABI and STL compatibility
 with Dwarf Fortress, DFHack has to be compiled with the same compiler.
 
 Visual Studio 2015 is no longer supported by Microsoft and it can be difficult to obtain
-working installers for this product today. As of 2022, the recommended approach
-is to use Visual Studio 2022 or Visual Studio 2019, installing additional optional
-Visual Studio components which provide the required support for using
-Visual Studio 2015's toolchain. All of the required tools are available from Microsoft as part of
-Visual Studio's Community Edition at no charge.
+working installers for this product today. The recommended approach is to use a modern community
+version of Visual Studio such as 2022 or 2019, installing additional optional Visual Studio
+components which provide the required support for using Visual Studio 2015's toolchain.
+All of the required tools are available from Microsoft as part of Visual Studio's Community
+Edition at no charge.
 
 You can also download just the Visual C++ 2015 `build tools`_ if you aren't going to use
 Visual Studio to edit code.
+
+.. _build tools: https://my.visualstudio.com/Downloads?q=visual%20studio%202015&wt.mc_id=o~msft~vscom~older-downloads
 
 Installing Dependencies
 =======================

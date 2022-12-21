@@ -9,7 +9,7 @@ Compiling DFHack
 DFHack builds are available for all supported platforms; see `installing` for
 installation instructions. If you are a DFHack end-user, modder, or plan on
 writing scripts (not plugins), it is generally recommended (and easier) to use
-these builds instead of compiling DFHack from source.
+these `builds<build-releases>` instead of compiling DFHack from source.
 
 However, if you are looking to develop plugins, work on the DFHack core, make
 complex changes to DF-structures, or anything else that requires compiling
@@ -17,9 +17,11 @@ DFHack from source, this document will walk you through the build process. Note
 that some steps may be unconventional compared to other projects, so be sure to
 pay close attention if this is your first time compiling DFHack.
 
+.. _build-releases:https://github.com/DFHack/dfhack/releases
+
 .. contents:: Contents
   :local:
-  :depth: 1
+  :depth: 2
 
 .. _compile-how-to-get-the-code:
 
@@ -86,6 +88,12 @@ assistance.
   are also able to help with any submodule-related (or Git-related) issues
   you may encounter.
 
+Dependencies
+------------
+
+If you haven't already checked, this would be a good point to ensure you have
+all the `dependencies <build-dependencies>`.
+
 
 Contributing to DFHack
 ----------------------
@@ -100,6 +108,8 @@ Build settings
 This section describes build configuration options that apply to all platforms.
 If you don't have a working build environment set up yet, follow the instructions
 in the platform-specific sections below first, then come back here.
+
+Be sure to check out common `compile options <compile-options>`.
 
 Generator
 ---------
@@ -160,10 +170,8 @@ automatically.
 
 Other settings
 --------------
-There are a variety of other settings which you can find in CMakeCache.txt in
-your build folder or by running ``ccmake`` (or another CMake GUI). Most
-DFHack-specific settings begin with ``BUILD_`` and control which parts of DFHack
-are built.
+See our page on `build options<build-options>`
+
 
 
 .. _compile-linux:
@@ -174,29 +182,7 @@ On Linux, DFHack acts as a library that shadows parts of the SDL API using LD_PR
 
 Dependencies
 ------------
-DFHack is meant to be installed into an existing DF folder, so get one ready.
 
-We assume that any Linux platform will have ``git`` available (though it may
-need to be installed with your package manager.)
-
-To build DFHack, you need GCC 4.8 or newer. GCC 4.8 has the benefit of avoiding
-`libstdc++ compatibility issues <linux-incompatible-libstdcxx>`, but can be hard
-to obtain on modern distributions, and working around these issues is done
-automatically by the ``dfhack`` launcher script. As long as your system-provided
-GCC is new enough, it should work. Note that extremely new GCC versions may not
-have been used to build DFHack yet, so if you run into issues with these, please
-let us know (e.g. by opening a GitHub issue).
-
-Before you can build anything, you'll also need ``cmake``. It is advisable to
-also get ``ccmake`` on distributions that split the cmake package into multiple
-parts. As mentioned above, ``ninja`` is recommended (many distributions call
-this package ``ninja-build``).
-
-You will need pthread; most systems should have this already. Note that older
-CMake versions may have trouble detecting pthread, so if you run into
-pthread-related errors and pthread is installed, you may need to upgrade CMake,
-either by downloading it from `cmake.org <https://cmake.org/download/>`_ or
-through your package manager, if possible.
 
 You also need zlib, libsdl (1.2, not sdl2, like DF), perl, and the XML::LibXML
 and XML::LibXSLT perl packages (for the code generation parts). You should be
@@ -609,50 +595,6 @@ manually uninstall the version you have already and re-install via Chocolatey,
 which will ensure the PATH are set up right and will allow Chocolatey to manage
 that program for you in future.
 
-Additional dependencies: installing manually
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If you prefer to install manually rather than using Chocolatey, details and
-requirements are as below. If you do install manually, please ensure you
-have all PATHs set up correctly.
-
-Git
-^^^
-Some examples:
-
-* `Git for Windows <https://git-for-windows.github.io>`_ (command-line and GUI)
-* `tortoisegit <https://tortoisegit.org>`_ (GUI and File Explorer integration)
-
-CMake
-^^^^^
-You can get the win32 installer version from
-`the official site <https://cmake.org/download/>`_.
-It has the usual installer wizard. Make sure you let it add its binary folder
-to your binary search PATH so the tool can be later run from anywhere.
-
-Perl / Strawberry Perl
-^^^^^^^^^^^^^^^^^^^^^^
-For the code generation stage of the build process, you'll need Perl 5 with
-XML::LibXML and XML::LibXSLT. `Strawberry Perl <http://strawberryperl.com>`_ is
-recommended as it includes all of the required packages in a single, easy
-install.
-
-After install, ensure Perl is in your user's PATH. This can be edited from
-``Control Panel -> System -> Advanced System Settings -> Environment Variables``.
-
-The following directories must be in your PATH, in this order:
-
-* ``<path to perl>\c\bin``
-* ``<path to perl>\perl\site\bin``
-* ``<path to perl>\perl\bin``
-* ``<path to perl>\perl\vendor\lib\auto\XML\LibXML`` (may only be required on some systems)
-
-Be sure to close and re-open any existing ``cmd.exe`` windows after updating
-your PATH.
-
-If you already have a different version of Perl installed (for example, from Cygwin),
-you can run into some trouble. Either remove the other Perl install from PATH, or
-install XML::LibXML and XML::LibXSLT for it using CPAN.
-
 Build
 -----
 There are several different batch files in the ``win32`` and ``win64``
@@ -825,7 +767,7 @@ Building the documentation
 ==========================
 
 The steps above will not build DFHack's documentation by default. If you are
-editing documentation, see `documentation` for details on how to build it.
+changing documentation, see `documentation` for details on how to build it.
 
 Misc. Notes
 ===========

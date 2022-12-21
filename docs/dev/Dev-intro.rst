@@ -8,6 +8,7 @@ likely the most straightforward choice.
 
 Other pages that may be relevant include:
 
+- `building-dfhack-index`
 - `contributing`
 - `documentation`
 - `license`
@@ -15,6 +16,8 @@ Other pages that may be relevant include:
 
 .. contents:: Contents
     :local:
+
+.. _architecture
 
 Architecture diagrams
 ---------------------
@@ -27,6 +30,9 @@ together:
   :alt: DFHack logic injection diagram
   :target: https://drive.google.com/file/d/1-2yeNMC7WHgMfZ9iQsDQ0dEbLukd_xyU
   :align: center
+
+As seen in the diagram Dwarf Fortress utilizes the SDL library, this provides us with an easy to isolate
+injection point for DFHack.
 
 .. image:: https://drive.google.com/uc?export=download&id=1--JoEQbzKpVUOkRKDD9HxvuCqtom780F
   :alt: DFHack tool call graph

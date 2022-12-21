@@ -434,35 +434,7 @@ Sphinx to build the docs:
 Using CMake
 -----------
 
-Enabling the ``BUILD_DOCS`` CMake option will cause the documentation to be built
-whenever it changes as part of the normal DFHack build process. There are several
-ways to do this:
-
-* When initially running CMake, add ``-DBUILD_DOCS:bool=ON`` to your ``cmake``
-  command. For example::
-
-    cmake .. -DCMAKE_BUILD_TYPE:string=Release -DBUILD_DOCS:bool=ON -DCMAKE_INSTALL_PREFIX=<path to DF>
-
-* If you have already run CMake, you can simply run it again from your build
-  folder to update your configuration::
-
-    cmake .. -DBUILD_DOCS:bool=ON
-
-* You can edit the ``BUILD_DOCS`` setting in CMakeCache.txt directly
-
-* You can use the CMake GUI or ``ccmake`` to change the ``BUILD_DOCS`` setting
-
-* On Windows, if you prefer to use the batch scripts, you can run
-  ``generate-msvc-gui.bat`` and set ``BUILD_DOCS`` through the GUI. If you are
-  running another file, such as ``generate-msvc-all.bat``, you will need to edit
-  the batch script to add the flag. You can also run ``cmake`` on the command line,
-  similar to other platforms.
-
-By default, both HTML and text docs are built by CMake. The generated
-documentation is stored in ``docs/html`` and ``docs/text`` (respectively) in the
-root DFHack folder, and they will both be installed to ``hack/docs`` when you
-install DFHack. The html and txt files will intermingle, but will not interfere
-with one another.
+See our page on `build options <building-documentation>`
 
 Running Sphinx manually
 -----------------------

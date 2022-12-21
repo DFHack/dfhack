@@ -2241,7 +2241,7 @@ static int imgui_textbackgroundcolored(lua_State* state)
 
     ImVec2 br = { tl.x + text_size.x, std::max(tl.y + text_size.y - 1, 0.f) };
 
-    tl.x = tl.x + 1;
+    //tl.x = tl.x + 1;
 
     ImU32 icol = ImGui::ColorConvertFloat4ToU32(col);
 

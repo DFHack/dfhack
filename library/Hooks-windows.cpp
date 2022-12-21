@@ -33,7 +33,6 @@ distribution.
 #include "Hooks.h"
 #include <stdio.h>
 
-#include "tinythread.h"
 #include "modules/Graphic.h"
 
 /*************************************************************************/

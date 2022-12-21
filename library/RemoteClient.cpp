@@ -56,10 +56,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 
 #include "json/json.h"
-#include "tinythread.h"
 
 using namespace DFHack;
-using namespace tthread;
 
 using dfproto::CoreTextNotification;
 

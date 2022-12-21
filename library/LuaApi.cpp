@@ -2308,6 +2308,38 @@ static int imgui_ismousehoveringrect(lua_State* state)
     return 1;
 }
 
+static int imgui_tablesetupcolumn(lua_State* state)
+{
+    int top = lua_gettop(state);
+
+    std::string label;
+    int flags = 0;
+    float width_or_weight = 0;
+
+    if (top == 1)
+        label == imgui_decode<std::string>(state, -1);
+    else if (top == 2)
+    {
+        label = imgui_decode<std::string>(state, -2);
+        flags = (int)imgui_decode<double>(state, -1);
+    }
+    else if (top == 3)
+    {
+        label = imgui_decode<std::string>(state, -3);
+        flags = (int)imgui_decode<double>(state, -2);
+        width_or_weight = imgui_decode<double>(state, -1);
+    }
+
+    const char* ptr = label.c_str();
+
+    if (label.size() == 0)
+        ptr = nullptr;
+
+    ImGui::TableSetupColumn(ptr, flags, width_or_weight);
+
+    return 0;
+}
+
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"SameLine", imgui_sameline},
     {"Checkbox", imgui_checkbox},
@@ -2327,6 +2359,7 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"PushStyleColor", imgui_pushstylecolor},
     {"IsItemHovered", imgui_isitemhovered},
     {"IsMouseHoveringRect", imgui_ismousehoveringrect},
+    {"TableSetupColumn", imgui_tablesetupcolumn},
     { NULL, NULL }
 };
 

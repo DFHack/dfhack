@@ -31,15 +31,10 @@ distribution.
 #include <fstream>
 #include <assert.h>
 #include <iostream>
+#include <mutex>
 #include <string>
 #include <vector>
-namespace tthread
-{
-    class mutex;
-    class recursive_mutex;
-    class condition_variable;
-    class thread;
-}
+
 namespace  DFHack
 {
     class CommandHistory
@@ -176,7 +171,7 @@ namespace  DFHack
         bool show();
     private:
         Private * d;
-        tthread::recursive_mutex * wlock;
+        std::recursive_mutex * wlock;
         std::atomic<bool> inited;
     };
 }

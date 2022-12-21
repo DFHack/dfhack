@@ -182,7 +182,7 @@ void drawTriangle(ImVec2 p0, ImVec2 p1, ImVec2 p2, ImU32 col) {
 void ImTuiInterop::impl::init_current_context()
 {
     ImGui::GetStyle().Alpha = 1.0f;
-    ImGui::GetStyle().WindowPadding = ImVec2(0.5f, 0.0f);
+    ImGui::GetStyle().WindowPadding = ImVec2(1.f, 0.0f);
     ImGui::GetStyle().WindowRounding = 0.0f;
     ImGui::GetStyle().WindowBorderSize = 0.0f;
     ImGui::GetStyle().WindowMinSize = ImVec2(4.0f, 2.0f);

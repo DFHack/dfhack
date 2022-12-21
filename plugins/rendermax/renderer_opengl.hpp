@@ -1,8 +1,6 @@
 //original file from https://github.com/Baughn/Dwarf-Fortress--libgraphics-
 #pragma once
 
-#include "tinythread.h"
-
 #include "Core.h"
 #include <VTableInterpose.h>
 #include "df/renderer.h"

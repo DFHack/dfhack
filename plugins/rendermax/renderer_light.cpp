@@ -105,7 +105,7 @@ lightingEngineViewscreen::lightingEngineViewscreen(renderer_light* target):light
 {
     reinit();
     defaultSettings();
-    int numTreads=tthread::thread::hardware_concurrency();
+    int numTreads=std::thread::hardware_concurrency();
     if(numTreads==0)numTreads=1;
     threading.start(numTreads);
 }
@@ -1462,17 +1462,17 @@ void lightThreadDispatch::start(int count)
     for(int i=0;i<count;i++)
     {
         std::unique_ptr<lightThread> nthread(new lightThread(*this));
-        nthread->myThread=new tthread::thread(&threadStub,nthread.get());
+        nthread->myThread=new std::thread(&threadStub,nthread.get());
         threadPool.push_back(std::move(nthread));
     }
 }
 
 void lightThreadDispatch::waitForWrites()
 {
-    tthread::lock_guard<tthread::mutex> guard(writeLock);
+    std::unique_lock<std::mutex> lock(writeLock);
     while(threadPool.size()>size_t(writeCount))//missed it somehow already.
     {
-        writesDone.wait(writeLock); //if not, wait a bit
+        writesDone.wait(lock); //if not, wait a bit
     }
 }
 

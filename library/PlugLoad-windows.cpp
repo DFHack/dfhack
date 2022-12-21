@@ -34,7 +34,6 @@ distribution.
 #include "Hooks.h"
 #include <stdio.h>
 
-#include "tinythread.h"
 #include "../plugins/uicommon.h"
 
 /*

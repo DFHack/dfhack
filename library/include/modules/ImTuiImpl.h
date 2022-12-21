@@ -25,6 +25,8 @@ namespace ImTuiInterop
 
 	struct ui_state;
 
+	ui_state& get_global_ui_state();
+
 	namespace impl
 	{
 		void init_current_context();

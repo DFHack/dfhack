@@ -2236,11 +2236,13 @@ static int imgui_buttoncolored(lua_State* state)
 
     ImGui::PushStyleColor(ImGuiCol_Text, col);
 
-    ImGui::Button(str.c_str());
+    bool result = ImGui::Button(str.c_str());
 
     ImGui::PopStyleColor(1);
 
-    return 0;
+    imgui_push_generic(state, result);
+
+    return 1;
 }
 
 static int imgui_textbackgroundcolored(lua_State* state)

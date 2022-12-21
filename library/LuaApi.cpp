@@ -2239,7 +2239,7 @@ static int imgui_textbackgroundcolored(lua_State* state)
     ImVec2 tl = ImGui::GetCursorScreenPos();
     ImVec2 text_size = ImGui::CalcTextSize(str.c_str());
 
-    ImVec2 br = { tl.x + text_size.x, std::max(tl.y + text_size.y - 1, 0.f) };
+    ImVec2 br = { tl.x + text_size.x - 1, std::max(tl.y + text_size.y - 1, 0.f) };
 
     //tl.x = tl.x + 1;
 

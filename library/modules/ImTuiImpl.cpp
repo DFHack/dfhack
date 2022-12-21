@@ -239,6 +239,8 @@ void ImTuiInterop::impl::init_current_context()
     style.Colors[ImGuiCol_TitleBgCollapsed] = named_colours("BLACK", "BLUE", false);
     style.Colors[ImGuiCol_MenuBarBg] = named_colours("BLACK", "BLUE", false);
 
+    style.Colors[ImGuiCol_TextSelectedBg] = named_colours("BLACK", "RED", false);
+
     //unsure about much of this
     style.Colors[ImGuiCol_CheckMark] = named_colours("WHITE", "BLACK", false); //?
     style.Colors[ImGuiCol_SliderGrab] = named_colours("WHITE", "BLACK", false); //?

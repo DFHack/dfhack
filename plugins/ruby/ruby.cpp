@@ -1,3 +1,6 @@
+#include <mutex>
+#include <thread>
+
 // blindly copied imports from fastdwarf
 #include "Core.h"
 #include "Console.h"
@@ -12,8 +15,6 @@
 #include "df/building.h"
 #include "df/item.h"
 #include "df/unit.h"
-
-#include "tinythread.h"
 
 using namespace DFHack;
 
@@ -35,13 +36,13 @@ enum RB_command {
     RB_DIE,
     RB_EVAL,
 };
-tthread::mutex *m_irun;
-tthread::mutex *m_mutex;
+std::mutex *m_irun;
+std::mutex *m_mutex;
 static volatile RB_command r_type;
 static volatile command_result r_result;
 static color_ostream *r_console;       // color_ostream given as argument, if NULL resort to console_proxy
 static const char *r_command;
-static tthread::thread *r_thread;
+static std::thread *r_thread;
 static int onupdate_active;
 static int onupdate_minyear, onupdate_minyeartick=-1, onupdate_minyeartickadv=-1;
 static color_ostream_proxy *console_proxy;
@@ -72,11 +73,11 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     // the ruby thread sleeps trying to lock this
     // when it gets it, it runs according to r_type
     // when finished, it sets r_type to IDLE and unlocks
-    m_irun = new tthread::mutex();
+    m_irun = new std::mutex();
 
     // when any thread is going to request something to the ruby thread,
     // lock this before anything, and release when everything is done
-    m_mutex = new tthread::mutex();
+    m_mutex = new std::mutex();
 
     // list of dfhack commands to run when the current ruby run is done (once locks are released)
     dfhack_run_queue = new std::vector<std::string>;
@@ -85,11 +86,11 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 
     // create the dedicated ruby thread
     // df_rubythread starts the ruby interpreter and goes to type=IDLE when done
-    r_thread = new tthread::thread(df_rubythread, 0);
+    r_thread = new std::thread(df_rubythread, (void *)0);
 
     // wait until init phase 1 is done
     while (r_type != RB_IDLE)
-        tthread::this_thread::yield();
+        std::this_thread::yield();
 
     // ensure the ruby thread sleeps until we have a command to handle
     m_irun->lock();
@@ -159,7 +160,7 @@ static command_result do_plugin_eval_ruby(color_ostream &out, const char *comman
 
     // semi-active loop until ruby thread is done
     while (r_type != RB_IDLE)
-        tthread::this_thread::yield();
+        std::this_thread::yield();
 
     ret = r_result;
     r_console = NULL;
@@ -495,7 +496,7 @@ static void df_rubythread(void *p)
         r_result = CR_OK;
         r_type = RB_IDLE;
         m_irun->unlock();
-        tthread::this_thread::yield();
+        std::this_thread::yield();
     }
 }
 

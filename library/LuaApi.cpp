@@ -1996,6 +1996,13 @@ static void imgui_eatmouseinputs()
     ImGui::GetIO().WantCaptureMouse = true;
 }
 
+static void imgui_feedupwards()
+{
+    ImTuiInterop::user_data& udata = ImTuiInterop::ui_state::get_user_data();
+
+    udata.should_pass_keyboard_up = true;
+}
+
 static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(Begin, imgui_begin),
     WRAPM(ImGui, End),
@@ -2055,6 +2062,7 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPM(ImGui, TableHeadersRow),
     WRAPN(EatKeyboardInputs, imgui_eatkeyboardinputs),
     WRAPN(EatMouseInputs, imgui_eatmouseinputs),
+    WRAPN(FeedUpwards, imgui_feedupwards),
     { NULL, NULL }
 };
 

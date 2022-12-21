@@ -4,12 +4,18 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <array>
 #include "df/interface_key.h"
 
 struct ImGuiContext;
 
 namespace ImTuiInterop
 {
+	struct user_data
+	{
+		bool should_pass_keyboard_up = false;
+	};
+
 	int name_to_colour_index(const std::string& name);
 	//fg, bg, bold
 	ImVec4 colour_interop(std::vector<int> col3);
@@ -31,16 +37,19 @@ namespace ImTuiInterop
 
 	struct ui_state
 	{
+		static user_data& get_user_data();
+
 		std::set<df::interface_key> unprocessed_keys;
+		std::array<int, 2> pressed_mouse_keys = {};
 		std::map<df::interface_key, int> danger_key_frames;
 
 		ImGuiContext* last_context;
 		ImGuiContext* ctx;
 
 		ui_state();
+		~ui_state();
 
 		void feed(std::set<df::interface_key> keys);
-		void filter_keys(std::set<df::interface_key>& keys);
 
 		void activate();
 

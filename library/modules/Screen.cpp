@@ -843,11 +843,19 @@ void dfhack_lua_viewscreen::feed(std::set<df::interface_key> *keys)
     if (keys)
     {
         st.feed(*keys);
-        st.filter_keys(*keys);
     }
 
     lua_pushlightuserdata(Lua::Core::State, keys);
     safe_call_lua(do_input, 1, 0);
+
+    ImTuiInterop::user_data& udata = ImTuiInterop::ui_state::get_user_data();
+
+    if (udata.should_pass_keyboard_up && parent && keys)
+    {
+        parent->feed(keys);
+    }
+
+    udata.should_pass_keyboard_up = false;
 }
 
 void dfhack_lua_viewscreen::onShow()

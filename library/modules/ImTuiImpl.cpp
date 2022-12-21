@@ -3,6 +3,7 @@
 #include "ColorText.h"
 #include "df/enabler.h"
 #include "df/interface_key.h"
+#include "imgui/imgui_internal.h"
 
 using namespace DFHack;
 
@@ -336,6 +337,11 @@ void ImTuiInterop::impl::init_current_context()
     ImGui::GetIO().DisplaySize = ImVec2(dim.x, dim.y);
 
     ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+    ImGuiContext* ctx = ImGui::GetCurrentContext();
+    //I don't particularly like the userdata hack, todo: figure out how to pass
+    //userdata through the lua opaque state object
+    ctx->UserData = new user_data();
 }
 
 //so, the way that the existing widgets work is that if you hit eg 4, the printable
@@ -439,17 +445,10 @@ void ImTuiInterop::impl::new_frame(std::set<df::interface_key> keys, ui_state& s
     //todo: frametime
     io.DeltaTime = 33.f / 1000.f;
 
-    io.MouseDown[0] = 0;
-    io.MouseDown[1] = 0;
+    io.MouseDown[0] = st.pressed_mouse_keys[0];
+    io.MouseDown[1] = st.pressed_mouse_keys[1];
 
-    if (df::global::enabler) {
-        if (df::global::enabler->mouse_lbut || df::global::enabler->mouse_lbut_down) {
-            io.MouseDown[0] = 1;
-        }
-        if (df::global::enabler->mouse_rbut || df::global::enabler->mouse_rbut_down) {
-            io.MouseDown[1] = 1;
-        }
-    }
+    st.pressed_mouse_keys = {};
 
     ImGui::NewFrame();
 }
@@ -576,37 +575,38 @@ void ImTuiInterop::impl::shutdown()
 
 }
 
+ImTuiInterop::user_data& ImTuiInterop::ui_state::get_user_data()
+{
+    return *(user_data*)ImGui::GetCurrentContext()->UserData;
+}
+
 ImTuiInterop::ui_state::ui_state()
 {
     last_context = nullptr;
     ctx = nullptr;
 }
 
+ImTuiInterop::ui_state::~ui_state()
+{
+    if (ImGui::GetCurrentContext()->UserData != nullptr)
+    {
+        delete ImGui::GetCurrentContext()->UserData;
+    }
+}
+
 void ImTuiInterop::ui_state::feed(std::set<df::interface_key> keys)
 {
     unprocessed_keys.insert(keys.begin(), keys.end());
-}
 
-void ImTuiInterop::ui_state::filter_keys(std::set<df::interface_key>& keys)
-{
-    bool filter_keyboard_keys = ImGui::GetIO().WantCaptureKeyboard || ImGui::GetIO().WantTextInput;
-    bool filter_mouse_buttons = ImGui::GetIO().WantCaptureMouse;
+    pressed_mouse_keys = {};
 
-    if (filter_mouse_buttons)
-    {
-        if (df::global::enabler) {
-            df::global::enabler->mouse_lbut_down = 0;
-            df::global::enabler->mouse_rbut_down = 0;
-            
-            //Is this fine? Or do I need to mess with the lua side in PushInterfaceKeys instead of this?
-            df::global::enabler->mouse_lbut = 0;
-            df::global::enabler->mouse_rbut = 0;
+    if (df::global::enabler) {
+        if (df::global::enabler->mouse_lbut || df::global::enabler->mouse_lbut_down) {
+            pressed_mouse_keys[0] = 1;
         }
-    }
-
-    if (filter_mouse_buttons || filter_keyboard_keys)
-    {
-        keys.clear();
+        if (df::global::enabler->mouse_rbut || df::global::enabler->mouse_rbut_down) {
+            pressed_mouse_keys[1] = 1;
+        }
     }
 }
 

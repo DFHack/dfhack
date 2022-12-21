@@ -1988,6 +1988,8 @@ static void imgui_tablenextrow()
 static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(Begin, imgui_begin),
     WRAPM(ImGui, End),
+    WRAPM(ImGui, BeginTooltip),
+    WRAPM(ImGui, EndTooltip),
     WRAPN(TextUnformatted, imgui_textunformatted),
     WRAPN(Text, imgui_text),
     WRAPN(TextDisabled, imgui_textdisabled),

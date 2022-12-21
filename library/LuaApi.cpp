@@ -1988,19 +1988,17 @@ static void imgui_tablenextrow()
 static void imgui_eatkeyboardinputs()
 {
     //hacky, but has no functional effect on imgui
-    ImGui::GetIO().WantCaptureKeyboard = true;
+    ImTuiInterop::ui_state::get_user_data().suppress_next_keyboard_passthrough = true;
 }
 
 static void imgui_eatmouseinputs()
 {
-    ImGui::GetIO().WantCaptureMouse = true;
+    ImTuiInterop::ui_state::get_user_data().suppress_next_keyboard_passthrough = true;
 }
 
 static void imgui_feedupwards()
 {
-    ImTuiInterop::user_data& udata = ImTuiInterop::ui_state::get_user_data();
-
-    udata.should_pass_keyboard_up = true;
+    ImTuiInterop::ui_state::get_user_data().should_pass_keyboard_up = true;
 }
 
 static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {

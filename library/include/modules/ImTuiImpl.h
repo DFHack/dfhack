@@ -14,6 +14,7 @@ namespace ImTuiInterop
 	struct user_data
 	{
 		bool should_pass_keyboard_up = false;
+		bool suppress_next_keyboard_passthrough = false;
 	};
 
 	int name_to_colour_index(const std::string& name);

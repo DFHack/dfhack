@@ -850,12 +850,10 @@ void dfhack_lua_viewscreen::feed(std::set<df::interface_key> *keys)
 
     ImTuiInterop::user_data& udata = ImTuiInterop::ui_state::get_user_data();
 
-    if (udata.should_pass_keyboard_up && parent && keys)
+    if (udata.should_pass_keyboard_up && !udata.suppress_next_keyboard_passthrough && parent && keys)
     {
         parent->feed(keys);
     }
-
-    udata.should_pass_keyboard_up = false;
 }
 
 void dfhack_lua_viewscreen::onShow()

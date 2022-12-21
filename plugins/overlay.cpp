@@ -1,8 +1,10 @@
 #include "df/viewscreen_adopt_regionst.h"
+#include "df/viewscreen_choose_game_typest.h"
 #include "df/viewscreen_choose_start_sitest.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_export_regionst.h"
 #include "df/viewscreen_game_cleanerst.h"
+#include "df/viewscreen_initial_prepst.h"
 #include "df/viewscreen_legendsst.h"
 #include "df/viewscreen_loadgamest.h"
 #include "df/viewscreen_new_regionst.h"
@@ -10,6 +12,7 @@
 #include "df/viewscreen_setupdwarfgamest.h"
 #include "df/viewscreen_titlest.h"
 #include "df/viewscreen_update_regionst.h"
+#include "df/viewscreen_worldst.h"
 
 #include "Debug.h"
 #include "LuaTools.h"
@@ -91,10 +94,12 @@ struct viewscreen_overlay : T {
     template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(screen##_overlay, render, 100);
 
 IMPLEMENT_HOOKS(adopt_region)
+IMPLEMENT_HOOKS(choose_game_type)
 IMPLEMENT_HOOKS(choose_start_site)
 IMPLEMENT_HOOKS(dwarfmode)
 IMPLEMENT_HOOKS(export_region)
 IMPLEMENT_HOOKS(game_cleaner)
+IMPLEMENT_HOOKS(initial_prep)
 IMPLEMENT_HOOKS(legends)
 IMPLEMENT_HOOKS(loadgame)
 IMPLEMENT_HOOKS(new_region)
@@ -102,6 +107,7 @@ IMPLEMENT_HOOKS(savegame)
 IMPLEMENT_HOOKS(setupdwarfgame)
 IMPLEMENT_HOOKS(title)
 IMPLEMENT_HOOKS(update_region)
+IMPLEMENT_HOOKS(world)
 
 #undef IMPLEMENT_HOOKS
 
@@ -123,16 +129,19 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 
     if (INTERPOSE_HOOKS_FAILED(adopt_region) ||
             INTERPOSE_HOOKS_FAILED(choose_start_site) ||
+            INTERPOSE_HOOKS_FAILED(choose_game_type) ||
             INTERPOSE_HOOKS_FAILED(dwarfmode) ||
             INTERPOSE_HOOKS_FAILED(export_region) ||
             INTERPOSE_HOOKS_FAILED(game_cleaner) ||
+            INTERPOSE_HOOKS_FAILED(initial_prep) ||
             INTERPOSE_HOOKS_FAILED(legends) ||
             INTERPOSE_HOOKS_FAILED(loadgame) ||
             INTERPOSE_HOOKS_FAILED(new_region) ||
             INTERPOSE_HOOKS_FAILED(savegame) ||
             INTERPOSE_HOOKS_FAILED(setupdwarfgame) ||
             INTERPOSE_HOOKS_FAILED(title) ||
-            INTERPOSE_HOOKS_FAILED(update_region))
+            INTERPOSE_HOOKS_FAILED(update_region) ||
+            INTERPOSE_HOOKS_FAILED(world))
         return CR_FAILURE;
 
     is_enabled = enable;

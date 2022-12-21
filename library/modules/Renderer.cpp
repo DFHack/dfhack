@@ -7,9 +7,8 @@ using df::global::enabler;
 using df::global::gps;
 using DFHack::Renderer::renderer_wrap;
 
+/*
 static renderer_wrap *original_renderer = NULL;
-
-const int32_t Renderer::GET_MOUSE_COORDS_SENTINEL = 0xcd1aa471;
 
 bool init()
 {
@@ -156,3 +155,4 @@ bool Renderer::renderer_wrap::get_mouse_coords(int32_t* x, int32_t* y) {
 bool Renderer::renderer_wrap::uses_opengl() {
     return parent->uses_opengl();
 };
+*/

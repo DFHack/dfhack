@@ -1014,10 +1014,12 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
     else if (first == "fpause")
     {
         World::SetPauseState(true);
+/* TODO: understand how this changes for v50
         if (auto scr = Gui::getViewscreenByType<df::viewscreen_new_regionst>())
         {
             scr->worldgen_paused = true;
         }
+*/
         con.print("The game was forced to pause!\n");
     }
     else if (first == "cls" || first == "clear")

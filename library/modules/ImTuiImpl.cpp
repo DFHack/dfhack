@@ -459,12 +459,8 @@ void ImTuiInterop::impl::new_frame(std::set<df::interface_key> keys, ui_state& s
     ImGui::NewFrame();
 }
 
-void ImTuiInterop::impl::draw_frame()
+void ImTuiInterop::impl::draw_frame(ImDrawData* drawData)
 {
-    ImGui::Render();
-
-    ImDrawData* drawData = ImGui::GetDrawData();
-
     int fb_width = (int)(drawData->DisplaySize.x * drawData->FramebufferScale.x);
     int fb_height = (int)(drawData->DisplaySize.y * drawData->FramebufferScale.y);
 
@@ -635,9 +631,9 @@ void ImTuiInterop::ui_state::new_frame()
     unprocessed_keys.clear();
 }
 
-void ImTuiInterop::ui_state::draw_frame()
+void ImTuiInterop::ui_state::draw_frame(ImDrawData* drawData)
 {
-    ImTuiInterop::impl::draw_frame();
+    ImTuiInterop::impl::draw_frame(drawData);
 }
 
 void ImTuiInterop::ui_state::deactivate()

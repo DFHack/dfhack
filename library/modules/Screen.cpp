@@ -831,7 +831,9 @@ void dfhack_lua_viewscreen::render()
     {
         ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
 
-        st.draw_frame();
+        ImGui::Render();
+
+        st.draw_frame(ImGui::GetDrawData());
         st.deactivate();
     }
 }

@@ -33,7 +33,7 @@ namespace ImTuiInterop
 
 		void new_frame(std::set<df::interface_key> keys, ui_state& st);
 
-		void draw_frame();
+		void draw_frame(ImDrawData* drawData);
 
 		void shutdown();
 	}
@@ -58,7 +58,7 @@ namespace ImTuiInterop
 
 		void new_frame();
 
-		void draw_frame();
+		void draw_frame(ImDrawData* drawData);
 
 		void deactivate();
 	};

@@ -87,7 +87,7 @@ df::coord2d Screen::getMousePos()
 {
     if (!gps)
         return df::coord2d(-1, -1);
-    return df::coord2d(gps->mouse_x_tile, gps->mouse_y_tile);
+    return df::coord2d(gps->mouse_x, gps->mouse_y);
 }
 
 // returns the screen pixel coordinates
@@ -95,7 +95,7 @@ df::coord2d Screen::getMousePixels()
 {
     if (!gps)
         return df::coord2d(-1, -1);
-    return df::coord2d(gps->mouse_x_pixel, gps->mouse_y_pixel);
+    return df::coord2d(gps->precise_mouse_x, gps->precise_mouse_y);
 }
 
 df::coord2d Screen::getWindowSize()
@@ -114,21 +114,6 @@ bool Screen::inGraphicsMode()
     return init && init->display.flag.is_set(init_display_flags::USE_GRAPHICS);
 }
 
-static int32_t flood_clear(int32_t target, size_t index, size_t max_idx) {
-    if (index >= max_idx || !gps->screen1_offset_tile[index]
-            || gps->screen1_offset_tile[index] != target)
-        return 0;
-    gps->screen1_offset_tile[index] = 0;
-    gps->screen1_offset_x[index] = 0;
-    gps->screen1_offset_y[index] = 0;
-    int32_t cleared = 1;
-    cleared += flood_clear(target, index - 1, max_idx);
-    cleared += flood_clear(target, index + 1, max_idx);
-    cleared += flood_clear(target, index - gps->dimy, max_idx);
-    cleared += flood_clear(target, index + gps->dimy, max_idx);
-    return cleared;
-}
-
 static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
 {
     auto dim = Screen::getWindowSize();
@@ -136,6 +121,7 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
         return false;
 
 // TODO: understand how this changes for v50
+/*
     size_t index = ((x * gps->dimy) + y);
     if (!map) {
         // don't let DF overlay interface elements draw over us
@@ -160,6 +146,7 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
     argb[4] = bg[0];
     argb[5] = bg[1];
     argb[6] = bg[2];
+*/
 /* old code
 //     auto screen = gps->screen + index*4;
 //     screen[0] = uint8_t(pen.ch);

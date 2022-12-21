@@ -687,9 +687,9 @@ GREY_FRAME = {
 
 -- The usual boundary used by the DF screens. Often has fancy pattern in tilesets.
 BOUNDARY_FRAME = {
-    frame_pen = to_pen{ ch = 0xDB, fg = COLOR_DARKGREY, bg = COLOR_BLACK },
+    frame_pen = to_pen{ ch = 0xDB, fg = COLOR_GREY, bg = COLOR_BLACK },
     title_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
-    signature_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_DARKGREY },
+    signature_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
 }
 
 GREY_LINE_FRAME = {
@@ -701,7 +701,7 @@ GREY_LINE_FRAME = {
     rt_frame_pen = to_pen{ ch = 187, fg = COLOR_GREY, bg = COLOR_BLACK },
     rb_frame_pen = to_pen{ ch = 188, fg = COLOR_GREY, bg = COLOR_BLACK },
     title_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
-    signature_pen = to_pen{ fg = COLOR_DARKGREY, bg = COLOR_BLACK },
+    signature_pen = to_pen{ fg = COLOR_GREY, bg = COLOR_BLACK },
 }
 
 function paint_frame(dc,rect,style,title)

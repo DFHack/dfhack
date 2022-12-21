@@ -116,9 +116,21 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
 
 // TODO: understand how this changes for v50
     int index = ((x * gps->dimy) + y);
-    gps->screen1_opt_tile[index] = uint8_t(pen.ch);
-    // we need a new way to represent color
-    //auto argb = &gps->screen1_asciirgb[index * 8];
+    if (!map) {
+        // don't let anything draw over us
+        gps->screen1_forced_tile[index] = 0;
+    }
+    gps->screen1_opt_tile[index] = uint8_t(pen.tile);
+    auto fg = &gps->palette[pen.fg][0];
+    auto bg = &gps->palette[pen.bg][0];
+    auto argb = &gps->screen1_asciirgb[index * 8];
+    argb[0] = uint8_t(pen.ch);
+    argb[1] = fg[0];
+    argb[2] = fg[1];
+    argb[3] = fg[2];
+    argb[4] = bg[0];
+    argb[5] = bg[1];
+    argb[6] = bg[2];
 /* old code
 //     auto screen = gps->screen + index*4;
 //     screen[0] = uint8_t(pen.ch);

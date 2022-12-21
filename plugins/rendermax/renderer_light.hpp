@@ -1,8 +1,10 @@
 #pragma once
 
+#include <condition_variable>
 #include <memory>
 #include <mutex>
 #include <stack>
+#include <thread>
 #include <tuple>
 #include <unordered_map>
 
@@ -231,18 +233,18 @@ public:
     std::vector<std::unique_ptr<lightThread> > threadPool;
     std::vector<lightSource>& lights;
 
-    tthread::mutex occlusionMutex;
-    tthread::condition_variable occlusionDone; //all threads wait for occlusion to finish
+    std::mutex occlusionMutex;
+    std::condition_variable occlusionDone; //all threads wait for occlusion to finish
     bool occlusionReady;
-    tthread::mutex unprocessedMutex;
+    std::mutex unprocessedMutex;
     std::stack<DFHack::rect2d> unprocessed; //stack of parts of map where lighting is not finished
     std::vector<rgbf>& occlusion;
     int& num_diffusion;
 
-    tthread::mutex writeLock; //mutex for lightMap
+    std::mutex writeLock; //mutex for lightMap
     std::vector<rgbf>& lightMap;
 
-    tthread::condition_variable writesDone;
+    std::condition_variable writesDone;
     int writeCount;
 
     lightThreadDispatch(lightingEngineViewscreen* p);
@@ -263,7 +265,7 @@ class lightThread
     void work(); //main light calculation function
     void combine(); //combine existing canvas into global lightmap
 public:
-    tthread::thread *myThread;
+    std::thread *myThread;
     bool isDone; //no mutex, because bool is atomic
     lightThread(lightThreadDispatch& dispatch);
     ~lightThread();

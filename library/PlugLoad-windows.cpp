@@ -34,8 +34,6 @@ distribution.
 #include "Hooks.h"
 #include <stdio.h>
 
-#include "tinythread.h"
-
 /*
  * Plugin loading functions
  */

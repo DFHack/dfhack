@@ -32,7 +32,6 @@ distribution.
 #include "Core.h"
 #include "Error.h"
 #include "VersionInfo.h"
-#include "tinythread.h"
 // must be last due to MS stupidity
 #include "DataDefs.h"
 #include "DataIdentity.h"

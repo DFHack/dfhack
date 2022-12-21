@@ -29,6 +29,7 @@ distribution.
 #include "ColorText.h"
 #include "MiscUtils.h"
 #include <map>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -37,11 +38,6 @@ distribution.
 
 typedef struct lua_State lua_State;
 
-namespace tthread
-{
-    class mutex;
-    class condition_variable;
-}
 namespace df
 {
     struct viewscreen;
@@ -280,8 +276,8 @@ namespace DFHack
     private:
         Core *core;
         bool addPlugin(std::string name);
-        tthread::recursive_mutex * plugin_mutex;
-        tthread::mutex * cmdlist_mutex;
+        std::recursive_mutex * plugin_mutex;
+        std::mutex * cmdlist_mutex;
         std::map <std::string, Plugin*> command_map;
         std::map <std::string, Plugin*> all_plugins;
         std::string plugin_path;

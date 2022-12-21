@@ -403,10 +403,6 @@ std::set<df::interface_key> cleanup_keys(std::set<df::interface_key> keys, std::
 
 void ImTuiInterop::impl::new_frame(std::set<df::interface_key> keys, ui_state& st)
 {
-    ui_state::get_user_data().suppress_next_keyboard_passthrough = false;
-    ui_state::get_user_data().should_pass_keyboard_up = false;
-
-
     keys = cleanup_keys(keys, st.danger_key_frames);
 
     for (auto& it : st.danger_key_frames)
@@ -581,7 +577,12 @@ void ImTuiInterop::impl::shutdown()
 
 ImTuiInterop::user_data& ImTuiInterop::ui_state::get_user_data()
 {
-    return *(user_data*)ImGui::GetCurrentContext()->UserData;
+    ImGuiContext* ctx = ImGui::GetCurrentContext();
+
+    assert(ctx);
+    assert(ctx->UserData);
+
+    return *(user_data*)ctx->UserData;
 }
 
 ImTuiInterop::ui_state::ui_state()
@@ -594,7 +595,8 @@ ImTuiInterop::ui_state::~ui_state()
 {
     if (ImGui::GetCurrentContext()->UserData != nullptr)
     {
-        delete ImGui::GetCurrentContext()->UserData;
+        //this causes an immediate leak because heh I'm returning an object somewhere else
+        //delete ImGui::GetCurrentContext()->UserData;
     }
 }
 

@@ -5,6 +5,7 @@
 #include <vector>
 #include <set>
 #include <array>
+#include <map>
 #include "df/interface_key.h"
 
 struct ImGuiContext;
@@ -45,6 +46,9 @@ namespace ImTuiInterop
 		std::set<df::interface_key> unprocessed_keys;
 		std::array<int, 2> pressed_mouse_keys = {};
 		std::map<df::interface_key, int> danger_key_frames;
+
+		int render_stack = 0;
+		std::map<int, std::vector<std::string>> windows;
 
 		ImGuiContext* last_context;
 		ImGuiContext* ctx;

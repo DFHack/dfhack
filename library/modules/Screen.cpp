@@ -813,27 +813,48 @@ void dfhack_lua_viewscreen::render()
 
     dfhack_lua_viewscreen* screen = get_first_lua_top();
 
+    ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
+
     bool is_top = screen == this;
 
     if (is_top)
     {
-        ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
-
+        st.windows.clear();
+        st.render_stack = 0;
         st.activate();
         st.new_frame();
     }
+
+    st.render_stack++;
+
+    int my_render_stack = st.render_stack;
 
     dfhack_viewscreen::render();
 
     safe_call_lua(do_render, 0, 0);
 
+    std::vector<std::string> my_windows = st.windows[my_render_stack];
+
+    //could use an already rendered set, could register renderable window names and find them
+    ImGui::ProgressiveRender(my_windows);
+
+    st.render_stack--;
+
+    //ImGui::Render();
+
+    st.draw_frame(ImGui::GetDrawData());
+
     if (is_top)
     {
-        ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
+        ImGui::EndFrame();
+
+        //ImGui::Render();
+
+        /*ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
 
         ImGui::Render();
 
-        st.draw_frame(ImGui::GetDrawData());
+        st.draw_frame(ImGui::GetDrawData());*/
         st.deactivate();
     }
 }

@@ -936,6 +936,9 @@ void dfhack_lua_viewscreen::feed(std::set<df::interface_key> *keys)
 
     if (udata.should_pass_keyboard_up && !udata.suppress_next_keyboard_passthrough && parent && keys)
     {
+        udata.suppress_next_keyboard_passthrough = false;
+        udata.should_pass_keyboard_up = false;
+
         parent->feed(keys);
     }
 

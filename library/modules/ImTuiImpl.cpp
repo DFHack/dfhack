@@ -590,11 +590,7 @@ ImTuiInterop::ui_state::ui_state()
 
 ImTuiInterop::ui_state::~ui_state()
 {
-    if (ImGui::GetCurrentContext()->UserData != nullptr)
-    {
-        //this causes an immediate leak because heh I'm returning an object somewhere else
-        //delete ImGui::GetCurrentContext()->UserData;
-    }
+
 }
 
 void ImTuiInterop::ui_state::feed(std::set<df::interface_key> keys)

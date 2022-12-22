@@ -60,6 +60,7 @@ namespace ImTuiInterop
 		void draw_frame(ImDrawData* drawData);
 
 		void deactivate();
+		void reset_input();
 	};
 
 	//returns an inactive imgui context system

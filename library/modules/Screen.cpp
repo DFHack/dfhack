@@ -760,6 +760,52 @@ int dfhack_lua_viewscreen::do_input(lua_State *L)
     return 0;
 }
 
+static dfhack_lua_viewscreen* get_first_lua_top()
+{
+    df::viewscreen* top = Gui::getCurViewscreen(true);
+
+    while (top != nullptr)
+    {
+        if (dfhack_viewscreen::is_instance(top))
+        {
+            dfhack_viewscreen* scr = static_cast<dfhack_viewscreen*>(top);
+
+            if (scr->is_lua_screen())
+            {
+                return static_cast<dfhack_lua_viewscreen*>(scr);
+            }
+        }
+
+        top = top->parent;
+    }
+
+    return nullptr;
+}
+
+static int get_visible_lua_script_count()
+{
+    int count = 0;
+    df::viewscreen* top = Gui::getCurViewscreen(true);
+
+    while (top != nullptr)
+    {
+        if (dfhack_viewscreen::is_instance(top))
+        {
+            dfhack_viewscreen* scr = static_cast<dfhack_viewscreen*>(top);
+
+            if (!Screen::isDismissed(scr) && scr->is_lua_screen())
+            {
+                count++;
+            }
+        }
+
+        top = top->parent;
+    }
+
+    return count;
+}
+
+
 dfhack_lua_viewscreen::dfhack_lua_viewscreen(lua_State *L, int table_idx)
 {
     ImTuiInterop::get_global_ui_state();
@@ -780,28 +826,11 @@ dfhack_lua_viewscreen::dfhack_lua_viewscreen(lua_State *L, int table_idx)
 dfhack_lua_viewscreen::~dfhack_lua_viewscreen()
 {
     safe_call_lua(do_destroy, 0, 0);
-}
 
-dfhack_lua_viewscreen* get_first_lua_top()
-{
-    df::viewscreen* top = Gui::getCurViewscreen(true);
-
-    while (top != nullptr)
+    if (get_visible_lua_script_count() == 0)
     {
-        if (dfhack_viewscreen::is_instance(top))
-        {
-            dfhack_viewscreen* scr = static_cast<dfhack_viewscreen*>(top);
-
-            if (scr->is_lua_screen())
-            {
-                return static_cast<dfhack_lua_viewscreen*>(scr);
-            }
-        }
-
-        top = top->parent;
+        ImTuiInterop::get_global_ui_state().reset_input();
     }
-
-    return nullptr;
 }
 
 void dfhack_lua_viewscreen::render()
@@ -963,6 +992,12 @@ void dfhack_lua_viewscreen::onDismiss()
 {
     lua_pushstring(Lua::Core::State, "onDismiss");
     safe_call_lua(do_notify, 1, 0);
+
+    //clean up input, because nobody's processing it and don't want it to get stuck
+    if (get_visible_lua_script_count() == 0)
+    {
+        ImTuiInterop::get_global_ui_state().reset_input();
+    }
 }
 
 df::unit *dfhack_lua_viewscreen::getSelectedUnit()

@@ -627,6 +627,21 @@ void ImTuiInterop::ui_state::deactivate()
     ImGui::SetCurrentContext(last_context);
 }
 
+void ImTuiInterop::ui_state::reset_input()
+{
+    ImGuiIO& io = ImGui::GetIO();
+
+    int arraysize_of_keysdown = IM_ARRAYSIZE(io.KeysDown);
+    int max_df_keys = df::enum_traits<df::interface_key>::last_item_value + 1;
+
+    assert(arraysize_of_keysdown >= max_df_keys);
+
+    auto& keysDown = io.KeysDown;
+    std::fill(keysDown, keysDown + arraysize_of_keysdown, false);
+
+    std::fill(io.MouseDown, io.MouseDown + 5, false);
+}
+
 ImTuiInterop::ui_state ImTuiInterop::make_ui_system()
 {
     std::cout << "Made ImTui System\n";

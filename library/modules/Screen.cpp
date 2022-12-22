@@ -34,6 +34,7 @@ using namespace std;
 #include "modules/Renderer.h"
 #include "modules/Screen.h"
 #include "modules/GuiHooks.h"
+#include "modules/Gui.h"
 #include "MemAccess.h"
 #include "VersionInfo.h"
 #include "Types.h"
@@ -759,7 +760,7 @@ int dfhack_lua_viewscreen::do_input(lua_State *L)
 
 dfhack_lua_viewscreen::dfhack_lua_viewscreen(lua_State *L, int table_idx)
 {
-    st = ImTuiInterop::make_ui_system();
+    ImTuiInterop::get_global_ui_state();
 
     assert(Lua::IsCoreContext(L));
 
@@ -779,6 +780,28 @@ dfhack_lua_viewscreen::~dfhack_lua_viewscreen()
     safe_call_lua(do_destroy, 0, 0);
 }
 
+dfhack_lua_viewscreen* get_first_lua_top()
+{
+    df::viewscreen* top = Gui::getCurViewscreen(true);
+
+    while (top != nullptr)
+    {
+        if (dfhack_viewscreen::is_instance(top))
+        {
+            dfhack_viewscreen* scr = static_cast<dfhack_viewscreen*>(top);
+
+            if (scr->is_lua_screen())
+            {
+                return static_cast<dfhack_lua_viewscreen*>(scr);
+            }
+        }
+
+        top = top->parent;
+    }
+
+    return nullptr;
+}
+
 void dfhack_lua_viewscreen::render()
 {
     if (Screen::isDismissed(this))
@@ -788,16 +811,50 @@ void dfhack_lua_viewscreen::render()
         return;
     }
 
-    st.activate();
-    st.new_frame();
+    dfhack_lua_viewscreen* screen = get_first_lua_top();
+
+    ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
+
+    bool is_top = screen == this;
+
+    if (is_top)
+    {
+        st.windows.clear();
+        st.rendered_windows.clear();
+        st.render_stack = 0;
+        st.activate();
+        st.new_frame();
+    }
+
+    st.render_stack++;
+
+    int my_render_stack = st.render_stack;
 
     dfhack_viewscreen::render();
 
     safe_call_lua(do_render, 0, 0);
 
-    st.draw_frame();
-    st.deactivate();
+    std::vector<std::string> my_windows = st.windows[my_render_stack];
 
+    ImGui::ProgressiveRender(my_windows, st.rendered_windows, is_top);
+
+    st.render_stack--;
+
+    st.draw_frame(ImGui::GetDrawData());
+
+    if (is_top)
+    {
+        ImGui::EndFrame();
+
+        //ImGui::Render();
+
+        /*ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
+
+        ImGui::Render();
+
+        st.draw_frame(ImGui::GetDrawData());*/
+        st.deactivate();
+    }
 }
 
 void dfhack_lua_viewscreen::logic()
@@ -840,10 +897,18 @@ void dfhack_lua_viewscreen::feed(std::set<df::interface_key> *keys)
 {
     if (Screen::isDismissed(this)) return;
 
-    if (keys)
+    dfhack_lua_viewscreen* screen = get_first_lua_top();
+
+    bool is_top = screen == this;
+
+    ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
+
+    if (keys && is_top)
     {
         st.feed(*keys);
-    }
+    }   
+
+    st.activate();
 
     lua_pushlightuserdata(Lua::Core::State, keys);
     safe_call_lua(do_input, 1, 0);
@@ -854,6 +919,8 @@ void dfhack_lua_viewscreen::feed(std::set<df::interface_key> *keys)
     {
         parent->feed(keys);
     }
+
+    st.deactivate();
 
     udata.suppress_next_keyboard_passthrough = false;
     udata.should_pass_keyboard_up = false;

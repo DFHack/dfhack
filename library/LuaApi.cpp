@@ -1852,6 +1852,10 @@ static ImVec4 imgui_get_colour_arg(lua_State* state, int index, bool defaults_to
 
 static bool imgui_begin(std::string title)
 {
+    ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
+
+    st.windows[st.render_stack].push_back(title);
+
     return ImGui::Begin(title.c_str(), nullptr, 0);
 }
 

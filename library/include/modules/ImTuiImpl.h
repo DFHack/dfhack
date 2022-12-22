@@ -31,6 +31,8 @@ namespace ImTuiInterop
 		void draw_frame(ImDrawData* drawData);
 
 		void shutdown();
+
+		void reset_input();
 	}
 
 	struct ui_state

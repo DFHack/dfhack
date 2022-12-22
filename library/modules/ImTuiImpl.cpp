@@ -414,15 +414,9 @@ void ImTuiInterop::impl::new_frame(std::set<df::interface_key> keys, ui_state& s
 
     ImGuiIO& io = ImGui::GetIO();
 
-    int arraysize_of_keysdown = IM_ARRAYSIZE(io.KeysDown);
-    int max_df_keys = df::enum_traits<df::interface_key>::last_item_value + 1;
-
-    assert(arraysize_of_keysdown >= max_df_keys);
+    reset_input();
 
     auto& keysDown = io.KeysDown;
-    std::fill(keysDown, keysDown + arraysize_of_keysdown, false);
-
-    std::fill(io.MouseDown, io.MouseDown + 5, false);
 
     for (const df::interface_key& key : keys)
     {
@@ -573,6 +567,21 @@ void ImTuiInterop::impl::shutdown()
 
 }
 
+void ImTuiInterop::impl::reset_input()
+{
+    ImGuiIO& io = ImGui::GetIO();
+
+    int arraysize_of_keysdown = IM_ARRAYSIZE(io.KeysDown);
+    int max_df_keys = df::enum_traits<df::interface_key>::last_item_value + 1;
+
+    assert(arraysize_of_keysdown >= max_df_keys);
+
+    auto& keysDown = io.KeysDown;
+    std::fill(keysDown, keysDown + arraysize_of_keysdown, false);
+
+    std::fill(io.MouseDown, io.MouseDown + 5, false);
+}
+
 ImTuiInterop::ui_state::ui_state()
 {
     last_context = nullptr;
@@ -629,17 +638,7 @@ void ImTuiInterop::ui_state::deactivate()
 
 void ImTuiInterop::ui_state::reset_input()
 {
-    ImGuiIO& io = ImGui::GetIO();
-
-    int arraysize_of_keysdown = IM_ARRAYSIZE(io.KeysDown);
-    int max_df_keys = df::enum_traits<df::interface_key>::last_item_value + 1;
-
-    assert(arraysize_of_keysdown >= max_df_keys);
-
-    auto& keysDown = io.KeysDown;
-    std::fill(keysDown, keysDown + arraysize_of_keysdown, false);
-
-    std::fill(io.MouseDown, io.MouseDown + 5, false);
+    ImTuiInterop::impl::reset_input();
 }
 
 ImTuiInterop::ui_state ImTuiInterop::make_ui_system()

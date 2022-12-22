@@ -33,4 +33,4 @@
 	url = ../../google/googletest.git
 [submodule "depends/imgui"]
 	path = depends/imgui
-	url = git@github.com:20k/dfhack-imgui.git
+	url = https://github.com/20k/dfhack-imgui.git

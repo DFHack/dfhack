@@ -54,6 +54,7 @@ using namespace DFHack;
 #include "df/tile_page.h"
 #include "df/interfacest.h"
 #include "df/enabler.h"
+#include "df/graphic_map_portst.h"
 #include "df/unit.h"
 #include "df/item.h"
 #include "df/job.h"
@@ -116,10 +117,11 @@ bool Screen::inGraphicsMode()
 
 static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
 {
-    auto dim = Screen::getWindowSize();
-    if (x < 0 || x >= dim.x || y < 0 || y >= dim.y)
-        return false;
-
+    df::graphic_map_portst *vp = gps->main_map_port;
+    if (x >= vp->clipx[0] && x <= vp->clipx[1]
+            && y >= vp->clipy[0] && y <= vp->clipy[1]) {
+        vp->screentexpos_interface[x + y*vp->dim_x] = pen.tile;
+    }
 // TODO: understand how this changes for v50
 /*
     size_t index = ((x * gps->dimy) + y);

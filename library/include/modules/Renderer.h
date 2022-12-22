@@ -12,18 +12,9 @@ namespace DFHack { namespace Renderer {
         renderer_wrap *parent;
         renderer_wrap *child;
 
-        virtual void update_tile(int32_t x, int32_t y);
-        virtual void update_all();
-        virtual void render();
-        virtual void set_fullscreen();
-        virtual void zoom(df::zoom_commands z);
-        virtual void resize(int32_t w, int32_t h);
-        virtual void grid_resize(int32_t w, int32_t h);
         virtual ~renderer_wrap() {
             // All necessary cleanup should be handled by RemoveRenderer()
         };
-        virtual bool get_mouse_coords(int32_t *x, int32_t *y);
-        virtual bool uses_opengl();
     };
 
     /* TODO: we can't cat enabler->renderer to renderer_wrap and expect it to work

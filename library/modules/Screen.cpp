@@ -934,6 +934,12 @@ void dfhack_lua_viewscreen::feed(std::set<df::interface_key> *keys)
 
     ImTuiInterop::user_data& udata = ImTuiInterop::ui_state::get_user_data();
 
+    //So, while this passes keyboard inputs up
+    //The current code structure seems to intentionally suppresses mouse clicks from filtering up
+    //through multiple lua scripts, by setting the lmouse_down in the global
+    //enabler to 0 in pushinterfacekeys
+    //this seems undesirable for imgui windows to unconditionally forcibly
+    //suppress mouse clicks
     if (udata.should_pass_keyboard_up && !udata.suppress_next_keyboard_passthrough && parent && keys)
     {
         udata.suppress_next_keyboard_passthrough = false;

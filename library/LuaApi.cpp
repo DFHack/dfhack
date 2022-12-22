@@ -1992,17 +1992,17 @@ static void imgui_tablenextrow()
 static void imgui_eatkeyboardinputs()
 {
     //hacky, but has no functional effect on imgui
-    ImTuiInterop::ui_state::get_user_data().suppress_next_keyboard_passthrough = true;
+    ImTuiInterop::get_global_ui_state().suppress_next_keyboard_passthrough = true;
 }
 
 static void imgui_eatmouseinputs()
 {
-    ImTuiInterop::ui_state::get_user_data().suppress_next_keyboard_passthrough = true;
+    ImTuiInterop::get_global_ui_state().suppress_next_keyboard_passthrough = true;
 }
 
 static void imgui_feedupwards()
 {
-    ImTuiInterop::ui_state::get_user_data().should_pass_keyboard_up = true;
+    ImTuiInterop::get_global_ui_state().should_pass_keyboard_up = true;
 }
 
 static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {

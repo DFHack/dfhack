@@ -12,12 +12,6 @@ struct ImGuiContext;
 
 namespace ImTuiInterop
 {
-	struct user_data
-	{
-		bool should_pass_keyboard_up = false;
-		bool suppress_next_keyboard_passthrough = false;
-	};
-
 	int name_to_colour_index(const std::string& name);
 	//fg, bg, bold
 	ImVec4 colour_interop(std::vector<int> col3);
@@ -41,8 +35,6 @@ namespace ImTuiInterop
 
 	struct ui_state
 	{
-		static user_data& get_user_data();
-
 		std::set<df::interface_key> unprocessed_keys;
 		std::array<int, 2> pressed_mouse_keys = {};
 		std::map<df::interface_key, int> danger_key_frames;
@@ -50,6 +42,8 @@ namespace ImTuiInterop
 		int render_stack = 0;
 		std::map<int, std::vector<std::string>> windows;
 		std::set<std::string> rendered_windows;
+		bool should_pass_keyboard_up = false;
+		bool suppress_next_keyboard_passthrough = false;
 
 		ImGuiContext* last_context;
 		ImGuiContext* ctx;

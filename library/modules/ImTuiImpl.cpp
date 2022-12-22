@@ -343,11 +343,6 @@ void ImTuiInterop::impl::init_current_context()
     ImGui::GetIO().DisplaySize = ImVec2(dim.x, dim.y);
 
     ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-
-    ImGuiContext* ctx = ImGui::GetCurrentContext();
-    //I don't particularly like the userdata hack, todo: figure out how to pass
-    //userdata through the lua opaque state object
-    ctx->UserData = new user_data();
 }
 
 //so, the way that the existing widgets work is that if you hit eg 4, the printable
@@ -575,16 +570,6 @@ void ImTuiInterop::impl::draw_frame(ImDrawData* drawData)
 void ImTuiInterop::impl::shutdown()
 {
 
-}
-
-ImTuiInterop::user_data& ImTuiInterop::ui_state::get_user_data()
-{
-    ImGuiContext* ctx = ImGui::GetCurrentContext();
-
-    assert(ctx);
-    assert(ctx->UserData);
-
-    return *(user_data*)ctx->UserData;
 }
 
 ImTuiInterop::ui_state::ui_state()

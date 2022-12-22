@@ -117,30 +117,18 @@ bool Screen::inGraphicsMode()
 
 static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
 {
-    df::graphic_map_portst *vp = gps->main_map_port;
-    if (x >= vp->clipx[0] && x <= vp->clipx[1]
-            && y >= vp->clipy[0] && y <= vp->clipy[1]) {
-        vp->screentexpos_interface[x + y*vp->dim_x] = pen.tile;
-    }
 // TODO: understand how this changes for v50
-/*
     size_t index = ((x * gps->dimy) + y);
     if (!map) {
         // don't let DF overlay interface elements draw over us
-        gps->screen1_forced_tile[index] = 0;
-        gps->screen1_flags[index] = 0;
-        // the DF renderer can't handle partial offset tiles. make sure we clear
-        // the whole thing if we hit any part of it
-        int32_t cleared = flood_clear(gps->screen1_offset_tile[index], index,
-                                      (gps->dimx*gps->dimy)-1);
-        if (cleared) {
-            DEBUG(screen).print("offset tiles cleared: %d\n", cleared);
-        }
+        gps->screentexpos_anchored[index] = 0;
+        gps->screentexpos_top[index] = 0;
+        gps->screentexpos_flag[index] = 0;
     }
     //gps->screen1_opt_tile[index] = uint8_t(pen.tile);
-    auto fg = &gps->palette[pen.fg][0];
-    auto bg = &gps->palette[pen.bg][0];
-    auto argb = &gps->screen1_asciirgb[index * 8];
+    auto fg = &gps->uccolor[pen.fg][0];
+    auto bg = &gps->uccolor[pen.bg][0];
+    auto argb = &gps->screen[index * 8];
     argb[0] = uint8_t(pen.ch);
     argb[1] = fg[0];
     argb[2] = fg[1];
@@ -148,7 +136,6 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
     argb[4] = bg[0];
     argb[5] = bg[1];
     argb[6] = bg[2];
-*/
 /* old code
 //     auto screen = gps->screen + index*4;
 //     screen[0] = uint8_t(pen.ch);

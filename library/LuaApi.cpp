@@ -49,6 +49,7 @@ distribution.
 #include "modules/Designations.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
+#include "modules/ImTuiImpl.h"
 #include "modules/Items.h"
 #include "modules/Job.h"
 #include "modules/Kitchen.h"
@@ -105,6 +106,7 @@ distribution.
 #include <lauxlib.h>
 #include <lualib.h>
 
+#include "imgui/imgui.h"
 #include "imgui/misc/cpp/imgui_stdlib.h"
 //GetCurrentContext
 #include "imgui/imgui_internal.h"

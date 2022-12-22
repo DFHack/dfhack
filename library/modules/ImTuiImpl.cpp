@@ -3,6 +3,7 @@
 #include "ColorText.h"
 #include "df/enabler.h"
 #include "df/interface_key.h"
+#include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
 
 using namespace DFHack;

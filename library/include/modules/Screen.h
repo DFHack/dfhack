@@ -39,7 +39,6 @@ distribution.
 #include "df/zoom_commands.h"
 
 #include "modules/GuiHooks.h"
-#include "modules/ImTuiImpl.h"
 
 namespace df
 {

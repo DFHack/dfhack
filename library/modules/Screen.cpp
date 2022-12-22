@@ -31,6 +31,7 @@ distribution.
 #include <set>
 using namespace std;
 
+#include "modules/ImTuiImpl.h"
 #include "modules/Renderer.h"
 #include "modules/Screen.h"
 #include "modules/GuiHooks.h"
@@ -45,6 +46,7 @@ using namespace std;
 #include "LuaTools.h"
 
 #include "MiscUtils.h"
+#include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
 
 using namespace DFHack;
@@ -708,7 +710,6 @@ int dfhack_lua_viewscreen::do_render(lua_State *L)
 
     lua_pushvalue(L, -2);
     lua_call(L, 1, 0);
-
     return 0;
 }
 

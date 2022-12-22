@@ -2150,7 +2150,7 @@ bool Gui::setDesignationCoords (const int32_t x, const int32_t y, const int32_t 
 df::coord Gui::getMousePos()
 {
     df::coord pos;
-    if (gps && gps->mouse_x_pixel > -1) {
+    if (gps && gps->precise_mouse_x > -1) {
         pos = getViewportPos();
 /* TODO: understand how this changes for v50
         pos.x += gps->mouse_x_pixel / tile_width;

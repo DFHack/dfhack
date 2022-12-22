@@ -54,6 +54,7 @@ using namespace DFHack;
 #include "df/tile_page.h"
 #include "df/interfacest.h"
 #include "df/enabler.h"
+#include "df/graphic_map_portst.h"
 #include "df/unit.h"
 #include "df/item.h"
 #include "df/job.h"
@@ -87,7 +88,7 @@ df::coord2d Screen::getMousePos()
 {
     if (!gps)
         return df::coord2d(-1, -1);
-    return df::coord2d(gps->mouse_x_tile, gps->mouse_y_tile);
+    return df::coord2d(gps->mouse_x, gps->mouse_y);
 }
 
 // returns the screen pixel coordinates
@@ -95,7 +96,7 @@ df::coord2d Screen::getMousePixels()
 {
     if (!gps)
         return df::coord2d(-1, -1);
-    return df::coord2d(gps->mouse_x_pixel, gps->mouse_y_pixel);
+    return df::coord2d(gps->precise_mouse_x, gps->precise_mouse_y);
 }
 
 df::coord2d Screen::getWindowSize()
@@ -114,45 +115,20 @@ bool Screen::inGraphicsMode()
     return init && init->display.flag.is_set(init_display_flags::USE_GRAPHICS);
 }
 
-static int32_t flood_clear(int32_t target, size_t index, size_t max_idx) {
-    if (index >= max_idx || !gps->screen1_offset_tile[index]
-            || gps->screen1_offset_tile[index] != target)
-        return 0;
-    gps->screen1_offset_tile[index] = 0;
-    gps->screen1_offset_x[index] = 0;
-    gps->screen1_offset_y[index] = 0;
-    int32_t cleared = 1;
-    cleared += flood_clear(target, index - 1, max_idx);
-    cleared += flood_clear(target, index + 1, max_idx);
-    cleared += flood_clear(target, index - gps->dimy, max_idx);
-    cleared += flood_clear(target, index + gps->dimy, max_idx);
-    return cleared;
-}
-
 static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
 {
-    auto dim = Screen::getWindowSize();
-    if (x < 0 || x >= dim.x || y < 0 || y >= dim.y)
-        return false;
-
 // TODO: understand how this changes for v50
     size_t index = ((x * gps->dimy) + y);
     if (!map) {
         // don't let DF overlay interface elements draw over us
-        gps->screen1_forced_tile[index] = 0;
-        gps->screen1_flags[index] = 0;
-        // the DF renderer can't handle partial offset tiles. make sure we clear
-        // the whole thing if we hit any part of it
-        int32_t cleared = flood_clear(gps->screen1_offset_tile[index], index,
-                                      (gps->dimx*gps->dimy)-1);
-        if (cleared) {
-            DEBUG(screen).print("offset tiles cleared: %d\n", cleared);
-        }
+        gps->screentexpos_anchored[index] = 0;
+        gps->screentexpos_top[index] = 0;
+        gps->screentexpos_flag[index] = 0;
     }
     //gps->screen1_opt_tile[index] = uint8_t(pen.tile);
-    auto fg = &gps->palette[pen.fg][0];
-    auto bg = &gps->palette[pen.bg][0];
-    auto argb = &gps->screen1_asciirgb[index * 8];
+    auto fg = &gps->uccolor[pen.fg][0];
+    auto bg = &gps->uccolor[pen.bg][0];
+    auto argb = &gps->screen[index * 8];
     argb[0] = uint8_t(pen.ch);
     argb[1] = fg[0];
     argb[2] = fg[1];

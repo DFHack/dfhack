@@ -49,6 +49,7 @@ namespace ImTuiInterop
 
 		int render_stack = 0;
 		std::map<int, std::vector<std::string>> windows;
+		std::set<std::string> rendered_windows;
 
 		ImGuiContext* last_context;
 		ImGuiContext* ctx;

@@ -820,6 +820,7 @@ void dfhack_lua_viewscreen::render()
     if (is_top)
     {
         st.windows.clear();
+        st.rendered_windows.clear();
         st.render_stack = 0;
         st.activate();
         st.new_frame();
@@ -835,12 +836,9 @@ void dfhack_lua_viewscreen::render()
 
     std::vector<std::string> my_windows = st.windows[my_render_stack];
 
-    //could use an already rendered set, could register renderable window names and find them
-    ImGui::ProgressiveRender(my_windows);
+    ImGui::ProgressiveRender(my_windows, st.rendered_windows, is_top);
 
     st.render_stack--;
-
-    //ImGui::Render();
 
     st.draw_frame(ImGui::GetDrawData());
 

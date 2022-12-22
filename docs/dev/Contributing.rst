@@ -36,11 +36,24 @@ The sections below cover some guidelines that contributions should follow:
 .. contents::
   :local:
 
+General contribution guidelines
+-------------------------------
+* If convenient, compile on multiple platforms when changing anything that
+  compiles. Our CI should catch anything that fails to build, but checking in
+  advance can sometimes let you know of any issues sooner.
+* Update documentation when applicable - see `docs-standards` for details.
+* Update ``docs/changelog.txt`` and ``docs/about/Authors.rst`` when applicable. See
+  `build-changelog` for more information on the changelog format.
+* Submit ideas and bug reports as :issue:`issues on GitHub <>`.
+  Posts in the forum thread can easily get missed or forgotten.
+* Work on :issue:`reported problems <?q=is:open+-label:idea>`
+  will take priority over ideas or suggestions.
+
 Code format
 -----------
 * Four space indents for C++. Never use tabs for indentation in any language.
 * LF (Unix style) line terminators
-* Avoid trailing whitespace
+* No trailing whitespace
 * UTF-8 encoding
 * For C++:
 
@@ -86,27 +99,13 @@ Pull request guidelines
   or add "WIP" to the title. Otherwise, your pull request may be reviewed and/or
   merged prematurely.
 
-General contribution guidelines
--------------------------------
-* If convenient, compile on multiple platforms when changing anything that
-  compiles. Our CI should catch anything that fails to build, but checking in
-  advance can sometimes let you know of any issues sooner.
-* Update documentation when applicable - see `docs-standards` for details.
-* Update ``docs/changelog.txt`` and ``docs/about/Authors.rst`` when applicable. See
-  `build-changelog` for more information on the changelog format.
-* Submit ideas and bug reports as :issue:`issues on GitHub <>`.
-  Posts in the forum thread can easily get missed or forgotten.
-* Work on :issue:`reported problems <?q=is:open+-label:idea>`
-  will take priority over ideas or suggestions.
-
-
 Other ways to help
 ==================
 DFHack is a software project, but there's a lot more to it than programming.
 If you're not comfortable programming, you can help by:
 
 * reporting bugs and incomplete documentation
-* improving the documentation
+* improving the documentation (C++ api is rife)
 * finding third-party scripts to add
 * writing tutorials for newbies
 

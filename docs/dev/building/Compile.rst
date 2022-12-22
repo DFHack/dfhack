@@ -2,13 +2,13 @@
 
 .. _compile:
 
-################
-Compiling DFHack
-################
+###########
+Compilation
+###########
 
 DFHack builds are available for all supported platforms; see `installing` for
 installation instructions. If you are a DFHack end-user, modder, or plan on
-writing scripts (not plugins), it is generally recommended (and easier) to use
+writing scripts [lua] (not plugins), it is generally recommended (and easier) to use
 these `builds<build-releases>` instead of compiling DFHack from source.
 
 However, if you are looking to develop plugins, work on the DFHack core, make
@@ -173,17 +173,17 @@ Other settings
 See our page on `build options<build-options>`
 
 
+Instructions
+============
 
 .. _compile-linux:
 
 Linux
-=====
+-----
 On Linux, DFHack acts as a library that shadows parts of the SDL API using LD_PRELOAD.
 
 Dependencies
-------------
-
-
+~~~~~~~~~~~~
 You also need zlib, libsdl (1.2, not sdl2, like DF), perl, and the XML::LibXML
 and XML::LibXSLT perl packages (for the code generation parts). You should be
 able to find them in your distribution's repositories.
@@ -206,9 +206,93 @@ Here are some package install commands for various distributions:
 
     yum install gcc-c++ cmake ninja-build git zlib-devel SDL-devel perl-core perl-XML-LibXML perl-XML-LibXSLT ruby
 
+Windows cross compiling from Linux
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. highlight:: bash
+
+If you are on Linux but need to produce a Windows build (for example, because the
+DF version you're working on isn't out for Linux yet), here is how you can build
+and run a Windows binary on Linux.
+
+.. contents::
+  :local:
+  :depth: 1
+
+Step 1: prepare a docker image
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+On your Linux host, install and run the docker daemon and then run these commands::
+
+    xhost +local:root
+    git clone https://github.com/BenLubar/build-env.git
+    cd build-env/msvc
+    docker build .
+    docker image ls
+    IMAGE_ID=<your image id>
+    docker run -it --env="DISPLAY" --env="QT_X11_NO_MITSHM=1" --volume=/tmp/.X11-unix:/tmp/.X11-unix --user buildmaster --name dfhack-win $IMAGE_ID
+
+The ``xhost`` command and ``--env`` parameters are there so you can eventually
+run Dwarf Fortress from the container and have it display on your host.
+
+Step 2: build DFHack
+^^^^^^^^^^^^^^^^^^^^
+
+The ``docker run`` command above will give you a shell prompt (as root) in the
+container. Inside the container, run the following commands::
+
+    git clone https://github.com/DFHack/dfhack.git
+    cd dfhack
+    git submodule update --init
+    cd build
+    dfhack-configure windows 64 Release
+    dfhack-make
+
+Inside the ``dfhack-*`` scripts there are several commands that set up the wine
+server. Each invocation of a windows tool will cause wine to run in the container.
+Preloading the wineserver and telling it not to exit will speed configuration and
+compilation up considerably (approx. 10x). You can configure and build DFHack
+with regular ``cmake`` and ``ninja`` commands, but your build will go much slower.
+
+Step 3: copy Dwarf Fortress to the container
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+First, create a directory in the container to house the Dwarf Fortress binary and
+assets::
+
+    mkdir ~/df
+
+If you can just downlaod Dwarf Fortress directly into the container, then that's fine.
+Otherwise, you can do something like this in your host Linux environment to copy an
+installed version to the container::
+
+    cd ~/.steam/steam/steamapps/common/Dwarf\ Fortress/
+    docker cp . dfhack-win:df/
+
+Step 4: install DFHack and run DF
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Back in the container, run the following commands::
+
+    cd dfhack/build
+    cmake .. -DCMAKE_INSTALL_PREFIX=/home/buildmaster/df
+    ninja install
+    cd ~/df
+    wine64 "Dwarf Fortress.exe"
+
+Other notes
+^^^^^^^^^^^
+
+Closing your shell will kick you out of the container. Run this command on your Linux
+host when you want to reattach::
+
+    docker start -ai dfhack-win
+
+If you edit code and need to rebuild, run ``dfhack-make`` and then ``ninja install``.
+That will handle all the wineserver management for you.
 
 Multilib dependencies
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 If you want to compile 32-bit DFHack on 64-bit distributions, you'll need the
 multilib development tools and libraries:
 
@@ -230,7 +314,7 @@ to use ``lxc`` to
 :forums:`create a virtual 32-bit environment <139553.msg5435310#msg5435310>`.
 
 Build
------
+~~~~~
 Building is fairly straightforward. Enter the ``build`` folder (or create an
 empty folder in the DFHack directory to use instead) and start the build like this::
 
@@ -280,323 +364,12 @@ similar errors. This is why DFHack distributes both GCC 4.8 and GCC 7 builds. If
 you are planning on distributing binaries to other users, we recommend using an
 older GCC (but still at least 4.8) version if possible.
 
-
-.. _compile-macos:
-
-macOS
-=====
-DFHack functions similarly on macOS and Linux, and the majority of the
-information above regarding the build process (CMake and Ninja) applies here
-as well.
-
-DFHack can officially be built on macOS only with GCC 4.8 or 7. Anything newer than 7
-will require you to perform extra steps to get DFHack to run (see `osx-new-gcc-notes`),
-and your build will likely not be redistributable.
-
-.. _osx-new-gcc-notes:
-
-Notes for GCC 8+ or OS X 10.10+ users
--------------------------------------
-
-If none of these situations apply to you, skip to `osx-setup`.
-
-If you have issues building on OS X 10.10 (Yosemite) or above, try defining
-the following environment variable::
-
-    export MACOSX_DEPLOYMENT_TARGET=10.9
-
-If you build with a GCC version newer than 7, DFHack will probably crash
-immediately on startup, or soon after. To fix this, you will need to replace
-``hack/libstdc++.6.dylib`` with a symlink to the ``libstdc++.6.dylib`` included
-in your version of GCC::
-
-  cd <path to df>/hack && mv libstdc++.6.dylib libstdc++.6.dylib.orig &&
-  ln -s [PATH_TO_LIBSTDC++] .
-
-For example, with GCC 6.3.0, ``PATH_TO_LIBSTDC++`` would be::
-
-  /usr/local/Cellar/gcc@6/6.3.0/lib/gcc/6/libstdc++.6.dylib  # for 64-bit DFHack
-  /usr/local/Cellar/gcc@6/6.3.0/lib/gcc/6/i386/libstdc++.6.dylib  # for 32-bit DFHack
-
-**Note:** If you build with a version of GCC that requires this, your DFHack
-build will *not* be redistributable. (Even if you copy the ``libstdc++.6.dylib``
-from your GCC version and distribute that too, it will fail on older OS X
-versions.) For this reason, if you plan on distributing DFHack, it is highly
-recommended to use GCC 4.8 or 7.
-
-.. _osx-m1-notes:
-
-Notes for M1 users
-------------------
-
-Alongside the above, you will need to follow these additional steps to get it
-running on Apple silicon.
-
-Install an x86 copy of ``homebrew`` alongside your existing one. `This
-stackoverflow answer <https://stackoverflow.com/a/64951025>`__ describes the
-process.
-
-Follow the normal macOS steps to install ``cmake`` and ``gcc`` via your x86 copy of
-``homebrew``. Note that this will install a GCC version newer than 7, so see
-`osx-new-gcc-notes`.
-
-In your terminal, ensure you have your path set to the correct homebrew in
-addition to the normal ``CC`` and ``CXX`` flags above::
-
-  export PATH=/usr/local/bin:$PATH
-
-.. _osx-setup:
-
-Dependencies and system set-up
-------------------------------
-
-#. Download and unpack a copy of the latest DF
-#. Install Xcode from the Mac App Store
-
-#. Install the XCode Command Line Tools by running the following command::
-
-    xcode-select --install
-
-#. Install dependencies
-
-    It is recommended to use Homebrew instead of MacPorts, as it is generally
-    cleaner, quicker, and smarter. For example, installing MacPort's GCC will
-    install more than twice as many dependencies as Homebrew's will, and all in
-    both 32-bit and 64-bit variants. Homebrew also doesn't require constant use
-    of ``sudo``.
-
-    Using `Homebrew <https://brew.sh/>`_ (recommended)::
-
-        brew tap homebrew/versions
-        brew install git
-        brew install cmake
-        brew install ninja
-        brew install gcc@7
-
-    Using `MacPorts <https://www.macports.org>`_::
-
-        sudo port install gcc7 +universal cmake +universal git-core +universal ninja +universal
-
-    Macports will take some time - maybe hours.  At some point it may ask
-    you to install a Java environment; let it do so.
-
-#. Install Perl dependencies
-
-  * Using system Perl
-
-    * ``sudo cpan``
-
-      If this is the first time you've run cpan, you will need to go through the setup
-      process. Just stick with the defaults for everything and you'll be fine.
-
-      If you are running OS X 10.6 (Snow Leopard) or earlier, good luck!
-      You'll need to open a separate Terminal window and run::
-
-        sudo ln -s /usr/include/libxml2/libxml /usr/include/libxml
-
-    * ``install XML::LibXML``
-    * ``install XML::LibXSLT``
-
-  * In a separate, local Perl install
-
-    Rather than using system Perl, you might also want to consider
-    the Perl manager, `Perlbrew <https://perlbrew.pl>`_.
-
-    This manages Perl 5 locally under ``~/perl5/``, providing an easy
-    way to install Perl and run CPAN against it without ``sudo``.
-    It can maintain multiple Perl installs and being local has the
-    benefit of easy migration and insulation from OS issues and upgrades.
-
-    See https://perlbrew.pl/ for more details.
-
-Building
---------
-
-* Get the DFHack source as per section `compile-how-to-get-the-code`, above.
-* Set environment variables
-
-  Homebrew (if installed elsewhere, replace /usr/local with ``$(brew --prefix)``)::
-
-    export CC=/usr/local/bin/gcc-7
-    export CXX=/usr/local/bin/g++-7
-
-  Macports::
-
-    export CC=/opt/local/bin/gcc-mp-7
-    export CXX=/opt/local/bin/g++-mp-7
-
-  Change the version numbers appropriately if you installed a different version of GCC.
-
-  If you are confident that you have GCC in your path, you can omit the absolute paths::
-
-    export CC=gcc-7
-    export CXX=g++-7
-
-  (adjust as needed for different GCC installations)
-
-* Build DFHack::
-
-    mkdir build-osx
-    cd build-osx
-    cmake .. -G Ninja -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=<path to DF>
-    ninja install  # or ninja -jX install to specify the number of cores (X) to use
-
-  <path to DF> should be a path to a copy of Dwarf Fortress, of the appropriate
-  version for the DFHack you are building.
-
-
 .. _compile-windows:
 
 Windows
-=======
-On Windows, DFHack replaces the SDL library distributed with DF.
-
-Dependencies
-------------
-You will need the following:
-
-* Microsoft Visual C++ 2022, 2019, 2017, or 2015 (optional)
-* Microsoft Visual C++ 2015 Build Tools
-* Git
-* CMake
-* Perl with XML::LibXML and XML::LibXSLT
-
-  * It is recommended to install StrawberryPerl, which includes both.
-
-* Python (for documentation; optional, except for release builds)
-
-Microsoft Visual Studio
-~~~~~~~~~~~~~~~~~~~~~~~
-Releases of Dwarf Fortress since roughly 2016 have been compiled for Windows using
-Microsoft's Visual Studio 2015 C++ compiler. In order to guarantee ABI and STL compatibility
-with Dwarf Fortress, DFHack has to be compiled with the same compiler.
-
-Visual Studio 2015 is no longer supported by Microsoft and it can be difficult to obtain
-working installers for this product today. As of 2022, the recommended approach
-is to use Visual Studio 2022 or Visual Studio 2019, installing additional optional
-Visual Studio components which provide the required support for using
-Visual Studio 2015's toolchain. All of the required tools are available from Microsoft as part of
-Visual Studio's Community Edition at no charge.
-
-You can also download just the Visual C++ 2015 `build tools`_ if you aren't going to use
-Visual Studio to edit code.
-
-Option 1: Build Tools Only
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-Click `build tools`_ and you will be prompted to login to your Microsoft account.
-Then you should be redirected to a page with various download options with 2015
-in their name. If this redirect doesn't occur, just copy, paste, and enter the
-download link again and you should see the options. You need to get:
-Visual C++ Build Tools for Visual Studio 2015 with Update 3.
-Click the download button next to it and a dropdown of download formats will appear.
-Select the DVD format to download an ISO file. When the download is complete,
-click on the ISO file and a folder will popup with the following contents:
-
-* packages (folder)
-* VCPlusPlusBuildTools2015Update3_x64_Files.cat
-* VisualCppBuildTools_Full.exe
-
-The packages folder contains the dependencies that are required by the build tools.
-These include:
-
-* Microsoft .NET Framework 4.6.1 Developer Pack
-* Microsoft Visual C++ 2015 Redistributable (x64) - 14.0.24210
-* Windows 10 Universal SDK - 10.0.10240
-* Windows 8.1 SDK
-
-Click VisualCppBuildTools_Full.exe and use the default options provided by the installer
-wizard that appears. After the installation is completed, add the path where MSBuild.exe
-was installed to your PATH environment variable. The path should be:
-
-* ``C:\Program Files (x86)\MSBuild\14.0\Bin``
-
-Note that this process may install only the ``v140`` toolchain, not the ``v140_xp`` toolchain that
-is normally used to compile build releases of DFHack. Due to a bug in the Microsoft-provided libraries used with
-the ``v140_xp`` toolchain that Microsoft has never fixed, DFHack (and probably also Dwarf Fortress itself)
-doesn't run reliably on 64-bit XP. Investigations have so far suggested that ``v140`` and
-``v140_xp`` are ABI-compatible. As such, there should be no harm in using ``v140`` instead of
-``v140_xp`` as the build toolchain, at least on 64-bit platforms. However, it is our policy to use
-``v140_xp`` for release builds for both 32-bit and 64-bit Windows,
-since 32-bit releases of Dwarf Fortress work on XP and ``v140_xp`` is required for compatibility with
-XP.
-
-The ``v141`` toolchain, in Visual Studio 2017, has been empirically documented to be incompatible with
-released versions of Dwarf Fortress and cannot be used to make usable builds of DFHack.
-
-Option 2: IDE + Build Tools
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Click Visual Studio 2022_ or 2019_ to download an installer wizard that will prompt you
-to select the optional tools you want to download alongside the IDE. You may need to log into
-(or create) a Microsoft account in order to download Visual Studio.
-
-In addition to selecting the workload for "Desktop Development with C++",
-you will also need to go to the "Individual Components" tab in the Installer and
-select the following additional components to get the "``v140_xp``" toolchain that DFHack
-requires for ABI compatibility with recent releases of Dwarf Fortress:
-* MSVC v140 - VS 2015 C++ build tools (v14.00)
-* C++ Windows XP Support for VS 2017 (v141) tools [Deprecated]
-
-Yes, this is unintuitive. Installing XP Support for VS 2017 installs XP Support for VS 2015
-if the 2015 toolchain is installed.
-
-.. _2022: https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&channel=Release&version=VS2022&source=VSLandingPage&cid=2030&passive=false
-.. _2019: https://my.visualstudio.com/Downloads?q=visual%20studio%202019&wt.mc_id=o~msft~vscom~older-downloads
-.. _build tools: https://my.visualstudio.com/Downloads?q=visual%20studio%202015&wt.mc_id=o~msft~vscom~older-downloads
-
-Additional dependencies: installing with the Chocolatey Package Manager
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The remainder of dependencies - Git, CMake, StrawberryPerl, and Python - can be
-most easily installed using the Chocolatey Package Manager. Chocolatey is a
-\*nix-style package manager for Windows. It's fast, small (8-20MB on disk)
-and very capable. Think "``apt-get`` for Windows."
-
-Chocolatey is a recommended way of installing the required dependencies
-as it's quicker, requires less effort, and will install known-good utilities
-guaranteed to have the correct setup (especially PATH).
-
-To install Chocolatey and the required dependencies:
-
-* Go to https://chocolatey.org in a web browser
-* At the top of the page it will give you the install command to copy
-
-  * Copy the first one, which starts ``@powershell ...``
-  * It won't be repeated here in case it changes in future Chocolatey releases.
-
-* Open an elevated (Admin) ``cmd.exe`` window
-
-  * On Windows 8 and later this can be easily achieved by:
-
-    * right-clicking on the Start Menu, or pressing Win+X.
-    * choosing "Command Prompt (Admin)"
-
-  * On earlier Windows: find ``cmd.exe`` in Start Menu, right click
-    and choose Open As Administrator.
-
-* Paste in the Chocolatey install command and hit enter
-* Close this ``cmd.exe`` window and open another Admin ``cmd.exe`` in the same way
-* Run the following command::
-
-    choco install git cmake.portable strawberryperl -y
-
-* Close the Admin ``cmd.exe`` window; you're done!
-
-You can now use all of these utilities from any normal ``cmd.exe`` window.
-You only need Admin/elevated ``cmd.exe`` for running ``choco install`` commands;
-for all other purposes, including compiling DFHack, you should use
-a normal ``cmd.exe`` (or, better, an improved terminal like `Cmder <https://cmder.net/>`_;
-details below, under Build.)
-
-**NOTE**: you can run the above ``choco install`` command even if you already have
-Git, CMake or StrawberryPerl installed. Chocolatey will inform you if any software
-is already installed and won't re-install it. In that case, please check the PATHs
-are correct for that utility as listed in the manual instructions below. Or, better,
-manually uninstall the version you have already and re-install via Chocolatey,
-which will ensure the PATH are set up right and will allow Chocolatey to manage
-that program for you in future.
-
+-------
 Build
------
+~~~~~
 There are several different batch files in the ``win32`` and ``win64``
 subfolders in the ``build`` folder, along with a script that's used for picking
 the DF path. Use the subfolder corresponding to the architecture that you want
@@ -622,10 +395,26 @@ solution file(s):
   release builds of DFHack. Note that this includes documentation, which requires
   Python.
 
-Then you can either open the solution with MSVC or use one of the msbuild scripts:
+Then you can either open the solution with MSVC or use one of the msbuild scripts.
 
-Building/installing from the command line:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Building/installing from the Visual Studio IDE
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+After running the CMake generate script you will have a new folder called VC2015
+or VC2015_32, depending on the architecture you specified. Open the file
+``dfhack.sln`` inside that folder. If you have multiple versions of Visual
+Studio installed, make sure you open with Visual Studio 2015.
+
+The first thing you must then do is change the build type. It defaults to Debug,
+but this cannot be used on Windows. Debug is not binary-compatible with DF.
+If you try to use a debug build with DF, you'll only get crashes and for this
+reason the Windows "debug" scripts actually do RelWithDebInfo builds.
+After loading the Solution, change the Build Type to either ``Release``
+or ``RelWithDebInfo``.
+
+Then build the ``INSTALL`` target listed under ``CMakePredefinedTargets``.
+
+Building/installing from the command line
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In the build directory you will find several ``.bat`` files:
 
 * Scripts with ``build`` prefix will only build DFHack.
@@ -666,117 +455,109 @@ You don't need to do anything special to compile from Bash. As long as your PATH
 are set up correctly, you can run the same generate- and build/install/package- bat
 files as detailed above.
 
-Building/installing from the Visual Studio IDE:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-After running the CMake generate script you will have a new folder called VC2015
-or VC2015_32, depending on the architecture you specified. Open the file
-``dfhack.sln`` inside that folder. If you have multiple versions of Visual
-Studio installed, make sure you open with Visual Studio 2015.
+.. _compile-macos:
 
-The first thing you must then do is change the build type. It defaults to Debug,
-but this cannot be used on Windows. Debug is not binary-compatible with DF.
-If you try to use a debug build with DF, you'll only get crashes and for this
-reason the Windows "debug" scripts actually do RelWithDebInfo builds.
-After loading the Solution, change the Build Type to either ``Release``
-or ``RelWithDebInfo``.
+macOS
+-----
+DFHack functions similarly on macOS and Linux, and the majority of the
+information above regarding the build process (CMake and Ninja) applies here
+as well.
 
-Then build the ``INSTALL`` target listed under ``CMakePredefinedTargets``.
+DFHack can officially be built on macOS only with GCC 4.8 or 7. Anything newer than 7
+will require you to perform extra steps to get DFHack to run (see `osx-new-gcc-notes`),
+and your build will likely not be redistributable.
 
-Windows cross compiling from Linux
-==================================
+Building
+~~~~~~~~
 
-.. highlight:: bash
+* Get the DFHack source as per section `compile-how-to-get-the-code`, above.
+* Set environment variables
 
-If you are on Linux but need to produce a Windows build (for example, because the
-DF version you're working on isn't out for Linux yet), here is how you can build
-and run a Windows binary on Linux.
+  Homebrew (if installed elsewhere, replace /usr/local with ``$(brew --prefix)``)::
 
-Step 1: prepare a docker image
-------------------------------
+    export CC=/usr/local/bin/gcc-7
+    export CXX=/usr/local/bin/g++-7
 
-On your Linux host, install and run the docker daemon and then run these commands::
+  Macports::
 
-    xhost +local:root
-    git clone https://github.com/BenLubar/build-env.git
-    cd build-env/msvc
-    docker build .
-    docker image ls
-    IMAGE_ID=<your image id>
-    docker run -it --env="DISPLAY" --env="QT_X11_NO_MITSHM=1" --volume=/tmp/.X11-unix:/tmp/.X11-unix --user buildmaster --name dfhack-win $IMAGE_ID
+    export CC=/opt/local/bin/gcc-mp-7
+    export CXX=/opt/local/bin/g++-mp-7
 
-The ``xhost`` command and ``--env`` parameters are there so you can eventually
-run Dwarf Fortress from the container and have it display on your host.
+  Change the version numbers appropriately if you installed a different version of GCC.
 
-Step 2: build DFHack
---------------------
+  If you are confident that you have GCC in your path, you can omit the absolute paths::
 
-The ``docker run`` command above will give you a shell prompt (as root) in the
-container. Inside the container, run the following commands::
+    export CC=gcc-7
+    export CXX=g++-7
 
-    git clone https://github.com/DFHack/dfhack.git
-    cd dfhack
-    git submodule update --init
-    cd build
-    dfhack-configure windows 64 Release
-    dfhack-make
+  (adjust as needed for different GCC installations)
 
-Inside the ``dfhack-*`` scripts there are several commands that set up the wine
-server. Each invocation of a windows tool will cause wine to run in the container.
-Preloading the wineserver and telling it not to exit will speed configuration and
-compilation up considerably (approx. 10x). You can configure and build DFHack
-with regular ``cmake`` and ``ninja`` commands, but your build will go much slower.
+* Build DFHack::
 
-Step 3: copy Dwarf Fortress to the container
---------------------------------------------
+    mkdir build-osx
+    cd build-osx
+    cmake .. -G Ninja -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=<path to DF>
+    ninja install  # or ninja -jX install to specify the number of cores (X) to use
 
-First, create a directory in the container to house the Dwarf Fortress binary and
-assets::
+  <path to DF> should be a path to a copy of Dwarf Fortress, of the appropriate
+  version for the DFHack you are building.
 
-    mkdir ~/df
+.. _osx-new-gcc-notes:
 
-If you can just downlaod Dwarf Fortress directly into the container, then that's fine.
-Otherwise, you can do something like this in your host Linux environment to copy an
-installed version to the container::
+Notes for GCC 8+ or OS X 10.10+ users
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    cd ~/.steam/steam/steamapps/common/Dwarf\ Fortress/
-    docker cp . dfhack-win:df/
+If none of these situations apply to you, skip to `osx-setup`.
 
-Step 4: install DFHack and run DF
----------------------------------
+If you have issues building on OS X 10.10 (Yosemite) or above, try defining
+the following environment variable::
 
-Back in the container, run the following commands::
+    export MACOSX_DEPLOYMENT_TARGET=10.9
 
-    cd dfhack/build
-    cmake .. -DCMAKE_INSTALL_PREFIX=/home/buildmaster/df
-    ninja install
-    cd ~/df
-    wine64 "Dwarf Fortress.exe"
+If you build with a GCC version newer than 7, DFHack will probably crash
+immediately on startup, or soon after. To fix this, you will need to replace
+``hack/libstdc++.6.dylib`` with a symlink to the ``libstdc++.6.dylib`` included
+in your version of GCC::
 
-Other notes
------------
+  cd <path to df>/hack && mv libstdc++.6.dylib libstdc++.6.dylib.orig &&
+  ln -s [PATH_TO_LIBSTDC++] .
 
-Closing your shell will kick you out of the container. Run this command on your Linux
-host when you want to reattach::
+For example, with GCC 6.3.0, ``PATH_TO_LIBSTDC++`` would be::
 
-    docker start -ai dfhack-win
+  /usr/local/Cellar/gcc@6/6.3.0/lib/gcc/6/libstdc++.6.dylib  # for 64-bit DFHack
+  /usr/local/Cellar/gcc@6/6.3.0/lib/gcc/6/i386/libstdc++.6.dylib  # for 32-bit DFHack
 
-If you edit code and need to rebuild, run ``dfhack-make`` and then ``ninja install``.
-That will handle all the wineserver management for you.
+**Note:** If you build with a version of GCC that requires this, your DFHack
+build will *not* be redistributable. (Even if you copy the ``libstdc++.6.dylib``
+from your GCC version and distribute that too, it will fail on older OS X
+versions.) For this reason, if you plan on distributing DFHack, it is highly
+recommended to use GCC 4.8 or 7.
 
-Building the documentation
-==========================
+.. _osx-m1-notes:
 
-The steps above will not build DFHack's documentation by default. If you are
-changing documentation, see `documentation` for details on how to build it.
+Notes for M1 users
+~~~~~~~~~~~~~~~~~~
 
-Misc. Notes
-===========
+Alongside the above, you will need to follow these additional steps to get it
+running on Apple silicon.
+
+Install an x86 copy of ``homebrew`` alongside your existing one. `This
+stackoverflow answer <https://stackoverflow.com/a/64951025>`__ describes the
+process.
+
+Follow the normal macOS steps to install ``cmake`` and ``gcc`` via your x86 copy of
+``homebrew``. Note that this will install a GCC version newer than 7, so see
+`osx-new-gcc-notes`.
+
+In your terminal, ensure you have your path set to the correct homebrew in
+addition to the normal ``CC`` and ``CXX`` flags above::
+
+  export PATH=/usr/local/bin:$PATH
 
 .. _note-offline-builds:
 
-Note on building DFHack offline
--------------------------------
-
+Building DFHack Offline
+-----------------------
 As of 0.43.05, DFHack downloads several files during the build process, depending
 on your target OS and architecture. If your build machine's internet connection
 is unreliable, or nonexistent, you can download these files in advance.

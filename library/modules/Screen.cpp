@@ -45,6 +45,7 @@ using namespace std;
 #include "LuaTools.h"
 
 #include "MiscUtils.h"
+#include "imgui/imgui_internal.h"
 
 using namespace DFHack;
 
@@ -834,25 +835,36 @@ void dfhack_lua_viewscreen::render()
 
     safe_call_lua(do_render, 0, 0);
 
-    std::vector<std::string> my_windows = st.windows[my_render_stack];
+    bool respect_dwarf_fortress_viewscreen_order = true;
 
-    ImGui::ProgressiveRender(my_windows, st.rendered_windows, is_top);
+    if (respect_dwarf_fortress_viewscreen_order)
+    {
+        std::vector<std::string> my_windows = st.windows[my_render_stack];
+
+        for (const std::string& name : my_windows)
+        {
+            ImGui::BringWindowToFocusFront(ImGui::FindWindowByName(name.c_str()));
+            ImGui::BringWindowToDisplayFront(ImGui::FindWindowByName(name.c_str()));
+        }
+
+        ImGui::ProgressiveRender(my_windows, st.rendered_windows, is_top);
+
+        //does not look at render stack
+        st.draw_frame(ImGui::GetDrawData());
+    }
 
     st.render_stack--;
-
-    st.draw_frame(ImGui::GetDrawData());
 
     if (is_top)
     {
         ImGui::EndFrame();
 
-        //ImGui::Render();
+        if (!respect_dwarf_fortress_viewscreen_order)
+        {
+            ImGui::Render();
+            st.draw_frame(ImGui::GetDrawData());
+        }
 
-        /*ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
-
-        ImGui::Render();
-
-        st.draw_frame(ImGui::GetDrawData());*/
         st.deactivate();
     }
 }

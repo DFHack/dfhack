@@ -106,10 +106,10 @@ distribution.
 #include <lauxlib.h>
 #include <lualib.h>
 
-#include "imgui/imgui.h"
-#include "imgui/misc/cpp/imgui_stdlib.h"
+#include "imgui.h"
+#include "misc/cpp/imgui_stdlib.h"
 //GetCurrentContext
-#include "imgui/imgui_internal.h"
+#include "imgui_internal.h"
 
 using namespace DFHack;
 using namespace DFHack::LuaWrapper;

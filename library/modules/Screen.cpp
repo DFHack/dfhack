@@ -46,8 +46,8 @@ using namespace std;
 #include "LuaTools.h"
 
 #include "MiscUtils.h"
-#include "imgui/imgui.h"
-#include "imgui/imgui_internal.h"
+#include "imgui.h"
+#include "imgui_internal.h"
 
 using namespace DFHack;
 

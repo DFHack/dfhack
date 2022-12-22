@@ -82,6 +82,4 @@ if(MSVC)
     target_compile_options(xlsxio_write_STATIC PRIVATE /wd4013 /wd4244)
 endif()
 
-set(IMTUI_SUPPORT_NCURSES OFF CACHE BOOL "")
-set(IMTUI_SUPPORT_CURL OFF CACHE BOOL "")
-add_subdirectory(imtui)
+add_subdirectory(imgui)

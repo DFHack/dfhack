@@ -31,6 +31,6 @@
 [submodule "depends/googletest"]
 	path = depends/googletest
 	url = ../../google/googletest.git
-[submodule "depends/imtui"]
-	path = depends/imtui
-	url = https://github.com/ggerganov/imtui.git
+[submodule "depends/imgui"]
+	path = depends/imgui
+	url = git@github.com:20k/dfhack-imgui.git

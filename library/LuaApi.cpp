@@ -1726,17 +1726,18 @@ static T imgui_decode(lua_State* state, int index)
     return val;
 }
 
-//decodes ref at -1
+//decodes ref at index
 template<typename T>
-static T imgui_decode_ref(lua_State* state)
+static T imgui_decode_ref(lua_State* state, int index)
 {
+    lua_pushvalue(state, index);
     lua_pushnumber(state, 0);
     lua_gettable(state, -2);
 
     T out = {};
     imgui_decode_impl(state, out, -1);
 
-    lua_pop(state, 1);
+    lua_pop(state, 2);
 
     return out;
 }
@@ -1793,13 +1794,15 @@ static void imgui_push_generic(lua_State* state, const std::map<T, U>& val)
     }
 }
 
-//table is at -1
+//table is at index
 template<typename T>
-static void imgui_encode_into_ref(lua_State* state, const T& val)
+static void imgui_encode_into_ref(lua_State* state, const T& val, int index)
 {
+    lua_pushvalue(state, index);
     lua_pushnumber(state, 0);
     imgui_push_generic(state, val);
     lua_settable(state, -3);
+    lua_pop(state, 1);
 }
 
 static ImVec4 imgui_get_colour_arg(lua_State* state, int index, bool defaults_to_fg)
@@ -2089,6 +2092,9 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(EatKeyboardInputs, imgui_eatkeyboardinputs),
     WRAPN(EatMouseInputs, imgui_eatmouseinputs),
     WRAPN(FeedUpwards, imgui_feedupwards),
+    WRAPM(ImGui, BeginMenuBar),
+    WRAPM(ImGui, EndMenuBar),
+    WRAPM(ImGui, EndMenu),
     { NULL, NULL }
 };
 
@@ -2156,11 +2162,11 @@ static int imgui_get(lua_State* state)
 static int imgui_checkbox(lua_State* state)
 {
     const char* label = lua_tostring(state, -2);
-    bool val = imgui_decode_ref<bool>(state);
+    bool val = imgui_decode_ref<bool>(state, -1);
 
     bool result = ImGui::Checkbox(label, &val);
 
-    imgui_encode_into_ref(state, val);
+    imgui_encode_into_ref(state, val, -1);
 
     lua_pushboolean(state, result);
     return 1;
@@ -2170,7 +2176,7 @@ static int imgui_checkbox(lua_State* state)
 static int imgui_inputtext(lua_State* state)
 {
     const char* label = lua_tostring(state, -2);
-    std::string val = imgui_decode_ref<std::string>(state);
+    std::string val = imgui_decode_ref<std::string>(state, -1);
 
     bool result = ImGui::InputText(label, &val);
 
@@ -2184,7 +2190,7 @@ static int imgui_inputtext(lua_State* state)
         ImGui::SetKeyboardFocusHere(-1);
     }
 
-    imgui_encode_into_ref(state, val);
+    imgui_encode_into_ref(state, val, -1);
 
     lua_pushboolean(state, result);
     return 1;
@@ -2463,6 +2469,65 @@ static int imgui_iskeyreleased(lua_State* state)
     return 1;
 }
 
+static int imgui_beginmenu(lua_State* state)
+{
+    int top = lua_gettop(state);
+
+    std::string label;
+    bool enabled = true;
+
+    if (top == 1)
+    {
+        label = imgui_decode<std::string>(state, -1);
+    }
+
+    if (top == 2)
+    {
+        label = imgui_decode<std::string>(state, -2);
+        enabled = imgui_decode<bool>(state, -1);
+    }
+
+    bool result = ImGui::BeginMenu(label.c_str(), enabled);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
+static int imgui_menuitem(lua_State* state)
+{
+    std::string label;
+    std::string shortcut;
+    bool selected = false;
+    bool enabled = false;
+
+    if (lua_gettop(state) == 3)
+    {
+        label = imgui_decode<std::string>(state, -3);
+        shortcut = imgui_decode<std::string>(state, -2);
+        selected = imgui_decode_ref<bool>(state, -1);
+    }
+
+    if (lua_gettop(state) == 4)
+    {
+        label = imgui_decode<std::string>(state, -4);
+        shortcut = imgui_decode<std::string>(state, -3);
+        selected = imgui_decode_ref<bool>(state, -2);
+        enabled = imgui_decode<bool>(state, -1);
+
+        //leave ref on the stack
+        lua_pop(state, 1);
+    }
+
+    bool result = ImGui::MenuItem(label.c_str(), shortcut.c_str(), &selected, enabled);
+
+    imgui_encode_into_ref(state, selected, -1);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"SameLine", imgui_sameline},
     {"Checkbox", imgui_checkbox},
@@ -2487,6 +2552,8 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"IsKeyDown", imgui_iskeydown},
     {"IsKeyPressed", imgui_iskeypressed},
     {"IsKeyReleased", imgui_iskeyreleased},
+    {"BeginMenu", imgui_beginmenu},
+    {"MenuItem", imgui_menuitem},
     { NULL, NULL }
 };
 

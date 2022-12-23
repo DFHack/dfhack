@@ -2027,7 +2027,6 @@ static void imgui_feedupwards()
 }
 
 static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
-    WRAPN(Begin, imgui_begin),
     WRAPM(ImGui, End),
     WRAPM(ImGui, BeginTooltip),
     WRAPM(ImGui, EndTooltip),

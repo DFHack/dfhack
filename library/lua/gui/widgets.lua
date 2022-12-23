@@ -1027,6 +1027,9 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
                 end
 
                 if token.key then
+                    if type(token.key) == 'string' and not df.interface_key[token.key] then
+                        error('Invalid interface_key: ' .. token.key)
+                    end
                     local keystr = gui.getKeyDisplay(token.key)
                     local sep = token.key_sep or ''
 

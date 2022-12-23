@@ -109,68 +109,6 @@ in the platform-specific sections below first, then come back here.
 
 Be sure to check out common `build options <build-options>`.
 
-Generator
----------
-
-The ``Ninja`` CMake build generator is the preferred build method on Linux and
-macOS, instead of ``Unix Makefiles``, which is the default. You can select Ninja
-by passing ``-G Ninja`` to CMake. Incremental builds using Unix Makefiles can be
-much slower than Ninja builds. Note that you will probably need to install
-Ninja; see the platform-specific sections for details.
-
-::
-
-    cmake .. -G Ninja
-
-.. warning::
-
-  Most other CMake settings can be changed by running ``cmake`` again, but the
-  generator cannot be changed after ``cmake`` has been run without creating a
-  new build folder. Do not forget to specify this option.
-
-  CMake versions 3.6 and older, and possibly as recent as 3.9, are known to
-  produce project files with dependency cycles that fail to build
-  (see :issue:`1369`). Obtaining a recent version of CMake is recommended, either from
-  `cmake.org <https://cmake.org/download/>`_ or through a package manager. See
-  the sections below for more platform-specific directions for installing CMake.
-
-Build type
-----------
-
-``cmake`` allows you to pick a build type by changing the ``CMAKE_BUILD_TYPE`` variable::
-
-    cmake .. -DCMAKE_BUILD_TYPE:string=BUILD_TYPE
-
-Valid and useful build types include 'Release' and 'RelWithDebInfo'. The default
-build type is 'Release'.
-
-Target architecture (32-bit vs. 64-bit)
----------------------------------------
-
-Set DFHACK_BUILD_ARCH to either ``32`` or ``64`` to build a 32-bit or 64-bit
-version of DFHack (respectively). The default is currently ``64``, so you will
-need to specify this explicitly for 32-bit builds. Specifying it is a good idea
-in any case.
-
-::
-
-    cmake .. -DDFHACK_BUILD_ARCH=32
-
-*or*
-::
-
-    cmake .. -DDFHACK_BUILD_ARCH=64
-
-Note that the scripts in the "build" folder on Windows will set the architecture
-automatically.
-
-.. _compile-build-options:
-
-Other settings
---------------
-See our page on `build options<build-options>`
-
-
 Instructions
 ============
 

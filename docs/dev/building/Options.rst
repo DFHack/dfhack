@@ -4,6 +4,10 @@
 Build Options
 #############
 
+.. contents:: Typical Options
+  :local:
+  :depth: 1
+
 There are a variety of other settings which you can find in CMakeCache.txt in
 your build folder or by running ``ccmake`` (or another CMake GUI). Most
 DFHack-specific settings begin with ``BUILD_`` and control which parts of DFHack
@@ -12,9 +16,17 @@ are built.
 Typical usage may look like::
 
     # Plugin development with updated documentation
-    cmake . -G Ninja -B builds/debug-info/ -DCMAKE_INSTALL_PREFIX=<path to DF> -DCMAKE_BUILD_TYPE:string=RelWithDebInfo -DBUILD_DOCS:bool=ON -DBUILD_PLUGINS=1
+    cmake ./ -G Ninja -B builds/debug-info/ -DCMAKE_INSTALL_PREFIX=<path to DF> -DCMAKE_BUILD_TYPE:string=RelWithDebInfo -DBUILD_DOCS:bool=ON -DBUILD_PLUGINS=1
     # Core DFHack only
     cmake ../ -G Ninja -DCMAKE_INSTALL_PREFIX=<path to DF> -DCMAKE_BUILD_TYPE:string=RelWithDebInfo -DBUILD_TESTS -DBUILD_DOCS:0 -DBUILD_PLUGINS=0
+
+.. admonition:: Modifying Build Options
+
+    You can typically run new cmake commands from your build directory to turn on/off options.
+    Of course the generator selection is not something you can change, but the rest are.
+
+    Additionally, you can edit the build settings in CMakeCache.txt. You also have cmake's
+    configuration utility ``ccmake``.
 
 Generator
 ---------
@@ -29,51 +41,112 @@ visual studio, and match that to your system's generator list viewed with ``cmak
 
 example::
 
-    cmake . -G "Visual Studio 17 2022"
+    cmake .. -G "Visual Studio 17 2022"
 
 Ninja
 =====
 The generally preferred build system where available.
 
-Core
-----
-todo:
+example::
+
+    cmake .. -G Ninja
+
+Install Location
+----------------
+This of course uses the default cmake variable.
+
+Variable: ``CMAKE_INSTALL_PREFIX``
+
+Usage::
+
+    cmake .. -DCMAKE_INSTALL_PREFIX=<path to df>
+
+The path to df will of course depend on your system. If the directory exists it is
+recommended to use ``~/.dwarffortress`` to avoid permission troubles.
+
+Build type
+----------
+Release/Debug, this is the type of build you want. This controls what information
+about symbols and line numbers the debugger will have available to it.
+
+Variable: ``CMAKE_BUILD_TYPE``
+
+Usage::
+
+    cmake .. -DCMAKE_BUILD_TYPE:string=RelWithDebugInfo
+
+Options:
+
+* Release
+* RelWithDebugInfo
+
+Target architecture (32/64-bit)
+---------------------------------------
+If need 32-bit binaries or are looking to be explicit about building 64-bit.
+
+Variable: ``DFHACK_BUILD_ARCH``
+
+Usage::
+
+    cmake .. -DDFHACK_BUILD_ARCH=32
+
+Options:
+
+* '32'
+* '64' (default option)
+
+Library
+-------
+This will only be useful if you're looking to avoid building the library core, as it builds by default.
+
+Variable: ``BUILD_LIBRARY``
+
+Usage::
+
+    cmake .. -DBUILD_LIBRARY:bool=OFF
+    cmake .. -DBUILD_LIBRARY=0
+
+Testing
+-------
+Regression testing will be arriving in the future, but for now there are only tests written in lua.
+
+Variables:
+
+* ``BUILD_TESTING`` (will build unit tests, in the future)
+* ``BUILD_TESTS`` (installs lua tests)
+
+Usage::
+
+    cmake .. -DBUILD_TESTS:bool=ON
+    cmake .. -DBUILD_TESTS=1
 
 Plugins
 -------
-todo:
+If you're doing plugin development.
+
+Variable: ``BUILD_PLUGINS``
+
+Usage::
+
+    cmake .. -DBUILD_PLUGINS:bool=ON
+    cmake .. -DBUILD_PLUGINS=1
 
 .. _building-documentation:
 
 Documentation
 -------------
+If you need to build documentation. Documentation can be built as HTML, and PDF,
+but there are also plain text files generated for in-game.
 
-Enabling the ``BUILD_DOCS`` CMake option will cause the documentation to be built
-whenever it changes as part of the normal DFHack build process. There are several
-ways to do this:
+Variable: ``BUILD_DOCS``
 
-* When initially running CMake, add ``-DBUILD_DOCS:bool=ON`` to your ``cmake``
-  command. For example::
-
-    cmake .. -DCMAKE_BUILD_TYPE:string=Release -DBUILD_DOCS:bool=ON -DCMAKE_INSTALL_PREFIX=<path to DF>
-
-* If you have already run CMake, you can simply run it again from your build
-  folder to update your configuration::
+Usage::
 
     cmake .. -DBUILD_DOCS:bool=ON
+    cmake .. -DBUILD_DOCS=1
 
-* You can edit the ``BUILD_DOCS`` setting in CMakeCache.txt directly
 
-* You can use the CMake GUI or ``ccmake`` to change the ``BUILD_DOCS`` setting
-
-* On Windows, if you prefer to use the batch scripts, you can run
-  ``generate-msvc-gui.bat`` and set ``BUILD_DOCS`` through the GUI. If you are
-  running another file, such as ``generate-msvc-all.bat``, you will need to edit
-  the batch script to add the flag. You can also run ``cmake`` on the command line,
-  similar to other platforms.
-
-By default, both HTML and text docs are built by CMake. The generated
-documentation is stored in ``docs/html`` and ``docs/text`` (respectively) in the
-root DFHack folder, and they will both be installed to ``hack/docs`` when you
-install DFHack. The html and txt files will intermingle, but will not interfere
-with one another.
+The generated documentation is stored in ``docs/html`` and ``docs/text`` (respectively)
+in the root DFHack folder, and they will both be installed to ``hack/docs`` when you
+install DFHack. The html and txt files will intermingle, but will not interfere with
+one another.

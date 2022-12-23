@@ -188,7 +188,7 @@ void ImTuiInterop::impl::init_current_context()
     ImGui::GetStyle().WindowPadding = ImVec2(1.f, 0.0f);
     ImGui::GetStyle().WindowRounding = 0.0f;
     ImGui::GetStyle().WindowBorderSize = 0.0f;
-    ImGui::GetStyle().WindowMinSize = ImVec2(4.0f, 2.0f);
+    ImGui::GetStyle().WindowMinSize = ImVec2(4.0f, 1.0f);
     ImGui::GetStyle().WindowTitleAlign = ImVec2(0.0f, 0.0f);
     ImGui::GetStyle().WindowMenuButtonPosition = ImGuiDir_Left;
     ImGui::GetStyle().ChildRounding = 0.0f;

@@ -1885,15 +1885,6 @@ static long imgui_key_name_to_key_code(std::string name)
     return it->second;
 }
 
-static bool imgui_begin(std::string title)
-{
-    ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
-
-    st.windows[st.render_stack].push_back(title);
-
-    return ImGui::Begin(title.c_str(), nullptr, 0);
-}
-
 static void imgui_textunformatted(std::string str)
 {
     ImGui::TextUnformatted(str.c_str(), str.c_str() + str.size());
@@ -2097,6 +2088,66 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPM(ImGui, EndMenu),
     { NULL, NULL }
 };
+
+static int imgui_begin(lua_State* state)
+{
+    int top = lua_gettop(state);
+
+    std::string name;
+    bool is_open_value = false;
+    int ref_index = 0;
+    ImGuiWindowFlags flags = 0;
+
+    if (top == 1)
+    {
+        name = imgui_decode<std::string>(state, -1);
+    }
+
+    if (top == 2)
+    {
+        name = imgui_decode<std::string>(state, -2);
+
+        if (lua_istable(state, -1))
+        {
+            is_open_value = imgui_decode_ref<bool>(state, -1);
+            ref_index = -1;
+        }
+    }
+
+    if (top == 3)
+    {
+        name = imgui_decode<std::string>(state, -3);
+
+        if (lua_istable(state, -2))
+        {
+            is_open_value = imgui_decode_ref<bool>(state, -2);
+            ref_index = -2;
+        }
+
+        flags = static_cast<ImGuiWindowFlags>(imgui_decode<double>(state, -1));
+    }
+
+    ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
+
+    st.windows[st.render_stack].push_back(name);
+
+    bool result = false;
+
+    if (ref_index != 0)
+    {
+        result = ImGui::Begin(name.c_str(), &is_open_value, flags);
+
+        imgui_encode_into_ref(state, is_open_value, ref_index);
+    }
+    else
+    {
+        result = ImGui::Begin(name.c_str(), nullptr, flags);
+    }
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
 
 static int imgui_sameline(lua_State* state)
 {
@@ -2529,6 +2580,7 @@ static int imgui_menuitem(lua_State* state)
 }
 
 static const luaL_Reg dfhack_imgui_funcs[] = {
+    {"Begin", imgui_begin},
     {"SameLine", imgui_sameline},
     {"Checkbox", imgui_checkbox},
     {"Ref", imgui_ref},

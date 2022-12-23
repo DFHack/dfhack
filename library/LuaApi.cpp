@@ -1852,6 +1852,36 @@ static ImVec4 imgui_get_colour_arg(lua_State* state, int index, bool defaults_to
     return ImTuiInterop::colour_interop(std::vector<int>{fg, bg, bold});
 }
 
+static std::map<std::string, int> imgui_key_name_to_key_code_impl()
+{
+    long first = df::enum_traits<df::interface_key>::first_item_value;
+    long last = df::enum_traits<df::interface_key>::last_item_value;
+
+    std::map<std::string, int> result;
+
+    for (long i = first; i <= last; i++)
+    {
+        std::string name = df::enum_traits<df::interface_key>::key_table[i - first];
+
+        result[name] = i;
+    }
+
+    return result;
+}
+
+//I could not find how DFhack already does this, df.interface_keys exists but that's a dead end
+static long imgui_key_name_to_key_code(std::string name)
+{
+    static thread_local std::map<std::string, int> key_cache = imgui_key_name_to_key_code_impl();
+
+    auto it = key_cache.find(name);
+
+    if (it == key_cache.end())
+        return -1;
+
+    return it->second;
+}
+
 static bool imgui_begin(std::string title)
 {
     ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();

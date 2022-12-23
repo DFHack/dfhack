@@ -2088,6 +2088,15 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     { NULL, NULL }
 };
 
+static void imgui_claim_current_window()
+{
+    ImGuiWindow* win = ImGui::GetCurrentWindow();
+
+    ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
+
+    st.windows[st.render_stack].push_back(win->Name);
+}
+
 static int imgui_begin(lua_State* state)
 {
     int top = lua_gettop(state);
@@ -2126,10 +2135,6 @@ static int imgui_begin(lua_State* state)
         flags = static_cast<ImGuiWindowFlags>(imgui_decode<double>(state, -1));
     }
 
-    ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
-
-    st.windows[st.render_stack].push_back(name);
-
     bool result = false;
 
     if (ref_index != 0)
@@ -2142,6 +2147,8 @@ static int imgui_begin(lua_State* state)
     {
         result = ImGui::Begin(name.c_str(), nullptr, flags);
     }
+
+    imgui_claim_current_window();
 
     imgui_push_generic(state, result);
 
@@ -2538,6 +2545,8 @@ static int imgui_beginmenu(lua_State* state)
     }
 
     bool result = ImGui::BeginMenu(label.c_str(), enabled);
+
+    imgui_claim_current_window();
 
     imgui_push_generic(state, result);
 

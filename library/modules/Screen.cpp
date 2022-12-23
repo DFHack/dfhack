@@ -884,7 +884,7 @@ void dfhack_lua_viewscreen::render()
                 continue;
 
             ImGui::BringWindowToFocusFront(window);
-            ImGui::BringWindowToDisplayFront(ImGui::FindWindowByName(name.c_str()));
+            ImGui::BringWindowToDisplayFront(window);
 
             imgui_windows.push_back(window);
         }

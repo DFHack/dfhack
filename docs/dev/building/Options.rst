@@ -78,7 +78,7 @@ Usage::
 Options:
 
 * Release
-* RelWithDebugInfo
+* RelWithDebInfo
 
 Target architecture (32/64-bit)
 ---------------------------------------

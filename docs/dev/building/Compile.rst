@@ -201,7 +201,7 @@ assets::
 
     mkdir ~/df
 
-If you can just downlaod Dwarf Fortress directly into the container, then that's fine.
+If you can just download Dwarf Fortress directly into the container, then that's fine.
 Otherwise, you can do something like this in your host Linux environment to copy an
 installed version to the container::
 

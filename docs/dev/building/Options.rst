@@ -73,7 +73,7 @@ Variable: ``CMAKE_BUILD_TYPE``
 
 Usage::
 
-    cmake .. -DCMAKE_BUILD_TYPE:string=RelWithDebugInfo
+    cmake .. -DCMAKE_BUILD_TYPE:string=RelWithDebInfo
 
 Options:
 

@@ -243,8 +243,8 @@ to your binary search PATH so the tool can be later run from anywhere.
 Perl / Strawberry Perl
 ^^^^^^^^^^^^^^^^^^^^^^
 For the code generation stage of the build process, you'll need Perl 5 with
-XML::LibXML and XML::LibXSLT. `Strawberry Perl <http://strawberryperl.com>`_ is
-recommended as it includes all of the required packages in a single, easy
+**XML::LibXML** and **XML::LibXSLT**. `Strawberry Perl <http://strawberryperl.com>`_ is
+recommended as it includes all of the required packages in a single easy
 install.
 
 After install, ensure Perl is in your user's PATH. This can be edited from
@@ -255,7 +255,7 @@ The following directories must be in your PATH, in this order:
 * ``<path to perl>\c\bin``
 * ``<path to perl>\perl\site\bin``
 * ``<path to perl>\perl\bin``
-* ``<path to perl>\perl\vendor\lib\auto\XML\LibXML`` (may only be required on some systems)
+* ``<path to perl>\perl\vendor\lib\auto\XML\LibXML`` (path may only be required on some systems)
 
 Be sure to close and re-open any existing ``cmd.exe`` windows after updating
 your PATH.

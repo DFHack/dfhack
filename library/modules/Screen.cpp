@@ -760,7 +760,7 @@ int dfhack_lua_viewscreen::do_input(lua_State *L)
     return 0;
 }
 
-static dfhack_lua_viewscreen* get_first_lua_top()
+static dfhack_lua_viewscreen* get_frontmost_lua_viewscreen()
 {
     df::viewscreen* top = Gui::getCurViewscreen(true);
 
@@ -842,7 +842,7 @@ void dfhack_lua_viewscreen::render()
         return;
     }
 
-    dfhack_lua_viewscreen* screen = get_first_lua_top();
+    dfhack_lua_viewscreen* screen = get_frontmost_lua_viewscreen();
 
     ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
 
@@ -946,7 +946,7 @@ void dfhack_lua_viewscreen::feed(std::set<df::interface_key> *keys)
 {
     if (Screen::isDismissed(this)) return;
 
-    dfhack_lua_viewscreen* screen = get_first_lua_top();
+    dfhack_lua_viewscreen* screen = get_frontmost_lua_viewscreen();
 
     bool is_top = screen == this;
 

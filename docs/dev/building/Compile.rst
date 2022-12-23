@@ -95,6 +95,9 @@ windows batch files that can be used to avoid opening a terminal/command-prompt.
 You should seek cmake's documentation online or via ``cmake --help`` to see how the command works. See
 the `build-options` page for help finding the DFHack build options relevant to you.
 
+Before compiling code, you'll of course need code to compile. This **will include** the submodules, so
+be sure you've read the section about getting the code.
+
 .. _compile-linux:
 
 Linux

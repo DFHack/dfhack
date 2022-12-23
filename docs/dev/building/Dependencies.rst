@@ -26,16 +26,16 @@ System packages:
 
 * SDL (libsdl 1.2, not sdl2).
 * cmake
-* git (required for `contributions<pr-link>`)
+* git (required for `contributions <https://github.com/DFHack/dfhack/pulls>`_)
 * ccache (**optional**, but recommended to improve build times)
 * OpenGL headers (**optional**: to build `stonesense`)
-* zlib (compression library used for `xlsxioreader` -> `quickfort`)
+* zlib (compression library used for `xlsxreader-api` -> `quickfort`)
 * build system (e.g. gcc & ninja, or Visual Studio)
 
 ..
     maybe the below should be talked about next to the bullets
 
-**SDL** is used as an injection point which you can see more about in DFHack's `architecture` documentation & diagrams.
+**SDL** is used as an injection point which you can see more about in DFHack's `architectural <architectural-diagrams>` documentation & diagrams.
 
 Perl packages:
 
@@ -46,12 +46,11 @@ These perl packages are used in code generation. DFHack has many structures that
 files to define and update these structures. Then during the configuration process [running cmake] these xml files are
 used to generate C++ source code to define these structures for use in plugins and scripts.
 
-.. _pr-link: https://github.com/DFHack/dfhack/pulls
 
 Installing
 ----------
 
-.. contents:: Install Instructions
+.. contents::
   :local:
   :depth: 2
 
@@ -168,9 +167,9 @@ What you'll need is as follows:
   * Perl (required)
   * XML:LibXML (required)
   * XML:LibXLST (required)
-* `Python <python-install>` (required for documentation, optional otherwise)
+* `Python`_ (required for documentation, optional otherwise)
 
-  * `Sphinx <sphinx-install>`
+  * `Sphinx`_
 
 Releases of Dwarf Fortress since roughly 2016 have been compiled for Windows using
 Microsoft's Visual Studio 2015 C++ compiler. In order to guarantee ABI and STL compatibility
@@ -191,7 +190,7 @@ Visual Studio to edit code.
 With Choco
 ~~~~~~~~~~
 Many of the dependencies are simple enough to download and install via the
-`chocolatey<chocolatey-link>` package manager on the command line.
+`chocolatey`_ package manager on the command line.
 
 Here are some package install commands::
 
@@ -202,7 +201,7 @@ Here are some package install commands::
     choco install sphinx
     choco install visualstudio2022community
 
-.. _chocolatey-link: https://chocolatey.org/install
+.. _chocolatey: https://chocolatey.org/install
 
 Visual Studio
 ~~~~~~~~~~~~~
@@ -230,7 +229,7 @@ If you prefer to install manually rather than using Chocolatey, details and
 requirements are as below. If you do install manually, please ensure you
 have all **executables searchable in your PATH variable**.
 
-.. contents:: Windows
+.. contents::
   :local:
   :depth: 1
 
@@ -267,15 +266,15 @@ install XML::LibXML and XML::LibXSLT for it using CPAN.
 
 Python
 ^^^^^^
-See `python-install`.
+See the `Python`_ website.
 
-.. _python-install: https://www.python.org/downloads/
+.. _Python: https://www.python.org/downloads/
 
 Sphinx
 ^^^^^^
-See `sphinx-install` at https://www.sphinx-doc.org/
+See the `Sphinx`_ website.
 
-.. _sphinx-install: https://www.sphinx-doc.org/en/master/usage/installation.html
+.. _Sphinx: https://www.sphinx-doc.org/en/master/usage/installation.html
 
 .. _install-visual-studio:
 
@@ -339,8 +338,6 @@ macOS
 DFHack can officially be built on macOS only with GCC 4.8 or 7. Anything newer than 7
 will require you to perform extra steps to get DFHack to run (see `osx-new-gcc-notes`),
 and your build will likely not be redistributable.
-
-.. _osx-setup:
 
 #. Download and unpack a copy of the latest DF
 #. Install Xcode from the Mac App Store

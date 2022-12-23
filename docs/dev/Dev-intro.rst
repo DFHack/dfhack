@@ -17,7 +17,7 @@ Other pages that may be relevant include:
 .. contents:: Contents
     :local:
 
-.. _architecture
+.. _architectural-diagrams:
 
 Architecture diagrams
 ---------------------

@@ -9,15 +9,13 @@ Compilation
 DFHack builds are available for all supported platforms; see `installing` for
 installation instructions. If you are a DFHack end-user, modder, or plan on
 writing scripts [lua] (not plugins), it is generally recommended (and easier) to use
-these `builds<build-releases>` instead of compiling DFHack from source.
+these `builds <https://github.com/DFHack/dfhack/releases>`_ instead of compiling DFHack from source.
 
 However, if you are looking to develop plugins, work on the DFHack core, make
 complex changes to DF-structures, or anything else that requires compiling
 DFHack from source, this document will walk you through the build process. Note
 that some steps may be unconventional compared to other projects, so be sure to
 pay close attention if this is your first time compiling DFHack.
-
-.. _build-releases:https://github.com/DFHack/dfhack/releases
 
 .. contents:: Contents
   :local:
@@ -109,7 +107,7 @@ This section describes build configuration options that apply to all platforms.
 If you don't have a working build environment set up yet, follow the instructions
 in the platform-specific sections below first, then come back here.
 
-Be sure to check out common `compile options <compile-options>`.
+Be sure to check out common `build options <build-options>`.
 
 Generator
 ---------
@@ -176,35 +174,38 @@ See our page on `build options<build-options>`
 Instructions
 ============
 
+.. contents::
+  :local:
+  :depth: 1
+
 .. _compile-linux:
 
 Linux
 -----
 On Linux, DFHack acts as a library that shadows parts of the SDL API using LD_PRELOAD.
 
-Dependencies
-~~~~~~~~~~~~
-You also need zlib, libsdl (1.2, not sdl2, like DF), perl, and the XML::LibXML
-and XML::LibXSLT perl packages (for the code generation parts). You should be
-able to find them in your distribution's repositories.
+Build
+~~~~~
+Building is fairly straightforward. Enter the ``build`` folder (or create an
+empty folder in the DFHack directory to use instead) and start the build like this::
 
-To build `stonesense`, you'll also need OpenGL headers.
+    cd build
+    cmake .. -G Ninja -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=<path to DF>
+    ninja install  # or ninja -jX install to specify the number of cores (X) to use
 
-Here are some package install commands for various distributions:
+<path to DF> should be a path to a copy of Dwarf Fortress, of the appropriate
+version for the DFHack you are building. This will build the library along
+with the normal set of plugins and install them into your DF folder.
 
-* On Arch linux:
+Alternatively, you can use ccmake instead of cmake::
 
-  * For the required Perl modules: ``perl-xml-libxml`` and ``perl-xml-libxslt`` (or through ``cpan``)
+    cd build
+    ccmake .. -G Ninja
+    ninja install
 
-* On Ubuntu::
-
-    apt-get install gcc cmake ninja-build git zlib1g-dev libsdl1.2-dev libxml-libxml-perl libxml-libxslt-perl
-
-  * Other Debian-based distributions should have similar requirements.
-
-* On Fedora::
-
-    yum install gcc-c++ cmake ninja-build git zlib-devel SDL-devel perl-core perl-XML-LibXML perl-XML-LibXSLT ruby
+This will show a curses-based interface that lets you set all of the
+extra options. You can also use a cmake-friendly IDE like KDevelop 4
+or the cmake-gui program.
 
 Windows cross compiling from Linux
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -290,79 +291,6 @@ host when you want to reattach::
 
 If you edit code and need to rebuild, run ``dfhack-make`` and then ``ninja install``.
 That will handle all the wineserver management for you.
-
-Multilib dependencies
-~~~~~~~~~~~~~~~~~~~~~
-If you want to compile 32-bit DFHack on 64-bit distributions, you'll need the
-multilib development tools and libraries:
-
-* ``gcc-multilib`` and ``g++-multilib``
-* If you have installed a non-default version of GCC - for example, GCC 4.8 on a
-  distribution that defaults to 5.x - you may need to add the version number to
-  the multilib packages.
-
-  * For example, ``gcc-4.8-multilib`` and ``g++-4.8-multilib`` if installing for GCC 4.8
-    on a system that uses a later GCC version.
-  * This is definitely required on Ubuntu/Debian, check if using a different distribution.
-
-* ``zlib1g-dev:i386`` (or a similar i386 zlib-dev package)
-
-Note that installing a 32-bit GCC on 64-bit systems (e.g. ``gcc:i386`` on
-Debian) will typically *not* work, as it depends on several other 32-bit
-libraries that conflict with system libraries. Alternatively, you might be able
-to use ``lxc`` to
-:forums:`create a virtual 32-bit environment <139553.msg5435310#msg5435310>`.
-
-Build
-~~~~~
-Building is fairly straightforward. Enter the ``build`` folder (or create an
-empty folder in the DFHack directory to use instead) and start the build like this::
-
-    cd build
-    cmake .. -G Ninja -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=<path to DF>
-    ninja install  # or ninja -jX install to specify the number of cores (X) to use
-
-<path to DF> should be a path to a copy of Dwarf Fortress, of the appropriate
-version for the DFHack you are building. This will build the library along
-with the normal set of plugins and install them into your DF folder.
-
-Alternatively, you can use ccmake instead of cmake::
-
-    cd build
-    ccmake .. -G Ninja
-    ninja install
-
-This will show a curses-based interface that lets you set all of the
-extra options. You can also use a cmake-friendly IDE like KDevelop 4
-or the cmake-gui program.
-
-.. _linux-incompatible-libstdcxx:
-
-Incompatible libstdc++
-~~~~~~~~~~~~~~~~~~~~~~
-When compiling DFHack yourself, it builds against your system libstdc++. When
-Dwarf Fortress runs, it uses a libstdc++ shipped in the ``libs`` folder, which
-comes from GCC 4.8 and is incompatible with code compiled with newer GCC
-versions. As of DFHack 0.42.05-alpha1, the ``dfhack`` launcher script attempts
-to fix this by automatically removing the DF-provided libstdc++ on startup.
-In rare cases, this may fail and cause errors such as:
-
-.. code-block:: text
-
-   ./libs/Dwarf_Fortress: /pathToDF/libs/libstdc++.so.6: version
-       `GLIBCXX_3.4.18' not found (required by ./hack/libdfhack.so)
-
-The easiest way to fix this is generally removing the libstdc++ shipped with
-DF, which causes DF to use your system libstdc++ instead::
-
-    cd /path/to/DF/
-    rm libs/libstdc++.so.6
-
-Note that distributing binaries compiled with newer GCC versions may result in
-the opposite compatibility issue: users with *older* GCC versions may encounter
-similar errors. This is why DFHack distributes both GCC 4.8 and GCC 7 builds. If
-you are planning on distributing binaries to other users, we recommend using an
-older GCC (but still at least 4.8) version if possible.
 
 .. _compile-windows:
 
@@ -506,8 +434,6 @@ Building
 
 Notes for GCC 8+ or OS X 10.10+ users
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If none of these situations apply to you, skip to `osx-setup`.
 
 If you have issues building on OS X 10.10 (Yosemite) or above, try defining
 the following environment variable::

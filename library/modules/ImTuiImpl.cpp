@@ -162,11 +162,6 @@ void drawTriangle(ImVec2 p0, ImVec2 p1, ImVec2 p2, ImU32 col) {
 
             while (len--) {
                 if (x >= 0 && x < dim.x && y + ymin >= 0 && y + ymin < dim.y) {
-                    /*auto& cell = screen->data[(y + ymin) * screen->nx + x];
-                    cell &= 0x00FF0000;
-                    cell |= ' ';
-                    cell |= ((ImTui::TCell)(col) << 24);*/
-
                     ImVec4 col4 = ImGui::ColorConvertU32ToFloat4(col);
 
                     //todo: colours
@@ -226,12 +221,6 @@ void ImTuiInterop::impl::init_current_context()
     ImGui::GetStyle().AntiAliasedFill = false;
     ImGui::GetStyle().CurveTessellationTol = 1.25f;
 
-    /*ImGui::GetStyle().Colors[ImGuiCol_WindowBg] = ImVec4(0.15, 0.15, 0.15, 1.0f);
-    ImGui::GetStyle().Colors[ImGuiCol_TitleBg] = ImVec4(0.35, 0.35, 0.35, 1.0f);
-    ImGui::GetStyle().Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.15, 0.15, 0.15, 1.0f);
-    ImGui::GetStyle().Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.75, 0.75, 0.75, 0.5f);
-    ImGui::GetStyle().Colors[ImGuiCol_NavHighlight] = ImVec4(0.00, 0.00, 0.00, 0.0f);*/
-
     ImGuiStyle& style = ImGui::GetStyle();
 
     for (int i = 0; i < ImGuiCol_COUNT; i++)
@@ -269,6 +258,7 @@ void ImTuiInterop::impl::init_current_context()
     style.Colors[ImGuiCol_TableBorderStrong] = named_colours("WHITE", "WHITE", false);
     style.Colors[ImGuiCol_TableBorderLight] = named_colours("WHITE", "WHITE", false);
 
+    //good for debugging
     //style.Colors[ImGuiCol_NavHighlight] = named_colours("WHITE", "YELLOW", false);
     //style.Colors[ImGuiCol_NavWindowingHighlight] = named_colours("WHITE", "YELLOW", false);
     //style.Colors[ImGuiCol_NavWindowingDimBg] = named_colours("WHITE", "YELLOW", false);
@@ -287,7 +277,6 @@ void ImTuiInterop::impl::init_current_context()
     int tex_w, tex_h;
     ImGui::GetIO().Fonts->GetTexDataAsRGBA32(&tex_pixels, &tex_w, &tex_h);
 
-    //ImGui::GetIO().KeyMap[ImGuiKey_Tab] = 9;
     ImGui::GetIO().KeyMap[ImGuiKey_Backspace] = df::enums::interface_key::STRING_A000; //why
     ImGui::GetIO().KeyMap[ImGuiKey_Escape] = df::enums::interface_key::LEAVESCREEN;
     //ImGui::GetIO().KeyMap[ImGuiKey_Enter] = df::enums::interface_key::SELECT;
@@ -304,41 +293,20 @@ void ImTuiInterop::impl::init_current_context()
     ImGui::GetIO().KeyMap[ImGuiKey_UpArrow] = df::enums::interface_key::CURSOR_UP;
     ImGui::GetIO().KeyMap[ImGuiKey_DownArrow] = df::enums::interface_key::CURSOR_DOWN;
 
+    //list of unmapped keys and their functions in ImGui:
+    //if I could get ctrl + tab, would be able to cycle through windows with the keyboard
+    //I beleive tab is also used for cycling through elements in keyboard navigation
+    //ctrl + arrows would also allow word skipping
+    //pageup/down would be ideal for large windows
+    //ctrl c and v would allow for copypaste support, although its theoretically doable on an arbitrary keybind
+    //and ctrl-x for cut
+    //inputtext supports undo and redo on ctrl-z and ctrl-y
+    //ctrl-a would be nice for select all
+    //home and end I believe also navigate text
+    //delete would be good for text deletion
+    //unsure on the functionality of insert
+
     ImGui::GetIO().MouseDragThreshold = 0.f;
-
-    /*
-    ImGui::GetIO().KeyMap[ImGuiKey_Tab]         = 9;
-    ImGui::GetIO().KeyMap[ImGuiKey_LeftArrow]   = 260;
-    ImGui::GetIO().KeyMap[ImGuiKey_RightArrow]  = 261;
-    ImGui::GetIO().KeyMap[ImGuiKey_UpArrow]     = 259;
-    ImGui::GetIO().KeyMap[ImGuiKey_DownArrow]   = 258;
-    ImGui::GetIO().KeyMap[ImGuiKey_PageUp]      = 339;
-    ImGui::GetIO().KeyMap[ImGuiKey_PageDown]    = 338;
-    ImGui::GetIO().KeyMap[ImGuiKey_Home]        = 262;
-    ImGui::GetIO().KeyMap[ImGuiKey_End]         = 360;
-    ImGui::GetIO().KeyMap[ImGuiKey_Insert]      = 331;
-    ImGui::GetIO().KeyMap[ImGuiKey_Delete]      = 330;
-    ImGui::GetIO().KeyMap[ImGuiKey_Backspace]   = 263;
-    ImGui::GetIO().KeyMap[ImGuiKey_Space]       = 32;
-    ImGui::GetIO().KeyMap[ImGuiKey_Enter]       = 10;
-    ImGui::GetIO().KeyMap[ImGuiKey_Escape]      = 27;
-    ImGui::GetIO().KeyMap[ImGuiKey_KeyPadEnter] = 343;
-    ImGui::GetIO().KeyMap[ImGuiKey_A]           = 1;
-    ImGui::GetIO().KeyMap[ImGuiKey_C]           = 3;
-    ImGui::GetIO().KeyMap[ImGuiKey_V]           = 22;
-    ImGui::GetIO().KeyMap[ImGuiKey_X]           = 24;
-    ImGui::GetIO().KeyMap[ImGuiKey_Y]           = 25;
-    ImGui::GetIO().KeyMap[ImGuiKey_Z]           = 26;
-
-    ImGui::GetIO().KeyRepeatDelay = 0.050;
-    ImGui::GetIO().KeyRepeatRate = 0.050;
-
-	int screenSizeX = 0;
-	int screenSizeY = 0;
-
-	getmaxyx(stdscr, screenSizeY, screenSizeX);
-	ImGui::GetIO().DisplaySize = ImVec2(screenSizeX, screenSizeY);
-*/
 
     df::coord2d dim = Screen::getWindowSize();
     ImGui::GetIO().DisplaySize = ImVec2(dim.x, dim.y);
@@ -431,8 +399,6 @@ void ImTuiInterop::impl::new_frame(std::set<df::interface_key> keys, ui_state& s
     df::coord2d dim = Screen::getWindowSize();
     ImGui::GetIO().DisplaySize = ImVec2(dim.x, dim.y);
 
-    //todo: fill keysdown, special keys
-
     df::coord2d mouse_pos = Screen::getMousePos();
 
     io.MousePos.x = mouse_pos.x;
@@ -491,13 +457,6 @@ void ImTuiInterop::impl::draw_frame(ImDrawData* drawData)
                         auto pos1 = cmd_list->VtxBuffer[vidx1].pos;
                         auto pos2 = cmd_list->VtxBuffer[vidx2].pos;
 
-                        /*pos0.x = std::max(std::min(float(clip_rect.z - 1), pos0.x), clip_rect.x);
-                        pos1.x = std::max(std::min(float(clip_rect.z - 1), pos1.x), clip_rect.x);
-                        pos2.x = std::max(std::min(float(clip_rect.z - 1), pos2.x), clip_rect.x);
-                        pos0.y = std::max(std::min(float(clip_rect.w - 1), pos0.y), clip_rect.y);
-                        pos1.y = std::max(std::min(float(clip_rect.w - 1), pos1.y), clip_rect.y);
-                        pos2.y = std::max(std::min(float(clip_rect.w - 1), pos2.y), clip_rect.y);*/
-
                         auto uv0 = cmd_list->VtxBuffer[vidx0].uv;
                         auto uv1 = cmd_list->VtxBuffer[vidx1].uv;
                         auto uv2 = cmd_list->VtxBuffer[vidx2].uv;
@@ -527,16 +486,11 @@ void ImTuiInterop::impl::draw_frame(ImDrawData* drawData)
                             lastCharX = x;
                             lastCharY = y;
 
-                            int xx = (x)+0;
-                            int yy = (y)+0;
+                            int xx = static_cast<int>(std::floor(x));
+                            int yy = static_cast<int>(std::floor(y));
                             if (xx < clip_rect.x || xx >= clip_rect.z || yy < clip_rect.y || yy >= clip_rect.w) {
                             }
                             else {
-                                /*auto& cell = screen->data[yy * screen->nx + xx];
-                                cell &= 0xFF000000;
-                                cell |= (col0 & 0xff000000) >> 24;
-                                cell |= ((ImTui::TCell)(rgbToAnsi256(col0, false)) << 16);*/
-                                
                                 //It looks like imtui stuffs the actual character in the a component
                                 char c = (col0 & 0xff000000) >> 24;
                                 
@@ -639,8 +593,6 @@ void ImTuiInterop::ui_state::reset_input()
 
 ImTuiInterop::ui_state ImTuiInterop::make_ui_system()
 {
-    std::cout << "Made ImTui System\n";
-
     ImGuiContext* ctx = ImGui::CreateContext();
     
     ui_state st;

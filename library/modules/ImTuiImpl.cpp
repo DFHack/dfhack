@@ -528,6 +528,9 @@ void ImTuiInterop::impl::reset_input()
     int arraysize_of_keysdown = IM_ARRAYSIZE(io.KeysDown);
     int max_df_keys = df::enum_traits<df::interface_key>::last_item_value + 1;
 
+    //use an extra slot as an always-false key
+    max_df_keys += 1;
+
     assert(arraysize_of_keysdown >= max_df_keys);
 
     auto& keysDown = io.KeysDown;

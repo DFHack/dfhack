@@ -1931,11 +1931,6 @@ static void imgui_popstylecolor(int n)
     ImGui::PopStyleColor(n);
 }
 
-static bool imgui_iskeypressed(int n)
-{
-    return ImGui::IsKeyPressed(n);
-}
-
 static bool imgui_ismouseclicked(int button)
 {
     return ImGui::IsMouseClicked(button);
@@ -2052,9 +2047,6 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPM(ImGui, NewLine),
     WRAPN(PopStyleColor, imgui_popstylecolor),
     WRAPN(StyleIndex, imgui_style_index),
-    WRAPM(ImGui, IsKeyDown),
-    WRAPN(IsKeyPressed, imgui_iskeypressed),
-    WRAPM(ImGui, IsKeyReleased),
     WRAPM(ImGui, IsMouseDown),
     WRAPN(IsMouseClicked, imgui_ismouseclicked),
     WRAPM(ImGui, IsMouseReleased),
@@ -2413,6 +2405,64 @@ static int imgui_tablesetupcolumn(lua_State* state)
     return 0;
 }
 
+int imgui_handle_key(lua_State* state, int index)
+{
+    int key = -1;
+
+    if (lua_isstring(state, index))
+    {
+        std::string val = imgui_decode<std::string>(state, index);
+
+        key = imgui_key_name_to_key_code(val);
+    }
+
+    if (lua_isnumber(state, index))
+    {
+        key = (int)imgui_decode<double>(state, index);
+    }
+
+    if (key < 0)
+    {
+        //returns a key which is always going to be false in imgui
+        key = df::enum_traits<df::interface_key>::last_item_value + 1;
+    }
+
+    return key;
+}
+
+static int imgui_iskeydown(lua_State* state)
+{
+    int key = imgui_handle_key(state, -1);
+
+    bool result = ImGui::IsKeyDown(key);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
+static int imgui_iskeypressed(lua_State* state)
+{
+    int key = imgui_handle_key(state, -1);
+
+    bool result = ImGui::IsKeyPressed(key);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
+static int imgui_iskeyreleased(lua_State* state)
+{
+    int key = imgui_handle_key(state, -1);
+
+    bool result = ImGui::IsKeyReleased(key);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"SameLine", imgui_sameline},
     {"Checkbox", imgui_checkbox},
@@ -2434,6 +2484,9 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"IsItemHovered", imgui_isitemhovered},
     {"IsMouseHoveringRect", imgui_ismousehoveringrect},
     {"TableSetupColumn", imgui_tablesetupcolumn},
+    {"IsKeyDown", imgui_iskeydown},
+    {"IsKeyPressed", imgui_iskeypressed},
+    {"IsKeyReleased", imgui_iskeyreleased},
     { NULL, NULL }
 };
 

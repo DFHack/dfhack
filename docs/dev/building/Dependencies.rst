@@ -26,6 +26,10 @@ System packages:
 
 * SDL (libsdl 1.2, not sdl2).
 * cmake
+* Perl
+* Python
+
+  * Sphinx
 * git (required for `contributions <https://github.com/DFHack/dfhack/pulls>`_)
 * ccache (**optional**, but recommended to improve build times)
 * OpenGL headers (**optional**: to build `stonesense`)
@@ -33,7 +37,7 @@ System packages:
 * build system (e.g. gcc & ninja, or Visual Studio)
 
 ..
-    maybe the below should be talked about next to the bullets
+    maybe the below should be talked about next to the bullet point??
 
 **SDL** is used as an injection point which you can see more about in DFHack's `architectural <architectural-diagrams>` documentation & diagrams.
 
@@ -152,24 +156,15 @@ older GCC (but still at least 4.8) version if possible.
 Windows
 =======
 
-On Windows, DFHack replaces the SDL library distributed with DF.
 For ABI compatibility with recent releases of Dwarf Fortress, DFHack requires the ``v140`` or ``v140_xp``
 toolchain to build for windows.
 
-What you'll need is as follows:
+Of course all dependencies are listed above, but here are some things you'll likely want on Windows
+to avoid risk of wading into uncharted waters:
 
 * Microsoft Visual C++ 2022, 2019, 2017, or 2015 (optional)
 * ``v140`` or ``v140_xp`` toolchain (Microsoft Visual C++ 2015 Build Tools)
-* Git (optional)
-* CMake
-* StrawberryPerl, OR CPAN (optional, see nested)
-
-  * Perl (required)
-  * XML:LibXML (required)
-  * XML:LibXLST (required)
-* `Python`_ (required for documentation, optional otherwise)
-
-  * `Sphinx`_
+* StrawberryPerl (perl + perl packages)
 
 Releases of Dwarf Fortress since roughly 2016 have been compiled for Windows using
 Microsoft's Visual Studio 2015 C++ compiler. In order to guarantee ABI and STL compatibility
@@ -200,6 +195,11 @@ Here are some package install commands::
     choco install python
     choco install sphinx
     choco install visualstudio2022community
+
+You may have noticed this list **does not include** the build tools, one of the build tool packages
+in the chocolatey `package repository <https://community.chocolatey.org/packages>`_ may work for our purposes
+but the tried and true method is just below in the **next section**. If you verify a package works feel free
+to open an issue, or update this documentation.
 
 .. _chocolatey: https://chocolatey.org/install
 

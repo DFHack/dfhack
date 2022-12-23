@@ -871,20 +871,40 @@ void dfhack_lua_viewscreen::render()
     {
         std::vector<std::string> my_windows = st.windows[my_render_stack];
 
+        std::vector<ImGuiWindow*> imgui_windows;
+
         //Modify imgui focus and display order so that windows are sorted
         //by viewscreen depth
         //todo: maintain relative ordering within a layer
         for (const std::string& name : my_windows)
         {
-            ImGui::BringWindowToFocusFront(ImGui::FindWindowByName(name.c_str()));
+            ImGuiWindow* window = ImGui::FindWindowByName(name.c_str());
+
+            if (window == nullptr)
+                continue;
+
+            ImGui::BringWindowToFocusFront(window);
             ImGui::BringWindowToDisplayFront(ImGui::FindWindowByName(name.c_str()));
+
+            imgui_windows.push_back(window);
+        }
+
+        if (is_top)
+        {
+            ImGuiContext* ctx = ImGui::GetCurrentContext();
+
+            //add remaining windows in, they'll just be ignored if they've already been rendered
+            for (int i = 0; i < ctx->Windows.Size; i++)
+            {
+                imgui_windows.push_back(ctx->Windows[i]);
+            }
         }
 
         //render only the windows which I own, which are named by st.rendered_windows
         //any unnamed windows will be rendered when is_top is true
         //todo: implicitly discover windows, this is slightly brittle
         //as only explicitly named windows via imgui_begin are noticed
-        ImGui::ProgressiveRender(my_windows, st.rendered_windows, is_top);
+        ImGui::ProgressiveRender(imgui_windows, st.rendered_windows, is_top);
 
         //does not look at render stack
         st.draw_frame(ImGui::GetDrawData());

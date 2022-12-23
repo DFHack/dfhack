@@ -50,8 +50,8 @@ using namespace DFHack;
 
 #include "DataDefs.h"
 #include "df/init.h"
-#include "df/texture_handler.h"
-#include "df/tile_page.h"
+#include "df/texture_handlerst.h"
+#include "df/tile_pagest.h"
 #include "df/interfacest.h"
 #include "df/enabler.h"
 #include "df/graphic_map_portst.h"

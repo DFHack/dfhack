@@ -66,7 +66,6 @@ using namespace DFHack;
 #include "df/item_corpsepiecest.h"
 #include "df/item_corpsest.h"
 #include "df/job.h"
-#include "df/layer_object_listst.h"
 #include "df/occupation.h"
 #include "df/plant.h"
 #include "df/popup_message.h"

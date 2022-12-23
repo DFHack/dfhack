@@ -227,7 +227,7 @@ host when you want to reattach::
 
     docker start -ai dfhack-win
 
-If you edit code and need to rebuild, run ``dfhack-make`` and then ``ninja install``.
+If you edit code and need to rebuild, run ``dfhack-make install``.
 That will handle all the wineserver management for you.
 
 .. _compile-windows:

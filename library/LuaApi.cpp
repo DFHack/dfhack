@@ -1623,11 +1623,24 @@ static const luaL_Reg dfhack_gui_funcs[] = {
     { NULL, NULL }
 };
 
+template<typename T>
+struct imgui_ref_tag {
+    bool decoded = false;
+    int index = 0;
+    T val = T{};
+};
+
 template<typename T, typename U>
 static void imgui_decode_impl(lua_State* state, std::map<T, U>& out, int index);
 
 template<typename T>
 static void imgui_decode_impl(lua_State* state, std::vector<T>& out, int index);
+
+template<typename T>
+static void imgui_decode_impl(lua_State* state, imgui_ref_tag<T>& out, int index);
+
+template<typename T>
+static T imgui_decode_ref(lua_State* state, int index);
 
 static void imgui_decode_impl(lua_State* state, double& out, int index)
 {
@@ -1716,6 +1729,18 @@ static void imgui_decode_impl(lua_State* state, std::vector<T>& out, int index)
 
         lua_pop(state, 1);
     }
+}
+
+template<typename T>
+static void imgui_decode_impl(lua_State* state, imgui_ref_tag<T>& out, int index)
+{
+    if (lua_istable(state, index))
+        out.decoded = true;
+    else
+        return;
+
+    out.index = index;
+    out.val = imgui_decode_ref<T>(state, index);
 }
 
 template<typename T>
@@ -2085,6 +2110,8 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPM(ImGui, BeginMenuBar),
     WRAPM(ImGui, EndMenuBar),
     WRAPM(ImGui, EndMenu),
+    WRAPM(ImGui, EndTabBar),
+    WRAPM(ImGui, EndTabItem),
     { NULL, NULL }
 };
 
@@ -2102,7 +2129,7 @@ static int imgui_begin(lua_State* state)
     int top = lua_gettop(state);
 
     std::string name;
-    bool is_open_value = false;
+    imgui_ref_tag<bool> is_open_value;
     int ref_index = 0;
     ImGuiWindowFlags flags = 0;
 
@@ -2114,34 +2141,23 @@ static int imgui_begin(lua_State* state)
     if (top == 2)
     {
         name = imgui_decode<std::string>(state, -2);
-
-        if (lua_istable(state, -1))
-        {
-            is_open_value = imgui_decode_ref<bool>(state, -1);
-            ref_index = -1;
-        }
+        is_open_value = imgui_decode<imgui_ref_tag<bool> >(state, -1);
     }
 
     if (top == 3)
     {
         name = imgui_decode<std::string>(state, -3);
-
-        if (lua_istable(state, -2))
-        {
-            is_open_value = imgui_decode_ref<bool>(state, -2);
-            ref_index = -2;
-        }
-
+        is_open_value = imgui_decode<imgui_ref_tag<bool> >(state, -2);
         flags = static_cast<ImGuiWindowFlags>(imgui_decode<double>(state, -1));
     }
 
     bool result = false;
 
-    if (ref_index != 0)
+    if (is_open_value.decoded)
     {
-        result = ImGui::Begin(name.c_str(), &is_open_value, flags);
+        result = ImGui::Begin(name.c_str(), &is_open_value.val, flags);
 
-        imgui_encode_into_ref(state, is_open_value, ref_index);
+        imgui_encode_into_ref(state, is_open_value.val, ref_index);
     }
     else
     {
@@ -2587,6 +2603,124 @@ static int imgui_menuitem(lua_State* state)
     return 1;
 }
 
+//not sure I like this, the usability is kind of poor
+template<typename T>
+static void imgui_decode_multiple_impl(std::tuple<T>& out, lua_State* state, int index)
+{
+    std::get<0>(out) = imgui_decode<T>(state, index);
+}
+
+template<typename Head, typename... Tail>
+static void imgui_decode_multiple_impl(std::tuple<Head, Tail...>& out, lua_State* state, int index)
+{
+    int argc = sizeof...(Tail);
+
+    std::tuple<Head> p1;
+    imgui_decode_multiple_impl(p1, state, index);
+
+    std::tuple<Tail...> p2;
+    imgui_decode_multiple_impl(p2, state, index+1);
+
+    out = std::tuple_cat(p1, p2);
+}
+
+template<typename... T>
+static std::tuple<T...> imgui_decode_multiple(lua_State* state, int last_arg_idx)
+{
+    //so, we pass in -1, with an arg size of 2
+    //that means the first arg is at -2, and the second arg is at -1
+    int offset = (last_arg_idx - sizeof...(T)) + 1;
+
+    std::tuple<T...> result;
+    imgui_decode_multiple_impl(result, state, offset);
+    return result;
+}
+
+static int imgui_begintabbar(lua_State* state)
+{
+    std::string str_id;
+    ImGuiTabBarFlags flags = 0;
+
+    if (lua_gettop(state) == 1)
+    {
+        str_id = imgui_decode<std::string>(state, -1);
+    }
+
+    if (lua_gettop(state) == 2)
+    {
+        std::tie(str_id, flags) = imgui_decode_multiple<std::string, double>(state, -1);
+    }
+
+    bool result = ImGui::BeginTabBar(str_id.c_str(), flags);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
+static int imgui_begintabitem(lua_State* state)
+{
+    std::string label;
+    imgui_ref_tag<bool> p_open;
+    ImGuiTabItemFlags flags = 0;
+
+    if (lua_gettop(state) == 1)
+    {
+        label = imgui_decode<std::string>(state, -1);
+    }
+
+    if (lua_gettop(state) == 2)
+    {
+        label = imgui_decode<std::string>(state, -2);
+        p_open = imgui_decode<imgui_ref_tag<bool> >(state, -1);
+    }
+
+    if (lua_gettop(state) == 3)
+    {
+        label = imgui_decode<std::string>(state, -3);
+        p_open = imgui_decode<imgui_ref_tag<bool> >(state, -2);
+        flags = imgui_decode<double>(state, -1);
+    }
+
+    bool result = false;
+    
+    if (p_open.decoded)
+    {
+        result = ImGui::BeginTabItem(label.c_str(), &p_open.val, flags);
+
+        imgui_encode_into_ref(state, p_open.val, p_open.index);
+    }
+    else
+        result = ImGui::BeginTabItem(label.c_str(), nullptr, flags);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
+static int imgui_tabitembutton(lua_State* state)
+{
+    std::string label;
+    ImGuiTabItemFlags flags = 0;
+
+    if (lua_gettop(state) == 1)
+    {
+        label = imgui_decode<std::string>(state, -1);
+    }
+
+    if (lua_gettop(state) == 2)
+    {
+        label = imgui_decode<std::string>(state, -2);
+        flags = imgui_decode<double>(state, -1);
+    }
+
+    bool result = ImGui::TabItemButton(label.c_str(), flags);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"Begin", imgui_begin},
     {"SameLine", imgui_sameline},
@@ -2614,6 +2748,9 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"IsKeyReleased", imgui_iskeyreleased},
     {"BeginMenu", imgui_beginmenu},
     {"MenuItem", imgui_menuitem},
+    {"BeginTabBar", imgui_begintabbar},
+    {"BeginTabItem", imgui_begintabitem},
+    {"TabItemButton", imgui_tabitembutton},
     { NULL, NULL }
 };
 

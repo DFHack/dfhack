@@ -2720,6 +2720,22 @@ static int imgui_tabitembutton(lua_State* state)
     return 1;
 }
 
+//todo: more complex nesting
+static int imgui_shortcut(lua_State* state)
+{
+    int key = imgui_handle_key(state, -1);
+
+    bool result = ImGui::IsKeyPressed(key);
+
+    ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
+
+    st.suppressed_keys[st.render_stack].insert(key);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"Begin", imgui_begin},
     {"SameLine", imgui_sameline},
@@ -2750,6 +2766,7 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"BeginTabBar", imgui_begintabbar},
     {"BeginTabItem", imgui_begintabitem},
     {"TabItemButton", imgui_tabitembutton},
+    {"Shortcut", imgui_shortcut},
     { NULL, NULL }
 };
 

@@ -46,6 +46,8 @@ namespace ImTuiInterop
 		std::set<std::string> rendered_windows;
 		bool should_pass_keyboard_up = false;
 		bool suppress_next_keyboard_passthrough = false;
+		//render_stack -> std::set<int>
+		std::map<int, std::set<int>> suppressed_keys;
 
 		ImGuiContext* last_context;
 		ImGuiContext* ctx;

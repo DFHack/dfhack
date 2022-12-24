@@ -830,6 +830,7 @@ dfhack_lua_viewscreen::~dfhack_lua_viewscreen()
     if (get_visible_lua_script_count() == 0)
     {
         ImTuiInterop::get_global_ui_state().reset_input();
+        ImTuiInterop::get_global_ui_state().suppressed_keys.clear();
     }
 }
 
@@ -992,6 +993,7 @@ void dfhack_lua_viewscreen::render()
         st.windows.clear();
         st.rendered_windows.clear();
         st.render_stack = 0;
+        st.suppressed_keys.clear();
         st.activate();
         st.new_frame();
     }
@@ -1123,6 +1125,14 @@ void dfhack_lua_viewscreen::feed(std::set<df::interface_key> *keys)
         st.suppress_next_keyboard_passthrough = false;
         st.should_pass_keyboard_up = false;
 
+        for (auto it : st.suppressed_keys)
+        {
+            for (auto key : it.second)
+            {
+                keys->erase(df::interface_key(key));
+            }
+        }
+
         parent->feed(keys);
     }
 
@@ -1147,6 +1157,7 @@ void dfhack_lua_viewscreen::onDismiss()
     if (get_visible_lua_script_count() == 0)
     {
         ImTuiInterop::get_global_ui_state().reset_input();
+        ImTuiInterop::get_global_ui_state().suppressed_keys.clear();
     }
 }
 

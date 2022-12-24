@@ -2130,7 +2130,6 @@ static int imgui_begin(lua_State* state)
 
     std::string name;
     imgui_ref_tag<bool> is_open_value;
-    int ref_index = 0;
     ImGuiWindowFlags flags = 0;
 
     if (top == 1)
@@ -2157,7 +2156,7 @@ static int imgui_begin(lua_State* state)
     {
         result = ImGui::Begin(name.c_str(), &is_open_value.val, flags);
 
-        imgui_encode_into_ref(state, is_open_value.val, ref_index);
+        imgui_encode_into_ref(state, is_open_value.val, is_open_value.index);
     }
     else
     {

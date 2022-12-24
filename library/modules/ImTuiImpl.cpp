@@ -5,6 +5,7 @@
 #include "df/interface_key.h"
 #include "imgui.h"
 #include "imgui_internal.h"
+#include "MiscUtils.h"
 
 using namespace DFHack;
 
@@ -491,17 +492,30 @@ void ImTuiInterop::impl::draw_frame(ImDrawData* drawData)
                             if (xx < clip_rect.x || xx >= clip_rect.z || yy < clip_rect.y || yy >= clip_rect.w) {
                             }
                             else {
-                                //It looks like imtui stuffs the actual character in the a component
-                                char c = (col0 & 0xff000000) >> 24;
-                                
+                                int slen = strlen(&cmd_list->VtxBuffer[vidx0].chrs[0]);
+
+                                std::string as_utf8(&cmd_list->VtxBuffer[vidx0].chrs[0], slen);
+
                                 ImVec4 col4 = ImGui::ColorConvertU32ToFloat4(col0);
 
                                 const Screen::Pen current_bg = Screen::readTile(xx, yy);
 
-                                //I am text, and have no background
-                                const Screen::Pen pen(0, col4.x, current_bg.bg);
+                                std::string as_df = UTF2DF(as_utf8);
 
-                                Screen::paintString(pen, xx, yy, std::string(1, c));
+                                if (as_df.size() == 1)
+                                {
+                                    //I am text, and have no background
+                                    const Screen::Pen pen(as_df[0], col4.x, current_bg.bg);
+
+                                    //Screen::paintString(pen, xx, yy, std::string(1, c));
+                                    Screen::paintTile(pen, xx, yy);
+                                }
+                                else
+                                {
+                                    const Screen::Pen pen('?', col4.x, current_bg.bg);
+
+                                    Screen::paintTile(pen, xx, yy);
+                                }
                             }
                             i += 3;
                         }

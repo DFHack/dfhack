@@ -1125,15 +1125,34 @@ void dfhack_lua_viewscreen::feed(std::set<df::interface_key> *keys)
         st.suppress_next_keyboard_passthrough = false;
         st.should_pass_keyboard_up = false;
 
+        bool skip_feed = false;
+
         for (auto it : st.suppressed_keys)
         {
             for (auto key : it.second)
             {
-                keys->erase(df::interface_key(key));
+                /*for (auto their_key : *keys)
+                {
+                    int theirs_as_char = Screen::keyToChar(their_key);
+                    int my_as_char = Screen::keyToChar(df::interface_key(key));
+
+                    if (theirs_as_char >= 0 && my_as_char >= 0)
+                        keys->erase(their_key);
+                }*/
+
+                if (keys->count(df::interface_key(key)) > 0)
+                {
+                    skip_feed = true;
+                    break;
+                }
             }
+
+            if (skip_feed)
+                break;
         }
 
-        parent->feed(keys);
+        if(!skip_feed)
+            parent->feed(keys);
     }
 
     st.suppress_next_keyboard_passthrough = false;

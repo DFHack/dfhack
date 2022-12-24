@@ -2736,6 +2736,17 @@ static int imgui_shortcut(lua_State* state)
     return 1;
 }
 
+static int imgui_getkeydisplay(lua_State* state)
+{
+    int key = imgui_handle_key(state, -1);
+
+    std::string str = Screen::getKeyDisplay(df::interface_key(key));
+
+    imgui_push_generic(state, str);
+
+    return 1;
+}
+
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"Begin", imgui_begin},
     {"SameLine", imgui_sameline},
@@ -2767,6 +2778,7 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"BeginTabItem", imgui_begintabitem},
     {"TabItemButton", imgui_tabitembutton},
     {"Shortcut", imgui_shortcut},
+    {"GetKeyDisplay", imgui_getkeydisplay},
     { NULL, NULL }
 };
 

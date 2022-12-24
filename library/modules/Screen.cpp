@@ -874,8 +874,6 @@ static void imgui_append_children(std::vector<ImGuiWindow*> in, std::set<std::st
 {
     for (auto i : in)
     {
-        std::cout << "First level window child size " << i->DC.ChildWindows.Size << " for " << std::string(i->Name) << std::endl;
-
         imgui_append(out, should_ignore, i);
     }
 }

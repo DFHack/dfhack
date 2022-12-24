@@ -1481,11 +1481,12 @@ bool Core::Init()
     // make it obvious what's going on if someone checks the *.txt files.
     #ifndef LINUX_BUILD
         // Don't do this on Linux because it will break PRINT_MODE:TEXT
+        // this is handled as appropriate in Console-posix.cpp
         fprintf(stdout, "dfhack: redirecting stdout to stdout.log (again)\n");
-        fprintf(stderr, "dfhack: redirecting stderr to stderr.log (again)\n");
         freopen("stdout.log", "w", stdout);
-        freopen("stderr.log", "w", stderr);
     #endif
+    fprintf(stderr, "dfhack: redirecting stderr to stderr.log\n");
+    freopen("stderr.log", "w", stderr);
 
     Filesystem::init();
 
@@ -1760,6 +1761,14 @@ bool Core::Init()
     }
 
     cerr << "DFHack is running.\n";
+
+    {
+        auto L = Lua::Core::State;
+        Lua::StackUnwinder top(L);
+        Lua::CallLuaModuleFunction(con, L, "script-manager", "reload");
+        onStateChange(con, SC_CORE_INITIALIZED);
+    }
+
     return true;
 }
 /// sets the current hotkey command
@@ -1835,16 +1844,9 @@ bool Core::isSuspended(void)
     return ownerThread.load() == std::this_thread::get_id();
 }
 
-void Core::doUpdate(color_ostream &out, bool first_update)
+void Core::doUpdate(color_ostream &out)
 {
     Lua::Core::Reset(out, "DF code execution");
-
-    if (first_update) {
-        auto L = Lua::Core::State;
-        Lua::StackUnwinder top(L);
-        Lua::CallLuaModuleFunction(out, L, "script-manager", "reload");
-        onStateChange(out, SC_CORE_INITIALIZED);
-    }
 
     // find the current viewscreen
     df::viewscreen *screen = NULL;
@@ -1948,19 +1950,15 @@ int Core::Update()
     // Pretend this thread has suspended the core in the usual way,
     // and run various processing hooks.
     {
-        // Initialize the core
-        bool first_update = false;
-
         if(!started)
         {
-            first_update = true;
+            // Initialize the core
             Init();
             if(errorstate)
                 return -1;
-            Lua::Core::Reset(con, "core init");
         }
 
-        doUpdate(out, first_update);
+        doUpdate(out);
     }
 
     // Let all commands run that require CoreSuspender
@@ -2287,6 +2285,14 @@ bool Core::ncurses_wgetch(int in, int & out)
     }
     out = in;
     return true;
+}
+
+bool Core::DFH_ncurses_key(int key)
+{
+    if (getenv("DFHACK_HEADLESS"))
+        return true;
+    int dummy;
+    return !ncurses_wgetch(key, dummy);
 }
 
 int UnicodeAwareSym(const SDL::KeyboardEvent& ke)

@@ -74,3 +74,11 @@ DFhackCExport void * SDL_GetVideoSurface(void);
 
 DFhackCExport int SDL_SemWait(vPtr sem);
 DFhackCExport int SDL_SemPost(vPtr sem);
+
+// new Hooks API
+DFhackCExport void dfhooks_init();
+DFhackCExport void dfhooks_shutdown();
+DFhackCExport void dfhooks_update();
+DFhackCExport void dfhooks_prerender();
+DFhackCExport bool dfhooks_sdl_event(SDL::Event* event);
+DFhackCExport bool dfhooks_ncurses_key(int key);

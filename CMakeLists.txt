@@ -258,6 +258,7 @@ if(UNIX)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32 -march=i686")
     endif()
     string(REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+    set(CMAKE_INSTALL_RPATH "hack")
 elseif(MSVC)
     # for msvc, tell it to always use 8-byte pointers to member functions to avoid confusion
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /vmg /vmm /MP")

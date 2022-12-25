@@ -2372,6 +2372,32 @@ static int imgui_buttoncolored(lua_State* state)
     return 1;
 }
 
+//Draw list, colour, text, {x=worldx, y=worldy, z=worldz}
+static int imgui_addtextbackgroundcoloredabsolute(lua_State* state)
+{
+    ImDrawList* draw = imgui_decode<ImDrawList*>(state, -4);
+    ImVec4 col = imgui_get_colour_arg(state, -3, true);
+    std::string str = imgui_decode<std::string>(state, -2);
+    std::map<std::string, double> pos = imgui_decode<std::map<std::string, double>>(state, -1);
+
+    if ((int32_t)pos.at("z") != *df::global::window_z)
+        return 0;
+
+    int32_t sx=0, sy=0, sz=0;
+    Gui::getViewCoords(sx, sy, sz);
+
+    ImVec2 text_size = ImGui::CalcTextSize(str.c_str());
+
+    ImVec2 tl = { (float)pos.at("x") - sx, (float)pos.at("y") - sy };
+    ImVec2 br = { tl.x + text_size.x - 1, std::max(tl.y + text_size.y - 1, 0.f) };
+
+    ImU32 icol = ImGui::ColorConvertFloat4ToU32(col);
+
+    draw->AddRectFilled(tl, br, icol);
+    draw->AddText(tl, icol, str.c_str());
+    return 0;
+}
+
 static int imgui_textbackgroundcolored(lua_State* state)
 {
     ImVec4 col = imgui_get_colour_arg(state, -2, true);
@@ -2765,6 +2791,7 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"TextColored", imgui_textcolored},
     {"ButtonColored", imgui_buttoncolored},
     {"TextBackgroundColored", imgui_textbackgroundcolored},
+    {"AddTextBackgroundColoredAbsolute", imgui_addtextbackgroundcoloredabsolute},
     {"PushStyleColor", imgui_pushstylecolor},
     {"IsItemHovered", imgui_isitemhovered},
     {"IsMouseHoveringRect", imgui_ismousehoveringrect},

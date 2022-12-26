@@ -72,6 +72,26 @@ namespace ImTuiInterop
 
     namespace viewscreen
     {
+        //Any window that wants to have its rendering correctly respect dfs viewscreen order
+        //needs to set this (after a call to Begin, or a widget that calls Begin internally)
+        /*
+        bool should_show = ImGui::Begin("My Window");
+
+        viewscreen::claim_current_imgui_window();
+
+        if(should_show)
+            //content
+
+        ImGui::End();
+        */
+        void claim_current_imgui_window();
+
+        void suppress_next_keyboard_feed_upwards();
+        void suppress_next_mouse_feed_upwards();
+        void feed_upwards();
+        //if this key is pressed, input will not be passed upwards
+        void declare_suppressed_key(df::interface_key key);
+
         //on_top for render and feed do not need to be the same viewscreen
         //but they *do* need to only be called with true once, after the last on_*_end
         //returns an id that should be passed to on_render_end

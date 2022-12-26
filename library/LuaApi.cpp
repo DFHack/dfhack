@@ -2037,18 +2037,17 @@ static void imgui_tablenextrow()
 
 static void imgui_eatkeyboardinputs()
 {
-    //hacky, but has no functional effect on imgui
-    ImTuiInterop::get_global_ui_state().suppress_next_keyboard_passthrough = true;
+    ImTuiInterop::viewscreen::suppress_next_keyboard_feed_upwards();
 }
 
 static void imgui_eatmouseinputs()
 {
-    ImTuiInterop::get_global_ui_state().suppress_next_keyboard_passthrough = true;
+    ImTuiInterop::viewscreen::suppress_next_keyboard_feed_upwards();
 }
 
 static void imgui_feedupwards()
 {
-    ImTuiInterop::get_global_ui_state().should_pass_keyboard_up = true;
+    ImTuiInterop::viewscreen::feed_upwards();
 }
 
 static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
@@ -2115,15 +2114,6 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     { NULL, NULL }
 };
 
-static void imgui_claim_current_window()
-{
-    ImGuiWindow* win = ImGui::GetCurrentWindow();
-
-    ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
-
-    st.windows[st.render_stack].push_back(win->Name);
-}
-
 static int imgui_begin(lua_State* state)
 {
     int top = lua_gettop(state);
@@ -2163,7 +2153,7 @@ static int imgui_begin(lua_State* state)
         result = ImGui::Begin(name.c_str(), nullptr, flags);
     }
 
-    imgui_claim_current_window();
+    ImTuiInterop::viewscreen::claim_current_imgui_window();
 
     imgui_push_generic(state, result);
 
@@ -2587,7 +2577,7 @@ static int imgui_beginmenu(lua_State* state)
 
     bool result = ImGui::BeginMenu(label.c_str(), enabled);
 
-    imgui_claim_current_window();
+    ImTuiInterop::viewscreen::claim_current_imgui_window();
 
     imgui_push_generic(state, result);
 
@@ -2753,9 +2743,7 @@ static int imgui_shortcut(lua_State* state)
 
     bool result = ImGui::IsKeyPressed(key);
 
-    ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
-
-    st.suppressed_keys[st.render_stack].insert(key);
+    ImTuiInterop::viewscreen::declare_suppressed_key(df::interface_key(key));
 
     imgui_push_generic(state, result);
 

@@ -624,6 +624,36 @@ ImTuiInterop::ui_state ImTuiInterop::make_ui_system()
     return st;
 }
 
+void ImTuiInterop::viewscreen::claim_current_imgui_window()
+{
+    ImGuiWindow* win = ImGui::GetCurrentWindow();
+
+    ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
+
+    st.windows[st.render_stack].push_back(win->Name);
+}
+
+void ImTuiInterop::viewscreen::suppress_next_keyboard_feed_upwards()
+{
+    ImTuiInterop::get_global_ui_state().suppress_next_keyboard_passthrough = true;
+}
+
+void ImTuiInterop::viewscreen::suppress_next_mouse_feed_upwards()
+{
+    ImTuiInterop::get_global_ui_state().suppress_next_keyboard_passthrough = true;
+}
+
+void ImTuiInterop::viewscreen::feed_upwards()
+{
+    ImTuiInterop::get_global_ui_state().should_pass_keyboard_up = true;
+}
+
+void ImTuiInterop::viewscreen::declare_suppressed_key(df::interface_key key)
+{
+    ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
+    st.suppressed_keys[st.render_stack].insert(key);
+}
+
 int ImTuiInterop::viewscreen::on_render_start(bool is_top)
 {
     ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();

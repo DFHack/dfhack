@@ -808,8 +808,6 @@ static int get_visible_lua_script_count()
 
 dfhack_lua_viewscreen::dfhack_lua_viewscreen(lua_State *L, int table_idx)
 {
-    ImTuiInterop::get_global_ui_state();
-
     assert(Lua::IsCoreContext(L));
 
     Lua::PushDFObject(L, (df::viewscreen*)this);
@@ -829,8 +827,7 @@ dfhack_lua_viewscreen::~dfhack_lua_viewscreen()
 
     if (get_visible_lua_script_count() == 0)
     {
-        ImTuiInterop::get_global_ui_state().reset_input();
-        ImTuiInterop::get_global_ui_state().suppressed_keys.clear();
+        ImTuiInterop::viewscreen::on_dismiss_final_imgui_aware_viewscreen();
     }
 }
 
@@ -923,8 +920,7 @@ void dfhack_lua_viewscreen::onDismiss()
     //clean up input, because nobody's processing it and don't want it to get stuck
     if (get_visible_lua_script_count() == 0)
     {
-        ImTuiInterop::get_global_ui_state().reset_input();
-        ImTuiInterop::get_global_ui_state().suppressed_keys.clear();
+        ImTuiInterop::viewscreen::on_dismiss_final_imgui_aware_viewscreen();
     }
 }
 

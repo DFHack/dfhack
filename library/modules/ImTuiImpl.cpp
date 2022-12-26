@@ -891,3 +891,9 @@ bool ImTuiInterop::viewscreen::on_feed_end(std::set<df::interface_key>* keys)
 
     return should_feed;
 }
+
+void ImTuiInterop::viewscreen::on_dismiss_final_imgui_aware_viewscreen()
+{
+    ImTuiInterop::get_global_ui_state().reset_input();
+    ImTuiInterop::get_global_ui_state().suppressed_keys.clear();
+}

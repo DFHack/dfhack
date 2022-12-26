@@ -81,5 +81,7 @@ namespace ImTuiInterop
         void on_feed_start(bool is_top, std::set<df::interface_key>* keys);
         //returns true if you should call parent->feed(keys)
         bool on_feed_end(std::set<df::interface_key>* keys);
+
+        void on_dismiss_final_imgui_aware_viewscreen();
     }
 }

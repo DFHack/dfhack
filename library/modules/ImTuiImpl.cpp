@@ -623,3 +623,57 @@ ImTuiInterop::ui_state ImTuiInterop::make_ui_system()
 
     return st;
 }
+
+void ImTuiInterop::viewscreen::on_feed_start(bool is_top, std::set<df::interface_key>* keys)
+{
+    ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
+
+    if (keys && is_top)
+    {
+        st.feed(*keys);
+    }
+
+    st.activate();
+}
+
+bool ImTuiInterop::viewscreen::on_feed_end(std::set<df::interface_key>* keys)
+{
+    ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
+
+    bool should_feed = false;
+
+    //So, while this passes keyboard inputs up
+    //The current code structure seems to intentionally suppresses mouse clicks from filtering up
+    //through multiple lua scripts, by setting the lmouse_down in the global
+    //enabler to 0 in pushinterfacekeys
+    //this seems undesirable for imgui windows to unconditionally forcibly
+    //suppress mouse clicks
+    if (st.should_pass_keyboard_up && !st.suppress_next_keyboard_passthrough && keys)
+    {
+        bool skip_feed = false;
+
+        for (auto it : st.suppressed_keys)
+        {
+            for (auto key : it.second)
+            {
+                if (keys->count(df::interface_key(key)) > 0)
+                {
+                    skip_feed = true;
+                    break;
+                }
+            }
+
+            if (skip_feed)
+                break;
+        }
+
+        should_feed = !skip_feed;
+    }
+
+    st.suppress_next_keyboard_passthrough = false;
+    st.should_pass_keyboard_up = false;
+
+    st.deactivate();
+
+    return should_feed;
+}

@@ -69,4 +69,16 @@ namespace ImTuiInterop
 
     //returns an inactive imgui context system
     ui_state make_ui_system();
+
+    namespace viewscreen
+    {
+        //on_top for render and feed do not need to be the same viewscreen
+        //but they *do* need to only be called with true once, after the last on_*_end
+        void on_render_start(bool is_top);
+        void on_render_end();
+
+        void on_feed_start(bool is_top, std::set<df::interface_key>* keys);
+        //returns true if you should call parent->feed(keys)
+        bool on_feed_end(std::set<df::interface_key>* keys);
+    }
 }

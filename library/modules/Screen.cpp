@@ -1100,63 +1100,13 @@ void dfhack_lua_viewscreen::feed(std::set<df::interface_key> *keys)
 
     bool is_top = screen == this;
 
-    ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
-
-    if (keys && is_top)
-    {
-        st.feed(*keys);
-    }
-
-    st.activate();
+    ImTuiInterop::viewscreen::on_feed_start(is_top, keys);
 
     lua_pushlightuserdata(Lua::Core::State, keys);
     safe_call_lua(do_input, 1, 0);
 
-    //So, while this passes keyboard inputs up
-    //The current code structure seems to intentionally suppresses mouse clicks from filtering up
-    //through multiple lua scripts, by setting the lmouse_down in the global
-    //enabler to 0 in pushinterfacekeys
-    //this seems undesirable for imgui windows to unconditionally forcibly
-    //suppress mouse clicks
-    if (st.should_pass_keyboard_up && !st.suppress_next_keyboard_passthrough && parent && keys)
-    {
-        st.suppress_next_keyboard_passthrough = false;
-        st.should_pass_keyboard_up = false;
-
-        bool skip_feed = false;
-
-        for (auto it : st.suppressed_keys)
-        {
-            for (auto key : it.second)
-            {
-                /*for (auto their_key : *keys)
-                {
-                    int theirs_as_char = Screen::keyToChar(their_key);
-                    int my_as_char = Screen::keyToChar(df::interface_key(key));
-
-                    if (theirs_as_char >= 0 && my_as_char >= 0)
-                        keys->erase(their_key);
-                }*/
-
-                if (keys->count(df::interface_key(key)) > 0)
-                {
-                    skip_feed = true;
-                    break;
-                }
-            }
-
-            if (skip_feed)
-                break;
-        }
-
-        if(!skip_feed)
-            parent->feed(keys);
-    }
-
-    st.suppress_next_keyboard_passthrough = false;
-    st.should_pass_keyboard_up = false;
-
-    st.deactivate();
+    if(ImTuiInterop::viewscreen::on_feed_end(keys))
+        parent->feed(keys);
 }
 
 void dfhack_lua_viewscreen::onShow()

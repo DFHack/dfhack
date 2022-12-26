@@ -74,8 +74,9 @@ namespace ImTuiInterop
     {
         //on_top for render and feed do not need to be the same viewscreen
         //but they *do* need to only be called with true once, after the last on_*_end
-        void on_render_start(bool is_top);
-        void on_render_end();
+        //returns an id that should be passed to on_render_end
+        int on_render_start(bool is_top);
+        void on_render_end(bool is_top, int id);
 
         void on_feed_start(bool is_top, std::set<df::interface_key>* keys);
         //returns true if you should call parent->feed(keys)

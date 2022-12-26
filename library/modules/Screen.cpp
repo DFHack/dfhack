@@ -834,143 +834,6 @@ dfhack_lua_viewscreen::~dfhack_lua_viewscreen()
     }
 }
 
-//this function finds windows by name, and handles top
-static void imgui_build_windows(std::vector<ImGuiWindow*>& out, const std::vector<std::string>& name, std::set<std::string>& ignore, bool is_top)
-{
-    ImGuiContext* ctx = ImGui::GetCurrentContext();
-
-    std::set<std::string> set_names(name.begin(), name.end());
-
-    for (int i = 0; i < ctx->Windows.Size; i++)
-    {
-        ImGuiWindow* next = ctx->Windows[i];
-
-        std::string sname(next->Name);
-
-        if (set_names.count(sname) == 0 && !is_top)
-            continue;
-
-        if (ignore.count(sname))
-            continue;
-
-        out.push_back(next);
-    }
-}
-
-static void imgui_append(std::vector<ImGuiWindow*>& out, std::set<std::string>& should_ignore, ImGuiWindow* win)
-{
-    assert(win);
-
-    if(should_ignore.count(win->Name) == 0)
-        out.push_back(win);
-
-    for (int i = 0; i < win->DC.ChildWindows.Size; i++)
-    {
-        imgui_append(out, should_ignore, win->DC.ChildWindows[i]);
-    }
-}
-
-static void imgui_append_children(std::vector<ImGuiWindow*> in, std::set<std::string>& should_ignore, std::vector<ImGuiWindow*>& out)
-{
-    for (auto i : in)
-    {
-        imgui_append(out, should_ignore, i);
-    }
-}
-
-static std::vector<ImGuiWindow*> imgui_pull_from_context_in_display_order(std::vector<ImGuiWindow*> windows)
-{
-    std::set<ImGuiWindow*> set_windows(windows.begin(), windows.end());
-
-    ImGuiContext* ctx = ImGui::GetCurrentContext();
-
-    std::vector<ImGuiWindow*> result;
-
-    for (int i = 0; i < ctx->Windows.Size; i++)
-    {
-        ImGuiWindow* win = ctx->Windows[i];
-
-        if (set_windows.count(win) == 0)
-            continue;
-
-        result.push_back(win);
-    }
-
-    return result;
-}
-
-static std::vector<ImGuiWindow*> imgui_pull_from_context_in_focus_order(std::vector<ImGuiWindow*> windows)
-{
-    std::set<ImGuiWindow*> set_windows(windows.begin(), windows.end());
-
-    ImGuiContext* ctx = ImGui::GetCurrentContext();
-
-    std::vector<ImGuiWindow*> result;
-
-    for (int i = 0; i < ctx->WindowsFocusOrder.Size; i++)
-    {
-        ImGuiWindow* win = ctx->WindowsFocusOrder[i];
-
-        if (set_windows.count(win) == 0)
-            continue;
-
-        result.push_back(win);
-    }
-
-    return result;
-}
-
-//only do this to display order
-static std::vector<ImGuiWindow*> imgui_child_sort(std::vector<ImGuiWindow*> in)
-{
-    ImGui::SortWindows(in);
-    return in;
-}
-
-static void imgui_rearrange_internals(const std::vector<ImGuiWindow*>& display_order, const std::vector<ImGuiWindow*>& focus_order)
-{
-    ImGuiContext* ctx = ImGui::GetCurrentContext();
-
-    std::set<ImGuiWindow*> set_display_order(display_order.begin(), display_order.end());
-    std::set<ImGuiWindow*> set_focus_order(focus_order.begin(), focus_order.end());
-
-    ImVector<ImGuiWindow*> finished_display_order;
-    ImVector<ImGuiWindow*> finished_focus_order;
-
-    //ImGui represents display order back to front, ie Windows.back() is considered the front
-    //so here we first push all the existing windows *except* for the ones we're actually going to render
-    //and then push the windows we're interested into the front
-    //importantly, they're all in the original order they were in in the list
-    for (auto win : ctx->Windows)
-    {
-        if (set_display_order.count(win) > 0)
-            continue;
-
-        finished_display_order.push_back(win);
-    }
-
-    for (auto win : display_order)
-    {
-        finished_display_order.push_back(win);
-    }
-
-    for (auto win : ctx->WindowsFocusOrder)
-    {
-        if (set_focus_order.count(win) > 0)
-            continue;
-
-        finished_focus_order.push_back(win);
-    }
-
-    for (auto win : focus_order)
-    {
-        finished_focus_order.push_back(win);
-    }
-
-    ctx->Windows = finished_display_order;
-    ctx->WindowsFocusOrder = finished_focus_order;
-}
-
 void dfhack_lua_viewscreen::render()
 {
     if (Screen::isDismissed(this))
@@ -982,78 +845,15 @@ void dfhack_lua_viewscreen::render()
 
     dfhack_lua_viewscreen* screen = get_frontmost_lua_viewscreen();
 
-    ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
-
     bool is_top = screen == this;
 
-    if (is_top)
-    {
-        st.windows.clear();
-        st.rendered_windows.clear();
-        st.render_stack = 0;
-        st.suppressed_keys.clear();
-        st.activate();
-        st.new_frame();
-    }
-
-    st.render_stack++;
-
-    int my_render_stack = st.render_stack;
+    int id = ImTuiInterop::viewscreen::on_render_start(is_top);
 
     dfhack_viewscreen::render();
 
     safe_call_lua(do_render, 0, 0);
 
-    bool respect_dwarf_fortress_viewscreen_order = true;
-
-    if (respect_dwarf_fortress_viewscreen_order)
-    {
-        std::vector<std::string> my_windows = st.windows[my_render_stack];
-
-        std::vector<ImGuiWindow*> unsorted_windows_without_children;
-        imgui_build_windows(unsorted_windows_without_children, my_windows, st.rendered_windows, is_top);
-
-        std::vector<ImGuiWindow*> unsorted_windows;
-        imgui_append_children(unsorted_windows_without_children, st.rendered_windows, unsorted_windows);
-
-        for (ImGuiWindow* win : unsorted_windows)
-        {
-            st.rendered_windows.insert(win->Name);
-        }
-
-        std::vector<ImGuiWindow*> display_order = imgui_pull_from_context_in_display_order(unsorted_windows);
-        std::vector<ImGuiWindow*> focus_order = imgui_pull_from_context_in_focus_order(unsorted_windows);
-
-        display_order = imgui_child_sort(display_order);
-
-        imgui_rearrange_internals(display_order, focus_order);
-
-        std::set<std::string> none;
-
-        //render only the windows which I own, which are named by st.rendered_windows
-        //any unnamed windows will be rendered when is_top is true
-        //todo: implicitly discover windows, this is slightly brittle
-        //as only explicitly named windows via imgui_begin are noticed
-        ImGui::ProgressiveRender(display_order, none, is_top);
-
-        //does not look at render stack
-        st.draw_frame(ImGui::GetDrawData());
-    }
-
-    st.render_stack--;
-
-    if (is_top)
-    {
-        ImGui::EndFrame();
-
-        if (!respect_dwarf_fortress_viewscreen_order)
-        {
-            ImGui::Render();
-            st.draw_frame(ImGui::GetDrawData());
-        }
-
-        st.deactivate();
-    }
+    ImTuiInterop::viewscreen::on_render_end(is_top, id);
 }
 
 void dfhack_lua_viewscreen::logic()

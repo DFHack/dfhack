@@ -127,7 +127,7 @@ void drawTriangle(ImVec2 p0, ImVec2 p1, ImVec2 p2, ImU32 col) {
     df::coord2d dim = Screen::getWindowSize();
 
     std::vector<int> g_xrange;
-    
+
     int screen_size = dim.x * dim.y;
 
     int ymin = std::floor(std::min(std::min(p0.y, p1.y), p2.y));
@@ -147,7 +147,7 @@ void drawTriangle(ImVec2 p0, ImVec2 p1, ImVec2 p2, ImU32 col) {
     p0.x = std::floor(p0.x);
     p1.x = std::floor(p1.x);
     p2.x = std::floor(p2.x);
-    
+
     p0.y = std::floor(p0.y);
     p1.y = std::floor(p1.y);
     p2.y = std::floor(p2.y);
@@ -611,7 +611,7 @@ void ImTuiInterop::ui_state::reset_input()
 ImTuiInterop::ui_state ImTuiInterop::make_ui_system()
 {
     ImGuiContext* ctx = ImGui::CreateContext();
-    
+
     ui_state st;
     st.ctx = ctx;
 

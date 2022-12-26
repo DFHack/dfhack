@@ -1105,7 +1105,7 @@ void dfhack_lua_viewscreen::feed(std::set<df::interface_key> *keys)
     if (keys && is_top)
     {
         st.feed(*keys);
-    }   
+    }
 
     st.activate();
 

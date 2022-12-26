@@ -2193,7 +2193,7 @@ static int imgui_sameline(lua_State* state)
     return 0;
 }
 
-//The reason for imgui_ref and imgui_get are because you cannot pass in values by reference in 
+//The reason for imgui_ref and imgui_get are because you cannot pass in values by reference in
 //scripting languages, so the convention of passing a table with the real value set in the 0th element
 //of the table is used
 //this is clunky, and one of the main api-wise disadvantages of doing imgui in scripting
@@ -2254,8 +2254,8 @@ static int imgui_inputtext(lua_State* state)
 
     //This makes keyboard navigation default activate the item
     //when arrow-keying past it, while also still allowing navigation away from it
-    if (ImGui::IsItemFocused() && 
-        !ImGui::IsItemActivated() && 
+    if (ImGui::IsItemFocused() &&
+        !ImGui::IsItemActivated() &&
         !ImGui::GetCurrentContext()->NavMoveRequest &&
         ImGui::GetIO().NavVisible)
     {
@@ -2328,7 +2328,7 @@ static int imgui_addrectfilled(lua_State* state)
 static int imgui_getbackgrounddrawlist(lua_State* state)
 {
     imgui_push_generic(state, ImGui::GetBackgroundDrawList());
-    
+
     return 1;
 }
 
@@ -2453,7 +2453,7 @@ static int imgui_ismousehoveringrect(lua_State* state)
     bool clip = true;
 
     int count = lua_gettop(state);
-    
+
     if (count == 2)
     {
         tl = imgui_decode<ImVec2>(state, -2);
@@ -2467,7 +2467,7 @@ static int imgui_ismousehoveringrect(lua_State* state)
         clip = imgui_decode<bool>(state, -1);
     }
 
-    //imgui uses the convention [min <= val < max] 
+    //imgui uses the convention [min <= val < max]
     //Which is great if our coordinates aren't integer, but they are
     br.x += 1;
     br.y += 1;
@@ -2708,7 +2708,7 @@ static int imgui_begintabitem(lua_State* state)
     }
 
     bool result = false;
-    
+
     if (p_open.decoded)
     {
         result = ImGui::BeginTabItem(label.c_str(), &p_open.val, flags);

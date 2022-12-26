@@ -83,3 +83,11 @@ if(MSVC)
 endif()
 
 add_subdirectory(imgui)
+
+if(MSVC)
+    target_compile_options(imgui PRIVATE /wd4244 /wd4305)
+endif()
+
+if(UNIX)
+	target_compile_options(imgui PRIVATE -Wno-unused_variable)
+endif()

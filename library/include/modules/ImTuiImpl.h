@@ -44,8 +44,6 @@ namespace ImTuiInterop
         //if this key is pressed, input will not be passed upwards
         void declare_suppressed_key(df::interface_key key);
 
-        //on_top for render and feed do not need to be the same viewscreen
-        //but they *do* need to only be called with true once, after the last on_*_end
         //returns an id that should be passed to on_render_end
         int on_render_start(df::viewscreen* screen);
         void on_render_end(df::viewscreen* screen, int id);

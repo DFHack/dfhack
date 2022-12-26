@@ -1483,10 +1483,12 @@ bool Core::Init()
         // Don't do this on Linux because it will break PRINT_MODE:TEXT
         // this is handled as appropriate in Console-posix.cpp
         fprintf(stdout, "dfhack: redirecting stdout to stdout.log (again)\n");
-        freopen("stdout.log", "w", stdout);
+        if (!freopen("stdout.log", "w", stdout))
+            cerr << "Could not redirect stdout to stdout.log" << endl;
     #endif
     fprintf(stderr, "dfhack: redirecting stderr to stderr.log\n");
-    freopen("stderr.log", "w", stderr);
+    if (!freopen("stderr.log", "w", stderr))
+        cerr << "Could not redirect stderr to stderr.log" << endl;
 
     Filesystem::init();
 

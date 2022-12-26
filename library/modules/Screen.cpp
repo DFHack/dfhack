@@ -35,7 +35,6 @@ using namespace std;
 #include "modules/Renderer.h"
 #include "modules/Screen.h"
 #include "modules/GuiHooks.h"
-#include "modules/Gui.h"
 #include "MemAccess.h"
 #include "VersionInfo.h"
 #include "Types.h"
@@ -46,8 +45,6 @@ using namespace std;
 #include "LuaTools.h"
 
 #include "MiscUtils.h"
-#include "imgui.h"
-#include "imgui_internal.h"
 
 using namespace DFHack;
 

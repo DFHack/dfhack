@@ -760,52 +760,6 @@ int dfhack_lua_viewscreen::do_input(lua_State *L)
     return 0;
 }
 
-static dfhack_lua_viewscreen* get_frontmost_lua_viewscreen()
-{
-    df::viewscreen* top = Gui::getCurViewscreen(true);
-
-    while (top != nullptr)
-    {
-        if (dfhack_viewscreen::is_instance(top))
-        {
-            dfhack_viewscreen* scr = static_cast<dfhack_viewscreen*>(top);
-
-            if (scr->is_lua_screen())
-            {
-                return static_cast<dfhack_lua_viewscreen*>(scr);
-            }
-        }
-
-        top = top->parent;
-    }
-
-    return nullptr;
-}
-
-static int get_visible_lua_script_count()
-{
-    int count = 0;
-    df::viewscreen* top = Gui::getCurViewscreen(true);
-
-    while (top != nullptr)
-    {
-        if (dfhack_viewscreen::is_instance(top))
-        {
-            dfhack_viewscreen* scr = static_cast<dfhack_viewscreen*>(top);
-
-            if (!Screen::isDismissed(scr) && scr->is_lua_screen())
-            {
-                count++;
-            }
-        }
-
-        top = top->parent;
-    }
-
-    return count;
-}
-
-
 dfhack_lua_viewscreen::dfhack_lua_viewscreen(lua_State *L, int table_idx)
 {
     assert(Lua::IsCoreContext(L));
@@ -819,16 +773,15 @@ dfhack_lua_viewscreen::dfhack_lua_viewscreen(lua_State *L, int table_idx)
     lua_rawsetp(L, LUA_REGISTRYINDEX, this);
 
     update_focus(L, table_idx);
+
+    ImTuiInterop::viewscreen::register_viewscreen(this);
 }
 
 dfhack_lua_viewscreen::~dfhack_lua_viewscreen()
 {
     safe_call_lua(do_destroy, 0, 0);
 
-    if (get_visible_lua_script_count() == 0)
-    {
-        ImTuiInterop::viewscreen::on_dismiss_final_imgui_aware_viewscreen();
-    }
+    ImTuiInterop::viewscreen::unregister_viewscreen(this);
 }
 
 void dfhack_lua_viewscreen::render()
@@ -840,17 +793,13 @@ void dfhack_lua_viewscreen::render()
         return;
     }
 
-    dfhack_lua_viewscreen* screen = get_frontmost_lua_viewscreen();
-
-    bool is_top = screen == this;
-
-    int id = ImTuiInterop::viewscreen::on_render_start(is_top);
+    int id = ImTuiInterop::viewscreen::on_render_start(this);
 
     dfhack_viewscreen::render();
 
     safe_call_lua(do_render, 0, 0);
 
-    ImTuiInterop::viewscreen::on_render_end(is_top, id);
+    ImTuiInterop::viewscreen::on_render_end(this, id);
 }
 
 void dfhack_lua_viewscreen::logic()
@@ -893,11 +842,7 @@ void dfhack_lua_viewscreen::feed(std::set<df::interface_key> *keys)
 {
     if (Screen::isDismissed(this)) return;
 
-    dfhack_lua_viewscreen* screen = get_frontmost_lua_viewscreen();
-
-    bool is_top = screen == this;
-
-    ImTuiInterop::viewscreen::on_feed_start(is_top, keys);
+    ImTuiInterop::viewscreen::on_feed_start(this, keys);
 
     lua_pushlightuserdata(Lua::Core::State, keys);
     safe_call_lua(do_input, 1, 0);
@@ -917,11 +862,7 @@ void dfhack_lua_viewscreen::onDismiss()
     lua_pushstring(Lua::Core::State, "onDismiss");
     safe_call_lua(do_notify, 1, 0);
 
-    //clean up input, because nobody's processing it and don't want it to get stuck
-    if (get_visible_lua_script_count() == 0)
-    {
-        ImTuiInterop::viewscreen::on_dismiss_final_imgui_aware_viewscreen();
-    }
+    ImTuiInterop::viewscreen::on_dismiss();
 }
 
 df::unit *dfhack_lua_viewscreen::getSelectedUnit()

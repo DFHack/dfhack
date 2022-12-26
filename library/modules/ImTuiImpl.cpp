@@ -1,5 +1,6 @@
 #include "modules/ImTuiImpl.h"
 #include "modules/Screen.h"
+#include "modules/Gui.h"
 #include "ColorText.h"
 #include "df/enabler.h"
 #include "df/interface_key.h"
@@ -674,6 +675,66 @@ ui_state make_ui_system()
     return st;
 }
 
+static std::set<df::viewscreen*> imgui_aware;
+
+static df::viewscreen* get_frontmost_aware_viewscreen()
+{
+    df::viewscreen* top = Gui::getCurViewscreen(true);
+
+    while (top != nullptr)
+    {
+        if (imgui_aware.count(top) > 0)
+            return top;
+
+        top = top->parent;
+    }
+
+    return nullptr;
+}
+
+static int get_visible_aware_script_count()
+{
+    int count = 0;
+    df::viewscreen* top = Gui::getCurViewscreen(true);
+
+    while (top != nullptr)
+    {
+        if (!Screen::isDismissed(top) && imgui_aware.count(top) > 0)
+        {
+            count++;
+        }
+
+        top = top->parent;
+    }
+
+    return count;
+}
+
+void ImTuiInterop::viewscreen::on_dismiss()
+{
+    if (get_visible_aware_script_count() == 0)
+    {
+        get_global_ui_state().reset_input();
+        get_global_ui_state().suppressed_keys.clear();
+    }
+}
+
+void ImTuiInterop::viewscreen::register_viewscreen(df::viewscreen* screen)
+{
+    imgui_aware.insert(screen);
+}
+
+void ImTuiInterop::viewscreen::unregister_viewscreen(df::viewscreen* screen)
+{
+    imgui_aware.erase(screen);
+
+    if (get_visible_aware_script_count() == 0)
+    {
+        get_global_ui_state().reset_input();
+        get_global_ui_state().suppressed_keys.clear();
+    }
+}
+
 void ImTuiInterop::viewscreen::claim_current_imgui_window()
 {
     ImGuiWindow* win = ImGui::GetCurrentWindow();
@@ -704,8 +765,15 @@ void ImTuiInterop::viewscreen::declare_suppressed_key(df::interface_key key)
     st.suppressed_keys[st.render_stack].insert(key);
 }
 
-int ImTuiInterop::viewscreen::on_render_start(bool is_top)
+static bool get_is_top(df::viewscreen* screen)
 {
+    return screen == get_frontmost_aware_viewscreen();
+}
+
+int ImTuiInterop::viewscreen::on_render_start(df::viewscreen* screen)
+{
+    bool is_top = get_is_top(screen);
+
     ui_state& st = get_global_ui_state();
 
     if (is_top)
@@ -862,8 +930,10 @@ static void imgui_rearrange_internals(const std::vector<ImGuiWindow*>& display_o
     ctx->WindowsFocusOrder = finished_focus_order;
 }
 
-void ImTuiInterop::viewscreen::on_render_end(bool is_top, int id)
+void ImTuiInterop::viewscreen::on_render_end(df::viewscreen* screen, int id)
 {
+    bool is_top = get_is_top(screen);
+
     ui_state& st = get_global_ui_state();
 
     bool respect_dwarf_fortress_viewscreen_order = true;
@@ -918,8 +988,10 @@ void ImTuiInterop::viewscreen::on_render_end(bool is_top, int id)
     }
 }
 
-void ImTuiInterop::viewscreen::on_feed_start(bool is_top, std::set<df::interface_key>* keys)
+void ImTuiInterop::viewscreen::on_feed_start(df::viewscreen* screen, std::set<df::interface_key>* keys)
 {
+    bool is_top = get_is_top(screen);
+
     ui_state& st = get_global_ui_state();
 
     if (keys && is_top)
@@ -970,10 +1042,4 @@ bool ImTuiInterop::viewscreen::on_feed_end(std::set<df::interface_key>* keys)
     st.deactivate();
 
     return should_feed;
-}
-
-void ImTuiInterop::viewscreen::on_dismiss_final_imgui_aware_viewscreen()
-{
-    get_global_ui_state().reset_input();
-    get_global_ui_state().suppressed_keys.clear();
 }

@@ -6,6 +6,7 @@
 #include <array>
 #include <map>
 #include "df/interface_key.h"
+#include "df/viewscreen.h"
 #include "imgui.h"
 
 namespace ImTuiInterop
@@ -18,6 +19,11 @@ namespace ImTuiInterop
 
     namespace viewscreen
     {
+        //call in constructor
+        void register_viewscreen(df::viewscreen* screen);
+        //call in destructor
+        void unregister_viewscreen(df::viewscreen* screen);
+
         //Any window that wants to have its rendering correctly respect dfs viewscreen order
         //needs to set this (after a call to Begin, or a widget that calls Begin internally)
         /*
@@ -41,13 +47,13 @@ namespace ImTuiInterop
         //on_top for render and feed do not need to be the same viewscreen
         //but they *do* need to only be called with true once, after the last on_*_end
         //returns an id that should be passed to on_render_end
-        int on_render_start(bool is_top);
-        void on_render_end(bool is_top, int id);
+        int on_render_start(df::viewscreen* screen);
+        void on_render_end(df::viewscreen* screen, int id);
 
-        void on_feed_start(bool is_top, std::set<df::interface_key>* keys);
+        void on_feed_start(df::viewscreen* screen, std::set<df::interface_key>* keys);
         //returns true if you should call parent->feed(keys)
         bool on_feed_end(std::set<df::interface_key>* keys);
 
-        void on_dismiss_final_imgui_aware_viewscreen();
+        void on_dismiss();
     }
 }

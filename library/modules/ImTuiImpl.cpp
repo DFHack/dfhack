@@ -176,15 +176,70 @@ void drawTriangle(ImVec2 p0, ImVec2 p1, ImVec2 p2, ImU32 col) {
     }
 }
 
-ImTuiInterop::ui_state& ImTuiInterop::get_global_ui_state()
+struct ui_state;
+
+ui_state& get_global_ui_state();
+
+namespace impl
 {
-    static ImTuiInterop::ui_state st = make_ui_system();
+    void init_current_context();
+
+    void new_frame(std::set<df::interface_key> keys, ui_state& st);
+
+    void draw_frame(ImDrawData* drawData);
+
+    void shutdown();
+
+    void reset_input();
+}
+
+struct ui_state
+{
+    std::set<df::interface_key> unprocessed_keys;
+    std::array<int, 2> pressed_mouse_keys = {};
+    std::map<df::interface_key, int> danger_key_frames;
+
+    int render_stack = 0;
+    std::map<int, std::vector<std::string>> windows;
+    std::set<std::string> rendered_windows;
+    bool should_pass_keyboard_up = false;
+    bool suppress_next_keyboard_passthrough = false;
+    //render_stack -> std::set<int>
+    std::map<int, std::set<int>> suppressed_keys;
+
+    ImGuiContext* last_context;
+    ImGuiContext* ctx;
+
+    ui_state();
+    ~ui_state();
+
+    void feed(std::set<df::interface_key> keys);
+
+    void activate();
+
+    void new_frame();
+
+    void draw_frame(ImDrawData* drawData);
+
+    void deactivate();
+    void reset_input();
+};
+
+//returns an inactive imgui context system
+ui_state make_ui_system();
+
+
+static ui_state& get_global_ui_state()
+{
+    static ui_state st = make_ui_system();
 
     return st;
 }
 
-void ImTuiInterop::impl::init_current_context()
+void impl::init_current_context()
 {
+    using namespace ImTuiInterop;
+
     ImGui::GetStyle().Alpha = 1.0f;
     ImGui::GetStyle().WindowPadding = ImVec2(1.f, 0.0f);
     ImGui::GetStyle().WindowRounding = 0.0f;
@@ -372,7 +427,7 @@ std::set<df::interface_key> cleanup_keys(std::set<df::interface_key> keys, std::
     return keys;
 }
 
-void ImTuiInterop::impl::new_frame(std::set<df::interface_key> keys, ui_state& st)
+void impl::new_frame(std::set<df::interface_key> keys, ui_state& st)
 {
     keys = cleanup_keys(keys, st.danger_key_frames);
 
@@ -416,7 +471,7 @@ void ImTuiInterop::impl::new_frame(std::set<df::interface_key> keys, ui_state& s
     ImGui::NewFrame();
 }
 
-void ImTuiInterop::impl::draw_frame(ImDrawData* drawData)
+void impl::draw_frame(ImDrawData* drawData)
 {
     int fb_width = (int)(drawData->DisplaySize.x * drawData->FramebufferScale.x);
     int fb_height = (int)(drawData->DisplaySize.y * drawData->FramebufferScale.y);
@@ -530,12 +585,7 @@ void ImTuiInterop::impl::draw_frame(ImDrawData* drawData)
     }
 }
 
-void ImTuiInterop::impl::shutdown()
-{
-
-}
-
-void ImTuiInterop::impl::reset_input()
+void impl::reset_input()
 {
     ImGuiIO& io = ImGui::GetIO();
 
@@ -553,18 +603,18 @@ void ImTuiInterop::impl::reset_input()
     std::fill(io.MouseDown, io.MouseDown + 5, false);
 }
 
-ImTuiInterop::ui_state::ui_state()
+ui_state::ui_state()
 {
     last_context = nullptr;
     ctx = nullptr;
 }
 
-ImTuiInterop::ui_state::~ui_state()
+ui_state::~ui_state()
 {
 
 }
 
-void ImTuiInterop::ui_state::feed(std::set<df::interface_key> keys)
+void ui_state::feed(std::set<df::interface_key> keys)
 {
     unprocessed_keys.insert(keys.begin(), keys.end());
 
@@ -580,35 +630,35 @@ void ImTuiInterop::ui_state::feed(std::set<df::interface_key> keys)
     }
 }
 
-void ImTuiInterop::ui_state::activate()
+void ui_state::activate()
 {
     last_context = ImGui::GetCurrentContext();
 
     ImGui::SetCurrentContext(ctx);
 }
 
-void ImTuiInterop::ui_state::new_frame()
+void ui_state::new_frame()
 {
-    ImTuiInterop::impl::new_frame(std::move(unprocessed_keys), *this);
+    impl::new_frame(std::move(unprocessed_keys), *this);
     unprocessed_keys.clear();
 }
 
-void ImTuiInterop::ui_state::draw_frame(ImDrawData* drawData)
+void ui_state::draw_frame(ImDrawData* drawData)
 {
-    ImTuiInterop::impl::draw_frame(drawData);
+    impl::draw_frame(drawData);
 }
 
-void ImTuiInterop::ui_state::deactivate()
+void ui_state::deactivate()
 {
     ImGui::SetCurrentContext(last_context);
 }
 
-void ImTuiInterop::ui_state::reset_input()
+void ui_state::reset_input()
 {
-    ImTuiInterop::impl::reset_input();
+    impl::reset_input();
 }
 
-ImTuiInterop::ui_state ImTuiInterop::make_ui_system()
+ui_state make_ui_system()
 {
     ImGuiContext* ctx = ImGui::CreateContext();
 
@@ -628,35 +678,35 @@ void ImTuiInterop::viewscreen::claim_current_imgui_window()
 {
     ImGuiWindow* win = ImGui::GetCurrentWindow();
 
-    ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
+    ui_state& st = get_global_ui_state();
 
     st.windows[st.render_stack].push_back(win->Name);
 }
 
 void ImTuiInterop::viewscreen::suppress_next_keyboard_feed_upwards()
 {
-    ImTuiInterop::get_global_ui_state().suppress_next_keyboard_passthrough = true;
+    get_global_ui_state().suppress_next_keyboard_passthrough = true;
 }
 
 void ImTuiInterop::viewscreen::suppress_next_mouse_feed_upwards()
 {
-    ImTuiInterop::get_global_ui_state().suppress_next_keyboard_passthrough = true;
+    get_global_ui_state().suppress_next_keyboard_passthrough = true;
 }
 
 void ImTuiInterop::viewscreen::feed_upwards()
 {
-    ImTuiInterop::get_global_ui_state().should_pass_keyboard_up = true;
+    get_global_ui_state().should_pass_keyboard_up = true;
 }
 
 void ImTuiInterop::viewscreen::declare_suppressed_key(df::interface_key key)
 {
-    ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
+    ui_state& st = get_global_ui_state();
     st.suppressed_keys[st.render_stack].insert(key);
 }
 
 int ImTuiInterop::viewscreen::on_render_start(bool is_top)
 {
-    ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
+    ui_state& st = get_global_ui_state();
 
     if (is_top)
     {
@@ -814,7 +864,7 @@ static void imgui_rearrange_internals(const std::vector<ImGuiWindow*>& display_o
 
 void ImTuiInterop::viewscreen::on_render_end(bool is_top, int id)
 {
-    ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
+    ui_state& st = get_global_ui_state();
 
     bool respect_dwarf_fortress_viewscreen_order = true;
 
@@ -870,7 +920,7 @@ void ImTuiInterop::viewscreen::on_render_end(bool is_top, int id)
 
 void ImTuiInterop::viewscreen::on_feed_start(bool is_top, std::set<df::interface_key>* keys)
 {
-    ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
+    ui_state& st = get_global_ui_state();
 
     if (keys && is_top)
     {
@@ -882,7 +932,7 @@ void ImTuiInterop::viewscreen::on_feed_start(bool is_top, std::set<df::interface
 
 bool ImTuiInterop::viewscreen::on_feed_end(std::set<df::interface_key>* keys)
 {
-    ImTuiInterop::ui_state& st = ImTuiInterop::get_global_ui_state();
+    ui_state& st = get_global_ui_state();
 
     bool should_feed = false;
 
@@ -924,6 +974,6 @@ bool ImTuiInterop::viewscreen::on_feed_end(std::set<df::interface_key>* keys)
 
 void ImTuiInterop::viewscreen::on_dismiss_final_imgui_aware_viewscreen()
 {
-    ImTuiInterop::get_global_ui_state().reset_input();
-    ImTuiInterop::get_global_ui_state().suppressed_keys.clear();
+    get_global_ui_state().reset_input();
+    get_global_ui_state().suppressed_keys.clear();
 }

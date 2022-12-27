@@ -319,14 +319,14 @@ uint16_t fletcher16(uint8_t const *data, size_t bytes)
 
 void ConvertDfColor(int16_t index, RemoteFortressReader::ColorDefinition * out)
 {
-    if (!df::global::enabler)
+    if (!df::global::gps)
         return;
 
-    auto enabler = df::global::enabler;
+    auto gps = df::global::gps;
 
-    out->set_red((int)(enabler->ccolor[index][0] * 255));
-    out->set_green((int)(enabler->ccolor[index][1] * 255));
-    out->set_blue((int)(enabler->ccolor[index][2] * 255));
+    out->set_red(gps->uccolor[index][0]);
+    out->set_green(gps->uccolor[index][1]);
+    out->set_blue(gps->uccolor[index][2]);
 }
 
 void ConvertDfColor(int16_t in[3], RemoteFortressReader::ColorDefinition * out)
@@ -1854,18 +1854,19 @@ static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in,
     Gui::getViewCoords(x, y, z);
     Gui::getCursorCoords(cx, cy, cz);
 
-#if DF_VERSION_INT > 34011
-    auto embark = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
-    if (embark)
-    {
-        df::embark_location location = embark->location;
-        df::world_data * data = df::global::world->world_data;
-        if (data && data->region_map)
-        {
-            z = data->region_map[location.region_pos.x][location.region_pos.y].elevation;
-        }
-    }
-#endif
+    //FIXME: Get get this info from the new embark screen.
+//#if DF_VERSION_INT > 34011
+//    auto embark = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
+//    if (embark)
+//    {
+//        df::embark_location location = embark->location;
+//        df::world_data * data = df::global::world->world_data;
+//        if (data && data->region_map)
+//        {
+//            z = data->region_map[location.region_pos.x][location.region_pos.y].elevation;
+//        }
+//    }
+//#endif
 
     auto dims = Gui::getDwarfmodeViewDims();
 
@@ -1915,22 +1916,23 @@ static command_result GetMapInfo(color_ostream &stream, const EmptyMessage *in, 
 DFCoord GetMapCenter()
 {
     DFCoord output;
-#if DF_VERSION_INT > 34011
-    auto embark = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
-    if (embark)
-    {
-        df::embark_location location = embark->location;
-        output.x = (location.region_pos.x * 16) + 8;
-        output.y = (location.region_pos.y * 16) + 8;
-        output.z = 100;
-        df::world_data * data = df::global::world->world_data;
-        if (data && data->region_map)
-        {
-            output.z = data->region_map[location.region_pos.x][location.region_pos.y].elevation;
-        }
-    }
-    else
-#endif
+//FIXME: Does this even still exist?
+//#if DF_VERSION_INT > 34011
+//    auto embark = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
+//    if (embark)
+//    {
+//        df::embark_location location = embark->location;
+//        output.x = (location.region_pos.x * 16) + 8;
+//        output.y = (location.region_pos.y * 16) + 8;
+//        output.z = 100;
+//        df::world_data * data = df::global::world->world_data;
+//        if (data && data->region_map)
+//        {
+//            output.z = data->region_map[location.region_pos.x][location.region_pos.y].elevation;
+//        }
+//    }
+//    else
+//#endif
         if (Maps::IsValid())
         {
             int x, y, z;

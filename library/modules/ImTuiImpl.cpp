@@ -185,7 +185,7 @@ namespace impl
 {
     void init_current_context();
 
-    void new_frame(std::set<df::interface_key> keys, ui_state& st);
+    void new_frame(std::set<df::interface_key> keys, std::map<df::interface_key, int>& danger_key_frames, std::array<int, 2>& pressed_mouse_keys);
 
     void draw_frame(ImDrawData* drawData);
 
@@ -428,11 +428,11 @@ std::set<df::interface_key> cleanup_keys(std::set<df::interface_key> keys, std::
     return keys;
 }
 
-void impl::new_frame(std::set<df::interface_key> keys, ui_state& st)
+void impl::new_frame(std::set<df::interface_key> keys, std::map<df::interface_key, int>& danger_key_frames, std::array<int, 2>& pressed_mouse_keys)
 {
-    keys = cleanup_keys(keys, st.danger_key_frames);
+    keys = cleanup_keys(keys, danger_key_frames);
 
-    for (auto& it : st.danger_key_frames)
+    for (auto& it : danger_key_frames)
     {
         it.second++;
     }
@@ -464,10 +464,10 @@ void impl::new_frame(std::set<df::interface_key> keys, ui_state& st)
     //todo: frametime
     io.DeltaTime = 33.f / 1000.f;
 
-    io.MouseDown[0] = st.pressed_mouse_keys[0];
-    io.MouseDown[1] = st.pressed_mouse_keys[1];
+    io.MouseDown[0] = pressed_mouse_keys[0];
+    io.MouseDown[1] = pressed_mouse_keys[1];
 
-    st.pressed_mouse_keys = {};
+    pressed_mouse_keys = {};
 
     ImGui::NewFrame();
 }
@@ -640,7 +640,7 @@ void ui_state::activate()
 
 void ui_state::new_frame()
 {
-    impl::new_frame(std::move(unprocessed_keys), *this);
+    impl::new_frame(std::move(unprocessed_keys), danger_key_frames, pressed_mouse_keys);
     unprocessed_keys.clear();
 }
 

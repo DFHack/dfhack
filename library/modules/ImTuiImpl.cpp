@@ -124,7 +124,7 @@ void ScanLine(int x1, int y1, int x2, int y2, int ymax, std::vector<int>& xrange
     }
 }
 
-void drawTriangle(ImVec2 p0, ImVec2 p1, ImVec2 p2, ImU32 col) {
+void drawTriangle(ImVec2 p0, ImVec2 p1, ImVec2 p2, ImU32 col, ImVec4 clip_rect) {
     df::coord2d dim = Screen::getWindowSize();
 
     std::vector<int> g_xrange;
@@ -166,10 +166,17 @@ void drawTriangle(ImVec2 p0, ImVec2 p1, ImVec2 p2, ImU32 col) {
                 if (x >= 0 && x < dim.x && y + ymin >= 0 && y + ymin < dim.y) {
                     ImVec4 col4 = ImGui::ColorConvertU32ToFloat4(col);
 
+                    int cy = y + ymin;
+
+                    if (x < clip_rect.x || x >= clip_rect.z || cy < clip_rect.y || cy >= clip_rect.w) {
+                        ++x;
+                        continue;
+                    }
+
                     //todo: colours
                     const Screen::Pen pen(0, col4.x, col4.y);
 
-                    Screen::paintString(pen, x, y + ymin, " ");
+                    Screen::paintString(pen, x, cy, " ");
                 }
                 ++x;
             }
@@ -583,8 +590,7 @@ void impl::draw_frame(ImDrawData* drawData)
                             i += 3;
                         }
                         else {
-                            //todo: pass in clip rect
-                            drawTriangle(pos0, pos1, pos2, col0);
+                            drawTriangle(pos0, pos1, pos2, col0, clip_rect);
                         }
                     }
                 }

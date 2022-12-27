@@ -66,7 +66,6 @@ using namespace DFHack;
 #include "df/item_corpsepiecest.h"
 #include "df/item_corpsest.h"
 #include "df/job.h"
-#include "df/layer_object_listst.h"
 #include "df/occupation.h"
 #include "df/plant.h"
 #include "df/popup_message.h"
@@ -2150,19 +2149,13 @@ bool Gui::setDesignationCoords (const int32_t x, const int32_t y, const int32_t 
 df::coord Gui::getMousePos()
 {
     df::coord pos;
-/* TODO: understand how this changes for v50
-    if (gps && gps->mouse_x > -1) {
-        // return invalid coords if the cursor is not over the map
-        DwarfmodeDims dims = getDwarfmodeViewDims();
-        if (gps->mouse_x < dims.map_x1 || gps->mouse_x > dims.map_x2 ||
-                gps->mouse_y < dims.map_y1 || gps->mouse_y > dims.map_y2) {
-            return pos;
-        }
+    if (gps && gps->precise_mouse_x > -1) {
         pos = getViewportPos();
-        pos.x += gps->mouse_x - 1;
-        pos.y += gps->mouse_y - 1;
-    }
+/* TODO: understand how this changes for v50
+        pos.x += gps->mouse_x_pixel / tile_width;
+        pos.y += gps->mouse_y_pixel / tile_height;
 */
+    }
     return pos;
 }
 

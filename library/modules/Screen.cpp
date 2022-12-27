@@ -34,6 +34,7 @@ using namespace std;
 #include "modules/Renderer.h"
 #include "modules/Screen.h"
 #include "modules/GuiHooks.h"
+#include "Debug.h"
 #include "MemAccess.h"
 #include "VersionInfo.h"
 #include "Types.h"
@@ -49,10 +50,11 @@ using namespace DFHack;
 
 #include "DataDefs.h"
 #include "df/init.h"
-#include "df/texture_handler.h"
-#include "df/tile_page.h"
+#include "df/texture_handlerst.h"
+#include "df/tile_pagest.h"
 #include "df/interfacest.h"
 #include "df/enabler.h"
+#include "df/graphic_map_portst.h"
 #include "df/unit.h"
 #include "df/item.h"
 #include "df/job.h"
@@ -72,30 +74,29 @@ using Screen::PenArray;
 
 using std::string;
 
+namespace DFHack {
+    DBG_DECLARE(core, screen, DebugCategory::LINFO);
+}
+
+
 /*
  * Screen painting API.
  */
 
-// returns text grid coordinates, even if the game map is scaled differently
+// returns ui grid coordinates, even if the game map is scaled differently
 df::coord2d Screen::getMousePos()
 {
-    int32_t pixelx = 0, pixely = 0, tilex = 0, tiley = 0;
-    if (!enabler || !enabler->renderer->get_mouse_coords(
-            &pixelx, &pixely, &tilex, &tiley)) {
+    if (!gps)
         return df::coord2d(-1, -1);
-    }
-    return df::coord2d(tilex, tiley);
+    return df::coord2d(gps->mouse_x, gps->mouse_y);
 }
 
 // returns the screen pixel coordinates
 df::coord2d Screen::getMousePixels()
 {
-    int32_t pixelx = 0, pixely = 0, tilex = 0, tiley = 0;
-    if (!enabler || !enabler->renderer->get_mouse_coords(
-            &pixelx, &pixely, &tilex, &tiley)) {
+    if (!gps)
         return df::coord2d(-1, -1);
-    }
-    return df::coord2d(pixelx, pixely);
+    return df::coord2d(gps->precise_mouse_x, gps->precise_mouse_y);
 }
 
 df::coord2d Screen::getWindowSize()
@@ -116,22 +117,36 @@ bool Screen::inGraphicsMode()
 
 static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
 {
-    auto dim = Screen::getWindowSize();
-    if (x < 0 || x >= dim.x || y < 0 || y >= dim.y)
-        return false;
-
-/* TODO: understand how this changes for v50
-    int index = ((x * gps->dimy) + y);
-    auto screen = gps->screen + index*4;
-    screen[0] = uint8_t(pen.ch);
-    screen[1] = uint8_t(pen.fg) & 15;
-    screen[2] = uint8_t(pen.bg) & 15;
-    screen[3] = uint8_t(pen.bold) & 1;
-    gps->screentexpos[index] = pen.tile;
-    gps->screentexpos_addcolor[index] = (pen.tile_mode == Screen::Pen::CharColor);
-    gps->screentexpos_grayscale[index] = (pen.tile_mode == Screen::Pen::TileColor);
-    gps->screentexpos_cf[index] = pen.tile_fg;
-    gps->screentexpos_cbr[index] = pen.tile_bg;
+// TODO: understand how this changes for v50
+    size_t index = ((x * gps->dimy) + y);
+    if (!map) {
+        // don't let DF overlay interface elements draw over us
+        gps->screentexpos_anchored[index] = 0;
+        gps->screentexpos_top[index] = 0;
+        gps->screentexpos_flag[index] = 0;
+    }
+    //gps->screen1_opt_tile[index] = uint8_t(pen.tile);
+    auto fg = &gps->uccolor[pen.fg][0];
+    auto bg = &gps->uccolor[pen.bg][0];
+    auto argb = &gps->screen[index * 8];
+    argb[0] = uint8_t(pen.ch);
+    argb[1] = fg[0];
+    argb[2] = fg[1];
+    argb[3] = fg[2];
+    argb[4] = bg[0];
+    argb[5] = bg[1];
+    argb[6] = bg[2];
+/* old code
+//     auto screen = gps->screen + index*4;
+//     screen[0] = uint8_t(pen.ch);
+//     screen[1] = uint8_t(pen.fg) & 15;
+//     screen[2] = uint8_t(pen.bg) & 15;
+//     screen[3] = uint8_t(pen.bold) & 1;
+//     gps->screentexpos[index] = pen.tile;
+//     gps->screentexpos_addcolor[index] = (pen.tile_mode == Screen::Pen::CharColor);
+//     gps->screentexpos_grayscale[index] = (pen.tile_mode == Screen::Pen::TileColor);
+//     gps->screentexpos_cf[index] = pen.tile_fg;
+//     gps->screentexpos_cbr[index] = pen.tile_bg;
 */
     return true;
 }
@@ -592,11 +607,13 @@ bool dfhack_viewscreen::key_conflict(df::interface_key key)
     if (key == interface_key::OPTIONS)
         return true;
 
+/* TODO: understand how this changes for v50
     if (text_input_mode)
     {
         if (key == interface_key::HELP || key == interface_key::MOVIES)
             return true;
     }
+*/
 
     return false;
 }

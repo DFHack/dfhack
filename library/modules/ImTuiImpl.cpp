@@ -177,10 +177,6 @@ void drawTriangle(ImVec2 p0, ImVec2 p1, ImVec2 p2, ImU32 col) {
     }
 }
 
-struct ui_state;
-
-ui_state& get_global_ui_state();
-
 namespace impl
 {
     void init_current_context();
@@ -188,8 +184,6 @@ namespace impl
     void new_frame(std::set<df::interface_key> keys, std::map<df::interface_key, int>& danger_key_frames, std::array<int, 2>& pressed_mouse_keys);
 
     void draw_frame(ImDrawData* drawData);
-
-    void shutdown();
 
     void reset_input();
 }
@@ -227,8 +221,21 @@ struct ui_state
 };
 
 //returns an inactive imgui context system
-ui_state make_ui_system();
+static ui_state make_ui_system()
+{
+    ImGuiContext* ctx = ImGui::CreateContext();
 
+    ui_state st;
+    st.ctx = ctx;
+
+    st.activate();
+
+    impl::init_current_context();
+
+    st.deactivate();
+
+    return st;
+}
 
 static ui_state& get_global_ui_state()
 {
@@ -657,22 +664,6 @@ void ui_state::deactivate()
 void ui_state::reset_input()
 {
     impl::reset_input();
-}
-
-ui_state make_ui_system()
-{
-    ImGuiContext* ctx = ImGui::CreateContext();
-
-    ui_state st;
-    st.ctx = ctx;
-
-    st.activate();
-
-    impl::init_current_context();
-
-    st.deactivate();
-
-    return st;
 }
 
 static std::set<df::viewscreen*> imgui_aware;

@@ -316,7 +316,8 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
     material->set_mat_index(local_build->mat_index);
 
     remote_build->set_building_flags(local_build->flags.whole);
-    remote_build->set_is_room(local_build->is_room);
+    //FIXME: Figure out what to replace this with.
+    //remote_build->set_is_room(local_build->is_room);
     if (local_build->room.width > 0 && local_build->room.height > 0 && local_build->room.extents != nullptr)
     {
         auto room = remote_build->mutable_room();
@@ -607,28 +608,29 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
     }
     case df::enums::building_type::ArcheryTarget:
     {
-        auto actual = strict_virtual_cast<df::building_archerytargetst>(local_build);
-        if (actual)
-        {
-            auto facing = actual->archery_direction;
-            switch (facing)
-            {
-            case df::building_archerytargetst::TopToBottom:
-                remote_build->set_direction(NORTH);
-                break;
-            case df::building_archerytargetst::BottomToTop:
-                remote_build->set_direction(SOUTH);
-                break;
-            case df::building_archerytargetst::LeftToRight:
-                remote_build->set_direction(WEST);
-                break;
-            case df::building_archerytargetst::RightToLeft:
-                remote_build->set_direction(EAST);
-                break;
-            default:
-                break;
-            }
-        }
+        //FIXME: Need to decode archery targets again.
+        //auto actual = strict_virtual_cast<df::building_archerytargetst>(local_build);
+        //if (actual)
+        //{
+        //    auto facing = actual->archery_direction;
+        //    switch (facing)
+        //    {
+        //    case df::building_archerytargetst::TopToBottom:
+        //        remote_build->set_direction(NORTH);
+        //        break;
+        //    case df::building_archerytargetst::BottomToTop:
+        //        remote_build->set_direction(SOUTH);
+        //        break;
+        //    case df::building_archerytargetst::LeftToRight:
+        //        remote_build->set_direction(WEST);
+        //        break;
+        //    case df::building_archerytargetst::RightToLeft:
+        //        remote_build->set_direction(EAST);
+        //        break;
+        //    default:
+        //        break;
+        //    }
+        //}
         break;
     }
     case df::enums::building_type::Chain:

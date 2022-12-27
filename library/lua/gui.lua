@@ -624,6 +624,7 @@ function Screen:renderParent()
     else
         dscreen.clear()
     end
+    df.global.gps.force_full_display_count = 1
 end
 
 function Screen:sendInputToParent(...)

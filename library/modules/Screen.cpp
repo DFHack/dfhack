@@ -54,7 +54,7 @@ using namespace DFHack;
 #include "df/tile_pagest.h"
 #include "df/interfacest.h"
 #include "df/enabler.h"
-#include "df/graphic_map_portst.h"
+#include "df/graphic_viewportst.h"
 #include "df/unit.h"
 #include "df/item.h"
 #include "df/job.h"
@@ -117,37 +117,55 @@ bool Screen::inGraphicsMode()
 
 static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
 {
-// TODO: understand how this changes for v50
-    size_t index = ((x * gps->dimy) + y);
-    if (!map) {
-        // don't let DF overlay interface elements draw over us
-        gps->screentexpos_anchored[index] = 0;
-        gps->screentexpos_top[index] = 0;
-        gps->screentexpos_flag[index] = 0;
+    if (x < 0 || x >= gps->dimx || y < 0 || y >= gps->dimy)
+        return false;
+
+    if (map) {
+        //gps->main_viewport->screentexpos_interface
+        return true;
     }
-    //gps->screen1_opt_tile[index] = uint8_t(pen.tile);
+
+    size_t index = (x * gps->dimy) + y;
+
+    uint8_t *screen = &gps->screen[index * 8];
+    long *texpos = &gps->screentexpos[index];
+    uint32_t *flag = &gps->screentexpos_flag[index];
+
+    *screen = 0;
+    *texpos = 0;
+    *flag = 4; // remove SCREENTEXPOS_FLAG_ANCHOR_SUBORDINATE
+
+    if (gps->top_in_use) {
+        screen = &gps->screen_top[index * 8];
+        texpos = &gps->screentexpos_top[index];
+        flag = &gps->screentexpos_top_flag[index];
+
+        *screen = 0;
+        *texpos = 0;
+        *flag = 4; // remove SCREENTEXPOS_FLAG_ANCHOR_SUBORDINATE
+    }
+
+    if (pen.tile_mode == Screen::Pen::CharColor)
+        *flag |= 2; // SCREENTEXPOS_FLAG_ADDCOLOR
+    else if (pen.tile_mode == Screen::Pen::TileColor)
+        *flag |= 1; // SCREENTEXPOS_FLAG_GRAYSCALE
+
+    if (pen.tile && init->display.flag.is_set(init_display_flags::USE_GRAPHICS)) {
+        *texpos = pen.tile;
+    } else {
+        screen[0] = uint8_t(pen.ch);
+    }
+
+    // note that pen.bold currently (50.04) has no representation in the DF data
     auto fg = &gps->uccolor[pen.fg][0];
     auto bg = &gps->uccolor[pen.bg][0];
-    auto argb = &gps->screen[index * 8];
-    argb[0] = uint8_t(pen.ch);
-    argb[1] = fg[0];
-    argb[2] = fg[1];
-    argb[3] = fg[2];
-    argb[4] = bg[0];
-    argb[5] = bg[1];
-    argb[6] = bg[2];
-/* old code
-//     auto screen = gps->screen + index*4;
-//     screen[0] = uint8_t(pen.ch);
-//     screen[1] = uint8_t(pen.fg) & 15;
-//     screen[2] = uint8_t(pen.bg) & 15;
-//     screen[3] = uint8_t(pen.bold) & 1;
-//     gps->screentexpos[index] = pen.tile;
-//     gps->screentexpos_addcolor[index] = (pen.tile_mode == Screen::Pen::CharColor);
-//     gps->screentexpos_grayscale[index] = (pen.tile_mode == Screen::Pen::TileColor);
-//     gps->screentexpos_cf[index] = pen.tile_fg;
-//     gps->screentexpos_cbr[index] = pen.tile_bg;
-*/
+    screen[1] = fg[0];
+    screen[2] = fg[1];
+    screen[3] = fg[2];
+    screen[4] = bg[0];
+    screen[5] = bg[1];
+    screen[6] = bg[2];
+
     return true;
 }
 

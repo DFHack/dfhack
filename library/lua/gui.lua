@@ -11,7 +11,7 @@ USE_GRAPHICS = dscreen.inGraphicsMode()
 
 local to_pen = dfhack.pen.parse
 
-CLEAR_PEN = to_pen{ch=32,fg=0,bg=0}
+CLEAR_PEN = to_pen{tile=909, ch=32, fg=0, bg=0}
 
 local FAKE_INPUT_KEYS = {
     _MOUSE_L = true,
@@ -693,17 +693,17 @@ BOUNDARY_FRAME = {
 }
 
 GREY_LINE_FRAME = {
-    frame_pen = to_pen{ ch = 206, fg = COLOR_GREY, bg = COLOR_BLACK },
-    t_frame_pen = to_pen{ tile=902, ch = 205, fg = COLOR_GREY, bg = COLOR_BLACK },
-    l_frame_pen = to_pen{ tile=908, ch = 186, fg = COLOR_GREY, bg = COLOR_BLACK },
-    b_frame_pen = to_pen{ tile=916, ch = 205, fg = COLOR_GREY, bg = COLOR_BLACK },
-    r_frame_pen = to_pen{ tile=910, ch = 186, fg = COLOR_GREY, bg = COLOR_BLACK },
-    lt_frame_pen = to_pen{ tile=901, ch = 201, fg = COLOR_GREY, bg = COLOR_BLACK },
-    lb_frame_pen = to_pen{ tile=915, ch = 200, fg = COLOR_GREY, bg = COLOR_BLACK },
-    rt_frame_pen = to_pen{ tile=903, ch = 187, fg = COLOR_GREY, bg = COLOR_BLACK },
-    rb_frame_pen = to_pen{ tile=917, ch = 188, fg = COLOR_GREY, bg = COLOR_BLACK },
-    title_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
-    signature_pen = to_pen{ fg = COLOR_GREY, bg = COLOR_BLACK },
+    frame_pen = to_pen{ ch=206, fg=COLOR_GREY, bg=COLOR_BLACK },
+    t_frame_pen = to_pen{ tile=902, ch=205, fg=COLOR_GREY, bg=COLOR_BLACK },
+    l_frame_pen = to_pen{ tile=908, ch=186, fg=COLOR_GREY, bg=COLOR_BLACK },
+    b_frame_pen = to_pen{ tile=916, ch=205, fg=COLOR_GREY, bg=COLOR_BLACK },
+    r_frame_pen = to_pen{ tile=910, ch=186, fg=COLOR_GREY, bg=COLOR_BLACK },
+    lt_frame_pen = to_pen{ tile=901, ch=201, fg=COLOR_GREY, bg=COLOR_BLACK },
+    lb_frame_pen = to_pen{ tile=915, ch=200, fg=COLOR_GREY, bg=COLOR_BLACK },
+    rt_frame_pen = to_pen{ tile=903, ch=187, fg=COLOR_GREY, bg=COLOR_BLACK },
+    rb_frame_pen = to_pen{ tile=917, ch=188, fg=COLOR_GREY, bg=COLOR_BLACK },
+    title_pen = to_pen{ fg=COLOR_BLACK, bg=COLOR_GREY },
+    signature_pen = to_pen{ fg=COLOR_GREY, bg=COLOR_BLACK },
 }
 
 function paint_frame(dc,rect,style,title)

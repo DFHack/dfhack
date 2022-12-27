@@ -117,31 +117,36 @@ bool Screen::inGraphicsMode()
 
 static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
 {
-    if (x < 0 || x >= gps->dimx || y < 0 || y >= gps->dimy)
+    size_t index = (x * gps->dimy) + y;
+    uint8_t *screen = &gps->screen[index * 8];
+
+    if (screen > gps->screen_limit)
         return false;
 
     if (map) {
+
         //gps->main_viewport->screentexpos_interface
         return true;
     }
 
-    size_t index = (x * gps->dimy) + y;
-
-    uint8_t *screen = &gps->screen[index * 8];
     long *texpos = &gps->screentexpos[index];
+    long *texpos_lower = &gps->screentexpos_lower[index];
     uint32_t *flag = &gps->screentexpos_flag[index];
 
     *screen = 0;
     *texpos = 0;
+    *texpos_lower = 0;
     *flag = 4; // remove SCREENTEXPOS_FLAG_ANCHOR_SUBORDINATE
 
     if (gps->top_in_use) {
         screen = &gps->screen_top[index * 8];
         texpos = &gps->screentexpos_top[index];
+        texpos_lower = &gps->screentexpos_top_lower[index];
         flag = &gps->screentexpos_top_flag[index];
 
         *screen = 0;
         *texpos = 0;
+        *texpos_lower = 0;
         *flag = 4; // remove SCREENTEXPOS_FLAG_ANCHOR_SUBORDINATE
     }
 
@@ -154,6 +159,7 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
         *texpos = pen.tile;
     } else {
         screen[0] = uint8_t(pen.ch);
+        *texpos_lower = 909;
     }
 
     // note that pen.bold currently (50.04) has no representation in the DF data

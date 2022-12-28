@@ -115,19 +115,28 @@ bool Screen::inGraphicsMode()
     return init && init->display.flag.is_set(init_display_flags::USE_GRAPHICS);
 }
 
+static bool doSetTile_map(const Pen &pen, int x, int y) {
+    size_t index = (x * gps->main_viewport->dim_y) + y;
+    long texpos = pen.tile;
+    if (texpos == 0) {
+        texpos = init->font.large_font_texpos[(uint8_t)pen.ch];
+    }
+    gps->main_viewport->screentexpos_interface[index] = texpos;
+    return true;
+}
+
 static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
 {
+    bool use_graphics = Screen::inGraphicsMode();
+
+    if (map && use_graphics)
+        return doSetTile_map(pen, x, y);
+
     size_t index = (x * gps->dimy) + y;
     uint8_t *screen = &gps->screen[index * 8];
 
     if (screen > gps->screen_limit)
         return false;
-
-    if (map) {
-
-        //gps->main_viewport->screentexpos_interface
-        return true;
-    }
 
     long *texpos = &gps->screentexpos[index];
     long *texpos_lower = &gps->screentexpos_lower[index];
@@ -155,7 +164,7 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
     else if (pen.tile_mode == Screen::Pen::TileColor)
         *flag |= 1; // SCREENTEXPOS_FLAG_GRAYSCALE
 
-    if (pen.tile && init->display.flag.is_set(init_display_flags::USE_GRAPHICS)) {
+    if (pen.tile && use_graphics) {
         *texpos = pen.tile;
     } else {
         screen[0] = uint8_t(pen.ch);

@@ -1121,7 +1121,8 @@ Other
 * ``dfhack.gui.getDepthAt(x, y)``
 
   Returns the distance from the z-level of the tile at map coordinates (x, y) to
-  the closest ground z-level below. Defaults to 0, unless overridden by plugins.
+  the closest rendered ground z-level below. Defaults to 0, unless overridden by
+  plugins.
 
 Job module
 ----------
@@ -2161,7 +2162,14 @@ Functions:
 
 * ``dfhack.screen.getMousePos()``
 
-  Returns *x,y* of the tile the mouse is over.
+  Returns *x,y* of the UI interface tile the mouse is over, with the upper left
+  corner being ``0,0``. To get the map tile coordinate that the mouse is over,
+  see ``dfhack.gui.getMousePos()``.
+
+* ``dfhack.screen.getMousePixels()``
+
+  Returns *x,y* of the screen coordinates the mouse is over in pixels, with the
+  upper left corner being ``0,0``.
 
 * ``dfhack.screen.inGraphicsMode()``
 

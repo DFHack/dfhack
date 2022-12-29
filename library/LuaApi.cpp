@@ -2373,6 +2373,11 @@ static int screen_getMousePos(lua_State *L)
     return Lua::PushPosXY(L, Screen::getMousePos());
 }
 
+static int screen_getMousePixels(lua_State *L)
+{
+    return Lua::PushPosXY(L, Screen::getMousePixels());
+}
+
 static int screen_getWindowSize(lua_State *L)
 {
     return Lua::PushPosXY(L, Screen::getWindowSize());
@@ -2563,6 +2568,7 @@ static int screen_zoom(lua_State *L)
 
 static const luaL_Reg dfhack_screen_funcs[] = {
     { "getMousePos", screen_getMousePos },
+    { "getMousePixels", screen_getMousePixels },
     { "getWindowSize", screen_getWindowSize },
     { "paintTile", screen_paintTile },
     { "readTile", screen_readTile },

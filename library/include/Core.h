@@ -121,6 +121,12 @@ namespace DFHack
         friend int  ::SDL_Init(uint32_t flags);
         friend int  ::wgetch(WINDOW * w);
 #endif
+        friend void ::dfhooks_init();
+        friend void ::dfhooks_shutdown();
+        friend void ::dfhooks_update();
+        friend void ::dfhooks_prerender();
+        friend bool ::dfhooks_sdl_event(SDL::Event* event);
+        friend bool ::dfhooks_ncurses_key(int key);
     public:
         /// Get the single Core instance or make one.
         static Core& getInstance()
@@ -202,8 +208,9 @@ namespace DFHack
         int Shutdown (void);
         int DFH_SDL_Event(SDL::Event* event);
         bool ncurses_wgetch(int in, int & out);
+        bool DFH_ncurses_key(int key);
 
-        void doUpdate(color_ostream &out, bool first_update);
+        void doUpdate(color_ostream &out);
         void onUpdate(color_ostream &out);
         void onStateChange(color_ostream &out, state_change_event event);
         void handleLoadAndUnloadScripts(color_ostream &out, state_change_event event);

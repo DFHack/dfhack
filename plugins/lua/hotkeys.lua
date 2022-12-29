@@ -11,15 +11,15 @@ local widgets = require('gui.widgets')
 
 HotspotMenuWidget = defclass(HotspotMenuWidget, overlay.OverlayWidget)
 HotspotMenuWidget.ATTRS{
-    default_pos={x=1,y=3},
+    default_pos={x=1,y=2},
     hotspot=true,
     viewscreens={'dwarfmode'},
     overlay_onupdate_max_freq_seconds=0,
-    frame={w=2, h=1}
+    frame={w=4, h=3}
 }
 
 function HotspotMenuWidget:init()
-    self:addviews{widgets.Label{text='!'}}
+    self:addviews{widgets.Label{text={'!!!!', NEWLINE, '!!!!', NEWLINE, '!!!!'}}}
     self.mouseover = false
 end
 
@@ -136,9 +136,9 @@ function MenuScreen:init()
 
     local help_frame = {w=list_frame.w, l=list_frame.l, r=list_frame.r}
     if list_frame.t then
-        help_frame.t = list_frame.t + list_frame.h + 1
+        help_frame.t = list_frame.t + list_frame.h
     else
-        help_frame.b = list_frame.b + list_frame.h + 1
+        help_frame.b = list_frame.b + list_frame.h
     end
 
     self:addviews{

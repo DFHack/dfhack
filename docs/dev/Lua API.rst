@@ -3640,11 +3640,6 @@ considered stable.
 Misc
 ----
 
-* ``USE_GRAPHICS``
-
-  Contains the value of ``dfhack.screen.inGraphicsMode()``, which cannot be
-  changed without restarting the game and thus is constant during the session.
-
 * ``CLEAR_PEN``
 
   The black pen used to clear the screen.

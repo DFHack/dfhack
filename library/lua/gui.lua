@@ -7,8 +7,6 @@ local utils = require('utils')
 local dscreen = dfhack.screen
 local getval = utils.getval
 
-USE_GRAPHICS = dscreen.inGraphicsMode()
-
 local to_pen = dfhack.pen.parse
 
 CLEAR_PEN = to_pen{tile=909, ch=32, fg=0, bg=0}

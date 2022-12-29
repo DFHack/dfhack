@@ -61,6 +61,7 @@ using namespace DFHack;
 #include "df/general_ref.h"
 #include "df/global_objects.h"
 #include "df/graphic.h"
+#include "df/graphic_viewportst.h"
 #include "df/historical_figure.h"
 #include "df/interfacest.h"
 #include "df/item_corpsepiecest.h"
@@ -2151,16 +2152,24 @@ df::coord Gui::getMousePos()
     df::coord pos;
     if (gps && gps->precise_mouse_x > -1) {
         pos = getViewportPos();
-/* TODO: understand how this changes for v50
-        pos.x += gps->mouse_x_pixel / tile_width;
-        pos.y += gps->mouse_y_pixel / tile_height;
-*/
+        int32_t map_tile_pixels = gps->viewport_zoom_factor >> 2;
+        pos.x += gps->precise_mouse_x / map_tile_pixels;
+        pos.y += gps->precise_mouse_y / map_tile_pixels;
     }
     return pos;
 }
 
 int getDepthAt_default (int32_t x, int32_t y)
 {
+    auto &main_vp = gps->main_viewport;
+    if (x < 0 || x >= main_vp->dim_x || y < 0 || y >= main_vp->dim_y)
+        return 0;
+    const size_t num_viewports = gps->viewport.size();
+    const size_t index = (x * main_vp->dim_y) + y;
+    for (int depth = 0; depth < num_viewports; ++depth) {
+        if (gps->viewport[depth]->screentexpos_background[index])
+            return depth;
+    }
     return 0;
 }
 

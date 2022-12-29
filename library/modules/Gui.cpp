@@ -2152,10 +2152,17 @@ df::coord Gui::getMousePos()
     df::coord pos;
     if (gps && gps->precise_mouse_x > -1) {
         pos = getViewportPos();
-        int32_t map_tile_pixels = gps->viewport_zoom_factor >> 2;
-        pos.x += gps->precise_mouse_x / map_tile_pixels;
-        pos.y += gps->precise_mouse_y / map_tile_pixels;
+        if (Screen::inGraphicsMode()) {
+            int32_t map_tile_pixels = gps->viewport_zoom_factor >> 2;
+            pos.x += gps->precise_mouse_x / map_tile_pixels;
+            pos.y += gps->precise_mouse_y / map_tile_pixels;
+        } else {
+            pos.x += gps->mouse_x;
+            pos.y += gps->mouse_y;
+        }
     }
+    if (!Maps::isValidTilePos(pos.x, pos.y, pos.z))
+        return df::coord();
     return pos;
 }
 

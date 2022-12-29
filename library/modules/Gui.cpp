@@ -2166,7 +2166,7 @@ int getDepthAt_default (int32_t x, int32_t y)
         return 0;
     const size_t num_viewports = gps->viewport.size();
     const size_t index = (x * main_vp->dim_y) + y;
-    for (int depth = 0; depth < num_viewports; ++depth) {
+    for (size_t depth = 0; depth < num_viewports; ++depth) {
         if (gps->viewport[depth]->screentexpos_background[index])
             return depth;
     }

@@ -935,7 +935,7 @@ function Scrollbar:onInput(keys)
     if not self.on_scroll or not scrollbar_is_visible(self) then
         return false
     end
-    
+
     if self.parent_view:getMousePos() then
         if keys.CONTEXT_SCROLL_UP then
             self.on_scroll('up_small')

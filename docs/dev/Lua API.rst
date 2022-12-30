@@ -4309,7 +4309,6 @@ Attributes:
           If it returns false, the character is ignored.
 :on_change: Change notification callback; used as ``on_change(new_text,old_text)``.
 :on_submit: Enter key callback; if set the field will handle the key and call ``on_submit(text)``.
-:on_submit2: Shift-Enter key callback; if set the field will handle the key and call ``on_submit2(text)``.
 :key: If specified, the field is disabled until this key is pressed. Must be given as a string.
 :key_sep: If specified, will be used to customize how the activation key is
           displayed. See ``token.key_sep`` in the ``Label`` documentation below.
@@ -4339,8 +4338,8 @@ You can click where you want the cursor to move or you can use any of the
 following keyboard hotkeys:
 
 - Left/Right arrow: move the cursor one character to the left or right.
-- Ctrl-Left/Right arrow: move the cursor one word to the left or right.
-- Alt-Left/Right arrow: move the cursor to the beginning/end of the text.
+- Ctrl-B/Ctrl-F: move the cursor one word back or forward.
+- Ctrl-A/Ctrl-E: move the cursor to the beginning/end of the text.
 
 Scrollbar class
 ---------------
@@ -4622,8 +4621,8 @@ It has the following attributes:
             with an empty list.
 :on_submit: Enter key or mouse click callback; if specified, the list reacts to the
             key/click and calls the callback as ``on_submit(index,choice)``.
-:on_submit2: Shift-Enter key or shift-mouse click callback; if specified, the list
-             reacts to the key/click and calls it as ``on_submit2(index,choice)``.
+:on_submit2: Shift-click callback; if specified, the list reacts to the click and
+             calls the callback as ``on_submit2(index,choice)``.
 :row_height: Height of every row in text lines.
 :icon_width: If not *nil*, the specified number of character columns
              are reserved to the left of the list item for the icons.

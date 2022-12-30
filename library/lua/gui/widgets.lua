@@ -26,16 +26,17 @@ end
 
 STANDARDSCROLL = {
     STANDARDSCROLL_UP = -1,
+    KEYBOARD_CURSOR_UP = -1,
+    CONTEXT_SCROLL_UP = -1,
     STANDARDSCROLL_DOWN = 1,
+    KEYBOARD_CURSOR_DOWN = 1,
+    CONTEXT_SCROLL_DOWN = 1,
     STANDARDSCROLL_PAGEUP = '-page',
+    KEYBOARD_CURSOR_UP_FAST = '-page',
+    CONTEXT_SCROLL_PAGEUP = '-page',
     STANDARDSCROLL_PAGEDOWN = '+page',
-}
-
-SECONDSCROLL = {
-    SECONDSCROLL_UP = -1,
-    SECONDSCROLL_DOWN = 1,
-    SECONDSCROLL_PAGEUP = '-page',
-    SECONDSCROLL_PAGEDOWN = '+page',
+    KEYBOARD_CURSOR_DOWN_FAST = '+page',
+    CONTEXT_SCROLL_PAGEDOWN = '+page',
 }
 
 ------------
@@ -677,22 +678,20 @@ function EditField:onInput(keys)
         return true
     end
 
-    if keys.SELECT then
+    if keys.SELECT or keys.CUSTOM_SHIFT_ENTER then
         if self.key then
             self:setFocus(false)
         end
-        if self.on_submit then
-            self.on_submit(self.text)
-            return true
-        end
-        return not not self.key
-    elseif keys.SEC_SELECT then
-        if self.key then
-            self:setFocus(false)
-        end
-        if self.on_submit2 then
-            self.on_submit2(self.text)
-            return true
+        if keys.CUSTOM_SHIFT_ENTER then
+            if self.on_submit2 then
+                self.on_submit2(self.text)
+                return true
+            end
+        else
+            if self.on_submit then
+                self.on_submit(self.text)
+                return true
+            end
         end
         return not not self.key
     elseif keys._MOUSE_L then
@@ -723,25 +722,25 @@ function EditField:onInput(keys)
             self.on_change(self.text, old)
         end
         return true
-    elseif keys.CURSOR_LEFT then
+    elseif keys.KEYBOARD_CURSOR_LEFT then
         self:setCursor(self.cursor - 1)
         return true
-    elseif keys.A_MOVE_W_DOWN then -- Ctrl-Left (end of prev word)
+    elseif keys.CUSTOM_CTRL_B then -- back one word
         local _, prev_word_end = self.text:sub(1, self.cursor-1):
-                                                    find('.*[%w_%-][^%w_%-]')
+                                               find('.*[%w_%-][^%w_%-]')
         self:setCursor(prev_word_end or 1)
         return true
-    elseif keys.A_CARE_MOVE_W then -- Alt-Left (home)
+    elseif keys.CUSTOM_CTRL_A then -- home
         self:setCursor(1)
         return true
-    elseif keys.CURSOR_RIGHT then
+    elseif keys.KEYBOARD_CURSOR_RIGHT then
         self:setCursor(self.cursor + 1)
         return true
-    elseif keys.A_MOVE_E_DOWN then -- Ctrl-Right (beginning of next word)
+    elseif keys.CUSTOM_CTRL_F then -- forward one word
         local _,next_word_start = self.text:find('[^%w_%-][%w_%-]', self.cursor)
         self:setCursor(next_word_start)
         return true
-    elseif keys.A_CARE_MOVE_E then -- Alt-Right (end)
+    elseif keys.CUSTOM_CTRL_E then -- end
         self:setCursor()
         return true
     end
@@ -1680,12 +1679,14 @@ end
 function List:submit()
     if self.on_submit and #self.choices > 0 then
         self.on_submit(self:getSelected())
+        return true
     end
 end
 
 function List:submit2()
     if self.on_submit2 and #self.choices > 0 then
         self.on_submit2(self:getSelected())
+        return true
     end
 end
 
@@ -1693,12 +1694,10 @@ function List:onInput(keys)
     if self:inputToSubviews(keys) then
         return true
     end
-    if self.on_submit and keys.SELECT then
-        self:submit()
-        return true
-    elseif self.on_submit2 and keys.SEC_SELECT then
-        self:submit2()
-        return true
+    if keys.SELECT then
+        return self:submit()
+    elseif keys.CUSTOM_SHIFT_ENTER then
+        return self:submit2()
     elseif keys._MOUSE_L_DOWN then
         local idx = self:getIdxUnderMouse()
         if idx then

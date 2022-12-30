@@ -173,8 +173,8 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
         *texpos_lower = 909;
     }
 
-    // note that pen.bold currently (50.04) has no representation in the DF data
-    auto fg = &gps->uccolor[pen.fg][0];
+    uint8_t fullfg = pen.fg | (pen.bold << 3);
+    auto fg = &gps->uccolor[fullfg][0];
     auto bg = &gps->uccolor[pen.bg][0];
     screen[1] = fg[0];
     screen[2] = fg[1];

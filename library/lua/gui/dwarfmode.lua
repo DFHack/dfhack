@@ -267,6 +267,10 @@ function Viewport:reveal(target,gap,max_scroll,scroll_gap,scroll_z)
 end
 
 MOVEMENT_KEYS = {
+    KEYBOARD_CURSOR_UP = { 0, -1, 0 }, KEYBOARD_CURSOR_DOWN = { 0, 1, 0 },
+    KEYBOARD_CURSOR_LEFT = { -1, 0, 0 }, KEYBOARD_CURSOR_RIGHT = { 1, 0, 0 },
+    KEYBOARD_CURSOR_UP_FAST = { 0, -1, 0, true }, KEYBOARD_CURSOR_DOWN_FAST = { 0, 1, 0, true },
+    KEYBOARD_CURSOR_LEFT_FAST = { -1, 0, 0, true }, KEYBOARD_CURSOR_RIGHT_FAST = { 1, 0, 0, true },
     CURSOR_UP = { 0, -1, 0 }, CURSOR_DOWN = { 0, 1, 0 },
     CURSOR_LEFT = { -1, 0, 0 }, CURSOR_RIGHT = { 1, 0, 0 },
     CURSOR_UPLEFT = { -1, -1, 0 }, CURSOR_UPRIGHT = { 1, -1, 0 },

@@ -145,7 +145,9 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
     *screen = 0;
     *texpos = 0;
     *texpos_lower = 0;
-    *flag = 4; // remove SCREENTEXPOS_FLAG_ANCHOR_SUBORDINATE
+    // keep SCREENTEXPOS_FLAG_ANCHOR_SUBORDINATE so occluded anchored textures
+    // don't appear corrupted
+    *flag &= 4;
 
     if (gps->top_in_use) {
         screen = &gps->screen_top[index * 8];
@@ -156,7 +158,7 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
         *screen = 0;
         *texpos = 0;
         *texpos_lower = 0;
-        *flag = 4; // remove SCREENTEXPOS_FLAG_ANCHOR_SUBORDINATE
+        *flag &= 4; // keep SCREENTEXPOS_FLAG_ANCHOR_SUBORDINATE
     }
 
     if (pen.tile_mode == Screen::Pen::CharColor)

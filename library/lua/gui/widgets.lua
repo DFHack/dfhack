@@ -363,8 +363,10 @@ function Panel:setKeyboardDragEnabled(enabled)
         return
     end
     if enabled then
-        local kbd_get_pos = function() return {x=0, y=0} end
-        Panel_begin_drag(self, kbd_get_pos())
+        local kbd_get_pos = function()
+            return {x=self.frame_rect.x1, y=self.frame_rect.y1}
+        end
+        Panel_begin_drag(self)
         self.kbd_get_pos = kbd_get_pos
     else
         Panel_end_drag(self)

@@ -27,16 +27,12 @@ end
 STANDARDSCROLL = {
     STANDARDSCROLL_UP = -1,
     KEYBOARD_CURSOR_UP = -1,
-    CONTEXT_SCROLL_UP = -1,
     STANDARDSCROLL_DOWN = 1,
     KEYBOARD_CURSOR_DOWN = 1,
-    CONTEXT_SCROLL_DOWN = 1,
     STANDARDSCROLL_PAGEUP = '-page',
     KEYBOARD_CURSOR_UP_FAST = '-page',
-    CONTEXT_SCROLL_PAGEUP = '-page',
     STANDARDSCROLL_PAGEDOWN = '+page',
     KEYBOARD_CURSOR_DOWN_FAST = '+page',
-    CONTEXT_SCROLL_PAGEDOWN = '+page',
 }
 
 ------------
@@ -934,10 +930,26 @@ function Scrollbar:onRenderBody(dc)
 end
 
 function Scrollbar:onInput(keys)
-    if not keys._MOUSE_L_DOWN or not self.on_scroll
-            or not scrollbar_is_visible(self) then
+    if not self.on_scroll or not scrollbar_is_visible(self) then
         return false
     end
+    
+    if self.parent_view:getMousePos() then
+        if keys.CONTEXT_SCROLL_UP then
+            self.on_scroll('up_small')
+            return true
+        elseif keys.CONTEXT_SCROLL_DOWN then
+            self.on_scroll('down_small')
+            return true
+        elseif keys.CONTEXT_SCROLL_PAGEUP then
+            self.on_scroll('up_large')
+            return true
+        elseif keys.CONTEXT_SCROLL_PAGEDOWN then
+            self.on_scroll('down_large')
+            return true
+        end
+    end
+    if not keys._MOUSE_L_DOWN then return false end
     local _,y = self:getMousePos()
     if not y then return false end
     local scroll_spec = nil

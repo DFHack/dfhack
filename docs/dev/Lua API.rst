@@ -4377,6 +4377,10 @@ direction. The amount of scrolling done in each case in determined by the
 associated widget, and after scrolling is complete, the associated widget must
 call ``scrollbar:update()`` with updated new display info.
 
+If the mouse wheel is scrolled while the mouse is over the Scrollbar widget's
+parent view, then the parent is scrolled accordingly. Holding :kbd:`Shift`
+while scrolling will result in faster movement.
+
 You can click and drag the scrollbar to scroll to a specific spot, or you can
 click and hold on the end arrows or in the unfilled portion of the scrollbar to
 scroll multiple times, just like in a normal browser scrollbar. The speed of

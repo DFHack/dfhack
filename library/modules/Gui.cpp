@@ -2153,7 +2153,7 @@ df::coord Gui::getMousePos()
     if (gps && gps->precise_mouse_x > -1) {
         pos = getViewportPos();
         if (Screen::inGraphicsMode()) {
-            int32_t map_tile_pixels = gps->viewport_zoom_factor >> 2;
+            int32_t map_tile_pixels = gps->viewport_zoom_factor / 4;
             pos.x += gps->precise_mouse_x / map_tile_pixels;
             pos.y += gps->precise_mouse_y / map_tile_pixels;
         } else {

@@ -161,10 +161,18 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
         *flag &= 4; // keep SCREENTEXPOS_FLAG_ANCHOR_SUBORDINATE
     }
 
+    uint8_t fg = pen.fg | (pen.bold << 3);
+    uint8_t bg = pen.bg;
+
     if (pen.tile_mode == Screen::Pen::CharColor)
         *flag |= 2; // SCREENTEXPOS_FLAG_ADDCOLOR
-    else if (pen.tile_mode == Screen::Pen::TileColor)
+    else if (pen.tile_mode == Screen::Pen::TileColor) {
         *flag |= 1; // SCREENTEXPOS_FLAG_GRAYSCALE
+        if (pen.tile_fg)
+            fg = pen.tile_fg;
+        if (pen.tile_bg)
+            bg = pen.tile_bg;
+    }
 
     if (pen.tile && use_graphics) {
         *texpos = pen.tile;
@@ -173,15 +181,14 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
         *texpos_lower = 909;
     }
 
-    uint8_t fullfg = pen.fg | (pen.bold << 3);
-    auto fg = &gps->uccolor[fullfg][0];
-    auto bg = &gps->uccolor[pen.bg][0];
-    screen[1] = fg[0];
-    screen[2] = fg[1];
-    screen[3] = fg[2];
-    screen[4] = bg[0];
-    screen[5] = bg[1];
-    screen[6] = bg[2];
+    auto rgb_fg = &gps->uccolor[fg][0];
+    auto rgb_bg = &gps->uccolor[bg][0];
+    screen[1] = rgb_fg[0];
+    screen[2] = rgb_fg[1];
+    screen[3] = rgb_fg[2];
+    screen[4] = rgb_bg[0];
+    screen[5] = rgb_bg[1];
+    screen[6] = rgb_bg[2];
 
     return true;
 }

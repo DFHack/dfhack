@@ -784,6 +784,14 @@ sub sizeof {
             } else {
                 print "sizeof stl-deque on $os\n";
             }
+        } elsif ($subtype eq 'stl-map') {
+            if ($os eq 'linux') {
+                return ($arch == 64) ? 48 : 24;
+            } elsif ($os eq 'windows') {
+                return ($arch == 64) ? 16 : 8;
+            } else {
+                print "sizeof stl-map on $os\n";
+            }
         } elsif ($subtype eq 'df-linked-list') {
             return 3 * $SIZEOF_PTR;
         } elsif ($subtype eq 'df-flagarray') {

@@ -103,6 +103,9 @@ module DFHack
                 def stl_deque(tglen)
                     StlDeque.new(tglen, yield)
                 end
+                def stl_map
+                    StlMap.new
+                end
 
                 def df_flagarray(indexenum=nil)
                     DfFlagarray.new(indexenum)
@@ -707,6 +710,10 @@ module DFHack
             # XXX DF uses stl::deque<some_struct>, so to have a C binding we'd need to single-case every
             # possible struct size, like for StlVector. Just ignore it for now, deques are rare enough.
             def inspect ; "#<StlDeque>" ; end
+        end
+        class StlMap < MemStruct
+            # stub, similar to StlDeque
+            def inspect ; "#<StlMap>" ; end
         end
 
         class DfFlagarray < MemStruct

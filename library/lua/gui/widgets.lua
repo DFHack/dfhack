@@ -988,7 +988,7 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
             if token.tile then
                 x = x + 1
                 if dc then
-                    dc:char(nil, token.tile)
+                    dc:tile(nil, token.tile)
                 end
             end
 

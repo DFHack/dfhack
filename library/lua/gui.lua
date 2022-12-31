@@ -597,7 +597,6 @@ end
 Screen = defclass(Screen, View)
 
 Screen.text_input_mode = false
-Screen.request_full_screen_refresh = false
 
 function Screen:postinit()
     self:onResize(dscreen.getWindowSize())
@@ -622,10 +621,6 @@ function Screen:renderParent()
         self._native.parent:render()
     else
         dscreen.clear()
-    end
-    if Screen.request_full_screen_refresh then
-        df.global.gps.force_full_display_count = 1
-        Screen.request_full_screen_refresh = false
     end
 end
 

@@ -442,7 +442,7 @@ end
 -- adding gaps between widgets according to self.autoarrange_gap.
 function Panel:postUpdateLayout()
     -- don't leave artifacts behind on the parent screen when we move
-    gui.Screen.request_full_screen_refresh = true
+    self.request_full_screen_refresh = true
 
     if not self.autoarrange_subviews then return end
 
@@ -464,6 +464,10 @@ end
 
 function Panel:onRenderFrame(dc, rect)
     Panel.super.onRenderFrame(self, dc, rect)
+    if self.request_full_screen_refresh then
+        df.global.gps.force_full_display_count = 1
+        self.request_full_screen_refresh = false
+    end
     if not self.frame_style then return end
     gui.paint_frame(dc, rect, self.frame_style, self.frame_title)
     if self.kbd_get_pos then

@@ -442,6 +442,9 @@ end
 -- if self.autoarrange_subviews is true, lay out visible subviews vertically,
 -- adding gaps between widgets according to self.autoarrange_gap.
 function Panel:postUpdateLayout()
+    -- don't leave artifacts behind on the parent screen when we move
+    gui.Screen.request_full_screen_refresh = true
+
     if not self.autoarrange_subviews then return end
 
     local gap = self.autoarrange_gap

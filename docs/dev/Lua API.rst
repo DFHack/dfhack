@@ -2363,7 +2363,14 @@ Supported callbacks and fields are:
   where the above painting functions work correctly.
 
   If omitted, the screen is cleared; otherwise it should do that itself.
-  In order to make a see-through dialog, call ``self._native.parent:render()``.
+  In order to make a dialog where portions of the parent viewscreen are still
+  visible in the background, call ``screen:renderParent()``.
+
+  If artifacts are left on the parent even after this function is called, such
+  as when the window is dragged or is resized, any code can set
+  ``gui.Screen.request_full_screen_refresh`` to ``true``. Then when
+  ``screen.renderParent()`` is next called, it will do a full flush of the
+  graphics and clear the screen of artifacts.
 
 * ``function screen:onIdle()``
 

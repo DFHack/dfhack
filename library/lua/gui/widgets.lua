@@ -487,6 +487,10 @@ Window.ATTRS {
     draggable = true,
 }
 
+function Window:postUpdateLayout()
+    gui.Screen.request_full_screen_refresh = true
+end
+
 -------------------
 -- ResizingPanel --
 -------------------

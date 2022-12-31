@@ -39,6 +39,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Misc Improvements
 - Scrollable widgets now react to mouse wheel events when the mouse is over the widget
+- the ``dfhack-config/scripts/`` folder is now searched for scripts by default
 
 ## Documentation
 - `overlay-dev-guide`: added troubleshooting tips and common development workflows

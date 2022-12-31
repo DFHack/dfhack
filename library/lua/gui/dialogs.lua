@@ -48,7 +48,7 @@ end
 function MessageBox:onRenderFrame(dc,rect)
     MessageBox.super.onRenderFrame(self,dc,rect)
     if self.on_accept then
-        dc:seek(rect.x1+2,rect.y2):key('LEAVESCREEN'):string('/'):key('MENU_CONFIRM')
+        dc:seek(rect.x1+2,rect.y2):key('LEAVESCREEN'):string('/'):key('SELECT')
     end
 end
 

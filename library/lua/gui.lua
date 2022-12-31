@@ -661,6 +661,8 @@ function Screen:dismiss()
     if self._native then
         dscreen.dismiss(self)
     end
+    -- don't leave artifacts behind on the parent screen when we disappear
+    Screen.request_full_screen_refresh = true
 end
 
 function Screen:onDismiss()

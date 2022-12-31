@@ -8,6 +8,7 @@ local utils = require('utils')
 
 local dscreen = dfhack.screen
 local getval = utils.getval
+local to_pen = dfhack.pen.parse
 
 local function show_view(view,vis)
     if view then
@@ -465,7 +466,7 @@ function Panel:onRenderFrame(dc, rect)
     gui.paint_frame(dc, rect, self.frame_style, self.frame_title)
     if self.kbd_get_pos then
         local pos = self.kbd_get_pos()
-        local pen = dfhack.pen.parse{fg=COLOR_GREEN, bg=COLOR_BLACK}
+        local pen = to_pen{fg=COLOR_GREEN, bg=COLOR_BLACK}
         dc:seek(pos.x, pos.y):pen(pen):char(string.char(0xDB))
     end
     if self.drag_offset and not self.kbd_get_pos
@@ -759,14 +760,12 @@ SCROLL_DELAY_MS = 20
 Scrollbar = defclass(Scrollbar, Widget)
 
 Scrollbar.ATTRS{
-    fg = COLOR_LIGHTGREEN,
-    bg = COLOR_CYAN,
     on_scroll = DEFAULT_NIL,
 }
 
 function Scrollbar:preinit(init_table)
     init_table.frame = init_table.frame or {}
-    init_table.frame.w = init_table.frame.w or 1
+    init_table.frame.w = init_table.frame.w or 2
 end
 
 function Scrollbar:init()
@@ -824,36 +823,95 @@ local function scrollbar_is_visible(scrollbar)
     return scrollbar.elems_per_page < scrollbar.num_elems
 end
 
-local UP_ARROW_CHAR = string.char(24)
-local DOWN_ARROW_CHAR = string.char(25)
-local NO_ARROW_CHAR = string.char(32)
-local BAR_CHAR = string.char(7)
-local BAR_BG_CHAR = string.char(179)
+local SCROLLBAR_UP_LEFT_PEN = to_pen{tile=922, ch=47, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_UP_RIGHT_PEN = to_pen{tile=923, ch=92, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_DOWN_LEFT_PEN = to_pen{tile=946, ch=92, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_DOWN_RIGHT_PEN = to_pen{tile=947, ch=47, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_UP_LEFT_PEN = to_pen{tile=930, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_UP_RIGHT_PEN = to_pen{tile=931, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_LEFT_PEN = to_pen{tile=954, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_RIGHT_PEN = to_pen{tile=955, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_UP_LEFT_PEN = to_pen{tile=932, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_UP_RIGHT_PEN = to_pen{tile=933, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_DOWN_LEFT_PEN = to_pen{tile=960, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_DOWN_RIGHT_PEN = to_pen{tile=961, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_LEFT_PEN = to_pen{tile=940, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_RIGHT_PEN = to_pen{tile=941, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_DOWN_LEFT_PEN = to_pen{tile=966, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_DOWN_RIGHT_PEN = to_pen{tile=967, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_UP_LEFT_HOVER_PEN = to_pen{tile=924, ch=47, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_UP_RIGHT_HOVER_PEN = to_pen{tile=925, ch=92, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_DOWN_LEFT_HOVER_PEN = to_pen{tile=936, ch=92, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_DOWN_RIGHT_HOVER_PEN = to_pen{tile=937, ch=47, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_UP_LEFT_HOVER_PEN = to_pen{tile=930, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_UP_RIGHT_HOVER_PEN = to_pen{tile=931, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_LEFT_HOVER_PEN = to_pen{tile=954, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_RIGHT_HOVER_PEN = to_pen{tile=955, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_UP_LEFT_HOVER_PEN = to_pen{tile=956, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_UP_RIGHT_HOVER_PEN = to_pen{tile=957, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_DOWN_LEFT_HOVER_PEN = to_pen{tile=968, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_DOWN_RIGHT_HOVER_PEN = to_pen{tile=969, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_LEFT_HOVER_PEN = to_pen{tile=942, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_RIGHT_HOVER_PEN = to_pen{tile=943, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_DOWN_LEFT_HOVER_PEN = to_pen{tile=966, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_DOWN_RIGHT_HOVER_PEN = to_pen{tile=967, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_BG_LEFT_PEN = to_pen{tile=934, ch=176, fg=COLOR_DARKGREY, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_BG_RIGHT_PEN = to_pen{tile=935, ch=176, fg=COLOR_DARKGREY, bg=COLOR_BLACK}
 
 function Scrollbar:onRenderBody(dc)
     -- don't draw if all elements are visible
     if not scrollbar_is_visible(self) then
         return
     end
-    -- render up arrow if we're not at the top
-    dc:seek(0, 0):char(
-        self.top_elem == 1 and NO_ARROW_CHAR or UP_ARROW_CHAR, self.fg, self.bg)
+    -- determine which elements should be highlighted
+    local _,hover_y = self:getMousePos()
+    local hover_up, hover_down, hover_bar = false, false, false
+    if hover_y == 0 then
+        hover_up = true
+    elseif hover_y == dc.height-1 then
+        hover_down = true
+    elseif hover_y then
+        hover_bar = true
+    end
+    -- render up arrow
+    dc:seek(0, 0)
+    dc:char(nil, hover_up and SCROLLBAR_UP_LEFT_HOVER_PEN or SCROLLBAR_UP_LEFT_PEN)
+    dc:char(nil, hover_up and SCROLLBAR_UP_RIGHT_HOVER_PEN or SCROLLBAR_UP_RIGHT_PEN)
     -- render scrollbar body
     local starty = self.bar_offset + 1
     local endy = self.bar_offset + self.bar_height
+    local midy = (starty + endy)/2
     for y=1,dc.height-2 do
         dc:seek(0, y)
         if y >= starty and y <= endy then
-            dc:char(BAR_CHAR, self.fg)
+            if y == starty then
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_UP_LEFT_HOVER_PEN or SCROLLBAR_BAR_UP_LEFT_PEN)
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_UP_RIGHT_HOVER_PEN or SCROLLBAR_BAR_UP_RIGHT_PEN)
+            elseif y == midy - 0.5 then
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_CENTER_UP_LEFT_HOVER_PEN or SCROLLBAR_BAR_CENTER_UP_LEFT_PEN)
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_CENTER_UP_RIGHT_HOVER_PEN or SCROLLBAR_BAR_CENTER_UP_RIGHT_PEN)
+            elseif y == midy + 0.5 then
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_CENTER_DOWN_LEFT_HOVER_PEN or SCROLLBAR_BAR_CENTER_DOWN_LEFT_PEN)
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_CENTER_DOWN_RIGHT_HOVER_PEN or SCROLLBAR_BAR_CENTER_DOWN_RIGHT_PEN)
+            elseif y == midy then
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_CENTER_LEFT_HOVER_PEN or SCROLLBAR_BAR_CENTER_LEFT_PEN)
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_CENTER_RIGHT_HOVER_PEN or SCROLLBAR_BAR_CENTER_RIGHT_PEN)
+            elseif y == endy then
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_DOWN_LEFT_HOVER_PEN or SCROLLBAR_BAR_DOWN_LEFT_PEN)
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_DOWN_RIGHT_HOVER_PEN or SCROLLBAR_BAR_DOWN_RIGHT_PEN)
+            else
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_LEFT_HOVER_PEN or SCROLLBAR_BAR_LEFT_PEN)
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_RIGHT_HOVER_PEN or SCROLLBAR_BAR_RIGHT_PEN)
+            end
         else
-            dc:char(BAR_BG_CHAR, self.bg)
+            dc:char(nil, SCROLLBAR_BAR_BG_LEFT_PEN)
+            dc:char(nil, SCROLLBAR_BAR_BG_RIGHT_PEN)
         end
     end
-    -- render down arrow if we're not at the bottom
-    local last_visible_el = self.top_elem + self.elems_per_page - 1
-    dc:seek(0, dc.height-1):char(
-        last_visible_el >= self.num_elems and NO_ARROW_CHAR or DOWN_ARROW_CHAR,
-        self.fg, self.bg)
+    -- render down arrow
+    dc:seek(0, dc.height-1)
+    dc:char(nil, hover_down and SCROLLBAR_DOWN_LEFT_HOVER_PEN or SCROLLBAR_DOWN_LEFT_PEN)
+    dc:char(nil, hover_down and SCROLLBAR_DOWN_RIGHT_HOVER_PEN or SCROLLBAR_DOWN_RIGHT_PEN)
     if not self.on_scroll then return end
     -- manage state for dragging and continuous scrolling
     if self.is_dragging then
@@ -994,7 +1052,7 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
 
             if token.text or token.key then
                 local text = ''..(getval(token.text) or '')
-                local keypen = dfhack.pen.parse(token.key_pen or COLOR_LIGHTGREEN)
+                local keypen = to_pen(token.key_pen or COLOR_LIGHTGREEN)
 
                 if dc then
                     local tpen = getval(token.pen)

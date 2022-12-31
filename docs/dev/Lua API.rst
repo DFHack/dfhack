@@ -4347,13 +4347,11 @@ Scrollbar class
 
 This Widget subclass implements mouse-interactive scrollbars whose bar sizes
 represent the amount of content currently visible in an associated display
-widget (like a `Label class`_ or a `List class`_). By default they are styled
-like scrollbars used in the vanilla DF help screens, but they are configurable.
+widget (like a `Label class`_ or a `List class`_). They are styled like scrollbars
+used in vanilla DF.
 
 Scrollbars have the following attributes:
 
-:fg: Specifies the pen for the scroll icons and the active part of the bar. Default is ``COLOR_LIGHTGREEN``.
-:bg: Specifies the pen for the background part of the scrollbar. Default is ``COLOR_CYAN``.
 :on_scroll: A callback called when the scrollbar is scrolled. If the scrollbar is clicked,
   the callback will be called with one of the following string parameters: "up_large",
   "down_large", "up_small", or "down_small". If the scrollbar is dragged, the callback will

@@ -922,11 +922,13 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
             case general_ref_type::UNIT_HOLDER:
                 if (auto unit = ref->getUnit())
                 {
+/* TODO: understand how this changes for v50
                     // Unit view sidebar holds inventory item pointers
                     if (ui->main.mode == ui_sidebar_mode::ViewUnits &&
                         (!ui_selected_unit ||
                          vector_get(world->units.active, *ui_selected_unit) == unit))
                         return false;
+*/
 
                     for (int i = unit->inventory.size()-1; i >= 0; i--)
                     {

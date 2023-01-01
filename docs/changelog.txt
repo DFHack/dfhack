@@ -45,6 +45,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - added DFHack architecture diagrams to the dev intro
 
 ## API
+- ``Gui::getDwarfmodeDims``: now only returns map viewport dimensions; menu dimensions are obsolete
 
 ## Lua
 - ``gui.View``: ``visible`` and ``active`` can now be functions that return a boolean

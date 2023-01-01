@@ -4154,6 +4154,8 @@ Base of all the widgets. Inherits from View and has the following attributes:
 
   The pen to fill the outer frame with. Defaults to no fill.
 
+.. _panel:
+
 Panel class
 -----------
 

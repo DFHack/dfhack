@@ -1,5 +1,4 @@
-#include "df/graphic_viewportst.h"
-
+#include "modules/Gui.h"
 #include "modules/Maps.h"
 #include "modules/Screen.h"
 
@@ -34,10 +33,9 @@ static void paintScreen(df::coord target, bool skip_unrevealed = false) {
 
     bool use_graphics = Screen::inGraphicsMode();
 
-    auto dimx = use_graphics ? gps->main_viewport->dim_x : gps->dimx;
-    auto dimy = use_graphics ? gps->main_viewport->dim_y : gps->dimy;
-    for (int y = 0; y < dimy; ++y) {
-        for (int x = 0; x < dimx; ++x) {
+    auto dims = Gui::getDwarfmodeViewDims().map();
+    for (int y = dims.first.y; y <= dims.second.y; ++y) {
+        for (int x = dims.first.x; x <= dims.second.x; ++x) {
             df::coord map_pos(*window_x + x, *window_y + y, *window_z);
 
             if (!Maps::isValidTilePos(map_pos))

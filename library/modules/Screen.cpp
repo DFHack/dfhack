@@ -150,6 +150,7 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
     *screen = 0;
     *texpos = 0;
     *texpos_lower = 0;
+    gps->screentexpos_anchored[index] = 0;
     // keep SCREENTEXPOS_FLAG_ANCHOR_SUBORDINATE so occluded anchored textures
     // don't appear corrupted
     *flag &= 4;
@@ -163,6 +164,7 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
         *screen = 0;
         *texpos = 0;
         *texpos_lower = 0;
+        gps->screentexpos_top_anchored[index] = 0;
         *flag &= 4; // keep SCREENTEXPOS_FLAG_ANCHOR_SUBORDINATE
     }
 

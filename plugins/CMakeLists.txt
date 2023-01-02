@@ -80,7 +80,7 @@ set_source_files_properties( Brushes.h PROPERTIES HEADER_FILE_ONLY TRUE )
 
 #dfhack_plugin(3dveins 3dveins.cpp)
 #dfhack_plugin(add-spatter add-spatter.cpp)
-#dfhack_plugin(autobutcher autobutcher.cpp LINK_LIBRARIES lua)
+dfhack_plugin(autobutcher autobutcher.cpp LINK_LIBRARIES lua)
 #dfhack_plugin(autochop autochop.cpp)
 #dfhack_plugin(autoclothing autoclothing.cpp)
 #dfhack_plugin(autodump autodump.cpp)

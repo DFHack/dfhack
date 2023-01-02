@@ -884,7 +884,7 @@ function Scrollbar:onRenderBody(dc)
     for y=1,dc.height-2 do
         dc:seek(0, y)
         if y >= starty and y <= endy then
-            if y == starty then
+            if y == starty and y <= midy - 1 then
                 dc:char(nil, hover_bar and SCROLLBAR_BAR_UP_LEFT_HOVER_PEN or SCROLLBAR_BAR_UP_LEFT_PEN)
                 dc:char(nil, hover_bar and SCROLLBAR_BAR_UP_RIGHT_HOVER_PEN or SCROLLBAR_BAR_UP_RIGHT_PEN)
             elseif y == midy - 0.5 then
@@ -896,7 +896,7 @@ function Scrollbar:onRenderBody(dc)
             elseif y == midy then
                 dc:char(nil, hover_bar and SCROLLBAR_BAR_CENTER_LEFT_HOVER_PEN or SCROLLBAR_BAR_CENTER_LEFT_PEN)
                 dc:char(nil, hover_bar and SCROLLBAR_BAR_CENTER_RIGHT_HOVER_PEN or SCROLLBAR_BAR_CENTER_RIGHT_PEN)
-            elseif y == endy then
+            elseif y == endy and y >= midy + 1 then
                 dc:char(nil, hover_bar and SCROLLBAR_BAR_DOWN_LEFT_HOVER_PEN or SCROLLBAR_BAR_DOWN_LEFT_PEN)
                 dc:char(nil, hover_bar and SCROLLBAR_BAR_DOWN_RIGHT_HOVER_PEN or SCROLLBAR_BAR_DOWN_RIGHT_PEN)
             else

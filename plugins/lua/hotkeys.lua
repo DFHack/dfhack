@@ -13,13 +13,13 @@ HotspotMenuWidget = defclass(HotspotMenuWidget, overlay.OverlayWidget)
 HotspotMenuWidget.ATTRS{
     default_pos={x=1,y=2},
     hotspot=true,
-    viewscreens={'dwarfmode'},
+    viewscreens='all',
     overlay_onupdate_max_freq_seconds=0,
     frame={w=4, h=3}
 }
 
 function HotspotMenuWidget:init()
-    self:addviews{widgets.Label{text={'!!!!', NEWLINE, '!!!!', NEWLINE, '!!!!'}}}
+    self:addviews{widgets.Label{text={'!DF!', NEWLINE, '!Ha!', NEWLINE, '!ck!'}}}
     self.mouseover = false
 end
 

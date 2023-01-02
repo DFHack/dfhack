@@ -78,7 +78,9 @@ end
 
 -- normalize "short form" viewscreen names to "long form"
 local function normalize_viewscreen_name(vs_name)
-    if vs_name:match('viewscreen_.*st') then return vs_name end
+    if vs_name == 'all' or vs_name:match('viewscreen_.*st') then
+        return vs_name
+    end
     return 'viewscreen_' .. vs_name .. 'st'
 end
 
@@ -416,18 +418,24 @@ function update_hotspot_widgets()
     end
 end
 
--- not subject to trigger lock since these widgets are already filtered by
--- viewscreen
-function update_viewscreen_widgets(vs_name, vs)
+local function _update_viewscreen_widgets(vs_name, vs, now_ms)
     local vs_widgets = active_viewscreen_widgets[vs_name]
     if not vs_widgets then return end
-    local now_ms = dfhack.getTickCount()
+    now_ms = now_ms or dfhack.getTickCount()
     for name,db_entry in pairs(vs_widgets) do
         if do_update(name, db_entry, now_ms, vs) then return end
     end
+    return now_ms
 end
 
-function feed_viewscreen_widgets(vs_name, keys)
+-- not subject to trigger lock since these widgets are already filtered by
+-- viewscreen
+function update_viewscreen_widgets(vs_name, vs)
+    local now_ms = _update_viewscreen_widgets(vs_name, vs, nil)
+    _update_viewscreen_widgets('all', vs, now_ms)
+end
+
+local function _feed_viewscreen_widgets(vs_name, keys)
     local vs_widgets = active_viewscreen_widgets[vs_name]
     if not vs_widgets then return false end
     for _,db_entry in pairs(vs_widgets) do
@@ -439,14 +447,24 @@ function feed_viewscreen_widgets(vs_name, keys)
     return false
 end
 
-function render_viewscreen_widgets(vs_name)
+function feed_viewscreen_widgets(vs_name, keys)
+    return _feed_viewscreen_widgets(vs_name, keys) or
+            _feed_viewscreen_widgets('all', keys)
+end
+
+local function _render_viewscreen_widgets(vs_name, dc)
     local vs_widgets = active_viewscreen_widgets[vs_name]
     if not vs_widgets then return false end
-    local dc = gui.Painter.new()
+    dc = dc or gui.Painter.new()
     for _,db_entry in pairs(vs_widgets) do
         local w = db_entry.widget
         detect_frame_change(w, function() w:render(dc) end)
     end
+end
+
+function render_viewscreen_widgets(vs_name)
+    local dc = _render_viewscreen_widgets(vs_name, nil)
+    _render_viewscreen_widgets('all', dc)
 end
 
 -- called when the DF window is resized

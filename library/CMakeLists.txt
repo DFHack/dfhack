@@ -141,6 +141,7 @@ set(MODULE_HEADERS
     include/modules/Random.h
     include/modules/Renderer.h
     include/modules/Screen.h
+    include/modules/Textures.h
     include/modules/Translation.h
     include/modules/Units.h
     include/modules/World.h
@@ -166,6 +167,7 @@ set(MODULE_SOURCES
     modules/Random.cpp
     modules/Renderer.cpp
     modules/Screen.cpp
+    modules/Textures.cpp
     modules/Translation.cpp
     modules/Units.cpp
     modules/World.cpp

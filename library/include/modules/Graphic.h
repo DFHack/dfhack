@@ -46,8 +46,28 @@ namespace DFHack
     } DFSDL_Rect;
     typedef struct
     {
+        void *palette; // SDL_Palette*
+        uint8_t  BitsPerPixel;
+        uint8_t  BytesPerPixel;
+        uint8_t  Rloss;
+        uint8_t  Gloss;
+        uint8_t  Bloss;
+        uint8_t  Aloss;
+        uint8_t  Rshift;
+        uint8_t  Gshift;
+        uint8_t  Bshift;
+        uint8_t  Ashift;
+        uint32_t Rmask;
+        uint32_t Gmask;
+        uint32_t Bmask;
+        uint32_t Amask;
+        uint32_t colorkey;
+        uint8_t  alpha;
+    } DFSDL_PixelFormat;
+    typedef struct
+    {
         uint32_t flags;
-        void* format; // PixelFormat*
+        DFSDL_PixelFormat* format;
         int w, h;
         int pitch;
         void* pixels;

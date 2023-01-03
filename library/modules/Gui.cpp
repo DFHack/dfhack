@@ -143,6 +143,7 @@ static std::map<virtual_identity*, getFocusStringHandler> getFocusStringHandlers
 
 DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
 {
+/* TODO: understand how this changes for v50
     using namespace df::enums::ui_sidebar_mode;
 
     using df::global::ui_workshop_in_add;
@@ -315,7 +316,6 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             focus += "/List";
         break;
 
-/* TODO: understand how this changes for v50
     case Hauling:
         if (ui->hauling.in_assign_vehicle)
         {
@@ -354,11 +354,11 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
                 focus += "/Select/" + tag;
         }
         break;
-*/
 
     default:
         break;
     }
+*/
 }
 
 /* TODO: understand how this changes for v50
@@ -667,12 +667,13 @@ bool Gui::cursor_hotkey(df::viewscreen *top)
 
 bool Gui::workshop_job_hotkey(df::viewscreen *top)
 {
+    if (!dwarfmode_hotkey(top))
+        return false;
+
+/* TODO: understand how this changes for v50
     using namespace ui_sidebar_mode;
     using df::global::ui_workshop_in_add;
     using df::global::ui_workshop_job_cursor;
-
-    if (!dwarfmode_hotkey(top))
-        return false;
 
     switch (ui->main.mode) {
     case QueryBuilding:
@@ -699,15 +700,17 @@ bool Gui::workshop_job_hotkey(df::viewscreen *top)
     default:
         return false;
     }
+*/ return false;
 }
 
 bool Gui::build_selector_hotkey(df::viewscreen *top)
 {
-    using namespace ui_sidebar_mode;
-    using df::global::ui_build_selector;
-
     if (!dwarfmode_hotkey(top))
         return false;
+
+/* TODO: understand how this changes for v50
+    using namespace ui_sidebar_mode;
+    using df::global::ui_build_selector;
 
     switch (ui->main.mode) {
     case Build:
@@ -726,20 +729,23 @@ bool Gui::build_selector_hotkey(df::viewscreen *top)
     default:
         return false;
     }
+*/ return false;
 }
 
 bool Gui::view_unit_hotkey(df::viewscreen *top)
 {
-    using df::global::ui_selected_unit;
-
     if (!dwarfmode_hotkey(top))
         return false;
+/* TODO: understand how this changes for v50
+    using df::global::ui_selected_unit;
+
     if (ui->main.mode != ui_sidebar_mode::ViewUnits)
         return false;
     if (!ui_selected_unit) // allow missing
         return false;
 
     return vector_get(world->units.active, *ui_selected_unit) != NULL;
+*/ return false;
 }
 
 bool Gui::unit_inventory_hotkey(df::viewscreen *top)
@@ -826,6 +832,7 @@ df::job *Gui::getSelectedJob(color_ostream &out, bool quiet)
 
 df::unit *Gui::getAnyUnit(df::viewscreen *top)
 {
+/* TODO: understand how this changes for v50
     using namespace ui_sidebar_mode;
     using df::global::ui_look_cursor;
     using df::global::ui_look_list;
@@ -834,7 +841,6 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
     using df::global::ui_building_assign_units;
     using df::global::ui_building_item_cursor;
 
-/* TODO: understand how this changes for v50
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_unitst, top))
     {
         return screen->unit;
@@ -1108,13 +1114,13 @@ df::unit *Gui::getSelectedUnit(color_ostream &out, bool quiet)
 
 df::item *Gui::getAnyItem(df::viewscreen *top)
 {
+/* TODO: understand how this changes for v50
     using namespace ui_sidebar_mode;
     using df::global::ui_look_cursor;
     using df::global::ui_look_list;
     using df::global::ui_unit_view_mode;
     using df::global::ui_building_item_cursor;
 
-/* TODO: understand how this changes for v50
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_textviewerst, top))
     {
         // return the main item if the parent screen is a viewscreen_itemst
@@ -1248,11 +1254,11 @@ df::item *Gui::getSelectedItem(color_ostream &out, bool quiet)
 
 df::building *Gui::getAnyBuilding(df::viewscreen *top)
 {
+/* TODO: understand how this changes for v50
     using namespace ui_sidebar_mode;
     using df::global::ui_look_list;
     using df::global::ui_look_cursor;
 
-/* TODO: understand how this changes for v50
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_buildinglistst, top))
         return vector_get(screen->buildings, screen->cursor);
 
@@ -1324,10 +1330,12 @@ df::plant *Gui::getAnyPlant(df::viewscreen *top)
         if (!cursor || !ui || !world)
             return nullptr;
 
+/* TODO: understand how this changes for v50
         if (ui->main.mode == ui_sidebar_mode::LookAround)
         {
             return Maps::getPlantAtTile(cursor->x, cursor->y, cursor->z);
         }
+*/
     }
 
     return nullptr;
@@ -1945,7 +1953,9 @@ void Gui::resetDwarfmodeView(bool pause)
     {
         ui->follow_unit = -1;
         ui->follow_item = -1;
+/* TODO: understand how this changes for v50
         ui->main.mode = ui_sidebar_mode::Default;
+*/
     }
 
     if (selection_rect)

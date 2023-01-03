@@ -2267,6 +2267,7 @@ bool Core::ncurses_wgetch(int in, int & out)
     }
     if(in >= KEY_F(1) && in <= KEY_F(8))
     {
+/* TODO: understand how this changes for v50
         int idx = in - KEY_F(1);
         // FIXME: copypasta, push into a method!
         if(df::global::ui && df::global::gview)
@@ -2285,6 +2286,7 @@ bool Core::ncurses_wgetch(int in, int & out)
                 return true;
             }
         }
+*/
     }
     out = in;
     return true;
@@ -2452,6 +2454,7 @@ bool Core::SelectHotkey(int sym, int modifiers)
             int idx = sym - SDL::K_F1;
             if(idx >= 0 && idx < 8)
             {
+/* TODO: understand how this changes for v50
                 if (modifiers & 1)
                     idx += 8;
 
@@ -2461,6 +2464,7 @@ bool Core::SelectHotkey(int sym, int modifiers)
                 {
                     cmd = df::global::ui->main.hotkeys[idx].name;
                 }
+*/
             }
         }
     }

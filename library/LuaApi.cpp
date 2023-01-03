@@ -2025,11 +2025,6 @@ static void imgui_navcapture(bool capture)
     }
 }
 
-static bool imgui_begintable(std::string name, int column, int flags)
-{
-    return ImGui::BeginTable(name.c_str(), column, flags);
-}
-
 static void imgui_tablenextrow()
 {
     ImGui::TableNextRow();
@@ -2097,7 +2092,6 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(WantCaptureInput, imgui_wantcaptureinput),
     WRAPN(AddNavGate, imgui_addnavgate),
     WRAPN(NavCapture, imgui_navcapture),
-    WRAPN(BeginTable, imgui_begintable),
     WRAPM(ImGui, EndTable),
     WRAPN(TableNextRow, imgui_tablenextrow),
     WRAPM(ImGui, TableNextColumn),
@@ -2838,6 +2832,45 @@ static int imgui_selectable(lua_State* state)
     return 1;
 }
 
+static int imgui_begintable(lua_State* state)
+{
+    std::string name;
+    int column = 0;
+    int flags = 0;
+    ImVec2 outer_size = ImVec2(0,0);
+    float inner_width = 0;
+
+    if (lua_gettop(state) == 3)
+    {
+        name = imgui_decode<std::string>(state, -3);
+        column = imgui_decode<double>(state, -2);
+        flags = imgui_decode<double>(state, -1);
+    }
+
+    if (lua_gettop(state) == 4)
+    {
+        name = imgui_decode<std::string>(state, -4);
+        column = imgui_decode<double>(state, -3);
+        flags = imgui_decode<double>(state, -2);
+        outer_size = imgui_decode<ImVec2>(state, -1);
+    }
+
+    if (lua_gettop(state) == 5)
+    {
+        name = imgui_decode<std::string>(state, -5);
+        column = imgui_decode<double>(state, -4);
+        flags = imgui_decode<double>(state, -3);
+        outer_size = imgui_decode<ImVec2>(state, -2);
+        inner_width = imgui_decode<double>(state, -1);
+    }
+
+    bool result = ImGui::BeginTable(name.c_str(), column, flags, outer_size, inner_width);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"Begin", imgui_begin},
     {"SameLine", imgui_sameline},
@@ -2873,6 +2906,7 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"GetKeyDisplay", imgui_getkeydisplay},
     {"SelectableRef", imgui_selectableref},
     {"Selectable", imgui_selectable},
+    {"BeginTable", imgui_begintable},
     { NULL, NULL }
 };
 

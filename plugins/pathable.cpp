@@ -33,6 +33,9 @@ static void paintScreen(df::coord target, bool skip_unrevealed = false) {
 
     bool use_graphics = Screen::inGraphicsMode();
 
+    int selected_tile_texpos = 0;
+    Screen::findGraphicsTile("CURSORS", 4, 3, &selected_tile_texpos);
+
     auto dims = Gui::getDwarfmodeViewDims().map();
     for (int y = dims.first.y; y <= dims.second.y; ++y) {
         for (int x = dims.first.x; x <= dims.second.x; ++x) {
@@ -70,7 +73,7 @@ static void paintScreen(df::coord target, bool skip_unrevealed = false) {
 
             if (use_graphics) {
                 if (map_pos == target) {
-                    cur_tile.tile = 100711; // highlighted selection
+                    cur_tile.tile = selected_tile_texpos;
                 } else{
                     cur_tile.tile = can_walk ? 779 : 782;
                 }

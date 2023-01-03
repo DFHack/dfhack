@@ -2761,6 +2761,83 @@ static int imgui_getkeydisplay(lua_State* state)
     return 1;
 }
 
+static int imgui_selectableref(lua_State* state)
+{
+    std::string label;
+    imgui_ref_tag<bool> is_selected;
+    int flags = 0;
+    ImVec2 width;
+
+    if (lua_gettop(state) == 2)
+    {
+        label = imgui_decode<std::string>(state, -2);
+        is_selected = imgui_decode<imgui_ref_tag<bool>>(state, -1);
+    }
+
+    if (lua_gettop(state) == 3)
+    {
+        label = imgui_decode<std::string>(state, -3);
+        is_selected = imgui_decode<imgui_ref_tag<bool>>(state, -2);
+        flags = imgui_decode<double>(state, -1);
+    }
+
+    if (lua_gettop(state) == 4)
+    {
+        label = imgui_decode<std::string>(state, -4);
+        is_selected = imgui_decode<imgui_ref_tag<bool>>(state, -3);
+        flags = imgui_decode<double>(state, -2);
+        width = imgui_decode<ImVec2>(state, -1);
+    }
+
+    bool result = ImGui::Selectable(label.c_str(), &is_selected.val, flags, width);
+
+    imgui_encode_into_ref(state, is_selected.val, is_selected.index);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
+static int imgui_selectable(lua_State* state)
+{
+    std::string label;
+    bool is_selected = false;
+    int flags = 0;
+    ImVec2 width;
+
+    if (lua_gettop(state) == 1)
+    {
+        label = imgui_decode<std::string>(state, -1);
+    }
+
+    if (lua_gettop(state) == 2)
+    {
+        label = imgui_decode<std::string>(state, -2);
+        is_selected = imgui_decode<bool>(state, -1);
+    }
+
+    if (lua_gettop(state) == 3)
+    {
+        label = imgui_decode<std::string>(state, -3);
+        is_selected = imgui_decode<bool>(state, -2);
+        flags = imgui_decode<double>(state, -1);
+    }
+
+    if (lua_gettop(state) == 4)
+    {
+        label = imgui_decode<std::string>(state, -4);
+        is_selected = imgui_decode<bool>(state, -3);
+        flags = imgui_decode<double>(state, -2);
+        width = imgui_decode<ImVec2>(state, -1);
+    }
+
+    bool result = ImGui::Selectable(label.c_str(), is_selected, flags, width);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"Begin", imgui_begin},
     {"SameLine", imgui_sameline},
@@ -2794,6 +2871,8 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"TabItemButton", imgui_tabitembutton},
     {"Shortcut", imgui_shortcut},
     {"GetKeyDisplay", imgui_getkeydisplay},
+    {"SelectableRef", imgui_selectableref},
+    {"Selectable", imgui_selectable},
     { NULL, NULL }
 };
 

@@ -657,6 +657,12 @@ function EditField:onRenderBody(dc)
     dc:string((' '):rep(dc.clip_x2 - dc.x))
 end
 
+function EditField:insert(text)
+    local old = self.text
+    self:setText(old:sub(1,self.cursor-1)..text..old:sub(self.cursor),
+                 self.cursor + #text)
+end
+
 function EditField:onInput(keys)
     if not self.focus then
         -- only react to our hotkey
@@ -713,8 +719,7 @@ function EditField:onInput(keys)
         else
             local cv = string.char(keys._STRING)
             if not self.on_char or self.on_char(cv, old) then
-                self:setText(old:sub(1,self.cursor-1)..cv..old:sub(self.cursor),
-                             self.cursor + 1)
+                self:insert(cv)
             elseif self.on_char then
                 return self.modal
             end

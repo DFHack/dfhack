@@ -274,7 +274,7 @@ void impl::init_current_context()
     ImGui::GetStyle().TouchExtraPadding = ImVec2(0.0f, 0.0f);
     ImGui::GetStyle().IndentSpacing = 1.0f;
     ImGui::GetStyle().ColumnsMinSpacing = 1.0f;
-    ImGui::GetStyle().ScrollbarSize = 0.5f;
+    ImGui::GetStyle().ScrollbarSize = 1.f;
     ImGui::GetStyle().ScrollbarRounding = 0.0f;
     ImGui::GetStyle().GrabMinSize = 0.1f;
     ImGui::GetStyle().GrabRounding = 0.0f;
@@ -337,6 +337,11 @@ void impl::init_current_context()
     style.Colors[ImGuiCol_NavHighlight] = ImVec4(0,0,0,0);
     style.Colors[ImGuiCol_NavWindowingHighlight] = ImVec4(0, 0, 0, 0);
     style.Colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0, 0, 0, 0);
+
+    style.Colors[ImGuiCol_ScrollbarBg] = named_colours("DARKGREY", "DARKGREY", false);
+    style.Colors[ImGuiCol_ScrollbarGrab] = named_colours("GREY", "GREY", false);
+    style.Colors[ImGuiCol_ScrollbarGrabHovered] = named_colours("WHITE", "WHITE", false);
+    style.Colors[ImGuiCol_ScrollbarGrabActive] = named_colours("WHITE", "WHITE", false);
 
     ImFontConfig fontConfig;
     fontConfig.GlyphMinAdvanceX = 1.0f;

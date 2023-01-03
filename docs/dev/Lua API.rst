@@ -1011,7 +1011,7 @@ Fortress mode
 
 * ``dfhack.gui.getDwarfmodeViewDims()``
 
-  Returns dimensions of the main fortress mode screen. See ``getPanelLayout()``
+  Returns dimensions of the displayed map viewport. See ``getPanelLayout()``
   in the ``gui.dwarfmode`` module for a more Lua-friendly version.
 
 * ``dfhack.gui.resetDwarfmodeView([pause])``

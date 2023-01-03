@@ -71,30 +71,9 @@ end
 
 function getPanelLayout()
     local dims = dfhack.gui.getDwarfmodeViewDims()
-    local area_pos = df.global.ui_menu_width[1]
-    local menu_pos = df.global.ui_menu_width[0]
-
-    if dims.menu_forced then
-        menu_pos = area_pos - 1
-    end
-
-    local rv = {
-        menu_pos = menu_pos,
-        area_pos = area_pos,
-        map = gui.mkdims_xy(dims.map_x1, dims.map_y1, dims.map_x2, dims.map_y2),
+    return {
+        map=gui.mkdims_xy(dims.map_x1, dims.map_y1, dims.map_x2, dims.map_y2),
     }
-
-    if dims.menu_forced then
-        rv.menu_forced = true
-    end
-    if dims.menu_on then
-        rv.menu = gui.mkdims_xy(dims.menu_x1, dims.y1, dims.menu_x2, dims.y2)
-    end
-    if dims.area_on then
-        rv.area_map = gui.mkdims_xy(dims.area_x1, dims.y1, dims.area_x2, dims.y2)
-    end
-
-    return rv
 end
 
 function getCursorPos()

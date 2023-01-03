@@ -1436,17 +1436,8 @@ static int gui_getDwarfmodeViewDims(lua_State *state)
     lua_newtable(state);
     Lua::TableInsert(state, "map_x1", dims.map_x1);
     Lua::TableInsert(state, "map_x2", dims.map_x2);
-    Lua::TableInsert(state, "menu_x1", dims.menu_x1);
-    Lua::TableInsert(state, "menu_x2", dims.menu_x2);
-    Lua::TableInsert(state, "area_x1", dims.area_x1);
-    Lua::TableInsert(state, "area_x2", dims.area_x2);
-    Lua::TableInsert(state, "y1", dims.y1);
-    Lua::TableInsert(state, "y2", dims.y2);
     Lua::TableInsert(state, "map_y1", dims.map_y1);
     Lua::TableInsert(state, "map_y2", dims.map_y2);
-    Lua::TableInsert(state, "menu_on", dims.menu_on);
-    Lua::TableInsert(state, "area_on", dims.area_on);
-    Lua::TableInsert(state, "menu_forced", dims.menu_forced);
     return 1;
 }
 

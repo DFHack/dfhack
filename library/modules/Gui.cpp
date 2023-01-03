@@ -1919,47 +1919,14 @@ Gui::DwarfmodeDims getDwarfmodeViewDims_default()
 {
     Gui::DwarfmodeDims dims;
 
-    auto ws = Screen::getWindowSize();
-    dims.y1 = 1;
-    dims.y2 = ws.y-2;
+    bool use_graphics = Screen::inGraphicsMode();
+    auto dimx = use_graphics ? gps->main_viewport->dim_x : gps->dimx;
+    auto dimy = use_graphics ? gps->main_viewport->dim_y : gps->dimy;
 
-    dims.map_x1 = 1;
-    dims.map_x2 = ws.x-2;
-    dims.map_y1 = dims.y1;
-    dims.map_y2 = dims.y2;
-
-    dims.area_x1 = dims.area_x2 = dims.menu_x1 = dims.menu_x2 = -1;
-    dims.menu_forced = false;
-
-    int menu_pos = (ui_menu_width ? (*ui_menu_width)[0] : 2);
-    int area_pos = (ui_menu_width ? (*ui_menu_width)[1] : 3);
-
-    if (ui && ui->main.mode != ui_sidebar_mode::Default && ui->main.mode != ui_sidebar_mode::ArenaWeather && menu_pos >= area_pos)
-    {
-        dims.menu_forced = true;
-        menu_pos = area_pos-1;
-    }
-
-    dims.area_on = (area_pos < 3);
-    dims.menu_on = (menu_pos < area_pos);
-
-    if (dims.menu_on)
-    {
-        dims.menu_x2 = ws.x - 2;
-        dims.menu_x1 = dims.menu_x2 - Gui::MENU_WIDTH + 1;
-        if (menu_pos == 1)
-            dims.menu_x1 -= Gui::AREA_MAP_WIDTH + 1;
-        dims.map_x2 = dims.menu_x1 - 2;
-    }
-    if (dims.area_on)
-    {
-        dims.area_x2 = ws.x-2;
-        dims.area_x1 = dims.area_x2 - Gui::AREA_MAP_WIDTH + 1;
-        if (dims.menu_on)
-            dims.menu_x2 = dims.area_x1 - 2;
-        else
-            dims.map_x2 = dims.area_x1 - 2;
-    }
+    dims.map_x1 = 0;
+    dims.map_x2 = dimx - 1;
+    dims.map_y1 = 0;
+    dims.map_y2 = dimy - 1;
 
     return dims;
 }
@@ -2198,18 +2165,4 @@ bool Gui::getWindowSize (int32_t &width, int32_t &height)
         height = 25;
         return false;
     }
-}
-
-bool Gui::getMenuWidth(uint8_t &menu_width, uint8_t &area_map_width)
-{
-    menu_width = (*ui_menu_width)[0];
-    area_map_width = (*ui_menu_width)[1];
-    return true;
-}
-
-bool Gui::setMenuWidth(const uint8_t menu_width, const uint8_t area_map_width)
-{
-    (*ui_menu_width)[0] = menu_width;
-    (*ui_menu_width)[1] = area_map_width;
-    return true;
 }

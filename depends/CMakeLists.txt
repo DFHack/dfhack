@@ -81,3 +81,13 @@ if(MSVC)
     target_compile_options(xlsxio_read_STATIC PRIVATE /wd4013 /wd4244)
     target_compile_options(xlsxio_write_STATIC PRIVATE /wd4013 /wd4244)
 endif()
+
+add_subdirectory(imgui)
+
+if(MSVC)
+    target_compile_options(imgui PRIVATE /wd4244 /wd4305)
+endif()
+
+if(UNIX)
+	target_compile_options(imgui PRIVATE -Wno-unused_variable)
+endif()

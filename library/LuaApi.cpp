@@ -49,6 +49,7 @@ distribution.
 #include "modules/Designations.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
+#include "modules/ImTuiImpl.h"
 #include "modules/Items.h"
 #include "modules/Job.h"
 #include "modules/Kitchen.h"
@@ -104,6 +105,11 @@ distribution.
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
+
+#include "imgui.h"
+#include "misc/cpp/imgui_stdlib.h"
+//GetCurrentContext
+#include "imgui_internal.h"
 
 using namespace DFHack;
 using namespace DFHack::LuaWrapper;
@@ -1614,6 +1620,1293 @@ static const luaL_Reg dfhack_gui_funcs[] = {
     { "pauseRecenter", gui_pauseRecenter },
     { "revealInDwarfmodeMap", gui_revealInDwarfmodeMap },
     { "getMousePos", gui_getMousePos },
+    { NULL, NULL }
+};
+
+template<typename T>
+struct imgui_ref_tag {
+    bool decoded = false;
+    int index = 0;
+    T val = T{};
+};
+
+template<typename T, typename U>
+static void imgui_decode_impl(lua_State* state, std::map<T, U>& out, int index);
+
+template<typename T>
+static void imgui_decode_impl(lua_State* state, std::vector<T>& out, int index);
+
+template<typename T>
+static void imgui_decode_impl(lua_State* state, imgui_ref_tag<T>& out, int index);
+
+template<typename T>
+static T imgui_decode_ref(lua_State* state, int index);
+
+static void imgui_decode_impl(lua_State* state, double& out, int index)
+{
+    lua_pushvalue(state, index);
+    out = lua_tonumber(state, -1);
+    lua_pop(state, 1);
+}
+
+static void imgui_decode_impl(lua_State* state, std::string& out, int index)
+{
+    lua_pushvalue(state, index);
+    size_t len = 0;
+    const char* str = lua_tolstring(state, -1, &len);
+
+    out = std::string(str, len);
+    lua_pop(state, 1);
+}
+
+static void imgui_decode_impl(lua_State* state, bool& out, int index)
+{
+    lua_pushvalue(state, index);
+    out = lua_toboolean(state, -1);
+    lua_pop(state, 1);
+}
+
+static void imgui_decode_impl(lua_State* state, ImVec2& out, int index)
+{
+    std::map<std::string, double> from_map;
+    imgui_decode_impl(state, from_map, index);
+    out = { static_cast<float>(from_map["x"]), static_cast<float>(from_map["y"]) };
+}
+
+template<typename T>
+static void imgui_decode_impl(lua_State* state, T*& ptr, int index)
+{
+    static_assert(!std::is_same<T, char>::value, "a char* ptr in here is probably not what you want");
+
+    lua_pushvalue(state, index);
+    ptr = (T*)lua_topointer(state, -1);
+    lua_pop(state, 1);
+}
+
+template<typename T, typename U>
+static void imgui_decode_impl(lua_State* state, std::map<T, U>& out, int index)
+{
+    out.clear();
+
+    lua_pushvalue(state, index);
+    lua_pushnil(state);
+
+    while (lua_next(state, -2))
+    {
+        lua_pushvalue(state, -2);
+
+        T key;
+        imgui_decode_impl(state, key, -1);
+
+        U value;
+        imgui_decode_impl(state, value, -2);
+
+        out[key] = std::move(value);
+
+        lua_pop(state, 2);
+    }
+
+    lua_pop(state, 1);
+}
+
+template<typename T>
+static void imgui_decode_impl(lua_State* state, std::vector<T>& out, int index)
+{
+    out.clear();
+
+    size_t len = lua_rawlen(state, index);
+
+    out.reserve(len);
+
+    for (size_t i = 0; i < len; i++)
+    {
+        lua_rawgeti(state, index, i);
+
+        T val;
+        imgui_decode_impl(state, val, -1);
+
+        out.push_back(std::move(val));
+
+        lua_pop(state, 1);
+    }
+}
+
+template<typename T>
+static void imgui_decode_impl(lua_State* state, imgui_ref_tag<T>& out, int index)
+{
+    if (lua_istable(state, index))
+        out.decoded = true;
+    else
+        return;
+
+    out.index = index;
+    out.val = imgui_decode_ref<T>(state, index);
+}
+
+template<typename T>
+static T imgui_decode(lua_State* state, int index)
+{
+    T val;
+    imgui_decode_impl(state, val, index);
+    return val;
+}
+
+//decodes ref at index
+template<typename T>
+static T imgui_decode_ref(lua_State* state, int index)
+{
+    lua_pushvalue(state, index);
+    lua_pushnumber(state, 0);
+    lua_gettable(state, -2);
+
+    T out = {};
+    imgui_decode_impl(state, out, -1);
+
+    lua_pop(state, 2);
+
+    return out;
+}
+
+template<typename T, typename U>
+static void imgui_push_generic(lua_State* state, const std::map<T, U>& val);
+
+static void imgui_push_generic(lua_State* state, double val)
+{
+    lua_pushnumber(state, val);
+}
+
+static void imgui_push_generic(lua_State* state, const std::string& val)
+{
+    lua_pushlstring(state, val.c_str(), val.size());
+}
+
+static void imgui_push_generic(lua_State* state, bool val)
+{
+    lua_pushboolean(state, val);
+}
+
+static void imgui_push_generic(lua_State* state, ImVec2 val)
+{
+    std::map<std::string, double> as_map = { {"x", val.x}, {"y", val.y} };
+
+    imgui_push_generic(state, as_map);
+}
+
+template<typename T>
+static void imgui_push_generic(lua_State* state, T* ptr)
+{
+    static_assert(!std::is_same<T, char>::value, "a char* ptr in here is probably not what you want");
+
+    lua_pushlightuserdata(state, ptr);
+}
+
+static void imgui_push_generic(lua_State* state, lua_CFunction f)
+{
+    lua_pushcfunction(state, f);
+}
+
+template<typename T, typename U>
+static void imgui_push_generic(lua_State* state, const std::map<T, U>& val)
+{
+    lua_newtable(state);
+
+    for (auto it : val)
+    {
+        imgui_push_generic(state, it.first);
+        imgui_push_generic(state, it.second);
+
+        lua_settable(state, -3);
+    }
+}
+
+//table is at index
+template<typename T>
+static void imgui_encode_into_ref(lua_State* state, const T& val, int index)
+{
+    lua_pushvalue(state, index);
+    lua_pushnumber(state, 0);
+    imgui_push_generic(state, val);
+    lua_settable(state, -3);
+    lua_pop(state, 1);
+}
+
+static ImVec4 imgui_get_colour_arg(lua_State* state, int index, bool defaults_to_fg)
+{
+    if (lua_isnumber(state, index))
+    {
+        double val = imgui_decode<double>(state, index);
+
+        if (defaults_to_fg)
+            return ImTuiInterop::colour_interop(std::vector<double>{ val, 0., 0. });
+        else
+            return ImTuiInterop::colour_interop(std::vector<double>{ 0., val, 0. });
+    }
+
+    int fg = 0;
+    int bg = 0;
+    int bold = 0;
+
+    if (lua_istable(state, index))
+    {
+        lua_pushvalue(state, index);
+        lua_pushnil(state);
+
+        while (lua_next(state, -2))
+        {
+            lua_pushvalue(state, -2);
+
+            std::string key = imgui_decode<std::string>(state, -1);
+
+            int idx = 0;
+
+            if (lua_isnumber(state, -2))
+                idx = (int)imgui_decode<double>(state, -2);
+
+            if (key == "fg")
+                fg = idx;
+
+            if (key == "bg")
+                bg = idx;
+
+            if (key == "bold" || key == "b")
+                bold = idx;
+
+            lua_pop(state, 2);
+        }
+
+        lua_pop(state, 1);
+    }
+
+    return ImTuiInterop::colour_interop(std::vector<int>{fg, bg, bold});
+}
+
+static std::map<std::string, int> imgui_key_name_to_key_code_impl()
+{
+    long first = df::enum_traits<df::interface_key>::first_item_value;
+    long last = df::enum_traits<df::interface_key>::last_item_value;
+
+    std::map<std::string, int> result;
+
+    for (long i = first; i <= last; i++)
+    {
+        std::string name = df::enum_traits<df::interface_key>::key_table[i - first];
+
+        result[name] = i;
+    }
+
+    return result;
+}
+
+//I could not find how DFhack already does this, df.interface_keys exists but that's a dead end
+static long imgui_key_name_to_key_code(std::string name)
+{
+    static thread_local std::map<std::string, int> key_cache = imgui_key_name_to_key_code_impl();
+
+    auto it = key_cache.find(name);
+
+    if (it == key_cache.end())
+        return -1;
+
+    return it->second;
+}
+
+static void imgui_textunformatted(std::string str)
+{
+    ImGui::TextUnformatted(str.c_str(), str.c_str() + str.size());
+}
+
+static void imgui_text(std::string str)
+{
+    ImGui::Text("%s", str.c_str());
+}
+
+static void imgui_textdisabled(std::string str)
+{
+    ImGui::TextDisabled("%s", str.c_str());
+}
+
+static void imgui_textwrapped(std::string str)
+{
+    ImGui::TextWrapped("%s", str.c_str());
+}
+
+static void imgui_labeltext(std::string label, std::string text)
+{
+    ImGui::LabelText(label.c_str(), "%s", text.c_str());
+}
+
+static void imgui_bullettext(std::string text)
+{
+    ImGui::BulletText("%s", text.c_str());
+}
+
+static bool imgui_button(std::string name)
+{
+    return ImGui::Button(name.c_str());
+}
+
+static void imgui_popstylecolor(int n)
+{
+    ImGui::PopStyleColor(n);
+}
+
+static bool imgui_ismouseclicked(int button)
+{
+    return ImGui::IsMouseClicked(button);
+}
+
+//This should probably go somewhere else long term, probably imtuiimpl.cpp
+//Could also stick these directly on the global
+static int imgui_style_index(std::string name)
+{
+    for (int i = 0; i < ImGuiCol_COUNT; i++)
+    {
+        std::string found_name = ImGui::GetStyleColorName(i);
+
+        if (found_name == name)
+            return i;
+    }
+
+    assert(false);
+    return -1;
+}
+
+static void imgui_setkeyboardfocushere(int offset)
+{
+    ImGui::SetKeyboardFocusHere(offset);
+}
+
+static bool imgui_ismousedragging(int button)
+{
+    return ImGui::IsMouseDragging(button);
+}
+
+static void imgui_settooltip(std::string text)
+{
+    ImGui::SetTooltip("%s", text.c_str());
+}
+
+static bool imgui_wantcapturemouse()
+{
+    return ImGui::GetIO().WantCaptureMouse;
+}
+
+static bool imgui_wantcapturekeyboard()
+{
+    return ImGui::GetIO().WantCaptureMouse;
+}
+
+static bool imgui_wanttextinput()
+{
+    return ImGui::GetIO().WantTextInput;
+}
+
+static bool imgui_wantcaptureinput()
+{
+    return imgui_wantcapturemouse() || imgui_wantcapturekeyboard() || imgui_wanttextinput();
+}
+
+static void imgui_addnavgate()
+{
+    ImGui::AddNavGate();
+}
+
+static void imgui_navcapture(bool capture)
+{
+    ImGuiIO& io = ImGui::GetIO();
+
+    if(!capture)
+    {
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    }
+    else
+    {
+        io.ConfigFlags &= ~ImGuiConfigFlags_NavEnableKeyboard;
+    }
+}
+
+static void imgui_tablenextrow()
+{
+    ImGui::TableNextRow();
+}
+
+static void imgui_eatkeyboardinputs()
+{
+    ImTuiInterop::viewscreen::suppress_next_keyboard_feed_upwards();
+}
+
+static void imgui_eatmouseinputs()
+{
+    ImTuiInterop::viewscreen::suppress_next_keyboard_feed_upwards();
+}
+
+static void imgui_feedupwards()
+{
+    ImTuiInterop::viewscreen::feed_upwards();
+}
+
+static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
+    WRAPM(ImGui, End),
+    WRAPM(ImGui, BeginTooltip),
+    WRAPM(ImGui, EndTooltip),
+    WRAPN(TextUnformatted, imgui_textunformatted),
+    WRAPN(Text, imgui_text),
+    WRAPN(TextDisabled, imgui_textdisabled),
+    WRAPN(TextWrapped, imgui_textwrapped),
+    WRAPN(LabelText, imgui_labeltext),
+    WRAPN(BulletText, imgui_bullettext),
+    WRAPN(Button, imgui_button),
+    WRAPM(ImGui, NewLine),
+    WRAPN(PopStyleColor, imgui_popstylecolor),
+    WRAPN(StyleIndex, imgui_style_index),
+    WRAPM(ImGui, IsMouseDown),
+    WRAPN(IsMouseClicked, imgui_ismouseclicked),
+    WRAPM(ImGui, IsMouseReleased),
+    WRAPM(ImGui, IsMouseDoubleClicked),
+    WRAPM(ImGui, SetItemDefaultFocus),
+    WRAPN(SetKeyboardFocusHere, imgui_setkeyboardfocushere),
+    WRAPM(ImGui, IsWindowAppearing),
+    WRAPM(ImGui, IsWindowCollapsed),
+    WRAPM(ImGui, IsWindowFocused),
+    WRAPM(ImGui, IsWindowHovered),
+    WRAPN(IsMouseDragging, imgui_ismousedragging),
+    WRAPM(ImGui, ResetMouseDragDelta),
+    WRAPM(ImGui, IsItemActive),
+    WRAPM(ImGui, IsItemFocused),
+    WRAPM(ImGui, IsItemClicked),
+    WRAPM(ImGui, IsItemVisible),
+    WRAPM(ImGui, IsItemEdited),
+    WRAPM(ImGui, IsItemActivated),
+    WRAPM(ImGui, IsItemDeactivated),
+    WRAPM(ImGui, IsItemDeactivatedAfterEdit),
+    WRAPM(ImGui, IsItemToggledOpen),
+    WRAPM(ImGui, IsAnyItemHovered),
+    WRAPM(ImGui, IsAnyItemActive),
+    WRAPM(ImGui, IsAnyItemFocused),
+    WRAPM(ImGui, BeginGroup),
+    WRAPM(ImGui, EndGroup),
+    WRAPN(SetTooltip, imgui_settooltip),
+    WRAPN(WantCaptureMouse, imgui_wantcapturemouse),
+    WRAPN(WantCaptureKeyboard, imgui_wantcapturekeyboard),
+    WRAPN(WantTextInput, imgui_wanttextinput),
+    WRAPN(WantCaptureInput, imgui_wantcaptureinput),
+    WRAPN(AddNavGate, imgui_addnavgate),
+    WRAPN(NavCapture, imgui_navcapture),
+    WRAPM(ImGui, EndTable),
+    WRAPN(TableNextRow, imgui_tablenextrow),
+    WRAPM(ImGui, TableNextColumn),
+    WRAPM(ImGui, TableSetColumnIndex),
+    WRAPM(ImGui, TableHeadersRow),
+    WRAPN(EatKeyboardInputs, imgui_eatkeyboardinputs),
+    WRAPN(EatMouseInputs, imgui_eatmouseinputs),
+    WRAPN(FeedUpwards, imgui_feedupwards),
+    WRAPM(ImGui, BeginMenuBar),
+    WRAPM(ImGui, EndMenuBar),
+    WRAPM(ImGui, EndMenu),
+    WRAPM(ImGui, EndTabBar),
+    WRAPM(ImGui, EndTabItem),
+    { NULL, NULL }
+};
+
+static int imgui_begin(lua_State* state)
+{
+    int top = lua_gettop(state);
+
+    std::string name;
+    imgui_ref_tag<bool> is_open_value;
+    ImGuiWindowFlags flags = 0;
+
+    if (top == 1)
+    {
+        name = imgui_decode<std::string>(state, -1);
+    }
+
+    if (top == 2)
+    {
+        name = imgui_decode<std::string>(state, -2);
+        is_open_value = imgui_decode<imgui_ref_tag<bool> >(state, -1);
+    }
+
+    if (top == 3)
+    {
+        name = imgui_decode<std::string>(state, -3);
+        is_open_value = imgui_decode<imgui_ref_tag<bool> >(state, -2);
+        flags = static_cast<ImGuiWindowFlags>(imgui_decode<double>(state, -1));
+    }
+
+    bool result = false;
+
+    if (is_open_value.decoded)
+    {
+        result = ImGui::Begin(name.c_str(), &is_open_value.val, flags);
+
+        imgui_encode_into_ref(state, is_open_value.val, is_open_value.index);
+    }
+    else
+    {
+        result = ImGui::Begin(name.c_str(), nullptr, flags);
+    }
+
+    ImTuiInterop::viewscreen::claim_current_imgui_window();
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
+static int imgui_sameline(lua_State* state)
+{
+    int args = lua_gettop(state);
+
+    float offset_from_start_x = 0;
+    float spacing = -1.f;
+
+    if (args == 1)
+    {
+        offset_from_start_x = lua_tonumber(state, -1);
+    }
+
+    if (args == 2)
+    {
+        offset_from_start_x = lua_tonumber(state, -2);
+        spacing = lua_tonumber(state, -1);
+    }
+
+    ImGui::SameLine(offset_from_start_x, spacing);
+
+    return 0;
+}
+
+//The reason for imgui_ref and imgui_get are because you cannot pass in values by reference in
+//scripting languages, so the convention of passing a table with the real value set in the 0th element
+//of the table is used
+//this is clunky, and one of the main api-wise disadvantages of doing imgui in scripting
+static int imgui_ref(lua_State* state)
+{
+    //0: value, argument
+    //1: table
+    lua_newtable(state);
+
+    //2: key
+    //3: value
+
+    lua_pushnumber(state, 0);
+    lua_pushvalue(state, -3); //0 == function argument
+
+    lua_settable(state, -3); //1 == table
+
+    //0: value, argument
+    //1: table
+
+    //return the newly created table
+    return 1;
+}
+
+static int imgui_get(lua_State* state)
+{
+    //0: table, argument
+    //1: key
+
+    lua_pushnumber(state, 0);
+    lua_gettable(state, -2);
+
+    //returns the value inside of the table at position 0
+    return 1;
+}
+
+//string, ref
+static int imgui_checkbox(lua_State* state)
+{
+    const char* label = lua_tostring(state, -2);
+    bool val = imgui_decode_ref<bool>(state, -1);
+
+    bool result = ImGui::Checkbox(label, &val);
+
+    imgui_encode_into_ref(state, val, -1);
+
+    lua_pushboolean(state, result);
+    return 1;
+}
+
+//label, str*
+static int imgui_inputtext(lua_State* state)
+{
+    const char* label = lua_tostring(state, -2);
+    std::string val = imgui_decode_ref<std::string>(state, -1);
+
+    bool result = ImGui::InputText(label, &val);
+
+    //This makes keyboard navigation default activate the item
+    //when arrow-keying past it, while also still allowing navigation away from it
+    if (ImGui::IsItemFocused() &&
+        !ImGui::IsItemActivated() &&
+        !ImGui::GetCurrentContext()->NavMoveRequest &&
+        ImGui::GetIO().NavVisible)
+    {
+        ImGui::SetKeyboardFocusHere(-1);
+    }
+
+    imgui_encode_into_ref(state, val, -1);
+
+    lua_pushboolean(state, result);
+    return 1;
+}
+
+static int imgui_getmousepos(lua_State* state)
+{
+    ImVec2 pos = ImGui::GetMousePos();
+
+    imgui_push_generic(state, pos);
+
+    return 1;
+}
+
+static int imgui_getmousedragdelta(lua_State* state)
+{
+    int button = lua_tointeger(state, -1);
+
+    ImVec2 diff = ImGui::GetMouseDragDelta(button);
+
+    imgui_push_generic(state, diff);
+
+    return 1;
+}
+
+static int imgui_getdisplaysize(lua_State* state)
+{
+    imgui_push_generic(state, ImGui::GetIO().DisplaySize);
+
+    return 1;
+}
+
+//-4,        -3, -2, -1
+//draw_list, tl, br, col
+static int imgui_addrect(lua_State* state)
+{
+    ImDrawList* lst = imgui_decode<ImDrawList*>(state, -4);
+    ImVec2 tl = imgui_decode<ImVec2>(state, -3);
+    ImVec2 br = imgui_decode<ImVec2>(state, -2);
+    ImVec4 col = imgui_get_colour_arg(state, -1, false);
+
+    ImU32 icol = ImGui::ColorConvertFloat4ToU32(col);
+
+    lst->AddRect(tl, br, icol, 0.f, ImDrawCornerFlags_All, 0.5f);
+
+    return 0;
+}
+
+static int imgui_addrectfilled(lua_State* state)
+{
+    ImDrawList* lst = imgui_decode<ImDrawList*>(state, -4);
+    ImVec2 tl = imgui_decode<ImVec2>(state, -3);
+    ImVec2 br = imgui_decode<ImVec2>(state, -2);
+    ImVec4 col = imgui_get_colour_arg(state, -1, false);
+
+    ImU32 icol = ImGui::ColorConvertFloat4ToU32(col);
+
+    lst->AddRectFilled(tl, br, icol);
+
+    return 0;
+}
+
+static int imgui_getbackgrounddrawlist(lua_State* state)
+{
+    imgui_push_generic(state, ImGui::GetBackgroundDrawList());
+
+    return 1;
+}
+
+static int imgui_getforegrounddrawlist(lua_State* state)
+{
+    imgui_push_generic(state, ImGui::GetForegroundDrawList());
+
+    return 1;
+}
+
+static int imgui_getcurrentdrawlist(lua_State* state)
+{
+    imgui_push_generic(state, ImGui::GetWindowDrawList());
+
+    return 1;
+}
+
+static int imgui_textcolored(lua_State* state)
+{
+    ImVec4 col = imgui_get_colour_arg(state, -2, true);
+    std::string str = imgui_decode<std::string>(state, -1);
+
+    ImGui::TextColored(col, "%s", str.c_str());
+
+    return 0;
+}
+
+static int imgui_buttoncolored(lua_State* state)
+{
+    ImVec4 col = imgui_get_colour_arg(state, -2, true);
+    std::string str = imgui_decode<std::string>(state, -1);
+
+    ImGui::PushStyleColor(ImGuiCol_Text, col);
+
+    bool result = ImGui::Button(str.c_str());
+
+    ImGui::PopStyleColor(1);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
+//Draw list, colour, text, {x=worldx, y=worldy, z=worldz}
+static int imgui_addtextbackgroundcoloredabsolute(lua_State* state)
+{
+    ImDrawList* draw = imgui_decode<ImDrawList*>(state, -4);
+    ImVec4 col = imgui_get_colour_arg(state, -3, true);
+    std::string str = imgui_decode<std::string>(state, -2);
+    std::map<std::string, double> pos = imgui_decode<std::map<std::string, double>>(state, -1);
+
+    if ((int32_t)pos.at("z") != *df::global::window_z)
+        return 0;
+
+    int32_t sx=0, sy=0, sz=0;
+    Gui::getViewCoords(sx, sy, sz);
+
+    ImVec2 text_size = ImGui::CalcTextSize(str.c_str());
+
+    ImVec2 tl = { (float)pos.at("x") - sx, (float)pos.at("y") - sy };
+    ImVec2 br = { tl.x + text_size.x - 1, std::max(tl.y + text_size.y - 1, 0.f) };
+
+    ImU32 icol = ImGui::ColorConvertFloat4ToU32(col);
+
+    draw->AddRectFilled(tl, br, icol);
+    draw->AddText(tl, icol, str.c_str());
+    return 0;
+}
+
+static int imgui_textbackgroundcolored(lua_State* state)
+{
+    ImVec4 col = imgui_get_colour_arg(state, -2, true);
+    std::string str = imgui_decode<std::string>(state, -1);
+
+    ImDrawList* draw = ImGui::GetWindowDrawList();
+
+    ImVec2 tl = ImGui::GetCursorScreenPos();
+    ImVec2 text_size = ImGui::CalcTextSize(str.c_str());
+
+    ImVec2 br = { tl.x + text_size.x - 1, std::max(tl.y + text_size.y - 1, 0.f) };
+
+    //tl.x = tl.x + 1;
+
+    ImU32 icol = ImGui::ColorConvertFloat4ToU32(col);
+
+    draw->AddRectFilled(tl, br, icol);
+
+    ImGui::TextColored(col, "%s", str.c_str());
+
+    return 0;
+}
+
+static int imgui_pushstylecolor(lua_State* state)
+{
+    int index = (int)imgui_decode<double>(state, -2);
+    ImVec4 col = imgui_get_colour_arg(state, -1, true);
+
+    ImGui::PushStyleColor(index, col);
+    return 0;
+}
+
+static int imgui_isitemhovered(lua_State* state)
+{
+    int flags = 0;
+
+    if (lua_gettop(state) == 1)
+    {
+        flags = (int)imgui_decode<double>(state, -1);
+    }
+
+    bool result = ImGui::IsItemHovered(flags);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
+static int imgui_ismousehoveringrect(lua_State* state)
+{
+    ImVec2 tl;
+    ImVec2 br;
+    bool clip = true;
+
+    int count = lua_gettop(state);
+
+    if (count == 2)
+    {
+        tl = imgui_decode<ImVec2>(state, -2);
+        br = imgui_decode<ImVec2>(state, -1);
+    }
+
+    if (count == 3)
+    {
+        tl = imgui_decode<ImVec2>(state, -3);
+        br = imgui_decode<ImVec2>(state, -2);
+        clip = imgui_decode<bool>(state, -1);
+    }
+
+    //imgui uses the convention [min <= val < max]
+    //Which is great if our coordinates aren't integer, but they are
+    br.x += 1;
+    br.y += 1;
+
+    imgui_push_generic(state, ImGui::IsMouseHoveringRect(tl, br, clip));
+
+    return 1;
+}
+
+static int imgui_tablesetupcolumn(lua_State* state)
+{
+    int top = lua_gettop(state);
+
+    std::string label;
+    int flags = 0;
+    float width_or_weight = 0;
+
+    if (top == 1)
+        label == imgui_decode<std::string>(state, -1);
+    else if (top == 2)
+    {
+        label = imgui_decode<std::string>(state, -2);
+        flags = (int)imgui_decode<double>(state, -1);
+    }
+    else if (top == 3)
+    {
+        label = imgui_decode<std::string>(state, -3);
+        flags = (int)imgui_decode<double>(state, -2);
+        width_or_weight = imgui_decode<double>(state, -1);
+    }
+
+    const char* ptr = label.c_str();
+
+    if (label.size() == 0)
+        ptr = nullptr;
+
+    ImGui::TableSetupColumn(ptr, flags, width_or_weight);
+
+    return 0;
+}
+
+int imgui_handle_key(lua_State* state, int index)
+{
+    int key = -1;
+
+    if (lua_isstring(state, index))
+    {
+        std::string val = imgui_decode<std::string>(state, index);
+
+        key = imgui_key_name_to_key_code(val);
+    }
+
+    if (lua_isnumber(state, index))
+    {
+        key = (int)imgui_decode<double>(state, index);
+    }
+
+    if (key < 0)
+    {
+        //returns a key which is always going to be false in imgui
+        key = df::enum_traits<df::interface_key>::last_item_value + 1;
+    }
+
+    return key;
+}
+
+static int imgui_iskeydown(lua_State* state)
+{
+    int key = imgui_handle_key(state, -1);
+
+    bool result = ImGui::IsKeyDown(key);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
+static int imgui_iskeypressed(lua_State* state)
+{
+    int key = imgui_handle_key(state, -1);
+
+    bool result = ImGui::IsKeyPressed(key);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
+static int imgui_iskeyreleased(lua_State* state)
+{
+    int key = imgui_handle_key(state, -1);
+
+    bool result = ImGui::IsKeyReleased(key);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
+static int imgui_beginmenu(lua_State* state)
+{
+    int top = lua_gettop(state);
+
+    std::string label;
+    bool enabled = true;
+
+    if (top == 1)
+    {
+        label = imgui_decode<std::string>(state, -1);
+    }
+
+    if (top == 2)
+    {
+        label = imgui_decode<std::string>(state, -2);
+        enabled = imgui_decode<bool>(state, -1);
+    }
+
+    bool result = ImGui::BeginMenu(label.c_str(), enabled);
+
+    ImTuiInterop::viewscreen::claim_current_imgui_window();
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
+static int imgui_menuitem(lua_State* state)
+{
+    std::string label;
+    std::string shortcut;
+    bool selected = false;
+    bool enabled = false;
+
+    if (lua_gettop(state) == 3)
+    {
+        label = imgui_decode<std::string>(state, -3);
+        shortcut = imgui_decode<std::string>(state, -2);
+        selected = imgui_decode_ref<bool>(state, -1);
+    }
+
+    if (lua_gettop(state) == 4)
+    {
+        label = imgui_decode<std::string>(state, -4);
+        shortcut = imgui_decode<std::string>(state, -3);
+        selected = imgui_decode_ref<bool>(state, -2);
+        enabled = imgui_decode<bool>(state, -1);
+
+        //leave ref on the stack
+        lua_pop(state, 1);
+    }
+
+    bool result = ImGui::MenuItem(label.c_str(), shortcut.c_str(), &selected, enabled);
+
+    imgui_encode_into_ref(state, selected, -1);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
+//not sure I like this, the usability is kind of poor
+template<typename T>
+static void imgui_decode_multiple_impl(std::tuple<T>& out, lua_State* state, int index)
+{
+    std::get<0>(out) = imgui_decode<T>(state, index);
+}
+
+template<typename Head, typename... Tail>
+static void imgui_decode_multiple_impl(std::tuple<Head, Tail...>& out, lua_State* state, int index)
+{
+    int argc = sizeof...(Tail);
+
+    std::tuple<Head> p1;
+    imgui_decode_multiple_impl(p1, state, index);
+
+    std::tuple<Tail...> p2;
+    imgui_decode_multiple_impl(p2, state, index+1);
+
+    out = std::tuple_cat(p1, p2);
+}
+
+template<typename... T>
+static std::tuple<T...> imgui_decode_multiple(lua_State* state, int last_arg_idx)
+{
+    //so, we pass in -1, with an arg size of 2
+    //that means the first arg is at -2, and the second arg is at -1
+    int offset = (last_arg_idx - sizeof...(T)) + 1;
+
+    std::tuple<T...> result;
+    imgui_decode_multiple_impl(result, state, offset);
+    return result;
+}
+
+static int imgui_begintabbar(lua_State* state)
+{
+    std::string str_id;
+    ImGuiTabBarFlags flags = 0;
+
+    if (lua_gettop(state) == 1)
+    {
+        str_id = imgui_decode<std::string>(state, -1);
+    }
+
+    if (lua_gettop(state) == 2)
+    {
+        std::tie(str_id, flags) = imgui_decode_multiple<std::string, double>(state, -1);
+    }
+
+    bool result = ImGui::BeginTabBar(str_id.c_str(), flags);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
+static int imgui_begintabitem(lua_State* state)
+{
+    std::string label;
+    imgui_ref_tag<bool> p_open;
+    ImGuiTabItemFlags flags = 0;
+
+    if (lua_gettop(state) == 1)
+    {
+        label = imgui_decode<std::string>(state, -1);
+    }
+
+    if (lua_gettop(state) == 2)
+    {
+        label = imgui_decode<std::string>(state, -2);
+        p_open = imgui_decode<imgui_ref_tag<bool> >(state, -1);
+    }
+
+    if (lua_gettop(state) == 3)
+    {
+        label = imgui_decode<std::string>(state, -3);
+        p_open = imgui_decode<imgui_ref_tag<bool> >(state, -2);
+        flags = imgui_decode<double>(state, -1);
+    }
+
+    bool result = false;
+
+    if (p_open.decoded)
+    {
+        result = ImGui::BeginTabItem(label.c_str(), &p_open.val, flags);
+
+        imgui_encode_into_ref(state, p_open.val, p_open.index);
+    }
+    else
+        result = ImGui::BeginTabItem(label.c_str(), nullptr, flags);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
+static int imgui_tabitembutton(lua_State* state)
+{
+    std::string label;
+    ImGuiTabItemFlags flags = 0;
+
+    if (lua_gettop(state) == 1)
+    {
+        label = imgui_decode<std::string>(state, -1);
+    }
+
+    if (lua_gettop(state) == 2)
+    {
+        label = imgui_decode<std::string>(state, -2);
+        flags = imgui_decode<double>(state, -1);
+    }
+
+    bool result = ImGui::TabItemButton(label.c_str(), flags);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
+//todo: more complex nesting
+static int imgui_shortcut(lua_State* state)
+{
+    int key = imgui_handle_key(state, -1);
+
+    bool result = ImGui::IsKeyPressed(key);
+
+    ImTuiInterop::viewscreen::declare_suppressed_key(df::interface_key(key));
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
+static int imgui_getkeydisplay(lua_State* state)
+{
+    int key = imgui_handle_key(state, -1);
+
+    std::string str = Screen::getKeyDisplay(df::interface_key(key));
+
+    imgui_push_generic(state, str);
+
+    return 1;
+}
+
+static int imgui_selectableref(lua_State* state)
+{
+    std::string label;
+    imgui_ref_tag<bool> is_selected;
+    int flags = 0;
+    ImVec2 width;
+
+    if (lua_gettop(state) == 2)
+    {
+        label = imgui_decode<std::string>(state, -2);
+        is_selected = imgui_decode<imgui_ref_tag<bool>>(state, -1);
+    }
+
+    if (lua_gettop(state) == 3)
+    {
+        label = imgui_decode<std::string>(state, -3);
+        is_selected = imgui_decode<imgui_ref_tag<bool>>(state, -2);
+        flags = imgui_decode<double>(state, -1);
+    }
+
+    if (lua_gettop(state) == 4)
+    {
+        label = imgui_decode<std::string>(state, -4);
+        is_selected = imgui_decode<imgui_ref_tag<bool>>(state, -3);
+        flags = imgui_decode<double>(state, -2);
+        width = imgui_decode<ImVec2>(state, -1);
+    }
+
+    bool result = ImGui::Selectable(label.c_str(), &is_selected.val, flags, width);
+
+    imgui_encode_into_ref(state, is_selected.val, is_selected.index);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
+static int imgui_selectable(lua_State* state)
+{
+    std::string label;
+    bool is_selected = false;
+    int flags = 0;
+    ImVec2 width;
+
+    if (lua_gettop(state) == 1)
+    {
+        label = imgui_decode<std::string>(state, -1);
+    }
+
+    if (lua_gettop(state) == 2)
+    {
+        label = imgui_decode<std::string>(state, -2);
+        is_selected = imgui_decode<bool>(state, -1);
+    }
+
+    if (lua_gettop(state) == 3)
+    {
+        label = imgui_decode<std::string>(state, -3);
+        is_selected = imgui_decode<bool>(state, -2);
+        flags = imgui_decode<double>(state, -1);
+    }
+
+    if (lua_gettop(state) == 4)
+    {
+        label = imgui_decode<std::string>(state, -4);
+        is_selected = imgui_decode<bool>(state, -3);
+        flags = imgui_decode<double>(state, -2);
+        width = imgui_decode<ImVec2>(state, -1);
+    }
+
+    bool result = ImGui::Selectable(label.c_str(), is_selected, flags, width);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
+static int imgui_begintable(lua_State* state)
+{
+    std::string name;
+    int column = 0;
+    int flags = 0;
+    ImVec2 outer_size = ImVec2(0,0);
+    float inner_width = 0;
+
+    if (lua_gettop(state) == 3)
+    {
+        name = imgui_decode<std::string>(state, -3);
+        column = imgui_decode<double>(state, -2);
+        flags = imgui_decode<double>(state, -1);
+    }
+
+    if (lua_gettop(state) == 4)
+    {
+        name = imgui_decode<std::string>(state, -4);
+        column = imgui_decode<double>(state, -3);
+        flags = imgui_decode<double>(state, -2);
+        outer_size = imgui_decode<ImVec2>(state, -1);
+    }
+
+    if (lua_gettop(state) == 5)
+    {
+        name = imgui_decode<std::string>(state, -5);
+        column = imgui_decode<double>(state, -4);
+        flags = imgui_decode<double>(state, -3);
+        outer_size = imgui_decode<ImVec2>(state, -2);
+        inner_width = imgui_decode<double>(state, -1);
+    }
+
+    bool result = ImGui::BeginTable(name.c_str(), column, flags, outer_size, inner_width);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
+static const luaL_Reg dfhack_imgui_funcs[] = {
+    {"Begin", imgui_begin},
+    {"SameLine", imgui_sameline},
+    {"Checkbox", imgui_checkbox},
+    {"Ref", imgui_ref},
+    {"Get", imgui_get},
+    {"InputText", imgui_inputtext},
+    {"GetMousePos", imgui_getmousepos},
+    {"GetMouseDragDelta", imgui_getmousedragdelta},
+    {"GetDisplaySize", imgui_getdisplaysize},
+    {"AddRect", imgui_addrect},
+    {"AddRectFilled", imgui_addrectfilled},
+    {"GetBackgroundDrawList", imgui_getbackgrounddrawlist},
+    {"GetForegroundDrawList", imgui_getforegrounddrawlist},
+    {"GetCurrentDrawList", imgui_getcurrentdrawlist},
+    {"TextColored", imgui_textcolored},
+    {"ButtonColored", imgui_buttoncolored},
+    {"TextBackgroundColored", imgui_textbackgroundcolored},
+    {"AddTextBackgroundColoredAbsolute", imgui_addtextbackgroundcoloredabsolute},
+    {"PushStyleColor", imgui_pushstylecolor},
+    {"IsItemHovered", imgui_isitemhovered},
+    {"IsMouseHoveringRect", imgui_ismousehoveringrect},
+    {"TableSetupColumn", imgui_tablesetupcolumn},
+    {"IsKeyDown", imgui_iskeydown},
+    {"IsKeyPressed", imgui_iskeypressed},
+    {"IsKeyReleased", imgui_iskeyreleased},
+    {"BeginMenu", imgui_beginmenu},
+    {"MenuItem", imgui_menuitem},
+    {"BeginTabBar", imgui_begintabbar},
+    {"BeginTabItem", imgui_begintabitem},
+    {"TabItemButton", imgui_tabitembutton},
+    {"Shortcut", imgui_shortcut},
+    {"GetKeyDisplay", imgui_getkeydisplay},
+    {"SelectableRef", imgui_selectableref},
+    {"Selectable", imgui_selectable},
+    {"BeginTable", imgui_begintable},
     { NULL, NULL }
 };
 
@@ -3373,4 +4666,5 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "kitchen", dfhack_kitchen_module);
     OpenModule(state, "console", dfhack_console_module);
     OpenModule(state, "internal", dfhack_internal_module, dfhack_internal_funcs);
+    OpenModule(state, "imgui", dfhack_imgui_module, dfhack_imgui_funcs);
 }

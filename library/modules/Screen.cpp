@@ -31,6 +31,7 @@ distribution.
 #include <set>
 using namespace std;
 
+#include "modules/ImTuiImpl.h"
 #include "modules/Renderer.h"
 #include "modules/Screen.h"
 #include "modules/GuiHooks.h"
@@ -769,11 +770,15 @@ dfhack_lua_viewscreen::dfhack_lua_viewscreen(lua_State *L, int table_idx)
     lua_rawsetp(L, LUA_REGISTRYINDEX, this);
 
     update_focus(L, table_idx);
+
+    ImTuiInterop::viewscreen::register_viewscreen(this);
 }
 
 dfhack_lua_viewscreen::~dfhack_lua_viewscreen()
 {
     safe_call_lua(do_destroy, 0, 0);
+
+    ImTuiInterop::viewscreen::unregister_viewscreen(this);
 }
 
 void dfhack_lua_viewscreen::render()
@@ -785,9 +790,13 @@ void dfhack_lua_viewscreen::render()
         return;
     }
 
+    int id = ImTuiInterop::viewscreen::on_render_start(this);
+
     dfhack_viewscreen::render();
 
     safe_call_lua(do_render, 0, 0);
+
+    ImTuiInterop::viewscreen::on_render_end(this, id);
 }
 
 void dfhack_lua_viewscreen::logic()
@@ -830,8 +839,13 @@ void dfhack_lua_viewscreen::feed(std::set<df::interface_key> *keys)
 {
     if (Screen::isDismissed(this)) return;
 
+    ImTuiInterop::viewscreen::on_feed_start(this, keys);
+
     lua_pushlightuserdata(Lua::Core::State, keys);
     safe_call_lua(do_input, 1, 0);
+
+    if(ImTuiInterop::viewscreen::on_feed_end(keys))
+        parent->feed(keys);
 }
 
 void dfhack_lua_viewscreen::onShow()
@@ -844,6 +858,8 @@ void dfhack_lua_viewscreen::onDismiss()
 {
     lua_pushstring(Lua::Core::State, "onDismiss");
     safe_call_lua(do_notify, 1, 0);
+
+    ImTuiInterop::viewscreen::on_dismiss();
 }
 
 df::unit *dfhack_lua_viewscreen::getSelectedUnit()

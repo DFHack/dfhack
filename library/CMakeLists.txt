@@ -129,6 +129,7 @@ set(MODULE_HEADERS
     include/modules/Graphic.h
     include/modules/Gui.h
     include/modules/GuiHooks.h
+    include/modules/ImTuiImpl.h
     include/modules/Items.h
     include/modules/Job.h
     include/modules/Kitchen.h
@@ -154,6 +155,7 @@ set(MODULE_SOURCES
     modules/Filesystem.cpp
     modules/Graphic.cpp
     modules/Gui.cpp
+    modules/ImTuiImpl.cpp
     modules/Items.cpp
     modules/Job.cpp
     modules/Kitchen.cpp
@@ -399,7 +401,7 @@ if(APPLE)
     set_target_properties(dfhack PROPERTIES SOVERSION 1.0.0)
 endif()
 
-target_link_libraries(dfhack protobuf-lite clsocket lua jsoncpp_static dfhack-version ${PROJECT_LIBS})
+target_link_libraries(dfhack protobuf-lite clsocket lua jsoncpp_static dfhack-version imgui ${PROJECT_LIBS})
 set_target_properties(dfhack PROPERTIES INTERFACE_LINK_LIBRARIES "")
 
 target_link_libraries(dfhack-client protobuf-lite clsocket jsoncpp_static)

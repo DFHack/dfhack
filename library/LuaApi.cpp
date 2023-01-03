@@ -1990,7 +1990,7 @@ static bool imgui_wantcapturemouse()
 
 static bool imgui_wantcapturekeyboard()
 {
-    return ImGui::GetIO().WantCaptureMouse;
+    return ImGui::GetIO().WantCaptureKeyboard;
 }
 
 static bool imgui_wanttextinput()
@@ -2001,6 +2001,11 @@ static bool imgui_wanttextinput()
 static bool imgui_wantcaptureinput()
 {
     return imgui_wantcapturemouse() || imgui_wantcapturekeyboard() || imgui_wanttextinput();
+}
+
+static bool imgui_isnavvisible()
+{
+    return ImGui::GetIO().NavVisible;
 }
 
 static void imgui_addnavgate()
@@ -2102,6 +2107,7 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPM(ImGui, EndMenu),
     WRAPM(ImGui, EndTabBar),
     WRAPM(ImGui, EndTabItem),
+    WRAPN(IsNavVisible, imgui_isnavvisible),
     { NULL, NULL }
 };
 

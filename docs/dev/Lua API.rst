@@ -2392,13 +2392,13 @@ Supported callbacks and fields are:
   ``_STRING``
     Maps to an integer in range 0-255. Duplicates a separate "STRING_A???" code for convenience.
 
-  ``_MOUSE_L, _MOUSE_R``
-    If the left or right mouse button is being pressed.
+  ``_MOUSE_L, _MOUSE_R, _MOUSE_M``
+    If the left, right, and/or middle mouse button is being pressed.
 
-  ``_MOUSE_L_DOWN, _MOUSE_R_DOWN``
-    If the left or right mouse button was just pressed.
+  ``_MOUSE_L_DOWN, _MOUSE_R_DOWN, _MOUSE_M_DOWN``
+    If the left, right, and/or middle mouse button was just pressed.
 
-  If this method is omitted, the screen is dismissed on receival of the ``LEAVESCREEN`` key.
+  If this method is omitted, the screen is dismissed on reception of the ``LEAVESCREEN`` key.
 
 * ``function screen:onGetSelectedUnit()``
 * ``function screen:onGetSelectedItem()``

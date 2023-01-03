@@ -487,6 +487,7 @@ void Core::getScriptPaths(std::vector<std::string> *dest)
     string df_path = this->p->getPath();
     for (auto it = script_paths[0].begin(); it != script_paths[0].end(); ++it)
         dest->push_back(*it);
+    dest->push_back(df_path + "/dfhack-config/scripts");
     if (df::global::world && isWorldLoaded()) {
         string save = World::ReadWorldFolder();
         if (save.size())

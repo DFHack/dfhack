@@ -21,10 +21,11 @@ DFHack commands can be implemented in any of three ways:
             same version of DFHack.  They are less flexible than scripts,
             but used for complex or ongoing tasks because they run faster.
 
-:scripts:   are Ruby or Lua scripts stored in ``hack/scripts/``.
-            Because they don't need to be compiled, scripts are
-            more flexible about versions, and easier to distribute.
-            Most third-party DFHack addons are scripts.
+:scripts:   are Ruby or Lua scripts stored in ``hack/scripts/`` or other
+            directories in the `script-paths`. Because they don't need to
+            be compiled, scripts are more flexible about versions, and
+            they are easier to distribute. Most third-party DFHack addons
+            are scripts.
 
 All tools distributed with DFHack are documented `here <tools>`.
 
@@ -37,6 +38,8 @@ DFHack commands can be executed in a number of ways:
 #. Pressing a key combination set up with `keybinding`
 #. From one of several `init-files`, automatically
 #. Using `script` to run a batch of commands from a file
+#. From an in-game command launcher interface like `gui/launcher`, the
+   `hotkeys` overlay widget, or `gui/quickcmd`.
 
 The DFHack console
 ------------------
@@ -144,7 +147,7 @@ save-specific init files in the save folders.
 DFHack looks for init files in three places each time they could be run:
 
 #. The :file:`dfhack-config/init` subdirectory in the main DF directory
-#. :file:`data/save/{world}/raw`, where ``world`` is the current save, and
+#. :file:`data/save/{world}/raw`, where ``{world}`` is the current save, and
 #. :file:`data/save/{world}/raw/objects`
 
 For each of those directories, all matching init files will be executed in
@@ -171,7 +174,7 @@ dfhack\*.init
 On startup, DFHack looks for files of the form ``dfhack*.init`` (where ``*`` is
 a placeholder for any string, including the empty string).
 
-These files are best used for keybindings and enabling persistent plugins
+These files are best used for keybindings and enabling persistent tools
 which do not require a world to be loaded.
 
 
@@ -230,9 +233,10 @@ Script paths are folders that DFHack searches to find a script when a command is
 run. By default, the following folders are searched, in order (relative to the
 root DF folder):
 
-1. :file:`data/save/{<region folder>}/raw/scripts` (only if a save is loaded)
-2. :file:`raw/scripts`
-3. :file:`hack/scripts`
+#. :file:`dfhack-config/scripts`
+#. :file:`data/save/{<region folder>}/raw/scripts` (only if a save is loaded)
+#. :file:`raw/scripts`
+#. :file:`hack/scripts`
 
 For example, if ``teleport`` is run, these folders are searched in order for
 ``teleport.lua`` or ``teleport.rb``, and the first matching file is run.

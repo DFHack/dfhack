@@ -2629,8 +2629,8 @@ and are only documented here for completeness:
 
   Registers ``path`` as a `script path <script-paths>`.
   If ``search_before`` is passed and ``true``, the path will be searched before
-  the default paths (e.g. ``raw/scripts``, ``hack/scripts``); otherwise, it will
-  be searched after.
+  the default paths (e.g. ``dfhack-config/scripts``, ``hack/scripts``); otherwise,
+  it will be searched after.
 
   Returns ``true`` if successful or ``false`` otherwise (e.g. if the path does
   not exist or has already been registered).
@@ -5466,11 +5466,11 @@ Scripts
    :local:
 
 Any files with the ``.lua`` extension placed into the :file:`hack/scripts` folder
-are automatically made available as DFHack commands. The command corresponding to
-a script is simply the script's filename, relative to the scripts folder, with
-the extension omitted. For example:
+(or any other folder in your `script-paths`) are automatically made available as
+DFHack commands. The command corresponding to a script is simply the script's
+filename, relative to the scripts folder, with the extension omitted. For example:
 
-* :file:`hack/scripts/add-thought.lua` is invoked as ``add-thought``
+* :file:`dfhack-config/scripts/startup.lua` is invoked as ``startup``
 * :file:`hack/scripts/gui/teleport.lua` is invoked as ``gui/teleport``
 
 .. note::
@@ -5486,12 +5486,6 @@ the extension omitted. For example:
       mods, not directly by end-users (as a rule of thumb: if someone other than
       a mod developer would want to run a script from the console, it should
       not be placed in this folder)
-
-Scripts can also be placed in other folders - by default, these include
-:file:`raw/scripts` and :file:`data/save/{region}/raw/scripts`, but additional
-folders can be added (for example, a copy of the
-:source-scripts:`scripts repository <>` for local development). See
-`script-paths` for more information on how to configure this behavior.
 
 Scripts are read from disk when run for the first time, or if they have changed
 since the last time they were run.
@@ -5520,7 +5514,7 @@ General script API
 
 * ``dfhack.run_script(name[,args...])``
 
-  Run a Lua script in :file:`hack/scripts/`, as if it were started from the
+  Run a Lua script in your `script-paths`, as if it were started from the
   DFHack command-line. The ``name`` argument should be the name of the script
   without its extension, as it would be used on the command line.
 
@@ -5562,8 +5556,8 @@ Importing scripts
 
   Loads a Lua script and returns its environment (i.e. a table of all global
   functions and variables). This is similar to the built-in ``require()``, but
-  searches all script paths for the first matching ``name.lua`` file instead
-  of searching the Lua library paths (like ``hack/lua``).
+  searches all `script-paths` for the first matching ``name.lua`` file instead
+  of searching the Lua library paths (like ``hack/lua/``).
 
   Most scripts can be made to support ``reqscript()`` without significant
   changes (in contrast, ``require()`` requires the use of ``mkmodule()`` and

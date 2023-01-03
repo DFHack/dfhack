@@ -1321,7 +1321,7 @@ end
 -- we can't set the text in init() since we may not yet have a frame that we
 -- can get wrapping bounds from.
 function WrappedLabel:postComputeFrame()
-    local wrapped_text = self:getWrappedText(self.frame_body.width-1)
+    local wrapped_text = self:getWrappedText(self.frame_body.width-3)
     if not wrapped_text then return end
     local text = {}
     for _,line in ipairs(wrapped_text:split(NEWLINE)) do

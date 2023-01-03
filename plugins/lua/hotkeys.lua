@@ -11,7 +11,7 @@ local widgets = require('gui.widgets')
 
 HotspotMenuWidget = defclass(HotspotMenuWidget, overlay.OverlayWidget)
 HotspotMenuWidget.ATTRS{
-    default_pos={x=1,y=2},
+    default_pos={x=2,y=2},
     hotspot=true,
     viewscreens='all',
     overlay_onupdate_max_freq_seconds=0,

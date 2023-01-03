@@ -4350,6 +4350,23 @@ following keyboard hotkeys:
 - Ctrl-B/Ctrl-F: move the cursor one word back or forward.
 - Ctrl-A/Ctrl-E: move the cursor to the beginning/end of the text.
 
+The ``EditField`` class also provides the following functions:
+
+* ``editfield:setCursor([cursor_pos])``
+
+  Sets the text insert cursor to the specified position. If ``cursor_pos`` is
+  not specified or is past the end of the current text string, the cursor will
+  be set to the end of the current input (that is, ``#editfield.text + 1``).
+
+* ``editfield:setText(text[, cursor_pos])``
+
+  Sets the input text string and, optionally, the cursor position. If the
+  cursor position is not specified, it sets it to the end of the string.
+
+* ``editfield:insert(text)``
+
+  Inserts the given text at the current cursor position.
+
 Scrollbar class
 ---------------
 

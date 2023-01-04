@@ -106,6 +106,9 @@ namespace DFHack {
 DBG_DECLARE(core,keybinding,DebugCategory::LINFO);
 DBG_DECLARE(core,script,DebugCategory::LINFO);
 
+static const std::string CONFIG_PATH = "dfhack-config/";
+static const std::string CONFIG_DEFAULTS_PATH = "hack/data/dfhack-config-defaults/";
+
 class MainThread {
 public:
     //! MainThread::suspend keeps the main DF thread suspended from Core::Init to
@@ -486,10 +489,10 @@ void Core::getScriptPaths(std::vector<std::string> *dest)
 {
     lock_guard<mutex> lock(script_path_mutex);
     dest->clear();
-    string df_path = this->p->getPath();
+    string df_path = this->p->getPath() + "/";
     for (auto it = script_paths[0].begin(); it != script_paths[0].end(); ++it)
         dest->push_back(*it);
-    dest->push_back(df_path + "/dfhack-config/scripts");
+    dest->push_back(df_path + CONFIG_PATH + "scripts");
     if (df::global::world && isWorldLoaded()) {
         string save = World::ReadWorldFolder();
         if (save.size())
@@ -518,7 +521,7 @@ string Core::findScript(string name)
 bool loadScriptPaths(color_ostream &out, bool silent = false)
 {
     using namespace std;
-    string filename("dfhack-config/script-paths.txt");
+    string filename(CONFIG_PATH + "script-paths.txt");
     ifstream file(filename);
     if (!file)
     {
@@ -1311,11 +1314,11 @@ static void run_dfhack_init(color_ostream &out, Core *core)
     }
 
     // load baseline defaults
-    core->loadScriptFile(out, "dfhack-config/init/default.dfhack.init", false);
+    core->loadScriptFile(out, CONFIG_PATH + "init/default.dfhack.init", false);
 
     // load user overrides
     std::vector<std::string> prefixes(1, "dfhack");
-    loadScriptFiles(core, out, prefixes, "dfhack-config/init");
+    loadScriptFiles(core, out, prefixes, CONFIG_PATH + "init");
 }
 
 // Load dfhack.init in a dedicated thread (non-interactive console mode)
@@ -1331,14 +1334,14 @@ void fInitthread(void * iodata)
 // A thread function... for the interactive console.
 void fIOthread(void * iodata)
 {
-    static const char * HISTORY_FILE = "dfhack-config/dfhack.history";
+    static const std::string HISTORY_FILE = CONFIG_PATH + "dfhack.history";
 
     IODATA * iod = ((IODATA*) iodata);
     Core * core = iod->core;
     PluginManager * plug_mgr = ((IODATA*) iodata)->plug_mgr;
 
     CommandHistory main_history;
-    main_history.load(HISTORY_FILE);
+    main_history.load(HISTORY_FILE.c_str());
 
     Console & con = core->getConsole();
     if (plug_mgr == 0)
@@ -1379,7 +1382,7 @@ void fIOthread(void * iodata)
         {
             // a proper, non-empty command was entered
             main_history.add(command);
-            main_history.save(HISTORY_FILE);
+            main_history.save(HISTORY_FILE.c_str());
         }
 
         auto rv = core->runCommand(con, command);
@@ -1614,46 +1617,44 @@ bool Core::Init()
     // initialize data defs
     virtual_identity::Init(this);
 
+    // create config directory if it doesn't already exist
+    if (!Filesystem::mkdir_recursive(CONFIG_PATH))
+        con.printerr("Failed to create config directory: '%s'\n", CONFIG_PATH.c_str());
+
     // copy over default config files if necessary
     std::map<std::string, bool> config_files;
     std::map<std::string, bool> default_config_files;
-    if (Filesystem::listdir_recursive("dfhack-config", config_files, 10, false) != 0)
-        con.printerr("Failed to list directory: dfhack-config");
-    else if (Filesystem::listdir_recursive("dfhack-config/default", default_config_files, 10, false) != 0)
-        con.printerr("Failed to list directory: dfhack-config/default");
+    if (Filesystem::listdir_recursive(CONFIG_PATH, config_files, 10, false) != 0)
+        con.printerr("Failed to list directory: '%s'\n", CONFIG_PATH.c_str());
+    else if (Filesystem::listdir_recursive(CONFIG_DEFAULTS_PATH, default_config_files, 10, false) != 0)
+        con.printerr("Failed to list directory: '%s'\n", CONFIG_DEFAULTS_PATH.c_str());
     else
     {
         // ensure all config file directories exist before we start copying files
-        for (auto it = default_config_files.begin(); it != default_config_files.end(); ++it)
-        {
+        for (auto &entry : default_config_files) {
             // skip over files
-            if (!it->second)
+            if (!entry.second)
                 continue;
-            std::string dirname = "dfhack-config/" + it->first;
+            std::string dirname = CONFIG_PATH + entry.first;
             if (!Filesystem::mkdir_recursive(dirname))
-            {
                 con.printerr("Failed to create config directory: '%s'\n", dirname.c_str());
-            }
         }
 
         // copy files from the default tree that don't already exist in the config tree
-        for (auto it = default_config_files.begin(); it != default_config_files.end(); ++it)
-        {
+        for (auto &entry : default_config_files) {
             // skip over directories
-            if (it->second)
+            if (entry.second)
                 continue;
-            std::string filename = it->first;
-            if (config_files.find(filename) == config_files.end())
-            {
-                std::string src_file = std::string("dfhack-config/default/") + filename;
+            std::string filename = entry.first;
+            if (!config_files.count(filename)) {
+                std::string src_file = CONFIG_DEFAULTS_PATH + filename;
                 if (!Filesystem::isfile(src_file))
                     continue;
-                std::string dest_file = std::string("dfhack-config/") + filename;
+                std::string dest_file = CONFIG_PATH + filename;
                 std::ifstream src(src_file, std::ios::binary);
                 std::ofstream dest(dest_file, std::ios::binary);
-                if (!src.good() || !dest.good())
-                {
-                    con.printerr("Copy failed: %s\n", filename.c_str());
+                if (!src.good() || !dest.good()) {
+                    con.printerr("Copy failed: '%s'\n", filename.c_str());
                     continue;
                 }
                 dest << src.rdbuf();
@@ -2090,9 +2091,9 @@ void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event eve
         const std::vector<std::string>& set = i->second;
 
         // load baseline defaults
-        this->loadScriptFile(out, "dfhack-config/init/default." + set[0] + ".init", false);
+        this->loadScriptFile(out, CONFIG_PATH + "init/default." + set[0] + ".init", false);
 
-        loadScriptFiles(this, out, set, "dfhack-config/init");
+        loadScriptFiles(this, out, set, CONFIG_PATH + "init");
         loadScriptFiles(this, out, set, rawFolder);
         loadScriptFiles(this, out, set, rawFolder + "objects/");
     }

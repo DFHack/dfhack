@@ -95,7 +95,6 @@ endif()
 
 set(MAIN_SOURCES_WINDOWS
     ${CONSOLE_SOURCES}
-    Hooks-windows.cpp
     Hooks.cpp
     PlugLoad-windows.cpp
     Process-windows.cpp
@@ -108,14 +107,12 @@ endif()
 
 set(MAIN_SOURCES_LINUX
     ${CONSOLE_SOURCES}
-    Hooks-linux.cpp
     PlugLoad-posix.cpp
     Process-linux.cpp
 )
 
 set(MAIN_SOURCES_DARWIN
     ${CONSOLE_SOURCES}
-    Hooks-darwin.cpp
     PlugLoad-posix.cpp
     Process-darwin.cpp
 )
@@ -376,8 +373,7 @@ add_executable(binpatch binpatch.cpp)
 target_link_libraries(binpatch dfhack-md5)
 
 if(WIN32)
-    # name the resulting library SDL.dll on Windows
-    set_target_properties(dfhack PROPERTIES OUTPUT_NAME "SDL" )
+    set_target_properties(dfhack PROPERTIES OUTPUT_NAME "dfhooks" )
     set_target_properties(dfhack PROPERTIES COMPILE_FLAGS "/FI\"Export.h\"" )
     set_target_properties(dfhack-client PROPERTIES COMPILE_FLAGS "/FI\"Export.h\"" )
 else()
@@ -436,10 +432,6 @@ if(UNIX)
     install(TARGETS dfhooks
         LIBRARY DESTINATION .
         RUNTIME DESTINATION .)
-else()
-    # On windows, copy the renamed SDL so DF can still run.
-    install(PROGRAMS ${dfhack_SOURCE_DIR}/package/windows/win${DFHACK_BUILD_ARCH}/SDLreal.dll
-        DESTINATION ${DFHACK_LIBRARY_DESTINATION})
 endif()
 
 # install the main lib

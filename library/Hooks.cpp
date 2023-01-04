@@ -26,8 +26,11 @@ DFhackCExport void dfhooks_prerender() {
 DFhackCExport bool dfhooks_sdl_event(SDL::Event* event) {
     return DFHack::Core::getInstance().DFH_SDL_Event(event);
 }
+
 // called for each utf-8 char read from the ncurses input
 // key is positive for ncurses keys and negative for everything else
+// if true is returned, then the event has been consumed and further processing
+// shouldn't happen
 DFhackCExport bool dfhooks_ncurses_key(int key) {
     return DFHack::Core::getInstance().DFH_ncurses_key(key);
 }

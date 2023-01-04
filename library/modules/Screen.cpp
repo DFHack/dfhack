@@ -502,6 +502,10 @@ bool Screen::hasActiveScreens(Plugin *plugin)
     return false;
 }
 
+void Screen::raise(df::viewscreen *screen) {
+    Hide swapper(screen, Screen::Hide::RESTORE_AT_TOP);
+}
+
 namespace DFHack { namespace Screen {
 
 Hide::Hide(df::viewscreen* screen, int flags) :

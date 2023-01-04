@@ -87,7 +87,7 @@ Panel.ATTRS {
 
 function Panel:init(args)
     if not self.drag_anchors then
-        self.drag_anchors = {title=true, frame=false, body=false}
+        self.drag_anchors = {title=true, frame=false, body=true}
     end
     if not self.resize_anchors then
         self.resize_anchors = {t=false, l=true, r=true, b=true}
@@ -303,8 +303,7 @@ function Panel:onInput(keys)
         return true
     end
     if not keys._MOUSE_L_DOWN then return end
-    local rect = self.frame_rect
-    local x,y = self:getMousePos(gui.ViewRect{rect=rect})
+    local x,y = self:getMouseFramePos()
     if not x then return end
 
     if self.resizable and y == 0 then

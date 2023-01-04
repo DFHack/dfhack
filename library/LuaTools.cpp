@@ -131,6 +131,9 @@ void DFHack::Lua::GetVector(lua_State *state, std::vector<std::string> &pvec)
     }
 }
 
+static bool trigger_inhibit_l_down = false;
+static bool trigger_inhibit_r_down = false;
+static bool trigger_inhibit_m_down = false;
 static bool inhibit_l_down = false;
 static bool inhibit_r_down = false;
 static bool inhibit_m_down = false;
@@ -161,17 +164,17 @@ void DFHack::Lua::PushInterfaceKeys(lua_State *L,
         if (!inhibit_l_down && df::global::enabler->mouse_lbut_down) {
             lua_pushboolean(L, true);
             lua_setfield(L, -2, "_MOUSE_L_DOWN");
-            inhibit_l_down = true;
+            trigger_inhibit_l_down = true;
         }
         if (!inhibit_r_down && df::global::enabler->mouse_rbut_down) {
             lua_pushboolean(L, true);
             lua_setfield(L, -2, "_MOUSE_R_DOWN");
-            inhibit_r_down = true;
+            trigger_inhibit_r_down = true;
         }
         if (!inhibit_m_down && df::global::enabler->mouse_mbut_down) {
             lua_pushboolean(L, true);
             lua_setfield(L, -2, "_MOUSE_M_DOWN");
-            inhibit_m_down = true;
+            trigger_inhibit_m_down = true;
         }
         if (df::global::enabler->mouse_lbut) {
             lua_pushboolean(L, true);
@@ -2146,6 +2149,19 @@ void DFHack::Lua::Core::Reset(color_ostream &out, const char *where)
     {
         out.printerr("Common lua context stack top left at %d after %s.\n", top, where);
         lua_settop(State, 0);
+    }
+
+    if (trigger_inhibit_l_down) {
+        trigger_inhibit_l_down = false;
+        inhibit_l_down = true;
+    }
+    if (trigger_inhibit_r_down) {
+        trigger_inhibit_r_down = false;
+        inhibit_r_down = true;
+    }
+    if (trigger_inhibit_m_down) {
+        trigger_inhibit_m_down = false;
+        inhibit_m_down = true;
     }
 
     if (!df::global::enabler->mouse_lbut)

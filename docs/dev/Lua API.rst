@@ -1011,7 +1011,7 @@ Fortress mode
 
 * ``dfhack.gui.getDwarfmodeViewDims()``
 
-  Returns dimensions of the main fortress mode screen. See ``getPanelLayout()``
+  Returns dimensions of the displayed map viewport. See ``getPanelLayout()``
   in the ``gui.dwarfmode`` module for a more Lua-friendly version.
 
 * ``dfhack.gui.resetDwarfmodeView([pause])``
@@ -1121,7 +1121,8 @@ Other
 * ``dfhack.gui.getDepthAt(x, y)``
 
   Returns the distance from the z-level of the tile at map coordinates (x, y) to
-  the closest ground z-level below. Defaults to 0, unless overridden by plugins.
+  the closest rendered ground z-level below. Defaults to 0, unless overridden by
+  plugins.
 
 Job module
 ----------
@@ -2161,7 +2162,14 @@ Functions:
 
 * ``dfhack.screen.getMousePos()``
 
-  Returns *x,y* of the tile the mouse is over.
+  Returns *x,y* of the UI interface tile the mouse is over, with the upper left
+  corner being ``0,0``. To get the map tile coordinate that the mouse is over,
+  see ``dfhack.gui.getMousePos()``.
+
+* ``dfhack.screen.getMousePixels()``
+
+  Returns *x,y* of the screen coordinates the mouse is over in pixels, with the
+  upper left corner being ``0,0``.
 
 * ``dfhack.screen.inGraphicsMode()``
 
@@ -2355,7 +2363,14 @@ Supported callbacks and fields are:
   where the above painting functions work correctly.
 
   If omitted, the screen is cleared; otherwise it should do that itself.
-  In order to make a see-through dialog, call ``self._native.parent:render()``.
+  In order to make a dialog where portions of the parent viewscreen are still
+  visible in the background, call ``screen:renderParent()``.
+
+  If artifacts are left on the parent even after this function is called, such
+  as when the window is dragged or is resized, any code can set
+  ``gui.Screen.request_full_screen_refresh`` to ``true``. Then when
+  ``screen.renderParent()`` is next called, it will do a full flush of the
+  graphics and clear the screen of artifacts.
 
 * ``function screen:onIdle()``
 
@@ -2614,8 +2629,8 @@ and are only documented here for completeness:
 
   Registers ``path`` as a `script path <script-paths>`.
   If ``search_before`` is passed and ``true``, the path will be searched before
-  the default paths (e.g. ``raw/scripts``, ``hack/scripts``); otherwise, it will
-  be searched after.
+  the default paths (e.g. ``dfhack-config/scripts``, ``hack/scripts``); otherwise,
+  it will be searched after.
 
   Returns ``true`` if successful or ``false`` otherwise (e.g. if the path does
   not exist or has already been registered).
@@ -3632,11 +3647,6 @@ considered stable.
 Misc
 ----
 
-* ``USE_GRAPHICS``
-
-  Contains the value of ``dfhack.screen.inGraphicsMode()``, which cannot be
-  changed without restarting the game and thus is constant during the session.
-
 * ``CLEAR_PEN``
 
   The black pen used to clear the screen.
@@ -4144,6 +4154,8 @@ Base of all the widgets. Inherits from View and has the following attributes:
 
   The pen to fill the outer frame with. Defaults to no fill.
 
+.. _panel:
+
 Panel class
 -----------
 
@@ -4306,7 +4318,6 @@ Attributes:
           If it returns false, the character is ignored.
 :on_change: Change notification callback; used as ``on_change(new_text,old_text)``.
 :on_submit: Enter key callback; if set the field will handle the key and call ``on_submit(text)``.
-:on_submit2: Shift-Enter key callback; if set the field will handle the key and call ``on_submit2(text)``.
 :key: If specified, the field is disabled until this key is pressed. Must be given as a string.
 :key_sep: If specified, will be used to customize how the activation key is
           displayed. See ``token.key_sep`` in the ``Label`` documentation below.
@@ -4336,21 +4347,36 @@ You can click where you want the cursor to move or you can use any of the
 following keyboard hotkeys:
 
 - Left/Right arrow: move the cursor one character to the left or right.
-- Ctrl-Left/Right arrow: move the cursor one word to the left or right.
-- Alt-Left/Right arrow: move the cursor to the beginning/end of the text.
+- Ctrl-B/Ctrl-F: move the cursor one word back or forward.
+- Ctrl-A/Ctrl-E: move the cursor to the beginning/end of the text.
+
+The ``EditField`` class also provides the following functions:
+
+* ``editfield:setCursor([cursor_pos])``
+
+  Sets the text insert cursor to the specified position. If ``cursor_pos`` is
+  not specified or is past the end of the current text string, the cursor will
+  be set to the end of the current input (that is, ``#editfield.text + 1``).
+
+* ``editfield:setText(text[, cursor_pos])``
+
+  Sets the input text string and, optionally, the cursor position. If the
+  cursor position is not specified, it sets it to the end of the string.
+
+* ``editfield:insert(text)``
+
+  Inserts the given text at the current cursor position.
 
 Scrollbar class
 ---------------
 
 This Widget subclass implements mouse-interactive scrollbars whose bar sizes
 represent the amount of content currently visible in an associated display
-widget (like a `Label class`_ or a `List class`_). By default they are styled
-like scrollbars used in the vanilla DF help screens, but they are configurable.
+widget (like a `Label class`_ or a `List class`_). They are styled like scrollbars
+used in vanilla DF.
 
 Scrollbars have the following attributes:
 
-:fg: Specifies the pen for the scroll icons and the active part of the bar. Default is ``COLOR_LIGHTGREEN``.
-:bg: Specifies the pen for the background part of the scrollbar. Default is ``COLOR_CYAN``.
 :on_scroll: A callback called when the scrollbar is scrolled. If the scrollbar is clicked,
   the callback will be called with one of the following string parameters: "up_large",
   "down_large", "up_small", or "down_small". If the scrollbar is dragged, the callback will
@@ -4376,6 +4402,10 @@ scrollbar above or below the filled area will scroll by a larger amount in that
 direction. The amount of scrolling done in each case in determined by the
 associated widget, and after scrolling is complete, the associated widget must
 call ``scrollbar:update()`` with updated new display info.
+
+If the mouse wheel is scrolled while the mouse is over the Scrollbar widget's
+parent view, then the parent is scrolled accordingly. Holding :kbd:`Shift`
+while scrolling will result in faster movement.
 
 You can click and drag the scrollbar to scroll to a specific spot, or you can
 click and hold on the end arrows or in the unfilled portion of the scrollbar to
@@ -4621,8 +4651,8 @@ It has the following attributes:
             with an empty list.
 :on_submit: Enter key or mouse click callback; if specified, the list reacts to the
             key/click and calls the callback as ``on_submit(index,choice)``.
-:on_submit2: Shift-Enter key or shift-mouse click callback; if specified, the list
-             reacts to the key/click and calls it as ``on_submit2(index,choice)``.
+:on_submit2: Shift-click callback; if specified, the list reacts to the click and
+             calls the callback as ``on_submit2(index,choice)``.
 :row_height: Height of every row in text lines.
 :icon_width: If not *nil*, the specified number of character columns
              are reserved to the left of the list item for the icons.
@@ -5455,11 +5485,11 @@ Scripts
    :local:
 
 Any files with the ``.lua`` extension placed into the :file:`hack/scripts` folder
-are automatically made available as DFHack commands. The command corresponding to
-a script is simply the script's filename, relative to the scripts folder, with
-the extension omitted. For example:
+(or any other folder in your `script-paths`) are automatically made available as
+DFHack commands. The command corresponding to a script is simply the script's
+filename, relative to the scripts folder, with the extension omitted. For example:
 
-* :file:`hack/scripts/add-thought.lua` is invoked as ``add-thought``
+* :file:`dfhack-config/scripts/startup.lua` is invoked as ``startup``
 * :file:`hack/scripts/gui/teleport.lua` is invoked as ``gui/teleport``
 
 .. note::
@@ -5475,12 +5505,6 @@ the extension omitted. For example:
       mods, not directly by end-users (as a rule of thumb: if someone other than
       a mod developer would want to run a script from the console, it should
       not be placed in this folder)
-
-Scripts can also be placed in other folders - by default, these include
-:file:`raw/scripts` and :file:`data/save/{region}/raw/scripts`, but additional
-folders can be added (for example, a copy of the
-:source-scripts:`scripts repository <>` for local development). See
-`script-paths` for more information on how to configure this behavior.
 
 Scripts are read from disk when run for the first time, or if they have changed
 since the last time they were run.
@@ -5509,7 +5533,7 @@ General script API
 
 * ``dfhack.run_script(name[,args...])``
 
-  Run a Lua script in :file:`hack/scripts/`, as if it were started from the
+  Run a Lua script in your `script-paths`, as if it were started from the
   DFHack command-line. The ``name`` argument should be the name of the script
   without its extension, as it would be used on the command line.
 
@@ -5551,8 +5575,8 @@ Importing scripts
 
   Loads a Lua script and returns its environment (i.e. a table of all global
   functions and variables). This is similar to the built-in ``require()``, but
-  searches all script paths for the first matching ``name.lua`` file instead
-  of searching the Lua library paths (like ``hack/lua``).
+  searches all `script-paths` for the first matching ``name.lua`` file instead
+  of searching the Lua library paths (like ``hack/lua/``).
 
   Most scripts can be made to support ``reqscript()`` without significant
   changes (in contrast, ``require()`` requires the use of ``mkmodule()`` and

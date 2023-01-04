@@ -48,7 +48,7 @@ end
 function MessageBox:onRenderFrame(dc,rect)
     MessageBox.super.onRenderFrame(self,dc,rect)
     if self.on_accept then
-        dc:seek(rect.x1+2,rect.y2):key('LEAVESCREEN'):string('/'):key('MENU_CONFIRM')
+        dc:seek(rect.x1+2,rect.y2):key('LEAVESCREEN'):string('/'):key('SELECT')
     end
 end
 
@@ -59,19 +59,16 @@ function MessageBox:onDestroy()
 end
 
 function MessageBox:onInput(keys)
-    if keys.MENU_CONFIRM then
+    if keys.SELECT or keys.LEAVESCREEN then
         self:dismiss()
-        if self.on_accept then
+        if keys.SELECT and self.on_accept then
             self.on_accept()
-        end
-    elseif keys.LEAVESCREEN or (keys.SELECT and not self.on_accept) then
-        self:dismiss()
-        if self.on_cancel then
+        elseif keys.LEAVESCREEN and self.on_cancel then
             self.on_cancel()
         end
-    else
-        self:inputToSubviews(keys)
+        return true
     end
+    return self:inputToSubviews(keys)
 end
 
 function showMessage(title, text, tcolor, on_close)
@@ -132,14 +129,15 @@ function InputBox:onInput(keys)
         if self.on_input then
             self.on_input(self.subviews.edit.text)
         end
+        return true
     elseif keys.LEAVESCREEN then
         self:dismiss()
         if self.on_cancel then
             self.on_cancel()
         end
-    else
-        self:inputToSubviews(keys)
+        return true
     end
+    return self:inputToSubviews(keys)
 end
 
 function showInputPrompt(title, text, tcolor, input, on_input, on_cancel, min_width)
@@ -238,9 +236,9 @@ function ListBox:onInput(keys)
         if self.on_cancel then
             self.on_cancel()
         end
-    else
-        self:inputToSubviews(keys)
+        return true
     end
+    return self:inputToSubviews(keys)
 end
 
 function showListPrompt(title, text, tcolor, choices, on_select, on_cancel, min_width, filter)

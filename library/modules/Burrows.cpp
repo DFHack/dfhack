@@ -76,6 +76,7 @@ void Burrows::clearUnits(df::burrow *burrow)
 
     burrow->units.clear();
 
+/* TODO: understand how this changes for v50
     // Sync ui if active
     if (ui && ui->main.mode == ui_sidebar_mode::Burrows &&
         ui->burrows.in_add_units_mode && ui->burrows.sel_id == burrow->id)
@@ -85,6 +86,7 @@ void Burrows::clearUnits(df::burrow *burrow)
         for (size_t i = 0; i < sel.size(); i++)
             sel[i] = false;
     }
+*/
 }
 
 bool Burrows::isAssignedUnit(df::burrow *burrow, df::unit *unit)
@@ -113,6 +115,7 @@ void Burrows::setAssignedUnit(df::burrow *burrow, df::unit *unit, bool enable)
         erase_from_vector(burrow->units, unit->id);
     }
 
+/* TODO: understand how this changes for v50
     // Sync ui if active
     if (ui && ui->main.mode == ui_sidebar_mode::Burrows &&
         ui->burrows.in_add_units_mode && ui->burrows.sel_id == burrow->id)
@@ -121,6 +124,7 @@ void Burrows::setAssignedUnit(df::burrow *burrow, df::unit *unit, bool enable)
         if (idx >= 0)
             ui->burrows.sel_units[idx] = enable;
     }
+*/
 }
 
 void Burrows::listBlocks(std::vector<df::map_block*> *pvec, df::burrow *burrow)

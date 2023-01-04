@@ -7,8 +7,6 @@ local utils = require('utils')
 local dscreen = dfhack.screen
 local getval = utils.getval
 
-USE_GRAPHICS = dscreen.inGraphicsMode()
-
 local to_pen = dfhack.pen.parse
 
 CLEAR_PEN = to_pen{tile=909, ch=32, fg=0, bg=0}
@@ -599,6 +597,7 @@ end
 Screen = defclass(Screen, View)
 
 Screen.text_input_mode = false
+Screen.request_full_screen_refresh = false
 
 function Screen:postinit()
     self:onResize(dscreen.getWindowSize())
@@ -624,7 +623,10 @@ function Screen:renderParent()
     else
         dscreen.clear()
     end
-    df.global.gps.force_full_display_count = 1
+    if Screen.request_full_screen_refresh then
+        df.global.gps.force_full_display_count = 1
+        Screen.request_full_screen_refresh = false
+    end
 end
 
 function Screen:sendInputToParent(...)
@@ -659,6 +661,8 @@ function Screen:dismiss()
     if self._native then
         dscreen.dismiss(self)
     end
+    -- don't leave artifacts behind on the parent screen when we disappear
+    Screen.request_full_screen_refresh = true
 end
 
 function Screen:onDismiss()

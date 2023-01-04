@@ -143,13 +143,10 @@ namespace DFHack
         static const int MENU_WIDTH = 30;
 
         struct DwarfmodeDims {
-            int map_x1, map_x2, menu_x1, menu_x2, area_x1, area_x2;
-            int y1, y2;
+            int map_x1, map_x2;
             int map_y1, map_y2;
-            bool menu_on, area_on, menu_forced;
 
             rect2d map() { return mkrect_xy(map_x1, map_y1, map_x2, map_y2); }
-            rect2d menu() { return mkrect_xy(menu_x1, y1, menu_x2, y2); }
         };
 
         DFHACK_EXPORT DwarfmodeDims getDwarfmodeViewDims();
@@ -197,18 +194,6 @@ namespace DFHack
 
         /// get the size of the window buffer
         DFHACK_EXPORT bool getWindowSize(int32_t & width, int32_t & height);
-
-        /**
-         *Menu width:
-         *3:3 - menu and area map closed
-         *2:3 - menu open single width
-         *1:3 - menu open double width
-         *1:2 - menu and area map open
-         *2:2 - area map open
-         */
-
-        DFHACK_EXPORT bool getMenuWidth(uint8_t & menu_width, uint8_t & area_map_width);
-        DFHACK_EXPORT bool setMenuWidth(const uint8_t menu_width, const uint8_t area_map_width);
 
         namespace Hooks {
             GUI_HOOK_DECLARE(depth_at, int, (int32_t x, int32_t y));

@@ -12,7 +12,7 @@ watch list. Units will be ignored if they are:
 * Untamed
 * Nicknamed (for custom protection; you can use the `rename` ``unit`` tool
   individually, or `zone` ``nick`` for groups)
-* Caged, if and only if the cage is defined as a room (to protect zoos)
+* Caged, if and only if the cage is in a zone (to protect zoos)
 * Trained for war or hunting
 
 Creatures who will not reproduce (because they're not interested in the

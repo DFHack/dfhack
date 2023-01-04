@@ -78,7 +78,9 @@ end
 
 -- normalize "short form" viewscreen names to "long form"
 local function normalize_viewscreen_name(vs_name)
-    if vs_name:match('viewscreen_.*st') then return vs_name end
+    if vs_name == 'all' or vs_name:match('viewscreen_.*st') then
+        return vs_name
+    end
     return 'viewscreen_' .. vs_name .. 'st'
 end
 
@@ -177,6 +179,7 @@ end
 
 local function do_disable(args, quiet)
     local disable_fn = function(name, db_entry)
+        if db_entry.widget.always_enabled then return end
         overlay_config[name].enabled = false
         if db_entry.widget.hotspot then
             active_hotspot_widgets[name] = nil
@@ -244,7 +247,7 @@ local function load_widget(name, widget_class)
     local config = overlay_config[name]
     config.pos = sanitize_pos(config.pos or widget.default_pos)
     widget.frame = make_frame(config.pos, widget.frame)
-    if config.enabled then
+    if config.enabled or widget.always_enabled then
         do_enable(name, true, true)
     else
         config.enabled = false
@@ -416,18 +419,24 @@ function update_hotspot_widgets()
     end
 end
 
--- not subject to trigger lock since these widgets are already filtered by
--- viewscreen
-function update_viewscreen_widgets(vs_name, vs)
+local function _update_viewscreen_widgets(vs_name, vs, now_ms)
     local vs_widgets = active_viewscreen_widgets[vs_name]
     if not vs_widgets then return end
-    local now_ms = dfhack.getTickCount()
+    now_ms = now_ms or dfhack.getTickCount()
     for name,db_entry in pairs(vs_widgets) do
         if do_update(name, db_entry, now_ms, vs) then return end
     end
+    return now_ms
 end
 
-function feed_viewscreen_widgets(vs_name, keys)
+-- not subject to trigger lock since these widgets are already filtered by
+-- viewscreen
+function update_viewscreen_widgets(vs_name, vs)
+    local now_ms = _update_viewscreen_widgets(vs_name, vs, nil)
+    _update_viewscreen_widgets('all', vs, now_ms)
+end
+
+local function _feed_viewscreen_widgets(vs_name, keys)
     local vs_widgets = active_viewscreen_widgets[vs_name]
     if not vs_widgets then return false end
     for _,db_entry in pairs(vs_widgets) do
@@ -439,14 +448,24 @@ function feed_viewscreen_widgets(vs_name, keys)
     return false
 end
 
-function render_viewscreen_widgets(vs_name)
+function feed_viewscreen_widgets(vs_name, keys)
+    return _feed_viewscreen_widgets(vs_name, keys) or
+            _feed_viewscreen_widgets('all', keys)
+end
+
+local function _render_viewscreen_widgets(vs_name, dc)
     local vs_widgets = active_viewscreen_widgets[vs_name]
     if not vs_widgets then return false end
-    local dc = gui.Painter.new()
+    dc = dc or gui.Painter.new()
     for _,db_entry in pairs(vs_widgets) do
         local w = db_entry.widget
         detect_frame_change(w, function() w:render(dc) end)
     end
+end
+
+function render_viewscreen_widgets(vs_name)
+    local dc = _render_viewscreen_widgets(vs_name, nil)
+    _render_viewscreen_widgets('all', dc)
 end
 
 -- called when the DF window is resized
@@ -461,7 +480,7 @@ end
 -- OverlayWidget (base class of all overlay widgets) --
 -- ------------------------------------------------- --
 
-OverlayWidget = defclass(OverlayWidget, widgets.Widget)
+OverlayWidget = defclass(OverlayWidget, widgets.Panel)
 OverlayWidget.ATTRS{
     name=DEFAULT_NIL, -- this is set by the framework to the widget name
     default_pos={x=DEFAULT_X_POS, y=DEFAULT_Y_POS}, -- 1-based widget screen pos
@@ -469,6 +488,7 @@ OverlayWidget.ATTRS{
     hotspot=false, -- whether to call overlay_onupdate on all screens
     viewscreens={}, -- override with associated viewscreen or list of viewscrens
     overlay_onupdate_max_freq_seconds=5, -- throttle calls to overlay_onupdate
+    always_enabled=false, -- for overlays that should never be disabled
 }
 
 function OverlayWidget:init()

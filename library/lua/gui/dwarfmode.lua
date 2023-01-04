@@ -71,30 +71,9 @@ end
 
 function getPanelLayout()
     local dims = dfhack.gui.getDwarfmodeViewDims()
-    local area_pos = df.global.ui_menu_width[1]
-    local menu_pos = df.global.ui_menu_width[0]
-
-    if dims.menu_forced then
-        menu_pos = area_pos - 1
-    end
-
-    local rv = {
-        menu_pos = menu_pos,
-        area_pos = area_pos,
-        map = gui.mkdims_xy(dims.map_x1, dims.map_y1, dims.map_x2, dims.map_y2),
+    return {
+        map=gui.mkdims_xy(dims.map_x1, dims.map_y1, dims.map_x2, dims.map_y2),
     }
-
-    if dims.menu_forced then
-        rv.menu_forced = true
-    end
-    if dims.menu_on then
-        rv.menu = gui.mkdims_xy(dims.menu_x1, dims.y1, dims.menu_x2, dims.y2)
-    end
-    if dims.area_on then
-        rv.area_map = gui.mkdims_xy(dims.area_x1, dims.y1, dims.area_x2, dims.y2)
-    end
-
-    return rv
 end
 
 function getCursorPos()
@@ -267,6 +246,10 @@ function Viewport:reveal(target,gap,max_scroll,scroll_gap,scroll_z)
 end
 
 MOVEMENT_KEYS = {
+    KEYBOARD_CURSOR_UP = { 0, -1, 0 }, KEYBOARD_CURSOR_DOWN = { 0, 1, 0 },
+    KEYBOARD_CURSOR_LEFT = { -1, 0, 0 }, KEYBOARD_CURSOR_RIGHT = { 1, 0, 0 },
+    KEYBOARD_CURSOR_UP_FAST = { 0, -1, 0, true }, KEYBOARD_CURSOR_DOWN_FAST = { 0, 1, 0, true },
+    KEYBOARD_CURSOR_LEFT_FAST = { -1, 0, 0, true }, KEYBOARD_CURSOR_RIGHT_FAST = { 1, 0, 0, true },
     CURSOR_UP = { 0, -1, 0 }, CURSOR_DOWN = { 0, 1, 0 },
     CURSOR_LEFT = { -1, 0, 0 }, CURSOR_RIGHT = { 1, 0, 0 },
     CURSOR_UPLEFT = { -1, -1, 0 }, CURSOR_UPRIGHT = { 1, -1, 0 },
@@ -553,66 +536,4 @@ function MenuOverlay:renderMapOverlay(get_overlay_char_fn, bounds_rect)
     end
 end
 
---fakes a "real" workshop sidebar menu, but on exactly selected workshop
-WorkshopOverlay = defclass(WorkshopOverlay, MenuOverlay)
-WorkshopOverlay.focus_path="WorkshopOverlay"
-WorkshopOverlay.ATTRS={
-    workshop=DEFAULT_NIL,
-}
-function WorkshopOverlay:onAboutToShow(below)
-    WorkshopOverlay.super.onAboutToShow(self,below)
-
-    if df.global.world.selected_building ~= self.workshop then
-        error("The workshop overlay tried to show up for incorrect workshop")
-    end
-end
-function WorkshopOverlay:onInput(keys)
-    local allowedKeys={ --TODO add options: job management, profile, etc...
-        "CURSOR_RIGHT","CURSOR_RIGHT_FAST","CURSOR_LEFT","CURSOR_LEFT_FAST","CURSOR_UP","CURSOR_UP_FAST","CURSOR_DOWN","CURSOR_DOWN_FAST",
-        "CURSOR_UPRIGHT","CURSOR_UPRIGHT_FAST","CURSOR_UPLEFT","CURSOR_UPLEFT_FAST","CURSOR_DOWNRIGHT","CURSOR_DOWNRIGHT_FAST","CURSOR_DOWNLEFT","CURSOR_DOWNLEFT_FAST",
-        "CURSOR_UP_Z","CURSOR_DOWN_Z","DESTROYBUILDING","CHANGETAB","SUSPENDBUILDING"}
-
-    if keys.LEAVESCREEN then
-        self:dismiss()
-        self:sendInputToParent('LEAVESCREEN')
-    elseif keys.CHANGETAB then
-        self:sendInputToParent("CHANGETAB")
-        self:inputToSubviews(keys)
-        self:updateLayout()
-    else
-        for _,name in ipairs(allowedKeys) do
-            if keys[name] then
-                self:sendInputToParent(name)
-                break
-            end
-        end
-        self:inputToSubviews(keys)
-    end
-    if df.global.world.selected_building ~= self.workshop then
-        self:dismiss()
-        return
-    end
-end
-function WorkshopOverlay:onGetSelectedBuilding()
-    return self.workshop
-end
-local function is_slated_for_remove( bld )
-    for i,v in ipairs(bld.jobs) do
-        if v.job_type==df.job_type.DestroyBuilding then
-            return true
-        end
-    end
-    return false
-end
-function WorkshopOverlay:render(dc)
-    self:renderParent()
-    if df.global.world.selected_building ~= self.workshop then
-        return
-    end
-    if is_slated_for_remove(self.workshop) then
-        return
-    end
-
-    WorkshopOverlay.super.render(self, dc)
-end
 return _ENV

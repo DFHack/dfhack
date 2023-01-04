@@ -116,7 +116,12 @@ bool Screen::inGraphicsMode()
 }
 
 static bool doSetTile_map(const Pen &pen, int x, int y) {
+    size_t max_index = gps->main_viewport->dim_x * gps->main_viewport->dim_y - 1;
     size_t index = (x * gps->main_viewport->dim_y) + y;
+
+    if (index < 0 || index > max_index)
+        return false;
+
     long texpos = pen.tile;
     if (texpos == 0) {
         texpos = init->font.large_font_texpos[(uint8_t)pen.ch];
@@ -145,7 +150,10 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
     *screen = 0;
     *texpos = 0;
     *texpos_lower = 0;
-    *flag = 4; // remove SCREENTEXPOS_FLAG_ANCHOR_SUBORDINATE
+    gps->screentexpos_anchored[index] = 0;
+    // keep SCREENTEXPOS_FLAG_ANCHOR_SUBORDINATE so occluded anchored textures
+    // don't appear corrupted
+    *flag &= 4;
 
     if (gps->top_in_use) {
         screen = &gps->screen_top[index * 8];
@@ -156,13 +164,22 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
         *screen = 0;
         *texpos = 0;
         *texpos_lower = 0;
-        *flag = 4; // remove SCREENTEXPOS_FLAG_ANCHOR_SUBORDINATE
+        gps->screentexpos_top_anchored[index] = 0;
+        *flag &= 4; // keep SCREENTEXPOS_FLAG_ANCHOR_SUBORDINATE
     }
+
+    uint8_t fg = pen.fg | (pen.bold << 3);
+    uint8_t bg = pen.bg;
 
     if (pen.tile_mode == Screen::Pen::CharColor)
         *flag |= 2; // SCREENTEXPOS_FLAG_ADDCOLOR
-    else if (pen.tile_mode == Screen::Pen::TileColor)
+    else if (pen.tile_mode == Screen::Pen::TileColor) {
         *flag |= 1; // SCREENTEXPOS_FLAG_GRAYSCALE
+        if (pen.tile_fg)
+            fg = pen.tile_fg;
+        if (pen.tile_bg)
+            bg = pen.tile_bg;
+    }
 
     if (pen.tile && use_graphics) {
         *texpos = pen.tile;
@@ -171,15 +188,14 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
         *texpos_lower = 909;
     }
 
-    // note that pen.bold currently (50.04) has no representation in the DF data
-    auto fg = &gps->uccolor[pen.fg][0];
-    auto bg = &gps->uccolor[pen.bg][0];
-    screen[1] = fg[0];
-    screen[2] = fg[1];
-    screen[3] = fg[2];
-    screen[4] = bg[0];
-    screen[5] = bg[1];
-    screen[6] = bg[2];
+    auto rgb_fg = &gps->uccolor[fg][0];
+    auto rgb_bg = &gps->uccolor[bg][0];
+    screen[1] = rgb_fg[0];
+    screen[2] = rgb_fg[1];
+    screen[3] = rgb_fg[2];
+    screen[4] = rgb_bg[0];
+    screen[5] = rgb_bg[1];
+    screen[6] = rgb_bg[2];
 
     return true;
 }
@@ -198,39 +214,83 @@ bool Screen::paintTile(const Pen &pen, int x, int y, bool map)
     return true;
 }
 
-static Pen doGetTile_default(int x, int y, bool map)
-{
-    auto dim = Screen::getWindowSize();
-    if (x < 0 || x >= dim.x || y < 0 || y >= dim.y)
-        return Pen(0,0,0,-1);
+static Pen doGetTile_map(int x, int y) {
+    size_t max_index = gps->main_viewport->dim_x * gps->main_viewport->dim_y - 1;
+    size_t index = (x * gps->main_viewport->dim_y) + y;
 
-/* TODO: understand how this changes for v50
-    int index = x*dim.y + y;
-    auto screen = gps->screen + index*4;
-    if (screen[3] & 0x80)
-        return Pen(0,0,0,-1);
+    if (index < 0 || index > max_index)
+        return Pen(0, 0, 0, -1);
 
-    Pen pen(
-        screen[0], screen[1], screen[2], screen[3]?true:false,
-        gps->screentexpos[index]
-    );
+    int tile = gps->main_viewport->screentexpos[index];
+    if (tile == 0)
+        tile = gps->main_viewport->screentexpos_item[index];
+    if (tile == 0)
+        tile = gps->main_viewport->screentexpos_building_one[index];
+    if (tile == 0)
+        tile = gps->main_viewport->screentexpos_background_two[index];
+    if (tile == 0)
+        tile = gps->main_viewport->screentexpos_background[index];
 
-    if (pen.tile)
-    {
-        if (gps->screentexpos_grayscale[index])
-        {
-            pen.tile_mode = Screen::Pen::TileColor;
-            pen.tile_fg = gps->screentexpos_cf[index];
-            pen.tile_bg = gps->screentexpos_cbr[index];
-        }
-        else if (gps->screentexpos_addcolor[index])
-        {
-            pen.tile_mode = Screen::Pen::CharColor;
+    char ch = 0;
+    uint8_t fg = 0;
+    uint8_t bg = 0;
+    return Pen(ch, fg, bg, tile, false);
+}
+
+static uint8_t to_16_bit_color(uint8_t  *rgb) {
+    for (uint8_t c = 0; c < 16; ++c) {
+        if (rgb[0] == gps->uccolor[c][0] &&
+                rgb[1] == gps->uccolor[c][1] &&
+                rgb[2] == gps->uccolor[c][2]) {
+            return c;
         }
     }
+    return 0;
+}
 
-    return pen;
-*/ return Pen(0,0,0,-1);
+static Pen doGetTile_default(int x, int y, bool map) {
+    if (x < 0 || y < 0)
+        return Pen(0, 0, 0, -1);
+
+    bool use_graphics = Screen::inGraphicsMode();
+
+    if (map && use_graphics)
+        return doGetTile_map(x, y);
+
+    size_t index = (x * gps->dimy) + y;
+    uint8_t *screen = &gps->screen[index * 8];
+
+    if (screen > gps->screen_limit)
+        return Pen(0, 0, 0, -1);
+
+    long *texpos = &gps->screentexpos[index];
+    uint32_t *flag = &gps->screentexpos_flag[index];
+
+    if (gps->top_in_use &&
+            (gps->screen_top[index * 8] ||
+             (use_graphics && gps->screentexpos_top[index]))) {
+        screen = &gps->screen_top[index * 8];
+        texpos = &gps->screentexpos_top[index];
+        flag = &gps->screentexpos_top_flag[index];
+    }
+
+    char ch = *screen;
+    uint8_t fg = to_16_bit_color(&screen[1]);
+    uint8_t bg = to_16_bit_color(&screen[4]);
+    int tile = 0;
+    if (use_graphics)
+        tile = *texpos;
+
+    if (*flag & 1) {
+        // TileColor
+        return Pen(ch, fg&7, bg, !!(fg&8), tile, fg, bg);
+    } else if (*flag & 2) {
+        // CharColor
+        return Pen(ch, fg, bg, tile, true);
+    }
+
+    // AsIs
+    return Pen(ch, fg, bg, tile, false);
 }
 
 GUI_HOOK_DEFINE(Screen::Hooks::get_tile, doGetTile_default);

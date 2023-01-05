@@ -49,9 +49,11 @@ using namespace std;
 #include "VersionInfo.h"
 #include "PluginManager.h"
 #include "ModuleFactory.h"
+#include "modules/DFSDL.h"
 #include "modules/EventManager.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
+#include "modules/Textures.h"
 #include "modules/World.h"
 #include "modules/Persistence.h"
 #include "RemoteServer.h"
@@ -1670,8 +1672,15 @@ bool Core::Init()
         return false;
     }
 
+    cerr << "Binding to SDL.\n";
+    if (!DFSDL::init(con)) {
+        fatal("cannot bind SDL libraries");
+        return false;
+    }
+    cerr << "Initializing textures.\n";
+    Textures::init(con);
     // create mutex for syncing with interactive tasks
-    cerr << "Initializing Plugins.\n";
+    cerr << "Initializing plugins.\n";
     // create plugin manager
     plug_mgr = new PluginManager(this);
     plug_mgr->init();
@@ -1765,12 +1774,7 @@ bool Core::Init()
 
     cerr << "DFHack is running.\n";
 
-    {
-        auto L = Lua::Core::State;
-        Lua::StackUnwinder top(L);
-        Lua::CallLuaModuleFunction(con, L, "script-manager", "reload");
-        onStateChange(con, SC_CORE_INITIALIZED);
-    }
+    onStateChange(con, SC_CORE_INITIALIZED);
 
     return true;
 }
@@ -2138,6 +2142,13 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
 
     switch (event)
     {
+    case SC_CORE_INITIALIZED:
+        {
+            auto L = Lua::Core::State;
+            Lua::StackUnwinder top(L);
+            Lua::CallLuaModuleFunction(con, L, "script-manager", "reload");
+        }
+        break;
     case SC_WORLD_LOADED:
     case SC_WORLD_UNLOADED:
     case SC_MAP_LOADED:
@@ -2171,6 +2182,10 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
                 evtlog << std::endl;
             }
         }
+        break;
+    case SC_VIEWSCREEN_CHANGED:
+        Textures::init(out);
+        break;
     default:
         break;
     }
@@ -2248,6 +2263,8 @@ int Core::Shutdown ( void )
     }
     // invalidate all modules
     allModules.clear();
+    Textures::cleanup();
+    DFSDL::cleanup();
     memset(&(s_mods), 0, sizeof(s_mods));
     d.reset();
     return -1;

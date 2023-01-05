@@ -57,6 +57,7 @@ distribution.
 #include "modules/Materials.h"
 #include "modules/Random.h"
 #include "modules/Screen.h"
+#include "modules/Textures.h"
 #include "modules/Translation.h"
 #include "modules/Units.h"
 #include "modules/World.h"
@@ -1667,6 +1668,13 @@ static int job_listNewlyCreated(lua_State *state)
 
 static const luaL_Reg dfhack_job_funcs[] = {
     { "listNewlyCreated", job_listNewlyCreated },
+    { NULL, NULL }
+};
+
+/***** Textures module *****/
+
+static const LuaWrapper::FunctionReg dfhack_textures_module[] = {
+    WRAPM(Textures, getDfhackLogoTexposStart),
     { NULL, NULL }
 };
 
@@ -3357,6 +3365,7 @@ void OpenDFHackApi(lua_State *state)
     luaL_setfuncs(state, dfhack_funcs, 0);
     OpenModule(state, "gui", dfhack_gui_module, dfhack_gui_funcs);
     OpenModule(state, "job", dfhack_job_module, dfhack_job_funcs);
+    OpenModule(state, "textures", dfhack_textures_module);
     OpenModule(state, "units", dfhack_units_module, dfhack_units_funcs);
     OpenModule(state, "items", dfhack_items_module, dfhack_items_funcs);
     OpenModule(state, "maps", dfhack_maps_module, dfhack_maps_funcs);

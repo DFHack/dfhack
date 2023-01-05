@@ -10,6 +10,9 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/quickfort/
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/orders/
         DESTINATION dfhack-config/orders/library)
 
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/art/
+        DESTINATION "${DFHACK_DATA_DESTINATION}/data/art")
+
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/examples/
         DESTINATION "${DFHACK_DATA_DESTINATION}/examples")
 

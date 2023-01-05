@@ -124,6 +124,7 @@ set(MODULE_HEADERS
     include/modules/Buildings.h
     include/modules/Burrows.h
     include/modules/Constructions.h
+    include/modules/DFSDL.h
     include/modules/Designations.h
     include/modules/EventManager.h
     include/modules/Filesystem.h
@@ -141,6 +142,7 @@ set(MODULE_HEADERS
     include/modules/Random.h
     include/modules/Renderer.h
     include/modules/Screen.h
+    include/modules/Textures.h
     include/modules/Translation.h
     include/modules/Units.h
     include/modules/World.h
@@ -150,6 +152,7 @@ set(MODULE_SOURCES
     modules/Buildings.cpp
     modules/Burrows.cpp
     modules/Constructions.cpp
+    modules/DFSDL.cpp
     modules/Designations.cpp
     modules/EventManager.cpp
     modules/Filesystem.cpp
@@ -166,6 +169,7 @@ set(MODULE_SOURCES
     modules/Random.cpp
     modules/Renderer.cpp
     modules/Screen.cpp
+    modules/Textures.cpp
     modules/Translation.cpp
     modules/Units.cpp
     modules/World.cpp

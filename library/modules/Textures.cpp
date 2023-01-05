@@ -86,7 +86,7 @@ static size_t load_textures(color_ostream & out, const char * fname,
     }
     DFSDL_FreeSurface(s);
 
-    DEBUG(textures,out).print("loaded %d textures from '%s'\n", count, fname);
+    DEBUG(textures,out).print("loaded %ld textures from '%s'\n", count, fname);
     return count;
 }
 
@@ -112,7 +112,7 @@ void Textures::init(color_ostream &out) {
     g_num_dfhack_textures = load_textures(out, "hack/data/art/dfhack.png",
                                           &g_dfhack_logo_texpos_start);
 
-    DEBUG(textures,out).print("loaded %d textures\n", g_num_dfhack_textures);
+    DEBUG(textures,out).print("loaded %ld textures\n", g_num_dfhack_textures);
 
     if (is_pre_world)
         textures.init_texture_size += g_num_dfhack_textures;

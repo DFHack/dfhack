@@ -394,6 +394,7 @@ namespace df
 
     template<class T>
     class ro_stl_container_identity : public container_identity {
+    protected:
         const char *name;
 
     public:
@@ -416,6 +417,30 @@ namespace df
             auto iter = (*(T*)ptr).begin();
             for (; idx > 0; idx--) ++iter;
             return (void*)&*iter;
+        }
+    };
+
+    template<class T>
+    class ro_stl_assoc_container_identity : public ro_stl_container_identity<T> {
+        type_identity *key_identity;
+        type_identity *item_identity;
+
+    public:
+        ro_stl_assoc_container_identity(const char *name, type_identity *key, type_identity *item)
+            : ro_stl_container_identity<T>(name, item),
+              key_identity(key),
+              item_identity(item)
+        {}
+
+        virtual std::string getFullName(type_identity*) override {
+            return std::string(ro_stl_assoc_container_identity<T>::name) + "<" + key_identity->getFullName() + ", " + item_identity->getFullName() + ">";
+        }
+
+    protected:
+        virtual void *item_pointer(type_identity *item, void *ptr, int idx) override {
+            auto iter = (*(T*)ptr).begin();
+            for (; idx > 0; idx--) ++iter;
+            return (void*)&iter->second;
         }
     };
 
@@ -609,6 +634,10 @@ namespace df
         static container_identity *get();
     };
 
+    template<class KT, class T> struct identity_traits<std::map<KT, T>> {
+        static container_identity *get();
+    };
+
     template<> struct identity_traits<BitArray<int> > {
         static bit_array_identity identity;
         static bit_container_identity *get() { return &identity; }
@@ -676,6 +705,13 @@ namespace df
     inline container_identity *identity_traits<std::set<T> >::get() {
         typedef std::set<T> container;
         static ro_stl_container_identity<container> identity("set", identity_traits<T>::get());
+        return &identity;
+    }
+
+    template<class KT, class T>
+    inline container_identity *identity_traits<std::map<KT, T>>::get() {
+        typedef std::map<KT, T> container;
+        static ro_stl_assoc_container_identity<container> identity("map", identity_traits<KT>::get(), identity_traits<T>::get());
         return &identity;
     }
 

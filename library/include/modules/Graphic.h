@@ -33,62 +33,11 @@ distribution.
 #include <stdint.h>
 #include "Export.h"
 #include "Module.h"
+#include "DFSDL.h"
 #include <vector>
 
 namespace DFHack
 {
-    // SDL stuff
-    typedef signed short SINT16;
-    typedef struct
-    {
-        int16_t x, y;
-        uint16_t w, h;
-    } DFSDL_Rect;
-    typedef struct
-    {
-        void *palette; // SDL_Palette*
-        uint8_t  BitsPerPixel;
-        uint8_t  BytesPerPixel;
-        uint8_t  Rloss;
-        uint8_t  Gloss;
-        uint8_t  Bloss;
-        uint8_t  Aloss;
-        uint8_t  Rshift;
-        uint8_t  Gshift;
-        uint8_t  Bshift;
-        uint8_t  Ashift;
-        uint32_t Rmask;
-        uint32_t Gmask;
-        uint32_t Bmask;
-        uint32_t Amask;
-        uint32_t colorkey;
-        uint8_t  alpha;
-    } DFSDL_PixelFormat;
-    typedef struct
-    {
-        uint32_t flags;
-        DFSDL_PixelFormat* format;
-        int w, h;
-        int pitch;
-        void* pixels;
-        void* userdata; // as far as i could see DF doesnt use this
-        int locked;
-        void* lock_data;
-        DFSDL_Rect clip_rect;
-        void* map;
-        int refcount;
-    } DFSDL_Surface;
-
-    // =========
-    struct DFTileSurface
-    {
-        bool paintOver; // draw over original tile?
-        DFSDL_Surface* surface; // from where it should be drawn
-        DFSDL_Rect* rect; // from which coords (NULL to draw whole surface)
-        DFSDL_Rect* dstResize; // if not NULL dst rect will be resized (x/y/w/h will be added to original dst)
-    };
-
-
     class DFHACK_EXPORT Graphic : public Module
     {
         public:
@@ -103,7 +52,6 @@ namespace DFHack
         private:
             std::vector<DFTileSurface* (*)(int, int)> funcs;
     };
-
 }
 
 #endif

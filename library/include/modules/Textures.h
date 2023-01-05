@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Export.h"
-
 #include "ColorText.h"
 
 namespace DFHack {

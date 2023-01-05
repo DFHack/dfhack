@@ -49,6 +49,7 @@ using namespace std;
 #include "VersionInfo.h"
 #include "PluginManager.h"
 #include "ModuleFactory.h"
+#include "modules/DFSDL.h"
 #include "modules/EventManager.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
@@ -1671,6 +1672,11 @@ bool Core::Init()
         return false;
     }
 
+    cerr << "Binding to SDL.\n";
+    if (!DFSDL::init(con)) {
+        fatal("cannot bind SDL libraries");
+        return false;
+    }
     cerr << "Initializing textures.\n";
     Textures::init(con);
     // create mutex for syncing with interactive tasks
@@ -2258,6 +2264,7 @@ int Core::Shutdown ( void )
     // invalidate all modules
     allModules.clear();
     Textures::cleanup();
+    DFSDL::cleanup();
     memset(&(s_mods), 0, sizeof(s_mods));
     d.reset();
     return -1;

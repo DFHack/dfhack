@@ -14,8 +14,10 @@ CLEAR_PEN = to_pen{tile=909, ch=32, fg=0, bg=0}
 local FAKE_INPUT_KEYS = {
     _MOUSE_L = true,
     _MOUSE_R = true,
+    _MOUSE_M = true,
     _MOUSE_L_DOWN = true,
     _MOUSE_R_DOWN = true,
+    _MOUSE_M_DOWN = true,
     _STRING = true,
 }
 

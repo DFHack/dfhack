@@ -721,6 +721,9 @@ function ZScreen:onInput(keys)
     end
     if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
         self:dismiss()
+        -- ensure underlying DF screens don't also react to the click
+        df.global.enabler.mouse_rbut_down = 0
+        df.global.enabler.mouse_rbut = 0
         return
     end
 

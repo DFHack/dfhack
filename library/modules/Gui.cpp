@@ -1873,6 +1873,12 @@ bool Gui::autoDFAnnouncement(df::announcement_type type, df::coord pos, std::str
     return autoDFAnnouncement(r, message);
 }
 
+static df::viewscreen * do_skip_dismissed(df::viewscreen * ws) {
+    while (ws && Screen::isDismissed(ws) && ws->parent)
+        ws = ws->parent;
+    return ws;
+}
+
 df::viewscreen *Gui::getCurViewscreen(bool skip_dismissed)
 {
     if (!gview)
@@ -1883,10 +1889,7 @@ df::viewscreen *Gui::getCurViewscreen(bool skip_dismissed)
         ws = ws->child;
 
     if (skip_dismissed)
-    {
-        while (ws && Screen::isDismissed(ws) && ws->parent)
-            ws = ws->parent;
-    }
+        ws = do_skip_dismissed(ws);
 
     return ws;
 }
@@ -1904,6 +1907,16 @@ df::viewscreen *Gui::getViewscreenByIdentity (virtual_identity &id, int n)
         screen = screen->parent;
     }
     return NULL;
+}
+
+df::viewscreen *Gui::getDFViewscreen(bool skip_dismissed) {
+    df::viewscreen *screen = Gui::getCurViewscreen(skip_dismissed);
+    while (screen && dfhack_viewscreen::is_instance(screen)) {
+        screen = screen->parent;
+        if (skip_dismissed)
+            screen = do_skip_dismissed(screen);
+    }
+    return screen;
 }
 
 df::coord Gui::getViewportPos()

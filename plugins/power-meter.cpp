@@ -29,8 +29,8 @@
 #include "df/machine_info.h"
 #include "df/report.h"
 #include "df/tile_designation.h"
-#include "df/ui.h"
-#include "df/ui_build_selector.h"
+#include "df/plotinfost.h"
+#include "df/buildreq.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/world.h"
 
@@ -43,7 +43,7 @@ using namespace df::enums;
 DFHACK_PLUGIN("power-meter");
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(ui_build_selector);
 
 static const uint32_t METER_BIT = 0x80000000U;

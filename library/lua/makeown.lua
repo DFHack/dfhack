@@ -288,11 +288,11 @@ end
 function make_own(unit)
     --tweak makeown
     unit.flags2.resident = false; unit.flags1.merchant = false; unit.flags1.forest = false;
-    unit.civ_id = df.global.ui.civ_id
+    unit.civ_id = df.global.plotinfo.civ_id
     if unit.profession == df.profession.MERCHANT then unit.profession = df.profession.TRADER end
     if unit.profession2 == df.profession.MERCHANT then unit.profession2 = df.profession.TRADER end
     fix_clothing_ownership(unit)
-    if unit.race == df.global.ui.race_id then
+    if unit.race == df.global.plotinfo.race_id then
         make_citizen(unit)
     end
 end

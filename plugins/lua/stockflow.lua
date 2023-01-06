@@ -234,7 +234,7 @@ function material_reactions(reactions, itemtypes, mat_info)
 end
 
 function clothing_reactions(reactions, mat_info, filter)
-    local resources = df.historical_entity.find(df.global.ui.civ_id).resources
+    local resources = df.historical_entity.find(df.global.plotinfo.civ_id).resources
     local itemdefs = df.global.world.raws.itemdefs
     local job_types = df.job_type
     resource_reactions(reactions, job_types.MakeArmor,  mat_info, resources.armor_type,  itemdefs.armor,  {permissible = filter})
@@ -408,7 +408,7 @@ function collect_reactions()
     -- Reactions defined in the raws.
     -- Not all reactions are allowed to the civilization.
     -- That includes "Make sharp rock" by default.
-    local entity = df.historical_entity.find(df.global.ui.civ_id)
+    local entity = df.historical_entity.find(df.global.plotinfo.civ_id)
     if not entity then
         -- No global civilization; arena mode?
         -- Anyway, skip remaining reactions, since many depend on the civ.

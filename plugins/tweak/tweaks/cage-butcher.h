@@ -6,7 +6,7 @@
 #include "df/unit.h"
 
 using namespace DFHack;
-using df::global::ui;
+using df::global::plotinfo;
 using df::global::ui_building_in_assign;
 using df::global::ui_building_in_resize;
 using df::global::ui_building_item_cursor;
@@ -19,7 +19,7 @@ struct cage_butcher_hook : df::viewscreen_dwarfmodest {
         if (*ui_building_in_assign || *ui_building_in_resize)
             return nullptr;
 
-        if (ui->main.mode != df::ui_sidebar_mode::QueryBuilding)
+        if (plotinfo->main.mode != df::ui_sidebar_mode::QueryBuilding)
             return nullptr;
 
         auto cage = virtual_cast<df::building_cagest>(Gui::getAnyBuilding(this));

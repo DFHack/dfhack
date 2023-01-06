@@ -9,7 +9,7 @@
 #include "df/building_stockpilest.h"
 #include "modules/Buildings.h"
 #include "modules/Items.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "modules/Maps.h"
 #include "modules/World.h"
 #include "df/item_quality.h"
@@ -21,7 +21,7 @@ DFHACK_PLUGIN("automelt");
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(cursor);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 
 static const string PERSISTENCE_KEY = "automelt/stockpiles";
 

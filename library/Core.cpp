@@ -65,8 +65,8 @@ using namespace std;
 
 using namespace DFHack;
 
-#include "df/ui.h"
-#include "df/ui_sidebar_menus.h"
+#include "df/plotinfost.h"
+#include "df/gamest.h"
 #include "df/world.h"
 #include "df/world_data.h"
 #include "df/interfacest.h"
@@ -1307,7 +1307,7 @@ bool Core::loadScriptFile(color_ostream &out, string fname, bool silent)
 static void run_dfhack_init(color_ostream &out, Core *core)
 {
     CoreSuspender lock;
-    if (!df::global::world || !df::global::ui || !df::global::gview)
+    if (!df::global::world || !df::global::plotinfo || !df::global::gview)
     {
         out.printerr("Key globals are missing, skipping loading dfhack.init.\n");
         return;
@@ -1712,10 +1712,10 @@ bool Core::Init()
     if (!listen.get())
         cerr << "TCP listen failed.\n";
 
-    if (df::global::ui_sidebar_menus)
+    if (df::global::game)
     {
         vector<string> args;
-        const string & raw = df::global::ui_sidebar_menus->command_line.original;
+        const string & raw = df::global::game->command_line.original;
         size_t offset = 0;
         while (offset < raw.size())
         {
@@ -1879,7 +1879,7 @@ void Core::doUpdate(color_ostream &out)
         strict_virtual_cast<df::viewscreen_savegamest>(screen);
 
     // save data (do this before updating last_world_data_ptr and triggering unload events)
-    if ((df::global::ui->main.autosave_request && !d->last_autosave_request) ||
+    if ((df::global::plotinfo->main.autosave_request && !d->last_autosave_request) ||
         (is_load_save && !d->was_load_save && strict_virtual_cast<df::viewscreen_savegamest>(screen)))
     {
         doSaveData(out);
@@ -1941,7 +1941,7 @@ void Core::doUpdate(color_ostream &out)
     // Execute per-frame handlers
     onUpdate(out);
 
-    d->last_autosave_request = df::global::ui->main.autosave_request;
+    d->last_autosave_request = df::global::plotinfo->main.autosave_request;
     d->was_load_save = is_load_save;
 
     out << std::flush;
@@ -2288,14 +2288,14 @@ bool Core::ncurses_wgetch(int in, int & out)
 /* TODO: understand how this changes for v50
         int idx = in - KEY_F(1);
         // FIXME: copypasta, push into a method!
-        if(df::global::ui && df::global::gview)
+        if(df::global::plotinfo && df::global::gview)
         {
             df::viewscreen * ws = Gui::getCurViewscreen();
             if (strict_virtual_cast<df::viewscreen_dwarfmodest>(ws) &&
-                df::global::ui->main.mode != ui_sidebar_mode::Hotkeys &&
-                df::global::ui->main.hotkeys[idx].cmd == df::ui_hotkey::T_cmd::None)
+                df::global::plotinfo->main.mode != ui_sidebar_mode::Hotkeys &&
+                df::global::plotinfo->main.hotkeys[idx].cmd == df::ui_hotkey::T_cmd::None)
             {
-                setHotkeyCmd(df::global::ui->main.hotkeys[idx].name);
+                setHotkeyCmd(df::global::plotinfo->main.hotkeys[idx].name);
                 return false;
             }
             else
@@ -2422,7 +2422,7 @@ int Core::DFH_SDL_Event(SDL::Event* ev)
 bool Core::SelectHotkey(int sym, int modifiers)
 {
     // Find the topmost viewscreen
-    if (!df::global::gview || !df::global::ui)
+    if (!df::global::gview || !df::global::plotinfo)
         return false;
 
     df::viewscreen *screen = &df::global::gview->view;
@@ -2477,10 +2477,10 @@ bool Core::SelectHotkey(int sym, int modifiers)
                     idx += 8;
 
                 if (strict_virtual_cast<df::viewscreen_dwarfmodest>(screen) &&
-                    df::global::ui->main.mode != ui_sidebar_mode::Hotkeys &&
-                    df::global::ui->main.hotkeys[idx].cmd == df::ui_hotkey::T_cmd::None)
+                    df::global::plotinfo->main.mode != ui_sidebar_mode::Hotkeys &&
+                    df::global::plotinfo->main.hotkeys[idx].cmd == df::ui_hotkey::T_cmd::None)
                 {
-                    cmd = df::global::ui->main.hotkeys[idx].name;
+                    cmd = df::global::plotinfo->main.hotkeys[idx].name;
                 }
 */
             }

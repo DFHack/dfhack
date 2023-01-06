@@ -36,39 +36,39 @@ function test.enterSidebarMode()
                end)
 
     -- verify expected starting state
-    expect.eq(df.ui_sidebar_mode.Default, df.global.ui.main.mode)
+    expect.eq(df.ui_sidebar_mode.Default, df.global.plotinfo.main.mode)
     expect.eq('dwarfmode/Default', dfhack.gui.getCurFocus(true))
 
     -- get into the orders screen
     gui.simulateInput(dfhack.gui.getCurViewscreen(true), 'D_JOBLIST')
     gui.simulateInput(dfhack.gui.getCurViewscreen(true), 'UNITJOB_MANAGER')
-    expect.eq(df.ui_sidebar_mode.Default, df.global.ui.main.mode)
+    expect.eq(df.ui_sidebar_mode.Default, df.global.plotinfo.main.mode)
     expect.eq('jobmanagement/Main', dfhack.gui.getCurFocus(true))
 
     -- get back into default from some deep screen
     guidm.enterSidebarMode(df.ui_sidebar_mode.Default)
-    expect.eq(df.ui_sidebar_mode.Default, df.global.ui.main.mode)
+    expect.eq(df.ui_sidebar_mode.Default, df.global.plotinfo.main.mode)
     expect.eq('dwarfmode/Default', dfhack.gui.getCurFocus(true))
 
     -- move from default to some other mode
     guidm.enterSidebarMode(df.ui_sidebar_mode.QueryBuilding)
-    expect.eq(df.ui_sidebar_mode.QueryBuilding, df.global.ui.main.mode)
+    expect.eq(df.ui_sidebar_mode.QueryBuilding, df.global.plotinfo.main.mode)
     expect.str_find('^dwarfmode/QueryBuilding', dfhack.gui.getCurFocus(true))
 
     -- move between non-default modes
     guidm.enterSidebarMode(df.ui_sidebar_mode.LookAround)
-    expect.eq(df.ui_sidebar_mode.LookAround, df.global.ui.main.mode)
+    expect.eq(df.ui_sidebar_mode.LookAround, df.global.plotinfo.main.mode)
     expect.str_find('^dwarfmode/LookAround', dfhack.gui.getCurFocus(true))
 
     -- get back into default from a supported mode
     guidm.enterSidebarMode(df.ui_sidebar_mode.Default)
-    expect.eq(df.ui_sidebar_mode.Default, df.global.ui.main.mode)
+    expect.eq(df.ui_sidebar_mode.Default, df.global.plotinfo.main.mode)
     expect.eq('dwarfmode/Default', dfhack.gui.getCurFocus(true))
 
     -- verify that all supported modes lead where we say they'll go
     for k,v in pairs(guidm.SIDEBAR_MODE_KEYS) do
         guidm.enterSidebarMode(k)
-        expect.eq(k, df.global.ui.main.mode, df.ui_sidebar_mode[k])
+        expect.eq(k, df.global.plotinfo.main.mode, df.ui_sidebar_mode[k])
     end
     -- end test back in default so the test harness doesn't have to autocorrect
     guidm.enterSidebarMode(df.ui_sidebar_mode.Default)

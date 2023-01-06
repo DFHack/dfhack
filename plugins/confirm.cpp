@@ -36,7 +36,7 @@ using std::vector;
 DFHACK_PLUGIN("confirm");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 REQUIRE_GLOBAL(gps);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 
 typedef std::set<df::interface_key> ikey_set;
 command_result df_confirm (color_ostream &out, vector <string> & parameters);

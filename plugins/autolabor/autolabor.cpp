@@ -12,7 +12,7 @@
 
 // DF data structure definition headers
 #include "DataDefs.h"
-#include <df/ui.h>
+#include <df/plotinfost.h>
 #include <df/world.h>
 #include <df/unit.h>
 #include <df/unit_soul.h>
@@ -32,7 +32,7 @@
 #include <df/building_tradedepotst.h>
 #include <df/building_stockpilest.h>
 #include <df/items_other_id.h>
-#include <df/ui.h>
+#include <df/plotinfost.h>
 #include <df/activity_info.h>
 
 #include <MiscUtils.h>
@@ -47,7 +47,7 @@ using namespace DFHack;
 using namespace df::enums;
 
 DFHACK_PLUGIN("autolabor");
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(world);
 
 #define ARRAY_COUNT(array) (sizeof(array)/sizeof((array)[0]))
@@ -813,7 +813,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
         // identify dwarfs who are needed for meetings and mark them for exclusion
 
-        for (auto& act : ui->activities)
+        for (auto& act : plotinfo->activities)
         {
             if (!act) continue;
             bool p1 = act->unit_actor == dwarfs[dwarf];

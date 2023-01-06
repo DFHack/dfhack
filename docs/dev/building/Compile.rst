@@ -187,29 +187,6 @@ Modern Windows terminal emulators such as `Cmder <https://cmder.app/>`_ or
 `Windows Terminal <https://github.com/microsoft/terminal>`_ provide a better
 experience by providing more scrollback and larger window sizes.
 
-**Note for Cygwin/msysgit users**: It is also possible to compile DFHack from a
-Bash command line. This has three potential benefits:
-
-* When you've installed Git and are using its Bash, but haven't added Git to your path:
-
-  * You can load Git's Bash and as long as it can access Perl and CMake, you can
-    use it for compile without adding Git to your system path.
-
-* When you've installed Cygwin and its SSH server:
-
-  * You can now SSH in to your Windows install and compile from a remote terminal;
-    very useful if your Windows installation is a local VM on a \*nix host OS.
-
-* In general: you can use Bash as your compilation terminal, meaning you have a decent
-  sized window, scrollback, etc.
-
-  * Whether you're accessing it locally as with Git's Bash, or remotely through
-    Cygwin's SSH server, this is far superior to using ``cmd.exe``.
-
-You don't need to do anything special to compile from Bash. As long as your PATHs
-are set up correctly, you can run the same generate- and build/install/package- bat
-files as detailed above.
-
 .. _compile-macos:
 
 macOS

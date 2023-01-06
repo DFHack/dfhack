@@ -737,10 +737,10 @@ function ZScreen:raise()
     dscreen.raise(self)
 end
 
--- subclasses should override this and return whether the mouse is over an
--- owned screen element
+-- subclasses should either annotate their viewable panel with view_id='main'
+-- or override this and return whether the mouse is over an owned screen element
 function ZScreen:isMouseOver()
-    return false
+    return self.subviews.main and self.subviews.main:getMouseFramePos() or false
 end
 
 --------------------------

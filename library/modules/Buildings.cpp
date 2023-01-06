@@ -1219,7 +1219,7 @@ bool Buildings::constructWithFilters(df::building *bld, std::vector<df::job_item
         /* The game picks up explicitly listed items in reverse
          * order, but processes filters straight. This reverses
          * the order of filters so as to produce the same final
-         * contained_items ordering as the normal plotinfo way. */
+         * contained_items ordering as the normal ui way. */
         vector_insert_at(job->job_items, 0, items[i]);
 
         if (items[i]->item_type == item_type::BOULDER)

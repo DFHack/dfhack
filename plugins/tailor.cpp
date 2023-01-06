@@ -20,7 +20,7 @@
 #include "df/job.h"
 #include "df/job_type.h"
 #include "df/manager_order.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/world.h"
 
 #include "modules/Maps.h"
@@ -32,14 +32,14 @@ using namespace DFHack;
 using namespace std;
 
 using df::global::world;
-using df::global::ui;
+using df::global::plotinfo;
 
 DFHACK_PLUGIN("tailor");
 #define AUTOENABLE false
 DFHACK_PLUGIN_IS_ENABLED(enabled);
 
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 
 class Tailor {
     // ARMOR, SHOES, HELM, GLOVES, PANTS
@@ -261,7 +261,7 @@ private:
 
     void create_orders()
     {
-        auto entity = world->entities.all[ui->civ_id];
+        auto entity = world->entities.all[plotinfo->civ_id];
 
         for (auto& a : needed)
         {
@@ -325,7 +325,7 @@ private:
 
     void place_orders()
     {
-        auto entity = world->entities.all[ui->civ_id];
+        auto entity = world->entities.all[plotinfo->civ_id];
 
         for (auto& o : orders)
         {

@@ -52,7 +52,7 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(gview);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(ui_building_assign_units);
 REQUIRE_GLOBAL(ui_building_in_assign);
 REQUIRE_GLOBAL(ui_building_item_cursor);
@@ -1878,7 +1878,7 @@ class look_menu_search : public look_menu_search_base
 public:
     bool can_init(df::viewscreen_dwarfmodest *screen)
     {
-        if (ui->main.mode == df::ui_sidebar_mode::LookAround)
+        if (plotinfo->main.mode == df::ui_sidebar_mode::LookAround)
         {
             return look_menu_search_base::can_init(screen);
         }
@@ -1986,7 +1986,7 @@ class burrow_search : public burrow_search_base
 public:
     bool can_init(df::viewscreen_dwarfmodest *screen)
     {
-        if (ui->main.mode == df::ui_sidebar_mode::Burrows && ui->burrows.in_add_units_mode)
+        if (plotinfo->main.mode == df::ui_sidebar_mode::Burrows && plotinfo->burrows.in_add_units_mode)
         {
             return burrow_search_base::can_init(screen);
         }
@@ -2011,17 +2011,17 @@ public:
 
     vector<df::unit *> *get_primary_list()
     {
-        return &ui->burrows.list_units;
+        return &plotinfo->burrows.list_units;
     }
 
     vector<bool> *get_secondary_list()
     {
-        return &ui->burrows.sel_units;
+        return &plotinfo->burrows.sel_units;
     }
 
     virtual int32_t * get_viewscreen_cursor()
     {
-        return &ui->burrows.unit_cursor_pos;
+        return &plotinfo->burrows.unit_cursor_pos;
     }
 
 
@@ -2055,7 +2055,7 @@ class room_assign_search : public room_assign_search_base
 public:
     bool can_init(df::viewscreen_dwarfmodest *screen)
     {
-        if (ui->main.mode == df::ui_sidebar_mode::QueryBuilding && *ui_building_in_assign)
+        if (plotinfo->main.mode == df::ui_sidebar_mode::QueryBuilding && *ui_building_in_assign)
         {
             return room_assign_search_base::can_init(screen);
         }

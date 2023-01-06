@@ -83,7 +83,7 @@ namespace DFHack {
  * Screen painting API.
  */
 
-// returns ui grid coordinates, even if the game map is scaled differently
+// returns plotinfo grid coordinates, even if the game map is scaled differently
 df::coord2d Screen::getMousePos()
 {
     if (!gps)

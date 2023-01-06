@@ -1,7 +1,7 @@
 #include "df/construction_type.h"
 #include "df/entity_position.h"
 #include "df/interface_key.h"
-#include "df/ui_build_selector.h"
+#include "df/buildreq.h"
 #include "df/viewscreen_dwarfmodest.h"
 
 #include "modules/Gui.h"
@@ -18,7 +18,7 @@
 
 DFHACK_PLUGIN("buildingplan");
 #define PLUGIN_VERSION "2.0"
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(ui_build_selector);
 REQUIRE_GLOBAL(world); // used in buildingplan library
 
@@ -455,8 +455,8 @@ struct buildingplan_query_hook : public df::viewscreen_dwarfmodest
 
     bool isInPlannedBuildingQueryMode()
     {
-        return (ui->main.mode == df::ui_sidebar_mode::QueryBuilding ||
-            ui->main.mode == df::ui_sidebar_mode::BuildingItems) &&
+        return (plotinfo->main.mode == df::ui_sidebar_mode::QueryBuilding ||
+            plotinfo->main.mode == df::ui_sidebar_mode::BuildingItems) &&
             planner.getPlannedBuilding(world->selected_building);
     }
 
@@ -595,7 +595,7 @@ struct buildingplan_place_hook : public df::viewscreen_dwarfmodest
 
     bool isInPlannedBuildingPlacementMode()
     {
-        return ui->main.mode == ui_sidebar_mode::Build &&
+        return plotinfo->main.mode == ui_sidebar_mode::Build &&
             df::global::ui_build_selector &&
             df::global::ui_build_selector->stage < 2 &&
             planner.isPlannableBuilding(toBuildingTypeKey(ui_build_selector));
@@ -861,7 +861,7 @@ struct buildingplan_room_hook : public df::viewscreen_dwarfmodest
     std::vector<Units::NoblePosition> getNoblePositionOfSelectedBuildingOwner()
     {
         std::vector<Units::NoblePosition> np;
-        if (ui->main.mode != df::ui_sidebar_mode::QueryBuilding ||
+        if (plotinfo->main.mode != df::ui_sidebar_mode::QueryBuilding ||
             !world->selected_building ||
             !world->selected_building->owner)
         {
@@ -1084,7 +1084,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 static bool is_paused()
 {
     return World::ReadPauseState() ||
-        ui->main.mode > df::ui_sidebar_mode::Squads ||
+        plotinfo->main.mode > df::ui_sidebar_mode::Squads ||
         !strict_virtual_cast<df::viewscreen_dwarfmodest>(Gui::getCurViewscreen(true));
 }
 

@@ -4,7 +4,7 @@
 #include "DataDefs.h"
 
 #include "df/job.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/unit.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/world.h"
@@ -53,7 +53,7 @@ using std::deque;
 DFHACK_PLUGIN("dwarfmonitor");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 
 typedef int16_t activity_type;
 

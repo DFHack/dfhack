@@ -81,14 +81,14 @@ using namespace DFHack;
 #include "df/job_item.h"
 #include "df/map_block.h"
 #include "df/tile_occupancy.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/ui_look_list.h"
 #include "df/unit.h"
 #include "df/unit_relationship_type.h"
 #include "df/world.h"
 
 using namespace df::enums;
-using df::global::ui;
+using df::global::plotinfo;
 using df::global::world;
 using df::global::d_init;
 using df::global::building_next_id;
@@ -425,7 +425,7 @@ df::building *Buildings::allocInstance(df::coord pos, df::building_type type, in
     bld->y1 = bld->y2 = bld->centery = pos.y;
     bld->z = pos.z;
 
-    bld->race = ui->race_id;
+    bld->race = plotinfo->race_id;
 
     if (subtype != -1)
         bld->setSubtype(subtype);
@@ -989,7 +989,7 @@ static void linkRooms(df::building *bld)
     }
 
     if (changed)
-        df::global::ui->equipment.update.bits.buildings = true;
+        df::global::plotinfo->equipment.update.bits.buildings = true;
 */
 }
 
@@ -1219,7 +1219,7 @@ bool Buildings::constructWithFilters(df::building *bld, std::vector<df::job_item
         /* The game picks up explicitly listed items in reverse
          * order, but processes filters straight. This reverses
          * the order of filters so as to produce the same final
-         * contained_items ordering as the normal ui way. */
+         * contained_items ordering as the normal plotinfo way. */
         vector_insert_at(job->job_items, 0, items[i]);
 
         if (items[i]->item_type == item_type::BOULDER)
@@ -1238,7 +1238,7 @@ bool Buildings::constructWithFilters(df::building *bld, std::vector<df::job_item
 
 bool Buildings::deconstruct(df::building *bld)
 {
-    using df::global::ui;
+    using df::global::plotinfo;
     using df::global::world;
     using df::global::ui_look_list;
 
@@ -1263,7 +1263,7 @@ bool Buildings::deconstruct(df::building *bld)
     // Assume: no parties.
     unlinkRooms(bld);
     // Assume: not unit destroy target
-    vector_erase_at(ui->tax_collection.rooms, linear_index(ui->tax_collection.rooms, bld->id));
+    vector_erase_at(plotinfo->tax_collection.rooms, linear_index(plotinfo->tax_collection.rooms, bld->id));
     // Assume: not used in punishment
     // Assume: not used in non-own jobs
     // Assume: does not affect pathfinding

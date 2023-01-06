@@ -123,7 +123,7 @@ namespace embark_assist {
 
         struct states {
             embark_assist::defs::find_callbacks find_callback;
-            uis ui;
+            uis plotinfo;
             display_maps finder_list;  //  Don't need the element key, but it's easier to use the same type.
             uint16_t finder_list_focus;
             bool finder_list_active;
@@ -171,13 +171,13 @@ namespace embark_assist {
             size_t civ = 0;
 
             while (true) {
-                for (size_t k = 0; k < state->ui[static_cast<int8_t>(i)]->list.size(); k++) {
-                    if (state->ui[static_cast<int8_t>(i) + civ]->current_value == state->ui[static_cast<int8_t>(i) + civ]->list[k].key) {
-                        fprintf(outfile, "[%s:%s]\n", state->finder_list[static_cast<int8_t>(i) + civ].text.c_str(), state->ui[static_cast<int8_t>(i) + civ]->list[k].text.c_str());
+                for (size_t k = 0; k < state->plotinfo[static_cast<int8_t>(i)]->list.size(); k++) {
+                    if (state->plotinfo[static_cast<int8_t>(i) + civ]->current_value == state->plotinfo[static_cast<int8_t>(i) + civ]->list[k].key) {
+                        fprintf(outfile, "[%s:%s]\n", state->finder_list[static_cast<int8_t>(i) + civ].text.c_str(), state->plotinfo[static_cast<int8_t>(i) + civ]->list[k].text.c_str());
                         break;
                     }
                 }
-//                fprintf(outfile, "[%s:%i]\n", state->finder_list[static_cast<int8_t>(i)].text.c_str(), state->ui[static_cast<int8_t>(i)]->current_value);
+//                fprintf(outfile, "[%s:%i]\n", state->finder_list[static_cast<int8_t>(i)].text.c_str(), state->plotinfo[static_cast<int8_t>(i)]->current_value);
                 if (i == last_fields) {
                     civ++;
 
@@ -229,10 +229,10 @@ namespace embark_assist {
 
                         found = false;
 
-                        for (size_t l = 0; l < state->ui[static_cast<int8_t>(i) + civ]->list.size(); l++) {
+                        for (size_t l = 0; l < state->plotinfo[static_cast<int8_t>(i) + civ]->list.size(); l++) {
                             for (int m = k + 1; m < count; m++) {
-                                if (state->ui[static_cast<int8_t>(i) + civ]->list[l].text.c_str()[m - (k + 1)] != line[m]) {
-                                    if (state->ui[static_cast<int8_t>(i) + civ]->list[l].text.c_str()[m - (k + 1)] == '\0' &&
+                                if (state->plotinfo[static_cast<int8_t>(i) + civ]->list[l].text.c_str()[m - (k + 1)] != line[m]) {
+                                    if (state->plotinfo[static_cast<int8_t>(i) + civ]->list[l].text.c_str()[m - (k + 1)] == '\0' &&
                                         line[m] == ']') {
                                         found = true;
                                     }
@@ -291,13 +291,13 @@ namespace embark_assist {
 
                         found = false;
 
-                        for (size_t l = 0; l < state->ui[static_cast<int8_t>(i) + civ]->list.size(); l++) {
+                        for (size_t l = 0; l < state->plotinfo[static_cast<int8_t>(i) + civ]->list.size(); l++) {
                             for (int m = k + 1; m < count; m++) {
-                                if (state->ui[static_cast<int8_t>(i) + civ]->list[l].text.c_str()[m - (k + 1)] != line[m]) {
-                                    if (state->ui[static_cast<int8_t>(i) + civ]->list[l].text.c_str()[m - (k + 1)] == '\0' &&
+                                if (state->plotinfo[static_cast<int8_t>(i) + civ]->list[l].text.c_str()[m - (k + 1)] != line[m]) {
+                                    if (state->plotinfo[static_cast<int8_t>(i) + civ]->list[l].text.c_str()[m - (k + 1)] == '\0' &&
                                         line[m] == ']') {
-                                        state->ui[static_cast<int8_t>(i) + civ]->current_value = state->ui[static_cast<int8_t>(i) + civ]->list[l].key;
-                                        state->ui[static_cast<int8_t>(i) + civ]->current_display_value = l;
+                                        state->plotinfo[static_cast<int8_t>(i) + civ]->current_value = state->plotinfo[static_cast<int8_t>(i) + civ]->list[l].key;
+                                        state->plotinfo[static_cast<int8_t>(i) + civ]->current_display_value = l;
                                         found = true;
                                     }
 
@@ -1095,7 +1095,7 @@ namespace embark_assist {
 
                         if (l < state->civs.size() - 1) {
                             element->current_value = element->list[0].key;
-                            state->ui.push_back(element);
+                            state->plotinfo.push_back(element);
                             element = new ui_lists;
                             element->current_display_value = 0;
                             element->current_index = 0;
@@ -1108,7 +1108,7 @@ namespace embark_assist {
                 }
 
                 element->current_value = element->list[0].key;
-                state->ui.push_back(element);
+                state->plotinfo.push_back(element);
 
                 switch (i) {
                 case fields::x_dim:
@@ -1333,21 +1333,21 @@ namespace embark_assist {
             //  off to compensate for the list starting with 1 at index 0.
             //
             auto screen = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
-            state->ui[static_cast<int8_t>(fields::x_dim)]->current_display_value =
+            state->plotinfo[static_cast<int8_t>(fields::x_dim)]->current_display_value =
                 screen->location.embark_pos_max.x -
                 screen->location.embark_pos_min.x;
-            state->ui[static_cast<int8_t>(fields::x_dim)]->current_index =
-                state->ui[static_cast<int8_t>(fields::x_dim)]->current_display_value;
-            state->ui[static_cast<int8_t>(fields::x_dim)]->current_value =
-                state->ui[static_cast<int8_t>(fields::x_dim)]->current_display_value + 1;
+            state->plotinfo[static_cast<int8_t>(fields::x_dim)]->current_index =
+                state->plotinfo[static_cast<int8_t>(fields::x_dim)]->current_display_value;
+            state->plotinfo[static_cast<int8_t>(fields::x_dim)]->current_value =
+                state->plotinfo[static_cast<int8_t>(fields::x_dim)]->current_display_value + 1;
 
-            state->ui[static_cast<int8_t>(fields::y_dim)]->current_display_value =
+            state->plotinfo[static_cast<int8_t>(fields::y_dim)]->current_display_value =
                 screen->location.embark_pos_max.y -
                 screen->location.embark_pos_min.y;
-            state->ui[static_cast<int8_t>(fields::y_dim)]->current_index =
-                state->ui[static_cast<int8_t>(fields::y_dim)]->current_display_value;
-            state->ui[static_cast<int8_t>(fields::y_dim)]->current_value =
-                state->ui[static_cast<int8_t>(fields::y_dim)]->current_display_value + 1;
+            state->plotinfo[static_cast<int8_t>(fields::y_dim)]->current_index =
+                state->plotinfo[static_cast<int8_t>(fields::y_dim)]->current_display_value;
+            state->plotinfo[static_cast<int8_t>(fields::y_dim)]->current_value =
+                state->plotinfo[static_cast<int8_t>(fields::y_dim)]->current_display_value + 1;
         }
 
         //==========================================================================================================
@@ -1360,234 +1360,234 @@ namespace embark_assist {
             while (true) {
                 switch (i) {
                 case fields::x_dim:
-                    finder.x_dim = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.x_dim = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::y_dim:
-                    finder.y_dim = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.y_dim = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::savagery_calm:
                     finder.savagery[0] =
-                        static_cast<embark_assist::defs::evil_savagery_values>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                        static_cast<embark_assist::defs::evil_savagery_values>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::savagery_medium:
                     finder.savagery[1] =
-                        static_cast<embark_assist::defs::evil_savagery_values>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                        static_cast<embark_assist::defs::evil_savagery_values>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
                 case fields::savagery_savage:
                     finder.savagery[2] =
-                        static_cast<embark_assist::defs::evil_savagery_values>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                        static_cast<embark_assist::defs::evil_savagery_values>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::good:
                     finder.evilness[0] =
-                        static_cast<embark_assist::defs::evil_savagery_values>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                        static_cast<embark_assist::defs::evil_savagery_values>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::neutral:
                     finder.evilness[1] =
-                        static_cast<embark_assist::defs::evil_savagery_values>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                        static_cast<embark_assist::defs::evil_savagery_values>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::evil:
                     finder.evilness[2] =
-                        static_cast<embark_assist::defs::evil_savagery_values>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                        static_cast<embark_assist::defs::evil_savagery_values>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::aquifer:
                     finder.aquifer =
-                        static_cast<embark_assist::defs::aquifer_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                        static_cast<embark_assist::defs::aquifer_ranges>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::min_river:
                     finder.min_river =
-                        static_cast<embark_assist::defs::river_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                        static_cast<embark_assist::defs::river_ranges>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::max_river:
                     finder.max_river =
-                        static_cast<embark_assist::defs::river_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                        static_cast<embark_assist::defs::river_ranges>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::min_waterfall:
-                    finder.min_waterfall = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.min_waterfall = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::flat:
                     finder.flat =
-                        static_cast<embark_assist::defs::yes_no_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                        static_cast<embark_assist::defs::yes_no_ranges>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::soil_min_everywhere:
                     finder.soil_min_everywhere =
-                        static_cast<embark_assist::defs::all_present_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                        static_cast<embark_assist::defs::all_present_ranges>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::freezing:
                     finder.freezing =
-                        static_cast<embark_assist::defs::freezing_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                        static_cast<embark_assist::defs::freezing_ranges>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::blood_rain:
                     finder.blood_rain =
-                        static_cast<embark_assist::defs::yes_no_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                        static_cast<embark_assist::defs::yes_no_ranges>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::syndrome_rain:
                     finder.syndrome_rain =
-                        static_cast<embark_assist::defs::syndrome_rain_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                        static_cast<embark_assist::defs::syndrome_rain_ranges>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::reanimation:
                     finder.reanimation =
-                        static_cast<embark_assist::defs::reanimation_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                        static_cast<embark_assist::defs::reanimation_ranges>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::clay:
                     finder.clay =
-                        static_cast<embark_assist::defs::present_absent_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                        static_cast<embark_assist::defs::present_absent_ranges>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::sand:
                     finder.sand =
-                        static_cast<embark_assist::defs::present_absent_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                        static_cast<embark_assist::defs::present_absent_ranges>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::flux:
                     finder.flux =
-                        static_cast<embark_assist::defs::present_absent_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                        static_cast<embark_assist::defs::present_absent_ranges>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::coal:
                     finder.coal =
-                        static_cast<embark_assist::defs::present_absent_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                        static_cast<embark_assist::defs::present_absent_ranges>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::soil_min:
                     finder.soil_min =
-                        static_cast<embark_assist::defs::soil_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                        static_cast<embark_assist::defs::soil_ranges>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::soil_max:
                     finder.soil_max =
-                        static_cast<embark_assist::defs::soil_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                        static_cast<embark_assist::defs::soil_ranges>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::spire_count_min:
-                    finder.spire_count_min = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.spire_count_min = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::spire_count_max:
-                    finder.spire_count_max = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.spire_count_max = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::magma_min:
                     finder.magma_min =
-                        static_cast<embark_assist::defs::magma_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                        static_cast<embark_assist::defs::magma_ranges>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::magma_max:
                     finder.magma_max =
-                        static_cast<embark_assist::defs::magma_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                        static_cast<embark_assist::defs::magma_ranges>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::biome_count_min:
-                    finder.biome_count_min = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.biome_count_min = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::biome_count_max:
-                    finder.biome_count_max = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.biome_count_max = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::region_type_1:
-                    finder.region_type_1 = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.region_type_1 = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::region_type_2:
-                    finder.region_type_2 = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.region_type_2 = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::region_type_3:
-                    finder.region_type_3 = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.region_type_3 = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::biome_1:
-                    finder.biome_1 = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.biome_1 = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::biome_2:
-                    finder.biome_2 = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.biome_2 = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::biome_3:
-                    finder.biome_3 = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.biome_3 = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::min_trees:
-                    finder.min_trees = static_cast<embark_assist::defs::tree_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                    finder.min_trees = static_cast<embark_assist::defs::tree_ranges>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::max_trees:
-                    finder.max_trees = static_cast<embark_assist::defs::tree_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                    finder.max_trees = static_cast<embark_assist::defs::tree_ranges>(state->plotinfo[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::metal_1:
-                    finder.metal_1 = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.metal_1 = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::metal_2:
-                    finder.metal_2 = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.metal_2 = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::metal_3:
-                    finder.metal_3 = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.metal_3 = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::economic_1:
-                    finder.economic_1 = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.economic_1 = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::economic_2:
-                    finder.economic_2 = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.economic_2 = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::economic_3:
-                    finder.economic_3 = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.economic_3 = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::mineral_1:
-                    finder.mineral_1 = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.mineral_1 = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::mineral_2:
-                    finder.mineral_2 = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.mineral_2 = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::mineral_3:
-                    finder.mineral_3 = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.mineral_3 = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::min_necro_neighbors:
-                    finder.min_necro_neighbors = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.min_necro_neighbors = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::max_necro_neighbors:
-                    finder.max_necro_neighbors = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.max_necro_neighbors = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::min_civ_neighbors:
-                    finder.min_civ_neighbors = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.min_civ_neighbors = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::max_civ_neighbors:
-                    finder.max_civ_neighbors = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    finder.max_civ_neighbors = state->plotinfo[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::neighbors:
                     for (size_t k = 0; k < state->civs.size(); k++) {
-                        finder.neighbors.push_back({ state->civs[k].id, static_cast<embark_assist::defs::present_absent_ranges>(state->ui[static_cast<uint8_t>(i) + k]->current_value) });
+                        finder.neighbors.push_back({ state->civs[k].id, static_cast<embark_assist::defs::present_absent_ranges>(state->plotinfo[static_cast<uint8_t>(i) + k]->current_value) });
                     }
                     break;
                 }
@@ -1641,10 +1641,10 @@ namespace embark_assist {
                     }
                 }
                 else {
-                    if (state->ui[state->finder_list_focus]->current_index > 0) {
-                        state->ui[state->finder_list_focus]->current_index--;
+                    if (state->plotinfo[state->finder_list_focus]->current_index > 0) {
+                        state->plotinfo[state->finder_list_focus]->current_index--;
                     } else {
-                        state->ui[state->finder_list_focus]->current_index = static_cast<uint16_t>(state->ui[state->finder_list_focus]->list.size()) - 1;
+                        state->plotinfo[state->finder_list_focus]->current_index = static_cast<uint16_t>(state->plotinfo[state->finder_list_focus]->list.size()) - 1;
                     }
                 }
 
@@ -1657,17 +1657,17 @@ namespace embark_assist {
                     }
                 }
                 else {
-                    if (state->ui[state->finder_list_focus]->current_index < state->ui[state->finder_list_focus]->list.size() - 1) {
-                        state->ui[state->finder_list_focus]->current_index++;
+                    if (state->plotinfo[state->finder_list_focus]->current_index < state->plotinfo[state->finder_list_focus]->list.size() - 1) {
+                        state->plotinfo[state->finder_list_focus]->current_index++;
                     } else {
-                        state->ui[state->finder_list_focus]->current_index = 0;
+                        state->plotinfo[state->finder_list_focus]->current_index = 0;
                     }
                 }
 
             } else if (input->count(df::interface_key::SELECT)) {
                 if (!state->finder_list_active) {
-                    state->ui[state->finder_list_focus]->current_display_value = state->ui[state->finder_list_focus]->current_index;
-                    state->ui[state->finder_list_focus]->current_value = state->ui[state->finder_list_focus]->list[state->ui[state->finder_list_focus]->current_index].key;
+                    state->plotinfo[state->finder_list_focus]->current_display_value = state->plotinfo[state->finder_list_focus]->current_index;
+                    state->plotinfo[state->finder_list_focus]->current_value = state->plotinfo[state->finder_list_focus]->list[state->plotinfo[state->finder_list_focus]->current_index].key;
                     state->finder_list_active = true;
                 }
 
@@ -1743,7 +1743,7 @@ namespace embark_assist {
                     embark_assist::screen::paintString(active_pen,
                         21,
                         top_row + i - offset,
-                        state->ui[i]->list[state->ui[i]->current_display_value].text);
+                        state->plotinfo[i]->list[state->plotinfo[i]->current_display_value].text);
                 }
                 else {
                     embark_assist::screen::paintString(normal_pen, 1, top_row + i - offset, state->finder_list[i].text);
@@ -1751,38 +1751,38 @@ namespace embark_assist {
                     embark_assist::screen::paintString(white_pen,
                         21,
                         top_row + i - offset,
-                        state->ui[i]->list[state->ui[i]->current_display_value].text);
+                        state->plotinfo[i]->list[state->plotinfo[i]->current_display_value].text);
                 }
             }
 
             //  Implement scrolling lists if they don't fit on the screen.
             offset = 0;
 
-            if (int32_t(state->ui[state->finder_list_focus]->list.size()) > screen_size.y - top_row - 1) {
+            if (int32_t(state->plotinfo[state->finder_list_focus]->list.size()) > screen_size.y - top_row - 1) {
                 offset = (screen_size.y - top_row - 1) / 2;
-                if (state->ui[state->finder_list_focus]->current_index < offset) {
+                if (state->plotinfo[state->finder_list_focus]->current_index < offset) {
                     offset = 0;
                 }
                 else {
-                    offset = state->ui[state->finder_list_focus]->current_index - offset;
+                    offset = state->plotinfo[state->finder_list_focus]->current_index - offset;
                 }
 
-                if (int32_t(state->ui[state->finder_list_focus]->list.size() - offset) < screen_size.y - top_row - 1) {
-                    offset = static_cast<uint16_t>(state->ui[state->finder_list_focus]->list.size()) - (screen_size.y - top_row - 1);
+                if (int32_t(state->plotinfo[state->finder_list_focus]->list.size() - offset) < screen_size.y - top_row - 1) {
+                    offset = static_cast<uint16_t>(state->plotinfo[state->finder_list_focus]->list.size()) - (screen_size.y - top_row - 1);
                 }
             }
 
-            for (uint16_t i = offset; i < state->ui[state->finder_list_focus]->list.size(); i++) {
-                if (i == state->ui[state->finder_list_focus]->current_index) {
+            for (uint16_t i = offset; i < state->plotinfo[state->finder_list_focus]->list.size(); i++) {
+                if (i == state->plotinfo[state->finder_list_focus]->current_index) {
                     if (!state->finder_list_active) {  // Negated expression to get the display lines in the same order as above.
-                        embark_assist::screen::paintString(active_pen, list_column, top_row + i - offset, state->ui[state->finder_list_focus]->list[i].text);
+                        embark_assist::screen::paintString(active_pen, list_column, top_row + i - offset, state->plotinfo[state->finder_list_focus]->list[i].text);
                     }
                     else {
-                        embark_assist::screen::paintString(passive_pen, list_column, top_row + i - offset, state->ui[state->finder_list_focus]->list[i].text);
+                        embark_assist::screen::paintString(passive_pen, list_column, top_row + i - offset, state->plotinfo[state->finder_list_focus]->list[i].text);
                     }
                 }
                 else {
-                    embark_assist::screen::paintString(normal_pen, list_column, top_row + i - offset, state->ui[state->finder_list_focus]->list[i].text);
+                    embark_assist::screen::paintString(normal_pen, list_column, top_row + i - offset, state->plotinfo[state->finder_list_focus]->list[i].text);
                 }
             }
 
@@ -1823,8 +1823,8 @@ void embark_assist::finder_ui::activate() {
 
 void embark_assist::finder_ui::shutdown() {
     if (embark_assist::finder_ui::state) {
-        for (uint16_t i = 0; i < embark_assist::finder_ui::state->ui.size(); i++) {
-            delete embark_assist::finder_ui::state->ui[i];
+        for (uint16_t i = 0; i < embark_assist::finder_ui::state->plotinfo.size(); i++) {
+            delete embark_assist::finder_ui::state->plotinfo[i];
         }
 
         delete embark_assist::finder_ui::state;

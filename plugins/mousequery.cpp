@@ -6,8 +6,8 @@
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/world.h"
 #include "df/items_other_id.h"
-#include "df/ui_build_selector.h"
-#include "df/ui_sidebar_menus.h"
+#include "df/buildreq.h"
+#include "df/gamest.h"
 
 #include "modules/Gui.h"
 #include "modules/World.h"
@@ -26,7 +26,7 @@ DFHACK_PLUGIN("mousequery");
 REQUIRE_GLOBAL(enabler);
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(ui_build_selector);
 
 using namespace df::enums::ui_sidebar_mode;
@@ -196,7 +196,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
 
     bool isInDesignationMenu()
     {
-        switch (ui->main.mode)
+        switch (plotinfo->main.mode)
         {
         case DesignateMine:
         case DesignateRemoveRamps:
@@ -230,7 +230,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             return true;
 
         case Burrows:
-            return ui->burrows.in_define_mode;
+            return plotinfo->burrows.in_define_mode;
 
         default:
             return false;
@@ -242,7 +242,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         if (isInDesignationMenu())
             return box_designation_enabled;
 
-        switch (ui->main.mode)
+        switch (plotinfo->main.mode)
         {
         case DesignateItemsClaim:
         case DesignateItemsForbid:
@@ -281,8 +281,8 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
     {
         bool selectableMode =
             isInDesignationMenu() ||
-            ui->main.mode == Stockpiles ||
-            ui->main.mode == Zones;
+            plotinfo->main.mode == Stockpiles ||
+            plotinfo->main.mode == Zones;
 
         if (selectableMode)
         {
@@ -314,7 +314,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         }
         else
         {
-            switch (ui->main.mode)
+            switch (plotinfo->main.mode)
             {
             case QueryBuilding:
                 if (cursor_still_here)
@@ -369,8 +369,8 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         if (mx < 1 || mx > dims.map_x2 || my < 1 || my > dims.map_y2)
             return false;
 
-        if (ui->main.mode == df::ui_sidebar_mode::Zones ||
-            ui->main.mode == df::ui_sidebar_mode::Stockpiles)
+        if (plotinfo->main.mode == df::ui_sidebar_mode::Zones ||
+            plotinfo->main.mode == df::ui_sidebar_mode::Stockpiles)
         {
             int32_t x, y, z;
             if (Gui::getDesignationCoords(x, y, z))
@@ -417,8 +417,8 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         enabler->mouse_rbut = 0;
 
         using namespace df::enums::ui_sidebar_mode;
-        if ((ui->main.mode == QueryBuilding || ui->main.mode == BuildingItems ||
-            ui->main.mode == ViewUnits || ui->main.mode == LookAround) ||
+        if ((plotinfo->main.mode == QueryBuilding || plotinfo->main.mode == BuildingItems ||
+            plotinfo->main.mode == ViewUnits || plotinfo->main.mode == LookAround) ||
             (isInTrackableMode() && tracking_enabled))
         {
             sendKey(df::interface_key::LEAVESCREEN);
@@ -707,8 +707,8 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             if (Gui::getDesignationCoords(x, y, z))
             {
                 color = COLOR_WHITE;
-                if (ui->main.mode == df::ui_sidebar_mode::Zones ||
-                    ui->main.mode == df::ui_sidebar_mode::Stockpiles)
+                if (plotinfo->main.mode == df::ui_sidebar_mode::Zones ||
+                    plotinfo->main.mode == df::ui_sidebar_mode::Stockpiles)
                 {
                     auto dX = abs(x - mpos.x);
                     if (dX > 30)

@@ -7,7 +7,7 @@
 #include "df/adventure_movement_hold_itemst.h"
 #include "df/adventure_movement_hold_tilest.h"
 #include "df/adventure_movement_optionst.h"
-#include "df/ui_advmode.h"
+#include "df/adventurest.h"
 #include "df/viewscreen.h"
 
 #include "modules/Gui.h"
@@ -42,7 +42,7 @@ command_result MoveCommand(DFHack::color_ostream &stream, const MoveCommandParam
     auto viewScreen = getCurViewscreen();
     if (!in->has_direction())
         return CR_WRONG_USAGE;
-    if (!df::global::ui_advmode->menu == ui_advmode_menu::Default)
+    if (!df::global::adventure->menu == ui_advmode_menu::Default)
         return CR_OK;
     auto dir = in->direction();
     switch (dir.x())
@@ -193,7 +193,7 @@ command_result JumpCommand(DFHack::color_ostream &stream, const MoveCommandParam
 {
     if (!in->has_direction())
         return CR_WRONG_USAGE;
-    if (!df::global::ui_advmode->menu == ui_advmode_menu::Default)
+    if (!df::global::adventure->menu == ui_advmode_menu::Default)
         return CR_OK;
     auto dir = in->direction();
     keyQueue.push(interface_key::A_JUMP);
@@ -233,7 +233,7 @@ command_result JumpCommand(DFHack::color_ostream &stream, const MoveCommandParam
 
 command_result MenuQuery(DFHack::color_ostream &stream, const EmptyMessage *in, MenuContents *out)
 {
-    auto advUi = df::global::ui_advmode;
+    auto advUi = df::global::adventure;
 
     if (advUi == NULL)
         return CR_FAILURE;
@@ -278,7 +278,7 @@ command_result MenuQuery(DFHack::color_ostream &stream, const EmptyMessage *in, 
 
 command_result MovementSelectCommand(DFHack::color_ostream &stream, const dfproto::IntMessage *in)
 {
-    if (!(df::global::ui_advmode->menu == ui_advmode_menu::MoveCarefully))
+    if (!(df::global::adventure->menu == ui_advmode_menu::MoveCarefully))
         return CR_OK;
     int choice = in->value();
     int page = choice / 5;
@@ -293,7 +293,7 @@ command_result MovementSelectCommand(DFHack::color_ostream &stream, const dfprot
 
 command_result MiscMoveCommand(DFHack::color_ostream &stream, const MiscMoveParams *in)
 {
-    if (!df::global::ui_advmode->menu == ui_advmode_menu::Default)
+    if (!df::global::adventure->menu == ui_advmode_menu::Default)
         return CR_OK;
 
     auto type = in->type();

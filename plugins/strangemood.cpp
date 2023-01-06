@@ -23,7 +23,7 @@
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/map_block.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/unit.h"
 #include "df/unit_preference.h"
 #include "df/unit_relationship_type.h"
@@ -39,7 +39,7 @@ using namespace df::enums;
 DFHACK_PLUGIN("strangemood");
 
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(d_init);
 REQUIRE_GLOBAL(created_item_count);
 REQUIRE_GLOBAL(created_item_type);
@@ -394,7 +394,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         out.printerr("Strange moods disabled via debug flag!\n");
         return CR_FAILURE;
     }
-    if (ui->mood_cooldown && !force)
+    if (plotinfo->mood_cooldown && !force)
     {
         out.printerr("Last strange mood happened too recently!\n");
         return CR_FAILURE;
@@ -406,7 +406,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         df::unit *cur = world->units.active[i];
         if (Units::isCitizen(cur) && cur->flags1.bits.has_mood)
         {
-            ui->mood_cooldown = 1000;
+            plotinfo->mood_cooldown = 1000;
             out.printerr("A strange mood is already in progress!\n");
             return CR_FAILURE;
         }
@@ -466,12 +466,12 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                     if (blk->designation[x][y].bits.subterranean && !blk->designation[x][y].bits.hidden)
                         num_revealed_tiles++;
         }
-        if (num_revealed_tiles / 2304 < ui->tasks.num_artifacts)
+        if (num_revealed_tiles / 2304 < plotinfo->tasks.num_artifacts)
         {
             out.printerr("Fortress is not eligible for a strange mood at this time - not enough subterranean tiles revealed.\n");
             return CR_FAILURE;
         }
-        if (num_items / 200 < ui->tasks.num_artifacts)
+        if (num_items / 200 < plotinfo->tasks.num_artifacts)
         {
             out.printerr("Fortress is not eligible for a strange mood at this time - not enough items created\n");
             return CR_FAILURE;
@@ -544,7 +544,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         return CR_FAILURE;
     }
 
-    ui->mood_cooldown = 1000;
+    plotinfo->mood_cooldown = 1000;
     // If no mood type was specified, pick one randomly
     if (type == mood_type::None)
     {
@@ -1034,7 +1034,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
          (job->job_type == job_type::StrangeMoodFell)
        ))
     {
-        int extra_items = std::min(rng.df_trandom((ui->tasks.num_artifacts * 20 + moodable_units.size()) / 20 + 1), 7);
+        int extra_items = std::min(rng.df_trandom((plotinfo->tasks.num_artifacts * 20 + moodable_units.size()) / 20 + 1), 7);
         df::item_type avoid_type = item_type::NONE;
         int avoid_glass = 0;
         switch (skill)

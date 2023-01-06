@@ -105,7 +105,7 @@ private:
   */
  void write();
 
- //  parse serialized data into ui indices
+ //  parse serialized data into plotinfo indices
  void read ();
 
  /**

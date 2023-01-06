@@ -5,7 +5,7 @@
 
 #include "DataDefs.h"
 #include "df/world.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/building_type.h"
 #include "df/building_farmplotst.h"
 #include "df/buildings_other_id.h"
@@ -30,7 +30,7 @@ using namespace DFHack;
 using namespace df::enums;
 
 using df::global::world;
-using df::global::ui;
+using df::global::plotinfo;
 
 static command_result autofarm(color_ostream& out, std::vector<std::string>& parameters);
 
@@ -348,7 +348,7 @@ static std::unique_ptr<AutoFarm> autofarmInstance;
 
 DFhackCExport command_result plugin_init(color_ostream& out, std::vector <PluginCommand>& commands)
 {
-    if (world && ui) {
+    if (world && plotinfo) {
         commands.push_back(
             PluginCommand("autofarm",
                           "Automatically manage farm crop selection.",

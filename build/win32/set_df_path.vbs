@@ -11,7 +11,10 @@ if args.count > 0 Then
     Set ObjF = fso.GetFolder(args.Item(0))
 else
     Set objDlg = WScript.CreateObject("Shell.Application")
-    Set objF = objDlg.BrowseForFolder (&H0,"Select your DF folder", BIF_returnonlyfsdirs).Self
+    Set objF = objDlg.BrowseForFolder (&H0,"Select your DF folder", BIF_returnonlyfsdirs)
+    if IsValue(objF) Then
+        set ObjF = objF.self
+    end if
 end if
 
 If fso.FileExists("DF_PATH.txt") Then

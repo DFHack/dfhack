@@ -195,8 +195,8 @@ if(NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl
 endif()
 
 # set up versioning.
-set(DF_VERSION "0.50.03")
-set(DFHACK_RELEASE "alpha0pre1")
+set(DF_VERSION "50.05")
+set(DFHACK_RELEASE "alpha0")
 set(DFHACK_PRERELEASE TRUE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
@@ -258,6 +258,7 @@ if(UNIX)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32 -march=i686")
     endif()
     string(REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+    set(CMAKE_INSTALL_RPATH "hack")
 elseif(MSVC)
     # for msvc, tell it to always use 8-byte pointers to member functions to avoid confusion
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /vmg /vmm /MP")
@@ -446,8 +447,6 @@ endif()
 
 file(WRITE "${CMAKE_BINARY_DIR}/dfhack_setarch.txt" ${DFHACK_SETARCH})
 install(FILES "${CMAKE_BINARY_DIR}/dfhack_setarch.txt" DESTINATION "${DFHACK_DATA_DESTINATION}")
-
-install(DIRECTORY dfhack-config/ DESTINATION dfhack-config/default)
 
 # build the plugins
 if(BUILD_PLUGINS)

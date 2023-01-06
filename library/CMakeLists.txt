@@ -96,6 +96,7 @@ endif()
 set(MAIN_SOURCES_WINDOWS
     ${CONSOLE_SOURCES}
     Hooks-windows.cpp
+    Hooks.cpp
     PlugLoad-windows.cpp
     Process-windows.cpp
 )
@@ -123,6 +124,7 @@ set(MODULE_HEADERS
     include/modules/Buildings.h
     include/modules/Burrows.h
     include/modules/Constructions.h
+    include/modules/DFSDL.h
     include/modules/Designations.h
     include/modules/EventManager.h
     include/modules/Filesystem.h
@@ -140,6 +142,7 @@ set(MODULE_HEADERS
     include/modules/Random.h
     include/modules/Renderer.h
     include/modules/Screen.h
+    include/modules/Textures.h
     include/modules/Translation.h
     include/modules/Units.h
     include/modules/World.h
@@ -149,6 +152,7 @@ set(MODULE_SOURCES
     modules/Buildings.cpp
     modules/Burrows.cpp
     modules/Constructions.cpp
+    modules/DFSDL.cpp
     modules/Designations.cpp
     modules/EventManager.cpp
     modules/Filesystem.cpp
@@ -165,6 +169,7 @@ set(MODULE_SOURCES
     modules/Random.cpp
     modules/Renderer.cpp
     modules/Screen.cpp
+    modules/Textures.cpp
     modules/Translation.cpp
     modules/Units.cpp
     modules/World.cpp
@@ -374,6 +379,8 @@ if(WIN32)
 else()
     set_target_properties(dfhack PROPERTIES COMPILE_FLAGS "-include Export.h" )
     set_target_properties(dfhack-client PROPERTIES COMPILE_FLAGS "-include Export.h" )
+    add_library(dfhooks SHARED Hooks.cpp)
+    target_link_libraries(dfhooks dfhack)
 endif()
 
 # effectively disables debug builds...
@@ -422,6 +429,9 @@ if(UNIX)
         install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack-run
             DESTINATION .)
     endif()
+    install(TARGETS dfhooks
+        LIBRARY DESTINATION .
+        RUNTIME DESTINATION .)
 else()
     # On windows, copy the renamed SDL so DF can still run.
     install(PROGRAMS ${dfhack_SOURCE_DIR}/package/windows/win${DFHACK_BUILD_ARCH}/SDLreal.dll

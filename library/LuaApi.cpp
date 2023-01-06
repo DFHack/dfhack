@@ -57,6 +57,7 @@ distribution.
 #include "modules/Materials.h"
 #include "modules/Random.h"
 #include "modules/Screen.h"
+#include "modules/Textures.h"
 #include "modules/Translation.h"
 #include "modules/Units.h"
 #include "modules/World.h"
@@ -1436,17 +1437,8 @@ static int gui_getDwarfmodeViewDims(lua_State *state)
     lua_newtable(state);
     Lua::TableInsert(state, "map_x1", dims.map_x1);
     Lua::TableInsert(state, "map_x2", dims.map_x2);
-    Lua::TableInsert(state, "menu_x1", dims.menu_x1);
-    Lua::TableInsert(state, "menu_x2", dims.menu_x2);
-    Lua::TableInsert(state, "area_x1", dims.area_x1);
-    Lua::TableInsert(state, "area_x2", dims.area_x2);
-    Lua::TableInsert(state, "y1", dims.y1);
-    Lua::TableInsert(state, "y2", dims.y2);
     Lua::TableInsert(state, "map_y1", dims.map_y1);
     Lua::TableInsert(state, "map_y2", dims.map_y2);
-    Lua::TableInsert(state, "menu_on", dims.menu_on);
-    Lua::TableInsert(state, "area_on", dims.area_on);
-    Lua::TableInsert(state, "menu_forced", dims.menu_forced);
     return 1;
 }
 
@@ -1462,6 +1454,7 @@ static int gui_getMousePos(lua_State *L)
 
 static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, getCurViewscreen),
+    WRAPM(Gui, getDFViewscreen),
     WRAPM(Gui, getFocusString),
     WRAPM(Gui, getCurFocus),
     WRAPM(Gui, getSelectedWorkshopJob),
@@ -1676,6 +1669,13 @@ static int job_listNewlyCreated(lua_State *state)
 
 static const luaL_Reg dfhack_job_funcs[] = {
     { "listNewlyCreated", job_listNewlyCreated },
+    { NULL, NULL }
+};
+
+/***** Textures module *****/
+
+static const LuaWrapper::FunctionReg dfhack_textures_module[] = {
+    WRAPM(Textures, getDfhackLogoTexposStart),
     { NULL, NULL }
 };
 
@@ -2373,6 +2373,11 @@ static int screen_getMousePos(lua_State *L)
     return Lua::PushPosXY(L, Screen::getMousePos());
 }
 
+static int screen_getMousePixels(lua_State *L)
+{
+    return Lua::PushPosXY(L, Screen::getMousePixels());
+}
+
 static int screen_getWindowSize(lua_State *L)
 {
     return Lua::PushPosXY(L, Screen::getWindowSize());
@@ -2450,6 +2455,17 @@ static int screen_findGraphicsTile(lua_State *L)
         lua_pushnil(L);
         return 1;
     }
+}
+
+static int screen_raise(lua_State *L) {
+    df::viewscreen *screen = dfhack_lua_viewscreen::get_pointer(L, 1, false);
+
+    // remove screen from the stack so it doesn't get returned as an output
+    lua_remove(L, 1);
+
+    Screen::raise(screen);
+
+    return 0;
 }
 
 static int screen_hideGuard(lua_State *L) {
@@ -2563,12 +2579,14 @@ static int screen_zoom(lua_State *L)
 
 static const luaL_Reg dfhack_screen_funcs[] = {
     { "getMousePos", screen_getMousePos },
+    { "getMousePixels", screen_getMousePixels },
     { "getWindowSize", screen_getWindowSize },
     { "paintTile", screen_paintTile },
     { "readTile", screen_readTile },
     { "paintString", screen_paintString },
     { "fillRect", screen_fillRect },
     { "findGraphicsTile", screen_findGraphicsTile },
+    CWRAP(raise, screen_raise),
     CWRAP(hideGuard, screen_hideGuard),
     CWRAP(show, screen_show),
     CWRAP(dismiss, screen_dismiss),
@@ -3360,6 +3378,7 @@ void OpenDFHackApi(lua_State *state)
     luaL_setfuncs(state, dfhack_funcs, 0);
     OpenModule(state, "gui", dfhack_gui_module, dfhack_gui_funcs);
     OpenModule(state, "job", dfhack_job_module, dfhack_job_funcs);
+    OpenModule(state, "textures", dfhack_textures_module);
     OpenModule(state, "units", dfhack_units_module, dfhack_units_funcs);
     OpenModule(state, "items", dfhack_items_module, dfhack_items_funcs);
     OpenModule(state, "maps", dfhack_maps_module, dfhack_maps_funcs);

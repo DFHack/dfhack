@@ -39,7 +39,7 @@
 #include "df/job.h"
 #include "df/general_ref_unit_workerst.h"
 #include "df/profession.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/unit.h"
 #include "df/unit_health_info.h"
 #include "df/unit_health_flags.h"
@@ -58,7 +58,7 @@ using namespace std;
 DFHACK_PLUGIN("dwarfvet");
 DFHACK_PLUGIN_IS_ENABLED(dwarfvet_enabled);
 
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(world);
 
 static unordered_set<int32_t> tracked_units;
@@ -407,7 +407,7 @@ void tickHandler(color_ostream& out, void* data) {
     if ( !dwarfvet_enabled )
         return;
     CoreSuspender suspend;
-    int32_t own_race_id = df::global::ui->race_id;
+    int32_t own_race_id = df::global::plotinfo->race_id;
 
     /**
      * Generate a list of animal hospitals on the map

@@ -20,7 +20,7 @@ using namespace std;
 #include "modules/World.h"
 #include "MiscUtils.h"
 
-#include <df/ui.h>
+#include <df/plotinfost.h>
 #include "df/world.h"
 #include "df/world_raws.h"
 #include "df/building_def.h"
@@ -34,7 +34,7 @@ using namespace DFHack;
 using namespace df::enums;
 using df::global::world;
 using df::global::cursor;
-using df::global::ui;
+using df::global::plotinfo;
 
 using namespace DFHack::Gui;
 

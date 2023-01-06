@@ -7,17 +7,17 @@ local utils = require('utils')
 local dscreen = dfhack.screen
 local getval = utils.getval
 
-USE_GRAPHICS = dscreen.inGraphicsMode()
-
 local to_pen = dfhack.pen.parse
 
-CLEAR_PEN = to_pen{ch=32,fg=0,bg=0}
+CLEAR_PEN = to_pen{tile=909, ch=32, fg=0, bg=0}
 
 local FAKE_INPUT_KEYS = {
     _MOUSE_L = true,
     _MOUSE_R = true,
+    _MOUSE_M = true,
     _MOUSE_L_DOWN = true,
     _MOUSE_R_DOWN = true,
+    _MOUSE_M_DOWN = true,
     _STRING = true,
 }
 
@@ -484,6 +484,10 @@ function View:getMousePos(view_rect)
     end
 end
 
+function View:getMouseFramePos()
+    return self:getMousePos(ViewRect{rect=self.frame_rect})
+end
+
 function View:computeFrame(parent_rect)
     return mkdims_wh(0,0,parent_rect.width,parent_rect.height)
 end
@@ -599,6 +603,7 @@ end
 Screen = defclass(Screen, View)
 
 Screen.text_input_mode = false
+Screen.request_full_screen_refresh = false
 
 function Screen:postinit()
     self:onResize(dscreen.getWindowSize())
@@ -623,6 +628,10 @@ function Screen:renderParent()
         self._native.parent:render()
     else
         dscreen.clear()
+    end
+    if Screen.request_full_screen_refresh then
+        df.global.gps.force_full_display_count = 1
+        Screen.request_full_screen_refresh = false
     end
 end
 
@@ -658,6 +667,8 @@ function Screen:dismiss()
     if self._native then
         dscreen.dismiss(self)
     end
+    -- don't leave artifacts behind on the parent screen when we disappear
+    Screen.request_full_screen_refresh = true
 end
 
 function Screen:onDismiss()
@@ -674,9 +685,67 @@ function Screen:onRender()
     self:render(Painter.new())
 end
 
-------------------------
+-----------------------------
+-- Z-order swapping screen --
+-----------------------------
+
+ZScreen = defclass(ZScreen, Screen)
+
+function ZScreen:onIdle()
+    if self._native and self._native.parent then
+        self._native.parent:logic()
+    end
+end
+
+function ZScreen:render(dc)
+    self:renderParent()
+    ZScreen.super.render(self, dc)
+end
+
+local function zscreen_is_top(self)
+    return dfhack.gui.getCurViewscreen(true) == self._native
+end
+
+function ZScreen:onInput(keys)
+    if not zscreen_is_top(self) then
+        if keys._MOUSE_L_DOWN and self:isMouseOver() then
+            self:raise()
+        else
+            self:sendInputToParent(keys)
+            return
+        end
+    end
+
+    if ZScreen.super.onInput(self, keys) then
+        return
+    end
+    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+        self:dismiss()
+        return
+    end
+
+    if not keys._MOUSE_L or not self:isMouseOver() then
+        self:sendInputToParent(keys)
+    end
+end
+
+-- move this viewscreen to the top of the stack (if it's not there already)
+function ZScreen:raise()
+    if self:isDismissed() or zscreen_is_top(self) then
+        return
+    end
+    dscreen.raise(self)
+end
+
+-- subclasses should override this and return whether the mouse is over an
+-- owned screen element
+function ZScreen:isMouseOver()
+    return false
+end
+
+--------------------------
 -- Framed screen object --
-------------------------
+--------------------------
 
 -- Plain grey-colored frame.
 GREY_FRAME = {
@@ -687,21 +756,23 @@ GREY_FRAME = {
 
 -- The usual boundary used by the DF screens. Often has fancy pattern in tilesets.
 BOUNDARY_FRAME = {
-    frame_pen = to_pen{ ch = 0xDB, fg = COLOR_DARKGREY, bg = COLOR_BLACK },
+    frame_pen = to_pen{ ch = 0xDB, fg = COLOR_GREY, bg = COLOR_BLACK },
     title_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
-    signature_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_DARKGREY },
+    signature_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
 }
 
 GREY_LINE_FRAME = {
-    frame_pen = to_pen{ ch = 206, fg = COLOR_GREY, bg = COLOR_BLACK },
-    h_frame_pen = to_pen{ ch = 205, fg = COLOR_GREY, bg = COLOR_BLACK },
-    v_frame_pen = to_pen{ ch = 186, fg = COLOR_GREY, bg = COLOR_BLACK },
-    lt_frame_pen = to_pen{ ch = 201, fg = COLOR_GREY, bg = COLOR_BLACK },
-    lb_frame_pen = to_pen{ ch = 200, fg = COLOR_GREY, bg = COLOR_BLACK },
-    rt_frame_pen = to_pen{ ch = 187, fg = COLOR_GREY, bg = COLOR_BLACK },
-    rb_frame_pen = to_pen{ ch = 188, fg = COLOR_GREY, bg = COLOR_BLACK },
-    title_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
-    signature_pen = to_pen{ fg = COLOR_DARKGREY, bg = COLOR_BLACK },
+    frame_pen = to_pen{ ch=206, fg=COLOR_GREY, bg=COLOR_BLACK },
+    t_frame_pen = to_pen{ tile=902, ch=205, fg=COLOR_GREY, bg=COLOR_BLACK },
+    l_frame_pen = to_pen{ tile=908, ch=186, fg=COLOR_GREY, bg=COLOR_BLACK },
+    b_frame_pen = to_pen{ tile=916, ch=205, fg=COLOR_GREY, bg=COLOR_BLACK },
+    r_frame_pen = to_pen{ tile=910, ch=186, fg=COLOR_GREY, bg=COLOR_BLACK },
+    lt_frame_pen = to_pen{ tile=901, ch=201, fg=COLOR_GREY, bg=COLOR_BLACK },
+    lb_frame_pen = to_pen{ tile=915, ch=200, fg=COLOR_GREY, bg=COLOR_BLACK },
+    rt_frame_pen = to_pen{ tile=903, ch=187, fg=COLOR_GREY, bg=COLOR_BLACK },
+    rb_frame_pen = to_pen{ tile=917, ch=188, fg=COLOR_GREY, bg=COLOR_BLACK },
+    title_pen = to_pen{ fg=COLOR_BLACK, bg=COLOR_GREY },
+    signature_pen = to_pen{ fg=COLOR_GREY, bg=COLOR_BLACK },
 }
 
 function paint_frame(dc,rect,style,title)

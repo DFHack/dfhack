@@ -31,7 +31,7 @@ REQUIRE_GLOBAL(cursor);
 REQUIRE_GLOBAL(enabler);
 REQUIRE_GLOBAL(gametype);
 REQUIRE_GLOBAL(gps);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(window_x);
 REQUIRE_GLOBAL(window_y);
 REQUIRE_GLOBAL(window_z);

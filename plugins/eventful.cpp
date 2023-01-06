@@ -39,7 +39,7 @@ using namespace df::enums;
 DFHACK_PLUGIN("eventful");
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 
 typedef df::reaction_product_itemst item_product;
 

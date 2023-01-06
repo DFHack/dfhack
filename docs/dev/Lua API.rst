@@ -4117,9 +4117,10 @@ ZScreen provides the following functions:
 
 * ``zscreen:raise()``
 
-  Raises the ZScreen to the top of the viewscreen stack. Note that this is
-  handled automatically for common cases (e.g. player clicks on a Window
-  belonging to a ZScreen that is not the top viewscreen).
+  Raises the ZScreen to the top of the viewscreen stack and returns a reference
+  to ``self``. A common pattern is to check if a tool dialog is already active
+  when the tool command is run and raise the existing dialog if it exists or
+  show a new dialog if it doesn't. See the sample code below for an example.
 
 * ``zscreen:isMouseOver()``
 
@@ -4129,6 +4130,43 @@ ZScreen provides the following functions:
   can override this function if that logic is not appropriate, for example if
   there are multiple independent windows being shown and this function should
   return true if the mouse is over any of them.
+
+Here is an example skeleton for a ZScreen tool dialog::
+
+    local gui = require('gui')
+    local widgets = require('gui.widgets')
+
+    MyWindow = defclass(MyWindow, widgets.Window)
+    MyWindow.ATTRS {
+        frame_title='My Window',
+        frame={w=50, h=45},
+        resizable=true, -- if resizing makes sense for your dialog
+    }
+
+    function MyWindow:init()
+        self:addviews{
+          -- add subviews here
+        }
+    end
+
+    function MyWindow:onInput(keys)
+        -- if required
+    end
+
+    MyScreen = defclass(MyScreen, gui.ZScreen)
+    MyScreen.ATTRS {
+        focus_path='myscreen',
+    }
+
+    function MyScreen:init()
+        self:addviews{MyWindow{view_id='main'}}
+    end
+
+    function MyScreen:onDismiss()
+        view = nil
+    end
+
+    view = view and view:raise() or MyScreen{}:show()
 
 FramedScreen class
 ------------------

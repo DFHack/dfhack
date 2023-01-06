@@ -702,12 +702,12 @@ function ZScreen:render(dc)
     ZScreen.super.render(self, dc)
 end
 
-local function zscreen_is_top(self)
+function ZScreen:isOnTop()
     return dfhack.gui.getCurViewscreen(true) == self._native
 end
 
 function ZScreen:onInput(keys)
-    if not zscreen_is_top(self) then
+    if not self:isOnTop() then
         if keys._MOUSE_L_DOWN and self:isMouseOver() then
             self:raise()
         else
@@ -734,10 +734,11 @@ end
 
 -- move this viewscreen to the top of the stack (if it's not there already)
 function ZScreen:raise()
-    if self:isDismissed() or zscreen_is_top(self) then
-        return
+    if self:isDismissed() or self:isOnTop() then
+        return self
     end
     dscreen.raise(self)
+    return self
 end
 
 -- subclasses should either annotate their viewable panel with view_id='main'

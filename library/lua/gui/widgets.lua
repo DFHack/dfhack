@@ -1416,7 +1416,8 @@ function CycleHotkeyLabel:init()
         {key=self.key, key_sep=': ', text=self.label, width=self.label_width,
          on_activate=self:callback('cycle')},
         '  ',
-        {text=self:callback('getOptionLabel')},
+        {text=self:callback('getOptionLabel'),
+         pen=self:callback('getOptionPen')},
     }
 end
 
@@ -1433,22 +1434,25 @@ function CycleHotkeyLabel:cycle()
     end
 end
 
-function CycleHotkeyLabel:getOptionLabel(option_idx)
+local function cyclehotkeylabel_getOptionElem(self, option_idx, key)
     option_idx = option_idx or self.option_idx
     local option = self.options[option_idx]
     if type(option) == 'table' then
-        return option.label
+        return option[key]
     end
     return option
 end
 
+function CycleHotkeyLabel:getOptionLabel(option_idx)
+    return cyclehotkeylabel_getOptionElem(self, option_idx, 'label')
+end
+
 function CycleHotkeyLabel:getOptionValue(option_idx)
-    option_idx = option_idx or self.option_idx
-    local option = self.options[option_idx]
-    if type(option) == 'table' then
-        return option.value
-    end
-    return option
+    return cyclehotkeylabel_getOptionElem(self, option_idx, 'value')
+end
+
+function CycleHotkeyLabel:getOptionPen(option_idx)
+    return cyclehotkeylabel_getOptionElem(self, option_idx, 'pen')
 end
 
 function CycleHotkeyLabel:onInput(keys)
@@ -1466,7 +1470,7 @@ end
 
 ToggleHotkeyLabel = defclass(ToggleHotkeyLabel, CycleHotkeyLabel)
 ToggleHotkeyLabel.ATTRS{
-    options={{label='On', value=true},
+    options={{label='On', value=true, pen=COLOR_GREEN},
              {label='Off', value=false}},
 }
 

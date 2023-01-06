@@ -3921,8 +3921,13 @@ The class has the following methods:
 * ``view:getMousePos([view_rect])``
 
   Returns the mouse *x,y* in coordinates local to the given ViewRect (or
-  ``frame_body`` if no ViewRect is passed) if it is within its clip area,
-  or nothing otherwise.
+  ``frame_body`` if no ViewRect is passed) if it is within its clip area, or
+  nothing otherwise.
+
+* ``view:getMouseFramePos()``
+
+  Returns the mouse *x,y* in coordinates local to ``frame_rect`` if it is
+  within its clip area, or nothing otherwise.
 
 * ``view:updateLayout([parent_rect])``
 
@@ -4005,7 +4010,7 @@ The class has the following methods:
 Screen class
 ------------
 
-This is a View subclass intended for use as a stand-alone dialog or screen.
+This is a View subclass intended for use as a stand-alone modal dialog or screen.
 It adds the following methods:
 
 * ``screen:isShown()``
@@ -4073,6 +4078,57 @@ It adds the following methods:
 
   Defined as callbacks for native code.
 
+ZScreen class
+-------------
+
+A screen subclass that allows the underlying viewscreens to be interacted with.
+For example, a DFHack GUI tool implemented as a ZScreen can allow the player to
+interact with the underlying map. That is, even when the DFHack tool window is
+visible, players will be able to use vanilla designation tools, select units, or
+scan/drag the map around.
+
+If multiple ZScreens are on the stack and the player clicks on a visible element
+of a non-top ZScreen, that ZScreen will be raised to the top of the viewscreen
+stack. This allows multiple DFHack gui tools to be usable at the same time.
+Clicks that are not over any visible ZScreen element, of course, are passed
+through to the underlying viewscreen.
+
+If :kbd:`Esc` or the right mouse button is pressed, and the ZScreen widgets
+don't otherwise handle them, then the top ZScreen is dismissed.
+
+Keyboard input goes to the top ZScreen, as usual. If the subviews of the top
+ZScreen don't handle the input (i.e. they all return something falsey), the
+input is passed directly to the first underlying non-ZScreen.
+
+All this behavior is implemented in ``ZScreen:onInput()``, which subclasses
+should *not* override. Instead, ZScreen subclasses should delegate all input
+processing to subviews. Consider using a `Window class`_ widget as your top
+level input processor.
+
+When rendering, the parent viewscreen is automatically rendered first, so
+subclasses do not have to call ``self:renderParent()``. Calls to ``logic()``
+(a world "tick" when playing the game) are also passed through, so the game
+progresses normally and can be paused/unpaused as normal by the player.
+ZScreens that handle the :kbd:`Space` key may want to provide an alternate way
+to pause. Note that passing ``logic()`` calls through to the underlying map is
+required for allowing the player to drag the map with the mouse.
+
+ZScreen provides the following functions:
+
+* ``zscreen:raise()``
+
+  Raises the ZScreen to the top of the viewscreen stack. Note that this is
+  handled automatically for common cases (e.g. player clicks on a Window
+  belonging to a ZScreen that is not the top viewscreen).
+
+* ``zscreen:isMouseOver()``
+
+  If the ZScreen subclass has a subview with a ``view_id`` equal to "main",
+  then the mouse will be considered to be over the visible viewscreen elements
+  when ``self.subviews.main:getMouseFramePos()`` returns a position. Subclasses
+  can override this function if that logic is not appropriate, for example if
+  there are multiple independent windows being shown and this function should
+  return true if the mouse is over any of them.
 
 FramedScreen class
 ------------------

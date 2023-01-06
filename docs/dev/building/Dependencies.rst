@@ -156,31 +156,8 @@ older GCC (but still at least 4.8) version if possible.
 Windows
 =======
 
-For ABI compatibility with recent releases of Dwarf Fortress, DFHack requires the ``v140`` or ``v140_xp``
-toolchain to build for windows.
-
-Of course all dependencies are listed above, but here are some things you'll likely want on Windows
-to avoid risk of wading into uncharted waters:
-
-* Microsoft Visual C++ 2022, 2019, 2017, or 2015 (optional)
-* ``v140`` or ``v140_xp`` toolchain (Microsoft Visual C++ 2015 Build Tools)
-* StrawberryPerl (perl + perl packages)
-
-Releases of Dwarf Fortress since roughly 2016 have been compiled for Windows using
-Microsoft's Visual Studio 2015 C++ compiler. In order to guarantee ABI and STL compatibility
-with Dwarf Fortress, DFHack has to be compiled with the same compiler.
-
-Visual Studio 2015 is no longer supported by Microsoft and it can be difficult to obtain
-working installers for this product today. The recommended approach is to use a modern community
-version of Visual Studio such as 2022_ or 2019_, installing additional optional Visual Studio
-components which provide the required support for using Visual Studio 2015's toolchain.
-All of the required tools are available from Microsoft as part of Visual Studio's Community
-Edition at no charge.
-
-You can also download just the Visual C++ 2015 `build tools`_ if you aren't going to use
-Visual Studio to edit code.
-
-.. _build tools: https://my.visualstudio.com/Downloads?q=visual%20studio%202015&wt.mc_id=o~msft~vscom~older-downloads
+DFHack must be built with the Microsoft Visual C++ 2022 toolchain (aka MSVC v143)
+for ABI compatibility with Dwarf Fortress v50.
 
 With Choco
 ~~~~~~~~~~
@@ -194,34 +171,19 @@ Here are some package install commands::
     choco install strawberryperl
     choco install python
     choco install sphinx
-    choco install visualstudio2022community
 
-You may have noticed this list **does not include** the build tools, one of the build tool packages
-in the chocolatey `package repository <https://community.chocolatey.org/packages>`_ may work for our purposes
-but the tried and true method is just below in the **next section**. If you verify a package works feel free
-to open an issue, or update this documentation.
+    # Visual Studio
+    choco install visualstudio2022community --params "--add Microsoft.VisualStudio.Workload.NativeDesktop --includeRecommended"
+    # OR
+    # Build Tools for Visual Studio
+    choco install visualstudio2022buildtools --params "--add Microsoft.VisualStudio.Workload.NativeDesktop --includeRecommended"
+
+If you already have Visual Studio 2022 or the Build Tools installed, you may
+need to modify the installed version to include the workload components
+listed in the manual installation section, as chocolatey will not amend
+the existing install.
 
 .. _chocolatey: https://chocolatey.org/install
-
-Visual Studio
-~~~~~~~~~~~~~
-You could install visual studio `manually<install-visual-studio>`, perhaps even the build tools as well.
-You could also just run a ``choco`` command. For example::
-
-    choco install visualstudio2022community
-
-If Visual Studio is installed follow these next steps for the build tools:
-
-1. Open **Visual Studio Installer**.
-2. Select modify, for whichever version you've chosen to utilize.
-3. Check the boxes for the following components:
-
-* "Desktop Development with C++"
-* "C++ Windows XP Support for VS 2017 (v141) tools [Deprecated]"
-* "MSVC v140 - VS 2015 C++ build tools (v14.00)"
-
-Yes, this is unintuitive. Installing XP Support for VS 2017 installs XP Support for VS 2015
-if the 2015 toolchain is installed.
 
 Manually
 ~~~~~~~~
@@ -280,55 +242,31 @@ See the `Sphinx`_ website.
 
 Visual Studio
 ^^^^^^^^^^^^^
-Click Visual Studio 2022_ or 2019_ to download an installer wizard that will prompt you
-to select the optional tools you want to download alongside the IDE. You may need to log into
-(or create) a Microsoft account in order to download Visual Studio.
+The required toolchain can be installed as a part of either the `Visual Studio 2022 IDE`_
+or the `Build Tools for Visual Studio 2022`_. If you already have a preferred code
+editor, the Build Tools will be a smaller install. You may need to log into (or create)
+a Microsoft account in order to download Visual Studio.
 
-.. _2022: https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&channel=Release&version=VS2022&source=VSLandingPage&cid=2030&passive=false
-.. _2019: https://my.visualstudio.com/Downloads?q=visual%20studio%202019&wt.mc_id=o~msft~vscom~older-downloads
+.. _Visual Studio 2022 IDE: https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&channel=Release&version=VS2022&source=VSLandingPage&cid=2030&passive=false
+.. _Build Tools for Visual Studio 2022: https://my.visualstudio.com/Downloads?q=Build%20Tools%20for%20Visual%20Studio%202022
+
 
 Build Tools [Without Visual Studio]
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Click `build tools`_ and you will be prompted to login to your Microsoft account.
-Then you should be redirected to a page with various download options with 2015
+Click `Build Tools for Visual Studio 2022`_ and you will be prompted to login to your Microsoft account.
+Then you should be redirected to a page with various download options with 2022
 in their name. If this redirect doesn't occur, just copy, paste, and enter the
-download link again and you should see the options. You need to get:
+download link again and you should see the options.
 
-Visual C++ Build Tools for Visual Studio 2015 with Update 3.
-Click the download button next to it and a dropdown of download formats will appear.
-Select the DVD format to download an ISO file. When the download is complete,
-click on the ISO file and a folder will popup with the following contents:
+You want to select the most up-to-date version -- as of writing this is
+"Build Tools for Visual Studio 2022 (version 17.4)". "LTSC" is an extended
+support variant and is not required for our purposes.
 
-* packages (folder)
-* VCPlusPlusBuildTools2015Update3_x64_Files.cat
-* VisualCppBuildTools_Full.exe
+When installing, select the "Desktop Development with C++" workload and ensure that the following are checked:
 
-The packages folder contains the dependencies that are required by the build tools.
-These include:
-
-* Microsoft .NET Framework 4.6.1 Developer Pack
-* Microsoft Visual C++ 2015 Redistributable (x64) - 14.0.24210
-* Windows 10 Universal SDK - 10.0.10240
-* Windows 8.1 SDK
-
-Click VisualCppBuildTools_Full.exe and use the default options provided by the installer
-wizard that appears. After the installation is completed, add the path where MSBuild.exe
-was installed to your PATH environment variable. The path should be:
-
-* ``C:\Program Files (x86)\MSBuild\14.0\Bin``
-
-Note that this process may install only the ``v140`` toolchain, not the ``v140_xp`` toolchain that
-is normally used to compile build releases of DFHack. Due to a bug in the Microsoft-provided libraries used with
-the ``v140_xp`` toolchain that Microsoft has never fixed, DFHack (and probably also Dwarf Fortress itself)
-doesn't run reliably on 64-bit XP. Investigations have so far suggested that ``v140`` and
-``v140_xp`` are ABI-compatible. As such, there should be no harm in using ``v140`` instead of
-``v140_xp`` as the build toolchain, at least on 64-bit platforms. However, it is our policy to use
-``v140_xp`` for release builds for both 32-bit and 64-bit Windows,
-since 32-bit releases of Dwarf Fortress work on XP and ``v140_xp`` is required for compatibility with
-XP.
-
-The ``v141`` toolchain, in Visual Studio 2017, has been empirically documented to be incompatible with
-released versions of Dwarf Fortress and cannot be used to make usable builds of DFHack.
+- MSVC v143 - VS 2022 C++ x64/x86 build tools
+- C++ CMake tools for Windows
+- At least one Windows SDK (for example, Windows 11 SDK 10.0.22621).
 
 .. _mac-dependency-instructions:
 

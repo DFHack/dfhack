@@ -160,10 +160,10 @@ Then you can either open the solution with MSVC or use one of the msbuild script
 
 Visual Studio IDE
 -----------------
-After running the CMake generate script you will have a new folder called VC2015
-or VC2015_32, depending on the architecture you specified. Open the file
+After running the CMake generate script you will have a new folder called VC2022
+or VC2022_32, depending on the architecture you specified. Open the file
 ``dfhack.sln`` inside that folder. If you have multiple versions of Visual
-Studio installed, make sure you open with Visual Studio 2015.
+Studio installed, make sure you open with Visual Studio 2022.
 
 The first thing you must then do is change the build type. It defaults to Debug,
 but this cannot be used on Windows. Debug is not binary-compatible with DF.
@@ -183,15 +183,9 @@ In the build directory you will find several ``.bat`` files:
 * Scripts with ``package`` prefix will build and create a .zip package of DFHack.
 
 Compiling from the command line is generally the quickest and easiest option.
-However be aware that due to the limitations of ``cmd.exe`` - especially in
-versions of Windows prior to Windows 10 - it can be very hard to see what happens
-during a build.  If you get a failure, you may miss important errors or warnings
-due to the tiny window size and extremely limited scrollback. For that reason you
-may prefer to compile in the IDE which will always show all build output.
-
-Alternatively (or additionally), consider installing an improved Windows terminal
-such as `Cmder <https://cmder.net/>`_. Easily installed through Chocolatey with:
-``choco install cmder -y``.
+Modern Windows terminal emulators such as `Cmder <https://cmder.app/>`_ or
+`Windows Terminal <https://github.com/microsoft/terminal>`_ provide a better
+experience by providing more scrollback and larger window sizes.
 
 **Note for Cygwin/msysgit users**: It is also possible to compile DFHack from a
 Bash command line. This has three potential benefits:

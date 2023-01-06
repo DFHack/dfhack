@@ -9,6 +9,6 @@ Those seeking to compile the source code for DFHack, and or plugins, can refer t
 .. toctree::
    :maxdepth: 2
 
-   /docs/dev/building/Dependencies
-   /docs/dev/building/Compile
-   /docs/dev/building/Options
+   /docs/dev/compile/Dependencies
+   /docs/dev/compile/Compile
+   /docs/dev/compile/Options

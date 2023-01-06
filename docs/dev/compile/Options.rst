@@ -29,13 +29,13 @@ Typical usage may look like::
     configuration utility ``ccmake``.
 
 Generator
----------
+=========
 For the uninitiated, the generator is what allows cmake to, of course, generate
 visual studio solution & project files, a makefile, or anything else.
 Your selection of generator comes down to preference and availability.
 
 Visual Studio
-=============
+-------------
 To generate visual studio project files, you'll need to select a particular version of
 visual studio, and match that to your system's generator list viewed with ``cmake --help``
 
@@ -44,7 +44,7 @@ example::
     cmake .. -G "Visual Studio 17 2022"
 
 Ninja
-=====
+-----
 The generally preferred build system where available.
 
 example::
@@ -52,8 +52,8 @@ example::
     cmake .. -G Ninja
 
 Install Location
-----------------
-This of course uses the default cmake variable.
+================
+This is the location where DFHack will be installed.
 
 Variable: ``CMAKE_INSTALL_PREFIX``
 
@@ -65,9 +65,9 @@ The path to df will of course depend on your system. If the directory exists it 
 recommended to use ``~/.dwarffortress`` to avoid permission troubles.
 
 Build type
-----------
-Release/Debug, this is the type of build you want. This controls what information
-about symbols and line numbers the debugger will have available to it.
+==========
+This is the type of build you want. This controls what information about symbols and
+line numbers the debugger will have available to it.
 
 Variable: ``CMAKE_BUILD_TYPE``
 
@@ -81,8 +81,9 @@ Options:
 * RelWithDebInfo
 
 Target architecture (32/64-bit)
----------------------------------------
-If need 32-bit binaries or are looking to be explicit about building 64-bit.
+===============================
+You can set this if you need 32-bit binaries or are looking to be explicit about
+building 64-bit.
 
 Variable: ``DFHACK_BUILD_ARCH``
 
@@ -96,7 +97,7 @@ Options:
 * '64' (default option)
 
 Library
--------
+=======
 This will only be useful if you're looking to avoid building the library core, as it builds by default.
 
 Variable: ``BUILD_LIBRARY``
@@ -107,7 +108,7 @@ Usage::
     cmake .. -DBUILD_LIBRARY=0
 
 Testing
--------
+=======
 Regression testing will be arriving in the future, but for now there are only tests written in lua.
 
 Variables:
@@ -121,7 +122,7 @@ Usage::
     cmake .. -DBUILD_TESTS=1
 
 Plugins
--------
+=======
 If you're doing plugin development.
 
 Variable: ``BUILD_PLUGINS``
@@ -134,7 +135,7 @@ Usage::
 .. _building-documentation:
 
 Documentation
--------------
+=============
 If you need to build documentation. Documentation can be built as HTML, and PDF,
 but there are also plain text files generated for in-game.
 

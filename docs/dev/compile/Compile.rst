@@ -89,8 +89,8 @@ assistance.
 All Platforms
 =============
 Before you can compile the code you'll need to configure your build with cmake. Some IDEs can do this,
-but from command line is the usual way to do this; thought the windows section below points out some
-windows batch files that can be used to avoid opening a terminal/command-prompt.
+but from command line is the usual way to do this; thought the Windows section below points out some
+Windows batch files that can be used to avoid opening a terminal/command-prompt.
 
 You should seek cmake's documentation online or via ``cmake --help`` to see how the command works. See
 the `build-options` page for help finding the DFHack build options relevant to you.
@@ -284,13 +284,13 @@ addition to the normal ``CC`` and ``CXX`` flags above::
 
   export PATH=/usr/local/bin:$PATH
 
-Docker
-======
+Windows cross compiling from Linux
+==================================
 
 .. highlight:: bash
 
-You can use docker to build DFHack for windows. These instructions were developed
-on a linux host system.
+You can use docker to build DFHack for Windows. These instructions were developed
+on a Linux host system.
 
 .. contents::
   :local:
@@ -326,7 +326,7 @@ container. Inside the container, run the following commands::
     dfhack-make
 
 Inside the ``dfhack-*`` scripts there are several commands that set up the wine
-server. Each invocation of a windows tool will cause wine to run in the container.
+server. Each invocation of a Windows tool will cause wine to run in the container.
 Preloading the wineserver and telling it not to exit will speed configuration and
 compilation up considerably (approx. 10x). You can configure and build DFHack
 with regular ``cmake`` and ``ninja`` commands, but your build will go much slower.

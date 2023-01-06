@@ -2456,6 +2456,17 @@ static int screen_findGraphicsTile(lua_State *L)
     }
 }
 
+static int screen_raise(lua_State *L) {
+    df::viewscreen *screen = dfhack_lua_viewscreen::get_pointer(L, 1, false);
+
+    // remove screen from the stack so it doesn't get returned as an output
+    lua_remove(L, 1);
+
+    Screen::raise(screen);
+
+    return 0;
+}
+
 static int screen_hideGuard(lua_State *L) {
     df::viewscreen *screen = dfhack_lua_viewscreen::get_pointer(L, 1, false);
     luaL_checktype(L, 2, LUA_TFUNCTION);
@@ -2574,6 +2585,7 @@ static const luaL_Reg dfhack_screen_funcs[] = {
     { "paintString", screen_paintString },
     { "fillRect", screen_fillRect },
     { "findGraphicsTile", screen_findGraphicsTile },
+    CWRAP(raise, screen_raise),
     CWRAP(hideGuard, screen_hideGuard),
     CWRAP(show, screen_show),
     CWRAP(dismiss, screen_dismiss),

@@ -1452,7 +1452,9 @@ function CycleHotkeyLabel:getOptionValue(option_idx)
 end
 
 function CycleHotkeyLabel:getOptionPen(option_idx)
-    return cyclehotkeylabel_getOptionElem(self, option_idx, 'pen')
+    local pen = cyclehotkeylabel_getOptionElem(self, option_idx, 'pen')
+    if type(pen) == 'string' then return nil end
+    return pen
 end
 
 function CycleHotkeyLabel:onInput(keys)

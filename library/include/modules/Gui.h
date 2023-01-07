@@ -181,6 +181,9 @@ namespace DFHack
 
         DFHACK_EXPORT df::viewscreen *getViewscreenByIdentity(virtual_identity &id, int n = 1);
 
+        /// Get the top-most underlying DF viewscreen (not owned by DFHack)
+        DFHACK_EXPORT df::viewscreen *getDFViewscreen(bool skip_dismissed = false);
+
         /// Get the top-most viewscreen of the given type from the top `n` viewscreens (or all viewscreens if n < 1)
         /// returns NULL if none match
         template <typename T>

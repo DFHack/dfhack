@@ -81,6 +81,7 @@ Panel.ATTRS {
     resize_min = DEFAULT_NIL,
     on_resize_begin = DEFAULT_NIL,
     on_resize_end = DEFAULT_NIL,
+    lockable = false,
     autoarrange_subviews = false, -- whether to automatically lay out subviews
     autoarrange_gap = 0, -- how many blank lines to insert between widgets
 }
@@ -464,7 +465,14 @@ end
 function Panel:onRenderFrame(dc, rect)
     Panel.super.onRenderFrame(self, dc, rect)
     if not self.frame_style then return end
-    gui.paint_frame(dc, rect, self.frame_style, self.frame_title)
+    local locked = nil
+    if self.lockable then
+        locked = self.parent_view and self.parent_view.locked
+    end
+    local inactive = self.parent_view and self.parent_view.isOnTop
+            and not self.parent_view:isOnTop()
+    gui.paint_frame(dc, rect, self.frame_style, self.frame_title,
+            self.lockable, locked, inactive)
     if self.kbd_get_pos then
         local pos = self.kbd_get_pos()
         local pen = to_pen{fg=COLOR_GREEN, bg=COLOR_BLACK}
@@ -487,7 +495,19 @@ Window.ATTRS {
     frame_background = gui.CLEAR_PEN,
     frame_inset = 1,
     draggable = true,
+    lockable = true,
 }
+
+function Window:onInput(keys)
+    if keys._MOUSE_L_DOWN and self.parent_view and self.parent_view.toggleLocked then
+        local x,y = dscreen.getMousePos()
+        local frame_rect = self.frame_rect
+        if x == frame_rect.x2-1 and y == frame_rect.y1 then
+            self.parent_view:toggleLocked()
+        end
+    end
+    return Window.super.onInput(self, keys)
+end
 
 -------------------
 -- ResizingPanel --
@@ -1416,7 +1436,8 @@ function CycleHotkeyLabel:init()
         {key=self.key, key_sep=': ', text=self.label, width=self.label_width,
          on_activate=self:callback('cycle')},
         '  ',
-        {text=self:callback('getOptionLabel')},
+        {text=self:callback('getOptionLabel'),
+         pen=self:callback('getOptionPen')},
     }
 end
 
@@ -1433,22 +1454,27 @@ function CycleHotkeyLabel:cycle()
     end
 end
 
-function CycleHotkeyLabel:getOptionLabel(option_idx)
+local function cyclehotkeylabel_getOptionElem(self, option_idx, key)
     option_idx = option_idx or self.option_idx
     local option = self.options[option_idx]
     if type(option) == 'table' then
-        return option.label
+        return option[key]
     end
     return option
 end
 
+function CycleHotkeyLabel:getOptionLabel(option_idx)
+    return cyclehotkeylabel_getOptionElem(self, option_idx, 'label')
+end
+
 function CycleHotkeyLabel:getOptionValue(option_idx)
-    option_idx = option_idx or self.option_idx
-    local option = self.options[option_idx]
-    if type(option) == 'table' then
-        return option.value
-    end
-    return option
+    return cyclehotkeylabel_getOptionElem(self, option_idx, 'value')
+end
+
+function CycleHotkeyLabel:getOptionPen(option_idx)
+    local pen = cyclehotkeylabel_getOptionElem(self, option_idx, 'pen')
+    if type(pen) == 'string' then return nil end
+    return pen
 end
 
 function CycleHotkeyLabel:onInput(keys)
@@ -1466,7 +1492,7 @@ end
 
 ToggleHotkeyLabel = defclass(ToggleHotkeyLabel, CycleHotkeyLabel)
 ToggleHotkeyLabel.ATTRS{
-    options={{label='On', value=true},
+    options={{label='On', value=true, pen=COLOR_GREEN},
              {label='Off', value=false}},
 }
 

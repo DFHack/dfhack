@@ -1,3 +1,5 @@
+
+
 ========================
 DFHack development guide
 ========================
@@ -8,7 +10,7 @@ These are pages relevant to people developing for DFHack.
    :maxdepth: 1
 
    /docs/dev/Dev-intro
-   /docs/dev/Compile
+   /docs/dev/compile/index
    /docs/dev/Contributing
    /docs/dev/Documentation
    /docs/api/index

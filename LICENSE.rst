@@ -36,6 +36,7 @@ tinyxml_        Zlib          \(c\) 2000-2006, Lee Thomason
 UTF-8-decoder_  MIT           \(c\) 2008-2010, Bjoern Hoehrmann
 xlsxio_         MIT           \(c\) 2016-2020, Brecht Sanders
 alt-getopt_     MIT           \(c\) 2009 Aleksey Cheusov
+googletest_     BSD 3-Clause  \(c\) 2008, Google Inc.
 =============== ============= =================================================
 
 .. _DFHack: https://github.com/DFHack/dfhack
@@ -56,6 +57,7 @@ alt-getopt_     MIT           \(c\) 2009 Aleksey Cheusov
 .. _UTF-8-decoder: http://bjoern.hoehrmann.de/utf-8/decoder/dfa
 .. _xlsxio: https://github.com/brechtsanders/xlsxio
 .. _alt-getopt: https://github.com/LuaDist/alt-getopt
+.. _googletest: https://github.com/google/googletest
 
 .. _CC-BY-SA: http://creativecommons.org/licenses/by/3.0/deed.en_US
 

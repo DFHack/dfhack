@@ -859,31 +859,6 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
             }
         }
     }
-    //for (size_t i = 0; i < history->figures.size(); i++)
-    //{
-    //    df::historical_figure * figure = history->figures[i];
-    //    if (figure->race < 0)
-    //        continue;
-    //    df::creature_raw * creature = raws->creatures.all[figure->race];
-    //    for (int j = 0; j < creature->material.size(); j++)
-    //    {
-    //        mat.decode(j + MaterialInfo::FIGURE_BASE, i);
-    //        MaterialDefinition *mat_def = out->add_material_list();
-    //        mat_def->mutable_mat_pair()->set_mat_type(j + MaterialInfo::FIGURE_BASE);
-    //        mat_def->mutable_mat_pair()->set_mat_index(i);
-    //        stringstream id;
-    //        id << "HF" << i << mat.getToken();
-    //        mat_def->set_id(id.str());
-    //        mat_def->set_name(mat.toString()); //find the name at cave temperature;
-    //        if (creature->material[j]->state_color[GetState(creature->material[j])] < raws->descriptors.colors.size())
-    //        {
-    //            df::descriptor_color *color = raws->descriptors.colors[creature->material[j]->state_color[GetState(creature->material[j])]];
-    //            mat_def->mutable_state_color()->set_red(color->red * 255);
-    //            mat_def->mutable_state_color()->set_green(color->green * 255);
-    //            mat_def->mutable_state_color()->set_blue(color->blue * 255);
-    //        }
-    //    }
-    //}
     for (size_t i = 0; i < raws->plants.all.size(); i++)
     {
         df::plant_raw * plant = raws->plants.all[i];

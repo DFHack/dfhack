@@ -3921,8 +3921,13 @@ The class has the following methods:
 * ``view:getMousePos([view_rect])``
 
   Returns the mouse *x,y* in coordinates local to the given ViewRect (or
-  ``frame_body`` if no ViewRect is passed) if it is within its clip area,
-  or nothing otherwise.
+  ``frame_body`` if no ViewRect is passed) if it is within its clip area, or
+  nothing otherwise.
+
+* ``view:getMouseFramePos()``
+
+  Returns the mouse *x,y* in coordinates local to ``frame_rect`` if it is
+  within its clip area, or nothing otherwise.
 
 * ``view:updateLayout([parent_rect])``
 
@@ -4005,7 +4010,7 @@ The class has the following methods:
 Screen class
 ------------
 
-This is a View subclass intended for use as a stand-alone dialog or screen.
+This is a View subclass intended for use as a stand-alone modal dialog or screen.
 It adds the following methods:
 
 * ``screen:isShown()``
@@ -4073,6 +4078,105 @@ It adds the following methods:
 
   Defined as callbacks for native code.
 
+ZScreen class
+-------------
+
+A screen subclass that allows the underlying viewscreens to be interacted with.
+For example, a DFHack GUI tool implemented as a ZScreen can allow the player to
+interact with the underlying map. That is, even when the DFHack tool window is
+visible, players will be able to use vanilla designation tools, select units, or
+scan/drag the map around.
+
+If multiple ZScreens are on the stack and the player clicks on a visible element
+of a non-top ZScreen, that ZScreen will be raised to the top of the viewscreen
+stack. This allows multiple DFHack gui tools to be usable at the same time.
+Clicks that are not over any visible ZScreen element, of course, are passed
+through to the underlying viewscreen.
+
+If :kbd:`Esc` or the right mouse button is pressed, and the ZScreen widgets
+don't otherwise handle them, then the top ZScreen is dismissed. If the ZScreen
+is "locked", then the screen is not dismissed and the input is passed on to the
+underlying DF viewscreen. :kbd:`Alt`:kbd:`L` toggles the locked status if the
+ZScreen widgets don't otherwise handle that key sequence. If you have a
+``Panel`` with the ``lockable`` attribute set and a frame that has pens defined
+for the lock icon (like ``Window`` widgets have by default), then a lock icon
+will appear in the upper right corner of the frame. Clicking on this icon will
+toggle the ZScreen ``locked`` status just as if :kbd:`Alt`:kbd:`L` had been
+pressed.
+
+Keyboard input goes to the top ZScreen, as usual. If the subviews of the top
+ZScreen don't handle the input (i.e. they all return something falsey), the
+input is passed directly to the first underlying non-ZScreen.
+
+All this behavior is implemented in ``ZScreen:onInput()``, which subclasses
+should *not* override. Instead, ZScreen subclasses should delegate all input
+processing to subviews. Consider using a `Window class`_ widget as your top
+level input processor.
+
+When rendering, the parent viewscreen is automatically rendered first, so
+subclasses do not have to call ``self:renderParent()``. Calls to ``logic()``
+(a world "tick" when playing the game) are also passed through, so the game
+progresses normally and can be paused/unpaused as normal by the player.
+ZScreens that handle the :kbd:`Space` key may want to provide an alternate way
+to pause. Note that passing ``logic()`` calls through to the underlying map is
+required for allowing the player to drag the map with the mouse.
+
+ZScreen provides the following functions:
+
+* ``zscreen:raise()``
+
+  Raises the ZScreen to the top of the viewscreen stack and returns a reference
+  to ``self``. A common pattern is to check if a tool dialog is already active
+  when the tool command is run and raise the existing dialog if it exists or
+  show a new dialog if it doesn't. See the sample code below for an example.
+
+* ``zscreen:toggleLocked()``
+
+  Toggles whether the window closes on :kbd:`ESC` or r-click (unlocked) or not
+  (locked).
+
+* ``zscreen:isMouseOver()``
+
+  The default implementation iterates over the direct subviews of the ZScreen
+  subclass and sees if ``getMouseFramePos()`` returns a position for any of
+  them. Subclasses can override this function if that logic is not appropriate.
+
+Here is an example skeleton for a ZScreen tool dialog::
+
+    local gui = require('gui')
+    local widgets = require('gui.widgets')
+
+    MyWindow = defclass(MyWindow, widgets.Window)
+    MyWindow.ATTRS {
+        frame_title='My Window',
+        frame={w=50, h=45},
+        resizable=true, -- if resizing makes sense for your dialog
+    }
+
+    function MyWindow:init()
+        self:addviews{
+          -- add subviews here
+        }
+    end
+
+    function MyWindow:onInput(keys)
+        -- if required
+    end
+
+    MyScreen = defclass(MyScreen, gui.ZScreen)
+    MyScreen.ATTRS {
+        focus_path='myscreen',
+    }
+
+    function MyScreen:init()
+        self:addviews{MyWindow{}}
+    end
+
+    function MyScreen:onDismiss()
+        view = nil
+    end
+
+    view = view and view:raise() or MyScreen{}:show()
 
 FramedScreen class
 ------------------
@@ -4221,6 +4325,11 @@ Has attributes:
   hitting :kbd:`Esc` (while resizing with the mouse or keyboard), or by calling
   ``Panel:setKeyboardResizeEnabled(false)`` (while resizing with the keyboard).
 
+* ``lockable = bool`` (default: ``false``)
+
+  Determines whether the panel will draw a lock icon in its frame. See
+  `ZScreen class`_ for details.
+
 * ``autoarrange_subviews = bool`` (default: ``false``)
 * ``autoarrange_gap = int`` (default: ``0``)
 
@@ -4282,7 +4391,7 @@ Window class
 ------------
 
 Subclass of Panel; sets Panel attributes to useful defaults for a top-level
-framed, draggable window.
+framed, lockable, draggable window.
 
 ResizingPanel class
 -------------------

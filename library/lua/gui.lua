@@ -702,12 +702,16 @@ function ZScreen:render(dc)
     ZScreen.super.render(self, dc)
 end
 
-local function zscreen_is_top(self)
+function ZScreen:isOnTop()
     return dfhack.gui.getCurViewscreen(true) == self._native
 end
 
+function ZScreen:toggleLocked()
+    self.locked = not self.locked
+end
+
 function ZScreen:onInput(keys)
-    if not zscreen_is_top(self) then
+    if not self:isOnTop() then
         if keys._MOUSE_L_DOWN and self:isMouseOver() then
             self:raise()
         else
@@ -719,8 +723,17 @@ function ZScreen:onInput(keys)
     if ZScreen.super.onInput(self, keys) then
         return
     end
-    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+
+    if keys.CUSTOM_ALT_L then
+        self:toggleLocked()
+        return
+    end
+
+    if not self.locked and (keys.LEAVESCREEN or keys._MOUSE_R_DOWN) then
         self:dismiss()
+        -- ensure underlying DF screens don't also react to the click
+        df.global.enabler.mouse_rbut_down = 0
+        df.global.enabler.mouse_rbut = 0
         return
     end
 
@@ -729,18 +742,18 @@ function ZScreen:onInput(keys)
     end
 end
 
--- move this viewscreen to the top of the stack (if it's not there already)
 function ZScreen:raise()
-    if self:isDismissed() or zscreen_is_top(self) then
-        return
+    if self:isDismissed() or self:isOnTop() then
+        return self
     end
     dscreen.raise(self)
+    return self
 end
 
--- subclasses should override this and return whether the mouse is over an
--- owned screen element
 function ZScreen:isMouseOver()
-    return false
+    for _,sv in ipairs(self.subviews) do
+        if sv:getMouseFramePos() then return true end
+    end
 end
 
 --------------------------
@@ -772,10 +785,13 @@ GREY_LINE_FRAME = {
     rt_frame_pen = to_pen{ tile=903, ch=187, fg=COLOR_GREY, bg=COLOR_BLACK },
     rb_frame_pen = to_pen{ tile=917, ch=188, fg=COLOR_GREY, bg=COLOR_BLACK },
     title_pen = to_pen{ fg=COLOR_BLACK, bg=COLOR_GREY },
+    inactive_title_pen = to_pen{ fg=COLOR_GREY, bg=COLOR_BLACK },
     signature_pen = to_pen{ fg=COLOR_GREY, bg=COLOR_BLACK },
+    locked_pen = to_pen{tile=779, ch=216, fg=COLOR_GREY, bg=COLOR_GREEN},
+    unlocked_pen = to_pen{tile=782, ch=216, fg=COLOR_GREY, bg=COLOR_BLACK},
 }
 
-function paint_frame(dc,rect,style,title)
+function paint_frame(dc,rect,style,title,show_lock,locked,inactive)
     local pen = style.frame_pen
     local x1,y1,x2,y2 = dc.x1+rect.x1, dc.y1+rect.y1, dc.x1+rect.x2, dc.y1+rect.y2
     dscreen.paintTile(style.lt_frame_pen or pen, x1, y1)
@@ -796,7 +812,16 @@ function paint_frame(dc,rect,style,title)
         if #tstr > x2-x1-1 then
             tstr = string.sub(tstr,1,x2-x1-1)
         end
-        dscreen.paintString(style.title_pen or pen, x, y1, tstr)
+        dscreen.paintString(inactive and style.inactive_title_pen or style.title_pen or pen,
+                            x, y1, tstr)
+    end
+
+    if show_lock then
+        if locked and style.locked_pen then
+            dscreen.paintTile(style.locked_pen, x2-1, y1)
+        elseif not locked and style.unlocked_pen then
+            dscreen.paintTile(style.unlocked_pen, x2-1, y1)
+        end
     end
 end
 

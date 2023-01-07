@@ -2197,6 +2197,11 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
         std::cerr << "loaded map in prerelease build" << std::endl;
     }
 
+    if (event == SC_WORLD_LOADED)
+    {
+        doLoadData(out);
+    }
+
     EventManager::onStateChange(out, event);
 
     buildings_onStateChange(out, event);
@@ -2210,10 +2215,6 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     if (event == SC_WORLD_UNLOADED)
     {
         Persistence::Internal::clear();
-    }
-    if (event == SC_WORLD_LOADED)
-    {
-        doLoadData(out);
     }
 }
 

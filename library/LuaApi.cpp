@@ -2462,7 +2462,7 @@ static int imgui_tablesetupcolumn(lua_State* state)
     float width_or_weight = 0;
 
     if (top == 1)
-        label == imgui_decode<std::string>(state, -1);
+        label = imgui_decode<std::string>(state, -1);
     else if (top == 2)
     {
         label = imgui_decode<std::string>(state, -2);

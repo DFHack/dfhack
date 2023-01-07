@@ -718,6 +718,7 @@ void ImTuiInterop::viewscreen::on_dismiss()
 
 void ImTuiInterop::viewscreen::register_viewscreen(df::viewscreen* screen)
 {
+    get_global_ui_state();
     imgui_aware.insert(screen);
 }
 

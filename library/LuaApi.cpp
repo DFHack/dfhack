@@ -1881,7 +1881,13 @@ static std::map<std::string, int> imgui_key_name_to_key_code_impl()
 
     for (long i = first; i <= last; i++)
     {
-        std::string name = df::enum_traits<df::interface_key>::key_table[i - first];
+        const char* key = df::enum_traits<df::interface_key>::key_table[i - first];
+
+        if (key == nullptr)
+            continue;
+
+        std::string name = key;
+
 
         result[name] = i;
     }
@@ -1893,7 +1899,6 @@ static std::map<std::string, int> imgui_key_name_to_key_code_impl()
 static long imgui_key_name_to_key_code(std::string name)
 {
     static thread_local std::map<std::string, int> key_cache = imgui_key_name_to_key_code_impl();
-
     auto it = key_cache.find(name);
 
     if (it == key_cache.end())

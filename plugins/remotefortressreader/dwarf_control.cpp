@@ -233,6 +233,7 @@ command_result SetPauseState(color_ostream &stream, const SingleBool *in)
 
 void CopyBuildMenu(DwarfControl::SidebarState * out)
 {
+    /* Removed in v50 because the new menu is completely changed and we may not even want to do it the same way anymore.
     auto menus = df::global::game;
     auto build_selector = df::global::ui_build_selector;
     if (build_selector->building_type == -1)
@@ -299,10 +300,12 @@ void CopyBuildMenu(DwarfControl::SidebarState * out)
                 send_selector->add_tiles(build_selector->tiles[x][y]);
             }
     }
+    */
 }
 
 command_result GetSideMenu(DFHack::color_ostream &stream, const dfproto::EmptyMessage *in, DwarfControl::SidebarState *out)
 {
+    /* Removed in v50 because the new menu is completely changed and we may not even want to do it the same way anymore.
     auto plotinfo = df::global::plotinfo;
     out->set_mode((proto::enums::ui_sidebar_mode::ui_sidebar_mode)plotinfo->main.mode);
     auto mode = plotinfo->main.mode;
@@ -422,11 +425,13 @@ command_result GetSideMenu(DFHack::color_ostream &stream, const dfproto::EmptyMe
     default:
         break;
     }
+    */
     return CR_OK;
 }
 
 command_result SetSideMenu(DFHack::color_ostream &stream, const DwarfControl::SidebarCommand *in)
 {
+    /* Removed in v50 because the new menu is completely changed and we may not even want to do it the same way anymore.
     auto plotinfo = df::global::plotinfo;
     if (in->has_mode())
     {
@@ -489,5 +494,6 @@ command_result SetSideMenu(DFHack::color_ostream &stream, const DwarfControl::Si
             break;
         }
     }
+    */
     return CR_OK;
 }

@@ -1792,10 +1792,10 @@ static void imgui_push_generic(lua_State* state, T* ptr)
     lua_pushlightuserdata(state, ptr);
 }
 
-static void imgui_push_generic(lua_State* state, lua_CFunction f)
+/*static void imgui_push_generic(lua_State* state, lua_CFunction f)
 {
     lua_pushcfunction(state, f);
-}
+}*/
 
 template<typename T, typename U>
 static void imgui_push_generic(lua_State* state, const std::map<T, U>& val)
@@ -2625,8 +2625,6 @@ static void imgui_decode_multiple_impl(std::tuple<T>& out, lua_State* state, int
 template<typename Head, typename... Tail>
 static void imgui_decode_multiple_impl(std::tuple<Head, Tail...>& out, lua_State* state, int index)
 {
-    int argc = sizeof...(Tail);
-
     std::tuple<Head> p1;
     imgui_decode_multiple_impl(p1, state, index);
 

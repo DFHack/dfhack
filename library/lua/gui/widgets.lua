@@ -469,7 +469,10 @@ function Panel:onRenderFrame(dc, rect)
     if self.lockable then
         locked = self.parent_view and self.parent_view.locked
     end
-    gui.paint_frame(dc, rect, self.frame_style, self.frame_title, self.lockable, locked)
+    local inactive = self.parent_view and self.parent_view.isOnTop
+            and not self.parent_view:isOnTop()
+    gui.paint_frame(dc, rect, self.frame_style, self.frame_title,
+            self.lockable, locked, inactive)
     if self.kbd_get_pos then
         local pos = self.kbd_get_pos()
         local pen = to_pen{fg=COLOR_GREEN, bg=COLOR_BLACK}

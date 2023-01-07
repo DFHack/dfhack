@@ -785,12 +785,13 @@ GREY_LINE_FRAME = {
     rt_frame_pen = to_pen{ tile=903, ch=187, fg=COLOR_GREY, bg=COLOR_BLACK },
     rb_frame_pen = to_pen{ tile=917, ch=188, fg=COLOR_GREY, bg=COLOR_BLACK },
     title_pen = to_pen{ fg=COLOR_BLACK, bg=COLOR_GREY },
+    inactive_title_pen = to_pen{ fg=COLOR_GREY, bg=COLOR_BLACK },
     signature_pen = to_pen{ fg=COLOR_GREY, bg=COLOR_BLACK },
     locked_pen = to_pen{tile=779, ch=216, fg=COLOR_GREY, bg=COLOR_GREEN},
     unlocked_pen = to_pen{tile=782, ch=216, fg=COLOR_GREY, bg=COLOR_BLACK},
 }
 
-function paint_frame(dc,rect,style,title,show_lock,locked)
+function paint_frame(dc,rect,style,title,show_lock,locked,inactive)
     local pen = style.frame_pen
     local x1,y1,x2,y2 = dc.x1+rect.x1, dc.y1+rect.y1, dc.x1+rect.x2, dc.y1+rect.y2
     dscreen.paintTile(style.lt_frame_pen or pen, x1, y1)
@@ -811,7 +812,8 @@ function paint_frame(dc,rect,style,title,show_lock,locked)
         if #tstr > x2-x1-1 then
             tstr = string.sub(tstr,1,x2-x1-1)
         end
-        dscreen.paintString(style.title_pen or pen, x, y1, tstr)
+        dscreen.paintString(inactive and style.inactive_title_pen or style.title_pen or pen,
+                            x, y1, tstr)
     end
 
     if show_lock then

@@ -4717,8 +4717,10 @@ It has the following attributes:
     hotkey.
 :label_width: The number of spaces to allocate to the ``label`` (for use in
     aligning a column of ``CycleHotkeyLabel`` labels).
-:options: A list of strings or tables of ``{label=string, value=string}``.
-    String options use the same string for the label and value.
+:options: A list of strings or tables of
+    ``{label=string, value=string[, pen=pen]}``. String options use the same
+    string for the label and value and the default pen. The optional ``pen``
+    element could be a color like ``COLOR_RED``.
 :initial_option: The value or numeric index of the initial option.
 :on_change: The callback to call when the selected option changes. It is called
     as ``on_change(new_option_value, old_option_value)``.
@@ -4746,7 +4748,8 @@ ToggleHotkeyLabel
 -----------------
 
 This is a specialized subclass of CycleHotkeyLabel that has two options:
-``On`` (with a value of ``true``) and ``Off`` (with a value of ``false``).
+``On`` (with a value of ``true``) and ``Off`` (with a value of ``false``). The
+``On`` option is rendered in green.
 
 List class
 ----------

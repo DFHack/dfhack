@@ -1,5 +1,6 @@
 #include "Core.h"
 #include "Console.h"
+#include "Debug.h"
 #include "Export.h"
 #include "PluginManager.h"
 
@@ -37,6 +38,13 @@ static command_result autofarm(color_ostream& out, std::vector<std::string>& par
 DFHACK_PLUGIN("autofarm");
 
 DFHACK_PLUGIN_IS_ENABLED(enabled);
+
+#define CONFIG_KEY "autofarm/config"
+
+namespace DFHack {
+    DBG_DECLARE(autofarm, cycle, DebugCategory::LINFO);
+    DBG_DECLARE(autofarm, config, DebugCategory::LINFO);
+}
 
 class AutoFarm {
 private:
@@ -192,9 +200,7 @@ public:
         if (old_plant_id != new_plant_id)
         {
             farm->plant_id[season] = new_plant_id;
-            out << "autofarm: changing farm #" << farm->id <<
-                " from " << get_plant_name(old_plant_id) <<
-                " to " << get_plant_name(new_plant_id) << '\n';
+            INFO(cycle, out).print("autofarm: changing farm #%d from %s to %s\n", farm->id, get_plant_name(old_plant_id), get_plant_name(new_plant_id));
         }
     }
 
@@ -341,6 +347,61 @@ public:
 
         out << std::flush;
     }
+
+    void load_state(color_ostream& out)
+    {
+        initialize();
+
+        PersistentDataItem cfg_default_threshold = World::GetPersistentData("autofarm/default_threshold");
+        if (cfg_default_threshold.isValid())
+            defaultThreshold = cfg_default_threshold.ival(0);
+
+        PersistentDataItem cfg_num_thresholds = World::GetPersistentData("autofarm/num_threshold");
+        if (cfg_num_thresholds.isValid())
+        {
+            int n = cfg_num_thresholds.ival(0);
+            for (int i = 0; i < n; i++)
+            {
+                const std::string keyName = "autofarm/threshold/" + std::to_string(i);
+                PersistentDataItem cfg_threshold = World::GetPersistentData(keyName);
+                if (cfg_threshold.isValid())
+                {
+                    const auto allPlants = world->raws.plants.all;
+                    const std::string id = cfg_threshold.val();
+                    const int val = cfg_threshold.ival(0);
+                    const auto plant = std::find_if(std::begin(allPlants), std::end(allPlants), [id](df::plant_raw* p) { return p->id == id; });
+                    if (plant != std::end(allPlants))
+                    {
+                        setThreshold((*plant)->index, val);
+                        INFO(config, out).print("threshold of %d for unknown plant %s in saved configuration loaded\n", val, id);
+                    }
+                    else
+                    {
+                        WARN(config, out).print("threshold for unknown plant %s in saved configuration ignored\n", id);
+                    }
+                }
+            }
+        }
+
+        PersistentDataItem cfg_enabled = World::GetPersistentData("autofarm/enabled");
+        enabled = (cfg_enabled.isValid() && cfg_enabled.ival(0) != 0);
+    }
+
+    void save_state(color_ostream& out)
+    {
+        World::AddPersistentData("autofarm/default_threshold").ival(0) = defaultThreshold;
+        World::AddPersistentData("autofarm/num_threshold").ival(0) = thresholds.size();
+        for (const auto& t : thresholds)
+        {
+            const std::string& plantName = world->raws.plants.all[t.first]->id;
+            const std::string keyName = "autofarm/threshold/" + plantName;
+            PersistentDataItem cfgThreshold = World::AddPersistentData(keyName);
+            cfgThreshold.val() = plantName;
+            cfgThreshold.ival(0) = t.second;
+        }
+        World::AddPersistentData("autofarm/enabled").ival(0) = enabled;
+    }
+
 };
 
 static std::unique_ptr<AutoFarm> autofarmInstance;
@@ -390,6 +451,26 @@ DFhackCExport command_result plugin_onupdate(color_ostream& out)
 DFhackCExport command_result plugin_enable(color_ostream& out, bool enable)
 {
     enabled = enable;
+    if (Core::getInstance().isWorldLoaded())
+        autofarmInstance->save_state(out);
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_onstatechange(color_ostream& out, state_change_event event)
+{
+    if (!autofarmInstance)
+        return CR_OK;
+
+    switch (event) {
+    case SC_WORLD_LOADED:
+        autofarmInstance->load_state(out);
+        break;
+    case SC_MAP_UNLOADED:
+        break;
+    default:
+        break;
+    }
+
     return CR_OK;
 }
 
@@ -417,6 +498,7 @@ static command_result setThresholds(color_ostream& out, std::vector<std::string>
             return CR_WRONG_USAGE;
         }
     }
+    autofarmInstance->save_state(out);
     return CR_OK;
 }
 
@@ -434,11 +516,16 @@ static command_result autofarm(color_ostream& out, std::vector<std::string>& par
         plugin_enable(out, false);
     else if (parameters.size() == 2 && parameters[0] == "default")
     {
-        if (autofarmInstance) autofarmInstance->setDefault(atoi(parameters[1].c_str()));
+        if (autofarmInstance)
+        {
+            autofarmInstance->setDefault(atoi(parameters[1].c_str()));
+            autofarmInstance->save_state(out);
+        }
     }
     else if (parameters.size() >= 3 && parameters[0] == "threshold")
     {
-        if (autofarmInstance) return setThresholds(out, parameters);
+        if (autofarmInstance)
+            return setThresholds(out, parameters);
     }
     else if (parameters.size() == 0 || (parameters.size() == 1 && parameters[0] == "status"))
         autofarmInstance->status(out);

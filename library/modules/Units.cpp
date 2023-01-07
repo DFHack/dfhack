@@ -73,7 +73,7 @@ using namespace std;
 #include "df/nemesis_record.h"
 #include "df/squad.h"
 #include "df/tile_occupancy.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/unit_inventory_item.h"
 #include "df/unit_misc_trait.h"
 #include "df/unit_relationship_type.h"
@@ -87,7 +87,7 @@ using namespace std;
 using namespace DFHack;
 using namespace df::enums;
 using df::global::world;
-using df::global::ui;
+using df::global::plotinfo;
 using df::global::gamemode;
 using df::global::gametype;
 
@@ -178,7 +178,7 @@ bool Units::isFortControlled(df::unit *unit)
         unit->flags2.bits.resident)
         return false;
 
-    return unit->civ_id != -1 && unit->civ_id == ui->civ_id;
+    return unit->civ_id != -1 && unit->civ_id == plotinfo->civ_id;
 }
 
 // check if creature belongs to the player's civilization
@@ -186,7 +186,7 @@ bool Units::isFortControlled(df::unit *unit)
 bool Units::isOwnCiv(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
-    return unit->civ_id == ui->civ_id;
+    return unit->civ_id == plotinfo->civ_id;
 }
 
 // check if creature belongs to the player's group
@@ -199,7 +199,7 @@ bool Units::isOwnGroup(df::unit* unit)
     for (size_t i = 0; i < histfig->entity_links.size(); i++)
     {
         auto link = histfig->entity_links[i];
-        if (link->entity_id == ui->group_id && link->getType() == df::histfig_entity_link_type::MEMBER)
+        if (link->entity_id == plotinfo->group_id && link->getType() == df::histfig_entity_link_type::MEMBER)
             return true;
     }
     return false;
@@ -210,7 +210,7 @@ bool Units::isOwnGroup(df::unit* unit)
 bool Units::isOwnRace(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
-    return unit->race == ui->race_id;
+    return unit->race == plotinfo->race_id;
 }
 
 
@@ -622,8 +622,8 @@ bool Units::isDwarf(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
 
-    return unit->race == ui->race_id ||
-           unit->enemy.normal_race == ui->race_id;
+    return unit->race == plotinfo->race_id ||
+           unit->enemy.normal_race == plotinfo->race_id;
 }
 
 bool Units::isAnimal(df::unit* unit) {
@@ -1301,7 +1301,7 @@ bool Units::setLaborValidity(df::unit_labor labor, bool isValid)
         return false;
     if (labor == df::unit_labor::NONE)
         return false;
-    df::historical_entity *entity = df::historical_entity::find(ui->civ_id);
+    df::historical_entity *entity = df::historical_entity::find(plotinfo->civ_id);
     if (!entity || !entity->entity_raw)
         return false;
     entity->entity_raw->jobs.permitted_labor[labor] = isValid;
@@ -1704,7 +1704,7 @@ std::string Units::getCasteProfessionName(int race, int casteid, df::profession 
 
     if (pid < (df::profession)0 || !is_valid_enum_item(pid))
         return "";
-    int16_t current_race = df::global::ui->race_id;
+    int16_t current_race = df::global::plotinfo->race_id;
     if (df::global::gamemode && *df::global::gamemode == df::game_mode::ADVENTURE)
         current_race = world->units.active[0]->race;
     bool use_race_prefix = (race >= 0 && race != current_race);

@@ -75,7 +75,7 @@ DFHACK_EXPORT void clearLimits();
 
 DFHACK_EXPORT std::size_t size();
 
-// Finds the index of a kitchen exclusion in ui.kitchen.exc_types. Returns -1 if not found.
+// Finds the index of a kitchen exclusion in plotinfo.kitchen.exc_types. Returns -1 if not found.
 DFHACK_EXPORT int findExclusion(df::kitchen_exc_type type,
     df::item_type item_type, int16_t item_subtype,
     int16_t mat_type, int32_t mat_index);

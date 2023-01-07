@@ -178,6 +178,7 @@ namespace DFHack
         };
 
         DFHACK_EXPORT df::coord2d getMousePos();
+        DFHACK_EXPORT df::coord2d getMousePixels();
         DFHACK_EXPORT df::coord2d getWindowSize();
 
         inline rect2d getScreenRect() {
@@ -221,6 +222,7 @@ namespace DFHack
         DFHACK_EXPORT void dismiss(df::viewscreen *screen, bool to_first = false);
         DFHACK_EXPORT bool isDismissed(df::viewscreen *screen);
         DFHACK_EXPORT bool hasActiveScreens(Plugin *p);
+        DFHACK_EXPORT void raise(df::viewscreen *screen);
 
         /// Retrieve the string representation of the bound key.
         DFHACK_EXPORT std::string getKeyDisplay(df::interface_key key);
@@ -336,6 +338,7 @@ namespace DFHack
 
         virtual void logic();
         virtual void render();
+        virtual void resize(int w, int h) { return; }
 
         virtual int8_t movies_okay() { return 1; }
         virtual bool key_conflict(df::interface_key key);

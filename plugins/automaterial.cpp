@@ -21,8 +21,8 @@
 #include "df/build_req_choice_specst.h"
 #include "df/construction_type.h"
 #include "df/item.h"
-#include "df/ui.h"
-#include "df/ui_build_selector.h"
+#include "df/plotinfost.h"
+#include "df/buildreq.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/items_other_id.h"
 #include "df/job.h"
@@ -50,7 +50,7 @@ using namespace df::enums;
 
 DFHACK_PLUGIN("automaterial");
 REQUIRE_GLOBAL(gps);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(ui_build_selector);
 
 namespace DFHack {
@@ -115,14 +115,14 @@ static inline bool in_material_choice_stage()
 {
     return Gui::build_selector_hotkey(Core::getTopViewscreen()) &&
         ui_build_selector->building_type == df::building_type::Construction &&
-        ui->main.mode == ui_sidebar_mode::Build &&
+        plotinfo->main.mode == ui_sidebar_mode::Build &&
         ui_build_selector->stage == 2;
 }
 
 static inline bool in_placement_stage()
 {
     return Gui::dwarfmode_hotkey(Core::getTopViewscreen()) &&
-        ui->main.mode == ui_sidebar_mode::Build &&
+        plotinfo->main.mode == ui_sidebar_mode::Build &&
         ui_build_selector &&
         ui_build_selector->building_type == df::building_type::Construction &&
         ui_build_selector->stage == 1;
@@ -131,7 +131,7 @@ static inline bool in_placement_stage()
 static inline bool in_type_choice_stage()
 {
     return Gui::dwarfmode_hotkey(Core::getTopViewscreen()) &&
-        ui->main.mode == ui_sidebar_mode::Build &&
+        plotinfo->main.mode == ui_sidebar_mode::Build &&
         ui_build_selector &&
         ui_build_selector->building_type < 0;
 }
@@ -713,7 +713,7 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
         if (!box_select_enabled)
             return;
 
-        if (ui->main.mode != df::ui_sidebar_mode::Build ||
+        if (plotinfo->main.mode != df::ui_sidebar_mode::Build ||
             ui_build_selector->building_type != df::building_type::Construction)
             return;
 

@@ -50,7 +50,6 @@ using namespace DFHack;
 #include "DataDefs.h"
 
 #include "df/announcement_flags.h"
-#include "df/assign_trade_status.h"
 #include "df/building_cagest.h"
 #include "df/building_civzonest.h"
 #include "df/building_furnacest.h"
@@ -62,12 +61,12 @@ using namespace DFHack;
 #include "df/general_ref.h"
 #include "df/global_objects.h"
 #include "df/graphic.h"
+#include "df/graphic_viewportst.h"
 #include "df/historical_figure.h"
 #include "df/interfacest.h"
 #include "df/item_corpsepiecest.h"
 #include "df/item_corpsest.h"
 #include "df/job.h"
-#include "df/layer_object_listst.h"
 #include "df/occupation.h"
 #include "df/plant.h"
 #include "df/popup_message.h"
@@ -75,43 +74,14 @@ using namespace DFHack;
 #include "df/report_zoom_type.h"
 #include "df/route_stockpile_link.h"
 #include "df/stop_depart_condition.h"
-#include "df/ui_advmode.h"
-#include "df/ui_build_selector.h"
+#include "df/adventurest.h"
+#include "df/buildreq.h"
 #include "df/ui_look_list.h"
-#include "df/ui_sidebar_menus.h"
+#include "df/gamest.h"
 #include "df/ui_unit_view_mode.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
-#include "df/viewscreen_announcelistst.h"
-#include "df/viewscreen_assign_display_itemst.h"
-#include "df/viewscreen_buildinglistst.h"
-#include "df/viewscreen_customize_unitst.h"
-#include "df/viewscreen_dungeon_monsterstatusst.h"
-#include "df/viewscreen_dungeonmodest.h"
 #include "df/viewscreen_dwarfmodest.h"
-#include "df/viewscreen_itemst.h"
-#include "df/viewscreen_joblistst.h"
-#include "df/viewscreen_jobmanagementst.h"
-#include "df/viewscreen_jobst.h"
-#include "df/viewscreen_layer.h"
-#include "df/viewscreen_layer_assigntradest.h"
-#include "df/viewscreen_layer_militaryst.h"
-#include "df/viewscreen_layer_noblelistst.h"
-#include "df/viewscreen_layer_overall_healthst.h"
-#include "df/viewscreen_layer_stockpilest.h"
-#include "df/viewscreen_layer_unit_healthst.h"
-#include "df/viewscreen_layer_unit_relationshipst.h"
-#include "df/viewscreen_locationsst.h"
-#include "df/viewscreen_petst.h"
-#include "df/viewscreen_storesst.h"
-#include "df/viewscreen_textviewerst.h"
-#include "df/viewscreen_tradegoodsst.h"
-#include "df/viewscreen_unitlistst.h"
-#include "df/viewscreen_unitst.h"
-#include "df/viewscreen_reportlistst.h"
-#include "df/viewscreen_treasurelistst.h"
-#include "df/viewscreen_workquota_conditionst.h"
-#include "df/viewscreen_workshop_profilest.h"
 #include "df/world.h"
 
 const size_t MAX_REPORTS_SIZE = 3000; // DF clears old reports to maintain this vector size
@@ -131,15 +101,17 @@ using df::global::gps;
 using df::global::gview;
 using df::global::init;
 using df::global::selection_rect;
-using df::global::ui;
+using df::global::plotinfo;
 using df::global::ui_menu_width;
-using df::global::ui_sidebar_menus;
+using df::global::game;
 using df::global::world;
 
+/* TODO: understand how this changes for v50
 static df::layer_object_listst *getLayerList(df::viewscreen_layer *layer, int idx)
 {
     return virtual_cast<df::layer_object_listst>(vector_get(layer->layer_objects,idx));
 }
+*/
 
 static std::string getNameChunk(virtual_identity *id, int start, int end)
 {
@@ -171,6 +143,7 @@ static std::map<virtual_identity*, getFocusStringHandler> getFocusStringHandlers
 
 DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
 {
+/* TODO: understand how this changes for v50
     using namespace df::enums::ui_sidebar_mode;
 
     using df::global::ui_workshop_in_add;
@@ -185,9 +158,9 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     using df::global::ui_building_assign_items;
     using df::global::ui_building_in_assign;
 
-    focus += "/" + enum_item_key(ui->main.mode);
+    focus += "/" + enum_item_key(plotinfo->main.mode);
 
-    switch (ui->main.mode)
+    switch (plotinfo->main.mode)
     {
     case QueryBuilding:
         if (df::building *selected = world->selected_building)
@@ -331,38 +304,38 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         break;
 
     case Burrows:
-        if (ui->burrows.in_confirm_delete)
+        if (plotinfo->burrows.in_confirm_delete)
             focus += "/ConfirmDelete";
-        else if (ui->burrows.in_add_units_mode)
+        else if (plotinfo->burrows.in_add_units_mode)
             focus += "/AddUnits";
-        else if (ui->burrows.in_edit_name_mode)
+        else if (plotinfo->burrows.in_edit_name_mode)
             focus += "/EditName";
-        else if (ui->burrows.in_define_mode)
+        else if (plotinfo->burrows.in_define_mode)
             focus += "/Define";
         else
             focus += "/List";
         break;
 
     case Hauling:
-        if (ui->hauling.in_assign_vehicle)
+        if (plotinfo->hauling.in_assign_vehicle)
         {
-            auto vehicle = vector_get(ui->hauling.vehicles, ui->hauling.cursor_vehicle);
+            auto vehicle = vector_get(plotinfo->hauling.vehicles, plotinfo->hauling.cursor_vehicle);
             focus += "/AssignVehicle/" + std::string(vehicle ? "Some" : "None");
         }
         else
         {
-            int idx = ui->hauling.cursor_top;
-            auto route = vector_get(ui->hauling.view_routes, idx);
-            auto stop = vector_get(ui->hauling.view_stops, idx);
+            int idx = plotinfo->hauling.cursor_top;
+            auto route = vector_get(plotinfo->hauling.view_routes, idx);
+            auto stop = vector_get(plotinfo->hauling.view_stops, idx);
             std::string tag = stop ? "Stop" : (route ? "Route" : "None");
 
-            if (ui->hauling.in_name)
+            if (plotinfo->hauling.in_name)
                 focus += "/Rename/" + tag;
-            else if (ui->hauling.in_stop)
+            else if (plotinfo->hauling.in_stop)
             {
-                int sidx = ui->hauling.cursor_stop;
-                auto cond = vector_get(ui->hauling.stop_conditions, sidx);
-                auto link = vector_get(ui->hauling.stop_links, sidx);
+                int sidx = plotinfo->hauling.cursor_stop;
+                auto cond = vector_get(plotinfo->hauling.stop_conditions, sidx);
+                auto link = vector_get(plotinfo->hauling.stop_links, sidx);
 
                 focus += "/DefineStop";
 
@@ -385,16 +358,18 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     default:
         break;
     }
+*/
 }
 
+/* TODO: understand how this changes for v50
 DEFINE_GET_FOCUS_STRING_HANDLER(dungeonmode)
 {
-    using df::global::ui_advmode;
+    using df::global::adventure;
 
-    if (!ui_advmode)
+    if (!adventure)
         return;
 
-    focus += "/" + enum_item_key(ui_advmode->menu);
+    focus += "/" + enum_item_key(adventure->menu);
 }
 
 DEFINE_GET_FOCUS_STRING_HANDLER(unitlist)
@@ -599,6 +574,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(workquota_condition)
     if (screen->item_count_edit)
         focus += "/EditCount";
 }
+*/
 
 std::string Gui::getFocusString(df::viewscreen *top)
 {
@@ -637,8 +613,10 @@ bool Gui::default_hotkey(df::viewscreen *top)
     {
         if (strict_virtual_cast<df::viewscreen_dwarfmodest>(top))
             return true;
+/* TODO: understand how this changes for v50
         if (strict_virtual_cast<df::viewscreen_dungeonmodest>(top))
             return true;
+*/
     }
     return false;
 }
@@ -655,15 +633,19 @@ bool Gui::dwarfmode_hotkey(df::viewscreen *top)
 
 bool Gui::unitjobs_hotkey(df::viewscreen *top)
 {
+/* TODO: understand how this changes for v50
     // Require the unit or jobs list
     return !!strict_virtual_cast<df::viewscreen_joblistst>(top) ||
            !!strict_virtual_cast<df::viewscreen_unitlistst>(top);
+*/ return false;
 }
 
 bool Gui::item_details_hotkey(df::viewscreen *top)
 {
+/* TODO: understand how this changes for v50
     // Require the main dwarf mode screen
     return !!strict_virtual_cast<df::viewscreen_itemst>(top);
+*/ return false;
 }
 
 static bool has_cursor()
@@ -685,14 +667,15 @@ bool Gui::cursor_hotkey(df::viewscreen *top)
 
 bool Gui::workshop_job_hotkey(df::viewscreen *top)
 {
+    if (!dwarfmode_hotkey(top))
+        return false;
+
+/* TODO: understand how this changes for v50
     using namespace ui_sidebar_mode;
     using df::global::ui_workshop_in_add;
     using df::global::ui_workshop_job_cursor;
 
-    if (!dwarfmode_hotkey(top))
-        return false;
-
-    switch (ui->main.mode) {
+    switch (plotinfo->main.mode) {
     case QueryBuilding:
         {
             if (!ui_workshop_job_cursor) // allow missing
@@ -717,17 +700,19 @@ bool Gui::workshop_job_hotkey(df::viewscreen *top)
     default:
         return false;
     }
+*/ return false;
 }
 
 bool Gui::build_selector_hotkey(df::viewscreen *top)
 {
-    using namespace ui_sidebar_mode;
-    using df::global::ui_build_selector;
-
     if (!dwarfmode_hotkey(top))
         return false;
 
-    switch (ui->main.mode) {
+/* TODO: understand how this changes for v50
+    using namespace ui_sidebar_mode;
+    using df::global::ui_build_selector;
+
+    switch (plotinfo->main.mode) {
     case Build:
         {
             if (!ui_build_selector) // allow missing
@@ -744,20 +729,23 @@ bool Gui::build_selector_hotkey(df::viewscreen *top)
     default:
         return false;
     }
+*/ return false;
 }
 
 bool Gui::view_unit_hotkey(df::viewscreen *top)
 {
-    using df::global::ui_selected_unit;
-
     if (!dwarfmode_hotkey(top))
         return false;
-    if (ui->main.mode != ui_sidebar_mode::ViewUnits)
+/* TODO: understand how this changes for v50
+    using df::global::ui_selected_unit;
+
+    if (plotinfo->main.mode != ui_sidebar_mode::ViewUnits)
         return false;
     if (!ui_selected_unit) // allow missing
         return false;
 
     return vector_get(world->units.active, *ui_selected_unit) != NULL;
+*/ return false;
 }
 
 bool Gui::unit_inventory_hotkey(df::viewscreen *top)
@@ -796,6 +784,7 @@ df::job *Gui::getSelectedWorkshopJob(color_ostream &out, bool quiet)
 
 bool Gui::any_job_hotkey(df::viewscreen *top)
 {
+/* TODO: understand how this changes for v50
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_joblistst, top))
         return vector_get(screen->jobs, screen->cursor_pos) != NULL;
 
@@ -803,10 +792,12 @@ bool Gui::any_job_hotkey(df::viewscreen *top)
         return vector_get(screen->jobs[screen->page], screen->cursor_pos[screen->page]) != NULL;
 
     return workshop_job_hotkey(top);
+*/ return false;
 }
 
 df::job *Gui::getSelectedJob(color_ostream &out, bool quiet)
 {
+/* TODO: understand how this changes for v50
     df::viewscreen *top = Core::getTopViewscreen();
 
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_jobst, top))
@@ -836,10 +827,12 @@ df::job *Gui::getSelectedJob(color_ostream &out, bool quiet)
         return dfscreen->getSelectedJob();
     else
         return getSelectedWorkshopJob(out, quiet);
+*/ return getSelectedWorkshopJob(out, quiet);
 }
 
 df::unit *Gui::getAnyUnit(df::viewscreen *top)
 {
+/* TODO: understand how this changes for v50
     using namespace ui_sidebar_mode;
     using df::global::ui_look_cursor;
     using df::global::ui_look_list;
@@ -1024,19 +1017,19 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
     if (!Gui::dwarfmode_hotkey(top))
         return NULL;
 
-    if (!ui)
+    if (!plotinfo)
         return NULL;
 
     // general assigning units in building, i.e. (q)uery cage -> (a)ssign
     if (ui_building_in_assign && *ui_building_in_assign
         && ui_building_assign_units && ui_building_item_cursor
-        && ui->main.mode != Zones) // dont show for (i) zone
+        && plotinfo->main.mode != Zones) // dont show for (i) zone
         return vector_get(*ui_building_assign_units, *ui_building_item_cursor);
 
-    if (ui->follow_unit != -1)
-        return df::unit::find(ui->follow_unit);
+    if (plotinfo->follow_unit != -1)
+        return df::unit::find(plotinfo->follow_unit);
 
-    switch (ui->main.mode) {
+    switch (plotinfo->main.mode) {
     case ViewUnits:
     {
         if (!ui_selected_unit || !world)
@@ -1054,8 +1047,8 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
     }
     case Burrows:
     {
-        if (ui->burrows.in_add_units_mode)
-            return vector_get(ui->burrows.list_units, ui->burrows.unit_cursor_pos);
+        if (plotinfo->burrows.in_add_units_mode)
+            return vector_get(plotinfo->burrows.list_units, plotinfo->burrows.unit_cursor_pos);
 
         return NULL;
     }
@@ -1101,6 +1094,7 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
     default:
         return NULL;
     }
+*/ return NULL;
 }
 
 bool Gui::any_unit_hotkey(df::viewscreen *top)
@@ -1120,6 +1114,7 @@ df::unit *Gui::getSelectedUnit(color_ostream &out, bool quiet)
 
 df::item *Gui::getAnyItem(df::viewscreen *top)
 {
+/* TODO: understand how this changes for v50
     using namespace ui_sidebar_mode;
     using df::global::ui_look_cursor;
     using df::global::ui_look_list;
@@ -1201,16 +1196,16 @@ df::item *Gui::getAnyItem(df::viewscreen *top)
     if (!Gui::dwarfmode_hotkey(top))
         return NULL;
 
-    switch (ui->main.mode) {
+    switch (plotinfo->main.mode) {
     case ViewUnits:
     {
-        if (!ui_unit_view_mode || !ui_look_cursor || !ui_sidebar_menus)
+        if (!ui_unit_view_mode || !ui_look_cursor || !game)
             return NULL;
 
         if (ui_unit_view_mode->value != df::ui_unit_view_mode::Inventory)
             return NULL;
 
-        auto inv_item = vector_get(ui_sidebar_menus->unit.inv_items, *ui_look_cursor);
+        auto inv_item = vector_get(game->unit.inv_items, *ui_look_cursor);
         return inv_item ? inv_item->item : NULL;
     }
     case LookAround:
@@ -1239,6 +1234,7 @@ df::item *Gui::getAnyItem(df::viewscreen *top)
     default:
         return NULL;
     }
+*/ return NULL;
 }
 
 bool Gui::any_item_hotkey(df::viewscreen *top)
@@ -1258,6 +1254,7 @@ df::item *Gui::getSelectedItem(color_ostream &out, bool quiet)
 
 df::building *Gui::getAnyBuilding(df::viewscreen *top)
 {
+/* TODO: understand how this changes for v50
     using namespace ui_sidebar_mode;
     using df::global::ui_look_list;
     using df::global::ui_look_cursor;
@@ -1274,7 +1271,7 @@ df::building *Gui::getAnyBuilding(df::viewscreen *top)
     if (!Gui::dwarfmode_hotkey(top))
         return NULL;
 
-    switch (ui->main.mode) {
+    switch (plotinfo->main.mode) {
     case LookAround:
     {
         if (!ui_look_list || !ui_look_cursor)
@@ -1296,13 +1293,14 @@ df::building *Gui::getAnyBuilding(df::viewscreen *top)
     case ZonesPitInfo:
     case ZonesHospitalInfo:
     {
-        if (ui_sidebar_menus)
-            return ui_sidebar_menus->zone.selected;
+        if (game)
+            return game->zone.selected;
         return NULL;
     }
     default:
         return NULL;
     }
+*/ return NULL;
 }
 
 bool Gui::any_building_hotkey(df::viewscreen *top)
@@ -1329,13 +1327,15 @@ df::plant *Gui::getAnyPlant(df::viewscreen *top)
 
     if (Gui::dwarfmode_hotkey(top))
     {
-        if (!cursor || !ui || !world)
+        if (!cursor || !plotinfo || !world)
             return nullptr;
 
-        if (ui->main.mode == ui_sidebar_mode::LookAround)
+/* TODO: understand how this changes for v50
+        if (plotinfo->main.mode == ui_sidebar_mode::LookAround)
         {
             return Maps::getPlantAtTile(cursor->x, cursor->y, cursor->z);
         }
+*/
     }
 
     return nullptr;
@@ -1927,47 +1927,14 @@ Gui::DwarfmodeDims getDwarfmodeViewDims_default()
 {
     Gui::DwarfmodeDims dims;
 
-    auto ws = Screen::getWindowSize();
-    dims.y1 = 1;
-    dims.y2 = ws.y-2;
+    bool use_graphics = Screen::inGraphicsMode();
+    auto dimx = use_graphics ? gps->main_viewport->dim_x : gps->dimx;
+    auto dimy = use_graphics ? gps->main_viewport->dim_y : gps->dimy;
 
-    dims.map_x1 = 1;
-    dims.map_x2 = ws.x-2;
-    dims.map_y1 = dims.y1;
-    dims.map_y2 = dims.y2;
-
-    dims.area_x1 = dims.area_x2 = dims.menu_x1 = dims.menu_x2 = -1;
-    dims.menu_forced = false;
-
-    int menu_pos = (ui_menu_width ? (*ui_menu_width)[0] : 2);
-    int area_pos = (ui_menu_width ? (*ui_menu_width)[1] : 3);
-
-    if (ui && ui->main.mode != ui_sidebar_mode::Default && ui->main.mode != ui_sidebar_mode::ArenaWeather && menu_pos >= area_pos)
-    {
-        dims.menu_forced = true;
-        menu_pos = area_pos-1;
-    }
-
-    dims.area_on = (area_pos < 3);
-    dims.menu_on = (menu_pos < area_pos);
-
-    if (dims.menu_on)
-    {
-        dims.menu_x2 = ws.x - 2;
-        dims.menu_x1 = dims.menu_x2 - Gui::MENU_WIDTH + 1;
-        if (menu_pos == 1)
-            dims.menu_x1 -= Gui::AREA_MAP_WIDTH + 1;
-        dims.map_x2 = dims.menu_x1 - 2;
-    }
-    if (dims.area_on)
-    {
-        dims.area_x2 = ws.x-2;
-        dims.area_x1 = dims.area_x2 - Gui::AREA_MAP_WIDTH + 1;
-        if (dims.menu_on)
-            dims.menu_x2 = dims.area_x1 - 2;
-        else
-            dims.map_x2 = dims.area_x1 - 2;
-    }
+    dims.map_x1 = 0;
+    dims.map_x2 = dimx - 1;
+    dims.map_y1 = 0;
+    dims.map_y2 = dimy - 1;
 
     return dims;
 }
@@ -1982,11 +1949,13 @@ void Gui::resetDwarfmodeView(bool pause)
 {
     using df::global::cursor;
 
-    if (ui)
+    if (plotinfo)
     {
-        ui->follow_unit = -1;
-        ui->follow_item = -1;
-        ui->main.mode = ui_sidebar_mode::Default;
+        plotinfo->follow_unit = -1;
+        plotinfo->follow_item = -1;
+/* TODO: understand how this changes for v50
+        plotinfo->main.mode = ui_sidebar_mode::Default;
+*/
     }
 
     if (selection_rect)
@@ -2042,8 +2011,8 @@ bool Gui::revealInDwarfmodeMap(int32_t x, int32_t y, int32_t z, bool center)
     *window_x = clip_range(new_win_x, 0, (world->map.x_count - w));
     *window_y = clip_range(new_win_y, 0, (world->map.y_count - h));
     *window_z = clip_range(new_win_z, 0, (world->map.z_count - 1));
-    ui_sidebar_menus->minimap.need_render = true;
-    ui_sidebar_menus->minimap.need_scan = true;
+    game->minimap.need_render = true;
+    game->minimap.need_scan = true;
 
     return true;
 }
@@ -2089,10 +2058,12 @@ bool Gui::refreshSidebar()
 
 bool Gui::inRenameBuilding()
 {
-    if (!ui_sidebar_menus)
+    if (!game)
         return false;
-
-    return ui_sidebar_menus->barracks.in_rename;
+    /* TODO: understand how this changes for v50
+    return game->barracks.in_rename;
+    */
+    return false;
 }
 
 bool Gui::getViewCoords (int32_t &x, int32_t &y, int32_t &z)
@@ -2156,22 +2127,33 @@ bool Gui::setDesignationCoords (const int32_t x, const int32_t y, const int32_t 
 df::coord Gui::getMousePos()
 {
     df::coord pos;
-    if (gps && gps->mouse_x > -1) {
-        // return invalid coords if the cursor is not over the map
-        DwarfmodeDims dims = getDwarfmodeViewDims();
-        if (gps->mouse_x < dims.map_x1 || gps->mouse_x > dims.map_x2 ||
-                gps->mouse_y < dims.map_y1 || gps->mouse_y > dims.map_y2) {
-            return pos;
-        }
+    if (gps && gps->precise_mouse_x > -1) {
         pos = getViewportPos();
-        pos.x += gps->mouse_x - 1;
-        pos.y += gps->mouse_y - 1;
+        if (Screen::inGraphicsMode()) {
+            int32_t map_tile_pixels = gps->viewport_zoom_factor / 4;
+            pos.x += gps->precise_mouse_x / map_tile_pixels;
+            pos.y += gps->precise_mouse_y / map_tile_pixels;
+        } else {
+            pos.x += gps->mouse_x;
+            pos.y += gps->mouse_y;
+        }
     }
+    if (!Maps::isValidTilePos(pos.x, pos.y, pos.z))
+        return df::coord();
     return pos;
 }
 
 int getDepthAt_default (int32_t x, int32_t y)
 {
+    auto &main_vp = gps->main_viewport;
+    if (x < 0 || x >= main_vp->dim_x || y < 0 || y >= main_vp->dim_y)
+        return 0;
+    const size_t num_viewports = gps->viewport.size();
+    const size_t index = (x * main_vp->dim_y) + y;
+    for (size_t depth = 0; depth < num_viewports; ++depth) {
+        if (gps->viewport[depth]->screentexpos_background[index])
+            return depth;
+    }
     return 0;
 }
 
@@ -2193,18 +2175,4 @@ bool Gui::getWindowSize (int32_t &width, int32_t &height)
         height = 25;
         return false;
     }
-}
-
-bool Gui::getMenuWidth(uint8_t &menu_width, uint8_t &area_map_width)
-{
-    menu_width = (*ui_menu_width)[0];
-    area_map_width = (*ui_menu_width)[1];
-    return true;
-}
-
-bool Gui::setMenuWidth(const uint8_t menu_width, const uint8_t area_map_width)
-{
-    (*ui_menu_width)[0] = menu_width;
-    (*ui_menu_width)[1] = area_map_width;
-    return true;
 }

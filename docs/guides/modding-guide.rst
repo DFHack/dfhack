@@ -60,9 +60,10 @@ For scripts with the same name, the `order of precedence <script-paths>` will
 be:
 
 1. ``own-scripts/``
-2. ``data/save/*/raw/scripts/``
-3. ``raw/scripts/``
-4. ``hack/scripts/``
+2. ``dfhack-config/scripts/``
+3. ``data/save/*/raw/scripts/``
+4. ``raw/scripts/``
+5. ``hack/scripts/``
 
 The structure of the game
 -------------------------

@@ -24,7 +24,7 @@
 #include "df/dfhack_material_category.h"
 #include "df/enabler.h"
 #include "df/item_quality.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/world.h"
 
 using namespace std;
@@ -217,7 +217,7 @@ static inline char get_string_input(const std::set<df::interface_key> *input)
 static inline df::building_stockpilest *get_selected_stockpile()
 {
     if (!Gui::dwarfmode_hotkey(Core::getTopViewscreen()) ||
-        df::global::ui->main.mode != ui_sidebar_mode::QueryBuilding)
+        df::global::plotinfo->main.mode != ui_sidebar_mode::QueryBuilding)
     {
         return nullptr;
     }
@@ -227,10 +227,10 @@ static inline df::building_stockpilest *get_selected_stockpile()
 
 static inline bool can_trade()
 {
-    if (df::global::ui->caravans.size() == 0)
+    if (df::global::plotinfo->caravans.size() == 0)
         return false;
 
-    for (auto it = df::global::ui->caravans.begin(); it != df::global::ui->caravans.end(); it++)
+    for (auto it = df::global::plotinfo->caravans.begin(); it != df::global::plotinfo->caravans.end(); it++)
     {
         typedef df::caravan_state::T_trade_state state;
         auto caravan = *it;

@@ -712,13 +712,20 @@ static bool hasValidMapPos(df::unit *unit) {
         && unit->pos.z < world->map.z_count;
 }
 
-// built cage defined as room (supposed to detect zoo cages)
+// built cage in a zone (supposed to detect zoo cages)
 static bool isInBuiltCageRoom(df::unit *unit) {
     for (auto building : world->buildings.all) {
-        // !!! building->isRoom() returns true if the building can be made a room but currently isn't
-        // !!! except for coffins/tombs which always return false
-        // !!! using the bool is_room however gives the correct state/value
-        if (!building->is_room || building->getType() != df::building_type::Cage)
+        if (building->getType() != df::building_type::Cage)
+            continue;
+
+        bool in_zone = false;
+        for (auto relation : building->relations) {
+            if (relation->getType() == df::building_type::Civzone) {
+                in_zone = true;
+                break;
+            }
+        }
+        if (!in_zone)
             continue;
 
         df::building_cagest* cage = (df::building_cagest*)building;

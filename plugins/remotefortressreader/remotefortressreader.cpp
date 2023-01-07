@@ -89,7 +89,7 @@
 #endif
 #include "df/tissue.h"
 #include "df/tissue_style_raw.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
 #include "df/unit_wound.h"
@@ -135,9 +135,9 @@ using namespace df::global;
 #else
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(gps);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(gamemode);
-REQUIRE_GLOBAL(ui_advmode);
+REQUIRE_GLOBAL(adventure);
 #endif
 
 // Here go all the command declarations...
@@ -1887,8 +1887,8 @@ static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in,
     if (gamemode && *gamemode == GameMode::ADVENTURE)
         out->set_follow_unit_id(world->units.active[0]->id);
     else
-        out->set_follow_unit_id(ui->follow_unit);
-    out->set_follow_item_id(ui->follow_item);
+        out->set_follow_unit_id(plotinfo->follow_unit);
+    out->set_follow_item_id(plotinfo->follow_item);
     return CR_OK;
 }
 

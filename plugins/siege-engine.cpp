@@ -47,8 +47,8 @@
 #include "df/report.h"
 #include "df/stockpile_links.h"
 #include "df/strain_type.h"
-#include "df/ui.h"
-#include "df/ui_build_selector.h"
+#include "df/plotinfost.h"
+#include "df/buildreq.h"
 #include "df/unit.h"
 #include "df/unit_misc_trait.h"
 #include "df/unit_relationship_type.h"
@@ -72,7 +72,7 @@ DFHACK_PLUGIN("siege-engine");
 REQUIRE_GLOBAL(gamemode);
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(ui_build_selector);
 REQUIRE_GLOBAL(process_jobs);
 
@@ -1477,7 +1477,7 @@ static bool isTired(df::unit *worker)
 static void releaseTiredWorker(EngineInfo *engine, df::job *job, df::unit *worker)
 {
     // If not in siege
-    auto &sieges = ui->invasions.list;
+    auto &sieges = plotinfo->invasions.list;
 
     for (size_t i = 0; i < sieges.size(); i++)
         if (sieges[i]->flags.bits.active)

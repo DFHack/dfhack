@@ -94,7 +94,7 @@ rect2d getMapViewport()
     {
         view_rb=area_x2;
     }
-    if (menu_pos<area_pos || df::global::ui->main.mode!=0)
+    if (menu_pos<area_pos || df::global::plotinfo->main.mode!=0)
     {
         if (menu_pos >= area_pos)
             menu_pos = area_pos-1;

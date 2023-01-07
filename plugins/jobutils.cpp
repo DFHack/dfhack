@@ -11,8 +11,8 @@
 
 #include "DataDefs.h"
 #include "df/world.h"
-#include "df/ui.h"
-#include "df/ui_build_selector.h"
+#include "df/plotinfost.h"
+#include "df/buildreq.h"
 #include "df/ui_build_item_req.h"
 #include "df/build_req_choice_genst.h"
 #include "df/build_req_choice_specst.h"
@@ -33,7 +33,7 @@ using namespace df::enums;
 
 DFHACK_PLUGIN("jobutils");
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(ui_build_selector);
 REQUIRE_GLOBAL(ui_workshop_job_cursor);
 REQUIRE_GLOBAL(job_next_id);
@@ -48,7 +48,7 @@ static command_result job_cmd(color_ostream &out, vector <string> & parameters);
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    if (!world || !ui)
+    if (!world || !plotinfo)
         return CR_FAILURE;
 
     commands.push_back(
@@ -232,9 +232,9 @@ static command_result job_material(color_ostream &out, vector <string> & paramet
     else
         return CR_WRONG_USAGE;
 
-    if (ui->main.mode == ui_sidebar_mode::QueryBuilding)
+    if (plotinfo->main.mode == ui_sidebar_mode::QueryBuilding)
         return job_material_in_job(out, new_mat);
-    if (ui->main.mode == ui_sidebar_mode::Build)
+    if (plotinfo->main.mode == ui_sidebar_mode::Build)
         return job_material_in_build(out, new_mat);
 
     return CR_WRONG_USAGE;

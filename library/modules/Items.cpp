@@ -87,12 +87,12 @@ using namespace std;
 #include "df/reaction_product_itemst.h"
 #include "df/tool_uses.h"
 #include "df/trapcomp_flags.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
 #include "df/vehicle.h"
 #include "df/vermin.h"
-#include "df/viewscreen_itemst.h"
+#include "df/viewscreen.h"
 #include "df/world.h"
 #include "df/world_site.h"
 #include "df/written_content.h"
@@ -100,7 +100,7 @@ using namespace std;
 using namespace DFHack;
 using namespace df::enums;
 using df::global::world;
-using df::global::ui;
+using df::global::plotinfo;
 using df::global::ui_selected_unit;
 using df::global::proj_next_id;
 
@@ -904,6 +904,7 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
             case general_ref_type::CONTAINED_IN_ITEM:
                 if (auto item2 = ref->getItem())
                 {
+/* TODO: understand how this changes for v50
                     // Viewscreens hold general_ref_contains_itemst pointers
                     for (auto screen = Core::getTopViewscreen(); screen; screen = screen->parent)
                     {
@@ -911,7 +912,7 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
                         if (vsitem && vsitem->item == item2)
                             return false;
                     }
-
+*/
                     item2->flags.bits.weight_computed = false;
 
                     removeRef(item2->general_refs, general_ref_type::CONTAINS_ITEM, item->id);
@@ -921,11 +922,13 @@ static bool detachItem(MapExtras::MapCache &mc, df::item *item)
             case general_ref_type::UNIT_HOLDER:
                 if (auto unit = ref->getUnit())
                 {
+/* TODO: understand how this changes for v50
                     // Unit view sidebar holds inventory item pointers
-                    if (ui->main.mode == ui_sidebar_mode::ViewUnits &&
+                    if (plotinfo->main.mode == ui_sidebar_mode::ViewUnits &&
                         (!ui_selected_unit ||
                          vector_get(world->units.active, *ui_selected_unit) == unit))
                         return false;
+*/
 
                     for (int i = unit->inventory.size()-1; i >= 0; i--)
                     {
@@ -1531,7 +1534,7 @@ int32_t Items::createItem(df::item_type item_type, int16_t item_subtype, int16_t
     df::enums::game_type::game_type type = *df::global::gametype;
     prod->produce(unit, &out_products, &out_items, &in_reag, &in_items, 1, job_skill::NONE,
             0, df::historical_entity::find(unit->civ_id),
-            ((type == df::enums::game_type::DWARF_MAIN) || (type == df::enums::game_type::DWARF_RECLAIM)) ? df::world_site::find(df::global::ui->site_id) : NULL,
+            ((type == df::enums::game_type::DWARF_MAIN) || (type == df::enums::game_type::DWARF_RECLAIM)) ? df::world_site::find(df::global::plotinfo->site_id) : NULL,
             NULL);
     if ( out_items.size() != 1 )
         return -1;
@@ -1640,9 +1643,9 @@ bool Items::isRouteVehicle(df::item *item)
 bool Items::isSquadEquipment(df::item *item)
 {
     CHECK_NULL_POINTER(item);
-    if (!ui)
+    if (!plotinfo)
         return false;
 
-    auto &vec = ui->equipment.items_assigned[item->getType()];
+    auto &vec = plotinfo->equipment.items_assigned[item->getType()];
     return binsearch_index(vec, &df::item::id, item->id) >= 0;
 }

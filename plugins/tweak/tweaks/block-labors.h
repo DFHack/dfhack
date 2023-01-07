@@ -6,7 +6,7 @@
 #include "df/viewscreen_dwarfmodest.h"
 
 using namespace DFHack;
-using df::global::ui;
+using df::global::plotinfo;
 using df::global::ui_look_cursor;
 using df::global::ui_unit_view_mode;
 
@@ -15,7 +15,7 @@ struct block_labors_hook : df::viewscreen_dwarfmodest {
 
     inline bool valid_mode()
     {
-        return ui->main.mode == df::ui_sidebar_mode::ViewUnits &&
+        return plotinfo->main.mode == df::ui_sidebar_mode::ViewUnits &&
             ui_unit_view_mode->value == df::ui_unit_view_mode::T_value::PrefLabor &&
             Gui::getAnyUnit(this);
     }

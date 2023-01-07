@@ -35,6 +35,7 @@ using namespace std;
 #include "modules/Renderer.h"
 #include "modules/Screen.h"
 #include "modules/GuiHooks.h"
+#include "Debug.h"
 #include "MemAccess.h"
 #include "VersionInfo.h"
 #include "Types.h"
@@ -50,10 +51,11 @@ using namespace DFHack;
 
 #include "DataDefs.h"
 #include "df/init.h"
-#include "df/texture_handler.h"
-#include "df/tile_page.h"
+#include "df/texture_handlerst.h"
+#include "df/tile_pagest.h"
 #include "df/interfacest.h"
 #include "df/enabler.h"
+#include "df/graphic_viewportst.h"
 #include "df/unit.h"
 #include "df/item.h"
 #include "df/job.h"
@@ -73,18 +75,29 @@ using Screen::PenArray;
 
 using std::string;
 
+namespace DFHack {
+    DBG_DECLARE(core, screen, DebugCategory::LINFO);
+}
+
+
 /*
  * Screen painting API.
  */
 
-// returns text grid coordinates, even if the game map is scaled differently
+// returns ui grid coordinates, even if the game map is scaled differently
 df::coord2d Screen::getMousePos()
 {
-    int32_t x = Renderer::GET_MOUSE_COORDS_SENTINEL, y = (int32_t)true;
-    if (!enabler || !enabler->renderer->get_mouse_coords(&x, &y)) {
+    if (!gps)
         return df::coord2d(-1, -1);
-    }
-    return df::coord2d(x, y);
+    return df::coord2d(gps->mouse_x, gps->mouse_y);
+}
+
+// returns the screen pixel coordinates
+df::coord2d Screen::getMousePixels()
+{
+    if (!gps)
+        return df::coord2d(-1, -1);
+    return df::coord2d(gps->precise_mouse_x, gps->precise_mouse_y);
 }
 
 df::coord2d Screen::getWindowSize()
@@ -103,23 +116,87 @@ bool Screen::inGraphicsMode()
     return init && init->display.flag.is_set(init_display_flags::USE_GRAPHICS);
 }
 
-static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
-{
-    auto dim = Screen::getWindowSize();
-    if (x < 0 || x >= dim.x || y < 0 || y >= dim.y)
+static bool doSetTile_map(const Pen &pen, int x, int y) {
+    size_t max_index = gps->main_viewport->dim_x * gps->main_viewport->dim_y - 1;
+    size_t index = (x * gps->main_viewport->dim_y) + y;
+
+    if (index < 0 || index > max_index)
         return false;
 
-    int index = ((x * gps->dimy) + y);
-    auto screen = gps->screen + index*4;
-    screen[0] = uint8_t(pen.ch);
-    screen[1] = uint8_t(pen.fg) & 15;
-    screen[2] = uint8_t(pen.bg) & 15;
-    screen[3] = uint8_t(pen.bold) & 1;
-    gps->screentexpos[index] = pen.tile;
-    gps->screentexpos_addcolor[index] = (pen.tile_mode == Screen::Pen::CharColor);
-    gps->screentexpos_grayscale[index] = (pen.tile_mode == Screen::Pen::TileColor);
-    gps->screentexpos_cf[index] = pen.tile_fg;
-    gps->screentexpos_cbr[index] = pen.tile_bg;
+    long texpos = pen.tile;
+    if (texpos == 0) {
+        texpos = init->font.large_font_texpos[(uint8_t)pen.ch];
+    }
+    gps->main_viewport->screentexpos_interface[index] = texpos;
+    return true;
+}
+
+static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
+{
+    bool use_graphics = Screen::inGraphicsMode();
+
+    if (map && use_graphics)
+        return doSetTile_map(pen, x, y);
+
+    size_t index = (x * gps->dimy) + y;
+    uint8_t *screen = &gps->screen[index * 8];
+
+    if (screen > gps->screen_limit)
+        return false;
+
+    long *texpos = &gps->screentexpos[index];
+    long *texpos_lower = &gps->screentexpos_lower[index];
+    uint32_t *flag = &gps->screentexpos_flag[index];
+
+    *screen = 0;
+    *texpos = 0;
+    *texpos_lower = 0;
+    gps->screentexpos_anchored[index] = 0;
+    // keep SCREENTEXPOS_FLAG_ANCHOR_SUBORDINATE so occluded anchored textures
+    // don't appear corrupted
+    *flag &= 4;
+
+    if (gps->top_in_use) {
+        screen = &gps->screen_top[index * 8];
+        texpos = &gps->screentexpos_top[index];
+        texpos_lower = &gps->screentexpos_top_lower[index];
+        flag = &gps->screentexpos_top_flag[index];
+
+        *screen = 0;
+        *texpos = 0;
+        *texpos_lower = 0;
+        gps->screentexpos_top_anchored[index] = 0;
+        *flag &= 4; // keep SCREENTEXPOS_FLAG_ANCHOR_SUBORDINATE
+    }
+
+    uint8_t fg = pen.fg | (pen.bold << 3);
+    uint8_t bg = pen.bg;
+
+    if (pen.tile_mode == Screen::Pen::CharColor)
+        *flag |= 2; // SCREENTEXPOS_FLAG_ADDCOLOR
+    else if (pen.tile_mode == Screen::Pen::TileColor) {
+        *flag |= 1; // SCREENTEXPOS_FLAG_GRAYSCALE
+        if (pen.tile_fg)
+            fg = pen.tile_fg;
+        if (pen.tile_bg)
+            bg = pen.tile_bg;
+    }
+
+    if (pen.tile && use_graphics) {
+        *texpos = pen.tile;
+    } else {
+        screen[0] = uint8_t(pen.ch);
+        *texpos_lower = 909;
+    }
+
+    auto rgb_fg = &gps->uccolor[fg][0];
+    auto rgb_bg = &gps->uccolor[bg][0];
+    screen[1] = rgb_fg[0];
+    screen[2] = rgb_fg[1];
+    screen[3] = rgb_fg[2];
+    screen[4] = rgb_bg[0];
+    screen[5] = rgb_bg[1];
+    screen[6] = rgb_bg[2];
 
     return true;
 }
@@ -138,37 +215,83 @@ bool Screen::paintTile(const Pen &pen, int x, int y, bool map)
     return true;
 }
 
-static Pen doGetTile_default(int x, int y, bool map)
-{
-    auto dim = Screen::getWindowSize();
-    if (x < 0 || x >= dim.x || y < 0 || y >= dim.y)
-        return Pen(0,0,0,-1);
+static Pen doGetTile_map(int x, int y) {
+    size_t max_index = gps->main_viewport->dim_x * gps->main_viewport->dim_y - 1;
+    size_t index = (x * gps->main_viewport->dim_y) + y;
 
-    int index = x*dim.y + y;
-    auto screen = gps->screen + index*4;
-    if (screen[3] & 0x80)
-        return Pen(0,0,0,-1);
+    if (index < 0 || index > max_index)
+        return Pen(0, 0, 0, -1);
 
-    Pen pen(
-        screen[0], screen[1], screen[2], screen[3]?true:false,
-        gps->screentexpos[index]
-    );
+    int tile = gps->main_viewport->screentexpos[index];
+    if (tile == 0)
+        tile = gps->main_viewport->screentexpos_item[index];
+    if (tile == 0)
+        tile = gps->main_viewport->screentexpos_building_one[index];
+    if (tile == 0)
+        tile = gps->main_viewport->screentexpos_background_two[index];
+    if (tile == 0)
+        tile = gps->main_viewport->screentexpos_background[index];
 
-    if (pen.tile)
-    {
-        if (gps->screentexpos_grayscale[index])
-        {
-            pen.tile_mode = Screen::Pen::TileColor;
-            pen.tile_fg = gps->screentexpos_cf[index];
-            pen.tile_bg = gps->screentexpos_cbr[index];
-        }
-        else if (gps->screentexpos_addcolor[index])
-        {
-            pen.tile_mode = Screen::Pen::CharColor;
+    char ch = 0;
+    uint8_t fg = 0;
+    uint8_t bg = 0;
+    return Pen(ch, fg, bg, tile, false);
+}
+
+static uint8_t to_16_bit_color(uint8_t  *rgb) {
+    for (uint8_t c = 0; c < 16; ++c) {
+        if (rgb[0] == gps->uccolor[c][0] &&
+                rgb[1] == gps->uccolor[c][1] &&
+                rgb[2] == gps->uccolor[c][2]) {
+            return c;
         }
     }
+    return 0;
+}
 
-    return pen;
+static Pen doGetTile_default(int x, int y, bool map) {
+    if (x < 0 || y < 0)
+        return Pen(0, 0, 0, -1);
+
+    bool use_graphics = Screen::inGraphicsMode();
+
+    if (map && use_graphics)
+        return doGetTile_map(x, y);
+
+    size_t index = (x * gps->dimy) + y;
+    uint8_t *screen = &gps->screen[index * 8];
+
+    if (screen > gps->screen_limit)
+        return Pen(0, 0, 0, -1);
+
+    long *texpos = &gps->screentexpos[index];
+    uint32_t *flag = &gps->screentexpos_flag[index];
+
+    if (gps->top_in_use &&
+            (gps->screen_top[index * 8] ||
+             (use_graphics && gps->screentexpos_top[index]))) {
+        screen = &gps->screen_top[index * 8];
+        texpos = &gps->screentexpos_top[index];
+        flag = &gps->screentexpos_top_flag[index];
+    }
+
+    char ch = *screen;
+    uint8_t fg = to_16_bit_color(&screen[1]);
+    uint8_t bg = to_16_bit_color(&screen[4]);
+    int tile = 0;
+    if (use_graphics)
+        tile = *texpos;
+
+    if (*flag & 1) {
+        // TileColor
+        return Pen(ch, fg&7, bg, !!(fg&8), tile, fg, bg);
+    } else if (*flag & 2) {
+        // CharColor
+        return Pen(ch, fg, bg, tile, true);
+    }
+
+    // AsIs
+    return Pen(ch, fg, bg, tile, false);
 }
 
 GUI_HOOK_DEFINE(Screen::Hooks::get_tile, doGetTile_default);
@@ -380,6 +503,10 @@ bool Screen::hasActiveScreens(Plugin *plugin)
     return false;
 }
 
+void Screen::raise(df::viewscreen *screen) {
+    Hide swapper(screen, Screen::Hide::RESTORE_AT_TOP);
+}
+
 namespace DFHack { namespace Screen {
 
 Hide::Hide(df::viewscreen* screen, int flags) :
@@ -578,11 +705,13 @@ bool dfhack_viewscreen::key_conflict(df::interface_key key)
     if (key == interface_key::OPTIONS)
         return true;
 
+/* TODO: understand how this changes for v50
     if (text_input_mode)
     {
         if (key == interface_key::HELP || key == interface_key::MOVIES)
             return true;
     }
+*/
 
     return false;
 }

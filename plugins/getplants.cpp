@@ -14,7 +14,7 @@
 #include "df/plant_growth.h"
 #include "df/plant_raw.h"
 #include "df/tile_dig_designation.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/world.h"
 #include "df/world_data.h"
 #include "df/world_object_data.h"
@@ -32,7 +32,7 @@ using namespace DFHack;
 using namespace df::enums;
 
 DFHACK_PLUGIN("getplants");
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(cur_year);
 REQUIRE_GLOBAL(cur_year_tick);
@@ -242,7 +242,7 @@ bool ripe(int32_t x, int32_t y, int32_t start, int32_t end) {
 //  Looks in the picked growths vector to see if a matching growth has been marked as picked.
 bool picked(const df::plant *plant, int32_t growth_subtype) {
     df::world_data *world_data = world->world_data;
-    df::world_site *site = df::world_site::find(ui->site_id);
+    df::world_site *site = df::world_site::find(plotinfo->site_id);
     int32_t pos_x = site->global_min_x + plant->pos.x / 48;
     int32_t pos_y = site->global_min_y + plant->pos.y / 48;
     size_t id = pos_x + pos_y * 16 * world_data->world_width;

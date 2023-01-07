@@ -348,58 +348,70 @@ public:
         out << std::flush;
     }
 
+private:
+
+    PersistentDataItem cfg_default_threshold;
+    PersistentDataItem cfg_enabled;
+
+public:
     void load_state(color_ostream& out)
     {
         initialize();
 
-        PersistentDataItem cfg_default_threshold = World::GetPersistentData("autofarm/default_threshold");
+        cfg_enabled = World::GetPersistentData("autofarm/enabled");
+        if (cfg_enabled.isValid())
+            enabled = cfg_enabled.ival(0) != 0;
+        else
+            cfg_enabled.ival(0) = enabled;
+
+        cfg_default_threshold = World::GetPersistentData("autofarm/default_threshold");
+
         if (cfg_default_threshold.isValid())
             defaultThreshold = cfg_default_threshold.ival(0);
+        else
+            cfg_default_threshold.ival(0) = defaultThreshold;
 
-        PersistentDataItem cfg_num_thresholds = World::GetPersistentData("autofarm/num_threshold");
-        if (cfg_num_thresholds.isValid())
-        {
-            int n = cfg_num_thresholds.ival(0);
-            for (int i = 0; i < n; i++)
+        std::vector<PersistentDataItem> items;
+        World::GetPersistentData(&items, "autofarm/threshold/", true);
+        for (auto& i: items) {
+            if (i.isValid())
             {
-                const std::string keyName = "autofarm/threshold/" + std::to_string(i);
-                PersistentDataItem cfg_threshold = World::GetPersistentData(keyName);
-                if (cfg_threshold.isValid())
+                const auto allPlants = world->raws.plants.all;
+                const std::string id = i.val();
+                const int val = i.ival(0);
+                const auto plant = std::find_if(std::begin(allPlants), std::end(allPlants), [id](df::plant_raw* p) { return p->id == id; });
+                if (plant != std::end(allPlants))
                 {
-                    const auto allPlants = world->raws.plants.all;
-                    const std::string id = cfg_threshold.val();
-                    const int val = cfg_threshold.ival(0);
-                    const auto plant = std::find_if(std::begin(allPlants), std::end(allPlants), [id](df::plant_raw* p) { return p->id == id; });
-                    if (plant != std::end(allPlants))
-                    {
-                        setThreshold((*plant)->index, val);
-                        INFO(config, out).print("threshold of %d for unknown plant %s in saved configuration loaded\n", val, id);
-                    }
-                    else
-                    {
-                        WARN(config, out).print("threshold for unknown plant %s in saved configuration ignored\n", id);
-                    }
+                    setThreshold((*plant)->index, val);
+                    INFO(config, out).print("threshold of %d for plant %s in saved configuration loaded\n", val, id);
+                }
+                else
+                {
+                    WARN(config, out).print("threshold for unknown plant %s in saved configuration ignored\n", id);
                 }
             }
         }
 
-        PersistentDataItem cfg_enabled = World::GetPersistentData("autofarm/enabled");
-        enabled = (cfg_enabled.isValid() && cfg_enabled.ival(0) != 0);
     }
 
     void save_state(color_ostream& out)
     {
-        World::AddPersistentData("autofarm/default_threshold").ival(0) = defaultThreshold;
-        World::AddPersistentData("autofarm/num_threshold").ival(0) = thresholds.size();
+        cfg_default_threshold.ival(0) = defaultThreshold;
+        cfg_enabled.ival(0) = enabled;
+
+        std::vector<PersistentDataItem> items;
+        World::GetPersistentData(&items, "autofarm/threshold/", true);
+        for (auto& i : items)
+            World::DeletePersistentData(i);
+
         for (const auto& t : thresholds)
         {
-            const std::string& plantName = world->raws.plants.all[t.first]->id;
-            const std::string keyName = "autofarm/threshold/" + plantName;
+            const std::string& plantID = world->raws.plants.all[t.first]->id;
+            const std::string keyName = "autofarm/threshold/" + plantID;
             PersistentDataItem cfgThreshold = World::AddPersistentData(keyName);
-            cfgThreshold.val() = plantName;
+            cfgThreshold.val() = plantID;
             cfgThreshold.ival(0) = t.second;
         }
-        World::AddPersistentData("autofarm/enabled").ival(0) = enabled;
     }
 
 };
@@ -416,6 +428,7 @@ DFhackCExport command_result plugin_init(color_ostream& out, std::vector <Plugin
                           autofarm));
     }
     autofarmInstance = std::move(dts::make_unique<AutoFarm>());
+    autofarmInstance->load_state(out);
     return CR_OK;
 }
 

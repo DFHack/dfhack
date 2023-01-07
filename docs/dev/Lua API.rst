@@ -4734,6 +4734,12 @@ The CycleHotkeyLabel widget implements the following methods:
 
     Cycles the selected option and triggers the ``on_change`` callback.
 
+* ``cyclehotkeylabel:setOption(value_or_index, call_on_change)``
+
+    Sets the current option to the option with the specified value or
+    index. If ``call_on_change`` is set to ``true``, then the ``on_change``
+    callback is triggered.
+
 * ``cyclehotkeylabel:getOptionLabel([option_idx])``
 
     Retrieves the option label at the given index, or the label of the
@@ -4743,6 +4749,12 @@ The CycleHotkeyLabel widget implements the following methods:
 
     Retrieves the option value at the given index, or the value of the
     currently selected option if no index is given.
+
+* ``cyclehotkeylabel:getOptionPen([option_idx])``
+
+    Retrieves the option pen at the given index, or the pen of the currently
+    selected option if no index is given. If an option was defined as just a
+    string, then this function will return ``nil`` for that option.
 
 ToggleHotkeyLabel
 -----------------

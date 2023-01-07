@@ -87,7 +87,7 @@ end
 -- returns a vector of constructed buildings (usually of size 1, but potentially
 -- more for constructions)
 function construct_buildings_from_ui_state()
-    local uibs = df.global.ui_build_selector
+    local uibs = df.global.buildreq
     local world = df.global.world
     local direction = world.selected_direction
     local _, width, height = dfhack.buildings.getCorrectSize(

@@ -27,7 +27,7 @@
 #include "df/job.h"
 #include "df/job_list_link.h"
 #include "df/report.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/unit.h"
 #include "df/unit_flags1.h"
 #include "df/unit_inventory_item.h"
@@ -297,14 +297,14 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
             return;
         if (!df::global::job_next_id)
             return;
-        if (!df::global::ui)
+        if (!df::global::plotinfo)
             return;
         if (!df::global::world)
             return;
 
         nextItem = *df::global::item_next_id;
         nextBuilding = *df::global::building_next_id;
-        nextInvasion = df::global::ui->invasions.next_id;
+        nextInvasion = df::global::plotinfo->invasions.next_id;
         lastJobId = -1 + *df::global::job_next_id;
 
         constructions.clear();
@@ -807,13 +807,13 @@ static void manageSyndromeEvent(color_ostream& out) {
 }
 
 static void manageInvasionEvent(color_ostream& out) {
-    if (!df::global::ui)
+    if (!df::global::plotinfo)
         return;
     multimap<Plugin*,EventHandler> copy(handlers[EventType::INVASION].begin(), handlers[EventType::INVASION].end());
 
-    if ( df::global::ui->invasions.next_id <= nextInvasion )
+    if ( df::global::plotinfo->invasions.next_id <= nextInvasion )
         return;
-    nextInvasion = df::global::ui->invasions.next_id;
+    nextInvasion = df::global::plotinfo->invasions.next_id;
 
     for (auto &key_value : copy) {
         EventHandler &handle = key_value.second;

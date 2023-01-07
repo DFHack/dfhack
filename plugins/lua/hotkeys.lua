@@ -19,7 +19,6 @@ HotspotMenuWidget.ATTRS{
 }
 
 function HotspotMenuWidget:init()
-    self:addviews{widgets.Label{text={'!DF!', NEWLINE, '!Ha!', NEWLINE, '!ck!'}}}
     self.mouseover = false
 end
 
@@ -39,6 +38,34 @@ function HotspotMenuWidget:overlay_trigger()
         hotkeys=hotkeys,
         bindings=bindings,
         mouseover=self.mouseover}:show()
+end
+
+local dscreen = dfhack.screen
+
+function HotspotMenuWidget:onRenderBody(dc)
+    local tpos = dfhack.textures.getDfhackLogoTexposStart()
+    local x, y = dc.x, dc.y
+
+    if tpos == -1 then
+        dscreen.paintString(COLOR_WHITE, x, y+0, '!DF!')
+        dscreen.paintString(COLOR_WHITE, x, y+1, '!Ha!')
+        dscreen.paintString(COLOR_WHITE, x, y+2, '!ck!')
+    else
+        dscreen.paintTile(COLOR_WHITE, x+0, y+0, '!', tpos+0)
+        dscreen.paintTile(COLOR_WHITE, x+1, y+0, 'D', tpos+1)
+        dscreen.paintTile(COLOR_WHITE, x+2, y+0, 'F', tpos+2)
+        dscreen.paintTile(COLOR_WHITE, x+3, y+0, '!', tpos+3)
+
+        dscreen.paintTile(COLOR_WHITE, x+0, y+1, '!', tpos+4)
+        dscreen.paintTile(COLOR_WHITE, x+1, y+1, 'H', tpos+5)
+        dscreen.paintTile(COLOR_WHITE, x+2, y+1, 'a', tpos+6)
+        dscreen.paintTile(COLOR_WHITE, x+3, y+1, '!', tpos+7)
+
+        dscreen.paintTile(COLOR_WHITE, x+0, y+2, '!', tpos+8)
+        dscreen.paintTile(COLOR_WHITE, x+1, y+2, 'c', tpos+9)
+        dscreen.paintTile(COLOR_WHITE, x+2, y+2, 'k', tpos+10)
+        dscreen.paintTile(COLOR_WHITE, x+3, y+2, '!', tpos+11)
+    end
 end
 
 -- register the menu hotspot with the overlay

@@ -49,9 +49,11 @@ using namespace std;
 #include "VersionInfo.h"
 #include "PluginManager.h"
 #include "ModuleFactory.h"
+#include "modules/DFSDL.h"
 #include "modules/EventManager.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
+#include "modules/Textures.h"
 #include "modules/World.h"
 #include "modules/Persistence.h"
 #include "RemoteServer.h"
@@ -63,8 +65,8 @@ using namespace std;
 
 using namespace DFHack;
 
-#include "df/ui.h"
-#include "df/ui_sidebar_menus.h"
+#include "df/plotinfost.h"
+#include "df/gamest.h"
 #include "df/world.h"
 #include "df/world_data.h"
 #include "df/interfacest.h"
@@ -103,6 +105,9 @@ namespace DFHack {
 
 DBG_DECLARE(core,keybinding,DebugCategory::LINFO);
 DBG_DECLARE(core,script,DebugCategory::LINFO);
+
+static const std::string CONFIG_PATH = "dfhack-config/";
+static const std::string CONFIG_DEFAULTS_PATH = "hack/data/dfhack-config-defaults/";
 
 class MainThread {
 public:
@@ -484,10 +489,10 @@ void Core::getScriptPaths(std::vector<std::string> *dest)
 {
     lock_guard<mutex> lock(script_path_mutex);
     dest->clear();
-    string df_path = this->p->getPath();
+    string df_path = this->p->getPath() + "/";
     for (auto it = script_paths[0].begin(); it != script_paths[0].end(); ++it)
         dest->push_back(*it);
-    dest->push_back(df_path + "/dfhack-config/scripts");
+    dest->push_back(df_path + CONFIG_PATH + "scripts");
     if (df::global::world && isWorldLoaded()) {
         string save = World::ReadWorldFolder();
         if (save.size())
@@ -516,7 +521,7 @@ string Core::findScript(string name)
 bool loadScriptPaths(color_ostream &out, bool silent = false)
 {
     using namespace std;
-    string filename("dfhack-config/script-paths.txt");
+    string filename(CONFIG_PATH + "script-paths.txt");
     ifstream file(filename);
     if (!file)
     {
@@ -1302,18 +1307,18 @@ bool Core::loadScriptFile(color_ostream &out, string fname, bool silent)
 static void run_dfhack_init(color_ostream &out, Core *core)
 {
     CoreSuspender lock;
-    if (!df::global::world || !df::global::ui || !df::global::gview)
+    if (!df::global::world || !df::global::plotinfo || !df::global::gview)
     {
         out.printerr("Key globals are missing, skipping loading dfhack.init.\n");
         return;
     }
 
     // load baseline defaults
-    core->loadScriptFile(out, "dfhack-config/init/default.dfhack.init", false);
+    core->loadScriptFile(out, CONFIG_PATH + "init/default.dfhack.init", false);
 
     // load user overrides
     std::vector<std::string> prefixes(1, "dfhack");
-    loadScriptFiles(core, out, prefixes, "dfhack-config/init");
+    loadScriptFiles(core, out, prefixes, CONFIG_PATH + "init");
 }
 
 // Load dfhack.init in a dedicated thread (non-interactive console mode)
@@ -1329,14 +1334,14 @@ void fInitthread(void * iodata)
 // A thread function... for the interactive console.
 void fIOthread(void * iodata)
 {
-    static const char * HISTORY_FILE = "dfhack-config/dfhack.history";
+    static const std::string HISTORY_FILE = CONFIG_PATH + "dfhack.history";
 
     IODATA * iod = ((IODATA*) iodata);
     Core * core = iod->core;
     PluginManager * plug_mgr = ((IODATA*) iodata)->plug_mgr;
 
     CommandHistory main_history;
-    main_history.load(HISTORY_FILE);
+    main_history.load(HISTORY_FILE.c_str());
 
     Console & con = core->getConsole();
     if (plug_mgr == 0)
@@ -1377,7 +1382,7 @@ void fIOthread(void * iodata)
         {
             // a proper, non-empty command was entered
             main_history.add(command);
-            main_history.save(HISTORY_FILE);
+            main_history.save(HISTORY_FILE.c_str());
         }
 
         auto rv = core->runCommand(con, command);
@@ -1612,46 +1617,44 @@ bool Core::Init()
     // initialize data defs
     virtual_identity::Init(this);
 
+    // create config directory if it doesn't already exist
+    if (!Filesystem::mkdir_recursive(CONFIG_PATH))
+        con.printerr("Failed to create config directory: '%s'\n", CONFIG_PATH.c_str());
+
     // copy over default config files if necessary
     std::map<std::string, bool> config_files;
     std::map<std::string, bool> default_config_files;
-    if (Filesystem::listdir_recursive("dfhack-config", config_files, 10, false) != 0)
-        con.printerr("Failed to list directory: dfhack-config");
-    else if (Filesystem::listdir_recursive("dfhack-config/default", default_config_files, 10, false) != 0)
-        con.printerr("Failed to list directory: dfhack-config/default");
+    if (Filesystem::listdir_recursive(CONFIG_PATH, config_files, 10, false) != 0)
+        con.printerr("Failed to list directory: '%s'\n", CONFIG_PATH.c_str());
+    else if (Filesystem::listdir_recursive(CONFIG_DEFAULTS_PATH, default_config_files, 10, false) != 0)
+        con.printerr("Failed to list directory: '%s'\n", CONFIG_DEFAULTS_PATH.c_str());
     else
     {
         // ensure all config file directories exist before we start copying files
-        for (auto it = default_config_files.begin(); it != default_config_files.end(); ++it)
-        {
+        for (auto &entry : default_config_files) {
             // skip over files
-            if (!it->second)
+            if (!entry.second)
                 continue;
-            std::string dirname = "dfhack-config/" + it->first;
+            std::string dirname = CONFIG_PATH + entry.first;
             if (!Filesystem::mkdir_recursive(dirname))
-            {
                 con.printerr("Failed to create config directory: '%s'\n", dirname.c_str());
-            }
         }
 
         // copy files from the default tree that don't already exist in the config tree
-        for (auto it = default_config_files.begin(); it != default_config_files.end(); ++it)
-        {
+        for (auto &entry : default_config_files) {
             // skip over directories
-            if (it->second)
+            if (entry.second)
                 continue;
-            std::string filename = it->first;
-            if (config_files.find(filename) == config_files.end())
-            {
-                std::string src_file = std::string("dfhack-config/default/") + filename;
+            std::string filename = entry.first;
+            if (!config_files.count(filename)) {
+                std::string src_file = CONFIG_DEFAULTS_PATH + filename;
                 if (!Filesystem::isfile(src_file))
                     continue;
-                std::string dest_file = std::string("dfhack-config/") + filename;
+                std::string dest_file = CONFIG_PATH + filename;
                 std::ifstream src(src_file, std::ios::binary);
                 std::ofstream dest(dest_file, std::ios::binary);
-                if (!src.good() || !dest.good())
-                {
-                    con.printerr("Copy failed: %s\n", filename.c_str());
+                if (!src.good() || !dest.good()) {
+                    con.printerr("Copy failed: '%s'\n", filename.c_str());
                     continue;
                 }
                 dest << src.rdbuf();
@@ -1670,8 +1673,15 @@ bool Core::Init()
         return false;
     }
 
+    cerr << "Binding to SDL.\n";
+    if (!DFSDL::init(con)) {
+        fatal("cannot bind SDL libraries");
+        return false;
+    }
+    cerr << "Initializing textures.\n";
+    Textures::init(con);
     // create mutex for syncing with interactive tasks
-    cerr << "Initializing Plugins.\n";
+    cerr << "Initializing plugins.\n";
     // create plugin manager
     plug_mgr = new PluginManager(this);
     plug_mgr->init();
@@ -1702,10 +1712,10 @@ bool Core::Init()
     if (!listen.get())
         cerr << "TCP listen failed.\n";
 
-    if (df::global::ui_sidebar_menus)
+    if (df::global::game)
     {
         vector<string> args;
-        const string & raw = df::global::ui_sidebar_menus->command_line.original;
+        const string & raw = df::global::game->command_line.original;
         size_t offset = 0;
         while (offset < raw.size())
         {
@@ -1765,12 +1775,7 @@ bool Core::Init()
 
     cerr << "DFHack is running.\n";
 
-    {
-        auto L = Lua::Core::State;
-        Lua::StackUnwinder top(L);
-        Lua::CallLuaModuleFunction(con, L, "script-manager", "reload");
-        onStateChange(con, SC_CORE_INITIALIZED);
-    }
+    onStateChange(con, SC_CORE_INITIALIZED);
 
     return true;
 }
@@ -1874,7 +1879,7 @@ void Core::doUpdate(color_ostream &out)
         strict_virtual_cast<df::viewscreen_savegamest>(screen);
 
     // save data (do this before updating last_world_data_ptr and triggering unload events)
-    if ((df::global::ui->main.autosave_request && !d->last_autosave_request) ||
+    if ((df::global::plotinfo->main.autosave_request && !d->last_autosave_request) ||
         (is_load_save && !d->was_load_save && strict_virtual_cast<df::viewscreen_savegamest>(screen)))
     {
         doSaveData(out);
@@ -1936,7 +1941,7 @@ void Core::doUpdate(color_ostream &out)
     // Execute per-frame handlers
     onUpdate(out);
 
-    d->last_autosave_request = df::global::ui->main.autosave_request;
+    d->last_autosave_request = df::global::plotinfo->main.autosave_request;
     d->was_load_save = is_load_save;
 
     out << std::flush;
@@ -2086,9 +2091,9 @@ void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event eve
         const std::vector<std::string>& set = i->second;
 
         // load baseline defaults
-        this->loadScriptFile(out, "dfhack-config/init/default." + set[0] + ".init", false);
+        this->loadScriptFile(out, CONFIG_PATH + "init/default." + set[0] + ".init", false);
 
-        loadScriptFiles(this, out, set, "dfhack-config/init");
+        loadScriptFiles(this, out, set, CONFIG_PATH + "init");
         loadScriptFiles(this, out, set, rawFolder);
         loadScriptFiles(this, out, set, rawFolder + "objects/");
     }
@@ -2138,6 +2143,13 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
 
     switch (event)
     {
+    case SC_CORE_INITIALIZED:
+        {
+            auto L = Lua::Core::State;
+            Lua::StackUnwinder top(L);
+            Lua::CallLuaModuleFunction(con, L, "script-manager", "reload");
+        }
+        break;
     case SC_WORLD_LOADED:
     case SC_WORLD_UNLOADED:
     case SC_MAP_LOADED:
@@ -2171,6 +2183,10 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
                 evtlog << std::endl;
             }
         }
+        break;
+    case SC_VIEWSCREEN_CHANGED:
+        Textures::init(out);
+        break;
     default:
         break;
     }
@@ -2248,6 +2264,8 @@ int Core::Shutdown ( void )
     }
     // invalidate all modules
     allModules.clear();
+    Textures::cleanup();
+    DFSDL::cleanup();
     memset(&(s_mods), 0, sizeof(s_mods));
     d.reset();
     return -1;
@@ -2270,14 +2288,14 @@ bool Core::ncurses_wgetch(int in, int & out)
 /* TODO: understand how this changes for v50
         int idx = in - KEY_F(1);
         // FIXME: copypasta, push into a method!
-        if(df::global::ui && df::global::gview)
+        if(df::global::plotinfo && df::global::gview)
         {
             df::viewscreen * ws = Gui::getCurViewscreen();
             if (strict_virtual_cast<df::viewscreen_dwarfmodest>(ws) &&
-                df::global::ui->main.mode != ui_sidebar_mode::Hotkeys &&
-                df::global::ui->main.hotkeys[idx].cmd == df::ui_hotkey::T_cmd::None)
+                df::global::plotinfo->main.mode != ui_sidebar_mode::Hotkeys &&
+                df::global::plotinfo->main.hotkeys[idx].cmd == df::ui_hotkey::T_cmd::None)
             {
-                setHotkeyCmd(df::global::ui->main.hotkeys[idx].name);
+                setHotkeyCmd(df::global::plotinfo->main.hotkeys[idx].name);
                 return false;
             }
             else
@@ -2404,7 +2422,7 @@ int Core::DFH_SDL_Event(SDL::Event* ev)
 bool Core::SelectHotkey(int sym, int modifiers)
 {
     // Find the topmost viewscreen
-    if (!df::global::gview || !df::global::ui)
+    if (!df::global::gview || !df::global::plotinfo)
         return false;
 
     df::viewscreen *screen = &df::global::gview->view;
@@ -2459,10 +2477,10 @@ bool Core::SelectHotkey(int sym, int modifiers)
                     idx += 8;
 
                 if (strict_virtual_cast<df::viewscreen_dwarfmodest>(screen) &&
-                    df::global::ui->main.mode != ui_sidebar_mode::Hotkeys &&
-                    df::global::ui->main.hotkeys[idx].cmd == df::ui_hotkey::T_cmd::None)
+                    df::global::plotinfo->main.mode != ui_sidebar_mode::Hotkeys &&
+                    df::global::plotinfo->main.hotkeys[idx].cmd == df::ui_hotkey::T_cmd::None)
                 {
-                    cmd = df::global::ui->main.hotkeys[idx].name;
+                    cmd = df::global::plotinfo->main.hotkeys[idx].name;
                 }
 */
             }

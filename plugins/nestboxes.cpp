@@ -5,7 +5,7 @@
 
 #include "DataDefs.h"
 #include "df/world.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/building_nest_boxst.h"
 #include "df/building_type.h"
 #include "df/buildings_other_id.h"
@@ -26,7 +26,7 @@ using namespace DFHack;
 using namespace df::enums;
 
 using df::global::world;
-using df::global::ui;
+using df::global::plotinfo;
 
 static command_result nestboxes(color_ostream &out, vector <string> & parameters);
 
@@ -67,7 +67,7 @@ static void eggscan(color_ostream &out)
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    if (world && ui) {
+    if (world && plotinfo) {
         commands.push_back(
             PluginCommand(
                 "nestboxes",

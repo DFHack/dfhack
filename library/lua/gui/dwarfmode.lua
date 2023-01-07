@@ -49,7 +49,7 @@ function enterSidebarMode(sidebar_mode, max_esc)
     while remaining_esc > 0 do
         local screen = dfhack.gui.getCurViewscreen(true)
         focus_string = dfhack.gui.getFocusString(screen)
-        if df.global.ui.main.mode == df.ui_sidebar_mode.Default and
+        if df.global.plotinfo.main.mode == df.ui_sidebar_mode.Default and
                 focus_string == 'dwarfmode/Default' then
             if #navkey > 0 then gui.simulateInput(screen, navkey) end
             if navkey == 'D_DESIGNATE' then
@@ -275,7 +275,7 @@ end
 
 HOTKEY_KEYS = {}
 
-for i,v in ipairs(df.global.ui.main.hotkeys) do
+for i,v in ipairs(df.global.plotinfo.main.hotkeys) do
     HOTKEY_KEYS['D_HOTKEY'..(i+1)] = v
 end
 
@@ -433,7 +433,7 @@ function MenuOverlay:init()
     end
 
     if self.sidebar_mode then
-        self.saved_sidebar_mode = df.global.ui.main.mode
+        self.saved_sidebar_mode = df.global.plotinfo.main.mode
         -- what mode should we restore when this window is dismissed? ideally, we'd
         -- restore the mode that the user has set, but we should fall back to
         -- restoring the default mode if either of the following conditions are

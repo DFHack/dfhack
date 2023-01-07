@@ -3,7 +3,7 @@
 
 using namespace DFHack;
 using df::global::gps;
-using df::global::ui_sidebar_menus;
+using df::global::game;
 
 struct hide_priority_hook : df::viewscreen_dwarfmodest {
     typedef df::viewscreen_dwarfmodest interpose_base;
@@ -14,7 +14,7 @@ struct hide_priority_hook : df::viewscreen_dwarfmodest {
 
     inline bool valid_mode ()
     {
-        switch (ui->main.mode)
+        switch (plotinfo->main.mode)
         {
         case df::ui_sidebar_mode::DesignateMine:
         case df::ui_sidebar_mode::DesignateRemoveRamps:
@@ -41,7 +41,7 @@ struct hide_priority_hook : df::viewscreen_dwarfmodest {
     DEFINE_VMETHOD_INTERPOSE(void, render, ())
     {
         if (!was_valid_mode && valid_mode() && toggled_manually) {
-            ui_sidebar_menus->designation.priority_set = last_show_priorities_setting;
+            game->designation.priority_set = last_show_priorities_setting;
         }
         INTERPOSE_NEXT(render)();
         if (valid_mode())
@@ -51,7 +51,7 @@ struct hide_priority_hook : df::viewscreen_dwarfmodest {
             {
                 int x = dims.menu_x1 + 1, y = gps->dimy - (gps->dimy > 26 ? 8 : 7);
                 OutputToggleString(x, y, "Show priorities", df::interface_key::CUSTOM_ALT_P,
-                    ui_sidebar_menus->designation.priority_set, true, 0,
+                    game->designation.priority_set, true, 0,
                     COLOR_WHITE, COLOR_LIGHTRED);
             }
         }
@@ -61,9 +61,9 @@ struct hide_priority_hook : df::viewscreen_dwarfmodest {
     {
         if (valid_mode() && input->count(df::interface_key::CUSTOM_ALT_P))
         {
-            ui_sidebar_menus->designation.priority_set = !ui_sidebar_menus->designation.priority_set;
+            game->designation.priority_set = !game->designation.priority_set;
             toggled_manually = true;
-            last_show_priorities_setting = ui_sidebar_menus->designation.priority_set;
+            last_show_priorities_setting = game->designation.priority_set;
         }
         else
             INTERPOSE_NEXT(feed)(input);

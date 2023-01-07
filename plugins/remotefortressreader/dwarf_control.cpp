@@ -12,9 +12,9 @@
 #include "df/job_list_link.h"
 #include "df/interface_button_construction_building_selectorst.h"
 #include "df/interface_button_construction_category_selectorst.h"
-#include "df/ui.h"
-#include "df/ui_build_selector.h"
-#include "df/ui_sidebar_menus.h"
+#include "df/plotinfost.h"
+#include "df/buildreq.h"
+#include "df/gamest.h"
 #include "df/viewscreen.h"
 #include "df/world.h"
 
@@ -233,261 +233,261 @@ command_result SetPauseState(color_ostream &stream, const SingleBool *in)
 
 void CopyBuildMenu(DwarfControl::SidebarState * out)
 {
-    //auto menus = df::global::ui_sidebar_menus;
-    //auto build_selector = df::global::ui_build_selector;
-    //if (build_selector->building_type == -1)
-    //    for (size_t i = 0; i < menus->building.choices_visible.size(); i++)
-    //    {
-    //        auto menu_item = menus->building.choices_visible[i];
-    //        auto send_item = out->add_menu_items();
-    //        STRICT_VIRTUAL_CAST_VAR(building, df::interface_button_construction_building_selectorst, menu_item);
-    //        if (building)
-    //        {
-    //            auto send_bld = send_item->mutable_building_type();
-    //            send_bld->set_building_type(building->building_type);
-    //            send_bld->set_building_subtype(building->building_subtype);
-    //            send_bld->set_building_custom(building->custom_type);
-    //            send_item->set_existing_count(building->existing_count);
-    //        }
-    //        STRICT_VIRTUAL_CAST_VAR(sub_category, df::interface_button_construction_category_selectorst, menu_item);
-    //        if (sub_category)
-    //        {
-    //            send_item->set_build_category((DwarfControl::BuildCategory)sub_category->category_id);
-    //        }
-    //    }
-    //else
-    //{
-    //    auto send_selector = out->mutable_build_selector();
-    //    auto send_bld = send_selector->mutable_building_type();
-    //    send_bld->set_building_type(build_selector->building_type);
-    //    send_bld->set_building_subtype(build_selector->building_subtype);
-    //    send_bld->set_building_custom(build_selector->custom_type);
-    //    send_selector->set_stage((DwarfControl::BuildSelectorStage)build_selector->stage);
-    //    for (size_t i = 0; i < build_selector->errors.size(); i++)
-    //    {
-    //        if (build_selector->errors[i])
-    //            send_selector->add_errors(*build_selector->errors[i]);
-    //    }
-    //    for (size_t i = 0; i < build_selector->choices.size(); i++)
-    //    {
-    //        auto choice = build_selector->choices[i];
-    //        auto send_choice = send_selector->add_choices();
-    //        send_choice->set_distance(choice->distance);
-    //        std::string name;
-    //        choice->getName(&name);
-    //        send_choice->set_name(name);
-    //        send_choice->set_num_candidates(choice->getNumCandidates());
-    //        send_choice->set_used_count(choice->getUsedCount());
-    //    }
-    //    int16_t x_low, y_low, x_high, y_high;
-    //    GetBuildingSize(build_selector->building_type, build_selector->building_subtype, build_selector->custom_type, x_low, y_low, x_high, y_high);
-    //    send_selector->set_radius_x_low(x_low);
-    //    send_selector->set_radius_y_low(y_low);
-    //    send_selector->set_radius_x_high(x_high);
-    //    send_selector->set_radius_y_high(y_high);
-    //    if (build_selector->stage >= 1)
-    //    {
-    //        auto send_cursor = send_selector->mutable_cursor();
-    //        send_cursor->set_x(cursor->x);
-    //        send_cursor->set_y(cursor->y);
-    //        send_cursor->set_z(cursor->z);
-    //    }
+    auto menus = df::global::game;
+    auto build_selector = df::global::ui_build_selector;
+    if (build_selector->building_type == -1)
+        for (size_t i = 0; i < menus->building.choices_visible.size(); i++)
+        {
+            auto menu_item = menus->building.choices_visible[i];
+            auto send_item = out->add_menu_items();
+            STRICT_VIRTUAL_CAST_VAR(building, df::interface_button_construction_building_selectorst, menu_item);
+            if (building)
+            {
+                auto send_bld = send_item->mutable_building_type();
+                send_bld->set_building_type(building->building_type);
+                send_bld->set_building_subtype(building->building_subtype);
+                send_bld->set_building_custom(building->custom_type);
+                send_item->set_existing_count(building->existing_count);
+            }
+            STRICT_VIRTUAL_CAST_VAR(sub_category, df::interface_button_construction_category_selectorst, menu_item);
+            if (sub_category)
+            {
+                send_item->set_build_category((DwarfControl::BuildCategory)sub_category->category_id);
+            }
+        }
+    else
+    {
+        auto send_selector = out->mutable_build_selector();
+        auto send_bld = send_selector->mutable_building_type();
+        send_bld->set_building_type(build_selector->building_type);
+        send_bld->set_building_subtype(build_selector->building_subtype);
+        send_bld->set_building_custom(build_selector->custom_type);
+        send_selector->set_stage((DwarfControl::BuildSelectorStage)build_selector->stage);
+        for (size_t i = 0; i < build_selector->errors.size(); i++)
+        {
+            if (build_selector->errors[i])
+                send_selector->add_errors(*build_selector->errors[i]);
+        }
+        for (size_t i = 0; i < build_selector->choices.size(); i++)
+        {
+            auto choice = build_selector->choices[i];
+            auto send_choice = send_selector->add_choices();
+            send_choice->set_distance(choice->distance);
+            std::string name;
+            choice->getName(&name);
+            send_choice->set_name(name);
+            send_choice->set_num_candidates(choice->getNumCandidates());
+            send_choice->set_used_count(choice->getUsedCount());
+        }
+        int16_t x_low, y_low, x_high, y_high;
+        GetBuildingSize(build_selector->building_type, build_selector->building_subtype, build_selector->custom_type, x_low, y_low, x_high, y_high);
+        send_selector->set_radius_x_low(x_low);
+        send_selector->set_radius_y_low(y_low);
+        send_selector->set_radius_x_high(x_high);
+        send_selector->set_radius_y_high(y_high);
+        if (build_selector->stage >= 1)
+        {
+            auto send_cursor = send_selector->mutable_cursor();
+            send_cursor->set_x(cursor->x);
+            send_cursor->set_y(cursor->y);
+            send_cursor->set_z(cursor->z);
+        }
 
-    //    for (int y = 0; y < (y_low + y_high + 1); y++)
-    //        for (int x = 0; x < (x_low + x_high + 1); x++)
-    //        {
-    //            send_selector->add_tiles(build_selector->tiles[x][y]);
-    //        }
-    //}
+        for (int y = 0; y < (y_low + y_high + 1); y++)
+            for (int x = 0; x < (x_low + x_high + 1); x++)
+            {
+                send_selector->add_tiles(build_selector->tiles[x][y]);
+            }
+    }
 }
 
 command_result GetSideMenu(DFHack::color_ostream &stream, const dfproto::EmptyMessage *in, DwarfControl::SidebarState *out)
 {
-    //auto ui = df::global::ui;
-    //out->set_mode((proto::enums::ui_sidebar_mode::ui_sidebar_mode)ui->main.mode);
-    //auto mode = ui->main.mode;
-    //switch (mode)
-    //{
-    //case ui_sidebar_mode::Default:
-    //    break;
-    //case ui_sidebar_mode::Squads:
-    //    break;
-    //case ui_sidebar_mode::DesignateMine:
-    //    break;
-    //case ui_sidebar_mode::DesignateRemoveRamps:
-    //    break;
-    //case ui_sidebar_mode::DesignateUpStair:
-    //    break;
-    //case ui_sidebar_mode::DesignateDownStair:
-    //    break;
-    //case ui_sidebar_mode::DesignateUpDownStair:
-    //    break;
-    //case ui_sidebar_mode::DesignateUpRamp:
-    //    break;
-    //case ui_sidebar_mode::DesignateChannel:
-    //    break;
-    //case ui_sidebar_mode::DesignateGatherPlants:
-    //    break;
-    //case ui_sidebar_mode::DesignateRemoveDesignation:
-    //    break;
-    //case ui_sidebar_mode::DesignateSmooth:
-    //    break;
-    //case ui_sidebar_mode::DesignateCarveTrack:
-    //    break;
-    //case ui_sidebar_mode::DesignateEngrave:
-    //    break;
-    //case ui_sidebar_mode::DesignateCarveFortification:
-    //    break;
-    //case ui_sidebar_mode::Stockpiles:
-    //    break;
-    //case ui_sidebar_mode::Build:
-    //    CopyBuildMenu(out);
-    //    break;
-    //case ui_sidebar_mode::QueryBuilding:
-    //    break;
-    //case ui_sidebar_mode::Orders:
-    //    break;
-    //case ui_sidebar_mode::OrdersForbid:
-    //    break;
-    //case ui_sidebar_mode::OrdersRefuse:
-    //    break;
-    //case ui_sidebar_mode::OrdersWorkshop:
-    //    break;
-    //case ui_sidebar_mode::OrdersZone:
-    //    break;
-    //case ui_sidebar_mode::BuildingItems:
-    //    break;
-    //case ui_sidebar_mode::ViewUnits:
-    //    break;
-    //case ui_sidebar_mode::LookAround:
-    //    break;
-    //case ui_sidebar_mode::DesignateItemsClaim:
-    //    break;
-    //case ui_sidebar_mode::DesignateItemsForbid:
-    //    break;
-    //case ui_sidebar_mode::DesignateItemsMelt:
-    //    break;
-    //case ui_sidebar_mode::DesignateItemsUnmelt:
-    //    break;
-    //case ui_sidebar_mode::DesignateItemsDump:
-    //    break;
-    //case ui_sidebar_mode::DesignateItemsUndump:
-    //    break;
-    //case ui_sidebar_mode::DesignateItemsHide:
-    //    break;
-    //case ui_sidebar_mode::DesignateItemsUnhide:
-    //    break;
-    //case ui_sidebar_mode::DesignateChopTrees:
-    //    break;
-    //case ui_sidebar_mode::DesignateToggleEngravings:
-    //    break;
-    //case ui_sidebar_mode::DesignateToggleMarker:
-    //    break;
-    //case ui_sidebar_mode::Hotkeys:
-    //    break;
-    //case ui_sidebar_mode::DesignateTrafficHigh:
-    //    break;
-    //case ui_sidebar_mode::DesignateTrafficNormal:
-    //    break;
-    //case ui_sidebar_mode::DesignateTrafficLow:
-    //    break;
-    //case ui_sidebar_mode::DesignateTrafficRestricted:
-    //    break;
-    //case ui_sidebar_mode::Zones:
-    //    break;
-    //case ui_sidebar_mode::ZonesPenInfo:
-    //    break;
-    //case ui_sidebar_mode::ZonesPitInfo:
-    //    break;
-    //case ui_sidebar_mode::ZonesHospitalInfo:
-    //    break;
-    //case ui_sidebar_mode::ZonesGatherInfo:
-    //    break;
-    //case ui_sidebar_mode::DesignateRemoveConstruction:
-    //    break;
-    //case ui_sidebar_mode::DepotAccess:
-    //    break;
-    //case ui_sidebar_mode::NotesPoints:
-    //    break;
-    //case ui_sidebar_mode::NotesRoutes:
-    //    break;
-    //case ui_sidebar_mode::Burrows:
-    //    break;
-    //case ui_sidebar_mode::Hauling:
-    //    break;
-    //case ui_sidebar_mode::ArenaWeather:
-    //    break;
-    //case ui_sidebar_mode::ArenaTrees:
-    //    break;
-    //default:
-    //    break;
-    //}
+    auto plotinfo = df::global::plotinfo;
+    out->set_mode((proto::enums::ui_sidebar_mode::ui_sidebar_mode)plotinfo->main.mode);
+    auto mode = plotinfo->main.mode;
+    switch (mode)
+    {
+    case ui_sidebar_mode::Default:
+        break;
+    case ui_sidebar_mode::Squads:
+        break;
+    case ui_sidebar_mode::DesignateMine:
+        break;
+    case ui_sidebar_mode::DesignateRemoveRamps:
+        break;
+    case ui_sidebar_mode::DesignateUpStair:
+        break;
+    case ui_sidebar_mode::DesignateDownStair:
+        break;
+    case ui_sidebar_mode::DesignateUpDownStair:
+        break;
+    case ui_sidebar_mode::DesignateUpRamp:
+        break;
+    case ui_sidebar_mode::DesignateChannel:
+        break;
+    case ui_sidebar_mode::DesignateGatherPlants:
+        break;
+    case ui_sidebar_mode::DesignateRemoveDesignation:
+        break;
+    case ui_sidebar_mode::DesignateSmooth:
+        break;
+    case ui_sidebar_mode::DesignateCarveTrack:
+        break;
+    case ui_sidebar_mode::DesignateEngrave:
+        break;
+    case ui_sidebar_mode::DesignateCarveFortification:
+        break;
+    case ui_sidebar_mode::Stockpiles:
+        break;
+    case ui_sidebar_mode::Build:
+        CopyBuildMenu(out);
+        break;
+    case ui_sidebar_mode::QueryBuilding:
+        break;
+    case ui_sidebar_mode::Orders:
+        break;
+    case ui_sidebar_mode::OrdersForbid:
+        break;
+    case ui_sidebar_mode::OrdersRefuse:
+        break;
+    case ui_sidebar_mode::OrdersWorkshop:
+        break;
+    case ui_sidebar_mode::OrdersZone:
+        break;
+    case ui_sidebar_mode::BuildingItems:
+        break;
+    case ui_sidebar_mode::ViewUnits:
+        break;
+    case ui_sidebar_mode::LookAround:
+        break;
+    case ui_sidebar_mode::DesignateItemsClaim:
+        break;
+    case ui_sidebar_mode::DesignateItemsForbid:
+        break;
+    case ui_sidebar_mode::DesignateItemsMelt:
+        break;
+    case ui_sidebar_mode::DesignateItemsUnmelt:
+        break;
+    case ui_sidebar_mode::DesignateItemsDump:
+        break;
+    case ui_sidebar_mode::DesignateItemsUndump:
+        break;
+    case ui_sidebar_mode::DesignateItemsHide:
+        break;
+    case ui_sidebar_mode::DesignateItemsUnhide:
+        break;
+    case ui_sidebar_mode::DesignateChopTrees:
+        break;
+    case ui_sidebar_mode::DesignateToggleEngravings:
+        break;
+    case ui_sidebar_mode::DesignateToggleMarker:
+        break;
+    case ui_sidebar_mode::Hotkeys:
+        break;
+    case ui_sidebar_mode::DesignateTrafficHigh:
+        break;
+    case ui_sidebar_mode::DesignateTrafficNormal:
+        break;
+    case ui_sidebar_mode::DesignateTrafficLow:
+        break;
+    case ui_sidebar_mode::DesignateTrafficRestricted:
+        break;
+    case ui_sidebar_mode::Zones:
+        break;
+    case ui_sidebar_mode::ZonesPenInfo:
+        break;
+    case ui_sidebar_mode::ZonesPitInfo:
+        break;
+    case ui_sidebar_mode::ZonesHospitalInfo:
+        break;
+    case ui_sidebar_mode::ZonesGatherInfo:
+        break;
+    case ui_sidebar_mode::DesignateRemoveConstruction:
+        break;
+    case ui_sidebar_mode::DepotAccess:
+        break;
+    case ui_sidebar_mode::NotesPoints:
+        break;
+    case ui_sidebar_mode::NotesRoutes:
+        break;
+    case ui_sidebar_mode::Burrows:
+        break;
+    case ui_sidebar_mode::Hauling:
+        break;
+    case ui_sidebar_mode::ArenaWeather:
+        break;
+    case ui_sidebar_mode::ArenaTrees:
+        break;
+    default:
+        break;
+    }
     return CR_OK;
 }
 
 command_result SetSideMenu(DFHack::color_ostream &stream, const DwarfControl::SidebarCommand *in)
 {
-    //auto ui = df::global::ui;
-    //if (in->has_mode())
-    //{
-    //    ui_sidebar_mode::ui_sidebar_mode set_mode = (ui_sidebar_mode::ui_sidebar_mode)in->mode();
-    //    if (ui->main.mode != set_mode)
-    //    {
-    //        ui->main.mode = ui_sidebar_mode::Default;
-    //        switch (set_mode)
-    //        {
-    //        case ui_sidebar_mode::Build:
-    //            keyQueue.push(interface_key::D_BUILDING);
-    //            break;
-    //        default:
-    //            ui->main.mode = set_mode;
-    //            break;
-    //        }
-    //    }
-    //}
-    //switch (ui->main.mode)
-    //{
-    //case ui_sidebar_mode::Build:
-    //    if (in->has_action())
-    //    {
-    //        int index = 0;
-    //        if (in->has_menu_index())
-    //            index = in->menu_index();
-    //        if(ui_build_selector->building_type == -1)
-    //            df::global::ui_sidebar_menus->building.cursor = index;
-    //        if (ui_build_selector->stage == 2)
-    //        {
-    //            ui_build_selector->sel_index = index;
-    //        }
-    //    }
-    //    if (ui_build_selector->stage == 1)
-    //    {
-    //        if (in->has_selection_coord())
-    //        {
-    //            df::global::cursor->x = in->selection_coord().x();
-    //            df::global::cursor->y = in->selection_coord().y();
-    //            df::global::cursor->z = in->selection_coord().z();
-    //            getCurViewscreen()->feed_key(interface_key::CURSOR_LEFT);
-    //            getCurViewscreen()->feed_key(interface_key::CURSOR_RIGHT);
-    //        }
-    //    }
-    //    break;
-    //default:
-    //    break;
-    //}
-    //if (in->has_action())
-    //{
-    //    switch (in->action())
-    //    {
-    //    case DwarfControl::MenuSelect:
-    //        keyQueue.push(interface_key::SELECT);
-    //        break;
-    //    case DwarfControl::MenuCancel:
-    //        keyQueue.push(interface_key::LEAVESCREEN);
-    //        break;
-    //    default:
-    //        break;
-    //    }
-    //}
+    auto plotinfo = df::global::plotinfo;
+    if (in->has_mode())
+    {
+        ui_sidebar_mode::ui_sidebar_mode set_mode = (ui_sidebar_mode::ui_sidebar_mode)in->mode();
+        if (plotinfo->main.mode != set_mode)
+        {
+            plotinfo->main.mode = ui_sidebar_mode::Default;
+            switch (set_mode)
+            {
+            case ui_sidebar_mode::Build:
+                keyQueue.push(interface_key::D_BUILDING);
+                break;
+            default:
+                plotinfo->main.mode = set_mode;
+                break;
+            }
+        }
+    }
+    switch (plotinfo->main.mode)
+    {
+    case ui_sidebar_mode::Build:
+        if (in->has_action())
+        {
+            int index = 0;
+            if (in->has_menu_index())
+                index = in->menu_index();
+            if(ui_build_selector->building_type == -1)
+                df::global::game->building.cursor = index;
+            if (ui_build_selector->stage == 2)
+            {
+                ui_build_selector->sel_index = index;
+            }
+        }
+        if (ui_build_selector->stage == 1)
+        {
+            if (in->has_selection_coord())
+            {
+                df::global::cursor->x = in->selection_coord().x();
+                df::global::cursor->y = in->selection_coord().y();
+                df::global::cursor->z = in->selection_coord().z();
+                getCurViewscreen()->feed_key(interface_key::CURSOR_LEFT);
+                getCurViewscreen()->feed_key(interface_key::CURSOR_RIGHT);
+            }
+        }
+        break;
+    default:
+        break;
+    }
+    if (in->has_action())
+    {
+        switch (in->action())
+        {
+        case DwarfControl::MenuSelect:
+            keyQueue.push(interface_key::SELECT);
+            break;
+        case DwarfControl::MenuCancel:
+            keyQueue.push(interface_key::LEAVESCREEN);
+            break;
+        default:
+            break;
+        }
+    }
     return CR_OK;
 }

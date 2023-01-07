@@ -146,7 +146,7 @@ function getBaseUnitWeight(unit)
             return -30
         elseif flags1.diplomat or flags1.merchant or flags1.forest then
             return -5
-        elseif flags1.tame and unit.civ_id == df.global.ui.civ_id then
+        elseif flags1.tame and unit.civ_id == df.global.plotinfo.civ_id then
             return -1
         end
     end

@@ -26,7 +26,7 @@ DFHACK_PLUGIN_IS_ENABLED(enabled);
 
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 
 bool fast = false;
 
@@ -56,15 +56,15 @@ public:
 
         if (found) {
             // Entice the bookkeeper to spend less time update records.
-            ui->nobles.bookkeeper_precision += ui->nobles.bookkeeper_precision >> 3;
+            plotinfo->nobles.bookkeeper_precision += plotinfo->nobles.bookkeeper_precision >> 3;
             if (!bookkeeping) {
                 command_method("start_bookkeeping", out);
                 bookkeeping = true;
             }
         } else {
             // Entice the bookkeeper to update records more often.
-            ui->nobles.bookkeeper_precision -= ui->nobles.bookkeeper_precision >> 5;
-            ui->nobles.bookkeeper_cooldown -= ui->nobles.bookkeeper_cooldown >> 2;
+            plotinfo->nobles.bookkeeper_precision -= plotinfo->nobles.bookkeeper_precision >> 5;
+            plotinfo->nobles.bookkeeper_cooldown -= plotinfo->nobles.bookkeeper_cooldown >> 2;
             if (bookkeeping) {
                 command_method("finish_bookkeeping", out);
                 bookkeeping = false;

@@ -31,8 +31,8 @@
 #include "df/power_info.h"
 #include "df/report.h"
 #include "df/tile_designation.h"
-#include "df/ui.h"
-#include "df/ui_build_selector.h"
+#include "df/plotinfost.h"
+#include "df/buildreq.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/workshop_type.h"
 #include "df/world.h"
@@ -48,7 +48,7 @@ DFHACK_PLUGIN("steam-engine");
 
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(ui_build_selector);
 REQUIRE_GLOBAL(cursor);
 
@@ -748,7 +748,7 @@ struct dwarfmode_hook : df::viewscreen_dwarfmodest
 
     steam_engine_workshop *get_steam_engine()
     {
-        if (ui->main.mode == ui_sidebar_mode::Build &&
+        if (plotinfo->main.mode == ui_sidebar_mode::Build &&
             ui_build_selector->stage == 1 &&
             ui_build_selector->building_type == building_type::Workshop &&
             ui_build_selector->building_subtype == workshop_type::Custom)

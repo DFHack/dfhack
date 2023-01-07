@@ -14,8 +14,10 @@ CLEAR_PEN = to_pen{tile=909, ch=32, fg=0, bg=0}
 local FAKE_INPUT_KEYS = {
     _MOUSE_L = true,
     _MOUSE_R = true,
+    _MOUSE_M = true,
     _MOUSE_L_DOWN = true,
     _MOUSE_R_DOWN = true,
+    _MOUSE_M_DOWN = true,
     _STRING = true,
 }
 
@@ -482,6 +484,10 @@ function View:getMousePos(view_rect)
     end
 end
 
+function View:getMouseFramePos()
+    return self:getMousePos(ViewRect{rect=self.frame_rect})
+end
+
 function View:computeFrame(parent_rect)
     return mkdims_wh(0,0,parent_rect.width,parent_rect.height)
 end
@@ -679,9 +685,67 @@ function Screen:onRender()
     self:render(Painter.new())
 end
 
-------------------------
+-----------------------------
+-- Z-order swapping screen --
+-----------------------------
+
+ZScreen = defclass(ZScreen, Screen)
+
+function ZScreen:onIdle()
+    if self._native and self._native.parent then
+        self._native.parent:logic()
+    end
+end
+
+function ZScreen:render(dc)
+    self:renderParent()
+    ZScreen.super.render(self, dc)
+end
+
+local function zscreen_is_top(self)
+    return dfhack.gui.getCurViewscreen(true) == self._native
+end
+
+function ZScreen:onInput(keys)
+    if not zscreen_is_top(self) then
+        if keys._MOUSE_L_DOWN and self:isMouseOver() then
+            self:raise()
+        else
+            self:sendInputToParent(keys)
+            return
+        end
+    end
+
+    if ZScreen.super.onInput(self, keys) then
+        return
+    end
+    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+        self:dismiss()
+        return
+    end
+
+    if not keys._MOUSE_L or not self:isMouseOver() then
+        self:sendInputToParent(keys)
+    end
+end
+
+-- move this viewscreen to the top of the stack (if it's not there already)
+function ZScreen:raise()
+    if self:isDismissed() or zscreen_is_top(self) then
+        return
+    end
+    dscreen.raise(self)
+end
+
+-- subclasses should override this and return whether the mouse is over an
+-- owned screen element
+function ZScreen:isMouseOver()
+    return false
+end
+
+--------------------------
 -- Framed screen object --
-------------------------
+--------------------------
 
 -- Plain grey-colored frame.
 GREY_FRAME = {

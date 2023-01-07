@@ -22,7 +22,7 @@
 #include "df/plant_tree_tile.h"
 #include "df/plant_raw.h"
 #include "df/tile_dig_designation.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/world.h"
 
@@ -45,7 +45,7 @@ using namespace df::enums;
 #define PLUGIN_VERSION 0.3
 DFHACK_PLUGIN("autochop");
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(plotinfo);
 
 static int get_log_count();
 
@@ -499,7 +499,7 @@ public:
 
         burrows_column.clear();
 
-        for (df::burrow *burrow : ui->burrows.list)
+        for (df::burrow *burrow : plotinfo->burrows.list)
         {
             string name = burrow->name;
             if (name.empty())
@@ -820,7 +820,7 @@ struct autochop_hook : public df::viewscreen_dwarfmodest
     bool isInDesignationMenu()
     {
         using namespace df::enums::ui_sidebar_mode;
-        return (ui->main.mode == DesignateChopTrees);
+        return (plotinfo->main.mode == DesignateChopTrees);
     }
 
     void sendKey(const df::interface_key &key)

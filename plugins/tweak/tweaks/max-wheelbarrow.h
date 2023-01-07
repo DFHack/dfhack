@@ -22,7 +22,7 @@ struct max_wheelbarrow_hook : df::viewscreen_dwarfmodest {
 
     df::building_stockpilest* getStockpile()
     {
-        if (ui->main.mode != ui_sidebar_mode::QueryBuilding)
+        if (plotinfo->main.mode != ui_sidebar_mode::QueryBuilding)
             return NULL;
         return virtual_cast<df::building_stockpilest>(world->selected_building);
     }

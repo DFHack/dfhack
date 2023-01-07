@@ -78,6 +78,9 @@
 # Display DFHack version on title screen
 #enable title-version
 
+# Allow DFHack tools to overlay functionality and information on the DF screen
+enable overlay
+
 # Dwarf Manipulator (simple in-game Dwarf Therapist replacement)
 #enable manipulator
 
@@ -89,7 +92,6 @@
 
 # Other interface improvement tools
 #enable \
-# overlay \
 # confirm \
 # dwarfmonitor \
 # mousequery \

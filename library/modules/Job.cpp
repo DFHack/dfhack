@@ -43,7 +43,7 @@ using namespace std;
 
 #include "DataDefs.h"
 #include "df/world.h"
-#include "df/ui.h"
+#include "df/plotinfost.h"
 #include "df/unit.h"
 #include "df/building.h"
 #include "df/job.h"

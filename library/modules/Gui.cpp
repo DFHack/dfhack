@@ -74,10 +74,10 @@ using namespace DFHack;
 #include "df/report_zoom_type.h"
 #include "df/route_stockpile_link.h"
 #include "df/stop_depart_condition.h"
-#include "df/ui_advmode.h"
-#include "df/ui_build_selector.h"
+#include "df/adventurest.h"
+#include "df/buildreq.h"
 #include "df/ui_look_list.h"
-#include "df/ui_sidebar_menus.h"
+#include "df/gamest.h"
 #include "df/ui_unit_view_mode.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
@@ -101,9 +101,9 @@ using df::global::gps;
 using df::global::gview;
 using df::global::init;
 using df::global::selection_rect;
-using df::global::ui;
+using df::global::plotinfo;
 using df::global::ui_menu_width;
-using df::global::ui_sidebar_menus;
+using df::global::game;
 using df::global::world;
 
 /* TODO: understand how this changes for v50
@@ -158,9 +158,9 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     using df::global::ui_building_assign_items;
     using df::global::ui_building_in_assign;
 
-    focus += "/" + enum_item_key(ui->main.mode);
+    focus += "/" + enum_item_key(plotinfo->main.mode);
 
-    switch (ui->main.mode)
+    switch (plotinfo->main.mode)
     {
     case QueryBuilding:
         if (df::building *selected = world->selected_building)
@@ -304,38 +304,38 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         break;
 
     case Burrows:
-        if (ui->burrows.in_confirm_delete)
+        if (plotinfo->burrows.in_confirm_delete)
             focus += "/ConfirmDelete";
-        else if (ui->burrows.in_add_units_mode)
+        else if (plotinfo->burrows.in_add_units_mode)
             focus += "/AddUnits";
-        else if (ui->burrows.in_edit_name_mode)
+        else if (plotinfo->burrows.in_edit_name_mode)
             focus += "/EditName";
-        else if (ui->burrows.in_define_mode)
+        else if (plotinfo->burrows.in_define_mode)
             focus += "/Define";
         else
             focus += "/List";
         break;
 
     case Hauling:
-        if (ui->hauling.in_assign_vehicle)
+        if (plotinfo->hauling.in_assign_vehicle)
         {
-            auto vehicle = vector_get(ui->hauling.vehicles, ui->hauling.cursor_vehicle);
+            auto vehicle = vector_get(plotinfo->hauling.vehicles, plotinfo->hauling.cursor_vehicle);
             focus += "/AssignVehicle/" + std::string(vehicle ? "Some" : "None");
         }
         else
         {
-            int idx = ui->hauling.cursor_top;
-            auto route = vector_get(ui->hauling.view_routes, idx);
-            auto stop = vector_get(ui->hauling.view_stops, idx);
+            int idx = plotinfo->hauling.cursor_top;
+            auto route = vector_get(plotinfo->hauling.view_routes, idx);
+            auto stop = vector_get(plotinfo->hauling.view_stops, idx);
             std::string tag = stop ? "Stop" : (route ? "Route" : "None");
 
-            if (ui->hauling.in_name)
+            if (plotinfo->hauling.in_name)
                 focus += "/Rename/" + tag;
-            else if (ui->hauling.in_stop)
+            else if (plotinfo->hauling.in_stop)
             {
-                int sidx = ui->hauling.cursor_stop;
-                auto cond = vector_get(ui->hauling.stop_conditions, sidx);
-                auto link = vector_get(ui->hauling.stop_links, sidx);
+                int sidx = plotinfo->hauling.cursor_stop;
+                auto cond = vector_get(plotinfo->hauling.stop_conditions, sidx);
+                auto link = vector_get(plotinfo->hauling.stop_links, sidx);
 
                 focus += "/DefineStop";
 
@@ -364,12 +364,12 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
 /* TODO: understand how this changes for v50
 DEFINE_GET_FOCUS_STRING_HANDLER(dungeonmode)
 {
-    using df::global::ui_advmode;
+    using df::global::adventure;
 
-    if (!ui_advmode)
+    if (!adventure)
         return;
 
-    focus += "/" + enum_item_key(ui_advmode->menu);
+    focus += "/" + enum_item_key(adventure->menu);
 }
 
 DEFINE_GET_FOCUS_STRING_HANDLER(unitlist)
@@ -675,7 +675,7 @@ bool Gui::workshop_job_hotkey(df::viewscreen *top)
     using df::global::ui_workshop_in_add;
     using df::global::ui_workshop_job_cursor;
 
-    switch (ui->main.mode) {
+    switch (plotinfo->main.mode) {
     case QueryBuilding:
         {
             if (!ui_workshop_job_cursor) // allow missing
@@ -712,7 +712,7 @@ bool Gui::build_selector_hotkey(df::viewscreen *top)
     using namespace ui_sidebar_mode;
     using df::global::ui_build_selector;
 
-    switch (ui->main.mode) {
+    switch (plotinfo->main.mode) {
     case Build:
         {
             if (!ui_build_selector) // allow missing
@@ -739,7 +739,7 @@ bool Gui::view_unit_hotkey(df::viewscreen *top)
 /* TODO: understand how this changes for v50
     using df::global::ui_selected_unit;
 
-    if (ui->main.mode != ui_sidebar_mode::ViewUnits)
+    if (plotinfo->main.mode != ui_sidebar_mode::ViewUnits)
         return false;
     if (!ui_selected_unit) // allow missing
         return false;
@@ -1017,19 +1017,19 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
     if (!Gui::dwarfmode_hotkey(top))
         return NULL;
 
-    if (!ui)
+    if (!plotinfo)
         return NULL;
 
     // general assigning units in building, i.e. (q)uery cage -> (a)ssign
     if (ui_building_in_assign && *ui_building_in_assign
         && ui_building_assign_units && ui_building_item_cursor
-        && ui->main.mode != Zones) // dont show for (i) zone
+        && plotinfo->main.mode != Zones) // dont show for (i) zone
         return vector_get(*ui_building_assign_units, *ui_building_item_cursor);
 
-    if (ui->follow_unit != -1)
-        return df::unit::find(ui->follow_unit);
+    if (plotinfo->follow_unit != -1)
+        return df::unit::find(plotinfo->follow_unit);
 
-    switch (ui->main.mode) {
+    switch (plotinfo->main.mode) {
     case ViewUnits:
     {
         if (!ui_selected_unit || !world)
@@ -1047,8 +1047,8 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
     }
     case Burrows:
     {
-        if (ui->burrows.in_add_units_mode)
-            return vector_get(ui->burrows.list_units, ui->burrows.unit_cursor_pos);
+        if (plotinfo->burrows.in_add_units_mode)
+            return vector_get(plotinfo->burrows.list_units, plotinfo->burrows.unit_cursor_pos);
 
         return NULL;
     }
@@ -1196,16 +1196,16 @@ df::item *Gui::getAnyItem(df::viewscreen *top)
     if (!Gui::dwarfmode_hotkey(top))
         return NULL;
 
-    switch (ui->main.mode) {
+    switch (plotinfo->main.mode) {
     case ViewUnits:
     {
-        if (!ui_unit_view_mode || !ui_look_cursor || !ui_sidebar_menus)
+        if (!ui_unit_view_mode || !ui_look_cursor || !game)
             return NULL;
 
         if (ui_unit_view_mode->value != df::ui_unit_view_mode::Inventory)
             return NULL;
 
-        auto inv_item = vector_get(ui_sidebar_menus->unit.inv_items, *ui_look_cursor);
+        auto inv_item = vector_get(game->unit.inv_items, *ui_look_cursor);
         return inv_item ? inv_item->item : NULL;
     }
     case LookAround:
@@ -1271,7 +1271,7 @@ df::building *Gui::getAnyBuilding(df::viewscreen *top)
     if (!Gui::dwarfmode_hotkey(top))
         return NULL;
 
-    switch (ui->main.mode) {
+    switch (plotinfo->main.mode) {
     case LookAround:
     {
         if (!ui_look_list || !ui_look_cursor)
@@ -1293,8 +1293,8 @@ df::building *Gui::getAnyBuilding(df::viewscreen *top)
     case ZonesPitInfo:
     case ZonesHospitalInfo:
     {
-        if (ui_sidebar_menus)
-            return ui_sidebar_menus->zone.selected;
+        if (game)
+            return game->zone.selected;
         return NULL;
     }
     default:
@@ -1327,11 +1327,11 @@ df::plant *Gui::getAnyPlant(df::viewscreen *top)
 
     if (Gui::dwarfmode_hotkey(top))
     {
-        if (!cursor || !ui || !world)
+        if (!cursor || !plotinfo || !world)
             return nullptr;
 
 /* TODO: understand how this changes for v50
-        if (ui->main.mode == ui_sidebar_mode::LookAround)
+        if (plotinfo->main.mode == ui_sidebar_mode::LookAround)
         {
             return Maps::getPlantAtTile(cursor->x, cursor->y, cursor->z);
         }
@@ -1949,12 +1949,12 @@ void Gui::resetDwarfmodeView(bool pause)
 {
     using df::global::cursor;
 
-    if (ui)
+    if (plotinfo)
     {
-        ui->follow_unit = -1;
-        ui->follow_item = -1;
+        plotinfo->follow_unit = -1;
+        plotinfo->follow_item = -1;
 /* TODO: understand how this changes for v50
-        ui->main.mode = ui_sidebar_mode::Default;
+        plotinfo->main.mode = ui_sidebar_mode::Default;
 */
     }
 
@@ -2011,8 +2011,8 @@ bool Gui::revealInDwarfmodeMap(int32_t x, int32_t y, int32_t z, bool center)
     *window_x = clip_range(new_win_x, 0, (world->map.x_count - w));
     *window_y = clip_range(new_win_y, 0, (world->map.y_count - h));
     *window_z = clip_range(new_win_z, 0, (world->map.z_count - 1));
-    ui_sidebar_menus->minimap.need_render = true;
-    ui_sidebar_menus->minimap.need_scan = true;
+    game->minimap.need_render = true;
+    game->minimap.need_scan = true;
 
     return true;
 }
@@ -2058,10 +2058,10 @@ bool Gui::refreshSidebar()
 
 bool Gui::inRenameBuilding()
 {
-    if (!ui_sidebar_menus)
+    if (!game)
         return false;
     /* TODO: understand how this changes for v50
-    return ui_sidebar_menus->barracks.in_rename;
+    return game->barracks.in_rename;
     */
     return false;
 }

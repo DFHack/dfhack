@@ -387,7 +387,7 @@ static std::string filterSaveFileName(std::string s)
 
 static std::string getSaveFilePath(const std::string &world, const std::string &name)
 {
-    return "data/save/" + world + "/dfhack-" + filterSaveFileName(name) + ".dat";
+    return "save/" + world + "/dfhack-" + filterSaveFileName(name) + ".dat";
 }
 
 #if defined(__GNUC__) && __GNUC__ < 5

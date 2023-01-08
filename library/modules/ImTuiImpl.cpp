@@ -331,8 +331,8 @@ void impl::init_current_context()
     //ImGui::GetStyle().ButtonTextAlign = ImVec2(0.5f, 0.0f);
     ImGui::GetStyle().ButtonTextAlign = ImVec2(0.0f, 0.0f);
     ImGui::GetStyle().SelectableTextAlign = ImVec2(0.0f, 0.0f);
-    ImGui::GetStyle().DisplayWindowPadding = ImVec2(0.0f, 0.0f);
-    ImGui::GetStyle().DisplaySafeAreaPadding = ImVec2(0.0f, 0.0f);
+    ImGui::GetStyle().DisplayWindowPadding = ImVec2(2.0f, 2.0f);
+    ImGui::GetStyle().DisplaySafeAreaPadding = ImVec2(2.0f, 2.0f);
     ImGui::GetStyle().CellPadding = ImVec2(1.0f, 0.0f);
     ImGui::GetStyle().MouseCursorScale = 1.0f;
     ImGui::GetStyle().AntiAliasedLines = false;

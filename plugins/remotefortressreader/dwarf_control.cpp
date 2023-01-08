@@ -1,3 +1,4 @@
+
 #include "dwarf_control.h"
 #include "DataDefs.h"
 #include "df_version_int.h"
@@ -10,8 +11,6 @@
 #include "df/building_def_workshopst.h"
 #include "df/job.h"
 #include "df/job_list_link.h"
-#include "df/interface_button_construction_building_selectorst.h"
-#include "df/interface_button_construction_category_selectorst.h"
 #include "df/plotinfost.h"
 #include "df/buildreq.h"
 #include "df/gamest.h"

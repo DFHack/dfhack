@@ -265,7 +265,7 @@ command_result reveal(color_ostream &out, vector<string> & params)
         con.print("Note that in graphics mode, tiles that are not adjacent to open\n"
                   "space will not render but can still be examined by hovering over\n"
                   "them with the mouse. Switching to text mode (in the game settings)\n"
-                  "will allow the display the revealed tiles.\n\n");
+                  "will allow the display of the revealed tiles.\n\n");
     }
     if(!no_hell)
         con.print("Unpausing can unleash the forces of hell, so it has been temporarily disabled.\n\n");

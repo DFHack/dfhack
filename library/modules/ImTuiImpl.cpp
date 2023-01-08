@@ -129,8 +129,6 @@ void drawTriangle(ImVec2 p0, ImVec2 p1, ImVec2 p2, ImU32 col, ImVec4 clip_rect) 
 
     std::vector<int> g_xrange;
 
-    int screen_size = dim.x * dim.y;
-
     int ymin = std::floor(std::min(std::min(p0.y, p1.y), p2.y));
     int ymax = std::floor(std::max(std::max(p0.y, p1.y), p2.y));
 

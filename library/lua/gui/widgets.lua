@@ -1415,22 +1415,7 @@ CycleHotkeyLabel.ATTRS{
 }
 
 function CycleHotkeyLabel:init()
-    -- initialize option_idx
-    for i in ipairs(self.options) do
-        if self.initial_option == self:getOptionValue(i) then
-            self.option_idx = i
-            break
-        end
-    end
-    if not self.option_idx then
-        if self.options[self.initial_option] then
-            self.option_idx = self.initial_option
-        end
-    end
-    if not self.option_idx then
-        error(('cannot find option with value or index: "%s"')
-              :format(self.initial_option))
-    end
+    self:setOption(self.initial_option)
 
     self:setText{
         {key=self.key, key_sep=': ', text=self.label, width=self.label_width,
@@ -1449,6 +1434,31 @@ function CycleHotkeyLabel:cycle()
         self.option_idx = self.option_idx + 1
     end
     if self.on_change then
+        self.on_change(self:getOptionValue(),
+                       self:getOptionValue(old_option_idx))
+    end
+end
+
+function CycleHotkeyLabel:setOption(value_or_index, call_on_change)
+    local option_idx = nil
+    for i in ipairs(self.options) do
+        if value_or_index == self:getOptionValue(i) then
+            option_idx = i
+            break
+        end
+    end
+    if not option_idx then
+        if self.options[value_or_index] then
+            option_idx = value_or_index
+        end
+    end
+    if not option_idx then
+        error(('cannot find option with value or index: "%s"')
+              :format(value_or_index))
+    end
+    local old_option_idx = self.option_idx
+    self.option_idx = option_idx
+    if call_on_change and self.on_change then
         self.on_change(self:getOptionValue(),
                        self:getOptionValue(old_option_idx))
     end

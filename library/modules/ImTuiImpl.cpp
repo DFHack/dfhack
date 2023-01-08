@@ -172,9 +172,9 @@ void drawTriangle(ImVec2 p0, ImVec2 p1, ImVec2 p2, ImU32 col, ImVec4 clip_rect) 
                     }
 
                     //todo: colours
-                    const Screen::Pen pen(0, col4.x, col4.y);
+                    const Screen::Pen pen(' ', col4.x, col4.y);
 
-                    Screen::paintString(pen, x, cy, " ");
+                    Screen::paintTile(pen, x, cy);
                 }
                 ++x;
             }

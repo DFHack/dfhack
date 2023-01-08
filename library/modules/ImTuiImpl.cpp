@@ -254,6 +254,50 @@ static ui_state& get_global_ui_state()
     return st;
 }
 
+static void set_border_style()
+{
+    ImGuiStyle& style = ImGui::GetStyle();
+
+    using namespace ImTuiInterop;
+
+    if (Screen::inGraphicsMode())
+    {
+        style.Colors[ImGuiCol_TitleBarText] = named_colours("BLACK", "WHITE", false);
+
+        style.Colors[ImGuiCol_TitleBg] = named_colours("BLACK", "BLUE", false);
+        style.Colors[ImGuiCol_TitleBgActive] = named_colours("BLACK", "LIGHTBLUE", false);
+        style.Colors[ImGuiCol_TitleBgCollapsed] = named_colours("BLACK", "BLUE", false);
+
+        style.Colors[ImGuiCol_WindowAsciiBorderT] = make_tile_as_colour(902);
+        style.Colors[ImGuiCol_WindowAsciiBorderL] = make_tile_as_colour(908);
+        style.Colors[ImGuiCol_WindowAsciiBorderB] = make_tile_as_colour(916);
+        style.Colors[ImGuiCol_WindowAsciiBorderR] = make_tile_as_colour(910);
+
+        style.Colors[ImGuiCol_WindowAsciiBorderTL] = make_tile_as_colour(901);
+        style.Colors[ImGuiCol_WindowAsciiBorderTR] = make_tile_as_colour(903);
+        style.Colors[ImGuiCol_WindowAsciiBorderBR] = make_tile_as_colour(917);
+        style.Colors[ImGuiCol_WindowAsciiBorderBL] = make_tile_as_colour(915);
+    }
+    else
+    {
+        style.Colors[ImGuiCol_TitleBarText] = named_colours("WHITE", "WHITE", false);
+
+        style.Colors[ImGuiCol_TitleBg] = named_colours("BLACK", "BLACK", false);
+        style.Colors[ImGuiCol_TitleBgActive] = named_colours("BLACK", "BLACK", false);
+        style.Colors[ImGuiCol_TitleBgCollapsed] = named_colours("BLACK", "BLACK", false);
+
+        style.Colors[ImGuiCol_WindowAsciiBorderT] = named_colours("WHITE", "WHITE", false);
+        style.Colors[ImGuiCol_WindowAsciiBorderL] = named_colours("WHITE", "WHITE", false);
+        style.Colors[ImGuiCol_WindowAsciiBorderB] = named_colours("WHITE", "WHITE", false);
+        style.Colors[ImGuiCol_WindowAsciiBorderR] = named_colours("WHITE", "WHITE", false);
+
+        style.Colors[ImGuiCol_WindowAsciiBorderTL] = named_colours("WHITE", "WHITE", false);
+        style.Colors[ImGuiCol_WindowAsciiBorderTR] = named_colours("WHITE", "WHITE", false);
+        style.Colors[ImGuiCol_WindowAsciiBorderBR] = named_colours("WHITE", "WHITE", false);
+        style.Colors[ImGuiCol_WindowAsciiBorderBL] = named_colours("WHITE", "WHITE", false);
+    }
+}
+
 void impl::init_current_context()
 {
     using namespace ImTuiInterop;
@@ -303,18 +347,9 @@ void impl::init_current_context()
     }
 
     //ascii borders
-    style.Colors[ImGuiCol_TitleBarText] = named_colours("BLACK", "WHITE", false);
     style.WindowTitleAlign = {0.5f, 0.5f};
 
-    style.Colors[ImGuiCol_WindowAsciiBorderT] = make_tile_as_colour(902);
-    style.Colors[ImGuiCol_WindowAsciiBorderL] = make_tile_as_colour(908);
-    style.Colors[ImGuiCol_WindowAsciiBorderB] = make_tile_as_colour(916);
-    style.Colors[ImGuiCol_WindowAsciiBorderR] = make_tile_as_colour(910);
-
-    style.Colors[ImGuiCol_WindowAsciiBorderTL] = make_tile_as_colour(901);
-    style.Colors[ImGuiCol_WindowAsciiBorderTR] = make_tile_as_colour(903);
-    style.Colors[ImGuiCol_WindowAsciiBorderBR] = make_tile_as_colour(917);
-    style.Colors[ImGuiCol_WindowAsciiBorderBL] = make_tile_as_colour(915);
+    set_border_style();
 
     style.WindowBorderAscii = true;
 
@@ -854,6 +889,8 @@ int ImTuiInterop::viewscreen::on_render_start(df::viewscreen* screen)
 
     if (is_top)
     {
+        set_border_style();
+
         st.windows.clear();
         st.rendered_windows.clear();
         st.render_stack = 0;

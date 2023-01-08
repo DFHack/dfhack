@@ -3,6 +3,7 @@
 #include "modules/Gui.h"
 #include "ColorText.h"
 #include "df/enabler.h"
+#include "df/graphic.h"
 #include "df/interface_key.h"
 #include "imgui.h"
 #include "imgui_internal.h"
@@ -470,13 +471,19 @@ void impl::new_frame(std::set<df::interface_key> keys, std::map<df::interface_ke
           io.AddInputCharacter(charval);
     }
 
-    df::coord2d dim = Screen::getWindowSize();
-    ImGui::GetIO().DisplaySize = ImVec2(dim.x, dim.y);
+    ImVec2 screen_in_px = ImVec2(df::global::gps->screen_pixel_x, df::global::gps->screen_pixel_y);
+    ImVec2 tile_size = ImVec2(df::global::gps->tile_pixel_x, df::global::gps->tile_pixel_y);
 
-    df::coord2d mouse_pos = Screen::getMousePos();
+    ImVec2 screen_in_tiles = ImVec2(screen_in_px.x / tile_size.x, screen_in_px.y / tile_size.y);
 
-    io.MousePos.x = mouse_pos.x;
-    io.MousePos.y = mouse_pos.y;
+    ImVec2 precise_mouse = ImVec2(df::global::gps->precise_mouse_x, df::global::gps->precise_mouse_y);
+
+    ImVec2 precise_mouse_in_tiles = ImVec2(precise_mouse.x / tile_size.x, precise_mouse.y / tile_size.y);
+
+    io.DisplaySize = screen_in_tiles;
+
+    io.MousePos.x = precise_mouse_in_tiles.x;
+    io.MousePos.y = precise_mouse_in_tiles.y;
 
     //todo: frametime
     io.DeltaTime = 33.f / 1000.f;

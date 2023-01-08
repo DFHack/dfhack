@@ -302,6 +302,22 @@ void impl::init_current_context()
         style.Colors[i] = named_colours("BLACK", "BLACK", false);
     }
 
+    //ascii borders
+    style.Colors[ImGuiCol_TitleBarText] = named_colours("BLACK", "WHITE", false);
+    style.WindowTitleAlign = {0.5f, 0.5f};
+
+    style.Colors[ImGuiCol_WindowAsciiBorderT] = make_tile_as_colour(902);
+    style.Colors[ImGuiCol_WindowAsciiBorderL] = make_tile_as_colour(908);
+    style.Colors[ImGuiCol_WindowAsciiBorderB] = make_tile_as_colour(916);
+    style.Colors[ImGuiCol_WindowAsciiBorderR] = make_tile_as_colour(910);
+
+    style.Colors[ImGuiCol_WindowAsciiBorderTL] = make_tile_as_colour(901);
+    style.Colors[ImGuiCol_WindowAsciiBorderTR] = make_tile_as_colour(903);
+    style.Colors[ImGuiCol_WindowAsciiBorderBR] = make_tile_as_colour(917);
+    style.Colors[ImGuiCol_WindowAsciiBorderBL] = make_tile_as_colour(915);
+
+    style.WindowBorderAscii = true;
+
     //I really need a transparency colour
     style.Colors[ImGuiCol_Text] = named_colours("WHITE", "WHITE", false);
     style.Colors[ImGuiCol_TextDisabled] = named_colours("GREY", "GREY", false);
@@ -345,10 +361,6 @@ void impl::init_current_context()
     style.Colors[ImGuiCol_ScrollbarGrab] = named_colours("GREY", "GREY", false);
     style.Colors[ImGuiCol_ScrollbarGrabHovered] = named_colours("WHITE", "WHITE", false);
     style.Colors[ImGuiCol_ScrollbarGrabActive] = named_colours("WHITE", "WHITE", false);
-
-    style.Colors[ImGuiCol_WindowAsciiBorder] = make_tile_as_colour(902);
-
-    style.WindowBorderAscii = true;
 
     ImFontConfig fontConfig;
     fontConfig.GlyphMinAdvanceX = 1.0f;
@@ -625,20 +637,21 @@ void impl::draw_frame(ImDrawData* drawData)
 
                                     std::string as_df = UTF2DF(as_utf8);
 
+                                    char to_write = '?';
+
                                     if (as_df.size() == 1)
-                                    {
-                                        //I am text, and have no background
-                                        const Screen::Pen pen(as_df[0], col4.x, current_bg.bg);
+                                        to_write = as_df[0];
 
-                                        //Screen::paintString(pen, xx, yy, std::string(1, c));
-                                        Screen::paintTile(pen, xx, yy);
-                                    }
+                                    //I am text, and have no background
+                                    //const Screen::Pen pen(to_write, col4.x, current_bg.bg);
+                                    Screen::Pen pen(to_write, col4.x);
+
+                                    if (current_bg.tile == 0)
+                                        pen.bg = current_bg.bg;
                                     else
-                                    {
-                                        const Screen::Pen pen('?', col4.x, current_bg.bg);
+                                        pen.bg = 8;
 
-                                        Screen::paintTile(pen, xx, yy);
-                                    }
+                                    Screen::paintTile(pen, xx, yy);
                                 }
                                 else
                                 {
@@ -646,8 +659,6 @@ void impl::draw_frame(ImDrawData* drawData)
                                     root_pen.ch = 0;
                                     root_pen.fg = 15;
                                     root_pen.bg = 15;
-
-                                    std::cout << "Tile? " << root_pen.tile << std::endl;
 
                                     Screen::paintTile(root_pen, xx, yy);
                                 }

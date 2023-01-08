@@ -73,6 +73,15 @@ ImVec4 ImTuiInterop::named_colours(const std::string& fg, const std::string& bg,
     return colour_interop(vals);
 }
 
+//this is pretty hacky
+static ImVec4 make_tile_as_colour(int tile)
+{
+    ImVec4 converted = ImGui::ColorConvertU32ToFloat4(tile);
+
+    converted.w = 2;
+    return converted;
+}
+
 #define ABS(x) ((x >= 0) ? x : -x)
 
 void ScanLine(int x1, int y1, int x2, int y2, int ymax, std::vector<int>& xrange) {
@@ -125,7 +134,7 @@ void ScanLine(int x1, int y1, int x2, int y2, int ymax, std::vector<int>& xrange
     }
 }
 
-void drawTriangle(ImVec2 p0, ImVec2 p1, ImVec2 p2, ImU32 col, ImVec4 clip_rect) {
+void drawTriangle(ImVec2 p0, ImVec2 p1, ImVec2 p2, const Screen::Pen& pen, ImVec4 clip_rect) {
     df::coord2d dim = Screen::getWindowSize();
 
     std::vector<int> g_xrange;
@@ -163,17 +172,12 @@ void drawTriangle(ImVec2 p0, ImVec2 p1, ImVec2 p2, ImU32 col, ImVec4 clip_rect) 
 
             while (len--) {
                 if (x >= 0 && x < dim.x && y + ymin >= 0 && y + ymin < dim.y) {
-                    ImVec4 col4 = ImGui::ColorConvertU32ToFloat4(col);
-
                     int cy = y + ymin;
 
                     if (x < clip_rect.x || x >= clip_rect.z || cy < clip_rect.y || cy >= clip_rect.w) {
                         ++x;
                         continue;
                     }
-
-                    //todo: colours
-                    const Screen::Pen pen(' ', col4.x, col4.y);
 
                     Screen::paintTile(pen, x, cy);
                 }
@@ -342,6 +346,10 @@ void impl::init_current_context()
     style.Colors[ImGuiCol_ScrollbarGrabHovered] = named_colours("WHITE", "WHITE", false);
     style.Colors[ImGuiCol_ScrollbarGrabActive] = named_colours("WHITE", "WHITE", false);
 
+    style.Colors[ImGuiCol_WindowAsciiBorder] = make_tile_as_colour(902);
+
+    style.WindowBorderAscii = true;
+
     ImFontConfig fontConfig;
     fontConfig.GlyphMinAdvanceX = 1.0f;
     fontConfig.SizePixels = 1.00;
@@ -496,6 +504,36 @@ void impl::new_frame(std::set<df::interface_key> keys, std::map<df::interface_ke
     ImGui::NewFrame();
 }
 
+static bool colour_is_tile(ImVec4 col)
+{
+    return col.w == 2;
+}
+
+static int colour_to_tile(ImVec4 col)
+{
+    ImU32 icol = ImGui::ColorConvertFloat4ToU32(col);
+
+    return icol & 0x00FFFFFF;
+}
+
+static Screen::Pen colour_to_pen(ImVec4 col)
+{
+    Screen::Pen result;
+
+    if(colour_is_tile(col))
+    {
+        result.tile = colour_to_tile(col);
+    }
+    else
+    {
+        result.fg = col.x;
+        result.bg = col.y;
+        result.bold = col.z > 0;
+    }
+
+    return result;
+}
+
 void impl::draw_frame(ImDrawData* drawData)
 {
     int fb_width = (int)(drawData->DisplaySize.x * drawData->FramebufferScale.x);
@@ -546,6 +584,10 @@ void impl::draw_frame(ImDrawData* drawData)
                         //auto col1 = cmd_list->VtxBuffer[vidx1].col;
                         //auto col2 = cmd_list->VtxBuffer[vidx2].col;
 
+                        ImVec4 col4 = ImGui::ColorConvertU32ToFloat4(col0);
+
+                        Screen::Pen root_pen = colour_to_pen(col4);
+
                         if (uv0.x != uv1.x || uv0.x != uv2.x || uv1.x != uv2.x ||
                             uv0.y != uv1.y || uv0.y != uv2.y || uv1.y != uv2.y) {
                             int vvidx0 = cmd_list->IdxBuffer[pcmd->IdxOffset + i + 3];
@@ -572,35 +614,50 @@ void impl::draw_frame(ImDrawData* drawData)
                             if (xx < clip_rect.x || xx >= clip_rect.z || yy < clip_rect.y || yy >= clip_rect.w) {
                             }
                             else {
-                                int slen = strlen(&cmd_list->VtxBuffer[vidx0].chrs[0]);
 
-                                std::string as_utf8(&cmd_list->VtxBuffer[vidx0].chrs[0], slen);
-
-                                ImVec4 col4 = ImGui::ColorConvertU32ToFloat4(col0);
-
-                                const Screen::Pen current_bg = Screen::readTile(xx, yy);
-
-                                std::string as_df = UTF2DF(as_utf8);
-
-                                if (as_df.size() == 1)
+                                if (!colour_is_tile(col4))
                                 {
-                                    //I am text, and have no background
-                                    const Screen::Pen pen(as_df[0], col4.x, current_bg.bg);
+                                    int slen = strlen(&cmd_list->VtxBuffer[vidx0].chrs[0]);
 
-                                    //Screen::paintString(pen, xx, yy, std::string(1, c));
-                                    Screen::paintTile(pen, xx, yy);
+                                    std::string as_utf8(&cmd_list->VtxBuffer[vidx0].chrs[0], slen);
+
+                                    const Screen::Pen current_bg = Screen::readTile(xx, yy);
+
+                                    std::string as_df = UTF2DF(as_utf8);
+
+                                    if (as_df.size() == 1)
+                                    {
+                                        //I am text, and have no background
+                                        const Screen::Pen pen(as_df[0], col4.x, current_bg.bg);
+
+                                        //Screen::paintString(pen, xx, yy, std::string(1, c));
+                                        Screen::paintTile(pen, xx, yy);
+                                    }
+                                    else
+                                    {
+                                        const Screen::Pen pen('?', col4.x, current_bg.bg);
+
+                                        Screen::paintTile(pen, xx, yy);
+                                    }
                                 }
                                 else
                                 {
-                                    const Screen::Pen pen('?', col4.x, current_bg.bg);
+                                    //root_pen = Screen::Pen(0, 15, 15, 902);
+                                    root_pen.ch = 0;
+                                    root_pen.fg = 15;
+                                    root_pen.bg = 15;
 
-                                    Screen::paintTile(pen, xx, yy);
+                                    std::cout << "Tile? " << root_pen.tile << std::endl;
+
+                                    Screen::paintTile(root_pen, xx, yy);
                                 }
                             }
                             i += 3;
                         }
                         else {
-                            drawTriangle(pos0, pos1, pos2, col0, clip_rect);
+                            Screen::Pen pen(' ', col4.x, col4.y);
+
+                            drawTriangle(pos0, pos1, pos2, pen, clip_rect);
                         }
                     }
                 }

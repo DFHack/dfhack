@@ -2255,6 +2255,44 @@ static int imgui_inputtext(lua_State* state)
     return 1;
 }
 
+static int imgui_getmouseworldpos(lua_State* state)
+{
+    if (!Screen::inGraphicsMode())
+    {
+        df::coord base_pos = Gui::getViewportPos();
+
+        ImVec2 mouse = ImGui::GetMousePos();
+        mouse.x += base_pos.x;
+        mouse.y += base_pos.y;
+
+        imgui_push_generic(state, mouse);
+        return 1;
+    }
+
+    ImVec2 pos = ImGui::GetMousePos();
+
+    if (df::global::gps)
+    {
+        ImVec2 tile_size = ImVec2(df::global::gps->tile_pixel_x, df::global::gps->tile_pixel_y);
+
+        ImVec2 screen_px = ImVec2(pos.x * tile_size.x, pos.y * tile_size.y);
+
+        int32_t map_tile_pixels = df::global::gps->viewport_zoom_factor / 4;
+
+        df::coord base_pos = Gui::getViewportPos();
+
+        ImVec2 result = ImVec2(base_pos.x + screen_px.x / map_tile_pixels, base_pos.y + screen_px.y / map_tile_pixels);
+
+        imgui_push_generic(state, result);
+
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
 static int imgui_getmousepos(lua_State* state)
 {
     ImVec2 pos = ImGui::GetMousePos();
@@ -2879,6 +2917,7 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"Ref", imgui_ref},
     {"Get", imgui_get},
     {"InputText", imgui_inputtext},
+    {"GetMouseWorldPos", imgui_getmouseworldpos},
     {"GetMousePos", imgui_getmousepos},
     {"GetMouseDragDelta", imgui_getmousedragdelta},
     {"GetDisplaySize", imgui_getdisplaysize},

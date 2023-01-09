@@ -97,12 +97,12 @@ command_result eventExample(color_ostream& out, vector<string>& parameters) {
     EventManager::registerTick(timeHandler, 4, plugin_self);
     EventManager::registerTick(timeHandler, 8, plugin_self);
     int32_t t = EventManager::registerTick(timeHandler, 16, plugin_self);
-    timeHandler.freq = t;
+    timeHandler.when = t;
     EventManager::unregister(EventManager::EventType::TICK, timeHandler, plugin_self);
     t = EventManager::registerTick(timeHandler, 32, plugin_self);
     t = EventManager::registerTick(timeHandler, 32, plugin_self);
     t = EventManager::registerTick(timeHandler, 32, plugin_self);
-    timeHandler.freq = t;
+    timeHandler.when = t;
     EventManager::unregister(EventManager::EventType::TICK, timeHandler, plugin_self);
     EventManager::unregister(EventManager::EventType::TICK, timeHandler, plugin_self);
 

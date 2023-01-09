@@ -101,7 +101,7 @@ int32_t DFHack::EventManager::registerTick(EventHandler handler, int32_t when, P
     }
     DEBUG(log).print("registering handler %p from plugin %s for event TICK\n", handler.eventHandler, plugin->getName().c_str());
     handler.when = when;
-    tickQueue.insert(pair<int32_t, EventHandler>(handler.when, handler));
+    tickQueue.emplace(handler.when, handler);
     // we don't track this handler, this allows registerTick to retain the old behaviour of needing to re-register the tick event
     //handlers[EventType::TICK].insert(pair<Plugin*,EventHandler>(plugin,handler));
     // since the event isn't added to the handlers, we don't need to unregister these events

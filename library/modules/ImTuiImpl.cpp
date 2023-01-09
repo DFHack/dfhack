@@ -191,7 +191,7 @@ namespace impl
 {
     void init_current_context();
 
-    void new_frame(std::set<df::interface_key> keys, std::map<df::interface_key, int>& danger_key_frames, std::array<int, 2>& pressed_mouse_keys);
+    void new_frame(std::set<df::interface_key> keys, std::map<df::interface_key, int>& danger_key_frames, std::array<int, 3>& pressed_mouse_keys);
 
     void draw_frame(ImDrawData* drawData);
 
@@ -201,7 +201,7 @@ namespace impl
 struct ui_state
 {
     std::set<df::interface_key> unprocessed_keys;
-    std::array<int, 2> pressed_mouse_keys = {};
+    std::array<int, 3> pressed_mouse_keys = {};
     std::map<df::interface_key, int> danger_key_frames;
 
     int render_stack = 0;
@@ -501,7 +501,7 @@ std::set<df::interface_key> cleanup_keys(std::set<df::interface_key> keys, std::
     return keys;
 }
 
-void impl::new_frame(std::set<df::interface_key> keys, std::map<df::interface_key, int>& danger_key_frames, std::array<int, 2>& pressed_mouse_keys)
+void impl::new_frame(std::set<df::interface_key> keys, std::map<df::interface_key, int>& danger_key_frames, std::array<int, 3>& pressed_mouse_keys)
 {
     keys = cleanup_keys(keys, danger_key_frames);
 
@@ -545,6 +545,7 @@ void impl::new_frame(std::set<df::interface_key> keys, std::map<df::interface_ke
 
     io.MouseDown[0] = pressed_mouse_keys[0];
     io.MouseDown[1] = pressed_mouse_keys[1];
+    io.MouseDown[2] = pressed_mouse_keys[2];
 
     pressed_mouse_keys = {};
 
@@ -753,6 +754,9 @@ void ui_state::feed(std::set<df::interface_key> keys)
         }
         if (df::global::enabler->mouse_rbut || df::global::enabler->mouse_rbut_down) {
             pressed_mouse_keys[1] = 1;
+        }
+        if (df::global::enabler->mouse_mbut || df::global::enabler->mouse_mbut_down) {
+            pressed_mouse_keys[2] = 1;
         }
     }
 }

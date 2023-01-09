@@ -688,7 +688,7 @@ static void autochop_printStatus(color_ostream &out) {
             protect_edible = get_config_bool(c, BURROW_CONFIG_PROTECT_EDIBLE);
             protect_cookable = get_config_bool(c, BURROW_CONFIG_PROTECT_COOKABLE);
         }
-        out.print(fmt, name_width, burrow->name, int_to_string(burrow->id).c_str(),
+        out.print(fmt, name_width, burrow->name.c_str(), int_to_string(burrow->id).c_str(),
                 chop ? "[x]" : "[ ]", clearcut ? "[x]" : "[ ]",
                 int_to_string(tree_counts[burrow->id]).c_str(),
                 int_to_string(designated_tree_counts[burrow->id]).c_str(),

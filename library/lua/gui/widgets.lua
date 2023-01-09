@@ -502,7 +502,8 @@ function Window:onInput(keys)
     if keys._MOUSE_L_DOWN and self.parent_view and self.parent_view.toggleLocked then
         local x,y = dscreen.getMousePos()
         local frame_rect = self.frame_rect
-        if x == frame_rect.x2-1 and y == frame_rect.y1 then
+        if (x == frame_rect.x2-2 or x == frame_rect.x2-1)
+                and (y == frame_rect.y1-1 or y == frame_rect.y1) then
             self.parent_view:toggleLocked()
         end
     end

@@ -13,8 +13,6 @@ Usage
 
 ``stonesense`` or ``ssense``
     Open the visualiser in a new window.
-``ssense overlay``
-    Overlay DF window, replacing the map area.
 
 The viewer window has read-only access to the game, and can follow the game view
 or be moved independently. Configuration for stonesense can be set in the
@@ -23,10 +21,6 @@ rate is too low, change ``SEGMENTSIZE_Z`` to ``2`` in this file, and if you are
 unable to see the edges of the map with the overlay active, try decreasing the
 value for ``SEGMENTSIZE_XY`` -- normal values are ``50`` to ``80``, depending
 on your screen resolution.
-
-If you replace the map section of your DF window with ``ssense overlay``, be
-aware that it's not (yet) suitable for use as your only interface. Use DF's
-``[PRINT_MODE:2D]`` init option (in ``data/init/init.txt``) for stability.
 
 .. figure:: ../images/stonesense-roadtruss.jpg
    :align: center

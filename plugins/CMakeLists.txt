@@ -2,7 +2,7 @@ include(Plugins.cmake)
 
 option(BUILD_STONESENSE "Build stonesense (needs a checkout first)." OFF)
 if(BUILD_STONESENSE)
-    #add_subdirectory(stonesense)
+    add_subdirectory(stonesense)
 endif()
 
 option(BUILD_ISOWORLD "Build isoworld (needs a checkout first)." OFF)

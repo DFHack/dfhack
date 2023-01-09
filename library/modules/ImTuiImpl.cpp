@@ -897,6 +897,8 @@ int ImTuiInterop::viewscreen::on_render_start(df::viewscreen* screen)
         st.suppressed_keys.clear();
         st.activate();
         st.new_frame();
+
+        st.suppress_next_keyboard_passthrough = false;
     }
 
     st.render_stack++;
@@ -1149,7 +1151,6 @@ bool ImTuiInterop::viewscreen::on_feed_end(std::set<df::interface_key>* keys)
         should_feed = !skip_feed;
     }
 
-    st.suppress_next_keyboard_passthrough = false;
     st.should_pass_keyboard_up = false;
 
     st.deactivate();

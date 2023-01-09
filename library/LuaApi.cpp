@@ -1983,6 +1983,16 @@ static void imgui_settooltip(std::string text)
     ImGui::SetTooltip("%s", text.c_str());
 }
 
+static void imgui_setwantcapturemouse(bool val)
+{
+    ImGui::CaptureMouseFromApp(val);
+}
+
+static void imgui_setwantcapturekeyboard(bool val)
+{
+    ImGui::CaptureKeyboardFromApp(val);
+}
+
 static bool imgui_wantcapturemouse()
 {
     return ImGui::GetIO().WantCaptureMouse;
@@ -2088,6 +2098,8 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPM(ImGui, BeginGroup),
     WRAPM(ImGui, EndGroup),
     WRAPN(SetTooltip, imgui_settooltip),
+    WRAPN(SetWantCaptureMouse, imgui_setwantcapturemouse),
+    WRAPN(SetWantCaptureKeyboard, imgui_setwantcapturekeyboard),
     WRAPN(WantCaptureMouse, imgui_wantcapturemouse),
     WRAPN(WantCaptureKeyboard, imgui_wantcapturekeyboard),
     WRAPN(WantTextInput, imgui_wanttextinput),

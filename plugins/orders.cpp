@@ -147,8 +147,7 @@ static command_result orders_list_command(color_ostream & out)
 
     if (files.empty())
     {
-        out << COLOR_YELLOW << "No exported orders yet. Create manager orders and export them with 'orders export <name>', or copy pre-made orders .json files into " << ORDERS_DIR << "." << std::endl;
-        return CR_OK;
+        out << COLOR_YELLOW << "No exported orders yet. Create manager orders and export them with 'orders export <name>', or copy pre-made orders .json files into " << ORDERS_DIR << "." << std::endl << std::endl;
     }
 
     for (auto it : files)

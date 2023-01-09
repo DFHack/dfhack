@@ -832,6 +832,15 @@ df::job *Gui::getSelectedJob(color_ostream &out, bool quiet)
 
 df::unit *Gui::getAnyUnit(df::viewscreen *top)
 {
+    using df::global::game;
+
+    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedUnit();
+
+    if (game->main_interface.view_sheets.open
+            && game->main_interface.view_sheets.active_sheet == view_sheet_type::UNIT)
+        return df::unit::find(game->main_interface.view_sheets.active_id);
+
 /* TODO: understand how this changes for v50
     using namespace ui_sidebar_mode;
     using df::global::ui_look_cursor;
@@ -1114,6 +1123,15 @@ df::unit *Gui::getSelectedUnit(color_ostream &out, bool quiet)
 
 df::item *Gui::getAnyItem(df::viewscreen *top)
 {
+    using df::global::game;
+
+    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedItem();
+
+    if (game->main_interface.view_sheets.open
+            && game->main_interface.view_sheets.active_sheet == view_sheet_type::ITEM)
+        return df::item::find(game->main_interface.view_sheets.active_id);
+
 /* TODO: understand how this changes for v50
     using namespace ui_sidebar_mode;
     using df::global::ui_look_cursor;
@@ -1254,6 +1272,15 @@ df::item *Gui::getSelectedItem(color_ostream &out, bool quiet)
 
 df::building *Gui::getAnyBuilding(df::viewscreen *top)
 {
+    using df::global::game;
+
+    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedBuilding();
+
+    if (game->main_interface.view_sheets.open
+            && game->main_interface.view_sheets.active_sheet == view_sheet_type::BUILDING)
+        return df::building::find(game->main_interface.view_sheets.active_id);
+
 /* TODO: understand how this changes for v50
     using namespace ui_sidebar_mode;
     using df::global::ui_look_list;

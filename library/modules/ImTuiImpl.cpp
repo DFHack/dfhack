@@ -191,7 +191,8 @@ namespace impl
 {
     void init_current_context();
 
-    void new_frame(std::set<df::interface_key> keys, std::map<df::interface_key, int>& danger_key_frames, std::array<int, 3>& pressed_mouse_keys);
+    void new_frame(std::set<df::interface_key> keys, std::map<df::interface_key, int>& danger_key_frames,
+                   std::array<int, 3>& pressed_mouse_keys, float& mouse_wheel);
 
     void draw_frame(ImDrawData* drawData);
 
@@ -203,6 +204,7 @@ struct ui_state
     std::set<df::interface_key> unprocessed_keys;
     std::array<int, 3> pressed_mouse_keys = {};
     std::map<df::interface_key, int> danger_key_frames;
+    float mouse_wheel = 0;
 
     int render_stack = 0;
     std::map<int, std::vector<std::string>> windows;
@@ -501,7 +503,8 @@ std::set<df::interface_key> cleanup_keys(std::set<df::interface_key> keys, std::
     return keys;
 }
 
-void impl::new_frame(std::set<df::interface_key> keys, std::map<df::interface_key, int>& danger_key_frames, std::array<int, 3>& pressed_mouse_keys)
+void impl::new_frame(std::set<df::interface_key> keys, std::map<df::interface_key, int>& danger_key_frames,
+                     std::array<int, 3>& pressed_mouse_keys, float& mouse_wheel)
 {
     keys = cleanup_keys(keys, danger_key_frames);
 
@@ -547,7 +550,10 @@ void impl::new_frame(std::set<df::interface_key> keys, std::map<df::interface_ke
     io.MouseDown[1] = pressed_mouse_keys[1];
     io.MouseDown[2] = pressed_mouse_keys[2];
 
+    io.MouseWheel = mouse_wheel;
+
     pressed_mouse_keys = {};
+    mouse_wheel = 0;
 
     ImGui::NewFrame();
 }
@@ -759,6 +765,18 @@ void ui_state::feed(std::set<df::interface_key> keys)
             pressed_mouse_keys[2] = 1;
         }
     }
+
+    if (keys.count(df::interface_key::CONTEXT_SCROLL_UP))
+        mouse_wheel += 1;
+
+    if (keys.count(df::interface_key::CONTEXT_SCROLL_DOWN))
+        mouse_wheel -= 1;
+
+    if (keys.count(df::interface_key::CONTEXT_SCROLL_PAGEUP))
+        mouse_wheel += 1;
+
+    if (keys.count(df::interface_key::CONTEXT_SCROLL_PAGEUP))
+        mouse_wheel -= 1;
 }
 
 void ui_state::activate()
@@ -770,7 +788,7 @@ void ui_state::activate()
 
 void ui_state::new_frame()
 {
-    impl::new_frame(std::move(unprocessed_keys), danger_key_frames, pressed_mouse_keys);
+    impl::new_frame(std::move(unprocessed_keys), danger_key_frames, pressed_mouse_keys, mouse_wheel);
     unprocessed_keys.clear();
 }
 

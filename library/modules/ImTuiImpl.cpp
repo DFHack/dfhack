@@ -174,7 +174,7 @@ void drawTriangle(ImVec2 p0, ImVec2 p1, ImVec2 p2, const Screen::Pen& pen, ImVec
                 if (x >= 0 && x < dim.x && y + ymin >= 0 && y + ymin < dim.y) {
                     int cy = y + ymin;
 
-                    if (x < clip_rect.x || x >= clip_rect.z || cy < clip_rect.y || cy >= clip_rect.w) {
+                    if (x < clip_rect.x || x >= clip_rect.z || cy < clip_rect.y || cy >= clip_rect.w || cy >= dim.y) {
                         ++x;
                         continue;
                     }
@@ -658,7 +658,7 @@ void impl::draw_frame(ImDrawData* drawData)
 
                             int xx = static_cast<int>(std::floor(x));
                             int yy = static_cast<int>(std::floor(y));
-                            if (xx < clip_rect.x || xx >= clip_rect.z || yy < clip_rect.y || yy > clip_rect.w) {
+                            if (xx < clip_rect.x || xx >= clip_rect.z || yy < clip_rect.y || yy > clip_rect.w || yy >= fb_height) {
                             }
                             else {
 

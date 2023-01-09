@@ -603,19 +603,19 @@ static const char * get_protect_str(bool protect_brewable, bool protect_edible, 
     if (!protect_brewable && !protect_edible && !protect_cookable)
         return "   ";
     if (!protect_brewable && !protect_edible && protect_cookable)
-        return "  c";
+        return "  z";
     if (!protect_brewable && protect_edible && !protect_cookable)
         return " e ";
     if (!protect_brewable && protect_edible && protect_cookable)
-        return " ec";
+        return " ez";
     if (protect_brewable && !protect_edible && !protect_cookable)
         return "b  ";
     if (protect_brewable && !protect_edible && protect_cookable)
-        return "b c";
+        return "b z";
     if (protect_brewable && protect_edible && !protect_cookable)
         return "be ";
     if (protect_brewable && protect_edible && protect_cookable)
-        return "bec";
+        return "bez";
     return "";
 }
 

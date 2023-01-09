@@ -272,10 +272,30 @@ local function Panel_on_double_click(self)
     Panel_update_frame(self, frame, true)
 end
 
+local function panel_is_on_pin(self)
+    local frame_rect = self.frame_rect
+    local x,y = dscreen.getMousePos()
+    return (x == frame_rect.x2-2 or x == frame_rect.x2-1)
+            and (y == frame_rect.y1-1 or y == frame_rect.y1)
+end
+
+local function panel_is_pinnable(self)
+    return self.lockable and self.parent_view and self.parent_view.toggleLocked
+end
+
+function Panel:getMouseFramePos()
+    local x,y = Panel.super.getMouseFramePos(self)
+    if x then return x, y end
+    if panel_is_pinnable(self) and panel_is_on_pin(self) then
+        local frame_rect = self.frame_rect
+        return frame_rect.width - 3, 0
+    end
+end
+
 function Panel:onInput(keys)
     if self.kbd_get_pos then
-        if keys.SELECT or keys.LEAVESCREEN then
-            Panel_end_drag(self, keys.LEAVESCREEN and self.saved_frame or nil,
+        if keys.SELECT or keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+            Panel_end_drag(self, not keys.SELECT and self.saved_frame or nil,
                            not not keys.SELECT)
             return true
         end
@@ -300,7 +320,13 @@ function Panel:onInput(keys)
         end
         return true
     end
-    if self:inputToSubviews(keys) then
+    if panel_is_pinnable(self) and keys._MOUSE_L_DOWN then
+        if panel_is_on_pin(self) then
+            self.parent_view:toggleLocked()
+            return true
+        end
+    end
+    if Panel.super.onInput(self, keys) then
         return true
     end
     if not keys._MOUSE_L_DOWN then return end
@@ -497,18 +523,6 @@ Window.ATTRS {
     draggable = true,
     lockable = true,
 }
-
-function Window:onInput(keys)
-    if keys._MOUSE_L_DOWN and self.parent_view and self.parent_view.toggleLocked then
-        local x,y = dscreen.getMousePos()
-        local frame_rect = self.frame_rect
-        if (x == frame_rect.x2-2 or x == frame_rect.x2-1)
-                and (y == frame_rect.y1-1 or y == frame_rect.y1) then
-            self.parent_view:toggleLocked()
-        end
-    end
-    return Window.super.onInput(self, keys)
-end
 
 -------------------
 -- ResizingPanel --

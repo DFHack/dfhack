@@ -721,6 +721,13 @@ function ZScreen:onInput(keys)
     end
 
     if ZScreen.super.onInput(self, keys) then
+        -- ensure underlying DF screens don't also react to handled clicks
+        if keys._MOUSE_L_DOWN then
+            df.global.enabler.mouse_lbut_down = 0
+        end
+        if keys._MOUSE_R_DOWN then
+            df.global.enabler.mouse_rbut_down = 0
+        end
         return
     end
 
@@ -729,7 +736,8 @@ function ZScreen:onInput(keys)
         return
     end
 
-    if not self.locked and (keys.LEAVESCREEN or keys._MOUSE_R_DOWN) then
+    if (self:isMouseOver() or not self.locked)
+            and (keys.LEAVESCREEN or keys._MOUSE_R_DOWN) then
         self:dismiss()
         -- ensure underlying DF screens don't also react to the click
         df.global.enabler.mouse_rbut_down = 0

@@ -10,7 +10,7 @@
 #on-new-fortress buildingplan set boulders false; buildingplan set logs false
 
 # Disable cooking of useful item types when you start a new fortress.
-on-new-fortress ban-cooking tallow; ban-cooking honey; ban-cooking oil; ban-cooking seeds; ban-cooking brew; ban-cooking fruit; ban-cooking mill; ban-cooking thread; ban-cooking milk; ban-cooking booze
+on-new-fortress ban-cooking all
 
 # Show a warning dialog when units are starving
 repeat -name warn-starving -time 10 -timeUnits days -command [ warn-starving ]
@@ -40,8 +40,8 @@ enable automelt
 enable tailor
 
 # auto-assigns nesting birds to nestbox zones and protects fertile eggs from
-# being cooked/eaten
-enable zone autonestbox nestboxes
+# being gathered and eaten
+enable autonestbox nestboxes
 
 # manages seed stocks
 enable seedwatch

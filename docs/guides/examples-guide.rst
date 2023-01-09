@@ -13,16 +13,16 @@ your preferences.
 The ``init/`` subfolder
 -----------------------
 
-The :source:`init/ <data/examples/init>` subfolder contains useful DFHack
-`init-files` that you can copy into your :file:`dfhack-config/init` folder --
-the same directory as ``dfhack.init``.
+The :source:`init/ <data/dfhack-config/init/examples>` subfolder contains useful
+DFHack `init-files` that you can copy into your :file:`dfhack-config/init`
+folder -- the same directory as ``dfhack.init``.
 
 .. _onMapLoad-dreamfort-init:
 
-:source:`onMapLoad_dreamfort.init <data/examples/init/onMapLoad_dreamfort.init>`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:source:`onMapLoad_dreamfort.init <data/dfhack-config/init/examples/onMapLoad_dreamfort.init>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This is the config file that comes with the `dreamfort` set of blueprints, but
+This is the config file that designed for the `dreamfort` set of blueprints, but
 it is useful (and customizable) for any fort. It includes the following config:
 
 - Calls `ban-cooking` for items that have important alternate uses and should

@@ -200,7 +200,9 @@ public:
         if (old_plant_id != new_plant_id)
         {
             farm->plant_id[season] = new_plant_id;
-            INFO(cycle, out).print("autofarm: changing farm #%d from %s to %s\n", farm->id, get_plant_name(old_plant_id), get_plant_name(new_plant_id));
+            INFO(cycle, out).print("autofarm: changing farm #%d from %s to %s\n", farm->id,
+                get_plant_name(old_plant_id).c_str(),
+                get_plant_name(new_plant_id).c_str());
         }
     }
 
@@ -357,19 +359,25 @@ public:
     void load_state(color_ostream& out)
     {
         initialize();
+        if (!(Core::getInstance().isWorldLoaded()))
+            return;
 
         cfg_enabled = World::GetPersistentData("autofarm/enabled");
         if (cfg_enabled.isValid())
             enabled = cfg_enabled.ival(0) != 0;
-        else
+        else {
+            cfg_enabled = World::AddPersistentData("autofarm/enabled");
             cfg_enabled.ival(0) = enabled;
+        }
 
         cfg_default_threshold = World::GetPersistentData("autofarm/default_threshold");
 
         if (cfg_default_threshold.isValid())
             defaultThreshold = cfg_default_threshold.ival(0);
-        else
+        else {
+            cfg_default_threshold = World::AddPersistentData("autofarm/default_threshold");
             cfg_default_threshold.ival(0) = defaultThreshold;
+        }
 
         std::vector<PersistentDataItem> items;
         World::GetPersistentData(&items, "autofarm/threshold/", true);
@@ -383,11 +391,11 @@ public:
                 if (plant != std::end(allPlants))
                 {
                     setThreshold((*plant)->index, val);
-                    INFO(config, out).print("threshold of %d for plant %s in saved configuration loaded\n", val, id);
+                    INFO(config, out).print("threshold of %d for plant %s in saved configuration loaded\n", val, id.c_str());
                 }
                 else
                 {
-                    WARN(config, out).print("threshold for unknown plant %s in saved configuration ignored\n", id);
+                    WARN(config, out).print("threshold for unknown plant %s in saved configuration ignored\n", id.c_str());
                 }
             }
         }

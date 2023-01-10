@@ -25,9 +25,6 @@ repeat -name autoMilkCreature -time 14 -timeUnits days -command [ workorder "{\"
 # Fulfill high-volume orders before slower once-daily orders
 repeat -name orders-sort -time 1 -timeUnits days -command [ orders sort ]
 
-# Don't let caravans bring barrels of blood and other useless liquids
-fix/blood-del
-
 # Manages crop assignment for farm plots
 enable autofarm
 autofarm default 30

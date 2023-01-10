@@ -764,6 +764,23 @@ function ZScreen:isMouseOver()
     end
 end
 
+local function zscreen_get_any(scr, thing)
+    if not scr._native or not scr._native.parent then return nil end
+    return dfhack.gui['getAny'..thing](scr._native.parent)
+end
+function ZScreen:onGetSelectedUnit()
+    return zscreen_get_any(self, 'Unit')
+end
+function ZScreen:onGetSelectedItem()
+    return zscreen_get_any(self, 'Item')
+end
+function ZScreen:onGetSelectedBuilding()
+    return zscreen_get_any(self, 'Building')
+end
+function ZScreen:onGetSelectedPlant()
+    return zscreen_get_any(self, 'Plant')
+end
+
 --------------------------
 -- Framed screen object --
 --------------------------

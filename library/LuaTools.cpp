@@ -1901,7 +1901,7 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
     lua_pushnil(state);
     lua_setfield(state, -2, "popen");
     lua_pop(state, 1);
-    
+
     // replace some os functions
     lua_getglobal(state, "os");
     luaL_setfuncs(state, dfhack_os_funcs, 0);

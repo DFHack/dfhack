@@ -68,10 +68,9 @@ Run `plug` at the DFHack prompt for a list of all plugins included in DFHack.
 Scripts
 -------
 
-DFHack scripts can currently be written in Lua or Ruby. The `Lua API <lua-api>`
-is more complete and currently better-documented, however. Referring to existing
-scripts as well as the API documentation can be helpful when developing new
-scripts.
+DFHack scripts are written in Lua, with a `well-documented library <lua-api>`.
+Referring to existing scripts as well as the API documentation can be helpful
+when developing new scripts.
 
 Scripts included in DFHack live in a separate
 :source-scripts:`scripts repository <>`. This can be found in the ``scripts``

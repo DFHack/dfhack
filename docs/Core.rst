@@ -21,7 +21,7 @@ DFHack commands can be implemented in any of three ways:
             same version of DFHack.  They are less flexible than scripts,
             but used for complex or ongoing tasks because they run faster.
 
-:scripts:   are Ruby or Lua scripts stored in ``hack/scripts/`` or other
+:scripts:   are Lua scripts stored in ``hack/scripts/`` or other
             directories in the `script-paths`. Because they don't need to
             be compiled, scripts are more flexible about versions, and
             they are easier to distribute. Most third-party DFHack addons

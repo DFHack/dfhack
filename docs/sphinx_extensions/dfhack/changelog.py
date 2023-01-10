@@ -27,7 +27,7 @@ CHANGELOG_SECTIONS = [
     'API',
     'Internals',
     'Lua',
-    'Ruby',
+    'Ruby', # deprecated, but still here so old changelogs build
     'Structures',
     'Documentation',
 ]

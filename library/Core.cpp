@@ -341,30 +341,6 @@ static command_result enableLuaScript(color_ostream &out, std::string name, bool
     return ok ? CR_OK : CR_FAILURE;
 }
 
-static command_result runRubyScript(color_ostream &out, PluginManager *plug_mgr, std::string filename, vector<string> &args)
-{
-    if (!plug_mgr->ruby || !plug_mgr->ruby->is_enabled())
-        return CR_FAILURE;
-
-    // ugly temporary patch for https://github.com/DFHack/dfhack/issues/1146
-    string cwd = Filesystem::getcwd();
-    if (filename.find(cwd) == 0)
-    {
-        filename = filename.substr(cwd.size());
-        while (!filename.empty() && (filename[0] == '/' || filename[0] == '\\'))
-            filename = filename.substr(1);
-    }
-
-    std::string rbcmd = "$script_args = [";
-    for (size_t i = 0; i < args.size(); i++)
-        rbcmd += "'" + args[i] + "', ";
-    rbcmd += "]\n";
-
-    rbcmd += "catch(:script_finished) { load '" + filename + "' }";
-
-    return plug_mgr->ruby->eval_ruby(out, rbcmd.c_str());
-}
-
 command_result Core::runCommand(color_ostream &out, const std::string &command)
 {
     if (!command.empty())
@@ -901,7 +877,6 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
         con << parts[0];
         bool builtin = is_builtin(con, parts[0]);
         string lua_path = findScript(parts[0] + ".lua");
-        string ruby_path = findScript(parts[0] + ".rb");
         Plugin *plug = plug_mgr->getPluginByCommand(parts[0]);
         if (builtin)
         {
@@ -919,10 +894,6 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
         else if (lua_path.size())
         {
             con << " is a Lua script: " << lua_path << std::endl;
-        }
-        else if (ruby_path.size())
-        {
-            con << " is a Ruby script: " << ruby_path << std::endl;
         }
         else
         {
@@ -1233,8 +1204,6 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
             }
             if ( lua )
                 res = runLuaScript(con, first, parts);
-            else if ( filename != "" && plug_mgr->ruby && plug_mgr->ruby->is_enabled() )
-                res = runRubyScript(con, plug_mgr, filename, parts);
             else if ( try_autocomplete(con, first, completed) )
                 res = CR_NOT_IMPLEMENTED;
             else

@@ -66,6 +66,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Removed
 - ``fix-job-postings`` from the `workflow` plugin is now obsolete since affected savegames can no longer be loaded
+- Ruby is no longer a supported DFHack scripting language
 
 # 0.47.05-r8
 

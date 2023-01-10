@@ -1676,6 +1676,8 @@ static const luaL_Reg dfhack_job_funcs[] = {
 
 static const LuaWrapper::FunctionReg dfhack_textures_module[] = {
     WRAPM(Textures, getDfhackLogoTexposStart),
+    WRAPM(Textures, getGreenPinTexposStart),
+    WRAPM(Textures, getRedPinTexposStart),
     { NULL, NULL }
 };
 

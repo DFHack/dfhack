@@ -721,6 +721,13 @@ function ZScreen:onInput(keys)
     end
 
     if ZScreen.super.onInput(self, keys) then
+        -- ensure underlying DF screens don't also react to handled clicks
+        if keys._MOUSE_L_DOWN then
+            df.global.enabler.mouse_lbut_down = 0
+        end
+        if keys._MOUSE_R_DOWN then
+            df.global.enabler.mouse_rbut_down = 0
+        end
         return
     end
 
@@ -729,7 +736,8 @@ function ZScreen:onInput(keys)
         return
     end
 
-    if not self.locked and (keys.LEAVESCREEN or keys._MOUSE_R_DOWN) then
+    if (self:isMouseOver() or not self.locked)
+            and (keys.LEAVESCREEN or keys._MOUSE_R_DOWN) then
         self:dismiss()
         -- ensure underlying DF screens don't also react to the click
         df.global.enabler.mouse_rbut_down = 0
@@ -818,9 +826,25 @@ function paint_frame(dc,rect,style,title,show_lock,locked,inactive)
 
     if show_lock then
         if locked and style.locked_pen then
-            dscreen.paintTile(style.locked_pen, x2-1, y1)
+            local pin_texpos = dfhack.textures.getGreenPinTexposStart()
+            if pin_texpos == -1 then
+                dscreen.paintTile(style.locked_pen, x2-1, y1)
+            else
+                dscreen.paintTile(style.locked_pen, x2-2, y1-1, nil, pin_texpos+0)
+                dscreen.paintTile(style.locked_pen, x2-1, y1-1, nil, pin_texpos+1)
+                dscreen.paintTile(style.locked_pen, x2-2, y1,   nil, pin_texpos+2)
+                dscreen.paintTile(style.locked_pen, x2-1, y1,   nil, pin_texpos+3)
+            end
         elseif not locked and style.unlocked_pen then
-            dscreen.paintTile(style.unlocked_pen, x2-1, y1)
+            local pin_texpos = dfhack.textures.getRedPinTexposStart()
+            if pin_texpos == -1 then
+                dscreen.paintTile(style.unlocked_pen, x2-1, y1)
+            else
+                dscreen.paintTile(style.unlocked_pen, x2-2, y1-1, nil, pin_texpos+0)
+                dscreen.paintTile(style.unlocked_pen, x2-1, y1-1, nil, pin_texpos+1)
+                dscreen.paintTile(style.unlocked_pen, x2-2, y1,   nil, pin_texpos+2)
+                dscreen.paintTile(style.unlocked_pen, x2-1, y1,   nil, pin_texpos+3)
+            end
         end
     end
 end

@@ -31,7 +31,7 @@ keybinding add Ctrl-Shift-K gui/cp437-table
 #keybinding add Ctrl-Alt-S@dwarfmode/Default quicksave
 
 # toggle the display of water level as 1-7 tiles
-keybinding add Ctrl-W@dwarfmode|dungeonmode twaterlvl
+#keybinding add Ctrl-W@dwarfmode|dungeonmode twaterlvl
 
 # designate the whole vein for digging
 #keybinding add Ctrl-V@dwarfmode digv

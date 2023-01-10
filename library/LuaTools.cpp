@@ -1896,9 +1896,17 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
     luaL_setfuncs(state, dfhack_coro_funcs, 0);
     lua_pop(state, 1);
 
+    // replace some io functions
+    lua_getglobal(state, "io");
+    lua_pushnil(state);
+    lua_setfield(state, -2, "popen");
+    lua_pop(state, 1);
+    
     // replace some os functions
     lua_getglobal(state, "os");
     luaL_setfuncs(state, dfhack_os_funcs, 0);
+    lua_pushnil(state);
+    lua_setfield(state, -2, "execute");
     lua_pop(state, 1);
 
     // split the global environment

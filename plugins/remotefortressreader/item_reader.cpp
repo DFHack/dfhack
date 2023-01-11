@@ -271,7 +271,8 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
     case df::enums::item_type::GLOVES:
         break;
     case df::enums::item_type::BOX:
-        type->set_mat_index(DfItem->isBag());
+        //FIXME: Figure out how things change with this. Possibly make sure the item types are mutable.
+        //type->set_mat_index(DfItem->isBag());
         break;
     case df::enums::item_type::BIN:
         break;

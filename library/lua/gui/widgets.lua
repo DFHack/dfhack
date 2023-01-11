@@ -81,6 +81,7 @@ Panel.ATTRS {
     resize_min = DEFAULT_NIL,
     on_resize_begin = DEFAULT_NIL,
     on_resize_end = DEFAULT_NIL,
+    lockable = false,
     autoarrange_subviews = false, -- whether to automatically lay out subviews
     autoarrange_gap = 0, -- how many blank lines to insert between widgets
 }
@@ -271,10 +272,30 @@ local function Panel_on_double_click(self)
     Panel_update_frame(self, frame, true)
 end
 
+local function panel_is_on_pin(self)
+    local frame_rect = self.frame_rect
+    local x,y = dscreen.getMousePos()
+    return (x == frame_rect.x2-2 or x == frame_rect.x2-1)
+            and (y == frame_rect.y1-1 or y == frame_rect.y1)
+end
+
+local function panel_is_pinnable(self)
+    return self.lockable and self.parent_view and self.parent_view.toggleLocked
+end
+
+function Panel:getMouseFramePos()
+    local x,y = Panel.super.getMouseFramePos(self)
+    if x then return x, y end
+    if panel_is_pinnable(self) and panel_is_on_pin(self) then
+        local frame_rect = self.frame_rect
+        return frame_rect.width - 3, 0
+    end
+end
+
 function Panel:onInput(keys)
     if self.kbd_get_pos then
-        if keys.SELECT or keys.LEAVESCREEN then
-            Panel_end_drag(self, keys.LEAVESCREEN and self.saved_frame or nil,
+        if keys.SELECT or keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+            Panel_end_drag(self, not keys.SELECT and self.saved_frame or nil,
                            not not keys.SELECT)
             return true
         end
@@ -299,7 +320,13 @@ function Panel:onInput(keys)
         end
         return true
     end
-    if self:inputToSubviews(keys) then
+    if panel_is_pinnable(self) and keys._MOUSE_L_DOWN then
+        if panel_is_on_pin(self) then
+            self.parent_view:toggleLocked()
+            return true
+        end
+    end
+    if Panel.super.onInput(self, keys) then
         return true
     end
     if not keys._MOUSE_L_DOWN then return end
@@ -464,7 +491,14 @@ end
 function Panel:onRenderFrame(dc, rect)
     Panel.super.onRenderFrame(self, dc, rect)
     if not self.frame_style then return end
-    gui.paint_frame(dc, rect, self.frame_style, self.frame_title)
+    local locked = nil
+    if self.lockable then
+        locked = self.parent_view and self.parent_view.locked
+    end
+    local inactive = self.parent_view and self.parent_view.isOnTop
+            and not self.parent_view:isOnTop()
+    gui.paint_frame(dc, rect, self.frame_style, self.frame_title,
+            self.lockable, locked, inactive)
     if self.kbd_get_pos then
         local pos = self.kbd_get_pos()
         local pen = to_pen{fg=COLOR_GREEN, bg=COLOR_BLACK}
@@ -487,6 +521,7 @@ Window.ATTRS {
     frame_background = gui.CLEAR_PEN,
     frame_inset = 1,
     draggable = true,
+    lockable = true,
 }
 
 -------------------
@@ -1395,28 +1430,14 @@ CycleHotkeyLabel.ATTRS{
 }
 
 function CycleHotkeyLabel:init()
-    -- initialize option_idx
-    for i in ipairs(self.options) do
-        if self.initial_option == self:getOptionValue(i) then
-            self.option_idx = i
-            break
-        end
-    end
-    if not self.option_idx then
-        if self.options[self.initial_option] then
-            self.option_idx = self.initial_option
-        end
-    end
-    if not self.option_idx then
-        error(('cannot find option with value or index: "%s"')
-              :format(self.initial_option))
-    end
+    self:setOption(self.initial_option)
 
     self:setText{
         {key=self.key, key_sep=': ', text=self.label, width=self.label_width,
          on_activate=self:callback('cycle')},
         '  ',
-        {text=self:callback('getOptionLabel')},
+        {text=self:callback('getOptionLabel'),
+         pen=self:callback('getOptionPen')},
     }
 end
 
@@ -1433,22 +1454,52 @@ function CycleHotkeyLabel:cycle()
     end
 end
 
-function CycleHotkeyLabel:getOptionLabel(option_idx)
+function CycleHotkeyLabel:setOption(value_or_index, call_on_change)
+    local option_idx = nil
+    for i in ipairs(self.options) do
+        if value_or_index == self:getOptionValue(i) then
+            option_idx = i
+            break
+        end
+    end
+    if not option_idx then
+        if self.options[value_or_index] then
+            option_idx = value_or_index
+        end
+    end
+    if not option_idx then
+        error(('cannot find option with value or index: "%s"')
+              :format(value_or_index))
+    end
+    local old_option_idx = self.option_idx
+    self.option_idx = option_idx
+    if call_on_change and self.on_change then
+        self.on_change(self:getOptionValue(),
+                       self:getOptionValue(old_option_idx))
+    end
+end
+
+local function cyclehotkeylabel_getOptionElem(self, option_idx, key)
     option_idx = option_idx or self.option_idx
     local option = self.options[option_idx]
     if type(option) == 'table' then
-        return option.label
+        return option[key]
     end
     return option
 end
 
+function CycleHotkeyLabel:getOptionLabel(option_idx)
+    return cyclehotkeylabel_getOptionElem(self, option_idx, 'label')
+end
+
 function CycleHotkeyLabel:getOptionValue(option_idx)
-    option_idx = option_idx or self.option_idx
-    local option = self.options[option_idx]
-    if type(option) == 'table' then
-        return option.value
-    end
-    return option
+    return cyclehotkeylabel_getOptionElem(self, option_idx, 'value')
+end
+
+function CycleHotkeyLabel:getOptionPen(option_idx)
+    local pen = cyclehotkeylabel_getOptionElem(self, option_idx, 'pen')
+    if type(pen) == 'string' then return nil end
+    return pen
 end
 
 function CycleHotkeyLabel:onInput(keys)
@@ -1466,7 +1517,7 @@ end
 
 ToggleHotkeyLabel = defclass(ToggleHotkeyLabel, CycleHotkeyLabel)
 ToggleHotkeyLabel.ATTRS{
-    options={{label='On', value=true},
+    options={{label='On', value=true, pen=COLOR_GREEN},
              {label='Off', value=false}},
 }
 

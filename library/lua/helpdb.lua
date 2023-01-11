@@ -25,8 +25,6 @@ local TAG_DEFINITIONS = 'hack/docs/docs/Tags.txt'
 -- used when reading help text embedded in script sources
 local SCRIPT_DOC_BEGIN = '[====['
 local SCRIPT_DOC_END = ']====]'
-local SCRIPT_DOC_BEGIN_RUBY = '=begin'
-local SCRIPT_DOC_END_RUBY = '=end'
 
 -- enums
 local ENTRY_TYPES = {
@@ -274,11 +272,10 @@ local function make_script_entry(old_entry, entry_name, kwargs)
     if not ok then
         return entry
     end
-    local is_rb = source_path:endswith('.rb')
     update_entry(entry, lines,
-            {begin_marker=(is_rb and SCRIPT_DOC_BEGIN_RUBY or SCRIPT_DOC_BEGIN),
-             end_marker=(is_rb and SCRIPT_DOC_END_RUBY or SCRIPT_DOC_END),
-             first_line_is_short_help=(is_rb and '#' or '%-%-')})
+            {begin_marker=SCRIPT_DOC_BEGIN,
+             end_marker=SCRIPT_DOC_END,
+             first_line_is_short_help='%-%-'})
     return entry
 end
 
@@ -364,7 +361,7 @@ local function scan_scripts(old_db)
         if not files then goto skip_path end
         for _,f in ipairs(files) do
             if f.isdir or
-                (not f.path:endswith('.lua') and not f.path:endswith('.rb')) or
+                    not f.path:endswith('.lua') or
                     f.path:startswith('test/') or
                     f.path:startswith('internal/') then
                 goto continue

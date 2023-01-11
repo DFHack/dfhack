@@ -1263,7 +1263,8 @@ bool Buildings::deconstruct(df::building *bld)
     // Assume: no parties.
     unlinkRooms(bld);
     // Assume: not unit destroy target
-    vector_erase_at(plotinfo->tax_collection.rooms, linear_index(plotinfo->tax_collection.rooms, bld->id));
+    int id = bld->id;
+    vector_erase_at(plotinfo->tax_collection.rooms, linear_index(plotinfo->tax_collection.rooms, id));
     // Assume: not used in punishment
     // Assume: not used in non-own jobs
     // Assume: does not affect pathfinding
@@ -1283,7 +1284,7 @@ bool Buildings::deconstruct(df::building *bld)
     {
         auto item = ui_look_list->items[i];
         if (item->type == df::ui_look_list::T_items::Building &&
-            item->data.Building == bld)
+            item->data.building.bld_id == id)
         {
             vector_erase_at(ui_look_list->items, i);
             delete item;

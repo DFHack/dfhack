@@ -289,22 +289,15 @@ it should be written in plain text. Any reStructuredText markup will not be proc
 if present, will be shown verbatim to the player (which is probably not what you want).
 
 For external scripts, the short description comes from a comment on the first line
-(the comment marker and extra whitespace is stripped). For Lua, this would look like:
+(the comment marker and extra whitespace is stripped):
 
 .. code-block:: lua
 
     -- A short description of my cool script.
 
-and for Ruby scripts it would look like:
-
-.. code-block:: ruby
-
-    # A short description of my cool script.
-
-The main help text for an external script needs to appear between two markers. For
-Lua, these markers are ``[====[`` and ``]====]``, and for Ruby they are ``=begin`` and
-``=end``. The documentation standards above still apply to external tools, but there is
-no need to include backticks for links or monospaced fonts. Here is a Lua example for an
+The main help text for an external script needs to appear between two markers -- ``[====[``
+and ``]====]``. The documentation standards above still apply to external tools, but there is
+no need to include backticks for links or monospaced fonts. Here is an example for an
 entire script header::
 
     -- Inventory management for adventurers.
@@ -434,35 +427,7 @@ Sphinx to build the docs:
 Using CMake
 -----------
 
-Enabling the ``BUILD_DOCS`` CMake option will cause the documentation to be built
-whenever it changes as part of the normal DFHack build process. There are several
-ways to do this:
-
-* When initially running CMake, add ``-DBUILD_DOCS:bool=ON`` to your ``cmake``
-  command. For example::
-
-    cmake .. -DCMAKE_BUILD_TYPE:string=Release -DBUILD_DOCS:bool=ON -DCMAKE_INSTALL_PREFIX=<path to DF>
-
-* If you have already run CMake, you can simply run it again from your build
-  folder to update your configuration::
-
-    cmake .. -DBUILD_DOCS:bool=ON
-
-* You can edit the ``BUILD_DOCS`` setting in CMakeCache.txt directly
-
-* You can use the CMake GUI or ``ccmake`` to change the ``BUILD_DOCS`` setting
-
-* On Windows, if you prefer to use the batch scripts, you can run
-  ``generate-msvc-gui.bat`` and set ``BUILD_DOCS`` through the GUI. If you are
-  running another file, such as ``generate-msvc-all.bat``, you will need to edit
-  the batch script to add the flag. You can also run ``cmake`` on the command line,
-  similar to other platforms.
-
-By default, both HTML and text docs are built by CMake. The generated
-documentation is stored in ``docs/html`` and ``docs/text`` (respectively) in the
-root DFHack folder, and they will both be installed to ``hack/docs`` when you
-install DFHack. The html and txt files will intermingle, but will not interfere
-with one another.
+See our page on `build options <building-documentation>`
 
 Running Sphinx manually
 -----------------------

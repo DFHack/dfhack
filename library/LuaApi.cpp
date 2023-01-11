@@ -1460,6 +1460,7 @@ static int gui_getMousePos(lua_State *L)
 
 static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, getCurViewscreen),
+    WRAPM(Gui, getDFViewscreen),
     WRAPM(Gui, getFocusString),
     WRAPM(Gui, getCurFocus),
     WRAPM(Gui, getSelectedWorkshopJob),
@@ -3028,6 +3029,8 @@ static const luaL_Reg dfhack_job_funcs[] = {
 
 static const LuaWrapper::FunctionReg dfhack_textures_module[] = {
     WRAPM(Textures, getDfhackLogoTexposStart),
+    WRAPM(Textures, getGreenPinTexposStart),
+    WRAPM(Textures, getRedPinTexposStart),
     { NULL, NULL }
 };
 

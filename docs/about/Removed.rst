@@ -128,9 +128,16 @@ longer necessary.
 
 resume
 ======
-
 Allowed you to resume suspended jobs and displayed an overlay indicating
 suspended building construction jobs. Replaced by `unsuspend` script.
+
+.. _ruby:
+.. _rb:
+
+ruby
+====
+Support for the Ruby language in DFHack scripts was removed due to the issues
+the Ruby library causes when used as an embedded language.
 
 .. _warn-stuck-trees:
 

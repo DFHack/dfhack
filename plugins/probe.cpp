@@ -477,8 +477,8 @@ command_result df_bprobe (color_ostream &out, vector <string> & parameters)
                 out.print(", subtype %i", building.subtype);
             break;
         }
-        if(building.origin->is_room)  //isRoom())
-            out << ", room";
+        if(building.origin->relations.size())  //Connected to rooms.
+            out << ", " << building.origin->relations.size() << " rooms";
         if(building.origin->getBuildStage()!=building.origin->getMaxBuildStage())
             out << ", in construction";
         out.print("\n");

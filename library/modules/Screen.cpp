@@ -117,17 +117,22 @@ bool Screen::inGraphicsMode()
 }
 
 static bool doSetTile_map(const Pen &pen, int x, int y) {
-    size_t max_index = gps->main_viewport->dim_x * gps->main_viewport->dim_y - 1;
-    size_t index = (x * gps->main_viewport->dim_y) + y;
+    auto &vp = gps->main_viewport;
 
-    if (index < 0 || index > max_index)
+    if (x < 0 || x >= vp->dim_x || y < 0 || y >= vp->dim_y)
+        return false;
+
+    size_t max_index = vp->dim_x * vp->dim_y - 1;
+    size_t index = (x * vp->dim_y) + y;
+
+    if (index > max_index)
         return false;
 
     long texpos = pen.tile;
     if (texpos == 0) {
         texpos = init->font.large_font_texpos[(uint8_t)pen.ch];
     }
-    gps->main_viewport->screentexpos_interface[index] = texpos;
+    vp->screentexpos_interface[index] = texpos;
     return true;
 }
 
@@ -137,6 +142,9 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
 
     if (map && use_graphics)
         return doSetTile_map(pen, x, y);
+
+    if (x < 0 || x >= gps->dimx || y < 0 || y >= gps->dimy)
+        return false;
 
     size_t index = (x * gps->dimy) + y;
     uint8_t *screen = &gps->screen[index * 8];
@@ -216,21 +224,26 @@ bool Screen::paintTile(const Pen &pen, int x, int y, bool map)
 }
 
 static Pen doGetTile_map(int x, int y) {
-    size_t max_index = gps->main_viewport->dim_x * gps->main_viewport->dim_y - 1;
-    size_t index = (x * gps->main_viewport->dim_y) + y;
+    auto &vp = gps->main_viewport;
+
+    if (x < 0 || x >= vp->dim_x || y < 0 || y >= vp->dim_y)
+        return Pen(0, 0, 0, -1);
+
+    size_t max_index = vp->dim_x * vp->dim_y - 1;
+    size_t index = (x * vp->dim_y) + y;
 
     if (index < 0 || index > max_index)
         return Pen(0, 0, 0, -1);
 
-    int tile = gps->main_viewport->screentexpos[index];
+    int tile = vp->screentexpos[index];
     if (tile == 0)
-        tile = gps->main_viewport->screentexpos_item[index];
+        tile = vp->screentexpos_item[index];
     if (tile == 0)
-        tile = gps->main_viewport->screentexpos_building_one[index];
+        tile = vp->screentexpos_building_one[index];
     if (tile == 0)
-        tile = gps->main_viewport->screentexpos_background_two[index];
+        tile = vp->screentexpos_background_two[index];
     if (tile == 0)
-        tile = gps->main_viewport->screentexpos_background[index];
+        tile = vp->screentexpos_background[index];
 
     char ch = 0;
     uint8_t fg = 0;
@@ -250,13 +263,13 @@ static uint8_t to_16_bit_color(uint8_t  *rgb) {
 }
 
 static Pen doGetTile_default(int x, int y, bool map) {
-    if (x < 0 || y < 0)
-        return Pen(0, 0, 0, -1);
-
     bool use_graphics = Screen::inGraphicsMode();
 
     if (map && use_graphics)
         return doGetTile_map(x, y);
+
+    if (x < 0 || x >= gps->dimx || y < 0 || y >= gps->dimy)
+        return Pen(0, 0, 0, -1);
 
     size_t index = (x * gps->dimy) + y;
     uint8_t *screen = &gps->screen[index * 8];

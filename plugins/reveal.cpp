@@ -12,6 +12,7 @@
 #include "modules/World.h"
 #include "modules/MapCache.h"
 #include "modules/Gui.h"
+#include "modules/Screen.h"
 
 #include "df/block_square_event_frozen_liquidst.h"
 #include "df/construction.h"
@@ -184,16 +185,18 @@ command_result reveal(color_ostream &out, vector<string> & params)
         else if(params[i] == "help" || params[i] == "?")
             return CR_WRONG_USAGE;
     }
+    auto& con = out;
     if(params.size() && params[0] == "hell")
     {
         no_hell = false;
     }
     if(params.size() && params[0] == "demon")
     {
-        no_hell = false;
-        pause = false;
+        con.printerr("`reveal demon` is currently disabled to prevent a hang due to a bug in the base game\n");
+        return CR_FAILURE;
+        //no_hell = false;
+        //pause = false;
     }
-    auto & con = out;
     if(revealed != NOT_REVEALED)
     {
         con.printerr("Map is already revealed or this is a different map.\n");
@@ -256,9 +259,16 @@ command_result reveal(color_ostream &out, vector<string> & params)
             revealed = DEMON_REVEALED;
     }
     is_active = nopause_state || (revealed == REVEALED);
-    con.print("Map revealed.\n");
+    bool graphics_mode = Screen::inGraphicsMode();
+    con.print("Map revealed.\n\n");
+    if (graphics_mode) {
+        con.print("Note that in graphics mode, tiles that are not adjacent to open\n"
+                  "space will not render but can still be examined by hovering over\n"
+                  "them with the mouse. Switching to text mode (in the game settings)\n"
+                  "will allow the display of the revealed tiles.\n\n");
+    }
     if(!no_hell)
-        con.print("Unpausing can unleash the forces of hell, so it has been temporarily disabled.\n");
+        con.print("Unpausing can unleash the forces of hell, so it has been temporarily disabled.\n\n");
     con.print("Run 'unreveal' to revert to previous state.\n");
     return CR_OK;
 }

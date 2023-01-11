@@ -832,6 +832,15 @@ df::job *Gui::getSelectedJob(color_ostream &out, bool quiet)
 
 df::unit *Gui::getAnyUnit(df::viewscreen *top)
 {
+    using df::global::game;
+
+    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedUnit();
+
+    if (game->main_interface.view_sheets.open
+            && game->main_interface.view_sheets.active_sheet == view_sheet_type::UNIT)
+        return df::unit::find(game->main_interface.view_sheets.active_id);
+
 /* TODO: understand how this changes for v50
     using namespace ui_sidebar_mode;
     using df::global::ui_look_cursor;
@@ -1114,6 +1123,15 @@ df::unit *Gui::getSelectedUnit(color_ostream &out, bool quiet)
 
 df::item *Gui::getAnyItem(df::viewscreen *top)
 {
+    using df::global::game;
+
+    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedItem();
+
+    if (game->main_interface.view_sheets.open
+            && game->main_interface.view_sheets.active_sheet == view_sheet_type::ITEM)
+        return df::item::find(game->main_interface.view_sheets.active_id);
+
 /* TODO: understand how this changes for v50
     using namespace ui_sidebar_mode;
     using df::global::ui_look_cursor;
@@ -1254,6 +1272,15 @@ df::item *Gui::getSelectedItem(color_ostream &out, bool quiet)
 
 df::building *Gui::getAnyBuilding(df::viewscreen *top)
 {
+    using df::global::game;
+
+    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedBuilding();
+
+    if (game->main_interface.view_sheets.open
+            && game->main_interface.view_sheets.active_sheet == view_sheet_type::BUILDING)
+        return df::building::find(game->main_interface.view_sheets.active_id);
+
 /* TODO: understand how this changes for v50
     using namespace ui_sidebar_mode;
     using df::global::ui_look_list;
@@ -1873,6 +1900,12 @@ bool Gui::autoDFAnnouncement(df::announcement_type type, df::coord pos, std::str
     return autoDFAnnouncement(r, message);
 }
 
+static df::viewscreen * do_skip_dismissed(df::viewscreen * ws) {
+    while (ws && Screen::isDismissed(ws) && ws->parent)
+        ws = ws->parent;
+    return ws;
+}
+
 df::viewscreen *Gui::getCurViewscreen(bool skip_dismissed)
 {
     if (!gview)
@@ -1883,10 +1916,7 @@ df::viewscreen *Gui::getCurViewscreen(bool skip_dismissed)
         ws = ws->child;
 
     if (skip_dismissed)
-    {
-        while (ws && Screen::isDismissed(ws) && ws->parent)
-            ws = ws->parent;
-    }
+        ws = do_skip_dismissed(ws);
 
     return ws;
 }
@@ -1904,6 +1934,16 @@ df::viewscreen *Gui::getViewscreenByIdentity (virtual_identity &id, int n)
         screen = screen->parent;
     }
     return NULL;
+}
+
+df::viewscreen *Gui::getDFViewscreen(bool skip_dismissed) {
+    df::viewscreen *screen = Gui::getCurViewscreen(skip_dismissed);
+    while (screen && dfhack_viewscreen::is_instance(screen)) {
+        screen = screen->parent;
+        if (skip_dismissed)
+            screen = do_skip_dismissed(screen);
+    }
+    return screen;
 }
 
 df::coord Gui::getViewportPos()
@@ -2011,8 +2051,8 @@ bool Gui::revealInDwarfmodeMap(int32_t x, int32_t y, int32_t z, bool center)
     *window_x = clip_range(new_win_x, 0, (world->map.x_count - w));
     *window_y = clip_range(new_win_y, 0, (world->map.y_count - h));
     *window_z = clip_range(new_win_z, 0, (world->map.z_count - 1));
-    game->minimap.need_render = true;
-    game->minimap.need_scan = true;
+    game->minimap.update = true;
+    game->minimap.mustmake = true;
 
     return true;
 }

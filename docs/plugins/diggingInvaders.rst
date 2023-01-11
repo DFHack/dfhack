@@ -3,7 +3,7 @@ diggingInvaders
 
 .. dfhack-tool::
     :summary: Invaders dig and destroy to get to your dwarves.
-    :tags: fort gameplay military units
+    :tags: untested fort gameplay military units
 
 Usage
 -----

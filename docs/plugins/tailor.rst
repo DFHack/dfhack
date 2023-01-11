@@ -3,7 +3,7 @@ tailor
 
 .. dfhack-tool::
     :summary: Automatically keep your dwarves in fresh clothing.
-    :tags: fort auto workorders
+    :tags: untested fort auto workorders
 
 Whenever the bookkeeper updates stockpile records, this plugin will scan the
 fort. If there are fresh cloths available, dwarves who are wearing tattered

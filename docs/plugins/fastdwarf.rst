@@ -3,7 +3,7 @@ fastdwarf
 
 .. dfhack-tool::
     :summary: Dwarves teleport and/or finish jobs instantly.
-    :tags: fort armok units
+    :tags: untested fort armok units
 
 Usage
 -----

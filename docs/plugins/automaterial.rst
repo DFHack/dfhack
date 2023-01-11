@@ -3,7 +3,7 @@ automaterial
 
 .. dfhack-tool::
     :summary: Sorts building materials by recent usage.
-    :tags: fort design productivity buildings map
+    :tags: untested fort design productivity buildings map
     :no-command:
 
 This plugin makes building constructions (walls, floors, fortifications, etc)

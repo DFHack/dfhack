@@ -3,7 +3,7 @@ changevein
 
 .. dfhack-tool::
     :summary: Change the material of a mineral inclusion.
-    :tags: fort armok map
+    :tags: untested fort armok map
 
 You can change a vein to any inorganic material RAW id. Note that this command
 only affects tiles within the current 16x16 block - for large veins and

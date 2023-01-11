@@ -6,7 +6,7 @@ filltraffic
 
 .. dfhack-tool::
     :summary: Set traffic designations using flood-fill starting at the cursor.
-    :tags: fort design productivity map
+    :tags: untested fort design productivity map
 
 .. dfhack-command:: alltraffic
     :summary: Set traffic designations for every single tile of the map.

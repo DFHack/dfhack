@@ -3,7 +3,7 @@ labormanager
 
 .. dfhack-tool::
     :summary: Automatically manage dwarf labors.
-    :tags: fort auto labors
+    :tags: untested fort auto labors
 
 Labormanager is derived from `autolabor` but uses a completely different
 approach to assigning jobs to dwarves. While autolabor tries to keep as many

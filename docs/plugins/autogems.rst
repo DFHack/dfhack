@@ -3,7 +3,7 @@ autogems
 
 .. dfhack-tool::
     :summary: Automatically cut rough gems.
-    :tags: fort auto workorders
+    :tags: untested fort auto workorders
     :no-command:
 
 .. dfhack-command:: autogems-reload

@@ -3,7 +3,7 @@ mode
 
 .. dfhack-tool::
     :summary: See and change the game mode.
-    :tags: armok dev gameplay
+    :tags: untested armok dev gameplay
 
 .. warning::
 

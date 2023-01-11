@@ -3,7 +3,7 @@ trackstop
 
 .. dfhack-tool::
     :summary: Add dynamic configuration options for track stops.
-    :tags: fort gameplay buildings
+    :tags: untested fort gameplay buildings
     :no-command:
 
 When enabled, this plugin adds a :kbd:`q` menu for track stops, which is

@@ -3,7 +3,7 @@ dig-now
 
 .. dfhack-tool::
     :summary: Instantly complete dig designations.
-    :tags: fort armok map
+    :tags: untested fort armok map
 
 This tool will magically complete non-marker dig designations, modifying tile
 shapes and creating boulders, ores, and gems as if a miner were doing the mining

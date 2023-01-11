@@ -208,7 +208,7 @@ static bool doSetTile(const Pen &pen, int x, int y, bool map)
 
 bool Screen::paintTile(const Pen &pen, int x, int y, bool map)
 {
-    if (!gps || !pen.valid()) return false;
+    if (!gps || !pen.valid() || x < 0 || y < 0) return false;
 
     doSetTile(pen, x, y, map);
     return true;
@@ -301,7 +301,7 @@ static Pen doGetTile(int x, int y, bool map)
 
 Pen Screen::readTile(int x, int y, bool map)
 {
-    if (!gps) return Pen(0,0,0,-1);
+    if (!gps || x < 0 || y < 0) return Pen(0,0,0,-1);
 
     return doGetTile(x, y, map);
 }

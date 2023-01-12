@@ -128,10 +128,10 @@ static bool doSetTile_map(const Pen &pen, int x, int y) {
         return false;
 
     long texpos = pen.tile;
-    if (texpos == 0) {
+    if (!texpos && pen.ch)
         texpos = init->font.large_font_texpos[(uint8_t)pen.ch];
-    }
-    vp->screentexpos_interface[index] = texpos;
+    if (texpos)
+        vp->screentexpos_interface[index] = texpos;
     return true;
 }
 
@@ -196,7 +196,7 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
             *texpos_lower = pen.tile;
         else
             *texpos = pen.tile;
-    } else {
+    } else if (pen.ch) {
         screen[0] = uint8_t(pen.ch);
         *texpos_lower = 909; // basic black background
     }

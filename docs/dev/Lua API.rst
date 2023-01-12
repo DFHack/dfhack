@@ -3663,6 +3663,10 @@ Misc
   The black pen used to clear the screen. In graphics mode, it will clear the
   foreground and set the background to the standard black tile.
 
+* ``TRANSPARENT_PEN``
+
+  A pen that will clear all textures from the UI layer, making the tile transparent.
+
 * ``KEEP_LOWER_PEN``
 
   A pen that will write tiles over existing background tiles instead of clearing

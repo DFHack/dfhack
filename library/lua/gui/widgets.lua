@@ -659,7 +659,7 @@ function EditField:postUpdateLayout()
 end
 
 function EditField:onRenderBody(dc)
-    dc:pen(self.text_pen or COLOR_LIGHTCYAN):fill(0,0,dc.width-1,0)
+    dc:pen(self.text_pen or COLOR_LIGHTCYAN)
 
     local cursor_char = '_'
     if not getval(self.active) or not self.focus or gui.blink_visible(300) then

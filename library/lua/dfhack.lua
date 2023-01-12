@@ -695,14 +695,7 @@ local valid_script_flags = {
     scripts = {required = false},
 }
 
-local warned_scripts = {}
 function dfhack.run_script(name,...)
-    if not warned_scripts[name] and require('helpdb').get_entry_tags(name).untested then
-        warned_scripts[name] = true
-        dfhack.printerr(('UNTESTED WARNING: the "%s" script has not been validated to work well with this version of DF.'):format(name))
-        dfhack.printerr('It may not work as expected, or it may corrupt your game.')
-        qerror('Please run the command again to ignore this warning and proceed.')
-    end
     return dfhack.run_script_with_env(nil, name, nil, ...)
 end
 
@@ -736,7 +729,16 @@ function dfhack.script_environment(name, strict)
     end
 end
 
+local warned_scripts = {}
+
 function dfhack.run_script_with_env(envVars, name, flags, ...)
+    if not warned_scripts[name] and require('helpdb').get_entry_tags(name).untested then
+        warned_scripts[name] = true
+        dfhack.printerr(('UNTESTED WARNING: the "%s" script has not been validated to work well with this version of DF.'):format(name))
+        dfhack.printerr('It may not work as expected, or it may corrupt your game.')
+        qerror('Please run the command again to ignore this warning and proceed.')
+    end
+
     if type(flags) ~= 'table' then flags = {} end
     local file = dfhack.findScript(name)
     if not file then

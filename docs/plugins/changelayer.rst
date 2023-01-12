@@ -3,7 +3,7 @@ changelayer
 
 .. dfhack-tool::
     :summary: Change the material of an entire geology layer.
-    :tags: fort armok map
+    :tags: untested fort armok map
 
 Note that one layer can stretch across many z-levels, and changes to the geology
 layer will affect all surrounding regions, not just your embark! Mineral veins

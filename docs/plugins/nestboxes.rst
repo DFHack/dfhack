@@ -3,7 +3,7 @@ nestboxes
 
 .. dfhack-tool::
     :summary: Protect fertile eggs incubating in a nestbox.
-    :tags: fort auto animals
+    :tags: untested fort auto animals
     :no-command:
 
 This plugin will automatically scan for and forbid fertile eggs incubating in a

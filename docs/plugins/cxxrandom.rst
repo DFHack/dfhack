@@ -3,7 +3,7 @@ cxxrandom
 
 .. dfhack-tool::
     :summary: Provides a Lua API for random distributions.
-    :tags: dev
+    :tags: untested dev
     :no-command:
 
 See `cxxrandom-api` for details.

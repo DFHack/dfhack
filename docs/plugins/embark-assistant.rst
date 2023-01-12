@@ -3,7 +3,7 @@ embark-assistant
 
 .. dfhack-tool::
     :summary: Embark site selection support.
-    :tags: embark fort interface
+    :tags: untested embark fort interface
 
 Run this command while the pre-embark screen is displayed to show extended (and
 reasonably correct) resource information for the embark rectangle as well as

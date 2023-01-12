@@ -5,7 +5,7 @@ search
 
 .. dfhack-tool::
     :summary: Adds search capabilities to the UI.
-    :tags: fort productivity interface
+    :tags: untested fort productivity interface
     :no-command:
 
 Search options are added to the Stocks, Animals, Trading, Stockpile, Noble

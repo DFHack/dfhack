@@ -3,7 +3,7 @@ sort
 
 .. dfhack-tool::
     :summary: Sort lists shown in the DF interface.
-    :tags: fort productivity interface
+    :tags: untested fort productivity interface
     :no-command:
 
 .. dfhack-command:: sort-items

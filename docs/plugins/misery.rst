@@ -3,7 +3,7 @@ misery
 
 .. dfhack-tool::
     :summary: Increase the intensity of negative dwarven thoughts.
-    :tags: fort armok units
+    :tags: untested fort armok auto units
 
 When enabled, negative thoughts that your dwarves have will multiply by the
 specified factor.

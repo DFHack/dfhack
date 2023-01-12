@@ -84,6 +84,9 @@ namespace DFHack
             } tile_mode;
             int8_t tile_fg, tile_bg;
 
+            bool write_to_lower = false;
+            bool keep_lower = false;
+
             bool valid() const { return tile >= 0; }
             bool empty() const { return ch == 0 && tile == 0; }
 

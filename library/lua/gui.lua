@@ -9,7 +9,8 @@ local getval = utils.getval
 
 local to_pen = dfhack.pen.parse
 
-CLEAR_PEN = to_pen{tile=909, ch=32, fg=0, bg=0}
+CLEAR_PEN = to_pen{tile=909, ch=32, fg=0, bg=0, write_to_lower=true}
+KEEP_LOWER_PEN = to_pen{ch=32, fg=0, bg=0, keep_lower=true}
 
 local FAKE_INPUT_KEYS = {
     _MOUSE_L = true,

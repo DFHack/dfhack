@@ -1896,7 +1896,6 @@ static ImVec4 imgui_get_colour_arg(lua_State* state, int index, bool defaults_to
     return ImTuiInterop::colour_interop(std::vector<int>{fg, bg, bold});
 }
 
-//not sure I like this, the usability is kind of poor
 template<typename T>
 static void imgui_decode_multiple_impl(std::tuple<T&> out, lua_State* state, int index, bool allow_varargs)
 {

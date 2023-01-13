@@ -19,8 +19,8 @@ requested width and height.
 
     blueprint is still in the process of being updated for the new version of
     DF. Stockpiles (the "place" phase), zones (the "zone" phase), building
-    (the "query" phase), and game configuration (the "config" phase) are not
-    yet supported.
+    configuration (the "query" phase), and game configuration (the "config"
+    phase) are not yet supported.
 
 Usage
 -----

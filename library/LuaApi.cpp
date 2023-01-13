@@ -177,6 +177,17 @@ static bool get_char_field(lua_State *L, char *pf, int idx, const char *name, ch
     }
 }
 
+static bool get_bool_field(lua_State *L, bool *pf, int idx, const char *name, bool defval) {
+    lua_getfield(L, idx, name);
+    bool nil = lua_isnil(L, -1);
+    if (nil)
+        *pf = defval;
+    else
+        *pf = lua_toboolean(L, -1);
+    lua_pop(L, 1);
+    return !nil;
+}
+
 static void decode_pen(lua_State *L, Pen &pen, int idx)
 {
     idx = lua_absindex(L, idx);
@@ -208,6 +219,9 @@ static void decode_pen(lua_State *L, Pen &pen, int idx)
         pen.tile_mode = (lua_toboolean(L, -1) ? Pen::CharColor : Pen::AsIs);
         lua_pop(L, 1);
     }
+
+    get_bool_field(L, &pen.keep_lower, idx, "keep_lower", false);
+    get_bool_field(L, &pen.write_to_lower, idx, "write_to_lower", false);
 }
 
 /**************************************************

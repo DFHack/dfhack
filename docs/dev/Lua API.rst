@@ -2266,6 +2266,12 @@ a table with the following possible fields:
     Specifies that the tile should be shaded with *fg/bg*.
   ``tile_fg, tile_bg``
     If specified, overrides *tile_color* and supplies shading colors directly.
+  ``keep_lower``
+    If set to true, will not overwrite the background tile when filling in
+    the foreground tile.
+  ``write_to_lower``
+    If set to true, the specified ``tile`` will be written to the background
+    instead of the foreground.
 
 Alternatively, it may be a pre-parsed native object with the following API:
 
@@ -3654,7 +3660,17 @@ Misc
 
 * ``CLEAR_PEN``
 
-  The black pen used to clear the screen.
+  The black pen used to clear the screen. In graphics mode, it will clear the
+  foreground and set the background to the standard black tile.
+
+* ``TRANSPARENT_PEN``
+
+  A pen that will clear all textures from the UI layer, making the tile transparent.
+
+* ``KEEP_LOWER_PEN``
+
+  A pen that will write tiles over existing background tiles instead of clearing
+  them.
 
 * ``simulateInput(screen, keys...)``
 
@@ -4582,8 +4598,8 @@ containing newlines, or a table with the following possible fields:
 
 * ``token.width = ...``
 
-  If specified either as a value or a callback, the text field is padded
-  or truncated to the specified number.
+  If specified either as a value or a callback, the text (or tile) field is
+  padded or truncated to the specified number.
 
 * ``token.pad_char = '?'``
 

@@ -659,7 +659,7 @@ function EditField:postUpdateLayout()
 end
 
 function EditField:onRenderBody(dc)
-    dc:pen(self.text_pen or COLOR_LIGHTCYAN):fill(0,0,dc.width-1,0)
+    dc:pen(self.text_pen or COLOR_LIGHTCYAN)
 
     local cursor_char = '_'
     if not getval(self.active) or not self.focus or gui.blink_visible(300) then
@@ -688,7 +688,6 @@ function EditField:onRenderBody(dc)
                                 end_pos == #txt and '' or string.char(26))
     end
     dc:advance(self.text_offset):string(txt)
-    dc:string((' '):rep(dc.clip_x2 - dc.x))
 end
 
 function EditField:insert(text)
@@ -1102,6 +1101,9 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
                 x = x + 1
                 if dc then
                     dc:tile(nil, token.tile)
+                    if token.width then
+                        dc:advance(token.width-1)
+                    end
                 end
             end
 

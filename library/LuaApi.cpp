@@ -2670,7 +2670,7 @@ static int imgui_menuitem(lua_State* state)
 template<typename T>
 static void imgui_decode_multiple_impl(std::tuple<T>& out, lua_State* state, int index, bool allow_varargs)
 {
-    bool out_of_bounds = abs(index) > lua_gettop(state);
+    bool out_of_bounds = abs(index) > lua_gettop(state) || index >= 0;
 
     if (allow_varargs && out_of_bounds)
         return;
@@ -2695,9 +2695,25 @@ static void imgui_decode_multiple_impl(std::tuple<Head, Tail...>& out, lua_State
 template<typename... T>
 static std::tuple<T...> imgui_decode_multiple(lua_State* state, int last_arg_idx, bool allow_varargs)
 {
+    int num_args = sizeof...(T);
+
     //so, we pass in -1, with an arg size of 2
     //that means the first arg is at -2, and the second arg is at -1
-    int offset = (last_arg_idx - sizeof...(T)) + 1;
+    int offset = (last_arg_idx - num_args) + 1;
+
+    if (allow_varargs)
+    {
+        int top = lua_gettop(state);
+        //say we have 3 real args
+        //and 2 lua args
+        //want to decode the first two real args, which will be situated at -2=first, -1=second, 0=third aka nil
+        //so therefore add num_real_args - top to the offset
+        top = std::min(top, num_args);
+
+        int shift = num_args - top;
+
+        offset += shift;
+    }
 
     std::tuple<T...> result;
     imgui_decode_multiple_impl(result, state, offset, allow_varargs);
@@ -2982,25 +2998,10 @@ static int imgui_setnextwindowpos(lua_State* state)
     int cond = 0;
     ImVec2 pivot;
 
-    if (lua_gettop(state) == 1)
-    {
-        pos = imgui_decode<ImVec2>(state, -1);
-    }
-
-    if (lua_gettop(state) == 2)
-    {
-        pos = imgui_decode<ImVec2>(state, -2);
-        cond = imgui_decode<double>(state, -1);
-    }
-
-    if (lua_gettop(state) == 3)
-    {
-        pos = imgui_decode<ImVec2>(state, -3);
-        cond = imgui_decode<double>(state, -2);
-        pivot = imgui_decode<ImVec2>(state, -1);
-    }
+    std::tie(pos, cond, pivot) = imgui_decode_multiple<ImVec2, double, ImVec2>(state, -1, true);
 
     ImGui::SetNextWindowPos(pos, cond, pivot);
+
     return 0;
 }
 

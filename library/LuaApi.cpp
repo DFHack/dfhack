@@ -1909,6 +1909,7 @@ static void imgui_decode_multiple_impl(std::tuple<T&> out, lua_State* state, int
     std::get<0>(out) = imgui_decode<T>(state, index);
 }
 
+/*
 template<std::size_t... Ns, typename... Ts>
 static auto tuple_tail_impl(std::index_sequence<Ns...>, std::tuple<Ts&...> t)
 {
@@ -1919,6 +1920,32 @@ template <typename... Ts>
 static auto tuple_tail(std::tuple<Ts&...> t)
 {
    return tuple_tail_impl(std::make_index_sequence<sizeof...(Ts) - 1u>(), t);
+}*/
+
+//https://stackoverflow.com/questions/10626856/how-to-split-a-tuple
+//significantly more complicated because of the lack of index_sequence
+//see above for the non insane implementation, delete the below when C++14 turns up
+template<typename Target, typename Tuple, int N, bool end>
+struct tuple_builder
+{
+    template<typename... Args>
+    static Target create(Tuple const& t, Args&&... args)
+    {
+        return tuple_builder<Target,Tuple, N+1, std::tuple_size<Tuple>::value == N+1>::create(t, std::forward<Args>(args)..., std::get<N>(t));
+    }
+};
+
+template<typename Target, typename Tuple, int N>
+struct tuple_builder<Target,Tuple,N,true>
+{
+    template < typename ... Args >
+    static Target create(Tuple const& t, Args&&... args) { return Target(std::forward<Args>(args)...); }
+};
+
+template < typename Head, typename ... Tail >
+std::tuple<Tail...> tuple_tail(std::tuple<Head,Tail...> const& tpl)
+{
+    return tuple_builder<std::tuple<Tail...>, std::tuple<Head,Tail...>, 1, std::tuple_size<std::tuple<Head,Tail...>>::value == 1>::create(tpl);
 }
 
 template<typename Head, typename... Tail>

@@ -6,7 +6,7 @@ tiletypes
 
 .. dfhack-tool::
     :summary: Paints tiles of specified types onto the map.
-    :tags: untested adventure fort armok map
+    :tags: adventure fort armok map
 
 .. dfhack-command:: tiletypes-command
    :summary: Run tiletypes commands.

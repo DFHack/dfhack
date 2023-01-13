@@ -5,7 +5,7 @@ liquids
 
 .. dfhack-tool::
     :summary: Place magma, water or obsidian.
-    :tags: untested adventure fort armok map
+    :tags: adventure fort armok map
 
 .. dfhack-command:: liquids-here
     :summary: Spawn liquids on the selected tile.

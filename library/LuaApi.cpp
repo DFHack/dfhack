@@ -2119,6 +2119,8 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPM(ImGui, EndTabBar),
     WRAPM(ImGui, EndTabItem),
     WRAPN(IsNavVisible, imgui_isnavvisible),
+    WRAPM(ImGui, GetWindowWidth),
+    WRAPM(ImGui, GetWindowHeight),
     { NULL, NULL }
 };
 
@@ -2953,6 +2955,20 @@ static int imgui_iswindowhovered(lua_State* state)
     return 1;
 }
 
+static int imgui_getwindowpos(lua_State* state)
+{
+    ImVec2 result = ImGui::GetWindowPos();
+    imgui_push_generic(state, result);
+    return 1;
+}
+
+static int imgui_getwindowsize(lua_State* state)
+{
+    ImVec2 result = ImGui::GetWindowSize();
+    imgui_push_generic(state, result);
+    return 1;
+}
+
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"Begin", imgui_begin},
     {"SameLine", imgui_sameline},
@@ -2992,6 +3008,8 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"BeginTable", imgui_begintable},
     {"IsWindowFocused", imgui_iswindowfocused},
     {"IsWindowHovered", imgui_iswindowhovered},
+    {"GetWindowPos", imgui_getwindowpos},
+    {"GetWindowSize", imgui_getwindowsize},
     { NULL, NULL }
 };
 

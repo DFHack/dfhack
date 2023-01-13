@@ -2999,6 +2999,29 @@ static int imgui_setnamedwindowfocus(lua_State* state)
     return 0;
 }
 
+static int imgui_getcontentregionavail(lua_State* state)
+{
+    imgui_push_generic(state, ImGui::GetContentRegionAvail());
+    return 1;
+}
+
+static int imgui_getcontentregionmax(lua_State* state)
+{
+    imgui_push_generic(state, ImGui::GetContentRegionMax());
+    return 1;
+}
+
+static int imgui_getwindowcontentregionmin(lua_State* state)
+{
+    imgui_push_generic(state, ImGui::GetWindowContentRegionMin());
+    return 1;
+}
+
+static int imgui_getwindowcontentregionmax(lua_State* state)
+{
+    imgui_push_generic(state, ImGui::GetWindowContentRegionMax());
+    return 1;
+}
 
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"Begin", imgui_begin},
@@ -3054,6 +3077,10 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"SetNamedWindowSize", imgui_setnamedwindowsize},
     {"SetNamedWindowCollapsed", imgui_setnamedwindowcollapsed},
     {"SetNamedWindowFocus", imgui_setnamedwindowfocus},
+    {"GetContentRegionAvail", imgui_getcontentregionavail},
+    {"GetContentRegionMax", imgui_getcontentregionmax},
+    {"GetWindowContentRegionMin", imgui_getwindowcontentregionmin},
+    {"GetWindowContentRegionMax", imgui_getwindowcontentregionmax},
     { NULL, NULL }
 };
 

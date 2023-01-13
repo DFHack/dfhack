@@ -2080,8 +2080,6 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(SetKeyboardFocusHere, imgui_setkeyboardfocushere),
     WRAPM(ImGui, IsWindowAppearing),
     WRAPM(ImGui, IsWindowCollapsed),
-    WRAPM(ImGui, IsWindowFocused),
-    WRAPM(ImGui, IsWindowHovered),
     WRAPN(IsMouseDragging, imgui_ismousedragging),
     WRAPM(ImGui, ResetMouseDragDelta),
     WRAPM(ImGui, IsItemActive),
@@ -2923,6 +2921,38 @@ static int imgui_begintable(lua_State* state)
     return 1;
 }
 
+static int imgui_iswindowfocused(lua_State* state)
+{
+    int flags = 0;
+
+    if (lua_gettop(state) == 1)
+    {
+        flags = imgui_decode<double>(state, -1);
+    }
+
+    bool result = ImGui::IsWindowFocused(flags);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
+static int imgui_iswindowhovered(lua_State* state)
+{
+    int flags = 0;
+
+    if (lua_gettop(state) == 1)
+    {
+        flags = imgui_decode<double>(state, -1);
+    }
+
+    bool result = ImGui::IsWindowHovered(flags);
+
+    imgui_push_generic(state, result);
+
+    return 1;
+}
+
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"Begin", imgui_begin},
     {"SameLine", imgui_sameline},
@@ -2960,6 +2990,8 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"SelectableRef", imgui_selectableref},
     {"Selectable", imgui_selectable},
     {"BeginTable", imgui_begintable},
+    {"IsWindowFocused", imgui_iswindowfocused},
+    {"IsWindowHovered", imgui_iswindowhovered},
     { NULL, NULL }
 };
 

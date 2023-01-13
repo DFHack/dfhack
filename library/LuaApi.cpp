@@ -2830,177 +2830,6 @@ static int imgui_begintable(lua_State* state)
     return 1;
 }
 
-static int imgui_iswindowfocused(lua_State* state)
-{
-    int flags = 0;
-
-    imgui_decode_multiple_into(std::tie(flags), state, -1, true);
-
-    bool result = ImGui::IsWindowFocused(flags);
-
-    imgui_push_generic(state, result);
-
-    return 1;
-}
-
-static int imgui_iswindowhovered(lua_State* state)
-{
-    int flags = 0;
-
-    imgui_decode_multiple_into(std::tie(flags), state, -1, true);
-
-    bool result = ImGui::IsWindowHovered(flags);
-
-    imgui_push_generic(state, result);
-
-    return 1;
-}
-
-static int imgui_getwindowpos(lua_State* state)
-{
-    ImVec2 result = ImGui::GetWindowPos();
-    imgui_push_generic(state, result);
-    return 1;
-}
-
-static int imgui_getwindowsize(lua_State* state)
-{
-    ImVec2 result = ImGui::GetWindowSize();
-    imgui_push_generic(state, result);
-    return 1;
-}
-
-static int imgui_setnextwindowpos(lua_State* state)
-{
-    ImVec2 pos;
-    int cond = 0;
-    ImVec2 pivot;
-
-    imgui_decode_multiple_into(std::tie(pos, cond, pivot), state, -1, true);
-
-    ImGui::SetNextWindowPos(pos, cond, pivot);
-
-    return 0;
-}
-
-static int imgui_setnextwindowsize(lua_State* state)
-{
-    ImVec2 size;
-    int cond = 0;
-
-    imgui_decode_multiple_into(std::tie(size, cond), state, -1, true);
-
-    ImGui::SetNextWindowSize(size);
-    return 0;
-}
-
-static int imgui_setnextwindowcontentsize(lua_State* state)
-{
-    ImVec2 size = imgui_decode<ImVec2>(state, -1);
-
-    ImGui::SetNextWindowContentSize(size);
-
-    return 0;
-}
-
-static int imgui_setnextwindowcollapsed(lua_State* state)
-{
-    bool collapsed = false;
-    int cond = 0;
-
-    imgui_decode_multiple_into(std::tie(collapsed, cond), state, -1, true);
-
-    ImGui::SetNextWindowCollapsed(collapsed, cond);
-    return 0;
-}
-
-static int imgui_setnextwindowscroll(lua_State* state)
-{
-    ImVec2 scroll = imgui_decode<ImVec2>(state, -1);
-
-    ImGui::SetNextWindowScroll(scroll);
-    return 0;
-}
-
-static int imgui_setwindowpos(lua_State* state)
-{
-    ImVec2 pos;
-    int cond = 0;
-
-    imgui_decode_multiple_into(std::tie(pos, cond), state, -1, true);
-
-    ImGui::SetWindowPos(pos, cond);
-    return 0;
-}
-
-static int imgui_setwindowsize(lua_State* state)
-{
-    ImVec2 pos;
-    int cond = 0;
-
-    imgui_decode_multiple_into(std::tie(pos, cond), state, -1, true);
-    ImGui::SetWindowSize(pos, cond);
-    return 0;
-}
-
-static int imgui_setwindowcollapsed(lua_State* state)
-{
-    bool collapsed = false;
-    int cond = 0;
-
-    imgui_decode_multiple_into(std::tie(collapsed, cond), state, -1, true);
-    ImGui::SetWindowCollapsed(collapsed, cond);
-    return 0;
-}
-
-static int imgui_setwindowfocus(lua_State* state)
-{
-    //there are two overloads so have to wrap this manually
-    ImGui::SetWindowFocus();
-    return 0;
-}
-
-static int imgui_setnamedwindowpos(lua_State* state)
-{
-    std::string name;
-    ImVec2 pos;
-    int cond = 0;
-
-    imgui_decode_multiple_into(std::tie(name, pos, cond), state, -1, true);
-    ImGui::SetWindowPos(name.c_str(), pos, cond);
-    return 0;
-}
-
-static int imgui_setnamedwindowsize(lua_State* state)
-{
-    std::string name;
-    ImVec2 pos;
-    int cond = 0;
-
-    imgui_decode_multiple_into(std::tie(name, pos, cond), state, -1, true);
-    ImGui::SetWindowSize(name.c_str(), pos, cond);
-    return 0;
-}
-
-static int imgui_setnamedwindowcollapsed(lua_State* state)
-{
-    std::string name;
-    bool collapsed = false;
-    int cond = 0;
-
-    imgui_decode_multiple_into(std::tie(name, collapsed, cond), state, -1, true);
-    ImGui::SetWindowCollapsed(name.c_str(), collapsed, cond);
-    return 0;
-}
-
-static int imgui_setnamedwindowfocus(lua_State* state)
-{
-    std::string name = imgui_decode<std::string>(state, -1);
-    //there are two overloads so have to wrap this manually
-    ImGui::SetWindowFocus(name.c_str());
-    return 0;
-}
-
 template<typename T>
 static T imgui_arg_shim(const T& in)
 {
@@ -3012,13 +2841,34 @@ static const char* imgui_arg_shim(const std::string& str)
     return str.c_str();
 }
 
-#define IMGUI_SIMPLE_GETE(name, extra) int imgui_##name##extra(lua_State* state){return imgui_push_generic(state, ImGui::name());}
-#define IMGUI_SIMPLE_GET(name) IMGUI_SIMPLE_GETE(name,)
+#define IMGUI_SIMPLE_GETE(name, extra) int imgui_##extra(lua_State* state){return imgui_push_generic(state, ImGui::name());}
+#define IMGUI_SIMPLE_GET(name) IMGUI_SIMPLE_GETE(name,name)
+#define IMGUI_SIMPLE_GET1(name, t1) int imgui_##name(lua_State* state){auto t = t1; imgui_decode_multiple_into(std::tie(t), state, -1, true); return imgui_push_generic(state, ImGui::name(imgui_arg_shim(t))); }
 #define IMGUI_SIMPLE(name) int imgui_##name(lua_State* state){ImGui::name(); return 0;}
-#define IMGUI_SIMPLE_SET1E(name, t1, extra) int imgui_##name##extra(lua_State* state){auto t = t1; imgui_decode_multiple_into(std::tie(t), state, -1, true); ImGui::name(imgui_arg_shim(t)); return 0;}
-#define IMGUI_SIMPLE_SET2E(name, t1, t2, extra) int imgui_##name##extra(lua_State* state){auto tl1 = t1; auto tl2 = t2; imgui_decode_multiple_into(std::tie(tl1, tl2), state, -1, true); ImGui::name(imgui_arg_shim(tl1), imgui_arg_shim(tl2)); return 0;}
-#define IMGUI_SIMPLE_SET1(name, t1) IMGUI_SIMPLE_SET1E(name, t1,)
-#define IMGUI_SIMPLE_SET2(name, t1, t2) IMGUI_SIMPLE_SET2E(name, t1, t2,)
+#define IMGUI_SIMPLE_SET1E(name, t1, extra) int imgui_##extra(lua_State* state){auto t = t1; imgui_decode_multiple_into(std::tie(t), state, -1, true); ImGui::name(imgui_arg_shim(t)); return 0;}
+#define IMGUI_SIMPLE_SET2E(name, t1, t2, extra) int imgui_##extra(lua_State* state){auto tl1 = t1; auto tl2 = t2; imgui_decode_multiple_into(std::tie(tl1, tl2), state, -1, true); ImGui::name(imgui_arg_shim(tl1), imgui_arg_shim(tl2)); return 0;}
+#define IMGUI_SIMPLE_SET3E(name, t1, t2, t3, extra) int imgui_##extra(lua_State* state){auto tl1 = t1; auto tl2 = t2; auto tl3 = t3; imgui_decode_multiple_into(std::tie(tl1, tl2, tl3), state, -1, true); ImGui::name(imgui_arg_shim(tl1), imgui_arg_shim(tl2), imgui_arg_shim(tl3)); return 0;}
+#define IMGUI_SIMPLE_SET1(name, t1) IMGUI_SIMPLE_SET1E(name, t1, name)
+#define IMGUI_SIMPLE_SET2(name, t1, t2) IMGUI_SIMPLE_SET2E(name, t1, t2, name)
+#define IMGUI_SIMPLE_SET3(name, t1, t2, t3) IMGUI_SIMPLE_SET3E(name, t1, t2, t3, name)
+
+IMGUI_SIMPLE_GET1(IsWindowFocused, 0);
+IMGUI_SIMPLE_GET1(IsWindowHovered, 0);
+IMGUI_SIMPLE_GET(GetWindowPos);
+IMGUI_SIMPLE_GET(GetWindowSize);
+IMGUI_SIMPLE_SET3(SetNextWindowPos, ImVec2(0,0), 0, ImVec2(0,0));
+IMGUI_SIMPLE_SET2(SetNextWindowSize, ImVec2(0,0), 0);
+IMGUI_SIMPLE_SET1(SetNextWindowContentSize, ImVec2(0,0));
+IMGUI_SIMPLE_SET2(SetNextWindowCollapsed, false, 0);
+IMGUI_SIMPLE_SET1(SetNextWindowScroll, ImVec2(0,0));
+IMGUI_SIMPLE_SET2(SetWindowPos, ImVec2(0,0), 0);
+IMGUI_SIMPLE_SET2(SetWindowSize, ImVec2(0,0), 0);
+IMGUI_SIMPLE_SET2(SetWindowCollapsed, false, 0);
+IMGUI_SIMPLE(SetWindowFocus);
+IMGUI_SIMPLE_SET3E(SetWindowPos, std::string(), ImVec2(0,0), 0, SetNamedWindowPos);
+IMGUI_SIMPLE_SET3E(SetWindowSize, std::string(), ImVec2(0,0), 0, SetNamedWindowSize);
+IMGUI_SIMPLE_SET3E(SetWindowCollapsed, std::string(), false, 0, SetNamedWindowCollapsed);
+IMGUI_SIMPLE_SET1E(SetWindowFocus, std::string(), SetNamedWindowFocus);
 
 IMGUI_SIMPLE_GET(GetContentRegionAvail);
 IMGUI_SIMPLE_GET(GetContentRegionMax);
@@ -3032,8 +2882,8 @@ IMGUI_SIMPLE_SET1(SetScrollHereY, 0.5f);
 IMGUI_SIMPLE_SET2(SetScrollFromPosX, 0.f, 0.5f);
 IMGUI_SIMPLE_SET2(SetScrollFromPosY, 0.f, 0.5f);
 
-IMGUI_SIMPLE_SET2E(PushStyleVar, 0, 0.f, f);
-IMGUI_SIMPLE_SET2E(PushStyleVar, 0, ImVec2(0,0), v);
+IMGUI_SIMPLE_SET2E(PushStyleVar, 0, 0.f, PushStyleVarf);
+IMGUI_SIMPLE_SET2E(PushStyleVar, 0, ImVec2(0,0), PushStyleVarv);
 
 IMGUI_SIMPLE_SET1(PopStyleVar, 1);
 IMGUI_SIMPLE_SET1(PopStyleColor, 1);
@@ -3091,27 +2941,22 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"SelectableRef", imgui_selectableref},
     {"Selectable", imgui_selectable},
     {"BeginTable", imgui_begintable},
-    {"IsWindowFocused", imgui_iswindowfocused},
-    {"IsWindowHovered", imgui_iswindowhovered},
-    {"GetWindowPos", imgui_getwindowpos},
-    {"GetWindowSize", imgui_getwindowsize},
-    {"SetNextWindowPos", imgui_setnextwindowpos},
-    {"SetNextWindowSize", imgui_setnextwindowsize},
-    {"SetNextWindowContentSize", imgui_setnextwindowcontentsize},
-    {"SetNextWindowCollapsed", imgui_setnextwindowcollapsed},
-    {"SetNextWindowScroll", imgui_setnextwindowscroll},
-    {"SetWindowPos", imgui_setwindowpos},
-    {"SetWindowSize", imgui_setwindowsize},
-    {"SetWindowCollapsed", imgui_setwindowcollapsed},
-    {"SetWindowFocus", imgui_setwindowfocus},
-    {"SetNamedWindowPos", imgui_setnamedwindowpos},
-    {"SetNamedWindowSize", imgui_setnamedwindowsize},
-    {"SetNamedWindowCollapsed", imgui_setnamedwindowcollapsed},
-    {"SetNamedWindowFocus", imgui_setnamedwindowfocus},
-    {"GetContentRegionAvail", imgui_GetContentRegionAvail},
-    {"GetContentRegionMax", imgui_GetContentRegionMax},
-    {"GetWindowContentRegionMin", imgui_GetWindowContentRegionMin},
-    {"GetWindowContentRegionMax", imgui_GetWindowContentRegionMax},
+    IMGUI_NAME_FUNC(IsWindowFocused),
+    IMGUI_NAME_FUNC(IsWindowHovered),
+    IMGUI_NAME_FUNC(GetWindowPos),
+    IMGUI_NAME_FUNC(GetWindowSize),
+    IMGUI_NAME_FUNC(SetNextWindowSize),
+    IMGUI_NAME_FUNC(SetNextWindowContentSize),
+    IMGUI_NAME_FUNC(SetNextWindowCollapsed),
+    IMGUI_NAME_FUNC(SetNextWindowScroll),
+    IMGUI_NAME_FUNC(SetWindowPos),
+    IMGUI_NAME_FUNC(SetWindowSize),
+    IMGUI_NAME_FUNC(SetNamedWindowCollapsed),
+    IMGUI_NAME_FUNC(SetNamedWindowFocus),
+    IMGUI_NAME_FUNC(GetContentRegionAvail),
+    IMGUI_NAME_FUNC(GetContentRegionMax),
+    IMGUI_NAME_FUNC(GetWindowContentRegionMin),
+    IMGUI_NAME_FUNC(GetWindowContentRegionMax),
     IMGUI_NAME_FUNC(GetContentRegionAvail),
     IMGUI_NAME_FUNC(GetContentRegionMax),
     IMGUI_NAME_FUNC(GetWindowContentRegionMin),

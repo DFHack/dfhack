@@ -2640,20 +2640,6 @@ static int imgui_menuitem(lua_State* state)
     return 1;
 }
 
-static int imgui_begintabbar(lua_State* state)
-{
-    std::string str_id;
-    int flags = 0;
-
-    imgui_decode_multiple_into(std::tie(str_id, flags), state, -1, true);
-
-    bool result = ImGui::BeginTabBar(str_id.c_str(), flags);
-
-    imgui_push_generic(state, result);
-
-    return 1;
-}
-
 static int imgui_begintabitem(lua_State* state)
 {
     std::string label;
@@ -2670,20 +2656,6 @@ static int imgui_begintabitem(lua_State* state)
         result = ImGui::BeginTabItem(label.c_str(), nullptr, flags);
 
     imgui_update_ref(state, p_open);
-    imgui_push_generic(state, result);
-
-    return 1;
-}
-
-static int imgui_tabitembutton(lua_State* state)
-{
-    std::string label;
-    int flags = 0;
-
-    imgui_decode_multiple_into(std::tie(label, flags), state, -1, true);
-
-    bool result = ImGui::TabItemButton(label.c_str(), flags);
-
     imgui_push_generic(state, result);
 
     return 1;
@@ -2779,6 +2751,7 @@ static const char* imgui_arg_shim(const std::string& str)
 #define IMGUI_SIMPLE_GETE(name, extra) int imgui_##extra(lua_State* state){return imgui_push_generic(state, ImGui::name());}
 #define IMGUI_SIMPLE_GET(name) IMGUI_SIMPLE_GETE(name,name)
 #define IMGUI_SIMPLE_GET1(name, t1) int imgui_##name(lua_State* state){auto t = t1; imgui_decode_multiple_into(std::tie(t), state, -1, true); return imgui_push_generic(state, ImGui::name(imgui_arg_shim(t))); }
+#define IMGUI_SIMPLE_GET2(name, t1, t2) int imgui_##name(lua_State* state){auto tl1 = t1; auto tl2 = t2; imgui_decode_multiple_into(std::tie(tl1, tl2), state, -1, true); return imgui_push_generic(state, ImGui::name(imgui_arg_shim(tl1), imgui_arg_shim(tl2)));}
 #define IMGUI_SIMPLE(name) int imgui_##name(lua_State* state){ImGui::name(); return 0;}
 #define IMGUI_SIMPLE_SET1E(name, t1, extra) int imgui_##extra(lua_State* state){auto t = t1; imgui_decode_multiple_into(std::tie(t), state, -1, true); ImGui::name(imgui_arg_shim(t)); return 0;}
 #define IMGUI_SIMPLE_SET2E(name, t1, t2, extra) int imgui_##extra(lua_State* state){auto tl1 = t1; auto tl2 = t2; imgui_decode_multiple_into(std::tie(tl1, tl2), state, -1, true); ImGui::name(imgui_arg_shim(tl1), imgui_arg_shim(tl2)); return 0;}
@@ -2854,6 +2827,9 @@ IMGUI_SIMPLE_SET1(SetKeyboardFocusHere, 0);
 IMGUI_SIMPLE_GET1(IsMouseDragging, 0);
 IMGUI_SIMPLE(TableNextRow);
 
+IMGUI_SIMPLE_GET2(TabItemButton, std::string(), 0);
+IMGUI_SIMPLE_GET2(BeginTabBar, std::string(), 0);
+
 #define IMGUI_NAME_FUNC(name) {#name, imgui_##name}
 
 static const luaL_Reg dfhack_imgui_funcs[] = {
@@ -2886,9 +2862,7 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"IsKeyReleased", imgui_iskeyreleased},
     {"BeginMenu", imgui_beginmenu},
     {"MenuItem", imgui_menuitem},
-    {"BeginTabBar", imgui_begintabbar},
     {"BeginTabItem", imgui_begintabitem},
-    {"TabItemButton", imgui_tabitembutton},
     {"Shortcut", imgui_shortcut},
     {"GetKeyDisplay", imgui_getkeydisplay},
     {"SelectableRef", imgui_selectableref},
@@ -2940,6 +2914,8 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     IMGUI_NAME_FUNC(IsMouseDragging),
     IMGUI_NAME_FUNC(TableNextRow),
     IMGUI_NAME_FUNC(Button),
+    IMGUI_NAME_FUNC(TabItemButton),
+    IMGUI_NAME_FUNC(BeginTabBar),
     { NULL, NULL }
 };
 

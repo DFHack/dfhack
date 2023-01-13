@@ -2668,32 +2668,39 @@ static int imgui_menuitem(lua_State* state)
 
 //not sure I like this, the usability is kind of poor
 template<typename T>
-static void imgui_decode_multiple_impl(std::tuple<T>& out, lua_State* state, int index)
+static void imgui_decode_multiple_impl(std::tuple<T>& out, lua_State* state, int index, bool allow_varargs)
 {
+    bool out_of_bounds = abs(index) > lua_gettop(state);
+
+    if (allow_varargs && out_of_bounds)
+        return;
+
+    assert(!out_of_bounds);
+
     std::get<0>(out) = imgui_decode<T>(state, index);
 }
 
 template<typename Head, typename... Tail>
-static void imgui_decode_multiple_impl(std::tuple<Head, Tail...>& out, lua_State* state, int index)
+static void imgui_decode_multiple_impl(std::tuple<Head, Tail...>& out, lua_State* state, int index, bool allow_varargs)
 {
     std::tuple<Head> p1;
-    imgui_decode_multiple_impl(p1, state, index);
+    imgui_decode_multiple_impl(p1, state, index, allow_varargs);
 
     std::tuple<Tail...> p2;
-    imgui_decode_multiple_impl(p2, state, index+1);
+    imgui_decode_multiple_impl(p2, state, index+1, allow_varargs);
 
     out = std::tuple_cat(p1, p2);
 }
 
 template<typename... T>
-static std::tuple<T...> imgui_decode_multiple(lua_State* state, int last_arg_idx)
+static std::tuple<T...> imgui_decode_multiple(lua_State* state, int last_arg_idx, bool allow_varargs)
 {
     //so, we pass in -1, with an arg size of 2
     //that means the first arg is at -2, and the second arg is at -1
     int offset = (last_arg_idx - sizeof...(T)) + 1;
 
     std::tuple<T...> result;
-    imgui_decode_multiple_impl(result, state, offset);
+    imgui_decode_multiple_impl(result, state, offset, allow_varargs);
     return result;
 }
 
@@ -2709,7 +2716,7 @@ static int imgui_begintabbar(lua_State* state)
 
     if (lua_gettop(state) == 2)
     {
-        std::tie(str_id, flags) = imgui_decode_multiple<std::string, double>(state, -1);
+        std::tie(str_id, flags) = imgui_decode_multiple<std::string, double>(state, -1, false);
     }
 
     bool result = ImGui::BeginTabBar(str_id.c_str(), flags);

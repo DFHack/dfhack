@@ -2062,16 +2062,6 @@ static void imgui_bullettext(std::string text)
     ImGui::BulletText("%s", text.c_str());
 }
 
-static bool imgui_button(std::string name)
-{
-    return ImGui::Button(name.c_str());
-}
-
-static bool imgui_ismouseclicked(int button)
-{
-    return ImGui::IsMouseClicked(button);
-}
-
 //This should probably go somewhere else long term, probably imtuiimpl.cpp
 //Could also stick these directly on the global
 static int imgui_style_index(std::string name)
@@ -2086,16 +2076,6 @@ static int imgui_style_index(std::string name)
 
     assert(false);
     return -1;
-}
-
-static void imgui_setkeyboardfocushere(int offset)
-{
-    ImGui::SetKeyboardFocusHere(offset);
-}
-
-static bool imgui_ismousedragging(int button)
-{
-    return ImGui::IsMouseDragging(button);
 }
 
 static void imgui_settooltip(std::string text)
@@ -2157,11 +2137,6 @@ static void imgui_navcapture(bool capture)
     }
 }
 
-static void imgui_tablenextrow()
-{
-    ImGui::TableNextRow();
-}
-
 static void imgui_eatkeyboardinputs()
 {
     ImTuiInterop::viewscreen::suppress_next_keyboard_feed_upwards();
@@ -2187,18 +2162,14 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(TextWrapped, imgui_textwrapped),
     WRAPN(LabelText, imgui_labeltext),
     WRAPN(BulletText, imgui_bullettext),
-    WRAPN(Button, imgui_button),
     WRAPM(ImGui, NewLine),
     WRAPN(StyleIndex, imgui_style_index),
     WRAPM(ImGui, IsMouseDown),
-    WRAPN(IsMouseClicked, imgui_ismouseclicked),
     WRAPM(ImGui, IsMouseReleased),
     WRAPM(ImGui, IsMouseDoubleClicked),
     WRAPM(ImGui, SetItemDefaultFocus),
-    WRAPN(SetKeyboardFocusHere, imgui_setkeyboardfocushere),
     WRAPM(ImGui, IsWindowAppearing),
     WRAPM(ImGui, IsWindowCollapsed),
-    WRAPN(IsMouseDragging, imgui_ismousedragging),
     WRAPM(ImGui, ResetMouseDragDelta),
     WRAPM(ImGui, IsItemActive),
     WRAPM(ImGui, IsItemFocused),
@@ -2224,7 +2195,6 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(AddNavGate, imgui_addnavgate),
     WRAPN(NavCapture, imgui_navcapture),
     WRAPM(ImGui, EndTable),
-    WRAPN(TableNextRow, imgui_tablenextrow),
     WRAPM(ImGui, TableNextColumn),
     WRAPM(ImGui, TableSetColumnIndex),
     WRAPM(ImGui, TableHeadersRow),
@@ -2863,6 +2833,12 @@ IMGUI_SIMPLE_GET1(GetMouseDragDelta, 0);
 
 IMGUI_SIMPLE_SET2(SameLine, 0.f, -1.f);
 
+IMGUI_SIMPLE_GET1(Button, std::string());
+IMGUI_SIMPLE_GET1(IsMouseClicked, 0);
+IMGUI_SIMPLE_SET1(SetKeyboardFocusHere, 0);
+IMGUI_SIMPLE_GET1(IsMouseDragging, 0);
+IMGUI_SIMPLE(TableNextRow);
+
 #define IMGUI_NAME_FUNC(name) {#name, imgui_##name}
 
 static const luaL_Reg dfhack_imgui_funcs[] = {
@@ -2941,6 +2917,12 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     IMGUI_NAME_FUNC(CalcItemWidth),
     IMGUI_NAME_FUNC(PushTextWrapPos),
     IMGUI_NAME_FUNC(PopTextWrapPos),
+    IMGUI_NAME_FUNC(Button),
+    IMGUI_NAME_FUNC(IsMouseClicked),
+    IMGUI_NAME_FUNC(SetKeyboardFocusHere),
+    IMGUI_NAME_FUNC(IsMouseDragging),
+    IMGUI_NAME_FUNC(TableNextRow),
+    IMGUI_NAME_FUNC(Button),
     { NULL, NULL }
 };
 

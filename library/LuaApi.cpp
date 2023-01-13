@@ -2121,6 +2121,7 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(IsNavVisible, imgui_isnavvisible),
     WRAPM(ImGui, GetWindowWidth),
     WRAPM(ImGui, GetWindowHeight),
+    WRAPM(ImGui, SetNextWindowFocus),
     { NULL, NULL }
 };
 
@@ -3005,6 +3006,123 @@ static int imgui_setnextwindowpos(lua_State* state)
     return 0;
 }
 
+static int imgui_setnextwindowsize(lua_State* state)
+{
+    ImVec2 size;
+    int cond = 0;
+
+    std::tie(size, cond) = imgui_decode_multiple<ImVec2, double>(state, -1, true);
+
+    ImGui::SetNextWindowSize(size);
+    return 0;
+}
+
+static int imgui_setnextwindowcontentsize(lua_State* state)
+{
+    ImVec2 size = imgui_decode<ImVec2>(state, -1);
+
+    ImGui::SetNextWindowContentSize(size);
+
+    return 0;
+}
+
+static int imgui_setnextwindowcollapsed(lua_State* state)
+{
+    bool collapsed = false;
+    int cond;
+
+    std::tie(collapsed, cond) = imgui_decode_multiple<bool, double>(state, -1, true);
+    ImGui::SetNextWindowCollapsed(collapsed, cond);
+    return 0;
+}
+
+static int imgui_setnextwindowscroll(lua_State* state)
+{
+    ImVec2 scroll = imgui_decode<ImVec2>(state, -1);
+
+    ImGui::SetNextWindowScroll(scroll);
+    return 0;
+}
+
+static int imgui_setwindowpos(lua_State* state)
+{
+    ImVec2 pos;
+    int cond = 0;
+
+    std::tie(pos, cond) = imgui_decode_multiple<ImVec2, double>(state, -1, true);
+    ImGui::SetWindowPos(pos, cond);
+    return 0;
+}
+
+static int imgui_setwindowsize(lua_State* state)
+{
+    ImVec2 pos;
+    int cond = 0;
+
+    std::tie(pos, cond) = imgui_decode_multiple<ImVec2, double>(state, -1, true);
+    ImGui::SetWindowSize(pos, cond);
+    return 0;
+}
+
+static int imgui_setwindowcollapsed(lua_State* state)
+{
+    bool collapsed = false;
+    int cond = 0;
+
+    std::tie(collapsed, cond) = imgui_decode_multiple<bool, double>(state, -1, true);
+    ImGui::SetWindowCollapsed(collapsed, cond);
+    return 0;
+}
+
+static int imgui_setwindowfocus(lua_State* state)
+{
+    //there are two overloads so have to wrap this manually
+    ImGui::SetWindowFocus();
+    return 0;
+}
+
+static int imgui_setnamedwindowpos(lua_State* state)
+{
+    std::string name;
+    ImVec2 pos;
+    int cond = 0;
+
+    std::tie(name, pos, cond) = imgui_decode_multiple<std::string, ImVec2, double>(state, -1, true);
+    ImGui::SetWindowPos(name.c_str(), pos, cond);
+    return 0;
+}
+
+static int imgui_setnamedwindowsize(lua_State* state)
+{
+    std::string name;
+    ImVec2 pos;
+    int cond = 0;
+
+    std::tie(name, pos, cond) = imgui_decode_multiple<std::string, ImVec2, double>(state, -1, true);
+    ImGui::SetWindowSize(name.c_str(), pos, cond);
+    return 0;
+}
+
+static int imgui_setnamedwindowcollapsed(lua_State* state)
+{
+    std::string name;
+    bool collapsed = false;
+    int cond = 0;
+
+    std::tie(name, collapsed, cond) = imgui_decode_multiple<std::string, bool, double>(state, -1, true);
+    ImGui::SetWindowCollapsed(name.c_str(), collapsed, cond);
+    return 0;
+}
+
+static int imgui_setnamedwindowfocus(lua_State* state)
+{
+    std::string name = imgui_decode<std::string>(state, -1);
+    //there are two overloads so have to wrap this manually
+    ImGui::SetWindowFocus(name.c_str());
+    return 0;
+}
+
+
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"Begin", imgui_begin},
     {"SameLine", imgui_sameline},
@@ -3047,6 +3165,18 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"GetWindowPos", imgui_getwindowpos},
     {"GetWindowSize", imgui_getwindowsize},
     {"SetNextWindowPos", imgui_setnextwindowpos},
+    {"SetNextWindowSize", imgui_setnextwindowsize},
+    {"SetNextWindowContentSize", imgui_setnextwindowcontentsize},
+    {"SetNextWindowCollapsed", imgui_setnextwindowcollapsed},
+    {"SetNextWindowScroll", imgui_setnextwindowscroll},
+    {"SetWindowPos", imgui_setwindowpos},
+    {"SetWindowSize", imgui_setwindowsize},
+    {"SetWindowCollapsed", imgui_setwindowcollapsed},
+    {"SetWindowFocus", imgui_setwindowfocus},
+    {"SetNamedWindowPos", imgui_setnamedwindowpos},
+    {"SetNamedWindowSize", imgui_setnamedwindowsize},
+    {"SetNamedWindowCollapsed", imgui_setnamedwindowcollapsed},
+    {"SetNamedWindowFocus", imgui_setnamedwindowfocus},
     { NULL, NULL }
 };
 

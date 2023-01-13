@@ -2271,18 +2271,6 @@ static int imgui_begin(lua_State* state)
     return 1;
 }
 
-static int imgui_sameline(lua_State* state)
-{
-    float offset_from_start_x = 0;
-    float spacing = -1.f;
-
-    imgui_decode_multiple_into(std::tie(offset_from_start_x, spacing), state, -1, true);
-
-    ImGui::SameLine(offset_from_start_x, spacing);
-
-    return 0;
-}
-
 //The reason for imgui_ref and imgui_get are because you cannot pass in values by reference in
 //scripting languages, so the convention of passing a table with the real value set in the 0th element
 //of the table is used
@@ -2399,26 +2387,6 @@ static int imgui_getmouseworldpos(lua_State* state)
     {
         return 0;
     }
-}
-
-static int imgui_getmousepos(lua_State* state)
-{
-    ImVec2 pos = ImGui::GetMousePos();
-
-    imgui_push_generic(state, pos);
-
-    return 1;
-}
-
-static int imgui_getmousedragdelta(lua_State* state)
-{
-    int button = lua_tointeger(state, -1);
-
-    ImVec2 diff = ImGui::GetMouseDragDelta(button);
-
-    imgui_push_generic(state, diff);
-
-    return 1;
 }
 
 static int imgui_getdisplaysize(lua_State* state)
@@ -2561,20 +2529,6 @@ static int imgui_pushstylecolor(lua_State* state)
 
     ImGui::PushStyleColor(index, col);
     return 0;
-}
-
-static int imgui_isitemhovered(lua_State* state)
-{
-    int flags = 0;
-
-    //this is kind of weird, but its because it returns a tuple
-    imgui_decode_multiple_into(std::tie(flags), state, -1, true);
-
-    bool result = ImGui::IsItemHovered(flags);
-
-    imgui_push_generic(state, result);
-
-    return 1;
 }
 
 static int imgui_ismousehoveringrect(lua_State* state)
@@ -2902,18 +2856,25 @@ IMGUI_SIMPLE(CalcItemWidth);
 IMGUI_SIMPLE_SET1(PushTextWrapPos, 0.f);
 IMGUI_SIMPLE(PopTextWrapPos);
 
+IMGUI_SIMPLE_GET1(IsItemHovered, 0);
+
+IMGUI_SIMPLE_GET(GetMousePos);
+IMGUI_SIMPLE_GET1(GetMouseDragDelta, 0);
+
+IMGUI_SIMPLE_SET2(SameLine, 0.f, -1.f);
+
 #define IMGUI_NAME_FUNC(name) {#name, imgui_##name}
 
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"Begin", imgui_begin},
-    {"SameLine", imgui_sameline},
+    IMGUI_NAME_FUNC(SameLine),
     {"Checkbox", imgui_checkbox},
     {"Ref", imgui_ref},
     {"Get", imgui_get},
     {"InputText", imgui_inputtext},
     {"GetMouseWorldPos", imgui_getmouseworldpos},
-    {"GetMousePos", imgui_getmousepos},
-    {"GetMouseDragDelta", imgui_getmousedragdelta},
+    IMGUI_NAME_FUNC(GetMousePos),
+    IMGUI_NAME_FUNC(GetMouseDragDelta),
     {"GetDisplaySize", imgui_getdisplaysize},
     {"AddRect", imgui_addrect},
     {"AddRectFilled", imgui_addrectfilled},
@@ -2925,7 +2886,7 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"TextBackgroundColored", imgui_textbackgroundcolored},
     {"AddTextBackgroundColoredAbsolute", imgui_addtextbackgroundcoloredabsolute},
     {"PushStyleColor", imgui_pushstylecolor},
-    {"IsItemHovered", imgui_isitemhovered},
+    IMGUI_NAME_FUNC(IsItemHovered),
     {"IsMouseHoveringRect", imgui_ismousehoveringrect},
     {"TableSetupColumn", imgui_tablesetupcolumn},
     {"IsKeyDown", imgui_iskeydown},

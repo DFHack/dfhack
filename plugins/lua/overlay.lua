@@ -43,7 +43,12 @@ end
 
 local function triggered_screen_has_lock()
     if not trigger_lock_holder_screen then return false end
-    if trigger_lock_holder_screen:isActive() then return true end
+    if trigger_lock_holder_screen:isActive() then
+        if trigger_lock_holder_screen.raise then
+            trigger_lock_holder_screen:raise()
+        end
+        return true
+    end
     return register_trigger_lock_screen(nil, nil)
 end
 
@@ -429,9 +434,8 @@ local function _update_viewscreen_widgets(vs_name, vs, now_ms)
     return now_ms
 end
 
--- not subject to trigger lock since these widgets are already filtered by
--- viewscreen
 function update_viewscreen_widgets(vs_name, vs)
+    if triggered_screen_has_lock() then return end
     local now_ms = _update_viewscreen_widgets(vs_name, vs, nil)
     _update_viewscreen_widgets('all', vs, now_ms)
 end

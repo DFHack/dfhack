@@ -1642,6 +1642,20 @@ static void imgui_decode_impl(lua_State* state, double& out, int index)
     lua_pop(state, 1);
 }
 
+static void imgui_decode_impl(lua_State* state, float& out, int index)
+{
+    lua_pushvalue(state, index);
+    out = lua_tonumber(state, -1);
+    lua_pop(state, 1);
+}
+
+static void imgui_decode_impl(lua_State* state, int& out, int index)
+{
+    lua_pushvalue(state, index);
+    out = lua_tonumber(state, -1);
+    lua_pop(state, 1);
+}
+
 static void imgui_decode_impl(lua_State* state, std::string& out, int index)
 {
     lua_pushvalue(state, index);
@@ -1823,6 +1837,15 @@ static void imgui_encode_into_ref(lua_State* state, const T& val, int index)
     lua_pop(state, 1);
 }
 
+template<typename T>
+static void imgui_update_ref(lua_State* state, imgui_ref_tag<T>& val)
+{
+    if (!val.decoded)
+        return;
+
+    imgui_encode_into_ref(state, val.val, val.index);
+}
+
 static ImVec4 imgui_get_colour_arg(lua_State* state, int index, bool defaults_to_fg)
 {
     if (lua_isnumber(state, index))
@@ -1872,6 +1895,73 @@ static ImVec4 imgui_get_colour_arg(lua_State* state, int index, bool defaults_to
 
     return ImTuiInterop::colour_interop(std::vector<int>{fg, bg, bold});
 }
+
+//not sure I like this, the usability is kind of poor
+template<typename T>
+static void imgui_decode_multiple_impl(std::tuple<T&> out, lua_State* state, int index, bool allow_varargs)
+{
+    bool out_of_bounds = abs(index) > lua_gettop(state) || index >= 0;
+
+    if (allow_varargs && out_of_bounds)
+        return;
+
+    assert(!out_of_bounds);
+
+    std::get<0>(out) = imgui_decode<T>(state, index);
+}
+
+template<std::size_t... Ns, typename... Ts>
+auto tuple_tail_impl(std::index_sequence<Ns...>, std::tuple<Ts&...> t)
+{
+   return std::tie(std::get<Ns+1u>(t)...);
+}
+
+template <typename... Ts>
+auto tuple_tail(std::tuple<Ts&...> t)
+{
+   return tuple_tail_impl(std::make_index_sequence<sizeof...(Ts) - 1u>(), t);
+}
+
+template<typename Head, typename... Tail>
+static void imgui_decode_multiple_impl(std::tuple<Head&, Tail&...> out, lua_State* state, int index, bool allow_varargs)
+{
+    imgui_decode_multiple_impl(std::tie(std::get<0>(out)), state, index, allow_varargs);
+    imgui_decode_multiple_impl(tuple_tail(out), state, index+1, allow_varargs);
+}
+
+template<typename... T>
+static void imgui_decode_multiple_into(std::tuple<T&...> out, lua_State* state, int last_arg_idx, bool allow_varargs)
+{
+    int num_args = sizeof...(T);
+
+    //so, we pass in -1, with an arg size of 2
+    //that means the first arg is at -2, and the second arg is at -1
+    int offset = (last_arg_idx - num_args) + 1;
+
+    if (allow_varargs)
+    {
+        int top = lua_gettop(state);
+        //say we have 3 real args
+        //and 2 lua args
+        //want to decode the first two real args, which will be situated at -2=first, -1=second, 0=third aka nil
+        //so therefore add num_real_args - top to the offset
+        top = std::min(top, num_args);
+
+        int shift = num_args - top;
+
+        offset += shift;
+    }
+
+    imgui_decode_multiple_impl(out, state, offset, allow_varargs);
+}
+
+/*template<typename... T>
+static std::tuple<T...> imgui_decode_multiple(lua_State* state, int last_arg_idx, bool allow_varargs)
+{
+    std::tuple<T...> result;
+    imgui_decode_multiple_into(result, state, last_arg_idx, allow_varargs);
+    return result;
+}*/
 
 static std::map<std::string, int> imgui_key_name_to_key_code_impl()
 {
@@ -2127,29 +2217,11 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
 
 static int imgui_begin(lua_State* state)
 {
-    int top = lua_gettop(state);
-
     std::string name;
     imgui_ref_tag<bool> is_open_value;
-    ImGuiWindowFlags flags = 0;
+    int flags = 0;
 
-    if (top == 1)
-    {
-        name = imgui_decode<std::string>(state, -1);
-    }
-
-    if (top == 2)
-    {
-        name = imgui_decode<std::string>(state, -2);
-        is_open_value = imgui_decode<imgui_ref_tag<bool> >(state, -1);
-    }
-
-    if (top == 3)
-    {
-        name = imgui_decode<std::string>(state, -3);
-        is_open_value = imgui_decode<imgui_ref_tag<bool> >(state, -2);
-        flags = static_cast<ImGuiWindowFlags>(imgui_decode<double>(state, -1));
-    }
+    imgui_decode_multiple_into(std::tie(name, is_open_value, flags), state, -1, true);
 
     bool result = false;
 
@@ -2157,7 +2229,7 @@ static int imgui_begin(lua_State* state)
     {
         result = ImGui::Begin(name.c_str(), &is_open_value.val, flags);
 
-        imgui_encode_into_ref(state, is_open_value.val, is_open_value.index);
+        imgui_update_ref(state, is_open_value);
     }
     else
     {
@@ -2173,21 +2245,10 @@ static int imgui_begin(lua_State* state)
 
 static int imgui_sameline(lua_State* state)
 {
-    int args = lua_gettop(state);
-
     float offset_from_start_x = 0;
     float spacing = -1.f;
 
-    if (args == 1)
-    {
-        offset_from_start_x = lua_tonumber(state, -1);
-    }
-
-    if (args == 2)
-    {
-        offset_from_start_x = lua_tonumber(state, -2);
-        spacing = lua_tonumber(state, -1);
-    }
+    imgui_decode_multiple_into(std::tie(offset_from_start_x, spacing), state, -1, true);
 
     ImGui::SameLine(offset_from_start_x, spacing);
 
@@ -2234,24 +2295,29 @@ static int imgui_get(lua_State* state)
 //string, ref
 static int imgui_checkbox(lua_State* state)
 {
-    const char* label = lua_tostring(state, -2);
-    bool val = imgui_decode_ref<bool>(state, -1);
+    std::string label;
+    imgui_ref_tag<bool> val;
 
-    bool result = ImGui::Checkbox(label, &val);
+    imgui_decode_multiple_into(std::tie(label, val), state, -1, true);
 
-    imgui_encode_into_ref(state, val, -1);
+    bool result = ImGui::Checkbox(label.c_str(), &val.val);
 
-    lua_pushboolean(state, result);
+    imgui_update_ref(state, val);
+
+    imgui_push_generic(state, result);
     return 1;
 }
 
 //label, str*
 static int imgui_inputtext(lua_State* state)
 {
-    const char* label = lua_tostring(state, -2);
-    std::string val = imgui_decode_ref<std::string>(state, -1);
+    std::string label;
+    imgui_ref_tag<std::string> val;
+    int flags = 0;
 
-    bool result = ImGui::InputText(label, &val);
+    imgui_decode_multiple_into(std::tie(label, val, flags), state, -1, true);
+
+    bool result = ImGui::InputText(label.c_str(), &val.val, flags);
 
     //This makes keyboard navigation default activate the item
     //when arrow-keying past it, while also still allowing navigation away from it
@@ -2263,7 +2329,7 @@ static int imgui_inputtext(lua_State* state)
         ImGui::SetKeyboardFocusHere(-1);
     }
 
-    imgui_encode_into_ref(state, val, -1);
+    imgui_update_ref(state, val);
 
     lua_pushboolean(state, result);
     return 1;
@@ -2473,10 +2539,8 @@ static int imgui_isitemhovered(lua_State* state)
 {
     int flags = 0;
 
-    if (lua_gettop(state) == 1)
-    {
-        flags = (int)imgui_decode<double>(state, -1);
-    }
+    //this is kind of weird, but its because it returns a tuple
+    imgui_decode_multiple_into(std::tie(flags), state, -1, true);
 
     bool result = ImGui::IsItemHovered(flags);
 
@@ -2491,20 +2555,7 @@ static int imgui_ismousehoveringrect(lua_State* state)
     ImVec2 br;
     bool clip = true;
 
-    int count = lua_gettop(state);
-
-    if (count == 2)
-    {
-        tl = imgui_decode<ImVec2>(state, -2);
-        br = imgui_decode<ImVec2>(state, -1);
-    }
-
-    if (count == 3)
-    {
-        tl = imgui_decode<ImVec2>(state, -3);
-        br = imgui_decode<ImVec2>(state, -2);
-        clip = imgui_decode<bool>(state, -1);
-    }
+    imgui_decode_multiple_into(std::tie(tl, br, clip), state, -1, true);
 
     //imgui uses the convention [min <= val < max]
     //Which is great if our coordinates aren't integer, but they are
@@ -2518,25 +2569,11 @@ static int imgui_ismousehoveringrect(lua_State* state)
 
 static int imgui_tablesetupcolumn(lua_State* state)
 {
-    int top = lua_gettop(state);
-
     std::string label;
     int flags = 0;
     float width_or_weight = 0;
 
-    if (top == 1)
-        label = imgui_decode<std::string>(state, -1);
-    else if (top == 2)
-    {
-        label = imgui_decode<std::string>(state, -2);
-        flags = (int)imgui_decode<double>(state, -1);
-    }
-    else if (top == 3)
-    {
-        label = imgui_decode<std::string>(state, -3);
-        flags = (int)imgui_decode<double>(state, -2);
-        width_or_weight = imgui_decode<double>(state, -1);
-    }
+    imgui_decode_multiple_into(std::tie(label, flags, width_or_weight), state, -1, true);
 
     const char* ptr = label.c_str();
 
@@ -2608,21 +2645,10 @@ static int imgui_iskeyreleased(lua_State* state)
 
 static int imgui_beginmenu(lua_State* state)
 {
-    int top = lua_gettop(state);
-
     std::string label;
     bool enabled = true;
 
-    if (top == 1)
-    {
-        label = imgui_decode<std::string>(state, -1);
-    }
-
-    if (top == 2)
-    {
-        label = imgui_decode<std::string>(state, -2);
-        enabled = imgui_decode<bool>(state, -1);
-    }
+    imgui_decode_multiple_into(std::tie(label, enabled), state, -1, true);
 
     bool result = ImGui::BeginMenu(label.c_str(), enabled);
 
@@ -2637,104 +2663,26 @@ static int imgui_menuitem(lua_State* state)
 {
     std::string label;
     std::string shortcut;
-    bool selected = false;
+    imgui_ref_tag<bool> selected;
     bool enabled = false;
 
-    if (lua_gettop(state) == 3)
-    {
-        label = imgui_decode<std::string>(state, -3);
-        shortcut = imgui_decode<std::string>(state, -2);
-        selected = imgui_decode_ref<bool>(state, -1);
-    }
+    imgui_decode_multiple_into(std::tie(label, shortcut, selected, enabled), state, -1, true);
 
-    if (lua_gettop(state) == 4)
-    {
-        label = imgui_decode<std::string>(state, -4);
-        shortcut = imgui_decode<std::string>(state, -3);
-        selected = imgui_decode_ref<bool>(state, -2);
-        enabled = imgui_decode<bool>(state, -1);
+    bool result = ImGui::MenuItem(label.c_str(), shortcut.c_str(), &selected.val, enabled);
 
-        //leave ref on the stack
-        lua_pop(state, 1);
-    }
-
-    bool result = ImGui::MenuItem(label.c_str(), shortcut.c_str(), &selected, enabled);
-
-    imgui_encode_into_ref(state, selected, -1);
+    imgui_update_ref(state, selected);
 
     imgui_push_generic(state, result);
 
     return 1;
 }
 
-//not sure I like this, the usability is kind of poor
-template<typename T>
-static void imgui_decode_multiple_impl(std::tuple<T>& out, lua_State* state, int index, bool allow_varargs)
-{
-    bool out_of_bounds = abs(index) > lua_gettop(state) || index >= 0;
-
-    if (allow_varargs && out_of_bounds)
-        return;
-
-    assert(!out_of_bounds);
-
-    std::get<0>(out) = imgui_decode<T>(state, index);
-}
-
-template<typename Head, typename... Tail>
-static void imgui_decode_multiple_impl(std::tuple<Head, Tail...>& out, lua_State* state, int index, bool allow_varargs)
-{
-    std::tuple<Head> p1;
-    imgui_decode_multiple_impl(p1, state, index, allow_varargs);
-
-    std::tuple<Tail...> p2;
-    imgui_decode_multiple_impl(p2, state, index+1, allow_varargs);
-
-    out = std::tuple_cat(p1, p2);
-}
-
-template<typename... T>
-static std::tuple<T...> imgui_decode_multiple(lua_State* state, int last_arg_idx, bool allow_varargs)
-{
-    int num_args = sizeof...(T);
-
-    //so, we pass in -1, with an arg size of 2
-    //that means the first arg is at -2, and the second arg is at -1
-    int offset = (last_arg_idx - num_args) + 1;
-
-    if (allow_varargs)
-    {
-        int top = lua_gettop(state);
-        //say we have 3 real args
-        //and 2 lua args
-        //want to decode the first two real args, which will be situated at -2=first, -1=second, 0=third aka nil
-        //so therefore add num_real_args - top to the offset
-        top = std::min(top, num_args);
-
-        int shift = num_args - top;
-
-        offset += shift;
-    }
-
-    std::tuple<T...> result;
-    imgui_decode_multiple_impl(result, state, offset, allow_varargs);
-    return result;
-}
-
 static int imgui_begintabbar(lua_State* state)
 {
     std::string str_id;
-    ImGuiTabBarFlags flags = 0;
+    int flags = 0;
 
-    if (lua_gettop(state) == 1)
-    {
-        str_id = imgui_decode<std::string>(state, -1);
-    }
-
-    if (lua_gettop(state) == 2)
-    {
-        std::tie(str_id, flags) = imgui_decode_multiple<std::string, double>(state, -1, false);
-    }
+    imgui_decode_multiple_into(std::tie(str_id, flags), state, -1, true);
 
     bool result = ImGui::BeginTabBar(str_id.c_str(), flags);
 
@@ -2747,37 +2695,18 @@ static int imgui_begintabitem(lua_State* state)
 {
     std::string label;
     imgui_ref_tag<bool> p_open;
-    ImGuiTabItemFlags flags = 0;
+    int flags = 0;
 
-    if (lua_gettop(state) == 1)
-    {
-        label = imgui_decode<std::string>(state, -1);
-    }
-
-    if (lua_gettop(state) == 2)
-    {
-        label = imgui_decode<std::string>(state, -2);
-        p_open = imgui_decode<imgui_ref_tag<bool> >(state, -1);
-    }
-
-    if (lua_gettop(state) == 3)
-    {
-        label = imgui_decode<std::string>(state, -3);
-        p_open = imgui_decode<imgui_ref_tag<bool> >(state, -2);
-        flags = imgui_decode<double>(state, -1);
-    }
+    imgui_decode_multiple_into(std::tie(label, p_open, flags), state, -1, true);
 
     bool result = false;
 
     if (p_open.decoded)
-    {
         result = ImGui::BeginTabItem(label.c_str(), &p_open.val, flags);
-
-        imgui_encode_into_ref(state, p_open.val, p_open.index);
-    }
     else
         result = ImGui::BeginTabItem(label.c_str(), nullptr, flags);
 
+    imgui_update_ref(state, p_open);
     imgui_push_generic(state, result);
 
     return 1;
@@ -2786,18 +2715,9 @@ static int imgui_begintabitem(lua_State* state)
 static int imgui_tabitembutton(lua_State* state)
 {
     std::string label;
-    ImGuiTabItemFlags flags = 0;
+    int flags = 0;
 
-    if (lua_gettop(state) == 1)
-    {
-        label = imgui_decode<std::string>(state, -1);
-    }
-
-    if (lua_gettop(state) == 2)
-    {
-        label = imgui_decode<std::string>(state, -2);
-        flags = imgui_decode<double>(state, -1);
-    }
+    imgui_decode_multiple_into(std::tie(label, flags), state, -1, true);
 
     bool result = ImGui::TabItemButton(label.c_str(), flags);
 
@@ -2838,30 +2758,11 @@ static int imgui_selectableref(lua_State* state)
     int flags = 0;
     ImVec2 width;
 
-    if (lua_gettop(state) == 2)
-    {
-        label = imgui_decode<std::string>(state, -2);
-        is_selected = imgui_decode<imgui_ref_tag<bool>>(state, -1);
-    }
-
-    if (lua_gettop(state) == 3)
-    {
-        label = imgui_decode<std::string>(state, -3);
-        is_selected = imgui_decode<imgui_ref_tag<bool>>(state, -2);
-        flags = imgui_decode<double>(state, -1);
-    }
-
-    if (lua_gettop(state) == 4)
-    {
-        label = imgui_decode<std::string>(state, -4);
-        is_selected = imgui_decode<imgui_ref_tag<bool>>(state, -3);
-        flags = imgui_decode<double>(state, -2);
-        width = imgui_decode<ImVec2>(state, -1);
-    }
+    imgui_decode_multiple_into(std::tie(label, is_selected, flags, width), state, -1, true);
 
     bool result = ImGui::Selectable(label.c_str(), &is_selected.val, flags, width);
 
-    imgui_encode_into_ref(state, is_selected.val, is_selected.index);
+    imgui_update_ref(state, is_selected);
 
     imgui_push_generic(state, result);
 
@@ -2875,31 +2776,7 @@ static int imgui_selectable(lua_State* state)
     int flags = 0;
     ImVec2 width;
 
-    if (lua_gettop(state) == 1)
-    {
-        label = imgui_decode<std::string>(state, -1);
-    }
-
-    if (lua_gettop(state) == 2)
-    {
-        label = imgui_decode<std::string>(state, -2);
-        is_selected = imgui_decode<bool>(state, -1);
-    }
-
-    if (lua_gettop(state) == 3)
-    {
-        label = imgui_decode<std::string>(state, -3);
-        is_selected = imgui_decode<bool>(state, -2);
-        flags = imgui_decode<double>(state, -1);
-    }
-
-    if (lua_gettop(state) == 4)
-    {
-        label = imgui_decode<std::string>(state, -4);
-        is_selected = imgui_decode<bool>(state, -3);
-        flags = imgui_decode<double>(state, -2);
-        width = imgui_decode<ImVec2>(state, -1);
-    }
+    imgui_decode_multiple_into(std::tie(label, is_selected, flags, width), state, -1, true);
 
     bool result = ImGui::Selectable(label.c_str(), is_selected, flags, width);
 
@@ -2916,29 +2793,7 @@ static int imgui_begintable(lua_State* state)
     ImVec2 outer_size = ImVec2(0,0);
     float inner_width = 0;
 
-    if (lua_gettop(state) == 3)
-    {
-        name = imgui_decode<std::string>(state, -3);
-        column = imgui_decode<double>(state, -2);
-        flags = imgui_decode<double>(state, -1);
-    }
-
-    if (lua_gettop(state) == 4)
-    {
-        name = imgui_decode<std::string>(state, -4);
-        column = imgui_decode<double>(state, -3);
-        flags = imgui_decode<double>(state, -2);
-        outer_size = imgui_decode<ImVec2>(state, -1);
-    }
-
-    if (lua_gettop(state) == 5)
-    {
-        name = imgui_decode<std::string>(state, -5);
-        column = imgui_decode<double>(state, -4);
-        flags = imgui_decode<double>(state, -3);
-        outer_size = imgui_decode<ImVec2>(state, -2);
-        inner_width = imgui_decode<double>(state, -1);
-    }
+    imgui_decode_multiple_into(std::tie(name, column, flags, inner_width), state, -1, true);
 
     bool result = ImGui::BeginTable(name.c_str(), column, flags, outer_size, inner_width);
 
@@ -2951,10 +2806,7 @@ static int imgui_iswindowfocused(lua_State* state)
 {
     int flags = 0;
 
-    if (lua_gettop(state) == 1)
-    {
-        flags = imgui_decode<double>(state, -1);
-    }
+    imgui_decode_multiple_into(std::tie(flags), state, -1, true);
 
     bool result = ImGui::IsWindowFocused(flags);
 
@@ -2967,10 +2819,7 @@ static int imgui_iswindowhovered(lua_State* state)
 {
     int flags = 0;
 
-    if (lua_gettop(state) == 1)
-    {
-        flags = imgui_decode<double>(state, -1);
-    }
+    imgui_decode_multiple_into(std::tie(flags), state, -1, true);
 
     bool result = ImGui::IsWindowHovered(flags);
 
@@ -2999,7 +2848,7 @@ static int imgui_setnextwindowpos(lua_State* state)
     int cond = 0;
     ImVec2 pivot;
 
-    std::tie(pos, cond, pivot) = imgui_decode_multiple<ImVec2, double, ImVec2>(state, -1, true);
+    imgui_decode_multiple_into(std::tie(pos, cond, pivot), state, -1, true);
 
     ImGui::SetNextWindowPos(pos, cond, pivot);
 
@@ -3011,7 +2860,7 @@ static int imgui_setnextwindowsize(lua_State* state)
     ImVec2 size;
     int cond = 0;
 
-    std::tie(size, cond) = imgui_decode_multiple<ImVec2, double>(state, -1, true);
+    imgui_decode_multiple_into(std::tie(size, cond), state, -1, true);
 
     ImGui::SetNextWindowSize(size);
     return 0;
@@ -3029,9 +2878,10 @@ static int imgui_setnextwindowcontentsize(lua_State* state)
 static int imgui_setnextwindowcollapsed(lua_State* state)
 {
     bool collapsed = false;
-    int cond;
+    int cond = 0;
 
-    std::tie(collapsed, cond) = imgui_decode_multiple<bool, double>(state, -1, true);
+    imgui_decode_multiple_into(std::tie(collapsed, cond), state, -1, true);
+
     ImGui::SetNextWindowCollapsed(collapsed, cond);
     return 0;
 }
@@ -3049,7 +2899,8 @@ static int imgui_setwindowpos(lua_State* state)
     ImVec2 pos;
     int cond = 0;
 
-    std::tie(pos, cond) = imgui_decode_multiple<ImVec2, double>(state, -1, true);
+    imgui_decode_multiple_into(std::tie(pos, cond), state, -1, true);
+
     ImGui::SetWindowPos(pos, cond);
     return 0;
 }
@@ -3059,7 +2910,7 @@ static int imgui_setwindowsize(lua_State* state)
     ImVec2 pos;
     int cond = 0;
 
-    std::tie(pos, cond) = imgui_decode_multiple<ImVec2, double>(state, -1, true);
+    imgui_decode_multiple_into(std::tie(pos, cond), state, -1, true);
     ImGui::SetWindowSize(pos, cond);
     return 0;
 }
@@ -3069,7 +2920,7 @@ static int imgui_setwindowcollapsed(lua_State* state)
     bool collapsed = false;
     int cond = 0;
 
-    std::tie(collapsed, cond) = imgui_decode_multiple<bool, double>(state, -1, true);
+    imgui_decode_multiple_into(std::tie(collapsed, cond), state, -1, true);
     ImGui::SetWindowCollapsed(collapsed, cond);
     return 0;
 }
@@ -3087,7 +2938,7 @@ static int imgui_setnamedwindowpos(lua_State* state)
     ImVec2 pos;
     int cond = 0;
 
-    std::tie(name, pos, cond) = imgui_decode_multiple<std::string, ImVec2, double>(state, -1, true);
+    imgui_decode_multiple_into(std::tie(name, pos, cond), state, -1, true);
     ImGui::SetWindowPos(name.c_str(), pos, cond);
     return 0;
 }
@@ -3098,7 +2949,7 @@ static int imgui_setnamedwindowsize(lua_State* state)
     ImVec2 pos;
     int cond = 0;
 
-    std::tie(name, pos, cond) = imgui_decode_multiple<std::string, ImVec2, double>(state, -1, true);
+    imgui_decode_multiple_into(std::tie(name, pos, cond), state, -1, true);
     ImGui::SetWindowSize(name.c_str(), pos, cond);
     return 0;
 }
@@ -3109,7 +2960,7 @@ static int imgui_setnamedwindowcollapsed(lua_State* state)
     bool collapsed = false;
     int cond = 0;
 
-    std::tie(name, collapsed, cond) = imgui_decode_multiple<std::string, bool, double>(state, -1, true);
+    imgui_decode_multiple_into(std::tie(name, collapsed, cond), state, -1, true);
     ImGui::SetWindowCollapsed(name.c_str(), collapsed, cond);
     return 0;
 }

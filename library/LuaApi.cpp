@@ -1929,7 +1929,7 @@ template<typename Target, typename Tuple, int N, bool end>
 struct tuple_builder
 {
     template<typename... Args>
-    static Target create(Tuple const& t, Args&&... args)
+    static Target create(const Tuple& t, Args&&... args)
     {
         return tuple_builder<Target,Tuple, N+1, std::tuple_size<Tuple>::value == N+1>::create(t, std::forward<Args>(args)..., std::get<N>(t));
     }
@@ -1938,12 +1938,12 @@ struct tuple_builder
 template<typename Target, typename Tuple, int N>
 struct tuple_builder<Target,Tuple,N,true>
 {
-    template < typename ... Args >
-    static Target create(Tuple const& t, Args&&... args) { return Target(std::forward<Args>(args)...); }
+    template <typename... Args>
+    static Target create(const Tuple& t, Args&&... args) { return Target(std::forward<Args>(args)...); }
 };
 
-template < typename Head, typename ... Tail >
-std::tuple<Tail...> tuple_tail(std::tuple<Head,Tail...> const& tpl)
+template<typename Head, typename... Tail>
+std::tuple<Tail...> tuple_tail(const std::tuple<Head,Tail...>& tpl)
 {
     return tuple_builder<std::tuple<Tail...>, std::tuple<Head,Tail...>, 1, std::tuple_size<std::tuple<Head,Tail...>>::value == 1>::create(tpl);
 }

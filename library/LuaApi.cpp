@@ -2037,11 +2037,6 @@ static void imgui_textunformatted(std::string str)
     ImGui::TextUnformatted(str.c_str(), str.c_str() + str.size());
 }
 
-static void imgui_text(std::string str)
-{
-    ImGui::Text("%s", str.c_str());
-}
-
 static void imgui_textdisabled(std::string str)
 {
     ImGui::TextDisabled("%s", str.c_str());
@@ -2157,7 +2152,6 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPM(ImGui, BeginTooltip),
     WRAPM(ImGui, EndTooltip),
     WRAPN(TextUnformatted, imgui_textunformatted),
-    WRAPN(Text, imgui_text),
     WRAPN(TextDisabled, imgui_textdisabled),
     WRAPN(TextWrapped, imgui_textwrapped),
     WRAPN(LabelText, imgui_labeltext),
@@ -2212,6 +2206,23 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPM(ImGui, SetNextWindowFocus),
     { NULL, NULL }
 };
+
+static int imgui_text(lua_State* state)
+{
+    int top = lua_gettop(state);
+
+    for (int i=-top; i < 0; i++)
+    {
+        std::string str = imgui_decode<std::string>(state, i);
+
+        ImGui::Text("%s", str.c_str());
+
+        if (i != -1)
+            ImGui::SameLine();
+    }
+
+    return 0;
+}
 
 static int imgui_begin(lua_State* state)
 {
@@ -2772,9 +2783,13 @@ static const char* imgui_arg_shim(const std::string& str)
 #define IMGUI_SIMPLE_SET1E(name, t1, extra) int imgui_##extra(lua_State* state){auto t = t1; imgui_decode_multiple_into(std::tie(t), state, -1, true); ImGui::name(imgui_arg_shim(t)); return 0;}
 #define IMGUI_SIMPLE_SET2E(name, t1, t2, extra) int imgui_##extra(lua_State* state){auto tl1 = t1; auto tl2 = t2; imgui_decode_multiple_into(std::tie(tl1, tl2), state, -1, true); ImGui::name(imgui_arg_shim(tl1), imgui_arg_shim(tl2)); return 0;}
 #define IMGUI_SIMPLE_SET3E(name, t1, t2, t3, extra) int imgui_##extra(lua_State* state){auto tl1 = t1; auto tl2 = t2; auto tl3 = t3; imgui_decode_multiple_into(std::tie(tl1, tl2, tl3), state, -1, true); ImGui::name(imgui_arg_shim(tl1), imgui_arg_shim(tl2), imgui_arg_shim(tl3)); return 0;}
+//#define IMGUI_SIMPLE_SET4E(name, t1, t2, t3, t4, extra) int imgui_##extra(lua_State* state){auto tl1 = t1; auto tl2 = t2; auto tl3 = t3; auto tl4 = t4; imgui_decode_multiple_into(std::tie(tl1, tl2, tl3, tl4), state, -1, true); ImGui::name(imgui_arg_shim(tl1), imgui_arg_shim(tl2), imgui_arg_shim(tl3), imgui_arg_shim(tl4)); return 0;}
+//#define IMGUI_SIMPLE_SET5E(name, t1, t2, t3, t4, t5, extra) int imgui_##extra(lua_State* state){auto tl1 = t1; auto tl2 = t2; auto tl3 = t3; auto tl4 = t4; auto tl5 = t5; imgui_decode_multiple_into(std::tie(tl1, tl2, tl3, tl4, tl5), state, -1, true); ImGui::name(imgui_arg_shim(tl1), imgui_arg_shim(tl2), imgui_arg_shim(tl3), imgui_arg_shim(tl4), imgui_arg_shim(tl5)); return 0;}
 #define IMGUI_SIMPLE_SET1(name, t1) IMGUI_SIMPLE_SET1E(name, t1, name)
 #define IMGUI_SIMPLE_SET2(name, t1, t2) IMGUI_SIMPLE_SET2E(name, t1, t2, name)
 #define IMGUI_SIMPLE_SET3(name, t1, t2, t3) IMGUI_SIMPLE_SET3E(name, t1, t2, t3, name)
+//#define IMGUI_SIMPLE_SET4(name, t1, t2, t3, t4) IMGUI_SIMPLE_SET4E(name, t1, t2, t3, t4, name)
+//#define IMGUI_SIMPLE_SET5(name, t1, t2, t3, t4, t5) IMGUI_SIMPLE_SET5E(name, t1, t2, t3, t4, t5, name)
 
 IMGUI_SIMPLE_GET1(IsWindowFocused, 0);
 IMGUI_SIMPLE_GET1(IsWindowHovered, 0);
@@ -2842,6 +2857,7 @@ IMGUI_SIMPLE(TableNextRow);
 #define IMGUI_NAME_FUNC(name) {#name, imgui_##name}
 
 static const luaL_Reg dfhack_imgui_funcs[] = {
+    {"Text", imgui_text},
     {"Begin", imgui_begin},
     IMGUI_NAME_FUNC(SameLine),
     {"Checkbox", imgui_checkbox},
@@ -2882,6 +2898,7 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     IMGUI_NAME_FUNC(IsWindowHovered),
     IMGUI_NAME_FUNC(GetWindowPos),
     IMGUI_NAME_FUNC(GetWindowSize),
+    IMGUI_NAME_FUNC(SetNextWindowPos),
     IMGUI_NAME_FUNC(SetNextWindowSize),
     IMGUI_NAME_FUNC(SetNextWindowContentSize),
     IMGUI_NAME_FUNC(SetNextWindowCollapsed),

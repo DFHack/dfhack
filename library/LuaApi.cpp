@@ -1775,52 +1775,52 @@ static T imgui_decode_ref(lua_State* state, int index)
 }
 
 template<typename T, typename U>
-static void imgui_push_generic(lua_State* state, const std::map<T, U>& val);
+static void imgui_push_generic_impl(lua_State* state, const std::map<T, U>& val);
 
-static void imgui_push_generic(lua_State* state, double val)
+static void imgui_push_generic_impl(lua_State* state, double val)
 {
     lua_pushnumber(state, val);
 }
 
-static void imgui_push_generic(lua_State* state, const std::string& val)
+static void imgui_push_generic_impl(lua_State* state, const std::string& val)
 {
     lua_pushlstring(state, val.c_str(), val.size());
 }
 
-static void imgui_push_generic(lua_State* state, bool val)
+static void imgui_push_generic_impl(lua_State* state, bool val)
 {
     lua_pushboolean(state, val);
 }
 
-static void imgui_push_generic(lua_State* state, ImVec2 val)
+static void imgui_push_generic_impl(lua_State* state, ImVec2 val)
 {
     std::map<std::string, double> as_map = { {"x", val.x}, {"y", val.y} };
 
-    imgui_push_generic(state, as_map);
+    imgui_push_generic_impl(state, as_map);
 }
 
 template<typename T>
-static void imgui_push_generic(lua_State* state, T* ptr)
+static void imgui_push_generic_impl(lua_State* state, T* ptr)
 {
     static_assert(!std::is_same<T, char>::value, "a char* ptr in here is probably not what you want");
 
     lua_pushlightuserdata(state, ptr);
 }
 
-/*static void imgui_push_generic(lua_State* state, lua_CFunction f)
+/*static void imgui_push_generic_impl(lua_State* state, lua_CFunction f)
 {
     lua_pushcfunction(state, f);
 }*/
 
 template<typename T, typename U>
-static void imgui_push_generic(lua_State* state, const std::map<T, U>& val)
+static void imgui_push_generic_impl(lua_State* state, const std::map<T, U>& val)
 {
     lua_newtable(state);
 
     for (auto it : val)
     {
-        imgui_push_generic(state, it.first);
-        imgui_push_generic(state, it.second);
+        imgui_push_generic_impl(state, it.first);
+        imgui_push_generic_impl(state, it.second);
 
         lua_settable(state, -3);
     }
@@ -1832,7 +1832,7 @@ static void imgui_encode_into_ref(lua_State* state, const T& val, int index)
 {
     lua_pushvalue(state, index);
     lua_pushnumber(state, 0);
-    imgui_push_generic(state, val);
+    imgui_push_generic_impl(state, val);
     lua_settable(state, -3);
     lua_pop(state, 1);
 }
@@ -1844,6 +1844,14 @@ static void imgui_update_ref(lua_State* state, imgui_ref_tag<T>& val)
         return;
 
     imgui_encode_into_ref(state, val.val, val.index);
+}
+
+//returns 1 for convenience
+template<typename T>
+static int imgui_push_generic(lua_State* state, const T& val)
+{
+    imgui_push_generic_impl(state, val);
+    return 1;
 }
 
 static ImVec4 imgui_get_colour_arg(lua_State* state, int index, bool defaults_to_fg)
@@ -2059,11 +2067,6 @@ static bool imgui_button(std::string name)
     return ImGui::Button(name.c_str());
 }
 
-static void imgui_popstylecolor(int n)
-{
-    ImGui::PopStyleColor(n);
-}
-
 static bool imgui_ismouseclicked(int button)
 {
     return ImGui::IsMouseClicked(button);
@@ -2186,7 +2189,6 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPN(BulletText, imgui_bullettext),
     WRAPN(Button, imgui_button),
     WRAPM(ImGui, NewLine),
-    WRAPN(PopStyleColor, imgui_popstylecolor),
     WRAPN(StyleIndex, imgui_style_index),
     WRAPM(ImGui, IsMouseDown),
     WRAPN(IsMouseClicked, imgui_ismouseclicked),
@@ -2999,29 +3001,58 @@ static int imgui_setnamedwindowfocus(lua_State* state)
     return 0;
 }
 
-static int imgui_getcontentregionavail(lua_State* state)
+template<typename T>
+static T imgui_arg_shim(const T& in)
 {
-    imgui_push_generic(state, ImGui::GetContentRegionAvail());
-    return 1;
+    return in;
 }
 
-static int imgui_getcontentregionmax(lua_State* state)
+static const char* imgui_arg_shim(const std::string& str)
 {
-    imgui_push_generic(state, ImGui::GetContentRegionMax());
-    return 1;
+    return str.c_str();
 }
 
-static int imgui_getwindowcontentregionmin(lua_State* state)
-{
-    imgui_push_generic(state, ImGui::GetWindowContentRegionMin());
-    return 1;
-}
+#define IMGUI_SIMPLE_GETE(name, extra) int imgui_##name##extra(lua_State* state){return imgui_push_generic(state, ImGui::name());}
+#define IMGUI_SIMPLE_GET(name) IMGUI_SIMPLE_GETE(name,)
+#define IMGUI_SIMPLE(name) int imgui_##name(lua_State* state){ImGui::name(); return 0;}
+#define IMGUI_SIMPLE_SET1E(name, t1, extra) int imgui_##name##extra(lua_State* state){auto t = t1; imgui_decode_multiple_into(std::tie(t), state, -1, true); ImGui::name(imgui_arg_shim(t)); return 0;}
+#define IMGUI_SIMPLE_SET2E(name, t1, t2, extra) int imgui_##name##extra(lua_State* state){auto tl1 = t1; auto tl2 = t2; imgui_decode_multiple_into(std::tie(tl1, tl2), state, -1, true); ImGui::name(imgui_arg_shim(tl1), imgui_arg_shim(tl2)); return 0;}
+#define IMGUI_SIMPLE_SET1(name, t1) IMGUI_SIMPLE_SET1E(name, t1,)
+#define IMGUI_SIMPLE_SET2(name, t1, t2) IMGUI_SIMPLE_SET2E(name, t1, t2,)
 
-static int imgui_getwindowcontentregionmax(lua_State* state)
-{
-    imgui_push_generic(state, ImGui::GetWindowContentRegionMax());
-    return 1;
-}
+IMGUI_SIMPLE_GET(GetContentRegionAvail);
+IMGUI_SIMPLE_GET(GetContentRegionMax);
+IMGUI_SIMPLE_GET(GetWindowContentRegionMin);
+IMGUI_SIMPLE_GET(GetWindowContentRegionMax);
+IMGUI_SIMPLE_GET(GetScrollX);
+IMGUI_SIMPLE_GET(GetScrollY);
+
+IMGUI_SIMPLE_SET1(SetScrollHereX, 0.5f);
+IMGUI_SIMPLE_SET1(SetScrollHereY, 0.5f);
+IMGUI_SIMPLE_SET2(SetScrollFromPosX, 0.f, 0.5f);
+IMGUI_SIMPLE_SET2(SetScrollFromPosY, 0.f, 0.5f);
+
+IMGUI_SIMPLE_SET2E(PushStyleVar, 0, 0.f, f);
+IMGUI_SIMPLE_SET2E(PushStyleVar, 0, ImVec2(0,0), v);
+
+IMGUI_SIMPLE_SET1(PopStyleVar, 1);
+IMGUI_SIMPLE_SET1(PopStyleColor, 1);
+
+IMGUI_SIMPLE_SET1(PushAllowKeyboardFocus, false);
+IMGUI_SIMPLE(PopAllowKeyboardFocus);
+
+IMGUI_SIMPLE_SET1(PushButtonRepeat, false);
+IMGUI_SIMPLE(PopButtonRepeat);
+
+IMGUI_SIMPLE_SET1(PushItemWidth, 0.f);
+IMGUI_SIMPLE(PopItemWidth);
+
+IMGUI_SIMPLE_SET1(SetNextItemWidth, 0.f);
+IMGUI_SIMPLE(CalcItemWidth);
+IMGUI_SIMPLE_SET1(PushTextWrapPos, 0.f);
+IMGUI_SIMPLE(PopTextWrapPos);
+
+#define IMGUI_NAME_FUNC(name) {#name, imgui_##name}
 
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"Begin", imgui_begin},
@@ -3077,10 +3108,33 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"SetNamedWindowSize", imgui_setnamedwindowsize},
     {"SetNamedWindowCollapsed", imgui_setnamedwindowcollapsed},
     {"SetNamedWindowFocus", imgui_setnamedwindowfocus},
-    {"GetContentRegionAvail", imgui_getcontentregionavail},
-    {"GetContentRegionMax", imgui_getcontentregionmax},
-    {"GetWindowContentRegionMin", imgui_getwindowcontentregionmin},
-    {"GetWindowContentRegionMax", imgui_getwindowcontentregionmax},
+    {"GetContentRegionAvail", imgui_GetContentRegionAvail},
+    {"GetContentRegionMax", imgui_GetContentRegionMax},
+    {"GetWindowContentRegionMin", imgui_GetWindowContentRegionMin},
+    {"GetWindowContentRegionMax", imgui_GetWindowContentRegionMax},
+    IMGUI_NAME_FUNC(GetContentRegionAvail),
+    IMGUI_NAME_FUNC(GetContentRegionMax),
+    IMGUI_NAME_FUNC(GetWindowContentRegionMin),
+    IMGUI_NAME_FUNC(GetWindowContentRegionMin),
+    IMGUI_NAME_FUNC(GetScrollX),
+    IMGUI_NAME_FUNC(GetScrollY),
+    IMGUI_NAME_FUNC(SetScrollHereX),
+    IMGUI_NAME_FUNC(SetScrollHereY),
+    IMGUI_NAME_FUNC(SetScrollFromPosX),
+    IMGUI_NAME_FUNC(SetScrollFromPosY),
+    IMGUI_NAME_FUNC(PushStyleVarf),
+    IMGUI_NAME_FUNC(PushStyleVarv),
+    IMGUI_NAME_FUNC(PopStyleVar),
+    IMGUI_NAME_FUNC(PopStyleColor),
+    IMGUI_NAME_FUNC(PushAllowKeyboardFocus),
+    IMGUI_NAME_FUNC(PopAllowKeyboardFocus),
+    IMGUI_NAME_FUNC(PushButtonRepeat),
+    IMGUI_NAME_FUNC(PopButtonRepeat),
+    IMGUI_NAME_FUNC(PopItemWidth),
+    IMGUI_NAME_FUNC(SetNextItemWidth),
+    IMGUI_NAME_FUNC(CalcItemWidth),
+    IMGUI_NAME_FUNC(PushTextWrapPos),
+    IMGUI_NAME_FUNC(PopTextWrapPos),
     { NULL, NULL }
 };
 

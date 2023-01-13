@@ -1911,13 +1911,13 @@ static void imgui_decode_multiple_impl(std::tuple<T&> out, lua_State* state, int
 }
 
 template<std::size_t... Ns, typename... Ts>
-auto tuple_tail_impl(std::index_sequence<Ns...>, std::tuple<Ts&...> t)
+static auto tuple_tail_impl(std::index_sequence<Ns...>, std::tuple<Ts&...> t)
 {
    return std::tie(std::get<Ns+1u>(t)...);
 }
 
 template <typename... Ts>
-auto tuple_tail(std::tuple<Ts&...> t)
+static auto tuple_tail(std::tuple<Ts&...> t)
 {
    return tuple_tail_impl(std::make_index_sequence<sizeof...(Ts) - 1u>(), t);
 }

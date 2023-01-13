@@ -2969,6 +2969,34 @@ static int imgui_getwindowsize(lua_State* state)
     return 1;
 }
 
+static int imgui_setnextwindowpos(lua_State* state)
+{
+    ImVec2 pos;
+    int cond = 0;
+    ImVec2 pivot;
+
+    if (lua_gettop(state) == 1)
+    {
+        pos = imgui_decode<ImVec2>(state, -1);
+    }
+
+    if (lua_gettop(state) == 2)
+    {
+        pos = imgui_decode<ImVec2>(state, -2);
+        cond = imgui_decode<double>(state, -1);
+    }
+
+    if (lua_gettop(state) == 3)
+    {
+        pos = imgui_decode<ImVec2>(state, -3);
+        cond = imgui_decode<double>(state, -2);
+        pivot = imgui_decode<ImVec2>(state, -1);
+    }
+
+    ImGui::SetNextWindowPos(pos, cond, pivot);
+    return 0;
+}
+
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"Begin", imgui_begin},
     {"SameLine", imgui_sameline},
@@ -3010,6 +3038,7 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"IsWindowHovered", imgui_iswindowhovered},
     {"GetWindowPos", imgui_getwindowpos},
     {"GetWindowSize", imgui_getwindowsize},
+    {"SetNextWindowPos", imgui_setnextwindowpos},
     { NULL, NULL }
 };
 

@@ -2171,10 +2171,8 @@ static const LuaWrapper::FunctionReg dfhack_imgui_module[] = {
     WRAPM(ImGui, SetItemDefaultFocus),
     WRAPM(ImGui, IsWindowAppearing),
     WRAPM(ImGui, IsWindowCollapsed),
-    WRAPM(ImGui, ResetMouseDragDelta),
     WRAPM(ImGui, IsItemActive),
     WRAPM(ImGui, IsItemFocused),
-    WRAPM(ImGui, IsItemClicked),
     WRAPM(ImGui, IsItemVisible),
     WRAPM(ImGui, IsItemEdited),
     WRAPM(ImGui, IsItemActivated),
@@ -2629,7 +2627,7 @@ static int imgui_beginmenu(lua_State* state)
     return 1;
 }
 
-static int imgui_menuitem(lua_State* state)
+static int imgui_menuitemref(lua_State* state)
 {
     std::string label;
     std::string shortcut;
@@ -2645,6 +2643,20 @@ static int imgui_menuitem(lua_State* state)
     imgui_push_generic(state, result);
 
     return 1;
+}
+
+static int imgui_menuitem(lua_State* state)
+{
+    std::string label;
+    std::string shortcut;
+    bool selected = false;
+    bool enabled = false;
+
+    imgui_decode_multiple_into(std::tie(label, shortcut, selected, enabled), state, -1, true);
+
+    bool result = ImGui::MenuItem(label.c_str(), shortcut.c_str(), selected, enabled);
+
+    return imgui_push_generic(state, result);
 }
 
 static int imgui_begintabitem(lua_State* state)
@@ -2744,6 +2756,21 @@ static int imgui_begintable(lua_State* state)
     return 1;
 }
 
+static int imgui_collapsingheaderref(lua_State* state)
+{
+    std::string label;
+    imgui_ref_tag<bool> is_selected;
+    int flags = 0;
+
+    imgui_decode_multiple_into(std::tie(label, is_selected, flags), state, -1, true);
+
+    bool result = ImGui::CollapsingHeader(label.c_str(), &is_selected.val, flags);
+
+    imgui_update_ref(state, is_selected);
+
+    return imgui_push_generic(state, result);
+}
+
 template<typename T>
 static T imgui_arg_shim(const T& in)
 {
@@ -2759,6 +2786,7 @@ static const char* imgui_arg_shim(const std::string& str)
 #define IMGUI_SIMPLE_GET(name) IMGUI_SIMPLE_GETE(name,name)
 #define IMGUI_SIMPLE_GET1(name, t1) int imgui_##name(lua_State* state){auto t = t1; imgui_decode_multiple_into(std::tie(t), state, -1, true); return imgui_push_generic(state, ImGui::name(imgui_arg_shim(t))); }
 #define IMGUI_SIMPLE_GET2(name, t1, t2) int imgui_##name(lua_State* state){auto tl1 = t1; auto tl2 = t2; imgui_decode_multiple_into(std::tie(tl1, tl2), state, -1, true); return imgui_push_generic(state, ImGui::name(imgui_arg_shim(tl1), imgui_arg_shim(tl2)));}
+#define IMGUI_SIMPLE_GET3(name, t1, t2, t3) int imgui_##name(lua_State* state){auto tl1 = t1; auto tl2 = t2; auto tl3 = t3; imgui_decode_multiple_into(std::tie(tl1, tl2, tl3), state, -1, true); return imgui_push_generic(state, ImGui::name(imgui_arg_shim(tl1), imgui_arg_shim(tl2), imgui_arg_shim(tl3)));}
 #define IMGUI_SIMPLE(name) int imgui_##name(lua_State* state){ImGui::name(); return 0;}
 #define IMGUI_SIMPLE_SET1E(name, t1, extra) int imgui_##extra(lua_State* state){auto t = t1; imgui_decode_multiple_into(std::tie(t), state, -1, true); ImGui::name(imgui_arg_shim(t)); return 0;}
 #define IMGUI_SIMPLE_SET2E(name, t1, t2, extra) int imgui_##extra(lua_State* state){auto tl1 = t1; auto tl2 = t2; imgui_decode_multiple_into(std::tie(tl1, tl2), state, -1, true); ImGui::name(imgui_arg_shim(tl1), imgui_arg_shim(tl2)); return 0;}
@@ -2822,9 +2850,11 @@ IMGUI_SIMPLE_SET1(PushTextWrapPos, 0.f);
 IMGUI_SIMPLE(PopTextWrapPos);
 
 IMGUI_SIMPLE_GET1(IsItemHovered, 0);
+IMGUI_SIMPLE_GET1(IsItemClicked, 0);
 
 IMGUI_SIMPLE_GET(GetMousePos);
-IMGUI_SIMPLE_GET1(GetMouseDragDelta, 0);
+IMGUI_SIMPLE_GET2(GetMouseDragDelta, 0, -1.f);
+IMGUI_SIMPLE_SET1(ResetMouseDragDelta, 0);
 
 IMGUI_SIMPLE_SET2(SameLine, 0.f, -1.f);
 
@@ -2836,6 +2866,7 @@ IMGUI_SIMPLE(TableNextRow);
 
 IMGUI_SIMPLE_GET2(TabItemButton, std::string(), 0);
 IMGUI_SIMPLE_GET2(BeginTabBar, std::string(), 0);
+IMGUI_SIMPLE_SET1(SetTabItemClosed, std::string());
 
 IMGUI_SIMPLE_GET1(GetStyleColorVec4, 0);
 IMGUI_SIMPLE(Separator);
@@ -2859,6 +2890,36 @@ IMGUI_SIMPLE_GET(GetTextLineHeightWithSpacing);
 IMGUI_SIMPLE_GET(GetFrameHeight);
 IMGUI_SIMPLE_GET(GetFrameHeightWithSpacing);
 
+IMGUI_SIMPLE_GET1(SmallButton, std::string());
+IMGUI_SIMPLE_GET3(InvisibleButton, std::string(), ImVec2(0,0), 0);
+IMGUI_SIMPLE_GET2(ArrowButton, std::string(), 0);
+
+//todo: test the combo boxes
+IMGUI_SIMPLE_GET3(BeginCombo, std::string(), std::string(), 0);
+IMGUI_SIMPLE(EndCombo);
+
+IMGUI_SIMPLE_GET1(TreeNode, std::string());
+IMGUI_SIMPLE_GET2(TreeNodeEx, std::string(), 0);
+IMGUI_SIMPLE_SET1(TreePush, std::string());
+IMGUI_SIMPLE(TreePop);
+IMGUI_SIMPLE_GET(GetTreeNodeToLabelSpacing);
+IMGUI_SIMPLE_GET2(CollapsingHeader, std::string(), 0);
+
+IMGUI_SIMPLE_SET2(SetNextItemOpen, false, 0);
+IMGUI_SIMPLE_GET2(BeginListBox, std::string(), ImVec2(0,0));
+IMGUI_SIMPLE(EndListBox);
+
+IMGUI_SIMPLE_SET2E(Value, std::string(), false, Valueb);
+IMGUI_SIMPLE_SET2E(Value, std::string(), 0, Valuei);
+IMGUI_SIMPLE_SET2E(Value, std::string(), 0.f, Valuef);
+
+IMGUI_SIMPLE_GET(GetItemRectMin);
+IMGUI_SIMPLE_GET(GetItemRectMax);
+IMGUI_SIMPLE_GET(GetItemRectSize);
+IMGUI_SIMPLE(SetItemAllowOverlap);
+
+IMGUI_SIMPLE_GET(GetMousePosOnOpeningCurrentPopup);
+
 #define IMGUI_NAME_FUNC(name) {#name, imgui_##name}
 
 static const luaL_Reg dfhack_imgui_funcs[] = {
@@ -2872,6 +2933,7 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"GetMouseWorldPos", imgui_getmouseworldpos},
     IMGUI_NAME_FUNC(GetMousePos),
     IMGUI_NAME_FUNC(GetMouseDragDelta),
+    IMGUI_NAME_FUNC(ResetMouseDragDelta),
     {"GetDisplaySize", imgui_getdisplaysize},
     {"AddRect", imgui_addrect},
     {"AddRectFilled", imgui_addrectfilled},
@@ -2884,12 +2946,14 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"AddTextBackgroundColoredAbsolute", imgui_addtextbackgroundcoloredabsolute},
     {"PushStyleColor", imgui_pushstylecolor},
     IMGUI_NAME_FUNC(IsItemHovered),
+    IMGUI_NAME_FUNC(IsItemClicked),
     {"IsMouseHoveringRect", imgui_ismousehoveringrect},
     {"TableSetupColumn", imgui_tablesetupcolumn},
     {"IsKeyDown", imgui_iskeydown},
     {"IsKeyPressed", imgui_iskeypressed},
     {"IsKeyReleased", imgui_iskeyreleased},
     {"BeginMenu", imgui_beginmenu},
+    {"MenuItemRef", imgui_menuitemref},
     {"MenuItem", imgui_menuitem},
     {"BeginTabItem", imgui_begintabitem},
     {"Shortcut", imgui_shortcut},
@@ -2945,6 +3009,7 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     IMGUI_NAME_FUNC(Button),
     IMGUI_NAME_FUNC(TabItemButton),
     IMGUI_NAME_FUNC(BeginTabBar),
+    IMGUI_NAME_FUNC(SetTabItemClosed),
     IMGUI_NAME_FUNC(GetStyleColorVec4),
     IMGUI_NAME_FUNC(Separator),
     IMGUI_NAME_FUNC(Spacing),
@@ -2965,6 +3030,29 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     IMGUI_NAME_FUNC(GetTextLineHeightWithSpacing),
     IMGUI_NAME_FUNC(GetFrameHeight),
     IMGUI_NAME_FUNC(GetFrameHeightWithSpacing),
+    IMGUI_NAME_FUNC(SmallButton),
+    IMGUI_NAME_FUNC(InvisibleButton),
+    IMGUI_NAME_FUNC(ArrowButton),
+    IMGUI_NAME_FUNC(BeginCombo),
+    IMGUI_NAME_FUNC(EndCombo),
+    IMGUI_NAME_FUNC(TreeNode),
+    IMGUI_NAME_FUNC(TreeNodeEx),
+    IMGUI_NAME_FUNC(TreePush),
+    IMGUI_NAME_FUNC(TreePop),
+    IMGUI_NAME_FUNC(GetTreeNodeToLabelSpacing),
+    IMGUI_NAME_FUNC(CollapsingHeader),
+    {"CollapsingHeaderRef", imgui_collapsingheaderref},
+    IMGUI_NAME_FUNC(SetNextItemOpen),
+    IMGUI_NAME_FUNC(BeginListBox),
+    IMGUI_NAME_FUNC(EndListBox),
+    IMGUI_NAME_FUNC(Valueb),
+    IMGUI_NAME_FUNC(Valuef),
+    IMGUI_NAME_FUNC(Valuei),
+    IMGUI_NAME_FUNC(GetItemRectMin),
+    IMGUI_NAME_FUNC(GetItemRectMax),
+    IMGUI_NAME_FUNC(GetItemRectSize),
+    IMGUI_NAME_FUNC(SetItemAllowOverlap),
+    IMGUI_NAME_FUNC(GetMousePosOnOpeningCurrentPopup),
     { NULL, NULL }
 };
 

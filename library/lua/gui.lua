@@ -725,6 +725,7 @@ function ZScreen:onInput(keys)
     if ZScreen.super.onInput(self, keys) then
         -- ensure underlying DF screens don't also react to handled clicks
         if keys._MOUSE_L_DOWN then
+            -- note we can't clear mouse_lbut here. otherwise we break dragging,
             df.global.enabler.mouse_lbut_down = 0
         end
         if keys._MOUSE_R_DOWN then

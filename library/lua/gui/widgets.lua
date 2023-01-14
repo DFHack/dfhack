@@ -530,6 +530,11 @@ Window.ATTRS {
 
 ResizingPanel = defclass(ResizingPanel, Panel)
 
+ResizingPanel.ATTRS{
+    auto_height = true,
+    auto_width = false,
+}
+
 -- adjust our frame dimensions according to positions and sizes of our subviews
 function ResizingPanel:postUpdateLayout(frame_body)
     local w, h = 0, 0
@@ -550,6 +555,8 @@ function ResizingPanel:postUpdateLayout(frame_body)
     end
     if not self.frame then self.frame = {} end
     local oldw, oldh = self.frame.w, self.frame.h
+    if not self.auto_height then h = oldh end
+    if not self.auto_width then w = oldw end
     self.frame.w, self.frame.h = w, h
     if not self._updateLayoutGuard and (oldw ~= w or oldh ~= h) then
         self._updateLayoutGuard = true -- protect against infinite loops

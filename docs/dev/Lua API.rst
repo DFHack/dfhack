@@ -4416,6 +4416,13 @@ Subclass of Panel; automatically adjusts its own frame height and width to the
 minimum required to show its subviews. Pairs nicely with a parent Panel that has
 ``autoarrange_subviews`` enabled.
 
+It has the following attributes:
+
+:auto_height: Sets self.frame.h from the positions and height of its subviews
+              (default is ``true``).
+:auto_width: Sets self.frame.w from the positions and width of its subviews
+             (default is ``false``).
+
 Pages class
 -----------
 

@@ -1,5 +1,3 @@
-call "%ProgramFiles%\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" amd64
-cd VC2022
-msbuild /m /p:Platform=x64 /p:Configuration=Release ALL_BUILD.vcxproj
-cd ..
+call msvc_include.bat
+%msbuild% /m /p:Platform=x64 /p:Configuration=Release VC2022/ALL_BUILD.vcxproj
 pause

@@ -708,7 +708,7 @@ function EditField:onInput(keys)
         end
     end
 
-    if self.key and keys.LEAVESCREEN then
+    if self.key and (keys.LEAVESCREEN or keys._MOUSE_R_DOWN) then
         local old = self.text
         self:setText(self.saved_text)
         if self.on_change and old ~= self.saved_text then

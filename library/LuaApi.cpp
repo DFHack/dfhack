@@ -2772,13 +2772,12 @@ static int imgui_collapsingheaderref(lua_State* state)
 }
 
 template<typename T>
-static auto imgui_arg_shim(const T& in)
+static const T& imgui_arg_shim(const T& in)
 {
     return in;
 }
 
-template<>
-static auto imgui_arg_shim(const std::string& str)
+const char* imgui_arg_shim(const std::string& str)
 {
     return str.c_str();
 }

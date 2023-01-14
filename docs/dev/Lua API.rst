@@ -1144,6 +1144,10 @@ Job module
 
   Prints info about the job item.
 
+* ``dfhack.job.removeJob(job)``
+
+  Cancels a job, cleans up all references to it, and removes it from the world.
+
 * ``dfhack.job.getGeneralRef(job, type)``
 
   Searches for a general_ref with the given type.

@@ -1036,6 +1036,20 @@ string Units::getRaceName(df::unit* unit)
     return getRaceNameById(unit->race);
 }
 
+// get human-readable race name by id or unit pointer
+string Units::getRaceReadableNameById(int32_t id)
+{
+    df::creature_raw* raw = world->raws.creatures.all[id];
+    if (raw)
+        return raw->name[0];
+    return "";
+}
+string Units::getRaceReadableName(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return getRaceReadableNameById(unit->race);
+}
+
 void df_unit_get_physical_description(df::unit* unit, string* out_str)
 {
     static auto* const fn =

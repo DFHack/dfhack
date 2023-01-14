@@ -179,6 +179,8 @@ DFHACK_EXPORT std::string getRaceName(df::unit* unit);
 DFHACK_EXPORT std::string getPhysicalDescription(df::unit* unit);
 DFHACK_EXPORT std::string getRaceNamePluralById(int32_t race_id);
 DFHACK_EXPORT std::string getRaceNamePlural(df::unit* unit);
+DFHACK_EXPORT std::string getRaceReadableNameById(int32_t race_id);
+DFHACK_EXPORT std::string getRaceReadableName(df::unit* unit);
 DFHACK_EXPORT std::string getRaceBabyNameById(int32_t race_id);
 DFHACK_EXPORT std::string getRaceBabyName(df::unit* unit);
 DFHACK_EXPORT std::string getRaceChildNameById(int32_t race_id);

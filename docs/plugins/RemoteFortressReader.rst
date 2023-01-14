@@ -3,7 +3,7 @@ RemoteFortressReader
 
 .. dfhack-tool::
     :summary: Backend for Armok Vision.
-    :tags: untested dev graphics
+    :tags: dev graphics
     :no-command:
 
 .. dfhack-command:: RemoteFortressReader_version

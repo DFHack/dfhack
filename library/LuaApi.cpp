@@ -1799,6 +1799,13 @@ static void imgui_push_generic_impl(lua_State* state, ImVec2 val)
     imgui_push_generic_impl(state, as_map);
 }
 
+static void imgui_push_generic_impl(lua_State* state, ImVec4 val)
+{
+    std::map<std::string, double> as_map = { {"x", val.x}, {"y", val.y}, {"z", val.z}, {"w", val.w} };
+
+    imgui_push_generic_impl(state, as_map);
+}
+
 template<typename T>
 static void imgui_push_generic_impl(lua_State* state, T* ptr)
 {
@@ -2830,6 +2837,28 @@ IMGUI_SIMPLE(TableNextRow);
 IMGUI_SIMPLE_GET2(TabItemButton, std::string(), 0);
 IMGUI_SIMPLE_GET2(BeginTabBar, std::string(), 0);
 
+IMGUI_SIMPLE_GET1(GetStyleColorVec4, 0);
+IMGUI_SIMPLE(Separator);
+IMGUI_SIMPLE(Spacing);
+IMGUI_SIMPLE_SET1(Dummy, ImVec2(0,0));
+IMGUI_SIMPLE_SET1(Indent, 0.f);
+IMGUI_SIMPLE_SET1(Unindent, 0.f);
+
+IMGUI_SIMPLE_GET(GetCursorPos);
+IMGUI_SIMPLE_GET(GetCursorPosX);
+IMGUI_SIMPLE_GET(GetCursorPosY);
+IMGUI_SIMPLE_SET1(SetCursorPos, ImVec2(0,0));
+IMGUI_SIMPLE_SET1(SetCursorPosX, 0.f);
+IMGUI_SIMPLE_SET1(SetCursorPosY, 0.f);
+IMGUI_SIMPLE_GET(GetCursorStartPos);
+IMGUI_SIMPLE_GET(GetCursorScreenPos);
+IMGUI_SIMPLE_SET1(SetCursorScreenPos, ImVec2(0,0));
+IMGUI_SIMPLE(AlignTextToFramePadding);
+IMGUI_SIMPLE_GET(GetTextLineHeight);
+IMGUI_SIMPLE_GET(GetTextLineHeightWithSpacing);
+IMGUI_SIMPLE_GET(GetFrameHeight);
+IMGUI_SIMPLE_GET(GetFrameHeightWithSpacing);
+
 #define IMGUI_NAME_FUNC(name) {#name, imgui_##name}
 
 static const luaL_Reg dfhack_imgui_funcs[] = {
@@ -2916,6 +2945,26 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     IMGUI_NAME_FUNC(Button),
     IMGUI_NAME_FUNC(TabItemButton),
     IMGUI_NAME_FUNC(BeginTabBar),
+    IMGUI_NAME_FUNC(GetStyleColorVec4),
+    IMGUI_NAME_FUNC(Separator),
+    IMGUI_NAME_FUNC(Spacing),
+    IMGUI_NAME_FUNC(Dummy),
+    IMGUI_NAME_FUNC(Indent),
+    IMGUI_NAME_FUNC(Unindent),
+    IMGUI_NAME_FUNC(GetCursorPos),
+    IMGUI_NAME_FUNC(GetCursorPosX),
+    IMGUI_NAME_FUNC(GetCursorPosY),
+    IMGUI_NAME_FUNC(SetCursorPos),
+    IMGUI_NAME_FUNC(SetCursorPosX),
+    IMGUI_NAME_FUNC(SetCursorPosY),
+    IMGUI_NAME_FUNC(GetCursorStartPos),
+    IMGUI_NAME_FUNC(GetCursorScreenPos),
+    IMGUI_NAME_FUNC(SetCursorScreenPos),
+    IMGUI_NAME_FUNC(AlignTextToFramePadding),
+    IMGUI_NAME_FUNC(GetTextLineHeight),
+    IMGUI_NAME_FUNC(GetTextLineHeightWithSpacing),
+    IMGUI_NAME_FUNC(GetFrameHeight),
+    IMGUI_NAME_FUNC(GetFrameHeightWithSpacing),
     { NULL, NULL }
 };
 

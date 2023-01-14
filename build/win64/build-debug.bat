@@ -1,3 +1,1 @@
-call msvc_include.bat
-%msbuild% /m /p:Platform=x64 /p:Configuration=RelWithDebInfo VC2022/ALL_BUILD.vcxproj
-
+cmake --build VC2022 -t ALL_BUILD -- /m /p:Platform=x64 /p:Configuration=RelWithDebInfo

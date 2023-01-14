@@ -2920,6 +2920,9 @@ IMGUI_SIMPLE(SetItemAllowOverlap);
 
 IMGUI_SIMPLE_GET(GetMousePosOnOpeningCurrentPopup);
 
+IMGUI_SIMPLE_SET1(CaptureKeyboardFromApp, true)
+IMGUI_SIMPLE_SET1(CaptureMouseFromApp, true)
+
 #define IMGUI_NAME_FUNC(name) {#name, imgui_##name}
 
 static const luaL_Reg dfhack_imgui_funcs[] = {
@@ -3053,6 +3056,8 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     IMGUI_NAME_FUNC(GetItemRectSize),
     IMGUI_NAME_FUNC(SetItemAllowOverlap),
     IMGUI_NAME_FUNC(GetMousePosOnOpeningCurrentPopup),
+    IMGUI_NAME_FUNC(CaptureKeyboardFromApp),
+    IMGUI_NAME_FUNC(CaptureMouseFromApp),
     { NULL, NULL }
 };
 

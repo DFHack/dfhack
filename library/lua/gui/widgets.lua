@@ -81,7 +81,7 @@ Panel.ATTRS {
     resize_min = DEFAULT_NIL,
     on_resize_begin = DEFAULT_NIL,
     on_resize_end = DEFAULT_NIL,
-    lockable = false,
+    pinnable = false,
     autoarrange_subviews = false, -- whether to automatically lay out subviews
     autoarrange_gap = 0, -- how many blank lines to insert between widgets
 }
@@ -280,7 +280,7 @@ local function panel_is_on_pin(self)
 end
 
 local function panel_is_pinnable(self)
-    return self.lockable and self.parent_view and self.parent_view.toggleLocked
+    return self.pinnable and self.parent_view and self.parent_view.togglePinned
 end
 
 function Panel:getMouseFramePos()
@@ -322,7 +322,7 @@ function Panel:onInput(keys)
     end
     if panel_is_pinnable(self) and keys._MOUSE_L_DOWN then
         if panel_is_on_pin(self) then
-            self.parent_view:toggleLocked()
+            self.parent_view:togglePinned()
             return true
         end
     end
@@ -491,14 +491,14 @@ end
 function Panel:onRenderFrame(dc, rect)
     Panel.super.onRenderFrame(self, dc, rect)
     if not self.frame_style then return end
-    local locked = nil
-    if self.lockable then
-        locked = self.parent_view and self.parent_view.locked
+    local pinned = nil
+    if self.pinnable then
+        pinned = self.parent_view and self.parent_view.pinned
     end
     local inactive = self.parent_view and self.parent_view.isOnTop
             and not self.parent_view:isOnTop()
     gui.paint_frame(dc, rect, self.frame_style, self.frame_title,
-            self.lockable, locked, inactive)
+            self.pinnable, pinned, inactive)
     if self.kbd_get_pos then
         local pos = self.kbd_get_pos()
         local pen = to_pen{fg=COLOR_GREEN, bg=COLOR_BLACK}
@@ -521,7 +521,7 @@ Window.ATTRS {
     frame_background = gui.CLEAR_PEN,
     frame_inset = 1,
     draggable = true,
-    lockable = true,
+    pinnable = true,
 }
 
 -------------------

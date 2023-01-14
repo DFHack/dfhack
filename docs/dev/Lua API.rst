@@ -4111,13 +4111,13 @@ through to the underlying viewscreen.
 
 If :kbd:`Esc` or the right mouse button is pressed, and the ZScreen widgets
 don't otherwise handle them, then the top ZScreen is dismissed. If the ZScreen
-is "locked", then the screen is not dismissed and the input is passed on to the
-underlying DF viewscreen. :kbd:`Alt`:kbd:`L` toggles the locked status if the
+is "pinned", then the screen is not dismissed and the input is passed on to the
+underlying DF viewscreen. :kbd:`Alt`:kbd:`L` toggles the pinned status if the
 ZScreen widgets don't otherwise handle that key sequence. If you have a
-``Panel`` with the ``lockable`` attribute set and a frame that has pens defined
-for the lock icon (like ``Window`` widgets have by default), then a lock icon
+``Panel`` with the ``pinnable`` attribute set and a frame that has pens defined
+for the pin icon (like ``Window`` widgets have by default), then a pin icon
 will appear in the upper right corner of the frame. Clicking on this icon will
-toggle the ZScreen ``locked`` status just as if :kbd:`Alt`:kbd:`L` had been
+toggle the ZScreen ``pinned`` status just as if :kbd:`Alt`:kbd:`L` had been
 pressed.
 
 Keyboard input goes to the top ZScreen, as usual. If the subviews of the top
@@ -4146,10 +4146,10 @@ ZScreen provides the following functions:
   when the tool command is run and raise the existing dialog if it exists or
   show a new dialog if it doesn't. See the sample code below for an example.
 
-* ``zscreen:toggleLocked()``
+* ``zscreen:togglePinned()``
 
-  Toggles whether the window closes on :kbd:`ESC` or r-click (unlocked) or not
-  (locked).
+  Toggles whether the window closes on :kbd:`ESC` or r-click (unpinned) or not
+  (pinned).
 
 * ``zscreen:isMouseOver()``
 
@@ -4341,9 +4341,9 @@ Has attributes:
   hitting :kbd:`Esc` (while resizing with the mouse or keyboard), or by calling
   ``Panel:setKeyboardResizeEnabled(false)`` (while resizing with the keyboard).
 
-* ``lockable = bool`` (default: ``false``)
+* ``pinnable = bool`` (default: ``false``)
 
-  Determines whether the panel will draw a lock icon in its frame. See
+  Determines whether the panel will draw a pin icon in its frame. See
   `ZScreen class`_ for details.
 
 * ``autoarrange_subviews = bool`` (default: ``false``)
@@ -4407,7 +4407,7 @@ Window class
 ------------
 
 Subclass of Panel; sets Panel attributes to useful defaults for a top-level
-framed, lockable, draggable window.
+framed, pinnable, draggable window.
 
 ResizingPanel class
 -------------------

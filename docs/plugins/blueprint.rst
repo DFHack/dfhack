@@ -3,7 +3,7 @@ blueprint
 
 .. dfhack-tool::
     :summary: Record a live game map in a quickfort blueprint.
-    :tags: untested fort design buildings map stockpiles
+    :tags: fort design buildings map stockpiles
 
 With ``blueprint``, you can export the structure of a portion of your fortress
 in a blueprint file that you (or anyone else) can later play back with
@@ -14,6 +14,13 @@ subdirectory of your DF folder. The map area to turn into a blueprint is either
 selected interactively with the ``gui/blueprint`` command or, if the GUI is not
 used, starts at the active cursor location and extends right and down for the
 requested width and height.
+
+.. admonition:: Note
+
+    blueprint is still in the process of being updated for the new version of
+    DF. Stockpiles (the "place" phase), zones (the "zone" phase), building
+    configuration (the "query" phase), and game configuration (the "config"
+    phase) are not yet supported.
 
 Usage
 -----

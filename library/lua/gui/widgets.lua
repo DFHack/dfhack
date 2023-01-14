@@ -1694,7 +1694,7 @@ function List:onRenderBody(dc)
 
     local function paint_icon(icon, obj)
         if type(icon) ~= 'string' then
-            dc:char(nil,icon)
+            dc:tile(nil,icon)
         else
             if current then
                 dc:string(icon, obj.icon_pen or self.icon_pen or cur_pen)

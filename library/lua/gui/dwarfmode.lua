@@ -286,6 +286,19 @@ function get_hotkey_target(key)
     end
 end
 
+function getMapKey(keys)
+    for code in pairs(keys) do
+        if MOVEMENT_KEYS[code] or HOTKEY_KEYS[code]
+                or code == '_MOUSE_M_DOWN' or code == '_MOUSE_M'
+                or code == 'ZOOM_OUT' or code == 'ZOOM_IN' then
+            if not HOTKEY_KEYS[code] or get_hotkey_target(code) then
+                return true
+            end
+            return code
+        end
+    end
+end
+
 function Viewport:scrollByKey(key)
     local dx, dy, dz = get_movement_delta(key, 10, 20)
     if dx then
@@ -339,13 +352,9 @@ function DwarfOverlay:selectBuilding(building,cursor,viewport,gap)
 end
 
 function DwarfOverlay:propagateMoveKeys(keys)
-    for code,_ in pairs(keys) do
-        if MOVEMENT_KEYS[code] or HOTKEY_KEYS[code] then
-            if not HOTKEY_KEYS[code] or get_hotkey_target(code) then
-                self:sendInputToParent(code)
-            end
-            return code
-        end
+    local map_key = getMapKey(keys)
+    if map_key then
+        self:sendInputToParent(map_key)
     end
 end
 
@@ -414,124 +423,45 @@ function DwarfOverlay:onAboutToShow(parent)
     end
 end
 
-MenuOverlay = defclass(MenuOverlay, DwarfOverlay)
-
-MenuOverlay.ATTRS {
-    frame_inset = 0,
-    frame_background = gui.CLEAR_PEN,
-
-    -- if sidebar_mode is set, we will enter the specified sidebar mode on show
-    -- and restore the previous sidebar mode on dismiss. otherwise it is up to
-    -- the caller to ensure we are in a sidebar mode where the menu is visible.
-    sidebar_mode = DEFAULT_NIL,
-}
-
-function MenuOverlay:init()
-    if not dfhack.isMapLoaded() then
-        -- sidebar menus are only valid when a fort map is loaded
-        error('A fortress map must be loaded.')
-    end
-
-    if self.sidebar_mode then
-        self.saved_sidebar_mode = df.global.plotinfo.main.mode
-        -- what mode should we restore when this window is dismissed? ideally, we'd
-        -- restore the mode that the user has set, but we should fall back to
-        -- restoring the default mode if either of the following conditions are
-        -- true:
-        -- 1) enterSidebarMode doesn't support getting back into the current mode
-        -- 2) a dfhack viewscreen is currently visible. in this case, we can't trust
-        --    that the current sidebar mode was set by the user. it could just be a
-        --    MenuOverlay subclass that is currently being shown that has set the
-        --    sidebar mode for its own purposes.
-        if not SIDEBAR_MODE_KEYS[self.saved_sidebar_mode]
-                or dfhack.gui.getCurFocus(true):find('^dfhack/') then
-            self.saved_sidebar_mode = df.ui_sidebar_mode.Default
-        end
-
-        enterSidebarMode(self.sidebar_mode)
-    end
-end
-
-function MenuOverlay:computeFrame(parent_rect)
-    return self.df_layout.menu, gui.inset_frame(self.df_layout.menu, self.frame_inset)
-end
-
-function MenuOverlay:onAboutToShow(parent)
-    self:updateLayout()
-    if not self.df_layout.menu then
-        error("The menu panel of dwarfmode is not visible")
-    end
-end
-
-function MenuOverlay:onDismiss()
-    if self.saved_sidebar_mode then
-        enterSidebarMode(self.saved_sidebar_mode)
-    end
-end
-
-function MenuOverlay:render(dc)
-    self:renderParent()
-
-    local menu = self.df_layout.menu
-    if menu then
-        -- Paint signature on the frame.
-        dscreen.paintString(
-            {fg=COLOR_BLACK,bg=COLOR_DARKGREY},
-            menu.x1+1, menu.y2+1, "DFHack"
-        )
-
-        if self.frame_background then
-            dc:fill(menu, self.frame_background)
-        end
-
-        MenuOverlay.super.render(self, dc)
-    end
-end
-
 -- Framework for managing rendering over the map area. This function is intended
--- to be called from a subclass's onRenderBody() function.
+-- to be called from a window's onRenderFrame() function.
 --
--- get_overlay_char_fn takes a coordinate position and an is_cursor boolean and
--- returns the char to render at that position and, optionally, the foreground
--- and background colors to use to draw the char. If nothing should be rendered
--- at that position, the function should return nil. If no foreground color is
--- specified, it defaults to COLOR_GREEN. If no background color is specified,
--- it defaults to COLOR_BLACK.
+-- get_overlay_pen_fn takes a coordinate position and an is_cursor boolean and
+-- returns the pen (and optional char and tile) to render at that position. If
+-- nothing should be rendered at that position, the function should return nil.
 --
 -- bounds_rect has elements {x1, x2, y1, y2} in global map coordinates (not
 -- screen coordinates). The rect is intersected with the visible map viewport to
 -- get the range over which get_overlay_char_fn is called. If bounds_rect is not
 -- specified, the entire viewport is scanned.
 --
--- example call from a subclass:
--- function MyMenuOverlaySubclass:onRenderBody()
---     local function get_overlay_char(pos)
---         return safe_index(self.overlay_chars, pos.z, pos.y, pos.x), COLOR_RED
+-- example call:
+-- function MyMapOverlay:onRenderFrame(dc, rect)
+--     local function get_overlay_pen(pos)
+--         if safe_index(self.overlay_map, pos.z, pos.y, pos.x) then
+--             return COLOR_GREEN, 'X', dfhack.screen.findGraphicsTile('CURSORS', 4, 3)
+--         end
 --     end
---     self:renderMapOverlay(get_overlay_char, self.overlay_bounds)
+--     guidm.renderMapOverlay(get_overlay_pen, self.overlay_bounds)
 -- end
-function MenuOverlay:renderMapOverlay(get_overlay_char_fn, bounds_rect)
-    local vp = self:getViewport()
+function renderMapOverlay(get_overlay_pen_fn, bounds_rect)
+    local vp = Viewport.get()
     local rect = gui.ViewRect{rect=vp,
                               clip_view=bounds_rect and gui.ViewRect{rect=bounds_rect} or nil}
 
-    -- nothing to do if the viewport is completely separate from the bounds_rect
+    -- nothing to do if the viewport is completely disjoint from the bounds_rect
     if rect:isDefunct() then return end
 
-    local dc = gui.Painter.new(self.df_layout.map)
     local z = df.global.window_z
     local cursor = getCursorPos()
     for y=rect.clip_y1,rect.clip_y2 do
         for x=rect.clip_x1,rect.clip_x2 do
             local pos = xyz2pos(x, y, z)
-            local overlay_char, fg_color, bg_color = get_overlay_char_fn(
-                    pos, same_xy(cursor, pos))
-            if not overlay_char then goto continue end
-            local stile = vp:tileToScreen(pos)
-            dc:map(true):seek(stile.x, stile.y):
-                    pen(fg_color or COLOR_GREEN, bg_color or COLOR_BLACK):
-                    char(overlay_char):map(false)
-            ::continue::
+            local overlay_pen, char, tile = get_overlay_pen_fn(pos, same_xy(cursor, pos))
+            if overlay_pen then
+                local stile = vp:tileToScreen(pos)
+                dscreen.paintTile(overlay_pen, stile.x, stile.y, char, tile, true)
+            end
         end
     end
 end

@@ -4472,9 +4472,10 @@ calling ``setFocus(true)`` on the field object.
 If an activation ``key`` is specified, the ``EditField`` will manage its own
 focus. It will start in the unfocused state, and pressing the activation key
 will acquire keyboard focus. Pressing the Enter key will release keyboard focus
-and then call the ``on_submit`` callback. Pressing the Escape key will also
-release keyboard focus, but first it will restore the text that was displayed
-before the ``EditField`` gained focus and then call the ``on_change`` callback.
+and then call the ``on_submit`` callback. Pressing the Escape key (or r-clicking
+with the mouse) will also release keyboard focus, but first it will restore the
+text that was displayed before the ``EditField`` gained focus and then call the
+``on_change`` callback.
 
 The ``EditField`` cursor can be moved to where you want to insert/remove text.
 You can click where you want the cursor to move or you can use any of the

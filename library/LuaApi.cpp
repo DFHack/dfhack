@@ -1819,6 +1819,11 @@ static void imgui_push_generic_impl(lua_State* state, double val)
     lua_pushnumber(state, val);
 }
 
+static void imgui_push_generic_impl(lua_State* state, int val)
+{
+    lua_pushinteger(state, val);
+}
+
 static void imgui_push_generic_impl(lua_State* state, const std::string& val)
 {
     lua_pushlstring(state, val.c_str(), val.size());
@@ -2539,6 +2544,7 @@ static int imgui_tablesetupcolumn(lua_State* state)
 
     const char* ptr = label.c_str();
 
+    //??
     if (label.size() == 0)
         ptr = nullptr;
 
@@ -2615,26 +2621,6 @@ static int imgui_beginmenu(lua_State* state)
     bool result = ImGui::BeginMenu(label.c_str(), enabled);
 
     ImTuiInterop::viewscreen::claim_current_imgui_window();
-
-    imgui_push_generic(state, result);
-
-    return 1;
-}
-
-static int imgui_begintabitem(lua_State* state)
-{
-    std::string label;
-    imgui_ref_tag<bool> p_open;
-    int flags = 0;
-
-    imgui_decode_multiple_into(std::tie(label, p_open, flags), state, -1, true);
-
-    bool result = false;
-
-    if (p_open.decoded)
-        result = ImGui::BeginTabItem(label.c_str(), &p_open.val, flags);
-    else
-        result = ImGui::BeginTabItem(label.c_str(), nullptr, flags);
 
     imgui_push_generic(state, result);
 
@@ -2788,8 +2774,19 @@ IMGUI_SIMPLE_GET1(Button, std::string());
 IMGUI_SIMPLE_GET1(IsMouseClicked, 0);
 IMGUI_SIMPLE_SET1(SetKeyboardFocusHere, 0);
 IMGUI_SIMPLE_GET1(IsMouseDragging, 0);
-IMGUI_SIMPLE(TableNextRow);
+IMGUI_SIMPLE_SET2(TableNextRow, 0, 0.f);
+IMGUI_SIMPLE_SET2(TableSetupScrollFreeze, 0, 0);
+IMGUI_SIMPLE_SET1(TableHeader, std::string());
+IMGUI_SIMPLE_GET(TableGetColumnCount);
+IMGUI_SIMPLE_GET(TableGetColumnIndex);
+IMGUI_SIMPLE_GET(TableGetRowIndex);
+//returns a const char*, which is not what I want
+//IMGUI_SIMPLE_GET1(TableGetRowIndex, -1);
+IMGUI_SIMPLE_GET1(TableGetColumnFlags, -1);
+IMGUI_SIMPLE_SET2(TableSetColumnEnabled, 0, false);
+//TableSetBgColor() is difficult conceptually
 
+IMGUI_SIMPLE_GET3(BeginTabItem, std::string(), imgui_ref_tag<bool>(), 0);
 IMGUI_SIMPLE_GET2(TabItemButton, std::string(), 0);
 IMGUI_SIMPLE_GET2(BeginTabBar, std::string(), 0);
 IMGUI_SIMPLE_SET1(SetTabItemClosed, std::string());
@@ -2907,7 +2904,7 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"BeginMenu", imgui_beginmenu},
     IMGUI_NAME_FUNC(MenuItemRef),
     IMGUI_NAME_FUNC(MenuItem),
-    {"BeginTabItem", imgui_begintabitem},
+    IMGUI_NAME_FUNC(BeginTabItem),
     {"Shortcut", imgui_shortcut},
     {"GetKeyDisplay", imgui_getkeydisplay},
     IMGUI_NAME_FUNC(SelectableRef),
@@ -2958,6 +2955,13 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     IMGUI_NAME_FUNC(SetKeyboardFocusHere),
     IMGUI_NAME_FUNC(IsMouseDragging),
     IMGUI_NAME_FUNC(TableNextRow),
+    IMGUI_NAME_FUNC(TableSetupScrollFreeze),
+    IMGUI_NAME_FUNC(TableHeader),
+    IMGUI_NAME_FUNC(TableGetColumnCount),
+    IMGUI_NAME_FUNC(TableGetColumnIndex),
+    IMGUI_NAME_FUNC(TableGetRowIndex),
+    IMGUI_NAME_FUNC(TableGetColumnFlags),
+    IMGUI_NAME_FUNC(TableSetColumnEnabled),
     IMGUI_NAME_FUNC(Button),
     IMGUI_NAME_FUNC(TabItemButton),
     IMGUI_NAME_FUNC(BeginTabBar),

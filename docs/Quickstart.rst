@@ -107,17 +107,22 @@ The DFHack windowing system allows you to use DFHack tools without interrupting
 the game. That is, if the game is unpaused, it will continue to run while a
 DFHack window is open. You can also interact with the map, scrolling it with the
 keyboard or mouse and selecting units, buildings, and items. Some tools will
-force-pause the game if it make sense to.
+force-pause the game if it makes sense to, like `gui/quickfort`, since you cannot
+interact with the map normally while placing a blueprint.
 
 DFHack windows are draggable from the title bar or from anywhere on the window
 that doesn't have a mouse-clickable widget on it. Many are resizable as well
-(if the tool window has components that can be reasonably resized). DFHack windows
-close with :kbd:`Esc` or a right mouse click, but if you want to keep a DFHack
-tool open while you interact with the game, you can hit :kbd:`Alt`:kbd:`L` or
-click the pin in the upper right corner of the DFHack window so that it turns
-green. The DFHack window will then ignore :kbd:`Esc` button presses and right
-clicks that would otherwise close the window. Note that you can still right
-click *on* the DFHack tool window to close it, even when it is pinned.
+(if the tool window has components that can be reasonably resized).
+
+DFHack windows close with a right mouse click or keyboard :kbd:`Esc`, but if you
+want to keep a DFHack tool open while you interact with the game, you can click the
+pin in the upper right corner of the DFHack window or hit :kbd:`Alt`:kbd:`L` so
+that the pin turns green. The DFHack window will then ignore right clicks and
+:kbd:`Esc` key presses that would otherwise close the window. This is especially
+useful for the configuration tool windows for the automation tools. For example,
+you can pin the `gui/autochop` window and let it sit there monitoring your
+logging industry as you play, using it as a live status window. Note that you can
+still right click *on* the DFHack tool window to close it, even when it is pinned.
 
 You can have multiple DFHack tool windows on the screen at the same time. The
 one that is receiving keyboard input has a highlighted title bar and will appear

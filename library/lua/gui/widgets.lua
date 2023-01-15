@@ -1366,6 +1366,10 @@ function WrappedLabel:getWrappedText(width)
     return text_to_wrap:wrap(width - self.indent)
 end
 
+function WrappedLabel:preUpdateLayout()
+    self.saved_start_line_num = self.start_line_num
+end
+
 -- we can't set the text in init() since we may not yet have a frame that we
 -- can get wrapping bounds from.
 function WrappedLabel:postComputeFrame()
@@ -1378,6 +1382,7 @@ function WrappedLabel:postComputeFrame()
         table.insert(text, NEWLINE)
     end
     self:setText(text)
+    self:scroll(self.saved_start_line_num - 1)
 end
 
 ------------------

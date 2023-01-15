@@ -284,8 +284,8 @@ addition to the normal ``CC`` and ``CXX`` flags above::
 
   export PATH=/usr/local/bin:$PATH
 
-Windows cross compiling from Linux
-==================================
+Windows cross compiling from Linux (running DF inside docker)
+=============================================================
 
 .. highlight:: bash
 
@@ -367,6 +367,62 @@ host when you want to reattach::
 
 If you edit code and need to rebuild, run ``dfhack-make`` and then ``ninja install``.
 That will handle all the wineserver management for you.
+
+Cross-compiling windows files for running DF in Steam for Linux
+===============================================================
+
+.. highlight:: bash
+
+If you wish, you can use Docker to build just the Windows files to copy to your
+existing Steam installation on Linux.
+
+.. contents::
+  :local:
+  :depth: 1
+
+Step 1: Build the MSVC builder image
+------------------------------------
+
+It'll be called ``dfhack-build-msvc:latest`` after it's done building::
+
+   git clone https://github.com/BenLubar/build-env.git
+   cd build-env/msvc
+   docker build --build-arg BUILDER_UID=$(id -u) -t dfhack-build-msvc .
+
+The ``BUILDER_UID`` argument is used to make sure the build user can access your
+source code directory inside the container.
+
+The docker build takes a while, but only needs to be done once, unless the build
+environment changes.
+
+Step 2: Get dfhack, and run the build script
+--------------------------------------------
+
+Check out ``dfhack`` into another directory, and run the build script::
+
+   git clone https://github.com/DFHack/dfhack.git
+   cd dfhack
+   git submodule update --init --recursive
+   cd build
+   ./build-win64-from-linux.sh
+
+The last step may ask you for your ``sudo`` password -- if you are able to run
+``docker`` without ``sudo`` normally, you can remove the ``sudo`` from the build
+script.
+
+The script will mount your host's ``dfhack`` directory to docker, use it to
+build the artifacts in ``build/win64-cross``, and put all the files needed to
+install in ``build/win64-cross/output``.
+
+Step 3: install dfhack to your Steam DF install
+-----------------------------------------------
+As the script will tell you, you can then copy the files into your DF folder::
+
+   # Optional -- remove the old hack directory in case we leave files behind
+   rm ~/.local/share/Steam/steamapps/common/"Dwarf Fortress"/hack
+   cp -r win64-cross/output/* ~/.local/share/Steam/steamapps/common/"Dwarf Fortress"/
+
+Afterward, just run DF as normal.
 
 .. _note-offline-builds:
 

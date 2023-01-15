@@ -2794,7 +2794,8 @@ IMGUI_SIMPLE_GET2(TabItemButton, std::string(), 0);
 IMGUI_SIMPLE_GET2(BeginTabBar, std::string(), 0);
 IMGUI_SIMPLE_SET1(SetTabItemClosed, std::string());
 
-IMGUI_SIMPLE_GET1(GetStyleColorVec4, 0);
+//this is incorrect: todo fixme
+//IMGUI_SIMPLE_GET1(GetStyleColorVec4, 0);
 IMGUI_SIMPLE(Separator);
 IMGUI_SIMPLE(Spacing);
 IMGUI_SIMPLE_SET1(Dummy, ImVec2(0,0));
@@ -2961,7 +2962,7 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     IMGUI_NAME_FUNC(TabItemButton),
     IMGUI_NAME_FUNC(BeginTabBar),
     IMGUI_NAME_FUNC(SetTabItemClosed),
-    IMGUI_NAME_FUNC(GetStyleColorVec4),
+    //IMGUI_NAME_FUNC(GetStyleColorVec4),
     IMGUI_NAME_FUNC(Separator),
     IMGUI_NAME_FUNC(Spacing),
     IMGUI_NAME_FUNC(Dummy),

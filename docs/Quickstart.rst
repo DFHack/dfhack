@@ -20,6 +20,7 @@ can also seamlessly integrate with the DFHack framework and extend the game far
 beyond what can be done by just modding the raws.
 
 DFHack's mission is to provide tools and interfaces for players and modders to:
+
 - expand the bounds of what is possible in Dwarf Fortress
 - reduce the impact of game bugs
 - give the player more agency and control over the game
@@ -49,7 +50,7 @@ to claim all items on the map after a messy siege.
 
 Other tools must be `enabled <enable>` and then they will run in the background.
 For example, `enable seedwatch <seedwatch>` will start monitoring your stocks of
-seeds and preventing your chefs from cooking seeds that you need for planting.
+seeds and prevent your chefs from cooking seeds that you need for planting.
 Enableable tools that affect a fort save their state with the fort and will
 remember that they are enabled the next time you load your save.
 
@@ -135,7 +136,7 @@ Where do I go next?
 To recap:
 
 You can get to popular, relevant tools for the current context by hovering
-the mouse over DFHack logo or by hitting :kbd:`Ctrl`:kbd:`Shift`:kbd:`C`.
+the mouse over the DFHack logo or by hitting :kbd:`Ctrl`:kbd:`Shift`:kbd:`C`.
 
 You can get to the launcher and its integrated autocomplete, history search,
 and help text by hitting backtick (\`) or :kbd:`Ctrl`:kbd:`Shift`:kbd:`D`,
@@ -156,7 +157,7 @@ mangager orders screen, you can see all the orders that have been created for yo
 
 Next, try setting up `autochop` by running the GUI configuration `gui/autochop`.
 You can enable it from the GUI, so you don't need to run `enable autochop <enable>`
-directly. You can set a target number of logs, and let autochop will manage
+directly. You can set a target number of logs, and autochop will manage
 your logging industry for you. You can control where your woodsdwarves go to
 cut down trees by setting up burrows and configuring autochop to only cut in
 those burrows.

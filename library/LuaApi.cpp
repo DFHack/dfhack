@@ -1631,7 +1631,10 @@ static const luaL_Reg dfhack_gui_funcs[] = {
 };
 
 template<typename T>
-static void imgui_update_ref(imgui_ref_tag<T>& val)
+struct imgui_ref_tag;
+
+template<typename T>
+static void imgui_update_ref(imgui_ref_tag<T>& val);
 
 template<typename T>
 struct imgui_ref_tag {
@@ -1641,7 +1644,8 @@ struct imgui_ref_tag {
     lua_State* state = nullptr;
     bool updated = false;
 
-    imgui_ref_tag(const imgui_ref_tag<T>&) = delete;
+    imgui_ref_tag(){}
+    imgui_ref_tag(const imgui_ref_tag<T>&) = default;
     imgui_ref_tag<T>& operator=(const imgui_ref_tag<T>&) = delete;
 
     ~imgui_ref_tag()
@@ -1875,6 +1879,8 @@ static void imgui_update_ref(imgui_ref_tag<T>& val)
 
     val.updated = true;
 
+    lua_State* state = val.state;
+
     lua_pushvalue(state, val.index);
     lua_pushnumber(state, 0);
     imgui_push_generic_impl(state, val.val);
@@ -1950,7 +1956,7 @@ static void imgui_decode_multiple_impl(std::tuple<T&> out, lua_State* state, int
 
     assert(!out_of_bounds);
 
-    std::get<0>(out) = imgui_decode<T>(state, index);
+    imgui_decode_impl(state, std::get<0>(out), index);
 }
 
 /*
@@ -2788,18 +2794,18 @@ static int imgui_collapsingheaderref(lua_State* state)
 }
 
 template<typename T>
-static const T& imgui_arg_shim(const T& in)
+static T& imgui_arg_shim(T& in)
 {
     return in;
 }
 
-static const char* imgui_arg_shim(const std::string& str)
+static const char* imgui_arg_shim(std::string& str)
 {
     return str.c_str();
 }
 
 template<typename T>
-T* imgui_arg_shim(const imgui_ref_tag<T>& in)
+T* imgui_arg_shim(imgui_ref_tag<T>& in)
 {
     if (in.decoded)
         return &in.val;
@@ -2948,7 +2954,8 @@ IMGUI_SIMPLE_GET(GetMousePosOnOpeningCurrentPopup);
 IMGUI_SIMPLE_SET1(CaptureKeyboardFromApp, true)
 IMGUI_SIMPLE_SET1(CaptureMouseFromApp, true)
 
-IMGUI_SIMPLE_GET2(BeginPopup, std::string(), int);
+IMGUI_SIMPLE_GET2(BeginPopup, std::string(), 0);
+IMGUI_SIMPLE_GET3(BeginPopupModal, std::string(), imgui_ref_tag<bool>(), 0);
 
 #define IMGUI_NAME_FUNC(name) {#name, imgui_##name}
 
@@ -3085,6 +3092,8 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     IMGUI_NAME_FUNC(GetMousePosOnOpeningCurrentPopup),
     IMGUI_NAME_FUNC(CaptureKeyboardFromApp),
     IMGUI_NAME_FUNC(CaptureMouseFromApp),
+    IMGUI_NAME_FUNC(BeginPopup),
+    IMGUI_NAME_FUNC(BeginPopupModal),
     { NULL, NULL }
 };
 

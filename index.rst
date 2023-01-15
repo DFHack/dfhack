@@ -17,7 +17,7 @@ Quick Links
 * `Installation guide <installing>`
 * `Getting help <support>`
 * :source:`Source code <>`
-    (**important:** read `compile` before attempting to build from source.)
+    (**important:** read `building-dfhack-index` before attempting to build from source.)
 
 User Manual
 ===========

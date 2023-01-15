@@ -50,7 +50,7 @@ The GCC 4.8 build is built on Ubuntu 14.04 and targets an older glibc, so it
 should work on older distributions.
 
 In the event that none of the provided binaries work on your distribution,
-you may need to `compile DFHack from source <compile>`.
+you may need to `compile DFHack from source <building-dfhack-index>`.
 
 macOS
 -----
@@ -86,7 +86,7 @@ restrictions apply (e.g. a file named ``Windows64`` is for 64-bit Windows DF).
     or by clicking "Download ZIP" on the repo homepage. This will give you an
     incomplete copy of the DFHack source code, which will not work as-is. (If
     you want to compile DFHack instead of using a pre-built release, see
-    `compile` for instructions.)
+    `building-dfhack-index` for instructions.)
 
 Installing DFHack
 =================

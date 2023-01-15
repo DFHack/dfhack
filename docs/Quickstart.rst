@@ -19,7 +19,7 @@ more. Third-party tools (e.g. mods downloaded from Steam Workshop or the forums)
 can also seamlessly integrate with the DFHack framework and extend the game far
 beyond what can be done by just modding the raws.
 
-DFHack's mission is to provide tools and interfaces for players and modders to: 
+DFHack's mission is to provide tools and interfaces for players and modders to:
 - expand the bounds of what is possible in Dwarf Fortress
 - reduce the impact of game bugs
 - give the player more agency and control over the game

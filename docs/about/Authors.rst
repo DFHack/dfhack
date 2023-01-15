@@ -13,6 +13,7 @@ Name                    Github                  Other
 Abel                    abstern
 acwatkins               acwatkins
 Alexander Gavrilov      angavrilov              ag
+Amber Brown             hawkowl
 Amostubal               Amostubal
 Andrea Cattaneo         acattaneo88
 AndreasPK               AndreasPK
@@ -46,10 +47,12 @@ David Corbett           dscorbett
 David Seguin            dseguin
 David Timm              dtimm
 Deon
+dikbut                  Tjudge1
 DoctorVanGogh           DoctorVanGogh
 Donald Ruegsegger       hashaash
 doomchild               doomchild
 DwarvenM                DwarvenM
+EarthPulseAcademy       EarthPulseAcademy
 ElMendukol              ElMendukol
 enjia2000
 Eric Wald               eswald
@@ -66,8 +69,10 @@ Guilherme Abraham       GuilhermeAbraham
 Harlan Playford         playfordh
 Hayati Ayguen           hayguen
 Herwig Hochleitner      bendlas
+Hevlikn                 Hevlikn
 Ian S                   kremlin-
 IndigoFenix
+James                   20k
 James Gilles            kazimuth
 James Logsdon           jlogsdon
 Jared Adams
@@ -80,14 +85,18 @@ Joel Meador             janxious
 John Beisley            huin
 John Shade              gsvslto
 Jonas Ask
+Jonathan Clark          AridTag
 Josh Cooper             cppcooper               coope
+jowario                 jowario
 kane-t                  kane-t
 Kelly Kinkade           ab9rf
+Kib Arekatír            arekatir
 KlonZK                  KlonZK
 Kris Parker             kaypy
 Kristjan Moore          kristjanmoore
 Kromtec                 Kromtec
 Kurik Amudnil
+Kévin Boissonneault     KABoissonneault
 Lethosor                lethosor
 LordGolias              LordGolias
 Mark Nielson            pseudodragon
@@ -111,6 +120,7 @@ Milo Christiansen       milochristiansen
 MithrilTuxedo           MithrilTuxedo
 mizipzor                mizipzor
 moversti                moversti
+Murad Beybalaev         Erquint
 Myk Taylor              myk002
 napagokc                napagokc
 Neil Little             nmlittle
@@ -119,7 +129,10 @@ Nicolas Ayala           nicolasayala
 Nik Nyby                nikolas
 Nikolay Amiantov        abbradar
 nocico                  nocico
+NotRexButCaesar         NotRexButCaesar
+Nuno Fernandes          UnknowableCoder
 Omniclasm
+oorzkws                 oorzkws
 OwnageIsMagic           OwnageIsMagic
 palenerd                dlmarquis
 PassionateAngler        PassionateAngler
@@ -133,6 +146,7 @@ Pierre-David Bélanger   pierredavidbelanger
 potato
 Priit Laes              plaes
 Putnam                  Putnam3145
+quarque2                quarque2
 Quietust                quietust                _Q
 Rafał Karczmarczyk      CarabusX
 Raidau                  Raidau
@@ -145,6 +159,7 @@ reverb
 Rich Rauenzahn          rrauenza
 Rinin                   Rinin
 rndmvar                 rndmvar
+Rob Bailey              actionninja
 Robert Heinrich         rh73
 Robert Janetzko         robertjanetzko
 Rocco Moretti           roccomoretti
@@ -165,8 +180,10 @@ scamtank                scamtank
 Sebastian Wolfertz      Enkrod
 seishuuu                seishuuu
 Seth Woodworth          sethwoodworth
+Shim Panze              Shim-Panze
 simon
 Simon Jackson           sizeak
+Simon Lees              simotek
 stolencatkarma
 Stoyan Gaydarov         sgayda2
 Su                      Moth-Tolias
@@ -198,6 +215,7 @@ Vjek                    vjek
 Warmist                 warmist
 Wes Malone              wesQ3
 Will Rogers             wjrogers
+WoosterUK               WoosterUK
 ZechyW                  ZechyW
 Zhentar                 Zhentar
 zilpin                  zilpin

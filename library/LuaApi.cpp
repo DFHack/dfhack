@@ -1631,10 +1631,27 @@ static const luaL_Reg dfhack_gui_funcs[] = {
 };
 
 template<typename T>
+static void imgui_update_ref(imgui_ref_tag<T>& val)
+
+template<typename T>
 struct imgui_ref_tag {
     bool decoded = false;
     int index = 0;
     T val = T{};
+    lua_State* state = nullptr;
+    bool updated = false;
+
+    imgui_ref_tag(const imgui_ref_tag<T>&) = delete;
+    imgui_ref_tag<T>& operator=(const imgui_ref_tag<T>&) = delete;
+
+    ~imgui_ref_tag()
+    {
+        if (decoded && !updated)
+        {
+            assert(state);
+            imgui_update_ref(*this);
+        }
+    }
 };
 
 template<typename T, typename U>
@@ -1755,6 +1772,8 @@ static void imgui_decode_impl(lua_State* state, std::vector<T>& out, int index)
 template<typename T>
 static void imgui_decode_impl(lua_State* state, imgui_ref_tag<T>& out, int index)
 {
+    out.state = state;
+
     if (lua_istable(state, index))
         out.decoded = true;
     else
@@ -1849,22 +1868,18 @@ static void imgui_push_generic_impl(lua_State* state, const std::map<T, U>& val)
 
 //table is at index
 template<typename T>
-static void imgui_encode_into_ref(lua_State* state, const T& val, int index)
-{
-    lua_pushvalue(state, index);
-    lua_pushnumber(state, 0);
-    imgui_push_generic_impl(state, val);
-    lua_settable(state, -3);
-    lua_pop(state, 1);
-}
-
-template<typename T>
-static void imgui_update_ref(lua_State* state, imgui_ref_tag<T>& val)
+static void imgui_update_ref(imgui_ref_tag<T>& val)
 {
     if (!val.decoded)
         return;
 
-    imgui_encode_into_ref(state, val.val, val.index);
+    val.updated = true;
+
+    lua_pushvalue(state, val.index);
+    lua_pushnumber(state, 0);
+    imgui_push_generic_impl(state, val.val);
+    lua_settable(state, -3);
+    lua_pop(state, 1);
 }
 
 //returns 1 for convenience
@@ -2256,8 +2271,6 @@ static int imgui_begin(lua_State* state)
     if (is_open_value.decoded)
     {
         result = ImGui::Begin(name.c_str(), &is_open_value.val, flags);
-
-        imgui_update_ref(state, is_open_value);
     }
     else
     {
@@ -2318,8 +2331,6 @@ static int imgui_checkbox(lua_State* state)
 
     bool result = ImGui::Checkbox(label.c_str(), &val.val);
 
-    imgui_update_ref(state, val);
-
     imgui_push_generic(state, result);
     return 1;
 }
@@ -2344,8 +2355,6 @@ static int imgui_inputtext(lua_State* state)
     {
         ImGui::SetKeyboardFocusHere(-1);
     }
-
-    imgui_update_ref(state, val);
 
     lua_pushboolean(state, result);
     return 1;
@@ -2652,8 +2661,6 @@ static int imgui_menuitemref(lua_State* state)
 
     bool result = ImGui::MenuItem(label.c_str(), shortcut.c_str(), &selected.val, enabled);
 
-    imgui_update_ref(state, selected);
-
     imgui_push_generic(state, result);
 
     return 1;
@@ -2688,7 +2695,6 @@ static int imgui_begintabitem(lua_State* state)
     else
         result = ImGui::BeginTabItem(label.c_str(), nullptr, flags);
 
-    imgui_update_ref(state, p_open);
     imgui_push_generic(state, result);
 
     return 1;
@@ -2729,8 +2735,6 @@ static int imgui_selectableref(lua_State* state)
     imgui_decode_multiple_into(std::tie(label, is_selected, flags, width), state, -1, true);
 
     bool result = ImGui::Selectable(label.c_str(), &is_selected.val, flags, width);
-
-    imgui_update_ref(state, is_selected);
 
     imgui_push_generic(state, result);
 
@@ -2780,8 +2784,6 @@ static int imgui_collapsingheaderref(lua_State* state)
 
     bool result = ImGui::CollapsingHeader(label.c_str(), &is_selected.val, flags);
 
-    imgui_update_ref(state, is_selected);
-
     return imgui_push_generic(state, result);
 }
 
@@ -2791,9 +2793,18 @@ static const T& imgui_arg_shim(const T& in)
     return in;
 }
 
-const char* imgui_arg_shim(const std::string& str)
+static const char* imgui_arg_shim(const std::string& str)
 {
     return str.c_str();
+}
+
+template<typename T>
+T* imgui_arg_shim(const imgui_ref_tag<T>& in)
+{
+    if (in.decoded)
+        return &in.val;
+    else
+        return nullptr;
 }
 
 #define IMGUI_SIMPLE_GETE(name, extra) int imgui_##extra(lua_State* state){return imgui_push_generic(state, ImGui::name());}
@@ -2936,6 +2947,8 @@ IMGUI_SIMPLE_GET(GetMousePosOnOpeningCurrentPopup);
 
 IMGUI_SIMPLE_SET1(CaptureKeyboardFromApp, true)
 IMGUI_SIMPLE_SET1(CaptureMouseFromApp, true)
+
+IMGUI_SIMPLE_GET2(BeginPopup, std::string(), int);
 
 #define IMGUI_NAME_FUNC(name) {#name, imgui_##name}
 

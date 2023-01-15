@@ -2956,6 +2956,11 @@ IMGUI_SIMPLE_SET1(CaptureMouseFromApp, true)
 
 IMGUI_SIMPLE_GET2(BeginPopup, std::string(), 0);
 IMGUI_SIMPLE_GET3(BeginPopupModal, std::string(), imgui_ref_tag<bool>(), 0);
+IMGUI_SIMPLE(EndPopup);
+
+IMGUI_SIMPLE_SET2(OpenPopup, std::string(), 0);
+IMGUI_SIMPLE_SET2(OpenPopupOnItemClick, std::string(), 1);
+IMGUI_SIMPLE(CloseCurrentPopup);
 
 #define IMGUI_NAME_FUNC(name) {#name, imgui_##name}
 
@@ -3094,6 +3099,10 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     IMGUI_NAME_FUNC(CaptureMouseFromApp),
     IMGUI_NAME_FUNC(BeginPopup),
     IMGUI_NAME_FUNC(BeginPopupModal),
+    IMGUI_NAME_FUNC(EndPopup),
+    IMGUI_NAME_FUNC(OpenPopup),
+    IMGUI_NAME_FUNC(OpenPopupOnItemClick),
+    IMGUI_NAME_FUNC(CloseCurrentPopup),
     { NULL, NULL }
 };
 

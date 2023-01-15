@@ -2327,20 +2327,6 @@ static int imgui_get(lua_State* state)
     return 1;
 }
 
-//string, ref
-static int imgui_checkbox(lua_State* state)
-{
-    std::string label;
-    imgui_ref_tag<bool> val;
-
-    imgui_decode_multiple_into(std::tie(label, val), state, -1, true);
-
-    bool result = ImGui::Checkbox(label.c_str(), &val.val);
-
-    imgui_push_generic(state, result);
-    return 1;
-}
-
 //label, str*
 static int imgui_inputtext(lua_State* state)
 {
@@ -2439,27 +2425,6 @@ static int imgui_addrectfilled(lua_State* state)
     lst->AddRectFilled(tl, br, icol);
 
     return 0;
-}
-
-static int imgui_getbackgrounddrawlist(lua_State* state)
-{
-    imgui_push_generic(state, ImGui::GetBackgroundDrawList());
-
-    return 1;
-}
-
-static int imgui_getforegrounddrawlist(lua_State* state)
-{
-    imgui_push_generic(state, ImGui::GetForegroundDrawList());
-
-    return 1;
-}
-
-static int imgui_getcurrentdrawlist(lua_State* state)
-{
-    imgui_push_generic(state, ImGui::GetWindowDrawList());
-
-    return 1;
 }
 
 static int imgui_textcolored(lua_State* state)
@@ -2656,36 +2621,6 @@ static int imgui_beginmenu(lua_State* state)
     return 1;
 }
 
-static int imgui_menuitemref(lua_State* state)
-{
-    std::string label;
-    std::string shortcut;
-    imgui_ref_tag<bool> selected;
-    bool enabled = false;
-
-    imgui_decode_multiple_into(std::tie(label, shortcut, selected, enabled), state, -1, true);
-
-    bool result = ImGui::MenuItem(label.c_str(), shortcut.c_str(), &selected.val, enabled);
-
-    imgui_push_generic(state, result);
-
-    return 1;
-}
-
-static int imgui_menuitem(lua_State* state)
-{
-    std::string label;
-    std::string shortcut;
-    bool selected = false;
-    bool enabled = false;
-
-    imgui_decode_multiple_into(std::tie(label, shortcut, selected, enabled), state, -1, true);
-
-    bool result = ImGui::MenuItem(label.c_str(), shortcut.c_str(), selected, enabled);
-
-    return imgui_push_generic(state, result);
-}
-
 static int imgui_begintabitem(lua_State* state)
 {
     std::string label;
@@ -2731,38 +2666,6 @@ static int imgui_getkeydisplay(lua_State* state)
     return 1;
 }
 
-static int imgui_selectableref(lua_State* state)
-{
-    std::string label;
-    imgui_ref_tag<bool> is_selected;
-    int flags = 0;
-    ImVec2 width;
-
-    imgui_decode_multiple_into(std::tie(label, is_selected, flags, width), state, -1, true);
-
-    bool result = ImGui::Selectable(label.c_str(), &is_selected.val, flags, width);
-
-    imgui_push_generic(state, result);
-
-    return 1;
-}
-
-static int imgui_selectable(lua_State* state)
-{
-    std::string label;
-    bool is_selected = false;
-    int flags = 0;
-    ImVec2 width;
-
-    imgui_decode_multiple_into(std::tie(label, is_selected, flags, width), state, -1, true);
-
-    bool result = ImGui::Selectable(label.c_str(), is_selected, flags, width);
-
-    imgui_push_generic(state, result);
-
-    return 1;
-}
-
 static int imgui_begintable(lua_State* state)
 {
     std::string name;
@@ -2778,19 +2681,6 @@ static int imgui_begintable(lua_State* state)
     imgui_push_generic(state, result);
 
     return 1;
-}
-
-static int imgui_collapsingheaderref(lua_State* state)
-{
-    std::string label;
-    imgui_ref_tag<bool> is_selected;
-    int flags = 0;
-
-    imgui_decode_multiple_into(std::tie(label, is_selected, flags), state, -1, true);
-
-    bool result = ImGui::CollapsingHeader(label.c_str(), &is_selected.val, flags);
-
-    return imgui_push_generic(state, result);
 }
 
 template<typename T>
@@ -2817,7 +2707,12 @@ T* imgui_arg_shim(imgui_ref_tag<T>& in)
 #define IMGUI_SIMPLE_GET(name) IMGUI_SIMPLE_GETE(name,name)
 #define IMGUI_SIMPLE_GET1(name, t1) int imgui_##name(lua_State* state){auto t = t1; imgui_decode_multiple_into(std::tie(t), state, -1, true); return imgui_push_generic(state, ImGui::name(imgui_arg_shim(t))); }
 #define IMGUI_SIMPLE_GET2(name, t1, t2) int imgui_##name(lua_State* state){auto tl1 = t1; auto tl2 = t2; imgui_decode_multiple_into(std::tie(tl1, tl2), state, -1, true); return imgui_push_generic(state, ImGui::name(imgui_arg_shim(tl1), imgui_arg_shim(tl2)));}
-#define IMGUI_SIMPLE_GET3(name, t1, t2, t3) int imgui_##name(lua_State* state){auto tl1 = t1; auto tl2 = t2; auto tl3 = t3; imgui_decode_multiple_into(std::tie(tl1, tl2, tl3), state, -1, true); return imgui_push_generic(state, ImGui::name(imgui_arg_shim(tl1), imgui_arg_shim(tl2), imgui_arg_shim(tl3)));}
+#define IMGUI_SIMPLE_GET3E(name, t1, t2, t3, extra) int imgui_##extra(lua_State* state){auto tl1 = t1; auto tl2 = t2; auto tl3 = t3; imgui_decode_multiple_into(std::tie(tl1, tl2, tl3), state, -1, true); return imgui_push_generic(state, ImGui::name(imgui_arg_shim(tl1), imgui_arg_shim(tl2), imgui_arg_shim(tl3)));}
+#define IMGUI_SIMPLE_GET4E(name, t1, t2, t3, t4, extra) int imgui_##extra(lua_State* state){auto tl1 = t1; auto tl2 = t2; auto tl3 = t3; auto tl4 = t4; imgui_decode_multiple_into(std::tie(tl1, tl2, tl3, tl4), state, -1, true); return imgui_push_generic(state, ImGui::name(imgui_arg_shim(tl1), imgui_arg_shim(tl2), imgui_arg_shim(tl3), imgui_arg_shim(tl4)));}
+
+#define IMGUI_SIMPLE_GET3(name, t1, t2, t3) IMGUI_SIMPLE_GET3E(name, t1, t2, t3, name)
+#define IMGUI_SIMPLE_GET4(name, t1, t2, t3, t4) IMGUI_SIMPLE_GET4E(name, t1, t2, t3, t4, name)
+
 #define IMGUI_SIMPLE(name) int imgui_##name(lua_State* state){ImGui::name(); return 0;}
 #define IMGUI_SIMPLE_SET1E(name, t1, extra) int imgui_##extra(lua_State* state){auto t = t1; imgui_decode_multiple_into(std::tie(t), state, -1, true); ImGui::name(imgui_arg_shim(t)); return 0;}
 #define IMGUI_SIMPLE_SET2E(name, t1, t2, extra) int imgui_##extra(lua_State* state){auto tl1 = t1; auto tl2 = t2; imgui_decode_multiple_into(std::tie(tl1, tl2), state, -1, true); ImGui::name(imgui_arg_shim(tl1), imgui_arg_shim(tl2)); return 0;}
@@ -2935,6 +2830,7 @@ IMGUI_SIMPLE_SET1(TreePush, std::string());
 IMGUI_SIMPLE(TreePop);
 IMGUI_SIMPLE_GET(GetTreeNodeToLabelSpacing);
 IMGUI_SIMPLE_GET2(CollapsingHeader, std::string(), 0);
+IMGUI_SIMPLE_GET3E(CollapsingHeader, std::string(), imgui_ref_tag<bool>(), 0, CollapsingHeaderRef);
 
 IMGUI_SIMPLE_SET2(SetNextItemOpen, false, 0);
 IMGUI_SIMPLE_GET2(BeginListBox, std::string(), ImVec2(0,0));
@@ -2967,13 +2863,24 @@ IMGUI_SIMPLE_GET2(BeginPopupContextWindow, std::string(), 1);
 IMGUI_SIMPLE_GET2(BeginPopupContextVoid, std::string(), 1);
 IMGUI_SIMPLE_GET2(IsPopupOpen, std::string(), 1);
 
+IMGUI_SIMPLE_GET2(Checkbox, std::string(), imgui_ref_tag<bool>());
+IMGUI_SIMPLE_GET(GetBackgroundDrawList);
+IMGUI_SIMPLE_GET(GetForegroundDrawList);
+IMGUI_SIMPLE_GET(GetWindowDrawList);
+
+IMGUI_SIMPLE_GET4E(MenuItem, std::string(), std::string(), imgui_ref_tag<bool>(), false, MenuItemRef);
+IMGUI_SIMPLE_GET4(MenuItem, std::string(), std::string(), false, false);
+
+IMGUI_SIMPLE_GET4E(Selectable, std::string(), imgui_ref_tag<bool>(), 0, ImVec2(0,0), SelectableRef);
+IMGUI_SIMPLE_GET4(Selectable, std::string(), false, 0, ImVec2(0,0));
+
 #define IMGUI_NAME_FUNC(name) {#name, imgui_##name}
 
 static const luaL_Reg dfhack_imgui_funcs[] = {
     {"Text", imgui_text},
     {"Begin", imgui_begin},
     IMGUI_NAME_FUNC(SameLine),
-    {"Checkbox", imgui_checkbox},
+    IMGUI_NAME_FUNC(Checkbox),
     {"Ref", imgui_ref},
     {"Get", imgui_get},
     {"InputText", imgui_inputtext},
@@ -2984,9 +2891,6 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"GetDisplaySize", imgui_getdisplaysize},
     {"AddRect", imgui_addrect},
     {"AddRectFilled", imgui_addrectfilled},
-    {"GetBackgroundDrawList", imgui_getbackgrounddrawlist},
-    {"GetForegroundDrawList", imgui_getforegrounddrawlist},
-    {"GetCurrentDrawList", imgui_getcurrentdrawlist},
     {"TextColored", imgui_textcolored},
     {"ButtonColored", imgui_buttoncolored},
     {"TextBackgroundColored", imgui_textbackgroundcolored},
@@ -3000,13 +2904,13 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"IsKeyPressed", imgui_iskeypressed},
     {"IsKeyReleased", imgui_iskeyreleased},
     {"BeginMenu", imgui_beginmenu},
-    {"MenuItemRef", imgui_menuitemref},
-    {"MenuItem", imgui_menuitem},
+    IMGUI_NAME_FUNC(MenuItemRef),
+    IMGUI_NAME_FUNC(MenuItem),
     {"BeginTabItem", imgui_begintabitem},
     {"Shortcut", imgui_shortcut},
     {"GetKeyDisplay", imgui_getkeydisplay},
-    {"SelectableRef", imgui_selectableref},
-    {"Selectable", imgui_selectable},
+    IMGUI_NAME_FUNC(SelectableRef),
+    IMGUI_NAME_FUNC(Selectable),
     {"BeginTable", imgui_begintable},
     IMGUI_NAME_FUNC(IsWindowFocused),
     IMGUI_NAME_FUNC(IsWindowHovered),
@@ -3088,7 +2992,7 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     IMGUI_NAME_FUNC(TreePop),
     IMGUI_NAME_FUNC(GetTreeNodeToLabelSpacing),
     IMGUI_NAME_FUNC(CollapsingHeader),
-    {"CollapsingHeaderRef", imgui_collapsingheaderref},
+    IMGUI_NAME_FUNC(CollapsingHeaderRef),
     IMGUI_NAME_FUNC(SetNextItemOpen),
     IMGUI_NAME_FUNC(BeginListBox),
     IMGUI_NAME_FUNC(EndListBox),
@@ -3112,6 +3016,9 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     IMGUI_NAME_FUNC(BeginPopupContextWindow),
     IMGUI_NAME_FUNC(BeginPopupContextVoid),
     IMGUI_NAME_FUNC(IsPopupOpen),
+    IMGUI_NAME_FUNC(GetBackgroundDrawList),
+    IMGUI_NAME_FUNC(GetForegroundDrawList),
+    IMGUI_NAME_FUNC(GetWindowDrawList),
     { NULL, NULL }
 };
 

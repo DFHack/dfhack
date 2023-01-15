@@ -81,7 +81,7 @@ Panel.ATTRS {
     resize_min = DEFAULT_NIL,
     on_resize_begin = DEFAULT_NIL,
     on_resize_end = DEFAULT_NIL,
-    lockable = false,
+    pinnable = false,
     autoarrange_subviews = false, -- whether to automatically lay out subviews
     autoarrange_gap = 0, -- how many blank lines to insert between widgets
 }
@@ -280,7 +280,7 @@ local function panel_is_on_pin(self)
 end
 
 local function panel_is_pinnable(self)
-    return self.lockable and self.parent_view and self.parent_view.toggleLocked
+    return self.pinnable and self.parent_view and self.parent_view.togglePinned
 end
 
 function Panel:getMouseFramePos()
@@ -322,7 +322,7 @@ function Panel:onInput(keys)
     end
     if panel_is_pinnable(self) and keys._MOUSE_L_DOWN then
         if panel_is_on_pin(self) then
-            self.parent_view:toggleLocked()
+            self.parent_view:togglePinned()
             return true
         end
     end
@@ -491,14 +491,14 @@ end
 function Panel:onRenderFrame(dc, rect)
     Panel.super.onRenderFrame(self, dc, rect)
     if not self.frame_style then return end
-    local locked = nil
-    if self.lockable then
-        locked = self.parent_view and self.parent_view.locked
+    local pinned = nil
+    if self.pinnable then
+        pinned = self.parent_view and self.parent_view.pinned
     end
     local inactive = self.parent_view and self.parent_view.isOnTop
             and not self.parent_view:isOnTop()
     gui.paint_frame(dc, rect, self.frame_style, self.frame_title,
-            self.lockable, locked, inactive)
+            self.pinnable, pinned, inactive)
     if self.kbd_get_pos then
         local pos = self.kbd_get_pos()
         local pen = to_pen{fg=COLOR_GREEN, bg=COLOR_BLACK}
@@ -521,7 +521,7 @@ Window.ATTRS {
     frame_background = gui.CLEAR_PEN,
     frame_inset = 1,
     draggable = true,
-    lockable = true,
+    pinnable = true,
 }
 
 -------------------
@@ -529,6 +529,11 @@ Window.ATTRS {
 -------------------
 
 ResizingPanel = defclass(ResizingPanel, Panel)
+
+ResizingPanel.ATTRS{
+    auto_height = true,
+    auto_width = false,
+}
 
 -- adjust our frame dimensions according to positions and sizes of our subviews
 function ResizingPanel:postUpdateLayout(frame_body)
@@ -550,6 +555,8 @@ function ResizingPanel:postUpdateLayout(frame_body)
     end
     if not self.frame then self.frame = {} end
     local oldw, oldh = self.frame.w, self.frame.h
+    if not self.auto_height then h = oldh end
+    if not self.auto_width then w = oldw end
     self.frame.w, self.frame.h = w, h
     if not self._updateLayoutGuard and (oldw ~= w or oldh ~= h) then
         self._updateLayoutGuard = true -- protect against infinite loops
@@ -659,7 +666,7 @@ function EditField:postUpdateLayout()
 end
 
 function EditField:onRenderBody(dc)
-    dc:pen(self.text_pen or COLOR_LIGHTCYAN):fill(0,0,dc.width-1,0)
+    dc:pen(self.text_pen or COLOR_LIGHTCYAN)
 
     local cursor_char = '_'
     if not getval(self.active) or not self.focus or gui.blink_visible(300) then
@@ -688,7 +695,6 @@ function EditField:onRenderBody(dc)
                                 end_pos == #txt and '' or string.char(26))
     end
     dc:advance(self.text_offset):string(txt)
-    dc:string((' '):rep(dc.clip_x2 - dc.x))
 end
 
 function EditField:insert(text)
@@ -709,7 +715,7 @@ function EditField:onInput(keys)
         end
     end
 
-    if self.key and keys.LEAVESCREEN then
+    if self.key and (keys.LEAVESCREEN or keys._MOUSE_R_DOWN) then
         local old = self.text
         self:setText(self.saved_text)
         if self.on_change and old ~= self.saved_text then
@@ -1102,6 +1108,9 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
                 x = x + 1
                 if dc then
                     dc:tile(nil, token.tile)
+                    if token.width then
+                        dc:advance(token.width-1)
+                    end
                 end
             end
 
@@ -1692,7 +1701,7 @@ function List:onRenderBody(dc)
 
     local function paint_icon(icon, obj)
         if type(icon) ~= 'string' then
-            dc:char(nil,icon)
+            dc:tile(nil,icon)
         else
             if current then
                 dc:string(icon, obj.icon_pen or self.icon_pen or cur_pen)

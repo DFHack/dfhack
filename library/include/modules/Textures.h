@@ -31,9 +31,15 @@ void cleanup();
 DFHACK_EXPORT long getDfhackLogoTexposStart();
 
 /**
- * Get the texpos for the UI pin tiles. Each are 2x2 grids.
+ * Get the first texpos for the UI pin tiles. Each are 2x2 grids.
  */
 DFHACK_EXPORT long getGreenPinTexposStart();
 DFHACK_EXPORT long getRedPinTexposStart();
+
+/**
+ * Get the first texpos for the DFHack icons. It's a 5x2 grid.
+ */
+DFHACK_EXPORT long getIconsTexposStart();
+
 }
 }

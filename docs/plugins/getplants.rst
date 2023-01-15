@@ -3,7 +3,7 @@ getplants
 
 .. dfhack-tool::
     :summary: Designate trees for chopping and shrubs for gathering.
-    :tags: fort productivity plants
+    :tags: untested fort productivity plants
 
 Specify the types of trees to cut down and/or shrubs to gather by their plant
 names.

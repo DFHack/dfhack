@@ -49,6 +49,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## API
 - ``Gui::getDwarfmodeDims``: now only returns map viewport dimensions; menu dimensions are obsolete
 - ``Gui::getDFViewscreen``: returns the topmost underlying DF viewscreen
+- ``Screen::Pen``: now accepts ``keep_lower`` and ``write_to_lower`` properties to support foreground and background textures in graphics mode
 
 ## Lua
 - Removed ``os.execute()`` and ``io.popen()`` built-in functions
@@ -58,10 +59,13 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``widgets.CycleHotkeyLabel``: now supports rendering option labels in the color of your choice
 - ``widgets.CycleHotkeyLabel``: new functions ``setOption()`` and ``getOptionPen()``
 - ``widgets.ToggleHotkeyLabel``: now renders the ``On`` option in green text
+- ``widgets.Label``: tiles can now have an associated width
 - `overlay`: ``OverlayWidget`` now inherits from ``Panel`` instead of ``Widget`` to get all the frame and mouse integration goodies
 - ``dfhack.gui.getDFViewscreen()``: returns the topmost underlying DF viewscreen
 - ``gui.ZScreen``: Screen subclass that implements window raising, multi-viewscreen input handling, and viewscreen event pass-through so the underlying map can be interacted with and dragged around while DFHack screens are visible
 - ``gui.View``: new function ``view:getMouseFramePos()`` for detecting whether the mouse is within (or over) the exterior frame of a view
+- ``gui.CLEAR_PEN``: now clears the background and foreground and writes to the background (before it would always write to the foreground)
+- ``gui.KEEP_LOWER_PEN``: a general use pen that writes associated tiles to the foreground while keeping the existing background
 
 ## Internals
 

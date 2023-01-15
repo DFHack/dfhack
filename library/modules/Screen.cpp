@@ -129,10 +129,10 @@ static bool doSetTile_map(const Pen &pen, int x, int y) {
         return false;
 
     long texpos = pen.tile;
-    if (texpos == 0) {
+    if (!texpos && pen.ch)
         texpos = init->font.large_font_texpos[(uint8_t)pen.ch];
-    }
-    vp->screentexpos_interface[index] = texpos;
+    if (texpos)
+        vp->screentexpos_interface[index] = texpos;
     return true;
 }
 
@@ -158,7 +158,8 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
 
     *screen = 0;
     *texpos = 0;
-    *texpos_lower = 0;
+    if (!pen.keep_lower)
+        *texpos_lower = 0;
     gps->screentexpos_anchored[index] = 0;
     // keep SCREENTEXPOS_FLAG_ANCHOR_SUBORDINATE so occluded anchored textures
     // don't appear corrupted
@@ -172,7 +173,8 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
 
         *screen = 0;
         *texpos = 0;
-        *texpos_lower = 0;
+        if (!pen.keep_lower)
+            *texpos_lower = 0;
         gps->screentexpos_top_anchored[index] = 0;
         *flag &= 4; // keep SCREENTEXPOS_FLAG_ANCHOR_SUBORDINATE
     }
@@ -191,10 +193,13 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
     }
 
     if (pen.tile && use_graphics) {
-        *texpos = pen.tile;
-    } else {
+        if (pen.write_to_lower)
+            *texpos_lower = pen.tile;
+        else
+            *texpos = pen.tile;
+    } else if (pen.ch) {
         screen[0] = uint8_t(pen.ch);
-        *texpos_lower = 909;
+        *texpos_lower = 909; // basic black background
     }
 
     auto rgb_fg = &gps->uccolor[fg][0];

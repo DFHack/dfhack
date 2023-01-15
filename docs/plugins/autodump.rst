@@ -3,7 +3,7 @@ autodump
 
 .. dfhack-tool::
     :summary: Automatically set items in a stockpile to be dumped.
-    :tags: fort armok fps productivity items stockpiles
+    :tags: untested fort armok fps productivity items stockpiles
     :no-command:
 
 .. dfhack-command:: autodump

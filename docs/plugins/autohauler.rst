@@ -3,7 +3,7 @@ autohauler
 
 .. dfhack-tool::
     :summary: Automatically manage hauling labors.
-    :tags: fort auto labors
+    :tags: untested fort auto labors
 
 Similar to `autolabor`, but instead of managing all labors, autohauler only
 addresses hauling labors, leaving the assignment of skilled labors entirely up

@@ -3,7 +3,7 @@ cleanconst
 
 .. dfhack-tool::
     :summary: Cleans up construction materials.
-    :tags: fort fps buildings
+    :tags: untested fort fps buildings
 
 This tool alters all constructions on the map so that they spawn their building
 component when they are disassembled, allowing their actual build items to be

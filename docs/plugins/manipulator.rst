@@ -3,7 +3,7 @@ manipulator
 
 .. dfhack-tool::
     :summary: An in-game labor management interface.
-    :tags: fort productivity labors
+    :tags: untested fort productivity labors
     :no-command:
 
 It is equivalent to the popular Dwarf Therapist utility.

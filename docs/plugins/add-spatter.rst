@@ -3,7 +3,7 @@ add-spatter
 
 .. dfhack-tool::
     :summary: Make tagged reactions produce contaminants.
-    :tags: adventure fort gameplay items
+    :tags: untested adventure fort gameplay items
     :no-command:
 
 Give some use to all those poisons that can be bought from caravans! The plugin

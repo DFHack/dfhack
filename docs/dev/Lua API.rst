@@ -1144,6 +1144,10 @@ Job module
 
   Prints info about the job item.
 
+* ``dfhack.job.removeJob(job)``
+
+  Cancels a job, cleans up all references to it, and removes it from the world.
+
 * ``dfhack.job.getGeneralRef(job, type)``
 
   Searches for a general_ref with the given type.
@@ -2266,6 +2270,12 @@ a table with the following possible fields:
     Specifies that the tile should be shaded with *fg/bg*.
   ``tile_fg, tile_bg``
     If specified, overrides *tile_color* and supplies shading colors directly.
+  ``keep_lower``
+    If set to true, will not overwrite the background tile when filling in
+    the foreground tile.
+  ``write_to_lower``
+    If set to true, the specified ``tile`` will be written to the background
+    instead of the foreground.
 
 Alternatively, it may be a pre-parsed native object with the following API:
 
@@ -3654,7 +3664,17 @@ Misc
 
 * ``CLEAR_PEN``
 
-  The black pen used to clear the screen.
+  The black pen used to clear the screen. In graphics mode, it will clear the
+  foreground and set the background to the standard black tile.
+
+* ``TRANSPARENT_PEN``
+
+  A pen that will clear all textures from the UI layer, making the tile transparent.
+
+* ``KEEP_LOWER_PEN``
+
+  A pen that will write tiles over existing background tiles instead of clearing
+  them.
 
 * ``simulateInput(screen, keys...)``
 
@@ -4095,13 +4115,13 @@ through to the underlying viewscreen.
 
 If :kbd:`Esc` or the right mouse button is pressed, and the ZScreen widgets
 don't otherwise handle them, then the top ZScreen is dismissed. If the ZScreen
-is "locked", then the screen is not dismissed and the input is passed on to the
-underlying DF viewscreen. :kbd:`Alt`:kbd:`L` toggles the locked status if the
+is "pinned", then the screen is not dismissed and the input is passed on to the
+underlying DF viewscreen. :kbd:`Alt`:kbd:`L` toggles the pinned status if the
 ZScreen widgets don't otherwise handle that key sequence. If you have a
-``Panel`` with the ``lockable`` attribute set and a frame that has pens defined
-for the lock icon (like ``Window`` widgets have by default), then a lock icon
+``Panel`` with the ``pinnable`` attribute set and a frame that has pens defined
+for the pin icon (like ``Window`` widgets have by default), then a pin icon
 will appear in the upper right corner of the frame. Clicking on this icon will
-toggle the ZScreen ``locked`` status just as if :kbd:`Alt`:kbd:`L` had been
+toggle the ZScreen ``pinned`` status just as if :kbd:`Alt`:kbd:`L` had been
 pressed.
 
 Keyboard input goes to the top ZScreen, as usual. If the subviews of the top
@@ -4130,10 +4150,10 @@ ZScreen provides the following functions:
   when the tool command is run and raise the existing dialog if it exists or
   show a new dialog if it doesn't. See the sample code below for an example.
 
-* ``zscreen:toggleLocked()``
+* ``zscreen:togglePinned()``
 
-  Toggles whether the window closes on :kbd:`ESC` or r-click (unlocked) or not
-  (locked).
+  Toggles whether the window closes on :kbd:`ESC` or r-click (unpinned) or not
+  (pinned).
 
 * ``zscreen:isMouseOver()``
 
@@ -4325,9 +4345,9 @@ Has attributes:
   hitting :kbd:`Esc` (while resizing with the mouse or keyboard), or by calling
   ``Panel:setKeyboardResizeEnabled(false)`` (while resizing with the keyboard).
 
-* ``lockable = bool`` (default: ``false``)
+* ``pinnable = bool`` (default: ``false``)
 
-  Determines whether the panel will draw a lock icon in its frame. See
+  Determines whether the panel will draw a pin icon in its frame. See
   `ZScreen class`_ for details.
 
 * ``autoarrange_subviews = bool`` (default: ``false``)
@@ -4391,7 +4411,7 @@ Window class
 ------------
 
 Subclass of Panel; sets Panel attributes to useful defaults for a top-level
-framed, lockable, draggable window.
+framed, pinnable, draggable window.
 
 ResizingPanel class
 -------------------
@@ -4399,6 +4419,13 @@ ResizingPanel class
 Subclass of Panel; automatically adjusts its own frame height and width to the
 minimum required to show its subviews. Pairs nicely with a parent Panel that has
 ``autoarrange_subviews`` enabled.
+
+It has the following attributes:
+
+:auto_height: Sets self.frame.h from the positions and height of its subviews
+              (default is ``true``).
+:auto_width: Sets self.frame.w from the positions and width of its subviews
+             (default is ``false``).
 
 Pages class
 -----------
@@ -4452,9 +4479,10 @@ calling ``setFocus(true)`` on the field object.
 If an activation ``key`` is specified, the ``EditField`` will manage its own
 focus. It will start in the unfocused state, and pressing the activation key
 will acquire keyboard focus. Pressing the Enter key will release keyboard focus
-and then call the ``on_submit`` callback. Pressing the Escape key will also
-release keyboard focus, but first it will restore the text that was displayed
-before the ``EditField`` gained focus and then call the ``on_change`` callback.
+and then call the ``on_submit`` callback. Pressing the Escape key (or r-clicking
+with the mouse) will also release keyboard focus, but first it will restore the
+text that was displayed before the ``EditField`` gained focus and then call the
+``on_change`` callback.
 
 The ``EditField`` cursor can be moved to where you want to insert/remove text.
 You can click where you want the cursor to move or you can use any of the
@@ -4582,8 +4610,8 @@ containing newlines, or a table with the following possible fields:
 
 * ``token.width = ...``
 
-  If specified either as a value or a callback, the text field is padded
-  or truncated to the specified number.
+  If specified either as a value or a callback, the text (or tile) field is
+  padded or truncated to the specified number.
 
 * ``token.pad_char = '?'``
 

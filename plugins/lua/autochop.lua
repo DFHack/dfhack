@@ -63,7 +63,7 @@ function parse_commandline(...)
     elseif command == 'undesignate' then
         autochop_undesignate()
     elseif command == 'target' then
-        setTarget(args[2], args[3])
+        setTargets(args[2], args[3])
     elseif command == 'chop' then
         do_set_burrow_config('chop', true, args[2])
     elseif command == 'nochop' then

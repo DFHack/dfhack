@@ -5,7 +5,7 @@ stockpiles
 
 .. dfhack-tool::
     :summary: Import and export stockpile settings.
-    :tags: fort design productivity stockpiles
+    :tags: untested fort design productivity stockpiles
     :no-command:
 
 .. dfhack-command:: copystock

@@ -3,7 +3,7 @@ burrows
 
 .. dfhack-tool::
     :summary: Auto-expand burrows as you dig.
-    :tags: fort auto design productivity map units
+    :tags: untested fort auto design productivity map units
     :no-command:
 
 .. dfhack-command:: burrow

@@ -34,8 +34,7 @@ itself. Many of the game's rough edges have been smoothed with DFHack tools.
 Here are some common tasks people use DFHack tools to accomplish:
 
 - Automatically chop trees when log stocks are low
-- Record fortress layouts in blueprint files and later play them back in
-  different forts
+- Record blueprint files that allow copy and paste of fort designs
 - Import and export lists of manager orders
 - Clean contaminants from map squares that dwarves can't reach
 - Automatically butcher excess livestock so you don't become overrun with
@@ -54,12 +53,12 @@ seeds and preventing your chefs from cooking seeds that you need for planting.
 Enableable tools that affect a fort save their state with the fort and will
 remember that they are enabled the next time you load your save.
 
-Other tools add information to the screen or provide new integrated functionality
-via the DFHack `overlay` framework. For example, the `unsuspend` tool, in addition
-to its basic function of unsuspending all building construction jobs, can also
-overlay a marker on suspended buildings to indicate that they are suspended (and
-will use different markers to tell you whether this is a problem). These overlays
-can be configured with the `gui/overlay` tool.
+And still other tools add information to the screen or provide new integrated
+functionality via the DFHack `overlay` framework. For example, the `unsuspend`
+tool, in addition to its basic function of unsuspending all building construction
+jobs, can also overlay a marker on suspended buildings to indicate that they are
+suspended (and will use different markers to tell you whether this is a problem).
+These overlays can be configured with the `gui/overlay` tool.
 
 How can I figure out which commands to run?
 -------------------------------------------

@@ -1640,6 +1640,7 @@ template<typename T>
 struct imgui_ref_tag {
     bool decoded = false;
     int index = 0;
+    int top = 0;
     T val = T{};
     lua_State* state = nullptr;
     bool updated = false;
@@ -1737,10 +1738,10 @@ static void imgui_decode_impl(lua_State* state, std::map<T, U>& out, int index)
     {
         lua_pushvalue(state, -2);
 
-        T key;
+        T key = T{};
         imgui_decode_impl(state, key, -1);
 
-        U value;
+        U value = U{};
         imgui_decode_impl(state, value, -2);
 
         out[key] = std::move(value);
@@ -1764,7 +1765,7 @@ static void imgui_decode_impl(lua_State* state, std::vector<T>& out, int index)
     {
         lua_rawgeti(state, index, i);
 
-        T val;
+        T val = {};
         imgui_decode_impl(state, val, -1);
 
         out.push_back(std::move(val));
@@ -1783,6 +1784,7 @@ static void imgui_decode_impl(lua_State* state, imgui_ref_tag<T>& out, int index
     else
         return;
 
+    out.top = lua_gettop(state);
     out.index = index;
     out.val = imgui_decode_ref<T>(state, index);
 }
@@ -1790,7 +1792,7 @@ static void imgui_decode_impl(lua_State* state, imgui_ref_tag<T>& out, int index
 template<typename T>
 static T imgui_decode(lua_State* state, int index)
 {
-    T val;
+    T val = T{};
     imgui_decode_impl(state, val, index);
     return val;
 }
@@ -1886,7 +1888,17 @@ static void imgui_update_ref(imgui_ref_tag<T>& val)
 
     lua_State* state = val.state;
 
-    lua_pushvalue(state, val.index);
+    int extra = (lua_gettop(state) - val.top);
+
+    if (extra < 0)
+        return;
+
+    int ridx = val.index - extra;
+
+    if (!lua_istable(state, ridx))
+        return;
+
+    lua_pushvalue(state, ridx);
     lua_pushnumber(state, 0);
     imgui_push_generic_impl(state, val.val);
     lua_settable(state, -3);

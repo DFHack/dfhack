@@ -2962,6 +2962,11 @@ IMGUI_SIMPLE_SET2(OpenPopup, std::string(), 0);
 IMGUI_SIMPLE_SET2(OpenPopupOnItemClick, std::string(), 1);
 IMGUI_SIMPLE(CloseCurrentPopup);
 
+IMGUI_SIMPLE_GET2(BeginPopupContextItem, std::string(), 1);
+IMGUI_SIMPLE_GET2(BeginPopupContextWindow, std::string(), 1);
+IMGUI_SIMPLE_GET2(BeginPopupContextVoid, std::string(), 1);
+IMGUI_SIMPLE_GET2(IsPopupOpen, std::string(), 1);
+
 #define IMGUI_NAME_FUNC(name) {#name, imgui_##name}
 
 static const luaL_Reg dfhack_imgui_funcs[] = {
@@ -3103,6 +3108,10 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     IMGUI_NAME_FUNC(OpenPopup),
     IMGUI_NAME_FUNC(OpenPopupOnItemClick),
     IMGUI_NAME_FUNC(CloseCurrentPopup),
+    IMGUI_NAME_FUNC(BeginPopupContextItem),
+    IMGUI_NAME_FUNC(BeginPopupContextWindow),
+    IMGUI_NAME_FUNC(BeginPopupContextVoid),
+    IMGUI_NAME_FUNC(IsPopupOpen),
     { NULL, NULL }
 };
 

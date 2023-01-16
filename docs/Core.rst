@@ -216,10 +216,10 @@ after a modded save is unloaded.
 
 .. _other_init_files:
 
-raw/init.d/\*.lua
-.................
+init.d/\*.lua
+.............
 
-Any lua script named ``raw/init.d/*.lua``, in the save or main DF directory,
+Any lua script named ``init.d/*.lua``, in the save or main DF directory,
 will be run when any world or that save is loaded.
 
 

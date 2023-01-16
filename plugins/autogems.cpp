@@ -299,7 +299,7 @@ IMPLEMENT_VMETHOD_INTERPOSE(autogem_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(autogem_hook, render);
 
 bool read_config(color_ostream &out) {
-    std::string path = "data/save/" + World::ReadWorldFolder() + "/autogems.json";
+    std::string path = "save/" + World::ReadWorldFolder() + "/autogems.json";
     if (!Filesystem::isfile(path)) {
         // no need to require the config file to exist
         return true;

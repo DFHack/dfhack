@@ -871,7 +871,7 @@ end
 
 function dfhack.getSavePath()
     if dfhack.isWorldLoaded() then
-        return dfhack.getDFPath() .. '/data/save/' .. df.global.world.cur_savegame.save_dir
+        return dfhack.getDFPath() .. '/save/' .. df.global.world.cur_savegame.save_dir
     end
 end
 
@@ -905,14 +905,14 @@ if dfhack.is_core_context then
             local path = dfhack.getSavePath()
 
             if path and op == SC_WORLD_LOADED then
-                loadInitFile(path, path..'/raw/init.lua')
+                loadInitFile(path, path..'/init.lua')
 
-                local dirlist = dfhack.internal.getDir(path..'/raw/init.d/')
+                local dirlist = dfhack.internal.getDir(path..'/init.d/')
                 if dirlist then
                     table.sort(dirlist)
                     for i,name in ipairs(dirlist) do
                         if string.match(name,'%.lua$') then
-                            loadInitFile(path, path..'/raw/init.d/'..name)
+                            loadInitFile(path, path..'/init.d/'..name)
                         end
                     end
                 end

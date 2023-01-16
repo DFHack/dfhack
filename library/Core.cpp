@@ -472,9 +472,8 @@ void Core::getScriptPaths(std::vector<std::string> *dest)
     if (df::global::world && isWorldLoaded()) {
         string save = World::ReadWorldFolder();
         if (save.size())
-            dest->push_back(df_path + "/data/save/" + save + "/raw/scripts");
+            dest->push_back(df_path + "/save/" + save + "/scripts");
     }
-    dest->push_back(df_path + "/raw/scripts");
     dest->push_back(df_path + "/hack/scripts");
     for (auto it = script_paths[1].begin(); it != script_paths[1].end(); ++it)
         dest->push_back(*it);
@@ -2053,7 +2052,7 @@ void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event eve
 
     if (!df::global::world)
         return;
-    std::string rawFolder = "data/save/" + (df::global::world->cur_savegame.save_dir) + "/raw/";
+    std::string rawFolder = "save/" + (df::global::world->cur_savegame.save_dir) + "/init";
 
     auto i = table.find(event);
     if ( i != table.end() ) {
@@ -2064,7 +2063,6 @@ void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event eve
 
         loadScriptFiles(this, out, set, CONFIG_PATH + "init");
         loadScriptFiles(this, out, set, rawFolder);
-        loadScriptFiles(this, out, set, rawFolder + "objects/");
     }
 
     for (auto it = state_change_scripts.begin(); it != state_change_scripts.end(); ++it)
@@ -2125,7 +2123,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     case SC_MAP_UNLOADED:
         if (world && world->cur_savegame.save_dir.size())
         {
-            std::string save_dir = "data/save/" + world->cur_savegame.save_dir;
+            std::string save_dir = "save/" + world->cur_savegame.save_dir;
             std::string evtlogpath = save_dir + "/events-dfhack.log";
             std::ofstream evtlog;
             evtlog.open(evtlogpath, std::ios_base::app);  // append

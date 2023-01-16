@@ -5883,9 +5883,9 @@ all script modules.
 Save init script
 ================
 
-If a save directory contains a file called ``raw/init.lua``, it is
+If a save directory contains a file called ``init.lua``, it is
 automatically loaded and executed every time the save is loaded.
-The same applies to any files called ``raw/init.d/*.lua``. Every
+The same applies to any files called ``init.d/*.lua``. Every
 such script can define the following functions to be called by dfhack:
 
 * ``function onStateChange(op) ... end``

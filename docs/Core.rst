@@ -144,11 +144,10 @@ savegave portability, mod merging, and general organization of init files,
 DFHack supports multiple init files both in the main DF directory and
 save-specific init files in the save folders.
 
-DFHack looks for init files in three places each time they could be run:
+DFHack looks for init files in two places each time they could be run:
 
-#. The :file:`dfhack-config/init` subdirectory in the main DF directory
-#. :file:`data/save/{world}/raw`, where ``{world}`` is the current save, and
-#. :file:`data/save/{world}/raw/objects`
+#. The :file:`dfhack-config/init` subdirectory in the main DF directory and
+#. :file:`save/{world}/init`, where ``{world}`` is the current save
 
 For each of those directories, all matching init files will be executed in
 alphabetical order.
@@ -156,7 +155,7 @@ alphabetical order.
 Before running matched init scripts in any of those locations, the
 :file:`dfhack-config/init/default.*` file that matches the event will be run to
 load DFHack defaults. Only the :file:`dfhack-config/init` directory is checked
-for this file, not any :file:`raw` directories. If you want DFHack to load
+for this file, not any :file:`save` directories. If you want DFHack to load
 without running any of its default configuration commands, edit the
 :file:`dfhack-config/init/default.*` files and comment out the commands you see
 there.
@@ -217,10 +216,10 @@ after a modded save is unloaded.
 
 .. _other_init_files:
 
-raw/init.d/\*.lua
-.................
+init.d/\*.lua
+.............
 
-Any lua script named ``raw/init.d/*.lua``, in the save or main DF directory,
+Any lua script named ``init.d/*.lua``, in the save or main DF directory,
 will be run when any world or that save is loaded.
 
 
@@ -234,12 +233,11 @@ run. By default, the following folders are searched, in order (relative to the
 root DF folder):
 
 #. :file:`dfhack-config/scripts`
-#. :file:`data/save/{<region folder>}/raw/scripts` (only if a save is loaded)
-#. :file:`raw/scripts`
+#. :file:`save/{world}/scripts` (only if a save is loaded)
 #. :file:`hack/scripts`
 
 For example, if ``teleport`` is run, these folders are searched in order for
-``teleport.lua`` or ``teleport.rb``, and the first matching file is run.
+``teleport.lua``, and the first matching file is run.
 
 Script paths can be added by modifying :file:`dfhack-config/script-paths.txt`.
 Each line should start with one of these characters:

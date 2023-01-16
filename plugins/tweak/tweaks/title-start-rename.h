@@ -17,7 +17,7 @@ struct title_start_rename_hook : df::viewscreen_titlest {
 
     inline std::string full_save_dir(const std::string &region_name)
     {
-        return std::string("data/save/") + region_name;
+        return std::string("save/") + region_name;
     }
 
     bool do_rename()

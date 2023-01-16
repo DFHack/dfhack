@@ -42,6 +42,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Scrollable widgets now react to mouse wheel events when the mouse is over the widget
 - the ``dfhack-config/scripts/`` folder is now searched for scripts by default
 - `hotkeys`: overlay hotspot widget now shows the DFHack logo in graphics mode and "DFHack" in text mode
+- `script-paths`: removed "raw" directories from default script paths. now the default locations to search for scripts are ``dfhack-config/scripts``, ``save/*/scripts``, and ``hack/scripts``
+- ``init.d``: directories have moved from the ``raw`` subfolder (which no longer exists) to the root of the main DF folder or a savegame folder
 
 ## Documentation
 - `overlay-dev-guide`: added troubleshooting tips and common development workflows
@@ -68,8 +70,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``gui.View``: new function ``view:getMouseFramePos()`` for detecting whether the mouse is within (or over) the exterior frame of a view
 - ``gui.CLEAR_PEN``: now clears the background and foreground and writes to the background (before it would always write to the foreground)
 - ``gui.KEEP_LOWER_PEN``: a general use pen that writes associated tiles to the foreground while keeping the existing background
-
-## Internals
 
 ## Removed
 - ``fix-job-postings`` from the `workflow` plugin is now obsolete since affected savegames can no longer be loaded

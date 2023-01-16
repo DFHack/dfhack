@@ -5812,9 +5812,13 @@ Enabling and disabling scripts
 ==============================
 
 Scripts can choose to recognize the built-in ``enable`` and ``disable`` commands
-by including the following line anywhere in their file::
+by including the following line near the top of their file::
 
-    --@ enable = true
+    --@enable = true
+    --@module = true
+
+Note that enableable scripts must also be `modules <reqscript>` so their
+``isEnabled()`` functions can be called from outside the script.
 
 When the ``enable`` and ``disable`` commands are invoked, the ``dfhack_flags``
 table passed to the script will have the following fields set:
@@ -5829,7 +5833,8 @@ command.
 
 Example usage::
 
-    --@ enable = true
+    --@enable = true
+    --@module = true
 
     enabled = enabled or false
     function isEnabled()

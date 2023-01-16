@@ -387,10 +387,7 @@ It'll be called ``dfhack-build-msvc:latest`` after it's done building::
 
    git clone https://github.com/BenLubar/build-env.git
    cd build-env/msvc
-   docker build --build-arg BUILDER_UID=$(id -u) -t dfhack-build-msvc .
-
-The ``BUILDER_UID`` argument is used to make sure the build user can access your
-source code directory inside the container.
+   docker build -t dfhack-build-msvc .
 
 The docker build takes a while, but only needs to be done once, unless the build
 environment changes.
@@ -406,13 +403,14 @@ Check out ``dfhack`` into another directory, and run the build script::
    cd build
    ./build-win64-from-linux.sh
 
-The last step may ask you for your ``sudo`` password -- if you are able to run
-``docker`` without ``sudo`` normally, you can remove the ``sudo`` from the build
-script.
-
 The script will mount your host's ``dfhack`` directory to docker, use it to
 build the artifacts in ``build/win64-cross``, and put all the files needed to
 install in ``build/win64-cross/output``.
+
+If you need to run ``docker`` using ``sudo``, run the script using ``sudo``
+rather than directly::
+
+  sudo ./build-win64-from-linux.sh
 
 Step 3: install dfhack to your Steam DF install
 -----------------------------------------------

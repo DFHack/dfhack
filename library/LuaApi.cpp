@@ -1843,12 +1843,12 @@ static void imgui_push_generic_impl(lua_State* state, ImVec2 val)
     imgui_push_generic_impl(state, as_map);
 }
 
-static void imgui_push_generic_impl(lua_State* state, ImVec4 val)
+/*static void imgui_push_generic_impl(lua_State* state, ImVec4 val)
 {
     std::map<std::string, double> as_map = { {"x", val.x}, {"y", val.y}, {"z", val.z}, {"w", val.w} };
 
     imgui_push_generic_impl(state, as_map);
-}
+}*/
 
 template<typename T>
 static void imgui_push_generic_impl(lua_State* state, T* ptr)

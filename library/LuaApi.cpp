@@ -2407,6 +2407,11 @@ static int imgui_getmouseworldpos(lua_State* state)
     }
 }
 
+static int imgui_getmousewheel(lua_State* state)
+{
+    return imgui_push_generic(state, ImGui::GetIO().MouseWheel);
+}
+
 static int imgui_getdisplaysize(lua_State* state)
 {
     imgui_push_generic(state, ImGui::GetIO().DisplaySize);
@@ -2895,6 +2900,7 @@ static const luaL_Reg dfhack_imgui_funcs[] = {
     {"Get", imgui_get},
     {"InputText", imgui_inputtext},
     {"GetMouseWorldPos", imgui_getmouseworldpos},
+    {"GetMouseWheel", imgui_getmousewheel},
     IMGUI_NAME_FUNC(GetMousePos),
     IMGUI_NAME_FUNC(GetMouseDragDelta),
     IMGUI_NAME_FUNC(ResetMouseDragDelta),

@@ -5,8 +5,8 @@ Quickstart guide
 
 Welcome to DFHack! This guide will help get you oriented with the DFHack system
 and teach you how to find and use the tools productively. If you're reading this
-in `dfhack-quickstart-guide`, hit the right arrow key or click on the hotkey
-hint in the lower right corner of the window to go to the next page.
+in `quickstart-guide`, hit the right arrow key or click on the hotkey hint in
+the lower right corner of the window to go to the next page.
 
 What is DFHack?
 ---------------

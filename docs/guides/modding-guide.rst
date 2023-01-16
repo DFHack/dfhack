@@ -62,7 +62,7 @@ be:
 1. ``own-scripts/``
 2. ``dfhack-config/scripts/``
 3. ``save/*/scripts/``
-5. ``hack/scripts/``
+4. ``hack/scripts/``
 
 The structure of the game
 -------------------------

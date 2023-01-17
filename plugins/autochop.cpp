@@ -522,10 +522,8 @@ static void scan_logs(int32_t *usable_logs, const vector<df::unit *> &citizens, 
         if (item->getType() != item_type::WOOD)
             continue;
 
-        if (!is_valid_item(item)) {
-            INFO(status).print("autochop is_valid_item actually caught something useful!! Please tell the DFHack team.\n");
+        if (!is_valid_item(item))
             continue;
-        }
 
         if (!is_accessible_item(item->pos, citizens)) {
             if (inaccessible_logs)

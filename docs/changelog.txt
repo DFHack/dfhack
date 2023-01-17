@@ -36,6 +36,20 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.05-alpha1
+
+## Fixes
 - ``widgets.WrappedLabel``: no longer resets scroll position when window is moved or resized
 
 ## Misc Improvements

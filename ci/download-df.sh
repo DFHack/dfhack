@@ -23,7 +23,7 @@ if ! test -f "$df_tardest"; then
         fi
     done <<URLS
     https://www.bay12games.com/dwarves/df_${minor}_${patch}_linux.tar.bz2
-    https://files.dfhack.org/DF/0.${minor}.${patch}/df_${minor}_${patch}_linux.tar.bz2
+    https://files.dfhack.org/DF/${minor}.${patch}/df_${minor}_${patch}_linux.tar.bz2
 URLS
     echo $df_tardest
     if ! test -f "$df_tardest"; then
@@ -42,11 +42,11 @@ URLS
 fi
 
 rm -rf df_linux
-mkdir -p df_linux/data/save
+mkdir -p df_linux/save
 
 echo Extracting
 tar xf "$df_tardest" --strip-components=1 -C df_linux
-tar xf "$save_tardest" -C df_linux/data/save
+tar xf "$save_tardest" -C df_linux/save
 echo Done
 
 ls -l

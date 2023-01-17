@@ -456,6 +456,20 @@ end
 
 function Panel:computeFrame(parent_rect)
     local sw, sh = parent_rect.width, parent_rect.height
+    if self.frame then
+        if self.frame.t and self.frame.h and self.frame.t + self.frame.h > sh then
+            self.frame.t = math.max(0, sh - self.frame.h)
+        end
+        if self.frame.b and self.frame.h and self.frame.b + self.frame.h > sh then
+            self.frame.b = math.max(0, sh - self.frame.h)
+        end
+        if self.frame.l and self.frame.w and self.frame.l + self.frame.w > sw then
+            self.frame.l = math.max(0, sw - self.frame.w)
+        end
+        if self.frame.r and self.frame.w and self.frame.r + self.frame.w > sw then
+            self.frame.r = math.max(0, sw - self.frame.w)
+        end
+    end
     return gui.compute_frame_body(sw, sh, self.frame, self.frame_inset,
                                   self.frame_style and 1 or 0)
 end
@@ -1366,6 +1380,10 @@ function WrappedLabel:getWrappedText(width)
     return text_to_wrap:wrap(width - self.indent)
 end
 
+function WrappedLabel:preUpdateLayout()
+    self.saved_start_line_num = self.start_line_num
+end
+
 -- we can't set the text in init() since we may not yet have a frame that we
 -- can get wrapping bounds from.
 function WrappedLabel:postComputeFrame()
@@ -1378,6 +1396,7 @@ function WrappedLabel:postComputeFrame()
         table.insert(text, NEWLINE)
     end
     self:setText(text)
+    self:scroll(self.saved_start_line_num - 1)
 end
 
 ------------------

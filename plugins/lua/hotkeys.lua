@@ -140,12 +140,18 @@ function Menu:init()
     local choices,list_width = get_choices(hotkeys, bindings, is_inverted)
 
     local list_frame = copyall(self.hotspot_frame)
+    local list_widget_frame = {h=math.min(#choices, MAX_LIST_HEIGHT)}
+    local quickstart_frame = {}
     list_frame.w = list_width + 2
-    list_frame.h = math.min(#choices, MAX_LIST_HEIGHT) + 2
+    list_frame.h = list_widget_frame.h + 4
     if list_frame.t then
         list_frame.t = math.max(0, list_frame.t - 1)
+        list_widget_frame.t = 0
+        quickstart_frame.b = 0
     else
         list_frame.b = math.max(0, list_frame.b - 1)
+        list_widget_frame.b = 0
+        quickstart_frame.t = 0
     end
     if list_frame.l then
         list_frame.l = math.max(0, list_frame.l + 5)
@@ -161,20 +167,29 @@ function Menu:init()
     end
 
     self:addviews{
-        widgets.ResizingPanel{
+        widgets.Panel{
             view_id='list_panel',
-            autoarrange_subviews=true,
             frame=list_frame,
             frame_style=gui.GREY_LINE_FRAME,
             frame_background=gui.CLEAR_PEN,
             subviews={
                 widgets.List{
                     view_id='list',
+                    frame=list_widget_frame,
                     choices=choices,
                     icon_width=2,
                     on_select=self:callback('onSelect'),
                     on_submit=self:callback('onSubmit'),
                     on_submit2=self:callback('onSubmit2'),
+                },
+                widgets.Panel{frame={h=1}},
+                widgets.HotkeyLabel{
+                    frame=quickstart_frame,
+                    label='Quickstart guide',
+                    key='STRING_A063',
+                    on_activate=function()
+                        self:onSubmit(nil, {command='quickstart-guide'})
+                    end,
                 },
             },
         },
@@ -247,6 +262,7 @@ function Menu:onRenderFrame(dc, rect)
         self.initialize()
         self.initialize = nil
     end
+    Menu.super.onRenderFrame(dc, rect)
 end
 
 function Menu:getMouseFramePos()

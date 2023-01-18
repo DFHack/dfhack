@@ -348,7 +348,7 @@ end
 local function do_trigger(args, quiet)
     if triggered_screen_has_lock() then
         dfhack.printerr(('cannot trigger widget; widget "%s" is already active')
-                        :format(active_triggered_widget))
+                        :format(trigger_lock_holder_description))
         return
     end
     do_by_names_or_numbers(args[1], function(name, db_entry)

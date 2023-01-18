@@ -649,7 +649,7 @@ bool Gui::item_details_hotkey(df::viewscreen *top)
 
 static bool has_cursor()
 {
-    return df::global::cursor && df::global::cursor->x != -30000;
+    return Gui::getCursorPos().isValid();
 }
 
 bool Gui::cursor_hotkey(df::viewscreen *top)
@@ -1720,7 +1720,7 @@ bool Gui::autoDFAnnouncement(df::report_init r, string message)
     // Check if the announcement will actually be announced
     if (*gamemode == game_mode::ADVENTURE)
     {
-        if (r.pos.x != -30000 &&
+        if (r.pos.x >= 0 &&
             r.type != announcement_type::CREATURE_SOUND &&
             r.type != announcement_type::REGULAR_CONVERSATION &&
             r.type != announcement_type::CONFLICT_CONVERSATION &&
@@ -2151,7 +2151,7 @@ bool Gui::getDesignationCoords (int32_t &x, int32_t &y, int32_t &z)
     x = selection_rect->start_x;
     y = selection_rect->start_y;
     z = selection_rect->start_z;
-    return (x == -30000) ? false : true;
+    return (x >= 0) ? false : true;
 }
 
 bool Gui::setDesignationCoords (const int32_t x, const int32_t y, const int32_t z)

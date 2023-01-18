@@ -281,12 +281,12 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
         "autodump",
         "Teleport items marked for dumping to the keyboard cursor.",
         df_autodump,
-        Gui::dwarfmode_hotkey));
+        Gui::cursor_hotkey));
     commands.push_back(PluginCommand(
         "autodump-destroy-here",
         "Destroy items marked for dumping under the keyboard cursor.",
         df_autodump_destroy_here,
-        Gui::dwarfmode_hotkey));
+        Gui::cursor_hotkey));
     /* you can no longer select items
     commands.push_back(PluginCommand(
         "autodump-destroy-item",
@@ -346,12 +346,12 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
     MapCache MC;
     int dumped_total = 0;
 
-    DFCoord pos_cursor;
+    df::coord pos_cursor;
     if(!destroy || here)
     {
-        pos_cursor = Gui::getMousePos();
+        pos_cursor = Gui::getCursorPos();
         if (!pos_cursor.isValid()) {
-            out.printerr("Mouse cursor must be over a suitable map tile.\n");
+            out.printerr("Keyboard cursor must be over a suitable map tile.\n");
             return CR_FAILURE;
         }
     }

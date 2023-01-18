@@ -6,6 +6,7 @@
 
 #include "Core.h"
 #include "DataDefs.h"
+#include "Debug.h"
 #include "PluginManager.h"
 
 #include "df/creature_raw.h"
@@ -29,17 +30,22 @@
 #include "modules/World.h"
 
 using namespace DFHack;
-using namespace std;
 
 using df::global::world;
 using df::global::plotinfo;
 
 DFHACK_PLUGIN("tailor");
+
 #define AUTOENABLE false
 DFHACK_PLUGIN_IS_ENABLED(enabled);
 
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(plotinfo);
+
+namespace DFHack {
+    DBG_DECLARE(tailor, cycle, DebugCategory::LINFO);
+    DBG_DECLARE(tailor, config, DebugCategory::LINFO);
+}
 
 class Tailor {
     // ARMOR, SHOES, HELM, GLOVES, PANTS
@@ -48,7 +54,7 @@ class Tailor {
 
 private:
 
-    const map<df::job_type, df::item_type> jobTypeMap = {
+    const std::map<df::job_type, df::item_type> jobTypeMap = {
         { df::job_type::MakeArmor, df::item_type::ARMOR },
         { df::job_type::MakePants, df::item_type::PANTS },
         { df::job_type::MakeHelm, df::item_type::HELM },
@@ -56,7 +62,7 @@ private:
         { df::job_type::MakeShoes, df::item_type::SHOES }
     };
 
-    const map<df::item_type, df::job_type> itemTypeMap = {
+    const std::map<df::item_type, df::job_type> itemTypeMap = {
         { df::item_type::ARMOR, df::job_type::MakeArmor },
         { df::item_type::PANTS, df::job_type::MakePants },
         { df::item_type::HELM, df::job_type::MakeHelm },
@@ -107,13 +113,13 @@ private:
 
     std::list<MatType> all_materials = { M_SILK, M_CLOTH, M_YARN, M_LEATHER };
 
-    map<pair<df::item_type, int>, int> available; // key is item type & size
-    map<pair<df::item_type, int>, int> needed;    // same
-    map<pair<df::item_type, int>, int> queued;    // same
+    std::map<std::pair<df::item_type, int>, int> available; // key is item type & size
+    std::map<std::pair<df::item_type, int>, int> needed;    // same
+    std::map<std::pair<df::item_type, int>, int> queued;    // same
 
-    map<int, int> sizes; // this maps body size to races
+    std::map<int, int> sizes; // this maps body size to races
 
-    map<tuple<df::job_type, int, int>, int> orders;  // key is item type, item subtype, size
+    std::map<std::tuple<df::job_type, int, int>, int> orders;  // key is item type, item subtype, size
 
     std::map<MatType, int> supply;
 
@@ -147,7 +153,7 @@ private:
             df::item_type t = i->getType();
             int size = world->raws.creatures.all[i->getMakerRace()]->adultsize;
 
-            available[make_pair(t, size)] += 1;
+            available[std::make_pair(t, size)] += 1;
         }
     }
 
@@ -180,7 +186,7 @@ private:
             supply[M_LEATHER] += i->getStackSize();
         }
 
-        out->print("tailor: available silk %d yarn %d cloth %d leather %d\n", supply[M_SILK], supply[M_YARN], supply[M_CLOTH], supply[M_LEATHER]);
+        DEBUG(cycle).print("tailor: available silk %d yarn %d cloth %d leather %d\n", supply[M_SILK], supply[M_YARN], supply[M_CLOTH], supply[M_LEATHER]);
     }
 
     void scan_replacements()
@@ -193,10 +199,10 @@ private:
                 Units::isBaby(u))
                 continue; // skip units we don't control
 
-            set <df::item_type> wearing;
+            std::set <df::item_type> wearing;
             wearing.clear();
 
-            deque<df::item*> worn;
+            std::deque<df::item*> worn;
             worn.clear();
 
             for (auto inv : u->inventory)
@@ -212,10 +218,16 @@ private:
             int size = world->raws.creatures.all[u->race]->adultsize;
             sizes[size] = u->race;
 
-            for (auto ty : set<df::item_type>{ df::item_type::ARMOR, df::item_type::PANTS, df::item_type::SHOES })
+            for (auto ty : std::set<df::item_type>{ df::item_type::ARMOR, df::item_type::PANTS, df::item_type::SHOES })
             {
                 if (wearing.count(ty) == 0)
-                    needed[make_pair(ty, size)] += 1;
+                {
+                    TRACE(cycle).print("tailor: one %s of size %d needed to cover %s\n",
+                        ENUM_KEY_STR(item_type, ty).c_str(),
+                        size,
+                        Translation::TranslateName(&u->name, false).c_str());
+                    needed[std::make_pair(ty, size)] += 1;
+                }
             }
 
             for (auto w : worn)
@@ -227,13 +239,13 @@ private:
                 std::string description;
                 w->getItemDescription(&description, 0);
 
-                if (available[make_pair(ty, size)] > 0)
+                if (available[std::make_pair(ty, size)] > 0)
                 {
                     if (w->flags.bits.owned)
                     {
                         bool confiscated = Items::setOwner(w, NULL);
 
-                        out->print(
+                        INFO(cycle).print(
                             "tailor: %s %s from %s.\n",
                             (confiscated ? "confiscated" : "could not confiscate"),
                             description.c_str(),
@@ -242,18 +254,22 @@ private:
                     }
 
                     if (wearing.count(ty) == 0)
-                        available[make_pair(ty, size)] -= 1;
+                    {
+                        DEBUG(cycle).print("tailor: allocating a %s to %s\n",
+                            ENUM_KEY_STR(item_type, ty).c_str(),
+                            Translation::TranslateName(&u->name, false).c_str());
+                        available[std::make_pair(ty, size)] -= 1;
+                    }
 
                     if (w->getWear() > 1)
                         w->flags.bits.dump = true;
                 }
                 else
                 {
-                    //                out->print("%s worn by %s needs replacement\n",
-                    //                    description.c_str(),
-                    //                    Translation::TranslateName(&u->name, false).c_str()
-                    //                );
-                    orders[make_tuple(o, w->getSubtype(), size)] += 1;
+                    DEBUG(cycle).print ("%s worn by %s needs replacement, but none available\n",
+                                        description.c_str(),
+                                        Translation::TranslateName(&u->name, false).c_str());
+                    orders[std::make_tuple(o, w->getSubtype(), size)] += 1;
                 }
             }
         }
@@ -270,7 +286,7 @@ private:
             int count = a.second;
 
             int sub = 0;
-            vector<int16_t> v;
+            std::vector<int16_t> v;
 
             switch (ty) {
             case df::item_type::ARMOR:  v = entity->resources.armor_type; break;
@@ -299,7 +315,8 @@ private:
             }
 
             const df::job_type j = itemTypeMap.at(ty);
-            orders[make_tuple(j, sub, size)] += count;
+            orders[std::make_tuple(j, sub, size)] += count;
+            DEBUG(cycle).print("tailor: %s times %d of size %d ordered\n", ENUM_KEY_STR(job_type, j).c_str(), count, size);
         }
     }
 
@@ -318,7 +335,11 @@ private:
 
             int size = world->raws.creatures.all[race]->adultsize;
 
-            orders[make_tuple(o->job_type, sub, size)] -= o->amount_left;
+            orders[std::make_tuple(o->job_type, sub, size)] -= o->amount_left;
+            TRACE(cycle).print("tailor: existing order for %d %s of size %d detected\n",
+                o->amount_left,
+                ENUM_KEY_STR(job_type, o->job_type).c_str(),
+                size);
         }
 
     }
@@ -333,14 +354,14 @@ private:
             int sub;
             int size;
 
-            tie(ty, sub, size) = o.first;
+            std::tie(ty, sub, size) = o.first;
             int count = o.second;
 
             if (count > 0)
             {
-                vector<int16_t> v;
+                std::vector<int16_t> v;
                 BitArray<df::armor_general_flags>* fl;
-                string name_s, name_p;
+                std::string name_s, name_p;
 
                 switch (ty) {
 
@@ -382,7 +403,7 @@ private:
 
                 if (!can_make)
                 {
-                    out->print("tailor: civilization cannot make %s, skipped\n", name_p.c_str());
+                    INFO(cycle).print("tailor: civilization cannot make %s, skipped\n", name_p.c_str());
                     continue;
                 }
 
@@ -416,7 +437,7 @@ private:
 
                         world->manager_orders.push_back(order);
 
-                        out->print("tailor: added order #%d for %d %s %s, sized for %s\n",
+                        INFO(cycle).print("tailor: added order #%d for %d %s %s, sized for %s\n",
                             order->id,
                             c,
                             bitfield_to_string(order->material_category).c_str(),
@@ -464,9 +485,9 @@ public:
     }
 
 public:
-    command_result set_materials(color_ostream& out, vector<string>& parameters)
+    command_result set_materials(color_ostream& out, std::vector<std::string>& parameters)
     {
-        list<MatType> newmat;
+        std::list<MatType> newmat;
         newmat.clear();
 
         for (auto m = parameters.begin() + 1; m != parameters.end(); m++)
@@ -475,7 +496,7 @@ public:
             auto mm = std::find_if(all_materials.begin(), all_materials.end(), nameMatch);
             if (mm == all_materials.end())
             {
-                out.print("tailor: material %s not recognized\n", m->c_str());
+                WARN(config,out).print("tailor: material %s not recognized\n", m->c_str());
                 return CR_WRONG_USAGE;
             }
             else {
@@ -484,7 +505,7 @@ public:
         }
 
         material_order = newmat;
-        out.print("tailor: material list set to %s\n", get_material_list().c_str());
+        INFO(config,out).print("tailor: material list set to %s\n", get_material_list().c_str());
 
         return CR_OK;
     }
@@ -549,7 +570,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream& out)
     return CR_OK;
 }
 
-static command_result tailor_cmd(color_ostream& out, vector <string>& parameters) {
+static command_result tailor_cmd(color_ostream& out, std::vector <std::string>& parameters) {
     bool desired = enabled;
     if (parameters.size() == 1 && (parameters[0] == "enable" || parameters[0] == "on" || parameters[0] == "1"))
     {

@@ -27,8 +27,8 @@ keybinding add Ctrl-Shift-K gui/cp437-table
 # dwarfmode bindings #
 ######################
 
-# quicksave, only in main dwarfmode screen and menu page
-#keybinding add Ctrl-Alt-S@dwarfmode/Default quicksave
+# quicksave
+keybinding add Ctrl-Alt-S@dwarfmode quicksave
 
 # toggle the display of water level as 1-7 tiles
 #keybinding add Ctrl-W@dwarfmode|dungeonmode twaterlvl
@@ -40,14 +40,15 @@ keybinding add Ctrl-Shift-K gui/cp437-table
 # clean the selected tile of blood etc
 #keybinding add Ctrl-C spotclean
 
-# destroy the selected item
-#keybinding add Ctrl-K@dwarfmode autodump-destroy-item
+# teleport all unforbidden items marked for dumping to the tile under the keyboard cursor
+keybinding add Ctrl-Alt-D autodump
 
-# destroy items designated for dump in the selected tile
-#keybinding add Ctrl-Shift-K@dwarfmode autodump-destroy-here
+# destroy the selected unit or items that are marked for dump under
+keybinding add Ctrl-Alt-K autodump-destroy-here
+#keybinding add Ctrl-Alt-K@dwarfmode "exterminate this"
 
-# apply blueprints to the map (Alt-F for compatibility with LNP Quickfort)
-#keybinding add Ctrl-Shift-Q@dwarfmode gui/quickfort
+# apply blueprints to the map
+keybinding add Ctrl-Shift-Q@dwarfmode gui/quickfort
 #keybinding add Alt-F@dwarfmode gui/quickfort
 
 # show information collected by dwarfmonitor

@@ -46,6 +46,7 @@ using namespace DFHack;
 #include "modules/Screen.h"
 #include "modules/Maps.h"
 #include "modules/Units.h"
+#include "modules/World.h"
 
 #include "DataDefs.h"
 
@@ -625,10 +626,8 @@ bool Gui::anywhere_hotkey(df::viewscreen *) {
     return true;
 }
 
-bool Gui::dwarfmode_hotkey(df::viewscreen *top)
-{
-    // Require the main dwarf mode screen
-    return !!strict_virtual_cast<df::viewscreen_dwarfmodest>(top);
+bool Gui::dwarfmode_hotkey(df::viewscreen *top) {
+    return World::isFortressMode();
 }
 
 bool Gui::unitjobs_hotkey(df::viewscreen *top)

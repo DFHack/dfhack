@@ -83,7 +83,7 @@ public:
     }
 
     PlannedBuilding(DFHack::PersistentDataItem &bld_config)
-            : bld_config(bld_config), id(get_config_val(bld_config, BLD_CONFIG_ID)) { }
+            : id(get_config_val(bld_config, BLD_CONFIG_ID)), bld_config(bld_config) { }
 
     void remove(color_ostream &out);
 
@@ -179,8 +179,10 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
     vector<PersistentDataItem> building_configs;
     World::GetPersistentData(&building_configs, BLD_CONFIG_KEY);
     const size_t num_building_configs = building_configs.size();
-    for (size_t idx = 0; idx < num_building_configs; ++idx)
-        registerPlannedBuilding(out, PlannedBuilding(building_configs[idx]));
+    for (size_t idx = 0; idx < num_building_configs; ++idx) {
+        PlannedBuilding pb(building_configs[idx]);
+        registerPlannedBuilding(out, pb);
+    }
 
     return CR_OK;
 }
@@ -616,7 +618,7 @@ static void printStatus(color_ostream &out) {
 }
 
 static bool setSetting(color_ostream &out, string name, bool value) {
-    DEBUG(status,out).print("entering setSetting (%s -> %s)\n", name, value ? "true" : "false");
+    DEBUG(status,out).print("entering setSetting (%s -> %s)\n", name.c_str(), value ? "true" : "false");
     if (name == "blocks")
         set_config_bool(config, CONFIG_BLOCKS, value);
     else if (name == "boulders")
@@ -660,7 +662,8 @@ static bool addPlannedBuilding(color_ostream &out, df::building *bld) {
             || !isPlannableBuilding(out, bld->getType(), bld->getSubtype(),
                                     bld->getCustomType()))
         return false;
-    return registerPlannedBuilding(out, PlannedBuilding(out, bld));
+    PlannedBuilding pb(out, bld);
+    return registerPlannedBuilding(out, pb);
 }
 
 static void doCycle(color_ostream &out) {

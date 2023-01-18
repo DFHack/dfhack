@@ -46,7 +46,6 @@ static const string CONFIG_KEY = string(plugin_name) + "/config";
 static const string BLD_CONFIG_KEY = string(plugin_name) + "/building";
 
 enum ConfigValues {
-    CONFIG_IS_ENABLED = 0,
     CONFIG_BLOCKS = 1,
     CONFIG_BOULDERS = 2,
     CONFIG_LOGS = 3,
@@ -79,12 +78,12 @@ public:
 
     PlannedBuilding(color_ostream &out, df::building *building) : id(building->id) {
         DEBUG(status,out).print("creating persistent data for building %d\n", id);
-        config = DFHack::World::AddPersistentData(BLD_CONFIG_KEY);
-        set_config_val(config, BLD_CONFIG_ID, id);
+        bld_config = DFHack::World::AddPersistentData(BLD_CONFIG_KEY);
+        set_config_val(bld_config, BLD_CONFIG_ID, id);
     }
 
-    PlannedBuilding(DFHack::PersistentDataItem &config)
-            : config(config), id(get_config_val(config, BLD_CONFIG_ID)) { }
+    PlannedBuilding(DFHack::PersistentDataItem &bld_config)
+            : bld_config(bld_config), id(get_config_val(bld_config, BLD_CONFIG_ID)) { }
 
     void remove(color_ostream &out);
 
@@ -102,7 +101,7 @@ public:
     }
 
 private:
-    DFHack::PersistentDataItem config;
+    DFHack::PersistentDataItem bld_config;
 };
 
 static PersistentDataItem config;
@@ -144,16 +143,10 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
-    if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("Cannot enable %s without a loaded world.\n", plugin_name);
-        return CR_FAILURE;
-    }
-
     if (enable != is_enabled) {
         is_enabled = enable;
         DEBUG(status,out).print("%s from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
-        set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
     } else {
         DEBUG(status,out).print("%s from the API, but already %s; no action\n",
                                 is_enabled ? "enabled" : "disabled",
@@ -174,24 +167,17 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
     if (!config.isValid()) {
         DEBUG(status,out).print("no config found in this save; initializing\n");
         config = World::AddPersistentData(CONFIG_KEY);
-        set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
         set_config_bool(config, CONFIG_BLOCKS, true);
         set_config_bool(config, CONFIG_BOULDERS, true);
         set_config_bool(config, CONFIG_LOGS, true);
         set_config_bool(config, CONFIG_BARS, false);
     }
 
-    // we have to copy our enabled flag into the global plugin variable, but
-    // all the other state we can directly read/modify from the persistent
-    // data structure.
-    is_enabled = get_config_bool(config, CONFIG_IS_ENABLED);
-    DEBUG(status,out).print("loading persisted enabled state: %s\n",
-                            is_enabled ? "true" : "false");
-
-    vector<PersistentDataItem> building_configs;
-    World::GetPersistentData(&building_configs, BLD_CONFIG_KEY);
+    DEBUG(status,out).print("loading persisted state\n");
     planned_buildings.clear();
     tasks.clear();
+    vector<PersistentDataItem> building_configs;
+    World::GetPersistentData(&building_configs, BLD_CONFIG_KEY);
     const size_t num_building_configs = building_configs.size();
     for (size_t idx = 0; idx < num_building_configs; ++idx)
         registerPlannedBuilding(out, PlannedBuilding(building_configs[idx]));
@@ -201,13 +187,9 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED) {
-        if (is_enabled) {
-            DEBUG(status,out).print("world unloaded; disabling %s\n",
-                                    plugin_name);
-            is_enabled = false;
-            planned_buildings.clear();
-            tasks.clear();
-        }
+        DEBUG(status,out).print("world unloaded; clearing state for %s\n", plugin_name);
+        planned_buildings.clear();
+        tasks.clear();
     }
     return CR_OK;
 }
@@ -215,6 +197,9 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 static bool cycle_requested = false;
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
+    if (!Core::getInstance().isWorldLoaded())
+        return CR_OK;
+
     if (is_enabled &&
             (cycle_requested || world->frame_counter - cycle_timestamp >= CYCLE_TICKS))
         do_cycle(out);
@@ -245,7 +230,7 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
     CoreSuspender suspend;
 
     if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("Cannot run %s without a loaded world.\n", plugin_name);
+        out.printerr("Cannot configure %s without a loaded world.\n", plugin_name);
         return CR_FAILURE;
     }
 

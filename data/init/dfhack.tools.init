@@ -81,6 +81,9 @@
 # Allow DFHack tools to overlay functionality and information on the DF screen
 enable overlay
 
+# Allow buildings to be placed now and built later when materials are available
+enable buildingplan
+
 # Dwarf Manipulator (simple in-game Dwarf Therapist replacement)
 #enable manipulator
 

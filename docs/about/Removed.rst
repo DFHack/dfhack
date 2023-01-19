@@ -16,6 +16,12 @@ command-prompt
 ==============
 Replaced by `gui/launcher --minimal <gui/launcher>`.
 
+.. _create-items:
+
+create-items
+============
+Replaced by `gui/create-item --multi`.
+
 .. _deteriorateclothes:
 
 deteriorateclothes

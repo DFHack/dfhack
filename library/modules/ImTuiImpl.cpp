@@ -665,7 +665,7 @@ void impl::draw_frame(ImDrawData* drawData)
 
                             int xx = static_cast<int>(std::floor(x));
                             int yy = static_cast<int>(std::floor(y));
-                            if (xx < clip_rect.x || xx >= clip_rect.z || yy < clip_rect.y || yy > clip_rect.w || yy >= fb_height) {
+                            if (xx < clip_rect.x || xx >= clip_rect.z || yy < clip_rect.y || yy >= clip_rect.w || yy >= fb_height) {
                             }
                             else {
 

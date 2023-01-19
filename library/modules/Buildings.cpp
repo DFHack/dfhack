@@ -198,18 +198,18 @@ static void zone_into_building_unidir(df::building* bld, df::building_civzonest*
     });
 }
 
+static bool is_suitable_building_for_zoning(df::building* bld)
+{
+    return bld->canMakeRoom();
+}
+
 static void add_building_to_zone(df::building* bld, df::building_civzonest* zone)
 {
-    if (!bld->canBeRoom())
+    if (!is_suitable_building_for_zoning(bld))
         return;
 
     building_into_zone_unidir(bld, zone);
     zone_into_building_unidir(bld, zone);
-}
-
-static bool is_suitable_building_for_zoning(df::building* bld)
-{
-    return bld->canBeRoom();
 }
 
 static void add_building_to_all_zones(df::building* bld)

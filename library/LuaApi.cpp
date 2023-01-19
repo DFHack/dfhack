@@ -2239,6 +2239,7 @@ static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {
     WRAPM(Buildings, constructWithItems),
     WRAPM(Buildings, constructWithFilters),
     WRAPM(Buildings, deconstruct),
+    WRAPM(Buildings, notifyCivzoneModified),
     WRAPM(Buildings, markedForRemoval),
     WRAPM(Buildings, getRoomDescription),
     WRAPM(Buildings, isActivityZone),

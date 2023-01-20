@@ -40,14 +40,13 @@ keybinding add Ctrl-Alt-S@dwarfmode quicksave
 # clean the selected tile of blood etc
 #keybinding add Ctrl-C spotclean
 
-# teleport all unforbidden items marked for dumping to the tile under the keyboard cursor
-keybinding add Ctrl-Alt-D autodump
+# destroy the selected item
+#keybinding add Ctrl-K@dwarfmode autodump-destroy-item
 
-# destroy the selected unit or items that are marked for dump under
-keybinding add Ctrl-Alt-K autodump-destroy-here
-#keybinding add Ctrl-Alt-K@dwarfmode "exterminate this"
+# destroy items designated for dump in the selected tile
+#keybinding add Ctrl-Shift-K@dwarfmode autodump-destroy-here
 
-# apply blueprints to the map
+# apply blueprints to the map (Alt-F for compatibility with LNP Quickfort)
 keybinding add Ctrl-Shift-Q@dwarfmode gui/quickfort
 #keybinding add Alt-F@dwarfmode gui/quickfort
 

@@ -169,34 +169,24 @@ void buildings_onUpdate(color_ostream &out)
 
 static void building_into_zone_unidir(df::building* bld, df::building_civzonest* zone)
 {
-    for (size_t bid = 0; bid < zone->contained_buildings.size(); bid++)
+    for (auto contained_building : zone->contained_buildings)
     {
-        if (zone->contained_buildings[bid] == bld)
+        if (contained_building == bld)
             return;
     }
 
-    zone->contained_buildings.push_back(bld);
-
-    std::sort(zone->contained_buildings.begin(), zone->contained_buildings.end(), [](df::building* b1, df::building* b2)
-    {
-        return b1->id < b2->id;
-    });
+    insert_into_vector(zone->contained_buildings, &df::building::id, bld);
 }
 
 static void zone_into_building_unidir(df::building* bld, df::building_civzonest* zone)
 {
-    for (size_t bid = 0; bid < bld->relations.size(); bid++)
+    for (auto relation : bld->relations)
     {
-        if (bld->relations[bid] == zone)
+        if (relation == zone)
             return;
     }
 
-    bld->relations.push_back(zone);
-
-    std::sort(bld->relations.begin(), bld->relations.end(), [](df::building* b1, df::building* b2)
-    {
-        return b1->id < b2->id;
-    });
+    insert_into_vector(bld->relations, &df::building::id, (df::building*)zone);
 }
 
 static bool is_suitable_building_for_zoning(df::building* bld)
@@ -223,10 +213,8 @@ static void add_building_to_all_zones(df::building* bld)
     std::vector<df::building_civzonest*> cv;
     Buildings::findCivzonesAt(&cv, coord);
 
-    for (size_t i=0; i < cv.size(); i++)
-    {
-        add_building_to_zone(bld, cv[i]);
-    }
+    for (auto zone : cv)
+        add_building_to_zone(bld, zone);
 }
 
 static void add_zone_to_all_buildings(df::building* zone_as_building)
@@ -239,20 +227,16 @@ static void add_zone_to_all_buildings(df::building* zone_as_building)
     if (zone == nullptr)
         return;
 
-    auto& vec = world->buildings.other[buildings_other_id::IN_PLAY];
-
-    for (size_t i = 0; i < vec.size(); i++)
+    for (auto bld : world->buildings.other.IN_PLAY)
     {
-        auto against = vec[i];
-
-        if (zone->z != against->z)
+        if (zone->z != bld->z)
             continue;
 
-        if (!is_suitable_building_for_zoning(against))
+        if (!is_suitable_building_for_zoning(bld))
             continue;
 
-        int32_t cx = against->centerx;
-        int32_t cy = against->centery;
+        int32_t cx = bld->centerx;
+        int32_t cy = bld->centery;
 
         df::coord2d coord(cx, cy);
 
@@ -263,7 +247,7 @@ static void add_zone_to_all_buildings(df::building* zone_as_building)
             if (!etile || !*etile)
                 continue;
 
-            add_building_to_zone(against, zone);
+            add_building_to_zone(bld, zone);
         }
     }
 }
@@ -296,10 +280,8 @@ static void remove_building_from_all_zones(df::building* bld)
     std::vector<df::building_civzonest*> cv;
     Buildings::findCivzonesAt(&cv, coord);
 
-    for (size_t i=0; i < cv.size(); i++)
-    {
-        remove_building_from_zone(bld, cv[i]);
-    }
+    for (auto zone : cv)
+        remove_building_from_zone(bld, zone);
 }
 
 static void remove_zone_from_all_buildings(df::building* zone_as_building)
@@ -312,16 +294,10 @@ static void remove_zone_from_all_buildings(df::building* zone_as_building)
     if (zone == nullptr)
         return;
 
-    auto& vec = world->buildings.other[buildings_other_id::IN_PLAY];
-
     //this is a paranoid check and slower than it could be. Zones contain a list of children
     //good for fixing potentially bad game states when deleting a zone
-    for (size_t i = 0; i < vec.size(); i++)
-    {
-        df::building* bld = vec[i];
-
+    for (auto bld : world->buildings.other.IN_PLAY)
         remove_building_from_zone(bld, zone);
-    }
 }
 
 uint32_t Buildings::getNumBuildings()

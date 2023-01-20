@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "df/building_cagest.h"
+#include "df/building_civzonest.h"
 #include "df/creature_raw.h"
 #include "df/world.h"
 
@@ -718,14 +719,7 @@ static bool isInBuiltCageRoom(df::unit *unit) {
         if (building->getType() != df::building_type::Cage)
             continue;
 
-        bool in_zone = false;
-        for (auto relation : building->relations) {
-            if (relation->getType() == df::building_type::Civzone) {
-                in_zone = true;
-                break;
-            }
-        }
-        if (!in_zone)
+        if (!building->relations.size())
             continue;
 
         df::building_cagest* cage = (df::building_cagest*)building;

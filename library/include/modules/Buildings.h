@@ -202,6 +202,11 @@ DFHACK_EXPORT bool deconstruct(df::building *bld);
  */
 DFHACK_EXPORT bool markedForRemoval(df::building *bld);
 
+/**
+ * Rebuilds a civzones building associations after it has been modified
+*/
+DFHACK_EXPORT void notifyCivzoneModified(df::building* bld);
+
 void updateBuildings(color_ostream& out, void* ptr);
 void clearBuildings(color_ostream& out);
 

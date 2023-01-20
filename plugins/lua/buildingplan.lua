@@ -14,17 +14,40 @@ local _ENV = mkmodule('plugins.buildingplan')
 
 --]]
 
-local dialogs = require('gui.dialogs')
-local guidm = require('gui.dwarfmode')
+local argparse = require('argparse')
 require('dfhack.buildings')
 
--- does not need the core suspended
+local function process_args(opts, args)
+    if args[1] == 'help' then
+        opts.help = true
+        return
+    end
+
+    return argparse.processArgsGetopt(args, {
+            {'h', 'help', handler=function() opts.help = true end},
+        })
+end
+
+function parse_commandline(...)
+    local args, opts = {...}, {}
+    local positionals = process_args(opts, args)
+
+    if opts.help then
+        return false
+    end
+
+    return true
+end
+
 function get_num_filters(btype, subtype, custom)
     local filters = dfhack.buildings.getFiltersByType(
         {}, btype, subtype, custom)
     if filters then return #filters end
     return 0
 end
+
+local dialogs = require('gui.dialogs')
+local guidm = require('gui.dwarfmode')
 
 local function to_title_case(str)
     str = str:gsub('(%a)([%w_]*)',

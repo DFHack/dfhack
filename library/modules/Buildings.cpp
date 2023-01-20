@@ -102,7 +102,6 @@ struct CoordHash {
 };
 
 static unordered_map<df::coord, int32_t, CoordHash> locationToBuilding;
-static unordered_map<df::coord, vector<int32_t>, CoordHash> locationToCivzones;
 
 static df::building_extents_type *getExtentTile(df::building_extents &extent, df::coord2d tile)
 {
@@ -164,6 +163,163 @@ void buildings_onUpdate(color_ostream &out)
             iref->role = df::job_item_ref::Hauled;
             iref->job_item_idx = -1;
         }
+    }
+}
+
+static void building_into_zone_unidir(df::building* bld, df::building_civzonest* zone)
+{
+    for (size_t bid = 0; bid < zone->contained_buildings.size(); bid++)
+    {
+        if (zone->contained_buildings[bid] == bld)
+            return;
+    }
+
+    zone->contained_buildings.push_back(bld);
+
+    std::sort(zone->contained_buildings.begin(), zone->contained_buildings.end(), [](df::building* b1, df::building* b2)
+    {
+        return b1->id < b2->id;
+    });
+}
+
+static void zone_into_building_unidir(df::building* bld, df::building_civzonest* zone)
+{
+    for (size_t bid = 0; bid < bld->relations.size(); bid++)
+    {
+        if (bld->relations[bid] == zone)
+            return;
+    }
+
+    bld->relations.push_back(zone);
+
+    std::sort(bld->relations.begin(), bld->relations.end(), [](df::building* b1, df::building* b2)
+    {
+        return b1->id < b2->id;
+    });
+}
+
+static bool is_suitable_building_for_zoning(df::building* bld)
+{
+    return bld->canMakeRoom();
+}
+
+static void add_building_to_zone(df::building* bld, df::building_civzonest* zone)
+{
+    if (!is_suitable_building_for_zoning(bld))
+        return;
+
+    building_into_zone_unidir(bld, zone);
+    zone_into_building_unidir(bld, zone);
+}
+
+static void add_building_to_all_zones(df::building* bld)
+{
+    if (!is_suitable_building_for_zoning(bld))
+        return;
+
+    df::coord coord(bld->centerx, bld->centery, bld->z);
+
+    std::vector<df::building_civzonest*> cv;
+    Buildings::findCivzonesAt(&cv, coord);
+
+    for (size_t i=0; i < cv.size(); i++)
+    {
+        add_building_to_zone(bld, cv[i]);
+    }
+}
+
+static void add_zone_to_all_buildings(df::building* zone_as_building)
+{
+    if (zone_as_building->getType() != building_type::Civzone)
+        return;
+
+    auto zone = strict_virtual_cast<df::building_civzonest>(zone_as_building);
+
+    if (zone == nullptr)
+        return;
+
+    auto& vec = world->buildings.other[buildings_other_id::IN_PLAY];
+
+    for (size_t i = 0; i < vec.size(); i++)
+    {
+        auto against = vec[i];
+
+        if (zone->z != against->z)
+            continue;
+
+        if (!is_suitable_building_for_zoning(against))
+            continue;
+
+        int32_t cx = against->centerx;
+        int32_t cy = against->centery;
+
+        df::coord2d coord(cx, cy);
+
+        //can a zone without extents exist?
+        if (zone->room.extents && zone->isExtentShaped())
+        {
+            auto etile = getExtentTile(zone->room, coord);
+            if (!etile || !*etile)
+                continue;
+
+            add_building_to_zone(against, zone);
+        }
+    }
+}
+
+static void remove_building_from_zone(df::building* bld, df::building_civzonest* zone)
+{
+    for (int bid = 0; bid < (int)zone->contained_buildings.size(); bid++)
+    {
+        if (zone->contained_buildings[bid] == bld)
+        {
+            zone->contained_buildings.erase(zone->contained_buildings.begin() + bid);
+            bid--;
+        }
+    }
+
+    for (int bid = 0; bid < (int)bld->relations.size(); bid++)
+    {
+        if (bld->relations[bid] == zone)
+        {
+            bld->relations.erase(bld->relations.begin() + bid);
+            bid--;
+        }
+    }
+}
+
+static void remove_building_from_all_zones(df::building* bld)
+{
+    df::coord coord(bld->centerx, bld->centery, bld->z);
+
+    std::vector<df::building_civzonest*> cv;
+    Buildings::findCivzonesAt(&cv, coord);
+
+    for (size_t i=0; i < cv.size(); i++)
+    {
+        remove_building_from_zone(bld, cv[i]);
+    }
+}
+
+static void remove_zone_from_all_buildings(df::building* zone_as_building)
+{
+    if (zone_as_building->getType() != building_type::Civzone)
+        return;
+
+    auto zone = strict_virtual_cast<df::building_civzonest>(zone_as_building);
+
+    if (zone == nullptr)
+        return;
+
+    auto& vec = world->buildings.other[buildings_other_id::IN_PLAY];
+
+    //this is a paranoid check and slower than it could be. Zones contain a list of children
+    //good for fixing potentially bad game states when deleting a zone
+    for (size_t i = 0; i < vec.size(); i++)
+    {
+        df::building* bld = vec[i];
+
+        remove_building_from_zone(bld, zone);
     }
 }
 
@@ -325,78 +481,30 @@ static void cacheBuilding(df::building *building, bool is_civzone) {
         for (int32_t y = p1.y; y <= p2.y; y++) {
             df::coord pt(x, y, building->z);
             if (Buildings::containsTile(building, pt, is_civzone)) {
-                if (is_civzone)
-                    locationToCivzones[pt].push_back(id);
-                else
+                if (!is_civzone)
                     locationToBuilding[pt] = id;
             }
         }
     }
 }
 
-static int32_t nextCivzone = 0;
-static void cacheNewCivzones() {
-    if (!world || !building_next_id)
-        return;
-
-    int32_t nextBuildingId = *building_next_id;
-    for (int32_t id = nextCivzone; id < nextBuildingId; ++id) {
-        auto &vec = world->buildings.other[buildings_other_id::ANY_ZONE];
-        int32_t idx = df::building::binsearch_index(vec, id);
-        if (idx > -1)
-            cacheBuilding(vec[idx], true);
-    }
-    nextCivzone = nextBuildingId;
-}
-
 bool Buildings::findCivzonesAt(std::vector<df::building_civzonest*> *pvec,
                                df::coord pos) {
     pvec->clear();
 
-    // Tiles have an occupancy->bits.building flag to quickly determine if it is
-    // covered by a buildling, but there is no such flag for civzones.
-    // Therefore, we need to make sure that our cache is authoratative.
-    // Otherwise, we would have to fall back to linearly scanning the list of
-    // all civzones on a cache miss.
-    //
-    // Since we guarantee our cache contains *at least* all tiles that are
-    // currently covered by civzones, we can conclude that if a tile is not in
-    // the cache, there is no civzone there. Civzones *can* be dynamically
-    // shrunk, so we still need to verify that civzones that once covered this
-    // tile continue to cover this tile.
-    cacheNewCivzones();
-
-    auto civzones_it = locationToCivzones.find(pos);
-    if (civzones_it == locationToCivzones.end())
-        return false;
-
-    set<int32_t> ids_to_remove;
-    auto &civzones = civzones_it->second;
-    for (int32_t id : civzones) {
-        int32_t idx = df::building::binsearch_index(
-                world->buildings.other[buildings_other_id::ANY_ZONE], id);
-        df::building_civzonest *civzone = NULL;
-        if (idx > -1)
-            civzone = world->buildings.other.ANY_ZONE[idx];
-        if (!civzone || civzone->z != pos.z ||
-                !containsTile(civzone, pos, true)) {
-            ids_to_remove.insert(id);
+    for (df::building_civzonest* zone : world->buildings.other.ACTIVITY_ZONE)
+    {
+        if (pos.z != zone->z)
             continue;
-        }
-        pvec->push_back(civzone);
-    }
 
-    // civzone no longer occupies this tile; update the cache
-    if (!ids_to_remove.empty()) {
-        for (auto it = civzones.begin(); it != civzones.end(); ) {
-            if (ids_to_remove.count(*it)) {
-                it = civzones.erase(it);
+        if (zone->room.extents && zone->isExtentShaped())
+        {
+            auto etile = getExtentTile(zone->room, pos);
+            if (!etile || !*etile)
                 continue;
-            }
-            ++it;
+
+            pvec->push_back(zone);
         }
-        if (civzones.empty())
-            locationToCivzones.erase(pos);
     }
 
     return !pvec->empty();
@@ -1053,7 +1161,6 @@ static int getMaxStockpileId()
     return max_id;
 }
 
-/* TODO: understand how this changes for v50
 static int getMaxCivzoneId()
 {
     auto &vec = world->buildings.other[buildings_other_id::ANY_ZONE];
@@ -1068,7 +1175,6 @@ static int getMaxCivzoneId()
 
     return max_id;
 }
-*/
 
 bool Buildings::constructAbstract(df::building *bld)
 {
@@ -1087,12 +1193,14 @@ bool Buildings::constructAbstract(df::building *bld)
                 stock->stockpile_number = getMaxStockpileId() + 1;
             break;
 
-/* TODO: understand how this changes for v50
         case building_type::Civzone:
             if (auto zone = strict_virtual_cast<df::building_civzonest>(bld))
+            {
                 zone->zone_num = getMaxCivzoneId() + 1;
+
+                add_zone_to_all_buildings(zone);
+            }
             break;
-*/
 
         default:
             break;
@@ -1186,6 +1294,8 @@ bool Buildings::constructWithItems(df::building *bld, std::vector<df::item*> ite
             bld->mat_index = items[i]->getMaterialIndex();
     }
 
+    add_building_to_all_zones(bld);
+
     createDesign(bld, rough);
     return true;
 }
@@ -1232,6 +1342,8 @@ bool Buildings::constructWithFilters(df::building *bld, std::vector<df::job_item
 
     buildings_do_onupdate = true;
 
+    add_building_to_all_zones(bld);
+
     createDesign(bld, rough);
     return true;
 }
@@ -1272,6 +1384,10 @@ bool Buildings::deconstruct(df::building *bld)
     // Don't clear arrows.
 
     bld->uncategorize();
+
+    remove_building_from_all_zones(bld);
+    remove_zone_from_all_buildings(bld);
+
     delete bld;
 
     if (world->selected_building == bld)
@@ -1310,12 +1426,20 @@ bool Buildings::markedForRemoval(df::building *bld)
     return false;
 }
 
+void Buildings::notifyCivzoneModified(df::building* bld)
+{
+    if (bld->getType() != building_type::Civzone)
+        return;
+
+    //remove zone here needs to be the slow method
+    remove_zone_from_all_buildings(bld);
+    add_zone_to_all_buildings(bld);
+}
+
 void Buildings::clearBuildings(color_ostream& out) {
     corner1.clear();
     corner2.clear();
     locationToBuilding.clear();
-    locationToCivzones.clear();
-    nextCivzone = 0;
 }
 
 void Buildings::updateBuildings(color_ostream&, void* ptr)

@@ -23,7 +23,7 @@ Usage
     one-time orders first, then yearly, seasonally, monthly, and finally, daily.
 
 You can keep your orders automatically sorted by adding the following command to
-your ``onMapLoad.init`` file::
+your ``dfhack-config/init/onMapLoad.init`` file::
 
     repeat -name orders-sort -time 1 -timeUnits days -command [ orders sort ]
 

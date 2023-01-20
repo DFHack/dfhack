@@ -36,6 +36,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
+- `autofarm`: don't duplicate status line entries for crops with no current supply
+- `orders`: allow the orders library to be listed and imported properly (if you previously copied the orders library into your ``dfhack-config/orders`` directory to work around this bug, you can remove those files now)
 
 ## Misc Improvements
 

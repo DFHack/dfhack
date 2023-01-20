@@ -82,6 +82,7 @@ using namespace DFHack;
 #include "df/map_block.h"
 #include "df/tile_occupancy.h"
 #include "df/plotinfost.h"
+#include "df/squad.h"
 #include "df/ui_look_list.h"
 #include "df/unit.h"
 #include "df/unit_relationship_type.h"
@@ -1348,6 +1349,43 @@ bool Buildings::constructWithFilters(df::building *bld, std::vector<df::job_item
     return true;
 }
 
+static void delete_civzone_squad_links(df::building* bld)
+{
+    if (bld->getType() != building_type::Civzone)
+        return;
+
+    auto zone = strict_virtual_cast<df::building_civzonest>(bld);
+
+    if (zone == nullptr)
+        return;
+
+    for (df::building_civzonest::T_squad_room_info* room_info : zone->squad_room_info)
+    {
+        int32_t squad_id = room_info->squad_id;
+
+        df::squad* squad = df::squad::find(squad_id);
+
+        //if this is null, something has gone just *terribly* wrong
+        if (squad)
+        {
+            for (int i=0; i < squad->rooms.size(); i++)
+            {
+                if (squad->rooms[i]->building_id == bld->id)
+                {
+                    auto room = squad->rooms[i];
+                    squad->rooms.erase(squad->rooms.begin() + i);
+                    delete room;
+                    i--;
+                }
+            }
+        }
+
+        delete room_info;
+    }
+
+    zone->squad_room_info.clear();
+}
+
 bool Buildings::deconstruct(df::building *bld)
 {
     using df::global::plotinfo;
@@ -1387,6 +1425,8 @@ bool Buildings::deconstruct(df::building *bld)
 
     remove_building_from_all_zones(bld);
     remove_zone_from_all_buildings(bld);
+
+    delete_civzone_squad_links(bld);
 
     delete bld;
 

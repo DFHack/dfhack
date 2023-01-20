@@ -1025,15 +1025,35 @@ df::unit_misc_trait *Units::getMiscTrait(df::unit *unit, df::misc_trait_type typ
 // get race name by id or unit pointer
 string Units::getRaceNameById(int32_t id)
 {
-    df::creature_raw *raw = world->raws.creatures.all[id];
-    if (raw)
-        return raw->creature_id;
+    if (id >= 0 && (size_t)id < world->raws.creatures.all.size())
+    {
+        df::creature_raw* raw = world->raws.creatures.all[id];
+        if (raw)
+            return raw->creature_id;
+    }
     return "";
 }
 string Units::getRaceName(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
     return getRaceNameById(unit->race);
+}
+
+// get human-readable race name by id or unit pointer
+string Units::getRaceReadableNameById(int32_t id)
+{
+    if (id >= 0 && (size_t)id < world->raws.creatures.all.size())
+    {
+        df::creature_raw* raw = world->raws.creatures.all[id];
+        if (raw)
+            return raw->name[0];
+    }
+    return "";
+}
+string Units::getRaceReadableName(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return getRaceReadableNameById(unit->race);
 }
 
 void df_unit_get_physical_description(df::unit* unit, string* out_str)
@@ -1058,9 +1078,12 @@ string Units::getPhysicalDescription(df::unit* unit)
 // get plural of race name (used for display in autobutcher UI and for sorting the watchlist)
 string Units::getRaceNamePluralById(int32_t id)
 {
-    df::creature_raw *raw = world->raws.creatures.all[id];
-    if (raw)
-        return raw->name[1]; // second field is plural of race name
+    if (id >= 0 && (size_t)id < world->raws.creatures.all.size())
+    {
+        df::creature_raw* raw = world->raws.creatures.all[id];
+        if (raw)
+            return raw->name[1]; // second field is plural of race name
+    }
     return "";
 }
 
@@ -1072,9 +1095,12 @@ string Units::getRaceNamePlural(df::unit* unit)
 
 string Units::getRaceBabyNameById(int32_t id)
 {
-    df::creature_raw *raw = world->raws.creatures.all[id];
-    if (raw)
-        return raw->general_baby_name[0];
+    if (id >= 0 && (size_t)id < world->raws.creatures.all.size())
+    {
+        df::creature_raw* raw = world->raws.creatures.all[id];
+        if (raw)
+            return raw->general_baby_name[0];
+    }
     return "";
 }
 
@@ -1086,9 +1112,12 @@ string Units::getRaceBabyName(df::unit* unit)
 
 string Units::getRaceChildNameById(int32_t id)
 {
-    df::creature_raw *raw = world->raws.creatures.all[id];
-    if (raw)
-        return raw->general_child_name[0];
+    if (id >= 0 && (size_t)id < world->raws.creatures.all.size())
+    {
+        df::creature_raw* raw = world->raws.creatures.all[id];
+        if (raw)
+            return raw->general_child_name[0];
+    }
     return "";
 }
 

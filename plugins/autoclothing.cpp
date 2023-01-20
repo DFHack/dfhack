@@ -13,7 +13,17 @@
 #include "modules/Materials.h"
 #include "modules/Units.h"
 #include "modules/World.h"
+#include "modules/Translation.h"
 
+#include "df/item.h"
+#include "df/item_actual.h"
+#include "df/item_crafted.h"
+#include "df/item_constructed.h"
+#include "df/item_armorst.h"
+#include "df/item_glovesst.h"
+#include "df/item_shoesst.h"
+#include "df/item_helmst.h"
+#include "df/item_pantsst.h"
 #include "df/itemdef_armorst.h"
 #include "df/itemdef_glovesst.h"
 #include "df/itemdef_shoesst.h"
@@ -55,6 +65,9 @@ static void cleanup_state(color_ostream &out);
 static void do_autoclothing();
 static bool validateMaterialCategory(ClothingRequirement * requirement);
 static bool setItem(std::string name, ClothingRequirement* requirement);
+static void generate_report(color_ostream& out);
+static bool isAvailableItem(df::item* item);
+
 
 std::vector<ClothingRequirement>clothingOrders;
 
@@ -366,6 +379,12 @@ command_result autoclothing(color_ostream &out, std::vector <std::string> & para
         }
         return CR_OK;
     }
+    else if (parameters.size() == 1 && parameters[0] == "report")
+    {
+        CoreSuspender suspend;
+        generate_report(out);
+        return CR_OK;
+    }
     else if (parameters.size() < 2 || parameters.size() > 3)
     {
         out << "Wrong number of arguments." << endl;
@@ -662,4 +681,201 @@ static void save_state(color_ostream &out)
         auto item = World::AddPersistentData("autoclothing/clothingItems");
         item.val() = clothingOrders[i].Serialize();
     }
+}
+
+static void list_unit_counts(color_ostream& out, std::map<int, int>& unitList)
+{
+    for (const auto& race : unitList)
+    {
+        if (race.second == 1)
+            out << "    1 " << Units::getRaceReadableNameById(race.first) << endl;
+        else
+            out << "    " << race.second << " " << Units::getRaceNamePluralById(race.first) << endl;
+    }
+}
+
+static bool isAvailableItem(df::item* item)
+{
+    if (item->flags.bits.in_job)
+        return false;
+    if (item->flags.bits.hostile)
+        return false;
+    if (item->flags.bits.in_building)
+        return false;
+    if (item->flags.bits.in_building)
+        return false;
+    if (item->flags.bits.encased)
+        return false;
+    if (item->flags.bits.foreign)
+        return false;
+    if (item->flags.bits.trader)
+        return false;
+    if (item->flags.bits.owned)
+        return false;
+    if (item->flags.bits.artifact)
+        return false;
+    if (item->flags.bits.forbid)
+        return false;
+    if (item->flags.bits.dump)
+        return false;
+    if (item->flags.bits.on_fire)
+        return false;
+    if (item->flags.bits.melt)
+        return false;
+    if (item->flags.bits.hidden)
+        return false;
+    if (item->getWear() > 1)
+        return false;
+    if (!item->isClothing())
+        return false;
+    return true;
+}
+
+static void generate_report(color_ostream& out)
+{
+    std::map<int, int> fullUnitList;
+    std::map<int, int> missingArmor;
+    std::map<int, int> missingShoes;
+    std::map<int, int> missingHelms;
+    std::map<int, int> missingGloves;
+    std::map<int, int> missingPants;
+    for (df::unit* unit : world->units.active)
+    {
+        if (!Units::isCitizen(unit))
+            continue;
+        fullUnitList[unit->race]++;
+        int numArmor = 0, numShoes = 0, numHelms = 0, numGloves = 0, numPants = 0;
+        for (auto itemId : unit->owned_items)
+        {
+
+            auto item = Items::findItemByID(itemId);
+            if (item->getWear() >= 1)
+                continue;
+            switch (item->getType())
+            {
+            case df::item_type::ARMOR:
+                numArmor++;
+                break;
+            case df::item_type::SHOES:
+                numShoes++;
+                break;
+            case df::item_type::HELM:
+                numHelms++;
+                break;
+            case df::item_type::GLOVES:
+                numGloves++;
+                break;
+            case df::item_type::PANTS:
+                numPants++;
+                break;
+            default:
+                break;
+            }
+        }
+        if (numArmor == 0)
+            missingArmor[unit->race]++;
+        if (numShoes < 2)
+            missingShoes[unit->race]++;
+        if (numHelms == 0)
+            missingHelms[unit->race]++;
+        if (numGloves < 2)
+            missingGloves[unit->race]++;
+        if (numPants == 0)
+            missingPants[unit->race]++;
+        //out << Translation::TranslateName(Units::getVisibleName(unit)) << " has " << numArmor << " armor, " << numShoes << " shoes, " << numHelms << " helms, " << numGloves << " gloves, " << numPants << " pants" << endl;
+    }
+    if (missingArmor.size() + missingShoes.size() + missingHelms.size() + missingGloves.size() + missingPants.size() == 0)
+    {
+        out << "Everybody has a full set of clothes to wear, congrats!" << endl;
+        return;
+    }
+    else
+    {
+        if (missingArmor.size())
+        {
+            out << "Following units need new bodywear:" << endl;
+            list_unit_counts(out, missingArmor);
+        }
+        if (missingShoes.size())
+        {
+            out << "Following units need new shoes:" << endl;
+            list_unit_counts(out, missingShoes);
+        }
+        if (missingHelms.size())
+        {
+            out << "Following units need new headwear:" << endl;
+            list_unit_counts(out, missingHelms);
+        }
+        if (missingGloves.size())
+        {
+            out << "Following units need new handwear:" << endl;
+            list_unit_counts(out, missingGloves);
+        }
+        if (missingPants.size())
+        {
+            out << "Following units need new legwear:" << endl;
+            list_unit_counts(out, missingPants);
+        }
+    }
+    std::map<int, int> availableArmor;
+    for (auto armor : world->items.other.ARMOR)
+    {
+        if (!isAvailableItem(armor))
+            continue;
+        availableArmor[armor->maker_race]++;
+    }
+    if (availableArmor.size())
+    {
+        out << "We have available bodywear for:" << endl;
+        list_unit_counts(out, availableArmor);
+    }
+    std::map<int, int> availableShoes;
+    for (auto shoe : world->items.other.SHOES)
+    {
+        if (!isAvailableItem(shoe))
+            continue;
+        availableShoes[shoe->maker_race]++;
+    }
+    if (availableShoes.size())
+    {
+        out << "We have available footwear for:" << endl;
+        list_unit_counts(out, availableShoes);
+    }
+    std::map<int, int> availableHelms;
+    for (auto helm : world->items.other.HELM)
+    {
+        if (!isAvailableItem(helm))
+            continue;
+        availableHelms[helm->maker_race]++;
+    }
+    if (availableHelms.size())
+    {
+        out << "We have available headwear for:" << endl;
+        list_unit_counts(out, availableHelms);
+    }
+    std::map<int, int> availableGloves;
+    for (auto glove : world->items.other.HELM)
+    {
+        if (!isAvailableItem(glove))
+            continue;
+        availableGloves[glove->maker_race]++;
+    }
+    if (availableGloves.size())
+    {
+        out << "We have available handwear for:" << endl;
+        list_unit_counts(out, availableGloves);
+    }
+    std::map<int, int> availablePants;
+    for (auto pants : world->items.other.HELM)
+    {
+        if (!isAvailableItem(pants))
+            continue;
+        availablePants[pants->maker_race]++;
+    }
+    if (availablePants.size())
+    {
+        out << "We have available legwear for:" << endl;
+        list_unit_counts(out, availablePants);
+    }
+
 }

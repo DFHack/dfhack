@@ -1171,11 +1171,11 @@ void lightingEngineViewscreen::loadSettings()
     std::string rawFolder;
     if(df::global::world->cur_savegame.save_dir!="")
     {
-        rawFolder= "data/save/" + (df::global::world->cur_savegame.save_dir) + "/raw/";
+        rawFolder= "save/" + (df::global::world->cur_savegame.save_dir) + "/";
     }
     else
     {
-        rawFolder= "raw/";
+        rawFolder= "dfhack-config/";
     }
     const std::string settingsfile=rawFolder+"rendermax.lua";
 

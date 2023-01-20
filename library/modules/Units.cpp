@@ -1455,7 +1455,7 @@ int Units::computeMovementSpeed(df::unit *unit)
     if (isBaby(unit))
         speed += 3000;
 
-    if (unit->flags3.bits.unk15)
+    if (unit->flags3.bits.diving)
         speed /= 20;
 
     if (unit->counters2.exhaustion >= 2000)
@@ -1965,7 +1965,7 @@ int Units::getStressCategory(df::unit *unit)
     if (!unit->status.current_soul)
         return int(stress_cutoffs.size()) / 2;
 
-    return getStressCategoryRaw(unit->status.current_soul->personality.stress_level);
+    return getStressCategoryRaw(unit->status.current_soul->personality.stress);
 }
 
 int Units::getStressCategoryRaw(int32_t stress_level)

@@ -619,13 +619,13 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
                     continue;
                 if (zone->type != df::civzone_type::ArcheryRange)
                     continue;
-                if(zone->dir_x < 0)
+                if(zone->zone_settings.archery.dir_x < 0)
                     remote_build->set_direction(EAST);
-                else if(zone->dir_x > 0)
+                else if(zone->zone_settings.archery.dir_x > 0)
                     remote_build->set_direction(WEST);
-                else if (zone->dir_y < 0)
+                else if (zone->zone_settings.archery.dir_y < 0)
                     remote_build->set_direction(SOUTH);
-                else if (zone->dir_y > 0)
+                else if (zone->zone_settings.archery.dir_y > 0)
                     remote_build->set_direction(NORTH);
                 break;
             }

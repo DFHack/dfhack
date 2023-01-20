@@ -1,6 +1,6 @@
 #!/bin/sh
 
-DF_DIR=$(dirname "$0")
+DF_DIR=$(dirname "$(readlink -f "$0")")
 cd "${DF_DIR}"
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"./hack/libs":"./hack"

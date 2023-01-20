@@ -39,6 +39,6 @@ repos:
       name: Check Authors.rst
       language: python
       entry: python3 ci/authors-rst.py
-      files: docs/Authors\.rst
+      files: docs/about/Authors\.rst
       pass_filenames: false
 exclude: '^(depends/|data/.*\.json$|.*\.diff$)'

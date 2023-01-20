@@ -456,6 +456,20 @@ end
 
 function Panel:computeFrame(parent_rect)
     local sw, sh = parent_rect.width, parent_rect.height
+    if self.frame then
+        if self.frame.t and self.frame.h and self.frame.t + self.frame.h > sh then
+            self.frame.t = math.max(0, sh - self.frame.h)
+        end
+        if self.frame.b and self.frame.h and self.frame.b + self.frame.h > sh then
+            self.frame.b = math.max(0, sh - self.frame.h)
+        end
+        if self.frame.l and self.frame.w and self.frame.l + self.frame.w > sw then
+            self.frame.l = math.max(0, sw - self.frame.w)
+        end
+        if self.frame.r and self.frame.w and self.frame.r + self.frame.w > sw then
+            self.frame.r = math.max(0, sw - self.frame.w)
+        end
+    end
     return gui.compute_frame_body(sw, sh, self.frame, self.frame_inset,
                                   self.frame_style and 1 or 0)
 end
@@ -530,6 +544,11 @@ Window.ATTRS {
 
 ResizingPanel = defclass(ResizingPanel, Panel)
 
+ResizingPanel.ATTRS{
+    auto_height = true,
+    auto_width = false,
+}
+
 -- adjust our frame dimensions according to positions and sizes of our subviews
 function ResizingPanel:postUpdateLayout(frame_body)
     local w, h = 0, 0
@@ -550,6 +569,8 @@ function ResizingPanel:postUpdateLayout(frame_body)
     end
     if not self.frame then self.frame = {} end
     local oldw, oldh = self.frame.w, self.frame.h
+    if not self.auto_height then h = oldh end
+    if not self.auto_width then w = oldw end
     self.frame.w, self.frame.h = w, h
     if not self._updateLayoutGuard and (oldw ~= w or oldh ~= h) then
         self._updateLayoutGuard = true -- protect against infinite loops
@@ -708,7 +729,7 @@ function EditField:onInput(keys)
         end
     end
 
-    if self.key and keys.LEAVESCREEN then
+    if self.key and (keys.LEAVESCREEN or keys._MOUSE_R_DOWN) then
         local old = self.text
         self:setText(self.saved_text)
         if self.on_change and old ~= self.saved_text then
@@ -1359,6 +1380,10 @@ function WrappedLabel:getWrappedText(width)
     return text_to_wrap:wrap(width - self.indent)
 end
 
+function WrappedLabel:preUpdateLayout()
+    self.saved_start_line_num = self.start_line_num
+end
+
 -- we can't set the text in init() since we may not yet have a frame that we
 -- can get wrapping bounds from.
 function WrappedLabel:postComputeFrame()
@@ -1371,6 +1396,7 @@ function WrappedLabel:postComputeFrame()
         table.insert(text, NEWLINE)
     end
     self:setText(text)
+    self:scroll(self.saved_start_line_num - 1)
 end
 
 ------------------
@@ -1694,7 +1720,7 @@ function List:onRenderBody(dc)
 
     local function paint_icon(icon, obj)
         if type(icon) ~= 'string' then
-            dc:char(nil,icon)
+            dc:tile(nil,icon)
         else
             if current then
                 dc:string(icon, obj.icon_pen or self.icon_pen or cur_pen)

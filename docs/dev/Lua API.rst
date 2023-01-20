@@ -1144,6 +1144,10 @@ Job module
 
   Prints info about the job item.
 
+* ``dfhack.job.removeJob(job)``
+
+  Cancels a job, cleans up all references to it, and removes it from the world.
+
 * ``dfhack.job.getGeneralRef(job, type)``
 
   Searches for a general_ref with the given type.
@@ -1993,6 +1997,11 @@ Low-level building creation functions:
 
   Destroys the building, or queues a deconstruction job.
   Returns *true* if the building was destroyed and deallocated immediately.
+
+* ``dfhack.buildings.notifyCivzoneModified(building)``
+
+  Rebuilds the civzone <-> overlapping building association mapping.
+  Call after changing extents or modifying size in some fashion
 
 * ``dfhack.buildings.markedForRemoval(building)``
 
@@ -4416,6 +4425,13 @@ Subclass of Panel; automatically adjusts its own frame height and width to the
 minimum required to show its subviews. Pairs nicely with a parent Panel that has
 ``autoarrange_subviews`` enabled.
 
+It has the following attributes:
+
+:auto_height: Sets self.frame.h from the positions and height of its subviews
+              (default is ``true``).
+:auto_width: Sets self.frame.w from the positions and width of its subviews
+             (default is ``false``).
+
 Pages class
 -----------
 
@@ -4468,9 +4484,10 @@ calling ``setFocus(true)`` on the field object.
 If an activation ``key`` is specified, the ``EditField`` will manage its own
 focus. It will start in the unfocused state, and pressing the activation key
 will acquire keyboard focus. Pressing the Enter key will release keyboard focus
-and then call the ``on_submit`` callback. Pressing the Escape key will also
-release keyboard focus, but first it will restore the text that was displayed
-before the ``EditField`` gained focus and then call the ``on_change`` callback.
+and then call the ``on_submit`` callback. Pressing the Escape key (or r-clicking
+with the mouse) will also release keyboard focus, but first it will restore the
+text that was displayed before the ``EditField`` gained focus and then call the
+``on_change`` callback.
 
 The ``EditField`` cursor can be moved to where you want to insert/remove text.
 You can click where you want the cursor to move or you can use any of the
@@ -5800,9 +5817,13 @@ Enabling and disabling scripts
 ==============================
 
 Scripts can choose to recognize the built-in ``enable`` and ``disable`` commands
-by including the following line anywhere in their file::
+by including the following line near the top of their file::
 
-    --@ enable = true
+    --@enable = true
+    --@module = true
+
+Note that enableable scripts must also be `modules <reqscript>` so their
+``isEnabled()`` functions can be called from outside the script.
 
 When the ``enable`` and ``disable`` commands are invoked, the ``dfhack_flags``
 table passed to the script will have the following fields set:
@@ -5817,7 +5838,8 @@ command.
 
 Example usage::
 
-    --@ enable = true
+    --@enable = true
+    --@module = true
 
     enabled = enabled or false
     function isEnabled()
@@ -5871,9 +5893,9 @@ all script modules.
 Save init script
 ================
 
-If a save directory contains a file called ``raw/init.lua``, it is
+If a save directory contains a file called ``init.lua``, it is
 automatically loaded and executed every time the save is loaded.
-The same applies to any files called ``raw/init.d/*.lua``. Every
+The same applies to any files called ``init.d/*.lua``. Every
 such script can define the following functions to be called by dfhack:
 
 * ``function onStateChange(op) ... end``

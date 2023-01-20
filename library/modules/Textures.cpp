@@ -21,6 +21,7 @@ static long g_num_dfhack_textures = 0;
 static long g_dfhack_logo_texpos_start = -1;
 static long g_green_pin_texpos_start = -1;
 static long g_red_pin_texpos_start = -1;
+static long g_icons_texpos_start = -1;
 
 // Converts an arbitrary Surface to something like the display format
 // (32-bit RGBA), and converts magenta to transparency if convert_magenta is set
@@ -117,6 +118,8 @@ void Textures::init(color_ostream &out) {
                                           &g_green_pin_texpos_start);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/red-pin.png",
                                           &g_red_pin_texpos_start);
+    g_num_dfhack_textures += load_textures(out, "hack/data/art/icons.png",
+                                          &g_icons_texpos_start);
 
     DEBUG(textures,out).print("loaded %ld textures\n", g_num_dfhack_textures);
 
@@ -159,4 +162,8 @@ long Textures::getGreenPinTexposStart() {
 
 long Textures::getRedPinTexposStart() {
     return g_red_pin_texpos_start;
+}
+
+long Textures::getIconsTexposStart() {
+    return g_icons_texpos_start;
 }

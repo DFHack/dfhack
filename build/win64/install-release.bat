@@ -1,4 +1,1 @@
-call "%ProgramFiles%\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" amd64
-cd VC2022
-msbuild /m /p:Platform=x64 /p:Configuration=Release INSTALL.vcxproj
-cd ..
+cmake --build VC2022 -t INSTALL -- /m /p:Platform=x64 /p:Configuration=Release

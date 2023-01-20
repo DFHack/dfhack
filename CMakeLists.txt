@@ -132,14 +132,8 @@ endif()
 find_package(Perl REQUIRED)
 
 # set up folder structures for IDE solutions
-# MSVC Express won't load solutions that use this. It also doesn't include MFC supported
-# Check for MFC!
-find_package(MFC QUIET)
-if(MFC_FOUND OR (NOT MSVC))
-    option(CMAKE_USE_FOLDERS "Enable folder grouping of projects in IDEs." ON)
-else()
-    option(CMAKE_USE_FOLDERS "Enable folder grouping of projects in IDEs." OFF)
-endif()
+# checking for msvc express is meaningless now, all available editions of msvc support folder groupings
+option(CMAKE_USE_FOLDERS "Enable folder grouping of projects in IDEs." ON)
 
 if(CMAKE_USE_FOLDERS)
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -196,7 +190,7 @@ endif()
 
 # set up versioning.
 set(DF_VERSION "50.05")
-set(DFHACK_RELEASE "alpha0")
+set(DFHACK_RELEASE "alpha1")
 set(DFHACK_PRERELEASE TRUE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")

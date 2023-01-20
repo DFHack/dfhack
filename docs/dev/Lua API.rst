@@ -1998,6 +1998,11 @@ Low-level building creation functions:
   Destroys the building, or queues a deconstruction job.
   Returns *true* if the building was destroyed and deallocated immediately.
 
+* ``dfhack.buildings.notifyCivzoneModified(building)``
+
+  Rebuilds the civzone <-> overlapping building association mapping.
+  Call after changing extents or modifying size in some fashion
+
 * ``dfhack.buildings.markedForRemoval(building)``
 
   Returns *true* if the building is marked for removal (with :kbd:`x`), *false*

@@ -20,7 +20,7 @@ Replaced by `gui/launcher --minimal <gui/launcher>`.
 
 create-items
 ============
-Replaced by `gui/create-item --multi`.
+Replaced by `gui/create-item --multi <gui/create-item>`.
 
 .. _deteriorateclothes:
 

@@ -1426,7 +1426,7 @@ int Units::computeMovementSpeed(df::unit *unit)
     if (isBaby(unit))
         speed += 3000;
 
-    if (unit->flags3.bits.unk15)
+    if (unit->flags3.bits.diving)
         speed /= 20;
 
     if (unit->counters2.exhaustion >= 2000)

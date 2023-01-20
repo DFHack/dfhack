@@ -1936,7 +1936,7 @@ int Units::getStressCategory(df::unit *unit)
     if (!unit->status.current_soul)
         return int(stress_cutoffs.size()) / 2;
 
-    return getStressCategoryRaw(unit->status.current_soul->personality.stress_level);
+    return getStressCategoryRaw(unit->status.current_soul->personality.stress);
 }
 
 int Units::getStressCategoryRaw(int32_t stress_level)

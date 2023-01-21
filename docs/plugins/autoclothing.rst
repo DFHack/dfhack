@@ -3,7 +3,7 @@ autoclothing
 
 .. dfhack-tool::
     :summary: Automatically manage clothing work orders.
-    :tags: untested fort auto workorders
+    :tags: fort auto workorders
 
 This command allows you to set how many of each clothing type every citizen
 should have.

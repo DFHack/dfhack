@@ -213,7 +213,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
             is_enabled = false;
         }
     }
-    
+
     return CR_OK;
 }
 
@@ -354,7 +354,7 @@ static int mark_item(color_ostream &out, df::item *item, df::item_flags bad_flag
     TRACE(perf,out).print("%s running mark_item\nshould_melt=%d\n", plugin_name,should_melt);
     string name = "";
     item->getItemDescription(&name, 0);
-    TRACE(perf,out).print("item %s %d\n", name, item->id);
+    TRACE(perf,out).print("item %s %d\n", name.c_str(), item->id);
     if (item->flags.whole & bad_flags.whole){
         TRACE(perf,out).print("rejected flag check\n");
         item_count++;
@@ -429,7 +429,7 @@ static int32_t mark_all_in_stockpile(color_ostream &out, PersistentDataItem & st
     F(in_job);
 #undef F
 
-    size_t marked_count = 0;
+    int32_t marked_count = 0;
 
     if(!stockpile.isValid()) {
         return 0;
@@ -438,7 +438,7 @@ static int32_t mark_all_in_stockpile(color_ostream &out, PersistentDataItem & st
     int spid = get_config_val(stockpile, STOCKPILE_CONFIG_ID);
     auto found = df::building::find(spid);
     if (!isStockpile(found)){
-        
+
         return 0;
     }
 
@@ -460,7 +460,7 @@ static int32_t mark_all_in_stockpile(color_ostream &out, PersistentDataItem & st
 static int32_t scan_stockpiles(color_ostream &out, bool disable_melt, map<int32_t, int32_t> &item_counts, map<int32_t, int32_t> &marked_item_counts, map<int32_t, int32_t> &premarked_item_counts) {
     TRACE(perf, out).print("%s running scan_stockpiles\n", plugin_name);
     int32_t newly_marked = 0;
-    
+
     // if (item_counts)
     item_counts.clear();
     // if (marked_item_counts)
@@ -485,7 +485,7 @@ static int32_t scan_stockpiles(color_ostream &out, bool disable_melt, map<int32_
 
         int32_t item_count = 0;
 
-        int32_t premarked_count = 0;        
+        int32_t premarked_count = 0;
 
         int32_t marked = mark_all_in_stockpile(out, c, premarked_count, item_count, melt_enabled);
 
@@ -523,7 +523,7 @@ static void push_stockpile_config(lua_State *L, int id, bool monitored,
     stockpile_config.emplace("id", id);
     stockpile_config.emplace("monitored", monitored);
     stockpile_config.emplace("melt", melt);
-    
+
     Lua::Push(L, stockpile_config);
 }
 
@@ -544,7 +544,7 @@ static void automelt_printStatus(color_ostream &out) {
     out.print("automelt is %s\n\n", is_enabled ? "enabled" : "disabled");
 
     map<int32_t, int32_t> item_counts, marked_item_counts, premarked_item_counts;
-    int32_t marked_items = scan_stockpiles(out, true, item_counts, marked_item_counts, premarked_item_counts);
+    scan_stockpiles(out, true, item_counts, marked_item_counts, premarked_item_counts);
 
     int32_t total_items_all_piles = 0;
     int32_t premarked_items_all_piles = 0;
@@ -581,7 +581,7 @@ static void automelt_printStatus(color_ostream &out) {
             monitored = get_config_bool(c, STOCKPILE_CONFIG_MONITORED);
         }
 
-        out.print(fmt, name_width, stockpile->name.c_str(), int_to_string(stockpile->id).c_str(), 
+        out.print(fmt, name_width, stockpile->name.c_str(), int_to_string(stockpile->id).c_str(),
                   monitored ? "[x]" : "[ ]", melt ? "[x]": "[ ]");
     }
 
@@ -595,7 +595,7 @@ static void automelt_setStockpileConfig(color_ostream &out, int id, bool monitor
     if (isInvalidStockpile || hasNoData) {
         remove_stockpile_config(out, id);
         return;
-    } 
+    }
 
     PersistentDataItem &c = ensure_stockpile_config(out, id);
     set_config_val(c, STOCKPILE_CONFIG_ID, id);
@@ -615,7 +615,7 @@ static int automelt_getStockpileConfig(lua_State *L) {
         id = lua_tointeger(L, -1);
         if (!df::building::find(id))
             return 0;
-        
+
     } else {
         const char * name = lua_tostring(L, -1);
         if (!name)
@@ -668,18 +668,18 @@ static int automelt_getItemCountsAndStockpileConfigs(lua_State *L) {
     summary.emplace("total_items", total_items_all_piles);
     summary.emplace("marked_items", marked_items);
     summary.emplace("premarked_items", premarked_items_all_piles);
-    
+
     Lua::Push(L, summary);
     Lua::Push(L, item_counts);
     Lua::Push(L, marked_item_counts);
     Lua::Push(L, premarked_item_counts);
     int32_t bldg_count = 0;
-    
+
     for (auto pile : world->buildings.other.STOCKPILE) {
         if (!isStockpile(pile))
             continue;
         bldg_count++;
-            
+
         int id = pile->id;
         if (watched_stockpiles_indices.count(id)) {
             push_stockpile_config(L, watched_stockpiles[watched_stockpiles_indices[id]]);

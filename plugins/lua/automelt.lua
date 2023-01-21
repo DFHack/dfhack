@@ -36,10 +36,6 @@ function parse_commandline(...)
         automelt_printStatus()
     elseif command == 'designate' then
         automelt_designate()
-    elseif command == 'melt' then
-        do_set_stockpile_config('melt', true, args[2])
-    elseif command == 'nomelt' then
-        do_set_stockpile_config('melt', false, args[2])
     elseif command == 'monitor' then
         do_set_stockpile_config('monitor', true, args[2])
     elseif command == 'nomonitor'then
@@ -53,7 +49,7 @@ end
 
 -- used by gui/autochop
 function setStockpileConfig(config)
-    automelt_setStockpileConfig(config.id, config.monitored, config.melt)
+    automelt_setStockpileConfig(config.id, config.monitored)
 end
 
 function getItemCountsAndStockpileConfigs()
@@ -67,7 +63,6 @@ function getItemCountsAndStockpileConfigs()
     for _,c in ipairs(ret.stockpile_configs) do
         c.name = df.building.find(c.id).name
         c.monitored = c.monitored ~= 0
-        c.melt = c.melt ~= 0
     end
     return ret
 end

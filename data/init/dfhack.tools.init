@@ -84,6 +84,9 @@ enable overlay
 # Allow buildings to be placed now and built later when materials are available
 enable buildingplan
 
+#Allow designated stockpiles to automatically mark items for melting
+enable automelt
+
 # Dwarf Manipulator (simple in-game Dwarf Therapist replacement)
 #enable manipulator
 

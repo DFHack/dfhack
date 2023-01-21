@@ -52,5 +52,5 @@ else
     echo "hack/ directory already present)"
     echo
     echo "Typically this can be done like this:"
-    echo "  cp -r win64-cross/output/* \"$HOME/.local/share/Steam/steamapps/common/Dwarf Fortress\""
+    echo "  cp -r win64-cross/output/* ~/.local/share/Steam/steamapps/common/\"Dwarf Fortress\""
 fi

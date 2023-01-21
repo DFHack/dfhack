@@ -41,6 +41,7 @@ DFHACK_PLUGIN_IS_ENABLED(enabled);
 
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(plotinfo);
+REQUIRE_GLOBAL(standing_orders_use_dyed_cloth);
 
 namespace DFHack {
     DBG_DECLARE(tailor, cycle, DebugCategory::LINFO);
@@ -159,12 +160,21 @@ private:
 
     void scan_materials()
     {
+        bool require_dyed = df::global::standing_orders_use_dyed_cloth ? (*df::global::standing_orders_use_dyed_cloth) : false;
+
         for (auto i : world->items.other[df::items_other_id::CLOTH])
         {
             if (i->flags.whole & bad_flags.whole)
                 continue;
-            if (!i->hasImprovements()) // only count dyed
+
+            if (require_dyed && !i->hasImprovements())
+            {
+                // only count dyed
+                std::string d;
+                i->getItemDescription(&d, 0);
+                TRACE(cycle).print("tailor: skipping undyed %s\n", d.c_str());
                 continue;
+            }
             MaterialInfo mat(i);
             int ss = i->getStackSize();
 
@@ -176,6 +186,12 @@ private:
                     supply[M_CLOTH] += ss;
                 else if (mat.material->flags.is_set(df::material_flags::YARN))
                     supply[M_YARN] += ss;
+                else
+                {
+                    std::string d;
+                    i->getItemDescription(&d, 0);
+                    WARN(cycle).print("tailor: weird cloth item found: %s (%d)\n", d.c_str(), i->id);
+                }
             }
         }
 
@@ -266,7 +282,7 @@ private:
                 }
                 else
                 {
-                    DEBUG(cycle).print ("%s worn by %s needs replacement, but none available\n",
+                    DEBUG(cycle).print ("tailor: %s worn by %s needs replacement, but none available\n",
                                         description.c_str(),
                                         Translation::TranslateName(&u->name, false).c_str());
                     orders[std::make_tuple(o, w->getSubtype(), size)] += 1;
@@ -407,6 +423,8 @@ private:
                     continue;
                 }
 
+                DEBUG(cycle).print("tailor: ordering %d %s\n", count, name_p.c_str());
+
                 for (auto& m : material_order)
                 {
                     if (count <= 0)
@@ -418,7 +436,11 @@ private:
                     if (supply[m] > res && fl->is_set(m.armor_flag)) {
                         int c = count;
                         if (supply[m] < count + res)
+                        {
                             c = supply[m] - res;
+                            TRACE(cycle).print("tailor: order reduced from %d to %d to protect reserves of %s\n",
+                                count, c, m.name.c_str());
+                        }
                         supply[m] -= c;
 
                         auto order = new df::manager_order;
@@ -447,6 +469,11 @@ private:
 
                         count -= c;
                     }
+                    else
+                    {
+                        TRACE(cycle).print("tailor: material %s skipped due to lack of reserves, %d available\n", m.name.c_str(), supply[m]);
+                    }
+
                 }
             }
         }

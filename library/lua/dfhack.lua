@@ -321,7 +321,7 @@ end
 function pos2xyz(pos)
     if pos then
         local x = pos.x
-        if x and x ~= -30000 then
+        if x and x >= 0 then
             return x, pos.y, pos.z
         end
     end
@@ -346,7 +346,7 @@ end
 function pos2xy(pos)
     if pos then
         local x = pos.x
-        if x and x ~= -30000 then
+        if x and x >= 0 then
             return x, pos.y
         end
     end

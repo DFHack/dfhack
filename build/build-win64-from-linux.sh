@@ -40,7 +40,7 @@ fi
 if ! docker run --rm -it -v "$srcdir":/src -v "$srcdir/build/win64-cross/":/src/build  \
     -e BUILDER_UID=$builder_uid \
     --name dfhack-win \
-    dfhack-build-msvc bash -c "cd /src/build && dfhack-configure windows 64 Release -DCMAKE_INSTALL_PREFIX=/src/build/output && dfhack-make -j$jobs install" \
+    dfhack-build-msvc bash -c "cd /src/build && dfhack-configure windows 64 Release -DCMAKE_INSTALL_PREFIX=/src/build/output cmake .. -DBUILD_DOCS=1 && dfhack-make -j$jobs install" \
     ; then
     echo
     echo "Build failed"

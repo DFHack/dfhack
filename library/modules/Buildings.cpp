@@ -186,7 +186,7 @@ static void zone_into_building_unidir(df::building* bld, df::building_civzonest*
             return;
     }
 
-    insert_into_vector(bld->relations, &df::building::id, (df::building*)zone);
+    insert_into_vector<df::building_civzonest>(bld->relations, &df::building_civzonest::id, zone);
 }
 
 static bool is_suitable_building_for_zoning(df::building* bld)

@@ -36,9 +36,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
-- `autofarm`: don't duplicate status line entries for crops with no current supply
-- `orders`: allow the orders library to be listed and imported properly (if you previously copied the orders library into your ``dfhack-config/orders`` directory to work around this bug, you can remove those files now)
-- `tailor`: now respects the setting of the "used dyed clothing" standing order toggle
 
 ## Misc Improvements
 
@@ -49,6 +46,13 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Lua
 
 ## Removed
+
+# 50.05-alpha2
+
+## Fixes
+- `autofarm`: don't duplicate status line entries for crops with no current supply
+- `orders`: allow the orders library to be listed and imported properly (if you previously copied the orders library into your ``dfhack-config/orders`` directory to work around this bug, you can remove those files now)
+- `tailor`: now respects the setting of the "used dyed clothing" standing order toggle
 
 # 50.05-alpha1
 

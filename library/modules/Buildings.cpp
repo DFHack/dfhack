@@ -186,7 +186,7 @@ static void zone_into_building_unidir(df::building* bld, df::building_civzonest*
             return;
     }
 
-    insert_into_vector<df::building_civzonest>(bld->relations, &df::building_civzonest::id, zone);
+    insert_into_vector(bld->relations, &df::building_civzonest::id, zone);
 }
 
 static bool is_suitable_building_for_zoning(df::building* bld)
@@ -1344,7 +1344,7 @@ static void delete_civzone_squad_links(df::building* bld)
         //if this is null, something has gone just *terribly* wrong
         if (squad)
         {
-            for (int i=0; i < squad->rooms.size(); i++)
+            for (int i=0; i < (int)squad->rooms.size(); i++)
             {
                 if (squad->rooms[i]->building_id == bld->id)
                 {

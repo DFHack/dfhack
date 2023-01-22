@@ -4,8 +4,8 @@
 # temporarily overridden in the active session with the `quickfort set` command.
 #
 # If you have edited this file but want to revert to "factory defaults", delete
-# this file and a fresh one will be copied from
-# dfhack-config/default/quickfort/quickfort.txt the next time you start DFHack.
+# this file and a default one will be regenerated for you the next time you
+# start DFHack.
 
 # Directory tree to search for blueprints. Can be set to an absolute or relative
 # path. If set to a relative path, resolves to a directory under the DF folder.
@@ -30,8 +30,8 @@ query_unsafe=false
 # Set to the maximum number of resources you want assigned to stockpiles of the
 # relevant types. Set to -1 for DF defaults (number of stockpile tiles for
 # stockpiles that take barrels and bins, 1 wheelbarrow for stone stockpiles).
-# The default here for wheelbarrows is 0 since using wheelbarrows normally
-# *decreases* the efficiency of your fort.
+# The default here for wheelbarrows is 0 since restricting stockpiles to a
+# single wheelbarrow can drastically *decrease* the efficiency of your fort.
 stockpiles_max_barrels=-1
 stockpiles_max_bins=-1
 stockpiles_max_wheelbarrows=0

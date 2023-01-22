@@ -40,6 +40,17 @@ Examples
     Import manager orders from the library that keep your fort stocked with
     basic essentials.
 
+Overlay
+-------
+
+Orders plugin functionality is directly available when the manager orders screen
+is open via an `overlay` widget. There are hotkeys assigned to export, import,
+sort, and clear. You can also click on the hotkey hints as if they were buttons.
+Clearing will ask for confirmation before acting.
+
+If you want to change where the hotkey hints appear, you can move them via
+`gui/overlay`.
+
 The orders library
 ------------------
 

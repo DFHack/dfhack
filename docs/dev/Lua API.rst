@@ -1779,6 +1779,10 @@ Maps module
 
   Returns the biome info struct for the given global map region.
 
+  ``dfhack.maps.getBiomeType(region_coord2d)`` or ``getBiomeType(x,y)``
+
+  Returns the biome_type for the given global map region.
+
 * ``dfhack.maps.enableBlockUpdates(block[,flow,temperature])``
 
   Enables updates for liquid flow or temperature, unless already active.
@@ -1798,7 +1802,7 @@ Maps module
 
 * ``dfhack.maps.getTileBiomeRgn(coords)``, or ``getTileBiomeRgn(x,y,z)``
 
-  Returns *x, y* for use with ``getRegionBiome``.
+  Returns *x, y* for use with ``getRegionBiome`` and ``getBiomeType``.
 
 * ``dfhack.maps.getPlantAtTile(pos)``, or ``getPlantAtTile(x,y,z)``
 

@@ -2131,6 +2131,13 @@ static int maps_getPlantAtTile(lua_State *L)
     return 1;
 }
 
+static int maps_getBiomeType(lua_State *L)
+{
+    auto pos = CheckCoordXY(L, 1, true);
+    lua_pushinteger(L, Maps::getBiomeType(pos.x, pos.y));
+    return 1;
+}
+
 static const luaL_Reg dfhack_maps_funcs[] = {
     { "isValidTilePos", maps_isValidTilePos },
     { "isTileVisible", maps_isTileVisible },
@@ -2141,6 +2148,7 @@ static const luaL_Reg dfhack_maps_funcs[] = {
     { "getRegionBiome", maps_getRegionBiome },
     { "getTileBiomeRgn", maps_getTileBiomeRgn },
     { "getPlantAtTile", maps_getPlantAtTile },
+    { "getBiomeType", maps_getBiomeType },
     { NULL, NULL }
 };
 

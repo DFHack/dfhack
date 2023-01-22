@@ -73,15 +73,18 @@ static int get_config_val(PersistentDataItem &c, int index)
         return -1;
     return c.ival(index);
 }
+
 static bool get_config_bool(PersistentDataItem &c, int index)
 {
     return get_config_val(c, index) == 1;
 }
+
 static void set_config_val(PersistentDataItem &c, int index, int value)
 {
     if (c.isValid())
         c.ival(index) = value;
 }
+
 static void set_config_bool(PersistentDataItem &c, int index, bool value)
 {
     set_config_val(c, index, value ? 1 : 0);
@@ -336,7 +339,8 @@ static inline bool is_in_job(df::item *item) {
     return item->flags.bits.in_job;
 }
 
-static int mark_item(color_ostream &out, df::item *item, df::item_flags bad_flags, int32_t stockpile_id, int32_t &premarked_item_count, int32_t &item_count, bool should_melt)
+static int mark_item(color_ostream &out, df::item *item, df::item_flags bad_flags, int32_t stockpile_id, 
+                     int32_t &premarked_item_count, int32_t &item_count, map<int32_t, bool> &tracked_item_map, bool should_melt)
 {
     DEBUG(perf,out).print("%s running mark_item\nshould_melt=%d\n", plugin_name,should_melt);
     string name = "";
@@ -357,7 +361,7 @@ static int mark_item(color_ostream &out, df::item *item, df::item_flags bad_flag
         for (auto child = contents.begin(); child != contents.end(); child++)
         {
             DEBUG(perf,out).print("inside child loop\n");
-            marked_count += mark_item(out, *child, bad_flags, stockpile_id, premarked_item_count, item_count, should_melt);
+            marked_count += mark_item(out, *child, bad_flags, stockpile_id, premarked_item_count, item_count, tracked_item_map, should_melt);
         }
         return marked_count;
     }
@@ -366,7 +370,9 @@ static int mark_item(color_ostream &out, df::item *item, df::item_flags bad_flag
 
     if (is_set_to_melt(item)) {
         DEBUG(perf,out).print("already set to melt\n");
+        tracked_item_map.emplace(item->id, true);
         premarked_item_count++;
+        DEBUG(perf,out).print("premarked_item_count=%d\n", premarked_item_count);
         item_count++;
         return 0;
     }
@@ -385,6 +391,7 @@ static int mark_item(color_ostream &out, df::item *item, df::item_flags bad_flag
         DEBUG(perf,out).print("should_melt hit\n");
         insert_into_vector(world->items.other[items_other_id::ANY_MELT_DESIGNATED], &df::item::id, item);
         item->flags.bits.melt = 1;
+        tracked_item_map.emplace(item->id, true);
         return 1;
     } else {
         return 0;
@@ -393,7 +400,7 @@ static int mark_item(color_ostream &out, df::item *item, df::item_flags bad_flag
 }
 
 
-static int32_t mark_all_in_stockpile(color_ostream &out, PersistentDataItem & stockpile, int32_t &premarked_item_count, int32_t &item_count, bool should_melt)
+static int32_t mark_all_in_stockpile(color_ostream &out, PersistentDataItem & stockpile, int32_t &premarked_item_count, int32_t &item_count,  map<int32_t, bool> &tracked_item_map, bool should_melt)
 {
     DEBUG(perf,out).print("%s running mark_all_in_stockpile\nshould_melt=%d\n", plugin_name, should_melt);
     // Precompute a bitmask with the bad flags
@@ -437,8 +444,8 @@ static int32_t mark_all_in_stockpile(color_ostream &out, PersistentDataItem & st
     DEBUG(perf,out).print("starting item iter. loop\n");
     for (stored.begin(pile_cast); !stored.done(); ++stored) {
         DEBUG(perf,out).print("calling mark_item\n");
-        marked_count += mark_item(out, *stored, bad_flags, spid, premarked_item_count, item_count, should_melt);
-        DEBUG(perf,out).print("end mark_item call\n");
+        marked_count += mark_item(out, *stored, bad_flags, spid, premarked_item_count, item_count, tracked_item_map, should_melt);
+        DEBUG(perf,out).print("end mark_item call\npremarked_item_count=%d\n", premarked_item_count);
     }
     DEBUG(perf,out).print("end item iter. loop\n");
     DEBUG(perf,out).print("exit mark_all_in_stockpile\nmarked_count %d\npremarked_count %d\n", marked_count, premarked_item_count);
@@ -446,17 +453,14 @@ static int32_t mark_all_in_stockpile(color_ostream &out, PersistentDataItem & st
 }
 
 
-static int32_t scan_stockpiles(color_ostream &out, bool should_melt, map<int32_t, int32_t> &item_counts, map<int32_t, int32_t> &marked_item_counts, map<int32_t, int32_t> &premarked_item_counts) {
+static int32_t scan_stockpiles(color_ostream &out, bool should_melt, map<int32_t, int32_t> &item_count_piles, map<int32_t, int32_t> &premarked_item_count_piles, 
+                                                                map<int32_t, int32_t> &marked_item_count_piles, map<int32_t, bool> &tracked_item_map) {
     DEBUG(perf,out).print("running scan_stockpiles\n");
     int32_t newly_marked = 0;
 
-    // if (item_counts)
-    item_counts.clear();
-    // if (marked_item_counts)
-    marked_item_counts.clear();
-    // if (premarked_item_counts)
-    premarked_item_counts.clear();
-
+    item_count_piles.clear();
+    premarked_item_count_piles.clear();
+    marked_item_count_piles.clear();
 
     //Parse all the watched piles
     for (auto &c : watched_stockpiles) {
@@ -472,13 +476,15 @@ static int32_t scan_stockpiles(color_ostream &out, bool should_melt, map<int32_t
 
         int32_t premarked_count = 0;
 
-        int32_t marked = mark_all_in_stockpile(out, c, premarked_count, item_count, should_melt);
+        int32_t marked = mark_all_in_stockpile(out, c, premarked_count, item_count, tracked_item_map, should_melt);
 
-        item_counts.emplace(id, item_count);
+        DEBUG(perf,out).print("post mark_all_in_stockpile premarked_count=%d\n", premarked_count);
 
-        marked_item_counts.emplace(id, marked);
+        item_count_piles.emplace(id, item_count);
 
-        premarked_item_counts.emplace(id, premarked_count);
+        premarked_item_count_piles.emplace(id, premarked_count);
+
+        marked_item_count_piles.emplace(id, marked);
 
         newly_marked += marked;
 
@@ -487,6 +493,49 @@ static int32_t scan_stockpiles(color_ostream &out, bool should_melt, map<int32_t
     return newly_marked;
 }
 
+static int32_t scan_all_melt_designated(color_ostream &out, map<int32_t, bool> &tracked_item_map) {
+
+    DEBUG(perf,out).print("running scan_all_melt_designated\n");
+    int32_t marked_item_count = 0;
+    //loop over all items marked as melt-designated
+    for (auto item : world->items.other[items_other_id::ANY_MELT_DESIGNATED]) {
+        //item has already been marked/counted as inside a stockpile. Don't double-count.
+        if (tracked_item_map.count(item->id)) {
+            continue;
+        }
+        marked_item_count++;
+    }
+    DEBUG(perf,out).print("exiting scan_all_melt_designated\n");
+    return marked_item_count;
+}
+
+static int32_t scan_count_all(color_ostream &out, bool should_melt, int32_t &marked_item_count_total, int32_t &marked_total_count_all_piles, int32_t &marked_item_count_global,
+                              int32_t &total_items_all_piles, map<int32_t, int32_t> &item_count_piles, map<int32_t, int32_t> &premarked_item_count_piles, map<int32_t, int32_t> &marked_item_count_piles) {
+    
+    //Wraps both scan_stockpiles and scan_all_melt_designated
+    //Returns count of items in piles freshly marked
+
+    int32_t newly_marked_items_piles = 0;
+
+    map<int32_t, bool> tracked_item_map_piles;
+
+    tracked_item_map_piles.clear();
+
+    newly_marked_items_piles = scan_stockpiles(out, should_melt, item_count_piles, premarked_item_count_piles, marked_item_count_piles, tracked_item_map_piles);
+    marked_item_count_global = scan_all_melt_designated(out, tracked_item_map_piles);
+
+    for (auto &i : watched_stockpiles) {
+        int id = get_config_val(i, STOCKPILE_CONFIG_ID);
+        total_items_all_piles+= item_count_piles[id];
+        marked_total_count_all_piles += premarked_item_count_piles[id];
+    }
+
+    marked_item_count_total = marked_item_count_global + marked_total_count_all_piles;
+    
+
+    return newly_marked_items_piles;
+
+}
 
 static int32_t do_cycle(color_ostream &out) {
     DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
@@ -494,12 +543,18 @@ static int32_t do_cycle(color_ostream &out) {
 
     validate_stockpile_configs(out);
 
-    int32_t marked_items_total;
-    map<int32_t, int32_t> item_counts, marked_items_counts, premarked_item_counts;
+    int32_t marked_item_count_total = 0;
+    int32_t marked_item_count_global = 0;
+    int32_t newly_marked_items_piles = 0;
+    int32_t total_items_all_piles = 0;
+    int32_t marked_total_count_all_piles = 0;
+    map<int32_t, int32_t> item_count_piles, premarked_item_count_piles, marked_item_count_piles;
 
-    marked_items_total = scan_stockpiles(out, true, item_counts, marked_items_counts, premarked_item_counts);
+    newly_marked_items_piles = scan_count_all(out, true, marked_item_count_total, marked_total_count_all_piles, marked_item_count_global,
+                                              total_items_all_piles, item_count_piles, premarked_item_count_piles, marked_item_count_piles);
+
     DEBUG(perf,out).print("exit %s do_cycle\n", plugin_name);
-    return marked_items_total;
+    return newly_marked_items_piles;
 }
 
 static int getSelectedStockpile(color_ostream &out) {
@@ -533,8 +588,6 @@ static PersistentDataItem *getSelectedStockpileConfig(color_ostream &out) {
 
 }
 
-
-
 static void push_stockpile_config(lua_State *L, int id, bool monitored) {
     map<string, int32_t> stockpile_config;
     stockpile_config.emplace("id", id);
@@ -558,22 +611,20 @@ static void automelt_printStatus(color_ostream &out) {
     validate_stockpile_configs(out);
     out.print("automelt is %s\n\n", is_enabled ? "enabled" : "disabled");
 
-    map<int32_t, int32_t> item_counts, marked_item_counts, premarked_item_counts;
-    scan_stockpiles(out, false, item_counts, marked_item_counts, premarked_item_counts);
-
+    int32_t marked_item_count_total = 0;
+    int32_t marked_item_count_global = 0;
     int32_t total_items_all_piles = 0;
-    int32_t premarked_items_all_piles = 0;
+    int32_t marked_total_count_all_piles = 0;
+    map<int32_t, int32_t> item_count_piles, premarked_item_count_piles, marked_item_count_piles;
 
-
-    for (auto &i : watched_stockpiles) {
-        int id = get_config_val(i, STOCKPILE_CONFIG_ID);
-        total_items_all_piles+= item_counts[id];
-        premarked_items_all_piles += premarked_item_counts[id];
-    }
+    scan_count_all(out, false, marked_item_count_total, marked_total_count_all_piles, marked_item_count_global,
+                                              total_items_all_piles, item_count_piles, premarked_item_count_piles, marked_item_count_piles);
 
     out.print("summary:\n");
-    out.print("    total items in monitored piles: %d\n", total_items_all_piles);
-    out.print("   marked items in monitored piles: %d\n", premarked_items_all_piles);
+    out.print("                         total items in monitored piles: %d\n", total_items_all_piles);
+    out.print("                        marked items in monitored piles: %d\n", marked_total_count_all_piles);
+    out.print("marked items global (excludes those in monitored piles): %d\n", marked_item_count_global);
+    out.print("         marked items global (monitored piles + others): %d\n", marked_item_count_total);
 
     int name_width = 11;
     for (auto &stockpile : world->buildings.other.STOCKPILE) {
@@ -582,19 +633,26 @@ static void automelt_printStatus(color_ostream &out) {
     }
     name_width = -name_width;
 
-    const char *fmt = "%*s  %4s  %4s\n";
-    out.print(fmt, name_width, "name", " id ", "monitored");
-    out.print(fmt, name_width, "----", "----", "---------");
+    const char *fmt = "%*s  %4s  %4s  %5s  %5s\n";
+    out.print(fmt, name_width, "name", " id ", "monitored", "items", "marked");
+    out.print(fmt, name_width, "----", "----", "---------", "-----", "------");
 
     for (auto &stockpile : world->buildings.other.STOCKPILE) {
         if (!isStockpile(stockpile)) continue;
         bool monitored = false;
+        int32_t item_count = 0;
+        int32_t marked_item_count = 0;
         if (watched_stockpiles_indices.count(stockpile->id)) {
             auto &c = watched_stockpiles[watched_stockpiles_indices[stockpile->id]];
             monitored = get_config_bool(c, STOCKPILE_CONFIG_MONITORED);
+            int id = get_config_val(c, STOCKPILE_CONFIG_ID);
+            item_count = item_count_piles[id];
+            marked_item_count = premarked_item_count_piles[id];
+
         }
 
-        out.print(fmt, name_width, stockpile->name.c_str(), int_to_string(stockpile->id).c_str(), monitored ? "[x]": "[ ]");
+        out.print(fmt, name_width, stockpile->name.c_str(), int_to_string(stockpile->id).c_str(), monitored ? "[x]": "[ ]", 
+                    int_to_string(item_count).c_str(), int_to_string(marked_item_count).c_str());
     }
     DEBUG(status,out).print("exiting automelt_printStatus\n");
 
@@ -681,28 +739,25 @@ static int automelt_getItemCountsAndStockpileConfigs(lua_State *L) {
     DEBUG(status,*out).print("entering automelt_getItemCountsAndStockpileConfigs\n");
     validate_stockpile_configs(*out);
 
-    map<int32_t, int32_t> item_counts, marked_item_counts, premarked_item_counts;
-    int32_t marked_items = scan_stockpiles(*out, false, item_counts, marked_item_counts, premarked_item_counts);
-
+    int32_t marked_item_count_total = 0;
+    int32_t marked_item_count_global = 0;
     int32_t total_items_all_piles = 0;
-    int32_t premarked_items_all_piles = 0;
+    int32_t marked_total_count_all_piles = 0;
+    map<int32_t, int32_t> item_count_piles, premarked_item_count_piles, marked_item_count_piles;
 
-
-    for (auto &i : watched_stockpiles) {
-        int id = get_config_val(i, STOCKPILE_CONFIG_ID);
-        total_items_all_piles+= item_counts[id];
-        premarked_items_all_piles += premarked_item_counts[id];
-    }
+    scan_count_all(*out, false, marked_item_count_total, marked_total_count_all_piles, marked_item_count_global,
+                                              total_items_all_piles, item_count_piles, premarked_item_count_piles, marked_item_count_piles);
 
     map<string, int32_t> summary;
     summary.emplace("total_items", total_items_all_piles);
-    summary.emplace("marked_items", marked_items);
-    summary.emplace("premarked_items", premarked_items_all_piles);
+    summary.emplace("premarked_items", marked_total_count_all_piles);
+    summary.emplace("marked_item_count_global", marked_item_count_global);
+    summary.emplace("marked_item_count_total", marked_item_count_total);
 
     Lua::Push(L, summary);
-    Lua::Push(L, item_counts);
-    Lua::Push(L, marked_item_counts);
-    Lua::Push(L, premarked_item_counts);
+    Lua::Push(L, item_count_piles);
+    Lua::Push(L, marked_item_count_piles);
+    Lua::Push(L, premarked_item_count_piles);
     int32_t bldg_count = 0;
 
     for (auto pile : world->buildings.other.STOCKPILE) {

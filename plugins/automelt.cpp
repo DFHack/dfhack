@@ -555,7 +555,6 @@ static int32_t do_cycle(color_ostream &out) {
 }
 
 static int getSelectedStockpile(color_ostream &out) {
-    int32_t stock_id = 0;
     df::building *selected_bldg = NULL;
     selected_bldg = Gui::getSelectedBuilding(out, true);
     if (selected_bldg->getType() != df::building_type::Stockpile) {
@@ -726,6 +725,8 @@ static int automelt_getSelectedStockpileConfig(lua_State *L){
     } else {
         push_stockpile_config(L, stock_id, false);
     }
+
+    return 1;
 }
 
 //TODO
@@ -783,4 +784,5 @@ DFHACK_PLUGIN_LUA_FUNCTIONS{
 DFHACK_PLUGIN_LUA_COMMANDS{
     DFHACK_LUA_COMMAND(automelt_getStockpileConfig),
     DFHACK_LUA_COMMAND(automelt_getItemCountsAndStockpileConfigs),
+    DFHACK_LUA_COMMAND(automelt_getSelectedStockpileConfig),
     DFHACK_LUA_END};

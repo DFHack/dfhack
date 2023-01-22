@@ -268,27 +268,40 @@ static bool isStockpile(df::building * building) {
     return building->getType() == df::building_type::Stockpile;
 }
 
+struct BadFlagsCanMelt {
+    uint32_t whole;
+
+    BadFlagsCanMelt() {
+        df::item_flags flags;
+        #define F(x) flags.bits.x = true;
+        F(dump); F(forbid); F(garbage_collect);
+        F(hostile); F(on_fire); F(rotten); F(trader);
+        F(in_building); F(construction); F(in_job);
+        #undef F
+        whole = flags.whole;
+    }
+};
+
+struct BadFlagsMarkItem {
+    uint32_t whole;
+
+    BadFlagsMarkItem() {
+        df::item_flags flags;
+        #define F(x) flags.bits.x = true;
+        F(dump); F(forbid); F(garbage_collect);
+        F(hostile); F(on_fire); F(rotten); F(trader);
+        F(in_building); F(construction); F(artifact);
+        F(spider_web); F(owned);
+        #undef F
+        whole = flags.whole;
+    }
+};
+
 // Copied from Kelly Martin's code
 static inline bool can_melt(df::item *item)
 {
 
-    df::item_flags bad_flags;
-    bad_flags.whole = 0;
-
-#define F(x) bad_flags.bits.x = true;
-    F(dump);
-    F(forbid);
-    F(garbage_collect);
-    F(in_job);
-    F(hostile);
-    F(on_fire);
-    F(rotten);
-    F(trader);
-    F(in_building);
-    F(construction);
-    F(artifact);
-    F(melt);
-#undef F
+    static const BadFlagsCanMelt bad_flags;
 
     if (item->flags.whole & bad_flags.whole)
         return false;
@@ -301,9 +314,9 @@ static inline bool can_melt(df::item *item)
     if (!is_metal_item(item))
         return false;
 
-    for (auto g = item->general_refs.begin(); g != item->general_refs.end(); g++)
+    for (auto &g : item->general_refs)
     {
-        switch ((*g)->getType())
+        switch (g->getType())
         {
         case general_ref_type::CONTAINS_ITEM:
         case general_ref_type::UNIT_HOLDER:
@@ -311,10 +324,10 @@ static inline bool can_melt(df::item *item)
             return false;
         case general_ref_type::CONTAINED_IN_ITEM:
         {
-            df::item *c = (*g)->getItem();
-            for (auto gg = c->general_refs.begin(); gg != c->general_refs.end(); gg++)
+            df::item *c = g->getItem();
+            for (auto &gg : c->general_refs)
             {
-                if ((*gg)->getType() == general_ref_type::UNIT_HOLDER)
+                if (gg->getType() == general_ref_type::UNIT_HOLDER)
                     return false;
             }
         }
@@ -335,17 +348,17 @@ static inline bool is_set_to_melt(df::item *item)
     return item->flags.bits.melt;
 }
 
-static inline bool is_in_job(df::item *item) {
-    return item->flags.bits.in_job;
-}
-
-static int mark_item(color_ostream &out, df::item *item, df::item_flags bad_flags, int32_t stockpile_id, 
+static int mark_item(color_ostream &out, df::item *item, BadFlagsMarkItem bad_flags, int32_t stockpile_id, 
                      int32_t &premarked_item_count, int32_t &item_count, map<int32_t, bool> &tracked_item_map, bool should_melt)
 {
     DEBUG(perf,out).print("%s running mark_item\nshould_melt=%d\n", plugin_name,should_melt);
-    string name = "";
-    item->getItemDescription(&name, 0);
-    DEBUG(perf,out).print("item %s %d\n", name.c_str(), item->id);
+    
+    if (DBG_NAME(perf).isEnabled(DebugCategory::LDEBUG)) {
+        string name = "";
+        item->getItemDescription(&name, 0);
+        DEBUG(perf,out).print("item %s %d\n", name.c_str(), item->id);
+    }
+
     if (item->flags.whole & bad_flags.whole){
         DEBUG(perf,out).print("rejected flag check\n");
         item_count++;
@@ -403,24 +416,8 @@ static int mark_item(color_ostream &out, df::item *item, df::item_flags bad_flag
 static int32_t mark_all_in_stockpile(color_ostream &out, PersistentDataItem & stockpile, int32_t &premarked_item_count, int32_t &item_count,  map<int32_t, bool> &tracked_item_map, bool should_melt)
 {
     DEBUG(perf,out).print("%s running mark_all_in_stockpile\nshould_melt=%d\n", plugin_name, should_melt);
-    // Precompute a bitmask with the bad flags
-    df::item_flags bad_flags;
-    bad_flags.whole = 0;
-
-#define F(x) bad_flags.bits.x = true;
-    F(dump);
-    F(forbid);
-    F(garbage_collect);
-    F(hostile);
-    F(on_fire);
-    F(rotten);
-    F(trader);
-    F(in_building);
-    F(construction);
-    F(artifact);
-    F(spider_web);
-    F(owned);
-#undef F
+    
+    static const BadFlagsMarkItem bad_flags;
 
     int32_t marked_count = 0;
 

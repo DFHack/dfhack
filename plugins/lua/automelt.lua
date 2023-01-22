@@ -47,7 +47,7 @@ function parse_commandline(...)
     return true
 end
 
--- used by gui/autochop
+-- used by gui/auomelt
 function setStockpileConfig(config)
     automelt_setStockpileConfig(config.id, config.monitored)
 end

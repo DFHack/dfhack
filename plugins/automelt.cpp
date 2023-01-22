@@ -348,11 +348,11 @@ static inline bool is_set_to_melt(df::item *item)
     return item->flags.bits.melt;
 }
 
-static int mark_item(color_ostream &out, df::item *item, BadFlagsMarkItem bad_flags, int32_t stockpile_id, 
+static int mark_item(color_ostream &out, df::item *item, BadFlagsMarkItem bad_flags, int32_t stockpile_id,
                      int32_t &premarked_item_count, int32_t &item_count, map<int32_t, bool> &tracked_item_map, bool should_melt)
 {
     DEBUG(perf,out).print("%s running mark_item\nshould_melt=%d\n", plugin_name,should_melt);
-    
+
     if (DBG_NAME(perf).isEnabled(DebugCategory::LDEBUG)) {
         string name = "";
         item->getItemDescription(&name, 0);
@@ -416,7 +416,7 @@ static int mark_item(color_ostream &out, df::item *item, BadFlagsMarkItem bad_fl
 static int32_t mark_all_in_stockpile(color_ostream &out, PersistentDataItem & stockpile, int32_t &premarked_item_count, int32_t &item_count,  map<int32_t, bool> &tracked_item_map, bool should_melt)
 {
     DEBUG(perf,out).print("%s running mark_all_in_stockpile\nshould_melt=%d\n", plugin_name, should_melt);
-    
+
     static const BadFlagsMarkItem bad_flags;
 
     int32_t marked_count = 0;
@@ -450,7 +450,7 @@ static int32_t mark_all_in_stockpile(color_ostream &out, PersistentDataItem & st
 }
 
 
-static int32_t scan_stockpiles(color_ostream &out, bool should_melt, map<int32_t, int32_t> &item_count_piles, map<int32_t, int32_t> &premarked_item_count_piles, 
+static int32_t scan_stockpiles(color_ostream &out, bool should_melt, map<int32_t, int32_t> &item_count_piles, map<int32_t, int32_t> &premarked_item_count_piles,
                                                                 map<int32_t, int32_t> &marked_item_count_piles, map<int32_t, bool> &tracked_item_map) {
     DEBUG(perf,out).print("running scan_stockpiles\n");
     int32_t newly_marked = 0;
@@ -508,7 +508,7 @@ static int32_t scan_all_melt_designated(color_ostream &out, map<int32_t, bool> &
 
 static int32_t scan_count_all(color_ostream &out, bool should_melt, int32_t &marked_item_count_total, int32_t &marked_total_count_all_piles, int32_t &marked_item_count_global,
                               int32_t &total_items_all_piles, map<int32_t, int32_t> &item_count_piles, map<int32_t, int32_t> &premarked_item_count_piles, map<int32_t, int32_t> &marked_item_count_piles) {
-    
+
     //Wraps both scan_stockpiles and scan_all_melt_designated
     //Returns count of items in piles freshly marked
 
@@ -528,7 +528,7 @@ static int32_t scan_count_all(color_ostream &out, bool should_melt, int32_t &mar
     }
 
     marked_item_count_total = marked_item_count_global + marked_total_count_all_piles;
-    
+
 
     return newly_marked_items_piles;
 
@@ -648,7 +648,7 @@ static void automelt_printStatus(color_ostream &out) {
 
         }
 
-        out.print(fmt, name_width, stockpile->name.c_str(), int_to_string(stockpile->id).c_str(), monitored ? "[x]": "[ ]", 
+        out.print(fmt, name_width, stockpile->name.c_str(), int_to_string(stockpile->id).c_str(), monitored ? "[x]": "[ ]",
                     int_to_string(item_count).c_str(), int_to_string(marked_item_count).c_str());
     }
     DEBUG(status,out).print("exiting automelt_printStatus\n");

@@ -784,4 +784,3 @@ DFHACK_PLUGIN_LUA_COMMANDS{
     DFHACK_LUA_COMMAND(automelt_getStockpileConfig),
     DFHACK_LUA_COMMAND(automelt_getItemCountsAndStockpileConfigs),
     DFHACK_LUA_END};
-

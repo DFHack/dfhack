@@ -1131,8 +1131,11 @@
 			},
 			{
 				"condition" : "AtMost",
-				"item_type" : "LIQUID_MISC",
-				"material" : "LYE",
+				"contains" : 
+				[
+					"lye"
+				],
+				"reaction_id" : "MAKE_SOAP_FROM_TALLOW",
 				"value" : 5
 			}
 		],
@@ -1160,8 +1163,11 @@
 			},
 			{
 				"condition" : "AtLeast",
-				"item_type" : "LIQUID_MISC",
-				"material" : "LYE",
+				"contains" : 
+				[
+					"lye"
+				],
+				"reaction_id" : "MAKE_SOAP_FROM_TALLOW",
 				"value" : 3
 			},
 			{
@@ -1194,8 +1200,11 @@
 			},
 			{
 				"condition" : "AtLeast",
-				"item_type" : "LIQUID_MISC",
-				"material" : "LYE",
+				"contains" : 
+				[
+					"lye"
+				],
+				"reaction_id" : "MAKE_SOAP_FROM_OIL",
 				"value" : 3
 			},
 			{

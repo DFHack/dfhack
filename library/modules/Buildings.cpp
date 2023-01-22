@@ -1357,17 +1357,20 @@ static void delete_civzone_squad_links(df::building_civzonest* zone)
 //do not use anything that touches anything other than the pointer value
 //this means also that if dwarf fortress reuses a memory allocation, we will end up with duplicates
 //this vector is also not sorted by id
+//it also turns out that multiple units eg (solely?) spouses can point to one room
 static void delete_assigned_unit_links(df::building_civzonest* zone)
 {
-    if (zone->assigned_unit_id == -1)
-        return;
+    //not clear if this is always true
+    /*if (zone->assigned_unit_id == -1)
+        return;*/
 
-    df::unit* unit = zone->assigned_unit;
-
-    for (int i=(int)unit->owned_buildings.size() - 1; i >= 0; i--)
+    for (df::unit* unit : world->units.active)
     {
-        if (unit->owned_buildings[i] == zone)
-            unit->owned_buildings.erase(unit->owned_buildings.begin() + i);
+        for (int i=(int)unit->owned_buildings.size() - 1; i >= 0; i--)
+        {
+            if (unit->owned_buildings[i] == zone)
+                unit->owned_buildings.erase(unit->owned_buildings.begin() + i);
+        }
     }
 }
 

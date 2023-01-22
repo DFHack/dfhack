@@ -1325,16 +1325,8 @@ bool Buildings::constructWithFilters(df::building *bld, std::vector<df::job_item
     return true;
 }
 
-static void delete_civzone_squad_links(df::building* bld)
+static void delete_civzone_squad_links(df::building_civzonest* zone)
 {
-    if (bld->getType() != building_type::Civzone)
-        return;
-
-    auto zone = strict_virtual_cast<df::building_civzonest>(bld);
-
-    if (zone == nullptr)
-        return;
-
     for (df::building_civzonest::T_squad_room_info* room_info : zone->squad_room_info)
     {
         int32_t squad_id = room_info->squad_id;
@@ -1346,7 +1338,7 @@ static void delete_civzone_squad_links(df::building* bld)
         {
             for (int i=(int)squad->rooms.size() - 1; i >= 0; i--)
             {
-                if (squad->rooms[i]->building_id == bld->id)
+                if (squad->rooms[i]->building_id == zone->id)
                 {
                     auto room = squad->rooms[i];
                     squad->rooms.erase(squad->rooms.begin() + i);
@@ -1359,6 +1351,31 @@ static void delete_civzone_squad_links(df::building* bld)
     }
 
     zone->squad_room_info.clear();
+}
+
+//unit owned_building pointers are known-bad as of 50.05 and dangle on zone delete
+//do not use anything that touches anything other than the pointer value
+//this means also that if dwarf fortress reuses a memory allocation, we will end up with duplicates
+//this vector is also not sorted by id
+static void delete_assigned_unit_links(df::building_civzonest* zone)
+{
+    if (zone->assigned_unit_id == -1)
+        return;
+
+    df::unit* unit = zone->assigned_unit;
+
+    for (int i=(int)unit->owned_buildings.size() - 1; i >= 0; i--)
+    {
+        if (unit->owned_buildings[i] == zone)
+            unit->owned_buildings.erase(unit->owned_buildings.begin() + i);
+    }
+}
+
+static void on_civzone_delete(df::building_civzonest* civzone)
+{
+    remove_zone_from_all_buildings(civzone);
+    delete_civzone_squad_links(civzone);
+    delete_assigned_unit_links(civzone);
 }
 
 bool Buildings::deconstruct(df::building *bld)
@@ -1399,9 +1416,14 @@ bool Buildings::deconstruct(df::building *bld)
     bld->uncategorize();
 
     remove_building_from_all_zones(bld);
-    remove_zone_from_all_buildings(bld);
 
-    delete_civzone_squad_links(bld);
+    if (bld->getType() == df::building_type::Civzone)
+    {
+        auto zone = strict_virtual_cast<df::building_civzonest>(bld);
+
+        if (zone)
+            on_civzone_delete(zone);
+    }
 
     delete bld;
 

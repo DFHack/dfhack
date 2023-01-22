@@ -723,6 +723,10 @@
 			},
 			{
 				"condition" : "AtMost",
+				"flags" : 
+				[
+					"empty"
+				],
 				"item_subtype" : "ITEM_TOOL_MINECART",
 				"item_type" : "TOOL",
 				"value" : 2

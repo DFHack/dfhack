@@ -23,13 +23,13 @@ Usage
 Examples
 --------
 
-Automatically designate all meltable items in the stockpile `melt` for melting. ::
+Automatically designate all meltable items in the stockpile ("melt") for melting. ::
 
     enable automelt
     automelt monitor melt
 
-Enable monitoring for the stockpile `melt`, and mmediately designate all meltable items in monitored stockpiles for melting. ::
-    
+Enable monitoring for the stockpile ("melt"), and mmediately designate all meltable items in monitored stockpiles for melting. ::
+
     automelt monitor melt
     automelt designate
 

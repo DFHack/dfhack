@@ -1344,14 +1344,13 @@ static void delete_civzone_squad_links(df::building* bld)
         //if this is null, something has gone just *terribly* wrong
         if (squad)
         {
-            for (int i=0; i < (int)squad->rooms.size(); i++)
+            for (int i=(int)squad->rooms.size() - 1; i >= 0; i--)
             {
                 if (squad->rooms[i]->building_id == bld->id)
                 {
                     auto room = squad->rooms[i];
                     squad->rooms.erase(squad->rooms.begin() + i);
                     delete room;
-                    i--;
                 }
             }
         }

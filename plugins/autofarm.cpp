@@ -315,7 +315,7 @@ public:
                     biome = biome_type::SUBTERRANEAN_WATER;
                 else {
                     df::coord2d region(Maps::getTileBiomeRgn(df::coord(bb->centerx, bb->centery, bb->z)));
-                    biome = Maps::GetBiomeType(region.x, region.y);
+                    biome = Maps::getBiomeType(region.x, region.y);
                 }
                 farms[biome].push_back(farm);
             }

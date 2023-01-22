@@ -987,7 +987,7 @@ Return the biome type, given a position coordinate expressed in world_tiles
 The world ref coordinates are used for tropicality determination and may refer
 to a tile neighboring the "official" one.
 *****************************************************************************/
-df::enums::biome_type::biome_type Maps::GetBiomeTypeWithRef(int world_coord_x,
+df::enums::biome_type::biome_type Maps::getBiomeTypeWithRef(int world_coord_x,
     int world_coord_y,
     int world_ref_coord_y
 )
@@ -1186,7 +1186,7 @@ df::enums::biome_type::biome_type Maps::GetBiomeTypeWithRef(int world_coord_x,
 Module main function.
 Return the biome type, given a position coordinate expressed in world_tiles
 *****************************************************************************/
-df::enums::biome_type::biome_type Maps::GetBiomeType(int world_coord_x, int world_coord_y)
+df::enums::biome_type::biome_type Maps::getBiomeType(int world_coord_x, int world_coord_y)
 {
-    return Maps::GetBiomeTypeWithRef(world_coord_x, world_coord_y, world_coord_y);
+    return Maps::getBiomeTypeWithRef(world_coord_x, world_coord_y, world_coord_y);
 }

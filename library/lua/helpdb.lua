@@ -1,22 +1,8 @@
 -- The help text database and query interface.
---
--- Help text is read from the rendered text in hack/docs/docs/. If no rendered
--- text exists, it is read from the script sources (for scripts) or the string
--- passed to the PluginCommand initializer (for plugins).
---
--- There should be one help file for each plugin that contains a summary for the
--- plugin itself and help for all the commands that plugin provides (if any).
--- Each script should also have one documentation file.
---
--- The database is lazy-loaded when an API method is called. It rechecks its
--- help sources for updates if an API method has not been called in the last
--- 60 seconds.
 
 local _ENV = mkmodule('helpdb')
 
 local argparse = require('argparse')
-
-local MAX_STALE_MS = 60000
 
 -- paths
 local RENDERED_PATH = 'hack/docs/docs/tools/'
@@ -415,13 +401,12 @@ local function index_tags()
     end
 end
 
--- ensures the db is up to date by scanning all help sources. does not do
--- anything if it has already been run within the last MAX_STALE_MS milliseconds
-local last_refresh_ms = 0
+local needs_refresh = true
+
+-- ensures the db is loaded
 local function ensure_db()
-    local now_ms = dfhack.getTickCount()
-    if now_ms - last_refresh_ms <= MAX_STALE_MS then return end
-    last_refresh_ms = now_ms
+    if not needs_refresh then return end
+    needs_refresh = false
 
     local old_db = textdb
     textdb, entrydb, tag_index = {}, {}, {}
@@ -431,6 +416,11 @@ local function ensure_db()
     scan_plugins(old_db)
     scan_scripts(old_db)
     index_tags()
+end
+
+function refresh()
+    needs_refresh = true
+    ensure_db()
 end
 
 local function parse_blocks(text)

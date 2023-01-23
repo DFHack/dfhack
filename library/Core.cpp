@@ -2114,6 +2114,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
         {
             auto L = Lua::Core::State;
             Lua::StackUnwinder top(L);
+            Lua::CallLuaModuleFunction(con, L, "helpdb", "refresh");
             Lua::CallLuaModuleFunction(con, L, "script-manager", "reload");
         }
         break;

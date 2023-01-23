@@ -531,7 +531,7 @@ end
 Window = defclass(Window, Panel)
 
 Window.ATTRS {
-    frame_style = gui.GREY_LINE_FRAME,
+    frame_style = gui.WINDOW_FRAME,
     frame_background = gui.CLEAR_PEN,
     frame_inset = 1,
     draggable = true,

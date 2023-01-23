@@ -39,6 +39,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Misc Improvements
 - A new cross-compile build script was added for building the Windows files from a Linux Docker builder (see the Compile instructions in the docs)
+- `hotkeys`: clicking on the DFHack logo no longer closes the popup menu
+- `orders`: orders plugin functionality is now offered via an overlay widget when the manager orders screen is open
 
 ## Documentation
 

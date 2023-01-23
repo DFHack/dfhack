@@ -125,10 +125,6 @@ The ``overlay.OverlayWidget`` superclass defines the following class attributes:
     not annoy the player. Set to 0 to be called at the maximum rate. Be aware
     that running more often than you really need to will impact game FPS,
     especially if your widget can run while the game is unpaused.
-- ``always_enabled`` (default: ``false``)
-    Set this to ``true`` if you don't want to let the user disable the widget.
-    This is useful for widgets that are controlled purely through their
-    triggers. See `gui/pathable` for an example.
 
 Registering a widget with the overlay framework
 ***********************************************

@@ -82,6 +82,7 @@ using namespace DFHack;
 #include "df/map_block.h"
 #include "df/tile_occupancy.h"
 #include "df/plotinfost.h"
+#include "df/squad.h"
 #include "df/ui_look_list.h"
 #include "df/unit.h"
 #include "df/unit_relationship_type.h"
@@ -168,34 +169,24 @@ void buildings_onUpdate(color_ostream &out)
 
 static void building_into_zone_unidir(df::building* bld, df::building_civzonest* zone)
 {
-    for (size_t bid = 0; bid < zone->contained_buildings.size(); bid++)
+    for (auto contained_building : zone->contained_buildings)
     {
-        if (zone->contained_buildings[bid] == bld)
+        if (contained_building == bld)
             return;
     }
 
-    zone->contained_buildings.push_back(bld);
-
-    std::sort(zone->contained_buildings.begin(), zone->contained_buildings.end(), [](df::building* b1, df::building* b2)
-    {
-        return b1->id < b2->id;
-    });
+    insert_into_vector(zone->contained_buildings, &df::building::id, bld);
 }
 
 static void zone_into_building_unidir(df::building* bld, df::building_civzonest* zone)
 {
-    for (size_t bid = 0; bid < bld->relations.size(); bid++)
+    for (auto relation : bld->relations)
     {
-        if (bld->relations[bid] == zone)
+        if (relation == zone)
             return;
     }
 
-    bld->relations.push_back(zone);
-
-    std::sort(bld->relations.begin(), bld->relations.end(), [](df::building* b1, df::building* b2)
-    {
-        return b1->id < b2->id;
-    });
+    insert_into_vector(bld->relations, &df::building_civzonest::id, zone);
 }
 
 static bool is_suitable_building_for_zoning(df::building* bld)
@@ -222,10 +213,8 @@ static void add_building_to_all_zones(df::building* bld)
     std::vector<df::building_civzonest*> cv;
     Buildings::findCivzonesAt(&cv, coord);
 
-    for (size_t i=0; i < cv.size(); i++)
-    {
-        add_building_to_zone(bld, cv[i]);
-    }
+    for (auto zone : cv)
+        add_building_to_zone(bld, zone);
 }
 
 static void add_zone_to_all_buildings(df::building* zone_as_building)
@@ -238,20 +227,16 @@ static void add_zone_to_all_buildings(df::building* zone_as_building)
     if (zone == nullptr)
         return;
 
-    auto& vec = world->buildings.other[buildings_other_id::IN_PLAY];
-
-    for (size_t i = 0; i < vec.size(); i++)
+    for (auto bld : world->buildings.other.IN_PLAY)
     {
-        auto against = vec[i];
-
-        if (zone->z != against->z)
+        if (zone->z != bld->z)
             continue;
 
-        if (!is_suitable_building_for_zoning(against))
+        if (!is_suitable_building_for_zoning(bld))
             continue;
 
-        int32_t cx = against->centerx;
-        int32_t cy = against->centery;
+        int32_t cx = bld->centerx;
+        int32_t cy = bld->centery;
 
         df::coord2d coord(cx, cy);
 
@@ -262,7 +247,7 @@ static void add_zone_to_all_buildings(df::building* zone_as_building)
             if (!etile || !*etile)
                 continue;
 
-            add_building_to_zone(against, zone);
+            add_building_to_zone(bld, zone);
         }
     }
 }
@@ -295,10 +280,8 @@ static void remove_building_from_all_zones(df::building* bld)
     std::vector<df::building_civzonest*> cv;
     Buildings::findCivzonesAt(&cv, coord);
 
-    for (size_t i=0; i < cv.size(); i++)
-    {
-        remove_building_from_zone(bld, cv[i]);
-    }
+    for (auto zone : cv)
+        remove_building_from_zone(bld, zone);
 }
 
 static void remove_zone_from_all_buildings(df::building* zone_as_building)
@@ -311,16 +294,10 @@ static void remove_zone_from_all_buildings(df::building* zone_as_building)
     if (zone == nullptr)
         return;
 
-    auto& vec = world->buildings.other[buildings_other_id::IN_PLAY];
-
     //this is a paranoid check and slower than it could be. Zones contain a list of children
     //good for fixing potentially bad game states when deleting a zone
-    for (size_t i = 0; i < vec.size(); i++)
-    {
-        df::building* bld = vec[i];
-
+    for (auto bld : world->buildings.other.IN_PLAY)
         remove_building_from_zone(bld, zone);
-    }
 }
 
 uint32_t Buildings::getNumBuildings()
@@ -1348,6 +1325,62 @@ bool Buildings::constructWithFilters(df::building *bld, std::vector<df::job_item
     return true;
 }
 
+static void delete_civzone_squad_links(df::building_civzonest* zone)
+{
+    for (df::building_civzonest::T_squad_room_info* room_info : zone->squad_room_info)
+    {
+        int32_t squad_id = room_info->squad_id;
+
+        df::squad* squad = df::squad::find(squad_id);
+
+        //if this is null, something has gone just *terribly* wrong
+        if (squad)
+        {
+            for (int i=(int)squad->rooms.size() - 1; i >= 0; i--)
+            {
+                if (squad->rooms[i]->building_id == zone->id)
+                {
+                    auto room = squad->rooms[i];
+                    squad->rooms.erase(squad->rooms.begin() + i);
+                    delete room;
+                }
+            }
+        }
+
+        delete room_info;
+    }
+
+    zone->squad_room_info.clear();
+}
+
+//unit owned_building pointers are known-bad as of 50.05 and dangle on zone delete
+//do not use anything that touches anything other than the pointer value
+//this means also that if dwarf fortress reuses a memory allocation, we will end up with duplicates
+//this vector is also not sorted by id
+//it also turns out that multiple units eg (solely?) spouses can point to one room
+static void delete_assigned_unit_links(df::building_civzonest* zone)
+{
+    //not clear if this is always true
+    /*if (zone->assigned_unit_id == -1)
+        return;*/
+
+    for (df::unit* unit : world->units.active)
+    {
+        for (int i=(int)unit->owned_buildings.size() - 1; i >= 0; i--)
+        {
+            if (unit->owned_buildings[i] == zone)
+                unit->owned_buildings.erase(unit->owned_buildings.begin() + i);
+        }
+    }
+}
+
+static void on_civzone_delete(df::building_civzonest* civzone)
+{
+    remove_zone_from_all_buildings(civzone);
+    delete_civzone_squad_links(civzone);
+    delete_assigned_unit_links(civzone);
+}
+
 bool Buildings::deconstruct(df::building *bld)
 {
     using df::global::plotinfo;
@@ -1386,7 +1419,14 @@ bool Buildings::deconstruct(df::building *bld)
     bld->uncategorize();
 
     remove_building_from_all_zones(bld);
-    remove_zone_from_all_buildings(bld);
+
+    if (bld->getType() == df::building_type::Civzone)
+    {
+        auto zone = strict_virtual_cast<df::building_civzonest>(bld);
+
+        if (zone)
+            on_civzone_delete(zone);
+    }
 
     delete bld;
 

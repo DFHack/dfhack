@@ -40,6 +40,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 - A new cross-compile build script was added for building the Windows files from a Linux Docker builder (see the Compile instructions in the docs)
 - `hotkeys`: clicking on the DFHack logo no longer closes the popup menu
+- `gui/launcher`: sped up initialization time for faster load of the UI
 - `orders`: orders plugin functionality is now offered via an overlay widget when the manager orders screen is open
 
 ## Documentation
@@ -47,6 +48,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## API
 
 ## Lua
+- `helpdb`: new function: ``helpdb.refresh()`` to force a refresh of the database. Call if you are a developer adding new scripts, loading new plugins, or changing help text during play
+- `helpdb`: changed from auto-refreshing every 60 seconds to only refreshing on explicit call to ``helpdb.refresh()``. docs very rarely change during a play session, and the automatic database refreshes were slowing down the startup of `gui/launcher`
 - ``widgets.Label``: ``label.scroll()`` now understands ``home`` and ``end`` keywords for scrolling to the top or bottom
 
 ## Removed

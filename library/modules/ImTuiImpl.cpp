@@ -420,10 +420,10 @@ void impl::init_current_context()
     //To the enter key to match dwarf fortress expectations
     ImGui::GetIO().KeyMap[ImGuiKey_Space] = df::enums::interface_key::SELECT;
 
-    ImGui::GetIO().KeyMap[ImGuiKey_LeftArrow] = df::enums::interface_key::CURSOR_LEFT;
-    ImGui::GetIO().KeyMap[ImGuiKey_RightArrow] = df::enums::interface_key::CURSOR_RIGHT;
-    ImGui::GetIO().KeyMap[ImGuiKey_UpArrow] = df::enums::interface_key::CURSOR_UP;
-    ImGui::GetIO().KeyMap[ImGuiKey_DownArrow] = df::enums::interface_key::CURSOR_DOWN;
+    ImGui::GetIO().KeyMap[ImGuiKey_LeftArrow] = df::enums::interface_key::KEYBOARD_CURSOR_LEFT;
+    ImGui::GetIO().KeyMap[ImGuiKey_RightArrow] = df::enums::interface_key::KEYBOARD_CURSOR_RIGHT;
+    ImGui::GetIO().KeyMap[ImGuiKey_UpArrow] = df::enums::interface_key::KEYBOARD_CURSOR_UP;
+    ImGui::GetIO().KeyMap[ImGuiKey_DownArrow] = df::enums::interface_key::KEYBOARD_CURSOR_DOWN;
 
     //list of unmapped keys and their functions in ImGui:
     //if I could get ctrl + tab, would be able to cycle through windows with the keyboard
@@ -453,10 +453,10 @@ std::set<df::interface_key> cleanup_keys(std::set<df::interface_key> keys, std::
 {
     std::map<df::interface_key, std::vector<df::interface_key>> to_kill_if_seen;
 
-    to_kill_if_seen[Screen::charToKey('4')] = { { df::enums::interface_key::CURSOR_LEFT } };
-    to_kill_if_seen[Screen::charToKey('6')] = { { df::enums::interface_key::CURSOR_RIGHT } };
-    to_kill_if_seen[Screen::charToKey('8')] = { { df::enums::interface_key::CURSOR_UP } };
-    to_kill_if_seen[Screen::charToKey('2')] = { { df::enums::interface_key::CURSOR_DOWN } };
+    to_kill_if_seen[Screen::charToKey('4')] = { { df::enums::interface_key::KEYBOARD_CURSOR_LEFT } };
+    to_kill_if_seen[Screen::charToKey('6')] = { { df::enums::interface_key::KEYBOARD_CURSOR_RIGHT } };
+    to_kill_if_seen[Screen::charToKey('8')] = { { df::enums::interface_key::KEYBOARD_CURSOR_UP } };
+    to_kill_if_seen[Screen::charToKey('2')] = { { df::enums::interface_key::KEYBOARD_CURSOR_DOWN } };
 
     for (auto it : to_kill_if_seen)
     {

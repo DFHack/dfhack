@@ -38,7 +38,7 @@ function parse_commandline(...)
         automelt_designate()
     elseif command == 'monitor' then
         do_set_stockpile_config('monitor', true, args[2])
-    elseif command == 'nomonitor'then
+    elseif command == 'nomonitor' or command == 'unmonitor' then
         do_set_stockpile_config('monitor', false, args[2])
     else
         return false
@@ -47,12 +47,13 @@ function parse_commandline(...)
     return true
 end
 
--- used by gui/auomelt
+-- used by gui/automelt
 function setStockpileConfig(config)
     automelt_setStockpileConfig(config.id, config.monitored)
 end
 
 function getItemCountsAndStockpileConfigs()
+    local fmt = 'Stockpile #%-5s'
     local data = {automelt_getItemCountsAndStockpileConfigs()}
     local ret = {}
     ret.summary = table.remove(data, 1)
@@ -62,6 +63,10 @@ function getItemCountsAndStockpileConfigs()
     ret.stockpile_configs = data
     for _,c in ipairs(ret.stockpile_configs) do
         c.name = df.building.find(c.id).name
+        if not c.name or c.name == '' then
+            c.name = (fmt):format(tostring(df.building.find(c.id).stockpile_number))
+            c.name = c.name.gsub(c.name, '^%s*(.-)%s*$', '%1')
+        end
         c.monitored = c.monitored ~= 0
     end
     return ret

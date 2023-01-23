@@ -17,21 +17,28 @@ Usage
 
     enable automelt
     automelt [status]
-    automelt (designate)
-    automelt (monitor|nomonitor) <stockpile>
+    automelt designate
+    automelt (monitor|nomonitor) <stockpile>[,<stockpile>...]
 
 Examples
 --------
 
-Automatically designate all meltable items in the stockpile ("melt") for melting. ::
+Automatically monitor stockpile ("melt"), marking new valid items for melting. This also immediately marks all present items for melting::
 
     enable automelt
     automelt monitor melt
 
-Enable monitoring for the stockpile ("melt"), and mmediately designate all meltable items in monitored stockpiles for melting. ::
+Enable monitoring for ("Stockpile #52"), which has not been given a custom name::
 
-    automelt monitor melt
-    automelt designate
+    automelt monitor "Stockpile #52"
+
+Enable monitoring for ("Stockpile #52"), which has not been given a custom name::
+
+    automelt monitor 52
+
+Enable monitoring for multiple stockpiles ("Stockpile #52", "Stockpile #35", and "melt")::
+
+    automelt monitor 52,"Stockpile #35",melt
 
 Commands
 --------
@@ -43,4 +50,6 @@ Commands
     Designates items in monitored stockpiles for melting right now. This works even if ``automelt`` is not currently enabled.
 
 ``(no)monitor <stockpile>``
-    Enable/disable monitoring of a given stockpile. Requires the stockpile to have a name set.
+    Enable/disable monitoring of a given stockpile. Works with either the stockpile's name (if set) or ID.
+    If the stockpile has no custom name set, you may designate it by either the full name as reported by
+    the status command, or by just the number. 

@@ -276,7 +276,8 @@ struct BadFlagsCanMelt {
         #define F(x) flags.bits.x = true;
         F(dump); F(forbid); F(garbage_collect);
         F(hostile); F(on_fire); F(rotten); F(trader);
-        F(in_building); F(construction); F(in_job);
+        F(in_building); F(construction); F(artifact);
+        F(spider_web); F(owned); F(in_job);
         #undef F
         whole = flags.whole;
     }
@@ -361,7 +362,6 @@ static int mark_item(color_ostream &out, df::item *item, BadFlagsMarkItem bad_fl
 
     if (item->flags.whole & bad_flags.whole){
         DEBUG(perf,out).print("rejected flag check\n");
-        item_count++;
         return 0;
     }
 
@@ -392,7 +392,6 @@ static int mark_item(color_ostream &out, df::item *item, BadFlagsMarkItem bad_fl
 
     if (!can_melt(item)) {
         DEBUG(perf,out).print("cannot melt\n");
-        item_count++;
         return 0;
     }
 
@@ -588,7 +587,6 @@ static void push_stockpile_config(lua_State *L, int id, bool monitored) {
     map<string, int32_t> stockpile_config;
     stockpile_config.emplace("id", id);
     stockpile_config.emplace("monitored", monitored);
-
     Lua::Push(L, stockpile_config);
 }
 
@@ -625,13 +623,18 @@ static void automelt_printStatus(color_ostream &out) {
     int name_width = 11;
     for (auto &stockpile : world->buildings.other.STOCKPILE) {
         if (!isStockpile(stockpile)) continue;
-        name_width = std::max(name_width, (int)stockpile->name.size());
+        if (stockpile->name.empty()) {
+            string stock_name = "Stockpile #" + int_to_string(stockpile->stockpile_number);
+            name_width = std::max(name_width, (int)(stock_name.size()));
+        } else {
+            name_width = std::max(name_width, (int)stockpile->name.size());
+        }
     }
     name_width = -name_width;
 
-    const char *fmt = "%*s  %4s  %4s  %5s  %5s\n";
-    out.print(fmt, name_width, "name", " id ", "monitored", "items", "marked");
-    out.print(fmt, name_width, "----", "----", "---------", "-----", "------");
+    const char *fmt = "%*s  %9s  %5s  %6s\n";
+    out.print(fmt, name_width, "name", "monitored", "items", "marked");
+    out.print(fmt, name_width, "----", "---------", "-----", "------");
 
     for (auto &stockpile : world->buildings.other.STOCKPILE) {
         if (!isStockpile(stockpile)) continue;
@@ -644,11 +647,19 @@ static void automelt_printStatus(color_ostream &out) {
             int id = get_config_val(c, STOCKPILE_CONFIG_ID);
             item_count = item_count_piles[id];
             marked_item_count = premarked_item_count_piles[id];
-
         }
 
-        out.print(fmt, name_width, stockpile->name.c_str(), int_to_string(stockpile->id).c_str(), monitored ? "[x]": "[ ]",
-                    int_to_string(item_count).c_str(), int_to_string(marked_item_count).c_str());
+        int32_t stockpile_number = stockpile->stockpile_number;
+        if (stockpile->name.empty()) {
+            string stock_name = "Stockpile #" + int_to_string(stockpile->stockpile_number);
+            out.print(fmt, name_width, stock_name, monitored ? "[x]": "[ ]",
+                        int_to_string(item_count).c_str(), int_to_string(marked_item_count).c_str());
+        } else {
+            out.print(fmt, name_width, stockpile->name.c_str(), monitored ? "[x]": "[ ]",
+                        int_to_string(item_count).c_str(), int_to_string(marked_item_count).c_str());
+        }
+
+
     }
     DEBUG(status,out).print("exiting automelt_printStatus\n");
 
@@ -667,6 +678,11 @@ static void automelt_setStockpileConfig(color_ostream &out, int id, bool monitor
     PersistentDataItem &c = ensure_stockpile_config(out, id);
     set_config_val(c, STOCKPILE_CONFIG_ID, id);
     set_config_bool(c, STOCKPILE_CONFIG_MONITORED, monitored);
+
+    //If we're marking something as monitored, go ahead and designate contents.
+    if (monitored) {
+        automelt_designate(out);
+    }
 }
 
 static int automelt_getStockpileConfig(lua_State *L) {
@@ -678,9 +694,22 @@ static int automelt_getStockpileConfig(lua_State *L) {
 
     int id;
     if (lua_isnumber(L, -1)) {
+        bool found = false;
         id = lua_tointeger(L, -1);
-        if (!df::building::find(id))
+        
+        for (auto &stockpile : world->buildings.other.STOCKPILE) {
+            if (!isStockpile(stockpile)) continue;
+            if (id == stockpile->stockpile_number){
+                id = stockpile->id;
+                found = true;
+                break;
+
+            }
+        }
+        
+        if (!found)
             return 0;
+
 
     } else {
         const char * name = lua_tostring(L, -1);
@@ -694,7 +723,15 @@ static int automelt_getStockpileConfig(lua_State *L) {
                 id = stockpile->id;
                 found = true;
                 break;
+            } else {
+                string stock_name = "Stockpile #" + int_to_string(stockpile->stockpile_number);
+                if (stock_name == nameStr) {
+                    id = stockpile->id;
+                    found = true;
+                    break;
+                }
             }
+
 
         }
         if (!found)

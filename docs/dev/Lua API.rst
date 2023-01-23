@@ -4145,7 +4145,7 @@ ZScreen don't handle the input (i.e. they all return something falsey), the
 input is passed directly to the first underlying non-ZScreen.
 
 All this behavior is implemented in ``ZScreen:onInput()``, which subclasses
-should *not* override. Instead, ZScreen subclasses should delegate all input
+**must not override**. Instead, ZScreen subclasses should delegate all input
 processing to subviews. Consider using a `Window class`_ widget as your top
 level input processor.
 

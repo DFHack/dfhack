@@ -13,7 +13,7 @@ MessageBox = defclass(MessageBox, gui.FramedScreen)
 MessageBox.focus_path = 'MessageBox'
 
 MessageBox.ATTRS{
-    frame_style = gui.GREY_LINE_FRAME,
+    frame_style = gui.WINDOW_FRAME,
     frame_inset = 1,
     -- new attrs
     on_accept = DEFAULT_NIL,

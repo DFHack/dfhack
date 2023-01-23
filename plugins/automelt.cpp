@@ -652,10 +652,9 @@ static void automelt_printStatus(color_ostream &out) {
             marked_item_count = premarked_item_count_piles[id];
         }
 
-        int32_t stockpile_number = stockpile->stockpile_number;
         if (stockpile->name.empty()) {
             string stock_name = "Stockpile #" + int_to_string(stockpile->stockpile_number);
-            out.print(fmt, name_width, stock_name, monitored ? "[x]": "[ ]",
+            out.print(fmt, name_width, stock_name.c_str(), monitored ? "[x]": "[ ]",
                         int_to_string(item_count).c_str(), int_to_string(marked_item_count).c_str());
         } else {
             out.print(fmt, name_width, stockpile->name.c_str(), monitored ? "[x]": "[ ]",
@@ -803,8 +802,6 @@ static int automelt_getItemCountsAndStockpileConfigs(lua_State *L) {
         bldg_count++;
 
         int id = pile->id;
-        DEBUG(cycle,*out).print("id=%d\ncount_res=%d\n", id, watched_stockpiles.count(id));
-
         if (watched_stockpiles.count(id)) {
             DEBUG(cycle,*out).print("indexed_id=%d\n", get_config_val(watched_stockpiles[id], STOCKPILE_CONFIG_ID));
             push_stockpile_config(L, watched_stockpiles[id]);

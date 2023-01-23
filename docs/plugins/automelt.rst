@@ -3,7 +3,7 @@ automelt
 
 .. dfhack-tool::
     :summary: Quickly designate items to be melted.
-    :tags: untested fort productivity items stockpiles
+    :tags: fort productivity items stockpiles
     :no-command:
 
 Automelt checks monitor-enabled stockpiles once every in-game day, and will mark valid items for melting.

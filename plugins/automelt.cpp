@@ -803,7 +803,7 @@ static int automelt_getItemCountsAndStockpileConfigs(lua_State *L) {
 
         int id = pile->id;
         DEBUG(cycle,*out).print("id=%d\ncount_res=%d\n", id, watched_stockpiles.count(id));
-        
+
         if (watched_stockpiles.count(id)) {
             DEBUG(cycle,*out).print("indexed_id=%d\n", get_config_val(watched_stockpiles[id], STOCKPILE_CONFIG_ID));
             push_stockpile_config(L, watched_stockpiles[id]);

@@ -72,7 +72,7 @@ function getItemCountsAndStockpileConfigs()
             end
             c.monitored = c.monitored ~= 0
         end
-       
+
     end
     return ret
 end

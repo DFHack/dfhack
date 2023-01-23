@@ -833,10 +833,14 @@ local function make_frame(name, double_line)
 end
 
 WINDOW_FRAME = make_frame('Window', true)
-GREY_LINE_FRAME = WINDOW_FRAME -- for compatibility with pre-steam code
 PANEL_FRAME = make_frame('Panel', false)
 MEDIUM_FRAME = make_frame('Medium', false)
 THIN_FRAME = make_frame('Thin', false)
+
+-- for compatibility with pre-steam code
+GREY_LINE_FRAME = WINDOW_FRAME
+BOUNDARY_FRAME = PANEL_FRAME
+GREY_FRAME = MEDIUM_FRAME
 
 function paint_frame(dc,rect,style,title,show_pin,pinned,inactive)
     local pen = style.frame_pen

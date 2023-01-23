@@ -52,4 +52,4 @@ Commands
 ``(no)monitor <stockpile>``
     Enable/disable monitoring of a given stockpile. Works with either the stockpile's name (if set) or ID.
     If the stockpile has no custom name set, you may designate it by either the full name as reported by
-    the status command, or by just the number. 
+    the status command, or by just the number.

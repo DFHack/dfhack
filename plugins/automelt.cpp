@@ -696,7 +696,7 @@ static int automelt_getStockpileConfig(lua_State *L) {
     if (lua_isnumber(L, -1)) {
         bool found = false;
         id = lua_tointeger(L, -1);
-        
+
         for (auto &stockpile : world->buildings.other.STOCKPILE) {
             if (!isStockpile(stockpile)) continue;
             if (id == stockpile->stockpile_number){
@@ -706,7 +706,7 @@ static int automelt_getStockpileConfig(lua_State *L) {
 
             }
         }
-        
+
         if (!found)
             return 0;
 

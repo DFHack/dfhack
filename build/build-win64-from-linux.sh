@@ -1,0 +1,56 @@
+#!/bin/bash
+
+set -e
+# Number of jobs == core count
+jobs=$(grep -c ^processor /proc/cpuinfo)
+
+# Calculate absolute paths for docker to do mounts
+srcdir=$(realpath "$(dirname "$(readlink -f "$0")")"/..)
+
+cd "$srcdir"/build
+
+builder_uid=$(id -u)
+
+mkdir -p win64-cross
+mkdir -p win64-cross/output
+
+# Check for sudo; we want to use the real user
+if [[ $(id -u) -eq 0 ]]; then
+    if [[ -z "$SUDO_UID" || "$SUDO_UID" -eq 0 ]]; then
+        echo "Please don't run this script directly as root, use sudo instead:"
+        echo
+        echo "  sudo $0"
+        # This is because we can't change the buildmaster UID in the container to 0 --
+        # that's already taken by root.
+        exit 1
+    fi
+
+    # If this was run using sudo, let's make sure the directories are owned by the
+    # real user (and set the BUILDER_UID to it)
+    builder_uid=$SUDO_UID
+    chown $builder_uid win64-cross win64-cross/output
+fi
+
+# Assumes you built a container image called dfhack-build-msvc from
+# https://github.com/BenLubar/build-env/tree/master/msvc, see
+# docs/dev/compile/Compile.rst.
+#
+# NOTE: win64-cross is mounted in /src/build due to the hardcoded `cmake ..` in
+# the Dockerfile
+if ! docker run --rm -it -v "$srcdir":/src -v "$srcdir/build/win64-cross/":/src/build  \
+    -e BUILDER_UID=$builder_uid \
+    --name dfhack-win \
+    dfhack-build-msvc bash -c "cd /src/build && dfhack-configure windows 64 Release -DCMAKE_INSTALL_PREFIX=/src/build/output cmake .. -DBUILD_DOCS=1 && dfhack-make -j$jobs install" \
+    ; then
+    echo
+    echo "Build failed"
+    exit 1
+else
+    echo
+    echo "Windows artifacts are at win64-cross/output. Copy or symlink them to"
+    echo "your steam DF directory to install dfhack (and optionally delete the"
+    echo "hack/ directory already present)"
+    echo
+    echo "Typically this can be done like this:"
+    echo "  cp -r win64-cross/output/* ~/.local/share/Steam/steamapps/common/\"Dwarf Fortress\""
+fi

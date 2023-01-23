@@ -32,7 +32,7 @@ function HotspotMenuWidget:overlay_onupdate()
 end
 
 function HotspotMenuWidget:overlay_trigger()
-    return MenuScreen{hotspot_frame=self.frame}:show()
+    return MenuScreen{hotspot=self}:show()
 end
 
 local dscreen = dfhack.screen
@@ -74,9 +74,9 @@ local ARROW = string.char(26)
 local MAX_LIST_WIDTH = 45
 local MAX_LIST_HEIGHT = 15
 
-Menu = defclass(MenuScreen, widgets.Panel)
+Menu = defclass(Menu, widgets.Panel)
 Menu.ATTRS{
-    hotspot_frame=DEFAULT_NIL,
+    hotspot=DEFAULT_NIL,
 }
 
 -- get a map from the binding string to a list of hotkey strings that all
@@ -136,10 +136,10 @@ end
 function Menu:init()
     local hotkeys, bindings = getHotkeys()
 
-    local is_inverted = not not self.hotspot_frame.b
+    local is_inverted = not not self.hotspot.frame.b
     local choices,list_width = get_choices(hotkeys, bindings, is_inverted)
 
-    local list_frame = copyall(self.hotspot_frame)
+    local list_frame = copyall(self.hotspot.frame)
     local list_widget_frame = {h=math.min(#choices, MAX_LIST_HEIGHT)}
     local quickstart_frame = {}
     list_frame.w = list_width + 2
@@ -248,7 +248,7 @@ function Menu:onInput(keys)
             self:onSubmit2(list:getSelected())
             return true
         end
-        if not self:getMouseFramePos() then
+        if not self:getMouseFramePos() and not self.hotspot:getMousePos() then
             self.parent_view:dismiss()
             return true
         end
@@ -297,12 +297,12 @@ end
 MenuScreen = defclass(MenuScreen, gui.ZScreen)
 MenuScreen.ATTRS {
     focus_path='hotkeys/menu',
-    hotspot_frame=DEFAULT_NIL,
+    hotspot=DEFAULT_NIL,
 }
 
 function MenuScreen:init()
     self:addviews{
-        Menu{hotspot_frame=self.hotspot_frame},
+        Menu{hotspot=self.hotspot},
     }
 end
 

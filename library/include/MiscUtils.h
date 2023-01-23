@@ -167,8 +167,8 @@ int linear_index(const std::vector<CT*> &vec, FT CT::*field, FT key)
     return -1;
 }
 
-template <typename CT, typename FT>
-int binsearch_index(const std::vector<CT*> &vec, FT CT::*field, FT key, bool exact = true)
+template <typename CT, typename FT, typename MT>
+int binsearch_index(const std::vector<CT*> &vec, FT MT::*field, FT key, bool exact = true)
 {
     // Returns the index of the value >= the key
     int min = -1, max = (int)vec.size();
@@ -245,8 +245,8 @@ unsigned insert_into_vector(std::vector<FT> &vec, FT key, bool *inserted = NULL)
     return pos;
 }
 
-template<typename CT, typename FT>
-unsigned insert_into_vector(std::vector<CT*> &vec, FT CT::*field, CT *obj, bool *inserted = NULL)
+template<typename CT, typename FT, typename MT>
+unsigned insert_into_vector(std::vector<CT*> &vec, FT MT::*field, CT *obj, bool *inserted = NULL)
 {
     unsigned pos = (unsigned)binsearch_index(vec, field, obj->*field, false);
     bool to_ins = (pos >= vec.size() || vec[pos] != obj);

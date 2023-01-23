@@ -671,7 +671,7 @@ static void automelt_setStockpileConfig(color_ostream &out, int id, bool monitor
     DEBUG(status,out).print("entering automelt_setStockpileConfig for id=%d and monitored=%d\n", id, monitored);
     validate_stockpile_configs(out);
     auto bldg = df::building::find(id);
-    bool isInvalidStockpile = bldg || !isStockpile(bldg);
+    bool isInvalidStockpile = !bldg || !isStockpile(bldg);
     bool hasNoData = !monitored;
     if (isInvalidStockpile || hasNoData) {
         DEBUG(cycle,out).print("calling remove_stockpile_config with id=%d monitored=%d\n", id, monitored);

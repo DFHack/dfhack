@@ -184,7 +184,6 @@ end
 
 local function do_disable(args, quiet)
     local disable_fn = function(name, db_entry)
-        if db_entry.widget.always_enabled then return end
         overlay_config[name].enabled = false
         if db_entry.widget.hotspot then
             active_hotspot_widgets[name] = nil
@@ -252,7 +251,7 @@ local function load_widget(name, widget_class)
     local config = overlay_config[name]
     config.pos = sanitize_pos(config.pos or widget.default_pos)
     widget.frame = make_frame(config.pos, widget.frame)
-    if config.enabled or widget.always_enabled then
+    if config.enabled then
         do_enable(name, true, true)
     else
         config.enabled = false
@@ -492,7 +491,6 @@ OverlayWidget.ATTRS{
     hotspot=false, -- whether to call overlay_onupdate on all screens
     viewscreens={}, -- override with associated viewscreen or list of viewscrens
     overlay_onupdate_max_freq_seconds=5, -- throttle calls to overlay_onupdate
-    always_enabled=false, -- for overlays that should never be disabled
 }
 
 function OverlayWidget:init()

@@ -4684,8 +4684,8 @@ The Label widget implements the following methods:
 
   This method takes the number of lines to scroll as positive or negative
   integers or one of the following keywords: ``+page``, ``-page``,
-  ``+halfpage``, or ``-halfpage``. It returns the number of lines that were
-  actually scrolled (negative for scrolling up).
+  ``+halfpage``, ``-halfpage``, ``home``, or ``end``. It returns the number of
+  lines that were actually scrolled (negative for scrolling up).
 
 WrappedLabel class
 ------------------

@@ -1315,6 +1315,7 @@ end
 
 function Label:scroll(nlines)
     if not nlines then return end
+    local text_height = math.max(1, self:getTextHeight())
     if type(nlines) == 'string' then
         if nlines == '+page' then
             nlines = self.frame_body.height
@@ -1324,12 +1325,15 @@ function Label:scroll(nlines)
             nlines = math.ceil(self.frame_body.height/2)
         elseif nlines == '-halfpage' then
             nlines = -math.ceil(self.frame_body.height/2)
+        elseif nlines == 'home' then
+            nlines = 1 - self.start_line_num
+        elseif nlines == 'end' then
+            nlines = text_height
         else
             error(('unhandled scroll keyword: "%s"'):format(nlines))
         end
     end
     local n = self.start_line_num + nlines
-    local text_height = math.max(1, self:getTextHeight())
     n = math.min(n, text_height - self.frame_body.height + 1)
     n = math.max(n, 1)
     nlines = n - self.start_line_num

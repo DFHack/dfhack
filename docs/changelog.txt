@@ -38,6 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 
 ## Misc Improvements
+- `orders`: orders plugin functionality is now offered via an overlay widget when the manager orders screen is open
 
 ## Documentation
 

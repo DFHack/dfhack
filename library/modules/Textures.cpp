@@ -22,6 +22,10 @@ static long g_dfhack_logo_texpos_start = -1;
 static long g_green_pin_texpos_start = -1;
 static long g_red_pin_texpos_start = -1;
 static long g_icons_texpos_start = -1;
+static long g_thin_borders_texpos_start = -1;
+static long g_medium_borders_texpos_start = -1;
+static long g_panel_borders_texpos_start = -1;
+static long g_window_borders_texpos_start = -1;
 
 // Converts an arbitrary Surface to something like the display format
 // (32-bit RGBA), and converts magenta to transparency if convert_magenta is set
@@ -120,6 +124,14 @@ void Textures::init(color_ostream &out) {
                                           &g_red_pin_texpos_start);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/icons.png",
                                           &g_icons_texpos_start);
+    g_num_dfhack_textures += load_textures(out, "hack/data/art/border-thin.png",
+                                          &g_thin_borders_texpos_start);
+    g_num_dfhack_textures += load_textures(out, "hack/data/art/border-medium.png",
+                                          &g_medium_borders_texpos_start);
+    g_num_dfhack_textures += load_textures(out, "hack/data/art/border-panel.png",
+                                          &g_panel_borders_texpos_start);
+    g_num_dfhack_textures += load_textures(out, "hack/data/art/border-window.png",
+                                          &g_window_borders_texpos_start);
 
     DEBUG(textures,out).print("loaded %ld textures\n", g_num_dfhack_textures);
 
@@ -166,4 +178,20 @@ long Textures::getRedPinTexposStart() {
 
 long Textures::getIconsTexposStart() {
     return g_icons_texpos_start;
+}
+
+long Textures::getThinBordersTexposStart() {
+    return g_thin_borders_texpos_start;
+}
+
+long Textures::getMediumBordersTexposStart() {
+    return g_medium_borders_texpos_start;
+}
+
+long Textures::getPanelBordersTexposStart() {
+    return g_panel_borders_texpos_start;
+}
+
+long Textures::getWindowBordersTexposStart() {
+    return g_window_borders_texpos_start;
 }

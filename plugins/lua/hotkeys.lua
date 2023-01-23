@@ -170,7 +170,7 @@ function Menu:init()
         widgets.Panel{
             view_id='list_panel',
             frame=list_frame,
-            frame_style=gui.GREY_LINE_FRAME,
+            frame_style=gui.PANEL_FRAME,
             frame_background=gui.CLEAR_PEN,
             subviews={
                 widgets.List{
@@ -197,7 +197,7 @@ function Menu:init()
             view_id='help_panel',
             autoarrange_subviews=true,
             frame=help_frame,
-            frame_style=gui.GREY_LINE_FRAME,
+            frame_style=gui.PANEL_FRAME,
             frame_background=gui.CLEAR_PEN,
             subviews={
                 widgets.WrappedLabel{

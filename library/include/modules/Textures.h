@@ -41,5 +41,13 @@ DFHACK_EXPORT long getRedPinTexposStart();
  */
 DFHACK_EXPORT long getIconsTexposStart();
 
+/**
+ * Get the first texpos for the DFHack borders. Each is a 7x3 grid.
+ */
+DFHACK_EXPORT long getThinBordersTexposStart();
+DFHACK_EXPORT long getMediumBordersTexposStart();
+DFHACK_EXPORT long getPanelBordersTexposStart();
+DFHACK_EXPORT long getWindowBordersTexposStart();
+
 }
 }

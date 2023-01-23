@@ -3319,17 +3319,20 @@ function:
   argument specifies the indentation step size in spaces. For
   the other arguments see the original documentation link above.
 
+.. _helpdb:
+
 helpdb
 ======
 
 Unified interface for DFHack tool help text. Help text is read from the rendered
-text in ``hack/docs/docs/``. If no rendered text exists, help is read from the
-script sources (for scripts) or the string passed to the ``PluginCommand``
+text in ``hack/docs/docs/tools``. If no rendered text exists, help is read from
+the script sources (for scripts) or the string passed to the ``PluginCommand``
 initializer (for plugins). See `documentation` for details on how DFHack's help
 system works.
 
-The database is lazy-loaded when an API method is called. It rechecks its help
-sources for updates if an API method has not been called in the last 60 seconds.
+The database is loaded when DFHack initializes, but can be explicitly refreshed
+with a call to ``helpdb.refresh()`` if docs are added/changed during a play
+session.
 
 Each entry has several properties associated with it:
 
@@ -3344,6 +3347,10 @@ Each entry has several properties associated with it:
 - Short help, a the ~54 character description string.
 - Long help, the entire contents of the associated help file.
 - A list of tags that define the groups that the entry belongs to.
+
+* ``helpdb.refresh()``
+
+  Scan for changes in available commands and their documentation.
 
 * ``helpdb.is_entry(str)``, ``helpdb.is_entry(list)``
 
@@ -4224,18 +4231,21 @@ A framed screen has the following attributes:
 
 There are the following predefined frame style tables:
 
-* ``GREY_FRAME``
+* ``WINDOW_FRAME``
 
-  A plain grey-colored frame.
+  A frame suitable for a draggable, optionally resizable window.
 
-* ``BOUNDARY_FRAME``
+* ``PANEL_FRAME``
 
-  The same frame as used by the usual full-screen DF views, like dwarfmode.
+  A frame suitable for a static (non-draggable, non-resizable) panel.
 
-* ``GREY_LINE_FRAME``
+* ``MEDIUM_FRAME``
 
-  A frame consisting of grey lines, similar to the one used by titan announcements.
+  A frame suitable for overlay widget panels.
 
+* ``THIN_FRAME``
+
+  A frame suitable for light accent elements.
 
 gui.widgets
 ===========

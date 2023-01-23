@@ -62,12 +62,17 @@ function getItemCountsAndStockpileConfigs()
     ret.premarked_item_counts = table.remove(data, 1)
     ret.stockpile_configs = data
     for _,c in ipairs(ret.stockpile_configs) do
-        c.name = df.building.find(c.id).name
-        if not c.name or c.name == '' then
-            c.name = (fmt):format(tostring(df.building.find(c.id).stockpile_number))
-            c.name = c.name.gsub(c.name, '^%s*(.-)%s*$', '%1')
+        if not c.id or c.id == -1 then
+            c.name = "ERROR"
+            c.monitored = false
+        else
+            c.name = df.building.find(c.id).name
+            if not c.name or c.name == '' then
+                c.name = (fmt):format(tostring(df.building.find(c.id).stockpile_number))
+            end
+            c.monitored = c.monitored ~= 0
         end
-        c.monitored = c.monitored ~= 0
+       
     end
     return ret
 end

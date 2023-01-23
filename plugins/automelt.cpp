@@ -57,8 +57,10 @@ static const string CONFIG_KEY = string(plugin_name) + "/config";
 static const string STOCKPILE_CONFIG_KEY_PREFIX = string(plugin_name) + "/stockpile/";
 static PersistentDataItem config;
 
-static vector<PersistentDataItem> watched_stockpiles;
-static unordered_map<int, size_t> watched_stockpiles_indices;
+// static vector<PersistentDataItem> watched_stockpiles;
+// static unordered_map<int, size_t> watched_stockpiles_indices;
+
+static unordered_map<int32_t, PersistentDataItem> watched_stockpiles;
 
 enum StockpileConfigValues
 {
@@ -92,31 +94,31 @@ static void set_config_bool(PersistentDataItem &c, int index, bool value)
 
 static PersistentDataItem &ensure_stockpile_config(color_ostream &out, int id)
 {
-    if (watched_stockpiles_indices.count(id))
-        return watched_stockpiles[watched_stockpiles_indices[id]];
+    DEBUG(cycle,out).print("ensuring stockpile config id=%d\n", id);
+    if (watched_stockpiles.count(id)){
+        DEBUG(cycle,out).print("stockpile exists in watched_indices\n");
+        return watched_stockpiles[id];
+    }
+
     string keyname = STOCKPILE_CONFIG_KEY_PREFIX + int_to_string(id);
-    DEBUG(status, out).print("creating new persistent key for stockpile %d\n", id);
-    watched_stockpiles.emplace_back(World::GetPersistentData(keyname, NULL));
-    size_t idx = watched_stockpiles.size() - 1;
-    watched_stockpiles_indices.emplace(id, idx);
-    return watched_stockpiles[idx];
+    DEBUG(status,out).print("creating new persistent key for stockpile %d\n", id);
+    watched_stockpiles.emplace(id, World::GetPersistentData(keyname, NULL));
+    return watched_stockpiles[id];
 }
 
 static void remove_stockpile_config(color_ostream &out, int id)
 {
-    if (!watched_stockpiles_indices.count(id))
+    if (!watched_stockpiles.count(id))
         return;
     DEBUG(status, out).print("removing persistent key for stockpile %d\n", id);
-    size_t idx = watched_stockpiles_indices[id];
-    World::DeletePersistentData(watched_stockpiles[idx]);
-    watched_stockpiles.erase(watched_stockpiles.begin() + idx);
-    watched_stockpiles_indices.erase(id);
+    World::DeletePersistentData(watched_stockpiles[id]);
+    watched_stockpiles.erase(id);
 }
 
 static void validate_stockpile_configs(color_ostream &out)
 {
     for (auto &c : watched_stockpiles) {
-        int id = get_config_val(c, STOCKPILE_CONFIG_ID);
+        int id = get_config_val(c.second, STOCKPILE_CONFIG_ID);
         if (!df::building::find(id)){
             remove_stockpile_config(out, id);
         }
@@ -174,13 +176,14 @@ DFhackCExport command_result plugin_load_data(color_ostream &out)
     }
 
     DEBUG(status, out).print("loading persisted enabled state: %s\n", is_enabled ? "true" : "false");
-    World::GetPersistentData(&watched_stockpiles, STOCKPILE_CONFIG_KEY_PREFIX, true);
-    watched_stockpiles_indices.clear();
-    const size_t num_watched_stockpiles = watched_stockpiles.size();
+    vector<PersistentDataItem> loaded_persist_data;
+    World::GetPersistentData(&loaded_persist_data, STOCKPILE_CONFIG_KEY_PREFIX, true);
+    watched_stockpiles.clear();
+    const size_t num_watched_stockpiles = loaded_persist_data.size();
     for (size_t idx = 0; idx < num_watched_stockpiles; ++idx)
     {
-        auto &c = watched_stockpiles[idx];
-        watched_stockpiles_indices.emplace(get_config_val(c, STOCKPILE_CONFIG_ID), idx);
+        auto &c = loaded_persist_data[idx];
+        watched_stockpiles.emplace(get_config_val(c, STOCKPILE_CONFIG_ID), c);
     }
     validate_stockpile_configs(out);
 
@@ -460,9 +463,9 @@ static int32_t scan_stockpiles(color_ostream &out, bool should_melt, map<int32_t
 
     //Parse all the watched piles
     for (auto &c : watched_stockpiles) {
-        int id = get_config_val(c, STOCKPILE_CONFIG_ID);
+        int id = get_config_val(c.second, STOCKPILE_CONFIG_ID);
         //Check monitor status
-        bool monitored = get_config_bool(c, STOCKPILE_CONFIG_MONITORED);
+        bool monitored = get_config_bool(c.second, STOCKPILE_CONFIG_MONITORED);
 
         if (!monitored) continue;
 
@@ -472,7 +475,7 @@ static int32_t scan_stockpiles(color_ostream &out, bool should_melt, map<int32_t
 
         int32_t premarked_count = 0;
 
-        int32_t marked = mark_all_in_stockpile(out, c, premarked_count, item_count, tracked_item_map, should_melt);
+        int32_t marked = mark_all_in_stockpile(out, c.second, premarked_count, item_count, tracked_item_map, should_melt);
 
         DEBUG(perf,out).print("post mark_all_in_stockpile premarked_count=%d\n", premarked_count);
 
@@ -521,7 +524,7 @@ static int32_t scan_count_all(color_ostream &out, bool should_melt, int32_t &mar
     marked_item_count_global = scan_all_melt_designated(out, tracked_item_map_piles);
 
     for (auto &i : watched_stockpiles) {
-        int id = get_config_val(i, STOCKPILE_CONFIG_ID);
+        int id = get_config_val(i.second, STOCKPILE_CONFIG_ID);
         total_items_all_piles+= item_count_piles[id];
         marked_total_count_all_piles += premarked_item_count_piles[id];
     }
@@ -573,8 +576,8 @@ static PersistentDataItem *getSelectedStockpileConfig(color_ostream &out) {
 
     validate_stockpile_configs(out);
     PersistentDataItem *c = NULL;
-    if (watched_stockpiles_indices.count(bldg_id)) {
-        c = &(watched_stockpiles[watched_stockpiles_indices[bldg_id]]);
+    if (watched_stockpiles.count(bldg_id)) {
+        c = &(watched_stockpiles[bldg_id]);
         return c;
     } else {
         DEBUG(status,out).print("No existing config\n");
@@ -641,8 +644,8 @@ static void automelt_printStatus(color_ostream &out) {
         bool monitored = false;
         int32_t item_count = 0;
         int32_t marked_item_count = 0;
-        if (watched_stockpiles_indices.count(stockpile->id)) {
-            auto &c = watched_stockpiles[watched_stockpiles_indices[stockpile->id]];
+        if (watched_stockpiles.count(stockpile->id)) {
+            auto &c = watched_stockpiles[stockpile->id];
             monitored = get_config_bool(c, STOCKPILE_CONFIG_MONITORED);
             int id = get_config_val(c, STOCKPILE_CONFIG_ID);
             item_count = item_count_piles[id];
@@ -666,11 +669,12 @@ static void automelt_printStatus(color_ostream &out) {
 }
 
 static void automelt_setStockpileConfig(color_ostream &out, int id, bool monitored) {
-    DEBUG(status,out).print("entering automelt_setStockpileConfig\n");
+    DEBUG(status,out).print("entering automelt_setStockpileConfig for id=%d and monitored=%d\n", id, monitored);
     validate_stockpile_configs(out);
-    bool isInvalidStockpile = !df::building::find(id);
+    bool isInvalidStockpile = !df::building::find(id) || !isStockpile(df::building::find(id));
     bool hasNoData = !monitored;
     if (isInvalidStockpile || hasNoData) {
+        DEBUG(cycle,out).print("calling remove_stockpile_config with id=%d monitored=%d\n", id, monitored);
         remove_stockpile_config(out, id);
         return;
     }
@@ -703,13 +707,11 @@ static int automelt_getStockpileConfig(lua_State *L) {
                 id = stockpile->id;
                 found = true;
                 break;
-
             }
         }
 
         if (!found)
             return 0;
-
 
     } else {
         const char * name = lua_tostring(L, -1);
@@ -732,14 +734,13 @@ static int automelt_getStockpileConfig(lua_State *L) {
                 }
             }
 
-
         }
         if (!found)
             return 0;
     }
 
-    if (watched_stockpiles_indices.count(id)) {
-        push_stockpile_config(L, watched_stockpiles[watched_stockpiles_indices[id]]);
+    if (watched_stockpiles.count(id)) {
+        push_stockpile_config(L, watched_stockpiles[id]);
     } else {
         push_stockpile_config(L, id, false);
     }
@@ -801,8 +802,11 @@ static int automelt_getItemCountsAndStockpileConfigs(lua_State *L) {
         bldg_count++;
 
         int id = pile->id;
-        if (watched_stockpiles_indices.count(id)) {
-            push_stockpile_config(L, watched_stockpiles[watched_stockpiles_indices[id]]);
+        DEBUG(cycle,*out).print("id=%d\ncount_res=%d\n", id, watched_stockpiles.count(id));
+        
+        if (watched_stockpiles.count(id)) {
+            DEBUG(cycle,*out).print("indexed_id=%d\n", get_config_val(watched_stockpiles[id], STOCKPILE_CONFIG_ID));
+            push_stockpile_config(L, watched_stockpiles[id]);
         } else {
             push_stockpile_config(L, id, false);
         }

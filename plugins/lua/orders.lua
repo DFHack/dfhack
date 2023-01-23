@@ -47,7 +47,7 @@ end
 
 OrdersOverlay = defclass(OrdersOverlay, overlay.OverlayWidget)
 OrdersOverlay.ATTRS{
-    default_pos={x=61,y=-6},
+    default_pos={x=53,y=-6},
     viewscreens='dwarfmode',
     frame={w=30, h=4},
     frame_style=gui.MEDIUM_FRAME,

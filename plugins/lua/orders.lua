@@ -50,7 +50,7 @@ OrdersOverlay.ATTRS{
     default_pos={x=61,y=-6},
     viewscreens='dwarfmode',
     frame={w=30, h=4},
-    frame_style=gui.GREY_LINE_FRAME,
+    frame_style=gui.MEDIUM_FRAME,
     frame_background=gui.CLEAR_PEN,
 }
 

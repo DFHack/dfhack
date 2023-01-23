@@ -789,35 +789,54 @@ end
 --------------------------
 
 -- Plain grey-colored frame.
+-- deprecated
 GREY_FRAME = {
     frame_pen = to_pen{ ch = ' ', fg = COLOR_BLACK, bg = COLOR_GREY },
     title_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_WHITE },
     signature_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
 }
 
--- The usual boundary used by the DF screens. Often has fancy pattern in tilesets.
+-- The boundary used by the pre-steam DF screens.
+-- deprecated
 BOUNDARY_FRAME = {
     frame_pen = to_pen{ ch = 0xDB, fg = COLOR_GREY, bg = COLOR_BLACK },
     title_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
     signature_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
 }
 
-GREY_LINE_FRAME = {
+local BASE_FRAME = {
     frame_pen = to_pen{ ch=206, fg=COLOR_GREY, bg=COLOR_BLACK },
-    t_frame_pen = to_pen{ tile=902, ch=205, fg=COLOR_GREY, bg=COLOR_BLACK },
-    l_frame_pen = to_pen{ tile=908, ch=186, fg=COLOR_GREY, bg=COLOR_BLACK },
-    b_frame_pen = to_pen{ tile=916, ch=205, fg=COLOR_GREY, bg=COLOR_BLACK },
-    r_frame_pen = to_pen{ tile=910, ch=186, fg=COLOR_GREY, bg=COLOR_BLACK },
-    lt_frame_pen = to_pen{ tile=901, ch=201, fg=COLOR_GREY, bg=COLOR_BLACK },
-    lb_frame_pen = to_pen{ tile=915, ch=200, fg=COLOR_GREY, bg=COLOR_BLACK },
-    rt_frame_pen = to_pen{ tile=903, ch=187, fg=COLOR_GREY, bg=COLOR_BLACK },
-    rb_frame_pen = to_pen{ tile=917, ch=188, fg=COLOR_GREY, bg=COLOR_BLACK },
     title_pen = to_pen{ fg=COLOR_BLACK, bg=COLOR_GREY },
     inactive_title_pen = to_pen{ fg=COLOR_GREY, bg=COLOR_BLACK },
     signature_pen = to_pen{ fg=COLOR_GREY, bg=COLOR_BLACK },
     pinned_pen = to_pen{tile=779, ch=216, fg=COLOR_GREY, bg=COLOR_GREEN},
     unpinned_pen = to_pen{tile=782, ch=216, fg=COLOR_GREY, bg=COLOR_BLACK},
 }
+
+local function make_frame(name, double_line)
+    local texpos = dfhack.textures['get'..name..'BordersTexposStart']()
+    local tp = function(offset)
+        if texpos == -1 then return nil end
+        return texpos + offset
+    end
+
+    local frame = copyall(BASE_FRAME)
+    frame.t_frame_pen = to_pen{ tile=tp(1), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.l_frame_pen = to_pen{ tile=tp(7), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.b_frame_pen = to_pen{ tile=tp(15), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.r_frame_pen = to_pen{ tile=tp(9), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.lt_frame_pen = to_pen{ tile=tp(0), ch=double_line and 201 or 218, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.lb_frame_pen = to_pen{ tile=tp(14), ch=double_line and 200 or 192, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.rt_frame_pen = to_pen{ tile=tp(2), ch=double_line and 187 or 191, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.rb_frame_pen = to_pen{ tile=tp(16), ch=double_line and 188 or 217, fg=COLOR_GREY, bg=COLOR_BLACK }
+    return frame
+end
+
+WINDOW_FRAME = make_frame('Window', true)
+GREY_LINE_FRAME = WINDOW_FRAME -- for compatibility with pre-steam code
+PANEL_FRAME = make_frame('Panel', false)
+MEDIUM_FRAME = make_frame('Medium', false)
+THIN_FRAME = make_frame('Thin', false)
 
 function paint_frame(dc,rect,style,title,show_pin,pinned,inactive)
     local pen = style.frame_pen

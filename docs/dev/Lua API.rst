@@ -4224,18 +4224,21 @@ A framed screen has the following attributes:
 
 There are the following predefined frame style tables:
 
-* ``GREY_FRAME``
+* ``WINDOW_FRAME``
 
-  A plain grey-colored frame.
+  A frame suitable for a draggable, optionally resizable window.
 
-* ``BOUNDARY_FRAME``
+* ``PANEL_FRAME``
 
-  The same frame as used by the usual full-screen DF views, like dwarfmode.
+  A frame suitable for a static (non-draggable, non-resizable) panel.
 
-* ``GREY_LINE_FRAME``
+* ``MEDIUM_FRAME``
 
-  A frame consisting of grey lines, similar to the one used by titan announcements.
+  A frame suitable for overlay widget panels.
 
+* ``THIN_FRAME``
+
+  A frame suitable for light accent elements.
 
 gui.widgets
 ===========

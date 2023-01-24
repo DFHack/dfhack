@@ -839,8 +839,6 @@ THIN_FRAME = make_frame('Thin', false)
 
 -- for compatibility with pre-steam code
 GREY_LINE_FRAME = WINDOW_FRAME
-BOUNDARY_FRAME = PANEL_FRAME
-GREY_FRAME = MEDIUM_FRAME
 
 function paint_frame(dc,rect,style,title,show_pin,pinned,inactive)
     local pen = style.frame_pen

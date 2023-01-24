@@ -8,7 +8,7 @@ orders
 Usage
 -----
 
-``orders orders list``
+``orders list``
     Shows the list of previously exported orders, including the orders library.
 ``orders export <name>``
     Saves all the current manager orders in a file.

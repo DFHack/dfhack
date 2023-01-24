@@ -710,10 +710,11 @@ function ZScreen:init()
     self.defocused = false
 end
 
-function ZScreen:onDestroy()
+function ZScreen:dismiss()
+    ZScreen.super.dismiss(self)
     if self.force_pause or self.initial_pause then
         -- never go from unpaused to paused, just from paused to unpaused
-        df.global.pause_state = df.global.pause_state or self.saved_pause_state
+        df.global.pause_state = df.global.pause_state and self.saved_pause_state
     end
 end
 

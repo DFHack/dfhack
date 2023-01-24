@@ -4392,11 +4392,6 @@ Has attributes:
   hitting :kbd:`Esc` (while resizing with the mouse or keyboard), or by calling
   ``Panel:setKeyboardResizeEnabled(false)`` (while resizing with the keyboard).
 
-* ``pinnable = bool`` (default: ``false``)
-
-  Determines whether the panel will draw a pin icon in its frame. See
-  `ZScreen class`_ for details.
-
 * ``autoarrange_subviews = bool`` (default: ``false``)
 * ``autoarrange_gap = int`` (default: ``0``)
 
@@ -4458,7 +4453,7 @@ Window class
 ------------
 
 Subclass of Panel; sets Panel attributes to useful defaults for a top-level
-framed, pinnable, draggable window.
+framed, draggable window.
 
 ResizingPanel class
 -------------------

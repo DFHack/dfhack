@@ -904,14 +904,18 @@ function paint_frame(dc,rect,style,title,inactive, pause_forced)
     end
 
     if pause_forced then
-        local pause_texpos = dfhack.textures.getRedPinTexposStart()
-        if pause_texpos == -1 then
+        -- get the tiles for the activated pause symbol
+        local pause_texpos_ul = dfhack.screen.findGraphicsTile('INTERFACE_BITS', 18, 28)
+        local pause_texpos_ur = dfhack.screen.findGraphicsTile('INTERFACE_BITS', 19, 28)
+        local pause_texpos_ll = dfhack.screen.findGraphicsTile('INTERFACE_BITS', 18, 29)
+        local pause_texpos_lr = dfhack.screen.findGraphicsTile('INTERFACE_BITS', 19, 29)
+        if not pause_texpos_ul then
             dscreen.paintTile(style.paused_pen, x2-1, y1)
         else
-            dscreen.paintTile(style.paused_pen, x2-2, y1-1, nil, pause_texpos+0)
-            dscreen.paintTile(style.paused_pen, x2-1, y1-1, nil, pause_texpos+1)
-            dscreen.paintTile(style.paused_pen, x2-2, y1,   nil, pause_texpos+2)
-            dscreen.paintTile(style.paused_pen, x2-1, y1,   nil, pause_texpos+3)
+            dscreen.paintTile(style.paused_pen, x2-2, y1-1, nil, pause_texpos_ul)
+            dscreen.paintTile(style.paused_pen, x2-1, y1-1, nil, pause_texpos_ur)
+            dscreen.paintTile(style.paused_pen, x2-2, y1,   nil, pause_texpos_ll)
+            dscreen.paintTile(style.paused_pen, x2-1, y1,   nil, pause_texpos_lr)
         end
     end
 end

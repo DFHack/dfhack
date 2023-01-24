@@ -49,7 +49,7 @@ function list()
     -- just been added
     reload()
     for name,fn in pairs(enabled_map) do
-        print(('%20s\t%-3s'):format(name..':', fn() and 'on' or 'off'))
+        print(('%21s  %-3s'):format(name..':', fn() and 'on' or 'off'))
     end
 end
 

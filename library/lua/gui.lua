@@ -761,7 +761,7 @@ function ZScreen:onInput(keys)
         return
     end
 
-    if keys._MOUSE_L_DOWN and not has_mouse then
+    if self.pass_mouse_clicks and keys._MOUSE_L_DOWN and not has_mouse then
         self.defocused = true
         self:sendInputToParent(keys)
         return

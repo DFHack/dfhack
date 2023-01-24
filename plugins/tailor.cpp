@@ -249,7 +249,12 @@ private:
             for (auto w : worn)
             {
                 auto ty = w->getType();
-                auto o = itemTypeMap.at(ty);
+                auto oo = itemTypeMap.find(ty);
+                if (oo == itemTypeMap.end())
+                {
+                    continue;
+                }
+                const df::job_type o = oo->second;
 
                 int size = world->raws.creatures.all[w->getMakerRace()]->adultsize;
                 std::string description;
@@ -330,9 +335,13 @@ private:
                 }
             }
 
-            const df::job_type j = itemTypeMap.at(ty);
-            orders[std::make_tuple(j, sub, size)] += count;
-            DEBUG(cycle).print("tailor: %s times %d of size %d ordered\n", ENUM_KEY_STR(job_type, j).c_str(), count, size);
+            auto jj = itemTypeMap.find(ty);
+            if (jj != itemTypeMap.end())
+            {
+                const df::job_type j = jj->second;
+                orders[std::make_tuple(j, sub, size)] += count;
+                DEBUG(cycle).print("tailor: %s times %d of size %d ordered\n", ENUM_KEY_STR(job_type, j).c_str(), count, size);
+            }
         }
     }
 

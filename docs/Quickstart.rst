@@ -99,37 +99,33 @@ How do DFHack in-game windows work?
 
 Many DFHack tools have graphical interfaces that appear in-game. You can tell
 which windows belong to DFHack tools because they will have the word "DFHack"
-printed across their bottom frame edge. DFHack provides a custom windowing system
-that gives the player a lot of control over where the windows appear and whether
-they capture keyboard and mouse input.
+printed across their bottom frame edge. DFHack provides an advanced windowing
+system that gives the player a lot of control over where the windows appear and
+whether they capture keyboard and mouse input.
 
-The DFHack windowing system allows you to use DFHack tools without interrupting
-the game. That is, if the game is unpaused, it will continue to run while a
-DFHack window is open. You can also interact with the map, scrolling it with the
-keyboard or mouse and selecting units, buildings, and items. Some tools will
-capture all keyboard input, such as tools with editable text fields, and some will
-force-pause the game if it makes sense to, like `gui/quickfort`, since you cannot
-interact with the map normally while trying to apply a blueprint.
+The DFHack windowing system allows multiple overlapping windows to be active at
+once. The one with the highlighted title bar has focus and will receive anything
+you type at the keyboard. Hit Esc or right click to close the window or cancel
+the current operation. You can click anywhere on the screen that is not a
+DFHack window to unfocus the window and let it just sit in the background. It won't
+respond to key presses or mouse clicks until you click on it again to give it
+focus. You can right click directly on an unfocused window to close it without
+left clicking to activate it first.
 
 DFHack windows are draggable from the title bar or from anywhere on the window
 that doesn't have a mouse-clickable widget on it. Many are resizable as well
 (if the tool window has components that can reasonably be resized).
 
-DFHack windows close with a right mouse click or keyboard Esc, but if you
-want to keep a DFHack tool open while you interact with the game, you can click the
-pin in the upper right corner of the DFHack window or hit Alt-L so
-that the pin turns green. The DFHack window will then ignore right clicks and
-Esc key presses that would otherwise close the window. This is especially
-useful for the configuration tool windows for the automation tools. For example,
-you can pin the `gui/autochop` window, set it to minimal mode, and let it sit
-there monitoring your logging industry as you play, using it as a live status
-window. Note that you can still right click *on* the DFHack tool window to close
-it, even when it is pinned.
-
-You can have multiple DFHack tool windows on the screen at the same time. The
-one that is receiving keyboard input has a highlighted title bar and will appear
-over other windows if dragged across them. Clicking on a DFHack window that is not
-currently active will bring it to the foreground and make it the active window.
+You can generally use DFHack tools without interrupting the game. That is, if the
+game is unpaused, it can continue to run while a DFHack window is open. Many tools
+will initially pause the game to let you focus on the task at hand, but you can
+unpause like normal if you want. You can also interact with the map, scrolling it
+with the keyboard or mouse and selecting units, buildings, and items. Some tools
+will capture all keyboard input, such as tools with editable text fields, and some
+will force-pause the game if it makes sense to, like `gui/quickfort`, since you
+cannot interact with the map normally while trying to apply a blueprint. Windows
+for tools that force-pause the game will have a pause icon in their upper right
+corner to indicate which tool is responsible for the pausing.
 
 Where do I go next?
 -------------------
@@ -161,10 +157,11 @@ You can enable it from the GUI, so you don't need to run `enable autochop <enabl
 directly. You can set a target number of logs, and autochop will manage
 your logging industry for you. You can control where your woodsdwarves go to
 cut down trees by setting up burrows and configuring autochop to only cut in
-those burrows. If you have the extra screen space, go ahead and click the pin so
-it turns green and set the `gui/autochop` window to minimal mode (click on the
-hint near the upper right corner of the window or hit Alt-M). As you play the game,
-you can glance at it to check on your stocks of wood.
+those burrows. If you have the extra screen space, go ahead and set the
+`gui/autochop` window to minimal mode (click on the hint near the upper right
+corner of the window or hit Alt-M) and click on the map so the window loses
+keyboard focus. As you play the game, you can glance at the status panel to
+check on your stocks of wood.
 
 Finally, let's do some fort design copy-pasting. Go to some bedrooms that you have
 set up in your fort. Run `gui/blueprint`, set a name for your blueprint by

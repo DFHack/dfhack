@@ -297,6 +297,7 @@ end
 MenuScreen = defclass(MenuScreen, gui.ZScreen)
 MenuScreen.ATTRS {
     focus_path='hotkeys/menu',
+    initial_pause=false,
     hotspot=DEFAULT_NIL,
 }
 

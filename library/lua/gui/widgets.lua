@@ -505,14 +505,11 @@ end
 function Panel:onRenderFrame(dc, rect)
     Panel.super.onRenderFrame(self, dc, rect)
     if not self.frame_style then return end
-    local pinned = nil
-    if self.pinnable then
-        pinned = self.parent_view and self.parent_view.pinned
-    end
-    local inactive = self.parent_view and self.parent_view.isOnTop
-            and not self.parent_view:isOnTop()
-    gui.paint_frame(dc, rect, self.frame_style, self.frame_title,
-            self.pinnable, pinned, inactive)
+    local inactive = self.parent_view and self.parent_view.hasFocus
+            and not self.parent_view:hasFocus()
+    local pause_forced = self.parent_view and self.parent_view.force_pause
+    gui.paint_frame(dc, rect, self.frame_style, self.frame_title, inactive,
+            pause_forced)
     if self.kbd_get_pos then
         local pos = self.kbd_get_pos()
         local pen = to_pen{fg=COLOR_GREEN, bg=COLOR_BLACK}

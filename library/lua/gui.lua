@@ -754,6 +754,7 @@ function ZScreen:onInput(keys)
         if keys._MOUSE_L_DOWN then
             -- note we can't clear mouse_lbut here. otherwise we break dragging,
             df.global.enabler.mouse_lbut_down = 0
+            self.inhibit_mouse_l = true
         end
         if keys._MOUSE_R_DOWN then
             df.global.enabler.mouse_rbut_down = 0
@@ -772,6 +773,13 @@ function ZScreen:onInput(keys)
         df.global.enabler.mouse_rbut = 0
         return
     else
+        if self.inhibit_mouse_l then
+            if keys._MOUSE_L then
+                return
+            else
+                self.inhibit_mouse_l = nil
+            end
+        end
         local passit = self.pass_pause and keys.D_PAUSE
         if not passit and self.pass_mouse_clicks then
             for key in pairs(MOUSE_KEYS) do

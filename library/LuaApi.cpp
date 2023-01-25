@@ -2833,12 +2833,177 @@ static int8_t getModstate() { return Core::getInstance().getModstate(); }
 static std::string internal_strerror(int n) { return strerror(n); }
 static std::string internal_md5(std::string s) { return md5_wrap.getHashFromString(s); }
 
+struct heap_pointer_info
+{
+    size_t size = 0;
+    int status = 0;
+};
+
+static std::map<uintptr_t, heap_pointer_info> snapshot;
+
+static int heap_take_snapshot()
+{
+    #ifdef _WIN32
+    snapshot.clear();
+
+    std::vector<std::pair<void*, heap_pointer_info>> entries;
+    //heap allocating while iterating the heap is suboptimal
+    entries.reserve(256*1024*1024);
+
+    _HEAPINFO hinfo;
+    int heapstatus;
+    int numLoops;
+    hinfo._pentry = NULL;
+    numLoops = 0;
+    while((heapstatus = _heapwalk(&hinfo)) == _HEAPOK &&
+          numLoops < 1024*1024*1024)
+    {
+        heap_pointer_info inf;
+        inf.size = hinfo._size;
+        inf.status = hinfo._useflag; //0 == _FREEENTRY, 1 == _USEDENTRY
+
+        entries.push_back({hinfo._pentry, inf});
+
+        numLoops++;
+    }
+
+    for (auto i : entries)
+    {
+        uintptr_t val = 0;
+        memcpy(&val, &i.first, sizeof(void*));
+        snapshot[val] = i.second;
+    }
+
+    if (heapstatus == _HEAPEMPTY || heapstatus == _HEAPEND)
+        return 0;
+
+    if (heapstatus == _HEAPBADPTR)
+        return 1;
+
+    if (heapstatus == _HEAPBADBEGIN)
+        return 2;
+
+    if (heapstatus == _HEAPBADNODE)
+        return 3;
+    #endif
+
+    return 0;
+}
+
+static void* address_to_pointer(uintptr_t ptr)
+{
+    void* as_ptr = nullptr;
+    memcpy((void*)&as_ptr, &ptr, sizeof(uintptr_t));
+
+    return as_ptr;
+}
+
+//this function probably should not allocate. Then again we're shimming through lua which.... probably does
+static int get_heap_state()
+{
+    #ifdef _WIN32
+    int heapstatus = _heapchk();
+
+    if (heapstatus == _HEAPEMPTY || heapstatus == _HEAPOK)
+        return 0;
+
+    if (heapstatus == _HEAPBADPTR)
+        return 1;
+
+    if (heapstatus == _HEAPBADBEGIN)
+        return 2;
+
+    if (heapstatus == _HEAPBADNODE)
+        return 3;
+    #endif
+
+    return 0;
+}
+
+static bool is_address_in_heap(uintptr_t ptr)
+{
+    return snapshot.find(ptr) != snapshot.end();
+}
+
+static bool is_address_active_in_heap(uintptr_t ptr)
+{
+    auto it = snapshot.find(ptr);
+
+    if (it == snapshot.end())
+        return false;
+
+    return it->second.status == 1;
+}
+
+static bool is_address_used_after_free_in_heap(uintptr_t ptr)
+{
+    auto it = snapshot.find(ptr);
+
+    if (it == snapshot.end())
+        return false;
+
+    return it->second.status != 1;
+}
+
+static int get_address_size_in_heap(uintptr_t ptr)
+{
+    auto it = snapshot.find(ptr);
+
+    if (it == snapshot.end())
+        return -1;
+
+    return it->second.size;
+}
+
+//eg if I have a struct, does any address lie within the struct?
+static uintptr_t get_root_address_of_heap_object(uintptr_t ptr)
+{
+    //find the first element strictly greater than our pointer
+    auto it = snapshot.upper_bound(ptr);
+
+    //if we're at the start of the snapshot, no elements are less than our pointer
+    //therefore it is invalid
+    if (it == snapshot.begin())
+        return 0;
+
+    //get the first element less than or equal to ours
+    it--;
+
+    //our pointer is only valid if we lie in the first pointer lower in memory than it
+    if (ptr >= it->first && ptr < it->first + it->second.size)
+        return it->first;
+
+    return 0;
+}
+
+//msize crashes if you pass an invalid pointer to it, only use it if you *know* the thing you're looking at
+//is in the heap/valid
+static int msize_address(uintptr_t ptr)
+{
+    void* vptr = address_to_pointer(ptr);
+
+    #ifdef _WIN32
+    if (vptr)
+        return _msize(vptr);
+    #endif
+
+    return -1;
+}
+
 static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
     WRAP(getImageBase),
     WRAP(getRebaseDelta),
     WRAP(getModstate),
     WRAPN(strerror, internal_strerror),
     WRAPN(md5, internal_md5),
+    WRAPN(heapTakeSnapshot, heap_take_snapshot),
+    WRAPN(getHeapState, get_heap_state),
+    WRAPN(isAddressInHeap, is_address_in_heap),
+    WRAPN(isAddressActiveInHeap, is_address_active_in_heap),
+    WRAPN(isAddressUsedAfterFreeInHeap, is_address_used_after_free_in_heap),
+    WRAPN(getAddressSizeInHeap, get_address_size_in_heap),
+    WRAPN(getRootAddressOfHeapObject, get_root_address_of_heap_object),
+    WRAPN(msizeAddress, msize_address),
     { NULL, NULL }
 };
 

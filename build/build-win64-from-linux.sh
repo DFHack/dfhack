@@ -37,10 +37,11 @@ fi
 #
 # NOTE: win64-cross is mounted in /src/build due to the hardcoded `cmake ..` in
 # the Dockerfile
-if ! docker run --rm -it -v "$srcdir":/src -v "$srcdir/build/win64-cross/":/src/build  \
+if ! docker run --rm -i -v "$srcdir":/src -v "$srcdir/build/win64-cross/":/src/build  \
     -e BUILDER_UID=$builder_uid \
     --name dfhack-win \
-    dfhack-build-msvc bash -c "cd /src/build && dfhack-configure windows 64 Release -DCMAKE_INSTALL_PREFIX=/src/build/output cmake .. -DBUILD_DOCS=1 && dfhack-make -j$jobs install" \
+    ghcr.io/dfhack/build-env:msvc \
+    bash -c "cd /src/build && dfhack-configure windows 64 Release -DCMAKE_INSTALL_PREFIX=/src/build/output cmake .. -DBUILD_DOCS=1 && dfhack-make -j$jobs install" \
     ; then
     echo
     echo "Build failed"

@@ -13,6 +13,7 @@ builder_uid=$(id -u)
 
 mkdir -p win64-cross
 mkdir -p win64-cross/output
+mkdir -p win64-cross/ccache
 
 # Check for sudo; we want to use the real user
 if [[ $(id -u) -eq 0 ]]; then
@@ -39,6 +40,7 @@ fi
 # the Dockerfile
 if ! docker run --rm -i -v "$srcdir":/src -v "$srcdir/build/win64-cross/":/src/build  \
     -e BUILDER_UID=$builder_uid \
+    -e CCACHE_DIR=/src/build/ccache \
     --name dfhack-win \
     ghcr.io/dfhack/build-env:msvc \
     bash -c "cd /src/build && dfhack-configure windows 64 Release -DCMAKE_INSTALL_PREFIX=/src/build/output cmake .. -DBUILD_DOCS=1 && dfhack-make -j$jobs install" \

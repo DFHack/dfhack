@@ -134,6 +134,14 @@ jobs:
         with:
           submodules: true
           fetch-depth: 0
+      - name: Fetch ccache
+        uses: actions/cache@v3
+        with:
+          path: build/win64-cross/ccache
+          key: ccache-win64-cross-msvc-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            ccache-win64-cross-msvc-${{ github.ref_name }}
+            ccache-win64-cross-msvc
       - name: Cross-compile win64 artifacts
         run: |
           cd build

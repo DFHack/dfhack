@@ -141,7 +141,7 @@ jobs:
       - name: Format artifact name
         id: artifactname
         run: |
-          echo name=$(date +%Y%m%d)-$(git rev-parse --short $GITHUB_REF) >> $GITHUB_OUTPUT
+          echo name=$(date +%Y%m%d)-$(git rev-parse --short HEAD) >> $GITHUB_OUTPUT
       - name: Upload win64 artifacts
         uses: actions/upload-artifact@v3
         with:

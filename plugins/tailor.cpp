@@ -582,7 +582,7 @@ public:
 
 static std::unique_ptr<Tailor> tailor_instance;
 
-#define DELTA_TICKS 600
+#define DELTA_TICKS 50
 
 DFhackCExport command_result plugin_onupdate(color_ostream& out)
 {

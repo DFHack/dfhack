@@ -188,7 +188,7 @@ void ChannelGroups::scan(bool full_scan) {
     std::set<df::coord> gone_jobs;
     set_difference(last_jobs, jobs, gone_jobs);
     set_difference(jobs, last_jobs, new_jobs);
-    INFO(groups).print("gone jobs: %" PRIu64 "\nnew jobs: %" PRIu64 "\n",gone_jobs.size(), new_jobs.size());
+    INFO(groups).print("gone jobs: %zd\nnew jobs: %zd\n",gone_jobs.size(), new_jobs.size());
     for (auto &pos : new_jobs) {
         add(pos);
     }

@@ -296,18 +296,13 @@ on a Linux host system.
   :local:
   :depth: 1
 
-Step 1: prepare a docker image
-------------------------------
+Step 1: prepare a build container
+---------------------------------
 
 On your Linux host, install and run the docker daemon and then run these commands::
 
     xhost +local:root
-    git clone https://github.com/BenLubar/build-env.git
-    cd build-env/msvc
-    docker build .
-    docker image ls
-    IMAGE_ID=<your image id>
-    docker run -it --env="DISPLAY" --env="QT_X11_NO_MITSHM=1" --volume=/tmp/.X11-unix:/tmp/.X11-unix --user buildmaster --name dfhack-win $IMAGE_ID
+    docker run -it --env="DISPLAY" --env="QT_X11_NO_MITSHM=1" --volume=/tmp/.X11-unix:/tmp/.X11-unix --user buildmaster --name dfhack-win ghcr.io/dfhack/build-env:msvc
 
 The ``xhost`` command and ``--env`` parameters are there so you can eventually
 run Dwarf Fortress from the container and have it display on your host.
@@ -380,19 +375,7 @@ existing Steam installation on Linux.
   :local:
   :depth: 1
 
-Step 1: Build the MSVC builder image
-------------------------------------
-
-It'll be called ``dfhack-build-msvc:latest`` after it's done building::
-
-   git clone https://github.com/BenLubar/build-env.git
-   cd build-env/msvc
-   docker build -t dfhack-build-msvc .
-
-The docker build takes a while, but only needs to be done once, unless the build
-environment changes.
-
-Step 2: Get dfhack, and run the build script
+Step 1: Get dfhack, and run the build script
 --------------------------------------------
 
 Check out ``dfhack`` into another directory, and run the build script::
@@ -412,7 +395,7 @@ rather than directly::
 
   sudo ./build-win64-from-linux.sh
 
-Step 3: install dfhack to your Steam DF install
+Step 2: install dfhack to your Steam DF install
 -----------------------------------------------
 As the script will tell you, you can then copy the files into your DF folder::
 

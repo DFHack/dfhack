@@ -1456,7 +1456,7 @@ function CycleHotkeyLabel:init()
     self:setText{
         {key=self.key, key_sep=': ', text=self.label, width=self.label_width,
          on_activate=self:callback('cycle')},
-        '  ',
+        ' ',
         {text=self:callback('getOptionLabel'),
          pen=self:callback('getOptionPen')},
     }

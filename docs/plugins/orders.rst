@@ -121,7 +121,7 @@ This file should only be imported, of course, if you need to equip a military.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As above, but this collection will also allow creation of platinum blunt weapons.
-Normally these are only created by artifact moods, work orders can't be created 
+Normally these are only created by artifact moods, work orders can't be created
 manually for them.
 
 - platinum/silver/steel/iron/bismuth bronze/bronze/copper weapons and armor,

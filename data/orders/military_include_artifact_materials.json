@@ -1070,11 +1070,116 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
+		"id" : 31,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_WEAPON_MACE",
+				"item_type" : "WEAPON",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_MACE",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:PLATINUM"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 32,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_WEAPON_HAMMER_WAR",
+				"item_type" : "WEAPON",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_HAMMER_WAR",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:PLATINUM"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
+		"id" : 64,
+		"is_active" : false,
+		"is_validated" : false,
+		"item_conditions" : 
+		[
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 20
+			},
+			{
+				"condition" : "AtLeast",
+				"item_type" : "BAR",
+				"material" : "COAL",
+				"value" : 100
+			},
+			{
+				"condition" : "AtMost",
+				"item_subtype" : "ITEM_WEAPON_CROSSBOW",
+				"item_type" : "WEAPON",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 10
+			}
+		],
+		"item_subtype" : "ITEM_WEAPON_CROSSBOW",
+		"job" : "MakeWeapon",
+		"material" : "INORGANIC:PLATINUM"
+	},
+	{
+		"amount_left" : 1,
+		"amount_total" : 1,
+		"frequency" : "Daily",
 		"id" : 35,
 		"is_active" : false,
 		"is_validated" : false,
 		"item_conditions" : 
 		[
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
 			{
 				"condition" : "AtLeast",
 				"item_type" : "BAR",
@@ -1111,6 +1216,12 @@
 		"is_validated" : false,
 		"item_conditions" : 
 		[
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
 			{
 				"condition" : "AtLeast",
 				"item_type" : "BAR",
@@ -1158,6 +1269,12 @@
 				"item_type" : "BAR",
 				"material" : "COAL",
 				"value" : 100
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
 			},
 			{
 				"condition" : "AtMost",
@@ -1447,6 +1564,12 @@
 				"value" : 5
 			},
 			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
 				"condition" : "AtMost",
 				"item_subtype" : "ITEM_WEAPON_MACE",
 				"item_type" : "WEAPON",
@@ -1483,6 +1606,12 @@
 				"condition" : "LessThan",
 				"item_type" : "BAR",
 				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
 				"value" : 5
 			},
 			{
@@ -1656,6 +1785,12 @@
 				"item_type" : "WEAPON",
 				"material" : "INORGANIC:STEEL",
 				"value" : 10
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
 			},
 			{
 				"condition" : "LessThan",
@@ -2064,6 +2199,12 @@
 				"value" : 5
 			},
 			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
 				"condition" : "AtMost",
 				"flags" : 
 				[
@@ -2115,6 +2256,12 @@
 				"condition" : "LessThan",
 				"item_type" : "BAR",
 				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
 				"value" : 5
 			},
 			{
@@ -2361,6 +2508,12 @@
 				"condition" : "LessThan",
 				"item_type" : "BAR",
 				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
 				"value" : 5
 			},
 			{
@@ -2784,6 +2937,12 @@
 				"material" : "INORGANIC:SILVER",
 				"value" : 5
 			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			}
 		],
 		"item_subtype" : "ITEM_WEAPON_MACE",
 		"job" : "MakeWeapon",
@@ -2826,6 +2985,12 @@
 				"condition" : "LessThan",
 				"item_type" : "BAR",
 				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
 				"value" : 5
 			},
 			{
@@ -3072,6 +3237,12 @@
 				"condition" : "LessThan",
 				"item_type" : "BAR",
 				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
 				"value" : 5
 			},
 			{
@@ -3527,6 +3698,12 @@
 				"value" : 5
 			},
 			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
 				"condition" : "AtMost",
 				"flags" : 
 				[
@@ -3584,6 +3761,12 @@
 				"condition" : "LessThan",
 				"item_type" : "BAR",
 				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
 				"value" : 5
 			},
 			{
@@ -3860,6 +4043,12 @@
 				"condition" : "LessThan",
 				"item_type" : "BAR",
 				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
 				"value" : 5
 			},
 			{
@@ -4369,6 +4558,12 @@
 				"value" : 5
 			},
 			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
+				"value" : 5
+			},
+			{
 				"condition" : "AtMost",
 				"flags" : 
 				[
@@ -4432,6 +4627,12 @@
 				"condition" : "LessThan",
 				"item_type" : "BAR",
 				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
 				"value" : 5
 			},
 			{
@@ -4738,6 +4939,12 @@
 				"condition" : "LessThan",
 				"item_type" : "BAR",
 				"material" : "INORGANIC:SILVER",
+				"value" : 5
+			},
+			{
+				"condition" : "LessThan",
+				"item_type" : "BAR",
+				"material" : "INORGANIC:PLATINUM",
 				"value" : 5
 			},
 			{

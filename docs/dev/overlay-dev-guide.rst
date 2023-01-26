@@ -96,6 +96,9 @@ The ``overlay.OverlayWidget`` superclass defines the following class attributes:
     mean for the position. Players can change the widget position at any time
     via the `overlay position <overlay>` command, so don't assume that your
     widget will always be at the default position.
+- ``default_enabled`` (default: ``false``)
+    Override this attribute if the overlay should be enabled by default if it
+    does not already have a state stored in ``dfhack-config/overlay.json``.
 - ``viewscreens`` (default: ``{}``)
     The list of viewscreens that this widget should be associated with. When
     one of these viewscreens is on top of the viewscreen stack, your widget's

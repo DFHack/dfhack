@@ -249,6 +249,9 @@ local function load_widget(name, widget_class)
     }
     if not overlay_config[name] then overlay_config[name] = {} end
     local config = overlay_config[name]
+    if config.enabled == nil then
+        config.enabled = widget.default_enabled
+    end
     config.pos = sanitize_pos(config.pos or widget.default_pos)
     widget.frame = make_frame(config.pos, widget.frame)
     if config.enabled then
@@ -487,6 +490,7 @@ OverlayWidget = defclass(OverlayWidget, widgets.Panel)
 OverlayWidget.ATTRS{
     name=DEFAULT_NIL, -- this is set by the framework to the widget name
     default_pos={x=DEFAULT_X_POS, y=DEFAULT_Y_POS}, -- 1-based widget screen pos
+    default_enabled=false, -- initial enabled state if not in config
     overlay_only=false, -- true if there is no widget to reposition
     hotspot=false, -- whether to call overlay_onupdate on all screens
     viewscreens={}, -- override with associated viewscreen or list of viewscrens

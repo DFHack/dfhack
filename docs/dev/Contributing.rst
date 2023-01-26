@@ -27,8 +27,7 @@ modify. GitHub has several documentation pages on these topics, including:
 
 In general, if you are not sure where or how to make a change, or would like
 advice before attempting to make a change, please see `support` for ways to
-contact maintainers - DFHack-specific channels such as IRC or Bay12 are
-preferred. If you are interested in addressing an issue reported on the
+contact maintainers. If you are interested in addressing an issue reported on the
 :issue:`issue tracker <>`, you can start a discussion there if you prefer.
 
 The sections below cover some guidelines that contributions should follow:
@@ -45,7 +44,7 @@ General contribution guidelines
 * Update ``docs/changelog.txt`` and ``docs/about/Authors.rst`` when applicable. See
   `build-changelog` for more information on the changelog format.
 * Submit ideas and bug reports as :issue:`issues on GitHub <>`.
-  Posts in the forum thread can easily get missed or forgotten.
+  Posts in the forum thread or on Disord can easily get missed or forgotten.
 * Work on :issue:`reported problems <?q=is:open+-label:idea>`
   will take priority over ideas or suggestions.
 

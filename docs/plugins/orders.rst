@@ -117,7 +117,7 @@ Make sure you have a lot of fuel (or magma forges and furnaces) before you turn
 
 This file should only be imported, of course, if you need to equip a military.
 
-:source:`library/military <data/orders/military_include_artifact_materials.json>`
+:source:`library/military_include_artifact_materials <data/orders/military_include_artifact_materials.json>`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As above, but this collection will also allow creation of platinum blunt weapons.

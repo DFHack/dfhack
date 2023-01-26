@@ -7,6 +7,7 @@
 #include "PluginManager.h"
 #include "DataDefs.h"
 #include "TileTypes.h"
+#include "MiscUtils.h"
 
 #include "df/map_block.h"
 #include "df/map_block_column.h"
@@ -395,7 +396,7 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
             }
         }
         else
-            plantNames.insert(parameters[i]);
+            plantNames.insert(toUpper(parameters[i]));
     }
     if (treesonly && shrubsonly)
     {

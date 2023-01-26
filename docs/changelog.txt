@@ -45,6 +45,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `orders`: orders plugin functionality is now offered via an overlay widget when the manager orders screen is open
 - `gui/quickcmd`: now has it's own global keybinding for your convenience: Ctrl-Shift-A
 - Many DFHack windows can now be unfocused by clicking somewhere not over the tool window. This has the same effect as pinning previously did, but without the extra clicking.
+- `overlay`: overlay widgets can now specify a default enabled state if they are not already set in the player's overlay config file
 
 ## Documentation
 

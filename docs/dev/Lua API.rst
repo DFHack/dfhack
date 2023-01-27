@@ -1933,9 +1933,11 @@ General
 
   Returns the number of tiles included by extents, or defval.
 
-* ``dfhack.buildings.containsTile(building, x, y[, room])``
+* ``dfhack.buildings.containsTile(building, x, y)``
 
-  Checks if the building contains the specified tile, either directly, or as room.
+  Checks if the building contains the specified tile. If the building contains extents,
+  then the extents are checked. Otherwise, returns whether the x and y map coordinates
+  are within the building's bounding box.
 
 * ``dfhack.buildings.hasSupport(pos,size)``
 
@@ -5602,6 +5604,13 @@ sort
 
 The `sort <sort>` plugin does not export any native functions as of now.
 Instead, it calls Lua code to perform the actual ordering of list items.
+
+tiletypes
+=========
+
+* ``bool tiletypes_setTile(pos, shape, material, special, variant)`` where
+  the parameters are enum values from ``df.tiletype_shape``,
+  ``df.tiletype_material``, etc. Returns whether the conversion succeeded.
 
 .. _xlsxreader-api:
 

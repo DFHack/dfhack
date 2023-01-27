@@ -2980,9 +2980,9 @@ static uintptr_t get_root_address_of_heap_object(uintptr_t ptr)
 //is in the heap/valid
 static int msize_address(uintptr_t ptr)
 {
+    #ifdef _WIN32
     void* vptr = address_to_pointer(ptr);
 
-    #ifdef _WIN32
     if (vptr)
         return _msize(vptr);
     #endif

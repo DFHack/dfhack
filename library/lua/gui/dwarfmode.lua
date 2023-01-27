@@ -48,7 +48,7 @@ function enterSidebarMode(sidebar_mode, max_esc)
     local focus_string = ''
     while remaining_esc > 0 do
         local screen = dfhack.gui.getCurViewscreen(true)
-        focus_string = dfhack.gui.getFocusString(screen)
+        focus_string = dfhack.gui.getFocusStrings(screen)
         if df.global.plotinfo.main.mode == df.ui_sidebar_mode.Default and
                 focus_string == 'dwarfmode/Default' then
             if #navkey > 0 then gui.simulateInput(screen, navkey) end

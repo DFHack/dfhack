@@ -26,7 +26,7 @@ function test.enterSidebarMode()
     -- Simulate not being able to get to default from a screen via mocks. This
     -- failure can actually happen in-game in some situations, such as when
     -- naming a building with ctrl-N (no way to cancel changes).
-    mock.patch({{dfhack.gui, 'getFocusString', mock.func()},
+    mock.patch({{dfhack.gui, 'getFocusStrings', mock.func()},
                 {gui, 'simulateInput', mock.func()}},
                function()
                    expect.error_match('Unable to get into target sidebar mode',

@@ -410,7 +410,7 @@ public:
         OutputHotkeyString(x, y, "Zoom Unit", CUSTOM_SHIFT_Z);
     }
 
-    std::string getFocusString() { return "dwarfmonitor_dwarfstats"; }
+    std::vector<std::string> getFocusStrings() { return std::vector<std::string>{"dwarfmonitor_dwarfstats"}; }
 
 private:
     ListColumn<df::unit *> dwarves_column;
@@ -1021,7 +1021,7 @@ public:
         OutputHotkeyString(x, y, "Zoom Unit", CUSTOM_SHIFT_Z);
     }
 
-    std::string getFocusString() { return "dwarfmonitor_fortstats"; }
+    std::vector<std::string> getFocusStrings() { return std::vector<std::string>{"dwarfmonitor_fortstats"}; }
 
 private:
     ListColumn<activity_type> fort_activity_column, category_breakdown_column;
@@ -1652,7 +1652,7 @@ public:
             getSelectedUnit() ? COLOR_WHITE : COLOR_DARKGREY);
     }
 
-    std::string getFocusString() override { return "dwarfmonitor_preferences"; }
+    std::vector<std::string> getFocusStrings() override { return std::vector<std::string>{"dwarfmonitor_preferences"}; }
 
 private:
     ListColumn<size_t> preferences_column;

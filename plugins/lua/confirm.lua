@@ -11,6 +11,9 @@ setmetatable(keys, {
     end,
     __newindex = function() error('Table is read-only') end
 })
+-- Mouse keys will be sent as a string instead of interface_key
+local MOUSE_LEFT = "MOUSE_LEFT"
+local MOUSE_RIGHT = "MOUSE_RIGHT"
 --[[ The screen where a confirmation has been triggered
 Note that this is *not* necessarily the topmost viewscreen, so do not use
 gui.getCurViewscreen() or related functions. ]]
@@ -57,8 +60,7 @@ is equivalent to:
 
 trade = defconf('trade')
 function trade.intercept_key(key)
-    return screen.in_edit_count == 0 and
-        key == keys.TRADE_TRADE
+    return false--dfhack.gui.matchFocusString("dwarfmode/Trade") and key == MOUSE_LEFT and hovering over trade button?
 end
 trade.title = "Confirm trade"
 function trade.get_message()
@@ -81,14 +83,14 @@ end
 
 trade_cancel = defconf('trade-cancel')
 function trade_cancel.intercept_key(key)
-    return screen.in_edit_count == 0 and
-        key == keys.LEAVESCREEN and
-        (trader_goods_selected(screen) or broker_goods_selected(screen))
+    return dfhack.gui.matchFocusString("dwarfmode/Trade") and
+    (key == keys.LEAVESCREEN or key == MOUSE_RIGHT) and
+    (trader_goods_selected(screen) or broker_goods_selected(screen))
 end
 trade_cancel.title = "Cancel trade"
 trade_cancel.message = "Are you sure you want leave this screen?\nSelected items will not be saved."
 
-trade_seize = defconf('trade-seize')
+--[[trade_seize = defconf('trade-seize')
 function trade_seize.intercept_key(key)
     return screen.in_edit_count == 0 and
         trader_goods_selected(screen) and
@@ -119,31 +121,28 @@ function trade_select_all.intercept_key(key)
 end
 trade_select_all.title = "Confirm selection"
 trade_select_all.message = "Selecting all goods will overwrite your current selection\n" ..
-        "and cannot be undone. Continue?"
+        "and cannot be undone. Continue?"--]]
 
-haul_delete = defconf('haul-delete')
-function haul_delete.intercept_key(key)
-    if ui.main.mode == df.ui_sidebar_mode.Hauling and
-            #ui.hauling.view_routes > 0 and
-            not ui.hauling.in_name and
-            not ui.hauling.in_stop and
-            not ui.hauling.in_assign_vehicle then
-        return key == keys.D_HAULING_REMOVE
-    end
-    return false
+haul_delete_route = defconf('haul-delete-route')
+function haul_delete_route.intercept_key(key)
+    return df.global.game.main_interface.current_hover == 180 and key == MOUSE_LEFT
 end
-haul_delete.title = "Confirm deletion"
-function haul_delete.get_message()
-    local t = ui.hauling.view_stops[ui.hauling.cursor_top] and "stop" or "route"
-    return "Are you sure you want to delete this " ..
-        (ui.hauling.view_stops[ui.hauling.cursor_top] and "stop" or "route") .. "?"
+haul_delete_route.title = "Confirm deletion"
+haul_delete_route.message = "Are you sure you want to delete this route?"
+
+haul_delete_stop = defconf('haul-delete-stop')
+function haul_delete_stop.intercept_key(key)
+    return df.global.game.main_interface.current_hover == 185 and key == MOUSE_LEFT
 end
+haul_delete_stop.title = "Confirm deletion"
+haul_delete_stop.message = "Are you sure you want to delete this stop?"
 
 depot_remove = defconf('depot-remove')
 function depot_remove.intercept_key(key)
-    if df.building_tradedepotst:is_instance(dfhack.gui.getSelectedBuilding(true)) and
-            key == keys.DESTROYBUILDING then
-        for _, caravan in pairs(ui.caravans) do
+    if df.global.game.main_interface.current_hover == 299 and
+            key == MOUSE_LEFT and
+            df.building_tradedepotst:is_instance(dfhack.gui.getSelectedBuilding(true)) then
+        for _, caravan in pairs(df.global.plotinfo.caravans) do
             if caravan.time_remaining > 0 then
                 return true
             end
@@ -156,15 +155,12 @@ depot_remove.message = "Are you sure you want to remove this depot?\n" ..
 
 squad_disband = defconf('squad-disband')
 function squad_disband.intercept_key(key)
-    return key == keys.D_MILITARY_DISBAND_SQUAD and
-        screen.page == screen._type.T_page.Positions and
-        screen.num_squads > 0 and
-        not screen.in_rename_alert
+    return key == MOUSE_LEFT and df.global.game.main_interface.current_hover == 341
 end
 squad_disband.title = "Disband squad"
 squad_disband.message = "Are you sure you want to disband this squad?"
 
-uniform_delete = defconf('uniform-delete')
+--[[uniform_delete = defconf('uniform-delete')
 function uniform_delete.intercept_key(key)
     return key == keys.D_MILITARY_DELETE_UNIFORM and
         screen.page == screen._type.T_page.Uniforms and
@@ -226,7 +222,7 @@ function order_remove.intercept_key(key)
 end
 order_remove.title = "Remove manager order"
 order_remove.message = "Are you sure you want to remove this order?"
-
+]]--
 -- End of confirmation definitions
 
 function check()

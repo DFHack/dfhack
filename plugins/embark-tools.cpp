@@ -572,7 +572,7 @@ public:
     embark_tools_settings () { };
     ~embark_tools_settings () { };
     void help () { };
-    std::string getFocusString () { return "embark-tools/options"; };
+    std::vector<std::string> getFocusStrings () { return std::vector<std::string>{"embark-tools/options"}; };
     void render ()
     {
         parent->render();

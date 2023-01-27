@@ -947,8 +947,8 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                 << "Supported keys: [Ctrl-][Alt-][Shift-](A-Z, 0-9, F1-F12, `, or Enter)." << endl
                 << "Context may be used to limit the scope of the binding, by" << endl
                 << "requiring the current context to have a certain prefix." << endl
-                << "Current UI context is: "
-                << Gui::getFocusString(Core::getTopViewscreen()) << endl;
+                << "Current UI context is: " << endl
+                << join_strings("\n", Gui::getFocusStrings(Gui::getDFViewscreen())) << endl;
         }
     }
     else if (first == "alias")
@@ -2419,11 +2419,22 @@ bool Core::SelectHotkey(int sym, int modifiers)
                                         binding.modifiers, modifiers);
                 continue;
             }
-            string focusString = Gui::getFocusString(screen);
-            if (!binding.focus.empty() && !prefix_matches(binding.focus, focusString)) {
-                DEBUG(keybinding).print("skipping keybinding due to focus string mismatch: '%s' !~ '%s'\n",
-                                        focusString.c_str(), binding.focus.c_str());
-                continue;
+            if (!binding.focus.empty()) {
+                // TODO: understand more about this to figure out if this solution works
+                bool found = false;
+                std::vector<std::string> focusStrings = Gui::getFocusStrings(Core::getTopViewscreen());
+                // is there convention for when to use size_t vs int?
+                for (std::string focusString : focusStrings) {
+                    if (prefix_matches(binding.focus, focusString)) {
+                        found = true;
+                    }
+                }
+
+                if (!found) {
+                    DEBUG(keybinding).print("skipping keybinding due to focus string mismatch: '%s' !~ '%s'\n",
+                        join_strings(", ", focusStrings), binding.focus.c_str());
+                    continue;
+                }
             }
             if (!plug_mgr->CanInvokeHotkey(binding.command[0], screen)) {
                 DEBUG(keybinding).print("skipping keybinding due to hotkey guard rejection (command: '%s')\n",

@@ -31,7 +31,7 @@ namespace embark_assist{
 
             void render();
 
-            std::string getFocusString() { return "Help UI"; }
+            std::vector<std::string> getFocusStrings() { return std::vector<std::string>{"Help UI"}; }
 
         private:
             pages current_page = pages::Intro;

@@ -56,7 +56,7 @@ public:
 
     void render();
 
-    std::string getFocusString() { return "buildingplan_choosemat"; }
+    std::string getFocusStrings() { return "buildingplan_choosemat"; }
 
 private:
     ListColumn<df::dfhack_material_category> masks_column;

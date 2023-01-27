@@ -864,7 +864,7 @@ public:
             }
         }
     }
-    std::string getFocusString() { return "unitlabors/batch"; }
+    std::vector<std::string> getFocusStrings() { return std::vector<std::string>{"unitlabors/batch"}; }
     void select_page (page p)
     {
         if (p == NICKNAME || p == PROFNAME)
@@ -1034,7 +1034,7 @@ public:
             }
         }
     }
-    std::string getFocusString() { return "unitlabors/profession"; }
+    std::vector<std::string> getFocusStrings() { return std::vector<std::string>{"unitlabors/profession"}; }
     void feed(set<df::interface_key> *events)
     {
         if (events->count(interface_key::LEAVESCREEN))
@@ -1146,7 +1146,7 @@ public:
 
     void help() { }
 
-    std::string getFocusString() { return "unitlabors"; }
+    std::vector<std::string> getFocusStrings() { return std::vector<std::string>{"unitlabors"}; }
 
     df::unit *getSelectedUnit();
 

@@ -90,7 +90,7 @@ static void find_active_keybindings(df::viewscreen *screen, bool filtermenu) {
 
     valid_keys.push_back("`");
 
-    current_focus = Gui::getFocusString(screen);
+    current_focus = Gui::getFocusStrings(screen)[0];
     for (int shifted = 0; shifted < 2; shifted++) {
         for (int alt = 0; alt < 2; alt++) {
             for (int ctrl = 0; ctrl < 2; ctrl++) {
@@ -158,7 +158,7 @@ static void list(color_ostream &out) {
 static bool invoke_command(color_ostream &out, const size_t index) {
     auto screen = Core::getTopViewscreen();
     if (sorted_keys.size() <= index ||
-            Gui::getFocusString(screen) != MENU_SCREEN_FOCUS_STRING)
+            !Gui::matchFocusString(MENU_SCREEN_FOCUS_STRING))
         return false;
 
     auto cmd = current_bindings[sorted_keys[index]];

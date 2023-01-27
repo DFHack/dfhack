@@ -151,9 +151,9 @@ ruby
 Support for the Ruby language in DFHack scripts was removed due to the issues
 the Ruby library causes when used as an embedded language.
 
-.. _show_unit_syndromes:
+.. _show-unit-syndromes:
 
-show_unit_syndromes
+show-unit-syndromes
 ===================
 Replaced with a GUI version: `gui/unit-syndromes`.
 

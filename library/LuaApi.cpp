@@ -2869,8 +2869,7 @@ static int heap_take_snapshot()
 
     for (auto i : entries)
     {
-        uintptr_t val = 0;
-        memcpy(&val, &i.first, sizeof(void*));
+        uintptr_t val = reinterpret_cast<uintptr_t>(i.first);
         snapshot[val] = i.second;
     }
 
@@ -2888,14 +2887,6 @@ static int heap_take_snapshot()
     #endif
 
     return 0;
-}
-
-static void* address_to_pointer(uintptr_t ptr)
-{
-    void* as_ptr = nullptr;
-    memcpy((void*)&as_ptr, &ptr, sizeof(uintptr_t));
-
-    return as_ptr;
 }
 
 //this function probably should not allocate. Then again we're shimming through lua which.... probably does
@@ -2981,7 +2972,7 @@ static uintptr_t get_root_address_of_heap_object(uintptr_t ptr)
 static int msize_address(uintptr_t ptr)
 {
     #ifdef _WIN32
-    void* vptr = address_to_pointer(ptr);
+    void* vptr = reinterpret_cast<void*>(ptr);
 
     if (vptr)
         return _msize(vptr);

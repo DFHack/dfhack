@@ -502,7 +502,7 @@ function Panel:onRenderFrame(dc, rect)
             and not self.parent_view:hasFocus()
     local pause_forced = self.parent_view and self.parent_view.force_pause
     gui.paint_frame(dc, rect, self.frame_style, self.frame_title, inactive,
-            pause_forced)
+            pause_forced, self.resizable)
     if self.kbd_get_pos then
         local pos = self.kbd_get_pos()
         local pen = to_pen{fg=COLOR_GREEN, bg=COLOR_BLACK}

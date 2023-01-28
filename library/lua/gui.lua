@@ -888,13 +888,17 @@ THIN_FRAME = make_frame('Thin', false)
 -- for compatibility with pre-steam code
 GREY_LINE_FRAME = WINDOW_FRAME
 
-function paint_frame(dc,rect,style,title,inactive, pause_forced)
+function paint_frame(dc,rect,style,title,inactive,pause_forced,resizable)
     local pen = style.frame_pen
     local x1,y1,x2,y2 = dc.x1+rect.x1, dc.y1+rect.y1, dc.x1+rect.x2, dc.y1+rect.y2
     dscreen.paintTile(style.lt_frame_pen or pen, x1, y1)
     dscreen.paintTile(style.rt_frame_pen or pen, x2, y1)
     dscreen.paintTile(style.lb_frame_pen or pen, x1, y2)
-    dscreen.paintTile(style.rb_frame_pen or pen, x2, y2)
+    local rb_frame_pen = style.rb_frame_pen
+    if rb_frame_pen == WINDOW_FRAME.rb_frame_pen and not resizable then
+        rb_frame_pen = PANEL_FRAME.rb_frame_pen
+    end
+    dscreen.paintTile(rb_frame_pen or pen, x2, y2)
     dscreen.fillRect(style.t_frame_pen or style.h_frame_pen or pen,x1+1,y1,x2-1,y1)
     dscreen.fillRect(style.b_frame_pen or style.h_frame_pen or pen,x1+1,y2,x2-1,y2)
     dscreen.fillRect(style.l_frame_pen or style.v_frame_pen or pen,x1,y1+1,x1,y2-1)

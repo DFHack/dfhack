@@ -318,9 +318,10 @@ namespace DFHack
 
             static const int RESTORE_AT_TOP = 0x1;
         private:
-            void extract(df::viewscreen*);
-            void merge(df::viewscreen*);
+            void extract();
+            void merge();
             df::viewscreen* screen;
+            df::viewscreen* prev_parent;
             int flags;
         };
     }

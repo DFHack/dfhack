@@ -816,8 +816,8 @@ int dfhack_lua_viewscreen::do_destroy(lua_State *L)
     if (!self) return 0;
 
     if (!Screen::isDismissed(self)) {
-        WARNING(screen).print("DFHack screen was destroyed before it was dismissed\n");
-        WARNING(screen).print("Please tell the DFHack team which DF screen you were just viewing\n");
+        WARN(screen).print("DFHack screen was destroyed before it was dismissed\n");
+        WARN(screen).print("Please tell the DFHack team which DF screen you were just viewing\n");
         // run skipped onDismiss cleanup logic
         Screen::dismiss(self);
     }

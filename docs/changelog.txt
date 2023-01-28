@@ -34,6 +34,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
+- `autoslab`: Automatically create work orders to engrave slabs for ghostly dwarves.
 
 ## Fixes
 - Fix issues with clicks "passing through" some DFHack window elements, like scrollbars

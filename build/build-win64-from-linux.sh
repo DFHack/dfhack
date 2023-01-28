@@ -29,7 +29,7 @@ if [[ $(id -u) -eq 0 ]]; then
     # If this was run using sudo, let's make sure the directories are owned by the
     # real user (and set the BUILDER_UID to it)
     builder_uid=$SUDO_UID
-    chown $builder_uid win64-cross win64-cross/output
+    chown -R $builder_uid win64-cross
 fi
 
 # Assumes you built a container image called dfhack-build-msvc from

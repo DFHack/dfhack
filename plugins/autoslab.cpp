@@ -13,15 +13,15 @@
 #include "PluginManager.h"
 
 #include "modules/Persistence.h"
-#include "modules/World.h"
 #include "modules/Translation.h"
+#include "modules/World.h"
 
+#include "df/historical_figure.h"
+#include "df/item.h"
 #include "df/manager_order.h"
-#include "df/world.h"
 #include "df/plotinfost.h"
 #include "df/unit.h"
-#include "df/item.h"
-#include "df/historical_figure.h"
+#include "df/world.h"
 
 using namespace DFHack;
 

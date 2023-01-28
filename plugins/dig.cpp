@@ -9,7 +9,6 @@
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
-#include "uicommon.h"
 
 #include "modules/Gui.h"
 #include "modules/MapCache.h"
@@ -213,7 +212,7 @@ bool lineY (MapExtras::MapCache & MCache,
 
 int32_t parse_priority(color_ostream &out, vector<string> &parameters)
 {
-    int32_t default_priority = game->designation.priority;
+    int32_t default_priority = game->main_interface.designation.priority;
 
     for (auto it = parameters.begin(); it != parameters.end(); ++it)
     {

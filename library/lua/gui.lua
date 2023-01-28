@@ -706,7 +706,7 @@ ZScreen.ATTRS{
 
 function ZScreen:init()
     self.saved_pause_state = df.global.pause_state
-    if self.initial_pause then
+    if self.initial_pause and dfhack.isMapLoaded() then
         df.global.pause_state = true
     end
     self.defocused = false
@@ -714,19 +714,30 @@ end
 
 function ZScreen:dismiss()
     ZScreen.super.dismiss(self)
-    if self.force_pause or self.initial_pause then
+    if (self.force_pause or self.initial_pause) and dfhack.isMapLoaded() then
         -- never go from unpaused to paused, just from paused to unpaused
         df.global.pause_state = df.global.pause_state and self.saved_pause_state
     end
 end
 
+local NO_LOGIC_SCREENS = utils.invert{
+    'viewscreen_loadgamest',
+    'viewscreen_export_regionst',
+    'viewscreen_choose_game_typest',
+}
+
 -- this is necessary for middle-click map scrolling to function
 function ZScreen:onIdle()
-    if self.force_pause then
+    if self.force_pause and dfhack.isMapLoaded() then
         df.global.pause_state = true
     end
     if self._native and self._native.parent then
-        self._native.parent:logic()
+        local vs_name = getmetatable(dfhack.gui.getDFViewscreen(true))
+        if NO_LOGIC_SCREENS[vs_name] then
+            self.force_pause = true
+        else
+            self._native.parent:logic()
+        end
     end
 end
 

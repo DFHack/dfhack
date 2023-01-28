@@ -724,6 +724,7 @@ local NO_LOGIC_SCREENS = utils.invert{
     'viewscreen_loadgamest',
     'viewscreen_export_regionst',
     'viewscreen_choose_game_typest',
+    'viewscreen_worldst',
 }
 
 -- this is necessary for middle-click map scrolling to function
@@ -735,6 +736,8 @@ function ZScreen:onIdle()
         local vs_name = getmetatable(dfhack.gui.getDFViewscreen(true))
         if NO_LOGIC_SCREENS[vs_name] then
             self.force_pause = true
+            self.pass_movement_keys = false
+            self.pass_mouse_clicks = false
         else
             self._native.parent:logic()
         end

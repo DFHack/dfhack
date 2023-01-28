@@ -2234,8 +2234,8 @@ static const luaL_Reg dfhack_burrows_funcs[] = {
 
 /***** Buildings module *****/
 
-static bool buildings_containsTile(df::building *bld, int x, int y, bool room) {
-    return Buildings::containsTile(bld, df::coord2d(x,y), room);
+static bool buildings_containsTile(df::building *bld, int x, int y) {
+    return Buildings::containsTile(bld, df::coord2d(x,y));
 }
 
 static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {

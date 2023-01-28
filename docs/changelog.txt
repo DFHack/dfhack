@@ -36,7 +36,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
-- Fix issues with clicks "passing through" some DFHack window elements, like scrollbars
+-@ Fix issues with clicks "passing through" some DFHack window elements, like scrollbars
 - `plugin/getplants`: tree are now designated correctly
 
 ## Misc Improvements
@@ -48,10 +48,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Many DFHack windows can now be unfocused by clicking somewhere not over the tool window. This has the same effect as pinning previously did, but without the extra clicking.
 - `overlay`: overlay widgets can now specify a default enabled state if they are not already set in the player's overlay config file
 - `plugin/getplants`: ID values will now be accepted regardless of case
+-@ New borders for DFHack tool windows -- tell us what you think!
 
 ## Documentation
 
 ## API
+- ``Buildings::containsTile()``: no longer takes a ``room`` parameter since that's not how rooms work anymore. If the building has extents, the extents will be checked. otherwise, the result just depends on whether the tile is within the building's bounding box.
 
 ## Lua
 - `helpdb`: new function: ``helpdb.refresh()`` to force a refresh of the database. Call if you are a developer adding new scripts, loading new plugins, or changing help text during play

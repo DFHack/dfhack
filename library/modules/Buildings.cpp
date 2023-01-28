@@ -407,7 +407,7 @@ df::building *Buildings::findAtTile(df::coord pos)
 
         if (building && building->z == pos.z &&
             building->isSettingOccupancy() &&
-            containsTile(building, pos, false))
+            containsTile(building, pos))
         {
             return building;
         }
@@ -442,24 +442,19 @@ df::building *Buildings::findAtTile(df::coord pos)
 
 static unordered_map<int32_t, df::coord> corner1;
 static unordered_map<int32_t, df::coord> corner2;
-static void cacheBuilding(df::building *building, bool is_civzone) {
+static void cacheBuilding(df::building *building) {
     int32_t id = building->id;
     df::coord p1(min(building->x1, building->x2), min(building->y1,building->y2), building->z);
     df::coord p2(max(building->x1, building->x2), max(building->y1,building->y2), building->z);
 
-    if (!is_civzone) {
-        // civzones can be dynamically shrunk so we don't bother to cache
-        // their boundaries. findCivzonesAt() will trim the cache as needed.
-        corner1[id] = p1;
-        corner2[id] = p2;
-    }
+    corner1[id] = p1;
+    corner2[id] = p2;
 
     for (int32_t x = p1.x; x <= p2.x; x++) {
         for (int32_t y = p1.y; y <= p2.y; y++) {
             df::coord pt(x, y, building->z);
-            if (Buildings::containsTile(building, pt, is_civzone)) {
-                if (!is_civzone)
-                    locationToBuilding[pt] = id;
+            if (Buildings::containsTile(building, pt)) {
+                locationToBuilding[pt] = id;
             }
         }
     }
@@ -868,31 +863,16 @@ int Buildings::countExtentTiles(df::building_extents *ext, int defval)
     return cnt;
 }
 
-bool Buildings::containsTile(df::building *bld, df::coord2d tile, bool room)
-{
+bool Buildings::containsTile(df::building *bld, df::coord2d tile) {
     CHECK_NULL_POINTER(bld);
 
-    if (room)
-    {
-/* TODO: understand how this changes for v50
-        if (!bld->is_room || !bld->room.extents)
-            return false;
-*/
-    }
-    else
-    {
+    if (!bld->isExtentShaped() || !bld->room.extents) {
         if (tile.x < bld->x1 || tile.x > bld->x2 || tile.y < bld->y1 || tile.y > bld->y2)
             return false;
     }
 
-    if (bld->room.extents && (room || bld->isExtentShaped()))
-    {
-        df::building_extents_type *etile = getExtentTile(bld->room, tile);
-        if (!etile || !*etile)
-            return false;
-    }
-
-    return true;
+    df::building_extents_type *etile = getExtentTile(bld->room, tile);
+    return etile && *etile;
 }
 
 bool Buildings::hasSupport(df::coord pos, df::coord2d size)
@@ -1491,7 +1471,7 @@ void Buildings::updateBuildings(color_ostream&, void* ptr)
     {
         bool is_civzone = !building->isSettingOccupancy();
         if (!corner1.count(id) && !is_civzone)
-            cacheBuilding(building, false);
+            cacheBuilding(building);
     }
     else if (corner1.count(id))
     {
@@ -1697,7 +1677,7 @@ StockpileIterator& StockpileIterator::operator++() {
             continue;
         }
 
-        if (!Buildings::containsTile(stockpile, item->pos, false)) {
+        if (!Buildings::containsTile(stockpile, item->pos)) {
             continue;
         }
 

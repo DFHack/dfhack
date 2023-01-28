@@ -259,7 +259,7 @@ struct TileType
 
     inline bool matches(const df::tiletype source,
                         const df::tile_designation des,
-                        const t_matpair mat)
+                        const t_matpair mat) const
     {
         bool rv = true;
         rv &= (shape == -1 || shape == tileShape(source));
@@ -735,6 +735,111 @@ bool processTileType(color_ostream & out, TileType &paint, std::vector<std::stri
     return found;
 }
 
+static bool paintTile(MapExtras::MapCache &map, const df::coord &pos,
+                      const TileType &target, const TileType &match = TileType()) {
+    MapExtras::Block *blk = map.BlockAtTile(pos);
+    if (!blk)
+        return false;
+
+    df::tiletype source = map.tiletypeAt(pos);
+    df::tile_designation des = map.designationAt(pos);
+
+    // Stone painting operates on the base layer
+    if (target.stone_material >= 0)
+        source = blk->baseTiletypeAt(pos);
+
+    t_matpair basemat = blk->baseMaterialAt(pos);
+
+    if (!match.matches(source, des, basemat))
+        return true;
+
+    df::tiletype_shape shape = target.shape;
+    if (shape == tiletype_shape::NONE)
+        shape = tileShape(source);
+
+    df::tiletype_material material = target.material;
+    if (material == tiletype_material::NONE)
+        material = tileMaterial(source);
+
+    df::tiletype_special special = target.special;
+    if (special == tiletype_special::NONE)
+        special = tileSpecial(source);
+
+    df::tiletype_variant variant = target.variant;
+    /*
+        * FIXME: variant should be:
+        * 1. If user variant:
+        * 2.   If user variant \belongs target variants
+        * 3.     use user variant
+        * 4.   Else
+        * 5.     use variant 0
+        * 6. If the source variant \belongs target variants
+        * 7    use source variant
+        * 8  ElseIf num target shape/material variants > 1
+        * 9.   pick one randomly
+        * 10.Else
+        * 11.  use variant 0
+        *
+        * The following variant check has been disabled because it's severely limiting
+        * the usefullness of the tool.
+        */
+    /*
+    if (variant == tiletype_variant::NONE)
+    {
+        variant = tileVariant(source);
+    }
+    */
+    // Remove direction from directionless tiles
+    DFHack::TileDirection direction = tileDirection(source);
+    if (!(material == tiletype_material::RIVER || shape == tiletype_shape::BROOK_BED || special == tiletype_special::TRACK || (shape == tiletype_shape::WALL && (material == tiletype_material::CONSTRUCTION || special == tiletype_special::SMOOTH))))
+        direction.whole = 0;
+
+    df::tiletype type = DFHack::findTileType(shape, material, variant, special, direction);
+    // hack for empty space
+    if (shape == tiletype_shape::EMPTY && material == tiletype_material::AIR && variant == tiletype_variant::VAR_1 && special == tiletype_special::NORMAL && direction.whole == 0)
+        type = tiletype::OpenSpace;
+
+    // make sure it's not invalid
+    if (type != tiletype::Void) {
+        if (target.stone_material >= 0) {
+            if (!blk->setStoneAt(pos, type, target.stone_material, target.vein_type, true, true))
+                return false;
+        }
+        else
+            map.setTiletypeAt(pos, type);
+    }
+
+    if (target.hidden > -1)
+        des.bits.hidden = target.hidden;
+
+    if (target.light > -1)
+        des.bits.light = target.light;
+
+    if (target.subterranean > -1)
+        des.bits.subterranean = target.subterranean;
+
+    if (target.skyview > -1)
+        des.bits.outside = target.skyview;
+
+    if (target.aquifer > -1)
+        des.bits.water_table = target.aquifer;
+
+    // Remove liquid from walls, etc
+    if (type != (df::tiletype)-1 && !DFHack::FlowPassable(type))
+    {
+        des.bits.flow_size = 0;
+        //des.bits.liquid_type = DFHack::liquid_water;
+        //des.bits.water_table = 0;
+        des.bits.flow_forbid = 0;
+        //des.bits.liquid_static = 0;
+        //des.bits.water_stagnant = 0;
+        //des.bits.water_salt = 0;
+    }
+
+    map.setDesignationAt(pos, des);
+    return true;
+}
+
 command_result executePaintJob(color_ostream &out,
                                const tiletypes_options &opts)
 {
@@ -786,128 +891,8 @@ command_result executePaintJob(color_ostream &out,
 
     for (coord_vec::iterator iter = all_tiles.begin(); iter != all_tiles.end(); ++iter)
     {
-        MapExtras::Block *blk = map.BlockAtTile(*iter);
-        if (!blk)
-            continue;
-
-        df::tiletype source = map.tiletypeAt(*iter);
-        df::tile_designation des = map.designationAt(*iter);
-
-        // Stone painting operates on the base layer
-        if (paint.stone_material >= 0)
-            source = blk->baseTiletypeAt(*iter);
-
-        t_matpair basemat = blk->baseMaterialAt(*iter);
-
-        if (!filter.matches(source, des, basemat))
-        {
-            continue;
-        }
-
-        df::tiletype_shape shape = paint.shape;
-        if (shape == tiletype_shape::NONE)
-        {
-            shape = tileShape(source);
-        }
-
-        df::tiletype_material material = paint.material;
-        if (material == tiletype_material::NONE)
-        {
-            material = tileMaterial(source);
-        }
-
-        df::tiletype_special special = paint.special;
-        if (special == tiletype_special::NONE)
-        {
-            special = tileSpecial(source);
-        }
-        df::tiletype_variant variant = paint.variant;
-        /*
-         * FIXME: variant should be:
-         * 1. If user variant:
-         * 2.   If user variant \belongs target variants
-         * 3.     use user variant
-         * 4.   Else
-         * 5.     use variant 0
-         * 6. If the source variant \belongs target variants
-         * 7    use source variant
-         * 8  ElseIf num target shape/material variants > 1
-         * 9.   pick one randomly
-         * 10.Else
-         * 11.  use variant 0
-         *
-         * The following variant check has been disabled because it's severely limiting
-         * the usefullness of the tool.
-         */
-        /*
-        if (variant == tiletype_variant::NONE)
-        {
-            variant = tileVariant(source);
-        }
-        */
-        // Remove direction from directionless tiles
-        DFHack::TileDirection direction = tileDirection(source);
-        if (!(material == tiletype_material::RIVER || shape == tiletype_shape::BROOK_BED || special == tiletype_special::TRACK || (shape == tiletype_shape::WALL && (material == tiletype_material::CONSTRUCTION || special == tiletype_special::SMOOTH))))
-        {
-            direction.whole = 0;
-        }
-
-        df::tiletype type = DFHack::findTileType(shape, material, variant, special, direction);
-        // hack for empty space
-        if (shape == tiletype_shape::EMPTY && material == tiletype_material::AIR && variant == tiletype_variant::VAR_1 && special == tiletype_special::NORMAL && direction.whole == 0)
-        {
-            type = tiletype::OpenSpace;
-        }
-        // make sure it's not invalid
-        if(type != tiletype::Void)
-        {
-            if (paint.stone_material >= 0)
-            {
-                if (!blk->setStoneAt(*iter, type, paint.stone_material, paint.vein_type, true, true))
-                    failures++;
-            }
-            else
-                map.setTiletypeAt(*iter, type);
-        }
-
-        if (paint.hidden > -1)
-        {
-            des.bits.hidden = paint.hidden;
-        }
-
-        if (paint.light > -1)
-        {
-            des.bits.light = paint.light;
-        }
-
-        if (paint.subterranean > -1)
-        {
-            des.bits.subterranean = paint.subterranean;
-        }
-
-        if (paint.skyview > -1)
-        {
-            des.bits.outside = paint.skyview;
-        }
-
-        if (paint.aquifer > -1)
-        {
-            des.bits.water_table = paint.aquifer;
-        }
-
-        // Remove liquid from walls, etc
-        if (type != (df::tiletype)-1 && !DFHack::FlowPassable(type))
-        {
-            des.bits.flow_size = 0;
-            //des.bits.liquid_type = DFHack::liquid_water;
-            //des.bits.water_table = 0;
-            des.bits.flow_forbid = 0;
-            //des.bits.liquid_static = 0;
-            //des.bits.water_stagnant = 0;
-            //des.bits.water_salt = 0;
-        }
-
-        map.setDesignationAt(*iter, des);
+        if (!paintTile(map, *iter, paint, filter))
+            ++failures;
     }
 
     if (failures > 0)
@@ -1135,3 +1120,59 @@ command_result df_tiletypes_here_point (color_ostream &out, vector <string> & pa
     brush = old;
     return rv;
 }
+
+static bool setTile(color_ostream &out, df::coord pos, df::tiletype_shape shape,
+                    df::tiletype_material material, df::tiletype_special special,
+                    df::tiletype_variant variant) {
+    if (!Maps::isValidTilePos(pos)) {
+        out.printerr("Invalid map position: %d, %d, %d\n", pos.x, pos.y, pos.z);
+        return false;
+    }
+
+    if (!is_valid_enum_item(shape)) {
+        out.printerr("Invalid shape type: %d\n", shape);
+        return false;
+    }
+    if (!is_valid_enum_item(material)) {
+        out.printerr("Invalid material type: %d\n", material);
+        return false;
+    }
+    if (!is_valid_enum_item(special)) {
+        out.printerr("Invalid special type: %d\n", special);
+        return false;
+    }
+    if (!is_valid_enum_item(variant)) {
+        out.printerr("Invalid variant type: %d\n", variant);
+        return false;
+    }
+
+    TileType target;
+    target.shape = shape;
+    target.material = material;
+    target.special = special;
+    target.variant = variant;
+
+    MapExtras::MapCache map;
+    return paintTile(map, pos, target) && map.WriteAll();
+}
+
+static int tiletypes_setTile(lua_State *L) {
+    color_ostream *out = Lua::GetOutput(L);
+    if (!out)
+        out = &Core::getInstance().getConsole();
+
+    df::coord pos;
+    Lua::CheckDFAssign(L, &pos, 1);
+    df::tiletype_shape shape = (df::tiletype_shape)lua_tointeger(L, 2);
+    df::tiletype_material material = (df::tiletype_material)lua_tointeger(L, 3);
+    df::tiletype_special special = (df::tiletype_special)lua_tointeger(L, 4);
+    df::tiletype_variant variant = (df::tiletype_variant)lua_tointeger(L, 5);
+
+    Lua::Push(L, setTile(*out, pos, shape, material, special, variant));
+    return 1;
+}
+
+DFHACK_PLUGIN_LUA_COMMANDS {
+    DFHACK_LUA_COMMAND(tiletypes_setTile),
+    DFHACK_LUA_END
+};

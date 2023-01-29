@@ -320,8 +320,10 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                      std::vector<dug_tile_info> &dug_tiles) {
     df::tiletype tt = map.tiletypeAt(pos);
 
-    if (!is_diggable(map, pos, tt))
+    if (!is_diggable(map, pos, tt)) {
+        out.print("dig_tile: not diggable\n");
         return false;
+    }
 
     df::tiletype target_type = df::tiletype::Void;
     switch(designation) {
@@ -339,19 +341,23 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
         case df::tile_dig_designation::Channel:
         {
             DFCoord pos_below(pos.x, pos.y, pos.z-1);
+            // todo: does can_dig_channel return false?
             if (can_dig_channel(tt) && map.ensureBlockAt(pos_below)
                     && is_diggable(map, pos_below, map.tiletypeAt(pos_below))) {
                 target_type = df::tiletype::OpenSpace;
                 DFCoord pos_above(pos.x, pos.y, pos.z+1);
-                if (map.ensureBlockAt(pos_above))
+                if (map.ensureBlockAt(pos_above)) {
                     remove_ramp_top(map, pos_above);
-                df::tile_dig_designation td_below =
-                        map.designationAt(pos_below).bits.dig;
-                if (dig_tile(out, map, pos_below,
-                             df::tile_dig_designation::Ramp, dug_tiles)) {
+                }
+                df::tile_dig_designation td_below = map.designationAt(pos_below).bits.dig;
+
+                // todo: what is this chain of dig_tile(below)?
+                if (dig_tile(out, map, pos_below, df::tile_dig_designation::Ramp, dug_tiles)) {
                     clean_ramps(map, pos_below);
-                    if (td_below == df::tile_dig_designation::Default)
+                    if (td_below == df::tile_dig_designation::Default) {
+                        // todo: removing ramp?
                         dig_tile(out, map, pos_below, td_below, dug_tiles);
+                    }
                     return true;
                 }
             }
@@ -407,7 +413,7 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
     if (target_type == df::tiletype::Void || target_type == tt)
         return false;
 
-    dug_tiles.push_back(dug_tile_info(map, pos));
+    dug_tiles.emplace_back(map, pos);
     dig_type(map, pos, target_type);
 
     // let light filter down to newly exposed tiles
@@ -606,14 +612,17 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
                 if (!Maps::getTileBlock(x, y, z))
                     continue;
 
+                // todo: check if tile is in the job list with a dig type
+
                 DFCoord pos(x, y, z);
                 df::tile_designation td = map.designationAt(pos);
                 df::tile_occupancy to = map.occupancyAt(pos);
-                if (td.bits.dig != df::tile_dig_designation::No &&
-                        !to.bits.dig_marked) {
+                if (td.bits.dig != df::tile_dig_designation::No && !to.bits.dig_marked) {
                     std::vector<dug_tile_info> dug_tiles;
+
+                    // todo: check why dig_tile doesn't dig the second layer of channels
                     if (dig_tile(out, map, pos, td.bits.dig, dug_tiles)) {
-                        for (auto info : dug_tiles) {
+                        for (auto info: dug_tiles) {
                             td = map.designationAt(info.pos);
                             td.bits.dig = df::tile_dig_designation::No;
                             map.setDesignationAt(info.pos, td);
@@ -629,6 +638,7 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
                             }
                         }
                     }
+                    // todo: check mark mode of smooth designations
                 } else if (td.bits.smooth == 1) {
                     if (smooth_tile(out, map, pos)) {
                         to = map.occupancyAt(pos);
@@ -636,9 +646,9 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
                         map.setDesignationAt(pos, td);
                     }
                 } else if (to.bits.carve_track_north == 1
-                                || to.bits.carve_track_east == 1
-                                || to.bits.carve_track_south == 1
-                                || to.bits.carve_track_west == 1) {
+                           || to.bits.carve_track_east == 1
+                           || to.bits.carve_track_south == 1
+                           || to.bits.carve_track_west == 1) {
                     if (carve_tile(map, pos, to)) {
                         to = map.occupancyAt(pos);
                         to.bits.carve_track_north = 0;

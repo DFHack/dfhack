@@ -13,15 +13,17 @@ CLEAR_PEN = to_pen{tile=909, ch=32, fg=0, bg=0, write_to_lower=true}
 TRANSPARENT_PEN = to_pen{tile=0, ch=0}
 KEEP_LOWER_PEN = to_pen{ch=32, fg=0, bg=0, keep_lower=true}
 
-local FAKE_INPUT_KEYS = {
+local MOUSE_KEYS = {
     _MOUSE_L = true,
     _MOUSE_R = true,
     _MOUSE_M = true,
     _MOUSE_L_DOWN = true,
     _MOUSE_R_DOWN = true,
     _MOUSE_M_DOWN = true,
-    _STRING = true,
 }
+
+local FAKE_INPUT_KEYS = copyall(MOUSE_KEYS)
+FAKE_INPUT_KEYS._STRING = true
 
 function simulateInput(screen,...)
     local keys = {}
@@ -691,9 +693,38 @@ end
 -- Z-order swapping screen --
 -----------------------------
 
-ZScreen = defclass(ZScreen, Screen)
+local zscreen_inhibit_mouse_l = false
 
+ZScreen = defclass(ZScreen, Screen)
+ZScreen.ATTRS{
+    initial_pause=true,
+    force_pause=false,
+    pass_pause=true,
+    pass_movement_keys=false,
+    pass_mouse_clicks=true,
+}
+
+function ZScreen:init()
+    self.saved_pause_state = df.global.pause_state
+    if self.initial_pause then
+        df.global.pause_state = true
+    end
+    self.defocused = false
+end
+
+function ZScreen:dismiss()
+    ZScreen.super.dismiss(self)
+    if self.force_pause or self.initial_pause then
+        -- never go from unpaused to paused, just from paused to unpaused
+        df.global.pause_state = df.global.pause_state and self.saved_pause_state
+    end
+end
+
+-- this is necessary for middle-click map scrolling to function
 function ZScreen:onIdle()
+    if self.force_pause then
+        df.global.pause_state = true
+    end
     if self._native and self._native.parent then
         self._native.parent:logic()
     end
@@ -704,17 +735,15 @@ function ZScreen:render(dc)
     ZScreen.super.render(self, dc)
 end
 
-function ZScreen:isOnTop()
-    return dfhack.gui.getCurViewscreen(true) == self._native
-end
-
-function ZScreen:togglePinned()
-    self.pinned = not self.pinned
+function ZScreen:hasFocus()
+    return not self.defocused
+            and dfhack.gui.getCurViewscreen(true) == self._native
 end
 
 function ZScreen:onInput(keys)
-    if not self:isOnTop() then
-        if keys._MOUSE_L_DOWN and self:isMouseOver() then
+    local has_mouse = self:isMouseOver()
+    if not self:hasFocus() then
+        if (keys._MOUSE_L_DOWN or keys._MOUSE_R_DOWN) and has_mouse then
             self:raise()
         else
             self:sendInputToParent(keys)
@@ -727,6 +756,7 @@ function ZScreen:onInput(keys)
         if keys._MOUSE_L_DOWN then
             -- note we can't clear mouse_lbut here. otherwise we break dragging,
             df.global.enabler.mouse_lbut_down = 0
+            zscreen_inhibit_mouse_l = true
         end
         if keys._MOUSE_R_DOWN then
             df.global.enabler.mouse_rbut_down = 0
@@ -734,30 +764,49 @@ function ZScreen:onInput(keys)
         return
     end
 
-    if keys.CUSTOM_ALT_L then
-        self:togglePinned()
+    if self.pass_mouse_clicks and keys._MOUSE_L_DOWN and not has_mouse then
+        self.defocused = true
+        self:sendInputToParent(keys)
         return
-    end
-
-    if (self:isMouseOver() or not self.pinned)
-            and (keys.LEAVESCREEN or keys._MOUSE_R_DOWN) then
+    elseif keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
         self:dismiss()
-        -- ensure underlying DF screens don't also react to the click
+        -- ensure underlying DF screens don't also react to the rclick
         df.global.enabler.mouse_rbut_down = 0
         df.global.enabler.mouse_rbut = 0
         return
-    end
-
-    if not keys._MOUSE_L or not self:isMouseOver() then
-        self:sendInputToParent(keys)
+    else
+        if zscreen_inhibit_mouse_l then
+            if keys._MOUSE_L then
+                return
+            else
+                zscreen_inhibit_mouse_l = false
+            end
+        end
+        local passit = self.pass_pause and keys.D_PAUSE
+        if not passit and self.pass_mouse_clicks then
+            for key in pairs(MOUSE_KEYS) do
+                if keys[key] then
+                    passit = true
+                    break
+                end
+            end
+        end
+        if not passit and self.pass_movement_keys then
+            passit = require('gui.dwarfmode').getMapKey(keys)
+        end
+        if passit then
+            self:sendInputToParent(keys)
+        end
+        return
     end
 end
 
 function ZScreen:raise()
-    if self:isDismissed() or self:isOnTop() then
+    if self:isDismissed() or self:hasFocus() then
         return self
     end
     dscreen.raise(self)
+    self.defocused = false
     return self
 end
 
@@ -789,43 +838,67 @@ end
 --------------------------
 
 -- Plain grey-colored frame.
+-- deprecated
 GREY_FRAME = {
     frame_pen = to_pen{ ch = ' ', fg = COLOR_BLACK, bg = COLOR_GREY },
     title_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_WHITE },
     signature_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
 }
 
--- The usual boundary used by the DF screens. Often has fancy pattern in tilesets.
+-- The boundary used by the pre-steam DF screens.
+-- deprecated
 BOUNDARY_FRAME = {
     frame_pen = to_pen{ ch = 0xDB, fg = COLOR_GREY, bg = COLOR_BLACK },
     title_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
     signature_pen = to_pen{ fg = COLOR_BLACK, bg = COLOR_GREY },
 }
 
-GREY_LINE_FRAME = {
+local BASE_FRAME = {
     frame_pen = to_pen{ ch=206, fg=COLOR_GREY, bg=COLOR_BLACK },
-    t_frame_pen = to_pen{ tile=902, ch=205, fg=COLOR_GREY, bg=COLOR_BLACK },
-    l_frame_pen = to_pen{ tile=908, ch=186, fg=COLOR_GREY, bg=COLOR_BLACK },
-    b_frame_pen = to_pen{ tile=916, ch=205, fg=COLOR_GREY, bg=COLOR_BLACK },
-    r_frame_pen = to_pen{ tile=910, ch=186, fg=COLOR_GREY, bg=COLOR_BLACK },
-    lt_frame_pen = to_pen{ tile=901, ch=201, fg=COLOR_GREY, bg=COLOR_BLACK },
-    lb_frame_pen = to_pen{ tile=915, ch=200, fg=COLOR_GREY, bg=COLOR_BLACK },
-    rt_frame_pen = to_pen{ tile=903, ch=187, fg=COLOR_GREY, bg=COLOR_BLACK },
-    rb_frame_pen = to_pen{ tile=917, ch=188, fg=COLOR_GREY, bg=COLOR_BLACK },
     title_pen = to_pen{ fg=COLOR_BLACK, bg=COLOR_GREY },
     inactive_title_pen = to_pen{ fg=COLOR_GREY, bg=COLOR_BLACK },
     signature_pen = to_pen{ fg=COLOR_GREY, bg=COLOR_BLACK },
-    pinned_pen = to_pen{tile=779, ch=216, fg=COLOR_GREY, bg=COLOR_GREEN},
-    unpinned_pen = to_pen{tile=782, ch=216, fg=COLOR_GREY, bg=COLOR_BLACK},
+    paused_pen = to_pen{tile=782, ch=216, fg=COLOR_GREY, bg=COLOR_BLACK},
 }
 
-function paint_frame(dc,rect,style,title,show_pin,pinned,inactive)
+local function make_frame(name, double_line)
+    local texpos = dfhack.textures['get'..name..'BordersTexposStart']()
+    local tp = function(offset)
+        if texpos == -1 then return nil end
+        return texpos + offset
+    end
+
+    local frame = copyall(BASE_FRAME)
+    frame.t_frame_pen = to_pen{ tile=tp(1), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.l_frame_pen = to_pen{ tile=tp(7), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.b_frame_pen = to_pen{ tile=tp(15), ch=double_line and 205 or 196, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.r_frame_pen = to_pen{ tile=tp(9), ch=double_line and 186 or 179, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.lt_frame_pen = to_pen{ tile=tp(0), ch=double_line and 201 or 218, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.lb_frame_pen = to_pen{ tile=tp(14), ch=double_line and 200 or 192, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.rt_frame_pen = to_pen{ tile=tp(2), ch=double_line and 187 or 191, fg=COLOR_GREY, bg=COLOR_BLACK }
+    frame.rb_frame_pen = to_pen{ tile=tp(16), ch=double_line and 188 or 217, fg=COLOR_GREY, bg=COLOR_BLACK }
+    return frame
+end
+
+WINDOW_FRAME = make_frame('Window', true)
+PANEL_FRAME = make_frame('Panel', false)
+MEDIUM_FRAME = make_frame('Medium', false)
+THIN_FRAME = make_frame('Thin', false)
+
+-- for compatibility with pre-steam code
+GREY_LINE_FRAME = WINDOW_FRAME
+
+function paint_frame(dc,rect,style,title,inactive,pause_forced,resizable)
     local pen = style.frame_pen
     local x1,y1,x2,y2 = dc.x1+rect.x1, dc.y1+rect.y1, dc.x1+rect.x2, dc.y1+rect.y2
     dscreen.paintTile(style.lt_frame_pen or pen, x1, y1)
     dscreen.paintTile(style.rt_frame_pen or pen, x2, y1)
     dscreen.paintTile(style.lb_frame_pen or pen, x1, y2)
-    dscreen.paintTile(style.rb_frame_pen or pen, x2, y2)
+    local rb_frame_pen = style.rb_frame_pen
+    if rb_frame_pen == WINDOW_FRAME.rb_frame_pen and not resizable then
+        rb_frame_pen = PANEL_FRAME.rb_frame_pen
+    end
+    dscreen.paintTile(rb_frame_pen or pen, x2, y2)
     dscreen.fillRect(style.t_frame_pen or style.h_frame_pen or pen,x1+1,y1,x2-1,y1)
     dscreen.fillRect(style.b_frame_pen or style.h_frame_pen or pen,x1+1,y2,x2-1,y2)
     dscreen.fillRect(style.l_frame_pen or style.v_frame_pen or pen,x1,y1+1,x1,y2-1)
@@ -844,27 +917,19 @@ function paint_frame(dc,rect,style,title,show_pin,pinned,inactive)
                             x, y1, tstr)
     end
 
-    if show_pin then
-        if pinned and style.pinned_pen then
-            local pin_texpos = dfhack.textures.getGreenPinTexposStart()
-            if pin_texpos == -1 then
-                dscreen.paintTile(style.pinned_pen, x2-1, y1)
-            else
-                dscreen.paintTile(style.pinned_pen, x2-2, y1-1, nil, pin_texpos+0)
-                dscreen.paintTile(style.pinned_pen, x2-1, y1-1, nil, pin_texpos+1)
-                dscreen.paintTile(style.pinned_pen, x2-2, y1,   nil, pin_texpos+2)
-                dscreen.paintTile(style.pinned_pen, x2-1, y1,   nil, pin_texpos+3)
-            end
-        elseif not pinned and style.unpinned_pen then
-            local pin_texpos = dfhack.textures.getRedPinTexposStart()
-            if pin_texpos == -1 then
-                dscreen.paintTile(style.unpinned_pen, x2-1, y1)
-            else
-                dscreen.paintTile(style.unpinned_pen, x2-2, y1-1, nil, pin_texpos+0)
-                dscreen.paintTile(style.unpinned_pen, x2-1, y1-1, nil, pin_texpos+1)
-                dscreen.paintTile(style.unpinned_pen, x2-2, y1,   nil, pin_texpos+2)
-                dscreen.paintTile(style.unpinned_pen, x2-1, y1,   nil, pin_texpos+3)
-            end
+    if pause_forced then
+        -- get the tiles for the activated pause symbol
+        local pause_texpos_ul = dfhack.screen.findGraphicsTile('INTERFACE_BITS', 18, 28)
+        local pause_texpos_ur = dfhack.screen.findGraphicsTile('INTERFACE_BITS', 19, 28)
+        local pause_texpos_ll = dfhack.screen.findGraphicsTile('INTERFACE_BITS', 18, 29)
+        local pause_texpos_lr = dfhack.screen.findGraphicsTile('INTERFACE_BITS', 19, 29)
+        if not pause_texpos_ul then
+            dscreen.paintTile(style.paused_pen, x2-1, y1)
+        else
+            dscreen.paintTile(style.paused_pen, x2-2, y1-1, nil, pause_texpos_ul)
+            dscreen.paintTile(style.paused_pen, x2-1, y1-1, nil, pause_texpos_ur)
+            dscreen.paintTile(style.paused_pen, x2-2, y1,   nil, pause_texpos_ll)
+            dscreen.paintTile(style.paused_pen, x2-1, y1,   nil, pause_texpos_lr)
         end
     end
 end

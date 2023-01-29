@@ -3114,6 +3114,10 @@ static const LuaWrapper::FunctionReg dfhack_textures_module[] = {
     WRAPM(Textures, getGreenPinTexposStart),
     WRAPM(Textures, getRedPinTexposStart),
     WRAPM(Textures, getIconsTexposStart),
+    WRAPM(Textures, getThinBordersTexposStart),
+    WRAPM(Textures, getMediumBordersTexposStart),
+    WRAPM(Textures, getPanelBordersTexposStart),
+    WRAPM(Textures, getWindowBordersTexposStart),
     { NULL, NULL }
 };
 
@@ -3552,6 +3556,13 @@ static int maps_getPlantAtTile(lua_State *L)
     return 1;
 }
 
+static int maps_getBiomeType(lua_State *L)
+{
+    auto pos = CheckCoordXY(L, 1, true);
+    lua_pushinteger(L, Maps::getBiomeType(pos.x, pos.y));
+    return 1;
+}
+
 static const luaL_Reg dfhack_maps_funcs[] = {
     { "isValidTilePos", maps_isValidTilePos },
     { "isTileVisible", maps_isTileVisible },
@@ -3562,6 +3573,7 @@ static const luaL_Reg dfhack_maps_funcs[] = {
     { "getRegionBiome", maps_getRegionBiome },
     { "getTileBiomeRgn", maps_getTileBiomeRgn },
     { "getPlantAtTile", maps_getPlantAtTile },
+    { "getBiomeType", maps_getBiomeType },
     { NULL, NULL }
 };
 
@@ -3643,8 +3655,8 @@ static const luaL_Reg dfhack_burrows_funcs[] = {
 
 /***** Buildings module *****/
 
-static bool buildings_containsTile(df::building *bld, int x, int y, bool room) {
-    return Buildings::containsTile(bld, df::coord2d(x,y), room);
+static bool buildings_containsTile(df::building *bld, int x, int y) {
+    return Buildings::containsTile(bld, df::coord2d(x,y));
 }
 
 static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {

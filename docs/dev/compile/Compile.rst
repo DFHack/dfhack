@@ -284,8 +284,8 @@ addition to the normal ``CC`` and ``CXX`` flags above::
 
   export PATH=/usr/local/bin:$PATH
 
-Windows cross compiling from Linux
-==================================
+Windows cross compiling from Linux (running DF inside docker)
+=============================================================
 
 .. highlight:: bash
 
@@ -296,18 +296,13 @@ on a Linux host system.
   :local:
   :depth: 1
 
-Step 1: prepare a docker image
-------------------------------
+Step 1: prepare a build container
+---------------------------------
 
 On your Linux host, install and run the docker daemon and then run these commands::
 
     xhost +local:root
-    git clone https://github.com/BenLubar/build-env.git
-    cd build-env/msvc
-    docker build .
-    docker image ls
-    IMAGE_ID=<your image id>
-    docker run -it --env="DISPLAY" --env="QT_X11_NO_MITSHM=1" --volume=/tmp/.X11-unix:/tmp/.X11-unix --user buildmaster --name dfhack-win $IMAGE_ID
+    docker run -it --env="DISPLAY" --env="QT_X11_NO_MITSHM=1" --volume=/tmp/.X11-unix:/tmp/.X11-unix --user buildmaster --name dfhack-win ghcr.io/dfhack/build-env:msvc
 
 The ``xhost`` command and ``--env`` parameters are there so you can eventually
 run Dwarf Fortress from the container and have it display on your host.
@@ -367,6 +362,48 @@ host when you want to reattach::
 
 If you edit code and need to rebuild, run ``dfhack-make`` and then ``ninja install``.
 That will handle all the wineserver management for you.
+
+Cross-compiling windows files for running DF in Steam for Linux
+===============================================================
+
+.. highlight:: bash
+
+If you wish, you can use Docker to build just the Windows files to copy to your
+existing Steam installation on Linux.
+
+.. contents::
+  :local:
+  :depth: 1
+
+Step 1: Get dfhack, and run the build script
+--------------------------------------------
+
+Check out ``dfhack`` into another directory, and run the build script::
+
+   git clone https://github.com/DFHack/dfhack.git
+   cd dfhack
+   git submodule update --init --recursive
+   cd build
+   ./build-win64-from-linux.sh
+
+The script will mount your host's ``dfhack`` directory to docker, use it to
+build the artifacts in ``build/win64-cross``, and put all the files needed to
+install in ``build/win64-cross/output``.
+
+If you need to run ``docker`` using ``sudo``, run the script using ``sudo``
+rather than directly::
+
+  sudo ./build-win64-from-linux.sh
+
+Step 2: install dfhack to your Steam DF install
+-----------------------------------------------
+As the script will tell you, you can then copy the files into your DF folder::
+
+   # Optional -- remove the old hack directory in case we leave files behind
+   rm ~/.local/share/Steam/steamapps/common/"Dwarf Fortress"/hack
+   cp -r win64-cross/output/* ~/.local/share/Steam/steamapps/common/"Dwarf Fortress"/
+
+Afterward, just run DF as normal.
 
 .. _note-offline-builds:
 

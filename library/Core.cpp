@@ -804,7 +804,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                 if (!plug->can_be_enabled()) continue;
 
                 con.print(
-                    "%20s\t%-3s%s\n",
+                    "%21s  %-3s%s\n",
                     (plug->getName()+":").c_str(),
                     plug->is_enabled() ? "on" : "off",
                     plug->can_set_enabled() ? "" : " (controlled internally)"
@@ -2114,6 +2114,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
         {
             auto L = Lua::Core::State;
             Lua::StackUnwinder top(L);
+            Lua::CallLuaModuleFunction(con, L, "helpdb", "refresh");
             Lua::CallLuaModuleFunction(con, L, "script-manager", "reload");
         }
         break;

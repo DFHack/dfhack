@@ -1779,6 +1779,10 @@ Maps module
 
   Returns the biome info struct for the given global map region.
 
+  ``dfhack.maps.getBiomeType(region_coord2d)`` or ``getBiomeType(x,y)``
+
+  Returns the biome_type for the given global map region.
+
 * ``dfhack.maps.enableBlockUpdates(block[,flow,temperature])``
 
   Enables updates for liquid flow or temperature, unless already active.
@@ -1798,7 +1802,7 @@ Maps module
 
 * ``dfhack.maps.getTileBiomeRgn(coords)``, or ``getTileBiomeRgn(x,y,z)``
 
-  Returns *x, y* for use with ``getRegionBiome``.
+  Returns *x, y* for use with ``getRegionBiome`` and ``getBiomeType``.
 
 * ``dfhack.maps.getPlantAtTile(pos)``, or ``getPlantAtTile(x,y,z)``
 
@@ -1929,9 +1933,11 @@ General
 
   Returns the number of tiles included by extents, or defval.
 
-* ``dfhack.buildings.containsTile(building, x, y[, room])``
+* ``dfhack.buildings.containsTile(building, x, y)``
 
-  Checks if the building contains the specified tile, either directly, or as room.
+  Checks if the building contains the specified tile. If the building contains extents,
+  then the extents are checked. Otherwise, returns whether the x and y map coordinates
+  are within the building's bounding box.
 
 * ``dfhack.buildings.hasSupport(pos,size)``
 
@@ -3315,17 +3321,20 @@ function:
   argument specifies the indentation step size in spaces. For
   the other arguments see the original documentation link above.
 
+.. _helpdb:
+
 helpdb
 ======
 
 Unified interface for DFHack tool help text. Help text is read from the rendered
-text in ``hack/docs/docs/``. If no rendered text exists, help is read from the
-script sources (for scripts) or the string passed to the ``PluginCommand``
+text in ``hack/docs/docs/tools``. If no rendered text exists, help is read from
+the script sources (for scripts) or the string passed to the ``PluginCommand``
 initializer (for plugins). See `documentation` for details on how DFHack's help
 system works.
 
-The database is lazy-loaded when an API method is called. It rechecks its help
-sources for updates if an API method has not been called in the last 60 seconds.
+The database is loaded when DFHack initializes, but can be explicitly refreshed
+with a call to ``helpdb.refresh()`` if docs are added/changed during a play
+session.
 
 Each entry has several properties associated with it:
 
@@ -3340,6 +3349,10 @@ Each entry has several properties associated with it:
 - Short help, a the ~54 character description string.
 - Long help, the entire contents of the associated help file.
 - A list of tags that define the groups that the entry belongs to.
+
+* ``helpdb.refresh()``
+
+  Scan for changes in available commands and their documentation.
 
 * ``helpdb.is_entry(str)``, ``helpdb.is_entry(list)``
 
@@ -4106,65 +4119,91 @@ It adds the following methods:
 ZScreen class
 -------------
 
-A screen subclass that allows the underlying viewscreens to be interacted with.
-For example, a DFHack GUI tool implemented as a ZScreen can allow the player to
-interact with the underlying map. That is, even when the DFHack tool window is
-visible, players will be able to use vanilla designation tools, select units, or
-scan/drag the map around.
+A screen subclass that allows multi-layer interactivity. For example, a DFHack
+GUI tool implemented as a ZScreen can allow the player to interact with the
+underlying map, or even other DFHack ZScreen windows! That is, even when the
+DFHack tool window is visible, players will be able to use vanilla designation
+tools, select units, and scan/drag the map around.
 
-If multiple ZScreens are on the stack and the player clicks on a visible element
-of a non-top ZScreen, that ZScreen will be raised to the top of the viewscreen
-stack. This allows multiple DFHack gui tools to be usable at the same time.
-Clicks that are not over any visible ZScreen element, of course, are passed
-through to the underlying viewscreen.
+At most one ZScreen can have keyboard focus at a time. That ZScreen's widgets
+will have a chance to handle the input before anything else. If unhandled, the
+input skips all unfocused ZScreens under that ZScreen and is passed directly to
+the first non-ZScreen viewscreen. There are class attributes that can be set to
+control what kind of unhandled input is passed to the lower layers.
 
-If :kbd:`Esc` or the right mouse button is pressed, and the ZScreen widgets
-don't otherwise handle them, then the top ZScreen is dismissed. If the ZScreen
-is "pinned", then the screen is not dismissed and the input is passed on to the
-underlying DF viewscreen. :kbd:`Alt`:kbd:`L` toggles the pinned status if the
-ZScreen widgets don't otherwise handle that key sequence. If you have a
-``Panel`` with the ``pinnable`` attribute set and a frame that has pens defined
-for the pin icon (like ``Window`` widgets have by default), then a pin icon
-will appear in the upper right corner of the frame. Clicking on this icon will
-toggle the ZScreen ``pinned`` status just as if :kbd:`Alt`:kbd:`L` had been
-pressed.
+If multiple ZScreens are visible and the player left or right clicks on a
+visible element of a non-focused ZScreen, that ZScreen will be given focus. This
+allows multiple DFHack GUI tools to be usable at the same time. If the mouse is
+clicked away from the ZScreen widgets, that ZScreen loses focus. If no ZScreen
+has focus, all input is passed directly through to the first underlying
+non-ZScreen viewscreen.
 
-Keyboard input goes to the top ZScreen, as usual. If the subviews of the top
-ZScreen don't handle the input (i.e. they all return something falsey), the
-input is passed directly to the first underlying non-ZScreen.
+For a ZScreen with keyboard focus, if :kbd:`Esc` or the right mouse button is
+pressed, and the ZScreen widgets don't otherwise handle them, then the ZScreen
+is dismissed.
 
 All this behavior is implemented in ``ZScreen:onInput()``, which subclasses
-should *not* override. Instead, ZScreen subclasses should delegate all input
+**must not override**. Instead, ZScreen subclasses should delegate all input
 processing to subviews. Consider using a `Window class`_ widget as your top
 level input processor.
 
 When rendering, the parent viewscreen is automatically rendered first, so
 subclasses do not have to call ``self:renderParent()``. Calls to ``logic()``
 (a world "tick" when playing the game) are also passed through, so the game
-progresses normally and can be paused/unpaused as normal by the player.
-ZScreens that handle the :kbd:`Space` key may want to provide an alternate way
-to pause. Note that passing ``logic()`` calls through to the underlying map is
-required for allowing the player to drag the map with the mouse.
+progresses normally and can be paused/unpaused as normal by the player. Note
+that passing ``logic()`` calls through to the underlying map is required for
+allowing the player to drag the map with the mouse. ZScreen subclasses can set
+attributes that control whether the game is paused when the ZScreen is shown and
+whether the game is forced to continue being paused while the ZScreen is shown.
+If pausing is forced, child ``Window`` widgets will show a force-pause icon to
+indicate which tool is forcing the pausing.
 
 ZScreen provides the following functions:
 
 * ``zscreen:raise()``
 
-  Raises the ZScreen to the top of the viewscreen stack and returns a reference
-  to ``self``. A common pattern is to check if a tool dialog is already active
-  when the tool command is run and raise the existing dialog if it exists or
-  show a new dialog if it doesn't. See the sample code below for an example.
-
-* ``zscreen:togglePinned()``
-
-  Toggles whether the window closes on :kbd:`ESC` or r-click (unpinned) or not
-  (pinned).
+  Raises the ZScreen to the top of the viewscreen stack, gives it keyboard
+  focus, and returns a reference to ``self``. A common pattern is to check if a
+  tool dialog is already active when the tool command is run and raise the
+  existing dialog if it exists or show a new dialog if it doesn't. See the
+  sample code below for an example.
 
 * ``zscreen:isMouseOver()``
 
   The default implementation iterates over the direct subviews of the ZScreen
   subclass and sees if ``getMouseFramePos()`` returns a position for any of
   them. Subclasses can override this function if that logic is not appropriate.
+
+* ``zscreen:hasFocus()``
+
+  Whether the ZScreen has keyboard focus. Subclasses will generally not need to
+  check this because they can assume if they are getting input, then they have
+  focus.
+
+ZScreen subclasses can set the following attributes:
+
+* ``initial_pause`` (default: ``true``)
+
+  Whether to pause the game when the ZScreen is shown.
+
+* ``force_pause`` (default: ``false``)
+
+  Whether to ensure the game *stays* paused while the ZScreen is shown.
+
+* ``pass_pause`` (default: ``true``)
+
+  Whether to pass the pause key to the lower viewscreens if it is not handled
+  by this ZScreen.
+
+* ``pass_movement_keys`` (default: ``false``)
+
+  Whether to pass the map movement keys to the lower viewscreens if they ar not
+  handled by this ZScreen.
+
+* ``pass_mouse_clicks`` (default: ``true``)
+
+  Whether to pass mouse clicks to the lower viewscreens if they are not handled
+  by this ZScreen.
 
 Here is an example skeleton for a ZScreen tool dialog::
 
@@ -4176,11 +4215,12 @@ Here is an example skeleton for a ZScreen tool dialog::
         frame_title='My Window',
         frame={w=50, h=45},
         resizable=true, -- if resizing makes sense for your dialog
+        resize_min={w=50, h=20}, -- try to allow users to shrink your windows
     }
 
     function MyWindow:init()
         self:addviews{
-          -- add subviews here
+          -- add subview widgets here
         }
     end
 
@@ -4191,6 +4231,7 @@ Here is an example skeleton for a ZScreen tool dialog::
     MyScreen = defclass(MyScreen, gui.ZScreen)
     MyScreen.ATTRS {
         focus_path='myscreen',
+        -- set pause and passthrough attributes as appropriate
     }
 
     function MyScreen:init()
@@ -4220,18 +4261,21 @@ A framed screen has the following attributes:
 
 There are the following predefined frame style tables:
 
-* ``GREY_FRAME``
+* ``WINDOW_FRAME``
 
-  A plain grey-colored frame.
+  A frame suitable for a draggable, optionally resizable window.
 
-* ``BOUNDARY_FRAME``
+* ``PANEL_FRAME``
 
-  The same frame as used by the usual full-screen DF views, like dwarfmode.
+  A frame suitable for a static (non-draggable, non-resizable) panel.
 
-* ``GREY_LINE_FRAME``
+* ``MEDIUM_FRAME``
 
-  A frame consisting of grey lines, similar to the one used by titan announcements.
+  A frame suitable for overlay widget panels.
 
+* ``THIN_FRAME``
+
+  A frame suitable for light accent elements.
 
 gui.widgets
 ===========
@@ -4350,11 +4394,6 @@ Has attributes:
   hitting :kbd:`Esc` (while resizing with the mouse or keyboard), or by calling
   ``Panel:setKeyboardResizeEnabled(false)`` (while resizing with the keyboard).
 
-* ``pinnable = bool`` (default: ``false``)
-
-  Determines whether the panel will draw a pin icon in its frame. See
-  `ZScreen class`_ for details.
-
 * ``autoarrange_subviews = bool`` (default: ``false``)
 * ``autoarrange_gap = int`` (default: ``0``)
 
@@ -4416,7 +4455,7 @@ Window class
 ------------
 
 Subclass of Panel; sets Panel attributes to useful defaults for a top-level
-framed, pinnable, draggable window.
+framed, draggable window.
 
 ResizingPanel class
 -------------------
@@ -4680,8 +4719,8 @@ The Label widget implements the following methods:
 
   This method takes the number of lines to scroll as positive or negative
   integers or one of the following keywords: ``+page``, ``-page``,
-  ``+halfpage``, or ``-halfpage``. It returns the number of lines that were
-  actually scrolled (negative for scrolling up).
+  ``+halfpage``, ``-halfpage``, ``home``, or ``end``. It returns the number of
+  lines that were actually scrolled (negative for scrolling up).
 
 WrappedLabel class
 ------------------
@@ -5565,6 +5604,13 @@ sort
 
 The `sort <sort>` plugin does not export any native functions as of now.
 Instead, it calls Lua code to perform the actual ordering of list items.
+
+tiletypes
+=========
+
+* ``bool tiletypes_setTile(pos, shape, material, special, variant)`` where
+  the parameters are enum values from ``df.tiletype_shape``,
+  ``df.tiletype_material``, etc. Returns whether the conversion succeeded.
 
 .. _xlsxreader-api:
 

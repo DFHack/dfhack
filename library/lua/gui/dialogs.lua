@@ -13,7 +13,7 @@ MessageBox = defclass(MessageBox, gui.FramedScreen)
 MessageBox.focus_path = 'MessageBox'
 
 MessageBox.ATTRS{
-    frame_style = gui.GREY_LINE_FRAME,
+    frame_style = gui.WINDOW_FRAME,
     frame_inset = 1,
     -- new attrs
     on_accept = DEFAULT_NIL,
@@ -218,9 +218,9 @@ end
 
 function ListBox:onRenderFrame(dc,rect)
     ListBox.super.onRenderFrame(self,dc,rect)
-    if self.select2_hint then
-        dc:seek(rect.x1+2,rect.y2):key('SEC_SELECT'):string(': '..self.select2_hint,COLOR_GREY)
-    end
+    --if self.select2_hint then
+    --    dc:seek(rect.x1+2,rect.y2):key('SEC_SELECT'):string(': '..self.select2_hint,COLOR_GREY)
+    --end
 end
 
 function ListBox:getWantedFrameSize()

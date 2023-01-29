@@ -96,6 +96,9 @@ The ``overlay.OverlayWidget`` superclass defines the following class attributes:
     mean for the position. Players can change the widget position at any time
     via the `overlay position <overlay>` command, so don't assume that your
     widget will always be at the default position.
+- ``default_enabled`` (default: ``false``)
+    Override this attribute if the overlay should be enabled by default if it
+    does not already have a state stored in ``dfhack-config/overlay.json``.
 - ``viewscreens`` (default: ``{}``)
     The list of viewscreens that this widget should be associated with. When
     one of these viewscreens is on top of the viewscreen stack, your widget's
@@ -125,10 +128,6 @@ The ``overlay.OverlayWidget`` superclass defines the following class attributes:
     not annoy the player. Set to 0 to be called at the maximum rate. Be aware
     that running more often than you really need to will impact game FPS,
     especially if your widget can run while the game is unpaused.
-- ``always_enabled`` (default: ``false``)
-    Set this to ``true`` if you don't want to let the user disable the widget.
-    This is useful for widgets that are controlled purely through their
-    triggers. See `gui/pathable` for an example.
 
 Registering a widget with the overlay framework
 ***********************************************

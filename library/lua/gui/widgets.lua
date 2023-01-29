@@ -81,7 +81,6 @@ Panel.ATTRS {
     resize_min = DEFAULT_NIL,
     on_resize_begin = DEFAULT_NIL,
     on_resize_end = DEFAULT_NIL,
-    pinnable = false,
     autoarrange_subviews = false, -- whether to automatically lay out subviews
     autoarrange_gap = 0, -- how many blank lines to insert between widgets
 }
@@ -272,21 +271,21 @@ local function Panel_on_double_click(self)
     Panel_update_frame(self, frame, true)
 end
 
-local function panel_is_on_pin(self)
+local function panel_mouse_is_on_pause_icon(self)
     local frame_rect = self.frame_rect
     local x,y = dscreen.getMousePos()
     return (x == frame_rect.x2-2 or x == frame_rect.x2-1)
             and (y == frame_rect.y1-1 or y == frame_rect.y1)
 end
 
-local function panel_is_pinnable(self)
-    return self.pinnable and self.parent_view and self.parent_view.togglePinned
+local function panel_has_pause_icon(self)
+    return self.parent_view and self.parent_view.force_pause
 end
 
 function Panel:getMouseFramePos()
     local x,y = Panel.super.getMouseFramePos(self)
     if x then return x, y end
-    if panel_is_pinnable(self) and panel_is_on_pin(self) then
+    if panel_has_pause_icon(self) and panel_mouse_is_on_pause_icon(self) then
         local frame_rect = self.frame_rect
         return frame_rect.width - 3, 0
     end
@@ -319,12 +318,6 @@ function Panel:onInput(keys)
             Panel_update_frame(self, Panel_make_frame(self))
         end
         return true
-    end
-    if panel_is_pinnable(self) and keys._MOUSE_L_DOWN then
-        if panel_is_on_pin(self) then
-            self.parent_view:togglePinned()
-            return true
-        end
     end
     if Panel.super.onInput(self, keys) then
         return true
@@ -505,14 +498,11 @@ end
 function Panel:onRenderFrame(dc, rect)
     Panel.super.onRenderFrame(self, dc, rect)
     if not self.frame_style then return end
-    local pinned = nil
-    if self.pinnable then
-        pinned = self.parent_view and self.parent_view.pinned
-    end
-    local inactive = self.parent_view and self.parent_view.isOnTop
-            and not self.parent_view:isOnTop()
-    gui.paint_frame(dc, rect, self.frame_style, self.frame_title,
-            self.pinnable, pinned, inactive)
+    local inactive = self.parent_view and self.parent_view.hasFocus
+            and not self.parent_view:hasFocus()
+    local pause_forced = self.parent_view and self.parent_view.force_pause
+    gui.paint_frame(dc, rect, self.frame_style, self.frame_title, inactive,
+            pause_forced, self.resizable)
     if self.kbd_get_pos then
         local pos = self.kbd_get_pos()
         local pen = to_pen{fg=COLOR_GREEN, bg=COLOR_BLACK}
@@ -531,11 +521,10 @@ end
 Window = defclass(Window, Panel)
 
 Window.ATTRS {
-    frame_style = gui.GREY_LINE_FRAME,
+    frame_style = gui.WINDOW_FRAME,
     frame_background = gui.CLEAR_PEN,
     frame_inset = 1,
     draggable = true,
-    pinnable = true,
 }
 
 -------------------
@@ -1315,6 +1304,7 @@ end
 
 function Label:scroll(nlines)
     if not nlines then return end
+    local text_height = math.max(1, self:getTextHeight())
     if type(nlines) == 'string' then
         if nlines == '+page' then
             nlines = self.frame_body.height
@@ -1324,12 +1314,15 @@ function Label:scroll(nlines)
             nlines = math.ceil(self.frame_body.height/2)
         elseif nlines == '-halfpage' then
             nlines = -math.ceil(self.frame_body.height/2)
+        elseif nlines == 'home' then
+            nlines = 1 - self.start_line_num
+        elseif nlines == 'end' then
+            nlines = text_height
         else
             error(('unhandled scroll keyword: "%s"'):format(nlines))
         end
     end
     local n = self.start_line_num + nlines
-    local text_height = math.max(1, self:getTextHeight())
     n = math.min(n, text_height - self.frame_body.height + 1)
     n = math.max(n, 1)
     nlines = n - self.start_line_num
@@ -1463,7 +1456,7 @@ function CycleHotkeyLabel:init()
     self:setText{
         {key=self.key, key_sep=': ', text=self.label, width=self.label_width,
          on_activate=self:callback('cycle')},
-        '  ',
+        ' ',
         {text=self:callback('getOptionLabel'),
          pen=self:callback('getOptionPen')},
     }

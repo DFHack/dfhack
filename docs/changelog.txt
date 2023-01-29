@@ -37,7 +37,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 -@ Fix issues with clicks "passing through" some DFHack window elements, like scrollbars
-- `plugin/getplants`: tree are now designated correctly
+- `getplants`: tree are now designated correctly
 
 ## Misc Improvements
 - A new cross-compile build script was added for building the Windows files from a Linux Docker builder (see the Compile instructions in the docs)
@@ -47,7 +47,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `gui/quickcmd`: now has it's own global keybinding for your convenience: Ctrl-Shift-A
 - Many DFHack windows can now be unfocused by clicking somewhere not over the tool window. This has the same effect as pinning previously did, but without the extra clicking.
 - `overlay`: overlay widgets can now specify a default enabled state if they are not already set in the player's overlay config file
-- `plugin/getplants`: ID values will now be accepted regardless of case
+- `getplants`: ID values will now be accepted regardless of case
 -@ New borders for DFHack tool windows -- tell us what you think!
 
 ## Documentation

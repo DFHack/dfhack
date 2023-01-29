@@ -7,6 +7,7 @@
 #include "PluginManager.h"
 #include "DataDefs.h"
 #include "TileTypes.h"
+#include "MiscUtils.h"
 
 #include "df/map_block.h"
 #include "df/map_block_column.h"
@@ -321,9 +322,9 @@ bool designate(const df::plant *plant, bool farming) {
                     }
                 }
 
-                if ((!farming || seedSource) &&
-                    ripe(plant->pos.x, plant->pos.y, plant_raw->growths[i]->timing_1, plant_raw->growths[i]->timing_2) &&
-                    !picked(plant, i))
+                bool istree = (tileMaterial(Maps::getTileBlock(plant->pos)->tiletype[plant->pos.x % 16][plant->pos.y % 16]) == tiletype_material::TREE);
+                bool isripe = ripe(plant->pos.x, plant->pos.y, plant_raw->growths[i]->timing_1, plant_raw->growths[i]->timing_2);
+                if ((!farming || seedSource) && (istree || isripe) && !picked(plant, i))
                 {
                     return Designations::markPlant(plant);
                 }
@@ -395,7 +396,7 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
             }
         }
         else
-            plantNames.insert(parameters[i]);
+            plantNames.insert(toUpper(parameters[i]));
     }
     if (treesonly && shrubsonly)
     {
@@ -428,7 +429,7 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
 //            plantSelections[i] = selectablePlant(out, plant, farming);
             plantSelections[i] = selectablePlant(plant, farming);
         }
-         else if (plantNames.find(plant->id) != plantNames.end())
+        else if (plantNames.find(plant->id) != plantNames.end())
         {
             plantNames.erase(plant->id);
 //            plantSelections[i] = selectablePlant(out, plant, farming);

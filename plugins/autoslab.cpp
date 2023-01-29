@@ -5,7 +5,8 @@
  * Enhancement idea: Automatically place the slab. This seems like a tricky problem but maybe solveable with named zones?
  *                   Might be made obsolete by people just using buildingplan to pre-place plans for slab?
  * Enhancement idea: Optionally enable autoengraving for pets.
- * Enhancement idea: Try to get ahead of ghosts by autoengraving for dead dwarves with no remains.
+ * Enhancement idea: Try to get ahead of ghosts by autoengraving for dead dwarves with no remains, or dwarves
+ *                   whose remains are unreachable.
  */
 
 #include "Core.h"
@@ -24,8 +25,6 @@
 #include "df/world.h"
 
 using namespace DFHack;
-
-static command_result autoslab(color_ostream &out, std::vector<std::string> &parameters);
 
 DFHACK_PLUGIN("autoslab");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
@@ -70,18 +69,11 @@ static void set_config_bool(int index, bool value)
 
 static int32_t cycle_timestamp = 0; // world->frame_counter at last cycle
 
-static command_result do_command(color_ostream &out, std::vector<std::string> &parameters);
 static void do_cycle(color_ostream &out);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginCommand> &commands)
 {
     DEBUG(status, out).print("initializing %s\n", plugin_name);
-
-    // provide a configuration interface for the plugin
-    commands.push_back(PluginCommand(
-        plugin_name,
-        "Automatically engrave slabs of ghostly citizens!",
-        do_command));
 
     return CR_OK;
 }
@@ -123,7 +115,6 @@ DFhackCExport command_result plugin_load_data(color_ostream &out)
         DEBUG(status, out).print("no config found in this save; initializing\n");
         config = World::AddPersistentData(CONFIG_KEY);
         set_config_bool(CONFIG_IS_ENABLED, is_enabled);
-        set_config_val(CONFIG_CYCLE_TICKS, 1200);
     }
 
     // we have to copy our enabled flag into the global plugin variable, but
@@ -147,27 +138,13 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     return CR_OK;
 }
 
+static const int32_t CYCLE_TICKS = 1200;
+
 DFhackCExport command_result plugin_onupdate(color_ostream &out)
 {
     CoreSuspender suspend;
-    if (is_enabled && world->frame_counter - cycle_timestamp >= get_config_val(CONFIG_CYCLE_TICKS))
+    if (is_enabled && world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
         do_cycle(out);
-    return CR_OK;
-}
-
-static command_result do_command(color_ostream &out, std::vector<std::string> &parameters)
-{
-    // be sure to suspend the core if any DF state is read or modified
-    CoreSuspender suspend;
-
-    if (!Core::getInstance().isWorldLoaded())
-    {
-        out.printerr("Cannot run %s without a loaded world.\n", plugin_name);
-        return CR_FAILURE;
-    }
-
-    // TODO: decide what, if any configuration should be here
-
     return CR_OK;
 }
 
@@ -243,7 +220,7 @@ static void checkslabs(color_ostream &out)
     std::vector<df::unit *> ghosts;
     std::copy_if(world->units.all.begin(), world->units.all.end(),
                  std::back_inserter(ghosts),
-                 [](const auto &unit)
+                 [](const df::unit *unit)
                  { return unit->flags3.bits.ghostly; });
 
     for (auto ghost : ghosts)

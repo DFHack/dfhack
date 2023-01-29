@@ -720,12 +720,18 @@ function ZScreen:dismiss()
     end
 end
 
-local NO_LOGIC_SCREENS = utils.invert{
+local NO_LOGIC_SCREENS = {
     'viewscreen_loadgamest',
     'viewscreen_export_regionst',
     'viewscreen_choose_game_typest',
     'viewscreen_worldst',
 }
+for _,v in ipairs(NO_LOGIC_SCREENS) do
+    if not df[v] then
+        error('invalid class name: ' .. v)
+    end
+    NO_LOGIC_SCREENS[df[v]] = true
+end
 
 -- this is necessary for middle-click map scrolling to function
 function ZScreen:onIdle()
@@ -733,8 +739,8 @@ function ZScreen:onIdle()
         df.global.pause_state = true
     end
     if self._native and self._native.parent then
-        local vs_name = getmetatable(dfhack.gui.getDFViewscreen(true))
-        if NO_LOGIC_SCREENS[vs_name] then
+        local vs_type = dfhack.gui.getDFViewscreen(true)._type
+        if NO_LOGIC_SCREENS[vs_type] then
             self.force_pause = true
             self.pass_movement_keys = false
             self.pass_mouse_clicks = false

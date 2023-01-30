@@ -520,7 +520,7 @@ static void find_needed_clothing_items()
             int alreadyOwnedAmount = 0;
 
             //looping through the items first, then clothing order might be a little faster, but this way is cleaner.
-            for (auto& ownedItem : unit->owned_items)
+            for (auto ownedItem : unit->owned_items)
             {
                 auto item = findItemByID(ownedItem);
 
@@ -782,8 +782,12 @@ static void generate_report(color_ostream& out)
         int numArmor = 0, numShoes = 0, numHelms = 0, numGloves = 0, numPants = 0;
         for (auto itemId : unit->owned_items)
         {
-
             auto item = Items::findItemByID(itemId);
+            if (!item)
+            {
+                WARN(cycle).print("Invalid inventory item ID: %d\n", itemId);
+                continue;
+            }
             if (item->getWear() >= 1)
                 continue;
             switch (item->getType())

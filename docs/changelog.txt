@@ -171,6 +171,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``Screen::Pen``: now accepts ``top_of_text`` and ``bottom_of_text`` properties to support offset text in graphics mode
 - `overlay`: overlay widgets can now specify a default enabled state if they are not already set in the player's overlay config file
 - ``Lua::Push``: now supports ``std::unordered_map``
+- `Military`: New module for military functionality
+- `Military`: new ``makeSquad`` to create a squad
+- `Military`: changed ``getSquadName`` to take a squad identifier
+- `Military`: new ``updateRoomAssignments`` for assigning a squad to a barracks and archery range
+- ``Maps::GetBiomeType`` renamed to ``Maps::getBiomeType`` for consistency
+- ``Maps::GetBiomeTypeRef`` renamed to ``Maps::getBiomeTypeRef`` for consistency
 
 ## Lua
 - `helpdb`: new function: ``helpdb.refresh()`` to force a refresh of the database. Call if you are a developer adding new scripts, loading new plugins, or changing help text during play
@@ -181,6 +187,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 -@ ``gui.ZScreen``: new attribute: ``defocusable`` for controlling whether a window loses keyboard focus when the map is clicked
 - ``widgets.Label``: token ``tile`` properties can now be either pens or numeric texture ids
 - `tiletypes`: now has a Lua API! ``tiletypes_setTile``
+- ``maps.getBiomeType``: exposed preexisting function to Lua
 
 ## Removed
 - `autohauler`: no plans to port to v50, as it just doesn't make sense with the new work detail system

@@ -1940,7 +1940,7 @@ static const luaL_Reg dfhack_units_funcs[] = {
 /***** Military Module *****/
 
 static const LuaWrapper::FunctionReg dfhack_military_module[] = {
-	WRAPM(Military, makeSquad),
+    WRAPM(Military, makeSquad),
     WRAPM(Military, updateRoomAssignments),
     WRAPM(Military, getSquadName),
     { NULL, NULL }

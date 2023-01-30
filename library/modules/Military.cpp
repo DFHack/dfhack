@@ -22,12 +22,9 @@ using namespace df::enums;
 using df::global::world;
 using df::global::plotinfo;
 
-std::string Military::getSquadName(df::unit *unit)
+std::string Military::getSquadName(int32_t squad_id)
 {
-    CHECK_NULL_POINTER(unit);
-    if (unit->military.squad_id == -1)
-        return "";
-    df::squad *squad = df::squad::find(unit->military.squad_id);
+    df::squad *squad = df::squad::find(squad_id);
     if (!squad)
         return "";
     if (squad->alias.size() > 0)

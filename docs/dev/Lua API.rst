@@ -1594,16 +1594,16 @@ Military Module API
 
 * ``dfhack.military.makeSquad(assignment_id)``
 
-  Creates a new squad associated with the assignment. Fails if one already exists
-  Note: This function does not name the squad, but they are otherwise complete
+  Creates a new squad associated with the assignment. Fails if one already exists.
+  Note: This function does not name the squad, but they are otherwise complete.
 
 * ``dfhack.military.updateRoomAssignments(squad_id, assignment_id, squad_use_flags)``
 
-  Sets the sleep, train, indiv_eq, and squad_eq flags when training at a barracks
+  Sets the sleep, train, indiv_eq, and squad_eq flags when training at a barracks.
 
-* ``dfhack.military.getSquadName(squad)``
+* ``dfhack.military.getSquadName(squad_id)``
 
-  Returns the name of a squad
+  Returns the name of a squad/
 
 Action Timer API
 ~~~~~~~~~~~~~~~~

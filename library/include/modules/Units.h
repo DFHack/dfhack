@@ -37,7 +37,6 @@ distribution.
 #include "df/mental_attribute_type.h"
 #include "df/misc_trait_type.h"
 #include "df/physical_attribute_type.h"
-#include "df/squad.h"
 #include "df/unit.h"
 #include "df/unit_action.h"
 #include "df/unit_action_type_group.h"
@@ -222,10 +221,6 @@ DFHACK_EXPORT int8_t getCasteProfessionColor(int race, int caste, df::profession
 DFHACK_EXPORT df::goal_type getGoalType(df::unit *unit, size_t goalIndex = 0);
 DFHACK_EXPORT std::string getGoalName(df::unit *unit, size_t goalIndex = 0);
 DFHACK_EXPORT bool isGoalAchieved(df::unit *unit, size_t goalIndex = 0);
-
-DFHACK_EXPORT std::string getSquadName(df::unit *unit);
-DFHACK_EXPORT df::squad* makeSquad(int32_t assignment_id);
-DFHACK_EXPORT void updateRoomAssignments(int32_t squad_id, int32_t civzone_id, df::squad_use_flags flags);
 
 DFHACK_EXPORT df::activity_entry *getMainSocialActivity(df::unit *unit);
 DFHACK_EXPORT df::activity_event *getMainSocialEvent(df::unit *unit);

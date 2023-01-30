@@ -1589,16 +1589,19 @@ Units module
 
   Returns a table of the cutoffs used by the above stress level functions.
 
-* ``dfhack.units.makeSquad(assignment_id)``
+Military Module API
+~~~~~~~~~~~~~~~~~~~
+
+* ``dfhack.military.makeSquad(assignment_id)``
 
   Creates a new squad associated with the assignment. Fails if one already exists
   Note: This function does not name the squad, but they are otherwise complete
 
-* ``dfhack.units.updateRoomAssignments(squad_id, assignment_id, squad_use_flags)``
+* ``dfhack.military.updateRoomAssignments(squad_id, assignment_id, squad_use_flags)``
 
   Sets the sleep, train, indiv_eq, and squad_eq flags when training at a barracks
 
-* ``dfhack.units.getSquadName(squad)``
+* ``dfhack.military.getSquadName(squad)``
 
   Returns the name of a squad
 

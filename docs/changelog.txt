@@ -67,6 +67,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``dfhack.units.getCitizens()``: gets a list of citizens
 
 ## Removed
+- `autohauler`: no plans to port to v50, as it just doesn't make sense with the new work detail system
 
 # 50.05-alpha2
 

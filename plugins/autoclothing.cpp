@@ -55,7 +55,7 @@ DFHACK_PLUGIN_IS_ENABLED(autoclothing_enabled);
 // logging levels can be dynamically controlled with the `debugfilter` command.
 namespace DFHack {
     // for configuration-related logging
-    DBG_DECLARE(autoclothing, status, DebugCategory::LINFO);
+    DBG_DECLARE(autoclothing, report, DebugCategory::LINFO);
     // for logging during the periodic scan
     DBG_DECLARE(autoclothing, cycle, DebugCategory::LINFO);
 }
@@ -524,6 +524,12 @@ static void find_needed_clothing_items()
             {
                 auto item = findItemByID(ownedItem);
 
+                if (!item)
+                {
+                    WARN(cycle).print("Invalid inventory item ID: %d\n", ownedItem);
+                    continue;
+                }
+
                 if (item->getType() != clothingOrder.itemType)
                     continue;
                 if (item->getSubtype() != clothingOrder.item_subtype)
@@ -811,7 +817,7 @@ static void generate_report(color_ostream& out)
             missingGloves[unit->race]++;
         if (numPants == 0)
             missingPants[unit->race]++;
-        //out << Translation::TranslateName(Units::getVisibleName(unit)) << " has " << numArmor << " armor, " << numShoes << " shoes, " << numHelms << " helms, " << numGloves << " gloves, " << numPants << " pants" << endl;
+        DEBUG(report) << Translation::TranslateName(Units::getVisibleName(unit)) << " has " << numArmor << " armor, " << numShoes << " shoes, " << numHelms << " helms, " << numGloves << " gloves, " << numPants << " pants" << endl;
     }
     if (missingArmor.size() + missingShoes.size() + missingHelms.size() + missingGloves.size() + missingPants.size() == 0)
     {

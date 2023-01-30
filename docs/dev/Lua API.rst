@@ -1412,6 +1412,11 @@ Units module
   Note that ``pos2xyz()`` cannot currently be used to convert coordinate objects to
   the arguments required by this function.
 
+* ``dfhack.units.getCitizens([ignore_sanity])``
+
+  Returns a table (list) of all citizens, which you would otherwise have to loop over all
+  units in world and test against ``isCitizen()`` to discover.
+
 * ``dfhack.units.teleport(unit, pos)``
 
   Moves the specified unit and any riders to the target coordinates, setting
@@ -4182,9 +4187,12 @@ ZScreen provides the following functions:
 
 ZScreen subclasses can set the following attributes:
 
-* ``initial_pause`` (default: ``true``)
+* ``initial_pause`` (default: ``DEFAULT_INITIAL_PAUSE``)
 
-  Whether to pause the game when the ZScreen is shown.
+  Whether to pause the game when the ZScreen is shown. ``DEFAULT_INITIAL_PAUSE``
+  defaults to ``true`` but can be set via running a command like::
+
+    :lua require('gui.widgets').DEFAULT_INITIAL_PAUSE = false
 
 * ``force_pause`` (default: ``false``)
 

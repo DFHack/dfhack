@@ -36,28 +36,34 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
--@ Ensure DF windows don't get "stuck" on transitions when DFHack tool windows are visible. Instead, those DF screens are force-paused while DFHack windows are visible so the player can close them first and not corrupt the screen sequence. The "force pause" indicator will appear on these DFHack windows to indicate what is happening.
+-@ DF screens can no longer get "stuck" on transitions when DFHack tool windows are visible. Instead, those DF screens are force-paused while DFHack windows are visible so the player can close them first and not corrupt the screen sequence. The "force pause" indicator will appear on these DFHack windows to indicate what is happening.
+-@ ``Screen``: allow `gui/launcher` and `gui/quickcmd` to launch themselves without hanging the game
 -@ Fix issues with clicks "passing through" some DFHack window elements, like scrollbars
+- `getplants`: tree are now designated correctly
 
 ## Misc Improvements
 - A new cross-compile build script was added for building the Windows files from a Linux Docker builder (see the Compile instructions in the docs)
+- You can now configure whether DFHack tool windows should pause the game by default
 - `hotkeys`: clicking on the DFHack logo no longer closes the popup menu
 - `gui/launcher`: sped up initialization time for faster load of the UI
 - `orders`: orders plugin functionality is now offered via an overlay widget when the manager orders screen is open
 - `gui/quickcmd`: now has it's own global keybinding for your convenience: Ctrl-Shift-A
 - Many DFHack windows can now be unfocused by clicking somewhere not over the tool window. This has the same effect as pinning previously did, but without the extra clicking.
 - `overlay`: overlay widgets can now specify a default enabled state if they are not already set in the player's overlay config file
+- `getplants`: ID values will now be accepted regardless of case
 -@ New borders for DFHack tool windows -- tell us what you think!
 
 ## Documentation
 
 ## API
 - ``Buildings::containsTile()``: no longer takes a ``room`` parameter since that's not how rooms work anymore. If the building has extents, the extents will be checked. otherwise, the result just depends on whether the tile is within the building's bounding box.
+- ``Units::getCitizens()``: gets a list of citizens, which otherwise you'd have to iterate over all units the world to discover
 
 ## Lua
 - `helpdb`: new function: ``helpdb.refresh()`` to force a refresh of the database. Call if you are a developer adding new scripts, loading new plugins, or changing help text during play
 - `helpdb`: changed from auto-refreshing every 60 seconds to only refreshing on explicit call to ``helpdb.refresh()``. docs very rarely change during a play session, and the automatic database refreshes were slowing down the startup of `gui/launcher`
 - ``widgets.Label``: ``label.scroll()`` now understands ``home`` and ``end`` keywords for scrolling to the top or bottom
+- ``dfhack.units.getCitizens()``: gets a list of citizens
 
 ## Removed
 

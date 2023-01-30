@@ -42,6 +42,11 @@ DFHACK_EXPORT long getRedPinTexposStart();
 DFHACK_EXPORT long getIconsTexposStart();
 
 /**
+ * Get the first texpos for the on and off icons. It's a 2x1 grid.
+ */
+DFHACK_EXPORT long getOnOffTexposStart();
+
+/**
  * Get the first texpos for the DFHack borders. Each is a 7x3 grid.
  */
 DFHACK_EXPORT long getThinBordersTexposStart();

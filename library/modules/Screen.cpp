@@ -527,43 +527,49 @@ void Screen::raise(df::viewscreen *screen) {
 namespace DFHack { namespace Screen {
 
 Hide::Hide(df::viewscreen* screen, int flags) :
-    screen{screen}, flags{flags}
-{
-    extract(screen);
+    screen{screen}, prev_parent{nullptr}, flags{flags} {
+    if (!screen)
+        return;
+
+    // don't extract a screen that's not even in the stack
+    if (screen->parent)
+        extract();
 }
 
-Hide::~Hide()
-{
+Hide::~Hide() {
     if (screen)
-        merge(screen);
+        merge();
 }
 
-void Hide::extract(df::viewscreen* a)
-{
-    df::viewscreen* ap = a->parent;
-    df::viewscreen* ac = a->child;
+void Hide::extract() {
+    prev_parent = screen->parent;
+    df::viewscreen *prev_child = screen->child;
 
-    ap->child = ac;
-    if (ac) ac->parent = ap;
-    else Core::getInstance().top_viewscreen = ap;
+    screen->parent = nullptr;
+    screen->child = nullptr;
+
+    prev_parent->child = prev_child;
+    if (prev_child) prev_child->parent = prev_parent;
+    else Core::getInstance().top_viewscreen = prev_parent;
 }
 
-void Hide::merge(df::viewscreen* a)
-{
-    if (flags & RESTORE_AT_TOP) {
-        a->parent = NULL;
-        a->child = NULL;
-        Screen::show(std::unique_ptr<df::viewscreen>(a));
+void Hide::merge() {
+    if (screen->parent) {
+        // we're somehow back on the stack; do nothing
         return;
     }
 
-    df::viewscreen* ap = a->parent;
-    df::viewscreen* ac = a->parent->child;
+    if (flags & RESTORE_AT_TOP) {
+        Screen::show(std::unique_ptr<df::viewscreen>(screen));
+        return;
+    }
 
-    ap->child = a;
-    a->child = ac;
-    if (ac) ac->parent = a;
-    else Core::getInstance().top_viewscreen = a;
+    df::viewscreen* new_child = prev_parent->child;
+
+    prev_parent->child = screen;
+    screen->child = new_child;
+    if (new_child) new_child->parent = screen;
+    else Core::getInstance().top_viewscreen = screen;
 }
 } }
 

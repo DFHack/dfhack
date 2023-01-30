@@ -145,6 +145,7 @@ DFHACK_EXPORT df::unit *getUnit(const int32_t index);
 DFHACK_EXPORT bool getUnitsInBox(std::vector<df::unit*> &units,
     int16_t x1, int16_t y1, int16_t z1,
     int16_t x2, int16_t y2, int16_t z2);
+DFHACK_EXPORT bool getCitizens(std::vector<df::unit *> &citizens, bool ignore_sanity = false);
 
 DFHACK_EXPORT int32_t findIndexById(int32_t id);
 

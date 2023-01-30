@@ -55,11 +55,13 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## API
 - ``Buildings::containsTile()``: no longer takes a ``room`` parameter since that's not how rooms work anymore. If the building has extents, the extents will be checked. otherwise, the result just depends on whether the tile is within the building's bounding box.
+- ``Units::getCitizens()``: gets a list of citizens, which otherwise you'd have to iterate over all units the world to discover
 
 ## Lua
 - `helpdb`: new function: ``helpdb.refresh()`` to force a refresh of the database. Call if you are a developer adding new scripts, loading new plugins, or changing help text during play
 - `helpdb`: changed from auto-refreshing every 60 seconds to only refreshing on explicit call to ``helpdb.refresh()``. docs very rarely change during a play session, and the automatic database refreshes were slowing down the startup of `gui/launcher`
 - ``widgets.Label``: ``label.scroll()`` now understands ``home`` and ``end`` keywords for scrolling to the top or bottom
+- ``dfhack.units.getCitizens()``: gets a list of citizens
 
 ## Removed
 

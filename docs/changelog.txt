@@ -36,6 +36,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
+-@ DF screens can no longer get "stuck" on transitions when DFHack tool windows are visible. Instead, those DF screens are force-paused while DFHack windows are visible so the player can close them first and not corrupt the screen sequence. The "force pause" indicator will appear on these DFHack windows to indicate what is happening.
 -@ ``Screen``: allow `gui/launcher` and `gui/quickcmd` to launch themselves without hanging the game
 -@ Fix issues with clicks "passing through" some DFHack window elements, like scrollbars
 - `getplants`: tree are now designated correctly

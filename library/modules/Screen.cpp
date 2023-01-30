@@ -716,6 +716,21 @@ void dfhack_viewscreen::logic()
 
     // Various stuff works poorly unless always repainting
     Screen::invalidate();
+
+    // if the DF screen immediately beneath the DFHack viewscreens is waiting to
+    // be dismissed, raise it to the top so DF never gets stuck
+    auto *p = parent;
+    while (p) {
+        bool is_df_screen = !is_instance(p);
+        auto *next_p = p->parent;
+        if (is_df_screen && Screen::isDismissed(p)) {
+            DEBUG(screen).print("raising dismissed DF viewscreen %p\n", p);
+            Screen::raise(p);
+        }
+        if (is_df_screen)
+            break;
+        p = next_p;
+    }
 }
 
 void dfhack_viewscreen::render()
@@ -805,6 +820,13 @@ int dfhack_lua_viewscreen::do_destroy(lua_State *L)
 {
     auto self = get_self(L);
     if (!self) return 0;
+
+    if (!Screen::isDismissed(self)) {
+        WARN(screen).print("DFHack screen was destroyed before it was dismissed\n");
+        WARN(screen).print("Please tell the DFHack team which DF screen you were just viewing\n");
+        // run skipped onDismiss cleanup logic
+        Screen::dismiss(self);
+    }
 
     lua_pushnil(L);
     lua_rawsetp(L, LUA_REGISTRYINDEX, self);

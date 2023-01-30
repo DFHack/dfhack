@@ -175,9 +175,9 @@ static const struct labor_default default_labor_infos[] = {
     /* CLEAN */                 {HAULERS, false, 1, 200, 0},
     /* CUTWOOD */               {AUTOMATIC, true, 1, 200, 0},
     /* CARPENTER */             {AUTOMATIC, false, 1, 200, 0},
-    /* DETAIL */                {AUTOMATIC, false, 1, 200, 0},
+    /* STONECUTTER */           {AUTOMATIC, false, 1, 200, 0},
+    /* STONE_CARVER */          {AUTOMATIC, false, 1, 200, 0},
     /* MASON */                 {AUTOMATIC, false, 1, 200, 0},
-    /* ARCHITECT */             {AUTOMATIC, false, 1, 200, 0},
     /* ANIMALTRAIN */           {AUTOMATIC, false, 1, 200, 0},
     /* ANIMALCARE */            {AUTOMATIC, false, 1, 200, 0},
     /* DIAGNOSE */              {AUTOMATIC, false, 1, 200, 0},
@@ -245,7 +245,18 @@ static const struct labor_default default_labor_infos[] = {
     /* BUILD_ROAD */            {AUTOMATIC, false, 1, 200, 0},
     /* BUILD_CONSTRUCTION */    {AUTOMATIC, false, 1, 200, 0},
     /* PAPERMAKING */           {AUTOMATIC, false, 1, 200, 0},
-    /* BOOKBINDING */           {AUTOMATIC, false, 1, 200, 0}
+    /* BOOKBINDING */           {AUTOMATIC, false, 1, 200, 0},
+    /* ANON_LABOR_83 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_84 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_85 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_86 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_87 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_88 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_89 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_90 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_91 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_92 */         {DISABLE, false, 0, 0, 0},
+    /* ANON_LABOR_93 */         {DISABLE, false, 0, 0, 0},
 };
 
 static const int responsibility_penalties[] = {
@@ -716,15 +727,18 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
-    static int step_count = 0;
+    static int last_run = 0;
+    static const int run_frequency = 60;
+
     if(!world || !world->map.block_index || !enable_autolabor)
     {
         return CR_OK;
     }
 
-    if (++step_count < 60)
+    if (world->frame_counter - last_run <= run_frequency)
         return CR_OK;
-    step_count = 0;
+
+    last_run = world->frame_counter;
 
     std::vector<df::unit *> dwarfs;
 

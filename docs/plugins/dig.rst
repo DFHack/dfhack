@@ -6,7 +6,7 @@ dig
 
 .. dfhack-tool::
     :summary: Provides commands for designating tiles for digging.
-    :tags: untested fort design productivity map
+    :tags: fort design productivity map
     :no-command:
 
 .. dfhack-command:: digv

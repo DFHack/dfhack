@@ -4187,9 +4187,12 @@ ZScreen provides the following functions:
 
 ZScreen subclasses can set the following attributes:
 
-* ``initial_pause`` (default: ``true``)
+* ``initial_pause`` (default: ``DEFAULT_INITIAL_PAUSE``)
 
-  Whether to pause the game when the ZScreen is shown.
+  Whether to pause the game when the ZScreen is shown. ``DEFAULT_INITIAL_PAUSE``
+  defaults to ``true`` but can be set via running a command like::
+
+    :lua require('gui.widgets').DEFAULT_INITIAL_PAUSE = false
 
 * ``force_pause`` (default: ``false``)
 

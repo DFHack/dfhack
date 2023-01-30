@@ -42,6 +42,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Misc Improvements
 - A new cross-compile build script was added for building the Windows files from a Linux Docker builder (see the Compile instructions in the docs)
+- You can now configure whether DFHack tool windows should pause the game by default
 - `hotkeys`: clicking on the DFHack logo no longer closes the popup menu
 - `gui/launcher`: sped up initialization time for faster load of the UI
 - `orders`: orders plugin functionality is now offered via an overlay widget when the manager orders screen is open

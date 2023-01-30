@@ -693,16 +693,24 @@ end
 -- Z-order swapping screen --
 -----------------------------
 
+DEFAULT_INITIAL_PAUSE = true
+
 local zscreen_inhibit_mouse_l = false
 
 ZScreen = defclass(ZScreen, Screen)
 ZScreen.ATTRS{
-    initial_pause=true,
+    initial_pause=DEFAULT_NIL,
     force_pause=false,
     pass_pause=true,
     pass_movement_keys=false,
     pass_mouse_clicks=true,
 }
+
+function ZScreen:preinit(args)
+    if args.initial_pause == nil then
+        args.initial_pause = DEFAULT_INITIAL_PAUSE
+    end
+end
 
 function ZScreen:init()
     self.saved_pause_state = df.global.pause_state

@@ -28,9 +28,11 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 REQUIRE_GLOBAL(world);
 
 // logging levels can be dynamically controlled with the `debugfilter` command.
+// the names "config" and "cycle" are arbitrary and are just used to categorize
+// your log messages.
 namespace DFHack {
     // for configuration-related logging
-    DBG_DECLARE(persistent_per_save_example, cycle, DebugCategory::LINFO);
+    DBG_DECLARE(persistent_per_save_example, config, DebugCategory::LINFO);
     // for logging during the periodic scan
     DBG_DECLARE(persistent_per_save_example, cycle, DebugCategory::LINFO);
 }
@@ -64,7 +66,7 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 static void do_cycle(color_ostream &out);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    DEBUG(cycle,out).print("initializing %s\n", plugin_name);
+    DEBUG(config,out).print("initializing %s\n", plugin_name);
 
     // provide a configuration interface for the plugin
     commands.push_back(PluginCommand(
@@ -83,11 +85,11 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 
     if (enable != is_enabled) {
         is_enabled = enable;
-        DEBUG(cycle,out).print("%s from the API; persisting\n",
+        DEBUG(config,out).print("%s from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
         set_config_bool(CONFIG_IS_ENABLED, is_enabled);
     } else {
-        DEBUG(cycle,out).print("%s from the API, but already %s; no action\n",
+        DEBUG(config,out).print("%s from the API, but already %s; no action\n",
                                 is_enabled ? "enabled" : "disabled",
                                 is_enabled ? "enabled" : "disabled");
     }
@@ -95,7 +97,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 }
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
-    DEBUG(cycle,out).print("shutting down %s\n", plugin_name);
+    DEBUG(config,out).print("shutting down %s\n", plugin_name);
 
     return CR_OK;
 }
@@ -104,7 +106,7 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
     config = World::GetPersistentData(CONFIG_KEY);
 
     if (!config.isValid()) {
-        DEBUG(cycle,out).print("no config found in this save; initializing\n");
+        DEBUG(config,out).print("no config found in this save; initializing\n");
         config = World::AddPersistentData(CONFIG_KEY);
         set_config_bool(CONFIG_IS_ENABLED, is_enabled);
         set_config_val(CONFIG_SOMETHING_ELSE, 6000);
@@ -114,7 +116,7 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
     // all the other state we can directly read/modify from the persistent
     // data structure.
     is_enabled = get_config_bool(CONFIG_IS_ENABLED);
-    DEBUG(cycle,out).print("loading persisted enabled state: %s\n",
+    DEBUG(config,out).print("loading persisted enabled state: %s\n",
                             is_enabled ? "true" : "false");
     return CR_OK;
 }
@@ -122,7 +124,7 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED) {
         if (is_enabled) {
-            DEBUG(cycle,out).print("world unloaded; disabling %s\n",
+            DEBUG(config,out).print("world unloaded; disabling %s\n",
                                     plugin_name);
             is_enabled = false;
         }

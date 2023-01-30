@@ -45,7 +45,6 @@ static PersistentDataItem config;
 enum ConfigValues
 {
     CONFIG_IS_ENABLED = 0,
-    CONFIG_CYCLE_TICKS = 1,
 };
 static int get_config_val(int index)
 {

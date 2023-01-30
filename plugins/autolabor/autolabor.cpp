@@ -34,6 +34,8 @@
 #include <df/items_other_id.h>
 #include <df/plotinfost.h>
 #include <df/activity_info.h>
+#include <df/global_objects.h>
+#include <df/gamest.h>
 
 #include <MiscUtils.h>
 
@@ -49,6 +51,7 @@ using namespace df::enums;
 DFHACK_PLUGIN("autolabor");
 REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(game);
 
 #define ARRAY_COUNT(array) (sizeof(array)/sizeof((array)[0]))
 
@@ -399,6 +402,8 @@ static void enable_plugin(color_ostream &out)
 
     cleanup_state();
     init_state();
+
+    df::global::game->external_flag |= 1; // shut down DF's work detail system
 }
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
@@ -1064,6 +1069,8 @@ DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable )
     {
         enable_autolabor = false;
         setOptionEnabled(CF_ENABLED, false);
+
+        df::global::game->external_flag &= ~1; // reenable DF's work detail system
 
         out << "Autolabor is disabled." << std::endl;
     }

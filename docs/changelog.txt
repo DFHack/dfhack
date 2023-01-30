@@ -54,8 +54,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `overlay`: overlay widgets can now specify a default enabled state if they are not already set in the player's overlay config file
 - `getplants`: ID values will now be accepted regardless of case
 -@ New borders for DFHack tool windows -- tell us what you think!
+- `gui/control-panel`: new global hotkey: tilde (Shift-backtick on most keyboards)
 
 ## Documentation
+-@ Quickstart guide has been updated with info on new window behavior and how to use the control panel
 
 ## API
 - ``Buildings::containsTile()``: no longer takes a ``room`` parameter since that's not how rooms work anymore. If the building has extents, the extents will be checked. otherwise, the result just depends on whether the tile is within the building's bounding box.

@@ -46,53 +46,66 @@ Here are some common tasks people use DFHack tools to accomplish:
   your mining efforts
 
 Some tools are one-shot commands. For example, you can run `unforbid all <unforbid>`
-to claim all items on the map after a messy siege.
+to claim all (reachable) items on the map after a messy siege.
 
 Other tools must be `enabled <enable>` and then they will run in the background.
 For example, `enable seedwatch <seedwatch>` will start monitoring your stocks of
 seeds and prevent your chefs from cooking seeds that you need for planting.
 Tools that are enabled in the context of a fort will save their state with that
-fort, and the will remember that they are enabled the next time you load your save.
+fort, and they will remember that they are enabled the next time you load your save.
 
 A third class of tools add information to the screen or provide new integrated
 functionality via the DFHack `overlay` framework. For example, the `unsuspend`
 tool, in addition to its basic function of unsuspending all building construction
 jobs, can also overlay a marker on suspended buildings to indicate that they are
 suspended (and will use different markers to tell you whether this is a problem).
-These overlays can be enabled and configured with the `gui/overlay` interface.
 
 How can I figure out which commands to run?
 -------------------------------------------
 
-There are several ways to scan DFHack tools and find the one you need right now.
+There are several ways to scan DFHack tools and find the ones you need right now.
 
 The first place to check is the DFHack logo hover hotspot. It's in the upper
 left corner of the screen by default, though you can move it anywhere you want
-with the `gui/overlay` tool.
+with the `gui/overlay` configuration UI.
 
 When you hover the mouse over the logo (or hit the Ctrl-Shift-C keyboard shortcut)
 a list of DFHack tools relevant to the current context comes up. For example, when
 you have a unit selected, the hotspot will show a list of tools that inspect
 units, allow you to edit them, or maybe even teleport them. Next to each tool,
-you'll see the global hotkey you can hit to invoke the command without even
-opening the hover list.
+you'll see the hotkey you can hit to invoke the command without even opening the
+hover list.
 
-You can run any DFHack tool from `gui/launcher`, which is always listed first in
-the hover list. You can also bring up the launcher by tapping the backtick key
-(\`) or hitting Ctrl-Shift-D. In the launcher, you can quickly autocomplete any
-command name by selecting it in the list on the right side of the window.
-Commands are ordered by how often you run them, so your favorite commands will
-always be on top. You can also pull full commandlines out of your history with
-Alt-S (or by clicking on the "history search" hotkey hint).
+The second place to check is the DFHack control panel: `gui/control-panel`. It
+will give you an overview of which tools are currently enabled, and will allow
+you to toggle them on or off, see help text for them, or launch their dedicated
+configuration UIs. You can launch the control panel from anywhere with the
+tilde key (Shift-\`) or from the logo hover list.
+
+In the control panel, you can also select which tools you'd like to be
+automatically enabled when you start a new fort. There are also system settings
+you can change, like whether DFHack windows will pause the game when they come
+up.
+
+Finally, you can explore the full extent of the DFHack catalog in `gui/launcher`,
+which is always listed first in the DFHack logo hover list. You can also bring up
+the launcher by tapping the backtick key (\`) or hitting Ctrl-Shift-D. In the
+launcher, you can quickly autocomplete any command name by selecting it in the
+list on the right side of the window. Commands are ordered by how often you run
+them, so your favorite commands will always be on top. You can also pull full
+commandlines out of your history with Alt-S or by clicking on the "history search"
+hotkey hint.
 
 Once you have typed (or autocompleted, or searched for) a command, other commands
-related to the one you have selected will appear in the autocomplete list.
-Scanning through that list is a great way to learn about new tools that you might
-find useful. You can also see how commands are grouped by running the `tags` command.
+related to the one you have selected will appear in the right-hand panel. Scanning
+through that list is a great way to learn about new tools that you might find
+useful. You can also see how commands are grouped by running the `tags` command.
 
 The bottom panel will show the full help text for the command you are running,
 allowing you to refer to the usage documentation and examples when you are typing
-your command.
+your command. After you run a command, the bottom panel switches to command output
+mode, but you can get back to the help text by hitting Ctrl-T or clicking on the
+``Showing`` selector.
 
 How do DFHack in-game windows work?
 -----------------------------------
@@ -106,26 +119,27 @@ whether they capture keyboard and mouse input.
 The DFHack windowing system allows multiple overlapping windows to be active at
 once. The one with the highlighted title bar has focus and will receive anything
 you type at the keyboard. Hit Esc or right click to close the window or cancel
-the current operation. You can click anywhere on the screen that is not a
-DFHack window to unfocus the window and let it just sit in the background. It won't
+the current action. You can click anywhere on the screen that is not a DFHack
+window to unfocus the window and let it just sit in the background. It won't
 respond to key presses or mouse clicks until you click on it again to give it
-focus. You can right click directly on an unfocused window to close it without
-left clicking to activate it first.
+focus. If no DFHack windows are focused, you can right click directly on a window
+to close it without left clicking to focus it first.
 
 DFHack windows are draggable from the title bar or from anywhere on the window
 that doesn't have a mouse-clickable widget on it. Many are resizable as well
 (if the tool window has components that can reasonably be resized).
 
 You can generally use DFHack tools without interrupting the game. That is, if the
-game is unpaused, it can continue to run while a DFHack window is open. Many tools
-will initially pause the game to let you focus on the task at hand, but you can
-unpause like normal if you want. You can also interact with the map, scrolling it
-with the keyboard or mouse and selecting units, buildings, and items. Some tools
-will capture all keyboard input, such as tools with editable text fields, and some
-will force-pause the game if it makes sense to, like `gui/quickfort`, since you
-cannot interact with the map normally while trying to apply a blueprint. Windows
-for tools that force-pause the game will have a pause icon in their upper right
-corner to indicate which tool is responsible for the pausing.
+game is unpaused, it can continue to run while a DFHack window is open. If configured
+to do so in `gui/control-panel`, tools will initially pause the game to let you
+focus on the task at hand, but you can unpause like normal if you want. You can
+also interact with the map, scrolling it with the keyboard or mouse and selecting
+units, buildings, and items. Some tools will capture all keyboard input, such as
+tools with editable text fields, and some will force-pause the game if it makes
+sense to, like `gui/quickfort`, since you cannot interact with the map normally
+while trying to apply a blueprint. Windows for tools that force-pause the game
+will have a pause icon in their upper right corner to indicate which tool is
+preventing you from unpausing.
 
 Where do I go next?
 -------------------
@@ -135,33 +149,32 @@ To recap:
 You can get to popular, relevant tools for the current context by hovering
 the mouse over the DFHack logo or by hitting Ctrl-Shift-C.
 
+You can enable DFHack tools and configure settings with `gui/control-panel`,
+which you can access directly with the tilde key (Shift-\`).
+
 You can get to the launcher and its integrated autocomplete, history search,
 and help text by hitting backtick (\`) or Ctrl-Shift-D, or, of course, by
 running it from the logo hover list.
 
-You can list and start tools that run in the background with the `enable`
-command.
-
-You can configure screen overlays with the `gui/overlay` tool.
-
-With those four tools, you have the complete DFHack tool suite at your
+With those three tools, you have the complete DFHack tool suite at your
 fingertips. So what to run first? Here are a few commands to get you started.
 You can run them all from the launcher.
 
 First, let's import some useful manager orders to keep your fort stocked with
 basic necessities. Run ``orders import library/basic``. If you go to your
 mangager orders screen, you can see all the orders that have been created for you.
+Note that you could have imported the orders directly from this screen as well,
+using the DFHack `overlay` widget at the bottom of the manager orders panel.
 
-Next, try setting up `autochop` by running the GUI configuration `gui/autochop`.
-You can enable it from the GUI, so you don't need to run `enable autochop <enable>`
-directly. You can set a target number of logs, and autochop will manage
-your logging industry for you. You can control where your woodsdwarves go to
-cut down trees by setting up burrows and configuring autochop to only cut in
-those burrows. If you have the extra screen space, go ahead and set the
-`gui/autochop` window to minimal mode (click on the hint near the upper right
-corner of the window or hit Alt-M) and click on the map so the window loses
-keyboard focus. As you play the game, you can glance at the status panel to
-check on your stocks of wood.
+Next, try setting up `autochop` to automatically designate trees for chopping when
+you get low on usable logs. Run `gui/control-panel` and select ``autochop`` in the
+list. Click on the button to the left of the name or hit Enter to enable it. You
+can then click on the ``[configure]`` button to launch `gui/autochop` if you'd
+like to customize its settings. If you have the extra screen space, you can go
+ahead and set the `gui/autochop` window to minimal mode (click on the hint near
+the upper right corner of the window or hit Alt-M) and click on the map so the
+window loses keyboard focus. As you play the game, you can glance at the live
+status panel to check on your stocks of wood.
 
 Finally, let's do some fort design copy-pasting. Go to some bedrooms that you have
 set up in your fort. Run `gui/blueprint`, set a name for your blueprint by

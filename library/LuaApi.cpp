@@ -1883,6 +1883,17 @@ static int units_getUnitsInBox(lua_State *state)
     return 2;
 }
 
+static int units_getCitizens(lua_State *L) {
+    bool ignore_sanity = lua_toboolean(L, -1); // defaults to false
+
+    std::vector<df::unit *> citizens;
+    if (Units::getCitizens(citizens, ignore_sanity)) {
+        Lua::PushVector(L, citizens);
+        return 1;
+    }
+    return 0;
+}
+
 static int units_getStressCutoffs(lua_State *L)
 {
     lua_newtable(L);
@@ -1896,6 +1907,7 @@ static const luaL_Reg dfhack_units_funcs[] = {
     { "getOuterContainerRef", units_getOuterContainerRef },
     { "getNoblePositions", units_getNoblePositions },
     { "getUnitsInBox", units_getUnitsInBox },
+    { "getCitizens", units_getCitizens },
     { "getStressCutoffs", units_getStressCutoffs },
     { NULL, NULL }
 };

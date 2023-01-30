@@ -756,6 +756,14 @@ bool Units::getUnitsInBox (std::vector<df::unit*> &units,
     return true;
 }
 
+bool Units::getCitizens(std::vector<df::unit *> &citizens, bool ignore_sanity) {
+    for (auto &unit : world->units.active) {
+        if (isCitizen(unit, ignore_sanity))
+            citizens.emplace_back(unit);
+    }
+    return true;
+}
+
 int32_t Units::findIndexById(int32_t creature_id)
 {
     return df::unit::binsearch_index(world->units.all, creature_id);

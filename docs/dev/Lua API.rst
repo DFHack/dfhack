@@ -1412,6 +1412,11 @@ Units module
   Note that ``pos2xyz()`` cannot currently be used to convert coordinate objects to
   the arguments required by this function.
 
+* ``dfhack.units.getCitizens([ignore_sanity])``
+
+  Returns a table (list) of all citizens, which you would otherwise have to loop over all
+  units in world and test against ``isCitizen()`` to discover.
+
 * ``dfhack.units.teleport(unit, pos)``
 
   Moves the specified unit and any riders to the target coordinates, setting

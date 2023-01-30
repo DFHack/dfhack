@@ -22,6 +22,7 @@ static long g_dfhack_logo_texpos_start = -1;
 static long g_green_pin_texpos_start = -1;
 static long g_red_pin_texpos_start = -1;
 static long g_icons_texpos_start = -1;
+static long g_on_off_texpos_start = -1;
 static long g_thin_borders_texpos_start = -1;
 static long g_medium_borders_texpos_start = -1;
 static long g_panel_borders_texpos_start = -1;
@@ -124,6 +125,8 @@ void Textures::init(color_ostream &out) {
                                           &g_red_pin_texpos_start);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/icons.png",
                                           &g_icons_texpos_start);
+    g_num_dfhack_textures += load_textures(out, "hack/data/art/on-off.png",
+                                          &g_on_off_texpos_start);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/border-thin.png",
                                           &g_thin_borders_texpos_start);
     g_num_dfhack_textures += load_textures(out, "hack/data/art/border-medium.png",
@@ -178,6 +181,10 @@ long Textures::getRedPinTexposStart() {
 
 long Textures::getIconsTexposStart() {
     return g_icons_texpos_start;
+}
+
+long Textures::getOnOffTexposStart() {
+    return g_on_off_texpos_start;
 }
 
 long Textures::getThinBordersTexposStart() {

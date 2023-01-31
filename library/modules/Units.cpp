@@ -33,7 +33,6 @@ distribution.
 #include <algorithm>
 #include <numeric>
 #include <functional>
-#include <array>
 using namespace std;
 
 #include "VersionInfo.h"
@@ -52,7 +51,6 @@ using namespace std;
 #include "MiscUtils.h"
 
 #include "df/activity_entry.h"
-#include "df/building_civzonest.h"
 #include "df/burrow.h"
 #include "df/caste_raw.h"
 #include "df/creature_raw.h"
@@ -63,7 +61,6 @@ using namespace std;
 #include "df/entity_raw_flags.h"
 #include "df/identity_type.h"
 #include "df/game_mode.h"
-#include "df/global_objects.h"
 #include "df/histfig_entity_link_positionst.h"
 #include "df/histfig_relationship_type.h"
 #include "df/historical_entity.h"
@@ -74,11 +71,6 @@ using namespace std;
 #include "df/identity.h"
 #include "df/job.h"
 #include "df/nemesis_record.h"
-#include "df/squad.h"
-#include "df/squad_position.h"
-#include "df/squad_schedule_order.h"
-#include "df/squad_order.h"
-#include "df/squad_order_trainst.h"
 #include "df/tile_occupancy.h"
 #include "df/plotinfost.h"
 #include "df/unit_inventory_item.h"

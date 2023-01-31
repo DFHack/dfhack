@@ -1589,7 +1589,7 @@ Units module
 
   Returns a table of the cutoffs used by the above stress level functions.
 
-Military Module API
+Military module
 ~~~~~~~~~~~~~~~~~~~
 
 * ``dfhack.military.makeSquad(assignment_id)``
@@ -1603,7 +1603,7 @@ Military Module API
 
 * ``dfhack.military.getSquadName(squad_id)``
 
-  Returns the name of a squad/
+  Returns the name of a squad.
 
 Action Timer API
 ~~~~~~~~~~~~~~~~

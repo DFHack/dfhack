@@ -4,7 +4,6 @@
 #include "DataDefs.h"
 
 #include "df/squad.h"
-#include "df/unit.h"
 
 namespace DFHack
 {

@@ -9,6 +9,7 @@
 #include "PluginManager.h"
 #include "TileTypes.h"
 
+#include "modules/Items.h"
 #include "modules/Kitchen.h"
 #include "modules/Maps.h"
 #include "modules/Persistence.h"
@@ -269,9 +270,6 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 struct BadFlags {
     uint32_t whole;
 
-    // TODO: maybe don't filter out seeds that are in_building. that would
-    // allow us to count seeds that are in workshops. are there any negative
-    // consequences?
     BadFlags() {
         df::item_flags flags;
         #define F(x) flags.bits.x = true;
@@ -285,9 +283,10 @@ struct BadFlags {
     }
 };
 
-static bool is_accessible_item(const df::coord &pos, const vector<df::unit *> &citizens) {
+static bool is_accessible_item(df::item *item, const vector<df::unit *> &citizens) {
+    const df::coord pos = Items::getPosition(item);
     for (auto &unit : citizens) {
-        if (Maps::canWalkBetween(unit->pos, pos))
+        if (Maps::canWalkBetween(Units::getPosition(unit), pos))
             return true;
     }
     return false;
@@ -304,7 +303,7 @@ static void scan_seeds(color_ostream &out, unordered_map<int32_t, int32_t> *acce
         MaterialInfo mat(item);
         if (!mat.isPlant())
             continue;
-        if ((bad_flags.whole & item->flags.whole) || !is_accessible_item(item->pos, citizens)) {
+        if ((bad_flags.whole & item->flags.whole) || !is_accessible_item(item, citizens)) {
             if (inaccessible_counts)
                 ++(*inaccessible_counts)[mat.plant->index];
         } else {

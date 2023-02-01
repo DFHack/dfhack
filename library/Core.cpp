@@ -948,7 +948,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                 << "Context may be used to limit the scope of the binding, by" << endl
                 << "requiring the current context to have a certain prefix." << endl
                 << "Current UI context is: " << endl
-                << join_strings("\n", Gui::getFocusStrings(Gui::getDFViewscreen())) << endl;
+                << join_strings("\n", Gui::getFocusStrings(Gui::getCurViewscreen(true))) << endl;
         }
     }
     else if (first == "alias")
@@ -2431,6 +2431,7 @@ bool Core::SelectHotkey(int sym, int modifiers)
                 }
 
                 if (!found) {
+                    // TODO: fix error: format ‘%s’ expects argument of type ‘char*’, but argument 3 has type ‘std::string {aka std::basic_string<char>}’ [-Werror=format=]
                     DEBUG(keybinding).print("skipping keybinding due to focus string mismatch: '%s' !~ '%s'\n",
                         join_strings(", ", focusStrings), binding.focus.c_str());
                     continue;

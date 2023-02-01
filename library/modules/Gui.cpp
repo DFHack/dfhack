@@ -172,6 +172,15 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         newFocusString += "/Hauling";
         focusStrings.push_back(newFocusString);
     }
+    if (game->main_interface.bottom_mode_selected == df::enums::main_bottom_mode_type::ZONE) {
+        newFocusString = baseFocus;
+        newFocusString += "/Zone";
+        if (game->main_interface.civzone.cur_bld) {
+            newFocusString += "/Some";
+            newFocusString += "/" + enum_item_key(game->main_interface.civzone.cur_bld->type);
+        }
+        focusStrings.push_back(newFocusString);
+    }
     if (game->main_interface.trade.open) {
         newFocusString = baseFocus;
         newFocusString += "/Trade";
@@ -351,7 +360,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
 
 bool Gui::matchFocusString(std::string focusString) {
     focusString = toLower(focusString);
-    std::vector<std::string> currentFocus = getFocusStrings(Core::getTopViewscreen());
+    std::vector<std::string> currentFocus = getFocusStrings(getCurViewscreen(true));
 
     return std::find_if(currentFocus.begin(), currentFocus.end(), [&focusString](std::string item) {
         return focusString == toLower(item);

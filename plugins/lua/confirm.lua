@@ -58,29 +58,6 @@ is equivalent to:
 
 ]]
 
-trade = defconf('trade')
-function trade.intercept_key(key)
-    return false--dfhack.gui.matchFocusString("dwarfmode/Trade") and key == MOUSE_LEFT and hovering over trade button?
-end
-trade.title = "Confirm trade"
-function trade.get_message()
-    if trader_goods_selected(screen) and broker_goods_selected(screen) then
-        return "Are you sure you want to trade the selected goods?"
-    elseif trader_goods_selected(screen) then
-        return "You are not giving any items. This is likely\n" ..
-            "to irritate the merchants.\n" ..
-            "Attempt to trade anyway?"
-    elseif broker_goods_selected(screen) then
-        return "You are not receiving any items. You may want to\n" ..
-            "offer these items instead or choose items to receive.\n" ..
-            "Attempt to trade anyway?"
-    else
-        return "No items are selected. This is likely\n" ..
-            "to irritate the merchants.\n" ..
-            "Attempt to trade anyway?"
-    end
-end
-
 trade_cancel = defconf('trade-cancel')
 function trade_cancel.intercept_key(key)
     return dfhack.gui.matchFocusString("dwarfmode/Trade") and
@@ -89,39 +66,6 @@ function trade_cancel.intercept_key(key)
 end
 trade_cancel.title = "Cancel trade"
 trade_cancel.message = "Are you sure you want leave this screen?\nSelected items will not be saved."
-
---[[trade_seize = defconf('trade-seize')
-function trade_seize.intercept_key(key)
-    return screen.in_edit_count == 0 and
-        trader_goods_selected(screen) and
-        key == keys.TRADE_SEIZE
-end
-trade_seize.title = "Confirm seize"
-trade_seize.message = "Are you sure you want to seize these goods?"
-
-trade_offer = defconf('trade-offer')
-function trade_offer.intercept_key(key)
-    return screen.in_edit_count == 0 and
-        broker_goods_selected(screen) and
-        key == keys.TRADE_OFFER
-end
-trade_offer.title = "Confirm offer"
-trade_offer.message = "Are you sure you want to offer these goods?\nYou will receive no payment."
-
-trade_select_all = defconf('trade-select-all')
-function trade_select_all.intercept_key(key)
-    if screen.in_edit_count == 0 and key == keys.SEC_SELECT then
-        if screen.in_right_pane and broker_goods_selected(screen) and not broker_goods_all_selected(screen) then
-            return true
-        elseif not screen.in_right_pane and trader_goods_selected(screen) and not trader_goods_all_selected(screen) then
-            return true
-        end
-    end
-    return false
-end
-trade_select_all.title = "Confirm selection"
-trade_select_all.message = "Selecting all goods will overwrite your current selection\n" ..
-        "and cannot be undone. Continue?"--]]
 
 haul_delete_route = defconf('haul-delete-route')
 function haul_delete_route.intercept_key(key)
@@ -160,7 +104,79 @@ end
 squad_disband.title = "Disband squad"
 squad_disband.message = "Are you sure you want to disband this squad?"
 
---[[uniform_delete = defconf('uniform-delete')
+order_remove = defconf('order-remove')
+function order_remove.intercept_key(key)
+    return key == MOUSE_LEFT and df.global.game.main_interface.current_hover == 222
+end
+order_remove.title = "Remove manager order"
+order_remove.message = "Are you sure you want to remove this order?"
+
+zone_remove = defconf('zone-remove')
+function zone_remove.intercept_key(key)
+    return key == MOUSE_LEFT and df.global.game.main_interface.current_hover == 130
+end
+zone_remove.title = "Remove zone"
+zone_remove.message = "Are you sure you want to remove this zone?"
+
+-- these confirmations have more complex button detection requirements
+--[[
+trade = defconf('trade')
+function trade.intercept_key(key)
+    dfhack.gui.matchFocusString("dwarfmode/Trade") and key == MOUSE_LEFT and hovering over trade button?
+end
+trade.title = "Confirm trade"
+function trade.get_message()
+    if trader_goods_selected(screen) and broker_goods_selected(screen) then
+        return "Are you sure you want to trade the selected goods?"
+    elseif trader_goods_selected(screen) then
+        return "You are not giving any items. This is likely\n" ..
+            "to irritate the merchants.\n" ..
+            "Attempt to trade anyway?"
+    elseif broker_goods_selected(screen) then
+        return "You are not receiving any items. You may want to\n" ..
+            "offer these items instead or choose items to receive.\n" ..
+            "Attempt to trade anyway?"
+    else
+        return "No items are selected. This is likely\n" ..
+            "to irritate the merchants.\n" ..
+            "Attempt to trade anyway?"
+    end
+end
+
+trade_seize = defconf('trade-seize')
+function trade_seize.intercept_key(key)
+    return screen.in_edit_count == 0 and
+        trader_goods_selected(screen) and
+        key == keys.TRADE_SEIZE
+end
+trade_seize.title = "Confirm seize"
+trade_seize.message = "Are you sure you want to seize these goods?"
+
+trade_offer = defconf('trade-offer')
+function trade_offer.intercept_key(key)
+    return screen.in_edit_count == 0 and
+        broker_goods_selected(screen) and
+        key == keys.TRADE_OFFER
+end
+trade_offer.title = "Confirm offer"
+trade_offer.message = "Are you sure you want to offer these goods?\nYou will receive no payment."
+
+trade_select_all = defconf('trade-select-all')
+function trade_select_all.intercept_key(key)
+    if screen.in_edit_count == 0 and key == keys.SEC_SELECT then
+        if screen.in_right_pane and broker_goods_selected(screen) and not broker_goods_all_selected(screen) then
+            return true
+        elseif not screen.in_right_pane and trader_goods_selected(screen) and not trader_goods_all_selected(screen) then
+            return true
+        end
+    end
+    return false
+end
+trade_select_all.title = "Confirm selection"
+trade_select_all.message = "Selecting all goods will overwrite your current selection\n" ..
+        "and cannot be undone. Continue?"
+
+uniform_delete = defconf('uniform-delete')
 function uniform_delete.intercept_key(key)
     return key == keys.D_MILITARY_DELETE_UNIFORM and
         screen.page == screen._type.T_page.Uniforms and
@@ -189,17 +205,6 @@ end
 route_delete.title = "Delete route"
 route_delete.message = "Are you sure you want to delete this route?"
 
-location_retire = defconf('location-retire')
-function location_retire.intercept_key(key)
-    return key == keys.LOCATION_RETIRE and
-        (screen.menu == df.viewscreen_locationsst.T_menu.Locations or
-            screen.menu == df.viewscreen_locationsst.T_menu.Occupations) and
-        screen.in_edit == df.viewscreen_locationsst.T_in_edit.None and
-        screen.locations[screen.location_idx]
-end
-location_retire.title = "Retire location"
-location_retire.message = "Are you sure you want to retire this location?"
-
 convict = defconf('convict')
 convict.title = "Confirm conviction"
 function convict.intercept_key(key)
@@ -214,15 +219,22 @@ function convict.get_message()
     return "Are you sure you want to convict " .. name .. "?\n" ..
         "This action is irreversible."
 end
-
-order_remove = defconf('order-remove')
-function order_remove.intercept_key(key)
-    return key == keys.MANAGER_REMOVE and
-        not screen.in_max_workshops
-end
-order_remove.title = "Remove manager order"
-order_remove.message = "Are you sure you want to remove this order?"
 ]]--
+
+-- locations cannot be retired currently
+--[[
+location_retire = defconf('location-retire')
+function location_retire.intercept_key(key)
+    return key == keys.LOCATION_RETIRE and
+        (screen.menu == df.viewscreen_locationsst.T_menu.Locations or
+            screen.menu == df.viewscreen_locationsst.T_menu.Occupations) and
+        screen.in_edit == df.viewscreen_locationsst.T_in_edit.None and
+        screen.locations[screen.location_idx]
+end
+location_retire.title = "Retire location"
+location_retire.message = "Are you sure you want to retire this location?"
+]]--
+
 -- End of confirmation definitions
 
 function check()

@@ -317,12 +317,7 @@ public:
 
         if (paused)
         {
-            // TODO: fix
             if (paused_focus != "" && (input->count(df::interface_key::LEAVESCREEN) || mouseExit))
-                if(mouseExit) {
-                    df::global::enabler->mouse_rbut = 0;
-                    df::global::enabler->mouse_rbut_down = 0;
-                }
                 conf_lua::api::unpause(NULL);
             return false;
         }
@@ -381,16 +376,11 @@ public:
                 set_state(SELECTED);
             else if (input->count(df::interface_key::CUSTOM_P))
             {
-                // TODO: fix
                 DEBUG(status).print("pausing\n");
                 paused = true;
-                // only record the screen when we're not at the top viewscreen
-                // since this screen will *always* be on the stack. for
-                // dwarfmode screens, use ESC detection to discover when to
-                // unpause
 
-                std::vector<std::string> focusStrings = Gui::getFocusStrings(Gui::getCurViewscreen());
-                std::string current_focus = focusStrings[0];
+                std::vector<std::string> focusStrings = Gui::getFocusStrings(Gui::getCurViewscreen(true));
+                std::string current_focus = focusStrings[0];// TODO: fix
 
                 if (current_focus != "dwarfmode") {
                     paused_focus = current_focus;
@@ -602,21 +592,27 @@ static int conf_register_##cls = conf_register(&cls##_instance, {\
     IDs (used in the "confirm enable/disable" command, by Lua, and in the docs)
     are obtained by replacing '_' with '-' in the first argument to DEFINE_CONFIRMATION
 */
-DEFINE_CONFIRMATION(trade,                viewscreen_dwarfmodest);
+
 DEFINE_CONFIRMATION(trade_cancel,         viewscreen_dwarfmodest);
-//DEFINE_CONFIRMATION(trade_seize,        viewscreen_tradegoodsst);
-//DEFINE_CONFIRMATION(trade_offer,        viewscreen_tradegoodsst);
-//DEFINE_CONFIRMATION(trade_select_all,   viewscreen_tradegoodsst);
 DEFINE_CONFIRMATION(haul_delete_route,    viewscreen_dwarfmodest);
 DEFINE_CONFIRMATION(haul_delete_stop,     viewscreen_dwarfmodest);
 DEFINE_CONFIRMATION(depot_remove,         viewscreen_dwarfmodest);
 DEFINE_CONFIRMATION(squad_disband,        viewscreen_dwarfmodest);
-//DEFINE_CONFIRMATION(uniform_delete,     viewscreen_layer_militaryst);
+DEFINE_CONFIRMATION(order_remove,         viewscreen_dwarfmodest);
+DEFINE_CONFIRMATION(zone_remove,          viewscreen_dwarfmodest);
+
+// these are more complex to implement
+//DEFINE_CONFIRMATION(convict,            viewscreen_dwarfmodest);
+//DEFINE_CONFIRMATION(trade,              viewscreen_dwarfmodest);
+//DEFINE_CONFIRMATION(trade_seize,        viewscreen_dwarfmodest);
+//DEFINE_CONFIRMATION(trade_offer,        viewscreen_dwarfmodest);
+//DEFINE_CONFIRMATION(trade_select_all,   viewscreen_dwarfmodest);
+//DEFINE_CONFIRMATION(uniform_delete,     viewscreen_dwarfmodest);
 //DEFINE_CONFIRMATION(note_delete,        viewscreen_dwarfmodest);
 //DEFINE_CONFIRMATION(route_delete,       viewscreen_dwarfmodest);
+
+// locations can't be retired currently
 //DEFINE_CONFIRMATION(location_retire,    viewscreen_locationsst);
-//DEFINE_CONFIRMATION(convict,            viewscreen_justicest);
-//DEFINE_CONFIRMATION(order_remove,       viewscreen_jobmanagementst);
 
 DFhackCExport command_result plugin_init (color_ostream &out, vector <PluginCommand> &commands)
 {

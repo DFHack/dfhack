@@ -12,4 +12,4 @@ list(APPEND COMMON_SRCS ${COMMON_HDRS})
 
 #dfhack_plugin(labormanager labormanager.cpp joblabormapper.cpp ${COMMON_SRCS})
 
-dfhack_plugin(autolabor autolabor.cpp ${COMMON_SRCS})
+dfhack_plugin(autolabor autolabor.cpp ${COMMON_SRCS} LINK_LIBRARIES lua)

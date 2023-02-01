@@ -886,7 +886,7 @@ local BASE_FRAME = {
     title_pen = to_pen{ fg=COLOR_BLACK, bg=COLOR_GREY },
     inactive_title_pen = to_pen{ fg=COLOR_GREY, bg=COLOR_BLACK },
     signature_pen = to_pen{ fg=COLOR_GREY, bg=COLOR_BLACK },
-    paused_pen = to_pen{tile=782, ch=216, fg=COLOR_GREY, bg=COLOR_BLACK},
+    paused_pen = to_pen{fg=COLOR_RED, bg=COLOR_BLACK},
 }
 
 local function make_frame(name, double_line)
@@ -946,19 +946,8 @@ function paint_frame(dc,rect,style,title,inactive,pause_forced,resizable)
     end
 
     if pause_forced then
-        -- get the tiles for the activated pause symbol
-        local pause_texpos_ul = dfhack.screen.findGraphicsTile('INTERFACE_BITS', 18, 28)
-        local pause_texpos_ur = dfhack.screen.findGraphicsTile('INTERFACE_BITS', 19, 28)
-        local pause_texpos_ll = dfhack.screen.findGraphicsTile('INTERFACE_BITS', 18, 29)
-        local pause_texpos_lr = dfhack.screen.findGraphicsTile('INTERFACE_BITS', 19, 29)
-        if not pause_texpos_ul then
-            dscreen.paintTile(style.paused_pen, x2-1, y1)
-        else
-            dscreen.paintTile(style.paused_pen, x2-2, y1-1, nil, pause_texpos_ul)
-            dscreen.paintTile(style.paused_pen, x2-1, y1-1, nil, pause_texpos_ur)
-            dscreen.paintTile(style.paused_pen, x2-2, y1,   nil, pause_texpos_ll)
-            dscreen.paintTile(style.paused_pen, x2-1, y1,   nil, pause_texpos_lr)
-        end
+        dscreen.paintString(style.paused_pen or style.title_pen or pen,
+                            x1+2, y2, ' PAUSE FORCED ')
     end
 end
 

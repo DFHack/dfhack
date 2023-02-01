@@ -271,26 +271,6 @@ local function Panel_on_double_click(self)
     Panel_update_frame(self, frame, true)
 end
 
-local function panel_mouse_is_on_pause_icon(self)
-    local frame_rect = self.frame_rect
-    local x,y = dscreen.getMousePos()
-    return (x == frame_rect.x2-2 or x == frame_rect.x2-1)
-            and (y == frame_rect.y1-1 or y == frame_rect.y1)
-end
-
-local function panel_has_pause_icon(self)
-    return self.parent_view and self.parent_view.force_pause
-end
-
-function Panel:getMouseFramePos()
-    local x,y = Panel.super.getMouseFramePos(self)
-    if x then return x, y end
-    if panel_has_pause_icon(self) and panel_mouse_is_on_pause_icon(self) then
-        local frame_rect = self.frame_rect
-        return frame_rect.width - 3, 0
-    end
-end
-
 function Panel:onInput(keys)
     if self.kbd_get_pos then
         if keys.SELECT or keys.LEAVESCREEN or keys._MOUSE_R_DOWN then

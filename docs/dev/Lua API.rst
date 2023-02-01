@@ -4187,6 +4187,12 @@ ZScreen provides the following functions:
 
 ZScreen subclasses can set the following attributes:
 
+* ``defocusable`` (default: ``true``)
+
+  Whether the ZScreen loses keyboard focus when the player clicks on an area
+  of the screen other than the tool window. If the player clicks on a different
+  ZScreen window, focus still transfers to that other ZScreen.
+
 * ``initial_pause`` (default: ``DEFAULT_INITIAL_PAUSE``)
 
   Whether to pause the game when the ZScreen is shown. ``DEFAULT_INITIAL_PAUSE``

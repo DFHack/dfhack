@@ -1112,7 +1112,7 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
                 if dc then
                     local tile_pen = tonumber(token.tile) and
                             to_pen{tile=token.tile} or token.tile
-                    dc:char(nil, token.tile)
+                    dc:char(nil, tile_pen)
                     if token.width then
                         dc:advance(token.width-1)
                     end

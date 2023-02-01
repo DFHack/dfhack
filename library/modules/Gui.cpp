@@ -358,6 +358,18 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     }
 }
 
+/* TODO: understand how this changes for v50
+DEFINE_GET_FOCUS_STRING_HANDLER(dungeonmode)
+{
+    using df::global::adventure;
+
+    if (!adventure)
+        return;
+
+    focus += "/" + enum_item_key(adventure->menu);
+}
+*/
+
 bool Gui::matchFocusString(std::string focusString) {
     focusString = toLower(focusString);
     std::vector<std::string> currentFocus = getFocusStrings(getCurViewscreen(true));

@@ -2423,7 +2423,6 @@ bool Core::SelectHotkey(int sym, int modifiers)
                 // TODO: understand more about this to figure out if this solution works
                 bool found = false;
                 std::vector<std::string> focusStrings = Gui::getFocusStrings(Core::getTopViewscreen());
-                // is there convention for when to use size_t vs int?
                 for (std::string focusString : focusStrings) {
                     if (prefix_matches(binding.focus, focusString)) {
                         found = true;

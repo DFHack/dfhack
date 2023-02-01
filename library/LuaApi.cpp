@@ -1694,6 +1694,7 @@ static const LuaWrapper::FunctionReg dfhack_textures_module[] = {
     WRAPM(Textures, getRedPinTexposStart),
     WRAPM(Textures, getIconsTexposStart),
     WRAPM(Textures, getOnOffTexposStart),
+    WRAPM(Textures, getControlPanelTexposStart),
     WRAPM(Textures, getThinBordersTexposStart),
     WRAPM(Textures, getMediumBordersTexposStart),
     WRAPM(Textures, getPanelBordersTexposStart),

@@ -818,7 +818,7 @@ static void generate_report(color_ostream& out)
             missingGloves[unit->race]++;
         if (numPants == 0)
             missingPants[unit->race]++;
-        DEBUG(report) << Translation::TranslateName(Units::getVisibleName(unit)) << " has " << numArmor << " armor, " << numShoes << " shoes, " << numHelms << " helms, " << numGloves << " gloves, " << numPants << " pants" << endl;
+        DEBUG(report,out) << Translation::TranslateName(Units::getVisibleName(unit)) << " has " << numArmor << " armor, " << numShoes << " shoes, " << numHelms << " helms, " << numGloves << " gloves, " << numPants << " pants" << endl;
     }
     if (missingArmor.size() + missingShoes.size() + missingHelms.size() + missingGloves.size() + missingPants.size() == 0)
     {

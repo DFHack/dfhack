@@ -317,8 +317,9 @@ public:
 
         if (paused)
         {
-            if (paused_focus != "" && (input->count(df::interface_key::LEAVESCREEN) || mouseExit))
+            if (paused_focus != "" && (input->count(df::interface_key::LEAVESCREEN) || mouseExit)) {
                 conf_lua::api::unpause(NULL);
+            }
             return false;
         }
         else if (state == INACTIVE)
@@ -372,6 +373,7 @@ public:
                     df::global::enabler->mouse_rbut_down = 0;
                 }
                 set_state(INACTIVE);
+                Screen::invalidate();
             } else if (input->count(df::interface_key::SELECT))
                 set_state(SELECTED);
             else if (input->count(df::interface_key::CUSTOM_P))
@@ -600,6 +602,7 @@ DEFINE_CONFIRMATION(depot_remove,         viewscreen_dwarfmodest);
 DEFINE_CONFIRMATION(squad_disband,        viewscreen_dwarfmodest);
 DEFINE_CONFIRMATION(order_remove,         viewscreen_dwarfmodest);
 DEFINE_CONFIRMATION(zone_remove,          viewscreen_dwarfmodest);
+DEFINE_CONFIRMATION(burrow_remove,        viewscreen_dwarfmodest);
 
 // these are more complex to implement
 //DEFINE_CONFIRMATION(convict,            viewscreen_dwarfmodest);

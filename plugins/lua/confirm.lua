@@ -118,6 +118,13 @@ end
 zone_remove.title = "Remove zone"
 zone_remove.message = "Are you sure you want to remove this zone?"
 
+burrow_remove = defconf('burrow-remove')
+function burrow_remove.intercept_key(key)
+    return key == MOUSE_LEFT and df.global.game.main_interface.current_hover == 171
+end
+burrow_remove.title = "Remove burrow"
+burrow_remove.message = "Are you sure you want to remove this burrow?"
+
 -- these confirmations have more complex button detection requirements
 --[[
 trade = defconf('trade')

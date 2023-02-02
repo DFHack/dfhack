@@ -125,6 +125,13 @@ end
 burrow_remove.title = "Remove burrow"
 burrow_remove.message = "Are you sure you want to remove this burrow?"
 
+stockpile_remove = defconf('stockpile-remove')
+function stockpile_remove.intercept_key(key)
+    return key == MOUSE_LEFT and df.global.game.main_interface.current_hover == 118
+end
+stockpile_remove.title = "Remove stockpile"
+stockpile_remove.message = "Are you sure you want to remove this stockpile?"
+
 -- these confirmations have more complex button detection requirements
 --[[
 trade = defconf('trade')

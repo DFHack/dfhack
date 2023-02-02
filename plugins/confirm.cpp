@@ -594,6 +594,7 @@ DEFINE_CONFIRMATION(squad_disband,        viewscreen_dwarfmodest);
 DEFINE_CONFIRMATION(order_remove,         viewscreen_dwarfmodest);
 DEFINE_CONFIRMATION(zone_remove,          viewscreen_dwarfmodest);
 DEFINE_CONFIRMATION(burrow_remove,        viewscreen_dwarfmodest);
+DEFINE_CONFIRMATION(stockpile_remove,     viewscreen_dwarfmodest);
 
 // these are more complex to implement
 //DEFINE_CONFIRMATION(convict,            viewscreen_dwarfmodest);

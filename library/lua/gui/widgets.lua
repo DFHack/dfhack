@@ -271,26 +271,6 @@ local function Panel_on_double_click(self)
     Panel_update_frame(self, frame, true)
 end
 
-local function panel_mouse_is_on_pause_icon(self)
-    local frame_rect = self.frame_rect
-    local x,y = dscreen.getMousePos()
-    return (x == frame_rect.x2-2 or x == frame_rect.x2-1)
-            and (y == frame_rect.y1-1 or y == frame_rect.y1)
-end
-
-local function panel_has_pause_icon(self)
-    return self.parent_view and self.parent_view.force_pause
-end
-
-function Panel:getMouseFramePos()
-    local x,y = Panel.super.getMouseFramePos(self)
-    if x then return x, y end
-    if panel_has_pause_icon(self) and panel_mouse_is_on_pause_icon(self) then
-        local frame_rect = self.frame_rect
-        return frame_rect.width - 3, 0
-    end
-end
-
 function Panel:onInput(keys)
     if self.kbd_get_pos then
         if keys.SELECT or keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
@@ -1110,7 +1090,9 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
             if token.tile then
                 x = x + 1
                 if dc then
-                    dc:tile(nil, token.tile)
+                    local tile_pen = tonumber(token.tile) and
+                            to_pen{tile=token.tile} or token.tile
+                    dc:char(nil, tile_pen)
                     if token.width then
                         dc:advance(token.width-1)
                     end
@@ -1713,7 +1695,7 @@ function List:onRenderBody(dc)
 
     local function paint_icon(icon, obj)
         if type(icon) ~= 'string' then
-            dc:tile(nil,icon)
+            dc:char(nil,icon)
         else
             if current then
                 dc:string(icon, obj.icon_pen or self.icon_pen or cur_pen)

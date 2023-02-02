@@ -30,6 +30,7 @@ distribution.
 #include <vector>
 #include <map>
 #include <type_traits>
+#include <unordered_map>
 
 #include "df/interfacest.h"
 
@@ -373,6 +374,13 @@ namespace DFHack {namespace Lua {
 
     template<typename T_Key, typename T_Value>
     void Push(lua_State *L, const std::map<T_Key, T_Value> &pmap) {
+        lua_createtable(L, 0, pmap.size());
+        for (auto &entry : pmap)
+            TableInsert(L, entry.first, entry.second);
+    }
+
+    template<typename T_Key, typename T_Value>
+    void Push(lua_State *L, const std::unordered_map<T_Key, T_Value> &pmap) {
         lua_createtable(L, 0, pmap.size());
         for (auto &entry : pmap)
             TableInsert(L, entry.first, entry.second);

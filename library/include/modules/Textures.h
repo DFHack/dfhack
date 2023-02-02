@@ -47,6 +47,11 @@ DFHACK_EXPORT long getIconsTexposStart();
 DFHACK_EXPORT long getOnOffTexposStart();
 
 /**
+ * Get the first texpos for the control panel icons. 10x2 grid.
+ */
+DFHACK_EXPORT long getControlPanelTexposStart();
+
+/**
  * Get the first texpos for the DFHack borders. Each is a 7x3 grid.
  */
 DFHACK_EXPORT long getThinBordersTexposStart();

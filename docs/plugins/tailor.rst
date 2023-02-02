@@ -35,6 +35,9 @@ are used, and in what order.
 Example
 -------
 
+``enable tailor``
+    Start replacing tattered clothes with default settings.
+
 ``tailor materials silk cloth yarn``
     Restrict the materials used for automatically manufacturing clothing to
     silk, cloth, and yarn, preferred in that order. This saves leather for

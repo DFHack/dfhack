@@ -86,6 +86,8 @@ namespace DFHack
 
             bool write_to_lower = false;
             bool keep_lower = false;
+            bool top_of_text = false;
+            bool bottom_of_text = false;
 
             bool valid() const { return tile >= 0; }
             bool empty() const { return ch == 0 && tile == 0; }

@@ -7,6 +7,7 @@
 
 #include "modules/Burrows.h"
 #include "modules/Designations.h"
+#include "modules/Items.h"
 #include "modules/Maps.h"
 #include "modules/Persistence.h"
 #include "modules/Units.h"
@@ -253,9 +254,10 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 // cycle logic
 //
 
-static bool is_accessible_item(const df::coord &pos, const vector<df::unit *> &citizens) {
+static bool is_accessible_item(df::item *item, const vector<df::unit *> &citizens) {
+    const df::coord pos = Items::getPosition(item);
     for (auto &unit : citizens) {
-        if (Maps::canWalkBetween(unit->pos, pos))
+        if (Maps::canWalkBetween(Units::getPosition(unit), pos))
             return true;
     }
     return false;
@@ -518,7 +520,7 @@ static void scan_logs(int32_t *usable_logs, const vector<df::unit *> &citizens, 
         if (!is_valid_item(item))
             continue;
 
-        if (!is_accessible_item(item->pos, citizens)) {
+        if (!is_accessible_item(item, citizens)) {
             if (inaccessible_logs)
                 ++*inaccessible_logs;
         } else if (usable_logs) {

@@ -373,7 +373,6 @@ public:
                     df::global::enabler->mouse_rbut_down = 0;
                 }
                 set_state(INACTIVE);
-                Screen::invalidate();
             } else if (input->count(df::interface_key::SELECT))
                 set_state(SELECTED);
             else if (input->count(df::interface_key::CUSTOM_P))

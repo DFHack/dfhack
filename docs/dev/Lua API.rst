@@ -2292,6 +2292,12 @@ a table with the following possible fields:
   ``write_to_lower``
     If set to true, the specified ``tile`` will be written to the background
     instead of the foreground.
+  ``top_of_text``
+    If set to true, the specified ``tile`` will have the top half of the specified
+    ``ch`` character superimposed over the lower half of the tile.
+  ``bottom_of_text``
+    If set to true, the specified ``tile`` will have the bottom half of the specified
+    ``ch`` character superimposed over the top half of the tile.
 
 Alternatively, it may be a pre-parsed native object with the following API:
 
@@ -4664,7 +4670,8 @@ containing newlines, or a table with the following possible fields:
 
 * ``token.tile = pen``
 
-  Specifies a pen to paint as one tile before the main part of the token.
+  Specifies a pen or texture index to paint as one tile before the main part of
+  the token.
 
 * ``token.width = ...``
 

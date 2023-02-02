@@ -222,6 +222,8 @@ static void decode_pen(lua_State *L, Pen &pen, int idx)
 
     get_bool_field(L, &pen.keep_lower, idx, "keep_lower", false);
     get_bool_field(L, &pen.write_to_lower, idx, "write_to_lower", false);
+    get_bool_field(L, &pen.top_of_text, idx, "top_of_text", false);
+    get_bool_field(L, &pen.bottom_of_text, idx, "bottom_of_text", false);
 }
 
 /**************************************************
@@ -1694,6 +1696,7 @@ static const LuaWrapper::FunctionReg dfhack_textures_module[] = {
     WRAPM(Textures, getRedPinTexposStart),
     WRAPM(Textures, getIconsTexposStart),
     WRAPM(Textures, getOnOffTexposStart),
+    WRAPM(Textures, getControlPanelTexposStart),
     WRAPM(Textures, getThinBordersTexposStart),
     WRAPM(Textures, getMediumBordersTexposStart),
     WRAPM(Textures, getPanelBordersTexposStart),

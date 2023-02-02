@@ -388,7 +388,7 @@ std::vector<std::string> Gui::getFocusStrings(df::viewscreen* top)
 
     if (dfhack_viewscreen::is_instance(top))
     {
-        auto name = static_cast<dfhack_viewscreen*>(top)->getFocusStrings();
+        auto name = static_cast<dfhack_viewscreen*>(top)->getFocusString();
         focusStrings.push_back(name.empty() ? "dfhack" : "dfhack/" + name);
     }
     else if (virtual_identity *id = virtual_identity::get(top))

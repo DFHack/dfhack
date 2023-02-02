@@ -28,7 +28,6 @@ using std::map;
 using std::queue;
 using std::string;
 using std::vector;
-using df::global::game;
 
 DFHACK_PLUGIN("confirm");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);

@@ -47,6 +47,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - A new cross-compile build script was added for building DFHack for Windows from a Linux Docker builder (see the `compile` instructions in the docs)
 - You can now configure whether DFHack tool windows should pause the game by default
 - `hotkeys`: clicking on the DFHack logo no longer closes the popup menu
+- `nestboxes`: now saves enabled state in your savegame
 - `gui/launcher`: sped up initialization time for faster load of the UI
 - `orders`: orders plugin functionality is now offered via an overlay widget when the manager orders screen is open
 - `gui/quickcmd`: now has its own global keybinding for your convenience: Ctrl-Shift-A
@@ -56,6 +57,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 -@ New borders for DFHack tool windows -- tell us what you think!
 - `gui/control-panel`: new global hotkey: tilde (Shift-backtick on most keyboards)
 - Windows now display "PAUSE FORCED" on the lower border if the tool is forcing the game to pause
+- `seedwatch`: now persists enabled state in the savegame, automatically loads useful defaults, and respects reachability when counting available seeds
 
 ## Documentation
 -@ Quickstart guide has been updated with info on new window behavior and how to use the control panel
@@ -63,12 +65,14 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## API
 - ``Buildings::containsTile()``: no longer takes a ``room`` parameter since that's not how rooms work anymore. If the building has extents, the extents will be checked. otherwise, the result just depends on whether the tile is within the building's bounding box.
 - ``Units::getCitizens()``: gets a list of citizens, which otherwise you'd have to iterate over all units the world to discover
+- ``Screen::Pen``: now accepts ``top_of_text`` and ``bottom_of_text`` properties to support offset text in graphics mode
 
 ## Lua
 - `helpdb`: new function: ``helpdb.refresh()`` to force a refresh of the database. Call if you are a developer adding new scripts, loading new plugins, or changing help text during play
 - `helpdb`: changed from auto-refreshing every 60 seconds to only refreshing on explicit call to ``helpdb.refresh()``. docs very rarely change during a play session, and the automatic database refreshes were slowing down the startup of `gui/launcher`
 - ``widgets.Label``: ``label.scroll()`` now understands ``home`` and ``end`` keywords for scrolling to the top or bottom
 - ``dfhack.units.getCitizens()``: gets a list of citizens
+- ``Label``: token ``tile`` properties can now be either pens or numeric texture ids
 
 ## Removed
 - `autohauler`: no plans to port to v50, as it just doesn't make sense with the new work detail system

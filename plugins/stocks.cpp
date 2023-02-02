@@ -620,7 +620,7 @@ public:
         for (auto line = lines.begin(); line != lines.end(); ++line)
             OutputString(COLOR_WHITE, x, y, line->c_str(), true, left_margin);
     }
-    std::vector<std::string> getFocusStrings() { return std::vector<std::string>{"stocks_view/search_help"}; }
+    std::string getFocusString() { return "stocks_view/search_help"; }
 };
 
 class ViewscreenStocks : public dfhack_viewscreen
@@ -973,7 +973,7 @@ public:
         OutputHotkeyString(x, y, "Search help", interface_key::HELP, true, left_margin);
     }
 
-    std::vector<std::string> getFocusStrings() { return std::vector<std::string>{"stocks_view"}; }
+    std::string getFocusString() { return "stocks_view"; }
 
     df::item *getSelectedItem() override
     {

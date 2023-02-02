@@ -1613,7 +1613,7 @@ namespace embark_assist {
 
             void render();
 
-            std::vector<std::string> getFocusStrings() { return std::vector<std::string>{"Finder UI"}; }
+            std::string getFocusString() { return "Finder UI"; }
 
         private:
         };

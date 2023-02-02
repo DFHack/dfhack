@@ -318,8 +318,6 @@ public:
         {
             if (paused_focus != "" && (input->count(df::interface_key::LEAVESCREEN) || mouseExit)) {
                 conf_lua::api::unpause(NULL);
-                // testing
-                df::global::gps->force_full_display_count = 1;
             }
             return false;
         }
@@ -374,8 +372,6 @@ public:
                     df::global::enabler->mouse_rbut_down = 0;
                 }
                 set_state(INACTIVE);
-                // testing
-                df::global::gps->force_full_display_count = 1;
             } else if (input->count(df::interface_key::SELECT))
                 set_state(SELECTED);
             else if (input->count(df::interface_key::CUSTOM_P))
@@ -497,6 +493,8 @@ public:
             }
             set_state(INACTIVE);
         }
+        // clean up any artifacts
+        df::global::gps->force_full_display_count = 1;
     }
     virtual string get_id() override = 0;
     #define CONF_LUA_START using namespace conf_lua; Lua::StackUnwinder unwind(l_state); push(screen); push(get_id());

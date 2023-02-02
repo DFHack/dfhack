@@ -167,6 +167,11 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         newFocusString += "/Stockpile";
         focusStrings.push_back(newFocusString);
     }
+    if (game->main_interface.bottom_mode_selected == df::enums::main_bottom_mode_type::STOCKPILE_PAINT) {
+        newFocusString = baseFocus;
+        newFocusString += "/Stockpile/Paint";
+        focusStrings.push_back(newFocusString);
+    }
     if (game->main_interface.bottom_mode_selected == df::enums::main_bottom_mode_type::HAULING) {
         newFocusString = baseFocus;
         newFocusString += "/Hauling";
@@ -179,6 +184,36 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             newFocusString += "/Some";
             newFocusString += "/" + enum_item_key(game->main_interface.civzone.cur_bld->type);
         }
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.bottom_mode_selected == df::enums::main_bottom_mode_type::ZONE_PAINT) {
+        newFocusString = baseFocus;
+        newFocusString += "/Zone/Paint";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.bottom_mode_selected == df::enums::main_bottom_mode_type::BURROW) {
+        newFocusString = baseFocus;
+        newFocusString += "/Burrow";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.bottom_mode_selected == df::enums::main_bottom_mode_type::BURROW_PAINT) {
+        newFocusString = baseFocus;
+        newFocusString += "/Burrow/Paint";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.bottom_mode_selected == df::enums::main_bottom_mode_type::BUILDING) {
+        newFocusString = baseFocus;
+        newFocusString += "/Building";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.bottom_mode_selected == df::enums::main_bottom_mode_type::BUILDING_PLACEMENT) {
+        newFocusString = baseFocus;
+        newFocusString += "/Building/Placement";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.bottom_mode_selected == df::enums::main_bottom_mode_type::BUILDING_PICK_MATERIALS) {
+        newFocusString = baseFocus;
+        newFocusString += "/Building/PickMaterials";
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.trade.open) {

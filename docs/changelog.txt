@@ -56,6 +56,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `getplants`: ID values will now be accepted regardless of case
 -@ New borders for DFHack tool windows -- tell us what you think!
 - `gui/control-panel`: new global hotkey: tilde (Shift-backtick on most keyboards)
+- Windows now display "PAUSE FORCED" on the lower border if the tool is forcing the game to pause
 - `seedwatch`: now persists enabled state in the savegame, automatically loads useful defaults, and respects reachability when counting available seeds
 
 ## Documentation

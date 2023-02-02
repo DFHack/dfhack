@@ -146,10 +146,34 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
 {
     std::string newFocusString;
 
+    if(game->main_interface.main_designation_selected != -1) {
+        newFocusString = baseFocus;
+        newFocusString += "/Designate/" + enum_item_key(game->main_interface.main_designation_selected);
+        focusStrings.push_back(newFocusString);
+    }
     if (game->main_interface.info.open) {
         newFocusString = baseFocus;
         newFocusString += "/Info";
         newFocusString += "/" + enum_item_key(game->main_interface.info.current_mode);
+
+        switch(game->main_interface.info.current_mode) {
+        case df::enums::info_interface_mode_type::CREATURES:
+            newFocusString += "/" + enum_item_key(game->main_interface.info.creatures.current_mode);
+            break;
+        case df::enums::info_interface_mode_type::BUILDINGS:
+            newFocusString += "/" + enum_item_key(game->main_interface.info.buildings.mode);
+            break;
+        case df::enums::info_interface_mode_type::LABOR:
+            newFocusString += "/" + enum_item_key(game->main_interface.info.labor.mode);
+            break;
+        case df::enums::info_interface_mode_type::ARTIFACTS:
+            newFocusString += "/" + enum_item_key(game->main_interface.info.artifacts.mode);
+            break;
+        case df::enums::info_interface_mode_type::JUSTICE:
+            newFocusString += "/" + enum_item_key(game->main_interface.info.justice.current_mode);
+            break;
+        }
+
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.view_sheets.open) {
@@ -158,64 +182,111 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         newFocusString += "/" + enum_item_key(game->main_interface.view_sheets.active_sheet);
         focusStrings.push_back(newFocusString);
     }
-    if (game->main_interface.bottom_mode_selected == df::enums::main_bottom_mode_type::STOCKPILE) {
+
+    if(game->main_interface.bottom_mode_selected != -1) {
         newFocusString = baseFocus;
-        // TODO: learn more about where /Some was used previously to ensure proper/consistent usage
-        if (game->main_interface.stockpile.cur_bld) {
-            newFocusString += "/Some";
+
+        switch(game->main_interface.bottom_mode_selected) {
+        case df::enums::main_bottom_mode_type::STOCKPILE:
+            if (game->main_interface.stockpile.cur_bld) {
+                newFocusString += "/Some";
+            }
+            newFocusString += "/Stockpile";
+            break;
+        case df::enums::main_bottom_mode_type::STOCKPILE_PAINT:
+            newFocusString += "/Stockpile/Paint";
+            break;
+        case df::enums::main_bottom_mode_type::HAULING:
+            newFocusString += "/Hauling";
+            break;
+        case df::enums::main_bottom_mode_type::ZONE:
+            newFocusString += "/Zone";
+            if (game->main_interface.civzone.cur_bld) {
+                newFocusString += "/Some";
+                newFocusString += "/" + enum_item_key(game->main_interface.civzone.cur_bld->type);
+            }
+            break;
+        case df::enums::main_bottom_mode_type::ZONE_PAINT:
+            newFocusString += "/Zone/Paint";
+
+            // TODO: figure out why enum_item_key doesn't work on this?
+            switch(game->main_interface.civzone.adding_new_type) {
+            case df::enums::civzone_type::MeetingHall:
+                newFocusString += "/MeetingHall";
+                break;
+            case df::enums::civzone_type::Bedroom:
+                newFocusString += "/Bedroom";
+                break;
+            case df::enums::civzone_type::DiningHall:
+                newFocusString += "/DiningHall";
+                break;
+            case df::enums::civzone_type::Pen:
+                newFocusString += "/Pen";
+                break;
+            case df::enums::civzone_type::Pond:
+                newFocusString += "/Pond";
+                break;
+            case df::enums::civzone_type::WaterSource:
+                newFocusString += "/WaterSource";
+                break;
+            case df::enums::civzone_type::Dungeon:
+                newFocusString += "/Dungeon";
+                break;
+            case df::enums::civzone_type::FishingArea:
+                newFocusString += "/FishingArea";
+                break;
+            case df::enums::civzone_type::SandCollection:
+                newFocusString += "/SandCollection";
+                break;
+            case df::enums::civzone_type::Office:
+                newFocusString += "/Office";
+                break;
+            case df::enums::civzone_type::Dormitory:
+                newFocusString += "/Dormitory";
+                break;
+            case df::enums::civzone_type::Barracks:
+                newFocusString += "/Barracks";
+                break;
+            case df::enums::civzone_type::ArcheryRange:
+                newFocusString += "/ArcheryRange";
+                break;
+            case df::enums::civzone_type::Dump:
+                newFocusString += "/Dump";
+                break;
+            case df::enums::civzone_type::AnimalTraining:
+                newFocusString += "/AnimalTraining";
+                break;
+            case df::enums::civzone_type::Tomb:
+                newFocusString += "/Tomb";
+                break;
+            case df::enums::civzone_type::PlantGathering:
+                newFocusString += "/PlantGathering";
+                break;
+            case df::enums::civzone_type::ClayCollection:
+                newFocusString += "/ClayCollection";
+                break;
+            }
+            break;
+        case df::enums::main_bottom_mode_type::BURROW:
+            newFocusString += "/Burrow";
+            break;
+        case df::enums::main_bottom_mode_type::BURROW_PAINT:
+            newFocusString += "/Burrow/Paint";
+            break;
+        case df::enums::main_bottom_mode_type::BUILDING:
+            newFocusString += "/Building";
+            break;
+        case df::enums::main_bottom_mode_type::BUILDING_PLACEMENT:
+            newFocusString += "/Building/Placement";
+            break;
+        case df::enums::main_bottom_mode_type::BUILDING_PICK_MATERIALS:
+            newFocusString += "/Building/PickMaterials";
+            break;
         }
-        newFocusString += "/Stockpile";
+
         focusStrings.push_back(newFocusString);
     }
-    if (game->main_interface.bottom_mode_selected == df::enums::main_bottom_mode_type::STOCKPILE_PAINT) {
-        newFocusString = baseFocus;
-        newFocusString += "/Stockpile/Paint";
-        focusStrings.push_back(newFocusString);
-    }
-    if (game->main_interface.bottom_mode_selected == df::enums::main_bottom_mode_type::HAULING) {
-        newFocusString = baseFocus;
-        newFocusString += "/Hauling";
-        focusStrings.push_back(newFocusString);
-    }
-    if (game->main_interface.bottom_mode_selected == df::enums::main_bottom_mode_type::ZONE) {
-        newFocusString = baseFocus;
-        newFocusString += "/Zone";
-        if (game->main_interface.civzone.cur_bld) {
-            newFocusString += "/Some";
-            newFocusString += "/" + enum_item_key(game->main_interface.civzone.cur_bld->type);
-        }
-        focusStrings.push_back(newFocusString);
-    }
-    if (game->main_interface.bottom_mode_selected == df::enums::main_bottom_mode_type::ZONE_PAINT) {
-        newFocusString = baseFocus;
-        newFocusString += "/Zone/Paint";
-        focusStrings.push_back(newFocusString);
-    }
-    if (game->main_interface.bottom_mode_selected == df::enums::main_bottom_mode_type::BURROW) {
-        newFocusString = baseFocus;
-        newFocusString += "/Burrow";
-        focusStrings.push_back(newFocusString);
-    }
-    if (game->main_interface.bottom_mode_selected == df::enums::main_bottom_mode_type::BURROW_PAINT) {
-        newFocusString = baseFocus;
-        newFocusString += "/Burrow/Paint";
-        focusStrings.push_back(newFocusString);
-    }
-    if (game->main_interface.bottom_mode_selected == df::enums::main_bottom_mode_type::BUILDING) {
-        newFocusString = baseFocus;
-        newFocusString += "/Building";
-        focusStrings.push_back(newFocusString);
-    }
-    if (game->main_interface.bottom_mode_selected == df::enums::main_bottom_mode_type::BUILDING_PLACEMENT) {
-        newFocusString = baseFocus;
-        newFocusString += "/Building/Placement";
-        focusStrings.push_back(newFocusString);
-    }
-    if (game->main_interface.bottom_mode_selected == df::enums::main_bottom_mode_type::BUILDING_PICK_MATERIALS) {
-        newFocusString = baseFocus;
-        newFocusString += "/Building/PickMaterials";
-        focusStrings.push_back(newFocusString);
-    }
+
     if (game->main_interface.trade.open) {
         newFocusString = baseFocus;
         newFocusString += "/Trade";

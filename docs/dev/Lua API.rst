@@ -955,7 +955,7 @@ Screens
   Returns a table of string representations of the current UI focuses.
   The strings have a "screen/foo/bar/baz..." format e.g..::
 
-    [1] = "dwarfmode/Info/CREATURES"
+    [1] = "dwarfmode/Info/CREATURES/CITIZEN"
     [2] = "dwardmode/Squads"
 
 * ``dfhack.gui.matchFocusString(focus_string)``

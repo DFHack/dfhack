@@ -324,42 +324,33 @@ public:
         else if (state == INACTIVE)
         {
             if(mouseExit) {
-                if(intercept_key("MOUSE_RIGHT")) {
-                    if (set_state(ACTIVE))
-                    {
-                        df::global::enabler->mouse_rbut = 0;
-                        df::global::enabler->mouse_rbut_down = 0;
-                        mouse_pos = df::coord2d(df::global::gps->mouse_x, df::global::gps->mouse_y);
-                        last_key_is_right_click = true;
-                        return true;
-                    }
+                if(intercept_key("MOUSE_RIGHT") && set_state(ACTIVE)) {
+                    df::global::enabler->mouse_rbut = 0;
+                    df::global::enabler->mouse_rbut_down = 0;
+                    mouse_pos = df::coord2d(df::global::gps->mouse_x, df::global::gps->mouse_y);
+                    last_key_is_right_click = true;
+                    return true;
                 }
             } else
                 last_key_is_right_click = false;
 
             if(mouseSelect) {
-                if(intercept_key("MOUSE_LEFT")) {
-                    if (set_state(ACTIVE))
-                    {
-                        df::global::enabler->mouse_lbut = 0;
-                        df::global::enabler->mouse_lbut_down = 0;
-                        mouse_pos = df::coord2d(df::global::gps->mouse_x, df::global::gps->mouse_y);
-                        last_key_is_left_click = true;
-                        return true;
-                    }
+                if(intercept_key("MOUSE_LEFT") && set_state(ACTIVE)) {
+                    df::global::enabler->mouse_lbut = 0;
+                    df::global::enabler->mouse_lbut_down = 0;
+                    mouse_pos = df::coord2d(df::global::gps->mouse_x, df::global::gps->mouse_y);
+                    last_key_is_left_click = true;
+                    return true;
                 }
             } else
                 last_key_is_left_click = false;
 
             for (df::interface_key key : *input)
             {
-                if (intercept_key(key))
+                if (intercept_key(key) && set_state(ACTIVE))
                 {
-                    if (set_state(ACTIVE))
-                    {
-                        last_key = key;
-                        return true;
-                    }
+                    last_key = key;
+                    return true;
                 }
             }
             return false;

@@ -2430,9 +2430,8 @@ bool Core::SelectHotkey(int sym, int modifiers)
                 }
 
                 if (!found) {
-                    // TODO: fix error: format ‘%s’ expects argument of type ‘char*’, but argument 3 has type ‘std::string {aka std::basic_string<char>}’ [-Werror=format=]
                     DEBUG(keybinding).print("skipping keybinding due to focus string mismatch: '%s' !~ '%s'\n",
-                        join_strings(", ", focusStrings), binding.focus.c_str());
+                        join_strings(", ", focusStrings).c_str(), binding.focus.c_str());
                     continue;
                 }
             }

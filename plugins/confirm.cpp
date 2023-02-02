@@ -319,6 +319,8 @@ public:
         {
             if (paused_focus != "" && (input->count(df::interface_key::LEAVESCREEN) || mouseExit)) {
                 conf_lua::api::unpause(NULL);
+                // testing
+                df::global::gps->force_full_display_count = 1;
             }
             return false;
         }
@@ -373,6 +375,8 @@ public:
                     df::global::enabler->mouse_rbut_down = 0;
                 }
                 set_state(INACTIVE);
+                // testing
+                df::global::gps->force_full_display_count = 1;
             } else if (input->count(df::interface_key::SELECT))
                 set_state(SELECTED);
             else if (input->count(df::interface_key::CUSTOM_P))
@@ -660,6 +664,8 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out)
     return CR_OK;
 }
 
+
+/* currently unused, leaving in until work is done in case it is needed again
 static bool screen_found(df::viewscreen *target_screen)
 {
     if (!&game->main_interface)
@@ -667,6 +673,7 @@ static bool screen_found(df::viewscreen *target_screen)
 
     return target_screen == Gui::getCurViewscreen();
 }
+*/
 
 DFhackCExport command_result plugin_onupdate (color_ostream &out)
 {

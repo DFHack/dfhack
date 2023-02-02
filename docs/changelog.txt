@@ -72,6 +72,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `helpdb`: changed from auto-refreshing every 60 seconds to only refreshing on explicit call to ``helpdb.refresh()``. docs very rarely change during a play session, and the automatic database refreshes were slowing down the startup of `gui/launcher`
 - ``widgets.Label``: ``label.scroll()`` now understands ``home`` and ``end`` keywords for scrolling to the top or bottom
 - ``dfhack.units.getCitizens()``: gets a list of citizens
+- ``gui.ZScreen``: new attribute: ``defocusable`` for controlling whether a window loses keyboard focus when the map is clicked
 - ``Label``: token ``tile`` properties can now be either pens or numeric texture ids
 
 ## Removed

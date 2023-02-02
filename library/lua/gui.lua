@@ -699,6 +699,7 @@ local zscreen_inhibit_mouse_l = false
 
 ZScreen = defclass(ZScreen, Screen)
 ZScreen.ATTRS{
+    defocusable=true,
     initial_pause=DEFAULT_NIL,
     force_pause=false,
     pass_pause=true,
@@ -793,7 +794,7 @@ function ZScreen:onInput(keys)
     end
 
     if self.pass_mouse_clicks and keys._MOUSE_L_DOWN and not has_mouse then
-        self.defocused = true
+        self.defocused = self.defocusable
         self:sendInputToParent(keys)
         return
     elseif keys.LEAVESCREEN or keys._MOUSE_R_DOWN then

@@ -64,6 +64,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## API
 - ``Buildings::containsTile()``: no longer takes a ``room`` parameter since that's not how rooms work anymore. If the building has extents, the extents will be checked. otherwise, the result just depends on whether the tile is within the building's bounding box.
 - ``Units::getCitizens()``: gets a list of citizens, which otherwise you'd have to iterate over all units the world to discover
+- ``Screen::Pen``: now accepts ``top_of_text`` and ``bottom_of_text`` properties to support offset text in graphics mode
 
 ## Lua
 - `helpdb`: new function: ``helpdb.refresh()`` to force a refresh of the database. Call if you are a developer adding new scripts, loading new plugins, or changing help text during play

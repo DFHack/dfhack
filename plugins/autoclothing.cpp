@@ -1,7 +1,8 @@
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
+#include "Console.h"
+#include "Debug.h"
+#include "Export.h"
+#include "PluginManager.h"
 
 #include <map>
 
@@ -11,6 +12,7 @@
 #include "modules/Items.h"
 #include "modules/Maps.h"
 #include "modules/Materials.h"
+#include "modules/Persistence.h"
 #include "modules/Units.h"
 #include "modules/World.h"
 #include "modules/Translation.h"
@@ -34,6 +36,9 @@
 #include "df/world.h"
 
 using std::endl;
+using std::string;
+using std::vector;
+using std::map;
 
 using namespace DFHack;
 using namespace DFHack::Items;
@@ -41,35 +46,46 @@ using namespace DFHack::Units;
 using namespace df::enums;
 
 
-// A plugin must be able to return its name and version.
-// The name string provided must correspond to the filename -
-// skeleton.plug.so, skeleton.plug.dylib, or skeleton.plug.dll in this case
 DFHACK_PLUGIN("autoclothing");
-
-// Any globals a plugin requires (e.g. world) should be listed here.
-// For example, this line expands to "using df::global::world" and prevents the
-// plugin from being loaded if df::global::world is null (i.e. missing from symbols.xml):
-//
 REQUIRE_GLOBAL(world);
 
 // Only run if this is enabled
 DFHACK_PLUGIN_IS_ENABLED(autoclothing_enabled);
 
+// logging levels can be dynamically controlled with the `debugfilter` command.
+namespace DFHack {
+    // for configuration-related logging
+    DBG_DECLARE(autoclothing, report, DebugCategory::LINFO);
+    // for logging during the periodic scan
+    DBG_DECLARE(autoclothing, cycle, DebugCategory::LINFO);
+}
+
+static const string CONFIG_KEY = string(plugin_name) + "/config";
+
+
 // Here go all the command declarations...
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
 struct ClothingRequirement;
-command_result autoclothing(color_ostream &out, std::vector <std::string> & parameters);
+command_result autoclothing(color_ostream &out, vector <string> & parameters);
 static void init_state(color_ostream &out);
 static void save_state(color_ostream &out);
 static void cleanup_state(color_ostream &out);
 static void do_autoclothing();
 static bool validateMaterialCategory(ClothingRequirement * requirement);
-static bool setItem(std::string name, ClothingRequirement* requirement);
+static bool setItem(string name, ClothingRequirement* requirement);
 static void generate_report(color_ostream& out);
 static bool isAvailableItem(df::item* item);
 
+enum match_strictness
+{
+    STRICT_PERMISSIVE,
+    STRICT_TYPE,
+    STRICT_MATERIAL
+};
 
-std::vector<ClothingRequirement>clothingOrders;
+match_strictness strictnessSetting = STRICT_PERMISSIVE;
+
+vector<ClothingRequirement>clothingOrders;
 
 struct ClothingRequirement
 {
@@ -78,7 +94,7 @@ struct ClothingRequirement
     int16_t item_subtype;
     df::job_material_category material_category;
     int16_t needed_per_citizen;
-    std::map<int16_t, int32_t> total_needed_per_race;
+    map<int16_t, int32_t> total_needed_per_race;
 
     bool matches(ClothingRequirement * b)
     {
@@ -93,7 +109,7 @@ struct ClothingRequirement
         return true;
     }
 
-    std::string Serialize()
+    string Serialize()
     {
         std::stringstream stream;
         stream << ENUM_KEY_STR(job_type, jobType) << " ";
@@ -104,10 +120,10 @@ struct ClothingRequirement
         return stream.str();
     }
 
-    void Deserialize(std::string s)
+    void Deserialize(string s)
     {
         std::stringstream stream(s);
-        std::string loadedJob;
+        string loadedJob;
         stream >> loadedJob;
         FOR_ENUM_ITEMS(job_type, job)
         {
@@ -117,7 +133,7 @@ struct ClothingRequirement
                 break;
             }
         }
-        std::string loadedItem;
+        string loadedItem;
         stream >> loadedItem;
         FOR_ENUM_ITEMS(item_type, item)
         {
@@ -132,7 +148,7 @@ struct ClothingRequirement
         stream >> needed_per_citizen;
     }
 
-    bool SetFromParameters(color_ostream &out, std::vector <std::string> & parameters)
+    bool SetFromParameters(color_ostream &out, vector <string> & parameters)
     {
         if (!set_bitfield_field(&material_category, parameters[0], 1))
         {
@@ -151,12 +167,12 @@ struct ClothingRequirement
         return true;
     }
 
-    std::string ToReadableLabel()
+    string ToReadableLabel()
     {
         std::stringstream stream;
         stream << bitfield_to_string(material_category) << " ";
-        std::string adjective = "";
-        std::string name = "";
+        string adjective = "";
+        string name = "";
         switch (itemType)
         {
         case df::enums::item_type::ARMOR:
@@ -193,7 +209,7 @@ struct ClothingRequirement
 
 
 // Mandatory init function. If you have some global state, create it here.
-DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init(color_ostream &out, vector <PluginCommand> &commands)
 {
     // Fill the command list with your commands.
     commands.push_back(PluginCommand(
@@ -256,12 +272,12 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
     return CR_OK;
 }
 
-static bool setItemFromName(std::string name, ClothingRequirement* requirement)
+static bool setItemFromName(string name, ClothingRequirement* requirement)
 {
 #define SEARCH_ITEM_RAWS(rawType, job, item) \
 for (auto& itemdef : world->raws.itemdefs.rawType) \
 { \
-    std::string fullName = itemdef->adjective.empty() ? itemdef->name : itemdef->adjective + " " + itemdef->name; \
+    string fullName = itemdef->adjective.empty() ? itemdef->name : itemdef->adjective + " " + itemdef->name; \
     if (fullName == name) \
     { \
         requirement->jobType = job_type::job; \
@@ -278,7 +294,7 @@ for (auto& itemdef : world->raws.itemdefs.rawType) \
     return false;
 }
 
-static bool setItemFromToken(std::string token, ClothingRequirement* requirement)
+static bool setItemFromToken(string token, ClothingRequirement* requirement)
 {
     ItemTypeInfo itemInfo;
     if (!itemInfo.find(token))
@@ -308,7 +324,7 @@ static bool setItemFromToken(std::string token, ClothingRequirement* requirement
     return true;
 }
 
-static bool setItem(std::string name, ClothingRequirement* requirement)
+static bool setItem(string name, ClothingRequirement* requirement)
 {
     if (setItemFromName(name, requirement))
         return true;
@@ -362,7 +378,7 @@ static bool validateMaterialCategory(ClothingRequirement * requirement)
 
 
 // A command! It sits around and looks pretty. And it's nice and friendly.
-command_result autoclothing(color_ostream &out, std::vector <std::string> & parameters)
+command_result autoclothing(color_ostream &out, vector <string> & parameters)
 {
     // It's nice to print a help message you get invalid options
     // from the user instead of just acting strange.
@@ -372,19 +388,30 @@ command_result autoclothing(color_ostream &out, std::vector <std::string> & para
     // be used by 'help your-command'.
     if (parameters.size() == 0)
     {
+        CoreSuspender suspend;
         out << "Currently set " << clothingOrders.size() << " automatic clothing orders" << endl;
         for (size_t i = 0; i < clothingOrders.size(); i++)
         {
             out << clothingOrders[i].ToReadableLabel() << endl;
         }
-        return CR_OK;
-    }
-    else if (parameters.size() == 1 && parameters[0] == "report")
-    {
-        CoreSuspender suspend;
         generate_report(out);
         return CR_OK;
     }
+    ////Disabled until I have time to fully implement it.
+    //else if (parameters[0] == "strictness")
+    //{
+    //    if (parameters.size() != 2)
+    //    {
+    //        out << "Wrong number of arguments." << endl;
+    //        return CR_WRONG_USAGE;
+    //    }
+    //    if (parameters[1] == "permissive")
+    //        strictnessSetting = STRICT_PERMISSIVE;
+    //    else if (parameters[1] == "type")
+    //        strictnessSetting = STRICT_TYPE;
+    //    else if (parameters[1] == "material")
+    //        strictnessSetting = STRICT_MATERIAL;
+    //}
     else if (parameters.size() < 2 || parameters.size() > 3)
     {
         out << "Wrong number of arguments." << endl;
@@ -490,9 +517,15 @@ static void find_needed_clothing_items()
             int alreadyOwnedAmount = 0;
 
             //looping through the items first, then clothing order might be a little faster, but this way is cleaner.
-            for (auto& ownedItem : unit->owned_items)
+            for (auto ownedItem : unit->owned_items)
             {
                 auto item = findItemByID(ownedItem);
+
+                if (!item)
+                {
+                    WARN(cycle).print("Invalid inventory item ID: %d\n", ownedItem);
+                    continue;
+                }
 
                 if (item->getType() != clothingOrder.itemType)
                     continue;
@@ -631,9 +664,8 @@ static void init_state(color_ostream &out)
         autoclothing_enabled = false;
     }
 
-
     // Parse constraints
-    std::vector<PersistentDataItem> items;
+    vector<PersistentDataItem> items;
     World::GetPersistentData(&items, "autoclothing/clothingItems");
 
     for (auto& item : items)
@@ -662,7 +694,7 @@ static void save_state(color_ostream &out)
 
 
     // Parse constraints
-    std::vector<PersistentDataItem> items;
+    vector<PersistentDataItem> items;
     World::GetPersistentData(&items, "autoclothing/clothingItems");
 
     for (size_t i = 0; i < items.size(); i++)
@@ -683,7 +715,7 @@ static void save_state(color_ostream &out)
     }
 }
 
-static void list_unit_counts(color_ostream& out, std::map<int, int>& unitList)
+static void list_unit_counts(color_ostream& out, map<int, int>& unitList)
 {
     for (const auto& race : unitList)
     {
@@ -733,12 +765,12 @@ static bool isAvailableItem(df::item* item)
 
 static void generate_report(color_ostream& out)
 {
-    std::map<int, int> fullUnitList;
-    std::map<int, int> missingArmor;
-    std::map<int, int> missingShoes;
-    std::map<int, int> missingHelms;
-    std::map<int, int> missingGloves;
-    std::map<int, int> missingPants;
+    map<int, int> fullUnitList;
+    map<int, int> missingArmor;
+    map<int, int> missingShoes;
+    map<int, int> missingHelms;
+    map<int, int> missingGloves;
+    map<int, int> missingPants;
     for (df::unit* unit : world->units.active)
     {
         if (!Units::isCitizen(unit))
@@ -747,8 +779,12 @@ static void generate_report(color_ostream& out)
         int numArmor = 0, numShoes = 0, numHelms = 0, numGloves = 0, numPants = 0;
         for (auto itemId : unit->owned_items)
         {
-
             auto item = Items::findItemByID(itemId);
+            if (!item)
+            {
+                WARN(cycle,out).print("Invalid inventory item ID: %d\n", itemId);
+                continue;
+            }
             if (item->getWear() >= 1)
                 continue;
             switch (item->getType())
@@ -782,7 +818,7 @@ static void generate_report(color_ostream& out)
             missingGloves[unit->race]++;
         if (numPants == 0)
             missingPants[unit->race]++;
-        //out << Translation::TranslateName(Units::getVisibleName(unit)) << " has " << numArmor << " armor, " << numShoes << " shoes, " << numHelms << " helms, " << numGloves << " gloves, " << numPants << " pants" << endl;
+        DEBUG(report,out) << Translation::TranslateName(Units::getVisibleName(unit)) << " has " << numArmor << " armor, " << numShoes << " shoes, " << numHelms << " helms, " << numGloves << " gloves, " << numPants << " pants" << endl;
     }
     if (missingArmor.size() + missingShoes.size() + missingHelms.size() + missingGloves.size() + missingPants.size() == 0)
     {
@@ -817,7 +853,7 @@ static void generate_report(color_ostream& out)
             list_unit_counts(out, missingPants);
         }
     }
-    std::map<int, int> availableArmor;
+    map<int, int> availableArmor;
     for (auto armor : world->items.other.ARMOR)
     {
         if (!isAvailableItem(armor))
@@ -829,7 +865,7 @@ static void generate_report(color_ostream& out)
         out << "We have available bodywear for:" << endl;
         list_unit_counts(out, availableArmor);
     }
-    std::map<int, int> availableShoes;
+    map<int, int> availableShoes;
     for (auto shoe : world->items.other.SHOES)
     {
         if (!isAvailableItem(shoe))
@@ -841,7 +877,7 @@ static void generate_report(color_ostream& out)
         out << "We have available footwear for:" << endl;
         list_unit_counts(out, availableShoes);
     }
-    std::map<int, int> availableHelms;
+    map<int, int> availableHelms;
     for (auto helm : world->items.other.HELM)
     {
         if (!isAvailableItem(helm))
@@ -853,7 +889,7 @@ static void generate_report(color_ostream& out)
         out << "We have available headwear for:" << endl;
         list_unit_counts(out, availableHelms);
     }
-    std::map<int, int> availableGloves;
+    map<int, int> availableGloves;
     for (auto glove : world->items.other.HELM)
     {
         if (!isAvailableItem(glove))
@@ -865,7 +901,7 @@ static void generate_report(color_ostream& out)
         out << "We have available handwear for:" << endl;
         list_unit_counts(out, availableGloves);
     }
-    std::map<int, int> availablePants;
+    map<int, int> availablePants;
     for (auto pants : world->items.other.HELM)
     {
         if (!isAvailableItem(pants))

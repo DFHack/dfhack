@@ -41,6 +41,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 -@ allow launcher tools to launch themselves without hanging the game
 -@ fix issues with clicks "passing through" some DFHack window elements to the screen below
 - `getplants`: trees are now designated correctly
+- `autoclothing`: fixed a crash that can happen when units are holding invalid items.
 -@ `orders`: fix orders in library/basic that create bags
 - `orders`: library/military now sticks to vanilla rules and does not add orders for normally-mood-only platinum weapons. A new library orders file ``library/military_include_artifact_materials`` is now offered as an alternate ``library/military`` set of orders that still includes the platinum weapons.
 
@@ -49,6 +50,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `getplants`: ID values will now be accepted regardless of case
 - Windows now display "PAUSE FORCED" on the lower border if the tool is forcing the game to pause
 -@ New borders for DFHack tool windows -- tell us what you think!
+- `autoclothing`: merged the two separate reports into the same command.
 - `automelt`: stockpile configuration can now be set from the commandline
 - `channel-safely`: new monitoring for cave-in prevention
 - `gui/control-panel`: you can now configure whether DFHack tool windows should pause the game by default

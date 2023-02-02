@@ -388,33 +388,30 @@ command_result autoclothing(color_ostream &out, vector <string> & parameters)
     // be used by 'help your-command'.
     if (parameters.size() == 0)
     {
+        CoreSuspender suspend;
         out << "Currently set " << clothingOrders.size() << " automatic clothing orders" << endl;
         for (size_t i = 0; i < clothingOrders.size(); i++)
         {
             out << clothingOrders[i].ToReadableLabel() << endl;
         }
-        return CR_OK;
-    }
-    else if (parameters[0] == "strictness")
-    {
-        if (parameters.size() != 2)
-        {
-            out << "Wrong number of arguments." << endl;
-            return CR_WRONG_USAGE;
-        }
-        if (parameters[1] == "permissive")
-            strictnessSetting = STRICT_PERMISSIVE;
-        else if (parameters[1] == "type")
-            strictnessSetting = STRICT_TYPE;
-        else if (parameters[1] == "material")
-            strictnessSetting = STRICT_MATERIAL;
-    }
-    else if (parameters.size() == 1 && parameters[0] == "report")
-    {
-        CoreSuspender suspend;
         generate_report(out);
         return CR_OK;
     }
+    ////Disabled until I have time to fully implement it.
+    //else if (parameters[0] == "strictness")
+    //{
+    //    if (parameters.size() != 2)
+    //    {
+    //        out << "Wrong number of arguments." << endl;
+    //        return CR_WRONG_USAGE;
+    //    }
+    //    if (parameters[1] == "permissive")
+    //        strictnessSetting = STRICT_PERMISSIVE;
+    //    else if (parameters[1] == "type")
+    //        strictnessSetting = STRICT_TYPE;
+    //    else if (parameters[1] == "material")
+    //        strictnessSetting = STRICT_MATERIAL;
+    //}
     else if (parameters.size() < 2 || parameters.size() > 3)
     {
         out << "Wrong number of arguments." << endl;

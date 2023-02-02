@@ -34,46 +34,52 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
-- `autoslab`: Automatically create work orders to engrave slabs for ghostly dwarves.
+- `autoslab`: automatically create work orders to engrave slabs for ghostly dwarves
 
 ## Fixes
--@ DF screens can no longer get "stuck" on transitions when DFHack tool windows are visible. Instead, those DF screens are force-paused while DFHack windows are visible so the player can close them first and not corrupt the screen sequence. The "force pause" indicator will appear on these DFHack windows to indicate what is happening.
--@ ``Screen``: allow `gui/launcher` and `gui/quickcmd` to launch themselves without hanging the game
--@ Fix issues with clicks "passing through" some DFHack window elements, like scrollbars
+-@ DF screens can no longer get "stuck" on transitions when DFHack tool windows are visible. Instead, those DF screens are force-paused while DFHack windows are visible so the player can close them first and not corrupt the screen sequence. The "PAUSE FORCED" indicator will appear on these DFHack windows to indicate what is happening.
+-@ allow launcher tools to launch themselves without hanging the game
+-@ fix issues with clicks "passing through" some DFHack window elements to the screen below
 - `getplants`: trees are now designated correctly
--@ Sample orders: fix orders that create bags
+-@ `orders`: fix orders in library/basic that create bags
+- `orders`: library/military now sticks to vanilla rules and does not add orders for normally-mood-only platinum weapons. A new library orders file ``library/military_include_artifact_materials`` is now offered as an alternate ``library/military`` set of orders that still includes the platinum weapons.
 
 ## Misc Improvements
-- A new cross-compile build script was added for building DFHack for Windows from a Linux Docker builder (see the `compile` instructions in the docs)
-- You can now configure whether DFHack tool windows should pause the game by default
+- DFHack windows can now be "defocused" by clicking somewhere not over the tool window. This has the same effect as pinning previously did, but without the extra clicking.
+- `getplants`: ID values will now be accepted regardless of case
+- Windows now display "PAUSE FORCED" on the lower border if the tool is forcing the game to pause
+-@ New borders for DFHack tool windows -- tell us what you think!
+- `automelt`: stockpile configuration can now be set from the commandline
+- `channel-safely`: new monitoring for cave-in prevention
+- `gui/control-panel`: you can now configure whether DFHack tool windows should pause the game by default
+- `gui/control-panel`: new global hotkey: tilde (Shift-backtick on most keyboards)
 - `hotkeys`: clicking on the DFHack logo no longer closes the popup menu
 - `nestboxes`: now saves enabled state in your savegame
-- `gui/launcher`: sped up initialization time for faster load of the UI
-- `orders`: orders plugin functionality is now offered via an overlay widget when the manager orders screen is open
+- `gui/launcher`: sped up initialization time for faster window appearance
+- `orders`: orders plugin functionality is now accessible via an `overlay` widget when the manager orders screen is open
 - `gui/quickcmd`: now has its own global keybinding for your convenience: Ctrl-Shift-A
-- Many DFHack windows can now be unfocused by clicking somewhere not over the tool window. This has the same effect as pinning previously did, but without the extra clicking.
-- `overlay`: overlay widgets can now specify a default enabled state if they are not already set in the player's overlay config file
-- `getplants`: ID values will now be accepted regardless of case
--@ New borders for DFHack tool windows -- tell us what you think!
-- `gui/control-panel`: new global hotkey: tilde (Shift-backtick on most keyboards)
-- Windows now display "PAUSE FORCED" on the lower border if the tool is forcing the game to pause
 - `seedwatch`: now persists enabled state in the savegame, automatically loads useful defaults, and respects reachability when counting available seeds
+- `quickfort`: planned buildings are now properly attached to any pertinent overlapping zones
 
 ## Documentation
+- `compile`: instructions added for cross-compiling DFHack for Windows from a Linux Docker builder
 -@ Quickstart guide has been updated with info on new window behavior and how to use the control panel
 
 ## API
 - ``Buildings::containsTile()``: no longer takes a ``room`` parameter since that's not how rooms work anymore. If the building has extents, the extents will be checked. otherwise, the result just depends on whether the tile is within the building's bounding box.
 - ``Units::getCitizens()``: gets a list of citizens, which otherwise you'd have to iterate over all units the world to discover
 - ``Screen::Pen``: now accepts ``top_of_text`` and ``bottom_of_text`` properties to support offset text in graphics mode
+- `overlay`: overlay widgets can now specify a default enabled state if they are not already set in the player's overlay config file
+- ``Lua::Push``: now supports ``std::unordered_map``
 
 ## Lua
 - `helpdb`: new function: ``helpdb.refresh()`` to force a refresh of the database. Call if you are a developer adding new scripts, loading new plugins, or changing help text during play
-- `helpdb`: changed from auto-refreshing every 60 seconds to only refreshing on explicit call to ``helpdb.refresh()``. docs very rarely change during a play session, and the automatic database refreshes were slowing down the startup of `gui/launcher`
+- `helpdb`: changed from auto-refreshing every 60 seconds to only refreshing on explicit call to ``helpdb.refresh()``. docs very rarely change during a play session, and the automatic database refreshes were slowing down the startup of `gui/launcher` and anything else that displays help text.
 - ``widgets.Label``: ``label.scroll()`` now understands ``home`` and ``end`` keywords for scrolling to the top or bottom
 - ``dfhack.units.getCitizens()``: gets a list of citizens
 - ``gui.ZScreen``: new attribute: ``defocusable`` for controlling whether a window loses keyboard focus when the map is clicked
 - ``Label``: token ``tile`` properties can now be either pens or numeric texture ids
+- `tiletypes`: now has a Lua API! ``tiletypes_setTile``
 
 ## Removed
 - `autohauler`: no plans to port to v50, as it just doesn't make sense with the new work detail system

@@ -960,7 +960,8 @@ Screens
 
 * ``dfhack.gui.matchFocusString(focus_string)``
 
-  Returns ``true`` if the given ``focus_string`` is found in current focus, or ``false``
+  Returns ``true`` if the given ``focus_string`` is found in the current
+  focus strings, or as a prefix to any of the focus strings, or ``false``
   if no match is found. Matching is case insensitive.
 
 * ``dfhack.gui.getCurFocus([skip_dismissed])``

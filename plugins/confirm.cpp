@@ -507,7 +507,7 @@ public:
         else
             return false;
     };
-    bool intercept_key (std::string mouse_button = "left")
+    bool intercept_key (std::string mouse_button = "MOUSE_LEFT")
     {
         CONF_LUA_START;
         push(mouse_button);

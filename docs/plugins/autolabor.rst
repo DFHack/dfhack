@@ -18,7 +18,7 @@ untouched by autolabor.
 
 .. warning::
 
-    ** This plugin is still being tested. Use at your own risk. **
+    **This plugin is still being tested. Use at your own risk.**
 
     The algorithms that autolabor uses to choose labor assignments have *not* been updated for version 50 of
     Dwarf Fortress. There is no particular guarantee that the labor assignments autolabor is making are optimal,
@@ -29,7 +29,7 @@ untouched by autolabor.
     any vanilla means for seeing the labor assignment table. Until `manipulator` is once again available,
     probably the best way to see what autolabor is doing is to use
     `Dwarf Therapist <https://github.com/Dwarf-Therapist/Dwarf-Therapist>`_. You can also increase autolabor's
-    logging level using the `debugfilter` command (setting either ``debug`` or ``trace`` level for the
+    logging level using the `debugfilter<debug>` command (setting either ``debug`` or ``trace`` level for the
     ``cycle`` mode) but be warned that this may generate a large amount of console spam, especially in a large fort.
 
     When it is enabled, autolabor automatically disables the work detail system. You cannot

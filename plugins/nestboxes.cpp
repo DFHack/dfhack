@@ -51,7 +51,7 @@ static void set_config_bool(PersistentDataItem &c, int index, bool value) {
 static const int32_t CYCLE_TICKS = 100; // need to react quickly if eggs are unforbidden
 static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
 
-static void do_cycle(color_ostream &out, int32_t *num_enabled_seeds, int32_t *num_disabled_seeds);
+static void do_cycle(color_ostream &out);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
     DEBUG(config,out).print("initializing %s\n", plugin_name);
@@ -112,16 +112,8 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (is_enabled && world->frame_counter - cycle_timestamp >= CYCLE_TICKS) {
-        int32_t num_enabled_seeds, num_disabled_seeds;
-        do_cycle(out, &num_enabled_seeds, &num_disabled_seeds);
-        if (0 < num_enabled_seeds)
-            out.print("%s: enabled %d seed types for cooking\n",
-                    plugin_name, num_enabled_seeds);
-        if (0 < num_disabled_seeds)
-            out.print("%s: protected %d seed types from cooking\n",
-                    plugin_name, num_disabled_seeds);
-    }
+    if (is_enabled && world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
+        do_cycle(out);
     return CR_OK;
 }
 
@@ -129,7 +121,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
 // cycle logic
 //
 
-static void do_cycle(color_ostream &out, int32_t *num_enabled_seed_types, int32_t *num_disabled_seed_types) {
+static void do_cycle(color_ostream &out) {
     DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
 
     // mark that we have recently run

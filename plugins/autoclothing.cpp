@@ -782,7 +782,7 @@ static void generate_report(color_ostream& out)
             auto item = Items::findItemByID(itemId);
             if (!item)
             {
-                WARN(cycle).print("Invalid inventory item ID: %d\n", itemId);
+                WARN(cycle,out).print("Invalid inventory item ID: %d\n", itemId);
                 continue;
             }
             if (item->getWear() >= 1)

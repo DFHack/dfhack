@@ -1609,13 +1609,13 @@ function List:getContentHeight()
     return #self.choices * self.row_height
 end
 
-function List:postComputeFrame(body)
-    self.page_size = math.max(1, math.floor(body.height / self.row_height))
-    self:moveCursor(0)
-end
-
 local function update_list_scrollbar(list)
     list.scrollbar:update(list.page_top, list.page_size, #list.choices)
+end
+
+function List:postComputeFrame(body)
+    self.page_size = math.max(1, math.floor(body.height / self.row_height))
+    update_list_scrollbar(self)
 end
 
 function List:postUpdateLayout()

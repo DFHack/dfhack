@@ -1897,6 +1897,16 @@ function FilteredList:init(info)
             return info.on_submit2(self:getSelected())
         end
     end
+    if info.on_double_click then
+        self.list.on_double_click = function()
+            return info.on_double_click(self:getSelected())
+        end
+    end
+    if info.on_double_click2 then
+        self.list.on_double_click2 = function()
+            return info.on_double_click2(self:getSelected())
+        end
+    end
     self.not_found = Label{
         visible = true,
         text = info.not_found_label or 'No matches',

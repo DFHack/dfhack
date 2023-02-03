@@ -54,7 +54,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `automelt`: stockpile configuration can now be set from the commandline
 - `channel-safely`: new monitoring for cave-in prevention
 - `gui/control-panel`: you can now configure whether DFHack tool windows should pause the game by default
-- `gui/control-panel`: new global hotkey: tilde (Shift-backtick on most keyboards)
+- `gui/control-panel`: new global hotkey for quick access: Ctrl-Shift-S (S for Settings)
 - `hotkeys`: clicking on the DFHack logo no longer closes the popup menu
 - `nestboxes`: now saves enabled state in your savegame
 - `gui/launcher`: sped up initialization time for faster window appearance

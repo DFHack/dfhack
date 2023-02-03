@@ -307,9 +307,12 @@ public:
         }
 
         conf_wrapper *wrapper = confirmations[this->get_id()];
-        if(wrapper->is_paused())
+        if(wrapper->is_paused()) {
+            std::string concernedFocus = this->get_focus_string();
+            if(!Gui::matchFocusString(this->get_focus_string(), this->match_prefix()))
+                wrapper->set_paused(false);
             return false;
-        else if (state == INACTIVE)
+        } else if (state == INACTIVE)
         {
             if(mouseExit) {
                 if(intercept_key("MOUSE_RIGHT") && set_state(ACTIVE)) {
@@ -373,10 +376,6 @@ public:
         return state == ACTIVE;
     }
     void render() {
-        conf_wrapper *wrapper = confirmations[this->get_id()];
-        std::string concernedFocus = this->get_focus_string();
-        if(!Gui::matchFocusString(this->get_focus_string(), this->match_prefix()))
-            wrapper->set_paused(false);
         static vector<string> lines;
         static const std::string pause_message =
                "Pause confirmations until you exit this screen";

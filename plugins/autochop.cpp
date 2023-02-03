@@ -158,6 +158,7 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out) {
 }
 
 DFhackCExport command_result plugin_load_data (color_ostream &out) {
+    cycle_timestamp = 0;
     config = World::GetPersistentData(CONFIG_KEY);
 
     if (!config.isValid()) {

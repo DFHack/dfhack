@@ -165,6 +165,8 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out) {
 }
 
 DFhackCExport command_result plugin_load_data (color_ostream &out) {
+    cycle_timestamp = 0;
+
     world_plant_ids.clear();
     for (size_t i = 0; i < world->raws.plants.all.size(); ++i) {
         auto & plant = world->raws.plants.all[i];

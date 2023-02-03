@@ -4875,6 +4875,10 @@ It has the following attributes:
             key/click and calls the callback as ``on_submit(index,choice)``.
 :on_submit2: Shift-click callback; if specified, the list reacts to the click and
              calls the callback as ``on_submit2(index,choice)``.
+:on_double_click: Mouse double click callback; if specified, the list reacts to the
+            click and calls the callback as ``on_double_click(index,choice)``.
+:on_double_click2: Shift-double click callback; if specified, the list reacts to the click and
+             calls the callback as ``on_double_click2(index,choice)``.
 :row_height: Height of every row in text lines.
 :icon_width: If not *nil*, the specified number of character columns
              are reserved to the left of the list item for the icons.

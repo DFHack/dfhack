@@ -17,7 +17,7 @@ keybinding add Ctrl-Shift-P "gui/launcher --minimal"
 keybinding add Ctrl-Shift-C hotkeys
 
 # control panel
-keybinding add Ctrl-Shift-S gui/control-panel
+keybinding add Ctrl-Shift-E gui/control-panel
 
 # on-screen keyboard
 keybinding add Ctrl-Shift-K gui/cp437-table

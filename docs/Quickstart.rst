@@ -80,7 +80,7 @@ The second place to check is the DFHack control panel: `gui/control-panel`. It
 will give you an overview of which tools are currently enabled, and will allow
 you to toggle them on or off, see help text for them, or launch their dedicated
 configuration UIs. You can launch the control panel from anywhere with the
-Ctrl-Shift-S hotkey or by selecting it from the logo hover list.
+Ctrl-Shift-E hotkey or by selecting it from the logo hover list.
 
 In the control panel, you can also select which tools you'd like to be
 automatically enabled when you start a new fort. There are also system settings
@@ -150,7 +150,7 @@ You can get to popular, relevant tools for the current context by hovering
 the mouse over the DFHack logo or by hitting Ctrl-Shift-C.
 
 You can enable DFHack tools and configure settings with `gui/control-panel`,
-which you can access directly with the Ctrl-Shift-S hotkey.
+which you can access directly with the Ctrl-Shift-E hotkey.
 
 You can get to the launcher and its integrated autocomplete, history search,
 and help text by hitting backtick (\`) or Ctrl-Shift-D, or, of course, by

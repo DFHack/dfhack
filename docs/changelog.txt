@@ -36,6 +36,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
+- `seedwatch`: fix parameter parsing when setting targets
 
 ## Misc Improvements
 

@@ -55,8 +55,8 @@ function parse_commandline(...)
         print_status()
     elseif command == 'clear' then
         set_target('all', 0)
-    elseif positionals[2] and positionals[3] then
-        set_target(positionals[2], positionals[3])
+    elseif positionals[2] then
+        set_target(command, positionals[2])
     else
         return false
     end

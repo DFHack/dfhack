@@ -36,7 +36,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
-- `seedwatch`: fix parameter parsing when setting targets
 
 ## Misc Improvements
 
@@ -47,6 +46,11 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Lua
 
 ## Removed
+
+# 50.05-alpha3.1
+
+## Fixes
+- `seedwatch`: fix parameter parsing when setting targets
 
 # 50.05-alpha3
 

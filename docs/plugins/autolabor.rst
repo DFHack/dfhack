@@ -34,7 +34,7 @@ untouched by autolabor.
 
     When it is enabled, autolabor automatically disables the work detail system. You cannot
     use autolabor and work details at the same time. If you attempt to open the work detail screen while
-    autohauler is active, a warning box should appear advising you that autolabor is managing labors and preventing
+    autolabor is active, a warning box should appear advising you that autolabor is managing labors and preventing
     you from making any changes on that screen.
 
     Finally, should you disable autolabor, autolabor will automatically reenable the vanilla work detail system.

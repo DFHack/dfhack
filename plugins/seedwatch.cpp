@@ -329,7 +329,7 @@ static void do_cycle(color_ostream &out, int32_t *num_enabled_seed_types, int32_
 
     for (auto &entry : watched_seeds) {
         int32_t id = entry.first;
-        if (id < 0 || id >= world->raws.plants.all.size())
+        if (id < 0 || (size_t)id >= world->raws.plants.all.size())
             continue;
         int32_t target = get_config_val(entry.second, SEED_CONFIG_TARGET);
         if (accessible_counts[id] <= target &&
@@ -359,7 +359,7 @@ static void set_target(color_ostream &out, int32_t id, int32_t target) {
     if (target == 0)
         remove_seed_config(out, id);
     else {
-        if (id < 0 || id >= world->raws.plants.all.size()) {
+        if (id < 0 || (size_t)id >= world->raws.plants.all.size()) {
             WARN(config,out).print(
                     "cannot set target for unknown plant id: %d\n", id);
             return;

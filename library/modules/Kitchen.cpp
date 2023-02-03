@@ -48,7 +48,7 @@ void Kitchen::debug_print(color_ostream &out)
 
 void Kitchen::allowPlantSeedCookery(int32_t plant_id)
 {
-    if (plant_id < 0 || plant_id >= world->raws.plants.all.size())
+    if (plant_id < 0 || (size_t)plant_id >= world->raws.plants.all.size())
         return;
 
     df::plant_raw *type = world->raws.plants.all[plant_id];
@@ -64,7 +64,7 @@ void Kitchen::allowPlantSeedCookery(int32_t plant_id)
 
 void Kitchen::denyPlantSeedCookery(int32_t plant_id)
 {
-    if (plant_id < 0 || plant_id >= world->raws.plants.all.size())
+    if (plant_id < 0 || (size_t)plant_id >= world->raws.plants.all.size())
         return;
 
     df::plant_raw *type = world->raws.plants.all[plant_id];
@@ -79,7 +79,7 @@ void Kitchen::denyPlantSeedCookery(int32_t plant_id)
 }
 
 bool Kitchen::isPlantCookeryAllowed(int32_t plant_id) {
-    if (plant_id < 0 || plant_id >= world->raws.plants.all.size())
+    if (plant_id < 0 || (size_t)plant_id >= world->raws.plants.all.size())
         return false;
 
     df::plant_raw *type = world->raws.plants.all[plant_id];
@@ -89,7 +89,7 @@ bool Kitchen::isPlantCookeryAllowed(int32_t plant_id) {
 }
 
 bool Kitchen::isSeedCookeryAllowed(int32_t plant_id) {
-    if (plant_id < 0 || plant_id >= world->raws.plants.all.size())
+    if (plant_id < 0 || (size_t)plant_id >= world->raws.plants.all.size())
         return false;
 
     df::plant_raw *type = world->raws.plants.all[plant_id];

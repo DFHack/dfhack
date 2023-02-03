@@ -394,6 +394,7 @@ static int32_t scan_trees(color_ostream & out, int32_t *expected_yield,
         int32_t *accessible_yield = NULL,
         map<int32_t, int32_t> *tree_counts = NULL,
         map<int32_t, int32_t> *designated_tree_counts = NULL) {
+    TRACE(cycle,out).print("scanning trees\n");
     int32_t newly_marked = 0;
 
     if (accessible_trees)
@@ -415,6 +416,9 @@ static int32_t scan_trees(color_ostream & out, int32_t *expected_yield,
     bucket_watched_burrows(out, clearcut_burrows, chop_burrows);
 
     for (auto plant : world->plants.all) {
+        TRACE(cycle,out).print("  scanning tree at %d,%d,%d\n",
+                               plant->pos.x, plant->pos.y, plant->pos.z);
+
         if (!is_valid_tree(plant))
             continue;
 
@@ -503,15 +507,18 @@ struct BadFlags
     }
 };
 
-static void scan_logs(int32_t *usable_logs, const vector<df::unit *> &citizens, int32_t *inaccessible_logs = NULL) {
+static void scan_logs(color_ostream &out, int32_t *usable_logs,
+                      const vector<df::unit *> &citizens, int32_t *inaccessible_logs = NULL) {
     static const BadFlags bad_flags;
 
+    TRACE(cycle,out).print("scanning logs\n");
     if (usable_logs)
         *usable_logs = 0;
     if (inaccessible_logs)
         *inaccessible_logs = 0;
 
     for (auto &item : world->items.other[items_other_id::IN_PLAY]) {
+        TRACE(cycle,out).print("  scanning log %d\n", item->id);
         if (item->flags.whole & bad_flags.whole)
             continue;
 
@@ -548,7 +555,7 @@ static int32_t do_cycle(color_ostream &out, bool force_designate) {
 
     // check how many logs we have already
     int32_t usable_logs;
-    scan_logs(&usable_logs, citizens);
+    scan_logs(out, &usable_logs, citizens);
 
     if (get_config_bool(config, CONFIG_WAITING_FOR_MIN)
             && usable_logs <= get_config_val(config, CONFIG_MIN_LOGS)) {
@@ -631,7 +638,7 @@ static void autochop_printStatus(color_ostream &out) {
     map<int32_t, int32_t> tree_counts, designated_tree_counts;
     vector<df::unit *> citizens;
     Units::getCitizens(citizens);
-    scan_logs(&usable_logs, citizens, &inaccessible_logs);
+    scan_logs(out, &usable_logs, citizens, &inaccessible_logs);
     scan_trees(out, &expected_yield, NULL, false, citizens, &accessible_trees, &inaccessible_trees,
             &designated_trees, &accessible_yield, &tree_counts, &designated_tree_counts);
 
@@ -736,7 +743,7 @@ static int autochop_getLogCounts(lua_State *L) {
     int32_t usable_logs, inaccessible_logs;
     vector<df::unit *> citizens;
     Units::getCitizens(citizens);
-    scan_logs(&usable_logs, citizens, &inaccessible_logs);
+    scan_logs(*out, &usable_logs, citizens, &inaccessible_logs);
     Lua::Push(L, usable_logs);
     Lua::Push(L, inaccessible_logs);
     return 2;

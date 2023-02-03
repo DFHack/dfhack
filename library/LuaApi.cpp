@@ -1471,7 +1471,6 @@ static int gui_getMousePos(lua_State *L)
 static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, getCurViewscreen),
     WRAPM(Gui, getDFViewscreen),
-    WRAPM(Gui, getCurFocus),
     WRAPM(Gui, getSelectedWorkshopJob),
     WRAPM(Gui, getSelectedJob),
     WRAPM(Gui, getSelectedUnit),
@@ -1503,6 +1502,13 @@ static int gui_getFocusStrings(lua_State *state) {
     df::viewscreen *r = Lua::GetDFObject<df::viewscreen>(state, 1);
     std::vector<std::string> focusStrings = Gui::getFocusStrings(r);
     Lua::PushVector(state, focusStrings);
+    return 1;
+}
+
+static int gui_getCurFocus(lua_State *state) {
+    bool skip_dismissed = lua_toboolean(state, 1);
+    std::vector<std::string> cur_focus = Gui::getCurFocus(skip_dismissed);
+    Lua::PushVector(state, cur_focus);
     return 1;
 }
 
@@ -1632,6 +1638,7 @@ static const luaL_Reg dfhack_gui_funcs[] = {
     { "revealInDwarfmodeMap", gui_revealInDwarfmodeMap },
     { "getMousePos", gui_getMousePos },
     { "getFocusStrings", gui_getFocusStrings },
+    { "getCurFocus", gui_getCurFocus },
     { NULL, NULL }
 };
 

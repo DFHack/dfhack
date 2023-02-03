@@ -37,7 +37,7 @@ static bool can_invoke(const string &cmdline, df::viewscreen *screen) {
 }
 
 static int cleanupHotkeys(lua_State *) {
-    DEBUG(log).print("cleaning up old stub keybindings for:\n %s\n", join_strings("\n", Gui::getFocusStrings(Gui::getCurViewscreen(true))).c_str());
+    DEBUG(log).print("cleaning up old stub keybindings for:\n %s\n", join_strings("\n", Gui::getCurFocus(true)).c_str());
     std::for_each(sorted_keys.begin(), sorted_keys.end(), [](const string &sym) {
         string keyspec = sym + "@" + MENU_SCREEN_FOCUS_STRING;
         DEBUG(log).print("clearing keybinding: %s\n", keyspec.c_str());
@@ -143,7 +143,7 @@ static void list(color_ostream &out) {
         find_active_keybindings(Gui::getCurViewscreen(true), false);
 
     out.print("Valid keybindings for the current focus:\n %s\n",
-              join_strings("\n", Gui::getFocusStrings(Gui::getCurViewscreen(true))).c_str());
+              join_strings("\n", Gui::getCurFocus(true)).c_str());
     std::for_each(sorted_keys.begin(), sorted_keys.end(), [&](const string &sym) {
         out.print("%s: %s\n", sym.c_str(), current_bindings[sym].c_str());
     });

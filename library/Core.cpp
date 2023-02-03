@@ -948,7 +948,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                 << "Context may be used to limit the scope of the binding, by" << endl
                 << "requiring the current context to have a certain prefix." << endl
                 << "Current UI context is: " << endl
-                << join_strings("\n", Gui::getFocusStrings(Gui::getCurViewscreen(true))) << endl;
+                << join_strings("\n", Gui::getCurFocus(true)) << endl;
         }
     }
     else if (first == "alias")
@@ -2421,7 +2421,7 @@ bool Core::SelectHotkey(int sym, int modifiers)
             }
             if (!binding.focus.empty()) {
                 bool found = false;
-                std::vector<std::string> focusStrings = Gui::getFocusStrings(Core::getTopViewscreen());
+                std::vector<std::string> focusStrings = Gui::getCurFocus(true);
                 if(Gui::matchFocusString(binding.focus)) {
                     found = true;
                 }

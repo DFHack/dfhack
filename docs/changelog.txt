@@ -78,9 +78,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `helpdb`: new function: ``helpdb.refresh()`` to force a refresh of the database. Call if you are a developer adding new scripts, loading new plugins, or changing help text during play
 - `helpdb`: changed from auto-refreshing every 60 seconds to only refreshing on explicit call to ``helpdb.refresh()``. docs very rarely change during a play session, and the automatic database refreshes were slowing down the startup of `gui/launcher` and anything else that displays help text.
 - ``widgets.Label``: ``label.scroll()`` now understands ``home`` and ``end`` keywords for scrolling to the top or bottom
+- ``widgets.List``: new callbacks for double click and shift double click
 - ``dfhack.units.getCitizens()``: gets a list of citizens
 - ``gui.ZScreen``: new attribute: ``defocusable`` for controlling whether a window loses keyboard focus when the map is clicked
-- ``Label``: token ``tile`` properties can now be either pens or numeric texture ids
+- ``widgets.Label``: token ``tile`` properties can now be either pens or numeric texture ids
 - `tiletypes`: now has a Lua API! ``tiletypes_setTile``
 
 ## Removed

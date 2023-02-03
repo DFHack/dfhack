@@ -1537,6 +1537,8 @@ List.ATTRS{
     on_select = DEFAULT_NIL,
     on_submit = DEFAULT_NIL,
     on_submit2 = DEFAULT_NIL,
+    on_double_click = DEFAULT_NIL,
+    on_double_click2 = DEFAULT_NIL,
     row_height = 1,
     scroll_keys = STANDARDSCROLL,
     icon_width = DEFAULT_NIL,
@@ -1557,6 +1559,8 @@ function List:init(info)
         self.choices = {}
         self.selected = 1
     end
+
+    self.last_select_click_ms = 0 -- used to track double-clicking on an item
 end
 
 function List:setChoices(choices, selected)
@@ -1765,6 +1769,16 @@ function List:submit2()
     end
 end
 
+function List:double_click()
+    if #self.choices == 0 then return end
+    local cb = dfhack.internal.getModifiers().shift and
+            self.on_double_click2 or self.on_double_click
+    if cb then
+        cb(self:getSelected())
+        return true
+    end
+end
+
 function List:onInput(keys)
     if self:inputToSubviews(keys) then
         return true
@@ -1776,6 +1790,18 @@ function List:onInput(keys)
     elseif keys._MOUSE_L_DOWN then
         local idx = self:getIdxUnderMouse()
         if idx then
+            local now_ms = dfhack.getTickCount()
+            if idx ~= self:getSelected() then
+                self.last_select_click_ms = now_ms
+            else
+                if now_ms - self.last_select_click_ms <= DOUBLE_CLICK_MS then
+                    self.last_select_click_ms = 0
+                    if self:double_click() then return true end
+                else
+                    self.last_select_click_ms = now_ms
+                end
+            end
+
             self:setSelected(idx)
             if dfhack.internal.getModifiers().shift then
                 self:submit2()
@@ -1869,6 +1895,16 @@ function FilteredList:init(info)
     if info.on_submit2 then
         self.list.on_submit2 = function()
             return info.on_submit2(self:getSelected())
+        end
+    end
+    if info.on_double_click then
+        self.list.on_double_click = function()
+            return info.on_double_click(self:getSelected())
+        end
+    end
+    if info.on_double_click2 then
+        self.list.on_double_click2 = function()
+            return info.on_double_click2(self:getSelected())
         end
     end
     self.not_found = Label{

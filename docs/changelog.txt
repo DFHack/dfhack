@@ -44,6 +44,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `autoclothing`: fixed a crash that can happen when units are holding invalid items.
 -@ `orders`: fix orders in library/basic that create bags
 - `orders`: library/military now sticks to vanilla rules and does not add orders for normally-mood-only platinum weapons. A new library orders file ``library/military_include_artifact_materials`` is now offered as an alternate ``library/military`` set of orders that still includes the platinum weapons.
+- `autochop`: fixed a crash when processing trees with corrupt data structures (e.g. when a trunk tile fails to fall when the rest of the tree is chopped down)
 
 ## Misc Improvements
 - DFHack windows can now be "defocused" by clicking somewhere not over the tool window. This has the same effect as pinning previously did, but without the extra clicking.

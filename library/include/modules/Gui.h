@@ -67,7 +67,7 @@ namespace DFHack
     namespace Gui
     {
         DFHACK_EXPORT std::vector<std::string> getFocusStrings(df::viewscreen *top);
-        DFHACK_EXPORT bool matchFocusString(std::string focusString);
+        DFHACK_EXPORT bool matchFocusString(std::string focusString, bool prefixMatch = true);
 
 
         // Full-screen item details view

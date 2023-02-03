@@ -42,12 +42,8 @@ static map<string, conf_wrapper*> confirmations;
 string active_id;
 queue<string> cmds;
 
-// true when confirm is paused
-bool paused = false;
-// if set, confirm will unpause when this screen is no longer on the stack
-df::viewscreen *paused_screen = NULL;
-
-std::string paused_focus = "";
+// TODO: move to confirmation instance with paused_focus etc
+ df::viewscreen *paused_screen = NULL;
 
 namespace DFHack {
     DBG_DECLARE(confirm,status);
@@ -70,11 +66,13 @@ string char_replace (string s, char a, char b)
 }
 
 bool set_conf_state (string name, bool state);
+bool set_conf_paused (string name, bool pause);
 
 class confirmation_base {
 public:
     enum cstate { INACTIVE, ACTIVE, SELECTED };
     virtual string get_id() = 0;
+    virtual string get_focus_string() = 0;
     virtual bool set_state(cstate) = 0;
 
     static bool set_state(string id, cstate state)
@@ -94,6 +92,7 @@ confirmation_base *confirmation_base::active = nullptr;
 struct conf_wrapper {
 private:
     bool enabled;
+    bool paused;
     std::set<VMethodInterposeLinkBase*> hooks;
 public:
     conf_wrapper()
@@ -115,7 +114,12 @@ public:
         enabled = state;
         return true;
     }
+    bool set_paused (bool pause) {
+        paused = pause;
+        return true;
+    }
     inline bool is_enabled() { return enabled; }
+    inline bool is_paused() { return paused; }
 };
 
 namespace trade {
@@ -226,6 +230,7 @@ namespace conf_lua {
                 lua_newtable(L);
                 Lua::TableInsert(L, "id", item.first);
                 Lua::TableInsert(L, "enabled", item.second->is_enabled());
+                Lua::TableInsert(L, "paused", item.second->is_paused());
                 lua_settable(L, -3);
             }
             return 1;
@@ -238,25 +243,13 @@ namespace conf_lua {
                 lua_pushnil(L);
             return 1;
         }
-        int unpause(lua_State *)
-        {
-            DEBUG(status).print("unpausing\n");
-            paused = false;
-            paused_screen = NULL;
-            paused_focus = "";
-            return 0;
-        }
-        int get_paused (lua_State *L)
-        {
-            Lua::Push(L, paused);
-            return 1;
-        }
     }
 }
 
 #define CONF_LUA_FUNC(ns, name) {#name, df::wrap_function(ns::name, true)}
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     CONF_LUA_FUNC( , set_conf_state),
+    CONF_LUA_FUNC( , set_conf_paused),
     CONF_LUA_FUNC(trade, broker_goods_selected),
     //CONF_LUA_FUNC(trade, broker_goods_all_selected),
     CONF_LUA_FUNC(trade, trader_goods_selected),
@@ -269,8 +262,6 @@ DFHACK_PLUGIN_LUA_COMMANDS {
     CONF_LUA_CMD(get_ids),
     CONF_LUA_CMD(get_conf_data),
     CONF_LUA_CMD(get_active_id),
-    CONF_LUA_CMD(unpause),
-    CONF_LUA_CMD(get_paused),
     DFHACK_LUA_END
 };
 
@@ -284,6 +275,7 @@ class confirmation : public confirmation_base {
 public:
     typedef T screen_type;
     screen_type *screen;
+    bool tryUnpauseOnRender;
 
     bool set_state (cstate s) override
     {
@@ -314,11 +306,12 @@ public:
             mouseSelect = true;
         }
 
-        if (paused)
+        conf_wrapper *wrapper = confirmations[this->get_id()];
+        if(wrapper->is_paused())
         {
-            if (paused_focus != "" && (input->count(df::interface_key::LEAVESCREEN) || mouseExit)) {
-                conf_lua::api::unpause(NULL);
-            }
+            if ((input->count(df::interface_key::LEAVESCREEN) || mouseExit))
+                tryUnpauseOnRender = true;
+
             return false;
         }
         else if (state == INACTIVE)
@@ -368,15 +361,8 @@ public:
             else if (input->count(df::interface_key::CUSTOM_P))
             {
                 DEBUG(status).print("pausing\n");
-                paused = true;
 
-                std::vector<std::string> focusStrings = Gui::getFocusStrings(Gui::getCurViewscreen(true));
-                std::string current_focus = focusStrings[0];// TODO: fix
-
-                if (current_focus != "dwarfmode") {
-                    paused_focus = current_focus;
-                }
-
+                wrapper->set_paused(true);
                 set_state(INACTIVE);
             }
             else if (input->count(df::interface_key::CUSTOM_S))
@@ -392,6 +378,15 @@ public:
         return state == ACTIVE;
     }
     void render() {
+        if(tryUnpauseOnRender) {
+            tryUnpauseOnRender = false;
+            conf_wrapper *wrapper = confirmations[this->get_id()];
+            std::string concernedFocus = this->get_focus_string();
+            bool prefixMatch = concernedFocus.find("*") != std::string::npos;
+
+            if(!Gui::matchFocusString(this->get_focus_string(), prefixMatch))
+                wrapper->set_paused(false);
+        }
         static vector<string> lines;
         static const std::string pause_message =
                "Pause confirmations until you exit this screen";
@@ -487,7 +482,8 @@ public:
         // clean up any artifacts
         df::global::gps->force_full_display_count = 1;
     }
-    virtual string get_id() override = 0;
+    string get_id() override = 0;
+    string get_focus_string() override = 0;
     #define CONF_LUA_START using namespace conf_lua; Lua::StackUnwinder unwind(l_state); push(screen); push(get_id());
     bool intercept_key (df::interface_key key)
     {
@@ -574,9 +570,10 @@ static int conf_register_##cls = conf_register(&cls##_instance, {\
     &INTERPOSE_HOOK(cls##_hooks, render), \
 });
 
-#define DEFINE_CONFIRMATION(cls, screen) \
+#define DEFINE_CONFIRMATION(cls, screen, focusString) \
     class confirmation_##cls : public confirmation<df::screen> { \
         virtual string get_id() { static string id = char_replace(#cls, '_', '-'); return id; } \
+        virtual string get_focus_string() { return focusString; } \
     }; \
     IMPLEMENT_CONFIRMATION_HOOKS(confirmation_##cls, 0);
 
@@ -584,17 +581,19 @@ static int conf_register_##cls = conf_register(&cls##_instance, {\
     implemented in plugins/lua/confirm.lua.
     IDs (used in the "confirm enable/disable" command, by Lua, and in the docs)
     are obtained by replacing '_' with '-' in the first argument to DEFINE_CONFIRMATION
+
+    TODO: document focus string stuff and how * does prefix matching
 */
 
-DEFINE_CONFIRMATION(trade_cancel,         viewscreen_dwarfmodest);
-DEFINE_CONFIRMATION(haul_delete_route,    viewscreen_dwarfmodest);
-DEFINE_CONFIRMATION(haul_delete_stop,     viewscreen_dwarfmodest);
-DEFINE_CONFIRMATION(depot_remove,         viewscreen_dwarfmodest);
-DEFINE_CONFIRMATION(squad_disband,        viewscreen_dwarfmodest);
-DEFINE_CONFIRMATION(order_remove,         viewscreen_dwarfmodest);
-DEFINE_CONFIRMATION(zone_remove,          viewscreen_dwarfmodest);
-DEFINE_CONFIRMATION(burrow_remove,        viewscreen_dwarfmodest);
-DEFINE_CONFIRMATION(stockpile_remove,     viewscreen_dwarfmodest);
+DEFINE_CONFIRMATION(trade_cancel,         viewscreen_dwarfmodest, "dwarfmode/Trade");
+DEFINE_CONFIRMATION(haul_delete_route,    viewscreen_dwarfmodest, "dwarfmode/Hauling");
+DEFINE_CONFIRMATION(haul_delete_stop,     viewscreen_dwarfmodest, "dwarfmode/Hauling");
+DEFINE_CONFIRMATION(depot_remove,         viewscreen_dwarfmodest, "dwarfmode/ViewSheets/BUILDING");
+DEFINE_CONFIRMATION(squad_disband,        viewscreen_dwarfmodest, "dwarfmode/Squads");
+DEFINE_CONFIRMATION(order_remove,         viewscreen_dwarfmodest, "dwarfmode/Info/WORK_ORDERS");
+DEFINE_CONFIRMATION(zone_remove,          viewscreen_dwarfmodest, "dwarfmode/Zone*");
+DEFINE_CONFIRMATION(burrow_remove,        viewscreen_dwarfmodest, "dwarfmode/Burrow");
+DEFINE_CONFIRMATION(stockpile_remove,     viewscreen_dwarfmodest, "dwarfmode/Some/Stockpile");
 
 // these are more complex to implement
 //DEFINE_CONFIRMATION(convict,            viewscreen_dwarfmodest);
@@ -672,9 +671,10 @@ DFhackCExport command_result plugin_onupdate (color_ostream &out)
         cmds.pop();
     }
 
+    // TODO: reimplement
     // if the screen that we paused on is no longer on the stack, unpause
-    if (paused_focus != "" && Gui::getFocusStrings(Gui::getCurViewscreen())[0] != paused_focus)
-        conf_lua::api::unpause(NULL);
+    //if (paused_focus != "" && Gui::getFocusStrings(Gui::getCurViewscreen())[0] != paused_focus)
+        //conf_lua::api::unpause(NULL);
 
     return CR_OK;
 }
@@ -692,6 +692,27 @@ bool set_conf_state (string name, bool state)
     }
 
     if (state == false)
+    {
+        // dismiss the confirmation too
+        confirmation_base::set_state(name, confirmation_base::INACTIVE);
+    }
+
+    return found;
+}
+
+bool set_conf_paused (string name, bool pause)
+{
+    bool found = false;
+    for (auto it : confirmations)
+    {
+        if (it.first == name)
+        {
+            found = true;
+            it.second->set_paused(pause);
+        }
+    }
+
+    if (pause == true)
     {
         // dismiss the confirmation too
         confirmation_base::set_state(name, confirmation_base::INACTIVE);

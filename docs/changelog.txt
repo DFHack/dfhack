@@ -34,6 +34,22 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.05-alpha3
+
+## New Plugins
 - `autoslab`: automatically create work orders to engrave slabs for ghostly dwarves
 
 ## Fixes

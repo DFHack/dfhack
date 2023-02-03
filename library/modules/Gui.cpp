@@ -356,11 +356,6 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         newFocusString += "/PatrolRoutes";
         focusStrings.push_back(newFocusString);
     }
-    if (game->main_interface.squad_equipment.open) {
-        newFocusString = baseFocus;
-        newFocusString += "/SquadEquipment";
-        focusStrings.push_back(newFocusString);
-    }
     if (game->main_interface.squad_schedule.open) {
         newFocusString = baseFocus;
         newFocusString += "/SquadSchedule";

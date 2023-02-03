@@ -301,7 +301,7 @@ static void scan_seeds(color_ostream &out, unordered_map<int32_t, int32_t> *acce
 
     for (auto &item : world->items.other[items_other_id::SEEDS]) {
         MaterialInfo mat(item);
-        if (!mat.isPlant())
+        if (mat.plant->index < 0 || !mat.isPlant())
             continue;
         if ((bad_flags.whole & item->flags.whole) || !is_accessible_item(item, citizens)) {
             if (inaccessible_counts)
@@ -329,13 +329,19 @@ static void do_cycle(color_ostream &out, int32_t *num_enabled_seed_types, int32_
 
     for (auto &entry : watched_seeds) {
         int32_t id = entry.first;
+        if (id < 0 || id >= world->raws.plants.all.size())
+            continue;
         int32_t target = get_config_val(entry.second, SEED_CONFIG_TARGET);
-        if (accessible_counts[id] <= target) {
+        if (accessible_counts[id] <= target &&
+                (Kitchen::isPlantCookeryAllowed(id) ||
+                 Kitchen::isSeedCookeryAllowed(id))) {
             DEBUG(cycle,out).print("disabling seed mat: %d\n", id);
             if (num_disabled_seed_types)
                 ++*num_disabled_seed_types;
             Kitchen::denyPlantSeedCookery(id);
-        } else if (target + TARGET_BUFFER < accessible_counts[id]) {
+        } else if (target + TARGET_BUFFER < accessible_counts[id] &&
+                (!Kitchen::isPlantCookeryAllowed(id) ||
+                 !Kitchen::isSeedCookeryAllowed(id))) {
             DEBUG(cycle,out).print("enabling seed mat: %d\n", id);
             if (num_enabled_seed_types)
                 ++*num_enabled_seed_types;
@@ -353,6 +359,11 @@ static void set_target(color_ostream &out, int32_t id, int32_t target) {
     if (target == 0)
         remove_seed_config(out, id);
     else {
+        if (id < 0 || id >= world->raws.plants.all.size()) {
+            WARN(config,out).print(
+                    "cannot set target for unknown plant id: %d\n", id);
+            return;
+        }
         PersistentDataItem &c = ensure_seed_config(out, id);
         set_config_val(c, SEED_CONFIG_TARGET, target);
     }

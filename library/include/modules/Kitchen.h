@@ -53,6 +53,9 @@ DFHACK_EXPORT void allowPlantSeedCookery(int32_t plant_id);
 // add this plant to the exclusion list, if it is not already in it
 DFHACK_EXPORT void denyPlantSeedCookery(int32_t plant_id);
 
+DFHACK_EXPORT bool isPlantCookeryAllowed(int32_t plant_id);
+DFHACK_EXPORT bool isSeedCookeryAllowed(int32_t plant_id);
+
 DFHACK_EXPORT std::size_t size();
 
 // Finds the index of a kitchen exclusion in plotinfo.kitchen.exc_types. Returns -1 if not found.

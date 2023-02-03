@@ -28,12 +28,6 @@ using namespace df::enums;
 using df::global::world;
 using df::global::plotinfo;
 
-// Special values used by "seedwatch" plugin to store seed limits
-const df::enums::item_type::item_type SEEDLIMIT_ITEMTYPE = df::enums::item_type::BAR;
-const int16_t SEEDLIMIT_ITEMSUBTYPE = 0;
-const int16_t SEEDLIMIT_MAX = 400; // Maximum permitted seed limit
-const df::kitchen_exc_type SEEDLIMIT_EXCTYPE = df::kitchen_exc_type(4);
-
 void Kitchen::debug_print(color_ostream &out)
 {
     out.print("Kitchen Exclusions\n");
@@ -54,6 +48,9 @@ void Kitchen::debug_print(color_ostream &out)
 
 void Kitchen::allowPlantSeedCookery(int32_t plant_id)
 {
+    if (plant_id < 0 || plant_id >= world->raws.plants.all.size())
+        return;
+
     df::plant_raw *type = world->raws.plants.all[plant_id];
 
     removeExclusion(df::kitchen_exc_type::Cook, item_type::SEEDS, -1,
@@ -67,6 +64,9 @@ void Kitchen::allowPlantSeedCookery(int32_t plant_id)
 
 void Kitchen::denyPlantSeedCookery(int32_t plant_id)
 {
+    if (plant_id < 0 || plant_id >= world->raws.plants.all.size())
+        return;
+
     df::plant_raw *type = world->raws.plants.all[plant_id];
 
     addExclusion(df::kitchen_exc_type::Cook, item_type::SEEDS, -1,
@@ -76,6 +76,26 @@ void Kitchen::denyPlantSeedCookery(int32_t plant_id)
     addExclusion(df::kitchen_exc_type::Cook, item_type::PLANT, -1,
         type->material_defs.type[plant_material_def::basic_mat],
         type->material_defs.idx[plant_material_def::basic_mat]);
+}
+
+bool Kitchen::isPlantCookeryAllowed(int32_t plant_id) {
+    if (plant_id < 0 || plant_id >= world->raws.plants.all.size())
+        return false;
+
+    df::plant_raw *type = world->raws.plants.all[plant_id];
+    return findExclusion(df::kitchen_exc_type::Cook, item_type::PLANT, -1,
+            type->material_defs.type[plant_material_def::basic_mat],
+            type->material_defs.idx[plant_material_def::basic_mat]) < 0;
+}
+
+bool Kitchen::isSeedCookeryAllowed(int32_t plant_id) {
+    if (plant_id < 0 || plant_id >= world->raws.plants.all.size())
+        return false;
+
+    df::plant_raw *type = world->raws.plants.all[plant_id];
+    return findExclusion(df::kitchen_exc_type::Cook, item_type::SEEDS, -1,
+                type->material_defs.type[plant_material_def::seed],
+                type->material_defs.idx[plant_material_def::seed]) < 0;
 }
 
 size_t Kitchen::size()

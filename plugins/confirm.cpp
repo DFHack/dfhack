@@ -73,6 +73,7 @@ public:
     enum cstate { INACTIVE, ACTIVE, SELECTED };
     virtual string get_id() = 0;
     virtual string get_focus_string() = 0;
+    virtual bool match_prefix() = 0;
     virtual bool set_state(cstate) = 0;
 
     static bool set_state(string id, cstate state)
@@ -275,7 +276,6 @@ class confirmation : public confirmation_base {
 public:
     typedef T screen_type;
     screen_type *screen;
-    bool tryUnpauseOnRender;
 
     bool set_state (cstate s) override
     {
@@ -308,12 +308,7 @@ public:
 
         conf_wrapper *wrapper = confirmations[this->get_id()];
         if(wrapper->is_paused())
-        {
-            if ((input->count(df::interface_key::LEAVESCREEN) || mouseExit))
-                tryUnpauseOnRender = true;
-
             return false;
-        }
         else if (state == INACTIVE)
         {
             if(mouseExit) {
@@ -378,15 +373,10 @@ public:
         return state == ACTIVE;
     }
     void render() {
-        if(tryUnpauseOnRender) {
-            tryUnpauseOnRender = false;
-            conf_wrapper *wrapper = confirmations[this->get_id()];
-            std::string concernedFocus = this->get_focus_string();
-            bool prefixMatch = concernedFocus.find("*") != std::string::npos;
-
-            if(!Gui::matchFocusString(this->get_focus_string(), prefixMatch))
-                wrapper->set_paused(false);
-        }
+        conf_wrapper *wrapper = confirmations[this->get_id()];
+        std::string concernedFocus = this->get_focus_string();
+        if(!Gui::matchFocusString(this->get_focus_string(), this->match_prefix()))
+            wrapper->set_paused(false);
         static vector<string> lines;
         static const std::string pause_message =
                "Pause confirmations until you exit this screen";
@@ -484,6 +474,7 @@ public:
     }
     string get_id() override = 0;
     string get_focus_string() override = 0;
+    bool match_prefix() override = 0;
     #define CONF_LUA_START using namespace conf_lua; Lua::StackUnwinder unwind(l_state); push(screen); push(get_id());
     bool intercept_key (df::interface_key key)
     {
@@ -574,6 +565,7 @@ static int conf_register_##cls = conf_register(&cls##_instance, {\
     class confirmation_##cls : public confirmation<df::screen> { \
         virtual string get_id() { static string id = char_replace(#cls, '_', '-'); return id; } \
         virtual string get_focus_string() { return focusString; } \
+        virtual bool match_prefix() { return focusString[strlen(focusString) - 1] == '*'; } \
     }; \
     IMPLEMENT_CONFIRMATION_HOOKS(confirmation_##cls, 0);
 
@@ -583,6 +575,7 @@ static int conf_register_##cls = conf_register(&cls##_instance, {\
     are obtained by replacing '_' with '-' in the first argument to DEFINE_CONFIRMATION
 
     TODO: document focus string stuff and how * does prefix matching
+    or just add a 4th param? that's probably the move
 */
 
 DEFINE_CONFIRMATION(trade_cancel,         viewscreen_dwarfmodest, "dwarfmode/Trade");

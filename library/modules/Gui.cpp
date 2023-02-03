@@ -172,6 +172,8 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         case df::enums::info_interface_mode_type::JUSTICE:
             newFocusString += "/" + enum_item_key(game->main_interface.info.justice.current_mode);
             break;
+        default:
+            break;
         }
 
         focusStrings.push_back(newFocusString);
@@ -281,6 +283,8 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             break;
         case df::enums::main_bottom_mode_type::BUILDING_PICK_MATERIALS:
             newFocusString += "/Building/PickMaterials";
+            break;
+        default:
             break;
         }
 

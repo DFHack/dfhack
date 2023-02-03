@@ -87,7 +87,7 @@ static void find_active_keybindings(df::viewscreen *screen, bool filtermenu) {
     }
 
     valid_keys.push_back("`");
-    vector<string> focusStrings = Gui::getFocusStrings(screen);
+
     for (int shifted = 0; shifted < 2; shifted++) {
         for (int alt = 0; alt < 2; alt++) {
             for (int ctrl = 0; ctrl < 2; ctrl++) {

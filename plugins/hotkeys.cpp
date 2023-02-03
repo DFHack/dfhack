@@ -109,11 +109,9 @@ static void find_active_keybindings(df::viewscreen *screen, bool filtermenu) {
                             vector<string> tokens;
                             split_string(&tokens, *invoke_cmd, ":");
                             string focus = tokens[0].substr(1);
-                            for(string focusString : focusStrings) {
-                                if (prefix_matches(toLower(focus), toLower(focusString))) {
-                                    auto cmdline = trim(tokens[1]);
-                                    add_binding_if_valid(sym, cmdline, screen, filtermenu);
-                                }
+                            if(Gui::matchFocusString(focus)) {
+                                auto cmdline = trim(tokens[1]);
+                                add_binding_if_valid(sym, cmdline, screen, filtermenu);
                             }
                         }
                     }

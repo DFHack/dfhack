@@ -481,7 +481,7 @@ bool Gui::matchFocusString(std::string focusString, bool prefixMatch) {
     std::vector<std::string> currentFocusStrings = getFocusStrings(getCurViewscreen(true));
 
     return std::find_if(currentFocusStrings.begin(), currentFocusStrings.end(), [&focusString, &prefixMatch](std::string item) {
-        return prefixMatch ? toLower(item).rfind(focusString, 0) == 0 : focusString == toLower(item);
+        return prefixMatch ? prefix_matches(focusString, toLower(item)) : focusString == toLower(item);
     }) != currentFocusStrings.end();
 }
 

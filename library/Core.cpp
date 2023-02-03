@@ -2422,10 +2422,8 @@ bool Core::SelectHotkey(int sym, int modifiers)
             if (!binding.focus.empty()) {
                 bool found = false;
                 std::vector<std::string> focusStrings = Gui::getFocusStrings(Core::getTopViewscreen());
-                for (std::string focusString : focusStrings) {
-                    if (prefix_matches(binding.focus, focusString)) {
-                        found = true;
-                    }
+                if(Gui::matchFocusString(binding.focus)) {
+                    found = true;
                 }
 
                 if (!found) {

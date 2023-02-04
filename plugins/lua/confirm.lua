@@ -1,7 +1,5 @@
 local _ENV = mkmodule('plugins.confirm')
 
-local ui = df.global.plotinfo
-
 local confs = {}
 -- Wraps df.interface_key[foo] functionality but fails with invalid keys
 keys = {}

@@ -42,9 +42,6 @@ static map<string, conf_wrapper*> confirmations;
 string active_id;
 queue<string> cmds;
 
-// TODO: move to confirmation instance with paused_focus etc
- df::viewscreen *paused_screen = NULL;
-
 namespace DFHack {
     DBG_DECLARE(confirm,status);
 }
@@ -97,7 +94,8 @@ private:
     std::set<VMethodInterposeLinkBase*> hooks;
 public:
     conf_wrapper()
-        :enabled(false)
+        :enabled(false),
+        paused(false)
     {}
     void add_hook(VMethodInterposeLinkBase *hook)
     {
@@ -573,8 +571,14 @@ static int conf_register_##cls = conf_register(&cls##_instance, {\
     IDs (used in the "confirm enable/disable" command, by Lua, and in the docs)
     are obtained by replacing '_' with '-' in the first argument to DEFINE_CONFIRMATION
 
-    TODO: document focus string stuff and how * does prefix matching
-    or just add a 4th param? that's probably the move
+    The second argument to DEFINE_CONFIRMATION determines the viewscreen that any
+    intercepted input will be fed to.
+
+    The third argument to DEFINE_CONFIRMATION determines the focus string that will
+    be used to determine if the confirmation should be unpaused. If a confirmation is paused
+    and the focus string is no longer found in the current focus, the confirmation will be
+    unpaused. Focus strings ending in "*" will use prefix matching e.g. "dwarfmode/Info*" would
+    match "dwarfmode/Info/Foo", "dwarfmode/Info/Bar" and so on. All matching is case insensitive.
 */
 
 DEFINE_CONFIRMATION(trade_cancel,         viewscreen_dwarfmodest, "dwarfmode/Trade");
@@ -662,11 +666,6 @@ DFhackCExport command_result plugin_onupdate (color_ostream &out)
         Core::getInstance().runCommand(out, cmds.front());
         cmds.pop();
     }
-
-    // TODO: reimplement
-    // if the screen that we paused on is no longer on the stack, unpause
-    //if (paused_focus != "" && Gui::getFocusStrings(Gui::getCurViewscreen())[0] != paused_focus)
-        //conf_lua::api::unpause(NULL);
 
     return CR_OK;
 }

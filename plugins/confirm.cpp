@@ -648,17 +648,6 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out)
     return CR_OK;
 }
 
-
-/* currently unused, leaving in until work is done in case it is needed again
-static bool screen_found(df::viewscreen *target_screen)
-{
-    if (!&game->main_interface)
-        return false;
-
-    return target_screen == Gui::getCurViewscreen();
-}
-*/
-
 DFhackCExport command_result plugin_onupdate (color_ostream &out)
 {
     while (!cmds.empty())

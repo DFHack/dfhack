@@ -123,19 +123,20 @@ public:
 namespace trade {
     static bool goods_selected (std::vector<uint8_t> &selected)
     {
+        if(!game->main_interface.trade.open)
+            return false;
+
         for (uint8_t sel : selected)
             if (sel == 1)
                 return true;
         return false;
     }
-    inline bool trader_goods_selected (df::viewscreen_dwarfmodest *screen)
+    inline bool trader_goods_selected ()
     {
-        CHECK_NULL_POINTER(screen);
         return goods_selected(game->main_interface.trade.goodflag[0]);
     }
-    inline bool broker_goods_selected (df::viewscreen_dwarfmodest*screen)
+    inline bool broker_goods_selected ()
     {
-        CHECK_NULL_POINTER(screen);
         return goods_selected(game->main_interface.trade.goodflag[1]);
     }
 
@@ -162,15 +163,13 @@ namespace trade {
         }
         return true;
     }
-    inline bool trader_goods_all_selected(df::viewscreen_dwarfmodest*screen)
+    inline bool trader_goods_all_selected()
     {
-        CHECK_NULL_POINTER(screen);
-        return false;// goods_all_selected(screen->trader_selected, screen->trader_items);
+        return goods_all_selected(screen->trader_selected, screen->trader_items);
     }
-    inline bool broker_goods_all_selected(df::viewscreen_dwarfmodest*screen)
+    inline bool broker_goods_all_selected()
     {
-        CHECK_NULL_POINTER(screen);
-        return false;// goods_all_selected(screen->broker_selected, screen->broker_items);
+        return goods_all_selected(screen->broker_selected, screen->broker_items);
     }*/
 }
 

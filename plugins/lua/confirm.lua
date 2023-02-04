@@ -60,7 +60,7 @@ trade_cancel = defconf('trade-cancel')
 function trade_cancel.intercept_key(key)
     return dfhack.gui.matchFocusString("dwarfmode/Trade") and
     (key == keys.LEAVESCREEN or key == MOUSE_RIGHT) and
-    (trader_goods_selected(screen) or broker_goods_selected(screen))
+    (trader_goods_selected() or broker_goods_selected())
 end
 trade_cancel.title = "Cancel trade"
 trade_cancel.message = "Are you sure you want leave this screen?\nSelected items will not be saved."
@@ -138,13 +138,13 @@ function trade.intercept_key(key)
 end
 trade.title = "Confirm trade"
 function trade.get_message()
-    if trader_goods_selected(screen) and broker_goods_selected(screen) then
+    if trader_goods_selected() and broker_goods_selected() then
         return "Are you sure you want to trade the selected goods?"
-    elseif trader_goods_selected(screen) then
+    elseif trader_goods_selected() then
         return "You are not giving any items. This is likely\n" ..
             "to irritate the merchants.\n" ..
             "Attempt to trade anyway?"
-    elseif broker_goods_selected(screen) then
+    elseif broker_goods_selected() then
         return "You are not receiving any items. You may want to\n" ..
             "offer these items instead or choose items to receive.\n" ..
             "Attempt to trade anyway?"
@@ -158,7 +158,7 @@ end
 trade_seize = defconf('trade-seize')
 function trade_seize.intercept_key(key)
     return screen.in_edit_count == 0 and
-        trader_goods_selected(screen) and
+        trader_goods_selected() and
         key == keys.TRADE_SEIZE
 end
 trade_seize.title = "Confirm seize"
@@ -167,7 +167,7 @@ trade_seize.message = "Are you sure you want to seize these goods?"
 trade_offer = defconf('trade-offer')
 function trade_offer.intercept_key(key)
     return screen.in_edit_count == 0 and
-        broker_goods_selected(screen) and
+        broker_goods_selected() and
         key == keys.TRADE_OFFER
 end
 trade_offer.title = "Confirm offer"
@@ -176,9 +176,9 @@ trade_offer.message = "Are you sure you want to offer these goods?\nYou will rec
 trade_select_all = defconf('trade-select-all')
 function trade_select_all.intercept_key(key)
     if screen.in_edit_count == 0 and key == keys.SEC_SELECT then
-        if screen.in_right_pane and broker_goods_selected(screen) and not broker_goods_all_selected(screen) then
+        if screen.in_right_pane and broker_goods_selected() and not broker_goods_all_selected() then
             return true
-        elseif not screen.in_right_pane and trader_goods_selected(screen) and not trader_goods_all_selected(screen) then
+        elseif not screen.in_right_pane and trader_goods_selected() and not trader_goods_all_selected() then
             return true
         end
     end

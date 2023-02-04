@@ -15,7 +15,6 @@
 #include "modules/Gui.h"
 #include "uicommon.h"
 
-#include "df/building_tradedepotst.h"
 #include "df/gamest.h"
 #include "df/general_ref.h"
 #include "df/general_ref_contained_in_itemst.h"

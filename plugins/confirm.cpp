@@ -30,7 +30,7 @@ using std::vector;
 
 DFHACK_PLUGIN("confirm");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
-REQUIRE_GLOBAL(game)
+REQUIRE_GLOBAL(game);
 REQUIRE_GLOBAL(gps);
 
 typedef std::set<df::interface_key> ikey_set;

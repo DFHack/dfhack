@@ -115,13 +115,17 @@ static void remove_stockpile_config(color_ostream &out, int id)
     watched_stockpiles.erase(id);
 }
 
+static bool isStockpile(df::building * building) {
+    return building->getType() == df::building_type::Stockpile;
+}
+
 static void validate_stockpile_configs(color_ostream &out)
 {
     for (auto &c : watched_stockpiles) {
         int id = get_config_val(c.second, STOCKPILE_CONFIG_ID);
-        if (!df::building::find(id)){
+        auto bld = df::building::find(id);
+        if (!bld || !isStockpile(bld))
             remove_stockpile_config(out, id);
-        }
     }
 }
 
@@ -268,10 +272,6 @@ static inline bool is_metal_item(df::item *item)
     return (mat.getCraftClass() == craft_material_class::Metal);
 }
 
-static bool isStockpile(df::building * building) {
-    return building->getType() == df::building_type::Stockpile;
-}
-
 struct BadFlagsCanMelt {
     uint32_t whole;
 
@@ -305,7 +305,6 @@ struct BadFlagsMarkItem {
 // Copied from Kelly Martin's code
 static inline bool can_melt(df::item *item)
 {
-
     static const BadFlagsCanMelt bad_flags;
 
     if (item->flags.whole & bad_flags.whole)
@@ -356,7 +355,7 @@ static inline bool is_set_to_melt(df::item *item)
 static int mark_item(color_ostream &out, df::item *item, BadFlagsMarkItem bad_flags, int32_t stockpile_id,
                      int32_t &premarked_item_count, int32_t &item_count, map<int32_t, bool> &tracked_item_map, bool should_melt)
 {
-    DEBUG(perf,out).print("%s running mark_item\nshould_melt=%d\n", plugin_name,should_melt);
+    DEBUG(perf,out).print("%s running mark_item: should_melt=%d\n", plugin_name, should_melt);
 
     if (DBG_NAME(perf).isEnabled(DebugCategory::LDEBUG)) {
         string name = "";

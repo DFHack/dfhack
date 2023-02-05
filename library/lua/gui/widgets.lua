@@ -808,7 +808,7 @@ local function scrollbar_get_max_pos_and_height(scrollbar)
     local frame_body = scrollbar.frame_body
     local scrollbar_body_height = (frame_body and frame_body.height or 3) - 2
 
-    local height = math.max(1, math.floor(
+    local height = math.max(2, math.floor(
         (math.min(scrollbar.elems_per_page, scrollbar.num_elems) * scrollbar_body_height) /
         scrollbar.num_elems))
 

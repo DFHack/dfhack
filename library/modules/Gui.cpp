@@ -87,8 +87,8 @@ using namespace DFHack;
 
 const size_t MAX_REPORTS_SIZE = 3000; // DF clears old reports to maintain this vector size
 const int32_t RECENT_REPORT_TICKS = 500; // used by UNIT_COMBAT_REPORT_ALL_ACTIVE
-const int32_t ANNOUNCE_LINE_DURATION = 100; // time to display each line in announcement bar; 3.3 sec at 30 GFPS
-const int16_t ANNOUNCE_DISPLAY_TIME = 2000; // DF uses this value for most announcements; 66.6 sec at 30 GFPS
+const int32_t ANNOUNCE_LINE_DURATION = 100; // time to display each line in announcement bar; 2 sec at 50 GFPS
+const int16_t ANNOUNCE_DISPLAY_TIME = 2000; // DF uses this value for most announcements; 40 sec at 50 GFPS
 
 namespace DFHack
 {
@@ -1992,16 +1992,20 @@ void Gui::resetDwarfmodeView(bool pause)
     {
         plotinfo->follow_unit = -1;
         plotinfo->follow_item = -1;
-/* TODO: understand how this changes for v50
         plotinfo->main.mode = ui_sidebar_mode::Default;
-*/
     }
 
     if (selection_rect)
     {
         selection_rect->start_x = -30000;
+        selection_rect->start_y = -30000;
+        selection_rect->start_z = -30000;
         selection_rect->end_x = -30000;
+        selection_rect->end_y = -30000;
+        selection_rect->end_z = -30000;
     }
+    // NOTE: There's an unidentified global coord after selection_rect that is reset to -30000 here.
+    //   This coord goes into game->main_interface.keyboard_last_track_s if the x value is not -30000. Probably okay to ignore?
 
     if (cursor)
         cursor->x = cursor->y = cursor->z = -30000;

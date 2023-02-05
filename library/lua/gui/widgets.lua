@@ -855,18 +855,22 @@ local SCROLLBAR_UP_LEFT_PEN = to_pen{tile=922, ch=47, fg=COLOR_CYAN, bg=COLOR_BL
 local SCROLLBAR_UP_RIGHT_PEN = to_pen{tile=923, ch=92, fg=COLOR_CYAN, bg=COLOR_BLACK}
 local SCROLLBAR_DOWN_LEFT_PEN = to_pen{tile=946, ch=92, fg=COLOR_CYAN, bg=COLOR_BLACK}
 local SCROLLBAR_DOWN_RIGHT_PEN = to_pen{tile=947, ch=47, fg=COLOR_CYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_UP_LEFT_PEN = to_pen{tile=930, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_UP_RIGHT_PEN = to_pen{tile=931, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_LEFT_PEN = to_pen{tile=954, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_RIGHT_PEN = to_pen{tile=955, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_UP_LEFT_PEN = to_pen{tile=928, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_UP_RIGHT_PEN = to_pen{tile=929, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_LEFT_PEN = to_pen{tile=952, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_RIGHT_PEN = to_pen{tile=953, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
 local SCROLLBAR_BAR_CENTER_UP_LEFT_PEN = to_pen{tile=932, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
 local SCROLLBAR_BAR_CENTER_UP_RIGHT_PEN = to_pen{tile=933, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_CENTER_DOWN_LEFT_PEN = to_pen{tile=960, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_CENTER_DOWN_RIGHT_PEN = to_pen{tile=961, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_DOWN_LEFT_PEN = to_pen{tile=944, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_CENTER_DOWN_RIGHT_PEN = to_pen{tile=945, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
 local SCROLLBAR_BAR_CENTER_LEFT_PEN = to_pen{tile=940, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
 local SCROLLBAR_BAR_CENTER_RIGHT_PEN = to_pen{tile=941, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_DOWN_LEFT_PEN = to_pen{tile=966, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
-local SCROLLBAR_BAR_DOWN_RIGHT_PEN = to_pen{tile=967, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_DOWN_LEFT_PEN = to_pen{tile=964, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_DOWN_RIGHT_PEN = to_pen{tile=965, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_2TALL_UP_LEFT_PEN = to_pen{tile=948, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_2TALL_UP_RIGHT_PEN = to_pen{tile=949, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_2TALL_DOWN_LEFT_PEN = to_pen{tile=960, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_2TALL_DOWN_RIGHT_PEN = to_pen{tile=961, ch=219, fg=COLOR_CYAN, bg=COLOR_BLACK}
 local SCROLLBAR_UP_LEFT_HOVER_PEN = to_pen{tile=924, ch=47, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
 local SCROLLBAR_UP_RIGHT_HOVER_PEN = to_pen{tile=925, ch=92, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
 local SCROLLBAR_DOWN_LEFT_HOVER_PEN = to_pen{tile=936, ch=92, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
@@ -883,6 +887,10 @@ local SCROLLBAR_BAR_CENTER_LEFT_HOVER_PEN = to_pen{tile=942, ch=219, fg=COLOR_LI
 local SCROLLBAR_BAR_CENTER_RIGHT_HOVER_PEN = to_pen{tile=943, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
 local SCROLLBAR_BAR_DOWN_LEFT_HOVER_PEN = to_pen{tile=966, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
 local SCROLLBAR_BAR_DOWN_RIGHT_HOVER_PEN = to_pen{tile=967, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_2TALL_UP_LEFT_HOVER_PEN = to_pen{tile=950, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_2TALL_UP_RIGHT_HOVER_PEN = to_pen{tile=951, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_2TALL_DOWN_LEFT_HOVER_PEN = to_pen{tile=962, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
+local SCROLLBAR_BAR_2TALL_DOWN_RIGHT_HOVER_PEN = to_pen{tile=963, ch=219, fg=COLOR_LIGHTCYAN, bg=COLOR_BLACK}
 local SCROLLBAR_BAR_BG_LEFT_PEN = to_pen{tile=934, ch=176, fg=COLOR_DARKGREY, bg=COLOR_BLACK}
 local SCROLLBAR_BAR_BG_RIGHT_PEN = to_pen{tile=935, ch=176, fg=COLOR_DARKGREY, bg=COLOR_BLACK}
 
@@ -915,6 +923,12 @@ function Scrollbar:onRenderBody(dc)
             if y == starty and y <= midy - 1 then
                 dc:char(nil, hover_bar and SCROLLBAR_BAR_UP_LEFT_HOVER_PEN or SCROLLBAR_BAR_UP_LEFT_PEN)
                 dc:char(nil, hover_bar and SCROLLBAR_BAR_UP_RIGHT_HOVER_PEN or SCROLLBAR_BAR_UP_RIGHT_PEN)
+            elseif y == midy - 0.5 and self.bar_height == 2 then
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_2TALL_UP_LEFT_HOVER_PEN or SCROLLBAR_BAR_2TALL_UP_LEFT_PEN)
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_2TALL_UP_RIGHT_HOVER_PEN or SCROLLBAR_BAR_2TALL_UP_RIGHT_PEN)
+            elseif y == midy + 0.5 and self.bar_height == 2 then
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_2TALL_DOWN_LEFT_HOVER_PEN or SCROLLBAR_BAR_2TALL_DOWN_LEFT_PEN)
+                dc:char(nil, hover_bar and SCROLLBAR_BAR_2TALL_DOWN_RIGHT_HOVER_PEN or SCROLLBAR_BAR_2TALL_DOWN_RIGHT_PEN)
             elseif y == midy - 0.5 then
                 dc:char(nil, hover_bar and SCROLLBAR_BAR_CENTER_UP_LEFT_HOVER_PEN or SCROLLBAR_BAR_CENTER_UP_LEFT_PEN)
                 dc:char(nil, hover_bar and SCROLLBAR_BAR_CENTER_UP_RIGHT_HOVER_PEN or SCROLLBAR_BAR_CENTER_UP_RIGHT_PEN)

@@ -484,6 +484,12 @@ bool Gui::matchFocusString(std::string focusString, bool prefixMatch) {
     }) != currentFocusStrings.end();
 }
 
+static void push_dfhack_focus_string(dfhack_viewscreen *vs, std::vector<std::string> &focusStrings)
+{
+    auto name = vs->getFocusString();
+    focusStrings.push_back(name.empty() ? "dfhack" : "dfhack/" + name);
+}
+
 std::vector<std::string> Gui::getFocusStrings(df::viewscreen* top)
 {
     std::vector<std::string> focusStrings;
@@ -493,10 +499,21 @@ std::vector<std::string> Gui::getFocusStrings(df::viewscreen* top)
 
     if (dfhack_viewscreen::is_instance(top))
     {
-        auto name = static_cast<dfhack_viewscreen*>(top)->getFocusString();
-        focusStrings.push_back(name.empty() ? "dfhack" : "dfhack/" + name);
+        dfhack_viewscreen *vs = static_cast<dfhack_viewscreen*>(top);
+        if (vs->isFocused())
+        {
+            push_dfhack_focus_string(vs, focusStrings);
+            return focusStrings;
+        }
+        top = Gui::getDFViewscreen(top);
+        if (dfhack_viewscreen::is_instance(top))
+        {
+            push_dfhack_focus_string(static_cast<dfhack_viewscreen*>(top), focusStrings);
+            return focusStrings;
+        }
     }
-    else if (virtual_identity *id = virtual_identity::get(top))
+
+    if (virtual_identity *id = virtual_identity::get(top))
     {
         std::string name = getNameChunk(id, 11, 2);
 
@@ -504,7 +521,8 @@ std::vector<std::string> Gui::getFocusStrings(df::viewscreen* top)
         if (handler)
             handler(name, focusStrings, top);
     }
-    else
+
+    if (!focusStrings.size())
     {
         Core &core = Core::getInstance();
         std::string name = core.p->readClassName(*(void**)top);
@@ -1865,8 +1883,9 @@ df::viewscreen *Gui::getViewscreenByIdentity (virtual_identity &id, int n)
     return NULL;
 }
 
-df::viewscreen *Gui::getDFViewscreen(bool skip_dismissed) {
-    df::viewscreen *screen = Gui::getCurViewscreen(skip_dismissed);
+df::viewscreen *Gui::getDFViewscreen(bool skip_dismissed, df::viewscreen *screen) {
+    if (!screen)
+        screen = Gui::getCurViewscreen(skip_dismissed);
     while (screen && dfhack_viewscreen::is_instance(screen)) {
         screen = screen->parent;
         if (skip_dismissed)

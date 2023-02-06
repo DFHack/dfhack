@@ -958,26 +958,28 @@ Screens
     [1] = "dwarfmode/Info/CREATURES/CITIZEN"
     [2] = "dwardmode/Squads"
 
-* ``dfhack.gui.matchFocusString(focus_string)``
+* ``dfhack.gui.matchFocusString(focus_string[, viewscreen])``
 
   Returns ``true`` if the given ``focus_string`` is found in the current
   focus strings, or as a prefix to any of the focus strings, or ``false``
-  if no match is found. Matching is case insensitive.
+  if no match is found. Matching is case insensitive. If ``viewscreen`` is
+  specified, gets the focus strings to match from the given viewscreen.
 
 * ``dfhack.gui.getCurFocus([skip_dismissed])``
 
   Returns the focus string of the current viewscreen.
 
-* ``dfhack.gui.getViewscreenByType(type [, depth])``
+* ``dfhack.gui.getViewscreenByType(type[, depth])``
 
   Returns the topmost viewscreen out of the top ``depth`` viewscreens with
   the specified type (e.g. ``df.viewscreen_titlest``), or ``nil`` if none match.
   If ``depth`` is not specified or is less than 1, all viewscreens are checked.
 
-* ``dfhack.gui.getDFViewscreen([skip_dismissed])``
+* ``dfhack.gui.getDFViewscreen([skip_dismissed[, viewscreen]])``
 
   Returns the topmost viewscreen not owned by DFHack. If ``skip_dismissed`` is
-  ``true``, ignores screens already marked to be removed.
+  ``true``, ignores screens already marked to be removed. If ``viewscreen`` is
+  specified, starts the scan at the given viewscreen.
 
 General-purpose selections
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

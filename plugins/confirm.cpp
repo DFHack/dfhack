@@ -69,7 +69,6 @@ public:
     enum cstate { INACTIVE, ACTIVE, SELECTED };
     virtual string get_id() = 0;
     virtual string get_focus_string() = 0;
-    virtual bool match_prefix() = 0;
     virtual bool set_state(cstate) = 0;
 
     static bool set_state(string id, cstate state)
@@ -305,7 +304,7 @@ public:
         conf_wrapper *wrapper = confirmations[this->get_id()];
         if(wrapper->is_paused()) {
             std::string concernedFocus = this->get_focus_string();
-            if(!Gui::matchFocusString(this->get_focus_string(), this->match_prefix()))
+            if(!Gui::matchFocusString(this->get_focus_string()))
                 wrapper->set_paused(false);
             return false;
         } else if (state == INACTIVE)
@@ -469,7 +468,6 @@ public:
     }
     string get_id() override = 0;
     string get_focus_string() override = 0;
-    bool match_prefix() override = 0;
     #define CONF_LUA_START using namespace conf_lua; Lua::StackUnwinder unwind(l_state); push(screen); push(get_id());
     bool intercept_key (df::interface_key key)
     {
@@ -560,7 +558,6 @@ static int conf_register_##cls = conf_register(&cls##_instance, {\
     class confirmation_##cls : public confirmation<df::screen> { \
         virtual string get_id() { static string id = char_replace(#cls, '_', '-'); return id; } \
         virtual string get_focus_string() { return focusString; } \
-        virtual bool match_prefix() { return focusString[strlen(focusString) - 1] == '*'; } \
     }; \
     IMPLEMENT_CONFIRMATION_HOOKS(confirmation_##cls, 0);
 
@@ -585,7 +582,7 @@ DEFINE_CONFIRMATION(haul_delete_stop,     viewscreen_dwarfmodest, "dwarfmode/Hau
 DEFINE_CONFIRMATION(depot_remove,         viewscreen_dwarfmodest, "dwarfmode/ViewSheets/BUILDING");
 DEFINE_CONFIRMATION(squad_disband,        viewscreen_dwarfmodest, "dwarfmode/Squads");
 DEFINE_CONFIRMATION(order_remove,         viewscreen_dwarfmodest, "dwarfmode/Info/WORK_ORDERS");
-DEFINE_CONFIRMATION(zone_remove,          viewscreen_dwarfmodest, "dwarfmode/Zone*");
+DEFINE_CONFIRMATION(zone_remove,          viewscreen_dwarfmodest, "dwarfmode/Zone");
 DEFINE_CONFIRMATION(burrow_remove,        viewscreen_dwarfmodest, "dwarfmode/Burrow");
 DEFINE_CONFIRMATION(stockpile_remove,     viewscreen_dwarfmodest, "dwarfmode/Some/Stockpile");
 

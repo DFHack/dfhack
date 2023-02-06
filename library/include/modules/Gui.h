@@ -67,7 +67,7 @@ namespace DFHack
     namespace Gui
     {
         DFHACK_EXPORT std::vector<std::string> getFocusStrings(df::viewscreen *top);
-        DFHACK_EXPORT bool matchFocusString(std::string focusString, bool prefixMatch = true);
+        DFHACK_EXPORT bool matchFocusString(std::string focus_string, df::viewscreen *top = NULL);
 
 
         // Full-screen item details view
@@ -189,7 +189,7 @@ namespace DFHack
         DFHACK_EXPORT df::viewscreen *getViewscreenByIdentity(virtual_identity &id, int n = 1);
 
         /// Get the top-most underlying DF viewscreen (not owned by DFHack)
-        DFHACK_EXPORT df::viewscreen *getDFViewscreen(bool skip_dismissed = false);
+        DFHACK_EXPORT df::viewscreen *getDFViewscreen(bool skip_dismissed = false, df::viewscreen *top = NULL);
 
         /// Get the top-most viewscreen of the given type from the top `n` viewscreens (or all viewscreens if n < 1)
         /// returns NULL if none match

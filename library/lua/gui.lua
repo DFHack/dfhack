@@ -789,6 +789,7 @@ function ZScreen:onInput(keys)
         end
         if keys._MOUSE_R_DOWN then
             df.global.enabler.mouse_rbut_down = 0
+            df.global.enabler.mouse_rbut = 0
         end
         return
     end

@@ -17,8 +17,12 @@ end
 local function do_set_stockpile_config(var_name, val, stockpiles)
     for _,bspec in ipairs(argparse.stringList(stockpiles)) do
         local config = automelt_getStockpileConfig(bspec)
-        config[var_name] = val
-        automelt_setStockpileConfig(config.id, config.monitor, config.melt)
+        if not config then
+            dfhack.printerr('invalid stockpile: '..tostring(bspec))
+        else
+            config[var_name] = val
+            automelt_setStockpileConfig(config.id, config.monitor, config.melt)
+        end
     end
 end
 

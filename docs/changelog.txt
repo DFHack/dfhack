@@ -37,16 +37,24 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - ``Units::isFortControlled``: Account for agitated wildlife
+- Fix right click sometimes closing both a DFHack window and a vanilla panel
 
 ## Misc Improvements
 - `automelt`: is now more resistent to savegame corruption
 - `hotkeys`: DFHack logo is now hidden on screens where it covers important information when in the default position (e.g. when choosing an embark site)
+- `autodump`: reinstate ``autodump-destroy-item``, hotkey: Ctrl-K
+- `autodump`: new hotkey for ``autodump-destroy-here``: Ctrl-H
+- `dig`: new hotkeys for vein designation on z-level (Ctrl-V) and vein designation across z-levels (Ctrl-Shift-V)
+- `clean`: new hotkey for `spotclean`: Ctrl-C
+- `autobutcher`: changed defaults from 5 females / 1 male to 4 females / 2 males so a single unfortunate accident doesn't leave players without a mating pair
+- `autobutcher`: now immediately loads races available at game start into the watchlist
 
 ## Documentation
 
 ## API
 
 ## Lua
+- `overlay`: overlay widgets can now specify focus paths for the viewscreens they attach to so they only appear in specific contexts. see `overlay-dev-guide` for details.
 
 ## Removed
 

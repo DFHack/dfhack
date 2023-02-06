@@ -264,7 +264,7 @@ DFHACK_PLUGIN_LUA_COMMANDS {
 
 void show_options()
 {
-    cmds.push("gui/confirm-opts");
+    cmds.push("gui/confirm");
 }
 
 template <class T>

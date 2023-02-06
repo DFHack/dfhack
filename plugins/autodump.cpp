@@ -287,13 +287,11 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
         "Destroy items marked for dumping under the keyboard cursor.",
         df_autodump_destroy_here,
         Gui::cursor_hotkey));
-    /* you can no longer select items
     commands.push_back(PluginCommand(
         "autodump-destroy-item",
         "Destroy the selected item.",
         df_autodump_destroy_item,
         Gui::any_item_hotkey));
-        */
     return CR_OK;
 }
 
@@ -335,7 +333,6 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
         return CR_WRONG_USAGE;
     }
 
-    //DFHack::VersionInfo *mem = Core::getInstance().vinfo;
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");
@@ -461,9 +458,10 @@ static int last_frame = 0;
 
 command_result df_autodump_destroy_item(color_ostream &out, vector <string> & parameters)
 {
-    // HOTKEY COMMAND; CORE ALREADY SUSPENDED
     if (!parameters.empty())
         return CR_WRONG_USAGE;
+
+    CoreSuspender suspend;
 
     df::item *item = Gui::getSelectedItem(out);
     if (!item)

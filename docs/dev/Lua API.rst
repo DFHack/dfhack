@@ -4817,6 +4817,7 @@ cycle through by pressing a specified hotkey or clicking on the text.
 It has the following attributes:
 
 :key: The hotkey keycode to display, e.g. ``'CUSTOM_A'``.
+:key_back: Similar to ``key``, but will cycle backwards (optional)
 :label: The string (or a function that returns a string) to display after the
     hotkey.
 :label_width: The number of spaces to allocate to the ``label`` (for use in
@@ -4834,9 +4835,10 @@ the ``option_idx`` instance variable.
 
 The CycleHotkeyLabel widget implements the following methods:
 
-* ``cyclehotkeylabel:cycle()``
+* ``cyclehotkeylabel:cycle([backwards])``
 
     Cycles the selected option and triggers the ``on_change`` callback.
+    If ``backwards`` is defined and is truthy, the cycle direction will be reversed
 
 * ``cyclehotkeylabel:setOption(value_or_index, call_on_change)``
 

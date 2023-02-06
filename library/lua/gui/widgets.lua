@@ -1440,6 +1440,7 @@ CycleHotkeyLabel = defclass(CycleHotkeyLabel, Label)
 
 CycleHotkeyLabel.ATTRS{
     key=DEFAULT_NIL,
+    key_back=DEFAULT_NIL,
     label=DEFAULT_NIL,
     label_width=DEFAULT_NIL,
     options=DEFAULT_NIL,
@@ -1451,7 +1452,8 @@ function CycleHotkeyLabel:init()
     self:setOption(self.initial_option)
 
     self:setText{
-        {key=self.key, key_sep=': ', text=self.label, width=self.label_width,
+         {key=self.key_back, key_sep='', width=0, on_activate=self.key_back and self:callback('cycle', true)},
+        {key=self.key, key_sep=self.key_back and '' or ': ', text=self.label, width=self.key_back and 0 or self.label_width,
          on_activate=self:callback('cycle')},
         ' ',
         {text=self:callback('getOptionLabel'),
@@ -1459,12 +1461,14 @@ function CycleHotkeyLabel:init()
     }
 end
 
-function CycleHotkeyLabel:cycle()
+function CycleHotkeyLabel:cycle(backwards)
     local old_option_idx = self.option_idx
-    if self.option_idx == #self.options then
+    if self.option_idx == #self.options and not backwards then
         self.option_idx = 1
+    elseif self.option_idx == 1 and backwards then
+        self.option_idx = #self.options
     else
-        self.option_idx = self.option_idx + 1
+        self.option_idx = self.option_idx + (not backwards and 1 or -1)
     end
     if self.on_change then
         self.on_change(self:getOptionValue(),

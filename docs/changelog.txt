@@ -44,12 +44,15 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `autodump`: new hotkey for ``autodump-destroy-here``: Ctrl-H
 - `dig`: new hotkeys for vein designation on z-level (Ctrl-V) and vein designation across z-levels (Ctrl-Shift-V)
 - `clean`: new hotkey for `spotclean`: Ctrl-C
+- `autobutcher`: changed defaults from 5 females / 1 male to 4 females / 2 males so a single unfortunate accident doesn't leave players without a mating pair
+- `autobutcher`: now immediately loads races available at game start into the watchlist
 
 ## Documentation
 
 ## API
 
 ## Lua
+- `overlay`: overlay widgets can now specify focus paths for the viewscreens they attach to so they only appear in specific contexts. see `overlay-dev-guide` for details.
 
 ## Removed
 

@@ -974,10 +974,11 @@ Screens
   the specified type (e.g. ``df.viewscreen_titlest``), or ``nil`` if none match.
   If ``depth`` is not specified or is less than 1, all viewscreens are checked.
 
-* ``dfhack.gui.getDFViewscreen([skip_dismissed])``
+* ``dfhack.gui.getDFViewscreen([skip_dismissed[, viewscreen]])``
 
   Returns the topmost viewscreen not owned by DFHack. If ``skip_dismissed`` is
-  ``true``, ignores screens already marked to be removed.
+  ``true``, ignores screens already marked to be removed. If ``viewscreen`` is
+  specified, starts the scan at the given viewscreen.
 
 General-purpose selections
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

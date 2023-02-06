@@ -865,6 +865,9 @@ void dfhack_lua_viewscreen::update_focus(lua_State *L, int idx)
     lua_getfield(L, idx, "allow_options");
     allow_options = lua_toboolean(L, -1);
     lua_pop(L, 1);
+    lua_getfield(L, idx, "defocused");
+    defocused = lua_toboolean(L, -1);
+    lua_pop(L, 1);
 
     lua_getfield(L, idx, "focus_path");
     auto str = lua_tostring(L, -1);
@@ -1081,6 +1084,7 @@ using df::identity_traits;
 #define CUR_STRUCT dfhack_viewscreen
 static const struct_field_info dfhack_viewscreen_fields[] = {
     { METHOD(OBJ_METHOD, is_lua_screen), 0, 0 },
+    { METHOD(OBJ_METHOD, isFocused), 0, 0 },
     { METHOD(OBJ_METHOD, getFocusString), 0, 0 },
     { METHOD(OBJ_METHOD, onShow), 0, 0 },
     { METHOD(OBJ_METHOD, onDismiss), 0, 0 },

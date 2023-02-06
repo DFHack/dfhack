@@ -40,6 +40,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Misc Improvements
 - `automelt`: is now more resistent to savegame corruption
+- `autobutcher`: changed defaults from 5 females / 1 male to 4 females / 2 males so a single unfortunate accident doesn't leave players without a mating pair
+- `autobutcher`: now immediately loads races available at game start into the watchlist
 
 ## Documentation
 

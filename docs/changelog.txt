@@ -46,6 +46,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## API
 
 ## Lua
+- ``widgets.CycleHotkeyLabel``: Added ``key_back`` optional parameter to cycle backwards.
 
 ## Removed
 

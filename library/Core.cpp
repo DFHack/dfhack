@@ -2420,13 +2420,8 @@ bool Core::SelectHotkey(int sym, int modifiers)
                 continue;
             }
             if (!binding.focus.empty()) {
-                bool found = false;
-                std::vector<std::string> focusStrings = Gui::getCurFocus(true);
-                if(Gui::matchFocusString(binding.focus)) {
-                    found = true;
-                }
-
-                if (!found) {
+                if (!Gui::matchFocusString(binding.focus)) {
+                    std::vector<std::string> focusStrings = Gui::getCurFocus(true);
                     DEBUG(keybinding).print("skipping keybinding due to focus string mismatch: '%s' !~ '%s'\n",
                         join_strings(", ", focusStrings).c_str(), binding.focus.c_str());
                     continue;

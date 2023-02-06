@@ -109,7 +109,11 @@ The ``overlay.OverlayWidget`` superclass defines the following class attributes:
     ``dwarfmode`` and the adventure mode map viewscreen would be
     ``dungeonmode``. If there is only one viewscreen that this widget is
     associated with, it can be specified as a string instead of a list of
-    strings with a single element.
+    strings with a single element. If you only want your widget to appear in
+    certain contexts, you can specify a focus path, in the same syntax as the
+    `keybinding` command. For example, ``dwarfmode/Info/CREATURES/CITIZEN`` will
+    ensure the overlay widget is only displayed when the "Citizens" subtab under
+    the "Units" panel is active.
 - ``hotspot`` (default: ``false``)
     If set to ``true``, your widget's ``overlay_onupdate`` function will be
     called whenever the `overlay` plugin's ``plugin_onupdate()`` function is

@@ -38,6 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 - ``Units::isFortControlled``: Account for agitated wildlife
 - Fix right click sometimes closing both a DFHack window and a vanilla panel
+- Fixed issue with scrollable lists having some data off-screen if they were scrolled before being made visible
 
 ## Misc Improvements
 - `automelt`: is now more resistent to savegame corruption

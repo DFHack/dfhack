@@ -143,6 +143,8 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         DEBUG(status,out).print("%s from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
         set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
+        if (enable)
+            do_cycle(out, true);
     } else {
         DEBUG(status,out).print("%s from the API, but already %s; no action\n",
                                 is_enabled ? "enabled" : "disabled",

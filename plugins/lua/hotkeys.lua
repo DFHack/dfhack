@@ -14,7 +14,22 @@ HotspotMenuWidget.ATTRS{
     default_pos={x=2,y=2},
     default_enabled=true,
     hotspot=true,
-    viewscreens='all',
+    viewscreens={
+        -- 'choose_start_site', -- conflicts with vanilla panel layouts
+        'choose_game_type',
+        'dwarfmode',
+        'export_region',
+        'game_cleaner',
+        'initial_prep',
+        'legends',
+        'loadgame',
+        -- 'new_region', -- conflicts with vanilla panel layouts
+        'savegame',
+        'setupdwarfgame',
+        'title',
+        'update_region',
+        'world'
+    },
     overlay_onupdate_max_freq_seconds=0,
     frame={w=4, h=3}
 }

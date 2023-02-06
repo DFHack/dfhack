@@ -57,6 +57,7 @@ using namespace DFHack;
 #include "df/building_trapst.h"
 #include "df/building_type.h"
 #include "df/building_workshopst.h"
+#include "df/cri_unitst.h"
 #include "df/d_init.h"
 #include "df/game_mode.h"
 #include "df/general_ref.h"
@@ -459,7 +460,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     }
 
     if (!newFocusString.size()) {
-        focusStrings.push_back(baseFocus);
+        focusStrings.push_back(baseFocus + "/Default");
     }
 }
 
@@ -475,12 +476,14 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dungeonmode)
 }
 */
 
-bool Gui::matchFocusString(std::string focusString, bool prefixMatch) {
-    focusString = toLower(focusString);
-    std::vector<std::string> currentFocusStrings = getFocusStrings(getCurViewscreen(true));
+bool Gui::matchFocusString(std::string focus_string, df::viewscreen *top) {
+    focus_string = toLower(focus_string);
+    if (!top)
+        top = getCurViewscreen(true);
+    std::vector<std::string> currentFocusStrings = getFocusStrings(top);
 
-    return std::find_if(currentFocusStrings.begin(), currentFocusStrings.end(), [&focusString, &prefixMatch](std::string item) {
-        return prefixMatch ? prefix_matches(focusString, toLower(item)) : focusString == toLower(item);
+    return std::find_if(currentFocusStrings.begin(), currentFocusStrings.end(), [&focus_string](std::string item) {
+        return prefix_matches(focus_string, toLower(item));
     }) != currentFocusStrings.end();
 }
 
@@ -535,17 +538,7 @@ std::vector<std::string> Gui::getFocusStrings(df::viewscreen* top)
 
 bool Gui::default_hotkey(df::viewscreen *top)
 {
-    // Default hotkey guard function
-    for (;top ;top = top->parent)
-    {
-        if (strict_virtual_cast<df::viewscreen_dwarfmodest>(top))
-            return true;
-/* TODO: understand how this changes for v50
-        if (strict_virtual_cast<df::viewscreen_dungeonmodest>(top))
-            return true;
-*/
-    }
-    return false;
+    return World::isFortressMode() || World::isAdventureMode();
 }
 
 bool Gui::anywhere_hotkey(df::viewscreen *) {
@@ -553,24 +546,7 @@ bool Gui::anywhere_hotkey(df::viewscreen *) {
 }
 
 bool Gui::dwarfmode_hotkey(df::viewscreen *top) {
-    return World::isFortressMode();
-}
-
-bool Gui::unitjobs_hotkey(df::viewscreen *top)
-{
-/* TODO: understand how this changes for v50
-    // Require the unit or jobs list
-    return !!strict_virtual_cast<df::viewscreen_joblistst>(top) ||
-           !!strict_virtual_cast<df::viewscreen_unitlistst>(top);
-*/ return false;
-}
-
-bool Gui::item_details_hotkey(df::viewscreen *top)
-{
-/* TODO: understand how this changes for v50
-    // Require the main dwarf mode screen
-    return !!strict_virtual_cast<df::viewscreen_itemst>(top);
-*/ return false;
+    return matchFocusString("dwarfmode", top);
 }
 
 static bool has_cursor()
@@ -595,164 +571,82 @@ bool Gui::workshop_job_hotkey(df::viewscreen *top)
     if (!dwarfmode_hotkey(top))
         return false;
 
-/* TODO: understand how this changes for v50
-    using namespace ui_sidebar_mode;
-    using df::global::ui_workshop_in_add;
-    using df::global::ui_workshop_job_cursor;
-
-    switch (plotinfo->main.mode) {
-    case QueryBuilding:
-        {
-            if (!ui_workshop_job_cursor) // allow missing
-                return false;
-
-            df::building *selected = world->selected_building;
-            if (!virtual_cast<df::building_workshopst>(selected) &&
-                !virtual_cast<df::building_furnacest>(selected))
-                return false;
-
-            // No jobs?
-            if (selected->jobs.empty() ||
-                selected->jobs[0]->job_type == job_type::DestroyBuilding)
-                return false;
-
-            // Add job gui activated?
-            if (ui_workshop_in_add && *ui_workshop_in_add)
-                return false;
-
-            return true;
-        };
-    default:
+    df::building *selected = getAnyBuilding(top);
+    if (!virtual_cast<df::building_workshopst>(selected) &&
+            !virtual_cast<df::building_furnacest>(selected))
         return false;
-    }
-*/ return false;
+
+    if (selected->jobs.empty() ||
+            selected->jobs[0]->job_type == job_type::DestroyBuilding)
+        return false;
+
+    return true;
 }
 
 bool Gui::build_selector_hotkey(df::viewscreen *top)
 {
+    using df::global::buildreq;
+
     if (!dwarfmode_hotkey(top))
         return false;
 
-/* TODO: understand how this changes for v50
-    using namespace ui_sidebar_mode;
-    using df::global::ui_build_selector;
-
-    switch (plotinfo->main.mode) {
-    case Build:
-        {
-            if (!ui_build_selector) // allow missing
-                return false;
-
-            // Not selecting, or no choices?
-            if (ui_build_selector->building_type < 0 ||
-                ui_build_selector->stage != 2 ||
-                ui_build_selector->choices.empty())
-                return false;
-
-            return true;
-        };
-    default:
+    if (buildreq->building_type < 0 ||
+            buildreq->stage != 2 ||
+            buildreq->choices.empty())
         return false;
-    }
-*/ return false;
+
+    return true;
 }
 
 bool Gui::view_unit_hotkey(df::viewscreen *top)
 {
     if (!dwarfmode_hotkey(top))
         return false;
-/* TODO: understand how this changes for v50
-    using df::global::ui_selected_unit;
 
-    if (plotinfo->main.mode != ui_sidebar_mode::ViewUnits)
-        return false;
-    if (!ui_selected_unit) // allow missing
-        return false;
-
-    return vector_get(world->units.active, *ui_selected_unit) != NULL;
-*/ return false;
-}
-
-bool Gui::unit_inventory_hotkey(df::viewscreen *top)
-{
-    using df::global::ui_unit_view_mode;
-
-    if (!view_unit_hotkey(top))
-        return false;
-    if (!ui_unit_view_mode)
-        return false;
-
-    return ui_unit_view_mode->value == df::ui_unit_view_mode::Inventory;
-}
-
-df::job *Gui::getSelectedWorkshopJob(color_ostream &out, bool quiet)
-{
-    using df::global::ui_workshop_job_cursor;
-
-    if (!workshop_job_hotkey(Core::getTopViewscreen())) {
-        if (!quiet)
-            out.printerr("Not in a workshop, or no job is highlighted.\n");
-        return NULL;
-    }
-
-    df::building *selected = world->selected_building;
-    int idx = *ui_workshop_job_cursor;
-
-    if (size_t(idx) >= selected->jobs.size())
-    {
-        out.printerr("Invalid job cursor index: %d\n", idx);
-        return NULL;
-    }
-
-    return selected->jobs[idx];
+    return !!getAnyUnit(top);
 }
 
 bool Gui::any_job_hotkey(df::viewscreen *top)
 {
-/* TODO: understand how this changes for v50
-    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_joblistst, top))
-        return vector_get(screen->jobs, screen->cursor_pos) != NULL;
+    return matchFocusString("dwarfmode/Info/JOBS", top)
+            || matchFocusString("dwarfmode/Info/CREATURES/CITIZEN", top)
+            || workshop_job_hotkey(top);
+}
 
-    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_unitlistst, top))
-        return vector_get(screen->jobs[screen->page], screen->cursor_pos[screen->page]) != NULL;
+df::job *Gui::getSelectedWorkshopJob(color_ostream &out, bool quiet)
+{
+    auto bld = getSelectedBuilding(out, true);
+    if (!bld)
+        return NULL;
 
-    return workshop_job_hotkey(top);
-*/ return false;
+    // no way to select a specific job; just get the first one
+    return bld->jobs.size() ? bld->jobs[0] : NULL;
 }
 
 df::job *Gui::getSelectedJob(color_ostream &out, bool quiet)
 {
-/* TODO: understand how this changes for v50
-    df::viewscreen *top = Core::getTopViewscreen();
+    using df::global::game;
 
-    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_jobst, top))
-    {
-        return screen->job;
-    }
-    if (VIRTUAL_CAST_VAR(joblist, df::viewscreen_joblistst, top))
-    {
-        df::job *job = vector_get(joblist->jobs, joblist->cursor_pos);
-
-        if (!job && !quiet)
-            out.printerr("Selected unit has no job\n");
-
-        return job;
-    }
-    else if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, top))
-    {
-        int page = unitlist->page;
-        df::job *job = vector_get(unitlist->jobs[page], unitlist->cursor_pos[page]);
-
-        if (!job && !quiet)
-            out.printerr("Selected unit has no job\n");
-
-        return job;
-    }
-    else if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+    auto top = Core::getTopViewscreen();
+    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
         return dfscreen->getSelectedJob();
-    else
-        return getSelectedWorkshopJob(out, quiet);
-*/ return getSelectedWorkshopJob(out, quiet);
+
+    if (matchFocusString("dwarfmode/Info/JOBS")) {
+        auto &cri_job = game->main_interface.info.jobs.cri_job;
+        // no way to select specific jobs; just get the first one
+        return cri_job.size() ? cri_job[0]->jb : NULL;
+    }
+
+    if (auto unit = getAnyUnit(top)) {
+        df::job *job = unit->job.current_job;
+
+        if (!job && !quiet)
+            out.printerr("Selected unit has no job\n");
+
+        return job;
+    }
+
+    return getSelectedWorkshopJob(out, quiet);
 }
 
 df::unit *Gui::getAnyUnit(df::viewscreen *top)
@@ -767,7 +661,7 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
         return df::unit::find(game->main_interface.view_sheets.active_id);
 
 /* TODO: understand how this changes for v50
-    using namespace ui_sidebar_mode;
+   using namespace ui_sidebar_mode;
     using df::global::ui_look_cursor;
     using df::global::ui_look_list;
     using df::global::ui_selected_unit;

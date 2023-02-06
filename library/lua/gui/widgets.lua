@@ -1452,7 +1452,7 @@ function CycleHotkeyLabel:init()
     self:setOption(self.initial_option)
 
     self:setText{
-         {key=self.key_back, key_sep='', width=0, on_activate=self.key_back and self:callback('cycle', true)},
+        self.key_back ~= nil and {key=self.key_back, key_sep='', width=0, on_activate=self.key_back and self:callback('cycle', true)} or {},
         {key=self.key, key_sep=self.key_back and '' or ': ', text=self.label, width=self.key_back and 0 or self.label_width,
          on_activate=self:callback('cycle')},
         ' ',

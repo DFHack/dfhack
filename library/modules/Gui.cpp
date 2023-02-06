@@ -130,236 +130,337 @@ static std::string getNameChunk(virtual_identity *id, int start, int end)
  * Classifying focus context by means of a string path.
  */
 
-typedef void (*getFocusStringHandler)(std::string &str, df::viewscreen *screen);
-static std::map<virtual_identity*, getFocusStringHandler> getFocusStringHandlers;
+typedef void (*getFocusStringsHandler)(std::string &str, std::vector<std::string> &strList, df::viewscreen *screen);
+static std::map<virtual_identity*, getFocusStringsHandler> getFocusStringsHandlers;
 
 #define VIEWSCREEN(name) df::viewscreen_##name##st
 #define DEFINE_GET_FOCUS_STRING_HANDLER(screen_type) \
-    static void getFocusString_##screen_type(std::string &focus, VIEWSCREEN(screen_type) *screen);\
+    static void getFocusStrings_##screen_type(std::string &baseFocus, std::vector<std::string> &focusStrings, VIEWSCREEN(screen_type) *screen);\
     DFHACK_STATIC_ADD_TO_MAP(\
-        &getFocusStringHandlers, &VIEWSCREEN(screen_type)::_identity, \
-        (getFocusStringHandler)getFocusString_##screen_type \
+        &getFocusStringsHandlers, &VIEWSCREEN(screen_type)::_identity, \
+        (getFocusStringsHandler)getFocusStrings_##screen_type \
     ); \
-    static void getFocusString_##screen_type(std::string &focus, VIEWSCREEN(screen_type) *screen)
+    static void getFocusStrings_##screen_type(std::string &baseFocus, std::vector<std::string> &focusStrings, VIEWSCREEN(screen_type) *screen)
 
 DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
 {
-/* TODO: understand how this changes for v50
-    using namespace df::enums::ui_sidebar_mode;
+    std::string newFocusString;
 
-    using df::global::ui_workshop_in_add;
-    using df::global::ui_build_selector;
-    using df::global::ui_selected_unit;
-    using df::global::ui_look_list;
-    using df::global::ui_look_cursor;
-    using df::global::ui_building_item_cursor;
-    using df::global::ui_building_assign_type;
-    using df::global::ui_building_assign_is_marked;
-    using df::global::ui_building_assign_units;
-    using df::global::ui_building_assign_items;
-    using df::global::ui_building_in_assign;
+    if(game->main_interface.main_designation_selected != -1) {
+        newFocusString = baseFocus;
+        newFocusString += "/Designate/" + enum_item_key(game->main_interface.main_designation_selected);
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.info.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/Info";
+        newFocusString += "/" + enum_item_key(game->main_interface.info.current_mode);
 
-    focus += "/" + enum_item_key(plotinfo->main.mode);
+        switch(game->main_interface.info.current_mode) {
+        case df::enums::info_interface_mode_type::CREATURES:
+            newFocusString += "/" + enum_item_key(game->main_interface.info.creatures.current_mode);
+            break;
+        case df::enums::info_interface_mode_type::BUILDINGS:
+            newFocusString += "/" + enum_item_key(game->main_interface.info.buildings.mode);
+            break;
+        case df::enums::info_interface_mode_type::LABOR:
+            newFocusString += "/" + enum_item_key(game->main_interface.info.labor.mode);
+            break;
+        case df::enums::info_interface_mode_type::ARTIFACTS:
+            newFocusString += "/" + enum_item_key(game->main_interface.info.artifacts.mode);
+            break;
+        case df::enums::info_interface_mode_type::JUSTICE:
+            newFocusString += "/" + enum_item_key(game->main_interface.info.justice.current_mode);
+            break;
+        default:
+            break;
+        }
 
-    switch (plotinfo->main.mode)
-    {
-    case QueryBuilding:
-        if (df::building *selected = world->selected_building)
-        {
-            if (!selected->jobs.empty() &&
-                selected->jobs[0]->job_type == job_type::DestroyBuilding)
-            {
-                focus += "/Destroying";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.view_sheets.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/ViewSheets";
+        newFocusString += "/" + enum_item_key(game->main_interface.view_sheets.active_sheet);
+        focusStrings.push_back(newFocusString);
+    }
+
+    if(game->main_interface.bottom_mode_selected != -1) {
+        newFocusString = baseFocus;
+
+        switch(game->main_interface.bottom_mode_selected) {
+        case df::enums::main_bottom_mode_type::STOCKPILE:
+            if (game->main_interface.stockpile.cur_bld) {
+                newFocusString += "/Some";
+            }
+            newFocusString += "/Stockpile";
+            break;
+        case df::enums::main_bottom_mode_type::STOCKPILE_PAINT:
+            newFocusString += "/Stockpile/Paint";
+            break;
+        case df::enums::main_bottom_mode_type::HAULING:
+            newFocusString += "/Hauling";
+            break;
+        case df::enums::main_bottom_mode_type::ZONE:
+            newFocusString += "/Zone";
+            if (game->main_interface.civzone.cur_bld) {
+                newFocusString += "/Some";
+                newFocusString += "/" + enum_item_key(game->main_interface.civzone.cur_bld->type);
+            }
+            break;
+        case df::enums::main_bottom_mode_type::ZONE_PAINT:
+            newFocusString += "/Zone/Paint";
+
+            // TODO: figure out why enum_item_key doesn't work on this?
+            switch(game->main_interface.civzone.adding_new_type) {
+            case df::enums::civzone_type::MeetingHall:
+                newFocusString += "/MeetingHall";
+                break;
+            case df::enums::civzone_type::Bedroom:
+                newFocusString += "/Bedroom";
+                break;
+            case df::enums::civzone_type::DiningHall:
+                newFocusString += "/DiningHall";
+                break;
+            case df::enums::civzone_type::Pen:
+                newFocusString += "/Pen";
+                break;
+            case df::enums::civzone_type::Pond:
+                newFocusString += "/Pond";
+                break;
+            case df::enums::civzone_type::WaterSource:
+                newFocusString += "/WaterSource";
+                break;
+            case df::enums::civzone_type::Dungeon:
+                newFocusString += "/Dungeon";
+                break;
+            case df::enums::civzone_type::FishingArea:
+                newFocusString += "/FishingArea";
+                break;
+            case df::enums::civzone_type::SandCollection:
+                newFocusString += "/SandCollection";
+                break;
+            case df::enums::civzone_type::Office:
+                newFocusString += "/Office";
+                break;
+            case df::enums::civzone_type::Dormitory:
+                newFocusString += "/Dormitory";
+                break;
+            case df::enums::civzone_type::Barracks:
+                newFocusString += "/Barracks";
+                break;
+            case df::enums::civzone_type::ArcheryRange:
+                newFocusString += "/ArcheryRange";
+                break;
+            case df::enums::civzone_type::Dump:
+                newFocusString += "/Dump";
+                break;
+            case df::enums::civzone_type::AnimalTraining:
+                newFocusString += "/AnimalTraining";
+                break;
+            case df::enums::civzone_type::Tomb:
+                newFocusString += "/Tomb";
+                break;
+            case df::enums::civzone_type::PlantGathering:
+                newFocusString += "/PlantGathering";
+                break;
+            case df::enums::civzone_type::ClayCollection:
+                newFocusString += "/ClayCollection";
                 break;
             }
-
-            focus += "/Some";
-
-            virtual_identity *id = virtual_identity::get(selected);
-
-            bool jobs = false;
-
-            if (id == &df::building_workshopst::_identity ||
-                id == &df::building_furnacest::_identity)
-            {
-                focus += "/Workshop";
-                jobs = true;
-            }
-            else if (id == &df::building_trapst::_identity)
-            {
-                auto trap = (df::building_trapst*)selected;
-                focus += "/" + enum_item_key(trap->trap_type);
-                if (trap->trap_type == trap_type::Lever)
-                    jobs = true;
-            }
-            else if (ui_building_in_assign && *ui_building_in_assign &&
-                     ui_building_assign_type && ui_building_assign_units &&
-                     ui_building_assign_type->size() == ui_building_assign_units->size())
-            {
-                focus += "/Assign";
-                if (ui_building_item_cursor)
-                {
-                    auto unit = vector_get(*ui_building_assign_units, *ui_building_item_cursor);
-                    focus += unit ? "/Unit" : "/None";
-                }
-            }
-            else
-                focus += "/" + enum_item_key(selected->getType());
-
-            if (jobs)
-            {
-                if (ui_workshop_in_add && *ui_workshop_in_add)
-                    focus += "/AddJob";
-                else if (!selected->jobs.empty())
-                    focus += "/Job";
-                else
-                    focus += "/Empty";
-            }
+            break;
+        case df::enums::main_bottom_mode_type::BURROW:
+            newFocusString += "/Burrow";
+            break;
+        case df::enums::main_bottom_mode_type::BURROW_PAINT:
+            newFocusString += "/Burrow/Paint";
+            break;
+        case df::enums::main_bottom_mode_type::BUILDING:
+            newFocusString += "/Building";
+            break;
+        case df::enums::main_bottom_mode_type::BUILDING_PLACEMENT:
+            newFocusString += "/Building/Placement";
+            break;
+        case df::enums::main_bottom_mode_type::BUILDING_PICK_MATERIALS:
+            newFocusString += "/Building/PickMaterials";
+            break;
+        default:
+            break;
         }
-        else
-            focus += "/None";
-        break;
 
-    case Build:
-        if (ui_build_selector)
-        {
-            // Not selecting, or no choices?
-            if (ui_build_selector->building_type < 0)
-                focus += "/Type";
-            else if (ui_build_selector->stage != 2)
-            {
-                if (ui_build_selector->stage != 1)
-                    focus += "/NoMaterials";
-                else
-                    focus += "/Position";
-
-                focus += "/" + enum_item_key(ui_build_selector->building_type);
-            }
-            else
-            {
-                focus += "/Material";
-                if (ui_build_selector->is_grouped)
-                    focus += "/Groups";
-                else
-                    focus += "/Items";
-            }
-        }
-        break;
-
-    case ViewUnits:
-        if (ui_selected_unit)
-        {
-            if (vector_get(world->units.active, *ui_selected_unit))
-            {
-                focus += "/Some";
-
-                using df::global::ui_unit_view_mode;
-
-                if (ui_unit_view_mode)
-                    focus += "/" + enum_item_key(ui_unit_view_mode->value);
-            }
-            else
-                focus += "/None";
-        }
-        break;
-
-    case LookAround:
-        if (ui_look_list && ui_look_cursor)
-        {
-            auto item = vector_get(ui_look_list->items, *ui_look_cursor);
-            if (item)
-                focus += "/" + enum_item_key(item->type);
-            else
-                focus += "/None";
-        }
-        break;
-
-    case BuildingItems:
-        if (VIRTUAL_CAST_VAR(selected, df::building_actual, world->selected_building))
-        {
-            if (selected->contained_items.empty())
-                focus += "/Some/Empty";
-            else
-                focus += "/Some/Item";
-        }
-        else
-            focus += "/None";
-        break;
-
-    case ZonesPenInfo:
-        if (ui_building_assign_type && ui_building_assign_units &&
-            ui_building_assign_is_marked && ui_building_assign_items &&
-            ui_building_assign_type->size() == ui_building_assign_units->size())
-        {
-            focus += "/Assign";
-            if (ui_building_item_cursor)
-            {
-                if (vector_get(*ui_building_assign_units, *ui_building_item_cursor))
-                    focus += "/Unit";
-                else if (vector_get(*ui_building_assign_items, *ui_building_item_cursor))
-                    focus += "/Vermin";
-                else
-                    focus += "/None";
-            }
-        }
-        break;
-
-    case Burrows:
-        if (plotinfo->burrows.in_confirm_delete)
-            focus += "/ConfirmDelete";
-        else if (plotinfo->burrows.in_add_units_mode)
-            focus += "/AddUnits";
-        else if (plotinfo->burrows.in_edit_name_mode)
-            focus += "/EditName";
-        else if (plotinfo->burrows.in_define_mode)
-            focus += "/Define";
-        else
-            focus += "/List";
-        break;
-
-    case Hauling:
-        if (plotinfo->hauling.in_assign_vehicle)
-        {
-            auto vehicle = vector_get(plotinfo->hauling.vehicles, plotinfo->hauling.cursor_vehicle);
-            focus += "/AssignVehicle/" + std::string(vehicle ? "Some" : "None");
-        }
-        else
-        {
-            int idx = plotinfo->hauling.cursor_top;
-            auto route = vector_get(plotinfo->hauling.view_routes, idx);
-            auto stop = vector_get(plotinfo->hauling.view_stops, idx);
-            std::string tag = stop ? "Stop" : (route ? "Route" : "None");
-
-            if (plotinfo->hauling.in_name)
-                focus += "/Rename/" + tag;
-            else if (plotinfo->hauling.in_stop)
-            {
-                int sidx = plotinfo->hauling.cursor_stop;
-                auto cond = vector_get(plotinfo->hauling.stop_conditions, sidx);
-                auto link = vector_get(plotinfo->hauling.stop_links, sidx);
-
-                focus += "/DefineStop";
-
-                if (cond)
-                    focus += "/Cond/" + enum_item_key(cond->mode);
-                else if (link)
-                {
-                    focus += "/Link/";
-                    if (link->mode.bits.give) focus += "Give";
-                    if (link->mode.bits.take) focus += "Take";
-                }
-                else
-                    focus += "/None";
-            }
-            else
-                focus += "/Select/" + tag;
-        }
-        break;
-
-    default:
-        break;
+        focusStrings.push_back(newFocusString);
     }
-*/
+
+    if (game->main_interface.trade.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/Trade";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.job_details.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/JobDetails";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.assign_trade.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/AssignTrade";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.diplomacy.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/Diplomacy";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.petitions.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/Petitions";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.stocks.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/Stocks";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.assign_display_item.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/AssignDisplayItem";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.name_creator.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/NameCreator";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.image_creator.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/ImageCreator";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.unit_selector.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/UnitSelector";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.announcement_alert.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/AnnouncementAlert";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.custom_symbol.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/CustomSymbol";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.patrol_routes.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/PatrolRoutes";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.squad_schedule.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/SquadSchedule";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.squad_selector.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/SquadSelector";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.burrow_selector.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/BurrowSelector";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.location_selector.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/LocationSelector";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.location_details.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/LocationDetails";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.hauling_stop_conditions.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/HaulingStopConditions";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.assign_vehicle.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/AssignVehicle";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.stockpile_link.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/StockpileLink";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.stockpile_tools.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/StockpileTools";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.custom_stockpile.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/CustomStockpile";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.create_squad.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/CreateSquad";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.squad_supplies.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/SquadSupplies";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.assign_uniform.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/AssignUniform";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.create_work_order.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/CreateWorkOrder";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.hotkey.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/Hotkey";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.options.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/Options";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.help.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/Help";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.settings.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/Settings";
+        focusStrings.push_back(newFocusString);
+    }
+    if (game->main_interface.squad_equipment.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/SquadEquipment";
+        focusStrings.push_back(newFocusString);
+    }
+    // squads should be last because it's the only one not exclusive with the others? or something?
+    if (game->main_interface.squads.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/Squads";
+        focusStrings.push_back(newFocusString);
+    }
+
+    if (!newFocusString.size()) {
+        focusStrings.push_back(baseFocus);
+    }
 }
 
 /* TODO: understand how this changes for v50
@@ -372,237 +473,44 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dungeonmode)
 
     focus += "/" + enum_item_key(adventure->menu);
 }
-
-DEFINE_GET_FOCUS_STRING_HANDLER(unitlist)
-{
-    focus += "/" + enum_item_key(screen->page);
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(layer_military)
-{
-    auto list1 = getLayerList(screen, 0);
-    auto list2 = getLayerList(screen, 1);
-    auto list3 = getLayerList(screen, 2);
-    if (!list1 || !list2 || !list3) return;
-
-    focus += "/" + enum_item_key(screen->page);
-
-    int cur_list;
-    if (list1->active) cur_list = 0;
-    else if (list2->active) cur_list = 1;
-    else if (list3->active) cur_list = 2;
-    else return;
-
-    switch (screen->page)
-    {
-    case df::viewscreen_layer_militaryst::Positions:
-        {
-            static const char *lists[] = { "/Squads", "/Positions", "/Candidates" };
-            focus += lists[cur_list];
-            break;
-        }
-
-    case df::viewscreen_layer_militaryst::Equip:
-        {
-            focus += "/" + enum_item_key(screen->equip.mode);
-
-            switch (screen->equip.mode)
-            {
-            case df::viewscreen_layer_militaryst::T_equip::Customize:
-                {
-                    if (screen->equip.edit_mode < 0)
-                        focus += "/View";
-                    else
-                        focus += "/" + enum_item_key(screen->equip.edit_mode);
-                    break;
-                }
-            case df::viewscreen_layer_militaryst::T_equip::Uniform:
-                break;
-            case df::viewscreen_layer_militaryst::T_equip::Priority:
-                {
-                    if (screen->equip.prio_in_move >= 0)
-                        focus += "/Move";
-                    else
-                        focus += "/View";
-                    break;
-                }
-            }
-
-            static const char *lists[] = { "/Squads", "/Positions", "/Choices" };
-            focus += lists[cur_list];
-            break;
-        }
-
-    default:
-        break;
-    }
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(workshop_profile)
-{
-    typedef df::viewscreen_workshop_profilest::T_tab T_tab;
-    switch(screen->tab)
-    {
-    case T_tab::Workers:
-        focus += "/Unit";
-        break;
-    case T_tab::Orders:
-        focus += "/Orders";
-        break;
-    case T_tab::Restrictions:
-        focus += "/Restrictions";
-        break;
-    }
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(layer_noblelist)
-{
-    auto list1 = getLayerList(screen, 0);
-    auto list2 = getLayerList(screen, 1);
-    if (!list1 || !list2) return;
-
-    focus += "/" + enum_item_key(screen->mode);
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(pet)
-{
-    focus += "/" + enum_item_key(screen->mode);
-
-    switch (screen->mode)
-    {
-    case df::viewscreen_petst::List:
-        focus += vector_get(screen->is_vermin, screen->cursor) ? "/Vermin" : "/Unit";
-        break;
-
-    case df::viewscreen_petst::SelectTrainer:
-        if (vector_get(screen->trainer_unit, screen->trainer_cursor))
-            focus += "/Unit";
-        break;
-
-    default:
-        break;
-    }
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(layer_overall_health)
-{
-    auto list1 = getLayerList(screen, 0);
-    if (!list1) return;
-
-    focus += "/Units";
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(tradegoods)
-{
-    if (!screen->has_traders || screen->is_unloading)
-        focus += "/NoTraders";
-    else if (screen->in_edit_count)
-        focus += "/EditCount";
-    else
-        focus += (screen->in_right_pane ? "/Items/Broker" : "/Items/Trader");
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(layer_assigntrade)
-{
-    auto list1 = getLayerList(screen, 0);
-    auto list2 = getLayerList(screen, 1);
-    if (!list1 || !list2) return;
-
-    int list_idx = vector_get(screen->visible_lists, list1->cursor, (int16_t)-1);
-    unsigned num_lists = sizeof(screen->lists)/sizeof(screen->lists[0]);
-    if (unsigned(list_idx) >= num_lists)
-        return;
-
-    if (list1->active)
-        focus += "/Groups";
-    else
-        focus += "/Items";
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(stores)
-{
-    if (!screen->in_right_list)
-        focus += "/Categories";
-    else if (screen->in_group_mode)
-        focus += "/Groups";
-    else
-        focus += "/Items";
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(layer_stockpile)
-{
-    auto list1 = getLayerList(screen, 0);
-    auto list2 = getLayerList(screen, 1);
-    auto list3 = getLayerList(screen, 2);
-    if (!list1 || !list2 || !list3 || !screen->settings) return;
-
-    auto group = screen->cur_group;
-    if (group != vector_get(screen->group_ids, list1->cursor))
-        return;
-
-    focus += "/" + enum_item_key(group);
-
-    auto bits = vector_get(screen->group_bits, list1->cursor);
-    if (bits.whole && !(bits.whole & screen->settings->flags.whole))
-    {
-        focus += "/Off";
-        return;
-    }
-
-    focus += "/On";
-
-    if (list2->active || list3->active || screen->list_ids.empty()) {
-        focus += "/" + enum_item_key(screen->cur_list);
-
-        if (list3->active)
-            focus += (screen->item_names.empty() ? "/None" : "/Item");
-    }
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(locations)
-{
-    focus += "/" + enum_item_key(screen->menu);
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(jobmanagement)
-{
-    focus += (screen->in_max_workshops ? "/MaxWorkshops" : "/Main");
-}
-
-DEFINE_GET_FOCUS_STRING_HANDLER(workquota_condition)
-{
-    focus += "/" + enum_item_key(screen->mode);
-    if (screen->item_count_edit)
-        focus += "/EditCount";
-}
 */
 
-std::string Gui::getFocusString(df::viewscreen *top)
+bool Gui::matchFocusString(std::string focusString, bool prefixMatch) {
+    focusString = toLower(focusString);
+    std::vector<std::string> currentFocusStrings = getFocusStrings(getCurViewscreen(true));
+
+    return std::find_if(currentFocusStrings.begin(), currentFocusStrings.end(), [&focusString, &prefixMatch](std::string item) {
+        return prefixMatch ? prefix_matches(focusString, toLower(item)) : focusString == toLower(item);
+    }) != currentFocusStrings.end();
+}
+
+std::vector<std::string> Gui::getFocusStrings(df::viewscreen* top)
 {
+    std::vector<std::string> focusStrings;
+
     if (!top)
-        return "";
+        return focusStrings;
 
     if (dfhack_viewscreen::is_instance(top))
     {
         auto name = static_cast<dfhack_viewscreen*>(top)->getFocusString();
-        return name.empty() ? "dfhack" : "dfhack/"+name;
+        focusStrings.push_back(name.empty() ? "dfhack" : "dfhack/" + name);
     }
     else if (virtual_identity *id = virtual_identity::get(top))
     {
         std::string name = getNameChunk(id, 11, 2);
 
-        auto handler = map_find(getFocusStringHandlers, id);
+        auto handler = map_find(getFocusStringsHandlers, id);
         if (handler)
-            handler(name, top);
-
-        return name;
+            handler(name, focusStrings, top);
     }
     else
     {
         Core &core = Core::getInstance();
         std::string name = core.p->readClassName(*(void**)top);
-        return name.substr(11, name.size()-11-2);
+        focusStrings.push_back(name.substr(11, name.size()-11-2));
     }
+    return focusStrings;
 }
 
 // Predefined common guard functions
@@ -1267,6 +1175,28 @@ df::item *Gui::getSelectedItem(color_ostream &out, bool quiet)
         out.printerr("No item is selected in the UI.\n");
 
     return item;
+}
+
+bool Gui::any_stockpile_hotkey(df::viewscreen* top)
+{
+    return getAnyStockpile(top) != NULL;
+}
+
+df::building_stockpilest* Gui::getAnyStockpile(df::viewscreen* top) {
+    if (matchFocusString("dwarfmode/Some/Stockpile")) {
+        return game->main_interface.stockpile.cur_bld;
+    }
+
+    return NULL;
+}
+
+df::building_stockpilest* Gui::getSelectedStockpile(color_ostream& out, bool quiet) {
+    df::building_stockpilest* stockpile = getAnyStockpile(Core::getTopViewscreen());
+
+    if (!stockpile && !quiet)
+        out.printerr("No stockpile is selected in the UI.\n");
+
+    return stockpile;
 }
 
 df::building *Gui::getAnyBuilding(df::viewscreen *top)

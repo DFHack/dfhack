@@ -99,7 +99,7 @@ static const int32_t CYCLE_TICKS = 1200;
 static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
 
 static command_result do_command(color_ostream &out, vector<string> &parameters);
-static void do_cycle(color_ostream &out, int32_t *num_enabled_seeds, int32_t *num_disabled_seeds);
+static void do_cycle(color_ostream &out, int32_t *num_enabled_seeds = NULL, int32_t *num_disabled_seeds = NULL);
 static void seedwatch_setTarget(color_ostream &out, string name, int32_t num);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
@@ -149,7 +149,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
                                 is_enabled ? "enabled" : "disabled");
         set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
         if (enable)
-            seedwatch_setTarget(out, "all", DEFAULT_TARGET);
+            do_cycle(out);
     } else {
         DEBUG(config,out).print("%s from the API, but already %s; no action\n",
                                 is_enabled ? "enabled" : "disabled",
@@ -174,17 +174,6 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
             world_plant_ids[plant->id] = i;
     }
 
-    config = World::GetPersistentData(CONFIG_KEY);
-
-    if (!config.isValid()) {
-        DEBUG(config,out).print("no config found in this save; initializing\n");
-        config = World::AddPersistentData(CONFIG_KEY);
-        set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
-    }
-
-    is_enabled = get_config_bool(config, CONFIG_IS_ENABLED);
-    DEBUG(config,out).print("loading persisted enabled state: %s\n",
-                            is_enabled ? "true" : "false");
     watched_seeds.clear();
     vector<PersistentDataItem> seed_configs;
     World::GetPersistentData(&seed_configs, SEED_CONFIG_KEY_PREFIX, true);
@@ -194,6 +183,18 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
         watched_seeds.emplace(get_config_val(c, SEED_CONFIG_ID), c);
     }
 
+    config = World::GetPersistentData(CONFIG_KEY);
+
+    if (!config.isValid()) {
+        DEBUG(config,out).print("no config found in this save; initializing\n");
+        config = World::AddPersistentData(CONFIG_KEY);
+        set_config_bool(config, CONFIG_IS_ENABLED, is_enabled);
+        seedwatch_setTarget(out, "all", DEFAULT_TARGET);
+    }
+
+    is_enabled = get_config_bool(config, CONFIG_IS_ENABLED);
+    DEBUG(config,out).print("loading persisted enabled state: %s\n",
+                            is_enabled ? "true" : "false");
     return CR_OK;
 }
 

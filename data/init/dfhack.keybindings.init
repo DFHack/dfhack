@@ -25,9 +25,6 @@ keybinding add Ctrl-Shift-K gui/cp437-table
 # customizable quick command list
 keybinding add Ctrl-Shift-A gui/quickcmd
 
-# an in-game init file editor
-#keybinding add Alt-S@title|dwarfmode/Default|dungeonmode gui/settings-manager
-
 
 ######################
 # dwarfmode bindings #
@@ -36,25 +33,21 @@ keybinding add Ctrl-Shift-A gui/quickcmd
 # quicksave
 keybinding add Ctrl-Alt-S@dwarfmode quicksave
 
-# toggle the display of water level as 1-7 tiles
-#keybinding add Ctrl-W@dwarfmode|dungeonmode twaterlvl
-
 # designate the whole vein for digging
-#keybinding add Ctrl-V@dwarfmode digv
-#keybinding add Ctrl-Shift-V@dwarfmode "digv x"
+keybinding add Ctrl-V@dwarfmode digv
+keybinding add Ctrl-Shift-V@dwarfmode "digv x"
 
 # clean the selected tile of blood etc
-#keybinding add Ctrl-C spotclean
+keybinding add Ctrl-C spotclean
 
 # destroy the selected item
-#keybinding add Ctrl-K@dwarfmode autodump-destroy-item
+keybinding add Ctrl-K@dwarfmode autodump-destroy-item
 
 # destroy items designated for dump in the selected tile
-#keybinding add Ctrl-Shift-K@dwarfmode autodump-destroy-here
+keybinding add Ctrl-H@dwarfmode autodump-destroy-here
 
-# apply blueprints to the map (Alt-F for compatibility with LNP Quickfort)
+# apply blueprints to the map
 keybinding add Ctrl-Shift-Q@dwarfmode gui/quickfort
-#keybinding add Alt-F@dwarfmode gui/quickfort
 
 # show information collected by dwarfmonitor
 #keybinding add Alt-M@dwarfmode/Default "dwarfmonitor prefs"

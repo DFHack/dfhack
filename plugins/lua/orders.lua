@@ -9,11 +9,6 @@ local widgets = require('gui.widgets')
 -- OrdersOverlay
 --
 
-local function is_orders_panel_visible()
-    local info = df.global.game.main_interface.info
-    return info.open and info.current_mode == df.info_interface_mode_type.WORK_ORDERS
-end
-
 local function do_sort()
     dfhack.run_command('orders', 'sort')
 end
@@ -49,7 +44,7 @@ OrdersOverlay = defclass(OrdersOverlay, overlay.OverlayWidget)
 OrdersOverlay.ATTRS{
     default_pos={x=53,y=-6},
     default_enabled=true,
-    viewscreens='dwarfmode',
+    viewscreens='dwarfmode/Info/WORK_ORDERS',
     frame={w=30, h=4},
     frame_style=gui.MEDIUM_FRAME,
     frame_background=gui.CLEAR_PEN,
@@ -82,16 +77,6 @@ function OrdersOverlay:init()
             on_activate=do_clear,
         },
     }
-end
-
-function OrdersOverlay:render(dc)
-    if not is_orders_panel_visible() then return false end
-    OrdersOverlay.super.render(self, dc)
-end
-
-function OrdersOverlay:onInput(keys)
-    if not is_orders_panel_visible() then return false end
-    OrdersOverlay.super.onInput(self, keys)
 end
 
 OVERLAY_WIDGETS = {

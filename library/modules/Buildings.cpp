@@ -1589,45 +1589,31 @@ bool Buildings::isPenPasture(df::building * building)
     if (!isActivityZone(building))
         return false;
 
-/* TODO: understand how this changes for v50
-    return ((df::building_civzonest*) building)->zone_flags.bits.pen_pasture != 0;
-*/ return false;
+    return ((df::building_civzonest*)building)->type == civzone_type::Pen;
 }
 
 bool Buildings::isPitPond(df::building * building)
 {
     if (!isActivityZone(building))
         return false;
-/* TODO: understand how this changes for v50
-    return ((df::building_civzonest*) building)->zone_flags.bits.pit_pond != 0;
-*/ return false;
+
+    return ((df::building_civzonest*)building)->type == civzone_type::Pond;
 }
 
 bool Buildings::isActive(df::building * building)
 {
     if (!isActivityZone(building))
         return false;
-/* TODO: understand how this changes for v50
-    return ((df::building_civzonest*) building)->zone_flags.bits.active != 0;
-*/ return false;
+    // 8 is the value obtained by reverse engineering
+    return ((df::building_civzonest*)building)->is_active == 8;
 }
-
-bool Buildings::isHospital(df::building * building)
- {
-     if (!isActivityZone(building))
-         return false;
-/* TODO: understand how this changes for v50
-     return ((df::building_civzonest*) building)->zone_flags.bits.hospital != 0;
-*/ return false;
- }
 
  bool Buildings::isAnimalTraining(df::building * building)
  {
      if (!isActivityZone(building))
          return false;
-/* TODO: understand how this changes for v50
-     return ((df::building_civzonest*) building)->zone_flags.bits.animal_training != 0;
-*/ return false;
+
+     return ((df::building_civzonest*)building)->type == civzone_type::AnimalTraining;
  }
 
 // returns building of pen/pit at cursor position (NULL if nothing found)

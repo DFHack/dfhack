@@ -1866,6 +1866,7 @@ end
 FilteredList = defclass(FilteredList, Widget)
 
 FilteredList.ATTRS {
+    case_sensitive = true,
     edit_below = false,
     edit_key = DEFAULT_NIL,
     edit_ignore_keys = DEFAULT_NIL,
@@ -2026,11 +2027,17 @@ function FilteredList:setFilter(filter, pos)
                 -- start matches at non-space or non-punctuation. this allows
                 -- punctuation itself to be matched if that is useful (e.g.
                 -- filenames or parameter names)
-                if key ~= '' and
+                if key ~= '' then
+                    if self.case_sensitive and
                         not search_key:match('%f[^%p\x00]'..key) and
                         not search_key:match('%f[^%s\x00]'..key) then
-                    ok = false
-                    break
+                            ok = false
+                            break
+                    elseif not string.lower(search_key):match('%f[^%p\x00]'..string.lower(key)) and
+                        not string.lower(search_key):match('%f[^%s\x00]'..string.lower(key)) then
+                            ok = false
+                            break
+                    end
                 end
             end
             if ok then

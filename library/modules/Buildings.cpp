@@ -1608,15 +1608,6 @@ bool Buildings::isActive(df::building * building)
     return ((df::building_civzonest*)building)->is_active == 8;
 }
 
-bool Buildings::isHospital(df::building * building)
- {
-     if (!isActivityZone(building))
-         return false;
-/* TODO: understand how this changes for v50
-     return ((df::building_civzonest*) building)->zone_flags.bits.hospital != 0;
-*/ return false;
- }
-
  bool Buildings::isAnimalTraining(df::building * building)
  {
      if (!isActivityZone(building))

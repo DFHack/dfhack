@@ -1604,7 +1604,7 @@ bool Buildings::isActive(df::building * building)
 {
     if (!isActivityZone(building))
         return false;
-
+    // 8 is the value obtained by reverse engineering
     return ((df::building_civzonest*)building)->is_active == 8;
 }
 

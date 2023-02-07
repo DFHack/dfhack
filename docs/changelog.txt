@@ -49,6 +49,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `clean`: new hotkey for `spotclean`: Ctrl-C
 - `autobutcher`: changed defaults from 5 females / 1 male to 4 females / 2 males so a single unfortunate accident doesn't leave players without a mating pair
 - `autobutcher`: now immediately loads races available at game start into the watchlist
+- replaced DFHack logo used for the hover hotspot with a crisper image
 
 ## Documentation
 

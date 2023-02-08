@@ -64,8 +64,10 @@ function getItemCountsAndStockpileConfigs()
     ret.item_counts = table.remove(data, 1)
     ret.marked_item_counts = table.remove(data, 1)
     ret.premarked_item_counts = table.remove(data, 1)
-    ret.stockpile_configs = data
-    for _,c in ipairs(ret.stockpile_configs) do
+    local unparsed_stockpile_configs = table.remove(data, 1)
+    ret.stockpile_configs = {}
+
+    for idx,c in pairs(unparsed_stockpile_configs) do
         if not c.id or c.id == -1 then
             c.name = "ERROR"
             c.monitored = false
@@ -76,6 +78,7 @@ function getItemCountsAndStockpileConfigs()
             end
             c.monitored = c.monitored ~= 0
         end
+        table.insert(ret.stockpile_configs, c)
 
     end
     return ret

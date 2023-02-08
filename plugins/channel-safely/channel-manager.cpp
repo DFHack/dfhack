@@ -5,7 +5,17 @@
 #include <modules/EventManager.h> //hash function for df::coord
 #include <df/block_square_event_designation_priorityst.h>
 
+#define NUMARGS(...) std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value
+#define d_assert(condition, ...) \
+            static_assert(NUMARGS(__VA_ARGS__) >= 1, "d_assert(condition, format, ...) requires at least up to format as arguments"); \
+            if (!condition) {                                                   \
+                DFHack::Core::getInstance().getConsole().printerr(__VA_ARGS__); \
+                assert(0);                                                      \
+            }
+
+
 df::unit* find_dwarf(const df::coord &map_pos) {
+
     df::unit* nearest = nullptr;
     uint32_t distance;
     for (auto unit : df::global::world->units.active) {
@@ -57,6 +67,7 @@ void ChannelManager::manage_group(const Group &group, bool set_marker_mode, bool
     // cavein prevention
     bool cavein_possible = false;
     uint8_t least_access = 100;
+
     std::unordered_map<df::coord, uint8_t> cavein_candidates;
     if (!marker_mode) {
         /* To prevent cave-ins we're looking at accessibility of tiles with open space below them
@@ -111,7 +122,7 @@ void ChannelManager::manage_group(const Group &group, bool set_marker_mode, bool
         // if no cave-in is possible [or we don't check for], we'll just execute normally and move on
         if (!cavein_possible) {
             TRACE(manager).print("cave-in evaluated false\n");
-            assert(manage_one(pos, true, marker_mode));
+            d_assert(manage_one(pos, true, marker_mode), "manage_one() is failing under !cavein");
             continue;
         }
         // cavein is only possible if marker_mode is false
@@ -136,16 +147,16 @@ void ChannelManager::manage_group(const Group &group, bool set_marker_mode, bool
                     evT->priority[Coord(local)] = v;
                 }
             }
-            assert(manage_one(pos, true, false));
+            d_assert(manage_one(pos, true, false), "manage_one() is failing for cavein ");
             continue;
         }
         // cavein possible, but we failed to meet the criteria for activation
         if (cavein_candidates.count(pos)) {
-            DEBUG(manager).print("cave-in evaluated true and no dignow and (%d > %d)\n", cavein_candidates[pos], least_access+OFFSET);
+            DEBUG(manager).print("cave-in evaluated true and the cavein candidate's accessibility check was made as (%d <= %d)\n", cavein_candidates[pos], least_access+OFFSET);
         } else {
-            DEBUG(manager).print("cave-in evaluated true and no dignow and pos is not a candidate\n");
+            DEBUG(manager).print("cave-in evaluated true and the position was not a candidate, nor was it set for dignow\n");
         }
-        assert(manage_one(pos, true, true));
+        d_assert(manage_one(pos, true, true), "manage_one() is failing to set a cave-in causing designation to marker mode");
     }
     INFO(manager).print("manage_group() is done\n");
 }

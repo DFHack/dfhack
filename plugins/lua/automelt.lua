@@ -68,8 +68,6 @@ function getItemCountsAndStockpileConfigs()
     ret.stockpile_configs = {}
     
     for idx,c in pairs(unparsed_stockpile_configs) do
-        print(c.id)
-        print(c.monitored)
         if not c.id or c.id == -1 then
             c.name = "ERROR"
             c.monitored = false

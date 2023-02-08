@@ -567,9 +567,8 @@ static void push_stockpile_config(lua_State *L, PersistentDataItem &c) {
             get_config_bool(c, STOCKPILE_CONFIG_MONITORED));
 }
 
-static void emplace_bulk_stockpile_configs(lua_State *L, PersistentDataItem &c, map<int32_t, map<string, int32_t>> &stockpiles) {
-    int32_t id = get_config_val(c, STOCKPILE_CONFIG_ID);
-    bool monitored = get_config_bool(c, STOCKPILE_CONFIG_MONITORED);
+static void emplace_bulk_stockpile_config(lua_State *L, int id, bool monitored, map<int32_t, map<string, int32_t>> &stockpiles) {
+    
     map<string, int32_t> stockpile_config;
     stockpile_config.emplace("id", id);
     stockpile_config.emplace("monitored", monitored);
@@ -577,13 +576,10 @@ static void emplace_bulk_stockpile_configs(lua_State *L, PersistentDataItem &c, 
     stockpiles.emplace(id, stockpile_config);
 }
 
-static void emplace_bulk_stockpile_configs(lua_State *L, int id, bool monitored, map<int32_t, map<string, int32_t>> &stockpiles) {
-    
-    map<string, int32_t> stockpile_config;
-    stockpile_config.emplace("id", id);
-    stockpile_config.emplace("monitored", monitored);
-
-    stockpiles.emplace(id, stockpile_config);
+static void emplace_bulk_stockpile_config(lua_State *L, PersistentDataItem &c, map<int32_t, map<string, int32_t>> &stockpiles) {
+    int32_t id = get_config_val(c, STOCKPILE_CONFIG_ID);
+    bool monitored = get_config_bool(c, STOCKPILE_CONFIG_MONITORED);
+    emplace_bulk_stockpile_config(L, id, monitored, stockpiles);
 }
 
 static void automelt_designate(color_ostream &out) {
@@ -792,17 +788,15 @@ static int automelt_getItemCountsAndStockpileConfigs(lua_State *L) {
 
         int id = pile->id;
         if (watched_stockpiles.count(id)) {
-            DEBUG(cycle,*out).print("indexed_id=%d\n", get_config_val(watched_stockpiles[id], STOCKPILE_CONFIG_ID));
-            emplace_bulk_stockpile_configs(L, watched_stockpiles[id], stockpile_config_map);
+            emplace_bulk_stockpile_config(L, watched_stockpiles[id], stockpile_config_map);
 
         } else {
-            emplace_bulk_stockpile_configs(L, id, false, stockpile_config_map);
+            emplace_bulk_stockpile_config(L, id, false, stockpile_config_map);
         }
     }
 
     Lua::Push(L, stockpile_config_map);
 
-    DEBUG(cycle, *out).print("confmap_length: %d\n", stockpile_config_map.size());
 
     DEBUG(perf, *out).print("exit automelt_getItemCountsAndStockpileConfigs\n");
 

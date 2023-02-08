@@ -96,14 +96,17 @@ function getTreeCountsAndBurrowConfigs()
     ret.summary = table.remove(data, 1)
     ret.tree_counts = table.remove(data, 1)
     ret.designated_tree_counts = table.remove(data, 1)
-    ret.burrow_configs = data
-    for _,c in ipairs(ret.burrow_configs) do
+    local unparsed_burrow_configs = table.remove(data, 1)
+
+    ret.burrow_configs = {}
+    for idx,c in pairs(unparsed_burrow_configs) do
         c.name = df.burrow.find(c.id).name
         c.chop = c.chop ~= 0
         c.clearcut = c.clearcut ~= 0
         c.protect_brewable = c.protect_brewable ~= 0
         c.protect_edible = c.protect_edible ~= 0
         c.protect_cookable = c.protect_cookable ~= 0
+        table.insert(ret.burrow_configs, c)
     end
     return ret
 end

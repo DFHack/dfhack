@@ -478,7 +478,7 @@ static void OpenPersistent(lua_State *state)
 
 static int DFHACK_MATINFO_TOKEN = 0;
 
-void Lua::Push(lua_State *state, MaterialInfo &info)
+void Lua::Push(lua_State *state, const MaterialInfo &info)
 {
     if (!info.isValid())
     {

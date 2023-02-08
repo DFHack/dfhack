@@ -49,6 +49,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `clean`: new hotkey for `spotclean`: Ctrl-C
 - `autobutcher`: changed defaults from 5 females / 1 male to 4 females / 2 males so a single unfortunate accident doesn't leave players without a mating pair
 - `autobutcher`: now immediately loads races available at game start into the watchlist
+- replaced DFHack logo used for the hover hotspot with a crisper image
+- `orders`: recipe for silver crossbows removed from ``library/military`` as it is not a vanilla recipe, but is available in ``library/military_include_artifact_materials``
 
 ## Documentation
 
@@ -59,6 +61,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``widgets.CycleHotkeyLabel``: Added ``key_back`` optional parameter to cycle backwards.
 - ``widgets.HotkeyLabel``: Added ``setLabel`` method to allow easily updating the label text without mangling the keyboard shortcut.
 - ``widgets.HotkeyLabel``: Added ``setOnActivate`` method to allow easily updating the ``on_activate`` callback.
+- ``widgets.FilteredList``: Added ``case_sensitive`` optional paramter to determine if filtering is case sensitive.
 
 ## Removed
 

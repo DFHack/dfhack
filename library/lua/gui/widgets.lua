@@ -1652,7 +1652,9 @@ end
 
 function List:postComputeFrame(body)
     self.page_size = math.max(1, math.floor(body.height / self.row_height))
-    self.page_top = math.max(1, math.min(#self.choices - self.page_size + 1))
+    if #self.choices - self.page_size < 0 then
+        self.page_top = 1
+    end
     update_list_scrollbar(self)
 end
 
@@ -1880,6 +1882,7 @@ end
 FilteredList = defclass(FilteredList, Widget)
 
 FilteredList.ATTRS {
+    case_sensitive = true,
     edit_below = false,
     edit_key = DEFAULT_NIL,
     edit_ignore_keys = DEFAULT_NIL,
@@ -2040,11 +2043,17 @@ function FilteredList:setFilter(filter, pos)
                 -- start matches at non-space or non-punctuation. this allows
                 -- punctuation itself to be matched if that is useful (e.g.
                 -- filenames or parameter names)
-                if key ~= '' and
-                        not search_key:match('%f[^%p\x00]'..key) and
+                if key ~= '' then
+                    if not self.case_sensitive then
+                        search_key = string.lower(search_key)
+                        key = string.lower(key)
+                    end
+
+                    if not search_key:match('%f[^%p\x00]'..key) and
                         not search_key:match('%f[^%s\x00]'..key) then
-                    ok = false
-                    break
+                            ok = false
+                            break
+                    end
                 end
             end
             if ok then

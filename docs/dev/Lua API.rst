@@ -4968,6 +4968,7 @@ construction that allows filtering the list by subwords of its items.
 In addition to passing through all attributes supported by List, it
 supports:
 
+:case_sensitive: If true, matching is case sensitive. Defaults to true.
 :edit_pen: If specified, used instead of ``cursor_pen`` for the edit field.
 :edit_below: If true, the edit field is placed below the list instead of above.
 :edit_key: If specified, the edit field is disabled until this key is pressed.

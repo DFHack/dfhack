@@ -1419,6 +1419,20 @@ HotkeyLabel.ATTRS{
 }
 
 function HotkeyLabel:init()
+    self:initializeLabel()
+end
+
+function HotkeyLabel:setOnActivate(on_activate)
+    self.on_activate = on_activate
+    self:initializeLabel()
+end
+
+function HotkeyLabel:setLabel(label)
+    self.label = label
+    self:initializeLabel()
+end
+
+function HotkeyLabel:initializeLabel()
     self:setText{{key=self.key, key_sep=self.key_sep, text=self.label,
                   on_activate=self.on_activate}}
 end

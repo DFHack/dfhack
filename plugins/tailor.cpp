@@ -3,7 +3,6 @@
  */
 
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "df/creature_raw.h"
@@ -695,10 +694,10 @@ static void tailor_setMaterialPreferences(color_ostream &out, int32_t silkIdx,
 
     // it doesn't really matter if these are invalid. set_material_order will do
     // the right thing.
-    set_config_val(config, CONFIG_SILK_IDX, silkIdx);
-    set_config_val(config, CONFIG_CLOTH_IDX, clothIdx);
-    set_config_val(config, CONFIG_YARN_IDX, yarnIdx);
-    set_config_val(config, CONFIG_LEATHER_IDX, leatherIdx);
+    set_config_val(config, CONFIG_SILK_IDX, silkIdx - 1);
+    set_config_val(config, CONFIG_CLOTH_IDX, clothIdx - 1);
+    set_config_val(config, CONFIG_YARN_IDX, yarnIdx - 1);
+    set_config_val(config, CONFIG_LEATHER_IDX, leatherIdx - 1);
 
     set_material_order();
 }

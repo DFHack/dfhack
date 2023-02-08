@@ -15,7 +15,7 @@ local function process_args(opts, args)
 end
 
 function status()
-    print(('tailor is %s'):format(enabled and "enabled" or "disabled"))
+    print(('tailor is %s'):format(isEnabled() and "enabled" or "disabled"))
     print('materials preference order:')
     for _,name in ipairs(tailor_getMaterialPreferences()) do
         print(('  %s'):format(name))

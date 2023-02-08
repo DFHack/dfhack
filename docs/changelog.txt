@@ -50,6 +50,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `autobutcher`: changed defaults from 5 females / 1 male to 4 females / 2 males so a single unfortunate accident doesn't leave players without a mating pair
 - `autobutcher`: now immediately loads races available at game start into the watchlist
 - replaced DFHack logo used for the hover hotspot with a crisper image
+- `orders`: recipe for silver crossbows removed from ``library/military`` as it is not a vanilla recipe, but is available in ``library/military_include_artifact_materials``
 
 ## Documentation
 
@@ -58,6 +59,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Lua
 - `overlay`: overlay widgets can now specify focus paths for the viewscreens they attach to so they only appear in specific contexts. see `overlay-dev-guide` for details.
 - ``widgets.CycleHotkeyLabel``: Added ``key_back`` optional parameter to cycle backwards.
+- ``widgets.FilteredList``: Added ``case_sensitive`` optional paramter to determine if filtering is case sensitive.
 
 ## Removed
 

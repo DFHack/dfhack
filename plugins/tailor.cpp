@@ -564,14 +564,14 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out) {
 
 static void set_material_order() {
     material_order.clear();
-    for (int i = 0; i < all_materials.size(); ++i) {
-        if (i == get_config_val(config, CONFIG_SILK_IDX))
+    for (size_t i = 0; i < all_materials.size(); ++i) {
+        if (i == (size_t)get_config_val(config, CONFIG_SILK_IDX))
             material_order.push_back(M_SILK);
-        else if (i == get_config_val(config, CONFIG_CLOTH_IDX))
+        else if (i == (size_t)get_config_val(config, CONFIG_CLOTH_IDX))
             material_order.push_back(M_CLOTH);
-        else if (i == get_config_val(config, CONFIG_YARN_IDX))
+        else if (i == (size_t)get_config_val(config, CONFIG_YARN_IDX))
             material_order.push_back(M_YARN);
-        else if (i == get_config_val(config, CONFIG_LEATHER_IDX))
+        else if (i == (size_t)get_config_val(config, CONFIG_LEATHER_IDX))
             material_order.push_back(M_LEATHER);
     }
     if (!material_order.size())

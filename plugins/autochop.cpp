@@ -816,7 +816,6 @@ static void emplace_bulk_burrow_config(lua_State *L,  map<int32_t, map<string, i
     burrow_config.emplace("protect_cookable", protect_cookable);
 
     burrows.emplace(id, burrow_config);
-
 }
 
 static void emplace_bulk_burrow_config(lua_State *L, map<int32_t, map<string, int32_t>> &burrows, PersistentDataItem &c) {
@@ -826,8 +825,6 @@ static void emplace_bulk_burrow_config(lua_State *L, map<int32_t, map<string, in
             get_config_bool(c, BURROW_CONFIG_PROTECT_BREWABLE),
             get_config_bool(c, BURROW_CONFIG_PROTECT_EDIBLE),
             get_config_bool(c, BURROW_CONFIG_PROTECT_COOKABLE));
-
-
 }
 
 static int autochop_getTreeCountsAndBurrowConfigs(lua_State *L) {
@@ -864,7 +861,6 @@ static int autochop_getTreeCountsAndBurrowConfigs(lua_State *L) {
             // push_burrow_config(L, watched_burrows[watched_burrows_indices[id]]);
             emplace_bulk_burrow_config(L, burrow_config_map, watched_burrows[watched_burrows_indices[id]]);
         } else {
-            // push_burrow_config(L, id);
             emplace_bulk_burrow_config(L, burrow_config_map, id);
         }
     }

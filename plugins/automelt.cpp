@@ -568,7 +568,6 @@ static void push_stockpile_config(lua_State *L, PersistentDataItem &c) {
 }
 
 static void emplace_bulk_stockpile_config(lua_State *L, int id, bool monitored, map<int32_t, map<string, int32_t>> &stockpiles) {
-
     map<string, int32_t> stockpile_config;
     stockpile_config.emplace("id", id);
     stockpile_config.emplace("monitored", monitored);
@@ -750,8 +749,6 @@ static int automelt_getSelectedStockpileConfig(lua_State *L){
 
     return 1;
 }
-
-
 
 static int automelt_getItemCountsAndStockpileConfigs(lua_State *L) {
     color_ostream *out = Lua::GetOutput(L);

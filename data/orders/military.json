@@ -1620,12 +1620,6 @@
 				"item_type" : "WEAPON",
 				"material" : "INORGANIC:STEEL",
 				"value" : 10
-			},
-			{
-				"condition" : "LessThan",
-				"item_type" : "BAR",
-				"material" : "INORGANIC:SILVER",
-				"value" : 5
 			}
 		],
 		"item_subtype" : "ITEM_WEAPON_CROSSBOW",
@@ -2320,12 +2314,6 @@
 				"item_type" : "BAR",
 				"material" : "INORGANIC:STEEL",
 				"value" : 30
-			},
-			{
-				"condition" : "LessThan",
-				"item_type" : "BAR",
-				"material" : "INORGANIC:SILVER",
-				"value" : 5
 			},
 			{
 				"condition" : "AtMost",
@@ -3031,12 +3019,6 @@
 				"item_type" : "BAR",
 				"material" : "INORGANIC:STEEL",
 				"value" : 30
-			},
-			{
-				"condition" : "LessThan",
-				"item_type" : "BAR",
-				"material" : "INORGANIC:SILVER",
-				"value" : 5
 			},
 			{
 				"condition" : "AtMost",
@@ -3819,12 +3801,6 @@
 				"item_type" : "BAR",
 				"material" : "INORGANIC:STEEL",
 				"value" : 30
-			},
-			{
-				"condition" : "LessThan",
-				"item_type" : "BAR",
-				"material" : "INORGANIC:SILVER",
-				"value" : 5
 			},
 			{
 				"condition" : "AtMost",
@@ -4697,12 +4673,6 @@
 				"item_type" : "BAR",
 				"material" : "INORGANIC:STEEL",
 				"value" : 30
-			},
-			{
-				"condition" : "LessThan",
-				"item_type" : "BAR",
-				"material" : "INORGANIC:SILVER",
-				"value" : 5
 			},
 			{
 				"condition" : "AtMost",

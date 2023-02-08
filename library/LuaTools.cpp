@@ -101,7 +101,7 @@ void DFHack::Lua::Push(lua_State *state, const Units::NoblePosition &pos)
     lua_setfield(state, -2, "position");
 }
 
-void DFHack::Lua::Push(lua_State *state, df::coord pos)
+void DFHack::Lua::Push(lua_State *state, const df::coord &pos)
 {
     lua_createtable(state, 0, 3);
     lua_pushinteger(state, pos.x);
@@ -112,7 +112,7 @@ void DFHack::Lua::Push(lua_State *state, df::coord pos)
     lua_setfield(state, -2, "z");
 }
 
-void DFHack::Lua::Push(lua_State *state, df::coord2d pos)
+void DFHack::Lua::Push(lua_State *state, const df::coord2d &pos)
 {
     lua_createtable(state, 0, 2);
     lua_pushinteger(state, pos.x);
@@ -191,7 +191,7 @@ void DFHack::Lua::PushInterfaceKeys(lua_State *L,
     }
 }
 
-int DFHack::Lua::PushPosXYZ(lua_State *state, df::coord pos)
+int DFHack::Lua::PushPosXYZ(lua_State *state, const df::coord &pos)
 {
     if (!pos.isValid())
     {
@@ -207,7 +207,7 @@ int DFHack::Lua::PushPosXYZ(lua_State *state, df::coord pos)
     }
 }
 
-int DFHack::Lua::PushPosXY(lua_State *state, df::coord2d pos)
+int DFHack::Lua::PushPosXY(lua_State *state, const df::coord2d &pos)
 {
     if (!pos.isValid())
     {

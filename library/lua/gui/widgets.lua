@@ -1638,7 +1638,9 @@ end
 
 function List:postComputeFrame(body)
     self.page_size = math.max(1, math.floor(body.height / self.row_height))
-    self.page_top = math.max(1, math.min(#self.choices - self.page_size + 1))
+    if #self.choices - self.page_size < 0 then
+        self.page_top = 1
+    end
     update_list_scrollbar(self)
 end
 

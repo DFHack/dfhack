@@ -6,6 +6,7 @@
 #include "PluginManager.h"
 #include "TileTypes.h"
 #include "LuaTools.h"
+#include "Debug.h"
 
 #include "modules/Buildings.h"
 #include "modules/Gui.h"
@@ -26,9 +27,22 @@
 #include <df/world.h>
 #include <df/world_site.h>
 
+#include <cinttypes>
+
 DFHACK_PLUGIN("dig-now");
 REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(world);
+
+// Debugging
+namespace DFHack {
+    DBG_DECLARE(dignow, general, DebugCategory::LINFO);
+    DBG_DECLARE(dignow, channels, DebugCategory::LINFO);
+}
+
+#define COORD "%" PRIi16 " %" PRIi16 " %" PRIi16
+#define COORDARGS(id) id.x, id.y, id.z
+
+// todo: integrate logging for debugging the layered channel problem
 
 using namespace DFHack;
 
@@ -321,9 +335,18 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
     df::tiletype tt = map.tiletypeAt(pos);
 
     if (!is_diggable(map, pos, tt)) {
-        out.print("dig_tile: not diggable\n");
+        DEBUG(general).print("dig_tile: not diggable\n");
         return false;
     }
+
+    /** The algorithm process seems to be:
+     * for each tile
+     *  check for a designation
+     *    if a designation exists send it to dig_tile
+     *
+     * dig_tile (below) then digs the layer below the channel designated tile
+     * thereby changing it and causing its designation to be lost
+     * */
 
     df::tiletype target_type = df::tiletype::Void;
     switch(designation) {
@@ -344,6 +367,7 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
             // todo: does can_dig_channel return false?
             if (can_dig_channel(tt) && map.ensureBlockAt(pos_below)
                     && is_diggable(map, pos_below, map.tiletypeAt(pos_below))) {
+                TRACE(channels).print("dig_tile: channeling at (" COORD ")\n",COORDARGS(pos_below));
                 target_type = df::tiletype::OpenSpace;
                 DFCoord pos_above(pos.x, pos.y, pos.z+1);
                 if (map.ensureBlockAt(pos_above)) {
@@ -360,6 +384,8 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                     }
                     return true;
                 }
+            } else {
+                DEBUG(channels).print("dig_tile: failed to channel at (" COORD ")\n", COORDARGS(pos_below));
             }
             break;
         }
@@ -414,6 +440,7 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
         return false;
 
     dug_tiles.emplace_back(map, pos);
+    TRACE(general).print("dig_tile: digging the designation tile at (" COORD ")\n",COORDARGS(pos));
     dig_type(map, pos, target_type);
 
     // let light filter down to newly exposed tiles
@@ -613,6 +640,8 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
                     continue;
 
                 // todo: check if tile is in the job list with a dig type
+                // todo: if it is cancel the job. Then check if the designation is removed on the map
+                // todo: if the designation does disappear on the map, just rewrite things to queue the designation info that needs to be processed
 
                 DFCoord pos(x, y, z);
                 df::tile_designation td = map.designationAt(pos);

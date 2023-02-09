@@ -53,6 +53,84 @@ function get_num_filters(btype, subtype, custom)
     return 0
 end
 
+local gui = require('gui')
+local overlay = require('plugins.overlay')
+local widgets = require('gui.widgets')
+
+PlannerOverlay = defclass(PlannerOverlay, overlay.OverlayWidget)
+PlannerOverlay.ATTRS{
+    default_pos={x=46,y=18},
+    default_enabled=true,
+    viewscreens='dwarfmode/Building/Placement',
+    frame={w=30, h=4},
+    frame_style=gui.MEDIUM_FRAME,
+    frame_background=gui.CLEAR_PEN,
+}
+
+function PlannerOverlay:init()
+    self:addviews{
+        widgets.ToggleHotkeyLabel{
+            frame={t=0, l=0},
+            label='build when materials are available',
+            key='CUSTOM_CTRL_B',
+        },
+        widgets.HotkeyLabel{
+            frame={t=1, l=0},
+            label='configure materials',
+            key='CUSTOM_CTRL_E',
+            on_activate=do_export,
+        },
+    }
+end
+
+InspectorOverlay = defclass(InspectorOverlay, overlay.OverlayWidget)
+InspectorOverlay.ATTRS{
+    default_pos={x=-41,y=14},
+    default_enabled=true,
+    viewscreens='dwarfmode/ViewSheets/BUILDING',
+    frame={w=30, h=5},
+    frame_style=gui.MEDIUM_FRAME,
+    frame_background=gui.CLEAR_PEN,
+}
+
+function InspectorOverlay:init()
+    self:addviews{
+        widgets.Label{
+            frame={t=0, l=0},
+            text='Waiting for items:',
+        },
+        widgets.Label{
+            frame={t=1, l=0},
+            text='items',
+        },
+        widgets.HotkeyLabel{
+            frame={t=2, l=0},
+            label='make top priority',
+            key='CUSTOM_CTRL_T',
+        },
+    }
+end
+
+function InspectorOverlay:onInput(keys)
+    if not isPlannedBuilding(dfhack.gui.getSelectedBuilding()) then
+        return false
+    end
+    return InspectorOverlay.super.onInput(self, keys)
+end
+
+function InspectorOverlay:render(dc)
+    if not isPlannedBuilding(dfhack.gui.getSelectedBuilding()) then
+        return
+    end
+    InspectorOverlay.super.render(self, dc)
+end
+
+OVERLAY_WIDGETS = {
+    planner=PlannerOverlay,
+    inspector=InspectorOverlay,
+}
+
+
 local dialogs = require('gui.dialogs')
 local guidm = require('gui.dwarfmode')
 

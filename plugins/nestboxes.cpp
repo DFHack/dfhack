@@ -1,6 +1,8 @@
 #include "Debug.h"
 #include "PluginManager.h"
 
+#include "modules/Items.h"
+#include "modules/Job.h"
 #include "modules/Persistence.h"
 #include "modules/World.h"
 
@@ -141,6 +143,13 @@ static void do_cycle(color_ostream &out) {
             df::item *item = contained_item->item;
             if (item->flags.bits.forbid != fertile) {
                 item->flags.bits.forbid = fertile;
+                if (fertile && item->flags.bits.in_job) {
+                    // cancel any job involving the egg
+                    df::specific_ref *sref = Items::getSpecificRef(
+                            item, df::specific_ref_type::JOB);
+                    if (sref && sref->data.job)
+                        Job::removeJob(sref->data.job);
+                }
                 out.print("%d eggs %s.\n", item->getStackSize(), fertile ? "forbidden" : "unforbidden");
             }
         }

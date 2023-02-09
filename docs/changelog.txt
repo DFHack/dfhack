@@ -40,13 +40,13 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Fix right click sometimes closing both a DFHack window and a vanilla panel
 - Fixed issue with scrollable lists having some data off-screen if they were scrolled before being made visible
 - `channel-safely`: fixed bug resulting in marker mode never being set for any designation
-- `automelt`: fixed bug related to lua stack smashing behavior in returned stockpile configs
-- `autochop`: fixed bug related to lua stack smashing behavior in returned stockpile configs
+-@ `automelt`: fixed bug related to lua stack smashing behavior in returned stockpile configs
+-@ `autochop`: fixed bug related to lua stack smashing behavior in returned stockpile configs
 - `nestboxes`: now cancels any in-progress hauling jobs when it protects a fertile egg
 
 ## Misc Improvements
 - `automelt`: is now more resistent to savegame corruption
-- `hotkeys`: DFHack logo is now hidden on screens where it covers important information when in the default position (e.g. when choosing an embark site)
+-@ `hotkeys`: DFHack logo is now hidden on screens where it covers important information when in the default position (e.g. when choosing an embark site)
 - `misery`: now persists state with the fort
 - `autodump`: reinstate ``autodump-destroy-item``, hotkey: Ctrl-K
 - `autodump`: new hotkey for ``autodump-destroy-here``: Ctrl-H
@@ -54,7 +54,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `clean`: new hotkey for `spotclean`: Ctrl-C
 - `autobutcher`: changed defaults from 5 females / 1 male to 4 females / 2 males so a single unfortunate accident doesn't leave players without a mating pair
 - `autobutcher`: now immediately loads races available at game start into the watchlist
-- replaced DFHack logo used for the hover hotspot with a crisper image
+-@ replaced DFHack logo used for the hover hotspot with a crisper image
 - `orders`: recipe for silver crossbows removed from ``library/military`` as it is not a vanilla recipe, but is available in ``library/military_include_artifact_materials``
 
 ## Documentation
@@ -73,7 +73,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # 50.05-alpha3.1
 
 ## Fixes
-- `seedwatch`: fix parameter parsing when setting targets
+-@ `seedwatch`: fix parameter parsing when setting targets
 
 # 50.05-alpha3
 

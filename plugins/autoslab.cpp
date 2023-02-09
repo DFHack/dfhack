@@ -193,13 +193,6 @@ static void checkslabs(color_ostream &out)
             histToJob[order->hist_figure_id] = order->id;
     }
 
-    // Get list of engraved slab items on map
-    std::vector<df::item *> engravedSlabs;
-    std::copy_if(world->items.all.begin(), world->items.all.end(),
-                 std::back_inserter(engravedSlabs),
-                 [](df::item *item)
-                 { return item->getType() == df::item_type::SLAB && item->getSlabEngravingType() == df::slab_engraving_type::Memorial; });
-
     // Build list of ghosts
     std::vector<df::unit *> ghosts;
     std::copy_if(world->units.all.begin(), world->units.all.end(),
@@ -211,11 +204,10 @@ static void checkslabs(color_ostream &out)
     {
         // Only create a job is the map has no existing jobs for that historical figure or no existing engraved slabs
         if (histToJob.count(ghost->hist_figure_id) == 0 &&
-            !std::any_of(engravedSlabs.begin(),
-                        engravedSlabs.end(),
-                        [&ghost](df::item *slab){
-                            auto slabst = virtual_cast<df::item_slabst>(slab);
-                            return slabst->topic == ghost->hist_figure_id;
+            !std::any_of(world->items.other.SLAB.begin(),
+                        world->items.other.SLAB.end(),
+                        [&ghost,&out](df::item_slabst *slab){
+                            return slab->engraving_type == df::slab_engraving_type::Memorial && slab->topic == ghost->hist_figure_id;
                         })
             )
         {

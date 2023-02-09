@@ -13,6 +13,11 @@ local _ENV = mkmodule('plugins.buildingplan')
 --]]
 
 local argparse = require('argparse')
+local gui = require('gui')
+local guidm = require('gui.dwarfmode')
+local overlay = require('plugins.overlay')
+local utils = require('utils')
+local widgets = require('gui.widgets')
 require('dfhack.buildings')
 
 local function process_args(opts, args)
@@ -47,40 +52,276 @@ function parse_commandline(...)
 end
 
 function get_num_filters(btype, subtype, custom)
-    local filters = dfhack.buildings.getFiltersByType(
-        {}, btype, subtype, custom)
-    if filters then return #filters end
-    return 0
+    local filters = dfhack.buildings.getFiltersByType({}, btype, subtype, custom)
+    return filters and #filters or 0
 end
 
-local gui = require('gui')
-local overlay = require('plugins.overlay')
-local widgets = require('gui.widgets')
+--------------------------------
+-- Planner Overlay
+--
+
+local uibs = df.global.buildreq
+
+local function cur_building_has_no_area()
+    if uibs.building_type == df.building_type.Construction then return false end
+    local filters = dfhack.buildings.getFiltersByType({},
+            uibs.building_type, uibs.building_subtype, uibs.custom_type)
+    -- this works because all variable-size buildings have either no item
+    -- filters or a quantity of -1 for their first (and only) item
+    return filters and filters[1] and (not filters[1].quantity or filters[1].quantity > 0)
+end
+
+local function is_choosing_area()
+    return uibs.selection_pos.x >= 0
+end
+
+local function get_cur_area_dims()
+    if not is_choosing_area() then return 1, 1 end
+    return math.abs(uibs.selection_pos.x - uibs.pos.x) + 1,
+            math.abs(uibs.selection_pos.y - uibs.pos.y) + 1
+end
+
+local function get_cur_filters()
+    return dfhack.buildings.getFiltersByType({}, uibs.building_type,
+            uibs.building_subtype, uibs.custom_type)
+end
+
+local function is_plannable()
+    return get_cur_filters() and
+            not (uibs.building_type == df.building_type.Construction
+                 and uibs.building_subtype == df.construction_type.TrackNSEW)
+end
+
+local direction_panel_frame = {t=4, h=13, w=46, r=28}
+
+local direction_panel_types = utils.invert{
+    df.building_type.Bridge,
+    df.building_type.ScrewPump,
+    df.building_type.WaterWheel,
+    df.building_type.AxleHorizontal,
+    df.building_type.Rollers,
+}
+
+local function has_direction_panel()
+    return direction_panel_types[uibs.building_type]
+        or (uibs.building_type == df.building_type.Trap
+            and uibs.building_subtype == df.trap_type.TrackStop)
+end
+
+local function is_over_direction_panel()
+    if not has_direction_panel() then return false end
+    local v = widgets.Widget{frame=direction_panel_frame}
+    local rect = gui.mkdims_wh(0, 0, dfhack.screen.getWindowSize())
+    v:updateLayout(gui.ViewRect{rect=rect})
+    return v:getMousePos()
+end
+
+local function to_title_case(str)
+    str = str:gsub('(%a)([%w_]*)',
+        function (first, rest) return first:upper()..rest:lower() end)
+    str = str:gsub('_', ' ')
+    return str
+end
+
+-- returns a reasonable label for the item based on the qualities of the filter
+function get_item_label(idx)
+    local filter = get_cur_filters()[idx]
+    local desc = 'Unknown'
+    if filter.has_tool_use then
+        desc = to_title_case(df.tool_uses[filter.has_tool_use])
+    end
+    if filter.item_type then
+        desc = to_title_case(df.item_type[filter.item_type])
+    end
+    if filter.flags2 and filter.flags2.building_material then
+        desc = "Generic building material";
+        if filter.flags2.fire_safe then
+            desc = "Fire-safe building material";
+        end
+        if filter.flags2.magma_safe then
+            desc = "Magma-safe building material";
+        end
+    elseif filter.vector_id then
+        desc = to_title_case(df.job_item_vector_id[filter.vector_id])
+    end
+
+    local quantity = filter.quantity or 1
+    local dimx, dimy = get_cur_area_dims()
+    if quantity < 1 then
+        quantity = ((dimx * dimy) // 4) + 1
+    else
+        quantity = quantity * dimx * dimy
+    end
+    return ('%s (need: %d)'):format(desc, quantity)
+end
+
+ItemLine = defclass(ItemLine, widgets.Panel)
+ItemLine.ATTRS{
+    idx=DEFAULT_NIL,
+}
+
+function ItemLine:init()
+    self.frame.h = 1
+    self.visible = function() return #get_cur_filters() >= self.idx end
+    self:addviews{
+        widgets.Label{
+            frame={t=0, l=0},
+            text={{text=function() return get_item_label(self.idx) end}}
+        },
+    }
+end
 
 PlannerOverlay = defclass(PlannerOverlay, overlay.OverlayWidget)
 PlannerOverlay.ATTRS{
-    default_pos={x=46,y=18},
+    default_pos={x=6,y=9},
     default_enabled=true,
     viewscreens='dwarfmode/Building/Placement',
-    frame={w=30, h=4},
-    frame_style=gui.MEDIUM_FRAME,
+    frame={w=54, h=9},
+    frame_style=gui.PANEL_FRAME,
     frame_background=gui.CLEAR_PEN,
 }
 
 function PlannerOverlay:init()
     self:addviews{
-        widgets.ToggleHotkeyLabel{
-            frame={t=0, l=0},
-            label='build when materials are available',
-            key='CUSTOM_CTRL_B',
+        widgets.Label{
+            frame={},
+            auto_width=true,
+            text='No items required.',
+            visible=function() return #get_cur_filters() == 0 end,
         },
-        widgets.HotkeyLabel{
-            frame={t=1, l=0},
-            label='configure materials',
-            key='CUSTOM_CTRL_E',
-            on_activate=do_export,
+        ItemLine{frame={t=0, l=0}, idx=1},
+        ItemLine{frame={t=2, l=0}, idx=2},
+        ItemLine{frame={t=4, l=0}, idx=3},
+        ItemLine{frame={t=6, l=0}, idx=4},
+        widgets.Label{
+            frame={b=0, l=17},
+            text={
+                'Selected area: ',
+                {text=function()
+                     return ('%d x %d'):format(get_cur_area_dims())
+                 end
+                },
+            },
+            visible=is_choosing_area,
         },
     }
+end
+
+function PlannerOverlay:do_config()
+    dfhack.run_script('gui/buildingplan')
+end
+
+function PlannerOverlay:onInput(keys)
+    if not is_plannable() then return false end
+    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+        return false
+    end
+    if PlannerOverlay.super.onInput(self, keys) then
+        return true
+    end
+    if keys._MOUSE_L_DOWN then
+        if is_over_direction_panel() then return false end
+        if self:getMouseFramePos() then return true end
+        if #uibs.errors > 0 then return true end
+        local pos = dfhack.gui.getMousePos()
+        if pos then
+            if is_choosing_area() or cur_building_has_no_area() then
+                if #get_cur_filters() == 0 then
+                    return false -- we don't add value; let the game place it
+                end
+                self:place_building()
+                uibs.selection_pos:clear()
+                return true
+            elseif not is_choosing_area() then
+                return false
+            end
+       end
+   end
+   return keys._MOUSE_L
+end
+
+function PlannerOverlay:render(dc)
+    if not is_plannable() then return end
+    PlannerOverlay.super.render(self, dc)
+end
+
+local to_pen = dfhack.pen.parse
+local GOOD_PEN = to_pen{ch='o', fg=COLOR_GREEN,
+                        tile=dfhack.screen.findGraphicsTile('CURSORS', 1, 2)}
+local BAD_PEN = to_pen{ch='X', fg=COLOR_RED,
+                       tile=dfhack.screen.findGraphicsTile('CURSORS', 3, 0)}
+
+function PlannerOverlay:onRenderFrame(dc, rect)
+    PlannerOverlay.super.onRenderFrame(self, dc, rect)
+
+    if not is_choosing_area() then return end
+
+    local bounds = {
+        x1 = math.min(uibs.selection_pos.x, uibs.pos.x),
+        x2 = math.max(uibs.selection_pos.x, uibs.pos.x),
+        y1 = math.min(uibs.selection_pos.y, uibs.pos.y),
+        y2 = math.max(uibs.selection_pos.y, uibs.pos.y),
+    }
+
+    local pen = #uibs.errors > 0 and BAD_PEN or GOOD_PEN
+
+    local function get_overlay_pen(pos)
+        return pen
+    end
+
+    guidm.renderMapOverlay(get_overlay_pen, bounds)
+end
+
+function PlannerOverlay:place_building()
+    local direction = uibs.direction
+    local has_selection = is_choosing_area()
+    local width = has_selection and math.abs(uibs.selection_pos.x - uibs.pos.x) + 1 or 1
+    local height = has_selection and math.abs(uibs.selection_pos.y - uibs.pos.y) + 1 or 1
+    local _, adjusted_width, adjusted_height = dfhack.buildings.getCorrectSize(
+            width, height, uibs.building_type, uibs.building_subtype,
+            uibs.custom_type, direction)
+    -- get the upper-left corner of the building/area
+    local pos = xyz2pos(
+        has_selection and math.min(uibs.selection_pos.x, uibs.pos.x) or uibs.pos.x - adjusted_width//2,
+        has_selection and math.min(uibs.selection_pos.y, uibs.pos.y) or uibs.pos.y - adjusted_height//2,
+        uibs.pos.z
+    )
+    local min_x, max_x = pos.x, pos.x
+    local min_y, max_y = pos.y, pos.y
+    if adjusted_width == 1 and adjusted_height == 1 and (width > 1 or height > 1) then
+        min_x = math.ceil(pos.x - width/2)
+        max_x = min_x + width - 1
+        min_y = math.ceil(pos.y - height/2)
+        max_y = min_y + height - 1
+    end
+    local blds = {}
+    for y=min_y,max_y do for x=min_x,max_x do
+        local bld, err = dfhack.buildings.constructBuilding{
+            type=uibs.building_type, subtype=uibs.building_subtype,
+            custom=uibs.custom_type, pos=xyz2pos(x, y, pos.z),
+            width=adjusted_width, height=adjusted_height, direction=direction}
+        if err then
+            for _,b in ipairs(blds) do
+                dfhack.buildings.deconstruct(b)
+            end
+            dfhack.printerr(err)
+            return
+        end
+        -- assign fields for the types that need them. we can't pass them all in
+        -- to the call to constructBuilding since attempting to assign unrelated
+        -- fields to building types that don't support them causes errors.
+        for k,v in pairs(bld) do
+            if k == 'friction' then bld.friction = uibs.friction end
+            if k == 'use_dump' then bld.use_dump = uibs.use_dump end
+            if k == 'dump_x_shift' then bld.dump_x_shift = uibs.dump_x_shift end
+            if k == 'dump_y_shift' then bld.dump_y_shift = uibs.dump_y_shift end
+            if k == 'speed' then bld.speed = uibs.speed end
+        end
+        table.insert(blds, bld)
+    end end
+    for _,bld in ipairs(blds) do
+        addPlannedBuilding(bld)
+    end
 end
 
 InspectorOverlay = defclass(InspectorOverlay, overlay.OverlayWidget)
@@ -134,48 +375,6 @@ OVERLAY_WIDGETS = {
 local dialogs = require('gui.dialogs')
 local guidm = require('gui.dwarfmode')
 
-local function to_title_case(str)
-    str = str:gsub('(%a)([%w_]*)',
-        function (first, rest) return first:upper()..rest:lower() end)
-    str = str:gsub('_', ' ')
-    return str
-end
-
-local function get_filter(btype, subtype, custom, reverse_idx)
-    local filters = dfhack.buildings.getFiltersByType(
-        {}, btype, subtype, custom)
-    if not filters or reverse_idx < 0 or reverse_idx >= #filters then
-        error(string.format('invalid index: %d', reverse_idx))
-    end
-    return filters[#filters-reverse_idx]
-end
-
--- returns a reasonable label for the item based on the qualities of the filter
--- does not need the core suspended
--- reverse_idx is 0-based and is expected to be counted from the *last* filter
-function get_item_label(btype, subtype, custom, reverse_idx)
-    local filter = get_filter(btype, subtype, custom, reverse_idx)
-    if filter.has_tool_use then
-        return to_title_case(df.tool_uses[filter.has_tool_use])
-    end
-    if filter.item_type then
-        return to_title_case(df.item_type[filter.item_type])
-    end
-    if filter.flags2 and filter.flags2.building_material then
-        if filter.flags2.fire_safe then
-            return "Fire-safe building material";
-        end
-        if filter.flags2.magma_safe then
-            return "Magma-safe building material";
-        end
-        return "Generic building material";
-    end
-    if filter.vector_id then
-        return to_title_case(df.job_item_vector_id[filter.vector_id])
-    end
-    return "Unknown";
-end
-
 -- returns whether the items matched by the specified filter can have a quality
 -- rating. This also conveniently indicates whether an item can be decorated.
 -- does not need the core suspended
@@ -191,56 +390,6 @@ function item_can_be_improved(btype, subtype, custom, reverse_idx)
             filter.item_type ~= df.item_type.BOULDER
 end
 
--- needs the core suspended
--- returns a vector of constructed buildings (usually of size 1, but potentially
--- more for constructions)
-function construct_buildings_from_ui_state()
-    local uibs = df.global.buildreq
-    local world = df.global.world
-    local direction = world.selected_direction
-    local _, width, height = dfhack.buildings.getCorrectSize(
-        world.building_width, world.building_height, uibs.building_type,
-        uibs.building_subtype, uibs.custom_type, direction)
-    -- the cursor is at the center of the building; we need the upper-left
-    -- corner of the building
-    local pos = guidm.getCursorPos()
-    pos.x = pos.x - math.floor(width/2)
-    pos.y = pos.y - math.floor(height/2)
-    local min_x, max_x = pos.x, pos.x
-    local min_y, max_y = pos.y, pos.y
-    if width == 1 and height == 1 and
-            (world.building_width > 1 or world.building_height > 1) then
-        min_x = math.ceil(pos.x - world.building_width/2)
-        max_x = min_x + world.building_width - 1
-        min_y = math.ceil(pos.y - world.building_height/2)
-        max_y = min_y + world.building_height - 1
-    end
-    local blds = {}
-    for y=min_y,max_y do for x=min_x,max_x do
-        local bld, err = dfhack.buildings.constructBuilding{
-            type=uibs.building_type, subtype=uibs.building_subtype,
-            custom=uibs.custom_type, pos=xyz2pos(x, y, pos.z),
-            width=width, height=height, direction=direction}
-        if err then
-            for _,b in ipairs(blds) do
-                dfhack.buildings.deconstruct(b)
-            end
-            error(err)
-        end
-        -- assign fields for the types that need them. we can't pass them all in
-        -- to the call to constructBuilding since attempting to assign unrelated
-        -- fields to building types that don't support them causes errors.
-        for k,v in pairs(bld) do
-            if k == 'friction' then bld.friction = uibs.friction end
-            if k == 'use_dump' then bld.use_dump = uibs.use_dump end
-            if k == 'dump_x_shift' then bld.dump_x_shift = uibs.dump_x_shift end
-            if k == 'dump_y_shift' then bld.dump_y_shift = uibs.dump_y_shift end
-            if k == 'speed' then bld.speed = uibs.speed end
-        end
-        table.insert(blds, bld)
-    end end
-    return blds
-end
 
 --
 -- GlobalSettings dialog

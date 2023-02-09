@@ -42,6 +42,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `channel-safely`: fixed bug resulting in marker mode never being set for any designation
 -@ `automelt`: fixed bug related to lua stack smashing behavior in returned stockpile configs
 -@ `autochop`: fixed bug related to lua stack smashing behavior in returned stockpile configs
+- `nestboxes`: now cancels any in-progress hauling jobs when it protects a fertile egg
 
 ## Misc Improvements
 - `automelt`: is now more resistent to savegame corruption

@@ -206,7 +206,7 @@ static void checkslabs(color_ostream &out)
         if (histToJob.count(ghost->hist_figure_id) == 0 &&
             !std::any_of(world->items.other.SLAB.begin(),
                         world->items.other.SLAB.end(),
-                        [&ghost,&out](df::item_slabst *slab){
+                        [&ghost](df::item_slabst *slab){
                             return slab->engraving_type == df::slab_engraving_type::Memorial && slab->topic == ghost->hist_figure_id;
                         })
             )

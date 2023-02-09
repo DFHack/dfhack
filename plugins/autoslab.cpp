@@ -213,7 +213,7 @@ static void checkslabs(color_ostream &out)
         if (histToJob.count(ghost->hist_figure_id) == 0 &&
             !std::any_of(engravedSlabs.begin(),
                         engravedSlabs.end(),
-                        [&ghost](const auto &slab){
+                        [&ghost](df::item *slab){
                             auto slabst = virtual_cast<df::item_slabst>(slab);
                             return slabst->topic == ghost->hist_figure_id;
                         })
@@ -222,6 +222,10 @@ static void checkslabs(color_ostream &out)
             createSlabJob(ghost);
             auto fullName = get_first_name(ghost) + " " + get_last_name(ghost);
             out.print("Added slab order for ghost %s\n", fullName.c_str());
+        }
+        else {
+            auto fullName = get_first_name(ghost) + " " + get_last_name(ghost);
+            out.print("%s doesn't need slab\n", fullName.c_str());
         }
     }
 }

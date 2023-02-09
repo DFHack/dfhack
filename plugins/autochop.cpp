@@ -803,6 +803,30 @@ static void push_burrow_config(lua_State *L, PersistentDataItem &c) {
             get_config_bool(c, BURROW_CONFIG_PROTECT_COOKABLE));
 }
 
+static void emplace_bulk_burrow_config(lua_State *L,  map<int32_t, map<string, int32_t>> &burrows, int id, bool chop = false,
+        bool clearcut = false, bool protect_brewable = false,
+        bool protect_edible = false, bool protect_cookable = false) {
+
+    map<string, int32_t> burrow_config;
+    burrow_config.emplace("id", id);
+    burrow_config.emplace("chop", chop);
+    burrow_config.emplace("clearcut", clearcut);
+    burrow_config.emplace("protect_brewable", protect_brewable);
+    burrow_config.emplace("protect_edible", protect_edible);
+    burrow_config.emplace("protect_cookable", protect_cookable);
+
+    burrows.emplace(id, burrow_config);
+}
+
+static void emplace_bulk_burrow_config(lua_State *L, map<int32_t, map<string, int32_t>> &burrows, PersistentDataItem &c) {
+    emplace_bulk_burrow_config(L, burrows, get_config_val(c, BURROW_CONFIG_ID),
+            get_config_bool(c, BURROW_CONFIG_CHOP),
+            get_config_bool(c, BURROW_CONFIG_CLEARCUT),
+            get_config_bool(c, BURROW_CONFIG_PROTECT_BREWABLE),
+            get_config_bool(c, BURROW_CONFIG_PROTECT_EDIBLE),
+            get_config_bool(c, BURROW_CONFIG_PROTECT_COOKABLE));
+}
+
 static int autochop_getTreeCountsAndBurrowConfigs(lua_State *L) {
     color_ostream *out = Lua::GetOutput(L);
     if (!out)
@@ -818,6 +842,9 @@ static int autochop_getTreeCountsAndBurrowConfigs(lua_State *L) {
             &designated_trees, &accessible_yield, &tree_counts, &designated_tree_counts);
 
     map<string, int32_t> summary;
+
+    map<int32_t, map<string, int32_t>> burrow_config_map;
+
     summary.emplace("accessible_trees", accessible_trees);
     summary.emplace("inaccessible_trees", inaccessible_trees);
     summary.emplace("designated_trees", designated_trees);
@@ -831,13 +858,16 @@ static int autochop_getTreeCountsAndBurrowConfigs(lua_State *L) {
     for (auto &burrow : plotinfo->burrows.list) {
         int id = burrow->id;
         if (watched_burrows_indices.count(id)) {
-            push_burrow_config(L, watched_burrows[watched_burrows_indices[id]]);
+            // push_burrow_config(L, watched_burrows[watched_burrows_indices[id]]);
+            emplace_bulk_burrow_config(L, burrow_config_map, watched_burrows[watched_burrows_indices[id]]);
         } else {
-            push_burrow_config(L, id);
+            emplace_bulk_burrow_config(L, burrow_config_map, id);
         }
     }
 
-    return 3 + plotinfo->burrows.list.size();
+    Lua::Push(L, burrow_config_map);
+
+    return 4;
 }
 
 static int autochop_getBurrowConfig(lua_State *L) {

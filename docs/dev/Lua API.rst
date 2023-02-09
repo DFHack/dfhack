@@ -4808,6 +4808,16 @@ It has the following attributes:
 :on_activate: If specified, it is the callback that will be called whenever
     the hotkey is pressed or the label is clicked.
 
+The HotkeyLabel widget implements the following methods:
+
+* ``hotkeylabel:setLabel(label)``
+
+    Updates the label without altering the hotkey text.
+
+* ``hotkeylabel:setOnActivate(on_activate)``
+
+    Updates the on_activate callback.
+
 CycleHotkeyLabel class
 ----------------------
 
@@ -4958,6 +4968,7 @@ construction that allows filtering the list by subwords of its items.
 In addition to passing through all attributes supported by List, it
 supports:
 
+:case_sensitive: If true, matching is case sensitive. Defaults to true.
 :edit_pen: If specified, used instead of ``cursor_pen`` for the edit field.
 :edit_below: If true, the edit field is placed below the list instead of above.
 :edit_key: If specified, the edit field is disabled until this key is pressed.

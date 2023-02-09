@@ -39,16 +39,22 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``Units::isFortControlled``: Account for agitated wildlife
 - Fix right click sometimes closing both a DFHack window and a vanilla panel
 - Fixed issue with scrollable lists having some data off-screen if they were scrolled before being made visible
+- `channel-safely`: fixed bug resulting in marker mode never being set for any designation
+-@ `automelt`: fixed bug related to lua stack smashing behavior in returned stockpile configs
+-@ `autochop`: fixed bug related to lua stack smashing behavior in returned stockpile configs
 
 ## Misc Improvements
 - `automelt`: is now more resistent to savegame corruption
-- `hotkeys`: DFHack logo is now hidden on screens where it covers important information when in the default position (e.g. when choosing an embark site)
+-@ `hotkeys`: DFHack logo is now hidden on screens where it covers important information when in the default position (e.g. when choosing an embark site)
+- `misery`: now persists state with the fort
 - `autodump`: reinstate ``autodump-destroy-item``, hotkey: Ctrl-K
 - `autodump`: new hotkey for ``autodump-destroy-here``: Ctrl-H
 - `dig`: new hotkeys for vein designation on z-level (Ctrl-V) and vein designation across z-levels (Ctrl-Shift-V)
 - `clean`: new hotkey for `spotclean`: Ctrl-C
 - `autobutcher`: changed defaults from 5 females / 1 male to 4 females / 2 males so a single unfortunate accident doesn't leave players without a mating pair
 - `autobutcher`: now immediately loads races available at game start into the watchlist
+-@ replaced DFHack logo used for the hover hotspot with a crisper image
+- `orders`: recipe for silver crossbows removed from ``library/military`` as it is not a vanilla recipe, but is available in ``library/military_include_artifact_materials``
 
 ## Documentation
 
@@ -57,13 +63,16 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Lua
 - `overlay`: overlay widgets can now specify focus paths for the viewscreens they attach to so they only appear in specific contexts. see `overlay-dev-guide` for details.
 - ``widgets.CycleHotkeyLabel``: Added ``key_back`` optional parameter to cycle backwards.
+- ``widgets.HotkeyLabel``: Added ``setLabel`` method to allow easily updating the label text without mangling the keyboard shortcut.
+- ``widgets.HotkeyLabel``: Added ``setOnActivate`` method to allow easily updating the ``on_activate`` callback.
+- ``widgets.FilteredList``: Added ``case_sensitive`` optional paramter to determine if filtering is case sensitive.
 
 ## Removed
 
 # 50.05-alpha3.1
 
 ## Fixes
-- `seedwatch`: fix parameter parsing when setting targets
+-@ `seedwatch`: fix parameter parsing when setting targets
 
 # 50.05-alpha3
 

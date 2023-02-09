@@ -567,6 +567,20 @@ static void push_stockpile_config(lua_State *L, PersistentDataItem &c) {
             get_config_bool(c, STOCKPILE_CONFIG_MONITORED));
 }
 
+static void emplace_bulk_stockpile_config(lua_State *L, int id, bool monitored, map<int32_t, map<string, int32_t>> &stockpiles) {
+    map<string, int32_t> stockpile_config;
+    stockpile_config.emplace("id", id);
+    stockpile_config.emplace("monitored", monitored);
+
+    stockpiles.emplace(id, stockpile_config);
+}
+
+static void emplace_bulk_stockpile_config(lua_State *L, PersistentDataItem &c, map<int32_t, map<string, int32_t>> &stockpiles) {
+    int32_t id = get_config_val(c, STOCKPILE_CONFIG_ID);
+    bool monitored = get_config_bool(c, STOCKPILE_CONFIG_MONITORED);
+    emplace_bulk_stockpile_config(L, id, monitored, stockpiles);
+}
+
 static void automelt_designate(color_ostream &out) {
     DEBUG(status, out).print("entering automelt designate\n");
     out.print("designated %d item(s) for melting\n", do_cycle(out));
@@ -762,24 +776,28 @@ static int automelt_getItemCountsAndStockpileConfigs(lua_State *L) {
     Lua::Push(L, item_count_piles);
     Lua::Push(L, marked_item_count_piles);
     Lua::Push(L, premarked_item_count_piles);
-    int32_t bldg_count = 0;
+
+    map<int32_t, map<string, int32_t>> stockpile_config_map;
 
     for (auto pile : world->buildings.other.STOCKPILE) {
         if (!isStockpile(pile))
             continue;
-        bldg_count++;
 
         int id = pile->id;
         if (watched_stockpiles.count(id)) {
-            DEBUG(cycle,*out).print("indexed_id=%d\n", get_config_val(watched_stockpiles[id], STOCKPILE_CONFIG_ID));
-            push_stockpile_config(L, watched_stockpiles[id]);
+            emplace_bulk_stockpile_config(L, watched_stockpiles[id], stockpile_config_map);
+
         } else {
-            push_stockpile_config(L, id, false);
+            emplace_bulk_stockpile_config(L, id, false, stockpile_config_map);
         }
     }
+
+    Lua::Push(L, stockpile_config_map);
+
+
     DEBUG(perf, *out).print("exit automelt_getItemCountsAndStockpileConfigs\n");
 
-    return 4+bldg_count;
+    return 5;
 }
 
 DFHACK_PLUGIN_LUA_FUNCTIONS{

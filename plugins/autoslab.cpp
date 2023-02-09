@@ -19,6 +19,7 @@
 
 #include "df/historical_figure.h"
 #include "df/item.h"
+#include "df/item_slabst.h"
 #include "df/manager_order.h"
 #include "df/plotinfost.h"
 #include "df/unit.h"
@@ -168,25 +169,6 @@ static std::string get_last_name(df::unit *unit)
     return Translation::capitalize(ret);
 }
 
-// Couldn't figure out any other way to do this besides look for the dwarf name in
-// the slab item description.
-// Ideally, we could get the historical figure id from the slab but I didn't
-// see anything like that in the item struct. This seems to work based on testing.
-// Confirmed nicknames don't show up in engraved slab names, so this should probably work okay
-bool engravedSlabItemExists(df::unit *unit, std::vector<df::item *> slabs)
-{
-    for (auto slab : slabs)
-    {
-        std::string desc = "";
-        slab->getItemDescription(&desc, 0);
-        auto fullName = get_first_name(unit) + " " + get_last_name(unit);
-        if (desc.find(fullName) != std::string::npos)
-            return true;
-    }
-
-    return false;
-}
-
 // Queue up a single order to engrave the slab for the given unit
 static void createSlabJob(df::unit *unit)
 {
@@ -211,13 +193,6 @@ static void checkslabs(color_ostream &out)
             histToJob[order->hist_figure_id] = order->id;
     }
 
-    // Get list of engraved slab items on map
-    std::vector<df::item *> engravedSlabs;
-    std::copy_if(world->items.all.begin(), world->items.all.end(),
-                 std::back_inserter(engravedSlabs),
-                 [](df::item *item)
-                 { return item->getType() == df::item_type::SLAB && item->getSlabEngravingType() == df::slab_engraving_type::Memorial; });
-
     // Build list of ghosts
     std::vector<df::unit *> ghosts;
     std::copy_if(world->units.all.begin(), world->units.all.end(),
@@ -228,7 +203,13 @@ static void checkslabs(color_ostream &out)
     for (auto ghost : ghosts)
     {
         // Only create a job is the map has no existing jobs for that historical figure or no existing engraved slabs
-        if (histToJob.count(ghost->hist_figure_id) == 0 && !engravedSlabItemExists(ghost, engravedSlabs))
+        if (histToJob.count(ghost->hist_figure_id) == 0 &&
+            !std::any_of(world->items.other.SLAB.begin(),
+                        world->items.other.SLAB.end(),
+                        [&ghost](df::item_slabst *slab){
+                            return slab->engraving_type == df::slab_engraving_type::Memorial && slab->topic == ghost->hist_figure_id;
+                        })
+            )
         {
             createSlabJob(ghost);
             auto fullName = get_first_name(ghost) + " " + get_last_name(ghost);

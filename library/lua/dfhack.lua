@@ -659,7 +659,7 @@ function Script:get_flags()
         local f = io.open(self.path)
         local contents = f:read('*all')
         f:close()
-        for line in contents:gmatch('%-%-@([^\n]+)') do
+        for line in contents:gmatch('^%-%-@([^\n]+)') do
             local chunk = load(line, self.path, 't', self._flags)
             if chunk then
                 chunk()

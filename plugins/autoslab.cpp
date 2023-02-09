@@ -223,10 +223,6 @@ static void checkslabs(color_ostream &out)
             auto fullName = get_first_name(ghost) + " " + get_last_name(ghost);
             out.print("Added slab order for ghost %s\n", fullName.c_str());
         }
-        else {
-            auto fullName = get_first_name(ghost) + " " + get_last_name(ghost);
-            out.print("%s doesn't need slab\n", fullName.c_str());
-        }
     }
 }
 

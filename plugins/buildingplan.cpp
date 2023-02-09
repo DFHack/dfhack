@@ -15,14 +15,14 @@
 #include "df/job_item.h"
 #include "df/world.h"
 
-#include <queue>
+#include <deque>
 #include <string>
 #include <vector>
 #include <unordered_map>
 
 using std::map;
 using std::pair;
-using std::queue;
+using std::deque;
 using std::string;
 using std::unordered_map;
 using std::vector;
@@ -34,11 +34,8 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 REQUIRE_GLOBAL(world);
 
-// logging levels can be dynamically controlled with the `debugfilter` command.
 namespace DFHack {
-    // for configuration-related logging
     DBG_DECLARE(buildingplan, status, DebugCategory::LINFO);
-    // for logging during the periodic scan
     DBG_DECLARE(buildingplan, cycle, DebugCategory::LINFO);
 }
 
@@ -108,7 +105,7 @@ static PersistentDataItem config;
 // building id -> PlannedBuilding
 unordered_map<int32_t, PlannedBuilding> planned_buildings;
 // vector id -> filter bucket -> queue of (building id, job_item index)
-map<df::job_item_vector_id, map<string, queue<pair<int32_t, int>>>> tasks;
+map<df::job_item_vector_id, map<string, deque<pair<int32_t, int>>>> tasks;
 
 // note that this just removes the PlannedBuilding. the tasks will get dropped
 // as we discover them in the tasks queues and they fail to be found in planned_buildings.
@@ -359,7 +356,7 @@ static void finalizeBuilding(color_ostream &out, df::building * bld) {
     Job::checkBuildingsNow();
 }
 
-static df::building * popInvalidTasks(color_ostream &out, queue<pair<int32_t, int>> & task_queue) {
+static df::building * popInvalidTasks(color_ostream &out, deque<pair<int32_t, int>> & task_queue) {
     while (!task_queue.empty()) {
         auto & task = task_queue.front();
         auto id = task.first;
@@ -369,13 +366,13 @@ static df::building * popInvalidTasks(color_ostream &out, queue<pair<int32_t, in
                 return bld;
         }
         DEBUG(cycle,out).print("discarding invalid task: bld=%d, job_item_idx=%d\n", id, task.second);
-        task_queue.pop();
+        task_queue.pop_front();
     }
     return NULL;
 }
 
 static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
-        map<string, queue<pair<int32_t, int>>> & buckets) {
+        map<string, deque<pair<int32_t, int>>> & buckets) {
     auto other_id = ENUM_ATTR(job_item_vector_id, other, vector_id);
     auto item_vector = df::global::world->items.other[other_id];
     DEBUG(cycle,out).print("matching %zu item(s) in vector %s against %zu filter bucket(s)\n",
@@ -423,7 +420,7 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
                 // items so if buildingplan is turned off, the building will
                 // be completed with the correct number of items.
                 --job->job_items[filter_idx]->quantity;
-                task_queue.pop();
+                task_queue.pop_front();
                 if (isJobReady(out, job)) {
                     finalizeBuilding(out, bld);
                     planned_buildings.at(id).remove(out);
@@ -586,7 +583,7 @@ static bool registerPlannedBuilding(color_ostream &out, PlannedBuilding & pb) {
         // as invalid
         for (auto vector_id : vector_ids) {
             for (int item_num = 0; item_num < job_item->quantity; ++item_num) {
-                tasks[vector_id][bucket].push(std::make_pair(id, job_item_idx));
+                tasks[vector_id][bucket].push_back(std::make_pair(id, job_item_idx));
                 DEBUG(status,out).print("added task: %s/%s/%d,%d; "
                       "%zu vector(s), %zu filter bucket(s), %zu task(s) in bucket",
                       ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
@@ -609,12 +606,45 @@ static bool registerPlannedBuilding(color_ostream &out, PlannedBuilding & pb) {
 static void printStatus(color_ostream &out) {
     DEBUG(status,out).print("entering buildingplan_printStatus\n");
     out.print("buildingplan is %s\n\n", is_enabled ? "enabled" : "disabled");
-    out.print("  finding materials for %zd buildings\n", planned_buildings.size());
     out.print("Current settings:\n");
     out.print("  use blocks:   %s\n", get_config_bool(config, CONFIG_BLOCKS) ? "yes" : "no");
     out.print("  use boulders: %s\n", get_config_bool(config, CONFIG_BOULDERS) ? "yes" : "no");
     out.print("  use logs:     %s\n", get_config_bool(config, CONFIG_LOGS) ? "yes" : "no");
     out.print("  use bars:     %s\n", get_config_bool(config, CONFIG_BARS) ? "yes" : "no");
+    out.print("\n");
+
+    map<string, int32_t> counts;
+    int32_t total = 0;
+    for (auto &buckets : tasks) {
+        for (auto &bucket_queue : buckets.second) {
+            deque<pair<int32_t, int>> &tqueue = bucket_queue.second;
+            for (auto it = tqueue.begin(); it != tqueue.end();) {
+                auto & task = *it;
+                auto id = task.first;
+                df::building *bld = NULL;
+                if (!planned_buildings.count(id) ||
+                        !(bld = planned_buildings.at(id).getBuildingIfValidOrRemoveIfNot(out))) {
+                    DEBUG(status,out).print("discarding invalid task: bld=%d, job_item_idx=%d\n",
+                                            id, task.second);
+                    it = tqueue.erase(it);
+                    continue;
+                }
+                auto *jitem = bld->jobs[0]->job_items[task.second];
+                int32_t quantity = jitem->quantity;
+                if (quantity) {
+                    string desc = toLower(ENUM_KEY_STR(item_type, jitem->item_type));
+                    counts[desc] += quantity;
+                    total += quantity;
+                }
+                ++it;
+            }
+        }
+    }
+
+    out.print("Waiting for %d item(s) to be produced or %zd building(s):\n",
+              total, planned_buildings.size());
+    for (auto &count : counts)
+        out.print("  %3d %s\n", count.second, count.first.c_str());
     out.print("\n");
 }
 

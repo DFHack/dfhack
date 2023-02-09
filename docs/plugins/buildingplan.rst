@@ -11,11 +11,14 @@ available, and they will be created in a suspended state. Buildingplan will
 periodically scan for appropriate items, and the jobs will be unsuspended when
 the items are available.
 
-This is very useful when combined with manager work orders or `workflow` -- you
-can set a constraint to always have one or two doors/beds/tables/chairs/etc.
-available, and place as many as you like. Materials are used to build the
-planned buildings as they are produced, with minimal space dedicated to
-stockpiles.
+This is very powerful when used with tools like `quickfort`, which allow you to
+set a building plan according to a blueprint, and the buildings will simply be
+built when you can build them.
+
+You can use manager work orders or `workflow` to ensure you always have one or
+two doors/beds/tables/chairs/etc. available, and place as many as you like.
+Materials are used to build the planned buildings as they are produced, with
+minimal space dedicated to stockpiles.
 
 Usage
 -----
@@ -23,37 +26,27 @@ Usage
 ::
 
     enable buildingplan
-    buildingplan set
+    buildingplan [status]
     buildingplan set <setting> true|false
-
-Running ``buildingplan set`` without parameters displays the current settings.
 
 .. _buildingplan-settings:
 
 Global settings
 ---------------
 
-The buildingplan plugin has global settings that can be set from the UI
-(:kbd:`G` from any building placement screen, for example:
-:kbd:`b`:kbd:`a`:kbd:`G`). These settings can also be set via the
-``buildingplan set`` command. The available settings are:
+The buildingplan plugin has several global settings that affect what materials
+can be chosen when attaching items to planned buildings:
 
-``all_enabled`` (default: false)
-    Enable planning mode for all building types.
 ``blocks``, ``boulders``, ``logs``, ``bars`` (defaults: true, true, true, false)
     Allow blocks, boulders, logs, or bars to be matched for generic "building
     material" items.
-``quickfort_mode`` (default: false)
-    Enable compatibility mode for the legacy Python Quickfort (this setting is
-    not required for DFHack `quickfort`)
 
-The settings for ``blocks``, ``boulders``, ``logs``, and ``bars`` are saved with
-your fort, so you only have to set them once and they will be persisted in your
-save.
+These settings are saved with your fort, so you only have to set them once and
+they will be persisted in your save.
 
 If you normally embark with some blocks on hand for early workshops, you might
 want to add this line to your ``dfhack-config/init/onMapLoad.init`` file to
-always configure buildingplan to just use blocks for buildings and
+always configure `buildingplan` to just use blocks for buildings and
 constructions::
 
     on-new-fortress buildingplan set boulders false; buildingplan set logs false
@@ -76,17 +69,3 @@ keep the filter values that were set when the building was placed.
 
 For example, you can be sure that all your constructed walls are the same color
 by setting a filter to accept only certain types of stone.
-
-Quickfort mode
---------------
-
-If you use the external Python Quickfort to apply building blueprints instead of
-the native DFHack `quickfort` script, you must enable Quickfort mode. This
-temporarily enables buildingplan for all building types and adds an extra blank
-screen after every building placement. This "dummy" screen is needed for Python
-Quickfort to interact successfully with Dwarf Fortress.
-
-Note that Quickfort mode is only for compatibility with the legacy Python
-Quickfort. The DFHack `quickfort` script does not need this Quickfort mode to be
-enabled. The `quickfort` script will successfully integrate with buildingplan as
-long as the buildingplan plugin itself is enabled.

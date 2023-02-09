@@ -4,8 +4,6 @@ local _ENV = mkmodule('plugins.buildingplan')
 
  Native functions:
 
- * void setSetting(string name, boolean value)
- * bool isPlanModeEnabled(df::building_type type, int16_t subtype, int32_t custom)
  * bool isPlannableBuilding(df::building_type type, int16_t subtype, int32_t custom)
  * bool isPlannedBuilding(df::building *bld)
  * void addPlannedBuilding(df::building *bld)
@@ -33,6 +31,15 @@ function parse_commandline(...)
     local positionals = process_args(opts, args)
 
     if opts.help then
+        return false
+    end
+
+    local command = table.remove(positionals, 1)
+    if not command or command == 'status' then
+        printStatus()
+    elseif command == 'set' then
+        setSetting(positionals[1], positionals[2] == 'true')
+    else
         return false
     end
 

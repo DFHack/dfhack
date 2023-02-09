@@ -1419,6 +1419,20 @@ HotkeyLabel.ATTRS{
 }
 
 function HotkeyLabel:init()
+    self:initializeLabel()
+end
+
+function HotkeyLabel:setOnActivate(on_activate)
+    self.on_activate = on_activate
+    self:initializeLabel()
+end
+
+function HotkeyLabel:setLabel(label)
+    self.label = label
+    self:initializeLabel()
+end
+
+function HotkeyLabel:initializeLabel()
     self:setText{{key=self.key, key_sep=self.key_sep, text=self.label,
                   on_activate=self.on_activate}}
 end
@@ -1868,6 +1882,7 @@ end
 FilteredList = defclass(FilteredList, Widget)
 
 FilteredList.ATTRS {
+    case_sensitive = true,
     edit_below = false,
     edit_key = DEFAULT_NIL,
     edit_ignore_keys = DEFAULT_NIL,
@@ -2028,11 +2043,17 @@ function FilteredList:setFilter(filter, pos)
                 -- start matches at non-space or non-punctuation. this allows
                 -- punctuation itself to be matched if that is useful (e.g.
                 -- filenames or parameter names)
-                if key ~= '' and
-                        not search_key:match('%f[^%p\x00]'..key) and
+                if key ~= '' then
+                    if not self.case_sensitive then
+                        search_key = string.lower(search_key)
+                        key = string.lower(key)
+                    end
+
+                    if not search_key:match('%f[^%p\x00]'..key) and
                         not search_key:match('%f[^%s\x00]'..key) then
-                    ok = false
-                    break
+                            ok = false
+                            break
+                    end
                 end
             end
             if ok then

@@ -37,27 +37,27 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - ``Units::isFortControlled``: Account for agitated wildlife
-- Fix right click sometimes closing both a DFHack window and a vanilla panel
+-@ Fix right click sometimes closing both a DFHack window and a vanilla panel
 - Fixed issue with scrollable lists having some data off-screen if they were scrolled before being made visible
 - `channel-safely`: fixed bug resulting in marker mode never being set for any designation
 -@ `automelt`: fixed bug related to lua stack smashing behavior in returned stockpile configs
 -@ `autochop`: fixed bug related to lua stack smashing behavior in returned stockpile configs
 - `nestboxes`: now cancels any in-progress hauling jobs when it protects a fertile egg
 -@ Fix persisted data not being written on manual save
-- `nestboxes`: now scans for eggs more frequently and cancels any in-progress hauling jobs when it protects a fertile egg
+-@ `nestboxes`: now scans for eggs more frequently and cancels any in-progress hauling jobs when it protects a fertile egg
 
 ## Misc Improvements
-- `automelt`: is now more resistent to vanilla savegame corruption
+-@ `automelt`: is now more resistent to vanilla savegame corruption
 -@ `hotkeys`: DFHack logo is now hidden on screens where it covers important information when in the default position (e.g. when choosing an embark site)
 - `misery`: now persists state with the fort
-- `autodump`: reinstate ``autodump-destroy-item``, hotkey: Ctrl-K
-- `autodump`: new hotkey for ``autodump-destroy-here``: Ctrl-H
-- `dig`: new hotkeys for vein designation on z-level (Ctrl-V) and vein designation across z-levels (Ctrl-Shift-V)
+-@ `autodump`: reinstate ``autodump-destroy-item``, hotkey: Ctrl-K
+-@ `autodump`: new hotkey for ``autodump-destroy-here``: Ctrl-H
+-@ `dig`: new hotkeys for vein designation on z-level (Ctrl-V) and vein designation across z-levels (Ctrl-Shift-V)
 -@ `clean`: new hotkey for `spotclean`: Ctrl-C
 - `autobutcher`: changed defaults from 5 females / 1 male to 4 females / 2 males so a single unfortunate accident doesn't leave players without a mating pair
 - `autobutcher`: now immediately loads races available at game start into the watchlist
 -@ replaced DFHack logo used for the hover hotspot with a crisper image
-- `orders`: recipe for silver crossbows removed from ``library/military`` as it is not a vanilla recipe, but is available in ``library/military_include_artifact_materials``
+-@ `orders`: recipe for silver crossbows removed from ``library/military`` as it is not a vanilla recipe, but is available in ``library/military_include_artifact_materials``
 
 ## Documentation
 
@@ -93,22 +93,22 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `autochop`: fixed a crash when processing trees with corrupt data structures (e.g. when a trunk tile fails to fall when the rest of the tree is chopped down)
 
 ## Misc Improvements
-- DFHack windows can now be "defocused" by clicking somewhere not over the tool window. This has the same effect as pinning previously did, but without the extra clicking.
+-@ DFHack windows can now be "defocused" by clicking somewhere not over the tool window. This has the same effect as pinning previously did, but without the extra clicking.
 - `getplants`: ID values will now be accepted regardless of case
-- Windows now display "PAUSE FORCED" on the lower border if the tool is forcing the game to pause
+-@ Windows now display "PAUSE FORCED" on the lower border if the tool is forcing the game to pause
 -@ New borders for DFHack tool windows -- tell us what you think!
-- `autoclothing`: merged the two separate reports into the same command.
+-@ `autoclothing`: merged the two separate reports into the same command.
 - `automelt`: stockpile configuration can now be set from the commandline
 - `channel-safely`: new monitoring for cave-in prevention
-- `gui/control-panel`: you can now configure whether DFHack tool windows should pause the game by default
+-@ `gui/control-panel`: you can now configure whether DFHack tool windows should pause the game by default
 - `gui/control-panel`: new global hotkey for quick access: Ctrl-Shift-E
-- `hotkeys`: clicking on the DFHack logo no longer closes the popup menu
+-@ `hotkeys`: clicking on the DFHack logo no longer closes the popup menu
 - `nestboxes`: now saves enabled state in your savegame
 - `gui/launcher`: sped up initialization time for faster window appearance
 - `orders`: orders plugin functionality is now accessible via an `overlay` widget when the manager orders screen is open
 - `gui/quickcmd`: now has its own global keybinding for your convenience: Ctrl-Shift-A
 - `seedwatch`: now persists enabled state in the savegame, automatically loads useful defaults, and respects reachability when counting available seeds
-- `quickfort`: planned buildings are now properly attached to any pertinent overlapping zones
+-@ `quickfort`: planned buildings are now properly attached to any pertinent overlapping zones
 
 ## Documentation
 - `compile`: instructions added for cross-compiling DFHack for Windows from a Linux Docker builder
@@ -127,7 +127,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``widgets.Label``: ``label.scroll()`` now understands ``home`` and ``end`` keywords for scrolling to the top or bottom
 - ``widgets.List``: new callbacks for double click and shift double click
 - ``dfhack.units.getCitizens()``: gets a list of citizens
-- ``gui.ZScreen``: new attribute: ``defocusable`` for controlling whether a window loses keyboard focus when the map is clicked
+-@ ``gui.ZScreen``: new attribute: ``defocusable`` for controlling whether a window loses keyboard focus when the map is clicked
 - ``widgets.Label``: token ``tile`` properties can now be either pens or numeric texture ids
 - `tiletypes`: now has a Lua API! ``tiletypes_setTile``
 
@@ -138,7 +138,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - `autofarm`: don't duplicate status line entries for crops with no current supply
-- `orders`: allow the orders library to be listed and imported properly (if you previously copied the orders library into your ``dfhack-config/orders`` directory to work around this bug, you can remove those files now)
+-@ `orders`: allow the orders library to be listed and imported properly (if you previously copied the orders library into your ``dfhack-config/orders`` directory to work around this bug, you can remove those files now)
 - `tailor`: now respects the setting of the "used dyed clothing" standing order toggle
 
 # 50.05-alpha1

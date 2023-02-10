@@ -36,6 +36,20 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## New Plugins
 
 ## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.07-alpha1
+
+## Fixes
 - ``Units::isFortControlled``: Account for agitated wildlife
 -@ Fix right click sometimes closing both a DFHack window and a vanilla panel
 - Fixed issue with scrollable lists having some data off-screen if they were scrolled before being made visible
@@ -70,8 +84,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``widgets.HotkeyLabel``: Added ``setLabel`` method to allow easily updating the label text without mangling the keyboard shortcut.
 - ``widgets.HotkeyLabel``: Added ``setOnActivate`` method to allow easily updating the ``on_activate`` callback.
 - ``widgets.FilteredList``: Added ``case_sensitive`` optional paramter to determine if filtering is case sensitive.
-
-## Removed
 
 # 50.05-alpha3.1
 

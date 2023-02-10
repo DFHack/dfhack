@@ -657,16 +657,18 @@ function Script:get_flags()
         self.flags_mtime = mtime
         self._flags = {}
         local f = io.open(self.path)
-        local contents = f:read('*all')
-        f:close()
-        for line in contents:gmatch('^%-%-@([^\n]+)') do
-            local chunk = load(line, self.path, 't', self._flags)
+        for line in f:lines() do
+            local at_tag = line:match('^%-%-@(.+)')
+            if not at_tag then goto continue end
+            local chunk = load(at_tag, self.path, 't', self._flags)
             if chunk then
                 chunk()
             else
                 dfhack.printerr('Parse error: ' .. line)
             end
+            ::continue::
         end
+        f:close()
     end
     return self._flags
 end

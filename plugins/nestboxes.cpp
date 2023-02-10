@@ -50,7 +50,7 @@ static void set_config_bool(PersistentDataItem &c, int index, bool value) {
     set_config_val(c, index, value ? 1 : 0);
 }
 
-static const int32_t CYCLE_TICKS = 100; // need to react quickly if eggs are unforbidden
+static const int32_t CYCLE_TICKS = 50; // need to react quickly when eggs are laid/unforbidden
 static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
 
 static void do_cycle(color_ostream &out);

@@ -58,6 +58,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `autobutcher`: now immediately loads races available at game start into the watchlist
 -@ replaced DFHack logo used for the hover hotspot with a crisper image
 -@ `orders`: recipe for silver crossbows removed from ``library/military`` as it is not a vanilla recipe, but is available in ``library/military_include_artifact_materials``
+- `stonesense`: added an ``INVERT_MOUSE_Z`` option to invert the mouse wheel direction
 
 ## Documentation
 

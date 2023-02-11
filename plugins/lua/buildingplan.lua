@@ -197,7 +197,7 @@ PlannerOverlay.ATTRS{
     default_enabled=true,
     viewscreens='dwarfmode/Building/Placement',
     frame={w=54, h=9},
-    frame_style=gui.PANEL_FRAME,
+    frame_style=gui.MEDIUM_FRAME,
     frame_background=gui.CLEAR_PEN,
 }
 
@@ -408,7 +408,7 @@ InspectorOverlay.ATTRS{
     default_pos={x=-41,y=14},
     default_enabled=true,
     viewscreens='dwarfmode/ViewSheets/BUILDING',
-    frame={w=30, h=5},
+    frame={w=30, h=9},
     frame_style=gui.MEDIUM_FRAME,
     frame_background=gui.CLEAR_PEN,
 }
@@ -421,10 +421,27 @@ function InspectorOverlay:init()
         },
         widgets.Label{
             frame={t=1, l=0},
-            text='items',
+            text='item1',
+        },
+        widgets.Label{
+            frame={t=2, l=0},
+            text='item2',
+        },
+        widgets.Label{
+            frame={t=3, l=0},
+            text='item3',
+        },
+        widgets.Label{
+            frame={t=4, l=0},
+            text='item4',
         },
         widgets.HotkeyLabel{
-            frame={t=2, l=0},
+            frame={t=5, l=0},
+            label='adjust filters',
+            key='CUSTOM_CTRL_F',
+        },
+        widgets.HotkeyLabel{
+            frame={t=6, l=0},
             label='make top priority',
             key='CUSTOM_CTRL_T',
         },

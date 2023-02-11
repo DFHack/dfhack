@@ -9,6 +9,7 @@
 #include "df/world.h"
 #include "df/building_nest_boxst.h"
 #include "df/item.h"
+#include "df/item_eggst.h"
 #include "df/unit.h"
 
 using std::string;
@@ -140,8 +141,8 @@ static void do_cycle(color_ostream &out) {
                 fertile = true;
         }
         for (auto &contained_item : nb->contained_items) {
-            df::item *item = contained_item->item;
-            if (item->flags.bits.forbid != fertile) {
+            auto *item = virtual_cast<df::item_eggst>(contained_item->item);
+            if (item && item->flags.bits.forbid != fertile) {
                 item->flags.bits.forbid = fertile;
                 if (fertile && item->flags.bits.in_job) {
                     // cancel any job involving the egg

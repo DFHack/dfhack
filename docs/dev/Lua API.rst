@@ -5028,6 +5028,41 @@ The widget implements:
 
   Same as with an ordinary list.
 
+TabBar class
+------------
+
+This widget implements a set of one or more tabs to allow navigation between groups of content. Tabs automatically wrap on
+the width of the window and will continue rendering on the next line(s) if all tabs cannot fit on a single line.
+
+:key: Specifies a keybinding that can be used to switch to the next tab.
+:key_back: Specifies a keybinding that can be used to switch to the previous tab.
+:labels: A table of strings; entry representing the label text for a single tab. The order of the entries
+         determines the order the tabs will appear in.
+:get_cur_page: Returns the current "page". This function does not have a default implementation; you must provide
+               an implementation that returns the current value of whichever variable your script uses to keep track of the
+               current "page" (this does not need to relate to an actual Pages widget).
+:on_select: Callback executed when a tab is selected. It receives the selected tab index as an argument. Your implementation
+            should likely update the value of whichever variable your script uses to keep track of the current page.
+:active_tab_pens: A table of pens used to render active tabs. See the default implementation in widgets.lua for an example
+                  of how to construct the table. Leave unspecified to use the default pens.
+:inactive_tab_pens: A table of pens used to render inactive tabs. See the default implementation in widgets.lua for an example
+                    of how to construct the table. Leave unspecified to use the default pens.
+:get_pens: A function used to determine which pens should be used to render a tab. Receives the index of the tab as the first
+           argument and the TabBar widget itself as the second. The default implementation, which will handle most situations,
+           returns ``self.active_tab_pens``, if ``self.get_cur_page() == idx``, otherwise returns ``self.inactive_tab_pens``.
+
+Tab class
+---------
+
+This widget implements a single clickable tab and is the main component of the TabBar widget. Usage of the ``TabBar``
+widget does not require direct usage of ``Tab``.
+
+:id: The id of the tab.
+:label: The text displayed on the tab.
+:on_select: Callback executed when the tab is selected.
+:get_pens: A function that is used during ``Tab:onRenderBody`` to determine the pens that should be used for drawing. See the
+           usage of ``Tab`` in ``TabBar:init()`` for an example. See the default value of ``active_tab_pens`` or ``inactive_tab_pens``
+           in ``TabBar`` for an example of how to construct pens.
 
 .. _lua-plugins:
 

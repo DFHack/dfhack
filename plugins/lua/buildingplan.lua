@@ -76,9 +76,10 @@ local function is_choosing_area()
 end
 
 local function get_cur_area_dims()
-    if not is_choosing_area() then return 1, 1 end
+    if not is_choosing_area() then return 1, 1, 1 end
     return math.abs(uibs.selection_pos.x - uibs.pos.x) + 1,
-            math.abs(uibs.selection_pos.y - uibs.pos.y) + 1
+            math.abs(uibs.selection_pos.y - uibs.pos.y) + 1,
+            math.abs(uibs.selection_pos.z - uibs.pos.z) + 1
 end
 
 local function get_cur_filters()
@@ -90,6 +91,11 @@ local function is_plannable()
     return get_cur_filters() and
             not (uibs.building_type == df.building_type.Construction
                  and uibs.building_subtype == df.construction_type.TrackNSEW)
+end
+
+local function is_stairs()
+    return uibs.building_type == df.building_type.Construction
+            and uibs.building_subtype == df.construction_type.UpDownStair
 end
 
 local direction_panel_frame = {t=4, h=13, w=46, r=28}
@@ -108,9 +114,23 @@ local function has_direction_panel()
             and uibs.building_subtype == df.trap_type.TrackStop)
 end
 
-local function is_over_direction_panel()
-    if not has_direction_panel() then return false end
-    local v = widgets.Widget{frame=direction_panel_frame}
+local pressure_plate_panel_frame = {t=4, h=37, w=46, r=28}
+
+local function has_pressure_plate_panel()
+    return uibs.building_type == df.building_type.Trap
+            and uibs.building_subtype == df.trap_type.PressurePlate
+end
+
+local function is_over_options_panel()
+    local frame = nil
+    if has_direction_panel() then
+        frame = direction_panel_frame
+    elseif has_pressure_plate_panel() then
+        frame = pressure_plate_panel_frame
+    else
+        return false
+    end
+    local v = widgets.Widget{frame=frame}
     local rect = gui.mkdims_wh(0, 0, dfhack.screen.getWindowSize())
     v:updateLayout(gui.ViewRect{rect=rect})
     return v:getMousePos()
@@ -146,11 +166,11 @@ function get_item_label(idx)
     end
 
     local quantity = filter.quantity or 1
-    local dimx, dimy = get_cur_area_dims()
+    local dimx, dimy, dimz = get_cur_area_dims()
     if quantity < 1 then
-        quantity = ((dimx * dimy) // 4) + 1
+        quantity = (((dimx * dimy) // 4) + 1) * dimz
     else
-        quantity = quantity * dimx * dimy
+        quantity = quantity * dimx * dimy * dimz
     end
     return ('%s (need: %d)'):format(desc, quantity)
 end
@@ -193,12 +213,36 @@ function PlannerOverlay:init()
         ItemLine{frame={t=2, l=0}, idx=2},
         ItemLine{frame={t=4, l=0}, idx=3},
         ItemLine{frame={t=6, l=0}, idx=4},
+        widgets.CycleHotkeyLabel{
+            view_id="stairs_top_subtype",
+            frame={t=2, l=0},
+            key="CUSTOM_R",
+            label="Top Stair Type: ",
+            visible=is_stairs,
+            options={
+                {label='Auto', value='auto'},
+                {label='UpDown', value=df.construction_type.UpDownStair},
+                {label='Down', value=df.construction_type.DownStair},
+            },
+        },
+        widgets.CycleHotkeyLabel {
+            view_id="stairs_bottom_subtype",
+            frame={t=3, l=0},
+            key="CUSTOM_B",
+            label="Bottom Stair Type: ",
+            visible=is_stairs,
+            options={
+                {label='Auto', value='auto'},
+                {label='UpDown', value=df.construction_type.UpDownStair},
+                {label='Up', value=df.construction_type.UpStair},
+            },
+        },
         widgets.Label{
             frame={b=0, l=17},
             text={
                 'Selected area: ',
                 {text=function()
-                     return ('%d x %d'):format(get_cur_area_dims())
+                     return ('%d x %d x %d'):format(get_cur_area_dims())
                  end
                 },
             },
@@ -220,7 +264,7 @@ function PlannerOverlay:onInput(keys)
         return true
     end
     if keys._MOUSE_L_DOWN then
-        if is_over_direction_panel() then return false end
+        if is_over_options_panel() then return false end
         if self:getMouseFramePos() then return true end
         if #uibs.errors > 0 then return true end
         local pos = dfhack.gui.getMousePos()
@@ -274,37 +318,72 @@ end
 
 function PlannerOverlay:place_building()
     local direction = uibs.direction
-    local has_selection = is_choosing_area()
-    local width = has_selection and math.abs(uibs.selection_pos.x - uibs.pos.x) + 1 or 1
-    local height = has_selection and math.abs(uibs.selection_pos.y - uibs.pos.y) + 1 or 1
+    local width, height, depth = get_cur_area_dims()
     local _, adjusted_width, adjusted_height = dfhack.buildings.getCorrectSize(
             width, height, uibs.building_type, uibs.building_subtype,
             uibs.custom_type, direction)
-    -- get the upper-left corner of the building/area
-    local pos = xyz2pos(
+    -- get the upper-left corner of the building/area at min z-level
+    local has_selection = is_choosing_area()
+    local start_pos = xyz2pos(
         has_selection and math.min(uibs.selection_pos.x, uibs.pos.x) or uibs.pos.x - adjusted_width//2,
         has_selection and math.min(uibs.selection_pos.y, uibs.pos.y) or uibs.pos.y - adjusted_height//2,
-        uibs.pos.z
+        has_selection and math.min(uibs.selection_pos.z, uibs.pos.z) or uibs.pos.z
     )
-    local min_x, max_x = pos.x, pos.x
-    local min_y, max_y = pos.y, pos.y
-    if adjusted_width == 1 and adjusted_height == 1 and (width > 1 or height > 1) then
-        min_x = math.ceil(pos.x - width/2)
+    if uibs.building_type == df.building_type.ScrewPump then
+        if direction == df.screw_pump_direction.FromSouth then
+            start_pos.y = start_pos.y + 1
+        elseif direction == df.screw_pump_direction.FromEast then
+            start_pos.x = start_pos.x + 1
+        end
+    end
+    local min_x, max_x = start_pos.x, start_pos.x
+    local min_y, max_y = start_pos.y, start_pos.y
+    local min_z, max_z = start_pos.z, start_pos.z
+    if adjusted_width == 1 and adjusted_height == 1
+            and (width > 1 or height > 1 or depth > 1) then
         max_x = min_x + width - 1
-        min_y = math.ceil(pos.y - height/2)
         max_y = min_y + height - 1
+        max_z = math.max(uibs.selection_pos.z, uibs.pos.z)
     end
     local blds = {}
-    for y=min_y,max_y do for x=min_x,max_x do
-        local bld, err = dfhack.buildings.constructBuilding{
-            type=uibs.building_type, subtype=uibs.building_subtype,
-            custom=uibs.custom_type, pos=xyz2pos(x, y, pos.z),
+    local subtype = uibs.building_subtype
+    for z=min_z,max_z do for y=min_y,max_y do for x=min_x,max_x do
+        local pos = xyz2pos(x, y, z)
+        if is_stairs() then
+            if z == min_z then
+                subtype = self.subviews.stairs_bottom_subtype:getOptionValue()
+                if subtype == 'auto' then
+                    local tt = dfhack.maps.getTileType(pos)
+                    local shape = df.tiletype.attrs[tt].shape
+                    if shape == df.tiletype_shape.STAIR_DOWN then
+                        subtype = uibs.building_subtype
+                    else
+                        subtype = df.construction_type.UpStair
+                    end
+                end
+            elseif z == max_z then
+                subtype = self.subviews.stairs_top_subtype:getOptionValue()
+                if subtype == 'auto' then
+                    local tt = dfhack.maps.getTileType(pos)
+                    local shape = df.tiletype.attrs[tt].shape
+                    if shape == df.tiletype_shape.STAIR_UP then
+                        subtype = uibs.building_subtype
+                    else
+                        subtype = df.construction_type.DownStair
+                    end
+                end
+            else
+                subtype = uibs.building_subtype
+            end
+        end
+        local bld, err = dfhack.buildings.constructBuilding{pos=pos,
+            type=uibs.building_type, subtype=subtype, custom=uibs.custom_type,
             width=adjusted_width, height=adjusted_height, direction=direction}
         if err then
             for _,b in ipairs(blds) do
                 dfhack.buildings.deconstruct(b)
             end
-            dfhack.printerr(err)
+            dfhack.printerr(err .. (' (%d, %d, %d)'):format(pos.x, pos.y, pos.z))
             return
         end
         -- assign fields for the types that need them. we can't pass them all in
@@ -318,7 +397,7 @@ function PlannerOverlay:place_building()
             if k == 'speed' then bld.speed = uibs.speed end
         end
         table.insert(blds, bld)
-    end end
+    end end end
     for _,bld in ipairs(blds) do
         addPlannedBuilding(bld)
     end

@@ -150,8 +150,8 @@ declared like this::
 
 When the `overlay` plugin is enabled, it scans all plugins and scripts for
 this table and registers the widgets on your behalf. Plugin lua code is loaded
-with ``require()`` and script lua code is loaded with `reqscript`. If your
-widget is in a script, ensure your script can be
+with ``require()`` and script lua code is loaded with ``reqscript()``.
+If your widget is in a script, ensure your script can be
 `loaded as a module <reqscript>`, or else the widget will not be discoverable.
 The widget is enabled on load if it was enabled the last time the `overlay`
 plugin was loaded, and the widget's position is restored according to the state
@@ -173,7 +173,8 @@ script.
 Note that reloading a script does not clear its global environment. This is fine
 if you are changing existing functions or adding new ones. If you remove a
 global function or other variable from the source, though, it will stick around
-in your script's global environment until you restart DF.
+in your script's global environment until you restart DF or run
+`devel/clear-script-env`.
 
 Scripts
 *******
@@ -204,10 +205,10 @@ check that:**
 
 #. ``OVERLAY_WIDGETS`` is declared, is global (not ``local``), and contains your
    widget class
-#. (if a script> your script is `declared as a module <reqscript>`
+#. (if a script) your script is `declared as a module <reqscript>`
    (``--@ module = true``) and it does not have side effects when loaded as a
    module (i.e. you check ``dfhack_flags.module`` and return before executing
-   any statements if the value is ``true``
+   any statements if the value is ``true``)
 #. your code does not have syntax errors -- run
    ``:lua ~reqscript('myscriptname')`` (if a script) or
    ``:lua ~require('plugins.mypluginname')`` (if a plugin) and make sure there
@@ -237,13 +238,17 @@ the :kbd:`Alt`:kbd:`Z` hotkey is hit::
     }
 
     function MessageWidget:init()
-        self.label = widgets.Label{text=''}
-        self:addviews{self.label}
+        self:addviews{
+            widgets.Label{
+                view_id='label',
+                text='',
+            },
+        }
     end
 
     function MessageWidget:overlay_onupdate()
         local text = getImportantMessage() -- defined in the host script/plugin
-        self.label:setText(text)
+        self.subviews.label:setText(text)
         self.frame.w = #text
     end
 
@@ -330,7 +335,7 @@ screen (by default, but the player can move it wherever).
 
     OVERLAY_WIDGETS = {menu=HotspotMenuWidget}
 
-    MenuScreen = defclass(MenuScreen, gui.Screen)
+    MenuScreen = defclass(MenuScreen, gui.ZScreen)
     MenuScreen.ATTRS{
         focus_path='hotspot/menu',
         hotspot_frame=DEFAULT_NIL,
@@ -345,27 +350,13 @@ screen (by default, but the player can move it wherever).
         -- ...
 
         self:addviews{
-            widgets.ResizingPanel{
-                autoarrange_subviews=true,
+            widgets.Window{
                 frame=frame,
-                frame_style=gui.GREY_LINE_FRAME,
-                frame_background=gui.CLEAR_PEN,
+                autoarrange_subviews=true,
                 subviews={
                     -- ...
                     },
                 },
             },
         }
-    end
-
-    function MenuScreen:onInput(keys)
-        if keys.LEAVESCREEN then
-            self:dismiss()
-            return true
-        end
-        return self:inputToSubviews(keys)
-    end
-
-    function MenuScreen:onRenderFrame(dc, rect)
-        self:renderParent()
     end

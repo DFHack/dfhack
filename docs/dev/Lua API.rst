@@ -1343,6 +1343,8 @@ Units module
 * ``dfhack.units.isTamable(unit)``
 * ``dfhack.units.isDomesticated(unit)``
 * ``dfhack.units.isMarkedForSlaughter(unit)``
+* ``dfhack.units.isMarkedForGelding(unit)``
+* ``dfhack.units.isGeldable(unit)``
 * ``dfhack.units.isGelded(unit)``
 * ``dfhack.units.isEggLayer(unit)``
 * ``dfhack.units.isGrazer(unit)``
@@ -1362,7 +1364,7 @@ Units module
 
   The unit is available for adoption.
 
-
+* ``dfhack.units.isPet(unit)``
 * ``dfhack.units.isOpposedToLife(unit)``
 * ``dfhack.units.hasExtravision(unit)``
 * ``dfhack.units.isBloodsucker(unit)``

@@ -44,6 +44,11 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## API
 
+- Units module: added new predicates for:
+  - ``isGeldable()``
+  - ``isMarkedForGelding()``
+  - ``isPet()``
+
 ## Lua
 
 ## Removed

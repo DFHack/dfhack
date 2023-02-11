@@ -37,6 +37,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 -@ `nestboxes`: fixed bug causing nestboxes themselves to be forbidden, which prevented citizens from using them to lay eggs. Now only eggs are forbidden.
+- `autobutcher`: implemented work-around for Dwarf Fortress not setting nicknames properly, so that nicknames created in the in-game interface are detected & protect animals from being butchered properly. Note that nicknames for unnamed units are not currently saved by dwarf fortress - use ``enable fix/protect-nicks`` to fix any nicknames created/removed within dwarf fortress so they can be saved/reloaded when you reload the game.
 
 ## Misc Improvements
 

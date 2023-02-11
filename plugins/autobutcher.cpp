@@ -107,6 +107,8 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         DEBUG(status,out).print("%s from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
         set_config_bool(CONFIG_IS_ENABLED, is_enabled);
+        if (enable)
+            autobutcher_cycle(out);
     } else {
         DEBUG(status,out).print("%s from the API, but already %s; no action\n",
                                 is_enabled ? "enabled" : "disabled",
@@ -122,6 +124,7 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out) {
 }
 
 DFhackCExport command_result plugin_load_data (color_ostream &out) {
+    cycle_timestamp = 0;
     config = World::GetPersistentData(CONFIG_KEY);
 
     if (!config.isValid()) {
@@ -129,11 +132,11 @@ DFhackCExport command_result plugin_load_data (color_ostream &out) {
         config = World::AddPersistentData(CONFIG_KEY);
         set_config_bool(CONFIG_IS_ENABLED, is_enabled);
         set_config_val(CONFIG_CYCLE_TICKS, 6000);
-        set_config_bool(CONFIG_AUTOWATCH, false);
-        set_config_val(CONFIG_DEFAULT_FK, 5);
-        set_config_val(CONFIG_DEFAULT_MK, 1);
-        set_config_val(CONFIG_DEFAULT_FA, 5);
-        set_config_val(CONFIG_DEFAULT_MA, 1);
+        set_config_bool(CONFIG_AUTOWATCH, true);
+        set_config_val(CONFIG_DEFAULT_FK, 4);
+        set_config_val(CONFIG_DEFAULT_MK, 2);
+        set_config_val(CONFIG_DEFAULT_FA, 4);
+        set_config_val(CONFIG_DEFAULT_MA, 2);
     }
 
     // we have to copy our enabled flag into the global plugin variable, but

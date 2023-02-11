@@ -28,12 +28,6 @@ using namespace df::enums;
 using df::global::world;
 using df::global::plotinfo;
 
-// Special values used by "seedwatch" plugin to store seed limits
-const df::enums::item_type::item_type SEEDLIMIT_ITEMTYPE = df::enums::item_type::BAR;
-const int16_t SEEDLIMIT_ITEMSUBTYPE = 0;
-const int16_t SEEDLIMIT_MAX = 400; // Maximum permitted seed limit
-const df::kitchen_exc_type SEEDLIMIT_EXCTYPE = df::kitchen_exc_type(4);
-
 void Kitchen::debug_print(color_ostream &out)
 {
     out.print("Kitchen Exclusions\n");
@@ -54,6 +48,9 @@ void Kitchen::debug_print(color_ostream &out)
 
 void Kitchen::allowPlantSeedCookery(int32_t plant_id)
 {
+    if (plant_id < 0 || (size_t)plant_id >= world->raws.plants.all.size())
+        return;
+
     df::plant_raw *type = world->raws.plants.all[plant_id];
 
     removeExclusion(df::kitchen_exc_type::Cook, item_type::SEEDS, -1,
@@ -67,6 +64,9 @@ void Kitchen::allowPlantSeedCookery(int32_t plant_id)
 
 void Kitchen::denyPlantSeedCookery(int32_t plant_id)
 {
+    if (plant_id < 0 || (size_t)plant_id >= world->raws.plants.all.size())
+        return;
+
     df::plant_raw *type = world->raws.plants.all[plant_id];
 
     addExclusion(df::kitchen_exc_type::Cook, item_type::SEEDS, -1,
@@ -78,82 +78,24 @@ void Kitchen::denyPlantSeedCookery(int32_t plant_id)
         type->material_defs.idx[plant_material_def::basic_mat]);
 }
 
-void Kitchen::fillWatchMap(std::map<int32_t, int16_t>& watchMap)
-{
-    watchMap.clear();
-    for (std::size_t i = 0; i < size(); ++i)
-    {
-        if (plotinfo->kitchen.item_subtypes[i] == SEEDLIMIT_ITEMTYPE &&
-            plotinfo->kitchen.item_subtypes[i] == SEEDLIMIT_ITEMSUBTYPE &&
-            plotinfo->kitchen.exc_types[i] == SEEDLIMIT_EXCTYPE)
-        {
-            watchMap[plotinfo->kitchen.mat_indices[i]] = plotinfo->kitchen.mat_types[i];
-        }
-    }
-}
-
-int Kitchen::findLimit(int32_t plant_id)
-{
-    for (size_t i = 0; i < size(); ++i)
-    {
-        if (plotinfo->kitchen.item_types[i] == SEEDLIMIT_ITEMTYPE &&
-            plotinfo->kitchen.item_subtypes[i] == SEEDLIMIT_ITEMSUBTYPE &&
-            plotinfo->kitchen.mat_indices[i] == plant_id &&
-            plotinfo->kitchen.exc_types[i] == SEEDLIMIT_EXCTYPE)
-        {
-            return int(i);
-        }
-    }
-    return -1;
-}
-
-bool Kitchen::removeLimit(int32_t plant_id)
-{
-    int i = findLimit(plant_id);
-    if (i < 0)
+bool Kitchen::isPlantCookeryAllowed(int32_t plant_id) {
+    if (plant_id < 0 || (size_t)plant_id >= world->raws.plants.all.size())
         return false;
 
-    plotinfo->kitchen.item_types.erase(plotinfo->kitchen.item_types.begin() + i);
-    plotinfo->kitchen.item_subtypes.erase(plotinfo->kitchen.item_subtypes.begin() + i);
-    plotinfo->kitchen.mat_types.erase(plotinfo->kitchen.mat_types.begin() + i);
-    plotinfo->kitchen.mat_indices.erase(plotinfo->kitchen.mat_indices.begin() + i);
-    plotinfo->kitchen.exc_types.erase(plotinfo->kitchen.exc_types.begin() + i);
-    return true;
+    df::plant_raw *type = world->raws.plants.all[plant_id];
+    return findExclusion(df::kitchen_exc_type::Cook, item_type::PLANT, -1,
+            type->material_defs.type[plant_material_def::basic_mat],
+            type->material_defs.idx[plant_material_def::basic_mat]) < 0;
 }
 
-bool Kitchen::setLimit(int32_t plant_id, int16_t limit)
-{
-    if (limit > SEEDLIMIT_MAX)
-        limit = SEEDLIMIT_MAX;
+bool Kitchen::isSeedCookeryAllowed(int32_t plant_id) {
+    if (plant_id < 0 || (size_t)plant_id >= world->raws.plants.all.size())
+        return false;
 
-    int i = findLimit(plant_id);
-    if (i < 0)
-    {
-        plotinfo->kitchen.item_types.push_back(SEEDLIMIT_ITEMTYPE);
-        plotinfo->kitchen.item_subtypes.push_back(SEEDLIMIT_ITEMSUBTYPE);
-        plotinfo->kitchen.mat_types.push_back(limit);
-        plotinfo->kitchen.mat_indices.push_back(plant_id);
-        plotinfo->kitchen.exc_types.push_back(SEEDLIMIT_EXCTYPE);
-    }
-    else
-    {
-        plotinfo->kitchen.mat_types[i] = limit;
-    }
-    return true;
-}
-
-void Kitchen::clearLimits()
-{
-    for (size_t i = 0; i < size(); ++i)
-    {
-        if (plotinfo->kitchen.item_types[i] == SEEDLIMIT_ITEMTYPE &&
-            plotinfo->kitchen.item_subtypes[i] == SEEDLIMIT_ITEMSUBTYPE &&
-            plotinfo->kitchen.exc_types[i] == SEEDLIMIT_EXCTYPE)
-        {
-            removeLimit(plotinfo->kitchen.mat_indices[i]);
-            --i;
-        }
-    }
+    df::plant_raw *type = world->raws.plants.all[plant_id];
+    return findExclusion(df::kitchen_exc_type::Cook, item_type::SEEDS, -1,
+                type->material_defs.type[plant_material_def::seed],
+                type->material_defs.idx[plant_material_def::seed]) < 0;
 }
 
 size_t Kitchen::size()

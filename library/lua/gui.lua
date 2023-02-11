@@ -693,20 +693,29 @@ end
 -- Z-order swapping screen --
 -----------------------------
 
+DEFAULT_INITIAL_PAUSE = true
+
 local zscreen_inhibit_mouse_l = false
 
 ZScreen = defclass(ZScreen, Screen)
 ZScreen.ATTRS{
-    initial_pause=true,
+    defocusable=true,
+    initial_pause=DEFAULT_NIL,
     force_pause=false,
     pass_pause=true,
     pass_movement_keys=false,
     pass_mouse_clicks=true,
 }
 
+function ZScreen:preinit(args)
+    if args.initial_pause == nil then
+        args.initial_pause = DEFAULT_INITIAL_PAUSE
+    end
+end
+
 function ZScreen:init()
     self.saved_pause_state = df.global.pause_state
-    if self.initial_pause then
+    if self.initial_pause and dfhack.isMapLoaded() then
         df.global.pause_state = true
     end
     self.defocused = false
@@ -714,19 +723,39 @@ end
 
 function ZScreen:dismiss()
     ZScreen.super.dismiss(self)
-    if self.force_pause or self.initial_pause then
+    if (self.force_pause or self.initial_pause) and dfhack.isMapLoaded() then
         -- never go from unpaused to paused, just from paused to unpaused
         df.global.pause_state = df.global.pause_state and self.saved_pause_state
     end
 end
 
+local NO_LOGIC_SCREENS = {
+    'viewscreen_loadgamest',
+    'viewscreen_export_regionst',
+    'viewscreen_choose_game_typest',
+    'viewscreen_worldst',
+}
+for _,v in ipairs(NO_LOGIC_SCREENS) do
+    if not df[v] then
+        error('invalid class name: ' .. v)
+    end
+    NO_LOGIC_SCREENS[df[v]] = true
+end
+
 -- this is necessary for middle-click map scrolling to function
 function ZScreen:onIdle()
-    if self.force_pause then
+    if self.force_pause and dfhack.isMapLoaded() then
         df.global.pause_state = true
     end
     if self._native and self._native.parent then
-        self._native.parent:logic()
+        local vs_type = dfhack.gui.getDFViewscreen(true)._type
+        if NO_LOGIC_SCREENS[vs_type] then
+            self.force_pause = true
+            self.pass_movement_keys = false
+            self.pass_mouse_clicks = false
+        else
+            self._native.parent:logic()
+        end
     end
 end
 
@@ -760,12 +789,13 @@ function ZScreen:onInput(keys)
         end
         if keys._MOUSE_R_DOWN then
             df.global.enabler.mouse_rbut_down = 0
+            df.global.enabler.mouse_rbut = 0
         end
         return
     end
 
     if self.pass_mouse_clicks and keys._MOUSE_L_DOWN and not has_mouse then
-        self.defocused = true
+        self.defocused = self.defocusable
         self:sendInputToParent(keys)
         return
     elseif keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
@@ -858,7 +888,7 @@ local BASE_FRAME = {
     title_pen = to_pen{ fg=COLOR_BLACK, bg=COLOR_GREY },
     inactive_title_pen = to_pen{ fg=COLOR_GREY, bg=COLOR_BLACK },
     signature_pen = to_pen{ fg=COLOR_GREY, bg=COLOR_BLACK },
-    paused_pen = to_pen{tile=782, ch=216, fg=COLOR_GREY, bg=COLOR_BLACK},
+    paused_pen = to_pen{fg=COLOR_RED, bg=COLOR_BLACK},
 }
 
 local function make_frame(name, double_line)
@@ -918,19 +948,8 @@ function paint_frame(dc,rect,style,title,inactive,pause_forced,resizable)
     end
 
     if pause_forced then
-        -- get the tiles for the activated pause symbol
-        local pause_texpos_ul = dfhack.screen.findGraphicsTile('INTERFACE_BITS', 18, 28)
-        local pause_texpos_ur = dfhack.screen.findGraphicsTile('INTERFACE_BITS', 19, 28)
-        local pause_texpos_ll = dfhack.screen.findGraphicsTile('INTERFACE_BITS', 18, 29)
-        local pause_texpos_lr = dfhack.screen.findGraphicsTile('INTERFACE_BITS', 19, 29)
-        if not pause_texpos_ul then
-            dscreen.paintTile(style.paused_pen, x2-1, y1)
-        else
-            dscreen.paintTile(style.paused_pen, x2-2, y1-1, nil, pause_texpos_ul)
-            dscreen.paintTile(style.paused_pen, x2-1, y1-1, nil, pause_texpos_ur)
-            dscreen.paintTile(style.paused_pen, x2-2, y1,   nil, pause_texpos_ll)
-            dscreen.paintTile(style.paused_pen, x2-1, y1,   nil, pause_texpos_lr)
-        end
+        dscreen.paintString(style.paused_pen or style.title_pen or pen,
+                            x1+2, y2, ' PAUSE FORCED ')
     end
 end
 

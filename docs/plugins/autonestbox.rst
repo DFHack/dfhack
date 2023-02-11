@@ -3,7 +3,7 @@ autonestbox
 
 .. dfhack-tool::
     :summary: Auto-assign egg-laying female pets to nestbox zones.
-    :tags: untested fort auto animals
+    :tags: fort auto animals
 
 To use this feature, you must create pen/pasture zones on the same tiles as
 built nestboxes. If the pen is bigger than 1x1, the nestbox must be in the top

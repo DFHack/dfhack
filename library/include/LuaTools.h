@@ -30,6 +30,7 @@ distribution.
 #include <vector>
 #include <map>
 #include <type_traits>
+#include <unordered_map>
 
 #include "df/interfacest.h"
 
@@ -324,10 +325,10 @@ namespace DFHack {namespace Lua {
     inline void Push(lua_State *state, const std::string &str) {
         lua_pushlstring(state, str.data(), str.size());
     }
-    DFHACK_EXPORT void Push(lua_State *state, df::coord obj);
-    DFHACK_EXPORT void Push(lua_State *state, df::coord2d obj);
+    DFHACK_EXPORT void Push(lua_State *state, const df::coord &obj);
+    DFHACK_EXPORT void Push(lua_State *state, const df::coord2d &obj);
     void Push(lua_State *state, const Units::NoblePosition &pos);
-    DFHACK_EXPORT void Push(lua_State *state, MaterialInfo &info);
+    DFHACK_EXPORT void Push(lua_State *state, const MaterialInfo &info);
     DFHACK_EXPORT void Push(lua_State *state, const Screen::Pen &info);
     template<class T> inline void Push(lua_State *state, T *ptr) {
         PushDFObject(state, ptr);
@@ -360,22 +361,34 @@ namespace DFHack {namespace Lua {
 
     DFHACK_EXPORT void GetVector(lua_State *state, std::vector<std::string> &pvec);
 
-    DFHACK_EXPORT int PushPosXYZ(lua_State *state, df::coord pos);
-    DFHACK_EXPORT int PushPosXY(lua_State *state, df::coord2d pos);
-
-    template <typename T_Key, typename T_Value>
-    inline void TableInsert(lua_State *state, T_Key key, T_Value value)
-    {
-        Lua::Push(state, key);
-        Lua::Push(state, value);
-        lua_settable(state, -3);
-    }
+    DFHACK_EXPORT int PushPosXYZ(lua_State *state, const df::coord &pos);
+    DFHACK_EXPORT int PushPosXY(lua_State *state, const df::coord2d &pos);
 
     template<typename T_Key, typename T_Value>
     void Push(lua_State *L, const std::map<T_Key, T_Value> &pmap) {
         lua_createtable(L, 0, pmap.size());
-        for (auto &entry : pmap)
-            TableInsert(L, entry.first, entry.second);
+        for (auto &entry : pmap) {
+            Lua::Push(L, entry.first);
+            Lua::Push(L, entry.second);
+            lua_settable(L, -3);
+        }
+    }
+
+    template<typename T_Key, typename T_Value>
+    void Push(lua_State *L, const std::unordered_map<T_Key, T_Value> &pmap) {
+        lua_createtable(L, 0, pmap.size());
+        for (auto &entry : pmap) {
+            Lua::Push(L, entry.first);
+            Lua::Push(L, entry.second);
+            lua_settable(L, -3);
+        }
+    }
+
+    template <typename T_Key, typename T_Value>
+    inline void TableInsert(lua_State *state, const T_Key &key, const T_Value &value) {
+        Lua::Push(state, key);
+        Lua::Push(state, value);
+        lua_settable(state, -3);
     }
 
     DFHACK_EXPORT void CheckPen(lua_State *L, Screen::Pen *pen, int index, bool allow_nil = false, bool allow_color = true);

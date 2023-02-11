@@ -143,6 +143,8 @@ jobs:
             ccache-win64-cross-msvc-${{ github.ref_name }}
             ccache-win64-cross-msvc
       - name: Cross-compile win64 artifacts
+        env:
+          CMAKE_EXTRA_ARGS: '-DBUILD_STONESENSE:BOOL=1'
         run: |
           cd build
           bash -x build-win64-from-linux.sh

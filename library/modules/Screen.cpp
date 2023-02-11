@@ -156,14 +156,18 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
     long *texpos_lower = &gps->screentexpos_lower[index];
     uint32_t *flag = &gps->screentexpos_flag[index];
 
+    // keep SCREENTEXPOS_FLAG_ANCHOR_SUBORDINATE so occluded anchored textures
+    // don't appear corrupted
+    uint32_t flag_mask = 0x4;
+    if (pen.write_to_lower)
+        flag_mask |= 0x18;
+
     *screen = 0;
     *texpos = 0;
     if (!pen.keep_lower)
         *texpos_lower = 0;
     gps->screentexpos_anchored[index] = 0;
-    // keep SCREENTEXPOS_FLAG_ANCHOR_SUBORDINATE so occluded anchored textures
-    // don't appear corrupted
-    *flag &= 4;
+    *flag &= flag_mask;
 
     if (gps->top_in_use) {
         screen = &gps->screen_top[index * 8];
@@ -176,7 +180,7 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
         if (!pen.keep_lower)
             *texpos_lower = 0;
         gps->screentexpos_top_anchored[index] = 0;
-        *flag &= 4; // keep SCREENTEXPOS_FLAG_ANCHOR_SUBORDINATE
+        *flag &= flag_mask;
     }
 
     uint8_t fg = pen.fg | (pen.bold << 3);
@@ -197,6 +201,14 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
             *texpos_lower = pen.tile;
         else
             *texpos = pen.tile;
+
+        if (pen.top_of_text || pen.bottom_of_text) {
+            screen[0] = uint8_t(pen.ch);
+            if (pen.top_of_text)
+                *flag |= 0x8;
+            if (pen.bottom_of_text)
+                *flag |= 0x10;
+        }
     } else if (pen.ch) {
         screen[0] = uint8_t(pen.ch);
         *texpos_lower = 909; // basic black background
@@ -717,6 +729,21 @@ void dfhack_viewscreen::logic()
 
     // Various stuff works poorly unless always repainting
     Screen::invalidate();
+
+    // if the DF screen immediately beneath the DFHack viewscreens is waiting to
+    // be dismissed, raise it to the top so DF never gets stuck
+    auto *p = parent;
+    while (p) {
+        bool is_df_screen = !is_instance(p);
+        auto *next_p = p->parent;
+        if (is_df_screen && Screen::isDismissed(p)) {
+            DEBUG(screen).print("raising dismissed DF viewscreen %p\n", p);
+            Screen::raise(p);
+        }
+        if (is_df_screen)
+            break;
+        p = next_p;
+    }
 }
 
 void dfhack_viewscreen::render()
@@ -807,6 +834,13 @@ int dfhack_lua_viewscreen::do_destroy(lua_State *L)
     auto self = get_self(L);
     if (!self) return 0;
 
+    if (!Screen::isDismissed(self)) {
+        WARN(screen).print("DFHack screen was destroyed before it was dismissed\n");
+        WARN(screen).print("Please tell the DFHack team which DF screen you were just viewing\n");
+        // run skipped onDismiss cleanup logic
+        Screen::dismiss(self);
+    }
+
     lua_pushnil(L);
     lua_rawsetp(L, LUA_REGISTRYINDEX, self);
 
@@ -831,6 +865,9 @@ void dfhack_lua_viewscreen::update_focus(lua_State *L, int idx)
     lua_pop(L, 1);
     lua_getfield(L, idx, "allow_options");
     allow_options = lua_toboolean(L, -1);
+    lua_pop(L, 1);
+    lua_getfield(L, idx, "defocused");
+    defocused = lua_toboolean(L, -1);
     lua_pop(L, 1);
 
     lua_getfield(L, idx, "focus_path");
@@ -1063,6 +1100,7 @@ using df::identity_traits;
 #define CUR_STRUCT dfhack_viewscreen
 static const struct_field_info dfhack_viewscreen_fields[] = {
     { METHOD(OBJ_METHOD, is_lua_screen), 0, 0 },
+    { METHOD(OBJ_METHOD, isFocused), 0, 0 },
     { METHOD(OBJ_METHOD, getFocusString), 0, 0 },
     { METHOD(OBJ_METHOD, onShow), 0, 0 },
     { METHOD(OBJ_METHOD, onDismiss), 0, 0 },

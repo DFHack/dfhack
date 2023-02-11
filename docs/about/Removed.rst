@@ -10,6 +10,14 @@ work (e.g. links from the `changelog`).
   :local:
   :depth: 1
 
+.. _autohauler:
+
+autohauler
+==========
+An automated labor management tool that only addressed hauling labors, leaving the assignment
+of skilled labors entirely up to the player. Fundamentally incompatible with the work detail
+system of labor management in v50 of Dwarf Fortress.
+
 .. _command-prompt:
 
 command-prompt

@@ -3,9 +3,9 @@ confirm
 
 .. dfhack-tool::
     :summary: Adds confirmation dialogs for destructive actions.
-    :tags: untested fort interface
+    :tags: fort interface
 
-Now you can get the chance to avoid seizing goods from traders or deleting a
+Now you can get the chance to avoid accidentally disbanding a squad or deleting a
 hauling route in case you hit the key accidentally.
 
 Usage

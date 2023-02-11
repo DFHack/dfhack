@@ -97,8 +97,8 @@ enable automelt
 #enable automaterial
 
 # Other interface improvement tools
-#enable \
-# confirm \
+enable \
+ confirm
 # dwarfmonitor \
 # mousequery \
 # autogems \

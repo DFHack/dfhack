@@ -36,6 +36,7 @@ distribution.
 #include "df/plotinfost.h"
 #include "df/announcement_type.h"
 #include "df/announcement_flags.h"
+#include "df/building_stockpilest.h"
 #include "df/report_init.h"
 #include "df/report_zoom_type.h"
 #include "df/unit_report_type.h"
@@ -65,7 +66,9 @@ namespace DFHack
      */
     namespace Gui
     {
-        DFHACK_EXPORT std::string getFocusString(df::viewscreen *top);
+        DFHACK_EXPORT std::vector<std::string> getFocusStrings(df::viewscreen *top);
+        DFHACK_EXPORT bool matchFocusString(std::string focus_string, df::viewscreen *top = NULL);
+
 
         // Full-screen item details view
         DFHACK_EXPORT bool item_details_hotkey(df::viewscreen *top);
@@ -106,6 +109,10 @@ namespace DFHack
         DFHACK_EXPORT bool any_building_hotkey(df::viewscreen *top);
         DFHACK_EXPORT df::building *getAnyBuilding(df::viewscreen *top);
         DFHACK_EXPORT df::building *getSelectedBuilding(color_ostream &out, bool quiet = false);
+
+        DFHACK_EXPORT bool any_stockpile_hotkey(df::viewscreen* top);
+        DFHACK_EXPORT df::building_stockpilest *getAnyStockpile(df::viewscreen* top);
+        DFHACK_EXPORT df::building_stockpilest *getSelectedStockpile(color_ostream& out, bool quiet = false);
 
         // A plant is selected, e.g. via 'k'
         DFHACK_EXPORT bool any_plant_hotkey(df::viewscreen *top);
@@ -182,7 +189,7 @@ namespace DFHack
         DFHACK_EXPORT df::viewscreen *getViewscreenByIdentity(virtual_identity &id, int n = 1);
 
         /// Get the top-most underlying DF viewscreen (not owned by DFHack)
-        DFHACK_EXPORT df::viewscreen *getDFViewscreen(bool skip_dismissed = false);
+        DFHACK_EXPORT df::viewscreen *getDFViewscreen(bool skip_dismissed = false, df::viewscreen *top = NULL);
 
         /// Get the top-most viewscreen of the given type from the top `n` viewscreens (or all viewscreens if n < 1)
         /// returns NULL if none match
@@ -191,8 +198,8 @@ namespace DFHack
             return strict_virtual_cast<T>(getViewscreenByIdentity(T::_identity, n));
         }
 
-        inline std::string getCurFocus(bool skip_dismissed = false) {
-            return getFocusString(getCurViewscreen(skip_dismissed));
+        inline std::vector<std::string> getCurFocus(bool skip_dismissed = false) {
+            return getFocusStrings(getCurViewscreen(skip_dismissed));
         }
 
         /// get the size of the window buffer

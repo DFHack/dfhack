@@ -175,7 +175,8 @@ bool Units::isFortControlled(df::unit *unit)
     if (unit->flags2.bits.visitor ||
         unit->flags2.bits.visitor_uninvited ||
         unit->flags2.bits.underworld ||
-        unit->flags2.bits.resident)
+        unit->flags2.bits.resident ||
+        unit->flags4.bits.agitated_wilderness_creature)
         return false;
 
     return unit->civ_id != -1 && unit->civ_id == plotinfo->civ_id;
@@ -752,6 +753,14 @@ bool Units::getUnitsInBox (std::vector<df::unit*> &units,
         {
             units.push_back(u);
         }
+    }
+    return true;
+}
+
+bool Units::getCitizens(std::vector<df::unit *> &citizens, bool ignore_sanity) {
+    for (auto &unit : world->units.active) {
+        if (isCitizen(unit, ignore_sanity))
+            citizens.emplace_back(unit);
     }
     return true;
 }

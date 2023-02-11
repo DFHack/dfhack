@@ -86,6 +86,8 @@ namespace DFHack
 
             bool write_to_lower = false;
             bool keep_lower = false;
+            bool top_of_text = false;
+            bool bottom_of_text = false;
 
             bool valid() const { return tile >= 0; }
             bool empty() const { return ch == 0 && tile == 0; }
@@ -349,6 +351,7 @@ namespace DFHack
 
         virtual bool is_lua_screen() { return false; }
 
+        virtual bool isFocused() { return true; }
         virtual std::string getFocusString() = 0;
         virtual void onShow() {};
         virtual void onDismiss() {};
@@ -363,6 +366,7 @@ namespace DFHack
 
     class DFHACK_EXPORT dfhack_lua_viewscreen : public dfhack_viewscreen {
         std::string focus;
+        bool defocused = false;
 
         void update_focus(lua_State *L, int idx);
 
@@ -382,6 +386,7 @@ namespace DFHack
         static df::viewscreen *get_pointer(lua_State *L, int idx, bool make);
 
         virtual bool is_lua_screen() { return true; }
+        virtual bool isFocused() { return !defocused; }
         virtual std::string getFocusString() { return focus; }
 
         virtual void render();

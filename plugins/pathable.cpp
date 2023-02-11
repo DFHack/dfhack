@@ -1,6 +1,7 @@
 #include "modules/Gui.h"
 #include "modules/Maps.h"
 #include "modules/Screen.h"
+#include "modules/Textures.h"
 
 #include "Debug.h"
 #include "LuaTools.h"
@@ -38,6 +39,11 @@ static void paintScreen(df::coord target, bool skip_unrevealed = false) {
 
     long pathable_tile_texpos = 779;
     long unpathable_tile_texpos = 782;
+    long on_off_texpos = Textures::getOnOffTexposStart();
+    if (on_off_texpos > 0) {
+        pathable_tile_texpos = on_off_texpos + 0;
+        unpathable_tile_texpos = on_off_texpos + 1;
+    }
 
     auto dims = Gui::getDwarfmodeViewDims().map();
     for (int y = dims.first.y; y <= dims.second.y; ++y) {

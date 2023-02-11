@@ -15,18 +15,15 @@ Usage
 
     autoclothing
     autoclothing <material> <item> [quantity]
-    autoclothing report
 
 ``material`` can be "cloth", "silk", "yarn", or "leather". The ``item`` can be
 anything your civilization can produce, such as "dress" or "mitten".
 
 When invoked without parameters, it shows a summary of all managed clothing
-orders. When invoked with a material and item, but without a quantity, it shows
+orders, and the overall clothing situation in your fort.
+When invoked with a material and item, but without a quantity, it shows
 the current configuration for that material and item.
 
-``report`` gives a list of how many units of each race in your fortress that are
-missing clothing in each available slot, as well as how much spare clothing you
-have per slot, per race.
 
 Examples
 --------
@@ -35,5 +32,3 @@ Examples
     Sets the desired number of cloth short skirts available per citizen to 10.
 ``autoclothing cloth dress``
     Displays the currently set number of cloth dresses chosen per citizen.
-``autoclothing report``
-    Displays a report of your clothing situation.

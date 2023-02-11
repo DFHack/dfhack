@@ -81,19 +81,18 @@ function normalize_list(element_or_list)
     return {element_or_list}
 end
 
--- normalize "short form" viewscreen names to "long form"
+-- normalize "short form" viewscreen names to "long form" and remove any focus
 local function normalize_viewscreen_name(vs_name)
-    if vs_name == 'all' or vs_name:match('viewscreen_.*st') then
-        return vs_name
+    if vs_name == 'all' or vs_name:match('^viewscreen_.*st') then
+        return vs_name:match('^[^/]+')
     end
-    return 'viewscreen_' .. vs_name .. 'st'
+    return 'viewscreen_' .. vs_name:match('^[^/]+') .. 'st'
 end
 
--- reduce "long form" viewscreen names to "short form"
+-- reduce "long form" viewscreen names to "short form"; keep focus
 function simplify_viewscreen_name(vs_name)
-    _,_,short_name = vs_name:find('^viewscreen_(.*)st$')
-    if short_name then return short_name end
-    return vs_name
+    local short_name = vs_name:match('^viewscreen_([^/]+)st')
+    return short_name or vs_name
 end
 
 local function is_empty(tbl)
@@ -241,10 +240,23 @@ local function do_list(args)
     end
 end
 
+local function get_focus_strings(viewscreens)
+    local focus_strings = nil
+    for _,vs in ipairs(viewscreens) do
+        if vs:match('/') then
+            focus_strings = focus_strings or {}
+            vs = simplify_viewscreen_name(vs)
+            table.insert(focus_strings, vs)
+        end
+    end
+    return focus_strings
+end
+
 local function load_widget(name, widget_class)
     local widget = widget_class{name=name}
     widget_db[name] = {
         widget=widget,
+        focus_strings=get_focus_strings(normalize_list(widget.viewscreens)),
         next_update_ms=widget.overlay_onupdate and 0 or math.huge,
     }
     if not overlay_config[name] then overlay_config[name] = {} end
@@ -426,12 +438,30 @@ function update_hotspot_widgets()
     end
 end
 
+local function matches_focus_strings(db_entry, vs_name)
+    if not db_entry.focus_strings then return true end
+    local matched = true
+    local simple_vs_name = simplify_viewscreen_name(vs_name)
+    for _,fs in ipairs(db_entry.focus_strings) do
+        if fs:startswith(simple_vs_name) then
+            matched = false
+            if dfhack.gui.matchFocusString(fs, vs) then
+                return true
+            end
+        end
+    end
+    return matched
+end
+
 local function _update_viewscreen_widgets(vs_name, vs, now_ms)
     local vs_widgets = active_viewscreen_widgets[vs_name]
     if not vs_widgets then return end
     now_ms = now_ms or dfhack.getTickCount()
     for name,db_entry in pairs(vs_widgets) do
-        if do_update(name, db_entry, now_ms, vs) then return end
+        if matches_focus_strings(db_entry, vs_name) and
+                do_update(name, db_entry, now_ms, vs) then
+            return
+        end
     end
     return now_ms
 end
@@ -439,7 +469,9 @@ end
 function update_viewscreen_widgets(vs_name, vs)
     if triggered_screen_has_lock() then return end
     local now_ms = _update_viewscreen_widgets(vs_name, vs, nil)
-    _update_viewscreen_widgets('all', vs, now_ms)
+    if now_ms then
+        _update_viewscreen_widgets('all', vs, now_ms)
+    end
 end
 
 local function _feed_viewscreen_widgets(vs_name, keys)
@@ -447,7 +479,8 @@ local function _feed_viewscreen_widgets(vs_name, keys)
     if not vs_widgets then return false end
     for _,db_entry in pairs(vs_widgets) do
         local w = db_entry.widget
-        if detect_frame_change(w, function() return w:onInput(keys) end) then
+        if matches_focus_strings(db_entry, vs_name) and
+                detect_frame_change(w, function() return w:onInput(keys) end) then
             return true
         end
     end
@@ -465,7 +498,9 @@ local function _render_viewscreen_widgets(vs_name, dc)
     dc = dc or gui.Painter.new()
     for _,db_entry in pairs(vs_widgets) do
         local w = db_entry.widget
-        detect_frame_change(w, function() w:render(dc) end)
+        if matches_focus_strings(db_entry, vs_name) then
+            detect_frame_change(w, function() w:render(dc) end)
+        end
     end
 end
 

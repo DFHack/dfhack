@@ -396,18 +396,22 @@ static command_result autodump_main(color_ostream &out, vector <string> & parame
         if (!need_forbidden && itm->flags.bits.forbid)
             continue;
 
-        if(!destroy) // move to cursor
+        if (!destroy) // move to cursor
         {
-            // Change flags to indicate the dump was completed, as if by super-dwarfs
-            itm->flags.bits.dump = false;
-            itm->flags.bits.forbid = true;
-
             // Don't move items if they're already at the cursor
             if (pos_cursor != pos_item)
             {
-                if (!Items::moveToGround(MC, itm, pos_cursor))
+                if (Items::moveToGround(MC, itm, pos_cursor))
+                {
+                    // Change flags to indicate the dump was completed, as if by super-dwarfs
+                    itm->flags.bits.dump = false;
+                    itm->flags.bits.forbid = true;
+                }
+                else
+                {
                     out.print("Could not move item: %s\n",
-                              Items::getDescription(itm, 0, true).c_str());
+                        Items::getDescription(itm, 0, true).c_str());
+                }
             }
         }
         else // destroy

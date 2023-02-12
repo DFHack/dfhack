@@ -85,6 +85,7 @@ static PersistentDataItem & ensure_seed_config(color_ostream &out, int id) {
     string keyname = SEED_CONFIG_KEY_PREFIX + int_to_string(id);
     DEBUG(config,out).print("creating new persistent key for seed type %d\n", id);
     watched_seeds.emplace(id, World::GetPersistentData(keyname, NULL));
+    set_config_val(watched_seeds[id], SEED_CONFIG_ID, id);
     return watched_seeds[id];
 }
 static void remove_seed_config(color_ostream &out, int id) {

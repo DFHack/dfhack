@@ -1887,6 +1887,7 @@ FilteredList.ATTRS {
     edit_key = DEFAULT_NIL,
     edit_ignore_keys = DEFAULT_NIL,
     edit_on_char = DEFAULT_NIL,
+    edit_on_change = DEFAULT_NIL,
 }
 
 function FilteredList:init(info)
@@ -1897,10 +1898,18 @@ function FilteredList:init(info)
         end
     end
 
+    local on_change = self:callback('onFilterChange')
+    if self.edit_on_change then
+        on_change = function(text)
+            self.edit_on_change(text)
+            self:onFilterChange(text)
+        end
+    end
+
     self.edit = EditField{
         text_pen = info.edit_pen or info.cursor_pen,
         frame = { l = info.icon_width, t = 0, h = 1 },
-        on_change = self:callback('onFilterChange'),
+        on_change = on_change,
         on_char = on_char,
         key = self.edit_key,
         ignore_keys = self.edit_ignore_keys,

@@ -53,7 +53,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Lua
 
-- ``widgets.FilteredList``: Added ``edit_on_change`` optional paramter to allow a custom callback on filter edit change.
+- ``widgets.FilteredList``: Added ``edit_on_change`` optional parameter to allow a custom callback on filter edit change.
 
 ## Removed
 

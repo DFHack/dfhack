@@ -732,6 +732,30 @@ static bool isInBuiltCageRoom(df::unit *unit) {
     return false;
 }
 
+// This can be used to identify completely inappropriate units (dead, undead, not belonging to the fort, ...)
+// that autobutcher should be ignoring.
+static bool isInappropriateUnit(df::unit *unit) {
+    return !Units::isActive(unit)
+        || Units::isUndead(unit)
+        || Units::isMerchant(unit) // ignore merchants' draft animals
+        || Units::isForest(unit) // ignore merchants' caged animals
+        || !Units::isOwnCiv(unit);
+}
+
+// This can be used to identify protected units that should be counted towards fort totals, but not scheduled
+// for butchering. This way they count towards target quota, so if you order that you want 1 female adult cat
+// and have 2 cats, one of them being a pet, the other gets butchered
+static bool isProtectedUnit(df::unit *unit) {
+    return Units::isWar(unit)    // ignore war dogs etc
+        || Units::isHunter(unit) // ignore hunting dogs etc
+        // ignore creatures in built cages which are defined as rooms to leave zoos alone
+        // (TODO: better solution would be to allow some kind of slaughter cages which you can place near the butcher)
+        || (isContainedInItem(unit) && isInBuiltCageRoom(unit))  // !!! see comments in isBuiltCageRoom()
+        || Units::isAvailableForAdoption(unit)
+        || unit->name.has_name
+        || !unit->name.nickname.empty();
+}
+
 static void autobutcher_cycle(color_ostream &out) {
     // mark that we have recently run
     cycle_timestamp = world->frame_counter;
@@ -757,14 +781,9 @@ static void autobutcher_cycle(color_ostream &out) {
         // then let autowatch add units to the watchlist which will probably start breeding (owned pets, war animals, ...)
         // then process units counting those which can't be butchered (war animals, named pets, ...)
         // so that they are treated as "own stock" as well and count towards the target quota
-        if (   !Units::isActive(unit)
-            || Units::isUndead(unit)
+        if (isInappropriateUnit(unit)
             || Units::isMarkedForSlaughter(unit)
-            || Units::isMerchant(unit) // ignore merchants' draft animals
-            || Units::isForest(unit) // ignore merchants' caged animals
-            || !Units::isOwnCiv(unit)
-            || !Units::isTame(unit)
-            )
+            || !Units::isTame(unit))
             continue;
 
         // found a bugged unit which had invalid coordinates but was not in a cage.
@@ -794,13 +813,7 @@ static void autobutcher_cycle(color_ostream &out) {
             // don't butcher protected units, but count them as stock as well
             // this way they count towards target quota, so if you order that you want 1 female adult cat
             // and have 2 cats, one of them being a pet, the other gets butchered
-            if(    Units::isWar(unit)    // ignore war dogs etc
-                || Units::isHunter(unit) // ignore hunting dogs etc
-                // ignore creatures in built cages which are defined as rooms to leave zoos alone
-                // (TODO: better solution would be to allow some kind of slaughter cages which you can place near the butcher)
-                || (isContainedInItem(unit) && isInBuiltCageRoom(unit))  // !!! see comments in isBuiltCageRoom()
-                || Units::isAvailableForAdoption(unit)
-                || unit->name.has_name)
+            if(isProtectedUnit(unit))
                 w->PushProtectedUnit(unit);
             else if (   Units::isGay(unit)
                      || Units::isGelded(unit))
@@ -833,12 +846,7 @@ static WatchedRace * checkRaceStocksTotal(color_ostream &out, int race) {
         if (unit->race != race)
             continue;
 
-        if (   !Units::isActive(unit)
-            || Units::isUndead(unit)
-            || Units::isMerchant(unit) // ignore merchants' draft animals
-            || Units::isForest(unit) // ignore merchants' caged animals
-            || !Units::isOwnCiv(unit)
-            )
+        if (isInappropriateUnit(unit))
             continue;
 
         if(!isContainedInItem(unit) && !hasValidMapPos(unit))
@@ -855,12 +863,7 @@ WatchedRace * checkRaceStocksProtected(color_ostream &out, int race) {
         if (unit->race != race)
             continue;
 
-        if (   !Units::isActive(unit)
-            || Units::isUndead(unit)
-            || Units::isMerchant(unit) // ignore merchants' draft animals
-            || Units::isForest(unit) // ignore merchants' caged animals
-            || !Units::isOwnCiv(unit)
-            )
+        if (isInappropriateUnit(unit))
             continue;
 
         // found a bugged unit which had invalid coordinates but was not in a cage.
@@ -868,14 +871,8 @@ WatchedRace * checkRaceStocksProtected(color_ostream &out, int race) {
         if (!isContainedInItem(unit) && !hasValidMapPos(unit))
             continue;
 
-        if (  !Units::isTame(unit)
-           || Units::isWar(unit) // ignore war dogs etc
-           || Units::isHunter(unit) // ignore hunting dogs etc
-            // ignore creatures in built cages which are defined as rooms to leave zoos alone
-            // (TODO: better solution would be to allow some kind of slaughter cages which you can place near the butcher)
-            || (isContainedInItem(unit) && isInBuiltCageRoom(unit))  // !!! see comments in isBuiltCageRoom()
-            || Units::isAvailableForAdoption(unit)
-            || unit->name.has_name )
+        if (   !Units::isTame(unit)
+            || isProtectedUnit(unit))
             w->PushUnit(unit);
     }
     return w;
@@ -887,19 +884,9 @@ WatchedRace * checkRaceStocksButcherable(color_ostream &out, int race) {
         if (unit->race != race)
             continue;
 
-        if (   !Units::isActive(unit)
-            || Units::isUndead(unit)
-            || Units::isMerchant(unit) // ignore merchants' draft animals
-            || Units::isForest(unit) // ignore merchants' caged animals
-            || !Units::isOwnCiv(unit)
+        if (   isInappropriateUnit(unit)
             || !Units::isTame(unit)
-            || Units::isWar(unit) // ignore war dogs etc
-            || Units::isHunter(unit) // ignore hunting dogs etc
-            // ignore creatures in built cages which are defined as rooms to leave zoos alone
-            // (TODO: better solution would be to allow some kind of slaughter cages which you can place near the butcher)
-            || (isContainedInItem(unit) && isInBuiltCageRoom(unit))  // !!! see comments in isBuiltCageRoom()
-            || Units::isAvailableForAdoption(unit)
-            || unit->name.has_name
+            || isProtectedUnit(unit)
             )
             continue;
 
@@ -917,12 +904,7 @@ WatchedRace * checkRaceStocksButcherFlag(color_ostream &out, int race) {
         if(unit->race != race)
             continue;
 
-        if (   !Units::isActive(unit)
-            || Units::isUndead(unit)
-            || Units::isMerchant(unit) // ignore merchants' draft animals
-            || Units::isForest(unit) // ignore merchants' caged animals
-            || !Units::isOwnCiv(unit)
-            )
+        if (isInappropriateUnit(unit))
             continue;
 
         if (!isContainedInItem(unit) && !hasValidMapPos(unit))
@@ -1013,19 +995,9 @@ static void autobutcher_butcherRace(color_ostream &out, int id) {
         if(unit->race != id)
             continue;
 
-        if(    !Units::isActive(unit)
-            || Units::isUndead(unit)
-            || Units::isMerchant(unit) // ignore merchants' draught animals
-            || Units::isForest(unit) // ignore merchants' caged animals
-            || !Units::isOwnCiv(unit)
+        if(    isInappropriateUnit(unit)
             || !Units::isTame(unit)
-            || Units::isWar(unit) // ignore war dogs etc
-            || Units::isHunter(unit) // ignore hunting dogs etc
-            // ignore creatures in built cages which are defined as rooms to leave zoos alone
-            // (TODO: better solution would be to allow some kind of slaughter cages which you can place near the butcher)
-            || (isContainedInItem(unit) && isInBuiltCageRoom(unit))  // !!! see comments in isBuiltCageRoom()
-            || Units::isAvailableForAdoption(unit)
-            || unit->name.has_name
+            || isProtectedUnit(unit)
             )
             continue;
 

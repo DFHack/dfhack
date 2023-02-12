@@ -100,13 +100,19 @@ function getTreeCountsAndBurrowConfigs()
 
     ret.burrow_configs = {}
     for idx,c in pairs(unparsed_burrow_configs) do
-        c.name = df.burrow.find(c.id).name
+        local burrow = df.burrow.find(c.id)
+        if not burrow then goto continue end
+        c.name = burrow.name
+        if #c.name == 0 then
+            c.name = ('Burrow %d'):format(c.id + 1)
+        end
         c.chop = c.chop ~= 0
         c.clearcut = c.clearcut ~= 0
         c.protect_brewable = c.protect_brewable ~= 0
         c.protect_edible = c.protect_edible ~= 0
         c.protect_cookable = c.protect_cookable ~= 0
         table.insert(ret.burrow_configs, c)
+        ::continue::
     end
     return ret
 end

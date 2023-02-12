@@ -857,12 +857,11 @@ static int autochop_getTreeCountsAndBurrowConfigs(lua_State *L) {
 
     for (auto &burrow : plotinfo->burrows.list) {
         int id = burrow->id;
-        if (watched_burrows_indices.count(id)) {
-            // push_burrow_config(L, watched_burrows[watched_burrows_indices[id]]);
-            emplace_bulk_burrow_config(L, burrow_config_map, watched_burrows[watched_burrows_indices[id]]);
-        } else {
+        if (watched_burrows_indices.count(id))
+            emplace_bulk_burrow_config(L, burrow_config_map,
+                    watched_burrows[watched_burrows_indices[id]]);
+        else
             emplace_bulk_burrow_config(L, burrow_config_map, id);
-        }
     }
 
     Lua::Push(L, burrow_config_map);
